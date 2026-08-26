@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-26 16:17+0000\n"
+"POT-Creation-Date: 2026-08-26 16:33+0000\n"
 "PO-Revision-Date: 2026-02-20 21:38+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Dutch <https://hosted.weblate.org/projects/eventyay/eventyay/"
@@ -48,7 +48,7 @@ msgstr ""
 #: eventyay/base/exporters/waitinglist.py:86
 #: eventyay/base/forms/questions.py:976 eventyay/base/models/auth_token.py:55
 #: eventyay/base/models/devices.py:41 eventyay/base/models/devices.py:104
-#: eventyay/base/models/event.py:3124 eventyay/base/models/event.py:3379
+#: eventyay/base/models/event.py:3295 eventyay/base/models/event.py:3550
 #: eventyay/base/models/organizer.py:119 eventyay/base/models/product.py:1679
 #: eventyay/base/models/product.py:1839 eventyay/base/models/review.py:206
 #: eventyay/base/models/room.py:288 eventyay/base/models/seating.py:42
@@ -603,7 +603,7 @@ msgstr "Track"
 #: eventyay/multidomain/views.py:195 eventyay/orga/forms/mails.py:345
 #: eventyay/orga/forms/mails.py:347 eventyay/orga/templates/orga/base.html:489
 #: eventyay/orga/templates/orga/submission/speakers.html:11
-#: eventyay/orga/views/event.py:464 eventyay/orga/views/event.py:496
+#: eventyay/orga/views/event.py:463 eventyay/orga/views/event.py:495
 #: eventyay/person/forms/profile.py:447 eventyay/person/forms/profile.py:492
 #: eventyay/presale/templates/pretixpresale/event/fragment_nav.html:45
 #: eventyay/schedule/phrases.py:18
@@ -781,14 +781,14 @@ msgstr "Video"
 msgid "Watch live"
 msgstr "niet actief"
 
-#: eventyay/agenda/views/schedule.py:420
-#: eventyay/cfp/templates/cfp/event/user_submission_edit.html:62
-#: eventyay/multidomain/views.py:181
+#: eventyay/agenda/views/schedule.py:420 eventyay/multidomain/views.py:181
 #: eventyay/orga/templates/orga/submission/content_edit.html:50
+#, fuzzy
+#| msgid "Speaker"
+#| msgid_plural "Speakers"
+msgctxt "noun"
 msgid "Speaker"
-msgid_plural "Speakers"
-msgstr[0] "Spreker"
-msgstr[1] "Sprekers"
+msgstr "Spreker"
 
 #: eventyay/agenda/views/schedule.py:421 eventyay/multidomain/views.py:182
 #, fuzzy
@@ -838,7 +838,7 @@ msgstr ""
 #: eventyay/base/exporters/invoices.py:297
 #: eventyay/base/exporters/orderlist.py:595
 #: eventyay/base/exporters/orderlist.py:987
-#: eventyay/base/exporters/orderlist.py:1398 eventyay/base/models/event.py:3057
+#: eventyay/base/exporters/orderlist.py:1398 eventyay/base/models/event.py:3228
 #: eventyay/base/models/orders.py:1344 eventyay/base/models/question.py:472
 #: eventyay/base/models/submission.py:1045 eventyay/control/forms/filter.py:124
 #: eventyay/control/forms/filter.py:549 eventyay/control/forms/product.py:603
@@ -868,7 +868,7 @@ msgstr "Ja"
 #: eventyay/base/exporters/invoices.py:297
 #: eventyay/base/exporters/orderlist.py:595
 #: eventyay/base/exporters/orderlist.py:987
-#: eventyay/base/exporters/orderlist.py:1398 eventyay/base/models/event.py:3047
+#: eventyay/base/exporters/orderlist.py:1398 eventyay/base/models/event.py:3218
 #: eventyay/base/models/orders.py:1346 eventyay/base/models/question.py:474
 #: eventyay/base/models/submission.py:1045
 #: eventyay/cfp/templates/cfp/event/invitation.html:44
@@ -952,7 +952,7 @@ msgstr ""
 
 #: eventyay/agenda/views/schedule.py:445 eventyay/control/navigation.py:296
 #: eventyay/eventyay_common/navigation.py:268 eventyay/multidomain/views.py:203
-#: eventyay/orga/views/event.py:516
+#: eventyay/orga/views/event.py:515
 #: eventyay/presale/templates/pretixpresale/organizers/base.html:154
 #: eventyay/presale/templates/pretixpresale/organizers/fragment_toolbar.html:7
 msgid "Export"
@@ -1005,7 +1005,7 @@ msgid "Calendar View"
 msgstr ""
 
 #: eventyay/agenda/views/schedule.py:454 eventyay/common/forms/forms.py:12
-#: eventyay/common/forms/widgets.py:278
+#: eventyay/common/forms/widgets.py:349
 #: eventyay/common/templates/common/includes/search_form.html:7
 #: eventyay/control/templates/pretixcontrol/admin/attendees/index.html:31
 #: eventyay/control/templates/pretixcontrol/admin/events/index.html:32
@@ -1033,7 +1033,7 @@ msgstr ""
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/sent_list.html:32
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/sent_list.html:36
 #: eventyay/presale/templates/pretixpresale/startpage.html:11
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:88
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:89
 #: eventyay/submission/forms/submission.py:479
 msgid "Search"
 msgstr "Zoeken"
@@ -1164,8 +1164,8 @@ msgstr "U heeft geen toestemming om dit te doen"
 
 #: eventyay/agenda/views/talk.py:866 eventyay/common/text/phrases.py:72
 #: eventyay/control/views/checkin.py:130
-#: eventyay/eventyay_common/views/event.py:817
-#: eventyay/eventyay_common/views/event.py:832
+#: eventyay/eventyay_common/views/event.py:852
+#: eventyay/eventyay_common/views/event.py:867
 msgid "You do not have permission to perform this action."
 msgstr "U heeft geen toestemming om deze actie uit te voeren."
 
@@ -1255,8 +1255,8 @@ msgstr "Lijst van toegestane URI's, gescheiden met spaties"
 msgid "Allowed list with space separated"
 msgstr "Toegestane lijst met spaties gescheiden"
 
-#: eventyay/api/models.py:37 eventyay/control/forms/global_settings.py:320
-#: eventyay/control/forms/global_settings.py:398
+#: eventyay/api/models.py:37 eventyay/control/forms/global_settings.py:405
+#: eventyay/control/forms/global_settings.py:483
 #: eventyay/plugins/socialauth/templates/socialauth/social_auth_settings.html:70
 msgid "Client ID"
 msgstr "Client ID"
@@ -1301,7 +1301,7 @@ msgstr ""
 msgid "The selected seat \"{seat}\" is not available."
 msgstr "De gekozen stoel \"{seat}\" is niet beschikbaar."
 
-#: eventyay/api/serializers/checkin.py:71 eventyay/base/models/event.py:3280
+#: eventyay/api/serializers/checkin.py:71 eventyay/base/models/event.py:3451
 #: eventyay/base/models/product.py:1567 eventyay/base/models/product.py:1796
 msgid "One or more products do not belong to this event."
 msgstr "Een of meer producten horen niet bij dit evenement."
@@ -1500,14 +1500,14 @@ msgid "An invoice for this order already exists."
 msgstr "Er bestaat al een factuur voor deze bestelling."
 
 #: eventyay/api/views/order.py:762 eventyay/common/text/phrases.py:70
-#: eventyay/control/views/orders.py:1826 eventyay/control/views/users.py:400
-#: eventyay/control/views/users.py:403 eventyay/control/views/users.py:497
+#: eventyay/control/views/orders.py:1826 eventyay/control/views/users.py:403
+#: eventyay/control/views/users.py:406 eventyay/control/views/users.py:500
 msgid "There was an error sending the mail. Please try again later."
 msgstr ""
 "Er is een fout opgetreden bij het verzenden van de e-mail. Probeer het later "
 "opnieuw."
 
-#: eventyay/api/views/order.py:842 eventyay/base/services/cart.py:142
+#: eventyay/api/views/order.py:842 eventyay/base/services/cart.py:146
 #: eventyay/base/services/orders.py:151 eventyay/presale/views/order.py:977
 msgid "One of the selected products is not available in the selected country."
 msgstr ""
@@ -1627,14 +1627,20 @@ msgctxt "subevent"
 msgid "Event series date deleted"
 msgstr "Evenementenreeks: datum verwijderd"
 
-#: eventyay/base/auth.py:98
+#: eventyay/base/auth.py:13
+#, fuzzy
+#| msgid "This change was performed by the system administrator."
+msgid "This account has been suspended. Please contact the site administrator."
+msgstr "Deze wijziging is uitgevoerd door de systeembeheerder."
+
+#: eventyay/base/auth.py:101
 #, python-brace-format
 msgid "{system} User"
 msgstr "{system}-gebruiker"
 
-#: eventyay/base/auth.py:111
+#: eventyay/base/auth.py:114
 #: eventyay/base/configurations/default_setting.py:239
-#: eventyay/base/forms/auth.py:233 eventyay/base/models/auth.py:187
+#: eventyay/base/forms/auth.py:234 eventyay/base/models/auth.py:187
 #: eventyay/base/models/notifications.py:25 eventyay/base/models/orders.py:177
 #: eventyay/control/forms/event.py:848
 #: eventyay/control/templates/pretixcontrol/items/orderforms.html:47
@@ -1647,9 +1653,9 @@ msgstr "{system}-gebruiker"
 msgid "E-mail"
 msgstr "E-mail"
 
-#: eventyay/base/auth.py:118 eventyay/base/forms/auth.py:142
-#: eventyay/base/forms/auth.py:198
-#: eventyay/control/forms/global_settings.py:226
+#: eventyay/base/auth.py:121 eventyay/base/forms/auth.py:143
+#: eventyay/base/forms/auth.py:199
+#: eventyay/control/forms/global_settings.py:311
 #: eventyay/control/templates/pretixcontrol/admin/systemconfig.html:89
 #: eventyay/person/forms/user.py:24 eventyay/person/forms/user.py:39
 #: eventyay/presale/templates/pretixpresale/fragment_modals.html:77
@@ -1670,7 +1676,7 @@ msgid "Please enter the hexadecimal code of a color, e.g. #990000."
 msgstr "Voer de hexadecimale code van een kleur in, bijv. #990000."
 
 #: eventyay/base/configurations/default_setting.py:97
-#: eventyay/control/forms/global_settings.py:496
+#: eventyay/control/forms/global_settings.py:581
 msgid "Maximum number of items per order"
 msgstr "Maximale aantal producten per bestelling"
 
@@ -2000,12 +2006,12 @@ msgstr ""
 "gebruikt."
 
 #: eventyay/base/configurations/default_setting.py:516
-#: eventyay/control/forms/global_settings.py:487
+#: eventyay/control/forms/global_settings.py:572
 msgid "Reservation period"
 msgstr "Reserveerperiode"
 
 #: eventyay/base/configurations/default_setting.py:517
-#: eventyay/control/forms/global_settings.py:488
+#: eventyay/control/forms/global_settings.py:573
 msgid ""
 "The number of minutes the items in a user's cart are reserved for this user."
 msgstr ""
@@ -2407,12 +2413,14 @@ msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:927
 #: eventyay/control/forms/event.py:102
+#: eventyay/eventyay_common/forms/event.py:340
 #, fuzzy
 #| msgid "Event Language"
 msgid "Event languages"
 msgstr "Evenementtaal"
 
 #: eventyay/base/configurations/default_setting.py:929
+#: eventyay/eventyay_common/forms/event.py:343
 msgid ""
 "Users will be able to use eventyay in these languages, and you will be able "
 "to provide all texts in these languages. If you don't provide a text in the "
@@ -2955,7 +2963,7 @@ msgid "Refund method"
 msgstr "Terugbetalingsmethode"
 
 #: eventyay/base/configurations/default_setting.py:1574
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:77
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:78
 #, fuzzy
 #| msgid "Contact information"
 msgid "Contact form"
@@ -2964,7 +2972,7 @@ msgstr "Contactgegevens"
 #: eventyay/base/configurations/default_setting.py:1584
 #: eventyay/base/models/event.py:629 eventyay/control/forms/event.py:419
 #: eventyay/event/forms.py:281
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:91
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:92
 msgid "Organizer email address"
 msgstr "E-mailadres van organisator"
 
@@ -3857,7 +3865,7 @@ msgid "We will show your logo with a maximal height and width of 2.5 cm."
 msgstr "We tonen uw logo met een maximale breedte en hoogte van 2,5 cm."
 
 #: eventyay/base/configurations/default_setting.py:2320
-#: eventyay/base/models/event.py:3168
+#: eventyay/base/models/event.py:3339
 msgid "Frontpage text"
 msgstr "Voorpaginatekst"
 
@@ -3973,7 +3981,7 @@ msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:2490
 #: eventyay/base/configurations/default_setting.py:2500
-#: eventyay/base/models/event.py:542 eventyay/base/models/event.py:3126
+#: eventyay/base/models/event.py:542 eventyay/base/models/event.py:3297
 #: eventyay/control/forms/subevents.py:507
 #: eventyay/control/templates/pretixcontrol/subevents/bulk.html:268
 msgid "Event start time"
@@ -4117,7 +4125,7 @@ msgstr ""
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:35
 #: eventyay/eventyay_common/views/dashboards.py:570
 #: eventyay/eventyay_common/views/dashboards.py:577
-#: eventyay/eventyay_common/views/event.py:980
+#: eventyay/eventyay_common/views/event.py:1015
 #: eventyay/orga/templates/orga/event/component_link.html:9
 #: eventyay/presale/templates/pretixpresale/organizers/index.html:105
 #: eventyay/presale/templates/pretixpresale/organizers/index.html:107
@@ -4316,7 +4324,8 @@ msgid ""
 "email settings are correct."
 msgstr ""
 
-#: eventyay/base/email.py:351 eventyay/eventyay_common/views/event.py:557
+#: eventyay/base/email.py:351 eventyay/eventyay_common/views/event.py:563
+#: eventyay/eventyay_common/views/event.py:1588
 #: eventyay/orga/templates/orga/cfp/submissiontype/list.html:62
 #: eventyay/plugins/badges/apps.py:63 eventyay/plugins/badges/models.py:26
 #: eventyay/plugins/badges/templates/pretixplugins/badges/index.html:47
@@ -4415,6 +4424,7 @@ msgid "Answers to file upload questions"
 msgstr "Antwoorden op bestandsuploadvragen"
 
 #: eventyay/base/exporters/answers.py:28 eventyay/base/models/product.py:1426
+#: eventyay/eventyay_common/forms/event.py:386
 msgid "Questions"
 msgstr "Vragen"
 
@@ -4994,14 +5004,14 @@ msgstr "Status"
 #: eventyay/base/exporters/waitinglist.py:87
 #: eventyay/base/models/checkin.py:188 eventyay/base/pdf.py:423
 #: eventyay/common/log_display.py:286
-#: eventyay/control/forms/global_settings.py:512
+#: eventyay/control/forms/global_settings.py:747
 #: eventyay/control/templates/control/user_list.html:15
 #: eventyay/control/templates/pretixcontrol/admin/attendees/index.html:76
 #: eventyay/control/templates/pretixcontrol/admin/orders/index.html:71
 #: eventyay/control/templates/pretixcontrol/checkin/index.html:114
 #: eventyay/control/templates/pretixcontrol/orders/index.html:197
 #: eventyay/control/templates/pretixcontrol/waitinglist/index.html:171
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:246
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:247
 #: eventyay/eventyay_common/templates/eventyay_common/sessions/sessions.html:57
 #: eventyay/eventyay_common/templates/eventyay_common/sessions/sessions.html:88
 #: eventyay/orga/templates/orga/organizer/speaker_list.html:31
@@ -5309,7 +5319,7 @@ msgid "Order comment"
 msgstr "Opmerking bestelling"
 
 #: eventyay/base/exporters/orderlist.py:864
-#: eventyay/plugins/badges/signals.py:165 eventyay/plugins/badges/utils.py:536
+#: eventyay/plugins/badges/signals.py:168 eventyay/plugins/badges/utils.py:536
 #, fuzzy
 #| msgid "Upload options"
 msgid "Badge options"
@@ -5677,21 +5687,21 @@ msgstr "Prioriteit"
 msgid "Voucher code"
 msgstr "Vouchercode"
 
-#: eventyay/base/forms/__init__.py:102
+#: eventyay/base/forms/__init__.py:104
 #, fuzzy
 #| msgid "Default ({value})"
 msgid "Default (Inherit: {})"
 msgstr "Standaard ({value})"
 
-#: eventyay/base/forms/__init__.py:217
+#: eventyay/base/forms/__init__.py:219
 msgid "Show secret key"
 msgstr "Geheime sleutel tonen"
 
-#: eventyay/base/forms/__init__.py:218
+#: eventyay/base/forms/__init__.py:220
 msgid "Hide secret key"
 msgstr "Geheime sleutel verbergen"
 
-#: eventyay/base/forms/auth.py:17
+#: eventyay/base/forms/auth.py:18
 msgid ""
 "Password must be at least 8 characters and include a letter, a number, and a "
 "special character."
@@ -5699,50 +5709,44 @@ msgstr ""
 "Het wachtwoord moet minimaal 8 tekens bevatten en een letter, een cijfer en "
 "een speciaal teken bevatten."
 
-#: eventyay/base/forms/auth.py:43 eventyay/base/forms/auth.py:159
+#: eventyay/base/forms/auth.py:44 eventyay/base/forms/auth.py:160
 #: eventyay/presale/templates/pretixpresale/fragment_modals.html:89
 msgid "Keep me logged in"
 msgstr "Houd mij ingelogd"
 
-#: eventyay/base/forms/auth.py:46 eventyay/base/forms/auth.py:248
+#: eventyay/base/forms/auth.py:47 eventyay/base/forms/auth.py:249
 msgid "This combination of credentials is not known to our system."
 msgstr ""
 "Deze combinatie van gebruikersnaam en wachtwoord is niet bekend in onze "
 "database."
 
-#: eventyay/base/forms/auth.py:47 eventyay/base/forms/user.py:20
+#: eventyay/base/forms/auth.py:48 eventyay/base/forms/user.py:20
 msgid "For security reasons, please wait 5 minutes before you try again."
 msgstr ""
 "Om veiligheidsredenen moet u vijf minuten wachten voor u dit opnieuw kunt "
 "proberen."
 
-#: eventyay/base/forms/auth.py:48 eventyay/base/forms/auth.py:249
+#: eventyay/base/forms/auth.py:49 eventyay/base/forms/auth.py:250
 msgid "This account is inactive."
 msgstr "Dit account is uitgeschakeld."
 
-#: eventyay/base/forms/auth.py:49 eventyay/base/forms/auth.py:250
-#, fuzzy
-#| msgid "This change was performed by the system administrator."
-msgid "This account has been suspended. Please contact the site administrator."
-msgstr "Deze wijziging is uitgevoerd door de systeembeheerder."
-
-#: eventyay/base/forms/auth.py:137
+#: eventyay/base/forms/auth.py:138
 msgid ""
 "You already registered with that email address, please use the login form."
 msgstr ""
 "U bent al geregistreerd met dit e-mailadres, gebruik het inlogformulier."
 
-#: eventyay/base/forms/auth.py:138 eventyay/base/forms/auth.py:196
+#: eventyay/base/forms/auth.py:139 eventyay/base/forms/auth.py:197
 #: eventyay/base/forms/user.py:19 eventyay/control/forms/users.py:26
 msgid "Please enter the same password twice"
 msgstr "Voer twee keer hetzelfde wachtwoord in"
 
-#: eventyay/base/forms/auth.py:140 eventyay/common/text/phrases.py:86
+#: eventyay/base/forms/auth.py:141 eventyay/common/text/phrases.py:86
 #: eventyay/orga/forms/importers.py:80
 msgid "Email address"
 msgstr "E-mailadres"
 
-#: eventyay/base/forms/auth.py:151 eventyay/base/forms/auth.py:199
+#: eventyay/base/forms/auth.py:152 eventyay/base/forms/auth.py:200
 msgid "Repeat password"
 msgstr "Herhaal wachtwoord"
 
@@ -5926,11 +5930,117 @@ msgstr "Zakelijke klant"
 msgid "Individual customer"
 msgstr "Particuliere klant"
 
+#: eventyay/base/gmail/backend.py:52
+#, fuzzy, python-format
+#| msgid "Failed to send mail to the following user: {}"
+msgid "Daily Gmail sending limit reached for %(email)s."
+msgstr "Kon geen mail sturen naar de volgende gebruiker: {}"
+
+#: eventyay/base/gmail/backend.py:61
+#, fuzzy, python-format
+#| msgid "Failed to send mail to the following user: {}"
+msgid "Gmail rate limit reached for %(email)s."
+msgstr "Kon geen mail sturen naar de volgende gebruiker: {}"
+
+#: eventyay/base/gmail/constants.py:15
+#: eventyay/control/forms/global_settings.py:113
+#: eventyay/orga/forms/email.py:21
+msgid "Gmail / Google Workspace API"
+msgstr ""
+
+#: eventyay/base/gmail/deps.py:20
+msgid ""
+"Gmail support requires the Google API client libraries. Rebuild the "
+"application image or run `uv sync --all-extras --all-groups`."
+msgstr ""
+
+#: eventyay/base/gmail/models.py:30 eventyay/base/models/event.py:840
+#: eventyay/base/models/orders.py:176 eventyay/base/models/orders.py:2692
+#: eventyay/base/models/product.py:311 eventyay/base/models/product.py:1669
+#: eventyay/base/models/vouchers.py:91 eventyay/base/models/waitinglist.py:32
+#: eventyay/base/notifications.py:178 eventyay/common/log_display.py:294
+#: eventyay/control/forms/organizer_forms/user_orders_form.py:11
+#: eventyay/control/templates/control/bbb_list.html:21
+#: eventyay/control/templates/control/janus_list.html:17
+#: eventyay/control/templates/control/jitsi_list.html:21
+#: eventyay/control/templates/control/systemlog_list.html:12
+#: eventyay/control/templates/control/turn_list.html:17
+#: eventyay/control/templates/pretixcontrol/admin/attendees/index.html:85
+#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:293
+#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:344
+#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:461
+#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:501
+#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:539
+#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:584
+#: eventyay/control/templates/pretixcontrol/admin/orders/index.html:61
+#: eventyay/control/templates/pretixcontrol/admin/submissions/index.html:91
+#: eventyay/control/templates/pretixcontrol/search/orders.html:42
+#: eventyay/control/templates/pretixcontrol/user/orders.html:27
+#: eventyay/event/stages.py:95 eventyay/eventyay_common/forms/filters.py:12
+#: eventyay/eventyay_common/forms/filters.py:54
+#: eventyay/eventyay_common/templates/eventyay_common/orders/orders.html:40
+#: eventyay/eventyay_common/templates/eventyay_common/orders/orders.html:54
+#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:187
+#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:256
+#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:325
+#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:361
+#: eventyay/eventyay_common/templates/eventyay_common/sessions/sessions.html:54
+#: eventyay/eventyay_common/templates/eventyay_common/sessions/sessions.html:69
+#: eventyay/orga/templates/orga/mails/_placeholder_group.html:14
+#: eventyay/orga/views/event.py:387 eventyay/presale/organizer_exports.py:212
+#: eventyay/presale/templates/pretixpresale/event/waitinglist.html:19
+#, fuzzy
+#| msgid "Event"
+#| msgid_plural "Events"
+msgid "Event"
+msgstr "Evenement"
+
+#: eventyay/base/gmail/models.py:32
+#, fuzzy
+#| msgid "Send email"
+msgid "Sender email"
+msgstr "Stuur e-mail"
+
+#: eventyay/base/gmail/models.py:50
+msgid "Gmail OAuth credential"
+msgstr ""
+
+#: eventyay/base/gmail/models.py:51
+#, fuzzy
+#| msgid "Live Credentials"
+msgid "Gmail OAuth credentials"
+msgstr "Live-inloggegevens"
+
+#: eventyay/base/gmail/models.py:58
+#, fuzzy
+#| msgid "Back to overview"
+msgid "platform"
+msgstr "Terug naar overzicht"
+
+#: eventyay/base/gmail/oauth.py:37
+#, fuzzy
+#| msgid "Add the client ID and client secret to admin settings"
+msgid "Gmail OAuth client ID and secret must be configured in global settings."
+msgstr "Voeg de client-ID en client secret toe aan de beheerdersinstellingen"
+
+#: eventyay/base/gmail/oauth.py:85
+#, fuzzy
+#| msgid "The requested question does not exist."
+msgid "The required Gmail send permission was not granted."
+msgstr "De gevraagde vraag bestaat niet."
+
+#: eventyay/base/gmail/oauth.py:99
+#, fuzzy
+#| msgid "Please provide an email address."
+msgid "Google did not return an email address for the connected account."
+msgstr "Geef een e-mailadres op."
+
 #: eventyay/base/invoice.py:71
-#, python-format
+#, fuzzy, python-format
+#| msgid "Page %(page)s of %(of)s"
 msgctxt "invoice"
-msgid "Page %d of %d"
-msgstr "Pagina %d van %d"
+msgid "Page %(page)d of %(of)d"
+msgstr "Pagina %(page)s van %(of)s"
 
 #: eventyay/base/invoice.py:272
 msgctxt "invoice"
@@ -6014,7 +6124,7 @@ msgstr ""
 msgid "TEST MODE"
 msgstr "TESTMODUS"
 
-#: eventyay/base/invoice.py:478 eventyay/base/services/mail.py:506
+#: eventyay/base/invoice.py:478 eventyay/base/services/mail.py:512
 #, python-brace-format
 msgctxt "invoice"
 msgid "Invoice {num}"
@@ -6435,6 +6545,7 @@ msgstr "[eventyay] Wachtwoord gewijzigd"
 #: eventyay/base/models/auth_token.py:65 eventyay/base/models/event.py:841
 #: eventyay/cfp/templates/cfp/index.html:4
 #: eventyay/cfp/templates/cfp/index.html:8
+#: eventyay/common/context_processors.py:121
 #: eventyay/control/forms/organizer_forms/device_form.py:45
 #: eventyay/control/navigation.py:494
 #: eventyay/control/templates/control/event_list.html:6
@@ -6754,28 +6865,28 @@ msgstr "Praatpagina's worden gepubliceerd"
 msgid "Event currency"
 msgstr "Munteenheid van evenement"
 
-#: eventyay/base/models/event.py:543 eventyay/base/models/event.py:3127
+#: eventyay/base/models/event.py:543 eventyay/base/models/event.py:3298
 #: eventyay/base/pdf.py:365 eventyay/control/forms/subevents.py:512
 #: eventyay/control/templates/pretixcontrol/subevents/bulk.html:270
 msgid "Event end time"
 msgstr "Eindtijd van het evenement"
 
-#: eventyay/base/models/event.py:544 eventyay/base/models/event.py:3128
+#: eventyay/base/models/event.py:544 eventyay/base/models/event.py:3299
 #: eventyay/control/forms/subevents.py:517
 #: eventyay/control/templates/pretixcontrol/subevents/bulk.html:274
 msgid "Admission time"
 msgstr "Toegangstijd"
 
-#: eventyay/base/models/event.py:547 eventyay/base/models/event.py:3119
+#: eventyay/base/models/event.py:547 eventyay/base/models/event.py:3290
 msgid "Show in lists"
 msgstr "Toon in lijsten"
 
-#: eventyay/base/models/event.py:553 eventyay/base/models/event.py:3132
+#: eventyay/base/models/event.py:553 eventyay/base/models/event.py:3303
 #: eventyay/control/forms/subevents.py:78
 msgid "End of presale"
 msgstr "Einde van de voorverkoop"
 
-#: eventyay/base/models/event.py:555 eventyay/base/models/event.py:3134
+#: eventyay/base/models/event.py:555 eventyay/base/models/event.py:3305
 #: eventyay/control/forms/subevents.py:80
 msgid ""
 "Optional. No products will be sold after this date. If you do not set this "
@@ -6784,17 +6895,17 @@ msgstr ""
 "Optioneel. Na deze datum worden geen producten meer verkocht. Als u deze "
 "waarde niet instelt eindigt de voorverkoop na de einddatum van uw evenement."
 
-#: eventyay/base/models/event.py:562 eventyay/base/models/event.py:3141
+#: eventyay/base/models/event.py:562 eventyay/base/models/event.py:3312
 #: eventyay/control/forms/subevents.py:72
 msgid "Start of presale"
 msgstr "Begin van de voorverkoop"
 
-#: eventyay/base/models/event.py:563 eventyay/base/models/event.py:3142
+#: eventyay/base/models/event.py:563 eventyay/base/models/event.py:3313
 #: eventyay/control/forms/subevents.py:73
 msgid "Optional. No products will be sold before this date."
 msgstr "Optioneel. Er worden geen producten verkocht vóór deze datum."
 
-#: eventyay/base/models/event.py:569 eventyay/base/models/event.py:3148
+#: eventyay/base/models/event.py:569 eventyay/base/models/event.py:3319
 #: eventyay/base/services/talkimport.py:147
 #: eventyay/eventyay_common/templates/eventyay_common/events/create.html:164
 #: eventyay/presale/templates/pretixpresale/event/index.html:216
@@ -6803,11 +6914,11 @@ msgstr "Optioneel. Er worden geen producten verkocht vóór deze datum."
 msgid "Location"
 msgstr "Plaats"
 
-#: eventyay/base/models/event.py:572 eventyay/base/models/event.py:3151
+#: eventyay/base/models/event.py:572 eventyay/base/models/event.py:3322
 msgid "Latitude"
 msgstr "Breedtegraad"
 
-#: eventyay/base/models/event.py:581 eventyay/base/models/event.py:3160
+#: eventyay/base/models/event.py:581 eventyay/base/models/event.py:3331
 msgid "Longitude"
 msgstr "Lengtegraad"
 
@@ -6878,7 +6989,7 @@ msgid ""
 msgstr ""
 
 #: eventyay/base/models/event.py:637
-#: eventyay/eventyay_common/forms/event.py:265
+#: eventyay/eventyay_common/forms/event.py:266
 msgid "Custom domain"
 msgstr "Aangepast domein"
 
@@ -6956,73 +7067,32 @@ msgstr "Topografie"
 msgid "Graph Paper"
 msgstr "Grafiekpapier"
 
-#: eventyay/base/models/event.py:840 eventyay/base/models/orders.py:176
-#: eventyay/base/models/orders.py:2692 eventyay/base/models/product.py:311
-#: eventyay/base/models/product.py:1669 eventyay/base/models/vouchers.py:91
-#: eventyay/base/models/waitinglist.py:32 eventyay/base/notifications.py:178
-#: eventyay/common/log_display.py:294
-#: eventyay/control/forms/organizer_forms/user_orders_form.py:11
-#: eventyay/control/templates/control/bbb_list.html:21
-#: eventyay/control/templates/control/janus_list.html:17
-#: eventyay/control/templates/control/jitsi_list.html:21
-#: eventyay/control/templates/control/systemlog_list.html:12
-#: eventyay/control/templates/control/turn_list.html:17
-#: eventyay/control/templates/pretixcontrol/admin/attendees/index.html:85
-#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:293
-#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:344
-#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:461
-#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:501
-#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:539
-#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:584
-#: eventyay/control/templates/pretixcontrol/admin/orders/index.html:61
-#: eventyay/control/templates/pretixcontrol/admin/submissions/index.html:91
-#: eventyay/control/templates/pretixcontrol/search/orders.html:42
-#: eventyay/control/templates/pretixcontrol/user/orders.html:27
-#: eventyay/event/stages.py:96 eventyay/eventyay_common/forms/filters.py:12
-#: eventyay/eventyay_common/forms/filters.py:54
-#: eventyay/eventyay_common/templates/eventyay_common/orders/orders.html:40
-#: eventyay/eventyay_common/templates/eventyay_common/orders/orders.html:54
-#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:187
-#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:256
-#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:325
-#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:361
-#: eventyay/eventyay_common/templates/eventyay_common/sessions/sessions.html:54
-#: eventyay/eventyay_common/templates/eventyay_common/sessions/sessions.html:69
-#: eventyay/orga/templates/orga/mails/_placeholder_group.html:14
-#: eventyay/orga/templates/orga/organizer/list.html:32
-#: eventyay/orga/views/event.py:388 eventyay/presale/organizer_exports.py:212
-#: eventyay/presale/templates/pretixpresale/event/waitinglist.html:19
-msgid "Event"
-msgid_plural "Events"
-msgstr[0] "Evenement"
-msgstr[1] "Evenementen"
-
-#: eventyay/base/models/event.py:1929 eventyay/control/views/dashboards.py:307
+#: eventyay/base/models/event.py:2100 eventyay/control/views/dashboards.py:307
 msgid "live (private test mode)"
 msgstr "live (privé testmodus)"
 
-#: eventyay/base/models/event.py:1929 eventyay/control/views/dashboards.py:316
+#: eventyay/base/models/event.py:2100 eventyay/control/views/dashboards.py:316
 msgid "in private test mode"
 msgstr "in privétestmodus"
 
-#: eventyay/base/models/event.py:1931 eventyay/control/views/dashboards.py:310
+#: eventyay/base/models/event.py:2102 eventyay/control/views/dashboards.py:310
 msgid "live and in test mode"
 msgstr "live en in testmodus"
 
-#: eventyay/base/models/event.py:1933 eventyay/control/views/dashboards.py:313
+#: eventyay/base/models/event.py:2104 eventyay/control/views/dashboards.py:313
 #: eventyay/orga/templates/orga/includes/dashboard_block_event.html:24
 msgid "live"
 msgstr "live"
 
-#: eventyay/base/models/event.py:1935 eventyay/control/views/dashboards.py:318
+#: eventyay/base/models/event.py:2106 eventyay/control/views/dashboards.py:318
 msgid "in test mode"
 msgstr "in testmodus"
 
-#: eventyay/base/models/event.py:1937 eventyay/control/views/dashboards.py:318
+#: eventyay/base/models/event.py:2108 eventyay/control/views/dashboards.py:318
 msgid "not yet public"
 msgstr "nog niet openbaar"
 
-#: eventyay/base/models/event.py:2053
+#: eventyay/base/models/event.py:2224
 msgid ""
 "You have configured at least one paid product but have not enabled any "
 "payment methods."
@@ -7030,78 +7100,78 @@ msgstr ""
 "U heeft ten minste één betaald product ingesteld maar geen betaalmethoden "
 "ingeschakeld."
 
-#: eventyay/base/models/event.py:2056
+#: eventyay/base/models/event.py:2227
 msgid "You need to configure at least one quota to sell anything."
 msgstr "U moet ten minste één quotum instellen om iets te verkopen."
 
-#: eventyay/base/models/event.py:2059
+#: eventyay/base/models/event.py:2230
 msgid "You have unpaid invoices, please pay them before going live."
 msgstr "Je hebt onbetaalde facturen, betaal deze voordat je live gaat."
 
-#: eventyay/base/models/event.py:2064
+#: eventyay/base/models/event.py:2235
 #, python-brace-format
 msgid "You need to fill the meta parameter \"{property}\"."
 msgstr "U moet de meta-eigenschap \"{property}\" invullen."
 
-#: eventyay/base/models/event.py:2110
+#: eventyay/base/models/event.py:2281
 msgid "You need to fill the billing information."
 msgstr "Je moet de factuurgegevens invullen."
 
-#: eventyay/base/models/event.py:2329
+#: eventyay/base/models/event.py:2500
 msgid ""
 "Once created an event cannot change between an series and a single event."
 msgstr ""
 "Een evenement kan, wanneer aangemaakt, niet worden veranderd van een enkel "
 "evenement in een reeks of andersom."
 
-#: eventyay/base/models/event.py:2335
+#: eventyay/base/models/event.py:2506
 msgid "The event slug cannot be changed."
 msgstr "De slug van het evenement kan niet worden veranderd."
 
-#: eventyay/base/models/event.py:2338
+#: eventyay/base/models/event.py:2509
 msgid "This slug has already been used for a different event."
 msgstr "Deze slug wordt al voor een ander evenement gebruikt."
 
-#: eventyay/base/models/event.py:2344
+#: eventyay/base/models/event.py:2515
 msgid "The event cannot end before it starts."
 msgstr "Het evenement kan niet eindigen voor het begint."
 
-#: eventyay/base/models/event.py:2350
+#: eventyay/base/models/event.py:2521
 msgid "The event's presale cannot end before it starts."
 msgstr ""
 "De voorverkoopperiode van het evenement kan niet eindigen voordat de "
 "voorverkoop begint."
 
-#: eventyay/base/models/event.py:2823 eventyay/base/models/event.py:3019
-#: eventyay/event/stages.py:68
+#: eventyay/base/models/event.py:2994 eventyay/base/models/event.py:3190
+#: eventyay/event/stages.py:67
 #: eventyay/orga/templates/orga/submission/review.html:198
 msgid "Review"
 msgstr "Beoordeling"
 
-#: eventyay/base/models/event.py:3027
+#: eventyay/base/models/event.py:3198
 msgid "Selection"
 msgstr "Selectie"
 
-#: eventyay/base/models/event.py:3042 eventyay/base/models/review.py:129
+#: eventyay/base/models/event.py:3213 eventyay/base/models/review.py:129
 #: eventyay/orga/forms/event.py:530 eventyay/orga/forms/event.py:547
 #: eventyay/orga/templates/orga/includes/review_filter_form.html:25
 #: eventyay/orga/templates/orga/submission/review.html:193
 msgid "Score"
 msgstr "Score"
 
-#: eventyay/base/models/event.py:3052
+#: eventyay/base/models/event.py:3223
 msgid "Maybe"
 msgstr "Misschien"
 
-#: eventyay/base/models/event.py:3075
+#: eventyay/base/models/event.py:3246
 msgid "Link text"
 msgstr "Linktekst"
 
-#: eventyay/base/models/event.py:3076
+#: eventyay/base/models/event.py:3247
 msgid "Link URL"
 msgstr "Link-URL"
 
-#: eventyay/base/models/event.py:3114
+#: eventyay/base/models/event.py:3285
 #: eventyay/base/models/global_plugin_config.py:28
 #: eventyay/base/models/product.py:337 eventyay/base/models/product.py:867
 #: eventyay/base/models/product.py:1320 eventyay/control/forms/filter.py:852
@@ -7125,7 +7195,7 @@ msgstr "Link-URL"
 msgid "Active"
 msgstr "Actief"
 
-#: eventyay/base/models/event.py:3115
+#: eventyay/base/models/event.py:3286
 msgid ""
 "Only with this checkbox enabled, this date is visible in the frontend to "
 "users."
@@ -7133,7 +7203,7 @@ msgstr ""
 "Alleen wanneer dit selectievak is ingeschakeld is deze datum zichtbaar voor "
 "gebruikers."
 
-#: eventyay/base/models/event.py:3120
+#: eventyay/base/models/event.py:3291
 msgid ""
 "If selected, this event will show up publicly on the list of dates for your "
 "event."
@@ -7141,42 +7211,42 @@ msgstr ""
 "Als dit is ingeschakeld zal dit evenement zichtbaar zijn in de lijst met "
 "datums van deze evenementenreeks."
 
-#: eventyay/base/models/event.py:3184
+#: eventyay/base/models/event.py:3355
 msgid "Date in event series"
 msgstr "Datum in evenementenreeks"
 
-#: eventyay/base/models/event.py:3185
+#: eventyay/base/models/event.py:3356
 msgid "Dates in event series"
 msgstr "Datums in evenementenreeks"
 
-#: eventyay/base/models/event.py:3286
+#: eventyay/base/models/event.py:3457
 msgid "One or more variations do not belong to this event."
 msgstr "Één of meer varianten horen niet bij dit evenement."
 
-#: eventyay/base/models/event.py:3372 eventyay/base/models/product.py:1832
+#: eventyay/base/models/event.py:3543 eventyay/base/models/product.py:1832
 msgid "Can not contain spaces or special characters except underscores"
 msgstr ""
 "Mag geen spaties of speciale tekens bevatten, maar wel onderstrepingstekens"
 
-#: eventyay/base/models/event.py:3376 eventyay/base/models/product.py:1836
+#: eventyay/base/models/event.py:3547 eventyay/base/models/product.py:1836
 msgid "The property name may only contain letters, numbers and underscores."
 msgstr ""
 "De naam van de eigenschap mag alleen letters, cijfers en "
 "onderstrepingstekens bevatten."
 
-#: eventyay/base/models/event.py:3381
+#: eventyay/base/models/event.py:3552
 msgid "Default value"
 msgstr "Standaardwaarde"
 
-#: eventyay/base/models/event.py:3384
+#: eventyay/base/models/event.py:3555
 msgid "Can only be changed by organizer-level administrators"
 msgstr "Kan alleen worden gewijzigd door beheerders van deze organisator"
 
-#: eventyay/base/models/event.py:3388
+#: eventyay/base/models/event.py:3559
 msgid "Required for events"
 msgstr "Verplicht voor evenementen"
 
-#: eventyay/base/models/event.py:3390
+#: eventyay/base/models/event.py:3561
 msgid ""
 "If checked, an event can only be taken live if the property is set. In event "
 "series, its always optional to set a value for individual dates"
@@ -7185,11 +7255,11 @@ msgstr ""
 "als deze eigenschap een waarde heeft. In evenementenreeksen is het altijd "
 "optioneel om een waarde voor individuele datums in te stellen."
 
-#: eventyay/base/models/event.py:3397
+#: eventyay/base/models/event.py:3568
 msgid "Valid values"
 msgstr "Toegestane waarden"
 
-#: eventyay/base/models/event.py:3398
+#: eventyay/base/models/event.py:3569
 msgid ""
 "If you keep this empty, any value is allowed. Otherwise, enter one possible "
 "value per line."
@@ -7197,13 +7267,13 @@ msgstr ""
 "Voer hier een toegestane waarde per regel in. Als u dit veld leeg laat wordt "
 "iedere waarde toegestaan."
 
-#: eventyay/base/models/event.py:3404
+#: eventyay/base/models/event.py:3575
 msgid "A property can either be required or have a default value, not both."
 msgstr ""
 "Een eigenschap kan niet verplicht zijn en tegelijkertijd een standaardwaarde "
 "hebben."
 
-#: eventyay/base/models/event.py:3406
+#: eventyay/base/models/event.py:3577
 msgid "You cannot set a default value that is not a valid value."
 msgstr ""
 "U kunt geen standaardwaarde instellen die niet in de lijst met toegestane "
@@ -7548,7 +7618,7 @@ msgstr ""
 #: eventyay/orga/templates/orga/mails/sent_list.html:25
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/outbox_form.html:30
 #: eventyay/plugins/sendmail/views.py:278
-#: eventyay/plugins/sendmail/views.py:530
+#: eventyay/plugins/sendmail/views.py:534
 msgid "To"
 msgstr "Naar"
 
@@ -7568,7 +7638,7 @@ msgstr ""
 msgid "CC"
 msgstr "CC"
 
-#: eventyay/base/models/mail.py:384 eventyay/plugins/sendmail/views.py:531
+#: eventyay/base/models/mail.py:384 eventyay/plugins/sendmail/views.py:535
 msgid "Sent at"
 msgstr "Verstuurd als"
 
@@ -7974,7 +8044,7 @@ msgstr "Organisator"
 
 #: eventyay/base/models/organizer.py:143
 #: eventyay/common/templates/common/fragment_profile_dropdown.html:28
-#: eventyay/control/forms/global_settings.py:553
+#: eventyay/control/forms/global_settings.py:789
 #: eventyay/control/navigation.py:386
 #: eventyay/control/templates/pretixcontrol/admin/dashboard.html:43
 #: eventyay/control/templates/pretixcontrol/admin/dashboard.html:207
@@ -8407,7 +8477,7 @@ msgstr "Organisatorlogs"
 msgid "Page title"
 msgstr "Paginatitel"
 
-#: eventyay/base/models/page.py:13 eventyay/control/views/pages.py:68
+#: eventyay/base/models/page.py:13 eventyay/control/views/pages.py:73
 msgid "URL form"
 msgstr "URL-vorm"
 
@@ -11033,13 +11103,13 @@ msgstr "Vul een geldig verkoopkanaal in."
 msgid "No matching seat was found."
 msgstr "Geen overeenkomende stoel gevonden."
 
-#: eventyay/base/orderimport.py:984 eventyay/base/services/cart.py:136
+#: eventyay/base/orderimport.py:984 eventyay/base/services/cart.py:140
 msgid ""
 "The seat you selected has already been taken. Please select a different seat."
 msgstr ""
 "De stoel die u selecteerde is al bezet. Kies alstublieft een andere stoel."
 
-#: eventyay/base/orderimport.py:993 eventyay/base/services/cart.py:133
+#: eventyay/base/orderimport.py:993 eventyay/base/services/cart.py:137
 msgid "You need to select a specific seat."
 msgstr "U moet een specifieke stoel kiezen."
 
@@ -11761,7 +11831,7 @@ msgid "Languages"
 msgstr "Talen"
 
 #: eventyay/base/plugins.py:100 eventyay/common/plugins.py:15
-#: eventyay/orga/templates/orga/mails/_placeholder_group.html:20
+#: eventyay/orga/templates/orga/mails/_placeholder_group.html:16
 msgctxt "category of items"
 msgid "Other"
 msgstr "Overig"
@@ -11937,36 +12007,37 @@ msgstr ""
 msgid "The entered price exceeds the permitted maximum."
 msgstr "De ingevoerde prijs is te hoog."
 
-#: eventyay/base/services/cart.py:94
+#: eventyay/base/services/cart.py:95
 #, python-format
 msgid ""
-"The entered price is below the permitted minimum. The price range is %s to "
-"%s %s."
+"The entered price is below the permitted minimum. The price range is %(min)s "
+"to %(max)s %(currency)s."
 msgstr ""
 
-#: eventyay/base/services/cart.py:95
+#: eventyay/base/services/cart.py:97
 #, python-format
 msgid ""
 "The entered price is below the permitted minimum. The minimum price is %s."
 msgstr ""
 
-#: eventyay/base/services/cart.py:96
-#, python-format
+#: eventyay/base/services/cart.py:99
+#, fuzzy, python-format
+#| msgid "The entered price is to high."
 msgid ""
-"The entered price exceeds the permitted maximum. The price range is %s to %s "
-"%s."
-msgstr ""
+"The entered price exceeds the permitted maximum. The price range is %(min)s "
+"to %(max)s %(currency)s."
+msgstr "De ingevoerde prijs is te hoog."
 
-#: eventyay/base/services/cart.py:97
+#: eventyay/base/services/cart.py:101
 msgid "This voucher code is not known in our database."
 msgstr "Deze vouchercode is niet bekend in onze database."
 
-#: eventyay/base/services/cart.py:98
+#: eventyay/base/services/cart.py:102
 msgid ""
 "This voucher code has already been used the maximum number of times allowed."
 msgstr "Deze vouchercode is al het maximale aantal keren gebruikt."
 
-#: eventyay/base/services/cart.py:100
+#: eventyay/base/services/cart.py:104
 #, python-format
 msgid ""
 "This voucher code is currently locked since it is already contained in a "
@@ -11980,12 +12051,12 @@ msgstr ""
 "te verzilveren, maar het afrekenproces niet heeft voltooid. U kunt over %d "
 "minuten opnieuw proberen om de voucher te gebruiken."
 
-#: eventyay/base/services/cart.py:105
+#: eventyay/base/services/cart.py:109
 #, python-format
 msgid "This voucher code can only be redeemed %d more times."
 msgstr "Deze vouchercode kan nog %d keren worden gebruikt."
 
-#: eventyay/base/services/cart.py:107
+#: eventyay/base/services/cart.py:111
 msgid ""
 "You already used this voucher code. Remove the associated line from your "
 "cart if you want to use it for a different product."
@@ -11993,19 +12064,19 @@ msgstr ""
 "U heeft deze vouchercode al gebruikt. Verwijder het geassocieerde product "
 "uit uw winkelwagen als u de voucher voor een ander product wilt gebruiken."
 
-#: eventyay/base/services/cart.py:110
+#: eventyay/base/services/cart.py:114
 msgid "This voucher is expired."
 msgstr "Deze voucher is verlopen."
 
-#: eventyay/base/services/cart.py:111
+#: eventyay/base/services/cart.py:115
 msgid "This voucher is not valid for this product."
 msgstr "Deze voucher is niet geldig voor dit product."
 
-#: eventyay/base/services/cart.py:112
+#: eventyay/base/services/cart.py:116
 msgid "This voucher is not valid for this seat."
 msgstr "Deze voucher is niet geldig voor deze stoel."
 
-#: eventyay/base/services/cart.py:114
+#: eventyay/base/services/cart.py:118
 msgid ""
 "We did not find any position in your cart that we could use this voucher "
 "for. If you want to add something new to your cart using that voucher, you "
@@ -12016,33 +12087,33 @@ msgstr ""
 "voegen met deze voucher kunt u dit doen met de optie om een voucher te "
 "gebruiken onderaan de pagina."
 
-#: eventyay/base/services/cart.py:118
+#: eventyay/base/services/cart.py:122
 msgid "Your voucher is valid for a product that is currently not for sale."
 msgstr "Uw voucher is geldig voor een product dat momenteel niet te koop is."
 
-#: eventyay/base/services/cart.py:119
+#: eventyay/base/services/cart.py:123
 msgctxt "subevent"
 msgid "This voucher is not valid for this event date."
 msgstr "Deze voucher is niet geldig voor deze evenementsdatum."
 
-#: eventyay/base/services/cart.py:120
+#: eventyay/base/services/cart.py:124
 msgid "You need a valid voucher code to order this product."
 msgstr "U heeft een geldige vouchercode nodig om dit product te bestellen."
 
-#: eventyay/base/services/cart.py:121
+#: eventyay/base/services/cart.py:125
 msgctxt "subevent"
 msgid "The selected event date is not active."
 msgstr "De gekozen evenementsdatum is niet actief."
 
-#: eventyay/base/services/cart.py:122
+#: eventyay/base/services/cart.py:126
 msgid "You can not select an add-on for the selected product."
 msgstr "U kunt geen add-on selecteren voor het gekozen product."
 
-#: eventyay/base/services/cart.py:123
+#: eventyay/base/services/cart.py:127
 msgid "You can not select two variations of the same add-on product."
 msgstr "U kunt niet twee varianten van hetzelfde add-on-product selecteren."
 
-#: eventyay/base/services/cart.py:124
+#: eventyay/base/services/cart.py:128
 #, python-format
 msgid ""
 "You can select at most %(max)s add-ons from the category %(cat)s for the "
@@ -12051,7 +12122,7 @@ msgstr ""
 "U kunt maximaal %(max)s add-ons van de categorie %(cat)s selecteren voor het "
 "product %(base)s."
 
-#: eventyay/base/services/cart.py:126
+#: eventyay/base/services/cart.py:130
 #, python-format
 msgid ""
 "You need to select at least %(min)s add-ons from the category %(cat)s for "
@@ -12060,7 +12131,7 @@ msgstr ""
 "U moet minimaal %(min)s add-ons van de categorie %(cat)s selecteren voor het "
 "product %(base)s."
 
-#: eventyay/base/services/cart.py:129
+#: eventyay/base/services/cart.py:133
 #, python-format
 msgid ""
 "You can select every add-ons from the category %(cat)s for the product "
@@ -12069,7 +12140,7 @@ msgstr ""
 "U kunt iedere add-on uit de categorie %(cat)s voor het product %(base)s "
 "maximaal één keer kiezen."
 
-#: eventyay/base/services/cart.py:131
+#: eventyay/base/services/cart.py:135
 msgid ""
 "One of the products you selected can only be bought as an add-on to another "
 "project."
@@ -12077,25 +12148,25 @@ msgstr ""
 "Een van de producten die u geselecteerd heeft kan alleen gekocht worden als "
 "add-on bij een ander product."
 
-#: eventyay/base/services/cart.py:132
+#: eventyay/base/services/cart.py:136
 msgid "One of the products you selected can only be bought part of a bundle."
 msgstr ""
 "Een van de producten die u selecteerde kan alleen gekocht worden als deel "
 "van een bundel."
 
-#: eventyay/base/services/cart.py:134
+#: eventyay/base/services/cart.py:138
 msgid "Please select a valid seat."
 msgstr "Kies een geldige beschikbare stoel."
 
-#: eventyay/base/services/cart.py:135
+#: eventyay/base/services/cart.py:139
 msgid "You can not select a seat for this position."
 msgstr "U kunt voor dit product geen stoel kiezen."
 
-#: eventyay/base/services/cart.py:137
+#: eventyay/base/services/cart.py:141
 msgid "You can not select the same seat multiple times."
 msgstr "U kunt dezelfde stoel niet meerdere keren kiezen."
 
-#: eventyay/base/services/cart.py:139
+#: eventyay/base/services/cart.py:143
 msgid ""
 "You entered a gift card instead of a voucher. Gift cards can be entered "
 "later on when you're asked for your payment details."
@@ -12104,7 +12175,7 @@ msgstr ""
 "Cadeaubonnen kunnen worden gebruikt tijdens het betalingsproces, wanneer u "
 "om uw betalingsgegevens wordt gevraagd."
 
-#: eventyay/base/services/cart.py:143
+#: eventyay/base/services/cart.py:147
 msgid ""
 "Only one ticket per user is allowed for a product in your cart. You already "
 "have a ticket."
@@ -12112,7 +12183,7 @@ msgstr ""
 "Er is maar één ticket per gebruiker toegestaan voor een product in je "
 "winkelwagen. Je hebt al een ticket."
 
-#: eventyay/base/services/cart.py:144
+#: eventyay/base/services/cart.py:148
 msgid ""
 "Only one ticket per user is allowed for this product. Quantity has been "
 "adjusted to 1."
@@ -12310,7 +12381,7 @@ msgstr "Voorbeeldproduct {}"
 msgid "Sample product A"
 msgstr "Voorbeeldproduct A"
 
-#: eventyay/base/services/mail.py:230
+#: eventyay/base/services/mail.py:236
 #, python-brace-format
 msgid ""
 "You are receiving this email because someone placed an order for {event} for "
@@ -12319,7 +12390,7 @@ msgstr ""
 "U ontvangt deze e-mail omdat iemand een bestelling voor {event} voor u heeft "
 "geplaatst."
 
-#: eventyay/base/services/mail.py:234 eventyay/base/services/mail.py:255
+#: eventyay/base/services/mail.py:240 eventyay/base/services/mail.py:261
 #, python-brace-format
 msgid ""
 "You can view your order details at the following URL:\n"
@@ -12328,7 +12399,7 @@ msgstr ""
 "U kunt uw bestellingsgegevens bekijken op de volgende URL:\n"
 "{orderurl}."
 
-#: eventyay/base/services/mail.py:250
+#: eventyay/base/services/mail.py:256
 #, python-brace-format
 msgid "You are receiving this email because you placed an order for {event}."
 msgstr ""
@@ -13160,6 +13231,8 @@ msgid "You do not have access to this page."
 msgstr "U heeft geen toegang tot deze pagina."
 
 #: eventyay/base/templates/403.html:20 eventyay/base/templates/404.html:19
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:76
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:78
 #: eventyay/control/templates/pretixcontrol/admin/user/staff_session_start.html:4
 #: eventyay/control/templates/pretixcontrol/admin/user/staff_session_start.html:6
 #: eventyay/control/templates/pretixcontrol/base.html:231
@@ -13168,8 +13241,8 @@ msgstr "U heeft geen toegang tot deze pagina."
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:197
 #: eventyay/orga/templates/orga/base.html:163
 #: eventyay/orga/templates/orga/base.html:164
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:125
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:127
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:126
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:128
 msgid "Admin mode"
 msgstr "Administratormodus"
 
@@ -13232,9 +13305,9 @@ msgstr ""
 
 #: eventyay/base/templates/pretixbase/email/email_footer.html:3
 #: eventyay/common/templates/common/powered_by.html:36
-#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:63
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:142
 #: eventyay/control/templates/pretixcontrol/base.html:416
-#: eventyay/eventyay_common/templates/eventyay_common/auth/base.html:89
+#: eventyay/eventyay_common/templates/eventyay_common/auth/base.html:98
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:386
 #: eventyay/presale/templates/pretixpresale/base_footer.html:13
 #, python-format
@@ -13387,11 +13460,12 @@ msgstr "Toon voorbeeld email"
 #: eventyay/base/templates/pretixbase/forms/widgets/thumbnailed_file_input.html:47
 #: eventyay/control/templates/pretixcontrol/event/mail_settings_fragment.html:30
 #: eventyay/control/templates/pretixcontrol/event/tickets.html:36
+#: eventyay/control/templates/pretixcontrol/global_settings.html:246
 #: eventyay/control/templates/pretixcontrol/includes/preview_modal.html:13
 #: eventyay/control/templates/pretixcontrol/includes/preview_modal.html:16
 #: eventyay/control/templates/pretixcontrol/order/sendmail.html:33
 #: eventyay/control/templates/pretixcontrol/pdf/index.html:452
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:305
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:303
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/outbox_form.html:136
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/send_form.html:73
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/send_team_form.html:48
@@ -13859,11 +13933,13 @@ msgstr "Uitnodiging accepteren"
 #: eventyay/common/templates/common/fragment_header_user.html:156
 #: eventyay/common/templates/common/fragment_header_user.html:158
 #: eventyay/common/text/phrases.py:121
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:95
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:96
 #: eventyay/control/templates/registration/login.html:4
 #: eventyay/eventyay_common/templates/eventyay_common/auth/invite.html:26
 #: eventyay/presale/templates/pretixpresale/fragment_modals.html:33
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:144
 #: eventyay/presale/templates/pretixpresale/startpage_base.html:145
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:146
 msgid "Login"
 msgstr "Inloggen"
 
@@ -14113,6 +14189,12 @@ msgstr ""
 "Deelnemers kunnen hier feedback achterlaten nadat je sessie heeft plaats "
 "gevonden."
 
+#: eventyay/cfp/templates/cfp/event/user_submission_edit.html:62
+msgid "Speaker"
+msgid_plural "Speakers"
+msgstr[0] "Spreker"
+msgstr[1] "Sprekers"
+
 #: eventyay/cfp/templates/cfp/event/user_submission_edit.html:64
 msgid "Submitter"
 msgid_plural "Submitters"
@@ -14276,7 +14358,7 @@ msgid "Submit something now!"
 msgstr "Stuur nu iets in!"
 
 #: eventyay/cfp/templates/cfp/includes/forms_header.html:18
-#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:16
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:23
 #: eventyay/control/templates/pretixcontrol/base.html:93
 #: eventyay/control/templates/pretixcontrol/pdf/index.html:39
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:36
@@ -14285,7 +14367,7 @@ msgid "Undo"
 msgstr "Ongedaan maken"
 
 #: eventyay/cfp/templates/cfp/includes/forms_header.html:19
-#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:16
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:23
 #: eventyay/control/templates/pretixcontrol/base.html:93
 #: eventyay/control/templates/pretixcontrol/pdf/index.html:43
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:36
@@ -14294,7 +14376,7 @@ msgid "Redo"
 msgstr "Opnieuw doen"
 
 #: eventyay/cfp/templates/cfp/includes/forms_header.html:20
-#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:16
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:23
 #: eventyay/control/templates/pretixcontrol/base.html:93
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:36
 #: eventyay/orga/templates/orga/base.html:63
@@ -14392,18 +14474,47 @@ msgstr "De uitnodiging is verstuurd!"
 msgid "You cannot accept this invitation."
 msgstr "Je kan deze uitnodiging niet accepteren."
 
-#: eventyay/common/forms/fields.py:67 eventyay/control/forms/__init__.py:196
+#: eventyay/common/context_processors.py:122
+msgid "Terms"
+msgstr ""
+
+#: eventyay/common/context_processors.py:123
+#: eventyay/control/templates/pretixcontrol/organizers/edit.html:97
+msgid "Privacy"
+msgstr "Privacy"
+
+#: eventyay/common/context_processors.py:124
+#: eventyay/control/views/pages.py:237
+#, fuzzy
+#| msgid "Price"
+msgid "Pricing"
+msgstr "Prijs"
+
+#: eventyay/common/context_processors.py:125
+#: eventyay/orga/templates/orga/settings/import_export.html:238
+#: eventyay/orga/templates/orga/settings/import_export.html:431
+#: eventyay/orga/templates/orga/settings/import_export.html:540
+msgid "Documentation"
+msgstr "Documentatie"
+
+#: eventyay/common/context_processors.py:126
+#, fuzzy
+#| msgid "CSV export"
+msgid "Support"
+msgstr "CSV export"
+
+#: eventyay/common/forms/fields.py:68 eventyay/control/forms/__init__.py:196
 #: eventyay/control/forms/__init__.py:217
 #, python-brace-format
 msgid "Please do not upload files larger than {size}!"
 msgstr "Upload geen bestanden groter dan {size}!"
 
-#: eventyay/common/forms/fields.py:90 eventyay/control/forms/__init__.py:236
+#: eventyay/common/forms/fields.py:91 eventyay/control/forms/__init__.py:236
 #, python-brace-format
 msgid "Supported formats: {formats}"
 msgstr "Ondersteunde formaten: {formats}"
 
-#: eventyay/common/forms/fields.py:103 eventyay/control/forms/__init__.py:250
+#: eventyay/common/forms/fields.py:104 eventyay/control/forms/__init__.py:250
 #, python-brace-format
 msgid ""
 "The file type '{extension}' is not supported. Please upload one of the "
@@ -14479,21 +14590,21 @@ msgstr "geen selectie"
 msgid "Scheduled time must not be in the past."
 msgstr "Enkel evenement in het verleden"
 
-#: eventyay/common/forms/widgets.py:50
+#: eventyay/common/forms/widgets.py:53
 msgid ""
 "This password would take <em class=\"password_strength_time\"></em> to crack."
 msgstr ""
 "Dit wachtwoord kraken zou <em class=\"password_strength_time\"></em> duren."
 
-#: eventyay/common/forms/widgets.py:72
+#: eventyay/common/forms/widgets.py:75
 msgid "Warning"
 msgstr "Waarschuwing"
 
-#: eventyay/common/forms/widgets.py:72
+#: eventyay/common/forms/widgets.py:75
 msgid "Your passwords don’t match."
 msgstr "Je wachtwoorden zijn niet gelijk."
 
-#: eventyay/common/forms/widgets.py:106
+#: eventyay/common/forms/widgets.py:109
 #, fuzzy
 #| msgid "Email preview"
 msgid "Image preview"
@@ -15303,8 +15414,8 @@ msgid "User menu"
 msgstr "User Agent"
 
 #: eventyay/common/templates/common/fragment_nav.html:10
-#: eventyay/event/stages.py:81 eventyay/orga/views/event.py:465
-#: eventyay/orga/views/event.py:497
+#: eventyay/event/stages.py:80 eventyay/orga/views/event.py:464
+#: eventyay/orga/views/event.py:496
 #: eventyay/presale/templates/pretixpresale/event/fragment_nav.html:35
 msgid "Schedule"
 msgstr "Schema"
@@ -15320,7 +15431,7 @@ msgid "Details"
 msgstr "Details"
 
 #: eventyay/common/templates/common/fragment_nav.html:17
-#: eventyay/eventyay_common/views/event.py:978
+#: eventyay/eventyay_common/views/event.py:1013
 #: eventyay/presale/templates/pretixpresale/event/fragment_nav.html:18
 msgid "Info"
 msgstr "Info"
@@ -15386,7 +15497,7 @@ msgstr "Inloggen mislukt. Probeer het opnieuw."
 #: eventyay/control/templates/pretixcontrol/item/index.html:173
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:118
 #: eventyay/eventyay_common/templates/eventyay_common/account/2fa-main-settings.html:109
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:506
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:511
 #: eventyay/presale/templates/pretixpresale/fragment_join_online_video.html:76
 #: eventyay/presale/templates/pretixpresale/fragment_modals.html:34
 #: eventyay/presale/templates/pretixpresale/includes/share_dialog.html:7
@@ -15458,6 +15569,12 @@ msgstr "Bericht"
 #| msgid "This device has been set up successfully."
 msgid "Your message has been sent successfully!"
 msgstr "Het apparaat is succesvol geïnstalleerd."
+
+#: eventyay/common/templates/common/includes/core_footer.html:5
+#, fuzzy
+#| msgid "Back to overview"
+msgid "Platform links"
+msgstr "Terug naar overzicht"
 
 #: eventyay/common/templates/common/logs.html:15
 msgid "This change was performed by an event organiser."
@@ -15650,7 +15767,7 @@ msgstr "{date_from} – {date_to}"
 #: eventyay/control/templates/pretixcontrol/event/tax_edit.html:137
 #: eventyay/control/templates/pretixcontrol/event/tickets.html:79
 #: eventyay/control/templates/pretixcontrol/global_plugins.html:80
-#: eventyay/control/templates/pretixcontrol/global_settings.html:239
+#: eventyay/control/templates/pretixcontrol/global_settings.html:282
 #: eventyay/control/templates/pretixcontrol/global_update.html:86
 #: eventyay/control/templates/pretixcontrol/item/index.html:150
 #: eventyay/control/templates/pretixcontrol/items/category.html:38
@@ -15685,7 +15802,7 @@ msgstr "{date_from} – {date_to}"
 #: eventyay/eventyay_common/templates/eventyay_common/account/oauth-app-register.html:25
 #: eventyay/eventyay_common/templates/eventyay_common/account/oauth-app-update.html:25
 #: eventyay/eventyay_common/templates/eventyay_common/auth/recover.html:15
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:424
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:422
 #: eventyay/eventyay_common/templates/eventyay_common/organizers/create.html:20
 #: eventyay/eventyay_common/templates/eventyay_common/organizers/teams/team_edit.html:23
 #: eventyay/orga/templates/orga/settings/import_export.html:583
@@ -15758,7 +15875,8 @@ msgstr "Opslaan"
 #: eventyay/eventyay_common/templates/eventyay_common/account/authorized-app-revoke.html:25
 #: eventyay/eventyay_common/templates/eventyay_common/account/oauth-app-delete.html:25
 #: eventyay/eventyay_common/templates/eventyay_common/account/oauth-app-rollkeys.html:25
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:518
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:92
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:523
 #: eventyay/eventyay_common/templates/eventyay_common/organizers/teams/team_delete.html:10
 #: eventyay/eventyay_common/templates/eventyay_common/organizers/teams/team_delete.html:23
 #: eventyay/orga/templates/orga/cfp/forms.html:118
@@ -15787,6 +15905,7 @@ msgstr "Annuleren"
 #: eventyay/control/templates/control/turn_list.html:35
 #: eventyay/control/templates/control/user_list.html:25
 #: eventyay/control/templates/pretixcontrol/event/mail_settings_fragment.html:27
+#: eventyay/control/templates/pretixcontrol/global_settings.html:241
 #: eventyay/control/templates/pretixcontrol/order/sendmail.html:28
 #: eventyay/control/templates/pretixcontrol/orders/index.html:41
 #: eventyay/control/templates/pretixcontrol/organizers/giftcard.html:15
@@ -15835,9 +15954,9 @@ msgstr "Het item is verwijderd."
 #: eventyay/control/views/event.py:524 eventyay/control/views/event.py:570
 #: eventyay/control/views/event.py:807 eventyay/control/views/event.py:1110
 #: eventyay/control/views/event.py:1472
-#: eventyay/control/views/global_settings.py:47
-#: eventyay/control/views/global_settings.py:69
-#: eventyay/control/views/global_settings.py:152
+#: eventyay/control/views/global_settings.py:62
+#: eventyay/control/views/global_settings.py:79
+#: eventyay/control/views/global_settings.py:162
 #: eventyay/control/views/organizer.py:232
 #: eventyay/control/views/organizer_views/device_view.py:250
 #: eventyay/control/views/organizer_views/gate_view.py:94
@@ -15845,7 +15964,7 @@ msgstr "Het item is verwijderd."
 #: eventyay/control/views/organizer_views/organizer_view.py:356
 #: eventyay/control/views/organizer_views/organizer_view.py:529
 #: eventyay/control/views/organizer_views/web_hook_view.py:116
-#: eventyay/control/views/pages.py:46 eventyay/control/views/pages.py:104
+#: eventyay/control/views/pages.py:51 eventyay/control/views/pages.py:109
 #: eventyay/control/views/product.py:250 eventyay/control/views/product.py:766
 #: eventyay/control/views/product.py:1184
 #: eventyay/control/views/product.py:1378
@@ -15853,11 +15972,11 @@ msgstr "Het item is verwijderd."
 #: eventyay/control/views/product.py:1847
 #: eventyay/control/views/product.py:1898
 #: eventyay/control/views/subevents.py:502
-#: eventyay/control/views/subevents.py:1709 eventyay/control/views/users.py:465
+#: eventyay/control/views/subevents.py:1709 eventyay/control/views/users.py:468
 #: eventyay/control/views/vouchers.py:287
 #: eventyay/eventyay_common/templates/eventyay_common/event/plugins.html:12
 #: eventyay/eventyay_common/views/account/basic.py:101
-#: eventyay/eventyay_common/views/event.py:786
+#: eventyay/eventyay_common/views/event.py:821
 #: eventyay/eventyay_common/views/organizer.py:241
 #: eventyay/plugins/badges/views.py:231 eventyay/plugins/sendmail/views.py:248
 #: eventyay/plugins/sendmail/views.py:417
@@ -15974,7 +16093,7 @@ msgstr "”"
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:32
 #: eventyay/eventyay_common/navigation.py:179
 #: eventyay/eventyay_common/navigation.py:334
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:247
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:248
 #: eventyay/orga/templates/orga/settings/feedback.html:18
 msgid "General"
 msgstr "Algemeen"
@@ -16220,7 +16339,7 @@ msgid "Write access"
 msgstr "Schrijftoegang"
 
 #: eventyay/control/forms/admin/admin.py:17
-#: eventyay/control/forms/global_settings.py:620
+#: eventyay/control/forms/global_settings.py:884
 msgid "Perform update checks"
 msgstr "Voer updatechecks uit"
 
@@ -16351,7 +16470,7 @@ msgstr ""
 "suggestie."
 
 #: eventyay/control/forms/event.py:183
-#: eventyay/eventyay_common/forms/event.py:38
+#: eventyay/eventyay_common/forms/event.py:39
 msgid "Event timezone"
 msgstr "Tijdzone evenement"
 
@@ -16389,7 +16508,7 @@ msgid "Create a new team for this event with me as the only member"
 msgstr "Maak een nieuw team voor dit evenement aan met mij als het enige lid"
 
 #: eventyay/control/forms/event.py:256
-#: eventyay/eventyay_common/forms/event.py:254
+#: eventyay/eventyay_common/forms/event.py:255
 msgid ""
 "Sample Conference Center\n"
 "Heidelberg, Germany"
@@ -16398,12 +16517,12 @@ msgstr ""
 "Amsterdam, Nederland"
 
 #: eventyay/control/forms/event.py:257
-#: eventyay/eventyay_common/forms/event.py:255
+#: eventyay/eventyay_common/forms/event.py:256
 msgid "Latitude, e.g. 40.7128"
 msgstr "Breedtegraad, bijv. 40.7128"
 
 #: eventyay/control/forms/event.py:258
-#: eventyay/eventyay_common/forms/event.py:256
+#: eventyay/eventyay_common/forms/event.py:257
 msgid "Longitude, e.g. -74.0060"
 msgstr "Lengtegraad, bijv. -74.0060"
 
@@ -16646,8 +16765,8 @@ msgid "e.g. your contact details"
 msgstr "bijv. uw contactgegevens"
 
 #: eventyay/control/forms/event.py:1264
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:289
-#: eventyay/orga/forms/email.py:58
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:287
+#: eventyay/orga/forms/email.py:59
 msgid "HTML mail renderer"
 msgstr "HTML-e-mail-renderer"
 
@@ -16993,8 +17112,8 @@ msgid "Quantity available"
 msgstr "Hoeveelheid beschikbaar"
 
 #: eventyay/control/forms/event.py:1928
-#: eventyay/eventyay_common/forms/event.py:193
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:191
+#: eventyay/eventyay_common/forms/event.py:194
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:192
 #: eventyay/eventyay_common/templates/eventyay_common/events/create.html:158
 #, fuzzy
 #| msgid "Registration Steps"
@@ -17002,7 +17121,7 @@ msgid "Registration limit"
 msgstr "Registratiestappen"
 
 #: eventyay/control/forms/event.py:1929
-#: eventyay/eventyay_common/forms/event.py:194
+#: eventyay/eventyay_common/forms/event.py:195
 msgid ""
 "Maximum number of attendees who can RSVP. Leave empty for unlimited "
 "registrations."
@@ -17584,20 +17703,21 @@ msgstr "Betaald"
 msgid "Canceled"
 msgstr "Geannuleerd"
 
-#: eventyay/control/forms/global_settings.py:53 eventyay/orga/forms/email.py:20
+#: eventyay/control/forms/global_settings.py:113
+#: eventyay/orga/forms/email.py:20
 msgid "SendGrid"
 msgstr "SendGrid"
 
-#: eventyay/control/forms/global_settings.py:53
+#: eventyay/control/forms/global_settings.py:113
 msgid "SMTP"
 msgstr "SMTP"
 
-#: eventyay/control/forms/global_settings.py:62
-#: eventyay/control/forms/global_settings.py:547
+#: eventyay/control/forms/global_settings.py:122
+#: eventyay/control/forms/global_settings.py:783
 msgid "Billing validation"
 msgstr "Factureringsvalidatie"
 
-#: eventyay/control/forms/global_settings.py:64
+#: eventyay/control/forms/global_settings.py:124
 msgid ""
 "Billing validation lets you require organizers to set up a billing method "
 "before they can create events. When this option is enabled, no new event can "
@@ -17608,70 +17728,70 @@ msgstr ""
 "optie is ingeschakeld, kan er geen nieuw evenement worden aangemaakt totdat "
 "er een geldige betaalmethode is toegevoegd."
 
-#: eventyay/control/forms/global_settings.py:73
+#: eventyay/control/forms/global_settings.py:133
 #, fuzzy
 #| msgid "Your event series"
 msgid "Allow event series creation"
 msgstr "Uw evenementenreeksen"
 
-#: eventyay/control/forms/global_settings.py:75
+#: eventyay/control/forms/global_settings.py:135
 msgid ""
 "When enabled, organizers can create event series or time slot bookings in "
 "addition to singular events. Disable this to restrict event creation to "
 "singular events and non-event shops only."
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:84
+#: eventyay/control/forms/global_settings.py:144
 #, fuzzy
 #| msgid "Invoice customization"
 msgid "Allow meetup creation"
 msgstr "Factuuraanpassingen"
 
-#: eventyay/control/forms/global_settings.py:86
+#: eventyay/control/forms/global_settings.py:146
 msgid ""
 "When enabled, organizers can create simplified meetup events in addition to "
 "standard events. Disable this to restrict event creation to standard events "
 "only."
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:97
+#: eventyay/control/forms/global_settings.py:157
 msgid "Additional footer text"
 msgstr "Extra footertekst"
 
-#: eventyay/control/forms/global_settings.py:98
+#: eventyay/control/forms/global_settings.py:158
 msgid "Will be included as additional text in the footer, site-wide."
 msgstr ""
 "Zal over de hele website als extra tekst in de footer worden opgenomen."
 
-#: eventyay/control/forms/global_settings.py:106
+#: eventyay/control/forms/global_settings.py:166
 msgid "Additional footer link"
 msgstr "Extra link in footer"
 
-#: eventyay/control/forms/global_settings.py:107
+#: eventyay/control/forms/global_settings.py:167
 msgid "Will be included as the link in the additional footer text."
 msgstr "Zal worden gebruikt als de link in de extra footertekst."
 
-#: eventyay/control/forms/global_settings.py:115
+#: eventyay/control/forms/global_settings.py:175
 msgid "Global message banner"
 msgstr "Globale berichtbanner"
 
-#: eventyay/control/forms/global_settings.py:123
+#: eventyay/control/forms/global_settings.py:183
 msgid "Global message banner detail text"
 msgstr "Detailtekst globale berichtbanner"
 
-#: eventyay/control/forms/global_settings.py:130
+#: eventyay/control/forms/global_settings.py:190
 msgid "OpenCage API key for geocoding"
 msgstr "OpenCage-API-sleutel voor geocoding"
 
-#: eventyay/control/forms/global_settings.py:137
+#: eventyay/control/forms/global_settings.py:197
 msgid "MapQuest API key for geocoding"
 msgstr "MapQuest-API-sleutel voor geocoding"
 
-#: eventyay/control/forms/global_settings.py:144
+#: eventyay/control/forms/global_settings.py:204
 msgid "Enable public Nominatim geocoding"
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:146
+#: eventyay/control/forms/global_settings.py:206
 msgid ""
 "Can be used alongside OpenCage or MapQuest as a fallback. In development, "
 "Nominatim is used automatically when no API key is configured. Only enable "
@@ -17679,180 +17799,197 @@ msgid ""
 "policy."
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:156
+#: eventyay/control/forms/global_settings.py:216
 msgid "Leaflet tiles URL pattern"
 msgstr "URL-patroon voor Leaflet-tegels"
 
-#: eventyay/control/forms/global_settings.py:157
-#: eventyay/control/forms/global_settings.py:165
-#: eventyay/control/forms/global_settings.py:677
+#: eventyay/control/forms/global_settings.py:217
+#: eventyay/control/forms/global_settings.py:225
+#: eventyay/control/forms/global_settings.py:941
 #, python-brace-format
 msgid "e.g. {sample}"
 msgstr "bijv. {sample}"
 
-#: eventyay/control/forms/global_settings.py:164
+#: eventyay/control/forms/global_settings.py:224
 msgid "Leaflet tiles attribution"
 msgstr "Attributie voor Leaflet-tegels"
 
-#: eventyay/control/forms/global_settings.py:173
+#: eventyay/control/forms/global_settings.py:233
 msgid "System Email"
 msgstr "Systeem e-mail"
 
-#: eventyay/control/forms/global_settings.py:183
+#: eventyay/control/forms/global_settings.py:243
 #, fuzzy
 #| msgid "Sendgrid Token"
 msgid "Sendgrid token"
 msgstr "Sendgrid-token"
 
-#: eventyay/control/forms/global_settings.py:193
+#: eventyay/control/forms/global_settings.py:254
+msgid "Gmail OAuth client ID"
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:256
+msgid ""
+"Create an OAuth client in Google Cloud Console. The connect flow requests "
+"Gmail send and user email scopes. Use the OAuth redirect URI shown below as "
+"an authorized redirect URI."
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:269
+#, fuzzy
+#| msgid "Client secret"
+msgid "Gmail OAuth client secret"
+msgstr "Cliëntgeheim"
+
+#: eventyay/control/forms/global_settings.py:278
 msgid "Hostname"
 msgstr "Hostnaam"
 
-#: eventyay/control/forms/global_settings.py:204
+#: eventyay/control/forms/global_settings.py:289
 #: eventyay/control/templates/pretixcontrol/admin/systemconfig.html:83
 msgid "Port"
 msgstr "Poort"
 
-#: eventyay/control/forms/global_settings.py:215
+#: eventyay/control/forms/global_settings.py:300
 msgid "Username"
 msgstr "Gebruikersnaam"
 
-#: eventyay/control/forms/global_settings.py:239
-#: eventyay/orga/forms/email.py:102
+#: eventyay/control/forms/global_settings.py:324
+#: eventyay/orga/forms/email.py:118
 msgid "Use STARTTLS"
 msgstr "Gebruik STARTTLS"
 
-#: eventyay/control/forms/global_settings.py:240
-#: eventyay/orga/forms/email.py:103
+#: eventyay/control/forms/global_settings.py:325
+#: eventyay/orga/forms/email.py:119
 msgid "Commonly enabled on port 587."
 msgstr "Vaak ingeschakeld op poort 587."
 
-#: eventyay/control/forms/global_settings.py:250
-#: eventyay/orga/forms/email.py:107
+#: eventyay/control/forms/global_settings.py:335
+#: eventyay/orga/forms/email.py:126
 msgid "Use SSL"
 msgstr "Gebruik SSL"
 
-#: eventyay/control/forms/global_settings.py:251
-#: eventyay/orga/forms/email.py:108
+#: eventyay/control/forms/global_settings.py:336
+#: eventyay/orga/forms/email.py:127
 msgid "Commonly enabled on port 465."
 msgstr "Vaak ingeschakeld op poort 465."
 
-#: eventyay/control/forms/global_settings.py:275
-#: eventyay/control/forms/global_settings.py:328
+#: eventyay/control/forms/global_settings.py:360
+#: eventyay/control/forms/global_settings.py:413
 msgid "Publishable key (Live)"
 msgstr "Publiceerbare sleutel (Live)"
 
-#: eventyay/control/forms/global_settings.py:278
+#: eventyay/control/forms/global_settings.py:363
 msgid "Live publishable key for organizer billing and platform fees."
 msgstr ""
 "Live publiceerbare sleutel voor facturering van organisatoren en "
 "platformkosten."
 
-#: eventyay/control/forms/global_settings.py:284
-#: eventyay/control/forms/global_settings.py:337
+#: eventyay/control/forms/global_settings.py:369
+#: eventyay/control/forms/global_settings.py:422
 msgid "Secret key (Live)"
 msgstr "Geheime sleutel (Live)"
 
-#: eventyay/control/forms/global_settings.py:287
+#: eventyay/control/forms/global_settings.py:372
 msgid "Live secret key for organizer billing and platform fees."
 msgstr ""
 "Live geheime sleutel voor facturering van organisatoren en platformkosten."
 
-#: eventyay/control/forms/global_settings.py:293
-#: eventyay/control/forms/global_settings.py:346
+#: eventyay/control/forms/global_settings.py:378
+#: eventyay/control/forms/global_settings.py:431
 msgid "Publishable key (Test)"
 msgstr "Publiceerbare sleutel (Test)"
 
-#: eventyay/control/forms/global_settings.py:296
+#: eventyay/control/forms/global_settings.py:381
 msgid "Test publishable key for organizer billing and platform fees."
 msgstr ""
 "Test publiceerbare sleutel voor facturering van organisatoren en "
 "platformkosten."
 
-#: eventyay/control/forms/global_settings.py:302
-#: eventyay/control/forms/global_settings.py:355
+#: eventyay/control/forms/global_settings.py:387
+#: eventyay/control/forms/global_settings.py:440
 msgid "Secret key (Test)"
 msgstr "Geheime sleutel (Test)"
 
-#: eventyay/control/forms/global_settings.py:305
+#: eventyay/control/forms/global_settings.py:390
 msgid "Test secret key for organizer billing and platform fees."
 msgstr ""
 "Test geheime sleutel voor facturering van organisatoren en platformkosten."
 
-#: eventyay/control/forms/global_settings.py:311
+#: eventyay/control/forms/global_settings.py:396
 msgid "Webhook secret key"
 msgstr "Geheime webhook-sleutel"
 
-#: eventyay/control/forms/global_settings.py:313
+#: eventyay/control/forms/global_settings.py:398
 msgid ""
 "Configure this endpoint in your Stripe dashboard to receive billing events."
 msgstr ""
 "Configureer dit endpoint in je Stripe-dashboard om "
 "factureringsgebeurtenissen te ontvangen."
 
-#: eventyay/control/forms/global_settings.py:322
+#: eventyay/control/forms/global_settings.py:407
 msgid "Stripe Connect client ID for ticket payments via the Stripe plugin."
 msgstr "Stripe Connect-client-ID voor ticketbetalingen via de Stripe-plug-in."
 
-#: eventyay/control/forms/global_settings.py:331
+#: eventyay/control/forms/global_settings.py:416
 msgid "Live publishable key for ticket payments via the Stripe plugin."
 msgstr ""
 "Live publiceerbare sleutel voor ticketbetalingen via de Stripe-plug-in."
 
-#: eventyay/control/forms/global_settings.py:340
+#: eventyay/control/forms/global_settings.py:425
 msgid "Live secret key for ticket payments via the Stripe plugin."
 msgstr "Live geheime sleutel voor ticketbetalingen via de Stripe-plug-in."
 
-#: eventyay/control/forms/global_settings.py:349
+#: eventyay/control/forms/global_settings.py:434
 msgid "Test publishable key for ticket payments via the Stripe plugin."
 msgstr ""
 "Test publiceerbare sleutel voor ticketbetalingen via de Stripe-plug-in."
 
-#: eventyay/control/forms/global_settings.py:358
+#: eventyay/control/forms/global_settings.py:443
 msgid "Test secret key for ticket payments via the Stripe plugin."
 msgstr "Test geheime sleutel voor ticketbetalingen via de Stripe-plug-in."
 
-#: eventyay/control/forms/global_settings.py:364
+#: eventyay/control/forms/global_settings.py:449
 msgid "App fee percentage"
 msgstr "Percentage appkosten"
 
-#: eventyay/control/forms/global_settings.py:368
+#: eventyay/control/forms/global_settings.py:453
 msgid "Percentage fee charged on ticket payments."
 msgstr "Percentage kosten dat wordt berekend op ticketbetalingen."
 
-#: eventyay/control/forms/global_settings.py:375
+#: eventyay/control/forms/global_settings.py:460
 msgid "App fee minimum"
 msgstr "Minimum app-kosten"
 
-#: eventyay/control/forms/global_settings.py:379
+#: eventyay/control/forms/global_settings.py:464
 msgid "Minimum fee amount charged on ticket payments."
 msgstr "Minimumbedrag aan kosten dat bij ticketbetalingen wordt berekend."
 
-#: eventyay/control/forms/global_settings.py:386
+#: eventyay/control/forms/global_settings.py:471
 msgid "App fee maximum"
 msgstr "Maximale app-kosten"
 
-#: eventyay/control/forms/global_settings.py:390
+#: eventyay/control/forms/global_settings.py:475
 msgid "Maximum fee amount charged on ticket payments."
 msgstr "Maximumbedrag aan kosten dat bij ticketbetalingen wordt berekend."
 
-#: eventyay/control/forms/global_settings.py:400
+#: eventyay/control/forms/global_settings.py:485
 msgid "PayPal Connect client ID for payment processing."
 msgstr "PayPal Connect-client-ID voor het verwerken van betalingen."
 
-#: eventyay/control/forms/global_settings.py:406
+#: eventyay/control/forms/global_settings.py:491
 msgid "Secret key"
 msgstr "Geheime sleutel"
 
-#: eventyay/control/forms/global_settings.py:408
+#: eventyay/control/forms/global_settings.py:493
 msgid "PayPal Connect secret key for payment processing."
 msgstr "PayPal Connect geheime sleutel voor betalingsverwerking."
 
-#: eventyay/control/forms/global_settings.py:414
+#: eventyay/control/forms/global_settings.py:499
 msgid "API Endpoint"
 msgstr "API-eindpunt"
 
-#: eventyay/control/forms/global_settings.py:416
+#: eventyay/control/forms/global_settings.py:501
 msgid ""
 "PayPal API endpoint (e.g., https://api.paypal.com or https://"
 "api.sandbox.paypal.com)."
@@ -17860,21 +17997,21 @@ msgstr ""
 "PayPal API-endpoint (bijv. https://api.paypal.com of https://"
 "api.sandbox.paypal.com)."
 
-#: eventyay/control/forms/global_settings.py:422
+#: eventyay/control/forms/global_settings.py:507
 msgid "Ticket fee percentage"
 msgstr "Percentage ticketkosten"
 
-#: eventyay/control/forms/global_settings.py:426
+#: eventyay/control/forms/global_settings.py:511
 msgid "A percentage fee will be charged for each ticket sold."
 msgstr ""
 "Er wordt een percentage aan kosten in rekening gebracht voor elk verkocht "
 "ticket."
 
-#: eventyay/control/forms/global_settings.py:433
+#: eventyay/control/forms/global_settings.py:518
 msgid "All registered users can create organizers"
 msgstr "Alle geregistreerde gebruikers kunnen organisatoren aanmaken"
 
-#: eventyay/control/forms/global_settings.py:434
+#: eventyay/control/forms/global_settings.py:519
 msgid ""
 "If enabled, all registered users will be allowed to create organizers. "
 "System admins can always create organizers."
@@ -17882,11 +18019,11 @@ msgstr ""
 "Indien ingeschakeld, mogen alle geregistreerde gebruikers organisatoren "
 "aanmaken. Systeembeheerders kunnen altijd organisatoren aanmaken."
 
-#: eventyay/control/forms/global_settings.py:441
+#: eventyay/control/forms/global_settings.py:526
 msgid "All accounts with payment information can create organizers"
 msgstr "Alle accounts met betaalinformatie kunnen organisatoren aanmaken"
 
-#: eventyay/control/forms/global_settings.py:442
+#: eventyay/control/forms/global_settings.py:527
 msgid ""
 "If enabled, users with valid payment information on file will be allowed to "
 "create organizers. System admins can always create organizers."
@@ -17895,45 +18032,45 @@ msgstr ""
 "systeem organisatoren aanmaken. Systeembeheerders kunnen altijd "
 "organisatoren aanmaken."
 
-#: eventyay/control/forms/global_settings.py:450
+#: eventyay/control/forms/global_settings.py:535
 #, fuzzy
 #| msgid "Recording integrations"
 msgid "Enable Etherpad integration"
 msgstr "Opname integraties"
 
-#: eventyay/control/forms/global_settings.py:451
+#: eventyay/control/forms/global_settings.py:536
 msgid "Allow events to attach collaborative Etherpad notes to their sessions."
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:458
+#: eventyay/control/forms/global_settings.py:543
 msgid "Default Etherpad instance URL"
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:459
+#: eventyay/control/forms/global_settings.py:544
 #, python-brace-format
 msgid "Base URL of the Etherpad instance, e.g. {sample}"
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:466
+#: eventyay/control/forms/global_settings.py:551
 #, fuzzy
 #| msgid "Telemetry API key"
 msgid "Etherpad API key"
 msgstr "Telemetrie-API-sleutel"
 
-#: eventyay/control/forms/global_settings.py:468
+#: eventyay/control/forms/global_settings.py:553
 msgid ""
 "API key of the Etherpad instance (found in APIKEY.txt). Required only for "
 "automatic pad creation; without it, pad links are generated as plain URLs "
 "that Etherpad creates on first visit."
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:477
+#: eventyay/control/forms/global_settings.py:562
 #, fuzzy
 #| msgid "Frontpage header pattern"
 msgid "Pad name pattern"
 msgstr "Patroon van de header op de homepage"
 
-#: eventyay/control/forms/global_settings.py:479
+#: eventyay/control/forms/global_settings.py:564
 #, fuzzy, python-brace-format
 #| msgid ""
 #| "This will be attached to every email. Available placeholders: {event}"
@@ -17943,75 +18080,199 @@ msgstr ""
 "Dit zal worden toegevoegd aan iedere e-mail. Beschikbare plaatsaanduidingen: "
 "{event}"
 
-#: eventyay/control/forms/global_settings.py:497
+#: eventyay/control/forms/global_settings.py:582
 #, fuzzy
 #| msgid "Add-on products will be excluded from the count."
 msgid ""
 "Add-on products will be excluded from the count. Set to 0 for unlimited."
 msgstr "Add-on-producten worden uitgesloten van de telling."
 
-#: eventyay/control/forms/global_settings.py:506
+#: eventyay/control/forms/global_settings.py:591
+#, fuzzy
+#| msgid "Show video link"
+msgid "Show \"Events\" footer link"
+msgstr "Videolink tonen"
+
+#: eventyay/control/forms/global_settings.py:598
+#, fuzzy
+#| msgid "Event list"
+msgid "\"Events\" link URL"
+msgstr "Evenementenlijst"
+
+#: eventyay/control/forms/global_settings.py:605
+#, fuzzy
+#| msgid "Show video link"
+msgid "Show \"Terms\" footer link"
+msgstr "Videolink tonen"
+
+#: eventyay/control/forms/global_settings.py:612
+msgid "\"Terms\" link URL"
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:619
+msgid "Show \"Privacy\" footer link"
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:626
+#, fuzzy
+#| msgid "Privacy Policy URL"
+msgid "\"Privacy\" link URL"
+msgstr "URL van privacybeleid"
+
+#: eventyay/control/forms/global_settings.py:633
+#, fuzzy
+#| msgid "Additional footer link"
+msgid "Show \"Pricing\" footer link"
+msgstr "Extra link in footer"
+
+#: eventyay/control/forms/global_settings.py:640
+#, fuzzy
+#| msgid "Privacy Policy URL"
+msgid "\"Pricing\" link URL"
+msgstr "URL van privacybeleid"
+
+#: eventyay/control/forms/global_settings.py:647
+msgid "Show \"Documentation\" footer link"
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:654
+#, fuzzy
+#| msgid "Documentation"
+msgid "\"Documentation\" link URL"
+msgstr "Documentatie"
+
+#: eventyay/control/forms/global_settings.py:661
+msgid "Show \"Support\" footer link"
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:668
+msgid "\"Support\" link URL"
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:677
+msgid "\"Terms of Service\" page content"
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:678
+msgid "Rich text content for the /terms page."
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:685
+#, fuzzy
+#| msgid "Privacy Policy URL"
+msgid "\"Privacy Policy\" page content"
+msgstr "URL van privacybeleid"
+
+#: eventyay/control/forms/global_settings.py:686
+msgid "Rich text content for the /privacy page."
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:693
+#, fuzzy
+#| msgid "Page content"
+msgid "\"Pricing\" page content"
+msgstr "Pagina-inhoud"
+
+#: eventyay/control/forms/global_settings.py:694
+msgid "Rich text content for the /pricing page."
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:701
+#, fuzzy
+#| msgid "Page content"
+msgid "\"Support\" page content"
+msgstr "Pagina-inhoud"
+
+#: eventyay/control/forms/global_settings.py:702
+msgid "Rich text content for the /support page."
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:713
+#, fuzzy
+#| msgid "Use languages"
+msgid "Page languages"
+msgstr "Gebruik talen"
+
+#: eventyay/control/forms/global_settings.py:715
+msgid ""
+"Select the languages for page content (Terms, Privacy, Pricing, Support). "
+"Only selected languages will be shown for editing."
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:722
 #: eventyay/control/templates/pretixcontrol/event/settings.html:21
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:34
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:35
 msgid "Basics"
 msgstr "Basisinstellingen"
 
-#: eventyay/control/forms/global_settings.py:509
+#: eventyay/control/forms/global_settings.py:725
+#: eventyay/control/navigation.py:444
+msgid "Pages"
+msgstr "Pagina's"
+
+#: eventyay/control/forms/global_settings.py:744
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:81
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:197
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:198
 #: eventyay/eventyay_common/templates/eventyay_common/events/create.html:106
 msgid "Localization"
 msgstr "Lokalisatie"
 
-#: eventyay/control/forms/global_settings.py:517
+#: eventyay/control/forms/global_settings.py:753
 msgid "Payment Gateways"
 msgstr "Betaalgateways"
 
-#: eventyay/control/forms/global_settings.py:540
+#: eventyay/control/forms/global_settings.py:776
 msgid "Cart"
 msgstr "Winkelwagen"
 
-#: eventyay/control/forms/global_settings.py:544
+#: eventyay/control/forms/global_settings.py:780
 msgid "Ticket fee"
 msgstr "Ticketkosten"
 
-#: eventyay/control/forms/global_settings.py:550
+#: eventyay/control/forms/global_settings.py:786
 msgid "Maps"
 msgstr "Kaarten"
 
-#: eventyay/control/forms/global_settings.py:557
+#: eventyay/control/forms/global_settings.py:793
 #, fuzzy
 #| msgid "Event location"
 msgid "Event Creation"
 msgstr "Evenementlocatie"
 
-#: eventyay/control/forms/global_settings.py:561
+#: eventyay/control/forms/global_settings.py:797
 #: eventyay/orga/templates/orga/settings/form.html:66
 #, fuzzy
 #| msgid "Netherlands"
 msgid "Etherpad"
 msgstr "Nederland"
 
-#: eventyay/control/forms/global_settings.py:571
+#: eventyay/control/forms/global_settings.py:807
 msgid "VoxBento"
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:580
+#: eventyay/control/forms/global_settings.py:816
 msgid "HubSpot"
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:600
+#: eventyay/control/forms/global_settings.py:838
 #, python-brace-format
 msgid ""
 "The pattern must contain {submission} or {token} so each session gets a "
 "unique pad."
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:610
+#: eventyay/control/forms/global_settings.py:848
 msgid "This field is required when using SendGrid as email vendor."
 msgstr "Dit veld is vereist bij het gebruik van SendGrid als e-mailprovider."
 
-#: eventyay/control/forms/global_settings.py:622
+#: eventyay/control/forms/global_settings.py:851
+#: eventyay/control/forms/global_settings.py:859
+#, fuzzy
+#| msgid "This field is required when using SendGrid as email vendor."
+msgid "This field is required when using Gmail as email vendor."
+msgstr "Dit veld is vereist bij het gebruik van SendGrid als e-mailprovider."
+
+#: eventyay/control/forms/global_settings.py:886
 msgid ""
 "During the update check, eventyay will report an anonymous, unique "
 "installation ID, the current version of the system and your installed "
@@ -18028,11 +18289,11 @@ msgstr ""
 "waar we je instance kunnen vinden. Je kunt dit gedrag hier op elk moment "
 "uitschakelen."
 
-#: eventyay/control/forms/global_settings.py:631
+#: eventyay/control/forms/global_settings.py:895
 msgid "E-mail notifications"
 msgstr "E-mailnotificaties"
 
-#: eventyay/control/forms/global_settings.py:633
+#: eventyay/control/forms/global_settings.py:897
 msgid ""
 "We will notify you at this address if we detect that a new update is "
 "available. This address will not be transmitted to eventyay.com, the emails "
@@ -18042,11 +18303,11 @@ msgstr ""
 "update beschikbaar is. Dit adres wordt niet doorgestuurd naar eventyay.com; "
 "de e-mails worden lokaal door deze server verzonden."
 
-#: eventyay/control/forms/global_settings.py:642
+#: eventyay/control/forms/global_settings.py:906
 msgid "Enable telemetry"
 msgstr "Telemetrie inschakelen"
 
-#: eventyay/control/forms/global_settings.py:644
+#: eventyay/control/forms/global_settings.py:908
 msgid ""
 "Send anonymous usage statistics (bucketed counts, deployment info) to help "
 "track version adoption and deployment patterns. No personal data is "
@@ -18057,29 +18318,29 @@ msgstr ""
 "volgen. Er worden geen persoonsgegevens verzameld. Gegevens worden ongeveer "
 "één keer per dag verzonden."
 
-#: eventyay/control/forms/global_settings.py:651
+#: eventyay/control/forms/global_settings.py:915
 msgid "Telemetry endpoint"
 msgstr "Telemetrie-eindpunt"
 
-#: eventyay/control/forms/global_settings.py:652
+#: eventyay/control/forms/global_settings.py:916
 msgid "The URL where telemetry data will be sent (Google Apps Script URL)."
 msgstr ""
 "De URL waar telemetriegegevens naartoe worden verzonden (Google Apps Script-"
 "URL)."
 
-#: eventyay/control/forms/global_settings.py:656
+#: eventyay/control/forms/global_settings.py:920
 msgid "Telemetry API key"
 msgstr "Telemetrie-API-sleutel"
 
-#: eventyay/control/forms/global_settings.py:657
+#: eventyay/control/forms/global_settings.py:921
 msgid "API key for authenticating with the telemetry receiver."
 msgstr "API-sleutel voor authenticatie bij de telemetrie-ontvanger."
 
-#: eventyay/control/forms/global_settings.py:661
+#: eventyay/control/forms/global_settings.py:925
 msgid "Maintainer contact"
 msgstr "Contactpersoon beheerder"
 
-#: eventyay/control/forms/global_settings.py:663
+#: eventyay/control/forms/global_settings.py:927
 msgid ""
 "Optional email address included in telemetry data to identify who maintains "
 "this instance. Only visible to those with access to the telemetry data sheet."
@@ -18088,15 +18349,15 @@ msgstr ""
 "identificeren wie deze instantie beheert. Alleen zichtbaar voor degenen met "
 "toegang tot het telemetriegegevensblad."
 
-#: eventyay/control/forms/global_settings.py:676
+#: eventyay/control/forms/global_settings.py:940
 msgid "Redirect URL"
 msgstr "Omleidings-URL"
 
-#: eventyay/control/forms/global_settings.py:717
+#: eventyay/control/forms/global_settings.py:981
 msgid "The Stripe key cannot be empty."
 msgstr "De Stripe-sleutel mag niet leeg zijn."
 
-#: eventyay/control/forms/global_settings.py:721
+#: eventyay/control/forms/global_settings.py:985
 #, python-format
 msgid ""
 "The provided key does not look valid. It should start with \"%(prefix)s\"."
@@ -18104,7 +18365,7 @@ msgstr ""
 "De opgegeven sleutel lijkt niet geldig. Deze moet beginnen met "
 "\"%(prefix)s\"."
 
-#: eventyay/control/forms/global_settings.py:724
+#: eventyay/control/forms/global_settings.py:988
 #, python-format
 msgid ""
 "The provided key does not look valid. It should start with one of: "
@@ -18361,7 +18622,7 @@ msgstr ""
 #: eventyay/plugins/sendmail/forms.py:535
 #: eventyay/plugins/sendmail/forms.py:637
 #: eventyay/plugins/sendmail/views.py:277
-#: eventyay/plugins/sendmail/views.py:529
+#: eventyay/plugins/sendmail/views.py:533
 msgid "Subject"
 msgstr "Onderwerp"
 
@@ -18692,12 +18953,12 @@ msgid "Invalid VAT number for {}"
 msgstr "Ongeldig btw-nummer voor {}"
 
 #: eventyay/control/forms/organizer_forms/organizer_update_form.py:52
-#: eventyay/eventyay_common/forms/event.py:276
+#: eventyay/eventyay_common/forms/event.py:277
 msgid "You cannot choose the base domain of this installation."
 msgstr "U kunt niet het basisdomein van deze installatie kiezen."
 
 #: eventyay/control/forms/organizer_forms/organizer_update_form.py:58
-#: eventyay/eventyay_common/forms/event.py:278
+#: eventyay/eventyay_common/forms/event.py:279
 msgid "This domain is already in use for a different event or organizer."
 msgstr ""
 "Dit domein is al in gebruik voor een ander evenement of andere organisator."
@@ -20431,7 +20692,7 @@ msgstr "Terugbetalingen"
 
 #: eventyay/control/navigation.py:283
 #: eventyay/orga/templates/orga/review/assignment-import.html:21
-#: eventyay/orga/views/event.py:515
+#: eventyay/orga/views/event.py:514
 msgid "Import"
 msgstr "Importeren"
 
@@ -20442,6 +20703,7 @@ msgstr "Importeren"
 #: eventyay/control/templates/pretixcontrol/subevents/bulk.html:501
 #: eventyay/control/templates/pretixcontrol/subevents/bulk_edit.html:255
 #: eventyay/control/templates/pretixcontrol/subevents/detail.html:143
+#: eventyay/eventyay_common/forms/event.py:392
 #: eventyay/plugins/checkinlists/apps.py:10
 msgid "Check-in lists"
 msgstr "Inchecklijsten"
@@ -20502,10 +20764,6 @@ msgstr "Instellingen"
 #: eventyay/control/templates/pretixcontrol/admin/systemconfig.html:17
 msgid "System information"
 msgstr "Systeeminformatie"
-
-#: eventyay/control/navigation.py:444
-msgid "Pages"
-msgstr "Pagina's"
 
 #: eventyay/control/navigation.py:449
 #: eventyay/control/templates/pretixcontrol/admin/events/index.html:96
@@ -20614,8 +20872,8 @@ msgstr "Administratieve sessies"
 
 #: eventyay/control/permissions.py:40 eventyay/control/permissions.py:80
 #: eventyay/control/permissions.py:115 eventyay/control/permissions.py:135
-#: eventyay/eventyay_common/views/event.py:925
-#: eventyay/eventyay_common/views/event.py:933
+#: eventyay/eventyay_common/views/event.py:960
+#: eventyay/eventyay_common/views/event.py:968
 msgid "You do not have permission to view this content."
 msgstr "U heeft geen toestemming om deze inhoud te bekijken."
 
@@ -20779,7 +21037,7 @@ msgid "Usage"
 msgstr "Gebruik"
 
 #: eventyay/control/templates/control/event_list.html:42
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:378
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:376
 msgid "Delete data"
 msgstr "Gegevens verwijderen"
 
@@ -21220,7 +21478,7 @@ msgstr "Bestellingsdetails"
 #: eventyay/control/templates/pretixcontrol/admin/dashboard.html:737
 #: eventyay/control/templates/pretixcontrol/admin/dashboard.html:785
 #: eventyay/control/templates/pretixcontrol/admin/dashboard.html:830
-#: eventyay/orga/templates/orga/mails/_placeholder_group.html:26
+#: eventyay/orga/templates/orga/mails/_placeholder_group.html:22
 msgid "Unavailable"
 msgstr "Onbeschikbaar"
 
@@ -21859,6 +22117,40 @@ msgstr "Alle organisatoren"
 #: eventyay/eventyay_common/templates/eventyay_common/organizers/index.html:27
 msgid "Create a new organizer"
 msgstr "Nieuwe organisator aanmaken"
+
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:52
+#: eventyay/control/templates/pretixcontrol/base.html:128
+#: eventyay/eventyay_common/templates/eventyay_common/base.html:126
+#: eventyay/orga/templates/orga/base.html:98
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:73
+msgid "Toggle sidebar"
+msgstr "Zijbalk in-/uitschakelen"
+
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:84
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:86
+#: eventyay/control/templates/pretixcontrol/base.html:238
+#: eventyay/control/templates/pretixcontrol/base.html:239
+#: eventyay/eventyay_common/templates/eventyay_common/base.html:203
+#: eventyay/eventyay_common/templates/eventyay_common/base.html:204
+#: eventyay/orga/templates/orga/base.html:170
+#: eventyay/orga/templates/orga/base.html:171
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:134
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:136
+msgid "End admin session"
+msgstr "Beëindig administratorsessie"
+
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:103
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:153
+#, fuzzy
+#| msgid "Footer Navigation"
+msgid "Main navigation"
+msgstr "Footer-navigatie"
+
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:112
+#: eventyay/eventyay_common/templates/eventyay_common/base.html:258
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:162
+msgid "Main dashboard"
+msgstr "Hoofddashboard"
 
 #: eventyay/control/templates/pretixcontrol/admin/pages/delete.html:4
 #: eventyay/control/templates/pretixcontrol/admin/pages/delete.html:6
@@ -22598,13 +22890,6 @@ msgstr ""
 msgid "Error:"
 msgstr "Fout:"
 
-#: eventyay/control/templates/pretixcontrol/base.html:128
-#: eventyay/eventyay_common/templates/eventyay_common/base.html:126
-#: eventyay/orga/templates/orga/base.html:98
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:72
-msgid "Toggle sidebar"
-msgstr "Zijbalk in-/uitschakelen"
-
 #: eventyay/control/templates/pretixcontrol/base.html:153
 #: eventyay/control/templates/pretixcontrol/base.html:177
 #: eventyay/control/templates/pretixcontrol/base.html:178
@@ -22613,17 +22898,6 @@ msgstr "Zijbalk in-/uitschakelen"
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:177
 msgid "Public profile"
 msgstr "Openbaar profiel"
-
-#: eventyay/control/templates/pretixcontrol/base.html:238
-#: eventyay/control/templates/pretixcontrol/base.html:239
-#: eventyay/eventyay_common/templates/eventyay_common/base.html:203
-#: eventyay/eventyay_common/templates/eventyay_common/base.html:204
-#: eventyay/orga/templates/orga/base.html:170
-#: eventyay/orga/templates/orga/base.html:171
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:133
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:135
-msgid "End admin session"
-msgstr "Beëindig administratorsessie"
 
 #: eventyay/control/templates/pretixcontrol/base.html:279
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:248
@@ -23326,8 +23600,8 @@ msgid "Videos"
 msgstr "Video's"
 
 #: eventyay/control/templates/pretixcontrol/event/delete.html:5
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:410
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:415
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:408
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:413
 msgid "Delete event"
 msgstr "Verwijder evenement"
 
@@ -23384,12 +23658,12 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/event/delete.html:55
 #: eventyay/control/templates/pretixcontrol/event/delete.html:69
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:373
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:371
 msgid "Delete personal data"
 msgstr "Verwijder persoonlijke gegevens"
 
 #: eventyay/control/templates/pretixcontrol/event/delete.html:59
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:340
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:338
 msgid "Go offline"
 msgstr "Ga offline"
 
@@ -23773,6 +24047,7 @@ msgstr "E-mailinstellingen"
 
 #: eventyay/control/templates/pretixcontrol/event/payment.html:10
 #: eventyay/control/templates/pretixcontrol/event/payment_provider.html:5
+#: eventyay/eventyay_common/forms/event.py:398
 msgid "Payment settings"
 msgstr "Betalingsinstellingen"
 
@@ -23875,9 +24150,9 @@ msgid "Disable"
 msgstr "Uitschakelen"
 
 #: eventyay/control/templates/pretixcontrol/event/plugins.html:75
-#: eventyay/control/templates/pretixcontrol/global_settings.html:135
-#: eventyay/control/templates/pretixcontrol/global_settings.html:153
-#: eventyay/control/templates/pretixcontrol/global_settings.html:172
+#: eventyay/control/templates/pretixcontrol/global_settings.html:137
+#: eventyay/control/templates/pretixcontrol/global_settings.html:155
+#: eventyay/control/templates/pretixcontrol/global_settings.html:174
 #: eventyay/eventyay_common/templates/eventyay_common/account/2fa-enable.html:34
 #: eventyay/eventyay_common/templates/eventyay_common/account/general-settings.html:80
 #: eventyay/eventyay_common/templates/eventyay_common/account/notification-settings.html:36
@@ -24028,9 +24303,10 @@ msgstr ""
 #: eventyay/control/templates/pretixcontrol/event/settings.html:7
 #: eventyay/control/templates/pretixcontrol/event/settings.html:13
 #: eventyay/control/templates/pretixcontrol/organizers/billing.html:7
+#: eventyay/eventyay_common/forms/event.py:355
 #: eventyay/eventyay_common/templates/eventyay_common/account/general-settings.html:25
 #: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:7
-#: eventyay/orga/views/event.py:81
+#: eventyay/orga/views/event.py:80
 msgid "General settings"
 msgstr "Algemene instellingen"
 
@@ -24051,12 +24327,12 @@ msgid "Changes to existing orders"
 msgstr "Wijzigingen aan bestaande bestellingen"
 
 #: eventyay/control/templates/pretixcontrol/event/settings.html:60
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:203
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:204
 msgid "Texts"
 msgstr "Teksten"
 
 #: eventyay/control/templates/pretixcontrol/event/settings.html:69
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:236
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:237
 msgid "Display"
 msgstr "Weergave"
 
@@ -24080,7 +24356,16 @@ msgid "Add property"
 msgstr "Eigenschap toevoegen"
 
 #: eventyay/control/templates/pretixcontrol/event/settings.html:163
+#: eventyay/eventyay_common/templates/eventyay_common/event/live.html:471
+msgid "Cancel or delete event"
+msgstr "Annuleer of verwijder evenement"
+
+#: eventyay/control/templates/pretixcontrol/event/settings.html:169
 #: eventyay/control/templates/pretixcontrol/organizers/detail.html:156
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:4
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:8
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:89
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:428
 msgid "Clone event"
 msgstr "Evenement kopiëren"
 
@@ -24377,78 +24662,78 @@ msgstr ""
 msgid "No plugins found."
 msgstr "Geen gebruikers gevonden."
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:21
+#: eventyay/control/templates/pretixcontrol/global_settings.html:23
 msgid "Stripe — Organizer Billing"
 msgstr "Stripe — Organisatorfacturering"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:23
+#: eventyay/control/templates/pretixcontrol/global_settings.html:25
 msgid "This configuration is used for organizer billing and platform fees."
 msgstr ""
 "Deze configuratie wordt gebruikt voor organisatorfacturering en "
 "platformkosten."
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:27
-#: eventyay/control/templates/pretixcontrol/global_settings.html:78
+#: eventyay/control/templates/pretixcontrol/global_settings.html:29
+#: eventyay/control/templates/pretixcontrol/global_settings.html:80
 msgid "Live Credentials"
 msgstr "Live-inloggegevens"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:38
-#: eventyay/control/templates/pretixcontrol/global_settings.html:89
+#: eventyay/control/templates/pretixcontrol/global_settings.html:40
+#: eventyay/control/templates/pretixcontrol/global_settings.html:91
 msgid "Test Credentials"
 msgstr "Test-inloggegevens"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:49
+#: eventyay/control/templates/pretixcontrol/global_settings.html:51
 #: eventyay/control/templates/pretixcontrol/organizers/webhooks.html:6
 msgid "Webhooks"
 msgstr "Webhooks"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:61
+#: eventyay/control/templates/pretixcontrol/global_settings.html:63
 msgid "Stripe — Ticket Payments"
 msgstr "Stripe — Ticketbetalingen"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:63
+#: eventyay/control/templates/pretixcontrol/global_settings.html:65
 msgid "This configuration is used for ticket payments via the Stripe plugin."
 msgstr ""
 "Deze configuratie wordt gebruikt voor ticketbetalingen via de Stripe-plug-in."
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:67
+#: eventyay/control/templates/pretixcontrol/global_settings.html:69
 msgid "Client Configuration"
 msgstr "Clientconfiguratie"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:100
+#: eventyay/control/templates/pretixcontrol/global_settings.html:102
 msgid "App Fees"
 msgstr "App-kosten"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:102
+#: eventyay/control/templates/pretixcontrol/global_settings.html:104
 msgid "Configure the application fees charged on ticket payments."
 msgstr ""
 "Configureer de applicatiekosten die worden berekend op ticketbetalingen."
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:115
+#: eventyay/control/templates/pretixcontrol/global_settings.html:117
 msgid "PayPal"
 msgstr "PayPal"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:117
+#: eventyay/control/templates/pretixcontrol/global_settings.html:119
 msgid "Configure PayPal payment processing."
 msgstr "Configureer PayPal-betalingsverwerking."
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:192
+#: eventyay/control/templates/pretixcontrol/global_settings.html:195
 msgid "Test email connection"
 msgstr ""
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:201
+#: eventyay/control/templates/pretixcontrol/global_settings.html:204
 #, fuzzy
 #| msgid "(no email address)"
 msgid "Recipient email address(es)"
 msgstr "(geen e-mailadres)"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:211
+#: eventyay/control/templates/pretixcontrol/global_settings.html:214
 #, fuzzy
 #| msgid "Send this email"
 msgid "Send test email"
 msgstr "Deze e-mail verzenden"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:216
+#: eventyay/control/templates/pretixcontrol/global_settings.html:219
 msgid ""
 "Sends a test email to the entered recipient address or comma-separated "
 "recipient addresses to verify the email settings are working."
@@ -24465,6 +24750,94 @@ msgstr "De eventyay-server heeft een foutcode geretourneerd."
 #: eventyay/control/templates/pretixcontrol/global_update.html:30
 msgid "The eventyay server could not be reached."
 msgstr "De eventyay-server kon niet worden bereikt."
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:4
+msgid ""
+"Gmail integration requires a database update. Run `python manage.py migrate` "
+"and reload this page."
+msgstr ""
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:9
+msgid ""
+"Gmail and Google Workspace are suitable for moderate transactional email and "
+"organiser communication. They are not recommended as the only backend for "
+"large event mailings. Configure SMTP or SendGrid as a fallback delivery "
+"backend if Gmail is unavailable or unsuitable for bulk mailings."
+msgstr ""
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:18
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:66
+#, fuzzy
+#| msgid "Redirect URL"
+msgid "OAuth redirect URI"
+msgstr "Omleidings-URL"
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:22
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:70
+msgid ""
+"Add this redirect URI to your Google Cloud OAuth client before connecting."
+msgstr ""
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:27
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:75
+#, fuzzy
+#| msgid "All actions"
+msgid "Gmail connection"
+msgstr "Alle acties"
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:31
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:79
+#, fuzzy
+#| msgid "Connect"
+msgid "Connected"
+msgstr "Verbinden"
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:35
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:83
+#, python-format
+msgid "Approximate usage today: %(sent)s / %(limit)s messages."
+msgstr ""
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:40
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:88
+#, python-format
+msgid "Last delivery issue: %(error)s"
+msgstr ""
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:46
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:94
+#, fuzzy
+#| msgid "Connect"
+msgid "Disconnect Gmail"
+msgstr "Verbinden"
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:50
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:98
+#, fuzzy
+#| msgid "Date joined"
+msgid "Not connected"
+msgstr "Datum toegevoegd"
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:54
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:102
+msgid ""
+"Configure the OAuth client ID and secret in global settings, then connect a "
+"Google account with send permission."
+msgstr ""
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:56
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:104
+msgid ""
+"Save your OAuth client ID and secret, then connect a Google account with "
+"send permission."
+msgstr ""
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:60
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:108
+#, fuzzy
+#| msgid "Connected devices"
+msgid "Connect Gmail account"
+msgstr "Verbonden apparaten"
 
 #: eventyay/control/templates/pretixcontrol/includes/logs.html:51
 #: eventyay/eventyay_common/templates/eventyay_common/includes/logs.html:51
@@ -24770,7 +25143,7 @@ msgstr "Productgeschiedenis"
 
 #: eventyay/control/templates/pretixcontrol/item/index.html:176
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:121
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:509
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:514
 #, fuzzy
 #| msgid "Logo image"
 msgid "Crop Image"
@@ -24778,7 +25151,7 @@ msgstr "Logo-plaatje"
 
 #: eventyay/control/templates/pretixcontrol/item/index.html:185
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:130
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:519
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:524
 #, fuzzy
 #| msgid "Apply"
 msgid "Apply Crop"
@@ -26438,8 +26811,8 @@ msgstr "Stuur e-mail"
 
 #: eventyay/control/templates/pretixcontrol/orders/cancel.html:5
 #: eventyay/control/templates/pretixcontrol/orders/cancel.html:7
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:350
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:355
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:348
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:353
 msgid "Cancel event"
 msgstr "Annuleer evenement"
 
@@ -27340,7 +27713,7 @@ msgid "Organizer settings"
 msgstr "Organisatorinstellingen"
 
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:49
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:209
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:210
 msgid "Design"
 msgstr "Ontwerp"
 
@@ -27361,15 +27734,11 @@ msgid "Community"
 msgstr "Opmerking"
 
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:86
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:229
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:230
 #, fuzzy
 #| msgid "Video"
 msgid "Video area"
 msgstr "Video"
-
-#: eventyay/control/templates/pretixcontrol/organizers/edit.html:97
-msgid "Privacy"
-msgstr "Privacy"
 
 #: eventyay/control/templates/pretixcontrol/organizers/gate_delete.html:5
 msgid "Delete gate:"
@@ -28633,7 +29002,7 @@ msgstr "Dat paginanummer is kleiner dan 1"
 msgid "Dashboard cache refreshed successfully."
 msgstr "Wachtwoord-herstelmail verstuurd."
 
-#: eventyay/control/views/admin.py:685 eventyay/control/views/pages.py:131
+#: eventyay/control/views/admin.py:685 eventyay/control/views/pages.py:136
 msgid "Invalid field."
 msgstr "Ongeldig veld."
 
@@ -28749,7 +29118,7 @@ msgstr "De nieuwe inchecklijst is aangemaakt."
 #: eventyay/control/views/event.py:1495 eventyay/control/views/event.py:1626
 #: eventyay/control/views/organizer_views/organizer_view.py:361
 #: eventyay/control/views/organizer_views/organizer_view.py:537
-#: eventyay/control/views/pages.py:108 eventyay/control/views/product.py:269
+#: eventyay/control/views/pages.py:113 eventyay/control/views/product.py:269
 #: eventyay/control/views/product.py:321 eventyay/control/views/product.py:779
 #: eventyay/control/views/product.py:813 eventyay/control/views/product.py:964
 #: eventyay/control/views/product.py:1243
@@ -28759,7 +29128,7 @@ msgstr "De nieuwe inchecklijst is aangemaakt."
 #: eventyay/control/views/subevents.py:1051
 #: eventyay/control/views/subevents.py:1620
 #: eventyay/eventyay_common/views/account/two_factor_auth.py:150
-#: eventyay/eventyay_common/views/event.py:895
+#: eventyay/eventyay_common/views/event.py:930
 #: eventyay/plugins/badges/views.py:144 eventyay/plugins/badges/views.py:193
 #: eventyay/plugins/sendmail/views.py:231
 #: eventyay/plugins/ticketoutputpdf/views.py:109
@@ -28884,7 +29253,7 @@ msgstr[1] "{num} bestellingen"
 
 #: eventyay/control/views/event.py:239
 #: eventyay/control/views/organizer_views/organizer_view.py:205
-#: eventyay/eventyay_common/views/event.py:780
+#: eventyay/eventyay_common/views/event.py:815
 msgid ""
 "Your changes have been saved. Please note that it can take a short period of "
 "time until your changes become active."
@@ -28936,7 +29305,7 @@ msgstr "U vroeg een ongeldig ticketsuitvoertype."
 msgid "This event can not be deleted."
 msgstr "Dit evenement kan niet worden verwijderd."
 
-#: eventyay/control/views/event.py:1204 eventyay/orga/views/event.py:399
+#: eventyay/control/views/event.py:1204 eventyay/orga/views/event.py:398
 msgid "The event has been deleted."
 msgstr "Dit evenement is verwijderd."
 
@@ -29022,66 +29391,74 @@ msgstr "Standaardticket"
 msgid "Virtual Ticket"
 msgstr "Virtueel ticket"
 
-#: eventyay/control/views/global_settings.py:51
-#: eventyay/control/views/global_settings.py:73
-#: eventyay/control/views/global_settings.py:103
-#: eventyay/control/views/global_settings.py:156
-#: eventyay/control/views/pages.py:50
+#: eventyay/control/views/global_settings.py:66
+#: eventyay/control/views/global_settings.py:83
+#: eventyay/control/views/global_settings.py:113
+#: eventyay/control/views/global_settings.py:166
+#: eventyay/control/views/pages.py:55
 msgid "Your changes have not been saved, see below for errors."
 msgstr "Uw wijzigingen zijn niet opgeslagen, zie onder voor details."
 
-#: eventyay/control/views/global_settings.py:197
+#: eventyay/control/views/global_settings.py:207
 #, fuzzy
 #| msgid "Please enter at least one email address!"
 msgid "Please enter at least one valid recipient email address."
 msgstr "Geef een geldig e-mailadres op!"
 
-#: eventyay/control/views/global_settings.py:207
+#: eventyay/control/views/global_settings.py:217
 #, fuzzy, python-format
 #| msgid "Please enter a valid email address."
 msgid ""
 "Please enter a valid recipient email address (\"%(email)s\" is invalid)."
 msgstr "Vul alstublieft een geldig e-mailadres in."
 
-#: eventyay/control/views/global_settings.py:220
+#: eventyay/control/views/global_settings.py:230
 msgid ""
 "No sender address is configured. Please set the \"Sender address\" field in "
 "the Email tab and save first."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:232
+#: eventyay/control/views/global_settings.py:242
 #, python-format
 msgid ""
 "The sender address \"%(addr)s\" is not a valid email address. Please correct "
 "the \"Sender address\" field and save again."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:245
+#: eventyay/control/views/global_settings.py:255
 #, python-format
 msgid ""
 "The sender address \"%(addr)s\" contains non-ASCII characters which are not "
 "allowed in SMTP. Please correct the \"Sender address\" field and save again."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:258
-#: eventyay/eventyay_common/views/event.py:704
+#: eventyay/control/views/global_settings.py:268
+#: eventyay/eventyay_common/views/event.py:729
 msgid "SendGrid API key is missing. Please configure it and save."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:266
-#: eventyay/eventyay_common/views/event.py:707
+#: eventyay/control/views/global_settings.py:279
+msgid ""
+"Gmail is selected but no account is connected. Connect Gmail in the settings "
+"first."
+msgstr ""
+
+#: eventyay/control/views/global_settings.py:288
+#: eventyay/eventyay_common/views/event.py:732
 msgid "SMTP host or port is missing. Please configure them and save."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:282
+#: eventyay/control/views/global_settings.py:301
+#: eventyay/control/views/global_settings.py:311
 msgid "Eventyay system - test email"
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:283
+#: eventyay/control/views/global_settings.py:302
+#: eventyay/control/views/global_settings.py:312
 msgid "This is a test email from your Eventyay system email configuration."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:299
+#: eventyay/control/views/global_settings.py:328
 msgid ""
 "SMTP authentication or email sending failed because the password, username, "
 "or recipient address contains an invisible non-ASCII character (e.g. a no-"
@@ -29089,31 +29466,123 @@ msgid ""
 "again."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:310
+#: eventyay/control/views/global_settings.py:339
 #, python-format
 msgid "SendGrid test email failed to connect or send. HTTP Error: %(err)s"
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:317
+#: eventyay/control/views/global_settings.py:356
+#: eventyay/eventyay_common/views/event.py:756
+#, python-format
+msgid "Gmail test email is temporarily delayed because of rate limits: %(err)s"
+msgstr ""
+
+#: eventyay/control/views/global_settings.py:362
+#: eventyay/eventyay_common/views/event.py:761
+#, fuzzy, python-format
+#| msgid "Some emails failed to send:"
+msgid "Gmail test email could not be sent: %(err)s"
+msgstr "Sommige e-mails konden niet worden verzonden:"
+
+#: eventyay/control/views/global_settings.py:369
 #, fuzzy, python-format
 #| msgid "Some emails failed to send:"
 msgid "Test email failed to connect or send: %(err)s"
 msgstr "Sommige e-mails konden niet worden verzonden:"
 
-#: eventyay/control/views/global_settings.py:325
+#: eventyay/control/views/global_settings.py:379
 #, python-format
 msgid "Test email sent to %(email)s — check inbox."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:396
+#: eventyay/control/views/global_settings.py:450
 msgid "Plugin configuration table is not available. Please run migrations."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:404
+#: eventyay/control/views/global_settings.py:458
 #, fuzzy
 #| msgid "Your notification settings have been saved."
 msgid "Plugin settings have been saved."
 msgstr "Uw meldingsinstellingen zijn opgeslagen."
+
+#: eventyay/control/views/gmail_oauth.py:47
+#: eventyay/control/views/gmail_oauth.py:156
+#, python-format
+msgid "Google authorization was denied or failed: %(error)s"
+msgstr ""
+
+#: eventyay/control/views/gmail_oauth.py:54
+#: eventyay/control/views/gmail_oauth.py:163
+msgid "Missing authorization response from Google."
+msgstr ""
+
+#: eventyay/control/views/gmail_oauth.py:60
+#: eventyay/control/views/gmail_oauth.py:169
+#, fuzzy
+#| msgid "The registration could not be completed. Please try again."
+msgid "The Google authorization session expired. Please try again."
+msgstr "De registratie kon niet worden voltooid. Probeer het opnieuw."
+
+#: eventyay/control/views/gmail_oauth.py:64
+#, fuzzy
+#| msgid "The waiting list entry has been moved to the end of the list."
+msgid "The Google authorization session does not match the current user."
+msgstr "De wachtlijstinschrijving is verplaatst naar het eind van de lijst."
+
+#: eventyay/control/views/gmail_oauth.py:75
+#: eventyay/control/views/gmail_oauth.py:189
+#, python-format
+msgid "Could not connect Gmail account: %(error)s"
+msgstr ""
+
+#: eventyay/control/views/gmail_oauth.py:83
+#: eventyay/control/views/gmail_oauth.py:197
+msgid ""
+"Google did not return a refresh token. Disconnect the app in your Google "
+"account and try again."
+msgstr ""
+
+#: eventyay/control/views/gmail_oauth.py:103
+#, fuzzy, python-format
+#| msgid "Verification failed."
+msgid "Gmail account %(email)s connected successfully."
+msgstr "Bevestiging mislukt."
+
+#: eventyay/control/views/gmail_oauth.py:113
+#, fuzzy
+#| msgid "Your PayPal account has been disconnected."
+msgid "Gmail account disconnected."
+msgstr "De verbinding met uw PayPal-account is verbroken."
+
+#: eventyay/control/views/gmail_oauth.py:115
+#, fuzzy
+#| msgid "No sent mails found."
+msgid "No active Gmail connection found."
+msgstr "Geen verzonden e-mails gevonden."
+
+#: eventyay/control/views/gmail_oauth.py:173
+#, fuzzy
+#| msgid "The video module is not enabled for this event."
+msgid "The Google authorization session is invalid for this event."
+msgstr "De videomodule is niet ingeschakeld voor dit evenement."
+
+#: eventyay/control/views/gmail_oauth.py:218
+#, fuzzy, python-format
+#| msgid "No servers configured yet."
+msgid "Gmail account %(email)s connected for this event."
+msgstr "Nog geen servers geconfigureerd."
+
+#: eventyay/control/views/gmail_oauth.py:231
+#, fuzzy
+#| msgid "No servers configured yet."
+msgid "Gmail account disconnected for this event."
+msgstr "Nog geen servers geconfigureerd."
+
+#: eventyay/control/views/gmail_oauth.py:233
+#, fuzzy
+#| msgid "No servers configured yet."
+msgid "No active Gmail connection found for this event."
+msgstr "Nog geen servers geconfigureerd."
 
 #: eventyay/control/views/orderimport.py:65
 msgid "Please only upload CSV files."
@@ -29729,18 +30198,40 @@ msgid ""
 msgstr ""
 
 #: eventyay/control/views/organizer_views/organizer_view.py:541
-#: eventyay/eventyay_common/views/event.py:899
+#: eventyay/eventyay_common/views/event.py:934
 msgid "You haven't made any changes."
 msgstr "Je hebt geen wijzigingen aangebracht."
 
-#: eventyay/control/views/pages.py:59 eventyay/control/views/pages.py:132
-#: eventyay/control/views/pages.py:182
+#: eventyay/control/views/pages.py:64 eventyay/control/views/pages.py:137
+#: eventyay/control/views/pages.py:187 eventyay/control/views/pages.py:248
 msgid "The requested page does not exist."
 msgstr "De opgevraagde pagina bestaat niet."
 
-#: eventyay/control/views/pages.py:171
+#: eventyay/control/views/pages.py:176
 msgid "The selected page has been deleted."
 msgstr "De geselecteerde pagina is verwijderd."
+
+#: eventyay/control/views/pages.py:235
+#, fuzzy
+#| msgid "Number of reviews"
+msgid "Terms of Service"
+msgstr "Aantal recenties"
+
+#: eventyay/control/views/pages.py:236
+#, fuzzy
+#| msgid "Privacy Policy URL"
+msgid "Privacy Policy"
+msgstr "URL van privacybeleid"
+
+#: eventyay/control/views/pages.py:238
+msgid "Support & Help"
+msgstr ""
+
+#: eventyay/control/views/pages.py:242
+#, fuzzy
+#| msgid "No redis server has been configured."
+msgid "Content for this page has not been configured yet."
+msgstr "Er is geen redis server geconfigureerd."
 
 #: eventyay/control/views/pdf.py:39
 #, fuzzy
@@ -30006,15 +30497,15 @@ msgid "Unknown action."
 msgstr "Onbekende reden"
 
 #: eventyay/control/views/users.py:198 eventyay/control/views/users.py:201
-#: eventyay/control/views/users.py:328 eventyay/control/views/users.py:331
-#: eventyay/control/views/users.py:389 eventyay/control/views/users.py:392
+#: eventyay/control/views/users.py:331 eventyay/control/views/users.py:334
+#: eventyay/control/views/users.py:392 eventyay/control/views/users.py:395
 #, fuzzy
 #| msgid "The addressed user’s email address"
 msgid "This user has no email address."
 msgstr "Het e-mailadres van de geadresseerde gebruiker"
 
 #: eventyay/control/views/users.py:210 eventyay/control/views/users.py:213
-#: eventyay/control/views/users.py:340 eventyay/control/views/users.py:343
+#: eventyay/control/views/users.py:343 eventyay/control/views/users.py:346
 #, fuzzy
 #| msgid "Please provide an email address."
 msgid "This user has no primary email address."
@@ -30056,77 +30547,77 @@ msgstr "Verwijder één"
 msgid "Admin status for %(email)s has been %(action)s."
 msgstr "Een aangepaste email is verstuurd."
 
-#: eventyay/control/views/users.py:314
+#: eventyay/control/views/users.py:317
 #, fuzzy
 #| msgid "Order marked as paid"
 msgid "marked as spam"
 msgstr "Bestelling gemarkeerd als betaald"
 
-#: eventyay/control/views/users.py:314
+#: eventyay/control/views/users.py:317
 #, fuzzy
 #| msgid "Order marked as paid"
 msgid "unmarked as spam"
 msgstr "Bestelling gemarkeerd als betaald"
 
-#: eventyay/control/views/users.py:317
+#: eventyay/control/views/users.py:320
 #, fuzzy, python-format
 #| msgid "The email has been sent."
 msgid "User %(email)s has been %(action)s."
 msgstr "De e-mail is verstuurd."
 
-#: eventyay/control/views/users.py:350 eventyay/control/views/users.py:353
+#: eventyay/control/views/users.py:353 eventyay/control/views/users.py:356
 #, fuzzy
 #| msgid "This event was already live."
 msgid "This user is already verified."
 msgstr "Dit evenement was al live."
 
-#: eventyay/control/views/users.py:363 eventyay/control/views/users.py:366
+#: eventyay/control/views/users.py:366 eventyay/control/views/users.py:369
 #, fuzzy
 #| msgid "There was an error sending the confirmation mail."
 msgid "There was an error sending the verification email."
 msgstr "Er is een fout opgetreden bij het versturen van de bevestigingsmail."
 
-#: eventyay/control/views/users.py:377
+#: eventyay/control/views/users.py:380
 #, fuzzy
 #| msgid "Verification failed."
 msgid "Verification email sent successfully."
 msgstr "Bevestiging mislukt."
 
-#: eventyay/control/views/users.py:381
+#: eventyay/control/views/users.py:384
 #, fuzzy, python-format
 #| msgid "Verification failed."
 msgid "Verification email sent to %(email)s."
 msgstr "Bevestiging mislukt."
 
-#: eventyay/control/views/users.py:410
+#: eventyay/control/views/users.py:413
 #, fuzzy
 #| msgid "Password reset mail sent."
 msgid "Password reset email sent successfully."
 msgstr "Wachtwoord-herstelmail verstuurd."
 
-#: eventyay/control/views/users.py:414
+#: eventyay/control/views/users.py:417
 #, fuzzy, python-format
 #| msgid "Password reset mail sent."
 msgid "Password reset email sent to %(email)s."
 msgstr "Wachtwoord-herstelmail verstuurd."
 
-#: eventyay/control/views/users.py:502
+#: eventyay/control/views/users.py:505
 msgid "We sent out an e-mail containing further instructions."
 msgstr "We hebben een e-mail met verdere instructies verstuurd."
 
-#: eventyay/control/views/users.py:548
+#: eventyay/control/views/users.py:551
 #, fuzzy
 #| msgid "The registration could not be completed. Please try again."
 msgid "The user could not be anonymized. Please try again later."
 msgstr "De registratie kon niet worden voltooid. Probeer het opnieuw."
 
-#: eventyay/control/views/users.py:551
+#: eventyay/control/views/users.py:554
 #, fuzzy
 #| msgid "This user has been anonymized."
 msgid "User has been anonymized successfully."
 msgstr "De gebruiker is geanonimiseerd."
 
-#: eventyay/control/views/users.py:646
+#: eventyay/control/views/users.py:649
 msgid "The new user has been created."
 msgstr "De nieuwe gebruiker is aangemaakt."
 
@@ -30279,101 +30770,101 @@ msgstr ""
 "mailinstellingen, sessietypes en e-mailsjablonen. Controleer deze "
 "instellingen zodra het evenement is aangemaakt!"
 
-#: eventyay/event/stages.py:41
+#: eventyay/event/stages.py:40
 msgid "Preparation"
 msgstr "Voorbereiding"
 
-#: eventyay/event/stages.py:45
+#: eventyay/event/stages.py:44
 msgid "Configure the event"
 msgstr "Configureer het evenement"
 
-#: eventyay/event/stages.py:46
+#: eventyay/event/stages.py:45
 msgid "Gather your team"
 msgstr "Verzamel je team"
 
-#: eventyay/event/stages.py:47
+#: eventyay/event/stages.py:46
 msgid "Write a CfP"
 msgstr "Schrijf een Call for Proposal"
 
-#: eventyay/event/stages.py:49
+#: eventyay/event/stages.py:48
 msgid "Customize mail templates"
 msgstr "Pas e-mail sjablonen aan"
 
-#: eventyay/event/stages.py:55
+#: eventyay/event/stages.py:54
 msgid "CfP is open"
 msgstr "De Call for Poposal staat open"
 
-#: eventyay/event/stages.py:59
+#: eventyay/event/stages.py:58
 msgid "Monitor proposals"
 msgstr "Voorstellen controleren"
 
-#: eventyay/event/stages.py:61
+#: eventyay/event/stages.py:60
 msgid "Submit sessions for your speakers"
 msgstr "Sessies voor uw sprekers indienen"
 
-#: eventyay/event/stages.py:64
+#: eventyay/event/stages.py:63
 msgid "Invite reviewers"
 msgstr "Nodig beoordelaars uit"
 
-#: eventyay/event/stages.py:72
+#: eventyay/event/stages.py:71
 msgid "Let reviewers do their work"
 msgstr "Laat de beoordelaars aan het werk gaan"
 
-#: eventyay/event/stages.py:74
+#: eventyay/event/stages.py:73
 msgid "Accept or reject proposals"
 msgstr "Voorstellen accepteren of afwijzen"
 
-#: eventyay/event/stages.py:77
+#: eventyay/event/stages.py:76
 msgid "Build your first schedule"
 msgstr "Stel je eerste schema samen"
 
-#: eventyay/event/stages.py:86
+#: eventyay/event/stages.py:85
 msgid "Release schedules as needed"
 msgstr "Schema's vrijgeven als dat nodig is"
 
-#: eventyay/event/stages.py:90
+#: eventyay/event/stages.py:89
 msgid "Inform your speakers about the infrastructure"
 msgstr "Informeer je sprekers over de organisatie"
 
-#: eventyay/event/stages.py:100
+#: eventyay/event/stages.py:99
 msgid "Provide a point of contact for the speakers"
 msgstr "Zorg voor een contactpersoon voor de sprekers"
 
-#: eventyay/event/stages.py:101
+#: eventyay/event/stages.py:100
 msgid "Enjoy the event!"
 msgstr "Geniet van het evenement!"
 
-#: eventyay/event/stages.py:105
+#: eventyay/event/stages.py:104
 msgid "Wrapup"
 msgstr "Samenvatting"
 
-#: eventyay/event/stages.py:109
+#: eventyay/event/stages.py:108
 msgid "Monitor incoming feedback"
 msgstr "Inkomende feedback controleren"
 
-#: eventyay/event/stages.py:110
+#: eventyay/event/stages.py:109
 msgid "Embed session recordings if available"
 msgstr "Opnames van sessies embedden, indien beschikbaar"
 
-#: eventyay/event/stages.py:111
+#: eventyay/event/stages.py:110
 msgid "Release next event date?"
 msgstr "Volgende evenementdatum vrijgeven?"
 
-#: eventyay/eventyay_common/forms/event.py:81
+#: eventyay/eventyay_common/forms/event.py:82
 #, fuzzy
 #| msgid "Please provide an email address."
 msgid "Please provide an email address for the contact form."
 msgstr "Geef een e-mailadres op."
 
-#: eventyay/eventyay_common/forms/event.py:214
+#: eventyay/eventyay_common/forms/event.py:215
 msgid "Ask search engines not to index the event pages"
 msgstr "Vraag zoekmachines om de evenement pagina's niet te indexeren"
 
-#: eventyay/eventyay_common/forms/event.py:259
+#: eventyay/eventyay_common/forms/event.py:260
 msgid "Show in search results and lists"
 msgstr ""
 
-#: eventyay/eventyay_common/forms/event.py:260
+#: eventyay/eventyay_common/forms/event.py:261
 #, fuzzy
 #| msgid ""
 #| "If selected, this event will show up publicly on the list of events for "
@@ -30385,9 +30876,137 @@ msgstr ""
 "Als dit is ingeschakeld zal dit evenement zichtbaar zijn in de lijst met "
 "evenementen van uw organisatoraccount."
 
-#: eventyay/eventyay_common/forms/event.py:267
+#: eventyay/eventyay_common/forms/event.py:268
 msgid "You need to configure the custom domain in the webserver beforehand."
 msgstr "U moet vooraf het aangepaste domein in de webserver instellen."
+
+#: eventyay/eventyay_common/forms/event.py:349
+#, fuzzy
+#| msgid "Client Configuration"
+msgid "Common event Configuration"
+msgstr "Clientconfiguratie"
+
+#: eventyay/eventyay_common/forms/event.py:350
+msgid "Includes general settings, design elements, and email configurations."
+msgstr ""
+
+#: eventyay/eventyay_common/forms/event.py:356
+msgid "Location, currency, plugins, header/footer links."
+msgstr ""
+
+#: eventyay/eventyay_common/forms/event.py:361
+#, fuzzy
+#| msgid "Date and time"
+msgid "Design and texts"
+msgstr "Datum en tijd"
+
+#: eventyay/eventyay_common/forms/event.py:362
+msgid "Colors, logo, custom CSS."
+msgstr ""
+
+#: eventyay/eventyay_common/forms/event.py:367
+#: eventyay/orga/templates/orga/settings/mail.html:14
+msgid "Email settings"
+msgstr "E-mailinstellingen"
+
+#: eventyay/eventyay_common/forms/event.py:368
+#, fuzzy
+#| msgid "Create a new configuration"
+msgid "Email templates and SMTP configuration."
+msgstr "Nieuwe configuratie aanmaken"
+
+#: eventyay/eventyay_common/forms/event.py:374
+#, fuzzy
+#| msgid "Client Configuration"
+msgid "Ticketing Configuration"
+msgstr "Clientconfiguratie"
+
+#: eventyay/eventyay_common/forms/event.py:375
+msgid "Includes products, quotas, attendee questions, and check-in lists."
+msgstr ""
+
+#: eventyay/eventyay_common/forms/event.py:380
+#, fuzzy
+#| msgid "Products"
+msgid "Products & Quotas"
+msgstr "Producten"
+
+#: eventyay/eventyay_common/forms/event.py:381
+msgid "Ticket products, categories, quotas, tax rules, add-ons."
+msgstr ""
+
+#: eventyay/eventyay_common/forms/event.py:387
+#, fuzzy
+#| msgid "Create a new question"
+msgid "Order and attendee questions."
+msgstr "Nieuwe vraag aanmaken"
+
+#: eventyay/eventyay_common/forms/event.py:393
+#, fuzzy
+#| msgid "Check-in device configuration"
+msgid "Check-in lists configuration."
+msgstr "Instellen van incheckapparaat"
+
+#: eventyay/eventyay_common/forms/event.py:399
+#, fuzzy
+#| msgid "Payment providers"
+msgid "Payment providers and invoicing."
+msgstr "Betalingsaanbieders"
+
+#: eventyay/eventyay_common/forms/event.py:405
+#, fuzzy
+#| msgid "Client Configuration"
+msgid "Talk Configuration"
+msgstr "Clientconfiguratie"
+
+#: eventyay/eventyay_common/forms/event.py:406
+msgid "Includes call for speakers, session tracks, and review settings."
+msgstr ""
+
+#: eventyay/eventyay_common/forms/event.py:411
+#, fuzzy
+#| msgid "Call for Speakers"
+msgid "Call for speakers"
+msgstr "Call for Speakers"
+
+#: eventyay/eventyay_common/forms/event.py:412
+#, fuzzy
+#| msgid "The selected configuration does not exist."
+msgid "Call for speakers configuration and basic text."
+msgstr "De gekozen configuratie bestaat niet."
+
+#: eventyay/eventyay_common/forms/event.py:417
+#, fuzzy
+#| msgid "Sessions by track"
+msgid "Session types & tracks"
+msgstr "Sessies per track"
+
+#: eventyay/eventyay_common/forms/event.py:418
+#, fuzzy
+#| msgid "Sessions by track"
+msgid "Session types and tracks."
+msgstr "Sessies per track"
+
+#: eventyay/eventyay_common/forms/event.py:423
+#: eventyay/orga/templates/orga/base.html:277
+#: eventyay/orga/templates/orga/settings/review.html:8
+#: eventyay/orga/templates/orga/settings/review.html:24
+#: eventyay/orga/views/event.py:132
+msgid "Review settings"
+msgstr "Recentie instellingen"
+
+#: eventyay/eventyay_common/forms/event.py:424
+msgid "Review phases and review scoring categories."
+msgstr ""
+
+#: eventyay/eventyay_common/forms/event.py:472
+#, fuzzy
+#| msgid ""
+#| "You already used this slug for a different event. Please choose a new one."
+msgid ""
+"You already have an event with this short name. Please choose another one."
+msgstr ""
+"U heeft deze slug al gebruikt voor een ander evenement. Kies een nieuwe slug."
 
 #: eventyay/eventyay_common/forms/filters.py:62
 msgid "Search by session name"
@@ -30411,7 +31030,7 @@ msgstr "Eventinstellingen"
 
 #: eventyay/eventyay_common/navigation.py:101
 #: eventyay/eventyay_common/templates/eventyay_common/event/live.html:12
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:327
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:325
 msgid "Event status"
 msgstr "Evenementstatus"
 
@@ -30936,6 +31555,18 @@ msgstr "Er zijn geen geregistreerde applicaties gevonden."
 msgid "Lost password?"
 msgstr "Wachtwoord kwijt?"
 
+#: eventyay/eventyay_common/templates/eventyay_common/auth/base.html:40
+#, fuzzy
+#| msgid "New password"
+msgid "Show password"
+msgstr "Nieuw wachtwoord"
+
+#: eventyay/eventyay_common/templates/eventyay_common/auth/base.html:41
+#, fuzzy
+#| msgid "New password"
+msgid "Hide password"
+msgstr "Nieuw wachtwoord"
+
 #: eventyay/eventyay_common/templates/eventyay_common/auth/forgot.html:14
 msgid "Send recovery information"
 msgstr "Stuur herstelinformatie"
@@ -30998,11 +31629,6 @@ msgstr ""
 msgid "Set new password"
 msgstr "Stel nieuw wachtwoord in"
 
-#: eventyay/eventyay_common/templates/eventyay_common/base.html:258
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:161
-msgid "Main dashboard"
-msgstr "Hoofddashboard"
-
 #: eventyay/eventyay_common/templates/eventyay_common/component/_beta_badge.html:1
 #, fuzzy
 #| msgid "This feature is not enabled."
@@ -31032,6 +31658,77 @@ msgstr "Je moet dit component eerst inschakelen"
 #: eventyay/eventyay_common/templates/eventyay_common/includes/permission_required_dialog.html:11
 msgid "Ok"
 msgstr "Ok"
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:11
+msgid ""
+"You can create a new event that is a copy of this event. Please enter a "
+"name, short form, and the new dates for the new event."
+msgstr ""
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:13
+#, fuzzy
+#| msgid "Scan the following configuration code:"
+msgid "By default, the following Configuration is NOT cloned:"
+msgstr "Scan de volgende configuratiecode:"
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:15
+msgid "Orders, attendees, payments, invoices, check-ins"
+msgstr ""
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:16
+#, fuzzy
+#| msgid "The proposal was accepted."
+msgid "Submitted proposals, reviews, accepted sessions"
+msgstr "Het voorstel was geaccepteerd."
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:17
+#, fuzzy
+#| msgid "Send reminder to unsubmitted proposal drafts"
+msgid "Speaker accounts or profiles linked to submitted proposals"
+msgstr "Herinnering versturen naar niet-ingediende concept voorstellen"
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:18
+#, fuzzy
+#| msgid "Responses contain personal data"
+msgid "Message history, logs, or any personal data"
+msgstr "Antwoorden bevatten persoonsgegevens"
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:27
+#, fuzzy
+#| msgid "Sent emails"
+msgid "New Event details"
+msgstr "Verstuur e-mails"
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:38
+#: eventyay/eventyay_common/templates/eventyay_common/events/create.html:122
+msgid "Set to random"
+msgstr "Kies willekeurig"
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:42
+#: eventyay/eventyay_common/templates/eventyay_common/events/create.html:126
+msgid "Slug not available"
+msgstr "Slug niet beschikbaar"
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:45
+#: eventyay/eventyay_common/templates/eventyay_common/events/create.html:129
+msgid ""
+"This is the address your event will be available at. Should be short, only "
+"contain lowercase letters and numbers, and must be unique. We recommend some "
+"kind of abbreviation with less than 30 characters that can be easily "
+"remembered. You cannot change the slug later on! If you don't provide a "
+"slug, a random one will be generated for you."
+msgstr ""
+"Dit is het adres waarop je evenement beschikbaar zal zijn. Het moet kort "
+"zijn, alleen kleine letters en cijfers bevatten en uniek zijn. We raden een "
+"soort afkorting aan met minder dan 30 tekens die makkelijk te onthouden is. "
+"Je kunt de slug later niet meer wijzigen! Als je geen slug opgeeft, wordt er "
+"een willekeurige voor je gegenereerd."
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:62
+#, fuzzy
+#| msgid "Confirmation code"
+msgid "Configuration to clone"
+msgstr "Bevestigingscode"
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:7
 #, fuzzy
@@ -31170,14 +31867,14 @@ msgid ""
 msgstr ""
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/includes/live_error_dialogs.html:29
-#: eventyay/eventyay_common/views/event.py:1058
+#: eventyay/eventyay_common/views/event.py:1093
 msgid ""
 "You cannot unpublish the event while tickets are published. Please switch "
 "ticketing to private test mode first."
 msgstr ""
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/includes/live_error_dialogs.html:31
-#: eventyay/eventyay_common/views/event.py:1064
+#: eventyay/eventyay_common/views/event.py:1099
 msgid ""
 "You cannot unpublish the event while talks are published. Please switch "
 "talks to private test mode first."
@@ -31603,7 +32300,7 @@ msgid "Enable video"
 msgstr "Videotoegang inschakelen"
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/live.html:461
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:316
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:314
 #, fuzzy
 #| msgid "Change order"
 msgid "Danger zone"
@@ -31615,21 +32312,17 @@ msgid ""
 "completed."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/live.html:471
-msgid "Cancel or delete event"
-msgstr "Annuleer of verwijder evenement"
-
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:21
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:22
 #, fuzzy, python-format
 #| msgid "- Settings"
 msgid "%(name)s - Settings"
 msgstr "- Instellingen"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:45
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:46
 msgid "Header links"
 msgstr "Koplinks"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:49
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:50
 msgid ""
 "These links will be shown at the top of all your schedule-related pages, "
 "e.g. the schedule itself, speaker pages, session pages, etc. You could for "
@@ -31640,11 +32333,11 @@ msgstr ""
 "bijv. het programma zelf, sprekerspagina’s, sessiepagina’s, enz. Je kunt "
 "hier bijvoorbeeld linken naar je homepage, registratiepagina of livestream."
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:62
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:63
 msgid "Footer links"
 msgstr "Footerlinks"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:66
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:67
 msgid ""
 "These links will be shown in the footer of all your public pages. You could "
 "for example link your terms of service, imprint, or privacy policy here."
@@ -31653,93 +32346,93 @@ msgstr ""
 "hier bijvoorbeeld linken naar je servicevoorwaarden, colofon of "
 "privacybeleid."
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:184
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:185
 #: eventyay/eventyay_common/templates/eventyay_common/events/create.html:151
 #, fuzzy
 #| msgid "Videos"
 msgid "Video stream"
 msgstr "Video's"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:241
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:242
 #, fuzzy
 #| msgid "Public link"
 msgid "Publication"
 msgstr "Publieke link"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:255
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:256
 #, fuzzy
 #| msgid "Email template"
 msgid "Email gateway"
 msgstr "E-mail sjabloon"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:274
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:272
 #, fuzzy
 #| msgid "Save and send"
 msgid "Save and send test email"
 msgstr "Opslaan en versturen"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:281
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:279
 #, fuzzy
 #| msgid "E-mail design"
 msgid "Email design"
 msgstr "E-mailontwerp"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:283
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:281
 msgid ""
 "The HTML mail renderer controls the visual design of outgoing "
 "<strong>ticket</strong> emails. Talk emails use a fixed layout and are not "
 "affected by this choice."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:320
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:318
 msgid ""
 "<strong>Danger zone:</strong> These actions can affect your event and may be "
 "irreversible. Please proceed with caution."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:328
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:326
 msgid "Manage the visibility or status of your event."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:335
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:333
 #, fuzzy
 #| msgid "The event was modified."
 msgid "Take event offline"
 msgstr "Het evenement is aangepast."
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:336
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:334
 msgid "Hide this event from attendees. You can bring it back online anytime."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:351
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:349
 msgid ""
 "Cancel this event and start the cancellation process. Ticket holders may "
 "need to be refunded."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:365
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:363
 #, fuzzy
 #| msgid "Task management"
 msgid "Data management"
 msgstr "Taakbeheer"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:366
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:364
 msgid ""
 "Manage and remove specific data while retaining required financial records."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:374
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:372
 msgid ""
 "Remove personal information such as attendee names and email addresses while "
 "retaining required financial records."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:389
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:394
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:387
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:392
 msgid "Delete talk data"
 msgstr "Talkgegevens verwijderen"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:390
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:388
 #, fuzzy
 #| msgid ""
 #| "ALL related data, such as proposals, and speaker profiles, and uploads, "
@@ -31751,19 +32444,19 @@ msgstr ""
 "ALLE gerelateerde gegevens zoals voorstellen, spreker profielen en uploads "
 "zullen worden verwijderd en kunnen daarna niet hersteld worden."
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:405
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:403
 #, fuzzy
 #| msgid "Account deletion"
 msgid "Permanent deletion"
 msgstr "Account opzeggen"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:406
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:404
 #, fuzzy
 #| msgid "This action cannot be undone."
 msgid "These actions cannot be undone. Please be absolutely sure."
 msgstr "Deze actie kan niet ongedaan worden gemaakt."
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:411
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:409
 msgid ""
 "Permanently delete this event and all deletable associated data. Events "
 "containing protected records, such as completed orders outside test mode, "
@@ -31798,28 +32491,6 @@ msgid ""
 "The event type is set from the entry point. To choose a different type, go "
 "back and use the appropriate button."
 msgstr ""
-
-#: eventyay/eventyay_common/templates/eventyay_common/events/create.html:122
-msgid "Set to random"
-msgstr "Kies willekeurig"
-
-#: eventyay/eventyay_common/templates/eventyay_common/events/create.html:126
-msgid "Slug not available"
-msgstr "Slug niet beschikbaar"
-
-#: eventyay/eventyay_common/templates/eventyay_common/events/create.html:129
-msgid ""
-"This is the address your event will be available at. Should be short, only "
-"contain lowercase letters and numbers, and must be unique. We recommend some "
-"kind of abbreviation with less than 30 characters that can be easily "
-"remembered. You cannot change the slug later on! If you don't provide a "
-"slug, a random one will be generated for you."
-msgstr ""
-"Dit is het adres waarop je evenement beschikbaar zal zijn. Het moet kort "
-"zijn, alleen kleine letters en cijfers bevatten en uniek zijn. We raden een "
-"soort afkorting aan met minder dan 30 tekens die makkelijk te onthouden is. "
-"Je kunt de slug later niet meer wijzigen! Als je geen slug opgeeft, wordt er "
-"een willekeurige voor je gegenereerd."
 
 #: eventyay/eventyay_common/templates/eventyay_common/events/create.html:137
 msgid ""
@@ -32727,12 +33398,12 @@ msgid "You do not have permission to change event settings."
 msgstr "Je hebt geen toestemming om evenementinstellingen te wijzigen."
 
 #: eventyay/eventyay_common/views/dashboards.py:416
-#: eventyay/eventyay_common/views/event.py:1189
+#: eventyay/eventyay_common/views/event.py:1224
 msgid "Video link is now visible on public pages."
 msgstr "Videolink is nu zichtbaar op openbare pagina’s."
 
 #: eventyay/eventyay_common/views/dashboards.py:418
-#: eventyay/eventyay_common/views/event.py:1191
+#: eventyay/eventyay_common/views/event.py:1226
 msgid "Video link is now hidden from public pages."
 msgstr "Videolink is nu verborgen op openbare pagina’s."
 
@@ -32740,91 +33411,98 @@ msgstr "Videolink is nu verborgen op openbare pagina’s."
 msgid "No dates"
 msgstr "Geen datums"
 
-#: eventyay/eventyay_common/views/event.py:318
+#: eventyay/eventyay_common/views/event.py:324
 #, fuzzy
 #| msgid "This ticket shop is currently disabled."
 msgid "Event series creation is currently disabled."
 msgstr "Deze ticketwinkel is op dit moment uitgeschakeld."
 
-#: eventyay/eventyay_common/views/event.py:321
+#: eventyay/eventyay_common/views/event.py:327
 #, fuzzy
 #| msgid "This ticket shop is currently disabled."
 msgid "Meetup creation is currently disabled."
 msgstr "Deze ticketwinkel is op dit moment uitgeschakeld."
 
-#: eventyay/eventyay_common/views/event.py:323
+#: eventyay/eventyay_common/views/event.py:329
 #, fuzzy
 #| msgid "You do not have permission to change event settings."
 msgid "You do not have permission to create meetup events."
 msgstr "Je hebt geen toestemming om evenementinstellingen te wijzigen."
 
-#: eventyay/eventyay_common/views/event.py:398
+#: eventyay/eventyay_common/views/event.py:404
 #, fuzzy
 #| msgid "We could not save the email. See below for details."
 msgid "We could not create the event. See below for details."
 msgstr "We konden de e-mail niet opslaan. Zie hieronder voor details."
 
-#: eventyay/eventyay_common/views/event.py:405
+#: eventyay/eventyay_common/views/event.py:411
 #, fuzzy
 #| msgid "You cannot generate an invoice for this order."
 msgid "You cannot create events for any organizer."
 msgstr "U kunt geen factuur genereren voor deze bestelling."
 
-#: eventyay/eventyay_common/views/event.py:412
+#: eventyay/eventyay_common/views/event.py:418
+#: eventyay/eventyay_common/views/event.py:1467
 #, fuzzy
 #| msgid "Content languages must be a subset of the active languages."
 msgid "Select at least one active language."
 msgstr "Talen voor content moeten een subset zijn van de actieve talen."
 
-#: eventyay/eventyay_common/views/event.py:700
+#: eventyay/eventyay_common/views/event.py:716
 #, fuzzy
 #| msgid "This feature is not enabled."
 msgid "Custom email gateway is not enabled."
 msgstr "Deze functie is niet ingeschakeld."
 
-#: eventyay/eventyay_common/views/event.py:719
+#: eventyay/eventyay_common/views/event.py:725
+msgid ""
+"Gmail is selected but no account is connected. Connect Gmail in the email "
+"settings first."
+msgstr ""
+
+#: eventyay/eventyay_common/views/event.py:744
 msgid ""
 "Email test failed because a field (password, username, or recipient) "
 "contains a non-ASCII character."
 msgstr ""
 
-#: eventyay/eventyay_common/views/event.py:725
+#: eventyay/eventyay_common/views/event.py:750
 #, python-format
 msgid ""
 "SendGrid test failed with HTTP error %(code)s. Check your API key and try "
 "again."
 msgstr ""
 
-#: eventyay/eventyay_common/views/event.py:732
+#: eventyay/eventyay_common/views/event.py:767
 msgid ""
 "Test email could not be delivered. Check the SMTP host, port, and "
 "credentials and try again."
 msgstr ""
 
-#: eventyay/eventyay_common/views/event.py:735
+#: eventyay/eventyay_common/views/event.py:770
 #, fuzzy
 #| msgid "This device has been set up successfully."
 msgid "Test email sent successfully."
 msgstr "Het apparaat is succesvol geïnstalleerd."
 
-#: eventyay/eventyay_common/views/event.py:982
+#: eventyay/eventyay_common/views/event.py:1017
 msgid "CFP"
 msgstr "CFP"
 
-#: eventyay/eventyay_common/views/event.py:984
+#: eventyay/eventyay_common/views/event.py:1019
 msgid "Schedule / Sessions / Speakers"
 msgstr "Planning / Sessies / Sprekers"
 
-#: eventyay/eventyay_common/views/event.py:993
+#: eventyay/eventyay_common/views/event.py:1028
 msgid "The Call for Proposals text is missing. Please add a description."
 msgstr ""
 
-#: eventyay/eventyay_common/views/event.py:1000
+#: eventyay/eventyay_common/views/event.py:1035
 msgid ""
 "The Call for Proposals text is too short (needs at least 50 characters)."
 msgstr ""
 
-#: eventyay/eventyay_common/views/event.py:1012
+#: eventyay/eventyay_common/views/event.py:1047
 msgid ""
 "You want submitters to choose the tracks for their proposals, but you do not "
 "offer tracks for selection. Add at least one track!"
@@ -32832,58 +33510,58 @@ msgstr ""
 "Je wilt dat indieners de tracks voor hun voorstellen kiezen, maar je biedt "
 "geen tracks aan om uit te kiezen. Voeg ten minste één track toe!"
 
-#: eventyay/eventyay_common/views/event.py:1020
+#: eventyay/eventyay_common/views/event.py:1055
 msgid "You have configured only one session type so far."
 msgstr "Je hebt tot nu toe slechts één sessietype geconfigureerd."
 
-#: eventyay/eventyay_common/views/event.py:1027
+#: eventyay/eventyay_common/views/event.py:1062
 #: eventyay/orga/templates/orga/cfp/talkquestion/list.html:127
 msgid "You have configured no custom fields yet."
 msgstr "Je hebt nog geen aangepaste velden ingesteld."
 
-#: eventyay/eventyay_common/views/event.py:1044
+#: eventyay/eventyay_common/views/event.py:1079
 msgid "Please resolve the billing information before publishing the event."
 msgstr "Los de factuurgegevens op voordat je het event publiceert."
 
-#: eventyay/eventyay_common/views/event.py:1052
+#: eventyay/eventyay_common/views/event.py:1087
 msgid "Your event is now online."
 msgstr "Je evenement is nu online."
 
-#: eventyay/eventyay_common/views/event.py:1074
+#: eventyay/eventyay_common/views/event.py:1109
 msgid "Your event has been unpublished."
 msgstr "Je evenement is offline gehaald."
 
-#: eventyay/eventyay_common/views/event.py:1080
+#: eventyay/eventyay_common/views/event.py:1115
 #, fuzzy
 #| msgid "Please set up ticketing before publishing tickets."
 msgid "Please set up ticketing before changing ticket modes."
 msgstr "Stel ticketing in voordat je tickets publiceert."
 
-#: eventyay/eventyay_common/views/event.py:1090
+#: eventyay/eventyay_common/views/event.py:1125
 msgid "Private test mode is now enabled for tickets."
 msgstr "Privétestmodus is nu ingeschakeld voor tickets."
 
-#: eventyay/eventyay_common/views/event.py:1093
+#: eventyay/eventyay_common/views/event.py:1128
 #, fuzzy
 #| msgid "Publish the event before publishing tickets."
 msgid "Publish the event before testing tickets publicly."
 msgstr "Publiceer het evenement voordat je tickets publiceert."
 
-#: eventyay/eventyay_common/views/event.py:1099
+#: eventyay/eventyay_common/views/event.py:1134
 #, fuzzy
 #| msgid "Your shop is now in test mode!"
 msgid "Your shop is now in public test mode!"
 msgstr "Uw winkel staat nu in testmodus!"
 
-#: eventyay/eventyay_common/views/event.py:1102
+#: eventyay/eventyay_common/views/event.py:1137
 msgid "Publish the event before publishing tickets."
 msgstr "Publiceer het evenement voordat je tickets publiceert."
 
-#: eventyay/eventyay_common/views/event.py:1105
+#: eventyay/eventyay_common/views/event.py:1140
 msgid "Please resolve the ticketing issues before publishing tickets."
 msgstr "Los de ticketing op voordat je tickets publiceert."
 
-#: eventyay/eventyay_common/views/event.py:1118
+#: eventyay/eventyay_common/views/event.py:1153
 msgid ""
 "An order could not be deleted as some constraints (e.g. data created by plug-"
 "ins) do not allow it."
@@ -32891,45 +33569,57 @@ msgstr ""
 "Een bestelling kon niet worden verwijderd omdat sommige beperkingen (bijv. "
 "data aangemaakt door plug-ins) het niet toestaan."
 
-#: eventyay/eventyay_common/views/event.py:1130
+#: eventyay/eventyay_common/views/event.py:1165
 #, fuzzy
 #| msgid "Tickets are now published."
 msgid "Tickets are now publicly sold."
 msgstr "Tickets zijn nu gepubliceerd."
 
-#: eventyay/eventyay_common/views/event.py:1132
+#: eventyay/eventyay_common/views/event.py:1167
 #, fuzzy
 #| msgid "Unknown reason"
 msgid "Unknown ticketing mode."
 msgstr "Onbekende reden"
 
-#: eventyay/eventyay_common/views/event.py:1157
+#: eventyay/eventyay_common/views/event.py:1192
 msgid "Private test mode is now enabled for talks."
 msgstr "Privétestmodus is nu ingeschakeld voor talks."
 
-#: eventyay/eventyay_common/views/event.py:1160
+#: eventyay/eventyay_common/views/event.py:1195
 msgid "Publish the event before publishing talks."
 msgstr "Publiceer het event voordat je de talks publiceert."
 
-#: eventyay/eventyay_common/views/event.py:1166
+#: eventyay/eventyay_common/views/event.py:1201
 msgid "Talk pages are now published."
 msgstr "Talkpagina’s zijn nu gepubliceerd."
 
-#: eventyay/eventyay_common/views/event.py:1168
+#: eventyay/eventyay_common/views/event.py:1203
 #, fuzzy
 #| msgid "Unknown country code."
 msgid "Unknown talk mode."
 msgstr "Onbekende landcode."
 
-#: eventyay/eventyay_common/views/event.py:1180
+#: eventyay/eventyay_common/views/event.py:1215
 msgid "Please configure video settings before changing visibility."
 msgstr ""
 
-#: eventyay/eventyay_common/views/event.py:1185
+#: eventyay/eventyay_common/views/event.py:1220
 #, fuzzy
 #| msgid "Publish the event before publishing talks."
 msgid "Publish the event before enabling public video link."
 msgstr "Publiceer het event voordat je de talks publiceert."
+
+#: eventyay/eventyay_common/views/event.py:1542
+#, fuzzy
+#| msgid "You do not have permission to change event settings."
+msgid "You do not have permission to create events."
+msgstr "Je hebt geen toestemming om evenementinstellingen te wijzigen."
+
+#: eventyay/eventyay_common/views/event.py:1612
+#, fuzzy
+#| msgid "This user has been anonymized."
+msgid "Event has been cloned successfully."
+msgstr "De gebruiker is geanonimiseerd."
 
 #: eventyay/eventyay_common/views/organizer.py:82
 msgid "New organizer is created."
@@ -33793,13 +34483,13 @@ msgstr "Als je geen aangepast veld selecteert, worden ze allemaal gebruikt."
 msgid "SMTP server"
 msgstr "Server"
 
-#: eventyay/orga/forms/email.py:41
+#: eventyay/orga/forms/email.py:42
 #, fuzzy
 #| msgid "Bcc address"
 msgid "BCC address"
 msgstr "BCC-adres"
 
-#: eventyay/orga/forms/email.py:42
+#: eventyay/orga/forms/email.py:43
 #, fuzzy
 #| msgid "All emails will be sent to this address as a Bcc copy"
 msgid ""
@@ -33807,99 +34497,99 @@ msgid ""
 "as a blind copy."
 msgstr "Alle e-mails zullen als BCC-kopie worden verstuurd naar dit adres"
 
-#: eventyay/orga/forms/email.py:48
+#: eventyay/orga/forms/email.py:49
 #, fuzzy
 #| msgid "Mail signature"
 msgid "Email signature"
 msgstr "Email ondertekening"
 
-#: eventyay/orga/forms/email.py:50
+#: eventyay/orga/forms/email.py:51
 msgid ""
 "This text will be appended to every outgoing email (both Tickets and Talks). "
 "You can use Markdown."
 msgstr ""
 
-#: eventyay/orga/forms/email.py:64
+#: eventyay/orga/forms/email.py:65
 #, fuzzy
 #| msgid "Use Custom Email"
 msgid "Use custom email gateway"
 msgstr "Aangepaste e-mail gebruiken"
 
-#: eventyay/orga/forms/email.py:66
+#: eventyay/orga/forms/email.py:67
 msgid ""
 "When enabled, all event-related emails (Tickets and Talks) are sent via the "
 "gateway configured below instead of the platform default."
 msgstr ""
 
-#: eventyay/orga/forms/email.py:72
+#: eventyay/orga/forms/email.py:73
 #, fuzzy
 #| msgid "Email template"
 msgid "Email gateway type"
 msgstr "E-mail sjabloon"
 
-#: eventyay/orga/forms/email.py:79
+#: eventyay/orga/forms/email.py:80
 #, fuzzy
 #| msgid "SendGrid"
 msgid "SendGrid API key"
 msgstr "SendGrid"
 
-#: eventyay/orga/forms/email.py:83
+#: eventyay/orga/forms/email.py:87
 #, fuzzy
 #| msgid "Hostname"
 msgid "SMTP hostname"
 msgstr "Hostnaam"
 
-#: eventyay/orga/forms/email.py:88
+#: eventyay/orga/forms/email.py:95
 #, fuzzy
 #| msgid "CSV export"
 msgid "SMTP port"
 msgstr "CSV export"
 
-#: eventyay/orga/forms/email.py:93
+#: eventyay/orga/forms/email.py:103
 #, fuzzy
 #| msgid "Username"
 msgid "SMTP username"
 msgstr "Gebruikersnaam"
 
-#: eventyay/orga/forms/email.py:98
+#: eventyay/orga/forms/email.py:111
 #, fuzzy
 #| msgid "Password"
 msgid "SMTP password"
 msgstr "Wachtwoord"
 
-#: eventyay/orga/forms/email.py:112
+#: eventyay/orga/forms/email.py:134
 #, fuzzy
 #| msgid "Send email to"
 msgid "Send test email to"
 msgstr "Stuur e-mail naar"
 
-#: eventyay/orga/forms/email.py:113
+#: eventyay/orga/forms/email.py:135
 msgid "Enter one or more addresses (comma-separated) to send a test message."
 msgstr ""
 
-#: eventyay/orga/forms/email.py:161
+#: eventyay/orga/forms/email.py:183
 #, fuzzy
 #| msgid "This field is required when using SendGrid as email vendor."
 msgid "A sender email address is required when using a custom email gateway."
 msgstr "Dit veld is vereist bij het gebruik van SendGrid als e-mailprovider."
 
-#: eventyay/orga/forms/email.py:175
+#: eventyay/orga/forms/email.py:197
 #, fuzzy
 #| msgid "This field is required when using SendGrid as email vendor."
 msgid "An API key is required when using SendGrid."
 msgstr "Dit veld is vereist bij het gebruik van SendGrid als e-mailprovider."
 
-#: eventyay/orga/forms/email.py:187
+#: eventyay/orga/forms/email.py:215
 #, fuzzy
 #| msgid "This field is required when using SendGrid as email vendor."
 msgid "A hostname is required when using a custom SMTP server."
 msgstr "Dit veld is vereist bij het gebruik van SendGrid als e-mailprovider."
 
-#: eventyay/orga/forms/email.py:192
+#: eventyay/orga/forms/email.py:220
 msgid "A port number is required when using a custom SMTP server."
 msgstr ""
 
-#: eventyay/orga/forms/email.py:198
+#: eventyay/orga/forms/email.py:226
 #, fuzzy
 #| msgid ""
 #| "You can activate either SSL or STARTTLS security, but not both at the "
@@ -33909,7 +34599,7 @@ msgstr ""
 "U kunt óf SSL óf STARTTLS-beveiliging inschakelen, maar niet allebei "
 "tegelijkertijd."
 
-#: eventyay/orga/forms/email.py:208
+#: eventyay/orga/forms/email.py:236
 msgid ""
 "You must enable SSL or STARTTLS when using a non-local SMTP server to "
 "protect credentials and email content in transit."
@@ -34905,13 +35595,6 @@ msgstr "Je gebruikt eventyay als superuser. Dit wordt niet aanbevolen."
 msgid "Please click here to switch to an administrator account."
 msgstr "Klik hier om over te schakelen naar een beheerdersaccount."
 
-#: eventyay/orga/templates/orga/base.html:277
-#: eventyay/orga/templates/orga/settings/review.html:8
-#: eventyay/orga/templates/orga/settings/review.html:24
-#: eventyay/orga/views/event.py:133
-msgid "Review settings"
-msgstr "Recentie instellingen"
-
 #: eventyay/orga/templates/orga/base.html:286
 #: eventyay/orga/templates/orga/settings/import_export.html:6
 #: eventyay/orga/templates/orga/settings/import_export.html:9
@@ -34955,7 +35638,7 @@ msgstr "Toegangs codes"
 #: eventyay/orga/templates/orga/submission/content.html:273
 #: eventyay/orga/templates/orga/submission/content_edit.html:66
 #: eventyay/orga/templates/orga/submission/review.html:11
-#: eventyay/orga/views/dashboard.py:210 eventyay/orga/views/event.py:498
+#: eventyay/orga/views/dashboard.py:210 eventyay/orga/views/event.py:497
 msgid "Reviews"
 msgstr "Recenties"
 
@@ -36210,7 +36893,7 @@ msgstr "Toon voorbeeld email"
 msgid "Send to outbox"
 msgstr "Verstuur naar outbox"
 
-#: eventyay/orga/templates/orga/mails/_placeholder_group.html:41
+#: eventyay/orga/templates/orga/mails/_placeholder_group.html:37
 msgid "e.g."
 msgstr "Bijvoorbeeld"
 
@@ -36414,6 +37097,16 @@ msgstr "Sorteer (laagste eerst)"
 #: eventyay/orga/templates/orga/mails/sent_list.html:34
 msgid "Sort (oldest first)"
 msgstr "Sorteer (oudste eerst)"
+
+#: eventyay/orga/templates/orga/organizer/list.html:32
+#, fuzzy
+#| msgid "Event"
+#| msgid_plural "Events"
+msgctxt "number of events"
+msgid "Event"
+msgid_plural "Events"
+msgstr[0] "Evenement"
+msgstr[1] "Evenementen"
 
 #: eventyay/orga/templates/orga/organizer/list.html:40
 msgctxt "number of teams"
@@ -36954,12 +37647,6 @@ msgstr ""
 "toegang wilt tot de organisatie versie in automatische integraties, moet je "
 "net als in de API je verificatietoken opgeven:"
 
-#: eventyay/orga/templates/orga/settings/import_export.html:238
-#: eventyay/orga/templates/orga/settings/import_export.html:431
-#: eventyay/orga/templates/orga/settings/import_export.html:540
-msgid "Documentation"
-msgstr "Documentatie"
-
 #: eventyay/orga/templates/orga/settings/import_export.html:241
 #: eventyay/orga/templates/orga/settings/import_export.html:434
 #: eventyay/orga/templates/orga/settings/import_export.html:543
@@ -37020,10 +37707,6 @@ msgstr ""
 #| msgid "Export settings"
 msgid "HTML Export Settings"
 msgstr "Exporteer instellingen"
-
-#: eventyay/orga/templates/orga/settings/mail.html:14
-msgid "Email settings"
-msgstr "E-mailinstellingen"
 
 #: eventyay/orga/templates/orga/settings/mail.html:17
 #, fuzzy
@@ -37221,13 +37904,14 @@ msgstr "Start import"
 
 #: eventyay/orga/templates/orga/speaker/information_form.html:5
 #: eventyay/orga/templates/orga/speaker/information_form.html:8
-#: eventyay/orga/templates/orga/speaker/information_list.html:13
 #: eventyay/orga/views/speaker.py:400
+#, fuzzy
+#| msgid "Speaker Information Note"
+#| msgid_plural "Speaker Information Notes"
 msgid "Speaker Information Note"
-msgid_plural "Speaker Information Notes"
-msgstr[0] "Spreker Informatie Notitie"
-msgstr[1] "Spreker Informatie Notities"
+msgstr "Spreker Informatie Notitie"
 
+#: eventyay/orga/templates/orga/speaker/information_list.html:13
 #: eventyay/orga/templates/orga/speaker/information_list.html:16
 #, fuzzy, python-format
 #| msgid "Speaker Information Note"
@@ -37999,23 +38683,23 @@ msgid_plural "sent emails"
 msgstr[0] "Verstuurde e-mail"
 msgstr[1] "Verstuurde e-mails"
 
-#: eventyay/orga/views/event.py:134
+#: eventyay/orga/views/event.py:133
 msgid "Review scoring"
 msgstr "Beoordelingsscore"
 
-#: eventyay/orga/views/event.py:135
+#: eventyay/orga/views/event.py:134
 msgid "Review phases"
 msgstr "Beoordelingsfases"
 
-#: eventyay/orga/views/event.py:213
+#: eventyay/orga/views/event.py:212
 msgid "Only the last review phase may be open-ended."
 msgstr "Alleen de laatste beoordelingsfase mag open zijn."
 
-#: eventyay/orga/views/event.py:215
+#: eventyay/orga/views/event.py:214
 msgid "All review phases except for the first one need a start date."
 msgstr "Alle reviewfases behalve de eerste hebben een startdatum nodig."
 
-#: eventyay/orga/views/event.py:219
+#: eventyay/orga/views/event.py:218
 #, python-brace-format
 msgid ""
 "The review phases '{phase1}' and '{phase2}' overlap. Please make sure that "
@@ -38024,7 +38708,7 @@ msgstr ""
 "De reviewfases '{phase1}' en '{phase2}' overlappen elkaar. Zorg ervoor dat "
 "de reviewfases elkaar niet overlappen en sla het vervolgens opnieuw op."
 
-#: eventyay/orga/views/event.py:353
+#: eventyay/orga/views/event.py:352
 msgid ""
 "There was a problem with your authentication. Please contact the organizer "
 "for further help."
@@ -38032,11 +38716,11 @@ msgstr ""
 "Er was een probleem met je authenticatie. Neem contact op met de organisator "
 "voor verdere hulp."
 
-#: eventyay/orga/views/event.py:367
+#: eventyay/orga/views/event.py:366
 msgid "You are now part of the team!"
 msgstr "Je maakt nu deel uit van het team!"
 
-#: eventyay/orga/views/event.py:376 eventyay/orga/views/event.py:408
+#: eventyay/orga/views/event.py:375 eventyay/orga/views/event.py:407
 #, fuzzy
 #| msgid ""
 #| "ALL related data, such as proposals, and speaker profiles, and uploads, "
@@ -38048,53 +38732,53 @@ msgstr ""
 "ALLE gerelateerde gegevens zoals voorstellen, spreker profielen en uploads "
 "zullen worden verwijderd en kunnen daarna niet hersteld worden."
 
-#: eventyay/orga/views/event.py:396 eventyay/orga/views/event.py:428
+#: eventyay/orga/views/event.py:395 eventyay/orga/views/event.py:427
 #, fuzzy
 #| msgid "The confirm code you entered was incorrect."
 msgid "The event name you entered was incorrect."
 msgstr "De bevestigingscode die u invoerde was onjuist."
 
-#: eventyay/orga/views/event.py:420
+#: eventyay/orga/views/event.py:419
 #, fuzzy
 #| msgid "Talks Dashboard"
 msgid "Talk Data for"
 msgstr "Sessiedashboard"
 
-#: eventyay/orga/views/event.py:432
+#: eventyay/orga/views/event.py:431
 #, fuzzy
 #| msgid "The team has been deleted."
 msgid "Talk data has been successfully deleted."
 msgstr "Het team is verwijderd."
 
-#: eventyay/orga/views/event.py:517
+#: eventyay/orga/views/event.py:516
 #, fuzzy
 #| msgid "Schedule exports"
 msgid "Schedule HTML export"
 msgstr "Programma exports"
 
-#: eventyay/orga/views/event.py:565
+#: eventyay/orga/views/event.py:564
 #, fuzzy
 #| msgid "Login failed. Please try again."
 msgid "Unknown action. Please try again."
 msgstr "Inloggen mislukt. Probeer het opnieuw."
 
-#: eventyay/orga/views/event.py:575
+#: eventyay/orga/views/event.py:574
 msgid "Please choose whether to import speakers or schedule."
 msgstr ""
 
-#: eventyay/orga/views/event.py:587
+#: eventyay/orga/views/event.py:586
 #, fuzzy
 #| msgid "Invalid email or password. Please try again."
 msgid "Could not establish a session for file upload. Please try again."
 msgstr "Ongeldig e-mailadres of wachtwoord. Probeer het opnieuw."
 
-#: eventyay/orga/views/event.py:613
+#: eventyay/orga/views/event.py:612
 #, fuzzy
 #| msgid "Please choose an earlier date."
 msgid "Please choose a valid export target."
 msgstr "Kies een eerdere datum."
 
-#: eventyay/orga/views/event.py:651
+#: eventyay/orga/views/event.py:650
 msgid "No data to be exported"
 msgstr "Er zijn geen gegevens die geëxporteerd moeten worden"
 
@@ -38132,7 +38816,7 @@ msgstr "De e-mail is verstuurd."
 msgid "{count} mails have been sent."
 msgstr "{count} e-mails zijn verzonden."
 
-#: eventyay/orga/views/mails.py:223 eventyay/plugins/sendmail/views.py:438
+#: eventyay/orga/views/mails.py:223 eventyay/plugins/sendmail/views.py:439
 #, python-brace-format
 msgid "Do you really want to delete this mail?"
 msgid_plural "Do you really want to purge {count} mails?"
@@ -38185,7 +38869,7 @@ msgstr "Er zijn geen ontvangers die aan deze selectie voldoen."
 
 #: eventyay/orga/views/mails.py:413 eventyay/plugins/sendmail/views.py:147
 #: eventyay/plugins/sendmail/views.py:410
-#: eventyay/plugins/sendmail/views.py:597
+#: eventyay/plugins/sendmail/views.py:601
 #, python-brace-format
 msgid "Subject: {subject}"
 msgstr "Onderwerp: {subject}"
@@ -38918,19 +39602,19 @@ msgstr "Vouchertags"
 msgid "Sample tag"
 msgstr "Voorbeeldstaat"
 
-#: eventyay/plugins/badges/signals.py:210
+#: eventyay/plugins/badges/signals.py:213
 msgid "Badge layout created."
 msgstr "Badge-lay-out aangemaakt."
 
-#: eventyay/plugins/badges/signals.py:211
+#: eventyay/plugins/badges/signals.py:214
 msgid "Badge layout deleted."
 msgstr "Badge-lay-out verwijderd."
 
-#: eventyay/plugins/badges/signals.py:212
+#: eventyay/plugins/badges/signals.py:215
 msgid "Badge layout changed."
 msgstr "Badge-lay-out veranderd."
 
-#: eventyay/plugins/badges/signals.py:226
+#: eventyay/plugins/badges/signals.py:229
 #, python-brace-format
 msgid "Badge layout {val}"
 msgstr "Badge-lay-out {val}"
@@ -40451,14 +41135,14 @@ msgid "There are no orders matching this selection."
 msgstr "Er zijn geen bestellingen die overeenkomen met deze selectie."
 
 #: eventyay/plugins/sendmail/views.py:194
-#: eventyay/plugins/sendmail/views.py:680
+#: eventyay/plugins/sendmail/views.py:684
 #, fuzzy, python-brace-format
 #| msgid "Your email has been sent to the outbox."
 msgid "Your email has been scheduled for {datetime} ({timezone})."
 msgstr "Je e-mail is naar de outbox verplaatst."
 
 #: eventyay/plugins/sendmail/views.py:202
-#: eventyay/plugins/sendmail/views.py:688
+#: eventyay/plugins/sendmail/views.py:692
 msgid "Your email has been sent to the outbox."
 msgstr "Je e-mail is naar de outbox verplaatst."
 
@@ -40471,7 +41155,7 @@ msgid "The mail has been queued for sending."
 msgstr "De e-mail is in de wachtrij geplaatst voor verzending."
 
 #: eventyay/plugins/sendmail/views.py:368
-#: eventyay/plugins/sendmail/views.py:563
+#: eventyay/plugins/sendmail/views.py:567
 msgid "We could not save the email. See below for details."
 msgstr "We konden de e-mail niet opslaan. Zie hieronder voor details."
 
@@ -40481,38 +41165,38 @@ msgstr "Deze e-mail is al verzonden en kan niet worden bewerkt."
 
 #: eventyay/plugins/sendmail/views.py:397
 #: eventyay/plugins/sendmail/views.py:406
-#: eventyay/plugins/sendmail/views.py:583
-#: eventyay/plugins/sendmail/views.py:592
+#: eventyay/plugins/sendmail/views.py:587
+#: eventyay/plugins/sendmail/views.py:596
 msgid "Invalid placeholder(s): {}"
 msgstr "Ongeldige placeholder(s): {}"
 
-#: eventyay/plugins/sendmail/views.py:445
+#: eventyay/plugins/sendmail/views.py:449
 msgid "This mail has already been sent and cannot be deleted."
 msgstr "Deze e-mail is al verzonden en kan niet worden verwijderd."
 
-#: eventyay/plugins/sendmail/views.py:454
+#: eventyay/plugins/sendmail/views.py:458
 msgid "The mail and its related data have been deleted."
 msgstr "De e-mail en de bijbehorende gegevens zijn verwijderd."
 
-#: eventyay/plugins/sendmail/views.py:473
+#: eventyay/plugins/sendmail/views.py:477
 #, python-brace-format
 msgid "Do you really want to purge the mail?"
 msgid_plural "Do you really want to purge {count} mails?"
 msgstr[0] "Wil je deze e-mail echt definitief verwijderen?"
 msgstr[1] "Wil je {count} e-mails echt definitief verwijderen?"
 
-#: eventyay/plugins/sendmail/views.py:489
+#: eventyay/plugins/sendmail/views.py:493
 #, python-brace-format
 msgid "One mail has been discarded."
 msgid_plural "{count} mails have been discarded."
 msgstr[0] "Eén e-mail is verwijderd."
 msgstr[1] "{count} e-mails zijn verwijderd."
 
-#: eventyay/plugins/sendmail/views.py:623
+#: eventyay/plugins/sendmail/views.py:627
 msgid "There are no valid recipients for the selected teams."
 msgstr "Er zijn geen geldige ontvangers voor de geselecteerde teams."
 
-#: eventyay/plugins/socialauth/adapter.py:32
+#: eventyay/plugins/socialauth/adapter.py:33
 #: eventyay/plugins/socialauth/views.py:45
 #, fuzzy
 #| msgid "This product is currently not available."
@@ -40768,19 +41452,19 @@ msgstr "(zoals hierboven)"
 msgid "PDF ticket layout"
 msgstr "PDF-ticketlay-out"
 
-#: eventyay/plugins/ticketoutputpdf/signals.py:117
+#: eventyay/plugins/ticketoutputpdf/signals.py:120
 msgid "Ticket layout created."
 msgstr "Ticketlay-out aangemaakt."
 
-#: eventyay/plugins/ticketoutputpdf/signals.py:118
+#: eventyay/plugins/ticketoutputpdf/signals.py:121
 msgid "Ticket layout deleted."
 msgstr "Ticketlay-out verwijderd."
 
-#: eventyay/plugins/ticketoutputpdf/signals.py:119
+#: eventyay/plugins/ticketoutputpdf/signals.py:122
 msgid "Ticket layout changed."
 msgstr "Ticketlay-out veranderd."
 
-#: eventyay/plugins/ticketoutputpdf/signals.py:136
+#: eventyay/plugins/ticketoutputpdf/signals.py:139
 #, python-brace-format
 msgid "Ticket layout {val}"
 msgstr "Ticketlay-out {val}"
@@ -43065,8 +43749,8 @@ msgstr "Live-evenementen"
 
 #: eventyay/presale/templates/pretixpresale/startpage.html:19
 #: eventyay/presale/templates/pretixpresale/startpage.html:20
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:96
 #: eventyay/presale/templates/pretixpresale/startpage_base.html:97
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:98
 msgid "Search events"
 msgstr "Evenementen zoeken"
 
@@ -43099,17 +43783,11 @@ msgstr "Toon alle recente evenementen"
 msgid "Browse live events on"
 msgstr "Blader door live-evenementen op"
 
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:104
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:105
 msgid "No matching events"
 msgstr "Geen overeenkomende evenementen"
 
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:152
-#, fuzzy
-#| msgid "Footer Navigation"
-msgid "Main navigation"
-msgstr "Footer-navigatie"
-
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:188
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:189
 msgid "Start page header"
 msgstr "Koptekst startpagina"
 
@@ -43692,6 +44370,11 @@ msgstr "niet geaccepteerd"
 msgid "Organisers"
 msgstr "Organisatoren"
 
+#, python-format
+#~ msgctxt "invoice"
+#~ msgid "Page %d of %d"
+#~ msgstr "Pagina %d van %d"
+
 #~ msgid "Video Admin"
 #~ msgstr "Videobeheer"
 
@@ -43990,9 +44673,6 @@ msgstr "Organisatoren"
 
 #~ msgid "Hide video link"
 #~ msgstr "Videolink verbergen"
-
-#~ msgid "Show video link"
-#~ msgstr "Videolink tonen"
 
 #~ msgid "The video module is not enabled for this event."
 #~ msgstr "De videomodule is niet ingeschakeld voor dit evenement."
@@ -44719,10 +45399,6 @@ msgstr "Organisatoren"
 #~ msgid "Copy event link"
 #~ msgstr "Evenementlink kopiëren"
 
-#, python-format
-#~ msgid "Page %(page)s of %(of)s"
-#~ msgstr "Pagina %(page)s van %(of)s"
-
 #, python-brace-format
 #~ msgid "The current, automatically generated GUID is: {guid}."
 #~ msgstr "De huidige, automatisch gegenereerde GUID is: {guid}."
@@ -44843,12 +45519,6 @@ msgstr "Organisatoren"
 
 #~ msgid "Filetype not allowed!"
 #~ msgstr "Bestandstype niet toegestaan!"
-
-#~ msgid ""
-#~ "You already used this slug for a different event. Please choose a new one."
-#~ msgstr ""
-#~ "U heeft deze slug al gebruikt voor een ander evenement. Kies een nieuwe "
-#~ "slug."
 
 #~ msgid "Stripe Connect: Secret key"
 #~ msgstr "Stripe Connect: Geheime sleutel"
@@ -45005,9 +45675,6 @@ msgstr "Organisatoren"
 
 #~ msgid "Question dependency"
 #~ msgstr "Afhankelijk van andere vraag"
-
-#~ msgid "Create a new question"
-#~ msgstr "Nieuwe vraag aanmaken"
 
 #~ msgid "The list below shows all teams that exist within this organizer."
 #~ msgstr ""
@@ -45839,9 +46506,6 @@ msgstr "Organisatoren"
 #~ msgid "It looks like you canceled the PayPal payment"
 #~ msgstr "Het lijkt erop dat u de PayPal-betaling heeft geannuleerd"
 
-#~ msgid "Your PayPal account has been disconnected."
-#~ msgstr "De verbinding met uw PayPal-account is verbroken."
-
 #~ msgid "Stripe"
 #~ msgstr "Stripe"
 
@@ -46285,11 +46949,6 @@ msgstr "Organisatoren"
 #~ msgid "Do you really want to disconnect your Stripe account?"
 #~ msgstr "Wilt u echt uw noodherstelcodes opnieuw genereren?"
 
-#, fuzzy
-#~| msgid "Connect"
-#~ msgid "Disconnect"
-#~ msgstr "Verbinden"
-
 #~ msgid ""
 #~ "We're waiting for an answer from the payment provider regarding your "
 #~ "payment. Please contact us if this takes more than a few days."
@@ -46520,9 +47179,6 @@ msgstr "Organisatoren"
 #~ msgid "pretixdesk – for desktop computers"
 #~ msgstr "pretixdesk - voor desktopcomputers"
 
-#~ msgid "Check-in device configuration"
-#~ msgstr "Instellen van incheckapparaat"
-
 #~ msgid "We've got a new app!"
 #~ msgstr "We hebben een nieuwe app!"
 
@@ -46579,9 +47235,6 @@ msgstr "Organisatoren"
 
 #~ msgid "Existing app configurations"
 #~ msgstr "Bestaande app-configuraties"
-
-#~ msgid "Create a new configuration"
-#~ msgstr "Nieuwe configuratie aanmaken"
 
 #~ msgid "Show info"
 #~ msgstr "Toon info"
@@ -46641,9 +47294,6 @@ msgstr "Organisatoren"
 #~ msgstr ""
 #~ "Testbestellingen zullen alleen worden gescand als u online scant. Als u "
 #~ "in de asynchrone modus scant zullen testbestellingen niet worden herkend."
-
-#~ msgid "The selected configuration does not exist."
-#~ msgstr "De gekozen configuratie bestaat niet."
 
 #~ msgid "The selected configuration has been deleted."
 #~ msgstr "De gekozen configuratie is verwijderd."

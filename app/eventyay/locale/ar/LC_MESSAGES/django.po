@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-26 16:17+0000\n"
+"POT-Creation-Date: 2026-08-26 16:33+0000\n"
 "PO-Revision-Date: 2026-03-30 15:57+0000\n"
 "Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Arabic <https://hosted.weblate.org/projects/eventyay/eventyay/"
@@ -50,7 +50,7 @@ msgstr ""
 #: eventyay/base/exporters/waitinglist.py:86
 #: eventyay/base/forms/questions.py:976 eventyay/base/models/auth_token.py:55
 #: eventyay/base/models/devices.py:41 eventyay/base/models/devices.py:104
-#: eventyay/base/models/event.py:3124 eventyay/base/models/event.py:3379
+#: eventyay/base/models/event.py:3295 eventyay/base/models/event.py:3550
 #: eventyay/base/models/organizer.py:119 eventyay/base/models/product.py:1679
 #: eventyay/base/models/product.py:1839 eventyay/base/models/review.py:206
 #: eventyay/base/models/room.py:288 eventyay/base/models/seating.py:42
@@ -599,7 +599,7 @@ msgstr "التتبع"
 #: eventyay/multidomain/views.py:195 eventyay/orga/forms/mails.py:345
 #: eventyay/orga/forms/mails.py:347 eventyay/orga/templates/orga/base.html:489
 #: eventyay/orga/templates/orga/submission/speakers.html:11
-#: eventyay/orga/views/event.py:464 eventyay/orga/views/event.py:496
+#: eventyay/orga/views/event.py:463 eventyay/orga/views/event.py:495
 #: eventyay/person/forms/profile.py:447 eventyay/person/forms/profile.py:492
 #: eventyay/presale/templates/pretixpresale/event/fragment_nav.html:45
 #: eventyay/schedule/phrases.py:18
@@ -752,18 +752,14 @@ msgstr "عرض الفيديو"
 msgid "Watch live"
 msgstr "شاهد مباشرة"
 
-#: eventyay/agenda/views/schedule.py:420
-#: eventyay/cfp/templates/cfp/event/user_submission_edit.html:62
-#: eventyay/multidomain/views.py:181
+#: eventyay/agenda/views/schedule.py:420 eventyay/multidomain/views.py:181
 #: eventyay/orga/templates/orga/submission/content_edit.html:50
+#, fuzzy
+#| msgid "Speaker"
+#| msgid_plural "Speakers"
+msgctxt "noun"
 msgid "Speaker"
-msgid_plural "Speakers"
-msgstr[0] "المتحدث"
-msgstr[1] "المتحدثين"
-msgstr[2] "المتحدثين"
-msgstr[3] "المتحدثين"
-msgstr[4] "المتحدثين"
-msgstr[5] "المتحدثين"
+msgstr "المتحدث"
 
 #: eventyay/agenda/views/schedule.py:421 eventyay/multidomain/views.py:182
 msgid "Speaker name not provided"
@@ -809,7 +805,7 @@ msgstr ""
 #: eventyay/base/exporters/invoices.py:297
 #: eventyay/base/exporters/orderlist.py:595
 #: eventyay/base/exporters/orderlist.py:987
-#: eventyay/base/exporters/orderlist.py:1398 eventyay/base/models/event.py:3057
+#: eventyay/base/exporters/orderlist.py:1398 eventyay/base/models/event.py:3228
 #: eventyay/base/models/orders.py:1344 eventyay/base/models/question.py:472
 #: eventyay/base/models/submission.py:1045 eventyay/control/forms/filter.py:124
 #: eventyay/control/forms/filter.py:549 eventyay/control/forms/product.py:603
@@ -839,7 +835,7 @@ msgstr "نعم فعلا"
 #: eventyay/base/exporters/invoices.py:297
 #: eventyay/base/exporters/orderlist.py:595
 #: eventyay/base/exporters/orderlist.py:987
-#: eventyay/base/exporters/orderlist.py:1398 eventyay/base/models/event.py:3047
+#: eventyay/base/exporters/orderlist.py:1398 eventyay/base/models/event.py:3218
 #: eventyay/base/models/orders.py:1346 eventyay/base/models/question.py:474
 #: eventyay/base/models/submission.py:1045
 #: eventyay/cfp/templates/cfp/event/invitation.html:44
@@ -915,7 +911,7 @@ msgstr ""
 
 #: eventyay/agenda/views/schedule.py:445 eventyay/control/navigation.py:296
 #: eventyay/eventyay_common/navigation.py:268 eventyay/multidomain/views.py:203
-#: eventyay/orga/views/event.py:516
+#: eventyay/orga/views/event.py:515
 #: eventyay/presale/templates/pretixpresale/organizers/base.html:154
 #: eventyay/presale/templates/pretixpresale/organizers/fragment_toolbar.html:7
 msgid "Export"
@@ -960,7 +956,7 @@ msgid "Calendar View"
 msgstr ""
 
 #: eventyay/agenda/views/schedule.py:454 eventyay/common/forms/forms.py:12
-#: eventyay/common/forms/widgets.py:278
+#: eventyay/common/forms/widgets.py:349
 #: eventyay/common/templates/common/includes/search_form.html:7
 #: eventyay/control/templates/pretixcontrol/admin/attendees/index.html:31
 #: eventyay/control/templates/pretixcontrol/admin/events/index.html:32
@@ -988,7 +984,7 @@ msgstr ""
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/sent_list.html:32
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/sent_list.html:36
 #: eventyay/presale/templates/pretixpresale/startpage.html:11
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:88
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:89
 #: eventyay/submission/forms/submission.py:479
 msgid "Search"
 msgstr "بحث"
@@ -1111,8 +1107,8 @@ msgstr "انت لا تملك اذنا لتعمل هذا"
 
 #: eventyay/agenda/views/talk.py:866 eventyay/common/text/phrases.py:72
 #: eventyay/control/views/checkin.py:130
-#: eventyay/eventyay_common/views/event.py:817
-#: eventyay/eventyay_common/views/event.py:832
+#: eventyay/eventyay_common/views/event.py:852
+#: eventyay/eventyay_common/views/event.py:867
 msgid "You do not have permission to perform this action."
 msgstr "ليس لديك إذن لتنفيذ هذا الإجراء."
 
@@ -1202,8 +1198,8 @@ msgstr "يسمح قائمة محددات، فصل الفضاء"
 msgid "Allowed list with space separated"
 msgstr "قائمة مسموح بها مفصولة بمسافات"
 
-#: eventyay/api/models.py:37 eventyay/control/forms/global_settings.py:320
-#: eventyay/control/forms/global_settings.py:398
+#: eventyay/api/models.py:37 eventyay/control/forms/global_settings.py:405
+#: eventyay/control/forms/global_settings.py:483
 #: eventyay/plugins/socialauth/templates/socialauth/social_auth_settings.html:70
 msgid "Client ID"
 msgstr "ID العميل"
@@ -1246,7 +1242,7 @@ msgstr "ليس هناك حصص كافية متوفرة على الكوتا \"{}\
 msgid "The selected seat \"{seat}\" is not available."
 msgstr "المقعد المحدد \"{seat}\" غير متوفر."
 
-#: eventyay/api/serializers/checkin.py:71 eventyay/base/models/event.py:3280
+#: eventyay/api/serializers/checkin.py:71 eventyay/base/models/event.py:3451
 #: eventyay/base/models/product.py:1567 eventyay/base/models/product.py:1796
 msgid "One or more products do not belong to this event."
 msgstr "منتج واحد أو أكثر لا ينتمي إلى هذا الحدث."
@@ -1432,12 +1428,12 @@ msgid "An invoice for this order already exists."
 msgstr "فاتورة لهذا النظام موجود بالفعل."
 
 #: eventyay/api/views/order.py:762 eventyay/common/text/phrases.py:70
-#: eventyay/control/views/orders.py:1826 eventyay/control/views/users.py:400
-#: eventyay/control/views/users.py:403 eventyay/control/views/users.py:497
+#: eventyay/control/views/orders.py:1826 eventyay/control/views/users.py:403
+#: eventyay/control/views/users.py:406 eventyay/control/views/users.py:500
 msgid "There was an error sending the mail. Please try again later."
 msgstr "كان هناك خطأ أثناء إرسال البريد. الرجاء معاودة المحاولة في وقت لاحق."
 
-#: eventyay/api/views/order.py:842 eventyay/base/services/cart.py:142
+#: eventyay/api/views/order.py:842 eventyay/base/services/cart.py:146
 #: eventyay/base/services/orders.py:151 eventyay/presale/views/order.py:977
 msgid "One of the selected products is not available in the selected country."
 msgstr "أحد المنتجات المحددة غير متوفر في البلد المحدد."
@@ -1556,14 +1552,20 @@ msgctxt "subevent"
 msgid "Event series date deleted"
 msgstr "تم حذف تاريخ من سلسلة الأحداث"
 
-#: eventyay/base/auth.py:98
+#: eventyay/base/auth.py:13
+#, fuzzy
+#| msgid "This change was performed by the system administrator."
+msgid "This account has been suspended. Please contact the site administrator."
+msgstr "تم إجراء هذا التغيير بواسطة مسؤول النظام."
+
+#: eventyay/base/auth.py:101
 #, python-brace-format
 msgid "{system} User"
 msgstr "{system} مستخدم"
 
-#: eventyay/base/auth.py:111
+#: eventyay/base/auth.py:114
 #: eventyay/base/configurations/default_setting.py:239
-#: eventyay/base/forms/auth.py:233 eventyay/base/models/auth.py:187
+#: eventyay/base/forms/auth.py:234 eventyay/base/models/auth.py:187
 #: eventyay/base/models/notifications.py:25 eventyay/base/models/orders.py:177
 #: eventyay/control/forms/event.py:848
 #: eventyay/control/templates/pretixcontrol/items/orderforms.html:47
@@ -1576,9 +1578,9 @@ msgstr "{system} مستخدم"
 msgid "E-mail"
 msgstr "البريد الإلكتروني"
 
-#: eventyay/base/auth.py:118 eventyay/base/forms/auth.py:142
-#: eventyay/base/forms/auth.py:198
-#: eventyay/control/forms/global_settings.py:226
+#: eventyay/base/auth.py:121 eventyay/base/forms/auth.py:143
+#: eventyay/base/forms/auth.py:199
+#: eventyay/control/forms/global_settings.py:311
 #: eventyay/control/templates/pretixcontrol/admin/systemconfig.html:89
 #: eventyay/person/forms/user.py:24 eventyay/person/forms/user.py:39
 #: eventyay/presale/templates/pretixpresale/fragment_modals.html:77
@@ -1599,7 +1601,7 @@ msgid "Please enter the hexadecimal code of a color, e.g. #990000."
 msgstr "الرجاء إدخال رمز عشري من لون، على سبيل المثال # 990000."
 
 #: eventyay/base/configurations/default_setting.py:97
-#: eventyay/control/forms/global_settings.py:496
+#: eventyay/control/forms/global_settings.py:581
 msgid "Maximum number of items per order"
 msgstr "الحد الأقصى لعدد العناصر في النظام"
 
@@ -1904,12 +1906,12 @@ msgstr ""
 "سيتم استخدام نظام الترقيم نفسه الذي تكوين الفواتير العادية."
 
 #: eventyay/base/configurations/default_setting.py:516
-#: eventyay/control/forms/global_settings.py:487
+#: eventyay/control/forms/global_settings.py:572
 msgid "Reservation period"
 msgstr "فترة الحجز"
 
 #: eventyay/base/configurations/default_setting.py:517
-#: eventyay/control/forms/global_settings.py:488
+#: eventyay/control/forms/global_settings.py:573
 msgid ""
 "The number of minutes the items in a user's cart are reserved for this user."
 msgstr "محجوزة عدد الدقائق البنود في عربة المستخدم لهذا المستخدم."
@@ -2287,12 +2289,14 @@ msgstr "عرض تفاصيل المنتج قبل بدء فترة ما قبل ال
 
 #: eventyay/base/configurations/default_setting.py:927
 #: eventyay/control/forms/event.py:102
+#: eventyay/eventyay_common/forms/event.py:340
 #, fuzzy
 #| msgid "Event Language"
 msgid "Event languages"
 msgstr "لغة الحدث"
 
 #: eventyay/base/configurations/default_setting.py:929
+#: eventyay/eventyay_common/forms/event.py:343
 msgid ""
 "Users will be able to use eventyay in these languages, and you will be able "
 "to provide all texts in these languages. If you don't provide a text in the "
@@ -2789,7 +2793,7 @@ msgid "Refund method"
 msgstr "طريقة الاسترداد"
 
 #: eventyay/base/configurations/default_setting.py:1574
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:77
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:78
 #, fuzzy
 #| msgid "Contact information"
 msgid "Contact form"
@@ -2798,7 +2802,7 @@ msgstr "معلومات التواصل"
 #: eventyay/base/configurations/default_setting.py:1584
 #: eventyay/base/models/event.py:629 eventyay/control/forms/event.py:419
 #: eventyay/event/forms.py:281
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:91
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:92
 msgid "Organizer email address"
 msgstr "عنوان البريد الإلكتروني للمنظم"
 
@@ -3672,7 +3676,7 @@ msgid "We will show your logo with a maximal height and width of 2.5 cm."
 msgstr "وسوف نعرض شعارك مع ارتفاع القصوى وعرض 2.5 سم."
 
 #: eventyay/base/configurations/default_setting.py:2320
-#: eventyay/base/models/event.py:3168
+#: eventyay/base/models/event.py:3339
 msgid "Frontpage text"
 msgstr "النص صفحتها الاولى"
 
@@ -3781,7 +3785,7 @@ msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:2490
 #: eventyay/base/configurations/default_setting.py:2500
-#: eventyay/base/models/event.py:542 eventyay/base/models/event.py:3126
+#: eventyay/base/models/event.py:542 eventyay/base/models/event.py:3297
 #: eventyay/control/forms/subevents.py:507
 #: eventyay/control/templates/pretixcontrol/subevents/bulk.html:268
 msgid "Event start time"
@@ -3920,7 +3924,7 @@ msgstr "نص قصير يُعرض على لافتة صفحة البداية ال�
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:35
 #: eventyay/eventyay_common/views/dashboards.py:570
 #: eventyay/eventyay_common/views/dashboards.py:577
-#: eventyay/eventyay_common/views/event.py:980
+#: eventyay/eventyay_common/views/event.py:1015
 #: eventyay/orga/templates/orga/event/component_link.html:9
 #: eventyay/presale/templates/pretixpresale/organizers/index.html:105
 #: eventyay/presale/templates/pretixpresale/organizers/index.html:107
@@ -4119,7 +4123,8 @@ msgid ""
 "email settings are correct."
 msgstr ""
 
-#: eventyay/base/email.py:351 eventyay/eventyay_common/views/event.py:557
+#: eventyay/base/email.py:351 eventyay/eventyay_common/views/event.py:563
+#: eventyay/eventyay_common/views/event.py:1588
 #: eventyay/orga/templates/orga/cfp/submissiontype/list.html:62
 #: eventyay/plugins/badges/apps.py:63 eventyay/plugins/badges/models.py:26
 #: eventyay/plugins/badges/templates/pretixplugins/badges/index.html:47
@@ -4218,6 +4223,7 @@ msgid "Answers to file upload questions"
 msgstr "إجابات على الأسئلة تحميل الملف"
 
 #: eventyay/base/exporters/answers.py:28 eventyay/base/models/product.py:1426
+#: eventyay/eventyay_common/forms/event.py:386
 msgid "Questions"
 msgstr "الأسئلة"
 
@@ -4794,14 +4800,14 @@ msgstr "الحالة"
 #: eventyay/base/exporters/waitinglist.py:87
 #: eventyay/base/models/checkin.py:188 eventyay/base/pdf.py:423
 #: eventyay/common/log_display.py:286
-#: eventyay/control/forms/global_settings.py:512
+#: eventyay/control/forms/global_settings.py:747
 #: eventyay/control/templates/control/user_list.html:15
 #: eventyay/control/templates/pretixcontrol/admin/attendees/index.html:76
 #: eventyay/control/templates/pretixcontrol/admin/orders/index.html:71
 #: eventyay/control/templates/pretixcontrol/checkin/index.html:114
 #: eventyay/control/templates/pretixcontrol/orders/index.html:197
 #: eventyay/control/templates/pretixcontrol/waitinglist/index.html:171
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:246
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:247
 #: eventyay/eventyay_common/templates/eventyay_common/sessions/sessions.html:57
 #: eventyay/eventyay_common/templates/eventyay_common/sessions/sessions.html:88
 #: eventyay/orga/templates/orga/organizer/speaker_list.html:31
@@ -5109,7 +5115,7 @@ msgid "Order comment"
 msgstr "تعليق على الطلب"
 
 #: eventyay/base/exporters/orderlist.py:864
-#: eventyay/plugins/badges/signals.py:165 eventyay/plugins/badges/utils.py:536
+#: eventyay/plugins/badges/signals.py:168 eventyay/plugins/badges/utils.py:536
 msgid "Badge options"
 msgstr "خيارات الشارة"
 
@@ -5475,21 +5481,21 @@ msgstr "أفضلية"
 msgid "Voucher code"
 msgstr "كود قسيمة"
 
-#: eventyay/base/forms/__init__.py:102
+#: eventyay/base/forms/__init__.py:104
 #, fuzzy
 #| msgid "Default ({value})"
 msgid "Default (Inherit: {})"
 msgstr "افتراضي ({value})"
 
-#: eventyay/base/forms/__init__.py:217
+#: eventyay/base/forms/__init__.py:219
 msgid "Show secret key"
 msgstr "إظهار المفتاح السري"
 
-#: eventyay/base/forms/__init__.py:218
+#: eventyay/base/forms/__init__.py:220
 msgid "Hide secret key"
 msgstr "إخفاء المفتاح السري"
 
-#: eventyay/base/forms/auth.py:17
+#: eventyay/base/forms/auth.py:18
 msgid ""
 "Password must be at least 8 characters and include a letter, a number, and a "
 "special character."
@@ -5497,46 +5503,40 @@ msgstr ""
 "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل وتتضمن حرفًا واحدًا، ورقمًا، وحرفًا "
 "خاصًا."
 
-#: eventyay/base/forms/auth.py:43 eventyay/base/forms/auth.py:159
+#: eventyay/base/forms/auth.py:44 eventyay/base/forms/auth.py:160
 #: eventyay/presale/templates/pretixpresale/fragment_modals.html:89
 msgid "Keep me logged in"
 msgstr "أبقني متصل"
 
-#: eventyay/base/forms/auth.py:46 eventyay/base/forms/auth.py:248
+#: eventyay/base/forms/auth.py:47 eventyay/base/forms/auth.py:249
 msgid "This combination of credentials is not known to our system."
 msgstr "ولا يعرف هذا المزيج من اوراق اعتماده الى نظامنا."
 
-#: eventyay/base/forms/auth.py:47 eventyay/base/forms/user.py:20
+#: eventyay/base/forms/auth.py:48 eventyay/base/forms/user.py:20
 msgid "For security reasons, please wait 5 minutes before you try again."
 msgstr "لأسباب أمنية، يرجى الانتظار 5 دقائق قبل المحاولة مرة أخرى."
 
-#: eventyay/base/forms/auth.py:48 eventyay/base/forms/auth.py:249
+#: eventyay/base/forms/auth.py:49 eventyay/base/forms/auth.py:250
 msgid "This account is inactive."
 msgstr "هذا الحساب غير نشط."
 
-#: eventyay/base/forms/auth.py:49 eventyay/base/forms/auth.py:250
-#, fuzzy
-#| msgid "This change was performed by the system administrator."
-msgid "This account has been suspended. Please contact the site administrator."
-msgstr "تم إجراء هذا التغيير بواسطة مسؤول النظام."
-
-#: eventyay/base/forms/auth.py:137
+#: eventyay/base/forms/auth.py:138
 msgid ""
 "You already registered with that email address, please use the login form."
 msgstr ""
 "كنت مسجل بالفعل مع عنوان البريد الإلكتروني، يرجى استخدام نموذج تسجيل الدخول."
 
-#: eventyay/base/forms/auth.py:138 eventyay/base/forms/auth.py:196
+#: eventyay/base/forms/auth.py:139 eventyay/base/forms/auth.py:197
 #: eventyay/base/forms/user.py:19 eventyay/control/forms/users.py:26
 msgid "Please enter the same password twice"
 msgstr "يرجى إدخال كلمة المرور نفسها مرتين"
 
-#: eventyay/base/forms/auth.py:140 eventyay/common/text/phrases.py:86
+#: eventyay/base/forms/auth.py:141 eventyay/common/text/phrases.py:86
 #: eventyay/orga/forms/importers.py:80
 msgid "Email address"
 msgstr "عنوان البريد الإلكتروني"
 
-#: eventyay/base/forms/auth.py:151 eventyay/base/forms/auth.py:199
+#: eventyay/base/forms/auth.py:152 eventyay/base/forms/auth.py:200
 msgid "Repeat password"
 msgstr "اعد كلمة السر"
 
@@ -5706,11 +5706,119 @@ msgstr "الشركات"
 msgid "Individual customer"
 msgstr "الأفراد"
 
+#: eventyay/base/gmail/backend.py:52
+#, fuzzy, python-format
+#| msgid "Failed to send mail to the following user: {}"
+msgid "Daily Gmail sending limit reached for %(email)s."
+msgstr "فشل في إرسال البريد الإلكتروني للمستخدم التالية: {}"
+
+#: eventyay/base/gmail/backend.py:61
+#, fuzzy, python-format
+#| msgid "Failed to send mail to the following user: {}"
+msgid "Gmail rate limit reached for %(email)s."
+msgstr "فشل في إرسال البريد الإلكتروني للمستخدم التالية: {}"
+
+#: eventyay/base/gmail/constants.py:15
+#: eventyay/control/forms/global_settings.py:113
+#: eventyay/orga/forms/email.py:21
+msgid "Gmail / Google Workspace API"
+msgstr ""
+
+#: eventyay/base/gmail/deps.py:20
+msgid ""
+"Gmail support requires the Google API client libraries. Rebuild the "
+"application image or run `uv sync --all-extras --all-groups`."
+msgstr ""
+
+#: eventyay/base/gmail/models.py:30 eventyay/base/models/event.py:840
+#: eventyay/base/models/orders.py:176 eventyay/base/models/orders.py:2692
+#: eventyay/base/models/product.py:311 eventyay/base/models/product.py:1669
+#: eventyay/base/models/vouchers.py:91 eventyay/base/models/waitinglist.py:32
+#: eventyay/base/notifications.py:178 eventyay/common/log_display.py:294
+#: eventyay/control/forms/organizer_forms/user_orders_form.py:11
+#: eventyay/control/templates/control/bbb_list.html:21
+#: eventyay/control/templates/control/janus_list.html:17
+#: eventyay/control/templates/control/jitsi_list.html:21
+#: eventyay/control/templates/control/systemlog_list.html:12
+#: eventyay/control/templates/control/turn_list.html:17
+#: eventyay/control/templates/pretixcontrol/admin/attendees/index.html:85
+#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:293
+#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:344
+#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:461
+#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:501
+#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:539
+#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:584
+#: eventyay/control/templates/pretixcontrol/admin/orders/index.html:61
+#: eventyay/control/templates/pretixcontrol/admin/submissions/index.html:91
+#: eventyay/control/templates/pretixcontrol/search/orders.html:42
+#: eventyay/control/templates/pretixcontrol/user/orders.html:27
+#: eventyay/event/stages.py:95 eventyay/eventyay_common/forms/filters.py:12
+#: eventyay/eventyay_common/forms/filters.py:54
+#: eventyay/eventyay_common/templates/eventyay_common/orders/orders.html:40
+#: eventyay/eventyay_common/templates/eventyay_common/orders/orders.html:54
+#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:187
+#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:256
+#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:325
+#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:361
+#: eventyay/eventyay_common/templates/eventyay_common/sessions/sessions.html:54
+#: eventyay/eventyay_common/templates/eventyay_common/sessions/sessions.html:69
+#: eventyay/orga/templates/orga/mails/_placeholder_group.html:14
+#: eventyay/orga/views/event.py:387 eventyay/presale/organizer_exports.py:212
+#: eventyay/presale/templates/pretixpresale/event/waitinglist.html:19
+#, fuzzy
+#| msgid "Event"
+#| msgid_plural "Events"
+msgid "Event"
+msgstr "الفعاليات"
+
+#: eventyay/base/gmail/models.py:32
+#, fuzzy
+#| msgid "Send email"
+msgid "Sender email"
+msgstr "ارسل بريد الكتروني"
+
+#: eventyay/base/gmail/models.py:50
+msgid "Gmail OAuth credential"
+msgstr ""
+
+#: eventyay/base/gmail/models.py:51
+#, fuzzy
+#| msgid "Live Credentials"
+msgid "Gmail OAuth credentials"
+msgstr "بيانات الاعتماد الحية"
+
+#: eventyay/base/gmail/models.py:58
+#, fuzzy
+#| msgid "Back to overview"
+msgid "platform"
+msgstr "الرجوع إلى النظرة العامة"
+
+#: eventyay/base/gmail/oauth.py:37
+#, fuzzy
+#| msgid "Add the client ID and client secret to admin settings"
+msgid "Gmail OAuth client ID and secret must be configured in global settings."
+msgstr ""
+"أضف معرف العميل (client ID) والرمز السري للعميل (client secret) إلى إعدادات "
+"المشرف"
+
+#: eventyay/base/gmail/oauth.py:85
+#, fuzzy
+#| msgid "The requested question does not exist."
+msgid "The required Gmail send permission was not granted."
+msgstr "عدم وجود مسألة المطلوبة."
+
+#: eventyay/base/gmail/oauth.py:99
+#, fuzzy
+#| msgid "Please provide an email address."
+msgid "Google did not return an email address for the connected account."
+msgstr "يرجى إدخال عنوان بريد إلكتروني."
+
 #: eventyay/base/invoice.py:71
-#, python-format
+#, fuzzy, python-format
+#| msgid "Page %(page)s of %(of)s"
 msgctxt "invoice"
-msgid "Page %d of %d"
-msgstr "صفحة %d من %d"
+msgid "Page %(page)d of %(of)d"
+msgstr "الصفحة%(page)s من %(of)s"
 
 #: eventyay/base/invoice.py:272
 msgctxt "invoice"
@@ -5794,7 +5902,7 @@ msgstr ""
 msgid "TEST MODE"
 msgstr "وضع الاختبار"
 
-#: eventyay/base/invoice.py:478 eventyay/base/services/mail.py:506
+#: eventyay/base/invoice.py:478 eventyay/base/services/mail.py:512
 #, python-brace-format
 msgctxt "invoice"
 msgid "Invoice {num}"
@@ -6206,6 +6314,7 @@ msgstr "[eventyay] تم تغيير كلمة المرور"
 #: eventyay/base/models/auth_token.py:65 eventyay/base/models/event.py:841
 #: eventyay/cfp/templates/cfp/index.html:4
 #: eventyay/cfp/templates/cfp/index.html:8
+#: eventyay/common/context_processors.py:121
 #: eventyay/control/forms/organizer_forms/device_form.py:45
 #: eventyay/control/navigation.py:494
 #: eventyay/control/templates/control/event_list.html:6
@@ -6519,28 +6628,28 @@ msgstr "صفحات النقاش منشورة"
 msgid "Event currency"
 msgstr "العملة الحدث"
 
-#: eventyay/base/models/event.py:543 eventyay/base/models/event.py:3127
+#: eventyay/base/models/event.py:543 eventyay/base/models/event.py:3298
 #: eventyay/base/pdf.py:365 eventyay/control/forms/subevents.py:512
 #: eventyay/control/templates/pretixcontrol/subevents/bulk.html:270
 msgid "Event end time"
 msgstr "وقت نهاية الحدث"
 
-#: eventyay/base/models/event.py:544 eventyay/base/models/event.py:3128
+#: eventyay/base/models/event.py:544 eventyay/base/models/event.py:3299
 #: eventyay/control/forms/subevents.py:517
 #: eventyay/control/templates/pretixcontrol/subevents/bulk.html:274
 msgid "Admission time"
 msgstr "وقت تسجيل الدخول"
 
-#: eventyay/base/models/event.py:547 eventyay/base/models/event.py:3119
+#: eventyay/base/models/event.py:547 eventyay/base/models/event.py:3290
 msgid "Show in lists"
 msgstr "تظهر في القوائم"
 
-#: eventyay/base/models/event.py:553 eventyay/base/models/event.py:3132
+#: eventyay/base/models/event.py:553 eventyay/base/models/event.py:3303
 #: eventyay/control/forms/subevents.py:78
 msgid "End of presale"
 msgstr "نهاية [خبر]"
 
-#: eventyay/base/models/event.py:555 eventyay/base/models/event.py:3134
+#: eventyay/base/models/event.py:555 eventyay/base/models/event.py:3305
 #: eventyay/control/forms/subevents.py:80
 msgid ""
 "Optional. No products will be sold after this date. If you do not set this "
@@ -6549,17 +6658,17 @@ msgstr ""
 "اختياري. وسيتم بيع أي منتجات بعد هذا التاريخ. إذا لم يكن لتعيين هذه القيمة، "
 "ستنتهي [خبر] بعد تاريخ انتهاء الحدث."
 
-#: eventyay/base/models/event.py:562 eventyay/base/models/event.py:3141
+#: eventyay/base/models/event.py:562 eventyay/base/models/event.py:3312
 #: eventyay/control/forms/subevents.py:72
 msgid "Start of presale"
 msgstr "بدء من [خبر]"
 
-#: eventyay/base/models/event.py:563 eventyay/base/models/event.py:3142
+#: eventyay/base/models/event.py:563 eventyay/base/models/event.py:3313
 #: eventyay/control/forms/subevents.py:73
 msgid "Optional. No products will be sold before this date."
 msgstr "اختياري. وسيتم بيع أي منتجات قبل هذا التاريخ."
 
-#: eventyay/base/models/event.py:569 eventyay/base/models/event.py:3148
+#: eventyay/base/models/event.py:569 eventyay/base/models/event.py:3319
 #: eventyay/base/services/talkimport.py:147
 #: eventyay/eventyay_common/templates/eventyay_common/events/create.html:164
 #: eventyay/presale/templates/pretixpresale/event/index.html:216
@@ -6568,11 +6677,11 @@ msgstr "اختياري. وسيتم بيع أي منتجات قبل هذا الت
 msgid "Location"
 msgstr "موقعك"
 
-#: eventyay/base/models/event.py:572 eventyay/base/models/event.py:3151
+#: eventyay/base/models/event.py:572 eventyay/base/models/event.py:3322
 msgid "Latitude"
 msgstr "خطوط الطول"
 
-#: eventyay/base/models/event.py:581 eventyay/base/models/event.py:3160
+#: eventyay/base/models/event.py:581 eventyay/base/models/event.py:3331
 msgid "Longitude"
 msgstr "خطوط العرض"
 
@@ -6641,7 +6750,7 @@ msgid ""
 msgstr ""
 
 #: eventyay/base/models/event.py:637
-#: eventyay/eventyay_common/forms/event.py:265
+#: eventyay/eventyay_common/forms/event.py:266
 msgid "Custom domain"
 msgstr "مجال مخصص"
 
@@ -6715,151 +6824,106 @@ msgstr "الطبوغرافيا"
 msgid "Graph Paper"
 msgstr "ورقة الرسم البياني"
 
-#: eventyay/base/models/event.py:840 eventyay/base/models/orders.py:176
-#: eventyay/base/models/orders.py:2692 eventyay/base/models/product.py:311
-#: eventyay/base/models/product.py:1669 eventyay/base/models/vouchers.py:91
-#: eventyay/base/models/waitinglist.py:32 eventyay/base/notifications.py:178
-#: eventyay/common/log_display.py:294
-#: eventyay/control/forms/organizer_forms/user_orders_form.py:11
-#: eventyay/control/templates/control/bbb_list.html:21
-#: eventyay/control/templates/control/janus_list.html:17
-#: eventyay/control/templates/control/jitsi_list.html:21
-#: eventyay/control/templates/control/systemlog_list.html:12
-#: eventyay/control/templates/control/turn_list.html:17
-#: eventyay/control/templates/pretixcontrol/admin/attendees/index.html:85
-#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:293
-#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:344
-#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:461
-#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:501
-#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:539
-#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:584
-#: eventyay/control/templates/pretixcontrol/admin/orders/index.html:61
-#: eventyay/control/templates/pretixcontrol/admin/submissions/index.html:91
-#: eventyay/control/templates/pretixcontrol/search/orders.html:42
-#: eventyay/control/templates/pretixcontrol/user/orders.html:27
-#: eventyay/event/stages.py:96 eventyay/eventyay_common/forms/filters.py:12
-#: eventyay/eventyay_common/forms/filters.py:54
-#: eventyay/eventyay_common/templates/eventyay_common/orders/orders.html:40
-#: eventyay/eventyay_common/templates/eventyay_common/orders/orders.html:54
-#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:187
-#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:256
-#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:325
-#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:361
-#: eventyay/eventyay_common/templates/eventyay_common/sessions/sessions.html:54
-#: eventyay/eventyay_common/templates/eventyay_common/sessions/sessions.html:69
-#: eventyay/orga/templates/orga/mails/_placeholder_group.html:14
-#: eventyay/orga/templates/orga/organizer/list.html:32
-#: eventyay/orga/views/event.py:388 eventyay/presale/organizer_exports.py:212
-#: eventyay/presale/templates/pretixpresale/event/waitinglist.html:19
-msgid "Event"
-msgid_plural "Events"
-msgstr[0] "الفعاليات"
-msgstr[1] "الفعالية"
-msgstr[2] "الفعاليات"
-msgstr[3] "الفعاليات"
-msgstr[4] ""
-msgstr[5] "الفعاليات"
-
-#: eventyay/base/models/event.py:1929 eventyay/control/views/dashboards.py:307
+#: eventyay/base/models/event.py:2100 eventyay/control/views/dashboards.py:307
 msgid "live (private test mode)"
 msgstr "مباشر (وضع اختبار خاص)"
 
-#: eventyay/base/models/event.py:1929 eventyay/control/views/dashboards.py:316
+#: eventyay/base/models/event.py:2100 eventyay/control/views/dashboards.py:316
 msgid "in private test mode"
 msgstr "في وضع الاختبار الخاص"
 
-#: eventyay/base/models/event.py:1931 eventyay/control/views/dashboards.py:310
+#: eventyay/base/models/event.py:2102 eventyay/control/views/dashboards.py:310
 msgid "live and in test mode"
 msgstr "يعيش وفي وضع الاختبار"
 
-#: eventyay/base/models/event.py:1933 eventyay/control/views/dashboards.py:313
+#: eventyay/base/models/event.py:2104 eventyay/control/views/dashboards.py:313
 #: eventyay/orga/templates/orga/includes/dashboard_block_event.html:24
 msgid "live"
 msgstr "حي"
 
-#: eventyay/base/models/event.py:1935 eventyay/control/views/dashboards.py:318
+#: eventyay/base/models/event.py:2106 eventyay/control/views/dashboards.py:318
 msgid "in test mode"
 msgstr "في وضع الاختبار"
 
-#: eventyay/base/models/event.py:1937 eventyay/control/views/dashboards.py:318
+#: eventyay/base/models/event.py:2108 eventyay/control/views/dashboards.py:318
 msgid "not yet public"
 msgstr "لا الجمهور بعد"
 
-#: eventyay/base/models/event.py:2053
+#: eventyay/base/models/event.py:2224
 msgid ""
 "You have configured at least one paid product but have not enabled any "
 "payment methods."
 msgstr ""
 "لقد قمت بتكوين ما لا يقل عن منتج واحد يدفع ولكن لم يتم تمكين أي وسائل الدفع."
 
-#: eventyay/base/models/event.py:2056
+#: eventyay/base/models/event.py:2227
 msgid "You need to configure at least one quota to sell anything."
 msgstr "تحتاج إلى تكوين حصة واحدة على الأقل لبيع أي شيء."
 
-#: eventyay/base/models/event.py:2059
+#: eventyay/base/models/event.py:2230
 msgid "You have unpaid invoices, please pay them before going live."
 msgstr "لديك فواتير غير مدفوعة، الرجاء تسديدها قبل بدء البث."
 
-#: eventyay/base/models/event.py:2064
+#: eventyay/base/models/event.py:2235
 #, python-brace-format
 msgid "You need to fill the meta parameter \"{property}\"."
 msgstr "عليك ملء معامل الميتا \"{property}\"."
 
-#: eventyay/base/models/event.py:2110
+#: eventyay/base/models/event.py:2281
 msgid "You need to fill the billing information."
 msgstr "عليك تعبئة معلومات الفوترة."
 
-#: eventyay/base/models/event.py:2329
+#: eventyay/base/models/event.py:2500
 msgid ""
 "Once created an event cannot change between an series and a single event."
 msgstr "وبمجرد إنشاء لا يمكن تغيير حدث بين سلسلة وحدث واحد."
 
-#: eventyay/base/models/event.py:2335
+#: eventyay/base/models/event.py:2506
 msgid "The event slug cannot be changed."
 msgstr "لا يمكن تغيير سبيكة الحدث."
 
-#: eventyay/base/models/event.py:2338
+#: eventyay/base/models/event.py:2509
 msgid "This slug has already been used for a different event."
 msgstr "وقد تم بالفعل استخدام هذا سبيكة لحدث آخر."
 
-#: eventyay/base/models/event.py:2344
+#: eventyay/base/models/event.py:2515
 msgid "The event cannot end before it starts."
 msgstr "لا يمكن أن ينتهي الحدث قبل أن تبدأ."
 
-#: eventyay/base/models/event.py:2350
+#: eventyay/base/models/event.py:2521
 msgid "The event's presale cannot end before it starts."
 msgstr "لا يمكن أن تنتهي [خبر] الحدث قبل أن تبدأ."
 
-#: eventyay/base/models/event.py:2823 eventyay/base/models/event.py:3019
-#: eventyay/event/stages.py:68
+#: eventyay/base/models/event.py:2994 eventyay/base/models/event.py:3190
+#: eventyay/event/stages.py:67
 #: eventyay/orga/templates/orga/submission/review.html:198
 msgid "Review"
 msgstr "التقييم"
 
-#: eventyay/base/models/event.py:3027
+#: eventyay/base/models/event.py:3198
 msgid "Selection"
 msgstr "تحديد"
 
-#: eventyay/base/models/event.py:3042 eventyay/base/models/review.py:129
+#: eventyay/base/models/event.py:3213 eventyay/base/models/review.py:129
 #: eventyay/orga/forms/event.py:530 eventyay/orga/forms/event.py:547
 #: eventyay/orga/templates/orga/includes/review_filter_form.html:25
 #: eventyay/orga/templates/orga/submission/review.html:193
 msgid "Score"
 msgstr "النتيجة"
 
-#: eventyay/base/models/event.py:3052
+#: eventyay/base/models/event.py:3223
 msgid "Maybe"
 msgstr "ربما"
 
-#: eventyay/base/models/event.py:3075
+#: eventyay/base/models/event.py:3246
 msgid "Link text"
 msgstr "نص الرابط"
 
-#: eventyay/base/models/event.py:3076
+#: eventyay/base/models/event.py:3247
 msgid "Link URL"
 msgstr "عنوان الرابط"
 
-#: eventyay/base/models/event.py:3114
+#: eventyay/base/models/event.py:3285
 #: eventyay/base/models/global_plugin_config.py:28
 #: eventyay/base/models/product.py:337 eventyay/base/models/product.py:867
 #: eventyay/base/models/product.py:1320 eventyay/control/forms/filter.py:852
@@ -6883,7 +6947,7 @@ msgstr "عنوان الرابط"
 msgid "Active"
 msgstr "نشيط"
 
-#: eventyay/base/models/event.py:3115
+#: eventyay/base/models/event.py:3286
 msgid ""
 "Only with this checkbox enabled, this date is visible in the frontend to "
 "users."
@@ -6891,46 +6955,46 @@ msgstr ""
 "فقط مع تمكين خانة الاختيار هذه، هذا التاريخ مرئيا في الواجهة الأمامية "
 "للمستخدمين."
 
-#: eventyay/base/models/event.py:3120
+#: eventyay/base/models/event.py:3291
 msgid ""
 "If selected, this event will show up publicly on the list of dates for your "
 "event."
 msgstr ""
 "إذا المحدد، سوف تظهر هذا الحدث للجمهور في قائمة مواعيد لهذا الحدث الخاص بك."
 
-#: eventyay/base/models/event.py:3184
+#: eventyay/base/models/event.py:3355
 msgid "Date in event series"
 msgstr "التاريخ في سلسلة الحدث"
 
-#: eventyay/base/models/event.py:3185
+#: eventyay/base/models/event.py:3356
 msgid "Dates in event series"
 msgstr "التمور في سلسلة الحدث"
 
-#: eventyay/base/models/event.py:3286
+#: eventyay/base/models/event.py:3457
 msgid "One or more variations do not belong to this event."
 msgstr "واحد أو أكثر من الاختلافات لا تنتمي إلى هذا الحدث."
 
-#: eventyay/base/models/event.py:3372 eventyay/base/models/product.py:1832
+#: eventyay/base/models/event.py:3543 eventyay/base/models/product.py:1832
 msgid "Can not contain spaces or special characters except underscores"
 msgstr "لا يمكن أن تحتوي على مسافات أو أحرف خاصة باستثناء أحرف (_)"
 
-#: eventyay/base/models/event.py:3376 eventyay/base/models/product.py:1836
+#: eventyay/base/models/event.py:3547 eventyay/base/models/product.py:1836
 msgid "The property name may only contain letters, numbers and underscores."
 msgstr "قد تحتوي على اسم الخاصية فقط الحروف والأرقام وسفلية."
 
-#: eventyay/base/models/event.py:3381
+#: eventyay/base/models/event.py:3552
 msgid "Default value"
 msgstr "القيمة الافتراضية"
 
-#: eventyay/base/models/event.py:3384
+#: eventyay/base/models/event.py:3555
 msgid "Can only be changed by organizer-level administrators"
 msgstr "لا يمكن تغييره إلا بواسطة مديري مستوى المنظم"
 
-#: eventyay/base/models/event.py:3388
+#: eventyay/base/models/event.py:3559
 msgid "Required for events"
 msgstr "مطلوب للفعاليات"
 
-#: eventyay/base/models/event.py:3390
+#: eventyay/base/models/event.py:3561
 msgid ""
 "If checked, an event can only be taken live if the property is set. In event "
 "series, its always optional to set a value for individual dates"
@@ -6938,11 +7002,11 @@ msgstr ""
 "إذا تم تحديد هذا الخيار، لا يمكن وضع الحدث قيد البث إلا إذا تم تعيين "
 "الخاصية. في سلاسل الأحداث، يكون تعيين قيمة للتواريخ الفردية اختياريًا دائمًا"
 
-#: eventyay/base/models/event.py:3397
+#: eventyay/base/models/event.py:3568
 msgid "Valid values"
 msgstr "القيم الصالحة"
 
-#: eventyay/base/models/event.py:3398
+#: eventyay/base/models/event.py:3569
 msgid ""
 "If you keep this empty, any value is allowed. Otherwise, enter one possible "
 "value per line."
@@ -6950,11 +7014,11 @@ msgstr ""
 "إذا تركت هذا الحقل فارغًا، فمسموح بأي قيمة. وإلا، أدخل قيمة محتملة واحدة في "
 "كل سطر."
 
-#: eventyay/base/models/event.py:3404
+#: eventyay/base/models/event.py:3575
 msgid "A property can either be required or have a default value, not both."
 msgstr "يمكن أن تكون الخاصية إما مطلوبة أو لها قيمة افتراضية، وليس كلاهما."
 
-#: eventyay/base/models/event.py:3406
+#: eventyay/base/models/event.py:3577
 msgid "You cannot set a default value that is not a valid value."
 msgstr "لا يمكنك تعيين قيمة افتراضية ليست من القيم الصالحة."
 
@@ -7294,7 +7358,7 @@ msgstr "قائمة الحقول المخصصة التي لم يرد عليها �
 #: eventyay/orga/templates/orga/mails/sent_list.html:25
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/outbox_form.html:30
 #: eventyay/plugins/sendmail/views.py:278
-#: eventyay/plugins/sendmail/views.py:530
+#: eventyay/plugins/sendmail/views.py:534
 msgid "To"
 msgstr "الى"
 
@@ -7314,7 +7378,7 @@ msgstr ""
 msgid "CC"
 msgstr "CC"
 
-#: eventyay/base/models/mail.py:384 eventyay/plugins/sendmail/views.py:531
+#: eventyay/base/models/mail.py:384 eventyay/plugins/sendmail/views.py:535
 msgid "Sent at"
 msgstr "إرسال الى"
 
@@ -7708,7 +7772,7 @@ msgstr "منظم"
 
 #: eventyay/base/models/organizer.py:143
 #: eventyay/common/templates/common/fragment_profile_dropdown.html:28
-#: eventyay/control/forms/global_settings.py:553
+#: eventyay/control/forms/global_settings.py:789
 #: eventyay/control/navigation.py:386
 #: eventyay/control/templates/pretixcontrol/admin/dashboard.html:43
 #: eventyay/control/templates/pretixcontrol/admin/dashboard.html:207
@@ -8137,7 +8201,7 @@ msgstr "سجلات المنظمين"
 msgid "Page title"
 msgstr "عنوان الصفحة"
 
-#: eventyay/base/models/page.py:13 eventyay/control/views/pages.py:68
+#: eventyay/base/models/page.py:13 eventyay/control/views/pages.py:73
 msgid "URL form"
 msgstr "نموذج عنوان URL"
 
@@ -10654,12 +10718,12 @@ msgstr "يرجى إدخال قناة مبيعات صالحة."
 msgid "No matching seat was found."
 msgstr "لم يتم العثور على مقعد مطابق."
 
-#: eventyay/base/orderimport.py:984 eventyay/base/services/cart.py:136
+#: eventyay/base/orderimport.py:984 eventyay/base/services/cart.py:140
 msgid ""
 "The seat you selected has already been taken. Please select a different seat."
 msgstr "وقد تم بالفعل اتخاذ المقعد الذي حددته. الرجاء اختيار مقعد مختلفة."
 
-#: eventyay/base/orderimport.py:993 eventyay/base/services/cart.py:133
+#: eventyay/base/orderimport.py:993 eventyay/base/services/cart.py:137
 msgid "You need to select a specific seat."
 msgstr "تحتاج إلى تحديد مقعد محددة."
 
@@ -11360,7 +11424,7 @@ msgid "Languages"
 msgstr "اللغات"
 
 #: eventyay/base/plugins.py:100 eventyay/common/plugins.py:15
-#: eventyay/orga/templates/orga/mails/_placeholder_group.html:20
+#: eventyay/orga/templates/orga/mails/_placeholder_group.html:16
 msgctxt "category of items"
 msgid "Other"
 msgstr "أخرى"
@@ -11529,36 +11593,37 @@ msgstr ""
 msgid "The entered price exceeds the permitted maximum."
 msgstr "سعر تم إدخالها إلى الأعلى."
 
-#: eventyay/base/services/cart.py:94
+#: eventyay/base/services/cart.py:95
 #, python-format
 msgid ""
-"The entered price is below the permitted minimum. The price range is %s to "
-"%s %s."
+"The entered price is below the permitted minimum. The price range is %(min)s "
+"to %(max)s %(currency)s."
 msgstr ""
 
-#: eventyay/base/services/cart.py:95
+#: eventyay/base/services/cart.py:97
 #, python-format
 msgid ""
 "The entered price is below the permitted minimum. The minimum price is %s."
 msgstr ""
 
-#: eventyay/base/services/cart.py:96
-#, python-format
+#: eventyay/base/services/cart.py:99
+#, fuzzy, python-format
+#| msgid "The entered price is to high."
 msgid ""
-"The entered price exceeds the permitted maximum. The price range is %s to %s "
-"%s."
-msgstr ""
+"The entered price exceeds the permitted maximum. The price range is %(min)s "
+"to %(max)s %(currency)s."
+msgstr "سعر تم إدخالها إلى الأعلى."
 
-#: eventyay/base/services/cart.py:97
+#: eventyay/base/services/cart.py:101
 msgid "This voucher code is not known in our database."
 msgstr "ولا يعرف هذا الرمز قسيمة في قاعدة البيانات الخاصة بنا."
 
-#: eventyay/base/services/cart.py:98
+#: eventyay/base/services/cart.py:102
 msgid ""
 "This voucher code has already been used the maximum number of times allowed."
 msgstr "انتهى كود الخصم المدخل."
 
-#: eventyay/base/services/cart.py:100
+#: eventyay/base/services/cart.py:104
 #, python-format
 msgid ""
 "This voucher code is currently locked since it is already contained in a "
@@ -11570,12 +11635,12 @@ msgstr ""
 "آخر هو التعويض هذه القسائم في الوقت الحالي، أو أنك حاولت استرداد قيمتها من "
 "قبل ولكن لم يكمل عملية السحب. يمكنك محاولة استخدامه مرة أخرى في %d دقيقة."
 
-#: eventyay/base/services/cart.py:105
+#: eventyay/base/services/cart.py:109
 #, python-format
 msgid "This voucher code can only be redeemed %d more times."
 msgstr "هذا الرمز قسيمة يمكن أن يكون إلا مطفي %d أكثر من مرة."
 
-#: eventyay/base/services/cart.py:107
+#: eventyay/base/services/cart.py:111
 msgid ""
 "You already used this voucher code. Remove the associated line from your "
 "cart if you want to use it for a different product."
@@ -11583,19 +11648,19 @@ msgstr ""
 "استخدمته بالفعل هذا الرمز قسيمة. إزالة السطر المرتبطة من سلة الخاص بك إذا "
 "كنت ترغب في استخدامه لمنتج مختلف."
 
-#: eventyay/base/services/cart.py:110
+#: eventyay/base/services/cart.py:114
 msgid "This voucher is expired."
 msgstr "هذا هو قسيمة منتهية الصلاحية."
 
-#: eventyay/base/services/cart.py:111
+#: eventyay/base/services/cart.py:115
 msgid "This voucher is not valid for this product."
 msgstr "هذه القسيمة غير صالح لهذا المنتج."
 
-#: eventyay/base/services/cart.py:112
+#: eventyay/base/services/cart.py:116
 msgid "This voucher is not valid for this seat."
 msgstr "هذة القسيمة غير صالحة لهذا المقعد."
 
-#: eventyay/base/services/cart.py:114
+#: eventyay/base/services/cart.py:118
 msgid ""
 "We did not find any position in your cart that we could use this voucher "
 "for. If you want to add something new to your cart using that voucher, you "
@@ -11605,33 +11670,33 @@ msgstr ""
 "إضافة شيء جديد إلى سلة التسوق باستخدام هذه القسيمة، يمكنك القيام بذلك عبر "
 "خيار استرداد القسيمة في أسفل الصفحة."
 
-#: eventyay/base/services/cart.py:118
+#: eventyay/base/services/cart.py:122
 msgid "Your voucher is valid for a product that is currently not for sale."
 msgstr "القسيمة غير صالحة لالمنتج الذي هو حاليا ليس للبيع."
 
-#: eventyay/base/services/cart.py:119
+#: eventyay/base/services/cart.py:123
 msgctxt "subevent"
 msgid "This voucher is not valid for this event date."
 msgstr "هذه القسيمة غير صالح لهذا التاريخ الحدث."
 
-#: eventyay/base/services/cart.py:120
+#: eventyay/base/services/cart.py:124
 msgid "You need a valid voucher code to order this product."
 msgstr "تحتاج إلى رمز قسيمة صالح لطلب هذا المنتج."
 
-#: eventyay/base/services/cart.py:121
+#: eventyay/base/services/cart.py:125
 msgctxt "subevent"
 msgid "The selected event date is not active."
 msgstr "تاريخ الحدث المحدد غير نشط."
 
-#: eventyay/base/services/cart.py:122
+#: eventyay/base/services/cart.py:126
 msgid "You can not select an add-on for the selected product."
 msgstr "لا يمكنك تحديد وظيفة إضافية على للمنتج المحدد."
 
-#: eventyay/base/services/cart.py:123
+#: eventyay/base/services/cart.py:127
 msgid "You can not select two variations of the same add-on product."
 msgstr "لا يمكنك تحديد شكلان من نفس إضافة على المنتج."
 
-#: eventyay/base/services/cart.py:124
+#: eventyay/base/services/cart.py:128
 #, python-format
 msgid ""
 "You can select at most %(max)s add-ons from the category %(cat)s for the "
@@ -11640,7 +11705,7 @@ msgstr ""
 "يمكنك تحديد في معظم %(max)s الصورة إضافات من فئة %(cat)s ليالي للمنتج "
 "%(base)s."
 
-#: eventyay/base/services/cart.py:126
+#: eventyay/base/services/cart.py:130
 #, python-format
 msgid ""
 "You need to select at least %(min)s add-ons from the category %(cat)s for "
@@ -11649,7 +11714,7 @@ msgstr ""
 "تحتاج إلى تحديد ما لا يقل عن %(min)s الصورة إضافات من فئة %(cat)s S للمنتج "
 "%(base)s."
 
-#: eventyay/base/services/cart.py:129
+#: eventyay/base/services/cart.py:133
 #, python-format
 msgid ""
 "You can select every add-ons from the category %(cat)s for the product "
@@ -11657,7 +11722,7 @@ msgid ""
 msgstr ""
 "يمكنك اختيار كل إضافة من الفئة %(cat)s للمنتج %(base)s مرة واحدة كحد أقصى."
 
-#: eventyay/base/services/cart.py:131
+#: eventyay/base/services/cart.py:135
 msgid ""
 "One of the products you selected can only be bought as an add-on to another "
 "project."
@@ -11665,23 +11730,23 @@ msgstr ""
 "واحدة من المنتجات التي حددتها لا يمكن إلا أن يكون اشترى باعتبارها إضافة إلى "
 "مشروع آخر."
 
-#: eventyay/base/services/cart.py:132
+#: eventyay/base/services/cart.py:136
 msgid "One of the products you selected can only be bought part of a bundle."
 msgstr "واحدة من المنتجات التي حددتها لا يمكن إلا أن يكون اشترى جزءا من حزمة."
 
-#: eventyay/base/services/cart.py:134
+#: eventyay/base/services/cart.py:138
 msgid "Please select a valid seat."
 msgstr "الرجاء اختيار مقعد صالح."
 
-#: eventyay/base/services/cart.py:135
+#: eventyay/base/services/cart.py:139
 msgid "You can not select a seat for this position."
 msgstr "لا يمكنك تحديد مقعد لهذا المنصب."
 
-#: eventyay/base/services/cart.py:137
+#: eventyay/base/services/cart.py:141
 msgid "You can not select the same seat multiple times."
 msgstr "لا يمكنك تحديد نفس المقعد عدة مرات."
 
-#: eventyay/base/services/cart.py:139
+#: eventyay/base/services/cart.py:143
 msgid ""
 "You entered a gift card instead of a voucher. Gift cards can be entered "
 "later on when you're asked for your payment details."
@@ -11689,7 +11754,7 @@ msgstr ""
 "لقد أدخلت بطاقة هدية بدلا من قسيمة. بطاقات هدية يمكن إدخالها في وقت لاحق "
 "عندما يطلب منك للحصول على تفاصيل الدفع الخاصة بك."
 
-#: eventyay/base/services/cart.py:143
+#: eventyay/base/services/cart.py:147
 msgid ""
 "Only one ticket per user is allowed for a product in your cart. You already "
 "have a ticket."
@@ -11697,7 +11762,7 @@ msgstr ""
 "يسمح بتذكرة واحدة لكل مستخدم لمنتج في سلة التسوق الخاصة بك. لديك تذكرة "
 "بالفعل."
 
-#: eventyay/base/services/cart.py:144
+#: eventyay/base/services/cart.py:148
 msgid ""
 "Only one ticket per user is allowed for this product. Quantity has been "
 "adjusted to 1."
@@ -11889,14 +11954,14 @@ msgstr "المنتج عينة {}"
 msgid "Sample product A"
 msgstr "عينة المنتج A"
 
-#: eventyay/base/services/mail.py:230
+#: eventyay/base/services/mail.py:236
 #, python-brace-format
 msgid ""
 "You are receiving this email because someone placed an order for {event} for "
 "you."
 msgstr "لقد استلمت هذا البريد لأن الحجز مسجل بايميلك ل {event}."
 
-#: eventyay/base/services/mail.py:234 eventyay/base/services/mail.py:255
+#: eventyay/base/services/mail.py:240 eventyay/base/services/mail.py:261
 #, python-brace-format
 msgid ""
 "You can view your order details at the following URL:\n"
@@ -11905,7 +11970,7 @@ msgstr ""
 "يمكنك مشاهدة تفاصيل طلبك في الرابط التالي:\n"
 "{orderurl}."
 
-#: eventyay/base/services/mail.py:250
+#: eventyay/base/services/mail.py:256
 #, python-brace-format
 msgid "You are receiving this email because you placed an order for {event}."
 msgstr "تلقيت هذا البريد لأنك قمت بالحجز في{event}."
@@ -12693,6 +12758,8 @@ msgid "You do not have access to this page."
 msgstr "لم يكن لديك الوصول إلى هذه الصفحة."
 
 #: eventyay/base/templates/403.html:20 eventyay/base/templates/404.html:19
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:76
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:78
 #: eventyay/control/templates/pretixcontrol/admin/user/staff_session_start.html:4
 #: eventyay/control/templates/pretixcontrol/admin/user/staff_session_start.html:6
 #: eventyay/control/templates/pretixcontrol/base.html:231
@@ -12701,8 +12768,8 @@ msgstr "لم يكن لديك الوصول إلى هذه الصفحة."
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:197
 #: eventyay/orga/templates/orga/base.html:163
 #: eventyay/orga/templates/orga/base.html:164
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:125
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:127
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:126
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:128
 msgid "Admin mode"
 msgstr "وضع المشرف"
 
@@ -12764,9 +12831,9 @@ msgstr ""
 
 #: eventyay/base/templates/pretixbase/email/email_footer.html:3
 #: eventyay/common/templates/common/powered_by.html:36
-#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:63
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:142
 #: eventyay/control/templates/pretixcontrol/base.html:416
-#: eventyay/eventyay_common/templates/eventyay_common/auth/base.html:89
+#: eventyay/eventyay_common/templates/eventyay_common/auth/base.html:98
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:386
 #: eventyay/presale/templates/pretixpresale/base_footer.html:13
 #, python-format
@@ -12913,11 +12980,12 @@ msgstr "البريد الإلكتروني المعاينة"
 #: eventyay/base/templates/pretixbase/forms/widgets/thumbnailed_file_input.html:47
 #: eventyay/control/templates/pretixcontrol/event/mail_settings_fragment.html:30
 #: eventyay/control/templates/pretixcontrol/event/tickets.html:36
+#: eventyay/control/templates/pretixcontrol/global_settings.html:246
 #: eventyay/control/templates/pretixcontrol/includes/preview_modal.html:13
 #: eventyay/control/templates/pretixcontrol/includes/preview_modal.html:16
 #: eventyay/control/templates/pretixcontrol/order/sendmail.html:33
 #: eventyay/control/templates/pretixcontrol/pdf/index.html:452
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:305
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:303
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/outbox_form.html:136
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/send_form.html:73
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/send_team_form.html:48
@@ -13373,11 +13441,13 @@ msgstr "اقبل الدعوة"
 #: eventyay/common/templates/common/fragment_header_user.html:156
 #: eventyay/common/templates/common/fragment_header_user.html:158
 #: eventyay/common/text/phrases.py:121
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:95
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:96
 #: eventyay/control/templates/registration/login.html:4
 #: eventyay/eventyay_common/templates/eventyay_common/auth/invite.html:26
 #: eventyay/presale/templates/pretixpresale/fragment_modals.html:33
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:144
 #: eventyay/presale/templates/pretixpresale/startpage_base.html:145
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:146
 msgid "Login"
 msgstr "تسجيل الدخول"
 
@@ -13617,6 +13687,16 @@ msgstr "التغذية الراجعة من قبل المشاركين"
 msgid "Attendees can leave feedback here after your session has taken place."
 msgstr "يمكن للمشاركين وضع ملاحظلاعم بعد أن يتم وضع الجلسة."
 
+#: eventyay/cfp/templates/cfp/event/user_submission_edit.html:62
+msgid "Speaker"
+msgid_plural "Speakers"
+msgstr[0] "المتحدث"
+msgstr[1] "المتحدثين"
+msgstr[2] "المتحدثين"
+msgstr[3] "المتحدثين"
+msgstr[4] "المتحدثين"
+msgstr[5] "المتحدثين"
+
 #: eventyay/cfp/templates/cfp/event/user_submission_edit.html:64
 msgid "Submitter"
 msgid_plural "Submitters"
@@ -13784,7 +13864,7 @@ msgid "Submit something now!"
 msgstr "قم بتقديم شيء الان!"
 
 #: eventyay/cfp/templates/cfp/includes/forms_header.html:18
-#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:16
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:23
 #: eventyay/control/templates/pretixcontrol/base.html:93
 #: eventyay/control/templates/pretixcontrol/pdf/index.html:39
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:36
@@ -13793,7 +13873,7 @@ msgid "Undo"
 msgstr "تراجع"
 
 #: eventyay/cfp/templates/cfp/includes/forms_header.html:19
-#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:16
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:23
 #: eventyay/control/templates/pretixcontrol/base.html:93
 #: eventyay/control/templates/pretixcontrol/pdf/index.html:43
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:36
@@ -13802,7 +13882,7 @@ msgid "Redo"
 msgstr "الإعادة"
 
 #: eventyay/cfp/templates/cfp/includes/forms_header.html:20
-#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:16
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:23
 #: eventyay/control/templates/pretixcontrol/base.html:93
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:36
 #: eventyay/orga/templates/orga/base.html:63
@@ -13898,18 +13978,47 @@ msgstr "تم إرسال الدعوة!"
 msgid "You cannot accept this invitation."
 msgstr "لا يمكنك قبول هذه الدعوة."
 
-#: eventyay/common/forms/fields.py:67 eventyay/control/forms/__init__.py:196
+#: eventyay/common/context_processors.py:122
+msgid "Terms"
+msgstr ""
+
+#: eventyay/common/context_processors.py:123
+#: eventyay/control/templates/pretixcontrol/organizers/edit.html:97
+msgid "Privacy"
+msgstr "الخصوصية"
+
+#: eventyay/common/context_processors.py:124
+#: eventyay/control/views/pages.py:237
+#, fuzzy
+#| msgid "Price"
+msgid "Pricing"
+msgstr "السعر"
+
+#: eventyay/common/context_processors.py:125
+#: eventyay/orga/templates/orga/settings/import_export.html:238
+#: eventyay/orga/templates/orga/settings/import_export.html:431
+#: eventyay/orga/templates/orga/settings/import_export.html:540
+msgid "Documentation"
+msgstr "عمية التوثيق"
+
+#: eventyay/common/context_processors.py:126
+#, fuzzy
+#| msgid "CSV export"
+msgid "Support"
+msgstr "تصدير CSV"
+
+#: eventyay/common/forms/fields.py:68 eventyay/control/forms/__init__.py:196
 #: eventyay/control/forms/__init__.py:217
 #, python-brace-format
 msgid "Please do not upload files larger than {size}!"
 msgstr "الرجاء عدم رفع ملفات أكبر من {size}!"
 
-#: eventyay/common/forms/fields.py:90 eventyay/control/forms/__init__.py:236
+#: eventyay/common/forms/fields.py:91 eventyay/control/forms/__init__.py:236
 #, python-brace-format
 msgid "Supported formats: {formats}"
 msgstr "التنسيقات المدعومة: {formats}"
 
-#: eventyay/common/forms/fields.py:103 eventyay/control/forms/__init__.py:250
+#: eventyay/common/forms/fields.py:104 eventyay/control/forms/__init__.py:250
 #, python-brace-format
 msgid ""
 "The file type '{extension}' is not supported. Please upload one of the "
@@ -13985,21 +14094,21 @@ msgstr "لا اختيار"
 msgid "Scheduled time must not be in the past."
 msgstr "لا يمكن أن يكون وقت البدء في الماضي."
 
-#: eventyay/common/forms/widgets.py:50
+#: eventyay/common/forms/widgets.py:53
 msgid ""
 "This password would take <em class=\"password_strength_time\"></em> to crack."
 msgstr ""
 "قد تستغرق كلمة المرور هذه <em class = \"password_stategy_time\"> </em>."
 
-#: eventyay/common/forms/widgets.py:72
+#: eventyay/common/forms/widgets.py:75
 msgid "Warning"
 msgstr "تحذير"
 
-#: eventyay/common/forms/widgets.py:72
+#: eventyay/common/forms/widgets.py:75
 msgid "Your passwords don’t match."
 msgstr "كلمات السر الخاصة بك لا تتطابق."
 
-#: eventyay/common/forms/widgets.py:106
+#: eventyay/common/forms/widgets.py:109
 #, fuzzy
 #| msgid "Email preview"
 msgid "Image preview"
@@ -14793,8 +14902,8 @@ msgid "User menu"
 msgstr "وكيل المستخدم"
 
 #: eventyay/common/templates/common/fragment_nav.html:10
-#: eventyay/event/stages.py:81 eventyay/orga/views/event.py:465
-#: eventyay/orga/views/event.py:497
+#: eventyay/event/stages.py:80 eventyay/orga/views/event.py:464
+#: eventyay/orga/views/event.py:496
 #: eventyay/presale/templates/pretixpresale/event/fragment_nav.html:35
 msgid "Schedule"
 msgstr "جدول"
@@ -14810,7 +14919,7 @@ msgid "Details"
 msgstr "تفاصيل"
 
 #: eventyay/common/templates/common/fragment_nav.html:17
-#: eventyay/eventyay_common/views/event.py:978
+#: eventyay/eventyay_common/views/event.py:1013
 #: eventyay/presale/templates/pretixpresale/event/fragment_nav.html:18
 msgid "Info"
 msgstr "معلومات"
@@ -14874,7 +14983,7 @@ msgstr "تعذّر تسجيل الدخول. الرجاء المحاولة مرة
 #: eventyay/control/templates/pretixcontrol/item/index.html:173
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:118
 #: eventyay/eventyay_common/templates/eventyay_common/account/2fa-main-settings.html:109
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:506
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:511
 #: eventyay/presale/templates/pretixpresale/fragment_join_online_video.html:76
 #: eventyay/presale/templates/pretixpresale/fragment_modals.html:34
 #: eventyay/presale/templates/pretixpresale/includes/share_dialog.html:7
@@ -14946,6 +15055,12 @@ msgstr "رسالة"
 #| msgid "This device has been set up successfully."
 msgid "Your message has been sent successfully!"
 msgstr "تم تعيين هذا الجهاز تصل بنجاح."
+
+#: eventyay/common/templates/common/includes/core_footer.html:5
+#, fuzzy
+#| msgid "Back to overview"
+msgid "Platform links"
+msgstr "الرجوع إلى النظرة العامة"
 
 #: eventyay/common/templates/common/logs.html:15
 msgid "This change was performed by an event organiser."
@@ -15142,7 +15257,7 @@ msgstr "{date_from} – {date_to}"
 #: eventyay/control/templates/pretixcontrol/event/tax_edit.html:137
 #: eventyay/control/templates/pretixcontrol/event/tickets.html:79
 #: eventyay/control/templates/pretixcontrol/global_plugins.html:80
-#: eventyay/control/templates/pretixcontrol/global_settings.html:239
+#: eventyay/control/templates/pretixcontrol/global_settings.html:282
 #: eventyay/control/templates/pretixcontrol/global_update.html:86
 #: eventyay/control/templates/pretixcontrol/item/index.html:150
 #: eventyay/control/templates/pretixcontrol/items/category.html:38
@@ -15177,7 +15292,7 @@ msgstr "{date_from} – {date_to}"
 #: eventyay/eventyay_common/templates/eventyay_common/account/oauth-app-register.html:25
 #: eventyay/eventyay_common/templates/eventyay_common/account/oauth-app-update.html:25
 #: eventyay/eventyay_common/templates/eventyay_common/auth/recover.html:15
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:424
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:422
 #: eventyay/eventyay_common/templates/eventyay_common/organizers/create.html:20
 #: eventyay/eventyay_common/templates/eventyay_common/organizers/teams/team_edit.html:23
 #: eventyay/orga/templates/orga/settings/import_export.html:583
@@ -15250,7 +15365,8 @@ msgstr "حفظ"
 #: eventyay/eventyay_common/templates/eventyay_common/account/authorized-app-revoke.html:25
 #: eventyay/eventyay_common/templates/eventyay_common/account/oauth-app-delete.html:25
 #: eventyay/eventyay_common/templates/eventyay_common/account/oauth-app-rollkeys.html:25
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:518
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:92
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:523
 #: eventyay/eventyay_common/templates/eventyay_common/organizers/teams/team_delete.html:10
 #: eventyay/eventyay_common/templates/eventyay_common/organizers/teams/team_delete.html:23
 #: eventyay/orga/templates/orga/cfp/forms.html:118
@@ -15279,6 +15395,7 @@ msgstr "إلغاء"
 #: eventyay/control/templates/control/turn_list.html:35
 #: eventyay/control/templates/control/user_list.html:25
 #: eventyay/control/templates/pretixcontrol/event/mail_settings_fragment.html:27
+#: eventyay/control/templates/pretixcontrol/global_settings.html:241
 #: eventyay/control/templates/pretixcontrol/order/sendmail.html:28
 #: eventyay/control/templates/pretixcontrol/orders/index.html:41
 #: eventyay/control/templates/pretixcontrol/organizers/giftcard.html:15
@@ -15326,9 +15443,9 @@ msgstr "تم حذف العنصر."
 #: eventyay/control/views/event.py:524 eventyay/control/views/event.py:570
 #: eventyay/control/views/event.py:807 eventyay/control/views/event.py:1110
 #: eventyay/control/views/event.py:1472
-#: eventyay/control/views/global_settings.py:47
-#: eventyay/control/views/global_settings.py:69
-#: eventyay/control/views/global_settings.py:152
+#: eventyay/control/views/global_settings.py:62
+#: eventyay/control/views/global_settings.py:79
+#: eventyay/control/views/global_settings.py:162
 #: eventyay/control/views/organizer.py:232
 #: eventyay/control/views/organizer_views/device_view.py:250
 #: eventyay/control/views/organizer_views/gate_view.py:94
@@ -15336,7 +15453,7 @@ msgstr "تم حذف العنصر."
 #: eventyay/control/views/organizer_views/organizer_view.py:356
 #: eventyay/control/views/organizer_views/organizer_view.py:529
 #: eventyay/control/views/organizer_views/web_hook_view.py:116
-#: eventyay/control/views/pages.py:46 eventyay/control/views/pages.py:104
+#: eventyay/control/views/pages.py:51 eventyay/control/views/pages.py:109
 #: eventyay/control/views/product.py:250 eventyay/control/views/product.py:766
 #: eventyay/control/views/product.py:1184
 #: eventyay/control/views/product.py:1378
@@ -15344,11 +15461,11 @@ msgstr "تم حذف العنصر."
 #: eventyay/control/views/product.py:1847
 #: eventyay/control/views/product.py:1898
 #: eventyay/control/views/subevents.py:502
-#: eventyay/control/views/subevents.py:1709 eventyay/control/views/users.py:465
+#: eventyay/control/views/subevents.py:1709 eventyay/control/views/users.py:468
 #: eventyay/control/views/vouchers.py:287
 #: eventyay/eventyay_common/templates/eventyay_common/event/plugins.html:12
 #: eventyay/eventyay_common/views/account/basic.py:101
-#: eventyay/eventyay_common/views/event.py:786
+#: eventyay/eventyay_common/views/event.py:821
 #: eventyay/eventyay_common/views/organizer.py:241
 #: eventyay/plugins/badges/views.py:231 eventyay/plugins/sendmail/views.py:248
 #: eventyay/plugins/sendmail/views.py:417
@@ -15462,7 +15579,7 @@ msgstr "\""
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:32
 #: eventyay/eventyay_common/navigation.py:179
 #: eventyay/eventyay_common/navigation.py:334
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:247
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:248
 #: eventyay/orga/templates/orga/settings/feedback.html:18
 msgid "General"
 msgstr "جنرال لواء"
@@ -15702,7 +15819,7 @@ msgid "Write access"
 msgstr "وصول الكتابة"
 
 #: eventyay/control/forms/admin/admin.py:17
-#: eventyay/control/forms/global_settings.py:620
+#: eventyay/control/forms/global_settings.py:884
 msgid "Perform update checks"
 msgstr "تنفيذ اختبارات التحديث"
 
@@ -15828,7 +15945,7 @@ msgstr ""
 "زر \"Set to random\" للحصول على اقتراح تلقائي."
 
 #: eventyay/control/forms/event.py:183
-#: eventyay/eventyay_common/forms/event.py:38
+#: eventyay/eventyay_common/forms/event.py:39
 msgid "Event timezone"
 msgstr "توقيت الحدث"
 
@@ -15864,7 +15981,7 @@ msgid "Create a new team for this event with me as the only member"
 msgstr "إنشاء فريق جديد لهذا الحدث بحيث أكون العضو الوحيد."
 
 #: eventyay/control/forms/event.py:256
-#: eventyay/eventyay_common/forms/event.py:254
+#: eventyay/eventyay_common/forms/event.py:255
 msgid ""
 "Sample Conference Center\n"
 "Heidelberg, Germany"
@@ -15873,12 +15990,12 @@ msgstr ""
 "هايدلبرغ، ألمانيا"
 
 #: eventyay/control/forms/event.py:257
-#: eventyay/eventyay_common/forms/event.py:255
+#: eventyay/eventyay_common/forms/event.py:256
 msgid "Latitude, e.g. 40.7128"
 msgstr "خط العرض، مثال 40.7128"
 
 #: eventyay/control/forms/event.py:258
-#: eventyay/eventyay_common/forms/event.py:256
+#: eventyay/eventyay_common/forms/event.py:257
 msgid "Longitude, e.g. -74.0060"
 msgstr "خط الطول، مثال -74.0060"
 
@@ -16115,8 +16232,8 @@ msgid "e.g. your contact details"
 msgstr "مثلا تفاصيل الاتصال الخاصة بك"
 
 #: eventyay/control/forms/event.py:1264
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:289
-#: eventyay/orga/forms/email.py:58
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:287
+#: eventyay/orga/forms/email.py:59
 msgid "HTML mail renderer"
 msgstr "HTML العارض الإلكتروني"
 
@@ -16453,8 +16570,8 @@ msgid "Quantity available"
 msgstr "الكمية متاحة"
 
 #: eventyay/control/forms/event.py:1928
-#: eventyay/eventyay_common/forms/event.py:193
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:191
+#: eventyay/eventyay_common/forms/event.py:194
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:192
 #: eventyay/eventyay_common/templates/eventyay_common/events/create.html:158
 #, fuzzy
 #| msgid "Registration Steps"
@@ -16462,7 +16579,7 @@ msgid "Registration limit"
 msgstr "خطوات التسجيل"
 
 #: eventyay/control/forms/event.py:1929
-#: eventyay/eventyay_common/forms/event.py:194
+#: eventyay/eventyay_common/forms/event.py:195
 msgid ""
 "Maximum number of attendees who can RSVP. Leave empty for unlimited "
 "registrations."
@@ -17044,20 +17161,21 @@ msgstr "مدفوع"
 msgid "Canceled"
 msgstr "ألغيت"
 
-#: eventyay/control/forms/global_settings.py:53 eventyay/orga/forms/email.py:20
+#: eventyay/control/forms/global_settings.py:113
+#: eventyay/orga/forms/email.py:20
 msgid "SendGrid"
 msgstr "SendGrid"
 
-#: eventyay/control/forms/global_settings.py:53
+#: eventyay/control/forms/global_settings.py:113
 msgid "SMTP"
 msgstr "SMTP"
 
-#: eventyay/control/forms/global_settings.py:62
-#: eventyay/control/forms/global_settings.py:547
+#: eventyay/control/forms/global_settings.py:122
+#: eventyay/control/forms/global_settings.py:783
 msgid "Billing validation"
 msgstr "التحقق من الفوترة"
 
-#: eventyay/control/forms/global_settings.py:64
+#: eventyay/control/forms/global_settings.py:124
 msgid ""
 "Billing validation lets you require organizers to set up a billing method "
 "before they can create events. When this option is enabled, no new event can "
@@ -17067,69 +17185,69 @@ msgstr ""
 "من إنشاء أحداث. عند تفعيل هذا الخيار، لا يمكن إنشاء أي حدث جديد حتى تتم "
 "إضافة طريقة فوترة صالحة."
 
-#: eventyay/control/forms/global_settings.py:73
+#: eventyay/control/forms/global_settings.py:133
 #, fuzzy
 #| msgid "Your event series"
 msgid "Allow event series creation"
 msgstr "سلسلة الحدث"
 
-#: eventyay/control/forms/global_settings.py:75
+#: eventyay/control/forms/global_settings.py:135
 msgid ""
 "When enabled, organizers can create event series or time slot bookings in "
 "addition to singular events. Disable this to restrict event creation to "
 "singular events and non-event shops only."
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:84
+#: eventyay/control/forms/global_settings.py:144
 #, fuzzy
 #| msgid "Allow badge customization"
 msgid "Allow meetup creation"
 msgstr "السماح بتخصيص الشارة"
 
-#: eventyay/control/forms/global_settings.py:86
+#: eventyay/control/forms/global_settings.py:146
 msgid ""
 "When enabled, organizers can create simplified meetup events in addition to "
 "standard events. Disable this to restrict event creation to standard events "
 "only."
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:97
+#: eventyay/control/forms/global_settings.py:157
 msgid "Additional footer text"
 msgstr "نص تذييل إضافية"
 
-#: eventyay/control/forms/global_settings.py:98
+#: eventyay/control/forms/global_settings.py:158
 msgid "Will be included as additional text in the footer, site-wide."
 msgstr "وسيتم إدراج كنص إضافي في تذييل الصفحة، في جميع أنحاء الموقع."
 
-#: eventyay/control/forms/global_settings.py:106
+#: eventyay/control/forms/global_settings.py:166
 msgid "Additional footer link"
 msgstr "رابط تذييل إضافية"
 
-#: eventyay/control/forms/global_settings.py:107
+#: eventyay/control/forms/global_settings.py:167
 msgid "Will be included as the link in the additional footer text."
 msgstr "وسيتم إدراج كحلقة وصل في النص تذييل إضافية."
 
-#: eventyay/control/forms/global_settings.py:115
+#: eventyay/control/forms/global_settings.py:175
 msgid "Global message banner"
 msgstr "راية رسالة العالمي"
 
-#: eventyay/control/forms/global_settings.py:123
+#: eventyay/control/forms/global_settings.py:183
 msgid "Global message banner detail text"
 msgstr "رسالة عالمية النص راية التفاصيل"
 
-#: eventyay/control/forms/global_settings.py:130
+#: eventyay/control/forms/global_settings.py:190
 msgid "OpenCage API key for geocoding"
 msgstr "مفتاح OpenCage API للتحويل الجغرافي"
 
-#: eventyay/control/forms/global_settings.py:137
+#: eventyay/control/forms/global_settings.py:197
 msgid "MapQuest API key for geocoding"
 msgstr "مفتاح MapQuest لعملية التحويل الجغرافي"
 
-#: eventyay/control/forms/global_settings.py:144
+#: eventyay/control/forms/global_settings.py:204
 msgid "Enable public Nominatim geocoding"
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:146
+#: eventyay/control/forms/global_settings.py:206
 msgid ""
 "Can be used alongside OpenCage or MapQuest as a fallback. In development, "
 "Nominatim is used automatically when no API key is configured. Only enable "
@@ -17137,172 +17255,189 @@ msgid ""
 "policy."
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:156
+#: eventyay/control/forms/global_settings.py:216
 msgid "Leaflet tiles URL pattern"
 msgstr "قالب عنوان URL لبلاطات Leaflet"
 
-#: eventyay/control/forms/global_settings.py:157
-#: eventyay/control/forms/global_settings.py:165
-#: eventyay/control/forms/global_settings.py:677
+#: eventyay/control/forms/global_settings.py:217
+#: eventyay/control/forms/global_settings.py:225
+#: eventyay/control/forms/global_settings.py:941
 #, python-brace-format
 msgid "e.g. {sample}"
 msgstr "مثلاً {sample}"
 
-#: eventyay/control/forms/global_settings.py:164
+#: eventyay/control/forms/global_settings.py:224
 msgid "Leaflet tiles attribution"
 msgstr "نص إسناد بلاطات Leaflet"
 
-#: eventyay/control/forms/global_settings.py:173
+#: eventyay/control/forms/global_settings.py:233
 msgid "System Email"
 msgstr "البريد الإلكتروني للنظام"
 
-#: eventyay/control/forms/global_settings.py:183
+#: eventyay/control/forms/global_settings.py:243
 #, fuzzy
 #| msgid "Sendgrid Token"
 msgid "Sendgrid token"
 msgstr "رمز SendGrid"
 
-#: eventyay/control/forms/global_settings.py:193
+#: eventyay/control/forms/global_settings.py:254
+msgid "Gmail OAuth client ID"
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:256
+msgid ""
+"Create an OAuth client in Google Cloud Console. The connect flow requests "
+"Gmail send and user email scopes. Use the OAuth redirect URI shown below as "
+"an authorized redirect URI."
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:269
+#, fuzzy
+#| msgid "Client secret"
+msgid "Gmail OAuth client secret"
+msgstr "سر العميل"
+
+#: eventyay/control/forms/global_settings.py:278
 msgid "Hostname"
 msgstr "اسم المضيف"
 
-#: eventyay/control/forms/global_settings.py:204
+#: eventyay/control/forms/global_settings.py:289
 #: eventyay/control/templates/pretixcontrol/admin/systemconfig.html:83
 msgid "Port"
 msgstr "ميناء"
 
-#: eventyay/control/forms/global_settings.py:215
+#: eventyay/control/forms/global_settings.py:300
 msgid "Username"
 msgstr "اسم المستخدم"
 
-#: eventyay/control/forms/global_settings.py:239
-#: eventyay/orga/forms/email.py:102
+#: eventyay/control/forms/global_settings.py:324
+#: eventyay/orga/forms/email.py:118
 msgid "Use STARTTLS"
 msgstr "استخدام STARTTLS"
 
-#: eventyay/control/forms/global_settings.py:240
-#: eventyay/orga/forms/email.py:103
+#: eventyay/control/forms/global_settings.py:325
+#: eventyay/orga/forms/email.py:119
 msgid "Commonly enabled on port 587."
 msgstr "تمكين عادة على المنفذ 587."
 
-#: eventyay/control/forms/global_settings.py:250
-#: eventyay/orga/forms/email.py:107
+#: eventyay/control/forms/global_settings.py:335
+#: eventyay/orga/forms/email.py:126
 msgid "Use SSL"
 msgstr "استخدام SSL"
 
-#: eventyay/control/forms/global_settings.py:251
-#: eventyay/orga/forms/email.py:108
+#: eventyay/control/forms/global_settings.py:336
+#: eventyay/orga/forms/email.py:127
 msgid "Commonly enabled on port 465."
 msgstr "تمكين عادة على المنفذ 465."
 
-#: eventyay/control/forms/global_settings.py:275
-#: eventyay/control/forms/global_settings.py:328
+#: eventyay/control/forms/global_settings.py:360
+#: eventyay/control/forms/global_settings.py:413
 msgid "Publishable key (Live)"
 msgstr "المفتاح القابل للنشر (مباشر)"
 
-#: eventyay/control/forms/global_settings.py:278
+#: eventyay/control/forms/global_settings.py:363
 msgid "Live publishable key for organizer billing and platform fees."
 msgstr "المفتاح القابل للنشر (مباشر) لفوترة المنظم ورسوم المنصة."
 
-#: eventyay/control/forms/global_settings.py:284
-#: eventyay/control/forms/global_settings.py:337
+#: eventyay/control/forms/global_settings.py:369
+#: eventyay/control/forms/global_settings.py:422
 msgid "Secret key (Live)"
 msgstr "المفتاح السري (مباشر)"
 
-#: eventyay/control/forms/global_settings.py:287
+#: eventyay/control/forms/global_settings.py:372
 msgid "Live secret key for organizer billing and platform fees."
 msgstr "المفتاح السري (مباشر) لفوترة المنظم ورسوم المنصة."
 
-#: eventyay/control/forms/global_settings.py:293
-#: eventyay/control/forms/global_settings.py:346
+#: eventyay/control/forms/global_settings.py:378
+#: eventyay/control/forms/global_settings.py:431
 msgid "Publishable key (Test)"
 msgstr "المفتاح القابل للنشر (اختبار)"
 
-#: eventyay/control/forms/global_settings.py:296
+#: eventyay/control/forms/global_settings.py:381
 msgid "Test publishable key for organizer billing and platform fees."
 msgstr "المفتاح القابل للنشر (اختبار) لفوترة المنظم ورسوم المنصة."
 
-#: eventyay/control/forms/global_settings.py:302
-#: eventyay/control/forms/global_settings.py:355
+#: eventyay/control/forms/global_settings.py:387
+#: eventyay/control/forms/global_settings.py:440
 msgid "Secret key (Test)"
 msgstr "المفتاح السري (اختبار)"
 
-#: eventyay/control/forms/global_settings.py:305
+#: eventyay/control/forms/global_settings.py:390
 msgid "Test secret key for organizer billing and platform fees."
 msgstr "المفتاح السري (اختبار) لفوترة المنظم ورسوم المنصة."
 
-#: eventyay/control/forms/global_settings.py:311
+#: eventyay/control/forms/global_settings.py:396
 msgid "Webhook secret key"
 msgstr "المفتاح السري للويبهوك"
 
-#: eventyay/control/forms/global_settings.py:313
+#: eventyay/control/forms/global_settings.py:398
 msgid ""
 "Configure this endpoint in your Stripe dashboard to receive billing events."
 msgstr "قم بتكوين نقطة النهاية هذه في لوحة تحكم Stripe لتلقي أحداث الفوترة."
 
-#: eventyay/control/forms/global_settings.py:322
+#: eventyay/control/forms/global_settings.py:407
 msgid "Stripe Connect client ID for ticket payments via the Stripe plugin."
 msgstr "معرّف عميل Stripe Connect لدفعات التذاكر عبر المكوّن الإضافي Stripe."
 
-#: eventyay/control/forms/global_settings.py:331
+#: eventyay/control/forms/global_settings.py:416
 msgid "Live publishable key for ticket payments via the Stripe plugin."
 msgstr ""
 "المفتاح القابل للنشر (مباشر) لمدفوعات التذاكر عبر المكوّن الإضافي Stripe."
 
-#: eventyay/control/forms/global_settings.py:340
+#: eventyay/control/forms/global_settings.py:425
 msgid "Live secret key for ticket payments via the Stripe plugin."
 msgstr "المفتاح السري (مباشر) لمدفوعات التذاكر عبر المكوّن الإضافي Stripe."
 
-#: eventyay/control/forms/global_settings.py:349
+#: eventyay/control/forms/global_settings.py:434
 msgid "Test publishable key for ticket payments via the Stripe plugin."
 msgstr ""
 "المفتاح القابل للنشر (اختبار) لمدفوعات التذاكر عبر المكوّن الإضافي Stripe."
 
-#: eventyay/control/forms/global_settings.py:358
+#: eventyay/control/forms/global_settings.py:443
 msgid "Test secret key for ticket payments via the Stripe plugin."
 msgstr "المفتاح السري (اختبار) لمدفوعات التذاكر عبر المكوّن الإضافي Stripe."
 
-#: eventyay/control/forms/global_settings.py:364
+#: eventyay/control/forms/global_settings.py:449
 msgid "App fee percentage"
 msgstr "نسبة رسوم التطبيق"
 
-#: eventyay/control/forms/global_settings.py:368
+#: eventyay/control/forms/global_settings.py:453
 msgid "Percentage fee charged on ticket payments."
 msgstr "نسبة تُفرض كرسوم على مدفوعات التذاكر."
 
-#: eventyay/control/forms/global_settings.py:375
+#: eventyay/control/forms/global_settings.py:460
 msgid "App fee minimum"
 msgstr "الحد الأدنى لرسوم التطبيق"
 
-#: eventyay/control/forms/global_settings.py:379
+#: eventyay/control/forms/global_settings.py:464
 msgid "Minimum fee amount charged on ticket payments."
 msgstr "الحد الأدنى للمبلغ المفروض كرسوم على مدفوعات التذاكر."
 
-#: eventyay/control/forms/global_settings.py:386
+#: eventyay/control/forms/global_settings.py:471
 msgid "App fee maximum"
 msgstr "الحد الأقصى لرسوم التطبيق"
 
-#: eventyay/control/forms/global_settings.py:390
+#: eventyay/control/forms/global_settings.py:475
 msgid "Maximum fee amount charged on ticket payments."
 msgstr "الحد الأقصى لمبلغ الرسوم على دفعات التذاكر."
 
-#: eventyay/control/forms/global_settings.py:400
+#: eventyay/control/forms/global_settings.py:485
 msgid "PayPal Connect client ID for payment processing."
 msgstr "معرّف عميل PayPal Connect لمعالجة الدفع."
 
-#: eventyay/control/forms/global_settings.py:406
+#: eventyay/control/forms/global_settings.py:491
 msgid "Secret key"
 msgstr "المفتاح السري"
 
-#: eventyay/control/forms/global_settings.py:408
+#: eventyay/control/forms/global_settings.py:493
 msgid "PayPal Connect secret key for payment processing."
 msgstr "المفتاح السري لـ PayPal Connect لمعالجة الدفع."
 
-#: eventyay/control/forms/global_settings.py:414
+#: eventyay/control/forms/global_settings.py:499
 msgid "API Endpoint"
 msgstr "نقطة نهاية API"
 
-#: eventyay/control/forms/global_settings.py:416
+#: eventyay/control/forms/global_settings.py:501
 msgid ""
 "PayPal API endpoint (e.g., https://api.paypal.com or https://"
 "api.sandbox.paypal.com)."
@@ -17310,19 +17445,19 @@ msgstr ""
 "نقطة نهاية API الخاصة بـ PayPal (مثال: https://api.paypal.com أو https://"
 "api.sandbox.paypal.com)."
 
-#: eventyay/control/forms/global_settings.py:422
+#: eventyay/control/forms/global_settings.py:507
 msgid "Ticket fee percentage"
 msgstr "نسبة رسوم التذكرة"
 
-#: eventyay/control/forms/global_settings.py:426
+#: eventyay/control/forms/global_settings.py:511
 msgid "A percentage fee will be charged for each ticket sold."
 msgstr "سيتم تحصيل نسبة رسوم عن كل تذكرة مباعة."
 
-#: eventyay/control/forms/global_settings.py:433
+#: eventyay/control/forms/global_settings.py:518
 msgid "All registered users can create organizers"
 msgstr "يمكن لجميع المستخدمين المسجلين إنشاء منظمين."
 
-#: eventyay/control/forms/global_settings.py:434
+#: eventyay/control/forms/global_settings.py:519
 msgid ""
 "If enabled, all registered users will be allowed to create organizers. "
 "System admins can always create organizers."
@@ -17330,11 +17465,11 @@ msgstr ""
 "إذا تم التفعيل، سيسمح لجميع المستخدمين المسجلين بإنشاء منظمين. يمكن لمسؤولي "
 "النظام دائمًا إنشاء منظمين."
 
-#: eventyay/control/forms/global_settings.py:441
+#: eventyay/control/forms/global_settings.py:526
 msgid "All accounts with payment information can create organizers"
 msgstr "يمكن لجميع الحسابات التي تحتوي على معلومات الدفع إنشاء منظمين."
 
-#: eventyay/control/forms/global_settings.py:442
+#: eventyay/control/forms/global_settings.py:527
 msgid ""
 "If enabled, users with valid payment information on file will be allowed to "
 "create organizers. System admins can always create organizers."
@@ -17342,45 +17477,45 @@ msgstr ""
 "إذا تم التفعيل، سيسمح للمستخدمين الذين لديهم معلومات دفع صالحة مسجلة بإنشاء "
 "منظمين. يمكن لمسؤولي النظام دائمًا إنشاء منظمين."
 
-#: eventyay/control/forms/global_settings.py:450
+#: eventyay/control/forms/global_settings.py:535
 #, fuzzy
 #| msgid "Recording integrations"
 msgid "Enable Etherpad integration"
 msgstr "تكاملات التسجيل"
 
-#: eventyay/control/forms/global_settings.py:451
+#: eventyay/control/forms/global_settings.py:536
 msgid "Allow events to attach collaborative Etherpad notes to their sessions."
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:458
+#: eventyay/control/forms/global_settings.py:543
 msgid "Default Etherpad instance URL"
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:459
+#: eventyay/control/forms/global_settings.py:544
 #, python-brace-format
 msgid "Base URL of the Etherpad instance, e.g. {sample}"
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:466
+#: eventyay/control/forms/global_settings.py:551
 #, fuzzy
 #| msgid "Telemetry API key"
 msgid "Etherpad API key"
 msgstr "مفتاح API للقياس"
 
-#: eventyay/control/forms/global_settings.py:468
+#: eventyay/control/forms/global_settings.py:553
 msgid ""
 "API key of the Etherpad instance (found in APIKEY.txt). Required only for "
 "automatic pad creation; without it, pad links are generated as plain URLs "
 "that Etherpad creates on first visit."
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:477
+#: eventyay/control/forms/global_settings.py:562
 #, fuzzy
 #| msgid "Frontpage header pattern"
 msgid "Pad name pattern"
 msgstr "نمط رأس الصفحة الأمامية"
 
-#: eventyay/control/forms/global_settings.py:479
+#: eventyay/control/forms/global_settings.py:564
 #, fuzzy, python-brace-format
 #| msgid ""
 #| "This will be attached to every email. Available placeholders: {event}"
@@ -17388,75 +17523,199 @@ msgid ""
 "Pattern used to generate pad names. Available placeholders: {placeholders}."
 msgstr "وسيلحق هذا على كل البريد الإلكتروني. النائبة المتاحة: {event}"
 
-#: eventyay/control/forms/global_settings.py:497
+#: eventyay/control/forms/global_settings.py:582
 #, fuzzy
 #| msgid "Add-on products will be excluded from the count."
 msgid ""
 "Add-on products will be excluded from the count. Set to 0 for unlimited."
 msgstr "سيتم استبعاد المنتجات الإضافية من العد."
 
-#: eventyay/control/forms/global_settings.py:506
+#: eventyay/control/forms/global_settings.py:591
+#, fuzzy
+#| msgid "Show video link"
+msgid "Show \"Events\" footer link"
+msgstr "عرض رابط الفيديو"
+
+#: eventyay/control/forms/global_settings.py:598
+#, fuzzy
+#| msgid "Event list"
+msgid "\"Events\" link URL"
+msgstr "قائمة الأحداث"
+
+#: eventyay/control/forms/global_settings.py:605
+#, fuzzy
+#| msgid "Show video link"
+msgid "Show \"Terms\" footer link"
+msgstr "عرض رابط الفيديو"
+
+#: eventyay/control/forms/global_settings.py:612
+msgid "\"Terms\" link URL"
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:619
+msgid "Show \"Privacy\" footer link"
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:626
+#, fuzzy
+#| msgid "Privacy Policy URL"
+msgid "\"Privacy\" link URL"
+msgstr "رابط سياسة الخصوصية"
+
+#: eventyay/control/forms/global_settings.py:633
+#, fuzzy
+#| msgid "Additional footer link"
+msgid "Show \"Pricing\" footer link"
+msgstr "رابط تذييل إضافية"
+
+#: eventyay/control/forms/global_settings.py:640
+#, fuzzy
+#| msgid "Privacy Policy URL"
+msgid "\"Pricing\" link URL"
+msgstr "رابط سياسة الخصوصية"
+
+#: eventyay/control/forms/global_settings.py:647
+msgid "Show \"Documentation\" footer link"
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:654
+#, fuzzy
+#| msgid "Documentation"
+msgid "\"Documentation\" link URL"
+msgstr "عمية التوثيق"
+
+#: eventyay/control/forms/global_settings.py:661
+msgid "Show \"Support\" footer link"
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:668
+msgid "\"Support\" link URL"
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:677
+msgid "\"Terms of Service\" page content"
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:678
+msgid "Rich text content for the /terms page."
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:685
+#, fuzzy
+#| msgid "Privacy Policy URL"
+msgid "\"Privacy Policy\" page content"
+msgstr "رابط سياسة الخصوصية"
+
+#: eventyay/control/forms/global_settings.py:686
+msgid "Rich text content for the /privacy page."
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:693
+#, fuzzy
+#| msgid "Page content"
+msgid "\"Pricing\" page content"
+msgstr "محتوى الصفحة"
+
+#: eventyay/control/forms/global_settings.py:694
+msgid "Rich text content for the /pricing page."
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:701
+#, fuzzy
+#| msgid "Page content"
+msgid "\"Support\" page content"
+msgstr "محتوى الصفحة"
+
+#: eventyay/control/forms/global_settings.py:702
+msgid "Rich text content for the /support page."
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:713
+#, fuzzy
+#| msgid "Use languages"
+msgid "Page languages"
+msgstr "استخدام اللغات"
+
+#: eventyay/control/forms/global_settings.py:715
+msgid ""
+"Select the languages for page content (Terms, Privacy, Pricing, Support). "
+"Only selected languages will be shown for editing."
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:722
 #: eventyay/control/templates/pretixcontrol/event/settings.html:21
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:34
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:35
 msgid "Basics"
 msgstr "مبادئ"
 
-#: eventyay/control/forms/global_settings.py:509
+#: eventyay/control/forms/global_settings.py:725
+#: eventyay/control/navigation.py:444
+msgid "Pages"
+msgstr "الصفحات"
+
+#: eventyay/control/forms/global_settings.py:744
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:81
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:197
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:198
 #: eventyay/eventyay_common/templates/eventyay_common/events/create.html:106
 msgid "Localization"
 msgstr "الموقع"
 
-#: eventyay/control/forms/global_settings.py:517
+#: eventyay/control/forms/global_settings.py:753
 msgid "Payment Gateways"
 msgstr "بوابات الدفع"
 
-#: eventyay/control/forms/global_settings.py:540
+#: eventyay/control/forms/global_settings.py:776
 msgid "Cart"
 msgstr "عربة التسوق"
 
-#: eventyay/control/forms/global_settings.py:544
+#: eventyay/control/forms/global_settings.py:780
 msgid "Ticket fee"
 msgstr "رسوم التذكرة"
 
-#: eventyay/control/forms/global_settings.py:550
+#: eventyay/control/forms/global_settings.py:786
 msgid "Maps"
 msgstr "الخرائط"
 
-#: eventyay/control/forms/global_settings.py:557
+#: eventyay/control/forms/global_settings.py:793
 #, fuzzy
 #| msgid "Event location"
 msgid "Event Creation"
 msgstr "موقع الحدث"
 
-#: eventyay/control/forms/global_settings.py:561
+#: eventyay/control/forms/global_settings.py:797
 #: eventyay/orga/templates/orga/settings/form.html:66
 #, fuzzy
 #| msgid "Netherlands"
 msgid "Etherpad"
 msgstr "هولندا"
 
-#: eventyay/control/forms/global_settings.py:571
+#: eventyay/control/forms/global_settings.py:807
 msgid "VoxBento"
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:580
+#: eventyay/control/forms/global_settings.py:816
 msgid "HubSpot"
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:600
+#: eventyay/control/forms/global_settings.py:838
 #, python-brace-format
 msgid ""
 "The pattern must contain {submission} or {token} so each session gets a "
 "unique pad."
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:610
+#: eventyay/control/forms/global_settings.py:848
 msgid "This field is required when using SendGrid as email vendor."
 msgstr "هذا الحقل مطلوب عند استخدام SendGrid كمزود للبريد الإلكتروني."
 
-#: eventyay/control/forms/global_settings.py:622
+#: eventyay/control/forms/global_settings.py:851
+#: eventyay/control/forms/global_settings.py:859
+#, fuzzy
+#| msgid "This field is required when using SendGrid as email vendor."
+msgid "This field is required when using Gmail as email vendor."
+msgstr "هذا الحقل مطلوب عند استخدام SendGrid كمزود للبريد الإلكتروني."
+
+#: eventyay/control/forms/global_settings.py:886
 msgid ""
 "During the update check, eventyay will report an anonymous, unique "
 "installation ID, the current version of the system and your installed "
@@ -17471,11 +17730,11 @@ msgstr ""
 "أبدًا، ولن نعرف من أنت أو مكان العثور على مثيلك. يمكنك تعطيل هذا السلوك هنا "
 "في أي وقت."
 
-#: eventyay/control/forms/global_settings.py:631
+#: eventyay/control/forms/global_settings.py:895
 msgid "E-mail notifications"
 msgstr "اشعارات البريد الالكتروني"
 
-#: eventyay/control/forms/global_settings.py:633
+#: eventyay/control/forms/global_settings.py:897
 msgid ""
 "We will notify you at this address if we detect that a new update is "
 "available. This address will not be transmitted to eventyay.com, the emails "
@@ -17484,11 +17743,11 @@ msgstr ""
 "سنعلمك على هذا العنوان إذا اكتشفنا توفر تحديث جديد. لن يتم نقل هذا العنوان "
 "إلى eventyay.com؛ ستُرسل الرسائل الإلكترونية من هذا الخادم محليًا."
 
-#: eventyay/control/forms/global_settings.py:642
+#: eventyay/control/forms/global_settings.py:906
 msgid "Enable telemetry"
 msgstr "تمكين جمع بيانات القياس"
 
-#: eventyay/control/forms/global_settings.py:644
+#: eventyay/control/forms/global_settings.py:908
 msgid ""
 "Send anonymous usage statistics (bucketed counts, deployment info) to help "
 "track version adoption and deployment patterns. No personal data is "
@@ -17498,27 +17757,27 @@ msgstr ""
 "اعتماد الإصدارات وأنماط النشر. لا يتم جمع بيانات شخصية. تُرسل البيانات تقريبًا "
 "مرة واحدة يوميًا."
 
-#: eventyay/control/forms/global_settings.py:651
+#: eventyay/control/forms/global_settings.py:915
 msgid "Telemetry endpoint"
 msgstr "نقطة نهاية القياس"
 
-#: eventyay/control/forms/global_settings.py:652
+#: eventyay/control/forms/global_settings.py:916
 msgid "The URL where telemetry data will be sent (Google Apps Script URL)."
 msgstr "عنوان URL الذي سترسل إليه بيانات القياس (رابط Google Apps Script)."
 
-#: eventyay/control/forms/global_settings.py:656
+#: eventyay/control/forms/global_settings.py:920
 msgid "Telemetry API key"
 msgstr "مفتاح API للقياس"
 
-#: eventyay/control/forms/global_settings.py:657
+#: eventyay/control/forms/global_settings.py:921
 msgid "API key for authenticating with the telemetry receiver."
 msgstr "مفتاح API للمصادقة لدى مستلم بيانات القياس."
 
-#: eventyay/control/forms/global_settings.py:661
+#: eventyay/control/forms/global_settings.py:925
 msgid "Maintainer contact"
 msgstr "جهة اتصال الصيانة"
 
-#: eventyay/control/forms/global_settings.py:663
+#: eventyay/control/forms/global_settings.py:927
 msgid ""
 "Optional email address included in telemetry data to identify who maintains "
 "this instance. Only visible to those with access to the telemetry data sheet."
@@ -17526,21 +17785,21 @@ msgstr ""
 "عنوان بريد إلكتروني اختياري يَدرَج في بيانات القياس لتحديد من يدير هذه النسخة. "
 "يظهر فقط لأولئك الذين لديهم حق الوصول إلى جدول بيانات القياس."
 
-#: eventyay/control/forms/global_settings.py:676
+#: eventyay/control/forms/global_settings.py:940
 msgid "Redirect URL"
 msgstr "عنوان URL لإعادة التوجيه"
 
-#: eventyay/control/forms/global_settings.py:717
+#: eventyay/control/forms/global_settings.py:981
 msgid "The Stripe key cannot be empty."
 msgstr "لا يمكن أن يكون مفتاح Stripe فارغًا."
 
-#: eventyay/control/forms/global_settings.py:721
+#: eventyay/control/forms/global_settings.py:985
 #, python-format
 msgid ""
 "The provided key does not look valid. It should start with \"%(prefix)s\"."
 msgstr "المفتاح المقدم يبدو غير صالح. يجب أن يبدأ بـ \"%(prefix)s\"."
 
-#: eventyay/control/forms/global_settings.py:724
+#: eventyay/control/forms/global_settings.py:988
 #, python-format
 msgid ""
 "The provided key does not look valid. It should start with one of: "
@@ -17784,7 +18043,7 @@ msgstr ""
 #: eventyay/plugins/sendmail/forms.py:535
 #: eventyay/plugins/sendmail/forms.py:637
 #: eventyay/plugins/sendmail/views.py:277
-#: eventyay/plugins/sendmail/views.py:529
+#: eventyay/plugins/sendmail/views.py:533
 msgid "Subject"
 msgstr "موضوع"
 
@@ -18098,12 +18357,12 @@ msgid "Invalid VAT number for {}"
 msgstr "رقم ضريبة القيمة المضافة غير صالح لـ {}"
 
 #: eventyay/control/forms/organizer_forms/organizer_update_form.py:52
-#: eventyay/eventyay_common/forms/event.py:276
+#: eventyay/eventyay_common/forms/event.py:277
 msgid "You cannot choose the base domain of this installation."
 msgstr "لا يمكنك اختيار المجال الأساسي من هذا التثبيت."
 
 #: eventyay/control/forms/organizer_forms/organizer_update_form.py:58
-#: eventyay/eventyay_common/forms/event.py:278
+#: eventyay/eventyay_common/forms/event.py:279
 msgid "This domain is already in use for a different event or organizer."
 msgstr "هذا النطاق مستخدم بالفعل لحدث أو منظم آخر."
 
@@ -19789,7 +20048,7 @@ msgstr "المستردة"
 
 #: eventyay/control/navigation.py:283
 #: eventyay/orga/templates/orga/review/assignment-import.html:21
-#: eventyay/orga/views/event.py:515
+#: eventyay/orga/views/event.py:514
 msgid "Import"
 msgstr "استيراد"
 
@@ -19800,6 +20059,7 @@ msgstr "استيراد"
 #: eventyay/control/templates/pretixcontrol/subevents/bulk.html:501
 #: eventyay/control/templates/pretixcontrol/subevents/bulk_edit.html:255
 #: eventyay/control/templates/pretixcontrol/subevents/detail.html:143
+#: eventyay/eventyay_common/forms/event.py:392
 #: eventyay/plugins/checkinlists/apps.py:10
 msgid "Check-in lists"
 msgstr "تحقق في القوائم"
@@ -19860,10 +20120,6 @@ msgstr "الإعدادات"
 #: eventyay/control/templates/pretixcontrol/admin/systemconfig.html:17
 msgid "System information"
 msgstr "معلومات النظام"
-
-#: eventyay/control/navigation.py:444
-msgid "Pages"
-msgstr "الصفحات"
 
 #: eventyay/control/navigation.py:449
 #: eventyay/control/templates/pretixcontrol/admin/events/index.html:96
@@ -19972,8 +20228,8 @@ msgstr "جلسات مشرف"
 
 #: eventyay/control/permissions.py:40 eventyay/control/permissions.py:80
 #: eventyay/control/permissions.py:115 eventyay/control/permissions.py:135
-#: eventyay/eventyay_common/views/event.py:925
-#: eventyay/eventyay_common/views/event.py:933
+#: eventyay/eventyay_common/views/event.py:960
+#: eventyay/eventyay_common/views/event.py:968
 msgid "You do not have permission to view this content."
 msgstr "ليس لديك إذن لعرض هذا المحتوى."
 
@@ -20134,7 +20390,7 @@ msgid "Usage"
 msgstr "الاستخدام"
 
 #: eventyay/control/templates/control/event_list.html:42
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:378
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:376
 msgid "Delete data"
 msgstr "حذف البيانات"
 
@@ -20575,7 +20831,7 @@ msgstr "تفاصيل الطلب"
 #: eventyay/control/templates/pretixcontrol/admin/dashboard.html:737
 #: eventyay/control/templates/pretixcontrol/admin/dashboard.html:785
 #: eventyay/control/templates/pretixcontrol/admin/dashboard.html:830
-#: eventyay/orga/templates/orga/mails/_placeholder_group.html:26
+#: eventyay/orga/templates/orga/mails/_placeholder_group.html:22
 msgid "Unavailable"
 msgstr "غير متاح"
 
@@ -21212,6 +21468,40 @@ msgstr "جميع المنظمين"
 #: eventyay/eventyay_common/templates/eventyay_common/organizers/index.html:27
 msgid "Create a new organizer"
 msgstr "إنشاء منظم جديد"
+
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:52
+#: eventyay/control/templates/pretixcontrol/base.html:128
+#: eventyay/eventyay_common/templates/eventyay_common/base.html:126
+#: eventyay/orga/templates/orga/base.html:98
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:73
+msgid "Toggle sidebar"
+msgstr "تبديل الشريط الجانبي"
+
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:84
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:86
+#: eventyay/control/templates/pretixcontrol/base.html:238
+#: eventyay/control/templates/pretixcontrol/base.html:239
+#: eventyay/eventyay_common/templates/eventyay_common/base.html:203
+#: eventyay/eventyay_common/templates/eventyay_common/base.html:204
+#: eventyay/orga/templates/orga/base.html:170
+#: eventyay/orga/templates/orga/base.html:171
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:134
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:136
+msgid "End admin session"
+msgstr "إنهاء جلسة مشرف"
+
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:103
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:153
+#, fuzzy
+#| msgid "Toggle navigation"
+msgid "Main navigation"
+msgstr "تبديل الملاحة"
+
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:112
+#: eventyay/eventyay_common/templates/eventyay_common/base.html:258
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:162
+msgid "Main dashboard"
+msgstr "لوحة التحكم الرئيسية"
 
 #: eventyay/control/templates/pretixcontrol/admin/pages/delete.html:4
 #: eventyay/control/templates/pretixcontrol/admin/pages/delete.html:6
@@ -21942,13 +22232,6 @@ msgstr ""
 msgid "Error:"
 msgstr "خطأ:"
 
-#: eventyay/control/templates/pretixcontrol/base.html:128
-#: eventyay/eventyay_common/templates/eventyay_common/base.html:126
-#: eventyay/orga/templates/orga/base.html:98
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:72
-msgid "Toggle sidebar"
-msgstr "تبديل الشريط الجانبي"
-
 #: eventyay/control/templates/pretixcontrol/base.html:153
 #: eventyay/control/templates/pretixcontrol/base.html:177
 #: eventyay/control/templates/pretixcontrol/base.html:178
@@ -21957,17 +22240,6 @@ msgstr "تبديل الشريط الجانبي"
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:177
 msgid "Public profile"
 msgstr "حساب عام"
-
-#: eventyay/control/templates/pretixcontrol/base.html:238
-#: eventyay/control/templates/pretixcontrol/base.html:239
-#: eventyay/eventyay_common/templates/eventyay_common/base.html:203
-#: eventyay/eventyay_common/templates/eventyay_common/base.html:204
-#: eventyay/orga/templates/orga/base.html:170
-#: eventyay/orga/templates/orga/base.html:171
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:133
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:135
-msgid "End admin session"
-msgstr "إنهاء جلسة مشرف"
 
 #: eventyay/control/templates/pretixcontrol/base.html:279
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:248
@@ -22655,8 +22927,8 @@ msgid "Videos"
 msgstr "مقاطع الفيديو"
 
 #: eventyay/control/templates/pretixcontrol/event/delete.html:5
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:410
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:415
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:408
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:413
 msgid "Delete event"
 msgstr "حدث الحذف"
 
@@ -22708,12 +22980,12 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/event/delete.html:55
 #: eventyay/control/templates/pretixcontrol/event/delete.html:69
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:373
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:371
 msgid "Delete personal data"
 msgstr "حذف البيانات الشخصية"
 
 #: eventyay/control/templates/pretixcontrol/event/delete.html:59
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:340
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:338
 msgid "Go offline"
 msgstr "العودة متواجد حاليا"
 
@@ -23091,6 +23363,7 @@ msgstr "إعدادات البريد الإلكتروني"
 
 #: eventyay/control/templates/pretixcontrol/event/payment.html:10
 #: eventyay/control/templates/pretixcontrol/event/payment_provider.html:5
+#: eventyay/eventyay_common/forms/event.py:398
 msgid "Payment settings"
 msgstr "إعدادات الدفع"
 
@@ -23190,9 +23463,9 @@ msgid "Disable"
 msgstr "تعطيل"
 
 #: eventyay/control/templates/pretixcontrol/event/plugins.html:75
-#: eventyay/control/templates/pretixcontrol/global_settings.html:135
-#: eventyay/control/templates/pretixcontrol/global_settings.html:153
-#: eventyay/control/templates/pretixcontrol/global_settings.html:172
+#: eventyay/control/templates/pretixcontrol/global_settings.html:137
+#: eventyay/control/templates/pretixcontrol/global_settings.html:155
+#: eventyay/control/templates/pretixcontrol/global_settings.html:174
 #: eventyay/eventyay_common/templates/eventyay_common/account/2fa-enable.html:34
 #: eventyay/eventyay_common/templates/eventyay_common/account/general-settings.html:80
 #: eventyay/eventyay_common/templates/eventyay_common/account/notification-settings.html:36
@@ -23339,9 +23612,10 @@ msgstr "بعد الإعداد، انتقل إلى قسم الدفع وقم بإ�
 #: eventyay/control/templates/pretixcontrol/event/settings.html:7
 #: eventyay/control/templates/pretixcontrol/event/settings.html:13
 #: eventyay/control/templates/pretixcontrol/organizers/billing.html:7
+#: eventyay/eventyay_common/forms/event.py:355
 #: eventyay/eventyay_common/templates/eventyay_common/account/general-settings.html:25
 #: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:7
-#: eventyay/orga/views/event.py:81
+#: eventyay/orga/views/event.py:80
 msgid "General settings"
 msgstr "الاعدادات العامة"
 
@@ -23362,12 +23636,12 @@ msgid "Changes to existing orders"
 msgstr "تغييرات على الطلبات الحالية"
 
 #: eventyay/control/templates/pretixcontrol/event/settings.html:60
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:203
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:204
 msgid "Texts"
 msgstr "النصوص"
 
 #: eventyay/control/templates/pretixcontrol/event/settings.html:69
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:236
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:237
 msgid "Display"
 msgstr "عرض"
 
@@ -23390,7 +23664,16 @@ msgid "Add property"
 msgstr "إضافة خاصية"
 
 #: eventyay/control/templates/pretixcontrol/event/settings.html:163
+#: eventyay/eventyay_common/templates/eventyay_common/event/live.html:471
+msgid "Cancel or delete event"
+msgstr "إلغاء أو حذف الحدث"
+
+#: eventyay/control/templates/pretixcontrol/event/settings.html:169
 #: eventyay/control/templates/pretixcontrol/organizers/detail.html:156
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:4
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:8
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:89
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:428
 msgid "Clone event"
 msgstr "الحدث استنساخ"
 
@@ -23680,74 +23963,74 @@ msgstr ""
 msgid "No plugins found."
 msgstr "لم يتم العثور على مستخدمين."
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:21
+#: eventyay/control/templates/pretixcontrol/global_settings.html:23
 msgid "Stripe — Organizer Billing"
 msgstr "Stripe — فوترة المنظم"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:23
+#: eventyay/control/templates/pretixcontrol/global_settings.html:25
 msgid "This configuration is used for organizer billing and platform fees."
 msgstr "يُستخدم هذا التكوين لفوترة المنظم ورسوم المنصة."
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:27
-#: eventyay/control/templates/pretixcontrol/global_settings.html:78
+#: eventyay/control/templates/pretixcontrol/global_settings.html:29
+#: eventyay/control/templates/pretixcontrol/global_settings.html:80
 msgid "Live Credentials"
 msgstr "بيانات الاعتماد الحية"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:38
-#: eventyay/control/templates/pretixcontrol/global_settings.html:89
+#: eventyay/control/templates/pretixcontrol/global_settings.html:40
+#: eventyay/control/templates/pretixcontrol/global_settings.html:91
 msgid "Test Credentials"
 msgstr "بيانات الاعتماد التجريبية"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:49
+#: eventyay/control/templates/pretixcontrol/global_settings.html:51
 #: eventyay/control/templates/pretixcontrol/organizers/webhooks.html:6
 msgid "Webhooks"
 msgstr "Webhooks"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:61
+#: eventyay/control/templates/pretixcontrol/global_settings.html:63
 msgid "Stripe — Ticket Payments"
 msgstr "Stripe — مدفوعات التذاكر"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:63
+#: eventyay/control/templates/pretixcontrol/global_settings.html:65
 msgid "This configuration is used for ticket payments via the Stripe plugin."
 msgstr "يُستخدم هذا التكوين لمدفوعات التذاكر عبر ملحق Stripe."
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:67
+#: eventyay/control/templates/pretixcontrol/global_settings.html:69
 msgid "Client Configuration"
 msgstr "إعدادات العميل"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:100
+#: eventyay/control/templates/pretixcontrol/global_settings.html:102
 msgid "App Fees"
 msgstr "رسوم التطبيق"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:102
+#: eventyay/control/templates/pretixcontrol/global_settings.html:104
 msgid "Configure the application fees charged on ticket payments."
 msgstr "اضبط رسوم التطبيق المفروضة على مدفوعات التذاكر."
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:115
+#: eventyay/control/templates/pretixcontrol/global_settings.html:117
 msgid "PayPal"
 msgstr "باي بال"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:117
+#: eventyay/control/templates/pretixcontrol/global_settings.html:119
 msgid "Configure PayPal payment processing."
 msgstr "اضبط معالجة المدفوعات عبر PayPal."
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:192
+#: eventyay/control/templates/pretixcontrol/global_settings.html:195
 msgid "Test email connection"
 msgstr ""
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:201
+#: eventyay/control/templates/pretixcontrol/global_settings.html:204
 #, fuzzy
 #| msgid "(no email address)"
 msgid "Recipient email address(es)"
 msgstr "(لا يوجد عنوان بريد إلكتروني)"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:211
+#: eventyay/control/templates/pretixcontrol/global_settings.html:214
 #, fuzzy
 #| msgid "Send this email"
 msgid "Send test email"
 msgstr "أرسل هذا البريد"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:216
+#: eventyay/control/templates/pretixcontrol/global_settings.html:219
 msgid ""
 "Sends a test email to the entered recipient address or comma-separated "
 "recipient addresses to verify the email settings are working."
@@ -23764,6 +24047,94 @@ msgstr "أعاد خادم eventyay رمز خطأ."
 #: eventyay/control/templates/pretixcontrol/global_update.html:30
 msgid "The eventyay server could not be reached."
 msgstr "تعذر الوصول إلى خادم eventyay."
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:4
+msgid ""
+"Gmail integration requires a database update. Run `python manage.py migrate` "
+"and reload this page."
+msgstr ""
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:9
+msgid ""
+"Gmail and Google Workspace are suitable for moderate transactional email and "
+"organiser communication. They are not recommended as the only backend for "
+"large event mailings. Configure SMTP or SendGrid as a fallback delivery "
+"backend if Gmail is unavailable or unsuitable for bulk mailings."
+msgstr ""
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:18
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:66
+#, fuzzy
+#| msgid "Redirect URL"
+msgid "OAuth redirect URI"
+msgstr "عنوان URL لإعادة التوجيه"
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:22
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:70
+msgid ""
+"Add this redirect URI to your Google Cloud OAuth client before connecting."
+msgstr ""
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:27
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:75
+#, fuzzy
+#| msgid "All actions"
+msgid "Gmail connection"
+msgstr "جميع الإجراءات"
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:31
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:79
+#, fuzzy
+#| msgid "Connect"
+msgid "Connected"
+msgstr "الاتصال"
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:35
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:83
+#, python-format
+msgid "Approximate usage today: %(sent)s / %(limit)s messages."
+msgstr ""
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:40
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:88
+#, python-format
+msgid "Last delivery issue: %(error)s"
+msgstr ""
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:46
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:94
+#, fuzzy
+#| msgid "Connect"
+msgid "Disconnect Gmail"
+msgstr "الاتصال"
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:50
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:98
+#, fuzzy
+#| msgid "Date joined"
+msgid "Not connected"
+msgstr "تاريخ انضم"
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:54
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:102
+msgid ""
+"Configure the OAuth client ID and secret in global settings, then connect a "
+"Google account with send permission."
+msgstr ""
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:56
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:104
+msgid ""
+"Save your OAuth client ID and secret, then connect a Google account with "
+"send permission."
+msgstr ""
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:60
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:108
+#, fuzzy
+#| msgid "Connected devices"
+msgid "Connect Gmail account"
+msgstr "الأجهزة المتصلة"
 
 #: eventyay/control/templates/pretixcontrol/includes/logs.html:51
 #: eventyay/eventyay_common/templates/eventyay_common/includes/logs.html:51
@@ -24058,7 +24429,7 @@ msgstr "تاريخ المنتج"
 
 #: eventyay/control/templates/pretixcontrol/item/index.html:176
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:121
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:509
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:514
 #, fuzzy
 #| msgid "Logo image"
 msgid "Crop Image"
@@ -24066,7 +24437,7 @@ msgstr "صورة الشعار"
 
 #: eventyay/control/templates/pretixcontrol/item/index.html:185
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:130
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:519
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:524
 #, fuzzy
 #| msgid "Apply"
 msgid "Apply Crop"
@@ -25676,8 +26047,8 @@ msgstr "ارسل بريد الكتروني"
 
 #: eventyay/control/templates/pretixcontrol/orders/cancel.html:5
 #: eventyay/control/templates/pretixcontrol/orders/cancel.html:7
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:350
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:355
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:348
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:353
 msgid "Cancel event"
 msgstr "إلغاء الحدث"
 
@@ -26564,7 +26935,7 @@ msgid "Organizer settings"
 msgstr "ضبط منظم"
 
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:49
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:209
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:210
 msgid "Design"
 msgstr "التصميم"
 
@@ -26584,15 +26955,11 @@ msgid "Community"
 msgstr "تعليق"
 
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:86
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:229
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:230
 #, fuzzy
 #| msgid "Video"
 msgid "Video area"
 msgstr "الفيديو"
-
-#: eventyay/control/templates/pretixcontrol/organizers/edit.html:97
-msgid "Privacy"
-msgstr "الخصوصية"
 
 #: eventyay/control/templates/pretixcontrol/organizers/gate_delete.html:5
 msgid "Delete gate:"
@@ -27821,7 +28188,7 @@ msgstr "أن رقم الصفحة هو أقل من 1"
 msgid "Dashboard cache refreshed successfully."
 msgstr "إرسال كلمة المرور الإلكتروني إعادة تعيين."
 
-#: eventyay/control/views/admin.py:685 eventyay/control/views/pages.py:131
+#: eventyay/control/views/admin.py:685 eventyay/control/views/pages.py:136
 msgid "Invalid field."
 msgstr "حقل غير صالح."
 
@@ -27935,7 +28302,7 @@ msgstr "تم إنشاء الاختيار في قائمة جديدة."
 #: eventyay/control/views/event.py:1495 eventyay/control/views/event.py:1626
 #: eventyay/control/views/organizer_views/organizer_view.py:361
 #: eventyay/control/views/organizer_views/organizer_view.py:537
-#: eventyay/control/views/pages.py:108 eventyay/control/views/product.py:269
+#: eventyay/control/views/pages.py:113 eventyay/control/views/product.py:269
 #: eventyay/control/views/product.py:321 eventyay/control/views/product.py:779
 #: eventyay/control/views/product.py:813 eventyay/control/views/product.py:964
 #: eventyay/control/views/product.py:1243
@@ -27945,7 +28312,7 @@ msgstr "تم إنشاء الاختيار في قائمة جديدة."
 #: eventyay/control/views/subevents.py:1051
 #: eventyay/control/views/subevents.py:1620
 #: eventyay/eventyay_common/views/account/two_factor_auth.py:150
-#: eventyay/eventyay_common/views/event.py:895
+#: eventyay/eventyay_common/views/event.py:930
 #: eventyay/plugins/badges/views.py:144 eventyay/plugins/badges/views.py:193
 #: eventyay/plugins/sendmail/views.py:231
 #: eventyay/plugins/ticketoutputpdf/views.py:109
@@ -28074,7 +28441,7 @@ msgstr[5] "{num} طلبات"
 
 #: eventyay/control/views/event.py:239
 #: eventyay/control/views/organizer_views/organizer_view.py:205
-#: eventyay/eventyay_common/views/event.py:780
+#: eventyay/eventyay_common/views/event.py:815
 msgid ""
 "Your changes have been saved. Please note that it can take a short period of "
 "time until your changes become active."
@@ -28124,7 +28491,7 @@ msgstr "لقد طلبت صالح نوع الانتاج التذاكر."
 msgid "This event can not be deleted."
 msgstr "لا يمكن حذف هذا الحدث."
 
-#: eventyay/control/views/event.py:1204 eventyay/orga/views/event.py:399
+#: eventyay/control/views/event.py:1204 eventyay/orga/views/event.py:398
 msgid "The event has been deleted."
 msgstr "الحدث تم الغائه."
 
@@ -28207,66 +28574,74 @@ msgstr "تذكرة عادية"
 msgid "Virtual Ticket"
 msgstr "تذكرة افتراضية"
 
-#: eventyay/control/views/global_settings.py:51
-#: eventyay/control/views/global_settings.py:73
-#: eventyay/control/views/global_settings.py:103
-#: eventyay/control/views/global_settings.py:156
-#: eventyay/control/views/pages.py:50
+#: eventyay/control/views/global_settings.py:66
+#: eventyay/control/views/global_settings.py:83
+#: eventyay/control/views/global_settings.py:113
+#: eventyay/control/views/global_settings.py:166
+#: eventyay/control/views/pages.py:55
 msgid "Your changes have not been saved, see below for errors."
 msgstr "لم يتم حفظ التغييرات، انظر أدناه للحصول على الأخطاء."
 
-#: eventyay/control/views/global_settings.py:197
+#: eventyay/control/views/global_settings.py:207
 #, fuzzy
 #| msgid "Please enter at least one email address!"
 msgid "Please enter at least one valid recipient email address."
 msgstr "يرجى إدخال عنوان بريد إلكتروني واحد على الأقل!"
 
-#: eventyay/control/views/global_settings.py:207
+#: eventyay/control/views/global_settings.py:217
 #, fuzzy, python-format
 #| msgid "Please enter a valid email address."
 msgid ""
 "Please enter a valid recipient email address (\"%(email)s\" is invalid)."
 msgstr "لو سمحت أدخل بريد إليكتروني صالح."
 
-#: eventyay/control/views/global_settings.py:220
+#: eventyay/control/views/global_settings.py:230
 msgid ""
 "No sender address is configured. Please set the \"Sender address\" field in "
 "the Email tab and save first."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:232
+#: eventyay/control/views/global_settings.py:242
 #, python-format
 msgid ""
 "The sender address \"%(addr)s\" is not a valid email address. Please correct "
 "the \"Sender address\" field and save again."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:245
+#: eventyay/control/views/global_settings.py:255
 #, python-format
 msgid ""
 "The sender address \"%(addr)s\" contains non-ASCII characters which are not "
 "allowed in SMTP. Please correct the \"Sender address\" field and save again."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:258
-#: eventyay/eventyay_common/views/event.py:704
+#: eventyay/control/views/global_settings.py:268
+#: eventyay/eventyay_common/views/event.py:729
 msgid "SendGrid API key is missing. Please configure it and save."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:266
-#: eventyay/eventyay_common/views/event.py:707
+#: eventyay/control/views/global_settings.py:279
+msgid ""
+"Gmail is selected but no account is connected. Connect Gmail in the settings "
+"first."
+msgstr ""
+
+#: eventyay/control/views/global_settings.py:288
+#: eventyay/eventyay_common/views/event.py:732
 msgid "SMTP host or port is missing. Please configure them and save."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:282
+#: eventyay/control/views/global_settings.py:301
+#: eventyay/control/views/global_settings.py:311
 msgid "Eventyay system - test email"
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:283
+#: eventyay/control/views/global_settings.py:302
+#: eventyay/control/views/global_settings.py:312
 msgid "This is a test email from your Eventyay system email configuration."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:299
+#: eventyay/control/views/global_settings.py:328
 msgid ""
 "SMTP authentication or email sending failed because the password, username, "
 "or recipient address contains an invisible non-ASCII character (e.g. a no-"
@@ -28274,31 +28649,123 @@ msgid ""
 "again."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:310
+#: eventyay/control/views/global_settings.py:339
 #, python-format
 msgid "SendGrid test email failed to connect or send. HTTP Error: %(err)s"
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:317
+#: eventyay/control/views/global_settings.py:356
+#: eventyay/eventyay_common/views/event.py:756
+#, python-format
+msgid "Gmail test email is temporarily delayed because of rate limits: %(err)s"
+msgstr ""
+
+#: eventyay/control/views/global_settings.py:362
+#: eventyay/eventyay_common/views/event.py:761
+#, fuzzy, python-format
+#| msgid "Some emails failed to send:"
+msgid "Gmail test email could not be sent: %(err)s"
+msgstr "فشل إرسال بعض رسائل البريد الإلكتروني:"
+
+#: eventyay/control/views/global_settings.py:369
 #, fuzzy, python-format
 #| msgid "Some emails failed to send:"
 msgid "Test email failed to connect or send: %(err)s"
 msgstr "فشل إرسال بعض رسائل البريد الإلكتروني:"
 
-#: eventyay/control/views/global_settings.py:325
+#: eventyay/control/views/global_settings.py:379
 #, python-format
 msgid "Test email sent to %(email)s — check inbox."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:396
+#: eventyay/control/views/global_settings.py:450
 msgid "Plugin configuration table is not available. Please run migrations."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:404
+#: eventyay/control/views/global_settings.py:458
 #, fuzzy
 #| msgid "Your notification settings have been saved."
 msgid "Plugin settings have been saved."
 msgstr "تم حفظ إعدادات الإشعار."
+
+#: eventyay/control/views/gmail_oauth.py:47
+#: eventyay/control/views/gmail_oauth.py:156
+#, python-format
+msgid "Google authorization was denied or failed: %(error)s"
+msgstr ""
+
+#: eventyay/control/views/gmail_oauth.py:54
+#: eventyay/control/views/gmail_oauth.py:163
+msgid "Missing authorization response from Google."
+msgstr ""
+
+#: eventyay/control/views/gmail_oauth.py:60
+#: eventyay/control/views/gmail_oauth.py:169
+#, fuzzy
+#| msgid "The registration could not be completed. Please try again."
+msgid "The Google authorization session expired. Please try again."
+msgstr "تعذر إكمال التسجيل. حاول مرة اخرى."
+
+#: eventyay/control/views/gmail_oauth.py:64
+#, fuzzy
+#| msgid "The waiting list entry has been moved to the end of the list."
+msgid "The Google authorization session does not match the current user."
+msgstr "تم نقل إدخال قائمة الانتظار إلى نهاية القائمة."
+
+#: eventyay/control/views/gmail_oauth.py:75
+#: eventyay/control/views/gmail_oauth.py:189
+#, python-format
+msgid "Could not connect Gmail account: %(error)s"
+msgstr ""
+
+#: eventyay/control/views/gmail_oauth.py:83
+#: eventyay/control/views/gmail_oauth.py:197
+msgid ""
+"Google did not return a refresh token. Disconnect the app in your Google "
+"account and try again."
+msgstr ""
+
+#: eventyay/control/views/gmail_oauth.py:103
+#, fuzzy, python-format
+#| msgid "Verification failed."
+msgid "Gmail account %(email)s connected successfully."
+msgstr "فشل التحقق."
+
+#: eventyay/control/views/gmail_oauth.py:113
+#, fuzzy
+#| msgid "Your PayPal account has been disconnected."
+msgid "Gmail account disconnected."
+msgstr "تم فصل حساب PayPal الخاص بك."
+
+#: eventyay/control/views/gmail_oauth.py:115
+#, fuzzy
+#| msgid "No sent mails found."
+msgid "No active Gmail connection found."
+msgstr "لم يتم العثور على رسائل مرسلة."
+
+#: eventyay/control/views/gmail_oauth.py:173
+#, fuzzy
+#| msgid "The video module is not enabled for this event."
+msgid "The Google authorization session is invalid for this event."
+msgstr "وحدة الفيديو غير مفعّلة لهذا الحدث."
+
+#: eventyay/control/views/gmail_oauth.py:218
+#, fuzzy, python-format
+#| msgid "No tracks are configured for any events."
+msgid "Gmail account %(email)s connected for this event."
+msgstr "لم يتم تكوين أي مسارات لأي أحداث."
+
+#: eventyay/control/views/gmail_oauth.py:231
+#, fuzzy
+#| msgid "No tracks are configured for any events."
+msgid "Gmail account disconnected for this event."
+msgstr "لم يتم تكوين أي مسارات لأي أحداث."
+
+#: eventyay/control/views/gmail_oauth.py:233
+#, fuzzy
+#| msgid "No tracks are configured for any events."
+msgid "No active Gmail connection found for this event."
+msgstr "لم يتم تكوين أي مسارات لأي أحداث."
 
 #: eventyay/control/views/orderimport.py:65
 msgid "Please only upload CSV files."
@@ -28890,18 +29357,40 @@ msgid ""
 msgstr ""
 
 #: eventyay/control/views/organizer_views/organizer_view.py:541
-#: eventyay/eventyay_common/views/event.py:899
+#: eventyay/eventyay_common/views/event.py:934
 msgid "You haven't made any changes."
 msgstr "لم تقم بأي تغييرات."
 
-#: eventyay/control/views/pages.py:59 eventyay/control/views/pages.py:132
-#: eventyay/control/views/pages.py:182
+#: eventyay/control/views/pages.py:64 eventyay/control/views/pages.py:137
+#: eventyay/control/views/pages.py:187 eventyay/control/views/pages.py:248
 msgid "The requested page does not exist."
 msgstr "الصفحة المطلوبة غير موجودة."
 
-#: eventyay/control/views/pages.py:171
+#: eventyay/control/views/pages.py:176
 msgid "The selected page has been deleted."
 msgstr "تم حذف الصفحة المحددة."
+
+#: eventyay/control/views/pages.py:235
+#, fuzzy
+#| msgid "Number of reviews"
+msgid "Terms of Service"
+msgstr "عدد المتقييمات"
+
+#: eventyay/control/views/pages.py:236
+#, fuzzy
+#| msgid "Privacy Policy URL"
+msgid "Privacy Policy"
+msgstr "رابط سياسة الخصوصية"
+
+#: eventyay/control/views/pages.py:238
+msgid "Support & Help"
+msgstr ""
+
+#: eventyay/control/views/pages.py:242
+#, fuzzy
+#| msgid "No redis server has been configured."
+msgid "Content for this page has not been configured yet."
+msgstr "لم يتم تكوين أي خادم."
 
 #: eventyay/control/views/pdf.py:39
 #, fuzzy
@@ -29158,15 +29647,15 @@ msgid "Unknown action."
 msgstr "سبب غير معلوم"
 
 #: eventyay/control/views/users.py:198 eventyay/control/views/users.py:201
-#: eventyay/control/views/users.py:328 eventyay/control/views/users.py:331
-#: eventyay/control/views/users.py:389 eventyay/control/views/users.py:392
+#: eventyay/control/views/users.py:331 eventyay/control/views/users.py:334
+#: eventyay/control/views/users.py:392 eventyay/control/views/users.py:395
 #, fuzzy
 #| msgid "The addressed user’s email address"
 msgid "This user has no email address."
 msgstr "عنوان ايميل المستخدم"
 
 #: eventyay/control/views/users.py:210 eventyay/control/views/users.py:213
-#: eventyay/control/views/users.py:340 eventyay/control/views/users.py:343
+#: eventyay/control/views/users.py:343 eventyay/control/views/users.py:346
 #, fuzzy
 #| msgid "Please provide an email address."
 msgid "This user has no primary email address."
@@ -29208,77 +29697,77 @@ msgstr "إزالة تذكرة"
 msgid "Admin status for %(email)s has been %(action)s."
 msgstr "تم إرسال البريد الإلكتروني المخصص."
 
-#: eventyay/control/views/users.py:314
+#: eventyay/control/views/users.py:317
 #, fuzzy
 #| msgid "Order marked as paid"
 msgid "marked as spam"
 msgstr "أجل وضع علامة على دفع"
 
-#: eventyay/control/views/users.py:314
+#: eventyay/control/views/users.py:317
 #, fuzzy
 #| msgid "Order marked as paid"
 msgid "unmarked as spam"
 msgstr "أجل وضع علامة على دفع"
 
-#: eventyay/control/views/users.py:317
+#: eventyay/control/views/users.py:320
 #, fuzzy, python-format
 #| msgid "The email has been sent."
 msgid "User %(email)s has been %(action)s."
 msgstr "تم إرسال البريد الإلكتروني."
 
-#: eventyay/control/views/users.py:350 eventyay/control/views/users.py:353
+#: eventyay/control/views/users.py:353 eventyay/control/views/users.py:356
 #, fuzzy
 #| msgid "This security device is already registered."
 msgid "This user is already verified."
 msgstr "مسجلة بالفعل هذا الجهاز الأمني."
 
-#: eventyay/control/views/users.py:363 eventyay/control/views/users.py:366
+#: eventyay/control/views/users.py:366 eventyay/control/views/users.py:369
 #, fuzzy
 #| msgid "There was an error sending the confirmation mail."
 msgid "There was an error sending the verification email."
 msgstr "كان هناك خطأ أثناء إرسال البريد تأكيد."
 
-#: eventyay/control/views/users.py:377
+#: eventyay/control/views/users.py:380
 #, fuzzy
 #| msgid "Verification failed."
 msgid "Verification email sent successfully."
 msgstr "فشل التحقق."
 
-#: eventyay/control/views/users.py:381
+#: eventyay/control/views/users.py:384
 #, fuzzy, python-format
 #| msgid "Verification failed."
 msgid "Verification email sent to %(email)s."
 msgstr "فشل التحقق."
 
-#: eventyay/control/views/users.py:410
+#: eventyay/control/views/users.py:413
 #, fuzzy
 #| msgid "Password reset mail sent."
 msgid "Password reset email sent successfully."
 msgstr "إرسال كلمة المرور الإلكتروني إعادة تعيين."
 
-#: eventyay/control/views/users.py:414
+#: eventyay/control/views/users.py:417
 #, fuzzy, python-format
 #| msgid "Password reset mail sent."
 msgid "Password reset email sent to %(email)s."
 msgstr "إرسال كلمة المرور الإلكتروني إعادة تعيين."
 
-#: eventyay/control/views/users.py:502
+#: eventyay/control/views/users.py:505
 msgid "We sent out an e-mail containing further instructions."
 msgstr "أرسلنا رسالة بريد إلكتروني تحتوي على مزيد من التعليمات."
 
-#: eventyay/control/views/users.py:548
+#: eventyay/control/views/users.py:551
 #, fuzzy
 #| msgid "The registration could not be completed. Please try again."
 msgid "The user could not be anonymized. Please try again later."
 msgstr "تعذر إكمال التسجيل. حاول مرة اخرى."
 
-#: eventyay/control/views/users.py:551
+#: eventyay/control/views/users.py:554
 #, fuzzy
 #| msgid "This user has been anonymized."
 msgid "User has been anonymized successfully."
 msgstr "تم طمس هويتها لهذا المستخدم."
 
-#: eventyay/control/views/users.py:646
+#: eventyay/control/views/users.py:649
 msgid "The new user has been created."
 msgstr "تم إنشاء مستخدم جديد."
 
@@ -29429,101 +29918,101 @@ msgstr ""
 "الجلسات وقوالب البريد الإلكتروني. يرجى التحقق من هذه الإعدادات بمجرد إنشاء "
 "الحدث!"
 
-#: eventyay/event/stages.py:41
+#: eventyay/event/stages.py:40
 msgid "Preparation"
 msgstr "التحضيرات"
 
-#: eventyay/event/stages.py:45
+#: eventyay/event/stages.py:44
 msgid "Configure the event"
 msgstr "إعدادات الحدث"
 
-#: eventyay/event/stages.py:46
+#: eventyay/event/stages.py:45
 msgid "Gather your team"
 msgstr "اجمع فريقك"
 
-#: eventyay/event/stages.py:47
+#: eventyay/event/stages.py:46
 msgid "Write a CfP"
 msgstr "اكتب ال CfP"
 
-#: eventyay/event/stages.py:49
+#: eventyay/event/stages.py:48
 msgid "Customize mail templates"
 msgstr "تخصيص نماذج البريد الإلكتروني"
 
-#: eventyay/event/stages.py:55
+#: eventyay/event/stages.py:54
 msgid "CfP is open"
 msgstr "ال CfP مفتوح"
 
-#: eventyay/event/stages.py:59
+#: eventyay/event/stages.py:58
 msgid "Monitor proposals"
 msgstr "رصد الطلبات (المقترحات)"
 
-#: eventyay/event/stages.py:61
+#: eventyay/event/stages.py:60
 msgid "Submit sessions for your speakers"
 msgstr "إرسال الجلسات للمتحدثين"
 
-#: eventyay/event/stages.py:64
+#: eventyay/event/stages.py:63
 msgid "Invite reviewers"
 msgstr "دعوة المشاركين"
 
-#: eventyay/event/stages.py:72
+#: eventyay/event/stages.py:71
 msgid "Let reviewers do their work"
 msgstr "دع المراجعين يقومون بواجباتهم"
 
-#: eventyay/event/stages.py:74
+#: eventyay/event/stages.py:73
 msgid "Accept or reject proposals"
 msgstr "قبول و رفض الطلبات (المقترحات)"
 
-#: eventyay/event/stages.py:77
+#: eventyay/event/stages.py:76
 msgid "Build your first schedule"
 msgstr "بناء جدولك الزمني الأول"
 
-#: eventyay/event/stages.py:86
+#: eventyay/event/stages.py:85
 msgid "Release schedules as needed"
 msgstr "تحرير الجداول وفق الحاجة"
 
-#: eventyay/event/stages.py:90
+#: eventyay/event/stages.py:89
 msgid "Inform your speakers about the infrastructure"
 msgstr "أعلم المتحدثين عن بنية المعلومات الأساسية"
 
-#: eventyay/event/stages.py:100
+#: eventyay/event/stages.py:99
 msgid "Provide a point of contact for the speakers"
 msgstr "توفير معلومات الاتصال للمتحدثين"
 
-#: eventyay/event/stages.py:101
+#: eventyay/event/stages.py:100
 msgid "Enjoy the event!"
 msgstr "الانضمام للحدث!"
 
-#: eventyay/event/stages.py:105
+#: eventyay/event/stages.py:104
 msgid "Wrapup"
 msgstr "الاستنتاج"
 
-#: eventyay/event/stages.py:109
+#: eventyay/event/stages.py:108
 msgid "Monitor incoming feedback"
 msgstr "رصد الملاحظات الواردة"
 
-#: eventyay/event/stages.py:110
+#: eventyay/event/stages.py:109
 msgid "Embed session recordings if available"
 msgstr "تضمين تسجيلات الجلسة إذا كانت متوفرة"
 
-#: eventyay/event/stages.py:111
+#: eventyay/event/stages.py:110
 msgid "Release next event date?"
 msgstr "تحرير تاريخ الحدث القادم ؟"
 
-#: eventyay/eventyay_common/forms/event.py:81
+#: eventyay/eventyay_common/forms/event.py:82
 #, fuzzy
 #| msgid "Please provide an email address."
 msgid "Please provide an email address for the contact form."
 msgstr "يرجى إدخال عنوان بريد إلكتروني."
 
-#: eventyay/eventyay_common/forms/event.py:214
+#: eventyay/eventyay_common/forms/event.py:215
 msgid "Ask search engines not to index the event pages"
 msgstr "اطلب من محركات البحث عدم فهرسة صفحات الأحداث"
 
-#: eventyay/eventyay_common/forms/event.py:259
+#: eventyay/eventyay_common/forms/event.py:260
 msgid "Show in search results and lists"
 msgstr ""
 
-#: eventyay/eventyay_common/forms/event.py:260
+#: eventyay/eventyay_common/forms/event.py:261
 #, fuzzy
 #| msgid ""
 #| "If selected, this event will show up publicly on the list of events for "
@@ -29533,9 +30022,136 @@ msgid ""
 "organizer account and in platform search results."
 msgstr "إذا المحدد، سوف تظهر هذا الحدث للجمهور في قائمة الأحداث لحساب المنظم."
 
-#: eventyay/eventyay_common/forms/event.py:267
+#: eventyay/eventyay_common/forms/event.py:268
 msgid "You need to configure the custom domain in the webserver beforehand."
 msgstr "تحتاج إلى تكوين المجال مخصصة في خادم الويب مسبقا."
+
+#: eventyay/eventyay_common/forms/event.py:349
+#, fuzzy
+#| msgid "Client Configuration"
+msgid "Common event Configuration"
+msgstr "إعدادات العميل"
+
+#: eventyay/eventyay_common/forms/event.py:350
+msgid "Includes general settings, design elements, and email configurations."
+msgstr ""
+
+#: eventyay/eventyay_common/forms/event.py:356
+msgid "Location, currency, plugins, header/footer links."
+msgstr ""
+
+#: eventyay/eventyay_common/forms/event.py:361
+#, fuzzy
+#| msgid "Date and time"
+msgid "Design and texts"
+msgstr "التاريخ و الوقت"
+
+#: eventyay/eventyay_common/forms/event.py:362
+msgid "Colors, logo, custom CSS."
+msgstr ""
+
+#: eventyay/eventyay_common/forms/event.py:367
+#: eventyay/orga/templates/orga/settings/mail.html:14
+msgid "Email settings"
+msgstr "إعدادات البريد الإلكتروني"
+
+#: eventyay/eventyay_common/forms/event.py:368
+#, fuzzy
+#| msgid "Create a new configuration"
+msgid "Email templates and SMTP configuration."
+msgstr "إنشاء تكوين جديد"
+
+#: eventyay/eventyay_common/forms/event.py:374
+#, fuzzy
+#| msgid "Client Configuration"
+msgid "Ticketing Configuration"
+msgstr "إعدادات العميل"
+
+#: eventyay/eventyay_common/forms/event.py:375
+msgid "Includes products, quotas, attendee questions, and check-in lists."
+msgstr ""
+
+#: eventyay/eventyay_common/forms/event.py:380
+#, fuzzy
+#| msgid "Products"
+msgid "Products & Quotas"
+msgstr "منتجات"
+
+#: eventyay/eventyay_common/forms/event.py:381
+msgid "Ticket products, categories, quotas, tax rules, add-ons."
+msgstr ""
+
+#: eventyay/eventyay_common/forms/event.py:387
+#, fuzzy
+#| msgid "Create a new question"
+msgid "Order and attendee questions."
+msgstr "إنشاء سؤال جديد"
+
+#: eventyay/eventyay_common/forms/event.py:393
+#, fuzzy
+#| msgid "Check-in device configuration"
+msgid "Check-in lists configuration."
+msgstr "تحقق في تكوين الجهاز"
+
+#: eventyay/eventyay_common/forms/event.py:399
+#, fuzzy
+#| msgid "Payment providers"
+msgid "Payment providers and invoicing."
+msgstr "مقدمي خدمات الدفع"
+
+#: eventyay/eventyay_common/forms/event.py:405
+#, fuzzy
+#| msgid "Client Configuration"
+msgid "Talk Configuration"
+msgstr "إعدادات العميل"
+
+#: eventyay/eventyay_common/forms/event.py:406
+msgid "Includes call for speakers, session tracks, and review settings."
+msgstr ""
+
+#: eventyay/eventyay_common/forms/event.py:411
+#, fuzzy
+#| msgid "Call for Speakers"
+msgid "Call for speakers"
+msgstr "دعوة المتحدثين"
+
+#: eventyay/eventyay_common/forms/event.py:412
+#, fuzzy
+#| msgid "The selected configuration does not exist."
+msgid "Call for speakers configuration and basic text."
+msgstr "عدم وجود التكوين المحدد."
+
+#: eventyay/eventyay_common/forms/event.py:417
+#, fuzzy
+#| msgid "Sessions by track"
+msgid "Session types & tracks"
+msgstr "الجلسات حسب المسار"
+
+#: eventyay/eventyay_common/forms/event.py:418
+#, fuzzy
+#| msgid "Sessions by track"
+msgid "Session types and tracks."
+msgstr "الجلسات حسب المسار"
+
+#: eventyay/eventyay_common/forms/event.py:423
+#: eventyay/orga/templates/orga/base.html:277
+#: eventyay/orga/templates/orga/settings/review.html:8
+#: eventyay/orga/templates/orga/settings/review.html:24
+#: eventyay/orga/views/event.py:132
+msgid "Review settings"
+msgstr "مراجعة الإعدادات"
+
+#: eventyay/eventyay_common/forms/event.py:424
+msgid "Review phases and review scoring categories."
+msgstr ""
+
+#: eventyay/eventyay_common/forms/event.py:472
+#, fuzzy
+#| msgid ""
+#| "You already used this slug for a different event. Please choose a new one."
+msgid ""
+"You already have an event with this short name. Please choose another one."
+msgstr "استخدمته بالفعل هذا سبيكة لحدث آخر. الرجاء اختيار واحدة جديدة."
 
 #: eventyay/eventyay_common/forms/filters.py:62
 msgid "Search by session name"
@@ -29559,7 +30175,7 @@ msgstr "إعدادات الحدث"
 
 #: eventyay/eventyay_common/navigation.py:101
 #: eventyay/eventyay_common/templates/eventyay_common/event/live.html:12
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:327
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:325
 msgid "Event status"
 msgstr "حالة الحدث"
 
@@ -30072,6 +30688,18 @@ msgstr "سجلت أي طلبات بعد."
 msgid "Lost password?"
 msgstr "كلمة مرور مفقودة؟"
 
+#: eventyay/eventyay_common/templates/eventyay_common/auth/base.html:40
+#, fuzzy
+#| msgid "New password"
+msgid "Show password"
+msgstr "كلمة مرور جديدة"
+
+#: eventyay/eventyay_common/templates/eventyay_common/auth/base.html:41
+#, fuzzy
+#| msgid "New password"
+msgid "Hide password"
+msgstr "كلمة مرور جديدة"
+
 #: eventyay/eventyay_common/templates/eventyay_common/auth/forgot.html:14
 msgid "Send recovery information"
 msgstr "إرسال معلومات الاسترداد"
@@ -30134,11 +30762,6 @@ msgstr ""
 msgid "Set new password"
 msgstr "كلمة المرور الجديدة تعيين"
 
-#: eventyay/eventyay_common/templates/eventyay_common/base.html:258
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:161
-msgid "Main dashboard"
-msgstr "لوحة التحكم الرئيسية"
-
 #: eventyay/eventyay_common/templates/eventyay_common/component/_beta_badge.html:1
 #, fuzzy
 #| msgid "This feature is not enabled."
@@ -30168,6 +30791,76 @@ msgstr "تحتاج إلى تفعيل هذا المكوّن أولاً"
 #: eventyay/eventyay_common/templates/eventyay_common/includes/permission_required_dialog.html:11
 msgid "Ok"
 msgstr "موافق"
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:11
+msgid ""
+"You can create a new event that is a copy of this event. Please enter a "
+"name, short form, and the new dates for the new event."
+msgstr ""
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:13
+#, fuzzy
+#| msgid "Scan the following configuration code:"
+msgid "By default, the following Configuration is NOT cloned:"
+msgstr "مسح رمز التكوين التالية:"
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:15
+msgid "Orders, attendees, payments, invoices, check-ins"
+msgstr ""
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:16
+#, fuzzy
+#| msgid "The proposal was accepted."
+msgid "Submitted proposals, reviews, accepted sessions"
+msgstr "تم قبول الطلب (المقترح)."
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:17
+#, fuzzy
+#| msgid "Send reminder to unsubmitted proposal drafts"
+msgid "Speaker accounts or profiles linked to submitted proposals"
+msgstr "إرسال تذكير لمسودات المقترحات غير المقدمة"
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:18
+#, fuzzy
+#| msgid "Responses contain personal data"
+msgid "Message history, logs, or any personal data"
+msgstr "الاستجابات تحتوي على بيانات شخصية"
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:27
+#, fuzzy
+#| msgid "Sent emails"
+msgid "New Event details"
+msgstr "إرسال الإيميل"
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:38
+#: eventyay/eventyay_common/templates/eventyay_common/events/create.html:122
+msgid "Set to random"
+msgstr "تعيين إلى عشوائي"
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:42
+#: eventyay/eventyay_common/templates/eventyay_common/events/create.html:126
+msgid "Slug not available"
+msgstr "المعرّف القصير غير متوفر"
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:45
+#: eventyay/eventyay_common/templates/eventyay_common/events/create.html:129
+msgid ""
+"This is the address your event will be available at. Should be short, only "
+"contain lowercase letters and numbers, and must be unique. We recommend some "
+"kind of abbreviation with less than 30 characters that can be easily "
+"remembered. You cannot change the slug later on! If you don't provide a "
+"slug, a random one will be generated for you."
+msgstr ""
+"هذا هو العنوان الذي سيكون الحدث متاحًا عليه. يجب أن يكون قصيرًا، وأن يحتوي فقط "
+"على أحرف صغيرة وأرقام، ويجب أن يكون فريدًا. نوصي باستخدام اختصار مكوّن من أقل "
+"من 30 حرفًا يسهل تذكره. لا يمكنك تغيير المعرّف القصير لاحقًا! إذا لم تقدم معرّفًا "
+"قصيرًا، فسيتم توليد واحد عشوائيًا لك."
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:62
+#, fuzzy
+#| msgid "Confirmation code"
+msgid "Configuration to clone"
+msgstr "رمز التأكيد"
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:7
 #, fuzzy
@@ -30305,14 +30998,14 @@ msgid ""
 msgstr ""
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/includes/live_error_dialogs.html:29
-#: eventyay/eventyay_common/views/event.py:1058
+#: eventyay/eventyay_common/views/event.py:1093
 msgid ""
 "You cannot unpublish the event while tickets are published. Please switch "
 "ticketing to private test mode first."
 msgstr ""
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/includes/live_error_dialogs.html:31
-#: eventyay/eventyay_common/views/event.py:1064
+#: eventyay/eventyay_common/views/event.py:1099
 msgid ""
 "You cannot unpublish the event while talks are published. Please switch "
 "talks to private test mode first."
@@ -30734,7 +31427,7 @@ msgid "Enable video"
 msgstr "تمكين الوصول إلى الفيديو"
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/live.html:461
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:316
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:314
 #, fuzzy
 #| msgid "Change order"
 msgid "Danger zone"
@@ -30746,21 +31439,17 @@ msgid ""
 "completed."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/live.html:471
-msgid "Cancel or delete event"
-msgstr "إلغاء أو حذف الحدث"
-
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:21
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:22
 #, fuzzy, python-format
 #| msgid "- Settings"
 msgid "%(name)s - Settings"
 msgstr "- الإعدادات"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:45
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:46
 msgid "Header links"
 msgstr "روابط الرأس"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:49
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:50
 msgid ""
 "These links will be shown at the top of all your schedule-related pages, "
 "e.g. the schedule itself, speaker pages, session pages, etc. You could for "
@@ -30771,11 +31460,11 @@ msgstr ""
 "وصفحات المتحدثين وصفحات الجلسات، إلخ. يمكنك مثلاً ربطها بصفحتك الرئيسية أو "
 "صفحة التسجيل أو البث المباشر."
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:62
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:63
 msgid "Footer links"
 msgstr "روابط التذييل"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:66
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:67
 msgid ""
 "These links will be shown in the footer of all your public pages. You could "
 "for example link your terms of service, imprint, or privacy policy here."
@@ -30783,93 +31472,93 @@ msgstr ""
 "ستُعرض هذه الروابط في تذييل جميع صفحاتك العامة. يمكنك مثلاً ربط شروط الخدمة أو "
 "معلومات النشر أو سياسة الخصوصية هنا."
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:184
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:185
 #: eventyay/eventyay_common/templates/eventyay_common/events/create.html:151
 #, fuzzy
 #| msgid "Videos"
 msgid "Video stream"
 msgstr "مقاطع الفيديو"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:241
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:242
 #, fuzzy
 #| msgid "Public link"
 msgid "Publication"
 msgstr "الرابط العام"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:255
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:256
 #, fuzzy
 #| msgid "Email template"
 msgid "Email gateway"
 msgstr "قالب البريد الإلكتروني"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:274
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:272
 #, fuzzy
 #| msgid "Save and send"
 msgid "Save and send test email"
 msgstr "احفظ وأرسل"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:281
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:279
 #, fuzzy
 #| msgid "E-mail design"
 msgid "Email design"
 msgstr "البريد الإلكتروني تصميم"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:283
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:281
 msgid ""
 "The HTML mail renderer controls the visual design of outgoing "
 "<strong>ticket</strong> emails. Talk emails use a fixed layout and are not "
 "affected by this choice."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:320
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:318
 msgid ""
 "<strong>Danger zone:</strong> These actions can affect your event and may be "
 "irreversible. Please proceed with caution."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:328
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:326
 msgid "Manage the visibility or status of your event."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:335
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:333
 #, fuzzy
 #| msgid "The event was modified."
 msgid "Take event offline"
 msgstr "تم تعديل الحدث."
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:336
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:334
 msgid "Hide this event from attendees. You can bring it back online anytime."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:351
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:349
 msgid ""
 "Cancel this event and start the cancellation process. Ticket holders may "
 "need to be refunded."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:365
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:363
 #, fuzzy
 #| msgid "Task management"
 msgid "Data management"
 msgstr "إدارة المهام"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:366
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:364
 msgid ""
 "Manage and remove specific data while retaining required financial records."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:374
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:372
 msgid ""
 "Remove personal information such as attendee names and email addresses while "
 "retaining required financial records."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:389
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:394
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:387
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:392
 msgid "Delete talk data"
 msgstr "حذف بيانات المحاضرة"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:390
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:388
 #, fuzzy
 #| msgid ""
 #| "ALL related data, such as proposals, and speaker profiles, and uploads, "
@@ -30881,19 +31570,19 @@ msgstr ""
 "سيتم أيضًا حذف جميع البيانات ذات الصلة ، مثل المقترحات وملفات تعريف المتحدث "
 "والتحميلات ، ولا يمكن استعادتها."
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:405
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:403
 #, fuzzy
 #| msgid "Account deletion"
 msgid "Permanent deletion"
 msgstr "حذف الحساب"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:406
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:404
 #, fuzzy
 #| msgid "This action cannot be undone."
 msgid "These actions cannot be undone. Please be absolutely sure."
 msgstr "لا يمكن التراجع عن هذا الإجراء."
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:411
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:409
 msgid ""
 "Permanently delete this event and all deletable associated data. Events "
 "containing protected records, such as completed orders outside test mode, "
@@ -30928,27 +31617,6 @@ msgid ""
 "The event type is set from the entry point. To choose a different type, go "
 "back and use the appropriate button."
 msgstr ""
-
-#: eventyay/eventyay_common/templates/eventyay_common/events/create.html:122
-msgid "Set to random"
-msgstr "تعيين إلى عشوائي"
-
-#: eventyay/eventyay_common/templates/eventyay_common/events/create.html:126
-msgid "Slug not available"
-msgstr "المعرّف القصير غير متوفر"
-
-#: eventyay/eventyay_common/templates/eventyay_common/events/create.html:129
-msgid ""
-"This is the address your event will be available at. Should be short, only "
-"contain lowercase letters and numbers, and must be unique. We recommend some "
-"kind of abbreviation with less than 30 characters that can be easily "
-"remembered. You cannot change the slug later on! If you don't provide a "
-"slug, a random one will be generated for you."
-msgstr ""
-"هذا هو العنوان الذي سيكون الحدث متاحًا عليه. يجب أن يكون قصيرًا، وأن يحتوي فقط "
-"على أحرف صغيرة وأرقام، ويجب أن يكون فريدًا. نوصي باستخدام اختصار مكوّن من أقل "
-"من 30 حرفًا يسهل تذكره. لا يمكنك تغيير المعرّف القصير لاحقًا! إذا لم تقدم معرّفًا "
-"قصيرًا، فسيتم توليد واحد عشوائيًا لك."
 
 #: eventyay/eventyay_common/templates/eventyay_common/events/create.html:137
 msgid ""
@@ -31842,12 +32510,12 @@ msgid "You do not have permission to change event settings."
 msgstr "ليس لديك إذن لتغيير إعدادات الحدث."
 
 #: eventyay/eventyay_common/views/dashboards.py:416
-#: eventyay/eventyay_common/views/event.py:1189
+#: eventyay/eventyay_common/views/event.py:1224
 msgid "Video link is now visible on public pages."
 msgstr "رابط الفيديو الآن مرئي في الصفحات العامة."
 
 #: eventyay/eventyay_common/views/dashboards.py:418
-#: eventyay/eventyay_common/views/event.py:1191
+#: eventyay/eventyay_common/views/event.py:1226
 msgid "Video link is now hidden from public pages."
 msgstr "رابط الفيديو الآن مخفي عن الصفحات العامة."
 
@@ -31855,91 +32523,98 @@ msgstr "رابط الفيديو الآن مخفي عن الصفحات العام
 msgid "No dates"
 msgstr "لا توجد تواريخ"
 
-#: eventyay/eventyay_common/views/event.py:318
+#: eventyay/eventyay_common/views/event.py:324
 #, fuzzy
 #| msgid "This ticket shop is currently disabled."
 msgid "Event series creation is currently disabled."
 msgstr "يتم تعطيل هذا المحل تذكرة لعرضه."
 
-#: eventyay/eventyay_common/views/event.py:321
+#: eventyay/eventyay_common/views/event.py:327
 #, fuzzy
 #| msgid "This ticket shop is currently disabled."
 msgid "Meetup creation is currently disabled."
 msgstr "يتم تعطيل هذا المحل تذكرة لعرضه."
 
-#: eventyay/eventyay_common/views/event.py:323
+#: eventyay/eventyay_common/views/event.py:329
 #, fuzzy
 #| msgid "You do not have permission to change event settings."
 msgid "You do not have permission to create meetup events."
 msgstr "ليس لديك إذن لتغيير إعدادات الحدث."
 
-#: eventyay/eventyay_common/views/event.py:398
+#: eventyay/eventyay_common/views/event.py:404
 #, fuzzy
 #| msgid "We could not save the email. See below for details."
 msgid "We could not create the event. See below for details."
 msgstr "تعذّر حفظ البريد الإلكتروني. راجع التفاصيل أدناه."
 
-#: eventyay/eventyay_common/views/event.py:405
+#: eventyay/eventyay_common/views/event.py:411
 #, fuzzy
 #| msgid "You cannot generate an invoice for this order."
 msgid "You cannot create events for any organizer."
 msgstr "لا يمكنك إنشاء فاتورة لهذا النظام."
 
-#: eventyay/eventyay_common/views/event.py:412
+#: eventyay/eventyay_common/views/event.py:418
+#: eventyay/eventyay_common/views/event.py:1467
 #, fuzzy
 #| msgid "Content languages must be a subset of the active languages."
 msgid "Select at least one active language."
 msgstr "يجب أن تكون لغات المحتوى مجموعة فرعية من اللغات النشطة."
 
-#: eventyay/eventyay_common/views/event.py:700
+#: eventyay/eventyay_common/views/event.py:716
 #, fuzzy
 #| msgid "This feature is not enabled."
 msgid "Custom email gateway is not enabled."
 msgstr "لم يتم تمكين هذه الميزة."
 
-#: eventyay/eventyay_common/views/event.py:719
+#: eventyay/eventyay_common/views/event.py:725
+msgid ""
+"Gmail is selected but no account is connected. Connect Gmail in the email "
+"settings first."
+msgstr ""
+
+#: eventyay/eventyay_common/views/event.py:744
 msgid ""
 "Email test failed because a field (password, username, or recipient) "
 "contains a non-ASCII character."
 msgstr ""
 
-#: eventyay/eventyay_common/views/event.py:725
+#: eventyay/eventyay_common/views/event.py:750
 #, python-format
 msgid ""
 "SendGrid test failed with HTTP error %(code)s. Check your API key and try "
 "again."
 msgstr ""
 
-#: eventyay/eventyay_common/views/event.py:732
+#: eventyay/eventyay_common/views/event.py:767
 msgid ""
 "Test email could not be delivered. Check the SMTP host, port, and "
 "credentials and try again."
 msgstr ""
 
-#: eventyay/eventyay_common/views/event.py:735
+#: eventyay/eventyay_common/views/event.py:770
 #, fuzzy
 #| msgid "This device has been set up successfully."
 msgid "Test email sent successfully."
 msgstr "تم تعيين هذا الجهاز تصل بنجاح."
 
-#: eventyay/eventyay_common/views/event.py:982
+#: eventyay/eventyay_common/views/event.py:1017
 msgid "CFP"
 msgstr "CFP"
 
-#: eventyay/eventyay_common/views/event.py:984
+#: eventyay/eventyay_common/views/event.py:1019
 msgid "Schedule / Sessions / Speakers"
 msgstr "الجدول / الجلسات / المتحدثون"
 
-#: eventyay/eventyay_common/views/event.py:993
+#: eventyay/eventyay_common/views/event.py:1028
 msgid "The Call for Proposals text is missing. Please add a description."
 msgstr ""
 
-#: eventyay/eventyay_common/views/event.py:1000
+#: eventyay/eventyay_common/views/event.py:1035
 msgid ""
 "The Call for Proposals text is too short (needs at least 50 characters)."
 msgstr ""
 
-#: eventyay/eventyay_common/views/event.py:1012
+#: eventyay/eventyay_common/views/event.py:1047
 msgid ""
 "You want submitters to choose the tracks for their proposals, but you do not "
 "offer tracks for selection. Add at least one track!"
@@ -31947,58 +32622,58 @@ msgstr ""
 "أنت تريد من المقدمين اختيار المسارات لمقترحاتهم، لكنك لم تقدم أي مسارات "
 "للاختيار. أضف مسارًا واحدًا على الأقل!"
 
-#: eventyay/eventyay_common/views/event.py:1020
+#: eventyay/eventyay_common/views/event.py:1055
 msgid "You have configured only one session type so far."
 msgstr "لقد قمت بتكوين نوع جلسة واحد فقط حتى الآن."
 
-#: eventyay/eventyay_common/views/event.py:1027
+#: eventyay/eventyay_common/views/event.py:1062
 #: eventyay/orga/templates/orga/cfp/talkquestion/list.html:127
 msgid "You have configured no custom fields yet."
 msgstr "لم تقم بتكوين أي حقول مخصصة بعد."
 
-#: eventyay/eventyay_common/views/event.py:1044
+#: eventyay/eventyay_common/views/event.py:1079
 msgid "Please resolve the billing information before publishing the event."
 msgstr "يرجى تصحيح معلومات الفوترة قبل نشر الحدث."
 
-#: eventyay/eventyay_common/views/event.py:1052
+#: eventyay/eventyay_common/views/event.py:1087
 msgid "Your event is now online."
 msgstr "أصبح حدثك متاحًا الآن على الإنترنت."
 
-#: eventyay/eventyay_common/views/event.py:1074
+#: eventyay/eventyay_common/views/event.py:1109
 msgid "Your event has been unpublished."
 msgstr "تم إلغاء نشر حدثك."
 
-#: eventyay/eventyay_common/views/event.py:1080
+#: eventyay/eventyay_common/views/event.py:1115
 #, fuzzy
 #| msgid "Please set up ticketing before publishing tickets."
 msgid "Please set up ticketing before changing ticket modes."
 msgstr "يرجى إعداد نظام التذاكر قبل نشر التذاكر."
 
-#: eventyay/eventyay_common/views/event.py:1090
+#: eventyay/eventyay_common/views/event.py:1125
 msgid "Private test mode is now enabled for tickets."
 msgstr "تم تفعيل وضع الاختبار الخاص للتذاكر."
 
-#: eventyay/eventyay_common/views/event.py:1093
+#: eventyay/eventyay_common/views/event.py:1128
 #, fuzzy
 #| msgid "Publish the event before publishing tickets."
 msgid "Publish the event before testing tickets publicly."
 msgstr "انشر الحدث قبل نشر التذاكر."
 
-#: eventyay/eventyay_common/views/event.py:1099
+#: eventyay/eventyay_common/views/event.py:1134
 #, fuzzy
 #| msgid "Your shop is now in test mode!"
 msgid "Your shop is now in public test mode!"
 msgstr "متجر الخاص بك هو الآن في وضع الاختبار!"
 
-#: eventyay/eventyay_common/views/event.py:1102
+#: eventyay/eventyay_common/views/event.py:1137
 msgid "Publish the event before publishing tickets."
 msgstr "انشر الحدث قبل نشر التذاكر."
 
-#: eventyay/eventyay_common/views/event.py:1105
+#: eventyay/eventyay_common/views/event.py:1140
 msgid "Please resolve the ticketing issues before publishing tickets."
 msgstr "يرجى حل مشاكل نظام التذاكر قبل نشر التذاكر."
 
-#: eventyay/eventyay_common/views/event.py:1118
+#: eventyay/eventyay_common/views/event.py:1153
 msgid ""
 "An order could not be deleted as some constraints (e.g. data created by plug-"
 "ins) do not allow it."
@@ -32006,45 +32681,57 @@ msgstr ""
 "لا يمكن حذف أمر وبعض القيود (مثل البيانات التي تم إنشاؤها من قبل المكونات "
 "الإضافية) لا تسمح بذلك."
 
-#: eventyay/eventyay_common/views/event.py:1130
+#: eventyay/eventyay_common/views/event.py:1165
 #, fuzzy
 #| msgid "Tickets are now published."
 msgid "Tickets are now publicly sold."
 msgstr "تم نشر التذاكر الآن."
 
-#: eventyay/eventyay_common/views/event.py:1132
+#: eventyay/eventyay_common/views/event.py:1167
 #, fuzzy
 #| msgid "Unknown reason"
 msgid "Unknown ticketing mode."
 msgstr "سبب غير معلوم"
 
-#: eventyay/eventyay_common/views/event.py:1157
+#: eventyay/eventyay_common/views/event.py:1192
 msgid "Private test mode is now enabled for talks."
 msgstr "تم الآن تفعيل وضع الاختبار الخاص للعروض."
 
-#: eventyay/eventyay_common/views/event.py:1160
+#: eventyay/eventyay_common/views/event.py:1195
 msgid "Publish the event before publishing talks."
 msgstr "انشر الحدث قبل نشر المحاضرات."
 
-#: eventyay/eventyay_common/views/event.py:1166
+#: eventyay/eventyay_common/views/event.py:1201
 msgid "Talk pages are now published."
 msgstr "تم الآن نشر صفحات المحاضرات."
 
-#: eventyay/eventyay_common/views/event.py:1168
+#: eventyay/eventyay_common/views/event.py:1203
 #, fuzzy
 #| msgid "Unknown country code."
 msgid "Unknown talk mode."
 msgstr "رمز البلد غير معروف."
 
-#: eventyay/eventyay_common/views/event.py:1180
+#: eventyay/eventyay_common/views/event.py:1215
 msgid "Please configure video settings before changing visibility."
 msgstr ""
 
-#: eventyay/eventyay_common/views/event.py:1185
+#: eventyay/eventyay_common/views/event.py:1220
 #, fuzzy
 #| msgid "Publish the event before publishing talks."
 msgid "Publish the event before enabling public video link."
 msgstr "انشر الحدث قبل نشر المحاضرات."
+
+#: eventyay/eventyay_common/views/event.py:1542
+#, fuzzy
+#| msgid "You do not have permission to change event settings."
+msgid "You do not have permission to create events."
+msgstr "ليس لديك إذن لتغيير إعدادات الحدث."
+
+#: eventyay/eventyay_common/views/event.py:1612
+#, fuzzy
+#| msgid "This user has been anonymized."
+msgid "Event has been cloned successfully."
+msgstr "تم طمس هويتها لهذا المستخدم."
 
 #: eventyay/eventyay_common/views/organizer.py:82
 msgid "New organizer is created."
@@ -32873,13 +33560,13 @@ msgstr "إذا لم تحدد أي حقل مخصص، فسيتم استخدام ج
 msgid "SMTP server"
 msgstr "الخادم"
 
-#: eventyay/orga/forms/email.py:41
+#: eventyay/orga/forms/email.py:42
 #, fuzzy
 #| msgid "Bcc address"
 msgid "BCC address"
 msgstr "عنوان مخفية"
 
-#: eventyay/orga/forms/email.py:42
+#: eventyay/orga/forms/email.py:43
 #, fuzzy
 #| msgid "All emails will be sent to this address as a Bcc copy"
 msgid ""
@@ -32887,99 +33574,99 @@ msgid ""
 "as a blind copy."
 msgstr "سيتم إرسال جميع رسائل البريد الإلكتروني إلى هذا العنوان كنسخة مخفية"
 
-#: eventyay/orga/forms/email.py:48
+#: eventyay/orga/forms/email.py:49
 #, fuzzy
 #| msgid "Mail signature"
 msgid "Email signature"
 msgstr "توقيع الخاص بالايميل"
 
-#: eventyay/orga/forms/email.py:50
+#: eventyay/orga/forms/email.py:51
 msgid ""
 "This text will be appended to every outgoing email (both Tickets and Talks). "
 "You can use Markdown."
 msgstr ""
 
-#: eventyay/orga/forms/email.py:64
+#: eventyay/orga/forms/email.py:65
 #, fuzzy
 #| msgid "Use Custom Email"
 msgid "Use custom email gateway"
 msgstr "استخدام بريد إلكتروني مخصص"
 
-#: eventyay/orga/forms/email.py:66
+#: eventyay/orga/forms/email.py:67
 msgid ""
 "When enabled, all event-related emails (Tickets and Talks) are sent via the "
 "gateway configured below instead of the platform default."
 msgstr ""
 
-#: eventyay/orga/forms/email.py:72
+#: eventyay/orga/forms/email.py:73
 #, fuzzy
 #| msgid "Email template"
 msgid "Email gateway type"
 msgstr "قالب البريد الإلكتروني"
 
-#: eventyay/orga/forms/email.py:79
+#: eventyay/orga/forms/email.py:80
 #, fuzzy
 #| msgid "SendGrid"
 msgid "SendGrid API key"
 msgstr "SendGrid"
 
-#: eventyay/orga/forms/email.py:83
+#: eventyay/orga/forms/email.py:87
 #, fuzzy
 #| msgid "Hostname"
 msgid "SMTP hostname"
 msgstr "اسم المضيف"
 
-#: eventyay/orga/forms/email.py:88
+#: eventyay/orga/forms/email.py:95
 #, fuzzy
 #| msgid "CSV export"
 msgid "SMTP port"
 msgstr "تصدير CSV"
 
-#: eventyay/orga/forms/email.py:93
+#: eventyay/orga/forms/email.py:103
 #, fuzzy
 #| msgid "Username"
 msgid "SMTP username"
 msgstr "اسم المستخدم"
 
-#: eventyay/orga/forms/email.py:98
+#: eventyay/orga/forms/email.py:111
 #, fuzzy
 #| msgid "Password"
 msgid "SMTP password"
 msgstr "كلمه السر"
 
-#: eventyay/orga/forms/email.py:112
+#: eventyay/orga/forms/email.py:134
 #, fuzzy
 #| msgid "Send email to"
 msgid "Send test email to"
 msgstr "إرسال بريد إلكتروني إلى"
 
-#: eventyay/orga/forms/email.py:113
+#: eventyay/orga/forms/email.py:135
 msgid "Enter one or more addresses (comma-separated) to send a test message."
 msgstr ""
 
-#: eventyay/orga/forms/email.py:161
+#: eventyay/orga/forms/email.py:183
 #, fuzzy
 #| msgid "This field is required when using SendGrid as email vendor."
 msgid "A sender email address is required when using a custom email gateway."
 msgstr "هذا الحقل مطلوب عند استخدام SendGrid كمزود للبريد الإلكتروني."
 
-#: eventyay/orga/forms/email.py:175
+#: eventyay/orga/forms/email.py:197
 #, fuzzy
 #| msgid "This field is required when using SendGrid as email vendor."
 msgid "An API key is required when using SendGrid."
 msgstr "هذا الحقل مطلوب عند استخدام SendGrid كمزود للبريد الإلكتروني."
 
-#: eventyay/orga/forms/email.py:187
+#: eventyay/orga/forms/email.py:215
 #, fuzzy
 #| msgid "This field is required when using SendGrid as email vendor."
 msgid "A hostname is required when using a custom SMTP server."
 msgstr "هذا الحقل مطلوب عند استخدام SendGrid كمزود للبريد الإلكتروني."
 
-#: eventyay/orga/forms/email.py:192
+#: eventyay/orga/forms/email.py:220
 msgid "A port number is required when using a custom SMTP server."
 msgstr ""
 
-#: eventyay/orga/forms/email.py:198
+#: eventyay/orga/forms/email.py:226
 #, fuzzy
 #| msgid ""
 #| "You can activate either SSL or STARTTLS security, but not both at the "
@@ -32987,7 +33674,7 @@ msgstr ""
 msgid "You can activate either SSL or STARTTLS, but not both at the same time."
 msgstr "يمكنك تنشيط إما SSL أو الأمن STARTTLS، ولكن ليس كلاهما في نفس الوقت."
 
-#: eventyay/orga/forms/email.py:208
+#: eventyay/orga/forms/email.py:236
 msgid ""
 "You must enable SSL or STARTTLS when using a non-local SMTP server to "
 "protect credentials and email content in transit."
@@ -33963,13 +34650,6 @@ msgstr "أنت تستخدم eventyay كبصفة مشرف. لا ينصح بهذا
 msgid "Please click here to switch to an administrator account."
 msgstr "الرجاء النقر هنا للتبديل إلى حساب المسؤول."
 
-#: eventyay/orga/templates/orga/base.html:277
-#: eventyay/orga/templates/orga/settings/review.html:8
-#: eventyay/orga/templates/orga/settings/review.html:24
-#: eventyay/orga/views/event.py:133
-msgid "Review settings"
-msgstr "مراجعة الإعدادات"
-
 #: eventyay/orga/templates/orga/base.html:286
 #: eventyay/orga/templates/orga/settings/import_export.html:6
 #: eventyay/orga/templates/orga/settings/import_export.html:9
@@ -34013,7 +34693,7 @@ msgstr "أكواد الوصول"
 #: eventyay/orga/templates/orga/submission/content.html:273
 #: eventyay/orga/templates/orga/submission/content_edit.html:66
 #: eventyay/orga/templates/orga/submission/review.html:11
-#: eventyay/orga/views/dashboard.py:210 eventyay/orga/views/event.py:498
+#: eventyay/orga/views/dashboard.py:210 eventyay/orga/views/event.py:497
 msgid "Reviews"
 msgstr "المراجعات"
 
@@ -35251,7 +35931,7 @@ msgstr "البريد الإلكتروني المعاينة"
 msgid "Send to outbox"
 msgstr "إرسال إلى صندوق الصادر"
 
-#: eventyay/orga/templates/orga/mails/_placeholder_group.html:41
+#: eventyay/orga/templates/orga/mails/_placeholder_group.html:37
 msgid "e.g."
 msgstr "مثلاً"
 
@@ -35454,6 +36134,20 @@ msgstr "فرز (الأحدث أولاً)"
 #: eventyay/orga/templates/orga/mails/sent_list.html:34
 msgid "Sort (oldest first)"
 msgstr "فرز (الأقدم أولاً)"
+
+#: eventyay/orga/templates/orga/organizer/list.html:32
+#, fuzzy
+#| msgid "Event"
+#| msgid_plural "Events"
+msgctxt "number of events"
+msgid "Event"
+msgid_plural "Events"
+msgstr[0] "الفعاليات"
+msgstr[1] "الفعالية"
+msgstr[2] "الفعاليات"
+msgstr[3] "الفعاليات"
+msgstr[4] ""
+msgstr[5] "الفعاليات"
 
 #: eventyay/orga/templates/orga/organizer/list.html:40
 msgctxt "number of teams"
@@ -36031,12 +36725,6 @@ msgstr ""
 "تقديم رمز المصادقة الخاص بك تمامًا كما هو الحال في واجهة برمجة التطبيقات ، "
 "مثل هذا:"
 
-#: eventyay/orga/templates/orga/settings/import_export.html:238
-#: eventyay/orga/templates/orga/settings/import_export.html:431
-#: eventyay/orga/templates/orga/settings/import_export.html:540
-msgid "Documentation"
-msgstr "عمية التوثيق"
-
 #: eventyay/orga/templates/orga/settings/import_export.html:241
 #: eventyay/orga/templates/orga/settings/import_export.html:434
 #: eventyay/orga/templates/orga/settings/import_export.html:543
@@ -36095,10 +36783,6 @@ msgstr ""
 #| msgid "Export settings"
 msgid "HTML Export Settings"
 msgstr "إعدادات عملية التصدير"
-
-#: eventyay/orga/templates/orga/settings/mail.html:14
-msgid "Email settings"
-msgstr "إعدادات البريد الإلكتروني"
 
 #: eventyay/orga/templates/orga/settings/mail.html:17
 #, fuzzy
@@ -36296,17 +36980,14 @@ msgstr "بدء الاستيراد"
 
 #: eventyay/orga/templates/orga/speaker/information_form.html:5
 #: eventyay/orga/templates/orga/speaker/information_form.html:8
-#: eventyay/orga/templates/orga/speaker/information_list.html:13
 #: eventyay/orga/views/speaker.py:400
+#, fuzzy
+#| msgid "Speaker Information Note"
+#| msgid_plural "Speaker Information Notes"
 msgid "Speaker Information Note"
-msgid_plural "Speaker Information Notes"
-msgstr[0] "ملاحظة معلومات المتحدث"
-msgstr[1] "ملاحظة معلومات المتحدث"
-msgstr[2] "ملاحظات معلومات المتحدث"
-msgstr[3] "ملاحظات معلومات المتحدث"
-msgstr[4] "ملاحظات معلومات المتحدث"
-msgstr[5] "ملاحظات معلومات المتحدث"
+msgstr "ملاحظة معلومات المتحدث"
 
+#: eventyay/orga/templates/orga/speaker/information_list.html:13
 #: eventyay/orga/templates/orga/speaker/information_list.html:16
 #, fuzzy, python-format
 #| msgid "Speaker Information Note"
@@ -37104,23 +37785,23 @@ msgstr[3] "رسائل إلكترونية مرسلة"
 msgstr[4] ""
 msgstr[5] "رسائل إلكترونية مرسلة"
 
-#: eventyay/orga/views/event.py:134
+#: eventyay/orga/views/event.py:133
 msgid "Review scoring"
 msgstr "معدل التقييمات"
 
-#: eventyay/orga/views/event.py:135
+#: eventyay/orga/views/event.py:134
 msgid "Review phases"
 msgstr "مراجعة المراحل"
 
-#: eventyay/orga/views/event.py:213
+#: eventyay/orga/views/event.py:212
 msgid "Only the last review phase may be open-ended."
 msgstr "لا يمكن أن تكون إلا المرحلة الأخيرة من المراجعة مفتوحة النهاية."
 
-#: eventyay/orga/views/event.py:215
+#: eventyay/orga/views/event.py:214
 msgid "All review phases except for the first one need a start date."
 msgstr "جميع مراحل المراجعة باستثناء الأولى تحتاج إلى تاريخ بدء."
 
-#: eventyay/orga/views/event.py:219
+#: eventyay/orga/views/event.py:218
 #, python-brace-format
 msgid ""
 "The review phases '{phase1}' and '{phase2}' overlap. Please make sure that "
@@ -37129,18 +37810,18 @@ msgstr ""
 "مراحل المراجعة '{phase1}' و'{phase2}' تتداخل. الرجاء التأكد من أن مراحل "
 "المراجعة لا تتداخل، ثم احفظ مرة أخرى."
 
-#: eventyay/orga/views/event.py:353
+#: eventyay/orga/views/event.py:352
 msgid ""
 "There was a problem with your authentication. Please contact the organizer "
 "for further help."
 msgstr ""
 "حدثت مشكلة في المصادقة. يرجى الاتصال بالمنظم للحصول على مزيد من المساعدة."
 
-#: eventyay/orga/views/event.py:367
+#: eventyay/orga/views/event.py:366
 msgid "You are now part of the team!"
 msgstr "أنت الآن جزء من الفريق!"
 
-#: eventyay/orga/views/event.py:376 eventyay/orga/views/event.py:408
+#: eventyay/orga/views/event.py:375 eventyay/orga/views/event.py:407
 #, fuzzy
 #| msgid ""
 #| "ALL related data, such as proposals, and speaker profiles, and uploads, "
@@ -37152,53 +37833,53 @@ msgstr ""
 "سيتم أيضًا حذف جميع البيانات ذات الصلة ، مثل المقترحات وملفات تعريف المتحدث "
 "والتحميلات ، ولا يمكن استعادتها."
 
-#: eventyay/orga/views/event.py:396 eventyay/orga/views/event.py:428
+#: eventyay/orga/views/event.py:395 eventyay/orga/views/event.py:427
 #, fuzzy
 #| msgid "The confirm code you entered was incorrect."
 msgid "The event name you entered was incorrect."
 msgstr "كان رمز تأكيد أدخلته غير صحيح."
 
-#: eventyay/orga/views/event.py:420
+#: eventyay/orga/views/event.py:419
 #, fuzzy
 #| msgid "Talks Dashboard"
 msgid "Talk Data for"
 msgstr "لوحة تحكم الجلسات"
 
-#: eventyay/orga/views/event.py:432
+#: eventyay/orga/views/event.py:431
 #, fuzzy
 #| msgid "The team has been deleted."
 msgid "Talk data has been successfully deleted."
 msgstr "تم حذف الفريق."
 
-#: eventyay/orga/views/event.py:517
+#: eventyay/orga/views/event.py:516
 #, fuzzy
 #| msgid "Schedule exports"
 msgid "Schedule HTML export"
 msgstr "تصدير الجداول"
 
-#: eventyay/orga/views/event.py:565
+#: eventyay/orga/views/event.py:564
 #, fuzzy
 #| msgid "Login failed. Please try again."
 msgid "Unknown action. Please try again."
 msgstr "تعذّر تسجيل الدخول. الرجاء المحاولة مرة أخرى."
 
-#: eventyay/orga/views/event.py:575
+#: eventyay/orga/views/event.py:574
 msgid "Please choose whether to import speakers or schedule."
 msgstr ""
 
-#: eventyay/orga/views/event.py:587
+#: eventyay/orga/views/event.py:586
 #, fuzzy
 #| msgid "Invalid email or password. Please try again."
 msgid "Could not establish a session for file upload. Please try again."
 msgstr "البريد الإلكتروني أو كلمة المرور غير صحيحة. الرجاء المحاولة مرة أخرى."
 
-#: eventyay/orga/views/event.py:613
+#: eventyay/orga/views/event.py:612
 #, fuzzy
 #| msgid "Please choose an earlier date."
 msgid "Please choose a valid export target."
 msgstr "يرجى اختيار تاريخ أبكر."
 
-#: eventyay/orga/views/event.py:651
+#: eventyay/orga/views/event.py:650
 msgid "No data to be exported"
 msgstr "لا توجد بيانات للتصدير"
 
@@ -37234,7 +37915,7 @@ msgstr "تم إرسال الرسالة."
 msgid "{count} mails have been sent."
 msgstr "{count} رسائل تم إرسالها."
 
-#: eventyay/orga/views/mails.py:223 eventyay/plugins/sendmail/views.py:438
+#: eventyay/orga/views/mails.py:223 eventyay/plugins/sendmail/views.py:439
 #, python-brace-format
 msgid "Do you really want to delete this mail?"
 msgid_plural "Do you really want to purge {count} mails?"
@@ -37291,7 +37972,7 @@ msgstr "لا يوجد مستلمون يتطابقون مع هذا الاختيا
 
 #: eventyay/orga/views/mails.py:413 eventyay/plugins/sendmail/views.py:147
 #: eventyay/plugins/sendmail/views.py:410
-#: eventyay/plugins/sendmail/views.py:597
+#: eventyay/plugins/sendmail/views.py:601
 #, python-brace-format
 msgid "Subject: {subject}"
 msgstr "الموضوع: {subject}"
@@ -38000,19 +38681,19 @@ msgstr "وسوم القسائم"
 msgid "Sample tag"
 msgstr "ولاية نموذجية"
 
-#: eventyay/plugins/badges/signals.py:210
+#: eventyay/plugins/badges/signals.py:213
 msgid "Badge layout created."
 msgstr "شارة نسق بإنشائه."
 
-#: eventyay/plugins/badges/signals.py:211
+#: eventyay/plugins/badges/signals.py:214
 msgid "Badge layout deleted."
 msgstr "حذف تخطيط شارة."
 
-#: eventyay/plugins/badges/signals.py:212
+#: eventyay/plugins/badges/signals.py:215
 msgid "Badge layout changed."
 msgstr "شارة نسق يتغير."
 
-#: eventyay/plugins/badges/signals.py:226
+#: eventyay/plugins/badges/signals.py:229
 #, python-brace-format
 msgid "Badge layout {val}"
 msgstr "تصميم شارة {val}"
@@ -39535,14 +40216,14 @@ msgid "There are no orders matching this selection."
 msgstr "لا توجد أوامر مطابقة هذا الاختيار."
 
 #: eventyay/plugins/sendmail/views.py:194
-#: eventyay/plugins/sendmail/views.py:680
+#: eventyay/plugins/sendmail/views.py:684
 #, fuzzy, python-brace-format
 #| msgid "Your email has been sent to the outbox."
 msgid "Your email has been scheduled for {datetime} ({timezone})."
 msgstr "تم إرسال بريدك الإلكتروني إلى صندوق الصادر."
 
 #: eventyay/plugins/sendmail/views.py:202
-#: eventyay/plugins/sendmail/views.py:688
+#: eventyay/plugins/sendmail/views.py:692
 msgid "Your email has been sent to the outbox."
 msgstr "تم إرسال بريدك الإلكتروني إلى صندوق الصادر."
 
@@ -39555,7 +40236,7 @@ msgid "The mail has been queued for sending."
 msgstr "تم وضع الرسالة في قائمة الانتظار للإرسال."
 
 #: eventyay/plugins/sendmail/views.py:368
-#: eventyay/plugins/sendmail/views.py:563
+#: eventyay/plugins/sendmail/views.py:567
 msgid "We could not save the email. See below for details."
 msgstr "تعذّر حفظ البريد الإلكتروني. راجع التفاصيل أدناه."
 
@@ -39565,20 +40246,20 @@ msgstr "تم إرسال هذا البريد الإلكتروني بالفعل و
 
 #: eventyay/plugins/sendmail/views.py:397
 #: eventyay/plugins/sendmail/views.py:406
-#: eventyay/plugins/sendmail/views.py:583
-#: eventyay/plugins/sendmail/views.py:592
+#: eventyay/plugins/sendmail/views.py:587
+#: eventyay/plugins/sendmail/views.py:596
 msgid "Invalid placeholder(s): {}"
 msgstr "عناصر نائب غير صالحة: {}"
 
-#: eventyay/plugins/sendmail/views.py:445
+#: eventyay/plugins/sendmail/views.py:449
 msgid "This mail has already been sent and cannot be deleted."
 msgstr "تم إرسال هذه الرسالة بالفعل ولا يمكن حذفها."
 
-#: eventyay/plugins/sendmail/views.py:454
+#: eventyay/plugins/sendmail/views.py:458
 msgid "The mail and its related data have been deleted."
 msgstr "تم حذف الرسالة وبياناتها المرتبطة."
 
-#: eventyay/plugins/sendmail/views.py:473
+#: eventyay/plugins/sendmail/views.py:477
 #, python-brace-format
 msgid "Do you really want to purge the mail?"
 msgid_plural "Do you really want to purge {count} mails?"
@@ -39589,7 +40270,7 @@ msgstr[3] "هل تريد حقًا مسح {count} رسائل؟"
 msgstr[4] "هل تريد حقًا مسح {count} رسائل؟"
 msgstr[5] "هل تريد حقًا مسح {count} رسائل؟"
 
-#: eventyay/plugins/sendmail/views.py:489
+#: eventyay/plugins/sendmail/views.py:493
 #, python-brace-format
 msgid "One mail has been discarded."
 msgid_plural "{count} mails have been discarded."
@@ -39600,11 +40281,11 @@ msgstr[3] "{count} رسائل تم تجاهلها."
 msgstr[4] "{count} رسائل تم تجاهلها."
 msgstr[5] "{count} رسائل تم تجاهلها."
 
-#: eventyay/plugins/sendmail/views.py:623
+#: eventyay/plugins/sendmail/views.py:627
 msgid "There are no valid recipients for the selected teams."
 msgstr "لا يوجد مستلمون صالحون للفرق المحددة."
 
-#: eventyay/plugins/socialauth/adapter.py:32
+#: eventyay/plugins/socialauth/adapter.py:33
 #: eventyay/plugins/socialauth/views.py:45
 msgid "This login method is not available."
 msgstr "طريقة تسجيل الدخول هذه غير متاحة."
@@ -39850,19 +40531,19 @@ msgstr "(نفس النحو الوارد أعلاه)"
 msgid "PDF ticket layout"
 msgstr "تخطيط تذكرة PDF"
 
-#: eventyay/plugins/ticketoutputpdf/signals.py:117
+#: eventyay/plugins/ticketoutputpdf/signals.py:120
 msgid "Ticket layout created."
 msgstr "تخطيط تذكرة إنشاؤه."
 
-#: eventyay/plugins/ticketoutputpdf/signals.py:118
+#: eventyay/plugins/ticketoutputpdf/signals.py:121
 msgid "Ticket layout deleted."
 msgstr "حذف تخطيط التذاكر."
 
-#: eventyay/plugins/ticketoutputpdf/signals.py:119
+#: eventyay/plugins/ticketoutputpdf/signals.py:122
 msgid "Ticket layout changed."
 msgstr "تخطيط تذكرة يتغير."
 
-#: eventyay/plugins/ticketoutputpdf/signals.py:136
+#: eventyay/plugins/ticketoutputpdf/signals.py:139
 #, python-brace-format
 msgid "Ticket layout {val}"
 msgstr "تخطيط تذكرة {val}"
@@ -42080,8 +42761,8 @@ msgstr "فعاليات مباشرة"
 
 #: eventyay/presale/templates/pretixpresale/startpage.html:19
 #: eventyay/presale/templates/pretixpresale/startpage.html:20
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:96
 #: eventyay/presale/templates/pretixpresale/startpage_base.html:97
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:98
 msgid "Search events"
 msgstr "ابحث عن فعاليات"
 
@@ -42114,17 +42795,11 @@ msgstr "عرض كل الأحداث الأخيرة"
 msgid "Browse live events on"
 msgstr "تصفح الفعاليات المباشرة على"
 
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:104
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:105
 msgid "No matching events"
 msgstr "لا توجد فعاليات مطابقة"
 
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:152
-#, fuzzy
-#| msgid "Toggle navigation"
-msgid "Main navigation"
-msgstr "تبديل الملاحة"
-
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:188
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:189
 msgid "Start page header"
 msgstr "عنوان صفحة البداية"
 
@@ -42684,6 +43359,11 @@ msgstr "لم تتم الموافقة"
 msgid "Organisers"
 msgstr "المنظمون"
 
+#, python-format
+#~ msgctxt "invoice"
+#~ msgid "Page %d of %d"
+#~ msgstr "صفحة %d من %d"
+
 #~ msgid "Video Admin"
 #~ msgstr "إدارة الفيديو"
 
@@ -42954,9 +43634,6 @@ msgstr "المنظمون"
 
 #~ msgid "Hide video link"
 #~ msgstr "إخفاء رابط الفيديو"
-
-#~ msgid "Show video link"
-#~ msgstr "عرض رابط الفيديو"
 
 #~ msgid "The video module is not enabled for this event."
 #~ msgstr "وحدة الفيديو غير مفعّلة لهذا الحدث."
@@ -43624,10 +44301,6 @@ msgstr "المنظمون"
 #~ msgid "Copy event link"
 #~ msgstr "نسخ رابط الحدث"
 
-#, python-format
-#~ msgid "Page %(page)s of %(of)s"
-#~ msgstr "الصفحة%(page)s من %(of)s"
-
 #, python-brace-format
 #~ msgid "The current, automatically generated GUID is: {guid}."
 #~ msgstr "معرّف GUID الحالي الذي تم إنشاؤه تلقائيًا هو: {guid}."
@@ -43746,10 +44419,6 @@ msgstr "المنظمون"
 
 #~ msgid "Filetype not allowed!"
 #~ msgstr "الملف المطبوع سري!"
-
-#~ msgid ""
-#~ "You already used this slug for a different event. Please choose a new one."
-#~ msgstr "استخدمته بالفعل هذا سبيكة لحدث آخر. الرجاء اختيار واحدة جديدة."
 
 #~ msgid "Stripe Connect: Secret key"
 #~ msgstr "شريط الاتصال: المفتاح السري"
@@ -43897,9 +44566,6 @@ msgstr "المنظمون"
 
 #~ msgid "Question dependency"
 #~ msgstr "مسألة التبعية"
-
-#~ msgid "Create a new question"
-#~ msgstr "إنشاء سؤال جديد"
 
 #~ msgid "The list below shows all teams that exist within this organizer."
 #~ msgstr "القائمة أدناه يبين جميع الفرق التي توجد داخل هذه المنظمة."
@@ -44679,9 +45345,6 @@ msgstr "المنظمون"
 #~ msgid "It looks like you canceled the PayPal payment"
 #~ msgstr "يبدو أنك إلغاء الدفع باي بال"
 
-#~ msgid "Your PayPal account has been disconnected."
-#~ msgstr "تم فصل حساب PayPal الخاص بك."
-
 #~ msgid "Stripe"
 #~ msgstr "شريط"
 
@@ -45085,11 +45748,6 @@ msgstr "المنظمون"
 #~ msgid "Do you really want to disconnect your Stripe account?"
 #~ msgstr "هل تريد حقا أن تجديد رموز الطوارئ الخاصة بك؟"
 
-#, fuzzy
-#~| msgid "Connect"
-#~ msgid "Disconnect"
-#~ msgstr "الاتصال"
-
 #~ msgid ""
 #~ "We're waiting for an answer from the payment provider regarding your "
 #~ "payment. Please contact us if this takes more than a few days."
@@ -45306,9 +45964,6 @@ msgstr "المنظمون"
 #~ msgid "pretixdesk – for desktop computers"
 #~ msgstr "pretixdesk - لأجهزة الكمبيوتر المكتبية"
 
-#~ msgid "Check-in device configuration"
-#~ msgstr "تحقق في تكوين الجهاز"
-
 #~ msgid "We've got a new app!"
 #~ msgstr "لقد حصلت على التطبيق الجديد!"
 
@@ -45360,9 +46015,6 @@ msgstr "المنظمون"
 
 #~ msgid "Existing app configurations"
 #~ msgstr "تكوينات التطبيق الحالي"
-
-#~ msgid "Create a new configuration"
-#~ msgstr "إنشاء تكوين جديد"
 
 #~ msgid "Show info"
 #~ msgstr "تظهر المعلومات"
@@ -45420,9 +46072,6 @@ msgstr "المنظمون"
 #~ msgstr ""
 #~ "لن يتم مسح أوامر وضع الاختبار اذا كنت تفحص على الانترنت. إذا كنت تفحص في "
 #~ "وضع غير متزامن، وأوامر وضع الاختبار لن يكون هناك."
-
-#~ msgid "The selected configuration does not exist."
-#~ msgstr "عدم وجود التكوين المحدد."
 
 #~ msgid "The selected configuration has been deleted."
 #~ msgstr "تم حذف التكوين المحدد."

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-26 16:17+0000\n"
+"POT-Creation-Date: 2026-08-26 16:33+0000\n"
 "PO-Revision-Date: 2026-03-30 15:14+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Gujarati <https://hosted.weblate.org/projects/eventyay/"
@@ -49,7 +49,7 @@ msgstr ""
 #: eventyay/base/exporters/waitinglist.py:86
 #: eventyay/base/forms/questions.py:976 eventyay/base/models/auth_token.py:55
 #: eventyay/base/models/devices.py:41 eventyay/base/models/devices.py:104
-#: eventyay/base/models/event.py:3124 eventyay/base/models/event.py:3379
+#: eventyay/base/models/event.py:3295 eventyay/base/models/event.py:3550
 #: eventyay/base/models/organizer.py:119 eventyay/base/models/product.py:1679
 #: eventyay/base/models/product.py:1839 eventyay/base/models/review.py:206
 #: eventyay/base/models/room.py:288 eventyay/base/models/seating.py:42
@@ -596,7 +596,7 @@ msgstr "ટ્રેક"
 #: eventyay/multidomain/views.py:195 eventyay/orga/forms/mails.py:345
 #: eventyay/orga/forms/mails.py:347 eventyay/orga/templates/orga/base.html:489
 #: eventyay/orga/templates/orga/submission/speakers.html:11
-#: eventyay/orga/views/event.py:464 eventyay/orga/views/event.py:496
+#: eventyay/orga/views/event.py:463 eventyay/orga/views/event.py:495
 #: eventyay/person/forms/profile.py:447 eventyay/person/forms/profile.py:492
 #: eventyay/presale/templates/pretixpresale/event/fragment_nav.html:45
 #: eventyay/schedule/phrases.py:18
@@ -751,14 +751,14 @@ msgstr "વિડિઓ જુઓ"
 msgid "Watch live"
 msgstr "લાઇવ જુઓ"
 
-#: eventyay/agenda/views/schedule.py:420
-#: eventyay/cfp/templates/cfp/event/user_submission_edit.html:62
-#: eventyay/multidomain/views.py:181
+#: eventyay/agenda/views/schedule.py:420 eventyay/multidomain/views.py:181
 #: eventyay/orga/templates/orga/submission/content_edit.html:50
+#, fuzzy
+#| msgid "Speaker"
+#| msgid_plural "Speakers"
+msgctxt "noun"
 msgid "Speaker"
-msgid_plural "Speakers"
-msgstr[0] "વક્તાઓ"
-msgstr[1] "વક્તાઓ"
+msgstr "વક્તાઓ"
 
 #: eventyay/agenda/views/schedule.py:421 eventyay/multidomain/views.py:182
 msgid "Speaker name not provided"
@@ -804,7 +804,7 @@ msgstr ""
 #: eventyay/base/exporters/invoices.py:297
 #: eventyay/base/exporters/orderlist.py:595
 #: eventyay/base/exporters/orderlist.py:987
-#: eventyay/base/exporters/orderlist.py:1398 eventyay/base/models/event.py:3057
+#: eventyay/base/exporters/orderlist.py:1398 eventyay/base/models/event.py:3228
 #: eventyay/base/models/orders.py:1344 eventyay/base/models/question.py:472
 #: eventyay/base/models/submission.py:1045 eventyay/control/forms/filter.py:124
 #: eventyay/control/forms/filter.py:549 eventyay/control/forms/product.py:603
@@ -834,7 +834,7 @@ msgstr "હા"
 #: eventyay/base/exporters/invoices.py:297
 #: eventyay/base/exporters/orderlist.py:595
 #: eventyay/base/exporters/orderlist.py:987
-#: eventyay/base/exporters/orderlist.py:1398 eventyay/base/models/event.py:3047
+#: eventyay/base/exporters/orderlist.py:1398 eventyay/base/models/event.py:3218
 #: eventyay/base/models/orders.py:1346 eventyay/base/models/question.py:474
 #: eventyay/base/models/submission.py:1045
 #: eventyay/cfp/templates/cfp/event/invitation.html:44
@@ -910,7 +910,7 @@ msgstr ""
 
 #: eventyay/agenda/views/schedule.py:445 eventyay/control/navigation.py:296
 #: eventyay/eventyay_common/navigation.py:268 eventyay/multidomain/views.py:203
-#: eventyay/orga/views/event.py:516
+#: eventyay/orga/views/event.py:515
 #: eventyay/presale/templates/pretixpresale/organizers/base.html:154
 #: eventyay/presale/templates/pretixpresale/organizers/fragment_toolbar.html:7
 msgid "Export"
@@ -955,7 +955,7 @@ msgid "Calendar View"
 msgstr ""
 
 #: eventyay/agenda/views/schedule.py:454 eventyay/common/forms/forms.py:12
-#: eventyay/common/forms/widgets.py:278
+#: eventyay/common/forms/widgets.py:349
 #: eventyay/common/templates/common/includes/search_form.html:7
 #: eventyay/control/templates/pretixcontrol/admin/attendees/index.html:31
 #: eventyay/control/templates/pretixcontrol/admin/events/index.html:32
@@ -983,7 +983,7 @@ msgstr ""
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/sent_list.html:32
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/sent_list.html:36
 #: eventyay/presale/templates/pretixpresale/startpage.html:11
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:88
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:89
 #: eventyay/submission/forms/submission.py:479
 msgid "Search"
 msgstr "શોધો"
@@ -1106,8 +1106,8 @@ msgstr "આ ક્રિયા કરવા માટે પરવાનગી �
 
 #: eventyay/agenda/views/talk.py:866 eventyay/common/text/phrases.py:72
 #: eventyay/control/views/checkin.py:130
-#: eventyay/eventyay_common/views/event.py:817
-#: eventyay/eventyay_common/views/event.py:832
+#: eventyay/eventyay_common/views/event.py:852
+#: eventyay/eventyay_common/views/event.py:867
 msgid "You do not have permission to perform this action."
 msgstr "આ ક્રિયા કરવા માટે પરવાનગી નથી."
 
@@ -1197,8 +1197,8 @@ msgstr "મંજૂર URI યાદી, સ્પેસ દ્વારા જ
 msgid "Allowed list with space separated"
 msgstr "મંજૂર યાદી, સ્પેસ દ્વારા જુદી પાડેલી"
 
-#: eventyay/api/models.py:37 eventyay/control/forms/global_settings.py:320
-#: eventyay/control/forms/global_settings.py:398
+#: eventyay/api/models.py:37 eventyay/control/forms/global_settings.py:405
+#: eventyay/control/forms/global_settings.py:483
 #: eventyay/plugins/socialauth/templates/socialauth/social_auth_settings.html:70
 msgid "Client ID"
 msgstr "ક્લાયન્ટ ID"
@@ -1241,7 +1241,7 @@ msgstr "ઓપરેશન કરવા માટે ક્વોટા \"{}\" �
 msgid "The selected seat \"{seat}\" is not available."
 msgstr "પસંદ કરાયેલ બેઠક \"{seat}\" ઉપલબ્ધ નથી."
 
-#: eventyay/api/serializers/checkin.py:71 eventyay/base/models/event.py:3280
+#: eventyay/api/serializers/checkin.py:71 eventyay/base/models/event.py:3451
 #: eventyay/base/models/product.py:1567 eventyay/base/models/product.py:1796
 msgid "One or more products do not belong to this event."
 msgstr "એક અથવા વધુ પ્રોડક્ટ્સ આ ઇવેન્ટના નથી."
@@ -1429,12 +1429,12 @@ msgid "An invoice for this order already exists."
 msgstr "આ ઓર્ડર માટેનું ઇન્વૉઇસ પહેલેથી હાજર છે."
 
 #: eventyay/api/views/order.py:762 eventyay/common/text/phrases.py:70
-#: eventyay/control/views/orders.py:1826 eventyay/control/views/users.py:400
-#: eventyay/control/views/users.py:403 eventyay/control/views/users.py:497
+#: eventyay/control/views/orders.py:1826 eventyay/control/views/users.py:403
+#: eventyay/control/views/users.py:406 eventyay/control/views/users.py:500
 msgid "There was an error sending the mail. Please try again later."
 msgstr "મેઇલ મોકલવામાં ભૂલ આવી. કૃપા કરીને પછી ફરી પ્રયાસ કરો."
 
-#: eventyay/api/views/order.py:842 eventyay/base/services/cart.py:142
+#: eventyay/api/views/order.py:842 eventyay/base/services/cart.py:146
 #: eventyay/base/services/orders.py:151 eventyay/presale/views/order.py:977
 msgid "One of the selected products is not available in the selected country."
 msgstr "પસંદ કરેલામાંથી કોઈ એક ઉત્પાદન પસંદ કરેલ દેશમાં ઉપલબ્ધ નથી."
@@ -1553,14 +1553,20 @@ msgctxt "subevent"
 msgid "Event series date deleted"
 msgstr "ઇવેન્ટ સિરીઝ તારીખ કાઢી"
 
-#: eventyay/base/auth.py:98
+#: eventyay/base/auth.py:13
+#, fuzzy
+#| msgid "This change was performed by the system administrator."
+msgid "This account has been suspended. Please contact the site administrator."
+msgstr "આ ફેરફાર સિસ્ટમ પ્રશાસક દ્વારા કરવામાં આવ્યો હતો."
+
+#: eventyay/base/auth.py:101
 #, python-brace-format
 msgid "{system} User"
 msgstr "{system} વપરાશકર્તા"
 
-#: eventyay/base/auth.py:111
+#: eventyay/base/auth.py:114
 #: eventyay/base/configurations/default_setting.py:239
-#: eventyay/base/forms/auth.py:233 eventyay/base/models/auth.py:187
+#: eventyay/base/forms/auth.py:234 eventyay/base/models/auth.py:187
 #: eventyay/base/models/notifications.py:25 eventyay/base/models/orders.py:177
 #: eventyay/control/forms/event.py:848
 #: eventyay/control/templates/pretixcontrol/items/orderforms.html:47
@@ -1573,9 +1579,9 @@ msgstr "{system} વપરાશકર્તા"
 msgid "E-mail"
 msgstr "ઇ-મેઇલ"
 
-#: eventyay/base/auth.py:118 eventyay/base/forms/auth.py:142
-#: eventyay/base/forms/auth.py:198
-#: eventyay/control/forms/global_settings.py:226
+#: eventyay/base/auth.py:121 eventyay/base/forms/auth.py:143
+#: eventyay/base/forms/auth.py:199
+#: eventyay/control/forms/global_settings.py:311
 #: eventyay/control/templates/pretixcontrol/admin/systemconfig.html:89
 #: eventyay/person/forms/user.py:24 eventyay/person/forms/user.py:39
 #: eventyay/presale/templates/pretixpresale/fragment_modals.html:77
@@ -1596,7 +1602,7 @@ msgid "Please enter the hexadecimal code of a color, e.g. #990000."
 msgstr "કૃપા કરીને રંગનો હેક્સાડેસિમલ કોડ દાખલ કરો, ઉદાહરણ તરીકે #990000."
 
 #: eventyay/base/configurations/default_setting.py:97
-#: eventyay/control/forms/global_settings.py:496
+#: eventyay/control/forms/global_settings.py:581
 msgid "Maximum number of items per order"
 msgstr "દર ઓર્ડર માટે વસ્તુઓની મહત્તમ સંખ્યા"
 
@@ -1899,12 +1905,12 @@ msgstr ""
 "ઇન્વૉઇસ માટે ગોઠવેલી એ જ નંબરિંગ યોજના વપરાશે."
 
 #: eventyay/base/configurations/default_setting.py:516
-#: eventyay/control/forms/global_settings.py:487
+#: eventyay/control/forms/global_settings.py:572
 msgid "Reservation period"
 msgstr "રિઝર્વેશન અવધિ"
 
 #: eventyay/base/configurations/default_setting.py:517
-#: eventyay/control/forms/global_settings.py:488
+#: eventyay/control/forms/global_settings.py:573
 msgid ""
 "The number of minutes the items in a user's cart are reserved for this user."
 msgstr "વપરાશકર્તાના કાર્ટમાં રહેલી વસ્તુઓ આ વપરાશકર્તા માટે કેટલા મિનિટ માટે રિઝર્વ રહેશે."
@@ -2278,12 +2284,14 @@ msgstr "પ્રીસેલ શરૂ થાય તે પહેલાં અ�
 
 #: eventyay/base/configurations/default_setting.py:927
 #: eventyay/control/forms/event.py:102
+#: eventyay/eventyay_common/forms/event.py:340
 #, fuzzy
 #| msgid "Event Language"
 msgid "Event languages"
 msgstr "ઇવેન્ટ ભાષા"
 
 #: eventyay/base/configurations/default_setting.py:929
+#: eventyay/eventyay_common/forms/event.py:343
 msgid ""
 "Users will be able to use eventyay in these languages, and you will be able "
 "to provide all texts in these languages. If you don't provide a text in the "
@@ -2784,7 +2792,7 @@ msgid "Refund method"
 msgstr "રિફંડ પદ્ધતિ"
 
 #: eventyay/base/configurations/default_setting.py:1574
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:77
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:78
 #, fuzzy
 #| msgid "Contact information"
 msgid "Contact form"
@@ -2793,7 +2801,7 @@ msgstr "સંપર્ક માહિતી"
 #: eventyay/base/configurations/default_setting.py:1584
 #: eventyay/base/models/event.py:629 eventyay/control/forms/event.py:419
 #: eventyay/event/forms.py:281
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:91
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:92
 msgid "Organizer email address"
 msgstr "આયોજકનો ઇમેલ સરનામું"
 
@@ -3662,7 +3670,7 @@ msgid "We will show your logo with a maximal height and width of 2.5 cm."
 msgstr "લોગો 2.5 cmની મહત્તમ ઊંચાઈ અને પહોળાઈ સાથે બતાવવામાં આવશે."
 
 #: eventyay/base/configurations/default_setting.py:2320
-#: eventyay/base/models/event.py:3168
+#: eventyay/base/models/event.py:3339
 msgid "Frontpage text"
 msgstr "ફ્રન્ટપેજ લખાણ"
 
@@ -3774,7 +3782,7 @@ msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:2490
 #: eventyay/base/configurations/default_setting.py:2500
-#: eventyay/base/models/event.py:542 eventyay/base/models/event.py:3126
+#: eventyay/base/models/event.py:542 eventyay/base/models/event.py:3297
 #: eventyay/control/forms/subevents.py:507
 #: eventyay/control/templates/pretixcontrol/subevents/bulk.html:268
 msgid "Event start time"
@@ -3912,7 +3920,7 @@ msgstr "જાહેર પ્રારંભ પૃષ્ઠના બૅનર
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:35
 #: eventyay/eventyay_common/views/dashboards.py:570
 #: eventyay/eventyay_common/views/dashboards.py:577
-#: eventyay/eventyay_common/views/event.py:980
+#: eventyay/eventyay_common/views/event.py:1015
 #: eventyay/orga/templates/orga/event/component_link.html:9
 #: eventyay/presale/templates/pretixpresale/organizers/index.html:105
 #: eventyay/presale/templates/pretixpresale/organizers/index.html:107
@@ -4111,7 +4119,8 @@ msgid ""
 "email settings are correct."
 msgstr ""
 
-#: eventyay/base/email.py:351 eventyay/eventyay_common/views/event.py:557
+#: eventyay/base/email.py:351 eventyay/eventyay_common/views/event.py:563
+#: eventyay/eventyay_common/views/event.py:1588
 #: eventyay/orga/templates/orga/cfp/submissiontype/list.html:62
 #: eventyay/plugins/badges/apps.py:63 eventyay/plugins/badges/models.py:26
 #: eventyay/plugins/badges/templates/pretixplugins/badges/index.html:47
@@ -4210,6 +4219,7 @@ msgid "Answers to file upload questions"
 msgstr "ફાઇલ અપલોડ પ્રશ્નોના જવાબો"
 
 #: eventyay/base/exporters/answers.py:28 eventyay/base/models/product.py:1426
+#: eventyay/eventyay_common/forms/event.py:386
 msgid "Questions"
 msgstr "પ્રશ્નો"
 
@@ -4786,14 +4796,14 @@ msgstr "સ્થિતિ"
 #: eventyay/base/exporters/waitinglist.py:87
 #: eventyay/base/models/checkin.py:188 eventyay/base/pdf.py:423
 #: eventyay/common/log_display.py:286
-#: eventyay/control/forms/global_settings.py:512
+#: eventyay/control/forms/global_settings.py:747
 #: eventyay/control/templates/control/user_list.html:15
 #: eventyay/control/templates/pretixcontrol/admin/attendees/index.html:76
 #: eventyay/control/templates/pretixcontrol/admin/orders/index.html:71
 #: eventyay/control/templates/pretixcontrol/checkin/index.html:114
 #: eventyay/control/templates/pretixcontrol/orders/index.html:197
 #: eventyay/control/templates/pretixcontrol/waitinglist/index.html:171
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:246
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:247
 #: eventyay/eventyay_common/templates/eventyay_common/sessions/sessions.html:57
 #: eventyay/eventyay_common/templates/eventyay_common/sessions/sessions.html:88
 #: eventyay/orga/templates/orga/organizer/speaker_list.html:31
@@ -5101,7 +5111,7 @@ msgid "Order comment"
 msgstr "ઓર્ડર ટિપ્પણી"
 
 #: eventyay/base/exporters/orderlist.py:864
-#: eventyay/plugins/badges/signals.py:165 eventyay/plugins/badges/utils.py:536
+#: eventyay/plugins/badges/signals.py:168 eventyay/plugins/badges/utils.py:536
 msgid "Badge options"
 msgstr "બેજ વિકલ્પો"
 
@@ -5467,21 +5477,21 @@ msgstr "પ્રાથમિકતા"
 msgid "Voucher code"
 msgstr "વાઉચર કોડ"
 
-#: eventyay/base/forms/__init__.py:102
+#: eventyay/base/forms/__init__.py:104
 #, fuzzy
 #| msgid "Default ({value})"
 msgid "Default (Inherit: {})"
 msgstr "મૂળભૂત ({value})"
 
-#: eventyay/base/forms/__init__.py:217
+#: eventyay/base/forms/__init__.py:219
 msgid "Show secret key"
 msgstr "ગુપ્ત કી બતાવો"
 
-#: eventyay/base/forms/__init__.py:218
+#: eventyay/base/forms/__init__.py:220
 msgid "Hide secret key"
 msgstr "ગુપ્ત કી છુપાવો"
 
-#: eventyay/base/forms/auth.py:17
+#: eventyay/base/forms/auth.py:18
 msgid ""
 "Password must be at least 8 characters and include a letter, a number, and a "
 "special character."
@@ -5489,46 +5499,40 @@ msgstr ""
 "પાસવર્ડ ઓછામાં ઓછા 8 અક્ષરોનો હોવો જોઈએ અને તેમાં એક અક્ષર, એક નંબર અને એક ખાસ અક્ષર "
 "સામેલ હોવા જોઈએ."
 
-#: eventyay/base/forms/auth.py:43 eventyay/base/forms/auth.py:159
+#: eventyay/base/forms/auth.py:44 eventyay/base/forms/auth.py:160
 #: eventyay/presale/templates/pretixpresale/fragment_modals.html:89
 msgid "Keep me logged in"
 msgstr "મને લૉગ ઇન રાખો"
 
-#: eventyay/base/forms/auth.py:46 eventyay/base/forms/auth.py:248
+#: eventyay/base/forms/auth.py:47 eventyay/base/forms/auth.py:249
 msgid "This combination of credentials is not known to our system."
 msgstr "આ ઓળખપત્રોનું સંયોજન અમારી સિસ્ટમમાં મળતું નથી."
 
-#: eventyay/base/forms/auth.py:47 eventyay/base/forms/user.py:20
+#: eventyay/base/forms/auth.py:48 eventyay/base/forms/user.py:20
 msgid "For security reasons, please wait 5 minutes before you try again."
 msgstr "સુરક્ષા કારણોસર, કૃપા કરીને ફરી પ્રયાસ કરતા પહેલાં 5 મિનિટ રાહ જુઓ."
 
-#: eventyay/base/forms/auth.py:48 eventyay/base/forms/auth.py:249
+#: eventyay/base/forms/auth.py:49 eventyay/base/forms/auth.py:250
 msgid "This account is inactive."
 msgstr "આ ખાતું નિષ્ક્રિય છે."
 
-#: eventyay/base/forms/auth.py:49 eventyay/base/forms/auth.py:250
-#, fuzzy
-#| msgid "This change was performed by the system administrator."
-msgid "This account has been suspended. Please contact the site administrator."
-msgstr "આ ફેરફાર સિસ્ટમ પ્રશાસક દ્વારા કરવામાં આવ્યો હતો."
-
-#: eventyay/base/forms/auth.py:137
+#: eventyay/base/forms/auth.py:138
 msgid ""
 "You already registered with that email address, please use the login form."
 msgstr ""
 "આ ઇમેલ સરનામા સાથે પહેલેથી નોંધણી થઈ ચૂકી છે, કૃપા કરીને લૉગિન ફોર્મનો ઉપયોગ કરો."
 
-#: eventyay/base/forms/auth.py:138 eventyay/base/forms/auth.py:196
+#: eventyay/base/forms/auth.py:139 eventyay/base/forms/auth.py:197
 #: eventyay/base/forms/user.py:19 eventyay/control/forms/users.py:26
 msgid "Please enter the same password twice"
 msgstr "કૃપા કરીને એ જ પાસવર્ડ બે વાર દાખલ કરો"
 
-#: eventyay/base/forms/auth.py:140 eventyay/common/text/phrases.py:86
+#: eventyay/base/forms/auth.py:141 eventyay/common/text/phrases.py:86
 #: eventyay/orga/forms/importers.py:80
 msgid "Email address"
 msgstr "ઇમેલ સરનામું"
 
-#: eventyay/base/forms/auth.py:151 eventyay/base/forms/auth.py:199
+#: eventyay/base/forms/auth.py:152 eventyay/base/forms/auth.py:200
 msgid "Repeat password"
 msgstr "પાસવર્ડ ફરી દાખલ કરો"
 
@@ -5693,11 +5697,117 @@ msgstr "વ્યાવસાયિક ગ્રાહક"
 msgid "Individual customer"
 msgstr "વ્યક્તિગત ગ્રાહક"
 
+#: eventyay/base/gmail/backend.py:52
+#, fuzzy, python-format
+#| msgid "Failed to send mail to the following user: {}"
+msgid "Daily Gmail sending limit reached for %(email)s."
+msgstr "નીચેના વપરાશકર્તાને મેઈલ મોકલવામાં નિષ્ફળ: {}"
+
+#: eventyay/base/gmail/backend.py:61
+#, fuzzy, python-format
+#| msgid "Failed to send mail to the following user: {}"
+msgid "Gmail rate limit reached for %(email)s."
+msgstr "નીચેના વપરાશકર્તાને મેઈલ મોકલવામાં નિષ્ફળ: {}"
+
+#: eventyay/base/gmail/constants.py:15
+#: eventyay/control/forms/global_settings.py:113
+#: eventyay/orga/forms/email.py:21
+msgid "Gmail / Google Workspace API"
+msgstr ""
+
+#: eventyay/base/gmail/deps.py:20
+msgid ""
+"Gmail support requires the Google API client libraries. Rebuild the "
+"application image or run `uv sync --all-extras --all-groups`."
+msgstr ""
+
+#: eventyay/base/gmail/models.py:30 eventyay/base/models/event.py:840
+#: eventyay/base/models/orders.py:176 eventyay/base/models/orders.py:2692
+#: eventyay/base/models/product.py:311 eventyay/base/models/product.py:1669
+#: eventyay/base/models/vouchers.py:91 eventyay/base/models/waitinglist.py:32
+#: eventyay/base/notifications.py:178 eventyay/common/log_display.py:294
+#: eventyay/control/forms/organizer_forms/user_orders_form.py:11
+#: eventyay/control/templates/control/bbb_list.html:21
+#: eventyay/control/templates/control/janus_list.html:17
+#: eventyay/control/templates/control/jitsi_list.html:21
+#: eventyay/control/templates/control/systemlog_list.html:12
+#: eventyay/control/templates/control/turn_list.html:17
+#: eventyay/control/templates/pretixcontrol/admin/attendees/index.html:85
+#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:293
+#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:344
+#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:461
+#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:501
+#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:539
+#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:584
+#: eventyay/control/templates/pretixcontrol/admin/orders/index.html:61
+#: eventyay/control/templates/pretixcontrol/admin/submissions/index.html:91
+#: eventyay/control/templates/pretixcontrol/search/orders.html:42
+#: eventyay/control/templates/pretixcontrol/user/orders.html:27
+#: eventyay/event/stages.py:95 eventyay/eventyay_common/forms/filters.py:12
+#: eventyay/eventyay_common/forms/filters.py:54
+#: eventyay/eventyay_common/templates/eventyay_common/orders/orders.html:40
+#: eventyay/eventyay_common/templates/eventyay_common/orders/orders.html:54
+#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:187
+#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:256
+#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:325
+#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:361
+#: eventyay/eventyay_common/templates/eventyay_common/sessions/sessions.html:54
+#: eventyay/eventyay_common/templates/eventyay_common/sessions/sessions.html:69
+#: eventyay/orga/templates/orga/mails/_placeholder_group.html:14
+#: eventyay/orga/views/event.py:387 eventyay/presale/organizer_exports.py:212
+#: eventyay/presale/templates/pretixpresale/event/waitinglist.html:19
+#, fuzzy
+#| msgid "Event"
+#| msgid_plural "Events"
+msgid "Event"
+msgstr "ઇવેન્ટ્સ"
+
+#: eventyay/base/gmail/models.py:32
+#, fuzzy
+#| msgid "Send email"
+msgid "Sender email"
+msgstr "ઈમેલ મોકલો"
+
+#: eventyay/base/gmail/models.py:50
+msgid "Gmail OAuth credential"
+msgstr ""
+
+#: eventyay/base/gmail/models.py:51
+#, fuzzy
+#| msgid "Live Credentials"
+msgid "Gmail OAuth credentials"
+msgstr "લાઇવ ક્રેડેન્શિયલ્સ"
+
+#: eventyay/base/gmail/models.py:58
+#, fuzzy
+#| msgid "Usage overview"
+msgid "platform"
+msgstr "ઉપયોગ સારાંશ"
+
+#: eventyay/base/gmail/oauth.py:37
+#, fuzzy
+#| msgid "Add the client ID and client secret to admin settings"
+msgid "Gmail OAuth client ID and secret must be configured in global settings."
+msgstr "એડમિન સેટિંગ્સમાં ક્લાયન્ટ ID અને ક્લાયન્ટ સિક્રેટ ઉમેરો"
+
+#: eventyay/base/gmail/oauth.py:85
+#, fuzzy
+#| msgid "The requested question does not exist."
+msgid "The required Gmail send permission was not granted."
+msgstr "વિનંતી કરાયેલ પ્રશ્ન અસ્તિત્વમાં નથી."
+
+#: eventyay/base/gmail/oauth.py:99
+#, fuzzy
+#| msgid "Please provide an email address."
+msgid "Google did not return an email address for the connected account."
+msgstr "કૃપા કરીને ઇમેઇલ સરનામું આપો."
+
 #: eventyay/base/invoice.py:71
-#, python-format
+#, fuzzy, python-format
+#| msgid "Page %(page)s of %(of)s"
 msgctxt "invoice"
-msgid "Page %d of %d"
-msgstr "પાનું %d માંથી %d"
+msgid "Page %(page)d of %(of)d"
+msgstr "%(of)s માંથી પૃષ્ઠ %(page)s"
 
 #: eventyay/base/invoice.py:272
 msgctxt "invoice"
@@ -5781,7 +5891,7 @@ msgstr ""
 msgid "TEST MODE"
 msgstr "ટેસ્ટ મોડ"
 
-#: eventyay/base/invoice.py:478 eventyay/base/services/mail.py:506
+#: eventyay/base/invoice.py:478 eventyay/base/services/mail.py:512
 #, python-brace-format
 msgctxt "invoice"
 msgid "Invoice {num}"
@@ -6193,6 +6303,7 @@ msgstr "[eventyay] પાસવર્ડ બદલાયો"
 #: eventyay/base/models/auth_token.py:65 eventyay/base/models/event.py:841
 #: eventyay/cfp/templates/cfp/index.html:4
 #: eventyay/cfp/templates/cfp/index.html:8
+#: eventyay/common/context_processors.py:121
 #: eventyay/control/forms/organizer_forms/device_form.py:45
 #: eventyay/control/navigation.py:494
 #: eventyay/control/templates/control/event_list.html:6
@@ -6502,28 +6613,28 @@ msgstr "ટોક પેજો પ્રકાશિત છે"
 msgid "Event currency"
 msgstr "ઇવેન્ટ કરન્સી"
 
-#: eventyay/base/models/event.py:543 eventyay/base/models/event.py:3127
+#: eventyay/base/models/event.py:543 eventyay/base/models/event.py:3298
 #: eventyay/base/pdf.py:365 eventyay/control/forms/subevents.py:512
 #: eventyay/control/templates/pretixcontrol/subevents/bulk.html:270
 msgid "Event end time"
 msgstr "ઇવેન્ટ સમાપ્તિ સમય"
 
-#: eventyay/base/models/event.py:544 eventyay/base/models/event.py:3128
+#: eventyay/base/models/event.py:544 eventyay/base/models/event.py:3299
 #: eventyay/control/forms/subevents.py:517
 #: eventyay/control/templates/pretixcontrol/subevents/bulk.html:274
 msgid "Admission time"
 msgstr "પ્રવેશ સમય"
 
-#: eventyay/base/models/event.py:547 eventyay/base/models/event.py:3119
+#: eventyay/base/models/event.py:547 eventyay/base/models/event.py:3290
 msgid "Show in lists"
 msgstr "યાદીમાં બતાવો"
 
-#: eventyay/base/models/event.py:553 eventyay/base/models/event.py:3132
+#: eventyay/base/models/event.py:553 eventyay/base/models/event.py:3303
 #: eventyay/control/forms/subevents.py:78
 msgid "End of presale"
 msgstr "પૂર્વવેચાણનો અંત"
 
-#: eventyay/base/models/event.py:555 eventyay/base/models/event.py:3134
+#: eventyay/base/models/event.py:555 eventyay/base/models/event.py:3305
 #: eventyay/control/forms/subevents.py:80
 msgid ""
 "Optional. No products will be sold after this date. If you do not set this "
@@ -6532,17 +6643,17 @@ msgstr ""
 "વૈકલ્પિક. આ તારીખ પછી કોઈ ઉત્પાદનો વેચાશે નહીં. જો આ મૂલ્ય સેટ ન કરો, તો પૂર્વવેચાણ "
 "ઇવેન્ટની અંતિમ તારીખ પછી સમાપ્ત થશે."
 
-#: eventyay/base/models/event.py:562 eventyay/base/models/event.py:3141
+#: eventyay/base/models/event.py:562 eventyay/base/models/event.py:3312
 #: eventyay/control/forms/subevents.py:72
 msgid "Start of presale"
 msgstr "પૂર્વવેચાણનો પ્રારંભ"
 
-#: eventyay/base/models/event.py:563 eventyay/base/models/event.py:3142
+#: eventyay/base/models/event.py:563 eventyay/base/models/event.py:3313
 #: eventyay/control/forms/subevents.py:73
 msgid "Optional. No products will be sold before this date."
 msgstr "વૈકલ્પિક. આ તારીખ પહેલાં કોઈ ઉત્પાદનો વેચાશે નહીં."
 
-#: eventyay/base/models/event.py:569 eventyay/base/models/event.py:3148
+#: eventyay/base/models/event.py:569 eventyay/base/models/event.py:3319
 #: eventyay/base/services/talkimport.py:147
 #: eventyay/eventyay_common/templates/eventyay_common/events/create.html:164
 #: eventyay/presale/templates/pretixpresale/event/index.html:216
@@ -6551,11 +6662,11 @@ msgstr "વૈકલ્પિક. આ તારીખ પહેલાં કો�
 msgid "Location"
 msgstr "સ્થળ"
 
-#: eventyay/base/models/event.py:572 eventyay/base/models/event.py:3151
+#: eventyay/base/models/event.py:572 eventyay/base/models/event.py:3322
 msgid "Latitude"
 msgstr "અક્ષાંશ"
 
-#: eventyay/base/models/event.py:581 eventyay/base/models/event.py:3160
+#: eventyay/base/models/event.py:581 eventyay/base/models/event.py:3331
 msgid "Longitude"
 msgstr "રેખાંશ"
 
@@ -6624,7 +6735,7 @@ msgid ""
 msgstr ""
 
 #: eventyay/base/models/event.py:637
-#: eventyay/eventyay_common/forms/event.py:265
+#: eventyay/eventyay_common/forms/event.py:266
 msgid "Custom domain"
 msgstr "કસ્ટમ ડોમેન"
 
@@ -6696,147 +6807,106 @@ msgstr "ભૂરૂપરેખા"
 msgid "Graph Paper"
 msgstr "ગ્રાફ પેપર"
 
-#: eventyay/base/models/event.py:840 eventyay/base/models/orders.py:176
-#: eventyay/base/models/orders.py:2692 eventyay/base/models/product.py:311
-#: eventyay/base/models/product.py:1669 eventyay/base/models/vouchers.py:91
-#: eventyay/base/models/waitinglist.py:32 eventyay/base/notifications.py:178
-#: eventyay/common/log_display.py:294
-#: eventyay/control/forms/organizer_forms/user_orders_form.py:11
-#: eventyay/control/templates/control/bbb_list.html:21
-#: eventyay/control/templates/control/janus_list.html:17
-#: eventyay/control/templates/control/jitsi_list.html:21
-#: eventyay/control/templates/control/systemlog_list.html:12
-#: eventyay/control/templates/control/turn_list.html:17
-#: eventyay/control/templates/pretixcontrol/admin/attendees/index.html:85
-#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:293
-#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:344
-#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:461
-#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:501
-#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:539
-#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:584
-#: eventyay/control/templates/pretixcontrol/admin/orders/index.html:61
-#: eventyay/control/templates/pretixcontrol/admin/submissions/index.html:91
-#: eventyay/control/templates/pretixcontrol/search/orders.html:42
-#: eventyay/control/templates/pretixcontrol/user/orders.html:27
-#: eventyay/event/stages.py:96 eventyay/eventyay_common/forms/filters.py:12
-#: eventyay/eventyay_common/forms/filters.py:54
-#: eventyay/eventyay_common/templates/eventyay_common/orders/orders.html:40
-#: eventyay/eventyay_common/templates/eventyay_common/orders/orders.html:54
-#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:187
-#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:256
-#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:325
-#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:361
-#: eventyay/eventyay_common/templates/eventyay_common/sessions/sessions.html:54
-#: eventyay/eventyay_common/templates/eventyay_common/sessions/sessions.html:69
-#: eventyay/orga/templates/orga/mails/_placeholder_group.html:14
-#: eventyay/orga/templates/orga/organizer/list.html:32
-#: eventyay/orga/views/event.py:388 eventyay/presale/organizer_exports.py:212
-#: eventyay/presale/templates/pretixpresale/event/waitinglist.html:19
-msgid "Event"
-msgid_plural "Events"
-msgstr[0] "ઇવેન્ટ્સ"
-msgstr[1] "ઇવેન્ટ્સ"
-
-#: eventyay/base/models/event.py:1929 eventyay/control/views/dashboards.py:307
+#: eventyay/base/models/event.py:2100 eventyay/control/views/dashboards.py:307
 msgid "live (private test mode)"
 msgstr "લાઇવ (ખાનગી ટેસ્ટ મોડમાં)"
 
-#: eventyay/base/models/event.py:1929 eventyay/control/views/dashboards.py:316
+#: eventyay/base/models/event.py:2100 eventyay/control/views/dashboards.py:316
 msgid "in private test mode"
 msgstr "ખાનગી ટેસ્ટ મોડમાં"
 
-#: eventyay/base/models/event.py:1931 eventyay/control/views/dashboards.py:310
+#: eventyay/base/models/event.py:2102 eventyay/control/views/dashboards.py:310
 msgid "live and in test mode"
 msgstr "લાઇવ અને ટેસ્ટ મોડમાં"
 
-#: eventyay/base/models/event.py:1933 eventyay/control/views/dashboards.py:313
+#: eventyay/base/models/event.py:2104 eventyay/control/views/dashboards.py:313
 #: eventyay/orga/templates/orga/includes/dashboard_block_event.html:24
 msgid "live"
 msgstr "લાઇવ"
 
-#: eventyay/base/models/event.py:1935 eventyay/control/views/dashboards.py:318
+#: eventyay/base/models/event.py:2106 eventyay/control/views/dashboards.py:318
 msgid "in test mode"
 msgstr "ટેસ્ટ મોડમાં"
 
-#: eventyay/base/models/event.py:1937 eventyay/control/views/dashboards.py:318
+#: eventyay/base/models/event.py:2108 eventyay/control/views/dashboards.py:318
 msgid "not yet public"
 msgstr "હજુ જાહેર નથી"
 
-#: eventyay/base/models/event.py:2053
+#: eventyay/base/models/event.py:2224
 msgid ""
 "You have configured at least one paid product but have not enabled any "
 "payment methods."
 msgstr ""
 "ઓછામાં ઓછું એક પેઈડ પ્રોડક્ટ રૂપરેખાંકિત કર્યું છે, પરંતુ કોઈપણ ચુકવણી પદ્ધતિઓ સક્રિય કરી નથી."
 
-#: eventyay/base/models/event.py:2056
+#: eventyay/base/models/event.py:2227
 msgid "You need to configure at least one quota to sell anything."
 msgstr "કઈપણ વેચવા માટે ઓછામાં ઓછું એક ક્વોટા રૂપરેખાંકિત કરવું જરૂરી છે."
 
-#: eventyay/base/models/event.py:2059
+#: eventyay/base/models/event.py:2230
 msgid "You have unpaid invoices, please pay them before going live."
 msgstr "અવેતન ઇન્વૉઇસ છે; લાઇવ જવા પહેલાં કૃપા કરીને તેની ચુકવણી કરો."
 
-#: eventyay/base/models/event.py:2064
+#: eventyay/base/models/event.py:2235
 #, python-brace-format
 msgid "You need to fill the meta parameter \"{property}\"."
 msgstr "મેટા પેરામીટર \"{property}\" ભરવું જરૂરી છે."
 
-#: eventyay/base/models/event.py:2110
+#: eventyay/base/models/event.py:2281
 msgid "You need to fill the billing information."
 msgstr "બિલિંગ માહિતી ભરવી જરૂરી છે."
 
-#: eventyay/base/models/event.py:2329
+#: eventyay/base/models/event.py:2500
 msgid ""
 "Once created an event cannot change between an series and a single event."
 msgstr "ઇવેન્ટ બનાવ્યા પછી તેને શ્રેણી અને એકલ ઇવેન્ટ વચ્ચે બદલી શકાતું નથી."
 
-#: eventyay/base/models/event.py:2335
+#: eventyay/base/models/event.py:2506
 msgid "The event slug cannot be changed."
 msgstr "ઇવેન્ટ સ્લગ બદલી શકાતો નથી."
 
-#: eventyay/base/models/event.py:2338
+#: eventyay/base/models/event.py:2509
 msgid "This slug has already been used for a different event."
 msgstr "આ સ્લગ પહેલેથી જ બીજા ઇવેન્ટ માટે વપરાઈ ગયો છે."
 
-#: eventyay/base/models/event.py:2344
+#: eventyay/base/models/event.py:2515
 msgid "The event cannot end before it starts."
 msgstr "ઇવેન્ટ શરૂ થાય તે પહેલાં સમાપ્ત થઈ શકતું નથી."
 
-#: eventyay/base/models/event.py:2350
+#: eventyay/base/models/event.py:2521
 msgid "The event's presale cannot end before it starts."
 msgstr "ઇવેન્ટનું પ્રીસેલ શરૂ થાય તે પહેલાં સમાપ્ત થઈ શકતું નથી."
 
-#: eventyay/base/models/event.py:2823 eventyay/base/models/event.py:3019
-#: eventyay/event/stages.py:68
+#: eventyay/base/models/event.py:2994 eventyay/base/models/event.py:3190
+#: eventyay/event/stages.py:67
 #: eventyay/orga/templates/orga/submission/review.html:198
 msgid "Review"
 msgstr "સમીક્ષા"
 
-#: eventyay/base/models/event.py:3027
+#: eventyay/base/models/event.py:3198
 msgid "Selection"
 msgstr "પસંદગી"
 
-#: eventyay/base/models/event.py:3042 eventyay/base/models/review.py:129
+#: eventyay/base/models/event.py:3213 eventyay/base/models/review.py:129
 #: eventyay/orga/forms/event.py:530 eventyay/orga/forms/event.py:547
 #: eventyay/orga/templates/orga/includes/review_filter_form.html:25
 #: eventyay/orga/templates/orga/submission/review.html:193
 msgid "Score"
 msgstr "સ્કોર"
 
-#: eventyay/base/models/event.py:3052
+#: eventyay/base/models/event.py:3223
 msgid "Maybe"
 msgstr "કદાચ"
 
-#: eventyay/base/models/event.py:3075
+#: eventyay/base/models/event.py:3246
 msgid "Link text"
 msgstr "લિંક ટેક્સ્ટ"
 
-#: eventyay/base/models/event.py:3076
+#: eventyay/base/models/event.py:3247
 msgid "Link URL"
 msgstr "લિંક URL"
 
-#: eventyay/base/models/event.py:3114
+#: eventyay/base/models/event.py:3285
 #: eventyay/base/models/global_plugin_config.py:28
 #: eventyay/base/models/product.py:337 eventyay/base/models/product.py:867
 #: eventyay/base/models/product.py:1320 eventyay/control/forms/filter.py:852
@@ -6860,51 +6930,51 @@ msgstr "લિંક URL"
 msgid "Active"
 msgstr "સક્રિય"
 
-#: eventyay/base/models/event.py:3115
+#: eventyay/base/models/event.py:3286
 msgid ""
 "Only with this checkbox enabled, this date is visible in the frontend to "
 "users."
 msgstr "આ ચેકબોક્સ સક્રિય હોય ત્યારે જ આ તારીખ ફ્રન્ટએન્ડમાં વપરાશકર્તાઓને દેખાશે."
 
-#: eventyay/base/models/event.py:3120
+#: eventyay/base/models/event.py:3291
 msgid ""
 "If selected, this event will show up publicly on the list of dates for your "
 "event."
 msgstr "પસંદ કર્યે બાદ, આ ઇવેન્ટ તમારી ઇવેન્ટ માટેની તારીખોની યાદીમાં જાહેર રીતે દેખાશે."
 
-#: eventyay/base/models/event.py:3184
+#: eventyay/base/models/event.py:3355
 msgid "Date in event series"
 msgstr "ઇવેન્ટ શ્રેણીમાં તારીખ"
 
-#: eventyay/base/models/event.py:3185
+#: eventyay/base/models/event.py:3356
 msgid "Dates in event series"
 msgstr "ઇવેન્ટ શ્રેણીમાં તારીખો"
 
-#: eventyay/base/models/event.py:3286
+#: eventyay/base/models/event.py:3457
 msgid "One or more variations do not belong to this event."
 msgstr "એક અથવા વધુ વેરિએશન આ ઇવેન્ટના નથી."
 
-#: eventyay/base/models/event.py:3372 eventyay/base/models/product.py:1832
+#: eventyay/base/models/event.py:3543 eventyay/base/models/product.py:1832
 msgid "Can not contain spaces or special characters except underscores"
 msgstr "અન્ડરસ્કોર સિવાય સ્પેસ અથવા વિશેષ અક્ષરો સમાવી શકાતાં નથી"
 
-#: eventyay/base/models/event.py:3376 eventyay/base/models/product.py:1836
+#: eventyay/base/models/event.py:3547 eventyay/base/models/product.py:1836
 msgid "The property name may only contain letters, numbers and underscores."
 msgstr "પ્રોપર્ટી નામમાં ફક્ત અક્ષરો, આંકડા અને અન્ડરસ્કોર હોઈ શકે છે."
 
-#: eventyay/base/models/event.py:3381
+#: eventyay/base/models/event.py:3552
 msgid "Default value"
 msgstr "ડિફૉલ્ટ મૂલ્ય"
 
-#: eventyay/base/models/event.py:3384
+#: eventyay/base/models/event.py:3555
 msgid "Can only be changed by organizer-level administrators"
 msgstr "ફક્ત આયોજક-સ્તરના એડમિનિસ્ટ્રેટરો દ્વારા જ બદલાઈ શકે છે"
 
-#: eventyay/base/models/event.py:3388
+#: eventyay/base/models/event.py:3559
 msgid "Required for events"
 msgstr "ઇવેન્ટ્સ માટે જરૂરી"
 
-#: eventyay/base/models/event.py:3390
+#: eventyay/base/models/event.py:3561
 msgid ""
 "If checked, an event can only be taken live if the property is set. In event "
 "series, its always optional to set a value for individual dates"
@@ -6912,22 +6982,22 @@ msgstr ""
 "ચેક કરેલ હોય તો, પ્રોપર્ટી સેટ હોય ત્યારે જ ઇવેન્ટ લાઇવ કરી શકાય. ઇવેન્ટ શ્રેણીમાં, "
 "વ્યક્તિગત તારીખો માટે મૂલ્ય સેટ કરવું હંમેશા વૈકલ્પિક છે"
 
-#: eventyay/base/models/event.py:3397
+#: eventyay/base/models/event.py:3568
 msgid "Valid values"
 msgstr "માન્ય મૂલ્યો"
 
-#: eventyay/base/models/event.py:3398
+#: eventyay/base/models/event.py:3569
 msgid ""
 "If you keep this empty, any value is allowed. Otherwise, enter one possible "
 "value per line."
 msgstr ""
 "આ ખાલી રાખશો તો કોઈ પણ મૂલ્ય માન્ય છે. અન્યથા, દર લાઇનમાં એક સંભવિત મૂલ્ય દાખલ કરો."
 
-#: eventyay/base/models/event.py:3404
+#: eventyay/base/models/event.py:3575
 msgid "A property can either be required or have a default value, not both."
 msgstr "પ્રોપર્ટી ફરજિયાત અથવા ડિફૉલ્ટ મૂલ્ય ધરાવી શકે છે, બન્ને નહીં."
 
-#: eventyay/base/models/event.py:3406
+#: eventyay/base/models/event.py:3577
 msgid "You cannot set a default value that is not a valid value."
 msgstr "માન્ય મૂલ્ય ન હોય તેવું ડિફૉલ્ટ મૂલ્ય સેટ કરી શકાતું નથી."
 
@@ -7262,7 +7332,7 @@ msgstr "વપરાશકર્તાએ જવાબ ન આપેલા ક�
 #: eventyay/orga/templates/orga/mails/sent_list.html:25
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/outbox_form.html:30
 #: eventyay/plugins/sendmail/views.py:278
-#: eventyay/plugins/sendmail/views.py:530
+#: eventyay/plugins/sendmail/views.py:534
 msgid "To"
 msgstr "To"
 
@@ -7282,7 +7352,7 @@ msgstr ""
 msgid "CC"
 msgstr "CC"
 
-#: eventyay/base/models/mail.py:384 eventyay/plugins/sendmail/views.py:531
+#: eventyay/base/models/mail.py:384 eventyay/plugins/sendmail/views.py:535
 msgid "Sent at"
 msgstr "મોકલ્યાનું સમય"
 
@@ -7676,7 +7746,7 @@ msgstr "આયોજક"
 
 #: eventyay/base/models/organizer.py:143
 #: eventyay/common/templates/common/fragment_profile_dropdown.html:28
-#: eventyay/control/forms/global_settings.py:553
+#: eventyay/control/forms/global_settings.py:789
 #: eventyay/control/navigation.py:386
 #: eventyay/control/templates/pretixcontrol/admin/dashboard.html:43
 #: eventyay/control/templates/pretixcontrol/admin/dashboard.html:207
@@ -8105,7 +8175,7 @@ msgstr "આયોજક લોગ્સ"
 msgid "Page title"
 msgstr "પેજ શીર્ષક"
 
-#: eventyay/base/models/page.py:13 eventyay/control/views/pages.py:68
+#: eventyay/base/models/page.py:13 eventyay/control/views/pages.py:73
 msgid "URL form"
 msgstr "URL ફોર્મ"
 
@@ -10603,12 +10673,12 @@ msgstr "માન્ય વેચાણ ચેનલ દાખલ કરો."
 msgid "No matching seat was found."
 msgstr "મેળ ખાતી સીટ મળી નથી."
 
-#: eventyay/base/orderimport.py:984 eventyay/base/services/cart.py:136
+#: eventyay/base/orderimport.py:984 eventyay/base/services/cart.py:140
 msgid ""
 "The seat you selected has already been taken. Please select a different seat."
 msgstr "પસંદ કરેલી સીટ પહેલેથી જ લેવાઈ ગઈ છે. બીજી સીટ પસંદ કરો."
 
-#: eventyay/base/orderimport.py:993 eventyay/base/services/cart.py:133
+#: eventyay/base/orderimport.py:993 eventyay/base/services/cart.py:137
 msgid "You need to select a specific seat."
 msgstr "ચોક્કસ સીટ પસંદ કરવી જરૂરી છે."
 
@@ -11308,7 +11378,7 @@ msgid "Languages"
 msgstr "ભાષાઓ"
 
 #: eventyay/base/plugins.py:100 eventyay/common/plugins.py:15
-#: eventyay/orga/templates/orga/mails/_placeholder_group.html:20
+#: eventyay/orga/templates/orga/mails/_placeholder_group.html:16
 msgctxt "category of items"
 msgid "Other"
 msgstr "અન્ય"
@@ -11476,36 +11546,37 @@ msgstr ""
 msgid "The entered price exceeds the permitted maximum."
 msgstr "દાખલ કરેલ કિંમત બહુ ઊંચી છે."
 
-#: eventyay/base/services/cart.py:94
+#: eventyay/base/services/cart.py:95
 #, python-format
 msgid ""
-"The entered price is below the permitted minimum. The price range is %s to "
-"%s %s."
+"The entered price is below the permitted minimum. The price range is %(min)s "
+"to %(max)s %(currency)s."
 msgstr ""
 
-#: eventyay/base/services/cart.py:95
+#: eventyay/base/services/cart.py:97
 #, python-format
 msgid ""
 "The entered price is below the permitted minimum. The minimum price is %s."
 msgstr ""
 
-#: eventyay/base/services/cart.py:96
-#, python-format
+#: eventyay/base/services/cart.py:99
+#, fuzzy, python-format
+#| msgid "The entered price is to high."
 msgid ""
-"The entered price exceeds the permitted maximum. The price range is %s to %s "
-"%s."
-msgstr ""
+"The entered price exceeds the permitted maximum. The price range is %(min)s "
+"to %(max)s %(currency)s."
+msgstr "દાખલ કરેલ કિંમત બહુ ઊંચી છે."
 
-#: eventyay/base/services/cart.py:97
+#: eventyay/base/services/cart.py:101
 msgid "This voucher code is not known in our database."
 msgstr "આ વાઉચર કોડ અમારા ડેટાબેઝમાં ઓળખાતો નથી."
 
-#: eventyay/base/services/cart.py:98
+#: eventyay/base/services/cart.py:102
 msgid ""
 "This voucher code has already been used the maximum number of times allowed."
 msgstr "આ વાઉચર કોડનો ઉપયોગ પહેલેથી જ મંજૂર મહત્તમ વખત થઈ ગયો છે."
 
-#: eventyay/base/services/cart.py:100
+#: eventyay/base/services/cart.py:104
 #, python-format
 msgid ""
 "This voucher code is currently locked since it is already contained in a "
@@ -11518,12 +11589,12 @@ msgstr ""
 "કર્યો હતો પણ ચેકઆઉટ પ્રક્રિયા પૂર્ણ કરી નહોતી. તમે તેને ફરીથી %d મિનિટમાં વાપરવાનો "
 "પ્રયાસ કરી શકો છો."
 
-#: eventyay/base/services/cart.py:105
+#: eventyay/base/services/cart.py:109
 #, python-format
 msgid "This voucher code can only be redeemed %d more times."
 msgstr "આ વાઉચર કોડને વધુમાં વધુ %d વખત વધુ રીડીમ કરી શકાય છે."
 
-#: eventyay/base/services/cart.py:107
+#: eventyay/base/services/cart.py:111
 msgid ""
 "You already used this voucher code. Remove the associated line from your "
 "cart if you want to use it for a different product."
@@ -11531,19 +11602,19 @@ msgstr ""
 "તમે આ વાઉચર કોડનો પહેલેથી ઉપયોગ કર્યો છે. જુદા પ્રોડક્ટ માટે તેનો ઉપયોગ કરવો હોય તો "
 "કાર્ટમાંથી સંબંધિત લાઇન દૂર કરો."
 
-#: eventyay/base/services/cart.py:110
+#: eventyay/base/services/cart.py:114
 msgid "This voucher is expired."
 msgstr "આ વાઉચરનું સમયગાળો સમાપ્ત થઈ ગયો છે."
 
-#: eventyay/base/services/cart.py:111
+#: eventyay/base/services/cart.py:115
 msgid "This voucher is not valid for this product."
 msgstr "આ પ્રોડક્ટ માટે આ વાઉચર માન્ય નથી."
 
-#: eventyay/base/services/cart.py:112
+#: eventyay/base/services/cart.py:116
 msgid "This voucher is not valid for this seat."
 msgstr "આ સીટ માટે આ વાઉચર માન્ય નથી."
 
-#: eventyay/base/services/cart.py:114
+#: eventyay/base/services/cart.py:118
 msgid ""
 "We did not find any position in your cart that we could use this voucher "
 "for. If you want to add something new to your cart using that voucher, you "
@@ -11553,33 +11624,33 @@ msgstr ""
 "વાઉચર વડે તમારા કાર્ટમાં કંઈક નવું ઉમેરવા માંગો છો, તો પેજના તળિયે આવેલી વાઉચર રીડેમ્પશન "
 "વિકલ્પનો ઉપયોગ કરી શકો છો."
 
-#: eventyay/base/services/cart.py:118
+#: eventyay/base/services/cart.py:122
 msgid "Your voucher is valid for a product that is currently not for sale."
 msgstr "તમારું વાઉચર એવા પ્રોડક્ટ માટે માન્ય છે જે હાલમાં વેચાણ માટે ઉપલબ્ધ નથી."
 
-#: eventyay/base/services/cart.py:119
+#: eventyay/base/services/cart.py:123
 msgctxt "subevent"
 msgid "This voucher is not valid for this event date."
 msgstr "આ ઇવેન્ટ તારીખ માટે આ વાઉચર માન્ય નથી."
 
-#: eventyay/base/services/cart.py:120
+#: eventyay/base/services/cart.py:124
 msgid "You need a valid voucher code to order this product."
 msgstr "આ પ્રોડક્ટ ઓર્ડર કરવા માટે માન્ય વાઉચર કોડ જરૂરી છે."
 
-#: eventyay/base/services/cart.py:121
+#: eventyay/base/services/cart.py:125
 msgctxt "subevent"
 msgid "The selected event date is not active."
 msgstr "પસંદ કરેલી ઇવેન્ટ તારીખ સક્રિય નથી."
 
-#: eventyay/base/services/cart.py:122
+#: eventyay/base/services/cart.py:126
 msgid "You can not select an add-on for the selected product."
 msgstr "પસંદ કરેલા પ્રોડક્ટ માટે ઍડ-ઓન પસંદ કરી શકાય તેમ નથી."
 
-#: eventyay/base/services/cart.py:123
+#: eventyay/base/services/cart.py:127
 msgid "You can not select two variations of the same add-on product."
 msgstr "એક જ ઍડ-ઓન પ્રોડક્ટની બે વેરિએશન પસંદ કરી શકાય તેમ નથી."
 
-#: eventyay/base/services/cart.py:124
+#: eventyay/base/services/cart.py:128
 #, python-format
 msgid ""
 "You can select at most %(max)s add-ons from the category %(cat)s for the "
@@ -11587,7 +11658,7 @@ msgid ""
 msgstr ""
 "પ્રોડક્ટ %(base)s માટે કેટેગરી %(cat)sમાંથી વધુમાં વધુ %(max)s ઍડ-ઓન પસંદ કરી શકાય છે."
 
-#: eventyay/base/services/cart.py:126
+#: eventyay/base/services/cart.py:130
 #, python-format
 msgid ""
 "You need to select at least %(min)s add-ons from the category %(cat)s for "
@@ -11596,7 +11667,7 @@ msgstr ""
 "પ્રોડક્ટ %(base)s માટે કેટેગરી %(cat)sમાંથી ઓછામાં ઓછા %(min)s ઍડ-ઓન પસંદ કરવા જરૂરી "
 "છે."
 
-#: eventyay/base/services/cart.py:129
+#: eventyay/base/services/cart.py:133
 #, python-format
 msgid ""
 "You can select every add-ons from the category %(cat)s for the product "
@@ -11605,30 +11676,30 @@ msgstr ""
 "પ્રોડક્ટ %(base)s માટે કેટેગરી %(cat)sમાંથી દરેક ઍડ-ઓન વધુમાં વધુ એક જ વખત પસંદ કરી "
 "શકાય છે."
 
-#: eventyay/base/services/cart.py:131
+#: eventyay/base/services/cart.py:135
 msgid ""
 "One of the products you selected can only be bought as an add-on to another "
 "project."
 msgstr ""
 "તમારે પસંદ કરેલા પ્રોડક્ટ્સમાંથી એક ફક્ત બીજા પ્રોજેક્ટના ઍડ-ઓન તરીકે જ ખરીદી શકાય છે."
 
-#: eventyay/base/services/cart.py:132
+#: eventyay/base/services/cart.py:136
 msgid "One of the products you selected can only be bought part of a bundle."
 msgstr "તમારે પસંદ કરેલા પ્રોડક્ટ્સમાંથી એક ફક્ત બંડલના ભાગરૂપે જ ખરીદી શકાય છે."
 
-#: eventyay/base/services/cart.py:134
+#: eventyay/base/services/cart.py:138
 msgid "Please select a valid seat."
 msgstr "કૃપા કરીને માન્ય સીટ પસંદ કરો."
 
-#: eventyay/base/services/cart.py:135
+#: eventyay/base/services/cart.py:139
 msgid "You can not select a seat for this position."
 msgstr "આ સ્થાન માટે સીટ પસંદ કરી શકાતી નથી."
 
-#: eventyay/base/services/cart.py:137
+#: eventyay/base/services/cart.py:141
 msgid "You can not select the same seat multiple times."
 msgstr "એક જ સીટ એકથી વધુ વખત પસંદ કરી શકાતી નથી."
 
-#: eventyay/base/services/cart.py:139
+#: eventyay/base/services/cart.py:143
 msgid ""
 "You entered a gift card instead of a voucher. Gift cards can be entered "
 "later on when you're asked for your payment details."
@@ -11636,7 +11707,7 @@ msgstr ""
 "વાઉચર બદલે ગિફ્ટ કાર્ડ દાખલ કરવામાં આવ્યું છે. ચુકવણી વિગતો માટે પૂછવામાં આવે ત્યારે ગિફ્ટ "
 "કાર્ડ પછીથી દાખલ કરી શકાય છે."
 
-#: eventyay/base/services/cart.py:143
+#: eventyay/base/services/cart.py:147
 msgid ""
 "Only one ticket per user is allowed for a product in your cart. You already "
 "have a ticket."
@@ -11644,7 +11715,7 @@ msgstr ""
 "કાર્ટમાં આવેલા પ્રોડક્ટ માટે પ્રતિ વપરાશકર્તા માત્ર એક ટિકિટ મંજૂર છે. પહેલેથી ટિકિટ હાજર "
 "છે."
 
-#: eventyay/base/services/cart.py:144
+#: eventyay/base/services/cart.py:148
 msgid ""
 "Only one ticket per user is allowed for this product. Quantity has been "
 "adjusted to 1."
@@ -11836,14 +11907,14 @@ msgstr "નમૂના ઉત્પાદન {}"
 msgid "Sample product A"
 msgstr "નમૂના ઉત્પાદન A"
 
-#: eventyay/base/services/mail.py:230
+#: eventyay/base/services/mail.py:236
 #, python-brace-format
 msgid ""
 "You are receiving this email because someone placed an order for {event} for "
 "you."
 msgstr "આ ઇમેઇલ મળી રહ્યો છે કારણ કે કોઈએ તમારી માટે {event} માટે ઓર્ડર મૂક્યો છે."
 
-#: eventyay/base/services/mail.py:234 eventyay/base/services/mail.py:255
+#: eventyay/base/services/mail.py:240 eventyay/base/services/mail.py:261
 #, python-brace-format
 msgid ""
 "You can view your order details at the following URL:\n"
@@ -11852,7 +11923,7 @@ msgstr ""
 "નીચેના URL પર ઓર્ડરની વિગતો જોઈ શકાય છે:\n"
 "{orderurl}."
 
-#: eventyay/base/services/mail.py:250
+#: eventyay/base/services/mail.py:256
 #, python-brace-format
 msgid "You are receiving this email because you placed an order for {event}."
 msgstr "આ ઇમેઇલ મળી રહ્યો છે કારણ કે {event} માટે ઓર્ડર મૂક્યો છે."
@@ -12618,6 +12689,8 @@ msgid "You do not have access to this page."
 msgstr "આ પેજને ઍક્સેસ કરવાની પરવાનગી નથી."
 
 #: eventyay/base/templates/403.html:20 eventyay/base/templates/404.html:19
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:76
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:78
 #: eventyay/control/templates/pretixcontrol/admin/user/staff_session_start.html:4
 #: eventyay/control/templates/pretixcontrol/admin/user/staff_session_start.html:6
 #: eventyay/control/templates/pretixcontrol/base.html:231
@@ -12626,8 +12699,8 @@ msgstr "આ પેજને ઍક્સેસ કરવાની પરવા�
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:197
 #: eventyay/orga/templates/orga/base.html:163
 #: eventyay/orga/templates/orga/base.html:164
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:125
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:127
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:126
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:128
 msgid "Admin mode"
 msgstr "એડમિન મોડ"
 
@@ -12689,9 +12762,9 @@ msgstr ""
 
 #: eventyay/base/templates/pretixbase/email/email_footer.html:3
 #: eventyay/common/templates/common/powered_by.html:36
-#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:63
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:142
 #: eventyay/control/templates/pretixcontrol/base.html:416
-#: eventyay/eventyay_common/templates/eventyay_common/auth/base.html:89
+#: eventyay/eventyay_common/templates/eventyay_common/auth/base.html:98
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:386
 #: eventyay/presale/templates/pretixpresale/base_footer.html:13
 #, python-format
@@ -12838,11 +12911,12 @@ msgstr "ઈમેલનું પૂર્વાવલોકન"
 #: eventyay/base/templates/pretixbase/forms/widgets/thumbnailed_file_input.html:47
 #: eventyay/control/templates/pretixcontrol/event/mail_settings_fragment.html:30
 #: eventyay/control/templates/pretixcontrol/event/tickets.html:36
+#: eventyay/control/templates/pretixcontrol/global_settings.html:246
 #: eventyay/control/templates/pretixcontrol/includes/preview_modal.html:13
 #: eventyay/control/templates/pretixcontrol/includes/preview_modal.html:16
 #: eventyay/control/templates/pretixcontrol/order/sendmail.html:33
 #: eventyay/control/templates/pretixcontrol/pdf/index.html:452
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:305
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:303
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/outbox_form.html:136
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/send_form.html:73
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/send_team_form.html:48
@@ -13292,11 +13366,13 @@ msgstr "આમંત્રણ સ્વીકારો"
 #: eventyay/common/templates/common/fragment_header_user.html:156
 #: eventyay/common/templates/common/fragment_header_user.html:158
 #: eventyay/common/text/phrases.py:121
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:95
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:96
 #: eventyay/control/templates/registration/login.html:4
 #: eventyay/eventyay_common/templates/eventyay_common/auth/invite.html:26
 #: eventyay/presale/templates/pretixpresale/fragment_modals.html:33
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:144
 #: eventyay/presale/templates/pretixpresale/startpage_base.html:145
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:146
 msgid "Login"
 msgstr "લૉગિન"
 
@@ -13530,6 +13606,12 @@ msgstr "પ્રેક્ષક પ્રતિસાદ"
 msgid "Attendees can leave feedback here after your session has taken place."
 msgstr "સત્ર પૂરૂં થયા પછી હાજર રહેનારા અહીં પ્રતિસાદ આપી શકશે."
 
+#: eventyay/cfp/templates/cfp/event/user_submission_edit.html:62
+msgid "Speaker"
+msgid_plural "Speakers"
+msgstr[0] "વક્તાઓ"
+msgstr[1] "વક્તાઓ"
+
 #: eventyay/cfp/templates/cfp/event/user_submission_edit.html:64
 msgid "Submitter"
 msgid_plural "Submitters"
@@ -13687,7 +13769,7 @@ msgid "Submit something now!"
 msgstr "હમણાં કંઈક સબમિટ કરો!"
 
 #: eventyay/cfp/templates/cfp/includes/forms_header.html:18
-#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:16
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:23
 #: eventyay/control/templates/pretixcontrol/base.html:93
 #: eventyay/control/templates/pretixcontrol/pdf/index.html:39
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:36
@@ -13696,7 +13778,7 @@ msgid "Undo"
 msgstr "અનડૂ"
 
 #: eventyay/cfp/templates/cfp/includes/forms_header.html:19
-#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:16
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:23
 #: eventyay/control/templates/pretixcontrol/base.html:93
 #: eventyay/control/templates/pretixcontrol/pdf/index.html:43
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:36
@@ -13705,7 +13787,7 @@ msgid "Redo"
 msgstr "રીડૂ"
 
 #: eventyay/cfp/templates/cfp/includes/forms_header.html:20
-#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:16
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:23
 #: eventyay/control/templates/pretixcontrol/base.html:93
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:36
 #: eventyay/orga/templates/orga/base.html:63
@@ -13801,18 +13883,47 @@ msgstr "આમંત્રણ મોકલાઈ ગયું!"
 msgid "You cannot accept this invitation."
 msgstr "આ આમંત્રણ સ્વીકારી શકાતું નથી."
 
-#: eventyay/common/forms/fields.py:67 eventyay/control/forms/__init__.py:196
+#: eventyay/common/context_processors.py:122
+msgid "Terms"
+msgstr ""
+
+#: eventyay/common/context_processors.py:123
+#: eventyay/control/templates/pretixcontrol/organizers/edit.html:97
+msgid "Privacy"
+msgstr "ગોપનીયતા"
+
+#: eventyay/common/context_processors.py:124
+#: eventyay/control/views/pages.py:237
+#, fuzzy
+#| msgid "Price"
+msgid "Pricing"
+msgstr "કિંમત"
+
+#: eventyay/common/context_processors.py:125
+#: eventyay/orga/templates/orga/settings/import_export.html:238
+#: eventyay/orga/templates/orga/settings/import_export.html:431
+#: eventyay/orga/templates/orga/settings/import_export.html:540
+msgid "Documentation"
+msgstr "દસ્તાવેજીકરણ"
+
+#: eventyay/common/context_processors.py:126
+#, fuzzy
+#| msgid "CSV export"
+msgid "Support"
+msgstr "CSV એક્સપોર્ટ"
+
+#: eventyay/common/forms/fields.py:68 eventyay/control/forms/__init__.py:196
 #: eventyay/control/forms/__init__.py:217
 #, python-brace-format
 msgid "Please do not upload files larger than {size}!"
 msgstr "કૃપા કરીને {size} કરતાં મોટી ફાઇલો અપલોડ ન કરો!"
 
-#: eventyay/common/forms/fields.py:90 eventyay/control/forms/__init__.py:236
+#: eventyay/common/forms/fields.py:91 eventyay/control/forms/__init__.py:236
 #, python-brace-format
 msgid "Supported formats: {formats}"
 msgstr "આધારિત ફોર્મેટ્સ: {formats}"
 
-#: eventyay/common/forms/fields.py:103 eventyay/control/forms/__init__.py:250
+#: eventyay/common/forms/fields.py:104 eventyay/control/forms/__init__.py:250
 #, python-brace-format
 msgid ""
 "The file type '{extension}' is not supported. Please upload one of the "
@@ -13888,20 +13999,20 @@ msgstr "— ઇવેન્ટ પસંદ કરો —"
 msgid "Scheduled time must not be in the past."
 msgstr "પ્રારંભ સમય ભૂતકાળમાં હોઈ શકતો નથી."
 
-#: eventyay/common/forms/widgets.py:50
+#: eventyay/common/forms/widgets.py:53
 msgid ""
 "This password would take <em class=\"password_strength_time\"></em> to crack."
 msgstr "આ પાસવર્ડ તોડવામાં <em class=\"password_strength_time\"></em> લાગશે."
 
-#: eventyay/common/forms/widgets.py:72
+#: eventyay/common/forms/widgets.py:75
 msgid "Warning"
 msgstr "ચેતવણી"
 
-#: eventyay/common/forms/widgets.py:72
+#: eventyay/common/forms/widgets.py:75
 msgid "Your passwords don’t match."
 msgstr "પાસવર્ડ્સ મેળ ખાતા નથી."
 
-#: eventyay/common/forms/widgets.py:106
+#: eventyay/common/forms/widgets.py:109
 #, fuzzy
 #| msgid "Email preview"
 msgid "Image preview"
@@ -14692,8 +14803,8 @@ msgid "User menu"
 msgstr "યૂઝર એજન્ટ"
 
 #: eventyay/common/templates/common/fragment_nav.html:10
-#: eventyay/event/stages.py:81 eventyay/orga/views/event.py:465
-#: eventyay/orga/views/event.py:497
+#: eventyay/event/stages.py:80 eventyay/orga/views/event.py:464
+#: eventyay/orga/views/event.py:496
 #: eventyay/presale/templates/pretixpresale/event/fragment_nav.html:35
 msgid "Schedule"
 msgstr "કાર્યક્રમ"
@@ -14709,7 +14820,7 @@ msgid "Details"
 msgstr "વિગતો"
 
 #: eventyay/common/templates/common/fragment_nav.html:17
-#: eventyay/eventyay_common/views/event.py:978
+#: eventyay/eventyay_common/views/event.py:1013
 #: eventyay/presale/templates/pretixpresale/event/fragment_nav.html:18
 msgid "Info"
 msgstr "માહિતી"
@@ -14773,7 +14884,7 @@ msgstr "લૉગિન નિષ્ફળ. કૃપા કરીને ફર�
 #: eventyay/control/templates/pretixcontrol/item/index.html:173
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:118
 #: eventyay/eventyay_common/templates/eventyay_common/account/2fa-main-settings.html:109
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:506
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:511
 #: eventyay/presale/templates/pretixpresale/fragment_join_online_video.html:76
 #: eventyay/presale/templates/pretixpresale/fragment_modals.html:34
 #: eventyay/presale/templates/pretixpresale/includes/share_dialog.html:7
@@ -14845,6 +14956,12 @@ msgstr "સંદેશ"
 #| msgid "This device has been set up successfully."
 msgid "Your message has been sent successfully!"
 msgstr "આ ડિવાઇસ સફળતાપૂર્વક સેટ અપ કરવામાં આવ્યું છે."
+
+#: eventyay/common/templates/common/includes/core_footer.html:5
+#, fuzzy
+#| msgid "Usage overview"
+msgid "Platform links"
+msgstr "ઉપયોગ સારાંશ"
 
 #: eventyay/common/templates/common/logs.html:15
 msgid "This change was performed by an event organiser."
@@ -15034,7 +15151,7 @@ msgstr "{date_from} – {date_to}"
 #: eventyay/control/templates/pretixcontrol/event/tax_edit.html:137
 #: eventyay/control/templates/pretixcontrol/event/tickets.html:79
 #: eventyay/control/templates/pretixcontrol/global_plugins.html:80
-#: eventyay/control/templates/pretixcontrol/global_settings.html:239
+#: eventyay/control/templates/pretixcontrol/global_settings.html:282
 #: eventyay/control/templates/pretixcontrol/global_update.html:86
 #: eventyay/control/templates/pretixcontrol/item/index.html:150
 #: eventyay/control/templates/pretixcontrol/items/category.html:38
@@ -15069,7 +15186,7 @@ msgstr "{date_from} – {date_to}"
 #: eventyay/eventyay_common/templates/eventyay_common/account/oauth-app-register.html:25
 #: eventyay/eventyay_common/templates/eventyay_common/account/oauth-app-update.html:25
 #: eventyay/eventyay_common/templates/eventyay_common/auth/recover.html:15
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:424
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:422
 #: eventyay/eventyay_common/templates/eventyay_common/organizers/create.html:20
 #: eventyay/eventyay_common/templates/eventyay_common/organizers/teams/team_edit.html:23
 #: eventyay/orga/templates/orga/settings/import_export.html:583
@@ -15142,7 +15259,8 @@ msgstr "સેવ કરો"
 #: eventyay/eventyay_common/templates/eventyay_common/account/authorized-app-revoke.html:25
 #: eventyay/eventyay_common/templates/eventyay_common/account/oauth-app-delete.html:25
 #: eventyay/eventyay_common/templates/eventyay_common/account/oauth-app-rollkeys.html:25
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:518
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:92
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:523
 #: eventyay/eventyay_common/templates/eventyay_common/organizers/teams/team_delete.html:10
 #: eventyay/eventyay_common/templates/eventyay_common/organizers/teams/team_delete.html:23
 #: eventyay/orga/templates/orga/cfp/forms.html:118
@@ -15171,6 +15289,7 @@ msgstr "રદ કરો"
 #: eventyay/control/templates/control/turn_list.html:35
 #: eventyay/control/templates/control/user_list.html:25
 #: eventyay/control/templates/pretixcontrol/event/mail_settings_fragment.html:27
+#: eventyay/control/templates/pretixcontrol/global_settings.html:241
 #: eventyay/control/templates/pretixcontrol/order/sendmail.html:28
 #: eventyay/control/templates/pretixcontrol/orders/index.html:41
 #: eventyay/control/templates/pretixcontrol/organizers/giftcard.html:15
@@ -15218,9 +15337,9 @@ msgstr "આઇટમ કાઢી નાખવામાં આવી છે."
 #: eventyay/control/views/event.py:524 eventyay/control/views/event.py:570
 #: eventyay/control/views/event.py:807 eventyay/control/views/event.py:1110
 #: eventyay/control/views/event.py:1472
-#: eventyay/control/views/global_settings.py:47
-#: eventyay/control/views/global_settings.py:69
-#: eventyay/control/views/global_settings.py:152
+#: eventyay/control/views/global_settings.py:62
+#: eventyay/control/views/global_settings.py:79
+#: eventyay/control/views/global_settings.py:162
 #: eventyay/control/views/organizer.py:232
 #: eventyay/control/views/organizer_views/device_view.py:250
 #: eventyay/control/views/organizer_views/gate_view.py:94
@@ -15228,7 +15347,7 @@ msgstr "આઇટમ કાઢી નાખવામાં આવી છે."
 #: eventyay/control/views/organizer_views/organizer_view.py:356
 #: eventyay/control/views/organizer_views/organizer_view.py:529
 #: eventyay/control/views/organizer_views/web_hook_view.py:116
-#: eventyay/control/views/pages.py:46 eventyay/control/views/pages.py:104
+#: eventyay/control/views/pages.py:51 eventyay/control/views/pages.py:109
 #: eventyay/control/views/product.py:250 eventyay/control/views/product.py:766
 #: eventyay/control/views/product.py:1184
 #: eventyay/control/views/product.py:1378
@@ -15236,11 +15355,11 @@ msgstr "આઇટમ કાઢી નાખવામાં આવી છે."
 #: eventyay/control/views/product.py:1847
 #: eventyay/control/views/product.py:1898
 #: eventyay/control/views/subevents.py:502
-#: eventyay/control/views/subevents.py:1709 eventyay/control/views/users.py:465
+#: eventyay/control/views/subevents.py:1709 eventyay/control/views/users.py:468
 #: eventyay/control/views/vouchers.py:287
 #: eventyay/eventyay_common/templates/eventyay_common/event/plugins.html:12
 #: eventyay/eventyay_common/views/account/basic.py:101
-#: eventyay/eventyay_common/views/event.py:786
+#: eventyay/eventyay_common/views/event.py:821
 #: eventyay/eventyay_common/views/organizer.py:241
 #: eventyay/plugins/badges/views.py:231 eventyay/plugins/sendmail/views.py:248
 #: eventyay/plugins/sendmail/views.py:417
@@ -15353,7 +15472,7 @@ msgstr "”"
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:32
 #: eventyay/eventyay_common/navigation.py:179
 #: eventyay/eventyay_common/navigation.py:334
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:247
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:248
 #: eventyay/orga/templates/orga/settings/feedback.html:18
 msgid "General"
 msgstr "સામાન્ય"
@@ -15593,7 +15712,7 @@ msgid "Write access"
 msgstr "લખાણ પ્રવેશ"
 
 #: eventyay/control/forms/admin/admin.py:17
-#: eventyay/control/forms/global_settings.py:620
+#: eventyay/control/forms/global_settings.py:884
 msgid "Perform update checks"
 msgstr "સુધારા ચેક ચલાવો"
 
@@ -15717,7 +15836,7 @@ msgstr ""
 "સૂચન માટે \"Set to random\" બટનનો ઉપયોગ કરો."
 
 #: eventyay/control/forms/event.py:183
-#: eventyay/eventyay_common/forms/event.py:38
+#: eventyay/eventyay_common/forms/event.py:39
 msgid "Event timezone"
 msgstr "ઇવેન્ટ સમય ઝોન"
 
@@ -15753,7 +15872,7 @@ msgid "Create a new team for this event with me as the only member"
 msgstr "આ ઇવેન્ટ માટે મારી સાથે એકમાત્ર સભ્ય તરીકે નવી ટીમ બનાવો"
 
 #: eventyay/control/forms/event.py:256
-#: eventyay/eventyay_common/forms/event.py:254
+#: eventyay/eventyay_common/forms/event.py:255
 msgid ""
 "Sample Conference Center\n"
 "Heidelberg, Germany"
@@ -15762,12 +15881,12 @@ msgstr ""
 "હાઇડલબર્ગ, જર્મની"
 
 #: eventyay/control/forms/event.py:257
-#: eventyay/eventyay_common/forms/event.py:255
+#: eventyay/eventyay_common/forms/event.py:256
 msgid "Latitude, e.g. 40.7128"
 msgstr "અક્ષાંશ, ઉદાહરણ તરીકે 40.7128"
 
 #: eventyay/control/forms/event.py:258
-#: eventyay/eventyay_common/forms/event.py:256
+#: eventyay/eventyay_common/forms/event.py:257
 msgid "Longitude, e.g. -74.0060"
 msgstr "રેખાંશ, ઉદાહરણ તરીકે -74.0060"
 
@@ -16001,8 +16120,8 @@ msgid "e.g. your contact details"
 msgstr "ઉદાહરણ તરીકે, તમારા સંપર્ક વિગતો"
 
 #: eventyay/control/forms/event.py:1264
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:289
-#: eventyay/orga/forms/email.py:58
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:287
+#: eventyay/orga/forms/email.py:59
 msgid "HTML mail renderer"
 msgstr "HTML મેઇલ રેન્ડરર"
 
@@ -16339,8 +16458,8 @@ msgid "Quantity available"
 msgstr "ઉપલબ્ધ જથ્થો"
 
 #: eventyay/control/forms/event.py:1928
-#: eventyay/eventyay_common/forms/event.py:193
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:191
+#: eventyay/eventyay_common/forms/event.py:194
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:192
 #: eventyay/eventyay_common/templates/eventyay_common/events/create.html:158
 #, fuzzy
 #| msgid "Registration Steps"
@@ -16348,7 +16467,7 @@ msgid "Registration limit"
 msgstr "નોંધણીના પગલાં"
 
 #: eventyay/control/forms/event.py:1929
-#: eventyay/eventyay_common/forms/event.py:194
+#: eventyay/eventyay_common/forms/event.py:195
 msgid ""
 "Maximum number of attendees who can RSVP. Leave empty for unlimited "
 "registrations."
@@ -16930,20 +17049,21 @@ msgstr "ચૂકવેલ"
 msgid "Canceled"
 msgstr "રદ કરાયેલ"
 
-#: eventyay/control/forms/global_settings.py:53 eventyay/orga/forms/email.py:20
+#: eventyay/control/forms/global_settings.py:113
+#: eventyay/orga/forms/email.py:20
 msgid "SendGrid"
 msgstr "SendGrid"
 
-#: eventyay/control/forms/global_settings.py:53
+#: eventyay/control/forms/global_settings.py:113
 msgid "SMTP"
 msgstr "SMTP"
 
-#: eventyay/control/forms/global_settings.py:62
-#: eventyay/control/forms/global_settings.py:547
+#: eventyay/control/forms/global_settings.py:122
+#: eventyay/control/forms/global_settings.py:783
 msgid "Billing validation"
 msgstr "બિલિંગ માન્યતા"
 
-#: eventyay/control/forms/global_settings.py:64
+#: eventyay/control/forms/global_settings.py:124
 msgid ""
 "Billing validation lets you require organizers to set up a billing method "
 "before they can create events. When this option is enabled, no new event can "
@@ -16953,69 +17073,69 @@ msgstr ""
 "બનાવી શકાય છે. આ વિકલ્પ સક્રિય હોય ત્યારે, માન્ય બિલિંગ પદ્ધતિ ઉમેરાય ત્યાં સુધી કોઈ નવી "
 "ઇવેન્ટ બનાવી શકાશે નહીં."
 
-#: eventyay/control/forms/global_settings.py:73
+#: eventyay/control/forms/global_settings.py:133
 #, fuzzy
 #| msgid "Your event series"
 msgid "Allow event series creation"
 msgstr "ઇવેન્ટ શ્રેણીઓ"
 
-#: eventyay/control/forms/global_settings.py:75
+#: eventyay/control/forms/global_settings.py:135
 msgid ""
 "When enabled, organizers can create event series or time slot bookings in "
 "addition to singular events. Disable this to restrict event creation to "
 "singular events and non-event shops only."
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:84
+#: eventyay/control/forms/global_settings.py:144
 #, fuzzy
 #| msgid "Allow badge customization"
 msgid "Allow meetup creation"
 msgstr "બેજ કસ્ટમાઇઝેશનને મંજૂરી આપો"
 
-#: eventyay/control/forms/global_settings.py:86
+#: eventyay/control/forms/global_settings.py:146
 msgid ""
 "When enabled, organizers can create simplified meetup events in addition to "
 "standard events. Disable this to restrict event creation to standard events "
 "only."
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:97
+#: eventyay/control/forms/global_settings.py:157
 msgid "Additional footer text"
 msgstr "વધારાનું ફૂટર લખાણ"
 
-#: eventyay/control/forms/global_settings.py:98
+#: eventyay/control/forms/global_settings.py:158
 msgid "Will be included as additional text in the footer, site-wide."
 msgstr "ફૂટરમાં વધારાના લખાણ તરીકે, સાઇટભર સામેલ કરાશે."
 
-#: eventyay/control/forms/global_settings.py:106
+#: eventyay/control/forms/global_settings.py:166
 msgid "Additional footer link"
 msgstr "વધારાની ફૂટર લિંક"
 
-#: eventyay/control/forms/global_settings.py:107
+#: eventyay/control/forms/global_settings.py:167
 msgid "Will be included as the link in the additional footer text."
 msgstr "વધારાના ફૂટર લખાણમાં લિંક તરીકે સામેલ કરાશે."
 
-#: eventyay/control/forms/global_settings.py:115
+#: eventyay/control/forms/global_settings.py:175
 msgid "Global message banner"
 msgstr "વૈશ્વિક સંદેશ બેનર"
 
-#: eventyay/control/forms/global_settings.py:123
+#: eventyay/control/forms/global_settings.py:183
 msgid "Global message banner detail text"
 msgstr "વૈશ્વિક સંદેશ બેનર વિગત લખાણ"
 
-#: eventyay/control/forms/global_settings.py:130
+#: eventyay/control/forms/global_settings.py:190
 msgid "OpenCage API key for geocoding"
 msgstr "જીઓકોડિંગ માટે OpenCage API કી"
 
-#: eventyay/control/forms/global_settings.py:137
+#: eventyay/control/forms/global_settings.py:197
 msgid "MapQuest API key for geocoding"
 msgstr "જીઓકોડિંગ માટે MapQuest API કી"
 
-#: eventyay/control/forms/global_settings.py:144
+#: eventyay/control/forms/global_settings.py:204
 msgid "Enable public Nominatim geocoding"
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:146
+#: eventyay/control/forms/global_settings.py:206
 msgid ""
 "Can be used alongside OpenCage or MapQuest as a fallback. In development, "
 "Nominatim is used automatically when no API key is configured. Only enable "
@@ -17023,170 +17143,187 @@ msgid ""
 "policy."
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:156
+#: eventyay/control/forms/global_settings.py:216
 msgid "Leaflet tiles URL pattern"
 msgstr "Leaflet ટાઇલ્સ URL પેટર્ન"
 
-#: eventyay/control/forms/global_settings.py:157
-#: eventyay/control/forms/global_settings.py:165
-#: eventyay/control/forms/global_settings.py:677
+#: eventyay/control/forms/global_settings.py:217
+#: eventyay/control/forms/global_settings.py:225
+#: eventyay/control/forms/global_settings.py:941
 #, python-brace-format
 msgid "e.g. {sample}"
 msgstr "ઉદાહરણ તરીકે {sample}"
 
-#: eventyay/control/forms/global_settings.py:164
+#: eventyay/control/forms/global_settings.py:224
 msgid "Leaflet tiles attribution"
 msgstr "Leaflet ટાઇલ્સ એટ્રિબ્યુશન"
 
-#: eventyay/control/forms/global_settings.py:173
+#: eventyay/control/forms/global_settings.py:233
 msgid "System Email"
 msgstr "સિસ્ટમ ઇમેલ"
 
-#: eventyay/control/forms/global_settings.py:183
+#: eventyay/control/forms/global_settings.py:243
 #, fuzzy
 #| msgid "Sendgrid Token"
 msgid "Sendgrid token"
 msgstr "Sendgrid ટોકન"
 
-#: eventyay/control/forms/global_settings.py:193
+#: eventyay/control/forms/global_settings.py:254
+msgid "Gmail OAuth client ID"
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:256
+msgid ""
+"Create an OAuth client in Google Cloud Console. The connect flow requests "
+"Gmail send and user email scopes. Use the OAuth redirect URI shown below as "
+"an authorized redirect URI."
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:269
+#, fuzzy
+#| msgid "Client secret"
+msgid "Gmail OAuth client secret"
+msgstr "ક્લાયન્ટ સિક્રેટ"
+
+#: eventyay/control/forms/global_settings.py:278
 msgid "Hostname"
 msgstr "હોસ્ટનામ"
 
-#: eventyay/control/forms/global_settings.py:204
+#: eventyay/control/forms/global_settings.py:289
 #: eventyay/control/templates/pretixcontrol/admin/systemconfig.html:83
 msgid "Port"
 msgstr "પોર્ટ"
 
-#: eventyay/control/forms/global_settings.py:215
+#: eventyay/control/forms/global_settings.py:300
 msgid "Username"
 msgstr "વપરાશકર્તાનામ"
 
-#: eventyay/control/forms/global_settings.py:239
-#: eventyay/orga/forms/email.py:102
+#: eventyay/control/forms/global_settings.py:324
+#: eventyay/orga/forms/email.py:118
 msgid "Use STARTTLS"
 msgstr "STARTTLS વાપરો"
 
-#: eventyay/control/forms/global_settings.py:240
-#: eventyay/orga/forms/email.py:103
+#: eventyay/control/forms/global_settings.py:325
+#: eventyay/orga/forms/email.py:119
 msgid "Commonly enabled on port 587."
 msgstr "સામાન્ય રીતે પોર્ટ 587 પર સક્રિય હોય છે."
 
-#: eventyay/control/forms/global_settings.py:250
-#: eventyay/orga/forms/email.py:107
+#: eventyay/control/forms/global_settings.py:335
+#: eventyay/orga/forms/email.py:126
 msgid "Use SSL"
 msgstr "SSL નો ઉપયોગ કરો"
 
-#: eventyay/control/forms/global_settings.py:251
-#: eventyay/orga/forms/email.py:108
+#: eventyay/control/forms/global_settings.py:336
+#: eventyay/orga/forms/email.py:127
 msgid "Commonly enabled on port 465."
 msgstr "સામાન્ય રીતે પોર્ટ 465 પર સક્રિય હોય છે."
 
-#: eventyay/control/forms/global_settings.py:275
-#: eventyay/control/forms/global_settings.py:328
+#: eventyay/control/forms/global_settings.py:360
+#: eventyay/control/forms/global_settings.py:413
 msgid "Publishable key (Live)"
 msgstr "પ્રકાશિત કરી શકાય તેવી કી (લાઇવ)"
 
-#: eventyay/control/forms/global_settings.py:278
+#: eventyay/control/forms/global_settings.py:363
 msgid "Live publishable key for organizer billing and platform fees."
 msgstr "આયોજક બિલિંગ અને પ્લેટફોર્મ ફી માટેની લાઇવ પ્રકાશિત કરી શકાય તેવી કી."
 
-#: eventyay/control/forms/global_settings.py:284
-#: eventyay/control/forms/global_settings.py:337
+#: eventyay/control/forms/global_settings.py:369
+#: eventyay/control/forms/global_settings.py:422
 msgid "Secret key (Live)"
 msgstr "ગુપ્ત કી (લાઇવ)"
 
-#: eventyay/control/forms/global_settings.py:287
+#: eventyay/control/forms/global_settings.py:372
 msgid "Live secret key for organizer billing and platform fees."
 msgstr "આયોજક બિલિંગ અને પ્લેટફોર્મ ફી માટેની લાઇવ ગુપ્ત કી."
 
-#: eventyay/control/forms/global_settings.py:293
-#: eventyay/control/forms/global_settings.py:346
+#: eventyay/control/forms/global_settings.py:378
+#: eventyay/control/forms/global_settings.py:431
 msgid "Publishable key (Test)"
 msgstr "પ્રકાશિત કરી શકાય તેવી કી (ટેસ્ટ)"
 
-#: eventyay/control/forms/global_settings.py:296
+#: eventyay/control/forms/global_settings.py:381
 msgid "Test publishable key for organizer billing and platform fees."
 msgstr "આયોજક બિલિંગ અને પ્લેટફોર્મ ફી માટેની ટેસ્ટ પ્રકાશિત કરી શકાય તેવી કી."
 
-#: eventyay/control/forms/global_settings.py:302
-#: eventyay/control/forms/global_settings.py:355
+#: eventyay/control/forms/global_settings.py:387
+#: eventyay/control/forms/global_settings.py:440
 msgid "Secret key (Test)"
 msgstr "ગુપ્ત કી (ટેસ્ટ)"
 
-#: eventyay/control/forms/global_settings.py:305
+#: eventyay/control/forms/global_settings.py:390
 msgid "Test secret key for organizer billing and platform fees."
 msgstr "આયોજક બિલિંગ અને પ્લેટફોર્મ ફી માટેની ટેસ્ટ ગુપ્ત કી."
 
-#: eventyay/control/forms/global_settings.py:311
+#: eventyay/control/forms/global_settings.py:396
 msgid "Webhook secret key"
 msgstr "Webhook ગુપ્ત કી"
 
-#: eventyay/control/forms/global_settings.py:313
+#: eventyay/control/forms/global_settings.py:398
 msgid ""
 "Configure this endpoint in your Stripe dashboard to receive billing events."
 msgstr "બિલિંગ ઇવેન્ટ્સ પ્રાપ્ત કરવા માટે Stripe ડેશબોર્ડમાં આ એન્ડપોઈન્ટ કન્ફિગર કરો."
 
-#: eventyay/control/forms/global_settings.py:322
+#: eventyay/control/forms/global_settings.py:407
 msgid "Stripe Connect client ID for ticket payments via the Stripe plugin."
 msgstr "Stripe પ્લગિન દ્વારા ટિકિટ ચુકવણી માટે Stripe Connect ક્લાયન્ટ ID."
 
-#: eventyay/control/forms/global_settings.py:331
+#: eventyay/control/forms/global_settings.py:416
 msgid "Live publishable key for ticket payments via the Stripe plugin."
 msgstr "Stripe પ્લગિન દ્વારા ટિકિટ ચુકવણી માટેની લાઇવ પ્રકાશિત કરી શકાય તેવી કી."
 
-#: eventyay/control/forms/global_settings.py:340
+#: eventyay/control/forms/global_settings.py:425
 msgid "Live secret key for ticket payments via the Stripe plugin."
 msgstr "Stripe પ્લગિન દ્વારા ટિકિટ ચુકવણી માટેની લાઇવ ગુપ્ત કી."
 
-#: eventyay/control/forms/global_settings.py:349
+#: eventyay/control/forms/global_settings.py:434
 msgid "Test publishable key for ticket payments via the Stripe plugin."
 msgstr "Stripe પ્લગિન દ્વારા ટિકિટ ચુકવણી માટેની ટેસ્ટ પ્રકાશિત કરી શકાય તેવી કી."
 
-#: eventyay/control/forms/global_settings.py:358
+#: eventyay/control/forms/global_settings.py:443
 msgid "Test secret key for ticket payments via the Stripe plugin."
 msgstr "Stripe પ્લગિન દ્વારા ટિકિટ ચુકવણીઓ માટેની ટેસ્ટ સિક્રેટ કી."
 
-#: eventyay/control/forms/global_settings.py:364
+#: eventyay/control/forms/global_settings.py:449
 msgid "App fee percentage"
 msgstr "એપ ફી ટકાવારી"
 
-#: eventyay/control/forms/global_settings.py:368
+#: eventyay/control/forms/global_settings.py:453
 msgid "Percentage fee charged on ticket payments."
 msgstr "ટિકિટ ચુકવણીઓ પર વસૂલાતી ટકાવારી ફી."
 
-#: eventyay/control/forms/global_settings.py:375
+#: eventyay/control/forms/global_settings.py:460
 msgid "App fee minimum"
 msgstr "એપ ફી ન્યૂનતમ"
 
-#: eventyay/control/forms/global_settings.py:379
+#: eventyay/control/forms/global_settings.py:464
 msgid "Minimum fee amount charged on ticket payments."
 msgstr "ટિકિટ ચુકવણીઓ પર વસૂલાતી ન્યૂનતમ ફી રકમ."
 
-#: eventyay/control/forms/global_settings.py:386
+#: eventyay/control/forms/global_settings.py:471
 msgid "App fee maximum"
 msgstr "એપ ફી મહત્તમ"
 
-#: eventyay/control/forms/global_settings.py:390
+#: eventyay/control/forms/global_settings.py:475
 msgid "Maximum fee amount charged on ticket payments."
 msgstr "ટિકિટ ચુકવણીઓ પર વસૂલાતી મહત્તમ ફી રકમ."
 
-#: eventyay/control/forms/global_settings.py:400
+#: eventyay/control/forms/global_settings.py:485
 msgid "PayPal Connect client ID for payment processing."
 msgstr "ચુકવણી પ્રક્રિયા માટે PayPal Connect ક્લાયન્ટ આઈડી."
 
-#: eventyay/control/forms/global_settings.py:406
+#: eventyay/control/forms/global_settings.py:491
 msgid "Secret key"
 msgstr "સિક્રેટ કી"
 
-#: eventyay/control/forms/global_settings.py:408
+#: eventyay/control/forms/global_settings.py:493
 msgid "PayPal Connect secret key for payment processing."
 msgstr "ચુકવણી પ્રક્રિયા માટે PayPal Connect સિક્રેટ કી."
 
-#: eventyay/control/forms/global_settings.py:414
+#: eventyay/control/forms/global_settings.py:499
 msgid "API Endpoint"
 msgstr "API એન્ડપોઈન્ટ"
 
-#: eventyay/control/forms/global_settings.py:416
+#: eventyay/control/forms/global_settings.py:501
 msgid ""
 "PayPal API endpoint (e.g., https://api.paypal.com or https://"
 "api.sandbox.paypal.com)."
@@ -17194,19 +17331,19 @@ msgstr ""
 "PayPal API એન્ડપોઈન્ટ (જેમ કે https://api.paypal.com અથવા https://"
 "api.sandbox.paypal.com)."
 
-#: eventyay/control/forms/global_settings.py:422
+#: eventyay/control/forms/global_settings.py:507
 msgid "Ticket fee percentage"
 msgstr "ટિકિટ ફી ટકાવારી"
 
-#: eventyay/control/forms/global_settings.py:426
+#: eventyay/control/forms/global_settings.py:511
 msgid "A percentage fee will be charged for each ticket sold."
 msgstr "વેચાયેલી દરેક ટિકિટ માટે ટકાવારી ફી વસૂલવામાં આવશે."
 
-#: eventyay/control/forms/global_settings.py:433
+#: eventyay/control/forms/global_settings.py:518
 msgid "All registered users can create organizers"
 msgstr "બધા નોંધાયેલા વપરાશકર્તાઓ આયોજકો બનાવી શકે છે"
 
-#: eventyay/control/forms/global_settings.py:434
+#: eventyay/control/forms/global_settings.py:519
 msgid ""
 "If enabled, all registered users will be allowed to create organizers. "
 "System admins can always create organizers."
@@ -17214,11 +17351,11 @@ msgstr ""
 "સક્રિય હોય તો, બધા નોંધાયેલા વપરાશકર્તાઓને આયોજકો બનાવવાની મંજૂરી મળશે. સિસ્ટમ એડમિન્સ "
 "હંમેશા આયોજકો બનાવી શકે છે."
 
-#: eventyay/control/forms/global_settings.py:441
+#: eventyay/control/forms/global_settings.py:526
 msgid "All accounts with payment information can create organizers"
 msgstr "ચુકવણી માહિતી ધરાવતા બધા ખાતાઓ આયોજકો બનાવી શકે છે"
 
-#: eventyay/control/forms/global_settings.py:442
+#: eventyay/control/forms/global_settings.py:527
 msgid ""
 "If enabled, users with valid payment information on file will be allowed to "
 "create organizers. System admins can always create organizers."
@@ -17226,45 +17363,45 @@ msgstr ""
 "સક્રિય હોય તો, ફાઇલમાં માન્ય ચુકવણી માહિતી ધરાવતા વપરાશકર્તાઓને આયોજકો બનાવવાની "
 "મંજૂરી મળશે. સિસ્ટમ એડમિન્સ હંમેશા આયોજકો બનાવી શકે છે."
 
-#: eventyay/control/forms/global_settings.py:450
+#: eventyay/control/forms/global_settings.py:535
 #, fuzzy
 #| msgid "Recording integrations"
 msgid "Enable Etherpad integration"
 msgstr "રેકોર્ડિંગ ઇન્ટિગ્રેશન્સ"
 
-#: eventyay/control/forms/global_settings.py:451
+#: eventyay/control/forms/global_settings.py:536
 msgid "Allow events to attach collaborative Etherpad notes to their sessions."
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:458
+#: eventyay/control/forms/global_settings.py:543
 msgid "Default Etherpad instance URL"
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:459
+#: eventyay/control/forms/global_settings.py:544
 #, python-brace-format
 msgid "Base URL of the Etherpad instance, e.g. {sample}"
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:466
+#: eventyay/control/forms/global_settings.py:551
 #, fuzzy
 #| msgid "Telemetry API key"
 msgid "Etherpad API key"
 msgstr "ટેલિમેટ્રી API કી"
 
-#: eventyay/control/forms/global_settings.py:468
+#: eventyay/control/forms/global_settings.py:553
 msgid ""
 "API key of the Etherpad instance (found in APIKEY.txt). Required only for "
 "automatic pad creation; without it, pad links are generated as plain URLs "
 "that Etherpad creates on first visit."
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:477
+#: eventyay/control/forms/global_settings.py:562
 #, fuzzy
 #| msgid "Frontpage header pattern"
 msgid "Pad name pattern"
 msgstr "મુખ્યપૃષ્ઠ હેડર પેટર્ન"
 
-#: eventyay/control/forms/global_settings.py:479
+#: eventyay/control/forms/global_settings.py:564
 #, fuzzy, python-brace-format
 #| msgid ""
 #| "This will be attached to every email. Available placeholders: {event}"
@@ -17272,75 +17409,199 @@ msgid ""
 "Pattern used to generate pad names. Available placeholders: {placeholders}."
 msgstr "આ દરેક ઇમેઇલ સાથે જોડાશે. ઉપલબ્ધ પ્લેસહોલ્ડર્સ: {event}"
 
-#: eventyay/control/forms/global_settings.py:497
+#: eventyay/control/forms/global_settings.py:582
 #, fuzzy
 #| msgid "Add-on products will be excluded from the count."
 msgid ""
 "Add-on products will be excluded from the count. Set to 0 for unlimited."
 msgstr "ઍડ-ઓન પ્રોડક્ટ્સ ગણતરીમાંથી બહાર રાખવામાં આવશે."
 
-#: eventyay/control/forms/global_settings.py:506
+#: eventyay/control/forms/global_settings.py:591
+#, fuzzy
+#| msgid "Show video link"
+msgid "Show \"Events\" footer link"
+msgstr "વિડિયો લિંક બતાવો"
+
+#: eventyay/control/forms/global_settings.py:598
+#, fuzzy
+#| msgid "Event list"
+msgid "\"Events\" link URL"
+msgstr "ઇવેન્ટ સૂચિ"
+
+#: eventyay/control/forms/global_settings.py:605
+#, fuzzy
+#| msgid "Show video link"
+msgid "Show \"Terms\" footer link"
+msgstr "વિડિયો લિંક બતાવો"
+
+#: eventyay/control/forms/global_settings.py:612
+msgid "\"Terms\" link URL"
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:619
+msgid "Show \"Privacy\" footer link"
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:626
+#, fuzzy
+#| msgid "Privacy Policy URL"
+msgid "\"Privacy\" link URL"
+msgstr "ગોપનીયતા નીતિ URL"
+
+#: eventyay/control/forms/global_settings.py:633
+#, fuzzy
+#| msgid "Additional footer link"
+msgid "Show \"Pricing\" footer link"
+msgstr "વધારાની ફૂટર લિંક"
+
+#: eventyay/control/forms/global_settings.py:640
+#, fuzzy
+#| msgid "Privacy Policy URL"
+msgid "\"Pricing\" link URL"
+msgstr "ગોપનીયતા નીતિ URL"
+
+#: eventyay/control/forms/global_settings.py:647
+msgid "Show \"Documentation\" footer link"
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:654
+#, fuzzy
+#| msgid "Documentation"
+msgid "\"Documentation\" link URL"
+msgstr "દસ્તાવેજીકરણ"
+
+#: eventyay/control/forms/global_settings.py:661
+msgid "Show \"Support\" footer link"
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:668
+msgid "\"Support\" link URL"
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:677
+msgid "\"Terms of Service\" page content"
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:678
+msgid "Rich text content for the /terms page."
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:685
+#, fuzzy
+#| msgid "Privacy Policy URL"
+msgid "\"Privacy Policy\" page content"
+msgstr "ગોપનીયતા નીતિ URL"
+
+#: eventyay/control/forms/global_settings.py:686
+msgid "Rich text content for the /privacy page."
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:693
+#, fuzzy
+#| msgid "Page content"
+msgid "\"Pricing\" page content"
+msgstr "પૃષ્ઠ સામગ્રી"
+
+#: eventyay/control/forms/global_settings.py:694
+msgid "Rich text content for the /pricing page."
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:701
+#, fuzzy
+#| msgid "Page content"
+msgid "\"Support\" page content"
+msgstr "પૃષ્ઠ સામગ્રી"
+
+#: eventyay/control/forms/global_settings.py:702
+msgid "Rich text content for the /support page."
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:713
+#, fuzzy
+#| msgid "Use languages"
+msgid "Page languages"
+msgstr "ભાષાઓ વાપરો"
+
+#: eventyay/control/forms/global_settings.py:715
+msgid ""
+"Select the languages for page content (Terms, Privacy, Pricing, Support). "
+"Only selected languages will be shown for editing."
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:722
 #: eventyay/control/templates/pretixcontrol/event/settings.html:21
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:34
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:35
 msgid "Basics"
 msgstr "મૂળભૂત"
 
-#: eventyay/control/forms/global_settings.py:509
+#: eventyay/control/forms/global_settings.py:725
+#: eventyay/control/navigation.py:444
+msgid "Pages"
+msgstr "પૃષ્ઠો"
+
+#: eventyay/control/forms/global_settings.py:744
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:81
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:197
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:198
 #: eventyay/eventyay_common/templates/eventyay_common/events/create.html:106
 msgid "Localization"
 msgstr "સ્થાનિકીકરણ"
 
-#: eventyay/control/forms/global_settings.py:517
+#: eventyay/control/forms/global_settings.py:753
 msgid "Payment Gateways"
 msgstr "ચુકવણી ગેટવે"
 
-#: eventyay/control/forms/global_settings.py:540
+#: eventyay/control/forms/global_settings.py:776
 msgid "Cart"
 msgstr "કાર્ટ"
 
-#: eventyay/control/forms/global_settings.py:544
+#: eventyay/control/forms/global_settings.py:780
 msgid "Ticket fee"
 msgstr "ટિકિટ ફી"
 
-#: eventyay/control/forms/global_settings.py:550
+#: eventyay/control/forms/global_settings.py:786
 msgid "Maps"
 msgstr "નકશા"
 
-#: eventyay/control/forms/global_settings.py:557
+#: eventyay/control/forms/global_settings.py:793
 #, fuzzy
 #| msgid "Event location"
 msgid "Event Creation"
 msgstr "ઇવેન્ટ સ્થાન"
 
-#: eventyay/control/forms/global_settings.py:561
+#: eventyay/control/forms/global_settings.py:797
 #: eventyay/orga/templates/orga/settings/form.html:66
 #, fuzzy
 #| msgid "Overpaid"
 msgid "Etherpad"
 msgstr "વધારે ચૂકવેલ"
 
-#: eventyay/control/forms/global_settings.py:571
+#: eventyay/control/forms/global_settings.py:807
 msgid "VoxBento"
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:580
+#: eventyay/control/forms/global_settings.py:816
 msgid "HubSpot"
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:600
+#: eventyay/control/forms/global_settings.py:838
 #, python-brace-format
 msgid ""
 "The pattern must contain {submission} or {token} so each session gets a "
 "unique pad."
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:610
+#: eventyay/control/forms/global_settings.py:848
 msgid "This field is required when using SendGrid as email vendor."
 msgstr "ઈમેલ વેન્ડર તરીકે SendGrid નો ઉપયોગ કરતાં વખતે આ ફીલ્ડ આવશ્યક છે."
 
-#: eventyay/control/forms/global_settings.py:622
+#: eventyay/control/forms/global_settings.py:851
+#: eventyay/control/forms/global_settings.py:859
+#, fuzzy
+#| msgid "This field is required when using SendGrid as email vendor."
+msgid "This field is required when using Gmail as email vendor."
+msgstr "ઈમેલ વેન્ડર તરીકે SendGrid નો ઉપયોગ કરતાં વખતે આ ફીલ્ડ આવશ્યક છે."
+
+#: eventyay/control/forms/global_settings.py:886
 msgid ""
 "During the update check, eventyay will report an anonymous, unique "
 "installation ID, the current version of the system and your installed "
@@ -17355,11 +17616,11 @@ msgstr ""
 "સરનામાં નહીં, અને કોણ છે અથવા ઇન્સ્ટન્સ ક્યાં મળે તે જાણી શકીશું નહીં. આ વર્તન અહીંથી કોઈ પણ "
 "સમયે નિષ્ક્રિય કરી શકાય છે."
 
-#: eventyay/control/forms/global_settings.py:631
+#: eventyay/control/forms/global_settings.py:895
 msgid "E-mail notifications"
 msgstr "ઇ-મેલ સૂચનાઓ"
 
-#: eventyay/control/forms/global_settings.py:633
+#: eventyay/control/forms/global_settings.py:897
 msgid ""
 "We will notify you at this address if we detect that a new update is "
 "available. This address will not be transmitted to eventyay.com, the emails "
@@ -17368,11 +17629,11 @@ msgstr ""
 "નવો અપડેટ ઉપલબ્ધ હોવાનું શોધાય ત્યારે આ સરનામે સૂચિત કરાશે. આ સરનામું eventyay.com પર "
 "મોકલાશે નહીં; ઇ-મેલ્સ આ સર્વર દ્વારા સ્થાનિક રીતે મોકલાશે."
 
-#: eventyay/control/forms/global_settings.py:642
+#: eventyay/control/forms/global_settings.py:906
 msgid "Enable telemetry"
 msgstr "ટેલિમેટ્રી સક્રિય કરો"
 
-#: eventyay/control/forms/global_settings.py:644
+#: eventyay/control/forms/global_settings.py:908
 msgid ""
 "Send anonymous usage statistics (bucketed counts, deployment info) to help "
 "track version adoption and deployment patterns. No personal data is "
@@ -17382,27 +17643,27 @@ msgstr ""
 "ગણતરીઓ, ડિપ્લોયમેન્ટ માહિતી) મોકલો. કોઈ વ્યક્તિગત ડેટા એકત્રિત થતો નથી. ડેટા અંદાજે "
 "દિવસમાં એક વાર મોકલાય છે."
 
-#: eventyay/control/forms/global_settings.py:651
+#: eventyay/control/forms/global_settings.py:915
 msgid "Telemetry endpoint"
 msgstr "ટેલિમેટ્રી એન્ડપોઇન્ટ"
 
-#: eventyay/control/forms/global_settings.py:652
+#: eventyay/control/forms/global_settings.py:916
 msgid "The URL where telemetry data will be sent (Google Apps Script URL)."
 msgstr "જે URL પર ટેલિમેટ્રી ડેટા મોકલાશે (Google Apps Script URL)."
 
-#: eventyay/control/forms/global_settings.py:656
+#: eventyay/control/forms/global_settings.py:920
 msgid "Telemetry API key"
 msgstr "ટેલિમેટ્રી API કી"
 
-#: eventyay/control/forms/global_settings.py:657
+#: eventyay/control/forms/global_settings.py:921
 msgid "API key for authenticating with the telemetry receiver."
 msgstr "ટેલિમેટ્રી રીસીવર સાથે પ્રમાણીકરણ માટેની API કી."
 
-#: eventyay/control/forms/global_settings.py:661
+#: eventyay/control/forms/global_settings.py:925
 msgid "Maintainer contact"
 msgstr "મેઇન્ટેનર સંપર્ક"
 
-#: eventyay/control/forms/global_settings.py:663
+#: eventyay/control/forms/global_settings.py:927
 msgid ""
 "Optional email address included in telemetry data to identify who maintains "
 "this instance. Only visible to those with access to the telemetry data sheet."
@@ -17410,21 +17671,21 @@ msgstr ""
 "આ ઇન્સ્ટન્સનું સંચાલન કોણ કરે છે તે ઓળખવા માટે ટેલિમેટ્રી ડેટામાં સામેલ કરાયેલ વિકલ્પિક ઇમેલ "
 "સરનામું. ફક્ત ટેલિમેટ્રી ડેટા શીટ સુધી ઍક્સેસ ધરાવતા લોકોને જ દેખાશે."
 
-#: eventyay/control/forms/global_settings.py:676
+#: eventyay/control/forms/global_settings.py:940
 msgid "Redirect URL"
 msgstr "રીડાયરેક્ટ URL"
 
-#: eventyay/control/forms/global_settings.py:717
+#: eventyay/control/forms/global_settings.py:981
 msgid "The Stripe key cannot be empty."
 msgstr "Stripe કી ખાલી હોઈ શકતી નથી."
 
-#: eventyay/control/forms/global_settings.py:721
+#: eventyay/control/forms/global_settings.py:985
 #, python-format
 msgid ""
 "The provided key does not look valid. It should start with \"%(prefix)s\"."
 msgstr "આપેલી કી માન્ય લાગી નથી. તે \"%(prefix)s\" થી શરૂ થવી જોઈએ."
 
-#: eventyay/control/forms/global_settings.py:724
+#: eventyay/control/forms/global_settings.py:988
 #, python-format
 msgid ""
 "The provided key does not look valid. It should start with one of: "
@@ -17661,7 +17922,7 @@ msgstr ""
 #: eventyay/plugins/sendmail/forms.py:535
 #: eventyay/plugins/sendmail/forms.py:637
 #: eventyay/plugins/sendmail/views.py:277
-#: eventyay/plugins/sendmail/views.py:529
+#: eventyay/plugins/sendmail/views.py:533
 msgid "Subject"
 msgstr "વિષય"
 
@@ -17975,12 +18236,12 @@ msgid "Invalid VAT number for {}"
 msgstr "{} માટે અમાન્ય VAT નંબર"
 
 #: eventyay/control/forms/organizer_forms/organizer_update_form.py:52
-#: eventyay/eventyay_common/forms/event.py:276
+#: eventyay/eventyay_common/forms/event.py:277
 msgid "You cannot choose the base domain of this installation."
 msgstr "આ ઇન્સ્ટોલેશન માટેનો બેઝ ડોમેઇન પસંદ કરી શકાતો નથી."
 
 #: eventyay/control/forms/organizer_forms/organizer_update_form.py:58
-#: eventyay/eventyay_common/forms/event.py:278
+#: eventyay/eventyay_common/forms/event.py:279
 msgid "This domain is already in use for a different event or organizer."
 msgstr "આ ડોમેઇન પહેલેથી અન્ય ઇવેન્ટ અથવા આયોજક માટે વપરાઈ રહ્યો છે."
 
@@ -19665,7 +19926,7 @@ msgstr "પરતફેર"
 
 #: eventyay/control/navigation.py:283
 #: eventyay/orga/templates/orga/review/assignment-import.html:21
-#: eventyay/orga/views/event.py:515
+#: eventyay/orga/views/event.py:514
 msgid "Import"
 msgstr "આયાત"
 
@@ -19676,6 +19937,7 @@ msgstr "આયાત"
 #: eventyay/control/templates/pretixcontrol/subevents/bulk.html:501
 #: eventyay/control/templates/pretixcontrol/subevents/bulk_edit.html:255
 #: eventyay/control/templates/pretixcontrol/subevents/detail.html:143
+#: eventyay/eventyay_common/forms/event.py:392
 #: eventyay/plugins/checkinlists/apps.py:10
 msgid "Check-in lists"
 msgstr "ચેક-ઇન યાદીઓ"
@@ -19736,10 +19998,6 @@ msgstr "સેટિંગ્સ"
 #: eventyay/control/templates/pretixcontrol/admin/systemconfig.html:17
 msgid "System information"
 msgstr "સિસ્ટમ માહિતી"
-
-#: eventyay/control/navigation.py:444
-msgid "Pages"
-msgstr "પૃષ્ઠો"
 
 #: eventyay/control/navigation.py:449
 #: eventyay/control/templates/pretixcontrol/admin/events/index.html:96
@@ -19848,8 +20106,8 @@ msgstr "એડમિન સેશન"
 
 #: eventyay/control/permissions.py:40 eventyay/control/permissions.py:80
 #: eventyay/control/permissions.py:115 eventyay/control/permissions.py:135
-#: eventyay/eventyay_common/views/event.py:925
-#: eventyay/eventyay_common/views/event.py:933
+#: eventyay/eventyay_common/views/event.py:960
+#: eventyay/eventyay_common/views/event.py:968
 msgid "You do not have permission to view this content."
 msgstr "આ સામગ્રી જોવા માટે પરવાનગી નથી."
 
@@ -20010,7 +20268,7 @@ msgid "Usage"
 msgstr "ઉપયોગ"
 
 #: eventyay/control/templates/control/event_list.html:42
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:378
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:376
 msgid "Delete data"
 msgstr "ડેટા કાઢી નાખો"
 
@@ -20452,7 +20710,7 @@ msgstr "ઓર્ડર વિગતો"
 #: eventyay/control/templates/pretixcontrol/admin/dashboard.html:737
 #: eventyay/control/templates/pretixcontrol/admin/dashboard.html:785
 #: eventyay/control/templates/pretixcontrol/admin/dashboard.html:830
-#: eventyay/orga/templates/orga/mails/_placeholder_group.html:26
+#: eventyay/orga/templates/orga/mails/_placeholder_group.html:22
 msgid "Unavailable"
 msgstr "ઉપલબ્ધ નથી"
 
@@ -21085,6 +21343,40 @@ msgstr "બધા આયોજકો"
 #: eventyay/eventyay_common/templates/eventyay_common/organizers/index.html:27
 msgid "Create a new organizer"
 msgstr "નવો આયોજક બનાવો"
+
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:52
+#: eventyay/control/templates/pretixcontrol/base.html:128
+#: eventyay/eventyay_common/templates/eventyay_common/base.html:126
+#: eventyay/orga/templates/orga/base.html:98
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:73
+msgid "Toggle sidebar"
+msgstr "સાઇડબાર ટૉગલ કરો"
+
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:84
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:86
+#: eventyay/control/templates/pretixcontrol/base.html:238
+#: eventyay/control/templates/pretixcontrol/base.html:239
+#: eventyay/eventyay_common/templates/eventyay_common/base.html:203
+#: eventyay/eventyay_common/templates/eventyay_common/base.html:204
+#: eventyay/orga/templates/orga/base.html:170
+#: eventyay/orga/templates/orga/base.html:171
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:134
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:136
+msgid "End admin session"
+msgstr "એડમિન સેશન સમાપ્ત કરો"
+
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:103
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:153
+#, fuzzy
+#| msgid "E-Mail notification"
+msgid "Main navigation"
+msgstr "ઈ-મેલ સૂચના"
+
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:112
+#: eventyay/eventyay_common/templates/eventyay_common/base.html:258
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:162
+msgid "Main dashboard"
+msgstr "મુખ્ય ડેશબોર્ડ"
 
 #: eventyay/control/templates/pretixcontrol/admin/pages/delete.html:4
 #: eventyay/control/templates/pretixcontrol/admin/pages/delete.html:6
@@ -21811,13 +22103,6 @@ msgstr ""
 msgid "Error:"
 msgstr "ભૂલ:"
 
-#: eventyay/control/templates/pretixcontrol/base.html:128
-#: eventyay/eventyay_common/templates/eventyay_common/base.html:126
-#: eventyay/orga/templates/orga/base.html:98
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:72
-msgid "Toggle sidebar"
-msgstr "સાઇડબાર ટૉગલ કરો"
-
 #: eventyay/control/templates/pretixcontrol/base.html:153
 #: eventyay/control/templates/pretixcontrol/base.html:177
 #: eventyay/control/templates/pretixcontrol/base.html:178
@@ -21826,17 +22111,6 @@ msgstr "સાઇડબાર ટૉગલ કરો"
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:177
 msgid "Public profile"
 msgstr "સાર્વજનિક પ્રોફાઇલ"
-
-#: eventyay/control/templates/pretixcontrol/base.html:238
-#: eventyay/control/templates/pretixcontrol/base.html:239
-#: eventyay/eventyay_common/templates/eventyay_common/base.html:203
-#: eventyay/eventyay_common/templates/eventyay_common/base.html:204
-#: eventyay/orga/templates/orga/base.html:170
-#: eventyay/orga/templates/orga/base.html:171
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:133
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:135
-msgid "End admin session"
-msgstr "એડમિન સેશન સમાપ્ત કરો"
 
 #: eventyay/control/templates/pretixcontrol/base.html:279
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:248
@@ -22519,8 +22793,8 @@ msgid "Videos"
 msgstr "વિડિઓઝ"
 
 #: eventyay/control/templates/pretixcontrol/event/delete.html:5
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:410
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:415
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:408
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:413
 msgid "Delete event"
 msgstr "ઇવેન્ટ ડિલીટ કરો"
 
@@ -22571,12 +22845,12 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/event/delete.html:55
 #: eventyay/control/templates/pretixcontrol/event/delete.html:69
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:373
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:371
 msgid "Delete personal data"
 msgstr "વ્યક્તિગત ડેટા ડિલીટ કરો"
 
 #: eventyay/control/templates/pretixcontrol/event/delete.html:59
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:340
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:338
 msgid "Go offline"
 msgstr "ઑફલાઇન કરો"
 
@@ -22950,6 +23224,7 @@ msgstr "ઈમેલ સેટિંગ્સ"
 
 #: eventyay/control/templates/pretixcontrol/event/payment.html:10
 #: eventyay/control/templates/pretixcontrol/event/payment_provider.html:5
+#: eventyay/eventyay_common/forms/event.py:398
 msgid "Payment settings"
 msgstr "ચુકવણી સેટિંગ્સ"
 
@@ -23047,9 +23322,9 @@ msgid "Disable"
 msgstr "નિષ્ક્રિય કરો"
 
 #: eventyay/control/templates/pretixcontrol/event/plugins.html:75
-#: eventyay/control/templates/pretixcontrol/global_settings.html:135
-#: eventyay/control/templates/pretixcontrol/global_settings.html:153
-#: eventyay/control/templates/pretixcontrol/global_settings.html:172
+#: eventyay/control/templates/pretixcontrol/global_settings.html:137
+#: eventyay/control/templates/pretixcontrol/global_settings.html:155
+#: eventyay/control/templates/pretixcontrol/global_settings.html:174
 #: eventyay/eventyay_common/templates/eventyay_common/account/2fa-enable.html:34
 #: eventyay/eventyay_common/templates/eventyay_common/account/general-settings.html:80
 #: eventyay/eventyay_common/templates/eventyay_common/account/notification-settings.html:36
@@ -23193,9 +23468,10 @@ msgstr "સેટઅપ પછી, કૃપા કરીને Payment વિ�
 #: eventyay/control/templates/pretixcontrol/event/settings.html:7
 #: eventyay/control/templates/pretixcontrol/event/settings.html:13
 #: eventyay/control/templates/pretixcontrol/organizers/billing.html:7
+#: eventyay/eventyay_common/forms/event.py:355
 #: eventyay/eventyay_common/templates/eventyay_common/account/general-settings.html:25
 #: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:7
-#: eventyay/orga/views/event.py:81
+#: eventyay/orga/views/event.py:80
 msgid "General settings"
 msgstr "સામાન્ય સેટિંગ્સ"
 
@@ -23216,12 +23492,12 @@ msgid "Changes to existing orders"
 msgstr "હાજર ઓર્ડર્સમાં ફેરફારો"
 
 #: eventyay/control/templates/pretixcontrol/event/settings.html:60
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:203
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:204
 msgid "Texts"
 msgstr "ટેક્સ્ટ્સ"
 
 #: eventyay/control/templates/pretixcontrol/event/settings.html:69
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:236
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:237
 msgid "Display"
 msgstr "ડિસ્પ્લે"
 
@@ -23244,7 +23520,16 @@ msgid "Add property"
 msgstr "પ્રોપર્ટી ઉમેરો"
 
 #: eventyay/control/templates/pretixcontrol/event/settings.html:163
+#: eventyay/eventyay_common/templates/eventyay_common/event/live.html:471
+msgid "Cancel or delete event"
+msgstr "ઇવેન્ટ રદ કરો અથવા ડિલીટ કરો"
+
+#: eventyay/control/templates/pretixcontrol/event/settings.html:169
 #: eventyay/control/templates/pretixcontrol/organizers/detail.html:156
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:4
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:8
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:89
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:428
 msgid "Clone event"
 msgstr "ઇવેન્ટ ક્લોન કરો"
 
@@ -23530,74 +23815,74 @@ msgstr ""
 msgid "No plugins found."
 msgstr "કોઈ વપરાશકર્તાઓ મળ્યા નથી."
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:21
+#: eventyay/control/templates/pretixcontrol/global_settings.html:23
 msgid "Stripe — Organizer Billing"
 msgstr "Stripe — આયોજક બિલિંગ"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:23
+#: eventyay/control/templates/pretixcontrol/global_settings.html:25
 msgid "This configuration is used for organizer billing and platform fees."
 msgstr "આ કૉન્ફિગરેશનનો ઉપયોગ આયોજક બિલિંગ અને પ્લેટફોર્મ ફી માટે થાય છે."
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:27
-#: eventyay/control/templates/pretixcontrol/global_settings.html:78
+#: eventyay/control/templates/pretixcontrol/global_settings.html:29
+#: eventyay/control/templates/pretixcontrol/global_settings.html:80
 msgid "Live Credentials"
 msgstr "લાઇવ ક્રેડેન્શિયલ્સ"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:38
-#: eventyay/control/templates/pretixcontrol/global_settings.html:89
+#: eventyay/control/templates/pretixcontrol/global_settings.html:40
+#: eventyay/control/templates/pretixcontrol/global_settings.html:91
 msgid "Test Credentials"
 msgstr "ટેસ્ટ ક્રેડેન્શિયલ્સ"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:49
+#: eventyay/control/templates/pretixcontrol/global_settings.html:51
 #: eventyay/control/templates/pretixcontrol/organizers/webhooks.html:6
 msgid "Webhooks"
 msgstr "વેબહૂક્સ"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:61
+#: eventyay/control/templates/pretixcontrol/global_settings.html:63
 msgid "Stripe — Ticket Payments"
 msgstr "Stripe — ટિકિટ ચુકવણીઓ"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:63
+#: eventyay/control/templates/pretixcontrol/global_settings.html:65
 msgid "This configuration is used for ticket payments via the Stripe plugin."
 msgstr "આ રૂપરેખાંકન Stripe પ્લગઇન દ્વારા ટિકિટ ચુકવણીઓ માટે વપરાય છે."
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:67
+#: eventyay/control/templates/pretixcontrol/global_settings.html:69
 msgid "Client Configuration"
 msgstr "ક્લાયન્ટ રૂપરેખાંકન"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:100
+#: eventyay/control/templates/pretixcontrol/global_settings.html:102
 msgid "App Fees"
 msgstr "એપ ફી"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:102
+#: eventyay/control/templates/pretixcontrol/global_settings.html:104
 msgid "Configure the application fees charged on ticket payments."
 msgstr "ટિકિટ ચુકવણીઓ પર વસૂલાતી એપ્લિકેશન ફી રૂપરેખાંકિત કરો."
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:115
+#: eventyay/control/templates/pretixcontrol/global_settings.html:117
 msgid "PayPal"
 msgstr "PayPal"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:117
+#: eventyay/control/templates/pretixcontrol/global_settings.html:119
 msgid "Configure PayPal payment processing."
 msgstr "PayPal ચુકવણી પ્રક્રિયા રૂપરેખાંકિત કરો."
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:192
+#: eventyay/control/templates/pretixcontrol/global_settings.html:195
 msgid "Test email connection"
 msgstr ""
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:201
+#: eventyay/control/templates/pretixcontrol/global_settings.html:204
 #, fuzzy
 #| msgid "(no email address)"
 msgid "Recipient email address(es)"
 msgstr "(ઈમેલ સરનામું નથી)"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:211
+#: eventyay/control/templates/pretixcontrol/global_settings.html:214
 #, fuzzy
 #| msgid "Send this email"
 msgid "Send test email"
 msgstr "આ ઇમેઇલ મોકલો"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:216
+#: eventyay/control/templates/pretixcontrol/global_settings.html:219
 msgid ""
 "Sends a test email to the entered recipient address or comma-separated "
 "recipient addresses to verify the email settings are working."
@@ -23614,6 +23899,95 @@ msgstr "eventyay સર્વરે ભૂલ કોડ પરત આપ્ય�
 #: eventyay/control/templates/pretixcontrol/global_update.html:30
 msgid "The eventyay server could not be reached."
 msgstr "eventyay સર્વર સુધી પહોંચવામાં આવી શક્યું નથી."
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:4
+msgid ""
+"Gmail integration requires a database update. Run `python manage.py migrate` "
+"and reload this page."
+msgstr ""
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:9
+msgid ""
+"Gmail and Google Workspace are suitable for moderate transactional email and "
+"organiser communication. They are not recommended as the only backend for "
+"large event mailings. Configure SMTP or SendGrid as a fallback delivery "
+"backend if Gmail is unavailable or unsuitable for bulk mailings."
+msgstr ""
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:18
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:66
+#, fuzzy
+#| msgid "Redirect URL"
+msgid "OAuth redirect URI"
+msgstr "રીડાયરેક્ટ URL"
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:22
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:70
+msgid ""
+"Add this redirect URI to your Google Cloud OAuth client before connecting."
+msgstr ""
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:27
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:75
+#, fuzzy
+#| msgid "All actions"
+msgid "Gmail connection"
+msgstr "બધી ક્રિયાઓ"
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:31
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:79
+#, fuzzy
+#| msgid "Connect"
+msgid "Connected"
+msgstr "કનેક્ટ કરો"
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:35
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:83
+#, python-format
+msgid "Approximate usage today: %(sent)s / %(limit)s messages."
+msgstr ""
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:40
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:88
+#, python-format
+msgid "Last delivery issue: %(error)s"
+msgstr ""
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:46
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:94
+#, fuzzy
+#| msgid "sent email"
+#| msgid_plural "sent emails"
+msgid "Disconnect Gmail"
+msgstr "મોકલેલ ઇમેઇલ્સ"
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:50
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:98
+#, fuzzy
+#| msgid "Date joined"
+msgid "Not connected"
+msgstr "જોડાવાની તારીખ"
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:54
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:102
+msgid ""
+"Configure the OAuth client ID and secret in global settings, then connect a "
+"Google account with send permission."
+msgstr ""
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:56
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:104
+msgid ""
+"Save your OAuth client ID and secret, then connect a Google account with "
+"send permission."
+msgstr ""
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:60
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:108
+#, fuzzy
+#| msgid "Connected devices"
+msgid "Connect Gmail account"
+msgstr "જોડાયેલા ઉપકરણો"
 
 #: eventyay/control/templates/pretixcontrol/includes/logs.html:51
 #: eventyay/eventyay_common/templates/eventyay_common/includes/logs.html:51
@@ -23906,7 +24280,7 @@ msgstr "પ્રોડક્ટ ઇતિહાસ"
 
 #: eventyay/control/templates/pretixcontrol/item/index.html:176
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:121
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:509
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:514
 #, fuzzy
 #| msgid "Logo image"
 msgid "Crop Image"
@@ -23914,7 +24288,7 @@ msgstr "લોગો છબી"
 
 #: eventyay/control/templates/pretixcontrol/item/index.html:185
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:130
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:519
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:524
 #, fuzzy
 #| msgid "Apply"
 msgid "Apply Crop"
@@ -25522,8 +25896,8 @@ msgstr "ઈમેલ મોકલો"
 
 #: eventyay/control/templates/pretixcontrol/orders/cancel.html:5
 #: eventyay/control/templates/pretixcontrol/orders/cancel.html:7
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:350
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:355
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:348
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:353
 msgid "Cancel event"
 msgstr "ઇવેન્ટ રદ કરો"
 
@@ -26400,7 +26774,7 @@ msgid "Organizer settings"
 msgstr "આયોજક સેટિંગ્સ"
 
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:49
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:209
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:210
 msgid "Design"
 msgstr "ડિઝાઇન"
 
@@ -26420,15 +26794,11 @@ msgid "Community"
 msgstr "ટિપ્પણી"
 
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:86
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:229
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:230
 #, fuzzy
 #| msgid "Video"
 msgid "Video area"
 msgstr "વીഡിയോ"
-
-#: eventyay/control/templates/pretixcontrol/organizers/edit.html:97
-msgid "Privacy"
-msgstr "ગોપનીયતા"
 
 #: eventyay/control/templates/pretixcontrol/organizers/gate_delete.html:5
 msgid "Delete gate:"
@@ -27650,7 +28020,7 @@ msgstr "તે પેજ નંબર 1 કરતાં ઓછો છે"
 msgid "Dashboard cache refreshed successfully."
 msgstr "પાસવર્ડ રીસેટ ઇમેઇલ મોકલવામાં આવ્યો છે."
 
-#: eventyay/control/views/admin.py:685 eventyay/control/views/pages.py:131
+#: eventyay/control/views/admin.py:685 eventyay/control/views/pages.py:136
 msgid "Invalid field."
 msgstr "અમાન્ય ક્ષેત્ર."
 
@@ -27763,7 +28133,7 @@ msgstr "નવી ચેક-ઇન યાદી બનાવવામાં આ�
 #: eventyay/control/views/event.py:1495 eventyay/control/views/event.py:1626
 #: eventyay/control/views/organizer_views/organizer_view.py:361
 #: eventyay/control/views/organizer_views/organizer_view.py:537
-#: eventyay/control/views/pages.py:108 eventyay/control/views/product.py:269
+#: eventyay/control/views/pages.py:113 eventyay/control/views/product.py:269
 #: eventyay/control/views/product.py:321 eventyay/control/views/product.py:779
 #: eventyay/control/views/product.py:813 eventyay/control/views/product.py:964
 #: eventyay/control/views/product.py:1243
@@ -27773,7 +28143,7 @@ msgstr "નવી ચેક-ઇન યાદી બનાવવામાં આ�
 #: eventyay/control/views/subevents.py:1051
 #: eventyay/control/views/subevents.py:1620
 #: eventyay/eventyay_common/views/account/two_factor_auth.py:150
-#: eventyay/eventyay_common/views/event.py:895
+#: eventyay/eventyay_common/views/event.py:930
 #: eventyay/plugins/badges/views.py:144 eventyay/plugins/badges/views.py:193
 #: eventyay/plugins/sendmail/views.py:231
 #: eventyay/plugins/ticketoutputpdf/views.py:109
@@ -27898,7 +28268,7 @@ msgstr[1] "{num} ઑર્ડર્સ"
 
 #: eventyay/control/views/event.py:239
 #: eventyay/control/views/organizer_views/organizer_view.py:205
-#: eventyay/eventyay_common/views/event.py:780
+#: eventyay/eventyay_common/views/event.py:815
 msgid ""
 "Your changes have been saved. Please note that it can take a short period of "
 "time until your changes become active."
@@ -27947,7 +28317,7 @@ msgstr "અમાન્ય ટિકિટ આઉટપુટ પ્રકાર
 msgid "This event can not be deleted."
 msgstr "આ ઇવેન્ટને કાઢી શકાતી નથી."
 
-#: eventyay/control/views/event.py:1204 eventyay/orga/views/event.py:399
+#: eventyay/control/views/event.py:1204 eventyay/orga/views/event.py:398
 msgid "The event has been deleted."
 msgstr "ઇવેન્ટ કાઢી નાખવામાં આવી છે."
 
@@ -28029,66 +28399,74 @@ msgstr "માનક ટિકિટ"
 msgid "Virtual Ticket"
 msgstr "વર્ચ્યુઅલ ટિકિટ"
 
-#: eventyay/control/views/global_settings.py:51
-#: eventyay/control/views/global_settings.py:73
-#: eventyay/control/views/global_settings.py:103
-#: eventyay/control/views/global_settings.py:156
-#: eventyay/control/views/pages.py:50
+#: eventyay/control/views/global_settings.py:66
+#: eventyay/control/views/global_settings.py:83
+#: eventyay/control/views/global_settings.py:113
+#: eventyay/control/views/global_settings.py:166
+#: eventyay/control/views/pages.py:55
 msgid "Your changes have not been saved, see below for errors."
 msgstr "ફેરફારો સાચવવામાં આવ્યા નથી; ભૂલો માટે નીચે જુઓ."
 
-#: eventyay/control/views/global_settings.py:197
+#: eventyay/control/views/global_settings.py:207
 #, fuzzy
 #| msgid "Please enter at least one email address!"
 msgid "Please enter at least one valid recipient email address."
 msgstr "કૃપા કરીને ઓછામાં ઓછું એક ઇમેઇલ સરનામું દાખલ કરો!"
 
-#: eventyay/control/views/global_settings.py:207
+#: eventyay/control/views/global_settings.py:217
 #, fuzzy, python-format
 #| msgid "Please enter a valid email address."
 msgid ""
 "Please enter a valid recipient email address (\"%(email)s\" is invalid)."
 msgstr "કૃપા કરીને માન્ય ઇમેઇલ સરનામું દાખલ કરો."
 
-#: eventyay/control/views/global_settings.py:220
+#: eventyay/control/views/global_settings.py:230
 msgid ""
 "No sender address is configured. Please set the \"Sender address\" field in "
 "the Email tab and save first."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:232
+#: eventyay/control/views/global_settings.py:242
 #, python-format
 msgid ""
 "The sender address \"%(addr)s\" is not a valid email address. Please correct "
 "the \"Sender address\" field and save again."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:245
+#: eventyay/control/views/global_settings.py:255
 #, python-format
 msgid ""
 "The sender address \"%(addr)s\" contains non-ASCII characters which are not "
 "allowed in SMTP. Please correct the \"Sender address\" field and save again."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:258
-#: eventyay/eventyay_common/views/event.py:704
+#: eventyay/control/views/global_settings.py:268
+#: eventyay/eventyay_common/views/event.py:729
 msgid "SendGrid API key is missing. Please configure it and save."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:266
-#: eventyay/eventyay_common/views/event.py:707
+#: eventyay/control/views/global_settings.py:279
+msgid ""
+"Gmail is selected but no account is connected. Connect Gmail in the settings "
+"first."
+msgstr ""
+
+#: eventyay/control/views/global_settings.py:288
+#: eventyay/eventyay_common/views/event.py:732
 msgid "SMTP host or port is missing. Please configure them and save."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:282
+#: eventyay/control/views/global_settings.py:301
+#: eventyay/control/views/global_settings.py:311
 msgid "Eventyay system - test email"
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:283
+#: eventyay/control/views/global_settings.py:302
+#: eventyay/control/views/global_settings.py:312
 msgid "This is a test email from your Eventyay system email configuration."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:299
+#: eventyay/control/views/global_settings.py:328
 msgid ""
 "SMTP authentication or email sending failed because the password, username, "
 "or recipient address contains an invisible non-ASCII character (e.g. a no-"
@@ -28096,31 +28474,123 @@ msgid ""
 "again."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:310
+#: eventyay/control/views/global_settings.py:339
 #, python-format
 msgid "SendGrid test email failed to connect or send. HTTP Error: %(err)s"
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:317
+#: eventyay/control/views/global_settings.py:356
+#: eventyay/eventyay_common/views/event.py:756
+#, python-format
+msgid "Gmail test email is temporarily delayed because of rate limits: %(err)s"
+msgstr ""
+
+#: eventyay/control/views/global_settings.py:362
+#: eventyay/eventyay_common/views/event.py:761
+#, fuzzy, python-format
+#| msgid "Some emails failed to send:"
+msgid "Gmail test email could not be sent: %(err)s"
+msgstr "કેટલાક ઇમેઇલ્સ મોકલવામાં નિષ્ફળ રહ્યા:"
+
+#: eventyay/control/views/global_settings.py:369
 #, fuzzy, python-format
 #| msgid "Some emails failed to send:"
 msgid "Test email failed to connect or send: %(err)s"
 msgstr "કેટલાક ઇમેઇલ્સ મોકલવામાં નિષ્ફળ રહ્યા:"
 
-#: eventyay/control/views/global_settings.py:325
+#: eventyay/control/views/global_settings.py:379
 #, python-format
 msgid "Test email sent to %(email)s — check inbox."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:396
+#: eventyay/control/views/global_settings.py:450
 msgid "Plugin configuration table is not available. Please run migrations."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:404
+#: eventyay/control/views/global_settings.py:458
 #, fuzzy
 #| msgid "Your notification settings have been saved."
 msgid "Plugin settings have been saved."
 msgstr "સૂચના સેટિંગ્સ સાચવવામાં આવી છે."
+
+#: eventyay/control/views/gmail_oauth.py:47
+#: eventyay/control/views/gmail_oauth.py:156
+#, python-format
+msgid "Google authorization was denied or failed: %(error)s"
+msgstr ""
+
+#: eventyay/control/views/gmail_oauth.py:54
+#: eventyay/control/views/gmail_oauth.py:163
+msgid "Missing authorization response from Google."
+msgstr ""
+
+#: eventyay/control/views/gmail_oauth.py:60
+#: eventyay/control/views/gmail_oauth.py:169
+#, fuzzy
+#| msgid "The registration could not be completed. Please try again."
+msgid "The Google authorization session expired. Please try again."
+msgstr "નોંધણી પૂર્ણ થઈ શકી નથી. કૃપા કરીને ફરી પ્રયાસ કરો."
+
+#: eventyay/control/views/gmail_oauth.py:64
+#, fuzzy
+#| msgid "The waiting list entry has been moved to the end of the list."
+msgid "The Google authorization session does not match the current user."
+msgstr "વેઇટિંગ લિસ્ટની એન્ટ્રીને યાદીના અંતમાં ખસેડવામાં આવી છે."
+
+#: eventyay/control/views/gmail_oauth.py:75
+#: eventyay/control/views/gmail_oauth.py:189
+#, python-format
+msgid "Could not connect Gmail account: %(error)s"
+msgstr ""
+
+#: eventyay/control/views/gmail_oauth.py:83
+#: eventyay/control/views/gmail_oauth.py:197
+msgid ""
+"Google did not return a refresh token. Disconnect the app in your Google "
+"account and try again."
+msgstr ""
+
+#: eventyay/control/views/gmail_oauth.py:103
+#, fuzzy, python-format
+#| msgid "Verification failed."
+msgid "Gmail account %(email)s connected successfully."
+msgstr "ચકાસણી નિષ્ફળ થઈ."
+
+#: eventyay/control/views/gmail_oauth.py:113
+#, fuzzy
+#| msgid "This account is inactive."
+msgid "Gmail account disconnected."
+msgstr "આ ખાતું નિષ્ક્રિય છે."
+
+#: eventyay/control/views/gmail_oauth.py:115
+#, fuzzy
+#| msgid "No sent mails found."
+msgid "No active Gmail connection found."
+msgstr "મોકલાયેલા કોઈ મેઇલ મળ્યા નથી."
+
+#: eventyay/control/views/gmail_oauth.py:173
+#, fuzzy
+#| msgid "The video module is not enabled for this event."
+msgid "The Google authorization session is invalid for this event."
+msgstr "આ ઇવેન્ટ માટે વિડિયો મોડ્યુલ સક્રિય નથી."
+
+#: eventyay/control/views/gmail_oauth.py:218
+#, fuzzy, python-format
+#| msgid "No tracks are configured for any events."
+msgid "Gmail account %(email)s connected for this event."
+msgstr "કોઈપણ ઇવેન્ટ માટે કોઈ ટ્રૅક્સ કન્ફિગર કરાયેલા નથી."
+
+#: eventyay/control/views/gmail_oauth.py:231
+#, fuzzy
+#| msgid "No tracks are configured for any events."
+msgid "Gmail account disconnected for this event."
+msgstr "કોઈપણ ઇવેન્ટ માટે કોઈ ટ્રૅક્સ કન્ફિગર કરાયેલા નથી."
+
+#: eventyay/control/views/gmail_oauth.py:233
+#, fuzzy
+#| msgid "No tracks are configured for any events."
+msgid "No active Gmail connection found for this event."
+msgstr "કોઈપણ ઇવેન્ટ માટે કોઈ ટ્રૅક્સ કન્ફિગર કરાયેલા નથી."
 
 #: eventyay/control/views/orderimport.py:65
 msgid "Please only upload CSV files."
@@ -28693,18 +29163,40 @@ msgid ""
 msgstr ""
 
 #: eventyay/control/views/organizer_views/organizer_view.py:541
-#: eventyay/eventyay_common/views/event.py:899
+#: eventyay/eventyay_common/views/event.py:934
 msgid "You haven't made any changes."
 msgstr "કોઈ ફેરફાર કરવામાં આવ્યો નથી."
 
-#: eventyay/control/views/pages.py:59 eventyay/control/views/pages.py:132
-#: eventyay/control/views/pages.py:182
+#: eventyay/control/views/pages.py:64 eventyay/control/views/pages.py:137
+#: eventyay/control/views/pages.py:187 eventyay/control/views/pages.py:248
 msgid "The requested page does not exist."
 msgstr "વિનંતી કરેલું પેજ અસ્તિત્વમાં નથી."
 
-#: eventyay/control/views/pages.py:171
+#: eventyay/control/views/pages.py:176
 msgid "The selected page has been deleted."
 msgstr "પસંદ કરેલું પેજ કાઢી નાખવામાં આવ્યું છે."
+
+#: eventyay/control/views/pages.py:235
+#, fuzzy
+#| msgid "Number of reviews"
+msgid "Terms of Service"
+msgstr "સમીક્ષાઓની સંખ્યા"
+
+#: eventyay/control/views/pages.py:236
+#, fuzzy
+#| msgid "Privacy Policy URL"
+msgid "Privacy Policy"
+msgstr "ગોપનીયતા નીતિ URL"
+
+#: eventyay/control/views/pages.py:238
+msgid "Support & Help"
+msgstr ""
+
+#: eventyay/control/views/pages.py:242
+#, fuzzy
+#| msgid "No redis server has been configured."
+msgid "Content for this page has not been configured yet."
+msgstr "કોઈ Redis સર્વર રૂપરેખાંકિત કરવામાં આવ્યું નથી."
 
 #: eventyay/control/views/pdf.py:39
 #, fuzzy
@@ -28960,15 +29452,15 @@ msgid "Unknown action."
 msgstr "અજાણી કાર્ટ પોઝિશન."
 
 #: eventyay/control/views/users.py:198 eventyay/control/views/users.py:201
-#: eventyay/control/views/users.py:328 eventyay/control/views/users.py:331
-#: eventyay/control/views/users.py:389 eventyay/control/views/users.py:392
+#: eventyay/control/views/users.py:331 eventyay/control/views/users.py:334
+#: eventyay/control/views/users.py:392 eventyay/control/views/users.py:395
 #, fuzzy
 #| msgid "The addressed user’s email address"
 msgid "This user has no email address."
 msgstr "સંબોધિત વપરાશકર્તાનું ઈમેલ સરનામું"
 
 #: eventyay/control/views/users.py:210 eventyay/control/views/users.py:213
-#: eventyay/control/views/users.py:340 eventyay/control/views/users.py:343
+#: eventyay/control/views/users.py:343 eventyay/control/views/users.py:346
 #, fuzzy
 #| msgid "Please provide an email address."
 msgid "This user has no primary email address."
@@ -29010,78 +29502,78 @@ msgstr "એક દૂર કરો"
 msgid "Admin status for %(email)s has been %(action)s."
 msgstr "કસ્ટમ ઇમેલ મોકલવામાં આવ્યું છે."
 
-#: eventyay/control/views/users.py:314
+#: eventyay/control/views/users.py:317
 #, fuzzy
 #| msgid "Order marked as paid"
 msgid "marked as spam"
 msgstr "ઓર્ડર ચૂકવાયેલ તરીકે ચિહ્નિત થયો"
 
-#: eventyay/control/views/users.py:314
+#: eventyay/control/views/users.py:317
 #, fuzzy
 #| msgid "Order marked as paid"
 msgid "unmarked as spam"
 msgstr "ઓર્ડર ચૂકવાયેલ તરીકે ચિહ્નિત થયો"
 
-#: eventyay/control/views/users.py:317
+#: eventyay/control/views/users.py:320
 #, fuzzy, python-format
 #| msgid "The email has been sent."
 msgid "User %(email)s has been %(action)s."
 msgstr "ઇમેઇલ મોકલાઈ ગયું છે."
 
-#: eventyay/control/views/users.py:350 eventyay/control/views/users.py:353
+#: eventyay/control/views/users.py:353 eventyay/control/views/users.py:356
 #, fuzzy
 #| msgid "This security device is already registered."
 msgid "This user is already verified."
 msgstr "આ સિક્યુરિટી ઉપકરણ પહેલેથી જ નોંધાયેલ છે."
 
-#: eventyay/control/views/users.py:363 eventyay/control/views/users.py:366
+#: eventyay/control/views/users.py:366 eventyay/control/views/users.py:369
 #, fuzzy
 #| msgid ""
 #| "There was an error sending the confirmation mail. Please try again later."
 msgid "There was an error sending the verification email."
 msgstr "પુષ્ટિકરણ ઇમેઇલ મોકલવામાં ભૂલ આવી. કૃપા કરીને પછીથી ફરી પ્રયાસ કરો."
 
-#: eventyay/control/views/users.py:377
+#: eventyay/control/views/users.py:380
 #, fuzzy
 #| msgid "Verification failed."
 msgid "Verification email sent successfully."
 msgstr "ચકાસણી નિષ્ફળ થઈ."
 
-#: eventyay/control/views/users.py:381
+#: eventyay/control/views/users.py:384
 #, fuzzy, python-format
 #| msgid "Verification failed."
 msgid "Verification email sent to %(email)s."
 msgstr "ચકાસણી નિષ્ફળ થઈ."
 
-#: eventyay/control/views/users.py:410
+#: eventyay/control/views/users.py:413
 #, fuzzy
 #| msgid "Password reset mail sent."
 msgid "Password reset email sent successfully."
 msgstr "પાસવર્ડ રીસેટ ઇમેઇલ મોકલવામાં આવ્યો છે."
 
-#: eventyay/control/views/users.py:414
+#: eventyay/control/views/users.py:417
 #, fuzzy, python-format
 #| msgid "Password reset mail sent."
 msgid "Password reset email sent to %(email)s."
 msgstr "પાસવર્ડ રીસેટ ઇમેઇલ મોકલવામાં આવ્યો છે."
 
-#: eventyay/control/views/users.py:502
+#: eventyay/control/views/users.py:505
 msgid "We sent out an e-mail containing further instructions."
 msgstr "વધુ સૂચનાઓ ધરાવતો ઇ-મેલ મોકલવામાં આવ્યો છે."
 
-#: eventyay/control/views/users.py:548
+#: eventyay/control/views/users.py:551
 #, fuzzy
 #| msgid "The registration could not be completed. Please try again."
 msgid "The user could not be anonymized. Please try again later."
 msgstr "નોંધણી પૂર્ણ થઈ શકી નથી. કૃપા કરીને ફરી પ્રયાસ કરો."
 
-#: eventyay/control/views/users.py:551
+#: eventyay/control/views/users.py:554
 #, fuzzy
 #| msgid "This user has been anonymized."
 msgid "User has been anonymized successfully."
 msgstr "આ વપરાશકર્તાને અનામ બનાવવામાં આવ્યો છે."
 
-#: eventyay/control/views/users.py:646
+#: eventyay/control/views/users.py:649
 msgid "The new user has been created."
 msgstr "નવો વપરાશકર્તા બનાવવામાં આવ્યો છે."
 
@@ -29231,101 +29723,101 @@ msgstr ""
 "અહીં અગાઉની ઇવેન્ટ્સમાંથી સેટિંગ્સ કૉપી કરી શકાય છે, જેમ કે મેઇલ સેટિંગ્સ, સેશન પ્રકારો અને "
 "ઇમેઇલ ટેમ્પલેટ્સ. ઇવેન્ટ બનાવ્યા પછી આ સેટિંગ્સ તપાસી લો!"
 
-#: eventyay/event/stages.py:41
+#: eventyay/event/stages.py:40
 msgid "Preparation"
 msgstr "તૈયારી"
 
-#: eventyay/event/stages.py:45
+#: eventyay/event/stages.py:44
 msgid "Configure the event"
 msgstr "ઇવેન્ટ કન્ફિગર કરો"
 
-#: eventyay/event/stages.py:46
+#: eventyay/event/stages.py:45
 msgid "Gather your team"
 msgstr "ટીમ એકત્ર કરો"
 
-#: eventyay/event/stages.py:47
+#: eventyay/event/stages.py:46
 msgid "Write a CfP"
 msgstr "CfP લખો"
 
-#: eventyay/event/stages.py:49
+#: eventyay/event/stages.py:48
 msgid "Customize mail templates"
 msgstr "મેઇલ ટેમ્પલેટ્સ કસ્ટમાઇઝ કરો"
 
-#: eventyay/event/stages.py:55
+#: eventyay/event/stages.py:54
 msgid "CfP is open"
 msgstr "CfP ખુલ્લું છે"
 
-#: eventyay/event/stages.py:59
+#: eventyay/event/stages.py:58
 msgid "Monitor proposals"
 msgstr "પ્રસ્તાવો પર નજર રાખો"
 
-#: eventyay/event/stages.py:61
+#: eventyay/event/stages.py:60
 msgid "Submit sessions for your speakers"
 msgstr "સ્પીકર્સ માટે સેશન્સ સબમિટ કરો"
 
-#: eventyay/event/stages.py:64
+#: eventyay/event/stages.py:63
 msgid "Invite reviewers"
 msgstr "રીવ્યુઅર્સને આમંત્રિત કરો"
 
-#: eventyay/event/stages.py:72
+#: eventyay/event/stages.py:71
 msgid "Let reviewers do their work"
 msgstr "રીવ્યુઅર્સને તેમનું કામ કરવા દો"
 
-#: eventyay/event/stages.py:74
+#: eventyay/event/stages.py:73
 msgid "Accept or reject proposals"
 msgstr "પ્રસ્તાવો સ્વીકારો અથવા નકારો"
 
-#: eventyay/event/stages.py:77
+#: eventyay/event/stages.py:76
 msgid "Build your first schedule"
 msgstr "પહેલું શેડ્યૂલ બનાવો"
 
-#: eventyay/event/stages.py:86
+#: eventyay/event/stages.py:85
 msgid "Release schedules as needed"
 msgstr "જરૂર મુજબ શેડ્યૂલ્સ પ્રકાશિત કરો"
 
-#: eventyay/event/stages.py:90
+#: eventyay/event/stages.py:89
 msgid "Inform your speakers about the infrastructure"
 msgstr "ઇન્ફ્રાસ્ટ્રક્ચર વિશે સ્પીકર્સને જાણ કરો"
 
-#: eventyay/event/stages.py:100
+#: eventyay/event/stages.py:99
 msgid "Provide a point of contact for the speakers"
 msgstr "સ્પીકર્સ માટે સંપર્ક બિંદુ આપો"
 
-#: eventyay/event/stages.py:101
+#: eventyay/event/stages.py:100
 msgid "Enjoy the event!"
 msgstr "ઇવેન્ટનો આનંદ લો!"
 
-#: eventyay/event/stages.py:105
+#: eventyay/event/stages.py:104
 msgid "Wrapup"
 msgstr "સમાપ્તિ"
 
-#: eventyay/event/stages.py:109
+#: eventyay/event/stages.py:108
 msgid "Monitor incoming feedback"
 msgstr "આવતા પ્રતિસાદ પર નજર રાખો"
 
-#: eventyay/event/stages.py:110
+#: eventyay/event/stages.py:109
 msgid "Embed session recordings if available"
 msgstr "ઉપલબ્ધ હોય તો સેશન રેકોર્ડિંગ્સ એમ્બેડ કરો"
 
-#: eventyay/event/stages.py:111
+#: eventyay/event/stages.py:110
 msgid "Release next event date?"
 msgstr "આગામી ઇવેન્ટની તારીખ રિલીઝ કરવી?"
 
-#: eventyay/eventyay_common/forms/event.py:81
+#: eventyay/eventyay_common/forms/event.py:82
 #, fuzzy
 #| msgid "Please provide an email address."
 msgid "Please provide an email address for the contact form."
 msgstr "કૃપા કરીને ઇમેઇલ સરનામું આપો."
 
-#: eventyay/eventyay_common/forms/event.py:214
+#: eventyay/eventyay_common/forms/event.py:215
 msgid "Ask search engines not to index the event pages"
 msgstr "સર્ચ એન્જિનને ઇવેન્ટ પેજ ઇન્ડેક્સ ન કરવા કહો"
 
-#: eventyay/eventyay_common/forms/event.py:259
+#: eventyay/eventyay_common/forms/event.py:260
 msgid "Show in search results and lists"
 msgstr ""
 
-#: eventyay/eventyay_common/forms/event.py:260
+#: eventyay/eventyay_common/forms/event.py:261
 #, fuzzy
 #| msgid ""
 #| "If selected, this event will show up publicly on the list of dates for "
@@ -29335,9 +29827,137 @@ msgid ""
 "organizer account and in platform search results."
 msgstr "પસંદ કર્યે બાદ, આ ઇવેન્ટ તમારી ઇવેન્ટ માટેની તારીખોની યાદીમાં જાહેર રીતે દેખાશે."
 
-#: eventyay/eventyay_common/forms/event.py:267
+#: eventyay/eventyay_common/forms/event.py:268
 msgid "You need to configure the custom domain in the webserver beforehand."
 msgstr "પહેલેથી વેબસર્વર પર કસ્ટમ ડોમેઇન કન્ફિગર કરવું જરૂરી છે."
+
+#: eventyay/eventyay_common/forms/event.py:349
+#, fuzzy
+#| msgid "Client Configuration"
+msgid "Common event Configuration"
+msgstr "ક્લાયન્ટ રૂપરેખાંકન"
+
+#: eventyay/eventyay_common/forms/event.py:350
+msgid "Includes general settings, design elements, and email configurations."
+msgstr ""
+
+#: eventyay/eventyay_common/forms/event.py:356
+msgid "Location, currency, plugins, header/footer links."
+msgstr ""
+
+#: eventyay/eventyay_common/forms/event.py:361
+#, fuzzy
+#| msgid "Date and time"
+msgid "Design and texts"
+msgstr "તારીખ અને સમય"
+
+#: eventyay/eventyay_common/forms/event.py:362
+msgid "Colors, logo, custom CSS."
+msgstr ""
+
+#: eventyay/eventyay_common/forms/event.py:367
+#: eventyay/orga/templates/orga/settings/mail.html:14
+msgid "Email settings"
+msgstr "ઈમેલ સેટિંગ્સ"
+
+#: eventyay/eventyay_common/forms/event.py:368
+#, fuzzy
+#| msgid "Edit list configuration"
+msgid "Email templates and SMTP configuration."
+msgstr "યાદી રૂપરેખા સંપાદિત કરો"
+
+#: eventyay/eventyay_common/forms/event.py:374
+#, fuzzy
+#| msgid "Client Configuration"
+msgid "Ticketing Configuration"
+msgstr "ક્લાયન્ટ રૂપરેખાંકન"
+
+#: eventyay/eventyay_common/forms/event.py:375
+msgid "Includes products, quotas, attendee questions, and check-in lists."
+msgstr ""
+
+#: eventyay/eventyay_common/forms/event.py:380
+#, fuzzy
+#| msgid "Products"
+msgid "Products & Quotas"
+msgstr "ઉત્પાદનો"
+
+#: eventyay/eventyay_common/forms/event.py:381
+msgid "Ticket products, categories, quotas, tax rules, add-ons."
+msgstr ""
+
+#: eventyay/eventyay_common/forms/event.py:387
+#, fuzzy
+#| msgid "There are no attendees to show."
+msgid "Order and attendee questions."
+msgstr "દર્શાવવા માટે કોઈ ભાગ લેનારાઓ નથી."
+
+#: eventyay/eventyay_common/forms/event.py:393
+#, fuzzy
+#| msgid "Edit list configuration"
+msgid "Check-in lists configuration."
+msgstr "યાદી રૂપરેખા સંપાદિત કરો"
+
+#: eventyay/eventyay_common/forms/event.py:399
+#, fuzzy
+#| msgid "Payment providers"
+msgid "Payment providers and invoicing."
+msgstr "ચુકવણી પ્રદાતાઓ"
+
+#: eventyay/eventyay_common/forms/event.py:405
+#, fuzzy
+#| msgid "Client Configuration"
+msgid "Talk Configuration"
+msgstr "ક્લાયન્ટ રૂપરેખાંકન"
+
+#: eventyay/eventyay_common/forms/event.py:406
+msgid "Includes call for speakers, session tracks, and review settings."
+msgstr ""
+
+#: eventyay/eventyay_common/forms/event.py:411
+#, fuzzy
+#| msgid "Call for Speakers"
+msgid "Call for speakers"
+msgstr "વક્તાઓ માટે આમંત્રણ"
+
+#: eventyay/eventyay_common/forms/event.py:412
+#, fuzzy
+#| msgid "A speaker information note was deleted."
+msgid "Call for speakers configuration and basic text."
+msgstr "વક્તા માહિતી નોંધ કાઢી નાખવામાં આવી."
+
+#: eventyay/eventyay_common/forms/event.py:417
+#, fuzzy
+#| msgid "Sessions by track"
+msgid "Session types & tracks"
+msgstr "ટ્રેક મુજબ સત્રો"
+
+#: eventyay/eventyay_common/forms/event.py:418
+#, fuzzy
+#| msgid "Sessions by track"
+msgid "Session types and tracks."
+msgstr "ટ્રેક મુજબ સત્રો"
+
+#: eventyay/eventyay_common/forms/event.py:423
+#: eventyay/orga/templates/orga/base.html:277
+#: eventyay/orga/templates/orga/settings/review.html:8
+#: eventyay/orga/templates/orga/settings/review.html:24
+#: eventyay/orga/views/event.py:132
+msgid "Review settings"
+msgstr "સેટિંગ્સ સમીક્ષા"
+
+#: eventyay/eventyay_common/forms/event.py:424
+msgid "Review phases and review scoring categories."
+msgstr ""
+
+#: eventyay/eventyay_common/forms/event.py:472
+#, fuzzy
+#| msgid ""
+#| "There already is an account associated with this e-mail address. Please "
+#| "choose a different one."
+msgid ""
+"You already have an event with this short name. Please choose another one."
+msgstr "આ ઇ-મેલ સરનામા સાથે પહેલેથી જ એક ખાતું જોડાયેલું છે. બીજું સરનામું પસંદ કરો."
 
 #: eventyay/eventyay_common/forms/filters.py:62
 msgid "Search by session name"
@@ -29361,7 +29981,7 @@ msgstr "ઇવેન્ટ સેટિંગ્સ"
 
 #: eventyay/eventyay_common/navigation.py:101
 #: eventyay/eventyay_common/templates/eventyay_common/event/live.html:12
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:327
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:325
 msgid "Event status"
 msgstr "ઇવેન્ટની સ્થિતિ"
 
@@ -29874,6 +30494,18 @@ msgstr "હજુ સુધી કોઈ એપ્લિકેશન નોં�
 msgid "Lost password?"
 msgstr "પાસવર્ડ ભૂલ્યા?"
 
+#: eventyay/eventyay_common/templates/eventyay_common/auth/base.html:40
+#, fuzzy
+#| msgid "New password"
+msgid "Show password"
+msgstr "નવો પાસવર્ડ"
+
+#: eventyay/eventyay_common/templates/eventyay_common/auth/base.html:41
+#, fuzzy
+#| msgid "New password"
+msgid "Hide password"
+msgstr "નવો પાસવર્ડ"
+
 #: eventyay/eventyay_common/templates/eventyay_common/auth/forgot.html:14
 msgid "Send recovery information"
 msgstr "રિકવરી માહિતી મોકલો"
@@ -29936,11 +30568,6 @@ msgstr ""
 msgid "Set new password"
 msgstr "નવો પાસવર્ડ સેટ કરો"
 
-#: eventyay/eventyay_common/templates/eventyay_common/base.html:258
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:161
-msgid "Main dashboard"
-msgstr "મુખ્ય ડેશબોર્ડ"
-
 #: eventyay/eventyay_common/templates/eventyay_common/component/_beta_badge.html:1
 #, fuzzy
 #| msgid "This feature is not enabled."
@@ -29970,6 +30597,76 @@ msgstr "પહેલાં આ ઘટક સક્રિય કરવું જ�
 #: eventyay/eventyay_common/templates/eventyay_common/includes/permission_required_dialog.html:11
 msgid "Ok"
 msgstr "ઠીક છે"
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:11
+msgid ""
+"You can create a new event that is a copy of this event. Please enter a "
+"name, short form, and the new dates for the new event."
+msgstr ""
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:13
+#, fuzzy
+#| msgid "Scan the following configuration code:"
+msgid "By default, the following Configuration is NOT cloned:"
+msgstr "નીચેનો રૂપરેખાંકન કોડ સ્કેન કરો:"
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:15
+msgid "Orders, attendees, payments, invoices, check-ins"
+msgstr ""
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:16
+#, fuzzy
+#| msgid "The proposal was accepted."
+msgid "Submitted proposals, reviews, accepted sessions"
+msgstr "પ્રસ્તાવ સ્વીકારવામાં આવ્યો."
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:17
+#, fuzzy
+#| msgid "Send reminder to unsubmitted proposal drafts"
+msgid "Speaker accounts or profiles linked to submitted proposals"
+msgstr "સબમિટ ન કરેલા પ્રસ્તાવ ડ્રાફ્ટ્સ માટે યાદ અપાવણું મોકલો"
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:18
+#, fuzzy
+#| msgid "Responses contain personal data"
+msgid "Message history, logs, or any personal data"
+msgstr "પ્રતિભાવોમાં વ્યક્તિગત ડેટા સામેલ છે"
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:27
+#, fuzzy
+#| msgid "Sent emails"
+msgid "New Event details"
+msgstr "મોકલાયેલા ઇમેઇલ્સ"
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:38
+#: eventyay/eventyay_common/templates/eventyay_common/events/create.html:122
+msgid "Set to random"
+msgstr "રેન્ડમ પર સેટ કરો"
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:42
+#: eventyay/eventyay_common/templates/eventyay_common/events/create.html:126
+msgid "Slug not available"
+msgstr "સ્લગ ઉપલબ્ધ નથી"
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:45
+#: eventyay/eventyay_common/templates/eventyay_common/events/create.html:129
+msgid ""
+"This is the address your event will be available at. Should be short, only "
+"contain lowercase letters and numbers, and must be unique. We recommend some "
+"kind of abbreviation with less than 30 characters that can be easily "
+"remembered. You cannot change the slug later on! If you don't provide a "
+"slug, a random one will be generated for you."
+msgstr ""
+"આ સરનામું છે જ્યાં તમારું ઇવેન્ટ ઉપલબ્ધ રહેશે. ટૂંકું હોવું જોઈએ, ફક્ત નાના અક્ષરો અને અંકો ધરાવવું "
+"જોઈએ અને અનન્ય હોવું આવશ્યક છે. 30 કરતાં ઓછી અક્ષરોનું, સરળતાથી યાદ રહે તેવું કોઈ સંક્ષેપ "
+"ભલામણ કરવામાં આવે છે. બાદમાં સ્લગ બદલી શકાશે નહીં! જો સ્લગ આપવામાં ન આવે, તો તમારા માટે "
+"એક રેન્ડમ સ્લગ જનરેટ કરવામાં આવશે."
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:62
+#, fuzzy
+#| msgid "Confirmation code"
+msgid "Configuration to clone"
+msgstr "પુષ્ટિકરણ કોડ"
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:7
 #, fuzzy
@@ -30106,14 +30803,14 @@ msgid ""
 msgstr ""
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/includes/live_error_dialogs.html:29
-#: eventyay/eventyay_common/views/event.py:1058
+#: eventyay/eventyay_common/views/event.py:1093
 msgid ""
 "You cannot unpublish the event while tickets are published. Please switch "
 "ticketing to private test mode first."
 msgstr ""
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/includes/live_error_dialogs.html:31
-#: eventyay/eventyay_common/views/event.py:1064
+#: eventyay/eventyay_common/views/event.py:1099
 msgid ""
 "You cannot unpublish the event while talks are published. Please switch "
 "talks to private test mode first."
@@ -30536,7 +31233,7 @@ msgid "Enable video"
 msgstr "વિડિયો ઍક્સેસ સક્રિય કરો"
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/live.html:461
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:316
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:314
 #, fuzzy
 #| msgid "Change order"
 msgid "Danger zone"
@@ -30548,21 +31245,17 @@ msgid ""
 "completed."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/live.html:471
-msgid "Cancel or delete event"
-msgstr "ઇવેન્ટ રદ કરો અથવા ડિલીટ કરો"
-
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:21
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:22
 #, fuzzy, python-format
 #| msgid "- Settings"
 msgid "%(name)s - Settings"
 msgstr "- સેટિંગ્સ"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:45
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:46
 msgid "Header links"
 msgstr "હેડર લિંક્સ"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:49
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:50
 msgid ""
 "These links will be shown at the top of all your schedule-related pages, "
 "e.g. the schedule itself, speaker pages, session pages, etc. You could for "
@@ -30573,11 +31266,11 @@ msgstr ""
 "પેજો, સેશન પેજો વગેરે. ઉદાહરણ તરીકે અહીં તમારા હોમ પેજ, નોંધણી પેજ અથવા લાઇવસ્ટ્રીમની "
 "લિંક આપી શકાય છે."
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:62
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:63
 msgid "Footer links"
 msgstr "ફૂટર લિંક્સ"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:66
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:67
 msgid ""
 "These links will be shown in the footer of all your public pages. You could "
 "for example link your terms of service, imprint, or privacy policy here."
@@ -30585,93 +31278,93 @@ msgstr ""
 "આ લિંક્સ તમારા તમામ જાહેર પેજોના ફૂટરમાં બતાવવામાં આવશે. ઉદાહરણ તરીકે અહીં તમારી સેવાની "
 "શરતો, ઇમ્પ્રિન્ટ અથવા ગોપનીયતા નીતિની લિંક આપી શકાય છે."
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:184
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:185
 #: eventyay/eventyay_common/templates/eventyay_common/events/create.html:151
 #, fuzzy
 #| msgid "Videos"
 msgid "Video stream"
 msgstr "વિડિઓઝ"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:241
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:242
 #, fuzzy
 #| msgid "Public link"
 msgid "Publication"
 msgstr "જાહેર લિંક"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:255
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:256
 #, fuzzy
 #| msgid "Email template"
 msgid "Email gateway"
 msgstr "ઇમેઇલ ટેમ્પલેટ"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:274
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:272
 #, fuzzy
 #| msgid "Save and send"
 msgid "Save and send test email"
 msgstr "સાચવો અને મોકલો"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:281
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:279
 #, fuzzy
 #| msgid "E-mail design"
 msgid "Email design"
 msgstr "ઈ-મેલ ડિઝાઇન"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:283
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:281
 msgid ""
 "The HTML mail renderer controls the visual design of outgoing "
 "<strong>ticket</strong> emails. Talk emails use a fixed layout and are not "
 "affected by this choice."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:320
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:318
 msgid ""
 "<strong>Danger zone:</strong> These actions can affect your event and may be "
 "irreversible. Please proceed with caution."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:328
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:326
 msgid "Manage the visibility or status of your event."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:335
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:333
 #, fuzzy
 #| msgid "The event was modified."
 msgid "Take event offline"
 msgstr "ઇવેન્ટમાં ફેરફાર કરવામાં આવ્યો હતો."
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:336
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:334
 msgid "Hide this event from attendees. You can bring it back online anytime."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:351
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:349
 msgid ""
 "Cancel this event and start the cancellation process. Ticket holders may "
 "need to be refunded."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:365
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:363
 #, fuzzy
 #| msgid "Task management"
 msgid "Data management"
 msgstr "કાર્ય વ્યવસ્થાપન"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:366
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:364
 msgid ""
 "Manage and remove specific data while retaining required financial records."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:374
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:372
 msgid ""
 "Remove personal information such as attendee names and email addresses while "
 "retaining required financial records."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:389
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:394
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:387
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:392
 msgid "Delete talk data"
 msgstr "ટોક ડેટા કાઢી નાખો"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:390
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:388
 #, fuzzy
 #| msgid ""
 #| "ALL related data, such as proposals, and speaker profiles, and uploads, "
@@ -30683,19 +31376,19 @@ msgstr ""
 "પ્રસ્તાવો, વક્તા પ્રોફાઇલ્સ અને અપલોડ્સ સહિતનું સંબંધિત બધી માહિતી પણ કાઢી નાખવામાં આવશે "
 "અને પુનઃસ્થાપિત કરી શકાશે નહીં."
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:405
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:403
 #, fuzzy
 #| msgid "Confirm deletion"
 msgid "Permanent deletion"
 msgstr "કાઢી નાખવાની પુષ્ટિ કરો"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:406
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:404
 #, fuzzy
 #| msgid "This action cannot be undone."
 msgid "These actions cannot be undone. Please be absolutely sure."
 msgstr "આ ક્રિયા પૂર્વવત્ કરી શકાશે નહીં."
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:411
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:409
 msgid ""
 "Permanently delete this event and all deletable associated data. Events "
 "containing protected records, such as completed orders outside test mode, "
@@ -30730,27 +31423,6 @@ msgid ""
 "The event type is set from the entry point. To choose a different type, go "
 "back and use the appropriate button."
 msgstr ""
-
-#: eventyay/eventyay_common/templates/eventyay_common/events/create.html:122
-msgid "Set to random"
-msgstr "રેન્ડમ પર સેટ કરો"
-
-#: eventyay/eventyay_common/templates/eventyay_common/events/create.html:126
-msgid "Slug not available"
-msgstr "સ્લગ ઉપલબ્ધ નથી"
-
-#: eventyay/eventyay_common/templates/eventyay_common/events/create.html:129
-msgid ""
-"This is the address your event will be available at. Should be short, only "
-"contain lowercase letters and numbers, and must be unique. We recommend some "
-"kind of abbreviation with less than 30 characters that can be easily "
-"remembered. You cannot change the slug later on! If you don't provide a "
-"slug, a random one will be generated for you."
-msgstr ""
-"આ સરનામું છે જ્યાં તમારું ઇવેન્ટ ઉપલબ્ધ રહેશે. ટૂંકું હોવું જોઈએ, ફક્ત નાના અક્ષરો અને અંકો ધરાવવું "
-"જોઈએ અને અનન્ય હોવું આવશ્યક છે. 30 કરતાં ઓછી અક્ષરોનું, સરળતાથી યાદ રહે તેવું કોઈ સંક્ષેપ "
-"ભલામણ કરવામાં આવે છે. બાદમાં સ્લગ બદલી શકાશે નહીં! જો સ્લગ આપવામાં ન આવે, તો તમારા માટે "
-"એક રેન્ડમ સ્લગ જનરેટ કરવામાં આવશે."
 
 #: eventyay/eventyay_common/templates/eventyay_common/events/create.html:137
 msgid ""
@@ -31631,12 +32303,12 @@ msgid "You do not have permission to change event settings."
 msgstr "ઇવેન્ટ સેટિંગ્સ બદલવાની પરવાનગી નથી."
 
 #: eventyay/eventyay_common/views/dashboards.py:416
-#: eventyay/eventyay_common/views/event.py:1189
+#: eventyay/eventyay_common/views/event.py:1224
 msgid "Video link is now visible on public pages."
 msgstr "વિડિયો લિંક હવે જાહેર પૃષ્ઠો પર દૃશ્યમાન છે."
 
 #: eventyay/eventyay_common/views/dashboards.py:418
-#: eventyay/eventyay_common/views/event.py:1191
+#: eventyay/eventyay_common/views/event.py:1226
 msgid "Video link is now hidden from public pages."
 msgstr "વિડિયો લિંક હવે જાહેર પૃષ્ઠોથી છુપાવવામાં આવી છે."
 
@@ -31644,91 +32316,98 @@ msgstr "વિડિયો લિંક હવે જાહેર પૃષ્�
 msgid "No dates"
 msgstr "તારીખો નથી"
 
-#: eventyay/eventyay_common/views/event.py:318
+#: eventyay/eventyay_common/views/event.py:324
 #, fuzzy
 #| msgid "This ticket shop is currently disabled."
 msgid "Event series creation is currently disabled."
 msgstr "આ ટિકિટ શોપ હાલમાં નિષ્ક્રિય છે."
 
-#: eventyay/eventyay_common/views/event.py:321
+#: eventyay/eventyay_common/views/event.py:327
 #, fuzzy
 #| msgid "This ticket shop is currently disabled."
 msgid "Meetup creation is currently disabled."
 msgstr "આ ટિકિટ શોપ હાલમાં નિષ્ક્રિય છે."
 
-#: eventyay/eventyay_common/views/event.py:323
+#: eventyay/eventyay_common/views/event.py:329
 #, fuzzy
 #| msgid "You do not have permission to change event settings."
 msgid "You do not have permission to create meetup events."
 msgstr "ઇવેન્ટ સેટિંગ્સ બદલવાની પરવાનગી નથી."
 
-#: eventyay/eventyay_common/views/event.py:398
+#: eventyay/eventyay_common/views/event.py:404
 #, fuzzy
 #| msgid "We could not save the email. See below for details."
 msgid "We could not create the event. See below for details."
 msgstr "ઇમેઇલ સાચવી શકાયો નથી. વિગતો માટે નીચે જુઓ."
 
-#: eventyay/eventyay_common/views/event.py:405
+#: eventyay/eventyay_common/views/event.py:411
 #, fuzzy
 #| msgid "You cannot generate an invoice for this order."
 msgid "You cannot create events for any organizer."
 msgstr "આ ઓર્ડર માટે ઇન્વૉઇસ બનાવી શકાતું નથી."
 
-#: eventyay/eventyay_common/views/event.py:412
+#: eventyay/eventyay_common/views/event.py:418
+#: eventyay/eventyay_common/views/event.py:1467
 #, fuzzy
 #| msgid "Content languages must be a subset of the active languages."
 msgid "Select at least one active language."
 msgstr "સામગ્રી ભાષાઓ સક્રિય ભાષાઓનો ઉપસેટ હોવી જોઈએ."
 
-#: eventyay/eventyay_common/views/event.py:700
+#: eventyay/eventyay_common/views/event.py:716
 #, fuzzy
 #| msgid "This feature is not enabled."
 msgid "Custom email gateway is not enabled."
 msgstr "આ સુવિધા સક્રિય નથી."
 
-#: eventyay/eventyay_common/views/event.py:719
+#: eventyay/eventyay_common/views/event.py:725
+msgid ""
+"Gmail is selected but no account is connected. Connect Gmail in the email "
+"settings first."
+msgstr ""
+
+#: eventyay/eventyay_common/views/event.py:744
 msgid ""
 "Email test failed because a field (password, username, or recipient) "
 "contains a non-ASCII character."
 msgstr ""
 
-#: eventyay/eventyay_common/views/event.py:725
+#: eventyay/eventyay_common/views/event.py:750
 #, python-format
 msgid ""
 "SendGrid test failed with HTTP error %(code)s. Check your API key and try "
 "again."
 msgstr ""
 
-#: eventyay/eventyay_common/views/event.py:732
+#: eventyay/eventyay_common/views/event.py:767
 msgid ""
 "Test email could not be delivered. Check the SMTP host, port, and "
 "credentials and try again."
 msgstr ""
 
-#: eventyay/eventyay_common/views/event.py:735
+#: eventyay/eventyay_common/views/event.py:770
 #, fuzzy
 #| msgid "This device has been set up successfully."
 msgid "Test email sent successfully."
 msgstr "આ ડિવાઇસ સફળતાપૂર્વક સેટ અપ કરવામાં આવ્યું છે."
 
-#: eventyay/eventyay_common/views/event.py:982
+#: eventyay/eventyay_common/views/event.py:1017
 msgid "CFP"
 msgstr "CFP"
 
-#: eventyay/eventyay_common/views/event.py:984
+#: eventyay/eventyay_common/views/event.py:1019
 msgid "Schedule / Sessions / Speakers"
 msgstr "સમયપત્રક / સત્રો / વક્તાઓ"
 
-#: eventyay/eventyay_common/views/event.py:993
+#: eventyay/eventyay_common/views/event.py:1028
 msgid "The Call for Proposals text is missing. Please add a description."
 msgstr ""
 
-#: eventyay/eventyay_common/views/event.py:1000
+#: eventyay/eventyay_common/views/event.py:1035
 msgid ""
 "The Call for Proposals text is too short (needs at least 50 characters)."
 msgstr ""
 
-#: eventyay/eventyay_common/views/event.py:1012
+#: eventyay/eventyay_common/views/event.py:1047
 msgid ""
 "You want submitters to choose the tracks for their proposals, but you do not "
 "offer tracks for selection. Add at least one track!"
@@ -31736,103 +32415,115 @@ msgstr ""
 "પ્રસ્તાવ રજૂ કરનારાઓને તેમના પ્રસ્તાવ માટે ટ્રેક પસંદ કરવા દેવા છે, પરંતુ પસંદગી માટે કોઈ ટ્રેક "
 "ઓફર નથી. ઓછામાં ઓછો એક ટ્રેક ઉમેરો!"
 
-#: eventyay/eventyay_common/views/event.py:1020
+#: eventyay/eventyay_common/views/event.py:1055
 msgid "You have configured only one session type so far."
 msgstr "હજી સુધી માત્ર એક સેશન પ્રકાર ગોઠવ્યો છે."
 
-#: eventyay/eventyay_common/views/event.py:1027
+#: eventyay/eventyay_common/views/event.py:1062
 #: eventyay/orga/templates/orga/cfp/talkquestion/list.html:127
 msgid "You have configured no custom fields yet."
 msgstr "હજી સુધી કોઈ કસ્ટમ ફીલ્ડ ગોઠવ્યા નથી."
 
-#: eventyay/eventyay_common/views/event.py:1044
+#: eventyay/eventyay_common/views/event.py:1079
 msgid "Please resolve the billing information before publishing the event."
 msgstr "ઇવેન્ટ પ્રકાશિત કરતા પહેલા બિલિંગ માહિતી ઉકેલો."
 
-#: eventyay/eventyay_common/views/event.py:1052
+#: eventyay/eventyay_common/views/event.py:1087
 msgid "Your event is now online."
 msgstr "ઇવેન્ટ હવે ઑનલાઇન છે."
 
-#: eventyay/eventyay_common/views/event.py:1074
+#: eventyay/eventyay_common/views/event.py:1109
 msgid "Your event has been unpublished."
 msgstr "ઇવેન્ટનું પ્રકાશન રદ કરવામાં આવ્યું છે."
 
-#: eventyay/eventyay_common/views/event.py:1080
+#: eventyay/eventyay_common/views/event.py:1115
 #, fuzzy
 #| msgid "Please set up ticketing before publishing tickets."
 msgid "Please set up ticketing before changing ticket modes."
 msgstr "ટિકિટ પ્રકાશિત કરતાં પહેલાં ટિકિટિંગ સેટ અપ કરો."
 
-#: eventyay/eventyay_common/views/event.py:1090
+#: eventyay/eventyay_common/views/event.py:1125
 msgid "Private test mode is now enabled for tickets."
 msgstr "ટિકિટો માટે પ્રાઇવેટ ટેસ્ટ મોડ હવે સક્રિય છે."
 
-#: eventyay/eventyay_common/views/event.py:1093
+#: eventyay/eventyay_common/views/event.py:1128
 #, fuzzy
 #| msgid "Publish the event before publishing tickets."
 msgid "Publish the event before testing tickets publicly."
 msgstr "ટિકિટ પ્રકાશિત કરતાં પહેલાં ઇવેન્ટ પ્રકાશિત કરો."
 
-#: eventyay/eventyay_common/views/event.py:1099
+#: eventyay/eventyay_common/views/event.py:1134
 #, fuzzy
 #| msgid "Your shop is now in test mode!"
 msgid "Your shop is now in public test mode!"
 msgstr "શોપ હવે ટેસ્ટ મોડમાં છે!"
 
-#: eventyay/eventyay_common/views/event.py:1102
+#: eventyay/eventyay_common/views/event.py:1137
 msgid "Publish the event before publishing tickets."
 msgstr "ટિકિટ પ્રકાશિત કરતાં પહેલાં ઇવેન્ટ પ્રકાશિત કરો."
 
-#: eventyay/eventyay_common/views/event.py:1105
+#: eventyay/eventyay_common/views/event.py:1140
 msgid "Please resolve the ticketing issues before publishing tickets."
 msgstr "ટિકિટ પ્રકાશિત કરતાં પહેલાં ટિકિટિંગ સમસ્યાઓ ઉકેલો."
 
-#: eventyay/eventyay_common/views/event.py:1118
+#: eventyay/eventyay_common/views/event.py:1153
 msgid ""
 "An order could not be deleted as some constraints (e.g. data created by plug-"
 "ins) do not allow it."
 msgstr ""
 "કેટલાક નિયંત્રણો (જેમ કે પ્લગ-ઇન્સ દ્વારા બનાવાયેલ ડેટા)ને કારણે ઓર્ડર કાઢી શકાયો નથી."
 
-#: eventyay/eventyay_common/views/event.py:1130
+#: eventyay/eventyay_common/views/event.py:1165
 #, fuzzy
 #| msgid "Tickets are now published."
 msgid "Tickets are now publicly sold."
 msgstr "ટિકિટો હવે પ્રકાશિત થઈ ગઈ છે."
 
-#: eventyay/eventyay_common/views/event.py:1132
+#: eventyay/eventyay_common/views/event.py:1167
 #, fuzzy
 #| msgid "Unknown cart position."
 msgid "Unknown ticketing mode."
 msgstr "અજાણી કાર્ટ પોઝિશન."
 
-#: eventyay/eventyay_common/views/event.py:1157
+#: eventyay/eventyay_common/views/event.py:1192
 msgid "Private test mode is now enabled for talks."
 msgstr "ટોક્સ માટે ખાનગી ટેસ્ટ મોડ હવે સક્રિય છે."
 
-#: eventyay/eventyay_common/views/event.py:1160
+#: eventyay/eventyay_common/views/event.py:1195
 msgid "Publish the event before publishing talks."
 msgstr "ટોક્સ પ્રકાશિત કરતા પહેલા ઇવેન્ટ પ્રકાશિત કરો."
 
-#: eventyay/eventyay_common/views/event.py:1166
+#: eventyay/eventyay_common/views/event.py:1201
 msgid "Talk pages are now published."
 msgstr "ટોક પેજિસ હવે પ્રકાશિત છે."
 
-#: eventyay/eventyay_common/views/event.py:1168
+#: eventyay/eventyay_common/views/event.py:1203
 #, fuzzy
 #| msgid "Unknown country code."
 msgid "Unknown talk mode."
 msgstr "અજ્ઞાત દેશ કોડ."
 
-#: eventyay/eventyay_common/views/event.py:1180
+#: eventyay/eventyay_common/views/event.py:1215
 msgid "Please configure video settings before changing visibility."
 msgstr ""
 
-#: eventyay/eventyay_common/views/event.py:1185
+#: eventyay/eventyay_common/views/event.py:1220
 #, fuzzy
 #| msgid "Publish the event before publishing talks."
 msgid "Publish the event before enabling public video link."
 msgstr "ટોક્સ પ્રકાશિત કરતા પહેલા ઇવેન્ટ પ્રકાશિત કરો."
+
+#: eventyay/eventyay_common/views/event.py:1542
+#, fuzzy
+#| msgid "You do not have permission to change event settings."
+msgid "You do not have permission to create events."
+msgstr "ઇવેન્ટ સેટિંગ્સ બદલવાની પરવાનગી નથી."
+
+#: eventyay/eventyay_common/views/event.py:1612
+#, fuzzy
+#| msgid "This user has been anonymized."
+msgid "Event has been cloned successfully."
+msgstr "આ વપરાશકર્તાને અનામ બનાવવામાં આવ્યો છે."
 
 #: eventyay/eventyay_common/views/organizer.py:82
 msgid "New organizer is created."
@@ -32663,13 +33354,13 @@ msgstr "કસ્ટમ ફીલ્ડ પસંદ ન કરો તો બધ
 msgid "SMTP server"
 msgstr "સર્વર"
 
-#: eventyay/orga/forms/email.py:41
+#: eventyay/orga/forms/email.py:42
 #, fuzzy
 #| msgid "Bcc address"
 msgid "BCC address"
 msgstr "Bcc સરનામું"
 
-#: eventyay/orga/forms/email.py:42
+#: eventyay/orga/forms/email.py:43
 #, fuzzy
 #| msgid "All emails will be sent to this address as a Bcc copy"
 msgid ""
@@ -32677,99 +33368,99 @@ msgid ""
 "as a blind copy."
 msgstr "બધી ઇમેઇલ્સ આ સરનામાં પર Bcc નકલ તરીકે મોકલાશે"
 
-#: eventyay/orga/forms/email.py:48
+#: eventyay/orga/forms/email.py:49
 #, fuzzy
 #| msgid "Mail signature"
 msgid "Email signature"
 msgstr "મેઇલ સહી"
 
-#: eventyay/orga/forms/email.py:50
+#: eventyay/orga/forms/email.py:51
 msgid ""
 "This text will be appended to every outgoing email (both Tickets and Talks). "
 "You can use Markdown."
 msgstr ""
 
-#: eventyay/orga/forms/email.py:64
+#: eventyay/orga/forms/email.py:65
 #, fuzzy
 #| msgid "Use Custom Email"
 msgid "Use custom email gateway"
 msgstr "કસ્ટમ ઇમેલ વાપરો"
 
-#: eventyay/orga/forms/email.py:66
+#: eventyay/orga/forms/email.py:67
 msgid ""
 "When enabled, all event-related emails (Tickets and Talks) are sent via the "
 "gateway configured below instead of the platform default."
 msgstr ""
 
-#: eventyay/orga/forms/email.py:72
+#: eventyay/orga/forms/email.py:73
 #, fuzzy
 #| msgid "Email template"
 msgid "Email gateway type"
 msgstr "ઇમેઇલ ટેમ્પલેટ"
 
-#: eventyay/orga/forms/email.py:79
+#: eventyay/orga/forms/email.py:80
 #, fuzzy
 #| msgid "SendGrid"
 msgid "SendGrid API key"
 msgstr "SendGrid"
 
-#: eventyay/orga/forms/email.py:83
+#: eventyay/orga/forms/email.py:87
 #, fuzzy
 #| msgid "Hostname"
 msgid "SMTP hostname"
 msgstr "હોસ્ટનામ"
 
-#: eventyay/orga/forms/email.py:88
+#: eventyay/orga/forms/email.py:95
 #, fuzzy
 #| msgid "CSV export"
 msgid "SMTP port"
 msgstr "CSV એક્સપોર્ટ"
 
-#: eventyay/orga/forms/email.py:93
+#: eventyay/orga/forms/email.py:103
 #, fuzzy
 #| msgid "Username"
 msgid "SMTP username"
 msgstr "વપરાશકર્તાનામ"
 
-#: eventyay/orga/forms/email.py:98
+#: eventyay/orga/forms/email.py:111
 #, fuzzy
 #| msgid "Password"
 msgid "SMTP password"
 msgstr "પાસવર્ડ"
 
-#: eventyay/orga/forms/email.py:112
+#: eventyay/orga/forms/email.py:134
 #, fuzzy
 #| msgid "Send email to"
 msgid "Send test email to"
 msgstr "આને ઇમેઇલ મોકલો"
 
-#: eventyay/orga/forms/email.py:113
+#: eventyay/orga/forms/email.py:135
 msgid "Enter one or more addresses (comma-separated) to send a test message."
 msgstr ""
 
-#: eventyay/orga/forms/email.py:161
+#: eventyay/orga/forms/email.py:183
 #, fuzzy
 #| msgid "This field is required when using SendGrid as email vendor."
 msgid "A sender email address is required when using a custom email gateway."
 msgstr "ઈમેલ વેન્ડર તરીકે SendGrid નો ઉપયોગ કરતાં વખતે આ ફીલ્ડ આવશ્યક છે."
 
-#: eventyay/orga/forms/email.py:175
+#: eventyay/orga/forms/email.py:197
 #, fuzzy
 #| msgid "This field is required when using SendGrid as email vendor."
 msgid "An API key is required when using SendGrid."
 msgstr "ઈમેલ વેન્ડર તરીકે SendGrid નો ઉપયોગ કરતાં વખતે આ ફીલ્ડ આવશ્યક છે."
 
-#: eventyay/orga/forms/email.py:187
+#: eventyay/orga/forms/email.py:215
 #, fuzzy
 #| msgid "This field is required when using SendGrid as email vendor."
 msgid "A hostname is required when using a custom SMTP server."
 msgstr "ઈમેલ વેન્ડર તરીકે SendGrid નો ઉપયોગ કરતાં વખતે આ ફીલ્ડ આવશ્યક છે."
 
-#: eventyay/orga/forms/email.py:192
+#: eventyay/orga/forms/email.py:220
 msgid "A port number is required when using a custom SMTP server."
 msgstr ""
 
-#: eventyay/orga/forms/email.py:198
+#: eventyay/orga/forms/email.py:226
 #, fuzzy
 #| msgid ""
 #| "You can activate either SSL or STARTTLS security, but not both at the "
@@ -32777,7 +33468,7 @@ msgstr ""
 msgid "You can activate either SSL or STARTTLS, but not both at the same time."
 msgstr "SSL અથવા STARTTLS સુરક્ષા પૈકી એક સક્રિય કરી શકાય છે, પરંતુ બંનેને એક સાથે નહીં."
 
-#: eventyay/orga/forms/email.py:208
+#: eventyay/orga/forms/email.py:236
 msgid ""
 "You must enable SSL or STARTTLS when using a non-local SMTP server to "
 "protect credentials and email content in transit."
@@ -33742,13 +34433,6 @@ msgstr "સુપરયુઝર તરીકે eventyay વપરાઈ રહ
 msgid "Please click here to switch to an administrator account."
 msgstr "એડમિનિસ્ટ્રેટર ખાતામાં બદલવા માટે અહીં ક્લિક કરો."
 
-#: eventyay/orga/templates/orga/base.html:277
-#: eventyay/orga/templates/orga/settings/review.html:8
-#: eventyay/orga/templates/orga/settings/review.html:24
-#: eventyay/orga/views/event.py:133
-msgid "Review settings"
-msgstr "સેટિંગ્સ સમીક્ષા"
-
 #: eventyay/orga/templates/orga/base.html:286
 #: eventyay/orga/templates/orga/settings/import_export.html:6
 #: eventyay/orga/templates/orga/settings/import_export.html:9
@@ -33792,7 +34476,7 @@ msgstr "ઍક્સેસ કોડ્સ"
 #: eventyay/orga/templates/orga/submission/content.html:273
 #: eventyay/orga/templates/orga/submission/content_edit.html:66
 #: eventyay/orga/templates/orga/submission/review.html:11
-#: eventyay/orga/views/dashboard.py:210 eventyay/orga/views/event.py:498
+#: eventyay/orga/views/dashboard.py:210 eventyay/orga/views/event.py:497
 msgid "Reviews"
 msgstr "સમીક્ષાઓ"
 
@@ -35026,7 +35710,7 @@ msgstr "ઈમેલનું પૂર્વાવલોકન"
 msgid "Send to outbox"
 msgstr "આઉટબોક્સમાં મોકલો"
 
-#: eventyay/orga/templates/orga/mails/_placeholder_group.html:41
+#: eventyay/orga/templates/orga/mails/_placeholder_group.html:37
 msgid "e.g."
 msgstr "ઉદાહરણ તરીકે"
 
@@ -35222,6 +35906,16 @@ msgstr "ક્રમમાં ગોઠવો (નવાં પહેલાં)"
 #: eventyay/orga/templates/orga/mails/sent_list.html:34
 msgid "Sort (oldest first)"
 msgstr "ક્રમમાં ગોઠવો (જૂનાં પહેલાં)"
+
+#: eventyay/orga/templates/orga/organizer/list.html:32
+#, fuzzy
+#| msgid "Event"
+#| msgid_plural "Events"
+msgctxt "number of events"
+msgid "Event"
+msgid_plural "Events"
+msgstr[0] "ઇવેન્ટ્સ"
+msgstr[1] "ઇવેન્ટ્સ"
 
 #: eventyay/orga/templates/orga/organizer/list.html:40
 msgctxt "number of teams"
@@ -35745,12 +36439,6 @@ msgstr ""
 "કરવાથી વધુ માહિતી શામેલ કરે છે. આપમેળે એકીકરણોમાં આયોજક આવૃત્તિ ઍક્સેસ કરવા માટે API જેવી "
 "રીતે ઑથન્ટિકેશન ટોકન આપવું પડશે, આ રીતે:"
 
-#: eventyay/orga/templates/orga/settings/import_export.html:238
-#: eventyay/orga/templates/orga/settings/import_export.html:431
-#: eventyay/orga/templates/orga/settings/import_export.html:540
-msgid "Documentation"
-msgstr "દસ્તાવેજીકરણ"
-
 #: eventyay/orga/templates/orga/settings/import_export.html:241
 #: eventyay/orga/templates/orga/settings/import_export.html:434
 #: eventyay/orga/templates/orga/settings/import_export.html:543
@@ -35810,10 +36498,6 @@ msgstr ""
 #| msgid "Export settings"
 msgid "HTML Export Settings"
 msgstr "નિકાસ સેટિંગ્સ"
-
-#: eventyay/orga/templates/orga/settings/mail.html:14
-msgid "Email settings"
-msgstr "ઈમેલ સેટિંગ્સ"
 
 #: eventyay/orga/templates/orga/settings/mail.html:17
 #, fuzzy
@@ -36005,13 +36689,14 @@ msgstr "આયાત શરૂ કરો"
 
 #: eventyay/orga/templates/orga/speaker/information_form.html:5
 #: eventyay/orga/templates/orga/speaker/information_form.html:8
-#: eventyay/orga/templates/orga/speaker/information_list.html:13
 #: eventyay/orga/views/speaker.py:400
+#, fuzzy
+#| msgid "Speaker Information Note"
+#| msgid_plural "Speaker Information Notes"
 msgid "Speaker Information Note"
-msgid_plural "Speaker Information Notes"
-msgstr[0] "વક્તા માહિતી નોંધો"
-msgstr[1] "વક્તા માહિતી નોંધો"
+msgstr "વક્તા માહિતી નોંધો"
 
+#: eventyay/orga/templates/orga/speaker/information_list.html:13
 #: eventyay/orga/templates/orga/speaker/information_list.html:16
 #, fuzzy, python-format
 #| msgid "Speaker Information Note"
@@ -36765,23 +37450,23 @@ msgid_plural "sent emails"
 msgstr[0] "મોકલેલ ઇમેઇલ્સ"
 msgstr[1] "મોકલેલ ઇમેઇલ્સ"
 
-#: eventyay/orga/views/event.py:134
+#: eventyay/orga/views/event.py:133
 msgid "Review scoring"
 msgstr "સમીક્ષા સ્કોરિંગ"
 
-#: eventyay/orga/views/event.py:135
+#: eventyay/orga/views/event.py:134
 msgid "Review phases"
 msgstr "સમીક્ષા તબક્કાઓ"
 
-#: eventyay/orga/views/event.py:213
+#: eventyay/orga/views/event.py:212
 msgid "Only the last review phase may be open-ended."
 msgstr "માત્ર છેલ્લો સમીક્ષા તબક્કો જ ખુલ્લા અંતવાળો હોઈ શકે છે."
 
-#: eventyay/orga/views/event.py:215
+#: eventyay/orga/views/event.py:214
 msgid "All review phases except for the first one need a start date."
 msgstr "પ્રથમ તબક્કા સિવાયના તમામ સમીક્ષા તબક્કાઓ માટે શરૂઆતની તારીખ જરૂરી છે."
 
-#: eventyay/orga/views/event.py:219
+#: eventyay/orga/views/event.py:218
 #, python-brace-format
 msgid ""
 "The review phases '{phase1}' and '{phase2}' overlap. Please make sure that "
@@ -36790,17 +37475,17 @@ msgstr ""
 "સમીક્ષા તબક્કાઓ '{phase1}' અને '{phase2}' એકબીજા સાથે ઓવરલેપ થાય છે. સમીક્ષા તબક્કાઓ "
 "ઓવરલેપ ન થાય તેની ખાતરી કરો, પછી ફરીથી સેવ કરો."
 
-#: eventyay/orga/views/event.py:353
+#: eventyay/orga/views/event.py:352
 msgid ""
 "There was a problem with your authentication. Please contact the organizer "
 "for further help."
 msgstr "પ્રમાણીકરણમાં સમસ્યા આવી છે. વધુ સહાય માટે આયોજકનો સંપર્ક કરો."
 
-#: eventyay/orga/views/event.py:367
+#: eventyay/orga/views/event.py:366
 msgid "You are now part of the team!"
 msgstr "હવે ટીમના સભ્ય બની ગયા છે."
 
-#: eventyay/orga/views/event.py:376 eventyay/orga/views/event.py:408
+#: eventyay/orga/views/event.py:375 eventyay/orga/views/event.py:407
 #, fuzzy
 #| msgid ""
 #| "ALL related data, such as proposals, and speaker profiles, and uploads, "
@@ -36812,53 +37497,53 @@ msgstr ""
 "પ્રસ્તાવો, વક્તા પ્રોફાઇલ્સ અને અપલોડ્સ સહિતનું સંબંધિત બધી માહિતી પણ કાઢી નાખવામાં આવશે "
 "અને પુનઃસ્થાપિત કરી શકાશે નહીં."
 
-#: eventyay/orga/views/event.py:396 eventyay/orga/views/event.py:428
+#: eventyay/orga/views/event.py:395 eventyay/orga/views/event.py:427
 #, fuzzy
 #| msgid "The confirm code you entered was incorrect."
 msgid "The event name you entered was incorrect."
 msgstr "તમે દાખલ કરેલો પુષ્ટિકરણ કોડ ખોટો હતો."
 
-#: eventyay/orga/views/event.py:420
+#: eventyay/orga/views/event.py:419
 #, fuzzy
 #| msgid "Talks Dashboard"
 msgid "Talk Data for"
 msgstr "ટૉક્સ ડેશબોર્ડ"
 
-#: eventyay/orga/views/event.py:432
+#: eventyay/orga/views/event.py:431
 #, fuzzy
 #| msgid "The team has been deleted."
 msgid "Talk data has been successfully deleted."
 msgstr "ટીમ કાઢી નાખવામાં આવી છે."
 
-#: eventyay/orga/views/event.py:517
+#: eventyay/orga/views/event.py:516
 #, fuzzy
 #| msgid "Schedule exports"
 msgid "Schedule HTML export"
 msgstr "નિકાસ શેડ્યૂલ કરો"
 
-#: eventyay/orga/views/event.py:565
+#: eventyay/orga/views/event.py:564
 #, fuzzy
 #| msgid "Login failed. Please try again."
 msgid "Unknown action. Please try again."
 msgstr "લૉગિન નિષ્ફળ. કૃપા કરીને ફરી પ્રયાસ કરો."
 
-#: eventyay/orga/views/event.py:575
+#: eventyay/orga/views/event.py:574
 msgid "Please choose whether to import speakers or schedule."
 msgstr ""
 
-#: eventyay/orga/views/event.py:587
+#: eventyay/orga/views/event.py:586
 #, fuzzy
 #| msgid "Invalid email or password. Please try again."
 msgid "Could not establish a session for file upload. Please try again."
 msgstr "અમાન્ય ઈમેલ અથવા પાસવર્ડ. કૃપા કરીને ફરી પ્રયાસ કરો."
 
-#: eventyay/orga/views/event.py:613
+#: eventyay/orga/views/event.py:612
 #, fuzzy
 #| msgid "Please choose an earlier date."
 msgid "Please choose a valid export target."
 msgstr "કૃપા કરીને વધુ વહેલી તારીખ પસંદ કરો."
 
-#: eventyay/orga/views/event.py:651
+#: eventyay/orga/views/event.py:650
 msgid "No data to be exported"
 msgstr "નિકાસ કરવા માટે કોઈ ડેટા નથી"
 
@@ -36894,7 +37579,7 @@ msgstr "ઇમેઇલ મોકલાઈ ગયું છે."
 msgid "{count} mails have been sent."
 msgstr "{count} ઇમેઇલ મોકલાઈ ગયા છે."
 
-#: eventyay/orga/views/mails.py:223 eventyay/plugins/sendmail/views.py:438
+#: eventyay/orga/views/mails.py:223 eventyay/plugins/sendmail/views.py:439
 #, python-brace-format
 msgid "Do you really want to delete this mail?"
 msgid_plural "Do you really want to purge {count} mails?"
@@ -36943,7 +37628,7 @@ msgstr "આ પસંદગી સાથે મેળ ખાતા કોઈ પ
 
 #: eventyay/orga/views/mails.py:413 eventyay/plugins/sendmail/views.py:147
 #: eventyay/plugins/sendmail/views.py:410
-#: eventyay/plugins/sendmail/views.py:597
+#: eventyay/plugins/sendmail/views.py:601
 #, python-brace-format
 msgid "Subject: {subject}"
 msgstr "વિષય: {subject}"
@@ -37654,19 +38339,19 @@ msgstr "વાઉચર ટૅગ્સ"
 msgid "Sample tag"
 msgstr "Sample State"
 
-#: eventyay/plugins/badges/signals.py:210
+#: eventyay/plugins/badges/signals.py:213
 msgid "Badge layout created."
 msgstr "બેજ લેઆઉટ બનાવવામાં આવ્યો."
 
-#: eventyay/plugins/badges/signals.py:211
+#: eventyay/plugins/badges/signals.py:214
 msgid "Badge layout deleted."
 msgstr "બેજ લેઆઉટ કાઢી નાખવામાં આવ્યો."
 
-#: eventyay/plugins/badges/signals.py:212
+#: eventyay/plugins/badges/signals.py:215
 msgid "Badge layout changed."
 msgstr "બેજ લેઆઉટ બદલવામાં આવ્યો."
 
-#: eventyay/plugins/badges/signals.py:226
+#: eventyay/plugins/badges/signals.py:229
 #, python-brace-format
 msgid "Badge layout {val}"
 msgstr "બેજ લેઆઉટ {val}"
@@ -39112,14 +39797,14 @@ msgid "There are no orders matching this selection."
 msgstr "આ પસંદગી સાથે મેળ ખાતા કોઈ ઓર્ડર્સ નથી."
 
 #: eventyay/plugins/sendmail/views.py:194
-#: eventyay/plugins/sendmail/views.py:680
+#: eventyay/plugins/sendmail/views.py:684
 #, fuzzy, python-brace-format
 #| msgid "Your email has been sent to the outbox."
 msgid "Your email has been scheduled for {datetime} ({timezone})."
 msgstr "ઇમેઇલ આઉટબોક્સમાં મોકલી દેવામાં આવ્યો છે."
 
 #: eventyay/plugins/sendmail/views.py:202
-#: eventyay/plugins/sendmail/views.py:688
+#: eventyay/plugins/sendmail/views.py:692
 msgid "Your email has been sent to the outbox."
 msgstr "ઇમેઇલ આઉટબોક્સમાં મોકલી દેવામાં આવ્યો છે."
 
@@ -39132,7 +39817,7 @@ msgid "The mail has been queued for sending."
 msgstr "મોકલવા માટે મેઇલ કતારમાં મૂકાયો છે."
 
 #: eventyay/plugins/sendmail/views.py:368
-#: eventyay/plugins/sendmail/views.py:563
+#: eventyay/plugins/sendmail/views.py:567
 msgid "We could not save the email. See below for details."
 msgstr "ઇમેઇલ સાચવી શકાયો નથી. વિગતો માટે નીચે જુઓ."
 
@@ -39142,38 +39827,38 @@ msgstr "આ ઇમેઇલ પહેલેથી મોકલાઈ ગયુ�
 
 #: eventyay/plugins/sendmail/views.py:397
 #: eventyay/plugins/sendmail/views.py:406
-#: eventyay/plugins/sendmail/views.py:583
-#: eventyay/plugins/sendmail/views.py:592
+#: eventyay/plugins/sendmail/views.py:587
+#: eventyay/plugins/sendmail/views.py:596
 msgid "Invalid placeholder(s): {}"
 msgstr "અમાન્ય પ્લેસહોલ્ડર(ઓ): {}"
 
-#: eventyay/plugins/sendmail/views.py:445
+#: eventyay/plugins/sendmail/views.py:449
 msgid "This mail has already been sent and cannot be deleted."
 msgstr "આ મેઇલ પહેલેથી મોકલાઈ ગયું છે અને કાઢી શકાય તેવું નથી."
 
-#: eventyay/plugins/sendmail/views.py:454
+#: eventyay/plugins/sendmail/views.py:458
 msgid "The mail and its related data have been deleted."
 msgstr "મેઇલ અને તેનું સંબંધિત ડેટા કાઢી નાખવામાં આવ્યું છે."
 
-#: eventyay/plugins/sendmail/views.py:473
+#: eventyay/plugins/sendmail/views.py:477
 #, python-brace-format
 msgid "Do you really want to purge the mail?"
 msgid_plural "Do you really want to purge {count} mails?"
 msgstr[0] "શું ખરેખર {count} ઇમેઇલ્સ દૂર કરવા છે?"
 msgstr[1] "શું ખરેખર {count} ઇમેઇલ્સ દૂર કરવા છે?"
 
-#: eventyay/plugins/sendmail/views.py:489
+#: eventyay/plugins/sendmail/views.py:493
 #, python-brace-format
 msgid "One mail has been discarded."
 msgid_plural "{count} mails have been discarded."
 msgstr[0] "{count} ઇમેઇલ્સ રદ કરવામાં આવ્યા છે."
 msgstr[1] "{count} ઇમેઇલ્સ રદ કરવામાં આવ્યા છે."
 
-#: eventyay/plugins/sendmail/views.py:623
+#: eventyay/plugins/sendmail/views.py:627
 msgid "There are no valid recipients for the selected teams."
 msgstr "પસંદ કરેલી ટીમો માટે કોઈ માન્ય પ્રાપ્તિકર્તાઓ નથી."
 
-#: eventyay/plugins/socialauth/adapter.py:32
+#: eventyay/plugins/socialauth/adapter.py:33
 #: eventyay/plugins/socialauth/views.py:45
 msgid "This login method is not available."
 msgstr "આ લૉગિન પદ્ધતિ ઉપલબ્ધ નથી."
@@ -39416,19 +40101,19 @@ msgstr "(ઉપર જેવું જ)"
 msgid "PDF ticket layout"
 msgstr "PDF ટિકિટ લેઆઉટ"
 
-#: eventyay/plugins/ticketoutputpdf/signals.py:117
+#: eventyay/plugins/ticketoutputpdf/signals.py:120
 msgid "Ticket layout created."
 msgstr "ટિકિટ લેઆઉટ બનાવ્યો."
 
-#: eventyay/plugins/ticketoutputpdf/signals.py:118
+#: eventyay/plugins/ticketoutputpdf/signals.py:121
 msgid "Ticket layout deleted."
 msgstr "ટિકિટ લેઆઉટ કાઢી નાખ્યો."
 
-#: eventyay/plugins/ticketoutputpdf/signals.py:119
+#: eventyay/plugins/ticketoutputpdf/signals.py:122
 msgid "Ticket layout changed."
 msgstr "ટિકિટ લેઆઉટ બદલ્યો."
 
-#: eventyay/plugins/ticketoutputpdf/signals.py:136
+#: eventyay/plugins/ticketoutputpdf/signals.py:139
 #, python-brace-format
 msgid "Ticket layout {val}"
 msgstr "ટિકિટ લેઆઉટ {val}"
@@ -41613,8 +42298,8 @@ msgstr "લાઇવ ઇવેન્ટ્સ"
 
 #: eventyay/presale/templates/pretixpresale/startpage.html:19
 #: eventyay/presale/templates/pretixpresale/startpage.html:20
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:96
 #: eventyay/presale/templates/pretixpresale/startpage_base.html:97
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:98
 msgid "Search events"
 msgstr "ઇવેન્ટ્સ શોધો"
 
@@ -41647,17 +42332,11 @@ msgstr "બધી તાજેતરની ઇવેન્ટ્સ જુઓ"
 msgid "Browse live events on"
 msgstr "પર લાઇવ ઇવેન્ટ્સ બ્રાઉઝ કરો"
 
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:104
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:105
 msgid "No matching events"
 msgstr "કોઈ મેળ ખાતી ઇવેન્ટ્સ નથી"
 
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:152
-#, fuzzy
-#| msgid "E-Mail notification"
-msgid "Main navigation"
-msgstr "ઈ-મેલ સૂચના"
-
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:188
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:189
 msgid "Start page header"
 msgstr "પ્રારંભ પૃષ્ઠ હેડર"
 
@@ -42208,6 +42887,11 @@ msgstr "સ્વીકારેલ નથી"
 msgid "Organisers"
 msgstr "ઓર્ગેનાઇઝર્સ"
 
+#, python-format
+#~ msgctxt "invoice"
+#~ msgid "Page %d of %d"
+#~ msgstr "પાનું %d માંથી %d"
+
 #~ msgid "Video Admin"
 #~ msgstr "વિડિયો એડમિન"
 
@@ -42471,9 +43155,6 @@ msgstr "ઓર્ગેનાઇઝર્સ"
 
 #~ msgid "Hide video link"
 #~ msgstr "વિડિયો લિંક છુપાવો"
-
-#~ msgid "Show video link"
-#~ msgstr "વિડિયો લિંક બતાવો"
 
 #~ msgid "The video module is not enabled for this event."
 #~ msgstr "આ ઇવેન્ટ માટે વિડિયો મોડ્યુલ સક્રિય નથી."
@@ -43125,10 +43806,6 @@ msgstr "ઓર્ગેનાઇઝર્સ"
 
 #~ msgid "Copy event link"
 #~ msgstr "ઇવેન્ટ લિંક કૉપી કરો"
-
-#, python-format
-#~ msgid "Page %(page)s of %(of)s"
-#~ msgstr "%(of)s માંથી પૃષ્ઠ %(page)s"
 
 #, python-brace-format
 #~ msgid "The current, automatically generated GUID is: {guid}."

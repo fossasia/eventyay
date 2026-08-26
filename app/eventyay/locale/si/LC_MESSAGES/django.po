@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-26 16:17+0000\n"
+"POT-Creation-Date: 2026-08-26 16:33+0000\n"
 "PO-Revision-Date: 2026-03-22 14:49+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Sinhala <https://hosted.weblate.org/projects/eventyay/"
@@ -49,7 +49,7 @@ msgstr ""
 #: eventyay/base/exporters/waitinglist.py:86
 #: eventyay/base/forms/questions.py:976 eventyay/base/models/auth_token.py:55
 #: eventyay/base/models/devices.py:41 eventyay/base/models/devices.py:104
-#: eventyay/base/models/event.py:3124 eventyay/base/models/event.py:3379
+#: eventyay/base/models/event.py:3295 eventyay/base/models/event.py:3550
 #: eventyay/base/models/organizer.py:119 eventyay/base/models/product.py:1679
 #: eventyay/base/models/product.py:1839 eventyay/base/models/review.py:206
 #: eventyay/base/models/room.py:288 eventyay/base/models/seating.py:42
@@ -597,7 +597,7 @@ msgstr "ට්‍රැක්"
 #: eventyay/multidomain/views.py:195 eventyay/orga/forms/mails.py:345
 #: eventyay/orga/forms/mails.py:347 eventyay/orga/templates/orga/base.html:489
 #: eventyay/orga/templates/orga/submission/speakers.html:11
-#: eventyay/orga/views/event.py:464 eventyay/orga/views/event.py:496
+#: eventyay/orga/views/event.py:463 eventyay/orga/views/event.py:495
 #: eventyay/person/forms/profile.py:447 eventyay/person/forms/profile.py:492
 #: eventyay/presale/templates/pretixpresale/event/fragment_nav.html:45
 #: eventyay/schedule/phrases.py:18
@@ -775,14 +775,14 @@ msgstr "වීඩියෝ"
 msgid "Watch live"
 msgstr "සජීවී නොවේ"
 
-#: eventyay/agenda/views/schedule.py:420
-#: eventyay/cfp/templates/cfp/event/user_submission_edit.html:62
-#: eventyay/multidomain/views.py:181
+#: eventyay/agenda/views/schedule.py:420 eventyay/multidomain/views.py:181
 #: eventyay/orga/templates/orga/submission/content_edit.html:50
+#, fuzzy
+#| msgid "Speaker"
+#| msgid_plural "Speakers"
+msgctxt "noun"
 msgid "Speaker"
-msgid_plural "Speakers"
-msgstr[0] "කථිකයින්"
-msgstr[1] "කථිකයින්"
+msgstr "කථිකයින්"
 
 #: eventyay/agenda/views/schedule.py:421 eventyay/multidomain/views.py:182
 #, fuzzy
@@ -832,7 +832,7 @@ msgstr ""
 #: eventyay/base/exporters/invoices.py:297
 #: eventyay/base/exporters/orderlist.py:595
 #: eventyay/base/exporters/orderlist.py:987
-#: eventyay/base/exporters/orderlist.py:1398 eventyay/base/models/event.py:3057
+#: eventyay/base/exporters/orderlist.py:1398 eventyay/base/models/event.py:3228
 #: eventyay/base/models/orders.py:1344 eventyay/base/models/question.py:472
 #: eventyay/base/models/submission.py:1045 eventyay/control/forms/filter.py:124
 #: eventyay/control/forms/filter.py:549 eventyay/control/forms/product.py:603
@@ -862,7 +862,7 @@ msgstr "ඔව්"
 #: eventyay/base/exporters/invoices.py:297
 #: eventyay/base/exporters/orderlist.py:595
 #: eventyay/base/exporters/orderlist.py:987
-#: eventyay/base/exporters/orderlist.py:1398 eventyay/base/models/event.py:3047
+#: eventyay/base/exporters/orderlist.py:1398 eventyay/base/models/event.py:3218
 #: eventyay/base/models/orders.py:1346 eventyay/base/models/question.py:474
 #: eventyay/base/models/submission.py:1045
 #: eventyay/cfp/templates/cfp/event/invitation.html:44
@@ -946,7 +946,7 @@ msgstr ""
 
 #: eventyay/agenda/views/schedule.py:445 eventyay/control/navigation.py:296
 #: eventyay/eventyay_common/navigation.py:268 eventyay/multidomain/views.py:203
-#: eventyay/orga/views/event.py:516
+#: eventyay/orga/views/event.py:515
 #: eventyay/presale/templates/pretixpresale/organizers/base.html:154
 #: eventyay/presale/templates/pretixpresale/organizers/fragment_toolbar.html:7
 msgid "Export"
@@ -999,7 +999,7 @@ msgid "Calendar View"
 msgstr ""
 
 #: eventyay/agenda/views/schedule.py:454 eventyay/common/forms/forms.py:12
-#: eventyay/common/forms/widgets.py:278
+#: eventyay/common/forms/widgets.py:349
 #: eventyay/common/templates/common/includes/search_form.html:7
 #: eventyay/control/templates/pretixcontrol/admin/attendees/index.html:31
 #: eventyay/control/templates/pretixcontrol/admin/events/index.html:32
@@ -1027,7 +1027,7 @@ msgstr ""
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/sent_list.html:32
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/sent_list.html:36
 #: eventyay/presale/templates/pretixpresale/startpage.html:11
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:88
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:89
 #: eventyay/submission/forms/submission.py:479
 msgid "Search"
 msgstr "සොයන්න"
@@ -1156,8 +1156,8 @@ msgstr "මෙය කිරීමට ඔබට අවසර නොමැත"
 
 #: eventyay/agenda/views/talk.py:866 eventyay/common/text/phrases.py:72
 #: eventyay/control/views/checkin.py:130
-#: eventyay/eventyay_common/views/event.py:817
-#: eventyay/eventyay_common/views/event.py:832
+#: eventyay/eventyay_common/views/event.py:852
+#: eventyay/eventyay_common/views/event.py:867
 msgid "You do not have permission to perform this action."
 msgstr "මෙම ක්‍රියාව සිදු කිරීමට ඔබට අවසර නැත."
 
@@ -1247,8 +1247,8 @@ msgstr "අවසරිත URI ලැයිස්තුව, ඉඩෙන් ව�
 msgid "Allowed list with space separated"
 msgstr "ඉඩෙන් වෙන් කළ අවසරිත ලැයිස්තුව"
 
-#: eventyay/api/models.py:37 eventyay/control/forms/global_settings.py:320
-#: eventyay/control/forms/global_settings.py:398
+#: eventyay/api/models.py:37 eventyay/control/forms/global_settings.py:405
+#: eventyay/control/forms/global_settings.py:483
 #: eventyay/plugins/socialauth/templates/socialauth/social_auth_settings.html:70
 msgid "Client ID"
 msgstr "සේවාදායක හැඳුනුම්පත"
@@ -1291,7 +1291,7 @@ msgstr "මෙහෙයුම සිදු කිරීමට කෝටාව \"
 msgid "The selected seat \"{seat}\" is not available."
 msgstr "තෝරාගත් අසුන \"{seat}\" ලබා ගත නොහැක."
 
-#: eventyay/api/serializers/checkin.py:71 eventyay/base/models/event.py:3280
+#: eventyay/api/serializers/checkin.py:71 eventyay/base/models/event.py:3451
 #: eventyay/base/models/product.py:1567 eventyay/base/models/product.py:1796
 msgid "One or more products do not belong to this event."
 msgstr "එක් හෝ වැඩි නිෂ්පාදන මෙම ඉසව්වට අයත් නොවේ."
@@ -1481,12 +1481,12 @@ msgid "An invoice for this order already exists."
 msgstr "මෙම ඇණවුම සඳහා ඉන්වොයිසියක් දැනටමත් පවතී."
 
 #: eventyay/api/views/order.py:762 eventyay/common/text/phrases.py:70
-#: eventyay/control/views/orders.py:1826 eventyay/control/views/users.py:400
-#: eventyay/control/views/users.py:403 eventyay/control/views/users.py:497
+#: eventyay/control/views/orders.py:1826 eventyay/control/views/users.py:403
+#: eventyay/control/views/users.py:406 eventyay/control/views/users.py:500
 msgid "There was an error sending the mail. Please try again later."
 msgstr "තැපෑල යැවීමේදී දෝෂයක් සිදුවිය. කරුණාකර පසුව නැවත උත්සාහ කරන්න."
 
-#: eventyay/api/views/order.py:842 eventyay/base/services/cart.py:142
+#: eventyay/api/views/order.py:842 eventyay/base/services/cart.py:146
 #: eventyay/base/services/orders.py:151 eventyay/presale/views/order.py:977
 msgid "One of the selected products is not available in the selected country."
 msgstr "තෝරාගත් නිෂ්පාදනවලින් එකක් තෝරාගත් රටේ ලබාගත නොහැක."
@@ -1605,14 +1605,20 @@ msgctxt "subevent"
 msgid "Event series date deleted"
 msgstr "ඉසව් මාලාවේ දිනය මකා දැමුවා"
 
-#: eventyay/base/auth.py:98
+#: eventyay/base/auth.py:13
+#, fuzzy
+#| msgid "This change was performed by the system administrator."
+msgid "This account has been suspended. Please contact the site administrator."
+msgstr "මෙම වෙනස පද්ධති පරිපාලකයා විසින් සිදු කරන ලදී."
+
+#: eventyay/base/auth.py:101
 #, python-brace-format
 msgid "{system} User"
 msgstr "{system} පරිශීලක"
 
-#: eventyay/base/auth.py:111
+#: eventyay/base/auth.py:114
 #: eventyay/base/configurations/default_setting.py:239
-#: eventyay/base/forms/auth.py:233 eventyay/base/models/auth.py:187
+#: eventyay/base/forms/auth.py:234 eventyay/base/models/auth.py:187
 #: eventyay/base/models/notifications.py:25 eventyay/base/models/orders.py:177
 #: eventyay/control/forms/event.py:848
 #: eventyay/control/templates/pretixcontrol/items/orderforms.html:47
@@ -1625,9 +1631,9 @@ msgstr "{system} පරිශීලක"
 msgid "E-mail"
 msgstr "ඊ-තැපෑල"
 
-#: eventyay/base/auth.py:118 eventyay/base/forms/auth.py:142
-#: eventyay/base/forms/auth.py:198
-#: eventyay/control/forms/global_settings.py:226
+#: eventyay/base/auth.py:121 eventyay/base/forms/auth.py:143
+#: eventyay/base/forms/auth.py:199
+#: eventyay/control/forms/global_settings.py:311
 #: eventyay/control/templates/pretixcontrol/admin/systemconfig.html:89
 #: eventyay/person/forms/user.py:24 eventyay/person/forms/user.py:39
 #: eventyay/presale/templates/pretixpresale/fragment_modals.html:77
@@ -1648,7 +1654,7 @@ msgid "Please enter the hexadecimal code of a color, e.g. #990000."
 msgstr "කරුණාකර වර්ණයක හෙක්සාඩෙසීමල් කේතය ඇතුළත් කරන්න, උදා. #990000."
 
 #: eventyay/base/configurations/default_setting.py:97
-#: eventyay/control/forms/global_settings.py:496
+#: eventyay/control/forms/global_settings.py:581
 msgid "Maximum number of items per order"
 msgstr "ඇණවුමකට අයිතම උපරිම සංඛ්‍යාව"
 
@@ -1953,12 +1959,12 @@ msgstr ""
 "සාමාන්‍ය ඉන්වොයිස් සඳහා ඔබ සකසා ඇති එකම අංකකරණ යෝජනාව භාවිතා කරනු ඇත."
 
 #: eventyay/base/configurations/default_setting.py:516
-#: eventyay/control/forms/global_settings.py:487
+#: eventyay/control/forms/global_settings.py:572
 msgid "Reservation period"
 msgstr "වෙන්කර තබාගැනීමේ කාලය"
 
 #: eventyay/base/configurations/default_setting.py:517
-#: eventyay/control/forms/global_settings.py:488
+#: eventyay/control/forms/global_settings.py:573
 msgid ""
 "The number of minutes the items in a user's cart are reserved for this user."
 msgstr "පරිශීලකයෙකුගේ කරත්තයේ අයිතම මෙම පරිශීලකයා සඳහා වෙන්කර තබා ඇති මිනිත්තු ගණන."
@@ -2329,12 +2335,14 @@ msgstr "පූර්වවිකුණුම් ආරම්භ වීමට ප
 
 #: eventyay/base/configurations/default_setting.py:927
 #: eventyay/control/forms/event.py:102
+#: eventyay/eventyay_common/forms/event.py:340
 #, fuzzy
 #| msgid "Event Language"
 msgid "Event languages"
 msgstr "සිදුවීමේ භාෂාව"
 
 #: eventyay/base/configurations/default_setting.py:929
+#: eventyay/eventyay_common/forms/event.py:343
 msgid ""
 "Users will be able to use eventyay in these languages, and you will be able "
 "to provide all texts in these languages. If you don't provide a text in the "
@@ -2832,7 +2840,7 @@ msgid "Refund method"
 msgstr "ආපසු ගෙවීමේ ක්‍රමය"
 
 #: eventyay/base/configurations/default_setting.py:1574
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:77
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:78
 #, fuzzy
 #| msgid "Contact information"
 msgid "Contact form"
@@ -2841,7 +2849,7 @@ msgstr "සම්බන්ධතා තොරතුරු"
 #: eventyay/base/configurations/default_setting.py:1584
 #: eventyay/base/models/event.py:629 eventyay/control/forms/event.py:419
 #: eventyay/event/forms.py:281
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:91
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:92
 msgid "Organizer email address"
 msgstr "සංවිධායකගේ විද්‍යුත් තැපැල් ලිපිනය"
 
@@ -3712,7 +3720,7 @@ msgid "We will show your logo with a maximal height and width of 2.5 cm."
 msgstr "අපි ඔබගේ ලාංඡනය උපරිම උස සහ පළල සෙ.මී. 2.5ක් සමඟ පෙන්වමු."
 
 #: eventyay/base/configurations/default_setting.py:2320
-#: eventyay/base/models/event.py:3168
+#: eventyay/base/models/event.py:3339
 msgid "Frontpage text"
 msgstr "ඉදිරි පිටුවේ පෙළ"
 
@@ -3824,7 +3832,7 @@ msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:2490
 #: eventyay/base/configurations/default_setting.py:2500
-#: eventyay/base/models/event.py:542 eventyay/base/models/event.py:3126
+#: eventyay/base/models/event.py:542 eventyay/base/models/event.py:3297
 #: eventyay/control/forms/subevents.py:507
 #: eventyay/control/templates/pretixcontrol/subevents/bulk.html:268
 msgid "Event start time"
@@ -3961,7 +3969,7 @@ msgstr "ප්‍රසිද්ධ ආරම්භක පිටුවේ බැ
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:35
 #: eventyay/eventyay_common/views/dashboards.py:570
 #: eventyay/eventyay_common/views/dashboards.py:577
-#: eventyay/eventyay_common/views/event.py:980
+#: eventyay/eventyay_common/views/event.py:1015
 #: eventyay/orga/templates/orga/event/component_link.html:9
 #: eventyay/presale/templates/pretixpresale/organizers/index.html:105
 #: eventyay/presale/templates/pretixpresale/organizers/index.html:107
@@ -4160,7 +4168,8 @@ msgid ""
 "email settings are correct."
 msgstr ""
 
-#: eventyay/base/email.py:351 eventyay/eventyay_common/views/event.py:557
+#: eventyay/base/email.py:351 eventyay/eventyay_common/views/event.py:563
+#: eventyay/eventyay_common/views/event.py:1588
 #: eventyay/orga/templates/orga/cfp/submissiontype/list.html:62
 #: eventyay/plugins/badges/apps.py:63 eventyay/plugins/badges/models.py:26
 #: eventyay/plugins/badges/templates/pretixplugins/badges/index.html:47
@@ -4259,6 +4268,7 @@ msgid "Answers to file upload questions"
 msgstr "ගොනු උඩුගත කිරීමේ ප්‍රශ්න සඳහා පිළිතුරු"
 
 #: eventyay/base/exporters/answers.py:28 eventyay/base/models/product.py:1426
+#: eventyay/eventyay_common/forms/event.py:386
 msgid "Questions"
 msgstr "ප්‍රශ්න"
 
@@ -4837,14 +4847,14 @@ msgstr "තත්ත්වය"
 #: eventyay/base/exporters/waitinglist.py:87
 #: eventyay/base/models/checkin.py:188 eventyay/base/pdf.py:423
 #: eventyay/common/log_display.py:286
-#: eventyay/control/forms/global_settings.py:512
+#: eventyay/control/forms/global_settings.py:747
 #: eventyay/control/templates/control/user_list.html:15
 #: eventyay/control/templates/pretixcontrol/admin/attendees/index.html:76
 #: eventyay/control/templates/pretixcontrol/admin/orders/index.html:71
 #: eventyay/control/templates/pretixcontrol/checkin/index.html:114
 #: eventyay/control/templates/pretixcontrol/orders/index.html:197
 #: eventyay/control/templates/pretixcontrol/waitinglist/index.html:171
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:246
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:247
 #: eventyay/eventyay_common/templates/eventyay_common/sessions/sessions.html:57
 #: eventyay/eventyay_common/templates/eventyay_common/sessions/sessions.html:88
 #: eventyay/orga/templates/orga/organizer/speaker_list.html:31
@@ -5152,7 +5162,7 @@ msgid "Order comment"
 msgstr "ඇණවුම් සටහන"
 
 #: eventyay/base/exporters/orderlist.py:864
-#: eventyay/plugins/badges/signals.py:165 eventyay/plugins/badges/utils.py:536
+#: eventyay/plugins/badges/signals.py:168 eventyay/plugins/badges/utils.py:536
 #, fuzzy
 #| msgid "Upload options"
 msgid "Badge options"
@@ -5520,66 +5530,60 @@ msgstr "ප්‍රමුඛතාවය"
 msgid "Voucher code"
 msgstr "වවුචර් කේතය"
 
-#: eventyay/base/forms/__init__.py:102
+#: eventyay/base/forms/__init__.py:104
 #, fuzzy
 #| msgid "Default ({value})"
 msgid "Default (Inherit: {})"
 msgstr "පෙරනිමි ({value})"
 
-#: eventyay/base/forms/__init__.py:217
+#: eventyay/base/forms/__init__.py:219
 msgid "Show secret key"
 msgstr "රහස් යතුර පෙන්වන්න"
 
-#: eventyay/base/forms/__init__.py:218
+#: eventyay/base/forms/__init__.py:220
 msgid "Hide secret key"
 msgstr "රහස් යතුර සඟවන්න"
 
-#: eventyay/base/forms/auth.py:17
+#: eventyay/base/forms/auth.py:18
 msgid ""
 "Password must be at least 8 characters and include a letter, a number, and a "
 "special character."
 msgstr ""
 "මුරපදය අක්ෂර 8කට අවමයෙන් තිබිය යුතු අතර අකුරක්, අංකයක් සහ විශේෂ අක්ෂරයක් ඇතුළත් විය යුතුය."
 
-#: eventyay/base/forms/auth.py:43 eventyay/base/forms/auth.py:159
+#: eventyay/base/forms/auth.py:44 eventyay/base/forms/auth.py:160
 #: eventyay/presale/templates/pretixpresale/fragment_modals.html:89
 msgid "Keep me logged in"
 msgstr "මාව ලොගින්ව තබාගන්න"
 
-#: eventyay/base/forms/auth.py:46 eventyay/base/forms/auth.py:248
+#: eventyay/base/forms/auth.py:47 eventyay/base/forms/auth.py:249
 msgid "This combination of credentials is not known to our system."
 msgstr "මෙම අක්තපත්‍ර සංයෝජනය අපගේ පද්ධතියට හඳුනාගත නොහැක."
 
-#: eventyay/base/forms/auth.py:47 eventyay/base/forms/user.py:20
+#: eventyay/base/forms/auth.py:48 eventyay/base/forms/user.py:20
 msgid "For security reasons, please wait 5 minutes before you try again."
 msgstr "ආරක්ෂක හේතු නිසා, නැවත උත්සාහ කිරීමට පෙර කරුණාකර මිනිත්තු 5ක් රැඳී සිටින්න."
 
-#: eventyay/base/forms/auth.py:48 eventyay/base/forms/auth.py:249
+#: eventyay/base/forms/auth.py:49 eventyay/base/forms/auth.py:250
 msgid "This account is inactive."
 msgstr "මෙම ගිණුම අක්‍රියයි."
 
-#: eventyay/base/forms/auth.py:49 eventyay/base/forms/auth.py:250
-#, fuzzy
-#| msgid "This change was performed by the system administrator."
-msgid "This account has been suspended. Please contact the site administrator."
-msgstr "මෙම වෙනස පද්ධති පරිපාලකයා විසින් සිදු කරන ලදී."
-
-#: eventyay/base/forms/auth.py:137
+#: eventyay/base/forms/auth.py:138
 msgid ""
 "You already registered with that email address, please use the login form."
 msgstr "ඔබ දැනටමත් එම ඉමේල් ලිපිනයෙන් ලියාපදිංචි වී ඇත, කරුණාකර ලොගින් පෝරමය භාවිතා කරන්න."
 
-#: eventyay/base/forms/auth.py:138 eventyay/base/forms/auth.py:196
+#: eventyay/base/forms/auth.py:139 eventyay/base/forms/auth.py:197
 #: eventyay/base/forms/user.py:19 eventyay/control/forms/users.py:26
 msgid "Please enter the same password twice"
 msgstr "එකම මුරපදය දෙවරක් ඇතුළත් කරන්න"
 
-#: eventyay/base/forms/auth.py:140 eventyay/common/text/phrases.py:86
+#: eventyay/base/forms/auth.py:141 eventyay/common/text/phrases.py:86
 #: eventyay/orga/forms/importers.py:80
 msgid "Email address"
 msgstr "ඉමේල් ලිපිනය"
 
-#: eventyay/base/forms/auth.py:151 eventyay/base/forms/auth.py:199
+#: eventyay/base/forms/auth.py:152 eventyay/base/forms/auth.py:200
 msgid "Repeat password"
 msgstr "මුරපදය නැවත ඇතුළත් කරන්න"
 
@@ -5758,11 +5762,117 @@ msgstr "ව්‍යාපාරික පාරිභෝගිකයා"
 msgid "Individual customer"
 msgstr "පුද්ගලික පාරිභෝගිකයා"
 
+#: eventyay/base/gmail/backend.py:52
+#, fuzzy, python-format
+#| msgid "Failed to send mail to the following user: {}"
+msgid "Daily Gmail sending limit reached for %(email)s."
+msgstr "පහත පරිශීලකයාට ඊමේල් යැවීමට අසමත් විය: {}"
+
+#: eventyay/base/gmail/backend.py:61
+#, fuzzy, python-format
+#| msgid "Failed to send mail to the following user: {}"
+msgid "Gmail rate limit reached for %(email)s."
+msgstr "පහත පරිශීලකයාට ඊමේල් යැවීමට අසමත් විය: {}"
+
+#: eventyay/base/gmail/constants.py:15
+#: eventyay/control/forms/global_settings.py:113
+#: eventyay/orga/forms/email.py:21
+msgid "Gmail / Google Workspace API"
+msgstr ""
+
+#: eventyay/base/gmail/deps.py:20
+msgid ""
+"Gmail support requires the Google API client libraries. Rebuild the "
+"application image or run `uv sync --all-extras --all-groups`."
+msgstr ""
+
+#: eventyay/base/gmail/models.py:30 eventyay/base/models/event.py:840
+#: eventyay/base/models/orders.py:176 eventyay/base/models/orders.py:2692
+#: eventyay/base/models/product.py:311 eventyay/base/models/product.py:1669
+#: eventyay/base/models/vouchers.py:91 eventyay/base/models/waitinglist.py:32
+#: eventyay/base/notifications.py:178 eventyay/common/log_display.py:294
+#: eventyay/control/forms/organizer_forms/user_orders_form.py:11
+#: eventyay/control/templates/control/bbb_list.html:21
+#: eventyay/control/templates/control/janus_list.html:17
+#: eventyay/control/templates/control/jitsi_list.html:21
+#: eventyay/control/templates/control/systemlog_list.html:12
+#: eventyay/control/templates/control/turn_list.html:17
+#: eventyay/control/templates/pretixcontrol/admin/attendees/index.html:85
+#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:293
+#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:344
+#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:461
+#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:501
+#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:539
+#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:584
+#: eventyay/control/templates/pretixcontrol/admin/orders/index.html:61
+#: eventyay/control/templates/pretixcontrol/admin/submissions/index.html:91
+#: eventyay/control/templates/pretixcontrol/search/orders.html:42
+#: eventyay/control/templates/pretixcontrol/user/orders.html:27
+#: eventyay/event/stages.py:95 eventyay/eventyay_common/forms/filters.py:12
+#: eventyay/eventyay_common/forms/filters.py:54
+#: eventyay/eventyay_common/templates/eventyay_common/orders/orders.html:40
+#: eventyay/eventyay_common/templates/eventyay_common/orders/orders.html:54
+#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:187
+#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:256
+#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:325
+#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:361
+#: eventyay/eventyay_common/templates/eventyay_common/sessions/sessions.html:54
+#: eventyay/eventyay_common/templates/eventyay_common/sessions/sessions.html:69
+#: eventyay/orga/templates/orga/mails/_placeholder_group.html:14
+#: eventyay/orga/views/event.py:387 eventyay/presale/organizer_exports.py:212
+#: eventyay/presale/templates/pretixpresale/event/waitinglist.html:19
+#, fuzzy
+#| msgid "Event"
+#| msgid_plural "Events"
+msgid "Event"
+msgstr "සිදුවීම්"
+
+#: eventyay/base/gmail/models.py:32
+#, fuzzy
+#| msgid "Send email"
+msgid "Sender email"
+msgstr "ඊමේල් යවන්න"
+
+#: eventyay/base/gmail/models.py:50
+msgid "Gmail OAuth credential"
+msgstr ""
+
+#: eventyay/base/gmail/models.py:51
+#, fuzzy
+#| msgid "Live Credentials"
+msgid "Gmail OAuth credentials"
+msgstr "සජීවී අක්තපත්‍ර"
+
+#: eventyay/base/gmail/models.py:58
+#, fuzzy
+#| msgid "Usage overview"
+msgid "platform"
+msgstr "භාවිතය සාරාංශය"
+
+#: eventyay/base/gmail/oauth.py:37
+#, fuzzy
+#| msgid "Add the client ID and client secret to admin settings"
+msgid "Gmail OAuth client ID and secret must be configured in global settings."
+msgstr "පරිපාලක සැකසුම් වලට client ID සහ client secret එකතු කරන්න"
+
+#: eventyay/base/gmail/oauth.py:85
+#, fuzzy
+#| msgid "The requested question does not exist."
+msgid "The required Gmail send permission was not granted."
+msgstr "ඉල්ලූ ප්‍රශ්නය නොපවතී."
+
+#: eventyay/base/gmail/oauth.py:99
+#, fuzzy
+#| msgid "Please provide an email address."
+msgid "Google did not return an email address for the connected account."
+msgstr "කරුණාකර ඊමේල් ලිපිනයක් ලබා දෙන්න."
+
 #: eventyay/base/invoice.py:71
-#, python-format
+#, fuzzy, python-format
+#| msgid "Page %(page)s of %(of)s"
 msgctxt "invoice"
-msgid "Page %d of %d"
-msgstr "පිටුව %d / %d"
+msgid "Page %(page)d of %(of)d"
+msgstr "පිටුව %(page)s / %(of)s"
 
 #: eventyay/base/invoice.py:272
 msgctxt "invoice"
@@ -5846,7 +5956,7 @@ msgstr ""
 msgid "TEST MODE"
 msgstr "පරීක්ෂණ ප්‍රකාරය"
 
-#: eventyay/base/invoice.py:478 eventyay/base/services/mail.py:506
+#: eventyay/base/invoice.py:478 eventyay/base/services/mail.py:512
 #, python-brace-format
 msgctxt "invoice"
 msgid "Invoice {num}"
@@ -6259,6 +6369,7 @@ msgstr "[eventyay] මුරපදය වෙනස් කරන ලදී"
 #: eventyay/base/models/auth_token.py:65 eventyay/base/models/event.py:841
 #: eventyay/cfp/templates/cfp/index.html:4
 #: eventyay/cfp/templates/cfp/index.html:8
+#: eventyay/common/context_processors.py:121
 #: eventyay/control/forms/organizer_forms/device_form.py:45
 #: eventyay/control/navigation.py:494
 #: eventyay/control/templates/control/event_list.html:6
@@ -6570,28 +6681,28 @@ msgstr "කතා පිටු ප්‍රකාශිතයි"
 msgid "Event currency"
 msgstr "සිදුවීමේ මුදල් ඒකකය"
 
-#: eventyay/base/models/event.py:543 eventyay/base/models/event.py:3127
+#: eventyay/base/models/event.py:543 eventyay/base/models/event.py:3298
 #: eventyay/base/pdf.py:365 eventyay/control/forms/subevents.py:512
 #: eventyay/control/templates/pretixcontrol/subevents/bulk.html:270
 msgid "Event end time"
 msgstr "සිදුවීම අවසන් වන වේලාව"
 
-#: eventyay/base/models/event.py:544 eventyay/base/models/event.py:3128
+#: eventyay/base/models/event.py:544 eventyay/base/models/event.py:3299
 #: eventyay/control/forms/subevents.py:517
 #: eventyay/control/templates/pretixcontrol/subevents/bulk.html:274
 msgid "Admission time"
 msgstr "ප්‍රවේශ වේලාව"
 
-#: eventyay/base/models/event.py:547 eventyay/base/models/event.py:3119
+#: eventyay/base/models/event.py:547 eventyay/base/models/event.py:3290
 msgid "Show in lists"
 msgstr "ලැයිස්තු වල පෙන්වන්න"
 
-#: eventyay/base/models/event.py:553 eventyay/base/models/event.py:3132
+#: eventyay/base/models/event.py:553 eventyay/base/models/event.py:3303
 #: eventyay/control/forms/subevents.py:78
 msgid "End of presale"
 msgstr "පූර්ව විකිණීම අවසන් වීම"
 
-#: eventyay/base/models/event.py:555 eventyay/base/models/event.py:3134
+#: eventyay/base/models/event.py:555 eventyay/base/models/event.py:3305
 #: eventyay/control/forms/subevents.py:80
 msgid ""
 "Optional. No products will be sold after this date. If you do not set this "
@@ -6600,17 +6711,17 @@ msgstr ""
 "විකල්පය. මෙම දිනයෙන් පසු නිෂ්පාදන විකිණීම සිදු නොවේ. ඔබ මෙම අගය සකස් නොකළහොත්, ඔබගේ සිදුවීමේ "
 "අවසාන දිනයෙන් පසු පූර්ව විකිණීම අවසන් වේ."
 
-#: eventyay/base/models/event.py:562 eventyay/base/models/event.py:3141
+#: eventyay/base/models/event.py:562 eventyay/base/models/event.py:3312
 #: eventyay/control/forms/subevents.py:72
 msgid "Start of presale"
 msgstr "පූර්ව විකිණීම ආරම්භය"
 
-#: eventyay/base/models/event.py:563 eventyay/base/models/event.py:3142
+#: eventyay/base/models/event.py:563 eventyay/base/models/event.py:3313
 #: eventyay/control/forms/subevents.py:73
 msgid "Optional. No products will be sold before this date."
 msgstr "විකල්පය. මෙම දිනයට පෙර නිෂ්පාදන විකිණීම සිදු නොවේ."
 
-#: eventyay/base/models/event.py:569 eventyay/base/models/event.py:3148
+#: eventyay/base/models/event.py:569 eventyay/base/models/event.py:3319
 #: eventyay/base/services/talkimport.py:147
 #: eventyay/eventyay_common/templates/eventyay_common/events/create.html:164
 #: eventyay/presale/templates/pretixpresale/event/index.html:216
@@ -6619,11 +6730,11 @@ msgstr "විකල්පය. මෙම දිනයට පෙර නිෂ්�
 msgid "Location"
 msgstr "ස්ථානය"
 
-#: eventyay/base/models/event.py:572 eventyay/base/models/event.py:3151
+#: eventyay/base/models/event.py:572 eventyay/base/models/event.py:3322
 msgid "Latitude"
 msgstr "අක්ෂාංශය"
 
-#: eventyay/base/models/event.py:581 eventyay/base/models/event.py:3160
+#: eventyay/base/models/event.py:581 eventyay/base/models/event.py:3331
 msgid "Longitude"
 msgstr "දේශාංශය"
 
@@ -6692,7 +6803,7 @@ msgid ""
 msgstr ""
 
 #: eventyay/base/models/event.py:637
-#: eventyay/eventyay_common/forms/event.py:265
+#: eventyay/eventyay_common/forms/event.py:266
 msgid "Custom domain"
 msgstr "අභිරුචි ඩොමේනය"
 
@@ -6765,73 +6876,32 @@ msgstr "භූ-රූපණ"
 msgid "Graph Paper"
 msgstr "ග්‍රාෆ් කඩදාසි"
 
-#: eventyay/base/models/event.py:840 eventyay/base/models/orders.py:176
-#: eventyay/base/models/orders.py:2692 eventyay/base/models/product.py:311
-#: eventyay/base/models/product.py:1669 eventyay/base/models/vouchers.py:91
-#: eventyay/base/models/waitinglist.py:32 eventyay/base/notifications.py:178
-#: eventyay/common/log_display.py:294
-#: eventyay/control/forms/organizer_forms/user_orders_form.py:11
-#: eventyay/control/templates/control/bbb_list.html:21
-#: eventyay/control/templates/control/janus_list.html:17
-#: eventyay/control/templates/control/jitsi_list.html:21
-#: eventyay/control/templates/control/systemlog_list.html:12
-#: eventyay/control/templates/control/turn_list.html:17
-#: eventyay/control/templates/pretixcontrol/admin/attendees/index.html:85
-#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:293
-#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:344
-#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:461
-#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:501
-#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:539
-#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:584
-#: eventyay/control/templates/pretixcontrol/admin/orders/index.html:61
-#: eventyay/control/templates/pretixcontrol/admin/submissions/index.html:91
-#: eventyay/control/templates/pretixcontrol/search/orders.html:42
-#: eventyay/control/templates/pretixcontrol/user/orders.html:27
-#: eventyay/event/stages.py:96 eventyay/eventyay_common/forms/filters.py:12
-#: eventyay/eventyay_common/forms/filters.py:54
-#: eventyay/eventyay_common/templates/eventyay_common/orders/orders.html:40
-#: eventyay/eventyay_common/templates/eventyay_common/orders/orders.html:54
-#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:187
-#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:256
-#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:325
-#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:361
-#: eventyay/eventyay_common/templates/eventyay_common/sessions/sessions.html:54
-#: eventyay/eventyay_common/templates/eventyay_common/sessions/sessions.html:69
-#: eventyay/orga/templates/orga/mails/_placeholder_group.html:14
-#: eventyay/orga/templates/orga/organizer/list.html:32
-#: eventyay/orga/views/event.py:388 eventyay/presale/organizer_exports.py:212
-#: eventyay/presale/templates/pretixpresale/event/waitinglist.html:19
-msgid "Event"
-msgid_plural "Events"
-msgstr[0] "සිදුවීම්"
-msgstr[1] "සිදුවීම්"
-
-#: eventyay/base/models/event.py:1929 eventyay/control/views/dashboards.py:307
+#: eventyay/base/models/event.py:2100 eventyay/control/views/dashboards.py:307
 msgid "live (private test mode)"
 msgstr "සජීවී (පෞද්ගලික පරීක්ෂණ මාදිලිය)"
 
-#: eventyay/base/models/event.py:1929 eventyay/control/views/dashboards.py:316
+#: eventyay/base/models/event.py:2100 eventyay/control/views/dashboards.py:316
 msgid "in private test mode"
 msgstr "පෞද්ගලික පරීක්ෂණ මාදිලියේ"
 
-#: eventyay/base/models/event.py:1931 eventyay/control/views/dashboards.py:310
+#: eventyay/base/models/event.py:2102 eventyay/control/views/dashboards.py:310
 msgid "live and in test mode"
 msgstr "සජීවී සහ පරීක්ෂණ මාදිලියේ"
 
-#: eventyay/base/models/event.py:1933 eventyay/control/views/dashboards.py:313
+#: eventyay/base/models/event.py:2104 eventyay/control/views/dashboards.py:313
 #: eventyay/orga/templates/orga/includes/dashboard_block_event.html:24
 msgid "live"
 msgstr "සජීවී"
 
-#: eventyay/base/models/event.py:1935 eventyay/control/views/dashboards.py:318
+#: eventyay/base/models/event.py:2106 eventyay/control/views/dashboards.py:318
 msgid "in test mode"
 msgstr "පරීක්ෂණ මාදිලියේ"
 
-#: eventyay/base/models/event.py:1937 eventyay/control/views/dashboards.py:318
+#: eventyay/base/models/event.py:2108 eventyay/control/views/dashboards.py:318
 msgid "not yet public"
 msgstr "තවමත් ප්‍රසිද්ධ නොවේ"
 
-#: eventyay/base/models/event.py:2053
+#: eventyay/base/models/event.py:2224
 msgid ""
 "You have configured at least one paid product but have not enabled any "
 "payment methods."
@@ -6839,74 +6909,74 @@ msgstr ""
 "ඔබ අවම වශයෙන් එක ගෙවීම් සහිත නිෂ්පාදනයක් වින්‍යාස කර ඇත, නමුත් කිසිදු ගෙවීම් ක්‍රමයක් සක්‍රීය කර "
 "නැත."
 
-#: eventyay/base/models/event.py:2056
+#: eventyay/base/models/event.py:2227
 msgid "You need to configure at least one quota to sell anything."
 msgstr "කිසිවක් අලෙවි කිරීමට ඔබ අවම වශයෙන් එක කෝටාවක් වින්‍යාස කළ යුතුය."
 
-#: eventyay/base/models/event.py:2059
+#: eventyay/base/models/event.py:2230
 msgid "You have unpaid invoices, please pay them before going live."
 msgstr "ඔබට නොගෙවූ ඉන්වොයිස් තිබේ, සජීවී කිරීමට පෙර ඒවා ගෙවන්න."
 
-#: eventyay/base/models/event.py:2064
+#: eventyay/base/models/event.py:2235
 #, python-brace-format
 msgid "You need to fill the meta parameter \"{property}\"."
 msgstr "ඔබ meta පරාමිතිය \"{property}\" පුරවිය යුතුය."
 
-#: eventyay/base/models/event.py:2110
+#: eventyay/base/models/event.py:2281
 msgid "You need to fill the billing information."
 msgstr "ඔබ බිල්පත් තොරතුරු පුරවිය යුතුය."
 
-#: eventyay/base/models/event.py:2329
+#: eventyay/base/models/event.py:2500
 msgid ""
 "Once created an event cannot change between an series and a single event."
 msgstr "සිදුවීමක් නිර්මාණය කළ පසු එය ශ්‍රේණියක් සහ තනි සිදුවීමක් අතර වෙනස් කළ නොහැක."
 
-#: eventyay/base/models/event.py:2335
+#: eventyay/base/models/event.py:2506
 msgid "The event slug cannot be changed."
 msgstr "සිදුවීම් slug එක වෙනස් කළ නොහැක."
 
-#: eventyay/base/models/event.py:2338
+#: eventyay/base/models/event.py:2509
 msgid "This slug has already been used for a different event."
 msgstr "මෙම slug එක දැනටමත් වෙනත් සිදුවීමක් සඳහා භාවිතා කර ඇත."
 
-#: eventyay/base/models/event.py:2344
+#: eventyay/base/models/event.py:2515
 msgid "The event cannot end before it starts."
 msgstr "සිදුවීම ආරම්භයට පෙර අවසන් විය නොහැක."
 
-#: eventyay/base/models/event.py:2350
+#: eventyay/base/models/event.py:2521
 msgid "The event's presale cannot end before it starts."
 msgstr "සිදුවීමේ පෙරවිකුණුම ආරම්භයට පෙර අවසන් විය නොහැක."
 
-#: eventyay/base/models/event.py:2823 eventyay/base/models/event.py:3019
-#: eventyay/event/stages.py:68
+#: eventyay/base/models/event.py:2994 eventyay/base/models/event.py:3190
+#: eventyay/event/stages.py:67
 #: eventyay/orga/templates/orga/submission/review.html:198
 msgid "Review"
 msgstr "සමාලෝචනය"
 
-#: eventyay/base/models/event.py:3027
+#: eventyay/base/models/event.py:3198
 msgid "Selection"
 msgstr "තේරීම"
 
-#: eventyay/base/models/event.py:3042 eventyay/base/models/review.py:129
+#: eventyay/base/models/event.py:3213 eventyay/base/models/review.py:129
 #: eventyay/orga/forms/event.py:530 eventyay/orga/forms/event.py:547
 #: eventyay/orga/templates/orga/includes/review_filter_form.html:25
 #: eventyay/orga/templates/orga/submission/review.html:193
 msgid "Score"
 msgstr "ලකුණු"
 
-#: eventyay/base/models/event.py:3052
+#: eventyay/base/models/event.py:3223
 msgid "Maybe"
 msgstr "සමහරවිට"
 
-#: eventyay/base/models/event.py:3075
+#: eventyay/base/models/event.py:3246
 msgid "Link text"
 msgstr "සබැඳි පෙළ"
 
-#: eventyay/base/models/event.py:3076
+#: eventyay/base/models/event.py:3247
 msgid "Link URL"
 msgstr "සබැඳි URL"
 
-#: eventyay/base/models/event.py:3114
+#: eventyay/base/models/event.py:3285
 #: eventyay/base/models/global_plugin_config.py:28
 #: eventyay/base/models/product.py:337 eventyay/base/models/product.py:867
 #: eventyay/base/models/product.py:1320 eventyay/control/forms/filter.py:852
@@ -6930,51 +7000,51 @@ msgstr "සබැඳි URL"
 msgid "Active"
 msgstr "සක්‍රීය"
 
-#: eventyay/base/models/event.py:3115
+#: eventyay/base/models/event.py:3286
 msgid ""
 "Only with this checkbox enabled, this date is visible in the frontend to "
 "users."
 msgstr "මෙම පිරික්සුම් කොටුව සක්‍රීය කළ විට පමණක්, මෙම දිනය frontend තුළ පරිශීලකයින්ට දෘශ්‍ය වේ."
 
-#: eventyay/base/models/event.py:3120
+#: eventyay/base/models/event.py:3291
 msgid ""
 "If selected, this event will show up publicly on the list of dates for your "
 "event."
 msgstr "තේරූ විට, මෙම සිදුවීම ඔබගේ සිදුවීම සඳහා දිනයන් ලැයිස්තුවේ ප්‍රසිද්ධියේ පෙන්වයි."
 
-#: eventyay/base/models/event.py:3184
+#: eventyay/base/models/event.py:3355
 msgid "Date in event series"
 msgstr "සිදුවීම් මාලාවේ දිනය"
 
-#: eventyay/base/models/event.py:3185
+#: eventyay/base/models/event.py:3356
 msgid "Dates in event series"
 msgstr "සිදුවීම් මාලාවේ දිනයන්"
 
-#: eventyay/base/models/event.py:3286
+#: eventyay/base/models/event.py:3457
 msgid "One or more variations do not belong to this event."
 msgstr "වෙනස්කම් එකක් හෝ කිහිපයක් මෙම සිදුවීමට අයත් නොවේ."
 
-#: eventyay/base/models/event.py:3372 eventyay/base/models/product.py:1832
+#: eventyay/base/models/event.py:3543 eventyay/base/models/product.py:1832
 msgid "Can not contain spaces or special characters except underscores"
 msgstr "අන්ඩර්ස්කෝර් හැර ඉඩතැන් හෝ විශේෂ අක්ෂර අඩංගු විය නොහැක"
 
-#: eventyay/base/models/event.py:3376 eventyay/base/models/product.py:1836
+#: eventyay/base/models/event.py:3547 eventyay/base/models/product.py:1836
 msgid "The property name may only contain letters, numbers and underscores."
 msgstr "ගුණාංග නාමය අකුරු, අංක සහ අන්ඩර්ස්කෝර් පමණක් අඩංගු විය හැක."
 
-#: eventyay/base/models/event.py:3381
+#: eventyay/base/models/event.py:3552
 msgid "Default value"
 msgstr "පෙරනිමි අගය"
 
-#: eventyay/base/models/event.py:3384
+#: eventyay/base/models/event.py:3555
 msgid "Can only be changed by organizer-level administrators"
 msgstr "සංවිධායක-මට්ටමේ පරිපාලකයින්ට පමණක් වෙනස් කළ හැක"
 
-#: eventyay/base/models/event.py:3388
+#: eventyay/base/models/event.py:3559
 msgid "Required for events"
 msgstr "සිදුවීම් සඳහා අවශ්‍යයි"
 
-#: eventyay/base/models/event.py:3390
+#: eventyay/base/models/event.py:3561
 msgid ""
 "If checked, an event can only be taken live if the property is set. In event "
 "series, its always optional to set a value for individual dates"
@@ -6982,22 +7052,22 @@ msgstr ""
 "මෙය සලකුණු කළහොත්, ගුණාංගය සකස් කර ඇති විට පමණක් සිදුවීමක් සජීවී කළ හැක. සිදුවීම් මාලාවේ, එක් "
 "එක් දිනය සඳහා අගයක් සකස් කිරීම සැමවිටම විකල්ප වේ"
 
-#: eventyay/base/models/event.py:3397
+#: eventyay/base/models/event.py:3568
 msgid "Valid values"
 msgstr "වලංගු අගයන්"
 
-#: eventyay/base/models/event.py:3398
+#: eventyay/base/models/event.py:3569
 msgid ""
 "If you keep this empty, any value is allowed. Otherwise, enter one possible "
 "value per line."
 msgstr ""
 "මෙය හිස්ව තබන්නේ නම්, ඕනෑම අගයක් ඉඩදෙයි. නැතිනම්, පේළියකට එකක් ලෙස හැකි අගයන් ඇතුළත් කරන්න."
 
-#: eventyay/base/models/event.py:3404
+#: eventyay/base/models/event.py:3575
 msgid "A property can either be required or have a default value, not both."
 msgstr "ගුණාංගයක් අවශ්‍ය වීමක් හෝ පෙරනිමි අගයක් තිබීමක් අතරින් එකක් පමණක් විය හැක, දෙකම නොවේ."
 
-#: eventyay/base/models/event.py:3406
+#: eventyay/base/models/event.py:3577
 msgid "You cannot set a default value that is not a valid value."
 msgstr "වලංගු නොවන අගයක් පෙරනිමි අගය ලෙස සකස් කළ නොහැක."
 
@@ -7332,7 +7402,7 @@ msgstr "පරිශීලකයා ප්‍රතිචාර නොදී ඇ
 #: eventyay/orga/templates/orga/mails/sent_list.html:25
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/outbox_form.html:30
 #: eventyay/plugins/sendmail/views.py:278
-#: eventyay/plugins/sendmail/views.py:530
+#: eventyay/plugins/sendmail/views.py:534
 msgid "To"
 msgstr "වෙත"
 
@@ -7352,7 +7422,7 @@ msgstr ""
 msgid "CC"
 msgstr "CC"
 
-#: eventyay/base/models/mail.py:384 eventyay/plugins/sendmail/views.py:531
+#: eventyay/base/models/mail.py:384 eventyay/plugins/sendmail/views.py:535
 msgid "Sent at"
 msgstr "යවා ඇති වේලාව"
 
@@ -7743,7 +7813,7 @@ msgstr "සංවිධායක"
 
 #: eventyay/base/models/organizer.py:143
 #: eventyay/common/templates/common/fragment_profile_dropdown.html:28
-#: eventyay/control/forms/global_settings.py:553
+#: eventyay/control/forms/global_settings.py:789
 #: eventyay/control/navigation.py:386
 #: eventyay/control/templates/pretixcontrol/admin/dashboard.html:43
 #: eventyay/control/templates/pretixcontrol/admin/dashboard.html:207
@@ -8171,7 +8241,7 @@ msgstr "සංවිධායක ලොග්ස්"
 msgid "Page title"
 msgstr "පිටු ශීර්ෂය"
 
-#: eventyay/base/models/page.py:13 eventyay/control/views/pages.py:68
+#: eventyay/base/models/page.py:13 eventyay/control/views/pages.py:73
 msgid "URL form"
 msgstr "URL පෝරමය"
 
@@ -10694,12 +10764,12 @@ msgstr "කරුණාකර වලංගු විකුණුම් නාල
 msgid "No matching seat was found."
 msgstr "ගැළපෙන ආසනයක් හමු නොවීය."
 
-#: eventyay/base/orderimport.py:984 eventyay/base/services/cart.py:136
+#: eventyay/base/orderimport.py:984 eventyay/base/services/cart.py:140
 msgid ""
 "The seat you selected has already been taken. Please select a different seat."
 msgstr "ඔබ තෝරාගත් ආසනය දැනටමත් ගෙන ඇත. කරුණාකර වෙනත් ආසනයක් තෝරන්න."
 
-#: eventyay/base/orderimport.py:993 eventyay/base/services/cart.py:133
+#: eventyay/base/orderimport.py:993 eventyay/base/services/cart.py:137
 msgid "You need to select a specific seat."
 msgstr "ඔබට විශේෂිත ආසනයක් තෝරාගත යුතුයි."
 
@@ -11398,7 +11468,7 @@ msgid "Languages"
 msgstr "භාෂා"
 
 #: eventyay/base/plugins.py:100 eventyay/common/plugins.py:15
-#: eventyay/orga/templates/orga/mails/_placeholder_group.html:20
+#: eventyay/orga/templates/orga/mails/_placeholder_group.html:16
 msgctxt "category of items"
 msgid "Other"
 msgstr "වෙනත්"
@@ -11566,36 +11636,37 @@ msgstr ""
 msgid "The entered price exceeds the permitted maximum."
 msgstr "ඇතුළත් කළ මිල ඉතා වැඩිය."
 
-#: eventyay/base/services/cart.py:94
+#: eventyay/base/services/cart.py:95
 #, python-format
 msgid ""
-"The entered price is below the permitted minimum. The price range is %s to "
-"%s %s."
+"The entered price is below the permitted minimum. The price range is %(min)s "
+"to %(max)s %(currency)s."
 msgstr ""
 
-#: eventyay/base/services/cart.py:95
+#: eventyay/base/services/cart.py:97
 #, python-format
 msgid ""
 "The entered price is below the permitted minimum. The minimum price is %s."
 msgstr ""
 
-#: eventyay/base/services/cart.py:96
-#, python-format
+#: eventyay/base/services/cart.py:99
+#, fuzzy, python-format
+#| msgid "The entered price is to high."
 msgid ""
-"The entered price exceeds the permitted maximum. The price range is %s to %s "
-"%s."
-msgstr ""
+"The entered price exceeds the permitted maximum. The price range is %(min)s "
+"to %(max)s %(currency)s."
+msgstr "ඇතුළත් කළ මිල ඉතා වැඩිය."
 
-#: eventyay/base/services/cart.py:97
+#: eventyay/base/services/cart.py:101
 msgid "This voucher code is not known in our database."
 msgstr "මෙම වවුචර් කේතය අපගේ දත්ත සමුදායේ නොමැත."
 
-#: eventyay/base/services/cart.py:98
+#: eventyay/base/services/cart.py:102
 msgid ""
 "This voucher code has already been used the maximum number of times allowed."
 msgstr "මෙම වවුචර් කේතය අවසර දී ඇති උපරිම වාර ගණන දැනටමත් භාවිතා කර ඇත."
 
-#: eventyay/base/services/cart.py:100
+#: eventyay/base/services/cart.py:104
 #, python-format
 msgid ""
 "This voucher code is currently locked since it is already contained in a "
@@ -11607,12 +11678,12 @@ msgstr ""
 "මොහොතේ භාවිතා කරමින් සිටින බවක්, හෝ ඔබ පෙර භාවිතා කිරීමට උත්සාහ කළත් චෙක්අවුට් ක්‍රියාවලිය "
 "සම්පූර්ණ නොකළ බවක් අදහස් විය හැක. ඔබට %d මිනිත්තු වලින් පසු නැවත උත්සාහ කළ හැක."
 
-#: eventyay/base/services/cart.py:105
+#: eventyay/base/services/cart.py:109
 #, python-format
 msgid "This voucher code can only be redeemed %d more times."
 msgstr "මෙම වවුචර් කේතය තවමත් %d වාරයක් පමණක් භාවිතා කළ හැක."
 
-#: eventyay/base/services/cart.py:107
+#: eventyay/base/services/cart.py:111
 msgid ""
 "You already used this voucher code. Remove the associated line from your "
 "cart if you want to use it for a different product."
@@ -11620,19 +11691,19 @@ msgstr ""
 "ඔබ මෙම වවුචර් කේතය දැනටමත් භාවිතා කර ඇත. වෙනත් නිෂ්පාදනයක් සඳහා එය භාවිතා කිරීමට අවශ්‍ය "
 "නම්, ඒ සම්බන්ධ පේළිය ඔබගේ කරත්තයෙන් ඉවත් කරන්න."
 
-#: eventyay/base/services/cart.py:110
+#: eventyay/base/services/cart.py:114
 msgid "This voucher is expired."
 msgstr "මෙම වවුචර් එකේ වලංගු කාලය අවසන් වී ඇත."
 
-#: eventyay/base/services/cart.py:111
+#: eventyay/base/services/cart.py:115
 msgid "This voucher is not valid for this product."
 msgstr "මෙම වවුචර් එක මෙම නිෂ්පාදනය සඳහා වලංගු නොවේ."
 
-#: eventyay/base/services/cart.py:112
+#: eventyay/base/services/cart.py:116
 msgid "This voucher is not valid for this seat."
 msgstr "මෙම වවුචර් එක මෙම ආසනය සඳහා වලංගු නොවේ."
 
-#: eventyay/base/services/cart.py:114
+#: eventyay/base/services/cart.py:118
 msgid ""
 "We did not find any position in your cart that we could use this voucher "
 "for. If you want to add something new to your cart using that voucher, you "
@@ -11642,33 +11713,33 @@ msgstr ""
 "කරමින් අලුතින් දෙයක් කරත්තයට එක් කිරීමට අවශ්‍ය නම්, පිටුවේ පහළින් ඇති වවුචර් රිඩීම් විකල්පය භාවිතා කළ "
 "හැක."
 
-#: eventyay/base/services/cart.py:118
+#: eventyay/base/services/cart.py:122
 msgid "Your voucher is valid for a product that is currently not for sale."
 msgstr "ඔබගේ වවුචර් එක දැනට විකිණීමට නොමැති නිෂ්පාදනයක් සඳහා වලංගු වේ."
 
-#: eventyay/base/services/cart.py:119
+#: eventyay/base/services/cart.py:123
 msgctxt "subevent"
 msgid "This voucher is not valid for this event date."
 msgstr "මෙම වවුචර් එක මෙම ඉසව් දිනය සඳහා වලංගු නොවේ."
 
-#: eventyay/base/services/cart.py:120
+#: eventyay/base/services/cart.py:124
 msgid "You need a valid voucher code to order this product."
 msgstr "මෙම නිෂ්පාදනය ඇණවුම් කිරීමට ඔබට වලංගු වවුචර් කේතයක් අවශ්‍ය වේ."
 
-#: eventyay/base/services/cart.py:121
+#: eventyay/base/services/cart.py:125
 msgctxt "subevent"
 msgid "The selected event date is not active."
 msgstr "තෝරාගත් ඉසව් දිනය සක්‍රිය නොවේ."
 
-#: eventyay/base/services/cart.py:122
+#: eventyay/base/services/cart.py:126
 msgid "You can not select an add-on for the selected product."
 msgstr "තෝරාගත් නිෂ්පාදනය සඳහා ඔබට ඇඩ්-ඔන් එකක් තෝරාගත නොහැක."
 
-#: eventyay/base/services/cart.py:123
+#: eventyay/base/services/cart.py:127
 msgid "You can not select two variations of the same add-on product."
 msgstr "එකම ඇඩ්-ඔන් නිෂ්පාදනයේ විචල්‍යතා දෙකක් තෝරාගත නොහැක."
 
-#: eventyay/base/services/cart.py:124
+#: eventyay/base/services/cart.py:128
 #, python-format
 msgid ""
 "You can select at most %(max)s add-ons from the category %(cat)s for the "
@@ -11676,7 +11747,7 @@ msgid ""
 msgstr ""
 "නිෂ්පාදනය %(base)s සඳහා %(cat)s ප්‍රවර්ගයෙන් ඇඩ්-ඔන් උපරිමයෙන් %(max)sක් තෝරාගත හැක."
 
-#: eventyay/base/services/cart.py:126
+#: eventyay/base/services/cart.py:130
 #, python-format
 msgid ""
 "You need to select at least %(min)s add-ons from the category %(cat)s for "
@@ -11684,7 +11755,7 @@ msgid ""
 msgstr ""
 "නිෂ්පාදනය %(base)s සඳහා %(cat)s ප්‍රවර්ගයෙන් අවම වශයෙන් ඇඩ්-ඔන් %(min)sක් තෝරාගත යුතුය."
 
-#: eventyay/base/services/cart.py:129
+#: eventyay/base/services/cart.py:133
 #, python-format
 msgid ""
 "You can select every add-ons from the category %(cat)s for the product "
@@ -11693,29 +11764,29 @@ msgstr ""
 "නිෂ්පාදනය %(base)s සඳහා %(cat)s ප්‍රවර්ගයේ එක් එක් ඇඩ්-ඔන් එකක් උපරිමයෙන් එක් වරක් පමණක් "
 "තෝරාගත හැක."
 
-#: eventyay/base/services/cart.py:131
+#: eventyay/base/services/cart.py:135
 msgid ""
 "One of the products you selected can only be bought as an add-on to another "
 "project."
 msgstr "ඔබ තෝරාගත් නිෂ්පාදනවලින් එකක් වෙනත් ව්‍යාපෘතියකට ඇඩ්-ඔන් ලෙස පමණක් මිලදී ගත හැක."
 
-#: eventyay/base/services/cart.py:132
+#: eventyay/base/services/cart.py:136
 msgid "One of the products you selected can only be bought part of a bundle."
 msgstr "ඔබ තෝරාගත් නිෂ්පාදනවලින් එකක් බණ්ඩලයක කොටසක් ලෙස පමණක් මිලදී ගත හැක."
 
-#: eventyay/base/services/cart.py:134
+#: eventyay/base/services/cart.py:138
 msgid "Please select a valid seat."
 msgstr "කරුණාකර වලංගු ආසනයක් තෝරන්න."
 
-#: eventyay/base/services/cart.py:135
+#: eventyay/base/services/cart.py:139
 msgid "You can not select a seat for this position."
 msgstr "මෙම ස්ථානය සඳහා ආසනයක් තෝරාගත නොහැක."
 
-#: eventyay/base/services/cart.py:137
+#: eventyay/base/services/cart.py:141
 msgid "You can not select the same seat multiple times."
 msgstr "එකම ආසනය එකाधिक වරක් තෝරාගත නොහැක."
 
-#: eventyay/base/services/cart.py:139
+#: eventyay/base/services/cart.py:143
 msgid ""
 "You entered a gift card instead of a voucher. Gift cards can be entered "
 "later on when you're asked for your payment details."
@@ -11723,14 +11794,14 @@ msgstr ""
 "ඔබ වවුචරයක් වෙනුවට තෑගි කාඩ්පතක් ඇතුළත් කර ඇත. ගෙවීම් තොරතුරු ඉල්ලන විට පසුව තෑගි කාඩ්පත් ඇතුළත් "
 "කළ හැක."
 
-#: eventyay/base/services/cart.py:143
+#: eventyay/base/services/cart.py:147
 msgid ""
 "Only one ticket per user is allowed for a product in your cart. You already "
 "have a ticket."
 msgstr ""
 "ඔබගේ කරත්තයේ නිෂ්පාදනයකට පරිශීලකයෙකුට ටිකට් එකක් පමණක් අවසර ඇත. ඔබට දැනටමත් ටිකට් එකක් ඇත."
 
-#: eventyay/base/services/cart.py:144
+#: eventyay/base/services/cart.py:148
 msgid ""
 "Only one ticket per user is allowed for this product. Quantity has been "
 "adjusted to 1."
@@ -11922,14 +11993,14 @@ msgstr "නියැදි නිෂ්පාදනය {}"
 msgid "Sample product A"
 msgstr "නියැදි නිෂ්පාදනය A"
 
-#: eventyay/base/services/mail.py:230
+#: eventyay/base/services/mail.py:236
 #, python-brace-format
 msgid ""
 "You are receiving this email because someone placed an order for {event} for "
 "you."
 msgstr "ඔබ වෙනුවෙන් {event} සඳහා කෙනෙකු ඇණවුමක් කළ නිසා ඔබට මෙම ඊමේල් එක ලැබේ."
 
-#: eventyay/base/services/mail.py:234 eventyay/base/services/mail.py:255
+#: eventyay/base/services/mail.py:240 eventyay/base/services/mail.py:261
 #, python-brace-format
 msgid ""
 "You can view your order details at the following URL:\n"
@@ -11938,7 +12009,7 @@ msgstr ""
 "පහත URL එකෙන් ඔබගේ ඇණවුම් විස්තර දැකිය හැක:\n"
 "{orderurl}."
 
-#: eventyay/base/services/mail.py:250
+#: eventyay/base/services/mail.py:256
 #, python-brace-format
 msgid "You are receiving this email because you placed an order for {event}."
 msgstr "ඔබ {event} සඳහා ඇණවුමක් කළ නිසා ඔබට මෙම ඊමේල් එක ලැබේ."
@@ -12713,6 +12784,8 @@ msgid "You do not have access to this page."
 msgstr "මෙම පිටුවට ඔබට ප්‍රවේශයක් නොමැත."
 
 #: eventyay/base/templates/403.html:20 eventyay/base/templates/404.html:19
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:76
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:78
 #: eventyay/control/templates/pretixcontrol/admin/user/staff_session_start.html:4
 #: eventyay/control/templates/pretixcontrol/admin/user/staff_session_start.html:6
 #: eventyay/control/templates/pretixcontrol/base.html:231
@@ -12721,8 +12794,8 @@ msgstr "මෙම පිටුවට ඔබට ප්‍රවේශයක් �
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:197
 #: eventyay/orga/templates/orga/base.html:163
 #: eventyay/orga/templates/orga/base.html:164
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:125
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:127
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:126
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:128
 msgid "Admin mode"
 msgstr "පරිපාලක මාදිලිය"
 
@@ -12785,9 +12858,9 @@ msgstr ""
 
 #: eventyay/base/templates/pretixbase/email/email_footer.html:3
 #: eventyay/common/templates/common/powered_by.html:36
-#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:63
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:142
 #: eventyay/control/templates/pretixcontrol/base.html:416
-#: eventyay/eventyay_common/templates/eventyay_common/auth/base.html:89
+#: eventyay/eventyay_common/templates/eventyay_common/auth/base.html:98
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:386
 #: eventyay/presale/templates/pretixpresale/base_footer.html:13
 #, python-format
@@ -12934,11 +13007,12 @@ msgstr "ඊමේල් පෙරදසුන් කරන්න"
 #: eventyay/base/templates/pretixbase/forms/widgets/thumbnailed_file_input.html:47
 #: eventyay/control/templates/pretixcontrol/event/mail_settings_fragment.html:30
 #: eventyay/control/templates/pretixcontrol/event/tickets.html:36
+#: eventyay/control/templates/pretixcontrol/global_settings.html:246
 #: eventyay/control/templates/pretixcontrol/includes/preview_modal.html:13
 #: eventyay/control/templates/pretixcontrol/includes/preview_modal.html:16
 #: eventyay/control/templates/pretixcontrol/order/sendmail.html:33
 #: eventyay/control/templates/pretixcontrol/pdf/index.html:452
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:305
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:303
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/outbox_form.html:136
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/send_form.html:73
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/send_team_form.html:48
@@ -13393,11 +13467,13 @@ msgstr "ආරාධනය පිළිගන්න"
 #: eventyay/common/templates/common/fragment_header_user.html:156
 #: eventyay/common/templates/common/fragment_header_user.html:158
 #: eventyay/common/text/phrases.py:121
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:95
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:96
 #: eventyay/control/templates/registration/login.html:4
 #: eventyay/eventyay_common/templates/eventyay_common/auth/invite.html:26
 #: eventyay/presale/templates/pretixpresale/fragment_modals.html:33
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:144
 #: eventyay/presale/templates/pretixpresale/startpage_base.html:145
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:146
 msgid "Login"
 msgstr "පිවිසෙන්න"
 
@@ -13634,6 +13710,12 @@ msgstr "ප්‍රේක්ෂක ප්‍රතිචාර"
 msgid "Attendees can leave feedback here after your session has taken place."
 msgstr "ඔබගේ සැසිය සිදු වූ පසු සහභාගිවන්නන්ට මෙහි ප්‍රතිචාර තබන්න හැක."
 
+#: eventyay/cfp/templates/cfp/event/user_submission_edit.html:62
+msgid "Speaker"
+msgid_plural "Speakers"
+msgstr[0] "කථිකයින්"
+msgstr[1] "කථිකයින්"
+
 #: eventyay/cfp/templates/cfp/event/user_submission_edit.html:64
 msgid "Submitter"
 msgid_plural "Submitters"
@@ -13792,7 +13874,7 @@ msgid "Submit something now!"
 msgstr "දැන්ම දෙයක් ඉදිරිපත් කරන්න!"
 
 #: eventyay/cfp/templates/cfp/includes/forms_header.html:18
-#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:16
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:23
 #: eventyay/control/templates/pretixcontrol/base.html:93
 #: eventyay/control/templates/pretixcontrol/pdf/index.html:39
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:36
@@ -13801,7 +13883,7 @@ msgid "Undo"
 msgstr "පසුගමන්"
 
 #: eventyay/cfp/templates/cfp/includes/forms_header.html:19
-#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:16
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:23
 #: eventyay/control/templates/pretixcontrol/base.html:93
 #: eventyay/control/templates/pretixcontrol/pdf/index.html:43
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:36
@@ -13810,7 +13892,7 @@ msgid "Redo"
 msgstr "නැවත කරන්න"
 
 #: eventyay/cfp/templates/cfp/includes/forms_header.html:20
-#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:16
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:23
 #: eventyay/control/templates/pretixcontrol/base.html:93
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:36
 #: eventyay/orga/templates/orga/base.html:63
@@ -13908,18 +13990,47 @@ msgstr "ආරාධනය යවා ඇත!"
 msgid "You cannot accept this invitation."
 msgstr "මෙම ආරාධනය පිළිගත නොහැක."
 
-#: eventyay/common/forms/fields.py:67 eventyay/control/forms/__init__.py:196
+#: eventyay/common/context_processors.py:122
+msgid "Terms"
+msgstr ""
+
+#: eventyay/common/context_processors.py:123
+#: eventyay/control/templates/pretixcontrol/organizers/edit.html:97
+msgid "Privacy"
+msgstr "පෞද්ගලිකත්වය"
+
+#: eventyay/common/context_processors.py:124
+#: eventyay/control/views/pages.py:237
+#, fuzzy
+#| msgid "Price"
+msgid "Pricing"
+msgstr "මිල"
+
+#: eventyay/common/context_processors.py:125
+#: eventyay/orga/templates/orga/settings/import_export.html:238
+#: eventyay/orga/templates/orga/settings/import_export.html:431
+#: eventyay/orga/templates/orga/settings/import_export.html:540
+msgid "Documentation"
+msgstr "ලේඛනගත කිරීම"
+
+#: eventyay/common/context_processors.py:126
+#, fuzzy
+#| msgid "CSV export"
+msgid "Support"
+msgstr "CSV අපනයනය"
+
+#: eventyay/common/forms/fields.py:68 eventyay/control/forms/__init__.py:196
 #: eventyay/control/forms/__init__.py:217
 #, python-brace-format
 msgid "Please do not upload files larger than {size}!"
 msgstr "කරුණාකර {size} ට වඩා විශාල ගොනු උඩුගත නොකරන්න!"
 
-#: eventyay/common/forms/fields.py:90 eventyay/control/forms/__init__.py:236
+#: eventyay/common/forms/fields.py:91 eventyay/control/forms/__init__.py:236
 #, python-brace-format
 msgid "Supported formats: {formats}"
 msgstr "සහාය දක්වන ආකෘති: {formats}"
 
-#: eventyay/common/forms/fields.py:103 eventyay/control/forms/__init__.py:250
+#: eventyay/common/forms/fields.py:104 eventyay/control/forms/__init__.py:250
 #, python-brace-format
 msgid ""
 "The file type '{extension}' is not supported. Please upload one of the "
@@ -13995,20 +14106,20 @@ msgstr "සිදුවීමක් තෝරන්න"
 msgid "Scheduled time must not be in the past."
 msgstr "අතීතයේ තනි ඉසව්ව"
 
-#: eventyay/common/forms/widgets.py:50
+#: eventyay/common/forms/widgets.py:53
 msgid ""
 "This password would take <em class=\"password_strength_time\"></em> to crack."
 msgstr "මෙම මුරපදය බිඳ දැමීමට <em class=\"password_strength_time\"></em> ගත වේ."
 
-#: eventyay/common/forms/widgets.py:72
+#: eventyay/common/forms/widgets.py:75
 msgid "Warning"
 msgstr "අවවාදය"
 
-#: eventyay/common/forms/widgets.py:72
+#: eventyay/common/forms/widgets.py:75
 msgid "Your passwords don’t match."
 msgstr "මුරපද නොගැළපේ."
 
-#: eventyay/common/forms/widgets.py:106
+#: eventyay/common/forms/widgets.py:109
 #, fuzzy
 #| msgid "Email preview"
 msgid "Image preview"
@@ -14809,8 +14920,8 @@ msgid "User menu"
 msgstr "පරිශීලක නියෝජිතය"
 
 #: eventyay/common/templates/common/fragment_nav.html:10
-#: eventyay/event/stages.py:81 eventyay/orga/views/event.py:465
-#: eventyay/orga/views/event.py:497
+#: eventyay/event/stages.py:80 eventyay/orga/views/event.py:464
+#: eventyay/orga/views/event.py:496
 #: eventyay/presale/templates/pretixpresale/event/fragment_nav.html:35
 msgid "Schedule"
 msgstr "කාලසටහන"
@@ -14826,7 +14937,7 @@ msgid "Details"
 msgstr "විස්තර"
 
 #: eventyay/common/templates/common/fragment_nav.html:17
-#: eventyay/eventyay_common/views/event.py:978
+#: eventyay/eventyay_common/views/event.py:1013
 #: eventyay/presale/templates/pretixpresale/event/fragment_nav.html:18
 msgid "Info"
 msgstr "තොරතුරු"
@@ -14892,7 +15003,7 @@ msgstr "පිවිසුම අසාර්ථකයි. නැවත උත�
 #: eventyay/control/templates/pretixcontrol/item/index.html:173
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:118
 #: eventyay/eventyay_common/templates/eventyay_common/account/2fa-main-settings.html:109
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:506
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:511
 #: eventyay/presale/templates/pretixpresale/fragment_join_online_video.html:76
 #: eventyay/presale/templates/pretixpresale/fragment_modals.html:34
 #: eventyay/presale/templates/pretixpresale/includes/share_dialog.html:7
@@ -14964,6 +15075,12 @@ msgstr "පණිවිඩය"
 #| msgid "This device has been set up successfully."
 msgid "Your message has been sent successfully!"
 msgstr "මෙම උපකරණය සාර්ථකව සකසා ඇත."
+
+#: eventyay/common/templates/common/includes/core_footer.html:5
+#, fuzzy
+#| msgid "Usage overview"
+msgid "Platform links"
+msgstr "භාවිතය සාරාංශය"
 
 #: eventyay/common/templates/common/logs.html:15
 msgid "This change was performed by an event organiser."
@@ -15154,7 +15271,7 @@ msgstr "{date_from} – {date_to}"
 #: eventyay/control/templates/pretixcontrol/event/tax_edit.html:137
 #: eventyay/control/templates/pretixcontrol/event/tickets.html:79
 #: eventyay/control/templates/pretixcontrol/global_plugins.html:80
-#: eventyay/control/templates/pretixcontrol/global_settings.html:239
+#: eventyay/control/templates/pretixcontrol/global_settings.html:282
 #: eventyay/control/templates/pretixcontrol/global_update.html:86
 #: eventyay/control/templates/pretixcontrol/item/index.html:150
 #: eventyay/control/templates/pretixcontrol/items/category.html:38
@@ -15189,7 +15306,7 @@ msgstr "{date_from} – {date_to}"
 #: eventyay/eventyay_common/templates/eventyay_common/account/oauth-app-register.html:25
 #: eventyay/eventyay_common/templates/eventyay_common/account/oauth-app-update.html:25
 #: eventyay/eventyay_common/templates/eventyay_common/auth/recover.html:15
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:424
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:422
 #: eventyay/eventyay_common/templates/eventyay_common/organizers/create.html:20
 #: eventyay/eventyay_common/templates/eventyay_common/organizers/teams/team_edit.html:23
 #: eventyay/orga/templates/orga/settings/import_export.html:583
@@ -15262,7 +15379,8 @@ msgstr "සුරකින්න"
 #: eventyay/eventyay_common/templates/eventyay_common/account/authorized-app-revoke.html:25
 #: eventyay/eventyay_common/templates/eventyay_common/account/oauth-app-delete.html:25
 #: eventyay/eventyay_common/templates/eventyay_common/account/oauth-app-rollkeys.html:25
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:518
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:92
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:523
 #: eventyay/eventyay_common/templates/eventyay_common/organizers/teams/team_delete.html:10
 #: eventyay/eventyay_common/templates/eventyay_common/organizers/teams/team_delete.html:23
 #: eventyay/orga/templates/orga/cfp/forms.html:118
@@ -15291,6 +15409,7 @@ msgstr "අවලංගු"
 #: eventyay/control/templates/control/turn_list.html:35
 #: eventyay/control/templates/control/user_list.html:25
 #: eventyay/control/templates/pretixcontrol/event/mail_settings_fragment.html:27
+#: eventyay/control/templates/pretixcontrol/global_settings.html:241
 #: eventyay/control/templates/pretixcontrol/order/sendmail.html:28
 #: eventyay/control/templates/pretixcontrol/orders/index.html:41
 #: eventyay/control/templates/pretixcontrol/organizers/giftcard.html:15
@@ -15337,9 +15456,9 @@ msgstr "අයිතමය මකා දමා ඇත."
 #: eventyay/control/views/event.py:524 eventyay/control/views/event.py:570
 #: eventyay/control/views/event.py:807 eventyay/control/views/event.py:1110
 #: eventyay/control/views/event.py:1472
-#: eventyay/control/views/global_settings.py:47
-#: eventyay/control/views/global_settings.py:69
-#: eventyay/control/views/global_settings.py:152
+#: eventyay/control/views/global_settings.py:62
+#: eventyay/control/views/global_settings.py:79
+#: eventyay/control/views/global_settings.py:162
 #: eventyay/control/views/organizer.py:232
 #: eventyay/control/views/organizer_views/device_view.py:250
 #: eventyay/control/views/organizer_views/gate_view.py:94
@@ -15347,7 +15466,7 @@ msgstr "අයිතමය මකා දමා ඇත."
 #: eventyay/control/views/organizer_views/organizer_view.py:356
 #: eventyay/control/views/organizer_views/organizer_view.py:529
 #: eventyay/control/views/organizer_views/web_hook_view.py:116
-#: eventyay/control/views/pages.py:46 eventyay/control/views/pages.py:104
+#: eventyay/control/views/pages.py:51 eventyay/control/views/pages.py:109
 #: eventyay/control/views/product.py:250 eventyay/control/views/product.py:766
 #: eventyay/control/views/product.py:1184
 #: eventyay/control/views/product.py:1378
@@ -15355,11 +15474,11 @@ msgstr "අයිතමය මකා දමා ඇත."
 #: eventyay/control/views/product.py:1847
 #: eventyay/control/views/product.py:1898
 #: eventyay/control/views/subevents.py:502
-#: eventyay/control/views/subevents.py:1709 eventyay/control/views/users.py:465
+#: eventyay/control/views/subevents.py:1709 eventyay/control/views/users.py:468
 #: eventyay/control/views/vouchers.py:287
 #: eventyay/eventyay_common/templates/eventyay_common/event/plugins.html:12
 #: eventyay/eventyay_common/views/account/basic.py:101
-#: eventyay/eventyay_common/views/event.py:786
+#: eventyay/eventyay_common/views/event.py:821
 #: eventyay/eventyay_common/views/organizer.py:241
 #: eventyay/plugins/badges/views.py:231 eventyay/plugins/sendmail/views.py:248
 #: eventyay/plugins/sendmail/views.py:417
@@ -15472,7 +15591,7 @@ msgstr "”"
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:32
 #: eventyay/eventyay_common/navigation.py:179
 #: eventyay/eventyay_common/navigation.py:334
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:247
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:248
 #: eventyay/orga/templates/orga/settings/feedback.html:18
 msgid "General"
 msgstr "සාමාන්‍ය"
@@ -15716,7 +15835,7 @@ msgid "Write access"
 msgstr "ලියීමේ ප්‍රවේශය"
 
 #: eventyay/control/forms/admin/admin.py:17
-#: eventyay/control/forms/global_settings.py:620
+#: eventyay/control/forms/global_settings.py:884
 msgid "Perform update checks"
 msgstr "යාවත්කාලීන පරීක්ෂා කිරීම සිදුකරන්න"
 
@@ -15841,7 +15960,7 @@ msgstr ""
 "යෝජනාවක් සඳහා \"අහඹු ලෙස සකසන්න\" බොත්තම භාවිතා කරන්න."
 
 #: eventyay/control/forms/event.py:183
-#: eventyay/eventyay_common/forms/event.py:38
+#: eventyay/eventyay_common/forms/event.py:39
 msgid "Event timezone"
 msgstr "සිදුවීම් වේලා කලාපය"
 
@@ -15878,7 +15997,7 @@ msgid "Create a new team for this event with me as the only member"
 msgstr "මෙම සිදුවීම සඳහා මාව එකම සාමාජිකයා ලෙස ඇති නව කණ්ඩායමක් සාදන්න"
 
 #: eventyay/control/forms/event.py:256
-#: eventyay/eventyay_common/forms/event.py:254
+#: eventyay/eventyay_common/forms/event.py:255
 msgid ""
 "Sample Conference Center\n"
 "Heidelberg, Germany"
@@ -15887,12 +16006,12 @@ msgstr ""
 "හයිඩල්බර්ග්, ජර්මනිය"
 
 #: eventyay/control/forms/event.py:257
-#: eventyay/eventyay_common/forms/event.py:255
+#: eventyay/eventyay_common/forms/event.py:256
 msgid "Latitude, e.g. 40.7128"
 msgstr "අක්ෂාංශය, උදා. 40.7128"
 
 #: eventyay/control/forms/event.py:258
-#: eventyay/eventyay_common/forms/event.py:256
+#: eventyay/eventyay_common/forms/event.py:257
 msgid "Longitude, e.g. -74.0060"
 msgstr "දේශාංශය, උදා. -74.0060"
 
@@ -16129,8 +16248,8 @@ msgid "e.g. your contact details"
 msgstr "උදා: ඔබගේ සම්බන්ධතා තොරතුරු"
 
 #: eventyay/control/forms/event.py:1264
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:289
-#: eventyay/orga/forms/email.py:58
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:287
+#: eventyay/orga/forms/email.py:59
 msgid "HTML mail renderer"
 msgstr "HTML ඊමේල් රෙන්ඩරර්"
 
@@ -16466,8 +16585,8 @@ msgid "Quantity available"
 msgstr "ලබාගත හැකි ප්‍රමාණය"
 
 #: eventyay/control/forms/event.py:1928
-#: eventyay/eventyay_common/forms/event.py:193
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:191
+#: eventyay/eventyay_common/forms/event.py:194
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:192
 #: eventyay/eventyay_common/templates/eventyay_common/events/create.html:158
 #, fuzzy
 #| msgid "Registration Steps"
@@ -16475,7 +16594,7 @@ msgid "Registration limit"
 msgstr "ලියාපදිංචි කිරීමේ පියවර"
 
 #: eventyay/control/forms/event.py:1929
-#: eventyay/eventyay_common/forms/event.py:194
+#: eventyay/eventyay_common/forms/event.py:195
 msgid ""
 "Maximum number of attendees who can RSVP. Leave empty for unlimited "
 "registrations."
@@ -17057,20 +17176,21 @@ msgstr "ගෙවූ"
 msgid "Canceled"
 msgstr "අවලංගු කළ"
 
-#: eventyay/control/forms/global_settings.py:53 eventyay/orga/forms/email.py:20
+#: eventyay/control/forms/global_settings.py:113
+#: eventyay/orga/forms/email.py:20
 msgid "SendGrid"
 msgstr "SendGrid"
 
-#: eventyay/control/forms/global_settings.py:53
+#: eventyay/control/forms/global_settings.py:113
 msgid "SMTP"
 msgstr "SMTP"
 
-#: eventyay/control/forms/global_settings.py:62
-#: eventyay/control/forms/global_settings.py:547
+#: eventyay/control/forms/global_settings.py:122
+#: eventyay/control/forms/global_settings.py:783
 msgid "Billing validation"
 msgstr "බිල්පත් වලංගුකරණය"
 
-#: eventyay/control/forms/global_settings.py:64
+#: eventyay/control/forms/global_settings.py:124
 msgid ""
 "Billing validation lets you require organizers to set up a billing method "
 "before they can create events. When this option is enabled, no new event can "
@@ -17080,69 +17200,69 @@ msgstr ""
 "කරවිය හැක. මෙම විකල්පය සක්‍රීය කර ඇති විට, වලංගු බිල්පත් ක්‍රමයක් එක් කරන තුරු නව වැඩසටහනක් "
 "නිර්මාණය කළ නොහැක."
 
-#: eventyay/control/forms/global_settings.py:73
+#: eventyay/control/forms/global_settings.py:133
 #, fuzzy
 #| msgid "Your event series"
 msgid "Allow event series creation"
 msgstr "ඔබගේ සිදුවීම් මාලාව"
 
-#: eventyay/control/forms/global_settings.py:75
+#: eventyay/control/forms/global_settings.py:135
 msgid ""
 "When enabled, organizers can create event series or time slot bookings in "
 "addition to singular events. Disable this to restrict event creation to "
 "singular events and non-event shops only."
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:84
+#: eventyay/control/forms/global_settings.py:144
 #, fuzzy
 #| msgid "Invoice customization"
 msgid "Allow meetup creation"
 msgstr "ඉන්වොයිස් අභිරුචිකරණය"
 
-#: eventyay/control/forms/global_settings.py:86
+#: eventyay/control/forms/global_settings.py:146
 msgid ""
 "When enabled, organizers can create simplified meetup events in addition to "
 "standard events. Disable this to restrict event creation to standard events "
 "only."
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:97
+#: eventyay/control/forms/global_settings.py:157
 msgid "Additional footer text"
 msgstr "අතිරේක පාදක පෙළ"
 
-#: eventyay/control/forms/global_settings.py:98
+#: eventyay/control/forms/global_settings.py:158
 msgid "Will be included as additional text in the footer, site-wide."
 msgstr "අඩවිය පුරා පාදකයේ අතිරේක පෙළක් ලෙස ඇතුළත් කරනු ඇත."
 
-#: eventyay/control/forms/global_settings.py:106
+#: eventyay/control/forms/global_settings.py:166
 msgid "Additional footer link"
 msgstr "අතිරේක පාදක සබැඳිය"
 
-#: eventyay/control/forms/global_settings.py:107
+#: eventyay/control/forms/global_settings.py:167
 msgid "Will be included as the link in the additional footer text."
 msgstr "අතිරේක පාදක පෙළේ සබැඳිය ලෙස ඇතුළත් කරනු ඇත."
 
-#: eventyay/control/forms/global_settings.py:115
+#: eventyay/control/forms/global_settings.py:175
 msgid "Global message banner"
 msgstr "ගෝලීය පණිවිඩ බැන්නරය"
 
-#: eventyay/control/forms/global_settings.py:123
+#: eventyay/control/forms/global_settings.py:183
 msgid "Global message banner detail text"
 msgstr "ගෝලීය පණිවිඩ බැන්නරයේ විස්තර පෙළ"
 
-#: eventyay/control/forms/global_settings.py:130
+#: eventyay/control/forms/global_settings.py:190
 msgid "OpenCage API key for geocoding"
 msgstr "භූකේතනය සඳහා OpenCage API යතුර"
 
-#: eventyay/control/forms/global_settings.py:137
+#: eventyay/control/forms/global_settings.py:197
 msgid "MapQuest API key for geocoding"
 msgstr "භූකේතනය සඳහා MapQuest API යතුර"
 
-#: eventyay/control/forms/global_settings.py:144
+#: eventyay/control/forms/global_settings.py:204
 msgid "Enable public Nominatim geocoding"
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:146
+#: eventyay/control/forms/global_settings.py:206
 msgid ""
 "Can be used alongside OpenCage or MapQuest as a fallback. In development, "
 "Nominatim is used automatically when no API key is configured. Only enable "
@@ -17150,170 +17270,187 @@ msgid ""
 "policy."
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:156
+#: eventyay/control/forms/global_settings.py:216
 msgid "Leaflet tiles URL pattern"
 msgstr "Leaflet ටයිල්ස් URL රටාව"
 
-#: eventyay/control/forms/global_settings.py:157
-#: eventyay/control/forms/global_settings.py:165
-#: eventyay/control/forms/global_settings.py:677
+#: eventyay/control/forms/global_settings.py:217
+#: eventyay/control/forms/global_settings.py:225
+#: eventyay/control/forms/global_settings.py:941
 #, python-brace-format
 msgid "e.g. {sample}"
 msgstr "උදා. {sample}"
 
-#: eventyay/control/forms/global_settings.py:164
+#: eventyay/control/forms/global_settings.py:224
 msgid "Leaflet tiles attribution"
 msgstr "Leaflet ටයිල් ආරෝපණය"
 
-#: eventyay/control/forms/global_settings.py:173
+#: eventyay/control/forms/global_settings.py:233
 msgid "System Email"
 msgstr "පද්ධති ඊමේල්"
 
-#: eventyay/control/forms/global_settings.py:183
+#: eventyay/control/forms/global_settings.py:243
 #, fuzzy
 #| msgid "Sendgrid Token"
 msgid "Sendgrid token"
 msgstr "Sendgrid ටෝකනය"
 
-#: eventyay/control/forms/global_settings.py:193
+#: eventyay/control/forms/global_settings.py:254
+msgid "Gmail OAuth client ID"
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:256
+msgid ""
+"Create an OAuth client in Google Cloud Console. The connect flow requests "
+"Gmail send and user email scopes. Use the OAuth redirect URI shown below as "
+"an authorized redirect URI."
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:269
+#, fuzzy
+#| msgid "Client secret"
+msgid "Gmail OAuth client secret"
+msgstr "සේවාදායක රහස්‍යය"
+
+#: eventyay/control/forms/global_settings.py:278
 msgid "Hostname"
 msgstr "හොස්ට් නාමය"
 
-#: eventyay/control/forms/global_settings.py:204
+#: eventyay/control/forms/global_settings.py:289
 #: eventyay/control/templates/pretixcontrol/admin/systemconfig.html:83
 msgid "Port"
 msgstr "පෝර්ට්"
 
-#: eventyay/control/forms/global_settings.py:215
+#: eventyay/control/forms/global_settings.py:300
 msgid "Username"
 msgstr "පරිශීලක නාමය"
 
-#: eventyay/control/forms/global_settings.py:239
-#: eventyay/orga/forms/email.py:102
+#: eventyay/control/forms/global_settings.py:324
+#: eventyay/orga/forms/email.py:118
 msgid "Use STARTTLS"
 msgstr "STARTTLS භාවිත කරන්න"
 
-#: eventyay/control/forms/global_settings.py:240
-#: eventyay/orga/forms/email.py:103
+#: eventyay/control/forms/global_settings.py:325
+#: eventyay/orga/forms/email.py:119
 msgid "Commonly enabled on port 587."
 msgstr "සාමාන්‍යයෙන් පෝර්ට් 587 හි සක්‍රිය කර ඇත."
 
-#: eventyay/control/forms/global_settings.py:250
-#: eventyay/orga/forms/email.py:107
+#: eventyay/control/forms/global_settings.py:335
+#: eventyay/orga/forms/email.py:126
 msgid "Use SSL"
 msgstr "SSL භාවිත කරන්න"
 
-#: eventyay/control/forms/global_settings.py:251
-#: eventyay/orga/forms/email.py:108
+#: eventyay/control/forms/global_settings.py:336
+#: eventyay/orga/forms/email.py:127
 msgid "Commonly enabled on port 465."
 msgstr "සාමාන්‍යයෙන් පෝර්ට් 465 හි සක්‍රිය කර ඇත."
 
-#: eventyay/control/forms/global_settings.py:275
-#: eventyay/control/forms/global_settings.py:328
+#: eventyay/control/forms/global_settings.py:360
+#: eventyay/control/forms/global_settings.py:413
 msgid "Publishable key (Live)"
 msgstr "ප්‍රකාශනීය යතුර (සජීවී)"
 
-#: eventyay/control/forms/global_settings.py:278
+#: eventyay/control/forms/global_settings.py:363
 msgid "Live publishable key for organizer billing and platform fees."
 msgstr "සංවිධායක බිල්පත්කරණය සහ වේදිකා ගාස්තු සඳහා සජීවී ප්‍රකාශනීය යතුර."
 
-#: eventyay/control/forms/global_settings.py:284
-#: eventyay/control/forms/global_settings.py:337
+#: eventyay/control/forms/global_settings.py:369
+#: eventyay/control/forms/global_settings.py:422
 msgid "Secret key (Live)"
 msgstr "රහස් යතුර (සජීවී)"
 
-#: eventyay/control/forms/global_settings.py:287
+#: eventyay/control/forms/global_settings.py:372
 msgid "Live secret key for organizer billing and platform fees."
 msgstr "සංවිධායක බිල්පත්කරණය සහ වේදිකා ගාස්තු සඳහා සජීවී රහස් යතුර."
 
-#: eventyay/control/forms/global_settings.py:293
-#: eventyay/control/forms/global_settings.py:346
+#: eventyay/control/forms/global_settings.py:378
+#: eventyay/control/forms/global_settings.py:431
 msgid "Publishable key (Test)"
 msgstr "ප්‍රකාශනීය යතුර (පරීක්ෂණ)"
 
-#: eventyay/control/forms/global_settings.py:296
+#: eventyay/control/forms/global_settings.py:381
 msgid "Test publishable key for organizer billing and platform fees."
 msgstr "සංවිධායක බිල්පත්කරණය සහ වේදිකා ගාස්තු සඳහා පරීක්ෂණ ප්‍රකාශනීය යතුර."
 
-#: eventyay/control/forms/global_settings.py:302
-#: eventyay/control/forms/global_settings.py:355
+#: eventyay/control/forms/global_settings.py:387
+#: eventyay/control/forms/global_settings.py:440
 msgid "Secret key (Test)"
 msgstr "රහස් යතුර (පරීක්ෂණ)"
 
-#: eventyay/control/forms/global_settings.py:305
+#: eventyay/control/forms/global_settings.py:390
 msgid "Test secret key for organizer billing and platform fees."
 msgstr "සංවිධායක බිල්පත්කරණය සහ වේදිකා ගාස්තු සඳහා පරීක්ෂණ රහස් යතුර."
 
-#: eventyay/control/forms/global_settings.py:311
+#: eventyay/control/forms/global_settings.py:396
 msgid "Webhook secret key"
 msgstr "Webhook රහස් යතුර"
 
-#: eventyay/control/forms/global_settings.py:313
+#: eventyay/control/forms/global_settings.py:398
 msgid ""
 "Configure this endpoint in your Stripe dashboard to receive billing events."
 msgstr "බිල්පත් සිදුවීම් ලබාගැනීම සඳහා Stripe පාලක පුවරුවේ මෙම අවසාන ලිපිනය වින්‍යාස කරන්න."
 
-#: eventyay/control/forms/global_settings.py:322
+#: eventyay/control/forms/global_settings.py:407
 msgid "Stripe Connect client ID for ticket payments via the Stripe plugin."
 msgstr "Stripe ප්ලගිනය හරහා ටිකට් ගෙවීම් සඳහා Stripe Connect සේවාලාභී හැඳුනුම."
 
-#: eventyay/control/forms/global_settings.py:331
+#: eventyay/control/forms/global_settings.py:416
 msgid "Live publishable key for ticket payments via the Stripe plugin."
 msgstr "Stripe ප්ලගිනය හරහා ටිකට් ගෙවීම් සඳහා සජීවී ප්‍රකාශනීය යතුර."
 
-#: eventyay/control/forms/global_settings.py:340
+#: eventyay/control/forms/global_settings.py:425
 msgid "Live secret key for ticket payments via the Stripe plugin."
 msgstr "Stripe ප්ලගිනය හරහා ටිකට් ගෙවීම් සඳහා සජීවී රහස් යතුර."
 
-#: eventyay/control/forms/global_settings.py:349
+#: eventyay/control/forms/global_settings.py:434
 msgid "Test publishable key for ticket payments via the Stripe plugin."
 msgstr "Stripe ප්ලගිනය හරහා ටිකට් ගෙවීම් සඳහා පරීක්ෂණ ප්‍රකාශනීය යතුර."
 
-#: eventyay/control/forms/global_settings.py:358
+#: eventyay/control/forms/global_settings.py:443
 msgid "Test secret key for ticket payments via the Stripe plugin."
 msgstr "Stripe ප්ලගිනය හරහා ටිකට් ගෙවීම් සඳහා පරීක්ෂණ රහස් යතුර."
 
-#: eventyay/control/forms/global_settings.py:364
+#: eventyay/control/forms/global_settings.py:449
 msgid "App fee percentage"
 msgstr "යෙදුම් ගාස්තු ප්‍රතිශතය"
 
-#: eventyay/control/forms/global_settings.py:368
+#: eventyay/control/forms/global_settings.py:453
 msgid "Percentage fee charged on ticket payments."
 msgstr "ටිකට් ගෙවීම් මත අය කරන ප්‍රතිශත ගාස්තුව."
 
-#: eventyay/control/forms/global_settings.py:375
+#: eventyay/control/forms/global_settings.py:460
 msgid "App fee minimum"
 msgstr "යෙදුම් ගාස්තුවේ අවම අගය"
 
-#: eventyay/control/forms/global_settings.py:379
+#: eventyay/control/forms/global_settings.py:464
 msgid "Minimum fee amount charged on ticket payments."
 msgstr "ටිකට් ගෙවීම් සඳහා අය කෙරෙන අවම ගාස්තු මුදල."
 
-#: eventyay/control/forms/global_settings.py:386
+#: eventyay/control/forms/global_settings.py:471
 msgid "App fee maximum"
 msgstr "යෙදුම් ගාස්තුවේ උපරිම අගය"
 
-#: eventyay/control/forms/global_settings.py:390
+#: eventyay/control/forms/global_settings.py:475
 msgid "Maximum fee amount charged on ticket payments."
 msgstr "ටිකට් ගෙවීම් සඳහා අය කෙරෙන උපරිම ගාස්තු මුදල."
 
-#: eventyay/control/forms/global_settings.py:400
+#: eventyay/control/forms/global_settings.py:485
 msgid "PayPal Connect client ID for payment processing."
 msgstr "ගෙවීම් සැකසීම සඳහා PayPal Connect සේවාදායක හැඳුනුම් අංකය."
 
-#: eventyay/control/forms/global_settings.py:406
+#: eventyay/control/forms/global_settings.py:491
 msgid "Secret key"
 msgstr "රහස් යතුර"
 
-#: eventyay/control/forms/global_settings.py:408
+#: eventyay/control/forms/global_settings.py:493
 msgid "PayPal Connect secret key for payment processing."
 msgstr "ගෙවීම් සැකසීම සඳහා PayPal Connect රහස් යතුර."
 
-#: eventyay/control/forms/global_settings.py:414
+#: eventyay/control/forms/global_settings.py:499
 msgid "API Endpoint"
 msgstr "API අවසාන ලිපිනය"
 
-#: eventyay/control/forms/global_settings.py:416
+#: eventyay/control/forms/global_settings.py:501
 msgid ""
 "PayPal API endpoint (e.g., https://api.paypal.com or https://"
 "api.sandbox.paypal.com)."
@@ -17321,19 +17458,19 @@ msgstr ""
 "PayPal API අවසාන ලිපිනය (උදා., https://api.paypal.com හෝ https://"
 "api.sandbox.paypal.com)."
 
-#: eventyay/control/forms/global_settings.py:422
+#: eventyay/control/forms/global_settings.py:507
 msgid "Ticket fee percentage"
 msgstr "ටිකට් ගාස්තු ප්‍රතිශතය"
 
-#: eventyay/control/forms/global_settings.py:426
+#: eventyay/control/forms/global_settings.py:511
 msgid "A percentage fee will be charged for each ticket sold."
 msgstr "විකුණුන සෑම ටිකට් එකක් සඳහාම ප්‍රතිශත ගාස්තුවක් අය කෙරේ."
 
-#: eventyay/control/forms/global_settings.py:433
+#: eventyay/control/forms/global_settings.py:518
 msgid "All registered users can create organizers"
 msgstr "ලියාපදිංචි සියලුම පරිශීලකයින්ට සංවිධායකයන් සෑදිය හැක"
 
-#: eventyay/control/forms/global_settings.py:434
+#: eventyay/control/forms/global_settings.py:519
 msgid ""
 "If enabled, all registered users will be allowed to create organizers. "
 "System admins can always create organizers."
@@ -17341,11 +17478,11 @@ msgstr ""
 "සක්‍රිය කර ඇත්නම්, ලියාපදිංචි සියලුම පරිශීලකයින්ට සංවිධායකයන් සෑදීමට අවසර ලැබේ. පද්ධති "
 "පරිපාලකයින්ට සෑමවිටම සංවිධායකයන් සෑදිය හැක."
 
-#: eventyay/control/forms/global_settings.py:441
+#: eventyay/control/forms/global_settings.py:526
 msgid "All accounts with payment information can create organizers"
 msgstr "ගෙවීම් තොරතුරු ඇති සියලුම ගිණුම්වලට සංවිධායකයන් සෑදිය හැක"
 
-#: eventyay/control/forms/global_settings.py:442
+#: eventyay/control/forms/global_settings.py:527
 msgid ""
 "If enabled, users with valid payment information on file will be allowed to "
 "create organizers. System admins can always create organizers."
@@ -17353,45 +17490,45 @@ msgstr ""
 "සක්‍රිය කර ඇත්නම්, ගොනුවේ වලංගු ගෙවීම් තොරතුරු ඇති පරිශීලකයින්ට සංවිධායකයන් සෑදීමට අවසර ලැබේ. "
 "පද්ධති පරිපාලකයින්ට සෑමවිටම සංවිධායකයන් සෑදිය හැක."
 
-#: eventyay/control/forms/global_settings.py:450
+#: eventyay/control/forms/global_settings.py:535
 #, fuzzy
 #| msgid "Recording integrations"
 msgid "Enable Etherpad integration"
 msgstr "පටිගත කිරීමේ ඒකාබද්ධතා"
 
-#: eventyay/control/forms/global_settings.py:451
+#: eventyay/control/forms/global_settings.py:536
 msgid "Allow events to attach collaborative Etherpad notes to their sessions."
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:458
+#: eventyay/control/forms/global_settings.py:543
 msgid "Default Etherpad instance URL"
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:459
+#: eventyay/control/forms/global_settings.py:544
 #, python-brace-format
 msgid "Base URL of the Etherpad instance, e.g. {sample}"
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:466
+#: eventyay/control/forms/global_settings.py:551
 #, fuzzy
 #| msgid "Telemetry API key"
 msgid "Etherpad API key"
 msgstr "Telemetry API යතුර"
 
-#: eventyay/control/forms/global_settings.py:468
+#: eventyay/control/forms/global_settings.py:553
 msgid ""
 "API key of the Etherpad instance (found in APIKEY.txt). Required only for "
 "automatic pad creation; without it, pad links are generated as plain URLs "
 "that Etherpad creates on first visit."
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:477
+#: eventyay/control/forms/global_settings.py:562
 #, fuzzy
 #| msgid "Frontpage header pattern"
 msgid "Pad name pattern"
 msgstr "මුල් පිටුවේ ශීර්ෂක රටාව"
 
-#: eventyay/control/forms/global_settings.py:479
+#: eventyay/control/forms/global_settings.py:564
 #, fuzzy, python-brace-format
 #| msgid ""
 #| "This will be attached to every email. Available placeholders: {event}"
@@ -17399,75 +17536,199 @@ msgid ""
 "Pattern used to generate pad names. Available placeholders: {placeholders}."
 msgstr "මෙය සෑම ඊමේලකටම අමුණනු ඇත। ලබාගත හැකි ස්ථාන රඳවනයන්: {event}"
 
-#: eventyay/control/forms/global_settings.py:497
+#: eventyay/control/forms/global_settings.py:582
 #, fuzzy
 #| msgid "Add-on products will be excluded from the count."
 msgid ""
 "Add-on products will be excluded from the count. Set to 0 for unlimited."
 msgstr "එක්කිරීම් (Add-on) නිෂ්පාදන ගණනයෙන් ඉවත් කරනු ඇත."
 
-#: eventyay/control/forms/global_settings.py:506
+#: eventyay/control/forms/global_settings.py:591
+#, fuzzy
+#| msgid "Show video link"
+msgid "Show \"Events\" footer link"
+msgstr "වීඩියෝ සබැඳිය පෙන්වන්න"
+
+#: eventyay/control/forms/global_settings.py:598
+#, fuzzy
+#| msgid "Event list"
+msgid "\"Events\" link URL"
+msgstr "ඉසව් ලැයිස්තුව"
+
+#: eventyay/control/forms/global_settings.py:605
+#, fuzzy
+#| msgid "Show video link"
+msgid "Show \"Terms\" footer link"
+msgstr "වීඩියෝ සබැඳිය පෙන්වන්න"
+
+#: eventyay/control/forms/global_settings.py:612
+msgid "\"Terms\" link URL"
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:619
+msgid "Show \"Privacy\" footer link"
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:626
+#, fuzzy
+#| msgid "Privacy Policy URL"
+msgid "\"Privacy\" link URL"
+msgstr "පෞද්ගලිකත්ව ප්‍රතිපත්ති URL"
+
+#: eventyay/control/forms/global_settings.py:633
+#, fuzzy
+#| msgid "Additional footer link"
+msgid "Show \"Pricing\" footer link"
+msgstr "අතිරේක පාදක සබැඳිය"
+
+#: eventyay/control/forms/global_settings.py:640
+#, fuzzy
+#| msgid "Privacy Policy URL"
+msgid "\"Pricing\" link URL"
+msgstr "පෞද්ගලිකත්ව ප්‍රතිපත්ති URL"
+
+#: eventyay/control/forms/global_settings.py:647
+msgid "Show \"Documentation\" footer link"
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:654
+#, fuzzy
+#| msgid "Documentation"
+msgid "\"Documentation\" link URL"
+msgstr "ලේඛනගත කිරීම"
+
+#: eventyay/control/forms/global_settings.py:661
+msgid "Show \"Support\" footer link"
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:668
+msgid "\"Support\" link URL"
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:677
+msgid "\"Terms of Service\" page content"
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:678
+msgid "Rich text content for the /terms page."
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:685
+#, fuzzy
+#| msgid "Privacy Policy URL"
+msgid "\"Privacy Policy\" page content"
+msgstr "පෞද්ගලිකත්ව ප්‍රතිපත්ති URL"
+
+#: eventyay/control/forms/global_settings.py:686
+msgid "Rich text content for the /privacy page."
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:693
+#, fuzzy
+#| msgid "Page content"
+msgid "\"Pricing\" page content"
+msgstr "පිටු අන්තර්ගතය"
+
+#: eventyay/control/forms/global_settings.py:694
+msgid "Rich text content for the /pricing page."
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:701
+#, fuzzy
+#| msgid "Page content"
+msgid "\"Support\" page content"
+msgstr "පිටු අන්තර්ගතය"
+
+#: eventyay/control/forms/global_settings.py:702
+msgid "Rich text content for the /support page."
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:713
+#, fuzzy
+#| msgid "Use languages"
+msgid "Page languages"
+msgstr "භාෂා භාවිතා කරන්න"
+
+#: eventyay/control/forms/global_settings.py:715
+msgid ""
+"Select the languages for page content (Terms, Privacy, Pricing, Support). "
+"Only selected languages will be shown for editing."
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:722
 #: eventyay/control/templates/pretixcontrol/event/settings.html:21
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:34
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:35
 msgid "Basics"
 msgstr "මූලික කරුණු"
 
-#: eventyay/control/forms/global_settings.py:509
+#: eventyay/control/forms/global_settings.py:725
+#: eventyay/control/navigation.py:444
+msgid "Pages"
+msgstr "පිටු"
+
+#: eventyay/control/forms/global_settings.py:744
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:81
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:197
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:198
 #: eventyay/eventyay_common/templates/eventyay_common/events/create.html:106
 msgid "Localization"
 msgstr "දේශීයකරණය"
 
-#: eventyay/control/forms/global_settings.py:517
+#: eventyay/control/forms/global_settings.py:753
 msgid "Payment Gateways"
 msgstr "ගෙවීම් ද්වාර"
 
-#: eventyay/control/forms/global_settings.py:540
+#: eventyay/control/forms/global_settings.py:776
 msgid "Cart"
 msgstr "කරත්තය"
 
-#: eventyay/control/forms/global_settings.py:544
+#: eventyay/control/forms/global_settings.py:780
 msgid "Ticket fee"
 msgstr "ටිකට් ගාස්තුව"
 
-#: eventyay/control/forms/global_settings.py:550
+#: eventyay/control/forms/global_settings.py:786
 msgid "Maps"
 msgstr "සිතියම්"
 
-#: eventyay/control/forms/global_settings.py:557
+#: eventyay/control/forms/global_settings.py:793
 #, fuzzy
 #| msgid "Event location"
 msgid "Event Creation"
 msgstr "සිදුවීම් ස්ථානය"
 
-#: eventyay/control/forms/global_settings.py:561
+#: eventyay/control/forms/global_settings.py:797
 #: eventyay/orga/templates/orga/settings/form.html:66
 #, fuzzy
 #| msgid "Overpaid"
 msgid "Etherpad"
 msgstr "වැඩිපුර ගෙවා ඇත"
 
-#: eventyay/control/forms/global_settings.py:571
+#: eventyay/control/forms/global_settings.py:807
 msgid "VoxBento"
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:580
+#: eventyay/control/forms/global_settings.py:816
 msgid "HubSpot"
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:600
+#: eventyay/control/forms/global_settings.py:838
 #, python-brace-format
 msgid ""
 "The pattern must contain {submission} or {token} so each session gets a "
 "unique pad."
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:610
+#: eventyay/control/forms/global_settings.py:848
 msgid "This field is required when using SendGrid as email vendor."
 msgstr "ඊමේල් සපයන්නා ලෙස SendGrid භාවිතා කරන විට මෙම ක්ෂේත්‍රය අනිවාර්ය වේ."
 
-#: eventyay/control/forms/global_settings.py:622
+#: eventyay/control/forms/global_settings.py:851
+#: eventyay/control/forms/global_settings.py:859
+#, fuzzy
+#| msgid "This field is required when using SendGrid as email vendor."
+msgid "This field is required when using Gmail as email vendor."
+msgstr "ඊමේල් සපයන්නා ලෙස SendGrid භාවිතා කරන විට මෙම ක්ෂේත්‍රය අනිවාර්ය වේ."
+
+#: eventyay/control/forms/global_settings.py:886
 msgid ""
 "During the update check, eventyay will report an anonymous, unique "
 "installation ID, the current version of the system and your installed "
@@ -17482,11 +17743,11 @@ msgstr ""
 "පමණි; කිසිවිටෙක IP ලිපින නොවේ, සහ ඔබ කවුද හෝ ඔබගේ ඉන්ස්ටන්ස් එක සොයාගන්නේ කොහෙන්ද යන්න අපට "
 "දැනගත නොහැක. ඔබට මෙම හැසිරීම ඕනෑම වේලාවක මෙහි අක්‍රීය කළ හැක."
 
-#: eventyay/control/forms/global_settings.py:631
+#: eventyay/control/forms/global_settings.py:895
 msgid "E-mail notifications"
 msgstr "ඊමේල් දැනුම්දීම්"
 
-#: eventyay/control/forms/global_settings.py:633
+#: eventyay/control/forms/global_settings.py:897
 msgid ""
 "We will notify you at this address if we detect that a new update is "
 "available. This address will not be transmitted to eventyay.com, the emails "
@@ -17495,11 +17756,11 @@ msgstr ""
 "නව යාවත්කාලීනයක් ලබාගත හැකි බව අපට හඳුනාගත් විට, මෙම ලිපිනයට ඔබට දැනුම් දෙන්නෙමු. මෙම "
 "ලිපිනය eventyay.com වෙත යැවෙන්නේ නැත; ඊමේල් මෙම සේවාදායකය මගින් දේශීයවම යවනු ලැබේ."
 
-#: eventyay/control/forms/global_settings.py:642
+#: eventyay/control/forms/global_settings.py:906
 msgid "Enable telemetry"
 msgstr "Telemetry සක්‍රිය කරන්න"
 
-#: eventyay/control/forms/global_settings.py:644
+#: eventyay/control/forms/global_settings.py:908
 msgid ""
 "Send anonymous usage statistics (bucketed counts, deployment info) to help "
 "track version adoption and deployment patterns. No personal data is "
@@ -17508,27 +17769,27 @@ msgstr ""
 "අනුවාද භාවිතා වීම සහ යෙදවීම් රටා නිරීක්ෂණයට උදව් කිරීමට අනන්‍යතාව රහිත භාවිත සංඛ්‍යාන (කොටස්ගත "
 "ගණන්, යෙදවීම් තොරතුරු) යවන්න. පුද්ගලික දත්ත රැස් නොකෙරේ. දත්ත ස приблиз ලෙස දිනකට වරක් යවයි."
 
-#: eventyay/control/forms/global_settings.py:651
+#: eventyay/control/forms/global_settings.py:915
 msgid "Telemetry endpoint"
 msgstr "Telemetry අවසාන ලක්ෂ්‍යය"
 
-#: eventyay/control/forms/global_settings.py:652
+#: eventyay/control/forms/global_settings.py:916
 msgid "The URL where telemetry data will be sent (Google Apps Script URL)."
 msgstr "Telemetry දත්ත යවනු ලබන URL එක (Google Apps Script URL)."
 
-#: eventyay/control/forms/global_settings.py:656
+#: eventyay/control/forms/global_settings.py:920
 msgid "Telemetry API key"
 msgstr "Telemetry API යතුර"
 
-#: eventyay/control/forms/global_settings.py:657
+#: eventyay/control/forms/global_settings.py:921
 msgid "API key for authenticating with the telemetry receiver."
 msgstr "Telemetry ලබන්නා සමඟ සත්‍යාපනය සඳහා වන API යතුර."
 
-#: eventyay/control/forms/global_settings.py:661
+#: eventyay/control/forms/global_settings.py:925
 msgid "Maintainer contact"
 msgstr "නඩත්තුකරුගේ සම්බන්ධතා"
 
-#: eventyay/control/forms/global_settings.py:663
+#: eventyay/control/forms/global_settings.py:927
 msgid ""
 "Optional email address included in telemetry data to identify who maintains "
 "this instance. Only visible to those with access to the telemetry data sheet."
@@ -17536,21 +17797,21 @@ msgstr ""
 "මෙම ඉන්ස්ටන්ස් එක නඩත්තු කරන්නේ කවුදැයි හඳුනාගැනීමට telemetry දත්තවලට ඇතුළත් කරන විකල්ප විද්‍යුත් "
 "තැපැල් ලිපිනය. Telemetry දත්ත පත්‍රයට ප්‍රවේශය ඇති අයට පමණක් දිස්වේ."
 
-#: eventyay/control/forms/global_settings.py:676
+#: eventyay/control/forms/global_settings.py:940
 msgid "Redirect URL"
 msgstr "ප්‍රතිනියමන URL"
 
-#: eventyay/control/forms/global_settings.py:717
+#: eventyay/control/forms/global_settings.py:981
 msgid "The Stripe key cannot be empty."
 msgstr "Stripe යතුර හිස් විය නොහැක."
 
-#: eventyay/control/forms/global_settings.py:721
+#: eventyay/control/forms/global_settings.py:985
 #, python-format
 msgid ""
 "The provided key does not look valid. It should start with \"%(prefix)s\"."
 msgstr "සපයා ඇති යතුර වලංගු ලෙස පෙනෙන්නේ නැත. එය \"%(prefix)s\" න් ආරම්භ විය යුතුය."
 
-#: eventyay/control/forms/global_settings.py:724
+#: eventyay/control/forms/global_settings.py:988
 #, python-format
 msgid ""
 "The provided key does not look valid. It should start with one of: "
@@ -17793,7 +18054,7 @@ msgstr ""
 #: eventyay/plugins/sendmail/forms.py:535
 #: eventyay/plugins/sendmail/forms.py:637
 #: eventyay/plugins/sendmail/views.py:277
-#: eventyay/plugins/sendmail/views.py:529
+#: eventyay/plugins/sendmail/views.py:533
 msgid "Subject"
 msgstr "විෂය"
 
@@ -18111,12 +18372,12 @@ msgid "Invalid VAT number for {}"
 msgstr "{} සඳහා වලංගු නොවන VAT අංකය"
 
 #: eventyay/control/forms/organizer_forms/organizer_update_form.py:52
-#: eventyay/eventyay_common/forms/event.py:276
+#: eventyay/eventyay_common/forms/event.py:277
 msgid "You cannot choose the base domain of this installation."
 msgstr "මෙම ස්ථාපනයේ මූලික ඩොමේනය තෝරාගැනීමට ඔබට නොහැක."
 
 #: eventyay/control/forms/organizer_forms/organizer_update_form.py:58
-#: eventyay/eventyay_common/forms/event.py:278
+#: eventyay/eventyay_common/forms/event.py:279
 msgid "This domain is already in use for a different event or organizer."
 msgstr "මෙම ඩොමේනය දැනටමත් වෙනත් ඉසව්වක් හෝ සංවිධායකයෙකු සඳහා භාවිතයේ ඇත."
 
@@ -19785,7 +20046,7 @@ msgstr "මුදල් ආපසු ගෙවීම්"
 
 #: eventyay/control/navigation.py:283
 #: eventyay/orga/templates/orga/review/assignment-import.html:21
-#: eventyay/orga/views/event.py:515
+#: eventyay/orga/views/event.py:514
 msgid "Import"
 msgstr "ආයාත"
 
@@ -19796,6 +20057,7 @@ msgstr "ආයාත"
 #: eventyay/control/templates/pretixcontrol/subevents/bulk.html:501
 #: eventyay/control/templates/pretixcontrol/subevents/bulk_edit.html:255
 #: eventyay/control/templates/pretixcontrol/subevents/detail.html:143
+#: eventyay/eventyay_common/forms/event.py:392
 #: eventyay/plugins/checkinlists/apps.py:10
 msgid "Check-in lists"
 msgstr "පිවිසුම් පරීක්ෂා ලැයිස්තු"
@@ -19856,10 +20118,6 @@ msgstr "සැකසුම්"
 #: eventyay/control/templates/pretixcontrol/admin/systemconfig.html:17
 msgid "System information"
 msgstr "පද්ධති තොරතුරු"
-
-#: eventyay/control/navigation.py:444
-msgid "Pages"
-msgstr "පිටු"
 
 #: eventyay/control/navigation.py:449
 #: eventyay/control/templates/pretixcontrol/admin/events/index.html:96
@@ -19968,8 +20226,8 @@ msgstr "පරිපාලක සැසි"
 
 #: eventyay/control/permissions.py:40 eventyay/control/permissions.py:80
 #: eventyay/control/permissions.py:115 eventyay/control/permissions.py:135
-#: eventyay/eventyay_common/views/event.py:925
-#: eventyay/eventyay_common/views/event.py:933
+#: eventyay/eventyay_common/views/event.py:960
+#: eventyay/eventyay_common/views/event.py:968
 msgid "You do not have permission to view this content."
 msgstr "මෙම අන්තර්ගතය බැලීමට ඔබට අවසර නැත."
 
@@ -20130,7 +20388,7 @@ msgid "Usage"
 msgstr "භාවිතය"
 
 #: eventyay/control/templates/control/event_list.html:42
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:378
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:376
 msgid "Delete data"
 msgstr "දත්ත මකා දමන්න"
 
@@ -20572,7 +20830,7 @@ msgstr "ඇණවුම් විස්තර"
 #: eventyay/control/templates/pretixcontrol/admin/dashboard.html:737
 #: eventyay/control/templates/pretixcontrol/admin/dashboard.html:785
 #: eventyay/control/templates/pretixcontrol/admin/dashboard.html:830
-#: eventyay/orga/templates/orga/mails/_placeholder_group.html:26
+#: eventyay/orga/templates/orga/mails/_placeholder_group.html:22
 msgid "Unavailable"
 msgstr "ලබාගත නොහැක"
 
@@ -21205,6 +21463,40 @@ msgstr "සියලු සංවිධායකයින්"
 #: eventyay/eventyay_common/templates/eventyay_common/organizers/index.html:27
 msgid "Create a new organizer"
 msgstr "නව සංවිධායකයෙකු සාදන්න"
+
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:52
+#: eventyay/control/templates/pretixcontrol/base.html:128
+#: eventyay/eventyay_common/templates/eventyay_common/base.html:126
+#: eventyay/orga/templates/orga/base.html:98
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:73
+msgid "Toggle sidebar"
+msgstr "පැති තීරුව මාරු කරන්න"
+
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:84
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:86
+#: eventyay/control/templates/pretixcontrol/base.html:238
+#: eventyay/control/templates/pretixcontrol/base.html:239
+#: eventyay/eventyay_common/templates/eventyay_common/base.html:203
+#: eventyay/eventyay_common/templates/eventyay_common/base.html:204
+#: eventyay/orga/templates/orga/base.html:170
+#: eventyay/orga/templates/orga/base.html:171
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:134
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:136
+msgid "End admin session"
+msgstr "පරිපාලක සැසිය අවසන් කරන්න"
+
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:103
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:153
+#, fuzzy
+#| msgid "E-Mail notification"
+msgid "Main navigation"
+msgstr "ඊ-තැපැල් දැනුම්දීම්"
+
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:112
+#: eventyay/eventyay_common/templates/eventyay_common/base.html:258
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:162
+msgid "Main dashboard"
+msgstr "ප්‍රධාන උපකරණ පුවරුව"
 
 #: eventyay/control/templates/pretixcontrol/admin/pages/delete.html:4
 #: eventyay/control/templates/pretixcontrol/admin/pages/delete.html:6
@@ -21932,13 +22224,6 @@ msgstr ""
 msgid "Error:"
 msgstr "දෝෂය:"
 
-#: eventyay/control/templates/pretixcontrol/base.html:128
-#: eventyay/eventyay_common/templates/eventyay_common/base.html:126
-#: eventyay/orga/templates/orga/base.html:98
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:72
-msgid "Toggle sidebar"
-msgstr "පැති තීරුව මාරු කරන්න"
-
 #: eventyay/control/templates/pretixcontrol/base.html:153
 #: eventyay/control/templates/pretixcontrol/base.html:177
 #: eventyay/control/templates/pretixcontrol/base.html:178
@@ -21947,17 +22232,6 @@ msgstr "පැති තීරුව මාරු කරන්න"
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:177
 msgid "Public profile"
 msgstr "පොදු පැතිකඩ"
-
-#: eventyay/control/templates/pretixcontrol/base.html:238
-#: eventyay/control/templates/pretixcontrol/base.html:239
-#: eventyay/eventyay_common/templates/eventyay_common/base.html:203
-#: eventyay/eventyay_common/templates/eventyay_common/base.html:204
-#: eventyay/orga/templates/orga/base.html:170
-#: eventyay/orga/templates/orga/base.html:171
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:133
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:135
-msgid "End admin session"
-msgstr "පරිපාලක සැසිය අවසන් කරන්න"
 
 #: eventyay/control/templates/pretixcontrol/base.html:279
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:248
@@ -22641,8 +22915,8 @@ msgid "Videos"
 msgstr "වීඩියෝ"
 
 #: eventyay/control/templates/pretixcontrol/event/delete.html:5
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:410
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:415
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:408
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:413
 msgid "Delete event"
 msgstr "සිදුවීම මකන්න"
 
@@ -22695,12 +22969,12 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/event/delete.html:55
 #: eventyay/control/templates/pretixcontrol/event/delete.html:69
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:373
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:371
 msgid "Delete personal data"
 msgstr "පුද්ගලික දත්ත මකන්න"
 
 #: eventyay/control/templates/pretixcontrol/event/delete.html:59
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:340
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:338
 msgid "Go offline"
 msgstr "ඔෆ්ලයින් කරන්න"
 
@@ -23077,6 +23351,7 @@ msgstr "ඊමේල් සැකසුම්"
 
 #: eventyay/control/templates/pretixcontrol/event/payment.html:10
 #: eventyay/control/templates/pretixcontrol/event/payment_provider.html:5
+#: eventyay/eventyay_common/forms/event.py:398
 msgid "Payment settings"
 msgstr "ගෙවීම් සැකසුම්"
 
@@ -23174,9 +23449,9 @@ msgid "Disable"
 msgstr "අක්‍රිය කරන්න"
 
 #: eventyay/control/templates/pretixcontrol/event/plugins.html:75
-#: eventyay/control/templates/pretixcontrol/global_settings.html:135
-#: eventyay/control/templates/pretixcontrol/global_settings.html:153
-#: eventyay/control/templates/pretixcontrol/global_settings.html:172
+#: eventyay/control/templates/pretixcontrol/global_settings.html:137
+#: eventyay/control/templates/pretixcontrol/global_settings.html:155
+#: eventyay/control/templates/pretixcontrol/global_settings.html:174
 #: eventyay/eventyay_common/templates/eventyay_common/account/2fa-enable.html:34
 #: eventyay/eventyay_common/templates/eventyay_common/account/general-settings.html:80
 #: eventyay/eventyay_common/templates/eventyay_common/account/notification-settings.html:36
@@ -23320,9 +23595,10 @@ msgstr "සැකසුමෙන් පසු, කරුණාකර Payment ප
 #: eventyay/control/templates/pretixcontrol/event/settings.html:7
 #: eventyay/control/templates/pretixcontrol/event/settings.html:13
 #: eventyay/control/templates/pretixcontrol/organizers/billing.html:7
+#: eventyay/eventyay_common/forms/event.py:355
 #: eventyay/eventyay_common/templates/eventyay_common/account/general-settings.html:25
 #: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:7
-#: eventyay/orga/views/event.py:81
+#: eventyay/orga/views/event.py:80
 msgid "General settings"
 msgstr "සාමාන්‍ය සැකසුම්"
 
@@ -23343,12 +23619,12 @@ msgid "Changes to existing orders"
 msgstr "දැනට පවතින ඇණවුම් සඳහා වෙනස්කම්"
 
 #: eventyay/control/templates/pretixcontrol/event/settings.html:60
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:203
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:204
 msgid "Texts"
 msgstr "පෙළ"
 
 #: eventyay/control/templates/pretixcontrol/event/settings.html:69
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:236
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:237
 msgid "Display"
 msgstr "දර්ශනය"
 
@@ -23371,7 +23647,16 @@ msgid "Add property"
 msgstr "ගුණාංගයක් එක් කරන්න"
 
 #: eventyay/control/templates/pretixcontrol/event/settings.html:163
+#: eventyay/eventyay_common/templates/eventyay_common/event/live.html:471
+msgid "Cancel or delete event"
+msgstr "සිදුවීම අවලංගු කරන්න හෝ මකන්න"
+
+#: eventyay/control/templates/pretixcontrol/event/settings.html:169
 #: eventyay/control/templates/pretixcontrol/organizers/detail.html:156
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:4
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:8
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:89
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:428
 msgid "Clone event"
 msgstr "සිදුවීම ක්ලෝන් කරන්න"
 
@@ -23657,74 +23942,74 @@ msgstr ""
 msgid "No plugins found."
 msgstr "පරිශීලකයන් හමු නොවීය."
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:21
+#: eventyay/control/templates/pretixcontrol/global_settings.html:23
 msgid "Stripe — Organizer Billing"
 msgstr "Stripe — සංවිධායක බිල්කරණය"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:23
+#: eventyay/control/templates/pretixcontrol/global_settings.html:25
 msgid "This configuration is used for organizer billing and platform fees."
 msgstr "මෙම වින්‍යාසය සංවිධායක බිල්කරණය සහ වේදිකා ගාස්තු සඳහා භාවිත වේ."
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:27
-#: eventyay/control/templates/pretixcontrol/global_settings.html:78
+#: eventyay/control/templates/pretixcontrol/global_settings.html:29
+#: eventyay/control/templates/pretixcontrol/global_settings.html:80
 msgid "Live Credentials"
 msgstr "සජීවී අක්තපත්‍ර"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:38
-#: eventyay/control/templates/pretixcontrol/global_settings.html:89
+#: eventyay/control/templates/pretixcontrol/global_settings.html:40
+#: eventyay/control/templates/pretixcontrol/global_settings.html:91
 msgid "Test Credentials"
 msgstr "පරීක්ෂා සහතික"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:49
+#: eventyay/control/templates/pretixcontrol/global_settings.html:51
 #: eventyay/control/templates/pretixcontrol/organizers/webhooks.html:6
 msgid "Webhooks"
 msgstr "Webhooks"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:61
+#: eventyay/control/templates/pretixcontrol/global_settings.html:63
 msgid "Stripe — Ticket Payments"
 msgstr "Stripe — ටිකට් ගෙවීම්"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:63
+#: eventyay/control/templates/pretixcontrol/global_settings.html:65
 msgid "This configuration is used for ticket payments via the Stripe plugin."
 msgstr "මෙම සැකසුම Stripe ප්ලගිනය හරහා ටිකට් ගෙවීම් සඳහා භාවිතා කරනු ලැබේ."
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:67
+#: eventyay/control/templates/pretixcontrol/global_settings.html:69
 msgid "Client Configuration"
 msgstr "පාරිභෝගික සැකසුම"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:100
+#: eventyay/control/templates/pretixcontrol/global_settings.html:102
 msgid "App Fees"
 msgstr "යෙදුම් ගාස්තු"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:102
+#: eventyay/control/templates/pretixcontrol/global_settings.html:104
 msgid "Configure the application fees charged on ticket payments."
 msgstr "ටිකට් ගෙවීම් හරහා අයකරන යෙදුම් ගාස්තු සකසන්න."
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:115
+#: eventyay/control/templates/pretixcontrol/global_settings.html:117
 msgid "PayPal"
 msgstr "PayPal"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:117
+#: eventyay/control/templates/pretixcontrol/global_settings.html:119
 msgid "Configure PayPal payment processing."
 msgstr "PayPal ගෙවීම් සැකසීම සකසන්න."
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:192
+#: eventyay/control/templates/pretixcontrol/global_settings.html:195
 msgid "Test email connection"
 msgstr ""
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:201
+#: eventyay/control/templates/pretixcontrol/global_settings.html:204
 #, fuzzy
 #| msgid "(no email address)"
 msgid "Recipient email address(es)"
 msgstr "(ඊමේල් ලිපිනයක් නොමැත)"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:211
+#: eventyay/control/templates/pretixcontrol/global_settings.html:214
 #, fuzzy
 #| msgid "Send this email"
 msgid "Send test email"
 msgstr "මෙම ඊමේල් පණිවිඩය යවන්න"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:216
+#: eventyay/control/templates/pretixcontrol/global_settings.html:219
 msgid ""
 "Sends a test email to the entered recipient address or comma-separated "
 "recipient addresses to verify the email settings are working."
@@ -23741,6 +24026,95 @@ msgstr "eventyay සේවාදායකය දෝෂ කේතයක් ලබ
 #: eventyay/control/templates/pretixcontrol/global_update.html:30
 msgid "The eventyay server could not be reached."
 msgstr "eventyay සේවාදායකයට සම්බන්ධ විය නොහැකි විය."
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:4
+msgid ""
+"Gmail integration requires a database update. Run `python manage.py migrate` "
+"and reload this page."
+msgstr ""
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:9
+msgid ""
+"Gmail and Google Workspace are suitable for moderate transactional email and "
+"organiser communication. They are not recommended as the only backend for "
+"large event mailings. Configure SMTP or SendGrid as a fallback delivery "
+"backend if Gmail is unavailable or unsuitable for bulk mailings."
+msgstr ""
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:18
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:66
+#, fuzzy
+#| msgid "Redirect URL"
+msgid "OAuth redirect URI"
+msgstr "ප්‍රතිනියමන URL"
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:22
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:70
+msgid ""
+"Add this redirect URI to your Google Cloud OAuth client before connecting."
+msgstr ""
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:27
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:75
+#, fuzzy
+#| msgid "All actions"
+msgid "Gmail connection"
+msgstr "සියලු ක්‍රියාමාර්ග"
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:31
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:79
+#, fuzzy
+#| msgid "Connect"
+msgid "Connected"
+msgstr "සම්බන්ධ කරන්න"
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:35
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:83
+#, python-format
+msgid "Approximate usage today: %(sent)s / %(limit)s messages."
+msgstr ""
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:40
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:88
+#, python-format
+msgid "Last delivery issue: %(error)s"
+msgstr ""
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:46
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:94
+#, fuzzy
+#| msgid "sent email"
+#| msgid_plural "sent emails"
+msgid "Disconnect Gmail"
+msgstr "යවන ලද ඊමේල්"
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:50
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:98
+#, fuzzy
+#| msgid "Date joined"
+msgid "Not connected"
+msgstr "එකතු වූ දිනය"
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:54
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:102
+msgid ""
+"Configure the OAuth client ID and secret in global settings, then connect a "
+"Google account with send permission."
+msgstr ""
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:56
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:104
+msgid ""
+"Save your OAuth client ID and secret, then connect a Google account with "
+"send permission."
+msgstr ""
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:60
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:108
+#, fuzzy
+#| msgid "Connected devices"
+msgid "Connect Gmail account"
+msgstr "සම්බන්ධිත උපාංග"
 
 #: eventyay/control/templates/pretixcontrol/includes/logs.html:51
 #: eventyay/eventyay_common/templates/eventyay_common/includes/logs.html:51
@@ -24034,7 +24408,7 @@ msgstr "නිෂ්පාදන ඉතිහාසය"
 
 #: eventyay/control/templates/pretixcontrol/item/index.html:176
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:121
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:509
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:514
 #, fuzzy
 #| msgid "Logo image"
 msgid "Crop Image"
@@ -24042,7 +24416,7 @@ msgstr "ලාංඡන රූපය"
 
 #: eventyay/control/templates/pretixcontrol/item/index.html:185
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:130
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:519
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:524
 #, fuzzy
 #| msgid "Apply"
 msgid "Apply Crop"
@@ -25650,8 +26024,8 @@ msgstr "ඊමේල් යවන්න"
 
 #: eventyay/control/templates/pretixcontrol/orders/cancel.html:5
 #: eventyay/control/templates/pretixcontrol/orders/cancel.html:7
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:350
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:355
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:348
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:353
 msgid "Cancel event"
 msgstr "සිදුවීම අවලංගු කරන්න"
 
@@ -26541,7 +26915,7 @@ msgid "Organizer settings"
 msgstr "සංවිධායක සැකසුම්"
 
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:49
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:209
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:210
 msgid "Design"
 msgstr "නිර්මාණය"
 
@@ -26561,15 +26935,11 @@ msgid "Community"
 msgstr "සටහන"
 
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:86
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:229
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:230
 #, fuzzy
 #| msgid "Video"
 msgid "Video area"
 msgstr "වීඩියෝ"
-
-#: eventyay/control/templates/pretixcontrol/organizers/edit.html:97
-msgid "Privacy"
-msgstr "පෞද්ගලිකත්වය"
 
 #: eventyay/control/templates/pretixcontrol/organizers/gate_delete.html:5
 msgid "Delete gate:"
@@ -27784,7 +28154,7 @@ msgstr "එම පිටු අංකය 1ට වඩා කුඩාය"
 msgid "Dashboard cache refreshed successfully."
 msgstr "මුරපද යළි සකස් කිරීමේ ඊමේල් පණිවිඩය යවා ඇත."
 
-#: eventyay/control/views/admin.py:685 eventyay/control/views/pages.py:131
+#: eventyay/control/views/admin.py:685 eventyay/control/views/pages.py:136
 msgid "Invalid field."
 msgstr "වලංගු නොවන ක්ෂේත්‍රය."
 
@@ -27897,7 +28267,7 @@ msgstr "නව check-in ලැයිස්තුව සෑදිය."
 #: eventyay/control/views/event.py:1495 eventyay/control/views/event.py:1626
 #: eventyay/control/views/organizer_views/organizer_view.py:361
 #: eventyay/control/views/organizer_views/organizer_view.py:537
-#: eventyay/control/views/pages.py:108 eventyay/control/views/product.py:269
+#: eventyay/control/views/pages.py:113 eventyay/control/views/product.py:269
 #: eventyay/control/views/product.py:321 eventyay/control/views/product.py:779
 #: eventyay/control/views/product.py:813 eventyay/control/views/product.py:964
 #: eventyay/control/views/product.py:1243
@@ -27907,7 +28277,7 @@ msgstr "නව check-in ලැයිස්තුව සෑදිය."
 #: eventyay/control/views/subevents.py:1051
 #: eventyay/control/views/subevents.py:1620
 #: eventyay/eventyay_common/views/account/two_factor_auth.py:150
-#: eventyay/eventyay_common/views/event.py:895
+#: eventyay/eventyay_common/views/event.py:930
 #: eventyay/plugins/badges/views.py:144 eventyay/plugins/badges/views.py:193
 #: eventyay/plugins/sendmail/views.py:231
 #: eventyay/plugins/ticketoutputpdf/views.py:109
@@ -28032,7 +28402,7 @@ msgstr[1] "{num} ඇණවුම්"
 
 #: eventyay/control/views/event.py:239
 #: eventyay/control/views/organizer_views/organizer_view.py:205
-#: eventyay/eventyay_common/views/event.py:780
+#: eventyay/eventyay_common/views/event.py:815
 msgid ""
 "Your changes have been saved. Please note that it can take a short period of "
 "time until your changes become active."
@@ -28081,7 +28451,7 @@ msgstr "ඔබ ඉල්ලා සිටියේ වලංගු නොවන �
 msgid "This event can not be deleted."
 msgstr "මෙම අවස්ථාව මකා දැමිය නොහැක."
 
-#: eventyay/control/views/event.py:1204 eventyay/orga/views/event.py:399
+#: eventyay/control/views/event.py:1204 eventyay/orga/views/event.py:398
 msgid "The event has been deleted."
 msgstr "අවස්ථාව මකා දමන ලදි."
 
@@ -28164,66 +28534,74 @@ msgstr "සම්මත ටිකට්පත"
 msgid "Virtual Ticket"
 msgstr "අථත්‍ය ටිකට්පත"
 
-#: eventyay/control/views/global_settings.py:51
-#: eventyay/control/views/global_settings.py:73
-#: eventyay/control/views/global_settings.py:103
-#: eventyay/control/views/global_settings.py:156
-#: eventyay/control/views/pages.py:50
+#: eventyay/control/views/global_settings.py:66
+#: eventyay/control/views/global_settings.py:83
+#: eventyay/control/views/global_settings.py:113
+#: eventyay/control/views/global_settings.py:166
+#: eventyay/control/views/pages.py:55
 msgid "Your changes have not been saved, see below for errors."
 msgstr "ඔබගේ වෙනස්කම් සුරක්ෂිත කර නැත, දෝෂ සඳහා පහළ බලන්න."
 
-#: eventyay/control/views/global_settings.py:197
+#: eventyay/control/views/global_settings.py:207
 #, fuzzy
 #| msgid "Please enter at least one email address!"
 msgid "Please enter at least one valid recipient email address."
 msgstr "කරුණාකර අවම වශයෙන් එක් ඊමේල් ලිපිනයක් ඇතුළත් කරන්න!"
 
-#: eventyay/control/views/global_settings.py:207
+#: eventyay/control/views/global_settings.py:217
 #, fuzzy, python-format
 #| msgid "Please enter a valid email address."
 msgid ""
 "Please enter a valid recipient email address (\"%(email)s\" is invalid)."
 msgstr "කරුණාකර වලංගු ඊමේල් ලිපිනයක් ඇතුළත් කරන්න."
 
-#: eventyay/control/views/global_settings.py:220
+#: eventyay/control/views/global_settings.py:230
 msgid ""
 "No sender address is configured. Please set the \"Sender address\" field in "
 "the Email tab and save first."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:232
+#: eventyay/control/views/global_settings.py:242
 #, python-format
 msgid ""
 "The sender address \"%(addr)s\" is not a valid email address. Please correct "
 "the \"Sender address\" field and save again."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:245
+#: eventyay/control/views/global_settings.py:255
 #, python-format
 msgid ""
 "The sender address \"%(addr)s\" contains non-ASCII characters which are not "
 "allowed in SMTP. Please correct the \"Sender address\" field and save again."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:258
-#: eventyay/eventyay_common/views/event.py:704
+#: eventyay/control/views/global_settings.py:268
+#: eventyay/eventyay_common/views/event.py:729
 msgid "SendGrid API key is missing. Please configure it and save."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:266
-#: eventyay/eventyay_common/views/event.py:707
+#: eventyay/control/views/global_settings.py:279
+msgid ""
+"Gmail is selected but no account is connected. Connect Gmail in the settings "
+"first."
+msgstr ""
+
+#: eventyay/control/views/global_settings.py:288
+#: eventyay/eventyay_common/views/event.py:732
 msgid "SMTP host or port is missing. Please configure them and save."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:282
+#: eventyay/control/views/global_settings.py:301
+#: eventyay/control/views/global_settings.py:311
 msgid "Eventyay system - test email"
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:283
+#: eventyay/control/views/global_settings.py:302
+#: eventyay/control/views/global_settings.py:312
 msgid "This is a test email from your Eventyay system email configuration."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:299
+#: eventyay/control/views/global_settings.py:328
 msgid ""
 "SMTP authentication or email sending failed because the password, username, "
 "or recipient address contains an invisible non-ASCII character (e.g. a no-"
@@ -28231,31 +28609,123 @@ msgid ""
 "again."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:310
+#: eventyay/control/views/global_settings.py:339
 #, python-format
 msgid "SendGrid test email failed to connect or send. HTTP Error: %(err)s"
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:317
+#: eventyay/control/views/global_settings.py:356
+#: eventyay/eventyay_common/views/event.py:756
+#, python-format
+msgid "Gmail test email is temporarily delayed because of rate limits: %(err)s"
+msgstr ""
+
+#: eventyay/control/views/global_settings.py:362
+#: eventyay/eventyay_common/views/event.py:761
+#, fuzzy, python-format
+#| msgid "Some emails failed to send:"
+msgid "Gmail test email could not be sent: %(err)s"
+msgstr "ඊමේල් කිහිපයක් යැවීමට අසමත් විය:"
+
+#: eventyay/control/views/global_settings.py:369
 #, fuzzy, python-format
 #| msgid "Some emails failed to send:"
 msgid "Test email failed to connect or send: %(err)s"
 msgstr "ඊමේල් කිහිපයක් යැවීමට අසමත් විය:"
 
-#: eventyay/control/views/global_settings.py:325
+#: eventyay/control/views/global_settings.py:379
 #, python-format
 msgid "Test email sent to %(email)s — check inbox."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:396
+#: eventyay/control/views/global_settings.py:450
 msgid "Plugin configuration table is not available. Please run migrations."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:404
+#: eventyay/control/views/global_settings.py:458
 #, fuzzy
 #| msgid "Your notification settings have been saved."
 msgid "Plugin settings have been saved."
 msgstr "ඔබගේ දැනුම්දීම් සැකසුම් සුරකින ලදී."
+
+#: eventyay/control/views/gmail_oauth.py:47
+#: eventyay/control/views/gmail_oauth.py:156
+#, python-format
+msgid "Google authorization was denied or failed: %(error)s"
+msgstr ""
+
+#: eventyay/control/views/gmail_oauth.py:54
+#: eventyay/control/views/gmail_oauth.py:163
+msgid "Missing authorization response from Google."
+msgstr ""
+
+#: eventyay/control/views/gmail_oauth.py:60
+#: eventyay/control/views/gmail_oauth.py:169
+#, fuzzy
+#| msgid "The registration could not be completed. Please try again."
+msgid "The Google authorization session expired. Please try again."
+msgstr "ලියාපදිංචිය සම්පූර්ණ කළ නොහැකි විය. කරුණාකර නැවත උත්සාහ කරන්න."
+
+#: eventyay/control/views/gmail_oauth.py:64
+#, fuzzy
+#| msgid "The waiting list entry has been moved to the end of the list."
+msgid "The Google authorization session does not match the current user."
+msgstr "රැඳීසිටි ලැයිස්තු ඇතුළත් කිරීම ලැයිස්තුවේ අවසානයට ගෙන ගොස් ඇත."
+
+#: eventyay/control/views/gmail_oauth.py:75
+#: eventyay/control/views/gmail_oauth.py:189
+#, python-format
+msgid "Could not connect Gmail account: %(error)s"
+msgstr ""
+
+#: eventyay/control/views/gmail_oauth.py:83
+#: eventyay/control/views/gmail_oauth.py:197
+msgid ""
+"Google did not return a refresh token. Disconnect the app in your Google "
+"account and try again."
+msgstr ""
+
+#: eventyay/control/views/gmail_oauth.py:103
+#, fuzzy, python-format
+#| msgid "Verification failed."
+msgid "Gmail account %(email)s connected successfully."
+msgstr "තහවුරු කිරීම අසාර්ථක විය."
+
+#: eventyay/control/views/gmail_oauth.py:113
+#, fuzzy
+#| msgid "This account is inactive."
+msgid "Gmail account disconnected."
+msgstr "මෙම ගිණුම අක්‍රියයි."
+
+#: eventyay/control/views/gmail_oauth.py:115
+#, fuzzy
+#| msgid "No sent mails found."
+msgid "No active Gmail connection found."
+msgstr "යවා ඇති තැපැල් හමු නොවීය."
+
+#: eventyay/control/views/gmail_oauth.py:173
+#, fuzzy
+#| msgid "The video module is not enabled for this event."
+msgid "The Google authorization session is invalid for this event."
+msgstr "මෙම උත්සවය සඳහා වීඩියෝ මොඩියුලය සක්‍රිය කර නැත."
+
+#: eventyay/control/views/gmail_oauth.py:218
+#, fuzzy, python-format
+#| msgid "No servers configured yet."
+msgid "Gmail account %(email)s connected for this event."
+msgstr "තවම සේවාදායක කිසිවක් සකසා නැත."
+
+#: eventyay/control/views/gmail_oauth.py:231
+#, fuzzy
+#| msgid "No servers configured yet."
+msgid "Gmail account disconnected for this event."
+msgstr "තවම සේවාදායක කිසිවක් සකසා නැත."
+
+#: eventyay/control/views/gmail_oauth.py:233
+#, fuzzy
+#| msgid "No servers configured yet."
+msgid "No active Gmail connection found for this event."
+msgstr "තවම සේවාදායක කිසිවක් සකසා නැත."
 
 #: eventyay/control/views/orderimport.py:65
 msgid "Please only upload CSV files."
@@ -28841,18 +29311,40 @@ msgid ""
 msgstr ""
 
 #: eventyay/control/views/organizer_views/organizer_view.py:541
-#: eventyay/eventyay_common/views/event.py:899
+#: eventyay/eventyay_common/views/event.py:934
 msgid "You haven't made any changes."
 msgstr "ඔබ කිසිදු වෙනස්කමක් කර නැත."
 
-#: eventyay/control/views/pages.py:59 eventyay/control/views/pages.py:132
-#: eventyay/control/views/pages.py:182
+#: eventyay/control/views/pages.py:64 eventyay/control/views/pages.py:137
+#: eventyay/control/views/pages.py:187 eventyay/control/views/pages.py:248
 msgid "The requested page does not exist."
 msgstr "ඉල්ලා ඇති පිටුව නොපවතී."
 
-#: eventyay/control/views/pages.py:171
+#: eventyay/control/views/pages.py:176
 msgid "The selected page has been deleted."
 msgstr "තෝරාගත් පිටුව මකා දමා ඇත."
+
+#: eventyay/control/views/pages.py:235
+#, fuzzy
+#| msgid "Number of reviews"
+msgid "Terms of Service"
+msgstr "සමාලෝචන ගණන"
+
+#: eventyay/control/views/pages.py:236
+#, fuzzy
+#| msgid "Privacy Policy URL"
+msgid "Privacy Policy"
+msgstr "පෞද්ගලිකත්ව ප්‍රතිපත්ති URL"
+
+#: eventyay/control/views/pages.py:238
+msgid "Support & Help"
+msgstr ""
+
+#: eventyay/control/views/pages.py:242
+#, fuzzy
+#| msgid "No redis server has been configured."
+msgid "Content for this page has not been configured yet."
+msgstr "Redis සේවාදායකයක් වින්‍යාස කර නැත."
 
 #: eventyay/control/views/pdf.py:39
 #, fuzzy
@@ -29112,15 +29604,15 @@ msgid "Unknown action."
 msgstr "නොදන්නා කරත්ත ස්ථානය."
 
 #: eventyay/control/views/users.py:198 eventyay/control/views/users.py:201
-#: eventyay/control/views/users.py:328 eventyay/control/views/users.py:331
-#: eventyay/control/views/users.py:389 eventyay/control/views/users.py:392
+#: eventyay/control/views/users.py:331 eventyay/control/views/users.py:334
+#: eventyay/control/views/users.py:392 eventyay/control/views/users.py:395
 #, fuzzy
 #| msgid "The addressed user’s email address"
 msgid "This user has no email address."
 msgstr "ලබන්නා වූ පරිශීලකයාගේ විද්‍යුත් තැපැල් ලිපිනය"
 
 #: eventyay/control/views/users.py:210 eventyay/control/views/users.py:213
-#: eventyay/control/views/users.py:340 eventyay/control/views/users.py:343
+#: eventyay/control/views/users.py:343 eventyay/control/views/users.py:346
 #, fuzzy
 #| msgid "Please provide an email address."
 msgid "This user has no primary email address."
@@ -29162,78 +29654,78 @@ msgstr "එකක් ඉවත් කරන්න"
 msgid "Admin status for %(email)s has been %(action)s."
 msgstr "අභිරුචි ඊමේලයක් යවා ඇත."
 
-#: eventyay/control/views/users.py:314
+#: eventyay/control/views/users.py:317
 #, fuzzy
 #| msgid "Order marked as paid"
 msgid "marked as spam"
 msgstr "ඇණවුම ගෙවා ඇත ලෙස ලකුණු කරන ලදී"
 
-#: eventyay/control/views/users.py:314
+#: eventyay/control/views/users.py:317
 #, fuzzy
 #| msgid "Order marked as paid"
 msgid "unmarked as spam"
 msgstr "ඇණවුම ගෙවා ඇත ලෙස ලකුණු කරන ලදී"
 
-#: eventyay/control/views/users.py:317
+#: eventyay/control/views/users.py:320
 #, fuzzy, python-format
 #| msgid "The email has been sent."
 msgid "User %(email)s has been %(action)s."
 msgstr "ඊමේල් යවන ලදී."
 
-#: eventyay/control/views/users.py:350 eventyay/control/views/users.py:353
+#: eventyay/control/views/users.py:353 eventyay/control/views/users.py:356
 #, fuzzy
 #| msgid "This security device is already registered."
 msgid "This user is already verified."
 msgstr "මෙම ආරක්ෂක උපාංගය දැනටමත් ලියාපදිංචි කර ඇත."
 
-#: eventyay/control/views/users.py:363 eventyay/control/views/users.py:366
+#: eventyay/control/views/users.py:366 eventyay/control/views/users.py:369
 #, fuzzy
 #| msgid ""
 #| "There was an error sending the confirmation mail. Please try again later."
 msgid "There was an error sending the verification email."
 msgstr "තහවුරු කිරීමේ ඊමේල් පණිවිඩය යැවීමේදී දෝෂයක් ඇතිවිය. කරුණාකර පසුව නැවත උත්සාහ කරන්න."
 
-#: eventyay/control/views/users.py:377
+#: eventyay/control/views/users.py:380
 #, fuzzy
 #| msgid "Verification failed."
 msgid "Verification email sent successfully."
 msgstr "තහවුරු කිරීම අසාර්ථක විය."
 
-#: eventyay/control/views/users.py:381
+#: eventyay/control/views/users.py:384
 #, fuzzy, python-format
 #| msgid "Verification failed."
 msgid "Verification email sent to %(email)s."
 msgstr "තහවුරු කිරීම අසාර්ථක විය."
 
-#: eventyay/control/views/users.py:410
+#: eventyay/control/views/users.py:413
 #, fuzzy
 #| msgid "Password reset mail sent."
 msgid "Password reset email sent successfully."
 msgstr "මුරපද යළි සකස් කිරීමේ ඊමේල් පණිවිඩය යවා ඇත."
 
-#: eventyay/control/views/users.py:414
+#: eventyay/control/views/users.py:417
 #, fuzzy, python-format
 #| msgid "Password reset mail sent."
 msgid "Password reset email sent to %(email)s."
 msgstr "මුරපද යළි සකස් කිරීමේ ඊමේල් පණිවිඩය යවා ඇත."
 
-#: eventyay/control/views/users.py:502
+#: eventyay/control/views/users.py:505
 msgid "We sent out an e-mail containing further instructions."
 msgstr "තවත් උපදෙස් අඩංගු විද්‍යුත් තැපෑලක් අපි යවා ඇත."
 
-#: eventyay/control/views/users.py:548
+#: eventyay/control/views/users.py:551
 #, fuzzy
 #| msgid "The registration could not be completed. Please try again."
 msgid "The user could not be anonymized. Please try again later."
 msgstr "ලියාපදිංචිය සම්පූර්ණ කළ නොහැකි විය. කරුණාකර නැවත උත්සාහ කරන්න."
 
-#: eventyay/control/views/users.py:551
+#: eventyay/control/views/users.py:554
 #, fuzzy
 #| msgid "This user has been anonymized."
 msgid "User has been anonymized successfully."
 msgstr "මෙම පරිශීලකයා අනන්‍යතාව ඉවත් කර ඇත."
 
-#: eventyay/control/views/users.py:646
+#: eventyay/control/views/users.py:649
 msgid "The new user has been created."
 msgstr "නව පරිශීලකයා නිර්මාණය කර ඇත."
 
@@ -29385,101 +29877,101 @@ msgstr ""
 "මෙහිදී පෙර ඉසව්වලින් සැකසුම් පිටපත් කළ හැක, උදාහරණයක් ලෙස තැපැල් සැකසුම්, සැසි වර්ග, සහ "
 "ඊමේල් අච්චු. ඉසව්ව නිර්මාණය කළ පසු එම සැකසුම් පරීක්ෂා කරන්න!"
 
-#: eventyay/event/stages.py:41
+#: eventyay/event/stages.py:40
 msgid "Preparation"
 msgstr "සූදානම"
 
-#: eventyay/event/stages.py:45
+#: eventyay/event/stages.py:44
 msgid "Configure the event"
 msgstr "ඉසව්ව වින්‍යාස කරන්න"
 
-#: eventyay/event/stages.py:46
+#: eventyay/event/stages.py:45
 msgid "Gather your team"
 msgstr "කණ්ඩායම එකතු කරන්න"
 
-#: eventyay/event/stages.py:47
+#: eventyay/event/stages.py:46
 msgid "Write a CfP"
 msgstr "CfP එක ලියන්න"
 
-#: eventyay/event/stages.py:49
+#: eventyay/event/stages.py:48
 msgid "Customize mail templates"
 msgstr "තැපැල් අච්චු අභිරුචිකරණය කරන්න"
 
-#: eventyay/event/stages.py:55
+#: eventyay/event/stages.py:54
 msgid "CfP is open"
 msgstr "CfP විවෘතයි"
 
-#: eventyay/event/stages.py:59
+#: eventyay/event/stages.py:58
 msgid "Monitor proposals"
 msgstr "යෝජනා නිරීක්ෂණය කරන්න"
 
-#: eventyay/event/stages.py:61
+#: eventyay/event/stages.py:60
 msgid "Submit sessions for your speakers"
 msgstr "කථිකයන් සඳහා සැසි ඉදිරිපත් කරන්න"
 
-#: eventyay/event/stages.py:64
+#: eventyay/event/stages.py:63
 msgid "Invite reviewers"
 msgstr "සමාලෝචකයන් ආරාධනා කරන්න"
 
-#: eventyay/event/stages.py:72
+#: eventyay/event/stages.py:71
 msgid "Let reviewers do their work"
 msgstr "සමාලෝචකයන්ට ඔවුන්ගේ වැඩ කිරීමට ඉඩ දෙන්න"
 
-#: eventyay/event/stages.py:74
+#: eventyay/event/stages.py:73
 msgid "Accept or reject proposals"
 msgstr "යෝජනා පිළිගන්න හෝ ප්‍රතික්ෂේප කරන්න"
 
-#: eventyay/event/stages.py:77
+#: eventyay/event/stages.py:76
 msgid "Build your first schedule"
 msgstr "පළමු කාලසටහන සකස් කරන්න"
 
-#: eventyay/event/stages.py:86
+#: eventyay/event/stages.py:85
 msgid "Release schedules as needed"
 msgstr "අවශ්‍ය පරිදි කාලසටහන් නිකුත් කරන්න"
 
-#: eventyay/event/stages.py:90
+#: eventyay/event/stages.py:89
 msgid "Inform your speakers about the infrastructure"
 msgstr "යටිතල පහසුකම් පිළිබඳ කථිකයන්ට දැනුම් දෙන්න"
 
-#: eventyay/event/stages.py:100
+#: eventyay/event/stages.py:99
 msgid "Provide a point of contact for the speakers"
 msgstr "කථිකයන් සඳහා සම්බන්ධතා පුද්ගලයෙකු ලබා දෙන්න"
 
-#: eventyay/event/stages.py:101
+#: eventyay/event/stages.py:100
 msgid "Enjoy the event!"
 msgstr "ඉසව්ව රසවිඳින්න!"
 
-#: eventyay/event/stages.py:105
+#: eventyay/event/stages.py:104
 msgid "Wrapup"
 msgstr "සමාරෝපය"
 
-#: eventyay/event/stages.py:109
+#: eventyay/event/stages.py:108
 msgid "Monitor incoming feedback"
 msgstr "ලැබෙන ප්‍රතිචාර නිරීක්ෂණය කරන්න"
 
-#: eventyay/event/stages.py:110
+#: eventyay/event/stages.py:109
 msgid "Embed session recordings if available"
 msgstr "ලබා ගත හැකි නම් සැසිය පටිගත කිරීම් අන්තර්ගත කරන්න"
 
-#: eventyay/event/stages.py:111
+#: eventyay/event/stages.py:110
 msgid "Release next event date?"
 msgstr "ඊළඟ සිදුවීමේ දිනය නිකුත් කරන්නද?"
 
-#: eventyay/eventyay_common/forms/event.py:81
+#: eventyay/eventyay_common/forms/event.py:82
 #, fuzzy
 #| msgid "Please provide an email address."
 msgid "Please provide an email address for the contact form."
 msgstr "කරුණාකර ඊමේල් ලිපිනයක් ලබා දෙන්න."
 
-#: eventyay/eventyay_common/forms/event.py:214
+#: eventyay/eventyay_common/forms/event.py:215
 msgid "Ask search engines not to index the event pages"
 msgstr "සෙවුම් යන්ත්‍රවලට සිදුවීම් පිටු දර්ශකගත නොකරන්න ලෙස ඉල්ලන්න"
 
-#: eventyay/eventyay_common/forms/event.py:259
+#: eventyay/eventyay_common/forms/event.py:260
 msgid "Show in search results and lists"
 msgstr ""
 
-#: eventyay/eventyay_common/forms/event.py:260
+#: eventyay/eventyay_common/forms/event.py:261
 #, fuzzy
 #| msgid ""
 #| "If selected, this event will show up publicly on the list of dates for "
@@ -29489,9 +29981,137 @@ msgid ""
 "organizer account and in platform search results."
 msgstr "තේරූ විට, මෙම සිදුවීම ඔබගේ සිදුවීම සඳහා දිනයන් ලැයිස්තුවේ ප්‍රසිද්ධියේ පෙන්වයි."
 
-#: eventyay/eventyay_common/forms/event.py:267
+#: eventyay/eventyay_common/forms/event.py:268
 msgid "You need to configure the custom domain in the webserver beforehand."
 msgstr "ඔබට පෙර සිටම වෙබ් සේවාදායකයේ අභිරුචි ඩොමේනය වින්‍යාස කළ යුතුය."
+
+#: eventyay/eventyay_common/forms/event.py:349
+#, fuzzy
+#| msgid "Client Configuration"
+msgid "Common event Configuration"
+msgstr "පාරිභෝගික සැකසුම"
+
+#: eventyay/eventyay_common/forms/event.py:350
+msgid "Includes general settings, design elements, and email configurations."
+msgstr ""
+
+#: eventyay/eventyay_common/forms/event.py:356
+msgid "Location, currency, plugins, header/footer links."
+msgstr ""
+
+#: eventyay/eventyay_common/forms/event.py:361
+#, fuzzy
+#| msgid "Date and time"
+msgid "Design and texts"
+msgstr "දිනය සහ වේලාව"
+
+#: eventyay/eventyay_common/forms/event.py:362
+msgid "Colors, logo, custom CSS."
+msgstr ""
+
+#: eventyay/eventyay_common/forms/event.py:367
+#: eventyay/orga/templates/orga/settings/mail.html:14
+msgid "Email settings"
+msgstr "ඊමේල් සැකසුම්"
+
+#: eventyay/eventyay_common/forms/event.py:368
+#, fuzzy
+#| msgid "Edit list configuration"
+msgid "Email templates and SMTP configuration."
+msgstr "ලැයිස්තු වින්‍යාසය සංස්කරණය කරන්න"
+
+#: eventyay/eventyay_common/forms/event.py:374
+#, fuzzy
+#| msgid "Client Configuration"
+msgid "Ticketing Configuration"
+msgstr "පාරිභෝගික සැකසුම"
+
+#: eventyay/eventyay_common/forms/event.py:375
+msgid "Includes products, quotas, attendee questions, and check-in lists."
+msgstr ""
+
+#: eventyay/eventyay_common/forms/event.py:380
+#, fuzzy
+#| msgid "Products"
+msgid "Products & Quotas"
+msgstr "නිෂ්පාදන"
+
+#: eventyay/eventyay_common/forms/event.py:381
+msgid "Ticket products, categories, quotas, tax rules, add-ons."
+msgstr ""
+
+#: eventyay/eventyay_common/forms/event.py:387
+#, fuzzy
+#| msgid "There are no attendees to show."
+msgid "Order and attendee questions."
+msgstr "පෙන්වීමට සහභාගිවන්නන් නොමැත."
+
+#: eventyay/eventyay_common/forms/event.py:393
+#, fuzzy
+#| msgid "Edit list configuration"
+msgid "Check-in lists configuration."
+msgstr "ලැයිස්තු වින්‍යාසය සංස්කරණය කරන්න"
+
+#: eventyay/eventyay_common/forms/event.py:399
+#, fuzzy
+#| msgid "Payment providers"
+msgid "Payment providers and invoicing."
+msgstr "ගෙවීම් සපයන්නන්"
+
+#: eventyay/eventyay_common/forms/event.py:405
+#, fuzzy
+#| msgid "Client Configuration"
+msgid "Talk Configuration"
+msgstr "පාරිභෝගික සැකසුම"
+
+#: eventyay/eventyay_common/forms/event.py:406
+msgid "Includes call for speakers, session tracks, and review settings."
+msgstr ""
+
+#: eventyay/eventyay_common/forms/event.py:411
+#, fuzzy
+#| msgid "Call for Speakers"
+msgid "Call for speakers"
+msgstr "කථිකයන් සඳහා ආරාධනය"
+
+#: eventyay/eventyay_common/forms/event.py:412
+#, fuzzy
+#| msgid "A speaker information note was deleted."
+msgid "Call for speakers configuration and basic text."
+msgstr "කථික තොරතුරු සටහනක් මකා දමන ලදී."
+
+#: eventyay/eventyay_common/forms/event.py:417
+#, fuzzy
+#| msgid "Sessions by track"
+msgid "Session types & tracks"
+msgstr "ට්‍රැක් අනුව සැසි"
+
+#: eventyay/eventyay_common/forms/event.py:418
+#, fuzzy
+#| msgid "Sessions by track"
+msgid "Session types and tracks."
+msgstr "ට්‍රැක් අනුව සැසි"
+
+#: eventyay/eventyay_common/forms/event.py:423
+#: eventyay/orga/templates/orga/base.html:277
+#: eventyay/orga/templates/orga/settings/review.html:8
+#: eventyay/orga/templates/orga/settings/review.html:24
+#: eventyay/orga/views/event.py:132
+msgid "Review settings"
+msgstr "සමාලෝචන සැකසුම්"
+
+#: eventyay/eventyay_common/forms/event.py:424
+msgid "Review phases and review scoring categories."
+msgstr ""
+
+#: eventyay/eventyay_common/forms/event.py:472
+#, fuzzy
+#| msgid ""
+#| "There already is an account associated with this e-mail address. Please "
+#| "choose a different one."
+msgid ""
+"You already have an event with this short name. Please choose another one."
+msgstr "මෙම ඊ-තැපැල් ලිපිනයට සම්බන්ධ ගිණුමක් දැනටමත් ඇත. කරුණාකර වෙනත් එකක් තෝරන්න."
 
 #: eventyay/eventyay_common/forms/filters.py:62
 msgid "Search by session name"
@@ -29515,7 +30135,7 @@ msgstr "සිදුවීමේ සැකසුම්"
 
 #: eventyay/eventyay_common/navigation.py:101
 #: eventyay/eventyay_common/templates/eventyay_common/event/live.html:12
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:327
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:325
 msgid "Event status"
 msgstr "උත්සව තත්ත්වය"
 
@@ -30024,6 +30644,18 @@ msgstr "තවම කිසිදු යෙදුමක් ලියාපදි
 msgid "Lost password?"
 msgstr "මුරපදය අමතකද?"
 
+#: eventyay/eventyay_common/templates/eventyay_common/auth/base.html:40
+#, fuzzy
+#| msgid "New password"
+msgid "Show password"
+msgstr "නව මුරපදය"
+
+#: eventyay/eventyay_common/templates/eventyay_common/auth/base.html:41
+#, fuzzy
+#| msgid "New password"
+msgid "Hide password"
+msgstr "නව මුරපදය"
+
 #: eventyay/eventyay_common/templates/eventyay_common/auth/forgot.html:14
 msgid "Send recovery information"
 msgstr "ප්‍රතිසාධන තොරතුරු යවන්න"
@@ -30086,11 +30718,6 @@ msgstr ""
 msgid "Set new password"
 msgstr "නව මුරපදය සකසන්න"
 
-#: eventyay/eventyay_common/templates/eventyay_common/base.html:258
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:161
-msgid "Main dashboard"
-msgstr "ප්‍රධාන උපකරණ පුවරුව"
-
 #: eventyay/eventyay_common/templates/eventyay_common/component/_beta_badge.html:1
 #, fuzzy
 #| msgid "This feature is not enabled."
@@ -30120,6 +30747,75 @@ msgstr "මුලින්ම මෙම සංරචකය සක්‍රිය
 #: eventyay/eventyay_common/templates/eventyay_common/includes/permission_required_dialog.html:11
 msgid "Ok"
 msgstr "හරි"
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:11
+msgid ""
+"You can create a new event that is a copy of this event. Please enter a "
+"name, short form, and the new dates for the new event."
+msgstr ""
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:13
+#, fuzzy
+#| msgid "Scan the following configuration code:"
+msgid "By default, the following Configuration is NOT cloned:"
+msgstr "පහත වින්‍යාස කේතය ස්කෑන් කරන්න:"
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:15
+msgid "Orders, attendees, payments, invoices, check-ins"
+msgstr ""
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:16
+#, fuzzy
+#| msgid "The proposal was accepted."
+msgid "Submitted proposals, reviews, accepted sessions"
+msgstr "යෝජනාව පිළිගන්නා ලදී."
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:17
+#, fuzzy
+#| msgid "Send reminder to unsubmitted proposal drafts"
+msgid "Speaker accounts or profiles linked to submitted proposals"
+msgstr "යවනු නොලැබූ යෝජනා කෙටුම්පත් සඳහා මතක් කිරීමක් යවන්න"
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:18
+#, fuzzy
+#| msgid "Responses contain personal data"
+msgid "Message history, logs, or any personal data"
+msgstr "ප්‍රතිචාරවල පෞද්ගලික දත්ත අඩංගු වේ"
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:27
+#, fuzzy
+#| msgid "Sent emails"
+msgid "New Event details"
+msgstr "යවන ලද ඊමේල්"
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:38
+#: eventyay/eventyay_common/templates/eventyay_common/events/create.html:122
+msgid "Set to random"
+msgstr "අහඹු ලෙස සකසන්න"
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:42
+#: eventyay/eventyay_common/templates/eventyay_common/events/create.html:126
+msgid "Slug not available"
+msgstr "Slug ලබාගත නොහැක"
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:45
+#: eventyay/eventyay_common/templates/eventyay_common/events/create.html:129
+msgid ""
+"This is the address your event will be available at. Should be short, only "
+"contain lowercase letters and numbers, and must be unique. We recommend some "
+"kind of abbreviation with less than 30 characters that can be easily "
+"remembered. You cannot change the slug later on! If you don't provide a "
+"slug, a random one will be generated for you."
+msgstr ""
+"මෙය ඔබගේ සිදුවීම ලබාගත හැකි ලිපිනයයි. කෙටි විය යුතුය, කුඩා අකුරු සහ අංක පමණක් අඩංගු විය යුතුය, "
+"සහ අනන්‍ය විය යුතුය. අක්ෂර 30ට අඩු, පහසුවෙන් මතක තබාගත හැකි කෙටි නාමයක් යෝජනා කරයි. පසුව "
+"slug එක වෙනස් කළ නොහැක! slug එකක් ලබා නොදේ නම්, ඔබට අහඹු එකක් ජනනය කරනු ඇත."
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:62
+#, fuzzy
+#| msgid "Confirmation code"
+msgid "Configuration to clone"
+msgstr "තහවුරු කිරීමේ කේතය"
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:7
 #, fuzzy
@@ -30256,14 +30952,14 @@ msgid ""
 msgstr ""
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/includes/live_error_dialogs.html:29
-#: eventyay/eventyay_common/views/event.py:1058
+#: eventyay/eventyay_common/views/event.py:1093
 msgid ""
 "You cannot unpublish the event while tickets are published. Please switch "
 "ticketing to private test mode first."
 msgstr ""
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/includes/live_error_dialogs.html:31
-#: eventyay/eventyay_common/views/event.py:1064
+#: eventyay/eventyay_common/views/event.py:1099
 msgid ""
 "You cannot unpublish the event while talks are published. Please switch "
 "talks to private test mode first."
@@ -30686,7 +31382,7 @@ msgid "Enable video"
 msgstr "වීඩියෝ ප්‍රවේශය සක්‍රිය කරන්න"
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/live.html:461
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:316
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:314
 #, fuzzy
 #| msgid "Change order"
 msgid "Danger zone"
@@ -30698,21 +31394,17 @@ msgid ""
 "completed."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/live.html:471
-msgid "Cancel or delete event"
-msgstr "සිදුවීම අවලංගු කරන්න හෝ මකන්න"
-
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:21
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:22
 #, fuzzy, python-format
 #| msgid "- Settings"
 msgid "%(name)s - Settings"
 msgstr "- සැකසුම්"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:45
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:46
 msgid "Header links"
 msgstr "ශීර්ෂක සබැඳි"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:49
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:50
 msgid ""
 "These links will be shown at the top of all your schedule-related pages, "
 "e.g. the schedule itself, speaker pages, session pages, etc. You could for "
@@ -30723,11 +31415,11 @@ msgstr ""
 "සැසි පිටු ආදිය. උදාහරණයක් ලෙස, මෙහි මුල් පිටුව, ලියාපදිංචි කිරීමේ පිටුව හෝ සජීව ප්‍රවාහය වෙත "
 "සබැඳියක් එක් කළ හැක."
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:62
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:63
 msgid "Footer links"
 msgstr "පාදක සබැඳි"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:66
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:67
 msgid ""
 "These links will be shown in the footer of all your public pages. You could "
 "for example link your terms of service, imprint, or privacy policy here."
@@ -30735,93 +31427,93 @@ msgstr ""
 "මෙම සබැඳි ඔබගේ සියලුම ප්‍රසිද්ධ පිටු වල පාදකයේ පෙන්වනු ඇත. උදාහරණයක් ලෙස, මෙහි සේවා "
 "නියමයන්, ඉම්ප්‍රින්ට් හෝ පෞද්ගලිකත්ව ප්‍රතිපත්තිය සබැඳිය කළ හැකිය."
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:184
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:185
 #: eventyay/eventyay_common/templates/eventyay_common/events/create.html:151
 #, fuzzy
 #| msgid "Videos"
 msgid "Video stream"
 msgstr "වීඩියෝ"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:241
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:242
 #, fuzzy
 #| msgid "Public link"
 msgid "Publication"
 msgstr "පොදු සබැඳිය"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:255
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:256
 #, fuzzy
 #| msgid "Email template"
 msgid "Email gateway"
 msgstr "ඊමේල් අච්චුව"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:274
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:272
 #, fuzzy
 #| msgid "Save and send"
 msgid "Save and send test email"
 msgstr "සුරකින්න සහ යවන්න"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:281
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:279
 #, fuzzy
 #| msgid "E-mail design"
 msgid "Email design"
 msgstr "විද්‍යුත් තැපැල් නිර්මාණය"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:283
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:281
 msgid ""
 "The HTML mail renderer controls the visual design of outgoing "
 "<strong>ticket</strong> emails. Talk emails use a fixed layout and are not "
 "affected by this choice."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:320
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:318
 msgid ""
 "<strong>Danger zone:</strong> These actions can affect your event and may be "
 "irreversible. Please proceed with caution."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:328
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:326
 msgid "Manage the visibility or status of your event."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:335
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:333
 #, fuzzy
 #| msgid "The event was modified."
 msgid "Take event offline"
 msgstr "සිදුවීම වෙනස් කරන ලදී."
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:336
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:334
 msgid "Hide this event from attendees. You can bring it back online anytime."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:351
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:349
 msgid ""
 "Cancel this event and start the cancellation process. Ticket holders may "
 "need to be refunded."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:365
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:363
 #, fuzzy
 #| msgid "Task management"
 msgid "Data management"
 msgstr "කාර්ය කළමනාකරණය"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:366
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:364
 msgid ""
 "Manage and remove specific data while retaining required financial records."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:374
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:372
 msgid ""
 "Remove personal information such as attendee names and email addresses while "
 "retaining required financial records."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:389
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:394
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:387
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:392
 msgid "Delete talk data"
 msgstr "කථා දත්ත මකන්න"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:390
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:388
 #, fuzzy
 #| msgid ""
 #| "ALL related data, such as proposals, and speaker profiles, and uploads, "
@@ -30833,19 +31525,19 @@ msgstr ""
 "යෝජනා, කථික පැතිකඩ, සහ උඩුගත කිරීම් වැනි සම්බන්ධ සියලු දත්තද මකා දමනු ලැබෙන අතර නැවත "
 "ප්‍රතිස්ථාපනය කළ නොහැක."
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:405
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:403
 #, fuzzy
 #| msgid "Confirm deletion"
 msgid "Permanent deletion"
 msgstr "මකාදැමීම තහවුරු කරන්න"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:406
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:404
 #, fuzzy
 #| msgid "This event can not be deleted."
 msgid "These actions cannot be undone. Please be absolutely sure."
 msgstr "මෙම අවස්ථාව මකා දැමිය නොහැක."
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:411
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:409
 msgid ""
 "Permanently delete this event and all deletable associated data. Events "
 "containing protected records, such as completed orders outside test mode, "
@@ -30880,26 +31572,6 @@ msgid ""
 "The event type is set from the entry point. To choose a different type, go "
 "back and use the appropriate button."
 msgstr ""
-
-#: eventyay/eventyay_common/templates/eventyay_common/events/create.html:122
-msgid "Set to random"
-msgstr "අහඹු ලෙස සකසන්න"
-
-#: eventyay/eventyay_common/templates/eventyay_common/events/create.html:126
-msgid "Slug not available"
-msgstr "Slug ලබාගත නොහැක"
-
-#: eventyay/eventyay_common/templates/eventyay_common/events/create.html:129
-msgid ""
-"This is the address your event will be available at. Should be short, only "
-"contain lowercase letters and numbers, and must be unique. We recommend some "
-"kind of abbreviation with less than 30 characters that can be easily "
-"remembered. You cannot change the slug later on! If you don't provide a "
-"slug, a random one will be generated for you."
-msgstr ""
-"මෙය ඔබගේ සිදුවීම ලබාගත හැකි ලිපිනයයි. කෙටි විය යුතුය, කුඩා අකුරු සහ අංක පමණක් අඩංගු විය යුතුය, "
-"සහ අනන්‍ය විය යුතුය. අක්ෂර 30ට අඩු, පහසුවෙන් මතක තබාගත හැකි කෙටි නාමයක් යෝජනා කරයි. පසුව "
-"slug එක වෙනස් කළ නොහැක! slug එකක් ලබා නොදේ නම්, ඔබට අහඹු එකක් ජනනය කරනු ඇත."
 
 #: eventyay/eventyay_common/templates/eventyay_common/events/create.html:137
 msgid ""
@@ -31780,12 +32452,12 @@ msgid "You do not have permission to change event settings."
 msgstr "සිදුවීම් සැකසුම් වෙනස් කිරීමට අවසර නොමැත."
 
 #: eventyay/eventyay_common/views/dashboards.py:416
-#: eventyay/eventyay_common/views/event.py:1189
+#: eventyay/eventyay_common/views/event.py:1224
 msgid "Video link is now visible on public pages."
 msgstr "වීඩියෝ සබැඳිය දැන් පොදු පිටුවල දර්ශනය වේ."
 
 #: eventyay/eventyay_common/views/dashboards.py:418
-#: eventyay/eventyay_common/views/event.py:1191
+#: eventyay/eventyay_common/views/event.py:1226
 msgid "Video link is now hidden from public pages."
 msgstr "වීඩියෝ සබැඳිය දැන් පොදු පිටුවලින් සඟවා ඇත."
 
@@ -31793,91 +32465,98 @@ msgstr "වීඩියෝ සබැඳිය දැන් පොදු පි�
 msgid "No dates"
 msgstr "දිනයන් නැත"
 
-#: eventyay/eventyay_common/views/event.py:318
+#: eventyay/eventyay_common/views/event.py:324
 #, fuzzy
 #| msgid "This ticket shop is currently disabled."
 msgid "Event series creation is currently disabled."
 msgstr "මෙම ටිකට් වෙළඳසැල දැනට අක්‍රීයයි."
 
-#: eventyay/eventyay_common/views/event.py:321
+#: eventyay/eventyay_common/views/event.py:327
 #, fuzzy
 #| msgid "This ticket shop is currently disabled."
 msgid "Meetup creation is currently disabled."
 msgstr "මෙම ටිකට් වෙළඳසැල දැනට අක්‍රීයයි."
 
-#: eventyay/eventyay_common/views/event.py:323
+#: eventyay/eventyay_common/views/event.py:329
 #, fuzzy
 #| msgid "You do not have permission to change event settings."
 msgid "You do not have permission to create meetup events."
 msgstr "සිදුවීම් සැකසුම් වෙනස් කිරීමට අවසර නොමැත."
 
-#: eventyay/eventyay_common/views/event.py:398
+#: eventyay/eventyay_common/views/event.py:404
 #, fuzzy
 #| msgid "We could not save the email. See below for details."
 msgid "We could not create the event. See below for details."
 msgstr "ඊමේල් පණිවිඩය සුරැකීමට නොහැකි විය. විස්තර සඳහා පහත බලන්න."
 
-#: eventyay/eventyay_common/views/event.py:405
+#: eventyay/eventyay_common/views/event.py:411
 #, fuzzy
 #| msgid "You cannot generate an invoice for this order."
 msgid "You cannot create events for any organizer."
 msgstr "මෙම ඇණවුම සඳහා ඉන්වොයිසියක් ජනනය කළ නොහැක."
 
-#: eventyay/eventyay_common/views/event.py:412
+#: eventyay/eventyay_common/views/event.py:418
+#: eventyay/eventyay_common/views/event.py:1467
 #, fuzzy
 #| msgid "Content languages must be a subset of the active languages."
 msgid "Select at least one active language."
 msgstr "අන්තර්ගත භාෂා සක්‍රිය භාෂා වල උපසෙට් එකක් විය යුතුය."
 
-#: eventyay/eventyay_common/views/event.py:700
+#: eventyay/eventyay_common/views/event.py:716
 #, fuzzy
 #| msgid "This feature is not enabled."
 msgid "Custom email gateway is not enabled."
 msgstr "මෙම විශේෂාංගය සක්‍රිය කර නැත."
 
-#: eventyay/eventyay_common/views/event.py:719
+#: eventyay/eventyay_common/views/event.py:725
+msgid ""
+"Gmail is selected but no account is connected. Connect Gmail in the email "
+"settings first."
+msgstr ""
+
+#: eventyay/eventyay_common/views/event.py:744
 msgid ""
 "Email test failed because a field (password, username, or recipient) "
 "contains a non-ASCII character."
 msgstr ""
 
-#: eventyay/eventyay_common/views/event.py:725
+#: eventyay/eventyay_common/views/event.py:750
 #, python-format
 msgid ""
 "SendGrid test failed with HTTP error %(code)s. Check your API key and try "
 "again."
 msgstr ""
 
-#: eventyay/eventyay_common/views/event.py:732
+#: eventyay/eventyay_common/views/event.py:767
 msgid ""
 "Test email could not be delivered. Check the SMTP host, port, and "
 "credentials and try again."
 msgstr ""
 
-#: eventyay/eventyay_common/views/event.py:735
+#: eventyay/eventyay_common/views/event.py:770
 #, fuzzy
 #| msgid "This device has been set up successfully."
 msgid "Test email sent successfully."
 msgstr "මෙම උපකරණය සාර්ථකව සකසා ඇත."
 
-#: eventyay/eventyay_common/views/event.py:982
+#: eventyay/eventyay_common/views/event.py:1017
 msgid "CFP"
 msgstr "CFP"
 
-#: eventyay/eventyay_common/views/event.py:984
+#: eventyay/eventyay_common/views/event.py:1019
 msgid "Schedule / Sessions / Speakers"
 msgstr "කාලසටහන / සැසියන් / කථිකයින්"
 
-#: eventyay/eventyay_common/views/event.py:993
+#: eventyay/eventyay_common/views/event.py:1028
 msgid "The Call for Proposals text is missing. Please add a description."
 msgstr ""
 
-#: eventyay/eventyay_common/views/event.py:1000
+#: eventyay/eventyay_common/views/event.py:1035
 msgid ""
 "The Call for Proposals text is too short (needs at least 50 characters)."
 msgstr ""
 
-#: eventyay/eventyay_common/views/event.py:1012
+#: eventyay/eventyay_common/views/event.py:1047
 msgid ""
 "You want submitters to choose the tracks for their proposals, but you do not "
 "offer tracks for selection. Add at least one track!"
@@ -31885,58 +32564,58 @@ msgstr ""
 "යෝජනා ඉදිරිපත් කරන්නන්ට ඔවුන්ගේ යෝජනා සඳහා ට්‍රැක් තෝරා ගැනීමට ඉඩ දීමට අවශ්‍යයි, නමුත් තෝරා "
 "ගැනීමට ට්‍රැක් ලබා නොදෙයි. අවම වශයෙන් එක් ට්‍රැක් එකක් එකතු කරන්න!"
 
-#: eventyay/eventyay_common/views/event.py:1020
+#: eventyay/eventyay_common/views/event.py:1055
 msgid "You have configured only one session type so far."
 msgstr "දැනට සැසි වර්ග එකක් පමණක් සකසා ඇත."
 
-#: eventyay/eventyay_common/views/event.py:1027
+#: eventyay/eventyay_common/views/event.py:1062
 #: eventyay/orga/templates/orga/cfp/talkquestion/list.html:127
 msgid "You have configured no custom fields yet."
 msgstr "තවම අභිරුචි ක්ෂේත්‍ර කිසිවක් සකසා නැත."
 
-#: eventyay/eventyay_common/views/event.py:1044
+#: eventyay/eventyay_common/views/event.py:1079
 msgid "Please resolve the billing information before publishing the event."
 msgstr "සිදුවීම ප්‍රකාශ කිරීමට පෙර බිල්පත් තොරතුරු විසඳන්න."
 
-#: eventyay/eventyay_common/views/event.py:1052
+#: eventyay/eventyay_common/views/event.py:1087
 msgid "Your event is now online."
 msgstr "සිදුවීම දැන් සජීවීව ඇත."
 
-#: eventyay/eventyay_common/views/event.py:1074
+#: eventyay/eventyay_common/views/event.py:1109
 msgid "Your event has been unpublished."
 msgstr "සිදුවීම ප්‍රකාශයෙන් ඉවත් කර ඇත."
 
-#: eventyay/eventyay_common/views/event.py:1080
+#: eventyay/eventyay_common/views/event.py:1115
 #, fuzzy
 #| msgid "Please set up ticketing before publishing tickets."
 msgid "Please set up ticketing before changing ticket modes."
 msgstr "ටිකට් ප්‍රකාශයට පත් කිරීමට පෙර ටිකට් විකිණීම සකස් කරන්න."
 
-#: eventyay/eventyay_common/views/event.py:1090
+#: eventyay/eventyay_common/views/event.py:1125
 msgid "Private test mode is now enabled for tickets."
 msgstr "ටිකට් සඳහා පුද්ගලික පරීක්ෂණ මාදිලිය දැන් සක්‍රිය කර ඇත."
 
-#: eventyay/eventyay_common/views/event.py:1093
+#: eventyay/eventyay_common/views/event.py:1128
 #, fuzzy
 #| msgid "Publish the event before publishing tickets."
 msgid "Publish the event before testing tickets publicly."
 msgstr "ටිකට් ප්‍රකාශයට පත් කිරීමට පෙර සිදුවීම ප්‍රකාශයට පත් කරන්න."
 
-#: eventyay/eventyay_common/views/event.py:1099
+#: eventyay/eventyay_common/views/event.py:1134
 #, fuzzy
 #| msgid "Your shop is now in test mode!"
 msgid "Your shop is now in public test mode!"
 msgstr "ඔබගේ වෙළඳසැල දැන් පරීක්ෂණ මාදිලියෙහි ඇත!"
 
-#: eventyay/eventyay_common/views/event.py:1102
+#: eventyay/eventyay_common/views/event.py:1137
 msgid "Publish the event before publishing tickets."
 msgstr "ටිකට් ප්‍රකාශයට පත් කිරීමට පෙර සිදුවීම ප්‍රකාශයට පත් කරන්න."
 
-#: eventyay/eventyay_common/views/event.py:1105
+#: eventyay/eventyay_common/views/event.py:1140
 msgid "Please resolve the ticketing issues before publishing tickets."
 msgstr "කරුණාකර ටිකට් ප්‍රකාශයට පත් කිරීමට පෙර ටිකට් සම්බන්ධ ගැටලු විසඳන්න."
 
-#: eventyay/eventyay_common/views/event.py:1118
+#: eventyay/eventyay_common/views/event.py:1153
 msgid ""
 "An order could not be deleted as some constraints (e.g. data created by plug-"
 "ins) do not allow it."
@@ -31944,45 +32623,57 @@ msgstr ""
 "සමහර සීමාකිරීම් (උදා: ප්ලගින මගින් නිර්මාණය කළ දත්ත) එයට ඉඩ නොදෙන බැවින් ඇණවුමක් මකා දැමිය "
 "නොහැකි විය."
 
-#: eventyay/eventyay_common/views/event.py:1130
+#: eventyay/eventyay_common/views/event.py:1165
 #, fuzzy
 #| msgid "Tickets are now published."
 msgid "Tickets are now publicly sold."
 msgstr "ටිකට් දැන් ප්‍රකාශයට පත් කර ඇත."
 
-#: eventyay/eventyay_common/views/event.py:1132
+#: eventyay/eventyay_common/views/event.py:1167
 #, fuzzy
 #| msgid "Unknown cart position."
 msgid "Unknown ticketing mode."
 msgstr "නොදන්නා කරත්ත ස්ථානය."
 
-#: eventyay/eventyay_common/views/event.py:1157
+#: eventyay/eventyay_common/views/event.py:1192
 msgid "Private test mode is now enabled for talks."
 msgstr "කථන සඳහා පුද්ගලික පරීක්ෂණ ප්‍රකාරය දැන් සක්‍රීය කර ඇත."
 
-#: eventyay/eventyay_common/views/event.py:1160
+#: eventyay/eventyay_common/views/event.py:1195
 msgid "Publish the event before publishing talks."
 msgstr "කථා ප්‍රකාශ කිරීමට පෙර සිදුවීම ප්‍රකාශ කරන්න."
 
-#: eventyay/eventyay_common/views/event.py:1166
+#: eventyay/eventyay_common/views/event.py:1201
 msgid "Talk pages are now published."
 msgstr "කථා පිටු දැන් ප්‍රකාශ කර ඇත."
 
-#: eventyay/eventyay_common/views/event.py:1168
+#: eventyay/eventyay_common/views/event.py:1203
 #, fuzzy
 #| msgid "Unknown country code."
 msgid "Unknown talk mode."
 msgstr "නොදන්නා රට කේතය."
 
-#: eventyay/eventyay_common/views/event.py:1180
+#: eventyay/eventyay_common/views/event.py:1215
 msgid "Please configure video settings before changing visibility."
 msgstr ""
 
-#: eventyay/eventyay_common/views/event.py:1185
+#: eventyay/eventyay_common/views/event.py:1220
 #, fuzzy
 #| msgid "Publish the event before publishing talks."
 msgid "Publish the event before enabling public video link."
 msgstr "කථා ප්‍රකාශ කිරීමට පෙර සිදුවීම ප්‍රකාශ කරන්න."
+
+#: eventyay/eventyay_common/views/event.py:1542
+#, fuzzy
+#| msgid "You do not have permission to change event settings."
+msgid "You do not have permission to create events."
+msgstr "සිදුවීම් සැකසුම් වෙනස් කිරීමට අවසර නොමැත."
+
+#: eventyay/eventyay_common/views/event.py:1612
+#, fuzzy
+#| msgid "This user has been anonymized."
+msgid "Event has been cloned successfully."
+msgstr "මෙම පරිශීලකයා අනන්‍යතාව ඉවත් කර ඇත."
 
 #: eventyay/eventyay_common/views/organizer.py:82
 msgid "New organizer is created."
@@ -32816,13 +33507,13 @@ msgstr "අභිරුචි ක්ෂේත්‍රයක් නොතෝර�
 msgid "SMTP server"
 msgstr "සේවාදායකය"
 
-#: eventyay/orga/forms/email.py:41
+#: eventyay/orga/forms/email.py:42
 #, fuzzy
 #| msgid "Bcc address"
 msgid "BCC address"
 msgstr "Bcc ලිපිනය"
 
-#: eventyay/orga/forms/email.py:42
+#: eventyay/orga/forms/email.py:43
 #, fuzzy
 #| msgid "All emails will be sent to this address as a Bcc copy"
 msgid ""
@@ -32830,99 +33521,99 @@ msgid ""
 "as a blind copy."
 msgstr "සියලුම ඊමේල් මෙම ලිපිනයට Bcc පිටපතක් ලෙස යැවෙයි"
 
-#: eventyay/orga/forms/email.py:48
+#: eventyay/orga/forms/email.py:49
 #, fuzzy
 #| msgid "Mail signature"
 msgid "Email signature"
 msgstr "තැපැල් අත්සන"
 
-#: eventyay/orga/forms/email.py:50
+#: eventyay/orga/forms/email.py:51
 msgid ""
 "This text will be appended to every outgoing email (both Tickets and Talks). "
 "You can use Markdown."
 msgstr ""
 
-#: eventyay/orga/forms/email.py:64
+#: eventyay/orga/forms/email.py:65
 #, fuzzy
 #| msgid "Use Custom Email"
 msgid "Use custom email gateway"
 msgstr "අභිරුචි ඊමේල් භාවිත කරන්න"
 
-#: eventyay/orga/forms/email.py:66
+#: eventyay/orga/forms/email.py:67
 msgid ""
 "When enabled, all event-related emails (Tickets and Talks) are sent via the "
 "gateway configured below instead of the platform default."
 msgstr ""
 
-#: eventyay/orga/forms/email.py:72
+#: eventyay/orga/forms/email.py:73
 #, fuzzy
 #| msgid "Email template"
 msgid "Email gateway type"
 msgstr "ඊමේල් අච්චුව"
 
-#: eventyay/orga/forms/email.py:79
+#: eventyay/orga/forms/email.py:80
 #, fuzzy
 #| msgid "SendGrid"
 msgid "SendGrid API key"
 msgstr "SendGrid"
 
-#: eventyay/orga/forms/email.py:83
+#: eventyay/orga/forms/email.py:87
 #, fuzzy
 #| msgid "Hostname"
 msgid "SMTP hostname"
 msgstr "හොස්ට් නාමය"
 
-#: eventyay/orga/forms/email.py:88
+#: eventyay/orga/forms/email.py:95
 #, fuzzy
 #| msgid "CSV export"
 msgid "SMTP port"
 msgstr "CSV අපනයනය"
 
-#: eventyay/orga/forms/email.py:93
+#: eventyay/orga/forms/email.py:103
 #, fuzzy
 #| msgid "Username"
 msgid "SMTP username"
 msgstr "පරිශීලක නාමය"
 
-#: eventyay/orga/forms/email.py:98
+#: eventyay/orga/forms/email.py:111
 #, fuzzy
 #| msgid "Password"
 msgid "SMTP password"
 msgstr "මුරපදය"
 
-#: eventyay/orga/forms/email.py:112
+#: eventyay/orga/forms/email.py:134
 #, fuzzy
 #| msgid "Send email to"
 msgid "Send test email to"
 msgstr "ඊමේල් යැවීමට"
 
-#: eventyay/orga/forms/email.py:113
+#: eventyay/orga/forms/email.py:135
 msgid "Enter one or more addresses (comma-separated) to send a test message."
 msgstr ""
 
-#: eventyay/orga/forms/email.py:161
+#: eventyay/orga/forms/email.py:183
 #, fuzzy
 #| msgid "This field is required when using SendGrid as email vendor."
 msgid "A sender email address is required when using a custom email gateway."
 msgstr "ඊමේල් සපයන්නා ලෙස SendGrid භාවිතා කරන විට මෙම ක්ෂේත්‍රය අනිවාර්ය වේ."
 
-#: eventyay/orga/forms/email.py:175
+#: eventyay/orga/forms/email.py:197
 #, fuzzy
 #| msgid "This field is required when using SendGrid as email vendor."
 msgid "An API key is required when using SendGrid."
 msgstr "ඊමේල් සපයන්නා ලෙස SendGrid භාවිතා කරන විට මෙම ක්ෂේත්‍රය අනිවාර්ය වේ."
 
-#: eventyay/orga/forms/email.py:187
+#: eventyay/orga/forms/email.py:215
 #, fuzzy
 #| msgid "This field is required when using SendGrid as email vendor."
 msgid "A hostname is required when using a custom SMTP server."
 msgstr "ඊමේල් සපයන්නා ලෙස SendGrid භාවිතා කරන විට මෙම ක්ෂේත්‍රය අනිවාර්ය වේ."
 
-#: eventyay/orga/forms/email.py:192
+#: eventyay/orga/forms/email.py:220
 msgid "A port number is required when using a custom SMTP server."
 msgstr ""
 
-#: eventyay/orga/forms/email.py:198
+#: eventyay/orga/forms/email.py:226
 #, fuzzy
 #| msgid ""
 #| "You can activate either SSL or STARTTLS security, but not both at the "
@@ -32930,7 +33621,7 @@ msgstr ""
 msgid "You can activate either SSL or STARTTLS, but not both at the same time."
 msgstr "ඔබට SSL හෝ STARTTLS ආරක්ෂාව සක්‍රිය කළ හැකි නමුත් එකම වේලාවේ දෙකම කළ නොහැක."
 
-#: eventyay/orga/forms/email.py:208
+#: eventyay/orga/forms/email.py:236
 msgid ""
 "You must enable SSL or STARTTLS when using a non-local SMTP server to "
 "protect credentials and email content in transit."
@@ -33899,13 +34590,6 @@ msgstr "superuser ලෙස eventyay භාවිතා කරයි. මෙය 
 msgid "Please click here to switch to an administrator account."
 msgstr "පරිපාලක ගිණුමකට මාරු වීමට මෙහි ක්ලික් කරන්න."
 
-#: eventyay/orga/templates/orga/base.html:277
-#: eventyay/orga/templates/orga/settings/review.html:8
-#: eventyay/orga/templates/orga/settings/review.html:24
-#: eventyay/orga/views/event.py:133
-msgid "Review settings"
-msgstr "සමාලෝචන සැකසුම්"
-
 #: eventyay/orga/templates/orga/base.html:286
 #: eventyay/orga/templates/orga/settings/import_export.html:6
 #: eventyay/orga/templates/orga/settings/import_export.html:9
@@ -33949,7 +34633,7 @@ msgstr "ප්‍රවේශ කේත"
 #: eventyay/orga/templates/orga/submission/content.html:273
 #: eventyay/orga/templates/orga/submission/content_edit.html:66
 #: eventyay/orga/templates/orga/submission/review.html:11
-#: eventyay/orga/views/dashboard.py:210 eventyay/orga/views/event.py:498
+#: eventyay/orga/views/dashboard.py:210 eventyay/orga/views/event.py:497
 msgid "Reviews"
 msgstr "සමාලෝචන"
 
@@ -35183,7 +35867,7 @@ msgstr "ඊමේල් පෙරදසුන් කරන්න"
 msgid "Send to outbox"
 msgstr "පිටවීම් පෙට්ටියට යවන්න"
 
-#: eventyay/orga/templates/orga/mails/_placeholder_group.html:41
+#: eventyay/orga/templates/orga/mails/_placeholder_group.html:37
 msgid "e.g."
 msgstr "උදා."
 
@@ -35380,6 +36064,16 @@ msgstr "වර්ග කරන්න (නවතම පෙරට)"
 #: eventyay/orga/templates/orga/mails/sent_list.html:34
 msgid "Sort (oldest first)"
 msgstr "වර්ග කරන්න (පැරණිතම පෙරට)"
+
+#: eventyay/orga/templates/orga/organizer/list.html:32
+#, fuzzy
+#| msgid "Event"
+#| msgid_plural "Events"
+msgctxt "number of events"
+msgid "Event"
+msgid_plural "Events"
+msgstr[0] "සිදුවීම්"
+msgstr[1] "සිදුවීම්"
 
 #: eventyay/orga/templates/orga/organizer/list.html:40
 msgctxt "number of teams"
@@ -35900,12 +36594,6 @@ msgstr ""
 "වූ විට වැඩි තොරතුරු ඇතුළත් වේ. ස්වයංක්‍රීය ඒකාබද්ධීකරණවලදී සංවිධායක අනුවාදයට ප්‍රවේශ වීමට නම්, "
 "API හි පරිදිම සත්‍යාපන ටෝකනය ලබාදිය යුතුය, මෙසේ:"
 
-#: eventyay/orga/templates/orga/settings/import_export.html:238
-#: eventyay/orga/templates/orga/settings/import_export.html:431
-#: eventyay/orga/templates/orga/settings/import_export.html:540
-msgid "Documentation"
-msgstr "ලේඛනගත කිරීම"
-
 #: eventyay/orga/templates/orga/settings/import_export.html:241
 #: eventyay/orga/templates/orga/settings/import_export.html:434
 #: eventyay/orga/templates/orga/settings/import_export.html:543
@@ -35965,10 +36653,6 @@ msgstr ""
 #| msgid "Export settings"
 msgid "HTML Export Settings"
 msgstr "නිර්යාත සැකසුම්"
-
-#: eventyay/orga/templates/orga/settings/mail.html:14
-msgid "Email settings"
-msgstr "ඊමේල් සැකසුම්"
 
 #: eventyay/orga/templates/orga/settings/mail.html:17
 #, fuzzy
@@ -36160,13 +36844,14 @@ msgstr "ආයාතය ආරම්භ කරන්න"
 
 #: eventyay/orga/templates/orga/speaker/information_form.html:5
 #: eventyay/orga/templates/orga/speaker/information_form.html:8
-#: eventyay/orga/templates/orga/speaker/information_list.html:13
 #: eventyay/orga/views/speaker.py:400
+#, fuzzy
+#| msgid "Speaker Information Note"
+#| msgid_plural "Speaker Information Notes"
 msgid "Speaker Information Note"
-msgid_plural "Speaker Information Notes"
-msgstr[0] "කථික තොරතුරු සටහන්"
-msgstr[1] "කථික තොරතුරු සටහන්"
+msgstr "කථික තොරතුරු සටහන්"
 
+#: eventyay/orga/templates/orga/speaker/information_list.html:13
 #: eventyay/orga/templates/orga/speaker/information_list.html:16
 #, fuzzy, python-format
 #| msgid "Speaker Information Note"
@@ -36925,23 +37610,23 @@ msgid_plural "sent emails"
 msgstr[0] "යවන ලද ඊමේල්"
 msgstr[1] "යවන ලද ඊමේල්"
 
-#: eventyay/orga/views/event.py:134
+#: eventyay/orga/views/event.py:133
 msgid "Review scoring"
 msgstr "සමාලෝචන අගය කිරීම"
 
-#: eventyay/orga/views/event.py:135
+#: eventyay/orga/views/event.py:134
 msgid "Review phases"
 msgstr "සමාලෝචන අදියර"
 
-#: eventyay/orga/views/event.py:213
+#: eventyay/orga/views/event.py:212
 msgid "Only the last review phase may be open-ended."
 msgstr "අවසාන සමාලෝචන අදියර පමණක් අවසාන දිනයක් නොමැතිව තැබිය හැක."
 
-#: eventyay/orga/views/event.py:215
+#: eventyay/orga/views/event.py:214
 msgid "All review phases except for the first one need a start date."
 msgstr "පළමු අදියර හැර අනෙකුත් සියලුම සමාලෝචන අදියර සඳහා ආරම්භක දිනයක් අවශ්‍ය වේ."
 
-#: eventyay/orga/views/event.py:219
+#: eventyay/orga/views/event.py:218
 #, python-brace-format
 msgid ""
 "The review phases '{phase1}' and '{phase2}' overlap. Please make sure that "
@@ -36950,17 +37635,17 @@ msgstr ""
 "සමාලෝචන අදියර '{phase1}' සහ '{phase2}' එකිනෙකට ආවරණය වේ. සමාලෝචන අදියර එකිනෙකට "
 "ආවරණය නොවන බව තහවුරු කරගෙන නැවත සුරකින්න."
 
-#: eventyay/orga/views/event.py:353
+#: eventyay/orga/views/event.py:352
 msgid ""
 "There was a problem with your authentication. Please contact the organizer "
 "for further help."
 msgstr "සත්‍යාපනයේ ගැටලුවක් තිබුණි. වැඩිදුර උදව් සඳහා සංවිධායකයා අමතන්න."
 
-#: eventyay/orga/views/event.py:367
+#: eventyay/orga/views/event.py:366
 msgid "You are now part of the team!"
 msgstr "දැන් කණ්ඩායමේ සාමාජිකයෙකි!"
 
-#: eventyay/orga/views/event.py:376 eventyay/orga/views/event.py:408
+#: eventyay/orga/views/event.py:375 eventyay/orga/views/event.py:407
 #, fuzzy
 #| msgid ""
 #| "ALL related data, such as proposals, and speaker profiles, and uploads, "
@@ -36972,53 +37657,53 @@ msgstr ""
 "යෝජනා, කථික පැතිකඩ, සහ උඩුගත කිරීම් වැනි සම්බන්ධ සියලු දත්තද මකා දමනු ලැබෙන අතර නැවත "
 "ප්‍රතිස්ථාපනය කළ නොහැක."
 
-#: eventyay/orga/views/event.py:396 eventyay/orga/views/event.py:428
+#: eventyay/orga/views/event.py:395 eventyay/orga/views/event.py:427
 #, fuzzy
 #| msgid "The confirm code you entered was incorrect."
 msgid "The event name you entered was incorrect."
 msgstr "ඔබ ඇතුළත් කළ තහවුරු කිරීමේ කේතය වැරදිය."
 
-#: eventyay/orga/views/event.py:420
+#: eventyay/orga/views/event.py:419
 #, fuzzy
 #| msgid "Talks Dashboard"
 msgid "Talk Data for"
 msgstr "කතා උපකරණ පුවරුව"
 
-#: eventyay/orga/views/event.py:432
+#: eventyay/orga/views/event.py:431
 #, fuzzy
 #| msgid "The team has been deleted."
 msgid "Talk data has been successfully deleted."
 msgstr "කණ්ඩායම මකා දමන ලදී."
 
-#: eventyay/orga/views/event.py:517
+#: eventyay/orga/views/event.py:516
 #, fuzzy
 #| msgid "Schedule exports"
 msgid "Schedule HTML export"
 msgstr "කාලසටහන් නිර්යාත"
 
-#: eventyay/orga/views/event.py:565
+#: eventyay/orga/views/event.py:564
 #, fuzzy
 #| msgid "Login failed. Please try again."
 msgid "Unknown action. Please try again."
 msgstr "පිවිසුම අසාර්ථකයි. නැවත උත්සාහ කරන්න."
 
-#: eventyay/orga/views/event.py:575
+#: eventyay/orga/views/event.py:574
 msgid "Please choose whether to import speakers or schedule."
 msgstr ""
 
-#: eventyay/orga/views/event.py:587
+#: eventyay/orga/views/event.py:586
 #, fuzzy
 #| msgid "Invalid email or password. Please try again."
 msgid "Could not establish a session for file upload. Please try again."
 msgstr "වලංගු නොවන ඊමේල් ලිපිනය හෝ මුරපදය. නැවත උත්සාහ කරන්න."
 
-#: eventyay/orga/views/event.py:613
+#: eventyay/orga/views/event.py:612
 #, fuzzy
 #| msgid "Please choose an earlier date."
 msgid "Please choose a valid export target."
 msgstr "කරුණාකර පෙර දිනයක් තෝරන්න."
 
-#: eventyay/orga/views/event.py:651
+#: eventyay/orga/views/event.py:650
 msgid "No data to be exported"
 msgstr "නිර්යාත කිරීමට දත්ත නොමැත"
 
@@ -37054,7 +37739,7 @@ msgstr "ඊමේල් යවා ඇත."
 msgid "{count} mails have been sent."
 msgstr "ඊමේල් {count}ක් යවා ඇත."
 
-#: eventyay/orga/views/mails.py:223 eventyay/plugins/sendmail/views.py:438
+#: eventyay/orga/views/mails.py:223 eventyay/plugins/sendmail/views.py:439
 #, python-brace-format
 msgid "Do you really want to delete this mail?"
 msgid_plural "Do you really want to purge {count} mails?"
@@ -37103,7 +37788,7 @@ msgstr "මෙම තේරීමට ගැළපෙන ලබන්නන් �
 
 #: eventyay/orga/views/mails.py:413 eventyay/plugins/sendmail/views.py:147
 #: eventyay/plugins/sendmail/views.py:410
-#: eventyay/plugins/sendmail/views.py:597
+#: eventyay/plugins/sendmail/views.py:601
 #, python-brace-format
 msgid "Subject: {subject}"
 msgstr "මාතෘකාව: {subject}"
@@ -37813,19 +38498,19 @@ msgstr "වවුචර් ටැග්"
 msgid "Sample tag"
 msgstr "Sample State"
 
-#: eventyay/plugins/badges/signals.py:210
+#: eventyay/plugins/badges/signals.py:213
 msgid "Badge layout created."
 msgstr "ලේබල් සැලසුම නිර්මාණය කරන ලදී."
 
-#: eventyay/plugins/badges/signals.py:211
+#: eventyay/plugins/badges/signals.py:214
 msgid "Badge layout deleted."
 msgstr "ලේබල් සැලසුම මකා දමන ලදී."
 
-#: eventyay/plugins/badges/signals.py:212
+#: eventyay/plugins/badges/signals.py:215
 msgid "Badge layout changed."
 msgstr "ලේබල් සැලසුම වෙනස් කරන ලදී."
 
-#: eventyay/plugins/badges/signals.py:226
+#: eventyay/plugins/badges/signals.py:229
 #, python-brace-format
 msgid "Badge layout {val}"
 msgstr "ලේබල් සැලසුම {val}"
@@ -39286,14 +39971,14 @@ msgid "There are no orders matching this selection."
 msgstr "මෙම තේරීමට ගැළපෙන ඇණවුම් නොමැත."
 
 #: eventyay/plugins/sendmail/views.py:194
-#: eventyay/plugins/sendmail/views.py:680
+#: eventyay/plugins/sendmail/views.py:684
 #, fuzzy, python-brace-format
 #| msgid "Your email has been sent to the outbox."
 msgid "Your email has been scheduled for {datetime} ({timezone})."
 msgstr "ඊමේල් පණිවිඩය පිටවන පෙට්ටියට යවා ඇත."
 
 #: eventyay/plugins/sendmail/views.py:202
-#: eventyay/plugins/sendmail/views.py:688
+#: eventyay/plugins/sendmail/views.py:692
 msgid "Your email has been sent to the outbox."
 msgstr "ඊමේල් පණිවිඩය පිටවන පෙට්ටියට යවා ඇත."
 
@@ -39306,7 +39991,7 @@ msgid "The mail has been queued for sending."
 msgstr "මෙම තැපැල් පණිවිඩය යැවීම සඳහා පෝලිම්ගත කර ඇත."
 
 #: eventyay/plugins/sendmail/views.py:368
-#: eventyay/plugins/sendmail/views.py:563
+#: eventyay/plugins/sendmail/views.py:567
 msgid "We could not save the email. See below for details."
 msgstr "ඊමේල් පණිවිඩය සුරැකීමට නොහැකි විය. විස්තර සඳහා පහත බලන්න."
 
@@ -39316,38 +40001,38 @@ msgstr "මෙම ඊමේල් පණිවිඩය දැනටමත් �
 
 #: eventyay/plugins/sendmail/views.py:397
 #: eventyay/plugins/sendmail/views.py:406
-#: eventyay/plugins/sendmail/views.py:583
-#: eventyay/plugins/sendmail/views.py:592
+#: eventyay/plugins/sendmail/views.py:587
+#: eventyay/plugins/sendmail/views.py:596
 msgid "Invalid placeholder(s): {}"
 msgstr "අවලංගු ස්ථානධාරක(ය): {}"
 
-#: eventyay/plugins/sendmail/views.py:445
+#: eventyay/plugins/sendmail/views.py:449
 msgid "This mail has already been sent and cannot be deleted."
 msgstr "මෙම තැපැල් පණිවිඩය දැනටමත් යවා ඇති බැවින් මකා දැමිය නොහැක."
 
-#: eventyay/plugins/sendmail/views.py:454
+#: eventyay/plugins/sendmail/views.py:458
 msgid "The mail and its related data have been deleted."
 msgstr "තැපැල් පණිවිඩය සහ ඒ හා සම්බන්ධ දත්ත මකා දමා ඇත."
 
-#: eventyay/plugins/sendmail/views.py:473
+#: eventyay/plugins/sendmail/views.py:477
 #, python-brace-format
 msgid "Do you really want to purge the mail?"
 msgid_plural "Do you really want to purge {count} mails?"
 msgstr[0] "ඔබට ඇත්තටම {count} ලිපි ඉවත් කිරීමට අවශ්‍යද?"
 msgstr[1] "ඔබට ඇත්තටම {count} ලිපි ඉවත් කිරීමට අවශ්‍යද?"
 
-#: eventyay/plugins/sendmail/views.py:489
+#: eventyay/plugins/sendmail/views.py:493
 #, python-brace-format
 msgid "One mail has been discarded."
 msgid_plural "{count} mails have been discarded."
 msgstr[0] "{count} ලිපි අත්හැර දමන ලදී."
 msgstr[1] "{count} ලිපි අත්හැර දමන ලදී."
 
-#: eventyay/plugins/sendmail/views.py:623
+#: eventyay/plugins/sendmail/views.py:627
 msgid "There are no valid recipients for the selected teams."
 msgstr "තෝරාගත් කණ්ඩායම් සඳහා වලංගු ලබන්නන් නොමැත।"
 
-#: eventyay/plugins/socialauth/adapter.py:32
+#: eventyay/plugins/socialauth/adapter.py:33
 #: eventyay/plugins/socialauth/views.py:45
 #, fuzzy
 #| msgid "This product is currently not available."
@@ -39593,19 +40278,19 @@ msgstr "(ඉහත පරිදිම)"
 msgid "PDF ticket layout"
 msgstr "PDF ටිකට් සැලසුම"
 
-#: eventyay/plugins/ticketoutputpdf/signals.py:117
+#: eventyay/plugins/ticketoutputpdf/signals.py:120
 msgid "Ticket layout created."
 msgstr "ටිකට් සැලසුම සාදන ලදී."
 
-#: eventyay/plugins/ticketoutputpdf/signals.py:118
+#: eventyay/plugins/ticketoutputpdf/signals.py:121
 msgid "Ticket layout deleted."
 msgstr "ටිකට් සැලසුම මකා දමන ලදී."
 
-#: eventyay/plugins/ticketoutputpdf/signals.py:119
+#: eventyay/plugins/ticketoutputpdf/signals.py:122
 msgid "Ticket layout changed."
 msgstr "ටිකට් සැලසුම වෙනස් කරන ලදී."
 
-#: eventyay/plugins/ticketoutputpdf/signals.py:136
+#: eventyay/plugins/ticketoutputpdf/signals.py:139
 #, python-brace-format
 msgid "Ticket layout {val}"
 msgstr "ටිකට් සැලසුම {val}"
@@ -41803,8 +42488,8 @@ msgstr "සජීවී සිදුවීම්"
 
 #: eventyay/presale/templates/pretixpresale/startpage.html:19
 #: eventyay/presale/templates/pretixpresale/startpage.html:20
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:96
 #: eventyay/presale/templates/pretixpresale/startpage_base.html:97
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:98
 msgid "Search events"
 msgstr "සිදුවීම් සොයන්න"
 
@@ -41837,17 +42522,11 @@ msgstr "මෑතක සිදුවීම් සියල්ල බලන්න
 msgid "Browse live events on"
 msgstr "මෙහි සජීවී සිදුවීම් බලන්න"
 
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:104
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:105
 msgid "No matching events"
 msgstr "ගැළපෙන සිදුවීම් නැත"
 
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:152
-#, fuzzy
-#| msgid "E-Mail notification"
-msgid "Main navigation"
-msgstr "ඊ-තැපැල් දැනුම්දීම්"
-
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:188
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:189
 msgid "Start page header"
 msgstr "ආරම්භක පිටු ශීර්ෂය"
 
@@ -42403,6 +43082,11 @@ msgstr "පිළිගැනීම නොලැබූ"
 msgid "Organisers"
 msgstr "සංවිධායකයන්"
 
+#, python-format
+#~ msgctxt "invoice"
+#~ msgid "Page %d of %d"
+#~ msgstr "පිටුව %d / %d"
+
 #~ msgid "Video Admin"
 #~ msgstr "වීඩියෝ පරිපාලක"
 
@@ -42672,9 +43356,6 @@ msgstr "සංවිධායකයන්"
 
 #~ msgid "Hide video link"
 #~ msgstr "වීඩියෝ සබැඳිය සඟවන්න"
-
-#~ msgid "Show video link"
-#~ msgstr "වීඩියෝ සබැඳිය පෙන්වන්න"
 
 #~ msgid "The video module is not enabled for this event."
 #~ msgstr "මෙම උත්සවය සඳහා වීඩියෝ මොඩියුලය සක්‍රිය කර නැත."
@@ -43336,10 +44017,6 @@ msgstr "සංවිධායකයන්"
 
 #~ msgid "Copy event link"
 #~ msgstr "සිදුවීම් සබැඳිය පිටපත් කරන්න"
-
-#, python-format
-#~ msgid "Page %(page)s of %(of)s"
-#~ msgstr "පිටුව %(page)s / %(of)s"
 
 #, python-brace-format
 #~ msgid "The current, automatically generated GUID is: {guid}."

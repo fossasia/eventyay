@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-26 16:17+0000\n"
+"POT-Creation-Date: 2026-08-26 16:33+0000\n"
 "PO-Revision-Date: 2026-03-30 15:15+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Greek <https://hosted.weblate.org/projects/eventyay/eventyay/"
@@ -49,7 +49,7 @@ msgstr ""
 #: eventyay/base/exporters/waitinglist.py:86
 #: eventyay/base/forms/questions.py:976 eventyay/base/models/auth_token.py:55
 #: eventyay/base/models/devices.py:41 eventyay/base/models/devices.py:104
-#: eventyay/base/models/event.py:3124 eventyay/base/models/event.py:3379
+#: eventyay/base/models/event.py:3295 eventyay/base/models/event.py:3550
 #: eventyay/base/models/organizer.py:119 eventyay/base/models/product.py:1679
 #: eventyay/base/models/product.py:1839 eventyay/base/models/review.py:206
 #: eventyay/base/models/room.py:288 eventyay/base/models/seating.py:42
@@ -607,7 +607,7 @@ msgstr "Πίστα"
 #: eventyay/multidomain/views.py:195 eventyay/orga/forms/mails.py:345
 #: eventyay/orga/forms/mails.py:347 eventyay/orga/templates/orga/base.html:489
 #: eventyay/orga/templates/orga/submission/speakers.html:11
-#: eventyay/orga/views/event.py:464 eventyay/orga/views/event.py:496
+#: eventyay/orga/views/event.py:463 eventyay/orga/views/event.py:495
 #: eventyay/person/forms/profile.py:447 eventyay/person/forms/profile.py:492
 #: eventyay/presale/templates/pretixpresale/event/fragment_nav.html:45
 #: eventyay/schedule/phrases.py:18
@@ -762,14 +762,14 @@ msgstr "Προβολή βίντεο"
 msgid "Watch live"
 msgstr "Παρακολούθηση ζωντανά"
 
-#: eventyay/agenda/views/schedule.py:420
-#: eventyay/cfp/templates/cfp/event/user_submission_edit.html:62
-#: eventyay/multidomain/views.py:181
+#: eventyay/agenda/views/schedule.py:420 eventyay/multidomain/views.py:181
 #: eventyay/orga/templates/orga/submission/content_edit.html:50
+#, fuzzy
+#| msgid "Speaker"
+#| msgid_plural "Speakers"
+msgctxt "noun"
 msgid "Speaker"
-msgid_plural "Speakers"
-msgstr[0] "Ομιλητής"
-msgstr[1] "Ομιλητές"
+msgstr "Ομιλητής"
 
 #: eventyay/agenda/views/schedule.py:421 eventyay/multidomain/views.py:182
 msgid "Speaker name not provided"
@@ -815,7 +815,7 @@ msgstr ""
 #: eventyay/base/exporters/invoices.py:297
 #: eventyay/base/exporters/orderlist.py:595
 #: eventyay/base/exporters/orderlist.py:987
-#: eventyay/base/exporters/orderlist.py:1398 eventyay/base/models/event.py:3057
+#: eventyay/base/exporters/orderlist.py:1398 eventyay/base/models/event.py:3228
 #: eventyay/base/models/orders.py:1344 eventyay/base/models/question.py:472
 #: eventyay/base/models/submission.py:1045 eventyay/control/forms/filter.py:124
 #: eventyay/control/forms/filter.py:549 eventyay/control/forms/product.py:603
@@ -845,7 +845,7 @@ msgstr "Ναι"
 #: eventyay/base/exporters/invoices.py:297
 #: eventyay/base/exporters/orderlist.py:595
 #: eventyay/base/exporters/orderlist.py:987
-#: eventyay/base/exporters/orderlist.py:1398 eventyay/base/models/event.py:3047
+#: eventyay/base/exporters/orderlist.py:1398 eventyay/base/models/event.py:3218
 #: eventyay/base/models/orders.py:1346 eventyay/base/models/question.py:474
 #: eventyay/base/models/submission.py:1045
 #: eventyay/cfp/templates/cfp/event/invitation.html:44
@@ -921,7 +921,7 @@ msgstr ""
 
 #: eventyay/agenda/views/schedule.py:445 eventyay/control/navigation.py:296
 #: eventyay/eventyay_common/navigation.py:268 eventyay/multidomain/views.py:203
-#: eventyay/orga/views/event.py:516
+#: eventyay/orga/views/event.py:515
 #: eventyay/presale/templates/pretixpresale/organizers/base.html:154
 #: eventyay/presale/templates/pretixpresale/organizers/fragment_toolbar.html:7
 msgid "Export"
@@ -966,7 +966,7 @@ msgid "Calendar View"
 msgstr ""
 
 #: eventyay/agenda/views/schedule.py:454 eventyay/common/forms/forms.py:12
-#: eventyay/common/forms/widgets.py:278
+#: eventyay/common/forms/widgets.py:349
 #: eventyay/common/templates/common/includes/search_form.html:7
 #: eventyay/control/templates/pretixcontrol/admin/attendees/index.html:31
 #: eventyay/control/templates/pretixcontrol/admin/events/index.html:32
@@ -994,7 +994,7 @@ msgstr ""
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/sent_list.html:32
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/sent_list.html:36
 #: eventyay/presale/templates/pretixpresale/startpage.html:11
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:88
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:89
 #: eventyay/submission/forms/submission.py:479
 msgid "Search"
 msgstr "Αναζήτηση"
@@ -1120,8 +1120,8 @@ msgstr "Δεν έχετε την άδεια να το κάνετε αυτό"
 
 #: eventyay/agenda/views/talk.py:866 eventyay/common/text/phrases.py:72
 #: eventyay/control/views/checkin.py:130
-#: eventyay/eventyay_common/views/event.py:817
-#: eventyay/eventyay_common/views/event.py:832
+#: eventyay/eventyay_common/views/event.py:852
+#: eventyay/eventyay_common/views/event.py:867
 msgid "You do not have permission to perform this action."
 msgstr "Δεν έχετε άδεια να εκτελέσετε αυτήν την ενέργεια."
 
@@ -1211,8 +1211,8 @@ msgstr "Επιτρεπόμενη λίστα URI, διαχωρισμένος χώ
 msgid "Allowed list with space separated"
 msgstr "Επιτρεπόμενη λίστα με διαχωρισμό με κενά"
 
-#: eventyay/api/models.py:37 eventyay/control/forms/global_settings.py:320
-#: eventyay/control/forms/global_settings.py:398
+#: eventyay/api/models.py:37 eventyay/control/forms/global_settings.py:405
+#: eventyay/control/forms/global_settings.py:483
 #: eventyay/plugins/socialauth/templates/socialauth/social_auth_settings.html:70
 msgid "Client ID"
 msgstr "ταυτότητα πελάτη"
@@ -1257,7 +1257,7 @@ msgstr ""
 msgid "The selected seat \"{seat}\" is not available."
 msgstr "Η επιλεγμένη θέση \"{seat}\" δεν είναι διαθέσιμη."
 
-#: eventyay/api/serializers/checkin.py:71 eventyay/base/models/event.py:3280
+#: eventyay/api/serializers/checkin.py:71 eventyay/base/models/event.py:3451
 #: eventyay/base/models/product.py:1567 eventyay/base/models/product.py:1796
 msgid "One or more products do not belong to this event."
 msgstr "Ένα ή περισσότερα προϊόντα δεν ανήκουν σε αυτή την εκδήλωση."
@@ -1455,14 +1455,14 @@ msgid "An invoice for this order already exists."
 msgstr "Ένα τιμολόγιο για αυτήν την παραγγελία υπάρχει ήδη."
 
 #: eventyay/api/views/order.py:762 eventyay/common/text/phrases.py:70
-#: eventyay/control/views/orders.py:1826 eventyay/control/views/users.py:400
-#: eventyay/control/views/users.py:403 eventyay/control/views/users.py:497
+#: eventyay/control/views/orders.py:1826 eventyay/control/views/users.py:403
+#: eventyay/control/views/users.py:406 eventyay/control/views/users.py:500
 msgid "There was an error sending the mail. Please try again later."
 msgstr ""
 "Παρουσιάστηκε σφάλμα κατά την αποστολή του μηνύματος. Παρακαλώ προσπαθήστε "
 "ξανά αργότερα."
 
-#: eventyay/api/views/order.py:842 eventyay/base/services/cart.py:142
+#: eventyay/api/views/order.py:842 eventyay/base/services/cart.py:146
 #: eventyay/base/services/orders.py:151 eventyay/presale/views/order.py:977
 msgid "One of the selected products is not available in the selected country."
 msgstr ""
@@ -1586,14 +1586,20 @@ msgctxt "subevent"
 msgid "Event series date deleted"
 msgstr "Η ημερομηνία της σειράς εκδηλώσεων διαγράφηκε"
 
-#: eventyay/base/auth.py:98
+#: eventyay/base/auth.py:13
+#, fuzzy
+#| msgid "This change was performed by the system administrator."
+msgid "This account has been suspended. Please contact the site administrator."
+msgstr "Αυτή η αλλαγή πραγματοποιήθηκε από τον διαχειριστή συστήματος."
+
+#: eventyay/base/auth.py:101
 #, python-brace-format
 msgid "{system} User"
 msgstr "{system} Χρήστης"
 
-#: eventyay/base/auth.py:111
+#: eventyay/base/auth.py:114
 #: eventyay/base/configurations/default_setting.py:239
-#: eventyay/base/forms/auth.py:233 eventyay/base/models/auth.py:187
+#: eventyay/base/forms/auth.py:234 eventyay/base/models/auth.py:187
 #: eventyay/base/models/notifications.py:25 eventyay/base/models/orders.py:177
 #: eventyay/control/forms/event.py:848
 #: eventyay/control/templates/pretixcontrol/items/orderforms.html:47
@@ -1606,9 +1612,9 @@ msgstr "{system} Χρήστης"
 msgid "E-mail"
 msgstr "Ηλεκτρονικό ταχυδρομείο"
 
-#: eventyay/base/auth.py:118 eventyay/base/forms/auth.py:142
-#: eventyay/base/forms/auth.py:198
-#: eventyay/control/forms/global_settings.py:226
+#: eventyay/base/auth.py:121 eventyay/base/forms/auth.py:143
+#: eventyay/base/forms/auth.py:199
+#: eventyay/control/forms/global_settings.py:311
 #: eventyay/control/templates/pretixcontrol/admin/systemconfig.html:89
 #: eventyay/person/forms/user.py:24 eventyay/person/forms/user.py:39
 #: eventyay/presale/templates/pretixpresale/fragment_modals.html:77
@@ -1629,7 +1635,7 @@ msgid "Please enter the hexadecimal code of a color, e.g. #990000."
 msgstr "Παρακαλώ εισάγετε τον δεκαεξαδικό κώδικα ενός χρώματος, π.χ. # 990000."
 
 #: eventyay/base/configurations/default_setting.py:97
-#: eventyay/control/forms/global_settings.py:496
+#: eventyay/control/forms/global_settings.py:581
 msgid "Maximum number of items per order"
 msgstr "Μέγιστος αριθμός αντικειμένων ανά παραγγελία"
 
@@ -1965,12 +1971,12 @@ msgstr ""
 "ρυθμίσει για τα κανονικά τιμολόγια."
 
 #: eventyay/base/configurations/default_setting.py:516
-#: eventyay/control/forms/global_settings.py:487
+#: eventyay/control/forms/global_settings.py:572
 msgid "Reservation period"
 msgstr "Περίοδος κράτησης"
 
 #: eventyay/base/configurations/default_setting.py:517
-#: eventyay/control/forms/global_settings.py:488
+#: eventyay/control/forms/global_settings.py:573
 msgid ""
 "The number of minutes the items in a user's cart are reserved for this user."
 msgstr ""
@@ -2373,12 +2379,14 @@ msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:927
 #: eventyay/control/forms/event.py:102
+#: eventyay/eventyay_common/forms/event.py:340
 #, fuzzy
 #| msgid "Event Language"
 msgid "Event languages"
 msgstr "Γλώσσα εκδήλωσης"
 
 #: eventyay/base/configurations/default_setting.py:929
+#: eventyay/eventyay_common/forms/event.py:343
 msgid ""
 "Users will be able to use eventyay in these languages, and you will be able "
 "to provide all texts in these languages. If you don't provide a text in the "
@@ -2928,7 +2936,7 @@ msgid "Refund method"
 msgstr "Μέθοδος επιστροφής χρημάτων"
 
 #: eventyay/base/configurations/default_setting.py:1574
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:77
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:78
 #, fuzzy
 #| msgid "Contact information"
 msgid "Contact form"
@@ -2937,7 +2945,7 @@ msgstr "Στοιχεία επικοινωνίας"
 #: eventyay/base/configurations/default_setting.py:1584
 #: eventyay/base/models/event.py:629 eventyay/control/forms/event.py:419
 #: eventyay/event/forms.py:281
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:91
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:92
 msgid "Organizer email address"
 msgstr "Διεύθυνση email διοργανωτή"
 
@@ -3842,7 +3850,7 @@ msgid "We will show your logo with a maximal height and width of 2.5 cm."
 msgstr "Θα δείξουμε το λογότυπό σας με μέγιστο ύψος και πλάτος 2,5 cm."
 
 #: eventyay/base/configurations/default_setting.py:2320
-#: eventyay/base/models/event.py:3168
+#: eventyay/base/models/event.py:3339
 msgid "Frontpage text"
 msgstr "Frontpage κείμενο"
 
@@ -3959,7 +3967,7 @@ msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:2490
 #: eventyay/base/configurations/default_setting.py:2500
-#: eventyay/base/models/event.py:542 eventyay/base/models/event.py:3126
+#: eventyay/base/models/event.py:542 eventyay/base/models/event.py:3297
 #: eventyay/control/forms/subevents.py:507
 #: eventyay/control/templates/pretixcontrol/subevents/bulk.html:268
 msgid "Event start time"
@@ -4103,7 +4111,7 @@ msgstr ""
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:35
 #: eventyay/eventyay_common/views/dashboards.py:570
 #: eventyay/eventyay_common/views/dashboards.py:577
-#: eventyay/eventyay_common/views/event.py:980
+#: eventyay/eventyay_common/views/event.py:1015
 #: eventyay/orga/templates/orga/event/component_link.html:9
 #: eventyay/presale/templates/pretixpresale/organizers/index.html:105
 #: eventyay/presale/templates/pretixpresale/organizers/index.html:107
@@ -4302,7 +4310,8 @@ msgid ""
 "email settings are correct."
 msgstr ""
 
-#: eventyay/base/email.py:351 eventyay/eventyay_common/views/event.py:557
+#: eventyay/base/email.py:351 eventyay/eventyay_common/views/event.py:563
+#: eventyay/eventyay_common/views/event.py:1588
 #: eventyay/orga/templates/orga/cfp/submissiontype/list.html:62
 #: eventyay/plugins/badges/apps.py:63 eventyay/plugins/badges/models.py:26
 #: eventyay/plugins/badges/templates/pretixplugins/badges/index.html:47
@@ -4402,6 +4411,7 @@ msgid "Answers to file upload questions"
 msgstr "Συνδυασμένο Excel (.xlsx)"
 
 #: eventyay/base/exporters/answers.py:28 eventyay/base/models/product.py:1426
+#: eventyay/eventyay_common/forms/event.py:386
 msgid "Questions"
 msgstr "Ερωτήσεις"
 
@@ -4984,14 +4994,14 @@ msgstr "Κατάσταση"
 #: eventyay/base/exporters/waitinglist.py:87
 #: eventyay/base/models/checkin.py:188 eventyay/base/pdf.py:423
 #: eventyay/common/log_display.py:286
-#: eventyay/control/forms/global_settings.py:512
+#: eventyay/control/forms/global_settings.py:747
 #: eventyay/control/templates/control/user_list.html:15
 #: eventyay/control/templates/pretixcontrol/admin/attendees/index.html:76
 #: eventyay/control/templates/pretixcontrol/admin/orders/index.html:71
 #: eventyay/control/templates/pretixcontrol/checkin/index.html:114
 #: eventyay/control/templates/pretixcontrol/orders/index.html:197
 #: eventyay/control/templates/pretixcontrol/waitinglist/index.html:171
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:246
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:247
 #: eventyay/eventyay_common/templates/eventyay_common/sessions/sessions.html:57
 #: eventyay/eventyay_common/templates/eventyay_common/sessions/sessions.html:88
 #: eventyay/orga/templates/orga/organizer/speaker_list.html:31
@@ -5299,7 +5309,7 @@ msgid "Order comment"
 msgstr "Σχόλιο παραγγελίας"
 
 #: eventyay/base/exporters/orderlist.py:864
-#: eventyay/plugins/badges/signals.py:165 eventyay/plugins/badges/utils.py:536
+#: eventyay/plugins/badges/signals.py:168 eventyay/plugins/badges/utils.py:536
 msgid "Badge options"
 msgstr "Επιλογές σήματος"
 
@@ -5665,21 +5675,21 @@ msgstr "Προτεραιότητα"
 msgid "Voucher code"
 msgstr "Κωδικός κουπονιού"
 
-#: eventyay/base/forms/__init__.py:102
+#: eventyay/base/forms/__init__.py:104
 #, fuzzy
 #| msgid "Default ({value})"
 msgid "Default (Inherit: {})"
 msgstr "Προεπιλογή ({value})"
 
-#: eventyay/base/forms/__init__.py:217
+#: eventyay/base/forms/__init__.py:219
 msgid "Show secret key"
 msgstr "Εμφάνιση μυστικού κλειδιού"
 
-#: eventyay/base/forms/__init__.py:218
+#: eventyay/base/forms/__init__.py:220
 msgid "Hide secret key"
 msgstr "Απόκρυψη μυστικού κλειδιού"
 
-#: eventyay/base/forms/auth.py:17
+#: eventyay/base/forms/auth.py:18
 msgid ""
 "Password must be at least 8 characters and include a letter, a number, and a "
 "special character."
@@ -5687,48 +5697,42 @@ msgstr ""
 "Ο κωδικός πρόσβασης πρέπει να έχει τουλάχιστον 8 χαρακτήρες και να "
 "περιλαμβάνει ένα γράμμα, έναν αριθμό και έναν ειδικό χαρακτήρα."
 
-#: eventyay/base/forms/auth.py:43 eventyay/base/forms/auth.py:159
+#: eventyay/base/forms/auth.py:44 eventyay/base/forms/auth.py:160
 #: eventyay/presale/templates/pretixpresale/fragment_modals.html:89
 msgid "Keep me logged in"
 msgstr "Κρατήστε με συνδεδεμένο"
 
-#: eventyay/base/forms/auth.py:46 eventyay/base/forms/auth.py:248
+#: eventyay/base/forms/auth.py:47 eventyay/base/forms/auth.py:249
 msgid "This combination of credentials is not known to our system."
 msgstr "Αυτός ο συνδυασμός διαπιστευτηρίων δεν είναι γνωστός στο σύστημά μας."
 
-#: eventyay/base/forms/auth.py:47 eventyay/base/forms/user.py:20
+#: eventyay/base/forms/auth.py:48 eventyay/base/forms/user.py:20
 msgid "For security reasons, please wait 5 minutes before you try again."
 msgstr ""
 "Για λόγους ασφαλείας, παρακαλούμε περιμένετε 5 λεπτά πριν δοκιμάσετε ξανά."
 
-#: eventyay/base/forms/auth.py:48 eventyay/base/forms/auth.py:249
+#: eventyay/base/forms/auth.py:49 eventyay/base/forms/auth.py:250
 msgid "This account is inactive."
 msgstr "Αυτός ο λογαριασμός είναι ανενεργός."
 
-#: eventyay/base/forms/auth.py:49 eventyay/base/forms/auth.py:250
-#, fuzzy
-#| msgid "This change was performed by the system administrator."
-msgid "This account has been suspended. Please contact the site administrator."
-msgstr "Αυτή η αλλαγή πραγματοποιήθηκε από τον διαχειριστή συστήματος."
-
-#: eventyay/base/forms/auth.py:137
+#: eventyay/base/forms/auth.py:138
 msgid ""
 "You already registered with that email address, please use the login form."
 msgstr ""
 "Έχετε ήδη εγγραφεί στη διεύθυνση ηλεκτρονικού ταχυδρομείου, χρησιμοποιήστε "
 "τη φόρμα σύνδεσης."
 
-#: eventyay/base/forms/auth.py:138 eventyay/base/forms/auth.py:196
+#: eventyay/base/forms/auth.py:139 eventyay/base/forms/auth.py:197
 #: eventyay/base/forms/user.py:19 eventyay/control/forms/users.py:26
 msgid "Please enter the same password twice"
 msgstr "Εισαγάγετε τον ίδιο κωδικό πρόσβασης δύο φορές"
 
-#: eventyay/base/forms/auth.py:140 eventyay/common/text/phrases.py:86
+#: eventyay/base/forms/auth.py:141 eventyay/common/text/phrases.py:86
 #: eventyay/orga/forms/importers.py:80
 msgid "Email address"
 msgstr "Διεύθυνση ηλεκτρονικού ταχυδρομείου"
 
-#: eventyay/base/forms/auth.py:151 eventyay/base/forms/auth.py:199
+#: eventyay/base/forms/auth.py:152 eventyay/base/forms/auth.py:200
 msgid "Repeat password"
 msgstr "Επαναλάβετε τον κωδικό πρόσβασης"
 
@@ -5901,11 +5905,119 @@ msgstr "Επιχείρηση"
 msgid "Individual customer"
 msgstr "Ιδιώτης"
 
+#: eventyay/base/gmail/backend.py:52
+#, fuzzy, python-format
+#| msgid "Failed to send mail to the following user: {}"
+msgid "Daily Gmail sending limit reached for %(email)s."
+msgstr "Αποτυχία αποστολής mail στον ακόλουθο χρήστη: {}"
+
+#: eventyay/base/gmail/backend.py:61
+#, fuzzy, python-format
+#| msgid "Failed to send mail to the following user: {}"
+msgid "Gmail rate limit reached for %(email)s."
+msgstr "Αποτυχία αποστολής mail στον ακόλουθο χρήστη: {}"
+
+#: eventyay/base/gmail/constants.py:15
+#: eventyay/control/forms/global_settings.py:113
+#: eventyay/orga/forms/email.py:21
+msgid "Gmail / Google Workspace API"
+msgstr ""
+
+#: eventyay/base/gmail/deps.py:20
+msgid ""
+"Gmail support requires the Google API client libraries. Rebuild the "
+"application image or run `uv sync --all-extras --all-groups`."
+msgstr ""
+
+#: eventyay/base/gmail/models.py:30 eventyay/base/models/event.py:840
+#: eventyay/base/models/orders.py:176 eventyay/base/models/orders.py:2692
+#: eventyay/base/models/product.py:311 eventyay/base/models/product.py:1669
+#: eventyay/base/models/vouchers.py:91 eventyay/base/models/waitinglist.py:32
+#: eventyay/base/notifications.py:178 eventyay/common/log_display.py:294
+#: eventyay/control/forms/organizer_forms/user_orders_form.py:11
+#: eventyay/control/templates/control/bbb_list.html:21
+#: eventyay/control/templates/control/janus_list.html:17
+#: eventyay/control/templates/control/jitsi_list.html:21
+#: eventyay/control/templates/control/systemlog_list.html:12
+#: eventyay/control/templates/control/turn_list.html:17
+#: eventyay/control/templates/pretixcontrol/admin/attendees/index.html:85
+#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:293
+#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:344
+#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:461
+#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:501
+#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:539
+#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:584
+#: eventyay/control/templates/pretixcontrol/admin/orders/index.html:61
+#: eventyay/control/templates/pretixcontrol/admin/submissions/index.html:91
+#: eventyay/control/templates/pretixcontrol/search/orders.html:42
+#: eventyay/control/templates/pretixcontrol/user/orders.html:27
+#: eventyay/event/stages.py:95 eventyay/eventyay_common/forms/filters.py:12
+#: eventyay/eventyay_common/forms/filters.py:54
+#: eventyay/eventyay_common/templates/eventyay_common/orders/orders.html:40
+#: eventyay/eventyay_common/templates/eventyay_common/orders/orders.html:54
+#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:187
+#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:256
+#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:325
+#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:361
+#: eventyay/eventyay_common/templates/eventyay_common/sessions/sessions.html:54
+#: eventyay/eventyay_common/templates/eventyay_common/sessions/sessions.html:69
+#: eventyay/orga/templates/orga/mails/_placeholder_group.html:14
+#: eventyay/orga/views/event.py:387 eventyay/presale/organizer_exports.py:212
+#: eventyay/presale/templates/pretixpresale/event/waitinglist.html:19
+#, fuzzy
+#| msgid "Event"
+#| msgid_plural "Events"
+msgid "Event"
+msgstr "Εκδήλωση"
+
+#: eventyay/base/gmail/models.py:32
+#, fuzzy
+#| msgid "Send email"
+msgid "Sender email"
+msgstr "Αποστολή email"
+
+#: eventyay/base/gmail/models.py:50
+msgid "Gmail OAuth credential"
+msgstr ""
+
+#: eventyay/base/gmail/models.py:51
+#, fuzzy
+#| msgid "Live Credentials"
+msgid "Gmail OAuth credentials"
+msgstr "Διαπιστευτήρια παραγωγής"
+
+#: eventyay/base/gmail/models.py:58
+#, fuzzy
+#| msgid "Back to overview"
+msgid "platform"
+msgstr "Επιστροφή στην επισκόπηση"
+
+#: eventyay/base/gmail/oauth.py:37
+#, fuzzy
+#| msgid "Add the client ID and client secret to admin settings"
+msgid "Gmail OAuth client ID and secret must be configured in global settings."
+msgstr ""
+"Προσθέστε το αναγνωριστικό πελάτη και το μυστικό πελάτη στις ρυθμίσεις "
+"διαχειριστή"
+
+#: eventyay/base/gmail/oauth.py:85
+#, fuzzy
+#| msgid "The requested question does not exist."
+msgid "The required Gmail send permission was not granted."
+msgstr "Η ζητούμενη ερώτηση δεν υπάρχει."
+
+#: eventyay/base/gmail/oauth.py:99
+#, fuzzy
+#| msgid "Please provide an email address."
+msgid "Google did not return an email address for the connected account."
+msgstr "Παρακαλώ δώστε μια διεύθυνση email."
+
 #: eventyay/base/invoice.py:71
-#, python-format
+#, fuzzy, python-format
+#| msgid "Page %(page)s of %(of)s"
 msgctxt "invoice"
-msgid "Page %d of %d"
-msgstr "Σελίδα %d από %d"
+msgid "Page %(page)d of %(of)d"
+msgstr "Σελίδα %(page)s από %(of)s"
 
 #: eventyay/base/invoice.py:272
 msgctxt "invoice"
@@ -5989,7 +6101,7 @@ msgstr ""
 msgid "TEST MODE"
 msgstr "TEST MODE"
 
-#: eventyay/base/invoice.py:478 eventyay/base/services/mail.py:506
+#: eventyay/base/invoice.py:478 eventyay/base/services/mail.py:512
 #, python-brace-format
 msgctxt "invoice"
 msgid "Invoice {num}"
@@ -6415,6 +6527,7 @@ msgstr "[eventyay] Ο κωδικός πρόσβασης άλλαξε"
 #: eventyay/base/models/auth_token.py:65 eventyay/base/models/event.py:841
 #: eventyay/cfp/templates/cfp/index.html:4
 #: eventyay/cfp/templates/cfp/index.html:8
+#: eventyay/common/context_processors.py:121
 #: eventyay/control/forms/organizer_forms/device_form.py:45
 #: eventyay/control/navigation.py:494
 #: eventyay/control/templates/control/event_list.html:6
@@ -6739,28 +6852,28 @@ msgstr "Οι σελίδες συζήτησης δημοσιεύονται"
 msgid "Event currency"
 msgstr "Νόμισμα εκδήλωσης"
 
-#: eventyay/base/models/event.py:543 eventyay/base/models/event.py:3127
+#: eventyay/base/models/event.py:543 eventyay/base/models/event.py:3298
 #: eventyay/base/pdf.py:365 eventyay/control/forms/subevents.py:512
 #: eventyay/control/templates/pretixcontrol/subevents/bulk.html:270
 msgid "Event end time"
 msgstr "Ώρα λήξης εκδήλωσης"
 
-#: eventyay/base/models/event.py:544 eventyay/base/models/event.py:3128
+#: eventyay/base/models/event.py:544 eventyay/base/models/event.py:3299
 #: eventyay/control/forms/subevents.py:517
 #: eventyay/control/templates/pretixcontrol/subevents/bulk.html:274
 msgid "Admission time"
 msgstr "Χρόνος αποδοχής"
 
-#: eventyay/base/models/event.py:547 eventyay/base/models/event.py:3119
+#: eventyay/base/models/event.py:547 eventyay/base/models/event.py:3290
 msgid "Show in lists"
 msgstr "Εμφάνιση σε λίστες"
 
-#: eventyay/base/models/event.py:553 eventyay/base/models/event.py:3132
+#: eventyay/base/models/event.py:553 eventyay/base/models/event.py:3303
 #: eventyay/control/forms/subevents.py:78
 msgid "End of presale"
 msgstr "Τέλος προπώλησης"
 
-#: eventyay/base/models/event.py:555 eventyay/base/models/event.py:3134
+#: eventyay/base/models/event.py:555 eventyay/base/models/event.py:3305
 #: eventyay/control/forms/subevents.py:80
 msgid ""
 "Optional. No products will be sold after this date. If you do not set this "
@@ -6770,17 +6883,17 @@ msgstr ""
 "ρυθμίσετε αυτήν την τιμή, η προπώληση θα λήξει μετά την ημερομηνία λήξης της "
 "εκδήλωσής σας."
 
-#: eventyay/base/models/event.py:562 eventyay/base/models/event.py:3141
+#: eventyay/base/models/event.py:562 eventyay/base/models/event.py:3312
 #: eventyay/control/forms/subevents.py:72
 msgid "Start of presale"
 msgstr "Έναρξη προπώλησης"
 
-#: eventyay/base/models/event.py:563 eventyay/base/models/event.py:3142
+#: eventyay/base/models/event.py:563 eventyay/base/models/event.py:3313
 #: eventyay/control/forms/subevents.py:73
 msgid "Optional. No products will be sold before this date."
 msgstr "Προαιρετικά. Δεν θα πωληθούν προϊόντα πριν από αυτή την ημερομηνία."
 
-#: eventyay/base/models/event.py:569 eventyay/base/models/event.py:3148
+#: eventyay/base/models/event.py:569 eventyay/base/models/event.py:3319
 #: eventyay/base/services/talkimport.py:147
 #: eventyay/eventyay_common/templates/eventyay_common/events/create.html:164
 #: eventyay/presale/templates/pretixpresale/event/index.html:216
@@ -6789,11 +6902,11 @@ msgstr "Προαιρετικά. Δεν θα πωληθούν προϊόντα π
 msgid "Location"
 msgstr "Τοποθεσία"
 
-#: eventyay/base/models/event.py:572 eventyay/base/models/event.py:3151
+#: eventyay/base/models/event.py:572 eventyay/base/models/event.py:3322
 msgid "Latitude"
 msgstr "Γεωγραφικό πλάτος"
 
-#: eventyay/base/models/event.py:581 eventyay/base/models/event.py:3160
+#: eventyay/base/models/event.py:581 eventyay/base/models/event.py:3331
 msgid "Longitude"
 msgstr "Γεωγραφικό μήκος"
 
@@ -6866,7 +6979,7 @@ msgid ""
 msgstr ""
 
 #: eventyay/base/models/event.py:637
-#: eventyay/eventyay_common/forms/event.py:265
+#: eventyay/eventyay_common/forms/event.py:266
 msgid "Custom domain"
 msgstr "Προσαρμοσμένος domain (Custom domain)"
 
@@ -6944,73 +7057,32 @@ msgstr "Τοπογραφία"
 msgid "Graph Paper"
 msgstr "Χαρτί μιλιμετρέ"
 
-#: eventyay/base/models/event.py:840 eventyay/base/models/orders.py:176
-#: eventyay/base/models/orders.py:2692 eventyay/base/models/product.py:311
-#: eventyay/base/models/product.py:1669 eventyay/base/models/vouchers.py:91
-#: eventyay/base/models/waitinglist.py:32 eventyay/base/notifications.py:178
-#: eventyay/common/log_display.py:294
-#: eventyay/control/forms/organizer_forms/user_orders_form.py:11
-#: eventyay/control/templates/control/bbb_list.html:21
-#: eventyay/control/templates/control/janus_list.html:17
-#: eventyay/control/templates/control/jitsi_list.html:21
-#: eventyay/control/templates/control/systemlog_list.html:12
-#: eventyay/control/templates/control/turn_list.html:17
-#: eventyay/control/templates/pretixcontrol/admin/attendees/index.html:85
-#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:293
-#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:344
-#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:461
-#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:501
-#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:539
-#: eventyay/control/templates/pretixcontrol/admin/dashboard.html:584
-#: eventyay/control/templates/pretixcontrol/admin/orders/index.html:61
-#: eventyay/control/templates/pretixcontrol/admin/submissions/index.html:91
-#: eventyay/control/templates/pretixcontrol/search/orders.html:42
-#: eventyay/control/templates/pretixcontrol/user/orders.html:27
-#: eventyay/event/stages.py:96 eventyay/eventyay_common/forms/filters.py:12
-#: eventyay/eventyay_common/forms/filters.py:54
-#: eventyay/eventyay_common/templates/eventyay_common/orders/orders.html:40
-#: eventyay/eventyay_common/templates/eventyay_common/orders/orders.html:54
-#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:187
-#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:256
-#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:325
-#: eventyay/eventyay_common/templates/eventyay_common/organizers/dashboard.html:361
-#: eventyay/eventyay_common/templates/eventyay_common/sessions/sessions.html:54
-#: eventyay/eventyay_common/templates/eventyay_common/sessions/sessions.html:69
-#: eventyay/orga/templates/orga/mails/_placeholder_group.html:14
-#: eventyay/orga/templates/orga/organizer/list.html:32
-#: eventyay/orga/views/event.py:388 eventyay/presale/organizer_exports.py:212
-#: eventyay/presale/templates/pretixpresale/event/waitinglist.html:19
-msgid "Event"
-msgid_plural "Events"
-msgstr[0] "Εκδήλωση"
-msgstr[1] "Εκδηλώσεις"
-
-#: eventyay/base/models/event.py:1929 eventyay/control/views/dashboards.py:307
+#: eventyay/base/models/event.py:2100 eventyay/control/views/dashboards.py:307
 msgid "live (private test mode)"
 msgstr "ζωντανά (ιδιωτική λειτουργία δοκιμής)"
 
-#: eventyay/base/models/event.py:1929 eventyay/control/views/dashboards.py:316
+#: eventyay/base/models/event.py:2100 eventyay/control/views/dashboards.py:316
 msgid "in private test mode"
 msgstr "σε ιδιωτική δοκιμαστική λειτουργία"
 
-#: eventyay/base/models/event.py:1931 eventyay/control/views/dashboards.py:310
+#: eventyay/base/models/event.py:2102 eventyay/control/views/dashboards.py:310
 msgid "live and in test mode"
 msgstr "ζωντανά και σε λειτουργία δοκιμής"
 
-#: eventyay/base/models/event.py:1933 eventyay/control/views/dashboards.py:313
+#: eventyay/base/models/event.py:2104 eventyay/control/views/dashboards.py:313
 #: eventyay/orga/templates/orga/includes/dashboard_block_event.html:24
 msgid "live"
 msgstr "ζωντανά"
 
-#: eventyay/base/models/event.py:1935 eventyay/control/views/dashboards.py:318
+#: eventyay/base/models/event.py:2106 eventyay/control/views/dashboards.py:318
 msgid "in test mode"
 msgstr "σε λειτουργία δοκιμής"
 
-#: eventyay/base/models/event.py:1937 eventyay/control/views/dashboards.py:318
+#: eventyay/base/models/event.py:2108 eventyay/control/views/dashboards.py:318
 msgid "not yet public"
 msgstr "δεν είναι ακόμη δημόσια"
 
-#: eventyay/base/models/event.py:2053
+#: eventyay/base/models/event.py:2224
 msgid ""
 "You have configured at least one paid product but have not enabled any "
 "payment methods."
@@ -7018,77 +7090,77 @@ msgstr ""
 "Έχετε διαμορφώσει τουλάχιστον ένα πληρωμένο προϊόν, αλλά δεν έχετε "
 "ενεργοποιήσει καμία μέθοδο πληρωμής."
 
-#: eventyay/base/models/event.py:2056
+#: eventyay/base/models/event.py:2227
 msgid "You need to configure at least one quota to sell anything."
 msgstr ""
 "Πρέπει να ρυθμίσετε τουλάχιστον μία αναλογία για να πουλήσετε οτιδήποτε."
 
-#: eventyay/base/models/event.py:2059
+#: eventyay/base/models/event.py:2230
 msgid "You have unpaid invoices, please pay them before going live."
 msgstr "Έχετε απλήρωτα τιμολόγια, παρακαλούμε εξοφλήστε τα πριν ξεκινήσετε."
 
-#: eventyay/base/models/event.py:2064
+#: eventyay/base/models/event.py:2235
 #, python-brace-format
 msgid "You need to fill the meta parameter \"{property}\"."
 msgstr "Πρέπει να συμπληρώσετε τη μετα-παράμετρο \"{property}\"."
 
-#: eventyay/base/models/event.py:2110
+#: eventyay/base/models/event.py:2281
 msgid "You need to fill the billing information."
 msgstr "Πρέπει να συμπληρώσετε τα στοιχεία τιμολόγησης."
 
-#: eventyay/base/models/event.py:2329
+#: eventyay/base/models/event.py:2500
 msgid ""
 "Once created an event cannot change between an series and a single event."
 msgstr ""
 "Μόλις δημιουργηθεί μια εκδήλωση δεν μπορεί να αλλάξει μεταξύ μιας σειράς και "
 "μίας μόνο εκδήλωσης."
 
-#: eventyay/base/models/event.py:2335
+#: eventyay/base/models/event.py:2506
 msgid "The event slug cannot be changed."
 msgstr "Το κείμενο της εκδήλωσης δεν μπορεί να αλλάξει."
 
-#: eventyay/base/models/event.py:2338
+#: eventyay/base/models/event.py:2509
 msgid "This slug has already been used for a different event."
 msgstr "Αυτό το slug έχει ήδη χρησιμοποιηθεί για μία διαφορετική εκδήλωση."
 
-#: eventyay/base/models/event.py:2344
+#: eventyay/base/models/event.py:2515
 msgid "The event cannot end before it starts."
 msgstr "Η εκδήλωση δεν μπορεί να ολοκληρωθεί πριν ξεκινήσει."
 
-#: eventyay/base/models/event.py:2350
+#: eventyay/base/models/event.py:2521
 msgid "The event's presale cannot end before it starts."
 msgstr "Η προπώληση της εκδήλωσης δεν μπορεί να ολοκληρωθεί πριν ξεκινήσει."
 
-#: eventyay/base/models/event.py:2823 eventyay/base/models/event.py:3019
-#: eventyay/event/stages.py:68
+#: eventyay/base/models/event.py:2994 eventyay/base/models/event.py:3190
+#: eventyay/event/stages.py:67
 #: eventyay/orga/templates/orga/submission/review.html:198
 msgid "Review"
 msgstr "Αξιολόγηση"
 
-#: eventyay/base/models/event.py:3027
+#: eventyay/base/models/event.py:3198
 msgid "Selection"
 msgstr "Επιλογή"
 
-#: eventyay/base/models/event.py:3042 eventyay/base/models/review.py:129
+#: eventyay/base/models/event.py:3213 eventyay/base/models/review.py:129
 #: eventyay/orga/forms/event.py:530 eventyay/orga/forms/event.py:547
 #: eventyay/orga/templates/orga/includes/review_filter_form.html:25
 #: eventyay/orga/templates/orga/submission/review.html:193
 msgid "Score"
 msgstr "Βαθμολογία"
 
-#: eventyay/base/models/event.py:3052
+#: eventyay/base/models/event.py:3223
 msgid "Maybe"
 msgstr "Μπορεί"
 
-#: eventyay/base/models/event.py:3075
+#: eventyay/base/models/event.py:3246
 msgid "Link text"
 msgstr "Κείμενο συνδέσμου"
 
-#: eventyay/base/models/event.py:3076
+#: eventyay/base/models/event.py:3247
 msgid "Link URL"
 msgstr "URL συνδέσμου"
 
-#: eventyay/base/models/event.py:3114
+#: eventyay/base/models/event.py:3285
 #: eventyay/base/models/global_plugin_config.py:28
 #: eventyay/base/models/product.py:337 eventyay/base/models/product.py:867
 #: eventyay/base/models/product.py:1320 eventyay/control/forms/filter.py:852
@@ -7112,7 +7184,7 @@ msgstr "URL συνδέσμου"
 msgid "Active"
 msgstr "Ενεργό"
 
-#: eventyay/base/models/event.py:3115
+#: eventyay/base/models/event.py:3286
 msgid ""
 "Only with this checkbox enabled, this date is visible in the frontend to "
 "users."
@@ -7120,7 +7192,7 @@ msgstr ""
 "Μόνο με αυτό το checkbox ενεργοποιημένο, αυτή η ημερομηνία είναι ορατή στο "
 "μενού των χρηστών."
 
-#: eventyay/base/models/event.py:3120
+#: eventyay/base/models/event.py:3291
 msgid ""
 "If selected, this event will show up publicly on the list of dates for your "
 "event."
@@ -7128,42 +7200,42 @@ msgstr ""
 "Αν επιλεγεί, αυτή η εκδήλωση θα εμφανιστεί δημόσια στη λίστα ημερομηνιών για "
 "το συμβάν σας."
 
-#: eventyay/base/models/event.py:3184
+#: eventyay/base/models/event.py:3355
 msgid "Date in event series"
 msgstr "Ημερομηνία σε σειρά εκδηλώσεων"
 
-#: eventyay/base/models/event.py:3185
+#: eventyay/base/models/event.py:3356
 msgid "Dates in event series"
 msgstr "Ημερομηνίες σε σειρές εκδηλώσεων"
 
-#: eventyay/base/models/event.py:3286
+#: eventyay/base/models/event.py:3457
 msgid "One or more variations do not belong to this event."
 msgstr "Μία ή περισσότερες παραλλαγές δεν ανήκουν σε αυτή την εκδήλωση."
 
-#: eventyay/base/models/event.py:3372 eventyay/base/models/product.py:1832
+#: eventyay/base/models/event.py:3543 eventyay/base/models/product.py:1832
 msgid "Can not contain spaces or special characters except underscores"
 msgstr ""
 "Δεν μπορεί να περιέχει κενά ή ειδικούς χαρακτήρες εκτός από τις υπογραμμίσεις"
 
-#: eventyay/base/models/event.py:3376 eventyay/base/models/product.py:1836
+#: eventyay/base/models/event.py:3547 eventyay/base/models/product.py:1836
 msgid "The property name may only contain letters, numbers and underscores."
 msgstr ""
 "Το όνομα του property μπορεί να περιέχει μόνο γράμματα, αριθμούς και "
 "υπογράμμιση."
 
-#: eventyay/base/models/event.py:3381
+#: eventyay/base/models/event.py:3552
 msgid "Default value"
 msgstr "Προεπιλεγμένη τιμή"
 
-#: eventyay/base/models/event.py:3384
+#: eventyay/base/models/event.py:3555
 msgid "Can only be changed by organizer-level administrators"
 msgstr "Μπορεί να αλλάξει μόνο από διαχειριστές επιπέδου διοργανωτή"
 
-#: eventyay/base/models/event.py:3388
+#: eventyay/base/models/event.py:3559
 msgid "Required for events"
 msgstr "Απαιτείται για εκδηλώσεις"
 
-#: eventyay/base/models/event.py:3390
+#: eventyay/base/models/event.py:3561
 msgid ""
 "If checked, an event can only be taken live if the property is set. In event "
 "series, its always optional to set a value for individual dates"
@@ -7172,11 +7244,11 @@ msgstr ""
 "ιδιότητα. Σε σειρές εκδηλώσεων, είναι πάντα προαιρετικό να ορίσετε τιμή για "
 "μεμονωμένες ημερομηνίες"
 
-#: eventyay/base/models/event.py:3397
+#: eventyay/base/models/event.py:3568
 msgid "Valid values"
 msgstr "Έγκυρες τιμές"
 
-#: eventyay/base/models/event.py:3398
+#: eventyay/base/models/event.py:3569
 msgid ""
 "If you keep this empty, any value is allowed. Otherwise, enter one possible "
 "value per line."
@@ -7184,13 +7256,13 @@ msgstr ""
 "Αν το αφήσετε κενό, επιτρέπεται οποιαδήποτε τιμή. Διαφορετικά, εισαγάγετε "
 "μία πιθανή τιμή ανά γραμμή."
 
-#: eventyay/base/models/event.py:3404
+#: eventyay/base/models/event.py:3575
 msgid "A property can either be required or have a default value, not both."
 msgstr ""
 "Μια ιδιότητα μπορεί είτε να είναι υποχρεωτική είτε να έχει προεπιλεγμένη "
 "τιμή, όχι και τα δύο."
 
-#: eventyay/base/models/event.py:3406
+#: eventyay/base/models/event.py:3577
 msgid "You cannot set a default value that is not a valid value."
 msgstr "Δεν μπορείτε να ορίσετε προεπιλεγμένη τιμή που δεν είναι έγκυρη τιμή."
 
@@ -7538,7 +7610,7 @@ msgstr ""
 #: eventyay/orga/templates/orga/mails/sent_list.html:25
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/outbox_form.html:30
 #: eventyay/plugins/sendmail/views.py:278
-#: eventyay/plugins/sendmail/views.py:530
+#: eventyay/plugins/sendmail/views.py:534
 msgid "To"
 msgstr "Προς"
 
@@ -7558,7 +7630,7 @@ msgstr ""
 msgid "CC"
 msgstr "Κοινοποίηση"
 
-#: eventyay/base/models/mail.py:384 eventyay/plugins/sendmail/views.py:531
+#: eventyay/base/models/mail.py:384 eventyay/plugins/sendmail/views.py:535
 msgid "Sent at"
 msgstr "Αποστολή σε"
 
@@ -7966,7 +8038,7 @@ msgstr "Διοργανωτής"
 
 #: eventyay/base/models/organizer.py:143
 #: eventyay/common/templates/common/fragment_profile_dropdown.html:28
-#: eventyay/control/forms/global_settings.py:553
+#: eventyay/control/forms/global_settings.py:789
 #: eventyay/control/navigation.py:386
 #: eventyay/control/templates/pretixcontrol/admin/dashboard.html:43
 #: eventyay/control/templates/pretixcontrol/admin/dashboard.html:207
@@ -8402,7 +8474,7 @@ msgstr "Καταγραφές διοργανωτή"
 msgid "Page title"
 msgstr "Τίτλος σελίδας"
 
-#: eventyay/base/models/page.py:13 eventyay/control/views/pages.py:68
+#: eventyay/base/models/page.py:13 eventyay/control/views/pages.py:73
 msgid "URL form"
 msgstr "Φόρμα URL"
 
@@ -11032,14 +11104,14 @@ msgstr "Παρακαλώ εισάγετε έναν έγκυρο δίαυλο π�
 msgid "No matching seat was found."
 msgstr "Δεν βρέθηκε αντίστοιχη θέση."
 
-#: eventyay/base/orderimport.py:984 eventyay/base/services/cart.py:136
+#: eventyay/base/orderimport.py:984 eventyay/base/services/cart.py:140
 msgid ""
 "The seat you selected has already been taken. Please select a different seat."
 msgstr ""
 "Η θέση που επιλέξατε έχει ήδη καταληφθεί. Παρακαλώ επιλέξτε μια διαφορετική "
 "θέση."
 
-#: eventyay/base/orderimport.py:993 eventyay/base/services/cart.py:133
+#: eventyay/base/orderimport.py:993 eventyay/base/services/cart.py:137
 msgid "You need to select a specific seat."
 msgstr "Πρέπει να επιλέξετε συγκεκριμένη θέση."
 
@@ -11763,7 +11835,7 @@ msgid "Languages"
 msgstr "Γλώσσες"
 
 #: eventyay/base/plugins.py:100 eventyay/common/plugins.py:15
-#: eventyay/orga/templates/orga/mails/_placeholder_group.html:20
+#: eventyay/orga/templates/orga/mails/_placeholder_group.html:16
 msgctxt "category of items"
 msgid "Other"
 msgstr "Άλλο"
@@ -11940,38 +12012,39 @@ msgstr ""
 msgid "The entered price exceeds the permitted maximum."
 msgstr "Η τιμή που εισάγεται είναι υψηλή."
 
-#: eventyay/base/services/cart.py:94
+#: eventyay/base/services/cart.py:95
 #, python-format
 msgid ""
-"The entered price is below the permitted minimum. The price range is %s to "
-"%s %s."
+"The entered price is below the permitted minimum. The price range is %(min)s "
+"to %(max)s %(currency)s."
 msgstr ""
 
-#: eventyay/base/services/cart.py:95
+#: eventyay/base/services/cart.py:97
 #, python-format
 msgid ""
 "The entered price is below the permitted minimum. The minimum price is %s."
 msgstr ""
 
-#: eventyay/base/services/cart.py:96
-#, python-format
+#: eventyay/base/services/cart.py:99
+#, fuzzy, python-format
+#| msgid "The entered price is to high."
 msgid ""
-"The entered price exceeds the permitted maximum. The price range is %s to %s "
-"%s."
-msgstr ""
+"The entered price exceeds the permitted maximum. The price range is %(min)s "
+"to %(max)s %(currency)s."
+msgstr "Η τιμή που εισάγεται είναι υψηλή."
 
-#: eventyay/base/services/cart.py:97
+#: eventyay/base/services/cart.py:101
 msgid "This voucher code is not known in our database."
 msgstr "Αυτός ο κωδικός κουπονιού δεν είναι γνωστός στη βάση δεδομένων μας."
 
-#: eventyay/base/services/cart.py:98
+#: eventyay/base/services/cart.py:102
 msgid ""
 "This voucher code has already been used the maximum number of times allowed."
 msgstr ""
 "Αυτός ο κωδικός κουπονιού έχει ήδη χρησιμοποιηθεί ο μέγιστος αριθμός φορών "
 "που επιτρέπεται."
 
-#: eventyay/base/services/cart.py:100
+#: eventyay/base/services/cart.py:104
 #, python-format
 msgid ""
 "This voucher code is currently locked since it is already contained in a "
@@ -11985,12 +12058,12 @@ msgstr ""
 "εξαργυρώσετε πριν αλλά δεν ολοκληρώσατε τη διαδικασία πληρωμής. Μπορείτε να "
 "προσπαθήσετε να το χρησιμοποιήσετε ξανά σε %d λεπτά."
 
-#: eventyay/base/services/cart.py:105
+#: eventyay/base/services/cart.py:109
 #, python-format
 msgid "This voucher code can only be redeemed %d more times."
 msgstr "Αυτός ο κωδικός κουπονιού μπορεί να εξαργυρωθεί %d περισσότερες φορές."
 
-#: eventyay/base/services/cart.py:107
+#: eventyay/base/services/cart.py:111
 msgid ""
 "You already used this voucher code. Remove the associated line from your "
 "cart if you want to use it for a different product."
@@ -11999,19 +12072,19 @@ msgstr ""
 "γραμμή από το καλάθι σας, αν θέλετε να το χρησιμοποιήσετε για ένα "
 "διαφορετικό προϊόν."
 
-#: eventyay/base/services/cart.py:110
+#: eventyay/base/services/cart.py:114
 msgid "This voucher is expired."
 msgstr "Αυτό το κουπόνι έχει λήξει."
 
-#: eventyay/base/services/cart.py:111
+#: eventyay/base/services/cart.py:115
 msgid "This voucher is not valid for this product."
 msgstr "Αυτό το δελτίο δεν ισχύει για αυτό το προϊόν."
 
-#: eventyay/base/services/cart.py:112
+#: eventyay/base/services/cart.py:116
 msgid "This voucher is not valid for this seat."
 msgstr "Αυτό το κουπόνι δεν είναι έγκυρο για αυτή τη θέση."
 
-#: eventyay/base/services/cart.py:114
+#: eventyay/base/services/cart.py:118
 msgid ""
 "We did not find any position in your cart that we could use this voucher "
 "for. If you want to add something new to your cart using that voucher, you "
@@ -12022,35 +12095,35 @@ msgstr ""
 "καλάθι σας χρησιμοποιώντας αυτό το voucher, μπορείτε να το κάνετε με την "
 "επιλογή εξαργύρωσης voucher στο κάτω μέρος της σελίδας."
 
-#: eventyay/base/services/cart.py:118
+#: eventyay/base/services/cart.py:122
 msgid "Your voucher is valid for a product that is currently not for sale."
 msgstr "Το κουπόνι σας ισχύει για προϊόν που δεν πωλείται αυτήν τη στιγμή."
 
-#: eventyay/base/services/cart.py:119
+#: eventyay/base/services/cart.py:123
 msgctxt "subevent"
 msgid "This voucher is not valid for this event date."
 msgstr "Αυτό το δελτίο δεν ισχύει για αυτήν την ημερομηνία."
 
-#: eventyay/base/services/cart.py:120
+#: eventyay/base/services/cart.py:124
 msgid "You need a valid voucher code to order this product."
 msgstr ""
 "Χρειάζεστε έναν έγκυρο κωδικό κουπονιού για να παραγγείλετε αυτό το προϊόν."
 
-#: eventyay/base/services/cart.py:121
+#: eventyay/base/services/cart.py:125
 msgctxt "subevent"
 msgid "The selected event date is not active."
 msgstr "Η επιλεγμένη ημερομηνία της εκδήλωσης δεν είναι ενεργή."
 
-#: eventyay/base/services/cart.py:122
+#: eventyay/base/services/cart.py:126
 msgid "You can not select an add-on for the selected product."
 msgstr "Δεν μπορείτε να επιλέξετε ένα πρόσθετο για το επιλεγμένο προϊόν."
 
-#: eventyay/base/services/cart.py:123
+#: eventyay/base/services/cart.py:127
 msgid "You can not select two variations of the same add-on product."
 msgstr ""
 "Δεν μπορείτε να επιλέξετε δύο παραλλαγές του ίδιου προϊόντος πρόσθετου."
 
-#: eventyay/base/services/cart.py:124
+#: eventyay/base/services/cart.py:128
 #, python-format
 msgid ""
 "You can select at most %(max)s add-ons from the category %(cat)s for the "
@@ -12059,7 +12132,7 @@ msgstr ""
 "Μπορείτε να επιλέξετε τα περισσότερα %(max)s πρόσθετα από την κατηγορία "
 "%(cat)s για το προϊόν %(base)s."
 
-#: eventyay/base/services/cart.py:126
+#: eventyay/base/services/cart.py:130
 #, python-format
 msgid ""
 "You need to select at least %(min)s add-ons from the category %(cat)s for "
@@ -12068,7 +12141,7 @@ msgstr ""
 "Πρέπει να επιλέξετε τουλάχιστον %(min)s πρόσθετα από την κατηγορία %(cat)s "
 "για το προϊόν %(base)s."
 
-#: eventyay/base/services/cart.py:129
+#: eventyay/base/services/cart.py:133
 #, python-format
 msgid ""
 "You can select every add-ons from the category %(cat)s for the product "
@@ -12077,7 +12150,7 @@ msgstr ""
 "Μπορείτε να επιλέξετε κάθε πρόσθετο από την κατηγορία %(cat)s για το προϊόν "
 "%(base)s το πολύ μία φορά."
 
-#: eventyay/base/services/cart.py:131
+#: eventyay/base/services/cart.py:135
 msgid ""
 "One of the products you selected can only be bought as an add-on to another "
 "project."
@@ -12085,24 +12158,24 @@ msgstr ""
 "Ένα από τα προϊόντα που επιλέξατε μπορεί να αγοραστεί μόνο ως πρόσθετο σε "
 "άλλο έργο."
 
-#: eventyay/base/services/cart.py:132
+#: eventyay/base/services/cart.py:136
 msgid "One of the products you selected can only be bought part of a bundle."
 msgstr ""
 "Ένα από τα προϊόντα που επιλέξατε μπορεί να αγοραστεί μόνο μέρος του πακέτου."
 
-#: eventyay/base/services/cart.py:134
+#: eventyay/base/services/cart.py:138
 msgid "Please select a valid seat."
 msgstr "Παρακαλούμε επιλέξτε μια έγκυρη θέση."
 
-#: eventyay/base/services/cart.py:135
+#: eventyay/base/services/cart.py:139
 msgid "You can not select a seat for this position."
 msgstr "Δεν μπορείτε να επιλέξετε θέση για αυτή τη θέση."
 
-#: eventyay/base/services/cart.py:137
+#: eventyay/base/services/cart.py:141
 msgid "You can not select the same seat multiple times."
 msgstr "Δεν μπορείτε να επιλέξετε την ίδια θέση πολλές φορές."
 
-#: eventyay/base/services/cart.py:139
+#: eventyay/base/services/cart.py:143
 msgid ""
 "You entered a gift card instead of a voucher. Gift cards can be entered "
 "later on when you're asked for your payment details."
@@ -12110,7 +12183,7 @@ msgstr ""
 "Εισαγάγατε μια δωροκάρτα αντί για voucher. Οι δωροκάρτες μπορούν να "
 "εισαχθούν αργότερα, όταν σας ζητηθούν τα στοιχεία πληρωμής σας."
 
-#: eventyay/base/services/cart.py:143
+#: eventyay/base/services/cart.py:147
 msgid ""
 "Only one ticket per user is allowed for a product in your cart. You already "
 "have a ticket."
@@ -12118,7 +12191,7 @@ msgstr ""
 "Επιτρέπεται μόνο ένα εισιτήριο ανά χρήστη για ένα προϊόν στο καλάθι σας. "
 "Έχετε ήδη ένα εισιτήριο."
 
-#: eventyay/base/services/cart.py:144
+#: eventyay/base/services/cart.py:148
 msgid ""
 "Only one ticket per user is allowed for this product. Quantity has been "
 "adjusted to 1."
@@ -12316,7 +12389,7 @@ msgstr "Δείγμα προϊόντος {}"
 msgid "Sample product A"
 msgstr "Δείγμα προϊόντος Α"
 
-#: eventyay/base/services/mail.py:230
+#: eventyay/base/services/mail.py:236
 #, python-brace-format
 msgid ""
 "You are receiving this email because someone placed an order for {event} for "
@@ -12325,7 +12398,7 @@ msgstr ""
 "Λαμβάνετε αυτό το email επειδή κάποιος έκανε μια παραγγελία για το {event} "
 "για εσάς."
 
-#: eventyay/base/services/mail.py:234 eventyay/base/services/mail.py:255
+#: eventyay/base/services/mail.py:240 eventyay/base/services/mail.py:261
 #, python-brace-format
 msgid ""
 "You can view your order details at the following URL:\n"
@@ -12334,7 +12407,7 @@ msgstr ""
 "Μπορείτε να δείτε τα στοιχεία της παραγγελίας σας στην παρακάτω διεύθυνση "
 "URL: {orderurl}."
 
-#: eventyay/base/services/mail.py:250
+#: eventyay/base/services/mail.py:256
 #, python-brace-format
 msgid "You are receiving this email because you placed an order for {event}."
 msgstr "Λαμβάνετε αυτό το email επειδή κάνατε παραγγελία για το {event}."
@@ -13165,6 +13238,8 @@ msgid "You do not have access to this page."
 msgstr "Δεν έχετε πρόσβαση σε αυτήν τη σελίδα."
 
 #: eventyay/base/templates/403.html:20 eventyay/base/templates/404.html:19
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:76
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:78
 #: eventyay/control/templates/pretixcontrol/admin/user/staff_session_start.html:4
 #: eventyay/control/templates/pretixcontrol/admin/user/staff_session_start.html:6
 #: eventyay/control/templates/pretixcontrol/base.html:231
@@ -13173,8 +13248,8 @@ msgstr "Δεν έχετε πρόσβαση σε αυτήν τη σελίδα."
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:197
 #: eventyay/orga/templates/orga/base.html:163
 #: eventyay/orga/templates/orga/base.html:164
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:125
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:127
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:126
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:128
 msgid "Admin mode"
 msgstr "Διαχειριστική λειτουργία (admin mode)"
 
@@ -13237,9 +13312,9 @@ msgstr ""
 
 #: eventyay/base/templates/pretixbase/email/email_footer.html:3
 #: eventyay/common/templates/common/powered_by.html:36
-#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:63
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:142
 #: eventyay/control/templates/pretixcontrol/base.html:416
-#: eventyay/eventyay_common/templates/eventyay_common/auth/base.html:89
+#: eventyay/eventyay_common/templates/eventyay_common/auth/base.html:98
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:386
 #: eventyay/presale/templates/pretixpresale/base_footer.html:13
 #, python-format
@@ -13393,11 +13468,12 @@ msgstr "Προεπισκόπηση email"
 #: eventyay/base/templates/pretixbase/forms/widgets/thumbnailed_file_input.html:47
 #: eventyay/control/templates/pretixcontrol/event/mail_settings_fragment.html:30
 #: eventyay/control/templates/pretixcontrol/event/tickets.html:36
+#: eventyay/control/templates/pretixcontrol/global_settings.html:246
 #: eventyay/control/templates/pretixcontrol/includes/preview_modal.html:13
 #: eventyay/control/templates/pretixcontrol/includes/preview_modal.html:16
 #: eventyay/control/templates/pretixcontrol/order/sendmail.html:33
 #: eventyay/control/templates/pretixcontrol/pdf/index.html:452
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:305
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:303
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/outbox_form.html:136
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/send_form.html:73
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/send_team_form.html:48
@@ -13876,11 +13952,13 @@ msgstr "Αποδοχή πρόσκλησης"
 #: eventyay/common/templates/common/fragment_header_user.html:156
 #: eventyay/common/templates/common/fragment_header_user.html:158
 #: eventyay/common/text/phrases.py:121
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:95
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:96
 #: eventyay/control/templates/registration/login.html:4
 #: eventyay/eventyay_common/templates/eventyay_common/auth/invite.html:26
 #: eventyay/presale/templates/pretixpresale/fragment_modals.html:33
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:144
 #: eventyay/presale/templates/pretixpresale/startpage_base.html:145
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:146
 msgid "Login"
 msgstr "Σύνδεση"
 
@@ -14134,6 +14212,12 @@ msgstr ""
 "Οι συμμετέχοντες μπορούν να αφήσουν σχόλια εδώ μετά την πραγματοποίηση της "
 "συνεδρίας σας."
 
+#: eventyay/cfp/templates/cfp/event/user_submission_edit.html:62
+msgid "Speaker"
+msgid_plural "Speakers"
+msgstr[0] "Ομιλητής"
+msgstr[1] "Ομιλητές"
+
 #: eventyay/cfp/templates/cfp/event/user_submission_edit.html:64
 msgid "Submitter"
 msgid_plural "Submitters"
@@ -14300,7 +14384,7 @@ msgid "Submit something now!"
 msgstr "Υποβάλετε κάτι τώρα!"
 
 #: eventyay/cfp/templates/cfp/includes/forms_header.html:18
-#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:16
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:23
 #: eventyay/control/templates/pretixcontrol/base.html:93
 #: eventyay/control/templates/pretixcontrol/pdf/index.html:39
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:36
@@ -14309,7 +14393,7 @@ msgid "Undo"
 msgstr "Αναίρεση"
 
 #: eventyay/cfp/templates/cfp/includes/forms_header.html:19
-#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:16
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:23
 #: eventyay/control/templates/pretixcontrol/base.html:93
 #: eventyay/control/templates/pretixcontrol/pdf/index.html:43
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:36
@@ -14318,7 +14402,7 @@ msgid "Redo"
 msgstr "Επανάληψη"
 
 #: eventyay/cfp/templates/cfp/includes/forms_header.html:20
-#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:16
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:23
 #: eventyay/control/templates/pretixcontrol/base.html:93
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:36
 #: eventyay/orga/templates/orga/base.html:63
@@ -14415,18 +14499,47 @@ msgstr "Η πρόσκληση έχει σταλεί!"
 msgid "You cannot accept this invitation."
 msgstr "Δεν μπορείτε να δεχθείτε αυτή την πρόσκληση."
 
-#: eventyay/common/forms/fields.py:67 eventyay/control/forms/__init__.py:196
+#: eventyay/common/context_processors.py:122
+msgid "Terms"
+msgstr ""
+
+#: eventyay/common/context_processors.py:123
+#: eventyay/control/templates/pretixcontrol/organizers/edit.html:97
+msgid "Privacy"
+msgstr "Απόρρητο"
+
+#: eventyay/common/context_processors.py:124
+#: eventyay/control/views/pages.py:237
+#, fuzzy
+#| msgid "Price"
+msgid "Pricing"
+msgstr "Τιμή"
+
+#: eventyay/common/context_processors.py:125
+#: eventyay/orga/templates/orga/settings/import_export.html:238
+#: eventyay/orga/templates/orga/settings/import_export.html:431
+#: eventyay/orga/templates/orga/settings/import_export.html:540
+msgid "Documentation"
+msgstr "Documentation"
+
+#: eventyay/common/context_processors.py:126
+#, fuzzy
+#| msgid "CSV export"
+msgid "Support"
+msgstr "Εξαγωγή CSV"
+
+#: eventyay/common/forms/fields.py:68 eventyay/control/forms/__init__.py:196
 #: eventyay/control/forms/__init__.py:217
 #, python-brace-format
 msgid "Please do not upload files larger than {size}!"
 msgstr "Παρακαλούμε μην ανεβάζετε αρχεία μεγαλύτερα από {size}!"
 
-#: eventyay/common/forms/fields.py:90 eventyay/control/forms/__init__.py:236
+#: eventyay/common/forms/fields.py:91 eventyay/control/forms/__init__.py:236
 #, python-brace-format
 msgid "Supported formats: {formats}"
 msgstr "Υποστηριζόμενες μορφές: {formats}"
 
-#: eventyay/common/forms/fields.py:103 eventyay/control/forms/__init__.py:250
+#: eventyay/common/forms/fields.py:104 eventyay/control/forms/__init__.py:250
 #, python-brace-format
 msgid ""
 "The file type '{extension}' is not supported. Please upload one of the "
@@ -14502,22 +14615,22 @@ msgstr "καμία επιλογή"
 msgid "Scheduled time must not be in the past."
 msgstr "Η ώρα έναρξης δεν μπορεί να είναι στο παρελθόν."
 
-#: eventyay/common/forms/widgets.py:50
+#: eventyay/common/forms/widgets.py:53
 msgid ""
 "This password would take <em class=\"password_strength_time\"></em> to crack."
 msgstr ""
 "Ο κωδικός χρήστη θα χρειαστεί <em class=\"password_strength_time\"></em> "
 "χρόνο για να σπάσει."
 
-#: eventyay/common/forms/widgets.py:72
+#: eventyay/common/forms/widgets.py:75
 msgid "Warning"
 msgstr "Ειδοποίηση"
 
-#: eventyay/common/forms/widgets.py:72
+#: eventyay/common/forms/widgets.py:75
 msgid "Your passwords don’t match."
 msgstr "Οι κωδικοί σας δεν ταιριάζουν."
 
-#: eventyay/common/forms/widgets.py:106
+#: eventyay/common/forms/widgets.py:109
 #, fuzzy
 #| msgid "Email preview"
 msgid "Image preview"
@@ -15321,8 +15434,8 @@ msgid "User menu"
 msgstr "Πράκτορας χρήστη"
 
 #: eventyay/common/templates/common/fragment_nav.html:10
-#: eventyay/event/stages.py:81 eventyay/orga/views/event.py:465
-#: eventyay/orga/views/event.py:497
+#: eventyay/event/stages.py:80 eventyay/orga/views/event.py:464
+#: eventyay/orga/views/event.py:496
 #: eventyay/presale/templates/pretixpresale/event/fragment_nav.html:35
 msgid "Schedule"
 msgstr "Πρόγραμμα"
@@ -15338,7 +15451,7 @@ msgid "Details"
 msgstr "Λεπτομέρειες"
 
 #: eventyay/common/templates/common/fragment_nav.html:17
-#: eventyay/eventyay_common/views/event.py:978
+#: eventyay/eventyay_common/views/event.py:1013
 #: eventyay/presale/templates/pretixpresale/event/fragment_nav.html:18
 msgid "Info"
 msgstr "Πληροφορίες"
@@ -15402,7 +15515,7 @@ msgstr "Η σύνδεση απέτυχε. Παρακαλώ δοκιμάστε ξ
 #: eventyay/control/templates/pretixcontrol/item/index.html:173
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:118
 #: eventyay/eventyay_common/templates/eventyay_common/account/2fa-main-settings.html:109
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:506
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:511
 #: eventyay/presale/templates/pretixpresale/fragment_join_online_video.html:76
 #: eventyay/presale/templates/pretixpresale/fragment_modals.html:34
 #: eventyay/presale/templates/pretixpresale/includes/share_dialog.html:7
@@ -15474,6 +15587,12 @@ msgstr "Μήνυμα"
 #| msgid "This device has been set up successfully."
 msgid "Your message has been sent successfully!"
 msgstr "Αυτή η συσκευή έχει ρυθμιστεί με επιτυχία."
+
+#: eventyay/common/templates/common/includes/core_footer.html:5
+#, fuzzy
+#| msgid "Back to overview"
+msgid "Platform links"
+msgstr "Επιστροφή στην επισκόπηση"
 
 #: eventyay/common/templates/common/logs.html:15
 msgid "This change was performed by an event organiser."
@@ -15668,7 +15787,7 @@ msgstr "{date_from} – {date_to}"
 #: eventyay/control/templates/pretixcontrol/event/tax_edit.html:137
 #: eventyay/control/templates/pretixcontrol/event/tickets.html:79
 #: eventyay/control/templates/pretixcontrol/global_plugins.html:80
-#: eventyay/control/templates/pretixcontrol/global_settings.html:239
+#: eventyay/control/templates/pretixcontrol/global_settings.html:282
 #: eventyay/control/templates/pretixcontrol/global_update.html:86
 #: eventyay/control/templates/pretixcontrol/item/index.html:150
 #: eventyay/control/templates/pretixcontrol/items/category.html:38
@@ -15703,7 +15822,7 @@ msgstr "{date_from} – {date_to}"
 #: eventyay/eventyay_common/templates/eventyay_common/account/oauth-app-register.html:25
 #: eventyay/eventyay_common/templates/eventyay_common/account/oauth-app-update.html:25
 #: eventyay/eventyay_common/templates/eventyay_common/auth/recover.html:15
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:424
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:422
 #: eventyay/eventyay_common/templates/eventyay_common/organizers/create.html:20
 #: eventyay/eventyay_common/templates/eventyay_common/organizers/teams/team_edit.html:23
 #: eventyay/orga/templates/orga/settings/import_export.html:583
@@ -15776,7 +15895,8 @@ msgstr "Αποθηκεύση"
 #: eventyay/eventyay_common/templates/eventyay_common/account/authorized-app-revoke.html:25
 #: eventyay/eventyay_common/templates/eventyay_common/account/oauth-app-delete.html:25
 #: eventyay/eventyay_common/templates/eventyay_common/account/oauth-app-rollkeys.html:25
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:518
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:92
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:523
 #: eventyay/eventyay_common/templates/eventyay_common/organizers/teams/team_delete.html:10
 #: eventyay/eventyay_common/templates/eventyay_common/organizers/teams/team_delete.html:23
 #: eventyay/orga/templates/orga/cfp/forms.html:118
@@ -15805,6 +15925,7 @@ msgstr "Ματαίωση"
 #: eventyay/control/templates/control/turn_list.html:35
 #: eventyay/control/templates/control/user_list.html:25
 #: eventyay/control/templates/pretixcontrol/event/mail_settings_fragment.html:27
+#: eventyay/control/templates/pretixcontrol/global_settings.html:241
 #: eventyay/control/templates/pretixcontrol/order/sendmail.html:28
 #: eventyay/control/templates/pretixcontrol/orders/index.html:41
 #: eventyay/control/templates/pretixcontrol/organizers/giftcard.html:15
@@ -15853,9 +15974,9 @@ msgstr "Το στοιχείο διαγράφηκε."
 #: eventyay/control/views/event.py:524 eventyay/control/views/event.py:570
 #: eventyay/control/views/event.py:807 eventyay/control/views/event.py:1110
 #: eventyay/control/views/event.py:1472
-#: eventyay/control/views/global_settings.py:47
-#: eventyay/control/views/global_settings.py:69
-#: eventyay/control/views/global_settings.py:152
+#: eventyay/control/views/global_settings.py:62
+#: eventyay/control/views/global_settings.py:79
+#: eventyay/control/views/global_settings.py:162
 #: eventyay/control/views/organizer.py:232
 #: eventyay/control/views/organizer_views/device_view.py:250
 #: eventyay/control/views/organizer_views/gate_view.py:94
@@ -15863,7 +15984,7 @@ msgstr "Το στοιχείο διαγράφηκε."
 #: eventyay/control/views/organizer_views/organizer_view.py:356
 #: eventyay/control/views/organizer_views/organizer_view.py:529
 #: eventyay/control/views/organizer_views/web_hook_view.py:116
-#: eventyay/control/views/pages.py:46 eventyay/control/views/pages.py:104
+#: eventyay/control/views/pages.py:51 eventyay/control/views/pages.py:109
 #: eventyay/control/views/product.py:250 eventyay/control/views/product.py:766
 #: eventyay/control/views/product.py:1184
 #: eventyay/control/views/product.py:1378
@@ -15871,11 +15992,11 @@ msgstr "Το στοιχείο διαγράφηκε."
 #: eventyay/control/views/product.py:1847
 #: eventyay/control/views/product.py:1898
 #: eventyay/control/views/subevents.py:502
-#: eventyay/control/views/subevents.py:1709 eventyay/control/views/users.py:465
+#: eventyay/control/views/subevents.py:1709 eventyay/control/views/users.py:468
 #: eventyay/control/views/vouchers.py:287
 #: eventyay/eventyay_common/templates/eventyay_common/event/plugins.html:12
 #: eventyay/eventyay_common/views/account/basic.py:101
-#: eventyay/eventyay_common/views/event.py:786
+#: eventyay/eventyay_common/views/event.py:821
 #: eventyay/eventyay_common/views/organizer.py:241
 #: eventyay/plugins/badges/views.py:231 eventyay/plugins/sendmail/views.py:248
 #: eventyay/plugins/sendmail/views.py:417
@@ -15995,7 +16116,7 @@ msgstr "”"
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:32
 #: eventyay/eventyay_common/navigation.py:179
 #: eventyay/eventyay_common/navigation.py:334
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:247
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:248
 #: eventyay/orga/templates/orga/settings/feedback.html:18
 msgid "General"
 msgstr "Γενικά"
@@ -16235,7 +16356,7 @@ msgid "Write access"
 msgstr "Πρόσβαση για εγγραφή"
 
 #: eventyay/control/forms/admin/admin.py:17
-#: eventyay/control/forms/global_settings.py:620
+#: eventyay/control/forms/global_settings.py:884
 msgid "Perform update checks"
 msgstr "Εκτελέστε ελέγχους ενημέρωσης"
 
@@ -16366,7 +16487,7 @@ msgstr ""
 "για μια αυτόματη πρόταση."
 
 #: eventyay/control/forms/event.py:183
-#: eventyay/eventyay_common/forms/event.py:38
+#: eventyay/eventyay_common/forms/event.py:39
 msgid "Event timezone"
 msgstr "Χρονική ζώνη γεγονότος"
 
@@ -16406,19 +16527,19 @@ msgstr ""
 "Δημιούργησε μια νέα ομάδα για αυτή την εκδήλωση με εμένα ως το μοναδικό μέλος"
 
 #: eventyay/control/forms/event.py:256
-#: eventyay/eventyay_common/forms/event.py:254
+#: eventyay/eventyay_common/forms/event.py:255
 msgid ""
 "Sample Conference Center\n"
 "Heidelberg, Germany"
 msgstr "Δείγμα Συνεδριακού Κέντρου - Χαϊδελβέργη, Γερμανία"
 
 #: eventyay/control/forms/event.py:257
-#: eventyay/eventyay_common/forms/event.py:255
+#: eventyay/eventyay_common/forms/event.py:256
 msgid "Latitude, e.g. 40.7128"
 msgstr "Γεωγραφικό πλάτος, π.χ. 40.7128"
 
 #: eventyay/control/forms/event.py:258
-#: eventyay/eventyay_common/forms/event.py:256
+#: eventyay/eventyay_common/forms/event.py:257
 msgid "Longitude, e.g. -74.0060"
 msgstr "Γεωγραφικό μήκος, π.χ. -74.0060"
 
@@ -16668,8 +16789,8 @@ msgid "e.g. your contact details"
 msgstr "π.χ. τα στοιχεία επικοινωνίας σας"
 
 #: eventyay/control/forms/event.py:1264
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:289
-#: eventyay/orga/forms/email.py:58
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:287
+#: eventyay/orga/forms/email.py:59
 msgid "HTML mail renderer"
 msgstr "Εκδότης αλληλογραφίας HTML (HTML mail renderer)"
 
@@ -17016,8 +17137,8 @@ msgid "Quantity available"
 msgstr "Διαθέσιμη ποσότητα"
 
 #: eventyay/control/forms/event.py:1928
-#: eventyay/eventyay_common/forms/event.py:193
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:191
+#: eventyay/eventyay_common/forms/event.py:194
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:192
 #: eventyay/eventyay_common/templates/eventyay_common/events/create.html:158
 #, fuzzy
 #| msgid "Registration Steps"
@@ -17025,7 +17146,7 @@ msgid "Registration limit"
 msgstr "Βήματα εγγραφής"
 
 #: eventyay/control/forms/event.py:1929
-#: eventyay/eventyay_common/forms/event.py:194
+#: eventyay/eventyay_common/forms/event.py:195
 msgid ""
 "Maximum number of attendees who can RSVP. Leave empty for unlimited "
 "registrations."
@@ -17608,20 +17729,21 @@ msgstr "Πληρώθηκε"
 msgid "Canceled"
 msgstr "Ακυρώθηκε"
 
-#: eventyay/control/forms/global_settings.py:53 eventyay/orga/forms/email.py:20
+#: eventyay/control/forms/global_settings.py:113
+#: eventyay/orga/forms/email.py:20
 msgid "SendGrid"
 msgstr "SendGrid"
 
-#: eventyay/control/forms/global_settings.py:53
+#: eventyay/control/forms/global_settings.py:113
 msgid "SMTP"
 msgstr "SMTP"
 
-#: eventyay/control/forms/global_settings.py:62
-#: eventyay/control/forms/global_settings.py:547
+#: eventyay/control/forms/global_settings.py:122
+#: eventyay/control/forms/global_settings.py:783
 msgid "Billing validation"
 msgstr "Επικύρωση χρέωσης"
 
-#: eventyay/control/forms/global_settings.py:64
+#: eventyay/control/forms/global_settings.py:124
 msgid ""
 "Billing validation lets you require organizers to set up a billing method "
 "before they can create events. When this option is enabled, no new event can "
@@ -17632,70 +17754,70 @@ msgstr ""
 "Όταν αυτή η επιλογή είναι ενεργοποιημένη, δεν μπορεί να δημιουργηθεί καμία "
 "νέα εκδήλωση έως ότου προστεθεί ένας έγκυρος τρόπος χρέωσης."
 
-#: eventyay/control/forms/global_settings.py:73
+#: eventyay/control/forms/global_settings.py:133
 #, fuzzy
 #| msgid "Your event series"
 msgid "Allow event series creation"
 msgstr "Η σειρά εκδηλώσεων σας"
 
-#: eventyay/control/forms/global_settings.py:75
+#: eventyay/control/forms/global_settings.py:135
 msgid ""
 "When enabled, organizers can create event series or time slot bookings in "
 "addition to singular events. Disable this to restrict event creation to "
 "singular events and non-event shops only."
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:84
+#: eventyay/control/forms/global_settings.py:144
 #, fuzzy
 #| msgid "Allow badge customization"
 msgid "Allow meetup creation"
 msgstr "Να επιτρέπεται η προσαρμογή σήματος"
 
-#: eventyay/control/forms/global_settings.py:86
+#: eventyay/control/forms/global_settings.py:146
 msgid ""
 "When enabled, organizers can create simplified meetup events in addition to "
 "standard events. Disable this to restrict event creation to standard events "
 "only."
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:97
+#: eventyay/control/forms/global_settings.py:157
 msgid "Additional footer text"
 msgstr "Πρόσθετο κείμενο υποσέλιδου"
 
-#: eventyay/control/forms/global_settings.py:98
+#: eventyay/control/forms/global_settings.py:158
 msgid "Will be included as additional text in the footer, site-wide."
 msgstr ""
 "Θα συμπεριληφθεί ως πρόσθετο κείμενο στο υποσέλιδο, σε ολόκληρο τον ιστότοπο."
 
-#: eventyay/control/forms/global_settings.py:106
+#: eventyay/control/forms/global_settings.py:166
 msgid "Additional footer link"
 msgstr "Πρόσθετη σύνδεση υποσέλιδου"
 
-#: eventyay/control/forms/global_settings.py:107
+#: eventyay/control/forms/global_settings.py:167
 msgid "Will be included as the link in the additional footer text."
 msgstr "Θα συμπεριληφθεί ως σύνδεσμος στο πρόσθετο κείμενο υποσέλιδου."
 
-#: eventyay/control/forms/global_settings.py:115
+#: eventyay/control/forms/global_settings.py:175
 msgid "Global message banner"
 msgstr "Παγκόσμιο banner μηνύματος"
 
-#: eventyay/control/forms/global_settings.py:123
+#: eventyay/control/forms/global_settings.py:183
 msgid "Global message banner detail text"
 msgstr "Κείμενο παγκόσμιας λεπτομέρειας banner μηνύματος"
 
-#: eventyay/control/forms/global_settings.py:130
+#: eventyay/control/forms/global_settings.py:190
 msgid "OpenCage API key for geocoding"
 msgstr "Κλειδί API OpenCage για γεωκωδικοποίηση"
 
-#: eventyay/control/forms/global_settings.py:137
+#: eventyay/control/forms/global_settings.py:197
 msgid "MapQuest API key for geocoding"
 msgstr "Κλειδί API MapQuest για γεωκωδικοποίηση"
 
-#: eventyay/control/forms/global_settings.py:144
+#: eventyay/control/forms/global_settings.py:204
 msgid "Enable public Nominatim geocoding"
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:146
+#: eventyay/control/forms/global_settings.py:206
 msgid ""
 "Can be used alongside OpenCage or MapQuest as a fallback. In development, "
 "Nominatim is used automatically when no API key is configured. Only enable "
@@ -17703,182 +17825,199 @@ msgid ""
 "policy."
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:156
+#: eventyay/control/forms/global_settings.py:216
 msgid "Leaflet tiles URL pattern"
 msgstr "Μοτίβο URL πλακιδίων Leaflet"
 
-#: eventyay/control/forms/global_settings.py:157
-#: eventyay/control/forms/global_settings.py:165
-#: eventyay/control/forms/global_settings.py:677
+#: eventyay/control/forms/global_settings.py:217
+#: eventyay/control/forms/global_settings.py:225
+#: eventyay/control/forms/global_settings.py:941
 #, python-brace-format
 msgid "e.g. {sample}"
 msgstr "π.χ. {sample}"
 
-#: eventyay/control/forms/global_settings.py:164
+#: eventyay/control/forms/global_settings.py:224
 msgid "Leaflet tiles attribution"
 msgstr "Αναφορά πηγής πλακιδίων Leaflet"
 
-#: eventyay/control/forms/global_settings.py:173
+#: eventyay/control/forms/global_settings.py:233
 msgid "System Email"
 msgstr "Email συστήματος"
 
-#: eventyay/control/forms/global_settings.py:183
+#: eventyay/control/forms/global_settings.py:243
 #, fuzzy
 #| msgid "Sendgrid Token"
 msgid "Sendgrid token"
 msgstr "Διακριτικό Sendgrid"
 
-#: eventyay/control/forms/global_settings.py:193
+#: eventyay/control/forms/global_settings.py:254
+msgid "Gmail OAuth client ID"
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:256
+msgid ""
+"Create an OAuth client in Google Cloud Console. The connect flow requests "
+"Gmail send and user email scopes. Use the OAuth redirect URI shown below as "
+"an authorized redirect URI."
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:269
+#, fuzzy
+#| msgid "Client secret"
+msgid "Gmail OAuth client secret"
+msgstr "Μυστικό πελάτη"
+
+#: eventyay/control/forms/global_settings.py:278
 msgid "Hostname"
 msgstr "Hostname"
 
-#: eventyay/control/forms/global_settings.py:204
+#: eventyay/control/forms/global_settings.py:289
 #: eventyay/control/templates/pretixcontrol/admin/systemconfig.html:83
 msgid "Port"
 msgstr "Θύρα"
 
-#: eventyay/control/forms/global_settings.py:215
+#: eventyay/control/forms/global_settings.py:300
 msgid "Username"
 msgstr "Όνομα χρήστη"
 
-#: eventyay/control/forms/global_settings.py:239
-#: eventyay/orga/forms/email.py:102
+#: eventyay/control/forms/global_settings.py:324
+#: eventyay/orga/forms/email.py:118
 msgid "Use STARTTLS"
 msgstr "Χρήση του STARTTLS"
 
-#: eventyay/control/forms/global_settings.py:240
-#: eventyay/orga/forms/email.py:103
+#: eventyay/control/forms/global_settings.py:325
+#: eventyay/orga/forms/email.py:119
 msgid "Commonly enabled on port 587."
 msgstr "Συνήθως ενεργοποιημένο στη θύρα 587."
 
-#: eventyay/control/forms/global_settings.py:250
-#: eventyay/orga/forms/email.py:107
+#: eventyay/control/forms/global_settings.py:335
+#: eventyay/orga/forms/email.py:126
 msgid "Use SSL"
 msgstr "Χρήση SSL"
 
-#: eventyay/control/forms/global_settings.py:251
-#: eventyay/orga/forms/email.py:108
+#: eventyay/control/forms/global_settings.py:336
+#: eventyay/orga/forms/email.py:127
 msgid "Commonly enabled on port 465."
 msgstr "Συνήθως ενεργοποιημένο στη θύρα 465."
 
-#: eventyay/control/forms/global_settings.py:275
-#: eventyay/control/forms/global_settings.py:328
+#: eventyay/control/forms/global_settings.py:360
+#: eventyay/control/forms/global_settings.py:413
 msgid "Publishable key (Live)"
 msgstr "Δημοσιεύσιμο κλειδί (Ζωντανό)"
 
-#: eventyay/control/forms/global_settings.py:278
+#: eventyay/control/forms/global_settings.py:363
 msgid "Live publishable key for organizer billing and platform fees."
 msgstr ""
 "Κλειδί δημοσίευσης (live) για χρέωση διοργανωτή και χρεώσεις πλατφόρμας."
 
-#: eventyay/control/forms/global_settings.py:284
-#: eventyay/control/forms/global_settings.py:337
+#: eventyay/control/forms/global_settings.py:369
+#: eventyay/control/forms/global_settings.py:422
 msgid "Secret key (Live)"
 msgstr "Μυστικό κλειδί (Ζωντανό)"
 
-#: eventyay/control/forms/global_settings.py:287
+#: eventyay/control/forms/global_settings.py:372
 msgid "Live secret key for organizer billing and platform fees."
 msgstr "Μυστικό κλειδί (live) για χρέωση διοργανωτή και χρεώσεις πλατφόρμας."
 
-#: eventyay/control/forms/global_settings.py:293
-#: eventyay/control/forms/global_settings.py:346
+#: eventyay/control/forms/global_settings.py:378
+#: eventyay/control/forms/global_settings.py:431
 msgid "Publishable key (Test)"
 msgstr "Δημοσιεύσιμο κλειδί (Δοκιμή)"
 
-#: eventyay/control/forms/global_settings.py:296
+#: eventyay/control/forms/global_settings.py:381
 msgid "Test publishable key for organizer billing and platform fees."
 msgstr ""
 "Κλειδί δημοσίευσης (test) για χρέωση διοργανωτή και χρεώσεις πλατφόρμας."
 
-#: eventyay/control/forms/global_settings.py:302
-#: eventyay/control/forms/global_settings.py:355
+#: eventyay/control/forms/global_settings.py:387
+#: eventyay/control/forms/global_settings.py:440
 msgid "Secret key (Test)"
 msgstr "Μυστικό κλειδί (Δοκιμή)"
 
-#: eventyay/control/forms/global_settings.py:305
+#: eventyay/control/forms/global_settings.py:390
 msgid "Test secret key for organizer billing and platform fees."
 msgstr "Μυστικό κλειδί (test) για χρέωση διοργανωτή και χρεώσεις πλατφόρμας."
 
-#: eventyay/control/forms/global_settings.py:311
+#: eventyay/control/forms/global_settings.py:396
 msgid "Webhook secret key"
 msgstr "Μυστικό κλειδί webhook"
 
-#: eventyay/control/forms/global_settings.py:313
+#: eventyay/control/forms/global_settings.py:398
 msgid ""
 "Configure this endpoint in your Stripe dashboard to receive billing events."
 msgstr ""
 "Διαμορφώστε αυτό το endpoint στον πίνακα ελέγχου Stripe για να λαμβάνετε "
 "συμβάντα χρέωσης."
 
-#: eventyay/control/forms/global_settings.py:322
+#: eventyay/control/forms/global_settings.py:407
 msgid "Stripe Connect client ID for ticket payments via the Stripe plugin."
 msgstr ""
 "Αναγνωριστικό πελάτη Stripe Connect για πληρωμές εισιτηρίων μέσω του "
 "πρόσθετου Stripe."
 
-#: eventyay/control/forms/global_settings.py:331
+#: eventyay/control/forms/global_settings.py:416
 msgid "Live publishable key for ticket payments via the Stripe plugin."
 msgstr ""
 "Ζωντανό δημοσιοποιήσιμο κλειδί για πληρωμές εισιτηρίων μέσω του πρόσθετου "
 "Stripe."
 
-#: eventyay/control/forms/global_settings.py:340
+#: eventyay/control/forms/global_settings.py:425
 msgid "Live secret key for ticket payments via the Stripe plugin."
 msgstr ""
 "Ζωντανό μυστικό κλειδί για πληρωμές εισιτηρίων μέσω του πρόσθετου Stripe."
 
-#: eventyay/control/forms/global_settings.py:349
+#: eventyay/control/forms/global_settings.py:434
 msgid "Test publishable key for ticket payments via the Stripe plugin."
 msgstr ""
 "Δοκιμαστικό δημοσιοποιήσιμο κλειδί για πληρωμές εισιτηρίων μέσω του "
 "πρόσθετου Stripe."
 
-#: eventyay/control/forms/global_settings.py:358
+#: eventyay/control/forms/global_settings.py:443
 msgid "Test secret key for ticket payments via the Stripe plugin."
 msgstr ""
 "Δοκιμαστικό μυστικό κλειδί για πληρωμές εισιτηρίων μέσω του πρόσθετου Stripe."
 
-#: eventyay/control/forms/global_settings.py:364
+#: eventyay/control/forms/global_settings.py:449
 msgid "App fee percentage"
 msgstr "Ποσοστό προμήθειας εφαρμογής"
 
-#: eventyay/control/forms/global_settings.py:368
+#: eventyay/control/forms/global_settings.py:453
 msgid "Percentage fee charged on ticket payments."
 msgstr "Ποσοστιαία χρέωση που επιβάλλεται στις πληρωμές εισιτηρίων."
 
-#: eventyay/control/forms/global_settings.py:375
+#: eventyay/control/forms/global_settings.py:460
 msgid "App fee minimum"
 msgstr "Ελάχιστη χρέωση εφαρμογής"
 
-#: eventyay/control/forms/global_settings.py:379
+#: eventyay/control/forms/global_settings.py:464
 msgid "Minimum fee amount charged on ticket payments."
 msgstr "Ελάχιστο ποσό χρέωσης που επιβάλλεται στις πληρωμές εισιτηρίων."
 
-#: eventyay/control/forms/global_settings.py:386
+#: eventyay/control/forms/global_settings.py:471
 msgid "App fee maximum"
 msgstr "Μέγιστη χρέωση εφαρμογής"
 
-#: eventyay/control/forms/global_settings.py:390
+#: eventyay/control/forms/global_settings.py:475
 msgid "Maximum fee amount charged on ticket payments."
 msgstr "Μέγιστο ποσό χρέωσης που επιβάλλεται στις πληρωμές εισιτηρίων."
 
-#: eventyay/control/forms/global_settings.py:400
+#: eventyay/control/forms/global_settings.py:485
 msgid "PayPal Connect client ID for payment processing."
 msgstr "Client ID του PayPal Connect για επεξεργασία πληρωμών."
 
-#: eventyay/control/forms/global_settings.py:406
+#: eventyay/control/forms/global_settings.py:491
 msgid "Secret key"
 msgstr "Μυστικό κλειδί"
 
-#: eventyay/control/forms/global_settings.py:408
+#: eventyay/control/forms/global_settings.py:493
 msgid "PayPal Connect secret key for payment processing."
 msgstr "Μυστικό κλειδί του PayPal Connect για επεξεργασία πληρωμών."
 
-#: eventyay/control/forms/global_settings.py:414
+#: eventyay/control/forms/global_settings.py:499
 msgid "API Endpoint"
 msgstr "Τελικό σημείο API"
 
-#: eventyay/control/forms/global_settings.py:416
+#: eventyay/control/forms/global_settings.py:501
 msgid ""
 "PayPal API endpoint (e.g., https://api.paypal.com or https://"
 "api.sandbox.paypal.com)."
@@ -17886,19 +18025,19 @@ msgstr ""
 "Τερματικό σημείο API PayPal (π.χ. https://api.paypal.com ή https://"
 "api.sandbox.paypal.com)."
 
-#: eventyay/control/forms/global_settings.py:422
+#: eventyay/control/forms/global_settings.py:507
 msgid "Ticket fee percentage"
 msgstr "Ποσοστό προμήθειας εισιτηρίου"
 
-#: eventyay/control/forms/global_settings.py:426
+#: eventyay/control/forms/global_settings.py:511
 msgid "A percentage fee will be charged for each ticket sold."
 msgstr "Θα χρεωθεί ένα ποσοστιαίο τέλος για κάθε εισιτήριο που πωλείται."
 
-#: eventyay/control/forms/global_settings.py:433
+#: eventyay/control/forms/global_settings.py:518
 msgid "All registered users can create organizers"
 msgstr "Όλοι οι εγγεγραμμένοι χρήστες μπορούν να δημιουργούν διοργανωτές"
 
-#: eventyay/control/forms/global_settings.py:434
+#: eventyay/control/forms/global_settings.py:519
 msgid ""
 "If enabled, all registered users will be allowed to create organizers. "
 "System admins can always create organizers."
@@ -17907,13 +18046,13 @@ msgstr ""
 "δημιουργούν διοργανωτές. Οι διαχειριστές του συστήματος μπορούν πάντα να "
 "δημιουργούν διοργανωτές."
 
-#: eventyay/control/forms/global_settings.py:441
+#: eventyay/control/forms/global_settings.py:526
 msgid "All accounts with payment information can create organizers"
 msgstr ""
 "Όλοι οι λογαριασμοί με πληροφορίες πληρωμής μπορούν να δημιουργούν "
 "διοργανωτές"
 
-#: eventyay/control/forms/global_settings.py:442
+#: eventyay/control/forms/global_settings.py:527
 msgid ""
 "If enabled, users with valid payment information on file will be allowed to "
 "create organizers. System admins can always create organizers."
@@ -17922,45 +18061,45 @@ msgstr ""
 "καταχωρισμένες θα επιτρέπεται να δημιουργούν διοργανωτές. Οι διαχειριστές "
 "του συστήματος μπορούν πάντα να δημιουργούν διοργανωτές."
 
-#: eventyay/control/forms/global_settings.py:450
+#: eventyay/control/forms/global_settings.py:535
 #, fuzzy
 #| msgid "Recording integrations"
 msgid "Enable Etherpad integration"
 msgstr "Ενσωματώσεις εγγραφής"
 
-#: eventyay/control/forms/global_settings.py:451
+#: eventyay/control/forms/global_settings.py:536
 msgid "Allow events to attach collaborative Etherpad notes to their sessions."
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:458
+#: eventyay/control/forms/global_settings.py:543
 msgid "Default Etherpad instance URL"
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:459
+#: eventyay/control/forms/global_settings.py:544
 #, python-brace-format
 msgid "Base URL of the Etherpad instance, e.g. {sample}"
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:466
+#: eventyay/control/forms/global_settings.py:551
 #, fuzzy
 #| msgid "Telemetry API key"
 msgid "Etherpad API key"
 msgstr "Κλειδί API τηλεμετρίας"
 
-#: eventyay/control/forms/global_settings.py:468
+#: eventyay/control/forms/global_settings.py:553
 msgid ""
 "API key of the Etherpad instance (found in APIKEY.txt). Required only for "
 "automatic pad creation; without it, pad links are generated as plain URLs "
 "that Etherpad creates on first visit."
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:477
+#: eventyay/control/forms/global_settings.py:562
 #, fuzzy
 #| msgid "Frontpage header pattern"
 msgid "Pad name pattern"
 msgstr "Πρότυπο κεφαλίδας αρχικής σελίδας"
 
-#: eventyay/control/forms/global_settings.py:479
+#: eventyay/control/forms/global_settings.py:564
 #, fuzzy, python-brace-format
 #| msgid ""
 #| "This will be attached to every email. Available placeholders: {event}"
@@ -17970,77 +18109,203 @@ msgstr ""
 "Αυτό θα επισυνάπτεται σε κάθε μήνυμα ηλεκτρονικού ταχυδρομείου. Διαθέσιμες "
 "επιλογές κράτησης θέσης: {event}"
 
-#: eventyay/control/forms/global_settings.py:497
+#: eventyay/control/forms/global_settings.py:582
 #, fuzzy
 #| msgid "Add-on products will be excluded from the count."
 msgid ""
 "Add-on products will be excluded from the count. Set to 0 for unlimited."
 msgstr "Τα πρόσθετα προϊόντα θα εξαιρεθούν από την καταμέτρηση."
 
-#: eventyay/control/forms/global_settings.py:506
+#: eventyay/control/forms/global_settings.py:591
+#, fuzzy
+#| msgid "Show video link"
+msgid "Show \"Events\" footer link"
+msgstr "Εμφάνιση συνδέσμου βίντεο"
+
+#: eventyay/control/forms/global_settings.py:598
+#, fuzzy
+#| msgid "Event list"
+msgid "\"Events\" link URL"
+msgstr "Λίστα εκδηλώσεων"
+
+#: eventyay/control/forms/global_settings.py:605
+#, fuzzy
+#| msgid "Show video link"
+msgid "Show \"Terms\" footer link"
+msgstr "Εμφάνιση συνδέσμου βίντεο"
+
+#: eventyay/control/forms/global_settings.py:612
+msgid "\"Terms\" link URL"
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:619
+msgid "Show \"Privacy\" footer link"
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:626
+#, fuzzy
+#| msgid "Privacy Policy URL"
+msgid "\"Privacy\" link URL"
+msgstr "URL Πολιτικής Απορρήτου"
+
+#: eventyay/control/forms/global_settings.py:633
+#, fuzzy
+#| msgid "Additional footer link"
+msgid "Show \"Pricing\" footer link"
+msgstr "Πρόσθετη σύνδεση υποσέλιδου"
+
+#: eventyay/control/forms/global_settings.py:640
+#, fuzzy
+#| msgid "Privacy Policy URL"
+msgid "\"Pricing\" link URL"
+msgstr "URL Πολιτικής Απορρήτου"
+
+#: eventyay/control/forms/global_settings.py:647
+msgid "Show \"Documentation\" footer link"
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:654
+#, fuzzy
+#| msgid "Documentation"
+msgid "\"Documentation\" link URL"
+msgstr "Documentation"
+
+#: eventyay/control/forms/global_settings.py:661
+msgid "Show \"Support\" footer link"
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:668
+msgid "\"Support\" link URL"
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:677
+msgid "\"Terms of Service\" page content"
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:678
+msgid "Rich text content for the /terms page."
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:685
+#, fuzzy
+#| msgid "Privacy Policy URL"
+msgid "\"Privacy Policy\" page content"
+msgstr "URL Πολιτικής Απορρήτου"
+
+#: eventyay/control/forms/global_settings.py:686
+msgid "Rich text content for the /privacy page."
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:693
+#, fuzzy
+#| msgid "Page content"
+msgid "\"Pricing\" page content"
+msgstr "Περιεχόμενο σελίδας"
+
+#: eventyay/control/forms/global_settings.py:694
+msgid "Rich text content for the /pricing page."
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:701
+#, fuzzy
+#| msgid "Page content"
+msgid "\"Support\" page content"
+msgstr "Περιεχόμενο σελίδας"
+
+#: eventyay/control/forms/global_settings.py:702
+msgid "Rich text content for the /support page."
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:713
+#, fuzzy
+#| msgid "Use languages"
+msgid "Page languages"
+msgstr "Χρήση γλωσσών"
+
+#: eventyay/control/forms/global_settings.py:715
+msgid ""
+"Select the languages for page content (Terms, Privacy, Pricing, Support). "
+"Only selected languages will be shown for editing."
+msgstr ""
+
+#: eventyay/control/forms/global_settings.py:722
 #: eventyay/control/templates/pretixcontrol/event/settings.html:21
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:34
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:35
 msgid "Basics"
 msgstr "Βασικά"
 
-#: eventyay/control/forms/global_settings.py:509
+#: eventyay/control/forms/global_settings.py:725
+#: eventyay/control/navigation.py:444
+msgid "Pages"
+msgstr "Σελίδες"
+
+#: eventyay/control/forms/global_settings.py:744
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:81
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:197
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:198
 #: eventyay/eventyay_common/templates/eventyay_common/events/create.html:106
 msgid "Localization"
 msgstr "Τοπικοποίηση"
 
-#: eventyay/control/forms/global_settings.py:517
+#: eventyay/control/forms/global_settings.py:753
 msgid "Payment Gateways"
 msgstr "Πύλες πληρωμών"
 
-#: eventyay/control/forms/global_settings.py:540
+#: eventyay/control/forms/global_settings.py:776
 msgid "Cart"
 msgstr "Καλάθι"
 
-#: eventyay/control/forms/global_settings.py:544
+#: eventyay/control/forms/global_settings.py:780
 msgid "Ticket fee"
 msgstr "Τέλος εισιτηρίου"
 
-#: eventyay/control/forms/global_settings.py:550
+#: eventyay/control/forms/global_settings.py:786
 msgid "Maps"
 msgstr "Χάρτες"
 
-#: eventyay/control/forms/global_settings.py:557
+#: eventyay/control/forms/global_settings.py:793
 #, fuzzy
 #| msgid "Event location"
 msgid "Event Creation"
 msgstr "Τοποθεσία εκδήλωσης"
 
-#: eventyay/control/forms/global_settings.py:561
+#: eventyay/control/forms/global_settings.py:797
 #: eventyay/orga/templates/orga/settings/form.html:66
 #, fuzzy
 #| msgid "Netherlands"
 msgid "Etherpad"
 msgstr "Ολλανδία"
 
-#: eventyay/control/forms/global_settings.py:571
+#: eventyay/control/forms/global_settings.py:807
 msgid "VoxBento"
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:580
+#: eventyay/control/forms/global_settings.py:816
 msgid "HubSpot"
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:600
+#: eventyay/control/forms/global_settings.py:838
 #, python-brace-format
 msgid ""
 "The pattern must contain {submission} or {token} so each session gets a "
 "unique pad."
 msgstr ""
 
-#: eventyay/control/forms/global_settings.py:610
+#: eventyay/control/forms/global_settings.py:848
 msgid "This field is required when using SendGrid as email vendor."
 msgstr ""
 "Αυτό το πεδίο είναι υποχρεωτικό όταν χρησιμοποιείτε το SendGrid ως πάροχο "
 "email."
 
-#: eventyay/control/forms/global_settings.py:622
+#: eventyay/control/forms/global_settings.py:851
+#: eventyay/control/forms/global_settings.py:859
+#, fuzzy
+#| msgid "This field is required when using SendGrid as email vendor."
+msgid "This field is required when using Gmail as email vendor."
+msgstr ""
+"Αυτό το πεδίο είναι υποχρεωτικό όταν χρησιμοποιείτε το SendGrid ως πάροχο "
+"email."
+
+#: eventyay/control/forms/global_settings.py:886
 msgid ""
 "During the update check, eventyay will report an anonymous, unique "
 "installation ID, the current version of the system and your installed "
@@ -18058,11 +18323,11 @@ msgstr ""
 "εγκατάστασή σας. Μπορείτε να απενεργοποιήσετε αυτή τη συμπεριφορά εδώ "
 "οποιαδήποτε στιγμή."
 
-#: eventyay/control/forms/global_settings.py:631
+#: eventyay/control/forms/global_settings.py:895
 msgid "E-mail notifications"
 msgstr "Ειδοποιήσεις ηλεκτρονικού ταχυδρομείου"
 
-#: eventyay/control/forms/global_settings.py:633
+#: eventyay/control/forms/global_settings.py:897
 msgid ""
 "We will notify you at this address if we detect that a new update is "
 "available. This address will not be transmitted to eventyay.com, the emails "
@@ -18072,11 +18337,11 @@ msgstr ""
 "διαθέσιμη μια νέα ενημέρωση. Αυτή η διεύθυνση δεν θα μεταδοθεί στο "
 "eventyay.com, τα email θα σταλούν τοπικά από αυτόν τον διακομιστή."
 
-#: eventyay/control/forms/global_settings.py:642
+#: eventyay/control/forms/global_settings.py:906
 msgid "Enable telemetry"
 msgstr "Ενεργοποίηση τηλεμετρίας"
 
-#: eventyay/control/forms/global_settings.py:644
+#: eventyay/control/forms/global_settings.py:908
 msgid ""
 "Send anonymous usage statistics (bucketed counts, deployment info) to help "
 "track version adoption and deployment patterns. No personal data is "
@@ -18087,29 +18352,29 @@ msgstr ""
 "των προτύπων ανάπτυξης. Δεν συλλέγονται προσωπικά δεδομένα. Τα δεδομένα "
 "αποστέλλονται περίπου μία φορά την ημέρα."
 
-#: eventyay/control/forms/global_settings.py:651
+#: eventyay/control/forms/global_settings.py:915
 msgid "Telemetry endpoint"
 msgstr "Τελικό σημείο τηλεμετρίας"
 
-#: eventyay/control/forms/global_settings.py:652
+#: eventyay/control/forms/global_settings.py:916
 msgid "The URL where telemetry data will be sent (Google Apps Script URL)."
 msgstr ""
 "Το URL στο οποίο θα αποστέλλονται τα δεδομένα τηλεμετρίας (URL Google Apps "
 "Script)."
 
-#: eventyay/control/forms/global_settings.py:656
+#: eventyay/control/forms/global_settings.py:920
 msgid "Telemetry API key"
 msgstr "Κλειδί API τηλεμετρίας"
 
-#: eventyay/control/forms/global_settings.py:657
+#: eventyay/control/forms/global_settings.py:921
 msgid "API key for authenticating with the telemetry receiver."
 msgstr "Κλειδί API για έλεγχο ταυτότητας με τον δέκτη τηλεμετρίας."
 
-#: eventyay/control/forms/global_settings.py:661
+#: eventyay/control/forms/global_settings.py:925
 msgid "Maintainer contact"
 msgstr "Επικοινωνία συντηρητή"
 
-#: eventyay/control/forms/global_settings.py:663
+#: eventyay/control/forms/global_settings.py:927
 msgid ""
 "Optional email address included in telemetry data to identify who maintains "
 "this instance. Only visible to those with access to the telemetry data sheet."
@@ -18118,15 +18383,15 @@ msgstr ""
 "να προσδιορίζεται ποιος συντηρεί αυτήν την εγκατάσταση. Ορατή μόνο σε όσους "
 "έχουν πρόσβαση στο φύλλο δεδομένων τηλεμετρίας."
 
-#: eventyay/control/forms/global_settings.py:676
+#: eventyay/control/forms/global_settings.py:940
 msgid "Redirect URL"
 msgstr "URL ανακατεύθυνσης"
 
-#: eventyay/control/forms/global_settings.py:717
+#: eventyay/control/forms/global_settings.py:981
 msgid "The Stripe key cannot be empty."
 msgstr "Το κλειδί Stripe δεν μπορεί να είναι κενό."
 
-#: eventyay/control/forms/global_settings.py:721
+#: eventyay/control/forms/global_settings.py:985
 #, python-format
 msgid ""
 "The provided key does not look valid. It should start with \"%(prefix)s\"."
@@ -18134,7 +18399,7 @@ msgstr ""
 "Το παρεχόμενο κλειδί δεν φαίνεται έγκυρο. Θα πρέπει να ξεκινά με "
 "\"%(prefix)s\"."
 
-#: eventyay/control/forms/global_settings.py:724
+#: eventyay/control/forms/global_settings.py:988
 #, python-format
 msgid ""
 "The provided key does not look valid. It should start with one of: "
@@ -18395,7 +18660,7 @@ msgstr ""
 #: eventyay/plugins/sendmail/forms.py:535
 #: eventyay/plugins/sendmail/forms.py:637
 #: eventyay/plugins/sendmail/views.py:277
-#: eventyay/plugins/sendmail/views.py:529
+#: eventyay/plugins/sendmail/views.py:533
 msgid "Subject"
 msgstr "Θέμα"
 
@@ -18735,14 +19000,14 @@ msgid "Invalid VAT number for {}"
 msgstr "Μη έγκυρος ΑΦΜ για {}"
 
 #: eventyay/control/forms/organizer_forms/organizer_update_form.py:52
-#: eventyay/eventyay_common/forms/event.py:276
+#: eventyay/eventyay_common/forms/event.py:277
 msgid "You cannot choose the base domain of this installation."
 msgstr ""
 "Δεν μπορείτε να επιλέξετε τον τομέα βάσης (base domain) αυτής της "
 "εγκατάστασης."
 
 #: eventyay/control/forms/organizer_forms/organizer_update_form.py:58
-#: eventyay/eventyay_common/forms/event.py:278
+#: eventyay/eventyay_common/forms/event.py:279
 msgid "This domain is already in use for a different event or organizer."
 msgstr ""
 "Αυτός ο τομέας χρησιμοποιείται ήδη για διαφορετική εκδήλωση ή διοργανωτή."
@@ -20483,7 +20748,7 @@ msgstr "Επιστροφές χρημάτων"
 
 #: eventyay/control/navigation.py:283
 #: eventyay/orga/templates/orga/review/assignment-import.html:21
-#: eventyay/orga/views/event.py:515
+#: eventyay/orga/views/event.py:514
 msgid "Import"
 msgstr "Εισαγωγή"
 
@@ -20494,6 +20759,7 @@ msgstr "Εισαγωγή"
 #: eventyay/control/templates/pretixcontrol/subevents/bulk.html:501
 #: eventyay/control/templates/pretixcontrol/subevents/bulk_edit.html:255
 #: eventyay/control/templates/pretixcontrol/subevents/detail.html:143
+#: eventyay/eventyay_common/forms/event.py:392
 #: eventyay/plugins/checkinlists/apps.py:10
 msgid "Check-in lists"
 msgstr "Κατάλογος check-in"
@@ -20554,10 +20820,6 @@ msgstr "Ρυθμίσεις"
 #: eventyay/control/templates/pretixcontrol/admin/systemconfig.html:17
 msgid "System information"
 msgstr "Πληροφορίες συστήματος"
-
-#: eventyay/control/navigation.py:444
-msgid "Pages"
-msgstr "Σελίδες"
 
 #: eventyay/control/navigation.py:449
 #: eventyay/control/templates/pretixcontrol/admin/events/index.html:96
@@ -20666,8 +20928,8 @@ msgstr "Συνεδρίες διαχειριστή (Admin sessions)"
 
 #: eventyay/control/permissions.py:40 eventyay/control/permissions.py:80
 #: eventyay/control/permissions.py:115 eventyay/control/permissions.py:135
-#: eventyay/eventyay_common/views/event.py:925
-#: eventyay/eventyay_common/views/event.py:933
+#: eventyay/eventyay_common/views/event.py:960
+#: eventyay/eventyay_common/views/event.py:968
 msgid "You do not have permission to view this content."
 msgstr "Δεν έχετε δικαίωμα να δείτε αυτό το περιεχόμενο."
 
@@ -20834,7 +21096,7 @@ msgid "Usage"
 msgstr "Χρήση"
 
 #: eventyay/control/templates/control/event_list.html:42
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:378
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:376
 msgid "Delete data"
 msgstr "Διαγραφή δεδομένων"
 
@@ -21277,7 +21539,7 @@ msgstr "Λεπτομέρειες παραγγελίας"
 #: eventyay/control/templates/pretixcontrol/admin/dashboard.html:737
 #: eventyay/control/templates/pretixcontrol/admin/dashboard.html:785
 #: eventyay/control/templates/pretixcontrol/admin/dashboard.html:830
-#: eventyay/orga/templates/orga/mails/_placeholder_group.html:26
+#: eventyay/orga/templates/orga/mails/_placeholder_group.html:22
 msgid "Unavailable"
 msgstr "Μη διαθέσιμο"
 
@@ -21918,6 +22180,40 @@ msgstr "Όλοι οι διοργανωτές"
 #: eventyay/eventyay_common/templates/eventyay_common/organizers/index.html:27
 msgid "Create a new organizer"
 msgstr "Δημιουργήστε έναν νέο διοργανωτή"
+
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:52
+#: eventyay/control/templates/pretixcontrol/base.html:128
+#: eventyay/eventyay_common/templates/eventyay_common/base.html:126
+#: eventyay/orga/templates/orga/base.html:98
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:73
+msgid "Toggle sidebar"
+msgstr "Εναλλαγή πλευρικής γραμμής"
+
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:84
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:86
+#: eventyay/control/templates/pretixcontrol/base.html:238
+#: eventyay/control/templates/pretixcontrol/base.html:239
+#: eventyay/eventyay_common/templates/eventyay_common/base.html:203
+#: eventyay/eventyay_common/templates/eventyay_common/base.html:204
+#: eventyay/orga/templates/orga/base.html:170
+#: eventyay/orga/templates/orga/base.html:171
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:134
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:136
+msgid "End admin session"
+msgstr "Κλείστε τη συνάντηση admin"
+
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:103
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:153
+#, fuzzy
+#| msgid "Toggle navigation"
+msgid "Main navigation"
+msgstr "Εναλλαγή πλοήγησης"
+
+#: eventyay/control/templates/pretixcontrol/admin/pages/base.html:112
+#: eventyay/eventyay_common/templates/eventyay_common/base.html:258
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:162
+msgid "Main dashboard"
+msgstr "Κύριος πίνακας ελέγχου"
 
 #: eventyay/control/templates/pretixcontrol/admin/pages/delete.html:4
 #: eventyay/control/templates/pretixcontrol/admin/pages/delete.html:6
@@ -22660,13 +22956,6 @@ msgstr ""
 msgid "Error:"
 msgstr "Λάθος:"
 
-#: eventyay/control/templates/pretixcontrol/base.html:128
-#: eventyay/eventyay_common/templates/eventyay_common/base.html:126
-#: eventyay/orga/templates/orga/base.html:98
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:72
-msgid "Toggle sidebar"
-msgstr "Εναλλαγή πλευρικής γραμμής"
-
 #: eventyay/control/templates/pretixcontrol/base.html:153
 #: eventyay/control/templates/pretixcontrol/base.html:177
 #: eventyay/control/templates/pretixcontrol/base.html:178
@@ -22675,17 +22964,6 @@ msgstr "Εναλλαγή πλευρικής γραμμής"
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:177
 msgid "Public profile"
 msgstr "Δημόσιο προφίλ"
-
-#: eventyay/control/templates/pretixcontrol/base.html:238
-#: eventyay/control/templates/pretixcontrol/base.html:239
-#: eventyay/eventyay_common/templates/eventyay_common/base.html:203
-#: eventyay/eventyay_common/templates/eventyay_common/base.html:204
-#: eventyay/orga/templates/orga/base.html:170
-#: eventyay/orga/templates/orga/base.html:171
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:133
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:135
-msgid "End admin session"
-msgstr "Κλείστε τη συνάντηση admin"
 
 #: eventyay/control/templates/pretixcontrol/base.html:279
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:248
@@ -23396,8 +23674,8 @@ msgid "Videos"
 msgstr "Βίντεο"
 
 #: eventyay/control/templates/pretixcontrol/event/delete.html:5
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:410
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:415
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:408
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:413
 msgid "Delete event"
 msgstr "Διαγραφή συμβάντος"
 
@@ -23453,12 +23731,12 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/event/delete.html:55
 #: eventyay/control/templates/pretixcontrol/event/delete.html:69
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:373
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:371
 msgid "Delete personal data"
 msgstr "Διαγράψτε τα προσωπικά σας δεδομένα"
 
 #: eventyay/control/templates/pretixcontrol/event/delete.html:59
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:340
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:338
 msgid "Go offline"
 msgstr "Αποσυνδέομαι"
 
@@ -23846,6 +24124,7 @@ msgstr "Ρυθμίσεις email"
 
 #: eventyay/control/templates/pretixcontrol/event/payment.html:10
 #: eventyay/control/templates/pretixcontrol/event/payment_provider.html:5
+#: eventyay/eventyay_common/forms/event.py:398
 msgid "Payment settings"
 msgstr "Ρυθμίσεις πληρωμής"
 
@@ -23949,9 +24228,9 @@ msgid "Disable"
 msgstr "Απενεργοποιώ(Disable)"
 
 #: eventyay/control/templates/pretixcontrol/event/plugins.html:75
-#: eventyay/control/templates/pretixcontrol/global_settings.html:135
-#: eventyay/control/templates/pretixcontrol/global_settings.html:153
-#: eventyay/control/templates/pretixcontrol/global_settings.html:172
+#: eventyay/control/templates/pretixcontrol/global_settings.html:137
+#: eventyay/control/templates/pretixcontrol/global_settings.html:155
+#: eventyay/control/templates/pretixcontrol/global_settings.html:174
 #: eventyay/eventyay_common/templates/eventyay_common/account/2fa-enable.html:34
 #: eventyay/eventyay_common/templates/eventyay_common/account/general-settings.html:80
 #: eventyay/eventyay_common/templates/eventyay_common/account/notification-settings.html:36
@@ -24104,9 +24383,10 @@ msgstr ""
 #: eventyay/control/templates/pretixcontrol/event/settings.html:7
 #: eventyay/control/templates/pretixcontrol/event/settings.html:13
 #: eventyay/control/templates/pretixcontrol/organizers/billing.html:7
+#: eventyay/eventyay_common/forms/event.py:355
 #: eventyay/eventyay_common/templates/eventyay_common/account/general-settings.html:25
 #: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:7
-#: eventyay/orga/views/event.py:81
+#: eventyay/orga/views/event.py:80
 msgid "General settings"
 msgstr "Γενικές ρυθμίσεις"
 
@@ -24127,12 +24407,12 @@ msgid "Changes to existing orders"
 msgstr "Αλλαγές σε υπάρχουσες παραγγελίες"
 
 #: eventyay/control/templates/pretixcontrol/event/settings.html:60
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:203
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:204
 msgid "Texts"
 msgstr "Κείμενα"
 
 #: eventyay/control/templates/pretixcontrol/event/settings.html:69
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:236
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:237
 msgid "Display"
 msgstr "Απεικόνιση"
 
@@ -24156,7 +24436,16 @@ msgid "Add property"
 msgstr "Προσθήκη ιδιότητας"
 
 #: eventyay/control/templates/pretixcontrol/event/settings.html:163
+#: eventyay/eventyay_common/templates/eventyay_common/event/live.html:471
+msgid "Cancel or delete event"
+msgstr "Ακύρωση ή διαγραφή εκδήλωσης"
+
+#: eventyay/control/templates/pretixcontrol/event/settings.html:169
 #: eventyay/control/templates/pretixcontrol/organizers/detail.html:156
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:4
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:8
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:89
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:428
 msgid "Clone event"
 msgstr "Εκδήλωση κλωνοποίησης (Clone event)"
 
@@ -24462,78 +24751,78 @@ msgstr ""
 msgid "No plugins found."
 msgstr "Δεν βρέθηκαν χρήστες."
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:21
+#: eventyay/control/templates/pretixcontrol/global_settings.html:23
 msgid "Stripe — Organizer Billing"
 msgstr "Stripe — Χρέωση διοργανωτή"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:23
+#: eventyay/control/templates/pretixcontrol/global_settings.html:25
 msgid "This configuration is used for organizer billing and platform fees."
 msgstr ""
 "Αυτή η ρύθμιση χρησιμοποιείται για τη χρέωση διοργανωτή και τα τέλη "
 "πλατφόρμας."
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:27
-#: eventyay/control/templates/pretixcontrol/global_settings.html:78
+#: eventyay/control/templates/pretixcontrol/global_settings.html:29
+#: eventyay/control/templates/pretixcontrol/global_settings.html:80
 msgid "Live Credentials"
 msgstr "Διαπιστευτήρια παραγωγής"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:38
-#: eventyay/control/templates/pretixcontrol/global_settings.html:89
+#: eventyay/control/templates/pretixcontrol/global_settings.html:40
+#: eventyay/control/templates/pretixcontrol/global_settings.html:91
 msgid "Test Credentials"
 msgstr "Διαπιστευτήρια δοκιμών"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:49
+#: eventyay/control/templates/pretixcontrol/global_settings.html:51
 #: eventyay/control/templates/pretixcontrol/organizers/webhooks.html:6
 msgid "Webhooks"
 msgstr "Webhooks"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:61
+#: eventyay/control/templates/pretixcontrol/global_settings.html:63
 msgid "Stripe — Ticket Payments"
 msgstr "Stripe — Πληρωμές εισιτηρίων"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:63
+#: eventyay/control/templates/pretixcontrol/global_settings.html:65
 msgid "This configuration is used for ticket payments via the Stripe plugin."
 msgstr ""
 "Αυτή η ρύθμιση χρησιμοποιείται για πληρωμές εισιτηρίων μέσω του πρόσθετου "
 "Stripe."
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:67
+#: eventyay/control/templates/pretixcontrol/global_settings.html:69
 msgid "Client Configuration"
 msgstr "Διαμόρφωση πελάτη"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:100
+#: eventyay/control/templates/pretixcontrol/global_settings.html:102
 msgid "App Fees"
 msgstr "Χρεώσεις εφαρμογής"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:102
+#: eventyay/control/templates/pretixcontrol/global_settings.html:104
 msgid "Configure the application fees charged on ticket payments."
 msgstr "Ρυθμίστε τα τέλη εφαρμογής που χρεώνονται στις πληρωμές εισιτηρίων."
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:115
+#: eventyay/control/templates/pretixcontrol/global_settings.html:117
 msgid "PayPal"
 msgstr "PayPal"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:117
+#: eventyay/control/templates/pretixcontrol/global_settings.html:119
 msgid "Configure PayPal payment processing."
 msgstr "Ρυθμίστε την επεξεργασία πληρωμών PayPal."
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:192
+#: eventyay/control/templates/pretixcontrol/global_settings.html:195
 msgid "Test email connection"
 msgstr ""
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:201
+#: eventyay/control/templates/pretixcontrol/global_settings.html:204
 #, fuzzy
 #| msgid "(no email address)"
 msgid "Recipient email address(es)"
 msgstr "(χωρίς διεύθυνση email)"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:211
+#: eventyay/control/templates/pretixcontrol/global_settings.html:214
 #, fuzzy
 #| msgid "Send this email"
 msgid "Send test email"
 msgstr "Αποστολή αυτού του email"
 
-#: eventyay/control/templates/pretixcontrol/global_settings.html:216
+#: eventyay/control/templates/pretixcontrol/global_settings.html:219
 msgid ""
 "Sends a test email to the entered recipient address or comma-separated "
 "recipient addresses to verify the email settings are working."
@@ -24550,6 +24839,94 @@ msgstr "Ο διακομιστής eventyay επέστρεψε έναν κωδι�
 #: eventyay/control/templates/pretixcontrol/global_update.html:30
 msgid "The eventyay server could not be reached."
 msgstr "Δεν ήταν δυνατή η σύνδεση με τον διακομιστή eventyay."
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:4
+msgid ""
+"Gmail integration requires a database update. Run `python manage.py migrate` "
+"and reload this page."
+msgstr ""
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:9
+msgid ""
+"Gmail and Google Workspace are suitable for moderate transactional email and "
+"organiser communication. They are not recommended as the only backend for "
+"large event mailings. Configure SMTP or SendGrid as a fallback delivery "
+"backend if Gmail is unavailable or unsuitable for bulk mailings."
+msgstr ""
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:18
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:66
+#, fuzzy
+#| msgid "Redirect URL"
+msgid "OAuth redirect URI"
+msgstr "URL ανακατεύθυνσης"
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:22
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:70
+msgid ""
+"Add this redirect URI to your Google Cloud OAuth client before connecting."
+msgstr ""
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:27
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:75
+#, fuzzy
+#| msgid "All actions"
+msgid "Gmail connection"
+msgstr "Όλες οι ενέργειες"
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:31
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:79
+#, fuzzy
+#| msgid "Connect"
+msgid "Connected"
+msgstr "Σύνδεση"
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:35
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:83
+#, python-format
+msgid "Approximate usage today: %(sent)s / %(limit)s messages."
+msgstr ""
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:40
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:88
+#, python-format
+msgid "Last delivery issue: %(error)s"
+msgstr ""
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:46
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:94
+#, fuzzy
+#| msgid "Connect"
+msgid "Disconnect Gmail"
+msgstr "Σύνδεση"
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:50
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:98
+#, fuzzy
+#| msgid "Date joined"
+msgid "Not connected"
+msgstr "Ημερομηνία εγγραφής"
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:54
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:102
+msgid ""
+"Configure the OAuth client ID and secret in global settings, then connect a "
+"Google account with send permission."
+msgstr ""
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:56
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:104
+msgid ""
+"Save your OAuth client ID and secret, then connect a Google account with "
+"send permission."
+msgstr ""
+
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:60
+#: eventyay/control/templates/pretixcontrol/includes/gmail_connection.html:108
+#, fuzzy
+#| msgid "Connected devices"
+msgid "Connect Gmail account"
+msgstr "Συνδεδεμένες συσκευές"
 
 #: eventyay/control/templates/pretixcontrol/includes/logs.html:51
 #: eventyay/eventyay_common/templates/eventyay_common/includes/logs.html:51
@@ -24859,7 +25236,7 @@ msgstr "Ιστορικό προϊόντος"
 
 #: eventyay/control/templates/pretixcontrol/item/index.html:176
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:121
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:509
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:514
 #, fuzzy
 #| msgid "Logo image"
 msgid "Crop Image"
@@ -24867,7 +25244,7 @@ msgstr "Εικόνα λογοτύπου"
 
 #: eventyay/control/templates/pretixcontrol/item/index.html:185
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:130
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:519
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:524
 #, fuzzy
 #| msgid "Apply"
 msgid "Apply Crop"
@@ -26540,8 +26917,8 @@ msgstr "Αποστολή email"
 
 #: eventyay/control/templates/pretixcontrol/orders/cancel.html:5
 #: eventyay/control/templates/pretixcontrol/orders/cancel.html:7
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:350
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:355
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:348
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:353
 msgid "Cancel event"
 msgstr "Ακύρωση εκδήλωσης"
 
@@ -27440,7 +27817,7 @@ msgid "Organizer settings"
 msgstr "Ρυθμίσεις διοργανωτή"
 
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:49
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:209
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:210
 msgid "Design"
 msgstr "Σχεδίαση"
 
@@ -27461,15 +27838,11 @@ msgid "Community"
 msgstr "Σχόλιο"
 
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:86
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:229
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:230
 #, fuzzy
 #| msgid "Video"
 msgid "Video area"
 msgstr "Βίντεο"
-
-#: eventyay/control/templates/pretixcontrol/organizers/edit.html:97
-msgid "Privacy"
-msgstr "Απόρρητο"
 
 #: eventyay/control/templates/pretixcontrol/organizers/gate_delete.html:5
 msgid "Delete gate:"
@@ -28747,7 +29120,7 @@ msgstr "Αυτός ο αριθμός σελίδας είναι μικρότερ�
 msgid "Dashboard cache refreshed successfully."
 msgstr "Έγινε αποστολή μηνύματος επαναφοράς κωδικού πρόσβασης."
 
-#: eventyay/control/views/admin.py:685 eventyay/control/views/pages.py:131
+#: eventyay/control/views/admin.py:685 eventyay/control/views/pages.py:136
 msgid "Invalid field."
 msgstr "Μη έγκυρο πεδίο."
 
@@ -28862,7 +29235,7 @@ msgstr "Η νέα λίστα ελέγχου έχει δημιουργηθεί."
 #: eventyay/control/views/event.py:1495 eventyay/control/views/event.py:1626
 #: eventyay/control/views/organizer_views/organizer_view.py:361
 #: eventyay/control/views/organizer_views/organizer_view.py:537
-#: eventyay/control/views/pages.py:108 eventyay/control/views/product.py:269
+#: eventyay/control/views/pages.py:113 eventyay/control/views/product.py:269
 #: eventyay/control/views/product.py:321 eventyay/control/views/product.py:779
 #: eventyay/control/views/product.py:813 eventyay/control/views/product.py:964
 #: eventyay/control/views/product.py:1243
@@ -28872,7 +29245,7 @@ msgstr "Η νέα λίστα ελέγχου έχει δημιουργηθεί."
 #: eventyay/control/views/subevents.py:1051
 #: eventyay/control/views/subevents.py:1620
 #: eventyay/eventyay_common/views/account/two_factor_auth.py:150
-#: eventyay/eventyay_common/views/event.py:895
+#: eventyay/eventyay_common/views/event.py:930
 #: eventyay/plugins/badges/views.py:144 eventyay/plugins/badges/views.py:193
 #: eventyay/plugins/sendmail/views.py:231
 #: eventyay/plugins/ticketoutputpdf/views.py:109
@@ -29000,7 +29373,7 @@ msgstr[1] "{num} παραγγελίες"
 
 #: eventyay/control/views/event.py:239
 #: eventyay/control/views/organizer_views/organizer_view.py:205
-#: eventyay/eventyay_common/views/event.py:780
+#: eventyay/eventyay_common/views/event.py:815
 msgid ""
 "Your changes have been saved. Please note that it can take a short period of "
 "time until your changes become active."
@@ -29052,7 +29425,7 @@ msgstr "Ζητήσατε άκυρο τύπο εξόδου εισιτηρίου."
 msgid "This event can not be deleted."
 msgstr "Αυτή η εκδήλωση δεν μπορεί να διαγραφεί."
 
-#: eventyay/control/views/event.py:1204 eventyay/orga/views/event.py:399
+#: eventyay/control/views/event.py:1204 eventyay/orga/views/event.py:398
 msgid "The event has been deleted."
 msgstr "Η εκδήλωση διαγράφηκε."
 
@@ -29142,66 +29515,74 @@ msgstr "Τυπικό εισιτήριο"
 msgid "Virtual Ticket"
 msgstr "Εικονικό εισιτήριο"
 
-#: eventyay/control/views/global_settings.py:51
-#: eventyay/control/views/global_settings.py:73
-#: eventyay/control/views/global_settings.py:103
-#: eventyay/control/views/global_settings.py:156
-#: eventyay/control/views/pages.py:50
+#: eventyay/control/views/global_settings.py:66
+#: eventyay/control/views/global_settings.py:83
+#: eventyay/control/views/global_settings.py:113
+#: eventyay/control/views/global_settings.py:166
+#: eventyay/control/views/pages.py:55
 msgid "Your changes have not been saved, see below for errors."
 msgstr "Οι αλλαγές σας δεν έχουν αποθηκευτεί, δείτε παρακάτω για σφάλματα."
 
-#: eventyay/control/views/global_settings.py:197
+#: eventyay/control/views/global_settings.py:207
 #, fuzzy
 #| msgid "Please enter at least one email address!"
 msgid "Please enter at least one valid recipient email address."
 msgstr "Παρακαλούμε εισαγάγετε τουλάχιστον μία διεύθυνση email!"
 
-#: eventyay/control/views/global_settings.py:207
+#: eventyay/control/views/global_settings.py:217
 #, fuzzy, python-format
 #| msgid "Please enter a valid email address."
 msgid ""
 "Please enter a valid recipient email address (\"%(email)s\" is invalid)."
 msgstr "Παρακαλώ εισάγετε μια έγκυρη διεύθυνση ηλεκτρονικού ταχυδρομείου."
 
-#: eventyay/control/views/global_settings.py:220
+#: eventyay/control/views/global_settings.py:230
 msgid ""
 "No sender address is configured. Please set the \"Sender address\" field in "
 "the Email tab and save first."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:232
+#: eventyay/control/views/global_settings.py:242
 #, python-format
 msgid ""
 "The sender address \"%(addr)s\" is not a valid email address. Please correct "
 "the \"Sender address\" field and save again."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:245
+#: eventyay/control/views/global_settings.py:255
 #, python-format
 msgid ""
 "The sender address \"%(addr)s\" contains non-ASCII characters which are not "
 "allowed in SMTP. Please correct the \"Sender address\" field and save again."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:258
-#: eventyay/eventyay_common/views/event.py:704
+#: eventyay/control/views/global_settings.py:268
+#: eventyay/eventyay_common/views/event.py:729
 msgid "SendGrid API key is missing. Please configure it and save."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:266
-#: eventyay/eventyay_common/views/event.py:707
+#: eventyay/control/views/global_settings.py:279
+msgid ""
+"Gmail is selected but no account is connected. Connect Gmail in the settings "
+"first."
+msgstr ""
+
+#: eventyay/control/views/global_settings.py:288
+#: eventyay/eventyay_common/views/event.py:732
 msgid "SMTP host or port is missing. Please configure them and save."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:282
+#: eventyay/control/views/global_settings.py:301
+#: eventyay/control/views/global_settings.py:311
 msgid "Eventyay system - test email"
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:283
+#: eventyay/control/views/global_settings.py:302
+#: eventyay/control/views/global_settings.py:312
 msgid "This is a test email from your Eventyay system email configuration."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:299
+#: eventyay/control/views/global_settings.py:328
 msgid ""
 "SMTP authentication or email sending failed because the password, username, "
 "or recipient address contains an invisible non-ASCII character (e.g. a no-"
@@ -29209,31 +29590,123 @@ msgid ""
 "again."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:310
+#: eventyay/control/views/global_settings.py:339
 #, python-format
 msgid "SendGrid test email failed to connect or send. HTTP Error: %(err)s"
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:317
+#: eventyay/control/views/global_settings.py:356
+#: eventyay/eventyay_common/views/event.py:756
+#, python-format
+msgid "Gmail test email is temporarily delayed because of rate limits: %(err)s"
+msgstr ""
+
+#: eventyay/control/views/global_settings.py:362
+#: eventyay/eventyay_common/views/event.py:761
+#, fuzzy, python-format
+#| msgid "Some emails failed to send:"
+msgid "Gmail test email could not be sent: %(err)s"
+msgstr "Ορισμένα email απέτυχαν να σταλούν:"
+
+#: eventyay/control/views/global_settings.py:369
 #, fuzzy, python-format
 #| msgid "Some emails failed to send:"
 msgid "Test email failed to connect or send: %(err)s"
 msgstr "Ορισμένα email απέτυχαν να σταλούν:"
 
-#: eventyay/control/views/global_settings.py:325
+#: eventyay/control/views/global_settings.py:379
 #, python-format
 msgid "Test email sent to %(email)s — check inbox."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:396
+#: eventyay/control/views/global_settings.py:450
 msgid "Plugin configuration table is not available. Please run migrations."
 msgstr ""
 
-#: eventyay/control/views/global_settings.py:404
+#: eventyay/control/views/global_settings.py:458
 #, fuzzy
 #| msgid "Your notification settings have been saved."
 msgid "Plugin settings have been saved."
 msgstr "Οι ρυθμίσεις ειδοποιήσεων έχουν αποθηκευτεί."
+
+#: eventyay/control/views/gmail_oauth.py:47
+#: eventyay/control/views/gmail_oauth.py:156
+#, python-format
+msgid "Google authorization was denied or failed: %(error)s"
+msgstr ""
+
+#: eventyay/control/views/gmail_oauth.py:54
+#: eventyay/control/views/gmail_oauth.py:163
+msgid "Missing authorization response from Google."
+msgstr ""
+
+#: eventyay/control/views/gmail_oauth.py:60
+#: eventyay/control/views/gmail_oauth.py:169
+#, fuzzy
+#| msgid "The registration could not be completed. Please try again."
+msgid "The Google authorization session expired. Please try again."
+msgstr "Δεν ήταν δυνατή η ολοκλήρωση της εγγραφής. Παρακαλώ προσπαθήστε ξανά."
+
+#: eventyay/control/views/gmail_oauth.py:64
+#, fuzzy
+#| msgid "The waiting list entry has been moved to the end of the list."
+msgid "The Google authorization session does not match the current user."
+msgstr "Η καταχώρηση της λίστας αναμονής μετακινήθηκε στο τέλος της λίστας."
+
+#: eventyay/control/views/gmail_oauth.py:75
+#: eventyay/control/views/gmail_oauth.py:189
+#, python-format
+msgid "Could not connect Gmail account: %(error)s"
+msgstr ""
+
+#: eventyay/control/views/gmail_oauth.py:83
+#: eventyay/control/views/gmail_oauth.py:197
+msgid ""
+"Google did not return a refresh token. Disconnect the app in your Google "
+"account and try again."
+msgstr ""
+
+#: eventyay/control/views/gmail_oauth.py:103
+#, fuzzy, python-format
+#| msgid "Verification failed."
+msgid "Gmail account %(email)s connected successfully."
+msgstr "Η επαλήθευση απέτυχε."
+
+#: eventyay/control/views/gmail_oauth.py:113
+#, fuzzy
+#| msgid "Your PayPal account has been disconnected."
+msgid "Gmail account disconnected."
+msgstr "Ο λογαριασμός σας στην PayPal έχει αποσυνδεθεί."
+
+#: eventyay/control/views/gmail_oauth.py:115
+#, fuzzy
+#| msgid "No sent mails found."
+msgid "No active Gmail connection found."
+msgstr "Δεν βρέθηκαν απεσταλμένα email."
+
+#: eventyay/control/views/gmail_oauth.py:173
+#, fuzzy
+#| msgid "The video module is not enabled for this event."
+msgid "The Google authorization session is invalid for this event."
+msgstr "Η ενότητα βίντεο δεν είναι ενεργοποιημένη για αυτή την εκδήλωση."
+
+#: eventyay/control/views/gmail_oauth.py:218
+#, fuzzy, python-format
+#| msgid "No tracks are configured for any events."
+msgid "Gmail account %(email)s connected for this event."
+msgstr "Δεν έχουν διαμορφωθεί tracks για κανένα συμβάν."
+
+#: eventyay/control/views/gmail_oauth.py:231
+#, fuzzy
+#| msgid "No tracks are configured for any events."
+msgid "Gmail account disconnected for this event."
+msgstr "Δεν έχουν διαμορφωθεί tracks για κανένα συμβάν."
+
+#: eventyay/control/views/gmail_oauth.py:233
+#, fuzzy
+#| msgid "No tracks are configured for any events."
+msgid "No active Gmail connection found for this event."
+msgstr "Δεν έχουν διαμορφωθεί tracks για κανένα συμβάν."
 
 #: eventyay/control/views/orderimport.py:65
 msgid "Please only upload CSV files."
@@ -29845,18 +30318,40 @@ msgid ""
 msgstr ""
 
 #: eventyay/control/views/organizer_views/organizer_view.py:541
-#: eventyay/eventyay_common/views/event.py:899
+#: eventyay/eventyay_common/views/event.py:934
 msgid "You haven't made any changes."
 msgstr "Δεν έχετε κάνει καμία αλλαγή."
 
-#: eventyay/control/views/pages.py:59 eventyay/control/views/pages.py:132
-#: eventyay/control/views/pages.py:182
+#: eventyay/control/views/pages.py:64 eventyay/control/views/pages.py:137
+#: eventyay/control/views/pages.py:187 eventyay/control/views/pages.py:248
 msgid "The requested page does not exist."
 msgstr "Η σελίδα που ζητήσατε δεν υπάρχει."
 
-#: eventyay/control/views/pages.py:171
+#: eventyay/control/views/pages.py:176
 msgid "The selected page has been deleted."
 msgstr "Η επιλεγμένη σελίδα έχει διαγραφεί."
+
+#: eventyay/control/views/pages.py:235
+#, fuzzy
+#| msgid "Number of reviews"
+msgid "Terms of Service"
+msgstr "Αριθμός κριτικών"
+
+#: eventyay/control/views/pages.py:236
+#, fuzzy
+#| msgid "Privacy Policy URL"
+msgid "Privacy Policy"
+msgstr "URL Πολιτικής Απορρήτου"
+
+#: eventyay/control/views/pages.py:238
+msgid "Support & Help"
+msgstr ""
+
+#: eventyay/control/views/pages.py:242
+#, fuzzy
+#| msgid "No redis server has been configured."
+msgid "Content for this page has not been configured yet."
+msgstr "Δεν έχει ρυθμιστεί διακομιστής redis."
 
 #: eventyay/control/views/pdf.py:39
 #, fuzzy
@@ -30118,15 +30613,15 @@ msgid "Unknown action."
 msgstr "Άγνωστος λόγος"
 
 #: eventyay/control/views/users.py:198 eventyay/control/views/users.py:201
-#: eventyay/control/views/users.py:328 eventyay/control/views/users.py:331
-#: eventyay/control/views/users.py:389 eventyay/control/views/users.py:392
+#: eventyay/control/views/users.py:331 eventyay/control/views/users.py:334
+#: eventyay/control/views/users.py:392 eventyay/control/views/users.py:395
 #, fuzzy
 #| msgid "The addressed user’s email address"
 msgid "This user has no email address."
 msgstr "Η διεύθυνση email του χρήστη που απευθύνεται"
 
 #: eventyay/control/views/users.py:210 eventyay/control/views/users.py:213
-#: eventyay/control/views/users.py:340 eventyay/control/views/users.py:343
+#: eventyay/control/views/users.py:343 eventyay/control/views/users.py:346
 #, fuzzy
 #| msgid "Please provide an email address."
 msgid "This user has no primary email address."
@@ -30168,78 +30663,78 @@ msgstr "Αφαιρέστε ένα"
 msgid "Admin status for %(email)s has been %(action)s."
 msgstr "Έχει αποσταλεί ένα προσαρμοσμένο μήνυμα ηλεκτρονικού ταχυδρομείου."
 
-#: eventyay/control/views/users.py:314
+#: eventyay/control/views/users.py:317
 #, fuzzy
 #| msgid "Order marked as paid"
 msgid "marked as spam"
 msgstr "Η παραγγελία έχει επισημανθεί ως πληρωμένη"
 
-#: eventyay/control/views/users.py:314
+#: eventyay/control/views/users.py:317
 #, fuzzy
 #| msgid "Order marked as paid"
 msgid "unmarked as spam"
 msgstr "Η παραγγελία έχει επισημανθεί ως πληρωμένη"
 
-#: eventyay/control/views/users.py:317
+#: eventyay/control/views/users.py:320
 #, fuzzy, python-format
 #| msgid "The email has been sent."
 msgid "User %(email)s has been %(action)s."
 msgstr "Το email έχει σταλεί."
 
-#: eventyay/control/views/users.py:350 eventyay/control/views/users.py:353
+#: eventyay/control/views/users.py:353 eventyay/control/views/users.py:356
 #, fuzzy
 #| msgid "This event was already live."
 msgid "This user is already verified."
 msgstr "Αυτή η εκδήλωση ήταν ήδη ζωντανή."
 
-#: eventyay/control/views/users.py:363 eventyay/control/views/users.py:366
+#: eventyay/control/views/users.py:366 eventyay/control/views/users.py:369
 #, fuzzy
 #| msgid "There was an error sending the confirmation mail."
 msgid "There was an error sending the verification email."
 msgstr "Παρουσιάστηκε σφάλμα κατά την αποστολή της αλληλογραφίας επιβεβαίωσης."
 
-#: eventyay/control/views/users.py:377
+#: eventyay/control/views/users.py:380
 #, fuzzy
 #| msgid "Verification failed."
 msgid "Verification email sent successfully."
 msgstr "Η επαλήθευση απέτυχε."
 
-#: eventyay/control/views/users.py:381
+#: eventyay/control/views/users.py:384
 #, fuzzy, python-format
 #| msgid "Verification failed."
 msgid "Verification email sent to %(email)s."
 msgstr "Η επαλήθευση απέτυχε."
 
-#: eventyay/control/views/users.py:410
+#: eventyay/control/views/users.py:413
 #, fuzzy
 #| msgid "Password reset mail sent."
 msgid "Password reset email sent successfully."
 msgstr "Έγινε αποστολή μηνύματος επαναφοράς κωδικού πρόσβασης."
 
-#: eventyay/control/views/users.py:414
+#: eventyay/control/views/users.py:417
 #, fuzzy, python-format
 #| msgid "Password reset mail sent."
 msgid "Password reset email sent to %(email)s."
 msgstr "Έγινε αποστολή μηνύματος επαναφοράς κωδικού πρόσβασης."
 
-#: eventyay/control/views/users.py:502
+#: eventyay/control/views/users.py:505
 msgid "We sent out an e-mail containing further instructions."
 msgstr ""
 "Στείλαμε ένα μήνυμα ηλεκτρονικού ταχυδρομείου που περιέχει περαιτέρω οδηγίες."
 
-#: eventyay/control/views/users.py:548
+#: eventyay/control/views/users.py:551
 #, fuzzy
 #| msgid "The registration could not be completed. Please try again."
 msgid "The user could not be anonymized. Please try again later."
 msgstr "Δεν ήταν δυνατή η ολοκλήρωση της εγγραφής. Παρακαλώ προσπαθήστε ξανά."
 
-#: eventyay/control/views/users.py:551
+#: eventyay/control/views/users.py:554
 #, fuzzy
 #| msgid "This user has been anonymized."
 msgid "User has been anonymized successfully."
 msgstr "Αυτός ο χρήστης ήταν ανώνυμος."
 
-#: eventyay/control/views/users.py:646
+#: eventyay/control/views/users.py:649
 msgid "The new user has been created."
 msgstr "Ο νέος χρήστης έχει δημιουργηθεί."
 
@@ -30396,102 +30891,102 @@ msgstr ""
 "ρυθμίσεις αλληλογραφίας, τύπους περιόδου σύνδεσης και πρότυπα email. Ελέγξτε "
 "αυτές τις ρυθμίσεις μόλις δημιουργηθεί το συμβάν!"
 
-#: eventyay/event/stages.py:41
+#: eventyay/event/stages.py:40
 msgid "Preparation"
 msgstr "Προετοιμασία"
 
-#: eventyay/event/stages.py:45
+#: eventyay/event/stages.py:44
 msgid "Configure the event"
 msgstr "Διαμορφώστε την εκδήλωση"
 
-#: eventyay/event/stages.py:46
+#: eventyay/event/stages.py:45
 msgid "Gather your team"
 msgstr "Συγκεντρώστε την ομάδα σας"
 
-#: eventyay/event/stages.py:47
+#: eventyay/event/stages.py:46
 msgid "Write a CfP"
 msgstr "Γράψτε ένα κάλεσμα"
 
-#: eventyay/event/stages.py:49
+#: eventyay/event/stages.py:48
 msgid "Customize mail templates"
 msgstr "Μορφοποίηση ηλεκτρονικής αλληλογραφίας"
 
-#: eventyay/event/stages.py:55
+#: eventyay/event/stages.py:54
 msgid "CfP is open"
 msgstr "Το κάλεσμα είναι ανοικτό"
 
-#: eventyay/event/stages.py:59
+#: eventyay/event/stages.py:58
 msgid "Monitor proposals"
 msgstr "Παρακολούθηση προτάσεων"
 
-#: eventyay/event/stages.py:61
+#: eventyay/event/stages.py:60
 msgid "Submit sessions for your speakers"
 msgstr "Υποβάλετε συνεδρίες για τους ομιλητές σας"
 
-#: eventyay/event/stages.py:64
+#: eventyay/event/stages.py:63
 msgid "Invite reviewers"
 msgstr "Προσκαλέστε κριτές"
 
-#: eventyay/event/stages.py:72
+#: eventyay/event/stages.py:71
 msgid "Let reviewers do their work"
 msgstr "Αφήστε τους κριτές να κάνουν τη δουλειά τους"
 
-#: eventyay/event/stages.py:74
+#: eventyay/event/stages.py:73
 msgid "Accept or reject proposals"
 msgstr "Αποδοχή ή απόρριψη προτάσεων"
 
-#: eventyay/event/stages.py:77
+#: eventyay/event/stages.py:76
 msgid "Build your first schedule"
 msgstr "Φτιάξτε το πρώτο σας πρόγραμμα"
 
-#: eventyay/event/stages.py:86
+#: eventyay/event/stages.py:85
 msgid "Release schedules as needed"
 msgstr "Εκδόστε τα προγράμματα όπως χρειάζεται"
 
-#: eventyay/event/stages.py:90
+#: eventyay/event/stages.py:89
 msgid "Inform your speakers about the infrastructure"
 msgstr "Ενημερώστε τους ομιλητές σας για την υποδομή"
 
-#: eventyay/event/stages.py:100
+#: eventyay/event/stages.py:99
 msgid "Provide a point of contact for the speakers"
 msgstr "Παροχή ενός σημείου επαφής για τους ομιλητές"
 
-#: eventyay/event/stages.py:101
+#: eventyay/event/stages.py:100
 msgid "Enjoy the event!"
 msgstr "Απολαύστε την εκδήλωση!"
 
-#: eventyay/event/stages.py:105
+#: eventyay/event/stages.py:104
 msgid "Wrapup"
 msgstr "Συμάζεμα"
 
-#: eventyay/event/stages.py:109
+#: eventyay/event/stages.py:108
 msgid "Monitor incoming feedback"
 msgstr "Παρακολουθήστε τις εισερχόμενες παρατηρήσεις"
 
-#: eventyay/event/stages.py:110
+#: eventyay/event/stages.py:109
 msgid "Embed session recordings if available"
 msgstr "Ενσωματώστε τις εγγραφές συνεδρίας εάν είναι διαθέσιμες"
 
-#: eventyay/event/stages.py:111
+#: eventyay/event/stages.py:110
 msgid "Release next event date?"
 msgstr "Να εκδοθεί νέα ημερομηνία εκδήλωσης;"
 
-#: eventyay/eventyay_common/forms/event.py:81
+#: eventyay/eventyay_common/forms/event.py:82
 #, fuzzy
 #| msgid "Please provide an email address."
 msgid "Please provide an email address for the contact form."
 msgstr "Παρακαλώ δώστε μια διεύθυνση email."
 
-#: eventyay/eventyay_common/forms/event.py:214
+#: eventyay/eventyay_common/forms/event.py:215
 msgid "Ask search engines not to index the event pages"
 msgstr ""
 "Ζητήστε από τις μηχανές αναζήτησης να μην ευρετηριάσουν τις σελίδες συμβάντων"
 
-#: eventyay/eventyay_common/forms/event.py:259
+#: eventyay/eventyay_common/forms/event.py:260
 msgid "Show in search results and lists"
 msgstr ""
 
-#: eventyay/eventyay_common/forms/event.py:260
+#: eventyay/eventyay_common/forms/event.py:261
 #, fuzzy
 #| msgid ""
 #| "If selected, this event will show up publicly on the list of events for "
@@ -30503,11 +30998,140 @@ msgstr ""
 "Αν επιλεγεί, αυτό το συμβάν θα εμφανίζεται δημόσια στη λίστα γεγονότων για "
 "το λογαριασμό του διοργανωτή σας."
 
-#: eventyay/eventyay_common/forms/event.py:267
+#: eventyay/eventyay_common/forms/event.py:268
 msgid "You need to configure the custom domain in the webserver beforehand."
 msgstr ""
 "Πρέπει να διαμορφώσετε εκ των προτέρων τον προσαρμοσμένο τομέα στο "
 "διακομιστή ιστού."
+
+#: eventyay/eventyay_common/forms/event.py:349
+#, fuzzy
+#| msgid "Client Configuration"
+msgid "Common event Configuration"
+msgstr "Διαμόρφωση πελάτη"
+
+#: eventyay/eventyay_common/forms/event.py:350
+msgid "Includes general settings, design elements, and email configurations."
+msgstr ""
+
+#: eventyay/eventyay_common/forms/event.py:356
+msgid "Location, currency, plugins, header/footer links."
+msgstr ""
+
+#: eventyay/eventyay_common/forms/event.py:361
+#, fuzzy
+#| msgid "Date and time"
+msgid "Design and texts"
+msgstr "Ημερομηνία και ώρα"
+
+#: eventyay/eventyay_common/forms/event.py:362
+msgid "Colors, logo, custom CSS."
+msgstr ""
+
+#: eventyay/eventyay_common/forms/event.py:367
+#: eventyay/orga/templates/orga/settings/mail.html:14
+msgid "Email settings"
+msgstr "Ρυθμίσεις email"
+
+#: eventyay/eventyay_common/forms/event.py:368
+#, fuzzy
+#| msgid "Create a new configuration"
+msgid "Email templates and SMTP configuration."
+msgstr "Δημιουργήστε μια νέα διαμόρφωση"
+
+#: eventyay/eventyay_common/forms/event.py:374
+#, fuzzy
+#| msgid "Client Configuration"
+msgid "Ticketing Configuration"
+msgstr "Διαμόρφωση πελάτη"
+
+#: eventyay/eventyay_common/forms/event.py:375
+msgid "Includes products, quotas, attendee questions, and check-in lists."
+msgstr ""
+
+#: eventyay/eventyay_common/forms/event.py:380
+#, fuzzy
+#| msgid "Products"
+msgid "Products & Quotas"
+msgstr "Προϊόντα"
+
+#: eventyay/eventyay_common/forms/event.py:381
+msgid "Ticket products, categories, quotas, tax rules, add-ons."
+msgstr ""
+
+#: eventyay/eventyay_common/forms/event.py:387
+#, fuzzy
+#| msgid "Create a new question"
+msgid "Order and attendee questions."
+msgstr "Δημιουργία μιας νέας ερώτησης"
+
+#: eventyay/eventyay_common/forms/event.py:393
+#, fuzzy
+#| msgid "Check-in device configuration"
+msgid "Check-in lists configuration."
+msgstr "Διαμόρφωση συσκευών ελέγχου check-in"
+
+#: eventyay/eventyay_common/forms/event.py:399
+#, fuzzy
+#| msgid "Payment providers"
+msgid "Payment providers and invoicing."
+msgstr "Πάροχοι πληρωμών"
+
+#: eventyay/eventyay_common/forms/event.py:405
+#, fuzzy
+#| msgid "Client Configuration"
+msgid "Talk Configuration"
+msgstr "Διαμόρφωση πελάτη"
+
+#: eventyay/eventyay_common/forms/event.py:406
+msgid "Includes call for speakers, session tracks, and review settings."
+msgstr ""
+
+#: eventyay/eventyay_common/forms/event.py:411
+#, fuzzy
+#| msgid "Call for Speakers"
+msgid "Call for speakers"
+msgstr "Πρόσκληση για ομιλητές"
+
+#: eventyay/eventyay_common/forms/event.py:412
+#, fuzzy
+#| msgid "The selected configuration does not exist."
+msgid "Call for speakers configuration and basic text."
+msgstr "Η επιλεγμένη διαμόρφωση δεν υπάρχει."
+
+#: eventyay/eventyay_common/forms/event.py:417
+#, fuzzy
+#| msgid "Sessions by track"
+msgid "Session types & tracks"
+msgstr "Συνεδρίες ανά κομμάτι"
+
+#: eventyay/eventyay_common/forms/event.py:418
+#, fuzzy
+#| msgid "Sessions by track"
+msgid "Session types and tracks."
+msgstr "Συνεδρίες ανά κομμάτι"
+
+#: eventyay/eventyay_common/forms/event.py:423
+#: eventyay/orga/templates/orga/base.html:277
+#: eventyay/orga/templates/orga/settings/review.html:8
+#: eventyay/orga/templates/orga/settings/review.html:24
+#: eventyay/orga/views/event.py:132
+msgid "Review settings"
+msgstr "Ανασκόπηση Ρυθμίσεων"
+
+#: eventyay/eventyay_common/forms/event.py:424
+msgid "Review phases and review scoring categories."
+msgstr ""
+
+#: eventyay/eventyay_common/forms/event.py:472
+#, fuzzy
+#| msgid ""
+#| "You already used this slug for a different event. Please choose a new one."
+msgid ""
+"You already have an event with this short name. Please choose another one."
+msgstr ""
+"Έχετε ήδη χρησιμοποιήσει αυτό το slug για ένα διαφορετικό συμβάν. Επιλέξτε "
+"ένα νέο."
 
 #: eventyay/eventyay_common/forms/filters.py:62
 msgid "Search by session name"
@@ -30531,7 +31155,7 @@ msgstr "Ρυθμίσεις εκδήλωσης"
 
 #: eventyay/eventyay_common/navigation.py:101
 #: eventyay/eventyay_common/templates/eventyay_common/event/live.html:12
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:327
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:325
 msgid "Event status"
 msgstr "Κατάσταση εκδήλωσης"
 
@@ -31077,6 +31701,18 @@ msgstr "Δεν έχουν καταγραφεί ακόμη αιτήσεις."
 msgid "Lost password?"
 msgstr "Χάσατε τον κωδικό;"
 
+#: eventyay/eventyay_common/templates/eventyay_common/auth/base.html:40
+#, fuzzy
+#| msgid "New password"
+msgid "Show password"
+msgstr "Νέος κωδικός πρόσβασης"
+
+#: eventyay/eventyay_common/templates/eventyay_common/auth/base.html:41
+#, fuzzy
+#| msgid "New password"
+msgid "Hide password"
+msgstr "Νέος κωδικός πρόσβασης"
+
 #: eventyay/eventyay_common/templates/eventyay_common/auth/forgot.html:14
 msgid "Send recovery information"
 msgstr "Αποστολή πληροφοριών ανάκτησης"
@@ -31140,11 +31776,6 @@ msgstr ""
 msgid "Set new password"
 msgstr "Ορίστε νέο κωδικό πρόσβασης"
 
-#: eventyay/eventyay_common/templates/eventyay_common/base.html:258
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:161
-msgid "Main dashboard"
-msgstr "Κύριος πίνακας ελέγχου"
-
 #: eventyay/eventyay_common/templates/eventyay_common/component/_beta_badge.html:1
 #, fuzzy
 #| msgid "This feature is not enabled."
@@ -31174,6 +31805,77 @@ msgstr "Πρέπει πρώτα να ενεργοποιήσετε αυτό το 
 #: eventyay/eventyay_common/templates/eventyay_common/includes/permission_required_dialog.html:11
 msgid "Ok"
 msgstr "Οκ"
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:11
+msgid ""
+"You can create a new event that is a copy of this event. Please enter a "
+"name, short form, and the new dates for the new event."
+msgstr ""
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:13
+#, fuzzy
+#| msgid "Scan the following configuration code:"
+msgid "By default, the following Configuration is NOT cloned:"
+msgstr "Σαρώστε τον ακόλουθο κωδικό ρύθμισης:"
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:15
+msgid "Orders, attendees, payments, invoices, check-ins"
+msgstr ""
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:16
+#, fuzzy
+#| msgid "The proposal was accepted."
+msgid "Submitted proposals, reviews, accepted sessions"
+msgstr "Η πρόταση έγινε δεκτή."
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:17
+#, fuzzy
+#| msgid "Send reminder to unsubmitted proposal drafts"
+msgid "Speaker accounts or profiles linked to submitted proposals"
+msgstr "Αποστολή υπενθύμισης σε μη υποβληθείσες προτάσεις"
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:18
+#, fuzzy
+#| msgid "Responses contain personal data"
+msgid "Message history, logs, or any personal data"
+msgstr "Οι απαντήσεις περιέχουν προσωπικά δεδομένα"
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:27
+#, fuzzy
+#| msgid "Sent emails"
+msgid "New Event details"
+msgstr "Στείλτε mail"
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:38
+#: eventyay/eventyay_common/templates/eventyay_common/events/create.html:122
+msgid "Set to random"
+msgstr "Ορίστε τυχαία"
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:42
+#: eventyay/eventyay_common/templates/eventyay_common/events/create.html:126
+msgid "Slug not available"
+msgstr "Το slug δεν είναι διαθέσιμο"
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:45
+#: eventyay/eventyay_common/templates/eventyay_common/events/create.html:129
+msgid ""
+"This is the address your event will be available at. Should be short, only "
+"contain lowercase letters and numbers, and must be unique. We recommend some "
+"kind of abbreviation with less than 30 characters that can be easily "
+"remembered. You cannot change the slug later on! If you don't provide a "
+"slug, a random one will be generated for you."
+msgstr ""
+"Αυτή είναι η διεύθυνση στην οποία θα είναι διαθέσιμη η εκδήλωσή σας. Θα "
+"πρέπει να είναι σύντομη, να περιέχει μόνο πεζά γράμματα και αριθμούς και να "
+"είναι μοναδική. Προτείνουμε κάποιο είδος συντομογραφίας με λιγότερους από 30 "
+"χαρακτήρες που να μπορεί να θυμάται εύκολα. Δεν μπορείτε να αλλάξετε το slug "
+"αργότερα! Αν δεν δώσετε slug, θα δημιουργηθεί για εσάς ένα τυχαίο."
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/clone.html:62
+#, fuzzy
+#| msgid "Confirmation code"
+msgid "Configuration to clone"
+msgstr "Κωδικός επιβεβαίωσης"
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:7
 #, fuzzy
@@ -31315,14 +32017,14 @@ msgid ""
 msgstr ""
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/includes/live_error_dialogs.html:29
-#: eventyay/eventyay_common/views/event.py:1058
+#: eventyay/eventyay_common/views/event.py:1093
 msgid ""
 "You cannot unpublish the event while tickets are published. Please switch "
 "ticketing to private test mode first."
 msgstr ""
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/includes/live_error_dialogs.html:31
-#: eventyay/eventyay_common/views/event.py:1064
+#: eventyay/eventyay_common/views/event.py:1099
 msgid ""
 "You cannot unpublish the event while talks are published. Please switch "
 "talks to private test mode first."
@@ -31752,7 +32454,7 @@ msgid "Enable video"
 msgstr "Ενεργοποίηση πρόσβασης σε βίντεο"
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/live.html:461
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:316
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:314
 #, fuzzy
 #| msgid "Change order"
 msgid "Danger zone"
@@ -31764,21 +32466,17 @@ msgid ""
 "completed."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/live.html:471
-msgid "Cancel or delete event"
-msgstr "Ακύρωση ή διαγραφή εκδήλωσης"
-
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:21
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:22
 #, fuzzy, python-format
 #| msgid "- Settings"
 msgid "%(name)s - Settings"
 msgstr "- Ρυθμίσεις"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:45
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:46
 msgid "Header links"
 msgstr "Σύνδεσμοι κεφαλίδας"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:49
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:50
 msgid ""
 "These links will be shown at the top of all your schedule-related pages, "
 "e.g. the schedule itself, speaker pages, session pages, etc. You could for "
@@ -31791,11 +32489,11 @@ msgstr ""
 "συνδέσετε εδώ την αρχική σας σελίδα, τη σελίδα εγγραφής σας ή τη ζωντανή "
 "μετάδοσή σας."
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:62
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:63
 msgid "Footer links"
 msgstr "Σύνδεσμοι υποσέλιδου"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:66
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:67
 msgid ""
 "These links will be shown in the footer of all your public pages. You could "
 "for example link your terms of service, imprint, or privacy policy here."
@@ -31804,93 +32502,93 @@ msgstr ""
 "σας. Μπορείτε, για παράδειγμα, να συνδέσετε εδώ τους όρους χρήσης, τα "
 "στοιχεία έκδοσης ή την πολιτική απορρήτου σας."
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:184
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:185
 #: eventyay/eventyay_common/templates/eventyay_common/events/create.html:151
 #, fuzzy
 #| msgid "Videos"
 msgid "Video stream"
 msgstr "Βίντεο"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:241
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:242
 #, fuzzy
 #| msgid "Public link"
 msgid "Publication"
 msgstr "Δημόσιος σύνδεσμος"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:255
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:256
 #, fuzzy
 #| msgid "Email template"
 msgid "Email gateway"
 msgstr "Πρότυπο email"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:274
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:272
 #, fuzzy
 #| msgid "Save and send"
 msgid "Save and send test email"
 msgstr "Αποθήκευση και αποστολή"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:281
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:279
 #, fuzzy
 #| msgid "E-mail design"
 msgid "Email design"
 msgstr "Σχεδιασμός ηλεκτρονικού ταχυδρομείου"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:283
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:281
 msgid ""
 "The HTML mail renderer controls the visual design of outgoing "
 "<strong>ticket</strong> emails. Talk emails use a fixed layout and are not "
 "affected by this choice."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:320
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:318
 msgid ""
 "<strong>Danger zone:</strong> These actions can affect your event and may be "
 "irreversible. Please proceed with caution."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:328
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:326
 msgid "Manage the visibility or status of your event."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:335
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:333
 #, fuzzy
 #| msgid "The event was modified."
 msgid "Take event offline"
 msgstr "Η εκδήλωση έχει τροποποιηθεί."
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:336
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:334
 msgid "Hide this event from attendees. You can bring it back online anytime."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:351
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:349
 msgid ""
 "Cancel this event and start the cancellation process. Ticket holders may "
 "need to be refunded."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:365
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:363
 #, fuzzy
 #| msgid "Task management"
 msgid "Data management"
 msgstr "Διαχείριση εργασιών"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:366
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:364
 msgid ""
 "Manage and remove specific data while retaining required financial records."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:374
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:372
 msgid ""
 "Remove personal information such as attendee names and email addresses while "
 "retaining required financial records."
 msgstr ""
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:389
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:394
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:387
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:392
 msgid "Delete talk data"
 msgstr "Διαγραφή δεδομένων ομιλίας"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:390
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:388
 #, fuzzy
 #| msgid ""
 #| "ALL related data, such as proposals, and speaker profiles, and uploads, "
@@ -31902,19 +32600,19 @@ msgstr ""
 "ΟΛΑ τα σχετικά δεδομένα, όπως προτάσεις, προφίλ ομιλητών και μεταφορτώσεις, "
 "θα διαγραφούν επίσης και δεν είναι δυνατή η επαναφορά τους."
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:405
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:403
 #, fuzzy
 #| msgid "Account deletion"
 msgid "Permanent deletion"
 msgstr "Διαγραφή λογαριασμού"
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:406
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:404
 #, fuzzy
 #| msgid "This action cannot be undone."
 msgid "These actions cannot be undone. Please be absolutely sure."
 msgstr "Αυτή η ενέργεια δεν μπορεί να αναιρεθεί."
 
-#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:411
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:409
 msgid ""
 "Permanently delete this event and all deletable associated data. Events "
 "containing protected records, such as completed orders outside test mode, "
@@ -31949,28 +32647,6 @@ msgid ""
 "The event type is set from the entry point. To choose a different type, go "
 "back and use the appropriate button."
 msgstr ""
-
-#: eventyay/eventyay_common/templates/eventyay_common/events/create.html:122
-msgid "Set to random"
-msgstr "Ορίστε τυχαία"
-
-#: eventyay/eventyay_common/templates/eventyay_common/events/create.html:126
-msgid "Slug not available"
-msgstr "Το slug δεν είναι διαθέσιμο"
-
-#: eventyay/eventyay_common/templates/eventyay_common/events/create.html:129
-msgid ""
-"This is the address your event will be available at. Should be short, only "
-"contain lowercase letters and numbers, and must be unique. We recommend some "
-"kind of abbreviation with less than 30 characters that can be easily "
-"remembered. You cannot change the slug later on! If you don't provide a "
-"slug, a random one will be generated for you."
-msgstr ""
-"Αυτή είναι η διεύθυνση στην οποία θα είναι διαθέσιμη η εκδήλωσή σας. Θα "
-"πρέπει να είναι σύντομη, να περιέχει μόνο πεζά γράμματα και αριθμούς και να "
-"είναι μοναδική. Προτείνουμε κάποιο είδος συντομογραφίας με λιγότερους από 30 "
-"χαρακτήρες που να μπορεί να θυμάται εύκολα. Δεν μπορείτε να αλλάξετε το slug "
-"αργότερα! Αν δεν δώσετε slug, θα δημιουργηθεί για εσάς ένα τυχαίο."
 
 #: eventyay/eventyay_common/templates/eventyay_common/events/create.html:137
 msgid ""
@@ -32901,12 +33577,12 @@ msgid "You do not have permission to change event settings."
 msgstr "Δεν έχετε άδεια να αλλάξετε τις ρυθμίσεις της εκδήλωσης."
 
 #: eventyay/eventyay_common/views/dashboards.py:416
-#: eventyay/eventyay_common/views/event.py:1189
+#: eventyay/eventyay_common/views/event.py:1224
 msgid "Video link is now visible on public pages."
 msgstr "Ο σύνδεσμος βίντεο είναι πλέον ορατός στις δημόσιες σελίδες."
 
 #: eventyay/eventyay_common/views/dashboards.py:418
-#: eventyay/eventyay_common/views/event.py:1191
+#: eventyay/eventyay_common/views/event.py:1226
 msgid "Video link is now hidden from public pages."
 msgstr "Ο σύνδεσμος βίντεο είναι πλέον κρυμμένος από τις δημόσιες σελίδες."
 
@@ -32914,92 +33590,99 @@ msgstr "Ο σύνδεσμος βίντεο είναι πλέον κρυμμέν�
 msgid "No dates"
 msgstr "Δεν υπάρχουν ημερομηνίες"
 
-#: eventyay/eventyay_common/views/event.py:318
+#: eventyay/eventyay_common/views/event.py:324
 #, fuzzy
 #| msgid "This ticket shop is currently disabled."
 msgid "Event series creation is currently disabled."
 msgstr "Αυτό το κατάστημα εισιτηρίων είναι απενεργοποιημένο αυτήν τη στιγμή."
 
-#: eventyay/eventyay_common/views/event.py:321
+#: eventyay/eventyay_common/views/event.py:327
 #, fuzzy
 #| msgid "This ticket shop is currently disabled."
 msgid "Meetup creation is currently disabled."
 msgstr "Αυτό το κατάστημα εισιτηρίων είναι απενεργοποιημένο αυτήν τη στιγμή."
 
-#: eventyay/eventyay_common/views/event.py:323
+#: eventyay/eventyay_common/views/event.py:329
 #, fuzzy
 #| msgid "You do not have permission to change event settings."
 msgid "You do not have permission to create meetup events."
 msgstr "Δεν έχετε άδεια να αλλάξετε τις ρυθμίσεις της εκδήλωσης."
 
-#: eventyay/eventyay_common/views/event.py:398
+#: eventyay/eventyay_common/views/event.py:404
 #, fuzzy
 #| msgid "We could not save the email. See below for details."
 msgid "We could not create the event. See below for details."
 msgstr ""
 "Δεν μπορέσαμε να αποθηκεύσουμε το email. Δείτε παρακάτω για λεπτομέρειες."
 
-#: eventyay/eventyay_common/views/event.py:405
+#: eventyay/eventyay_common/views/event.py:411
 #, fuzzy
 #| msgid "You cannot generate an invoice for this order."
 msgid "You cannot create events for any organizer."
 msgstr "Δεν μπορείτε να δημιουργήσετε τιμολόγιο για αυτήν την παραγγελία."
 
-#: eventyay/eventyay_common/views/event.py:412
+#: eventyay/eventyay_common/views/event.py:418
+#: eventyay/eventyay_common/views/event.py:1467
 #, fuzzy
 #| msgid "Content languages must be a subset of the active languages."
 msgid "Select at least one active language."
 msgstr "Οι γλώσσες περιεχομένου πρέπει να είναι υποσύνολο των ενεργών γλωσσών."
 
-#: eventyay/eventyay_common/views/event.py:700
+#: eventyay/eventyay_common/views/event.py:716
 #, fuzzy
 #| msgid "This feature is not enabled."
 msgid "Custom email gateway is not enabled."
 msgstr "Αυτή η λειτουργία δεν είναι ενεργοποιημένη."
 
-#: eventyay/eventyay_common/views/event.py:719
+#: eventyay/eventyay_common/views/event.py:725
+msgid ""
+"Gmail is selected but no account is connected. Connect Gmail in the email "
+"settings first."
+msgstr ""
+
+#: eventyay/eventyay_common/views/event.py:744
 msgid ""
 "Email test failed because a field (password, username, or recipient) "
 "contains a non-ASCII character."
 msgstr ""
 
-#: eventyay/eventyay_common/views/event.py:725
+#: eventyay/eventyay_common/views/event.py:750
 #, python-format
 msgid ""
 "SendGrid test failed with HTTP error %(code)s. Check your API key and try "
 "again."
 msgstr ""
 
-#: eventyay/eventyay_common/views/event.py:732
+#: eventyay/eventyay_common/views/event.py:767
 msgid ""
 "Test email could not be delivered. Check the SMTP host, port, and "
 "credentials and try again."
 msgstr ""
 
-#: eventyay/eventyay_common/views/event.py:735
+#: eventyay/eventyay_common/views/event.py:770
 #, fuzzy
 #| msgid "This device has been set up successfully."
 msgid "Test email sent successfully."
 msgstr "Αυτή η συσκευή έχει ρυθμιστεί με επιτυχία."
 
-#: eventyay/eventyay_common/views/event.py:982
+#: eventyay/eventyay_common/views/event.py:1017
 msgid "CFP"
 msgstr "CFP"
 
-#: eventyay/eventyay_common/views/event.py:984
+#: eventyay/eventyay_common/views/event.py:1019
 msgid "Schedule / Sessions / Speakers"
 msgstr "Πρόγραμμα / Συνεδρίες / Ομιλητές"
 
-#: eventyay/eventyay_common/views/event.py:993
+#: eventyay/eventyay_common/views/event.py:1028
 msgid "The Call for Proposals text is missing. Please add a description."
 msgstr ""
 
-#: eventyay/eventyay_common/views/event.py:1000
+#: eventyay/eventyay_common/views/event.py:1035
 msgid ""
 "The Call for Proposals text is too short (needs at least 50 characters)."
 msgstr ""
 
-#: eventyay/eventyay_common/views/event.py:1012
+#: eventyay/eventyay_common/views/event.py:1047
 msgid ""
 "You want submitters to choose the tracks for their proposals, but you do not "
 "offer tracks for selection. Add at least one track!"
@@ -33007,63 +33690,63 @@ msgstr ""
 "Θέλετε οι υποβάλλοντες να επιλέξουν τα κομμάτια για τις προτάσεις τους, αλλά "
 "δεν προσφέρετε κομμάτια για επιλογή. Προσθέστε τουλάχιστον ένα κομμάτι!"
 
-#: eventyay/eventyay_common/views/event.py:1020
+#: eventyay/eventyay_common/views/event.py:1055
 msgid "You have configured only one session type so far."
 msgstr "Έχετε διαμορφώσει μόνο έναν τύπο συνεδρίας μέχρι στιγμής."
 
-#: eventyay/eventyay_common/views/event.py:1027
+#: eventyay/eventyay_common/views/event.py:1062
 #: eventyay/orga/templates/orga/cfp/talkquestion/list.html:127
 msgid "You have configured no custom fields yet."
 msgstr "Δεν έχετε ρυθμίσει ακόμη κανένα προσαρμοσμένο πεδίο."
 
-#: eventyay/eventyay_common/views/event.py:1044
+#: eventyay/eventyay_common/views/event.py:1079
 msgid "Please resolve the billing information before publishing the event."
 msgstr ""
 "Παρακαλούμε επιλύστε τα στοιχεία χρέωσης πριν δημοσιεύσετε την εκδήλωση."
 
-#: eventyay/eventyay_common/views/event.py:1052
+#: eventyay/eventyay_common/views/event.py:1087
 msgid "Your event is now online."
 msgstr "Η εκδήλωσή σας είναι τώρα online."
 
-#: eventyay/eventyay_common/views/event.py:1074
+#: eventyay/eventyay_common/views/event.py:1109
 msgid "Your event has been unpublished."
 msgstr "Η εκδήλωσή σας έχει αποδημοσιευτεί."
 
-#: eventyay/eventyay_common/views/event.py:1080
+#: eventyay/eventyay_common/views/event.py:1115
 #, fuzzy
 #| msgid "Please set up ticketing before publishing tickets."
 msgid "Please set up ticketing before changing ticket modes."
 msgstr ""
 "Παρακαλούμε ρυθμίστε την έκδοση εισιτηρίων πριν δημοσιεύσετε τα εισιτήρια."
 
-#: eventyay/eventyay_common/views/event.py:1090
+#: eventyay/eventyay_common/views/event.py:1125
 msgid "Private test mode is now enabled for tickets."
 msgstr ""
 "Η ιδιωτική λειτουργία δοκιμής είναι πλέον ενεργοποιημένη για τα εισιτήρια."
 
-#: eventyay/eventyay_common/views/event.py:1093
+#: eventyay/eventyay_common/views/event.py:1128
 #, fuzzy
 #| msgid "Publish the event before publishing tickets."
 msgid "Publish the event before testing tickets publicly."
 msgstr "Δημοσιεύστε την εκδήλωση πριν δημοσιεύσετε τα εισιτήρια."
 
-#: eventyay/eventyay_common/views/event.py:1099
+#: eventyay/eventyay_common/views/event.py:1134
 #, fuzzy
 #| msgid "Your shop is now in test mode!"
 msgid "Your shop is now in public test mode!"
 msgstr "Το κατάστημά σας βρίσκεται τώρα σε δοκιμαστική λειτουργία!"
 
-#: eventyay/eventyay_common/views/event.py:1102
+#: eventyay/eventyay_common/views/event.py:1137
 msgid "Publish the event before publishing tickets."
 msgstr "Δημοσιεύστε την εκδήλωση πριν δημοσιεύσετε τα εισιτήρια."
 
-#: eventyay/eventyay_common/views/event.py:1105
+#: eventyay/eventyay_common/views/event.py:1140
 msgid "Please resolve the ticketing issues before publishing tickets."
 msgstr ""
 "Παρακαλούμε επιλύστε τα ζητήματα της έκδοσης εισιτηρίων πριν δημοσιεύσετε τα "
 "εισιτήρια."
 
-#: eventyay/eventyay_common/views/event.py:1118
+#: eventyay/eventyay_common/views/event.py:1153
 msgid ""
 "An order could not be deleted as some constraints (e.g. data created by plug-"
 "ins) do not allow it."
@@ -33071,46 +33754,58 @@ msgstr ""
 "Δεν ήταν δυνατή η διαγραφή μιας παραγγελίας, καθώς ορισμένοι περιορισμοί "
 "(π.χ. δεδομένα που δημιουργήθηκαν από πρόσθετα) δεν το επιτρέπουν."
 
-#: eventyay/eventyay_common/views/event.py:1130
+#: eventyay/eventyay_common/views/event.py:1165
 #, fuzzy
 #| msgid "Tickets are now published."
 msgid "Tickets are now publicly sold."
 msgstr "Τα εισιτήρια έχουν πλέον δημοσιευτεί."
 
-#: eventyay/eventyay_common/views/event.py:1132
+#: eventyay/eventyay_common/views/event.py:1167
 #, fuzzy
 #| msgid "Unknown reason"
 msgid "Unknown ticketing mode."
 msgstr "Άγνωστος λόγος"
 
-#: eventyay/eventyay_common/views/event.py:1157
+#: eventyay/eventyay_common/views/event.py:1192
 msgid "Private test mode is now enabled for talks."
 msgstr ""
 "Η ιδιωτική δοκιμαστική λειτουργία είναι πλέον ενεργοποιημένη για τις ομιλίες."
 
-#: eventyay/eventyay_common/views/event.py:1160
+#: eventyay/eventyay_common/views/event.py:1195
 msgid "Publish the event before publishing talks."
 msgstr "Δημοσιεύστε την εκδήλωση πριν δημοσιεύσετε τις ομιλίες."
 
-#: eventyay/eventyay_common/views/event.py:1166
+#: eventyay/eventyay_common/views/event.py:1201
 msgid "Talk pages are now published."
 msgstr "Οι σελίδες συζήτησης δημοσιεύτηκαν."
 
-#: eventyay/eventyay_common/views/event.py:1168
+#: eventyay/eventyay_common/views/event.py:1203
 #, fuzzy
 #| msgid "Unknown country code."
 msgid "Unknown talk mode."
 msgstr "Άγνωστος κωδικός χώρας."
 
-#: eventyay/eventyay_common/views/event.py:1180
+#: eventyay/eventyay_common/views/event.py:1215
 msgid "Please configure video settings before changing visibility."
 msgstr ""
 
-#: eventyay/eventyay_common/views/event.py:1185
+#: eventyay/eventyay_common/views/event.py:1220
 #, fuzzy
 #| msgid "Publish the event before publishing talks."
 msgid "Publish the event before enabling public video link."
 msgstr "Δημοσιεύστε την εκδήλωση πριν δημοσιεύσετε τις ομιλίες."
+
+#: eventyay/eventyay_common/views/event.py:1542
+#, fuzzy
+#| msgid "You do not have permission to change event settings."
+msgid "You do not have permission to create events."
+msgstr "Δεν έχετε άδεια να αλλάξετε τις ρυθμίσεις της εκδήλωσης."
+
+#: eventyay/eventyay_common/views/event.py:1612
+#, fuzzy
+#| msgid "This user has been anonymized."
+msgid "Event has been cloned successfully."
+msgstr "Αυτός ο χρήστης ήταν ανώνυμος."
 
 #: eventyay/eventyay_common/views/organizer.py:82
 msgid "New organizer is created."
@@ -33978,13 +34673,13 @@ msgstr "Αν δεν επιλέξετε κανένα προσαρμοσμένο �
 msgid "SMTP server"
 msgstr "Διακομιστής"
 
-#: eventyay/orga/forms/email.py:41
+#: eventyay/orga/forms/email.py:42
 #, fuzzy
 #| msgid "Bcc address"
 msgid "BCC address"
 msgstr "Διεύθυνση Bcc"
 
-#: eventyay/orga/forms/email.py:42
+#: eventyay/orga/forms/email.py:43
 #, fuzzy
 #| msgid "All emails will be sent to this address as a Bcc copy"
 msgid ""
@@ -33994,77 +34689,77 @@ msgstr ""
 "Όλα τα μηνύματα ηλεκτρονικού ταχυδρομείου θα σταλούν σε αυτήν τη διεύθυνση "
 "ως αντίγραφο Bcc"
 
-#: eventyay/orga/forms/email.py:48
+#: eventyay/orga/forms/email.py:49
 #, fuzzy
 #| msgid "Mail signature"
 msgid "Email signature"
 msgstr "Υπογραφή αλληλογραφίας"
 
-#: eventyay/orga/forms/email.py:50
+#: eventyay/orga/forms/email.py:51
 msgid ""
 "This text will be appended to every outgoing email (both Tickets and Talks). "
 "You can use Markdown."
 msgstr ""
 
-#: eventyay/orga/forms/email.py:64
+#: eventyay/orga/forms/email.py:65
 #, fuzzy
 #| msgid "Use Custom Email"
 msgid "Use custom email gateway"
 msgstr "Χρήση προσαρμοσμένου email"
 
-#: eventyay/orga/forms/email.py:66
+#: eventyay/orga/forms/email.py:67
 msgid ""
 "When enabled, all event-related emails (Tickets and Talks) are sent via the "
 "gateway configured below instead of the platform default."
 msgstr ""
 
-#: eventyay/orga/forms/email.py:72
+#: eventyay/orga/forms/email.py:73
 #, fuzzy
 #| msgid "Email template"
 msgid "Email gateway type"
 msgstr "Πρότυπο email"
 
-#: eventyay/orga/forms/email.py:79
+#: eventyay/orga/forms/email.py:80
 #, fuzzy
 #| msgid "SendGrid"
 msgid "SendGrid API key"
 msgstr "SendGrid"
 
-#: eventyay/orga/forms/email.py:83
+#: eventyay/orga/forms/email.py:87
 #, fuzzy
 #| msgid "Hostname"
 msgid "SMTP hostname"
 msgstr "Hostname"
 
-#: eventyay/orga/forms/email.py:88
+#: eventyay/orga/forms/email.py:95
 #, fuzzy
 #| msgid "CSV export"
 msgid "SMTP port"
 msgstr "Εξαγωγή CSV"
 
-#: eventyay/orga/forms/email.py:93
+#: eventyay/orga/forms/email.py:103
 #, fuzzy
 #| msgid "Username"
 msgid "SMTP username"
 msgstr "Όνομα χρήστη"
 
-#: eventyay/orga/forms/email.py:98
+#: eventyay/orga/forms/email.py:111
 #, fuzzy
 #| msgid "Password"
 msgid "SMTP password"
 msgstr "Κωδικός πρόσβασης"
 
-#: eventyay/orga/forms/email.py:112
+#: eventyay/orga/forms/email.py:134
 #, fuzzy
 #| msgid "Send email to"
 msgid "Send test email to"
 msgstr "Στείλτε email στο"
 
-#: eventyay/orga/forms/email.py:113
+#: eventyay/orga/forms/email.py:135
 msgid "Enter one or more addresses (comma-separated) to send a test message."
 msgstr ""
 
-#: eventyay/orga/forms/email.py:161
+#: eventyay/orga/forms/email.py:183
 #, fuzzy
 #| msgid "This field is required when using SendGrid as email vendor."
 msgid "A sender email address is required when using a custom email gateway."
@@ -34072,7 +34767,7 @@ msgstr ""
 "Αυτό το πεδίο είναι υποχρεωτικό όταν χρησιμοποιείτε το SendGrid ως πάροχο "
 "email."
 
-#: eventyay/orga/forms/email.py:175
+#: eventyay/orga/forms/email.py:197
 #, fuzzy
 #| msgid "This field is required when using SendGrid as email vendor."
 msgid "An API key is required when using SendGrid."
@@ -34080,7 +34775,7 @@ msgstr ""
 "Αυτό το πεδίο είναι υποχρεωτικό όταν χρησιμοποιείτε το SendGrid ως πάροχο "
 "email."
 
-#: eventyay/orga/forms/email.py:187
+#: eventyay/orga/forms/email.py:215
 #, fuzzy
 #| msgid "This field is required when using SendGrid as email vendor."
 msgid "A hostname is required when using a custom SMTP server."
@@ -34088,11 +34783,11 @@ msgstr ""
 "Αυτό το πεδίο είναι υποχρεωτικό όταν χρησιμοποιείτε το SendGrid ως πάροχο "
 "email."
 
-#: eventyay/orga/forms/email.py:192
+#: eventyay/orga/forms/email.py:220
 msgid "A port number is required when using a custom SMTP server."
 msgstr ""
 
-#: eventyay/orga/forms/email.py:198
+#: eventyay/orga/forms/email.py:226
 #, fuzzy
 #| msgid ""
 #| "You can activate either SSL or STARTTLS security, but not both at the "
@@ -34102,7 +34797,7 @@ msgstr ""
 "Μπορείτε να ενεργοποιήσετε την ασφάλεια SSL ή STARTTLS, αλλά όχι και τα δύο "
 "ταυτόχρονα."
 
-#: eventyay/orga/forms/email.py:208
+#: eventyay/orga/forms/email.py:236
 msgid ""
 "You must enable SSL or STARTTLS when using a non-local SMTP server to "
 "protect credentials and email content in transit."
@@ -35113,13 +35808,6 @@ msgstr ""
 msgid "Please click here to switch to an administrator account."
 msgstr "Παρακαλώ πατήστε εδώ για να αλλάξετε σε λογαριασμό διαχειριστή."
 
-#: eventyay/orga/templates/orga/base.html:277
-#: eventyay/orga/templates/orga/settings/review.html:8
-#: eventyay/orga/templates/orga/settings/review.html:24
-#: eventyay/orga/views/event.py:133
-msgid "Review settings"
-msgstr "Ανασκόπηση Ρυθμίσεων"
-
 #: eventyay/orga/templates/orga/base.html:286
 #: eventyay/orga/templates/orga/settings/import_export.html:6
 #: eventyay/orga/templates/orga/settings/import_export.html:9
@@ -35163,7 +35851,7 @@ msgstr "Κωδικοί πρόσβασης"
 #: eventyay/orga/templates/orga/submission/content.html:273
 #: eventyay/orga/templates/orga/submission/content_edit.html:66
 #: eventyay/orga/templates/orga/submission/review.html:11
-#: eventyay/orga/views/dashboard.py:210 eventyay/orga/views/event.py:498
+#: eventyay/orga/views/dashboard.py:210 eventyay/orga/views/event.py:497
 msgid "Reviews"
 msgstr "Αξιολογήσεις"
 
@@ -36429,7 +37117,7 @@ msgstr "Προεπισκόπηση email"
 msgid "Send to outbox"
 msgstr "Αποστολή στα εξερχόμενα"
 
-#: eventyay/orga/templates/orga/mails/_placeholder_group.html:41
+#: eventyay/orga/templates/orga/mails/_placeholder_group.html:37
 msgid "e.g."
 msgstr "π.χ."
 
@@ -36634,6 +37322,16 @@ msgstr "Ταξινόμηση (τα πιο πρόσφατα πρώτα)"
 #: eventyay/orga/templates/orga/mails/sent_list.html:34
 msgid "Sort (oldest first)"
 msgstr "Ταξινόμηση (τα παλαιότερα πρώτα)"
+
+#: eventyay/orga/templates/orga/organizer/list.html:32
+#, fuzzy
+#| msgid "Event"
+#| msgid_plural "Events"
+msgctxt "number of events"
+msgid "Event"
+msgid_plural "Events"
+msgstr[0] "Εκδήλωση"
+msgstr[1] "Εκδηλώσεις"
 
 #: eventyay/orga/templates/orga/organizer/list.html:40
 msgctxt "number of teams"
@@ -37183,12 +37881,6 @@ msgstr ""
 "organizer σε αυτόματες ενσωματώσεις, θα πρέπει να παρέχετε το διακριτικό "
 "ελέγχου ταυτότητας όπως στο API, ως εξής:"
 
-#: eventyay/orga/templates/orga/settings/import_export.html:238
-#: eventyay/orga/templates/orga/settings/import_export.html:431
-#: eventyay/orga/templates/orga/settings/import_export.html:540
-msgid "Documentation"
-msgstr "Documentation"
-
 #: eventyay/orga/templates/orga/settings/import_export.html:241
 #: eventyay/orga/templates/orga/settings/import_export.html:434
 #: eventyay/orga/templates/orga/settings/import_export.html:543
@@ -37250,10 +37942,6 @@ msgstr ""
 #| msgid "Export settings"
 msgid "HTML Export Settings"
 msgstr "Εξαγωγή ρυθμίσεων"
-
-#: eventyay/orga/templates/orga/settings/mail.html:14
-msgid "Email settings"
-msgstr "Ρυθμίσεις email"
 
 #: eventyay/orga/templates/orga/settings/mail.html:17
 #, fuzzy
@@ -37459,13 +38147,14 @@ msgstr "Έναρξη εισαγωγής"
 
 #: eventyay/orga/templates/orga/speaker/information_form.html:5
 #: eventyay/orga/templates/orga/speaker/information_form.html:8
-#: eventyay/orga/templates/orga/speaker/information_list.html:13
 #: eventyay/orga/views/speaker.py:400
+#, fuzzy
+#| msgid "Speaker Information Note"
+#| msgid_plural "Speaker Information Notes"
 msgid "Speaker Information Note"
-msgid_plural "Speaker Information Notes"
-msgstr[0] "Σημείωση για Πληροφορίες Ομιλητή"
-msgstr[1] "Σημειώσεις για Πληροφορίες Ομιλητή"
+msgstr "Σημείωση για Πληροφορίες Ομιλητή"
 
+#: eventyay/orga/templates/orga/speaker/information_list.html:13
 #: eventyay/orga/templates/orga/speaker/information_list.html:16
 #, fuzzy, python-format
 #| msgid "Speaker Information Note"
@@ -38241,25 +38930,25 @@ msgid_plural "sent emails"
 msgstr[0] "απεσταλμένο email"
 msgstr[1] "απεσταλμένα emails"
 
-#: eventyay/orga/views/event.py:134
+#: eventyay/orga/views/event.py:133
 msgid "Review scoring"
 msgstr "Αξιολόγηση της βαθμολογίας"
 
-#: eventyay/orga/views/event.py:135
+#: eventyay/orga/views/event.py:134
 msgid "Review phases"
 msgstr "Φάσεις επανεξέτασης"
 
-#: eventyay/orga/views/event.py:213
+#: eventyay/orga/views/event.py:212
 msgid "Only the last review phase may be open-ended."
 msgstr "Μόνο η τελευταία φάση αξιολόγησης μπορεί να είναι ανοιχτού τέλους."
 
-#: eventyay/orga/views/event.py:215
+#: eventyay/orga/views/event.py:214
 msgid "All review phases except for the first one need a start date."
 msgstr ""
 "Όλες οι φάσεις αξιολόγησης, εκτός από την πρώτη, χρειάζονται ημερομηνία "
 "έναρξης."
 
-#: eventyay/orga/views/event.py:219
+#: eventyay/orga/views/event.py:218
 #, python-brace-format
 msgid ""
 "The review phases '{phase1}' and '{phase2}' overlap. Please make sure that "
@@ -38269,7 +38958,7 @@ msgstr ""
 "ότι οι φάσεις αξιολόγησης δεν επικαλύπτονται και, στη συνέχεια, αποθηκεύστε "
 "ξανά."
 
-#: eventyay/orga/views/event.py:353
+#: eventyay/orga/views/event.py:352
 msgid ""
 "There was a problem with your authentication. Please contact the organizer "
 "for further help."
@@ -38277,11 +38966,11 @@ msgstr ""
 "Υπήρξε πρόβλημα με την ταυτοποίησή σας. Παρακαλούμε επικοινωνήστε με τον "
 "διοργανωτή για περαιτέρω βοήθεια."
 
-#: eventyay/orga/views/event.py:367
+#: eventyay/orga/views/event.py:366
 msgid "You are now part of the team!"
 msgstr "Είστε πλέον μέλος της ομάδας!"
 
-#: eventyay/orga/views/event.py:376 eventyay/orga/views/event.py:408
+#: eventyay/orga/views/event.py:375 eventyay/orga/views/event.py:407
 #, fuzzy
 #| msgid ""
 #| "ALL related data, such as proposals, and speaker profiles, and uploads, "
@@ -38293,53 +38982,53 @@ msgstr ""
 "ΟΛΑ τα σχετικά δεδομένα, όπως προτάσεις, προφίλ ομιλητών και μεταφορτώσεις, "
 "θα διαγραφούν επίσης και δεν είναι δυνατή η επαναφορά τους."
 
-#: eventyay/orga/views/event.py:396 eventyay/orga/views/event.py:428
+#: eventyay/orga/views/event.py:395 eventyay/orga/views/event.py:427
 #, fuzzy
 #| msgid "The confirm code you entered was incorrect."
 msgid "The event name you entered was incorrect."
 msgstr "Ο κωδικός επιβεβαίωσης που εισαγάγατε ήταν εσφαλμένος."
 
-#: eventyay/orga/views/event.py:420
+#: eventyay/orga/views/event.py:419
 #, fuzzy
 #| msgid "Talks Dashboard"
 msgid "Talk Data for"
 msgstr "Πίνακας ελέγχου ομιλιών"
 
-#: eventyay/orga/views/event.py:432
+#: eventyay/orga/views/event.py:431
 #, fuzzy
 #| msgid "The team has been deleted."
 msgid "Talk data has been successfully deleted."
 msgstr "Η ομάδα έχει διαγραφεί."
 
-#: eventyay/orga/views/event.py:517
+#: eventyay/orga/views/event.py:516
 #, fuzzy
 #| msgid "Schedule exports"
 msgid "Schedule HTML export"
 msgstr "Προγραμματίστε τις εξαγωγές"
 
-#: eventyay/orga/views/event.py:565
+#: eventyay/orga/views/event.py:564
 #, fuzzy
 #| msgid "Login failed. Please try again."
 msgid "Unknown action. Please try again."
 msgstr "Η σύνδεση απέτυχε. Παρακαλώ δοκιμάστε ξανά."
 
-#: eventyay/orga/views/event.py:575
+#: eventyay/orga/views/event.py:574
 msgid "Please choose whether to import speakers or schedule."
 msgstr ""
 
-#: eventyay/orga/views/event.py:587
+#: eventyay/orga/views/event.py:586
 #, fuzzy
 #| msgid "Invalid email or password. Please try again."
 msgid "Could not establish a session for file upload. Please try again."
 msgstr "Μη έγκυρο email ή κωδικός πρόσβασης. Παρακαλώ δοκιμάστε ξανά."
 
-#: eventyay/orga/views/event.py:613
+#: eventyay/orga/views/event.py:612
 #, fuzzy
 #| msgid "Please choose an earlier date."
 msgid "Please choose a valid export target."
 msgstr "Παρακαλούμε επιλέξτε μια προγενέστερη ημερομηνία."
 
-#: eventyay/orga/views/event.py:651
+#: eventyay/orga/views/event.py:650
 msgid "No data to be exported"
 msgstr "Δεν υπάρχουν δεδομένα προς εξαγωγή"
 
@@ -38377,7 +39066,7 @@ msgstr "Το mail έχει σταλεί."
 msgid "{count} mails have been sent."
 msgstr "{count} mails έχουν ήδη σταλεί."
 
-#: eventyay/orga/views/mails.py:223 eventyay/plugins/sendmail/views.py:438
+#: eventyay/orga/views/mails.py:223 eventyay/plugins/sendmail/views.py:439
 #, python-brace-format
 msgid "Do you really want to delete this mail?"
 msgid_plural "Do you really want to purge {count} mails?"
@@ -38430,7 +39119,7 @@ msgstr "Δεν υπάρχουν παραλήπτες που να ταιριάζ�
 
 #: eventyay/orga/views/mails.py:413 eventyay/plugins/sendmail/views.py:147
 #: eventyay/plugins/sendmail/views.py:410
-#: eventyay/plugins/sendmail/views.py:597
+#: eventyay/plugins/sendmail/views.py:601
 #, python-brace-format
 msgid "Subject: {subject}"
 msgstr "Θέμα: {subject}"
@@ -39165,19 +39854,19 @@ msgstr "Ετικέτες κουπονιών"
 msgid "Sample tag"
 msgstr "Δείγμα Πολιτείας"
 
-#: eventyay/plugins/badges/signals.py:210
+#: eventyay/plugins/badges/signals.py:213
 msgid "Badge layout created."
 msgstr "Δημιουργήθηκε σχέδιο τατυτότητας."
 
-#: eventyay/plugins/badges/signals.py:211
+#: eventyay/plugins/badges/signals.py:214
 msgid "Badge layout deleted."
 msgstr "Διαγράφηκε το σχέδιο τατυτότητας."
 
-#: eventyay/plugins/badges/signals.py:212
+#: eventyay/plugins/badges/signals.py:215
 msgid "Badge layout changed."
 msgstr "Η διάταξη του badge άλλαξε."
 
-#: eventyay/plugins/badges/signals.py:226
+#: eventyay/plugins/badges/signals.py:229
 #, python-brace-format
 msgid "Badge layout {val}"
 msgstr "Διάταξη Badge {val}"
@@ -40699,14 +41388,14 @@ msgid "There are no orders matching this selection."
 msgstr "Δεν υπάρχουν εντολές που ταιριάζουν με αυτήν την επιλογή."
 
 #: eventyay/plugins/sendmail/views.py:194
-#: eventyay/plugins/sendmail/views.py:680
+#: eventyay/plugins/sendmail/views.py:684
 #, fuzzy, python-brace-format
 #| msgid "Your email has been sent to the outbox."
 msgid "Your email has been scheduled for {datetime} ({timezone})."
 msgstr "Το email σας έχει σταλεί στα εξερχόμενα."
 
 #: eventyay/plugins/sendmail/views.py:202
-#: eventyay/plugins/sendmail/views.py:688
+#: eventyay/plugins/sendmail/views.py:692
 msgid "Your email has been sent to the outbox."
 msgstr "Το email σας έχει σταλεί στα εξερχόμενα."
 
@@ -40719,7 +41408,7 @@ msgid "The mail has been queued for sending."
 msgstr "Το mail έχει τεθεί σε ουρά για αποστολή."
 
 #: eventyay/plugins/sendmail/views.py:368
-#: eventyay/plugins/sendmail/views.py:563
+#: eventyay/plugins/sendmail/views.py:567
 msgid "We could not save the email. See below for details."
 msgstr ""
 "Δεν μπορέσαμε να αποθηκεύσουμε το email. Δείτε παρακάτω για λεπτομέρειες."
@@ -40730,38 +41419,38 @@ msgstr "Αυτό το email έχει ήδη σταλεί και δεν μπορ�
 
 #: eventyay/plugins/sendmail/views.py:397
 #: eventyay/plugins/sendmail/views.py:406
-#: eventyay/plugins/sendmail/views.py:583
-#: eventyay/plugins/sendmail/views.py:592
+#: eventyay/plugins/sendmail/views.py:587
+#: eventyay/plugins/sendmail/views.py:596
 msgid "Invalid placeholder(s): {}"
 msgstr "Μη έγκυρο(α) σύμβολο(α) κράτησης θέσης: {}"
 
-#: eventyay/plugins/sendmail/views.py:445
+#: eventyay/plugins/sendmail/views.py:449
 msgid "This mail has already been sent and cannot be deleted."
 msgstr "Αυτό το mail έχει ήδη σταλεί και δεν μπορεί να διαγραφεί."
 
-#: eventyay/plugins/sendmail/views.py:454
+#: eventyay/plugins/sendmail/views.py:458
 msgid "The mail and its related data have been deleted."
 msgstr "Το μήνυμα και τα σχετικά δεδομένα του έχουν διαγραφεί."
 
-#: eventyay/plugins/sendmail/views.py:473
+#: eventyay/plugins/sendmail/views.py:477
 #, python-brace-format
 msgid "Do you really want to purge the mail?"
 msgid_plural "Do you really want to purge {count} mails?"
 msgstr[0] "Θέλετε πραγματικά να εκκαθαρίσετε το μήνυμα;"
 msgstr[1] "Θέλετε πραγματικά να εκκαθαρίσετε {count} μηνύματα;"
 
-#: eventyay/plugins/sendmail/views.py:489
+#: eventyay/plugins/sendmail/views.py:493
 #, python-brace-format
 msgid "One mail has been discarded."
 msgid_plural "{count} mails have been discarded."
 msgstr[0] "Ένα μήνυμα απορρίφθηκε."
 msgstr[1] "Έχουν απορριφθεί {count} μηνύματα."
 
-#: eventyay/plugins/sendmail/views.py:623
+#: eventyay/plugins/sendmail/views.py:627
 msgid "There are no valid recipients for the selected teams."
 msgstr "Δεν υπάρχουν έγκυροι παραλήπτες για τις επιλεγμένες ομάδες."
 
-#: eventyay/plugins/socialauth/adapter.py:32
+#: eventyay/plugins/socialauth/adapter.py:33
 #: eventyay/plugins/socialauth/views.py:45
 msgid "This login method is not available."
 msgstr "Αυτή η μέθοδος σύνδεσης δεν είναι διαθέσιμη."
@@ -41012,19 +41701,19 @@ msgstr "(Ιδια όπως παραπάνω)"
 msgid "PDF ticket layout"
 msgstr "Layout του PDF εισιτηρίου"
 
-#: eventyay/plugins/ticketoutputpdf/signals.py:117
+#: eventyay/plugins/ticketoutputpdf/signals.py:120
 msgid "Ticket layout created."
 msgstr "Δημιουργήθηκε το layout των εισιτηρίων."
 
-#: eventyay/plugins/ticketoutputpdf/signals.py:118
+#: eventyay/plugins/ticketoutputpdf/signals.py:121
 msgid "Ticket layout deleted."
 msgstr "Διαγράφηκε το layout των εισιτηρίων."
 
-#: eventyay/plugins/ticketoutputpdf/signals.py:119
+#: eventyay/plugins/ticketoutputpdf/signals.py:122
 msgid "Ticket layout changed."
 msgstr "Έγινε αλλαγή στο layout των εισιτηρίων."
 
-#: eventyay/plugins/ticketoutputpdf/signals.py:136
+#: eventyay/plugins/ticketoutputpdf/signals.py:139
 #, python-brace-format
 msgid "Ticket layout {val}"
 msgstr "Το layout του εισιτηρίου {val}"
@@ -43338,8 +44027,8 @@ msgstr "Ζωντανές εκδηλώσεις"
 
 #: eventyay/presale/templates/pretixpresale/startpage.html:19
 #: eventyay/presale/templates/pretixpresale/startpage.html:20
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:96
 #: eventyay/presale/templates/pretixpresale/startpage_base.html:97
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:98
 msgid "Search events"
 msgstr "Αναζήτηση εκδηλώσεων"
 
@@ -43372,17 +44061,11 @@ msgstr "Δείτε όλες τις εκδηλώσεις"
 msgid "Browse live events on"
 msgstr "Περιηγηθείτε τις ζωντανές εκδηλώσεις στο"
 
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:104
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:105
 msgid "No matching events"
 msgstr "Καμία αντίστοιχη εκδήλωση"
 
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:152
-#, fuzzy
-#| msgid "Toggle navigation"
-msgid "Main navigation"
-msgstr "Εναλλαγή πλοήγησης"
-
-#: eventyay/presale/templates/pretixpresale/startpage_base.html:188
+#: eventyay/presale/templates/pretixpresale/startpage_base.html:189
 msgid "Start page header"
 msgstr "Επικεφαλίδα αρχικής σελίδας"
 
@@ -43972,6 +44655,11 @@ msgstr "μη αποδεκτή"
 msgid "Organisers"
 msgstr "Οργανωτές"
 
+#, python-format
+#~ msgctxt "invoice"
+#~ msgid "Page %d of %d"
+#~ msgstr "Σελίδα %d από %d"
+
 #~ msgid "Video Admin"
 #~ msgstr "Διαχειριστής Βίντεο"
 
@@ -44288,9 +44976,6 @@ msgstr "Οργανωτές"
 
 #~ msgid "Hide video link"
 #~ msgstr "Απόκρυψη συνδέσμου βίντεο"
-
-#~ msgid "Show video link"
-#~ msgstr "Εμφάνιση συνδέσμου βίντεο"
 
 #~ msgid "The video module is not enabled for this event."
 #~ msgstr "Η ενότητα βίντεο δεν είναι ενεργοποιημένη για αυτή την εκδήλωση."
@@ -45035,10 +45720,6 @@ msgstr "Οργανωτές"
 #~ msgid "Copy event link"
 #~ msgstr "Αντιγραφή συνδέσμου εκδήλωσης"
 
-#, python-format
-#~ msgid "Page %(page)s of %(of)s"
-#~ msgstr "Σελίδα %(page)s από %(of)s"
-
 #, python-brace-format
 #~ msgid "The current, automatically generated GUID is: {guid}."
 #~ msgstr "Το τρέχον, αυτόματα παραγόμενο GUID είναι: {guid}."
@@ -45160,12 +45841,6 @@ msgstr "Οργανωτές"
 
 #~ msgid "Filetype not allowed!"
 #~ msgstr "Δεν επιτρέπεται ο τύπος αρχείου!"
-
-#~ msgid ""
-#~ "You already used this slug for a different event. Please choose a new one."
-#~ msgstr ""
-#~ "Έχετε ήδη χρησιμοποιήσει αυτό το slug για ένα διαφορετικό συμβάν. "
-#~ "Επιλέξτε ένα νέο."
 
 #~ msgid "Stripe Connect: Secret key"
 #~ msgstr "Σύνδεση Stripe: Μυστικό κλειδί"
@@ -45321,9 +45996,6 @@ msgstr "Οργανωτές"
 
 #~ msgid "Question dependency"
 #~ msgstr "Εξάρτηση από ερωτήσεις"
-
-#~ msgid "Create a new question"
-#~ msgstr "Δημιουργία μιας νέας ερώτησης"
 
 #~ msgid "The list below shows all teams that exist within this organizer."
 #~ msgstr ""
@@ -46186,9 +46858,6 @@ msgstr "Οργανωτές"
 #~ msgid "It looks like you canceled the PayPal payment"
 #~ msgstr "Φαίνεται ότι ακυρώσατε την πληρωμή PayPal"
 
-#~ msgid "Your PayPal account has been disconnected."
-#~ msgstr "Ο λογαριασμός σας στην PayPal έχει αποσυνδεθεί."
-
 #~ msgid "Stripe"
 #~ msgstr "Stripe"
 
@@ -46606,11 +47275,6 @@ msgstr "Οργανωτές"
 #~ msgstr ""
 #~ "Θέλετε πραγματικά να αναδημιουργήσετε τους κωδικούς σας έκτακτης ανάγκης;"
 
-#, fuzzy
-#~| msgid "Connect"
-#~ msgid "Disconnect"
-#~ msgstr "Σύνδεση"
-
 #~ msgid ""
 #~ "We're waiting for an answer from the payment provider regarding your "
 #~ "payment. Please contact us if this takes more than a few days."
@@ -46840,9 +47504,6 @@ msgstr "Οργανωτές"
 #~ msgid "pretixdesk – for desktop computers"
 #~ msgstr "pretixdesk - για επιτραπέζιους υπολογιστές"
 
-#~ msgid "Check-in device configuration"
-#~ msgstr "Διαμόρφωση συσκευών ελέγχου check-in"
-
 #, fuzzy
 #~| msgid "Create app configuration"
 #~ msgid "Scroll down to create a configuration"
@@ -46863,9 +47524,6 @@ msgstr "Οργανωτές"
 
 #~ msgid "Existing app configurations"
 #~ msgstr "Υπάρχουσες διαμορφώσεις εφαρμογής"
-
-#~ msgid "Create a new configuration"
-#~ msgstr "Δημιουργήστε μια νέα διαμόρφωση"
 
 #~ msgid "Show info"
 #~ msgstr "Εμφάνιση πληροφοριών"
@@ -46926,9 +47584,6 @@ msgstr "Οργανωτές"
 #~ "Οι εντολές λειτουργίας δοκιμής θα σαρωθούν μόνο εάν σαρώσετε ηλεκτρονικά. "
 #~ "Αν πραγματοποιείτε σάρωση σε ασύγχρονη λειτουργία, οι εντολές της "
 #~ "λειτουργίας δοκιμής δεν θα υπάρχουν."
-
-#~ msgid "The selected configuration does not exist."
-#~ msgstr "Η επιλεγμένη διαμόρφωση δεν υπάρχει."
 
 #~ msgid "The selected configuration has been deleted."
 #~ msgstr "Η επιλεγμένη διαμόρφωση έχει διαγραφεί."

@@ -11,11 +11,7 @@
         {% elif tag == "user" %}
           {% translate "User" %}
         {% elif tag == "event" %}
-          {% blocktranslate trimmed count count=1 %}
-            Event
-          {% plural %}
-            Events
-          {% endblocktranslate %}
+          {% translate "Event" %}
         {% elif tag == "other" %}
           {% translate "Other" context "category of items" %}
         {% else %}

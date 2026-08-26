@@ -1,11 +1,13 @@
 from django.core.management.commands.compilemessages import Command as CompilemessagesCommand
 
-from eventyay.common.locale_extract import merge_ignore_patterns
+from eventyay.common.locale_extract import COMPILE_IGNORE_PATTERNS, merge_ignore_patterns
 
 
 class Command(CompilemessagesCommand):
-    help = 'Compile gettext catalogs, skipping node_modules/dist/build.'
+    help = 'Compile project gettext catalogs, skipping .venv and vendor trees.'
 
     def handle(self, **options):
-        options['ignore_patterns'] = merge_ignore_patterns(options.get('ignore_patterns'))
+        options['ignore_patterns'] = merge_ignore_patterns(
+            options.get('ignore_patterns'), COMPILE_IGNORE_PATTERNS
+        )
         return super().handle(**options)

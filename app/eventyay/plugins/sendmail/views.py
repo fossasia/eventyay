@@ -435,7 +435,11 @@ class DeleteEmailQueueView(EventPermissionRequiredMixin, TemplateView):
         )
 
     def question(self):
-        return _("Do you really want to delete this mail?")
+        return ngettext_lazy(
+            'Do you really want to delete this mail?',
+            'Do you really want to purge {count} mails?',
+            1,
+        )
 
     def post(self, request, *args, **kwargs):
         mail = self.mail

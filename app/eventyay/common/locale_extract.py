@@ -1,5 +1,7 @@
 """Vendor and generated trees that Django gettext should not scan."""
 
+from collections.abc import Iterable, Sequence
+
 LOCALE_IGNORE_PATTERNS = (
     'node_modules',
     'dist',
@@ -11,12 +13,23 @@ LOCALE_IGNORE_PATTERNS = (
     'eventyay/static/vendored/*',
 )
 
+# compilemessages walks the whole tree. makemessages already skips
+# dot-directories via Django's default .* pattern; compilemessages does not.
+COMPILE_IGNORE_PATTERNS = LOCALE_IGNORE_PATTERNS + (
+    '.venv',
+    'venv',
+    'site-packages',
+)
+
 SOURCE_LANGUAGE = 'en'
 
 
-def merge_ignore_patterns(ignore_patterns):
+def merge_ignore_patterns(
+    ignore_patterns: Iterable[str] | None,
+    extra: Sequence[str] = LOCALE_IGNORE_PATTERNS,
+) -> list[str]:
     merged = list(ignore_patterns or [])
-    for pattern in LOCALE_IGNORE_PATTERNS:
+    for pattern in extra:
         if pattern not in merged:
             merged.append(pattern)
     return merged
