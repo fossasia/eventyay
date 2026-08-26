@@ -53,9 +53,9 @@ class FeedbackForm(ReadOnlyFlag, forms.ModelForm):
         parent_id = self.cleaned_data.get('parent')
         if parent_id:
             try:
-                parent_feedback = Feedback.objects.get(id=parent_id)
-                if parent_feedback.talk_id != self.instance.talk_id:
-                    raise forms.ValidationError(_('Parent feedback does not belong to this session.'))
+                # Scope via the talk relation to avoid cross-session replies
+                # and satisfy django_scopes on Feedback queries.
+                self.instance.talk.feedback.get(id=parent_id)
             except Feedback.DoesNotExist:
                 raise forms.ValidationError(_('Parent feedback does not exist.'))
         return parent_id

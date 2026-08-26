@@ -1325,8 +1325,10 @@ class FeedbackUpdateStatus(EventPermissionRequired, View):
             else:
                 messages.error(request, _('Cannot unban anonymous user.'))
             
-        next_url = request.GET.get('next', request.event.orga_urls.feedback)
-        return redirect(next_url)
+        next_url = request.GET.get('next')
+        if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
+            return redirect(next_url)
+        return redirect(request.event.orga_urls.feedback)
 
 
 class FeedbackExportView(EventPermissionRequired, View):

@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from eventyay.api.serializers.i18n import I18nAwareModelSerializer
+from eventyay.api.versions import CURRENT_VERSIONS, register_serializer
 from eventyay.base.models import Feedback, User
 
 
@@ -19,9 +20,10 @@ class AuthorSerializer(serializers.ModelSerializer):
         return obj.avatar_url or ''
 
 
+@register_serializer(versions=CURRENT_VERSIONS)
 class FeedbackReplySerializer(I18nAwareModelSerializer):
     author = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = Feedback
         fields = (
@@ -38,6 +40,7 @@ class FeedbackReplySerializer(I18nAwareModelSerializer):
         return AuthorSerializer(obj.author).data
 
 
+@register_serializer(versions=CURRENT_VERSIONS)
 class FeedbackSerializer(I18nAwareModelSerializer):
     author = serializers.SerializerMethodField()
     replies = serializers.SerializerMethodField()

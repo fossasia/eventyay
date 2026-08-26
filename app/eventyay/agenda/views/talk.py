@@ -871,7 +871,7 @@ class TalkFeedbackPublicActionView(TalkMixin, View):
             elif action == 'ban':
                 if feedback.author:
                     request.event.banned_users.add(feedback.author)
-                    feedback.status = 'deleted'
+                    feedback.status = 'hidden'
                     feedback.save(update_fields=['status'])
                     messages.success(request, _('User banned successfully.'))
                 else:

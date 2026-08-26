@@ -156,14 +156,16 @@
                                                     <button type="submit" name="action" value="hide" class="dropdown-item dropdown-item-clean">
                                                         {% translate 'Hide' %}
                                                     </button>
-                                                    {% if fb.author and fb.author.id in banned_user_ids %}
-                                                        <button type="submit" name="action" value="unban" class="dropdown-item dropdown-item-clean">
-                                                            {% translate 'Unban User' %}
-                                                        </button>
-                                                    {% else %}
-                                                        <button type="submit" name="action" value="ban" class="dropdown-item dropdown-item-clean" data-confirm-message="{% translate 'Are you sure you want to ban this user?' %}">
-                                                            {% translate 'Ban User' %}
-                                                        </button>
+                                                    {% if fb.author %}
+                                                        {% if fb.author.id in banned_user_ids %}
+                                                            <button type="submit" name="action" value="unban" class="dropdown-item dropdown-item-clean">
+                                                                {% translate 'Unban User' %}
+                                                            </button>
+                                                        {% else %}
+                                                            <button type="submit" name="action" value="ban" class="dropdown-item dropdown-item-clean" data-confirm-message="{% translate 'Are you sure you want to ban this user?' %}">
+                                                                {% translate 'Ban User' %}
+                                                            </button>
+                                                        {% endif %}
                                                     {% endif %}
                                                 {% endif %}
                                             </form>
