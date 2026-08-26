@@ -2589,6 +2589,23 @@ class Event(
                 return None
 
     @cached_property
+    def preview_image_url_small(self):
+        """
+        Return a smaller 400×225 resolved URL of the preview image for responsive srcset delivery.
+        """
+        path = self._visible_preview_image_path or self._visible_header_image_path or self._visible_logo_path
+        if not path:
+            return None
+
+        if is_http_url(str(path)):
+            return path
+
+        try:
+            return get_thumbnail(path, '400x225^').thumb.url
+        except Exception:
+            return self.preview_image_url_with_fallback
+
+    @cached_property
     def visible_logo_url(self):
         from django.core.files.storage import default_storage
 
