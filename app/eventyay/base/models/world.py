@@ -31,7 +31,6 @@ from eventyay.base.models.storage_model import StoredFile
 
 FEATURE_FLAGS = [
     "schedule-control",
-    "iframe-player",
     "roulette",
     "muxdata",
     "page.landing",

@@ -1,5 +1,5 @@
 <template lang="pug">
-bunt-input-outline-container.c-rich-text-editor(ref="outline", :label="label")
+bunt-input-outline-container.c-rich-text-editor(ref="outline", :label="label", :style="tooltipStyle")
 	.toolbar(ref="toolbar")
 		.buttongroup
 			bunt-icon-button.ql-bold(v-tooltip="$t('RichTextEditor:bold:tooltip')") format-bold
@@ -41,7 +41,8 @@ bunt-input-outline-container.c-rich-text-editor(ref="outline", :label="label")
 </template>
 <script setup>
 /* global ENV_DEVELOPMENT */
-import { ref, markRaw, onMounted, onBeforeUnmount } from 'vue'
+import { ref, markRaw, computed, onMounted, onBeforeUnmount } from 'vue'
+import { useStore } from 'vuex'
 import Quill from 'quill'
 import i18n from 'i18n'
 import BuntTheme from 'lib/quill/BuntTheme'
@@ -58,6 +59,18 @@ const props = defineProps({
 	label: String,
 })
 const emit = defineEmits(['update:modelValue'])
+
+const store = useStore()
+const tooltipStyle = computed(() => {
+	store.state.userLocale
+	return {
+		'--ql-tooltip-visit-url': JSON.stringify(i18n.t('Visit URL:')),
+		'--ql-tooltip-edit': JSON.stringify(i18n.t('Edit')),
+		'--ql-tooltip-remove': JSON.stringify(i18n.t('Remove')),
+		'--ql-tooltip-save': JSON.stringify(i18n.t('Save')),
+		'--ql-tooltip-enter-link': JSON.stringify(i18n.t('Enter link:')),
+	}
+})
 
 const outline = ref(null)
 const toolbar = ref(null)
@@ -211,7 +224,7 @@ onMounted(() => {
 		white-space: nowrap
 
 		&::before
-			content: "Visit URL:"
+			content: var(--ql-tooltip-visit-url)
 			line-height: 26px
 			margin-right: 8px
 
@@ -233,12 +246,12 @@ onMounted(() => {
 
 		a.ql-action::after
 			border-right: 1px solid #ccc
-			content: 'Edit'
+			content: var(--ql-tooltip-edit)
 			margin-left: 16px
 			padding-right: 8px
 
 		a.ql-remove::before
-			content: 'Remove'
+			content: var(--ql-tooltip-remove)
 			margin-left: 8px
 
 		a
@@ -253,9 +266,9 @@ onMounted(() => {
 
 		a.ql-action::after
 			border-right: 0px
-			content: 'Save'
+			content: var(--ql-tooltip-save)
 			padding-right: 0px
 
 	.ql-tooltip[data-mode=link]::before
-		content: "Enter link:"
+		content: var(--ql-tooltip-enter-link)
 </style>

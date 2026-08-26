@@ -1,7 +1,7 @@
 <template lang="pug">
 .c-sidebar-addons
-	h2 Sidebar addons
-	bunt-switch(name="enable-chat", v-model="hasChat", label="Enable Chat")
+	h2 {{ $t('Sidebar addons') }}
+	bunt-switch(name="enable-chat", v-model="hasChat", :label="$t('Enable Chat')")
 	template(v-if="hasChat")
 		button.webhook-toggle(
 			type="button"
@@ -9,18 +9,18 @@
 			@click="toggleWebhookConfig"
 		)
 			span.webhook-toggle-icon {{ showWebhookConfig ? '▼' : '►' }}
-			span Webhook
+			span {{ $t('Webhook') }}
 			span.webhook-configured-icon(v-if="webhookConfigured", role="img", aria-label="Webhook configured", title="Webhook configured") ✓
 		.webhook-config(v-if="showWebhookConfig")
-			h4 Chat Webhook
-			p.hint Send chat messages to an external endpoint in real-time
-			bunt-input-outline-container(label="Webhook URL")
+			h4 {{ $t('Chat Webhook') }}
+			p.hint {{ $t('Send chat messages to an external endpoint in real-time') }}
+			bunt-input-outline-container(:label="$t('Webhook URL')")
 				template(#default="{focus, blur}")
 					input(
 						name="chat-webhook-endpoint-url"
 						v-model="modules['chat.native'].config.webhook_url"
-						aria-label="Webhook URL"
-						placeholder="https://example.com/webhook"
+						:aria-label="$t('Webhook URL')"
+						:placeholder="$t('https://example.com/webhook')"
 						type="url"
 						autocomplete="off"
 						data-1p-ignore
@@ -29,19 +29,19 @@
 						@focus="focus"
 						@blur="blur"
 					)
-			bunt-input-outline-container(v-if="!isEditingSecret && modules['chat.native'].config.webhook_hmac_secret" label="HMAC signing secret")
+			bunt-input-outline-container(v-if="!isEditingSecret && modules['chat.native'].config.webhook_hmac_secret", :label="$t('HMAC signing secret')")
 				template(#default)
 					.secret-value-wrapper
 						span.secret-value ••••••••••••••••••••••••••••••••
-						button.btn-edit-secret(type="button" @click="isEditingSecret = true") Edit
+						button.btn-edit-secret(type="button" @click="isEditingSecret = true") {{ $t('Edit') }}
 			template(v-else)
-				bunt-input-outline-container(label="HMAC signing secret")
+				bunt-input-outline-container(:label="$t('HMAC signing secret')")
 					template(#default="{focus, blur}")
 						input(
 							name="chat-webhook-hmac-shared-key"
 							v-model="modules['chat.native'].config.webhook_hmac_secret"
-							aria-label="HMAC signing secret"
-							placeholder="shared-secret-key"
+							:aria-label="$t('HMAC signing secret')"
+							:placeholder="$t('shared-secret-key')"
 							type="text"
 							autocomplete="off"
 							data-1p-ignore
@@ -50,13 +50,13 @@
 							@focus="focus"
 							@blur="blur"
 						)
-				p.hint-small Used to sign chat webhook payloads. This is not your Eventyay password.
-			p.hint-small(v-if="modules['chat.native'].config.webhook_url") Every chat message and reaction will be POSTed to this URL with an HMAC-SHA256 signature
-	bunt-switch(name="enable-qa", v-model="hasQuestions", label="Enable Q&A")
+				p.hint-small {{ $t('Used to sign chat webhook payloads. This is not your Eventyay password.') }}
+			p.hint-small(v-if="modules['chat.native'].config.webhook_url") {{ $t('Every chat message and reaction will be POSTed to this URL with an HMAC-SHA256 signature') }}
+	bunt-switch(name="enable-qa", v-model="hasQuestions", :label="$t('Enable Q&A')")
 	template(v-if="hasQuestions")
-		bunt-checkbox(v-model="modules['question'].config.active", label="Active", name="active")
-		bunt-checkbox(v-model="modules['question'].config.requires_moderation", label="Questions require moderation", name="requires_moderation")
-	bunt-switch(v-if="$features.enabled('polls')", name="enable-polls", v-model="hasPolls", label="Enable Polls")
+		bunt-checkbox(v-model="modules['question'].config.active", :label="$t('Active')", name="active")
+		bunt-checkbox(v-model="modules['question'].config.requires_moderation", :label="$t('Questions require moderation')", name="requires_moderation")
+	bunt-switch(v-if="$features.enabled('polls')", name="enable-polls", v-model="hasPolls", :label="$t('Enable Polls')")
 </template>
 <script>
 import mixin from './mixin'

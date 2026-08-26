@@ -1,0 +1,340 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: i18next-conv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"POT-Creation-Date: 2026-08-24T07:39:34.354Z\n"
+"PO-Revision-Date: 2026-08-24T07:39:34.354Z\n"
+"Language: pl\n"
+
+msgid "+{{count}} more"
+msgstr ""
+
+msgid "+{{count}} more speakers"
+msgstr ""
+
+msgid "+{{count}} more speakers_one"
+msgstr ""
+
+msgid "+{{count}} more speakers_other"
+msgstr ""
+
+msgid "+{{count}} more_one"
+msgstr ""
+
+msgid "+{{count}} more_other"
+msgstr ""
+
+msgid "A \\u2192 Z"
+msgstr ""
+
+msgid "A → Z"
+msgstr ""
+
+msgid "Abstract"
+msgstr ""
+
+msgid "Add to calendar"
+msgstr ""
+
+msgid "All sessions"
+msgstr ""
+
+msgid "An error occurred while loading the schedule. Please try again later."
+msgstr ""
+
+msgid "Anonymous (name not shared)"
+msgstr ""
+
+msgid "A–Z"
+msgstr ""
+
+msgid "Back"
+msgstr ""
+
+msgid "Biography"
+msgstr ""
+
+msgid "By room"
+msgstr ""
+
+msgid "Calendar"
+msgstr ""
+
+msgid "Calendar View"
+msgstr ""
+
+msgid "Clear"
+msgstr ""
+
+msgid "Clear search"
+msgstr ""
+
+msgid "Coming soon"
+msgstr ""
+
+msgid "Could not load speakers. Please try again."
+msgstr ""
+
+msgid "Could not save favourites in this browser. Please check your browser storage settings."
+msgstr ""
+
+msgid "Description"
+msgstr ""
+
+msgid "Downloads"
+msgstr ""
+
+msgid "Exit Fullscreen"
+msgstr ""
+
+msgid "Export"
+msgstr ""
+
+msgid "Exports"
+msgstr ""
+
+msgid "External Link"
+msgstr ""
+
+msgid "Featured"
+msgstr ""
+
+msgid "Featured Speakers"
+msgstr ""
+
+msgid "Filter by recording"
+msgstr ""
+
+msgid "Filters"
+msgstr ""
+
+msgid "Fullscreen"
+msgstr ""
+
+msgid "Go to current version"
+msgstr ""
+
+msgid "Hide"
+msgstr ""
+
+msgid "Include datetime"
+msgstr ""
+
+msgid "Include room"
+msgstr ""
+
+msgid "Join room"
+msgstr ""
+
+msgid "Language"
+msgstr ""
+
+msgid "Latest"
+msgstr ""
+
+msgid "List"
+msgstr ""
+
+msgid "List View"
+msgstr ""
+
+msgid "Make your starred sessions visible to others. You can open someone else's starred list only if they have enabled sharing."
+msgstr ""
+
+msgid "More"
+msgstr ""
+
+msgid "More speakers"
+msgstr ""
+
+msgid "Most popular"
+msgstr ""
+
+msgid "Most popular first"
+msgstr ""
+
+msgid "Next days"
+msgstr ""
+
+msgid "No"
+msgstr ""
+
+msgid "No file provided"
+msgstr ""
+
+msgid "No response"
+msgstr ""
+
+msgid "No schedule has been published yet. Please check back later."
+msgstr ""
+
+msgid "No speakers found."
+msgstr ""
+
+msgid "No starred sessions."
+msgstr ""
+
+msgid "No {{name}} available"
+msgstr ""
+
+msgid "Not recorded"
+msgstr ""
+
+msgid "Only available on the public schedule once a schedule is released and public."
+msgstr ""
+
+msgid "Other Timezones"
+msgstr ""
+
+msgid "Previous days"
+msgstr ""
+
+msgid "Print"
+msgstr ""
+
+msgid "Recorded only"
+msgstr ""
+
+msgid "Reset all filters"
+msgstr ""
+
+msgid "Resource"
+msgstr ""
+
+msgid "Rooms"
+msgstr ""
+
+msgid "Search"
+msgstr ""
+
+msgid "Search sessions…"
+msgstr ""
+
+msgid "Search speakers\\u2026"
+msgstr ""
+
+msgid "Search speakers…"
+msgstr ""
+
+msgid "Search timezones…"
+msgstr ""
+
+msgid "Session video"
+msgstr ""
+
+msgid "Sessions"
+msgstr ""
+
+msgid "Share starred sessions"
+msgstr ""
+
+msgid "Sorry, no matching options."
+msgstr ""
+
+msgid "Sort"
+msgstr ""
+
+msgid "Speaker"
+msgstr ""
+
+msgid "Speaker name not provided"
+msgstr ""
+
+msgid "Speakers"
+msgstr ""
+
+msgid "Starred"
+msgstr ""
+
+msgid "Starred by"
+msgstr ""
+
+msgid "Switch to details view"
+msgstr ""
+
+msgid "Switch to list view"
+msgstr ""
+
+msgid "This room has live interpretation."
+msgstr ""
+
+msgid "This session will not be recorded."
+msgstr ""
+
+msgid "Track"
+msgstr ""
+
+msgid "Tracks"
+msgstr ""
+
+msgid "Types"
+msgstr ""
+
+msgid "View Changelog"
+msgstr ""
+
+msgid "View Video"
+msgstr ""
+
+msgid "View all"
+msgstr ""
+
+msgid "View speaker profile"
+msgstr ""
+
+msgid "Watch live"
+msgstr ""
+
+msgid "Yes"
+msgstr ""
+
+msgid "You are currently viewing an older schedule version."
+msgstr ""
+
+msgid "You are currently viewing the editable schedule version, which is unreleased and may change at any time."
+msgstr ""
+
+msgid "You are currently viewing the unreleased schedule preview. It may change at any time and is not visible to the public."
+msgstr ""
+
+msgid "Your favourites can only be saved locally in this browser. Please sign in or register to sync starred sessions and use more features. Locally saved stars may be lost if you clear your browser data; we are not responsible for data loss in this case."
+msgstr ""
+
+msgid "Z \\u2192 A"
+msgstr ""
+
+msgid "Z → A"
+msgstr ""
+
+msgid "Z–A"
+msgstr ""
+
+msgid "comfortable view"
+msgstr ""
+
+msgid "compact view"
+msgstr ""
+
+msgid "current"
+msgstr ""
+
+msgid "default view"
+msgstr ""
+
+msgid "h"
+msgstr ""
+
+msgid "iCal"
+msgstr ""
+
+msgid "live"
+msgstr ""
+
+msgid "min"
+msgstr ""
+
+msgid "{{ext}} Document"
+msgstr ""
