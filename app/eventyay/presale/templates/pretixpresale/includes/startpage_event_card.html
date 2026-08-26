@@ -5,6 +5,7 @@
 {% eventurl event "presale:event.index" as event_url %}
 {% abseventurl event "presale:event.index" as event_url_abs %}
 {% with event.preview_image_url_with_fallback as event_image_url %}
+{% with event.preview_image_url_small as event_image_url_small %}
 {% with event.social_image_signature as share_image_signature %}
 <article
     class="startpage-event-card"
@@ -15,7 +16,16 @@
 >
     <a class="startpage-event-media" href="{{ event_url }}">
         {% if event_image_url %}
-            <img src="{{ event_image_url }}" alt="{{ event.name|event_localize }}">
+            <img src="{{ event_image_url }}"
+                 {% if event_image_url_small and event_image_url_small != event_image_url %}
+                     srcset="{{ event_image_url_small }} 400w, {{ event_image_url }} 800w"
+                     sizes="(max-width: 600px) 100vw, 400px"
+                 {% endif %}
+                 alt="{{ event.name|event_localize }}"
+                 width="800"
+                 height="450"
+                 decoding="async"
+                 {% if is_lcp %}fetchpriority="high"{% else %}loading="lazy"{% endif %}>
         {% else %}
             <div class="startpage-event-media-placeholder">
                 <i class="fa fa-calendar"></i>
@@ -53,5 +63,6 @@
         </button>
     </div>
 </article>
+{% endwith %}
 {% endwith %}
 {% endwith %}

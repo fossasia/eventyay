@@ -38,6 +38,13 @@ def _find_products_nav(nav):
     return None
 
 
+def _find_orders_nav(nav):
+    for item in nav:
+        if str(item.get('label')) == 'Orders':
+            return item
+    return None
+
+
 @pytest.mark.django_db
 def test_voucher_only_navigation_shows_vouchers(event, rf):
     user = User.objects.create_user('voucher@example.com', 'dummy')
@@ -85,3 +92,30 @@ def test_product_and_voucher_navigation_keeps_vouchers_under_products(event, rf)
     assert products is not None
     assert _nav_includes_vouchers([products])
     assert not any(str(item.get('label')) == 'Vouchers' for item in nav)
+
+
+@pytest.mark.django_db
+def test_orders_parent_nav_links_to_overview(event, rf):
+    user = User.objects.create_user('orders@example.com', 'dummy')
+    team = Team.objects.create(
+        organizer=event.organizer,
+        can_view_orders=True,
+        all_events=True,
+    )
+    team.members.add(user)
+
+    request = rf.get(f'/control/event/{event.organizer.slug}/{event.slug}/')
+    request.user = user
+    request.event = event
+    request.organizer = event.organizer
+    request.eventpermset = user.get_event_permission_set(event.organizer, event)
+    request.resolver_match = resolve(
+        f'/control/event/{event.organizer.slug}/{event.slug}/'
+    )
+
+    nav = get_event_navigation(request)
+    orders = _find_orders_nav(nav)
+
+    assert orders is not None
+    assert orders['url'].endswith('/orders/overview/')
+    assert any(str(child.get('label')) == 'Overview' for child in orders.get('children', []))

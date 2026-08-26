@@ -3,29 +3,29 @@
 	template(v-if="user")
 		.ui-page-header
 			bunt-icon-button(@click="$router.push({name: 'admin:users'})") arrow_left
-			h1 User: {{ (user.profile && user.profile.display_name) || user.id }}
+			h1 {{ $t('User:') }} {{ (user.profile && user.profile.display_name) || user.id }}
 			.actions(v-if="user.id !== ownUser.id")
-				bunt-button.btn-dm(v-if="hasPermission('world:chat.direct') && !user.deleted", @click="openDM") message
-				bunt-button.btn-call(v-if="hasPermission('world:chat.direct') && !user.deleted", @click="startCall") call
+				bunt-button.btn-dm(v-if="hasPermission('world:chat.direct') && !user.deleted", @click="openDM") {{ $t('message') }}
+				bunt-button.btn-call(v-if="hasPermission('world:chat.direct') && !user.deleted", @click="startCall") {{ $t('call') }}
 				bunt-button.btn-delete(v-if="hasPermission('world:users.manage') && !user.deleted", @click="userAction = 'delete'") {{ $t('UserAction:action.delete:label') }}
-				bunt-button.btn-ban(v-if="hasPermission('world:users.manage') && !user.deleted && user.moderation_state !== 'banned'", @click="userAction = 'ban'") ban
-				bunt-button.btn-silence(v-if="hasPermission('world:users.manage') && !user.deleted && !user.moderation_state", @click="userAction = 'silence'") silence
+				bunt-button.btn-ban(v-if="hasPermission('world:users.manage') && !user.deleted && user.moderation_state !== 'banned'", @click="userAction = 'ban'") {{ $t('ban') }}
+				bunt-button.btn-silence(v-if="hasPermission('world:users.manage') && !user.deleted && !user.moderation_state", @click="userAction = 'silence'") {{ $t('silence') }}
 				bunt-button.btn-reactivate(v-if="hasPermission('world:users.manage') && user.moderation_state", @click="userAction = 'reactivate'")
-					| {{ user.moderation_state === 'banned' ? 'unban' : 'unsilence'}}
+					| {{ user.moderation_state === 'banned' ? $t('unban') : $t('unsilence') }}
 				bunt-button#btn-save(v-if="edit", :disabled="v$.$invalid && v$.$dirty", :loading="saving", @click="save") {{ $t('preferences/index:btn-save:label') }}
-				bunt-button#btn-edit(v-if="!user.deleted", @click="edit=true") edit
+				bunt-button#btn-edit(v-if="!user.deleted", @click="edit=true") {{ $t('edit') }}
 		scrollbars.user-info(y)
 			.avatar-wrapper
 				avatar(:user="user", :size="128")
 				bunt-button#btn-change-avatar(@click="showChangeAvatar = true", v-if="edit") {{ $t('preferences/index:btn-change-avatar:label') }}
 			bunt-input.display-name(name="displayName", :label="$t('profile/GreetingPrompt:displayname:label')", v-model.trim="user.profile.display_name", :validation="v$.user.profile.display_name", :disabled="!edit")
-			bunt-input(name="id", label="ID", :modelValue="user.id", :disabled="true")
-			bunt-input(name="token_id", label="Login UID (JWT uid)", :modelValue="user.token_id || '–'", :disabled="true")
-			bunt-input(name="email", label="Email", :modelValue="user.email || '–'", :disabled="true")
-			bunt-input(name="wikimedia_username", label="Wikimedia / Wikimania username", :modelValue="user.wikimedia_username || '–'", :disabled="true")
-			bunt-input(name="order_code", label="Order code", :modelValue="user.order_code || '–'", :disabled="true")
-			bunt-input(name="ticket_code", label="Ticket code (position secret)", :modelValue="user.ticket_code || '–'", :disabled="true")
-			bunt-input(name="mod_state", label="Moderation state", :modelValue="user.moderation_state || '-'", :disabled="true")
+			bunt-input(name="id", :label="$t('ID')", :modelValue="user.id", :disabled="true")
+			bunt-input(name="token_id", :label="$t('Login UID (JWT uid)')", :modelValue="user.token_id || '–'", :disabled="true")
+			bunt-input(name="email", :label="$t('Email')", :modelValue="user.email || '–'", :disabled="true")
+			bunt-input(name="wikimedia_username", :label="$t('Wikimedia / Wikimania username')", :modelValue="user.wikimedia_username || '–'", :disabled="true")
+			bunt-input(name="order_code", :label="$t('Order code')", :modelValue="user.order_code || '–'", :disabled="true")
+			bunt-input(name="ticket_code", :label="$t('Ticket code (position secret)')", :modelValue="user.ticket_code || '–'", :disabled="true")
+			bunt-input(name="mod_state", :label="$t('Moderation state')", :modelValue="user.moderation_state || '-'", :disabled="true")
 			change-additional-fields(v-model="user.profile.fields", :disabled="!edit")
 	bunt-progress-circular(v-else, size="huge")
 	transition(name="prompt")
@@ -66,11 +66,13 @@ export default {
 			edit: false
 		}
 	},
-	validations: {
-		user: {
-			profile: {
-				display_name: {
-					required: required('Display name cannot be empty')
+	validations() {
+		return {
+			user: {
+				profile: {
+					display_name: {
+						required: required(this.$t('Display name cannot be empty'))
+					}
 				}
 			}
 		}

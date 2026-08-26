@@ -6,7 +6,7 @@
 				span(v-if="key !== 0") {{ ', ' }}
 				.online-status(v-if="!u.deleted", :class="onlineStatus[u.id] ? 'online' : (onlineStatus[u.id] === false ? 'offline' : 'unknown')", v-tooltip="onlineStatus[u.id] ? $t('UserAction:state.online:tooltip') : (onlineStatus[u.id] === false ? $t('UserAction:state.offline:tooltip') : '')")
 				span {{ u.deleted ? $t('User:label:deleted') : u.profile.display_name }}
-		bunt-icon-button(@click="startCall", tooltip="start video call", tooltipPlacement="left") phone_outline
+		bunt-icon-button(@click="startCall", :tooltip="$t('start video call')", tooltipPlacement="left") phone_outline
 	.main
 		media-source-placeholder.channel-call(v-if="hasCall")
 		chat(:mode="hasCall ? 'compact' : 'standalone'", :module="{channel_id: channelId}", :showUserlist="false")

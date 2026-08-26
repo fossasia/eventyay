@@ -5,7 +5,7 @@
 			.info-message {{ noScheduleMessage }}
 	template(v-else-if="scheduleError")
 		.schedule-error
-			.error-message An error occurred while loading the schedule. Please try again later.
+			.error-message {{ $t('An error occurred while loading the schedule. Please try again later.') }}
 	template(v-else-if="isTalkView && schedule && resolvedTalk")
 		talk-detail(:talk="resolvedTalk", :baseUrl="eventUrl")
 	template(v-else-if="isSpeakerView && schedule")
@@ -136,6 +136,7 @@ const FeaturedSpeakers = defineAsyncComponent(() => import('~/components/Feature
 const SpeakerDetail = defineAsyncComponent(() => import('~/components/SpeakerDetail'))
 const TalkDetail = defineAsyncComponent(() => import('~/components/TalkDetail'))
 import { findScrollParent, getLocalizedString, getSessionTime, getSessionTypeLabel, isProperSession, isPopularityFeatureEnabled, isPopularitySortAvailable, isPopularityVisibleOnSchedule, normalizePopularityCount, computeTalkExporters, areScheduleExportsDisabled, resolveScheduleApiBase, talksToScheduleSessions, buildSessionsBySpeaker, talkToSession, sortSessionsByStart, isTalkSchedulePending, getCsrfToken, loadStarredSharingPreference, updateStarredSharingPreference, fetchWidgetScheduleData } from '~/utils'
+import { changeScheduleLanguage } from './i18n.js'
 
 function normalizeLocaleCode (code) {
 	if (!code) return ''
@@ -404,12 +405,12 @@ export default {
 		},
 		filterGroups () {
 			const groups = [
-				{ refKey: 'track', title: 'Tracks', data: this.allTracks },
-				{ refKey: 'room', title: 'Rooms', data: this.allRooms },
-				{ refKey: 'type', title: 'Types', data: this.allTypes }
+				{ refKey: 'track', title: this.$t('Tracks'), data: this.allTracks },
+				{ refKey: 'room', title: this.$t('Rooms'), data: this.allRooms },
+				{ refKey: 'type', title: this.$t('Types'), data: this.allTypes }
 			]
 			if (this.allLanguages.length > 1) {
-				groups.push({ refKey: 'language', title: 'Language', data: this.allLanguages })
+				groups.push({ refKey: 'language', title: this.$t('Language'), data: this.allLanguages })
 			}
 			return groups
 		},
@@ -615,10 +616,13 @@ export default {
 		},
 		noScheduleMessage () {
 			const m = this.translationMessages || {}
-			return m.no_schedule_available || 'No schedule has been published yet. Please check back later.'
+			return m.no_schedule_available || this.$t('No schedule has been published yet. Please check back later.')
 		}
 	},
 	watch: {
+		async locale (value) {
+			await changeScheduleLanguage(value)
+		},
 		popularityFeatureEnabled (enabled) {
 			if (!enabled) {
 				this.sortIncludePopularity = false
@@ -658,6 +662,7 @@ export default {
 	async created () {
 		// Gotta get the fragment early, before anything else sneakily modifies it
 		const fragment = window.location.hash.slice(1)
+		await changeScheduleLanguage(this.locale)
 		this.readRecordingQueryParam()
 		moment.locale(this.locale)
 		this.userTimezone = moment.tz.guess()
@@ -1040,7 +1045,7 @@ export default {
 		},
 		showAnonymousFavsInfo () {
 			if (this.loggedIn || this.favsReadOnly) return
-			const message = this.translationMessages.favs_anonymous_notice
+			const message = this.translationMessages.favs_anonymous_notice || this.$t('Your favourites can only be saved locally in this browser. Please sign in or register to sync starred sessions and use more features. Locally saved stars may be lost if you clear your browser data; we are not responsible for data loss in this case.')
 			if (message) this.pushErrorMessage(message)
 		},
 		pruneFavs (favs, schedule) {
@@ -1054,7 +1059,7 @@ export default {
 				return true
 			} catch (error) {
 				console.error('Failed to save favourites locally:', error)
-				this.pushErrorMessage(this.translationMessages.favs_not_saved)
+				this.pushErrorMessage(this.translationMessages.favs_not_saved || this.$t('Could not save favourites in this browser. Please check your browser storage settings.'))
 				return false
 			}
 		},

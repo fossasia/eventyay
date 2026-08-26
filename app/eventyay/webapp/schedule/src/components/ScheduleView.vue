@@ -225,7 +225,7 @@ export default {
 		t() {
 			const m = this.translationMessages || {}
 			return {
-				no_schedule_available: m.no_schedule_available || 'No schedule has been published yet. Please check back later.'
+				no_schedule_available: m.no_schedule_available || this.$t('No schedule has been published yet. Please check back later.')
 			}
 		},
 		showFavCountOnSchedule() {
@@ -396,12 +396,12 @@ export default {
 		},
 		filterGroups() {
 			const groups = [
-				{ refKey: 'track', title: 'Tracks', data: this.filterState.tracks },
-				{ refKey: 'room', title: 'Rooms', data: this.filterState.rooms },
-				{ refKey: 'session_type', title: 'Types', data: this.filterState.types }
+				{ refKey: 'track', title: this.$t('Tracks'), data: this.filterState.tracks },
+				{ refKey: 'room', title: this.$t('Rooms'), data: this.filterState.rooms },
+				{ refKey: 'session_type', title: this.$t('Types'), data: this.filterState.types }
 			]
 			if (this.filterState.languages.length > 1) {
-				groups.push({ refKey: 'language', title: 'Language', data: this.filterState.languages })
+				groups.push({ refKey: 'language', title: this.$t('Language'), data: this.filterState.languages })
 			}
 			return groups
 		},

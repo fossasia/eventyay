@@ -71,6 +71,47 @@ export function getRoomTypeById(id) {
 	return ROOM_TYPES.find(type => type.id === id) || null
 }
 
+export function localizeRoomType(t, type) {
+	if (!type) return type
+	const labels = {
+		stage: {
+			name: t('Stage'),
+			description: t('A stage allows you to present a live stream to your audience, optionally combined with chat and Q&A features.'),
+		},
+		'channel-bbb': {
+			name: t('Video Channel'),
+			description: t('A video channel allows you to connect with attendees in real time and host workshops or panels. The video channels are powered by BigBlueButton and support 25-80 people, depending on usage.'),
+		},
+		'channel-janus': {
+			name: t('Video Channel (beta)'),
+			description: t('A video channel allows you to connect with attendees in real time and host workshops or panels. The video channels are powered by Janus.'),
+		},
+		'channel-zoom': {
+			name: t('Video Channel (Zoom)'),
+			description: t('This room type allows you to embed a Zoom meeting or webinar directly into eventyay.'),
+		},
+		'channel-jitsi': {
+			name: t('Video Channel (Jitsi)'),
+			description: t('This room type allows you to connect with attendees through a Jitsi meeting.'),
+		},
+		'channel-text': {
+			name: t('Text Channel'),
+			description: t('This type of channel allows you to enable pure-text communication between your attendees.'),
+		},
+		'channel-roulette': {
+			name: t('Random video calls'),
+			description: t('Connect your attendees for short video calls in random combinations.'),
+		},
+		'page-landing': {
+			name: t('Landing Page'),
+			description: t('The landing place module combines the most important content into one place for your attendees to see after they join.'),
+		},
+	}
+	const localized = labels[type.id]
+	if (!localized) return type
+	return { ...type, ...localized }
+}
+
 export function inferType(config) {
 	const modules = config.module_config.reduce((acc, module) => {
 		acc[module.type] = module

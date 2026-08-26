@@ -13,7 +13,7 @@ export const definition = {
 
 // SVG render function
 // Parameters:
-// - random: instance of a random number generator, use this to get your randomness, pick colors, shapes, etc. (see https://github.com/ckknight/random-js#alternate-api for API)
+// - random: seeded generator with integer(min, max), pick(array), and engine.next()
 // - userProfile: object, can be used to render additional information from, optional
 //   - display_name: string
 //   - fields: object, additional fields added by event organizers

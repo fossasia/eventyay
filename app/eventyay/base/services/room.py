@@ -211,7 +211,6 @@ def uses_schedule_driven_stage(module_config):
     stage_modules = {
         'livestream.native',
         'livestream.youtube',
-        'livestream.iframe',
     }
     for module in module_config or []:
         if module.get('type') not in stage_modules:
