@@ -1,0 +1,102 @@
+{% extends "eventyay_common/event/settings_base.html" %}
+{% load i18n static %}
+{% load bootstrap3 %}
+{% block title %}{% trans "Clone event" %}{% endblock %}
+
+
+{% block inside %}
+<h1>{% trans "Clone event" %}</h1>
+
+<div class="alert alert-info">
+    {% trans "You can create a new event that is a copy of this event. Please enter a name, short form, and the new dates for the new event." %}
+    <br><br>
+    {% trans "By default, the following Configuration is NOT cloned:" %}
+    <ul>
+        <li>{% trans "Orders, attendees, payments, invoices, check-ins" %}</li>
+        <li>{% trans "Submitted proposals, reviews, accepted sessions" %}</li>
+        <li>{% trans "Speaker accounts or profiles linked to submitted proposals" %}</li>
+        <li>{% trans "Message history, logs, or any personal data" %}</li>
+    </ul>
+</div>
+
+<form action="" method="post" class="form-horizontal event-clone-form">
+    {% csrf_token %}
+    {% bootstrap_form_errors form %}
+
+    <fieldset>
+        <legend>{% trans "New Event details" %}</legend>
+        {% bootstrap_field form.locales layout="horizontal" %}
+        <div id="event-name-field">
+            {% bootstrap_field form.name layout="horizontal" %}
+        </div>
+        
+        <div class="form-group{% if form.slug.errors %} has-error{% endif %}">
+            <label class="col-md-3 control-label" for="{{ form.slug.id_for_label }}">{{ form.slug.label }}</label>
+            <div class="col-md-9 form-inline">
+                <button class="btn btn-default pull-right flip" type="button" id="event-slug-random-generate"
+                        data-rng-url="{% url 'control:events.add.slugrng' organizer=request.event.organizer.slug %}">
+                    {% trans "Set to random" %}
+                </button>
+                {{ form.slug }}
+                {% if form.slug.errors %}
+                    <span class="text-danger ml-2"><small>{% trans "Slug not available" %}</small></span>
+                {% endif %}
+                <div class="help-block">
+                    {% blocktrans trimmed %}
+                    This is the address your event will be available at. Should be short, only contain lowercase letters
+                    and numbers, and must be unique. We recommend some kind of abbreviation with less than 30 characters
+                    that can be easily remembered. You cannot change the slug later on! If you don't provide a slug,
+                    a random one will be generated for you.
+                    {% endblocktrans %}
+                </div>
+            </div>
+        </div>
+
+        {% bootstrap_field form.date_from layout="horizontal" %}
+        {% bootstrap_field form.date_to layout="horizontal" %}
+        {% bootstrap_field form.timezone layout="horizontal" %}
+        {% bootstrap_field form.locale layout="horizontal" %}
+    </fieldset>
+
+    <fieldset>
+        <legend>{% trans "Configuration to clone" %}</legend>
+        
+        {% bootstrap_field form.clone_common_data layout="control" %}
+        <div class="team-permission-children" data-parent="{{ form.clone_common_data.auto_id }}">
+            {% bootstrap_field form.clone_settings layout="control" %}
+            {% bootstrap_field form.clone_design_texts layout="control" %}
+            {% bootstrap_field form.clone_email_settings layout="control" %}
+        </div>
+
+        {% bootstrap_field form.clone_ticketing_data layout="control" %}
+        <div class="team-permission-children" data-parent="{{ form.clone_ticketing_data.auto_id }}">
+            {% bootstrap_field form.clone_products layout="control" %}
+            {% bootstrap_field form.clone_questions layout="control" %}
+            {% bootstrap_field form.clone_checkin_lists layout="control" %}
+            {% bootstrap_field form.clone_payment_settings layout="control" %}
+        </div>
+
+        {% bootstrap_field form.clone_talk_data layout="control" %}
+        <div class="team-permission-children" data-parent="{{ form.clone_talk_data.auto_id }}">
+            {% bootstrap_field form.clone_cfp layout="control" %}
+            {% bootstrap_field form.clone_session_types_tracks layout="control" %}
+            {% bootstrap_field form.clone_review_settings layout="control" %}
+        </div>
+    </fieldset>
+
+    <div class="form-group submit-group">
+        <button type="submit" class="btn btn-primary btn-save">
+            {% trans "Clone event" %}
+        </button>
+        <a href="{% url 'eventyay_common:event.update' organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-default btn-cancel">
+            {% trans "Cancel" %}
+        </a>
+    </div>
+</form>
+{% endblock %}
+
+{% block custom_header %}
+{{ block.super }}
+<script src="{% static 'eventyay-common/js/ui/team.js' %}"></script>
+<script defer src="{% static 'eventyay-common/js/ui/event-create.js' %}"></script>
+{% endblock %}

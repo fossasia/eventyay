@@ -161,6 +161,7 @@ urlpatterns = [
                 ),
                 path('plugins/', event.EventPlugins.as_view(), name='event.plugins'),
                 path('live/', event.EventLive.as_view(), name='event.live'),
+                path('settings/clone/', event.EventCloneView.as_view(), name='event.clone'),
                 path('video-access/', event.VideoAccessAuthenticator.as_view(), name='event.create_access_to_video'),
             ]
         ),

@@ -302,6 +302,9 @@ class UserListView(AdministratorPermissionRequiredMixin, ListView):
 
             user_to_update.is_spam = not user_to_update.is_spam
             user_to_update.save(update_fields=['is_spam'])
+            if user_to_update.is_spam:
+                # Revoke active sessions upon flagging as spam.
+                user_to_update.update_session_token()
             target_user.is_spam = user_to_update.is_spam
 
         target_user.log_action(

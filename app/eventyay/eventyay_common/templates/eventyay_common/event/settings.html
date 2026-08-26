@@ -415,10 +415,17 @@
             </div>
         </fieldset>
     </div>
-    <div class="form-group submit-group">
+    <div class="form-group submit-group event-settings-submit">
         <button type="submit" class="btn btn-primary btn-save">
             {% trans "Save" %}
         </button>
+        <div class="pull-left event-settings-danger-actions">
+            <a href="{% url "eventyay_common:event.clone" organizer=request.event.organizer.slug event=request.event.slug %}"
+               class="btn btn-default btn-lg">
+                <span class="fa fa-copy"></span>
+                {% trans "Clone event" %}
+            </a>
+        </div>
     </div>
 
     {% comment %}
