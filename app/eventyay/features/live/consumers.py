@@ -154,23 +154,22 @@ class MainConsumer(AsyncJsonWebsocketConsumer):
 
     # Receive message from WebSocket
     async def receive_json(self, content, **kargs):
-        self.content = content
-
         if content[0] == "ping":
             await self.send_json(["pong", content[1]])
             self.last_conn_ping = await ping_connection(self.last_conn_ping, self.user)
             return
 
         if not self.event:
-            await self.send_error("event.unknown_event", close=True)
+            await self.send_error("event.unknown_event", close=True, request=content)
             return
 
         if not self.user:
             if content[0] == "authenticate":
                 await self._maybe_refresh(self.event, allowed_age=30)
+                self.content = content
                 await self.components["user"].login(content[-1])
             else:
-                await self.send_error("protocol.unauthenticated")
+                await self.send_error("protocol.unauthenticated", request=content)
             return
 
         async with statsd() as s:
@@ -179,18 +178,17 @@ class MainConsumer(AsyncJsonWebsocketConsumer):
         namespace = content[0].split(".")[0]
         component = self.components.get(namespace)
         if component:
-            try:
+            async with self.command_lock:
                 await self._maybe_refresh(self.event, allowed_age=900)
                 await self._maybe_refresh(self.user, allowed_age=30)
-                # Room command decorators temporarily store the selected room
-                # on a shared module instance. Serialize commands so a fast
-                # room transition cannot overwrite that state.
-                async with self.command_lock:
+                # Module handlers temporarily store room state on the module.
+                self.content = content
+                try:
                     await component.dispatch_command(content)
-            except ConsumerException as e:
-                await self.send_error(e.code, e.message)
+                except ConsumerException as e:
+                    await self.send_error(e.code, e.message, request=content)
         else:
-            await self.send_error("protocol.unknown_command")
+            await self.send_error("protocol.unknown_command", request=content)
 
     async def dispatch(self, message):
         if self.conn_time and time.time() - self.conn_time > 3600 * 24 * random.uniform(
@@ -231,7 +229,8 @@ class MainConsumer(AsyncJsonWebsocketConsumer):
             component = self.components.get(namespace)
             if component:
                 if hasattr(component, "dispatch_event"):
-                    return await component.dispatch_event(message)
+                    async with self.command_lock:
+                        return await component.dispatch_event(message)
             else:
                 return await super().dispatch(message)
         except ConnectionClosed:  # pragma: no cover
@@ -253,25 +252,32 @@ class MainConsumer(AsyncJsonWebsocketConsumer):
                     f"error.fatal,event={self.event.pk if self.event else 'None'}"
                 )
 
-    def build_response(self, status, data):
+    def build_response(self, status, data, request=None):
         if data is None:
             data = {}
         response = [status]
-        if len(self.content) == 3:
-            response.append(self.content[1])
+        request_content = request if request is not None else self.content
+        if len(request_content) == 3:
+            response.append(request_content[1])
         response.append(data)
         return response
 
-    async def send_error(self, code, message=None, close=False, details=None):
+    async def send_error(
+        self, code, message=None, close=False, details=None, request=None
+    ):
         data = {"code": code}
         if message:
             data["message"] = message
         if details:
             data["details"] = details
-        await self.send_json(self.build_response("error", data), close=close)
+        await self.send_json(
+            self.build_response("error", data, request=request), close=close
+        )
 
     async def send_success(self, data=None, close=False):
-        await self.send_json(self.build_response("success", data), close=close)
+        await self.send_json(
+            self.build_response("success", data), close=close
+        )
 
     # Override send and receive methods to use orjson and less function calls
 
