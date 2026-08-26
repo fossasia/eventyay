@@ -843,8 +843,8 @@ input.password_strength {
   right: 12px;
   top: 50%;
   transform: translateY(-50%);
-  background: transparent !important;
-  border: none !important;
+  background: transparent;
+  border: none;
   padding: 0;
   width: 24px;
   height: 24px;
