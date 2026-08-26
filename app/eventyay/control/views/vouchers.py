@@ -1,12 +1,11 @@
 import io
-from collections import defaultdict
 
 from defusedcsv import csv
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db import connection, transaction
-from django.db.models import Min, Q, Subquery
+from django.db.models import Min, Q, Subquery, Sum
 from django.http import (
     Http404,
     HttpResponse,
@@ -50,7 +49,7 @@ class VoucherList(PaginationMixin, EventPermissionRequiredMixin, ListView):
 
     def get_filtered_queryset(self):
         qs = self.request.event.vouchers.filter(waitinglistentries__isnull=True).select_related(
-            'product', 'variation', 'seat'
+            'product', 'variation', 'seat', 'quota', 'subevent'
         )
         if self.filter_form and self.filter_form.is_valid():
             qs = self.filter_form.filter_qs(qs)
@@ -81,14 +80,18 @@ class VoucherList(PaginationMixin, EventPermissionRequiredMixin, ListView):
         vouchers = list(ctx['vouchers'])
         group_tags = {voucher.tag for voucher in vouchers if voucher.tag}
         if group_tags:
-            grouped_vouchers = defaultdict(list)
-            for voucher in self.request.event.vouchers.filter(waitinglistentries__isnull=True, tag__in=group_tags):
-                grouped_vouchers[voucher.tag].append(voucher)
+            group_totals = {
+                total['tag']: total
+                for total in self.request.event.vouchers.filter(waitinglistentries__isnull=True, tag__in=group_tags)
+                .order_by()
+                .values('tag')
+                .annotate(group_redeemed=Sum('redeemed'), group_max_usages=Sum('max_usages'))
+            }
             for voucher in vouchers:
                 if voucher.tag:
-                    voucher.group_vouchers = grouped_vouchers[voucher.tag]
-                    voucher.group_redeemed = sum(member.redeemed for member in voucher.group_vouchers)
-                    voucher.group_max_usages = sum(member.max_usages for member in voucher.group_vouchers)
+                    total = group_totals.get(voucher.tag)
+                    voucher.group_redeemed = total['group_redeemed'] if total else 0
+                    voucher.group_max_usages = total['group_max_usages'] if total else 0
 
         return ctx
 
@@ -152,6 +155,62 @@ class VoucherList(PaginationMixin, EventPermissionRequiredMixin, ListView):
         r = HttpResponse(output.getvalue().encode('utf-8'), content_type='text/csv')
         r['Content-Disposition'] = 'attachment; filename="vouchers.csv"'
         return r
+
+
+class VoucherGroupMembers(EventPermissionRequiredMixin, View):
+    permission = 'can_view_vouchers'
+    MEMBER_PAGE_SIZE = 50
+
+    def get(self, request, *args, **kwargs):
+        try:
+            group_representative = request.event.vouchers.get(pk=kwargs['voucher'])
+        except Voucher.DoesNotExist:
+            raise Http404(_('The requested voucher does not exist.'))
+
+        if not group_representative.tag:
+            raise Http404(_('The requested voucher does not belong to a group.'))
+
+        try:
+            after = int(request.GET.get('after') or 0)
+        except ValueError:
+            return HttpResponseBadRequest()
+        if after < 0:
+            return HttpResponseBadRequest()
+
+        members = Voucher.annotate_budget_used_orders(
+            request.event.vouchers.filter(
+                waitinglistentries__isnull=True,
+                tag=group_representative.tag,
+                pk__gt=after,
+            )
+            .select_related('product', 'variation', 'seat', 'quota', 'subevent')
+            .order_by('pk')
+        )
+        members = list(members[: self.MEMBER_PAGE_SIZE + 1])
+        next_members_url = None
+        if len(members) > self.MEMBER_PAGE_SIZE:
+            next_members_url = '{}?after={}'.format(
+                reverse(
+                    'control:event.voucher.members',
+                    kwargs={
+                        'organizer': request.event.organizer.slug,
+                        'event': request.event.slug,
+                        'voucher': group_representative.pk,
+                    },
+                ),
+                members[self.MEMBER_PAGE_SIZE - 1].pk,
+            )
+            members = members[: self.MEMBER_PAGE_SIZE]
+
+        return render(
+            request,
+            'pretixcontrol/vouchers/_voucher_group_members.html',
+            {
+                'group_id': group_representative.pk,
+                'members': members,
+                'next_members_url': next_members_url,
+            },
+        )
 
 
 class VoucherDelete(EventPermissionRequiredMixin, DeleteView):
@@ -495,11 +554,19 @@ class VoucherBulkAction(EventPermissionRequiredMixin, View):
 
     @cached_property
     def objects(self):
-        return self.request.event.vouchers.filter(id__in=self.request.POST.getlist('voucher'))
+        selected_vouchers = Q(id__in=self.request.POST.getlist('voucher'))
+        selected_groups = self.request.POST.getlist('voucher_group')
+        if selected_groups:
+            selected_group_tags = (
+                self.request.event.vouchers.filter(id__in=selected_groups).exclude(tag='').order_by().values('tag')
+            )
+            selected_vouchers |= Q(tag__in=Subquery(selected_group_tags), waitinglistentries__isnull=True)
+
+        return self.request.event.vouchers.filter(selected_vouchers).distinct()
 
     @transaction.atomic
     def post(self, request, *args, **kwargs):
-        if not self.objects:
+        if not self.objects.exists():
             return redirect(self.get_success_url())
 
         if request.POST.get('action') == 'delete':
@@ -514,16 +581,21 @@ class VoucherBulkAction(EventPermissionRequiredMixin, View):
         elif request.POST.get('action') == 'delete_confirm':
             allowed = self.objects.filter(redeemed=0, orderposition__isnull=True)
             forbidden = self.objects.exclude(redeemed=0, orderposition__isnull=True)
+            has_allowed = allowed.exists()
+            has_forbidden = forbidden.exists()
 
-            for obj in allowed:
+            for obj in allowed.iterator():
                 obj.log_action('eventyay.voucher.deleted', user=self.request.user)
                 CartPosition.objects.filter(addon_to__voucher=obj).delete()
                 obj.cartposition_set.all().delete()
                 obj.delete()
 
-            if forbidden:
-                messages.error(request, _('Deletion failed for some vouchers because they have already been redeemed or used in an order.'))
-                if allowed:
+            if has_forbidden:
+                messages.error(
+                    request,
+                    _('Deletion failed for some vouchers because they have already been redeemed or used in an order.'),
+                )
+                if has_allowed:
                     messages.success(request, _('The other selected vouchers have been deleted.'))
             else:
                 messages.success(request, _('The selected vouchers have been deleted.'))

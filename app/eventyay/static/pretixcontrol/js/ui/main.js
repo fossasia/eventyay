@@ -1257,15 +1257,14 @@ $(function () {
     // Voucher page specific delete selected toggle
     var $vouchersDeleteBtn = $('button[name="action"][value="delete"]');
     var $vouchersForm = $vouchersDeleteBtn.closest('form');
-    var $vouchersCheckboxes = $vouchersForm.find('input[name="voucher"]');
-
     // Only run this behavior on the voucher list (other pages also use .table-quotas + a delete button).
-    if ($vouchersCheckboxes.length) {
+    if ($vouchersForm.length) {
         var updateVouchersDeleteBtn = function () {
+            var $vouchersCheckboxes = $vouchersForm.find('input[name="voucher"], input[name="voucher_group"]');
             $vouchersDeleteBtn.toggleClass('hidden', $vouchersCheckboxes.filter(':checked').length === 0);
         };
 
-        $vouchersForm.on('change', 'input[name="voucher"], input[data-toggle-table]', function () {
+        $vouchersForm.on('change', 'input[name="voucher"], input[name="voucher_group"], input[data-toggle-table]', function () {
             setTimeout(updateVouchersDeleteBtn, 50);
         });
 

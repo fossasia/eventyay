@@ -172,11 +172,13 @@
                             <tbody>
                             {% for v in vouchers %}
                                 {% if v.tag %}
-                                    <tr id="voucher-group-{{ v.pk }}" data-voucher-group="{{ v.pk }}">
+                                    <tr id="voucher-group-{{ v.pk }}"
+                                        data-voucher-group="{{ v.pk }}"
+                                        data-voucher-group-members-url="{% url 'control:event.voucher.members' organizer=request.event.organizer.slug event=request.event.slug voucher=v.pk %}">
                                         <td class="list-select">
                                             {% if "can_change_vouchers" in request.eventpermset %}
                                                 <label aria-label="{% trans "Select all vouchers in this group" %}" class="batch-select-label">
-                                                    <input type="checkbox" data-voucher-group-select="{{ v.pk }}" />
+                                                    <input type="checkbox" name="voucher_group" value="{{ v.pk }}" data-voucher-group-select="{{ v.pk }}" />
                                                 </label>
                                             {% endif %}
                                         </td>
@@ -193,9 +195,6 @@
                                         {% if request.event.has_subevents %}<td></td>{% endif %}
                                         <td></td>
                                     </tr>
-                                    {% for member in v.group_vouchers %}
-                                        {% include 'pretixcontrol/vouchers/_voucher_row.html' with v=member row_class='voucher-group-member hidden' group_id=v.pk %}
-                                    {% endfor %}
                                 {% else %}
                                     {% include 'pretixcontrol/vouchers/_voucher_row.html' with v=v %}
                                 {% endif %}
