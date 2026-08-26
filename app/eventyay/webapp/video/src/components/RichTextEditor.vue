@@ -83,7 +83,8 @@ const CustomTextAlign = TextAlign.extend({
 })
 
 const props = defineProps({
-	modelValue: String,
+	// HTML string going forward; Object/Array kept for legacy Quill Delta values
+	modelValue: [String, Object, Array],
 	label: String,
 })
 const emit = defineEmits(['update:modelValue'])
@@ -100,6 +101,29 @@ const editorState = ref(null)
 
 let editorInstance = null
 let emitTimeout = null
+
+function escapeHtml (text) {
+	return String(text)
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+}
+
+/** Normalize v-model into HTML Tiptap can load (legacy Delta → plain HTML). */
+function normalizeEditorContent (value) {
+	if (!value) return ''
+	if (typeof value === 'string') return value
+	if (typeof value === 'object') {
+		const ops = Array.isArray(value) ? value : value.ops
+		if (Array.isArray(ops)) {
+			const plain = ops
+				.map(op => (typeof op.insert === 'string' ? op.insert : ''))
+				.join('')
+			return '<p>' + escapeHtml(plain).replace(/\n/g, '<br>') + '</p>'
+		}
+	}
+	return ''
+}
 
 // Toolbar helpers — read from editorState to stay reactive
 const isActive = (nameOrAttrs, attrs) => {
@@ -156,6 +180,7 @@ const handleImageUpload = (event) => {
 		console.error('RichTextEditor image upload failed', error, `File: ${file.name}`)
 		showErrorDialog.value = true
 		uploading.value = false
+		event.target.value = ''
 	})
 }
 
@@ -178,7 +203,7 @@ onMounted(() => {
 			Underline,
 			CustomTextAlign.configure({ types: ['heading', 'paragraph'] }),
 		],
-		content: props.modelValue || '',
+		content: normalizeEditorContent(props.modelValue),
 		editorProps: {
 			attributes: {
 				class: 'rich-text-content',
@@ -214,9 +239,10 @@ onBeforeUnmount(() => {
 // Sync external model changes (e.g. parent resets the field)
 watch(() => props.modelValue, (newVal) => {
 	if (!editorInstance) return
+	const normalized = normalizeEditorContent(newVal)
 	const current = editorInstance.getHTML()
-	if (newVal === current) return
-	editorInstance.commands.setContent(newVal || '', false)
+	if (normalized === current) return
+	editorInstance.commands.setContent(normalized, false)
 })
 </script>
 <style lang="stylus">

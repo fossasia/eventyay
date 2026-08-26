@@ -107,17 +107,27 @@ export default {
 		},
 		mainContentIsRichText() {
 			const content = this.mainContent
-			if (!content || typeof content !== 'object') return false
-			if (Array.isArray(content)) {
-				return content.some(op => typeof op?.insert === 'string' && op.insert.trim() !== '')
+			if (!content) return false
+			// Legacy Quill Delta (array of ops or { ops: [...] })
+			if (typeof content === 'object') {
+				if (Array.isArray(content)) {
+					return content.some(op => typeof op?.insert === 'string' && op.insert.trim() !== '')
+				}
+				if (Array.isArray(content.ops)) {
+					return content.ops.some(op => typeof op?.insert === 'string' && op.insert.trim() !== '')
+				}
+				return false
 			}
-			if (Array.isArray(content.ops)) {
-				return content.ops.some(op => typeof op?.insert === 'string' && op.insert.trim() !== '')
+			// Tiptap HTML strings (vs legacy plain Markdown)
+			if (typeof content === 'string') {
+				return /^\s*</.test(content)
 			}
 			return false
 		},
 		mainContentIsMarkdown() {
-			return typeof this.mainContent === 'string' && this.mainContent.trim().length > 0
+			return typeof this.mainContent === 'string' &&
+				this.mainContent.trim().length > 0 &&
+				!this.mainContentIsRichText
 		},
 		hasContent() {
 			return this.mainContentIsRichText ||

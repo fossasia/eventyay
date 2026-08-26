@@ -5,6 +5,20 @@
 import DOMPurify from 'dompurify'
 import router from 'router'
 
+const RICH_TEXT_ALLOWED_TAGS = [
+	'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'strike',
+	'ul', 'ol', 'li', 'a', 'blockquote', 'pre', 'code',
+	'h1', 'h2', 'h3', 'img',
+]
+const RICH_TEXT_ALLOWED_ATTR = ['href', 'title', 'target', 'rel', 'src', 'alt', 'class']
+
+function escapeHtml (text) {
+	return String(text)
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+}
+
 export default {
 	props: {
 		content: [String, Array, Object],
@@ -19,18 +33,23 @@ export default {
 					? this.content
 					: this.content?.ops
 				if (Array.isArray(ops)) {
-					// Render as plain text fallback (no formatting)
+					// Render as escaped plain text fallback (no formatting)
 					const plain = ops
 						.map(op => (typeof op.insert === 'string' ? op.insert : ''))
 						.join('')
-					return DOMPurify.sanitize('<p>' + plain.replace(/\n/g, '<br>') + '</p>')
+					const escaped = escapeHtml(plain)
+					return DOMPurify.sanitize(
+						'<p>' + escaped.replace(/\n/g, '<br>') + '</p>',
+						{ ALLOWED_TAGS: ['p', 'br'], ALLOWED_ATTR: [] },
+					)
 				}
 				return ''
 			}
 
-			// Regular HTML string
+			// Regular HTML string from Tiptap
 			return DOMPurify.sanitize(this.content, {
-				ADD_ATTR: ['target', 'rel'],
+				ALLOWED_TAGS: RICH_TEXT_ALLOWED_TAGS,
+				ALLOWED_ATTR: RICH_TEXT_ALLOWED_ATTR,
 			})
 		},
 	},
@@ -105,5 +124,11 @@ export default {
 	h1, h2, h3, h4, h5, h6
 		margin: 0 16px
 
+	.text-left
+		text-align: left
+	.text-center
+		text-align: center
+	.text-right
+		text-align: right
 
 </style>

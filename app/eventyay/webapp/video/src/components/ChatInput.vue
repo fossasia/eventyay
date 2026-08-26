@@ -52,7 +52,10 @@ import UploadButton from 'components/UploadButton'
 
 // ─── Emoji regex helpers ───────────────────────────────────────────────────
 const emojiRegex = EmojiRegex()
-const splitEmojiRegex = new RegExp(`(${emojiRegex.source})`, 'g')
+const splitEmojiRegex = new RegExp(
+	`(${emojiRegex.source})`,
+	emojiRegex.flags.includes('g') ? emojiRegex.flags : `${emojiRegex.flags}g`,
+)
 
 // ─── Custom Tiptap node: inline emoji image ────────────────────────────────
 const EmojiNode = Node.create({
@@ -412,6 +415,7 @@ export default {
 
 		send () {
 			const text = this.serializeContent()
+			if (!text && this.files.length === 0) return
 			if (this.files.length > 0) {
 				this.$emit('send', {
 					type: 'files',
