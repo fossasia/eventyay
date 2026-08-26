@@ -880,9 +880,6 @@ msgstr "Marraskuu"
 msgid "December"
 msgstr "Joulukuu"
 
-#: eventyay/static/vendored/vue.min.js:12
-msgid "div"
-msgstr ""
 
 #~ msgid "Total"
 #~ msgstr "Summa"

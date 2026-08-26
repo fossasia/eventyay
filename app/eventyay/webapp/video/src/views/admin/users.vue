@@ -136,7 +136,7 @@ export default {
 			} catch (error) {
 				user.error = {
 					action,
-					message: this.$t(`error:${error.code}`)
+					message: error?.message || this.$t('Something went wrong.'),
 				}
 			}
 			user.updating = null
