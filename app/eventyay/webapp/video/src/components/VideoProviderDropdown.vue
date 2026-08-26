@@ -1,7 +1,7 @@
 <template lang="pug">
-.c-video-provider-dropdown(v-if="canManage", @click.stop, @keydown.stop)
+.c-video-provider-dropdown(v-if="canManage", :class="{open}", @click.prevent.stop, @keydown.stop)
 	template(v-if="providers.length")
-		menu-dropdown(v-model="open", :placement="placement", :offset="offset")
+		menu-dropdown(v-model="open", :placement="placement", :strategy="strategy", :offset="offset")
 			template(#button="{toggle}")
 				bunt-button.dropdown-toggle(
 					:class="buttonClass",
@@ -66,6 +66,10 @@ export default {
 		placement: {
 			type: String,
 			default: 'bottom-start'
+		},
+		strategy: {
+			type: String,
+			default: 'absolute'
 		}
 	},
 	emits: ['select'],
@@ -170,6 +174,9 @@ export default {
 	display: inline-flex
 	flex-direction: column
 	align-items: flex-end
+	z-index: 1
+	&.open
+		z-index: 1200
 	.dropdown-toggle
 		display: inline-flex
 		align-items: center
@@ -196,6 +203,8 @@ export default {
 		display: flex
 		flex-direction: column
 		min-width: 220px
+		position: relative
+		z-index: 1200
 	.provider-option
 		display: flex
 		align-items: center

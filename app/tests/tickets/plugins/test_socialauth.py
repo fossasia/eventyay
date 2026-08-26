@@ -1,12 +1,15 @@
 import re
 import time as import_time
+from types import SimpleNamespace
 from urllib.parse import parse_qs, urlparse
 
 import pytest
+from allauth.core.exceptions import ImmediateHttpResponse
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.test import RequestFactory
 from django.urls import reverse
 
+from eventyay.base.auth import SPAM_ACCOUNT_ERROR
 from eventyay.base.models import User
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.consts import KEY_LAST_FORCE_LOGIN, KEY_LONG_SESSION, KEY_SOCIAL_KEEP_LOGGED_IN
@@ -363,3 +366,36 @@ def test_social_adapter_rejects_enabled_but_unconfigured_provider():
         adapter.pre_social_login(request, MockSocialLogin(user))
 
     assert exc_info.value.response.status_code == 302
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('provider', ['google', 'github', 'mediawiki'])
+def test_social_and_account_adapter_rejects_spam_user(provider):
+    """SSO pre_social_login and account pre_login reject spam users across all providers."""
+    user = User.objects.create_user(f'spam_{provider}@example.com', 'password', is_spam=True)
+    GlobalSettingsObject().settings.set('login_providers', {
+        provider: {'state': True, 'client_id': 'id', 'secret': 'sec'},
+    })
+
+    request = RequestFactory().get('/')
+    request.session = {}
+    setattr(request, '_messages', FallbackStorage(request))
+
+    sociallogin = SimpleNamespace(
+        is_existing=True,
+        user=user,
+        account=SimpleNamespace(provider=provider, extra_data={}),
+    )
+    with pytest.raises(ImmediateHttpResponse) as exc_info:
+        CustomSocialAccountAdapter(request).pre_social_login(request, sociallogin)
+
+    assert exc_info.value.response.status_code == 302
+    assert exc_info.value.response['Location'] == reverse('auth.login')
+
+    with pytest.raises(ImmediateHttpResponse) as exc_info:
+        CustomAccountAdapter().pre_login(
+            request, user, email_verification=None, signal_kwargs=None, email=None, signup=False, redirect_url=None
+        )
+    assert exc_info.value.response['Location'] == reverse('auth.login')
+    messages = [str(m.message) for m in getattr(request, '_messages')]
+    assert str(SPAM_ACCOUNT_ERROR) in messages

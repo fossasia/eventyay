@@ -2,15 +2,18 @@
 {% load i18n %}
 {% load eventsignal %}
 {% load bootstrap3 %}
+{% load static %}
 {% block title %}{% trans "Voucher" %}{% endblock %}
 {% block inside %}
     {% trans "Create multiple vouchers" as header_title %}
     {% include "common/includes/header_nav.html" with header_title=header_title header_component_link="pretixcontrol/event/component_link.html" %}
-    <form action="" method="post" class="form-horizontal" data-asynctask>
+    <form action="" method="post" class="form-horizontal" data-asynctask data-voucher-bulk-form>
         {% csrf_token %}
         {% bootstrap_form_errors form %}
         <fieldset>
             <legend>{% trans "Voucher codes" %}</legend>
+            {% bootstrap_field form.tag layout='control' %}
+            {% bootstrap_field form.use_tag_as_prefix layout='control' %}
             <div class="form-group form-inline">
                 <div class="col-md-7 col-sm-12 col-md-offset-3">
                     <input type="text" class="form-control input-xs"
@@ -76,7 +79,6 @@
             {% bootstrap_field form.allow_ignore_quota layout="control" %}
             {% bootstrap_field form.allow_ignore_approval layout="control" %}
             {% bootstrap_field form.budget addon_after=request.event.currency layout="control" %}
-            {% bootstrap_field form.tag layout="control" %}
             {% bootstrap_field form.comment layout="control" %}
             {% bootstrap_field form.show_hidden_products layout="control" %}
         </fieldset>
@@ -94,4 +96,5 @@
             </button>
         </div>
     </form>
+    <script type="module" src="{% static 'pretixcontrol/js/ui/voucher-bulk.js' %}"></script>
 {% endblock %}

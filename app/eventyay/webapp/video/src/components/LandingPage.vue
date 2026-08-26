@@ -107,17 +107,27 @@ export default {
 		},
 		mainContentIsRichText() {
 			const content = this.mainContent
-			if (!content || typeof content !== 'object') return false
-			if (Array.isArray(content)) {
-				return content.some(op => typeof op?.insert === 'string' && op.insert.trim() !== '')
+			if (!content) return false
+			// Legacy Quill Delta (array of ops or { ops: [...] })
+			if (typeof content === 'object') {
+				if (Array.isArray(content)) {
+					return content.some(op => typeof op?.insert === 'string' && op.insert.trim() !== '')
+				}
+				if (Array.isArray(content.ops)) {
+					return content.ops.some(op => typeof op?.insert === 'string' && op.insert.trim() !== '')
+				}
+				return false
 			}
-			if (Array.isArray(content.ops)) {
-				return content.ops.some(op => typeof op?.insert === 'string' && op.insert.trim() !== '')
+			// Tiptap HTML strings (vs legacy plain Markdown)
+			if (typeof content === 'string') {
+				return /^\s*</.test(content)
 			}
 			return false
 		},
 		mainContentIsMarkdown() {
-			return typeof this.mainContent === 'string' && this.mainContent.trim().length > 0
+			return typeof this.mainContent === 'string' &&
+				this.mainContent.trim().length > 0 &&
+				!this.mainContentIsRichText
 		},
 		hasContent() {
 			return this.mainContentIsRichText ||
@@ -181,7 +191,7 @@ export default {
 			return {
 				'--landing-hero-background-color': headerBackground,
 				'--landing-hero-text-color': headerText,
-				'--landing-hero-background-image': this.heroBackgroundImage ? `url("${this.heroBackgroundImage}")` : 'none'
+				'--landing-hero-background-image': this.heroBackgroundImage ? `url('${this.heroBackgroundImage}')` : 'none'
 			}
 		},
 		presaleHomeUrl() {
@@ -274,12 +284,11 @@ export default {
 			if (!this.rooms) return []
 			// Shared list used for both the inclusion filter and the hasVideo flag.
 			// Using the same constant avoids the bug where rooms with only
-			// livestream.youtube / livestream.iframe are shown as active but
+			// livestream.youtube rooms are shown as active but
 			// not marked as having video.
 			const videoModuleTypes = [
 				'livestream.native',
 				'livestream.youtube',
-				'livestream.iframe',
 				'call.bigbluebutton',
 				'call.zoom',
 				'call.janus',

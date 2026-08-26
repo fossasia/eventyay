@@ -39,6 +39,12 @@ footer {
     font-size: 11px;
 }
 
+.voucher-group-toggle,
+.voucher-group-toggle:hover,
+.voucher-group-toggle:focus {
+    text-decoration: none;
+}
+
 nav.navbar {
     margin: 0;
     position: fixed;
@@ -1347,4 +1353,3 @@ h1 .label {
         }
     }
 }
-

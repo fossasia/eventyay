@@ -10,6 +10,7 @@
 <link type="text/css" rel="stylesheet" href='{% url "control:pdf.css" %}'>
 <link type="text/css" rel="stylesheet" href="{% static 'vendored/cropperjs/cropper.min.css' %}">
 <script defer src="{% static 'eventyay-common/js/smtp-toggle.js' %}"></script>
+<script type="text/javascript" src="{% static 'eventyay-common/js/move-event-email-elements.js' %}"></script>
 <script defer src="{% static 'eventyay-common/js/contact-form-toggle.js' %}"></script>
 <script type="module" src="{% static 'pretixcontrol/js/ui/secret-toggle.js' %}"></script>
 {{ sform.media }}
@@ -254,17 +255,14 @@
             {% bootstrap_field email_form.smtp_use_custom layout="control" %}
             <div id="smtp-custom-fields">
                 {% bootstrap_field email_form.email_vendor layout="control" %}
-                <div id="sendgrid-fields">
-                    {% bootstrap_field email_form.send_grid_api_key layout="control" %}
-                </div>
-                <div id="smtp-server-fields">
-                    {% bootstrap_field email_form.smtp_host layout="control" %}
-                    {% bootstrap_field email_form.smtp_port layout="control" %}
-                    {% bootstrap_field email_form.smtp_username layout="control" %}
-                    {% bootstrap_field email_form.smtp_password layout="control" %}
-                    {% bootstrap_field email_form.smtp_use_tls layout="control" %}
-                    {% bootstrap_field email_form.smtp_use_ssl layout="control" %}
-                </div>
+                {% bootstrap_field email_form.send_grid_api_key layout="control" %}
+                {% include "pretixcontrol/includes/gmail_connection.html" with gmail_panel_nested=True gmail_event_level=True gmail_disconnect_form_id="event-gmail-disconnect-form" %}
+                {% bootstrap_field email_form.smtp_host layout="control" %}
+                {% bootstrap_field email_form.smtp_port layout="control" %}
+                {% bootstrap_field email_form.smtp_username layout="control" %}
+                {% bootstrap_field email_form.smtp_password layout="control" %}
+                {% bootstrap_field email_form.smtp_use_tls layout="control" %}
+                {% bootstrap_field email_form.smtp_use_ssl layout="control" %}
                 {% bootstrap_field email_form.test_email layout="control" %}
                 <div class="form-group">
                     <div class="col-md-9 col-md-offset-3">
@@ -417,10 +415,17 @@
             </div>
         </fieldset>
     </div>
-    <div class="form-group submit-group">
+    <div class="form-group submit-group event-settings-submit">
         <button type="submit" class="btn btn-primary btn-save">
             {% trans "Save" %}
         </button>
+        <div class="pull-left event-settings-danger-actions">
+            <a href="{% url "eventyay_common:event.clone" organizer=request.event.organizer.slug event=request.event.slug %}"
+               class="btn btn-default btn-lg">
+                <span class="fa fa-copy"></span>
+                {% trans "Clone event" %}
+            </a>
+        </div>
     </div>
 
     {% comment %}
@@ -521,6 +526,11 @@
 
     <script src="{% static 'vendored/cropperjs/cropper.min.js' %}"></script>
     <script src="{% static 'eventyay-common/image_cropper.js' %}"></script>
+</form>
+<form id="event-gmail-disconnect-form"
+      action="{{ gmail_disconnect_url }}"
+      method="post">
+    {% csrf_token %}
 </form>
 <script src="{% static 'eventyay-common/js/event-settings-images.js' %}" type="module"></script>
 {% endblock %}

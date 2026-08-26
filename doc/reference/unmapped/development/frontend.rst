@@ -31,7 +31,7 @@ Architecture
 
 **Styling**: Stylus with custom theming
 
-**i18n**: vue-i18n for internationalization
+**i18n**: i18next with gettext ``video.po`` files
 
 Core Application Structure
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -250,17 +250,10 @@ Other Utilities
 Internationalization
 ~~~~~~~~~~~~~~~~~~~~
 
-**Supported Languages** (``src/locales/``):
-- English (en)
-- German (de)
-- Spanish (es)
-- French (fr)
-- Portuguese (pt_BR)
-- Russian (ru)
-- Ukrainian (uk)
-- Arabic (ar)
+**Supported Languages**: same UI languages as tickets/talk (Django ``LANGUAGES``).
+Catalogs live in ``app/eventyay/locale/*/LC_MESSAGES/video.po``.
 
-**Implementation**: vue-i18n with JSON translation files
+**Implementation**: i18next loading gettext ``video.po`` catalogs (Weblate)
 
 **Usage**:
 
