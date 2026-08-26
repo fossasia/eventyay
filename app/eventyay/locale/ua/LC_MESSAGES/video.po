@@ -5,11 +5,14 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"POT-Creation-Date: 2026-08-24T07:39:33.717Z\n"
-"PO-Revision-Date: 2026-08-24T07:39:33.717Z\n"
+"POT-Creation-Date: 2026-08-26T13:47:47.593Z\n"
+"PO-Revision-Date: 2026-08-26T13:47:47.593Z\n"
 "Language: ua\n"
 
 msgid "+ Add Stream Schedule"
+msgstr ""
+
+msgid "A few people are in this room"
 msgstr ""
 
 msgid "A stage allows you to present a live stream to your audience, optionally combined with chat and Q&A features."
@@ -21,28 +24,10 @@ msgstr ""
 msgid "A video channel allows you to connect with attendees in real time and host workshops or panels. The video channels are powered by Janus."
 msgstr ""
 
-msgid "AVDevice:error:notallowed"
-msgstr "Дозволи камери або мікрофону відхилені. Будь ласка, надайте доступ до камери або мікрофону у вашому браузері та перезавантажте сторінку."
-
-msgid "AVDevice:error:notfound"
-msgstr "Камеру або мікрофон не знайдено."
-
-msgid "AVDevice:error:notreadable"
-msgstr "Ваша камера або мікрофон недоступні, можливо, їх використовує інша програма?"
-
-msgid "AVDevicePrompt:apply:label"
-msgstr "Застосувати"
-
-msgid "AVDevicePrompt:default:label"
-msgstr "Системні налаштування за замовчуванням"
-
-msgid "AVDevicePrompt:headline:label"
-msgstr "Налаштування пристрою"
-
-msgid "AVDevicePrompt:videoout:label"
-msgstr "Показати відео від інших користувачів (може викликати повторне підключення)"
-
 msgid "About"
+msgstr ""
+
+msgid "Access denied"
 msgstr ""
 
 msgid "Account"
@@ -60,6 +45,9 @@ msgstr ""
 msgid "Add Option"
 msgstr ""
 
+msgid "Add Video"
+msgstr ""
+
 msgid "Add alternative stream"
 msgstr ""
 
@@ -72,8 +60,29 @@ msgstr ""
 msgid "Additional Fields"
 msgstr ""
 
+msgid "Additional information"
+msgstr ""
+
+msgid "Admin mode"
+msgstr "Режим адміністратора"
+
+msgid "Administration"
+msgstr "Адміністрація"
+
+msgid "Align center"
+msgstr ""
+
+msgid "Align left"
+msgstr ""
+
+msgid "Align right"
+msgstr ""
+
 msgid "All Attendees"
 msgstr ""
+
+msgid "All speakers"
+msgstr "до повного списку"
 
 msgid "All times in"
 msgstr ""
@@ -87,49 +96,43 @@ msgstr ""
 msgid "Alternative Streams"
 msgstr ""
 
+msgid "Alternatively, you can create a new channel."
+msgstr "Ви також можете створити новий канал."
+
 msgid "Always-on stage"
 msgstr ""
 
 msgid "Analytics Reports"
 msgstr ""
 
+msgid "And lastly, why not add some optional information to your profile? Don't worry, you can always edit anything in your profile later."
+msgstr "І нарешті, чому б не додати трохи додаткової інформації до вашого профілю? Не хвилюйтесь, ви завжди можете змінити все, що завгодно у вашому профілі пізніше."
+
+msgid "Announcement"
+msgstr "Оголошення"
+
 msgid "Announcements"
+msgstr "Оголошення"
+
+msgid "Apply"
 msgstr ""
 
-msgid "App:disconnected-warning:text"
-msgstr "Зв'язок втрачено! Підключення повторюється..."
+msgid "Approve question"
+msgstr ""
 
-msgid "App:error-code:1006"
-msgstr "Не вдалося підключитися. Ми спробуємо знову, але якщо ця помилка повторюється, можливо, підключення блокується фаєрволом у вашій мережі або VPN на вашому пристрої."
-
-msgid "App:error-code:text"
-msgstr "Код помилки"
-
-msgid "App:fatal-connection-error:connection.replaced:action"
-msgstr "Продовжити (відключити інший пристрій)"
-
-msgid "App:fatal-connection-error:connection.replaced:headline"
-msgstr "Ви відкрили цей захід на новому пристрої або вкладці."
-
-msgid "App:fatal-connection-error:else:headline"
-msgstr "З'єднання відхилено"
-
-msgid "App:fatal-connection-error:world.unknown_world:headline"
-msgstr "Захід не знайдено"
-
-msgid "AppBar:admin-mode:end"
-msgstr "Завершити сеанс адміністратора"
-
-msgid "AppBar:admin-mode:start"
-msgstr "Режим адміністратора"
-
-msgid "AppBar:user-anonymous"
-msgstr "анонімний"
+msgid "Archive All"
+msgstr "Архівувати все"
 
 msgid "Are you ABSOLUTELY sure?"
 msgstr ""
 
 msgid "Are you sure you want to reset this room to the unconfigured state?"
+msgstr ""
+
+msgid "Ask a Question"
+msgstr "Задати питання"
+
+msgid "Attach a file"
 msgstr ""
 
 msgid "Attendee Reports"
@@ -144,6 +147,9 @@ msgstr ""
 msgid "Audit Log"
 msgstr ""
 
+msgid "Authentication failed"
+msgstr ""
+
 msgid "Auto"
 msgstr ""
 
@@ -156,7 +162,16 @@ msgstr ""
 msgid "Auto-mute users"
 msgstr ""
 
+msgid "Autoplay streams"
+msgstr ""
+
+msgid "Awaiting approval"
+msgstr ""
+
 msgid "BBB servers"
+msgstr ""
+
+msgid "Back to {{name}}"
 msgstr ""
 
 msgid "Background color"
@@ -165,11 +180,44 @@ msgstr ""
 msgid "Bad Request"
 msgstr ""
 
+msgid "Ban"
+msgstr ""
+
+msgid "Ban this user from the event?"
+msgstr ""
+
+msgid "Before you join others in this event, please set up your profile. We can get your profile information from one of your social media accounts, or you can fill in your profile by hand."
+msgstr "Перед тим як приєднатися до інших на цьому заході, будь ласка, налаштуйте свій профіль. Ми можемо отримати інформацію вашого профілю з однієї з ваших облікових записів у соціальних мережах, або ви можете заповнити свій профіль вручну."
+
+msgid "Before you join others in this event, please set up your profile. We will show your name to other attendees if you interact with them, e.g. in a chat. You do not need to use your real name. After this, you can optionally choose a picture."
+msgstr "Перед тим як приєднатися до інших на цьому заході, будь ласка, налаштуйте свій профіль. Ми будемо показувати ваше ім'я іншим учасникам, якщо ви взаємодієте з ними, наприклад, у чаті. Вам не потрібно використовувати своє справжнє ім'я. Після цього ви можете вибрати зображення, якщо хочете."
+
+msgid "Block"
+msgstr ""
+
+msgid "Block this user?"
+msgstr ""
+
+msgid "Blockquote"
+msgstr ""
+
+msgid "Bold"
+msgstr ""
+
 msgid "Browse all channels"
+msgstr "Переглянути всі канали"
+
+msgid "Browse channels"
+msgstr "Перегляд каналів"
+
+msgid "Bullet list"
 msgstr ""
 
 msgid "By Session"
 msgstr ""
+
+msgid "By default, livestreams start playing automatically when you enter a stage. Disable autoplay when you attend this event physically and want to use stage features without watching the livestream."
+msgstr "За замовчуванням, живі трансляції починають відтворюватися автоматично, коли ви входите на сцену. Вимкніть автоматичне відтворення, якщо ви фізично присутні на цьому заході та хочете використовувати функції сцени без перегляду живої трансляції."
 
 msgid "By showing this external content you accept their"
 msgstr ""
@@ -177,32 +225,23 @@ msgstr ""
 msgid "CSV"
 msgstr ""
 
+msgid "Camera or microphone permissions denied. Please allow camera or microphone access in your browser and reload the page."
+msgstr "Дозволи камери або мікрофону відхилені. Будь ласка, надайте доступ до камери або мікрофону у вашому браузері та перезавантажте сторінку."
+
 msgid "Cancel"
 msgstr ""
 
 msgid "Change session for room"
 msgstr ""
 
-msgid "ChannelBrowser:create:label"
-msgstr "Ви також можете створити новий канал."
+msgid "Channel members"
+msgstr ""
 
-msgid "ChannelBrowser:headline:text"
-msgstr "Перегляд каналів"
+msgid "Channel name"
+msgstr ""
 
-msgid "ChannelBrowser:intro:text"
-msgstr "Тут ми показуємо вам список усіх каналів, до яких ви можете приєднатися на цьому заході."
-
-msgid "ChannelBrowser:join:label"
-msgstr "Приєднатися"
-
-msgid "ChannelBrowser:preview:label"
-msgstr "Попередній перегляд"
-
-msgid "ChannelBrowser:search:empty"
-msgstr "Вибачте, відповідних каналів не знайдено"
-
-msgid "ChannelBrowser:view:label"
-msgstr "Перегляд"
+msgid "Channels"
+msgstr "Канали"
 
 msgid "Chat"
 msgstr ""
@@ -213,50 +252,38 @@ msgstr ""
 msgid "Chat Webhook"
 msgstr ""
 
-msgid "Chat:join-button:label"
-msgstr "приєднатися до чату"
-
-msgid "Chat:permission-block:room:chat.join"
-msgstr "Вибачте, ви не можете приєднатися до цього каналу."
-
-msgid "Chat:permission-block:room:chat.send"
-msgstr "Цей канал доступний тільки для читання."
-
-msgid "ChatInput:input:placeholder"
-msgstr "Надіслати повідомлення"
-
-msgid "ChatInput:load-more:label"
-msgstr "Більше"
-
-msgid "ChatMessage:join-message:text"
-msgstr "приєднався"
-
-msgid "ChatMessage:leave-message:text"
-msgstr "покинув"
-
-msgid "ChatMessage:message-delete:label"
-msgstr "видалити повідомлення"
-
-msgid "ChatMessage:message-edit:label"
-msgstr "редагувати повідомлення"
-
-msgid "ChatMessage:poll-message:header"
-msgstr "Нове опитування:"
+msgid "Chat with another person"
+msgstr "Чат з іншою людиною"
 
 msgid "Choices (comma seperated)"
 msgstr ""
 
-msgid "Choose a room type"
+msgid "Choose your look"
+msgstr "Виберіть свій вигляд"
+
+msgid "Clear formatting"
 msgstr ""
 
 msgid "Click \"Add Stream Schedule\" to create one."
 msgstr ""
 
+msgid "Click the button below to start a video call with a random other person at the event!"
+msgstr "Натисніть на кнопку нижче, щоб розпочати відеодзвінок з іншою випадковою людиною на заході!"
+
 msgid "Clone"
 msgstr ""
 
+msgid "Code block"
+msgstr ""
+
+msgid "Complete schedule"
+msgstr "до повного розкладу"
+
 msgid "Compute current session from schedule"
 msgstr ""
+
+msgid "Config"
+msgstr "Конфігурація"
 
 msgid "Configuration"
 msgstr ""
@@ -279,11 +306,26 @@ msgstr ""
 msgid "Conftool URL must be a URL"
 msgstr ""
 
+msgid "Connect"
+msgstr "Підключити"
+
 msgid "Connect your attendees for short video calls in random combinations."
 msgstr ""
 
 msgid "Connecting..."
 msgstr ""
+
+msgid "Connection failed. We'll retry, but if this error occurs repeatedly, the connection might be blocked by a firewall in your network or by a VPN on your device."
+msgstr "Не вдалося підключитися. Ми спробуємо знову, але якщо ця помилка повторюється, можливо, підключення блокується фаєрволом у вашій мережі або VPN на вашому пристрої."
+
+msgid "Connection lost! Trying to reconnect…"
+msgstr "Зв'язок втрачено! Підключення повторюється..."
+
+msgid "Connection refused"
+msgstr "З'єднання відхилено"
+
+msgid "Continue (disconnect other device)"
+msgstr "Продовжити (відключити інший пристрій)"
 
 msgid "Copied!"
 msgstr ""
@@ -307,12 +349,15 @@ msgid "Could not publish microphone."
 msgstr ""
 
 msgid "Create"
-msgstr ""
+msgstr "Створити"
 
 msgid "Create Channel"
 msgstr ""
 
 msgid "Create Poll"
+msgstr ""
+
+msgid "Create Room"
 msgstr ""
 
 msgid "Create Stage"
@@ -327,53 +372,29 @@ msgstr ""
 msgid "Create a new announcement"
 msgstr ""
 
+msgid "Create a new channel"
+msgstr "Створити новий канал"
+
 msgid "Create a new kiosk"
 msgstr ""
 
+msgid "Create a new place to discuss a topic you'd like to talk about."
+msgstr "Створіть нове місце для обговорення теми, яку ви хочете обговорити."
+
 msgid "Create a new room"
-msgstr ""
+msgstr "Створити нову кімнату"
+
+msgid "Create a new stage"
+msgstr "Створити нову сцену"
 
 msgid "Create random video calls"
 msgstr ""
 
-msgid "CreateChatPrompt:error:no-permission"
-msgstr ""
+msgid "Current Session"
+msgstr "Поточна сесія"
 
-msgid "CreateChatPrompt:headline:text"
-msgstr "Створити новий канал"
-
-msgid "CreateChatPrompt:intro:text"
-msgstr "Створіть нове місце для обговорення теми, яку ви хочете обговорити."
-
-msgid "CreateChatPrompt:submit:label"
-msgstr "Створити"
-
-msgid "CreateChatPrompt:type.text:label"
-msgstr "Текстовий чат"
-
-msgid "CreateChatPrompt:type.video:label"
-msgstr "Відеочат"
-
-msgid "CreateChatPrompt:type:label"
-msgstr "Тип"
-
-msgid "CreateDMPrompt:headline:text"
-msgstr "Чат з іншою людиною"
-
-msgid "CreateDMPrompt:intro:text"
-msgstr "Почніть вводити ім'я однієї або кількох осіб, з якими ви хочете поспілкуватися!"
-
-msgid "CreateRoomPrompt:headline:text"
-msgstr "Створити нову кімнату"
-
-msgid "CreateRoomPrompt:submit:label"
-msgstr "Створити"
-
-msgid "CreateStagePrompt:headline:text"
-msgstr "Створити нову сцену"
-
-msgid "CreateStagePrompt:submit:label"
-msgstr "Створити"
+msgid "Currently playing"
+msgstr "Зараз відтворюється"
 
 msgid "Custom"
 msgstr ""
@@ -393,6 +414,9 @@ msgstr ""
 msgid "Days"
 msgstr ""
 
+msgid "Default"
+msgstr "За замовчуванням"
+
 msgid "Default stream source"
 msgstr ""
 
@@ -408,14 +432,26 @@ msgstr ""
 msgid "Delete this room"
 msgstr ""
 
+msgid "Deleted User"
+msgstr "Видалений користувач"
+
 msgid "Deleting this room will remove it from the schedule, but the sessions will remain safe."
 msgstr ""
 
 msgid "Description"
 msgstr ""
 
-msgid "DirectMessage:notification-unread:text"
-msgstr "Нові повідомлення"
+msgid "Desktop Notifications"
+msgstr "Сповіщення на робочому столі"
+
+msgid "Desktop notifications are blocked for this site. Please change the setting in your browser."
+msgstr "Сповіщення на робочому столі заблоковані для цього сайту. Будь ласка, змініть налаштування у вашому браузері."
+
+msgid "Device configuration"
+msgstr "Налаштування пристрою"
+
+msgid "Direct messages"
+msgstr "Особисті повідомлення"
 
 msgid "Disable Keyboard Controls"
 msgstr ""
@@ -429,8 +465,14 @@ msgstr ""
 msgid "Disable public chat for non-moderators"
 msgstr ""
 
+msgid "Display name"
+msgstr ""
+
 msgid "Display name cannot be empty"
 msgstr ""
+
+msgid "Do you want to get desktop notifications for direct messages, contact requests and more while the event is running in the background?"
+msgstr "Бажаєте отримувати сповіщення на робочому столі про особисті повідомлення, запити на контакт та інше, поки захід працює у фоновому режимі?"
 
 msgid "Don't make this url publicly accessible!"
 msgstr ""
@@ -480,11 +522,20 @@ msgstr ""
 msgid "Enable block"
 msgstr ""
 
+msgid "Enable desktop notifications"
+msgstr "Увімкнути сповіщення на робочому столі"
+
+msgid "Enable notifications"
+msgstr "Увімкнути сповіщення"
+
 msgid "Enable or disable iframe blocking behaviour for matching domains and the default behaviour if no matching domains are found. Every iframe url domain that ends with a configured domain here will match. For example: configuring \"youtube.com\" on this page will match all iframes with \"www.youtube.com\"."
 msgstr ""
 
 msgid "End Time"
 msgstr ""
+
+msgid "End admin session"
+msgstr "Завершити сеанс адміністратора"
 
 msgid "End time is required"
 msgstr ""
@@ -492,14 +543,20 @@ msgstr ""
 msgid "End time must be after start time."
 msgstr ""
 
-msgid "Enter link:"
+msgid "Enter URL"
 msgstr ""
+
+msgid "Error code"
+msgstr "Код помилки"
 
 msgid "Event"
 msgstr ""
 
 msgid "Event Config"
 msgstr ""
+
+msgid "Event not found"
+msgstr "Захід не знайдено"
 
 msgid "Events"
 msgstr ""
@@ -516,29 +573,41 @@ msgstr ""
 msgid "Failed to delete stream schedule"
 msgstr ""
 
+msgid "Failed to load recordings from the server."
+msgstr "Не вдалося завантажити записи з сервера."
+
 msgid "Failed to load rooms."
 msgstr ""
 
 msgid "Failed to load stream schedules"
 msgstr ""
 
+msgid "Failed to process image. Please try a different file."
+msgstr "Не вдалося обробити зображення. Спробуйте інший файл."
+
 msgid "Failed to save stream schedule"
 msgstr ""
 
-msgid "FeedbackPrompt:headline:text"
-msgstr "Надіслати відгук"
+msgid "Failed to upload avatar. Please try again."
+msgstr "Не вдалося завантажити аватар. Спробуйте ще раз."
 
-msgid "FeedbackPrompt:intro:text"
-msgstr "Виникли проблеми? Провели хороший час? Повідомте нам!"
+msgid "Failed to upload the image"
+msgstr ""
 
-msgid "FeedbackPrompt:privacy:text"
-msgstr "Крім вашого повідомлення, ми зберігатимемо технічну інформацію про ваш дзвінок, таку як час підключення, журнали помилок, версія браузера тощо. Ми не зберігатимемо жодного вмісту розмов."
+msgid "Featured sessions"
+msgstr "Вибрані сесії"
 
-msgid "FeedbackPrompt:submit:label"
-msgstr "Надіслати"
+msgid "Featured speakers"
+msgstr "Наші {{speakers}} доповідачі"
+
+msgid "Fetch from gravatar"
+msgstr "Отримати з Gravatar"
 
 msgid "File size exceeds {{size}} MB. Please choose a smaller image."
 msgstr ""
+
+msgid "Fill manually"
+msgstr "Заповнити вручну"
 
 msgid "For domain"
 msgstr ""
@@ -564,7 +633,13 @@ msgstr ""
 msgid "Generate Reports"
 msgstr ""
 
+msgid "Get desktop notifications for direct messages, contact requests and more while the event is running in the background."
+msgstr "Отримуйте сповіщення на робочому столі про особисті повідомлення, запити на контакт та інше, поки захід працює у фоновому режимі."
+
 msgid "Gravatar"
+msgstr ""
+
+msgid "Gravatar email"
 msgstr ""
 
 msgid "HLS"
@@ -573,8 +648,11 @@ msgstr ""
 msgid "HLS URL"
 msgstr ""
 
-msgid "HMAC Secret"
+msgid "HMAC signing secret"
 msgstr ""
+
+msgid "Having trouble? Had a great time? Let us know!"
+msgstr "Виникли проблеми? Провели хороший час? Повідомте нам!"
 
 msgid "Header background color"
 msgstr ""
@@ -585,6 +663,21 @@ msgstr ""
 msgid "Header image"
 msgstr ""
 
+msgid "Heading 1"
+msgstr ""
+
+msgid "Heading 2"
+msgstr ""
+
+msgid "Heading 3"
+msgstr ""
+
+msgid "Here, we show you a list of all channels that you can join for this event."
+msgstr "Тут ми показуємо вам список усіх каналів, до яких ви можете приєднатися на цьому заході."
+
+msgid "Hi there!"
+msgstr "Привіт!"
+
 msgid "Hide Controls"
 msgstr ""
 
@@ -592,6 +685,9 @@ msgid "Hide Video Info"
 msgstr ""
 
 msgid "Hide presentation when users join"
+msgstr ""
+
+msgid "Home"
 msgstr ""
 
 msgid "ID"
@@ -618,14 +714,29 @@ msgstr ""
 msgid "If your event is large, this might take multiple minutes."
 msgstr ""
 
+msgid "Image must be at least 128px by 128px large."
+msgstr "Зображення повинно бути щонайменше 128 пікселів на 128 пікселів."
+
+msgid "In addition to your message, we'll store technical information about your call, such as connection times, error logs, browser version, etc. We will not store any conversation contents."
+msgstr "Крім вашого повідомлення, ми зберігатимемо технічну інформацію про ваш дзвінок, таку як час підключення, журнали помилок, версія браузера тощо. Ми не зберігатимемо жодного вмісту розмов."
+
 msgid "Include in search queries"
 msgstr ""
 
 msgid "Initial presentation"
 msgstr ""
 
-msgid "Initiate room"
+msgid "Insert emoji"
 msgstr ""
+
+msgid "Insert image"
+msgstr ""
+
+msgid "Insert link"
+msgstr ""
+
+msgid "Interface Language"
+msgstr "Мова інтерфейсу"
 
 msgid "Interpretation"
 msgstr ""
@@ -636,31 +747,25 @@ msgstr ""
 msgid "Invalid file format. Only PNG, JPG, and JPEG images are allowed."
 msgstr ""
 
+msgid "It appears your connection is slow. Click here if you want to reconnect without video."
+msgstr "Здається, ваше підключення повільне. Натисніть тут, якщо хочете перепідключитися без відео."
+
+msgid "Italic"
+msgstr ""
+
 msgid "JSON URL"
 msgstr ""
 
 msgid "Janus servers"
 msgstr ""
 
-msgid "JanusCall:error:text"
-msgstr "Ми не змогли підключитися до сервера відеоконференції, вибачте."
-
-msgid "JanusVideoroom:connection-error:text"
-msgstr "Не вдалося підключитися."
-
-msgid "JanusVideoroom:disconnected:text"
-msgstr "Ви були відключені."
-
-msgid "JanusVideoroom:slow:text"
-msgstr "Здається, ваше підключення повільне. Натисніть тут, якщо хочете перепідключитися без відео."
-
-msgid "JanusVideoroom:video-output:off"
-msgstr "Ви вимкнули отримання відео від інших учасників у налаштуваннях відео/аудіо."
-
 msgid "Jitsi servers"
 msgstr ""
 
 msgid "Join"
+msgstr ""
+
+msgid "Join this chat"
 msgstr ""
 
 msgid "Kiosk Login URL:"
@@ -670,46 +775,13 @@ msgid "Kiosk name"
 msgstr ""
 
 msgid "Kiosks"
-msgstr ""
+msgstr "Кіоски"
 
 msgid "Label"
 msgstr ""
 
 msgid "Landing Page"
 msgstr ""
-
-msgid "LandingPage:dateRange:to"
-msgstr ""
-
-msgid "LandingPage:home-back:label"
-msgstr ""
-
-msgid "LandingPage:home-back:organizer"
-msgstr ""
-
-msgid "LandingPage:rooms:header"
-msgstr ""
-
-msgid "LandingPage:rooms:live"
-msgstr ""
-
-msgid "LandingPage:sessions:featured:header"
-msgstr "Вибрані сесії"
-
-msgid "LandingPage:sessions:featured:link"
-msgstr "до повного розкладу"
-
-msgid "LandingPage:sessions:next:header"
-msgstr "Сесії незабаром"
-
-msgid "LandingPage:sessions:next:link"
-msgstr "до повного розкладу"
-
-msgid "LandingPage:speakers:header"
-msgstr "Наші {{speakers}} доповідачі"
-
-msgid "LandingPage:speakers:link"
-msgstr "до повного списку"
 
 msgid "Language"
 msgstr ""
@@ -718,6 +790,9 @@ msgid "Languages and Audio Source"
 msgstr ""
 
 msgid "Last 7 Days"
+msgstr ""
+
+msgid "Leave"
 msgstr ""
 
 msgid "Let users connect to the following social networks when they first visit your event. Connecting to a social network fills the user's profile with data available from the social connection, like name, avatar and link to the social network profile."
@@ -732,22 +807,16 @@ msgstr ""
 msgid "LinkedIn"
 msgstr ""
 
-msgid "Livestream:automuted-unmute:text"
-msgstr "Натисніть, щоб увімкнути звук"
-
-msgid "Livestream:captions-off:text"
-msgstr "Вимкнено"
-
-msgid "Livestream:default-source:text"
-msgstr "За замовчуванням"
-
-msgid "Livestream:offline-message:text"
-msgstr "Потік офлайн"
+msgid "Live"
+msgstr ""
 
 msgid "Load schedule"
 msgstr ""
 
 msgid "Loading..."
+msgstr ""
+
+msgid "Log in to join this event."
 msgstr ""
 
 msgid "Login UID (JWT uid)"
@@ -768,6 +837,9 @@ msgstr ""
 msgid "Making your profile public allows other attendees to find you in the networking chat list and see you in room viewer lists. Private profiles are completely hidden."
 msgstr ""
 
+msgid "Many people are in this room"
+msgstr ""
+
 msgid "Max connections"
 msgstr ""
 
@@ -783,16 +855,10 @@ msgstr ""
 msgid "Maximum file size: {{size}} MB. Supported formats: PNG, JPG, JPEG. Minimum dimensions: 128x128 pixels."
 msgstr ""
 
-msgid "MediaSource:call:label"
-msgstr "Приватний дзвінок"
-
-msgid "MediaSource:iframe-error:text"
-msgstr "Ми не змогли підключитися до сервера відеоконференції, вибачте."
-
-msgid "MediaSource:room:hint"
-msgstr "Зараз відтворюється"
-
 msgid "Meeting ID"
+msgstr ""
+
+msgid "Message"
 msgstr ""
 
 msgid "Minimum time before the same persons meet again (minutes)"
@@ -804,6 +870,12 @@ msgstr ""
 msgid "Moderation state"
 msgstr ""
 
+msgid "Moderator Actions"
+msgstr "Дії модератора"
+
+msgid "More"
+msgstr "Більше"
+
 msgid "Move BBB room"
 msgstr ""
 
@@ -813,6 +885,9 @@ msgstr ""
 msgid "Must be a valid YouTube URL"
 msgstr ""
 
+msgid "Mute"
+msgstr ""
+
 msgid "My Events"
 msgstr ""
 
@@ -820,9 +895,6 @@ msgid "My Orders"
 msgstr ""
 
 msgid "My Sessions"
-msgstr ""
-
-msgid "Mystery Room"
 msgstr ""
 
 msgid "Name"
@@ -837,25 +909,76 @@ msgstr ""
 msgid "New kiosk"
 msgstr ""
 
+msgid "New messages"
+msgstr "Нові повідомлення"
+
+msgid "New poll:"
+msgstr "Нове опитування:"
+
 msgid "New room"
 msgstr ""
+
+msgid "Next Session"
+msgstr "Наступна сесія"
+
+msgid "Next Sessions"
+msgstr "Наступні сесії"
 
 msgid "Next session"
 msgstr ""
 
+msgid "No camera or microphone found."
+msgstr "Камеру або мікрофон не знайдено."
+
 msgid "No modules to manage in this room"
 msgstr ""
+
+msgid "No polls currently running"
+msgstr "Наразі немає активних опитувань"
+
+msgid "No questions yet, why not ask one?"
+msgstr "Поки немає питань, чому б не задати одне?"
+
+msgid "No recordings are available."
+msgstr "Немає доступних записів."
 
 msgid "No screen video track was selected."
 msgstr ""
 
+msgid "No sessions happening soon in this room."
+msgstr "Незабаром не буде сеансів у цій кімнаті."
+
 msgid "No stream schedules configured yet."
 msgstr ""
 
-msgid "Note: Hiding controls disables autoplay (browsers require muted autoplay, but users cannot unmute without controls)"
+msgid "Not now"
+msgstr "Не зараз"
+
+msgid "Note: Hiding controls disables autoplay so the stream can start with sound when the viewer clicks play."
 msgstr ""
 
+msgid "Notes"
+msgstr "Нотатки"
+
 msgid "Number"
+msgstr ""
+
+msgid "Numbered list"
+msgstr ""
+
+msgid "OK"
+msgstr ""
+
+msgid "Off"
+msgstr "Вимкнено"
+
+msgid "Offline"
+msgstr ""
+
+msgid "One person is joining you online"
+msgstr "Одна людина приєднується до вас онлайн"
+
+msgid "Online"
 msgstr ""
 
 msgid "Option {{n}}"
@@ -870,10 +993,16 @@ msgstr ""
 msgid "Organizers"
 msgstr ""
 
+msgid "Pages"
+msgstr ""
+
 msgid "Participant"
 msgstr ""
 
 msgid "Password"
+msgstr ""
+
+msgid "Pick an identicon or upload a picture."
 msgstr ""
 
 msgid "Pinned poll"
@@ -882,38 +1011,26 @@ msgstr ""
 msgid "Pinned question"
 msgstr ""
 
+msgid "Play a sound for notifications"
+msgstr ""
+
+msgid "Playback"
+msgstr "Відтворити"
+
+msgid "Please log in again to continue."
+msgstr ""
+
+msgid "Please note that recordings start processing and showing up here only a few minutes after the meeting has ended (usually, if the room was empty for a while)."
+msgstr "Будь ласка, зверніть увагу, що записи починають оброблятися і з'являються тут через кілька хвилин після завершення зустрічі (зазвичай, якщо кімната залишалася порожньою деякий час)."
+
+msgid "Please select your language. You can change it later in your profile."
+msgstr "Будь ласка, виберіть свою мову, ви можете змінити її пізніше у своєму профілі."
+
 msgid "Please type"
 msgstr ""
 
 msgid "Please type in the name of the kiosk to confirm."
 msgstr ""
-
-msgid "Poll:empty-placeholder"
-msgstr "Наразі немає активних опитувань"
-
-msgid "Poll:moderation-menu:archive-poll:label"
-msgstr "архівувати"
-
-msgid "Poll:moderation-menu:close-poll:label"
-msgstr "закрити"
-
-msgid "Poll:moderation-menu:delete-poll:label"
-msgstr "видалити"
-
-msgid "Poll:moderation-menu:open-poll:label"
-msgstr "відкрити для голосування"
-
-msgid "Poll:moderation-menu:pin-poll:label"
-msgstr "закріпити"
-
-msgid "Poll:moderation-menu:redraft-poll:label"
-msgstr "переписати"
-
-msgid "Poll:moderation-menu:unarchive-poll:label"
-msgstr "розархівувати"
-
-msgid "Poll:moderation-menu:unpin-poll:label"
-msgstr "відкріпити"
 
 msgid "Polls"
 msgstr ""
@@ -936,6 +1053,9 @@ msgstr ""
 msgid "Private"
 msgstr ""
 
+msgid "Private call"
+msgstr "Приватний дзвінок"
+
 msgid "Private – hidden from attendee lists"
 msgstr ""
 
@@ -947,9 +1067,6 @@ msgstr ""
 
 msgid "Profile visibility"
 msgstr ""
-
-msgid "Prompt:cancel:label"
-msgstr "скасувати"
 
 msgid "Public"
 msgstr ""
@@ -963,47 +1080,14 @@ msgstr ""
 msgid "Question"
 msgstr ""
 
-msgid "Question:moderation-menu:approve-question:label"
-msgstr "затвердити"
-
-msgid "Question:moderation-menu:archive-question:label"
-msgstr "архівувати"
-
-msgid "Question:moderation-menu:delete-question:label"
-msgstr "видалити"
-
-msgid "Question:moderation-menu:pin-question:label"
-msgstr "закріпити"
-
-msgid "Question:moderation-menu:unarchive-question:label"
-msgstr "розархівувати"
-
-msgid "Question:moderation-menu:unpin-question:label"
-msgstr "відкріпити"
-
-msgid "Question:vote-count:label"
-msgstr "Голоси"
-
 msgid "Questions"
 msgstr ""
 
-msgid "Questions require moderation"
-msgstr ""
-
-msgid "Questions:ask-question-button:label"
-msgstr "Задати питання"
-
-msgid "Questions:asking-form:submit"
-msgstr "Надіслати ваше питання"
-
-msgid "Questions:deactivated-placeholder"
+msgid "Questions are currently disabled."
 msgstr "Питання наразі вимкнені."
 
-msgid "Questions:empty-placeholder"
-msgstr "Поки немає питань, чому б не задати одне?"
-
-msgid "Questions:moderator-actions:archive-all:label"
-msgstr "Архівувати все"
+msgid "Questions require moderation"
+msgstr ""
 
 msgid "Random video calls"
 msgstr ""
@@ -1011,37 +1095,16 @@ msgstr ""
 msgid "Raw Tracking"
 msgstr ""
 
-msgid "RecordingsPrompt:empty:text"
-msgstr "Немає доступних записів."
-
-msgid "RecordingsPrompt:error:text"
-msgstr "Не вдалося завантажити записи з сервера."
-
-msgid "RecordingsPrompt:headline:text"
+msgid "Recordings"
 msgstr "Записи"
 
-msgid "RecordingsPrompt:info:text"
-msgstr "Будь ласка, зверніть увагу, що записи починають оброблятися і з'являються тут через кілька хвилин після завершення зустрічі (зазвичай, якщо кімната залишалася порожньою деякий час)."
-
-msgid "RecordingsPrompt:view-notes:label"
-msgstr "Нотатки"
-
-msgid "RecordingsPrompt:view-screenshare:label"
-msgstr "Спільний екран"
-
-msgid "RecordingsPrompt:view-video:label"
-msgstr "Відео"
-
-msgid "RecordingsPrompt:view:label"
-msgstr "Відтворити"
+msgid "Redo"
+msgstr ""
 
 msgid "Rematch interval (minutes)"
 msgstr ""
 
 msgid "Remember my choice"
-msgstr ""
-
-msgid "Remove"
 msgstr ""
 
 msgid "Report issue"
@@ -1068,16 +1131,10 @@ msgstr ""
 msgid "Return this room to the unconfigured state. The room itself and assigned sessions stay in place."
 msgstr ""
 
-msgid "RichTextEditor:upload:error"
-msgstr ""
-
 msgid "Room"
-msgstr ""
+msgstr "Кімната"
 
 msgid "Room Activity"
-msgstr ""
-
-msgid "Room Type"
 msgstr ""
 
 msgid "Room destroyed"
@@ -1098,9 +1155,6 @@ msgstr ""
 msgid "Room name is required."
 msgstr ""
 
-msgid "Room not instantiated."
-msgstr ""
-
 msgid "Room-Specific Reports"
 msgstr ""
 
@@ -1108,58 +1162,7 @@ msgid "Room-level plugin streams used when “Use plugin language streams” is 
 msgstr ""
 
 msgid "Rooms"
-msgstr ""
-
-msgid "RoomsSidebar:admin-announcements:label"
-msgstr "Оголошення"
-
-msgid "RoomsSidebar:admin-config:label"
-msgstr "Конфігурація"
-
-msgid "RoomsSidebar:admin-headline:text"
-msgstr "Адміністрація"
-
-msgid "RoomsSidebar:admin-kiosks:label"
-msgstr "Кіоски"
-
-msgid "RoomsSidebar:admin-rooms:label"
 msgstr "Кімнати"
-
-msgid "RoomsSidebar:admin-users:label"
-msgstr "Користувачі"
-
-msgid "RoomsSidebar:browse-channels-button:label"
-msgstr "Переглянути всі канали"
-
-msgid "RoomsSidebar:channels-headline:text"
-msgstr "Канали"
-
-msgid "RoomsSidebar:direct-messages-headline:text"
-msgstr "Особисті повідомлення"
-
-msgid "RoomsSidebar:schedule:label"
-msgstr "Розклад"
-
-msgid "RoomsSidebar:speaker:label"
-msgstr "Доповідачі"
-
-msgid "RoomsSidebar:stages-headline:text"
-msgstr "Сцени"
-
-msgid "Roulette:btn-start:label"
-msgstr "Почати новий дзвінок"
-
-msgid "Roulette:connecting:text"
-msgstr "Ми знайшли когось! Підключення..."
-
-msgid "Roulette:instructions-repeated:text"
-msgstr "Ваш дзвінок завершено. Натисніть на кнопку нижче, щоб розпочати новий!"
-
-msgid "Roulette:instructions:text"
-msgstr "Натисніть на кнопку нижче, щоб розпочати відеодзвінок з іншою випадковою людиною на заході!"
-
-msgid "Roulette:waiting:text"
-msgstr "Очікування когось для спілкування..."
 
 msgid "Save"
 msgstr ""
@@ -1168,7 +1171,7 @@ msgid "Save Poll"
 msgstr ""
 
 msgid "Schedule"
-msgstr ""
+msgstr "Розклад"
 
 msgid "Schedule-driven stage"
 msgstr ""
@@ -1180,6 +1183,12 @@ msgid "Screen sharing is not supported by this browser."
 msgstr ""
 
 msgid "Screen sharing needs to be started again."
+msgstr ""
+
+msgid "Screenshare"
+msgstr "Спільний екран"
+
+msgid "Search channels"
 msgstr ""
 
 msgid "Search kiosks"
@@ -1197,8 +1206,17 @@ msgstr ""
 msgid "Select which slides to show on the kiosk. Slides will only show when they have content to show. Pinned poll and question slides will always take priority over others, there is no need to manually intervene during a session."
 msgstr ""
 
+msgid "Send"
+msgstr ""
+
+msgid "Send a message"
+msgstr "Надіслати повідомлення"
+
 msgid "Send chat messages to an external endpoint in real-time"
 msgstr ""
+
+msgid "Send feedback"
+msgstr "Надіслати відгук"
 
 msgid "Session Activity"
 msgstr ""
@@ -1218,6 +1236,9 @@ msgstr ""
 msgid "Settings for stages"
 msgstr ""
 
+msgid "Share screen"
+msgstr ""
+
 msgid "Shared screen"
 msgstr ""
 
@@ -1230,7 +1251,16 @@ msgstr ""
 msgid "Show reaction cloud"
 msgstr ""
 
+msgid "Show video from other users (might cause a reconnect)"
+msgstr ""
+
 msgid "Sidebar addons"
+msgstr ""
+
+msgid "Silence"
+msgstr ""
+
+msgid "Silence this user?"
 msgstr ""
 
 msgid "Slides"
@@ -1239,13 +1269,37 @@ msgstr ""
 msgid "Social Connections"
 msgstr ""
 
-msgid "Sorting is disabled while searching"
+msgid "Something went wrong."
 msgstr ""
+
+msgid "Sorry, could not find any matching channels"
+msgstr "Вибачте, відповідних каналів не знайдено"
+
+msgid "Sorry, no polls or questions currently active in this room!"
+msgstr "Вибачте, наразі в цій кімнаті немає активних опитувань або питань!"
+
+msgid "Sorry, you can't join this channel."
+msgstr "Вибачте, ви не можете приєднатися до цього каналу."
+
+msgid "Speakers"
+msgstr "Доповідачі"
 
 msgid "Stage"
 msgstr ""
 
+msgid "Stage name"
+msgstr ""
+
+msgid "Stages"
+msgstr "Сцени"
+
 msgid "Start Time"
+msgstr ""
+
+msgid "Start a new call"
+msgstr "Почати новий дзвінок"
+
+msgid "Start chat"
 msgstr ""
 
 msgid "Start muted"
@@ -1257,6 +1311,9 @@ msgstr ""
 msgid "Start time is required"
 msgstr ""
 
+msgid "Start typing the name of one or more persons you want to talk to!"
+msgstr "Почніть вводити ім'я однієї або кількох осіб, з якими ви хочете поспілкуватися!"
+
 msgid "Start with audio muted"
 msgstr ""
 
@@ -1265,6 +1322,12 @@ msgstr ""
 
 msgid "State"
 msgstr ""
+
+msgid "Stop sharing screen"
+msgstr ""
+
+msgid "Stream Autoplay"
+msgstr "Автоматичне відтворення потоків"
 
 msgid "Stream Schedules"
 msgstr ""
@@ -1281,6 +1344,9 @@ msgstr ""
 msgid "Stream keys"
 msgstr ""
 
+msgid "Stream offline"
+msgstr "Потік офлайн"
+
 msgid "Stream offline image"
 msgstr ""
 
@@ -1296,8 +1362,20 @@ msgstr ""
 msgid "Streaming servers"
 msgstr ""
 
+msgid "Strikethrough"
+msgstr ""
+
+msgid "Submit"
+msgstr "Надіслати"
+
+msgid "Submit your question"
+msgstr "Надіслати ваше питання"
+
 msgid "Summary"
 msgstr ""
+
+msgid "System default"
+msgstr "Системні налаштування за замовчуванням"
 
 msgid "System details"
 msgstr ""
@@ -1308,11 +1386,23 @@ msgstr ""
 msgid "TURN servers"
 msgstr ""
 
+msgid "Tap to unmute"
+msgstr "Натисніть, щоб увімкнути звук"
+
 msgid "Text"
 msgstr ""
 
 msgid "Text Channel"
 msgstr ""
+
+msgid "Text chat"
+msgstr "Текстовий чат"
+
+msgid "Text formatting"
+msgstr ""
+
+msgid "The connection has failed."
+msgstr "Не вдалося підключитися."
 
 msgid "The file could not be uploaded. Please try again."
 msgstr ""
@@ -1335,13 +1425,43 @@ msgstr ""
 msgid "Theme Config"
 msgstr ""
 
+msgid "There are a few people waiting, this should not take too long."
+msgstr ""
+
+msgid "There are lots of people waiting, this should be quick."
+msgstr ""
+
+msgid "They can still watch, but can no longer send chat messages."
+msgstr ""
+
+msgid "They will be able to join this event again."
+msgstr ""
+
+msgid "They will be able to send chat messages again."
+msgstr ""
+
+msgid "They will no longer be able to join this event."
+msgstr ""
+
+msgid "They will no longer be able to send you direct messages."
+msgstr ""
+
 msgid "This Week"
 msgstr ""
 
 msgid "This action CANNOT be undone. This will permanently delete the kiosk"
 msgstr ""
 
+msgid "This channel is readonly."
+msgstr "Цей канал доступний тільки для читання."
+
 msgid "This content is hosted by a third party on"
+msgstr ""
+
+msgid "This message was not visible to {{count}} people."
+msgstr ""
+
+msgid "This room does not have a video option yet."
 msgstr ""
 
 msgid "This room type allows you to connect with attendees through a Jitsi meeting."
@@ -1371,6 +1491,9 @@ msgstr ""
 msgid "To"
 msgstr ""
 
+msgid "To {{- date}}"
+msgstr ""
+
 msgid "Today"
 msgstr ""
 
@@ -1392,16 +1515,34 @@ msgstr ""
 msgid "Traits (comma-separated)"
 msgstr ""
 
+msgid "Try again"
+msgstr ""
+
+msgid "Turn camera off"
+msgstr ""
+
+msgid "Turn camera on"
+msgstr ""
+
 msgid "Twitter"
 msgstr ""
 
 msgid "Type"
-msgstr ""
+msgstr "Тип"
 
 msgid "URL for external subtitles"
 msgstr ""
 
-msgid "Unconfigured"
+msgid "Unban"
+msgstr ""
+
+msgid "Unban this user?"
+msgstr ""
+
+msgid "Underline"
+msgstr ""
+
+msgid "Undo"
 msgstr ""
 
 msgid "Unknown Janus connection error"
@@ -1410,10 +1551,19 @@ msgstr ""
 msgid "Unknown user"
 msgstr ""
 
+msgid "Unmute"
+msgstr ""
+
 msgid "Unscheduled"
 msgstr ""
 
 msgid "Unscheduled room (hide from schedule/sessions)"
+msgstr ""
+
+msgid "Unsilence"
+msgstr ""
+
+msgid "Unsilence this user?"
 msgstr ""
 
 msgid "Untitled"
@@ -1422,25 +1572,31 @@ msgstr ""
 msgid "Untitled Stream"
 msgstr ""
 
-msgid "UpcomingStreamCountdown:at:text"
+msgid "Up Next:"
 msgstr ""
 
-msgid "UpcomingStreamCountdown:default-title:text"
+msgid "Upcoming Stream"
 msgstr ""
 
-msgid "UpcomingStreamCountdown:in:text"
-msgstr ""
+msgid "Upcoming sessions"
+msgstr "Сесії незабаром"
 
-msgid "UpcomingStreamCountdown:label:text"
+msgid "Upload failed"
 msgstr ""
 
 msgid "Upload file"
 msgstr ""
 
+msgid "Uploaded image is too large. Please choose a smaller file."
+msgstr "Завантажене зображення занадто велике. Виберіть менший файл."
+
 msgid "Use only the active stream schedule as the playback source."
 msgstr ""
 
 msgid "Use video from this interpretation channel"
+msgstr ""
+
+msgid "Used to sign chat webhook payloads. This is not your Eventyay password."
 msgstr ""
 
 msgid "User"
@@ -1449,53 +1605,26 @@ msgstr ""
 msgid "User Profile"
 msgstr ""
 
-msgid "User:"
+msgid "User banned"
 msgstr ""
 
-msgid "User:label:deleted"
-msgstr "Видалений користувач"
+msgid "User blocked"
+msgstr ""
 
-msgid "User:state:banned"
-msgstr "заблокований"
+msgid "User silenced"
+msgstr ""
 
-msgid "User:state:inactive"
-msgstr "неактивний"
+msgid "User unbanned"
+msgstr ""
 
-msgid "User:state:silenced"
-msgstr "приглушений"
-
-msgid "UserAction:action.ban:label"
-msgstr "забанити"
-
-msgid "UserAction:action.block:label"
-msgstr "блокувати"
-
-msgid "UserAction:action.call:label"
-msgstr "дзвінок"
-
-msgid "UserAction:action.delete:label"
-msgstr "видалити"
-
-msgid "UserAction:action.dm:label"
-msgstr "повідомлення"
-
-msgid "UserAction:action.silence:label"
-msgstr "приглушити"
-
-msgid "UserAction:action.unban:label"
-msgstr "розблокувати"
-
-msgid "UserAction:action.unblock:label"
-msgstr "розблокувати"
-
-msgid "UserAction:action.unsilence:label"
-msgstr "прибрати приглушення"
-
-msgid "UserAction:moderator-actions:title"
-msgstr "Дії модератора"
+msgid "User unsilenced"
+msgstr ""
 
 msgid "Users"
-msgstr ""
+msgstr "Користувачі"
+
+msgid "Video"
+msgstr "Відео"
 
 msgid "Video Admin"
 msgstr ""
@@ -1515,7 +1644,10 @@ msgstr ""
 msgid "Video admin settings"
 msgstr ""
 
-msgid "Visit URL:"
+msgid "Video chat"
+msgstr "Відеочат"
+
+msgid "Video option"
 msgstr ""
 
 msgid "Voice Bridge ID"
@@ -1524,14 +1656,38 @@ msgstr ""
 msgid "Volume"
 msgstr ""
 
+msgid "Votes"
+msgstr "Голоси"
+
+msgid "Waiting for a person to talk to …"
+msgstr "Очікування когось для спілкування..."
+
+msgid "We could not connect to the video conference server, sorry."
+msgstr "Ми не змогли підключитися до сервера відеоконференції, вибачте."
+
 msgid "We could not fetch the current configuration."
 msgstr ""
+
+msgid "We found someone! Connecting …"
+msgstr "Ми знайшли когось! Підключення..."
+
+msgid "We will fetch your display name and avatar from gravatar. We download your information only once and only on your browser, we'll never see your email address."
+msgstr "Ми отримаємо ваше відображуване ім'я та аватар з Gravatar. Ми завантажуємо вашу інформацію лише один раз і лише на ваш браузер, ми ніколи не бачимо вашу електронну адресу."
+
+msgid "We will show your name to other attendees if you interact with them, e.g. in a chat. You do not need to use your real name."
+msgstr "Ми будемо показувати ваше ім'я іншим учасникам, якщо ви взаємодієте з ними, наприклад, у чаті. Вам не потрібно використовувати своє справжнє ім'я."
 
 msgid "Webhook"
 msgstr ""
 
 msgid "Webhook URL"
 msgstr ""
+
+msgid "Webhook configured"
+msgstr ""
+
+msgid "What are you called?"
+msgstr "Як вас звати?"
 
 msgid "Wikimedia"
 msgstr ""
@@ -1540,6 +1696,18 @@ msgid "Wikimedia / Wikimania username"
 msgstr ""
 
 msgid "Yesterday"
+msgstr ""
+
+msgid "You are first in line. We will connect you as soon as someone else arrives."
+msgstr ""
+
+msgid "You are not logged in"
+msgstr ""
+
+msgid "You disabled receiving videos of other participants in the video/audio settings."
+msgstr "Ви вимкнули отримання відео від інших учасників у налаштуваннях відео/аудіо."
+
+msgid "You do not have permission to create channels."
 msgstr ""
 
 msgid "You do not have permission to create random video calls."
@@ -1551,11 +1719,23 @@ msgstr ""
 msgid "You do not have permission to edit this room."
 msgstr ""
 
+msgid "You do not have permission to join this event."
+msgstr ""
+
+msgid "You have been disconnected."
+msgstr "Ви були відключені."
+
 msgid "You likely lack admin permissions."
 msgstr ""
 
+msgid "You opened this event on a new device or tab."
+msgstr "Ви відкрили цей захід на новому пристрої або вкладці."
+
 msgid "You started a video call"
 msgstr ""
+
+msgid "You're voting anonymously"
+msgstr "Ви голосуєте анонімно"
 
 msgid "YouTube"
 msgstr ""
@@ -1564,6 +1744,24 @@ msgid "YouTube Video ID or URL"
 msgstr ""
 
 msgid "YouTube Video ID or URL is required"
+msgstr ""
+
+msgid "Your call has ended. Click the button below to start a new one!"
+msgstr "Ваш дзвінок завершено. Натисніть на кнопку нижче, щоб розпочати новий!"
+
+msgid "Your camera or microphone is not available, maybe another program uses it right now?"
+msgstr "Ваша камера або мікрофон недоступні, можливо, їх використовує інша програма?"
+
+msgid "Your login has expired"
+msgstr ""
+
+msgid "Your login is invalid"
+msgstr ""
+
+msgid "Your profile"
+msgstr "Ваш профіль"
+
+msgid "Your question"
 msgstr ""
 
 msgid "Your screen"
@@ -1575,26 +1773,59 @@ msgstr ""
 msgid "admin"
 msgstr ""
 
+msgid "anonymous"
+msgstr "анонімний"
+
+msgid "approve"
+msgstr "затвердити"
+
 msgid "archive"
+msgstr "архівувати"
+
+msgid "at"
 msgstr ""
+
+msgid "back"
+msgstr "назад"
 
 msgid "ban"
-msgstr ""
+msgstr "забанити"
+
+msgid "banned"
+msgstr "заблокований"
+
+msgid "block"
+msgstr "блокувати"
 
 msgid "call"
-msgstr ""
+msgstr "дзвінок"
 
 msgid "cancel"
-msgstr ""
+msgstr "скасувати"
+
+msgid "change avatar"
+msgstr "змінити аватар"
+
+msgid "close"
+msgstr "закрити"
 
 msgid "color must be in 3 or 6 digit hex format"
 msgstr ""
+
+msgid "continue"
+msgstr "продовжити"
 
 msgid "create"
 msgstr ""
 
 msgid "default"
 msgstr ""
+
+msgid "delete"
+msgstr "видалити"
+
+msgid "delete message"
+msgstr "видалити повідомлення"
 
 msgid "delete this kiosk"
 msgstr ""
@@ -1614,6 +1845,12 @@ msgstr ""
 msgid "edit"
 msgstr ""
 
+msgid "edit message"
+msgstr "редагувати повідомлення"
+
+msgid "error code:"
+msgstr ""
+
 msgid "eventyay domain"
 msgstr ""
 
@@ -1622,6 +1859,9 @@ msgstr ""
 
 msgid "example.com"
 msgstr ""
+
+msgid "finish"
+msgstr "завершити"
 
 msgid "forever"
 msgstr ""
@@ -1632,14 +1872,47 @@ msgstr ""
 msgid "hls.js config"
 msgstr ""
 
+msgid "https://example.com/privacy"
+msgstr ""
+
+msgid "https://example.com/stream.m3u8"
+msgstr ""
+
+msgid "https://example.com/webhook"
+msgstr ""
+
+msgid "https://www.youtube.com/watch?v=..."
+msgstr ""
+
+msgid "https://youtube.com/watch?v=..."
+msgstr ""
+
+msgid "in"
+msgstr ""
+
+msgid "inactive"
+msgstr "неактивний"
+
 msgid "invited you to a video call"
 msgstr ""
+
+msgid "join"
+msgstr "Приєднатися"
+
+msgid "join chat"
+msgstr "приєднатися до чату"
+
+msgid "joined"
+msgstr "приєднався"
+
+msgid "left"
+msgstr "покинув"
 
 msgid "live"
 msgstr ""
 
 msgid "message"
-msgstr ""
+msgstr "повідомлення"
 
 msgid "must be a valid url"
 msgstr ""
@@ -1656,142 +1929,29 @@ msgstr ""
 msgid "not a valid YouTube video ID or URL"
 msgstr ""
 
-msgid "notifications/Announcment:title"
-msgstr "Оголошення"
-
-msgid "notifications/NotificationPermissionNotification:accept:label"
-msgstr "Увімкнути сповіщення"
-
-msgid "notifications/NotificationPermissionNotification:decline:label"
-msgstr "Не зараз"
-
-msgid "notifications/NotificationPermissionNotification:prompt"
-msgstr "Бажаєте отримувати сповіщення на робочому столі про особисті повідомлення, запити на контакт та інше, поки захід працює у фоновому режимі?"
-
-msgid "notifications/NotificationPermissionNotification:title"
-msgstr "Сповіщення на робочому столі"
-
 msgid "open a direct message"
 msgstr ""
 
+msgid "open for voting"
+msgstr "відкрити для голосування"
+
 msgid "or"
-msgstr ""
-
-msgid "pages"
-msgstr ""
-
-msgid "preferences/index:autoplay:description"
-msgstr "За замовчуванням, живі трансляції починають відтворюватися автоматично, коли ви входите на сцену. Вимкніть автоматичне відтворення, якщо ви фізично присутні на цьому заході та хочете використовувати функції сцени без перегляду живої трансляції."
-
-msgid "preferences/index:autoplay:header"
-msgstr "Автоматичне відтворення потоків"
-
-msgid "preferences/index:btn-change-avatar:label"
-msgstr "змінити аватар"
-
-msgid "preferences/index:btn-enable-desktop-notifications:label"
-msgstr "Увімкнути сповіщення на робочому столі"
-
-msgid "preferences/index:btn-save:label"
-msgstr "зберегти"
-
-msgid "preferences/index:btn-upload-save:label"
-msgstr "зберегти"
-
-msgid "preferences/index:heading"
-msgstr "Ваш профіль"
-
-msgid "preferences/index:interface-language:description"
-msgstr "Будь ласка, виберіть свою мову, ви можете змінити її пізніше у своєму профілі."
-
-msgid "preferences/index:interface-language:header"
-msgstr "Мова інтерфейсу"
-
-msgid "preferences/index:notification-permission-denied-warning"
-msgstr "Сповіщення на робочому столі заблоковані для цього сайту. Будь ласка, змініть налаштування у вашому браузері."
-
-msgid "preferences/index:notifications:description"
-msgstr "Отримуйте сповіщення на робочому столі про особисті повідомлення, запити на контакт та інше, поки захід працює у фоновому режимі."
-
-msgid "preferences/index:notifications:header"
-msgstr "Сповіщення на робочому столі"
-
-msgid "profile/ChangeAvatar:button-randomize:label"
-msgstr "випадковий"
-
-msgid "profile/ChangeAvatar:button-upload:label"
-msgstr "завантажити"
-
-msgid "profile/ChangeAvatar:error:file-too-large"
-msgstr "Завантажене зображення занадто велике. Виберіть менший файл."
-
-msgid "profile/ChangeAvatar:error:image-too-small"
-msgstr "Зображення повинно бути щонайменше 128 пікселів на 128 пікселів."
-
-msgid "profile/ChangeAvatar:error:process-failed"
-msgstr "Не вдалося обробити зображення. Спробуйте інший файл."
-
-msgid "profile/ChangeAvatar:error:upload-failed"
-msgstr "Не вдалося завантажити аватар. Спробуйте ще раз."
-
-msgid "profile/ChangeAvatar:or"
 msgstr "або"
 
-msgid "profile/ConnectGravatar:gravatar-connect:label"
-msgstr "Підключити"
+msgid "pin"
+msgstr "закріпити"
 
-msgid "profile/ConnectGravatar:headline"
-msgstr "Отримати з Gravatar"
-
-msgid "profile/ConnectGravatar:text"
-msgstr "Ми отримаємо ваше відображуване ім'я та аватар з Gravatar. Ми завантажуємо вашу інформацію лише один раз і лише на ваш браузер, ми ніколи не бачимо вашу електронну адресу."
-
-msgid "profile/GreetingPrompt:button-back:label"
-msgstr "назад"
-
-msgid "profile/GreetingPrompt:button-continue:label"
-msgstr "продовжити"
-
-msgid "profile/GreetingPrompt:button-finish:label"
-msgstr "завершити"
-
-msgid "profile/GreetingPrompt:step-avatar:heading"
-msgstr "Виберіть свій вигляд"
-
-msgid "profile/GreetingPrompt:step-avatar:text"
-msgstr ""
-
-msgid "profile/GreetingPrompt:step-display-name:heading"
-msgstr "Як вас звати?"
-
-msgid "profile/GreetingPrompt:step-display-name:text"
-msgstr "Ми будемо показувати ваше ім'я іншим учасникам, якщо ви взаємодієте з ними, наприклад, у чаті. Вам не потрібно використовувати своє справжнє ім'я."
-
-msgid "profile/GreetingPrompt:step-display-name~as-first-step:heading"
-msgstr "Привіт!"
-
-msgid "profile/GreetingPrompt:step-display-name~as-first-step:text"
-msgstr ""
-"Перед тим як приєднатися до інших на цьому заході, будь ласка, налаштуйте свій профіль.\n"
-"Ми будемо показувати ваше ім'я іншим учасникам, якщо ви взаємодієте з ними, наприклад, у чаті. Вам не потрібно використовувати своє справжнє ім'я. Після цього ви можете вибрати зображення, якщо хочете."
-
-msgid "profile/GreetingPrompt:step-fields:heading"
-msgstr ""
-
-msgid "profile/GreetingPrompt:step-fields:text"
-msgstr "І нарешті, чому б не додати трохи додаткової інформації до вашого профілю? Не хвилюйтесь, ви завжди можете змінити все, що завгодно у вашому профілі пізніше."
-
-msgid "profile/GreetingPrompt:step-social:button-fill-manually:label"
-msgstr "Заповнити вручну"
-
-msgid "profile/GreetingPrompt:step-social:heading"
-msgstr "Привіт!"
-
-msgid "profile/GreetingPrompt:step-social:text"
-msgstr "Перед тим як приєднатися до інших на цьому заході, будь ласка, налаштуйте свій профіль. Ми можемо отримати інформацію вашого профілю з однієї з ваших облікових записів у соціальних мережах, або ви можете заповнити свій профіль вручну."
+msgid "preview"
+msgstr "Попередній перегляд"
 
 msgid "random video calls"
 msgstr ""
+
+msgid "randomize"
+msgstr "випадковий"
+
+msgid "re-draft"
+msgstr "переписати"
 
 msgid "reacted with"
 msgstr ""
@@ -1800,7 +1960,7 @@ msgid "remove"
 msgstr ""
 
 msgid "save"
-msgstr ""
+msgstr "зберегти"
 
 msgid "shared-secret-key"
 msgstr ""
@@ -1809,34 +1969,13 @@ msgid "show until"
 msgstr ""
 
 msgid "silence"
+msgstr "приглушити"
+
+msgid "silenced"
+msgstr "приглушений"
+
+msgid "sorting is disabled while searching"
 msgstr ""
-
-msgid "standalone/Anonymous:footer-anonymously"
-msgstr "Ви голосуєте анонімно"
-
-msgid "standalone/Anonymous:header_room"
-msgstr "Кімната"
-
-msgid "standalone/Anonymous:no-content"
-msgstr "Вибачте, наразі в цій кімнаті немає активних опитувань або питань!"
-
-msgid "standalone/Anonymous:no-sessions"
-msgstr "Незабаром не буде сеансів у цій кімнаті."
-
-msgid "standalone/Anonymous:schedule:current-session"
-msgstr "Поточна сесія"
-
-msgid "standalone/Anonymous:schedule:next-sessions"
-msgstr "Наступні сесії"
-
-msgid "standalone/NextSession:header"
-msgstr "Наступна сесія"
-
-msgid "standalone/Viewers:header_one"
-msgstr "Одна людина приєднується до вас онлайн"
-
-msgid "standalone/Viewers:header_other"
-msgstr "{{ count }} осіб приєднуються до вас онлайн"
 
 msgid "start video call"
 msgstr ""
@@ -1853,11 +1992,29 @@ msgstr ""
 msgid "to confirm deletion."
 msgstr ""
 
+msgid "unarchive"
+msgstr "розархівувати"
+
 msgid "unban"
-msgstr ""
+msgstr "розблокувати"
+
+msgid "unblock"
+msgstr "розблокувати"
+
+msgid "unpin"
+msgstr "відкріпити"
 
 msgid "unsilence"
-msgstr ""
+msgstr "прибрати приглушення"
+
+msgid "upload"
+msgstr "завантажити"
+
+msgid "view"
+msgstr "Перегляд"
+
+msgid "{{ count }} people are joining you online"
+msgstr "{{ count }} осіб приєднуються до вас онлайн"
 
 msgid "{{name}}'s screen"
 msgstr ""

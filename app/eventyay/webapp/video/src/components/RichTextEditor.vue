@@ -1,44 +1,44 @@
 <template lang="pug">
 bunt-input-outline-container.c-rich-text-editor(ref="outline", :label="label")
-	.tiptap-toolbar(role="toolbar", aria-label="Text formatting")
-		button.tiptap-btn(:class="{'is-active': isActive('bold')}", type="button", title="Bold", aria-label="Bold", @click.prevent="cmd('toggleBold')")
+	.tiptap-toolbar(role="toolbar", :aria-label="$t('Text formatting')")
+		button.tiptap-btn(:class="{'is-active': isActive('bold')}", type="button", :title="$t('Bold')", :aria-label="$t('Bold')", @click.prevent="cmd('toggleBold')")
 			b B
-		button.tiptap-btn(:class="{'is-active': isActive('italic')}", type="button", title="Italic", aria-label="Italic", @click.prevent="cmd('toggleItalic')")
+		button.tiptap-btn(:class="{'is-active': isActive('italic')}", type="button", :title="$t('Italic')", :aria-label="$t('Italic')", @click.prevent="cmd('toggleItalic')")
 			i I
-		button.tiptap-btn(:class="{'is-active': isActive('underline')}", type="button", title="Underline", aria-label="Underline", @click.prevent="cmd('toggleUnderline')")
+		button.tiptap-btn(:class="{'is-active': isActive('underline')}", type="button", :title="$t('Underline')", :aria-label="$t('Underline')", @click.prevent="cmd('toggleUnderline')")
 			u U
-		button.tiptap-btn(:class="{'is-active': isActive('strike')}", type="button", title="Strikethrough", aria-label="Strikethrough", @click.prevent="cmd('toggleStrike')")
+		button.tiptap-btn(:class="{'is-active': isActive('strike')}", type="button", :title="$t('Strikethrough')", :aria-label="$t('Strikethrough')", @click.prevent="cmd('toggleStrike')")
 			s S
 		span.tiptap-separator(aria-hidden="true")
-		button.tiptap-btn(:class="{'is-active': isActive('heading', {level: 1})}", type="button", title="Heading 1", aria-label="Heading 1", @click.prevent="cmdWith('toggleHeading', {level: 1})") H1
-		button.tiptap-btn(:class="{'is-active': isActive('heading', {level: 2})}", type="button", title="Heading 2", aria-label="Heading 2", @click.prevent="cmdWith('toggleHeading', {level: 2})") H2
-		button.tiptap-btn(:class="{'is-active': isActive('heading', {level: 3})}", type="button", title="Heading 3", aria-label="Heading 3", @click.prevent="cmdWith('toggleHeading', {level: 3})") H3
-		button.tiptap-btn(:class="{'is-active': isActive('blockquote')}", type="button", title="Blockquote", aria-label="Blockquote", @click.prevent="cmd('toggleBlockquote')") ❝
-		button.tiptap-btn(:class="{'is-active': isActive('codeBlock')}", type="button", title="Code block", aria-label="Code block", @click.prevent="cmd('toggleCodeBlock')") &lt;/&gt;
+		button.tiptap-btn(:class="{'is-active': isActive('heading', {level: 1})}", type="button", :title="$t('Heading 1')", :aria-label="$t('Heading 1')", @click.prevent="cmdWith('toggleHeading', {level: 1})") H1
+		button.tiptap-btn(:class="{'is-active': isActive('heading', {level: 2})}", type="button", :title="$t('Heading 2')", :aria-label="$t('Heading 2')", @click.prevent="cmdWith('toggleHeading', {level: 2})") H2
+		button.tiptap-btn(:class="{'is-active': isActive('heading', {level: 3})}", type="button", :title="$t('Heading 3')", :aria-label="$t('Heading 3')", @click.prevent="cmdWith('toggleHeading', {level: 3})") H3
+		button.tiptap-btn(:class="{'is-active': isActive('blockquote')}", type="button", :title="$t('Blockquote')", :aria-label="$t('Blockquote')", @click.prevent="cmd('toggleBlockquote')") ❝
+		button.tiptap-btn(:class="{'is-active': isActive('codeBlock')}", type="button", :title="$t('Code block')", :aria-label="$t('Code block')", @click.prevent="cmd('toggleCodeBlock')") &lt;/&gt;
 		span.tiptap-separator(aria-hidden="true")
-		button.tiptap-btn(:class="{'is-active': isActive('bulletList')}", type="button", title="Bullet list", aria-label="Bullet list", @click.prevent="cmd('toggleBulletList')") &#8226;&#8212;
-		button.tiptap-btn(:class="{'is-active': isActive('orderedList')}", type="button", title="Numbered list", aria-label="Numbered list", @click.prevent="cmd('toggleOrderedList')") 1.&#8212;
+		button.tiptap-btn(:class="{'is-active': isActive('bulletList')}", type="button", :title="$t('Bullet list')", :aria-label="$t('Bullet list')", @click.prevent="cmd('toggleBulletList')") &#8226;&#8212;
+		button.tiptap-btn(:class="{'is-active': isActive('orderedList')}", type="button", :title="$t('Numbered list')", :aria-label="$t('Numbered list')", @click.prevent="cmd('toggleOrderedList')") 1.&#8212;
 		span.tiptap-separator(aria-hidden="true")
-		button.tiptap-btn(:class="{'is-active': isActive({textAlign: 'left'})}", type="button", title="Align left", aria-label="Align left", @click.prevent="cmdWith('setTextAlign', 'left')") &#8676;
-		button.tiptap-btn(:class="{'is-active': isActive({textAlign: 'center'})}", type="button", title="Align center", aria-label="Align center", @click.prevent="cmdWith('setTextAlign', 'center')") &#8652;
-		button.tiptap-btn(:class="{'is-active': isActive({textAlign: 'right'})}", type="button", title="Align right", aria-label="Align right", @click.prevent="cmdWith('setTextAlign', 'right')") &#8677;
+		button.tiptap-btn(:class="{'is-active': isActive({textAlign: 'left'})}", type="button", :title="$t('Align left')", :aria-label="$t('Align left')", @click.prevent="cmdWith('setTextAlign', 'left')") &#8676;
+		button.tiptap-btn(:class="{'is-active': isActive({textAlign: 'center'})}", type="button", :title="$t('Align center')", :aria-label="$t('Align center')", @click.prevent="cmdWith('setTextAlign', 'center')") &#8652;
+		button.tiptap-btn(:class="{'is-active': isActive({textAlign: 'right'})}", type="button", :title="$t('Align right')", :aria-label="$t('Align right')", @click.prevent="cmdWith('setTextAlign', 'right')") &#8677;
 		span.tiptap-separator(aria-hidden="true")
 		span.tiptap-link-menu(ref="linkMenuRef")
-			button.tiptap-btn(type="button", title="Insert link", aria-label="Insert link", @click.prevent="insertLink") &#128279;
-		button.tiptap-btn(type="button", title="Insert image", aria-label="Insert image", @click.prevent="triggerImageUpload") &#128247;
+			button.tiptap-btn(type="button", :title="$t('Insert link')", :aria-label="$t('Insert link')", @click.prevent="insertLink") &#128279;
+		button.tiptap-btn(type="button", :title="$t('Insert image')", :aria-label="$t('Insert image')", @click.prevent="triggerImageUpload") &#128247;
 		span.tiptap-separator(aria-hidden="true")
-		button.tiptap-btn(type="button", title="Clear formatting", aria-label="Clear formatting", @click.prevent="clearFormatting") &#10005;
-		button.tiptap-btn(type="button", title="Undo", aria-label="Undo", @click.prevent="cmd('undo')") &#8630;
-		button.tiptap-btn(type="button", title="Redo", aria-label="Redo", @click.prevent="cmd('redo')") &#8631;
+		button.tiptap-btn(type="button", :title="$t('Clear formatting')", :aria-label="$t('Clear formatting')", @click.prevent="clearFormatting") &#10005;
+		button.tiptap-btn(type="button", :title="$t('Undo')", :aria-label="$t('Undo')", @click.prevent="cmd('undo')") &#8630;
+		button.tiptap-btn(type="button", :title="$t('Redo')", :aria-label="$t('Redo')", @click.prevent="cmd('redo')") &#8631;
 	.editor-mount(ref="editorMount")
 	input(type="file", ref="imageInput", accept="image/png, image/gif, image/jpeg, image/bmp, image/x-icon", style="display:none", @change="handleImageUpload")
 	.uploading(v-if="uploading")
 		bunt-progress-circular(size="huge")
 	error-dialog(
 		v-if="showErrorDialog"
-		:title="$t('RichTextEditor:upload:error-title')"
+		:title="$t('Upload failed')"
 		:message="uploadErrorMessage"
-		:button-text="$t('RichTextEditor:upload:error-ok')"
+		:button-text="$t('OK')"
 		@close="closeErrorDialog"
 	)
 </template>
@@ -147,7 +147,7 @@ const cmdWith = (command, arg) => {
 const insertLink = () => {
 	if (!editorInstance) return
 	const existing = editorInstance.getAttributes('link').href || ''
-	const url = prompt(i18n.t('RichTextEditor:link:prompt') || 'Enter URL', existing)
+	const url = prompt(i18n.t('Enter URL'), existing)
 	if (url === null) return
 	if (url === '') {
 		editorInstance.chain().focus().extendMarkRange('link').unsetLink().run()
@@ -167,7 +167,7 @@ const handleImageUpload = (event) => {
 	uploading.value = true
 	api.uploadFilePromise(file, file.name).then(data => {
 		if (data.error) {
-			uploadErrorMessage.value = i18n.t('RichTextEditor:upload:error')
+			uploadErrorMessage.value = i18n.t('Failed to upload the image')
 			console.error('RichTextEditor image upload failed', data.error, `File: ${file.name}`)
 			showErrorDialog.value = true
 		} else {
@@ -176,7 +176,7 @@ const handleImageUpload = (event) => {
 		uploading.value = false
 		event.target.value = ''
 	}).catch(error => {
-		uploadErrorMessage.value = i18n.t('RichTextEditor:upload:error')
+		uploadErrorMessage.value = i18n.t('Failed to upload the image')
 		console.error('RichTextEditor image upload failed', error, `File: ${file.name}`)
 		showErrorDialog.value = true
 		uploading.value = false

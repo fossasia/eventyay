@@ -1,16 +1,16 @@
 <template lang="pug">
 .v-preferences
 	.ui-page-header
-		h1 {{ $t('preferences/index:heading') }}
+		h1 {{ $t('Your profile') }}
 	scrollbars(y)
 		.inputs
 			.avatar-wrapper
 				avatar(:user="{profile}", :size="128")
-				bunt-button#btn-change-avatar(@click="showChangeAvatar = true") {{ $t('preferences/index:btn-change-avatar:label') }}
-			bunt-input.display-name(name="displayName", :label="`${$t('profile/GreetingPrompt:displayname:label')} *`", v-model.trim="profile.display_name", :validation="v$.profile.display_name")
+				bunt-button#btn-change-avatar(@click="showChangeAvatar = true") {{ $t('change avatar') }}
+			bunt-input.display-name(name="displayName", :label="`${$t('Display name')} *`", v-model.trim="profile.display_name", :validation="v$.profile.display_name")
 			change-additional-fields(v-model="profile.fields")
 			template(v-if="languages")
-				h2 {{ $t('preferences/index:interface-language:header') }}
+				h2 {{ $t('Interface Language') }}
 				bunt-select#select-interface-language(name="interface-language", v-model="interfaceLanguage", :options="languages", option-value="code", option-label="nativeLabel")
 			h2 {{ $t('Profile Visibility') }}
 			p {{ $t('Making your profile public allows other attendees to find you in the networking chat list and see you in room viewer lists. Private profiles are completely hidden.') }}
@@ -20,25 +20,25 @@
 				:model-value="showPublicly",
 				@update:modelValue="toggleVisibility"
 			)
-			h2 {{ $t('preferences/index:notifications:header') }}
-			p {{ $t('preferences/index:notifications:description') }}
-			bunt-button#btn-enable-desktop-notifications(v-if="notificationPermission === 'default'", icon="bell", @click="$store.dispatch('notifications/askForPermission')") {{ $t('preferences/index:btn-enable-desktop-notifications:label') }}
-			.notification-permission-denied(v-else-if="notificationPermission === 'denied'") {{ $t('preferences/index:notification-permission-denied-warning') }}
+			h2 {{ $t('Desktop Notifications') }}
+			p {{ $t('Get desktop notifications for direct messages, contact requests and more while the event is running in the background.') }}
+			bunt-button#btn-enable-desktop-notifications(v-if="notificationPermission === 'default'", icon="bell", @click="$store.dispatch('notifications/askForPermission')") {{ $t('Enable desktop notifications') }}
+			.notification-permission-denied(v-else-if="notificationPermission === 'denied'") {{ $t('Desktop notifications are blocked for this site. Please change the setting in your browser.') }}
 			template(v-else)
-				bunt-switch(name="notificationSettings.notify", :label="$t('preferences/index:switch-enable-desktop-notifications:label')", v-model="notificationSettings.notify")
-				bunt-switch(name="notificationSettings.playSounds", :label="$t('preferences/index:switch-enable-desktop-notification-sound:label')", v-model="notificationSettings.playSounds")
-			h2 {{ $t('preferences/index:autoplay:header') }}
-			p {{ $t('preferences/index:autoplay:description') }}
-			bunt-switch(name="autoplay", v-model="autoplay", :label="$t('preferences/index:switch-autoplay:label')")
+				bunt-switch(name="notificationSettings.notify", :label="$t('Enable desktop notifications')", v-model="notificationSettings.notify")
+				bunt-switch(name="notificationSettings.playSounds", :label="$t('Play a sound for notifications')", v-model="notificationSettings.playSounds")
+			h2 {{ $t('Stream Autoplay') }}
+			p {{ $t('By default, livestreams start playing automatically when you enter a stage. Disable autoplay when you attend this event physically and want to use stage features without watching the livestream.') }}
+			bunt-switch(name="autoplay", v-model="autoplay", :label="$t('Autoplay streams')")
 	.ui-form-actions
-		bunt-button#btn-save(:disabled="v$.$invalid && v$.$dirty", :loading="saving", @click="save") {{ $t('preferences/index:btn-save:label') }}
+		bunt-button#btn-save(:disabled="v$.$invalid && v$.$dirty", :loading="saving", @click="save") {{ $t('save') }}
 	transition(name="prompt")
 		prompt.change-avatar-prompt(v-if="showChangeAvatar", @close="showChangeAvatar = false")
 			.content
 				change-avatar(ref="avatar", v-model="profile.avatar", :profile="profile", @blockSave="blockSave = $event")
 				.actions
-					bunt-button#btn-cancel(@click="showChangeAvatar = false") {{ $t('Prompt:cancel:label') }}
-					bunt-button#btn-upload(:loading="savingAvatar", :disabled="blockSave", @click="uploadAvatar") {{ $t('preferences/index:btn-upload-save:label') }}
+					bunt-button#btn-cancel(@click="showChangeAvatar = false") {{ $t('cancel') }}
+					bunt-button#btn-upload(:loading="savingAvatar", :disabled="blockSave", @click="uploadAvatar") {{ $t('save') }}
 </template>
 <script>
 // TODO communicate language change to other tabs?
