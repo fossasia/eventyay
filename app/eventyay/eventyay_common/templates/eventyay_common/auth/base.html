@@ -8,6 +8,7 @@
     {% compress css %}
         <link rel="stylesheet" type="text/x-scss" href="{% static "pretixcontrol/scss/auth.scss" %}"/>
         <link rel="stylesheet" type="text/x-scss" href="{% static "pretixcontrol/scss/main.scss" %}" />
+        <link rel="stylesheet" type="text/css" href="{% static "common/css/_footer.css" %}"/>
     {% endcompress %}
     <link rel="stylesheet" type="text/css" href="{% static "common/css/password_toggle.css" %}" />
     {% compress js %}
@@ -106,6 +107,7 @@
                 {% endfor %}
             {% endif %}
         </ul>
+        {% include "common/includes/core_footer.html" %}
     </footer>
 </div>
 </body>
