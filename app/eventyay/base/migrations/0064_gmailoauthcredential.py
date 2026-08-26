@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0062_attendee_feedback_redesign'),
+        ('base', '0063_jitsi_video_moderator_permissions'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
