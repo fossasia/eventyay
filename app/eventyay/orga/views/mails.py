@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.utils.functional import cached_property
 from django.utils.html import escape
 from django.utils.translation import gettext_lazy as _
-from django.utils.translation import ngettext_lazy
+from django.utils.translation import ngettext_lazy, npgettext_lazy
 from django.views.generic import FormView, ListView, TemplateView, View
 from django_context_decorator import context
 
@@ -219,7 +219,8 @@ class MailDelete(PermissionRequired, ActionConfirmMixin, TemplateView):
     def question(self):
         count = len(self.queryset)
         return str(
-            ngettext_lazy(
+            npgettext_lazy(
+                'queued mail',
                 'Do you really want to delete this mail?',
                 'Do you really want to purge {count} mails?',
                 count,

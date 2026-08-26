@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-26 16:33+0000\n"
+"POT-Creation-Date: 2026-08-26 20:35+0000\n"
 "PO-Revision-Date: 2026-03-30 15:15+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Khmer (Central) <https://hosted.weblate.org/projects/eventyay/"
@@ -7319,7 +7319,7 @@ msgstr "បញ្ជីវាលផីល្ដ្សផ្សេងៗដែល
 #: eventyay/orga/templates/orga/mails/sent_list.html:25
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/outbox_form.html:30
 #: eventyay/plugins/sendmail/views.py:278
-#: eventyay/plugins/sendmail/views.py:534
+#: eventyay/plugins/sendmail/views.py:530
 msgid "To"
 msgstr "ជូនដល់"
 
@@ -7339,7 +7339,7 @@ msgstr ""
 msgid "CC"
 msgstr "CC"
 
-#: eventyay/base/models/mail.py:384 eventyay/plugins/sendmail/views.py:535
+#: eventyay/base/models/mail.py:384 eventyay/plugins/sendmail/views.py:531
 msgid "Sent at"
 msgstr "បានផ្ញើនៅ"
 
@@ -12880,7 +12880,7 @@ msgid "Delete Image"
 msgstr "លុបទំព័រ"
 
 #: eventyay/base/templatetags/rich_text.py:252
-#: eventyay/control/views/event.py:848 eventyay/orga/views/mails.py:404
+#: eventyay/control/views/event.py:848 eventyay/orga/views/mails.py:405
 msgid "This value will be replaced based on dynamic parameters."
 msgstr "តម្លៃនេះនឹងត្រូវបានជំនួសដោយផ្អែកលើប៉ារ៉ាម៉ែត្រឌីណាមិច។"
 
@@ -17861,7 +17861,7 @@ msgstr ""
 #: eventyay/plugins/sendmail/forms.py:535
 #: eventyay/plugins/sendmail/forms.py:637
 #: eventyay/plugins/sendmail/views.py:277
-#: eventyay/plugins/sendmail/views.py:533
+#: eventyay/plugins/sendmail/views.py:529
 msgid "Subject"
 msgstr "ប្រធានបទ"
 
@@ -34101,7 +34101,7 @@ msgstr "ជូនដំណឹង​អ្នកនិយាយ​អំពី​
 #: eventyay/orga/forms/schedule.py:33
 #: eventyay/orga/templates/orga/cfp/question/remind.html:18
 #: eventyay/orga/templates/orga/schedule/release.html:51
-#: eventyay/orga/views/mails.py:545 eventyay/orga/views/mails.py:547
+#: eventyay/orga/views/mails.py:546 eventyay/orga/views/mails.py:548
 msgid "Email template"
 msgstr "គំរូ​អ៊ីមែល"
 
@@ -37421,74 +37421,77 @@ msgstr "អ៊ីមែលត្រូវបានផ្ញើរួចហើយ
 msgid "{count} mails have been sent."
 msgstr "អ៊ីមែល {count} ត្រូវបានផ្ញើរួចហើយ។"
 
-#: eventyay/orga/views/mails.py:223 eventyay/plugins/sendmail/views.py:439
-#, python-brace-format
+#: eventyay/orga/views/mails.py:224
+#, fuzzy, python-brace-format
+#| msgid "Do you really want to delete this mail?"
+#| msgid_plural "Do you really want to purge {count} mails?"
+msgctxt "queued mail"
 msgid "Do you really want to delete this mail?"
 msgid_plural "Do you really want to purge {count} mails?"
 msgstr[0] "ពិតជាចង់លុបអ៊ីមែល {count} មែនទេ?"
 
-#: eventyay/orga/views/mails.py:235
+#: eventyay/orga/views/mails.py:236
 msgid ""
 "This mail either does not exist or cannot be discarded because it was sent "
 "already."
 msgstr "អ៊ីមែលនេះមិនមាន ឬមិនអាចបោះបង់បាន ព្រោះបានផ្ញើរួចហើយ។"
 
-#: eventyay/orga/views/mails.py:246
+#: eventyay/orga/views/mails.py:247
 #, python-brace-format
 msgid "The mail has been discarded."
 msgid_plural "{count} mails have been discarded."
 msgstr[0] "អ៊ីមែល {count} ត្រូវបានបោះបង់រួចហើយ។"
 
-#: eventyay/orga/views/mails.py:262
+#: eventyay/orga/views/mails.py:263
 #, python-brace-format
 msgid "Do you really want to purge {count} mails?"
 msgstr "ពិតជាចង់លុបអ៊ីមែល {count} មែនទេ?"
 
-#: eventyay/orga/views/mails.py:279
+#: eventyay/orga/views/mails.py:280
 #, python-brace-format
 msgid "{count} mails have been purged."
 msgstr "អ៊ីមែល {count} ត្រូវបានលុបទាំងស្រុងរួចហើយ។"
 
-#: eventyay/orga/views/mails.py:311
+#: eventyay/orga/views/mails.py:312
 msgid "The email has been sent."
 msgstr "អ៊ីមែលត្រូវបានផ្ញើរួចហើយ។"
 
-#: eventyay/orga/views/mails.py:317
+#: eventyay/orga/views/mails.py:318
 msgid ""
 "The email has been saved. When you send it, the updated text will be used."
 msgstr "អ៊ីមែលត្រូវបានរក្សាទុក។ នៅពេលផ្ញើ នឹងប្រើអត្ថបទដែលបានធ្វើបច្ចុប្បន្នភាព។"
 
-#: eventyay/orga/views/mails.py:331
+#: eventyay/orga/views/mails.py:332
 msgid "The mail has been copied, you can edit it now."
 msgstr "អ៊ីមែលត្រូវបានចម្លង ហើយអាចកែសម្រួលឥឡូវនេះ។"
 
-#: eventyay/orga/views/mails.py:394
+#: eventyay/orga/views/mails.py:395
 msgid "There are no recipients matching this selection."
 msgstr "មិនមានអ្នកទទួលដែលត្រូវនឹងការជ្រើសរើសនេះទេ។"
 
-#: eventyay/orga/views/mails.py:413 eventyay/plugins/sendmail/views.py:147
+#: eventyay/orga/views/mails.py:414 eventyay/plugins/sendmail/views.py:147
 #: eventyay/plugins/sendmail/views.py:410
-#: eventyay/plugins/sendmail/views.py:601
+#: eventyay/plugins/sendmail/views.py:597
 #, python-brace-format
 msgid "Subject: {subject}"
 msgstr "ប្រធានបទ៖ {subject}"
 
-#: eventyay/orga/views/mails.py:426 eventyay/orga/views/mails.py:518
+#: eventyay/orga/views/mails.py:427 eventyay/orga/views/mails.py:519
 #, python-brace-format
 msgid "{count} emails have been sent."
 msgstr "អ៊ីមែល {count} ត្រូវបានផ្ញើរួចរាល់។"
 
-#: eventyay/orga/views/mails.py:432
+#: eventyay/orga/views/mails.py:433
 msgid "No emails could be created. Please check your recipient selection."
 msgstr ""
 
-#: eventyay/orga/views/mails.py:447
+#: eventyay/orga/views/mails.py:448
 #, fuzzy, python-brace-format
 #| msgid "{count} emails have been sent."
 msgid "{count} emails have been scheduled for {datetime} ({timezone})."
 msgstr "អ៊ីមែល {count} ត្រូវបានផ្ញើរួចរាល់។"
 
-#: eventyay/orga/views/mails.py:530
+#: eventyay/orga/views/mails.py:531
 msgid ""
 "The template has been saved - note that already pending emails that are "
 "based on this template will not be changed!"
@@ -37496,11 +37499,11 @@ msgstr ""
 "បានរក្សាទុកពុម្ពអ៊ីមែលហើយ — សូមចំណាំថា អ៊ីមែលដែលកំពុងរង់ចាំរួចហើយដែលផ្អែកលើពុម្ពនេះ "
 "នឹងមិនត្រូវបានផ្លាស់ប្តូរទេ!"
 
-#: eventyay/orga/views/mails.py:549
+#: eventyay/orga/views/mails.py:550
 msgid "New email template"
 msgstr "ពុម្ពអ៊ីមែលថ្មី"
 
-#: eventyay/orga/views/mails.py:550
+#: eventyay/orga/views/mails.py:551
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/mail_templates.html:5
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/mail_templates.html:10
 msgid "Email templates"
@@ -39617,14 +39620,14 @@ msgid "There are no orders matching this selection."
 msgstr "មិនមានការបញ្ជាទិញដែលត្រូវនឹងជម្រើសនេះទេ។"
 
 #: eventyay/plugins/sendmail/views.py:194
-#: eventyay/plugins/sendmail/views.py:684
+#: eventyay/plugins/sendmail/views.py:680
 #, fuzzy, python-brace-format
 #| msgid "Your email has been sent to the outbox."
 msgid "Your email has been scheduled for {datetime} ({timezone})."
 msgstr "អ៊ីមែលត្រូវបានផ្ញើទៅប្រអប់ចេញ។"
 
 #: eventyay/plugins/sendmail/views.py:202
-#: eventyay/plugins/sendmail/views.py:692
+#: eventyay/plugins/sendmail/views.py:688
 msgid "Your email has been sent to the outbox."
 msgstr "អ៊ីមែលត្រូវបានផ្ញើទៅប្រអប់ចេញ។"
 
@@ -39637,7 +39640,7 @@ msgid "The mail has been queued for sending."
 msgstr "អ៊ីមែលត្រូវបានដាក់ចូលជួររង់ចាំសម្រាប់ការផ្ញើ។"
 
 #: eventyay/plugins/sendmail/views.py:368
-#: eventyay/plugins/sendmail/views.py:567
+#: eventyay/plugins/sendmail/views.py:563
 msgid "We could not save the email. See below for details."
 msgstr "មិនអាចរក្សាទុកអ៊ីមែលបានទេ។ សូមមើលព័ត៌មានលម្អិតខាងក្រោម។"
 
@@ -39647,32 +39650,39 @@ msgstr "អ៊ីមែលនេះត្រូវបានផ្ញើរួច
 
 #: eventyay/plugins/sendmail/views.py:397
 #: eventyay/plugins/sendmail/views.py:406
-#: eventyay/plugins/sendmail/views.py:587
-#: eventyay/plugins/sendmail/views.py:596
+#: eventyay/plugins/sendmail/views.py:583
+#: eventyay/plugins/sendmail/views.py:592
 msgid "Invalid placeholder(s): {}"
 msgstr "placeholder មិនត្រឹមត្រូវ៖ {}"
 
-#: eventyay/plugins/sendmail/views.py:449
+#: eventyay/plugins/sendmail/views.py:438
+#, fuzzy
+#| msgid "Do you really want to delete this mail?"
+#| msgid_plural "Do you really want to purge {count} mails?"
+msgid "Do you really want to delete this mail?"
+msgstr "ពិតជាចង់លុបអ៊ីមែល {count} មែនទេ?"
+
+#: eventyay/plugins/sendmail/views.py:445
 msgid "This mail has already been sent and cannot be deleted."
 msgstr "សំបុត្រនេះត្រូវបានផ្ញើរួចហើយ ហើយមិនអាចលុបបានទេ។"
 
-#: eventyay/plugins/sendmail/views.py:458
+#: eventyay/plugins/sendmail/views.py:454
 msgid "The mail and its related data have been deleted."
 msgstr "សំបុត្រ និងទិន្នន័យពាក់ព័ន្ធរបស់វាត្រូវបានលុបរួចហើយ។"
 
-#: eventyay/plugins/sendmail/views.py:477
+#: eventyay/plugins/sendmail/views.py:473
 #, python-brace-format
 msgid "Do you really want to purge the mail?"
 msgid_plural "Do you really want to purge {count} mails?"
 msgstr[0] "ពិតជាចង់លុបអ៊ីមែល {count} មែនទេ?"
 
-#: eventyay/plugins/sendmail/views.py:493
+#: eventyay/plugins/sendmail/views.py:489
 #, python-brace-format
 msgid "One mail has been discarded."
 msgid_plural "{count} mails have been discarded."
 msgstr[0] "អ៊ីមែល {count} ត្រូវបានបោះបង់រួចហើយ។"
 
-#: eventyay/plugins/sendmail/views.py:627
+#: eventyay/plugins/sendmail/views.py:623
 msgid "There are no valid recipients for the selected teams."
 msgstr "មិនមានអ្នកទទួលត្រឹមត្រូវសម្រាប់ក្រុមដែលបានជ្រើសរើសទេ។"
 

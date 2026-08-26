@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-26 16:33+0000\n"
+"POT-Creation-Date: 2026-08-26 20:35+0000\n"
 "PO-Revision-Date: 2026-08-03 18:02+0000\n"
 "Last-Translator: தமிழ்நேரம் <tamilneram247@gmail.com>\n"
 "Language-Team: Tamil <https://hosted.weblate.org/projects/eventyay/eventyay/"
@@ -7430,7 +7430,7 @@ msgstr "பயனர் பதிலளிக்காத தனிப்பய�
 #: eventyay/orga/templates/orga/mails/sent_list.html:25
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/outbox_form.html:30
 #: eventyay/plugins/sendmail/views.py:278
-#: eventyay/plugins/sendmail/views.py:534
+#: eventyay/plugins/sendmail/views.py:530
 msgid "To"
 msgstr "பெறுநர்"
 
@@ -7450,7 +7450,7 @@ msgstr ""
 msgid "CC"
 msgstr "CC"
 
-#: eventyay/base/models/mail.py:384 eventyay/plugins/sendmail/views.py:535
+#: eventyay/base/models/mail.py:384 eventyay/plugins/sendmail/views.py:531
 msgid "Sent at"
 msgstr "அனுப்பிய நேரம்"
 
@@ -13125,7 +13125,7 @@ msgid "Delete Image"
 msgstr "ஒரு பக்கத்தை நீக்கு"
 
 #: eventyay/base/templatetags/rich_text.py:252
-#: eventyay/control/views/event.py:848 eventyay/orga/views/mails.py:404
+#: eventyay/control/views/event.py:848 eventyay/orga/views/mails.py:405
 msgid "This value will be replaced based on dynamic parameters."
 msgstr "இந்த மதிப்பு இயக்கநிலை அளவுருக்களை அடிப்படையாகக் கொண்டு மாற்றப்படும்."
 
@@ -18174,7 +18174,7 @@ msgstr ""
 #: eventyay/plugins/sendmail/forms.py:535
 #: eventyay/plugins/sendmail/forms.py:637
 #: eventyay/plugins/sendmail/views.py:277
-#: eventyay/plugins/sendmail/views.py:533
+#: eventyay/plugins/sendmail/views.py:529
 msgid "Subject"
 msgstr "பொருள்"
 
@@ -34696,7 +34696,7 @@ msgstr "மாற்றங்களைப் பற்றி பேச்சா�
 #: eventyay/orga/forms/schedule.py:33
 #: eventyay/orga/templates/orga/cfp/question/remind.html:18
 #: eventyay/orga/templates/orga/schedule/release.html:51
-#: eventyay/orga/views/mails.py:545 eventyay/orga/views/mails.py:547
+#: eventyay/orga/views/mails.py:546 eventyay/orga/views/mails.py:548
 msgid "Email template"
 msgstr "மின்னஞ்சல் வார்ப்புரு"
 
@@ -38093,76 +38093,79 @@ msgstr "மின்னஞ்சல் அனுப்பப்பட்டத�
 msgid "{count} mails have been sent."
 msgstr "{count} மின்னஞ்சல்கள் அனுப்பப்பட்டன."
 
-#: eventyay/orga/views/mails.py:223 eventyay/plugins/sendmail/views.py:439
-#, python-brace-format
+#: eventyay/orga/views/mails.py:224
+#, fuzzy, python-brace-format
+#| msgid "Do you really want to delete this mail?"
+#| msgid_plural "Do you really want to purge {count} mails?"
+msgctxt "queued mail"
 msgid "Do you really want to delete this mail?"
 msgid_plural "Do you really want to purge {count} mails?"
 msgstr[0] "இந்த அஞ்சலை உண்மையில் நீக்க விரும்புகிறீர்களா?"
 msgstr[1] "நீங்கள் உண்மையில் {count} அஞ்சல்களை அகற்ற விரும்புகிறீர்களா?"
 
-#: eventyay/orga/views/mails.py:235
+#: eventyay/orga/views/mails.py:236
 msgid ""
 "This mail either does not exist or cannot be discarded because it was sent "
 "already."
 msgstr "இந்த மின்னஞ்சல் இல்லை அல்லது ஏற்கனவே அனுப்பப்பட்டதால் கைவிட முடியாது."
 
-#: eventyay/orga/views/mails.py:246
+#: eventyay/orga/views/mails.py:247
 #, python-brace-format
 msgid "The mail has been discarded."
 msgid_plural "{count} mails have been discarded."
 msgstr[0] "அஞ்சல் நிராகரிக்கப்பட்டது."
 msgstr[1] "{count} அஞ்சல்கள் நிராகரிக்கப்பட்டன."
 
-#: eventyay/orga/views/mails.py:262
+#: eventyay/orga/views/mails.py:263
 #, python-brace-format
 msgid "Do you really want to purge {count} mails?"
 msgstr "{count} மின்னஞ்சல்களை உண்மையில் முழுமையாக நீக்க வேண்டுமா?"
 
-#: eventyay/orga/views/mails.py:279
+#: eventyay/orga/views/mails.py:280
 #, python-brace-format
 msgid "{count} mails have been purged."
 msgstr "{count} மின்னஞ்சல்கள் முழுமையாக நீக்கப்பட்டன."
 
-#: eventyay/orga/views/mails.py:311
+#: eventyay/orga/views/mails.py:312
 msgid "The email has been sent."
 msgstr "மின்னஞ்சல் அனுப்பப்பட்டது."
 
-#: eventyay/orga/views/mails.py:317
+#: eventyay/orga/views/mails.py:318
 msgid ""
 "The email has been saved. When you send it, the updated text will be used."
 msgstr "மின்னஞ்சல் சேமிக்கப்பட்டது. அதை அனுப்பும்போது புதுப்பிக்கப்பட்ட உரை பயன்படுத்தப்படும்."
 
-#: eventyay/orga/views/mails.py:331
+#: eventyay/orga/views/mails.py:332
 msgid "The mail has been copied, you can edit it now."
 msgstr "மின்னஞ்சல் நகலெடுக்கப்பட்டது; இப்போது திருத்தலாம்."
 
-#: eventyay/orga/views/mails.py:394
+#: eventyay/orga/views/mails.py:395
 msgid "There are no recipients matching this selection."
 msgstr "இந்தத் தேர்விற்கு பொருந்தும் பெறுநர்கள் இல்லை."
 
-#: eventyay/orga/views/mails.py:413 eventyay/plugins/sendmail/views.py:147
+#: eventyay/orga/views/mails.py:414 eventyay/plugins/sendmail/views.py:147
 #: eventyay/plugins/sendmail/views.py:410
-#: eventyay/plugins/sendmail/views.py:601
+#: eventyay/plugins/sendmail/views.py:597
 #, python-brace-format
 msgid "Subject: {subject}"
 msgstr "பொருள்: {subject}"
 
-#: eventyay/orga/views/mails.py:426 eventyay/orga/views/mails.py:518
+#: eventyay/orga/views/mails.py:427 eventyay/orga/views/mails.py:519
 #, python-brace-format
 msgid "{count} emails have been sent."
 msgstr "{count} மின்னஞ்சல்கள் அனுப்பப்பட்டன."
 
-#: eventyay/orga/views/mails.py:432
+#: eventyay/orga/views/mails.py:433
 msgid "No emails could be created. Please check your recipient selection."
 msgstr ""
 
-#: eventyay/orga/views/mails.py:447
+#: eventyay/orga/views/mails.py:448
 #, fuzzy, python-brace-format
 #| msgid "{count} emails have been sent."
 msgid "{count} emails have been scheduled for {datetime} ({timezone})."
 msgstr "{count} மின்னஞ்சல்கள் அனுப்பப்பட்டன."
 
-#: eventyay/orga/views/mails.py:530
+#: eventyay/orga/views/mails.py:531
 msgid ""
 "The template has been saved - note that already pending emails that are "
 "based on this template will not be changed!"
@@ -38170,11 +38173,11 @@ msgstr ""
 "டெம்ப்ளேட் சேமிக்கப்பட்டது - ஏற்கனவே நிலுவையில் உள்ள, இந்த டெம்ப்ளேட்டை அடிப்படையாக கொண்ட "
 "மின்னஞ்சல்கள் மாற்றப்படாது!"
 
-#: eventyay/orga/views/mails.py:549
+#: eventyay/orga/views/mails.py:550
 msgid "New email template"
 msgstr "புதிய மின்னஞ்சல் டெம்ப்ளேட்"
 
-#: eventyay/orga/views/mails.py:550
+#: eventyay/orga/views/mails.py:551
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/mail_templates.html:5
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/mail_templates.html:10
 msgid "Email templates"
@@ -40366,14 +40369,14 @@ msgid "There are no orders matching this selection."
 msgstr "இந்தத் தேர்வுடன் பொருந்தும் ஆர்டர்கள் எதுவும் இல்லை."
 
 #: eventyay/plugins/sendmail/views.py:194
-#: eventyay/plugins/sendmail/views.py:684
+#: eventyay/plugins/sendmail/views.py:680
 #, fuzzy, python-brace-format
 #| msgid "Your email has been sent to the outbox."
 msgid "Your email has been scheduled for {datetime} ({timezone})."
 msgstr "மின்னஞ்சல் வெளிப்பெட்டிக்கு அனுப்பப்பட்டுள்ளது."
 
 #: eventyay/plugins/sendmail/views.py:202
-#: eventyay/plugins/sendmail/views.py:692
+#: eventyay/plugins/sendmail/views.py:688
 msgid "Your email has been sent to the outbox."
 msgstr "மின்னஞ்சல் வெளிப்பெட்டிக்கு அனுப்பப்பட்டுள்ளது."
 
@@ -40386,7 +40389,7 @@ msgid "The mail has been queued for sending."
 msgstr "இந்த மின்னஞ்சல் அனுப்புவதற்காக வரிசைப்படுத்தப்பட்டுள்ளது."
 
 #: eventyay/plugins/sendmail/views.py:368
-#: eventyay/plugins/sendmail/views.py:567
+#: eventyay/plugins/sendmail/views.py:563
 msgid "We could not save the email. See below for details."
 msgstr "மின்னஞ்சலைச் சேமிக்க முடியவில்லை. விவரங்களுக்கு கீழே காண்க."
 
@@ -40396,34 +40399,41 @@ msgstr "இந்த மின்னஞ்சல் ஏற்கனவே அன
 
 #: eventyay/plugins/sendmail/views.py:397
 #: eventyay/plugins/sendmail/views.py:406
-#: eventyay/plugins/sendmail/views.py:587
-#: eventyay/plugins/sendmail/views.py:596
+#: eventyay/plugins/sendmail/views.py:583
+#: eventyay/plugins/sendmail/views.py:592
 msgid "Invalid placeholder(s): {}"
 msgstr "தவறான இடமாற்று(கள்): {}"
 
-#: eventyay/plugins/sendmail/views.py:449
+#: eventyay/plugins/sendmail/views.py:438
+#, fuzzy
+#| msgid "Do you really want to delete this mail?"
+#| msgid_plural "Do you really want to purge {count} mails?"
+msgid "Do you really want to delete this mail?"
+msgstr "இந்த அஞ்சலை உண்மையில் நீக்க விரும்புகிறீர்களா?"
+
+#: eventyay/plugins/sendmail/views.py:445
 msgid "This mail has already been sent and cannot be deleted."
 msgstr "இந்த மின்னஞ்சல் ஏற்கனவே அனுப்பப்பட்டுள்ளது; இதை நீக்க முடியாது."
 
-#: eventyay/plugins/sendmail/views.py:458
+#: eventyay/plugins/sendmail/views.py:454
 msgid "The mail and its related data have been deleted."
 msgstr "மின்னஞ்சலும் அதனுடன் தொடர்புடைய தரவும் நீக்கப்பட்டன."
 
-#: eventyay/plugins/sendmail/views.py:477
+#: eventyay/plugins/sendmail/views.py:473
 #, python-brace-format
 msgid "Do you really want to purge the mail?"
 msgid_plural "Do you really want to purge {count} mails?"
 msgstr[0] "நீங்கள் உண்மையில் அஞ்சலை அகற்ற விரும்புகிறீர்களா?"
 msgstr[1] "நீங்கள் உண்மையில் {count} அஞ்சல்களை அகற்ற விரும்புகிறீர்களா?"
 
-#: eventyay/plugins/sendmail/views.py:493
+#: eventyay/plugins/sendmail/views.py:489
 #, python-brace-format
 msgid "One mail has been discarded."
 msgid_plural "{count} mails have been discarded."
 msgstr[0] "ஒரு அஞ்சல் நிராகரிக்கப்பட்டது."
 msgstr[1] "{count} அஞ்சல்கள் நிராகரிக்கப்பட்டன."
 
-#: eventyay/plugins/sendmail/views.py:627
+#: eventyay/plugins/sendmail/views.py:623
 msgid "There are no valid recipients for the selected teams."
 msgstr "தேர்ந்தெடுக்கப்பட்ட குழுக்களுக்கு செல்லுபடியான பெறுநர்கள் இல்லை."
 

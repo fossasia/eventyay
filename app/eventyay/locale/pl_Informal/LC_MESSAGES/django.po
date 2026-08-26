@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-26 16:33+0000\n"
+"POT-Creation-Date: 2026-08-26 20:35+0000\n"
 "PO-Revision-Date: 2026-03-23 15:14+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Polish <https://hosted.weblate.org/projects/eventyay/eventyay/"
@@ -7569,7 +7569,7 @@ msgstr ""
 #: eventyay/orga/templates/orga/mails/sent_list.html:25
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/outbox_form.html:30
 #: eventyay/plugins/sendmail/views.py:278
-#: eventyay/plugins/sendmail/views.py:534
+#: eventyay/plugins/sendmail/views.py:530
 msgid "To"
 msgstr "Do"
 
@@ -7589,7 +7589,7 @@ msgstr ""
 msgid "CC"
 msgstr "DW"
 
-#: eventyay/base/models/mail.py:384 eventyay/plugins/sendmail/views.py:535
+#: eventyay/base/models/mail.py:384 eventyay/plugins/sendmail/views.py:531
 msgid "Sent at"
 msgstr "Wysłano"
 
@@ -13341,7 +13341,7 @@ msgid "Delete Image"
 msgstr "Usuń stronę"
 
 #: eventyay/base/templatetags/rich_text.py:252
-#: eventyay/control/views/event.py:848 eventyay/orga/views/mails.py:404
+#: eventyay/control/views/event.py:848 eventyay/orga/views/mails.py:405
 msgid "This value will be replaced based on dynamic parameters."
 msgstr "Ta wartość zostanie zastąpiona na podstawie parametrów dynamicznych."
 
@@ -18450,7 +18450,7 @@ msgstr ""
 #: eventyay/plugins/sendmail/forms.py:535
 #: eventyay/plugins/sendmail/forms.py:637
 #: eventyay/plugins/sendmail/views.py:277
-#: eventyay/plugins/sendmail/views.py:533
+#: eventyay/plugins/sendmail/views.py:529
 msgid "Subject"
 msgstr "Temat"
 
@@ -35094,7 +35094,7 @@ msgstr "Powiadom prelegentów o zmianach"
 #: eventyay/orga/forms/schedule.py:33
 #: eventyay/orga/templates/orga/cfp/question/remind.html:18
 #: eventyay/orga/templates/orga/schedule/release.html:51
-#: eventyay/orga/views/mails.py:545 eventyay/orga/views/mails.py:547
+#: eventyay/orga/views/mails.py:546 eventyay/orga/views/mails.py:548
 msgid "Email template"
 msgstr "Szablon e-maila"
 
@@ -38540,15 +38540,18 @@ msgstr "E-mail został wysłany."
 msgid "{count} mails have been sent."
 msgstr "Wysłano {count} wiadomości."
 
-#: eventyay/orga/views/mails.py:223 eventyay/plugins/sendmail/views.py:439
-#, python-brace-format
+#: eventyay/orga/views/mails.py:224
+#, fuzzy, python-brace-format
+#| msgid "Do you really want to delete this mail?"
+#| msgid_plural "Do you really want to purge {count} mails?"
+msgctxt "queued mail"
 msgid "Do you really want to delete this mail?"
 msgid_plural "Do you really want to purge {count} mails?"
 msgstr[0] "Czy na pewno chcesz usunąć tę wiadomość?"
 msgstr[1] "Czy na pewno chcesz trwale usunąć {count} wiadomości?"
 msgstr[2] "Czy na pewno chcesz trwale usunąć {count} wiadomości?"
 
-#: eventyay/orga/views/mails.py:235
+#: eventyay/orga/views/mails.py:236
 msgid ""
 "This mail either does not exist or cannot be discarded because it was sent "
 "already."
@@ -38556,7 +38559,7 @@ msgstr ""
 "Ta wiadomość nie istnieje albo nie można jej odrzucić, ponieważ została już "
 "wysłana."
 
-#: eventyay/orga/views/mails.py:246
+#: eventyay/orga/views/mails.py:247
 #, python-brace-format
 msgid "The mail has been discarded."
 msgid_plural "{count} mails have been discarded."
@@ -38564,57 +38567,57 @@ msgstr[0] "Wiadomość została odrzucona."
 msgstr[1] "Odrzucono {count} wiadomości."
 msgstr[2] "Odrzucono {count} wiadomości."
 
-#: eventyay/orga/views/mails.py:262
+#: eventyay/orga/views/mails.py:263
 #, python-brace-format
 msgid "Do you really want to purge {count} mails?"
 msgstr "Czy na pewno chcesz trwale usunąć {count} wiadomości?"
 
-#: eventyay/orga/views/mails.py:279
+#: eventyay/orga/views/mails.py:280
 #, python-brace-format
 msgid "{count} mails have been purged."
 msgstr "Trwale usunięto {count} wiadomości."
 
-#: eventyay/orga/views/mails.py:311
+#: eventyay/orga/views/mails.py:312
 msgid "The email has been sent."
 msgstr "E-mail został wysłany."
 
-#: eventyay/orga/views/mails.py:317
+#: eventyay/orga/views/mails.py:318
 msgid ""
 "The email has been saved. When you send it, the updated text will be used."
 msgstr ""
 "E-mail został zapisany. Przy wysyłaniu zostanie użyta zaktualizowana treść."
 
-#: eventyay/orga/views/mails.py:331
+#: eventyay/orga/views/mails.py:332
 msgid "The mail has been copied, you can edit it now."
 msgstr "Wiadomość została skopiowana, można ją teraz edytować."
 
-#: eventyay/orga/views/mails.py:394
+#: eventyay/orga/views/mails.py:395
 msgid "There are no recipients matching this selection."
 msgstr "Brak odbiorców pasujących do tego wyboru."
 
-#: eventyay/orga/views/mails.py:413 eventyay/plugins/sendmail/views.py:147
+#: eventyay/orga/views/mails.py:414 eventyay/plugins/sendmail/views.py:147
 #: eventyay/plugins/sendmail/views.py:410
-#: eventyay/plugins/sendmail/views.py:601
+#: eventyay/plugins/sendmail/views.py:597
 #, python-brace-format
 msgid "Subject: {subject}"
 msgstr "Temat: {subject}"
 
-#: eventyay/orga/views/mails.py:426 eventyay/orga/views/mails.py:518
+#: eventyay/orga/views/mails.py:427 eventyay/orga/views/mails.py:519
 #, python-brace-format
 msgid "{count} emails have been sent."
 msgstr "Wysłano {count} e-maile."
 
-#: eventyay/orga/views/mails.py:432
+#: eventyay/orga/views/mails.py:433
 msgid "No emails could be created. Please check your recipient selection."
 msgstr ""
 
-#: eventyay/orga/views/mails.py:447
+#: eventyay/orga/views/mails.py:448
 #, fuzzy, python-brace-format
 #| msgid "{count} emails have been sent."
 msgid "{count} emails have been scheduled for {datetime} ({timezone})."
 msgstr "Wysłano {count} e-maile."
 
-#: eventyay/orga/views/mails.py:530
+#: eventyay/orga/views/mails.py:531
 msgid ""
 "The template has been saved - note that already pending emails that are "
 "based on this template will not be changed!"
@@ -38622,11 +38625,11 @@ msgstr ""
 "Szablon został zapisany – uwaga: już oczekujące e-maile oparte na tym "
 "szablonie nie zostaną zmienione!"
 
-#: eventyay/orga/views/mails.py:549
+#: eventyay/orga/views/mails.py:550
 msgid "New email template"
 msgstr "Nowy szablon e-maila"
 
-#: eventyay/orga/views/mails.py:550
+#: eventyay/orga/views/mails.py:551
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/mail_templates.html:5
 #: eventyay/plugins/sendmail/templates/pretixplugins/sendmail/mail_templates.html:10
 msgid "Email templates"
@@ -40856,14 +40859,14 @@ msgid "There are no orders matching this selection."
 msgstr "Brak zamówień pasujących do tego wyboru."
 
 #: eventyay/plugins/sendmail/views.py:194
-#: eventyay/plugins/sendmail/views.py:684
+#: eventyay/plugins/sendmail/views.py:680
 #, fuzzy, python-brace-format
 #| msgid "Your email has been sent to the outbox."
 msgid "Your email has been scheduled for {datetime} ({timezone})."
 msgstr "E-mail został wysłany do skrzynki nadawczej."
 
 #: eventyay/plugins/sendmail/views.py:202
-#: eventyay/plugins/sendmail/views.py:692
+#: eventyay/plugins/sendmail/views.py:688
 msgid "Your email has been sent to the outbox."
 msgstr "E-mail został wysłany do skrzynki nadawczej."
 
@@ -40876,7 +40879,7 @@ msgid "The mail has been queued for sending."
 msgstr "E-mail został dodany do kolejki wysyłki."
 
 #: eventyay/plugins/sendmail/views.py:368
-#: eventyay/plugins/sendmail/views.py:567
+#: eventyay/plugins/sendmail/views.py:563
 msgid "We could not save the email. See below for details."
 msgstr "Nie udało się zapisać e-maila. Szczegóły poniżej."
 
@@ -40886,20 +40889,27 @@ msgstr "Ten e-mail został już wysłany i nie można go edytować."
 
 #: eventyay/plugins/sendmail/views.py:397
 #: eventyay/plugins/sendmail/views.py:406
-#: eventyay/plugins/sendmail/views.py:587
-#: eventyay/plugins/sendmail/views.py:596
+#: eventyay/plugins/sendmail/views.py:583
+#: eventyay/plugins/sendmail/views.py:592
 msgid "Invalid placeholder(s): {}"
 msgstr "Nieprawidłowe symbole zastępcze: {}"
 
-#: eventyay/plugins/sendmail/views.py:449
+#: eventyay/plugins/sendmail/views.py:438
+#, fuzzy
+#| msgid "Do you really want to delete this mail?"
+#| msgid_plural "Do you really want to purge {count} mails?"
+msgid "Do you really want to delete this mail?"
+msgstr "Czy na pewno chcesz usunąć tę wiadomość?"
+
+#: eventyay/plugins/sendmail/views.py:445
 msgid "This mail has already been sent and cannot be deleted."
 msgstr "Ten e-mail został już wysłany i nie można go usunąć."
 
-#: eventyay/plugins/sendmail/views.py:458
+#: eventyay/plugins/sendmail/views.py:454
 msgid "The mail and its related data have been deleted."
 msgstr "Wiadomość i powiązane z nią dane zostały usunięte."
 
-#: eventyay/plugins/sendmail/views.py:477
+#: eventyay/plugins/sendmail/views.py:473
 #, python-brace-format
 msgid "Do you really want to purge the mail?"
 msgid_plural "Do you really want to purge {count} mails?"
@@ -40907,7 +40917,7 @@ msgstr[0] "Czy na pewno chcesz trwale usunąć wiadomość?"
 msgstr[1] "Czy na pewno chcesz trwale usunąć {count} wiadomości?"
 msgstr[2] "Czy na pewno chcesz trwale usunąć {count} wiadomości?"
 
-#: eventyay/plugins/sendmail/views.py:493
+#: eventyay/plugins/sendmail/views.py:489
 #, python-brace-format
 msgid "One mail has been discarded."
 msgid_plural "{count} mails have been discarded."
@@ -40915,7 +40925,7 @@ msgstr[0] "Jedna wiadomość została odrzucona."
 msgstr[1] "Odrzucono {count} wiadomości."
 msgstr[2] "Odrzucono {count} wiadomości."
 
-#: eventyay/plugins/sendmail/views.py:627
+#: eventyay/plugins/sendmail/views.py:623
 msgid "There are no valid recipients for the selected teams."
 msgstr "Brak prawidłowych odbiorców dla wybranych zespołów."
 
