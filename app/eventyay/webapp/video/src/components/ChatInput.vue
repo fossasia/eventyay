@@ -94,7 +94,7 @@ const MentionNode = Node.create({
 		}
 	},
 	parseHTML () {
-		return [{ tag: 'span[data-mention]' }]
+		return [{ tag: 'span[data-mention]', getAttrs: node => ({ id: node.getAttribute('data-id'), name: node.getAttribute('data-name') }) }]
 	},
 	renderHTML ({ node, HTMLAttributes }) {
 		return ['span', mergeAttributes(HTMLAttributes, {
@@ -451,6 +451,7 @@ export default {
 			})
 			this.files.push(...fileInfos)
 			this.uploading = false
+			event.target.value = ''
 		},
 
 		addEmoji (emoji) {

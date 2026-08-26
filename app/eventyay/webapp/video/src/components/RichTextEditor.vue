@@ -150,9 +150,9 @@ const insertLink = () => {
 	const url = prompt(i18n.t('RichTextEditor:link:prompt') || 'Enter URL', existing)
 	if (url === null) return
 	if (url === '') {
-		editorInstance.chain().focus().unsetLink().run()
+		editorInstance.chain().focus().extendMarkRange('link').unsetLink().run()
 	} else {
-		editorInstance.chain().focus().setLink({ href: url, target: '_blank', rel: 'noopener noreferrer' }).run()
+		editorInstance.chain().focus().extendMarkRange('link').setLink({ href: url, target: '_blank', rel: 'noopener noreferrer' }).run()
 	}
 }
 
