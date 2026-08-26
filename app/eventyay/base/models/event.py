@@ -1052,10 +1052,15 @@ class Event(
         or by returning a custom one based on the event's settings.
         """
         from eventyay.base.email import CustomSMTPBackend, SendGridEmail
+        from eventyay.base.gmail.resolver import get_gmail_mail_backend
 
         gs = GlobalSettingsObject()
 
         if self.settings.smtp_use_custom or force_custom:
+            if self.settings.email_vendor == 'gmail_api':
+                backend = get_gmail_mail_backend(event=self, timeout=timeout, force_custom=force_custom)
+                if backend:
+                    return backend
             if self.settings.email_vendor == 'sendgrid':
                 return SendGridEmail(api_key=self.settings.send_grid_api_key)
             if not force_custom and not smtp_reachable(self.settings.smtp_host, self.settings.smtp_port, timeout=timeout):
@@ -1076,6 +1081,10 @@ class Event(
                 timeout=timeout,
             )
         elif gs.settings.email_vendor is not None:
+            if gs.settings.email_vendor == 'gmail_api':
+                backend = get_gmail_mail_backend(timeout=timeout)
+                if backend:
+                    return backend
             if gs.settings.email_vendor == 'sendgrid':
                 return SendGridEmail(api_key=gs.settings.send_grid_api_key)
             if not smtp_reachable(gs.settings.smtp_host, gs.settings.smtp_port, timeout=timeout):
