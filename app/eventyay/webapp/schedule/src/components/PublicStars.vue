@@ -78,8 +78,8 @@ export default {
 		t() {
 			const m = this.translationMessages || {}
 			return {
-				starred_by: m.starred_by || 'Starred by',
-				no_starred_sessions: m.no_starred_sessions || 'No starred sessions.',
+				starred_by: m.starred_by || this.$t('Starred by'),
+				no_starred_sessions: m.no_starred_sessions || this.$t('No starred sessions.'),
 			}
 		},
 		heading() {

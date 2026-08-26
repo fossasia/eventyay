@@ -7,15 +7,15 @@ prompt.c-profile-greeting-prompt(:allowCancel="false")
 			p {{ $t('profile/GreetingPrompt:step-social:text') }}
 			bunt-button.social-connection.social-twitter(v-if="world.social_logins.includes('twitter')", @click="connectSocial('twitter')")
 				.mdi.mdi-twitter
-				.label twitter
+				.label {{ $t('Twitter') }}
 			bunt-button.social-connection.social-linkedin(v-if="world.social_logins.includes('linkedin')", @click="connectSocial('linkedin')")
 				.mdi.mdi-linkedin
-				.label linkedin
+				.label {{ $t('LinkedIn') }}
 			bunt-button.social-connection.social-gravatar(v-if="world.social_logins.includes('gravatar')",@click="showConnectGravatar = true")
 				svg(viewBox="0 0 27 27")
 					path(d="M10.8 2.699v9.45a2.699 2.699 0 005.398 0V5.862a8.101 8.101 0 11-8.423 1.913 2.702 2.702 0 00-3.821-3.821A13.5 13.5 0 1013.499 0 2.699 2.699 0 0010.8 2.699z")
-				.label gravatar
-			p.joiner or
+				.label {{ $t('Gravatar') }}
+			p.joiner {{ $t('or') }}
 			bunt-button.manual(@click="activeStep = 'displayName'") {{ $t('profile/GreetingPrompt:step-social:button-fill-manually:label') }}
 		.step-display-name(v-else-if="activeStep === 'displayName'")
 			template(v-if="steps.includes('connectSocial')")
@@ -48,7 +48,7 @@ import { mapState } from 'vuex'
 import { required } from 'lib/validators'
 import api from 'lib/api'
 import config from 'config'
-import { locales } from 'locales'
+import { resolveLanguageOptions } from 'locales'
 import Prompt from 'components/Prompt'
 import ChangeAvatar from './ChangeAvatar'
 import ChangeAdditionalFields from './ChangeAdditionalFields'
@@ -74,7 +74,7 @@ export default {
 		return {
 			profile: {
 				display_name: {
-					required: required('Display name cannot be empty')
+					required: required(this.$t('Display name cannot be empty'))
 				}
 			}
 		}
@@ -98,8 +98,8 @@ export default {
 			return this.steps[this.steps.indexOf(this.activeStep) + 1]
 		},
 		languages() {
-			if (!config.locales?.length) return null
-			return locales.filter(locale => config.locales.includes(locale.code))
+			const options = resolveLanguageOptions(config.locales)
+			return options.length ? options : null
 		}
 	},
 	async created() {
@@ -164,7 +164,6 @@ export default {
 			}
 			this.profile.greeted = true // override even if explicitly set to false by server
 			await this.$store.dispatch('updateUser', {profile: this.profile})
-			localStorage.userLanguage = this.interfaceLanguage
 			await this.$store.dispatch('updateUserLocale', this.interfaceLanguage)
 			// TODO error handling
 			this.$emit('close')

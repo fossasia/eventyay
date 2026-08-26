@@ -1,4 +1,5 @@
 import moment from 'moment-timezone'
+import {translate} from './i18n.js'
 import { getVideoEmbedUrl } from './videoEmbed.js'
 
 export { getVideoEmbedUrl }
@@ -30,16 +31,18 @@ export function findScrollParent (node) {
 	return findScrollParent(node.parentNode)
 }
 export function getPrettyDuration (start, end) {
+	const minLabel = translate('min')
+	const hourLabel = translate('h')
 	let minutes = end.diff(start, 'minutes')
 	if (minutes <= 60) {
-		return `${minutes}min`
+		return `${minutes}${minLabel}`
 	}
 	const hours = Math.floor(minutes / 60)
 	minutes = minutes % 60
 	if (minutes) {
-		return `${hours}h${minutes}min`
+		return `${hours}${hourLabel}${minutes}${minLabel}`
 	}
-	return `${hours}h`
+	return `${hours}${hourLabel}`
 }
 
 export function getSessionTime(session, timezone, locale, hasAmPm) {

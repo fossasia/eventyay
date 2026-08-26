@@ -8,10 +8,10 @@
 			.mdi.mdi-alert-circle-outline.state-icon.state-icon--error
 			p {{ $t('JanusVideoroom:connection-error:text') }}
 			p.error-detail {{ connectionError }}
-			bunt-button.retry-btn(@click="initJanus") Retry
+			bunt-button.retry-btn(@click="initJanus") {{ $t('Retry') }}
 		.state-inner(v-else)
 			bunt-progress-circular(size="huge", :page="true")
-			span Connecting...
+			span {{ $t('Connecting...') }}
 
 	.room-surface(v-show="connectionState === 'connected'")
 		.gallery(ref="container", :class="{ 'has-screen': hasScreenTile }", :style="gridStyle", v-resize-observer="onResize")
@@ -105,9 +105,9 @@
 				@click="toggleScreenShare"
 			)
 				.mdi(:class="screenShareState === 'published' ? 'mdi-monitor-off' : 'mdi-monitor-share'")
-			button.control-button(type="button", title="Settings", @click="showDevicePrompt = true")
+			button.control-button(type="button", :title="$t('Settings')", @click="showDevicePrompt = true")
 				.mdi.mdi-cog
-			button.control-button(type="button", title="Report issue", @click="showFeedbackPrompt = true")
+			button.control-button(type="button", :title="$t('Report issue')", @click="showFeedbackPrompt = true")
 				.mdi.mdi-message-alert-outline
 			button.control-button.leave(type="button", :title="$t('JanusVideoroom:tool-hangup:tooltip')", @click="leaveRoom")
 				.mdi.mdi-phone-hangup
@@ -362,7 +362,7 @@ export default {
 					local: true,
 					screen: true,
 					user: this.user,
-					label: 'Your screen',
+					label: this.$t('Your screen'),
 					hasVideo: true,
 					muted: true,
 					audioLevel: 0,
@@ -645,7 +645,7 @@ export default {
 					this.cameraEnabled = false
 					this.publishedWithVideo = false
 					this.stopLocalCameraTracks()
-					this.publishingError = 'The server rejected the selected camera stream.'
+					this.publishingError = this.$t('The server rejected the selected camera stream.')
 				}
 			} else if (event === 'event' && msg.configured === 'ok') {
 				this.finishVideoPublish()
@@ -659,7 +659,7 @@ export default {
 				msg,
 			})
 			if (event === 'destroyed') {
-				this.failConnection('Room destroyed', false)
+				this.failConnection(this.$t('Room destroyed'), false)
 			} else if (event === 'event') {
 				if (msg.publishers) this.subscribeToPublishers(msg.publishers)
 				if (msg.joining) {
@@ -679,7 +679,7 @@ export default {
 				}
 				if (msg.error) {
 					if (msg.error_code === 426) {
-						this.failConnection('Room does not exist', false)
+						this.failConnection(this.$t('Room does not exist'), false)
 					} else {
 						this.failConnection(`Server error: ${msg.error}`, false)
 					}
@@ -743,7 +743,7 @@ export default {
 					})
 					this.finishAudioPublish()
 					this.publishingState = 'failed'
-					this.publishingError = error?.message || 'Could not publish microphone.'
+					this.publishingError = error?.message || this.$t('Could not publish microphone.')
 					return
 				}
 			}
@@ -777,7 +777,7 @@ export default {
 							})
 							this.finishAudioPublish()
 							this.publishingState = 'failed'
-							this.publishingError = error?.message || error || 'Could not configure microphone.'
+							this.publishingError = error?.message || error || this.$t('Could not configure microphone.')
 						},
 					})
 				},
@@ -789,7 +789,7 @@ export default {
 					})
 					this.finishAudioPublish()
 					this.publishingState = 'failed'
-					this.publishingError = error?.message || 'Could not publish microphone.'
+					this.publishingError = error?.message || this.$t('Could not publish microphone.')
 				},
 			}
 			if (explicitStream) {
@@ -867,7 +867,7 @@ export default {
 					this.publishedWithVideo = false
 					this.localCameraActive = false
 					localStorage.videoRequested = false
-					this.publishingError = error?.message || 'Could not publish camera.'
+					this.publishingError = error?.message || this.$t('Could not publish camera.')
 					return
 				}
 			}
@@ -904,7 +904,7 @@ export default {
 								error: error?.message || error,
 							})
 							this.finishVideoPublish()
-							this.publishingError = error?.message || error || 'Could not configure camera.'
+							this.publishingError = error?.message || error || this.$t('Could not configure camera.')
 						},
 					})
 				},
@@ -919,7 +919,7 @@ export default {
 					this.publishedWithVideo = false
 					this.localCameraActive = false
 					localStorage.videoRequested = false
-					this.publishingError = error?.message || 'Could not publish camera.'
+					this.publishingError = error?.message || this.$t('Could not publish camera.')
 				},
 			}
 			if (explicitStream) {
@@ -1213,7 +1213,7 @@ export default {
 				if (stream) {
 					this.publishScreenShare(stream)
 				} else {
-					this.failScreenShare('Screen sharing needs to be started again.')
+					this.failScreenShare(this.$t('Screen sharing needs to be started again.'))
 				}
 			} else if (event === 'event') {
 				if (msg.unpublished === 'ok') {
@@ -1224,12 +1224,12 @@ export default {
 					this.failScreenShare(msg.error)
 				}
 			} else if (event === 'destroyed') {
-				this.failScreenShare('Room destroyed')
+				this.failScreenShare(this.$t('Room destroyed'))
 			}
 			if (jsep) {
 				this.screenShareHandle.handleRemoteJsep({jsep})
 				if (!msg.video_codec) {
-					this.failScreenShare('The server rejected the selected screen stream.')
+					this.failScreenShare(this.$t('The server rejected the selected screen stream.'))
 				}
 			}
 		},
@@ -1241,7 +1241,7 @@ export default {
 			this.screenShareState = 'publishing'
 			this.stopScreenShareTracks()
 			if (!stream) {
-				this.failScreenShare('Screen sharing needs to be started again.')
+				this.failScreenShare(this.$t('Screen sharing needs to be started again.'))
 				return
 			}
 			this.screenShareStream = stream
@@ -1310,7 +1310,7 @@ export default {
 		},
 		async getDisplayMedia() {
 			if (!navigator.mediaDevices?.getDisplayMedia) {
-				throw new Error('Screen sharing is not supported by this browser.')
+				throw new Error(this.$t('Screen sharing is not supported by this browser.'))
 			}
 			const isSafari = Janus.webRTCAdapter?.browserDetails?.browser === 'safari'
 			const constraints = {
@@ -1338,7 +1338,7 @@ export default {
 				})
 			}
 			if (!stream.getVideoTracks().length) {
-				throw new Error('No screen video track was selected.')
+				throw new Error(this.$t('No screen video track was selected.'))
 			}
 			return stream
 		},
@@ -1403,7 +1403,7 @@ export default {
 			this.stopPendingScreenShareTracks()
 			this.stopScreenShareTracks()
 			this.screenShareState = 'failed'
-			this.screenShareError = silent ? null : (error?.message || error || 'Screen sharing failed.')
+			this.screenShareError = silent ? null : (error?.message || error || this.$t('Screen sharing failed.'))
 			if (silent) {
 				this.screenShareState = 'unpublished'
 			}
@@ -1782,7 +1782,7 @@ export default {
 					local: false,
 					screen: false,
 					user: feed.user,
-					label: feed.user?.profile?.display_name || 'Participant',
+					label: feed.user?.profile?.display_name || this.$t('Participant'),
 					hasVideo: false,
 					muted: true,
 					audioLevel: 0,
@@ -2061,9 +2061,11 @@ export default {
 		},
 		feedLabel(feed) {
 			if (feed.feedType === 'screen') {
-				return feed.user?.profile?.display_name ? `${feed.user.profile.display_name}'s screen` : 'Shared screen'
+				return feed.user?.profile?.display_name
+					? this.$t("{{name}}'s screen", {name: feed.user.profile.display_name})
+					: this.$t('Shared screen')
 			}
-			return feed.user?.profile?.display_name || 'Participant'
+			return feed.user?.profile?.display_name || this.$t('Participant')
 		},
 		stopLocalCameraTracks() {
 			this.localCameraActive = false
@@ -2219,7 +2221,7 @@ export default {
 			const retryInterval = this.retryInterval
 			this.cleanup({preserveConnectionFailure: true})
 			this.connectionState = 'failed'
-			this.connectionError = error?.message || error || 'Unknown Janus connection error'
+			this.connectionError = error?.message || error || this.$t('Unknown Janus connection error')
 			if (retry) {
 				this.connectionRetryTimeout = window.setTimeout(this.onJanusInitialized, retryInterval)
 				this.retryInterval = retryInterval * 2

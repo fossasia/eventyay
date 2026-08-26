@@ -9,11 +9,11 @@
 							i.fa(:class="condensedView ? 'fa-expand' : 'fa-compress'", aria-hidden="true")
 							span.density-btn-text {{ condensedView ? $t('Normal view') : $t('Condensed view') }}
 						.select-wrapper.custom-dropdown(ref="customDropdownRef", @click="showTimeDensityMenu = !showTimeDensityMenu", :class="{'active': showTimeDensityMenu}")
-							span.time-density-display {{ timeDensityMinutes }} min
+							span.time-density-display {{ timeDensityMinutes }} {{ $t('min') }}
 							i.fa.fa-chevron-down(aria-hidden="true")
 							.time-density-menu.vue-dropdown(v-if="showTimeDensityMenu")
 								.density-option(v-for="mins in [5, 15, 30, 60]", @click.stop="timeDensityMinutes = mins; onTimeDensityChange(); showTimeDensityMenu = false", :class="{active: timeDensityMinutes === mins}")
-									span {{ mins }} min
+									span {{ mins }} {{ $t('min') }}
 									i.fa.fa-check(v-if="timeDensityMinutes === mins")
 					.title
 						bunt-input#filter-input(v-model="unassignedFilterString", :placeholder="translations.filterSessions", icon="search", name="filter-input")
@@ -92,7 +92,7 @@
 									select.form-control.role-select(v-model="r.id", required)
 										option(:value="undefined" disabled) {{ $t('Select a role') }}
 										option(v-for="role in schedule?.roles", :key="role.id", :value="role.id") {{ getLocalizedString(role.name) }}
-									input.form-control.role-capacity(v-model.number="r.capacity", type="number", min="1", required, title="Capacity")
+									input.form-control.role-capacity(v-model.number="r.capacity", type="number", min="1", required, :title="$t('Capacity')")
 									a.text-danger(href="#", @click.prevent="editorSession.roles.splice(index, 1)")
 										i.fa.fa-trash
 								a(href="#", @click.prevent="editorSession.roles.push({id: undefined, capacity: 1})")
@@ -116,7 +116,7 @@
 			#assign-modal-wrapper(v-if="assigningSession && caps.canAssignMembers", @click="closeAssignModal")
 				#session-editor(@click.stop="")
 					h3.session-editor-title
-						span {{ $t('Assign Members for ') }} {{ getLocalizedString(assigningSession.title) }}
+						span {{ assignMembersHeading }}
 					
 					.data.assign-data
 						.assign-role(v-for="role in assigningSession.roles", :key="role.id")
@@ -152,6 +152,7 @@ import api from '~/api'
 import { resolveMode, getCapabilities } from '~/teamshifts-adapter'
 import type { Capabilities } from '~/teamshifts-adapter/types'
 import { getLocalizedString } from '~/utils'
+import {translate as $t} from '~/lib/i18n'
 import type { AvailabilityEntry, RoleAssignment, ScheduleRole } from '~/schemas';
 
 interface Speaker {
@@ -292,14 +293,16 @@ function onTimeDensityChange (): void {
   localStorage.setItem('schedule-time-density-minutes', String(timeDensityMinutes.value))
 }
 
-function $t(key: string): string {
-  return typeof window !== 'undefined' && (window as { $t?: (key: string) => string }).$t?.(key) || key;
-}
 
 const translations = computed(() => ({
   filterSessions: caps.showRoles ? $t('Filter shifts') : $t('Filter sessions'),
   newBreak: $t('New break'),
 }))
+
+const assignMembersHeading = computed(() => {
+  if (!assigningSession.value) return $t('Assign Members')
+  return $t('Assign Members for {{title}}', {title: getLocalizedString(assigningSession.value.title)})
+})
 
 function lookupKey(value?: string | number | null): string {
   return value == null ? '' : String(value)

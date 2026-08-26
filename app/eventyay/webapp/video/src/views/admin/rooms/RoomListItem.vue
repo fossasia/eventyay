@@ -1,18 +1,18 @@
 <template lang="pug">
 router-link.c-room-list-item.table-row(:to="{name: 'admin:rooms:item', params: {roomId: room.id}}", draggable="false")
-	.handle.mdi.mdi-drag-vertical(:class="{disabled}", v-handle, v-tooltip="disabled ? 'sorting is disabled while searching' : ''")
+	.handle.mdi.mdi-drag-vertical(:class="{disabled}", v-handle, v-tooltip="disabled ? $t('sorting is disabled while searching') : ''")
 	.name(v-html="$emojify(room.name)")
 	.badge-cell
 		.badges-wrapper
 			.room-type-badge.unscheduled-room-badge(v-if="room.is_unscheduled")
 				.mdi.mdi-calendar-remove
-				span Unscheduled
+				span {{ $t('Unscheduled') }}
 			.room-type-badge(v-if="inferredType", :class="badgeClass")
 				.mdi(:class="badgeIcon")
 				span {{ badgeLabel }}
 			VideoProviderDropdown(
 				v-else,
-				label="Add Video",
+				:label="$t('Add Video')",
 				variant="action",
 				placement="bottom-end",
 				strategy="fixed",
