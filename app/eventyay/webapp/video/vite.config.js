@@ -205,7 +205,6 @@ export default defineConfig(({ mode }) => {
               if (id.includes('materialdesignicons-webfont') || id.match(/materialdesignicons/)) return 'vendor-mdi'
               if (id.includes('moment') || id.includes('moment-timezone')) return 'vendor-moment'
               if (id.includes('lodash') || id.includes('lodash-es')) return 'vendor-lodash'
-              if (id.includes('quill')) return 'vendor-quill'
               if (id.includes('markdown-it')) return 'vendor-markdown'
               if (id.includes('i18next')) return 'vendor-i18n'
               if (id.includes('preact')) return 'vendor-preact'
