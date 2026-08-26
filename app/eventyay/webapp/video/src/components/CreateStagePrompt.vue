@@ -1,9 +1,9 @@
 <template lang="pug">
 prompt.c-create-stage-prompt(@close="$emit('close')")
 	.content
-		h1 {{ $t('CreateStagePrompt:headline:text') }}
+		h1 {{ $t('Create a new stage') }}
 		form(@submit.prevent="create")
-			bunt-input(name="name", :label="$t('CreateStagePrompt:name:label')", icon="theater", :placeholder="$t('CreateStagePrompt:name:placeholder')", v-model="name", :validation="v$.name")
+			bunt-input(name="name", :label="$t('Name')", icon="theater", :placeholder="$t('Stage name')", v-model="name", :validation="v$.name")
 			.stage-mode
 				.fieldset-label {{ $t('Stream type') }}
 				.ui-radio-options
@@ -20,14 +20,14 @@ prompt.c-create-stage-prompt(@close="$emit('close')")
 							input(type="radio", name="streamSource", :value="option.id", v-model="streamSource")
 							.radio-copy
 								.ui-radio-title {{ option.label }}
-				bunt-input(v-if="streamSource === 'hls'", name="url", :label="$t('CreateStagePrompt:url:label')", icon="link", :placeholder="$t('https://example.com/stream.m3u8')", v-model="url", :validation="v$.url")
+				bunt-input(v-if="streamSource === 'hls'", name="url", :label="$t('Stream URL')", icon="link", :placeholder="$t('https://example.com/stream.m3u8')", v-model="url", :validation="v$.url")
 				template(v-else-if="streamSource === 'youtube'")
 					bunt-input(name="youtubeId", :label="$t('YouTube Video ID or URL')", icon="youtube", :placeholder="$t('https://www.youtube.com/watch?v=...')", v-model="youtubeId", :validation="v$.youtubeId", @blur="normalizeYoutubeId")
 					bunt-checkbox(name="start-muted", v-model="startMuted", :label="$t('Start muted')")
-			bunt-input-outline-container(:label="$t('CreateChatPrompt:description:label')")
+			bunt-input-outline-container(:label="$t('Description')")
 				template(#default="{focus, blur}")
 					textarea(v-model="description", @focus="focus", @blur="blur")
-			bunt-button(type="submit", :loading="loading", :error-message="error") {{ $t('CreateStagePrompt:submit:label') }}
+			bunt-button(type="submit", :loading="loading", :error-message="error") {{ $t('Create') }}
 </template>
 <script>
 import { useVuelidate } from '@vuelidate/core'

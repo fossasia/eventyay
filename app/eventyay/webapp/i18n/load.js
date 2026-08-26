@@ -1,6 +1,21 @@
 import {isEnglishLocale, mergeCatalogWithEnglish, toDjangoLanguage, usableTranslations} from './catalog.js'
+import {parsePo} from './po.js'
 
 export {isEnglishLocale, mergeCatalogWithEnglish, toDjangoLanguage, usableTranslations}
+
+export function catalogFromLoaderResult(locale) {
+	if (locale == null) return {}
+	if (typeof locale === 'string') return parsePo(locale)
+	if (typeof locale !== 'object') return {}
+	if (typeof locale.default === 'string') return parsePo(locale.default)
+	if (locale.default && typeof locale.default === 'object' && !Array.isArray(locale.default)) {
+		const keys = Object.keys(locale)
+		if (keys.every((key) => key === 'default' || key === '__esModule')) {
+			return locale.default
+		}
+	}
+	return locale
+}
 
 export function toGettextLocale(language) {
 	const django = toDjangoLanguage(language)
@@ -50,7 +65,7 @@ export async function loadRawCatalog(localeLoaders, language) {
 	const loader = resolveLocaleLoader(localeLoaders, language)
 	if (!loader) return null
 	const locale = await loader()
-	return locale.default || {}
+	return catalogFromLoaderResult(locale)
 }
 
 export function createEnglishCatalogLoader(localeLoaders) {

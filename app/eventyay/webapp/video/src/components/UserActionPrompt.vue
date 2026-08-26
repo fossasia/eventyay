@@ -1,17 +1,17 @@
 <template lang="pug">
 prompt.c-user-action-prompt(@close="$emit('close')", :class="[`action-${action}`]")
 	.content
-		h2(v-if="success") {{ $t(`UserActionPrompt:action.${actionLabel}:confirmation`) }}
-		h2(v-else) {{ $t(`UserActionPrompt:action.${actionLabel}:question`) }}
+		h2(v-if="success") {{ confirmationText }}
+		h2(v-else) {{ questionText }}
 		.user
 			avatar(:user="user", :size="128")
 			.display-name
 				| {{ user.profile.display_name }}
 				.ui-badge(v-for="badge in user.badges") {{ badge }}
-		.explanation {{ $t(`UserActionPrompt:action.${actionLabel}:explanation`) }}
+		.explanation {{ explanationText }}
 		.actions
-			bunt-button.btn-cancel(v-if="!success", @click="$emit('close')") {{ $t(`Prompt:cancel:label`) }}
-			bunt-button.btn-action(@click="takeAction", :loading="loading", :error-message="error") {{ $t(`UserActionPrompt:action.${actionLabel}:execute:label`) }}
+			bunt-button.btn-cancel(v-if="!success", @click="$emit('close')") {{ $t('cancel') }}
+			bunt-button.btn-action(@click="takeAction", :loading="loading", :error-message="error") {{ executeText }}
 </template>
 <script>
 import Prompt from 'components/Prompt'
@@ -41,7 +41,43 @@ export default {
 				return this.user.moderation_state === 'banned' ? 'unban' : 'unsilence'
 			}
 			return this.action
-		}
+		},
+		questionText() {
+			switch (this.actionLabel) {
+				case 'ban': return this.$t('Ban this user from the event?')
+				case 'silence': return this.$t('Silence this user?')
+				case 'unban': return this.$t('Unban this user?')
+				case 'unsilence': return this.$t('Unsilence this user?')
+				default: return this.$t('Block this user?')
+			}
+		},
+		explanationText() {
+			switch (this.actionLabel) {
+				case 'ban': return this.$t('They will no longer be able to join this event.')
+				case 'silence': return this.$t('They can still watch, but can no longer send chat messages.')
+				case 'unban': return this.$t('They will be able to join this event again.')
+				case 'unsilence': return this.$t('They will be able to send chat messages again.')
+				default: return this.$t('They will no longer be able to send you direct messages.')
+			}
+		},
+		executeText() {
+			switch (this.actionLabel) {
+				case 'ban': return this.$t('Ban')
+				case 'silence': return this.$t('Silence')
+				case 'unban': return this.$t('Unban')
+				case 'unsilence': return this.$t('Unsilence')
+				default: return this.$t('Block')
+			}
+		},
+		confirmationText() {
+			switch (this.actionLabel) {
+				case 'ban': return this.$t('User banned')
+				case 'silence': return this.$t('User silenced')
+				case 'unban': return this.$t('User unbanned')
+				case 'unsilence': return this.$t('User unsilenced')
+				default: return this.$t('User blocked')
+			}
+		},
 	},
 	methods: {
 		async takeAction() {
@@ -62,8 +98,8 @@ export default {
 				this.success = successLabels[this.action]
 				setTimeout(() => this.$emit('close'), this.closeDelay)
 			} catch (error) {
-				console.log(error)
-				this.error = this.$t(`error:${error.code}`)
+				console.error('UserActionPrompt failed', error)
+				this.error = error?.message || this.$t('Something went wrong.')
 			}
 			this.loading = false
 		}

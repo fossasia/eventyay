@@ -3,9 +3,9 @@
 	transition(name="background-room")
 		router-link.background-room(v-if="background", :to="room ? {name: 'room', params: {roomId: room.id}}: {name: 'channel', params: {channelId: call.channel}}")
 			.description
-				.hint {{ $t('MediaSource:room:hint') }}
+				.hint {{ $t('Currently playing') }}
 				.room-name(v-if="room", v-html="$emojify(room.name)")
-				.room-name(v-else-if="call") {{ $t('MediaSource:call:label') }}
+				.room-name(v-else-if="call") {{ $t('Private call') }}
 			.global-placeholder
 			bunt-icon-button(@click.prevent.stop="$emit('close')") close
 	Livestream(v-if="room && shouldUseLivestream", ref="livestream", :room="room", :module="module", :size="background ? 'tiny' : 'normal'", :key="`livestream-${room.id}`", @playback-state-changed="onMainPlayerPlaybackChanged")
@@ -14,8 +14,8 @@
 	.iframe-consent-gate(v-if="consentBlockedUrl && !background")
 		iframe-blocker(:src="consentBlockedUrl", allow="camera *; autoplay *; microphone *; fullscreen *; display-capture *", allowfullscreen, @consent-given="onConsentGiven")
 	.iframe-error(v-if="!iframeEl && !consentBlockedUrl && (iframeError || iframeOffline)", :class="{background: background, 'size-tiny': background}")
-		.offline-message(v-if="iframeOffline") {{ $t('Livestream:offline-message:text') }}
-		.offline-message(v-else) {{ $t('MediaSource:iframe-error:text') }}
+		.offline-message(v-if="iframeOffline") {{ $t('Stream offline') }}
+		.offline-message(v-else) {{ $t('We could not connect to the video conference server, sorry.') }}
 	iframe#video-player-translation(v-if="languageIframeUrl", ref="translationIframeEl", :src="languageIframeUrl", style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;", frameborder="0", gesture="media", allow="autoplay; encrypted-media", referrerpolicy="strict-origin-when-cross-origin", @load="onTranslationIframeLoaded")
 	audio(ref="whepAudioEl", autoplay, style="display: none;")
 </template>

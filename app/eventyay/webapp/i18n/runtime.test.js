@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import {importFromApp} from './app-deps.js'
 import {createGettextRuntime} from './runtime.js'
 import {usableTranslations} from './catalog.js'
-import {subscribeLocale} from './locale.js'
+import {createTranslate, subscribeLocale} from './locale.js'
 
 const {default: i18next} = await importFromApp('i18next')
 
@@ -23,33 +23,32 @@ function runtimeFor(domain, catalogs, options = {}) {
 	})
 }
 
-test('video namespaced keys fall back to English and keep German overlays', async () => {
+test('video English-as-msgid keys fall back to English and keep German overlays', async () => {
 	const runtime = runtimeFor('video', {
 		en: {
-			'RoomsSidebar:schedule:label': 'Schedule',
+			Schedule: 'Schedule',
 			Save: 'Save',
-			'{{name}}\'s screen': "{{name}}'s screen",
+			"{{name}}'s screen": "{{name}}'s screen",
 		},
 		de: {
-			'RoomsSidebar:schedule:label': 'Zeitplan',
+			Schedule: 'Zeitplan',
 			Save: '',
 		},
 		hi: {
-			'RoomsSidebar:schedule:label': '',
+			Schedule: '',
 			Save: 'Save',
 		},
 	})
 	await runtime.init({lng: 'hi'})
-	assert.equal(runtime.translate('RoomsSidebar:schedule:label'), 'Schedule')
+	assert.equal(runtime.translate('Schedule'), 'Schedule')
 	assert.equal(runtime.translate('Save'), 'Save')
-	assert.notEqual(runtime.translate('RoomsSidebar:schedule:label'), 'RoomsSidebar:schedule:label')
 
 	await runtime.changeLanguage('de')
-	assert.equal(runtime.translate('RoomsSidebar:schedule:label'), 'Zeitplan')
+	assert.equal(runtime.translate('Schedule'), 'Zeitplan')
 	assert.equal(runtime.translate('Save'), 'Save')
 
 	await runtime.changeLanguage('en-gb')
-	assert.equal(runtime.translate('RoomsSidebar:schedule:label'), 'Schedule')
+	assert.equal(runtime.translate('Schedule'), 'Schedule')
 	assert.equal(runtime.translate("{{name}}'s screen", {name: 'Ada'}), "Ada's screen")
 })
 
@@ -152,4 +151,55 @@ test('language changes notify subscribers used by the Vue runtime', async () => 
 	await runtime.changeLanguage('en-gb')
 	assert.ok(seen.length >= 2)
 	stop()
+})
+
+test('raw PO loaders populate bilingual video strings', async () => {
+	const runtime = createGettextRuntime({
+		domain: 'video',
+		i18next: i18next.createInstance(),
+		localeLoaders: {
+			'/locale/en/LC_MESSAGES/video.po': async () => (
+				'msgid "Schedule"\nmsgstr ""\n'
+			),
+		},
+		warnOnMissing: false,
+	})
+	await runtime.init({lng: 'en'})
+	assert.equal(runtime.translate('Schedule'), 'Schedule')
+})
+
+test('translate keeps strings with colons even when i18next would split namespaces', async () => {
+	const i18n = i18next.createInstance()
+	await i18n.init({
+		lng: 'en',
+		resources: {
+			en: {
+				translation: {
+					'Admin:mode:start': 'Admin mode',
+				},
+			},
+		},
+	})
+	assert.notEqual(i18n.t('Admin:mode:start'), 'Admin mode')
+	const translate = createTranslate(i18n)
+	assert.equal(translate('Admin:mode:start'), 'Admin mode')
+})
+
+test('missing locale loaders warn instead of throwing', async () => {
+	const warnings = []
+	const originalWarn = console.warn
+	console.warn = (...args) => warnings.push(args.join(' '))
+	try {
+		const runtime = createGettextRuntime({
+			domain: 'video',
+			i18next: i18next.createInstance(),
+			localeLoaders: {},
+			warnOnMissing: true,
+		})
+		await runtime.init({lng: 'en'})
+		assert.ok(warnings.some((line) => line.includes('video') && line.includes('locale loaders')))
+		assert.equal(runtime.translate('Schedule'), 'Schedule')
+	} finally {
+		console.warn = originalWarn
+	}
 })
