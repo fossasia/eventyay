@@ -28,7 +28,7 @@ from .event import (
     SubEventMetaValue,
     generate_invite_token,
 )
-from .feedback import Feedback
+from .feedback import Feedback, FeedbackReaction
 from .giftcards import GiftCard, GiftCardAcceptance, GiftCardTransaction
 from eventyay.base.gmail.models import GmailOAuthCredential
 from .global_plugin_config import GlobalPluginConfig
@@ -146,6 +146,7 @@ __all__ = [
     'EventPlannedUsage',
     'EventView',
     'Feedback',
+    'FeedbackReaction',
     'FileCleanupMixin',
     'Gate',
     'GenerateCode',

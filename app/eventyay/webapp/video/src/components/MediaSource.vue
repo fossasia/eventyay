@@ -37,7 +37,6 @@ import {
 	getStagePlaybackMode,
 	PLAYBACK_MODE_SCHEDULE_DRIVEN,
 	STREAM_TYPE_HLS,
-	STREAM_TYPE_IFRAME,
 	STREAM_TYPE_VIMEO,
 	STREAM_TYPE_YOUTUBE,
 } from 'lib/stage-streams';
@@ -96,7 +95,6 @@ const module = computed(() => {
 		[
 			'livestream.native',
 			'livestream.youtube',
-			'livestream.iframe',
 			'call.bigbluebutton',
 			'call.janus',
 			'call.zoom',
@@ -109,7 +107,6 @@ const isLivestreamModule = computed(() =>
 	[
 		'livestream.native',
 		'livestream.youtube',
-		'livestream.iframe',
 	].includes(module.value?.type)
 );
 
@@ -143,11 +140,10 @@ const iframeOffline = computed(() => {
 	const currentStream = isScheduleDriven ? props.room?.currentStream : null;
 	const streamType = currentStream?.stream_type;
 	const moduleType = module.value.type;
-	const isIFrame = streamType === STREAM_TYPE_IFRAME || moduleType === 'livestream.iframe';
 	const isYouTube = streamType === STREAM_TYPE_YOUTUBE || moduleType === 'livestream.youtube';
 	const isVimeo = streamType === STREAM_TYPE_VIMEO;
 
-	if (!isIFrame && !isYouTube && !isVimeo) return false;
+	if (!isYouTube && !isVimeo) return false;
 
 	const scheduleUrl = currentStream?.url || null;
 
@@ -525,8 +521,6 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 			? 'livestream.youtube'
 			: streamType === STREAM_TYPE_VIMEO
 			? 'livestream.vimeo'
-			: streamType === STREAM_TYPE_IFRAME
-			? 'livestream.iframe'
 			: (!isScheduleDriven ? module.value.type : null);
 
 		switch (effectiveModuleType) {
@@ -550,10 +544,6 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 				});
 				iframeUrl = getJitsiRoomUrl(jitsiConfig);
 				hideIfBackground = true;
-				break;
-			}
-			case 'livestream.iframe': {
-				iframeUrl = currentStream?.url || module.value.config.url;
 				break;
 			}
 			case 'livestream.vimeo': {

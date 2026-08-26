@@ -514,13 +514,13 @@ def advanced_filters_open_from_get(filter_form) -> bool:
     """Return True when the advanced filter panel should start expanded."""
     if not filter_form:
         return False
-        
+
     if filter_form.data.get('filters') == '1':
         return True
-    
+
     if not filter_form.is_valid():
         return False
-        
+
     for key in filter_form.fields.keys():
         if key in FILTER_COUNT_IGNORED_FIELDS:
             continue
@@ -531,7 +531,7 @@ def advanced_filters_open_from_get(filter_form) -> bool:
 
 def advanced_filter_count(filter_form) -> int:
     """Count active advanced filters for the Filters button badge."""
-    if not filter_form.is_valid():
+    if not filter_form or not filter_form.is_valid():
         return 0
     count = 0
     for key in filter_form.fields.keys():
@@ -1798,46 +1798,6 @@ class VoucherFilterForm(FilterForm):
         return qs
 
 
-class VoucherTagFilterForm(FilterForm):
-    subevent = forms.ModelChoiceField(
-        label=pgettext_lazy('subevent', 'Date'),
-        queryset=SubEvent.objects.none(),
-        required=False,
-        empty_label=pgettext_lazy('subevent', 'All dates'),
-    )
-
-    def __init__(self, *args, **kwargs):
-        self.event = kwargs.pop('event')
-        super().__init__(*args, **kwargs)
-
-        if self.event.has_subevents:
-            self.fields['subevent'].queryset = self.event.subevents.all()
-            self.fields['subevent'].widget = Select2(
-                attrs={
-                    'data-model-select2': 'event',
-                    'data-select2-url': reverse(
-                        'control:event.subevents.select2',
-                        kwargs={
-                            'event': self.event.slug,
-                            'organizer': self.event.organizer.slug,
-                        },
-                    ),
-                    'data-placeholder': pgettext_lazy('subevent', 'All dates'),
-                }
-            )
-            self.fields['subevent'].widget.choices = self.fields['subevent'].choices
-        elif 'subevent':
-            del self.fields['subevent']
-
-    def filter_qs(self, qs):
-        fdata = self.cleaned_data
-
-        if fdata.get('subevent'):
-            qs = qs.filter(subevent_id=fdata.get('subevent').pk)
-
-        return qs
-
-
 class RefundFilterForm(FilterForm):
     orders = {
         'provider': 'provider',
@@ -1904,23 +1864,21 @@ class OverviewFilterForm(FilterForm):
         empty_label=pgettext_lazy('subevent', 'All dates'),
     )
     date_axis = forms.ChoiceField(
-        label=_('Date filter'),
+        label=_('Filter by'),
         choices=(
-            ('', _('Filter by…')),
+            ('', _('All products')),
             ('order_date', _('Order date')),
             ('last_payment_date', _('Date of last successful payment')),
         ),
         required=False,
     )
     date_from = forms.DateField(
-        label=_('Date from'),
+        label=_('Start date'),
         required=False,
-        widget=DatePickerWidget,
     )
     date_until = forms.DateField(
-        label=_('Date until'),
+        label=_('End date'),
         required=False,
-        widget=DatePickerWidget,
     )
     browser_timezone = forms.CharField(
         widget=forms.HiddenInput(attrs={'class': 'browser-timezone-field'}),
@@ -1951,6 +1909,17 @@ class OverviewFilterForm(FilterForm):
             self.fields['subevent'].widget.choices = self.fields['subevent'].choices
         elif 'subevent':
             del self.fields['subevent']
+
+        for field_name, placeholder in (
+            ('date_from', _('Start date')),
+            ('date_until', _('End date')),
+        ):
+            self.fields[field_name].widget = DatePickerWidget(
+                attrs={
+                    'autocomplete': 'off',
+                }
+            )
+            self.fields[field_name].widget.attrs['placeholder'] = placeholder
 
 
 class TaskFilterForm(forms.Form):

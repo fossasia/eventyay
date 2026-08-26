@@ -24,6 +24,7 @@ from eventyay.base.models.room import AnonymousInvite
 from eventyay.base.models import Event  # Added for /video event context
 from eventyay.base.services.video_theme import build_video_theme_for_event
 from eventyay.agenda.views.utils import build_public_schedule_exporters
+from eventyay.common.language import get_ui_language_options
 from eventyay.common.templatetags.vite import fetch_vite_html, VIDEO_DIST_DIR, VIDEO_DEV_SERVER
 from eventyay.consts import SizeKey
 
@@ -146,7 +147,7 @@ class VideoSPAView(View):
                 'showTimes': bool(event.settings.show_times),
                 'basePath': base_path,
                 'defaultLocale': 'en',
-                'locales': ['en', 'de', 'pt_BR', 'ar', 'fr', 'es', 'uk', 'ru'],
+                'locales': get_ui_language_options(),
                 'noThemeEndpoint': True,  # Prevent frontend from requesting missing /theme endpoint
                 'translationMessages': {
                     'favs_anonymous_notice': str(_(
