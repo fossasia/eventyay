@@ -54,8 +54,8 @@ import MediaSource from 'components/MediaSource'
 import Notifications from 'components/notifications'
 import GreetingPrompt from 'components/profile/GreetingPrompt'
 
-const mediaModules = ['livestream.native', 'livestream.youtube', 'livestream.iframe', 'call.bigbluebutton', 'call.janus', 'call.zoom', 'call.jitsi']
-const stageToolModules = ['livestream.native', 'livestream.youtube', 'livestream.iframe', 'call.janus']
+const mediaModules = ['livestream.native', 'livestream.youtube', 'call.bigbluebutton', 'call.janus', 'call.zoom', 'call.jitsi']
+const stageToolModules = ['livestream.native', 'livestream.youtube', 'call.janus']
 const chatbarModules = ['chat.native', 'question', 'poll']
 
 export default {

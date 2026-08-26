@@ -12,11 +12,11 @@
 			template(v-if="languages")
 				h2 {{ $t('preferences/index:interface-language:header') }}
 				bunt-select#select-interface-language(name="interface-language", v-model="interfaceLanguage", :options="languages", option-value="code", option-label="nativeLabel")
-			h2 Profile Visibility
-			p Making your profile public allows other attendees to find you in the networking chat list and see you in room viewer lists. Private profiles are completely hidden.
+			h2 {{ $t('Profile Visibility') }}
+			p {{ $t('Making your profile public allows other attendees to find you in the networking chat list and see you in room viewer lists. Private profiles are completely hidden.') }}
 			bunt-switch#switch-show-publicly(
 				name="showPublicly",
-				:label="showPublicly ? 'Public – visible to other attendees' : 'Private – hidden from attendee lists'",
+				:label="showPublicly ? $t('Public – visible to other attendees') : $t('Private – hidden from attendee lists')",
 				:model-value="showPublicly",
 				@update:modelValue="toggleVisibility"
 			)
@@ -46,7 +46,7 @@ import { mapState } from 'vuex'
 import { cloneDeep } from 'lodash'
 import { useVuelidate } from '@vuelidate/core'
 import config from 'config'
-import { locales } from 'locales'
+import { resolveLanguageOptions } from 'locales'
 import Avatar from 'components/Avatar'
 import Prompt from 'components/Prompt'
 import ChangeAvatar from 'components/profile/ChangeAvatar'
@@ -69,10 +69,12 @@ export default {
 			saving: false
 		}
 	},
-	validations: {
-		profile: {
-			display_name: {
-				required: required('Display name cannot be empty')
+	validations() {
+		return {
+			profile: {
+				display_name: {
+					required: required(this.$t('Display name cannot be empty'))
+				}
 			}
 		}
 	},
@@ -85,8 +87,8 @@ export default {
 			return !!this.$store.state.user?.show_publicly
 		},
 		languages() {
-			if (!config.locales?.length) return null
-			return locales.filter(locale => config.locales.includes(locale.code))
+			const options = resolveLanguageOptions(config.locales)
+			return options.length ? options : null
 		}
 	},
 	created() {
@@ -117,7 +119,6 @@ export default {
 			this.$store.dispatch('notifications/updateSettings', this.notificationSettings)
 			this.$store.dispatch('setAutoplay', this.autoplay)
 			this.$store.dispatch('schedule/setCurrentLanguage', this.interfaceLanguage)
-			localStorage.userLanguage = this.interfaceLanguage
 			try {
 				await this.$store.dispatch('updateUserLocale', this.interfaceLanguage)
 			} catch (error) {

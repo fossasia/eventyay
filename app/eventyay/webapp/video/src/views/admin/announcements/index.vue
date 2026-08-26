@@ -1,15 +1,15 @@
 <template lang="pug">
 .c-admin-announcements
 	.ui-page-header
-		h1 Announcements
+		h1 {{ $t('Announcements') }}
 		.actions
-			bunt-link-button#btn-create(:to="{name: 'admin:announcements:item', params: {announcementId: 'new'}}") Create a new announcement
+			bunt-link-button#btn-create(:to="{name: 'admin:announcements:item', params: {announcementId: 'new'}}") {{ $t('Create a new announcement') }}
 	.page-content(v-if="announcements")
 		.announcements-list
 			.header
-				.state state
-				.text text
-				.show-until show until
+				.state {{ $t('state') }}
+				.text {{ $t('text') }}
+				.show-until {{ $t('show until') }}
 			.tbody(v-scrollbar.y="")
 				router-link.announcement.table-row(v-for="announcement of announcements", :to="{name: 'admin:announcements:item', params: {announcementId: announcement.id}}")
 					.state(:class="[announcement.state, {expired: announcement.expired}]")

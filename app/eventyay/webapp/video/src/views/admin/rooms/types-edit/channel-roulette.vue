@@ -1,6 +1,6 @@
 <template lang="pug">
 .c-channel-roulette-settings
-	bunt-input(v-model="module.config.rematch_interval", label="Minimum time before the same persons meet again (minutes)", name="rematch_interval")
+	bunt-input(v-model="module.config.rematch_interval", :label="$t('Minimum time before the same persons meet again (minutes)')", name="rematch_interval")
 </template>
 <script>
 import mixin from './mixin'

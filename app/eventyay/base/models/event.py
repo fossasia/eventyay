@@ -104,7 +104,6 @@ def event_logo_path(instance, filename):
 
 FEATURE_FLAGS = [
     'schedule-control',
-    'iframe-player',
     'roulette',
     'muxdata',
     'page.landing',
@@ -610,6 +609,13 @@ class Event(
         verbose_name=_('Add video call'),
         help_text=_('Create Video platform for Event.'),
         default=False,
+    )
+    banned_users = models.ManyToManyField(
+        'User',
+        related_name='banned_events',
+        blank=True,
+        verbose_name=_('Banned users'),
+        help_text=_('Users who are banned from submitting feedback or interacting with this event.'),
     )
 
     # Fields for talk
@@ -2581,6 +2587,23 @@ class Event(
                 return default_storage.url(path)
             except Exception:
                 return None
+
+    @cached_property
+    def preview_image_url_small(self):
+        """
+        Return a smaller 400×225 resolved URL of the preview image for responsive srcset delivery.
+        """
+        path = self._visible_preview_image_path or self._visible_header_image_path or self._visible_logo_path
+        if not path:
+            return None
+
+        if is_http_url(str(path)):
+            return path
+
+        try:
+            return get_thumbnail(path, '400x225^').thumb.url
+        except Exception:
+            return self.preview_image_url_with_fallback
 
     @cached_property
     def visible_logo_url(self):

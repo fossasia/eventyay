@@ -4,7 +4,7 @@ div.c-audio-translation
 		:name="selectName",
 		v-model="internalSelectedLanguage",
 		:options="languageOptions",
-		:label="label"
+		:label="resolvedLabel"
 )
 </template>
 <script>
@@ -24,7 +24,7 @@ export default {
 		},
 		label: {
 			type: String,
-			default: 'Audio Translation'
+			default: null
 		}
 	},
 	data() {
@@ -36,8 +36,11 @@ export default {
 	},
 	computed: {
 		selectName() {
-			const slug = (this.label || 'audio-translation').toLowerCase().replace(/\s+/g, '-')
+			const slug = (this.resolvedLabel || 'audio-translation').toLowerCase().replace(/\s+/g, '-')
 			return `audio-translation-${slug}`
+		},
+		resolvedLabel() {
+			return this.label || this.$t('Audio Translation')
 		},
 	},
 	watch: {

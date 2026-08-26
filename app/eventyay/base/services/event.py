@@ -392,7 +392,6 @@ async def create_room(event, data, creator):
     livestream_types = {
         "livestream.native",
         "livestream.youtube",
-        "livestream.iframe",
     }
     livestream_modules = [
         m for m in data.get("modules", []) if m.get("type") in livestream_types
@@ -439,8 +438,6 @@ async def create_room(event, data, creator):
                 ):
                     if config.get(key):
                         clean_config[key] = True
-            elif module["type"] == "livestream.iframe":
-                clean_config["url"] = config.get("url", "")
         module["config"] = clean_config
 
         if "chat.native" in types:

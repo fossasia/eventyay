@@ -2,7 +2,7 @@
 .c-admin-rooms-new
 	.ui-page-header
 		bunt-icon-button(@click="$router.replace({name: 'admin:rooms:index'})") arrow_left
-		h1 New room
+		h1 {{ $t('New room') }}
 			template(v-if="chosenProvider")  : {{ chosenProvider.label }}
 	edit-form(v-if="config", :config="config", :creating="true")
 </template>

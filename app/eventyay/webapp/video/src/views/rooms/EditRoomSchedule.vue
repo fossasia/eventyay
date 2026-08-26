@@ -2,7 +2,7 @@
 .c-edit-room-schedule
 	.edit-wrapper
 		bunt-icon-button#btn-close(@click="$emit('close')") close
-		h2 Change session for room {{ room.name }}
+		h2 {{ $t('Change session for room') }} {{ room.name }}
 		.content
 			.sessions(v-scrollbar.y="")
 				.session(v-for="session, index of sessions", :ref="session === currentSession ? 'currentSession': null", :class="{current: session === currentSession, selected: session === selectedSession}", @click="selectedSession = session")
@@ -13,7 +13,7 @@
 					.time {{ formatTime(session.start) }}-{{ formatTime(session.end) }}
 			.selected-session(v-if="selectedSession")
 				img.preview(:src="`https://picsum.photos/64`")
-				h3 DETAIL VIEW HERE
+				h3 {{ $t('DETAIL VIEW HERE') }}
 				.info
 					.title {{ $localize(selectedSession.title) }}
 					.speakers(v-if="selectedSession.speakers") {{ selectedSession.speakers.map(s => s.name).join(', ')}}

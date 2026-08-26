@@ -309,7 +309,7 @@ def get_event_navigation(request: HttpRequest):
             {
                 'label': _('Orders'),
                 'url': reverse(
-                    'control:event.orders',
+                    'control:event.orders.overview',
                     kwargs={
                         'event': request.event.slug,
                         'organizer': request.event.organizer.slug,

@@ -1,3 +1,4 @@
+import re
 from collections import OrderedDict
 
 from django import forms
@@ -10,6 +11,24 @@ from django_scopes.forms import SafeModelMultipleChoiceField
 from eventyay.base.models.organizer import Team
 from eventyay.base.models.track import Track
 from eventyay.control.forms.event import SafeEventMultipleChoiceField
+
+
+EXHIBITION_PLUGIN_REGEX = r'(^|,)exhibition(,|$)'
+
+EXHIBITION_FIELDS = (
+    'can_change_exhibition_proposals',
+    'is_exhibition_reviewer',
+    'hide_exhibition_applicant_emails',
+)
+
+EXHIBITION_PERMISSIONS = (
+    'can_change_exhibition_proposals',
+    'is_exhibition_reviewer',
+)
+
+
+def event_has_exhibition(event):
+    return bool(re.search(EXHIBITION_PLUGIN_REGEX, event.plugins or ''))
 
 
 class TeamForm(forms.ModelForm):
@@ -39,6 +58,20 @@ class TeamForm(forms.ModelForm):
         if not apps.is_installed("socialmedia"):
             if "can_manage_social_media" in self.fields:
                 del self.fields["can_manage_social_media"]
+
+        self.exhibition_event_ids = []
+        if apps.is_installed('exhibition'):
+            self.exhibition_event_ids = list(
+                organizer.events.filter(plugins__regex=EXHIBITION_PLUGIN_REGEX).values_list('pk', flat=True)
+            )
+
+        has_exhibition = bool(self.exhibition_event_ids)
+        self.exhibition_plugin_enabled = has_exhibition
+        if not has_exhibition:
+            for f in EXHIBITION_FIELDS:
+                if f in self.fields:
+                    del self.fields[f]
+
         has_teamshifts = False
         if apps.is_installed('teamshifts'):
             has_teamshifts = organizer.events.filter(
@@ -76,6 +109,14 @@ class TeamForm(forms.ModelForm):
             for f in teamshifts_fields:
                 if f in self.fields:
                     del self.fields[f]
+
+    def _exhibition_applies_to_team(self, data):
+        """Whether any event this team covers actually has the exhibition plugin enabled."""
+        if not getattr(self, 'exhibition_plugin_enabled', False):
+            return False
+        if data.get('all_events'):
+            return True
+        return any(event_has_exhibition(event) for event in data.get('limit_events') or [])
 
     @staticmethod
     def _build_events_with_tracks(events_qs, tracks_qs):
@@ -282,9 +323,22 @@ class TeamForm(forms.ModelForm):
             'can_video_manage_kiosks',
             'can_video_view_analytics',
         )
-        has_any_permission = any(data.get(permission) for permission in permissions)
+        effective_permissions = permissions
+        if not self._exhibition_applies_to_team(data):
+            effective_permissions = tuple(p for p in permissions if p not in EXHIBITION_PERMISSIONS)
+
+        has_any_permission = any(data.get(permission) for permission in effective_permissions)
         if not has_any_permission and not data.get('teamshifts_role'):
-            error = forms.ValidationError(_('Please pick at least one permission for this team!'))
+            if any(data.get(permission) for permission in EXHIBITION_PERMISSIONS):
+                error = forms.ValidationError(
+                    _(
+                        'None of the events selected for this team have the exhibition plugin enabled, '
+                        'so the exhibition permissions would grant no access. Enable the plugin for one '
+                        'of these events, or pick another permission.'
+                    )
+                )
+            else:
+                error = forms.ValidationError(_('Please pick at least one permission for this team!'))
             self.add_error(None, error)
 
         if data.get('can_change_orders'):
