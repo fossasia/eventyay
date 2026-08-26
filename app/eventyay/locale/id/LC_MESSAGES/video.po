@@ -5,11 +5,14 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"POT-Creation-Date: 2026-08-24T07:39:33.657Z\n"
-"PO-Revision-Date: 2026-08-24T07:39:33.657Z\n"
+"POT-Creation-Date: 2026-08-26T13:47:47.514Z\n"
+"PO-Revision-Date: 2026-08-26T13:47:47.514Z\n"
 "Language: id\n"
 
 msgid "+ Add Stream Schedule"
+msgstr ""
+
+msgid "A few people are in this room"
 msgstr ""
 
 msgid "A stage allows you to present a live stream to your audience, optionally combined with chat and Q&A features."
@@ -21,28 +24,10 @@ msgstr ""
 msgid "A video channel allows you to connect with attendees in real time and host workshops or panels. The video channels are powered by Janus."
 msgstr ""
 
-msgid "AVDevice:error:notallowed"
-msgstr ""
-
-msgid "AVDevice:error:notfound"
-msgstr ""
-
-msgid "AVDevice:error:notreadable"
-msgstr ""
-
-msgid "AVDevicePrompt:apply:label"
-msgstr ""
-
-msgid "AVDevicePrompt:default:label"
-msgstr ""
-
-msgid "AVDevicePrompt:headline:label"
-msgstr ""
-
-msgid "AVDevicePrompt:videoout:label"
-msgstr ""
-
 msgid "About"
+msgstr ""
+
+msgid "Access denied"
 msgstr ""
 
 msgid "Account"
@@ -60,6 +45,9 @@ msgstr ""
 msgid "Add Option"
 msgstr ""
 
+msgid "Add Video"
+msgstr ""
+
 msgid "Add alternative stream"
 msgstr ""
 
@@ -72,7 +60,28 @@ msgstr ""
 msgid "Additional Fields"
 msgstr ""
 
+msgid "Additional information"
+msgstr ""
+
+msgid "Admin mode"
+msgstr ""
+
+msgid "Administration"
+msgstr ""
+
+msgid "Align center"
+msgstr ""
+
+msgid "Align left"
+msgstr ""
+
+msgid "Align right"
+msgstr ""
+
 msgid "All Attendees"
+msgstr ""
+
+msgid "All speakers"
 msgstr ""
 
 msgid "All times in"
@@ -87,49 +96,43 @@ msgstr ""
 msgid "Alternative Streams"
 msgstr ""
 
+msgid "Alternatively, you can create a new channel."
+msgstr ""
+
 msgid "Always-on stage"
 msgstr ""
 
 msgid "Analytics Reports"
 msgstr ""
 
+msgid "And lastly, why not add some optional information to your profile? Don't worry, you can always edit anything in your profile later."
+msgstr ""
+
+msgid "Announcement"
+msgstr ""
+
 msgid "Announcements"
 msgstr ""
 
-msgid "App:disconnected-warning:text"
+msgid "Apply"
 msgstr ""
 
-msgid "App:error-code:1006"
+msgid "Approve question"
 msgstr ""
 
-msgid "App:error-code:text"
-msgstr ""
-
-msgid "App:fatal-connection-error:connection.replaced:action"
-msgstr ""
-
-msgid "App:fatal-connection-error:connection.replaced:headline"
-msgstr ""
-
-msgid "App:fatal-connection-error:else:headline"
-msgstr ""
-
-msgid "App:fatal-connection-error:world.unknown_world:headline"
-msgstr ""
-
-msgid "AppBar:admin-mode:end"
-msgstr ""
-
-msgid "AppBar:admin-mode:start"
-msgstr ""
-
-msgid "AppBar:user-anonymous"
+msgid "Archive All"
 msgstr ""
 
 msgid "Are you ABSOLUTELY sure?"
 msgstr ""
 
 msgid "Are you sure you want to reset this room to the unconfigured state?"
+msgstr ""
+
+msgid "Ask a Question"
+msgstr ""
+
+msgid "Attach a file"
 msgstr ""
 
 msgid "Attendee Reports"
@@ -144,6 +147,9 @@ msgstr ""
 msgid "Audit Log"
 msgstr ""
 
+msgid "Authentication failed"
+msgstr ""
+
 msgid "Auto"
 msgstr ""
 
@@ -156,7 +162,16 @@ msgstr ""
 msgid "Auto-mute users"
 msgstr ""
 
+msgid "Autoplay streams"
+msgstr ""
+
+msgid "Awaiting approval"
+msgstr ""
+
 msgid "BBB servers"
+msgstr ""
+
+msgid "Back to {{name}}"
 msgstr ""
 
 msgid "Background color"
@@ -165,10 +180,43 @@ msgstr ""
 msgid "Bad Request"
 msgstr ""
 
+msgid "Ban"
+msgstr ""
+
+msgid "Ban this user from the event?"
+msgstr ""
+
+msgid "Before you join others in this event, please set up your profile. We can get your profile information from one of your social media accounts, or you can fill in your profile by hand."
+msgstr ""
+
+msgid "Before you join others in this event, please set up your profile. We will show your name to other attendees if you interact with them, e.g. in a chat. You do not need to use your real name. After this, you can optionally choose a picture."
+msgstr ""
+
+msgid "Block"
+msgstr ""
+
+msgid "Block this user?"
+msgstr ""
+
+msgid "Blockquote"
+msgstr ""
+
+msgid "Bold"
+msgstr ""
+
 msgid "Browse all channels"
 msgstr ""
 
+msgid "Browse channels"
+msgstr ""
+
+msgid "Bullet list"
+msgstr ""
+
 msgid "By Session"
+msgstr ""
+
+msgid "By default, livestreams start playing automatically when you enter a stage. Disable autoplay when you attend this event physically and want to use stage features without watching the livestream."
 msgstr ""
 
 msgid "By showing this external content you accept their"
@@ -177,31 +225,22 @@ msgstr ""
 msgid "CSV"
 msgstr ""
 
+msgid "Camera or microphone permissions denied. Please allow camera or microphone access in your browser and reload the page."
+msgstr ""
+
 msgid "Cancel"
 msgstr ""
 
 msgid "Change session for room"
 msgstr ""
 
-msgid "ChannelBrowser:create:label"
+msgid "Channel members"
 msgstr ""
 
-msgid "ChannelBrowser:headline:text"
+msgid "Channel name"
 msgstr ""
 
-msgid "ChannelBrowser:intro:text"
-msgstr ""
-
-msgid "ChannelBrowser:join:label"
-msgstr ""
-
-msgid "ChannelBrowser:preview:label"
-msgstr ""
-
-msgid "ChannelBrowser:search:empty"
-msgstr ""
-
-msgid "ChannelBrowser:view:label"
+msgid "Channels"
 msgstr ""
 
 msgid "Chat"
@@ -213,49 +252,37 @@ msgstr ""
 msgid "Chat Webhook"
 msgstr ""
 
-msgid "Chat:join-button:label"
-msgstr ""
-
-msgid "Chat:permission-block:room:chat.join"
-msgstr ""
-
-msgid "Chat:permission-block:room:chat.send"
-msgstr ""
-
-msgid "ChatInput:input:placeholder"
-msgstr ""
-
-msgid "ChatInput:load-more:label"
-msgstr ""
-
-msgid "ChatMessage:join-message:text"
-msgstr ""
-
-msgid "ChatMessage:leave-message:text"
-msgstr ""
-
-msgid "ChatMessage:message-delete:label"
-msgstr ""
-
-msgid "ChatMessage:message-edit:label"
-msgstr ""
-
-msgid "ChatMessage:poll-message:header"
+msgid "Chat with another person"
 msgstr ""
 
 msgid "Choices (comma seperated)"
 msgstr ""
 
-msgid "Choose a room type"
+msgid "Choose your look"
+msgstr ""
+
+msgid "Clear formatting"
 msgstr ""
 
 msgid "Click \"Add Stream Schedule\" to create one."
 msgstr ""
 
+msgid "Click the button below to start a video call with a random other person at the event!"
+msgstr ""
+
 msgid "Clone"
 msgstr ""
 
+msgid "Code block"
+msgstr ""
+
+msgid "Complete schedule"
+msgstr ""
+
 msgid "Compute current session from schedule"
+msgstr ""
+
+msgid "Config"
 msgstr ""
 
 msgid "Configuration"
@@ -279,10 +306,25 @@ msgstr ""
 msgid "Conftool URL must be a URL"
 msgstr ""
 
+msgid "Connect"
+msgstr ""
+
 msgid "Connect your attendees for short video calls in random combinations."
 msgstr ""
 
 msgid "Connecting..."
+msgstr ""
+
+msgid "Connection failed. We'll retry, but if this error occurs repeatedly, the connection might be blocked by a firewall in your network or by a VPN on your device."
+msgstr ""
+
+msgid "Connection lost! Trying to reconnect…"
+msgstr ""
+
+msgid "Connection refused"
+msgstr ""
+
+msgid "Continue (disconnect other device)"
 msgstr ""
 
 msgid "Copied!"
@@ -315,6 +357,9 @@ msgstr ""
 msgid "Create Poll"
 msgstr ""
 
+msgid "Create Room"
+msgstr ""
+
 msgid "Create Stage"
 msgstr ""
 
@@ -327,52 +372,28 @@ msgstr ""
 msgid "Create a new announcement"
 msgstr ""
 
+msgid "Create a new channel"
+msgstr ""
+
 msgid "Create a new kiosk"
+msgstr ""
+
+msgid "Create a new place to discuss a topic you'd like to talk about."
 msgstr ""
 
 msgid "Create a new room"
 msgstr ""
 
+msgid "Create a new stage"
+msgstr ""
+
 msgid "Create random video calls"
 msgstr ""
 
-msgid "CreateChatPrompt:error:no-permission"
+msgid "Current Session"
 msgstr ""
 
-msgid "CreateChatPrompt:headline:text"
-msgstr ""
-
-msgid "CreateChatPrompt:intro:text"
-msgstr ""
-
-msgid "CreateChatPrompt:submit:label"
-msgstr ""
-
-msgid "CreateChatPrompt:type.text:label"
-msgstr ""
-
-msgid "CreateChatPrompt:type.video:label"
-msgstr ""
-
-msgid "CreateChatPrompt:type:label"
-msgstr ""
-
-msgid "CreateDMPrompt:headline:text"
-msgstr ""
-
-msgid "CreateDMPrompt:intro:text"
-msgstr ""
-
-msgid "CreateRoomPrompt:headline:text"
-msgstr ""
-
-msgid "CreateRoomPrompt:submit:label"
-msgstr ""
-
-msgid "CreateStagePrompt:headline:text"
-msgstr ""
-
-msgid "CreateStagePrompt:submit:label"
+msgid "Currently playing"
 msgstr ""
 
 msgid "Custom"
@@ -393,6 +414,9 @@ msgstr ""
 msgid "Days"
 msgstr ""
 
+msgid "Default"
+msgstr ""
+
 msgid "Default stream source"
 msgstr ""
 
@@ -408,13 +432,25 @@ msgstr ""
 msgid "Delete this room"
 msgstr ""
 
+msgid "Deleted User"
+msgstr ""
+
 msgid "Deleting this room will remove it from the schedule, but the sessions will remain safe."
 msgstr ""
 
 msgid "Description"
 msgstr ""
 
-msgid "DirectMessage:notification-unread:text"
+msgid "Desktop Notifications"
+msgstr ""
+
+msgid "Desktop notifications are blocked for this site. Please change the setting in your browser."
+msgstr ""
+
+msgid "Device configuration"
+msgstr ""
+
+msgid "Direct messages"
 msgstr ""
 
 msgid "Disable Keyboard Controls"
@@ -429,7 +465,13 @@ msgstr ""
 msgid "Disable public chat for non-moderators"
 msgstr ""
 
+msgid "Display name"
+msgstr ""
+
 msgid "Display name cannot be empty"
+msgstr ""
+
+msgid "Do you want to get desktop notifications for direct messages, contact requests and more while the event is running in the background?"
 msgstr ""
 
 msgid "Don't make this url publicly accessible!"
@@ -480,10 +522,19 @@ msgstr ""
 msgid "Enable block"
 msgstr ""
 
+msgid "Enable desktop notifications"
+msgstr ""
+
+msgid "Enable notifications"
+msgstr ""
+
 msgid "Enable or disable iframe blocking behaviour for matching domains and the default behaviour if no matching domains are found. Every iframe url domain that ends with a configured domain here will match. For example: configuring \"youtube.com\" on this page will match all iframes with \"www.youtube.com\"."
 msgstr ""
 
 msgid "End Time"
+msgstr ""
+
+msgid "End admin session"
 msgstr ""
 
 msgid "End time is required"
@@ -492,13 +543,19 @@ msgstr ""
 msgid "End time must be after start time."
 msgstr ""
 
-msgid "Enter link:"
+msgid "Enter URL"
+msgstr ""
+
+msgid "Error code"
 msgstr ""
 
 msgid "Event"
 msgstr ""
 
 msgid "Event Config"
+msgstr ""
+
+msgid "Event not found"
 msgstr ""
 
 msgid "Events"
@@ -516,28 +573,40 @@ msgstr ""
 msgid "Failed to delete stream schedule"
 msgstr ""
 
+msgid "Failed to load recordings from the server."
+msgstr ""
+
 msgid "Failed to load rooms."
 msgstr ""
 
 msgid "Failed to load stream schedules"
 msgstr ""
 
+msgid "Failed to process image. Please try a different file."
+msgstr ""
+
 msgid "Failed to save stream schedule"
 msgstr ""
 
-msgid "FeedbackPrompt:headline:text"
+msgid "Failed to upload avatar. Please try again."
 msgstr ""
 
-msgid "FeedbackPrompt:intro:text"
+msgid "Failed to upload the image"
 msgstr ""
 
-msgid "FeedbackPrompt:privacy:text"
+msgid "Featured sessions"
 msgstr ""
 
-msgid "FeedbackPrompt:submit:label"
+msgid "Featured speakers"
+msgstr ""
+
+msgid "Fetch from gravatar"
 msgstr ""
 
 msgid "File size exceeds {{size}} MB. Please choose a smaller image."
+msgstr ""
+
+msgid "Fill manually"
 msgstr ""
 
 msgid "For domain"
@@ -564,7 +633,13 @@ msgstr ""
 msgid "Generate Reports"
 msgstr ""
 
+msgid "Get desktop notifications for direct messages, contact requests and more while the event is running in the background."
+msgstr ""
+
 msgid "Gravatar"
+msgstr ""
+
+msgid "Gravatar email"
 msgstr ""
 
 msgid "HLS"
@@ -573,7 +648,10 @@ msgstr ""
 msgid "HLS URL"
 msgstr ""
 
-msgid "HMAC Secret"
+msgid "HMAC signing secret"
+msgstr ""
+
+msgid "Having trouble? Had a great time? Let us know!"
 msgstr ""
 
 msgid "Header background color"
@@ -585,6 +663,21 @@ msgstr ""
 msgid "Header image"
 msgstr ""
 
+msgid "Heading 1"
+msgstr ""
+
+msgid "Heading 2"
+msgstr ""
+
+msgid "Heading 3"
+msgstr ""
+
+msgid "Here, we show you a list of all channels that you can join for this event."
+msgstr ""
+
+msgid "Hi there!"
+msgstr ""
+
 msgid "Hide Controls"
 msgstr ""
 
@@ -592,6 +685,9 @@ msgid "Hide Video Info"
 msgstr ""
 
 msgid "Hide presentation when users join"
+msgstr ""
+
+msgid "Home"
 msgstr ""
 
 msgid "ID"
@@ -618,13 +714,28 @@ msgstr ""
 msgid "If your event is large, this might take multiple minutes."
 msgstr ""
 
+msgid "Image must be at least 128px by 128px large."
+msgstr ""
+
+msgid "In addition to your message, we'll store technical information about your call, such as connection times, error logs, browser version, etc. We will not store any conversation contents."
+msgstr ""
+
 msgid "Include in search queries"
 msgstr ""
 
 msgid "Initial presentation"
 msgstr ""
 
-msgid "Initiate room"
+msgid "Insert emoji"
+msgstr ""
+
+msgid "Insert image"
+msgstr ""
+
+msgid "Insert link"
+msgstr ""
+
+msgid "Interface Language"
 msgstr ""
 
 msgid "Interpretation"
@@ -636,31 +747,25 @@ msgstr ""
 msgid "Invalid file format. Only PNG, JPG, and JPEG images are allowed."
 msgstr ""
 
+msgid "It appears your connection is slow. Click here if you want to reconnect without video."
+msgstr ""
+
+msgid "Italic"
+msgstr ""
+
 msgid "JSON URL"
 msgstr ""
 
 msgid "Janus servers"
 msgstr ""
 
-msgid "JanusCall:error:text"
-msgstr ""
-
-msgid "JanusVideoroom:connection-error:text"
-msgstr ""
-
-msgid "JanusVideoroom:disconnected:text"
-msgstr ""
-
-msgid "JanusVideoroom:slow:text"
-msgstr ""
-
-msgid "JanusVideoroom:video-output:off"
-msgstr ""
-
 msgid "Jitsi servers"
 msgstr ""
 
 msgid "Join"
+msgstr ""
+
+msgid "Join this chat"
 msgstr ""
 
 msgid "Kiosk Login URL:"
@@ -678,39 +783,6 @@ msgstr ""
 msgid "Landing Page"
 msgstr ""
 
-msgid "LandingPage:dateRange:to"
-msgstr ""
-
-msgid "LandingPage:home-back:label"
-msgstr ""
-
-msgid "LandingPage:home-back:organizer"
-msgstr ""
-
-msgid "LandingPage:rooms:header"
-msgstr ""
-
-msgid "LandingPage:rooms:live"
-msgstr ""
-
-msgid "LandingPage:sessions:featured:header"
-msgstr ""
-
-msgid "LandingPage:sessions:featured:link"
-msgstr ""
-
-msgid "LandingPage:sessions:next:header"
-msgstr ""
-
-msgid "LandingPage:sessions:next:link"
-msgstr ""
-
-msgid "LandingPage:speakers:header"
-msgstr ""
-
-msgid "LandingPage:speakers:link"
-msgstr ""
-
 msgid "Language"
 msgstr ""
 
@@ -718,6 +790,9 @@ msgid "Languages and Audio Source"
 msgstr ""
 
 msgid "Last 7 Days"
+msgstr ""
+
+msgid "Leave"
 msgstr ""
 
 msgid "Let users connect to the following social networks when they first visit your event. Connecting to a social network fills the user's profile with data available from the social connection, like name, avatar and link to the social network profile."
@@ -732,22 +807,16 @@ msgstr ""
 msgid "LinkedIn"
 msgstr ""
 
-msgid "Livestream:automuted-unmute:text"
-msgstr ""
-
-msgid "Livestream:captions-off:text"
-msgstr ""
-
-msgid "Livestream:default-source:text"
-msgstr ""
-
-msgid "Livestream:offline-message:text"
+msgid "Live"
 msgstr ""
 
 msgid "Load schedule"
 msgstr ""
 
 msgid "Loading..."
+msgstr ""
+
+msgid "Log in to join this event."
 msgstr ""
 
 msgid "Login UID (JWT uid)"
@@ -768,6 +837,9 @@ msgstr ""
 msgid "Making your profile public allows other attendees to find you in the networking chat list and see you in room viewer lists. Private profiles are completely hidden."
 msgstr ""
 
+msgid "Many people are in this room"
+msgstr ""
+
 msgid "Max connections"
 msgstr ""
 
@@ -783,16 +855,10 @@ msgstr ""
 msgid "Maximum file size: {{size}} MB. Supported formats: PNG, JPG, JPEG. Minimum dimensions: 128x128 pixels."
 msgstr ""
 
-msgid "MediaSource:call:label"
-msgstr ""
-
-msgid "MediaSource:iframe-error:text"
-msgstr ""
-
-msgid "MediaSource:room:hint"
-msgstr ""
-
 msgid "Meeting ID"
+msgstr ""
+
+msgid "Message"
 msgstr ""
 
 msgid "Minimum time before the same persons meet again (minutes)"
@@ -804,6 +870,12 @@ msgstr ""
 msgid "Moderation state"
 msgstr ""
 
+msgid "Moderator Actions"
+msgstr ""
+
+msgid "More"
+msgstr ""
+
 msgid "Move BBB room"
 msgstr ""
 
@@ -813,6 +885,9 @@ msgstr ""
 msgid "Must be a valid YouTube URL"
 msgstr ""
 
+msgid "Mute"
+msgstr ""
+
 msgid "My Events"
 msgstr ""
 
@@ -820,9 +895,6 @@ msgid "My Orders"
 msgstr ""
 
 msgid "My Sessions"
-msgstr ""
-
-msgid "Mystery Room"
 msgstr ""
 
 msgid "Name"
@@ -837,25 +909,76 @@ msgstr ""
 msgid "New kiosk"
 msgstr ""
 
+msgid "New messages"
+msgstr ""
+
+msgid "New poll:"
+msgstr ""
+
 msgid "New room"
+msgstr ""
+
+msgid "Next Session"
+msgstr ""
+
+msgid "Next Sessions"
 msgstr ""
 
 msgid "Next session"
 msgstr ""
 
+msgid "No camera or microphone found."
+msgstr ""
+
 msgid "No modules to manage in this room"
+msgstr ""
+
+msgid "No polls currently running"
+msgstr ""
+
+msgid "No questions yet, why not ask one?"
+msgstr ""
+
+msgid "No recordings are available."
 msgstr ""
 
 msgid "No screen video track was selected."
 msgstr ""
 
+msgid "No sessions happening soon in this room."
+msgstr ""
+
 msgid "No stream schedules configured yet."
 msgstr ""
 
-msgid "Note: Hiding controls disables autoplay (browsers require muted autoplay, but users cannot unmute without controls)"
+msgid "Not now"
+msgstr ""
+
+msgid "Note: Hiding controls disables autoplay so the stream can start with sound when the viewer clicks play."
+msgstr ""
+
+msgid "Notes"
 msgstr ""
 
 msgid "Number"
+msgstr ""
+
+msgid "Numbered list"
+msgstr ""
+
+msgid "OK"
+msgstr ""
+
+msgid "Off"
+msgstr ""
+
+msgid "Offline"
+msgstr ""
+
+msgid "One person is joining you online"
+msgstr ""
+
+msgid "Online"
 msgstr ""
 
 msgid "Option {{n}}"
@@ -870,10 +993,16 @@ msgstr ""
 msgid "Organizers"
 msgstr ""
 
+msgid "Pages"
+msgstr ""
+
 msgid "Participant"
 msgstr ""
 
 msgid "Password"
+msgstr ""
+
+msgid "Pick an identicon or upload a picture."
 msgstr ""
 
 msgid "Pinned poll"
@@ -882,37 +1011,25 @@ msgstr ""
 msgid "Pinned question"
 msgstr ""
 
+msgid "Play a sound for notifications"
+msgstr ""
+
+msgid "Playback"
+msgstr ""
+
+msgid "Please log in again to continue."
+msgstr ""
+
+msgid "Please note that recordings start processing and showing up here only a few minutes after the meeting has ended (usually, if the room was empty for a while)."
+msgstr ""
+
+msgid "Please select your language. You can change it later in your profile."
+msgstr ""
+
 msgid "Please type"
 msgstr ""
 
 msgid "Please type in the name of the kiosk to confirm."
-msgstr ""
-
-msgid "Poll:empty-placeholder"
-msgstr ""
-
-msgid "Poll:moderation-menu:archive-poll:label"
-msgstr ""
-
-msgid "Poll:moderation-menu:close-poll:label"
-msgstr ""
-
-msgid "Poll:moderation-menu:delete-poll:label"
-msgstr ""
-
-msgid "Poll:moderation-menu:open-poll:label"
-msgstr ""
-
-msgid "Poll:moderation-menu:pin-poll:label"
-msgstr ""
-
-msgid "Poll:moderation-menu:redraft-poll:label"
-msgstr ""
-
-msgid "Poll:moderation-menu:unarchive-poll:label"
-msgstr ""
-
-msgid "Poll:moderation-menu:unpin-poll:label"
 msgstr ""
 
 msgid "Polls"
@@ -936,6 +1053,9 @@ msgstr ""
 msgid "Private"
 msgstr ""
 
+msgid "Private call"
+msgstr ""
+
 msgid "Private – hidden from attendee lists"
 msgstr ""
 
@@ -946,9 +1066,6 @@ msgid "Profile Visibility"
 msgstr ""
 
 msgid "Profile visibility"
-msgstr ""
-
-msgid "Prompt:cancel:label"
 msgstr ""
 
 msgid "Public"
@@ -963,46 +1080,13 @@ msgstr ""
 msgid "Question"
 msgstr ""
 
-msgid "Question:moderation-menu:approve-question:label"
-msgstr ""
-
-msgid "Question:moderation-menu:archive-question:label"
-msgstr ""
-
-msgid "Question:moderation-menu:delete-question:label"
-msgstr ""
-
-msgid "Question:moderation-menu:pin-question:label"
-msgstr ""
-
-msgid "Question:moderation-menu:unarchive-question:label"
-msgstr ""
-
-msgid "Question:moderation-menu:unpin-question:label"
-msgstr ""
-
-msgid "Question:vote-count:label"
-msgstr ""
-
 msgid "Questions"
 msgstr ""
 
+msgid "Questions are currently disabled."
+msgstr ""
+
 msgid "Questions require moderation"
-msgstr ""
-
-msgid "Questions:ask-question-button:label"
-msgstr ""
-
-msgid "Questions:asking-form:submit"
-msgstr ""
-
-msgid "Questions:deactivated-placeholder"
-msgstr ""
-
-msgid "Questions:empty-placeholder"
-msgstr ""
-
-msgid "Questions:moderator-actions:archive-all:label"
 msgstr ""
 
 msgid "Random video calls"
@@ -1011,37 +1095,16 @@ msgstr ""
 msgid "Raw Tracking"
 msgstr ""
 
-msgid "RecordingsPrompt:empty:text"
+msgid "Recordings"
 msgstr ""
 
-msgid "RecordingsPrompt:error:text"
-msgstr ""
-
-msgid "RecordingsPrompt:headline:text"
-msgstr ""
-
-msgid "RecordingsPrompt:info:text"
-msgstr ""
-
-msgid "RecordingsPrompt:view-notes:label"
-msgstr ""
-
-msgid "RecordingsPrompt:view-screenshare:label"
-msgstr ""
-
-msgid "RecordingsPrompt:view-video:label"
-msgstr ""
-
-msgid "RecordingsPrompt:view:label"
+msgid "Redo"
 msgstr ""
 
 msgid "Rematch interval (minutes)"
 msgstr ""
 
 msgid "Remember my choice"
-msgstr ""
-
-msgid "Remove"
 msgstr ""
 
 msgid "Report issue"
@@ -1068,16 +1131,10 @@ msgstr ""
 msgid "Return this room to the unconfigured state. The room itself and assigned sessions stay in place."
 msgstr ""
 
-msgid "RichTextEditor:upload:error"
-msgstr ""
-
 msgid "Room"
 msgstr ""
 
 msgid "Room Activity"
-msgstr ""
-
-msgid "Room Type"
 msgstr ""
 
 msgid "Room destroyed"
@@ -1098,9 +1155,6 @@ msgstr ""
 msgid "Room name is required."
 msgstr ""
 
-msgid "Room not instantiated."
-msgstr ""
-
 msgid "Room-Specific Reports"
 msgstr ""
 
@@ -1108,57 +1162,6 @@ msgid "Room-level plugin streams used when “Use plugin language streams” is 
 msgstr ""
 
 msgid "Rooms"
-msgstr ""
-
-msgid "RoomsSidebar:admin-announcements:label"
-msgstr ""
-
-msgid "RoomsSidebar:admin-config:label"
-msgstr ""
-
-msgid "RoomsSidebar:admin-headline:text"
-msgstr ""
-
-msgid "RoomsSidebar:admin-kiosks:label"
-msgstr ""
-
-msgid "RoomsSidebar:admin-rooms:label"
-msgstr ""
-
-msgid "RoomsSidebar:admin-users:label"
-msgstr ""
-
-msgid "RoomsSidebar:browse-channels-button:label"
-msgstr ""
-
-msgid "RoomsSidebar:channels-headline:text"
-msgstr ""
-
-msgid "RoomsSidebar:direct-messages-headline:text"
-msgstr ""
-
-msgid "RoomsSidebar:schedule:label"
-msgstr ""
-
-msgid "RoomsSidebar:speaker:label"
-msgstr ""
-
-msgid "RoomsSidebar:stages-headline:text"
-msgstr ""
-
-msgid "Roulette:btn-start:label"
-msgstr ""
-
-msgid "Roulette:connecting:text"
-msgstr ""
-
-msgid "Roulette:instructions-repeated:text"
-msgstr ""
-
-msgid "Roulette:instructions:text"
-msgstr ""
-
-msgid "Roulette:waiting:text"
 msgstr ""
 
 msgid "Save"
@@ -1182,6 +1185,12 @@ msgstr ""
 msgid "Screen sharing needs to be started again."
 msgstr ""
 
+msgid "Screenshare"
+msgstr ""
+
+msgid "Search channels"
+msgstr ""
+
 msgid "Search kiosks"
 msgstr ""
 
@@ -1197,7 +1206,16 @@ msgstr ""
 msgid "Select which slides to show on the kiosk. Slides will only show when they have content to show. Pinned poll and question slides will always take priority over others, there is no need to manually intervene during a session."
 msgstr ""
 
+msgid "Send"
+msgstr ""
+
+msgid "Send a message"
+msgstr ""
+
 msgid "Send chat messages to an external endpoint in real-time"
+msgstr ""
+
+msgid "Send feedback"
 msgstr ""
 
 msgid "Session Activity"
@@ -1218,6 +1236,9 @@ msgstr ""
 msgid "Settings for stages"
 msgstr ""
 
+msgid "Share screen"
+msgstr ""
+
 msgid "Shared screen"
 msgstr ""
 
@@ -1230,7 +1251,16 @@ msgstr ""
 msgid "Show reaction cloud"
 msgstr ""
 
+msgid "Show video from other users (might cause a reconnect)"
+msgstr ""
+
 msgid "Sidebar addons"
+msgstr ""
+
+msgid "Silence"
+msgstr ""
+
+msgid "Silence this user?"
 msgstr ""
 
 msgid "Slides"
@@ -1239,13 +1269,37 @@ msgstr ""
 msgid "Social Connections"
 msgstr ""
 
-msgid "Sorting is disabled while searching"
+msgid "Something went wrong."
+msgstr ""
+
+msgid "Sorry, could not find any matching channels"
+msgstr ""
+
+msgid "Sorry, no polls or questions currently active in this room!"
+msgstr ""
+
+msgid "Sorry, you can't join this channel."
+msgstr ""
+
+msgid "Speakers"
 msgstr ""
 
 msgid "Stage"
 msgstr ""
 
+msgid "Stage name"
+msgstr ""
+
+msgid "Stages"
+msgstr ""
+
 msgid "Start Time"
+msgstr ""
+
+msgid "Start a new call"
+msgstr ""
+
+msgid "Start chat"
 msgstr ""
 
 msgid "Start muted"
@@ -1257,6 +1311,9 @@ msgstr ""
 msgid "Start time is required"
 msgstr ""
 
+msgid "Start typing the name of one or more persons you want to talk to!"
+msgstr ""
+
 msgid "Start with audio muted"
 msgstr ""
 
@@ -1264,6 +1321,12 @@ msgid "Start with video muted"
 msgstr ""
 
 msgid "State"
+msgstr ""
+
+msgid "Stop sharing screen"
+msgstr ""
+
+msgid "Stream Autoplay"
 msgstr ""
 
 msgid "Stream Schedules"
@@ -1281,6 +1344,9 @@ msgstr ""
 msgid "Stream keys"
 msgstr ""
 
+msgid "Stream offline"
+msgstr ""
+
 msgid "Stream offline image"
 msgstr ""
 
@@ -1296,7 +1362,19 @@ msgstr ""
 msgid "Streaming servers"
 msgstr ""
 
+msgid "Strikethrough"
+msgstr ""
+
+msgid "Submit"
+msgstr ""
+
+msgid "Submit your question"
+msgstr ""
+
 msgid "Summary"
+msgstr ""
+
+msgid "System default"
 msgstr ""
 
 msgid "System details"
@@ -1308,10 +1386,22 @@ msgstr ""
 msgid "TURN servers"
 msgstr ""
 
+msgid "Tap to unmute"
+msgstr ""
+
 msgid "Text"
 msgstr ""
 
 msgid "Text Channel"
+msgstr ""
+
+msgid "Text chat"
+msgstr ""
+
+msgid "Text formatting"
+msgstr ""
+
+msgid "The connection has failed."
 msgstr ""
 
 msgid "The file could not be uploaded. Please try again."
@@ -1335,13 +1425,43 @@ msgstr ""
 msgid "Theme Config"
 msgstr ""
 
+msgid "There are a few people waiting, this should not take too long."
+msgstr ""
+
+msgid "There are lots of people waiting, this should be quick."
+msgstr ""
+
+msgid "They can still watch, but can no longer send chat messages."
+msgstr ""
+
+msgid "They will be able to join this event again."
+msgstr ""
+
+msgid "They will be able to send chat messages again."
+msgstr ""
+
+msgid "They will no longer be able to join this event."
+msgstr ""
+
+msgid "They will no longer be able to send you direct messages."
+msgstr ""
+
 msgid "This Week"
 msgstr ""
 
 msgid "This action CANNOT be undone. This will permanently delete the kiosk"
 msgstr ""
 
+msgid "This channel is readonly."
+msgstr ""
+
 msgid "This content is hosted by a third party on"
+msgstr ""
+
+msgid "This message was not visible to {{count}} people."
+msgstr ""
+
+msgid "This room does not have a video option yet."
 msgstr ""
 
 msgid "This room type allows you to connect with attendees through a Jitsi meeting."
@@ -1371,6 +1491,9 @@ msgstr ""
 msgid "To"
 msgstr ""
 
+msgid "To {{- date}}"
+msgstr ""
+
 msgid "Today"
 msgstr ""
 
@@ -1392,6 +1515,15 @@ msgstr ""
 msgid "Traits (comma-separated)"
 msgstr ""
 
+msgid "Try again"
+msgstr ""
+
+msgid "Turn camera off"
+msgstr ""
+
+msgid "Turn camera on"
+msgstr ""
+
 msgid "Twitter"
 msgstr ""
 
@@ -1401,7 +1533,16 @@ msgstr ""
 msgid "URL for external subtitles"
 msgstr ""
 
-msgid "Unconfigured"
+msgid "Unban"
+msgstr ""
+
+msgid "Unban this user?"
+msgstr ""
+
+msgid "Underline"
+msgstr ""
+
+msgid "Undo"
 msgstr ""
 
 msgid "Unknown Janus connection error"
@@ -1410,10 +1551,19 @@ msgstr ""
 msgid "Unknown user"
 msgstr ""
 
+msgid "Unmute"
+msgstr ""
+
 msgid "Unscheduled"
 msgstr ""
 
 msgid "Unscheduled room (hide from schedule/sessions)"
+msgstr ""
+
+msgid "Unsilence"
+msgstr ""
+
+msgid "Unsilence this user?"
 msgstr ""
 
 msgid "Untitled"
@@ -1422,19 +1572,22 @@ msgstr ""
 msgid "Untitled Stream"
 msgstr ""
 
-msgid "UpcomingStreamCountdown:at:text"
+msgid "Up Next:"
 msgstr ""
 
-msgid "UpcomingStreamCountdown:default-title:text"
+msgid "Upcoming Stream"
 msgstr ""
 
-msgid "UpcomingStreamCountdown:in:text"
+msgid "Upcoming sessions"
 msgstr ""
 
-msgid "UpcomingStreamCountdown:label:text"
+msgid "Upload failed"
 msgstr ""
 
 msgid "Upload file"
+msgstr ""
+
+msgid "Uploaded image is too large. Please choose a smaller file."
 msgstr ""
 
 msgid "Use only the active stream schedule as the playback source."
@@ -1443,58 +1596,34 @@ msgstr ""
 msgid "Use video from this interpretation channel"
 msgstr ""
 
+msgid "Used to sign chat webhook payloads. This is not your Eventyay password."
+msgstr ""
+
 msgid "User"
 msgstr ""
 
 msgid "User Profile"
 msgstr ""
 
-msgid "User:"
+msgid "User banned"
 msgstr ""
 
-msgid "User:label:deleted"
+msgid "User blocked"
 msgstr ""
 
-msgid "User:state:banned"
+msgid "User silenced"
 msgstr ""
 
-msgid "User:state:inactive"
+msgid "User unbanned"
 msgstr ""
 
-msgid "User:state:silenced"
-msgstr ""
-
-msgid "UserAction:action.ban:label"
-msgstr ""
-
-msgid "UserAction:action.block:label"
-msgstr ""
-
-msgid "UserAction:action.call:label"
-msgstr ""
-
-msgid "UserAction:action.delete:label"
-msgstr ""
-
-msgid "UserAction:action.dm:label"
-msgstr ""
-
-msgid "UserAction:action.silence:label"
-msgstr ""
-
-msgid "UserAction:action.unban:label"
-msgstr ""
-
-msgid "UserAction:action.unblock:label"
-msgstr ""
-
-msgid "UserAction:action.unsilence:label"
-msgstr ""
-
-msgid "UserAction:moderator-actions:title"
+msgid "User unsilenced"
 msgstr ""
 
 msgid "Users"
+msgstr ""
+
+msgid "Video"
 msgstr ""
 
 msgid "Video Admin"
@@ -1515,7 +1644,10 @@ msgstr ""
 msgid "Video admin settings"
 msgstr ""
 
-msgid "Visit URL:"
+msgid "Video chat"
+msgstr ""
+
+msgid "Video option"
 msgstr ""
 
 msgid "Voice Bridge ID"
@@ -1524,13 +1656,37 @@ msgstr ""
 msgid "Volume"
 msgstr ""
 
+msgid "Votes"
+msgstr ""
+
+msgid "Waiting for a person to talk to …"
+msgstr ""
+
+msgid "We could not connect to the video conference server, sorry."
+msgstr ""
+
 msgid "We could not fetch the current configuration."
+msgstr ""
+
+msgid "We found someone! Connecting …"
+msgstr ""
+
+msgid "We will fetch your display name and avatar from gravatar. We download your information only once and only on your browser, we'll never see your email address."
+msgstr ""
+
+msgid "We will show your name to other attendees if you interact with them, e.g. in a chat. You do not need to use your real name."
 msgstr ""
 
 msgid "Webhook"
 msgstr ""
 
 msgid "Webhook URL"
+msgstr ""
+
+msgid "Webhook configured"
+msgstr ""
+
+msgid "What are you called?"
 msgstr ""
 
 msgid "Wikimedia"
@@ -1542,6 +1698,18 @@ msgstr ""
 msgid "Yesterday"
 msgstr ""
 
+msgid "You are first in line. We will connect you as soon as someone else arrives."
+msgstr ""
+
+msgid "You are not logged in"
+msgstr ""
+
+msgid "You disabled receiving videos of other participants in the video/audio settings."
+msgstr ""
+
+msgid "You do not have permission to create channels."
+msgstr ""
+
 msgid "You do not have permission to create random video calls."
 msgstr ""
 
@@ -1551,10 +1719,22 @@ msgstr ""
 msgid "You do not have permission to edit this room."
 msgstr ""
 
+msgid "You do not have permission to join this event."
+msgstr ""
+
+msgid "You have been disconnected."
+msgstr ""
+
 msgid "You likely lack admin permissions."
 msgstr ""
 
+msgid "You opened this event on a new device or tab."
+msgstr ""
+
 msgid "You started a video call"
+msgstr ""
+
+msgid "You're voting anonymously"
 msgstr ""
 
 msgid "YouTube"
@@ -1566,6 +1746,24 @@ msgstr ""
 msgid "YouTube Video ID or URL is required"
 msgstr ""
 
+msgid "Your call has ended. Click the button below to start a new one!"
+msgstr ""
+
+msgid "Your camera or microphone is not available, maybe another program uses it right now?"
+msgstr ""
+
+msgid "Your login has expired"
+msgstr ""
+
+msgid "Your login is invalid"
+msgstr ""
+
+msgid "Your profile"
+msgstr ""
+
+msgid "Your question"
+msgstr ""
+
 msgid "Your screen"
 msgstr ""
 
@@ -1575,10 +1773,28 @@ msgstr ""
 msgid "admin"
 msgstr ""
 
+msgid "anonymous"
+msgstr ""
+
+msgid "approve"
+msgstr ""
+
 msgid "archive"
 msgstr ""
 
+msgid "at"
+msgstr ""
+
+msgid "back"
+msgstr ""
+
 msgid "ban"
+msgstr ""
+
+msgid "banned"
+msgstr ""
+
+msgid "block"
 msgstr ""
 
 msgid "call"
@@ -1587,13 +1803,28 @@ msgstr ""
 msgid "cancel"
 msgstr ""
 
+msgid "change avatar"
+msgstr ""
+
+msgid "close"
+msgstr ""
+
 msgid "color must be in 3 or 6 digit hex format"
+msgstr ""
+
+msgid "continue"
 msgstr ""
 
 msgid "create"
 msgstr ""
 
 msgid "default"
+msgstr ""
+
+msgid "delete"
+msgstr ""
+
+msgid "delete message"
 msgstr ""
 
 msgid "delete this kiosk"
@@ -1614,6 +1845,12 @@ msgstr ""
 msgid "edit"
 msgstr ""
 
+msgid "edit message"
+msgstr ""
+
+msgid "error code:"
+msgstr ""
+
 msgid "eventyay domain"
 msgstr ""
 
@@ -1621,6 +1858,9 @@ msgid "eventyay event slug"
 msgstr ""
 
 msgid "example.com"
+msgstr ""
+
+msgid "finish"
 msgstr ""
 
 msgid "forever"
@@ -1632,7 +1872,40 @@ msgstr ""
 msgid "hls.js config"
 msgstr ""
 
+msgid "https://example.com/privacy"
+msgstr ""
+
+msgid "https://example.com/stream.m3u8"
+msgstr ""
+
+msgid "https://example.com/webhook"
+msgstr ""
+
+msgid "https://www.youtube.com/watch?v=..."
+msgstr ""
+
+msgid "https://youtube.com/watch?v=..."
+msgstr ""
+
+msgid "in"
+msgstr ""
+
+msgid "inactive"
+msgstr ""
+
 msgid "invited you to a video call"
+msgstr ""
+
+msgid "join"
+msgstr ""
+
+msgid "join chat"
+msgstr ""
+
+msgid "joined"
+msgstr ""
+
+msgid "left"
 msgstr ""
 
 msgid "live"
@@ -1656,139 +1929,28 @@ msgstr ""
 msgid "not a valid YouTube video ID or URL"
 msgstr ""
 
-msgid "notifications/Announcment:title"
-msgstr ""
-
-msgid "notifications/NotificationPermissionNotification:accept:label"
-msgstr ""
-
-msgid "notifications/NotificationPermissionNotification:decline:label"
-msgstr ""
-
-msgid "notifications/NotificationPermissionNotification:prompt"
-msgstr ""
-
-msgid "notifications/NotificationPermissionNotification:title"
-msgstr ""
-
 msgid "open a direct message"
+msgstr ""
+
+msgid "open for voting"
 msgstr ""
 
 msgid "or"
 msgstr ""
 
-msgid "pages"
+msgid "pin"
 msgstr ""
 
-msgid "preferences/index:autoplay:description"
-msgstr ""
-
-msgid "preferences/index:autoplay:header"
-msgstr ""
-
-msgid "preferences/index:btn-change-avatar:label"
-msgstr ""
-
-msgid "preferences/index:btn-enable-desktop-notifications:label"
-msgstr ""
-
-msgid "preferences/index:btn-save:label"
-msgstr ""
-
-msgid "preferences/index:btn-upload-save:label"
-msgstr ""
-
-msgid "preferences/index:heading"
-msgstr ""
-
-msgid "preferences/index:interface-language:description"
-msgstr ""
-
-msgid "preferences/index:interface-language:header"
-msgstr ""
-
-msgid "preferences/index:notification-permission-denied-warning"
-msgstr ""
-
-msgid "preferences/index:notifications:description"
-msgstr ""
-
-msgid "preferences/index:notifications:header"
-msgstr ""
-
-msgid "profile/ChangeAvatar:button-randomize:label"
-msgstr ""
-
-msgid "profile/ChangeAvatar:button-upload:label"
-msgstr ""
-
-msgid "profile/ChangeAvatar:error:file-too-large"
-msgstr ""
-
-msgid "profile/ChangeAvatar:error:image-too-small"
-msgstr ""
-
-msgid "profile/ChangeAvatar:error:process-failed"
-msgstr ""
-
-msgid "profile/ChangeAvatar:error:upload-failed"
-msgstr ""
-
-msgid "profile/ChangeAvatar:or"
-msgstr ""
-
-msgid "profile/ConnectGravatar:gravatar-connect:label"
-msgstr ""
-
-msgid "profile/ConnectGravatar:headline"
-msgstr ""
-
-msgid "profile/ConnectGravatar:text"
-msgstr ""
-
-msgid "profile/GreetingPrompt:button-back:label"
-msgstr ""
-
-msgid "profile/GreetingPrompt:button-continue:label"
-msgstr ""
-
-msgid "profile/GreetingPrompt:button-finish:label"
-msgstr ""
-
-msgid "profile/GreetingPrompt:step-avatar:heading"
-msgstr ""
-
-msgid "profile/GreetingPrompt:step-avatar:text"
-msgstr ""
-
-msgid "profile/GreetingPrompt:step-display-name:heading"
-msgstr ""
-
-msgid "profile/GreetingPrompt:step-display-name:text"
-msgstr ""
-
-msgid "profile/GreetingPrompt:step-display-name~as-first-step:heading"
-msgstr ""
-
-msgid "profile/GreetingPrompt:step-display-name~as-first-step:text"
-msgstr ""
-
-msgid "profile/GreetingPrompt:step-fields:heading"
-msgstr ""
-
-msgid "profile/GreetingPrompt:step-fields:text"
-msgstr ""
-
-msgid "profile/GreetingPrompt:step-social:button-fill-manually:label"
-msgstr ""
-
-msgid "profile/GreetingPrompt:step-social:heading"
-msgstr ""
-
-msgid "profile/GreetingPrompt:step-social:text"
+msgid "preview"
 msgstr ""
 
 msgid "random video calls"
+msgstr ""
+
+msgid "randomize"
+msgstr ""
+
+msgid "re-draft"
 msgstr ""
 
 msgid "reacted with"
@@ -1809,31 +1971,10 @@ msgstr ""
 msgid "silence"
 msgstr ""
 
-msgid "standalone/Anonymous:footer-anonymously"
+msgid "silenced"
 msgstr ""
 
-msgid "standalone/Anonymous:header_room"
-msgstr ""
-
-msgid "standalone/Anonymous:no-content"
-msgstr ""
-
-msgid "standalone/Anonymous:no-sessions"
-msgstr ""
-
-msgid "standalone/Anonymous:schedule:current-session"
-msgstr ""
-
-msgid "standalone/Anonymous:schedule:next-sessions"
-msgstr ""
-
-msgid "standalone/NextSession:header"
-msgstr ""
-
-msgid "standalone/Viewers:header_one"
-msgstr ""
-
-msgid "standalone/Viewers:header_other"
+msgid "sorting is disabled while searching"
 msgstr ""
 
 msgid "start video call"
@@ -1851,10 +1992,28 @@ msgstr ""
 msgid "to confirm deletion."
 msgstr ""
 
+msgid "unarchive"
+msgstr ""
+
 msgid "unban"
 msgstr ""
 
+msgid "unblock"
+msgstr ""
+
+msgid "unpin"
+msgstr ""
+
 msgid "unsilence"
+msgstr ""
+
+msgid "upload"
+msgstr ""
+
+msgid "view"
+msgstr ""
+
+msgid "{{ count }} people are joining you online"
 msgstr ""
 
 msgid "{{name}}'s screen"

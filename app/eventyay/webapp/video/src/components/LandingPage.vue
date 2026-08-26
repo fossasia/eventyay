@@ -31,8 +31,8 @@
 					.split-left(v-if="(featuredSessions && featuredSessions.length) || (nextSessions && nextSessions.length)")
 						.landing-section(v-if="featuredSessions && featuredSessions.length")
 							.section-header
-								h3 {{ $t('LandingPage:sessions:featured:header') }}
-								bunt-link-button.section-link(:to="{name: 'schedule'}") {{ $t('LandingPage:sessions:featured:link') }}
+								h3 {{ $t('Featured sessions') }}
+								bunt-link-button.section-link(:to="{name: 'schedule'}") {{ $t('Complete schedule') }}
 							.sessions
 								session(
 									v-for="session of featuredSessions",
@@ -44,8 +44,8 @@
 								)
 						.landing-section(v-if="nextSessions && nextSessions.length")
 							.section-header
-								h3 {{ $t('LandingPage:sessions:next:header') }}
-								bunt-link-button.section-link(:to="{name: 'schedule'}") {{ $t('LandingPage:sessions:next:link') }}
+								h3 {{ $t('Upcoming sessions') }}
+								bunt-link-button.section-link(:to="{name: 'schedule'}") {{ $t('Complete schedule') }}
 							.sessions
 								session(
 									v-for="session of nextSessions",
@@ -58,20 +58,20 @@
 					.split-right
 						.landing-section(v-if="activeRooms && activeRooms.length")
 							.section-header
-								h3 {{ $t('LandingPage:rooms:header') }}
+								h3 {{ $t('Stages') }}
 							.active-rooms.active-rooms-list
 								router-link.room-card(v-for="item of activeRooms", :key="item.room.id", :to="{name: 'room', params: {roomId: item.room.id}}")
 									.room-info
 										.room-name(v-html="$emojify(item.room.name)")
 										.current-session(v-if="item.session")
-											span.live-badge(v-if="item.isLive") {{ $t('LandingPage:rooms:live') }}
+											span.live-badge(v-if="item.isLive") {{ $t('Live') }}
 											span {{ item.session.title }}
 									svg.room-arrow(viewBox="0 0 24 24", stroke="currentColor", stroke-width="2", fill="none")
 										path(d="M5 12h14M12 5l7 7-7 7")
 						.landing-section.speakers-section(v-if="featuredSpeakers.length")
 							.section-header
-								h3 {{ $t('LandingPage:speakers:header') }}
-								bunt-link-button.section-link(:to="{name: 'schedule:speakers'}") {{ $t('LandingPage:speakers:link') }}
+								h3 {{ $t('Featured speakers') }}
+								bunt-link-button.section-link(:to="{name: 'schedule:speakers'}") {{ $t('All speakers') }}
 							speakers-list(:hideToolbar="true", viewMode="list", :speakers="featuredSpeakers")
 </template>
 <script>
@@ -205,7 +205,7 @@ export default {
 				return {
 					href: navigation.organizer_presale_url,
 					label: navigation.organizer_name || '',
-					ariaLabel: this.$t('LandingPage:home-back:organizer', {
+					ariaLabel: this.$t('Back to {{name}}', {
 						name: navigation.organizer_name || ''
 					})
 				}
@@ -214,8 +214,8 @@ export default {
 			if (!href) return null
 			return {
 				href,
-				label: this.$t('LandingPage:home-back:label'),
-				ariaLabel: this.$t('LandingPage:home-back:label')
+				label: this.$t('Home'),
+				ariaLabel: this.$t('Home')
 			}
 		},
 		eventTitle() {
@@ -259,7 +259,7 @@ export default {
 		},
 		eventEndLine() {
 			if (!this.showEventEndLine) return ''
-			return this.$t('LandingPage:dateRange:to', { date: this.formatEventDateTime(this.eventDateRange.end) })
+			return this.$t('To {{- date}}', { date: this.formatEventDateTime(this.eventDateRange.end) })
 		},
 		featuredSessions() {
 			if (!this.sessions) return

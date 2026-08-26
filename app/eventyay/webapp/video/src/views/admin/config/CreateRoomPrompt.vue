@@ -1,10 +1,10 @@
 <template lang="pug">
 prompt.c-create-room-prompt(@close="$emit('close')")
 	.content
-		h1 {{ $t('CreateRoomPrompt:headline:text') }}
+		h1 {{ $t('Create a new room') }}
 		form(@submit.prevent="create")
-			bunt-input(name="name", :label="$t('CreateRoomPrompt:name:label')", :placeholder="$t('CreateRoomPrompt:name:placeholder')", v-model="name", :validation="v$.name")
-			bunt-button(type="submit", :loading="loading", :error-message="error") {{ $t('CreateRoomPrompt:submit:label') }}
+			bunt-input(name="name", :label="$t('Name')", :placeholder="$t('Room name')", v-model="name", :validation="v$.name")
+			bunt-button(type="submit", :loading="loading", :error-message="error") {{ $t('Create') }}
 </template>
 <script>
 import {useVuelidate} from '@vuelidate/core'

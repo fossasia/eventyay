@@ -8,9 +8,9 @@
 				span.display-name
 					| {{ user ? user.profile.display_name : '' }}
 					span.ui-badge(v-for="badge in user.badges") {{ badge }}
-					span.inactive-label(v-if="user.moderation_state === 'banned'") {{ $t('User:state:banned') }}
-					span.inactive-label(v-else-if="user.moderation_state === 'silenced'") {{ $t('User:state:silenced') }}
-					span.inactive-label(v-else-if="user.inactive") {{ $t('User:state:inactive') }}
+					span.inactive-label(v-if="user.moderation_state === 'banned'") {{ $t('banned') }}
+					span.inactive-label(v-else-if="user.moderation_state === 'silenced'") {{ $t('silenced') }}
+					span.inactive-label(v-else-if="user.inactive") {{ $t('inactive') }}
 			li(v-if="!lastPage")
 				infinite-scroll(:loading="loading", @load="page++")
 </template>
