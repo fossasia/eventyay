@@ -170,12 +170,17 @@
     {% endwith %}
 </fieldset>
 
-<fieldset>
+{% if form.exhibition_plugin_enabled %}
+<fieldset class="team-exhibition-permissions"
+          data-exhibition-events="{{ form.exhibition_event_ids|join:"," }}"
+          data-all-events-id="{{ form.all_events.auto_id }}"
+          data-limit-events-name="{{ form.limit_events.html_name }}">
     <legend>{% translate "Exhibition permissions" %}</legend>
     {% bootstrap_field form.can_change_exhibition_proposals layout="control" %}
     {% bootstrap_field form.is_exhibition_reviewer layout="control" %}
     {% bootstrap_field form.hide_exhibition_applicant_emails layout="control" %}
 </fieldset>
+{% endif %}
 
 <fieldset>
     <legend>{% translate "Video permissions" %}</legend>
