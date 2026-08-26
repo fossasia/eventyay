@@ -1,11 +1,11 @@
 <template lang="pug">
 form.c-connect-gravatar(@submit.prevent="connectGravatar")
-	h1 {{ $t('profile/ConnectGravatar:headline') }}
-	p {{ $t('profile/ConnectGravatar:text') }}
-	bunt-input(name="gravatar", :label="$t('profile/ConnectGravatar:gravatar-email:label')", v-model="email")
+	h1 {{ $t('Fetch from gravatar') }}
+	p {{ $t("We will fetch your display name and avatar from gravatar. We download your information only once and only on your browser, we'll never see your email address.") }}
+	bunt-input(name="gravatar", :label="$t('Gravatar email')", v-model="email")
 	.actions
-		bunt-button#btn-cancel(type="button", @click="$emit('close')") {{ $t('Prompt:cancel:label') }}
-		bunt-button#btn-connect-gravatar(type="submit", :loading="searchingGravatar", :error="gravatarError") {{ $t('profile/ConnectGravatar:gravatar-connect:label') }}
+		bunt-button#btn-cancel(type="button", @click="$emit('close')") {{ $t('cancel') }}
+		bunt-button#btn-connect-gravatar(type="submit", :loading="searchingGravatar", :error="gravatarError") {{ $t('Connect') }}
 </template>
 <script>
 import api from 'lib/api'

@@ -911,9 +911,6 @@ msgstr "Novembre"
 msgid "December"
 msgstr "Dicembre"
 
-#: eventyay/static/vendored/vue.min.js:12
-msgid "div"
-msgstr ""
 
 #~ msgid "Contacting Stripe …"
 #~ msgstr "Sto contattando Stripe …"

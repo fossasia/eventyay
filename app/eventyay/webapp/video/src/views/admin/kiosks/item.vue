@@ -133,7 +133,7 @@ export default {
 				await api.call('user.delete', {id: this.kiosk.id})
 				this.$router.replace({name: 'admin:kiosks:index'})
 			} catch (error) {
-				this.deleteError = this.$t(`error:${error.code}`)
+				this.deleteError = error?.message || this.$t('Something went wrong.')
 			}
 			this.deleting = false
 		}
