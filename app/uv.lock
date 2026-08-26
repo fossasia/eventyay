@@ -1212,7 +1212,7 @@ dependencies = [
 [[package]]
 name = "eventyay-interpretation"
 version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-interpretation.git?rev=dev#d955f4cfb0eafdf07b595e89a12d7994d002edd0" }
+source = { git = "https://github.com/fossasia/eventyay-interpretation.git?rev=dev#6d396abd2ccec07b06d3af4591fefa3d0262e1fa" }
 dependencies = [
     { name = "cryptography" },
     { name = "requests" },
@@ -1244,7 +1244,7 @@ dependencies = [
 [[package]]
 name = "eventyay-teamshifts"
 version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-teamshifts.git?rev=dev#a98c9af0063c9bae51678648a503cc053bc27d93" }
+source = { git = "https://github.com/fossasia/eventyay-teamshifts.git?rev=dev#df6e821b48db4153082018273469aabfacbc9e4b" }
 
 [[package]]
 name = "eventyay-unified"
