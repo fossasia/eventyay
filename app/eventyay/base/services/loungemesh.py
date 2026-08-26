@@ -243,12 +243,15 @@ def token_exchange_payload(access: LoungeMeshAccessToken) -> dict:
     }
 
 
-def issue_join_url(event, room, user, *, moderator: bool) -> str | None:
+def issue_join_session(event, room, user, *, moderator: bool) -> dict | None:
     if not loungemesh_is_available(event):
         return None
     if not room_has_loungemesh_module(room):
         return None
     token = issue_opaque_token(event, room, user, moderator=moderator)
+    payload = token_exchange_payload(token)
+    if not payload:
+        return None
     query = urlencode(
         {
             'token': token.token,
@@ -256,4 +259,10 @@ def issue_join_url(event, room, user, *, moderator: bool) -> str | None:
             'room': str(room.pk),
         }
     )
-    return f'{room_base_url(room)}/join/{jitsi_room_name(event, room)}?{query}'
+    payload['url'] = f'{room_base_url(room)}/join/{jitsi_room_name(event, room)}?{query}'
+    return payload
+
+
+def issue_join_url(event, room, user, *, moderator: bool) -> str | None:
+    session = issue_join_session(event, room, user, moderator=moderator)
+    return None if not session else session['url']

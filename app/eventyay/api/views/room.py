@@ -1,6 +1,11 @@
+import hashlib
+from datetime import datetime
+
 from django.db import transaction
 from django.db.models.deletion import ProtectedError
 from django.http import HttpResponse
+from django.utils.cache import patch_cache_control
+from django.utils.http import http_date
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import exceptions, pagination, status, viewsets
 from rest_framework.decorators import action
@@ -9,7 +14,7 @@ from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
 
 from eventyay.api.documentation import build_search_docs
-from eventyay.api.mixins import PretalxViewSetMixin
+from eventyay.api.mixins import PretalxViewSetMixin, request_is_private
 from eventyay.api.serializers.room import RoomOrgaSerializer, RoomSerializer
 from eventyay.api.serializers.stream_schedule import StreamScheduleSerializer
 from eventyay.api.throttles import EventyayUserRateThrottle, PublicStreamThrottle
@@ -17,6 +22,51 @@ from eventyay.base.exporters.room_broadcast import (
     VideoRoomBroadcastConfigurationExporter,
 )
 from eventyay.base.models.room import Room
+from eventyay.base.services.room import (
+    CURRENT_STREAM_HTTP_MAX_AGE,
+    NEXT_STREAM_HTTP_MAX_AGE,
+    get_cached_current_stream_data,
+    get_cached_next_stream_data,
+)
+
+
+def stream_http_response(request, data, *, max_age):
+    if data:
+        etag = hashlib.md5(
+            f'{data.get("id")}:{data.get("updated_at")}'.encode(),
+            usedforsecurity=False,
+        ).hexdigest()
+        etag_header = f'"{etag}"'
+        if_none_match = request.headers.get('If-None-Match', '')
+        if etag_header in {part.strip() for part in if_none_match.split(',')}:
+            response = Response(status=304)
+        else:
+            response = Response(data)
+        response['ETag'] = etag_header
+        updated = data.get('updated_at')
+        if updated:
+            try:
+                stamp = datetime.fromisoformat(str(updated).replace('Z', '+00:00'))
+                response['Last-Modified'] = http_date(stamp.timestamp())
+            except ValueError:
+                pass
+    else:
+        response = Response(status=404)
+
+    if request_is_private(request):
+        patch_cache_control(response, no_store=True)
+    else:
+        patch_cache_control(
+            response,
+            max_age=max_age,
+            public=True,
+            stale_while_revalidate=60,
+        )
+    return response
+
+
+def current_stream_http_response(request, data):
+    return stream_http_response(request, data, max_age=CURRENT_STREAM_HTTP_MAX_AGE)
 
 
 class RoomPagination(pagination.LimitOffsetPagination):
@@ -59,7 +109,6 @@ class RoomViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
         if self.request.method not in SAFE_METHODS or self.has_perm("update"):
             return RoomOrgaSerializer
         return RoomSerializer
-
 
     def perform_destroy(self, instance):
         try:
@@ -117,11 +166,8 @@ class RoomViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     @action(detail=True, methods=["get"], url_path="streams/current", throttle_classes=[PublicStreamThrottle, EventyayUserRateThrottle])
     def current_stream(self, request, pk=None, **kwargs):
         room = self.get_object()
-        current = room.get_current_stream()
-        if current:
-            serializer = StreamScheduleSerializer(current)
-            return Response(serializer.data)
-        return Response(status=404)
+        data = get_cached_current_stream_data(room)
+        return current_stream_http_response(request, data)
 
     @extend_schema(
         summary="Get Next Stream",
@@ -132,8 +178,5 @@ class RoomViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
             throttle_classes=[PublicStreamThrottle, EventyayUserRateThrottle])
     def next_stream(self, request, pk=None, **kwargs):
         room = self.get_object()
-        next_stream = room.get_next_stream()
-        if next_stream:
-            serializer = StreamScheduleSerializer(next_stream)
-            return Response(serializer.data)
-        return Response(status=404)
+        data = get_cached_next_stream_data(room)
+        return stream_http_response(request, data, max_age=NEXT_STREAM_HTTP_MAX_AGE)

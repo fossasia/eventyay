@@ -36,6 +36,8 @@ if [ -d /usr/src/plugins ]; then
 fi
 
 python manage.py migrate
+python manage.py compilemessages -i .venv
+find /usr/src/app/eventyay/locale -name "*.mo" -exec sh -c 'chown --reference="${1%.mo}.po" "$1" 2>/dev/null || true' _ {} \;
 
 # Start Vite dev servers for live frontend development when EVY_NPM_DEV=1
 if [ "$EVY_NPM_DEV" = "1" ]; then

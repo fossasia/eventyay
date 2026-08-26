@@ -2,7 +2,6 @@ from datetime import timedelta
 
 import jwt
 import pytest
-from django.db import connection
 from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.timezone import now
@@ -13,6 +12,7 @@ from eventyay.base.models.auth import StaffSession
 from eventyay.base.models.loungemesh import LoungeMeshAccessToken
 from eventyay.base.services.loungemesh import (
     apply_loungemesh_embed_headers,
+    issue_join_session,
     issue_join_url,
     issue_jitsi_jwt,
     issue_opaque_token,
@@ -106,9 +106,13 @@ def test_issue_and_exchange_token(event, user):
         user.save()
         token = issue_opaque_token(event, room, user, moderator=True)
         url = issue_join_url(event, room, user, moderator=False)
+        session = issue_join_session(event, room, user, moderator=True)
 
     assert token.token
-    assert 'https://loungemesh.com/join/lms-testevent-' in url
+    assert url.startswith(f'https://loungemesh.com/join/lms-testevent-{room.pk}')
+    assert session['url'].startswith(f'https://loungemesh.com/join/lms-testevent-{room.pk}')
+    assert session['jwt']
+    assert session['moderator'] is True
     assert f'token={token.token}' not in url  # a new token is minted for join URL
     access = verify_loungemesh_token(token.token)
     assert access is not None
@@ -155,6 +159,25 @@ def test_expired_token_is_rejected(event, user):
             expires=now() - timedelta(minutes=1),
         )
     assert verify_loungemesh_token(token.token) is None
+
+
+@pytest.mark.django_db
+def test_expired_tokens_are_purged_by_periodic_cleanup(event, user):
+    _enable_loungemesh()
+    with scope(event=event):
+        room = _create_loungemesh_room(event)
+        expired = LoungeMeshAccessToken.objects.create(
+            event=event,
+            room=room,
+            user=user,
+            expires=now() - timedelta(minutes=1),
+        )
+        active = issue_opaque_token(event, room, user, moderator=False)
+    from eventyay.base.services.cleanup import clean_expired_loungemesh_tokens
+
+    clean_expired_loungemesh_tokens(sender=None)
+    assert not LoungeMeshAccessToken.objects.filter(pk=expired.pk).exists()
+    assert LoungeMeshAccessToken.objects.filter(pk=active.pk).exists()
 
 
 @pytest.mark.django_db
@@ -290,12 +313,10 @@ def test_embed_origins_include_configured_url():
     gs = GlobalSettingsObject().settings
     gs.set('loungemesh_url', 'http://localhost:5173')
     origins = loungemesh_embed_origins()
-    assert 'https://loungemesh.com' in origins
-    assert 'http://localhost:5173' in origins
+    assert origins == ('https://loungemesh.com', 'http://localhost:5173')
     policy = loungemesh_permissions_policy()
-    assert 'camera=(self' in policy
-    assert '"https://loungemesh.com"' in policy
-    assert '"http://localhost:5173"' in policy
+    assert policy.startswith('camera=(self')
+    assert 'microphone=(self "https://loungemesh.com" "http://localhost:5173")' in policy
 
 
 @pytest.mark.django_db
@@ -304,8 +325,8 @@ def test_apply_embed_headers_sets_permissions_and_csp():
     gs.set('loungemesh_url', 'https://loungemesh.com')
     response = HttpResponse('ok')
     apply_loungemesh_embed_headers(response)
-    assert 'camera=' in response['Permissions-Policy']
-    assert 'https://loungemesh.com' in response._csp_update['frame-src']
+    assert response['Permissions-Policy'].startswith('camera=(self "https://loungemesh.com")')
+    assert response._csp_update['frame-src'] == ['https://loungemesh.com']
 
 
 def test_default_roles_include_loungemesh_permissions():
@@ -317,9 +338,12 @@ def test_default_roles_include_loungemesh_permissions():
 
 @pytest.mark.django_db
 def test_base_migration_graph_has_single_leaf():
-    from django.db.migrations.loader import MigrationLoader
+    from pathlib import Path
 
-    loader = MigrationLoader(connection, ignore_no_migrations=True)
-    leaves = loader.graph.leaf_nodes(app='base')
-    assert leaves == [('base', '0059_loungemeshaccesstoken')], leaves
-    assert ('base', '0057_loungemeshaccesstoken') not in loader.graph.nodes
+    from django.apps import apps
+
+    migration_dir = Path(apps.get_app_config('base').path) / 'migrations'
+    names = sorted(path.stem for path in migration_dir.glob('[0-9]*.py'))
+    assert names[-1] == '0062_loungemeshaccesstoken'
+    assert '0057_loungemeshaccesstoken' not in names
+    assert '0059_loungemeshaccesstoken' not in names

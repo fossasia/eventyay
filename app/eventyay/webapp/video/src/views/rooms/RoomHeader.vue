@@ -1,13 +1,13 @@
 <template lang="pug">
 .c-room-header
-	.ui-page-header(v-if="!modules['page.markdown'] && !modules['page.static'] && !modules['page.iframe'] && !modules['page.landing']")
+	.ui-page-header(v-if="!modules['page.markdown'] && !modules['page.landing']")
 		.room-info
 			.room-name(v-html="$emojify(room.name)")
 			.room-session(v-if="currentSession") {{ $localize(currentSession.title) }}
 		//- bunt-icon-button(v-if="$features.enabled('schedule-control')", @click="showEditSchedule = true") calendar_edit
 		.actions
 			bunt-icon-button(v-if="modules['call.bigbluebutton'] && hasPermission('room:bbb.recordings')", :tooltip="$t('Room:recordings:tooltip')", tooltipPlacement="bottom-end", @click="showRecordingsPrompt = true") file-video-outline
-			.button-group(v-if="['stage', 'channel-bbb', 'channel-janus', 'channel-zoom', 'channel-jitsi'].includes(roomType) && canManage")
+			.button-group(v-if="['stage', 'channel-bbb', 'channel-janus', 'channel-zoom', 'channel-jitsi', 'channel-loungemesh'].includes(roomType) && canManage")
 				// TODO buntpapier does not support replace
 				// hardlink params so home page alias works
 				bunt-link-button(:to="{name: 'room:manage', params: {roomId: room.id}}", replace) manage

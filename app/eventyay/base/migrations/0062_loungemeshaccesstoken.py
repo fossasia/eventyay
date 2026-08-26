@@ -7,7 +7,7 @@ import uuid
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0058_alter_locale_choices_native_names'),
+        ('base', '0061_price_max_digits_currency_support'),
     ]
 
     operations = [

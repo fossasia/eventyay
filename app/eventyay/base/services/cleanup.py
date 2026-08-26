@@ -6,7 +6,7 @@ from django.dispatch import receiver
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
-from eventyay.base.models import CachedCombinedTicket, CachedTicket
+from eventyay.base.models import CachedCombinedTicket, CachedTicket, LoungeMeshAccessToken
 
 from ..models import CachedFile, CartPosition, InvoiceAddress
 from ..signals import periodic_task
@@ -33,14 +33,21 @@ def clean_cached_files(sender, **kwargs):
 @receiver(signal=periodic_task)
 @scopes_disabled()
 def clean_cached_tickets(sender, **kwargs):
-    for cf in CachedTicket.objects.filter(created__lte=now() - timedelta(hours=settings.CACHE_TICKETS_HOURS)):
+    cutoff = now() - settings.CACHE_TICKETS_MAX_AGE
+    for cf in CachedTicket.objects.filter(created__lte=cutoff):
         cf.delete()
-    for cf in CachedCombinedTicket.objects.filter(created__lte=now() - timedelta(hours=settings.CACHE_TICKETS_HOURS)):
+    for cf in CachedCombinedTicket.objects.filter(created__lte=cutoff):
         cf.delete()
     for cf in CachedTicket.objects.filter(created__lte=now() - timedelta(minutes=30), file__isnull=True):
         cf.delete()
     for cf in CachedCombinedTicket.objects.filter(created__lte=now() - timedelta(minutes=30), file__isnull=True):
         cf.delete()
+
+
+@receiver(signal=periodic_task)
+@scopes_disabled()
+def clean_expired_loungemesh_tokens(sender, **kwargs):
+    LoungeMeshAccessToken.objects.filter(expires__lt=now()).delete()
 
 
 @receiver(signal=periodic_task)

@@ -1,6 +1,6 @@
 from channels.db import database_sync_to_async
 
-from eventyay.base.services.loungemesh import issue_join_url
+from eventyay.base.services.loungemesh import issue_join_session
 from eventyay.core.permissions import Permission
 from eventyay.features.live.decorators import command, room_action
 from eventyay.features.live.exceptions import ConsumerException
@@ -24,12 +24,12 @@ class LoungeMeshModule(BaseModule):
             permission=Permission.ROOM_LOUNGEMESH_MODERATE,
             room=self.room,
         )
-        url = await database_sync_to_async(issue_join_url)(
+        session = await database_sync_to_async(issue_join_session)(
             self.consumer.event,
             self.room,
             self.consumer.user,
             moderator=moderator,
         )
-        if not url:
+        if not session:
             raise ConsumerException('loungemesh.failed')
-        await self.consumer.send_success({'url': url})
+        await self.consumer.send_success(session)

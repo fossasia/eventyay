@@ -5,6 +5,20 @@ import jwt
 from channels.testing import WebsocketCommunicator
 from django.utils.crypto import get_random_string
 
+from eventyay.core.permissions import Permission
+
+
+def video_permissions(perms):
+    known = set()
+    for permission in Permission:
+        value = permission.value
+        known.add(value)
+        if value.startswith('event:'):
+            known.add('world:' + value[len('event:'):])
+        elif value.startswith('event.'):
+            known.add('world:' + value[len('event.'):])
+    return {perm for perm in perms if perm in known}
+
 
 def get_token(world, traits, uid=None):
     config = world.config["JWT_secrets"][0]

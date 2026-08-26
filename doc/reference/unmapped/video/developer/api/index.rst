@@ -21,8 +21,6 @@ without warning.
    announcements
    bbb
    uploads
-   exhibition
-   poster
    polls
    questions
    roulette

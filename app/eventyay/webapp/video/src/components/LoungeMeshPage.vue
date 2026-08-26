@@ -45,12 +45,16 @@ export default {
 		loaded() {
 			this.loading = false
 		},
-		async loadJoinUrl() {
-			this.loading = true
+		async loadJoinUrl({refresh = false} = {}) {
+			this.loading = !refresh
 			this.error = null
 			try {
-				const { url } = await api.call('loungemesh.room_url', { room: this.room.id })
-				this.url = url
+				const session = await api.call('loungemesh.room_url', { room: this.room.id })
+				if (refresh && session.jwt && this.postToken(session.jwt)) {
+					this.loading = false
+					return
+				}
+				this.url = session.url
 			} catch (error) {
 				console.error('Failed to load LoungeMesh join URL', error)
 				this.error = error?.message || error?.code || 'Could not open LoungeMesh.'
@@ -69,12 +73,22 @@ export default {
 			}
 			return ''
 		},
+		postToken(jwt) {
+			const iframe = this.$el?.querySelector('iframe')
+			const origin = this.allowedOrigin()
+			if (!iframe?.contentWindow || !origin || !jwt) return false
+			iframe.contentWindow.postMessage(
+				{ source: 'eventyay', type: 'loungemesh:new_token', jwt },
+				origin
+			)
+			return true
+		},
 		onMessage(event) {
 			const expected = this.allowedOrigin()
 			if (expected && event.origin !== expected) return
 			if (!event.data || event.data.source !== 'loungemesh') return
 			if (event.data.type === 'token_expired') {
-				this.loadJoinUrl()
+				this.loadJoinUrl({ refresh: true })
 			}
 		}
 	}
