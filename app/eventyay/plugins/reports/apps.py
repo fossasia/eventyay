@@ -12,8 +12,13 @@ class ReportsApp(AppConfig):
     class EventyayPluginMeta:
         name = _('Report exporter')
         version = version
-        category = 'FORMAT'
-        description = _('This plugin allows you to generate printable reports about your sales.')
+        # Built-in platform feature: always active, hidden from organizer plugin lists
+        # (same pattern as check-in list exporter).
+        visible = False
+        description = _(
+            'Built-in printable sales reports (order overview PDF and tax reports). '
+            'Always available; not managed as an optional plugin.'
+        )
 
     def ready(self):
         from . import signals  # NOQA
