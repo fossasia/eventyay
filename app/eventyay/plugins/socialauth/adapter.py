@@ -42,7 +42,7 @@ def require_not_spam(request, user):
         return
     logger.warning('Social login attempt for account marked as spam: %s', user.pk)
     messages.error(request, SPAM_ACCOUNT_ERROR)
-    raise ImmediateHttpResponse(HttpResponseRedirect(reverse('eventyay_common:auth.login')))
+    raise ImmediateHttpResponse(HttpResponseRedirect(reverse('auth.login')))
 
 
 def sync_wikimedia_username(user, sociallogin):

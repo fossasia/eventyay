@@ -59,7 +59,7 @@ class CustomAccountAdapter(DefaultAccountAdapter):
         if user.is_spam:
             messages.error(request, SPAM_ACCOUNT_ERROR)
             raise ImmediateHttpResponse(
-                HttpResponseRedirect(reverse('eventyay_common:auth.login'))
+                HttpResponseRedirect(reverse('auth.login'))
             )
         return super().pre_login(
             request,
