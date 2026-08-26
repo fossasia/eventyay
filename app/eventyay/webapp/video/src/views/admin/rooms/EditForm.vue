@@ -3,17 +3,17 @@
 	.scroll-wrapper(v-scrollbar.y="")
 		.ui-form-body
 			.generic-settings
-				bunt-input(name="name", v-model="localizedName", label="Name", :validation="v$.config.name")
-				bunt-input(name="description", v-model="localizedDescription", label="Description")
-				div(:title="config.has_linked_sessions ? \"Room has linked sessions and can't be marked unscheduled\" : ''")
-					bunt-checkbox(name="is_unscheduled", v-model="config.is_unscheduled", label="Unscheduled room (hide from schedule/sessions)", :disabled="config.has_linked_sessions")
+				bunt-input(name="name", v-model="localizedName", :label="$t('Name')", :validation="v$.config.name")
+				bunt-input(name="description", v-model="localizedDescription", :label="$t('Description')")
+				div(:title="unscheduledDisabledTitle")
+					bunt-checkbox(name="is_unscheduled", v-model="config.is_unscheduled", :label="$t('Unscheduled room (hide from schedule/sessions)')", :disabled="config.has_linked_sessions")
 				template(v-if="inferredType")
-					bunt-checkbox(v-if="inferredType.id === 'channel-text'", name="force_join", v-model="config.force_join", label="Force join on login (use for non-volatile, text-based chats only!!)")
+					bunt-checkbox(v-if="inferredType.id === 'channel-text'", name="force_join", v-model="config.force_join", :label="$t('Force join on login (use for non-volatile, text-based chats only!!)')")
 			component.stage-settings(ref="settings", v-if="inferredType && typeComponents[inferredType.id]", :is="typeComponents[inferredType.id]", :config="config", :modules="modules", :creating="creating", :interpretation-admin="interpretationAdmin")
 			stream-schedule(ref="streamSchedule", v-if="showStreamSchedule", :config="config", :room-id="config.id ? String(config.id) : null", :room-name="localizedName", :open-create-on-mount="openStreamScheduleCreateOnMount", @opened-create-on-mount="clearOpenStreamScheduleCreateQuery", @create-requires-room="createRoomForStreamSchedule")
 			sidebar-addons(v-if="inferredType && inferredType.id === 'stage'", :config="config", :modules="modules", :creating="creating")
 	.ui-form-actions
-		bunt-button.btn-save(@click="save", :loading="saving", :error="!!error") {{ creating ? 'create' : 'save' }}
+		bunt-button.btn-save(@click="save", :loading="saving", :error="!!error") {{ creating ? $t('Create') : $t('Save') }}
 		.errors {{ error || validationErrors.join(', ') }}
 </template>
 <script>
@@ -27,14 +27,11 @@ import ROOM_TYPES, { inferType } from 'lib/room-types'
 import { filterRoomTypesByPermission } from 'lib/room-type-permissions'
 import { PLAYBACK_MODE_SCHEDULE_DRIVEN, getStagePlaybackMode } from 'lib/stage-streams'
 import Stage from './types-edit/stage'
-import PageStatic from './types-edit/page-static'
-import PageIframe from './types-edit/page-iframe'
 import ChannelBBB from './types-edit/channel-bbb'
 import ChannelJanus from './types-edit/channel-janus'
 import ChannelJitsi from './types-edit/channel-jitsi'
 import ChannelZoom from './types-edit/channel-zoom'
 import ChannelRoulette from './types-edit/channel-roulette'
-import Posters from './types-edit/posters'
 import PageLanding from './types-edit/page-landing'
 import StreamSchedule from './StreamSchedule'
 import SidebarAddons from './types-edit/SidebarAddons'
@@ -68,15 +65,12 @@ export default {
 			allRoomTypes: ROOM_TYPES,
 			typeComponents: markRaw({
 				stage: Stage,
-				'page-static': PageStatic,
-				'page-iframe': PageIframe,
 				'page-landing': PageLanding,
 				'channel-bbb': ChannelBBB,
 				'channel-roulette': ChannelRoulette,
 				'channel-janus': ChannelJanus,
 				'channel-jitsi': ChannelJitsi,
 				'channel-zoom': ChannelZoom,
-				posters: Posters
 			}),
 			saving: false,
 			error: null,
@@ -105,9 +99,14 @@ export default {
 		inferredType() {
 			return inferType(this.config)
 		},
+		unscheduledDisabledTitle() {
+			this.$store.state.userLocale
+			if (!this.config.has_linked_sessions) return ''
+			return this.$t('Room has linked sessions and cannot be marked unscheduled')
+		},
 		stagePlaybackMode() {
 			if (!this.modules) return null
-			const module = this.modules['livestream.native'] || this.modules['livestream.youtube'] || this.modules['livestream.iframe']
+			const module = this.modules['livestream.native'] || this.modules['livestream.youtube']
 			return getStagePlaybackMode(module)
 		},
 		showStreamSchedule() {
@@ -138,7 +137,7 @@ export default {
 		return {
 			config: {
 				name: {
-					required: required('name is required')
+					required: required(this.$t('name is required'))
 				},
 			},
 		}

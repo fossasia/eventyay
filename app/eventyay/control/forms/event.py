@@ -640,7 +640,6 @@ class EventSettingsForm(SettingsForm):
         'allow_modifications',
         'last_order_modification_date',
         'allow_modifications_after_checkin',
-        'checkout_show_copy_answers_button',
         'primary_color',
         'theme_color_success',
         'theme_color_danger',
@@ -822,7 +821,6 @@ class OrderFormSettingsForm(EventSettingsForm):
         'order_email_asked_twice',
         'require_registered_account_for_tickets',
         'include_wikimedia_username',
-        'checkout_show_copy_answers_button',
     ]
 
     def __init__(self, *args, **kwargs):
@@ -1757,11 +1755,26 @@ class QuickSetupForm(I18nForm):
         ),
         required=False,
     )
+    payment_paypal__enabled = forms.BooleanField(
+        label=_('Payment via PayPal'),
+        help_text=_(
+            'PayPal is a widely used online payment service. To accept payments via PayPal, '
+            'the platform must have PayPal configured in global settings.'
+        ),
+        required=False,
+    )
     payment_banktransfer__enabled = forms.BooleanField(
         label=_('Payment by bank transfer'),
         help_text=_(
             'Your customers will be instructed to wire the money to your account. You can then import your '
             'bank statements to process the payments within eventyay, or mark them as paid manually.'
+        ),
+        required=False,
+    )
+    payment_manualpayment__enabled = forms.BooleanField(
+        label=_('Manual payment'),
+        help_text=_(
+            'Your customers will be instructed to pay the money manually. You can then mark them as paid.'
         ),
         required=False,
     )
@@ -1779,16 +1792,37 @@ class QuickSetupForm(I18nForm):
     payment_banktransfer_bank_details = btf['bank_details']
 
     def __init__(self, *args, **kwargs):
+        from eventyay.base.plugins import get_all_plugins
+
         self.obj = kwargs.pop('event', None)
         self.locales = self.obj.settings.get('locales') if self.obj else kwargs.pop('locales', None)
         kwargs['locales'] = self.locales
         super().__init__(*args, **kwargs)
-        plugins_active = self.obj.get_plugins()
-        if ('eventyay_stripe' not in plugins_active) or (not self.obj.settings.payment_stripe_client_id):
+        
+        plugins_available = {
+            p.module for p in get_all_plugins(self.obj)
+            if getattr(p, 'visible', True) and not p.name.startswith('.')
+        }
+
+        if 'eventyay.plugins.stripe' not in plugins_available:
             del self.fields['payment_stripe__enabled']
-        if 'eventyay.plugins.banktransfer' not in plugins_active:
+        if 'eventyay.plugins.paypal' not in plugins_available:
+            del self.fields['payment_paypal__enabled']
+            
+        if 'eventyay.plugins.banktransfer' not in plugins_available:
             del self.fields['payment_banktransfer__enabled']
-        self.fields['payment_banktransfer_bank_details'].required = False
+            del self.fields['payment_banktransfer_bank_details_type']
+            del self.fields['payment_banktransfer_bank_details_sepa_name']
+            del self.fields['payment_banktransfer_bank_details_sepa_iban']
+            del self.fields['payment_banktransfer_bank_details_sepa_bic']
+            del self.fields['payment_banktransfer_bank_details_sepa_bank']
+            del self.fields['payment_banktransfer_bank_details']
+        else:
+            self.fields['payment_banktransfer_bank_details'].required = False
+            
+        if 'eventyay.plugins.manualpayment' not in plugins_available:
+            del self.fields['payment_manualpayment__enabled']
+
         for f in self.fields.values():
             if 'data-required-if' in f.widget.attrs:
                 del f.widget.attrs['data-required-if']
@@ -1817,7 +1851,7 @@ class QuickSetupProductForm(I18nForm):
     )
     default_price = forms.DecimalField(
         label=_('Price (optional)'),
-        max_digits=7,
+        max_digits=13,
         decimal_places=2,
         required=False,
         localize=True,

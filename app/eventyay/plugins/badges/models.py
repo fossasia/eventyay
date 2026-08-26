@@ -39,6 +39,7 @@ class BadgeLayout(LoggedModel):
         default='[{"type":"textarea","left":"0","bottom":"85","fontsize":"12.0","color":[0,0,0,1],"fontfamily":"Open Sans","bold":true,"italic":false,"width":"80","content":"attendee_name","text":"John Doe","align":"center"},{"type":"barcodearea","left":"24.87","bottom":"34","size":"30.00","content":"secret"},{"type":"textarea","left":"0","bottom":"83","fontsize":"10.0","color":[0,0,0,1],"fontfamily":"Open Sans","bold":false,"italic":false,"width":"80.00","downward":true,"content":"attendee_job_title","text":"Developer","align":"center"},{"type":"textarea","left":"0","bottom":"76","fontsize":"12.0","color":[0,0,0,1],"fontfamily":"Open Sans","bold":false,"italic":false,"width":"80","downward":true,"content":"attendee_company","text":"FOSSASIA","align":"center"}]'
     )
     ask_user_fields = models.TextField(default='[]', blank=True)
+    required_badge_fields = models.TextField(default='[]', blank=True)
 
     size = models.TextField(default='[{"width": 148, "height": 105, "orientation": "landscape"}]')
 
@@ -76,6 +77,19 @@ class BadgeLayout(LoggedModel):
     @ask_user_fields_data.setter
     def ask_user_fields_data(self, values):
         self.ask_user_fields = json.dumps(list(values or []))
+
+    @property
+    def required_badge_fields_data(self):
+        if self.required_badge_fields:
+            try:
+                return json.loads(self.required_badge_fields)
+            except ValueError:
+                return []
+        return []
+
+    @required_badge_fields_data.setter
+    def required_badge_fields_data(self, values):
+        self.required_badge_fields = json.dumps(list(values or []))
 
     @property
     def layout_data(self):

@@ -1647,7 +1647,7 @@ class QuickSetupView(FormView):
                     plugins_active.append('eventyay_passbook')
                 self.request.event.settings.ticketoutput_passbook__enabled = True
 
-        if form.cleaned_data['payment_banktransfer__enabled']:
+        if form.cleaned_data.get('payment_banktransfer__enabled', None):
             if 'eventyay.plugins.banktransfer' not in plugins_active:
                 self.request.event.log_action(
                     'eventyay.event.plugins.enabled',
@@ -1666,7 +1666,7 @@ class QuickSetupView(FormView):
             ):
                 self.request.event.settings.set(
                     'payment_banktransfer_%s' % f,
-                    form.cleaned_data['payment_banktransfer_%s' % f],
+                    form.cleaned_data.get('payment_banktransfer_%s' % f),
                 )
 
         if form.cleaned_data.get('payment_stripe__enabled', None):
@@ -1677,6 +1677,24 @@ class QuickSetupView(FormView):
                     data={'plugin': 'eventyay.plugins.stripe'},
                 )
                 plugins_active.append('eventyay.plugins.stripe')
+
+        if form.cleaned_data.get('payment_paypal__enabled', None):
+            if 'eventyay.plugins.paypal' not in plugins_active:
+                self.request.event.log_action(
+                    'eventyay.event.plugins.enabled',
+                    user=self.request.user,
+                    data={'plugin': 'eventyay.plugins.paypal'},
+                )
+                plugins_active.append('eventyay.plugins.paypal')
+
+        if form.cleaned_data.get('payment_manualpayment__enabled', None):
+            if 'eventyay.plugins.manualpayment' not in plugins_active:
+                self.request.event.log_action(
+                    'eventyay.event.plugins.enabled',
+                    user=self.request.user,
+                    data={'plugin': 'eventyay.plugins.manualpayment'},
+                )
+                plugins_active.append('eventyay.plugins.manualpayment')
 
         if form.cleaned_data['currency'] != self.request.event.currency:
             self.request.event.currency = form.cleaned_data['currency']

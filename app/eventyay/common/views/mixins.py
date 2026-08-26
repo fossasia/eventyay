@@ -6,7 +6,7 @@ from contextlib import suppress
 from csp.decorators import csp_exempt
 from django import forms
 from django.conf import settings
-from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured
+from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured, PermissionDenied
 from django.db.models import CharField, Q
 from django.db.models.functions import Lower
 from django.http import FileResponse, Http404, HttpRequest
@@ -261,16 +261,23 @@ class PermissionRequired(PermissionRequiredMixin):
         request = getattr(self, 'request', None)
         if not request or not isinstance(request, HttpRequest):
             raise ImproperlyConfigured('PermissionRequiredMixin requires a request.')
-        # Debug log to trace why 404 happened
         logger.debug('User %s has no permission to access %s', request.user, request.path)
-        if (
-            request
-            and hasattr(request, 'event')
-            and request.user.is_anonymous
-            and 'cfp' in request.resolver_match.namespaces
-        ):
+        
+        is_cfp_or_agenda = False
+        if hasattr(request, 'event') and getattr(request, 'resolver_match', None):
+            namespaces = request.resolver_match.namespaces
+            if 'cfp' in namespaces or 'agenda' in namespaces:
+                is_cfp_or_agenda = True
+
+        if not is_cfp_or_agenda:
+            raise Http404()
+
+        # Unauthenticated user: redirect to login preserving the original URL
+        if request.user.is_anonymous:
             return redirect(build_login_url_with_next(request.get_full_path()))
-        raise Http404()
+
+        # Authenticated user without permission: raise a proper 403
+        raise PermissionDenied(_('You do not have permission to access this page.'))
 
 
 class EventPermissionRequired(PermissionRequired):

@@ -32,7 +32,7 @@ export default {
 		},
 		backLabel () {
 			const messages = this.translationMessages || {}
-			return messages.back || 'Back'
+			return messages.back || this.$t('Back')
 		},
 		showBack () {
 			if (this.hideBack) return false;

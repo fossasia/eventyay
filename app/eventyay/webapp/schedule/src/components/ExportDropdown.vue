@@ -81,8 +81,8 @@ export default {
 		t() {
 			const m = this.translationMessages || {}
 			return {
-				exports: m.exports || 'Exports',
-				public_schedule_only: m.public_schedule_only || 'Only available on the public schedule once a schedule is released and public.',
+				exports: m.exports || this.$t('Exports'),
+				public_schedule_only: m.public_schedule_only || this.$t('Only available on the public schedule once a schedule is released and public.'),
 			}
 		},
 		resolvedDisabledHint() {

@@ -39,11 +39,11 @@
                             <th class="text-center">{% translate "Settings" %}</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        {# E-mail #}
+                    <tbody data-dnd-url="{% url "control:event.products.questions.reorder" event=request.event.slug organizer=request.event.organizer.slug %}">
+                        {% for field_id in ordered_customer_fields %}
+                        {% if field_id == 'order_email' %}
                         {% with field=sform.order_email_asked_required %}
-                        {% if field %}
-                        <tr>
+                        <tr data-dnd-id="order_email">
                             <th id="{{ field.auto_id }}_label">{% translate "E-mail" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -67,13 +67,12 @@
                                 <a href="{% url 'control:event.products.orderforms.customerfield' organizer=request.event.organizer.slug event=request.event.slug field='order_email' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for E-mail' %}" title="{% translate 'Settings for E-mail' %}"><i class="fa fa-cog fa-fw"></i></a>
                             </td>
                         </tr>
-                        {% endif %}
                         {% endwith %}
+                        {% endif %}
 
-                        {# Phone number #}
+                        {% if field_id == 'order_phone' %}
                         {% with field=sform.order_phone_asked_required %}
-                        {% if field %}
-                        <tr>
+                        <tr data-dnd-id="order_phone">
                             <th id="{{ field.auto_id }}_label">{% translate "Phone number" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -97,23 +96,23 @@
                                 <a href="{% url 'control:event.products.orderforms.customerfield' organizer=request.event.organizer.slug event=request.event.slug field='order_phone' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Phone number' %}" title="{% translate 'Settings for Phone number' %}"><i class="fa fa-cog fa-fw"></i></a>
                             </td>
                         </tr>
-                        {% endif %}
                         {% endwith %}
+                        {% endif %}
 
-                        {# Name and address - static link #}
-                        <tr>
+                        {% if field_id == 'name_address' %}
+                        <tr data-dnd-id="name_address">
                             <th>{% translate "Name and address" %}</th>
                             <td class="text-center"><span class="text-muted">—</span></td>
                             <td class="text-center"><span class="text-muted">—</span></td>
-                            <td class="text-center">
+                            <td class="dnd-container text-center text-nowrap">
                                 <a href="{% url "control:event.settings.invoice" event=request.event.slug organizer=request.organizer.slug %}#tab-0-1-open"
-                                   target="_blank"
-                                   rel="noopener noreferrer"
-                                   aria-label="{% translate 'See invoice settings (opens in new tab)' %}">
+                                   aria-label="{% translate 'See invoice settings' %}">
                                     {% translate "See invoice settings" %}
                                 </a>
                             </td>
                         </tr>
+                        {% endif %}
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>
@@ -496,7 +495,6 @@
 
         <fieldset>
             <legend>{% translate "Form settings" %}</legend>
-            {% bootstrap_field sform.checkout_show_copy_answers_button layout="control" %}
             {% bootstrap_field sform.require_registered_account_for_tickets layout="control" %}
             {% bootstrap_field sform.include_wikimedia_username layout="control" %}
         </fieldset>

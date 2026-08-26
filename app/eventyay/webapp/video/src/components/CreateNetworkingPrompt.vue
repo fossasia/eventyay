@@ -1,14 +1,14 @@
 <template lang="pug">
 prompt.c-create-networking-prompt(@close="$emit('close')")
 	.content
-		h1 Create random video calls
+		h1 {{ $t('Create random video calls') }}
 		form(@submit.prevent="create")
-			bunt-input(name="name", label="Name", icon="webcam", placeholder="random video calls", v-model="name", :validation="v$.name")
-			bunt-input-outline-container(label="Description")
+			bunt-input(name="name", :label="$t('Name')", icon="webcam", :placeholder="$t('random video calls')", v-model="name", :validation="v$.name")
+			bunt-input-outline-container(:label="$t('Description')")
 				template(#default="{focus, blur}")
 					textarea(v-model="description", @focus="focus", @blur="blur")
-			bunt-input(name="rematchInterval", label="Rematch interval (minutes)", icon="timer-outline", v-model="rematchInterval", :validation="v$.rematchInterval")
-			bunt-button(type="submit", :loading="loading", :error-message="error") Create
+			bunt-input(name="rematchInterval", :label="$t('Rematch interval (minutes)')", icon="timer-outline", v-model="rematchInterval", :validation="v$.rematchInterval")
+			bunt-button(type="submit", :loading="loading", :error-message="error") {{ $t('Create') }}
 </template>
 <script>
 import { useVuelidate } from '@vuelidate/core'
@@ -37,12 +37,12 @@ export default {
 	validations() {
 		return {
 			name: {
-				required: required('Name is required')
+				required: required(this.$t('Name is required'))
 			},
 			rematchInterval: {
-				required: required('Minimum time is required'),
-				integer: integer('must be a whole number'),
-				minValue: minValue(1, 'must be at least 1')
+				required: required(this.$t('Minimum time is required')),
+				integer: integer(this.$t('must be a whole number')),
+				minValue: minValue(1, this.$t('must be at least 1'))
 			}
 		}
 	},
@@ -53,7 +53,7 @@ export default {
 			if (this.v$.$invalid) return
 
 			if (!isRoomTypeAvailable('channel-roulette', this.hasPermission)) {
-				this.error = 'You do not have permission to create random video calls.'
+				this.error = this.$t('You do not have permission to create random video calls.')
 				return
 			}
 

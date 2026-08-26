@@ -27,6 +27,27 @@ def calculate_contrast_ratio(rgb1, rgb2):
     return l2 / l1
 
 
+BLACK_RGB = (0, 0, 0)
+
+
+def get_contrast_color(hex_color):
+    """Return 'black' or 'white' text color for a hex background, using WCAG 2.1 contrast ratios."""
+    if not hex_color:
+        return ''
+    hex_color = hex_color.lstrip('#')
+    if len(hex_color) == 3:
+        hex_color = ''.join(c + c for c in hex_color)
+    try:
+        r = int(hex_color[0:2], 16)
+        g = int(hex_color[2:4], 16)
+        b = int(hex_color[4:6], 16)
+    except ValueError:
+        return ''
+    contrast_with_white = calculate_contrast_ratio((r, g, b), WHITE_RGB)
+    contrast_with_black = calculate_contrast_ratio((r, g, b), BLACK_RGB)
+    return 'white' if contrast_with_white >= contrast_with_black else 'black'
+
+
 def generate_random_high_contrast_color(min_contrast=3.0, max_attempts=100, exclude_colors=None):
     """Generate a random hex color with sufficient contrast against white background."""
     exclude_colors = exclude_colors or set()

@@ -65,6 +65,16 @@ def apply_track_limit_to_slots(queryset, event, user, *, reviewers_only=False):
     return queryset.filter(Q(submission__isnull=True) | Q(submission__track__in=allowed))
 
 
+def schedule_cache_user_scope(event, user, *, reviewers_only=False):
+    """Stable cache key segment for schedule and talk-slot API responses."""
+    allowed = get_allowed_tracks(event, user, reviewers_only=reviewers_only)
+    if allowed is None:
+        return 'public'
+    if not allowed:
+        return 'tracks:none'
+    return 'tracks:' + ','.join(str(track.pk) for track in sorted(allowed, key=lambda track: track.pk))
+
+
 def filter_schedule_talk_data(talks, allowed_tracks):
     """Filter schedule JSON talk entries to *allowed_tracks* (a set of track PKs)."""
     if allowed_tracks is None:

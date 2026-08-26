@@ -10,7 +10,7 @@
 <html lang="{{ html_locale }}"{% if rtl %} dir="rtl" class="rtl"{% endif %}>
     <head>
         <meta charset="utf-8">
-        <title>{% block page_title %}{% trans 'Start page' %}{% endblock %} :: {{ site_name }}</title>
+        <title>{{ site_name }}</title>
         {% block meta_tags %}
         <meta name="title" content="{% trans 'Start page' %} {{ site_name }}">
         <meta name="description" content="{% trans 'Browse live events on' %} {{ site_name }}">

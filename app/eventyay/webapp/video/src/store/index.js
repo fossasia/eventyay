@@ -1,5 +1,5 @@
 import Vuex from 'vuex'
-import i18n from 'i18n'
+import { persistLanguage, changeLanguage } from 'i18n'
 import { jwtDecode } from 'jwt-decode'
 import api, { initApi } from 'lib/api'
 import { doesTraitsMatchGrants } from 'lib/traitGrants'
@@ -8,7 +8,6 @@ import chat from './chat'
 import question from './question'
 import poll from './poll'
 import roulette from './roulette'
-import exhibition from './exhibition'
 import schedule from './schedule'
 import notifications from './notifications'
 import moment from 'lib/timetravelMoment'
@@ -188,7 +187,6 @@ export default new Vuex.Store({
 				commit('chat/setJoinedChannels', serverState['chat.channels'])
 				commit('chat/setReadPointers', serverState['chat.read_pointers'])
 				commit('chat/setNotificationCounts', serverState['chat.notification_counts'])
-				commit('exhibition/setData', serverState.exhibition)
 				commit('announcement/setAnnouncements', serverState.announcements)
 				commit('updateRooms', serverState['world.config'].rooms)
 				// TODO ?
@@ -380,7 +378,7 @@ export default new Vuex.Store({
 				// preserve the last fatal error for the room without attempting to reconnect immediately
 				return
 			}
-			if (room?.modules.some(module => ['livestream.native', 'livestream.youtube', 'livestream.iframe', 'call.bigbluebutton', 'call.zoom', 'call.janus', 'call.jitsi'].includes(module.type))) {
+			if (room?.modules.some(module => ['livestream.native', 'livestream.youtube', 'call.bigbluebutton', 'call.zoom', 'call.janus', 'call.jitsi'].includes(module.type))) {
 				try {
 					const { viewers } = await api.call('room.enter', {room: room.id})
 					state.roomViewers = viewers
@@ -403,7 +401,8 @@ export default new Vuex.Store({
 			return await api.call('room.schedule', {room: room.id, schedule_data})
 		},
 		async updateUserLocale({state}, locale) {
-			await i18n.changeLanguage(locale)
+			await persistLanguage(locale)
+			await changeLanguage(locale)
 			state.userLocale = locale
 		},
 		updateUserTimezone({state}, timezone) {
@@ -528,7 +527,6 @@ export default new Vuex.Store({
 		chat,
 		question,
 		poll,
-		exhibition,
 		schedule,
 		roulette,
 		notifications

@@ -39,7 +39,7 @@ from webauthn.helpers.structs import PublicKeyCredentialDescriptor
 
 from eventyay.base.i18n import language
 from eventyay.base.models.cache import VersionedModel
-from eventyay.common.image import create_thumbnail
+from eventyay.common.image import get_thumbnail
 from eventyay.common.text.path import path_with_hash
 from eventyay.common.urls import EventUrls
 from eventyay.helpers.urls import build_absolute_uri
@@ -375,7 +375,15 @@ class User(
 
         # Check if we need to get the profile picture from gravatar
         update_gravatar = not update_fields or 'get_gravatar' in update_fields
+        should_invalidate_avatar_caches = not is_new and (
+            update_fields is None
+            or {'avatar', 'avatar_thumbnail', 'avatar_thumbnail_tiny'} & set(update_fields)
+        )
         super().save(*args, **kwargs)
+        if should_invalidate_avatar_caches:
+            from eventyay.common.image import invalidate_speaker_avatar_caches
+
+            invalidate_speaker_avatar_caches(self)
         if account_hash_invalidate or account_hash_refresh:
             from eventyay.base.services.user import (
                 invalidate_account_hash_cache_for_emails,
@@ -1015,12 +1023,22 @@ the eventyay team"""
         if not thumbnail:
             image = self.avatar
         else:
-            image = self.avatar_thumbnail_tiny if thumbnail == 'tiny' else self.avatar_thumbnail
-            if not image:
-                image = create_thumbnail(self.avatar, thumbnail)
+            if str(self.avatar.name).lower().endswith('.svg'):
+                image = self.avatar
+            else:
+                image = get_thumbnail(self.avatar, thumbnail)
 
         if not image:
             return ''
+
+        if not thumbnail and image.name and not image.storage.exists(image.name):
+            for size in ('default', 'tiny'):
+                fallback = get_thumbnail(self.avatar, size)
+                if fallback and fallback.name and fallback.storage.exists(fallback.name):
+                    image = fallback
+                    break
+            else:
+                return ''
 
         # Build base URL with cache-busting
         try:
@@ -1090,8 +1108,6 @@ the eventyay team"""
                 "new": {"__redacted": True},
             }
         )
-        self.exhibitor_staff.all().delete()
-        self.poster_presenter.all().delete()
         self.chat_channels.filter(channel__room__isnull=False).delete()
 
         for dm_channel in self.chat_channels.filter(channel__room__isnull=True):

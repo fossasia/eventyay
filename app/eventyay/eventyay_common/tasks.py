@@ -10,6 +10,7 @@ import requests
 from celery import shared_task
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
+from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import DatabaseError
@@ -210,7 +211,7 @@ def update_billing_invoice_information(invoice_id: str):
             id=invoice_id,
         ).update(
             status=BillingInvoice.STATUS_PAID,
-            paid_datetime=datetime.now(),
+            paid_datetime=timezone.now(),
             payment_method='stripe',
             reminder_enabled=False,
         )
@@ -374,12 +375,15 @@ def get_next_reminder_datetime(reminder_schedule):
     @return:
     """
     reminder_schedule.sort()
-    today = datetime.now()
+    today = timezone.localtime()
     # Find the next scheduled day in the current month
     next_reminder = None
     for day in reminder_schedule:
         # Create a datetime object for each scheduled
-        reminder_date = datetime(today.year, today.month, day)
+        try:
+            reminder_date = today.replace(day=day, hour=0, minute=0, second=0, microsecond=0)
+        except ValueError:
+            continue
         # Check if the scheduled day is in the future
         if reminder_date > today:
             next_reminder = reminder_date
@@ -389,7 +393,7 @@ def get_next_reminder_datetime(reminder_schedule):
         next_month = today.month + 1 if today.month < 12 else 1
         next_year = today.year if today.month < 12 else today.year + 1
         # Select the first date in BILLING_REMIND_SCHEDULE for the next month
-        next_reminder = datetime(next_year, next_month, reminder_schedule[0])
+        next_reminder = today.replace(year=next_year, month=next_month, day=reminder_schedule[0], hour=0, minute=0, second=0, microsecond=0)
 
     return next_reminder
 

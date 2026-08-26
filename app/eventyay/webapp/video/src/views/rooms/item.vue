@@ -1,6 +1,6 @@
 <template lang="pug">
 .c-room(v-if="room", :class="{'standalone-chat': modules['chat.native'] && room.modules.length === 1}")
-	.stage(v-if="modules['livestream.native'] || modules['livestream.youtube'] || modules['livestream.iframe'] || modules['call.janus']")
+	.stage(v-if="modules['livestream.native'] || modules['livestream.youtube'] || modules['call.janus']")
 		media-source-placeholder
 		reactions-overlay(v-if="hasLivestream")
 		upcoming-stream-countdown(:room="room")
@@ -8,17 +8,12 @@
 		.stage-tools(v-if="hasLivestream")
 			// Added dropdown menu for audio translations near the reactions bar
 			reactions-bar(:expanded="true", @expand="activeStageTool = 'reaction'")
-			AudioTranslationDropdown(v-if="showCoreLanguageDropdown", :key="`${room.id}-core`", :languages="coreLanguages", :selected-language="selectedCoreLanguage", label="Audio Translation", @languageChanged="handleCoreLanguageChange")
-			AudioTranslationDropdown(v-if="showPluginLanguageDropdown", :key="`${room.id}-plugin`", :languages="pluginLanguages", :selected-language="selectedPluginLanguage", label="Interpretation", @languageChanged="handlePluginLanguageChange")
+			AudioTranslationDropdown(v-if="showCoreLanguageDropdown", :key="`${room.id}-core`", :languages="coreLanguages", :selected-language="selectedCoreLanguage", :label="$t('Audio Translation')", @languageChanged="handleCoreLanguageChange")
+			AudioTranslationDropdown(v-if="showPluginLanguageDropdown", :key="`${room.id}-plugin`", :languages="pluginLanguages", :selected-language="selectedPluginLanguage", :label="$t('Interpretation')", @languageChanged="handlePluginLanguageChange")
 	media-source-placeholder(v-else-if="modules['call.bigbluebutton'] || modules['call.zoom'] || modules['call.jitsi']")
 	roulette(v-else-if="modules['networking.roulette'] && $features.enabled('roulette')", :module="modules['networking.roulette']", :room="room")
 	landing-page(v-else-if="modules['page.landing']", :module="modules['page.landing']")
 	markdown-page(v-else-if="modules['page.markdown']", :module="modules['page.markdown']")
-	static-page(v-else-if="modules['page.static']", :module="modules['page.static']")
-	UserListPage(v-else-if="modules['page.userlist']", :module="modules['page.userlist']")
-	iframe-page(v-else-if="modules['page.iframe']", :module="modules['page.iframe']")
-	exhibition(v-else-if="modules['exhibition.native']", :room="room")
-	poster-hall(v-else-if="modules['poster.native']", :room="room")
 	chat(v-if="room.modules.length === 1 && modules['chat.native']", :room="room", :module="modules['chat.native']", mode="standalone", :key="room.id")
 	.room-sidebar(v-else-if="modules['chat.native'] || modules['question'] || modules['poll']", :class="unreadTabsClasses", role="complementary")
 		bunt-tabs(v-if="(!!modules['question'] + !!modules['poll'] + !!modules['chat.native']) > 1 && activeSidebarTab", :active-tab="activeSidebarTab")
@@ -36,15 +31,10 @@
 import Chat from 'components/Chat'
 import LandingPage from 'components/LandingPage'
 import MarkdownPage from 'components/MarkdownPage'
-import StaticPage from 'components/StaticPage'
-import IframePage from 'components/IframePage'
-import Exhibition from 'components/Exhibition'
 import ReactionsBar from 'components/ReactionsBar'
 import ReactionsOverlay from 'components/ReactionsOverlay'
 import Roulette from 'components/Roulette'
-import UserListPage from 'components/UserListPage'
 import Polls from 'components/Polls'
-import PosterHall from 'components/PosterHall'
 import Questions from 'components/Questions'
 import MediaSourcePlaceholder from 'components/MediaSourcePlaceholder'
 import AudioTranslationDropdown from 'components/AudioTranslationDropdown'
@@ -57,17 +47,12 @@ export default {
 	name: 'Room',
 	components: {
 		Chat,
-		Exhibition,
 		LandingPage,
 		MarkdownPage,
-		StaticPage,
-		IframePage,
 		ReactionsBar,
 		ReactionsOverlay,
-		UserListPage,
 		Roulette,
 		Polls,
-		PosterHall,
 		Questions,
 		MediaSourcePlaceholder,
 		AudioTranslationDropdown,
@@ -113,8 +98,7 @@ export default {
 		usesStreamPolling() {
 			return Boolean(
 				this.modules['livestream.native'] ||
-				this.modules['livestream.youtube'] ||
-				this.modules['livestream.iframe']
+				this.modules['livestream.youtube']
 			)
 		},
 		unreadTabsClasses() {
@@ -123,8 +107,7 @@ export default {
 		hasLivestream() {
 			return Boolean(
 				this.modules['livestream.native'] ||
-				this.modules['livestream.youtube'] ||
-				this.modules['livestream.iframe']
+				this.modules['livestream.youtube']
 			)
 		}
 	},
@@ -195,7 +178,7 @@ export default {
 		buildCoreLanguages() {
 			let languageUrls = null
 
-			const stageModule = this.modules['livestream.native'] || this.modules['livestream.youtube'] || this.modules['livestream.iframe']
+			const stageModule = this.modules['livestream.native'] || this.modules['livestream.youtube']
 			const isScheduleDriven = getStagePlaybackMode(stageModule) === PLAYBACK_MODE_SCHEDULE_DRIVEN
 
 			if (isScheduleDriven) {

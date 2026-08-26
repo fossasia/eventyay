@@ -1,7 +1,7 @@
 <template lang="pug">
 .c-admin
-	h1 admin
-	p here be global config
+	h1 {{ $t('admin') }}
+	p {{ $t('here be global config') }}
 </template>
 <script>
 export default {

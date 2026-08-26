@@ -2,31 +2,31 @@
 prompt.c-room-edit-prompt(:scrollable="false", @close="$emit('close')")
 	.content
 		.prompt-header
-			h2 Edit Room
+			h2 {{ $t('Edit Room') }}
 		bunt-progress-circular(v-if="loading", size="large")
 		.error(v-else-if="error")
 			p {{ error }}
-			bunt-button(@click="fetchConfig") Retry
+			bunt-button(@click="fetchConfig") {{ $t('Retry') }}
 		template(v-else-if="config")
 			.edit-body(v-scrollbar.y="")
 				.reset-section(v-if="wasConfigured")
 					.section-header
-						h3 Reset Room
+						h3 {{ $t('Reset Room') }}
 						bunt-button.btn-reset(
 							v-if="!confirmingReset",
 							@click="confirmingReset = true",
-						) Reset
-					p Return this room to the unconfigured state. The room itself and assigned sessions stay in place.
+						) {{ $t('Reset') }}
+					p {{ $t('Return this room to the unconfigured state. The room itself and assigned sessions stay in place.') }}
 					.confirmation(v-if="confirmingReset")
-						p Are you sure you want to reset this room to the unconfigured state?
+						p {{ $t('Are you sure you want to reset this room to the unconfigured state?') }}
 						.confirmation-actions
-							bunt-button.btn-cancel(@click="confirmingReset = false") Cancel
-							bunt-button.btn-reset(@click="resetRoom", :loading="resetting", :error-message="resetError") Confirm reset
+							bunt-button.btn-cancel(@click="confirmingReset = false") {{ $t('Cancel') }}
+							bunt-button.btn-reset(@click="resetRoom", :loading="resetting", :error-message="resetError") {{ $t('Confirm reset') }}
 				.type-section
-					h3 Room Type
+					h3 {{ $t('Video option') }}
 					.current-type(v-if="inferredType")
 						.mdi(:class="[`mdi-${inferredType.icon}`]")
-						span {{ inferredType.name }}
+						span {{ currentTypeLabel }}
 					.type-picker
 						.type-option(
 							v-for="type of availableRoomTypes",
@@ -39,8 +39,8 @@ prompt.c-room-edit-prompt(:scrollable="false", @close="$emit('close')")
 								.name {{ type.name }}
 								.description {{ type.description }}
 				.generic-settings
-					bunt-input(name="name", v-model="localizedName", label="Name")
-					bunt-input(name="description", v-model="localizedDescription", label="Description")
+					bunt-input(name="name", v-model="localizedName", :label="$t('Name')")
+					bunt-input(name="description", v-model="localizedDescription", :label="$t('Description')")
 				component.type-settings(
 					ref="settings",
 					v-if="inferredType && typeComponents[inferredType.id]",
@@ -57,36 +57,37 @@ prompt.c-room-edit-prompt(:scrollable="false", @close="$emit('close')")
 					:creating="!wasConfigured"
 				)
 				.danger-zone(v-if="wasConfigured && hasPermission('room:delete')")
-					h3 Danger Zone
-					p #[b Deleting this room will remove it from the schedule, but the sessions will remain safe.] Sessions assigned to this room will no longer have a room assigned.
-					bunt-button.btn-delete-room(v-if="!confirmingDelete", @click="confirmingDelete = true") Delete
+					h3 {{ $t('Danger Zone') }}
+					p {{ $t('Deleting this room will remove it from the schedule, but the sessions will remain safe.') }} {{ $t('Sessions assigned to this room will no longer have a room assigned.') }}
+					bunt-button.btn-delete-room(v-if="!confirmingDelete", @click="confirmingDelete = true") {{ $t('Delete') }}
 					.delete-confirmation(v-else)
-						p Please type #[b {{ localizedRoomName }}] to confirm deletion.
-						bunt-input(name="deletingRoomName", label="Room name", v-model="deletingRoomName", @keypress.enter="deleteRoom")
+						p {{ $t('Please type') }} #[b {{ localizedRoomName }}] {{ $t('to confirm deletion.') }}
+						bunt-input(name="deletingRoomName", :label="$t('Room name')", v-model="deletingRoomName", @keypress.enter="deleteRoom")
 						.confirmation-actions
-							bunt-button.btn-cancel(@click="cancelDelete") Cancel
-							bunt-button.btn-delete-room(icon="delete", :disabled="deletingRoomName !== localizedRoomName", @click="deleteRoom", :loading="deleting", :error-message="deleteError") Delete this room
+							bunt-button.btn-cancel(@click="cancelDelete") {{ $t('Cancel') }}
+							bunt-button.btn-delete-room(icon="delete", :disabled="deletingRoomName !== localizedRoomName", @click="deleteRoom", :loading="deleting", :error-message="deleteError") {{ $t('Delete this room') }}
 			.edit-actions
-				bunt-button.btn-cancel(@click="$emit('close')") Cancel
-				bunt-button.btn-save(@click="save", :loading="saving", :error-message="saveError") Save
+				bunt-button.btn-cancel(@click="$emit('close')") {{ $t('Cancel') }}
+				bunt-button.btn-save(@click="save", :loading="saving", :error-message="saveError") {{ $t('Save') }}
 </template>
 <script>
 import { markRaw } from 'vue'
 import { mapGetters } from 'vuex'
 import api from 'lib/api'
 import Prompt from 'components/Prompt'
-import ROOM_TYPES, { inferType } from 'lib/room-types'
-import { filterRoomTypesByPermission } from 'lib/room-type-permissions'
-import { PLAYBACK_MODE_SCHEDULE_DRIVEN } from 'lib/stage-streams'
+import { getRoomTypeById, inferType } from 'lib/room-types'
+import {
+	getAvailableVideoProviders,
+	getConfiguredRoomLabel,
+	applyVideoProviderToConfig,
+} from 'lib/video-providers'
+import features from 'features'
 import Stage from 'views/admin/rooms/types-edit/stage'
-import PageStatic from 'views/admin/rooms/types-edit/page-static'
-import PageIframe from 'views/admin/rooms/types-edit/page-iframe'
 import ChannelBBB from 'views/admin/rooms/types-edit/channel-bbb'
 import ChannelJanus from 'views/admin/rooms/types-edit/channel-janus'
 import ChannelJitsi from 'views/admin/rooms/types-edit/channel-jitsi'
 import ChannelZoom from 'views/admin/rooms/types-edit/channel-zoom'
 import ChannelRoulette from 'views/admin/rooms/types-edit/channel-roulette'
-import Posters from 'views/admin/rooms/types-edit/posters'
 import PageLanding from 'views/admin/rooms/types-edit/page-landing'
 import SidebarAddons from 'views/admin/rooms/types-edit/SidebarAddons'
 
@@ -114,25 +115,37 @@ export default {
 			deletingRoomName: '',
 			deleting: false,
 			deleteError: null,
-			allRoomTypes: ROOM_TYPES,
 			typeComponents: markRaw({
 				stage: Stage,
-				'page-static': PageStatic,
-				'page-iframe': PageIframe,
 				'page-landing': PageLanding,
 				'channel-bbb': ChannelBBB,
 				'channel-roulette': ChannelRoulette,
 				'channel-janus': ChannelJanus,
 				'channel-jitsi': ChannelJitsi,
 				'channel-zoom': ChannelZoom,
-				posters: Posters
 			})
 		}
 	},
 	computed: {
 		...mapGetters(['hasPermission', 'isAdminMode']),
 		availableRoomTypes () {
-			return filterRoomTypesByPermission(this.allRoomTypes, this.hasPermission, this.isAdminMode)
+			const videoTypes = getAvailableVideoProviders(
+				this.hasPermission,
+				this.isAdminMode,
+				(flag) => features.enabled(flag)
+			).map(provider => {
+				const type = getRoomTypeById(provider.roomTypeId)
+				if (!type) return null
+				return {
+					...type,
+					name: provider.label,
+					description: provider.description
+				}
+			}).filter(Boolean)
+			if (this.inferredType && !videoTypes.some(type => type.id === this.inferredType.id)) {
+				return [this.inferredType, ...videoTypes]
+			}
+			return videoTypes
 		},
 		modules () {
 			if (!this.config) return {}
@@ -163,18 +176,15 @@ export default {
 		},
 		localizedRoomName () {
 			return this.$localize(this.config?.name)
+		},
+		currentTypeLabel () {
+			return getConfiguredRoomLabel(this.inferredType)
 		}
 	},
 	async created () {
 		await this.fetchConfig()
 	},
 	methods: {
-		getStartingModuleConfig (type) {
-			if (type.id === 'stage') {
-				return { playback_mode: PLAYBACK_MODE_SCHEDULE_DRIVEN }
-			}
-			return {}
-		},
 		async fetchConfig () {
 			this.loading = true
 			this.error = null
@@ -183,7 +193,7 @@ export default {
 				this.wasConfigured = !!inferType(this.config)
 			} catch (err) {
 				this.error = err.code === 'protocol.denied'
-					? 'You do not have permission to edit this room.'
+					? this.$t('You do not have permission to edit this room.')
 					: (err.message || String(err))
 			} finally {
 				this.loading = false
@@ -191,7 +201,7 @@ export default {
 		},
 		changeType (type) {
 			if (this.inferredType && this.inferredType.id === type.id) return
-			this.config.module_config = [{ type: type.startingModule, config: this.getStartingModuleConfig(type) }]
+			applyVideoProviderToConfig(this.config, type)
 		},
 		async resetRoom () {
 			this.resetError = null

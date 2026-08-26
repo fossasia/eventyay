@@ -12,7 +12,6 @@ from eventyay.base.exporter import ListExporter
 BROADCAST_MODULE_TYPES = {
     "livestream.native",
     "livestream.youtube",
-    "livestream.iframe",
 }
 
 YOUTUBE_BOOLEAN_OPTIONS = (
@@ -62,7 +61,6 @@ class VideoRoomBroadcastConfigurationExporter(ListExporter):
             "module_type",
             "playback_mode",
             "hls_url",
-            "iframe_url",
             "youtube_id",
             "subtitles_url",
             "stream_offline_image",
@@ -126,7 +124,6 @@ class VideoRoomBroadcastConfigurationExporter(ListExporter):
             "module_type": module.get("type", ""),
             "playback_mode": config.get("playback_mode") or "always_on",
             "hls_url": config.get("hls_url", ""),
-            "iframe_url": config.get("url", ""),
             "youtube_id": config.get("ytid", ""),
             "subtitles_url": config.get("subtitle_url", ""),
             "stream_offline_image": config.get("streamOfflineImage", ""),
@@ -199,12 +196,6 @@ class VideoRoomBroadcastConfigurationExporter(ListExporter):
             return "zoom"
         if "chat.native" in module_types:
             return "chat"
-        if "exhibition.native" in module_types:
-            return "exhibition"
-        if "poster.native" in module_types:
-            return "poster"
         if "page.landing" in module_types:
             return "landing_page"
-        if "page.iframe" in module_types:
-            return "iframe_page"
         return ""

@@ -73,54 +73,48 @@ class StartPageView(TemplateView):
                 ctx['events'] = [e for e in qs if not e.has_component_testmode]
                 return ctx
 
-            qs = Event.objects.select_related('organizer').prefetch_related('_settings_objects').filter(live=True)
-            qs = qs.filter(Q(startpage_visible=True) | Q(startpage_featured=True))
-            events = list(qs.order_by('date_from'))
-            visible_events = [event for event in events if not event.has_component_testmode]
+            today_datetime = timezone.localtime().replace(hour=0, minute=0, second=0, microsecond=0)
+            base_qs = (
+                Event.objects.select_related('organizer')
+                .prefetch_related('_settings_objects')
+                .filter(live=True, testmode=False)
+                .exclude(_settings_objects__key='talks_testmode', _settings_objects__value='True')
+            )
+            future_filter = Q(date_to__gte=today_datetime) | Q(date_to__isnull=True, date_from__gte=today_datetime)
+            past_filter = Q(date_to__lt=today_datetime) | Q(date_to__isnull=True, date_from__lt=today_datetime)
 
-            today = timezone.localdate()
-            featured_events = []
-            upcoming_events = []
-            past_events = []
+            featured_qs = base_qs.filter(startpage_featured=True).filter(future_filter).order_by('date_from')[:8]
+            upcoming_qs = (
+                base_qs.filter(startpage_visible=True, startpage_featured=False)
+                .filter(future_filter)
+                .order_by('date_from')[:8]
+            )
+            past_qs = (
+                base_qs.filter(startpage_visible=True)
+                .filter(past_filter)
+                .order_by('-date_from')[:8]
+            )
 
-            for event in visible_events:
-                event_end = event.date_to or event.date_from
-                if timezone.is_aware(event_end):
-                    event_end_date = timezone.localtime(event_end).date()
-                else:
-                    event_end_date = event_end.date()
-                in_future = event_end_date >= today
-                if in_future and event.startpage_featured:
-                    featured_events.append(event)
-                if in_future:
-                    if event.startpage_visible and not event.startpage_featured:
-                        upcoming_events.append(event)
-                elif event.startpage_visible:
-                    past_events.append(event)
-
-            ctx['featured_events'] = featured_events[:8]
-            ctx['upcoming_events'] = upcoming_events[:8]
-            ctx['past_events'] = list(reversed(past_events))[:8]
+            ctx['featured_events'] = list(featured_qs)
+            ctx['upcoming_events'] = list(upcoming_qs)
+            ctx['past_events'] = list(past_qs)
 
             followed_upcoming_events = []
             if self.request.user.is_authenticated:
                 followed_org_ids = OrganizerFollower.objects.filter(
                     user=self.request.user
                 ).values_list('organizer_id', flat=True)
-                qs = (
-                    Event.objects.filter(
+                followed_qs = (
+                    base_qs.filter(
                         organizer_id__in=followed_org_ids,
-                        live=True,
                     )
                     .filter(Q(startpage_visible=True) | Q(startpage_featured=True))
-                    .filter(Q(date_to__gte=today) | Q(date_to__isnull=True, date_from__gte=today))
-                    .select_related('organizer')
-                    .prefetch_related('_settings_objects')
-                    .order_by('date_from')[:20]
+                    .filter(future_filter)
+                    .order_by('date_from')[:8]
                 )
-                followed_upcoming_events = [e for e in qs if not e.has_component_testmode]
+                followed_upcoming_events = list(followed_qs)
 
-            ctx['followed_upcoming_events'] = followed_upcoming_events[:8]
+            ctx['followed_upcoming_events'] = followed_upcoming_events
         return ctx
 
 
@@ -164,13 +158,13 @@ class UpcomingEventsView(PaginationMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        today = timezone.localdate()
+        today_datetime = timezone.localtime().replace(hour=0, minute=0, second=0, microsecond=0)
         qs = (
             Event.objects.select_related('organizer')
             .prefetch_related('_settings_objects')
             .filter(live=True)
             .filter(Q(startpage_visible=True) | Q(startpage_featured=True))
-            .filter(Q(date_to__gte=today) | Q(date_to__isnull=True, date_from__gte=today))
+            .filter(Q(date_to__gte=today_datetime) | Q(date_to__isnull=True, date_from__gte=today_datetime))
             .filter(testmode=False)
             .exclude(_settings_objects__key='talks_testmode', _settings_objects__value='True')
             .order_by('date_from')
@@ -192,13 +186,13 @@ class PastEventsView(PaginationMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        today = timezone.localdate()
+        today_datetime = timezone.localtime().replace(hour=0, minute=0, second=0, microsecond=0)
         qs = (
             Event.objects.select_related('organizer')
             .prefetch_related('_settings_objects')
             .filter(live=True)
             .filter(Q(startpage_visible=True) | Q(startpage_featured=True))
-            .filter(Q(date_to__lt=today) | Q(date_to__isnull=True, date_from__lt=today))
+            .filter(Q(date_to__lt=today_datetime) | Q(date_to__isnull=True, date_from__lt=today_datetime))
             .filter(testmode=False)
             .exclude(_settings_objects__key='talks_testmode', _settings_objects__value='True')
             .order_by('-date_from')
@@ -220,7 +214,7 @@ class FollowedEventsView(TemplateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx.update(_common_base_context(self.request))
-        today = timezone.localdate()
+        today_datetime = timezone.localtime().replace(hour=0, minute=0, second=0, microsecond=0)
 
         followed_org_ids = OrganizerFollower.objects.filter(
             user=self.request.user
@@ -236,7 +230,7 @@ class FollowedEventsView(TemplateView):
                     live=True,
                 )
                 .filter(Q(startpage_visible=True) | Q(startpage_featured=True))
-                .filter(Q(date_to__gte=today) | Q(date_to__isnull=True, date_from__gte=today))
+                .filter(Q(date_to__gte=today_datetime) | Q(date_to__isnull=True, date_from__gte=today_datetime))
                 .filter(testmode=False)
                 .exclude(_settings_objects__key='talks_testmode', _settings_objects__value='True')
                 .select_related('organizer')

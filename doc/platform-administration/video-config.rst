@@ -81,7 +81,6 @@ Experimental Features
 * janus
 * jitsi
 * page.landing
-* iframe-player
 * polls
 
 Jitsi Rooms

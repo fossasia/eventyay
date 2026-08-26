@@ -1,6 +1,6 @@
 <template lang="pug">
 .c-manage-schedule
-	bunt-switch(name="computeSession", v-model="computeSession", label="Compute current session from schedule")
+	bunt-switch(name="computeSession", v-model="computeSession", :label="$t('Compute current session from schedule')")
 </template>
 <script>
 export default {
