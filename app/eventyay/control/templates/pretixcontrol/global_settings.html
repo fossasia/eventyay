@@ -186,6 +186,7 @@
                                 {% bootstrap_field field layout='control' %}
                             {% endwith %}
                         {% endfor %}
+                        {% include "pretixcontrol/includes/gmail_connection.html" with gmail_panel_nested=True gmail_disconnect_form_id="admin-gmail-disconnect-form" %}
                         <hr>
                         <div class="form-group">
                             <label class="col-md-3 control-label" for="admin-test-email-input">
@@ -245,6 +246,11 @@
     {# The input and button above reference this form via the HTML5 form= attribute.           #}
     <form id="admin-test-email-form"
           action="{% url 'eventyay_admin:admin.global.settings.test_email' %}"
+          method="post">
+        {% csrf_token %}
+    </form>
+    <form id="admin-gmail-disconnect-form"
+          action="{{ gmail_disconnect_url }}"
           method="post">
         {% csrf_token %}
     </form>

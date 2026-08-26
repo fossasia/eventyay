@@ -42,6 +42,20 @@ class GlobalSettingsView(AdministratorPermissionRequiredMixin, FormView):
     template_name = 'pretixcontrol/global_settings.html'
     form_class = GlobalSettingsForm
 
+    def get_context_data(self, **kwargs):
+        from eventyay.base.gmail.models import GmailOAuthCredential
+
+        context = super().get_context_data(**kwargs)
+        context['gmail_migration_pending'] = not GmailOAuthCredential.is_table_available()
+        context['gmail_credential'] = GmailOAuthCredential.get_active_global_safe()
+        context['gmail_callback_url'] = self.request.build_absolute_uri(
+            reverse('eventyay_admin:admin.global.gmail.callback')
+        )
+        context['gmail_connect_url'] = reverse('eventyay_admin:admin.global.gmail.connect')
+        context['gmail_disconnect_url'] = reverse('eventyay_admin:admin.global.gmail.disconnect')
+        context['test_email_feedback'] = self.request.session.pop('admin_test_email_feedback', None)
+        return context
+
     def form_valid(self, form):
         form.save()
         messages.success(self.request, _('Your changes have been saved.'))
@@ -50,11 +64,6 @@ class GlobalSettingsView(AdministratorPermissionRequiredMixin, FormView):
     def form_invalid(self, form):
         messages.error(self.request, _('Your changes have not been saved, see below for errors.'))
         return super().form_invalid(form)
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx['test_email_feedback'] = self.request.session.pop('admin_test_email_feedback', None)
-        return ctx
 
     def get_success_url(self):
         return reverse('eventyay_admin:admin.global.settings')
@@ -258,6 +267,18 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
                         _('SendGrid API key is missing. Please configure it and save.'),
                     )
                 backend = SendGridEmail(api_key=gs.settings.send_grid_api_key)
+                backend.test(from_addr=mail_from, to_addrs=recipients)
+            elif gs.settings.email_vendor == 'gmail_api':
+                from eventyay.base.gmail.resolver import get_gmail_mail_backend
+
+                backend = get_gmail_mail_backend(timeout=10)
+                if not backend:
+                    messages.error(
+                        request,
+                        _('Gmail is selected but no account is connected. Connect Gmail in the settings first.'),
+                    )
+                    return redirect(reverse('eventyay_admin:admin.global.settings'))
+                backend.test(from_addr=mail_from, to_addrs=recipients)
             elif gs.settings.email_vendor == 'smtp':
                 if not gs.settings.smtp_host or not gs.settings.smtp_port:
                     return self._respond(
@@ -275,17 +296,24 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
                     fail_silently=False,
                     timeout=10,
                 )
+                email = EmailMessage(
+                    subject=_('Eventyay system - test email'),
+                    body=_('This is a test email from your Eventyay system email configuration.'),
+                    from_email=mail_from,
+                    to=recipients,
+                    connection=backend,
+                )
+                email.send(fail_silently=False)
             else:
                 backend = get_mail_backend(timeout=10)
-
-            email = EmailMessage(
-                subject=_('Eventyay system - test email'),
-                body=_('This is a test email from your Eventyay system email configuration.'),
-                from_email=mail_from,
-                to=recipients,
-                connection=backend,
-            )
-            email.send(fail_silently=False)
+                email = EmailMessage(
+                    subject=_('Eventyay system - test email'),
+                    body=_('This is a test email from your Eventyay system email configuration.'),
+                    from_email=mail_from,
+                    to=recipients,
+                    connection=backend,
+                )
+                email.send(fail_silently=False)
         except UnicodeEncodeError:
             # Stored credentials or recipient may contain non-ASCII (e.g. NBSP from clipboard).
             logger.warning(
@@ -309,13 +337,38 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
                 'error',
                 _('SendGrid test email failed to connect or send. HTTP Error: %(err)s') % {'err': e},
             )
-        except (smtplib.SMTPException, OSError) as e:
-            logger.exception('Admin SMTP test failed (from=%s)', mail_from)
-            return self._respond(
-                request,
-                'error',
-                _('Test email failed to connect or send: %(err)s') % {'err': e},
+        except ImportError as e:
+            logger.exception('Admin Gmail test failed because dependencies are missing (from=%s)', mail_from)
+            return self._respond(request, 'error', str(e))
+        except Exception as e:
+            from eventyay.base.gmail.errors import (
+                GmailDailyLimitError,
+                GmailPermanentError,
+                GmailRateLimitError,
+                GmailTemporaryError,
             )
+
+            if isinstance(e, (GmailRateLimitError, GmailTemporaryError)):
+                return self._respond(
+                    request,
+                    'warning',
+                    _('Gmail test email is temporarily delayed because of rate limits: %(err)s') % {'err': e},
+                )
+            elif isinstance(e, (GmailDailyLimitError, GmailPermanentError)):
+                return self._respond(
+                    request,
+                    'error',
+                    _('Gmail test email could not be sent: %(err)s') % {'err': e},
+                )
+            elif isinstance(e, (smtplib.SMTPException, OSError)):
+                logger.exception('Admin SMTP test failed (from=%s)', mail_from)
+                return self._respond(
+                    request,
+                    'error',
+                    _('Test email failed to connect or send: %(err)s') % {'err': e},
+                )
+            else:
+                raise
 
         recipients_str = ', '.join(recipients)
         logger.info('Admin test email sent to %d recipient(s)', len(recipients))

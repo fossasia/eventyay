@@ -7,7 +7,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext_lazy as _
 from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
 
-from eventyay.base.forms import SecretKeySettingsField, SecretKeySettingsWidget, SettingsForm
+from eventyay.base.forms import SECRET_REDACTED, SecretKeySettingsField, SecretKeySettingsWidget, SettingsForm
 from eventyay.base.settings import EVENT_SERIES_CREATION_ENABLED, MEETUP_CREATION_ENABLED, GlobalSettingsObject
 from eventyay.base.signals import register_global_settings
 
@@ -50,7 +50,7 @@ class GlobalSettingsForm(SettingsForm):
         self._setting_default()
         super().__init__(*args, obj=self.obj, **kwargs)
 
-        smtp_select = [('sendgrid', _('SendGrid')), ('smtp', _('SMTP'))]
+        smtp_select = [('sendgrid', _('SendGrid')), ('smtp', _('SMTP')), ('gmail_api', _('Gmail / Google Workspace API'))]
 
         self.fields = OrderedDict(
             list(self.fields.items())
@@ -178,12 +178,37 @@ class GlobalSettingsForm(SettingsForm):
                 ),
                 (
                     'send_grid_api_key',
-                    forms.CharField(
+                    SecretKeySettingsField(
                         required=False,
                         label=_('Sendgrid token'),
-                        widget=forms.TextInput(attrs={
+                        widget=SecretKeySettingsWidget(attrs={
                             'placeholder': 'SG.xxxxxxxx',
                             'data-display-dependency': '#id_email_vendor_0',
+                        }),
+                    ),
+                ),
+                (
+                    'gmail_client_id',
+                    forms.CharField(
+                        required=False,
+                        label=_('Gmail OAuth client ID'),
+                        help_text=_(
+                            'Create an OAuth client in Google Cloud Console. The connect flow requests '
+                            'Gmail send and user email scopes. Use the OAuth redirect URI shown below '
+                            'as an authorized redirect URI.'
+                        ),
+                        widget=forms.TextInput(attrs={
+                            'data-display-dependency': '#id_email_vendor_2',
+                        }),
+                    ),
+                ),
+                (
+                    'gmail_client_secret',
+                    SecretKeySettingsField(
+                        required=False,
+                        label=_('Gmail OAuth client secret'),
+                        widget=SecretKeySettingsWidget(attrs={
+                            'data-display-dependency': '#id_email_vendor_2',
                         }),
                     ),
                 ),
@@ -511,6 +536,7 @@ class GlobalSettingsForm(SettingsForm):
             ]),
             ('email', _('Email'), [
                 'mail_from', 'email_vendor', 'send_grid_api_key',
+                'gmail_client_id', 'gmail_client_secret',
                 'smtp_host', 'smtp_port', 'smtp_username', 'smtp_password',
                 'smtp_use_tls', 'smtp_use_ssl',
             ]),
@@ -584,6 +610,8 @@ class GlobalSettingsForm(SettingsForm):
                 ])
             )
 
+
+
     def clean_voxbento_base_url(self):
         url = (self.cleaned_data.get('voxbento_base_url') or '').strip()
         if url:
@@ -608,6 +636,17 @@ class GlobalSettingsForm(SettingsForm):
         if data.get('email_vendor') == 'sendgrid':
             if not data.get('send_grid_api_key'):
                 raise forms.ValidationError({'send_grid_api_key': _('This field is required when using SendGrid as email vendor.')})
+        if data.get('email_vendor') == 'gmail_api':
+            if not (data.get('gmail_client_id') or '').strip():
+                raise forms.ValidationError({'gmail_client_id': _('This field is required when using Gmail as email vendor.')})
+            secret = data.get('gmail_client_secret')
+            has_secret = (
+                secret == SECRET_REDACTED
+                or bool((secret or '').strip())
+                or self.obj.settings.get('gmail_client_secret')
+            )
+            if not has_secret:
+                raise forms.ValidationError({'gmail_client_secret': _('This field is required when using Gmail as email vendor.')})
 
 
 
