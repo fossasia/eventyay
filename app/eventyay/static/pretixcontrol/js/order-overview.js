@@ -91,6 +91,8 @@ function initOrderOverviewReport(root = document) {
                 }
             });
         });
+    }
+
     // Open the datepicker when the calendar addon is clicked.
     toggleRoot.querySelectorAll('.order-overview-filter-field .input-group.date').forEach((group) => {
         const input = group.querySelector('.datepickerfield');
