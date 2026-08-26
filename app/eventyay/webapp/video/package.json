@@ -25,7 +25,7 @@
     "@tiptap/extension-link": "^2.27.2",
     "@tiptap/extension-paragraph": "^2.27.2",
     "@tiptap/extension-placeholder": "^2.27.2",
-    "@tiptap/extension-text": "^2.27.2",
+    "@tiptap/extension-text": "^3.30.2",
     "@tiptap/extension-text-align": "^2.27.2",
     "@tiptap/extension-underline": "^2.27.2",
     "@tiptap/starter-kit": "^2.27.2",
