@@ -2062,7 +2062,7 @@ export default {
 		feedLabel(feed) {
 			if (feed.feedType === 'screen') {
 				return feed.user?.profile?.display_name
-					? this.$t("{{name}}'s screen", {name: feed.user.profile.display_name})
+					? this.$t('{{name}}\'s screen', {name: feed.user.profile.display_name})
 					: this.$t('Shared screen')
 			}
 			return feed.user?.profile?.display_name || this.$t('Participant')
