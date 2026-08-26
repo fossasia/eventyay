@@ -1,13 +1,16 @@
 all: localecompile staticfiles
 production: localecompile staticfiles compress
-LNGS:=`find eventyay/locale/ -mindepth 1 -maxdepth 1 -type d -printf "-l %f "`
+LNGS := $(foreach d,$(shell find eventyay/locale -mindepth 1 -maxdepth 1 -type d),-l $(notdir $(d)))
 
 localecompile:
 	./manage.py compilemessages --ignore ".venv"
 
 localegen:
-	./manage.py makemessages --keep-pot --ignore "eventyay/helpers/*" $(LNGS)
-	./manage.py makemessages --keep-pot -d djangojs --ignore "eventyay/helpers/*" --ignore "eventyay/static/jsi18n/*" --ignore "eventyay/static/jsi18n/*" --ignore "eventyay/static.dist/*" --ignore "data/*" --ignore "eventyay/static/rrule/*" --ignore "build/*" $(LNGS)
+	./manage.py makemessages --keep-pot --ignore "eventyay/helpers/*" --ignore "eventyay/webapp/*" $(LNGS)
+	./manage.py makemessages --keep-pot -d djangojs --ignore "eventyay/helpers/*" --ignore "eventyay/static/jsi18n/*" --ignore "eventyay/static.dist/*" --ignore "data/*" --ignore "eventyay/static/rrule/*" --ignore "build/*" --ignore "eventyay/webapp/*" --ignore "*/node_modules/*" --ignore "*/dist/*" $(LNGS)
+	npm run i18n:extract --prefix=eventyay/webapp/video
+	npm run i18n:extract --prefix=eventyay/webapp/schedule
+	npm run i18n:extract --prefix=eventyay/webapp/schedule-editor
 
 staticfiles: jsi18n
 	./manage.py collectstatic --noinput

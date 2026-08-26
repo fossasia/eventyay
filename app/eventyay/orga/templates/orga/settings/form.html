@@ -31,10 +31,10 @@
 
         {% include "orga/includes/tablist.html" %}
 
-        <section role="tabpanel" id="tabpanel-display" aria-labelledby="tab-display" tabindex="0" aria-hidden="false">
+        <section role="tabpanel" id="tabpanel-general" aria-labelledby="tab-general" tabindex="0" aria-hidden="false">
 
-            <fieldset>
-                {# Needs to be later moved to common settings design: hiding Custom Event CSS upload/text fields and Header Pattern #}
+        <fieldset>
+            {# Needs to be later moved to common settings design: hiding Custom Event CSS upload/text fields and Header Pattern #}
 {#                <div id="csswrap">#}
 {#                    {{ form.custom_css.as_field_group }}#}
 {#                    <button class="btn btn-outline-info" type="button" data-toggle="collapse" data-target="#collapseCSSBox" aria-expanded="false" aria-controls="collapseCSSBox">#}
@@ -47,37 +47,32 @@
 {#                <div {% if request.event.visible_primary_color %}style="--color: {{ request.event.visible_primary_color }}"{% endif %} class="colorpicker-update">#}
 {#                    {{ form.header_pattern.as_field_group }}#}
 {#                </div>#}
-            </fieldset>
-            <fieldset>
-                <legend id="schedule">{% translate "Schedule" %}</legend>
-                {{ form.show_featured.as_field_group }}
-                {{ form.show_featured_speakers.as_field_group }}
-                {{ form.session_popularity_enabled.as_field_group }}
-                <div class="form-subfield-group{% if form.fields.session_popularity_show_on_schedule.disabled %} subfield-disabled{% endif %}" id="session-popularity-subfields">
-                    {{ form.session_popularity_show_on_schedule.as_field_group }}
-                </div>
-                {{ form.use_feedback.as_field_group }}
-            </fieldset>
+        </fieldset>
+        <fieldset>
+            <legend id="featured">{% translate "Featured" %}</legend>
+            {{ form.show_featured.as_field_group }}
+            {{ form.show_featured_speakers.as_field_group }}
+        </fieldset>
+        <fieldset>
+            <legend id="popularity">{% translate "Popularity" %}</legend>
+            {{ form.session_popularity_enabled.as_field_group }}
+            <div class="form-subfield-group{% if form.fields.session_popularity_show_on_schedule.disabled %} subfield-disabled{% endif %}" id="session-popularity-subfields">
+                {{ form.session_popularity_show_on_schedule.as_field_group }}
+            </div>
+        </fieldset>
 
-            {% if form.etherpad_enabled %}
-            <fieldset>
-                <legend id="etherpad">{% translate "Etherpad" %}</legend>
-                {{ form.etherpad_enabled.as_field_group }}
-                {{ form.etherpad_auto_generate.as_field_group }}
-                {{ form.etherpad_public.as_field_group }}
-            </fieldset>
-            {% endif %}
+        {% if form.etherpad_enabled %}
+        <fieldset>
+            <legend id="etherpad">{% translate "Etherpad" %}</legend>
+            {{ form.etherpad_enabled.as_field_group }}
+            {{ form.etherpad_auto_generate.as_field_group }}
+            {{ form.etherpad_public.as_field_group }}
+        </fieldset>
+        {% endif %}
+
         </section>
 
-        <div class="submit-group panel">
-            <span></span>
-            <span>
-                <button type="submit" class="btn btn-success">
-                    <i class="fa fa-check"></i>
-                    {{ phrases.base.save }}
-                </button>
-            </span>
-        </div>
+        {% include "orga/includes/submit_row.html" %}
     </form>
 
 {% endblock settings_content %}

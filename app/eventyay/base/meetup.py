@@ -21,30 +21,25 @@ DEFAULT_QUOTA_NAME = 'RSVP'
 
 VIDEO_TYPE_YOUTUBE = 'youtube'
 VIDEO_TYPE_HLS = 'hls'
-VIDEO_TYPE_IFRAME = 'iframe'
 
 VIDEO_TYPE_CHOICES = [
     ('', _('No video stream')),
     (VIDEO_TYPE_YOUTUBE, _('YouTube')),
     (VIDEO_TYPE_HLS, _('HLS stream')),
-    (VIDEO_TYPE_IFRAME, _('Embed URL / iframe')),
 ]
 
 VIDEO_MODULES = {
     VIDEO_TYPE_YOUTUBE: ('livestream.youtube', 'ytid'),
     VIDEO_TYPE_HLS: ('livestream.native', 'hls_url'),
-    VIDEO_TYPE_IFRAME: ('page.iframe', 'url'),
 }
 
 VIDEO_TYPES_BY_MODULE = {
     module_type: (video_type, config_key) for video_type, (module_type, config_key) in VIDEO_MODULES.items()
 }
-VIDEO_TYPES_BY_MODULE['livestream.iframe'] = (VIDEO_TYPE_IFRAME, 'url')
 
-URL_VIDEO_TYPES = (VIDEO_TYPE_HLS, VIDEO_TYPE_IFRAME)
+URL_VIDEO_TYPES = (VIDEO_TYPE_HLS,)
 
 LIVESTREAM_MODULE_PREFIX = 'livestream.'
-EMBEDDED_PAGE_MODULE_TYPE = 'page.iframe'
 
 VIDEO_SETTINGS_KEYS = (
     'venueless_url',
@@ -82,7 +77,7 @@ def get_video_config_from_modules(module_config) -> dict:
 
 def _is_video_module(module) -> bool:
     module_type = (module or {}).get('type', '') or ''
-    return module_type.startswith(LIVESTREAM_MODULE_PREFIX) or module_type == EMBEDDED_PAGE_MODULE_TYPE
+    return module_type.startswith(LIVESTREAM_MODULE_PREFIX)
 
 
 def has_video_stream(event) -> bool:
@@ -137,7 +132,7 @@ def build_video_form_fields(type_help_text=None) -> dict:
             required=False,
             max_length=255,
             label=_('Video URL / stream identifier'),
-            help_text=_('YouTube video URL, HLS stream URL, or embed URL.'),
+            help_text=_('YouTube video URL or HLS stream URL.'),
         ),
     }
 
@@ -226,11 +221,19 @@ def ensure_video_credentials(event, request=None, force=False) -> bool:
 
 
 def ensure_rsvp_product(event):
+    """
+    Ensure an active admission product and quota exist for a meetup event.
+
+    Note: Product and Quota models in Eventyay are scoped by organizer
+    (`event__organizer`) in the ORM, so this helper establishes organizer
+    scope internally. Callers should not wrap calls to this helper in
+    redundant `scope(organizer=...)` blocks.
+    """
     from eventyay.base.models import Quota
     from eventyay.base.models.product import Product
 
     locale = getattr(event, 'locale', 'en') or 'en'
-    with scope(event=event):
+    with scope(organizer=event.organizer):
         product = event.products.filter(admission=True, active=True).first()
         if product is None:
             product = Product(
@@ -251,11 +254,19 @@ def ensure_rsvp_product(event):
 
 
 def get_rsvp_product_and_quota(event):
-    with scope(event=event):
+    """
+    Retrieve the active RSVP product and associated quota for a meetup event.
+
+    Note: Product and Quota models in Eventyay are scoped by organizer
+    (`event__organizer`) in the ORM, so this helper establishes organizer
+    scope internally. Callers should not wrap calls to this helper in
+    redundant `scope(organizer=...)` blocks.
+    """
+    with scope(organizer=event.organizer):
         product = event.products.filter(admission=True, active=True).first()
         if product is None:
             return None, None
-        quota = product.quotas.filter(size__isnull=True).first() or product.quotas.first()
+        quota = product.quotas.first()
         return product, quota
 
 

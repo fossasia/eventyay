@@ -34,7 +34,7 @@ Architecture
 
 **Styling**: Stylus with custom theming
 
-**i18n**: vue-i18n for internationalization
+**i18n**: shared ``webapp/i18n`` gettext runtime (``video.po`` / ``schedule.po`` / ``schedule-editor.po``)
 
 Core Application Structure
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -102,13 +102,6 @@ Interactive Features
 - ``components/Questions.vue`` - Q&A question list
 - ``components/Roulette.vue`` - Speed networking roulette
 
-Exhibition
-^^^^^^^^^^
-
-- ``components/Exhibition.vue`` - Exhibition hall view
-- ``components/ContactExhibitorPrompt.vue`` - Exhibitor contact form
-- ``components/PosterHall.vue`` - Poster session hall
-
 User Interface
 ^^^^^^^^^^^^^^
 
@@ -127,8 +120,6 @@ Content Display
 - ``components/MarkdownPage.vue`` - Full markdown page
 - ``components/RichTextContent.vue`` - Rich text display
 - ``components/RichTextEditor.vue`` - Quill-based rich text editor
-- ``components/StaticPage.vue`` - Static content pages
-- ``components/IframePage.vue`` - Embedded iframe pages
 
 Forms & Prompts
 ^^^^^^^^^^^^^^^
@@ -203,11 +194,6 @@ Vuex Store Modules (``src/store/``)
   - Unread counts
   - Message history
 
-**exhibition.js**
-  - Exhibitor data
-  - Contact requests
-  - Booth interactions
-
 **poll.js**
   - Poll data and votes
   - Real-time results
@@ -267,27 +253,21 @@ Other Utilities
 Internationalization
 ~~~~~~~~~~~~~~~~~~~~
 
-**Supported Languages** (``src/locales/``):
-- English (en)
-- German (de)
-- Spanish (es)
-- French (fr)
-- Portuguese (pt_BR)
-- Russian (ru)
-- Ukrainian (uk)
-- Arabic (ar)
+**Supported Languages**: same UI languages as tickets/talk (Django ``LANGUAGES``).
+Catalogs live in ``app/eventyay/locale/*/LC_MESSAGES/{video,schedule,schedule-editor}.po``.
+Untranslated locales always fall back to English; they never show raw keys.
 
-**Implementation**: vue-i18n with JSON translation files
+**Implementation**: i18next loading gettext catalogs (Weblate)
 
 **Usage**:
 
 .. code-block:: javascript
 
    // In components
-   this.$t('key.path')
+   this.$t('Search')
    
    // In templates
-   {{ $t('key.path') }}
+   {{ $t('Save') }}
 
 Styling & Theming
 ~~~~~~~~~~~~~~~~~

@@ -1,0 +1,18 @@
+{% extends "orga/base.html" %}
+{% load i18n %}
+
+{% block content %}
+    <h2>{% translate "Delete feedback" %}</h2>
+    <p>{% translate "Are you sure you want to delete this feedback?" %}</p>
+    <div class="card mb-3">
+        <div class="card-body">
+            {{ object.review|truncatechars:200 }}
+        </div>
+    </div>
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="delete">
+        <button type="submit" class="btn btn-danger">{% translate "Delete" %}</button>
+        <a href="{{ request.GET.next|default:request.event.orga_urls.feedback }}" class="btn btn-outline-info">{% translate "Cancel" %}</a>
+    </form>
+{% endblock %}

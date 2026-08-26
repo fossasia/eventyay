@@ -43,7 +43,8 @@ from eventyay.base.models import (
     Quota,
     TaxRule,
 )
-from eventyay.base.models.checkin import CheckinList
+from eventyay.common.views.helpers import build_login_url_with_next
+from eventyay.base.models.checkin import Checkin, CheckinList
 from eventyay.base.models.orders import (
     CachedCombinedTicket,
     InvoiceAddress,
@@ -96,6 +97,37 @@ from eventyay.presale.views.robots import NoSearchIndexViewMixin
 logger = logging.getLogger(__name__)
 
 
+def record_video_join_checkin(event, position, include_pending):
+    """Record video-join check-in without blocking repeat JWT redirects."""
+    list_name = gettext('Eventyay Video')
+    if Checkin.objects.filter(
+        position_id=position.pk,
+        list__event=event,
+        list__name=list_name,
+        type=Checkin.TYPE_ENTRY,
+    ).exists():
+        return
+
+    cl = CheckinList.objects.get_or_create(
+        event=event,
+        subevent=position.subevent,
+        name=list_name,
+        defaults={
+            'all_products': True,
+            'include_pending': include_pending,
+        },
+    )[0]
+    try:
+        perform_checkin(position, cl, {})
+    except Exception:
+        logger.exception(
+            'Error during Eventyay Video check-in',
+            extra={
+                'event_id': getattr(event, 'id', None),
+                'position_id': getattr(position, 'id', None),
+            },
+        )
+
 
 class OrderDetailMixin(NoSearchIndexViewMixin):
     @cached_property
@@ -131,7 +163,19 @@ class OrderPositionDetailMixin(NoSearchIndexViewMixin):
                 order__code=self.kwargs['order'],
                 positionid=self.kwargs['position'],
             )
-            .select_related('order', 'order__event')
+            .select_related(
+                'order',
+                'order__event',
+                'product',
+                'product__category',
+                'variation',
+                'subevent',
+            )
+            .prefetch_related(
+                'addons',
+                'addons__product',
+                'addons__variation',
+            )
             .first()
         )
         if p:
@@ -144,8 +188,35 @@ class OrderPositionDetailMixin(NoSearchIndexViewMixin):
     def order(self):
         return self.position.order if self.position else None
 
+class OrderProtectedActionMixin:
+    def dispatch(self, request, *args, **kwargs):
+        self.request = request
+        order = getattr(self, 'order', None)
+        position = getattr(self, 'position', None)
+
+        if order is None and position:
+            order = position.order
+
+        if not request.user.is_authenticated:
+            return redirect(build_login_url_with_next(request.get_full_path()))
+
+        if order:
+            user_email = (request.user.email or '').lower()
+            allowed_emails = {(order.email or '').lower()}
+
+            if position and position.attendee_email:
+                allowed_emails.add(position.attendee_email.lower())
+
+            allowed_emails.discard('')
+
+            if user_email not in allowed_emails:
+                raise PermissionDenied(_('You are not authorized to access this order.'))
+
+        return super().dispatch(request, *args, **kwargs)
+
+
 @method_decorator(xframe_options_exempt, 'dispatch')
-class OrderPositionJoin(EventViewMixin, OrderPositionDetailMixin, View):
+class OrderPositionJoin(OrderProtectedActionMixin, EventViewMixin, OrderPositionDetailMixin, View):
     """Generate a video access token for a specific order position and redirect to the Video SPA.
 
     This used to live in the old ticket-video plugin; video is now integrated.
@@ -209,26 +280,11 @@ class OrderPositionJoin(EventViewMixin, OrderPositionDetailMixin, View):
 
         token = jwt.encode(payload, request.event.settings.venueless_secret, algorithm='HS256')
 
-        cl = CheckinList.objects.get_or_create(
-            event=request.event,
-            subevent=self.position.subevent,
-            name=gettext('Eventyay Video'),
-            defaults={
-                'all_products': True,
-                'include_pending': request.event.settings.venueless_allow_pending,
-            },
-        )[0]
-        try:
-            perform_checkin(self.position, cl, {})
-        except Exception:
-            logger.exception(
-                'Error during Eventyay Video check-in',
-                extra={
-                    'event_id': getattr(request.event, 'id', None),
-                    'order_code': getattr(getattr(self, 'order', None), 'code', None),
-                    'position_id': getattr(self.position, 'id', None),
-                },
-            )
+        record_video_join_checkin(
+            request.event,
+            self.position,
+            request.event.settings.venueless_allow_pending,
+        )
 
         if kwargs.get('view_schedule') == 'True':
             redirect_url = request.event.settings.venueless_talk_schedule_url
@@ -311,7 +367,7 @@ class TicketPageMixin:
 
 
 @method_decorator(xframe_options_exempt, 'dispatch')
-class OrderDetails(EventViewMixin, OrderDetailMixin, CartMixin, TicketPageMixin, TemplateView):
+class OrderDetails(OrderProtectedActionMixin, EventViewMixin, OrderDetailMixin, CartMixin, TicketPageMixin, TemplateView):
     template_name = 'pretixpresale/event/order.html'
 
     def get(self, request, *args, **kwargs):
@@ -430,7 +486,7 @@ class OrderDetails(EventViewMixin, OrderDetailMixin, CartMixin, TicketPageMixin,
 
 
 @method_decorator(xframe_options_exempt, 'dispatch')
-class OrderPositionDetails(EventViewMixin, OrderPositionDetailMixin, CartMixin, TicketPageMixin, TemplateView):
+class OrderPositionDetails(OrderProtectedActionMixin, EventViewMixin, OrderPositionDetailMixin, CartMixin, TicketPageMixin, TemplateView):
     template_name = 'pretixpresale/event/position.html'
 
     def get(self, request, *args, **kwargs):
@@ -479,7 +535,7 @@ class OrderPositionDetails(EventViewMixin, OrderPositionDetailMixin, CartMixin, 
 
 @method_decorator(xframe_options_exempt, 'dispatch')
 @method_decorator(iframe_entry_view_wrapper, 'dispatch')
-class OrderPaymentStart(EventViewMixin, OrderDetailMixin, TemplateView):
+class OrderPaymentStart(OrderProtectedActionMixin, EventViewMixin, OrderDetailMixin, TemplateView):
     """
     This is used if a payment is retried or the payment method is changed. It shows the payment
     provider's form that asks for payment details (e.g. CC number).
@@ -549,7 +605,7 @@ class OrderPaymentStart(EventViewMixin, OrderDetailMixin, TemplateView):
 
 @method_decorator(xframe_options_exempt, 'dispatch')
 @method_decorator(iframe_entry_view_wrapper, 'dispatch')
-class OrderPaymentConfirm(EventViewMixin, OrderDetailMixin, TemplateView):
+class OrderPaymentConfirm(OrderProtectedActionMixin, EventViewMixin, OrderDetailMixin, TemplateView):
     """
     This is used if a payment is retried or the payment method is changed. It is shown after the
     payment details have been entered and allows the user to confirm and review the details. On
@@ -625,7 +681,7 @@ class OrderPaymentConfirm(EventViewMixin, OrderDetailMixin, TemplateView):
 
 
 @method_decorator(xframe_options_exempt, 'dispatch')
-class OrderPaymentComplete(EventViewMixin, OrderDetailMixin, View):
+class OrderPaymentComplete(OrderProtectedActionMixin, EventViewMixin, OrderDetailMixin, View):
     """
     This is used for the first try of a payment. This means the user just entered payment
     details and confirmed them during the order process and we don't need to show them again,
@@ -682,7 +738,7 @@ class OrderPaymentComplete(EventViewMixin, OrderDetailMixin, View):
 
 
 @method_decorator(xframe_options_exempt, 'dispatch')
-class OrderPayChangeMethod(EventViewMixin, OrderDetailMixin, TemplateView):
+class OrderPayChangeMethod(OrderProtectedActionMixin, EventViewMixin, OrderDetailMixin, TemplateView):
     template_name = 'pretixpresale/event/order_pay_change.html'
 
     def dispatch(self, request, *args, **kwargs):
@@ -860,7 +916,7 @@ def can_generate_invoice(event, order, ignore_payments=False):
 
 
 @method_decorator(xframe_options_exempt, 'dispatch')
-class OrderInvoiceCreate(EventViewMixin, OrderDetailMixin, View):
+class OrderInvoiceCreate(OrderProtectedActionMixin, EventViewMixin, OrderDetailMixin, View):
     def dispatch(self, request, *args, **kwargs):
         self.request = request
         if not self.order:
@@ -880,7 +936,7 @@ class OrderInvoiceCreate(EventViewMixin, OrderDetailMixin, View):
 
 
 @method_decorator(xframe_options_exempt, 'dispatch')
-class OrderModify(EventViewMixin, OrderDetailMixin, OrderQuestionsViewMixin, TemplateView):
+class OrderModify(OrderProtectedActionMixin, EventViewMixin, OrderDetailMixin, OrderQuestionsViewMixin, TemplateView):
     form_class = QuestionsForm
     invoice_form_class = InvoiceAddressForm
     template_name = 'pretixpresale/event/order_modify.html'
@@ -993,7 +1049,7 @@ class OrderPositionCancelMixin:
 
 
 @method_decorator(xframe_options_exempt, 'dispatch')
-class OrderPositionCancel(OrderPositionCancelMixin, EventViewMixin, OrderDetailMixin, TemplateView):
+class OrderPositionCancel(OrderProtectedActionMixin, OrderPositionCancelMixin, EventViewMixin, OrderDetailMixin, TemplateView):
     template_name = 'pretixpresale/event/order_cancel_positions.html'
 
     def dispatch(self, request, *args, **kwargs):
@@ -1032,7 +1088,7 @@ class OrderPositionCancel(OrderPositionCancelMixin, EventViewMixin, OrderDetailM
 
 
 @method_decorator(xframe_options_exempt, 'dispatch')
-class OrderPositionCancelDo(OrderPositionCancelMixin, EventViewMixin, OrderDetailMixin, AsyncAction, View):
+class OrderPositionCancelDo(OrderProtectedActionMixin, OrderPositionCancelMixin, EventViewMixin, OrderDetailMixin, AsyncAction, View):
     task = cancel_order_positions
     known_errortypes = ['OrderError']
 
@@ -1074,7 +1130,7 @@ class OrderPositionCancelDo(OrderPositionCancelMixin, EventViewMixin, OrderDetai
 
 
 @method_decorator(xframe_options_exempt, 'dispatch')
-class OrderCancel(EventViewMixin, OrderDetailMixin, TemplateView):
+class OrderCancel(OrderProtectedActionMixin, EventViewMixin, OrderDetailMixin, TemplateView):
     template_name = 'pretixpresale/event/order_cancel.html'
 
     def dispatch(self, request, *args, **kwargs):
@@ -1115,7 +1171,7 @@ class OrderCancel(EventViewMixin, OrderDetailMixin, TemplateView):
 
 
 @method_decorator(xframe_options_exempt, 'dispatch')
-class OrderCancelDo(EventViewMixin, OrderDetailMixin, AsyncAction, View):
+class OrderCancelDo(OrderProtectedActionMixin, EventViewMixin, OrderDetailMixin, AsyncAction, View):
     task = cancel_order
     known_errortypes = ['OrderError']
 
@@ -1191,7 +1247,8 @@ class OrderCancelDo(EventViewMixin, OrderDetailMixin, AsyncAction, View):
 
 
 @method_decorator(xframe_options_exempt, 'dispatch')
-class AnswerDownload(EventViewMixin, OrderDetailMixin, View):
+@method_decorator(xframe_options_exempt, 'dispatch')
+class AnswerDownload(OrderProtectedActionMixin, EventViewMixin, OrderDetailMixin, View):
     def get(self, request, *args, **kwargs):
         answid = kwargs.get('answer')
         token = request.GET.get('token', '')
@@ -1315,7 +1372,7 @@ class OrderDownloadMixin:
 
 
 @method_decorator(xframe_options_exempt, 'dispatch')
-class OrderDownload(OrderDownloadMixin, EventViewMixin, OrderDetailMixin, AsyncAction, View):
+class OrderDownload(OrderProtectedActionMixin, OrderDownloadMixin, EventViewMixin, OrderDetailMixin, AsyncAction, View):
     task = generate
     known_errortypes = ['OrderError']
 
@@ -1338,7 +1395,7 @@ class OrderDownload(OrderDownloadMixin, EventViewMixin, OrderDetailMixin, AsyncA
 
 
 @method_decorator(xframe_options_exempt, 'dispatch')
-class OrderPositionDownload(OrderDownloadMixin, EventViewMixin, OrderPositionDetailMixin, AsyncAction, View):
+class OrderPositionDownload(OrderProtectedActionMixin, OrderDownloadMixin, EventViewMixin, OrderPositionDetailMixin, AsyncAction, View):
     task = generate
     known_errortypes = ['OrderError']
 
@@ -1363,7 +1420,7 @@ class OrderPositionDownload(OrderDownloadMixin, EventViewMixin, OrderPositionDet
 
 
 @method_decorator(xframe_options_exempt, 'dispatch')
-class InvoiceDownload(EventViewMixin, OrderDetailMixin, View):
+class InvoiceDownload(OrderProtectedActionMixin, EventViewMixin, OrderDetailMixin, View):
     def get(self, request, *args, **kwargs):
         if not self.order:
             raise Http404(_('Unknown order code or not authorized to access this order.'))
@@ -1403,7 +1460,7 @@ class InvoiceDownload(EventViewMixin, OrderDetailMixin, View):
 
 
 @method_decorator(xframe_options_exempt, 'dispatch')
-class OrderChange(EventViewMixin, OrderDetailMixin, TemplateView):
+class OrderChange(OrderProtectedActionMixin, EventViewMixin, OrderDetailMixin, TemplateView):
     template_name = 'pretixpresale/event/order_change.html'
 
     def dispatch(self, request, *args, **kwargs):

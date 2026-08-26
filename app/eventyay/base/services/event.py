@@ -40,7 +40,6 @@ class EventConfigSerializer(serializers.Serializer):
         child=serializers.CharField(), required=False, allow_empty=True
     )
     iframe_blockers = serializers.JSONField()
-    track_exhibitor_views = serializers.BooleanField()
     track_room_views = serializers.BooleanField()
     track_event_views = serializers.BooleanField()
     onsite_traits = serializers.JSONField(
@@ -393,7 +392,6 @@ async def create_room(event, data, creator):
     livestream_types = {
         "livestream.native",
         "livestream.youtube",
-        "livestream.iframe",
     }
     livestream_modules = [
         m for m in data.get("modules", []) if m.get("type") in livestream_types
@@ -440,8 +438,6 @@ async def create_room(event, data, creator):
                 ):
                     if config.get(key):
                         clean_config[key] = True
-            elif module["type"] == "livestream.iframe":
-                clean_config["url"] = config.get("url", "")
         module["config"] = clean_config
 
         if "chat.native" in types:
@@ -600,7 +596,6 @@ def _config_serializer(event, *args, **kwargs):
             "date_locale": cfg.get("date_locale", "en-ie"),
             "roles": event.roles,
             "bbb_defaults": bbb_defaults,
-            "track_exhibitor_views": cfg.get("track_exhibitor_views", True),
             "track_room_views": cfg.get("track_room_views", True),
             "track_event_views": cfg.get("track_event_views", False),
             "pretalx": cfg.get("pretalx", {}),

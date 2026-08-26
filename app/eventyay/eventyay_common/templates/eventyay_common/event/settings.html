@@ -185,6 +185,10 @@
                 {% bootstrap_field sform.video_url layout="control" %}
             </div>
         </fieldset>
+        <fieldset>
+            <legend>{% trans "Registration limit" %}</legend>
+            {% bootstrap_field sform.registration_limit layout="control" %}
+        </fieldset>
         {% endif %}
 
         <fieldset>
@@ -496,7 +500,7 @@
         <div class="modal-dialog modal-lg" role="document" style="margin-top: 80px;">
             <div class="modal-content">
                 <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="{% trans 'Close' %}">
                         <span aria-hidden="true">&times;</span>
                     </button>
                     <h4 class="modal-title" id="cropperModalLabel">{% trans "Crop Image" %}</h4>

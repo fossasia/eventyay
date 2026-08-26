@@ -21,6 +21,10 @@ export default {
 			type: String,
 			default: ''
 		},
+		hideBack: {
+			type: Boolean,
+			default: false
+		},
 	},
 	computed: {
 		resolvedEventUrl () {
@@ -28,9 +32,10 @@ export default {
 		},
 		backLabel () {
 			const messages = this.translationMessages || {}
-			return messages.back || 'Back'
+			return messages.back || this.$t('Back')
 		},
 		showBack () {
+			if (this.hideBack) return false;
 			return Boolean(this.resolvedEventUrl || (typeof window !== 'undefined' && window.history.length > 1))
 		},
 	},

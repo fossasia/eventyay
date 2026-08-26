@@ -1,11 +1,12 @@
 body {
-  background: color-mix(in hsl, var(--color-primary), hsl(120 0 0) 20%);
-  a,
-  a:hover {
-    font-weight: bold;
-    color: white;
-    text-decoration: underline;
-  }
+  background: var(--color-primary);
+}
+
+body a:not(.btn),
+body a:not(.btn):hover {
+  font-weight: bold;
+  color: white;
+  text-decoration: underline;
 }
 
 #wrapper {
@@ -27,4 +28,38 @@ body {
 .card {
   padding: 10px;
   width: 20rem;
+}
+
+.btn-white {
+  display: inline-block;
+  padding: 0.5rem 1.5rem;
+  border-radius: 4px;
+  background-color: white;
+  color: var(--color-primary);
+  border: 1px solid white;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.btn-white:hover {
+  background-color: #f8f9fa;
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.btn-outline-white {
+  display: inline-block;
+  padding: 0.5rem 1.5rem;
+  border-radius: 4px;
+  background-color: transparent;
+  color: white;
+  border: 1px solid white;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.btn-outline-white:hover {
+  background-color: white;
+  color: var(--color-primary);
+  text-decoration: none;
 }

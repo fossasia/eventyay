@@ -11,26 +11,159 @@
     {% trans "Attendee feedback" as header_title %}
     {% include "common/includes/header_nav.html" with header_title=header_title %}
 
-    {% regroup feedback|dictsort:"talk.title" by talk.title as feedbacks_list %}
+    <div class="mb-3">
+        <a href="{% url 'orga:submissions.feedback.export' organizer=request.event.organizer.slug event=request.event.slug %}?format=csv"
+           class="btn btn-outline-secondary btn-sm">
+            <i class="fa fa-download"></i> {% trans "Export CSV" %}
+        </a>
+        <a href="{% url 'orga:submissions.feedback.export' organizer=request.event.organizer.slug event=request.event.slug %}?format=json"
+           class="btn btn-outline-secondary btn-sm ml-2">
+            <i class="fa fa-download"></i> {% trans "Export JSON" %}
+        </a>
+    </div>
 
-    {% for submission in feedbacks_list %}
-        <h4>
-            {% translate "Feedback" %}: {{ quotation_open }}<a href="{{ submission.list.0.talk.orga_urls.feedback }}">{{ submission.grouper }}</a>{{ quotation_close }}
-        </h4>
+    <div class="submission-page-tabs mb-4">
+        <div role="tablist" class="submission-page-tabs__nav">
+            <a role="tab" href="?tab=published" {% if current_tab == 'published' %}aria-selected="true"{% else %}aria-selected="false"{% endif %}>
+                {% translate "Published" %}
+            </a>
+            <a role="tab" href="?tab=pending" {% if current_tab == 'pending' %}aria-selected="true"{% else %}aria-selected="false"{% endif %}>
+                {% translate "Review Queue" %}
+            </a>
+            <a role="tab" href="?tab=hidden" {% if current_tab == 'hidden' %}aria-selected="true"{% else %}aria-selected="false"{% endif %}>
+                {% translate "Hidden" %}
+            </a>
+            <a role="tab" href="?tab=anonymous" {% if current_tab == 'anonymous' %}aria-selected="true"{% else %}aria-selected="false"{% endif %}>
+                {% translate "Anonymous" %}
+            </a>
+        </div>
+    </div>
 
-        {% for entry in submission.list %}
-            {% has_event_perm "base.view_feedback_submission" request.user request entry.talk as can_see_feedback %}
-            {% if can_see_feedback %}
-                <div class="card mb-2">
-                    <div class="card-body pb-0">{{ entry.review|rich_text }}</div>
-                </div>
-            {% endif %}
-        {% endfor %}
-        <br>
-        <br>
-    {% empty %}
-        {% translate "There has been no feedback for sessions in this event yet." %}
-    {% endfor %}
+    <form method="post" class="feedback-bulk-form" action="{% url 'orga:submissions.feedback.bulk' organizer=request.event.organizer.slug event=request.event.slug %}?next={{ request.get_full_path|urlencode }}">
+        {% csrf_token %}
+        {% if current_tab == 'pending' %}
+            <div class="mb-3 batch-select-actions-feedback batch-select-actions-disabled"
+                 data-batch-disabled-reason-none="{% translate 'Select at least one comment.' %}">
+                <span class="mr-2" data-batch-count-label data-base-label="{% translate 'Select action' %}">{% translate "Select action" %}</span>
+                <button type="submit" name="action" value="approve" data-batch-action class="btn btn-outline-primary btn-sm mr-1" disabled>
+                    <i class="fa fa-check"></i> {% translate "Approve" %}
+                </button>
+                <button type="submit" name="action" value="hide" data-batch-action class="btn btn-outline-warning btn-sm mr-1" disabled>
+                    <i class="fa fa-eye-slash"></i> {% translate "Hide" %}
+                </button>
+                <button type="submit" name="action" value="delete" data-batch-action class="btn btn-outline-danger btn-sm" disabled data-confirm-message="{% translate 'Are you sure you want to delete the selected comments?' %}">
+                    <i class="fa fa-trash"></i> {% translate "Delete" %}
+                </button>
+                <span class="text-muted ml-2" data-batch-action-hint hidden></span>
+            </div>
+        {% endif %}
+
+        <div class="table-responsive">
+            <table class="table table-hover table-sm">
+                <thead>
+                    <tr>
+                        {% if current_tab == 'pending' %}
+                            <th class="text-center" style="width: 1%;">
+                                <input type="checkbox" data-toggle-table id="selectAll" aria-label="{% translate 'Select all' %}">
+                            </th>
+                        {% endif %}
+                        <th>{% translate "COMMENT" %}</th>
+                    <th>{% translate "SESSION" %}</th>
+                    <th>{% translate "AUTHOR" %}</th>
+                    <th>{% translate "RECEIVED" %}</th>
+                    <th class="text-right"></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in feedback %}
+                    {% has_event_perm "base.view_feedback_submission" request.user request entry.talk as can_see_feedback %}
+                    {% if can_see_feedback %}
+                        <tr>
+                            {% if current_tab == 'pending' %}
+                                <td class="text-center">
+                                    <input type="checkbox" name="feedback_ids" value="{{ entry.pk }}" class="feedback-batch-select-checkbox" aria-label="{% translate 'Select comment' %}">
+                                </td>
+                            {% endif %}
+                            <td>
+                                <div class="feedback-comment-cell text-break" style="max-width: 400px;">
+                                    <div class="feedback-comment-cell__text">
+                                        {{ entry.review|rich_text }}
+                                    </div>
+                                    {% if entry.report_count %}
+                                        <span class="feedback-report-count" title="{% blocktranslate count counter=entry.report_count %}{{ counter }} report{% plural %}{{ counter }} reports{% endblocktranslate %}">
+                                            {{ entry.report_count }}
+                                        </span>
+                                    {% elif entry.is_reported %}
+                                        <span class="feedback-report-count" title="{% translate '1 report' %}">1</span>
+                                    {% endif %}
+                                </div>
+                                {% if entry.rating %}
+                                    <div class="feedback-rating mt-1" aria-label="{% translate 'Rating' %}: {{ entry.rating }} / 5" title="{% translate 'Rating' %}: {{ entry.rating }} / 5">
+                                        {% for i in "12345"|make_list %}
+                                            <span class="{% if forloop.counter <= entry.rating %}text-warning{% else %}text-muted{% endif %}">★</span>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ entry.talk.orga_urls.feedback }}">{{ entry.talk.title }}</a>
+                            </td>
+                            <td>
+                                {% if entry.is_public %}
+                                    {% if entry.author %}{{ entry.author.get_display_name }}{% else %}{% translate "Anonymous" %}{% endif %}
+                                {% else %}
+                                    <span class="text-muted"><i class="fa fa-user-secret"></i> {% translate "Anonymous" %}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ entry.created|timesince }} {% translate "ago" %}
+                            </td>
+                            <td class="text-right">
+                                {% if current_tab == 'pending' %}
+                                    <button type="submit" name="action" value="approve" class="btn btn-sm btn-outline-primary" title="{% translate 'Approve' %}" formaction="{% url 'orga:submissions.feedback.action' organizer=request.event.organizer.slug event=request.event.slug pk=entry.pk %}?next={{ request.get_full_path|urlencode }}">
+                                        <i class="fa fa-check"></i> {% translate "Approve" %}
+                                    </button>
+                                    <button type="submit" name="action" value="hide" class="btn btn-sm btn-outline-warning" title="{% translate 'Hide' %}" formaction="{% url 'orga:submissions.feedback.action' organizer=request.event.organizer.slug event=request.event.slug pk=entry.pk %}?next={{ request.get_full_path|urlencode }}">
+                                        <i class="fa fa-eye-slash"></i> {% translate "Hide" %}
+                                    </button>
+                                    <a href="{% url 'orga:submissions.feedback.action' organizer=request.event.organizer.slug event=request.event.slug pk=entry.pk %}?action=delete&next={{ request.get_full_path|urlencode }}" class="btn btn-sm btn-outline-danger" title="{% translate 'Delete' %}">
+                                        <i class="fa fa-trash"></i> {% translate "Delete" %}
+                                    </a>
+                                {% endif %}
+                                {% if current_tab == 'published' %}
+                                    <button type="submit" name="action" value="hide" class="btn btn-sm btn-outline-warning" formaction="{% url 'orga:submissions.feedback.action' organizer=request.event.organizer.slug event=request.event.slug pk=entry.pk %}?next={{ request.get_full_path|urlencode }}">
+                                        {% translate "Hide" %}
+                                    </button>
+                                    <a href="{% url 'orga:submissions.feedback.action' organizer=request.event.organizer.slug event=request.event.slug pk=entry.pk %}?action=delete&next={{ request.get_full_path|urlencode }}" class="btn btn-sm btn-outline-danger">
+                                        {% translate "Delete" %}
+                                    </a>
+                                {% endif %}
+                                {% if entry.author %}
+                                    {% if entry.author.id in banned_user_ids %}
+                                        <button type="submit" name="action" value="unban" class="btn btn-sm btn-outline-success" title="{% translate 'Unban User' %}" formaction="{% url 'orga:submissions.feedback.action' organizer=request.event.organizer.slug event=request.event.slug pk=entry.pk %}?next={{ request.get_full_path|urlencode }}">
+                                            <i class="fa fa-unlock"></i> {% translate "Unban User" %}
+                                        </button>
+                                    {% else %}
+                                        <button type="submit" name="action" value="ban" class="btn btn-sm btn-outline-dark" title="{% translate 'Ban User' %}" formaction="{% url 'orga:submissions.feedback.action' organizer=request.event.organizer.slug event=request.event.slug pk=entry.pk %}?next={{ request.get_full_path|urlencode }}">
+                                            <i class="fa fa-ban"></i> {% translate "Ban User" %}
+                                        </button>
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endif %}
+                {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">
+                            {% translate "There has been no feedback for sessions in this tab yet." %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    </form>
 
     {% include "orga/includes/pagination.html" %}
 

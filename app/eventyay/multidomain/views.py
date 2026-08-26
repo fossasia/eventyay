@@ -18,16 +18,15 @@ from django.utils.functional import Promise
 from django.utils.translation import gettext as _
 from django.views.generic import View
 from django.views.static import serve as static_serve
-from django.contrib.auth.models import AnonymousUser
 from django_scopes import scope
 from i18nfield.strings import LazyI18nString
 from eventyay.base.models.room import AnonymousInvite
 from eventyay.base.models import Event  # Added for /video event context
 from eventyay.base.services.video_theme import build_video_theme_for_event
 from eventyay.agenda.views.utils import build_public_schedule_exporters
+from eventyay.common.language import get_ui_language_options
 from eventyay.common.templatetags.vite import fetch_vite_html, VIDEO_DIST_DIR, VIDEO_DEV_SERVER
 from eventyay.consts import SizeKey
-from eventyay.talk_rules.submission import are_featured_submissions_visible
 
 logger = logging.getLogger(__name__)
 
@@ -86,19 +85,8 @@ class VideoSPAView(View):
                         .first()
                     )
                 if not schedule:
-                    schedule = event.current_schedule or event.wip_schedule
+                    schedule = event.current_schedule
 
-                schedule_data = (
-                    schedule.build_data(
-                        all_talks=False,
-                        enrich=True,
-                        include_featured_speaker_metadata=are_featured_submissions_visible(
-                            AnonymousUser(), event
-                        ),
-                    )
-                    if schedule
-                    else None
-                )
                 schedule_version = schedule.version if schedule else None
                 schedule_exporters = build_public_schedule_exporters(event, version=schedule_version)
 
@@ -124,7 +112,7 @@ class VideoSPAView(View):
                 'theme': build_video_theme_for_event(event),
                 'video_player': cfg.get('video_player', {}),
                 'mux': cfg.get('mux', {}),
-                'schedule': schedule_data,
+                'schedule': None,
                 'scheduleMeta': {
                     'version': schedule_version or '',
                     'is_current': schedule == event.current_schedule if schedule else False,
@@ -159,7 +147,7 @@ class VideoSPAView(View):
                 'showTimes': bool(event.settings.show_times),
                 'basePath': base_path,
                 'defaultLocale': 'en',
-                'locales': ['en', 'de', 'pt_BR', 'ar', 'fr', 'es', 'uk', 'ru'],
+                'locales': get_ui_language_options(),
                 'noThemeEndpoint': True,  # Prevent frontend from requesting missing /theme endpoint
                 'translationMessages': {
                     'favs_anonymous_notice': str(_(

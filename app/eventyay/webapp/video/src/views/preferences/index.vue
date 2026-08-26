@@ -12,6 +12,14 @@
 			template(v-if="languages")
 				h2 {{ $t('preferences/index:interface-language:header') }}
 				bunt-select#select-interface-language(name="interface-language", v-model="interfaceLanguage", :options="languages", option-value="code", option-label="nativeLabel")
+			h2 {{ $t('Profile Visibility') }}
+			p {{ $t('Making your profile public allows other attendees to find you in the networking chat list and see you in room viewer lists. Private profiles are completely hidden.') }}
+			bunt-switch#switch-show-publicly(
+				name="showPublicly",
+				:label="showPublicly ? $t('Public – visible to other attendees') : $t('Private – hidden from attendee lists')",
+				:model-value="showPublicly",
+				@update:modelValue="toggleVisibility"
+			)
 			h2 {{ $t('preferences/index:notifications:header') }}
 			p {{ $t('preferences/index:notifications:description') }}
 			bunt-button#btn-enable-desktop-notifications(v-if="notificationPermission === 'default'", icon="bell", @click="$store.dispatch('notifications/askForPermission')") {{ $t('preferences/index:btn-enable-desktop-notifications:label') }}
@@ -38,7 +46,7 @@ import { mapState } from 'vuex'
 import { cloneDeep } from 'lodash'
 import { useVuelidate } from '@vuelidate/core'
 import config from 'config'
-import { locales } from 'locales'
+import { resolveLanguageOptions } from 'locales'
 import Avatar from 'components/Avatar'
 import Prompt from 'components/Prompt'
 import ChangeAvatar from 'components/profile/ChangeAvatar'
@@ -61,10 +69,12 @@ export default {
 			saving: false
 		}
 	},
-	validations: {
-		profile: {
-			display_name: {
-				required: required('Display name cannot be empty')
+	validations() {
+		return {
+			profile: {
+				display_name: {
+					required: required(this.$t('Display name cannot be empty'))
+				}
 			}
 		}
 	},
@@ -73,9 +83,12 @@ export default {
 		...mapState('notifications', {
 			notificationPermission: 'permission'
 		}),
+		showPublicly() {
+			return !!this.$store.state.user?.show_publicly
+		},
 		languages() {
-			if (!config.locales?.length) return null
-			return locales.filter(locale => config.locales.includes(locale.code))
+			const options = resolveLanguageOptions(config.locales)
+			return options.length ? options : null
 		}
 	},
 	created() {
@@ -88,6 +101,9 @@ export default {
 		}
 	},
 	methods: {
+		async toggleVisibility(value) {
+			await this.$store.dispatch('setProfileVisibility', value)
+		},
 		async uploadAvatar() {
 			this.savingAvatar = true
 			await this.$refs.avatar.update()
@@ -103,7 +119,6 @@ export default {
 			this.$store.dispatch('notifications/updateSettings', this.notificationSettings)
 			this.$store.dispatch('setAutoplay', this.autoplay)
 			this.$store.dispatch('schedule/setCurrentLanguage', this.interfaceLanguage)
-			localStorage.userLanguage = this.interfaceLanguage
 			try {
 				await this.$store.dispatch('updateUserLocale', this.interfaceLanguage)
 			} catch (error) {
@@ -152,6 +167,8 @@ export default {
 		border-radius: 4px
 		padding: 16px
 		font-weight: 500
+	#switch-show-publicly
+		margin-top: 4px
 	#btn-save
 		themed-button-primary()
 

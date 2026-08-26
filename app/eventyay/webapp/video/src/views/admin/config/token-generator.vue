@@ -1,13 +1,13 @@
 <template lang="pug">
 .c-tokengenerator
 	.ui-page-header
-		h1 Token Generator
+		h1 {{ $t('Token Generator') }}
 	scrollbars(y).ui-form-body
-		bunt-input(v-model="number", label="Number", name="number", :validation="v$.number")
-		bunt-input(v-model="days", label="Days", name="days", :validation="v$.days")
-		bunt-input(name="t", label="Traits (comma-separated)", @update:modelValue="set_traits($event)", :modelValue="traits ? traits.join(', ') : ''")
-		bunt-button.btn-generate(@click="save", :loading="saving") Generate
-		bunt-input-outline-container(label="Result")
+		bunt-input(v-model="number", :label="$t('Number')", name="number", :validation="v$.number")
+		bunt-input(v-model="days", :label="$t('Days')", name="days", :validation="v$.days")
+		bunt-input(name="t", :label="$t('Traits (comma-separated)')", @update:modelValue="set_traits($event)", :modelValue="traits ? traits.join(', ') : ''")
+		bunt-button.btn-generate(@click="save", :loading="saving") {{ $t('Generate') }}
+		bunt-input-outline-container(:label="$t('Result')")
 			template(#default="{focus, blur}")
 				textarea(@focus="focus", @blur="blur", v-model="result")
 </template>

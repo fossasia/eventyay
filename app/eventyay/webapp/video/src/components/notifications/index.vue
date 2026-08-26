@@ -1,7 +1,6 @@
 <template lang="pug">
 .c-notifications(:class="{'has-background-media': hasBackgroundMedia}")
 	notification-permission-notification(v-if="showNotificationPermissionPrompt")
-	contact-request-notification(v-for="contactRequest of openContactRequests", :contactRequest="contactRequest")
 	announcement(v-for="announcement of visibleAnnouncements", :announcement="announcement")
 </template>
 <script>
@@ -9,11 +8,10 @@
 // - scrolling
 import { mapGetters } from 'vuex'
 import Announcement from './Announcement'
-import ContactRequestNotification from './ContactRequestNotification'
 import NotificationPermissionNotification from './NotificationPermissionNotification'
 
 export default {
-	components: { Announcement, ContactRequestNotification, NotificationPermissionNotification },
+	components: { Announcement, NotificationPermissionNotification },
 	props: {
 		hasBackgroundMedia: Boolean
 	},
@@ -23,7 +21,6 @@ export default {
 	},
 	computed: {
 		...mapGetters('notifications', ['showNotificationPermissionPrompt']),
-		...mapGetters('exhibition', ['openContactRequests']),
 		...mapGetters('announcement', ['visibleAnnouncements'])
 	},
 	created() {},

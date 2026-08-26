@@ -37,6 +37,9 @@
                     {% bootstrap_field form.domain layout="control" %}
                 {% endif %}
                 {% endcomment %}
+                {% if form.set_as_default %}
+                    {% bootstrap_field form.set_as_default layout="control" %}
+                {% endif %}
                 {% bootstrap_field sform.imprint_url layout="control" %}
                 {% bootstrap_field sform.contact_mail layout="control" %}
                 {% bootstrap_field sform.organizer_info_text layout="control" %}
@@ -112,7 +115,7 @@
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="{% trans 'Close' %}">
                         <span aria-hidden="true">&times;</span>
                     </button>
                     <h4 class="modal-title" id="cropperModalLabel">{% trans "Crop Image" %}</h4>

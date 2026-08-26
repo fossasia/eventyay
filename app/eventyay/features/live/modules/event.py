@@ -109,7 +109,6 @@ class EventModule(BaseModule):
                 "profile_fields",
                 "track_room_views",
                 "track_event_views",
-                "track_exhibitor_views",
                 "onsite_traits",
                 "conftool_url",
                 "conftool_password",
