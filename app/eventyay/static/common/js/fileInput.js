@@ -18,7 +18,7 @@ const updateFileInput = (input) => {
     if (filename) {
         filename.textContent = hasSelection
             ? Array.from(input.files).map((file) => file.name).join(', ')
-            : filename.dataset.emptyText
+            : ''
     }
 }
 
@@ -34,7 +34,6 @@ const wrapFileInput = (input) => {
 
     const i18nElement = document.getElementById('eventyay-file-input-i18n')
     const chooseLabel = input.dataset.chooseFileLabel || i18nElement?.dataset.chooseFile || 'Choose file'
-    const emptyText = input.dataset.noFileLabel || i18nElement?.dataset.noFile || 'No file chosen'
     const wrapper = document.createElement('div')
     wrapper.className = 'eventyay-file-pick-wrapper'
 
@@ -48,7 +47,6 @@ const wrapFileInput = (input) => {
 
     const filename = document.createElement('span')
     filename.className = 'eventyay-file-name text-muted small'
-    filename.dataset.emptyText = emptyText
     filename.setAttribute('aria-live', 'polite')
 
     wrapper.addEventListener('click', (event) => {
