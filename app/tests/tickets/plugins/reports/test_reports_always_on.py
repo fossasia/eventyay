@@ -25,7 +25,7 @@ def event_without_reports_plugin():
 
 
 @pytest.mark.django_db
-def test_reports_plugin_is_hidden_from_organizer_plugin_list(event_without_reports_plugin):
+def test_reports_plugin_is_hidden_from_event_available_plugins(event_without_reports_plugin):
     event, _user = event_without_reports_plugin
     with scope(event=event):
         assert 'eventyay.plugins.reports' not in event.available_plugins
@@ -58,3 +58,15 @@ def test_orders_export_page_shows_pdfreport_without_plugin_enabled(client, event
     filtered_content = filtered.content.decode()
     assert 'pdfreport' in filtered_content
     assert 'No export matching this request is available.' not in filtered_content
+
+@pytest.mark.django_db
+def test_orders_export_page_shows_empty_state_for_unknown_identifier(client, event_without_reports_plugin):
+    event, user = event_without_reports_plugin
+    assert client.login(email='reports@dummy.dummy', password='dummy')
+    url = f'/control/event/{event.organizer.slug}/{event.slug}/orders/export/'
+    
+    filtered = client.get(f'{url}?identifier=unknown_exporter_123')
+    assert filtered.status_code == 200
+    filtered_content = filtered.content.decode()
+    assert 'No export matching this request is available.' in filtered_content
+    assert 'Show all available exports' in filtered_content
