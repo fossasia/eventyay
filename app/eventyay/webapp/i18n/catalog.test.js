@@ -9,40 +9,40 @@ import {isEnglishLocale, mergeCatalogWithEnglish, toDjangoLanguage, usableTransl
 test('usableTranslations drops empty and msgid copies except in English', () => {
 	const catalog = {
 		Save: 'Save',
-		'RoomsSidebar:schedule:label': 'RoomsSidebar:schedule:label',
-		Schedule: '',
+		Schedule: 'Schedule',
+		Empty: '',
 		Cancel: 'Abbrechen',
 	}
 	assert.deepEqual(usableTranslations(catalog, 'de'), {Cancel: 'Abbrechen'})
 	assert.deepEqual(usableTranslations(catalog, 'en'), {
 		Save: 'Save',
-		'RoomsSidebar:schedule:label': 'RoomsSidebar:schedule:label',
+		Schedule: 'Schedule',
 		Cancel: 'Abbrechen',
 	})
 })
 
 test('missing or empty catalogs fall back to English', () => {
 	const english = {
-		'RoomsSidebar:schedule:label': 'Schedule',
+		Schedule: 'Schedule',
 		Save: 'Save',
 	}
-	assert.equal(mergeCatalogWithEnglish(english, null, 'hi')['RoomsSidebar:schedule:label'], 'Schedule')
-	assert.equal(mergeCatalogWithEnglish(english, {}, 'bg')['RoomsSidebar:schedule:label'], 'Schedule')
+	assert.equal(mergeCatalogWithEnglish(english, null, 'hi').Schedule, 'Schedule')
+	assert.equal(mergeCatalogWithEnglish(english, {}, 'bg').Schedule, 'Schedule')
 	assert.equal(mergeCatalogWithEnglish(english, {Save: ''}, 'ja').Save, 'Save')
 	assert.equal(isEnglishLocale('en-gb'), true)
 })
 
 test('partial Weblate catalogs overlay English', () => {
 	const english = {
-		'RoomsSidebar:schedule:label': 'Schedule',
+		Schedule: 'Schedule',
 		Save: 'Save',
 	}
 	const german = {
-		'RoomsSidebar:schedule:label': 'Zeitplan',
+		Schedule: 'Zeitplan',
 		Save: '',
 	}
 	const merged = mergeCatalogWithEnglish(english, german, 'de')
-	assert.equal(merged['RoomsSidebar:schedule:label'], 'Zeitplan')
+	assert.equal(merged.Schedule, 'Zeitplan')
 	assert.equal(merged.Save, 'Save')
 })
 

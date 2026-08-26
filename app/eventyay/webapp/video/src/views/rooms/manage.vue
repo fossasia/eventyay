@@ -23,7 +23,7 @@
 						template(#button="{toggle}")
 							bunt-icon-button(@click="toggle") dots-vertical
 						template(#menu)
-							.archive-all(@click="$store.dispatch('question/archiveAll')") {{ $t('Questions:moderator-actions:archive-all:label') }}
+							.archive-all(@click="$store.dispatch('question/archiveAll')") {{ $t('Archive All') }}
 			questions(:module="modules['question']")
 		panel.chat(v-if="modules['chat.native']")
 			.header

@@ -840,6 +840,3 @@ msgstr ""
 msgid "December"
 msgstr ""
 
-#: eventyay/static/vendored/vue.min.js:12
-msgid "div"
-msgstr ""

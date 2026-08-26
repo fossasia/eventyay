@@ -372,7 +372,7 @@ export default {
 			// Increment notification count
 			state.notificationCounts[channel.id] = (state.notificationCounts[channel.id] || 0) + 1
 			// TODO show desktop notification when window in focus but route is somewhere else?
-			let body = i18n.t('DirectMessage:notification-unread:text')
+			let body = i18n.t('New messages')
 			if (data.event.content.type === 'text') {
 				// TODO parse @uuid mentions
 				body = data.event.content.body

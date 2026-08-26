@@ -1,6 +1,6 @@
 <template lang="pug">
 .c-januscall(:class="[`size-${size}`]")
-	.error(v-if="error") {{ $t('JanusCall:error:text') }}
+	.error(v-if="error") {{ $t('We could not connect to the video conference server, sorry.') }}
 	janus-videoroom(v-if="server", :server="server", :token="token", :iceServers="iceServers", :sessionId="sessionId", :audioSessionId="audioSessionId", :videoSessionId="videoSessionId", :screenShareSessionId="screenShareSessionId", :roomId="roomId", :size="size", :automute="true", @hangup="roomId = null; $router.push('/')")
 </template>
 <script>
