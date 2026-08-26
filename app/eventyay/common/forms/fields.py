@@ -14,6 +14,7 @@ from eventyay.common.forms.widgets import (
     ClearableBasenameFileInput,
     EmailEditorWidget,
     I18nEmailEditorWidget,
+    I18nRichTextWidget,
     ImageInput,
     PasswordConfirmationInput,
     PasswordStrengthInput,
@@ -139,6 +140,32 @@ class RichTextField(CharField):
     def clean(self, value: str) -> str:
         value = super().clean(value)
         return sanitize_rich_text(value) if value else value
+
+
+class I18nRichTextFormField(I18nFormField):
+    """I18n form field using the Tiptap rich text editor.
+
+    Sanitizes each locale value with ``sanitize_rich_text`` after validation.
+    """
+
+    widget = I18nRichTextWidget
+
+    def __init__(self, *args, **kwargs) -> None:
+        kwargs.setdefault('widget', I18nRichTextWidget)
+        super().__init__(*args, **kwargs)
+
+    def clean(self, value):
+        result = super().clean(value)
+        if isinstance(result, LazyI18nString):
+            if isinstance(result.data, dict):
+                return LazyI18nString(
+                    {locale: sanitize_rich_text(text) if text else text for locale, text in result.data.items()}
+                )
+            elif isinstance(result.data, str):
+                return LazyI18nString(sanitize_rich_text(result.data) if result.data else result.data)
+        elif isinstance(result, str):
+            return sanitize_rich_text(result) if result else result
+        return result
 
 
 class EmailBodyField(CharField):

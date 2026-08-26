@@ -1,7 +1,7 @@
+import json
 import logging
 import secrets
 import smtplib
-
 
 from django.conf import settings
 from django.contrib import messages
@@ -9,7 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.mail import EmailMessage
 from django.core.validators import validate_email
 from django.db import IntegrityError, OperationalError, ProgrammingError
-from django.http import JsonResponse
+from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, reverse
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
@@ -24,6 +24,7 @@ from eventyay.base.plugins import get_all_plugins
 from eventyay.base.services.mail import get_mail_backend
 from eventyay.base.services.update_check import check_result_table, update_check
 from eventyay.base.settings import GlobalSettingsObject
+from eventyay.common.sanitizers import sanitize_rich_text
 from eventyay.control.forms.global_settings import (
     GlobalSettingsForm,
     SSOConfigForm,
@@ -486,3 +487,39 @@ class RefundDetailView(AdministratorPermissionRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         p = get_object_or_404(OrderRefund, pk=request.GET.get('pk'))
         return JsonResponse({'data': p.info_data})
+
+
+class GlobalSettingsPagePreviewView(AdministratorPermissionRequiredMixin, View):
+    """AJAX endpoint for previewing multi-lingual rich text page content."""
+
+    def post(self, request, *args, **kwargs):
+        content_type = request.content_type or ''
+        if 'application/json' in content_type:
+            try:
+                payload = json.loads(request.body)
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                return HttpResponseBadRequest('Invalid JSON body')
+            raw_html = payload.get('html', '')
+            safe_html = sanitize_rich_text(raw_html) if isinstance(raw_html, str) else ''
+            return JsonResponse({'html': safe_html})
+
+        previews = {}
+        for key, values in request.POST.lists():
+            if not values:
+                continue
+            body = values[0]
+            safe_html = sanitize_rich_text(body) if body else ''
+            if key.startswith('body_'):
+                locale = key[5:]
+                previews[locale] = safe_html
+            elif key == 'content':
+                return JsonResponse({'html': safe_html})
+
+        if not previews:
+            body = request.POST.get('body', '')
+            if body:
+                safe_html = sanitize_rich_text(body)
+                previews['en'] = safe_html
+
+        return JsonResponse({'previews': previews})
+

@@ -11,6 +11,7 @@ from django_scopes import get_scope
 
 from eventyay.base.meetup import has_video_stream, is_meetup_event
 from eventyay.base.models.settings import GlobalSettings
+from eventyay.base.settings import GlobalSettingsObject
 from eventyay.cfp.signals import footer_link, html_head
 from eventyay.helpers.formats.variants import get_day_month_date_format
 from eventyay.helpers.i18n import get_javascript_format, get_moment_locale, is_rtl
@@ -114,14 +115,40 @@ def system_information(request):
                 _head.append(response)
             context['html_head'] = ''.join(_head)
 
+    # Load core platform footer links from GlobalSettings
+    gs = GlobalSettingsObject().settings
+    core_footer_items = [
+        ('events', _('Events'), '/upcoming'),
+        ('terms', _('Terms'), '/terms'),
+        ('privacy', _('Privacy'), '/privacy'),
+        ('pricing', _('Pricing'), '/pricing'),
+        ('documentation', _('Documentation'), 'https://docs.eventyay.com'),
+        ('support', _('Support'), '/support'),
+    ]
+
+    core_footer_links = []
+    for key, label, default_url in core_footer_items:
+        enabled = gs.get(f'footer_link_{key}_enabled', as_type=bool, default=True)
+        url = gs.get(f'footer_link_{key}_url', as_type=str, default=default_url).strip()
+        if enabled and url:
+            core_footer_links.append({
+                'key': key,
+                'label': label,
+                'url': url,
+                'target_blank': url.startswith('http://') or url.startswith('https://'),
+            })
+
+    context['core_footer_links'] = core_footer_links
+
     if settings.DEBUG:
         context['development_mode'] = True
         context['eventyay_version'] = settings.EVENTYAY_VERSION
 
     context['warning_update_available'] = False
     context['base_path'] = settings.BASE_PATH
-    if not request.user.is_anonymous and request.user.is_administrator and request.path.startswith('/orga'):
-        gs = GlobalSettings()
-        if gs.settings.update_check_result_warning:
+    user = getattr(request, 'user', None)
+    if user and not user.is_anonymous and getattr(user, 'is_administrator', False) and request.path.startswith('/orga'):
+        gs_obj = GlobalSettings()
+        if gs_obj.settings.update_check_result_warning:
             context['warning_update_available'] = True
     return context

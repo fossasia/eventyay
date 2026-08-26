@@ -1,0 +1,16 @@
+{% load i18n %}
+{% load safelink %}
+
+{% if core_footer_links %}
+<nav class="core-footer-nav" aria-label="{% translate 'Platform links' %}">
+    <div class="core-footer-links-container">
+        {% for link in core_footer_links %}
+            <a href="{% safelink link.url %}"
+               class="core-footer-link"
+               {% if link.target_blank %}target="_blank" rel="noopener"{% endif %}>
+                {{ link.label }}
+            </a>
+        {% endfor %}
+    </div>
+</nav>
+{% endif %}

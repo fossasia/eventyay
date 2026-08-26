@@ -107,6 +107,10 @@ eventyay_common_patterns = [
 
 
 page_patterns = [
+    path('terms/', pages.SystemPageView.as_view(slug='terms'), name='page.terms'),
+    path('privacy/', pages.SystemPageView.as_view(slug='privacy'), name='page.privacy'),
+    path('pricing/', pages.SystemPageView.as_view(slug='pricing'), name='page.pricing'),
+    path('support/', pages.SystemPageView.as_view(slug='support'), name='page.support'),
     path('page/<slug:slug>/', pages.ShowPageView.as_view(), name='page'),
 ]
 
