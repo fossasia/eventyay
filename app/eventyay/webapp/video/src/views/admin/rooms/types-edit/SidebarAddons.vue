@@ -6,11 +6,11 @@
 		button.webhook-toggle(
 			type="button"
 			:aria-expanded="String(showWebhookConfig)"
-			@click="showWebhookConfig = !showWebhookConfig"
+			@click="toggleWebhookConfig"
 		)
 			span.webhook-toggle-icon {{ showWebhookConfig ? '▼' : '►' }}
 			span Webhook
-			span.webhook-configured-icon(v-if="webhookConfigured", aria-label="Webhook configured", title="Webhook configured") ✓
+			span.webhook-configured-icon(v-if="webhookConfigured", role="img", aria-label="Webhook configured", title="Webhook configured") ✓
 		.webhook-config(v-if="showWebhookConfig")
 			h4 Chat Webhook
 			p.hint Send chat messages to an external endpoint in real-time
@@ -122,6 +122,12 @@ export default {
 		}
 	},
 	methods: {
+		toggleWebhookConfig() {
+			this.showWebhookConfig = !this.showWebhookConfig
+			if (!this.showWebhookConfig) {
+				this.isEditingSecret = false
+			}
+		},
 		clearChatWebhookConfig() {
 			const config = this.modules['chat.native']?.config
 			if (!config) return
