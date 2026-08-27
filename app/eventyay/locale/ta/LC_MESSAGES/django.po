@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 18:36+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2026-08-27 18:37+0000\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Tamil <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "ta/>\n"
 "Language: ta\n"
@@ -1046,7 +1046,8 @@ msgstr "%(count)s உறுப்பினர்"
 #, fuzzy
 #| msgid "We have trouble sending emails right now, please check back later."
 msgid "No schedule has been published yet. Please check back later."
-msgstr "தற்போது மின்னஞ்சல்கள் அனுப்புவதில் சிக்கல் உள்ளது, பின்னர் மீண்டும் சரிபார்க்கவும்."
+msgstr ""
+"தற்போது மின்னஞ்சல்கள் அனுப்புவதில் சிக்கல் உள்ளது, பின்னர் மீண்டும் சரிபார்க்கவும்."
 
 #: eventyay/agenda/views/schedule.py:477
 #, fuzzy
@@ -1481,7 +1482,8 @@ msgstr "இந்த ஆர்டருக்கான டிக்கெட் 
 #, fuzzy
 #| msgid "You cannot select a quota and a specific product at the same time."
 msgid "You cannot set an organizer as default if you are not a member."
-msgstr "ஒதுக்கீடும் ஒரு குறிப்பிட்ட தயாரிப்பையும் ஒரே நேரத்தில் தேர்வு செய்ய முடியாது."
+msgstr ""
+"ஒதுக்கீடும் ஒரு குறிப்பிட்ட தயாரிப்பையும் ஒரே நேரத்தில் தேர்வு செய்ய முடியாது."
 
 #: eventyay/api/webhooks.py:181 eventyay/base/notifications.py:239
 msgid "New order placed"
@@ -2933,8 +2935,8 @@ msgid ""
 "Sender address for outgoing emails. When using a custom sender, replies go "
 "to this address unless a Reply-To is set."
 msgstr ""
-"Reply-To முகவரி. இந்த அமைப்பு காலியாக இருந்தால், மேலும் தனிப்பயன் அனுப்புநர் இல்லை "
-"என்றால், நிகழ்வு மின்னஞ்சல் முகவரி Reply-To முகவரியாக பயன்படுத்தப்படும்."
+"Reply-To முகவரி. இந்த அமைப்பு காலியாக இருந்தால், மேலும் தனிப்பயன் அனுப்புநர் இல்லை என்றால், "
+"நிகழ்வு மின்னஞ்சல் முகவரி Reply-To முகவரியாக பயன்படுத்தப்படும்."
 
 #: eventyay/base/configurations/default_setting.py:1664
 #, fuzzy
@@ -7959,8 +7961,7 @@ msgstr "வங்கி பரிமாற்றம் மூலம் கட்
 #| msgid "Can only create a bank transfer refund from an existing payment."
 msgid "Import bank data and export refunds for bank transfer payments."
 msgstr ""
-"இருப்பிலுள்ள கட்டணத்திலிருந்தே வங்கி பரிமாற்றம் மூலம் திருப்பிச் செலுத்தலை உருவாக்க "
-"முடியும்."
+"இருப்பிலுள்ள கட்டணத்திலிருந்தே வங்கி பரிமாற்றம் மூலம் திருப்பிச் செலுத்தலை உருவாக்க முடியும்."
 
 #: eventyay/base/models/organizer.py:408
 msgid "Can perform check-ins"
@@ -8113,7 +8114,8 @@ msgstr ""
 #, fuzzy
 #| msgid "Reviewer Manager — can edit and manage submissions"
 msgid "Reviewer Manager — can review and manage exhibitor proposals"
-msgstr "மதிப்பாய்வாளர் மேலாளர் — சமர்ப்பிப்புகளைத் திருத்தவும் நிர்வகிக்கவும் முடியும்"
+msgstr ""
+"மதிப்பாய்வாளர் மேலாளர் — சமர்ப்பிப்புகளைத் திருத்தவும் நிர்வகிக்கவும் முடியும்"
 
 #: eventyay/base/models/organizer.py:568
 msgid ""
@@ -8137,8 +8139,8 @@ msgid ""
 "Can review and provide feedback on exhibitor and sponsor proposals but "
 "cannot approve, reject, or otherwise manage them."
 msgstr ""
-"சமர்ப்பிப்புகளை மதிப்பாய்வு செய்து கருத்துரைகளை வழங்க முடியும்; ஆனால் விவரங்களைத் "
-"திருத்தவோ அல்லது சமர்ப்பிப்பு நிலைகளை மாற்றவோ முடியாது."
+"சமர்ப்பிப்புகளை மதிப்பாய்வு செய்து கருத்துரைகளை வழங்க முடியும்; ஆனால் விவரங்களைத் திருத்தவோ "
+"அல்லது சமர்ப்பிப்பு நிலைகளை மாற்றவோ முடியாது."
 
 #: eventyay/base/models/organizer.py:583
 msgid "Hide emails of applicants"
@@ -8481,9 +8483,9 @@ msgid ""
 "products that are bought as an add-on to other products."
 msgstr ""
 "இந்த விருப்பம் செயல்பாட்டில் இருந்தால், பயனர்கள் விலையைத் தாங்களே தேர்வு செய்யலாம். மேலே "
-"அமைக்கப்பட்ட விலை, பயனர் உள்ளிட வேண்டிய குறைந்தபட்ச விலையாகக் கருதப்படும். இது, "
-"உதாரணமாக, நிகழ்விற்கான கூடுதல் நன்கொடைகளைச் சேகரிக்கப் பயன்படுத்தலாம். பிற பொருட்களுக்கு "
-"சேர்க்கையாக வாங்கப்படும் பொருட்களுக்கு இது தற்போது ஆதரிக்கப்படவில்லை."
+"அமைக்கப்பட்ட விலை, பயனர் உள்ளிட வேண்டிய குறைந்தபட்ச விலையாகக் கருதப்படும். இது, உதாரணமாக, "
+"நிகழ்விற்கான கூடுதல் நன்கொடைகளைச் சேகரிக்கப் பயன்படுத்தலாம். பிற பொருட்களுக்கு சேர்க்கையாக "
+"வாங்கப்படும் பொருட்களுக்கு இது தற்போது ஆதரிக்கப்படவில்லை."
 
 #: eventyay/base/models/product.py:369
 #, fuzzy
@@ -16473,8 +16475,8 @@ msgid ""
 "the person who registers, the following email will be sent out to the "
 "attendees."
 msgstr ""
-"ஆர்டரில், டிக்கெட்டுகளை ஆர்டர் செய்பவரை விட வேறு மின்னஞ்சல் முகவரிகளைக் கொண்ட "
-"பங்கேற்பாளர்கள் இருந்தால், கீழ்கண்ட மின்னஞ்சல் பங்கேற்பாளர்களுக்கு அனுப்பப்படும்."
+"ஆர்டரில், டிக்கெட்டுகளை ஆர்டர் செய்பவரை விட வேறு மின்னஞ்சல் முகவரிகளைக் கொண்ட பங்கேற்பாளர்கள் "
+"இருந்தால், கீழ்கண்ட மின்னஞ்சல் பங்கேற்பாளர்களுக்கு அனுப்பப்படும்."
 
 #: eventyay/control/forms/event.py:1347 eventyay/plugins/sendmail/forms.py:310
 msgid "Text (sent by admin)"
@@ -16720,9 +16722,9 @@ msgid ""
 "Your customers will be instructed to pay the money manually. You can then "
 "mark them as paid."
 msgstr ""
-"வாடிக்கையாளர்களுக்கு உங்கள் கணக்கிற்கு பணத்தை பரிமாற்றம் செய்ய வழிமுறைகள் வழங்கப்படும். "
-"பின்னர் eventyay-இல் கட்டணங்களை செயலாக்க வங்கி அறிக்கைகளை இறக்குமதி செய்யலாம் அல்லது "
-"கையால் செலுத்தப்பட்டதாக குறிக்கலாம்."
+"வாடிக்கையாளர்களுக்கு உங்கள் கணக்கிற்கு பணத்தை பரிமாற்றம் செய்ய வழிமுறைகள் வழங்கப்படும். பின்னர் "
+"eventyay-இல் கட்டணங்களை செயலாக்க வங்கி அறிக்கைகளை இறக்குமதி செய்யலாம் அல்லது கையால் "
+"செலுத்தப்பட்டதாக குறிக்கலாம்."
 
 #: eventyay/control/forms/event.py:1839 eventyay/control/forms/product.py:575
 #, fuzzy
@@ -17708,7 +17710,8 @@ msgstr "முகப்புப் பக்கத் தலைப்பு வ
 #| "This will be attached to every email. Available placeholders: {event}"
 msgid ""
 "Pattern used to generate pad names. Available placeholders: {placeholders}."
-msgstr "இது ஒவ்வொரு மின்னஞ்சலிலும் இணைக்கப்படும். கிடைக்கும் இடம்பிடிப்புகள்: {event}"
+msgstr ""
+"இது ஒவ்வொரு மின்னஞ்சலிலும் இணைக்கப்படும். கிடைக்கும் இடம்பிடிப்புகள்: {event}"
 
 #: eventyay/control/forms/global_settings.py:582
 #, fuzzy
@@ -23198,7 +23201,8 @@ msgstr "இந்த செயல்பாட்டை மீட்டெடு�
 msgid ""
 "To confirm you really want this, please type out the event's name "
 "(\"%(name)s\") here:"
-msgstr "இதனை உறுதிப்படுத்த, நிகழ்வின் குறுக்குப் பெயரை (\"%(slug)s\") இங்கே உள்ளிடவும்:"
+msgstr ""
+"இதனை உறுதிப்படுத்த, நிகழ்வின் குறுக்குப் பெயரை (\"%(slug)s\") இங்கே உள்ளிடவும்:"
 
 #: eventyay/control/templates/pretixcontrol/event/delete.html:36
 msgid "Your event can not be deleted as it already contains orders."
@@ -23851,7 +23855,8 @@ msgstr ""
 msgid ""
 "After the setup, please go to the Payment area and set up the PayPal "
 "connection."
-msgstr "அமைப்பு முடிந்ததும், Payment பகுதிக்கு சென்று Stripe இணைப்பை அமைக்கவும்."
+msgstr ""
+"அமைப்பு முடிந்ததும், Payment பகுதிக்கு சென்று Stripe இணைப்பை அமைக்கவும்."
 
 #: eventyay/control/templates/pretixcontrol/event/settings.html:7
 #: eventyay/control/templates/pretixcontrol/event/settings.html:13
@@ -26601,7 +26606,8 @@ msgstr "தயாரிப்புகளை மாற்று"
 #| msgid ""
 #| "One of the selected products is not available in the selected country."
 msgid "No product values found in the selected column."
-msgstr "தேர்ந்தெடுக்கப்பட்ட தயாரிப்புகளில் ஒன்று தேர்ந்தெடுக்கப்பட்ட நாட்டில் கிடைக்கவில்லை."
+msgstr ""
+"தேர்ந்தெடுக்கப்பட்ட தயாரிப்புகளில் ஒன்று தேர்ந்தெடுக்கப்பட்ட நாட்டில் கிடைக்கவில்லை."
 
 #: eventyay/control/templates/pretixcontrol/orders/index.html:15
 msgid "Nobody ordered a ticket yet."
@@ -28543,7 +28549,8 @@ msgstr "தேர்ந்தெடுக்கப்பட்ட செக்-�
 #, fuzzy
 #| msgid "The selected tickets have been marked as checked in."
 msgid "The selected tickets have been marked as checked out."
-msgstr "தேர்ந்தெடுக்கப்பட்ட டிக்கெட்டுகள் செக்-இன் செய்யப்பட்டதாக குறிக்கப்பட்டன."
+msgstr ""
+"தேர்ந்தெடுக்கப்பட்ட டிக்கெட்டுகள் செக்-இன் செய்யப்பட்டதாக குறிக்கப்பட்டன."
 
 #: eventyay/control/views/checkin.py:195
 msgid "The selected tickets have been marked as checked in."
@@ -29060,8 +29067,8 @@ msgid ""
 "We were not able to complete the import because the event is busy. Please "
 "try again in a moment."
 msgstr ""
-"சேவையகம் மிக அதிக சுமையிலிருந்ததால் கோரிக்கையை முழுமையாக செயலாக்க முடியவில்லை. "
-"மீண்டும் முயற்சிக்கவும்."
+"சேவையகம் மிக அதிக சுமையிலிருந்ததால் கோரிக்கையை முழுமையாக செயலாக்க முடியவில்லை. மீண்டும் "
+"முயற்சிக்கவும்."
 
 #: eventyay/control/views/orderimport.py:209
 msgid "The import was successful."
@@ -30301,8 +30308,7 @@ msgid ""
 "If selected, this event will show up publicly on the list of events for your "
 "organizer account and in platform search results."
 msgstr ""
-"தேர்ந்தெடுத்தால், இந்த நிகழ்வு பொதுவாக உங்கள் நிகழ்விற்கான தேதிகளின் பட்டியலில் "
-"காண்பிக்கப்படும்."
+"தேர்ந்தெடுத்தால், இந்த நிகழ்வு பொதுவாக உங்கள் நிகழ்விற்கான தேதிகளின் பட்டியலில் காண்பிக்கப்படும்."
 
 #: eventyay/eventyay_common/forms/event.py:268
 msgid "You need to configure the custom domain in the webserver beforehand."
@@ -30669,7 +30675,8 @@ msgstr "கீழே குறைந்தது ஒரு சாதனத்த
 #| msgid "Please activate two-factor authentication using the button below."
 msgid ""
 "Please activate two-factor authentication using the toggle switch below."
-msgstr "கீழே உள்ள பொத்தானைப் பயன்படுத்தி இரண்டு-காரணி அங்கீகாரத்தை செயல்படுத்தவும்."
+msgstr ""
+"கீழே உள்ள பொத்தானைப் பயன்படுத்தி இரண்டு-காரணி அங்கீகாரத்தை செயல்படுத்தவும்."
 
 #: eventyay/eventyay_common/templates/eventyay_common/account/2fa-main-settings.html:47
 msgid "Two-factor status"
@@ -31981,7 +31988,8 @@ msgstr "அனுமதி மறுக்கப்பட்டது"
 msgid ""
 "You require additional permissions to access the talks dashboard. Please "
 "contact the main event organisers."
-msgstr "ஒழுங்கமைப்பாளர்களை உருவாக்க அனுமதி இல்லை. நிர்வாகியைத் தொடர்புகொள்ளவும்."
+msgstr ""
+"ஒழுங்கமைப்பாளர்களை உருவாக்க அனுமதி இல்லை. நிர்வாகியைத் தொடர்புகொள்ளவும்."
 
 #: eventyay/eventyay_common/templates/eventyay_common/includes/ticket_permission_dialog.html:2
 #, fuzzy
@@ -31991,7 +31999,8 @@ msgstr "ஒழுங்கமைப்பாளர்களை உருவா�
 msgid ""
 "You require additional permissions to access the tickets dashboard. Please "
 "contact the main event organisers."
-msgstr "ஒழுங்கமைப்பாளர்களை உருவாக்க அனுமதி இல்லை. நிர்வாகியைத் தொடர்புகொள்ளவும்."
+msgstr ""
+"ஒழுங்கமைப்பாளர்களை உருவாக்க அனுமதி இல்லை. நிர்வாகியைத் தொடர்புகொள்ளவும்."
 
 #: eventyay/eventyay_common/templates/eventyay_common/includes/video_permission_dialog.html:2
 #, fuzzy
@@ -32001,7 +32010,8 @@ msgstr "ஒழுங்கமைப்பாளர்களை உருவா�
 msgid ""
 "You require additional permissions to access the video dashboard. Please "
 "contact the main event organisers."
-msgstr "ஒழுங்கமைப்பாளர்களை உருவாக்க அனுமதி இல்லை. நிர்வாகியைத் தொடர்புகொள்ளவும்."
+msgstr ""
+"ஒழுங்கமைப்பாளர்களை உருவாக்க அனுமதி இல்லை. நிர்வாகியைத் தொடர்புகொள்ளவும்."
 
 #: eventyay/eventyay_common/templates/eventyay_common/orders/orders.html:41
 #: eventyay/eventyay_common/templates/eventyay_common/orders/orders.html:57
@@ -32865,7 +32875,8 @@ msgstr "இந்த ஆர்டருக்கான இன்வாய்ஸ�
 #, fuzzy
 #| msgid "Content languages must be a subset of the active languages."
 msgid "Select at least one active language."
-msgstr "உள்ளடக்க மொழிகள் செயலில் உள்ள மொழிகளின் துணைத்தொகுதியாக இருக்க வேண்டும்."
+msgstr ""
+"உள்ளடக்க மொழிகள் செயலில் உள்ள மொழிகளின் துணைத்தொகுதியாக இருக்க வேண்டும்."
 
 #: eventyay/eventyay_common/views/event.py:716
 #, fuzzy
@@ -34450,7 +34461,8 @@ msgstr "சுயவிவரப் படத்தின் உரிமம்"
 #| "Please enter the name of the license of the photo and link to it if "
 #| "applicable."
 msgid "Please provide the license name and link if applicable."
-msgstr "தேவையெனில், புகைப்படத்தின் உரிமத்தின் பெயரும் அதற்கான இணைப்பும் உள்ளிடவும்."
+msgstr ""
+"தேவையெனில், புகைப்படத்தின் உரிமத்தின் பெயரும் அதற்கான இணைப்பும் உள்ளிடவும்."
 
 #: eventyay/orga/forms/importers.py:109
 #, fuzzy
@@ -34665,7 +34677,8 @@ msgstr "புதிய காலாவதி தேதி எதிர்கா
 #| msgid "You cannot select a quota and a specific product at the same time."
 msgid ""
 "You cannot select \"Send immediately\" and also specify a scheduled time."
-msgstr "ஒதுக்கீடும் ஒரு குறிப்பிட்ட தயாரிப்பையும் ஒரே நேரத்தில் தேர்வு செய்ய முடியாது."
+msgstr ""
+"ஒதுக்கீடும் ஒரு குறிப்பிட்ட தயாரிப்பையும் ஒரே நேரத்தில் தேர்வு செய்ய முடியாது."
 
 #: eventyay/orga/forms/mails.py:274
 msgid "Recipient groups"
@@ -39051,8 +39064,8 @@ msgstr ""
 "PDF டிக்கெட் தொகுப்பியைப் பயன்படுத்தி டிக்கெட் வடிவமைப்பை தனிப்பயனாக்கலாம். அங்கே, "
 "டிக்கெட்டுகளுக்குப் பின்னணியாகப் பயன்படுத்த ஒரு PDF கோப்பை பதிவேற்றி, பின்னர் விருப்பமான "
 "இடங்களில் பின்னணியில் பல்வேறு உரைகள் மற்றும் QR குறியீடுகளை இடமமைக்கலாம். இழுத்து-விடு "
-"பயனர் இடைமுகம் இருப்பதால் தொகுப்பியைப் பயன்படுத்த எளிது; ஆனால், இதற்கு நவீன உலாவியும் "
-"நல்ல இணைய இணைப்பும் தேவை."
+"பயனர் இடைமுகம் இருப்பதால் தொகுப்பியைப் பயன்படுத்த எளிது; ஆனால், இதற்கு நவீன உலாவியும் நல்ல "
+"இணைய இணைப்பும் தேவை."
 
 #: eventyay/plugins/badges/templates/pretixplugins/badges/form.html:12
 #, fuzzy
@@ -40217,8 +40230,7 @@ msgid ""
 "Any changes to the Reply-To field apply only to this queued email. If left "
 "empty, the event's default Reply-To will be used."
 msgstr ""
-"Reply-To புலத்தில் செய்யப்பட்ட மாற்றங்கள் இந்த வரிசையிலுள்ள மின்னஞ்சலுக்கு மட்டுமே "
-"பொருந்தும்."
+"Reply-To புலத்தில் செய்யப்பட்ட மாற்றங்கள் இந்த வரிசையிலுள்ள மின்னஞ்சலுக்கு மட்டுமே பொருந்தும்."
 
 #: eventyay/plugins/sendmail/forms.py:502
 msgid "Any changes to the BCC field will apply only to this queued email."
@@ -41924,7 +41936,8 @@ msgstr "இந்த நிகழ்வுக்கான முன்விற�
 #, fuzzy, python-format
 #| msgid "The presale for this event will start on %(date)s at %(time)s."
 msgid "Registration for this event will open on %(date)s at %(time)s."
-msgstr "இந்த நிகழ்வுக்கான முன்விற்பனை %(date)s அன்று %(time)s மணிக்கு தொடங்கும்."
+msgstr ""
+"இந்த நிகழ்வுக்கான முன்விற்பனை %(date)s அன்று %(time)s மணிக்கு தொடங்கும்."
 
 #: eventyay/presale/templates/pretixpresale/event/meetup_index.html:218
 #, fuzzy
@@ -42415,7 +42428,8 @@ msgstr ""
 msgid ""
 "Refunds for canceled tickets will be issued as a gift card for future "
 "purchases."
-msgstr "பின்னர் வாங்குவதற்கான கிப்ட் கார்டாக பணத்தைத் திரும்பப் பெற விரும்புகிறேன்"
+msgstr ""
+"பின்னர் வாங்குவதற்கான கிப்ட் கார்டாக பணத்தைத் திரும்பப் பெற விரும்புகிறேன்"
 
 #: eventyay/presale/templates/pretixpresale/event/order_cancel_positions.html:83
 #, fuzzy
@@ -42723,8 +42737,8 @@ msgid ""
 "As a registered attendee, please also check your email for the unique link "
 "to join online sessions."
 msgstr ""
-"டிக்கெட் வைத்திருப்பவராக, ஆன்லைன் அமர்வுகளில் சேர்வதற்கான தனிப்பட்ட இணைப்புக்காக "
-"மின்னஞ்சலையும் சரிபார்க்கவும்."
+"டிக்கெட் வைத்திருப்பவராக, ஆன்லைன் அமர்வுகளில் சேர்வதற்கான தனிப்பட்ட இணைப்புக்காக மின்னஞ்சலையும் "
+"சரிபார்க்கவும்."
 
 #: eventyay/presale/templates/pretixpresale/fragment_join_online_video.html:17
 msgid ""
@@ -43183,7 +43197,8 @@ msgstr "கணக்கு இயக்கமிழக்கப்பட்ட�
 #, fuzzy
 #| msgid "For security reasons, please wait 5 minutes before you try again."
 msgid "Too many messages sent. Please wait a few minutes before trying again."
-msgstr "பாதுகாப்பு காரணங்களுக்காக, மீண்டும் முயற்சிக்கும் முன் 5 நிமிடங்கள் காத்திருக்கவும்."
+msgstr ""
+"பாதுகாப்பு காரணங்களுக்காக, மீண்டும் முயற்சிக்கும் முன் 5 நிமிடங்கள் காத்திருக்கவும்."
 
 #: eventyay/presale/views/contact.py:98 eventyay/presale/views/contact.py:104
 #, fuzzy
