@@ -48,8 +48,6 @@ import { ref, onMounted, onBeforeUnmount, watch, markRaw } from 'vue'
 import { Editor } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
-import Link from '@tiptap/extension-link'
-import Underline from '@tiptap/extension-underline'
 import TextAlign from '@tiptap/extension-text-align'
 import api from 'lib/api'
 import i18n from 'i18n'
@@ -197,10 +195,15 @@ onMounted(() => {
 	editorInstance = markRaw(new Editor({
 		element: editorMount.value,
 		extensions: [
-			StarterKit,
+			StarterKit.configure({
+				// TipTap v3 StarterKit already includes Link + Underline.
+				link: {
+					openOnClick: false,
+					autolink: true,
+					HTMLAttributes: { rel: 'noopener noreferrer', target: '_blank' },
+				},
+			}),
 			Image.configure({ inline: false, allowBase64: false }),
-			Link.configure({ openOnClick: false, autolink: true, HTMLAttributes: { rel: 'noopener noreferrer', target: '_blank' } }),
-			Underline,
 			CustomTextAlign.configure({ types: ['heading', 'paragraph'] }),
 		],
 		content: normalizeEditorContent(props.modelValue),
@@ -242,7 +245,7 @@ watch(() => props.modelValue, (newVal) => {
 	const normalized = normalizeEditorContent(newVal)
 	const current = editorInstance.getHTML()
 	if (normalized === current) return
-	editorInstance.commands.setContent(normalized, false)
+	editorInstance.commands.setContent(normalized, { emitUpdate: false })
 })
 </script>
 <style lang="stylus">
