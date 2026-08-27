@@ -9,7 +9,7 @@ export function unescapePoString(value) {
 
 export function parsePo(content) {
 	const entries = []
-	const parts = String(content || '').split(/\nmsgid /)
+	const parts = `\n${String(content || '')}`.split(/\nmsgid /)
 	for (const part of parts.slice(1)) {
 		const lines = part.split('\n')
 		let mode = 'id'

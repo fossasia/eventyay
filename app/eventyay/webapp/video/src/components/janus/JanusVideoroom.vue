@@ -3,10 +3,10 @@
 	.connection-state(v-if="connectionState !== 'connected'")
 		.state-inner(v-if="connectionState === 'disconnected'")
 			.mdi.mdi-wifi-off.state-icon
-			span {{ $t('JanusVideoroom:disconnected:text') }}
+			span {{ $t('You have been disconnected.') }}
 		.state-inner.connection-error(v-else-if="connectionState === 'failed'")
 			.mdi.mdi-alert-circle-outline.state-icon.state-icon--error
-			p {{ $t('JanusVideoroom:connection-error:text') }}
+			p {{ $t('The connection has failed.') }}
 			p.error-detail {{ connectionError }}
 			bunt-button.retry-btn(@click="initJanus") {{ $t('Retry') }}
 		.state-inner(v-else)
@@ -67,13 +67,13 @@
 							.mdi(:class="tile.screen ? 'mdi-monitor-share' : 'mdi-account'")
 							span {{ tile.label }}
 						.tile-actions
-							button.tile-action(type="button", v-if="tile.local && tile.screen", :title="$t('JanusVideoroom:tool-screenshare:off')", @click="stopScreenShare")
+							button.tile-action(type="button", v-if="tile.local && tile.screen", :title="$t('Stop sharing screen')", @click="stopScreenShare")
 								.mdi.mdi-monitor-off
 
-			.slow-banner(v-if="downstreamSlowLinkCount > 5 && videoOutput", @click="disableIncomingVideo") {{ $t('JanusVideoroom:slow:text') }}
+			.slow-banner(v-if="downstreamSlowLinkCount > 5 && videoOutput", @click="disableIncomingVideo") {{ $t('It appears your connection is slow. Click here if you want to reconnect without video.') }}
 
 		.info-bar
-			.info-message(v-if="!videoOutput") {{ $t('JanusVideoroom:video-output:off') }}
+			.info-message(v-if="!videoOutput") {{ $t('You disabled receiving videos of other participants in the video/audio settings.') }}
 			.info-message.error-message(v-if="publishingError")
 				.mdi.mdi-alert
 				span {{ publishingError }}
@@ -85,7 +85,7 @@
 			button.control-button(
 				type="button",
 				:class="{ muted: micMuted }",
-				:title="micMuted ? $t('JanusVideoroom:tool-mute:off') : $t('JanusVideoroom:tool-mute:on')",
+				:title="micMuted ? $t('Unmute') : $t('Mute')",
 				@click="toggleMic"
 			)
 				.mdi(:class="micMuted ? 'mdi-microphone-off' : 'mdi-microphone'")
@@ -93,7 +93,7 @@
 				type="button",
 				:class="{ disabled: !cameraEnabled, loading: cameraToggleInProgress || videoPublishInProgress }",
 				:disabled="cameraToggleInProgress || videoPublishInProgress",
-				:title="cameraEnabled ? $t('JanusVideoroom:tool-video:off') : $t('JanusVideoroom:tool-video:on')",
+				:title="cameraEnabled ? $t('Turn camera off') : $t('Turn camera on')",
 				@click="toggleCamera"
 			)
 				.mdi(:class="cameraEnabled ? 'mdi-video' : 'mdi-video-off'")
@@ -101,7 +101,7 @@
 				type="button",
 				:class="{ active: screenShareState === 'published', loading: screenShareState === 'publishing' || screenShareState === 'unpublishing' }",
 				:disabled="screenShareState === 'publishing' || screenShareState === 'unpublishing'",
-				:title="screenShareState === 'published' ? $t('JanusVideoroom:tool-screenshare:off') : $t('JanusVideoroom:tool-screenshare:on')",
+				:title="screenShareState === 'published' ? $t('Stop sharing screen') : $t('Share screen')",
 				@click="toggleScreenShare"
 			)
 				.mdi(:class="screenShareState === 'published' ? 'mdi-monitor-off' : 'mdi-monitor-share'")
@@ -109,7 +109,7 @@
 				.mdi.mdi-cog
 			button.control-button(type="button", :title="$t('Report issue')", @click="showFeedbackPrompt = true")
 				.mdi.mdi-message-alert-outline
-			button.control-button.leave(type="button", :title="$t('JanusVideoroom:tool-hangup:tooltip')", @click="leaveRoom")
+			button.control-button.leave(type="button", :title="$t('Leave')", @click="leaveRoom")
 				.mdi.mdi-phone-hangup
 
 	chat-user-card(v-if="selectedUser", ref="avatarCard", :user="selectedUser", @close="selectedUser = null")

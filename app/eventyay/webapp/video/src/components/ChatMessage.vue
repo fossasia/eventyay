@@ -48,15 +48,15 @@
 				template(#button="{toggle}")
 					bunt-icon-button(@click="toggle") dots-vertical
 				template(#menu)
-					.edit-message(v-if="canEditMessage", @click="startEditingMessage") {{ $t('ChatMessage:message-edit:label') }}
-					.delete-message(v-if="canDeleteMessage", @click="selected = false, showDeletePrompt = true") {{ $t('ChatMessage:message-delete:label') }}
+					.edit-message(v-if="canEditMessage", @click="startEditingMessage") {{ $t('edit message') }}
+					.delete-message(v-if="canDeleteMessage", @click="selected = false, showDeletePrompt = true") {{ $t('delete message') }}
 	template(v-else-if="message.event_type === 'channel.member'")
-		.system-content {{ senderDisplayName }} {{ message.content.membership === 'join' ? $t('ChatMessage:join-message:text') : $t('ChatMessage:leave-message:text') }}
+		.system-content {{ senderDisplayName }} {{ message.content.membership === 'join' ? $t('joined') : $t('left') }}
 	template(v-else-if="message.event_type === 'channel.poll' && poll")
 		.content-wrapper
 			.message-header
 				.timestamp {{ timestamp }}
-				span {{ $t('ChatMessage:poll-message:header') }}
+				span {{ $t('New poll:') }}
 			Poll(:poll="poll")
 	prompt.delete-message-prompt(v-if="showDeletePrompt", @close="showDeletePrompt = false")
 		.prompt-content
@@ -65,7 +65,7 @@
 				chat-message(:message="message", mode="standalone", :readonly="true")
 			.actions
 				bunt-button#btn-cancel(@click="showDeletePrompt = false") {{ $t('cancel') }}
-				bunt-button#btn-delete-message(@click="deleteMessage") {{ $t('ChatMessage:message-delete:label') }}
+				bunt-button#btn-delete-message(@click="deleteMessage") {{ $t('delete message') }}
 </template>
 <script>
 // TODO

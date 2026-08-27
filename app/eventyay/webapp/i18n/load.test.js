@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {importFromApp} from './app-deps.js'
 import {
+	catalogFromLoaderResult,
 	createEnglishCatalogLoader,
 	loadCatalogForLanguage,
 	loadRawCatalog,
@@ -49,25 +50,39 @@ test('loadCatalogForLanguage overlays partial catalogs and ignores missing local
 		en: {
 			Save: 'Save',
 			Search: 'Search',
-			'RoomsSidebar:schedule:label': 'Schedule',
+			Schedule: 'Schedule',
 		},
 		de: {
 			Save: '',
 			Search: 'Search',
-			'RoomsSidebar:schedule:label': 'Zeitplan',
+			Schedule: 'Zeitplan',
 		},
 	})
 	const loadEnglish = createEnglishCatalogLoader(localeLoaders)
 	const german = await loadCatalogForLanguage(localeLoaders, 'de', loadEnglish)
 	assert.equal(german.Save, 'Save')
 	assert.equal(german.Search, 'Search')
-	assert.equal(german['RoomsSidebar:schedule:label'], 'Zeitplan')
+	assert.equal(german.Schedule, 'Zeitplan')
 	assert.equal(await loadRawCatalog(localeLoaders, 'hi'), null)
 	const hindi = await loadCatalogForLanguage(localeLoaders, 'hi', loadEnglish)
 	assert.equal(hindi.Save, 'Save')
-	assert.equal(hindi['RoomsSidebar:schedule:label'], 'Schedule')
+	assert.equal(hindi.Schedule, 'Schedule')
 	const english = await loadCatalogForLanguage(localeLoaders, 'en-gb', loadEnglish)
 	assert.equal(english.Save, 'Save')
+})
+
+test('raw PO text and Vite query paths still resolve to catalogs', async () => {
+	const po = 'msgid "Schedule"\nmsgstr "Zeitplan"\n'
+	const loaders = {
+		'../../../locale/de/LC_MESSAGES/video.po?raw': async () => po,
+	}
+	assert.ok(resolveLocaleLoader(loaders, 'de'))
+	assert.equal((await loadRawCatalog(loaders, 'de')).Schedule, 'Zeitplan')
+	assert.deepEqual(
+		catalogFromLoaderResult({default: {Save: 'Save'}, __esModule: true}),
+		{Save: 'Save'}
+	)
+	assert.deepEqual(catalogFromLoaderResult({Save: 'Save'}), {Save: 'Save'})
 })
 
 test('i18next still returns English after a Hindi fallback merge', async () => {

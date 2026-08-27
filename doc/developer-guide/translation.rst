@@ -87,13 +87,30 @@ scroll down, there is also a "Comments" section to discuss any questions with fe
 Video UI strings live in ``video.po``, public schedule widget strings in
 ``schedule.po``, and organiser schedule-editor strings in
 ``schedule-editor.po`` (``app/eventyay/locale/*/LC_MESSAGES/``). All three
-Vue apps share ``app/eventyay/webapp/i18n/``: the same catalog loader,
-English fallbacks, locale aliases, and Vue ``$t`` helper. After adding
-``$t()`` keys, run ``make localegen`` from ``app/`` (or
-``npm run i18n:extract`` in the relevant app). Extract updates English
-plus any locale that already has that domain file; other languages belong
-in the Weblate/catalog PR. On Weblate, use monolingual English sources
-``en/LC_MESSAGES/video.po``, ``schedule.po``, and ``schedule-editor.po``.
+Vue apps share ``app/eventyay/webapp/i18n/`` and use the same **bilingual**
+gettext model as Django: ``msgid`` in the ``.pot`` template is the English UI
+copy, and other languages fill ``msgstr`` in ``locale/<lang>/LC_MESSAGES/*.po``.
+Do not commit ``locale/en/LC_MESSAGES/*.po``. That file duplicates the
+template, and Weblate reports *The component contains translation file for
+the source language* (for example ``django.po`` next to ``django.pot``).
+After adding ``$t()`` strings, run ``make localegen`` from ``app/`` (or
+``npm run i18n:extract`` in the relevant app). Extract updates the ``.pot``
+template plus any non-English locale that already has that domain file.
+
+Weblate component configuration
+--------------------------------
+
+Each gettext domain is its own bilingual Weblate component:
+
+* File format: Gettext PO file (``po``, not monolingual)
+* File mask: ``app/eventyay/locale/*/LC_MESSAGES/{domain}.po``
+* Template for new translations: ``app/eventyay/locale/{domain}.pot``
+* Monolingual base language file: empty
+* Source language: English
+* Language filter: ``^(?!en$).+$``
+
+Do not add ``locale/en/LC_MESSAGES/*.po``. If Weblate still lists English as
+a translation after this lands, remove that language from the component.
 
 .. _translate.eventyay.com: https://translate.eventyay.com
 .. _eventyay project page: https://translate.eventyay.com/projects/eventyay/

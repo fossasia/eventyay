@@ -68,11 +68,11 @@ class NumberedCanvas(Canvas):
         self.drawRightString(
             self._pagesize[0] - 20 * mm,
             10 * mm,
-            pgettext('invoice', 'Page %d of %d')
-            % (
-                self._pageNumber,
-                page_count,
-            ),
+            pgettext('invoice', 'Page %(page)d of %(of)d')
+            % {
+                'page': self._pageNumber,
+                'of': page_count,
+            },
         )
         self.restoreState()
 
