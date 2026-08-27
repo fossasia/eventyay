@@ -5,7 +5,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
 "PO-Revision-Date: 2026-08-27 13:58+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "fr/>\n"
 "Language: fr\n"
@@ -4362,8 +4362,8 @@ msgstr "Le montant dû a été débité de votre carte."
 #: eventyay/base/email.py:924
 msgid "Please transfer money to this bank account: 9999-9999-9999-9999"
 msgstr ""
-"Veuillez effectuer un virement vers le compte bancaire suivant : "
-"9999-9999-9999-9999"
+"Veuillez effectuer un virement vers le compte bancaire suivant : 9999-9999-"
+"9999-9999"
 
 #: eventyay/base/exporter.py:119 eventyay/base/exporter.py:255
 #: eventyay/base/exporters/orderlist.py:1051 eventyay/orga/forms/export.py:28
@@ -13298,8 +13298,7 @@ msgstr "Cliquez ici pour désactiver immédiatement toutes les notifications."
 
 #: eventyay/base/templates/pretixbase/email/notification.txt:15
 msgid "Click here to view and change your notification settings:"
-msgstr ""
-"Cliquez ici pour consulter et modifier vos paramètres de notification :"
+msgstr "Cliquez ici pour consulter et modifier vos paramètres de notification :"
 
 #: eventyay/base/templates/pretixbase/email/notification.txt:17
 msgid "Click here disable all notifications immediately:"
@@ -13340,8 +13339,8 @@ msgid ""
 "You are receiving this email because you placed an order for the following "
 "event:"
 msgstr ""
-"Nous vous envoyons cet e-mail suite à votre commande pour l'événement "
-"suivant :"
+"Nous vous envoyons cet e-mail suite à votre commande pour l'événement suivant"
+" :"
 
 #: eventyay/base/templates/pretixbase/email/order_details.html:90
 msgid "Details:"
@@ -15650,10 +15649,8 @@ msgstr[1] ""
 #| msgid "You can choose up to %(max_count)s options from this category."
 msgid "You can keep up to %(count)s slide entry in total."
 msgid_plural "You can keep up to %(count)s slide entries in total."
-msgstr[0] ""
-"Vous pouvez choisir jusqu'à %(max_count)s options dans cette catégorie."
-msgstr[1] ""
-"Vous pouvez choisir jusqu'à %(max_count)s options dans cette catégorie."
+msgstr[0] "Vous pouvez choisir jusqu'à %(max_count)s options dans cette catégorie."
+msgstr[1] "Vous pouvez choisir jusqu'à %(max_count)s options dans cette catégorie."
 
 #: eventyay/common/templates/common/widgets/slides_input.html:79
 #, fuzzy
@@ -19488,8 +19485,8 @@ msgid ""
 "Position #{posid}: {old_product} ({old_price}) changed to {new_product} "
 "({new_price})."
 msgstr ""
-"Position #{posid}: {old_product} ({old_price}) modifiée en {new_product} "
-"({new_price})."
+"Position #{posid}: {old_product} ({old_price}) modifiée en {new_product} ("
+"{new_price})."
 
 #: eventyay/control/logdisplay.py:73
 #, python-brace-format
@@ -23136,8 +23133,8 @@ msgstr "Supprimer la liste d'enregistrement"
 msgid ""
 "Are you sure you want to delete the check-in list <strong>%(name)s</strong>?"
 msgstr ""
-"Êtes-vous sûr de vouloir supprimer la liste d'enregistrement "
-"<strong>%(name)s</strong> ?"
+"Êtes-vous sûr de vouloir supprimer la liste d'enregistrement <strong>%(name)"
+"s</strong> ?"
 
 #: eventyay/control/templates/pretixcontrol/checkin/list_delete.html:11
 #, python-format
@@ -24515,8 +24512,8 @@ msgid ""
 "%(plugin_settings_href)s>plugin settings</a> and activate one or more ticket "
 "output plugins."
 msgstr ""
-"Aucune sortie de billets n'est disponible. Veuillez aller dans les <a "
-"%(plugin_settings_href)s>paramètres des plugins</a> et activer un ou "
+"Aucune sortie de billets n'est disponible. Veuillez aller dans les <a %"
+"(plugin_settings_href)s>paramètres des plugins</a> et activer un ou "
 "plusieurs plugins de sortie de billets."
 
 #: eventyay/control/templates/pretixcontrol/event/tickets.html:65
@@ -25196,8 +25193,7 @@ msgstr "Supprimer catégorie de produit"
 #: eventyay/control/templates/pretixcontrol/items/category_delete.html:9
 #, python-format
 msgid "Are you sure you want to delete the category <strong>%(name)s</strong>?"
-msgstr ""
-"Voulez-vous vraiment supprimer la catégorie <strong>%(name)s</strong> ?"
+msgstr "Voulez-vous vraiment supprimer la catégorie <strong>%(name)s</strong> ?"
 
 #: eventyay/control/templates/pretixcontrol/items/description_delete.html:4
 #: eventyay/control/templates/pretixcontrol/items/description_delete.html:6
@@ -25560,8 +25556,8 @@ msgstr "Supprimer la question"
 msgid ""
 "Are you sure you want to delete the question <strong>%(question)s</strong>?"
 msgstr ""
-"Êtes-vous sûr de vouloir supprimer la question <strong>%(question)s</"
-"strong> ?"
+"Êtes-vous sûr de vouloir supprimer la question <strong>%(question)s</strong> "
+"?"
 
 #: eventyay/control/templates/pretixcontrol/items/question_delete.html:11
 msgid ""
@@ -25769,8 +25765,7 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/items/quota_delete.html:12
 msgid "The following products might be no longer available for sale:"
-msgstr ""
-"Les articles suivants risquent de ne plus être disponibles à la vente :"
+msgstr "Les articles suivants risquent de ne plus être disponibles à la vente :"
 
 #: eventyay/control/templates/pretixcontrol/items/quota_edit.html:30
 msgid "Items"
@@ -28302,9 +28297,9 @@ msgid ""
 "(\"%(slug)s\") here:"
 msgstr ""
 "Veuillez revérifier que vous êtes bien certain de vouloir supprimer les "
-"catégories de données sélectionnées de l'événement <strong>%(event)s</"
-"strong>. Pour confirmer que vous souhaitez vraiment cela, veuillez taper ici "
-"le nom court de l'événement (\"%(slug)s\") :"
+"catégories de données sélectionnées de l'événement <strong>%(event)s</strong>"
+". Pour confirmer que vous souhaitez vraiment cela, veuillez taper ici le nom "
+"court de l'événement (\"%(slug)s\") :"
 
 #: eventyay/control/templates/pretixcontrol/shredder/download.html:41
 msgid "Event short name"
@@ -31108,8 +31103,8 @@ msgstr "Blackberry (Lien via Google)"
 #: eventyay/eventyay_common/templates/eventyay_common/account/2fa-confirm-totp.html:52
 msgid "Add a new account to the app by scanning the following barcode:"
 msgstr ""
-"Ajoutez un nouveau compte à l'application en scannant le code-barres "
-"suivant :"
+"Ajoutez un nouveau compte à l'application en scannant le code-barres suivant "
+":"
 
 #: eventyay/eventyay_common/templates/eventyay_common/account/2fa-confirm-totp.html:56
 msgid "Can't scan the barcode?"
@@ -31172,8 +31167,8 @@ msgstr "Supprimer un dispositif d'authentification à deux facteurs"
 msgid ""
 "Are you sure you want to delete the authentication device \"%(device)s\"?"
 msgstr ""
-"Êtes-vous sûr de vouloir supprimer le dispositif d'authentification "
-"\"%(device)s\" ?"
+"Êtes-vous sûr de vouloir supprimer le dispositif d'authentification \"%"
+"(device)s\" ?"
 
 #: eventyay/eventyay_common/templates/eventyay_common/account/2fa-delete.html:25
 #, fuzzy
