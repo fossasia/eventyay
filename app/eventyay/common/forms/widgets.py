@@ -83,20 +83,23 @@ class ClearableBasenameFileInput(ClearableFileInput):
         def __init__(self, file):
             self.file = file
 
+        def __bool__(self):
+            return bool(self.file)
+
         @property
         def name(self):
-            return self.file.name
+            return self.file.name if self.file else ''
 
         def __str__(self):
-            return Path(self.name).stem
+            return Path(self.name).stem if self.name else ''
 
         @property
         def url(self):
-            return self.file.url
+            return self.file.url if self.file and hasattr(self.file, 'url') else ''
 
     def get_context(self, name, value, attrs):
         ctx = super().get_context(name, value, attrs)
-        ctx['widget']['value'] = self.FakeFile(value)
+        ctx['widget']['value'] = self.FakeFile(value) if value else None
         return ctx
 
 

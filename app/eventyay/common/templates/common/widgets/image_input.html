@@ -6,9 +6,9 @@
             {{ widget.input_text }}:{% endif %}
         <input type="{{ widget.type }}" name="{{ widget.name }}"{% include "django/forms/widgets/attrs.html" %}>
     </div>
-    <div class="form-image-preview" {% if not widget.value or not widget.value.url %}style="display: none;"{% endif %}>
-        <a {% if widget.value and widget.value.url %}href="{{ widget.value.url }}"{% endif %} aria-label="{{ widget.alt_text }}">
-            <img loading="lazy"{% if widget.value and widget.value.url %} src="{{ widget.value.url }}"{% endif %} alt="{{ widget.alt_text }}">
+    <div class="form-image-preview" {% if not widget.is_initial %}style="display: none;"{% endif %}>
+        <a {% if widget.is_initial %}href="{{ widget.value.url }}"{% endif %} aria-label="{{ widget.alt_text }}">
+            <img loading="lazy"{% if widget.is_initial %} src="{{ widget.value.url }}"{% endif %} alt="{{ widget.alt_text }}">
         </a>
     </div>
 </div>
