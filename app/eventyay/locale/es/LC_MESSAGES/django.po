@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-03-30 15:56+0000\n"
-"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
+"PO-Revision-Date: 2026-08-27 12:01+0000\n"
+"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Spanish <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/es/>\n"
 "Language: es\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.17-dev\n"
+"X-Generator: Weblate 2026.9.dev0\n"
 
 #: data/templates/exhibitors/exhibitor_info.html:3
 #: data/templates/exhibitors/exhibitor_info.html:5
@@ -8431,8 +8431,7 @@ msgstr "Mostrar en el menú del encabezado en todas las páginas"
 
 #: eventyay/base/models/page.py:27
 msgid "Show in website footer menu on all pages"
-msgstr ""
-"Mostrar en el menú del pie de página del sitio web en todas las páginas"
+msgstr "Mostrar en el menú del pie de página del sitio web en todas las páginas"
 
 #: eventyay/base/models/page.py:31
 msgid ""
@@ -8919,8 +8918,7 @@ msgstr ""
 
 #: eventyay/base/models/product.py:786
 msgid "The product's availability cannot end before it starts."
-msgstr ""
-"La disponibilidad del producto no puede terminar antes de que comience."
+msgstr "La disponibilidad del producto no puede terminar antes de que comience."
 
 #: eventyay/base/models/product.py:791
 #, fuzzy
@@ -9127,9 +9125,9 @@ msgid ""
 "and can be toggled by event organizers."
 msgstr ""
 "Las preguntas inactivas no se muestran a los clientes durante la compra o el "
-"check-in. A diferencia de las preguntas ocultas (que son a nivel del "
-"sistema), las preguntas activas controlan la visibilidad y pueden ser "
-"alternadas por los organizadores del evento."
+"check-in. A diferencia de las preguntas ocultas (que son a nivel del sistema)"
+", las preguntas activas controlan la visibilidad y pueden ser alternadas por "
+"los organizadores del evento."
 
 #: eventyay/base/models/product.py:1342
 msgid "Help text"
@@ -11850,8 +11848,7 @@ msgstr "No puedes seleccionar más de %s productos por pedido."
 #, python-format
 msgid ""
 "You cannot select more than %(max)s products of the product %(product)s."
-msgstr ""
-"No puedes seleccionar más de %(max)s unidades del producto %(product)s."
+msgstr "No puedes seleccionar más de %(max)s unidades del producto %(product)s."
 
 #: eventyay/base/services/cart.py:78
 #, python-format
@@ -15479,8 +15476,8 @@ msgid ""
 "The link you clicked on wants to redirect you to a destination on the "
 "website %(host)s."
 msgstr ""
-"El enlace que has pulsado quiere redirigirte a un destino en el sitio web "
-"%(host)s."
+"El enlace que has pulsado quiere redirigirte a un destino en el sitio web %"
+"(host)s."
 
 #: eventyay/common/templates/common/redirect.html:18
 msgid "Please only proceed if you trust this website to be safe."
@@ -18256,8 +18253,8 @@ msgid ""
 "The provided key does not look valid. It should start with one of: "
 "%(prefixes)s"
 msgstr ""
-"La clave proporcionada no parece válida. Debe comenzar con uno de: "
-"%(prefixes)s"
+"La clave proporcionada no parece válida. Debe comenzar con uno de: %"
+"(prefixes)s"
 
 #: eventyay/control/forms/orderimport.py:10
 msgid "Import mode"
@@ -19391,8 +19388,8 @@ msgid ""
 "Position #{posid}: {old_product} ({old_price}) changed to {new_product} "
 "({new_price})."
 msgstr ""
-"Posición #{posid}: {old_product} ({old_price}) cambió a {new_product} "
-"({new_price})."
+"Posición #{posid}: {old_product} ({old_price}) cambió a {new_product} ("
+"{new_price})."
 
 #: eventyay/control/logdisplay.py:73
 #, python-brace-format
@@ -19493,8 +19490,8 @@ msgid ""
 "Unknown scan of code \"{barcode}…\" at {datetime} for list \"{list}\", type "
 "\"{type}\"."
 msgstr ""
-"Escaneo desconocido del código \"{barcode}…\" en {datetime} para la lista "
-"\"{list}\", tipo \"{type}\"."
+"Escaneo desconocido del código \"{barcode}…\" en {datetime} para la lista \""
+"{list}\", tipo \"{type}\"."
 
 #: eventyay/control/logdisplay.py:258
 #, python-brace-format
@@ -19537,8 +19534,8 @@ msgid ""
 "Denied scan of position #{posid} for list \"{list}\", type \"{type}\", error "
 "code \"{errorcode}\"."
 msgstr ""
-"Escaneo denegado de la posición #{posid} para la lista \"{list}\", tipo "
-"\"{type}\", código de error \"{errorcode}\"."
+"Escaneo denegado de la posición #{posid} para la lista \"{list}\", tipo \""
+"{type}\", código de error \"{errorcode}\"."
 
 #: eventyay/control/logdisplay.py:308
 #, python-brace-format
@@ -19617,8 +19614,7 @@ msgstr "Se ha añadido la aceptación de tarjetas regalo para otro organizador."
 
 #: eventyay/control/logdisplay.py:497
 msgid "Gift card acceptance for another organizer has been removed."
-msgstr ""
-"Se ha eliminado la aceptación de tarjetas regalo para otro organizador."
+msgstr "Se ha eliminado la aceptación de tarjetas regalo para otro organizador."
 
 #: eventyay/control/logdisplay.py:498
 msgid "The webhook has been created."
@@ -22055,8 +22051,7 @@ msgstr "Eliminar una página"
 #: eventyay/control/templates/pretixcontrol/admin/pages/delete.html:9
 #, python-format
 msgid "Are you sure you want to delete the page <strong>%(name)s</strong>?"
-msgstr ""
-"¿Está seguro de que desea eliminar la página <strong>%(name)s</strong>?"
+msgstr "¿Está seguro de que desea eliminar la página <strong>%(name)s</strong>?"
 
 #: eventyay/control/templates/pretixcontrol/admin/pages/form.html:5
 #: eventyay/control/templates/pretixcontrol/admin/pages/form.html:16
@@ -22133,9 +22128,9 @@ msgid ""
 "strong> and set the DEBUG variable to False if this page is in any way "
 "reachable from the internet."
 msgstr ""
-"Estás ejecutando %(site_name)s en modo de desarrollo. Por favor, "
-"<strong>DETÉN</strong> y establece la variable DEBUG en False si esta página "
-"es accesible desde Internet."
+"Estás ejecutando %(site_name)s en modo de desarrollo. Por favor, <strong>"
+"DETÉN</strong> y establece la variable DEBUG en False si esta página es "
+"accesible desde Internet."
 
 #: eventyay/control/templates/pretixcontrol/admin/systemconfig.html:31
 msgid "Your eventyay version is:"
@@ -23943,9 +23938,8 @@ msgid ""
 "%(plugin_settings_href)s>plugin settings</a> and activate one or more "
 "payment plugins."
 msgstr ""
-"No hay proveedores de pago disponibles. Vaya a los <a "
-"%(plugin_settings_href)s>ajustes de complementos</a> y active uno o más "
-"complementos de pago."
+"No hay proveedores de pago disponibles. Vaya a los <a %(plugin_settings_href)"
+"s>ajustes de complementos</a> y active uno o más complementos de pago."
 
 #: eventyay/control/templates/pretixcontrol/event/payment.html:76
 msgid "Deadlines"
@@ -24398,9 +24392,8 @@ msgid ""
 "%(plugin_settings_href)s>plugin settings</a> and activate one or more ticket "
 "output plugins."
 msgstr ""
-"No hay salidas de tickets disponibles. Vaya a los <a "
-"%(plugin_settings_href)s>ajustes del plugin</a> y active uno o más plugins "
-"de salida de tickets."
+"No hay salidas de tickets disponibles. Vaya a los <a %(plugin_settings_href)"
+"s>ajustes del plugin</a> y active uno o más plugins de salida de tickets."
 
 #: eventyay/control/templates/pretixcontrol/event/tickets.html:65
 msgid "Download time"
@@ -28375,8 +28368,8 @@ msgid ""
 msgstr ""
 "Has seleccionado un conjunto de fechas que actualmente tienen distintas "
 "configuraciones de cuotas. Por lo tanto, no puedes cambiar sus cuotas en "
-"bloque. Si quieres, puedes crear un nuevo conjunto de cuotas para "
-"<strong>reemplazar</strong> la configuración de cuotas de todas las fechas "
+"bloque. Si quieres, puedes crear un nuevo conjunto de cuotas para <strong>"
+"reemplazar</strong> la configuración de cuotas de todas las fechas "
 "seleccionadas."
 
 #: eventyay/control/templates/pretixcontrol/subevents/bulk_edit.html:258
@@ -28501,8 +28494,8 @@ msgid ""
 "We just want to make sure it's really you. Please re-authenticate with "
 "'%(login_provider)s'."
 msgstr ""
-"Solo queremos asegurarnos de que seas tú. Vuelve a autenticarte con "
-"'%(login_provider)s'."
+"Solo queremos asegurarnos de que seas tú. Vuelve a autenticarte con '%"
+"(login_provider)s'."
 
 #: eventyay/control/templates/pretixcontrol/user/reauth.html:14
 msgid ""
@@ -31203,8 +31196,8 @@ msgid ""
 "Are you sure you want to revoke access to your account for the application "
 "%(application)s?"
 msgstr ""
-"¿Está seguro de que desea revocar el acceso a su cuenta para la aplicación "
-"%(application)s?"
+"¿Está seguro de que desea revocar el acceso a su cuenta para la aplicación %"
+"(application)s?"
 
 #: eventyay/eventyay_common/templates/eventyay_common/account/authorized-apps.html:4
 #: eventyay/eventyay_common/templates/eventyay_common/account/authorized-apps.html:19
@@ -34069,8 +34062,8 @@ msgid ""
 msgstr ""
 "¡Hola!\n"
 "\n"
-"Se te ha añadido a una propuesta de {event_name}, titulada "
-"“{proposal_title}”.\n"
+"Se te ha añadido a una propuesta de {event_name}, titulada “{proposal_title}"
+"”.\n"
 "Se ha creado una cuenta para ti – por favor sigue este enlace para "
 "establecer la contraseña de tu cuenta.\n"
 "\n"
@@ -34096,8 +34089,8 @@ msgid ""
 msgstr ""
 "¡Hola!\n"
 "\n"
-"Se te ha añadido a una propuesta de {event_name}, titulada "
-"“{proposal_title}”.\n"
+"Se te ha añadido a una propuesta de {event_name}, titulada “{proposal_title}"
+"”.\n"
 "Por favor, sigue este enlace para editar tu perfil de usuario y ver el "
 "estado de tu propuesta:\n"
 "\n"
@@ -36697,9 +36690,9 @@ msgid ""
 "href=\"%(domain)s\">%(domain)s</a>, please log in now. Otherwise, create a "
 "new account to join the team!"
 msgstr ""
-"Si ya tienes una cuenta –como ponente u organizador– en <a "
-"href=\"%(domain)s\">%(domain)s</a>, por favor inicia sesión ahora. De lo "
-"contrario, crea una cuenta nueva para unirte al equipo."
+"Si ya tienes una cuenta –como ponente u organizador– en <a href=\"%(domain)"
+"s\">%(domain)s</a>, por favor inicia sesión ahora. De lo contrario, crea una "
+"cuenta nueva para unirte al equipo."
 
 #: eventyay/orga/templates/orga/invitation.html:37
 #, python-format
@@ -36820,8 +36813,8 @@ msgstr ""
 #, python-format
 msgid "Recipients filtered by responses to the custom field “%(question)s”."
 msgstr ""
-"Destinatarios filtrados por las respuestas al campo personalizado "
-"“%(question)s”."
+"Destinatarios filtrados por las respuestas al campo personalizado “%"
+"(question)s”."
 
 #: eventyay/orga/templates/orga/mails/compose_session_mail_form.html:28
 #, python-format
@@ -39723,8 +39716,7 @@ msgstr "Transferencia bancaria"
 
 #: eventyay/plugins/banktransfer/apps.py:17
 msgid "This plugin allows you to receive payments via bank transfer."
-msgstr ""
-"Este complemento permite recibir pagos mediante transferencia bancaria."
+msgstr "Este complemento permite recibir pagos mediante transferencia bancaria."
 
 #: eventyay/plugins/banktransfer/apps.py:31
 msgid ""
@@ -40260,8 +40252,8 @@ msgstr[0] ""
 "Estás intentando descargar una exportación de reembolsos de %(date)s con un "
 "pedido y un total de %(sum)s."
 msgstr[1] ""
-"Estás intentando descargar una exportación de reembolsos de %(date)s con "
-"%(cnt)s pedido y un total de %(sum)s."
+"Estás intentando descargar una exportación de reembolsos de %(date)s con %"
+"(cnt)s pedido y un total de %(sum)s."
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/sepa_export.html:23
 msgid ""
@@ -41192,8 +41184,7 @@ msgstr "Notas importantes"
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:59
 msgid "The OAuth application must be approved by a MediaWiki administrator"
-msgstr ""
-"La aplicación OAuth debe ser aprobada por un administrador de MediaWiki"
+msgstr "La aplicación OAuth debe ser aprobada por un administrador de MediaWiki"
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:60
 msgid "Until approved, only the application owner can log in"
@@ -42094,8 +42085,7 @@ msgstr "Orden confirmada"
 
 #: eventyay/presale/templates/pretixpresale/event/fragment_downloads.html:14
 msgid "Please check your email account, we've sent you your tickets."
-msgstr ""
-"Por favor, revisa tu correo electrónico: te hemos enviado tus entradas."
+msgstr "Por favor, revisa tu correo electrónico: te hemos enviado tus entradas."
 
 #: eventyay/presale/templates/pretixpresale/event/fragment_downloads.html:16
 msgid "Please check your email account, we've sent you an email."
@@ -43511,8 +43501,8 @@ msgstr ""
 msgid ""
 "To log in and access your events, please <a %(a_attr)s>head over here</a>."
 msgstr ""
-"Para iniciar sesión y acceder a tus eventos, por favor <a "
-"%(a_attr)s>dirígete aquí</a>."
+"Para iniciar sesión y acceder a tus eventos, por favor <a %(a_attr)s>"
+"dirígete aquí</a>."
 
 #: eventyay/presale/templates/pretixpresale/index.html:30
 msgid "Enjoy!"
