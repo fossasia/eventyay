@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 11:56+0000\n"
-"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
+"PO-Revision-Date: 2026-08-27 11:59+0000\n"
+"Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Greek <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "el/>\n"
 "Language: el\n"
@@ -317,8 +317,7 @@ msgstr ""
 
 #: eventyay/agenda/templates/agenda/feedback_form.html:26
 msgid "You can’t give feedback for this session at this time."
-msgstr ""
-"Δεν μπορείτε να υποβάλετε σχόλια για αυτήν τη συνεδρία αυτήν τη στιγμή."
+msgstr "Δεν μπορείτε να υποβάλετε σχόλια για αυτήν τη συνεδρία αυτήν τη στιγμή."
 
 #: eventyay/agenda/templates/agenda/feedback_form.html:44
 msgid "stars"
@@ -7422,8 +7421,7 @@ msgstr "Όριο στα κομμάτια"
 
 #: eventyay/base/models/information.py:37
 msgid "Leave empty to show this information to all tracks."
-msgstr ""
-"Αφήστε κενό για να εμφανιστούν αυτές οι πληροφορίες σε όλα τα κομμάτια."
+msgstr "Αφήστε κενό για να εμφανιστούν αυτές οι πληροφορίες σε όλα τα κομμάτια."
 
 #: eventyay/base/models/information.py:41
 msgid "Limit to proposal types"
@@ -9086,8 +9084,7 @@ msgstr "Ο μέγιστος αριθμός πρέπει να είναι ίσος
 
 #: eventyay/base/models/product.py:1158
 msgid "The maximum count needs to be greater than the minimum count."
-msgstr ""
-"Ο μέγιστος αριθμός πρέπει να είναι μεγαλύτερος από τον ελάχιστο αριθμό."
+msgstr "Ο μέγιστος αριθμός πρέπει να είναι μεγαλύτερος από τον ελάχιστο αριθμό."
 
 #: eventyay/base/models/product.py:1182 eventyay/control/forms/product.py:1039
 #: eventyay/control/templates/pretixcontrol/item/include_bundles.html:23
@@ -9903,8 +9900,7 @@ msgstr "Ο/Η {speaker} δεν είναι διαθέσιμος/η την προ�
 #: eventyay/base/models/schedule.py:518
 #, python-brace-format
 msgid "{speaker} is scheduled for another session at the same time."
-msgstr ""
-"Ο/Η {speaker} πραγματοποιεί μια άλλη συνεδρία την προγραμματισμένη ώρα."
+msgstr "Ο/Η {speaker} πραγματοποιεί μια άλλη συνεδρία την προγραμματισμένη ώρα."
 
 #: eventyay/base/models/schedule.py:690
 msgid "This schedule contains only breaks and no sessions."
@@ -10572,8 +10568,7 @@ msgstr "Τιμή κουπονιού"
 
 #: eventyay/base/models/vouchers.py:166 eventyay/control/forms/vouchers.py:31
 msgid "This product is added to the user's cart if the voucher is redeemed."
-msgstr ""
-"Αυτό το προϊόν προστίθεται στο καλάθι χρήστη αν το κουπόνι εξαργυρωθεί."
+msgstr "Αυτό το προϊόν προστίθεται στο καλάθι χρήστη αν το κουπόνι εξαργυρωθεί."
 
 #: eventyay/base/models/vouchers.py:177
 msgid "This variation of the product select above is being used."
@@ -10808,8 +10803,7 @@ msgstr "Ένα κουπόνι έχει ήδη σταλεί σε αυτό το ά
 
 #: eventyay/base/models/waitinglist.py:125
 msgid "This entry is anonymized and can no longer be used."
-msgstr ""
-"Αυτή η καταχώρηση είναι ανώνυμη και δεν μπορεί πλέον να χρησιμοποιηθεί."
+msgstr "Αυτή η καταχώρηση είναι ανώνυμη και δεν μπορεί πλέον να χρησιμοποιηθεί."
 
 #: eventyay/base/models/waitinglist.py:135
 #, python-brace-format
@@ -11204,8 +11198,8 @@ msgstr "Ποσοστό του συνόλου της παραγγελίας."
 #: eventyay/base/payment.py:337
 msgid "Calculate the fee from the total value including the fee."
 msgstr ""
-"Υπολογίστε το τέλος(fee) από τη συνολική αξία συμπεριλαμβανομένου του "
-"τέλους(fee)."
+"Υπολογίστε το τέλος(fee) από τη συνολική αξία συμπεριλαμβανομένου του τέλους"
+"(fee)."
 
 #: eventyay/base/payment.py:339
 #, python-brace-format
@@ -12119,8 +12113,7 @@ msgstr "Δεν μπορείτε να επιλέξετε ένα πρόσθετο 
 
 #: eventyay/base/services/cart.py:127
 msgid "You can not select two variations of the same add-on product."
-msgstr ""
-"Δεν μπορείτε να επιλέξετε δύο παραλλαγές του ίδιου προϊόντος πρόσθετου."
+msgstr "Δεν μπορείτε να επιλέξετε δύο παραλλαγές του ίδιου προϊόντος πρόσθετου."
 
 #: eventyay/base/services/cart.py:128
 #, python-format
@@ -12128,8 +12121,8 @@ msgid ""
 "You can select at most %(max)s add-ons from the category %(cat)s for the "
 "product %(base)s."
 msgstr ""
-"Μπορείτε να επιλέξετε τα περισσότερα %(max)s πρόσθετα από την κατηγορία "
-"%(cat)s για το προϊόν %(base)s."
+"Μπορείτε να επιλέξετε τα περισσότερα %(max)s πρόσθετα από την κατηγορία %"
+"(cat)s για το προϊόν %(base)s."
 
 #: eventyay/base/services/cart.py:130
 #, python-format
@@ -13337,8 +13330,7 @@ msgstr "Κάντε κλικ εδώ απενεργοποιήστε όλες τι�
 
 #: eventyay/base/templates/pretixbase/email/notification.txt:15
 msgid "Click here to view and change your notification settings:"
-msgstr ""
-"Κάντε κλικ εδώ για να δείτε και να αλλάξετε τις ρυθμίσεις ειδοποιήσεων:"
+msgstr "Κάντε κλικ εδώ για να δείτε και να αλλάξετε τις ρυθμίσεις ειδοποιήσεων:"
 
 #: eventyay/base/templates/pretixbase/email/notification.txt:17
 msgid "Click here disable all notifications immediately:"
@@ -13884,8 +13876,8 @@ msgid ""
 "You can enter proposals until %(deadline)s (%(timezone)s), %(until_string)s "
 "from now."
 msgstr ""
-"Μπορείτε να εισάγετε προτάσεις μέχρι %(deadline)s (%(timezone)s), "
-"%(until_string)s από τώρα."
+"Μπορείτε να εισάγετε προτάσεις μέχρι %(deadline)s (%(timezone)s), %"
+"(until_string)s από τώρα."
 
 #: eventyay/cfp/templates/cfp/event/cfp.html:35
 #, python-format
@@ -14425,8 +14417,7 @@ msgstr "Αυτή η πρόταση δεν έχει ακόμη πόρους."
 
 #: eventyay/cfp/templates/cfp/includes/submission_resources_form.html:94
 msgid "You can either provide a URL or upload a file."
-msgstr ""
-"Μπορείτε είτε να δώσετε μια διεύθυνση URL είτε να ανεβάσετε ένα αρχείο."
+msgstr "Μπορείτε είτε να δώσετε μια διεύθυνση URL είτε να ανεβάσετε ένα αρχείο."
 
 #: eventyay/cfp/templates/cfp/includes/submission_resources_form.html:104
 msgid "Add another resource"
@@ -19869,8 +19860,8 @@ msgstr "Η παραγγελία απορρίφθηκε."
 msgid ""
 "The email address has been changed from \"{old_email}\" to \"{new_email}\"."
 msgstr ""
-"Η διεύθυνση ηλεκτρονικού ταχυδρομείου έχει αλλάξει από \"{old_email}\" σε "
-"\"{new_email}\"."
+"Η διεύθυνση ηλεκτρονικού ταχυδρομείου έχει αλλάξει από \"{old_email}\" σε \""
+"{new_email}\"."
 
 #: eventyay/control/logdisplay.py:524
 msgid ""
@@ -24134,8 +24125,8 @@ msgid ""
 "%(plugin_settings_href)s>plugin settings</a> and activate one or more "
 "payment plugins."
 msgstr ""
-"Δεν υπάρχουν διαθέσιμοι πάροχοι πληρωμών. Μεταβείτε στις <a "
-"%(plugin_settings_href)s> ρυθμίσεις plugin </a> και ενεργοποιήστε ένα ή "
+"Δεν υπάρχουν διαθέσιμοι πάροχοι πληρωμών. Μεταβείτε στις <a %"
+"(plugin_settings_href)s> ρυθμίσεις plugin </a> και ενεργοποιήστε ένα ή "
 "περισσότερα πρόσθετα πληρωμής."
 
 #: eventyay/control/templates/pretixcontrol/event/payment.html:76
@@ -24592,8 +24583,8 @@ msgid ""
 "%(plugin_settings_href)s>plugin settings</a> and activate one or more ticket "
 "output plugins."
 msgstr ""
-"Δεν υπάρχουν διαθέσιμες έξοδοι εισιτηρίων(ticket outputs). Μεταβείτε στις "
-"<a>%(plugin_settings_href)s> ρυθμίσεις plugin </a> και ενεργοποιήστε ένα ή "
+"Δεν υπάρχουν διαθέσιμες έξοδοι εισιτηρίων(ticket outputs). Μεταβείτε στις <a>"
+"%(plugin_settings_href)s> ρυθμίσεις plugin </a> και ενεργοποιήστε ένα ή "
 "περισσότερα πρόσθετα εισόδου εισιτηρίων."
 
 #: eventyay/control/templates/pretixcontrol/event/tickets.html:65
@@ -25850,8 +25841,8 @@ msgstr "Διαγραφή quota"
 #, python-format
 msgid "Are you sure you want to delete the quota <strong>%(quota)s</strong>?"
 msgstr ""
-"Είστε βέβαιοι ότι θέλετε να διαγράψετε την ποσόστωση(quota) <strong> "
-"%(quota)s </strong> ;"
+"Είστε βέβαιοι ότι θέλετε να διαγράψετε την ποσόστωση(quota) <strong> %(quota)"
+"s </strong> ;"
 
 #: eventyay/control/templates/pretixcontrol/items/quota_delete.html:12
 msgid "The following products might be no longer available for sale:"
@@ -26864,9 +26855,8 @@ msgid ""
 msgstr ""
 "Λάβαμε ειδοποίηση οτι <strong> %(amount)s </strong> έχει γίνει επιστροφή "
 "χρημάτων μέσω <strong> %(method)s </strong> . Εάν αυτή η επιστροφή χρημάτων "
-"υποβληθεί σε επεξεργασία, η παραγγελία θα υποπληρωθεί από <strong> "
-"%(pending)s </strong>. Η συνολική παραγγελία είναι <strong> %(total)s </"
-"strong> ."
+"υποβληθεί σε επεξεργασία, η παραγγελία θα υποπληρωθεί από <strong> %(pending)"
+"s </strong>. Η συνολική παραγγελία είναι <strong> %(total)s </strong> ."
 
 #: eventyay/control/templates/pretixcontrol/order/refund_process.html:30
 msgid "Since the order is already canceled, this will not affect its state."
@@ -31287,8 +31277,8 @@ msgstr "Διαγράψτε μια συσκευή επαλήθευσης δύο �
 msgid ""
 "Are you sure you want to delete the authentication device \"%(device)s\"?"
 msgstr ""
-"Είστε βέβαιοι ότι θέλετε να διαγράψετε τη συσκευή ελέγχου ταυτότητας "
-"\"%(device)s\";"
+"Είστε βέβαιοι ότι θέλετε να διαγράψετε τη συσκευή ελέγχου ταυτότητας \"%"
+"(device)s\";"
 
 #: eventyay/eventyay_common/templates/eventyay_common/account/2fa-delete.html:25
 #, fuzzy
@@ -33813,8 +33803,7 @@ msgstr "Δημιουργήθηκε νέος διοργανωτής."
 #: eventyay/eventyay_common/views/organizer.py:393
 #: eventyay/eventyay_common/views/team.py:318
 msgid "The team has been created. You can now add members to the team."
-msgstr ""
-"Η ομάδα έχει δημιουργηθεί. Τώρα μπορείτε να προσθέσετε μέλη στην ομάδα."
+msgstr "Η ομάδα έχει δημιουργηθεί. Τώρα μπορείτε να προσθέσετε μέλη στην ομάδα."
 
 #: eventyay/eventyay_common/views/organizer.py:399
 msgid ""
@@ -35765,8 +35754,8 @@ msgid ""
 "href=\"http://www.heropatterns.com/\">heropatterns.com</a>, CC BY 4.0."
 msgstr ""
 "Επιλέξτε τον τρόπο με τον οποίο θα μορφοποιηθεί το banner της αρχικής "
-"σελίδας. Πηγή μοτίβου:<a href=\"http://www.heropatterns.com/"
-"\">heropatterns.com</a>, CC BY 4.0."
+"σελίδας. Πηγή μοτίβου:<a href=\"http://www.heropatterns.com/\">"
+"heropatterns.com</a>, CC BY 4.0."
 
 #: eventyay/orga/phrases.py:13
 msgid "Schedule display format"
@@ -35795,8 +35784,9 @@ msgid ""
 "{count} emails have been saved to the outbox – you can make individual "
 "changes there or just send them all."
 msgstr ""
-"{count} μηνύματα ηλεκτρονικού ταχυδρομείου έχουν αποθηκευτεί στα εξερχόμενα "
-"- μπορείτε να κάνετε μεμονωμένες αλλαγές εκεί ή απλώς να τα στείλετε όλα."
+"{count} μηνύματα ηλεκτρονικού ταχυδρομείου έχουν αποθηκευτεί στα "
+"εξερχόμενα - μπορείτε να κάνετε μεμονωμένες αλλαγές εκεί ή απλώς να τα "
+"στείλετε όλα."
 
 #: eventyay/orga/templates/orga/base.html:208
 msgid "You’re using eventyay as a superuser. This is not recommended."
@@ -37453,8 +37443,8 @@ msgid ""
 msgstr ""
 "Εδώ μπορείτε να αναθέσετε κριτικούς σε συγκεκριμένες προτάσεις! "
 "Χρησιμοποιήστε αυτό το αναπτυσσόμενο μενού για εναλλαγή μεταξύ των δύο "
-"τρόπων ανάθεσης (ανάθεση αναθεωρητών σε προτάσεις ή προτάσεων σε "
-"αναθεωρητές)."
+"τρόπων ανάθεσης (ανάθεση αναθεωρητών σε προτάσεις ή προτάσεων σε αναθεωρητές)"
+"."
 
 #: eventyay/orga/templates/orga/review/assignment.html:133
 msgid ""
@@ -37968,8 +37958,8 @@ msgid ""
 "when reviewing proposals."
 msgstr ""
 "Εάν δεν χρειάζεστε ούτε βαθμολογία αξιολόγησης ούτε κείμενο κριτικής, θα "
-"προσφερθεί στους αξιολογητές ένα επιπλέον κουμπί "
-"%(quotation_open)sAbstain%(quotation_close)s κατά τον έλεγχο των προτάσεων."
+"προσφερθεί στους αξιολογητές ένα επιπλέον κουμπί %(quotation_open)sAbstain%"
+"(quotation_close)s κατά τον έλεγχο των προτάσεων."
 
 #: eventyay/orga/templates/orga/settings/review.html:82
 msgid ""
@@ -38283,8 +38273,8 @@ msgid ""
 "Please confirm that you really want to change the state of these %(count)s "
 "proposals."
 msgstr ""
-"Επιβεβαιώστε ότι θέλετε πραγματικά να αλλάξετε την κατάσταση αυτών των "
-"%(count)s προτάσεων."
+"Επιβεβαιώστε ότι θέλετε πραγματικά να αλλάξετε την κατάσταση αυτών των %"
+"(count)s προτάσεων."
 
 #: eventyay/orga/templates/orga/submission/apply_pending.html:33
 #: eventyay/orga/templates/orga/submission/state_change.html:34
@@ -39894,8 +39884,8 @@ msgstr "Εκτύπωση badges"
 msgid ""
 "Are you sure you want to delete the badge layout <strong>%(layout)s</strong>?"
 msgstr ""
-"Είστε σίγουροι ότι θέλετε να διαγράψετε τη διάταξη του badge "
-"<strong>%(layout)s</strong>;"
+"Είστε σίγουροι ότι θέλετε να διαγράψετε τη διάταξη του badge <strong>%"
+"(layout)s</strong>;"
 
 #: eventyay/plugins/badges/templates/pretixplugins/badges/edit.html:6
 #: eventyay/plugins/badges/templates/pretixplugins/badges/edit.html:16
@@ -41898,8 +41888,7 @@ msgstr "Παρακαλώ εισάγετε το όνομά σας."
 #: eventyay/presale/checkoutflowstep/questions_step.py:363
 #: eventyay/presale/checkoutflowstep/questions_step.py:371
 msgid "Please fill in answers to all required questions."
-msgstr ""
-"Παρακαλώ συμπληρώστε τις απαντήσεις σε όλες τις απαιτούμενες ερωτήσεις."
+msgstr "Παρακαλώ συμπληρώστε τις απαντήσεις σε όλες τις απαιτούμενες ερωτήσεις."
 
 #: eventyay/presale/forms/checkout.py:69
 msgid "E-mail address (repeated)"
@@ -42979,8 +42968,7 @@ msgstr[1] "Η παραγγελία έχει ήδη ακυρωθεί."
 #: eventyay/presale/templates/pretixpresale/event/order.html:132
 #, python-format
 msgid "A payment of %(total)s is still pending for this order."
-msgstr ""
-"Μία πληρωμή %(total)s εξακολουθεί να εκκρεμεί για αυτήν την παραγγελία."
+msgstr "Μία πληρωμή %(total)s εξακολουθεί να εκκρεμεί για αυτήν την παραγγελία."
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:135
 #, python-format
@@ -44479,8 +44467,7 @@ msgstr ""
 
 #: eventyay/schedule/forms.py:111
 msgid "The submitted availability does not comply with the required format."
-msgstr ""
-"Η υποβληθείσα διαθεσιμότητα δεν συμμορφώνεται με την απαιτούμενη μορφή."
+msgstr "Η υποβληθείσα διαθεσιμότητα δεν συμμορφώνεται με την απαιτούμενη μορφή."
 
 #: eventyay/schedule/forms.py:125
 msgid "The submitted availability contains an invalid date."
@@ -44538,8 +44525,8 @@ msgstr "Δεν υπάρχουν σχόλια για αυτήν τη συνεδρ
 #, python-format
 msgid "- Your session “%(title)s” will take place at %(start)s in %(location)s"
 msgstr ""
-"- Η συνεδρία σας \"%(title)s\" θα πραγματοποιηθεί στο %(start)s σε "
-"%(location)s"
+"- Η συνεδρία σας \"%(title)s\" θα πραγματοποιηθεί στο %(start)s σε %"
+"(location)s"
 
 #: eventyay/schedule/templates/schedule/speaker_notification.txt:3
 #, python-format
