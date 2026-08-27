@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: 1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-03-30 15:29+0000\n"
-"Last-Translator: Andreas Kleinert <Andy.Kleinert@gmail.com>\n"
+"PO-Revision-Date: 2026-08-27 09:20+0000\n"
+"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: German <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "de/>\n"
 "Language: de\n"
@@ -14,7 +14,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.17-dev\n"
+"X-Generator: Weblate 2026.9.dev0\n"
 "X-Poedit-Bookmarks: -1,-1,904,-1,-1,-1,-1,-1,-1,-1\n"
 
 #: data/templates/exhibitors/exhibitor_info.html:3
@@ -18288,8 +18288,8 @@ msgstr "Der Stripe-Schlüssel darf nicht leer sein."
 msgid ""
 "The provided key does not look valid. It should start with \"%(prefix)s\"."
 msgstr ""
-"Der angegebene Schlüssel scheint ungültig zu sein. Er sollte mit "
-"\"%(prefix)s\" beginnen."
+"Der angegebene Schlüssel scheint ungültig zu sein. Er sollte mit \"%(prefix)"
+"s\" beginnen."
 
 #: eventyay/control/forms/global_settings.py:988
 #, python-format
@@ -19445,8 +19445,8 @@ msgid ""
 "Position #{posid}: {old_product} ({old_price}) changed to {new_product} "
 "({new_price})."
 msgstr ""
-"Position #{posid}: {old_product} ({old_price}) wurde zu {new_product} "
-"({new_price}) geändert."
+"Position #{posid}: {old_product} ({old_price}) wurde zu {new_product} ("
+"{new_price}) geändert."
 
 #: eventyay/control/logdisplay.py:73
 #, python-brace-format
@@ -19517,8 +19517,8 @@ msgid ""
 "Position #{posid} created: {product} ({price}) as an add-on to position "
 "#{addon_to}."
 msgstr ""
-"Position #{posid} erstellt: {product} ({price}) als Add-on zu Position "
-"#{addon_to}."
+"Position #{posid} erstellt: {product} ({price}) als Add-on zu Position #"
+"{addon_to}."
 
 #: eventyay/control/logdisplay.py:194
 #, python-brace-format
@@ -33324,8 +33324,8 @@ msgstr ""
 #, python-format
 msgid "Please confirm that %(email)s is an email address for user %(user)s."
 msgstr ""
-"Bitte bestätigen Sie, dass %(email)s eine E-Mail-Adresse für Benutzer "
-"%(user)s ist."
+"Bitte bestätigen Sie, dass %(email)s eine E-Mail-Adresse für Benutzer %(user)"
+"s ist."
 
 #: eventyay/eventyay_common/views/custom.py:55
 #, python-format
@@ -33346,8 +33346,8 @@ msgid ""
 "This email confirmation link expired or is invalid. Please "
 "%(email_action_link)s."
 msgstr ""
-"Dieser Bestätigungslink für die E-Mail ist abgelaufen oder ungültig. Bitte "
-"%(email_action_link)s."
+"Dieser Bestätigungslink für die E-Mail ist abgelaufen oder ungültig. Bitte %"
+"(email_action_link)s."
 
 #: eventyay/eventyay_common/views/dashboards.py:407
 msgid "You do not have permission to change event settings."
@@ -36819,10 +36819,10 @@ msgid ""
 msgstr ""
 "Um die Einladung mit dem aktuell angemeldeten Konto anzunehmen, verwenden "
 "Sie bitte die Schaltfläche unten. Wenn Sie die Einladung mit einem anderen "
-"Konto annehmen möchten, können Sie sich <a href=\"/orga/logout/?"
-"next=%(link)s\">abmelden</a> und sich mit dem anderen Konto anmelden. </"
-"p><p> Wenn Sie der Meinung sind, diese Einladung irrtümlich erhalten zu "
-"haben, kontaktieren Sie bitte direkt den Veranstalter."
+"Konto annehmen möchten, können Sie sich <a href=\"/orga/logout/?next=%(link)"
+"s\">abmelden</a> und sich mit dem anderen Konto anmelden. </p><p> Wenn Sie "
+"der Meinung sind, diese Einladung irrtümlich erhalten zu haben, kontaktieren "
+"Sie bitte direkt den Veranstalter."
 
 #: eventyay/orga/templates/orga/invitation.html:45
 msgid "Join the team!"
@@ -40865,8 +40865,8 @@ msgstr ""
 #: eventyay/plugins/sendmail/forms.py:502
 msgid "Any changes to the BCC field will apply only to this queued email."
 msgstr ""
-"Änderungen am BCC-Feld gelten nur für diese in der Warteschlange stehende "
-"E‑Mail."
+"Änderungen am BCC-Feld gelten nur für diese in der Warteschlange stehende E‑"
+"Mail."
 
 #: eventyay/plugins/sendmail/forms.py:503
 msgid ""
@@ -43638,8 +43638,8 @@ msgid ""
 "events of all kinds — from conferences to online meetups."
 msgstr ""
 "Eventyay befähigt Gemeinden und Organisationen, Veranstaltungen aller Art zu "
-"erstellen, zu verwalten und auszurichten — von Konferenzen bis zu "
-"Online‑Treffen."
+"erstellen, zu verwalten und auszurichten — von Konferenzen bis zu Online‑"
+"Treffen."
 
 #: eventyay/presale/templates/pretixpresale/index.html:20
 msgid ""
