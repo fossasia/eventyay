@@ -32,7 +32,7 @@ export default {
 		}
 	},
 	computed: {
-		...mapGetters(['hasPermission'])
+		...mapGetters(['hasPermission', 'isAdminMode'])
 	},
 	validations() {
 		return {
@@ -52,7 +52,7 @@ export default {
 			this.v$.$touch()
 			if (this.v$.$invalid) return
 
-			if (!isRoomTypeAvailable('channel-roulette', this.hasPermission)) {
+			if (!isRoomTypeAvailable('channel-roulette', this.hasPermission, this.isAdminMode)) {
 				this.error = this.$t('You do not have permission to create random video calls.')
 				return
 			}

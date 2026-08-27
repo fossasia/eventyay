@@ -41,8 +41,7 @@ import { Editor, Node, Extension, mergeAttributes } from '@tiptap/core'
 import Document from '@tiptap/extension-document'
 import Paragraph from '@tiptap/extension-paragraph'
 import Text from '@tiptap/extension-text'
-import History from '@tiptap/extension-history'
-import Placeholder from '@tiptap/extension-placeholder'
+import { Placeholder, UndoRedo } from '@tiptap/extensions'
 import EmojiRegex from 'emoji-regex'
 import api from 'lib/api'
 import { nativeToUrl } from 'lib/emoji'
@@ -214,7 +213,7 @@ export default {
 				Document,
 				Paragraph,
 				Text,
-				History,
+				UndoRedo,
 				EmojiNode,
 				MentionNode,
 				ChatKeymap,
@@ -240,7 +239,7 @@ export default {
 		if (this.message) {
 			const body = this.message.content?.body || ''
 			if (body) {
-				this.editor.commands.setContent(this.parseMessageBody(body), false)
+				this.editor.commands.setContent(this.parseMessageBody(body), { emitUpdate: false })
 			}
 			if (this.message.content?.files?.length > 0) {
 				this.files = this.message.content.files
