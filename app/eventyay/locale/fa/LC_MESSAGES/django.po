@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 08:22+0000\n"
-"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
+"PO-Revision-Date: 2026-08-27 08:23+0000\n"
+"Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Persian <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/fa/>\n"
 "Language: fa\n"
@@ -207,8 +207,8 @@ msgid ""
 "We had to move some sessions, so if you were planning on seeing them, check "
 "their new dates or locations:"
 msgstr ""
-"ما مجبور شدیم برخی جلسه‌ها را جابجا کنیم، بنابراین اگر قصد دیدن آنها را "
-"داشتید، تاریخ یا مکان جدیدشان را بررسی کنید:"
+"ما مجبور شدیم برخی جلسه‌ها را جابجا کنیم، بنابراین اگر قصد دیدن آنها را داشتید"
+"، تاریخ یا مکان جدیدشان را بررسی کنید:"
 
 #: eventyay/agenda/templates/agenda/changelog_block.html:120
 msgid "We have moved a session around: "
@@ -254,9 +254,8 @@ msgid ""
 "To see our schedule, please either enable JavaScript or go <a "
 "href=\"%(href)s\">here</a> for our NoJS schedule."
 msgstr ""
-"برای مشاهده برنامه زمان‌بندی ما لطفا جاوااسکریپت را فعال کنید یا <a href=\\"
-"\"%(href)s\\\">اینجا</a> را برای برنامه زمان‌بندی بدون جاوااسکریپت مشاهده "
-"کنید."
+"برای مشاهده برنامه زمان‌بندی ما لطفا جاوااسکریپت را فعال کنید یا <a href=\\\"%"
+"(href)s\\\">اینجا</a> را برای برنامه زمان‌بندی بدون جاوااسکریپت مشاهده کنید."
 
 #: eventyay/agenda/templates/agenda/featured.html:55
 msgid ""
@@ -476,8 +475,8 @@ msgid ""
 "href=\"%(href)s\">here</a>."
 msgstr ""
 "برای دیدن برنامه زمان‌بندی ما با تمام قابلیت‌ها، مانند تبدیل منطقه زمان‌بندی و "
-"زمان‌بندی شخصی، لطفا جاوااسکریپت را فعال کنید و به <a href=\\\"%(href)s\\"
-"\">اینجا</a> بروید."
+"زمان‌بندی شخصی، لطفا جاوااسکریپت را فعال کنید و به <a href=\\\"%(href)s\\\">"
+"اینجا</a> بروید."
 
 #: eventyay/agenda/templates/agenda/schedule_nojs.html:77
 #, python-format
@@ -2858,8 +2857,8 @@ msgid ""
 "This should point e.g. to a part of your website that has your contact "
 "details and legal information."
 msgstr ""
-"این باید به‌عنوان مثال به بخشی از وبگاه شما اشاره کند که اطلاعات تماس و "
-"اطلاعات قانونی شما را دارد."
+"این باید به‌عنوان مثال به بخشی از وبگاه شما اشاره کند که اطلاعات تماس و اطلاعات "
+"قانونی شما را دارد."
 
 #: eventyay/base/configurations/default_setting.py:1617
 msgid "Attach ticket files"
@@ -9605,8 +9604,8 @@ msgid ""
 "Information relevant for speakers scheduled in this room, for example room "
 "size, special directions, available adaptors for video input …"
 msgstr ""
-"اطلاعات مرتبط برای سخنرانانی که در این اتاق برنامه‌ریزی شده‌اند، مثلاً اندازه "
-"اتاق، مسیرهای خاص، آداپتورهای موجود برای ورودی ویدئو …"
+"اطلاعات مرتبط برای سخنرانانی که در این اتاق برنامه‌ریزی شده‌اند، مثلاً اندازه اتاق"
+"، مسیرهای خاص، آداپتورهای موجود برای ورودی ویدئو …"
 
 #: eventyay/base/models/room.py:308
 #: eventyay/orga/templates/orga/schedule/room/list.html:27
@@ -13507,8 +13506,8 @@ msgid ""
 "You can enter proposals until %(deadline)s (%(timezone)s), %(until_string)s "
 "from now."
 msgstr ""
-"می‌توانید تا %(until_string)s از اکنون، طرح‌های پیشنهادی را تا %(deadline)s "
-"(%(timezone)s) وارد کنید."
+"می‌توانید تا %(until_string)s از اکنون، طرح‌های پیشنهادی را تا %(deadline)s (%"
+"(timezone)s) وارد کنید."
 
 #: eventyay/cfp/templates/cfp/event/cfp.html:35
 #, python-format
@@ -13740,8 +13739,8 @@ msgid ""
 "Please provide us with your available hours during the event, so that we can "
 "schedule your event accordingly:"
 msgstr ""
-"لطفا ساعت‌های در دسترس خود در طول رویداد را به ما اطلاع دهید تا بتوانیم "
-"برنامه رویداد شما را به درستی تنظیم کنیم:"
+"لطفا ساعت‌های در دسترس خود در طول رویداد را به ما اطلاع دهید تا بتوانیم برنامه "
+"رویداد شما را به درستی تنظیم کنیم:"
 
 #: eventyay/cfp/templates/cfp/event/user_submission_confirm.html:40
 msgid ""
@@ -13989,8 +13988,7 @@ msgid ""
 "If you did not, why not go ahead and create a proposal now? We’d love to "
 "hear from you!"
 msgstr ""
-"اگر نه، چرا همین حالا یک طرح پیشنهادی ایجاد نمی‌کنید؟ دوست داریم از شما "
-"بشنویم!"
+"اگر نه، چرا همین حالا یک طرح پیشنهادی ایجاد نمی‌کنید؟ دوست داریم از شما بشنویم!"
 
 #: eventyay/cfp/templates/cfp/event/user_submissions.html:172
 msgid "Submit something now!"
@@ -14794,9 +14792,9 @@ msgid ""
 "reasons, we cannot process it. <br> Please go back to the last page, "
 "refresh, and then try again."
 msgstr ""
-"ما نتوانستیم تأیید کنیم که این درخواست واقعا توسط شما ارسال شده است. به "
-"دلایل امنیتی، نمی‌توانیم آن را پردازش کنیم. <br> لطفا به صفحه قبلی بازگردید، "
-"آن را تازه کنید و دوباره امتحان کنید."
+"ما نتوانستیم تأیید کنیم که این درخواست واقعا توسط شما ارسال شده است. به دلایل "
+"امنیتی، نمی‌توانیم آن را پردازش کنیم. <br> لطفا به صفحه قبلی بازگردید، آن را "
+"تازه کنید و دوباره امتحان کنید."
 
 #: eventyay/common/templates/404.html:6 eventyay/common/templates/404.html:8
 #: eventyay/common/templates/404.html:11
@@ -16158,7 +16156,8 @@ msgstr "استفاده از زبان‌ها"
 
 #: eventyay/control/forms/event.py:434 eventyay/event/forms.py:173
 msgid "Choose all languages that your event should be available in."
-msgstr "تمام زبان‌هایی که رویداد شما باید در آن‌ها در دسترس باشد را انتخاب کنید."
+msgstr ""
+"تمام زبان‌هایی که رویداد شما باید در آن‌ها در دسترس باشد را انتخاب کنید."
 
 #: eventyay/control/forms/event.py:453 eventyay/event/forms.py:194
 msgid ""
@@ -30135,9 +30134,9 @@ msgid ""
 "session types, and email templates. Please check those settings once the "
 "event has been created!"
 msgstr ""
-"می‌توانید تنظیمات را از رویدادهای قبلی اینجا کپی کنید، مانند تنظیمات "
-"رایانامه، انواع جلسات و قالب‌های رایانامه. لطفا پس از ایجاد رویداد، آن "
-"تنظیمات را بررسی کنید!"
+"می‌توانید تنظیمات را از رویدادهای قبلی اینجا کپی کنید، مانند تنظیمات رایانامه"
+"، انواع جلسات و قالب‌های رایانامه. لطفا پس از ایجاد رویداد، آن تنظیمات را "
+"بررسی کنید!"
 
 #: eventyay/event/stages.py:40
 msgid "Preparation"
@@ -33406,8 +33405,8 @@ msgstr ""
 "\n"
 "متأسفیم که به شما اطلاع دهیم نمی‌توانیم طرح پیشنهادی شما\n"
 "«{submission_title}» را برای {event_name} بپذیریم. طرح‌های پیشنهادی زیادی "
-"عالی وجود داشتند - امیدواریم شما را در {event_name} به‌عنوان شرکت‌کننده "
-"ببینیم، نه به‌عنوان سخنران!\n"
+"عالی وجود داشتند - امیدواریم شما را در {event_name} به‌عنوان شرکت‌کننده ببینیم"
+"، نه به‌عنوان سخنران!\n"
 "\n"
 "تیم برگزارکننده‌گان {event_name}"
 
@@ -33436,8 +33435,8 @@ msgstr ""
 "\n"
 "{speaker_schedule_new}\n"
 "\n"
-"منتظر دیدن شما هستیم، و لطفا اگر مشکلی با جلسه شما یا فاصله اختصاص‌یافته "
-"دارید، با ما تماس بگیرید.\n"
+"منتظر دیدن شما هستیم، و لطفا اگر مشکلی با جلسه شما یا فاصله اختصاص‌یافته دارید"
+"، با ما تماس بگیرید.\n"
 "\n"
 "تیم برگزارکننده‌گان {event_name}"
 
@@ -33528,8 +33527,8 @@ msgid ""
 msgstr ""
 "سلام!\n"
 "\n"
-"شما به یک طرح پیشنهادی از {event_name} اضافه شده‌اید، با عنوان "
-"«{proposal_title}».\n"
+"شما به یک طرح پیشنهادی از {event_name} اضافه شده‌اید، با عنوان «"
+"{proposal_title}».\n"
 "یک حساب برای شما ایجاد شده است – لطفا این پیوند را برای تنظیم گذرواژه حساب "
 "خود دنبال کنید.\n"
 "\n"
@@ -33556,8 +33555,8 @@ msgid ""
 msgstr ""
 "سلام!\n"
 "\n"
-"شما به یک طرح پیشنهادی از {event_name} اضافه شده‌اید، با عنوان "
-"«{proposal_title}».\n"
+"شما به یک طرح پیشنهادی از {event_name} اضافه شده‌اید، با عنوان «"
+"{proposal_title}».\n"
 "لطفا این پیوند را برای ویرایش نمایه کاربری خود و مشاهده وضعیت طرح پیشنهادی "
 "دنبال کنید:\n"
 "\n"
@@ -34739,7 +34738,8 @@ msgstr "شناسه‌های سخنران"
 
 #: eventyay/orga/forms/schedule.py:96
 msgid "The unique ID of a speaker is used in the speaker URL and in exports"
-msgstr "شناسه یکتای سخنران در نشانی اینترنتی سخنران و در خروجی‌ها استفاده می‌شود"
+msgstr ""
+"شناسه یکتای سخنران در نشانی اینترنتی سخنران و در خروجی‌ها استفاده می‌شود"
 
 #: eventyay/orga/forms/schedule.py:114 eventyay/orga/forms/schedule.py:129
 msgid "date"
@@ -35045,8 +35045,8 @@ msgid ""
 "Select which information should be requested and/or required during CfP "
 "proposal."
 msgstr ""
-"انتخاب کنید که چه اطلاعاتی باید در طول طرح پیشنهادی فراخوان برای طرح "
-"پیشنهادی درخواست شود و یا الزامی باشد."
+"انتخاب کنید که چه اطلاعاتی باید در طول طرح پیشنهادی فراخوان برای طرح پیشنهادی "
+"درخواست شود و یا الزامی باشد."
 
 #: eventyay/orga/templates/orga/cfp/forms.html:88
 msgid "Click here to view the proposal form."
@@ -36467,8 +36467,8 @@ msgstr ""
 "شما می‌توانید تخصیص‌های بازبین خود را از یک پرونده JSON اینجا بارگذاری کنید. "
 "می‌توانید کدهای پیشنهاد (مثلا «UX3N1») به‌عنوان کلید و شناسایی کاربر به‌عنوان "
 "مقدار یا برعکس داشته باشید. شناسایی کاربر می‌تواند نشانی رایانامه بازبین یا "
-"کد کاربری آن‌ها باشد (مثلا «34KJN»). می‌توانید یک پرونده نمونه را <a "
-"href=\"%(href)s\">اینجا</a> پیدا کنید."
+"کد کاربری آن‌ها باشد (مثلا «34KJN»). می‌توانید یک پرونده نمونه را <a href=\"%"
+"(href)s\">اینجا</a> پیدا کنید."
 
 #: eventyay/orga/templates/orga/review/assignment.html:23
 msgid ""
@@ -37236,8 +37236,8 @@ msgid ""
 "speakers above the list of their submitted sessions."
 msgstr ""
 "پیام‌های مهم (مثلا «لطفا در صورت نیاز آداپتور HDMI بیاورید.») یا به پرونده‌ها "
-"(مثلا یک راهنمای سبک کنفرانس) اضافه کنید.<br> این موارد به سخنرانان "
-"انتخاب‌شده بالای فهرست جلسات ارسال‌شده آن‌ها نمایش داده می‌شود."
+"(مثلا یک راهنمای سبک کنفرانس) اضافه کنید.<br> این موارد به سخنرانان انتخاب‌شده "
+"بالای فهرست جلسات ارسال‌شده آن‌ها نمایش داده می‌شود."
 
 #: eventyay/orga/templates/orga/speaker/information_list.html:34
 msgid "Add a new note"
@@ -37716,7 +37716,8 @@ msgstr "شما مجاز به بازبینی یا مشاهده بازبینی‌�
 
 #: eventyay/orga/templates/orga/submission/review.html:44
 msgid "You will be able to see other reviews once you have given yours."
-msgstr "شما پس از ارائه بازبینی خود می‌توانید بازبینی‌های دیگران را مشاهده کنید."
+msgstr ""
+"شما پس از ارائه بازبینی خود می‌توانید بازبینی‌های دیگران را مشاهده کنید."
 
 #: eventyay/orga/templates/orga/submission/review.html:146
 msgid "Other proposals"
@@ -38209,8 +38210,8 @@ msgid ""
 "ALL related data for ALL events, such as proposals, and speaker profiles, "
 "and uploads, will also be deleted and cannot be restored."
 msgstr ""
-"تمام داده‌های مرتبط برای تمام رویدادها، مانند طرح‌های پیشنهادی، نمایه‌های "
-"سخنران، و بارگذاری‌ها، نیز حذف خواهند شد و قابل بازیابی نیستند."
+"تمام داده‌های مرتبط برای تمام رویدادها، مانند طرح‌های پیشنهادی، نمایه‌های سخنران"
+"، و بارگذاری‌ها، نیز حذف خواهند شد و قابل بازیابی نیستند."
 
 #: eventyay/orga/views/organizer.py:91
 msgid "The organizer and all related data have been deleted."
@@ -38710,8 +38711,8 @@ msgid ""
 "We already have a user with that email address. Did you already register "
 "before and just need to log in?"
 msgstr ""
-"ما قبلا یک کاربر با این نشانی رایانامه داریم. آیا قبلا نام‌نویسی کرده‌اید و "
-"فقط نیاز به ورود دارید؟"
+"ما قبلا یک کاربر با این نشانی رایانامه داریم. آیا قبلا نام‌نویسی کرده‌اید و فقط "
+"نیاز به ورود دارید؟"
 
 #: eventyay/plugins/badges/apps.py:31 eventyay/plugins/badges/apps.py:34
 #: eventyay/plugins/badges/signals.py:55
