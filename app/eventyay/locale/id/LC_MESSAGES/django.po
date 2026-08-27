@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
 "PO-Revision-Date: 2026-08-27 08:28+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"Last-Translator: Mujadidi <mujadidi.bjm@gmail.com>\n"
 "Language-Team: Indonesian <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/id/>\n"
 "Language: id\n"
@@ -255,8 +255,8 @@ msgid ""
 "To see our schedule, please either enable JavaScript or go <a "
 "href=\"%(href)s\">here</a> for our NoJS schedule."
 msgstr ""
-"Untuk melihat jadwal kami, silakan izinkan JavaScript atau buka <a "
-"href=\"%(href)s\">di sini</a> untuk melihat jadwal NoJS."
+"Untuk melihat jadwal kami, silakan izinkan JavaScript atau buka <a href=\"%"
+"(href)s\">di sini</a> untuk melihat jadwal NoJS."
 
 #: eventyay/agenda/templates/agenda/featured.html:55
 msgid ""
@@ -479,8 +479,8 @@ msgid ""
 "href=\"%(href)s\">here</a>."
 msgstr ""
 "Untuk melihat jadwal dengan fitur lengkap kami, seperti konversi zona waktu "
-"dan penjadwalan pribadi, silakan aktifkan JavaScript dan buka <a "
-"href=\"%(href)s\">di sini</a>."
+"dan penjadwalan pribadi, silakan aktifkan JavaScript dan buka <a href=\"%"
+"(href)s\">di sini</a>."
 
 #: eventyay/agenda/templates/agenda/schedule_nojs.html:77
 #, python-format
@@ -25840,8 +25840,7 @@ msgstr "Opsi Lencana"
 #: eventyay/presale/templates/pretixpresale/event/checkout_questions.html:180
 #: eventyay/presale/templates/pretixpresale/event/order_modify.html:79
 msgid "Please select all fields you'd like to appear on your event badge."
-msgstr ""
-"Silakan pilih semua kolom yang ingin anda tampilkan pada lencana acara."
+msgstr "Silakan pilih semua kolom yang ingin anda tampilkan pada lencana acara."
 
 #: eventyay/control/templates/pretixcontrol/order/delete.html:4
 #: eventyay/control/templates/pretixcontrol/order/delete.html:8
