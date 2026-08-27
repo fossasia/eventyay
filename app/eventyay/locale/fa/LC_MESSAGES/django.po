@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 08:23+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2026-08-27 08:24+0000\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Persian <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/fa/>\n"
 "Language: fa\n"
@@ -7185,8 +7185,7 @@ msgstr ""
 #| msgid ""
 #| "Control whether the Join Online Video link is visible on public pages."
 msgid "Controls whether the plugin is available on the platform at all."
-msgstr ""
-"مشخص کنید که آیا پیوند Join Online Video در صفحات عمومی نمایش داده شود."
+msgstr "مشخص کنید که آیا پیوند Join Online Video در صفحات عمومی نمایش داده شود."
 
 #: eventyay/base/models/global_plugin_config.py:33
 #: eventyay/control/templates/pretixcontrol/global_plugins.html:26
@@ -8453,8 +8452,8 @@ msgstr ""
 "اگر این گزینه فعال باشد، کاربران می‌توانند خود قیمت را انتخاب کنند. قیمتی که "
 "در بالا تنظیم شده به‌عنوان حداقل قیمتی که کاربر باید وارد کند در نظر گرفته "
 "می‌شود. می‌توانید از این ویژگی مثلاً برای جمع‌آوری کمک‌های مالی اضافی برای "
-"رویدادتان استفاده کنید. در حال حاضر این گزینه برای محصولاتی که به‌عنوان "
-"افزونه به محصولات دیگر خریداری می‌شوند پشتیبانی نمی‌شود."
+"رویدادتان استفاده کنید. در حال حاضر این گزینه برای محصولاتی که به‌عنوان افزونه "
+"به محصولات دیگر خریداری می‌شوند پشتیبانی نمی‌شود."
 
 #: eventyay/base/models/product.py:369
 #, fuzzy
@@ -23051,8 +23050,8 @@ msgid ""
 "section."
 msgstr ""
 "امکان‌دادن به کاربران برای تغییر سفارش‌شان یک قابلیت در حال توسعه است. "
-"بنابراین فعلاً فقط تغییرات مشخصی (مثل تغییر گزینهٔ یک محصول) ممکن است. ممکن "
-"است بعداً گزینه‌های بیشتری اضافه شود."
+"بنابراین فعلاً فقط تغییرات مشخصی (مثل تغییر گزینهٔ یک محصول) ممکن است. ممکن است "
+"بعداً گزینه‌های بیشتری اضافه شود."
 
 #: eventyay/control/templates/pretixcontrol/event/component_link.html:8
 #: eventyay/eventyay_common/templates/eventyay_common/event/component_link.html:9
@@ -28147,8 +28146,8 @@ msgid ""
 "The following vouchers can't be deleted as they already have been redeemed "
 "or used in an order."
 msgstr ""
-"ووچرهای زیر قابل حذف نیستند زیرا قبلاً بازخرید شده‌اند، اما به‌جای آن به حالت "
-"«کاملاً بازخریدشده» تنظیم خواهند شد."
+"ووچرهای زیر قابل حذف نیستند زیرا قبلاً بازخرید شده‌اند، اما به‌جای آن به حالت «"
+"کاملاً بازخریدشده» تنظیم خواهند شد."
 
 #: eventyay/control/templates/pretixcontrol/vouchers/detail.html:16
 #, python-format
@@ -31142,9 +31141,9 @@ msgid ""
 "streamline event marketing by sending targeted emails."
 msgstr ""
 "فروش بلیت رویداد را راه‌اندازی و پیکربندی کنید و افزونه‌هایی مانند دسترسی ویژه "
-"یا اقلام تبلیغاتی را بفروشید. شرکت‌کنندگان و غرفه‌داران را مدیریت کنید، "
-"کارت‌های شناسایی سفارشی طراحی کنید، و با ارسال ایمیل‌های هدفمند، بازاریابی "
-"رویداد را ساده‌سازی کنید."
+"یا اقلام تبلیغاتی را بفروشید. شرکت‌کنندگان و غرفه‌داران را مدیریت کنید، کارت‌های "
+"شناسایی سفارشی طراحی کنید، و با ارسال ایمیل‌های هدفمند، بازاریابی رویداد را "
+"ساده‌سازی کنید."
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:47
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:65
@@ -33902,19 +33901,22 @@ msgstr ""
 #, fuzzy
 #| msgid "This field is required when using SendGrid as email vendor."
 msgid "A sender email address is required when using a custom email gateway."
-msgstr "این فیلد هنگام استفاده از SendGrid به‌عنوان ارائه‌دهندهٔ ایمیل لازم است."
+msgstr ""
+"این فیلد هنگام استفاده از SendGrid به‌عنوان ارائه‌دهندهٔ ایمیل لازم است."
 
 #: eventyay/orga/forms/email.py:197
 #, fuzzy
 #| msgid "This field is required when using SendGrid as email vendor."
 msgid "An API key is required when using SendGrid."
-msgstr "این فیلد هنگام استفاده از SendGrid به‌عنوان ارائه‌دهندهٔ ایمیل لازم است."
+msgstr ""
+"این فیلد هنگام استفاده از SendGrid به‌عنوان ارائه‌دهندهٔ ایمیل لازم است."
 
 #: eventyay/orga/forms/email.py:215
 #, fuzzy
 #| msgid "This field is required when using SendGrid as email vendor."
 msgid "A hostname is required when using a custom SMTP server."
-msgstr "این فیلد هنگام استفاده از SendGrid به‌عنوان ارائه‌دهندهٔ ایمیل لازم است."
+msgstr ""
+"این فیلد هنگام استفاده از SendGrid به‌عنوان ارائه‌دهندهٔ ایمیل لازم است."
 
 #: eventyay/orga/forms/email.py:220
 msgid "A port number is required when using a custom SMTP server."
