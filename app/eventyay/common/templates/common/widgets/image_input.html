@@ -1,3 +1,4 @@
+{% load i18n %}
 <div class="image-input-wrapper" data-image-input>
     <div class="image-input-fields">
         {% if widget.is_initial %}<span class="form-image-initial">{{ widget.initial_text }}: <a href="{{ widget.value.url }}">{{ widget.value }}</a>{% if not widget.is_required %}
@@ -10,5 +11,6 @@
         <a {% if widget.is_initial %}href="{{ widget.value.url }}"{% endif %} aria-label="{{ widget.alt_text }}">
             <img loading="lazy"{% if widget.is_initial %} src="{{ widget.value.url }}"{% endif %} alt="{{ widget.alt_text }}">
         </a>
+        <button type="button" class="form-image-remove" aria-label="{% trans 'Remove image' %}" title="{% trans 'Remove image' %}">&times;</button>
     </div>
 </div>

@@ -414,6 +414,7 @@ input[type="number"]:not(.show-spinner) {
 }
 
 .form-image-preview {
+  position: relative;
   flex: 0 0 auto;
   max-width: 150px;
   background-size: 21px 21px;
@@ -446,6 +447,32 @@ input[type="number"]:not(.show-spinner) {
     height: auto;
     box-shadow: var(--shadow-light);
     display: block;
+  }
+}
+
+.form-image-remove {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  width: 20px;
+  height: 20px;
+  background: #dc3545;
+  color: #fff;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  font-size: 14px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  transition: background 0.15s ease-in-out, transform 0.1s ease-in-out;
+  z-index: 2;
+  &:hover {
+    background: #bd2130;
+    transform: scale(1.15);
   }
 }
 .form-image-initial {

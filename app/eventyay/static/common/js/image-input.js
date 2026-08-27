@@ -22,6 +22,7 @@ const setupImageInputs = () => {
         // we can restore it when the user clears their pending selection.
         const initialSrc = image.getAttribute("src") || ""
         const clearCheckbox = wrapper.querySelector('input[type="checkbox"]')
+        const removeButton = preview.querySelector(".form-image-remove")
 
         let currentObjectUrl = null
 
@@ -45,6 +46,28 @@ const setupImageInputs = () => {
                 if (link) link.removeAttribute("href")
                 preview.style.display = "none"
             }
+        }
+
+        const clearSelection = () => {
+            input.value = ""
+            if (clearCheckbox) {
+                clearCheckbox.checked = true
+            }
+            if (currentObjectUrl) {
+                URL.revokeObjectURL(currentObjectUrl)
+                currentObjectUrl = null
+            }
+            image.removeAttribute("src")
+            if (link) link.removeAttribute("href")
+            preview.style.display = "none"
+
+            // Notify custom file input wrappers (e.g. fileInput.js)
+            const wrapperPick = input.closest('.eventyay-file-pick-wrapper')
+            const filenameEl = wrapperPick?.querySelector('.eventyay-file-name')
+            if (filenameEl) {
+                filenameEl.textContent = ''
+            }
+            input.classList.remove('file-input-has-selection')
         }
 
         input.addEventListener("change", (ev) => {
@@ -74,17 +97,18 @@ const setupImageInputs = () => {
             }
         })
 
+        if (removeButton) {
+            removeButton.addEventListener("click", (ev) => {
+                ev.preventDefault()
+                ev.stopPropagation()
+                clearSelection()
+            })
+        }
+
         if (clearCheckbox) {
             clearCheckbox.addEventListener("change", (ev) => {
                 if (ev.target.checked) {
-                    input.value = ""
-                    if (currentObjectUrl) {
-                        URL.revokeObjectURL(currentObjectUrl)
-                        currentObjectUrl = null
-                    }
-                    image.removeAttribute("src")
-                    if (link) link.removeAttribute("href")
-                    preview.style.display = "none"
+                    clearSelection()
                 } else {
                     restore()
                 }
