@@ -400,8 +400,22 @@ input[type="number"]:not(.show-spinner) {
   padding: 0;
 }
 
+.image-input-wrapper {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+}
+
+.image-input-fields {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .form-image-preview {
-  max-width: 180px;
+  flex: 0 0 auto;
+  max-width: 150px;
   background-size: 21px 21px;
   background-position:
     0 0,
@@ -426,9 +440,12 @@ input[type="number"]:not(.show-spinner) {
   border-radius: 6px;
   img {
     border-radius: 6px;
-    max-width: 100%;
+    max-width: 150px;
+    max-height: 100px;
+    object-fit: contain;
     height: auto;
     box-shadow: var(--shadow-light);
+    display: block;
   }
 }
 .form-image-initial {

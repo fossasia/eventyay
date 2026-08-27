@@ -1,12 +1,14 @@
-<div data-image-input>
-    <div class="form-image-preview{% if not widget.value or not widget.value.url %} d-none{% endif %}">
-        <a{% if widget.value and widget.value.url %} href="{{ widget.value.url }}" data-lightbox="{{ widget.value.url }}"{% else %} data-lightbox=""{% endif %}>
+<div class="image-input-wrapper" data-image-input>
+    <div class="image-input-fields">
+        {% if widget.is_initial %}<span class="form-image-initial">{{ widget.initial_text }}: <a href="{{ widget.value.url }}">{{ widget.value }}</a>{% if not widget.is_required %}
+            <span class="form-image-clear"><input type="checkbox" name="{{ widget.checkbox_name }}" id="{{ widget.checkbox_id }}"{% if widget.attrs.disabled %} disabled{% endif %}>
+                <label for="{{ widget.checkbox_id }}">{{ widget.clear_checkbox_label }}</label></span>{% endif %}</span><br>
+            {{ widget.input_text }}:{% endif %}
+        <input type="{{ widget.type }}" name="{{ widget.name }}"{% include "django/forms/widgets/attrs.html" %}>
+    </div>
+    <div class="form-image-preview" {% if not widget.value or not widget.value.url %}style="display: none;"{% endif %}>
+        <a {% if widget.value and widget.value.url %}href="{{ widget.value.url }}"{% endif %} aria-label="{{ widget.alt_text }}">
             <img loading="lazy"{% if widget.value and widget.value.url %} src="{{ widget.value.url }}"{% endif %} alt="{{ widget.alt_text }}">
         </a>
     </div>
-    {% if widget.is_initial %}<span class="form-image-initial">{{ widget.initial_text }}: <a href="{{ widget.value.url }}" data-lightbox="{{ widget.value.url }}">{{ widget.value }}</a>{% if not widget.is_required %}
-        <span class="form-image-clear"><input type="checkbox" name="{{ widget.checkbox_name }}" id="{{ widget.checkbox_id }}"{% if widget.attrs.disabled %} disabled{% endif %}>
-            <label for="{{ widget.checkbox_id }}">{{ widget.clear_checkbox_label }}</label></span>{% endif %}</span><br>
-        {{ widget.input_text }}:{% endif %}
-    <input type="{{ widget.type }}" name="{{ widget.name }}"{% include "django/forms/widgets/attrs.html" %}>
 </div>

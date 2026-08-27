@@ -29,9 +29,8 @@ const setupImageInputs = () => {
             image.src = url
             if (link) {
                 link.href = url
-                link.dataset.lightbox = url
             }
-            preview.classList.remove("d-none")
+            preview.style.display = ""
         }
 
         const restore = () => {
@@ -42,7 +41,9 @@ const setupImageInputs = () => {
             if (initialSrc) {
                 showImage(initialSrc)
             } else {
-                preview.classList.add("d-none")
+                image.removeAttribute("src")
+                if (link) link.removeAttribute("href")
+                preview.style.display = "none"
             }
         }
 
@@ -77,7 +78,13 @@ const setupImageInputs = () => {
             clearCheckbox.addEventListener("change", (ev) => {
                 if (ev.target.checked) {
                     input.value = ""
-                    preview.classList.add("d-none")
+                    if (currentObjectUrl) {
+                        URL.revokeObjectURL(currentObjectUrl)
+                        currentObjectUrl = null
+                    }
+                    image.removeAttribute("src")
+                    if (link) link.removeAttribute("href")
+                    preview.style.display = "none"
                 } else {
                     restore()
                 }
