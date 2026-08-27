@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-03-21 17:02+0000\n"
+"PO-Revision-Date: 2026-08-27 17:38+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
 "projects/eventyay/eventyay/zh_Hans/>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 5.17-dev\n"
+"X-Generator: Weblate 2026.9.dev0\n"
 
 #: data/templates/exhibitors/exhibitor_info.html:3
 #: data/templates/exhibitors/exhibitor_info.html:5
@@ -1833,8 +1833,8 @@ msgid ""
 "optional."
 msgstr ""
 "如果您想在发票地址表单中添加自定义文本字段（例如国家特定的注册号），请在此输"
-"入该字段的标签。该标签将用于提示用户输入以及在发票上显示该值。该字段为可选"
-"项。"
+"入该字段的标签。该标签将用于提示用户输入以及在发票上显示该值。该字段为可选项"
+"。"
 
 #: eventyay/base/configurations/default_setting.py:395
 msgid "Ask for VAT ID"
@@ -2038,8 +2038,8 @@ msgid ""
 "be a few minutes longer before the order is marked as expired."
 msgstr ""
 "用户在下单后必须在多少分钟内付款以保留预订。仅当您只提供实时支付方式时使用。"
-"请注意，出于技术原因，订单被标记为过期前的实际时间可能会比设置的期限长几分"
-"钟。"
+"请注意，出于技术原因，订单被标记为过期前的实际时间可能会比设置的期限长几分钟"
+"。"
 
 #: eventyay/base/configurations/default_setting.py:651
 msgid "Last date of payments"
@@ -2349,8 +2349,8 @@ msgid ""
 "languages used in different regions globally (like English)."
 msgstr ""
 "将用于确定日期和时间格式，以及参与者地址和电话号码的默认国家。对于格式设定，"
-"该项优先级低于语言设置，因此主要适用于在不同地区使用相同语言的情况（例如英"
-"语）。"
+"该项优先级低于语言设置，因此主要适用于在不同地区使用相同语言的情况（例如英语"
+"）。"
 
 #: eventyay/base/configurations/default_setting.py:990
 msgid "Show event end date"
@@ -2735,8 +2735,7 @@ msgstr "启用此选项后，与会者可以选择接受较少退款以支持您
 msgid ""
 "However, if you want us to help keep the lights on here, please consider "
 "using the slider below to request a smaller refund. Thank you!"
-msgstr ""
-"不过，如果您希望我们能继续维持运营，请考虑使用下面的滑块申请较少退款。谢谢！"
+msgstr "不过，如果您希望我们能继续维持运营，请考虑使用下面的滑块申请较少退款。谢谢！"
 
 #: eventyay/base/configurations/default_setting.py:1492
 msgid "Voluntary lower refund explanation"
@@ -2770,8 +2769,8 @@ msgid ""
 "Customers can only request a cancellation that needs to be approved by the "
 "event organizer before the order is canceled and a refund is issued."
 msgstr ""
-"客户只能提出需活动组织者批准的取消请求；在订单被取消并退款发放前必须获得批"
-"准。"
+"客户只能提出需活动组织者批准的取消请求；在订单被取消并退款发放前必须获得批准"
+"。"
 
 #: eventyay/base/configurations/default_setting.py:1536
 #: eventyay/base/configurations/default_setting.py:1548
@@ -3819,8 +3818,7 @@ msgstr "礼品卡代码长度"
 msgid ""
 "The system generates by default {}-character long gift card codes. However, "
 "if a different length is required, it can be set here."
-msgstr ""
-"系统默认生成{}-字符长的礼品卡代码。但是，如果需要不同长度，可以在此设置。"
+msgstr "系统默认生成{}-字符长的礼品卡代码。但是，如果需要不同长度，可以在此设置。"
 
 #: eventyay/base/configurations/default_setting.py:2573
 msgid "Validity of gift card codes in years"
@@ -7638,8 +7636,8 @@ msgid ""
 "There must be at least one team with the permission to change teams, as "
 "otherwise nobody can create new teams or grant permissions to existing teams."
 msgstr ""
-"必须至少有一个团队具有更改团队的权限，否则将无法创建新团队或授予现有团队权"
-"限。"
+"必须至少有一个团队具有更改团队的权限，否则将无法创建新团队或授予现有团队权限"
+"。"
 
 #: eventyay/base/models/organizer.py:68
 msgid "Nobody on your teams has the permission to create new events."
@@ -7892,8 +7890,8 @@ msgid ""
 "waitlist), manage submission metadata, and oversee the review workflow. This "
 "provides full management permissions beyond standard reviewing."
 msgstr ""
-"可编辑投稿详情、修改提案状态（接受/拒绝/候补）、管理投稿元数据并监督评审流"
-"程。与普通评审相比，此权限提供完整的管理权限。"
+"可编辑投稿详情、修改提案状态（接受/拒绝/候补）、管理投稿元数据并监督评审流程"
+"。与普通评审相比，此权限提供完整的管理权限。"
 
 #: eventyay/base/models/organizer.py:539
 msgid "Reviewer — can only review submissions"
@@ -8130,8 +8128,8 @@ msgid ""
 "This will be used to generate the URL of the page. Please only use latin "
 "letters, numbers, dots and dashes. You cannot change this afterwards."
 msgstr ""
-"此值将用于生成页面的 URL。请仅使用拉丁字母、数字、点和短横线。生成后无法更"
-"改。"
+"此值将用于生成页面的 URL。请仅使用拉丁字母、数字、点和短横线。生成后无法更改"
+"。"
 
 #: eventyay/base/models/page.py:20
 msgid "Show link on the website start page"
@@ -11889,8 +11887,7 @@ msgstr ""
 msgid ""
 "The voucher code used for one of the products in your cart has already been "
 "too often. We adjusted the price of the product in your cart."
-msgstr ""
-"购物车中某件产品使用的优惠码已被过多使用。我们已调整该产品在购物车中的价格。"
+msgstr "购物车中某件产品使用的优惠码已被过多使用。我们已调整该产品在购物车中的价格。"
 
 #: eventyay/base/services/orders.py:130
 msgid ""
@@ -11902,8 +11899,7 @@ msgstr "购物车中某件产品使用的优惠码已过期。我们已将此产
 msgid ""
 "The voucher code used for one of the products in your cart is not valid for "
 "this product. We removed this product from your cart."
-msgstr ""
-"购物车中某件产品使用的优惠码不适用于该产品。我们已将此产品从购物车中移除。"
+msgstr "购物车中某件产品使用的优惠码不适用于该产品。我们已将此产品从购物车中移除。"
 
 #: eventyay/base/services/orders.py:137
 msgid ""
@@ -13170,8 +13166,7 @@ msgid ""
 "Unfortunately, you cannot accept this invitation at the moment. This may be "
 "because the invitation has expired, or because the proposal cannot be edited "
 "any more."
-msgstr ""
-"抱歉，您目前无法接受此邀请。可能是因为邀请已过期，或该提案无法再被编辑。"
+msgstr "抱歉，您目前无法接受此邀请。可能是因为邀请已过期，或该提案无法再被编辑。"
 
 #: eventyay/cfp/templates/cfp/event/invitation.html:21
 msgid "Please contact the conference organizers for more information."
@@ -13749,8 +13744,7 @@ msgstr "支持的格式: {formats}"
 msgid ""
 "The file type '{extension}' is not supported. Please upload one of the "
 "supported formats: {formats}."
-msgstr ""
-"文件类型 '{extension}' 不受支持。请上传其中一种受支持的格式: {formats}."
+msgstr "文件类型 '{extension}' 不受支持。请上传其中一种受支持的格式: {formats}."
 
 #: eventyay/common/forms/mixins.py:61
 msgid "You are trying to change read-only data."
@@ -14527,8 +14521,7 @@ msgstr "该活动当前处于离线状态。只有活动团队成员和系统管
 msgid ""
 "Tickets and talk pages are in private test mode. Only event team members and "
 "system administrators can see them."
-msgstr ""
-"门票和演讲页面处于私人测试模式。只有活动团队成员和系统管理员可以看到它们。"
+msgstr "门票和演讲页面处于私人测试模式。只有活动团队成员和系统管理员可以看到它们。"
 
 #: eventyay/common/templates/common/base_public.html:137
 msgid ""
@@ -15654,8 +15647,8 @@ msgid ""
 "This short name is already taken by another event. Please choose a different "
 "one or use the \"Set to random\" button for an automatic suggestion."
 msgstr ""
-"此简称已被其他活动使用。请选择其他简称，或使用 \"随机设置\" 按钮获取自动建"
-"议。"
+"此简称已被其他活动使用。请选择其他简称，或使用 \"随机设置\" 按钮获取自动建议"
+"。"
 
 #: eventyay/control/forms/event.py:183
 #: eventyay/eventyay_common/forms/event.py:39
@@ -15906,8 +15899,8 @@ msgid ""
 "The order placed and paid emails will only be send to orders from these "
 "sales channels. The online shop must be enabled."
 msgstr ""
-"“订单已下单”和“已付款”邮件仅会发送到来自这些销售渠道的订单。必须启用在线商"
-"店。"
+"“订单已下单”和“已付款”邮件仅会发送到来自这些销售渠道的订单。必须启用在线商店"
+"。"
 
 #: eventyay/control/forms/event.py:1243 eventyay/plugins/sendmail/forms.py:387
 msgid ""
@@ -17161,8 +17154,8 @@ msgid ""
 "If enabled, users with valid payment information on file will be allowed to "
 "create organizers. System admins can always create organizers."
 msgstr ""
-"启用后，系统中有有效付款信息的用户可创建主办方。系统管理员始终可以创建主办"
-"方。"
+"启用后，系统中有有效付款信息的用户可创建主办方。系统管理员始终可以创建主办方"
+"。"
 
 #: eventyay/control/forms/global_settings.py:535
 #, fuzzy
@@ -17816,8 +17809,8 @@ msgid ""
 "series is only partially canceled since it consists of tickets for multiple "
 "dates."
 msgstr ""
-"所选类型的费用不会被退款，而是计入取消费用。由于系列活动订单包含多个日期的"
-"票，若仅部分取消则费用不会被退款。"
+"所选类型的费用不会被退款，而是计入取消费用。由于系列活动订单包含多个日期的票"
+"，若仅部分取消则费用不会被退款。"
 
 #: eventyay/control/forms/orders.py:699
 msgid "Send information via email"
@@ -18660,8 +18653,8 @@ msgid ""
 "Unknown scan of code \"{barcode}…\" at {datetime} for list \"{list}\", type "
 "\"{type}\"."
 msgstr ""
-"在 {datetime} 对列表 \"{list}\"（类型 \"{type}\"）发现未知代码扫描 "
-"\"{barcode}…\"."
+"在 {datetime} 对列表 \"{list}\"（类型 \"{type}\"）发现未知代码扫描 \""
+"{barcode}…\"."
 
 #: eventyay/control/logdisplay.py:258
 #, python-brace-format
@@ -18683,8 +18676,7 @@ msgstr ""
 msgid ""
 "Scan of revoked code \"{barcode}\" for list \"{list}\", type \"{type}\", was "
 "uploaded."
-msgstr ""
-"已上传对列表 \"{list}\"（类型 \"{type}\"）的撤销代码 \"{barcode}\" 的扫描."
+msgstr "已上传对列表 \"{list}\"（类型 \"{type}\"）的撤销代码 \"{barcode}\" 的扫描."
 
 #: eventyay/control/logdisplay.py:287
 #, python-brace-format
@@ -18701,8 +18693,8 @@ msgid ""
 "Denied scan of position #{posid} for list \"{list}\", type \"{type}\", error "
 "code \"{errorcode}\"."
 msgstr ""
-"对列表 \"{list}\"（类型 \"{type}\"）扫描位置 #{posid} 被拒，错误代码 "
-"\"{errorcode}\"."
+"对列表 \"{list}\"（类型 \"{type}\"）扫描位置 #{posid} 被拒，错误代码 \""
+"{errorcode}\"."
 
 #: eventyay/control/logdisplay.py:308
 #, python-brace-format
@@ -20021,8 +20013,8 @@ msgid ""
 "Overview of events managed by the Video Admin. Use the table actions to "
 "manage settings, generate admin tokens, or clear data."
 msgstr ""
-"由视频管理员管理的活动概览。使用表格操作来管理设置、生成管理员令牌或清除数"
-"据。"
+"由视频管理员管理的活动概览。使用表格操作来管理设置、生成管理员令牌或清除数据"
+"。"
 
 #: eventyay/control/templates/control/event_list.html:14
 msgid "Usage"
@@ -21227,8 +21219,8 @@ msgid ""
 "strong> and set the DEBUG variable to False if this page is in any way "
 "reachable from the internet."
 msgstr ""
-"您正在以开发模式运行 %(site_name)s。如果此页面以任何方式可从互联网访问，请"
-"<strong>停止</strong>并将 DEBUG 变量设置为 False。"
+"您正在以开发模式运行 %(site_name)s。如果此页面以任何方式可从互联网访问，"
+"请<strong>停止</strong>并将 DEBUG 变量设置为 False。"
 
 #: eventyay/control/templates/pretixcontrol/admin/systemconfig.html:31
 msgid "Your eventyay version is:"
@@ -21836,8 +21828,7 @@ msgstr "授权申请"
 msgid ""
 "Do you really want to grant the application <strong>%(application)s</strong> "
 "access to your account?"
-msgstr ""
-"您确定要授予应用 <strong>%(application)s</strong> 访问您的帐户的权限吗？"
+msgstr "您确定要授予应用 <strong>%(application)s</strong> 访问您的帐户的权限吗？"
 
 #: eventyay/control/templates/pretixcontrol/auth/oauth_authorization.html:24
 #, python-format
@@ -23493,8 +23484,8 @@ msgid ""
 msgstr ""
 "\n"
 "        如果您有礼品卡，请在此输入礼品卡代码。如果礼品卡余额不足以支付整个订"
-"单，您将再次看到此页面，您可以选择兑换另一张礼品卡或为差额选择其他支付方"
-"式。\n"
+"单，您将再次看到此页面，您可以选择兑换另一张礼品卡或为差额选择其他支付方式"
+"。\n"
 "    "
 
 #: eventyay/control/templates/pretixcontrol/giftcards/checkout_confirm.html:4
@@ -23910,11 +23901,11 @@ msgid ""
 "product. You can also specify the minimum and maximum number of add-ons of "
 "the given category that can or need to be chosen."
 msgstr ""
-"通过附加产品，您可以指定可作为本产品附加购买的产品。例如，如果您举办一场会"
-"议，提供基础会议门票和若干工作坊，您可以将工作坊定义为会议门票的附加产品。使"
-"用此配置，工作坊不能单独购买，只能与会议门票组合购买。您可以在此指定可作为本"
-"产品附加项的产品分类。您还可以指定每个分类可选或必须选择的附加产品的最小和最"
-"大数量。"
+"通过附加产品，您可以指定可作为本产品附加购买的产品。例如，如果您举办一场会议"
+"，提供基础会议门票和若干工作坊，您可以将工作坊定义为会议门票的附加产品。使用"
+"此配置，工作坊不能单独购买，只能与会议门票组合购买。您可以在此指定可作为本产"
+"品附加项的产品分类。您还可以指定每个分类可选或必须选择的附加产品的最小和最大"
+"数量。"
 
 #: eventyay/control/templates/pretixcontrol/item/include_addons.html:28
 #: eventyay/control/templates/pretixcontrol/item/include_addons.html:62
@@ -23961,8 +23952,8 @@ msgid ""
 "A product that does not represent a person. By default, pretix will not ask "
 "for attendee information or offer ticket downloads."
 msgstr ""
-"此商品不代表任何人员。默认情况下，pretix 不会要求填写参会者信息或提供票务下"
-"载。"
+"此商品不代表任何人员。默认情况下，pretix 不会要求填写参会者信息或提供票务下载"
+"。"
 
 #: eventyay/control/templates/pretixcontrol/item/index.html:104
 #: eventyay/control/templates/pretixcontrol/items/index.html:65
@@ -24617,10 +24608,10 @@ msgid ""
 "such as limiting the total number of tickets sold while also restricting the "
 "number of specific ticket types simultaneously."
 msgstr ""
-"为确保您的产品按预期可售，您需要设置配额。配额决定在平台上可售出您产品的数"
-"量。这使您可以配置活动是能容纳无限数量的参与者，还是参会者数量受限。您可以将"
-"一个产品分配到多个配额，以满足更复杂的需求，例如在限制总票数的同时也限制特定"
-"票种的数量。"
+"为确保您的产品按预期可售，您需要设置配额。配额决定在平台上可售出您产品的数量"
+"。这使您可以配置活动是能容纳无限数量的参与者，还是参会者数量受限。您可以将一"
+"个产品分配到多个配额，以满足更复杂的需求，例如在限制总票数的同时也限制特定票"
+"种的数量。"
 
 #: eventyay/control/templates/pretixcontrol/items/quotas.html:22
 msgid "Your search did not match any quotas."
@@ -25404,8 +25395,8 @@ msgid ""
 "the expiry date will be reset."
 msgstr ""
 "通过重新激活订单，您可以撤销其取消并将其恢复为待处理或已付款订单。只有当订单"
-"中的所有商品仍然可用时才可以这样做。如果订单处于待支付状态，过期日期将被重"
-"置。"
+"中的所有商品仍然可用时才可以这样做。如果订单处于待支付状态，过期日期将被重置"
+"。"
 
 #: eventyay/control/templates/pretixcontrol/order/reactivate.html:34
 msgid "Reactivate"
@@ -25598,16 +25589,15 @@ msgid ""
 "orders can be created. Make sure that you check afterwards for any overpaid "
 "orders or pending refunds that you need to take care of manually."
 msgstr ""
-"如果您需要取消活动，可使用此页面一次性取消并退款所有订单。这也会禁用所有商"
-"品，阻止创建新订单。请在操作后检查是否存在需要您手动处理的多付订单或待处理退"
-"款。"
+"如果您需要取消活动，可使用此页面一次性取消并退款所有订单。这也会禁用所有商品"
+"，阻止创建新订单。请在操作后检查是否存在需要您手动处理的多付订单或待处理退款"
+"。"
 
 #: eventyay/control/templates/pretixcontrol/orders/cancel.html:15
 msgid ""
 "After starting this operation, depending on the size of your event, it might "
 "take a few minutes or longer until all orders are processed."
-msgstr ""
-"开始此操作后，处理所有订单可能需要几分钟或更长时间，具体取决于活动规模。"
+msgstr "开始此操作后，处理所有订单可能需要几分钟或更长时间，具体取决于活动规模。"
 
 #: eventyay/control/templates/pretixcontrol/orders/cancel.html:21
 msgid ""
@@ -26180,8 +26170,7 @@ msgstr "无法删除此组织者帐户，因为它已包含订单、发票或设
 msgid ""
 "eventyay does not allow deleting orders once they have been placed in order "
 "to be audit-proof and trustable by financial authorities."
-msgstr ""
-"eventyay 为了确保审计完整性并获得财务监管机构的信赖，不允许删除已创建的订单。"
+msgstr "eventyay 为了确保审计完整性并获得财务监管机构的信赖，不允许删除已创建的订单。"
 
 #: eventyay/control/templates/pretixcontrol/organizers/detail.html:12
 #, python-format
@@ -26999,8 +26988,8 @@ msgid ""
 "confirm you really want this, please type out the event's short name "
 "(\"%(slug)s\") here:"
 msgstr ""
-"请再次核对您是否确实要从活动 <strong>%(event)s</strong> 中删除所选的数据类"
-"别。为确认，请在此处输入活动的简称 (\"%(slug)s\"):"
+"请再次核对您是否确实要从活动 <strong>%(event)s</strong> 中删除所选的数据类别"
+"。为确认，请在此处输入活动的简称 (\"%(slug)s\"):"
 
 #: eventyay/control/templates/pretixcontrol/shredder/download.html:41
 msgid "Event short name"
@@ -27208,8 +27197,8 @@ msgid ""
 "You selected a set of dates that currently have different check-in list "
 "setups. You can therefore not change their check-in lists in bulk."
 msgstr ""
-"您选择的一组日期当前具有不同的签到列表设置。因此，无法批量更改它们的签到列"
-"表。"
+"您选择的一组日期当前具有不同的签到列表设置。因此，无法批量更改它们的签到列表"
+"。"
 
 #: eventyay/control/templates/pretixcontrol/subevents/delete.html:4
 #: eventyay/control/templates/pretixcontrol/subevents/delete.html:6
@@ -30886,8 +30875,8 @@ msgid ""
 "example link to your home page, your registration page, or your livestream "
 "here."
 msgstr ""
-"这些链接将显示在所有日程相关页面的顶部，例如日程页面、演讲者页面、场次页面"
-"等。您可以在此处添加主页、报名页面或直播页面的链接。"
+"这些链接将显示在所有日程相关页面的顶部，例如日程页面、演讲者页面、场次页面等"
+"。您可以在此处添加主页、报名页面或直播页面的链接。"
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:63
 msgid "Footer links"
@@ -33428,8 +33417,8 @@ msgid ""
 "How do you want to separate data within a single cell (for example, multiple "
 "speakers in one session/multiple sessions for one speaker)?"
 msgstr ""
-"你想如何在单元格内分隔数据（例如，同一场次的多位演讲者或同一演讲者的多场场"
-"次）？"
+"你想如何在单元格内分隔数据（例如，同一场次的多位演讲者或同一演讲者的多场场次"
+"）？"
 
 #: eventyay/orga/forms/export.py:45
 msgid "Comma"
@@ -35111,8 +35100,7 @@ msgstr "事件历史"
 msgid ""
 "You are currently in the organizer area of eventyay. To view your submitted "
 "proposals, please go directly to the event page:"
-msgstr ""
-"您当前位于 eventyay 的组织者区域。要查看您提交的提案，请直接前往活动页面："
+msgstr "您当前位于 eventyay 的组织者区域。要查看您提交的提案，请直接前往活动页面："
 
 #: eventyay/orga/templates/orga/includes/dashboard_block_event.html:13
 #: eventyay/orga/templates/orga/speaker/form.html:33
@@ -35219,8 +35207,8 @@ msgid ""
 "href=\"%(domain)s\">%(domain)s</a>, please log in now. Otherwise, create a "
 "new account to join the team!"
 msgstr ""
-"如果您已在 <a href=\"%(domain)s\">%(domain)s</a> 拥有账户（作为演讲者或组织"
-"者），请现在登录。否则，请创建新账户以加入团队！"
+"如果您已在 <a href=\"%(domain)s\">%(domain)s</a> 拥有账户（作为演讲者或组织者"
+"），请现在登录。否则，请创建新账户以加入团队！"
 
 #: eventyay/orga/templates/orga/invitation.html:37
 #, python-format
@@ -35232,8 +35220,8 @@ msgid ""
 "invitation by mistake, please contact the organizer directly."
 msgstr ""
 "要使用当前登录的账号接受邀请，请使用下方按钮。如果想用其他账号接受邀请，您可"
-"以 <a href=\"/orga/logout/?next=%(link)s\">注销</a> 并用其他账号登录。 </"
-"p><p> 如果您认为自己误收到了此邀请，请直接联系组织者。"
+"以 <a href=\"/orga/logout/?next=%(link)s\">注销</a> 并用其他账号登录。 </p>"
+"<p> 如果您认为自己误收到了此邀请，请直接联系组织者。"
 
 #: eventyay/orga/templates/orga/invitation.html:45
 msgid "Join the team!"
@@ -35799,8 +35787,7 @@ msgid ""
 msgid_plural ""
 "%(count)s sessions are still <strong>unconfirmed</strong> and will not show "
 "up on the public schedule."
-msgstr[0] ""
-"%(count)s 会话仍然 <strong>unconfirmed</strong>，不会显示在公开日程上。"
+msgstr[0] "%(count)s 会话仍然 <strong>unconfirmed</strong>，不会显示在公开日程上。"
 
 #: eventyay/orga/templates/orga/schedule/release.html:69
 msgid "See all unconfirmed sessions."
@@ -36824,8 +36811,8 @@ msgid ""
 "API tokens can be used to access the <a %(apiurl)s>eventyay API</a>. To find "
 "out more, please have a look at the <a %(docurl)s> API documentation</a>."
 msgstr ""
-"API 令牌可用于访问 <a %(apiurl)s>eventyay API</a>。要了解更多，请参阅 <a "
-"%(docurl)s>API 文档</a>。"
+"API 令牌可用于访问 <a %(apiurl)s>eventyay API</a>。要了解更多，请参阅 <a %"
+"(docurl)s>API 文档</a>。"
 
 #: eventyay/orga/templates/orga/user.html:69
 msgid "Your API tokens"
@@ -37602,8 +37589,7 @@ msgstr "请提供一份评价分数！"
 msgid ""
 "The name you entered does not match the name on your account. Please update "
 "your account name in your profile before submitting."
-msgstr ""
-"您输入的姓名与账户上的姓名不匹配。请在提交前在个人资料中更新您的账户姓名。"
+msgstr "您输入的姓名与账户上的姓名不匹配。请在提交前在个人资料中更新您的账户姓名。"
 
 #: eventyay/person/forms/profile.py:444
 msgid "Role"
@@ -38599,8 +38585,7 @@ msgid ""
 msgid_plural ""
 "You are trying to download a refund export from %(date)s with %(cnt)s order "
 "and a total of %(sum)s."
-msgstr[0] ""
-"您正尝试从 %(date)s 下载退票导出，包含 %(cnt)s 笔订单，总计 %(sum)s。"
+msgstr[0] "您正尝试从 %(date)s 下载退票导出，包含 %(cnt)s 笔订单，总计 %(sum)s。"
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/sepa_export.html:23
 msgid ""
@@ -39417,8 +39402,7 @@ msgstr "社交登录设置"
 msgid ""
 "To enable social login for providers, you first need to create an OAuth "
 "application on the provider's website."
-msgstr ""
-"要为提供商启用社交登录，您首先需要在该提供商的网站上创建一个 OAuth 应用。"
+msgstr "要为提供商启用社交登录，您首先需要在该提供商的网站上创建一个 OAuth 应用。"
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:6
 msgid ""
@@ -39566,8 +39550,7 @@ msgstr "客户端应用密钥"
 msgid ""
 "Add the client application key and client application secret to your "
 "Eventyay social auth settings"
-msgstr ""
-"将客户端应用 Key 和客户端应用 Secret 添加到您的 Eventyay 社交认证设置中"
+msgstr "将客户端应用 Key 和客户端应用 Secret 添加到您的 Eventyay 社交认证设置中"
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:98
 msgid "After Approval"
@@ -39577,8 +39560,7 @@ msgstr "批准后"
 msgid ""
 "Once approved, other users can log in to your Eventyay instance using their "
 "MediaWiki account."
-msgstr ""
-"一旦批准，其他用户就可以使用他们的 MediaWiki 帐户登录您的 Eventyay 实例。"
+msgstr "一旦批准，其他用户就可以使用他们的 MediaWiki 帐户登录您的 Eventyay 实例。"
 
 #: eventyay/plugins/statistics/apps.py:6
 msgid "Statistics"
@@ -40349,8 +40331,8 @@ msgid ""
 "the order clicked the link in the email they received to confirm the email "
 "address is valid."
 msgstr ""
-"一旦下单人点击他们收到的邮件中的链接以确认该邮箱有效，您就可以在此处下载门"
-"票。"
+"一旦下单人点击他们收到的邮件中的链接以确认该邮箱有效，您就可以在此处下载门票"
+"。"
 
 #: eventyay/presale/templates/pretixpresale/event/fragment_downloads.html:26
 msgid ""
@@ -41269,8 +41251,7 @@ msgstr "您的订单项"
 msgid ""
 "This order is managed for you by %(email)s. Please contact them for any "
 "questions regarding payment, cancellation or changes to this order."
-msgstr ""
-"此订单由 %(email)s 为您管理。如对付款、取消或订单变更有任何疑问，请联系他们。"
+msgstr "此订单由 %(email)s 为您管理。如对付款、取消或订单变更有任何疑问，请联系他们。"
 
 #: eventyay/presale/templates/pretixpresale/event/resend_link.html:15
 msgid ""
@@ -42185,8 +42166,7 @@ msgstr "请注意，所有时间均为活动所在时区 {tz}。"
 msgid ""
 "If you set room availabilities, speakers will only be able to set their "
 "availability for when any room is available."
-msgstr ""
-"如果您设置了房间可用性, 发言人只能在有任何房间可用时设置自己的可用时间."
+msgstr "如果您设置了房间可用性, 发言人只能在有任何房间可用时设置自己的可用时间."
 
 #: eventyay/schedule/forms.py:111
 msgid "The submitted availability does not comply with the required format."
