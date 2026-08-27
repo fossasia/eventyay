@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 18:05+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2026-08-27 18:06+0000\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Bengali <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/bn/>\n"
 "Language: bn\n"
@@ -730,8 +730,8 @@ msgid ""
 "You are currently viewing the unreleased schedule preview. It may change at "
 "any time and is not visible to the public."
 msgstr ""
-"বর্তমানে সম্পাদনাযোগ্য সময়সূচির সংস্করণ দেখা হচ্ছে। এটি প্রকাশিত সংস্করণের সঙ্গে মিল "
-"নাও থাকতে পারে।"
+"বর্তমানে সম্পাদনাযোগ্য সময়সূচির সংস্করণ দেখা হচ্ছে। এটি প্রকাশিত সংস্করণের সঙ্গে মিল নাও "
+"থাকতে পারে।"
 
 #: eventyay/agenda/views/schedule.py:416 eventyay/multidomain/views.py:177
 #: eventyay/schedule/phrases.py:24
@@ -2877,8 +2877,8 @@ msgid ""
 "Sender address for outgoing emails. When using a custom sender, replies go "
 "to this address unless a Reply-To is set."
 msgstr ""
-"Reply-To ঠিকানা। এই সেটিং খালি থাকলে এবং কাস্টম প্রেরক না থাকলে, ইভেন্ট ইমেল "
-"ঠিকানাটি Reply-To ঠিকানা হিসেবে ব্যবহার করা হবে।"
+"Reply-To ঠিকানা। এই সেটিং খালি থাকলে এবং কাস্টম প্রেরক না থাকলে, ইভেন্ট ইমেল ঠিকানাটি "
+"Reply-To ঠিকানা হিসেবে ব্যবহার করা হবে।"
 
 #: eventyay/base/configurations/default_setting.py:1664
 #, fuzzy
@@ -3639,10 +3639,10 @@ msgid ""
 "(the center 1920 × 320 px will always be visible). Images will be "
 "automatically optimized to max 3000 px wide on save."
 msgstr ""
-"এই ইমেজটি সব আয়োজক পৃষ্ঠার উপরে দেখানো হয় এবং ডিফল্ট রং বা প্যাটার্নকে প্রতিস্থাপন "
-"করে। এটি কেন্দ্র-সারিবদ্ধ এবং টানা হয় না, ফলে ছোট স্ক্রিনে মাঝের অংশ দৃশ্যমান থাকে। "
-"১১৪০ পিক্সেল প্রস্থ এবং ১২০ পিক্সেল উচ্চতার একটি ইমেজের পরামর্শ দেওয়া হচ্ছে (নিচের "
-"সেটিং দিয়ে বাড়ানো যেতে পারে)।"
+"এই ইমেজটি সব আয়োজক পৃষ্ঠার উপরে দেখানো হয় এবং ডিফল্ট রং বা প্যাটার্নকে প্রতিস্থাপন করে। "
+"এটি কেন্দ্র-সারিবদ্ধ এবং টানা হয় না, ফলে ছোট স্ক্রিনে মাঝের অংশ দৃশ্যমান থাকে। ১১৪০ পিক্সেল "
+"প্রস্থ এবং ১২০ পিক্সেল উচ্চতার একটি ইমেজের পরামর্শ দেওয়া হচ্ছে (নিচের সেটিং দিয়ে বাড়ানো "
+"যেতে পারে)।"
 
 #: eventyay/base/configurations/default_setting.py:2282
 msgid "Social media image"
@@ -7848,7 +7848,8 @@ msgstr "ব্যাংক ট্রান্সফারের মাধ্য�
 #, fuzzy
 #| msgid "Can only create a bank transfer refund from an existing payment."
 msgid "Import bank data and export refunds for bank transfer payments."
-msgstr "বিদ্যমান কোনো পেমেন্ট থেকে কেবল ব্যাংক ট্রান্সফার রিফান্ড তৈরি করা যাবে।"
+msgstr ""
+"বিদ্যমান কোনো পেমেন্ট থেকে কেবল ব্যাংক ট্রান্সফার রিফান্ড তৈরি করা যাবে।"
 
 #: eventyay/base/models/organizer.py:408
 msgid "Can perform check-ins"
@@ -8024,8 +8025,8 @@ msgid ""
 "Can review and provide feedback on exhibitor and sponsor proposals but "
 "cannot approve, reject, or otherwise manage them."
 msgstr ""
-"সাবমিশন রিভিউ করে মতামত দিতে পারেন, তবে বিস্তারিত সম্পাদনা বা সাবমিশনের অবস্থা "
-"পরিবর্তন করতে পারেন না।"
+"সাবমিশন রিভিউ করে মতামত দিতে পারেন, তবে বিস্তারিত সম্পাদনা বা সাবমিশনের অবস্থা পরিবর্তন "
+"করতে পারেন না।"
 
 #: eventyay/base/models/organizer.py:583
 msgid "Hide emails of applicants"
@@ -8365,11 +8366,10 @@ msgid ""
 "additional donations for your event. This is currently not supported for "
 "products that are bought as an add-on to other products."
 msgstr ""
-"এই বিকল্পটি সক্রিয় থাকলে, ব্যবহারকারীরা নিজেরাই মূল্য নির্বাচন করতে পারবেন। তখন "
-"উপরে কনফিগার করা মূল্যটি ব্যবহারকারীকে যে ন্যূনতম মূল্য প্রবেশ করতে হবে তা হিসেবে "
-"গণ্য হবে। উদাহরণস্বরূপ, ইভেন্টের জন্য অতিরিক্ত অনুদান সংগ্রহ করতে এটি ব্যবহার করা "
-"যেতে পারে। অন্য পণ্যের অ্যাড-অন হিসেবে কেনা হয় এমন পণ্যের ক্ষেত্রে এটি বর্তমানে "
-"সমর্থিত নয়।"
+"এই বিকল্পটি সক্রিয় থাকলে, ব্যবহারকারীরা নিজেরাই মূল্য নির্বাচন করতে পারবেন। তখন উপরে "
+"কনফিগার করা মূল্যটি ব্যবহারকারীকে যে ন্যূনতম মূল্য প্রবেশ করতে হবে তা হিসেবে গণ্য হবে। "
+"উদাহরণস্বরূপ, ইভেন্টের জন্য অতিরিক্ত অনুদান সংগ্রহ করতে এটি ব্যবহার করা যেতে পারে। অন্য "
+"পণ্যের অ্যাড-অন হিসেবে কেনা হয় এমন পণ্যের ক্ষেত্রে এটি বর্তমানে সমর্থিত নয়।"
 
 #: eventyay/base/models/product.py:369
 #, fuzzy
@@ -15857,9 +15857,9 @@ msgid ""
 "reorder them — the first language (bold border) is used as your event's "
 "default language."
 msgstr ""
-"এই ভাষাগুলিতে ব্যবহারকারীরা eventyay ব্যবহার করতে পারবে, এবং এই ভাষাগুলিতে সব "
-"লেখা প্রদান করা যাবে। ব্যবহারকারী যে ভাষা নির্বাচন করে, সেই ভাষায় কোনো লেখা "
-"প্রদান না করলে, সেটির পরিবর্তে ইভেন্টের ডিফল্ট ভাষায় দেখানো হবে।"
+"এই ভাষাগুলিতে ব্যবহারকারীরা eventyay ব্যবহার করতে পারবে, এবং এই ভাষাগুলিতে সব লেখা প্রদান করা "
+"যাবে। ব্যবহারকারী যে ভাষা নির্বাচন করে, সেই ভাষায় কোনো লেখা প্রদান না করলে, সেটির পরিবর্তে "
+"ইভেন্টের ডিফল্ট ভাষায় দেখানো হবে।"
 
 #: eventyay/control/forms/event.py:111
 msgid "This is an event series"
@@ -16236,8 +16236,8 @@ msgid ""
 "the person who registers, the following email will be sent out to the "
 "attendees."
 msgstr ""
-"অর্ডারে টিকিট অর্ডারকারী ব্যক্তির থেকে ভিন্ন ইমেইল ঠিকানাসম্পন্ন অংশগ্রহণকারী থাকলে, "
-"নিচের ইমেইলটি অংশগ্রহণকারীদের কাছে পাঠানো হবে।"
+"অর্ডারে টিকিট অর্ডারকারী ব্যক্তির থেকে ভিন্ন ইমেইল ঠিকানাসম্পন্ন অংশগ্রহণকারী থাকলে, নিচের "
+"ইমেইলটি অংশগ্রহণকারীদের কাছে পাঠানো হবে।"
 
 #: eventyay/control/forms/event.py:1347 eventyay/plugins/sendmail/forms.py:310
 msgid "Text (sent by admin)"
@@ -16481,9 +16481,9 @@ msgid ""
 "Your customers will be instructed to pay the money manually. You can then "
 "mark them as paid."
 msgstr ""
-"গ্রাহকদের বলা হবে আপনার অ্যাকাউন্টে টাকা ট্রান্সফার করতে। এরপর eventyay-এর মধ্যে "
-"পেমেন্ট প্রক্রিয়াকরণের জন্য ব্যাংক স্টেটমেন্ট ইমপোর্ট করা যেতে পারে, অথবা হাতে করে "
-"পরিশোধিত হিসেবে চিহ্নিত করা যেতে পারে।"
+"গ্রাহকদের বলা হবে আপনার অ্যাকাউন্টে টাকা ট্রান্সফার করতে। এরপর eventyay-এর মধ্যে পেমেন্ট "
+"প্রক্রিয়াকরণের জন্য ব্যাংক স্টেটমেন্ট ইমপোর্ট করা যেতে পারে, অথবা হাতে করে পরিশোধিত "
+"হিসেবে চিহ্নিত করা যেতে পারে।"
 
 #: eventyay/control/forms/event.py:1839 eventyay/control/forms/product.py:575
 #, fuzzy
@@ -22841,9 +22841,9 @@ msgid ""
 "Variation changes are configured per product in the product's \"Variations\" "
 "section."
 msgstr ""
-"ব্যবহারকারীদের অর্ডার পরিবর্তন করার অনুমতি দেওয়ার ফিচারটি বর্তমানে উন্নয়নাধীন। তাই "
-"বর্তমানে কেবল নির্দিষ্ট কিছু পরিবর্তন (যেমন কোনো পণ্যের ভ্যারিয়েশন পরিবর্তন) করা "
-"সম্ভব। পরবর্তীতে আরও বিকল্প যোগ করা হতে পারে।"
+"ব্যবহারকারীদের অর্ডার পরিবর্তন করার অনুমতি দেওয়ার ফিচারটি বর্তমানে উন্নয়নাধীন। তাই বর্তমানে "
+"কেবল নির্দিষ্ট কিছু পরিবর্তন (যেমন কোনো পণ্যের ভ্যারিয়েশন পরিবর্তন) করা সম্ভব। "
+"পরবর্তীতে আরও বিকল্প যোগ করা হতে পারে।"
 
 #: eventyay/control/templates/pretixcontrol/event/component_link.html:8
 #: eventyay/eventyay_common/templates/eventyay_common/event/component_link.html:9
@@ -26652,8 +26652,7 @@ msgid ""
 "If your device does not support scanning a QR code, you can also enter the "
 "following information:"
 msgstr ""
-"অ্যাপ/ডিভাইসটি যদি QR কোড স্ক্যান সমর্থন না করে, তবে নিম্নলিখিত তথ্যও প্রবেশ করানো "
-"যাবে:"
+"অ্যাপ/ডিভাইসটি যদি QR কোড স্ক্যান সমর্থন না করে, তবে নিম্নলিখিত তথ্যও প্রবেশ করানো যাবে:"
 
 #: eventyay/control/templates/pretixcontrol/organizers/device_connect.html:40
 msgid "System URL:"
@@ -28710,8 +28709,7 @@ msgid ""
 "We were not able to complete the import because the event is busy. Please "
 "try again in a moment."
 msgstr ""
-"সার্ভার অত্যন্ত ব্যস্ত থাকায় অনুরোধটি সম্পূর্ণভাবে প্রক্রিয়া করা যায়নি। অনুগ্রহ করে আবার "
-"চেষ্টা করুন।"
+"সার্ভার অত্যন্ত ব্যস্ত থাকায় অনুরোধটি সম্পূর্ণভাবে প্রক্রিয়া করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।"
 
 #: eventyay/control/views/orderimport.py:209
 msgid "The import was successful."
@@ -30829,9 +30827,9 @@ msgid ""
 "premium access or Swag. Manage attendees, design custom badges, and "
 "streamline event marketing by sending targeted emails."
 msgstr ""
-"ইভেন্টের জন্য টিকিটিং সেটআপ ও কনফিগার করুন এবং প্রিমিয়াম অ্যাক্সেস বা Swag-এর মতো "
-"অ্যাড-অন বিক্রি করুন। অংশগ্রহণকারী ও প্রদর্শকদের পরিচালনা করুন, কাস্টম ব্যাজ ডিজাইন "
-"করুন, এবং লক্ষ্যভিত্তিক ইমেইল পাঠিয়ে ইভেন্ট মার্কেটিং সহজ করুন।"
+"ইভেন্টের জন্য টিকিটিং সেটআপ ও কনফিগার করুন এবং প্রিমিয়াম অ্যাক্সেস বা Swag-এর মতো অ্যাড-"
+"অন বিক্রি করুন। অংশগ্রহণকারী ও প্রদর্শকদের পরিচালনা করুন, কাস্টম ব্যাজ ডিজাইন করুন, এবং "
+"লক্ষ্যভিত্তিক ইমেইল পাঠিয়ে ইভেন্ট মার্কেটিং সহজ করুন।"
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:47
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:65
@@ -31485,8 +31483,8 @@ msgid ""
 "Permanently remove proposals, speaker profiles, and uploaded talk-related "
 "content."
 msgstr ""
-"প্রস্তাবনা, বক্তার প্রোফাইল এবং আপলোডসহ সংশ্লিষ্ট সব ডেটাও মুছে ফেলা হবে এবং "
-"পুনরুদ্ধার করা যাবে না।"
+"প্রস্তাবনা, বক্তার প্রোফাইল এবং আপলোডসহ সংশ্লিষ্ট সব ডেটাও মুছে ফেলা হবে এবং পুনরুদ্ধার করা "
+"যাবে না।"
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:403
 #, fuzzy
@@ -37573,8 +37571,8 @@ msgid ""
 "ALL related data, such as proposals, speaker profiles, and uploads, will "
 "also be deleted and cannot be restored."
 msgstr ""
-"প্রস্তাবনা, বক্তার প্রোফাইল এবং আপলোডসহ সংশ্লিষ্ট সব ডেটাও মুছে ফেলা হবে এবং "
-"পুনরুদ্ধার করা যাবে না।"
+"প্রস্তাবনা, বক্তার প্রোফাইল এবং আপলোডসহ সংশ্লিষ্ট সব ডেটাও মুছে ফেলা হবে এবং পুনরুদ্ধার করা "
+"যাবে না।"
 
 #: eventyay/orga/views/event.py:395 eventyay/orga/views/event.py:427
 #, fuzzy
@@ -38498,11 +38496,10 @@ msgid ""
 "upload a PDF file used as a background for the badges and then place various "
 "texts and QR codes at the positions of your choice."
 msgstr ""
-"PDF টিকিট এডিটর দিয়ে টিকিট ডিজাইন কাস্টমাইজ করা যাবে। সেখানে টিকিটের "
-"ব্যাকগ্রাউন্ড হিসেবে ব্যবহৃত একটি PDF ফাইল আপলোড করে পছন্দমতো অবস্থানে ব্যাকগ্রাউন্ডের "
-"ওপর বিভিন্ন লেখা ও QR কোড বসানো যাবে। ড্র্যাগ-অ্যান্ড-ড্রপ ইউজার ইন্টারফেসের কারণে "
-"এডিটরটি ব্যবহার করা সহজ, তবে এর জন্য আধুনিক ব্রাউজার এবং ভালো ইন্টারনেট সংযোগ "
-"প্রয়োজন।"
+"PDF টিকিট এডিটর দিয়ে টিকিট ডিজাইন কাস্টমাইজ করা যাবে। সেখানে টিকিটের ব্যাকগ্রাউন্ড "
+"হিসেবে ব্যবহৃত একটি PDF ফাইল আপলোড করে পছন্দমতো অবস্থানে ব্যাকগ্রাউন্ডের ওপর বিভিন্ন লেখা "
+"ও QR কোড বসানো যাবে। ড্র্যাগ-অ্যান্ড-ড্রপ ইউজার ইন্টারফেসের কারণে এডিটরটি ব্যবহার করা সহজ, "
+"তবে এর জন্য আধুনিক ব্রাউজার এবং ভালো ইন্টারনেট সংযোগ প্রয়োজন।"
 
 #: eventyay/plugins/badges/templates/pretixplugins/badges/form.html:12
 #, fuzzy
@@ -41951,7 +41948,8 @@ msgstr "নিবন্ধনের বিবরণ"
 #| "This voucher code has already been used the maximum number of times "
 #| "allowed."
 msgid "This event has reached its maximum number of registrations."
-msgstr "এই ভাউচার কোডটি অনুমোদিত সর্বোচ্চ সংখ্যক বার ইতিমধ্যে ব্যবহার করা হয়েছে।"
+msgstr ""
+"এই ভাউচার কোডটি অনুমোদিত সর্বোচ্চ সংখ্যক বার ইতিমধ্যে ব্যবহার করা হয়েছে।"
 
 #: eventyay/presale/templates/pretixpresale/event/rsvp.html:28
 #, fuzzy
@@ -42091,9 +42089,9 @@ msgid ""
 "confirmation email. On the event page there is also a link to join online "
 "sessions."
 msgstr ""
-"এটি টিকিটযুক্ত ইভেন্ট। অতিথি ব্যবহারকারী হিসেবে টিকিট অর্ডার করলে কোনো অ্যাকাউন্ট "
-"থাকবে না, তবে টিকিট নিশ্চিতকরণ ইমেলের গোপন লিঙ্ক ব্যবহার করে টিকিটে অ্যাক্সেস করা "
-"যাবে। টিকিটের পাতায় অনলাইন সেশনে যোগ দেওয়ার জন্যও একটি লিঙ্ক রয়েছে।"
+"এটি টিকিটযুক্ত ইভেন্ট। অতিথি ব্যবহারকারী হিসেবে টিকিট অর্ডার করলে কোনো অ্যাকাউন্ট থাকবে "
+"না, তবে টিকিট নিশ্চিতকরণ ইমেলের গোপন লিঙ্ক ব্যবহার করে টিকিটে অ্যাক্সেস করা যাবে। "
+"টিকিটের পাতায় অনলাইন সেশনে যোগ দেওয়ার জন্যও একটি লিঙ্ক রয়েছে।"
 
 #: eventyay/presale/templates/pretixpresale/fragment_join_online_video.html:13
 #, fuzzy
