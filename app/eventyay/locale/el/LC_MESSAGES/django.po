@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
 "PO-Revision-Date: 2026-08-27 11:59+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Greek <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "el/>\n"
 "Language: el\n"
@@ -8871,8 +8871,7 @@ msgstr "Να επιτρέπεται στους πελάτες να τροποπ�
 msgid ""
 "If this is checked, customers can switch between variations of this product "
 "in their order details."
-msgstr ""
-"Οι πελάτες μπορούν να αλλάξουν την παραλλαγή των προϊόντων που αγόρασαν"
+msgstr "Οι πελάτες μπορούν να αλλάξουν την παραλλαγή των προϊόντων που αγόρασαν"
 
 #: eventyay/base/models/product.py:516
 msgid "Minimum amount per order"
