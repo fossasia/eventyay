@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
 "PO-Revision-Date: 2026-08-27 18:30+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Gujarati <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/gu/>\n"
 "Language: gu\n"
@@ -7120,7 +7120,8 @@ msgstr ""
 #| msgid ""
 #| "Control whether the Join Online Video link is visible on public pages."
 msgid "Controls whether the plugin is available on the platform at all."
-msgstr "જાહેર પેજો પર Join Online Video લિંક દૃશ્યમાન છે કે નહીં તે નિયંત્રિત કરો."
+msgstr ""
+"જાહેર પેજો પર Join Online Video લિંક દૃશ્યમાન છે કે નહીં તે નિયંત્રિત કરો."
 
 #: eventyay/base/models/global_plugin_config.py:33
 #: eventyay/control/templates/pretixcontrol/global_plugins.html:26
@@ -23536,7 +23537,8 @@ msgstr ""
 msgid ""
 "After the setup, please go to the Payment area and set up the PayPal "
 "connection."
-msgstr "સેટઅપ પછી, કૃપા કરીને Payment વિસ્તારમાં જઈને Stripe કનેક્શન સેટ અપ કરો."
+msgstr ""
+"સેટઅપ પછી, કૃપા કરીને Payment વિસ્તારમાં જઈને Stripe કનેક્શન સેટ અપ કરો."
 
 #: eventyay/control/templates/pretixcontrol/event/settings.html:7
 #: eventyay/control/templates/pretixcontrol/event/settings.html:13
@@ -25079,7 +25081,8 @@ msgstr ""
 #| "choose a different one."
 msgid ""
 "The user account associated with this order will remain active and untouched."
-msgstr "આ ઇ-મેલ સરનામા સાથે પહેલેથી જ એક ખાતું જોડાયેલું છે. બીજું સરનામું પસંદ કરો."
+msgstr ""
+"આ ઇ-મેલ સરનામા સાથે પહેલેથી જ એક ખાતું જોડાયેલું છે. બીજું સરનામું પસંદ કરો."
 
 #: eventyay/control/templates/pretixcontrol/order/anonymize.html:17
 msgid ""
@@ -29911,7 +29914,8 @@ msgstr ""
 msgid ""
 "If selected, this event will show up publicly on the list of events for your "
 "organizer account and in platform search results."
-msgstr "પસંદ કર્યે બાદ, આ ઇવેન્ટ તમારી ઇવેન્ટ માટેની તારીખોની યાદીમાં જાહેર રીતે દેખાશે."
+msgstr ""
+"પસંદ કર્યે બાદ, આ ઇવેન્ટ તમારી ઇવેન્ટ માટેની તારીખોની યાદીમાં જાહેર રીતે દેખાશે."
 
 #: eventyay/eventyay_common/forms/event.py:268
 msgid "You need to configure the custom domain in the webserver beforehand."
@@ -33242,7 +33246,8 @@ msgstr "નવા પ્રસ્તાવ પર ઇમેઇલ મોકલ�
 msgid ""
 "If this setting is checked, all event admins will receive an email "
 "notification for every received proposal."
-msgstr "આ સેટિંગ સક્રિય હોય તો મળતા દરેક પ્રસ્તાવ માટે આયોજકના સરનામે ઇમેઇલ મળશે."
+msgstr ""
+"આ સેટિંગ સક્રિય હોય તો મળતા દરેક પ્રસ્તાવ માટે આયોજકના સરનામે ઇમેઇલ મળશે."
 
 #: eventyay/orga/forms/cfp.py:70
 msgid "Allow submitters to share their proposal publicly"
@@ -33563,7 +33568,8 @@ msgstr ""
 #| "You can activate either SSL or STARTTLS security, but not both at the "
 #| "same time."
 msgid "You can activate either SSL or STARTTLS, but not both at the same time."
-msgstr "SSL અથવા STARTTLS સુરક્ષા પૈકી એક સક્રિય કરી શકાય છે, પરંતુ બંનેને એક સાથે નહીં."
+msgstr ""
+"SSL અથવા STARTTLS સુરક્ષા પૈકી એક સક્રિય કરી શકાય છે, પરંતુ બંનેને એક સાથે નહીં."
 
 #: eventyay/orga/forms/email.py:236
 msgid ""
@@ -39672,7 +39678,8 @@ msgstr "અલ્પવિરામથી અલગ કરેલા પ્રા
 msgid ""
 "Any changes to the Reply-To field apply only to this queued email. If left "
 "empty, the event's default Reply-To will be used."
-msgstr "Reply-To ફીલ્ડમાં થયેલા કોઈપણ ફેરફારો ફક્ત આ કતારબદ્ધ ઇમેલ પર જ લાગુ પડશે."
+msgstr ""
+"Reply-To ફીલ્ડમાં થયેલા કોઈપણ ફેરફારો ફક્ત આ કતારબદ્ધ ઇમેલ પર જ લાગુ પડશે."
 
 #: eventyay/plugins/sendmail/forms.py:502
 msgid "Any changes to the BCC field will apply only to this queued email."
@@ -42133,7 +42140,8 @@ msgstr ""
 msgid ""
 "As a registered attendee, please also check your email for the unique link "
 "to join online sessions."
-msgstr "ટિકિટ ધારક તરીકે, ઑનલાઇન સેશન્સમાં જોડાવા માટેની અનન્ય લિંક માટે ઇમેલ પણ તપાસો."
+msgstr ""
+"ટિકિટ ધારક તરીકે, ઑનલાઇન સેશન્સમાં જોડાવા માટેની અનન્ય લિંક માટે ઇમેલ પણ તપાસો."
 
 #: eventyay/presale/templates/pretixpresale/fragment_join_online_video.html:17
 msgid ""
