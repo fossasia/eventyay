@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 16:35+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2026-08-27 16:36+0000\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Polish <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "pl/>\n"
 "Language: pl\n"
@@ -7339,8 +7339,7 @@ msgstr "Ustaw jako domyślny"
 #, fuzzy
 #| msgid "Invoices will never be automatically generated for free orders."
 msgid "Controls whether the plugin is automatically enabled for new events."
-msgstr ""
-"Faktury nigdy nie będą generowane automatycznie dla darmowych zamówień."
+msgstr "Faktury nigdy nie będą generowane automatycznie dla darmowych zamówień."
 
 #: eventyay/base/models/global_plugin_config.py:38
 msgid "Show in organizer plugin list"
@@ -13288,8 +13287,8 @@ msgstr "Wyświetl wydarzenie"
 msgid ""
 "You are receiving this email because you follow %(organizer)s on %(site)s."
 msgstr ""
-"Otrzymujesz tę wiadomość e-mail, ponieważ złożyłeś(-aś) zamówienie na "
-"{event}."
+"Otrzymujesz tę wiadomość e-mail, ponieważ złożyłeś(-aś) zamówienie na {event}"
+"."
 
 #: eventyay/base/templates/pretixbase/email/organizer_follower_new_event.html:37
 #, fuzzy
@@ -21837,8 +21836,7 @@ msgstr "Otwórz panel wydarzenia"
 #, fuzzy
 #| msgid "This is a list of all talk submissions across events."
 msgid "This is a list of all orders across all events."
-msgstr ""
-"To jest lista wszystkich zgłoszeń prelekcji we wszystkich wydarzeniach."
+msgstr "To jest lista wszystkich zgłoszeń prelekcji we wszystkich wydarzeniach."
 
 #: eventyay/control/templates/pretixcontrol/admin/orders/index.html:57
 #, fuzzy
@@ -43697,8 +43695,7 @@ msgstr "Konto zostało wyłączone."
 #, fuzzy
 #| msgid "For security reasons, please wait 5 minutes before you try again."
 msgid "Too many messages sent. Please wait a few minutes before trying again."
-msgstr ""
-"Ze względów bezpieczeństwa odczekaj 5 minut, zanim spróbujesz ponownie."
+msgstr "Ze względów bezpieczeństwa odczekaj 5 minut, zanim spróbujesz ponownie."
 
 #: eventyay/presale/views/contact.py:98 eventyay/presale/views/contact.py:104
 #, fuzzy
