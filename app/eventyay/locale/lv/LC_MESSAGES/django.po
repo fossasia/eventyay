@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 16:13+0000\n"
-"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
+"PO-Revision-Date: 2026-08-27 16:14+0000\n"
+"Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Latvian <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/lv/>\n"
 "Language: lv\n"
@@ -6091,8 +6091,8 @@ msgid ""
 "Using the conversion rate of 1:{rate} as published by the European Central "
 "Bank on {date}, this corresponds to:"
 msgstr ""
-"Izmantojot maiņas kursu 1:{rate}, ko Eiropas Centrālā banka publicēja "
-"{date}, šis atbilst:"
+"Izmantojot maiņas kursu 1:{rate}, ko Eiropas Centrālā banka publicēja {date}"
+", šis atbilst:"
 
 #: eventyay/base/invoice.py:823
 #, python-brace-format
@@ -6101,8 +6101,8 @@ msgid ""
 "Using the conversion rate of 1:{rate} as published by the European Central "
 "Bank on {date}, the invoice total corresponds to {total}."
 msgstr ""
-"Izmantojot maiņas kursu 1:{rate}, ko Eiropas Centrālā banka publicēja "
-"{date}, rēķina kopsumma atbilst {total}."
+"Izmantojot maiņas kursu 1:{rate}, ko Eiropas Centrālā banka publicēja {date}"
+", rēķina kopsumma atbilst {total}."
 
 #: eventyay/base/invoice.py:839
 msgid "Modern"
@@ -8639,10 +8639,10 @@ msgid ""
 "paid and completed. You can use this e.g. for discounted tickets that are "
 "only available to specific groups."
 msgstr ""
-"Ja šis produkts ir daļa no pasūtījuma, pasūtījumam tiks piemērots "
-"“apstiprināšanas” satuss un tas būs jāapstiprina jums, pirms klients to "
-"varēs apmaksāt un pabeigt iegādes procesu. Jūs varat izmantot šo funkciju, "
-"piem. biļetēm ar atlaidi, kuras ir pieejamas tikai noteiktām grupām."
+"Ja šis produkts ir daļa no pasūtījuma, pasūtījumam tiks piemērots “"
+"apstiprināšanas” satuss un tas būs jāapstiprina jums, pirms klients to varēs "
+"apmaksāt un pabeigt iegādes procesu. Jūs varat izmantot šo funkciju, piem. "
+"biļetēm ar atlaidi, kuras ir pieejamas tikai noteiktām grupām."
 
 #: eventyay/base/models/product.py:485
 msgid ""
@@ -11716,8 +11716,8 @@ msgid ""
 "We removed %(product)s from your cart as you can not buy less than %(min)s "
 "items of it."
 msgstr ""
-"No jūsu groza tika noņemti %(product)s, jo jūs nevarat iegādāties mazāk par "
-"%(min)s precēm."
+"No jūsu groza tika noņemti %(product)s, jo jūs nevarat iegādāties mazāk par %"
+"(min)s precēm."
 
 #: eventyay/base/services/cart.py:82 eventyay/base/services/orders.py:118
 msgid "The presale period for this event has not yet started."
@@ -11867,8 +11867,8 @@ msgid ""
 "You can select at most %(max)s add-ons from the category %(cat)s for the "
 "product %(base)s."
 msgstr ""
-"Jūs varat izvēlēties ne vairāk kā %(max)s papildinājumus no kategorijas "
-"%(cat)s šim produktam %(base)s."
+"Jūs varat izvēlēties ne vairāk kā %(max)s papildinājumus no kategorijas %"
+"(cat)s šim produktam %(base)s."
 
 #: eventyay/base/services/cart.py:130
 #, python-format
@@ -41520,8 +41520,7 @@ msgstr ""
 #: eventyay/presale/templates/pretixpresale/event/checkout_questions.html:10
 msgid ""
 "You need to fill all fields that are marked with <span>*</span> to continue."
-msgstr ""
-"Lai turpinātu, jāaizpilda visi lauki, kas apzīmēti ar <span> * </span>."
+msgstr "Lai turpinātu, jāaizpilda visi lauki, kas apzīmēti ar <span> * </span>."
 
 #: eventyay/presale/templates/pretixpresale/event/checkout_questions.html:68
 msgid "Copy answers from above"
@@ -42168,8 +42167,7 @@ msgstr "Lūdzu, pabeidziet maksājumu pirms %(date)s"
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:144
 msgid "Re-try payment or choose another payment method"
-msgstr ""
-"Atkārtoti mēģiniet veikt maksājumu vai izvēlieties citu maksājuma veidu"
+msgstr "Atkārtoti mēģiniet veikt maksājumu vai izvēlieties citu maksājuma veidu"
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:152
 #: eventyay/presale/templates/pretixpresale/event/order_pay_confirm.html:45
