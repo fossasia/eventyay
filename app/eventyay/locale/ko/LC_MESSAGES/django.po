@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 08:37+0000\n"
-"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
+"PO-Revision-Date: 2026-08-27 08:38+0000\n"
+"Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Korean <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "ko/>\n"
 "Language: ko\n"
@@ -206,8 +206,8 @@ msgid ""
 "We had to move some sessions, so if you were planning on seeing them, check "
 "their new dates or locations:"
 msgstr ""
-"일부 세션을 이동해야 했으므로, 해당 세션을 시청할 예정이었다면 새로운 날짜 또"
-"는 장소를 확인하세요:"
+"일부 세션을 이동해야 했으므로, 해당 세션을 시청할 예정이었다면 새로운 날짜 "
+"또는 장소를 확인하세요:"
 
 #: eventyay/agenda/templates/agenda/changelog_block.html:120
 msgid "We have moved a session around: "
@@ -242,9 +242,9 @@ msgid ""
 "conference. Please keep in mind that this is not our full schedule. We will "
 "follow up with the full schedule in time, stay tuned!"
 msgstr ""
-"이번 컨퍼런스를 미리 느껴볼 수 있도록 흥미로운 세션 목록을 준비했습니다. 다"
-"만, 이 목록은 전체 일정이 아니며, 추후에 전체 일정을 안내해 드릴 예정이니 많"
-"은 관심 부탁드려요!"
+"이번 컨퍼런스를 미리 느껴볼 수 있도록 흥미로운 세션 목록을 준비했습니다. "
+"다만, 이 목록은 전체 일정이 아니며, 추후에 전체 일정을 안내해 드릴 예정이니 "
+"많은 관심 부탁드려요!"
 
 #: eventyay/agenda/templates/agenda/featured.html:45
 #: eventyay/agenda/templates/agenda/schedule.html:34
@@ -304,9 +304,9 @@ msgid ""
 "presentation. Even a short review can prove valuable to a speaker! Please "
 "take the time and communicate your feedback in a constructive way."
 msgstr ""
-"리뷰는 발표자가 콘텐츠와 프레젠테이션을 개선할 수 있는 유용한 도구입니다. 짧"
-"은 리뷰도 발표자에게 큰 도움이 될 수 있습니다! 시간을 내어 건설적인 방식으로 "
-"피드백을 전달해 주세요."
+"리뷰는 발표자가 콘텐츠와 프레젠테이션을 개선할 수 있는 유용한 도구입니다. "
+"짧은 리뷰도 발표자에게 큰 도움이 될 수 있습니다! 시간을 내어 건설적인 "
+"방식으로 피드백을 전달해 주세요."
 
 #: eventyay/agenda/templates/agenda/feedback_form.html:26
 msgid "You can’t give feedback for this session at this time."
@@ -6060,8 +6060,7 @@ msgstr "접속 코드"
 msgid ""
 "You can restrict the access code to a single track, or leave it open for all "
 "tracks."
-msgstr ""
-"접근 코드를 단일 트랙으로 제한하거나 모든 트랙에 대해 열어둘 수 있습니다."
+msgstr "접근 코드를 단일 트랙으로 제한하거나 모든 트랙에 대해 열어둘 수 있습니다."
 
 #: eventyay/base/models/access_code.py:39 eventyay/control/forms/filter.py:1110
 #: eventyay/control/forms/filter.py:1112
@@ -6076,8 +6075,8 @@ msgid ""
 "You can restrict the access code to a single session type, or leave it open "
 "for all session types."
 msgstr ""
-"접근 코드를 단일 세션 유형으로 제한하거나 모든 세션 유형에 대해 열어둘 수 있"
-"습니다."
+"접근 코드를 단일 세션 유형으로 제한하거나 모든 세션 유형에 대해 열어둘 수 "
+"있습니다."
 
 #: eventyay/base/models/access_code.py:48 eventyay/base/models/vouchers.py:124
 #: eventyay/base/models/vouchers.py:573 eventyay/control/views/vouchers.py:113
@@ -6171,8 +6170,8 @@ msgid ""
 "If you have registered with an email address that has a gravatar account, we "
 "can retrieve your profile picture from there."
 msgstr ""
-"Gravatar 계정이 있는 이메일 주소로 등록한 경우, 그곳에서 프로필 사진을 가져"
-"올 수 있습니다."
+"Gravatar 계정이 있는 이메일 주소로 등록한 경우, 그곳에서 프로필 사진을 "
+"가져올 수 있습니다."
 
 #: eventyay/base/models/auth.py:285
 #: eventyay/orga/templates/orga/submission/speakers.html:41
@@ -6751,8 +6750,8 @@ msgid ""
 "Upload a custom CSS file if changing the primary colour is not sufficient "
 "for you."
 msgstr ""
-"기본 색상을 변경하는 것만으로는 충분하지 않은 경우 커스텀 CSS 파일을 업로드하"
-"세요."
+"기본 색상을 변경하는 것만으로는 충분하지 않은 경우 커스텀 CSS 파일을 "
+"업로드하세요."
 
 #: eventyay/base/models/event.py:668
 msgid ""
@@ -7297,8 +7296,8 @@ msgid ""
 "Enter comma separated addresses. Will receive a blind copy of every mail "
 "sent from this template. This may be a LOT!"
 msgstr ""
-"쉼표로 구분된 주소를 입력하세요. 이 템플릿에서 발송된 모든 메일의 숨은 복사본"
-"을 받게 됩니다. 이건 정말 많을 수 있습니다!"
+"쉼표로 구분된 주소를 입력하세요. 이 템플릿에서 발송된 모든 메일의 숨은 "
+"복사본을 받게 됩니다. 이건 정말 많을 수 있습니다!"
 
 #: eventyay/base/models/mail.py:285
 msgid ""
@@ -7669,8 +7668,8 @@ msgid ""
 "There must be at least one team with the permission to change teams, as "
 "otherwise nobody can create new teams or grant permissions to existing teams."
 msgstr ""
-"팀 변경 권한이 있는 팀이 최소한 하나는 있어야 합니다. 그렇지 않으면 새로운 팀"
-"을 만들거나 기존 팀에 권한을 부여할 수 없습니다."
+"팀 변경 권한이 있는 팀이 최소한 하나는 있어야 합니다. 그렇지 않으면 새로운 "
+"팀을 만들거나 기존 팀에 권한을 부여할 수 없습니다."
 
 #: eventyay/base/models/organizer.py:68
 msgid "Nobody on your teams has the permission to create new events."
@@ -9173,8 +9172,7 @@ msgstr "필수 필드"
 #: eventyay/base/models/question.py:165
 msgid ""
 "You can limit this field to some tracks. Leave empty to apply to all tracks."
-msgstr ""
-"이 필드를 일부 트랙으로 제한할 수 있습니다. 비워 두면 모든 트랙에 적용됩니다."
+msgstr "이 필드를 일부 트랙으로 제한할 수 있습니다. 비워 두면 모든 트랙에 적용됩니다."
 
 #: eventyay/base/models/question.py:172
 msgid ""
@@ -9281,8 +9279,8 @@ msgid ""
 "Should responses to this field be shown to reviewers? This is helpful if you "
 "want to collect personal information, but use anonymous reviews."
 msgstr ""
-"이 필드에 대한 응답을 검토자에게 표시해야 합니까? 개인 정보를 수집하고 싶지"
-"만 익명 리뷰를 사용하려는 경우 유용합니다."
+"이 필드에 대한 응답을 검토자에게 표시해야 합니까? 개인 정보를 수집하고 "
+"싶지만 익명 리뷰를 사용하려는 경우 유용합니다."
 
 #: eventyay/base/models/question.py:273
 #: eventyay/control/templates/pretixcontrol/items/question_edit.html:145
@@ -9335,8 +9333,8 @@ msgid ""
 "Independent scores are not part of the total score. Instead they are shown "
 "in a separate column in the review dashboard."
 msgstr ""
-"독립 점수는 총 점수의 일부가 아닙니다. 대신 검토 대시보드의 별도 열에 표시됩"
-"니다."
+"독립 점수는 총 점수의 일부가 아닙니다. 대신 검토 대시보드의 별도 열에 "
+"표시됩니다."
 
 #: eventyay/base/models/review.py:56
 msgid "You need to keep at least one non-independent score category!"
@@ -9373,9 +9371,9 @@ msgid ""
 "proposals will be highlighted and will be shown first in the review "
 "workflow. "
 msgstr ""
-"“모두”를 선택하면 검토자는 팀이 접근할 수 있는 모든 제안을 검토할 수 있습니"
-"다 (따라서 모든 제안 또는 특정 트랙). 이 모드에서는 할당된 제안이 강조 표시되"
-"며 검토 작업 흐름에서 먼저 표시됩니다. "
+"“모두”를 선택하면 검토자는 팀이 접근할 수 있는 모든 제안을 검토할 수 "
+"있습니다 (따라서 모든 제안 또는 특정 트랙). 이 모드에서는 할당된 제안이 강조 "
+"표시되며 검토 작업 흐름에서 먼저 표시됩니다. "
 
 #: eventyay/base/models/review.py:231
 msgid "Reviewers can see other reviews"
@@ -9427,8 +9425,8 @@ msgid ""
 "By default, modification of proposals is locked after the CfP ends, and is "
 "re-enabled once the proposal was accepted."
 msgstr ""
-"기본적으로, 제안 수정은 CfP 종료 후 잠겨 있으며, 제안이 수락되면 다시 활성화"
-"됩니다."
+"기본적으로, 제안 수정은 CfP 종료 후 잠겨 있으며, 제안이 수락되면 다시 "
+"활성화됩니다."
 
 #: eventyay/base/models/room.py:43
 msgid "A room with linked submissions cannot be marked as unscheduled."
@@ -9461,8 +9459,8 @@ msgid ""
 "Information relevant for speakers scheduled in this room, for example room "
 "size, special directions, available adaptors for video input …"
 msgstr ""
-"이 방에 예정된 발표자에게 관련된 정보, 예: 방 크기, 특별한 방향, 비디오 입력"
-"을 위한 사용 가능한 어댑터 …"
+"이 방에 예정된 발표자에게 관련된 정보, 예: 방 크기, 특별한 방향, 비디오 "
+"입력을 위한 사용 가능한 어댑터 …"
 
 #: eventyay/base/models/room.py:308
 #: eventyay/orga/templates/orga/schedule/room/list.html:27
@@ -9546,8 +9544,8 @@ msgid ""
 "Please give a fair review on why you’d like to see this proposal at the "
 "conference, or why you think it would not be a good fit."
 msgstr ""
-"이 제안을 행사(컨퍼런스)에서 보고 싶은 이유 또는 적합하지 않다고 생각하는 이"
-"유에 대해 공정하게 검토해 주세요."
+"이 제안을 행사(컨퍼런스)에서 보고 싶은 이유 또는 적합하지 않다고 생각하는 "
+"이유에 대해 공정하게 검토해 주세요."
 
 #: eventyay/base/models/settings.py:71
 #, python-brace-format
@@ -9829,8 +9827,7 @@ msgstr "내부 메모"
 msgid ""
 "Internal notes for other organisers/reviewers. Not visible to the speakers "
 "or the public."
-msgstr ""
-"다른 조직자/검토자를 위한 내부 메모. 발표자나 대중에게는 보이지 않습니다."
+msgstr "다른 조직자/검토자를 위한 내부 메모. 발표자나 대중에게는 보이지 않습니다."
 
 #: eventyay/base/models/submission.py:249
 msgid "The duration in minutes."
@@ -10042,8 +10039,8 @@ msgid ""
 "If you want a different deadline than the global deadline for this session "
 "type, enter it here."
 msgstr ""
-"이 세션 유형에 대해 글로벌 마감일과 다른 마감일을 원하시면 여기에 입력하십시"
-"오."
+"이 세션 유형에 대해 글로벌 마감일과 다른 마감일을 원하시면 여기에 "
+"입력하십시오."
 
 #: eventyay/base/models/type.py:47
 msgid ""
@@ -13060,8 +13057,8 @@ msgid ""
 "changes to it up to the submission deadline, and you will be notified of any "
 "changes or questions."
 msgstr ""
-"제안서를 제출하셨습니다! 제출 마감일까지 제안서를 계속 변경할 수 있으며, 변"
-"경 사항이나 질문이 있을 경우 알림을 받게 됩니다."
+"제안서를 제출하셨습니다! 제출 마감일까지 제안서를 계속 변경할 수 있으며, "
+"변경 사항이나 질문이 있을 경우 알림을 받게 됩니다."
 
 #: eventyay/cfp/flow.py:493
 msgid "Hey, nice to meet you!"
@@ -13111,8 +13108,7 @@ msgstr "계정"
 
 #: eventyay/cfp/flow.py:538
 msgid "That’s it about your proposal! We now just need a way to contact you."
-msgstr ""
-"제안서는 여기까지입니다! 이제 당신에게 연락드릴 방법을 알려주시면 됩니다."
+msgstr "제안서는 여기까지입니다! 이제 당신에게 연락드릴 방법을 알려주시면 됩니다."
 
 #: eventyay/cfp/flow.py:543
 msgid ""
@@ -13120,8 +13116,8 @@ msgid ""
 "gives us a way to contact you, it also gives you the possibility to edit "
 "your proposal or to view its current state."
 msgstr ""
-"제안서를 작성하려면 이 페이지에서 계정이 필요합니다. 계정을 통해 연락할 수 있"
-"을 뿐만 아니라 제안서를 수정하거나 현재 상태를 확인할 수 있습니다."
+"제안서를 작성하려면 이 페이지에서 계정이 필요합니다. 계정을 통해 연락할 수 "
+"있을 뿐만 아니라 제안서를 수정하거나 현재 상태를 확인할 수 있습니다."
 
 #: eventyay/cfp/flow.py:626 eventyay/person/social_link_mixin.py:54
 #, fuzzy
@@ -13144,8 +13140,8 @@ msgid ""
 "This information will be publicly displayed next to your session - you can "
 "always edit for as long as proposals are still open."
 msgstr ""
-"이 정보는 세션 옆에 공개적으로 표시되며, 제안서가 열려 있는 동안에는 언제든"
-"지 수정할 수 있습니다."
+"이 정보는 세션 옆에 공개적으로 표시되며, 제안서가 열려 있는 동안에는 "
+"언제든지 수정할 수 있습니다."
 
 #: eventyay/cfp/forms/cfp.py:23
 #, fuzzy
@@ -13183,8 +13179,8 @@ msgid ""
 "This link was not valid. Make sure you copied the complete URL from the "
 "email and that the email is no more than 24 hours old."
 msgstr ""
-"이 링크는 유효하지 않습니다. 이메일에서 전체 URL을 복사했는지, 이메일이 24시"
-"간이 지나지 않았는지 확인하세요."
+"이 링크는 유효하지 않습니다. 이메일에서 전체 URL을 복사했는지, 이메일이 "
+"24시간이 지나지 않았는지 확인하세요."
 
 #: eventyay/cfp/phrases.py:17
 msgid "Awesome! You can now log in using your new password."
@@ -13199,8 +13195,8 @@ msgid ""
 "Your proposal can’t be withdrawn at this time – please contact us if you "
 "need to withdraw your proposal!"
 msgstr ""
-"지금은 발표 제안을 철회할 수 없습니다. 제안을 철회해야 하는 경우 문의해 주세"
-"요!"
+"지금은 발표 제안을 철회할 수 없습니다. 제안을 철회해야 하는 경우 문의해 "
+"주세요!"
 
 #: eventyay/cfp/phrases.py:23
 msgid "Your session has been confirmed – we’re looking forward to seeing you!"
@@ -13210,8 +13206,7 @@ msgstr "세션이 확정되었습니다 - 여러분을 만나 뵙기를 고대�
 msgid ""
 "This proposal has already been confirmed – we’re looking forward to seeing "
 "you!"
-msgstr ""
-"이 발표 제안은 이미 확정되었습니다 - 여러분의 많은 참여를 기다리겠습니다!"
+msgstr "이 발표 제안은 이미 확정되었습니다 - 여러분의 많은 참여를 기다리겠습니다!"
 
 #: eventyay/cfp/phrases.py:26
 msgid ""
@@ -13271,8 +13266,7 @@ msgstr "초대장이 전송되었습니다!"
 
 #: eventyay/cfp/phrases.py:48
 msgid "You are now part of this proposal! Please fill in your profile below."
-msgstr ""
-"이제 해당 제안서에 참여하실 수 있습니다! 아래에 프로필을 작성해 주세요."
+msgstr "이제 해당 제안서에 참여하실 수 있습니다! 아래에 프로필을 작성해 주세요."
 
 #: eventyay/cfp/phrases.py:51
 msgid ""
@@ -13290,8 +13284,8 @@ msgid ""
 "You can enter proposals until %(deadline)s (%(timezone)s), %(until_string)s "
 "from now."
 msgstr ""
-"지금부터 %(deadline)s (%(timezone)s) 까지 , %(until_string)s 동안 제안서를 입"
-"력할 수 있습니다."
+"지금부터 %(deadline)s (%(timezone)s) 까지 , %(until_string)s 동안 제안서를 "
+"입력할 수 있습니다."
 
 #: eventyay/cfp/templates/cfp/event/cfp.html:35
 #, python-format
@@ -13338,8 +13332,8 @@ msgid ""
 "You, %(name)s, have been invited to be a speaker for the session “%(talk)s”. "
 "Do you accept the invitation?"
 msgstr ""
-"%(name)s님께서는 “%(talk)s” 발표의 발표자로 초대되셨습니다. 이 초대를 수락하"
-"시겠습니까?"
+"%(name)s님께서는 “%(talk)s” 발표의 발표자로 초대되셨습니다. 이 초대를 "
+"수락하시겠습니까?"
 
 #: eventyay/cfp/templates/cfp/event/invitation.html:35
 msgid "Abstract:"
@@ -13374,8 +13368,8 @@ msgid ""
 "If you already created a proposal for a different event on this server, you "
 "can re-use your account to log in for this event."
 msgstr ""
-"이 서버에서 다른 이벤트에 대한 제안서를 이미 생성한 경우, 해당 계정을 다시 사"
-"용하여 이 이벤트에 로그인할 수 있습니다."
+"이 서버에서 다른 이벤트에 대한 제안서를 이미 생성한 경우, 해당 계정을 다시 "
+"사용하여 이 이벤트에 로그인할 수 있습니다."
 
 #: eventyay/cfp/templates/cfp/event/login.html:15
 msgid ""
@@ -13437,8 +13431,8 @@ msgid ""
 "not be able to see your proposal, though they will be able to send you "
 "reminder emails about the upcoming deadline."
 msgstr ""
-"제안서를 초안으로 저장하고 나중에 제출할 수 있습니다. 주최자는 제안서를 볼 수"
-"는 없지만, 다가오는 마감일에 대한 알림 이메일을 보낼 수 있습니다."
+"제안서를 초안으로 저장하고 나중에 제출할 수 있습니다. 주최자는 제안서를 볼 "
+"수는 없지만, 다가오는 마감일에 대한 알림 이메일을 보낼 수 있습니다."
 
 #: eventyay/cfp/templates/cfp/event/submission_base.html:93
 msgid "You need to be logged in to submit a proposal"
@@ -13472,8 +13466,8 @@ msgid ""
 "will be able to send you reminders about your pending proposal draft closer "
 "to the deadline."
 msgstr ""
-"주최자는 당신의 초안이나 이메일 주소를 볼 수 없지만, 마감일이 가까워지면 보"
-"류 중인 제안서 초안에 대한 리마인더를 보낼 수 있습니다."
+"주최자는 당신의 초안이나 이메일 주소를 볼 수 없지만, 마감일이 가까워지면 "
+"보류 중인 제안서 초안에 대한 리마인더를 보낼 수 있습니다."
 
 #: eventyay/cfp/templates/cfp/event/user_mails.html:4
 #: eventyay/cfp/templates/cfp/event/user_mails.html:7
@@ -13486,9 +13480,9 @@ msgid ""
 "in your email inbox, but this page serves as a helper in case your email "
 "address was unavailable or the emails got lost in some way."
 msgstr ""
-"주최자가 보낸 이메일은 당신의 이메일 편지함으로 전송되지만, 당신의 이메일 주"
-"소를 사용할 수 없거나 이메일이 분실된 경우, 이 페이지는 이에 대한 도우미 역할"
-"을 합니다."
+"주최자가 보낸 이메일은 당신의 이메일 편지함으로 전송되지만, 당신의 이메일 "
+"주소를 사용할 수 없거나 이메일이 분실된 경우, 이 페이지는 이에 대한 도우미 "
+"역할을 합니다."
 
 #: eventyay/cfp/templates/cfp/event/user_profile.html:5
 #: eventyay/cfp/templates/cfp/event/user_profile.html:14
@@ -13516,8 +13510,8 @@ msgid ""
 "Please provide us with your available hours during the event, so that we can "
 "schedule your event accordingly:"
 msgstr ""
-"이벤트 기간 중 가능한 시간을 알려주시면 그에 맞춰 이벤트 일정을 조정할 수 있"
-"습니다:"
+"이벤트 기간 중 가능한 시간을 알려주시면 그에 맞춰 이벤트 일정을 조정할 수 "
+"있습니다:"
 
 #: eventyay/cfp/templates/cfp/event/user_submission_confirm.html:40
 msgid ""
@@ -13526,9 +13520,9 @@ msgid ""
 "proposal data, such as title, abstract, description, and any uploads you "
 "provided, can be made publicly available once the proposal is confirmed."
 msgstr ""
-"제안서를 확인함으로써 귀하는 이 이벤트에 참가할 수 있으며 제안서의 내용을 공"
-"개할 의향이 있음에 동의합니다. 제안서가 확정되면 제목, 초안, 설명 및 제출한 "
-"파일과 같은 제안서의 데이터가 공개될 수 있습니다."
+"제안서를 확인함으로써 귀하는 이 이벤트에 참가할 수 있으며 제안서의 내용을 "
+"공개할 의향이 있음에 동의합니다. 제안서가 확정되면 제목, 초안, 설명 및 "
+"제출한 파일과 같은 제안서의 데이터가 공개될 수 있습니다."
 
 #: eventyay/cfp/templates/cfp/event/user_submission_confirm.html:50
 #: eventyay/cfp/templates/cfp/event/user_submission_edit.html:143
@@ -13553,8 +13547,9 @@ msgid ""
 "belong to the account you’re currently logged in with. Try logging in with a "
 "different account, or contact the event organisers for further information."
 msgstr ""
-"확인하려는 제안서가 존재하지 않거나 현재 로그인한 계정에 속하지 않습니다. 다"
-"른 계정으로 로그인하거나 이벤트 주최자에게 문의하여 자세한 정보를 확인하세요."
+"확인하려는 제안서가 존재하지 않거나 현재 로그인한 계정에 속하지 않습니다. "
+"다른 계정으로 로그인하거나 이벤트 주최자에게 문의하여 자세한 정보를 "
+"확인하세요."
 
 #: eventyay/cfp/templates/cfp/event/user_submission_discard.html:16
 msgid ""
@@ -13624,8 +13619,8 @@ msgid ""
 "If you need a review from a colleague or a friend here’s a link that you can "
 "send out for viewing your proposal:"
 msgstr ""
-"동료나 친구의 리뷰가 필요하다면, 제안서를 확인할 수 있는 링크를 공유할 수 있"
-"습니다:"
+"동료나 친구의 리뷰가 필요하다면, 제안서를 확인할 수 있는 링크를 공유할 수 "
+"있습니다:"
 
 #: eventyay/cfp/templates/cfp/event/user_submission_edit.html:132
 #: eventyay/cfp/templates/cfp/event/user_submission_withdraw.html:14
@@ -13638,8 +13633,8 @@ msgid ""
 "undo this - if you are just uncertain if you can or should hold your "
 "session, please contact the organiser instead."
 msgstr ""
-"여기에서 제안서를 철회할 수 있습니다. 이 작업은 되돌릴 수 없습니다. 만약 본인"
-"의 제안에 확신이 없는 경우, 운영진에게 문의하는 것을 고려해 주세요."
+"여기에서 제안서를 철회할 수 있습니다. 이 작업은 되돌릴 수 없습니다. 만약 "
+"본인의 제안에 확신이 없는 경우, 운영진에게 문의하는 것을 고려해 주세요."
 
 #: eventyay/cfp/templates/cfp/event/user_submission_edit.html:148
 msgid "Discard draft proposal"
@@ -13651,8 +13646,8 @@ msgid ""
 "just uncertain if you can or should submit your proposal, please contact the "
 "organiser instead."
 msgstr ""
-"여기에서 제안서 초안을 삭제할 수 있습니다. 이 작업은 되돌릴 수 없습니다. 만"
-"약 본인의 제안에 확신이 없는 경우, 운영진에게 문의하는 것을 고려해 주세요."
+"여기에서 제안서 초안을 삭제할 수 있습니다. 이 작업은 되돌릴 수 없습니다. "
+"만약 본인의 제안에 확신이 없는 경우, 운영진에게 문의하는 것을 고려해 주세요."
 
 #: eventyay/cfp/templates/cfp/event/user_submission_edit.html:159
 #: eventyay/orga/templates/orga/mails/outbox_form.html:96
@@ -13671,8 +13666,8 @@ msgid ""
 "organising team to cancel it. The best way to reach out would be an answer "
 "to your acceptance mail."
 msgstr ""
-"제안서가 이미 수락 되었으므로, 취소하려면 이벤트 주최 팀에 문의하시기 바랍니"
-"다. 승인 이메일에 답장을 하여 문의를 하는 것을 권장합니다."
+"제안서가 이미 수락 되었으므로, 취소하려면 이벤트 주최 팀에 문의하시기 "
+"바랍니다. 승인 이메일에 답장을 하여 문의를 하는 것을 권장합니다."
 
 #: eventyay/cfp/templates/cfp/event/user_submission_invitation.html:23
 msgid ""
@@ -13680,8 +13675,8 @@ msgid ""
 "email, (which might get caught by spam filters) you can also give them this "
 "link:"
 msgstr ""
-"여기에서 당신의 발표 제안서에 다른 발표자를 초대하세요. (스팸 처리될 수 있"
-"는) 메일을 보내는 대신, 다음 링크를 제공해도 됩니다:"
+"여기에서 당신의 발표 제안서에 다른 발표자를 초대하세요. (스팸 처리될 수 "
+"있는) 메일을 보내는 대신, 다음 링크를 제공해도 됩니다:"
 
 #: eventyay/cfp/templates/cfp/event/user_submission_withdraw.html:16
 msgid "Do you really want to withdraw your proposal?"
@@ -13825,8 +13820,8 @@ msgid ""
 "This is a draft proposal. It will never be visible to anybody else, unless "
 "you submit it or explicitly share it."
 msgstr ""
-"이것은 제안서 초안입니다. 제출하거나 명시적으로 공유하지 않는 한 다른 사람에"
-"게 절대 공개되지 않습니다."
+"이것은 제안서 초안입니다. 제출하거나 명시적으로 공유하지 않는 한 다른 "
+"사람에게 절대 공개되지 않습니다."
 
 #: eventyay/cfp/templates/cfp/index.html:22
 msgid "No events are currently ongoing."
@@ -13996,8 +13991,8 @@ msgstr "시작 시간은 과거일 수 없습니다."
 msgid ""
 "This password would take <em class=\"password_strength_time\"></em> to crack."
 msgstr ""
-"이 비밀번호를 해독하는 데 <em class=\"password_strength_time\"></em> 가 소요"
-"됩니다."
+"이 비밀번호를 해독하는 데 <em class=\"password_strength_time\"></em> 가 "
+"소요됩니다."
 
 #: eventyay/common/forms/widgets.py:75
 msgid "Warning"
@@ -14044,16 +14039,16 @@ msgid ""
 "The file you uploaded has a very large number of pixels, please upload a "
 "picture with smaller dimensions."
 msgstr ""
-"업로드한 파일의 픽셀 수가 매우 많습니다. 더 작은 크기의 사진을 업로드해 주세"
-"요."
+"업로드한 파일의 픽셀 수가 매우 많습니다. 더 작은 크기의 사진을 업로드해 "
+"주세요."
 
 #: eventyay/common/image.py:204
 msgid ""
 "Upload a valid image. The file you uploaded was either not an image or a "
 "corrupted image."
 msgstr ""
-"유효한 이미지를 업로드하세요. 업로드한 파일이 이미지가 아니거나 손상된 이미지"
-"입니다."
+"유효한 이미지를 업로드하세요. 업로드한 파일이 이미지가 아니거나 손상된 "
+"이미지입니다."
 
 #: eventyay/common/log_display.py:33 eventyay/common/log_display.py:36
 #, python-brace-format
@@ -14496,8 +14491,8 @@ msgid ""
 "It looks as if the communication between you and eventyay went wrong in some "
 "way. <br> Please return to the last page and try again!"
 msgstr ""
-"사용자와 시스템 간의 통신이 어떤 식으로든 잘못된 것 같습니다.<br>마지막 페이"
-"지로 돌아가서 다시 시도해 주세요!"
+"사용자와 시스템 간의 통신이 어떤 식으로든 잘못된 것 같습니다.<br>마지막 "
+"페이지로 돌아가서 다시 시도해 주세요!"
 
 #: eventyay/common/templates/400.html:29 eventyay/common/templates/400.html:32
 #: eventyay/common/templates/403.html:35 eventyay/common/templates/403.html:38
@@ -14562,8 +14557,9 @@ msgid ""
 "reasons, we cannot process it. <br> Please go back to the last page, "
 "refresh, and then try again."
 msgstr ""
-"이 요청이 실제로 귀하가 보낸 것인지 확인할 수 없습니다. 보안상의 이유로 처리"
-"할 수 없습니다.<br> 마지막 페이지로 돌아가 새로고침한 후 다시 시도해 주세요."
+"이 요청이 실제로 귀하가 보낸 것인지 확인할 수 없습니다. 보안상의 이유로 "
+"처리할 수 없습니다.<br> 마지막 페이지로 돌아가 새로고침한 후 다시 시도해 "
+"주세요."
 
 #: eventyay/common/templates/404.html:6 eventyay/common/templates/404.html:8
 #: eventyay/common/templates/404.html:11
@@ -15380,8 +15376,8 @@ msgstr "잘못된 요청."
 #: eventyay/common/text/phrases.py:71
 msgid "We had trouble saving your input – Please see below for details."
 msgstr ""
-"입력 내용을 저장하는 데 문제가 발생했습니다. 자세한 내용은 아래를 참조하세"
-"요. 🠯"
+"입력 내용을 저장하는 데 문제가 발생했습니다. 자세한 내용은 아래를 "
+"참조하세요. 🠯"
 
 #: eventyay/common/text/phrases.py:74
 msgid "Permission denied."
@@ -18259,8 +18255,8 @@ msgid ""
 "Please either pick some events for this team, or grant access to all your "
 "events!"
 msgstr ""
-"이 팀에 대해 몇 가지 이벤트를 선택하거나, 모든 이벤트에 대한 액세스 권한을 부"
-"여하세요!"
+"이 팀에 대해 몇 가지 이벤트를 선택하거나, 모든 이벤트에 대한 액세스 권한을 "
+"부여하세요!"
 
 #: eventyay/control/forms/organizer_forms/team_form.py:293
 #, fuzzy
@@ -21488,8 +21484,8 @@ msgid ""
 "No settings files were found, all settings are either set to their default "
 "value or have been read from environment variables."
 msgstr ""
-"설정 파일이 발견되지 않았습니다. 모든 설정은 기본값으로 설정되었거나 환경 변"
-"수에서 읽혔습니다."
+"설정 파일이 발견되지 않았습니다. 모든 설정은 기본값으로 설정되었거나 환경 "
+"변수에서 읽혔습니다."
 
 #: eventyay/control/templates/pretixcontrol/admin/systemconfig.html:52
 msgid "Database"
@@ -29687,8 +29683,8 @@ msgid ""
 "kind of abbreviation with less than 30 characters that can be easily "
 "remembered."
 msgstr ""
-"이벤트가 진행될 주소입니다. 짧고 소문자와 숫자만 포함해야 하며 고유해야 합니"
-"다. 쉽게 기억할 수 있는 30자 미만의 약어를 사용하는 것이 좋습니다."
+"이벤트가 진행될 주소입니다. 짧고 소문자와 숫자만 포함해야 하며 고유해야 "
+"합니다. 쉽게 기억할 수 있는 30자 미만의 약어를 사용하는 것이 좋습니다."
 
 #: eventyay/event/forms.py:216
 msgid "You cannot change the slug later on!"
@@ -29699,8 +29695,8 @@ msgid ""
 "This short name is already taken, please choose another one (or ask the "
 "owner of that event to add you to their team)."
 msgstr ""
-"이 짧은 이름은 이미 사용 중이므로 다른 이름을 선택하거나 해당 이벤트의 소유자"
-"에게 팀에 추가해 달라고 요청하세요."
+"이 짧은 이름은 이미 사용 중이므로 다른 이름을 선택하거나 해당 이벤트의 "
+"소유자에게 팀에 추가해 달라고 요청하세요."
 
 #: eventyay/event/forms.py:315
 msgid ""
@@ -29709,8 +29705,8 @@ msgid ""
 "event has been created!"
 msgstr ""
 "이곳에서 이전 이벤트의 설정을 복사할 수 있습니다. 예를 들어 메일 설정, 세션 "
-"유형 및 이메일 템플릿 등이 있습니다. 이벤트가 생성된 후 해당 설정을 확인해 주"
-"세요!"
+"유형 및 이메일 템플릿 등이 있습니다. 이벤트가 생성된 후 해당 설정을 확인해 "
+"주세요!"
 
 #: eventyay/event/stages.py:40
 msgid "Preparation"
@@ -31246,9 +31242,9 @@ msgid ""
 "example link to your home page, your registration page, or your livestream "
 "here."
 msgstr ""
-"이 링크는 모든 일정 관련 페이지의 상단에 표시됩니다. 예를 들어, 일정 자체, 연"
-"사 페이지, 세션 페이지 등이 있습니다. 여기에서 홈페이지, 등록 페이지 또는 라"
-"이브 스트림에 링크할 수 있습니다."
+"이 링크는 모든 일정 관련 페이지의 상단에 표시됩니다. 예를 들어, 일정 자체, "
+"연사 페이지, 세션 페이지 등이 있습니다. 여기에서 홈페이지, 등록 페이지 또는 "
+"라이브 스트림에 링크할 수 있습니다."
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:63
 msgid "Footer links"
@@ -32385,8 +32381,7 @@ msgstr ""
 msgid ""
 "You want submitters to choose the tracks for their proposals, but you do not "
 "offer tracks for selection. Add at least one track!"
-msgstr ""
-"제출자가 제안서의 트랙을 선택하도록 하려면 최소한 하나의 트랙을 추가하세요!"
+msgstr "제출자가 제안서의 트랙을 선택하도록 하려면 최소한 하나의 트랙을 추가하세요!"
 
 #: eventyay/eventyay_common/views/event.py:1055
 msgid "You have configured only one session type so far."
@@ -32872,9 +32867,9 @@ msgid ""
 msgstr ""
 "안녕하세요!\n"
 "\n"
-"귀하의 제안 “{submission_title}”을 {event_name}에 접수하였습니다. 모든 제안"
-"을 검토할 시간이 필요하니, 그때까지 {submission_url}에서 귀하의 제안을 확인하"
-"고 수정할 수 있습니다.\n"
+"귀하의 제안 “{submission_title}”을 {event_name}에 접수하였습니다. 모든 "
+"제안을 검토할 시간이 필요하니, 그때까지 {submission_url}에서 귀하의 제안을 "
+"확인하고 수정할 수 있습니다.\n"
 "\n"
 "질문이 있으시면 주저하지 말고 연락해 주세요!\n"
 "\n"
@@ -32929,9 +32924,9 @@ msgid ""
 msgstr ""
 "안녕하세요!\n"
 "\n"
-"귀하의 제안 “{submission_title}”이 {event_name}에 수락되지 않았음을 알려드리"
-"게 되어 유감입니다. 훌륭한 제안이 너무 많았습니다 - 귀하를 발표자가 아닌 참석"
-"자로 {event_name}에서 뵙기를 희망합니다!\n"
+"귀하의 제안 “{submission_title}”이 {event_name}에 수락되지 않았음을 "
+"알려드리게 되어 유감입니다. 훌륭한 제안이 너무 많았습니다 - 귀하를 발표자가 "
+"아닌 참석자로 {event_name}에서 뵙기를 희망합니다!\n"
 "\n"
 "{event_name} 주최자 드림"
 
@@ -32959,8 +32954,8 @@ msgstr ""
 "\n"
 "{speaker_schedule_new}\n"
 "\n"
-"귀하를 뵙기를 기대하며, 세션이나 배정된 슬롯에 문제가 있을 경우 연락해 주세"
-"요.\n"
+"귀하를 뵙기를 기대하며, 세션이나 배정된 슬롯에 문제가 있을 경우 연락해 "
+"주세요.\n"
 "\n"
 "{event_name} 주최자 드림"
 
@@ -32986,8 +32981,8 @@ msgid ""
 msgstr ""
 "안녕하세요!\n"
 "\n"
-"귀하와 귀하의 제안에 대해 몇 가지 질문이 있습니다. 답변해 주시면 감사하겠습니"
-"다:\n"
+"귀하와 귀하의 제안에 대해 몇 가지 질문이 있습니다. 답변해 주시면 "
+"감사하겠습니다:\n"
 "\n"
 "{questions}\n"
 "\n"
@@ -33051,8 +33046,8 @@ msgid ""
 msgstr ""
 "안녕하세요!\n"
 "\n"
-"귀하가 “{proposal_title}”이라는 제목의 {event_name} 제안에 추가되었습니다. 귀"
-"하의 계정을 설정하기 위해 이 링크를 따라 주십시오.\n"
+"귀하가 “{proposal_title}”이라는 제목의 {event_name} 제안에 추가되었습니다. "
+"귀하의 계정을 설정하기 위해 이 링크를 따라 주십시오.\n"
 "\n"
 "{invitation_link}\n"
 "\n"
@@ -33076,9 +33071,9 @@ msgid ""
 msgstr ""
 "안녕하세요!\n"
 "\n"
-"귀하가 “{proposal_title}”이라는 제목의 {event_name} 제안에 추가되었습니다. 사"
-"용자 프로필을 수정하고 귀하의 제안 상태를 확인하기 위해 이 링크를 따라 주십시"
-"오:\n"
+"귀하가 “{proposal_title}”이라는 제목의 {event_name} 제안에 추가되었습니다. "
+"사용자 프로필을 수정하고 귀하의 제안 상태를 확인하기 위해 이 링크를 따라 "
+"주십시오:\n"
 "\n"
 "{proposal_url}\n"
 "\n"
@@ -33127,8 +33122,8 @@ msgstr "제안자가 자신의 제안을 공개적으로 공유할 수 있도록
 #: eventyay/orga/forms/cfp.py:71
 msgid "Allow submitters to share a secret link to their proposal with others."
 msgstr ""
-"제안자가 다른 사람과 자신의 제안에 대한 비밀 링크를 공유할 수 있도록 허용합니"
-"다."
+"제안자가 다른 사람과 자신의 제안에 대한 비밀 링크를 공유할 수 있도록 "
+"허용합니다."
 
 #: eventyay/orga/forms/cfp.py:75
 msgid "Count text length in"
@@ -33198,8 +33193,8 @@ msgid ""
 "You can upload options here, one option per line. To use multiple languages, "
 "please upload a JSON file with a list of options:"
 msgstr ""
-"여기에 옵션을 한 줄에 하나씩 업로드할 수 있습니다. 여러 언어를 사용하려면 옵"
-"션 목록이 포함된 JSON 파일을 업로드하세요:"
+"여기에 옵션을 한 줄에 하나씩 업로드할 수 있습니다. 여러 언어를 사용하려면 "
+"옵션 목록이 포함된 JSON 파일을 업로드하세요:"
 
 #: eventyay/orga/forms/cfp.py:411
 msgid "Replace existing options"
@@ -33212,9 +33207,9 @@ msgid ""
 "you do not check this, the uploaded options will be added to the existing "
 "ones, without adding duplicates."
 msgstr ""
-"새 옵션을 업로드하면 기존 옵션을 교체하시겠습니까? 이 경우 이 사용자 정의 필"
-"드에 대한 모든 기존 응답이 삭제됩니다! 이 체크를 하지 않으면 업로드된 옵션이 "
-"기존 옵션에 추가되며, 중복 항목은 추가되지 않습니다."
+"새 옵션을 업로드하면 기존 옵션을 교체하시겠습니까? 이 경우 이 사용자 정의 "
+"필드에 대한 모든 기존 응답이 삭제됩니다! 이 체크를 하지 않으면 업로드된 "
+"옵션이 기존 옵션에 추가되며, 중복 항목은 추가되지 않습니다."
 
 #: eventyay/orga/forms/cfp.py:492
 msgid ""
@@ -33546,8 +33541,7 @@ msgstr "일정 발표 시 HTML 내보내기 생성"
 msgid ""
 "The static HTML export will be provided as a .zip archive on the schedule "
 "export page."
-msgstr ""
-"정적 HTML 내보내기는 일정 내보내기 페이지에서 .zip 아카이브로 제공됩니다."
+msgstr "정적 HTML 내보내기는 일정 내보내기 페이지에서 .zip 아카이브로 제공됩니다."
 
 #: eventyay/orga/forms/event.py:212
 msgid "HTML Export URL"
@@ -33559,9 +33553,9 @@ msgid ""
 "absolute URL to be set in various places. Please only set this value once "
 "you have published your schedule. Should end with a slash."
 msgstr ""
-"HTML 내보내기를 통해 일정을 게시하는 경우 다양한 위치에 올바른 절대 URL이 설"
-"정되기를 원할 것입니다. 일정을 게시한 후에만 이 값을 설정하십시오. 슬래시로 "
-"끝나야 합니다."
+"HTML 내보내기를 통해 일정을 게시하는 경우 다양한 위치에 올바른 절대 URL이 "
+"설정되기를 원할 것입니다. 일정을 게시한 후에만 이 값을 설정하십시오. "
+"슬래시로 끝나야 합니다."
 
 #: eventyay/orga/forms/event.py:247
 msgid "Enable submission comments"
@@ -33631,8 +33625,8 @@ msgid ""
 "This text will be shown at the top of every review, as long as reviews can "
 "be created or edited."
 msgstr ""
-"이 텍스트는 리뷰를 생성하거나 편집할 수 있는 한 모든 리뷰의 상단에 표시됩니"
-"다."
+"이 텍스트는 리뷰를 생성하거나 편집할 수 있는 한 모든 리뷰의 상단에 "
+"표시됩니다."
 
 #: eventyay/orga/forms/event.py:296
 #, fuzzy
@@ -33764,8 +33758,8 @@ msgstr "일수 제한"
 msgid ""
 "You can limit the days shown in the widget. Leave empty to show all days."
 msgstr ""
-"위젯에 표시되는 일수를 제한할 수 있습니다. 모든 날을 표시하려면 비워 두십시"
-"오."
+"위젯에 표시되는 일수를 제한할 수 있습니다. 모든 날을 표시하려면 비워 "
+"두십시오."
 
 #: eventyay/orga/forms/event.py:442
 msgid "Widget language"
@@ -34033,8 +34027,8 @@ msgid ""
 "Invalid email template! Please check that you don’t have stray { or } "
 "somewhere, and that there are no spaces inside the {} blocks."
 msgstr ""
-"유효하지 않은 이메일 템플릿입니다! { 또는 }가 어딘가에 남아 있지 않은지 확인"
-"하고, {} 블록 내부에 공백이 없는지 확인하십시오."
+"유효하지 않은 이메일 템플릿입니다! { 또는 }가 어딘가에 남아 있지 않은지 "
+"확인하고, {} 블록 내부에 공백이 없는지 확인하십시오."
 
 #: eventyay/orga/forms/mails.py:100 eventyay/orga/forms/mails.py:117
 msgid "Unknown placeholder!"
@@ -34138,8 +34132,8 @@ msgid ""
 "If you provide multiple languages, the best fit for each speaker will be "
 "used."
 msgstr ""
-"하나의 언어만 제공하면 해당 언어가 모든 이메일에 사용됩니다. 여러 언어를 제공"
-"하면 각 발표자에게 가장 적합한 언어가 사용됩니다."
+"하나의 언어만 제공하면 해당 언어가 모든 이메일에 사용됩니다. 여러 언어를 "
+"제공하면 각 발표자에게 가장 적합한 언어가 사용됩니다."
 
 #: eventyay/orga/forms/review.py:88
 msgid "No score"
@@ -34191,8 +34185,8 @@ msgid ""
 "Select to remove all current assignments and replace them with the import. "
 "Otherwise, the import will be an addition to the current assignments."
 msgstr ""
-"모든 현재 할당을 제거하고 가져온 것으로 교체하려면 선택하십시오. 그렇지 않으"
-"면 가져오기는 현재 할당에 추가됩니다."
+"모든 현재 할당을 제거하고 가져온 것으로 교체하려면 선택하십시오. 그렇지 "
+"않으면 가져오기는 현재 할당에 추가됩니다."
 
 #: eventyay/orga/forms/review.py:406
 msgid "Cannot parse JSON file."
@@ -34338,16 +34332,15 @@ msgid ""
 "right away. You can always apply pending changes for some or all proposals "
 "in one go once you’re ready to make your decisions public."
 msgstr ""
-"상태 변경을 보류 중으로 표시하면 발표자에게 즉시 표시되지 않습니다. 결정을 공"
-"개할 준비가 되면 일부 또는 모든 제안에 대해 보류 중인 변경 사항을 한 번에 적"
-"용할 수 있습니다."
+"상태 변경을 보류 중으로 표시하면 발표자에게 즉시 표시되지 않습니다. 결정을 "
+"공개할 준비가 되면 일부 또는 모든 제안에 대해 보류 중인 변경 사항을 한 번에 "
+"적용할 수 있습니다."
 
 #: eventyay/orga/forms/submission.py:311
 msgid ""
 "The email address of the speaker holding the session. They will be invited "
 "to create an account."
-msgstr ""
-"세션을 진행하는 발표자의 이메일 주소입니다. 계정을 만들도록 초대됩니다."
+msgstr "세션을 진행하는 발표자의 이메일 주소입니다. 계정을 만들도록 초대됩니다."
 
 #: eventyay/orga/forms/submission.py:316
 msgid "Speaker name"
@@ -34396,8 +34389,7 @@ msgstr "비밀번호가 재설정되었고 사용자가 통지되었습니다."
 #: eventyay/orga/phrases.py:16
 msgid ""
 "The password reset email could not be sent, so the password was not reset."
-msgstr ""
-"비밀번호 재설정 이메일을 보낼 수 없으므로 비밀번호가 재설정되지 않았습니다."
+msgstr "비밀번호 재설정 이메일을 보낼 수 없으므로 비밀번호가 재설정되지 않았습니다."
 
 #: eventyay/orga/phrases.py:18
 #, python-brace-format
@@ -34405,8 +34397,8 @@ msgid ""
 "{count} emails have been saved to the outbox – you can make individual "
 "changes there or just send them all."
 msgstr ""
-"{count}개의 이메일이 발신함에 저장되었습니다 – 개별 변경을 거기에서 하거나 모"
-"두 보낼 수 있습니다."
+"{count}개의 이메일이 발신함에 저장되었습니다 – 개별 변경을 거기에서 하거나 "
+"모두 보낼 수 있습니다."
 
 #: eventyay/orga/templates/orga/base.html:208
 msgid "You’re using eventyay as a superuser. This is not recommended."
@@ -34531,9 +34523,10 @@ msgid ""
 "accommodation. Custom fields can be configured either on a per-proposal "
 "level, or per speaker, as you see fit."
 msgstr ""
-"사용자 정의 필드를 사용하면 옷 사이즈, 식단 요구 사항 등의 특별 요구 사항, 숙"
-"박 시설 등 발표자와 관련된 추가 세부 정보를 정리하는 데 도움이 됩니다. 사용"
-"자 정의 필드는 제안서 단위 또는 발표자 별로 필요에 따라 구성할 수 있습니다."
+"사용자 정의 필드를 사용하면 옷 사이즈, 식단 요구 사항 등의 특별 요구 사항, "
+"숙박 시설 등 발표자와 관련된 추가 세부 정보를 정리하는 데 도움이 됩니다. "
+"사용자 정의 필드는 제안서 단위 또는 발표자 별로 필요에 따라 구성할 수 "
+"있습니다."
 
 #: eventyay/orga/templates/orga/cfp/forms.html:79
 msgid "Proposal information"
@@ -35275,8 +35268,8 @@ msgid ""
 "Here you can limit who will receive reminder emails. You will be able to "
 "review emails before they are sent out."
 msgstr ""
-"여기에서 알림 이메일을 받을 사람을 제한할 수 있습니다. 이메일이 발송되기 전"
-"에 검토할 수 있습니다."
+"여기에서 알림 이메일을 받을 사람을 제한할 수 있습니다. 이메일이 발송되기 "
+"전에 검토할 수 있습니다."
 
 #: eventyay/orga/templates/orga/cfp/question/update.html:8
 #: eventyay/orga/templates/orga/cfp/talkquestion/update.html:8
@@ -35286,8 +35279,8 @@ msgid ""
 "also deactivate this field and create a new one instead."
 msgstr ""
 "이 사용자 지정 필드에는 이미 일부 발표자의 답변이 있습니다. 필드를 수정하면 "
-"해당 답변이 더 이상 유효하지 않게 되므로 신중하게 고려해 주세요. 이 필드를 비"
-"활성화하고 새 필드를 만들 수도 있습니다."
+"해당 답변이 더 이상 유효하지 않게 되므로 신중하게 고려해 주세요. 이 필드를 "
+"비활성화하고 새 필드를 만들 수도 있습니다."
 
 #: eventyay/orga/templates/orga/cfp/question/update.html:18
 #: eventyay/orga/templates/orga/cfp/talkquestion/detail.html:43
@@ -35324,8 +35317,8 @@ msgid ""
 "lengths (short sessions vs long sessions) or different presentation formats "
 "(talk vs workshop vs metal concert)."
 msgstr ""
-"다양한 세션 유형은 연사들이 서로 다른 시간 길이(짧은 세션 vs 긴 세션) 또는 서"
-"로 다른 발표 형식(강연 vs 워크숍 vs 메탈 콘서트)으로 안내하는 데 도움이 될 "
+"다양한 세션 유형은 연사들이 서로 다른 시간 길이(짧은 세션 vs 긴 세션) 또는 "
+"서로 다른 발표 형식(강연 vs 워크숍 vs 메탈 콘서트)으로 안내하는 데 도움이 될 "
 "수 있습니다."
 
 #: eventyay/orga/templates/orga/cfp/submissiontype/list.html:37
@@ -35363,9 +35356,9 @@ msgid ""
 "can also use them for hidden tracks or hidden session types, which can only "
 "be seen with a matching access code."
 msgstr ""
-"액세스 코드는 CfP가 종료된 후에도 제안을 허용하는 데 사용할 수 있습니다. 또"
-"한 숨겨진 트랙이나 숨겨진 세션 유형에 사용할 수 있으며, 이는 일치하는 액세스 "
-"코드로만 볼 수 있습니다."
+"액세스 코드는 CfP가 종료된 후에도 제안을 허용하는 데 사용할 수 있습니다. "
+"또한 숨겨진 트랙이나 숨겨진 세션 유형에 사용할 수 있으며, 이는 일치하는 "
+"액세스 코드로만 볼 수 있습니다."
 
 #: eventyay/orga/templates/orga/cfp/submitteraccesscode/list.html:41
 #: eventyay/orga/templates/orga/cfp/submitteraccesscode/list.html:63
@@ -35409,8 +35402,8 @@ msgid ""
 "strong> <a href=\"%(base_search_url)sunanswered=1\">are still missing</a>."
 msgstr ""
 "이 필드는 <strong>%(count)s</strong>개의 응답이 있으며, <strong>%(missing)s</"
-"strong> <a href=\"%(base_search_url)sunanswered=1\">아직 누락된 응답이 있습니"
-"다</a>."
+"strong> <a href=\"%(base_search_url)sunanswered=1\">아직 누락된 응답이 "
+"있습니다</a>."
 
 #: eventyay/orga/templates/orga/cfp/talkquestion/detail.html:60
 #, python-format
@@ -35418,8 +35411,8 @@ msgid ""
 "This field has <strong>%(count)s</strong> responses, and no answers are "
 "missing."
 msgstr ""
-"이 필드는 <strong>%(count)s</strong>개의 응답이 있으며, 누락된 답변이 없습니"
-"다."
+"이 필드는 <strong>%(count)s</strong>개의 응답이 있으며, 누락된 답변이 "
+"없습니다."
 
 #: eventyay/orga/templates/orga/cfp/talkquestion/detail.html:78
 #, python-format
@@ -35435,8 +35428,8 @@ msgid ""
 "A good Call for Participation will engage potential speakers. Remember to "
 "include:"
 msgstr ""
-"좋은 참여 요청은 잠재적인 발표자의 참여를 유도할 수 있습니다. 다음을 포함하"
-"는 것을 잊지 마십시오:"
+"좋은 참여 요청은 잠재적인 발표자의 참여를 유도할 수 있습니다. 다음을 "
+"포함하는 것을 잊지 마십시오:"
 
 #: eventyay/orga/templates/orga/cfp/text.html:25
 msgid "The formats (sessions, workshops, panels) and their durations"
@@ -35485,8 +35478,8 @@ msgid ""
 "schedule."
 msgstr ""
 "트랙은 세션을 카테고리로 분류하는 데 사용됩니다. 발표자가 자신의 세션에 대한 "
-"트랙을 선택할 수 있는지 여부는 CfP 설정을 통해 결정할 수 있습니다. 트랙 색상"
-"은 참석자가 일정을 탐색하는 데 도움이 됩니다."
+"트랙을 선택할 수 있는지 여부는 CfP 설정을 통해 결정할 수 있습니다. 트랙 "
+"색상은 참석자가 일정을 탐색하는 데 도움이 됩니다."
 
 #: eventyay/orga/templates/orga/event/dashboard.html:36
 msgid ""
@@ -35671,8 +35664,7 @@ msgstr "대략 %(count)s개의 이메일이 생성됩니다."
 msgid ""
 "You have placeholders in your email that are either not valid or not valid "
 "for every email!"
-msgstr ""
-"이메일에 유효하지 않거나 모든 이메일에 유효하지 않은 자리 표시자가 있습니다!"
+msgstr "이메일에 유효하지 않거나 모든 이메일에 유효하지 않은 자리 표시자가 있습니다!"
 
 #: eventyay/orga/templates/orga/mails/_mail_editor.html:90
 #, python-brace-format
@@ -35716,8 +35708,7 @@ msgstr "세션, 제안, 발표자"
 msgid ""
 "Send an email to speakers, authors, submitters, based on their proposal "
 "status and other filters."
-msgstr ""
-"제안 상태 및 기타 필터를 기반으로 발표자, 저자, 제출자에게 이메일을 보냅니다."
+msgstr "제안 상태 및 기타 필터를 기반으로 발표자, 저자, 제출자에게 이메일을 보냅니다."
 
 #: eventyay/orga/templates/orga/mails/compose_choice.html:22
 #: eventyay/orga/templates/orga/mails/compose_reviewer_mail_form.html:6
@@ -35734,8 +35725,8 @@ msgid ""
 "are not placed in the outbox first. They also do not show up in the list of "
 "sent mails."
 msgstr ""
-"검토자 및 다른 팀원에게 보내는 이메일은 항상 직접 발송되며, 먼저 보낸 편지함"
-"에 배치되지 않습니다. 또한 발송된 메일 목록에 표시되지 않습니다."
+"검토자 및 다른 팀원에게 보내는 이메일은 항상 직접 발송되며, 먼저 보낸 "
+"편지함에 배치되지 않습니다. 또한 발송된 메일 목록에 표시되지 않습니다."
 
 #: eventyay/orga/templates/orga/mails/compose_session_mail_form.html:16
 #, python-format
@@ -35758,17 +35749,17 @@ msgid ""
 "to the \"Send Emails\" tab. Mails queued for sending are in the \"Outbox\" "
 "tab."
 msgstr ""
-"여기에서 이메일에 대한 기본 템플릿과 사용자 정의 템플릿을 편집할 수 있습니"
-"다. 일부 또는 모든 발표자에게 이메일을 보내고 싶다면 \"이메일 보내기\" 탭으"
-"로 이동하세요. 발송 대기 중인 메일은 \"보낸 편지함\" 탭에 있습니다."
+"여기에서 이메일에 대한 기본 템플릿과 사용자 정의 템플릿을 편집할 수 "
+"있습니다. 일부 또는 모든 발표자에게 이메일을 보내고 싶다면 \"이메일 보내기\" "
+"탭으로 이동하세요. 발송 대기 중인 메일은 \"보낸 편지함\" 탭에 있습니다."
 
 #: eventyay/orga/templates/orga/mails/mailtemplate/list.html:36
 msgid ""
 "There are different placeholders available depending on the template type. "
 "They are explained in detail once you start editing a template."
 msgstr ""
-"템플릿 유형에 따라 사용할 수 있는 다양한 플레이스 홀더가 있습니다. 템플릿 편"
-"집을 시작하면 자세히 설명됩니다."
+"템플릿 유형에 따라 사용할 수 있는 다양한 플레이스 홀더가 있습니다. 템플릿 "
+"편집을 시작하면 자세히 설명됩니다."
 
 #: eventyay/orga/templates/orga/mails/mailtemplate/list.html:50
 msgid "Template"
@@ -35880,8 +35871,8 @@ msgid ""
 "These emails will be sent out immediately! They will not be saved to the "
 "outbox or logged first, to protect the privacy of the draft authors."
 msgstr ""
-"이 이메일은 즉시 발송됩니다! 초안 작성자의 개인 정보를 보호하기 위해 발신함"
-"에 저장되거나 먼저 기록되지 않습니다."
+"이 이메일은 즉시 발송됩니다! 초안 작성자의 개인 정보를 보호하기 위해 "
+"발신함에 저장되거나 먼저 기록되지 않습니다."
 
 #: eventyay/orga/templates/orga/mails/sent_list.html:9
 msgid "Sent emails"
@@ -35951,10 +35942,10 @@ msgid ""
 "be either the reviewer’s email address or their user code (e.g. “34KJN”). "
 "You can find an example file <a href=\"%(href)s\">here</a>."
 msgstr ""
-"여기에서 JSON 파일에서 리뷰어 할당을 업로드할 수 있습니다. 제안 코드(예: "
-"“UX3N1”)를 키로, 사용자 식별을 값으로 하거나 그 반대의 경우도 가능합니다. 사"
-"용자 식별은 리뷰어의 이메일 주소 또는 사용자 코드(예: “34KJN”)일 수 있습니"
-"다. 예제 파일은 <a href=\"%(href)s\">여기</a>에서 찾을 수 있습니다."
+"여기에서 JSON 파일에서 리뷰어 할당을 업로드할 수 있습니다. 제안 코드(예: “"
+"UX3N1”)를 키로, 사용자 식별을 값으로 하거나 그 반대의 경우도 가능합니다. "
+"사용자 식별은 리뷰어의 이메일 주소 또는 사용자 코드(예: “34KJN”)일 수 "
+"있습니다. 예제 파일은 <a href=\"%(href)s\">여기</a>에서 찾을 수 있습니다."
 
 #: eventyay/orga/templates/orga/review/assignment.html:23
 msgid ""
@@ -36017,16 +36008,16 @@ msgid ""
 "reviewers to proposals or proposals to reviewers)."
 msgstr ""
 "여기에서 특정 제안에 리뷰어를 할당할 수 있습니다! 이 드롭다운을 사용하여 두 "
-"가지 할당 모드(제안에 리뷰어를 할당하거나 리뷰어에게 제안을 할당) 간에 전환하"
-"세요."
+"가지 할당 모드(제안에 리뷰어를 할당하거나 리뷰어에게 제안을 할당) 간에 "
+"전환하세요."
 
 #: eventyay/orga/templates/orga/review/assignment.html:133
 msgid ""
 "You can also use the Actions menu above to import your assignments from a "
 "prepared file."
 msgstr ""
-"준비된 파일에서 제출물들을 가져오기 위해 위의 작업 메뉴를 사용할 수도 있습니"
-"다."
+"준비된 파일에서 제출물들을 가져오기 위해 위의 작업 메뉴를 사용할 수도 "
+"있습니다."
 
 #: eventyay/orga/templates/orga/review/assignment.html:145
 msgid "Import assignments"
@@ -36194,8 +36185,8 @@ msgid_plural ""
 "strong> can be generated and placed in the outbox, to tell speakers about "
 "their session slots."
 msgstr[0] ""
-"이 새로운 일정을 발표하면 <strong>%(count)s개의 알림 이메일</strong>이 생성되"
-"어 발신함에 보관되어 발표자에게 세션 시간대를 알릴 수 있습니다."
+"이 새로운 일정을 발표하면 <strong>%(count)s개의 알림 이메일</strong>이 "
+"생성되어 발신함에 보관되어 발표자에게 세션 시간대를 알릴 수 있습니다."
 
 #: eventyay/orga/templates/orga/schedule/release.html:51
 msgid "New schedule version"
@@ -36206,8 +36197,8 @@ msgid ""
 "This schedule release would result in <strong>no notification emails</"
 "strong> for speakers."
 msgstr ""
-"이번 일정 발표는 발표자에게 <strong>알림 이메일이 전혀 발송되지 않을 것입니다"
-"</strong>."
+"이번 일정 발표는 발표자에게 <strong>알림 이메일이 전혀 발송되지 않을 "
+"것입니다</strong>."
 
 #: eventyay/orga/templates/orga/schedule/release.html:63
 #, python-format
@@ -36218,8 +36209,8 @@ msgid_plural ""
 "%(count)s sessions are still <strong>unconfirmed</strong> and will not show "
 "up on the public schedule."
 msgstr[0] ""
-"%(count)s개의 세션 아직 <strong>확정되지 않았습니다</strong>. 따라서 공개 일"
-"정에 표시되지 않습니다."
+"%(count)s개의 세션 아직 <strong>확정되지 않았습니다</strong>. 따라서 공개 "
+"일정에 표시되지 않습니다."
 
 #: eventyay/orga/templates/orga/schedule/release.html:69
 msgid "See all unconfirmed sessions."
@@ -36229,16 +36220,14 @@ msgstr "모든 확인되지 않은 세션 보기."
 #, python-format
 msgid "One session has <strong>not yet been scheduled</strong>."
 msgid_plural "%(count)s sessions have <strong>not yet been scheduled</strong>."
-msgstr[0] ""
-"%(count)s개의 세션이 <strong>아직 일정이 잡히지 않았습니다</strong>."
+msgstr[0] "%(count)s개의 세션이 <strong>아직 일정이 잡히지 않았습니다</strong>."
 
 #: eventyay/orga/templates/orga/schedule/release.html:79
 #, python-format
 msgid "One session has <strong>not yet been assigned a track</strong>."
 msgid_plural ""
 "%(count)s sessions have <strong>not yet been assigned a track</strong>."
-msgstr[0] ""
-"%(count)s개의 세션이 <strong>아직 트랙이 지정되지 않았습니다</strong>."
+msgstr[0] "%(count)s개의 세션이 <strong>아직 트랙이 지정되지 않았습니다</strong>."
 
 #: eventyay/orga/templates/orga/schedule/release.html:95
 msgid "Warnings"
@@ -36416,8 +36405,8 @@ msgid ""
 "provide your authentication token just like in the API, like this:"
 msgstr ""
 "일부 일반 내보내기는 주최자만 접근할 수 있으며, 주최자 계정으로 접근할 때 더 "
-"많은 정보를 포함합니다. 자동 통합에서 주최자 버전에 접근하려면 API와 마찬가지"
-"로 인증 토큰을 제공해야 합니다. 다음과 같이:"
+"많은 정보를 포함합니다. 자동 통합에서 주최자 버전에 접근하려면 API와 "
+"마찬가지로 인증 토큰을 제공해야 합니다. 다음과 같이:"
 
 #: eventyay/orga/templates/orga/settings/import_export.html:241
 #: eventyay/orga/templates/orga/settings/import_export.html:434
@@ -36436,24 +36425,24 @@ msgid ""
 "You haven’t released a schedule yet – many of these data exporters only work "
 "on a released schedule."
 msgstr ""
-"아직 일정을 발표하지 않았습니다. 이러한 데이터 내보내기 도구는 발표된 일정에"
-"서만 작동합니다."
+"아직 일정을 발표하지 않았습니다. 이러한 데이터 내보내기 도구는 발표된 "
+"일정에서만 작동합니다."
 
 #: eventyay/orga/templates/orga/settings/import_export.html:388
 msgid ""
 "The event schedule can be exported to a static HTML dump, so you can upload "
 "it to a normal file-serving web server like nginx."
 msgstr ""
-"이벤트 일정을 정적 HTML 덤프로 내보낼 수 있으므로, 이를 nginx와 같은 일반 파"
-"일 제공 웹 서버에 업로드할 수 있습니다."
+"이벤트 일정을 정적 HTML 덤프로 내보낼 수 있으므로, 이를 nginx와 같은 일반 "
+"파일 제공 웹 서버에 업로드할 수 있습니다."
 
 #: eventyay/orga/templates/orga/settings/import_export.html:393
 msgid ""
 "This is done automatically on schedule release, but you can also trigger "
 "that action here."
 msgstr ""
-"일정 발표 시 자동으로 수행되지만, 여기에서 해당 작업을 트리거할 수도 있습니"
-"다."
+"일정 발표 시 자동으로 수행되지만, 여기에서 해당 작업을 트리거할 수도 "
+"있습니다."
 
 #: eventyay/orga/templates/orga/settings/import_export.html:402
 msgid "Download ZIP"
@@ -36517,9 +36506,9 @@ msgid ""
 "this total score can be weighted. Currently, the total score is calculated "
 "as:"
 msgstr ""
-"리뷰어에게 하나 이상의 점수를 제공하도록 요청할 수 있습니다. 여러 점수를 요청"
-"하면 최종 총점으로 합산됩니다. 원하신다면 이 총점은 가중치를 부여할 수 있습니"
-"다. 현재 총점은 다음과 같이 계산됩니다:"
+"리뷰어에게 하나 이상의 점수를 제공하도록 요청할 수 있습니다. 여러 점수를 "
+"요청하면 최종 총점으로 합산됩니다. 원하신다면 이 총점은 가중치를 부여할 수 "
+"있습니다. 현재 총점은 다음과 같이 계산됩니다:"
 
 #: eventyay/orga/templates/orga/settings/review.html:99
 msgid "Review Score category"
@@ -36546,10 +36535,10 @@ msgid ""
 "review phase is over. But you could for example add another review and "
 "selection phase after that, if you require additional review rounds."
 msgstr ""
-"리뷰 단계는 리뷰 프로세스를 구조화할 수 있게 해줍니다. 기본적으로 두 개의 리"
-"뷰 단계가 있습니다: 리뷰 자체와 리뷰 단계가 끝난 후의 선택 프로세스입니다. 그"
-"러나 예를 들어 추가 리뷰 단계가 필요하다면 그 후에 또 다른 리뷰 및 리뷰 단계"
-"를 추가할 수 있습니다."
+"리뷰 단계는 리뷰 프로세스를 구조화할 수 있게 해줍니다. 기본적으로 두 개의 "
+"리뷰 단계가 있습니다: 리뷰 자체와 리뷰 단계가 끝난 후의 선택 프로세스입니다. "
+"그러나 예를 들어 추가 리뷰 단계가 필요하다면 그 후에 또 다른 리뷰 및 리뷰 "
+"단계를 추가할 수 있습니다."
 
 #: eventyay/orga/templates/orga/settings/review.html:252
 #: eventyay/orga/templates/orga/settings/review.html:308
@@ -36602,8 +36591,8 @@ msgid ""
 "Using this form, you can generate code to copy and paste to your website "
 "source."
 msgstr ""
-"이 양식을 사용하여 웹사이트 소스에 복사하고 붙여넣을 코드를 생성할 수 있습니"
-"다."
+"이 양식을 사용하여 웹사이트 소스에 복사하고 붙여넣을 코드를 생성할 수 "
+"있습니다."
 
 #: eventyay/orga/templates/orga/settings/widget.html:50
 msgid "Generate widget"
@@ -36785,8 +36774,8 @@ msgid ""
 "have no permissions to change this proposal will be shown the anonymised "
 "proposal content."
 msgstr ""
-"익명화가 활성화된 검토 단계가 현재 활성화되어 있는 경우, 이 제안을 변경할 권"
-"한이 없는 모든 검토자는 익명화된 제안 내용을 보게 됩니다."
+"익명화가 활성화된 검토 단계가 현재 활성화되어 있는 경우, 이 제안을 변경할 "
+"권한이 없는 모든 검토자는 익명화된 제안 내용을 보게 됩니다."
 
 #: eventyay/orga/templates/orga/submission/anonymise.html:65
 msgid "Save and go to next unanonymised"
@@ -37319,8 +37308,8 @@ msgid ""
 "You cannot delete a custom field that has any responses. We have deactivated "
 "the field instead."
 msgstr ""
-"응답이 있는 사용자 정의 필드를 삭제할 수 없습니다. 대신 필드를 비활성화했습니"
-"다."
+"응답이 있는 사용자 정의 필드를 삭제할 수 없습니다. 대신 필드를 "
+"비활성화했습니다."
 
 #: eventyay/orga/views/cfp.py:746
 #, fuzzy
@@ -37357,8 +37346,8 @@ msgid ""
 "This access code has been used for a proposal and cannot be deleted. To "
 "disable it, you can set its validity date to the past."
 msgstr ""
-"이 접속 코드는 제안서에 사용되었으며 삭제할 수 없습니다. 비활성화하려면 유효"
-"성 날짜를 과거로 설정할 수 있습니다."
+"이 접속 코드는 제안서에 사용되었으며 삭제할 수 없습니다. 비활성화하려면 "
+"유효성 날짜를 과거로 설정할 수 있습니다."
 
 #: eventyay/orga/views/cfp.py:959
 msgid "The access code has been sent."
@@ -37446,8 +37435,8 @@ msgid ""
 "The review phases '{phase1}' and '{phase2}' overlap. Please make sure that "
 "review phases do not overlap, then save again."
 msgstr ""
-"리뷰 단계 '{phase1}'와 '{phase2}'가 겹칩니다. 리뷰 단계가 겹치지 않도록 확인"
-"한 후 다시 저장하세요."
+"리뷰 단계 '{phase1}'와 '{phase2}'가 겹칩니다. 리뷰 단계가 겹치지 않도록 "
+"확인한 후 다시 저장하세요."
 
 #: eventyay/orga/views/event.py:352
 msgid ""
@@ -37628,8 +37617,8 @@ msgid ""
 "The template has been saved - note that already pending emails that are "
 "based on this template will not be changed!"
 msgstr ""
-"템플릿이 저장되었습니다 - 이 템플릿을 기반으로 한 이미 보류 중인 이메일은 변"
-"경되지 않습니다!"
+"템플릿이 저장되었습니다 - 이 템플릿을 기반으로 한 이미 보류 중인 이메일은 "
+"변경되지 않습니다!"
 
 #: eventyay/orga/views/mails.py:550
 msgid "New email template"
@@ -37672,8 +37661,7 @@ msgstr "이제 슈퍼유저 대신 관리자가 되었습니다."
 msgid ""
 "Success! {accepted} proposals were accepted, {rejected} proposals were "
 "rejected."
-msgstr ""
-"성공! {accepted}개의 제안이 수락되었고, {rejected}개의 제안이 거부되었습니다."
+msgstr "성공! {accepted}개의 제안이 수락되었고, {rejected}개의 제안이 거부되었습니다."
 
 #: eventyay/orga/views/review.py:291
 #, python-brace-format
@@ -37703,8 +37691,8 @@ msgid ""
 "Do you really want to regenerate %(count)s acceptance and rejection emails? "
 "They will be placed in the outbox and not sent out directly."
 msgstr ""
-"정말로 %(count)s개의 수락 및 거부 이메일을 다시 생성하시겠습니까? 이들은 발신"
-"함에 배치되며 직접 전송되지 않습니다."
+"정말로 %(count)s개의 수락 및 거부 이메일을 다시 생성하시겠습니까? 이들은 "
+"발신함에 배치되며 직접 전송되지 않습니다."
 
 #: eventyay/orga/views/review.py:654
 #, python-brace-format
@@ -37732,8 +37720,8 @@ msgid ""
 "A new export will be generated on the next scheduled opportunity – please "
 "contact your administrator for details."
 msgstr ""
-"다음 예정된 기회에 새 내보내기가 생성됩니다 - 자세한 내용은 관리자에게 문의하"
-"십시오."
+"다음 예정된 기회에 새 내보내기가 생성됩니다 - 자세한 내용은 관리자에게 "
+"문의하십시오."
 
 #: eventyay/orga/views/schedule.py:98
 #, python-brace-format
@@ -37779,8 +37767,8 @@ msgid ""
 "Do your really want to reset this user’s password? They won’t be able to log "
 "in until they set a new password."
 msgstr ""
-"정말로 이 사용자의 비밀번호를 재설정하시겠습니까? 새 비밀번호를 설정할 때까"
-"지 로그인할 수 없습니다."
+"정말로 이 사용자의 비밀번호를 재설정하시겠습니까? 새 비밀번호를 설정할 "
+"때까지 로그인할 수 없습니다."
 
 #: eventyay/orga/views/speaker.py:401
 msgid "Speaker Information Notes"
@@ -37823,15 +37811,14 @@ msgid ""
 "Somebody else was faster than you: this proposal was already in the state "
 "you wanted to change it to."
 msgstr ""
-"다른 사람이 당신보다 빨랐습니다: 이 제안은 이미 당신이 변경하고자 했던 상태"
-"에 있었습니다."
+"다른 사람이 당신보다 빨랐습니다: 이 제안은 이미 당신이 변경하고자 했던 "
+"상태에 있었습니다."
 
 #: eventyay/orga/views/submission.py:229
 msgid ""
 "There may be pending emails for this proposal that are now incorrect or "
 "outdated."
-msgstr ""
-"이 제안에 대해 잘못되었거나 오래된 대기 중인 이메일이 있을 수 있습니다."
+msgstr "이 제안에 대해 잘못되었거나 오래된 대기 중인 이메일이 있을 수 있습니다."
 
 #: eventyay/orga/views/submission.py:256
 msgid "The speaker has been removed from the proposal."
@@ -38033,8 +38020,7 @@ msgstr ""
 msgid ""
 "Please provide a profile picture or allow us to load your picture from "
 "gravatar!"
-msgstr ""
-"프로필 사진을 제공하거나 gravatar에서 사진을 불러올 수 있도록 허용해 주세요!"
+msgstr "프로필 사진을 제공하거나 gravatar에서 사진을 불러올 수 있도록 허용해 주세요!"
 
 #: eventyay/person/forms/profile.py:264
 #, fuzzy
@@ -38125,8 +38111,8 @@ msgid ""
 "No user account matches the entered credentials. Are you sure that you typed "
 "your password correctly?"
 msgstr ""
-"입력한 자격 증명과 일치하는 사용자 계정이 없습니다. 비밀번호를 올바르게 입력"
-"했는지 확실합니까?"
+"입력한 자격 증명과 일치하는 사용자 계정이 없습니다. 비밀번호를 올바르게 "
+"입력했는지 확실합니까?"
 
 #: eventyay/person/forms/user.py:72
 msgid "Sorry, your account is currently disabled."
@@ -38137,8 +38123,8 @@ msgid ""
 "We already have a user with that email address. Did you already register "
 "before and just need to log in?"
 msgstr ""
-"이미 해당 이메일 주소로 사용자 계정이 있습니다. 이전에 등록하셨고 로그인만 필"
-"요하신가요?"
+"이미 해당 이메일 주소로 사용자 계정이 있습니다. 이전에 등록하셨고 로그인만 "
+"필요하신가요?"
 
 #: eventyay/plugins/badges/apps.py:31 eventyay/plugins/badges/apps.py:34
 #: eventyay/plugins/badges/signals.py:55
@@ -42668,9 +42654,9 @@ msgid ""
 "green blocks. We will try to schedule your slot during these times. You can "
 "click a block twice to remove it."
 msgstr ""
-"회의 중에 녹색 블록으로 귀하의 가용성을 표시하려면 클릭하고 드래그하세요. 우"
-"리는 이 시간 동안 귀하의 슬롯을 예약하려고 노력할 것입니다. 블록을 두 번 클릭"
-"하면 제거할 수 있습니다."
+"회의 중에 녹색 블록으로 귀하의 가용성을 표시하려면 클릭하고 드래그하세요. "
+"우리는 이 시간 동안 귀하의 슬롯을 예약하려고 노력할 것입니다. 블록을 두 번 "
+"클릭하면 제거할 수 있습니다."
 
 #: eventyay/schedule/forms.py:76
 #, python-brace-format
@@ -42726,8 +42712,7 @@ msgstr ""
 #: eventyay/schedule/phrases.py:25
 #, python-format
 msgid "You can find the current version <a href=\"%(current_url)s\">here</a>."
-msgstr ""
-"현재 버전은 <a href=\"%(current_url)s\">여기</a>에서 확인할 수 있습니다."
+msgstr "현재 버전은 <a href=\"%(current_url)s\">여기</a>에서 확인할 수 있습니다."
 
 #. Translators: “tz” is a full timezone name like “Europe/Berlin”
 #: eventyay/schedule/phrases.py:28
