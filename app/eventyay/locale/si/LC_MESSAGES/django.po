@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
 "PO-Revision-Date: 2026-08-27 17:08+0000\n"
-"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
+"Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Sinhala <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/si/>\n"
 "Language: si\n"
@@ -740,8 +740,8 @@ msgid ""
 "You are currently viewing the editable schedule version. It may not match "
 "the released version."
 msgstr ""
-"දැනට සංස්කරණය කළ හැකි කාලසටහන් අනුවාදය බැලෙයි; එය තවම නිකුත් කර නොමැති අතර ඕනෑම "
-"වේලාවක වෙනස් විය හැක।"
+"දැනට සංස්කරණය කළ හැකි කාලසටහන් අනුවාදය බැලෙයි; එය තවම නිකුත් කර නොමැති අතර ඕනෑම වේලාවක "
+"වෙනස් විය හැක।"
 
 #: eventyay/agenda/views/schedule.py:413
 #, fuzzy
@@ -5709,8 +5709,7 @@ msgstr ""
 #| "address or password."
 msgid "Please enter your current password if you want to change your password."
 msgstr ""
-"ඔබගේ ඊ-තැපැල් ලිපිනය හෝ මුරපදය වෙනස් කිරීමට අවශ්‍ය නම් කරුණාකර ඔබගේ වත්මන් මුරපදය ඇතුළත් "
-"කරන්න."
+"ඔබගේ ඊ-තැපැල් ලිපිනය හෝ මුරපදය වෙනස් කිරීමට අවශ්‍ය නම් කරුණාකර ඔබගේ වත්මන් මුරපදය ඇතුළත් කරන්න."
 
 #: eventyay/base/forms/user.py:18 eventyay/person/forms/auth.py:14
 #: eventyay/person/forms/profile.py:362
@@ -12685,7 +12684,8 @@ msgstr ""
 #| "You have to ask for attendee emails if you want to make them required."
 msgid ""
 "You have to ask for attendee job titles if you want to make them required."
-msgstr "ඔබ ඒවා අනිවාර්ය කිරීමට අවශ්‍ය නම්, සහභාගිවන්නාගේ ඊ-තැපැල් ලිපින ඉල්ලා සිටිය යුතුය."
+msgstr ""
+"ඔබ ඒවා අනිවාර්ය කිරීමට අවශ්‍ය නම්, සහභාගිවන්නාගේ ඊ-තැපැල් ලිපින ඉල්ලා සිටිය යුතුය."
 
 #: eventyay/base/settings.py:222
 msgid "You have to ask for order email if you want to make it required."
@@ -14936,8 +14936,7 @@ msgid ""
 "When enabled, event and UI languages are linked. Selecting one updates the "
 "other whenever that language is available for this event."
 msgstr ""
-"සක්‍රීය කළ විට, මෙම සිදුවීමට එම භාෂාව ලබා ගත හැකි නම් සිදුවීමේ භාෂාව UI භාෂාවට අනුගමනය "
-"කරයි."
+"සක්‍රීය කළ විට, මෙම සිදුවීමට එම භාෂාව ලබා ගත හැකි නම් සිදුවීමේ භාෂාව UI භාෂාවට අනුගමනය කරයි."
 
 #: eventyay/common/templates/common/fragment_header_user.html:44
 #, fuzzy
@@ -41517,8 +41516,8 @@ msgid ""
 "Your request has been submitted and is awaiting approval by the event "
 "organizer. See below for details."
 msgstr ""
-"මෙම ඇණවුමට ගෙවී එය සම්පූර්ණ කිරීමට පෙර, උත්සව සංවිධායකයාගේ අනුමැතිය අප තවමත් බලාපොරොත්තු "
-"වන බව කරුණාකර සලකන්න."
+"මෙම ඇණවුමට ගෙවී එය සම්පූර්ණ කිරීමට පෙර, උත්සව සංවිධායකයාගේ අනුමැතිය අප තවමත් බලාපොරොත්තු වන "
+"බව කරුණාකර සලකන්න."
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:17
 #: eventyay/presale/templates/pretixpresale/event/order.html:66
