@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 17:59+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2026-08-27 18:00+0000\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Khmer (Central) <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/km/>\n"
 "Language: km\n"
@@ -2875,8 +2875,8 @@ msgid ""
 "Sender address for outgoing emails. When using a custom sender, replies go "
 "to this address unless a Reply-To is set."
 msgstr ""
-"អាសយដ្ឋាន Reply-To។ ប្រសិនបើការកំណត់នេះទទេ ហើយមិនមានអ្នកផ្ញើផ្ទាល់ខ្លួន "
-"អាសយដ្ឋានអ៊ីមែលព្រឹត្តិការណ៍របស់អ្នកនឹងត្រូវបានប្រើជា​អាសយដ្ឋាន Reply-To។"
+"អាសយដ្ឋាន Reply-To។ ប្រសិនបើការកំណត់នេះទទេ ហើយមិនមានអ្នកផ្ញើផ្ទាល់ខ្លួន អាសយដ្ឋានអ៊ីមែលព្រឹត្តិ"
+"ការណ៍របស់អ្នកនឹងត្រូវបានប្រើជា​អាសយដ្ឋាន Reply-To។"
 
 #: eventyay/base/configurations/default_setting.py:1664
 #, fuzzy
@@ -3647,9 +3647,9 @@ msgid ""
 "(the center 1920 × 320 px will always be visible). Images will be "
 "automatically optimized to max 3000 px wide on save."
 msgstr ""
-"រូបភាពនេះបង្ហាញនៅខាងលើនៃទំព័រអ្នករៀបចំទាំងអស់ ដោយជំនួសពណ៌ ឬលំនាំលំនាំដើម។ វាតម្រឹមកណ្ដាល "
-"និងមិនត្រូវបានពង្រីក ដើម្បីធានាថាផ្នែកកណ្ដាលនៅតែមើលឃើញលើអេក្រង់តូចៗ។ ណែនាំឱ្យប្រើរូបភាពទទឹង "
-"1140 px និងកម្ពស់ 120 px (អាចបង្កើនបានដោយការកំណត់ខាងក្រោម)។"
+"រូបភាពនេះបង្ហាញនៅខាងលើនៃទំព័រអ្នករៀបចំទាំងអស់ ដោយជំនួសពណ៌ ឬលំនាំលំនាំដើម។ វាតម្រឹមកណ្ដាល និងមិនត្រូ"
+"វបានពង្រីក ដើម្បីធានាថាផ្នែកកណ្ដាលនៅតែមើលឃើញលើអេក្រង់តូចៗ។ ណែនាំឱ្យប្រើរូបភាពទទឹង 1140 px និ"
+"ងកម្ពស់ 120 px (អាចបង្កើនបានដោយការកំណត់ខាងក្រោម)។"
 
 #: eventyay/base/configurations/default_setting.py:2282
 msgid "Social media image"
@@ -7123,7 +7123,8 @@ msgstr "កំណត់ជាលំនាំដើម"
 #, fuzzy
 #| msgid "Invoices will never be automatically generated for free orders."
 msgid "Controls whether the plugin is automatically enabled for new events."
-msgstr "វិក្កយបត្រនឹងមិនត្រូវបានបង្កើតដោយស្វ័យប្រវត្តិសម្រាប់ការបញ្ជាទិញឥតគិតថ្លៃឡើយ។"
+msgstr ""
+"វិក្កយបត្រនឹងមិនត្រូវបានបង្កើតដោយស្វ័យប្រវត្តិសម្រាប់ការបញ្ជាទិញឥតគិតថ្លៃឡើយ។"
 
 #: eventyay/base/models/global_plugin_config.py:38
 msgid "Show in organizer plugin list"
@@ -7378,7 +7379,8 @@ msgstr "កាលវិភាគ"
 #| "If you check this, the emails will be sent immediately, instead of being "
 #| "put in the outbox."
 msgid "If set, the email will be sent at this time instead of immediately."
-msgstr "បើបើកជម្រើសនេះ អ៊ីមែលនឹងត្រូវផ្សើផ្សាយភ្លាមៗ ជំនួសឱយដាក់ក្នុងប្រអប់អ៊ីមែលចាកចេញ។"
+msgstr ""
+"បើបើកជម្រើសនេះ អ៊ីមែលនឹងត្រូវផ្សើផ្សាយភ្លាមៗ ជំនួសឱយដាក់ក្នុងប្រអប់អ៊ីមែលចាកចេញ។"
 
 #: eventyay/base/models/mail.py:475
 msgid "This mail has been sent already. It cannot be sent again."
@@ -7842,7 +7844,8 @@ msgstr "ការទូទាត់តាមការផ្ទេរប្រា
 #, fuzzy
 #| msgid "Can only create a bank transfer refund from an existing payment."
 msgid "Import bank data and export refunds for bank transfer payments."
-msgstr "អាចបង្កើតការសងប្រាក់តាមការផ្ទេរប្រាក់តាមធនាគារបានតែពីការទូទាត់ដែលមានស្រាប់ប៉ុណ្ណោះ។"
+msgstr ""
+"អាចបង្កើតការសងប្រាក់តាមការផ្ទេរប្រាក់តាមធនាគារបានតែពីការទូទាត់ដែលមានស្រាប់ប៉ុណ្ណោះ។"
 
 #: eventyay/base/models/organizer.py:408
 msgid "Can perform check-ins"
@@ -8018,8 +8021,8 @@ msgid ""
 "Can review and provide feedback on exhibitor and sponsor proposals but "
 "cannot approve, reject, or otherwise manage them."
 msgstr ""
-"អាចត្រួតពិនិត្យ និងផ្តល់មតិយោបល់លើការដាក់ស្នើ ប៉ុន្តែមិនអាចកែសម្រួលព័ត៌មានលម្អិត "
-"ឬផ្លាស់ប្តូរស្ថានភាពការដាក់ស្នើបានទេ។"
+"អាចត្រួតពិនិត្យ និងផ្តល់មតិយោបល់លើការដាក់ស្នើ ប៉ុន្តែមិនអាចកែសម្រួលព័ត៌មានលម្អិត ឬផ្លាស់ប្តូរស្ថានភាពការ"
+"ដាក់ស្នើបានទេ។"
 
 #: eventyay/base/models/organizer.py:583
 msgid "Hide emails of applicants"
@@ -8357,10 +8360,9 @@ msgid ""
 "additional donations for your event. This is currently not supported for "
 "products that are bought as an add-on to other products."
 msgstr ""
-"ប្រសិនបើជម្រើសនេះសកម្ម អ្នកប្រើអាចជ្រើសរើសតម្លៃដោយខ្លួនឯងបាន។ "
-"តម្លៃដែលបានកំណត់ខាងលើនឹងត្រូវបានយល់ថាជាតម្លៃអប្បបរមាដែលអ្នកប្រើត្រូវបញ្ចូល។ អាចប្រើវា ឧ. "
-"ដើម្បីប្រមូលការបរិច្ចាគបន្ថែមសម្រាប់ព្រឹត្តិការណ៍។ "
-"បច្ចុប្បន្នមិនគាំទ្រសម្រាប់ផលិតផលដែលត្រូវបានទិញជាផលិតផលបន្ថែមទៅលើផលិតផលផ្សេងទៀតទេ។"
+"ប្រសិនបើជម្រើសនេះសកម្ម អ្នកប្រើអាចជ្រើសរើសតម្លៃដោយខ្លួនឯងបាន។ តម្លៃដែលបានកំណត់ខាងលើនឹងត្រូវបា"
+"នយល់ថាជាតម្លៃអប្បបរមាដែលអ្នកប្រើត្រូវបញ្ចូល។ អាចប្រើវា ឧ. ដើម្បីប្រមូលការបរិច្ចាគបន្ថែមសម្រាប់ព្រឹ"
+"ត្តិការណ៍។ បច្ចុប្បន្នមិនគាំទ្រសម្រាប់ផលិតផលដែលត្រូវបានទិញជាផលិតផលបន្ថែមទៅលើផលិតផលផ្សេងទៀតទេ។"
 
 #: eventyay/base/models/product.py:369
 #, fuzzy
@@ -15817,8 +15819,8 @@ msgid ""
 "reorder them — the first language (bold border) is used as your event's "
 "default language."
 msgstr ""
-"អាចប្រើ eventyay ជាភាសាទាំងនេះ ហើយអាចផ្តល់អត្ថបទទាំងអស់ជាភាសាទាំងនេះ។ "
-"ប្រសិនបើមិនបានផ្តល់អត្ថបទជាភាសាដែលបានជ្រើស វានឹងបង្ហាញជំនួសដោយភាសាលំនាំដើមរបស់ព្រឹត្តិការណ៍។"
+"អាចប្រើ eventyay ជាភាសាទាំងនេះ ហើយអាចផ្តល់អត្ថបទទាំងអស់ជាភាសាទាំងនេះ។ ប្រសិនបើមិនបានផ្តល់អ"
+"ត្ថបទជាភាសាដែលបានជ្រើស វានឹងបង្ហាញជំនួសដោយភាសាលំនាំដើមរបស់ព្រឹត្តិការណ៍។"
 
 #: eventyay/control/forms/event.py:111
 msgid "This is an event series"
@@ -16191,8 +16193,8 @@ msgid ""
 "the person who registers, the following email will be sent out to the "
 "attendees."
 msgstr ""
-"ប្រសិនបើការបញ្ជាទិញមានអ្នកចូលរួមដែលមានអាសយដ្ឋានអ៊ីមែលខុសពីអ្នកដែលបញ្ជាទិញសំបុត្រ "
-"អ៊ីមែលខាងក្រោមនឹងត្រូវផ្ញើទៅអ្នកចូលរួម។"
+"ប្រសិនបើការបញ្ជាទិញមានអ្នកចូលរួមដែលមានអាសយដ្ឋានអ៊ីមែលខុសពីអ្នកដែលបញ្ជាទិញសំបុត្រ អ៊ីមែលខាងក្រោមនឹងត្"
+"រូវផ្ញើទៅអ្នកចូលរួម។"
 
 #: eventyay/control/forms/event.py:1347 eventyay/plugins/sendmail/forms.py:310
 msgid "Text (sent by admin)"
@@ -16435,8 +16437,8 @@ msgid ""
 "Your customers will be instructed to pay the money manually. You can then "
 "mark them as paid."
 msgstr ""
-"អតិថិជននឹងត្រូវបានណែនាំឱ្យផ្ទេរប្រាក់ទៅគណនី។ បន្ទាប់មក អាចនាំចូលរបាយការណ៍ធនាគារ "
-"ដើម្បីដំណើរការការទូទាត់នៅក្នុង eventyay ឬសម្គាល់ថាបានទូទាត់ដោយដៃ។"
+"អតិថិជននឹងត្រូវបានណែនាំឱ្យផ្ទេរប្រាក់ទៅគណនី។ បន្ទាប់មក អាចនាំចូលរបាយការណ៍ធនាគារ ដើម្បីដំណើរការកា"
+"រទូទាត់នៅក្នុង eventyay ឬសម្គាល់ថាបានទូទាត់ដោយដៃ។"
 
 #: eventyay/control/forms/event.py:1839 eventyay/control/forms/product.py:575
 #, fuzzy
@@ -22766,8 +22768,8 @@ msgid ""
 "section."
 msgstr ""
 "ការអនុញ្ញាតឱ្យអ្នកប្រើប្រាស់ផ្លាស់ប្តូរការបញ្ជាទិញរបស់ពួកគេ គឺជាមុខងារកំពុងអភិវឌ្ឍ។ ដូច្នេះ បច្ចុប្បន្ន "
-"អាចធ្វើបានតែការផ្លាស់ប្តូរជាក់លាក់ប៉ុណ្ណោះ (ដូចជា ការផ្លាស់ប្តូរបម្រែបម្រួលនៃផលិតផល)។ "
-"ជម្រើសបន្ថែមអាចនឹងត្រូវបានបន្ថែមនៅពេលក្រោយ។"
+"អាចធ្វើបានតែការផ្លាស់ប្តូរជាក់លាក់ប៉ុណ្ណោះ (ដូចជា ការផ្លាស់ប្តូរបម្រែបម្រួលនៃផលិតផល)។ ជម្រើសបន្ថែម"
+"អាចនឹងត្រូវបានបន្ថែមនៅពេលក្រោយ។"
 
 #: eventyay/control/templates/pretixcontrol/event/component_link.html:8
 #: eventyay/eventyay_common/templates/eventyay_common/event/component_link.html:9
@@ -22832,7 +22834,8 @@ msgstr "ប្រតិបត្តិការនេះមិនអាចត្
 msgid ""
 "To confirm you really want this, please type out the event's name "
 "(\"%(name)s\") here:"
-msgstr "ដើម្បីបញ្ជាក់ថាពិតជាចង់ធ្វើនេះ សូមវាយឈ្មោះខ្លីរបស់ព្រឹត្តិការណ៍ (\"%(slug)s\") នៅទីនេះ៖"
+msgstr ""
+"ដើម្បីបញ្ជាក់ថាពិតជាចង់ធ្វើនេះ សូមវាយឈ្មោះខ្លីរបស់ព្រឹត្តិការណ៍ (\"%(slug)s\") នៅទីនេះ៖"
 
 #: eventyay/control/templates/pretixcontrol/event/delete.html:36
 msgid "Your event can not be deleted as it already contains orders."
@@ -26177,7 +26180,8 @@ msgstr "ប្ដូរផលិតផល"
 #| msgid ""
 #| "One of the selected products is not available in the selected country."
 msgid "No product values found in the selected column."
-msgstr "ផលិតផលមួយក្នុងចំណោមផលិតផលដែលបានជ្រើសរើស មិនមាននៅក្នុងប្រទេសដែលបានជ្រើសរើសទេ។"
+msgstr ""
+"ផលិតផលមួយក្នុងចំណោមផលិតផលដែលបានជ្រើសរើស មិនមាននៅក្នុងប្រទេសដែលបានជ្រើសរើសទេ។"
 
 #: eventyay/control/templates/pretixcontrol/orders/index.html:15
 msgid "Nobody ordered a ticket yet."
@@ -26553,7 +26557,8 @@ msgstr "ស្កេនកូដកំណត់រចនាសម្ព័ន្
 msgid ""
 "If your device does not support scanning a QR code, you can also enter the "
 "following information:"
-msgstr "ប្រសិនបើកម្មវិធី/ឧបករណ៍មិនគាំទ្រការស្កេនកូដ QR អាចបញ្ចូលព័ត៌មានខាងក្រោមបានផងដែរ៖"
+msgstr ""
+"ប្រសិនបើកម្មវិធី/ឧបករណ៍មិនគាំទ្រការស្កេនកូដ QR អាចបញ្ចូលព័ត៌មានខាងក្រោមបានផងដែរ៖"
 
 #: eventyay/control/templates/pretixcontrol/organizers/device_connect.html:40
 msgid "System URL:"
@@ -30710,8 +30715,8 @@ msgid ""
 "streamline event marketing by sending targeted emails."
 msgstr ""
 "រៀបចំនិងកំណត់រចនាសម្ព័ន្ទលក់សំបុត្រសម្រាប់ព្រឹត្តិការណ៍ និងលកទំនិញបន្ថែមដូចជា ការចូលដំណើរការជាពិសេស ឬ "
-"Swag។ គ្រប់គ្រងអ្នកចូលរួម និងអ្នកតាំងព័ន្ធព័ណ៌, រចនាផ្ទាក់ងារតាមកំណត់ "
-"និងធ្វើអ្យការផ្សព្វផ្សាយព្រឹត្តិការណ៍កាន់តែងាយស្រួល ដោយផ្ញើអ៊ីមែលគោលដៅ។"
+"Swag។ គ្រប់គ្រងអ្នកចូលរួម និងអ្នកតាំងព័ន្ធព័ណ៌, រចនាផ្ទាក់ងារតាមកំណត់ និងធ្វើអ្យការផ្សព្វផ្សាយព្រឹត្តិកា"
+"រណ៍កាន់តែងាយស្រួល ដោយផ្ញើអ៊ីមែលគោលដៅ។"
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:47
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:65
@@ -31366,8 +31371,8 @@ msgid ""
 "Permanently remove proposals, speaker profiles, and uploaded talk-related "
 "content."
 msgstr ""
-"ទិន្នន័យដែលពាក់ព័ន្ធទាំងអស់ ដូចជា សំណើ ប្រវត្តិរូបអ្នកនិយាយ និងឯកសារផ្ទុកឡើង នឹងត្រូវបានលុបផងដែរ "
-"ហើយមិនអាចស្ដារឡើងវិញបានទេ។"
+"ទិន្នន័យដែលពាក់ព័ន្ធទាំងអស់ ដូចជា សំណើ ប្រវត្តិរូបអ្នកនិយាយ និងឯកសារផ្ទុកឡើង នឹងត្រូវបានលុបផងដែរ ហើយ"
+"មិនអាចស្ដារឡើងវិញបានទេ។"
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:403
 #, fuzzy
@@ -33136,7 +33141,8 @@ msgstr "ផ្ញើអ៊ីមែលនៅពេលមានសំណើថ្
 msgid ""
 "If this setting is checked, all event admins will receive an email "
 "notification for every received proposal."
-msgstr "ប្រសិនបើបានធីកការកំណត់នេះ នឹងទទួលអ៊ីមែលទៅអាសយដ្ឋានអ្នករៀបចំសម្រាប់រាល់សំណើដែលបានទទួល។"
+msgstr ""
+"ប្រសិនបើបានធីកការកំណត់នេះ នឹងទទួលអ៊ីមែលទៅអាសយដ្ឋានអ្នករៀបចំសម្រាប់រាល់សំណើដែលបានទទួល។"
 
 #: eventyay/orga/forms/cfp.py:70
 msgid "Allow submitters to share their proposal publicly"
@@ -33457,7 +33463,8 @@ msgstr ""
 #| "You can activate either SSL or STARTTLS security, but not both at the "
 #| "same time."
 msgid "You can activate either SSL or STARTTLS, but not both at the same time."
-msgstr "អាចបើកសុវត្ថិភាព SSL ឬ STARTTLS បានមួយប៉ុណ្ណោះ មិនអាចបើកទាំងពីរនៅពេលតែមួយបានទេ។"
+msgstr ""
+"អាចបើកសុវត្ថិភាព SSL ឬ STARTTLS បានមួយប៉ុណ្ណោះ មិនអាចបើកទាំងពីរនៅពេលតែមួយបានទេ។"
 
 #: eventyay/orga/forms/email.py:236
 msgid ""
@@ -34069,7 +34076,8 @@ msgstr "អ៊ីមែលត្រូវមានអ្នកទទួលយ៉
 msgid ""
 "If set, the email will be sent at this time. Time is interpreted in the "
 "event timezone."
-msgstr "បើបើកជម្រើសនេះ អ៊ីមែលនឹងត្រូវផ្សើផ្សាយភ្លាមៗ ជំនួសឱយដាក់ក្នុងប្រអប់អ៊ីមែលចាកចេញ។"
+msgstr ""
+"បើបើកជម្រើសនេះ អ៊ីមែលនឹងត្រូវផ្សើផ្សាយភ្លាមៗ ជំនួសឱយដាក់ក្នុងប្រអប់អ៊ីមែលចាកចេញ។"
 
 #: eventyay/orga/forms/mails.py:221
 msgid "Send immediately"
@@ -37468,8 +37476,8 @@ msgid ""
 "ALL related data, such as proposals, speaker profiles, and uploads, will "
 "also be deleted and cannot be restored."
 msgstr ""
-"ទិន្នន័យដែលពាក់ព័ន្ធទាំងអស់ ដូចជា សំណើ ប្រវត្តិរូបអ្នកនិយាយ និងឯកសារផ្ទុកឡើង នឹងត្រូវបានលុបផងដែរ "
-"ហើយមិនអាចស្ដារឡើងវិញបានទេ។"
+"ទិន្នន័យដែលពាក់ព័ន្ធទាំងអស់ ដូចជា សំណើ ប្រវត្តិរូបអ្នកនិយាយ និងឯកសារផ្ទុកឡើង នឹងត្រូវបានលុបផងដែរ ហើយ"
+"មិនអាចស្ដារឡើងវិញបានទេ។"
 
 #: eventyay/orga/views/event.py:395 eventyay/orga/views/event.py:427
 #, fuzzy
@@ -38387,9 +38395,9 @@ msgid ""
 "texts and QR codes at the positions of your choice."
 msgstr ""
 "អាចកែតម្រូវការរចនាសំបុត្របានដោយប្រើកម្មវិធីកែសម្រួលសំបុត្រ PDF។ នៅទីនោះ អាចផ្ទុកឡើងឯកសារ PDF "
-"ដែលប្រើជាផ្ទៃខាងក្រោយសម្រាប់សំបុត្រ ហើយបន្ទាប់មកដាក់អត្ថបទ និងកូដ QR "
-"ផ្សេងៗលើផ្ទៃខាងក្រោយតាមទីតាំងដែលបានជ្រើស។ កម្មវិធីកែសម្រួលងាយប្រើដោយសារចំណុចប្រទាក់អូស "
-"និងទម្លាក់ ប៉ុន្តែត្រូវការកម្មវិធីរុករកទំនើប និងការតភ្ជាប់អ៊ីនធឺណិតដែលមានគុណភាពល្អ។"
+"ដែលប្រើជាផ្ទៃខាងក្រោយសម្រាប់សំបុត្រ ហើយបន្ទាប់មកដាក់អត្ថបទ និងកូដ QR ផ្សេងៗលើផ្ទៃខាងក្រោយតាមទី"
+"តាំងដែលបានជ្រើស។ កម្មវិធីកែសម្រួលងាយប្រើដោយសារចំណុចប្រទាក់អូស និងទម្លាក់ ប៉ុន្តែត្រូវការកម្មវិធីរុករកទំ"
+"នើប និងការតភ្ជាប់អ៊ីនធឺណិតដែលមានគុណភាពល្អ។"
 
 #: eventyay/plugins/badges/templates/pretixplugins/badges/form.html:12
 #, fuzzy
@@ -39521,7 +39529,8 @@ msgstr "កែសម្រួលបញ្ជីអាសយដ្ឋានអ៊
 msgid ""
 "Any changes to the Reply-To field apply only to this queued email. If left "
 "empty, the event's default Reply-To will be used."
-msgstr "ការផ្លាស់ប្តូរណាមួយទៅកាន់វាល Reply-To នឹងអនុវត្តតែចំពោះអ៊ីមែលដែលបានរៀបជួរនេះប៉ុណ្ណោះ។"
+msgstr ""
+"ការផ្លាស់ប្តូរណាមួយទៅកាន់វាល Reply-To នឹងអនុវត្តតែចំពោះអ៊ីមែលដែលបានរៀបជួរនេះប៉ុណ្ណោះ។"
 
 #: eventyay/plugins/sendmail/forms.py:502
 msgid "Any changes to the BCC field will apply only to this queued email."
@@ -41186,7 +41195,8 @@ msgstr "រយៈពេលលក់ជាមុនសម្រាប់ព្រ
 #, fuzzy, python-format
 #| msgid "The presale for this event will start on %(date)s at %(time)s."
 msgid "Registration for this event will open on %(date)s at %(time)s."
-msgstr "ការលក់ជាមុនសម្រាប់ព្រឹត្តិការណ៍នេះនឹងចាប់ផ្តើមនៅ %(date)s ម៉ោង %(time)s។"
+msgstr ""
+"ការលក់ជាមុនសម្រាប់ព្រឹត្តិការណ៍នេះនឹងចាប់ផ្តើមនៅ %(date)s ម៉ោង %(time)s។"
 
 #: eventyay/presale/templates/pretixpresale/event/meetup_index.html:218
 #, fuzzy
@@ -41808,7 +41818,8 @@ msgstr "ពត៌មានការចុះឈ្មោះ"
 #| "This voucher code has already been used the maximum number of times "
 #| "allowed."
 msgid "This event has reached its maximum number of registrations."
-msgstr "កូដ្សំណុំបែកបង់ដោះខ្លួននេះត្រូវបានប្រើរួចហើយដ់ល់ចំនួនអតិបរមាដែលអនុញ្ញាត។"
+msgstr ""
+"កូដ្សំណុំបែកបង់ដោះខ្លួននេះត្រូវបានប្រើរួចហើយដ់ល់ចំនួនអតិបរមាដែលអនុញ្ញាត។"
 
 #: eventyay/presale/templates/pretixpresale/event/rsvp.html:28
 #, fuzzy
@@ -41948,9 +41959,9 @@ msgid ""
 "confirmation email. On the event page there is also a link to join online "
 "sessions."
 msgstr ""
-"នេះជាព្រឹត្តិការណ៍ដែលត្រូវការសំបុត្រ។ ប្រសិនបើបានបញ្ជាទិញសំបុត្រជាអ្នកប្រើប្រាស់ភ្ញៀវ "
-"នោះមិនមានគណនីទេ ប៉ុន្តែនៅតែអាចចូលប្រើសំបុត្របានដោយប្រើតំណសម្ងាត់ក្នុងអ៊ីមែលបញ្ជាក់សំបុត្រ។ "
-"នៅទំព័រសំបុត្រក៏មានតំណភ្ជាប់ដើម្បីចូលរួមសម័យអនឡាញផងដែរ។"
+"នេះជាព្រឹត្តិការណ៍ដែលត្រូវការសំបុត្រ។ ប្រសិនបើបានបញ្ជាទិញសំបុត្រជាអ្នកប្រើប្រាស់ភ្ញៀវ នោះមិនមានគណនី"
+"ទេ ប៉ុន្តែនៅតែអាចចូលប្រើសំបុត្របានដោយប្រើតំណសម្ងាត់ក្នុងអ៊ីមែលបញ្ជាក់សំបុត្រ។ នៅទំព័រសំបុត្រក៏មានតំណភ្ជាប់"
+"ដើម្បីចូលរួមសម័យអនឡាញផងដែរ។"
 
 #: eventyay/presale/templates/pretixpresale/fragment_join_online_video.html:13
 #, fuzzy
@@ -41960,7 +41971,8 @@ msgstr ""
 msgid ""
 "As a registered attendee, please also check your email for the unique link "
 "to join online sessions."
-msgstr "ក្នុងនាមជាអ្នកកាន់សំបុត្រ សូមពិនិត្យអ៊ីមែលផងដែរ សម្រាប់តំណពិសេសដើម្បីចូលរួមសម័យអនឡាញ។"
+msgstr ""
+"ក្នុងនាមជាអ្នកកាន់សំបុត្រ សូមពិនិត្យអ៊ីមែលផងដែរ សម្រាប់តំណពិសេសដើម្បីចូលរួមសម័យអនឡាញ។"
 
 #: eventyay/presale/templates/pretixpresale/fragment_join_online_video.html:17
 msgid ""
