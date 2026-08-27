@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 17:38+0000\n"
-"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
+"PO-Revision-Date: 2026-08-27 17:41+0000\n"
+"Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
 "projects/eventyay/eventyay/zh_Hans/>\n"
 "Language: zh_Hans\n"
@@ -1305,8 +1305,7 @@ msgstr "未知的销售渠道。"
 msgid ""
 "Events cannot be created as 'live'. Quotas and payment must be added to the "
 "event before sales can go live."
-msgstr ""
-"事件不能创建为“实时”。在销售活动开始之前，必须将配额和付款添加到活动中。"
+msgstr "事件不能创建为“实时”。在销售活动开始之前，必须将配额和付款添加到活动中。"
 
 #: eventyay/api/serializers/event.py:211 eventyay/api/serializers/event.py:512
 #, python-brace-format
@@ -1892,8 +1891,7 @@ msgstr "前缀之后发票号码的最小长度"
 msgid ""
 "The part of your invoice number after your prefix will be filled up with "
 "leading zeros up to this length, e.g. INV-001 or INV-00001."
-msgstr ""
-"发票号码除前缀外，如果长度不足，会用数字0填充，比如INV-001或INV-00001。"
+msgstr "发票号码除前缀外，如果长度不足，会用数字0填充，比如INV-001或INV-00001。"
 
 #: eventyay/base/configurations/default_setting.py:467
 msgid "Generate invoices with consecutive numbers"
@@ -2704,8 +2702,8 @@ msgid ""
 "Paid money will be automatically paid back if the payment method allows it. "
 "Otherwise, a manual refund will be created for you to process manually."
 msgstr ""
-"如果支付方式允许，已支付的款项将自动退还。否则，将创建手动退款以供您手动处"
-"理。"
+"如果支付方式允许，已支付的款项将自动退还。否则，将创建手动退款以供您手动处理"
+"。"
 
 #: eventyay/base/configurations/default_setting.py:1448
 #: eventyay/control/forms/orders.py:669
@@ -2853,8 +2851,7 @@ msgstr "主题前缀"
 msgid ""
 "This will be prepended to the subject of all outgoing emails, formatted as "
 "[prefix]. Choose, for example, a short form of your event name."
-msgstr ""
-"这将作为所有外发邮件的主题，格式为[前缀]。例如，选择您的活动名称的简短形式。"
+msgstr "这将作为所有外发邮件的主题，格式为[前缀]。例如，选择您的活动名称的简短形式。"
 
 #: eventyay/base/configurations/default_setting.py:1654
 msgid "Sender address"
@@ -3667,8 +3664,8 @@ msgid ""
 "Not displayed anywhere by default, but if you want to, you can use this e.g. "
 "in ticket templates."
 msgstr ""
-"默认情况下不会显示在任何位置，但如果您愿意，可以使用此功能，例如在票证模板"
-"中。"
+"默认情况下不会显示在任何位置，但如果您愿意，可以使用此功能，例如在票证模板中"
+"。"
 
 #: eventyay/base/configurations/default_setting.py:2342
 msgid "Banner text (top)"
@@ -6715,8 +6712,7 @@ msgstr "主要活动颜色"
 msgid ""
 "Provide a hex value like #00ff00 if you want to style eventyay in your "
 "event’s colour scheme."
-msgstr ""
-"如果您想要使用活动颜色方案样式化Eventyay，请提供类似#00ff00的十六进制值。"
+msgstr "如果您想要使用活动颜色方案样式化Eventyay，请提供类似#00ff00的十六进制值。"
 
 #: eventyay/base/models/event.py:659
 msgid "Custom Event CSS"
@@ -7268,8 +7264,7 @@ msgstr "BCC"
 msgid ""
 "Enter comma separated addresses. Will receive a blind copy of every mail "
 "sent from this template. This may be a LOT!"
-msgstr ""
-"输入逗号分隔的地址。将会收到此模板发送的每一封邮件的密送副本。这可能会很多！"
+msgstr "输入逗号分隔的地址。将会收到此模板发送的每一封邮件的密送副本。这可能会很多！"
 
 #: eventyay/base/models/mail.py:285
 msgid ""
@@ -7391,8 +7386,7 @@ msgstr "由于付款设置中配置的最后付款日期已结束，因此无法
 msgid ""
 "The payment can not be accepted as the order is expired and you configured "
 "that no late payments should be accepted in the payment settings."
-msgstr ""
-"由于订单已过期且您的付款设置中已配置为不接受延迟付款，因此无法接受付款。"
+msgstr "由于订单已过期且您的付款设置中已配置为不接受延迟付款，因此无法接受付款。"
 
 #: eventyay/base/models/orders.py:1034
 msgid "This order is not yet approved by the event organizer."
@@ -8414,8 +8408,8 @@ msgid ""
 "all tickets in the referenced quota are reserved, but not yet sold."
 msgstr ""
 "如果您在此选择配额，此产品将仅在该配额不可用时显示。如果结合隐藏已售完产品的"
-"选项，这允许您在产品售完后将其换成更贵的产品。这两种产品可能会在短时间内可"
-"见，而引用配额中的所有票证都已保留，但尚未售出。"
+"选项，这允许您在产品售完后将其换成更贵的产品。这两种产品可能会在短时间内可见"
+"，而引用配额中的所有票证都已保留，但尚未售出。"
 
 #: eventyay/base/models/product.py:469
 msgid "This product can only be bought using a voucher."
@@ -8503,8 +8497,8 @@ msgid ""
 "many times. If you keep the field empty or set it to 0, there is no special "
 "limit for this product."
 msgstr ""
-"只有将产品添加到购物车至少这么多次才能购买。如果将该字段保留为空或将其设置为"
-"0，则此产品没有特殊限制。"
+"只有将产品添加到购物车至少这么多次才能购买。如果将该字段保留为空或将其设置为0"
+"，则此产品没有特殊限制。"
 
 #: eventyay/base/models/product.py:525
 msgid "Maximum amount per order"
@@ -8662,8 +8656,7 @@ msgstr "附加组件包括在价格中"
 msgid ""
 "If selected, adding add-ons to this ticket is free, even if the add-ons "
 "would normally cost money individually."
-msgstr ""
-"如果选中，则向此票证添加附加组件是免费的，即使附加组件通常单独购买也是如此。"
+msgstr "如果选中，则向此票证添加附加组件是免费的，即使附加组件通常单独购买也是如此。"
 
 #: eventyay/base/models/product.py:1122
 msgid "Allow the same product to be selected multiple times"
@@ -9487,8 +9480,7 @@ msgstr "座位{number}"
 msgid ""
 "Please give a fair review on why you’d like to see this proposal at the "
 "conference, or why you think it would not be a good fit."
-msgstr ""
-"请公正地评价为什么您想在这个会议上看到这个提案，或者为什么您认为它不适合。"
+msgstr "请公正地评价为什么您想在这个会议上看到这个提案，或者为什么您认为它不适合。"
 
 #: eventyay/base/models/settings.py:71
 #, python-brace-format
@@ -9946,8 +9938,7 @@ msgctxt "invoice"
 msgid ""
 "Reverse Charge: According to Article 194, 196 of Council Directive 2006/112/"
 "EEC, VAT liability rests with the service recipient."
-msgstr ""
-"反向收费：根据理事会指令2006/112 / EEC第194,196条，增值税应该由服务对象承担。"
+msgstr "反向收费：根据理事会指令2006/112 / EEC第194,196条，增值税应该由服务对象承担。"
 
 #: eventyay/base/models/tax.py:331
 msgctxt "invoice"
@@ -10771,8 +10762,7 @@ msgstr "结账时的付款流程说明"
 msgid ""
 "This text will be shown during checkout when the user selects this payment "
 "method. It should give a short explanation on this payment method."
-msgstr ""
-"当用户选择此付款方式时，将在结帐时显示此文本。它应该简要说明这种付款方式。"
+msgstr "当用户选择此付款方式时，将在结帐时显示此文本。它应该简要说明这种付款方式。"
 
 #: eventyay/base/payment.py:1041
 msgid "Payment process description in order confirmation emails"
@@ -11424,8 +11414,7 @@ msgstr "此活动的预售期尚未开始。受影响的位置已从您的购物
 msgid ""
 "The presale period for one of the events in your cart has ended. The "
 "affected positions have been removed from your cart."
-msgstr ""
-"您购物车中其中一个活动的预售期已结束。受影响的位置已从您的购物车中删除。"
+msgstr "您购物车中其中一个活动的预售期已结束。受影响的位置已从您的购物车中删除。"
 
 #: eventyay/base/services/cart.py:93
 #, fuzzy
@@ -11580,8 +11569,7 @@ msgstr "您不能多次选择同一座位。"
 msgid ""
 "You entered a gift card instead of a voucher. Gift cards can be entered "
 "later on when you're asked for your payment details."
-msgstr ""
-"您输入了礼品卡而不是优惠券。稍后要求您提供付款详细信息时，可以输入礼品卡。"
+msgstr "您输入了礼品卡而不是优惠券。稍后要求您提供付款详细信息时，可以输入礼品卡。"
 
 #: eventyay/base/services/cart.py:147
 msgid ""
@@ -11911,8 +11899,7 @@ msgstr "订购购物车中某件产品需要有效的优惠码。我们已将此
 msgid ""
 "The presale period for one of the events in your cart has not yet started. "
 "The affected positions have been removed from your cart."
-msgstr ""
-"您购物车中其中某个活动的预售期尚未开始。受影响的位置已从您的购物车中移除。"
+msgstr "您购物车中其中某个活动的预售期尚未开始。受影响的位置已从您的购物车中移除。"
 
 #: eventyay/base/services/orders.py:147
 msgid ""
@@ -11924,8 +11911,7 @@ msgstr "您订单中的座位之一无效，我们从您的购物车中删除了
 msgid ""
 "One of the seats in your order has been taken in the meantime, we removed "
 "the position from your cart."
-msgstr ""
-"在此期间，您订单中的一个座位已被选走，我们已从您的购物车中删除了该位置。"
+msgstr "在此期间，您订单中的一个座位已被选走，我们已从您的购物车中删除了该位置。"
 
 #: eventyay/base/services/orders.py:222 eventyay/control/forms/orders.py:82
 msgid "The new expiry date needs to be in the future."
@@ -12581,8 +12567,7 @@ msgstr "验证失败"
 msgid ""
 "We could not verify that this request really was sent from you. For security "
 "reasons, we therefore cannot process it."
-msgstr ""
-"我们无法验证此请求是否真的是您发送的。出于安全原因，我们因此无法处理它。"
+msgstr "我们无法验证此请求是否真的是您发送的。出于安全原因，我们因此无法处理它。"
 
 #: eventyay/base/templates/csrffail.html:20
 msgid ""
@@ -12876,8 +12861,8 @@ msgid ""
 "enable them, at least for this site, or for HTTPS connections, or for 'same-"
 "origin' requests."
 msgstr ""
-"如果您已将浏览器配置为禁用“referer”标题，请至少为此网站、HTTPS连接或“相同来"
-"源”请求重新启用它们。"
+"如果您已将浏览器配置为禁用“referer”标题，请至少为此网站、HTTPS连接或“相同来源"
+"”请求重新启用它们。"
 
 #: eventyay/base/views/errors.py:36
 msgid ""
@@ -12995,8 +12980,7 @@ msgstr "告诉我们一些关于你自己的事情！"
 msgid ""
 "This information will be publicly displayed next to your session - you can "
 "always edit for as long as proposals are still open."
-msgstr ""
-"这些信息将会公开显示在你的会话旁边 - 只要建议还未关闭，你随时可以进行编辑。"
+msgstr "这些信息将会公开显示在你的会话旁边 - 只要建议还未关闭，你随时可以进行编辑。"
 
 #: eventyay/cfp/forms/cfp.py:23
 #, fuzzy
@@ -13034,8 +13018,8 @@ msgid ""
 "This link was not valid. Make sure you copied the complete URL from the "
 "email and that the email is no more than 24 hours old."
 msgstr ""
-"这个链接无效。请确保您从电子邮件中复制了完整的URL，并且该电子邮件不超过24小"
-"时。"
+"这个链接无效。请确保您从电子邮件中复制了完整的URL，并且该电子邮件不超过24小时"
+"。"
 
 #: eventyay/cfp/phrases.py:17
 msgid "Awesome! You can now log in using your new password."
@@ -13132,8 +13116,7 @@ msgstr "自定义字段"
 msgid ""
 "You can enter proposals until %(deadline)s (%(timezone)s), %(until_string)s "
 "from now."
-msgstr ""
-"你可以在%(deadline)s (%(timezone)s)之前提交提案，距离现在还%(until_string)s。"
+msgstr "你可以在%(deadline)s (%(timezone)s)之前提交提案，距离现在还%(until_string)s。"
 
 #: eventyay/cfp/templates/cfp/event/cfp.html:35
 #, python-format
@@ -13177,8 +13160,7 @@ msgstr "如需更多信息，请联系会议组织者。"
 msgid ""
 "You, %(name)s, have been invited to be a speaker for the session “%(talk)s”. "
 "Do you accept the invitation?"
-msgstr ""
-"%(name)s 您好，您已被邀请成为“%(talk)s”议程的演讲者。请问您是否接受邀请？"
+msgstr "%(name)s 您好，您已被邀请成为“%(talk)s”议程的演讲者。请问您是否接受邀请？"
 
 #: eventyay/cfp/templates/cfp/event/invitation.html:35
 msgid "Abstract:"
@@ -15543,9 +15525,9 @@ msgid ""
 "your instance. You can disable this behavior here at any time."
 msgstr ""
 "在更新检查期间，eventyay将向由eventyay开发人员操作的服务器报告一个匿名、唯一"
-"的安装ID、当前版本的eventyay和您安装的插件以及您安装中活动和不活动的事件数"
-"量。我们仅存储匿名数据，从不记录任何IP地址，我们也不知道您是谁或者在哪里找到"
-"您的实例。您可以随时在此处禁用此行为。"
+"的安装ID、当前版本的eventyay和您安装的插件以及您安装中活动和不活动的事件数量"
+"。我们仅存储匿名数据，从不记录任何IP地址，我们也不知道您是谁或者在哪里找到您"
+"的实例。您可以随时在此处禁用此行为。"
 
 #: eventyay/control/forms/admin/admin.py:28
 msgid "Email notifications"
@@ -15774,8 +15756,7 @@ msgstr "允许的头衔"
 msgid ""
 "If the naming scheme you defined above allows users to input a title, you "
 "can use this to restrict the set of selectable titles."
-msgstr ""
-"如果上面定义的命名方案允许用户输入头衔，则可以使用它来限制可选头衔的集合。"
+msgstr "如果上面定义的命名方案允许用户输入头衔，则可以使用它来限制可选头衔的集合。"
 
 #: eventyay/control/forms/event.py:702 eventyay/control/forms/event.py:940
 #, python-brace-format
@@ -15871,8 +15852,7 @@ msgstr "生成销售渠道的发票"
 msgid ""
 "If you have enabled invoice generation in the previous setting, you can "
 "limit it here to specific sales channels."
-msgstr ""
-"如果您在上一个设置中启用了发票生成，则可以在此处将其限制为特定的销售渠道。"
+msgstr "如果您在上一个设置中启用了发票生成，则可以在此处将其限制为特定的销售渠道。"
 
 #: eventyay/control/forms/event.py:1169
 msgid "Invoice style"
@@ -16019,8 +15999,7 @@ msgstr "此电子邮件将在订单到期的前这几天发出。如果值为0�
 msgid ""
 "This email will be sent out this many days before the order event starts. If "
 "the field is empty, the mail will never be sent."
-msgstr ""
-"此电子邮件将在订单项目开始的前几天发送。如果该字段为空，则永远不会发送邮件。"
+msgstr "此电子邮件将在订单项目开始的前几天发送。如果该字段为空，则永远不会发送邮件。"
 
 #: eventyay/control/forms/event.py:1413 eventyay/plugins/sendmail/forms.py:394
 msgid "Received order"
@@ -17537,8 +17516,7 @@ msgstr "超额预定的配额"
 msgid ""
 "If you check this box, this operation will be performed even if it leads to "
 "an overbooked quota and you having sold more tickets than you planned!"
-msgstr ""
-"如果选中此框，即使导致超额预订配额并且您销售的票数超出计划，也会执行此操作！"
+msgstr "如果选中此框，即使导致超额预订配额并且您销售的票数超出计划，也会执行此操作！"
 
 #: eventyay/control/forms/orders.py:92
 msgid "Overbook quota and ignore late payment"
@@ -18227,8 +18205,8 @@ msgid ""
 "Be aware that setting a minimal number makes it impossible to buy this "
 "product if all available add-ons are sold out."
 msgstr ""
-"请注意，如果所有可用的附加组件都已售完，那么设置最小数量将使您无法购买此产"
-"品。"
+"请注意，如果所有可用的附加组件都已售完，那么设置最小数量将使您无法购买此产品"
+"。"
 
 #: eventyay/control/forms/product.py:989
 msgid "Bundled products"
@@ -18570,8 +18548,8 @@ msgid ""
 "Position #{posid}: Event date \"{old_event}\" ({old_price}) changed to "
 "\"{new_event}\" ({new_price})."
 msgstr ""
-"位置 #{posid}：活动日期“{old_event}”（{old_price}）更改"
-"为“{new_event}”（{new_price}）。"
+"位置 #{posid}：活动日期“{old_event}”（{old_price}）更改为“{new_event}”（"
+"{new_price}）。"
 
 #: eventyay/control/logdisplay.py:99
 #, python-brace-format
@@ -20934,8 +20912,7 @@ msgstr "全局设置"
 msgid ""
 "The list below shows all events you have administrative access to. Click on "
 "the event name to access event details."
-msgstr ""
-"下面的列表显示您具有管理访问所有活动的权限。单击活动名称以访问活动详细信息。"
+msgstr "下面的列表显示您具有管理访问所有活动的权限。单击活动名称以访问活动详细信息。"
 
 #: eventyay/control/templates/pretixcontrol/admin/events/index.html:18
 #: eventyay/control/templates/pretixcontrol/organizers/detail.html:36
@@ -22783,8 +22760,7 @@ msgstr ""
 msgid ""
 "Only fully paid orders are counted. Orders paid in multiple payments are "
 "shown with the date of their last payment."
-msgstr ""
-"只计算全额支付的订单。以多次付款方式支付的订单显示其最后一次付款的日期。"
+msgstr "只计算全额支付的订单。以多次付款方式支付的订单显示其最后一次付款的日期。"
 
 #: eventyay/control/templates/pretixcontrol/event/index.html:197
 #: eventyay/plugins/reports/exporters.py:278
@@ -23150,9 +23126,9 @@ msgid ""
 "ticket types in more detail, you can later do so in the \"Products\" section "
 "in the navigation. Don't worry, you can change everything you input here."
 msgstr ""
-"如果您想使用更高级的功能，如不允许使用的产品、产品变化、自定义配额、附加产"
-"品，或者想更详细地修改您的票类型，您可以稍后在导航的“产品”部分中这样做。别担"
-"心，您可以更改这里输入的所有内容。"
+"如果您想使用更高级的功能，如不允许使用的产品、产品变化、自定义配额、附加产品"
+"，或者想更详细地修改您的票类型，您可以稍后在导航的“产品”部分中这样做。别担心"
+"，您可以更改这里输入的所有内容。"
 
 #: eventyay/control/templates/pretixcontrol/event/quick_setup.html:175
 #: eventyay/control/templates/pretixcontrol/event/tickets.html:73
@@ -23380,8 +23356,7 @@ msgstr "下载设置"
 msgid ""
 "You activated ticket downloads but no output provider is enabled. Be sure to "
 "enable a plugin and activate an output provider."
-msgstr ""
-"您激活了票证下载但未启用输出提供程序。 确保启用插件并激活输出提供程序。"
+msgstr "您激活了票证下载但未启用输出提供程序。 确保启用插件并激活输出提供程序。"
 
 #: eventyay/control/templates/pretixcontrol/event/tickets.html:29
 msgid "Download formats"
@@ -23434,8 +23409,8 @@ msgid ""
 "JavaScript is disabled in your browser. To access our ticket shop without "
 "JavaScript, please &lt;a %(a_attr)s&gt;click here&lt;/a&gt;."
 msgstr ""
-"JavaScript在您的浏览器禁用了。 要在没有JavaScript的情况下访问我们的售票处，请"
-"&lt; %(a_attr)s&gt;点击此处&lt;/a&gt;。"
+"JavaScript在您的浏览器禁用了。 要在没有JavaScript的情况下访问我们的售票处，"
+"请&lt; %(a_attr)s&gt;点击此处&lt;/a&gt;。"
 
 #: eventyay/control/templates/pretixcontrol/event/widget.html:65
 msgid "Read our documentation for more information"
@@ -24560,8 +24535,7 @@ msgstr "此配额当前已被%(num)s票超额预订。"
 msgid ""
 "Your event contains vouchers that affect products covered by this quota and "
 "that allow a user to buy products even if this quota is sold out."
-msgstr ""
-"您的活动包含影响此配额所涵盖产品的凭证，允许用户购买产品，即使此配额已售完。"
+msgstr "您的活动包含影响此配额所涵盖产品的凭证，允许用户购买产品，即使此配额已售完。"
 
 #: eventyay/control/templates/pretixcontrol/items/quota.html:106
 msgid "Quota history"
@@ -24591,8 +24565,8 @@ msgid ""
 "applied to. If you apply two quotas to the same product, it will only be "
 "available if <strong>both</strong> quotas have capacity left."
 msgstr ""
-"请选择此配额应适用的产品或产品变量。如果对同一产品应用两个配额，则只有在"
-"<strong>两者</strong>配额还有剩余容量时才可用。"
+"请选择此配额应适用的产品或产品变量。如果对同一产品应用两个配额，则只有"
+"在<strong>两者</strong>配额还有剩余容量时才可用。"
 
 #: eventyay/control/templates/pretixcontrol/items/quota_edit.html:42
 msgid "Advanced options"
@@ -24831,8 +24805,7 @@ msgstr ""
 msgid ""
 "The user will receive a notification about the change but in the case of new "
 "required questions, the user will not be forced to answer them."
-msgstr ""
-"用户将收到有关更改的通知，但在出现新的必需问题时，不会强制用户回答这些问题。"
+msgstr "用户将收到有关更改的通知，但在出现新的必需问题时，不会强制用户回答这些问题。"
 
 #: eventyay/control/templates/pretixcontrol/order/change.html:37
 msgid ""
@@ -24968,8 +24941,7 @@ msgstr "删除订单"
 msgid ""
 "Do you really want to delete this order? <strong>You really cannot revert "
 "this action and we can't either.</strong>"
-msgstr ""
-"您真的要删除这个订单吗？<strong>你真的无法恢复这个动作，我们也不能。</strong>"
+msgstr "您真的要删除这个订单吗？<strong>你真的无法恢复这个动作，我们也不能。</strong>"
 
 #: eventyay/control/templates/pretixcontrol/order/delete.html:25
 msgid "Yes, delete order"
@@ -25530,8 +25502,8 @@ msgid ""
 "<strong>%(total)s</strong>."
 msgstr ""
 "我们收到<strong>%(amount)s</strong>已通过<strong>%(method)s</strong>退款的通"
-"知。如果处理此退款，订单金额将低于<strong>%(pending)s</strong>。订单总数为"
-"<strong>%(total)s</strong>。"
+"知。如果处理此退款，订单金额将低于<strong>%(pending)s</strong>。订单总数"
+"为<strong>%(total)s</strong>。"
 
 #: eventyay/control/templates/pretixcontrol/order/refund_process.html:30
 msgid "Since the order is already canceled, this will not affect its state."
@@ -26150,8 +26122,7 @@ msgstr "删除组织者"
 msgid ""
 "This operation will destroy this organizer including all events, "
 "configuration, products, quotas, questions, vouchers, lists, etc."
-msgstr ""
-"此操作将销毁此组织者，包括所有活动、配置、产品、配额、问题、凭证、列表等。"
+msgstr "此操作将销毁此组织者，包括所有活动、配置、产品、配额、问题、凭证、列表等。"
 
 #: eventyay/control/templates/pretixcontrol/organizers/delete.html:25
 #, python-format
@@ -26447,8 +26418,7 @@ msgid ""
 "These settings will be used for the organizer page as well as for the "
 "default settings for all events in this account that do not have their own "
 "design settings."
-msgstr ""
-"这些设置将用于组织者页面以及此帐户中没有自己设计设置的所有活动的默认设置。"
+msgstr "这些设置将用于组织者页面以及此帐户中没有自己设计设置的所有活动的默认设置。"
 
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:76
 #, fuzzy
@@ -27858,8 +27828,8 @@ msgid ""
 "To start selling tickets, you need to create products or quotas. The fastest "
 "way to create this is to use our setup tool."
 msgstr ""
-"要开始销售门票，您需要创建产品或配额。创建这个的最快方法是使用我们的设置工"
-"具。"
+"要开始销售门票，您需要创建产品或配额。创建这个的最快方法是使用我们的设置工具"
+"。"
 
 #: eventyay/control/views/dashboards.py:401
 msgid "Set up Ticketing"
@@ -28016,8 +27986,7 @@ msgstr ""
 msgid ""
 "Your changes have been saved. You can now go on with looking at the details "
 "or take your event live to start selling!"
-msgstr ""
-"您的更改已保存。现在，您可以继续查看详细信息，或将活动现场直播，开始销售！"
+msgstr "您的更改已保存。现在，您可以继续查看详细信息，或将活动现场直播，开始销售！"
 
 #: eventyay/control/views/event.py:1824
 msgid "Standard Ticket"
@@ -29790,8 +29759,8 @@ msgid ""
 "smartphone or a hardware token generator and that changes on a regular basis."
 msgstr ""
 "双因素身份验证是一种为帐户添加额外安全性的方法。 如果您启用它，不仅需要密码才"
-"能登录，还需要生成额外的令牌，例如： 通过智能手机或硬件令牌生成器上的应用程"
-"序，并定期更改。"
+"能登录，还需要生成额外的令牌，例如： 通过智能手机或硬件令牌生成器上的应用程序"
+"，并定期更改。"
 
 #: eventyay/eventyay_common/templates/eventyay_common/account/2fa-main-settings.html:30
 msgid "Obligatory usage of two-factor authentication"
@@ -30143,8 +30112,8 @@ msgid ""
 "you can <a %(login_href)s>log in</a> first and then click this link again to "
 "accept the invitation with your existing account."
 msgstr ""
-"如果您在此网站上已有一个具有不同电子邮件地址的帐户，您可以先<a "
-"%(login_href)s>登录</a>然后再次单击此链接以接受现有帐户的邀请。"
+"如果您在此网站上已有一个具有不同电子邮件地址的帐户，您可以先<a %(login_href)"
+"s>登录</a>然后再次单击此链接以接受现有帐户的邀请。"
 
 #: eventyay/eventyay_common/templates/eventyay_common/auth/login.html:17
 #: eventyay/eventyay_common/templates/eventyay_common/auth/login.html:45
@@ -31043,8 +31012,7 @@ msgstr "我们强烈建议不要使用超过16个字符的简短格式。"
 msgid ""
 "Every event needs to be created as part of an organizer account. Currently, "
 "you do not have access to any organizer accounts."
-msgstr ""
-"每个活动都需要作为组织者帐户的一部分创建。目前，您无法访问任何组织者帐户。"
+msgstr "每个活动都需要作为组织者帐户的一部分创建。目前，您无法访问任何组织者帐户。"
 
 #: eventyay/eventyay_common/templates/eventyay_common/events/index.html:6
 msgid "Events management"
@@ -31779,8 +31747,7 @@ msgstr "该设备已经过验证，现在可以使用。"
 msgid ""
 "The code you entered was not valid. If this problem persists, please check "
 "that the date and time of your phone are configured correctly."
-msgstr ""
-"您输入的代码无效。 如果此问题仍然存在，请检查手机的日期和时间是否正确配置。"
+msgstr "您输入的代码无效。 如果此问题仍然存在，请检查手机的日期和时间是否正确配置。"
 
 #: eventyay/eventyay_common/views/account/two_factor_auth.py:274
 msgid "This security device is already registered."
@@ -32550,9 +32517,8 @@ msgid ""
 msgstr ""
 "你好！\n"
 "\n"
-"很抱歉地告诉你，我们不能接受你的提案 “{submission_title}”，参加 "
-"{event_name}。因为有太多优秀的提案，我们希望你能以参会者的身份来参加 "
-"{event_name}！\n"
+"很抱歉地告诉你，我们不能接受你的提案 “{submission_title}”，参加 {event_name}"
+"。因为有太多优秀的提案，我们希望你能以参会者的身份来参加 {event_name}！\n"
 "\n"
 "{event_name}的组织者"
 
@@ -33977,8 +33943,8 @@ msgid ""
 "Choose how the frontpage header banner will be styled. Pattern source: <a "
 "href=\"http://www.heropatterns.com/\">heropatterns.com</a>, CC BY 4.0."
 msgstr ""
-"选择前页面头部横幅的样式。图案来源：<a href=\"http://www.heropatterns.com/"
-"\">heropatterns.com</a>，采用CC BY 4.0许可。"
+"选择前页面头部横幅的样式。图案来源：<a href=\"http://www.heropatterns.com/\">"
+"heropatterns.com</a>，采用CC BY 4.0许可。"
 
 #: eventyay/orga/phrases.py:13
 msgid "Schedule display format"
@@ -35344,8 +35310,7 @@ msgstr ""
 msgid ""
 "There are different placeholders available depending on the template type. "
 "They are explained in detail once you start editing a template."
-msgstr ""
-"根据模板类型，有不同的占位符可用。一旦您开始编辑模板，它们将被详细解释。"
+msgstr "根据模板类型，有不同的占位符可用。一旦您开始编辑模板，它们将被详细解释。"
 
 #: eventyay/orga/templates/orga/mails/mailtemplate/list.html:50
 msgid "Template"
@@ -35528,10 +35493,10 @@ msgid ""
 "be either the reviewer’s email address or their user code (e.g. “34KJN”). "
 "You can find an example file <a href=\"%(href)s\">here</a>."
 msgstr ""
-"您可以在此处从JSON文件上传您的审稿人任务分配。你可以将建议书代码（例"
-"如“UX3N1”）作为键，并将用户识别作为值，或者反之亦然。用户识别可以是审稿人的电"
-"子邮件地址或用户代码（例如“34KJN”）。您可以在<a href=\"%(href)s\">这里</a>找"
-"到一个示例文件。"
+"您可以在此处从JSON文件上传您的审稿人任务分配。你可以将建议书代码（例如“UX3N1”"
+"）作为键，并将用户识别作为值，或者反之亦然。用户识别可以是审稿人的电子邮件地"
+"址或用户代码（例如“34KJN”）。您可以在<a href=\"%(href)s\">这里</a>找到一个示"
+"例文件。"
 
 #: eventyay/orga/templates/orga/review/assignment.html:23
 msgid ""
@@ -36066,8 +36031,8 @@ msgid ""
 "offered an additional %(quotation_open)sAbstain%(quotation_close)s button "
 "when reviewing proposals."
 msgstr ""
-"如果您不需要评审分数或评审文本，评审人在评审提案时将可选择添加额外"
-"的%(quotation_open)s放弃%(quotation_close)s按键。"
+"如果您不需要评审分数或评审文本，评审人在评审提案时将可选择添加额外的%"
+"(quotation_open)s放弃%(quotation_close)s按键。"
 
 #: eventyay/orga/templates/orga/settings/review.html:82
 msgid ""
@@ -36167,8 +36132,7 @@ msgstr "生成小部件"
 msgid ""
 "To embed the widget into your website, copy the following code to the "
 "<code>&lt;head></code> section of your website:"
-msgstr ""
-"将小部件嵌入您的网站，将以下代码复制到您网站的<code>&lt;head></code>部分："
+msgstr "将小部件嵌入您的网站，将以下代码复制到您网站的<code>&lt;head></code>部分："
 
 #: eventyay/orga/templates/orga/settings/widget.html:81
 #, python-format
@@ -36912,8 +36876,7 @@ msgstr "这个轨迹正在方案中使用，无法删除。"
 msgid ""
 "This access code has been used for a proposal and cannot be deleted. To "
 "disable it, you can set its validity date to the past."
-msgstr ""
-"此访问代码已用于提案，无法删除。要禁用它，您可以将其有效日期设置为过去。"
+msgstr "此访问代码已用于提案，无法删除。要禁用它，您可以将其有效日期设置为过去。"
 
 #: eventyay/orga/views/cfp.py:959
 msgid "The access code has been sent."
@@ -37197,8 +37160,8 @@ msgid ""
 "ALL related data for ALL events, such as proposals, and speaker profiles, "
 "and uploads, will also be deleted and cannot be restored."
 msgstr ""
-"所有与所有活动相关的数据，如提案、演讲者简介和文件上传，也将被删除，无法恢"
-"复。"
+"所有与所有活动相关的数据，如提案、演讲者简介和文件上传，也将被删除，无法恢复"
+"。"
 
 #: eventyay/orga/views/organizer.py:91
 msgid "The organizer and all related data have been deleted."
@@ -37675,8 +37638,7 @@ msgstr "抱歉，您的帐户目前已被停用。"
 msgid ""
 "We already have a user with that email address. Did you already register "
 "before and just need to log in?"
-msgstr ""
-"我们已经有一个使用该电子邮件地址的用户了。您之前已经注册过了，只需要登录吗？"
+msgstr "我们已经有一个使用该电子邮件地址的用户了。您之前已经注册过了，只需要登录吗？"
 
 #: eventyay/plugins/badges/apps.py:31 eventyay/plugins/badges/apps.py:34
 #: eventyay/plugins/badges/signals.py:55
@@ -38352,8 +38314,7 @@ msgid ""
 "We've been unable to automatically determine how the columns in your file "
 "are aligned. Please help us by selecting which column contain what kind of "
 "data."
-msgstr ""
-"我们无法自动确定文件中列的对齐方式。 请帮助我们选择哪个列包含哪种数据。"
+msgstr "我们无法自动确定文件中列的对齐方式。 请帮助我们选择哪个列包含哪种数据。"
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/import_assign.html:95
 msgid ""
@@ -38483,8 +38444,8 @@ msgid ""
 "After you sent the bank transfer, you can close this window. We will send "
 "you an email as soon as we received your payment."
 msgstr ""
-"发送银行转帐后，您可以关闭此窗口。 我们会在收到您的付款后立即向您发送电子邮"
-"件。"
+"发送银行转帐后，您可以关闭此窗口。 我们会在收到您的付款后立即向您发送电子邮件"
+"。"
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/pending.html:63
 msgid "Open banking app"
@@ -40971,8 +40932,8 @@ msgid ""
 "cancellation fee of <strong>%(fee)s</strong> will be kept and you will "
 "receive a refund of the remainder."
 msgstr ""
-"您可以要求消此订单。 如果订单被许可，将扣除<strong>%(fee)s</strong>的取消费"
-"用，您将收到剩余的退款到您的原始付款方式。"
+"您可以要求消此订单。 如果订单被许可，将扣除<strong>%(fee)s</strong>的取消费用"
+"，您将收到剩余的退款到您的原始付款方式。"
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:497
 #, python-format
@@ -41033,8 +40994,8 @@ msgid ""
 "organizer will then decide on your request. If they approve, your order will "
 "be canceled and all tickets will be invalidated."
 msgstr ""
-"您可以要求取消您的订单。活动筹办者需确认您的请求。经许可后您的订单将会被取"
-"消，全部门票将失效。"
+"您可以要求取消您的订单。活动筹办者需确认您的请求。经许可后您的订单将会被取消"
+"，全部门票将失效。"
 
 #: eventyay/presale/templates/pretixpresale/event/order_cancel.html:34
 msgid ""
@@ -41361,8 +41322,8 @@ msgid ""
 "waiting list. If we notify you, you'll have %(hours)s hours time to buy a "
 "ticket until we assign it to the next person on the list."
 msgstr ""
-"如果门票再次可用，我们将通知等候名单上的第一批人员。 如果我们通知您，您将"
-"有%(hours)s小时的时间来购买们票，直到我们将其分配给列表中的下一个人。"
+"如果门票再次可用，我们将通知等候名单上的第一批人员。 如果我们通知您，您将有%"
+"(hours)s小时的时间来购买们票，直到我们将其分配给列表中的下一个人。"
 
 #: eventyay/presale/templates/pretixpresale/event/waitinglist.html:35
 msgid "Add me to the list"
