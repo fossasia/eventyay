@@ -28,8 +28,8 @@
 					.new-break-hint(v-if="newBreakTooltip", id="new-break-hint", role="tooltip") {{ newBreakTooltip }}
 				session(v-for="un in unscheduled", :key="un.id", :session="un", @startDragging="startDragging", :isDragged="draggedSession && un.id === draggedSession.id", @editSession="editorStart($event)", @deleteSession="deleteSessionDirect($event)", @assignMembers="openAssignModal($event)")
 				.deleted-room-sessions(v-if="deletedRoomSessions.length")
-					h3 {{ $t('Deleted Room Sessions') }}
-					p {{ $t('These sessions were assigned to a room that has been deleted. Drag them into another room to restore them to the schedule.') }}
+					h3 {{ caps.showRoles ? $t('Deleted Room Shifts') : $t('Deleted Room Sessions') }}
+					p {{ caps.showRoles ? $t('These shifts were assigned to a room that has been deleted. Drag them into another room to restore them to the schedule.') : $t('These sessions were assigned to a room that has been deleted. Drag them into another room to restore them to the schedule.') }}
 					session(v-for="session in deletedRoomSessions", :key="session.id", :session="session", @startDragging="startDragging", :isDragged="draggedSession && session.id === draggedSession.id")
 			#schedule-wrapper(v-scrollbar.x.y="")
 				.schedule-controls
@@ -117,6 +117,13 @@
 				#session-editor(@click.stop="")
 					h3.session-editor-title
 						span {{ assignMembersHeading }}
+						button.modal-close-btn(type="button", @click="closeAssignModal", :aria-label="$t('Close')")
+							i.fa.fa-times(aria-hidden="true")
+					
+					.assign-modal-error(v-if="assignModalError")
+						span {{ assignModalError }}
+						button.assign-modal-error-dismiss(type="button", @click="assignModalError = ''", :aria-label="$t('Dismiss')")
+							i.fa.fa-times(aria-hidden="true")
 					
 					.data.assign-data
 						.assign-role(v-for="role in assigningSession.roles", :key="role.id")
@@ -136,9 +143,27 @@
 										option(v-for="vol in availableMembersByRole[role.id]", :key="vol.id", :value="vol.id") {{ vol.name }}{{ vol.email ? ` (${vol.email})` : '' }}
 								.col-md-4
 									button.assign-btn(type="button", @click="assignMember(role.id)", :disabled="assigningWaiting") {{ $t('Assign') }}
-					
-					.button-row
-						bunt-button(@click="closeAssignModal") {{ $t('Close') }}
+
+		confirm-dialog(
+			v-if="caps.showRoles",
+			ref="confirmDialogRef",
+			:title="confirmDialogTitle",
+			:lead="confirmDialogLead",
+			:confirm-label="confirmDialogLabel",
+			:confirm-class="confirmDialogClass",
+			:busy="confirmDialogBusy",
+			:error="confirmDialogError",
+			@confirm="onConfirmDialogConfirm",
+			@cancel="onConfirmDialogCancel")
+
+		dialog.break-confirm-dialog(ref="breakConfirmDialogEl", @click="onBreakDialogBackdrop", @cancel.prevent="cancelBreakDelete")
+			.dialog-inner(@click.stop="")
+				h3 {{ breakConfirmTitle }}
+				p {{ breakConfirmLead }}
+				p.break-confirm-error(v-if="breakConfirmError") {{ breakConfirmError }}
+				.break-confirm-actions
+					button.btn.btn-sm.btn-default(type="button", :disabled="breakConfirmBusy", @click="cancelBreakDelete") {{ $t('Cancel') }}
+					button.btn.btn-sm.btn-danger(type="button", :disabled="breakConfirmBusy", @click="confirmBreakDelete") {{ $t('Delete') }}
 
 	bunt-progress-circular(v-else, size="huge", :page="true")
 </template>
@@ -147,7 +172,9 @@
 import { ref, reactive, computed, onMounted, onUnmounted, onBeforeMount, nextTick } from 'vue'
 import moment, { Moment } from 'moment-timezone'
 import GridSchedule from '~/components/GridSchedule.vue'
-import Session from '~/components/Session.vue'
+import TalkSession from '~/components/Session.vue'
+import ShiftSession from '~/teamshifts-adapter/Session.vue'
+import ConfirmDialog from '~/teamshifts-adapter/ConfirmDialog.vue'
 import api from '~/api'
 import { resolveMode, getCapabilities } from '~/teamshifts-adapter'
 import type { Capabilities } from '~/teamshifts-adapter/types'
@@ -247,6 +274,7 @@ const props = defineProps<{
 
 const mode = resolveMode()
 const caps: Capabilities = getCapabilities(mode)
+const Session = mode === 'shifts' || mode === 'public-shifts' ? ShiftSession : TalkSession
 
 const eventSlug = ref<string | null>(null)
 const organizerSlug = ref<string | null>(null)
@@ -264,7 +292,115 @@ const editorSession = ref<SessionData | null>(null)
 const editorSessionWaiting = ref<boolean>(false)
 const assigningSession = ref<SessionData | null>(null)
 const assigningWaiting = ref<boolean>(false)
+const assignModalError = ref<string>('')
 const selectedMemberIds = ref<Record<string, number | undefined>>({})
+
+const confirmDialogRef = ref<InstanceType<typeof ConfirmDialog> | null>(null)
+const confirmDialogTitle = ref('')
+const confirmDialogLead = ref('')
+const confirmDialogLabel = ref('')
+const confirmDialogClass = ref('btn-primary')
+const confirmDialogBusy = ref(false)
+const confirmDialogError = ref('')
+let confirmDialogResolve: ((value: boolean) => void) | null = null
+let confirmDialogAction: (() => Promise<void>) | null = null
+
+const breakConfirmDialogEl = ref<HTMLDialogElement | null>(null)
+const breakConfirmTitle = ref('')
+const breakConfirmLead = ref('')
+const breakConfirmError = ref('')
+const breakConfirmBusy = ref(false)
+let breakConfirmResolve: ((value: boolean) => void) | null = null
+let breakDeleteId: number | null = null
+
+function showBreakConfirmDialog(id: number): Promise<boolean> {
+  breakDeleteId = id
+  breakConfirmTitle.value = $t('Delete break')
+  breakConfirmLead.value = $t('Are you sure you want to delete this break?')
+  breakConfirmError.value = ''
+  breakConfirmBusy.value = false
+  return new Promise((resolve) => {
+    breakConfirmResolve = resolve
+    nextTick(() => breakConfirmDialogEl.value?.showModal?.())
+  })
+}
+
+async function confirmBreakDelete() {
+  if (!breakDeleteId) return
+  breakConfirmBusy.value = true
+  breakConfirmError.value = ''
+  try {
+    await api.deleteTalk({ id: breakDeleteId })
+    if (schedule.value) {
+      schedule.value.talks = schedule.value.talks.filter((s) => s.id !== breakDeleteId)
+    }
+    await fetchAdditionalScheduleData()
+    breakConfirmDialogEl.value?.close()
+    breakConfirmResolve?.(true)
+  } catch (error) {
+    breakConfirmError.value = $t('Failed to delete break. Please try again.')
+    breakConfirmResolve?.(false)
+  } finally {
+    breakConfirmBusy.value = false
+    breakConfirmResolve = null
+    breakDeleteId = null
+  }
+}
+
+function cancelBreakDelete() {
+  breakConfirmDialogEl.value?.close()
+  breakConfirmResolve?.(false)
+  breakConfirmResolve = null
+  breakDeleteId = null
+}
+
+function onBreakDialogBackdrop(event: MouseEvent) {
+  if (event.target === breakConfirmDialogEl.value) cancelBreakDelete()
+}
+
+function showConfirmDialog(opts: { title: string; lead: string; confirmLabel: string; confirmClass?: string; onConfirm?: () => Promise<void> }): Promise<boolean> {
+  confirmDialogTitle.value = opts.title
+  confirmDialogLead.value = opts.lead
+  confirmDialogLabel.value = opts.confirmLabel
+  confirmDialogClass.value = opts.confirmClass || 'btn-primary'
+  confirmDialogBusy.value = false
+  confirmDialogError.value = ''
+  confirmDialogAction = opts.onConfirm || null
+  return new Promise((resolve) => {
+    confirmDialogResolve = resolve
+    nextTick(() => confirmDialogRef.value?.show())
+  })
+}
+
+async function onConfirmDialogConfirm() {
+  if (confirmDialogAction) {
+    confirmDialogBusy.value = true
+    confirmDialogError.value = ''
+    try {
+      await confirmDialogAction()
+      confirmDialogRef.value?.close()
+      confirmDialogResolve?.(true)
+    } catch (error) {
+      confirmDialogError.value = (error as Error).message || $t('An error occurred. Please try again.')
+      confirmDialogResolve?.(false)
+    } finally {
+      confirmDialogBusy.value = false
+      confirmDialogResolve = null
+      confirmDialogAction = null
+    }
+  } else {
+    confirmDialogRef.value?.close()
+    confirmDialogResolve?.(true)
+    confirmDialogResolve = null
+    confirmDialogAction = null
+  }
+}
+
+function onConfirmDialogCancel() {
+  confirmDialogResolve?.(false)
+  confirmDialogResolve = null
+  confirmDialogAction = null
+}
 const isUnassigning = ref<boolean>(false)
 const locales = ref<string[]>(['en'])
 const unassignedFilterString = ref<string>('')
@@ -358,7 +494,8 @@ const unassignedSortMethods = computed<SortMethod[]>(() => {
 const unscheduled = computed<SessionData[]>(() => {
   if (!schedule.value) return []
   let sessions: SessionData[] = []
-  for (const session of schedule.value.talks.filter((s) => !s.start)) {
+  const isShifts = mode === 'shifts' || mode === 'public-shifts'
+  for (const session of schedule.value.talks.filter((s) => isShifts ? !s.room : !s.start)) {
     sessions.push({
       id: session.id,
       code: session.code,
@@ -407,6 +544,8 @@ const unscheduled = computed<SessionData[]>(() => {
 
 const deletedRoomSessions = computed<SessionData[]>(() => {
   if (!schedule.value) return []
+  const isShifts = mode === 'shifts' || mode === 'public-shifts'
+  if (isShifts) return []
   return schedule.value.talks
     .filter(
       (session) =>
@@ -650,50 +789,61 @@ async function editorSave(): Promise<void> {
 
 async function editorDelete(): Promise<void> {
   if (!editorSession.value) return
-  const deleted = await deleteSessionById(editorSession.value.id)
+  let deleted = false
+  if (mode === 'shifts' || mode === 'public-shifts') {
+    deleted = await deleteShiftById(editorSession.value.id)
+  } else {
+    if (editorSession.value.code) return
+    deleted = await deleteTalkBreakById(editorSession.value.id)
+  }
   if (deleted) {
     editorSession.value = null
   }
 }
 
 async function deleteSessionDirect(session: SessionData | Talk): Promise<void> {
-  await deleteSessionById(session.id)
-}
-
-async function deleteSessionById(id: number): Promise<boolean> {
-  if (!window.confirm($t('Are you sure you want to delete this session?'))) return false
-
-  editorSessionWaiting.value = true
-  try {
-    await api.deleteTalk({ id })
-    if (schedule.value) {
-      schedule.value.talks = schedule.value.talks.filter((s) => s.id !== id)
-    }
-    await fetchAdditionalScheduleData()
-    return true
-  } catch (error) {
-    console.error('Failed to delete session', error)
-    window.alert($t('Failed to delete session. Please try again.'))
-    return false
-  } finally {
-    editorSessionWaiting.value = false
+  if (mode === 'shifts' || mode === 'public-shifts') {
+    await deleteShiftById(session.id)
+  } else {
+    if (session.code) return
+    await deleteTalkBreakById(session.id)
   }
 }
 
+async function deleteShiftById(id: number): Promise<boolean> {
+  return showConfirmDialog({
+    title: $t('Delete shift'),
+    lead: $t('Are you sure you want to delete this shift? This action cannot be undone.'),
+    confirmLabel: $t('Delete'),
+    confirmClass: 'btn-danger',
+    onConfirm: async () => {
+      await api.deleteTalk({ id })
+      if (schedule.value) {
+        schedule.value.talks = schedule.value.talks.filter((s) => s.id !== id)
+      }
+      await fetchAdditionalScheduleData()
+    },
+  })
+}
+
+async function deleteTalkBreakById(id: number): Promise<boolean> {
+  return showBreakConfirmDialog(id)
+}
+
 async function openAssignModal(session: SessionData | Talk): Promise<void> {
+  assignModalError.value = ''
   assigningSession.value = { ...session } as SessionData
   if (assigningSession.value.roles && assigningSession.value.roles.length > 0) {
-    const promises = []
     for (const role of assigningSession.value.roles) {
       selectedMemberIds.value[String(role.id)] = undefined
-      promises.push(loadMembers(role.id))
     }
-    await Promise.all(promises)
+    await Promise.all(assigningSession.value.roles.map((role) => loadMembers(role.id)))
   }
 }
 
 function closeAssignModal(): void {
   assigningSession.value = null
+  assignModalError.value = ''
   selectedMemberIds.value = {}
   availableMembersByRole.value = {}
 }
@@ -704,7 +854,7 @@ async function loadMembers(roleId: number): Promise<void> {
     availableMembersByRole.value[String(roleId)] = response.members ?? []
   } catch (error) {
     console.error('Failed to fetch members', error)
-    window.alert($t('Failed to load members. Please try again.'))
+    assignModalError.value = $t('Failed to load members. Please try again.')
   }
 }
 
@@ -730,7 +880,7 @@ async function assignMember(roleId: number): Promise<void> {
     selectedMemberIds.value[String(roleId)] = undefined
   } catch (error) {
     console.error('Failed to assign member', error)
-    window.alert($t('Failed to assign member. Please try again.'))
+    assignModalError.value = $t('Failed to assign member. Please try again.')
   } finally {
     assigningWaiting.value = false
   }
@@ -738,7 +888,13 @@ async function assignMember(roleId: number): Promise<void> {
 
 async function unassignMember(roleId: number, userId: number): Promise<void> {
   if (!assigningSession.value) return
-  if (!window.confirm($t('Are you sure you want to unassign this member?'))) return
+  const confirmed = await showConfirmDialog({
+    title: $t('Unassign member'),
+    lead: $t('Are you sure you want to unassign this member?'),
+    confirmLabel: $t('Unassign'),
+    confirmClass: 'btn-danger',
+  })
+  if (!confirmed) return
   
   assigningWaiting.value = true
   try {
@@ -756,7 +912,7 @@ async function unassignMember(roleId: number, userId: number): Promise<void> {
     await fetchAdditionalScheduleData()
   } catch (error) {
     console.error('Failed to unassign member', error)
-    window.alert($t('Failed to unassign member. Please try again.'))
+    assignModalError.value = $t('Failed to unassign member. Please try again.')
   } finally {
     assigningWaiting.value = false
   }
@@ -808,9 +964,13 @@ async function stopDragging(): Promise<void> {
       if (draggedSession.value.code && !draggedSession.value.deletedRoom) {
         const movedSession = schedule.value?.talks.find((s) => s.id === draggedSession.value!.id)
         if (movedSession) {
-          movedSession.start = null
-          movedSession.end = null
-          movedSession.room = undefined
+          if (mode === 'shifts' || mode === 'public-shifts') {
+            movedSession.room = undefined
+          } else {
+            movedSession.start = null
+            movedSession.end = null
+            movedSession.room = undefined
+          }
           await saveTalk(movedSession)
           await fetchAdditionalScheduleData()
         }
@@ -1184,10 +1344,27 @@ onUnmounted(() => {
 		left: 50%
 		transform: translate(-50%, -50%)
 		width: 680px
+		max-height: calc(100vh - 48px)
+		overflow-y: auto
 
 		.session-editor-title
 			font-size: 22px
 			margin-bottom: 16px
+			display: flex
+			justify-content: space-between
+			align-items: center
+			.modal-close-btn
+				background: none
+				border: none
+				font-size: 20px
+				color: #666
+				cursor: pointer
+				padding: 4px 8px
+				line-height: 1
+				border-radius: 4px
+				&:hover
+					color: #333
+					background-color: rgba(0, 0, 0, 0.05)
 		.button-row
 			display: flex
 			width: 100%
@@ -1255,6 +1432,27 @@ onUnmounted(() => {
 				margin-bottom: 24px
 			.assign-new
 				align-items: center
+		.assign-modal-error
+			display: flex
+			align-items: center
+			justify-content: space-between
+			gap: 8px
+			padding: 10px 14px
+			margin-bottom: 16px
+			background-color: #fdecea
+			border: 1px solid #f5c6cb
+			border-radius: 4px
+			color: #721c24
+			font-size: 14px
+			.assign-modal-error-dismiss
+				background: none
+				border: none
+				color: #721c24
+				cursor: pointer
+				padding: 2px 6px
+				font-size: 14px
+				&:hover
+					opacity: 0.7
 		.member-chip
 			display: inline-flex
 			align-items: center
@@ -1296,4 +1494,45 @@ onUnmounted(() => {
 			&:disabled
 				opacity: 0.6
 				cursor: default
+.break-confirm-dialog
+	border: none
+	border-radius: 4px
+	padding: 0
+	max-width: 400px
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2)
+	&::backdrop
+		background: rgba(0, 0, 0, 0.5)
+	.dialog-inner
+		padding: 32px 40px
+		h3
+			margin: 0 0 12px
+			font-size: 18px
+		p
+			margin: 0 0 16px
+			color: $clr-grey-700
+			line-height: 1.4
+		.break-confirm-error
+			color: $clr-danger
+			margin: 0 0 12px
+		.break-confirm-actions
+			display: flex
+			justify-content: flex-end
+			gap: 8px
+			.btn
+				display: inline-block
+				padding: 6px 12px
+				font-size: 14px
+				line-height: 1.4
+				border-radius: 4px
+				border: 1px solid transparent
+				cursor: pointer
+				&:disabled
+					opacity: 0.65
+					cursor: default
+			.btn-default
+				background: $clr-white
+				border-color: $clr-dividers-light
+				color: $clr-grey-900
+			.btn-danger
+				button-style(color: $clr-danger, text-color: $clr-white)
 </style>

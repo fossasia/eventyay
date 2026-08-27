@@ -137,6 +137,7 @@ const SpeakerDetail = defineAsyncComponent(() => import('~/components/SpeakerDet
 const TalkDetail = defineAsyncComponent(() => import('~/components/TalkDetail'))
 import { findScrollParent, getLocalizedString, getSessionTime, getSessionTypeLabel, isProperSession, isPopularityFeatureEnabled, isPopularitySortAvailable, isPopularityVisibleOnSchedule, normalizePopularityCount, computeTalkExporters, areScheduleExportsDisabled, resolveScheduleApiBase, talksToScheduleSessions, buildSessionsBySpeaker, talkToSession, sortSessionsByStart, isTalkSchedulePending, getCsrfToken, loadStarredSharingPreference, updateStarredSharingPreference, fetchWidgetScheduleData } from '~/utils'
 import { changeScheduleLanguage } from './i18n.js'
+import { isShiftSchedule, resolveMode } from './teamshifts-adapter'
 
 function normalizeLocaleCode (code) {
 	if (!code) return ''
@@ -240,12 +241,17 @@ export default {
 			remoteApiUrl: computed(() => this.remoteApiUrl),
 			buntTeleportTarget: computed(() => this.$refs.teleportTarget),
 			onSessionLinkClick: (event, session) => {
+				if (this.isShiftMode) {
+					event.preventDefault()
+					return
+				}
 				if (this.onHomeServer) return
 				event.preventDefault()
 
 				this.showSessionDetails(session, event)
 			},
 			generateSessionLinkUrl: ({eventUrl, session}) => {
+				if (this.isShiftMode) return undefined
 				if (!this.onHomeServer) return `#session/${session.id}/`
 				return `${eventUrl}${wipLinkPrefix()}talk/${session.id}/`
 			},
@@ -342,6 +348,9 @@ export default {
 		}
 	},
 	computed: {
+		isShiftMode () {
+			return isShiftSchedule(this.schedule)
+		},
 		defaultJoinRoomBaseUrl () {
 			if (!this.eventUrl) return ''
 			return `${this.eventUrl.replace(/\/$/, '')}/video/rooms/`
@@ -455,6 +464,7 @@ export default {
 				tracksLookup: this.tracksLookup,
 				roomsLookup: this.roomsLookup,
 				includePopularity: true,
+				mode: resolveMode(this.schedule),
 			}
 			const sessions = []
 			for (const talk of this.schedule.talks) {
@@ -489,6 +499,7 @@ export default {
 				tracksLookup: this.tracksLookup,
 				roomsLookup: this.roomsLookup,
 				includePopularity: true,
+				mode: resolveMode(this.schedule),
 			})
 		},
 		// sessions: baseSessions + search filter. Used for display.
@@ -727,6 +738,9 @@ export default {
 					return
 				}
 			}
+		}
+		if (this.isShiftMode) {
+			this.favsReadOnly = true
 		}
 		// Read toolbar metadata (version, exporters) injected by Django
 		const metaEl = document.getElementById('pretalx-schedule-meta')
