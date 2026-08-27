@@ -1,0 +1,24 @@
+{% extends "orga/mails/outbox_list.html" %}
+
+{% load i18n %}
+
+{% block extra_title %}{% translate "Drafts" %} :: {% endblock extra_title %}
+
+{% block mail_list_heading %}
+    {{ page_obj.paginator.count }}
+    {% blocktranslate trimmed count count=page_obj.paginator.count %}
+        draft
+    {% plural %}
+        drafts
+    {% endblocktranslate %}
+{% endblock mail_list_heading %}
+
+{% block mail_list_bulk_actions %}{% endblock mail_list_bulk_actions %}
+
+{% block mail_list_page_actions %}{% endblock mail_list_page_actions %}
+
+{% block mail_row_primary_action %}
+  <a href="{{ mail.urls.to_outbox }}" title="{% translate 'Move to outbox' %}" class="btn btn-sm btn-success">
+    <i class="fa fa-mail-forward"></i>
+  </a>
+{% endblock mail_row_primary_action %}
