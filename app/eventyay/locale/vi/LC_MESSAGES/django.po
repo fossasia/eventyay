@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
 "PO-Revision-Date: 2026-08-27 08:54+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Vietnamese <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/vi/>\n"
 "Language: vi\n"
@@ -8866,8 +8866,7 @@ msgstr "Thời gian kết thúc cung cấp sản phẩm không thể trước th
 #, fuzzy
 #| msgid "The product's availability cannot end before it starts."
 msgid "Admission validity cannot end before it starts."
-msgstr ""
-"Thời gian kết thúc cung cấp sản phẩm không thể trước thời gian bắt đầu."
+msgstr "Thời gian kết thúc cung cấp sản phẩm không thể trước thời gian bắt đầu."
 
 #: eventyay/base/models/product.py:807
 msgid "Admission validity offsets cannot be negative."
@@ -29692,8 +29691,7 @@ msgstr ""
 #, fuzzy
 #| msgid "A new client secret has been generated and is now effective."
 msgid "A new setup code has been generated. Scan or enter the updated QR code."
-msgstr ""
-"Mã bí mật ứng dụng (client secret) mới đã được tạo và hiện có hiệu lực."
+msgstr "Mã bí mật ứng dụng (client secret) mới đã được tạo và hiện có hiệu lực."
 
 #: eventyay/control/views/organizer_views/device_view.py:350
 msgid "This device currently does not have access."
