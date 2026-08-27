@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
 "PO-Revision-Date: 2026-08-27 08:33+0000\n"
-"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
+"Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/ja/>\n"
 "Language: ja\n"
@@ -149,8 +149,7 @@ msgstr ""
 
 #: eventyay/agenda/templates/agenda/base.html:43
 msgid "This schedule-related page is non-public. Only organisers can see it."
-msgstr ""
-"このスケジュール関連ページは非公開です。主催者のみが見ることができます。"
+msgstr "このスケジュール関連ページは非公開です。主催者のみが見ることができます。"
 
 #: eventyay/agenda/templates/agenda/base.html:60
 #, fuzzy
@@ -246,8 +245,8 @@ msgid ""
 "follow up with the full schedule in time, stay tuned!"
 msgstr ""
 "魅力的な講演のリストを用意したので、ぜひ私達のカンファレンスの様子を知ってく"
-"ださい。これは完全なスケジュールではありませんので、ご注意ください。詳細は"
-"追ってお知らせいたしますので、ご期待ください。"
+"ださい。これは完全なスケジュールではありませんので、ご注意ください。詳細は追"
+"ってお知らせいたしますので、ご期待ください。"
 
 #: eventyay/agenda/templates/agenda/featured.html:45
 #: eventyay/agenda/templates/agenda/schedule.html:34
@@ -6101,8 +6100,8 @@ msgid ""
 "You can restrict the access code to a single session type, or leave it open "
 "for all session types."
 msgstr ""
-"アクセスコードは単一の投稿タイプに限定することも可能ですし、すべての投稿タイ"
-"プに適用することも可能です。"
+"アクセスコードは単一の投稿タイプに限定することも可能ですし、すべての投稿"
+"タイプに適用することも可能です。"
 
 #: eventyay/base/models/access_code.py:48 eventyay/base/models/vouchers.py:124
 #: eventyay/base/models/vouchers.py:573 eventyay/control/views/vouchers.py:113
@@ -6198,8 +6197,8 @@ msgid ""
 "If you have registered with an email address that has a gravatar account, we "
 "can retrieve your profile picture from there."
 msgstr ""
-"gravatarアカウントに紐付けられたメールアドレスを使って登録を行った場合、プロ"
-"フィール画像はその画像が利用されます。"
+"gravatarアカウントに紐付けられたメールアドレスを使って登録を行った場合、"
+"プロフィール画像はその画像が利用されます。"
 
 #: eventyay/base/models/auth.py:285
 #: eventyay/orga/templates/orga/submission/speakers.html:41
@@ -6595,8 +6594,7 @@ msgstr ""
 
 #: eventyay/base/models/event.py:525 eventyay/base/models/organizer.py:133
 msgid "The slug may only contain letters, numbers, dots and dashes."
-msgstr ""
-"スラグには、文字、数字、ドット(.)、ダッシュ(-)のみを含めることができます。"
+msgstr "スラグには、文字、数字、ドット(.)、ダッシュ(-)のみを含めることができます。"
 
 #: eventyay/base/models/event.py:529 eventyay/base/models/organizer.py:137
 #: eventyay/control/templates/pretixcontrol/admin/organizers.html:53
@@ -6744,8 +6742,7 @@ msgstr ""
 #: eventyay/base/models/event.py:626
 msgid ""
 "All event dates will be localised and interpreted to be in this timezone."
-msgstr ""
-"すべてのイベントの日付はローカライズされ、そのタイムゾーンで解釈されます。"
+msgstr "すべてのイベントの日付はローカライズされ、そのタイムゾーンで解釈されます。"
 
 #: eventyay/base/models/event.py:630
 msgid ""
@@ -6785,8 +6782,8 @@ msgid ""
 "Upload a custom CSS file if changing the primary colour is not sufficient "
 "for you."
 msgstr ""
-"プライマリカラーの変更だけでは不十分な場合は、カスタムCSSファイルをアップロー"
-"ドしてください。"
+"プライマリカラーの変更だけでは不十分な場合は、カスタムCSSファイルを"
+"アップロードしてください。"
 
 #: eventyay/base/models/event.py:668
 msgid ""
@@ -7228,8 +7225,8 @@ msgstr "ファイル"
 #: eventyay/base/models/information.py:51
 msgid "Please try to keep your upload small, preferably below 16 MB."
 msgstr ""
-"ファイルをアップロードする際には、サイズが16MB以下となるよう留意してくださ"
-"い。"
+"ファイルをアップロードする際には、サイズが16MB以下となるよう留意してください"
+"。"
 
 #: eventyay/base/models/invoices.py:139
 #, python-format
@@ -13164,8 +13161,7 @@ msgstr "タスクが完了しました。"
 #: eventyay/cfp/flow.py:466
 msgid ""
 "Your draft was saved. You can continue to edit it as long as the CfP is open."
-msgstr ""
-"下書きは保存されました。CfPが募集中の間は、編集を続けることができます。"
+msgstr "下書きは保存されました。CfPが募集中の間は、編集を続けることができます。"
 
 #: eventyay/cfp/flow.py:473
 msgid ""
@@ -13333,8 +13329,7 @@ msgstr "この投稿はすでに確定しています。あなたに会えるの
 msgid ""
 "This proposal cannot be confirmed at this time – please contact us if you "
 "think this is an error."
-msgstr ""
-"この投稿は現時点では確認できません - エラーだと思われる場合はご連絡ください。"
+msgstr "この投稿は現時点では確認できません - エラーだと思われる場合はご連絡ください。"
 
 #: eventyay/cfp/phrases.py:28
 msgid "This proposal cannot be edited anymore."
@@ -13388,15 +13383,13 @@ msgstr "招待を送りました！"
 
 #: eventyay/cfp/phrases.py:48
 msgid "You are now part of this proposal! Please fill in your profile below."
-msgstr ""
-"あなたもこの投稿の一部になりました 以下にプロフィールを記入してください。"
+msgstr "あなたもこの投稿の一部になりました 以下にプロフィールを記入してください。"
 
 #: eventyay/cfp/phrases.py:51
 msgid ""
 "We are experiencing difficulties when sending mails, but your session was "
 "submitted successfully!"
-msgstr ""
-"メール送信時に問題が発生しましたが、あなたのトークは無事に投稿されました!"
+msgstr "メール送信時に問題が発生しましたが、あなたのトークは無事に投稿されました!"
 
 #: eventyay/cfp/phrases.py:69 eventyay/orga/views/cfp.py:440
 msgid "Custom fields"
@@ -13408,8 +13401,8 @@ msgid ""
 "You can enter proposals until %(deadline)s (%(timezone)s), %(until_string)s "
 "from now."
 msgstr ""
-"今から %(deadline)s (%(timezone)s), %(until_string)s まで、投稿を入力できま"
-"す。"
+"今から %(deadline)s (%(timezone)s), %(until_string)s まで、投稿を入力できます"
+"。"
 
 #: eventyay/cfp/templates/cfp/event/cfp.html:35
 #, python-format
@@ -13492,8 +13485,8 @@ msgid ""
 "If you already created a proposal for a different event on this server, you "
 "can re-use your account to log in for this event."
 msgstr ""
-"もしこのサーバ上の別のイベントに対して提案したことがあれば、その時のアカウン"
-"トでログインすることで再利用できます。"
+"もしこのサーバ上の別のイベントに対して提案したことがあれば、その時の"
+"アカウントでログインすることで再利用できます。"
 
 #: eventyay/cfp/templates/cfp/event/login.html:15
 msgid ""
@@ -13758,8 +13751,8 @@ msgid ""
 "session, please contact the organiser instead."
 msgstr ""
 "選考中に、こちらからあなたの提案を撤回することができます。この動作はやり直し"
-"ができません。撤回しても良いかどうか確かでない場合は主催者に連絡してくださ"
-"い。"
+"ができません。撤回しても良いかどうか確かでない場合は主催者に連絡してください"
+"。"
 
 #: eventyay/cfp/templates/cfp/event/user_submission_edit.html:148
 msgid "Discard draft proposal"
@@ -14684,9 +14677,9 @@ msgid ""
 "reasons, we cannot process it. <br> Please go back to the last page, "
 "refresh, and then try again."
 msgstr ""
-"このリクエストが本当にあなたから送られたものかどうか確認できませんでした。セ"
-"キュリティ上の理由により、処理することができません。<br>前のページに戻り、リ"
-"フレッシュしてから試してみてください。"
+"このリクエストが本当にあなたから送られたものかどうか確認できませんでした。"
+"セキュリティ上の理由により、処理することができません。<br>前のページに戻り、"
+"リフレッシュしてから試してみてください。"
 
 #: eventyay/common/templates/404.html:6 eventyay/common/templates/404.html:8
 #: eventyay/common/templates/404.html:11
@@ -15849,11 +15842,11 @@ msgid ""
 "your instance. You can disable this behavior here at any time."
 msgstr ""
 "アップデートチェックの間、eventyayは匿名のユニークなインストールID、eventyay"
-"の現在のバージョン、インストールされているプラグイン、インストール中のアク"
-"ティブなイベントと非アクティブなイベントの数をeventyay開発者によって運営され"
-"ているサーバーに報告します。私たちは匿名のデータのみを保存し、IPアドレスは一"
-"切保存せず、あなたが誰なのか、どこであなたのインスタンスを見つけたのかはわか"
-"りません。この機能はいつでも無効にすることができます。"
+"の現在のバージョン、インストールされているプラグイン、インストール中の"
+"アクティブなイベントと非アクティブなイベントの数をeventyay開発者によって運営"
+"されているサーバーに報告します。私たちは匿名のデータのみを保存し、IPアドレス"
+"は一切保存せず、あなたが誰なのか、どこであなたのインスタンスを見つけたのかは"
+"わかりません。この機能はいつでも無効にすることができます。"
 
 #: eventyay/control/forms/admin/admin.py:28
 msgid "Email notifications"
@@ -23866,8 +23859,8 @@ msgid ""
 "Then, copy the following code to the place of your website where you want "
 "the widget to show up:"
 msgstr ""
-"次に以下のコードを、あなたのウェブサイトのウィジェットを表示させたい場所にコ"
-"ピーしてください。"
+"次に以下のコードを、あなたのウェブサイトのウィジェットを表示させたい場所に"
+"コピーしてください。"
 
 #: eventyay/control/templates/pretixcontrol/event/widget.html:39
 #: eventyay/control/templates/pretixcontrol/event/widget.html:52
@@ -29888,8 +29881,8 @@ msgid ""
 "This short name is already taken, please choose another one (or ask the "
 "owner of that event to add you to their team)."
 msgstr ""
-"この短い名前は既に取られています。別の名前を選択してください（または、そのイ"
-"ベントのオーナーにあなたをチームに加えるように依頼してください）。"
+"この短い名前は既に取られています。別の名前を選択してください（または、その"
+"イベントのオーナーにあなたをチームに加えるように依頼してください）。"
 
 #: eventyay/event/forms.py:315
 msgid ""
@@ -29897,9 +29890,9 @@ msgid ""
 "session types, and email templates. Please check those settings once the "
 "event has been created!"
 msgstr ""
-"メール設定や提案タイプ、メールテンプレートなど、過去のイベントから設定をコ"
-"ピーすることができます。イベントが作成されたら、これらの設定を確認してくださ"
-"い"
+"メール設定や提案タイプ、メールテンプレートなど、過去のイベントから設定を"
+"コピーすることができます。イベントが作成されたら、これらの設定を確認してくだ"
+"さい"
 
 #: eventyay/event/stages.py:40
 msgid "Preparation"
@@ -33789,8 +33782,8 @@ msgid ""
 "you have published your schedule. Should end with a slash."
 msgstr ""
 "HTMLエクスポートでスケジュールを公開する場合、正しい絶対URLを様々な場所に設定"
-"する必要があります。この値はスケジュールを公開した後に設定してください。ス"
-"ラッシュで終わる必要があります。"
+"する必要があります。この値はスケジュールを公開した後に設定してください。"
+"スラッシュで終わる必要があります。"
 
 #: eventyay/orga/forms/event.py:247
 msgid "Enable submission comments"
@@ -33982,8 +33975,8 @@ msgid ""
 "Set to allow external pages to show the schedule widget, even if the "
 "schedule is not shown here using eventyay."
 msgstr ""
-"eventyayを使ってここにスケジュールが表示されていなくても、外部ページにスケ"
-"ジュールウィジェットを表示させるように設定します。"
+"eventyayを使ってここにスケジュールが表示されていなくても、外部ページに"
+"スケジュールウィジェットを表示させるように設定します。"
 
 #: eventyay/orga/forms/event.py:433
 msgid "Limit days"
@@ -34458,8 +34451,7 @@ msgstr "新しいスケジュールバージョンをリリースしました"
 
 #: eventyay/orga/forms/schedule.py:44
 msgid "This schedule version was used already, please choose a different one."
-msgstr ""
-"このスケジュール版はすでに使用されています。別のものを選択してください。"
+msgstr "このスケジュール版はすでに使用されています。別のものを選択してください。"
 
 #: eventyay/orga/forms/schedule.py:58 eventyay/orga/forms/speaker.py:20
 #: eventyay/orga/templates/orga/speaker/information_list.html:42
@@ -34609,8 +34601,8 @@ msgid ""
 "href=\"http://www.heropatterns.com/\">heropatterns.com</a>, CC BY 4.0."
 msgstr ""
 "フロントページのヘッダーバナーがどのようにスタイリングされるかを選択します。"
-"パターンのソース: <a href=“http://www.heropatterns.com/“>heropatterns.com</"
-"a>, CC BY 4.0."
+"パターンのソース: <a href=“http://www.heropatterns.com/“>heropatterns.com</a>"
+", CC BY 4.0."
 
 #: eventyay/orga/phrases.py:13
 msgid "Schedule display format"
@@ -36671,8 +36663,8 @@ msgid ""
 "You haven’t released a schedule yet – many of these data exporters only work "
 "on a released schedule."
 msgstr ""
-"スケジュールがリリースされていません - データエクスポートの機能の多くは、リ"
-"リース済みのスケジュールをもとにして動作します。"
+"スケジュールがリリースされていません - データエクスポートの機能の多くは、"
+"リリース済みのスケジュールをもとにして動作します。"
 
 #: eventyay/orga/templates/orga/settings/import_export.html:388
 msgid ""
@@ -36742,8 +36734,8 @@ msgid ""
 "offered an additional %(quotation_open)sAbstain%(quotation_close)s button "
 "when reviewing proposals."
 msgstr ""
-"レビュースコアやテキストが不要な場合、レビュアーは投稿をレビューする際に "
-"%(quotation_open)sAbstain%(quotation_close)s ボタンを追加することを提案するこ"
+"レビュースコアやテキストが不要な場合、レビュアーは投稿をレビューする際に %"
+"(quotation_open)sAbstain%(quotation_close)s ボタンを追加することを提案するこ"
 "とが可能です。"
 
 #: eventyay/orga/templates/orga/settings/review.html:82
@@ -36820,9 +36812,10 @@ msgid ""
 "your homepage, instead of using this page. If you want to disable the "
 "schedule on here entirely, please activate the setting below."
 msgstr ""
-"eventyayスケジュールウィジェットを使うことで、作成したスケジュールをこのサイ"
-"トだけではなく、あなたのウェブページにも表示することができるようになります。"
-"このサイトのスケジュールを無効化したい場合、以下の設定を有効化してください。"
+"eventyayスケジュールウィジェットを使うことで、作成したスケジュールをこの"
+"サイトだけではなく、あなたのウェブページにも表示することができるようになりま"
+"す。このサイトのスケジュールを無効化したい場合、以下の設定を有効化してくださ"
+"い。"
 
 #: eventyay/orga/templates/orga/settings/widget.html:35
 msgid ""
@@ -36830,10 +36823,11 @@ msgid ""
 "website. This way, your attendees can see your schedule without leaving your "
 "website, and you can style the schedule to fit right in with your website."
 msgstr ""
-"eventyayスケジュールウィジェットを使うことで、作成されたスケジュールをイベン"
-"トウェブサイトに埋め込むことができるようになります。これによって、ウェブサイ"
-"ト間を移動することなく、作成されたスケジュールを確認することができるようにな"
-"ります。また、ウェブサイトにあわせてスタイルを変更することも可能です。"
+"eventyayスケジュールウィジェットを使うことで、作成されたスケジュールを"
+"イベントウェブサイトに埋め込むことができるようになります。これによって、"
+"ウェブサイト間を移動することなく、作成されたスケジュールを確認することができ"
+"るようになります。また、ウェブサイトにあわせてスタイルを変更することも可能で"
+"す。"
 
 #: eventyay/orga/templates/orga/settings/widget.html:42
 msgid ""
@@ -36860,8 +36854,7 @@ msgstr ""
 msgid ""
 "Please look at <a href=\"%(link)s\">our documentation</a> for more "
 "information."
-msgstr ""
-"より詳しくは <a href=\"%(link)s\">私達のドキュメント</a> を参照ください。"
+msgstr "より詳しくは <a href=\"%(link)s\">私達のドキュメント</a> を参照ください。"
 
 #: eventyay/orga/templates/orga/settings/widget.html:90
 msgid "Widget preview"
@@ -36933,9 +36926,9 @@ msgid ""
 "files (e.g. a conference styleguide). <br> They are shown to the selected "
 "speakers above the list of their submitted sessions."
 msgstr ""
-"重要なメッセージ (例: “必要な場合はHDMIコネクタを用意してください”) やファイ"
-"ル (例: カンファレンススタイルガイド)。<br> この内容は、上記の講演投稿一覧に"
-"表示されている、選択された講演者に対して表示されます。"
+"重要なメッセージ (例: “必要な場合はHDMIコネクタを用意してください”) や"
+"ファイル (例: カンファレンススタイルガイド)。<br> この内容は、上記の講演投稿"
+"一覧に表示されている、選択された講演者に対して表示されます。"
 
 #: eventyay/orga/templates/orga/speaker/information_list.html:34
 msgid "Add a new note"
@@ -37835,8 +37828,7 @@ msgstr "メールが送付されました。"
 #: eventyay/orga/views/mails.py:318
 msgid ""
 "The email has been saved. When you send it, the updated text will be used."
-msgstr ""
-"メールが保存されました。送付する際には、更新したテキストが使用されます。"
+msgstr "メールが保存されました。送付する際には、更新したテキストが使用されます。"
 
 #: eventyay/orga/views/mails.py:332
 msgid "The mail has been copied, you can edit it now."
@@ -37918,8 +37910,8 @@ msgid ""
 "Success! {accepted} proposals were accepted, {rejected} proposals were "
 "rejected."
 msgstr ""
-"成功です！ {accepted} 個の投稿がアクセプトされ、 {rejected} 個の投稿がリジェ"
-"クトされました。"
+"成功です！ {accepted} 個の投稿がアクセプトされ、 {rejected} 個の投稿が"
+"リジェクトされました。"
 
 #: eventyay/orga/views/review.py:291
 #, python-brace-format
@@ -38005,13 +37997,12 @@ msgstr "やりました、あなたのスケジュールがリリースされま
 msgid ""
 "Reset successful – start editing the schedule from your selected version!"
 msgstr ""
-"リセットに成功しました - 選択したバージョンからスケジュールの編集を開始しま"
-"す！"
+"リセットに成功しました - 選択したバージョンからスケジュールの編集を開始します"
+"！"
 
 #: eventyay/orga/views/schedule.py:165
 msgid "Error retrieving the schedule version to reset to."
-msgstr ""
-"リセットするスケジュールのバージョンを取得する際にエラーが発生しました。"
+msgstr "リセットするスケジュールのバージョンを取得する際にエラーが発生しました。"
 
 #: eventyay/orga/views/schedule.py:224
 msgid "You can only regenerate mails after the first schedule was released."
@@ -38273,9 +38264,9 @@ msgid ""
 "invite them to create an account. If you have more than one co-speaker, you "
 "can add more speakers after finishing the proposal process."
 msgstr ""
-"共同発表者がいる場合は、こちらにその方のメールアドレスを追加していただけれ"
-"ば、アカウントを作成するための招待を行います。複数の共同発表者がいる場合は、"
-"投稿プロセスが完了した後に追加することができます。"
+"共同発表者がいる場合は、こちらにその方のメールアドレスを追加していただければ"
+"、アカウントを作成するための招待を行います。複数の共同発表者がいる場合は、投"
+"稿プロセスが完了した後に追加することができます。"
 
 #: eventyay/person/forms/profile.py:210
 #, python-brace-format
@@ -38286,8 +38277,7 @@ msgstr ""
 msgid ""
 "Please provide a profile picture or allow us to load your picture from "
 "gravatar!"
-msgstr ""
-"プロフィール写真を登録するか、gravatar から写真を読み込ませてください！"
+msgstr "プロフィール写真を登録するか、gravatar から写真を読み込ませてください！"
 
 #: eventyay/person/forms/profile.py:264
 #, fuzzy
@@ -38377,8 +38367,7 @@ msgstr "登録フォームかログイン用のすべての項目を入力して
 msgid ""
 "No user account matches the entered credentials. Are you sure that you typed "
 "your password correctly?"
-msgstr ""
-"入力した条件に合致するユーザがありません。パスワードが間違っていませんか？"
+msgstr "入力した条件に合致するユーザがありません。パスワードが間違っていませんか？"
 
 #: eventyay/person/forms/user.py:72
 msgid "Sorry, your account is currently disabled."
@@ -38388,8 +38377,7 @@ msgstr "すみません、アカウントが無効化されています。"
 msgid ""
 "We already have a user with that email address. Did you already register "
 "before and just need to log in?"
-msgstr ""
-"すでにこのメールアドレスは使われています。以前に登録した記憶はありませんか？"
+msgstr "すでにこのメールアドレスは使われています。以前に登録した記憶はありませんか？"
 
 #: eventyay/plugins/badges/apps.py:31 eventyay/plugins/badges/apps.py:34
 #: eventyay/plugins/badges/signals.py:55
@@ -42957,8 +42945,7 @@ msgstr ""
 #: eventyay/schedule/forms.py:76
 #, python-brace-format
 msgid "Please note that all times are in the event timezone, {tz}."
-msgstr ""
-"すべての時間表記はイベントのタイムゾーン {tz} であることに注意してください。"
+msgstr "すべての時間表記はイベントのタイムゾーン {tz} であることに注意してください。"
 
 #: eventyay/schedule/forms.py:81
 msgid ""
@@ -42987,8 +42974,7 @@ msgstr "ルーム1"
 #: eventyay/schedule/forms.py:199
 msgid ""
 "Description, e.g.: Our main meeting place, Room I, enter from the right."
-msgstr ""
-"情報、例: メインのミーティングスペース、ルーム1、右側から入ります、など"
+msgstr "情報、例: メインのミーティングスペース、ルーム1、右側から入ります、など"
 
 #: eventyay/schedule/forms.py:202
 msgid "Information for speakers, e.g.: Projector has only HDMI input."
