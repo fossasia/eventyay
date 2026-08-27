@@ -6,7 +6,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
 "PO-Revision-Date: 2026-08-27 09:23+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"Last-Translator: Andreas Kleinert <Andy.Kleinert@gmail.com>\n"
 "Language-Team: German <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "de/>\n"
 "Language: de\n"
@@ -19,21 +19,17 @@ msgstr ""
 
 #: data/templates/exhibitors/exhibitor_info.html:3
 #: data/templates/exhibitors/exhibitor_info.html:5
-#, fuzzy
-#| msgid "Exhibitors"
 msgid "Exhibitors/Sponsors"
-msgstr "Aussteller"
+msgstr "Aussteller/Förderer"
 
 #: data/templates/exhibitors/exhibitor_info.html:9
-#, fuzzy
-#| msgid "You don't have any API tokens yet."
 msgid "You don't have any exhibitors or sponsors yet."
-msgstr "Du hast noch keine API-Token."
+msgstr "Sie haben noch keine Aussteller oder Förderer."
 
 #: data/templates/exhibitors/exhibitor_info.html:16
 #: data/templates/exhibitors/exhibitor_info.html:23
 msgid "Add an Exhibitor/Sponsor"
-msgstr ""
+msgstr "Aussteller/Förderer hinzufügen"
 
 #: data/templates/exhibitors/exhibitor_info.html:31
 #: eventyay/base/configurations/default_setting.py:2492
@@ -94,11 +90,11 @@ msgstr "Name"
 
 #: data/templates/exhibitors/exhibitor_info.html:32
 msgid "Group"
-msgstr ""
+msgstr "Gruppe"
 
 #: data/templates/exhibitors/exhibitor_info.html:33
 msgid "Booth"
-msgstr ""
+msgstr "Stand"
 
 #: data/templates/exhibitors/exhibitor_info.html:62
 #, fuzzy
@@ -108,7 +104,7 @@ msgstr "Titel"
 
 #: data/templates/exhibitors/exhibitor_info.html:71
 msgid "Copy exhibitor key"
-msgstr ""
+msgstr "Ausstellerschlüssel kopieren"
 
 #: eventyay/agenda/phrases.py:8
 msgid "Thank you for your feedback!"
@@ -163,6 +159,9 @@ msgid ""
 "public view. You will only be able to see the schedule if it is public and "
 "released."
 msgstr ""
+"Sie verlassen gerade den Modus „Programm-Vorschau“. Dadurch gelangen Sie zur "
+"öffentlichen Ansicht. Sie können den Zeitplan nur einsehen, wenn er "
+"öffentlich zugänglich und freigegeben wurde."
 
 #: eventyay/agenda/templates/agenda/base.html:67
 #, fuzzy
@@ -217,16 +216,18 @@ msgstr "Wir mussten einen Beitrag verschieben: "
 
 #: eventyay/agenda/templates/agenda/etherpad_session_block.html:3
 msgid "Collaborative notes"
-msgstr ""
+msgstr "Gemeinsame Anmerkungen"
 
 #: eventyay/agenda/templates/agenda/etherpad_session_block.html:6
 msgid "Open collaborative notes"
-msgstr ""
+msgstr "Gemeinsame Anmerkungen öffnen"
 
 #: eventyay/agenda/templates/agenda/etherpad_session_block.html:9
 msgid ""
 "Notes are hosted on an external Etherpad instance and open in a new tab."
 msgstr ""
+"Anmerkungen werden auf einer externen Etherpad-Instanz gehostet und in einem "
+"neuen Tab geöffnet."
 
 #: eventyay/agenda/templates/agenda/featured.html:7
 #: eventyay/agenda/templates/agenda/featured.html:8
@@ -263,6 +264,9 @@ msgid ""
 "No featured sessions have been selected yet. Once our organisers highlight "
 "sessions, they will appear here. Please check back later!"
 msgstr ""
+"Es wurden noch keine hervorgehobenen Veranstaltungen ausgewählt. Sobald "
+"unsere Organisatoren Veranstaltungen hervorheben, werden diese hier "
+"angezeigt. Schauen Sie bitte später noch einmal vorbei!"
 
 #: eventyay/agenda/templates/agenda/feed/description.html:6
 #, python-format
@@ -317,7 +321,7 @@ msgstr "Derzeit kann für diese Veranstaltung kein Feedback gegeben werden."
 
 #: eventyay/agenda/templates/agenda/feedback_form.html:44
 msgid "stars"
-msgstr ""
+msgstr "Sterne"
 
 #: eventyay/agenda/templates/agenda/includes/feedback_reply.html:13
 #: eventyay/agenda/templates/agenda/talk.html:119
@@ -645,7 +649,7 @@ msgstr "Zusätzliche Informationen"
 
 #: eventyay/agenda/views/public.py:59
 msgid "Anonymous (name not shared)"
-msgstr ""
+msgstr "Anonym (Name nicht angegeben)"
 
 #: eventyay/agenda/views/public.py:60
 #, python-format
@@ -671,16 +675,24 @@ msgid ""
 "may be lost if you clear your browser data; we are not responsible for data "
 "loss in this case."
 msgstr ""
+"Ihre Favoriten können nur lokal in diesem Browser gespeichert werden. Bitte "
+"melden Sie sich an oder registrieren Sie sich, um mit einem Stern markierte "
+"Veranstaltungen zu synchronisieren und weitere Funktionen nutzen zu können. "
+"Lokal gespeicherte Favoriten können verloren gehen, wenn Sie Ihre "
+"Browserdaten löschen; es wird in diesem Fall keine Haftung für Datenverluste "
+"übernommen."
 
 #: eventyay/agenda/views/schedule.py:396 eventyay/multidomain/views.py:160
 msgid ""
 "Could not save favourites in this browser. Please check your browser storage "
 "settings."
 msgstr ""
+"Die Favoriten konnten in diesem Browser nicht gespeichert werden. Bitte "
+"überprüfen Sie die Speichereinstellungen Ihres Browsers."
 
 #: eventyay/agenda/views/schedule.py:398 eventyay/multidomain/views.py:162
 msgid "Sorry, no matching options."
-msgstr ""
+msgstr "Leider wurden keine passenden Ergebnisse gefunden."
 
 #: eventyay/agenda/views/schedule.py:399 eventyay/multidomain/views.py:163
 msgid "View Changelog"
@@ -704,15 +716,15 @@ msgstr "Nach Raum"
 
 #: eventyay/agenda/views/schedule.py:404 eventyay/multidomain/views.py:168
 msgid "A–Z"
-msgstr ""
+msgstr "A-Z"
 
 #: eventyay/agenda/views/schedule.py:405 eventyay/multidomain/views.py:169
 msgid "Most popular"
-msgstr ""
+msgstr "Am beliebtesten"
 
 #: eventyay/agenda/views/schedule.py:406 eventyay/multidomain/views.py:170
 msgid "Fullscreen"
-msgstr ""
+msgstr "Vollbild"
 
 #: eventyay/agenda/views/schedule.py:407 eventyay/multidomain/views.py:171
 msgid "Exit Fullscreen"
@@ -749,7 +761,7 @@ msgstr "Dies ist eine veraltete Fassung des Veranstaltungsprogramms."
 
 #: eventyay/agenda/views/schedule.py:417 eventyay/multidomain/views.py:178
 msgid "Join room"
-msgstr ""
+msgstr "Raum beitreten"
 
 #: eventyay/agenda/views/schedule.py:418 eventyay/multidomain/views.py:179
 msgid "View Video"
@@ -783,6 +795,8 @@ msgstr "Zum Kalender hinzufügen"
 msgid ""
 "Only available on the public schedule once a schedule is released and public."
 msgstr ""
+"Erstmals im öffentlichen Zeitplan verfügbar, sobald dieser veröffentlicht "
+"und öffentlich zugänglich ist."
 
 #: eventyay/agenda/views/schedule.py:426 eventyay/multidomain/views.py:184
 msgid "iCal"
@@ -790,15 +804,15 @@ msgstr "iCal"
 
 #: eventyay/agenda/views/schedule.py:427 eventyay/multidomain/views.py:185
 msgid "JSON"
-msgstr ""
+msgstr "JSON"
 
 #: eventyay/agenda/views/schedule.py:428 eventyay/multidomain/views.py:186
 msgid "XML"
-msgstr ""
+msgstr "XML"
 
 #: eventyay/agenda/views/schedule.py:429 eventyay/multidomain/views.py:187
 msgid "XCal"
-msgstr ""
+msgstr "XCal"
 
 #: eventyay/agenda/views/schedule.py:430 eventyay/multidomain/views.py:188
 msgid "Google Calendar"
@@ -806,7 +820,7 @@ msgstr "Google Kalender"
 
 #: eventyay/agenda/views/schedule.py:431 eventyay/multidomain/views.py:189
 msgid "Webcal"
-msgstr ""
+msgstr "WebCal"
 
 #: eventyay/agenda/views/schedule.py:432
 #: eventyay/base/exporters/invoices.py:297
@@ -916,6 +930,10 @@ msgid ""
 "Make your starred sessions visible to others. You can open someone else's "
 "starred list only if they have enabled sharing."
 msgstr ""
+"Machen Sie Ihre mit einem Stern gekennzeichneten Veranstaltungen für andere "
+"sichtbar. Sie können die Liste der mit einem Stern gekennzeichneten "
+"Veranstaltungen einer anderen Person nur öffnen, wenn diese die Freigabe "
+"aktiviert hat."
 
 #: eventyay/agenda/views/schedule.py:445 eventyay/control/navigation.py:296
 #: eventyay/eventyay_common/navigation.py:268 eventyay/multidomain/views.py:203
@@ -961,7 +979,7 @@ msgstr "Listenansicht"
 
 #: eventyay/agenda/views/schedule.py:453 eventyay/multidomain/views.py:211
 msgid "Calendar View"
-msgstr ""
+msgstr "Kalenderansicht"
 
 #: eventyay/agenda/views/schedule.py:454 eventyay/common/forms/forms.py:12
 #: eventyay/common/forms/widgets.py:349
@@ -1012,7 +1030,7 @@ msgstr "Keine mit Stern markierten Sitzungen."
 
 #: eventyay/agenda/views/schedule.py:459
 msgid "This room has live interpretation."
-msgstr ""
+msgstr "In diesem Raum wird simultan übersetzt."
 
 #. Translators: This is a label on navigation elements leading to the previous page.
 #: eventyay/agenda/views/schedule.py:460 eventyay/common/text/phrases.py:57
@@ -1030,7 +1048,7 @@ msgstr "Zurück"
 
 #: eventyay/agenda/views/schedule.py:461
 msgid "Coming soon"
-msgstr ""
+msgstr "Demnächst verfügbar"
 
 #: eventyay/agenda/views/schedule.py:462
 #: eventyay/presale/templates/pretixpresale/event/meetup_index.html:74
@@ -1074,7 +1092,7 @@ msgstr "Ungültiger Link"
 
 #: eventyay/agenda/views/schedule.py:491
 msgid "Expected boolean show_publicly."
-msgstr ""
+msgstr "Erwarteter boolescher Wert: show_publicly."
 
 #: eventyay/agenda/views/speaker.py:102 eventyay/agenda/views/speaker.py:203
 msgid "No published speakers."
@@ -1179,6 +1197,9 @@ msgid ""
 "Ticket check-in, attendee search and edits, live registration, badge "
 "printing, and offline sync of orders, revoked secrets, and badge layouts."
 msgstr ""
+"Ticket-Check-in, Suche nach Teilnehmern und Bearbeitung von Teilnehmerdaten, "
+"Live-Registrierung, Druck von Ausweisen sowie Offline-Synchronisation von "
+"Bestellungen, widerrufenen Zugangsdaten und Ausweisvorlagen."
 
 #: eventyay/api/auth/devicesecurity.py:137
 #, fuzzy
@@ -1191,6 +1212,9 @@ msgid ""
 "Kiosk badge printing: scan tickets, check in attendees, and print badges. "
 "Online only — no order sync, revoked-secret sync, or live registration."
 msgstr ""
+"Ausweisdruck am Kiosk: Tickets erfassen, Teilnehmer einschreiben und "
+"Ausweise drucken. Nur online – keine Auftragsabgleichung, keine "
+"Synchronisation gesperrter Zugangsdaten und keine Live-Registrierung."
 
 #: eventyay/api/models.py:23
 msgid "Application name"
@@ -1297,6 +1321,8 @@ msgstr "Unbekannte Erweiterung: '{name}'."
 msgid ""
 "External image URLs are no longer accepted. Please upload a file instead."
 msgstr ""
+"Externe Bild-URLs werden nicht mehr akzeptiert. Bitte stattdessen eine Datei "
+"hochladen."
 
 #: eventyay/api/serializers/order.py:1393
 #: eventyay/api/serializers/order.py:1403
@@ -1415,12 +1441,16 @@ msgstr "Die Endzeit muss nach der Startzeit liegen."
 msgid ""
 "Stream schedules must include at least one scheduled session in this room."
 msgstr ""
+"Die Sendungspläne müssen mindestens eine geplante Sitzung in diesem Raum "
+"enthalten."
 
 #: eventyay/api/serializers/stream_schedule.py:130
 msgid ""
 "This stream schedule overlaps with an existing schedule for this room. "
 "Please adjust the time range."
 msgstr ""
+"Dieser Sendungsplan überschneidet sich mit einem bereits bestehenden Plan "
+"für diesen Raum. Bitte passen Sie den Zeitrahmen an."
 
 #: eventyay/api/templates/rest_framework/api.html:18
 #: eventyay/orga/templates/orga/auth/base.html:29
@@ -2925,6 +2955,9 @@ msgid ""
 "contact form. Messages will be sent to this address. Your email address "
 "remains hidden from attendees."
 msgstr ""
+"Sie müssen eine E-Mail-Adresse angeben, damit die Teilnehmer Sie über ein "
+"Kontaktformular erreichen können. Nachrichten werden an diese Adresse "
+"gesendet. Ihre E-Mail-Adresse bleibt für die Teilnehmer verborgen."
 
 #: eventyay/base/configurations/default_setting.py:1597
 msgid "Imprint URL"
@@ -3669,7 +3702,7 @@ msgstr "Hintergrundfarbe der Seite"
 
 #: eventyay/base/configurations/default_setting.py:2110
 msgid "Video sidebar text color"
-msgstr ""
+msgstr "Textfarbe in der Video-Seitenleiste"
 
 #: eventyay/base/configurations/default_setting.py:2114
 #, fuzzy
@@ -3706,6 +3739,13 @@ msgid ""
 "will always be visible). Images will be automatically optimized to max 3000 "
 "px wide on save."
 msgstr ""
+"Laden Sie ein Bannerbild hoch, das oben auf allen Veranstaltungsseiten "
+"angezeigt wird. Das Banner wird standardmäßig auf einen 320 px hohen "
+"Streifen zugeschnitten. Platzieren Sie wichtige Inhalte (Titel, Logo, "
+"wichtige Bildelemente) in der Mitte des Bildes – auf schmalen Bildschirmen "
+"werden die Seiten beschnitten. Empfohlene Größe: 1920 × 640 px (der mittlere "
+"Bereich von 1920 × 320 px ist immer sichtbar). Bilder werden beim Speichern "
+"automatisch auf eine maximale Breite von 3000 px optimiert."
 
 #: eventyay/base/configurations/default_setting.py:2169
 #, fuzzy
@@ -11142,8 +11182,8 @@ msgid ""
 "Don't forget to set the correct fees above!"
 msgstr ""
 "Es wird empfohlen, diese Option zu aktivieren, wenn Sie möchten, dass Ihre "
-"Nutzer die Zahlungsgebühren Ihres Zahlungsanbieters übernehmen. <a "
-"href=\"{docs_url}\" target=\"_blank\" rel=\"noopener\">Klicken Sie hier, um "
+"Nutzer die Zahlungsgebühren Ihres Zahlungsanbieters übernehmen. <a href=\""
+"{docs_url}\" target=\"_blank\" rel=\"noopener\">Klicken Sie hier, um "
 "detaillierte Informationen zu dieser Funktion zu erhalten.</a> Vergessen Sie "
 "nicht, oben die korrekten Gebühren anzugeben!"
 
@@ -28827,19 +28867,15 @@ msgstr ""
 "früher erhält diese Person einen Gutschein."
 
 #: eventyay/control/templates/pretixcontrol/waitinglist/index.html:226
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                                    Waiting, product %(num)sx available\n"
-#| "                                "
+#, python-format
 msgid ""
 "\n"
 "                                        Waiting, product %(num)sx available\n"
 "                                    "
 msgstr ""
 "\n"
-"                                    Wartet, Produkt %(num)sx verfügbar\n"
-"                                "
+"                                        Wartet, Produkt %(num)sx verfügbar\n"
+"                                    "
 
 #: eventyay/control/templates/pretixcontrol/waitinglist/index.html:231
 msgid "Waiting, product unavailable"
@@ -33987,8 +34023,8 @@ msgid ""
 msgstr ""
 "Hallo!\n"
 "\n"
-"Wir freuen uns, Ihnen mitteilen zu können, dass wir Ihren Vorschlag "
-"„{submission_title}”\n"
+"Wir freuen uns, Ihnen mitteilen zu können, dass wir Ihren Vorschlag „"
+"{submission_title}”\n"
 "für {event_name} angenommen haben. Bitte klicken Sie auf diesen Link, um "
 "Ihre Teilnahme zu bestätigen:\n"
 "\n"
