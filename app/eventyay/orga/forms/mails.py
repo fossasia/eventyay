@@ -16,9 +16,10 @@ from eventyay.base.forms.widgets import SplitDateTimePickerWidget
 from eventyay.control.forms import SplitDateTimeField
 
 from eventyay.common.exceptions import SendMailException
+from eventyay.common.forms.fields import I18nEmailBodyFormField
 from eventyay.common.forms.mixins import I18nHelpText, ReadOnlyFlag, ScheduledAtValidationMixin
 from eventyay.common.forms.renderers import InlineFormRenderer, TabularFormRenderer
-from eventyay.common.forms.widgets import EnhancedSelectMultiple, SelectMultipleWithCount
+from eventyay.common.forms.widgets import EnhancedSelectMultiple, I18nEmailEditorWidget, SelectMultipleWithCount
 from eventyay.common.language import language
 from eventyay.common.text.phrases import phrases
 from eventyay.mail.context import get_available_placeholders, get_invalid_placeholders
@@ -49,13 +50,24 @@ class TalkSplitDateTimePickerWidget(SplitDateTimePickerWidget):
         )
 
 class MailTemplateForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
+    default_renderer = TabularFormRenderer
+
     def __init__(self, *args, event=None, **kwargs):
         self.event = getattr(self, 'event', None) or event
         if self.event:
             kwargs['locales'] = self.event.locales
         super().__init__(*args, **kwargs)
         self.fields['subject'].required = True
-        self.fields['text'].required = True
+        text_field = self.fields['text']
+        placeholder_names = sorted(self.valid_placeholders.keys())
+        self.fields['text'] = I18nEmailBodyFormField(
+            label=text_field.label,
+            help_text=text_field.help_text,
+            widget=I18nEmailEditorWidget,
+            widget_kwargs={'placeholders': placeholder_names},
+            required=True,
+            locales=self.event.locales,
+        )
 
     def get_valid_placeholders(self, **kwargs):
         if not getattr(self.instance, 'event', None):
@@ -116,12 +128,12 @@ class MailTemplateForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
             warnings = ', '.join('{' + warning + '}' for warning in warnings)
             raise forms.ValidationError(str(_('Unknown placeholder!')) + ' ' + warnings)
 
-        from eventyay.base.templatetags.rich_text import render_markdown_abslinks
+        from eventyay.base.templatetags.rich_text import compile_email_body
 
         for locale in self.event.locales:
             with language(locale):
                 message = text.localize(locale)
-                preview_text = render_markdown_abslinks(
+                preview_text = compile_email_body(
                     message.format_map(
                         {key: escape(value.render_sample(self.event)) for key, value in self.valid_placeholders.items()}
                     )
@@ -225,8 +237,13 @@ class WriteMailBaseForm(ScheduledAtValidationMixin, MailTemplateForm):
     scheduled_at = forms.SplitDateTimeField(
         label=_('Send later'),
         required=False,
-        help_text=_('Leave empty to send immediately or queue to outbox. If set, the email will be sent at this time. Time is interpreted in the event timezone.'),
+        help_text=_('The email will be sent at this time in the event timezone.'),
         widget=TalkSplitDateTimePickerWidget(),
+    )
+    test_email = forms.EmailField(
+        label=_('Send test email to'),
+        required=False,
+        help_text=_('The test email is rendered with sample data and is not counted as a sent email.'),
     )
 
     def __init__(self, *args, may_skip_queue=False, source_template=None, **kwargs):
@@ -348,6 +365,7 @@ class WriteSessionMailForm(SubmissionFilterForm, WriteMailBaseForm):
     )
 
     def __init__(self, **kwargs):
+        kwargs.setdefault('show_all_filters', True)
         super().__init__(**kwargs)
         initial = kwargs.get('initial', {})
         self.filter_search = initial.get('q')
@@ -362,6 +380,19 @@ class WriteSessionMailForm(SubmissionFilterForm, WriteMailBaseForm):
             (sub.code, sub.title) for sub in self.event.submissions.all().order_by('title')
         ]
         self.fields['speakers'].queryset = self.event.submitters.all().order_by('fullname')
+        composer_filter_fields = {
+            'state': (_('State'), _('Proposal states')),
+            'submission_type': (_('Submission type'), None),
+            'track': (_('Track'), None),
+            'content_locale': (_('Content locale'), None),
+            'tags': (_('Tags'), None),
+        }
+        for field_name, (label, help_text) in composer_filter_fields.items():
+            if field_name not in self.fields:
+                continue
+            self.fields[field_name].label = label
+            if help_text:
+                self.fields[field_name].help_text = help_text
         if len(self.event.locales) > 1:
             self.fields['subject'].help_text = _(
                 'If you provide only one language, that language will be used for all emails. If you provide multiple languages, the best fit for each speaker will be used.'
@@ -497,6 +528,20 @@ class WriteSessionMailForm(SubmissionFilterForm, WriteMailBaseForm):
             for mail in result:
                 mail.send()
         return result
+
+
+class SessionMailRecipientsForm(WriteSessionMailForm):
+    """Audience preview variant of the session mail form.
+
+    The recipient list and count are shown before the message is written, so
+    subject and text are not required here. Recipient selection itself is
+    inherited unchanged, which keeps the preview in step with the actual send.
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        for name in ('subject', 'text'):
+            self.fields.pop(name, None)
 
 
 class QueuedMailFilterForm(forms.Form):

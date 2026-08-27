@@ -852,9 +852,6 @@ msgstr "Listopad"
 msgid "December"
 msgstr "Prosinec"
 
-#: eventyay/static/vendored/vue.min.js:12
-msgid "div"
-msgstr ""
 
 #, fuzzy
 #~| msgctxt "widget"

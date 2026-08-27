@@ -758,11 +758,13 @@ class Event(
         mail = '{base}mails/'
         compose_mails = '{mail}compose'
         compose_mails_sessions = '{compose_mails}/sessions/'
+        compose_mails_sessions_recipients = '{compose_mails}/sessions/recipients'
         compose_mails_teams = '{compose_mails}/teams/'
         send_drafts_reminder = '{compose_mails}/reminders'
         mail_templates = '{mail}templates/'
         new_template = '{mail_templates}new/'
         outbox = '{mail}outbox/'
+        drafts = '{mail}drafts/'
         sent_mails = '{mail}sent'
         send_outbox = '{outbox}send'
         purge_outbox = '{outbox}purge'
@@ -3238,7 +3240,7 @@ class Event(
 
         :class:`~eventyay.base.models.mail.QueuedMail` objects.
         """
-        return self.queued_mails.filter(sent__isnull=True).count()
+        return self.queued_mails.filter(sent__isnull=True, is_draft=False).count()
 
 
 class EventExtraLink(OrderedModel, PretalxModel):

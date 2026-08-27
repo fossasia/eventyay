@@ -6,6 +6,12 @@
     {% translate "Reviewers and team members" %}
 {% endblock email_editor_title_detail %}
 
+{% block email_editor_description %}
+    <p class="text-muted mb-0">
+        {% translate "Send emails to your reviewers and other team members." %}
+    </p>
+{% endblock email_editor_description %}
+
 {% block skip_queue %}
     <div class="alert alert-danger mt-3" role="alert">
         {% blocktranslate trimmed %}
@@ -21,3 +27,6 @@
 {% endblock recipient_form %}
 
 {% block send_button_label %}{{ phrases.base.send }}{% endblock send_button_label %}
+
+{# These emails are always sent out directly, so there is nothing to draft. #}
+{% block draft_button %}{% endblock draft_button %}

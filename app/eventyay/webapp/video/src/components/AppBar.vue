@@ -13,18 +13,18 @@
 				v-if="showAdminModeStart"
 				type="button"
 				@click="startAdminSession"
-				:aria-label="$t('AppBar:admin-mode:start')"
+				:aria-label="$t('Admin mode')"
 			)
 				i.fa.fa-id-card(aria-hidden="true")
-				span {{ $t('AppBar:admin-mode:start') }}
+				span {{ $t('Admin mode') }}
 			button.admin-mode-btn.admin-mode-btn--end(
 				v-if="showAdminModeEnd"
 				type="button"
 				@click="endAdminSession"
-				:aria-label="$t('AppBar:admin-mode:end')"
+				:aria-label="$t('End admin session')"
 			)
 				i.fa.fa-id-card(aria-hidden="true")
-				span {{ $t('AppBar:admin-mode:end') }}
+				span {{ $t('End admin session') }}
 		.language-menu(v-if="languages.length", ref="languageMenuEl")
 			button.language-toggle(
 				type="button"
@@ -53,7 +53,7 @@
 				div.user-profile(:class="{open: profileMenuOpen}", @click.stop="toggleProfileMenu")
 					avatar(v-if="!isAnonymous", :user="user", :size="32")
 					span.display-name(v-if="!isAnonymous") {{ user.profile.display_name }}
-					span.display-name(v-else) {{ $t('AppBar:user-anonymous') }}
+					span.display-name(v-else) {{ $t('anonymous') }}
 					span.user-caret(role="button", :aria-expanded="String(profileMenuOpen)", aria-haspopup="true", tabindex="0", @click.stop="toggleProfileMenu", @keydown.enter.prevent="toggleProfileMenu", @keydown.space.prevent="toggleProfileMenu", :class="{open: profileMenuOpen}")
 				transition(name="dropdown-reveal")
 					.profile-dropdown(v-if="profileMenuOpen", role="menu", @click.stop)

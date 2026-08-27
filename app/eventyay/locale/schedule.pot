@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"POT-Creation-Date: 2026-08-24T07:39:34.337Z\n"
-"PO-Revision-Date: 2026-08-24T07:39:34.337Z\n"
+"POT-Creation-Date: 2026-08-26T13:16:28.737Z\n"
+"PO-Revision-Date: 2026-08-26T13:16:28.737Z\n"
 
 msgid "+{{count}} more"
 msgstr ""
@@ -14,13 +14,16 @@ msgstr ""
 msgid "+{{count}} more speakers"
 msgstr ""
 
-msgid "A \\u2192 Z"
-msgstr ""
-
 msgid "A → Z"
 msgstr ""
 
 msgid "Abstract"
+msgstr ""
+
+msgid "Add to Google Calendar"
+msgstr ""
+
+msgid "Add to Other Calendar"
 msgstr ""
 
 msgid "Add to calendar"
@@ -113,6 +116,9 @@ msgstr ""
 msgid "Include room"
 msgstr ""
 
+msgid "JSON (frab compatible)"
+msgstr ""
+
 msgid "Join room"
 msgstr ""
 
@@ -200,9 +206,6 @@ msgstr ""
 msgid "Search sessions…"
 msgstr ""
 
-msgid "Search speakers\\u2026"
-msgstr ""
-
 msgid "Search speakers…"
 msgstr ""
 
@@ -275,6 +278,12 @@ msgstr ""
 msgid "Watch live"
 msgstr ""
 
+msgid "XCal (frab compatible)"
+msgstr ""
+
+msgid "XML (frab compatible)"
+msgstr ""
+
 msgid "Yes"
 msgstr ""
 
@@ -288,9 +297,6 @@ msgid "You are currently viewing the unreleased schedule preview. It may change 
 msgstr ""
 
 msgid "Your favourites can only be saved locally in this browser. Please sign in or register to sync starred sessions and use more features. Locally saved stars may be lost if you clear your browser data; we are not responsible for data loss in this case."
-msgstr ""
-
-msgid "Z \\u2192 A"
 msgstr ""
 
 msgid "Z → A"
@@ -324,20 +330,4 @@ msgid "min"
 msgstr ""
 
 msgid "{{ext}} Document"
-msgstr ""
-
-msgctxt "one"
-msgid "+{{count}} more speakers"
-msgstr ""
-
-msgctxt "one"
-msgid "+{{count}} more"
-msgstr ""
-
-msgctxt "other"
-msgid "+{{count}} more speakers"
-msgstr ""
-
-msgctxt "other"
-msgid "+{{count}} more"
 msgstr ""

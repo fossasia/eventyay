@@ -187,7 +187,7 @@ function buildPlaceholderMenu(editor, placeholders) {
   const toggle = document.createElement('button')
   toggle.type = 'button'
   toggle.className = 'tiptap-btn'
-  toggle.textContent = '{ } Insert placeholder'
+  toggle.textContent = '{ } Placeholder help'
   toggle.setAttribute('aria-haspopup', 'listbox')
   toggle.setAttribute('aria-expanded', 'false')
 
