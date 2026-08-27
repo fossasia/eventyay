@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 08:58+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2026-08-27 08:59+0000\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Arabic <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "ar/>\n"
 "Language: ar\n"
@@ -8378,9 +8378,9 @@ msgid ""
 "products that are bought as an add-on to other products."
 msgstr ""
 "إذا كان هذا الخيار غير نشط، يمكن للمستخدمين اختيار سعر أنفسهم. سعر تكوين "
-"أعلاه ثم يتم تفسير كحد أدنى سعر للمستخدم للدخول. هل يمكن استخدام هذا على "
-"سبيل المثال لجمع التبرعات إضافية لهذا الحدث الخاص بك. هذا غير معتمد حاليا "
-"بالنسبة للمنتجات التي يتم شراؤها كميزة إضافية إلى غيرها من المنتجات."
+"أعلاه ثم يتم تفسير كحد أدنى سعر للمستخدم للدخول. هل يمكن استخدام هذا على سبيل "
+"المثال لجمع التبرعات إضافية لهذا الحدث الخاص بك. هذا غير معتمد حاليا بالنسبة "
+"للمنتجات التي يتم شراؤها كميزة إضافية إلى غيرها من المنتجات."
 
 #: eventyay/base/models/product.py:369
 #, fuzzy
@@ -16284,8 +16284,8 @@ msgid ""
 "the person who registers, the following email will be sent out to the "
 "attendees."
 msgstr ""
-"إذا كان النظام يحتوي على الحضور مع عناوين البريد الإلكتروني المختلفة من "
-"الشخص الذي يأمر التذاكر، سيتم إرسال البريد الإلكتروني التالي إلى الحضور."
+"إذا كان النظام يحتوي على الحضور مع عناوين البريد الإلكتروني المختلفة من الشخص "
+"الذي يأمر التذاكر، سيتم إرسال البريد الإلكتروني التالي إلى الحضور."
 
 #: eventyay/control/forms/event.py:1347 eventyay/plugins/sendmail/forms.py:310
 msgid "Text (sent by admin)"
@@ -16531,8 +16531,8 @@ msgid ""
 "mark them as paid."
 msgstr ""
 "سيتم تعليمات الزبائن لسلك المال لحسابك. يمكنك بعد ذلك استيراد البيانات "
-"المصرفية الخاصة بك لمعالجة المدفوعات في غضون eventyay، أو وضع علامة عليها "
-"كما تدفع يدويا."
+"المصرفية الخاصة بك لمعالجة المدفوعات في غضون eventyay، أو وضع علامة عليها كما "
+"تدفع يدويا."
 
 #: eventyay/control/forms/event.py:1839 eventyay/control/forms/product.py:575
 #, fuzzy
@@ -27914,8 +27914,8 @@ msgid ""
 "The following vouchers can't be deleted as they already have been redeemed "
 "or used in an order."
 msgstr ""
-"لا يمكن حذف هذه القسائم التالية لأنها بالفعل قد تم استبدالها، ولكن سيتم "
-"تعيين لاستبدالها بالكامل بدلا من ذلك."
+"لا يمكن حذف هذه القسائم التالية لأنها بالفعل قد تم استبدالها، ولكن سيتم تعيين "
+"لاستبدالها بالكامل بدلا من ذلك."
 
 #: eventyay/control/templates/pretixcontrol/vouchers/detail.html:16
 #, python-format
@@ -38731,8 +38731,8 @@ msgid ""
 msgstr ""
 "يمكنك تخصيص تصميم تذكرة مع جهودنا لتحرير PDF التذاكر. هناك، يمكنك تحميل ملف "
 "PDF تستخدم كخلفية لشراء التذاكر ثم وضع النصوص المختلفة ورموز QR على الخلفية "
-"في المواقف من اختيارك. محرر سهل الاستخدام بفضل واجهة المستخدم السحب "
-"والإفلات، ولكنه يتطلب متصفح حديث والاتصال بشبكة الانترنت لائقة."
+"في المواقف من اختيارك. محرر سهل الاستخدام بفضل واجهة المستخدم السحب والإفلات، "
+"ولكنه يتطلب متصفح حديث والاتصال بشبكة الانترنت لائقة."
 
 #: eventyay/plugins/badges/templates/pretixplugins/badges/form.html:12
 #, fuzzy
