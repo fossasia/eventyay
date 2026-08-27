@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
 "PO-Revision-Date: 2026-08-27 18:44+0000\n"
-"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
+"Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Telugu <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "te/>\n"
 "Language: te\n"
@@ -5698,7 +5698,8 @@ msgstr ""
 #| "Please enter your current password if you want to change your e-mail "
 #| "address or password."
 msgid "Please enter your current password if you want to change your password."
-msgstr "ఈ-మెయిల్ చిరునామా లేదా పాస్వర్డ్ని మార్చాలని అనుకుంటే, దయచేసి మీ ప్రస్తుత పాస్వర్డ్ని నమోదు చేయండి."
+msgstr ""
+"ఈ-మెయిల్ చిరునామా లేదా పాస్వర్డ్ని మార్చాలని అనుకుంటే, దయచేసి మీ ప్రస్తుత పాస్వర్డ్ని నమోదు చేయండి."
 
 #: eventyay/base/forms/user.py:18 eventyay/person/forms/auth.py:14
 #: eventyay/person/forms/profile.py:362
@@ -10263,7 +10264,8 @@ msgid ""
 "If activated, a holder of this voucher code can buy tickets without awaiting "
 "approval by the organiser. This is applicable for products that require "
 "approval."
-msgstr "సక్రియం చేస్తే, ఈ వౌచర్ కోడ్ కలిగిన వ్యక్తి టికెట్లు కొనుగోలు చేయగలరు, మిగిలి లేకపోయినా."
+msgstr ""
+"సక్రియం చేస్తే, ఈ వౌచర్ కోడ్ కలిగిన వ్యక్తి టికెట్లు కొనుగోలు చేయగలరు, మిగిలి లేకపోయినా."
 
 #: eventyay/base/models/vouchers.py:147 eventyay/base/models/vouchers.py:575
 msgid "Price mode"
@@ -17915,7 +17917,8 @@ msgstr "చెల్లింపు తేదీ"
 #, fuzzy
 #| msgid "This action is only allowed for pending or paid orders."
 msgid "This option cannot be combined with only paid orders."
-msgstr "ఈ చర్య పెండింగ్‌లో ఉన్న లేదా చెల్లించిన ఆర్డర్‌లకు మాత్రమే అనుమతించబడుతుంది."
+msgstr ""
+"ఈ చర్య పెండింగ్‌లో ఉన్న లేదా చెల్లించిన ఆర్డర్‌లకు మాత్రమే అనుమతించబడుతుంది."
 
 #: eventyay/control/forms/orders.py:186
 #, fuzzy
