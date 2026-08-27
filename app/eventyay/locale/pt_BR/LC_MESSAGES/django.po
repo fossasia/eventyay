@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
 "PO-Revision-Date: 2026-08-27 16:46+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Portuguese (Brazil) <https://hosted.weblate.org/projects/"
 "eventyay/eventyay/pt_BR/>\n"
 "Language: pt_BR\n"
@@ -17978,8 +17978,7 @@ msgstr "Padrão do cabeçalho da página inicial"
 #| "This will be attached to every email. Available placeholders: {event}"
 msgid ""
 "Pattern used to generate pad names. Available placeholders: {placeholders}."
-msgstr ""
-"Isso será anexado a todos os e-mails. Placeholders disponíveis: {event}"
+msgstr "Isso será anexado a todos os e-mails. Placeholders disponíveis: {event}"
 
 #: eventyay/control/forms/global_settings.py:582
 #, fuzzy
@@ -43112,8 +43111,7 @@ msgstr "Detalhes de cadastro"
 #| "This voucher code has already been used the maximum number of times "
 #| "allowed."
 msgid "This event has reached its maximum number of registrations."
-msgstr ""
-"Este código de voucher já foi usado o número máximo de vezes permitido."
+msgstr "Este código de voucher já foi usado o número máximo de vezes permitido."
 
 #: eventyay/presale/templates/pretixpresale/event/rsvp.html:28
 #, fuzzy
