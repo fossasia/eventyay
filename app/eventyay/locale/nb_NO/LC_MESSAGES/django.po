@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 16:19+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2026-08-27 16:20+0000\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Norwegian Bokmål <https://hosted.weblate.org/projects/"
 "eventyay/eventyay/nb_NO/>\n"
 "Language: nb_NO\n"
@@ -15452,10 +15452,8 @@ msgstr[1] ""
 #| msgid "You can choose up to %(max_count)s options from this category."
 msgid "You can keep up to %(count)s slide entry in total."
 msgid_plural "You can keep up to %(count)s slide entries in total."
-msgstr[0] ""
-"Det kan velges opptil %(max_count)s alternativer fra denne kategorien."
-msgstr[1] ""
-"Det kan velges opptil %(max_count)s alternativer fra denne kategorien."
+msgstr[0] "Det kan velges opptil %(max_count)s alternativer fra denne kategorien."
+msgstr[1] "Det kan velges opptil %(max_count)s alternativer fra denne kategorien."
 
 #: eventyay/common/templates/common/widgets/slides_input.html:79
 #, fuzzy
@@ -34610,8 +34608,7 @@ msgstr "Kilde for profilbilde"
 #| "Please enter the name of the author or source of image and a link if "
 #| "applicable."
 msgid "Name the author or source of the image and include a link if available."
-msgstr ""
-"Oppgi navnet på forfatteren eller bildekilden og en lenke hvis aktuelt."
+msgstr "Oppgi navnet på forfatteren eller bildekilden og en lenke hvis aktuelt."
 
 #: eventyay/orga/forms/importers.py:103
 #: eventyay/orga/templates/orga/cfp/forms.html:978
