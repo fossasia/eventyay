@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
 "PO-Revision-Date: 2026-08-27 08:44+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Malay <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "ms/>\n"
 "Language: ms\n"
@@ -1484,8 +1484,7 @@ msgstr "Muat turun tiket belum (lagi) didayakan untuk pesanan ini."
 #, fuzzy
 #| msgid "You cannot select a quota and a specific product at the same time."
 msgid "You cannot set an organizer as default if you are not a member."
-msgstr ""
-"Anda tidak boleh memilih kuota dan produk tertentu pada masa yang sama."
+msgstr "Anda tidak boleh memilih kuota dan produk tertentu pada masa yang sama."
 
 #: eventyay/api/webhooks.py:181 eventyay/base/notifications.py:239
 msgid "New order placed"
@@ -34945,8 +34944,7 @@ msgstr "Tarikh luput baharu perlu berada pada masa hadapan."
 #| msgid "You cannot select a quota and a specific product at the same time."
 msgid ""
 "You cannot select \"Send immediately\" and also specify a scheduled time."
-msgstr ""
-"Anda tidak boleh memilih kuota dan produk tertentu pada masa yang sama."
+msgstr "Anda tidak boleh memilih kuota dan produk tertentu pada masa yang sama."
 
 #: eventyay/orga/forms/mails.py:274
 msgid "Recipient groups"
