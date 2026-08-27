@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
 "PO-Revision-Date: 2026-08-27 17:47+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Chinese (Traditional Han script) <https://hosted.weblate.org/"
 "projects/eventyay/eventyay/zh_Hant/>\n"
 "Language: zh_Hant\n"
@@ -744,8 +744,7 @@ msgstr "您現在正在查看可編輯版本的議程表。注意此版本尚未
 msgid ""
 "You are currently viewing the unreleased schedule preview. It may change at "
 "any time and is not visible to the public."
-msgstr ""
-"您現在正在查看可編輯版本的議程表。注意此版本尚未釋出，隨時都有可能改變。"
+msgstr "您現在正在查看可編輯版本的議程表。注意此版本尚未釋出，隨時都有可能改變。"
 
 #: eventyay/agenda/views/schedule.py:416 eventyay/multidomain/views.py:177
 #: eventyay/schedule/phrases.py:24
@@ -30962,8 +30961,7 @@ msgstr "刪除演講資料"
 msgid ""
 "Permanently remove proposals, speaker profiles, and uploaded talk-related "
 "content."
-msgstr ""
-"所有相關的資料，如議程投稿、講者資料、上傳資料等都會被刪除，並且無法復原。"
+msgstr "所有相關的資料，如議程投稿、講者資料、上傳資料等都會被刪除，並且無法復原。"
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:403
 #, fuzzy
@@ -37007,8 +37005,7 @@ msgstr "您現在是團隊的一員了！"
 msgid ""
 "ALL related data, such as proposals, speaker profiles, and uploads, will "
 "also be deleted and cannot be restored."
-msgstr ""
-"所有相關的資料，如議程投稿、講者資料、上傳資料等都會被刪除，並且無法復原。"
+msgstr "所有相關的資料，如議程投稿、講者資料、上傳資料等都會被刪除，並且無法復原。"
 
 #: eventyay/orga/views/event.py:395 eventyay/orga/views/event.py:427
 #, fuzzy
