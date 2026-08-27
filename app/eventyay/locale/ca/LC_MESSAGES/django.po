@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 09:07+0000\n"
-"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
+"PO-Revision-Date: 2026-08-27 09:08+0000\n"
+"Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Catalan <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/ca/>\n"
 "Language: ca\n"
@@ -4319,8 +4319,8 @@ msgstr "S'ha carregat l'import a la vostra targeta."
 #: eventyay/base/email.py:924
 msgid "Please transfer money to this bank account: 9999-9999-9999-9999"
 msgstr ""
-"Si us plau, feu una transferència a aquest compte bancari: "
-"9999-9999-9999-9999"
+"Si us plau, feu una transferència a aquest compte bancari: 9999-9999-9999-"
+"9999"
 
 #: eventyay/base/exporter.py:119 eventyay/base/exporter.py:255
 #: eventyay/base/exporters/orderlist.py:1051 eventyay/orga/forms/export.py:28
@@ -6165,8 +6165,8 @@ msgid ""
 "Bank on {date}, the invoice total corresponds to {total}."
 msgstr ""
 "S'està usant la taxa de conversió de 1:{rate} tal com publica el Banc "
-"Central Europeu a dia {date}, el total de la factura es correspon amb "
-"{total}."
+"Central Europeu a dia {date}, el total de la factura es correspon amb {total}"
+"."
 
 #: eventyay/base/invoice.py:839
 msgid "Modern"
@@ -6302,8 +6302,7 @@ msgstr "Zona horària"
 
 #: eventyay/base/models/auth.py:203
 msgid "Two-factor authentication is required to log in"
-msgstr ""
-"Es necessita un factor d'autenticació de dues passes per iniciar sessió"
+msgstr "Es necessita un factor d'autenticació de dues passes per iniciar sessió"
 
 #: eventyay/base/models/auth.py:206
 msgid "Receive notifications according to my settings below"
@@ -6726,8 +6725,7 @@ msgstr "Data d'inicialització"
 
 #: eventyay/base/models/event.py:181
 msgid "The end of the presale period has to be later than its start."
-msgstr ""
-"La data del període de prevenda ha de ser posterior al seu començament."
+msgstr "La data del període de prevenda ha de ser posterior al seu començament."
 
 #: eventyay/base/models/event.py:183
 msgid "The end of the event has to be later than its start."
@@ -9139,8 +9137,7 @@ msgstr "Camp obligatori"
 
 #: eventyay/base/models/product.py:1354
 msgid "This question will be asked to buyers of the selected products"
-msgstr ""
-"Aquesta pregunta es demanarà als compradors dels productes seleccionats"
+msgstr "Aquesta pregunta es demanarà als compradors dels productes seleccionats"
 
 #: eventyay/base/models/product.py:1358
 msgid "Ask during check-in instead of in the ticket buying process"
@@ -10531,8 +10528,7 @@ msgstr "No podeu seleccionar una quota que pertany a un esdeveniment diferent."
 
 #: eventyay/base/models/vouchers.py:252
 msgid "You cannot select a quota and a specific product at the same time."
-msgstr ""
-"No podeu seleccionar una quota i un producte específic al mateix temps."
+msgstr "No podeu seleccionar una quota i un producte específic al mateix temps."
 
 #: eventyay/base/models/vouchers.py:255
 msgid "You cannot select an product that belongs to a different event."
@@ -39708,8 +39704,7 @@ msgstr "Transferència bancària"
 
 #: eventyay/plugins/banktransfer/apps.py:17
 msgid "This plugin allows you to receive payments via bank transfer."
-msgstr ""
-"Aquest complement us permet rebre pagaments via transferència bancària."
+msgstr "Aquest complement us permet rebre pagaments via transferència bancària."
 
 #: eventyay/plugins/banktransfer/apps.py:31
 msgid ""
@@ -41920,8 +41915,7 @@ msgstr "Abans de continuar, necessitem que ens proporcioneu més informació."
 #: eventyay/presale/templates/pretixpresale/event/checkout_questions.html:10
 msgid ""
 "You need to fill all fields that are marked with <span>*</span> to continue."
-msgstr ""
-"Heu d'omplir tots els camps marcats amb <span>*</span> per a continuar."
+msgstr "Heu d'omplir tots els camps marcats amb <span>*</span> per a continuar."
 
 #: eventyay/presale/templates/pretixpresale/event/checkout_questions.html:68
 msgid "Copy answers from above"
