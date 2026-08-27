@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 08:48+0000\n"
-"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
+"PO-Revision-Date: 2026-08-27 08:49+0000\n"
+"Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Thai <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "th/>\n"
 "Language: th\n"
@@ -738,7 +738,8 @@ msgstr "ประตู"
 msgid ""
 "You are currently viewing the editable schedule version. It may not match "
 "the released version."
-msgstr "คุณกำลังดูเวอร์ชันกำหนดการที่แก้ไขได้ ซึ่งยังไม่เผยแพร่และอาจเปลี่ยนแปลงได้ตลอดเวลา."
+msgstr ""
+"คุณกำลังดูเวอร์ชันกำหนดการที่แก้ไขได้ ซึ่งยังไม่เผยแพร่และอาจเปลี่ยนแปลงได้ตลอดเวลา."
 
 #: eventyay/agenda/views/schedule.py:413
 #, fuzzy
@@ -10198,7 +10199,8 @@ msgid ""
 "If activated, a holder of this voucher code can buy tickets without awaiting "
 "approval by the organiser. This is applicable for products that require "
 "approval."
-msgstr "หากเปิดใช้งาน ผู้ถือรหัสบัตรกำนัลนี้สามารถซื้อตั๋วได้ แม้ว่าตั๋วจะหมดแล้ว"
+msgstr ""
+"หากเปิดใช้งาน ผู้ถือรหัสบัตรกำนัลนี้สามารถซื้อตั๋วได้ แม้ว่าตั๋วจะหมดแล้ว"
 
 #: eventyay/base/models/vouchers.py:147 eventyay/base/models/vouchers.py:575
 msgid "Price mode"
@@ -14803,8 +14805,8 @@ msgid ""
 "When enabled, event and UI languages are linked. Selecting one updates the "
 "other whenever that language is available for this event."
 msgstr ""
-"เมื่อเปิดใช้งาน "
-"ภาษาของงานจะสอดคล้องกับภาษาของอินเทอร์เฟซผู้ใช้ของคุณเมื่อภาษานั้นมีให้สำหรับงานนี้"
+"เมื่อเปิดใช้งาน ภาษาของงานจะสอดคล้องกับภาษาของอินเทอร์เฟซผู้ใช้ของคุณเมื่อภาษานั้นมีให้สำหรับงาน"
+"นี้"
 
 #: eventyay/common/templates/common/fragment_header_user.html:44
 #, fuzzy
@@ -41160,8 +41162,8 @@ msgid ""
 "Your request has been submitted and is awaiting approval by the event "
 "organizer. See below for details."
 msgstr ""
-"โปรดทราบว่าเรายังรอการอนุมัติจากผู้จัดงาน "
-"ก่อนที่คุณจะสามารถชำระเงินและดำเนินการคำสั่งซื้อนี้ให้เสร็จได้"
+"โปรดทราบว่าเรายังรอการอนุมัติจากผู้จัดงาน ก่อนที่คุณจะสามารถชำระเงินและดำเนินการคำสั่งซื้อนี้ให้เส"
+"ร็จได้"
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:17
 #: eventyay/presale/templates/pretixpresale/event/order.html:66
