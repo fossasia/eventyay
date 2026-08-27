@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
 "PO-Revision-Date: 2026-08-27 18:24+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Malayalam <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/ml/>\n"
 "Language: ml\n"
@@ -2904,8 +2904,8 @@ msgid ""
 "Sender address for outgoing emails. When using a custom sender, replies go "
 "to this address unless a Reply-To is set."
 msgstr ""
-"Reply-To വിലാസം. ഈ ക്രമീകരണം കാലിയാണെങ്കിലും കസ്ടം സെന്ഡറും ഇല്ലാത്തതായാലും, ഇവെന്റ് "
-"ഇമെയില് വിലാസം Reply-To വിലാസമായി ഉപയോഗിക്കും."
+"Reply-To വിലാസം. ഈ ക്രമീകരണം കാലിയാണെങ്കിലും കസ്ടം സെന്ഡറും ഇല്ലാത്തതായാലും, ഇവെന്റ് ഇമെയില് "
+"വിലാസം Reply-To വിലാസമായി ഉപയോഗിക്കും."
 
 #: eventyay/base/configurations/default_setting.py:1664
 #, fuzzy
@@ -7165,7 +7165,8 @@ msgstr ""
 #| msgid ""
 #| "Control whether the Join Online Video link is visible on public pages."
 msgid "Controls whether the plugin is available on the platform at all."
-msgstr "പൊതു പേജുകളിൽ ഓൺലൈൻ വീഡിയോയിൽ ചേരുക ലിങ്ക് ദൃശ്യമാണോ എന്ന് നിയന്ത്രിക്കുക."
+msgstr ""
+"പൊതു പേജുകളിൽ ഓൺലൈൻ വീഡിയോയിൽ ചേരുക ലിങ്ക് ദൃശ്യമാണോ എന്ന് നിയന്ത്രിക്കുക."
 
 #: eventyay/base/models/global_plugin_config.py:33
 #: eventyay/control/templates/pretixcontrol/global_plugins.html:26
@@ -7436,7 +7437,8 @@ msgstr "ഷെഡ്യൂൾ"
 #| "If you check this, the emails will be sent immediately, instead of being "
 #| "put in the outbox."
 msgid "If set, the email will be sent at this time instead of immediately."
-msgstr "ഇത് തിരഞ്ഞെടുക്കുകയാണെങ്കിൽ, ഇമെയിലുകൾ ഔട്ട്‌ബോക്സിൽ ഇടുന്നതിനുപകരം ഉടൻ അയയ്‌ക്കും."
+msgstr ""
+"ഇത് തിരഞ്ഞെടുക്കുകയാണെങ്കിൽ, ഇമെയിലുകൾ ഔട്ട്‌ബോക്സിൽ ഇടുന്നതിനുപകരം ഉടൻ അയയ്‌ക്കും."
 
 #: eventyay/base/models/mail.py:475
 msgid "This mail has been sent already. It cannot be sent again."
@@ -7901,7 +7903,8 @@ msgstr "ബാങ്ക് ട്രാൻസ്ഫർ വഴി പേയ്‌
 #, fuzzy
 #| msgid "Can only create a bank transfer refund from an existing payment."
 msgid "Import bank data and export refunds for bank transfer payments."
-msgstr "നിലവിലുള്ള പേയ്മെന്റിൽ നിന്നു മാത്രമേ ബാങ്ക് ട്രാൻസ്ഫർ റീഫണ്ട് സൃഷ്ടിക്കാനാകൂ."
+msgstr ""
+"നിലവിലുള്ള പേയ്മെന്റിൽ നിന്നു മാത്രമേ ബാങ്ക് ട്രാൻസ്ഫർ റീഫണ്ട് സൃഷ്ടിക്കാനാകൂ."
 
 #: eventyay/base/models/organizer.py:408
 msgid "Can perform check-ins"
@@ -8077,8 +8080,8 @@ msgid ""
 "Can review and provide feedback on exhibitor and sponsor proposals but "
 "cannot approve, reject, or otherwise manage them."
 msgstr ""
-"സമർപ്പണങ്ങൾ റിവ്യൂ ചെയ്ത് ഫീഡ്ബാക്ക് നൽകാം, പക്ഷേ വിശദാംശങ്ങൾ തിരുത്താനോ സമർപ്പണ നിലകൾ "
-"മാറ്റാനോ കഴിയില്ല."
+"സമർപ്പണങ്ങൾ റിവ്യൂ ചെയ്ത് ഫീഡ്ബാക്ക് നൽകാം, പക്ഷേ വിശദാംശങ്ങൾ തിരുത്താനോ സമർപ്പണ നിലകൾ മാറ്റാനോ "
+"കഴിയില്ല."
 
 #: eventyay/base/models/organizer.py:583
 msgid "Hide emails of applicants"
@@ -8135,7 +8138,8 @@ msgstr "വീഡിയോ: കിയോസ്‌കുകൾ സൃഷ്‌ട
 #, fuzzy
 #| msgid "Allows managing kiosk displays inside Eventyay Video."
 msgid "Allows creating and editing kiosk displays inside Eventyay Video."
-msgstr "Eventyay Video-യ്ക്കുള്ളിൽ കിയോസ്‌ക് ഡിസ്പ്ലേകൾ മാനേജ് ചെയ്യാൻ അനുവദിക്കുന്നു."
+msgstr ""
+"Eventyay Video-യ്ക്കുള്ളിൽ കിയോസ്‌ക് ഡിസ്പ്ലേകൾ മാനേജ് ചെയ്യാൻ അനുവദിക്കുന്നു."
 
 #: eventyay/base/models/organizer.py:621
 #, fuzzy
@@ -8418,10 +8422,10 @@ msgid ""
 "additional donations for your event. This is currently not supported for "
 "products that are bought as an add-on to other products."
 msgstr ""
-"ഈ ഓപ്ഷൻ സജീവമാണെങ്കിൽ, ഉപയോക്താക്കൾക്ക് വില സ്വയം തിരഞ്ഞെടുക്കാം. മുകളിൽ കോൺഫിഗർ ചെയ്ത "
-"വില ഉപയോക്താവ് നൽകേണ്ട ഏറ്റവും കുറഞ്ഞ വിലയായി കണക്കാക്കും. ഉദാ. ഇവന്റിനായി അധിക "
-"സംഭാവനകൾ ശേഖരിക്കാൻ ഇത് ഉപയോഗിക്കാം. മറ്റ് ഉൽപ്പന്നങ്ങളിലേക്കുള്ള അഡോൺ ആയി വാങ്ങുന്ന "
-"ഉൽപ്പന്നങ്ങൾക്ക് ഇത് നിലവിൽ പിന്തുണയ്ക്കുന്നില്ല."
+"ഈ ഓപ്ഷൻ സജീവമാണെങ്കിൽ, ഉപയോക്താക്കൾക്ക് വില സ്വയം തിരഞ്ഞെടുക്കാം. മുകളിൽ കോൺഫിഗർ ചെയ്ത വില "
+"ഉപയോക്താവ് നൽകേണ്ട ഏറ്റവും കുറഞ്ഞ വിലയായി കണക്കാക്കും. ഉദാ. ഇവന്റിനായി അധിക സംഭാവനകൾ ശേഖരിക്കാൻ "
+"ഇത് ഉപയോഗിക്കാം. മറ്റ് ഉൽപ്പന്നങ്ങളിലേക്കുള്ള അഡോൺ ആയി വാങ്ങുന്ന ഉൽപ്പന്നങ്ങൾക്ക് ഇത് നിലവിൽ "
+"പിന്തുണയ്ക്കുന്നില്ല."
 
 #: eventyay/base/models/product.py:369
 #, fuzzy
@@ -8740,7 +8744,8 @@ msgstr ""
 #, fuzzy
 #| msgid "The product's availability cannot end before it starts."
 msgid "Admission validity cannot end before it starts."
-msgstr "ഉൽപ്പന്നത്തിന്റെ ലഭ്യത ആരംഭിക്കുന്നതിന് മുമ്പ് അവസാനിപ്പിക്കാൻ കഴിയില്ല."
+msgstr ""
+"ഉൽപ്പന്നത്തിന്റെ ലഭ്യത ആരംഭിക്കുന്നതിന് മുമ്പ് അവസാനിപ്പിക്കാൻ കഴിയില്ല."
 
 #: eventyay/base/models/product.py:807
 msgid "Admission validity offsets cannot be negative."
@@ -15949,9 +15954,9 @@ msgid ""
 "reorder them — the first language (bold border) is used as your event's "
 "default language."
 msgstr ""
-"ഈ ഭാഷകളിൽ ഉപയോക്താക്കൾക്ക് eventyay ഉപയോഗിക്കാനാകും, കൂടാതെ ഈ ഭാഷകളിൽ എല്ലാ എഴുത്തുകളും "
-"നൽകാനാകും. ഉപയോക്താവ് തിരഞ്ഞെടുക്കുന്ന ഭാഷയിൽ എഴുത്ത് നൽകാത്ത പക്ഷം, അതിന് പകരം ഇവന്റിന്റെ "
-"ഡിഫോൾട്ട് ഭാഷയിൽ അത് കാണിക്കും."
+"ഈ ഭാഷകളിൽ ഉപയോക്താക്കൾക്ക് eventyay ഉപയോഗിക്കാനാകും, കൂടാതെ ഈ ഭാഷകളിൽ എല്ലാ എഴുത്തുകളും നൽകാനാകും. "
+"ഉപയോക്താവ് തിരഞ്ഞെടുക്കുന്ന ഭാഷയിൽ എഴുത്ത് നൽകാത്ത പക്ഷം, അതിന് പകരം ഇവന്റിന്റെ ഡിഫോൾട്ട് ഭാഷയിൽ "
+"അത് കാണിക്കും."
 
 #: eventyay/control/forms/event.py:111
 msgid "This is an event series"
@@ -22959,9 +22964,9 @@ msgid ""
 "Variation changes are configured per product in the product's \"Variations\" "
 "section."
 msgstr ""
-"ഉപയോക്താക്കള്‍ക്ക് അവരുടെ ഓര്‍ഡര്‍ മാറ്റാന്‍ അനുവദിക്കല്‍ വികസനത്തിലിരിക്കുന്ന ഒരു സവിശേഷതയാണ്. "
-"അതിനാല്‍, ഇപ്പോള്‍ പ്രത്യേക മാറ്റങ്ങള്‍ (ഉദാഹരണത്തിന് ഒരു ഉല്‍പ്പന്നത്തിന്റെ വകഭേദം മാറ്റുന്നത്) "
-"മാത്രമാണ് സാധ്യമാകുന്നത്. കൂടുതല്‍ ഓപ്ഷനുകള്‍ പിന്നീട് ചേര്‍ക്കാം."
+"ഉപയോക്താക്കള്‍ക്ക് അവരുടെ ഓര്‍ഡര്‍ മാറ്റാന്‍ അനുവദിക്കല്‍ വികസനത്തിലിരിക്കുന്ന ഒരു സവിശേഷതയാണ്. അതിനാല്‍, "
+"ഇപ്പോള്‍ പ്രത്യേക മാറ്റങ്ങള്‍ (ഉദാഹരണത്തിന് ഒരു ഉല്‍പ്പന്നത്തിന്റെ വകഭേദം മാറ്റുന്നത്) മാത്രമാണ് "
+"സാധ്യമാകുന്നത്. കൂടുതല്‍ ഓപ്ഷനുകള്‍ പിന്നീട് ചേര്‍ക്കാം."
 
 #: eventyay/control/templates/pretixcontrol/event/component_link.html:8
 #: eventyay/eventyay_common/templates/eventyay_common/event/component_link.html:9
@@ -25234,8 +25239,7 @@ msgstr ""
 msgid ""
 "The user account associated with this order will remain active and untouched."
 msgstr ""
-"ഈ ഇ-മെയിൽ വിലാസവുമായി ബന്ധപ്പെട്ട ഒരു അക്കൗണ്ട് ഇതിനകം നിലവിലുണ്ട്. മറ്റൊരു വിലാസം "
-"തിരഞ്ഞെടുക്കുക."
+"ഈ ഇ-മെയിൽ വിലാസവുമായി ബന്ധപ്പെട്ട ഒരു അക്കൗണ്ട് ഇതിനകം നിലവിലുണ്ട്. മറ്റൊരു വിലാസം തിരഞ്ഞെടുക്കുക."
 
 #: eventyay/control/templates/pretixcontrol/order/anonymize.html:17
 msgid ""
@@ -28010,8 +28014,8 @@ msgid ""
 "The following vouchers can't be deleted as they already have been redeemed "
 "or used in an order."
 msgstr ""
-"ഇതിനകം റീഡീം ചെയ്തതിനാൽ താഴെ പറയുന്ന വൗച്ചറുകൾ ഇല്ലാതാക്കാൻ കഴിയില്ല, പക്ഷേ അവയെ "
-"പൂർണ്ണമായി റീഡീം ചെയ്തതായി സെറ്റ് ചെയ്യും."
+"ഇതിനകം റീഡീം ചെയ്തതിനാൽ താഴെ പറയുന്ന വൗച്ചറുകൾ ഇല്ലാതാക്കാൻ കഴിയില്ല, പക്ഷേ അവയെ പൂർണ്ണമായി "
+"റീഡീം ചെയ്തതായി സെറ്റ് ചെയ്യും."
 
 #: eventyay/control/templates/pretixcontrol/vouchers/detail.html:16
 #, python-format
@@ -29340,7 +29344,8 @@ msgstr ""
 #, fuzzy
 #| msgid "A new client secret has been generated and is now effective."
 msgid "A new setup code has been generated. Scan or enter the updated QR code."
-msgstr "ഒരു പുതിയ ക്ലയന്റ് സീക്രെറ്റ് സൃഷ്‌ടിച്ചിരിക്കുന്നു, അത് ഇപ്പോൾ പ്രാബല്യത്തിലാണ്."
+msgstr ""
+"ഒരു പുതിയ ക്ലയന്റ് സീക്രെറ്റ് സൃഷ്‌ടിച്ചിരിക്കുന്നു, അത് ഇപ്പോൾ പ്രാബല്യത്തിലാണ്."
 
 #: eventyay/control/views/organizer_views/device_view.py:350
 msgid "This device currently does not have access."
@@ -29795,7 +29800,8 @@ msgstr "ഈ സുരക്ഷാ ഉപകരണം ഇതിനകം രജ�
 #| msgid ""
 #| "There was an error sending the confirmation mail. Please try again later."
 msgid "There was an error sending the verification email."
-msgstr "സ്ഥിരീകരണ ഇമെയിൽ അയയ്ക്കുന്നതിൽ പിശക് സംഭവിച്ചു. പിന്നീട് വീണ്ടും ശ്രമിക്കുക."
+msgstr ""
+"സ്ഥിരീകരണ ഇമെയിൽ അയയ്ക്കുന്നതിൽ പിശക് സംഭവിച്ചു. പിന്നീട് വീണ്ടും ശ്രമിക്കുക."
 
 #: eventyay/control/views/users.py:380
 #, fuzzy
@@ -30090,8 +30096,7 @@ msgid ""
 "If selected, this event will show up publicly on the list of events for your "
 "organizer account and in platform search results."
 msgstr ""
-"തിരഞ്ഞെടുക്കുകയാണെങ്കിൽ, ഈ ഇവന്റിനുള്ള തീയതികളുടെ പട്ടികയിൽ ഈ ഇവന്റ് പൊതുവായി "
-"പ്രദർശിപ്പിക്കും."
+"തിരഞ്ഞെടുക്കുകയാണെങ്കിൽ, ഈ ഇവന്റിനുള്ള തീയതികളുടെ പട്ടികയിൽ ഈ ഇവന്റ് പൊതുവായി പ്രദർശിപ്പിക്കും."
 
 #: eventyay/eventyay_common/forms/event.py:268
 msgid "You need to configure the custom domain in the webserver beforehand."
@@ -30989,9 +30994,9 @@ msgid ""
 "premium access or Swag. Manage attendees, design custom badges, and "
 "streamline event marketing by sending targeted emails."
 msgstr ""
-"ഇവന്റിനായുള്ള ടിക്കറ്റിംഗ് സജ്ജീകരിച്ച് കോൺഫിഗർ ചെയ്യുക, പ്രീമിയം ആക്‌സസ് അല്ലെങ്കിൽ സ്വാഗ് "
-"പോലുള്ള ആഡ്-ഓണുകൾ വിൽക്കുക. പങ്കെടുക്കുന്നവരെയും എക്സിബിറ്റർമാരെയും മാനേജ് ചെയ്യുക, ഇഷ്ടാനുസൃത "
-"ബാഡ്ജുകൾ രൂപകൽപ്പന ചെയ്യുക, ലക്ഷ്യമിട്ട ഇമെയിലുകൾ അയച്ച് ഇവന്റ് മാർക്കറ്റിംഗ് ലളിതമാക്കുക."
+"ഇവന്റിനായുള്ള ടിക്കറ്റിംഗ് സജ്ജീകരിച്ച് കോൺഫിഗർ ചെയ്യുക, പ്രീമിയം ആക്‌സസ് അല്ലെങ്കിൽ സ്വാഗ് പോലുള്ള "
+"ആഡ്-ഓണുകൾ വിൽക്കുക. പങ്കെടുക്കുന്നവരെയും എക്സിബിറ്റർമാരെയും മാനേജ് ചെയ്യുക, ഇഷ്ടാനുസൃത ബാഡ്ജുകൾ "
+"രൂപകൽപ്പന ചെയ്യുക, ലക്ഷ്യമിട്ട ഇമെയിലുകൾ അയച്ച് ഇവന്റ് മാർക്കറ്റിംഗ് ലളിതമാക്കുക."
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:47
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:65
@@ -31649,8 +31654,8 @@ msgid ""
 "Permanently remove proposals, speaker profiles, and uploaded talk-related "
 "content."
 msgstr ""
-"പ്രമേയങ്ങൾ, വക്തൃ പ്രൊഫൈലുകൾ, അപ്‌ലോഡുകൾ എന്നിവ ഉൾപ്പെടെയുള്ള ബന്ധപ്പെട്ട എല്ലാ ഡാറ്റയും "
-"ഇല്ലാതാക്കും; പിന്നീട് പുനഃസ്ഥാപിക്കാൻ കഴിയില്ല."
+"പ്രമേയങ്ങൾ, വക്തൃ പ്രൊഫൈലുകൾ, അപ്‌ലോഡുകൾ എന്നിവ ഉൾപ്പെടെയുള്ള ബന്ധപ്പെട്ട എല്ലാ ഡാറ്റയും ഇല്ലാതാക്കും; "
+"പിന്നീട് പുനഃസ്ഥാപിക്കാൻ കഴിയില്ല."
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:403
 #, fuzzy
@@ -34200,7 +34205,8 @@ msgstr "പ്രൊഫൈൽ ചിത്രം ലൈസൻസ്"
 #| "Please enter the name of the license of the photo and link to it if "
 #| "applicable."
 msgid "Please provide the license name and link if applicable."
-msgstr "ബാധകമാണെങ്കിൽ, ഫോട്ടോയുടെ ലൈസൻസിന്റെ പേര്, കൂടാതെ അതിലേക്കുള്ള ലിങ്ക് നൽകുക."
+msgstr ""
+"ബാധകമാണെങ്കിൽ, ഫോട്ടോയുടെ ലൈസൻസിന്റെ പേര്, കൂടാതെ അതിലേക്കുള്ള ലിങ്ക് നൽകുക."
 
 #: eventyay/orga/forms/importers.py:109
 #, fuzzy
@@ -34376,7 +34382,8 @@ msgstr "ഒരു ഇമെയിലിന് കുറഞ്ഞത് ഒരു
 msgid ""
 "If set, the email will be sent at this time. Time is interpreted in the "
 "event timezone."
-msgstr "ഇത് തിരഞ്ഞെടുക്കുകയാണെങ്കിൽ, ഇമെയിലുകൾ ഔട്ട്‌ബോക്സിൽ ഇടുന്നതിനുപകരം ഉടൻ അയയ്‌ക്കും."
+msgstr ""
+"ഇത് തിരഞ്ഞെടുക്കുകയാണെങ്കിൽ, ഇമെയിലുകൾ ഔട്ട്‌ബോക്സിൽ ഇടുന്നതിനുപകരം ഉടൻ അയയ്‌ക്കും."
 
 #: eventyay/orga/forms/mails.py:221
 msgid "Send immediately"
@@ -37826,8 +37833,8 @@ msgid ""
 "ALL related data, such as proposals, speaker profiles, and uploads, will "
 "also be deleted and cannot be restored."
 msgstr ""
-"പ്രമേയങ്ങൾ, വക്തൃ പ്രൊഫൈലുകൾ, അപ്‌ലോഡുകൾ എന്നിവ ഉൾപ്പെടെയുള്ള ബന്ധപ്പെട്ട എല്ലാ ഡാറ്റയും "
-"ഇല്ലാതാക്കും; പിന്നീട് പുനഃസ്ഥാപിക്കാൻ കഴിയില്ല."
+"പ്രമേയങ്ങൾ, വക്തൃ പ്രൊഫൈലുകൾ, അപ്‌ലോഡുകൾ എന്നിവ ഉൾപ്പെടെയുള്ള ബന്ധപ്പെട്ട എല്ലാ ഡാറ്റയും ഇല്ലാതാക്കും; "
+"പിന്നീട് പുനഃസ്ഥാപിക്കാൻ കഴിയില്ല."
 
 #: eventyay/orga/views/event.py:395 eventyay/orga/views/event.py:427
 #, fuzzy
@@ -38761,10 +38768,9 @@ msgid ""
 "texts and QR codes at the positions of your choice."
 msgstr ""
 "PDF ടിക്കറ്റ് എഡിറ്റർ ഉപയോഗിച്ച് ടിക്കറ്റ് ഡിസൈൻ ഇഷ്ടാനുസൃതമാക്കാം. അവിടെ, ടിക്കറ്റുകളുടെ "
-"പശ്ചാത്തലമായി ഉപയോഗിക്കുന്ന PDF ഫയൽ അപ്‌ലോഡ് ചെയ്ത്, തുടർന്ന് ഇഷ്ടമുള്ള സ്ഥാനങ്ങളിൽ "
-"പശ്ചാത്തലത്തിൽ വിവിധ ടെക്സ്റ്റുകളും QR കോഡുകളും സ്ഥാപിക്കാം. ഡ്രാഗ്-അൻഡ്-ഡ്രോപ്പ് ഉപയോക്തൃ "
-"ഇന്റർഫേസ് മൂലം എഡിറ്റർ ഉപയോഗിക്കാൻ എളുപ്പമാണ്, എന്നാൽ ഇതിന് ആധുനിക ബ്രൗസറും നല്ല ഇന്റർനെറ്റ് "
-"കണക്ഷനും ആവശ്യമാണ്."
+"പശ്ചാത്തലമായി ഉപയോഗിക്കുന്ന PDF ഫയൽ അപ്‌ലോഡ് ചെയ്ത്, തുടർന്ന് ഇഷ്ടമുള്ള സ്ഥാനങ്ങളിൽ പശ്ചാത്തലത്തിൽ "
+"വിവിധ ടെക്സ്റ്റുകളും QR കോഡുകളും സ്ഥാപിക്കാം. ഡ്രാഗ്-അൻഡ്-ഡ്രോപ്പ് ഉപയോക്തൃ ഇന്റർഫേസ് മൂലം എഡിറ്റർ "
+"ഉപയോഗിക്കാൻ എളുപ്പമാണ്, എന്നാൽ ഇതിന് ആധുനിക ബ്രൗസറും നല്ല ഇന്റർനെറ്റ് കണക്ഷനും ആവശ്യമാണ്."
 
 #: eventyay/plugins/badges/templates/pretixplugins/badges/form.html:12
 #, fuzzy
@@ -42377,9 +42383,9 @@ msgid ""
 "confirmation email. On the event page there is also a link to join online "
 "sessions."
 msgstr ""
-"ഇത് ടിക്കറ്റ് ആവശ്യമായ ഒരു ഇവന്റാണ്. ഗസ്റ്റ് ഉപയോക്താവായി ടിക്കറ്റ് ഓർഡർ ചെയ്തിട്ടുണ്ടെങ്കിൽ, "
-"അക്കൗണ്ട് ഉണ്ടാകില്ലെങ്കിലും ടിക്കറ്റ് സ്ഥിരീകരണ ഇമെയിലിലെ രഹസ്യ ലിങ്ക് ഉപയോഗിച്ച് ടിക്കറ്റ് "
-"ആക്സസ് ചെയ്യാം. ടിക്കറ്റുകൾ പേജിൽ ഓൺലൈൻ സെഷനുകളിൽ ചേരുന്നതിനുള്ള ലിങ്കും ഉണ്ട്."
+"ഇത് ടിക്കറ്റ് ആവശ്യമായ ഒരു ഇവന്റാണ്. ഗസ്റ്റ് ഉപയോക്താവായി ടിക്കറ്റ് ഓർഡർ ചെയ്തിട്ടുണ്ടെങ്കിൽ, അക്കൗണ്ട് "
+"ഉണ്ടാകില്ലെങ്കിലും ടിക്കറ്റ് സ്ഥിരീകരണ ഇമെയിലിലെ രഹസ്യ ലിങ്ക് ഉപയോഗിച്ച് ടിക്കറ്റ് ആക്സസ് "
+"ചെയ്യാം. ടിക്കറ്റുകൾ പേജിൽ ഓൺലൈൻ സെഷനുകളിൽ ചേരുന്നതിനുള്ള ലിങ്കും ഉണ്ട്."
 
 #: eventyay/presale/templates/pretixpresale/fragment_join_online_video.html:13
 #, fuzzy
@@ -42848,7 +42854,8 @@ msgstr "അക്കൗണ്ട് പ്രവർത്തനരഹിതമ�
 #, fuzzy
 #| msgid "For security reasons, please wait 5 minutes before you try again."
 msgid "Too many messages sent. Please wait a few minutes before trying again."
-msgstr "സുരക്ഷാ കാരണങ്ങളാൽ, വീണ്ടും ശ്രമിക്കുന്നതിന് മുമ്പ് 5 മിനിറ്റ് കാത്തിരിക്കുക."
+msgstr ""
+"സുരക്ഷാ കാരണങ്ങളാൽ, വീണ്ടും ശ്രമിക്കുന്നതിന് മുമ്പ് 5 മിനിറ്റ് കാത്തിരിക്കുക."
 
 #: eventyay/presale/views/contact.py:98 eventyay/presale/views/contact.py:104
 #, fuzzy
@@ -42937,7 +42944,8 @@ msgstr "Eventyay വീഡിയോ"
 #, fuzzy
 #| msgid "Unknown order code or not authorized to access this order."
 msgid "You are not authorized to access this order."
-msgstr "അജ്ഞാത ഓര്‍ഡര്‍ കോഡ് അല്ലെങ്കില്‍ ഈ ഓര്‍ഡറില്‍ പ്രവേശിക്കാന്‍ അനുമതിയില്ല."
+msgstr ""
+"അജ്ഞാത ഓര്‍ഡര്‍ കോഡ് അല്ലെങ്കില്‍ ഈ ഓര്‍ഡറില്‍ പ്രവേശിക്കാന്‍ അനുമതിയില്ല."
 
 #: eventyay/presale/views/order.py:556 eventyay/presale/views/order.py:626
 #: eventyay/presale/views/order.py:700
