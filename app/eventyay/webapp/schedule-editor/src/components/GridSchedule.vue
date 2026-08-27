@@ -39,8 +39,13 @@
 <script lang="ts" setup>
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import moment, { Moment } from 'moment-timezone'
-import Session from './Session.vue'
+import TalkSession from './Session.vue'
+import ShiftSession from '~/teamshifts-adapter/Session.vue'
+import { resolveMode } from '~/teamshifts-adapter'
 import { getLocalizedString } from '~/utils'
+
+const mode = resolveMode()
+const Session = mode === 'shifts' || mode === 'public-shifts' ? ShiftSession : TalkSession
 
 interface Room {
   id: string
@@ -611,8 +616,24 @@ const getSessionStyle = (session: SessionDatum | Availability): Record<string, s
   const { total } = getOverlapGroup(session)
 
   if (props.allowOverlap && total > 1 && 'id' in session) {
+    const overlapping = visibleSessions.value.filter(s => {
+      if (!s.room || !s.start || !s.end) return false
+      if (s.room.id !== session.room!.id) return false
+      return s.start.isBefore(session.end) && s.end.isAfter(session.start)
+    }).sort((a, b) => {
+      const diff = a.start.diff(b.start)
+      return diff !== 0 ? diff : a.id - b.id
+    })
+    const myIndex = overlapping.findIndex(s => s.id === (session as SessionDatum).id)
+    if (myIndex === 0) {
+      return {
+        'grid-row-start': getSliceName(session.start),
+        'grid-column': roomIndex > -1 ? (roomIndex + 2).toString() : '',
+      }
+    }
+    const prev = overlapping[myIndex - 1]
     return {
-      'grid-row-start': getSliceName(session.start),
+      'grid-row-start': getSliceName(prev.end),
       'grid-column': roomIndex > -1 ? (roomIndex + 2).toString() : '',
     }
   }

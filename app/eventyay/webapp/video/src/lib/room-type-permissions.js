@@ -3,7 +3,7 @@ export function isRoomTypeAvailable(typeId, hasPermission, isAdminMode = false) 
 		return hasPermission('world:rooms.create.stage')
 	}
 	if (typeId === 'channel-bbb' || typeId === 'channel-janus' || typeId === 'channel-zoom') {
-		return hasPermission('world:rooms.create.bbb')
+		return isAdminMode && hasPermission('world:rooms.create.bbb')
 	}
 	if (typeId === 'channel-jitsi') {
 		return isAdminMode && hasPermission('world:rooms.create.jitsi')
@@ -11,7 +11,10 @@ export function isRoomTypeAvailable(typeId, hasPermission, isAdminMode = false) 
 	if (typeId === 'channel-text') {
 		return hasPermission('world:rooms.create.chat')
 	}
-	if (typeId === 'channel-roulette' || typeId === 'page-landing') {
+	if (typeId === 'channel-roulette') {
+		return isAdminMode && hasPermission('room:update')
+	}
+	if (typeId === 'page-landing') {
 		return hasPermission('room:update')
 	}
 	return true

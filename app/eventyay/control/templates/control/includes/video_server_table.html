@@ -1,0 +1,53 @@
+{% load i18n %}
+
+{% if video_server_rows %}
+    <div class="video-admin-table-wrapper" data-video-server-table data-csrf-token="{{ csrf_token }}">
+        <table class="table table-condensed table-hover video-admin-table video-server-table">
+            <thead>
+                <tr>
+                    <th>{% trans "Type" %}</th>
+                    <th>{% trans "Server" %}</th>
+                    <th>{% trans "Event" %}</th>
+                    <th>{% trans "Status" %}</th>
+                    <th class="text-right">{% trans "Active" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for server in video_server_rows %}
+                    <tr data-video-server-row>
+                        <td>{{ server.type_label }}</td>
+                        <td>
+                            <a class="video-server-link" href="{{ server.edit_url }}">{{ server.name }}</a>
+                        </td>
+                        <td>
+                            {% if server.event_exclusive %}
+                                {{ server.event_exclusive.name }}
+                            {% else %}
+                                <span class="text-muted">{% trans "All events" %}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="label {% if server.active %}label-success{% else %}label-default{% endif %} video-server-status" data-video-server-status>
+                                {{ server.status }}
+                            </span>
+                        </td>
+                        <td class="text-right">
+                            <label class="video-server-toggle">
+                                <span class="sr-only">{% blocktrans with name=server.name %}Toggle active state for {{ name }}{% endblocktrans %}</span>
+                                <input
+                                    type="checkbox"
+                                    data-video-server-toggle
+                                    data-toggle-url="{{ server.toggle_url }}"
+                                    {% if server.active %}checked{% endif %}
+                                >
+                                <span class="video-server-toggle-slider" aria-hidden="true"></span>
+                            </label>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="panel-body text-muted">{% trans "No video servers configured." %}</div>
+{% endif %}

@@ -17,7 +17,10 @@ from eventyay.base.models.audit import AuditLog
 from eventyay.base.models.chat import Channel
 from eventyay.base.models.event import Event
 from eventyay.base.models.room import Room, RoomConfigSerializer, RoomView
-from eventyay.base.services.jitsi import user_can_create_jitsi_room_during_development
+from eventyay.base.services.room_creation_gate import (
+    SERVER_BACKED_ROOM_MODULE_TYPES,
+    user_can_create_server_backed_room_during_development,
+)
 from eventyay.base.services.video_theme import build_video_theme_for_event
 from eventyay.core.permissions import Permission
 
@@ -397,6 +400,13 @@ async def create_room(event, data, creator):
         m for m in data.get("modules", []) if m.get("type") in livestream_types
     ]
 
+    if types & SERVER_BACKED_ROOM_MODULE_TYPES:
+        if not await user_can_create_server_backed_room_during_development(creator):
+            raise ValidationError(
+                "This user is not allowed to create a room of this type.",
+                code="denied",
+            )
+
     if livestream_modules:
         allowed_stage_types = livestream_types | {"chat.native"}
         if len(livestream_modules) != 1 or types - allowed_stage_types:
@@ -465,11 +475,6 @@ async def create_room(event, data, creator):
         m["config"] = event.config.get("bbb_defaults", {})
         m["config"].pop("secret", None)  # legacy
     elif types == {"call.jitsi"}:
-        if not await user_can_create_jitsi_room_during_development(creator):
-            raise ValidationError(
-                "This user is not allowed to create a room of this type.",
-                code="denied",
-            )
         m = [m for m in data.get("modules", []) if m["type"] == "call.jitsi"][0]
         config = m.get("config", {})
         if not isinstance(config, dict):
