@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0062_attendee_feedback_redesign'),
+        ('base', '0064_gmailoauthcredential'),
     ]
 
     operations = [
