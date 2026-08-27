@@ -160,7 +160,10 @@ class EventDashboardView(EventPermissionRequired, SubmissionStatsMixin, Template
         result = []
         if not hasattr(self.request.event, 'cfp'):
             return result
-        if self.request.event.cfp.is_open:
+        if self.request.event.cfp.is_open and (
+            self.request.event.talks_published
+            or self.request.event.private_testmode_talks_enabled
+        ):
             result.append(
                 {
                     'url': self.request.event.cfp.urls.public,

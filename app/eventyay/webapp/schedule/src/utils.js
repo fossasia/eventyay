@@ -237,6 +237,7 @@ export function talkToSession (talk, {
 	tracksLookup = {},
 	roomsLookup = {},
 	includePopularity = false,
+	mode = 'talks',
 } = {}) {
 	const isPending = isTalkSchedulePending(talk)
 	const speakers = (talk.speakers || []).map((sp) => {
@@ -251,8 +252,8 @@ export function talkToSession (talk, {
 		title: talk.title,
 		abstract: talk.abstract,
 		description: talk.description,
-        do_not_record: talk.do_not_record,
-        duration: talk.duration,
+		do_not_record: talk.do_not_record,
+		duration: talk.duration,
 		speakers,
 		track,
 		tags: talk.tags,
@@ -264,6 +265,10 @@ export function talkToSession (talk, {
 		recording_iframe: talk.recording_iframe,
 		stream_url: talk.stream_url || null,
 		stream_type: talk.stream_type || null,
+	}
+	if (mode === 'shifts') {
+		base.roles = talk.roles || null
+		base.talkId = talk.id
 	}
 	if (includePopularity) {
 		base.fav_count = normalizePopularityCount(talk)

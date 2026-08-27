@@ -140,6 +140,7 @@ const api = {
     let payload: HttpRequestBody = null
     if (action !== 'DELETE') {
       const roomId = typeof talk.room === 'object' ? talk.room.id : talk.room
+      const roomValue = resolveMode() !== 'talks' ? (roomId ?? null) : roomId
       const duration = talk.duration ?? calculateDuration(talk.start, talk.end)
 
       const convertToUTC = (date: string | Moment | undefined): string | undefined => {
@@ -150,7 +151,7 @@ const api = {
       }
 
       payload = {
-        room: roomId,
+        room: roomValue,
         start: convertToUTC(talk.start),
         end: convertToUTC(talk.end),
         duration,

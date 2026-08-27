@@ -1,5 +1,5 @@
 <template lang="pug">
-.c-grid-schedule(:class="'density-' + density")
+.c-grid-schedule(:class="[('density-' + density), { 'is-shift-mode': isShiftMode }]")
 	.sticky-header
 		.rooms-bar(ref="roomsBar")
 			.rooms-inner(:style="{'--total-rooms': rooms.length, 'min-width': scrollContentWidth ? (scrollContentWidth + 'px') : null}")
@@ -21,7 +21,8 @@
 				svg(viewBox="0 0 10 10", :title="nowHoverTime")
 					path(d="M 0 0 L 10 5 L 0 10 z")
 			template(v-for="session of sessions")
-				session(
+				component(
+					:is="SessionComponent",
 					v-if="isProperSession(session)",
 					:session="session",
 					:now="now",
@@ -56,7 +57,8 @@
 						.timeslice(:class="getSliceClasses(slice)", :style="getSliceStyle(slice)") {{ getSliceLabel(slice) }}
 						.timeline(:class="getSliceClasses(slice)", :style="getSliceStyle(slice)")
 					template(v-for="session of getChunkSessions(chunk)")
-						session(
+						component(
+							:is="SessionComponent",
 							v-if="isProperSession(session)",
 							:session="session",
 							:now="now",
@@ -85,16 +87,18 @@
 // - handle click on already selected day (needs some buntpapier hacking)
 // - optionally only show venueless rooms
 import moment from 'moment-timezone'
-import Session from './Session'
+import TalkSession from './Session'
+import ShiftSession from '../teamshifts-adapter/Session.vue'
 import GridBreak from './GridBreak'
 import { getLocalizedString } from '../utils'
+import { isShiftSchedule, computeShiftOverlapPlacement } from '../teamshifts-adapter'
 
 const getSliceName = function (date) {
 	return `slice-${date.format('MM-DD-HH-mm')}`
 }
 
 export default {
-	components: { Session, GridBreak },
+	components: { TalkSession, ShiftSession, GridBreak },
 	props: {
 		sessions: Array,
 		rooms: Array,
@@ -127,6 +131,7 @@ export default {
 		}
 	},
 	inject: {
+		scheduleData: { default: null },
 		translationMessages: { default: () => ({}) }
 	},
 	data () {
@@ -142,6 +147,14 @@ export default {
 		}
 	},
 	computed: {
+		SessionComponent () {
+			const data = this.scheduleData?.value ?? this.scheduleData
+			return isShiftSchedule(data) ? ShiftSession : TalkSession
+		},
+		isShiftMode () {
+			const data = this.scheduleData?.value ?? this.scheduleData
+			return isShiftSchedule(data)
+		},
 		favSet () {
 			return new Set(this.favs || [])
 		},
@@ -295,7 +308,7 @@ export default {
 				}
 			})
 			// remove gap at the end of the schedule
-			if (compactedSlices[compactedSlices.length - 1].gap) compactedSlices.pop()
+			if (compactedSlices[compactedSlices.length - 1]?.gap) compactedSlices.pop()
 			for (let i = 0; i < compactedSlices.length; i++) {
 				const next = compactedSlices[i + 1]
 				if (next?.datebreak || !next) {
@@ -449,6 +462,22 @@ export default {
 		},
 		getSessionStyle (session) {
 			const roomIndex = this.roomIndexLookup.has(session.room) ? this.roomIndexLookup.get(session.room) : -1
+			const data = this.scheduleData?.value ?? this.scheduleData
+			if (isShiftSchedule(data) && session.start && session.end) {
+				const placement = computeShiftOverlapPlacement(session, this.sessions)
+				if (placement) {
+					if (placement.startName) {
+						return {
+							'grid-row-start': getSliceName(placement.startName),
+							'grid-column': roomIndex > -1 ? roomIndex + 2 : null
+						}
+					}
+					return {
+						'grid-row-start': getSliceName(session.start),
+						'grid-column': roomIndex > -1 ? roomIndex + 2 : null
+					}
+				}
+			}
 			return {
 				'grid-row': `${getSliceName(session.start)} / ${getSliceName(session.end)}`,
 				'grid-column': roomIndex > -1 ? roomIndex + 2 : null
@@ -642,6 +671,8 @@ export default {
 	flex: auto
 	background-color: $clr-grey-50
 	--room-col-min: 320px
+	&.is-shift-mode
+		--room-col-min: 420px
 	.sticky-header
 		position: sticky
 		top: calc(var(--pretalx-sticky-top-offset, 0px) + var(--pretalx-toolbar-height, 30px) + var(--pretalx-version-warning-height, 0px) - 1px)
