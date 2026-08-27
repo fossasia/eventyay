@@ -7,8 +7,8 @@ msgstr ""
 "Project-Id-Version: 1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 16:24+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2026-08-27 16:25+0000\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Dutch <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "nl/>\n"
 "Language: nl\n"
@@ -4034,8 +4034,7 @@ msgstr "Tag publiekelijk tonen"
 #, fuzzy
 #| msgid "Displayed as the background image on the public start page."
 msgid "Display the number of followers on the public organizer profile page."
-msgstr ""
-"Wordt weergegeven als achtergrondafbeelding op de openbare startpagina."
+msgstr "Wordt weergegeven als achtergrondafbeelding op de openbare startpagina."
 
 #: eventyay/base/configurations/default_setting.py:2559
 msgid "Length of gift card codes"
@@ -23623,8 +23622,8 @@ msgid ""
 "To confirm you really want this, please type out the event's name "
 "(\"%(name)s\") here:"
 msgstr ""
-"Typ om zeker te zijn dat u dit echt wilt de korte naam van het evenement "
-"(\"%(slug)s\") hier:"
+"Typ om zeker te zijn dat u dit echt wilt de korte naam van het evenement (\"%"
+"(slug)s\") hier:"
 
 #: eventyay/control/templates/pretixcontrol/event/delete.html:36
 msgid "Your event can not be deleted as it already contains orders."
@@ -43980,8 +43979,7 @@ msgstr "Eventyay-video"
 #, fuzzy
 #| msgid "Unknown order code or not authorized to access this order."
 msgid "You are not authorized to access this order."
-msgstr ""
-"Onbekende bestelcode of niet gemachtigd om deze bestelling te bekijken."
+msgstr "Onbekende bestelcode of niet gemachtigd om deze bestelling te bekijken."
 
 #: eventyay/presale/views/order.py:556 eventyay/presale/views/order.py:626
 #: eventyay/presale/views/order.py:700
