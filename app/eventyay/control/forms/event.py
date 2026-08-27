@@ -2054,11 +2054,11 @@ class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
                 'geo_lat': None,
                 'geo_lon': None,
             })
-            add_video_field_errors(self, cleaned_data.get('video_type'), cleaned_data.get('video_url'))
         elif loc_type == LOCATION_IN_PERSON:
             cleaned_data['video_type'] = ''
             cleaned_data['video_url'] = ''
-        elif loc_type == LOCATION_HYBRID:
+
+        if loc_type in (LOCATION_VIRTUAL, LOCATION_HYBRID):
             add_video_field_errors(self, cleaned_data.get('video_type'), cleaned_data.get('video_url'))
 
         cap_type = cleaned_data.get('capacity_type') or CAPACITY_UNLIMITED
