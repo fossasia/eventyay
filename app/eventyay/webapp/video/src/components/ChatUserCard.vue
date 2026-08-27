@@ -5,26 +5,26 @@
 		scrollbars(y)
 			avatar(:user="user", :size="128")
 			.name
-				.online-status(v-if="!user.deleted", :class="onlineStatus ? 'online' : (onlineStatus === false ? 'offline' : 'unknown')", v-tooltip="onlineStatus ? $t('UserAction:state.online:tooltip') : (onlineStatus === false ? $t('UserAction:state.offline:tooltip') : '')")
+				.online-status(v-if="!user.deleted", :class="onlineStatus ? 'online' : (onlineStatus === false ? 'offline' : 'unknown')", v-tooltip="onlineStatus ? $t('Online') : (onlineStatus === false ? $t('Offline') : '')")
 				| {{ getUserName(user) }}
 				.ui-badge(v-for="badge in user.badges") {{ badge }}
 			ProfileFields(:user="user")
 			.state {{ userStates.join(', ') }}
 			.actions(v-if="user.id !== ownUser.id && user.id && !user.deleted")
-				bunt-button.btn-dm(v-if="hasPermission('world:chat.direct')", @click="openDM") {{ $t('UserAction:action.dm:label') }}
-				bunt-button.btn-call(v-if="hasPermission('world:chat.direct')", @click="startCall") {{ $t('UserAction:action.call:label') }}
+				bunt-button.btn-dm(v-if="hasPermission('world:chat.direct')", @click="openDM") {{ $t('message') }}
+				bunt-button.btn-call(v-if="hasPermission('world:chat.direct')", @click="startCall") {{ $t('call') }}
 				menu-dropdown(v-model="showMoreActions", :blockBackground="false", @mousedown.stop="")
 					template(#button="{toggle}")
 						bunt-icon-button(@click="toggle") dots-vertical
 					template(#menu)
-						.unblock(v-if="isBlocked", @click="userAction = 'unblock'") {{ $t('UserAction:action.unblock:label') }}
-						.block(v-else, @click="userAction = 'block'") {{ $t('UserAction:action.block:label') }}
+						.unblock(v-if="isBlocked", @click="userAction = 'unblock'") {{ $t('unblock') }}
+						.block(v-else, @click="userAction = 'block'") {{ $t('block') }}
 						template(v-if="hasPermission('room:chat.moderate') && user.id !== ownUser.id")
-							.divider {{ $t('UserAction:moderator-actions:title') }}
-							.ban(v-if="user.moderation_state !== 'banned'", @click="userAction = 'ban'") {{ $t('UserAction:action.ban:label') }}
-							.silence(v-if="!user.moderation_state", @click="userAction = 'silence'") {{ $t('UserAction:action.silence:label') }}
+							.divider {{ $t('Moderator Actions') }}
+							.ban(v-if="user.moderation_state !== 'banned'", @click="userAction = 'ban'") {{ $t('ban') }}
+							.silence(v-if="!user.moderation_state", @click="userAction = 'silence'") {{ $t('silence') }}
 							.reactivate(v-if="user.moderation_state", @click="userAction = 'reactivate'")
-								| {{ user.moderation_state === 'banned' ? $t('UserAction:action.unban:label') : $t('UserAction:action.unsilence:label') }}
+								| {{ user.moderation_state === 'banned' ? $t('unban') : $t('unsilence') }}
 	user-action-prompt(v-if="userAction", :action="userAction", :user="user", @close="$emit('close')")
 </template>
 <script>

@@ -12,10 +12,15 @@ from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic import FormView, ListView, TemplateView, UpdateView
 
+from i18nfield.strings import LazyI18nString
+
 from eventyay.base.models.page import Page
+from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.templatetags.rich_text import compile_markdown
+from eventyay.common.permissions import is_admin_mode_active
 from eventyay.control.forms.page import PageSettingsForm
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
+from eventyay.eventyay_common.navigation import get_global_navigation
 from eventyay.helpers.compat import CompatDeleteView
 
 
@@ -185,6 +190,8 @@ class ShowPageView(TemplateView):
         ctx = super().get_context_data()
         page = self.get_page()
         ctx['page'] = page
+        ctx['staff_session'] = is_admin_mode_active(self.request)
+        ctx['nav_items'] = get_global_navigation(self.request) if self.request.user.is_authenticated else []
         ctx['show_link_in_header_for_all_pages'] = Page.objects.filter(link_in_system=True, link_in_header=True)
         ctx['show_link_in_footer_for_all_pages'] = Page.objects.filter(link_in_system=True, link_in_footer=True)
 
@@ -206,3 +213,37 @@ class ShowPageView(TemplateView):
             url_schemes=url_schemes,
         )
         return ctx
+
+
+class SystemPageView(ShowPageView):
+    """Render system pages (terms, privacy, pricing, support) from DB or with default content if enabled."""
+
+    slug = None
+
+    def get_slug(self):
+        return self.slug or self.kwargs.get('slug')
+
+    def get_page(self):
+        slug = self.get_slug()
+        try:
+            return Page.objects.get(slug=slug)
+        except Page.DoesNotExist:
+            gs = GlobalSettingsObject().settings
+            enabled_key = f'footer_link_{slug}_enabled'
+            if gs.get(enabled_key, as_type=bool, default=True):
+                title_map = {
+                    'terms': _('Terms of Service'),
+                    'privacy': _('Privacy Policy'),
+                    'pricing': _('Pricing'),
+                    'support': _('Support & Help'),
+                }
+                title = title_map.get(slug, slug.capitalize())
+                custom_text = gs.get(f'footer_page_{slug}_text', as_type=LazyI18nString)
+                text = custom_text if custom_text else f'# {title}\n\n' + str(_('Content for this page has not been configured yet.'))
+                return Page(
+                    title=title,
+                    slug=slug,
+                    text=text,
+                )
+            raise Http404(_('The requested page does not exist.'))
+

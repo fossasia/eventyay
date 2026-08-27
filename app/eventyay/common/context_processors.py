@@ -1,7 +1,5 @@
 import logging
 import warnings
-from collections import Counter
-from functools import lru_cache
 from pathlib import Path
 
 from django.conf import settings
@@ -13,24 +11,15 @@ from django_scopes import get_scope
 
 from eventyay.base.meetup import has_video_stream, is_meetup_event
 from eventyay.base.models.settings import GlobalSettings
+from eventyay.base.settings import GlobalSettingsObject
 from eventyay.cfp.signals import footer_link, html_head
 from eventyay.helpers.formats.variants import get_day_month_date_format
 from eventyay.helpers.i18n import get_javascript_format, get_moment_locale, is_rtl
 
-from .language import get_language_choices_native_with_ui_name
+from .language import get_ui_language_options
 from .text.phrases import phrases
 
 logger = logging.getLogger(__name__)
-
-
-@lru_cache(maxsize=None)
-def _get_native_language_name(code: str) -> str:
-    language_info = settings.LANGUAGES_INFORMATION.get(code, {})
-    language_name = language_info.get('name')
-    if language_name is None:
-        return code
-    with translation.override(code):
-        return str(language_name)
 
 
 def add_events(request: HttpRequest):
@@ -55,28 +44,7 @@ def locale_context(request):
     AVAILABLE_CALENDAR_LOCALES = tuple(
         f.name.removesuffix('.global.min.js') for f in cal_static_dir.rglob('*.global.min.js')
     )
-    available_codes = [code for code, __ in settings.LANGUAGES]
-    ordered_codes = [code for code, __ in get_language_choices_native_with_ui_name(available_codes)]
-    supported_languages = [(code, settings.LANGUAGES_INFORMATION[code]['natural_name']) for code in ordered_codes]
-    natural_name_counts = Counter(natural_name for __, natural_name in supported_languages)
-    labels_by_code = {}
-    for code, natural_name in supported_languages:
-        label = natural_name
-        if natural_name_counts[natural_name] > 1:
-            native_language_name = _get_native_language_name(code)
-            if native_language_name:
-                label = native_language_name
-        labels_by_code[code] = label
-
-    # Ensure labels remain unique even if native variants still collide.
-    label_counts = Counter(labels_by_code.values())
-    languages_with_natural_names = []
-    for code, __ in supported_languages:
-        label = labels_by_code[code]
-        if label_counts[label] > 1:
-            label = f'{label} ({code})'
-        languages_with_natural_names.append((code, label))
-    language_options = [{'code': code, 'label': name} for code, name in languages_with_natural_names]
+    language_options = get_ui_language_options()
 
     context = {
         'js_date_format': get_javascript_format('DATE_INPUT_FORMATS'),
@@ -147,14 +115,40 @@ def system_information(request):
                 _head.append(response)
             context['html_head'] = ''.join(_head)
 
+    # Load core platform footer links from GlobalSettings
+    gs = GlobalSettingsObject().settings
+    core_footer_items = [
+        ('events', _('Events'), '/upcoming'),
+        ('terms', _('Terms'), '/terms'),
+        ('privacy', _('Privacy'), '/privacy'),
+        ('pricing', _('Pricing'), '/pricing'),
+        ('documentation', _('Documentation'), 'https://docs.eventyay.com'),
+        ('support', _('Support'), '/support'),
+    ]
+
+    core_footer_links = []
+    for key, label, default_url in core_footer_items:
+        enabled = gs.get(f'footer_link_{key}_enabled', as_type=bool, default=True)
+        url = gs.get(f'footer_link_{key}_url', as_type=str, default=default_url).strip()
+        if enabled and url:
+            core_footer_links.append({
+                'key': key,
+                'label': label,
+                'url': url,
+                'target_blank': url.startswith('http://') or url.startswith('https://'),
+            })
+
+    context['core_footer_links'] = core_footer_links
+
     if settings.DEBUG:
         context['development_mode'] = True
         context['eventyay_version'] = settings.EVENTYAY_VERSION
 
     context['warning_update_available'] = False
     context['base_path'] = settings.BASE_PATH
-    if not request.user.is_anonymous and request.user.is_administrator and request.path.startswith('/orga'):
-        gs = GlobalSettings()
-        if gs.settings.update_check_result_warning:
+    user = getattr(request, 'user', None)
+    if user and not user.is_anonymous and getattr(user, 'is_administrator', False) and request.path.startswith('/orga'):
+        gs_obj = GlobalSettings()
+        if gs_obj.settings.update_check_result_warning:
             context['warning_update_available'] = True
     return context

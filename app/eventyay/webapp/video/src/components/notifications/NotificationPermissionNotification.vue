@@ -1,11 +1,11 @@
 <template lang="pug">
 .c-notification-permission-notification.ui-notification
 	bunt-icon-button#btn-close(@click="$store.dispatch('notifications/dismissPermissionPrompt')") close
-	h1 {{ $t('notifications/NotificationPermissionNotification:title') }}
-	p {{ $t('notifications/NotificationPermissionNotification:prompt') }}
+	h1 {{ $t('Desktop Notifications') }}
+	p {{ $t('Do you want to get desktop notifications for direct messages, contact requests and more while the event is running in the background?') }}
 	.actions
-		bunt-button#btn-enable-desktop-notifications(@click="$store.dispatch('notifications/askForPermission')") {{ $t('notifications/NotificationPermissionNotification:accept:label') }}
-		bunt-button#btn-dismiss(@click="$store.dispatch('notifications/dismissPermissionPrompt')") {{ $t('notifications/NotificationPermissionNotification:decline:label') }}
+		bunt-button#btn-enable-desktop-notifications(@click="$store.dispatch('notifications/askForPermission')") {{ $t('Enable notifications') }}
+		bunt-button#btn-dismiss(@click="$store.dispatch('notifications/dismissPermissionPrompt')") {{ $t('Not now') }}
 </template>
 <script>
 export default {

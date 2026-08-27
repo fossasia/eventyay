@@ -67,6 +67,7 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
 import moment, { Moment } from 'moment-timezone'
+import { translate } from '~/lib/i18n'
 import { getLocalizedString } from '~/utils'
 import { getCapabilities, resolveMode, resolveSessionKind, getClaimedShiftIds, getCsrfToken, getClaimBaseUrl } from '~/teamshifts-adapter'
 import type { Capabilities } from '~/teamshifts-adapter/types'
@@ -248,16 +249,18 @@ const isShortSession = computed<boolean>(() => {
 const durationPretty = computed<string | undefined>(() => {
   const minutes = durationMinutes.value
   if (!minutes) return undefined
+  const minLabel = translate('min')
+  const hourLabel = translate('h')
 
   if (minutes <= 60) {
-    return `${minutes}min`
+    return `${minutes}${minLabel}`
   }
   const hours = Math.floor(minutes / 60)
   const leftoverMinutes = minutes % 60
   if (leftoverMinutes) {
-    return `${hours}h${leftoverMinutes}min`
+    return `${hours}${hourLabel}${leftoverMinutes}${minLabel}`
   }
-  return `${hours}h`
+  return `${hours}${hourLabel}`
 })
 
 function onPointerDown(event: PointerEvent): void {

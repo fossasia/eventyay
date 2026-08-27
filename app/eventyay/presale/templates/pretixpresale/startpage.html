@@ -37,7 +37,7 @@
                 <h2>{% trans "Featured events" %}</h2>
                 <div class="startpage-event-list">
                     {% for event in featured_events %}
-                        {% include "pretixpresale/includes/startpage_event_card.html" with event=event %}
+                        {% include "pretixpresale/includes/startpage_event_card.html" with event=event is_lcp=forloop.first %}
                     {% endfor %}
                 </div>
             </section>
@@ -49,7 +49,11 @@
             </div>
             <div class="startpage-event-list">
                 {% for event in upcoming_events %}
-                    {% include "pretixpresale/includes/startpage_event_card.html" with event=event %}
+                    {% if featured_events %}
+                        {% include "pretixpresale/includes/startpage_event_card.html" with event=event %}
+                    {% else %}
+                        {% include "pretixpresale/includes/startpage_event_card.html" with event=event is_lcp=forloop.first %}
+                    {% endif %}
                 {% empty %}
                     <p class="startpage-empty">{% trans "No upcoming events available yet." %}</p>
                 {% endfor %}

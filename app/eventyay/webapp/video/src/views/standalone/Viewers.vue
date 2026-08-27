@@ -1,6 +1,6 @@
 <template lang="pug">
 .c-standalone-viewers(v-if="roomViewers")
-	h1 {{ $t('standalone/Viewers:header', {count: roomViewers.length}) }}
+	h1 {{ viewersHeading }}
 	.viewers(:class="{many: roomViewers.length > 92}")
 		.viewer(v-for="viewer in roomViewers")
 			avatar(:user="viewer", :size="64")
@@ -16,6 +16,12 @@ export default {
 	},
 	computed: {
 		...mapState(['roomViewers']),
+		viewersHeading() {
+			if (this.roomViewers.length === 1) {
+				return this.$t('One person is joining you online')
+			}
+			return this.$t('{{ count }} people are joining you online', {count: this.roomViewers.length})
+		},
 	},
 }
 </script>

@@ -16,18 +16,18 @@
 				span.session-language(v-if="!isSchedulePending && sessionLanguageLabel")  · {{ t.session_language }}: {{ sessionLanguageLabel }}
 			.recording-embed(v-if="resolvedTalk.recording_iframe", v-html="resolvedTalk.recording_iframe")
 			.field-section.abstract-section(v-if="resolvedTalk.abstract")
-				h2.field-heading Abstract
+				h2.field-heading {{ $t('Abstract') }}
 				.field-content
 					markdown-content(:markdown="resolvedTalk.abstract")
 			.field-section.description-section(v-if="resolvedTalk.description")
-				h2.field-heading Description
+				h2.field-heading {{ $t('Description') }}
 				.field-content
 					markdown-content(:markdown="resolvedTalk.description")
 			.field-section.video-embed-section(v-for="(answer, index) in videoAnswers", :key="'api-video-' + index + '-' + (answer.embed_url || answer.answer)")
 				.video-embed
 					iframe(
 						:src="videoEmbedSrc(answer)",
-						title="Session video",
+						:title="$t('Session video')",
 						allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share",
 						allowfullscreen,
 						loading="lazy",
@@ -36,7 +36,7 @@
 				.video-embed(v-if="videoEmbedSrc(answer)")
 					iframe(
 						:src="videoEmbedSrc(answer)",
-						title="Session video",
+						:title="$t('Session video')",
 						allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share",
 						allowfullscreen,
 						loading="lazy",
@@ -206,18 +206,18 @@ export default {
 		t() {
 			const m = this.translationMessages || {}
 			return {
-				join_room: m.join_room || 'Join room',
-				speaker_name_not_provided: m.speaker_name_not_provided || 'Speaker name not provided',
-				downloads: m.downloads || 'Downloads',
-				speakers: m.speakers || 'Speakers',
-				view_video: m.view_video || 'View Video',
-				starred_by: m.starred_by || 'Starred by',
-				anonymous_attendee: m.anonymous_attendee || 'Anonymous (name not shared)',
-				view_all: m.view_all || 'View all',
-				hide_list: m.hide_list || 'Hide',
-				session_language: m.session_language || 'Language',
-				yes: m.yes || 'Yes',
-				no: m.no || 'No',
+				join_room: m.join_room || this.$t('Join room'),
+				speaker_name_not_provided: m.speaker_name_not_provided || this.$t('Speaker name not provided'),
+				downloads: m.downloads || this.$t('Downloads'),
+				speakers: m.speakers || this.$t('Speakers'),
+				view_video: m.view_video || this.$t('View Video'),
+				starred_by: m.starred_by || this.$t('Starred by'),
+				anonymous_attendee: m.anonymous_attendee || this.$t('Anonymous (name not shared)'),
+				view_all: m.view_all || this.$t('View all'),
+				hide_list: m.hide_list || this.$t('Hide'),
+				session_language: m.session_language || this.$t('Language'),
+				yes: m.yes || this.$t('Yes'),
+				no: m.no || this.$t('No'),
 			}
 		},
 		uiLocale () {
@@ -289,7 +289,7 @@ export default {
 		},
 		schedulePendingText () {
 			const m = this.translationMessages || {}
-			return m.schedule_pending_secondary || 'Coming soon'
+			return m.schedule_pending_secondary || this.$t('Coming soon')
 		},
 		sessionTimeLabel () {
 			if (this.isSchedulePending) return this.schedulePendingText
@@ -488,14 +488,14 @@ export default {
 			return resolveAbsoluteUrl(resource, this.baseUrl)
 		},
 		getFileExtensionLabel(path) {
-			if (!path) return 'Resource'
+			if (!path) return this.$t('Resource')
 			if (/^https?:\/\//i.test(path) && !/\.[a-z0-9]+$/i.test(path)) {
-				return 'External Link'
+				return this.$t('External Link')
 			}
 			const parts = path.split(/[#?]/)[0].split('.')
-			if (parts.length < 2) return 'Resource'
+			if (parts.length < 2) return this.$t('Resource')
 			const ext = parts[parts.length - 1].toUpperCase()
-			return `${ext} Document`
+			return this.$t('{{ext}} Document', {ext})
 		},
 		getSpeakerLink(speaker) {
 			return this.generateSpeakerLinkUrl({speaker})

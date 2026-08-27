@@ -1238,7 +1238,97 @@ class AllFeedbacksList(EventPermissionRequired, PaginationMixin, ListView):
     paginate_by = 25
 
     def get_queryset(self):
-        return Feedback.objects.order_by('-pk').select_related('talk').filter(talk__event=self.request.event)
+        qs = Feedback.objects.order_by('-pk').select_related('talk', 'author').filter(talk__event=self.request.event)
+        
+        tab = self.request.GET.get('tab', 'published')
+        if tab == 'published':
+            qs = qs.filter(status='published', is_public=True)
+        elif tab == 'pending':
+            qs = qs.filter(status='pending', is_public=True)
+        elif tab == 'hidden':
+            qs = qs.filter(status='hidden', is_public=True)
+        elif tab == 'anonymous':
+            qs = qs.filter(is_public=False)
+            
+        return qs
+        
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['current_tab'] = self.request.GET.get('tab', 'published')
+        context['banned_user_ids'] = list(self.request.event.banned_users.values_list('id', flat=True))
+        return context
+
+class FeedbackBulkAction(EventPermissionRequired, View):
+    permission_required = 'base.orga_update_submission'
+
+    def post(self, request, *args, **kwargs):
+        action = request.POST.get('action')
+        feedback_ids = request.POST.getlist('feedback_ids')
+        
+        if not feedback_ids:
+            messages.warning(request, _('No items selected.'))
+            return redirect(request.GET.get('next', request.event.orga_urls.feedback))
+            
+        feedbacks = Feedback.objects.filter(pk__in=feedback_ids, talk__event=request.event)
+        
+        if action == 'approve':
+            count = feedbacks.filter(status='pending').update(status='published')
+            messages.success(request, _('Successfully approved %d feedback(s).') % count)
+        elif action == 'hide':
+            count = feedbacks.exclude(status='hidden').update(status='hidden')
+            messages.success(request, _('Successfully hid %d feedback(s).') % count)
+        elif action == 'delete':
+            count = feedbacks.exclude(status='deleted').update(status='deleted')
+            messages.success(request, _('Successfully deleted %d feedback(s).') % count)
+            
+        return redirect(request.GET.get('next', request.event.orga_urls.feedback))
+
+class FeedbackUpdateStatus(EventPermissionRequired, View):
+    permission_required = 'base.orga_update_submission'
+
+    def get(self, request, *args, **kwargs):
+        feedback = get_object_or_404(Feedback, pk=self.kwargs['pk'], talk__event=request.event)
+        action = request.GET.get('action')
+        if action == 'delete':
+            from django.shortcuts import render
+            return render(request, 'orga/submission/feedback_delete.html', {'object': feedback})
+        return redirect(request.GET.get('next', request.event.orga_urls.feedback))
+
+    def post(self, request, *args, **kwargs):
+        feedback = get_object_or_404(Feedback, pk=self.kwargs['pk'], talk__event=request.event)
+        action = request.POST.get('action')
+        
+        if action == 'approve' and feedback.status == 'pending':
+            feedback.status = 'published'
+            feedback.save()
+            messages.success(request, _('Feedback approved.'))
+        elif action == 'hide' and feedback.status != 'hidden':
+            feedback.status = 'hidden'
+            feedback.save()
+            messages.success(request, _('Feedback hidden.'))
+        elif action == 'delete':
+            feedback.status = 'deleted'
+            feedback.save()
+            messages.success(request, _('Feedback deleted.'))
+        elif action == 'ban':
+            if feedback.author:
+                request.event.banned_users.add(feedback.author)
+                feedback.status = 'hidden'
+                feedback.save()
+                messages.success(request, _('User banned successfully.'))
+            else:
+                messages.error(request, _('Cannot ban anonymous user.'))
+        elif action == 'unban':
+            if feedback.author:
+                request.event.banned_users.remove(feedback.author)
+                messages.success(request, _('User unbanned successfully.'))
+            else:
+                messages.error(request, _('Cannot unban anonymous user.'))
+            
+        next_url = request.GET.get('next')
+        if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
+            return redirect(next_url)
+        return redirect(request.event.orga_urls.feedback)
 
 
 class FeedbackExportView(EventPermissionRequired, View):
