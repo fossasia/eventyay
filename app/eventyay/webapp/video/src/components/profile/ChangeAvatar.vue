@@ -1,9 +1,9 @@
 <template lang="pug">
 .c-change-avatar(v-if="modelValue")
 	.inputs
-		bunt-button.btn-randomize(@click="changeIdenticon") {{ $t('profile/ChangeAvatar:button-randomize:label') }}
-		span {{ $t('profile/ChangeAvatar:or') }}
-		upload-button.btn-upload(@change="fileSelected", accept="image/png, image/jpg, image/jpeg, .png, .jpg, .jpeg") {{ $t('profile/ChangeAvatar:button-upload:label') }}
+		bunt-button.btn-randomize(@click="changeIdenticon") {{ $t('randomize') }}
+		span {{ $t('or') }}
+		upload-button.btn-upload(@change="fileSelected", accept="image/png, image/jpg, image/jpeg, .png, .jpg, .jpeg") {{ $t('upload') }}
 	.upload-info {{ uploadInfoText }}
 	.image-wrapper
 		.file-error(v-if="fileError")
@@ -103,7 +103,7 @@ function fileSelected(event) {
 		const img = new Image()
 		img.onload = () => {
 			if (img.width < MIN_AVATAR_SIZE || img.height < MIN_AVATAR_SIZE) {
-				fileError.value = proxy.$t('profile/ChangeAvatar:error:image-too-small')
+				fileError.value = proxy.$t('Image must be at least 128px by 128px large.')
 				emit('blockSave', true)
 			} else {
 				changedImage.value = true
@@ -135,7 +135,7 @@ async function update() {
 
 	const processed = await createAvatarBlob(canvas)
 	if (!processed) {
-		fileError.value = proxy.$t('profile/ChangeAvatar:error:process-failed')
+		fileError.value = proxy.$t('Failed to process image. Please try a different file.')
 		emit('blockSave', true)
 		return
 	}
@@ -147,9 +147,9 @@ async function update() {
 	await new Promise((resolve) => {
 		const request = api.uploadFile(resizedBlob, 'avatar.png', null, dimension, dimension)
 		const handleFailure = (status, responseText) => {
-			let message = proxy.$t('profile/ChangeAvatar:error:upload-failed')
+			let message = proxy.$t('Failed to upload avatar. Please try again.')
 			if (status === 413) {
-				message = proxy.$t('profile/ChangeAvatar:error:file-too-large')
+				message = proxy.$t('Uploaded image is too large. Please choose a smaller file.')
 			}
 			console.error('[avatar-upload]', status, responseText)
 			fileError.value = message

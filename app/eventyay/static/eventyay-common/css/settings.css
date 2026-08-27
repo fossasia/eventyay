@@ -276,6 +276,24 @@
     display: none;
 }
 
+.gmail-connection-panel--nested {
+    margin-top: 10px;
+}
+
+.gmail-connection-panel--nested .alert {
+    margin-bottom: 10px;
+}
+
+.gmail-connection-panel--nested .gmail-connection-row + .gmail-connection-row {
+    margin-top: 12px;
+}
+
+.gmail-callback-uri {
+    word-break: break-all;
+    display: inline-block;
+    max-width: 100%;
+}
+
 /* Event schedule row (creation + settings) */
 .event-schedule-row {
     display: flex;

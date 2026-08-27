@@ -1,11 +1,11 @@
 <template lang="pug">
 prompt.c-create-chat-prompt(@close="$emit('close')")
 	.content
-		h1 {{ $t('CreateChatPrompt:headline:text') }}
-		p {{ $t('CreateChatPrompt:intro:text') }}
+		h1 {{ $t('Create a new channel') }}
+		p {{ $t("Create a new place to discuss a topic you'd like to talk about.") }}
 		form(@submit.prevent="create")
 			.channel-type
-				.fieldset-label {{ $t('CreateChatPrompt:type:label') }}
+				.fieldset-label {{ $t('Type') }}
 				.ui-radio-options
 					label.ui-radio-option(v-for="option in types", :key="option.id")
 						input(type="radio", name="type", :value="option.id", v-model="type")
@@ -13,11 +13,11 @@ prompt.c-create-chat-prompt(@close="$emit('close')")
 							.ui-radio-title
 								i.mdi(:class="`mdi-${option.icon}`", style="margin-right: 6px; font-size: 16px; line-height: 1;")
 								span {{ option.label }}
-			bunt-input.name-input(:class="{ 'has-error': !!error }", name="name", :label="$t('CreateChatPrompt:name:label')", :icon="selectedType ? selectedType.icon : null", :placeholder="$t('CreateChatPrompt:name:placeholder')", v-model="name", :validation="error ? { $error: true, $errors: [{ $message: error }] } : null")
-			bunt-input-outline-container(:label="$t('CreateChatPrompt:description:label')")
+			bunt-input.name-input(:class="{ 'has-error': !!error }", name="name", :label="$t('Name')", :icon="selectedType ? selectedType.icon : null", :placeholder="$t('Channel name')", v-model="name", :validation="error ? { $error: true, $errors: [{ $message: error }] } : null")
+			bunt-input-outline-container(:label="$t('Description')")
 				template(#default= "{focus, blur}")
 					textarea(v-model="description", @focus="focus", @blur="blur")
-			bunt-button(type="submit", :loading="loading", :disabled="!!error", :error="!!error") {{ $t('CreateChatPrompt:submit:label') }}
+			bunt-button(type="submit", :loading="loading", :disabled="!!error", :error="!!error") {{ $t('Create') }}
 </template>
 <script>
 import {mapGetters} from 'vuex'
@@ -47,7 +47,7 @@ export default {
 				types.push({
 					id: 'text',
 					roomTypeId: 'channel-text',
-					label: this.$t('CreateChatPrompt:type.text:label'),
+					label: this.$t('Text chat'),
 					icon: 'pound',
 					moduleType: 'chat.native',
 					permission: 'world:rooms.create.chat'
@@ -57,7 +57,7 @@ export default {
 				types.push({
 					id: 'video',
 					roomTypeId: 'channel-bbb',
-					label: this.$t('CreateChatPrompt:type.video:label'),
+					label: this.$t('Video chat'),
 					icon: 'webcam',
 					moduleType: 'call.bigbluebutton',
 					permission: 'world:rooms.create.bbb'
@@ -101,7 +101,7 @@ export default {
 			this.error = null
 			// Check if any types are available
 			if (this.types.length === 0) {
-				this.error = this.$t('CreateChatPrompt:error:no-permission') || 'You do not have permission to create channels.'
+				this.error = this.$t('You do not have permission to create channels.') || 'You do not have permission to create channels.'
 				return
 			}
 			if (!this.selectedType) {
@@ -110,7 +110,7 @@ export default {
 
 			// Verify permission for selected type
 			if (!isRoomTypeAvailable(this.selectedType.roomTypeId, this.hasPermission, this.isAdminMode)) {
-				this.error = this.$t('CreateChatPrompt:error:no-permission') || 'You do not have permission to create channels.'
+				this.error = this.$t('You do not have permission to create channels.') || 'You do not have permission to create channels.'
 				return
 			}
 

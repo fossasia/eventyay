@@ -1,0 +1,115 @@
+{% load i18n %}
+{% if gmail_migration_pending %}
+    <div class="alert alert-warning">
+        {% trans "Gmail integration requires a database update. Run `python manage.py migrate` and reload this page." %}
+    </div>
+{% else %}
+<div class="gmail-connection-panel{% if gmail_panel_nested %} gmail-connection-panel--nested{% endif %}">
+    <div class="alert alert-info">
+        {% blocktrans trimmed %}
+            Gmail and Google Workspace are suitable for moderate transactional email and organiser communication.
+            They are not recommended as the only backend for large event mailings. Configure SMTP or SendGrid as a
+            fallback delivery backend if Gmail is unavailable or unsuitable for bulk mailings.
+        {% endblocktrans %}
+    </div>
+    {% if gmail_panel_nested %}
+        <div class="gmail-connection-row">
+            <p class="help-block">
+                <strong>{% trans "OAuth redirect URI" %}</strong><br>
+                <code class="gmail-callback-uri">{{ gmail_callback_url }}</code>
+            </p>
+            <p class="help-block">
+                {% trans "Add this redirect URI to your Google Cloud OAuth client before connecting." %}
+            </p>
+        </div>
+        <div class="gmail-connection-row">
+            <p class="help-block">
+                <strong>{% trans "Gmail connection" %}</strong>
+            </p>
+            {% if gmail_credential %}
+                <p class="help-block">
+                    <span class="label label-success">{% trans "Connected" %}</span>
+                    {{ gmail_credential.sender_email }}
+                </p>
+                <p class="help-block">
+                    {% blocktrans trimmed with sent=gmail_credential.daily_send_count limit=gmail_credential.daily_send_limit %}
+                        Approximate usage today: {{ sent }} / {{ limit }} messages.
+                    {% endblocktrans %}
+                    {% if gmail_credential.last_error %}
+                        <br>
+                        {% blocktrans trimmed with error=gmail_credential.last_error %}
+                            Last delivery issue: {{ error }}
+                        {% endblocktrans %}
+                    {% endif %}
+                </p>
+                <button type="submit" class="btn btn-danger btn-sm" form="{{ gmail_disconnect_form_id }}">
+                    {% trans "Disconnect Gmail" %}
+                </button>
+            {% else %}
+                <p class="help-block">
+                    <span class="label label-default">{% trans "Not connected" %}</span>
+                </p>
+                <p class="help-block">
+                    {% if gmail_event_level %}
+                        {% trans "Configure the OAuth client ID and secret in global settings, then connect a Google account with send permission." %}
+                    {% else %}
+                        {% trans "Save your OAuth client ID and secret, then connect a Google account with send permission." %}
+                    {% endif %}
+                </p>
+                <a href="{{ gmail_connect_url }}" class="btn btn-primary btn-sm">
+                    {% trans "Connect Gmail account" %}
+                </a>
+            {% endif %}
+        </div>
+    {% else %}
+        <div class="form-group">
+            <label class="col-md-3 control-label">{% trans "OAuth redirect URI" %}</label>
+            <div class="col-md-9">
+                <p class="form-control-static"><code class="gmail-callback-uri">{{ gmail_callback_url }}</code></p>
+                <p class="help-block">
+                    {% trans "Add this redirect URI to your Google Cloud OAuth client before connecting." %}
+                </p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-md-3 control-label">{% trans "Gmail connection" %}</label>
+            <div class="col-md-9">
+                {% if gmail_credential %}
+                    <p class="form-control-static">
+                        <span class="label label-success">{% trans "Connected" %}</span>
+                        {{ gmail_credential.sender_email }}
+                    </p>
+                    <p class="help-block">
+                        {% blocktrans trimmed with sent=gmail_credential.daily_send_count limit=gmail_credential.daily_send_limit %}
+                            Approximate usage today: {{ sent }} / {{ limit }} messages.
+                        {% endblocktrans %}
+                        {% if gmail_credential.last_error %}
+                            <br>
+                            {% blocktrans trimmed with error=gmail_credential.last_error %}
+                                Last delivery issue: {{ error }}
+                            {% endblocktrans %}
+                        {% endif %}
+                    </p>
+                    <button type="submit" class="btn btn-danger" form="{{ gmail_disconnect_form_id }}">
+                        {% trans "Disconnect Gmail" %}
+                    </button>
+                {% else %}
+                    <p class="form-control-static">
+                        <span class="label label-default">{% trans "Not connected" %}</span>
+                    </p>
+                    <p class="help-block">
+                        {% if gmail_event_level %}
+                            {% trans "Configure the OAuth client ID and secret in global settings, then connect a Google account with send permission." %}
+                        {% else %}
+                            {% trans "Save your OAuth client ID and secret, then connect a Google account with send permission." %}
+                        {% endif %}
+                    </p>
+                    <a href="{{ gmail_connect_url }}" class="btn btn-primary">
+                        {% trans "Connect Gmail account" %}
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endif %}

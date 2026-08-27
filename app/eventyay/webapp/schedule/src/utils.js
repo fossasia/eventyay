@@ -114,12 +114,12 @@ export function buildExportMenuItems(exporters) {
 	if (!exporters) return []
 	const qr = exporters.qrcodes || {}
 	return [
-		{ id: 'google_calendar', label: 'Add to Google Calendar', url: exporters.google_calendar, icon: 'fa-google', qrcode_svg: qr.google_calendar },
-		{ id: 'webcal', label: 'Add to Other Calendar', url: exporters.webcal, icon: 'fa-calendar', qrcode_svg: qr.webcal },
-		{ id: 'ics', label: 'iCal', url: exporters.ics, icon: 'fa-calendar', qrcode_svg: qr.ics },
-		{ id: 'json', label: 'JSON (frab compatible)', url: exporters.json, icon: 'fa-code', qrcode_svg: qr.json },
-		{ id: 'xml', label: 'XML (frab compatible)', url: exporters.xml, icon: 'fa-code', qrcode_svg: qr.xml },
-		{ id: 'xcal', label: 'XCal (frab compatible)', url: exporters.xcal, icon: 'fa-calendar', qrcode_svg: qr.xcal },
+		{ id: 'google_calendar', label: translate('Add to Google Calendar'), url: exporters.google_calendar, icon: 'fa-google', qrcode_svg: qr.google_calendar },
+		{ id: 'webcal', label: translate('Add to Other Calendar'), url: exporters.webcal, icon: 'fa-calendar', qrcode_svg: qr.webcal },
+		{ id: 'ics', label: translate('iCal'), url: exporters.ics, icon: 'fa-calendar', qrcode_svg: qr.ics },
+		{ id: 'json', label: translate('JSON (frab compatible)'), url: exporters.json, icon: 'fa-code', qrcode_svg: qr.json },
+		{ id: 'xml', label: translate('XML (frab compatible)'), url: exporters.xml, icon: 'fa-code', qrcode_svg: qr.xml },
+		{ id: 'xcal', label: translate('XCal (frab compatible)'), url: exporters.xcal, icon: 'fa-calendar', qrcode_svg: qr.xcal },
 	].filter(o => o.url)
 }
 
