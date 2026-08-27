@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 17:28+0000\n"
-"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
+"PO-Revision-Date: 2026-08-27 17:29+0000\n"
+"Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Turkish <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/tr/>\n"
 "Language: tr\n"
@@ -5685,8 +5685,7 @@ msgstr "Bu hesap aktif değildir."
 #: eventyay/base/forms/auth.py:138
 msgid ""
 "You already registered with that email address, please use the login form."
-msgstr ""
-"Bu e-posta adresiyle zaten kaydoldunuz, lütfen giriş panelini kullanın."
+msgstr "Bu e-posta adresiyle zaten kaydoldunuz, lütfen giriş panelini kullanın."
 
 #: eventyay/base/forms/auth.py:139 eventyay/base/forms/auth.py:197
 #: eventyay/base/forms/user.py:19 eventyay/control/forms/users.py:26
@@ -10584,8 +10583,7 @@ msgstr ""
 #: eventyay/base/models/vouchers.py:294 eventyay/base/models/vouchers.py:350
 msgid ""
 "If you want this voucher to block quota, you need to select a specific date."
-msgstr ""
-"Bu makbuzun kotayı engellemesi için belirli bir tarih seçmeniz gerekir."
+msgstr "Bu makbuzun kotayı engellemesi için belirli bir tarih seçmeniz gerekir."
 
 #: eventyay/base/models/vouchers.py:296
 msgid "You can not select a subevent if your event is not an event series."
@@ -11016,8 +11014,7 @@ msgstr "Ödeme yöntemini etkinleştir"
 #: eventyay/base/payment.py:265
 msgid ""
 "Users will not be able to choose this payment provider after the given date."
-msgstr ""
-"Kullanıcılar, bu ödeme sağlayıcısını belirtilen tarihten sonra seçemez."
+msgstr "Kullanıcılar, bu ödeme sağlayıcısını belirtilen tarihten sonra seçemez."
 
 #: eventyay/base/payment.py:272
 msgid "Text on invoices"
@@ -13166,8 +13163,7 @@ msgstr "Tüm bildirimleri hemen devre dışı bırakmak için buraya tıklayın.
 
 #: eventyay/base/templates/pretixbase/email/notification.txt:15
 msgid "Click here to view and change your notification settings:"
-msgstr ""
-"Bildirim ayarlarınızı görüntülemek ve değiştirmek için buraya tıklayın:"
+msgstr "Bildirim ayarlarınızı görüntülemek ve değiştirmek için buraya tıklayın:"
 
 #: eventyay/base/templates/pretixbase/email/notification.txt:17
 msgid "Click here disable all notifications immediately:"
@@ -19320,8 +19316,8 @@ msgid ""
 "Position #{posid}: Event date \"{old_event}\" ({old_price}) changed to "
 "\"{new_event}\" ({new_price})."
 msgstr ""
-"Pozisyon #{posid}: Etkinlik günü \"{old_event}\" ({old_price}) den "
-"\"{new_event}\" ({new_price}) değiştirildi."
+"Pozisyon #{posid}: Etkinlik günü \"{old_event}\" ({old_price}) den \""
+"{new_event}\" ({new_price}) değiştirildi."
 
 #: eventyay/control/logdisplay.py:99
 #, python-brace-format
@@ -19489,8 +19485,8 @@ msgid ""
 "A scan for position #{posid} at {datetime} for list \"{list}\" has been "
 "uploaded even though it has been scanned already."
 msgstr ""
-"Daha önceden incelenmesine rağmen #{posid} pzisyonu için {datetime}'da "
-"\"{list}\" listesi için incelenme yüklendi."
+"Daha önceden incelenmesine rağmen #{posid} pzisyonu için {datetime}'da \""
+"{list}\" listesi için incelenme yüklendi."
 
 #: eventyay/control/logdisplay.py:335
 #, python-brace-format
@@ -19729,8 +19725,7 @@ msgstr ""
 #: eventyay/control/logdisplay.py:564
 msgid ""
 "An email has been sent to notify the user that the order has been received."
-msgstr ""
-"Siparişin alındığını kullanıcıya bildirmek için bir e-posta gönderildi."
+msgstr "Siparişin alındığını kullanıcıya bildirmek için bir e-posta gönderildi."
 
 #: eventyay/control/logdisplay.py:567
 #, fuzzy
@@ -22752,8 +22747,7 @@ msgstr "geliştirme modunda çalışıyor"
 #: eventyay/orga/templates/orga/base.html:553
 #: eventyay/presale/templates/pretixpresale/waiting.html:24
 msgid "If this takes longer than a few minutes, please contact us."
-msgstr ""
-"Bu işlem birkaç dakikadan uzun sürerse, lütfen bizimle iletişime geçin."
+msgstr "Bu işlem birkaç dakikadan uzun sürerse, lütfen bizimle iletişime geçin."
 
 #: eventyay/control/templates/pretixcontrol/boxoffice/payment.html:4
 #: eventyay/control/templates/pretixcontrol/organizers/devices.html:48
@@ -23393,8 +23387,7 @@ msgstr ""
 #: eventyay/control/templates/pretixcontrol/organizers/delete.html:16
 msgid ""
 "This operation is irreversible and there is no way to bring your data back."
-msgstr ""
-"Bu işlem geri alınamaz ve verilerinizi geri getirmenin bir yolu yoktur."
+msgstr "Bu işlem geri alınamaz ve verilerinizi geri getirmenin bir yolu yoktur."
 
 #: eventyay/control/templates/pretixcontrol/event/delete.html:22
 #, fuzzy, python-format
@@ -26509,9 +26502,9 @@ msgid ""
 "underpaid by <strong>%(pending)s</strong>. The order total is "
 "<strong>%(total)s</strong>."
 msgstr ""
-"Farkettik ki <strong>%(amount)s</strong> üzerinden iade "
-"edildi<strong>%(method)s</strong>. Bu geri ödeme işleniyorsa, sipariş,"
-"<strong>%(pending)s</strong>.Sipariş toplamı <strong>%(total)s</strong>."
+"Farkettik ki <strong>%(amount)s</strong> üzerinden iade edildi<strong>%"
+"(method)s</strong>. Bu geri ödeme işleniyorsa, sipariş,<strong>%(pending)s</"
+"strong>.Sipariş toplamı <strong>%(total)s</strong>."
 
 #: eventyay/control/templates/pretixcontrol/order/refund_process.html:30
 msgid "Since the order is already canceled, this will not affect its state."
@@ -28451,8 +28444,7 @@ msgstr ""
 #, python-format
 msgid ""
 "Are you sure you want to delete the voucher <strong>%(voucher)s</strong>?"
-msgstr ""
-"Kuponu <strong>%(voucher)s</strong> silmek istediğinizden emin misiniz?"
+msgstr "Kuponu <strong>%(voucher)s</strong> silmek istediğinizden emin misiniz?"
 
 #: eventyay/control/templates/pretixcontrol/vouchers/delete_bulk.html:4
 #: eventyay/control/templates/pretixcontrol/vouchers/delete_bulk.html:6
@@ -31300,8 +31292,8 @@ msgid ""
 "you can <a %(login_href)s>log in</a> first and then click this link again to "
 "accept the invitation with your existing account."
 msgstr ""
-"Bu sitede farklı bir e-posta adresine sahip bir hesabınız varsa, önce <a "
-"%(login_href)s>log in </a> adresinde oturum açabilirsiniz ve ardından mevcut "
+"Bu sitede farklı bir e-posta adresine sahip bir hesabınız varsa, önce <a %"
+"(login_href)s>log in </a> adresinde oturum açabilirsiniz ve ardından mevcut "
 "hesabınızla daveti kabul etmek için bu bağlantıyı tekrar tıklayabilirsiniz."
 
 #: eventyay/eventyay_common/templates/eventyay_common/auth/login.html:17
@@ -33029,8 +33021,7 @@ msgstr ""
 msgid ""
 "You cannot accept the invitation for \"{}\" as you already are part of this "
 "team."
-msgstr ""
-"Bu ekibin bir parçası olduğunuz için \"{}\" davetini kabul edemezsiniz."
+msgstr "Bu ekibin bir parçası olduğunuz için \"{}\" davetini kabul edemezsiniz."
 
 #: eventyay/eventyay_common/views/auth.py:216
 msgid "You are now part of the team \"{}\"."
