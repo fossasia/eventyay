@@ -10,7 +10,7 @@
 <html lang="{{ html_locale }}"{% if rtl %} dir="rtl" class="rtl"{% endif %}>
     <head>
         <meta charset="utf-8">
-        <title>{% block page_title %}{% trans 'Start page' %}{% endblock %} :: {{ site_name }}</title>
+        <title>{{ site_name }}</title>
         {% block meta_tags %}
         <meta name="title" content="{% trans 'Start page' %} {{ site_name }}">
         <meta name="description" content="{% trans 'Browse live events on' %} {{ site_name }}">
@@ -42,6 +42,7 @@
             <link rel="stylesheet" type="text/css" href="{% static "agenda/css/_speaker.css" %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'common/css/_navbar.css' %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'common/css/_component_nav_mobile.css' %}" />
+            <link rel="stylesheet" type="text/css" href="{% static 'common/css/_footer.css' %}" />
             <link rel="stylesheet" type="text/x-scss" href="{% static "pretixpresale/scss/startpage.scss" %}" />
         {% endcompress %}
         {% if css_file %}
@@ -223,6 +224,7 @@
                 {% for footer in footer_links %}
                     · <a href="{% safelink footer.url %}" target="_blank" rel="noopener">{{ footer.label }}</a>
                 {% endfor %}
+                {% include "common/includes/core_footer.html" %}
                 <ul class="list-inline text-center startpage-footer-links">
                     {% if show_link_in_footer_for_start_page %}
                         {% for page in show_link_in_footer_for_start_page %}

@@ -480,12 +480,12 @@ class SubmissionFilterForm(forms.Form):
 
     default_renderer = InlineFormRenderer
 
-    def __init__(self, event, *args, limit_tracks=False, search_fields=None, **kwargs):
+    def __init__(self, event, *args, limit_tracks=False, search_fields=None, show_all_filters=False, **kwargs):
         self.event = event
         self.search_fields = search_fields or (
             'code__icontains',
             'title__icontains',
-            'speakers__name__icontains',
+            'speakers__fullname__icontains',
         )
         usable_states = kwargs.pop('usable_states', None)
         initial = kwargs.pop('initial', {}) or {}
@@ -513,7 +513,7 @@ class SubmissionFilterForm(forms.Form):
             limit_tracks = event.tracks.filter(pk__in=[track.pk for track in limit_tracks])
         tracks = limit_tracks or event.tracks.all()
         languages = event.named_content_locales
-        if len(sub_types) > 1:
+        if len(sub_types) > 1 or show_all_filters:
             type_count = {
                 d['submission_type_id']: d['submission_type_id__count']
                 for d in qs.order_by('submission_type_id')
@@ -529,7 +529,7 @@ class SubmissionFilterForm(forms.Form):
             ]
         else:
             self.fields.pop('submission_type', None)
-        if len(tracks) > 1:
+        if len(tracks) > 1 or show_all_filters:
             self.fields['track'].queryset = tracks.annotate(
                 count=Count(
                     'submissions',
@@ -545,7 +545,7 @@ class SubmissionFilterForm(forms.Form):
             ).order_by('-count')
         else:
             self.fields.pop('track', None)
-        if len(languages) > 1:
+        if len(languages) > 1 or show_all_filters:
             language_count = {
                 d['content_locale']: d['content_locale__count']
                 for d in qs.order_by('content_locale').values('content_locale').annotate(Count('content_locale'))
@@ -556,12 +556,12 @@ class SubmissionFilterForm(forms.Form):
         else:
             self.fields.pop('content_locale', None)
 
-        if not self.event.tags.all().exists():
-            self.fields.pop('tags', None)
-        else:
+        if self.event.tags.all().exists() or show_all_filters:
             self.fields['tags'].queryset = event.tags.prefetch_related('submissions').annotate(
                 submission_count=Count('submissions', distinct=True)
             )
+        else:
+            self.fields.pop('tags', None)
 
         if usable_states:
             usable_states = [choice for choice in self.fields['state'].choices if choice[0] in usable_states]

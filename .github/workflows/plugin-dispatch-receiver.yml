@@ -1,0 +1,34 @@
+name: Plugin Dispatch Receiver
+
+on:
+  repository_dispatch:
+    types: [plugin_updated]
+
+jobs:
+  dispatch-handler:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Parse Payload
+        run: |
+          echo "Plugin: ${{ github.event.client_payload.plugin }}"
+          echo "Repository: ${{ github.event.client_payload.repo }}"
+          echo "Branch: ${{ github.event.client_payload.branch }}"
+          echo "Commit SHA: ${{ github.event.client_payload.commit_sha }}"
+
+      - name: Trigger Dev Build
+        if: github.event.client_payload.branch == 'dev'
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: enext-docker.yml
+          ref: dev
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # Docker build for dev will use BUILD_MODE=dev which pulls the latest plugin commit automatically
+
+      - name: Trigger Main Lockfile Update
+        if: github.event.client_payload.branch == 'main' || github.event.client_payload.branch == 'master'
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: update-plugin-pins.yml
+          ref: dev
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # All lockfile updates (even for plugin main releases) must originate from and be reviewed on the dev branch before eventually reaching production.

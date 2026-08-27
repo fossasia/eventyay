@@ -7,7 +7,7 @@
 	.speaker-wrapper(v-if="speakerDetailReady")
 		.speaker-header
 			.speaker-avatar
-				img(v-if="resolvedSpeaker.avatar || resolvedSpeaker.avatar_url", :src="resolvedSpeaker.avatar || resolvedSpeaker.avatar_url", :alt="resolvedSpeaker.name")
+				img(v-if="resolvedSpeakerAvatar", :src="resolvedSpeakerAvatar", :alt="resolvedSpeaker.name")
 				.avatar-placeholder(v-else)
 					svg(viewBox="0 0 24 24")
 						path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
@@ -118,13 +118,13 @@ export default {
 		t() {
 			const m = this.translationMessages || {}
 			return {
-				speaker_fallback: m.speaker_fallback || 'Speaker',
-				ical: m.ical || 'iCal',
-				sessions: m.sessions || 'Sessions',
-				export: m.export || 'Exports',
-				yes: m.yes || 'Yes',
-				no: m.no || 'No',
-				biography: m.biography || 'Biography',
+				speaker_fallback: m.speaker_fallback || this.$t('Speaker'),
+				ical: m.ical || this.$t('iCal'),
+				sessions: m.sessions || this.$t('Sessions'),
+				export: m.export || this.$t('Exports'),
+				yes: m.yes || this.$t('Yes'),
+				no: m.no || this.$t('No'),
+				biography: m.biography || this.$t('Biography'),
 			}
 		},
 		resolvedSpeaker() {
@@ -148,6 +148,15 @@ export default {
 				}
 			}
 			return null
+		},
+		resolvedSpeakerAvatar() {
+			const speaker = this.resolvedSpeaker
+			if (!speaker) return null
+			return speaker.avatar_thumbnail_default
+				|| speaker.avatar_thumbnail_tiny
+				|| speaker.avatar
+				|| speaker.avatar_url
+				|| null
 		},
 		resolvedSessions() {
 			if (this.sessions?.length) return this.sessions

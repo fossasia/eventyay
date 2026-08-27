@@ -114,6 +114,15 @@ def optimize_uploaded_image(
     _, original_ext = os.path.splitext(uploaded.name or 'upload')
     original_ext = (original_ext.lstrip('.') or 'jpg').lower()
 
+    if original_ext == 'svg':
+        logger.info('Bypassing optimization for SVG image')
+        return OptimizedImages(
+            optimized=ContentFile(raw),
+            original=ContentFile(raw),
+            optimized_ext='svg',
+            original_ext='svg',
+        )
+
     image = Image.open(BytesIO(raw))
     try:
         image.load()
@@ -135,8 +144,17 @@ def optimize_uploaded_image(
     image = ImageOps.exif_transpose(image)
 
     if crop_box:
-        logger.info('Cropping %s to %s', setting_key, crop_box)
-        image = image.crop(crop_box)
+        left, top, right, bottom = crop_box
+        if 0 <= left < right <= image.width and 0 <= top < bottom <= image.height:
+            logger.info('Cropping %s to %s', setting_key, crop_box)
+            image = image.crop(crop_box)
+        else:
+            logger.warning(
+                'Crop box %s out of image bounds (%sx%s); ignoring crop box',
+                crop_box,
+                image.width,
+                image.height,
+            )
 
     orig_w, orig_h = image.size
     if orig_w > max_w:

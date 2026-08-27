@@ -29,7 +29,7 @@
                 <div class="stats">
                     <div class="submissions">
                         {{ organizer.event_count }}
-                        {% blocktranslate trimmed count count=organizer.event_count %}
+                        {% blocktranslate trimmed count count=organizer.event_count context "number of events" %}
                             Event
                         {% plural %}
                             Events

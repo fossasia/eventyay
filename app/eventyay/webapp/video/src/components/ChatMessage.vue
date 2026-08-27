@@ -21,9 +21,9 @@
 							i.bunt-icon.mdi.mdi-file
 							| {{ file.name }}
 			.call(v-else-if="message.content.type === 'call'")
-				.prompt(v-if="message.sender === user.id") You started a video call
-				.prompt(v-else) {{ senderDisplayName }} invited you to a video call
-				bunt-button(@click="$store.dispatch('chat/joinCall', message.content.body)") Join
+				.prompt(v-if="message.sender === user.id") {{ $t('You started a video call') }}
+				.prompt(v-else) {{ senderDisplayName }} {{ $t('invited you to a video call') }}
+				bunt-button(@click="$store.dispatch('chat/joinCall', message.content.body)") {{ $t('Join') }}
 			a.preview-card(v-if="message.content.preview_card", :href="message.content.preview_card.url", target="_blank")
 				.url {{ message.content.preview_card.url }}
 				img(v-if="message.content.preview_card.image", :src="message.content.preview_card.image")
@@ -40,7 +40,7 @@
 						img.emoji(:src="nativeEmojiToUrl(reactionTooltip.emoji)", :alt="reactionTooltip.emoji")
 					.description
 						span.users {{ reactionTooltip.usersString }}
-						|  reacted with
+						|  {{ $t('reacted with') }}
 						span.emoji-text  {{ getEmojiDataFromNative(reactionTooltip.emoji).short_names[0] }}
 		.actions(v-if="!readonly")
 			emoji-picker-button(@selected="addReaction", strategy="fixed", placement="bottom-end", :offset="[36, 3]", icon-style="plus")
@@ -48,24 +48,24 @@
 				template(#button="{toggle}")
 					bunt-icon-button(@click="toggle") dots-vertical
 				template(#menu)
-					.edit-message(v-if="canEditMessage", @click="startEditingMessage") {{ $t('ChatMessage:message-edit:label') }}
-					.delete-message(v-if="canDeleteMessage", @click="selected = false, showDeletePrompt = true") {{ $t('ChatMessage:message-delete:label') }}
+					.edit-message(v-if="canEditMessage", @click="startEditingMessage") {{ $t('edit message') }}
+					.delete-message(v-if="canDeleteMessage", @click="selected = false, showDeletePrompt = true") {{ $t('delete message') }}
 	template(v-else-if="message.event_type === 'channel.member'")
-		.system-content {{ senderDisplayName }} {{ message.content.membership === 'join' ? $t('ChatMessage:join-message:text') : $t('ChatMessage:leave-message:text') }}
+		.system-content {{ senderDisplayName }} {{ message.content.membership === 'join' ? $t('joined') : $t('left') }}
 	template(v-else-if="message.event_type === 'channel.poll' && poll")
 		.content-wrapper
 			.message-header
 				.timestamp {{ timestamp }}
-				span {{ $t('ChatMessage:poll-message:header') }}
+				span {{ $t('New poll:') }}
 			Poll(:poll="poll")
 	prompt.delete-message-prompt(v-if="showDeletePrompt", @close="showDeletePrompt = false")
 		.prompt-content
-			h2 Delete this message?
+			h2 {{ $t('Delete this message?') }}
 			.message-to-delete-wrapper
 				chat-message(:message="message", mode="standalone", :readonly="true")
 			.actions
-				bunt-button#btn-cancel(@click="showDeletePrompt = false") cancel
-				bunt-button#btn-delete-message(@click="deleteMessage") {{ $t('ChatMessage:message-delete:label') }}
+				bunt-button#btn-cancel(@click="showDeletePrompt = false") {{ $t('cancel') }}
+				bunt-button#btn-delete-message(@click="deleteMessage") {{ $t('delete message') }}
 </template>
 <script>
 // TODO

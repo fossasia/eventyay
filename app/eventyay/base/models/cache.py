@@ -1,5 +1,7 @@
+import copy
 import logging
 import os
+import pickle
 import random
 import time
 
@@ -55,6 +57,15 @@ class VersionedModel(models.Model):
         self.save(update_fields=["version"])
         self.clear_caches()
 
+    def __getstate__(self):
+        # Process-cache only needs concrete fields. Related objects (e.g. Room.event
+        # with Hierarkey settings) can embed callables that Twisted fails to unpickle.
+        state = super().__getstate__()
+        state["_state"] = copy.copy(state["_state"])
+        state["_state"].fields_cache = {}
+        state.pop("_prefetched_objects_cache", None)
+        return state
+
     async def refresh_from_db_if_outdated(self, allowed_age=0):
         if allowed_age:
             # In some places, we allow the cache to be a little outdated to avoid thousands
@@ -83,13 +94,37 @@ class VersionedModel(models.Model):
             return
 
         cache = caches["process"]
-        cached_instance = cache.get(self._cachekey)
-        if cached_instance and cached_instance.version == latest_version:
+        try:
+            cached_instance = cache.get(self._cachekey)
+        except (
+            AttributeError,
+            TypeError,
+            ValueError,
+            EOFError,
+            ImportError,
+            IndexError,
+            pickle.UnpicklingError,
+        ):
+            logger.warning(
+                "VersionedModel.refresh_from_db_if_outdated: dropping unreadable cache for %s",
+                self._cachekey,
+            )
+            cache.delete(self._cachekey)
+            cached_instance = None
+
+        if cached_instance is not None and getattr(cached_instance, "version", None) == latest_version:
             self._refresh_from_cache(cached_instance)
             return
 
         await database_sync_to_async(self.refresh_from_db)()
-        cache.set(self._cachekey, self, timeout=600)
+        try:
+            cache.set(self._cachekey, self, timeout=600)
+        except (TypeError, AttributeError):
+            logger.debug(
+                "VersionedModel.refresh_from_db_if_outdated: skipping unpicklable %s pk=%s",
+                self.__class__.__name__,
+                self.pk,
+            )
         if latest_version < self.version:
             await self._set_cache_version_async()
 

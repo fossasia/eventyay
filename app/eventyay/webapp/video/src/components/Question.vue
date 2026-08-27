@@ -1,22 +1,22 @@
 <template lang="pug">
 .c-question(:class="{queued: question.state === 'mod_queue', 'has-voted': question.voted, pinned: question.is_pinned, archived: question.state === 'archived', managing: isManaging}")
 	.moderation-block(v-if="question.state === 'mod_queue'")
-		bunt-icon-button(:disabled="!isManaging", :tooltip="isManaging ? $t('Question:moderation-approve-button:label') : $t('Question:attendee-awaiting-approval:label')", tooltip-placement="right", :tooltip-fixed="true", @click="doAction('approve')") {{ isManaging ? 'eye-check' : 'eye-off' }}
+		bunt-icon-button(:disabled="!isManaging", :tooltip="isManaging ? $t('Approve question') : $t('Awaiting approval')", tooltip-placement="right", :tooltip-fixed="true", @click="doAction('approve')") {{ isManaging ? 'eye-check' : 'eye-off' }}
 	.votes(v-else, @click="vote")
 		.mdi.mdi-menu-up.upvote(v-if="!isManaging")
 		.vote-count {{ question.score }}
-		| {{ $t('Question:vote-count:label') }}
+		| {{ $t('Votes') }}
 	.content {{ question.content }}
 	menu-dropdown(v-if="isManaging && hasPermission('room:question.moderate')", v-model="showModerationMenu", strategy="fixed")
 		template(#button="{toggle}")
 			bunt-icon-button#btn-menu-toggle(@click="toggle") dots-vertical
 		template(#menu)
-			.approve-question(v-if="question.state === 'mod_queue'", @click="doAction('approve')") {{ $t('Question:moderation-menu:approve-question:label') }}
-			.pin-question(v-if="question.state === 'visible' && !question.is_pinned", @click="doAction('pin')") {{ $t('Question:moderation-menu:pin-question:label') }}
-			.unpin-question(v-if="question.state === 'visible' && question.is_pinned", @click="doAction('unpin')") {{ $t('Question:moderation-menu:unpin-question:label') }}
-			.archive-question(v-if="question.state !== 'archived'", @click="doAction('archive')") {{ $t('Question:moderation-menu:archive-question:label') }}
-			.unarchive-question(v-if="question.state === 'archived'", @click="doAction('unarchive')") {{ $t('Question:moderation-menu:unarchive-question:label') }}
-			.delete-question(@click="doAction('delete')") {{ $t('Question:moderation-menu:delete-question:label') }}
+			.approve-question(v-if="question.state === 'mod_queue'", @click="doAction('approve')") {{ $t('approve') }}
+			.pin-question(v-if="question.state === 'visible' && !question.is_pinned", @click="doAction('pin')") {{ $t('pin') }}
+			.unpin-question(v-if="question.state === 'visible' && question.is_pinned", @click="doAction('unpin')") {{ $t('unpin') }}
+			.archive-question(v-if="question.state !== 'archived'", @click="doAction('archive')") {{ $t('archive') }}
+			.unarchive-question(v-if="question.state === 'archived'", @click="doAction('unarchive')") {{ $t('unarchive') }}
+			.delete-question(@click="doAction('delete')") {{ $t('delete') }}
 </template>
 <script>
 import { mapGetters } from 'vuex'

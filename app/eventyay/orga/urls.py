@@ -233,6 +233,16 @@ urlpatterns = [
                     submission.FeedbackExportView.as_view(),
                     name='submissions.feedback.export',
                 ),
+                path(
+                    'submissions/feedback/bulk/',
+                    submission.FeedbackBulkAction.as_view(),
+                    name='submissions.feedback.bulk',
+                ),
+                path(
+                    'submissions/feedback/<int:pk>/action/',
+                    submission.FeedbackUpdateStatus.as_view(),
+                    name='submissions.feedback.action',
+                ),
                 *submission.TagView.get_urls(
                     url_base='submissions/tags',
                     url_name='submissions.tags',
@@ -520,6 +530,17 @@ urlpatterns = [
                     'mails/compose/sessions/',
                     mails.ComposeSessionMail.as_view(),
                     name='mails.compose.sessions',
+                ),
+                path(
+                    'mails/compose/sessions/recipients',
+                    mails.ComposeSessionMailRecipients.as_view(),
+                    name='mails.compose.sessions.recipients',
+                ),
+                path('mails/drafts/', mails.DraftList.as_view(), name='mails.drafts'),
+                path(
+                    'mails/<int:pk>/to-outbox',
+                    mails.DraftToOutbox.as_view(),
+                    name='mails.draft.to_outbox',
                 ),
                 path('mails/sent', mails.SentMail.as_view(), name='mails.sent'),
                 path(

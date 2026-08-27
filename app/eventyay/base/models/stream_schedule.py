@@ -1,5 +1,7 @@
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 
 
@@ -39,7 +41,6 @@ class StreamSchedule(models.Model):
             ('youtube', 'YouTube'),
             ('vimeo', 'Vimeo'),
             ('hls', 'HLS'),
-            ('iframe', 'Iframe'),
         ],
         verbose_name=_('Stream Type'),
     )
@@ -98,3 +99,12 @@ class StreamSchedule(models.Model):
 
         at_time = at_time or now()
         return self.start_time <= at_time < self.end_time
+
+
+@receiver(post_save, sender=StreamSchedule)
+@receiver(post_delete, sender=StreamSchedule)
+def invalidate_current_stream_cache_on_change(sender, instance, **kwargs):
+    from eventyay.base.services.room import invalidate_current_stream_cache
+
+    room_id = instance.room_id
+    transaction.on_commit(lambda: invalidate_current_stream_cache(room_id))

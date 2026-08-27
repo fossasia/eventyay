@@ -600,8 +600,7 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
         default=False,
         verbose_name=_('Video: Can manage rooms and content'),
         help_text=_(
-            'Create and edit stages, chat/video channels, and poster '
-            'sessions; edit and delete rooms.'
+            'Create and edit stages and chat/video channels; edit and delete rooms.'
         ),
     )
     can_video_moderate = models.BooleanField(

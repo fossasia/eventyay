@@ -24,12 +24,15 @@ The video frontend is a full-featured virtual event platform built with Vue 3, p
 - **Interactive Chat**: Real-time messaging with channels and DMs
 - **Audience Engagement**: Polls, Q&A, emoji reactions
 - **Networking**: Speed networking (roulette) and direct messaging
-- **Posters**: Academic poster sessions with Q&A
 - **Recordings**: On-demand video playback
 
-New rooms can be created as **Stage**, **Video Channel**, or **Text Channel**.
-Exhibition halls, static pages, iframe pages, and user lists have been removed
-from the video room catalog. Meetup embed URLs use a stage iframe player instead.
+New rooms are created from the organiser rooms page with a **Create Room** dropdown.
+The available video options are **Stream (YT, HLS)**, **BBB**, **Jitsi**, and **Janus**,
+filtered by platform feature flags and the organiser's permissions.
+Unconfigured rooms use **Add Video** with the same provider list instead of an
+Unconfigured badge. Exhibition halls, poster halls, static pages, iframe pages,
+and user lists have been removed from the video room catalog. Meetup embed URLs
+use a stage iframe player instead.
 
 **Location**: ``app/eventyay/webapp/video/``
 
@@ -332,22 +335,6 @@ Live reactions system:
 - Reaction counts
 - Real-time synchronization
 - Custom reaction sets per event
-
-Posters
-~~~~~~~
-
-PosterHall Component
-^^^^^^^^^^^^^^^^^^^^
-
-**File**: ``components/PosterHall.vue``
-
-Academic poster sessions:
-- Poster grid display
-- Poster detail view
-- Author chat
-- File downloads
-- Voting/feedback
-- Session scheduling
 
 User Interface Components
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -952,7 +939,6 @@ Vue Router configuration with:
 - `/` - Event landing page
 - `/rooms/:roomId` - Individual rooms
 - `/schedule` - Event schedule
-- `/posters` - Poster sessions
 - `/profile` - User profile
 - `/settings` - User settings
 

@@ -34,6 +34,12 @@ from django_scopes import scope, scopes_disabled
 from i18nfield.strings import LazyI18nString
 
 from eventyay.base.email import ClassicMailRenderer
+from eventyay.base.gmail.errors import (
+    GmailDailyLimitError,
+    GmailPermanentError,
+    GmailRateLimitError,
+    GmailTemporaryError,
+)
 from eventyay.base.i18n import language
 from eventyay.base.models import (
     CachedFile,
@@ -337,7 +343,43 @@ class CustomEmail(EmailMultiAlternatives):
         basetype, subtype = mimetype.split('/', 1)
         if basetype == 'multipart' and isinstance(content, SafeMIMEMultipart):
             return content
+        if basetype == 'text' and isinstance(content, SafeMIMEText):
+            return content
         return super()._create_mime_attachment(content, mimetype)
+
+    def _add_bodies(self, msg):
+        from django.core.mail.message import EmailMessage
+        from django.utils.encoding import force_bytes
+        
+        # Call EmailMessage._add_bodies to handle the plain text body
+        EmailMessage._add_bodies(self, msg)
+
+        if self.alternatives:
+            if hasattr(self, "alternative_subtype"):
+                raise AttributeError(
+                    "EmailMultiAlternatives no longer supports the"
+                    " undocumented `alternative_subtype` attribute"
+                )
+            msg.make_alternative()
+            encoding = self.encoding or settings.DEFAULT_CHARSET
+            for alternative in self.alternatives:
+                if isinstance(alternative, tuple) and not hasattr(alternative, 'content'):
+                    content, mimetype = alternative[0], alternative[1]
+                else:
+                    content, mimetype = alternative.content, alternative.mimetype
+
+                if isinstance(content, (SafeMIMEMultipart, SafeMIMEText)):
+                    msg.attach(content)
+                else:
+                    maintype, subtype = mimetype.split("/", 1)
+                    if maintype == "text":
+                        if isinstance(content, bytes):
+                            content = content.decode()
+                        msg.add_alternative(content, subtype=subtype, charset=encoding)
+                    else:
+                        content = force_bytes(content, encoding=encoding, strings_only=True)
+                        msg.add_alternative(content, maintype=maintype, subtype=subtype)
+        return msg
 
 
 @app.task(base=TransactionAwareTask, bind=True, acks_late=True)
@@ -364,11 +406,17 @@ def mail_send_task(
 ) -> bool:
     email = CustomEmail(subject, body, sender, to=to, bcc=bcc, headers=headers)
     if html is not None:
-        html_message = SafeMIMEMultipart(_subtype='related', encoding=settings.DEFAULT_CHARSET)
         html_with_cid, cid_images = replace_images_with_cid_paths(html)
-        html_message.attach(SafeMIMEText(html_with_cid, 'html', settings.DEFAULT_CHARSET))
-        attach_cid_images(html_message, cid_images, verify_ssl=True)
-        email.attach_alternative(html_message, 'multipart/related')
+        if cid_images:
+            html_message = SafeMIMEMultipart(_subtype='related', encoding=settings.DEFAULT_CHARSET)
+            html_message.attach(SafeMIMEText(html_with_cid, 'html', settings.DEFAULT_CHARSET))
+            attached_count = attach_cid_images(html_message, cid_images, verify_ssl=True)
+            if attached_count > 0:
+                email.attach_alternative(html_message, 'multipart/related')
+            else:
+                email.attach_alternative(SafeMIMEText(html_with_cid, 'html', settings.DEFAULT_CHARSET), 'text/html')
+        else:
+            email.attach_alternative(SafeMIMEText(html_with_cid, 'html', settings.DEFAULT_CHARSET), 'text/html')
 
     if user:
         user = User.objects.get(pk=user)
@@ -491,6 +539,42 @@ def mail_send_task(
             logger.info('Try to send email to %s with subject "%s"', to, subject)
             logger.debug('Email backend: %s', backend)
             backend.send_messages([email])
+        except (
+            GmailRateLimitError,
+            GmailTemporaryError,
+        ) as e:
+            countdown = getattr(backend, 'retry_countdown', 60)
+            try:
+                self.retry(
+                    max_retries=5,
+                    countdown=min(countdown * (2 ** self.request.retries), 300),
+                )
+            except MaxRetriesExceededError:
+                if order:
+                    order.log_action(
+                        'eventyay.event.order.email.error',
+                        data={
+                            'subject': 'Gmail temporary error',
+                            'message': str(e),
+                            'recipient': '',
+                            'invoices': [],
+                        },
+                    )
+                raise SendMailException(f'Failed to send an email to {to}.') from e
+            raise
+        except (GmailDailyLimitError, GmailPermanentError) as e:
+            logger.warning('Gmail delivery rejected without further retries: %s', e)
+            if order:
+                order.log_action(
+                    'eventyay.event.order.email.error',
+                    data={
+                        'subject': 'Gmail delivery rejected',
+                        'message': str(e),
+                        'recipient': '',
+                        'invoices': [],
+                    },
+                )
+            raise SendMailException(f'Failed to send an email to {to}.') from e
         except (smtplib.SMTPResponseException, smtplib.SMTPSenderRefused) as e:
             logger.debug('Got error %s. Retry...', e)
             if e.smtp_code in (101, 111, 421, 422, 431, 442, 447, 452):
@@ -673,7 +757,8 @@ def replace_images_with_cid_paths(body_html: str) -> tuple[str, list[str]]:
     return str(email), cid_images
 
 
-def attach_cid_images(msg: SafeMIMEMultipart, cid_images: Sequence[str], verify_ssl: bool = True):
+def attach_cid_images(msg: SafeMIMEMultipart, cid_images: Sequence[str], verify_ssl: bool = True) -> int:
+    attached_count = 0
     if cid_images and len(cid_images) > 0:
         msg.mixed_subtype = 'mixed'
         for key, image in enumerate(cid_images):
@@ -681,8 +766,10 @@ def attach_cid_images(msg: SafeMIMEMultipart, cid_images: Sequence[str], verify_
             try:
                 if mime_image := convert_image_to_cid(image, cid, verify_ssl):
                     msg.attach(mime_image)
+                    attached_count += 1
             except (ValueError, IndexError, requests.RequestException, ssl.SSLError):
                 logger.exception('ERROR attaching CID image %s[%s]', cid, image)
+    return attached_count
 
 
 def encoder_linelength(msg):
@@ -712,6 +799,7 @@ def convert_image_to_cid(image_src: str, cid_id: str, verify_ssl: bool = True) -
         image_type = re.findall(r'data:image/(\w+);base64', image_type)[0]
         mime_image = MIMEImage(image_content, _subtype=image_type, _encoder=encoder_linelength)
         mime_image.add_header('Content-Transfer-Encoding', 'base64')
+        guess_subtype = image_type
     elif image_src.startswith('data:'):
         logger.warning('Non-image MIME element %s[%s]', cid_id, image_src)
         return None
@@ -725,6 +813,9 @@ def convert_image_to_cid(image_src: str, cid_id: str, verify_ssl: bool = True) -
         mime_image = MIMEImage(response.content, _subtype=guess_subtype)
 
     mime_image.add_header('Content-ID', f'<{cid_id}>')
+
+    filename = f"{cid_id}.{guess_subtype}" if guess_subtype else cid_id
+    mime_image.add_header('Content-Disposition', 'inline', filename=filename)
 
     return mime_image
 
@@ -759,12 +850,17 @@ def get_mail_backend(timeout=None):
     or by returning a custom one based on the system's settings.
     """
     from eventyay.base.email import CustomSMTPBackend, SendGridEmail
+    from eventyay.base.gmail.resolver import get_gmail_mail_backend
 
     gs = GlobalSettingsObject()
     smtp_host = gs.settings.smtp_host
     smtp_port = gs.settings.smtp_port
 
     if gs.settings.email_vendor is not None:
+        if gs.settings.email_vendor == 'gmail_api':
+            backend = get_gmail_mail_backend(timeout=timeout)
+            if backend:
+                return backend
         if gs.settings.email_vendor == 'sendgrid':
             return SendGridEmail(api_key=gs.settings.send_grid_api_key)
         if smtp_reachable(smtp_host, smtp_port, timeout=timeout):

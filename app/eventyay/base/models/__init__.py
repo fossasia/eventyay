@@ -28,8 +28,9 @@ from .event import (
     SubEventMetaValue,
     generate_invite_token,
 )
-from .feedback import Feedback
+from .feedback import Feedback, FeedbackReaction
 from .giftcards import GiftCard, GiftCardAcceptance, GiftCardTransaction
+from eventyay.base.gmail.models import GmailOAuthCredential
 from .global_plugin_config import GlobalPluginConfig
 from .invoices import Invoice, InvoiceLine, invoice_filename
 from .janus import JanusServer
@@ -65,7 +66,6 @@ from .organizer import (
 )
 from .organizer_follower import OrganizerFollower
 from .poll import Poll, PollOption, PollVote
-from .poster import Poster, PosterLink, PosterPresenter, PosterVote
 from .product import (
     Product,
     ProductAddOn,
@@ -146,6 +146,7 @@ __all__ = [
     'EventPlannedUsage',
     'EventView',
     'Feedback',
+    'FeedbackReaction',
     'FileCleanupMixin',
     'Gate',
     'GenerateCode',
@@ -188,10 +189,6 @@ __all__ = [
     'Poll',
     'PollOption',
     'PollVote',
-    'Poster',
-    'PosterLink',
-    'PosterPresenter',
-    'PosterVote',
     'PretalxModel',
     'PriceModeChoices',
     'Question',

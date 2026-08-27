@@ -361,6 +361,11 @@ urlpatterns = [
                     typeahead.productvarquota_select2,
                     name='event.vouchers.productselect2',
                 ),
+                url(
+                    r'^vouchers/(?P<voucher>\d+)/members$',
+                    vouchers.VoucherGroupMembers.as_view(),
+                    name='event.voucher.members',
+                ),
                 url(r'^vouchers/(?P<voucher>\d+)/$', vouchers.VoucherUpdate.as_view(), name='event.voucher'),
                 url(
                     r'^vouchers/(?P<voucher>\d+)/delete$', vouchers.VoucherDelete.as_view(), name='event.voucher.delete'

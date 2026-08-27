@@ -1,8 +1,8 @@
 <template lang="pug">
 .c-channel-jitsi-settings
-	bunt-input(v-model="module.config.prefer_server", label="Preferred Jitsi server URL", name="jitsi_prefer_server")
-	bunt-checkbox(v-model="module.config.start_with_audio_muted", label="Start with audio muted", name="jitsi_audio_muted")
-	bunt-checkbox(v-model="module.config.start_with_video_muted", label="Start with video muted", name="jitsi_video_muted")
+	bunt-input(v-model="module.config.prefer_server", :label="$t('Preferred Jitsi server URL')", name="jitsi_prefer_server")
+	bunt-checkbox(v-model="module.config.start_with_audio_muted", :label="$t('Start with audio muted')", name="jitsi_audio_muted")
+	bunt-checkbox(v-model="module.config.start_with_video_muted", :label="$t('Start with video muted')", name="jitsi_video_muted")
 	sidebar-addons(v-bind="$props")
 </template>
 <script>

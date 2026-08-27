@@ -1,20 +1,20 @@
 <template lang="pug">
 .c-questions
 	.deactivated(v-if="!module.config.active")
-		| {{ $t('Questions:deactivated-placeholder') }}
+		| {{ $t('Questions are currently disabled.') }}
 	template(v-else)
 		.asking-form(v-if="showAskingForm")
-			bunt-input-outline-container(:label="$t('Questions:asking-form:label')")
+			bunt-input-outline-container(:label="$t('Your question')")
 				template(#default="{focus, blur}")
 					textarea(v-model="question", @focus="focus", @blur="blur")
 			.actions
-				bunt-button#btn-cancel(@click="showAskingForm = false") {{ $t('Prompt:cancel:label') }}
-				bunt-button#btn-submit-question(@click="submitQuestion") {{ $t('Questions:asking-form:submit') }}
+				bunt-button#btn-cancel(@click="showAskingForm = false") {{ $t('cancel') }}
+				bunt-button#btn-submit-question(@click="submitQuestion") {{ $t('Submit your question') }}
 		template(v-else-if="!isManaging")
-			bunt-button#btn-ask-question(v-if="hasPermission('room:question.ask')", @click="question = ''; showAskingForm = true") {{ $t('Questions:ask-question-button:label') }}
+			bunt-button#btn-ask-question(v-if="hasPermission('room:question.ask')", @click="question = ''; showAskingForm = true") {{ $t('Ask a Question') }}
 			//- v-else ?
 	.questions(v-if="questions && module.config.active", :class="{'can-vote': hasPermission('room:question.vote')}", v-scrollbar.y="")
-		.empty-placeholder(v-if="sortedQuestions.length === 0") {{ $t('Questions:empty-placeholder') }}
+		.empty-placeholder(v-if="sortedQuestions.length === 0") {{ $t('No questions yet, why not ask one?') }}
 		question(v-for="question of sortedQuestions", :question="question", :key="question.id")
 </template>
 <script>

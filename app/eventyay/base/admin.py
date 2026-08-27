@@ -7,9 +7,9 @@ from .models import (
     billing, Channel, ChatEvent, checkin, choices, Device, devices, event,
     SystemLog, fields, Gate, GiftCard, GiftCardAcceptance,
     GiftCardTransaction, giftcards, Invoice, invoices, JanusServer, JitsiServer, log, notifications, Order, OrderPayment, OrderRefund,
-    orders, organizer, page, Poll, Poster, roomquestion, Quota, Room, roulette,
+    orders, organizer, page, Poll, roomquestion, Quota, Room, roulette,
     seating, StreamingServer, tax, Team, TeamInvite, TurnServer, vouchers,
-    WaitingListEntry, waitinglist, room, poll, poster, chat
+    WaitingListEntry, waitinglist, room, poll, chat
 )
 from ..api.models import OAuthApplication, OAuthAccessToken, OAuthRefreshToken, OAuthIDToken, WebHook, WebHookCall, ApiCall, WebHookEventListener
 
@@ -91,12 +91,6 @@ admin.site.register(poll.PollOption)
 admin.site.register(poll.PollVote)
 admin.site.register(roomquestion.RoomQuestion)
 admin.site.register(roomquestion.QuestionVote)
-
-# Posters
-admin.site.register(Poster)
-admin.site.register(poster.PosterPresenter)
-admin.site.register(poster.PosterVote)
-admin.site.register(poster.PosterLink)
 
 # Chat and Communication
 admin.site.register(Channel)

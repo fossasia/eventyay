@@ -1,0 +1,4 @@
+# English is the gettext source language (*.pot). Committing
+# en/LC_MESSAGES/*.po next to those templates makes Weblate report
+# "The component contains translation file for the source language."
+en/

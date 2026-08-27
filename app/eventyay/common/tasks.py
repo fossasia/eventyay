@@ -35,10 +35,8 @@ def task_process_image(*, model: str, pk: int, field: str, generate_thumbnail: b
         if not image:
             return
 
-        try:
-            process_image(image=image, generate_thumbnail=generate_thumbnail)
-        except Exception as e:  # pragma: no cover
-            logger.error('Could not process image %s: %s', image.path, e)
+        if not process_image(image=image, generate_thumbnail=generate_thumbnail):
+            logger.error('Could not process image %s', image.name)
 
 
 @app.task(name='pretalx.cleanup_file')
@@ -90,7 +88,7 @@ def send_scheduled_queuedmail(self, mail_pk: int):
             mail = (
                 QueuedMail.objects
                 .select_for_update(skip_locked=True)
-                .filter(pk=mail_pk, sent__isnull=True)
+                .filter(pk=mail_pk, sent__isnull=True, is_draft=False)
                 .first()
             )
 

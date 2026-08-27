@@ -14,21 +14,15 @@ from eventyay.common.forms.widgets import (
     ClearableBasenameFileInput,
     EmailEditorWidget,
     I18nEmailEditorWidget,
+    I18nRichTextWidget,
     ImageInput,
     PasswordConfirmationInput,
     PasswordStrengthInput,
     RichTextWidget,
 )
 from eventyay.common.sanitizers import sanitize_email_html, sanitize_rich_text
+from eventyay.common.image import IMAGE_EXTENSIONS, validate_image
 from eventyay.common.templatetags.filesize import filesize
-
-IMAGE_EXTENSIONS = {
-    '.png': ['image/png', '.png'],
-    '.jpg': ['image/jpeg', '.jpg'],
-    '.jpeg': ['image/jpeg', '.jpeg'],
-    '.gif': ['image/gif', '.gif'],
-    '.svg': ['image/svg+xml', '.svg'],
-}
 
 
 class GlobalValidator:
@@ -126,6 +120,12 @@ class ImageField(ExtensionFileInput, SizeFileInput, FileField):
     widget = ImageInput
     extensions = IMAGE_EXTENSIONS
 
+    def clean(self, value, initial=None):
+        value = super().clean(value, initial)
+        if value:
+            validate_image(value)
+        return value
+
 
 class RichTextField(CharField):
     """A CharField that uses the Tiptap rich text editor widget.
@@ -140,6 +140,32 @@ class RichTextField(CharField):
     def clean(self, value: str) -> str:
         value = super().clean(value)
         return sanitize_rich_text(value) if value else value
+
+
+class I18nRichTextFormField(I18nFormField):
+    """I18n form field using the Tiptap rich text editor.
+
+    Sanitizes each locale value with ``sanitize_rich_text`` after validation.
+    """
+
+    widget = I18nRichTextWidget
+
+    def __init__(self, *args, **kwargs) -> None:
+        kwargs.setdefault('widget', I18nRichTextWidget)
+        super().__init__(*args, **kwargs)
+
+    def clean(self, value):
+        result = super().clean(value)
+        if isinstance(result, LazyI18nString):
+            if isinstance(result.data, dict):
+                return LazyI18nString(
+                    {locale: sanitize_rich_text(text) if text else text for locale, text in result.data.items()}
+                )
+            elif isinstance(result.data, str):
+                return LazyI18nString(sanitize_rich_text(result.data) if result.data else result.data)
+        elif isinstance(result, str):
+            return sanitize_rich_text(result) if result else result
+        return result
 
 
 class EmailBodyField(CharField):

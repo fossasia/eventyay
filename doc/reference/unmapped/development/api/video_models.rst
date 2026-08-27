@@ -78,18 +78,3 @@ Networking
 .. autoclass:: eventyay.base.models.RoulettePairing
    :members:
 
-Posters
--------
-
-.. autoclass:: eventyay.base.models.Poster
-   :members:
-
-.. autoclass:: eventyay.base.models.PosterPresenter
-   :members:
-
-.. autoclass:: eventyay.base.models.PosterLink
-   :members:
-
-.. autoclass:: eventyay.base.models.PosterVote
-   :members:
-
