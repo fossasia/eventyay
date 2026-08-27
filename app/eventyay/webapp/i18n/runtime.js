@@ -85,16 +85,24 @@ export function createGettextRuntime({
 	async function init({lng = 'en'} = {}) {
 		registerPlugins()
 		const language = toDjangoLanguage(lng) || 'en'
-		const english = await loadEnglishCatalog()
+		let english = {}
+		try {
+			english = await loadEnglishCatalog()
+		} catch (error) {
+			console.error('Failed to load %s English catalog', domain, error)
+		}
+		if (warnOnMissing && Object.keys(localeLoaders || {}).length === 0) {
+			console.warn('No %s.po locale loaders were bundled', domain)
+		}
 		if (!i18n.isInitialized) {
 			await i18n.init({
 				lng: 'en',
 				debug,
-				...I18N_INIT_OPTIONS,
 				resources: {
 					en: {translation: english},
 				},
 				...extraInitOptions,
+				...I18N_INIT_OPTIONS,
 			})
 		}
 		return changeLanguage(language)

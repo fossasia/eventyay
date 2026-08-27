@@ -18,6 +18,13 @@ export function localeRevisionValue() {
 export function createTranslate(i18n, track = localeRevisionValue) {
 	return function translate(key, options) {
 		track()
-		return i18n.t(key, options)
+		const tOptions = typeof options === 'string'
+			? {defaultValue: options}
+			: (options && typeof options === 'object' ? options : {})
+		return i18n.t(key, {
+			...tOptions,
+			nsSeparator: false,
+			keySeparator: false,
+		})
 	}
 }

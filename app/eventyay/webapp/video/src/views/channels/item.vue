@@ -4,8 +4,8 @@
 		h2
 			span.user(v-for="(u, key) in otherUsers", :class="{deleted: u.deleted}")
 				span(v-if="key !== 0") {{ ', ' }}
-				.online-status(v-if="!u.deleted", :class="onlineStatus[u.id] ? 'online' : (onlineStatus[u.id] === false ? 'offline' : 'unknown')", v-tooltip="onlineStatus[u.id] ? $t('UserAction:state.online:tooltip') : (onlineStatus[u.id] === false ? $t('UserAction:state.offline:tooltip') : '')")
-				span {{ u.deleted ? $t('User:label:deleted') : u.profile.display_name }}
+				.online-status(v-if="!u.deleted", :class="onlineStatus[u.id] ? 'online' : (onlineStatus[u.id] === false ? 'offline' : 'unknown')", v-tooltip="onlineStatus[u.id] ? $t('Online') : (onlineStatus[u.id] === false ? $t('Offline') : '')")
+				span {{ u.deleted ? $t('Deleted User') : u.profile.display_name }}
 		bunt-icon-button(@click="startCall", :tooltip="$t('start video call')", tooltipPlacement="left") phone_outline
 	.main
 		media-source-placeholder.channel-call(v-if="hasCall")

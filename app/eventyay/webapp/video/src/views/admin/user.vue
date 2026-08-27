@@ -3,22 +3,22 @@
 	template(v-if="user")
 		.ui-page-header
 			bunt-icon-button(@click="$router.push({name: 'admin:users'})") arrow_left
-			h1 {{ $t('User:') }} {{ (user.profile && user.profile.display_name) || user.id }}
+			h1 {{ $t('User') }} {{ (user.profile && user.profile.display_name) || user.id }}
 			.actions(v-if="user.id !== ownUser.id")
 				bunt-button.btn-dm(v-if="hasPermission('world:chat.direct') && !user.deleted", @click="openDM") {{ $t('message') }}
 				bunt-button.btn-call(v-if="hasPermission('world:chat.direct') && !user.deleted", @click="startCall") {{ $t('call') }}
-				bunt-button.btn-delete(v-if="hasPermission('world:users.manage') && !user.deleted", @click="userAction = 'delete'") {{ $t('UserAction:action.delete:label') }}
+				bunt-button.btn-delete(v-if="hasPermission('world:users.manage') && !user.deleted", @click="userAction = 'delete'") {{ $t('delete') }}
 				bunt-button.btn-ban(v-if="hasPermission('world:users.manage') && !user.deleted && user.moderation_state !== 'banned'", @click="userAction = 'ban'") {{ $t('ban') }}
 				bunt-button.btn-silence(v-if="hasPermission('world:users.manage') && !user.deleted && !user.moderation_state", @click="userAction = 'silence'") {{ $t('silence') }}
 				bunt-button.btn-reactivate(v-if="hasPermission('world:users.manage') && user.moderation_state", @click="userAction = 'reactivate'")
 					| {{ user.moderation_state === 'banned' ? $t('unban') : $t('unsilence') }}
-				bunt-button#btn-save(v-if="edit", :disabled="v$.$invalid && v$.$dirty", :loading="saving", @click="save") {{ $t('preferences/index:btn-save:label') }}
+				bunt-button#btn-save(v-if="edit", :disabled="v$.$invalid && v$.$dirty", :loading="saving", @click="save") {{ $t('save') }}
 				bunt-button#btn-edit(v-if="!user.deleted", @click="edit=true") {{ $t('edit') }}
 		scrollbars.user-info(y)
 			.avatar-wrapper
 				avatar(:user="user", :size="128")
-				bunt-button#btn-change-avatar(@click="showChangeAvatar = true", v-if="edit") {{ $t('preferences/index:btn-change-avatar:label') }}
-			bunt-input.display-name(name="displayName", :label="$t('profile/GreetingPrompt:displayname:label')", v-model.trim="user.profile.display_name", :validation="v$.user.profile.display_name", :disabled="!edit")
+				bunt-button#btn-change-avatar(@click="showChangeAvatar = true", v-if="edit") {{ $t('change avatar') }}
+			bunt-input.display-name(name="displayName", :label="$t('Display name')", v-model.trim="user.profile.display_name", :validation="v$.user.profile.display_name", :disabled="!edit")
 			bunt-input(name="id", :label="$t('ID')", :modelValue="user.id", :disabled="true")
 			bunt-input(name="token_id", :label="$t('Login UID (JWT uid)')", :modelValue="user.token_id || '–'", :disabled="true")
 			bunt-input(name="email", :label="$t('Email')", :modelValue="user.email || '–'", :disabled="true")
@@ -35,8 +35,8 @@
 			.content
 				change-avatar(ref="avatar", v-model="user.profile.avatar", :profile="user.profile", @blockSave="blockSave = $event")
 				.actions
-					bunt-button#btn-cancel(@click="showChangeAvatar = false") {{ $t('Prompt:cancel:label') }}
-					bunt-button#btn-upload(:loading="savingAvatar", :disabled="blockSave", @click="uploadAvatar") {{ $t('preferences/index:btn-upload-save:label') }}
+					bunt-button#btn-cancel(@click="showChangeAvatar = false") {{ $t('cancel') }}
+					bunt-button#btn-upload(:loading="savingAvatar", :disabled="blockSave", @click="uploadAvatar") {{ $t('save') }}
 </template>
 <script>
 import { useVuelidate } from '@vuelidate/core'

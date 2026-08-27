@@ -10,7 +10,7 @@
 		)
 			span.webhook-toggle-icon {{ showWebhookConfig ? '▼' : '►' }}
 			span {{ $t('Webhook') }}
-			span.webhook-configured-icon(v-if="webhookConfigured", role="img", aria-label="Webhook configured", title="Webhook configured") ✓
+			span.webhook-configured-icon(v-if="webhookConfigured", role="img", :aria-label="$t('Webhook configured')", :title="$t('Webhook configured')") ✓
 		.webhook-config(v-if="showWebhookConfig")
 			h4 {{ $t('Chat Webhook') }}
 			p.hint {{ $t('Send chat messages to an external endpoint in real-time') }}

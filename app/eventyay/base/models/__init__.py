@@ -30,6 +30,7 @@ from .event import (
 )
 from .feedback import Feedback, FeedbackReaction
 from .giftcards import GiftCard, GiftCardAcceptance, GiftCardTransaction
+from eventyay.base.gmail.models import GmailOAuthCredential
 from .global_plugin_config import GlobalPluginConfig
 from .invoices import Invoice, InvoiceLine, invoice_filename
 from .janus import JanusServer

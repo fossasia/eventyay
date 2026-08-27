@@ -4,11 +4,11 @@
 		video(ref="video", style="width:100%;height:100%", @playing="playingVideo", @pause="pausingVideo", @volumechange="onVolumechange")
 		.offline(v-if="offline")
 			img.offline-image(v-if="module.config.streamOfflineImage || theme.streamOfflineImage", :src="module.config.streamOfflineImage || theme.streamOfflineImage")
-			.offline-message(v-else) {{ $t('Livestream:offline-message:text') }}
+			.offline-message(v-else) {{ $t('Stream offline') }}
 		.controls(v-if="!offline || hasAlternativeStreams", @click="toggleVideo")
 			.automuted-unmute(v-if="!offline && automuted")
 				span.mdi.mdi-volume-off
-				span {{ $t('Livestream:automuted-unmute:text') }}
+				span {{ $t('Tap to unmute') }}
 			.big-button.mdi.mdi-play(v-if="!offline && !playing")
 			bunt-progress-circular(v-if="(buffering || seeking) && !offline", size="huge")
 			.bottom-controls(@click.stop="")
@@ -29,10 +29,10 @@
 				input.volume-slider(v-if="!offline", type="range", step="any", min="0", max="1", :aria-label="$t('Volume')", :value="volume", @input="onVolumeSlider", :style="{'--volume': volume}")
 				bunt-icon-button(v-if="!offline", @click="toggleFullscreen") {{ fullscreen ? 'fullscreen-exit' : 'fullscreen' }}
 			.source-chooser(v-if="showSourceChooser", @click.stop="")
-				.source(@click="chooseSource(null)", :class="{chosen: !chosenAlternative}") {{ $t('Livestream:default-source:text') }}
+				.source(@click="chooseSource(null)", :class="{chosen: !chosenAlternative}") {{ $t('Default') }}
 				.source(v-for="a in module.config.alternatives", :class="{chosen: a.label === chosenAlternative}", @click="chooseSource(a)") {{ a.label }}
 			.caption-chooser(v-if="showCaptionsChooser", @click.stop="")
-				.track(@click="chooseTextTrack(null)", :class="{chosen: !textTracks.some(t => t.mode === 'showing')}") {{ $t('Livestream:captions-off:text') }}
+				.track(@click="chooseTextTrack(null)", :class="{chosen: !textTracks.some(t => t.mode === 'showing')}") {{ $t('Off') }}
 				.track(v-for="track of textTracks", :class="{chosen: track.mode === 'showing'}", @click="chooseTextTrack(track)") {{ track.label }}
 			.level-chooser(v-if="showLevelChooser", @click.stop="")
 				.level(@click="chooseLevel(null)", :class="{chosen: !manualLevel}") {{ $t('Auto') }}

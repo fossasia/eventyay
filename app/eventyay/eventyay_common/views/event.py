@@ -27,7 +27,7 @@ from django.utils.encoding import iri_to_uri
 from django.utils.functional import cached_property
 from django.utils.timezone import get_current_timezone_name
 from django.utils.translation import gettext_lazy as _
-from django.views.generic import ListView, TemplateView
+from django.views.generic import FormView, ListView, TemplateView
 from django_scopes import scope
 from zoneinfo import ZoneInfo
 from rest_framework import views
@@ -37,6 +37,12 @@ from django.apps import apps
 from eventyay.timezones import localize_datetime
 
 from eventyay.base.i18n import language
+from eventyay.base.gmail.errors import (
+    GmailDailyLimitError,
+    GmailPermanentError,
+    GmailRateLimitError,
+    GmailTemporaryError,
+)
 from eventyay.base.meetup import (
     get_rsvp_product_and_quota,
     get_video_config_initial,
@@ -81,7 +87,7 @@ from eventyay.orga.forms.event import EventFooterLinkFormset, EventHeaderLinkFor
 from eventyay.eventyay_common.video.permissions import collect_user_video_traits
 from eventyay.helpers.plugin_enable import is_video_enabled
 from eventyay.multidomain.urlreverse import build_absolute_uri
-from ..forms.event import EventUpdateForm
+from ..forms.event import EventCloneForm, EventUpdateForm
 
 logger = logging.getLogger(__name__)
 
@@ -683,6 +689,16 @@ class EventUpdate(
         context['is_video_enabled'] = is_video_enabled(self.object)
         context['is_meetup_event'] = is_meetup_event(self.object)
         context['is_talk_event_created'] = False
+        from eventyay.base.gmail.models import GmailOAuthCredential
+
+        context['gmail_migration_pending'] = not GmailOAuthCredential.is_table_available()
+        context['gmail_credential'] = GmailOAuthCredential.get_active_for_event_safe(self.object)
+        gmail_kwargs = {'organizer': self.object.organizer.slug, 'event': self.object.slug}
+        context['gmail_callback_url'] = self.request.build_absolute_uri(
+            reverse('eventyay_common:event.gmail.callback', kwargs=gmail_kwargs)
+        )
+        context['gmail_connect_url'] = reverse('eventyay_common:event.gmail.connect', kwargs=gmail_kwargs)
+        context['gmail_disconnect_url'] = reverse('eventyay_common:event.gmail.disconnect', kwargs=gmail_kwargs)
         if (
             self.object.settings.create_for == EventCreatedFor.BOTH
             or self.object.settings.talk_schedule_public is not None
@@ -700,10 +716,19 @@ class EventUpdate(
             messages.error(self.request, _('Custom email gateway is not enabled.'))
             return
         vendor = event.settings.get('email_vendor', 'smtp')
-        if vendor == 'sendgrid' and not event.settings.get('send_grid_api_key'):
+        if vendor == 'gmail_api':
+            from eventyay.base.gmail.models import GmailOAuthCredential
+
+            if not GmailOAuthCredential.get_active_for_event(event):
+                messages.error(
+                    self.request,
+                    _('Gmail is selected but no account is connected. Connect Gmail in the email settings first.'),
+                )
+                return
+        elif vendor == 'sendgrid' and not event.settings.get('send_grid_api_key'):
             messages.error(self.request, _('SendGrid API key is missing. Please configure it and save.'))
             return
-        if vendor != 'sendgrid' and (not event.settings.get('smtp_host') or not event.settings.get('smtp_port')):
+        if vendor != 'sendgrid' and vendor != 'gmail_api' and (not event.settings.get('smtp_host') or not event.settings.get('smtp_port')):
             messages.error(self.request, _('SMTP host or port is missing. Please configure them and save.'))
             return
 
@@ -724,6 +749,16 @@ class EventUpdate(
                 self.request,
                 _('SendGrid test failed with HTTP error %(code)s. Check your API key and try again.')
                 % {'code': e.response.status_code if hasattr(e, 'response') and e.response is not None else '?'},
+            )
+        except (GmailRateLimitError, GmailTemporaryError) as e:
+            messages.warning(
+                self.request,
+                _('Gmail test email is temporarily delayed because of rate limits: %(err)s') % {'err': e},
+            )
+        except (GmailDailyLimitError, GmailPermanentError) as e:
+            messages.error(
+                self.request,
+                _('Gmail test email could not be sent: %(err)s') % {'err': e},
             )
         except (smtplib.SMTPException, OSError):
             logger.exception('Central SMTP test failed (event=%s)', event.slug)
@@ -1409,3 +1444,175 @@ class EventSearchView(views.APIView):
                 results.append({'name': event.name, 'slug': event.slug, 'organizer': event.organizer.slug})
 
         return JsonResponse(results, safe=False)
+
+
+class EventCloneView(EventSettingsViewMixin, EventPermissionRequiredMixin, FormView):
+    template_name = 'eventyay_common/event/clone.html'
+    permission = 'can_change_event_settings'
+    form_class = EventCloneForm
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get('ajax') == 'event-i18n-fields':
+            return self.render_event_i18n_fields()
+        return super().post(request, *args, **kwargs)
+
+    def render_event_i18n_fields(self):
+        valid_locale_codes = {code for code, _name in settings.LANGUAGES}
+        locales = [
+            locale for locale in self.request.POST.getlist('locales') if locale in valid_locale_codes
+        ]
+        if not locales:
+            from django.http import JsonResponse
+            from django.utils.translation import gettext as _
+            return JsonResponse({'error': _('Select at least one active language.')}, status=400)
+
+        clone_from = self.request.event
+        user_tz = ZoneInfo(get_current_timezone_name())
+        now_dt = datetime.now(user_tz)
+        default_start = now_dt + timedelta(days=90)
+        default_start = default_start.replace(hour=9, minute=0, second=0, microsecond=0)
+        default_end = default_start.replace(hour=17, minute=0, second=0, microsecond=0)
+
+        initial = {
+            'name': clone_from.name,
+            'date_from': default_start,
+            'date_to': default_end,
+            'timezone': clone_from.settings.get('timezone') or clone_from.timezone,
+            'locale': clone_from.settings.get('locale') or clone_from.locale,
+            'locales': locales,
+        }
+        name_values = {}
+        for index, locale in enumerate(locales):
+            key = f'name_{index}'
+            if key in self.request.POST:
+                value = self.request.POST.get(key, '').strip()
+                if value:
+                    name_values[locale] = value
+        if name_values:
+            initial['name'] = name_values
+
+        form = self.form_class(
+            data=None,
+            initial=initial,
+            organizer=clone_from.organizer,
+            locales=locales,
+        )
+
+        from django.template.loader import render_to_string
+        from django.http import JsonResponse
+        fields = render_to_string(
+            'eventyay_common/event/fragment_event_clone_i18n_fields.html',
+            {'form': form},
+            request=self.request,
+        )
+        return JsonResponse({'fields': fields})
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['organizer'] = self.request.event.organizer
+        clone_from = self.request.event
+        clone_locales = list(clone_from.settings.get('locales') or [clone_from.locale or 'en'])
+        kwargs['locales'] = clone_locales
+        user_tz = ZoneInfo(get_current_timezone_name())
+        now_dt = datetime.now(user_tz)
+        default_start = now_dt + timedelta(days=90)
+        default_start = default_start.replace(hour=9, minute=0, second=0, microsecond=0)
+        default_end = default_start.replace(hour=17, minute=0, second=0, microsecond=0)
+
+        kwargs['initial'] = {
+            'name': clone_from.name,
+            'date_from': default_start,
+            'date_to': default_end,
+            'timezone': clone_from.settings.get('timezone') or clone_from.timezone,
+            'locale': clone_from.settings.get('locale') or clone_from.locale,
+            'locales': clone_locales,
+            'clone_common_data': True,
+            'clone_ticketing_data': True,
+            'clone_talk_data': True,
+        }
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['organizer_slug_rng_url'] = reverse('control:events.add.slugrng', kwargs={'organizer': self.request.event.organizer.slug})
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        if not check_create_permission(request):
+            raise PermissionDenied(_('You do not have permission to create events.'))
+        return super().dispatch(request, *args, **kwargs)
+
+    @transaction.atomic
+    def form_valid(self, form):
+        old_event = self.request.event
+        new_event = form.instance
+        
+        clone_options = {
+            'clone_common_data': form.cleaned_data.get('clone_common_data'),
+            'clone_settings': form.cleaned_data.get('clone_settings'),
+            'clone_design_texts': form.cleaned_data.get('clone_design_texts'),
+            'clone_email_settings': form.cleaned_data.get('clone_email_settings'),
+            'clone_ticketing_data': form.cleaned_data.get('clone_ticketing_data'),
+            'clone_products': form.cleaned_data.get('clone_products'),
+            'clone_questions': form.cleaned_data.get('clone_questions'),
+            'clone_checkin_lists': form.cleaned_data.get('clone_checkin_lists'),
+            'clone_payment_settings': form.cleaned_data.get('clone_payment_settings'),
+            'clone_talk_data': form.cleaned_data.get('clone_talk_data'),
+            'clone_cfp': form.cleaned_data.get('clone_cfp'),
+            'clone_session_types_tracks': form.cleaned_data.get('clone_session_types_tracks'),
+            'clone_review_settings': form.cleaned_data.get('clone_review_settings'),
+        }
+
+        new_event.organizer = old_event.organizer
+        if clone_options.get('clone_common_data') and clone_options.get('clone_settings'):
+            new_event.plugins = old_event.plugins
+        new_event.has_subevents = old_event.has_subevents
+        new_event.is_video_creation = old_event.is_video_creation
+        new_event.testmode = False
+        new_event.private_testmode = False
+        
+        new_event.timezone = form.cleaned_data['timezone']
+        new_event.locale = form.cleaned_data['locale']
+        form.save()
+
+        new_event.clone_from(old_event, new_secrets=True)
+        new_event.copy_data_from(old_event, clone_options=clone_options)
+        
+        new_event.settings.set('locales', form.cleaned_data['locales'])
+        
+        if clone_options.get('clone_talk_data') and clone_options.get('clone_cfp', True) and getattr(old_event, 'cfp', None):
+            new_event.cfp.copy_data_from(old_event.cfp)
+
+        with scope(organizer=new_event.organizer):
+            if not new_event.checkin_lists.exists():
+                new_event.checkin_lists.create(name=_('Default'), all_products=True)
+            for team in self.request.user.teams.filter(organizer=new_event.organizer):
+                if not team.all_events and team.can_create_events:
+                    team.limit_events.add(new_event)
+
+        new_event.set_defaults()
+        
+        # Override the values potentially cloned from the old event to the ones chosen in the form
+        new_event.timezone = form.cleaned_data['timezone']
+        new_event.locale = form.cleaned_data['locale']
+        new_event.save(update_fields=['timezone', 'locale'])
+        new_event.settings.set('timezone', form.cleaned_data['timezone'])
+        new_event.settings.set('locale', form.cleaned_data['locale'])
+        
+        cloned_locales = new_event.settings.get('locales', as_type=list) or []
+        if form.cleaned_data['locale'] not in cloned_locales:
+            cloned_locales.append(form.cleaned_data['locale'])
+        new_event.settings.set('locales', cloned_locales)
+
+        new_event.log_action(
+            action='eventyay.event.added',
+            user=self.request.user,
+        )
+
+        messages.success(self.request, _('Event has been cloned successfully.'))
+        return redirect(
+            reverse(
+                'eventyay_common:event.update',
+                kwargs={'event': new_event.slug, 'organizer': new_event.organizer.slug},
+            )
+        )
