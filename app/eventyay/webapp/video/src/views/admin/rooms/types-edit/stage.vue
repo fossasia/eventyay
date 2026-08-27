@@ -32,6 +32,7 @@
 		// Language and URL input for YouTube stream
 		.language-urls(v-if="modules['livestream.youtube']")
 			LanguageAudioSourceList(
+				v-if="!showPluginLanguageStreams"
 				:title="$t('Languages and Audio Source')"
 				:entries="modules['livestream.youtube'].config.languageUrls"
 			)
