@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-03-21 17:30+0000\n"
+"PO-Revision-Date: 2026-08-27 17:12+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Slovenian <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/sl/>\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=4; plural=n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || "
 "n%100==4 ? 2 : 3;\n"
-"X-Generator: Weblate 5.17-dev\n"
+"X-Generator: Weblate 2026.9.dev0\n"
 
 #: data/templates/exhibitors/exhibitor_info.html:3
 #: data/templates/exhibitors/exhibitor_info.html:5
@@ -1672,8 +1672,7 @@ msgstr "Dodatni izdelki bodo izključeni iz štetja."
 msgid ""
 "Display net prices in the product list instead of gross prices (not "
 "recommended)"
-msgstr ""
-"V seznamu izdelkov prikaži neto cene namesto bruto cen (ni priporočeno)"
+msgstr "V seznamu izdelkov prikaži neto cene namesto bruto cen (ni priporočeno)"
 
 #: eventyay/base/configurations/default_setting.py:109
 msgid ""
@@ -1965,8 +1964,8 @@ msgstr ""
 "znotraj iste organizacije v tem polju uporablja enako vrednost, bodo delili "
 "isti številčni razpon, tj. vsaka celotna številka bo uporabljena največ "
 "enkrat v vseh dogodkih. Ta nastavitev vpliva samo na prihodnje račune. Za "
-"vstavitev leta računa lahko uporabite %Y (s stoletjem) ali %y (brez "
-"stoletja), za dan v mesecu pa %m in %d."
+"vstavitev leta računa lahko uporabite %Y (s stoletjem) ali %y (brez stoletja)"
+", za dan v mesecu pa %m in %d."
 
 #: eventyay/base/configurations/default_setting.py:494
 msgid "Invoice number prefix for cancellations"
@@ -2649,8 +2648,8 @@ msgid ""
 msgstr ""
 "Če je ta možnost vklopljena, morajo biti uporabniki pred dokončanjem "
 "naročila prijavljeni. Ko uporabnik klikne »Checkout«, ne da bi bil "
-"prijavljen, bo preusmerjen na stran za prijavo. Možnost »Continue as a "
-"Guest« za udeležence tega dogodka ne bo na voljo."
+"prijavljen, bo preusmerjen na stran za prijavo. Možnost »Continue as a Guest"
+"« za udeležence tega dogodka ne bo na voljo."
 
 #: eventyay/base/configurations/default_setting.py:1261
 msgid "Show availability in event overviews"
@@ -2752,8 +2751,7 @@ msgstr ""
 msgid ""
 "Only allow changes if the resulting price is higher or equal than the "
 "previous price."
-msgstr ""
-"Dovoli spremembe samo, če je končna cena višja ali enaka prejšnji ceni."
+msgstr "Dovoli spremembe samo, če je končna cena višja ali enaka prejšnji ceni."
 
 #: eventyay/base/configurations/default_setting.py:1366
 #: eventyay/base/configurations/default_setting.py:1387
@@ -2882,8 +2880,7 @@ msgstr "Vsa vračila se izvedejo na prvotni način plačila"
 #: eventyay/base/configurations/default_setting.py:1551
 msgid ""
 "Customers can choose between a gift card and a refund to their payment method"
-msgstr ""
-"Stranke lahko izbirajo med darilno kartico in vračilom na način plačila"
+msgstr "Stranke lahko izbirajo med darilno kartico in vračilom na način plačila"
 
 #: eventyay/base/configurations/default_setting.py:1541
 #: eventyay/base/configurations/default_setting.py:1553
@@ -7878,8 +7875,8 @@ msgid ""
 "Nobody on your teams has the permissions to change settings for the event "
 "{event_name}"
 msgstr ""
-"Nihče v ekipah nima dovoljenj za spreminjanje nastavitev dogodka "
-"{event_name}."
+"Nihče v ekipah nima dovoljenj za spreminjanje nastavitev dogodka {event_name}"
+"."
 
 #: eventyay/base/models/organizer.py:124
 msgid ""
@@ -12481,8 +12478,7 @@ msgstr "To je dodatek; izberite osnovno postavko, h kateri naj se doda."
 msgid ""
 "The selected base position does not allow you to add this product as an add-"
 "on."
-msgstr ""
-"Izbrana osnovna postavka ne omogoča dodajanja tega izdelka kot dodatka."
+msgstr "Izbrana osnovna postavka ne omogoča dodajanja tega izdelka kot dodatka."
 
 #: eventyay/base/services/orders.py:1508
 msgid "You need to choose a subevent for the new position."
@@ -18852,8 +18848,8 @@ msgid ""
 "\"inactive\" instead."
 msgstr ""
 "Različice »%s« ni mogoče izbrisati, ker jo je uporabnik že naročil ali pa je "
-"trenutno v uporabnikovi košarici. Namesto tega nastavite različico kot "
-"»neaktivno«."
+"trenutno v uporabnikovi košarici. Namesto tega nastavite različico kot »"
+"neaktivno«."
 
 #: eventyay/control/forms/product.py:904
 msgid "Add-ons"
@@ -19076,8 +19072,8 @@ msgid ""
 msgstr ""
 "Pozdravljeni,\n"
 "\n"
-"s tem e-poštnim sporočilom vam pošiljamo enega ali več vaučerjev za "
-"{event}:\n"
+"s tem e-poštnim sporočilom vam pošiljamo enega ali več vaučerjev za {event}"
+":\n"
 "\n"
 "{voucher_list}\n"
 "\n"
@@ -19112,8 +19108,8 @@ msgid ""
 "\"email\", \"number\", \"name\", or \"tag\"."
 msgstr ""
 "Vnesete lahko seznam e-poštnih naslovov, po en naslov v vsaki vrstici, ali "
-"pa datoteko CSV z naslovnim stolpcem in enim ali več stolpci »email«, "
-"»number«, »name« ali »tag«."
+"pa datoteko CSV z naslovnim stolpcem in enim ali več stolpci »email«, »number"
+"«, »name« ali »tag«."
 
 #: eventyay/control/forms/vouchers.py:332
 msgid "Maximum usages per voucher"
@@ -19208,14 +19204,13 @@ msgid ""
 "Position #{posid}: {old_product} ({old_price}) changed to {new_product} "
 "({new_price})."
 msgstr ""
-"Položaj št. {posid}: {old_product} ({old_price}) spremenjen v {new_product} "
-"({new_price})."
+"Položaj št. {posid}: {old_product} ({old_price}) spremenjen v {new_product} ("
+"{new_price})."
 
 #: eventyay/control/logdisplay.py:73
 #, python-brace-format
 msgid "Position #{posid}: Seat \"{old_seat}\" changed to \"{new_seat}\"."
-msgstr ""
-"Postavka #{posid}: sedež »{old_seat}« je bil spremenjen v »{new_seat}«."
+msgstr "Postavka #{posid}: sedež »{old_seat}« je bil spremenjen v »{new_seat}«."
 
 #: eventyay/control/logdisplay.py:86
 #, python-brace-format
@@ -19373,8 +19368,7 @@ msgstr "Pozicija #{posid} je bila odjavljena za seznam »{list}«."
 #, python-brace-format
 msgid ""
 "Position #{posid} has been checked in at {datetime} for list \"{list}\"."
-msgstr ""
-"Pozicija #{posid} je bila prijavljena ob {datetime} za seznam »{list}«."
+msgstr "Pozicija #{posid} je bila prijavljena ob {datetime} za seznam »{list}«."
 
 #: eventyay/control/logdisplay.py:321
 #, python-brace-format
@@ -20660,8 +20654,8 @@ msgid ""
 msgstr ""
 "Premikanje sobe bo poskusilo odstraniti vse iz sobe. Udeleženci se morajo "
 "ponovno pridružiti z osvežitvijo strani. Če odstranjevanje ne uspe (npr. "
-"strežnik ne deluje), se bo postopek vseeno nadaljeval, vendar lahko ustvari "
-"»razdeljeno« sobo, tj. dve skupini udeležencev, ki menita, da sta v isti "
+"strežnik ne deluje), se bo postopek vseeno nadaljeval, vendar lahko ustvari »"
+"razdeljeno« sobo, tj. dve skupini udeležencev, ki menita, da sta v isti "
 "sobi, vendar nista. Posnetki sobe kasneje ne bodo več dostopni prek "
 "vmesnika. Priporočeno je, da se sobi pridružite tudi sami, da se lahko na to "
 "odzovete. Uporabljajte previdno."
@@ -22827,8 +22821,7 @@ msgstr ""
 msgid ""
 "This will delete the information of <strong>%(num)s</strong> check-ins as "
 "well."
-msgstr ""
-"S tem boste izbrisali tudi podatke o <strong>%(num)s</strong> prijavah."
+msgstr "S tem boste izbrisali tudi podatke o <strong>%(num)s</strong> prijavah."
 
 #: eventyay/control/templates/pretixcontrol/checkin/list_edit.html:10
 #: eventyay/control/templates/pretixcontrol/checkin/list_edit.html:17
@@ -23719,9 +23712,8 @@ msgid ""
 "%(plugin_settings_href)s>plugin settings</a> and activate one or more "
 "payment plugins."
 msgstr ""
-"Ponudniki plačil niso na voljo. Odprite <a "
-"%(plugin_settings_href)s>nastavitve vtičnika</a> in aktivirajte enega ali "
-"več plačilnih vtičnikov."
+"Ponudniki plačil niso na voljo. Odprite <a %(plugin_settings_href)s>"
+"nastavitve vtičnika</a> in aktivirajte enega ali več plačilnih vtičnikov."
 
 #: eventyay/control/templates/pretixcontrol/event/payment.html:76
 msgid "Deadlines"
@@ -24163,9 +24155,9 @@ msgid ""
 "%(plugin_settings_href)s>plugin settings</a> and activate one or more ticket "
 "output plugins."
 msgstr ""
-"Na voljo ni nobenih izhodov vstopnic. Pojdite v <a "
-"%(plugin_settings_href)s>nastavitve vtičnikov</a> in aktivirajte enega ali "
-"več vtičnikov za izhod vstopnic."
+"Na voljo ni nobenih izhodov vstopnic. Pojdite v <a %(plugin_settings_href)s>"
+"nastavitve vtičnikov</a> in aktivirajte enega ali več vtičnikov za izhod "
+"vstopnic."
 
 #: eventyay/control/templates/pretixcontrol/event/tickets.html:65
 msgid "Download time"
@@ -24350,8 +24342,7 @@ msgstr "Stripe — Plačila vstopnic"
 
 #: eventyay/control/templates/pretixcontrol/global_settings.html:65
 msgid "This configuration is used for ticket payments via the Stripe plugin."
-msgstr ""
-"Ta konfiguracija se uporablja za plačila vstopnic prek vtičnika Stripe."
+msgstr "Ta konfiguracija se uporablja za plačila vstopnic prek vtičnika Stripe."
 
 #: eventyay/control/templates/pretixcontrol/global_settings.html:69
 msgid "Client Configuration"
@@ -24571,10 +24562,10 @@ msgid ""
 "except if the add-on products or bundled products represent additional "
 "people (e.g. group bundles)."
 msgstr ""
-"Ta možnost naj bo nastavljena za večino stvari, ki bi jih poimenovali "
-"»vstopnica«. Pri dodatkih k izdelku ali paketih naj bo nastavljena pri "
-"glavni vstopnici, razen če dodatni ali paketni izdelki predstavljajo dodatne "
-"osebe (npr. skupinski paketi)."
+"Ta možnost naj bo nastavljena za večino stvari, ki bi jih poimenovali »"
+"vstopnica«. Pri dodatkih k izdelku ali paketih naj bo nastavljena pri glavni "
+"vstopnici, razen če dodatni ali paketni izdelki predstavljajo dodatne osebe "
+"(npr. skupinski paketi)."
 
 #: eventyay/control/templates/pretixcontrol/item/create.html:44
 #: eventyay/control/templates/pretixcontrol/item/index.html:51
@@ -24810,8 +24801,7 @@ msgstr "Uporabi"
 msgid ""
 "You can use categories to group multiple products together in an organized "
 "way."
-msgstr ""
-"Kategorije se lahko uporabijo za organizirano združevanje več izdelkov."
+msgstr "Kategorije se lahko uporabijo za organizirano združevanje več izdelkov."
 
 #: eventyay/control/templates/pretixcontrol/items/categories.html:15
 msgid "You haven't created any categories yet."
@@ -25414,8 +25404,8 @@ msgid ""
 "available if <strong>both</strong> quotas have capacity left."
 msgstr ""
 "Izberite izdelke ali različice izdelkov, za katere naj se uporabi ta kvota. "
-"Če za isti izdelek uporabite dve kvoti, bo na voljo le, če imata "
-"<strong>obe</strong> kvoti še prosto kapaciteto."
+"Če za isti izdelek uporabite dve kvoti, bo na voljo le, če imata <strong>"
+"obe</strong> kvoti še prosto kapaciteto."
 
 #: eventyay/control/templates/pretixcontrol/items/quota_edit.html:42
 msgid "Advanced options"
@@ -26394,8 +26384,8 @@ msgid ""
 msgstr ""
 "Prejeli smo obvestilo, da je bilo <strong>%(amount)s</strong> vrnjenih prek "
 "<strong>%(method)s</strong>. Če bo to vračilo obdelano, bo naročilo premalo "
-"plačano za <strong>%(pending)s</strong>. Skupni znesek naročila je "
-"<strong>%(total)s</strong>."
+"plačano za <strong>%(pending)s</strong>. Skupni znesek naročila je <strong>%"
+"(total)s</strong>."
 
 #: eventyay/control/templates/pretixcontrol/order/refund_process.html:30
 msgid "Since the order is already canceled, this will not affect its state."
@@ -27661,8 +27651,8 @@ msgid ""
 msgstr ""
 "Upoštevajte, da urejevalnik lahko prikaže le grob predogled. Nekatere "
 "podrobnosti, na primer pri izrisu besedila, so lahko v končnih vstopnicah "
-"videti nekoliko drugače. Za natančnejši predogled lahko uporabite gumb "
-"»Predogled« na desni."
+"videti nekoliko drugače. Za natančnejši predogled lahko uporabite gumb »"
+"Predogled« na desni."
 
 #: eventyay/control/templates/pretixcontrol/pdf/index.html:121
 msgid ""
@@ -28250,8 +28240,8 @@ msgid ""
 "We just want to make sure it's really you. Please re-authenticate with "
 "'%(login_provider)s'."
 msgstr ""
-"Preveriti je treba, ali ste to res vi. Ponovno se overite z "
-"»%(login_provider)s«."
+"Preveriti je treba, ali ste to res vi. Ponovno se overite z »%"
+"(login_provider)s«."
 
 #: eventyay/control/templates/pretixcontrol/user/reauth.html:14
 msgid ""
@@ -28488,8 +28478,8 @@ msgid ""
 "<strong>%(amount)s</strong>."
 msgstr ""
 "Če na dogodku ustvarite dovolj prostora, da vanj sprejmete vse osebe na "
-"čakalnem seznamu, bi lahko prodali vstopnice v dodatni vrednosti "
-"<strong>%(amount)s</strong>."
+"čakalnem seznamu, bi lahko prodali vstopnice v dodatni vrednosti <strong>%"
+"(amount)s</strong>."
 
 #: eventyay/control/templates/pretixcontrol/waitinglist/index.html:107
 msgid "Successfully redeemed"
@@ -30701,8 +30691,7 @@ msgstr "Blackberry (povezava prek Googla)"
 
 #: eventyay/eventyay_common/templates/eventyay_common/account/2fa-confirm-totp.html:52
 msgid "Add a new account to the app by scanning the following barcode:"
-msgstr ""
-"Dodajte nov račun v aplikacijo z optičnim branjem naslednje črtne kode:"
+msgstr "Dodajte nov račun v aplikacijo z optičnim branjem naslednje črtne kode:"
 
 #: eventyay/eventyay_common/templates/eventyay_common/account/2fa-confirm-totp.html:56
 msgid "Can't scan the barcode?"
@@ -30762,8 +30751,8 @@ msgstr "Izbriši napravo za dvostopenjsko preverjanje pristnosti"
 msgid ""
 "Are you sure you want to delete the authentication device \"%(device)s\"?"
 msgstr ""
-"Ali ste prepričani, da želite izbrisati napravo za preverjanje pristnosti "
-"»%(device)s«?"
+"Ali ste prepričani, da želite izbrisati napravo za preverjanje pristnosti »%"
+"(device)s«?"
 
 #: eventyay/eventyay_common/templates/eventyay_common/account/2fa-delete.html:25
 #, fuzzy
@@ -30946,8 +30935,8 @@ msgid ""
 "Are you sure you want to revoke access to your account for the application "
 "%(application)s?"
 msgstr ""
-"Ali ste prepričani, da želite preklicati dostop do računa za aplikacijo "
-"%(application)s?"
+"Ali ste prepričani, da želite preklicati dostop do računa za aplikacijo %"
+"(application)s?"
 
 #: eventyay/eventyay_common/templates/eventyay_common/account/authorized-apps.html:4
 #: eventyay/eventyay_common/templates/eventyay_common/account/authorized-apps.html:19
@@ -32988,8 +32977,8 @@ msgid ""
 "This email confirmation link expired or is invalid. Please "
 "%(email_action_link)s."
 msgstr ""
-"Ta povezava za potrditev e-pošte je potekla ali ni veljavna. Prosimo, "
-"%(email_action_link)s."
+"Ta povezava za potrditev e-pošte je potekla ali ni veljavna. Prosimo, %"
+"(email_action_link)s."
 
 #: eventyay/eventyay_common/views/dashboards.py:407
 msgid "You do not have permission to change event settings."
@@ -33561,8 +33550,7 @@ msgstr ""
 #: eventyay/mail/context.py:294
 msgid ""
 "A list of all changes to the user’s schedule in the current schedule version."
-msgstr ""
-"Seznam vseh sprememb uporabnikovega urnika v trenutni različici urnika."
+msgstr "Seznam vseh sprememb uporabnikovega urnika v trenutni različici urnika."
 
 #: eventyay/mail/context.py:304
 #, python-brace-format
@@ -34764,8 +34752,8 @@ msgid ""
 "Invalid email template! Please check that you don’t have stray { or } "
 "somewhere, and that there are no spaces inside the {} blocks."
 msgstr ""
-"Neveljavna predloga e-pošte! Preverite, da se kje ne pojavlja odvečen "
-"{ ali } in da v blokih {} ni presledkov."
+"Neveljavna predloga e-pošte! Preverite, da se kje ne pojavlja odvečen { "
+"ali } in da v blokih {} ni presledkov."
 
 #: eventyay/orga/forms/mails.py:100 eventyay/orga/forms/mails.py:117
 msgid "Unknown placeholder!"
@@ -36374,9 +36362,9 @@ msgid ""
 "href=\"%(domain)s\">%(domain)s</a>, please log in now. Otherwise, create a "
 "new account to join the team!"
 msgstr ""
-"Če že imaš račun – bodisi kot govorec ali organizator – na <a "
-"href=\"%(domain)s\">%(domain)s</a>, se zdaj prijavi. V nasprotnem primeru "
-"ustvari nov račun, da se pridružiš ekipi!"
+"Če že imaš račun – bodisi kot govorec ali organizator – na <a href=\"%"
+"(domain)s\">%(domain)s</a>, se zdaj prijavi. V nasprotnem primeru ustvari "
+"nov račun, da se pridružiš ekipi!"
 
 #: eventyay/orga/templates/orga/invitation.html:37
 #, python-format
@@ -36515,9 +36503,8 @@ msgid ""
 "tab."
 msgstr ""
 "Tukaj je mogoče urejati privzete predloge in predloge e‑pošte po meri. Za "
-"pošiljanje e‑pošte nekaterim ali vsem govorcem odprite zavihek »Pošlji "
-"e‑pošto«. Sporočila v čakalni vrsti za pošiljanje so v zavihku »Odhodna "
-"pošta«."
+"pošiljanje e‑pošte nekaterim ali vsem govorcem odprite zavihek »Pošlji e‑"
+"pošto«. Sporočila v čakalni vrsti za pošiljanje so v zavihku »Odhodna pošta«."
 
 #: eventyay/orga/templates/orga/mails/mailtemplate/list.html:36
 msgid ""
@@ -37313,8 +37300,8 @@ msgid ""
 "when reviewing proposals."
 msgstr ""
 "Če ne zahtevate ne ocene ne besedila recenzije, bodo recenzentom pri "
-"recenziranju predlogov na voljo dodatni gumb %(quotation_open)sVzdrži "
-"se%(quotation_close)s."
+"recenziranju predlogov na voljo dodatni gumb %(quotation_open)sVzdrži se%"
+"(quotation_close)s."
 
 #: eventyay/orga/templates/orga/settings/review.html:82
 msgid ""
@@ -38126,8 +38113,7 @@ msgstr "Dodatni govorec"
 #: eventyay/orga/views/cfp.py:563
 msgid ""
 "You cannot change the options and upload an option file at the same time."
-msgstr ""
-"Možnosti ni mogoče spreminjati in hkrati naložiti datoteke z možnostmi."
+msgstr "Možnosti ni mogoče spreminjati in hkrati naložiti datoteke z možnostmi."
 
 #: eventyay/orga/views/cfp.py:580
 #, fuzzy
@@ -38598,8 +38584,8 @@ msgstr ""
 msgid ""
 "Could not find the current export, please try to regenerate it. ({error})"
 msgstr ""
-"Trenutnega izvoza ni bilo mogoče najti. Poskusite ga ponovno ustvariti. "
-"({error})"
+"Trenutnega izvoza ni bilo mogoče najti. Poskusite ga ponovno ustvariti. ("
+"{error})"
 
 #: eventyay/orga/views/schedule.py:129
 msgid "You have to provide a new, unique schedule version!"
@@ -39016,8 +39002,7 @@ msgstr "Značke"
 #: eventyay/plugins/badges/apps.py:38
 msgid ""
 "This plugin allows you to generate badges or name tags for your attendees."
-msgstr ""
-"Ta vtičnik omogoča ustvarjanje značk ali imenskih kartic za udeležence."
+msgstr "Ta vtičnik omogoča ustvarjanje značk ali imenskih kartic za udeležence."
 
 #: eventyay/plugins/badges/exporters.py:166
 msgid "One badge per page"
@@ -39221,8 +39206,8 @@ msgstr "Natisni priponke"
 msgid ""
 "Are you sure you want to delete the badge layout <strong>%(layout)s</strong>?"
 msgstr ""
-"Ali ste prepričani, da želite izbrisati postavitev priponke "
-"<strong>%(layout)s</strong>?"
+"Ali ste prepričani, da želite izbrisati postavitev priponke <strong>%(layout)"
+"s</strong>?"
 
 #: eventyay/plugins/badges/templates/pretixplugins/badges/edit.html:6
 #: eventyay/plugins/badges/templates/pretixplugins/badges/edit.html:16
@@ -39560,10 +39545,10 @@ msgid ""
 "a specific country."
 msgstr ""
 "Vnesite en IBAN ali predpono IBAN na vrstico. Sistem ne bo poskušal izvesti "
-"vračil na nobenega od teh IBAN-ov. Uporabno npr. če prejemate veliko "
-"»posredovanih plačil« prek ponudnika plačil tretje osebe. Navedete lahko "
-"tudi kode držav, kot je »GB«, če nikoli ne želite pošiljati vračil na IBAN-e "
-"iz določene države."
+"vračil na nobenega od teh IBAN-ov. Uporabno npr. če prejemate veliko »"
+"posredovanih plačil« prek ponudnika plačil tretje osebe. Navedete lahko tudi "
+"kode držav, kot je »GB«, če nikoli ne želite pošiljati vračil na IBAN-e iz "
+"določene države."
 
 #: eventyay/plugins/banktransfer/payment.py:236
 msgid "Please fill out your bank account details."
@@ -39794,8 +39779,7 @@ msgstr "Rezultat uvoza"
 msgid ""
 "The result of your import is in progress. Please be patient while we process "
 "the data …"
-msgstr ""
-"Rezultat uvoza je v obdelavi. Prosimo, počakajte, da obdelamo podatke …"
+msgstr "Rezultat uvoza je v obdelavi. Prosimo, počakajte, da obdelamo podatke …"
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/job_detail.html:18
 msgid "An internal error occurred during processing your data."
