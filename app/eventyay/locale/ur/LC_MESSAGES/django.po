@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 18:17+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2026-08-27 18:18+0000\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Urdu <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "ur/>\n"
 "Language: ur\n"
@@ -1094,8 +1094,8 @@ msgstr "%(count)s رکن"
 #| msgid "We have trouble sending emails right now, please check back later."
 msgid "No schedule has been published yet. Please check back later."
 msgstr ""
-"اس وقت ای میلز بھیجنے میں مشکل پیش آ رہی ہے، براہِ کرم بعد میں دوبارہ چیک "
-"کریں۔"
+"اس وقت ای میلز بھیجنے میں مشکل پیش آ رہی ہے، براہِ کرم بعد میں دوبارہ چیک کریں"
+"۔"
 
 #: eventyay/agenda/views/schedule.py:477
 #, fuzzy
@@ -3182,8 +3182,8 @@ msgid ""
 msgstr ""
 "سلام،\n"
 "\n"
-"{event} کے لیے آرڈر کامیاب ہو گیا ہے۔ چونکہ صرف مفت مصنوعات آرڈر کی گئی "
-"ہیں،\n"
+"{event} کے لیے آرڈر کامیاب ہو گیا ہے۔ چونکہ صرف مفت مصنوعات آرڈر کی گئی ہیں"
+"،\n"
 "ادائیگی درکار نہیں ہے۔\n"
 "\n"
 "آرڈر کی تفصیلات تبدیل کرنے اور آرڈر کی حالت دیکھنے کے لیے:\n"
@@ -7280,8 +7280,7 @@ msgstr ""
 #| "Control whether the Join Online Video link is visible on public pages."
 msgid "Controls whether the plugin is available on the platform at all."
 msgstr ""
-"کنٹرول کریں کہ عوامی صفحات پر آن لائن ویڈیو جوائن کرنے کا لنک نظر آئے یا "
-"نہیں۔"
+"کنٹرول کریں کہ عوامی صفحات پر آن لائن ویڈیو جوائن کرنے کا لنک نظر آئے یا نہیں۔"
 
 #: eventyay/base/models/global_plugin_config.py:33
 #: eventyay/control/templates/pretixcontrol/global_plugins.html:26
@@ -15438,10 +15437,8 @@ msgstr[1] ""
 #| msgid "You can choose up to %(max_count)s options from this category."
 msgid "You can keep up to %(count)s slide entry in total."
 msgid_plural "You can keep up to %(count)s slide entries in total."
-msgstr[0] ""
-"اس زمرے سے زیادہ سے زیادہ %(max_count)s آپشنز منتخب کیے جا سکتے ہیں۔"
-msgstr[1] ""
-"اس زمرے سے زیادہ سے زیادہ %(max_count)s آپشنز منتخب کیے جا سکتے ہیں۔"
+msgstr[0] "اس زمرے سے زیادہ سے زیادہ %(max_count)s آپشنز منتخب کیے جا سکتے ہیں۔"
+msgstr[1] "اس زمرے سے زیادہ سے زیادہ %(max_count)s آپشنز منتخب کیے جا سکتے ہیں۔"
 
 #: eventyay/common/templates/common/widgets/slides_input.html:79
 #, fuzzy
@@ -23298,8 +23295,8 @@ msgid ""
 "To confirm you really want this, please type out the event's name "
 "(\"%(name)s\") here:"
 msgstr ""
-"تصدیق کے لیے کہ واقعی یہی مطلوب ہے، براہِ کرم ایونٹ کا مختصر نام "
-"(\"%(slug)s\") یہاں ٹائپ کریں:"
+"تصدیق کے لیے کہ واقعی یہی مطلوب ہے، براہِ کرم ایونٹ کا مختصر نام (\"%(slug)"
+"s\") یہاں ٹائپ کریں:"
 
 #: eventyay/control/templates/pretixcontrol/event/delete.html:36
 msgid "Your event can not be deleted as it already contains orders."
@@ -25522,8 +25519,8 @@ msgstr ""
 msgid ""
 "The user account associated with this order will remain active and untouched."
 msgstr ""
-"اس ای میل پتے کے ساتھ پہلے ہی ایک اکاؤنٹ وابستہ ہے۔ کوئی دوسرا پتہ منتخب "
-"کریں۔"
+"اس ای میل پتے کے ساتھ پہلے ہی ایک اکاؤنٹ وابستہ ہے۔ کوئی دوسرا پتہ منتخب کریں"
+"۔"
 
 #: eventyay/control/templates/pretixcontrol/order/anonymize.html:17
 msgid ""
@@ -28336,8 +28333,8 @@ msgid ""
 "or used in an order."
 msgstr ""
 "درج ذیل واؤچرز کو حذف نہیں کیا جا سکتا کیونکہ انہیں پہلے ہی ریڈیم کیا جا چکا "
-"ہے، لیکن اس کے بجائے انہیں مکمل طور پر ریڈیم شدہ کے طور پر سیٹ کر دیا جائے "
-"گا۔"
+"ہے، لیکن اس کے بجائے انہیں مکمل طور پر ریڈیم شدہ کے طور پر سیٹ کر دیا جائے گا"
+"۔"
 
 #: eventyay/control/templates/pretixcontrol/vouchers/detail.html:16
 #, python-format
@@ -30146,8 +30143,7 @@ msgstr "یہ سیکیورٹی ڈیوائس پہلے ہی رجسٹرڈ ہے۔"
 #| msgid ""
 #| "There was an error sending the confirmation mail. Please try again later."
 msgid "There was an error sending the verification email."
-msgstr ""
-"تصدیقی ای میل بھیجنے میں خرابی ہوئی۔ براہ کرم بعد میں دوبارہ کوشش کریں۔"
+msgstr "تصدیقی ای میل بھیجنے میں خرابی ہوئی۔ براہ کرم بعد میں دوبارہ کوشش کریں۔"
 
 #: eventyay/control/views/users.py:380
 #, fuzzy
@@ -42828,10 +42824,10 @@ msgid ""
 "confirmation email. On the event page there is also a link to join online "
 "sessions."
 msgstr ""
-"یہ ٹکٹ والا ایونٹ ہے۔ اگر ٹکٹ مہمان کے طور پر آرڈر کیا گیا ہے تو اکاؤنٹ "
-"موجود نہیں ہے، لیکن پھر بھی ٹکٹ کنفرمیشن ای میل میں موجود خفیہ لنک کے ذریعے "
-"ٹکٹ تک رسائی ممکن ہے۔ ٹکٹس کے صفحے پر آن لائن سیشنز میں شامل ہونے کے لیے ایک "
-"لنک بھی موجود ہے۔"
+"یہ ٹکٹ والا ایونٹ ہے۔ اگر ٹکٹ مہمان کے طور پر آرڈر کیا گیا ہے تو اکاؤنٹ موجود "
+"نہیں ہے، لیکن پھر بھی ٹکٹ کنفرمیشن ای میل میں موجود خفیہ لنک کے ذریعے ٹکٹ تک "
+"رسائی ممکن ہے۔ ٹکٹس کے صفحے پر آن لائن سیشنز میں شامل ہونے کے لیے ایک لنک بھی "
+"موجود ہے۔"
 
 #: eventyay/presale/templates/pretixpresale/fragment_join_online_video.html:13
 #, fuzzy
