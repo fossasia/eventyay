@@ -182,9 +182,7 @@ class OutboxSend(ActionConfirmMixin, OutboxList):
     def queryset(self):
         pks = self.request.GET.get('pks') or ''
         if pks:
-            return self.request.event.queued_mails.filter(
-                sent__isnull=True, is_draft=False, pk__in=pks.split(',')
-            )
+            return self.request.event.queued_mails.filter(sent__isnull=True, is_draft=False, pk__in=pks.split(','))
         return self.get_queryset()
 
     def post(self, request, *args, **kwargs):
@@ -194,7 +192,6 @@ class OutboxSend(ActionConfirmMixin, OutboxList):
             for error in errors:
                 messages.error(request, error)
             return redirect(self.request.event.orga_urls.outbox)
-        count = mails.count()
         sent_count = 0
         for mail in mails:
             try:
@@ -355,7 +352,7 @@ class MailDetail(PermissionRequired, ActionFromUrl, CreateOrUpdateView):
                     messages.error(self.request, error)
                 return redirect(self.get_success_url())
             try:
-                form.instance.send()
+                form.instance.send(requestor=self.request.user)
                 messages.success(self.request, _('The email has been sent.'))
             except SendMailException as e:
                 messages.error(self.request, str(e))
@@ -404,6 +401,7 @@ class ComposeMailBaseView(EventPermissionRequired, FormView):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['event'] = self.request.event
+        kwargs['user'] = self.request.user
         initial = kwargs.get('initial', {})
         if 'template' in self.request.GET:
             template = self.request.event.mail_templates.filter(pk=self.request.GET.get('template')).first()
@@ -533,10 +531,7 @@ class ComposeMailBaseView(EventPermissionRequired, FormView):
             )
         elif scheduled_at:
             if not result:
-                messages.error(
-                    self.request,
-                    _('No emails could be created. Please check your recipient selection.')
-                )
+                messages.error(self.request, _('No emails could be created. Please check your recipient selection.'))
                 return redirect(self.request.event.orga_urls.compose_mails_sessions)
             self.success_url = self.request.event.orga_urls.outbox
             for mail in result:
@@ -587,9 +582,6 @@ class ComposeTeamsMail(ComposeMailBaseView):
                 messages.error(request, error)
             return redirect(self.request.event.orga_urls.outbox)
         return super().dispatch(request, *args, **kwargs)
-
-    def get_success_url(self):
-        return self.request.event.orga_urls.outbox
 
 
 class ComposeSessionMail(ComposeMailBaseView):
@@ -688,7 +680,8 @@ class MailTemplateView(OrgaCRUDView):
     messages = {
         'create': phrases.base.saved,
         'update': _(
-            'The template has been saved - note that already pending emails that are based on this template will not be changed!'
+            'The template has been saved - note that already pending emails that are based on this '
+            'template will not be changed!'
         ),
         'delete': phrases.base.deleted,
     }

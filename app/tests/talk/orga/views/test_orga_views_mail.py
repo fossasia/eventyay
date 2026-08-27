@@ -6,6 +6,7 @@ from django.utils.timezone import now
 from django_scopes import scope
 
 from eventyay.base.models import MailTemplate, MailTemplateRoles, QueuedMail
+from eventyay.orga.forms.mails import MailDetailForm
 
 
 @pytest.mark.django_db
@@ -357,12 +358,15 @@ def test_orga_can_delete_template(orga_client, event, mail_template):
 
 
 @pytest.mark.django_db
-def test_orga_can_compose_single_mail_team(orga_client, review_user, event):
+def test_orga_can_compose_single_mail_team(orga_user, orga_client, review_user, event):
     response = orga_client.get(
         event.orga_urls.compose_mails_teams,
         follow=True,
     )
     assert response.status_code == 200
+    assert "Reviewer and team member emails are sent directly and are not placed in the outbox first." in response.text
+    assert "They will appear in the Sent email list after sending." in response.text
+    assert "They also do not show up in the list of sent mails." not in response.text
     djmail.outbox = []
     with scope(event=event):
         assert QueuedMail.objects.filter(sent__isnull=False).count() == 0
@@ -376,12 +380,32 @@ def test_orga_can_compose_single_mail_team(orga_client, review_user, event):
         },
     )
     assert response.status_code == 200
+    assert response.redirect_chain[-1][0] == event.orga_urls.sent_mails
     with scope(event=event):
-        assert QueuedMail.objects.filter(sent__isnull=False).count() == 0
+        sent_mails = QueuedMail.objects.filter(sent__isnull=False)
+        assert sent_mails.count() == 1
+        saved_mail = sent_mails.first()
+        assert saved_mail.subject == f"foo {review_user.fullname}"
+        assert saved_mail.text == f"bar {review_user.fullname}"
+        assert review_user in saved_mail.to_users.all()
         assert len(djmail.outbox) == 1
         mail = djmail.outbox[0]
         assert mail.subject == f"foo {review_user.fullname}"
         assert mail.body == f"bar {review_user.fullname}"
+        action = saved_mail.logged_actions().filter(action_type="eventyay.mail.sent").first()
+        assert action is not None
+        assert action.person == orga_user
+
+    # Verify that the sent reviewer email appears in the sent list view
+    sent_list_response = orga_client.get(event.orga_urls.sent_mails)
+    assert sent_list_response.status_code == 200
+    assert f"foo {review_user.fullname}" in sent_list_response.text
+
+    # Verify that the sent reviewer email can be viewed in the mail detail view
+    detail_response = orga_client.get(saved_mail.urls.base)
+    assert detail_response.status_code == 200
+    assert f"foo {review_user.fullname}" in detail_response.text
+    assert f"bar {review_user.fullname}" in detail_response.text
 
 
 @pytest.mark.django_db
@@ -403,12 +427,69 @@ def test_orga_can_compose_single_mail_team_by_pk(
         },
     )
     assert response.status_code == 200
+    assert response.redirect_chain[-1][0] == event.orga_urls.sent_mails
     with scope(event=event):
-        assert QueuedMail.objects.filter(sent__isnull=False).count() == 0
+        assert QueuedMail.objects.filter(sent__isnull=False).count() == 2
         assert len(djmail.outbox) == 2
         for user in (orga_user, review_user):
             mail = [m for m in djmail.outbox if m.subject == f"foo {user.fullname}"][0]
             assert mail.body == f"bar {user.email}"
+            saved_mail = QueuedMail.objects.filter(to_users=user).first()
+            assert saved_mail is not None
+            assert saved_mail.sent is not None
+            assert saved_mail.subject == f"foo {user.fullname}"
+            assert saved_mail.text == f"bar {user.email}"
+            action = saved_mail.logged_actions().filter(action_type="eventyay.mail.sent").first()
+            assert action is not None
+            assert action.person == orga_user
+
+
+@pytest.mark.django_db
+def test_orga_can_compose_team_mail_default_all_teams(
+    orga_user, orga_client, review_user, event
+):
+    team = orga_user.teams.first()
+    assert team in event.teams.all()
+    djmail.outbox = []
+    with scope(event=event):
+        assert QueuedMail.objects.filter(sent__isnull=False).count() == 0
+
+    # Test preview without selecting any recipient group
+    preview_response = orga_client.post(
+        event.orga_urls.compose_mails_teams,
+        follow=True,
+        data={
+            "action": "preview",
+            "subject_0": "foo {name}",
+            "text_0": "bar {email}",
+        },
+    )
+    assert preview_response.status_code == 200
+    assert "There are no recipients matching this selection." not in preview_response.text
+
+    # Test sending without selecting any recipient group
+    response = orga_client.post(
+        event.orga_urls.compose_mails_teams,
+        follow=True,
+        data={
+            "subject_0": "foo {name}",
+            "text_0": "bar {email}",
+        },
+    )
+    assert response.status_code == 200
+    assert response.redirect_chain[-1][0] == event.orga_urls.sent_mails
+    with scope(event=event):
+        assert QueuedMail.objects.filter(sent__isnull=False).count() == 2
+        assert len(djmail.outbox) == 2
+        for user in (orga_user, review_user):
+            saved_mail = QueuedMail.objects.filter(to_users=user).first()
+            assert saved_mail is not None
+            assert saved_mail.sent is not None
+            assert saved_mail.subject == f"foo {user.fullname}"
+            assert saved_mail.text == f"bar {user.email}"
+            action = saved_mail.logged_actions().filter(action_type="eventyay.mail.sent").first()
+            assert action is not None
+            assert action.person == orga_user
 
 
 @pytest.mark.django_db
@@ -1020,3 +1101,12 @@ def test_orga_can_move_a_draft_to_the_outbox(orga_client, event, mail):
 
     outbox = orga_client.get(event.orga_urls.outbox, follow=True)
     assert mail.subject in outbox.text
+
+
+@pytest.mark.django_db
+def test_mail_detail_form_preserves_external_historical_to_users(event, mail, other_speaker):
+    with scope(event=event):
+        mail.to_users.add(other_speaker)
+        form = MailDetailForm(instance=mail)
+        assert other_speaker in form.fields['to_users'].queryset
+
