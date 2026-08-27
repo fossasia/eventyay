@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 09:02+0000\n"
-"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
+"PO-Revision-Date: 2026-08-27 09:03+0000\n"
+"Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Bulgarian <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/bg/>\n"
 "Language: bg\n"
@@ -6920,8 +6920,7 @@ msgstr "Персонализирани CSS стилове за събитиет�
 msgid ""
 "Upload a custom CSS file if changing the primary colour is not sufficient "
 "for you."
-msgstr ""
-"Качете собствен CSS файл, ако смяната на основния цвят не е достатъчна."
+msgstr "Качете собствен CSS файл, ако смяната на основния цвят не е достатъчна."
 
 #: eventyay/base/models/event.py:668
 msgid ""
@@ -13704,8 +13703,8 @@ msgid ""
 "You can enter proposals until %(deadline)s (%(timezone)s), %(until_string)s "
 "from now."
 msgstr ""
-"Може да подавате предложения отсега до %(deadline)s (%(timezone)s), "
-"%(until_string)s ."
+"Може да подавате предложения отсега до %(deadline)s (%(timezone)s), %"
+"(until_string)s ."
 
 #: eventyay/cfp/templates/cfp/event/cfp.html:35
 #, python-format
@@ -15405,8 +15404,8 @@ msgid ""
 "The link you clicked on wants to redirect you to a destination on the "
 "website %(host)s."
 msgstr ""
-"Връзката, която сте последвали, иска да Ви пренасочи към страница на сайта "
-"%(host)s."
+"Връзката, която сте последвали, иска да Ви пренасочи към страница на сайта %"
+"(host)s."
 
 #: eventyay/common/templates/common/redirect.html:18
 msgid "Please only proceed if you trust this website to be safe."
@@ -15851,8 +15850,7 @@ msgstr "Нова парола (отново)"
 
 #: eventyay/common/text/phrases.py:89
 msgid "You entered two different passwords. Please enter the same one twice!"
-msgstr ""
-"Въвели сте две различни пароли. Моля, въведете еднаква парола два пъти!"
+msgstr "Въвели сте две различни пароли. Моля, въведете еднаква парола два пъти!"
 
 #: eventyay/common/text/phrases.py:90
 msgctxt "noun / heading"
@@ -33936,8 +33934,8 @@ msgid ""
 msgstr ""
 "Здравейте!\n"
 "\n"
-"Добавени сте към предложение за {event_name} със заглавие "
-"„{proposal_title}“.\n"
+"Добавени сте към предложение за {event_name} със заглавие „{proposal_title}"
+"“.\n"
 "Моля, последвайте връзката, за да редактирате профила си и състоянието на "
 "предложението си:\n"
 "\n"
@@ -36336,8 +36334,7 @@ msgstr "Добрата покана за предложения подканя �
 
 #: eventyay/orga/templates/orga/cfp/text.html:25
 msgid "The formats (sessions, workshops, panels) and their durations"
-msgstr ""
-"Форматите (сесии, работилници, панелни дискусии) и продължителността им"
+msgstr "Форматите (сесии, работилници, панелни дискусии) и продължителността им"
 
 #: eventyay/orga/templates/orga/cfp/text.html:26
 msgid "Topics you are looking for"
@@ -36868,8 +36865,8 @@ msgstr ""
 "ползвате кодовете на предложенията като ключове (напр. „UX3N1“), а "
 "идентификаторите на потребителите като стойности, или обратно. За "
 "идентификатор може да ползвате или e-mail адреса на потребителите, или "
-"кодовете им (напр. „34KJN“). Може да погледнете примерен файл <a "
-"href='%(href)s'>тук</a>."
+"кодовете им (напр. „34KJN“). Може да погледнете примерен файл <a href='%"
+"(href)s'>тук</a>."
 
 #: eventyay/orga/templates/orga/review/assignment.html:23
 msgid ""
@@ -36924,10 +36921,10 @@ msgid ""
 "them first. You can change this in your <a href=\"%(href)s\">review "
 "settings</a>."
 msgstr ""
-"Рецензентите може да виждат и рецензират <strong>всички предложения</"
-"strong>, но предложенията, които са им разпределени, се изобразяват "
-"осветени, а рецензентите биват подканени да прегледат първо тях. Може да "
-"промените това в <a href='%(href)s'>настройките за рецензиране</a>."
+"Рецензентите може да виждат и рецензират <strong>всички предложения</strong>"
+", но предложенията, които са им разпределени, се изобразяват осветени, а "
+"рецензентите биват подканени да прегледат първо тях. Може да промените това "
+"в <a href='%(href)s'>настройките за рецензиране</a>."
 
 #: eventyay/orga/templates/orga/review/assignment.html:129
 msgid ""
@@ -37161,8 +37158,7 @@ msgstr "Всички непотвърдени сесии."
 msgid "One session has <strong>not yet been scheduled</strong>."
 msgid_plural "%(count)s sessions have <strong>not yet been scheduled</strong>."
 msgstr[0] "Една сесия все още <strong>не е поместена в програмата</strong>."
-msgstr[1] ""
-"%(count)s сесии все още <strong>не са поместени в програмата</strong>."
+msgstr[1] "%(count)s сесии все още <strong>не са поместени в програмата</strong>."
 
 #: eventyay/orga/templates/orga/schedule/release.html:79
 #, python-format
@@ -37170,8 +37166,7 @@ msgid "One session has <strong>not yet been assigned a track</strong>."
 msgid_plural ""
 "%(count)s sessions have <strong>not yet been assigned a track</strong>."
 msgstr[0] "Една сесия все още <strong>не е поместена в някой поток</strong>."
-msgstr[1] ""
-"%(count)s сесии все още <strong>не са поместени в някой поток</strong>."
+msgstr[1] "%(count)s сесии все още <strong>не са поместени в някой поток</strong>."
 
 #: eventyay/orga/templates/orga/schedule/release.html:95
 msgid "Warnings"
@@ -37444,9 +37439,8 @@ msgid ""
 "when reviewing proposals."
 msgstr ""
 "Ако оценката от рецензията и текстът на рецензията не са задължителни, "
-"рецензентите ще разполагат с допълнителен бутон за "
-"%(quotation_open)sВъздържане%(quotation_close)s при прегледа на "
-"предложенията."
+"рецензентите ще разполагат с допълнителен бутон за %(quotation_open)"
+"sВъздържане%(quotation_close)s при прегледа на предложенията."
 
 #: eventyay/orga/templates/orga/settings/review.html:82
 msgid ""
