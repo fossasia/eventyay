@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-03-21 17:10+0000\n"
+"PO-Revision-Date: 2026-08-27 08:53+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Vietnamese <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/vi/>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 5.17-dev\n"
+"X-Generator: Weblate 2026.9.dev0\n"
 
 #: data/templates/exhibitors/exhibitor_info.html:3
 #: data/templates/exhibitors/exhibitor_info.html:5
@@ -2129,8 +2129,7 @@ msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:679
 msgid "Hide \"payment pending\" state on attendee-facing pages"
-msgstr ""
-"Ẩn trạng thái \"payment pending\" trên các trang dành cho người tham dự"
+msgstr "Ẩn trạng thái \"payment pending\" trên các trang dành cho người tham dự"
 
 #: eventyay/base/configurations/default_setting.py:681
 msgid ""
@@ -2305,8 +2304,7 @@ msgstr "Mã VAT EU"
 
 #: eventyay/base/configurations/default_setting.py:842
 msgid "e.g. With this document, we sent you the invoice for your ticket order."
-msgstr ""
-"ví dụ: Với tài liệu này, chúng tôi gửi hóa đơn cho đơn hàng vé của bạn."
+msgstr "ví dụ: Với tài liệu này, chúng tôi gửi hóa đơn cho đơn hàng vé của bạn."
 
 #: eventyay/base/configurations/default_setting.py:845
 msgid "Introductory text"
@@ -2321,8 +2319,8 @@ msgid ""
 "e.g. Thank you for your purchase! You can find more information on the event "
 "at ..."
 msgstr ""
-"ví dụ: Cảm ơn bạn đã mua hàng! Bạn có thể tìm thêm thông tin về sự kiện "
-"tại ..."
+"ví dụ: Cảm ơn bạn đã mua hàng! Bạn có thể tìm thêm thông tin về sự kiện tại "
+"..."
 
 #: eventyay/base/configurations/default_setting.py:864
 msgid "Additional text"
@@ -2753,8 +2751,7 @@ msgstr ""
 msgid ""
 "Only allow changes if the resulting price is higher or equal than the "
 "previous price."
-msgstr ""
-"Chỉ cho phép thay đổi nếu giá cuối cùng cao hơn hoặc bằng giá trước đó."
+msgstr "Chỉ cho phép thay đổi nếu giá cuối cùng cao hơn hoặc bằng giá trước đó."
 
 #: eventyay/base/configurations/default_setting.py:1366
 #: eventyay/base/configurations/default_setting.py:1387
@@ -3231,8 +3228,8 @@ msgstr ""
 "Xin chào,\n"
 "\n"
 "chúng tôi đã nhận đơn hàng của bạn cho {event} với tổng giá trị\n"
-"là {total_with_currency}. Vui lòng hoàn thành thanh toán trước "
-"{expire_date}.\n"
+"là {total_with_currency}. Vui lòng hoàn thành thanh toán trước {expire_date}"
+".\n"
 "\n"
 "{payment_info}\n"
 "\n"
@@ -7169,8 +7166,7 @@ msgstr ""
 
 #: eventyay/base/models/event.py:3577
 msgid "You cannot set a default value that is not a valid value."
-msgstr ""
-"Bạn không thể đặt giá trị mặc định nếu nó không phải là giá trị hợp lệ."
+msgstr "Bạn không thể đặt giá trị mặc định nếu nó không phải là giá trị hợp lệ."
 
 #: eventyay/base/models/feedback.py:44
 msgid "Author"
@@ -8865,8 +8861,7 @@ msgstr "Quy tắc thuế của sản phẩm phải thuộc cùng sự kiện v�
 
 #: eventyay/base/models/product.py:786
 msgid "The product's availability cannot end before it starts."
-msgstr ""
-"Thời gian kết thúc cung cấp sản phẩm không thể trước thời gian bắt đầu."
+msgstr "Thời gian kết thúc cung cấp sản phẩm không thể trước thời gian bắt đầu."
 
 #: eventyay/base/models/product.py:791
 #, fuzzy
@@ -11045,9 +11040,9 @@ msgid ""
 "Don't forget to set the correct fees above!"
 msgstr ""
 "Chúng tôi khuyên bật tùy chọn này nếu bạn muốn người dùng trả phí thanh toán "
-"của nhà cung cấp. <a href=\"{docs_url}\" target=\"_blank\" "
-"rel=\"noopener\">Nhấn vào đây để biết thông tin chi tiết về chức năng này.</"
-"a> Đừng quên đặt mức phí chính xác ở trên!"
+"của nhà cung cấp. <a href=\"{docs_url}\" target=\"_blank\" rel=\"noopener\">"
+"Nhấn vào đây để biết thông tin chi tiết về chức năng này.</a> Đừng quên đặt "
+"mức phí chính xác ở trên!"
 
 #: eventyay/base/payment.py:350
 msgid "Restrict to countries"
@@ -11105,8 +11100,7 @@ msgstr "Nhà cung cấp thanh toán này không hỗ trợ hoàn tiền tự đ�
 msgid ""
 "No payment is required as this order only includes products which are free "
 "of charge."
-msgstr ""
-"Không cần thanh toán vì đơn hàng này chỉ bao gồm các sản phẩm miễn phí."
+msgstr "Không cần thanh toán vì đơn hàng này chỉ bao gồm các sản phẩm miễn phí."
 
 #: eventyay/base/payment.py:924
 msgid "Free of charge"
@@ -11700,8 +11694,7 @@ msgstr "Chưa thiết lập"
 
 #: eventyay/base/secrets.py:100
 msgid "Random (default, works with all apps in the ecosystem)"
-msgstr ""
-"Ngẫu nhiên (mặc định, hoạt động với tất cả ứng dụng trong hệ sinh thái)"
+msgstr "Ngẫu nhiên (mặc định, hoạt động với tất cả ứng dụng trong hệ sinh thái)"
 
 #: eventyay/base/secrets.py:139
 msgid ""
@@ -11957,8 +11950,8 @@ msgid ""
 "You can select every add-ons from the category %(cat)s for the product "
 "%(base)s at most once."
 msgstr ""
-"Bạn có thể chọn mỗi tùy chọn bổ sung từ danh mục %(cat)s cho sản phẩm "
-"%(base)s tối đa một lần."
+"Bạn có thể chọn mỗi tùy chọn bổ sung từ danh mục %(cat)s cho sản phẩm %(base)"
+"s tối đa một lần."
 
 #: eventyay/base/services/cart.py:135
 msgid ""
@@ -18113,8 +18106,8 @@ msgid ""
 "The provided key does not look valid. It should start with one of: "
 "%(prefixes)s"
 msgstr ""
-"Khóa được cung cấp có vẻ không hợp lệ. Nó phải bắt đầu bằng một trong: "
-"%(prefixes)s"
+"Khóa được cung cấp có vẻ không hợp lệ. Nó phải bắt đầu bằng một trong: %"
+"(prefixes)s"
 
 #: eventyay/control/forms/orderimport.py:10
 msgid "Import mode"
@@ -19250,8 +19243,8 @@ msgid ""
 "Position #{posid}: Event date \"{old_event}\" ({old_price}) changed to "
 "\"{new_event}\" ({new_price})."
 msgstr ""
-"Vị trí #{posid}: Ngày sự kiện \"{old_event}\" ({old_price}) đã đổi thành "
-"\"{new_event}\" ({new_price})."
+"Vị trí #{posid}: Ngày sự kiện \"{old_event}\" ({old_price}) đã đổi thành \""
+"{new_event}\" ({new_price})."
 
 #: eventyay/control/logdisplay.py:99
 #, python-brace-format
@@ -19356,8 +19349,8 @@ msgid ""
 "Scan scan of revoked code \"{barcode}…\" at {datetime} for list \"{list}\", "
 "type \"{type}\", was uploaded."
 msgstr ""
-"Bản quét của mã bị thu hồi \"{barcode}…\" tại {datetime} cho danh sách "
-"\"{list}\", loại \"{type}\" đã được tải lên."
+"Bản quét của mã bị thu hồi \"{barcode}…\" tại {datetime} cho danh sách \""
+"{list}\", loại \"{type}\" đã được tải lên."
 
 #: eventyay/control/logdisplay.py:277
 #, python-brace-format
@@ -19365,8 +19358,8 @@ msgid ""
 "Scan of revoked code \"{barcode}\" for list \"{list}\", type \"{type}\", was "
 "uploaded."
 msgstr ""
-"Bản quét của mã bị thu hồi \"{barcode}\" cho danh sách \"{list}\", loại "
-"\"{type}\" đã được tải lên."
+"Bản quét của mã bị thu hồi \"{barcode}\" cho danh sách \"{list}\", loại \""
+"{type}\" đã được tải lên."
 
 #: eventyay/control/logdisplay.py:287
 #, python-brace-format
@@ -19383,8 +19376,8 @@ msgid ""
 "Denied scan of position #{posid} for list \"{list}\", type \"{type}\", error "
 "code \"{errorcode}\"."
 msgstr ""
-"Bản quét bị từ chối của vị trí #{posid} cho danh sách \"{list}\", loại "
-"\"{type}\", mã lỗi \"{errorcode}\"."
+"Bản quét bị từ chối của vị trí #{posid} cho danh sách \"{list}\", loại \""
+"{type}\", mã lỗi \"{errorcode}\"."
 
 #: eventyay/control/logdisplay.py:308
 #, python-brace-format
@@ -19595,8 +19588,7 @@ msgstr "Đã bật/tắt đánh dấu 'yêu cầu chú ý khi check-in' cho đơ
 #: eventyay/control/logdisplay.py:539
 #, python-brace-format
 msgid "A new payment {local_id} has been started instead of the previous one."
-msgstr ""
-"Thanh toán mới {local_id} đã được bắt đầu thay cho thanh toán trước đó."
+msgstr "Thanh toán mới {local_id} đã được bắt đầu thay cho thanh toán trước đó."
 
 #: eventyay/control/logdisplay.py:541
 msgid "An unidentified type email has been sent."
@@ -20231,8 +20223,8 @@ msgid ""
 "Position #{posid} has been checked in manually at {datetime} on list \"{list}"
 "\"."
 msgstr ""
-"Vị trí #{posid} đã được điểm danh thủ công lúc {datetime} trên danh sách "
-"\"{list}\"."
+"Vị trí #{posid} đã được điểm danh thủ công lúc {datetime} trên danh sách \""
+"{list}\"."
 
 #: eventyay/control/logdisplay.py:776
 #, python-brace-format
@@ -23748,8 +23740,8 @@ msgid ""
 "%(plugin_settings_href)s>plugin settings</a> and activate one or more "
 "payment plugins."
 msgstr ""
-"Không có nhà cung cấp thanh toán nào khả dụng. Vui lòng đến <a "
-"%(plugin_settings_href)s>cài đặt plugin</a> và kích hoạt một hoặc nhiều "
+"Không có nhà cung cấp thanh toán nào khả dụng. Vui lòng đến <a %"
+"(plugin_settings_href)s>cài đặt plugin</a> và kích hoạt một hoặc nhiều "
 "plugin thanh toán."
 
 #: eventyay/control/templates/pretixcontrol/event/payment.html:76
@@ -24190,9 +24182,8 @@ msgid ""
 "%(plugin_settings_href)s>plugin settings</a> and activate one or more ticket "
 "output plugins."
 msgstr ""
-"Không có đầu ra vé nào khả dụng. Vui lòng vào <a "
-"%(plugin_settings_href)s>cài đặt plugin</a> và kích hoạt một hoặc nhiều "
-"plugin đầu ra vé."
+"Không có đầu ra vé nào khả dụng. Vui lòng vào <a %(plugin_settings_href)s>"
+"cài đặt plugin</a> và kích hoạt một hoặc nhiều plugin đầu ra vé."
 
 #: eventyay/control/templates/pretixcontrol/event/tickets.html:65
 msgid "Download time"
@@ -25980,8 +25971,7 @@ msgstr "Tạo lại"
 msgid ""
 "Generate a cancellation document for this invoice and create a new invoice "
 "with a new invoice number."
-msgstr ""
-"Tạo chứng từ hủy cho hóa đơn này và lập hóa đơn mới với số hóa đơn mới."
+msgstr "Tạo chứng từ hủy cho hóa đơn này và lập hóa đơn mới với số hóa đơn mới."
 
 #: eventyay/control/templates/pretixcontrol/order/index.html:255
 msgid "Generate cancellation"
@@ -28257,8 +28247,8 @@ msgid ""
 "We just want to make sure it's really you. Please re-authenticate with "
 "'%(login_provider)s'."
 msgstr ""
-"Chúng tôi chỉ muốn xác nhận đó là bạn. Vui lòng xác thực lại bằng "
-"'%(login_provider)s'."
+"Chúng tôi chỉ muốn xác nhận đó là bạn. Vui lòng xác thực lại bằng '%"
+"(login_provider)s'."
 
 #: eventyay/control/templates/pretixcontrol/user/reauth.html:14
 msgid ""
@@ -30934,8 +30924,8 @@ msgid ""
 "Are you sure you want to revoke access to your account for the application "
 "%(application)s?"
 msgstr ""
-"Bạn có chắc muốn thu hồi quyền truy cập vào tài khoản của bạn cho ứng dụng "
-"%(application)s không?"
+"Bạn có chắc muốn thu hồi quyền truy cập vào tài khoản của bạn cho ứng dụng %"
+"(application)s không?"
 
 #: eventyay/eventyay_common/templates/eventyay_common/account/authorized-apps.html:4
 #: eventyay/eventyay_common/templates/eventyay_common/account/authorized-apps.html:19
@@ -30954,8 +30944,7 @@ msgstr "Quyền"
 
 #: eventyay/eventyay_common/templates/eventyay_common/account/authorized-apps.html:71
 msgid "No applications have access to your eventyay account."
-msgstr ""
-"Không có ứng dụng nào có quyền truy cập vào tài khoản eventyay của bạn."
+msgstr "Không có ứng dụng nào có quyền truy cập vào tài khoản eventyay của bạn."
 
 #: eventyay/eventyay_common/templates/eventyay_common/account/email-management.html:4
 #: eventyay/eventyay_common/templates/eventyay_common/account/email-management.html:7
@@ -32783,8 +32772,7 @@ msgstr "Bạn có chắc chắn muốn tạo client secret mới cho ứng dụn
 
 #: eventyay/eventyay_common/views/account/oauth.py:130
 msgid "A new client secret has been generated and is now effective."
-msgstr ""
-"Mã bí mật ứng dụng (client secret) mới đã được tạo và hiện có hiệu lực."
+msgstr "Mã bí mật ứng dụng (client secret) mới đã được tạo và hiện có hiệu lực."
 
 #: eventyay/eventyay_common/views/account/oauth.py:149
 #, python-brace-format
@@ -32966,8 +32954,8 @@ msgid ""
 "This email confirmation link expired or is invalid. Please "
 "%(email_action_link)s."
 msgstr ""
-"Liên kết xác nhận email này đã hết hạn hoặc không hợp lệ. Vui lòng "
-"%(email_action_link)s."
+"Liên kết xác nhận email này đã hết hạn hoặc không hợp lệ. Vui lòng %"
+"(email_action_link)s."
 
 #: eventyay/eventyay_common/views/dashboards.py:407
 msgid "You do not have permission to change event settings."
@@ -40046,8 +40034,8 @@ msgid ""
 "We could not find bank account information for the refund {refund_id}. It "
 "was marked as failed."
 msgstr ""
-"Không tìm thấy thông tin tài khoản ngân hàng cho khoản hoàn tiền "
-"{refund_id}. Nó đã được đánh dấu là thất bại."
+"Không tìm thấy thông tin tài khoản ngân hàng cho khoản hoàn tiền {refund_id}"
+". Nó đã được đánh dấu là thất bại."
 
 #: eventyay/plugins/banktransfer/views.py:779
 msgid "No valid orders have been found."
@@ -41433,8 +41421,7 @@ msgstr ""
 #: eventyay/presale/templates/pretixpresale/event/checkout_base.html:44
 #: eventyay/presale/templates/pretixpresale/event/checkout_confirm.html:48
 msgid "The products in your cart are no longer reserved for you."
-msgstr ""
-"Các sản phẩm trong giỏ hàng của bạn không còn được giữ chỗ cho bạn nữa."
+msgstr "Các sản phẩm trong giỏ hàng của bạn không còn được giữ chỗ cho bạn nữa."
 
 #: eventyay/presale/templates/pretixpresale/event/checkout_base.html:53
 #: eventyay/presale/templates/pretixpresale/event/index.html:152
@@ -42358,8 +42345,7 @@ msgstr "Hủy hoặc xóa sự kiện"
 #: eventyay/presale/templates/pretixpresale/event/order.html:478
 msgid ""
 "You can request to cancel this order, but you will not receive a refund."
-msgstr ""
-"Bạn có thể yêu cầu hủy đơn hàng này, nhưng bạn sẽ không được hoàn tiền."
+msgstr "Bạn có thể yêu cầu hủy đơn hàng này, nhưng bạn sẽ không được hoàn tiền."
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:482
 msgid "You can cancel this order, but you will not receive a refund."
@@ -43546,8 +43532,7 @@ msgstr "Chúng tôi đang gặp sự cố gửi email, vui lòng thử lại sau
 msgid ""
 "If there were any orders by this user, they will receive an email with their "
 "order codes."
-msgstr ""
-"Nếu người dùng này có đơn hàng, họ sẽ nhận được email chứa mã đơn hàng."
+msgstr "Nếu người dùng này có đơn hàng, họ sẽ nhận được email chứa mã đơn hàng."
 
 #: eventyay/presale/views/waiting.py:89
 msgid "Waiting lists are disabled for this event."
