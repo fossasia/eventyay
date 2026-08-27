@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: 1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-03-30 15:15+0000\n"
+"PO-Revision-Date: 2026-08-27 09:49+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: German <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "de_INFORMAL/>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.17-dev\n"
+"X-Generator: Weblate 2026.9.dev0\n"
 
 #: data/templates/exhibitors/exhibitor_info.html:3
 #: data/templates/exhibitors/exhibitor_info.html:5
@@ -2716,8 +2716,7 @@ msgstr "Kundschaft darf Informationen ändern"
 
 #: eventyay/base/configurations/default_setting.py:1332
 msgid "Allow attendees to modify their information after they checked in."
-msgstr ""
-"Teilnehmenden erlauben, ihre Informationen nach dem Check-in zu ändern."
+msgstr "Teilnehmenden erlauben, ihre Informationen nach dem Check-in zu ändern."
 
 #: eventyay/base/configurations/default_setting.py:1334
 msgid ""
@@ -2819,8 +2818,7 @@ msgstr "Prozentuale Stornogebühr einbehalten"
 
 #: eventyay/base/configurations/default_setting.py:1477
 msgid "Allow attendees to voluntarily choose a lower refund"
-msgstr ""
-"Teilnehmenden erlauben, freiwillig eine niedrigere Erstattung zu wählen"
+msgstr "Teilnehmenden erlauben, freiwillig eine niedrigere Erstattung zu wählen"
 
 #: eventyay/base/configurations/default_setting.py:1478
 msgid ""
@@ -9121,9 +9119,8 @@ msgid ""
 "and can be toggled by event organizers."
 msgstr ""
 "Inaktive Fragen werden Kundschaft beim Checkout oder Check-in nicht "
-"angezeigt. Anders als bei versteckten Fragen (auf Systemebene) steuert "
-"„Aktiv“ die Sichtbarkeit und kann von Event-Organisator*innen umgeschaltet "
-"werden."
+"angezeigt. Anders als bei versteckten Fragen (auf Systemebene) steuert „Aktiv"
+"“ die Sichtbarkeit und kann von Event-Organisator*innen umgeschaltet werden."
 
 #: eventyay/base/models/product.py:1342
 msgid "Help text"
@@ -18264,8 +18261,8 @@ msgstr "Der Stripe-Schlüssel darf nicht leer sein."
 msgid ""
 "The provided key does not look valid. It should start with \"%(prefix)s\"."
 msgstr ""
-"Der angegebene Schlüssel scheint ungültig zu sein. Er sollte mit "
-"„%(prefix)s“ beginnen."
+"Der angegebene Schlüssel scheint ungültig zu sein. Er sollte mit „%(prefix)s"
+"“ beginnen."
 
 #: eventyay/control/forms/global_settings.py:988
 #, python-format
@@ -19413,8 +19410,8 @@ msgid ""
 "Position #{posid}: {old_product} ({old_price}) changed to {new_product} "
 "({new_price})."
 msgstr ""
-"Position Nr. {posid}: {old_product} ({old_price}) wurde in {new_product} "
-"({new_price}) geändert."
+"Position Nr. {posid}: {old_product} ({old_price}) wurde in {new_product} ("
+"{new_price}) geändert."
 
 #: eventyay/control/logdisplay.py:73
 #, python-brace-format
@@ -29519,8 +29516,7 @@ msgstr "Bitte wähle mindestens eine Bestellung aus."
 
 #: eventyay/control/views/orders.py:335
 msgid "At least one selected order does not exist anymore."
-msgstr ""
-"Mindestens eine der ausgewählten Bestellungen ist nicht mehr vorhanden."
+msgstr "Mindestens eine der ausgewählten Bestellungen ist nicht mehr vorhanden."
 
 #: eventyay/control/views/orders.py:355
 msgid ""
@@ -30641,9 +30637,9 @@ msgid ""
 "session types, and email templates. Please check those settings once the "
 "event has been created!"
 msgstr ""
-"Hier können Einstellungen aus früheren Veranstaltungen übernommen werden, "
-"z. B. E-Mail-Einstellungen, Sitzungstypen und E-Mail-Vorlagen. Bitte "
-"überprüfe diese Einstellungen, sobald die Veranstaltung erstellt wurde!"
+"Hier können Einstellungen aus früheren Veranstaltungen übernommen werden, z. "
+"B. E-Mail-Einstellungen, Sitzungstypen und E-Mail-Vorlagen. Bitte überprüfe "
+"diese Einstellungen, sobald die Veranstaltung erstellt wurde!"
 
 #: eventyay/event/stages.py:40
 msgid "Preparation"
@@ -33264,8 +33260,8 @@ msgstr ""
 #, python-format
 msgid "Please confirm that %(email)s is an email address for user %(user)s."
 msgstr ""
-"Bitte bestätige, dass %(email)s eine E-Mail-Adresse für den Benutzer "
-"%(user)s ist."
+"Bitte bestätige, dass %(email)s eine E-Mail-Adresse für den Benutzer %(user)"
+"s ist."
 
 #: eventyay/eventyay_common/views/custom.py:55
 #, python-format
@@ -33286,8 +33282,8 @@ msgid ""
 "This email confirmation link expired or is invalid. Please "
 "%(email_action_link)s."
 msgstr ""
-"Dieser E-Mail-Bestätigungslink ist abgelaufen oder ungültig. Bitte "
-"%(email_action_link)s."
+"Dieser E-Mail-Bestätigungslink ist abgelaufen oder ungültig. Bitte %"
+"(email_action_link)s."
 
 #: eventyay/eventyay_common/views/dashboards.py:407
 msgid "You do not have permission to change event settings."
@@ -33945,8 +33941,8 @@ msgid ""
 msgstr ""
 "Hallo!\n"
 "\n"
-"Wir freuen uns, dir mitteilen zu können, dass wir deinen Vorschlag "
-"„{submission_title}“\n"
+"Wir freuen uns, dir mitteilen zu können, dass wir deinen Vorschlag „"
+"{submission_title}“\n"
 "für {event_name} annehmen. Bitte klicke auf diesen Link, um deine Teilnahme "
 "zu bestätigen:\n"
 "\n"
@@ -34100,8 +34096,8 @@ msgid ""
 msgstr ""
 "Hallo!\n"
 "\n"
-"Du wurdest zu einem Vorschlag für {event_name} hinzugefügt, mit dem Titel "
-"„{proposal_title}“.\n"
+"Du wurdest zu einem Vorschlag für {event_name} hinzugefügt, mit dem Titel „"
+"{proposal_title}“.\n"
 "Ein Konto wurde für dich erstellt – bitte folge diesem Link, um dein "
 "Kontopasswort festzulegen.\n"
 "\n"
@@ -34128,8 +34124,8 @@ msgid ""
 msgstr ""
 "Hallo!\n"
 "\n"
-"Du wurdest zu einem Vorschlag für {event_name} hinzugefügt, mit dem Titel "
-"„{proposal_title}“.\n"
+"Du wurdest zu einem Vorschlag für {event_name} hinzugefügt, mit dem Titel „"
+"{proposal_title}“.\n"
 "Bitte folge diesem Link, um dein Benutzerprofil zu bearbeiten und den Status "
 "deines Vorschlags einzusehen:\n"
 "\n"
@@ -34608,8 +34604,8 @@ msgid ""
 "The static HTML export will be provided as a .zip archive on the schedule "
 "export page."
 msgstr ""
-"Der statische HTML-Export wird auf der Seite für den Zeitplan-Export "
-"als .zip-Archiv bereitgestellt."
+"Der statische HTML-Export wird auf der Seite für den Zeitplan-Export als "
+".zip-Archiv bereitgestellt."
 
 #: eventyay/orga/forms/event.py:212
 msgid "HTML Export URL"
@@ -35101,8 +35097,8 @@ msgid ""
 "Invalid email template! Please check that you don’t have stray { or } "
 "somewhere, and that there are no spaces inside the {} blocks."
 msgstr ""
-"Ungültige E-Mail-Vorlage! Bitte prüfe, dass du irgendwo keine verirrte "
-"{ oder } hast und dass innerhalb der {}-Blöcke keine Leerzeichen stehen."
+"Ungültige E-Mail-Vorlage! Bitte prüfe, dass du irgendwo keine verirrte { "
+"oder } hast und dass innerhalb der {}-Blöcke keine Leerzeichen stehen."
 
 #: eventyay/orga/forms/mails.py:100 eventyay/orga/forms/mails.py:117
 msgid "Unknown placeholder!"
@@ -35479,8 +35475,7 @@ msgstr ""
 
 #: eventyay/orga/phrases.py:15
 msgid "The password was reset and the user was notified."
-msgstr ""
-"Das Passwort wurde zurückgesetzt und der Benutzer wurde benachrichtigt."
+msgstr "Das Passwort wurde zurückgesetzt und der Benutzer wurde benachrichtigt."
 
 #: eventyay/orga/phrases.py:16
 msgid ""
@@ -36704,8 +36699,8 @@ msgstr "Ausstehende Änderungen anwenden"
 #, python-format
 msgid "List filtered by responses to custom field “%(question)s”."
 msgstr ""
-"Liste gefiltert nach Antworten auf das benutzerdefinierte Feld "
-"„%(question)s“."
+"Liste gefiltert nach Antworten auf das benutzerdefinierte Feld „%(question)s"
+"“."
 
 #: eventyay/orga/templates/orga/invitation.html:4
 msgid "Invitation"
@@ -36744,10 +36739,10 @@ msgid ""
 msgstr ""
 "Um die Einladung mit dem Konto anzunehmen, mit dem du derzeit angemeldet "
 "bist, bitte die Schaltfläche unten verwenden. Wenn du die Einladung mit "
-"einem anderen Konto annehmen möchtest, kannst du dich <a href=\"/orga/"
-"logout/?next=%(link)s\">abmelden</a> und dich mit dem anderen Konto "
-"anmelden. </p><p> Wenn du glaubst, diese Einladung irrtümlich erhalten zu "
-"haben, bitte den Organisator direkt kontaktieren."
+"einem anderen Konto annehmen möchtest, kannst du dich <a href=\"/orga/logout/"
+"?next=%(link)s\">abmelden</a> und dich mit dem anderen Konto anmelden. </p>"
+"<p> Wenn du glaubst, diese Einladung irrtümlich erhalten zu haben, bitte den "
+"Organisator direkt kontaktieren."
 
 #: eventyay/orga/templates/orga/invitation.html:45
 msgid "Join the team!"
@@ -37075,8 +37070,8 @@ msgstr ""
 "werden. Als Schlüssel können entweder die Proposal-Codes (z. B. „UX3N1“) und "
 "als Werte die Benutzerkennung verwendet werden oder umgekehrt. Die "
 "Benutzerkennung kann entweder die E-Mail-Adresse des Reviewers oder der User-"
-"Code (z. B. „34KJN“) sein. Eine Beispieldatei gibt es <a "
-"href=\"%(href)s\">hier</a>."
+"Code (z. B. „34KJN“) sein. Eine Beispieldatei gibt es <a href=\"%(href)s\">"
+"hier</a>."
 
 #: eventyay/orga/templates/orga/review/assignment.html:23
 msgid ""
@@ -37376,8 +37371,7 @@ msgid "One session has <strong>not yet been assigned a track</strong>."
 msgid_plural ""
 "%(count)s sessions have <strong>not yet been assigned a track</strong>."
 msgstr[0] "Einer Session wurde <strong>noch kein Track zugewiesen</strong>."
-msgstr[1] ""
-"%(count)s Sessions wurde <strong>noch kein Track zugewiesen</strong>."
+msgstr[1] "%(count)s Sessions wurde <strong>noch kein Track zugewiesen</strong>."
 
 #: eventyay/orga/templates/orga/schedule/release.html:95
 msgid "Warnings"
@@ -37654,8 +37648,8 @@ msgid ""
 "when reviewing proposals."
 msgstr ""
 "Wenn weder ein Review-Score noch ein Review-Text erforderlich ist, wird "
-"Reviewer*innen beim Bewerten von Einreichungen ein zusätzlicher "
-"%(quotation_open)sEnthalten%(quotation_close)s-Button angeboten."
+"Reviewer*innen beim Bewerten von Einreichungen ein zusätzlicher %"
+"(quotation_open)sEnthalten%(quotation_close)s-Button angeboten."
 
 #: eventyay/orga/templates/orga/settings/review.html:82
 msgid ""
@@ -44114,8 +44108,7 @@ msgstr "Raum I"
 #: eventyay/schedule/forms.py:199
 msgid ""
 "Description, e.g.: Our main meeting place, Room I, enter from the right."
-msgstr ""
-"Beschreibung, z. B.: Unser Haupttreffpunkt, Raum I, Eingang von rechts."
+msgstr "Beschreibung, z. B.: Unser Haupttreffpunkt, Raum I, Eingang von rechts."
 
 #: eventyay/schedule/forms.py:202
 msgid "Information for speakers, e.g.: Projector has only HDMI input."
