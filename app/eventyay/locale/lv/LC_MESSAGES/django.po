@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
 "PO-Revision-Date: 2026-08-27 16:14+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Latvian <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/lv/>\n"
 "Language: lv\n"
@@ -34518,8 +34518,7 @@ msgstr "Profila attēla avots"
 #| "Please enter the name of the author or source of image and a link if "
 #| "applicable."
 msgid "Name the author or source of the image and include a link if available."
-msgstr ""
-"Lūdzu, ievadiet attēla autora vai avota nosaukumu un saiti, ja tāda ir."
+msgstr "Lūdzu, ievadiet attēla autora vai avota nosaukumu un saiti, ja tāda ir."
 
 #: eventyay/orga/forms/importers.py:103
 #: eventyay/orga/templates/orga/cfp/forms.html:978
