@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-04-04 08:01+0000\n"
-"Last-Translator: António Oliveira <antonio.oliveira5487@gmail.com>\n"
+"PO-Revision-Date: 2026-08-27 16:48+0000\n"
+"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Portuguese (Portugal) <https://hosted.weblate.org/projects/"
 "eventyay/eventyay/pt_PT/>\n"
 "Language: pt_PT\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Weblate 5.17-dev\n"
+"X-Generator: Weblate 2026.9.dev0\n"
 
 #: data/templates/exhibitors/exhibitor_info.html:3
 #: data/templates/exhibitors/exhibitor_info.html:5
@@ -8888,8 +8888,7 @@ msgstr "A categoria do produto deve pertencer ao mesmo evento que o produto."
 
 #: eventyay/base/models/product.py:780
 msgid "The product's tax rule must belong to the same event as the product."
-msgstr ""
-"A regra fiscal do produto deve pertencer ao mesmo evento que o produto."
+msgstr "A regra fiscal do produto deve pertencer ao mesmo evento que o produto."
 
 #: eventyay/base/models/product.py:786
 msgid "The product's availability cannot end before it starts."
@@ -15417,8 +15416,8 @@ msgid ""
 "The link you clicked on wants to redirect you to a destination on the "
 "website %(host)s."
 msgstr ""
-"A ligação em que clicou pretende redirecioná-lo para um destino no website "
-"%(host)s."
+"A ligação em que clicou pretende redirecioná-lo para um destino no website %"
+"(host)s."
 
 #: eventyay/common/templates/common/redirect.html:18
 msgid "Please only proceed if you trust this website to be safe."
@@ -22041,9 +22040,9 @@ msgid ""
 "strong> and set the DEBUG variable to False if this page is in any way "
 "reachable from the internet."
 msgstr ""
-"Está a executar %(site_name)s em modo de desenvolvimento. Por favor, "
-"<strong>PARE</strong> e defina a variável DEBUG como False se esta página "
-"estiver, de alguma forma, acessível a partir da internet."
+"Está a executar %(site_name)s em modo de desenvolvimento. Por favor, <strong>"
+"PARE</strong> e defina a variável DEBUG como False se esta página estiver, "
+"de alguma forma, acessível a partir da internet."
 
 #: eventyay/control/templates/pretixcontrol/admin/systemconfig.html:31
 msgid "Your eventyay version is:"
@@ -22607,8 +22606,8 @@ msgid ""
 "Are you sure you want to delete the voucher <strong>%(invoice_voucher)s</"
 "strong>?"
 msgstr ""
-"Tem a certeza de que pretende eliminar o voucher "
-"<strong>%(invoice_voucher)s</strong>?"
+"Tem a certeza de que pretende eliminar o voucher <strong>%(invoice_voucher)"
+"s</strong>?"
 
 #: eventyay/control/templates/pretixcontrol/admin/vouchers/detail.html:9
 #: eventyay/control/templates/pretixcontrol/vouchers/detail.html:12
@@ -30952,8 +30951,7 @@ msgstr "Deseja mesmo ativar a autenticação de dois fatores?"
 #: eventyay/eventyay_common/templates/eventyay_common/account/2fa-enable.html:26
 msgid ""
 "You will no longer be able to log in without one of your configured devices."
-msgstr ""
-"Já não poderá iniciar sessão sem um dos seus dispositivos configurados."
+msgstr "Já não poderá iniciar sessão sem um dos seus dispositivos configurados."
 
 #: eventyay/eventyay_common/templates/eventyay_common/account/2fa-enable.html:27
 msgid ""
@@ -31095,8 +31093,8 @@ msgid ""
 "Are you sure you want to revoke access to your account for the application "
 "%(application)s?"
 msgstr ""
-"Tem a certeza de que pretende revogar o acesso à sua conta para a aplicação "
-"%(application)s?"
+"Tem a certeza de que pretende revogar o acesso à sua conta para a aplicação %"
+"(application)s?"
 
 #: eventyay/eventyay_common/templates/eventyay_common/account/authorized-apps.html:4
 #: eventyay/eventyay_common/templates/eventyay_common/account/authorized-apps.html:19
@@ -33150,8 +33148,8 @@ msgid ""
 "This email confirmation link expired or is invalid. Please "
 "%(email_action_link)s."
 msgstr ""
-"Esta ligação de confirmação de e-mail expirou ou é inválida. Por favor, "
-"%(email_action_link)s."
+"Esta ligação de confirmação de e-mail expirou ou é inválida. Por favor, %"
+"(email_action_link)s."
 
 #: eventyay/eventyay_common/views/dashboards.py:407
 msgid "You do not have permission to change event settings."
@@ -33952,8 +33950,8 @@ msgid ""
 msgstr ""
 "Olá!\n"
 "\n"
-"Foi adicionada uma proposta de {event_name}, com o título "
-"“{proposal_title}”.\n"
+"Foi adicionada uma proposta de {event_name}, com o título “{proposal_title}"
+"”.\n"
 "Foi criada uma conta para si – siga esta ligação para definir a palavra-"
 "passe da sua conta.\n"
 "\n"
@@ -33980,8 +33978,8 @@ msgid ""
 msgstr ""
 "Olá!\n"
 "\n"
-"Foi adicionada uma proposta de {event_name}, com o título "
-"“{proposal_title}”.\n"
+"Foi adicionada uma proposta de {event_name}, com o título “{proposal_title}"
+"”.\n"
 "Siga esta ligação para editar o seu perfil de utilizador e ver o estado da "
 "sua proposta:\n"
 "\n"
@@ -36574,9 +36572,9 @@ msgid ""
 "href=\"%(domain)s\">%(domain)s</a>, please log in now. Otherwise, create a "
 "new account to join the team!"
 msgstr ""
-"Se já tem uma conta – seja como orador(a) ou organizador(a) – em <a "
-"href=\"%(domain)s\">%(domain)s</a>, inicie sessão agora. Caso contrário, "
-"crie uma nova conta para se juntar à equipa!"
+"Se já tem uma conta – seja como orador(a) ou organizador(a) – em <a href=\"%"
+"(domain)s\">%(domain)s</a>, inicie sessão agora. Caso contrário, crie uma "
+"nova conta para se juntar à equipa!"
 
 #: eventyay/orga/templates/orga/invitation.html:37
 #, python-format
@@ -40873,8 +40871,7 @@ msgstr "Não foram encontrados e-mails enviados."
 
 #: eventyay/plugins/sendmail/views.py:71
 msgid "We could not queue the email. See below for details."
-msgstr ""
-"Não foi possível colocar o e-mail na fila. Consulte abaixo os detalhes."
+msgstr "Não foi possível colocar o e-mail na fila. Consulte abaixo os detalhes."
 
 #: eventyay/plugins/sendmail/views.py:128
 msgid "There are no orders matching this selection."
@@ -41072,8 +41069,7 @@ msgstr "Notas Importantes"
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:59
 msgid "The OAuth application must be approved by a MediaWiki administrator"
-msgstr ""
-"A aplicação OAuth tem de ser aprovada por um administrador do MediaWiki"
+msgstr "A aplicação OAuth tem de ser aprovada por um administrador do MediaWiki"
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:60
 msgid "Until approved, only the application owner can log in"
@@ -43386,8 +43382,8 @@ msgstr ""
 msgid ""
 "To log in and access your events, please <a %(a_attr)s>head over here</a>."
 msgstr ""
-"Para iniciar sessão e aceder aos seus eventos, por favor <a "
-"%(a_attr)s>clique aqui</a>."
+"Para iniciar sessão e aceder aos seus eventos, por favor <a %(a_attr)s>"
+"clique aqui</a>."
 
 #: eventyay/presale/templates/pretixpresale/index.html:30
 msgid "Enjoy!"
