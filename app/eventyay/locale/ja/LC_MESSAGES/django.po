@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 08:33+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2026-08-27 08:34+0000\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/ja/>\n"
 "Language: ja\n"
@@ -2872,8 +2872,8 @@ msgid ""
 "Sender address for outgoing emails. When using a custom sender, replies go "
 "to this address unless a Reply-To is set."
 msgstr ""
-"返信先アドレスです。この設定が空で、カスタム送信者がない場合、イベントのメー"
-"ルアドレスがReply-Toアドレスとして使用されます。"
+"返信先アドレスです。この設定が空で、カスタム送信者がない場合、イベントの"
+"メールアドレスがReply-Toアドレスとして使用されます。"
 
 #: eventyay/base/configurations/default_setting.py:1664
 #, fuzzy
@@ -7129,8 +7129,7 @@ msgstr ""
 #| msgid ""
 #| "Control whether the Join Online Video link is visible on public pages."
 msgid "Controls whether the plugin is available on the platform at all."
-msgstr ""
-"公開ページに「オンラインビデオに参加」リンクを表示するかどうかを制御します。"
+msgstr "公開ページに「オンラインビデオに参加」リンクを表示するかどうかを制御します。"
 
 #: eventyay/base/models/global_plugin_config.py:33
 #: eventyay/control/templates/pretixcontrol/global_plugins.html:26
@@ -7404,8 +7403,7 @@ msgstr "スケジュール"
 #| "If you check this, the emails will be sent immediately, instead of being "
 #| "put in the outbox."
 msgid "If set, the email will be sent at this time instead of immediately."
-msgstr ""
-"これをチェックすると、メールは送信キューに入れられず即座に送信されます。"
+msgstr "これをチェックすると、メールは送信キューに入れられず即座に送信されます。"
 
 #: eventyay/base/models/mail.py:475
 msgid "This mail has been sent already. It cannot be sent again."
@@ -15923,9 +15921,9 @@ msgid ""
 "reorder them — the first language (bold border) is used as your event's "
 "default language."
 msgstr ""
-"ユーザーはこれらの言語でeventyayを利用でき、あなたはこれらの言語で全てのテキ"
-"ストを提供できます。ユーザーが選択した言語のテキストを用意していない場合は、"
-"イベントのデフォルト言語が表示されます。"
+"ユーザーはこれらの言語でeventyayを利用でき、あなたはこれらの言語で全ての"
+"テキストを提供できます。ユーザーが選択した言語のテキストを用意していない場合"
+"は、イベントのデフォルト言語が表示されます。"
 
 #: eventyay/control/forms/event.py:111
 msgid "This is an event series"
@@ -16548,8 +16546,9 @@ msgid ""
 "Your customers will be instructed to pay the money manually. You can then "
 "mark them as paid."
 msgstr ""
-"お客様にはあなたの口座へ送金するよう案内されます。その後、銀行取引明細をイン"
-"ポートしてeventyay内で支払いを処理するか、手動で支払い済みにマークできます。"
+"お客様にはあなたの口座へ送金するよう案内されます。その後、銀行取引明細を"
+"インポートしてeventyay内で支払いを処理するか、手動で支払い済みにマークできま"
+"す。"
 
 #: eventyay/control/forms/event.py:1839 eventyay/control/forms/product.py:575
 #, fuzzy
@@ -16596,8 +16595,7 @@ msgstr ""
 #, fuzzy
 #| msgid "This will create a new Video platform for this event."
 msgid "Optional: configure a live video stream for this meetup."
-msgstr ""
-"これにより、このイベント用の新しいVideoプラットフォームが作成されます。"
+msgstr "これにより、このイベント用の新しいVideoプラットフォームが作成されます。"
 
 #: eventyay/control/forms/filter.py:149 eventyay/control/forms/filter.py:151
 #: eventyay/control/templates/pretixcontrol/admin/orders/index.html:22
@@ -17529,8 +17527,7 @@ msgstr "フロントページのヘッダーパターン"
 #| "This will be attached to every email. Available placeholders: {event}"
 msgid ""
 "Pattern used to generate pad names. Available placeholders: {placeholders}."
-msgstr ""
-"これはすべてのメールに添付されます。利用可能なプレースホルダー: {event}"
+msgstr "これはすべてのメールに添付されます。利用可能なプレースホルダー: {event}"
 
 #: eventyay/control/forms/global_settings.py:582
 #, fuzzy
@@ -18978,8 +18975,7 @@ msgstr "商品を削除"
 #, fuzzy, python-brace-format
 #| msgid "Position #{posid} ({old_product}, {old_price}) canceled."
 msgid "Position #{posid} ({product}, {price}) reinstated."
-msgstr ""
-"ポジション #{posid} ({old_product}, {old_price}) はキャンセルされました。"
+msgstr "ポジション #{posid} ({old_product}, {old_price}) はキャンセルされました。"
 
 #: eventyay/control/logdisplay.py:183
 #, python-brace-format
@@ -22908,9 +22904,9 @@ msgid ""
 "Variation changes are configured per product in the product's \"Variations\" "
 "section."
 msgstr ""
-"ユーザーが注文を変更できる機能は現在開発中です。そのため、現時点では商品バリ"
-"エーションの変更など、特定の変更のみが可能です。今後、さらにオプションが追加"
-"される場合があります。"
+"ユーザーが注文を変更できる機能は現在開発中です。そのため、現時点では商品"
+"バリエーションの変更など、特定の変更のみが可能です。今後、さらにオプションが"
+"追加される場合があります。"
 
 #: eventyay/control/templates/pretixcontrol/event/component_link.html:8
 #: eventyay/eventyay_common/templates/eventyay_common/event/component_link.html:9
@@ -30893,9 +30889,9 @@ msgid ""
 "premium access or Swag. Manage attendees, design custom badges, and "
 "streamline event marketing by sending targeted emails."
 msgstr ""
-"イベントのチケット販売を設定・構成し、プレミアムアクセスやグッズなどのアドオ"
-"ンを販売します。参加者や出展者を管理し、カスタムバッジを作成し、ターゲットを"
-"絞ったメール送信でイベントのマーケティングを効率化します。"
+"イベントのチケット販売を設定・構成し、プレミアムアクセスやグッズなどの"
+"アドオンを販売します。参加者や出展者を管理し、カスタムバッジを作成し、"
+"ターゲットを絞ったメール送信でイベントのマーケティングを効率化します。"
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:47
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:65
@@ -34090,8 +34086,7 @@ msgstr "プロフィール画像の出典"
 #| "Please enter the name of the author or source of image and a link if "
 #| "applicable."
 msgid "Name the author or source of the image and include a link if available."
-msgstr ""
-"画像の作成者または出典の名前と、該当する場合はリンクを入力してください。"
+msgstr "画像の作成者または出典の名前と、該当する場合はリンクを入力してください。"
 
 #: eventyay/orga/forms/importers.py:103
 #: eventyay/orga/templates/orga/cfp/forms.html:978
@@ -34280,8 +34275,7 @@ msgstr "メールには、少なくとも1人の受信者が必要です。"
 msgid ""
 "If set, the email will be sent at this time. Time is interpreted in the "
 "event timezone."
-msgstr ""
-"これをチェックすると、メールは送信キューに入れられず即座に送信されます。"
+msgstr "これをチェックすると、メールは送信キューに入れられず即座に送信されます。"
 
 #: eventyay/orga/forms/mails.py:221
 msgid "Send immediately"
@@ -37745,8 +37739,7 @@ msgstr ""
 #, fuzzy
 #| msgid "Invalid email or password. Please try again."
 msgid "Could not establish a session for file upload. Please try again."
-msgstr ""
-"メールアドレスまたはパスワードが正しくありません。もう一度お試しください。"
+msgstr "メールアドレスまたはパスワードが正しくありません。もう一度お試しください。"
 
 #: eventyay/orga/views/event.py:612
 #, fuzzy
@@ -38627,8 +38620,8 @@ msgid ""
 msgstr ""
 "PDFチケットエディタでチケットデザインをカスタマイズできます。背景として使う"
 "PDFをアップロードし、任意の位置にテキストやQRコードを配置できます。ドラッグ＆"
-"ドロップの直感的な操作で使いやすいですが、最新のブラウザと安定したインター"
-"ネット接続が必要です。"
+"ドロップの直感的な操作で使いやすいですが、最新のブラウザと安定した"
+"インターネット接続が必要です。"
 
 #: eventyay/plugins/badges/templates/pretixplugins/badges/form.html:12
 #, fuzzy
@@ -39771,8 +39764,7 @@ msgstr "受信者のメールアドレスをカンマで区切って編集して
 msgid ""
 "Any changes to the Reply-To field apply only to this queued email. If left "
 "empty, the event's default Reply-To will be used."
-msgstr ""
-"Reply-To フィールドへの変更は、このキューに入ったメールにのみ適用されます。"
+msgstr "Reply-To フィールドへの変更は、このキューに入ったメールにのみ適用されます。"
 
 #: eventyay/plugins/sendmail/forms.py:502
 msgid "Any changes to the BCC field will apply only to this queued email."
