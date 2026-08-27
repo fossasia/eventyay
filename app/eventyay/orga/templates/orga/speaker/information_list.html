@@ -10,7 +10,7 @@
     {% endcompress %}
 {% endblock scripts %}
 
-{% block extra_title %}{{ information.count }} {% blocktranslate trimmed count count=information.count %}Speaker Information Note{% plural %}Speaker Information Notes{% endblocktranslate %} :: {% endblock extra_title %}
+{% block extra_title %}{% blocktranslate trimmed count count=information.count %}{{ count }} Speaker Information Note{% plural %}{{ count }} Speaker Information Notes{% endblocktranslate %} :: {% endblock extra_title %}
 
 {% block content %}
     {% blocktranslate trimmed count count=information.count asvar header_title %}

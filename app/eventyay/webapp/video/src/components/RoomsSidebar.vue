@@ -2,15 +2,15 @@
 transition(name="sidebar")
 	.c-rooms-sidebar(v-show="show && !snapBack", :style="style", role="navigation", @pointerdown="onPointerdown", @pointermove="onPointermove", @pointerup="onPointerup", @pointercancel="onPointercancel")
 		scrollbars(y)
-			.global-links(role="group", aria-label="pages")
+			.global-links(role="group", :aria-label="$t('Pages')")
 				router-link.room(v-if="homeRoom", :to="{name: 'about'}", v-html="$emojify(homeRoom.name)")
-				router-link.room(:to="{name: 'schedule'}") {{ $t('RoomsSidebar:schedule:label') }}
-				router-link.room(:to="{name: 'schedule:speakers'}") {{ $t('RoomsSidebar:speaker:label') }}
+				router-link.room(:to="{name: 'schedule'}") {{ $t('Schedule') }}
+				router-link.room(:to="{name: 'schedule:speakers'}") {{ $t('Speakers') }}
 				template(v-for="page of roomsByType.page", :key="page.id")
 					router-link.room(v-if="!homeRoom || page !== homeRoom", :to="{name: 'room', params: {roomId: page.id}}", v-html="$emojify(page.name)")
 			.group-title#stages-title(v-if="roomsByType.stage.length || hasPermission('world:rooms.create.stage')")
-				span {{ $t('RoomsSidebar:stages-headline:text') }}
-				bunt-icon-button(v-if="hasPermission('world:rooms.create.stage')", tooltip="Create Stage", :tooltip-fixed="true", @click="showStageCreationPrompt = true") plus
+				span {{ $t('Stages') }}
+				bunt-icon-button(v-if="hasPermission('world:rooms.create.stage')", :tooltip="createStageTooltip", :tooltip-fixed="true", @click="showStageCreationPrompt = true") plus
 			.stages(role="group", aria-describedby="stages-title")
 				router-link.stage(v-for="stage of roomsByType.stage", :to="homeRoom && stage.room === homeRoom ? {name: 'about'} : {name: 'room', params: {roomId: stage.room.id}}", :class="{active: stage.room.id === $route.params.roomId, session: stage.session, live: stage.session && stage.room.schedule_data, 'has-image': stage.image}")
 					template(v-if="stage.session")
@@ -33,46 +33,46 @@ transition(name="sidebar")
 						.notifications(v-if="stage.notifications") {{ stage.notifications }}
 			.group-title#networking-title(v-if="roomsByType.networking.length || canCreateNetworkingRoom")
 				span {{ networkingTitle }}
-				bunt-icon-button(v-if="canCreateNetworkingRoom", tooltip="Create random video calls", :tooltip-fixed="true", @click="showNetworkingCreationPrompt = true") plus
+				bunt-icon-button(v-if="canCreateNetworkingRoom", :tooltip="createNetworkingTooltip", :tooltip-fixed="true", @click="showNetworkingCreationPrompt = true") plus
 			.networking(role="group", aria-describedby="networking-title")
 				router-link.networking-room(v-for="room of roomsByType.networking", :to="homeRoom && room === homeRoom ? {name: 'about'} : {name: 'room', params: {roomId: room.id}}", :class="{active: room.id === $route.params.roomId}")
 					.room-icon(aria-hidden="true")
 					.name(v-html="$emojify(room.name)")
 			.group-title#chats-title(v-if="roomsByType.videoChat.length || roomsByType.textChat.length || canCreateChatRoom")
-				span {{ $t('RoomsSidebar:channels-headline:text') }}
+				span {{ $t('Channels') }}
 				.buffer
-				bunt-icon-button(v-if="canCreateChatRoom", tooltip="Create Channel", :tooltip-fixed="true", @click="showChatCreationPrompt = true") plus
-				bunt-icon-button(v-if="worldHasTextChannels", tooltip="Browse all channels", :tooltip-fixed="true", @click="showChannelBrowser = true") compass-outline
+				bunt-icon-button(v-if="canCreateChatRoom", :tooltip="createChannelTooltip", :tooltip-fixed="true", @click="showChatCreationPrompt = true") plus
+				bunt-icon-button(v-if="worldHasTextChannels", :tooltip="browseChannelsTooltip", :tooltip-fixed="true", @click="showChannelBrowser = true") compass-outline
 			.chats(v-if="roomsByType.videoChat.length || roomsByType.textChat.length || canCreateChatRoom", role="group", aria-describedby="chats-title")
 				router-link.video-chat(v-for="chat of roomsByType.videoChat", :to="homeRoom && chat === homeRoom ? {name: 'about'} : {name: 'room', params: {roomId: chat.id}}", :class="{active: chat.id === $route.params.roomId}")
 					.room-icon(aria-hidden="true")
 					.name(v-html="$emojify(chat.name)")
-					i.bunt-icon.activity-icon.mdi(v-if="chat.users === 'many' || chat.users === 'few'", :class="{'mdi-account-group': (chat.users === 'many'), 'mdi-account-multiple': (chat.users === 'few')}", v-tooltip.bottom.fixed="{text: $t('RoomsSidebar:users-tooltip:' + chat.users)}", :aria-label="$t('RoomsSidebar:users-tooltip:' + chat.users)")
+					i.bunt-icon.activity-icon.mdi(v-if="chat.users === 'many' || chat.users === 'few'", :class="{'mdi-account-group': (chat.users === 'many'), 'mdi-account-multiple': (chat.users === 'few')}", v-tooltip.bottom.fixed="{text: roomActivityLabel(chat.users)}", :aria-label="roomActivityLabel(chat.users)")
 				router-link.text-chat(v-for="chat of roomsByType.textChat", :to="homeRoom && chat.room === homeRoom ? {name: 'about'} : {name: 'room', params: {roomId: chat.room.id}}", :class="{unread: hasUnreadMessages(chat.room.modules[0].channel_id)}")
 					.room-icon(aria-hidden="true")
 					.name(v-html="$emojify(chat.room.name)")
 					.notifications(v-if="chat.notifications") {{ chat.notifications }}
 					bunt-icon-button(@click.prevent.stop="$store.dispatch('chat/leaveChannel', {channelId: chat.room.modules[0].channel_id})") close
-				bunt-button#btn-browse-channels-trailing(v-if="worldHasTextChannels", @click="showChannelBrowser = true") {{ $t('RoomsSidebar:browse-channels-button:label') }}
+				bunt-button#btn-browse-channels-trailing(v-if="worldHasTextChannels", @click="showChannelBrowser = true") {{ $t('Browse all channels') }}
 			.group-title#dm-title(v-if="hasPermission('world:chat.direct')")
-				span {{ $t('RoomsSidebar:direct-messages-headline:text') }}
-				bunt-icon-button(v-if="hasPermission('world:chat.direct')", tooltip="open a direct message", :tooltip-fixed="true", @click="showDMCreationPrompt = true") plus
+				span {{ $t('Direct messages') }}
+				bunt-icon-button(v-if="hasPermission('world:chat.direct')", :tooltip="openDirectMessageTooltip", :tooltip-fixed="true", @click="showDMCreationPrompt = true") plus
 			.direct-messages(v-if="hasPermission('world:chat.direct') && directMessageChannels.length", role="group", aria-describedby="dm-title")
 				router-link.direct-message(v-for="channel of directMessageChannels", :to="{name: 'channel', params: {channelId: channel.id}}", :class="{unread: hasUnreadMessages(channel.id)}")
 					i.bunt-icon.mdi(v-if="call && call.channel === channel.id", aria-hidden="true").mdi-phone
 					.name {{ getDMChannelName(channel) }}
 					.notifications(v-if="channel.notifications") {{ channel.notifications }}
-					bunt-icon-button(tooltip="remove", :tooltip-fixed="true", @click.prevent.stop="$store.dispatch('chat/leaveChannel', {channelId: channel.id})") close
+					bunt-icon-button(:tooltip="removeTooltip", :tooltip-fixed="true", @click.prevent.stop="$store.dispatch('chat/leaveChannel', {channelId: channel.id})") close
 			.buffer
 			template(v-if="hasPermission('world:users.list') || hasPermission('world:update') || hasPermission('world:announce') || hasPermission('room:update') || hasPermission('world:kiosks.manage') || isAdminMode")
-				.group-title {{ $t('RoomsSidebar:admin-headline:text') }}
+				.group-title {{ $t('Administration') }}
 				.admin
-					router-link.room(:to="{name: 'admin:announcements'}", v-if="hasPermission('world:announce')") {{ $t('RoomsSidebar:admin-announcements:label') }}
-					router-link.room(:to="{name: 'admin:users'}", v-if="hasPermission('world:users.list')") {{ $t('RoomsSidebar:admin-users:label') }}
-					router-link.room(:to="{name: 'admin:rooms:index'}", v-if="hasPermission('room:update')") {{ $t('RoomsSidebar:admin-rooms:label') }}
-					router-link.room(:to="{name: 'admin:kiosks:index'}", v-if="hasPermission('world:kiosks.manage')") {{ $t('RoomsSidebar:admin-kiosks:label') }}
-					router-link.room(v-if="hasPermission('world:update')", :to="{name: 'admin:config'}") {{ $t('RoomsSidebar:admin-config:label') }}
-					router-link.room(v-if="isAdminMode", :to="{name: 'admin:video-admin'}") Video Admin
+					router-link.room(:to="{name: 'admin:announcements'}", v-if="hasPermission('world:announce')") {{ $t('Announcements') }}
+					router-link.room(:to="{name: 'admin:users'}", v-if="hasPermission('world:users.list')") {{ $t('Users') }}
+					router-link.room(:to="{name: 'admin:rooms:index'}", v-if="hasPermission('room:update')") {{ $t('Rooms') }}
+					router-link.room(:to="{name: 'admin:kiosks:index'}", v-if="hasPermission('world:kiosks.manage')") {{ $t('Kiosks') }}
+					router-link.room(v-if="hasPermission('world:update')", :to="{name: 'admin:config'}") {{ $t('Config') }}
+					router-link.room(v-if="isAdminMode", :to="{name: 'admin:video-admin'}") {{ $t('Video Admin') }}
 		transition(name="prompt")
 			channel-browser(v-if="showChannelBrowser", @close="showChannelBrowser = false", @createChannel="showChannelBrowser = false, showChatCreationPrompt = true")
 			create-stage-prompt(v-else-if="showStageCreationPrompt", @close="showStageCreationPrompt = false")
@@ -125,14 +125,32 @@ export default {
 
 			return {
 				id: 'info',
-				name: 'About',
+				name: this.$t('About'),
 				modules: [{
 					type: 'page.landing'
 				}]
 			}
 		},
 		networkingTitle() {
-			return this.networkingRoomType?.name || 'Networking'
+			return this.networkingRoomType?.name || this.$t('Networking')
+		},
+		createStageTooltip() {
+			return this.$t('Create Stage')
+		},
+		createNetworkingTooltip() {
+			return this.$t('Create random video calls')
+		},
+		createChannelTooltip() {
+			return this.$t('Create Channel')
+		},
+		browseChannelsTooltip() {
+			return this.$t('Browse all channels')
+		},
+		openDirectMessageTooltip() {
+			return this.$t('open a direct message')
+		},
+		removeTooltip() {
+			return this.$t('remove')
 		},
 		networkingRoomType() {
 			return ROOM_TYPES.find(type => type.sidebarGroup === 'networking')
@@ -179,7 +197,7 @@ export default {
 					rooms.networking.push(room)
 				} else if (room.modules.some(module => VIDEO_CHANNEL_MODULE_TYPES.has(module.type))) {
 					rooms.videoChat.push(room)
-				} else if (room.modules.some(module => ['livestream.native', 'livestream.youtube', 'livestream.iframe'].includes(module.type))) {
+				} else if (room.modules.some(module => ['livestream.native', 'livestream.youtube'].includes(module.type))) {
 					let session
 					if (this.$features.enabled('schedule-control')) {
 						session = this.currentSessionPerRoom?.[room.id]?.session
@@ -235,7 +253,12 @@ export default {
 			this.showDMCreationPrompt = false
 		},
 		getDMChannelName(channel) {
-			return channel.users.map(user => user.deleted ? this.$t('User:label:deleted') : user.profile.display_name).join(', ')
+			return channel.users.map(user => user.deleted ? this.$t('Deleted User') : user.profile.display_name).join(', ')
+		},
+		roomActivityLabel(users) {
+			if (users === 'many') return this.$t('Many people are in this room')
+			if (users === 'few') return this.$t('A few people are in this room')
+			return ''
 		},
 		onPointerdown(event) {
 			// Begin tracking pointer for potential swipe-to-close gesture universally

@@ -25,6 +25,7 @@ from eventyay.base.models import Event
 from eventyay.base.settings import validate_event_settings
 from eventyay.common.language import get_language_choices_native_with_ui_name
 from eventyay.common.urls import get_file_url_path, is_http_url
+from eventyay.multidomain.urlreverse import build_absolute_uri
 from eventyay.control.forms import MultipleLanguagesWidget, SlugWidget, SplitDateTimeField, SplitDateTimePickerWidget
 from eventyay.helpers.image_optimize import optimize_uploaded_image
 from eventyay.multidomain.models import KnownDomain
@@ -331,3 +332,143 @@ class EventUpdateForm(I18nModelForm):
             'date_to': SplitDateTimePickerWidget(attrs={'data-date-after': '#id_date_from_0'}),
             'date_admission': SplitDateTimePickerWidget(attrs={'data-date-default': '#id_date_from_0'}),
         }
+
+
+class EventCloneForm(I18nModelForm):
+    locales = forms.MultipleChoiceField(
+        choices=django_settings.LANGUAGES,
+        label=_('Event languages'),
+        widget=MultipleLanguagesWidget,
+        help_text=_(
+            "Users will be able to use eventyay in these languages, and you will be able to provide all texts in "
+            "these languages. If you don't provide a text in the language a user selects, it will be shown in your "
+            "event's default language instead."
+        ),
+    )
+    clone_common_data = forms.BooleanField(
+        label=_('Common event Configuration'),
+        help_text=_('Includes general settings, design elements, and email configurations.'),
+        required=False,
+        initial=True,
+    )
+    clone_settings = forms.BooleanField(
+        label=_('General settings'),
+        help_text=_('Location, currency, plugins, header/footer links.'),
+        required=False,
+        initial=True,
+    )
+    clone_design_texts = forms.BooleanField(
+        label=_('Design and texts'),
+        help_text=_('Colors, logo, custom CSS.'),
+        required=False,
+        initial=True,
+    )
+    clone_email_settings = forms.BooleanField(
+        label=_('Email settings'),
+        help_text=_('Email templates and SMTP configuration.'),
+        required=False,
+        initial=True,
+    )
+
+    clone_ticketing_data = forms.BooleanField(
+        label=_('Ticketing Configuration'),
+        help_text=_('Includes products, quotas, attendee questions, and check-in lists.'),
+        required=False,
+        initial=True,
+    )
+    clone_products = forms.BooleanField(
+        label=_('Products & Quotas'),
+        help_text=_('Ticket products, categories, quotas, tax rules, add-ons.'),
+        required=False,
+        initial=True,
+    )
+    clone_questions = forms.BooleanField(
+        label=_('Questions'),
+        help_text=_('Order and attendee questions.'),
+        required=False,
+        initial=True,
+    )
+    clone_checkin_lists = forms.BooleanField(
+        label=_('Check-in lists'),
+        help_text=_('Check-in lists configuration.'),
+        required=False,
+        initial=True,
+    )
+    clone_payment_settings = forms.BooleanField(
+        label=_('Payment settings'),
+        help_text=_('Payment providers and invoicing.'),
+        required=False,
+        initial=True,
+    )
+
+    clone_talk_data = forms.BooleanField(
+        label=_('Talk Configuration'),
+        help_text=_('Includes call for speakers, session tracks, and review settings.'),
+        required=False,
+        initial=True,
+    )
+    clone_cfp = forms.BooleanField(
+        label=_('Call for speakers'),
+        help_text=_('Call for speakers configuration and basic text.'),
+        required=False,
+        initial=True,
+    )
+    clone_session_types_tracks = forms.BooleanField(
+        label=_('Session types & tracks'),
+        help_text=_('Session types and tracks.'),
+        required=False,
+        initial=True,
+    )
+    clone_review_settings = forms.BooleanField(
+        label=_('Review settings'),
+        help_text=_('Review phases and review scoring categories.'),
+        required=False,
+        initial=True,
+    )
+
+    class Meta:
+        model = Event
+        fields = [
+            'locales',
+            'name',
+            'slug',
+            'date_from',
+            'date_to',
+            'timezone',
+            'locale',
+        ]
+        field_classes = {
+            'date_from': SplitDateTimeField,
+            'date_to': SplitDateTimeField,
+        }
+        widgets = {
+            'slug': SlugWidget(attrs={'data-slug-source': 'name'}),
+            'date_from': SplitDateTimePickerWidget(),
+            'date_to': SplitDateTimePickerWidget(attrs={'data-date-after': '#id_date_from_0'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.organizer = kwargs.pop('organizer', None)
+        self.locales = kwargs.get('locales')
+        if self.locales is None and kwargs.get('initial'):
+            self.locales = kwargs['initial'].get('locales')
+        if not self.locales:
+            self.locales = ['en']
+        kwargs['locales'] = self.locales
+        super().__init__(*args, **kwargs)
+        if self.organizer:
+            self.fields['slug'].widget.organizer = self.organizer
+            self.fields['slug'].widget.prefix = build_absolute_uri(self.organizer, 'presale:organizer.index')
+        self.fields['slug'].widget.attrs.setdefault('class', 'form-control')
+        self.fields['timezone'].choices = ((a, a) for a in common_timezones)
+
+        locale_choices = get_language_choices_native_with_ui_name()
+        self.fields['locale'].choices = [(code, label) for code, label in locale_choices if code in self.locales]
+
+    def clean_slug(self):
+        slug = self.cleaned_data.get('slug')
+        if Event.objects.filter(slug=slug, organizer=self.organizer).exists():
+            raise forms.ValidationError(
+                _('You already have an event with this short name. Please choose another one.')
+            )
+        return slug

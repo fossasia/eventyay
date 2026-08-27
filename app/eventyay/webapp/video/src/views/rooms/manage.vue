@@ -5,57 +5,57 @@
 			media-source-placeholder
 		panel.schedule(v-if="$features.enabled('schedule-control')")
 			.header
-				h3 Schedule
+				h3 {{ $t('Schedule') }}
 			SchedulePanel(:room="room")
 		panel.polls(v-if="modules['poll']")
 			.header
-				h3 Polls
+				h3 {{ $t('Polls') }}
 				.actions
-					bunt-button#btn-create-poll(@click="showCreatePollPrompt") Create Poll
+					bunt-button#btn-create-poll(@click="showCreatePollPrompt") {{ $t('Create Poll') }}
 					bunt-icon-button(@click="showUrlPopup('poll')") presentation
 			polls(:module="modules['poll']", @edit="startEditingPoll")
 		panel.questions(v-if="modules['question']")
 			.header
-				h3 Questions
+				h3 {{ $t('Questions') }}
 				.actions
 					bunt-icon-button(@click="showUrlPopup('question')") presentation
 					menu-dropdown(v-if="hasPermission('room:question.moderate')", v-model="showingQuestionsMenu", strategy="fixed")
 						template(#button="{toggle}")
 							bunt-icon-button(@click="toggle") dots-vertical
 						template(#menu)
-							.archive-all(@click="$store.dispatch('question/archiveAll')") {{ $t('Questions:moderator-actions:archive-all:label') }}
+							.archive-all(@click="$store.dispatch('question/archiveAll')") {{ $t('Archive All') }}
 			questions(:module="modules['question']")
 		panel.chat(v-if="modules['chat.native']")
 			.header
-				h3 Chat
+				h3 {{ $t('Chat') }}
 				bunt-icon-button(@click="showUrlPopup('chat')") presentation
 			chat(:room="room", :module="modules['chat.native']", mode="compact", :key="room.id")
 		panel.no-modules(v-if="Object.keys(modules).length === 1")
-			p No modules to manage in this room
+			p {{ $t('No modules to manage in this room') }}
 	.ui-background-blocker(v-if="showingPresentationUrlFor", @click="showingPresentationUrlFor = null")
 	.url-popup(v-if="showingPresentationUrlFor", ref="urlPopup", :class="{'url-copied': copiedUrl}")
-		.copy-success(v-if="copiedUrl") Copied!
+		.copy-success(v-if="copiedUrl") {{ $t('Copied!') }}
 		template(v-else)
 			.copy-url
 				bunt-input(ref="urlInput", name="presentation-url", :readonly="true", :modelValue="getPresentationUrl(showingPresentationUrlFor)")
-				bunt-button(@click="copyUrl") Copy
-			.hint This url contains your personal token.
+				bunt-button(@click="copyUrl") {{ $t('Copy') }}
+			.hint {{ $t('This url contains your personal token.') }}
 				br
-				| Don't make this url publicly accessible!
+				| {{ $t("Don't make this url publicly accessible!") }}
 	transition(name="prompt")
 		// TODO less hacks
 		prompt.create-poll-prompt(v-if="editedPoll", @close="editedPoll = null")
 			.content
-				h1 {{ editedPoll.id ? 'Edit Poll' : 'Create a Poll' }}
+				h1 {{ editedPoll.id ? $t('Edit Poll') : $t('Create a Poll') }}
 				.form-content
-					bunt-input-outline-container(name="poll-question", label="Question")
+					bunt-input-outline-container(name="poll-question", :label="$t('Question')")
 						template(#default="{focus, blur}")
 							textarea(v-model="editedPoll.content", @focus="focus", @blur="blur")
 					.option(v-for="(option, index) of editedPoll.options")
-						bunt-input(:name="`poll-option-${index}`", :label="`Option ${index + 1}`", v-model="option.content")
+						bunt-input(:name="`poll-option-${index}`", :label="$t('Option {{n}}', {n: index + 1})", v-model="option.content")
 						bunt-icon-button.btn-delete-poll-option(@click="editedPoll.options.splice(index, 1)") delete-outline
-					bunt-button#btn-add-poll-option(@click="editedPoll.options.push({content: ''})") Add Option
-				bunt-button#btn-submit-poll(@click="submitPoll") {{ editedPoll.id ? 'Save Poll' : 'Create Poll' }}
+					bunt-button#btn-add-poll-option(@click="editedPoll.options.push({content: ''})") {{ $t('Add Option') }}
+				bunt-button#btn-submit-poll(@click="submitPoll") {{ editedPoll.id ? $t('Save Poll') : $t('Create Poll') }}
 </template>
 <script>
 // TODO

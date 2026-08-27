@@ -267,7 +267,7 @@ def process_scheduled_emails(sender, **kwargs):
         with transaction.atomic():
             mail = (
                 QueuedMail.objects
-                .filter(scheduled_at__isnull=False, scheduled_at__lte=now(), sent__isnull=True)
+                .filter(scheduled_at__isnull=False, scheduled_at__lte=now(), sent__isnull=True, is_draft=False)
                 .select_for_update(skip_locked=True)
                 .order_by('pk')
                 .first()

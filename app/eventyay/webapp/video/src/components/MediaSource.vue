@@ -3,9 +3,9 @@
 	transition(name="background-room")
 		router-link.background-room(v-if="background", :to="room ? {name: 'room', params: {roomId: room.id}}: {name: 'channel', params: {channelId: call.channel}}")
 			.description
-				.hint {{ $t('MediaSource:room:hint') }}
+				.hint {{ $t('Currently playing') }}
 				.room-name(v-if="room", v-html="$emojify(room.name)")
-				.room-name(v-else-if="call") {{ $t('MediaSource:call:label') }}
+				.room-name(v-else-if="call") {{ $t('Private call') }}
 			.global-placeholder
 			bunt-icon-button(@click.prevent.stop="$emit('close')") close
 	Livestream(v-if="room && shouldUseLivestream", ref="livestream", :room="room", :module="module", :size="background ? 'tiny' : 'normal'", :key="`livestream-${room.id}`", @playback-state-changed="onMainPlayerPlaybackChanged")
@@ -14,8 +14,8 @@
 	.iframe-consent-gate(v-if="consentBlockedUrl && !background")
 		iframe-blocker(:src="consentBlockedUrl", allow="camera *; autoplay *; microphone *; fullscreen *; display-capture *", allowfullscreen, @consent-given="onConsentGiven")
 	.iframe-error(v-if="!iframeEl && !consentBlockedUrl && (iframeError || iframeOffline)", :class="{background: background, 'size-tiny': background}")
-		.offline-message(v-if="iframeOffline") {{ $t('Livestream:offline-message:text') }}
-		.offline-message(v-else) {{ $t('MediaSource:iframe-error:text') }}
+		.offline-message(v-if="iframeOffline") {{ $t('Stream offline') }}
+		.offline-message(v-else) {{ $t('We could not connect to the video conference server, sorry.') }}
 	iframe#video-player-translation(v-if="languageIframeUrl", ref="translationIframeEl", :src="languageIframeUrl", style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;", frameborder="0", gesture="media", allow="autoplay; encrypted-media", referrerpolicy="strict-origin-when-cross-origin", @load="onTranslationIframeLoaded")
 	audio(ref="whepAudioEl", autoplay, style="display: none;")
 </template>
@@ -37,7 +37,6 @@ import {
 	getStagePlaybackMode,
 	PLAYBACK_MODE_SCHEDULE_DRIVEN,
 	STREAM_TYPE_HLS,
-	STREAM_TYPE_IFRAME,
 	STREAM_TYPE_VIMEO,
 	STREAM_TYPE_YOUTUBE,
 } from 'lib/stage-streams';
@@ -96,7 +95,6 @@ const module = computed(() => {
 		[
 			'livestream.native',
 			'livestream.youtube',
-			'livestream.iframe',
 			'call.bigbluebutton',
 			'call.janus',
 			'call.zoom',
@@ -109,7 +107,6 @@ const isLivestreamModule = computed(() =>
 	[
 		'livestream.native',
 		'livestream.youtube',
-		'livestream.iframe',
 	].includes(module.value?.type)
 );
 
@@ -143,11 +140,10 @@ const iframeOffline = computed(() => {
 	const currentStream = isScheduleDriven ? props.room?.currentStream : null;
 	const streamType = currentStream?.stream_type;
 	const moduleType = module.value.type;
-	const isIFrame = streamType === STREAM_TYPE_IFRAME || moduleType === 'livestream.iframe';
 	const isYouTube = streamType === STREAM_TYPE_YOUTUBE || moduleType === 'livestream.youtube';
 	const isVimeo = streamType === STREAM_TYPE_VIMEO;
 
-	if (!isIFrame && !isYouTube && !isVimeo) return false;
+	if (!isYouTube && !isVimeo) return false;
 
 	const scheduleUrl = currentStream?.url || null;
 
@@ -303,12 +299,9 @@ async function applyYoutubeTranslation(transConfig) {
 			// Create hidden translation audio iframe first
 			languageIframeUrl.value = getLanguageIframeUrl(audioSource);
 		}
-		
-		// Mute the main player using postMessage after a short delay
-		setTimeout(() => {
-			if (updateToken !== translationUpdateToken) return;
-			muteYouTubePlayer();
-		}, 500);
+
+		// The main player is already loaded when changing translations dynamically.
+		muteYouTubePlayer();
 
 		if (mainPlayerPaused.value) {
 			setTimeout(() => {
@@ -322,7 +315,7 @@ async function applyYoutubeTranslation(transConfig) {
 		// Restore the main player unless the organiser asked to start muted
 		setTimeout(() => {
 			if (updateToken !== translationUpdateToken) return;
-			if (module.value?.config?.startMuted) return;
+			if (getYoutubeConfig().startMuted) return;
 			unmuteYouTubePlayer();
 		}, 100);
 	}
@@ -366,6 +359,15 @@ function muteYouTubePlayer() {
 			error,
 		});
 	}
+}
+
+function getYoutubeConfig() {
+	const streamType = isScheduleDrivenStage.value ? props.room?.currentStream?.stream_type : null;
+	const currentStream = streamType === STREAM_TYPE_YOUTUBE ? props.room?.currentStream : null;
+	return {
+		...(currentStream?.config || {}),
+		...(module.value?.config || {}),
+	};
 }
 
 function disconnectWhepTranslation() {
@@ -519,8 +521,6 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 			? 'livestream.youtube'
 			: streamType === STREAM_TYPE_VIMEO
 			? 'livestream.vimeo'
-			: streamType === STREAM_TYPE_IFRAME
-			? 'livestream.iframe'
 			: (!isScheduleDriven ? module.value.type : null);
 
 		switch (effectiveModuleType) {
@@ -544,10 +544,6 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 				});
 				iframeUrl = getJitsiRoomUrl(jitsiConfig);
 				hideIfBackground = true;
-				break;
-			}
-			case 'livestream.iframe': {
-				iframeUrl = currentStream?.url || module.value.config.url;
 				break;
 			}
 			case 'livestream.vimeo': {
@@ -589,7 +585,7 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 					iframeError.value = new Error('Invalid YouTube video ID');
 					break;
 				}
-				const config = module.value.config || {};
+				const config = getYoutubeConfig();
 				const shouldStartMuted = Boolean(
 					mute || config.startMuted || hasAudioOnlyYoutubeTranslation()
 				);
@@ -664,9 +660,6 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 		if (isYouTube) {
 			iframe.onload = () => {
 				subscribeToYouTubePlayerEvents();
-				if (hasAudioOnlyYoutubeTranslation()) {
-					setTimeout(() => muteYouTubePlayer(), 1000);
-				}
 			};
 		}
 	} catch (error) {
@@ -898,21 +891,32 @@ function getYoutubeUrl(
 function getLanguageIframeUrl(languageUrl) {
 	// Checks if the languageUrl is not provided then return null
 	if (!languageUrl) return null;
-	const config = module.value?.config || {};
+	const config = getYoutubeConfig();
 	const origin = window.location.origin;
-	const params = new URLSearchParams({
-		enablejsapi: '1',
-		autoplay: '1',
-		mute: '0', // Ensure translation audio is not muted
-		modestbranding: '1',
-		loop: '1',
-		controls: '0',
-		disablekb: '1',
-		rel: '0',
-		showinfo: '0',
-		playlist: languageUrl,
-		origin, // Required when using enablejsapi=1 (fixes Error 153)
-	});
+	const params = new URLSearchParams();
+	params.append('autoplay', autoplay.value ? '1' : '0');
+	// Start muted applies to the main video, never to interpretation audio.
+	params.append('mute', '0');
+	params.append('enablejsapi', '1');
+	params.append('origin', origin); // Required when using enablejsapi=1 (fixes Error 153)
+	params.append('controls', '0'); // Translation audio is always hidden.
+
+	if (config.noRelated) {
+		params.append('rel', '0');
+	}
+	if (config.showInfo) {
+		params.append('showinfo', '0');
+	}
+	if (config.disableKb) {
+		params.append('disablekb', '1');
+	}
+	if (config.loop) {
+		params.append('loop', '1');
+		params.append('playlist', languageUrl);
+	}
+	if (config.modestBranding) {
+		params.append('modestbranding', '1');
+	}
 
 	const domain = config.enablePrivacyEnhancedMode
 		? 'www.youtube-nocookie.com'

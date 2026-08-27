@@ -1,6 +1,7 @@
 from django.urls import include, path
 from django.views.generic import RedirectView, TemplateView
 
+from eventyay.control.views import gmail_oauth
 from eventyay.control.views import organizer as organizer_control
 from eventyay.control.views import organizer_views
 from eventyay.eventyay_common.views import (
@@ -143,8 +144,24 @@ urlpatterns = [
                 path('', dashboards.EventIndexView.as_view(), name='event.index'),
                 path('widgets.json', dashboards.event_index_widgets_lazy, name='event.index.widgets'),
                 path('settings/', event.EventUpdate.as_view(), name='event.update'),
+                path(
+                    'settings/gmail/connect/',
+                    gmail_oauth.EventGmailOAuthConnectView.as_view(),
+                    name='event.gmail.connect',
+                ),
+                path(
+                    'settings/gmail/callback/',
+                    gmail_oauth.EventGmailOAuthCallbackView.as_view(),
+                    name='event.gmail.callback',
+                ),
+                path(
+                    'settings/gmail/disconnect/',
+                    gmail_oauth.EventGmailOAuthDisconnectView.as_view(),
+                    name='event.gmail.disconnect',
+                ),
                 path('plugins/', event.EventPlugins.as_view(), name='event.plugins'),
                 path('live/', event.EventLive.as_view(), name='event.live'),
+                path('settings/clone/', event.EventCloneView.as_view(), name='event.clone'),
                 path('video-access/', event.VideoAccessAuthenticator.as_view(), name='event.create_access_to_video'),
             ]
         ),
