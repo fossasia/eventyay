@@ -16,30 +16,41 @@ class MyOrdersView(PaginationMixin, ListView):
     template_name = 'eventyay_common/orders/orders.html'
     paginate_by = 25
 
+    def _build_filter_form(self):
+        return UserOrderFilterForm(self.request.GET, user=self.request.user, request=self.request)
+
     def get_queryset(self):
         user = self.request.user
         qs = Order.objects.filter(Q(email__iexact=user.email)).select_related('event').order_by('-datetime')
 
-        # Filter by event if provided
-        filter_form = UserOrderFilterForm(self.request.GET, user=user, request=self.request)
+        filter_form = self._build_filter_form()
         if filter_form.is_valid():
-            event = filter_form.cleaned_data['event']
-            if event:
-                qs = qs.filter(event=event)
+            cleaned = filter_form.cleaned_data
+            if cleaned.get('event'):
+                qs = qs.filter(event=cleaned['event'])
+            if code := (cleaned.get('code') or '').strip():
+                qs = qs.filter(code__icontains=code)
+            if status := cleaned.get('status'):
+                qs = qs.filter(status=status)
+            if date_from := cleaned.get('date_from'):
+                qs = qs.filter(datetime__date__gte=date_from)
+            if date_to := cleaned.get('date_to'):
+                qs = qs.filter(datetime__date__lte=date_to)
 
         return qs
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['filter_form'] = UserOrderFilterForm(self.request.GET, user=self.request.user, request=self.request)
+        ctx['filter_form'] = self._build_filter_form()
         return ctx
 
     def get(self, request, *args, **kwargs):
-        filter_form = UserOrderFilterForm(self.request.GET, user=self.request.user, request=self.request)
-        # If filter form is invalid, strip the 'event' from URL and redirect to this new URL.
+        filter_form = self._build_filter_form()
+        # If filter form is invalid, strip the invalid inputs and redirect to a clean URL.
         if not filter_form.is_valid():
             new_url_query = request.GET.copy()
-            new_url_query.pop('event', None)
+            for field_name in filter_form.errors:
+                new_url_query.pop(field_name, None)
             new_url = request.path + '?' + new_url_query.urlencode()
             logger.info('To redirect to "%s" because the filter values are invalid.', new_url)
             return redirect(new_url)
