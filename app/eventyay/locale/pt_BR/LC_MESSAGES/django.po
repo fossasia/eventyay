@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 16:44+0000\n"
-"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
+"PO-Revision-Date: 2026-08-27 16:46+0000\n"
+"Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Portuguese (Brazil) <https://hosted.weblate.org/projects/"
 "eventyay/eventyay/pt_BR/>\n"
 "Language: pt_BR\n"
@@ -478,8 +478,8 @@ msgid ""
 "href=\"%(href)s\">here</a>."
 msgstr ""
 "Para ver nossa programação com funcionalidade total, como conversão de fuso "
-"horário e programação pessoal, habilite o JavaScript e clique <a "
-"href=\"%(href)s\">aqui</a>."
+"horário e programação pessoal, habilite o JavaScript e clique <a href=\"%"
+"(href)s\">aqui</a>."
 
 #: eventyay/agenda/templates/agenda/schedule_nojs.html:77
 #, python-format
@@ -7072,8 +7072,7 @@ msgstr ""
 
 #: eventyay/base/models/event.py:2227
 msgid "You need to configure at least one quota to sell anything."
-msgstr ""
-"Você precisa configurar pelo menos uma cota para vender qualquer coisa."
+msgstr "Você precisa configurar pelo menos uma cota para vender qualquer coisa."
 
 #: eventyay/base/models/event.py:2230
 msgid "You have unpaid invoices, please pay them before going live."
@@ -13782,8 +13781,8 @@ msgid ""
 "You can enter proposals until %(deadline)s (%(timezone)s), %(until_string)s "
 "from now."
 msgstr ""
-"Você pode submeter propostas até %(deadline)s (%(timezone)s), "
-"%(until_string)s a partir de agora."
+"Você pode submeter propostas até %(deadline)s (%(timezone)s), %(until_string)"
+"s a partir de agora."
 
 #: eventyay/cfp/templates/cfp/event/cfp.html:35
 #, python-format
@@ -15007,8 +15006,8 @@ msgid ""
 "It looks as if the communication between you and eventyay went wrong in some "
 "way. <br> Please return to the last page and try again!"
 msgstr ""
-"Parece que a comunicação entre você e o eventyay deu errado de alguma forma."
-"<br> Volte à última página e tente novamente!"
+"Parece que a comunicação entre você e o eventyay deu errado de alguma "
+"forma.<br> Volte à última página e tente novamente!"
 
 #: eventyay/common/templates/400.html:29 eventyay/common/templates/400.html:32
 #: eventyay/common/templates/403.html:35 eventyay/common/templates/403.html:38
@@ -34008,8 +34007,8 @@ msgid ""
 msgstr ""
 "Olá!\n"
 "\n"
-"Temos algumas perguntas pendentes sobre você e sua proposta que "
-"gostaríamos \n"
+"Temos algumas perguntas pendentes sobre você e sua proposta que gostaríamos "
+"\n"
 "que respondesse:\n"
 "\n"
 "{questions}\n"
@@ -34074,8 +34073,8 @@ msgid ""
 msgstr ""
 "Olá!\n"
 "\n"
-"Incluiram você em uma proposta de {event_name}, intitulada "
-"“{proposal_title}”.\n"
+"Incluiram você em uma proposta de {event_name}, intitulada “{proposal_title}"
+"”.\n"
 "Uma conta foi criada para você – por favor, siga este link para definir a "
 "senha da sua conta.\"\n"
 "\n"
@@ -34102,8 +34101,8 @@ msgid ""
 msgstr ""
 "Olá!\n"
 "\n"
-"Te escolheram para palestrante do evento {event_name}, com a proposta "
-"\"{proposal_title}\".\n"
+"Te escolheram para palestrante do evento {event_name}, com a proposta \""
+"{proposal_title}\".\n"
 "Por favor, siga este link para definir a senha da sua conta.\n"
 "\n"
 "{proposal_url}\n"
@@ -35319,8 +35318,7 @@ msgstr "Pontuação média de revisão, caso já tenham havido revisões"
 
 #: eventyay/orga/forms/schedule.py:150
 msgid "Resources provided by the speaker, either as links or as uploaded files"
-msgstr ""
-"Recursos fornecidos pela palestrante, como links e/ou arquivos enviados"
+msgstr "Recursos fornecidos pela palestrante, como links e/ou arquivos enviados"
 
 #: eventyay/orga/forms/speaker.py:23
 msgid "Just speakers with accepted and confirmed proposals"
@@ -35441,8 +35439,7 @@ msgstr "Formato de exibição da programação"
 
 #: eventyay/orga/phrases.py:14
 msgid "The unique ID of a proposal is used in the proposal URL and in exports"
-msgstr ""
-"O ID único de uma proposta é usado no URL da proposta e nas exportações"
+msgstr "O ID único de uma proposta é usado no URL da proposta e nas exportações"
 
 #: eventyay/orga/phrases.py:15
 msgid "The password was reset and the user was notified."
@@ -36821,8 +36818,8 @@ msgstr ""
 #, python-format
 msgid "Recipients filtered by responses to the custom field “%(question)s”."
 msgstr ""
-"Destinatários filtrados pelas respostas ao campo personalizado "
-"“%(question)s”."
+"Destinatários filtrados pelas respostas ao campo personalizado “%(question)s"
+"”."
 
 #: eventyay/orga/templates/orga/mails/compose_session_mail_form.html:28
 #, python-format
@@ -37044,8 +37041,8 @@ msgstr ""
 "É possível usar os códigos das propostas (por exemplo, \"UX3N1\") como "
 "chaves e a identificação de quem avalia como valores, ou o contrário. A "
 "identificação pode ser o endereço de e-mail ou o código de usuário (por "
-"exemplo, \"34KJN\"). Um arquivo de exemplo pode ser encontrado <a "
-"href=\"%(href)s\">aqui</a>."
+"exemplo, \"34KJN\"). Um arquivo de exemplo pode ser encontrado <a href=\"%"
+"(href)s\">aqui</a>."
 
 #: eventyay/orga/templates/orga/review/assignment.html:23
 msgid ""
@@ -37089,8 +37086,8 @@ msgid ""
 "settings</a>."
 msgstr ""
 "Pessoas revisoras poderão ver e revisar <strong>apenas as propostas "
-"atribuídas</strong>. Isto pode ser modificado nas <a "
-"href=\"%(href)s\">configurações de revisão</a>."
+"atribuídas</strong>. Isto pode ser modificado nas <a href=\"%(href)s\">"
+"configurações de revisão</a>."
 
 #: eventyay/orga/templates/orga/review/assignment.html:120
 #, python-format
@@ -37100,10 +37097,10 @@ msgid ""
 "them first. You can change this in your <a href=\"%(href)s\">review "
 "settings</a>."
 msgstr ""
-"Pessoas revisoras poderão ver e revisar <strong> todas as propostas </"
-"strong>, mas suas revisões atribuídas aparecerão destacadas e serão "
-"direcionadas a elas primeiro. Você pode alterar isto nas <a "
-"href=\"%(href)s\">configurações de revisão</a>."
+"Pessoas revisoras poderão ver e revisar <strong> todas as propostas </strong>"
+", mas suas revisões atribuídas aparecerão destacadas e serão direcionadas a "
+"elas primeiro. Você pode alterar isto nas <a href=\"%(href)s\">configurações "
+"de revisão</a>."
 
 #: eventyay/orga/templates/orga/review/assignment.html:129
 msgid ""
@@ -38897,8 +38894,8 @@ msgstr ""
 msgid ""
 "Could not find the current export, please try to regenerate it. ({error})"
 msgstr ""
-"Não foi possível encontrar a exportação atual, tente gerá-la novamente. "
-"({error})"
+"Não foi possível encontrar a exportação atual, tente gerá-la novamente. ("
+"{error})"
 
 #: eventyay/orga/views/schedule.py:129
 msgid "You have to provide a new, unique schedule version!"
