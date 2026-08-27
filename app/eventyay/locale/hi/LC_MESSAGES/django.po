@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 17:53+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2026-08-27 17:54+0000\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Hindi <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "hi/>\n"
 "Language: hi\n"
@@ -3673,8 +3673,8 @@ msgid ""
 "(the center 1920 × 320 px will always be visible). Images will be "
 "automatically optimized to max 3000 px wide on save."
 msgstr ""
-"यह इमेज सभी आयोजक पेजों के शीर्ष पर दिखाई देती है और डिफ़ॉल्ट रंग या पैटर्न को बदल देती "
-"है। यह केंद्र में संरेखित होती है और खिंचाई नहीं जाती, जिससे छोटी स्क्रीन पर बीच का हिस्सा "
+"यह इमेज सभी आयोजक पेजों के शीर्ष पर दिखाई देती है और डिफ़ॉल्ट रंग या पैटर्न को बदल देती है"
+"। यह केंद्र में संरेखित होती है और खिंचाई नहीं जाती, जिससे छोटी स्क्रीन पर बीच का हिस्सा "
 "दिखाई देता रहे। हम 1140 px चौड़ी और 120 px ऊँची इमेज की सलाह देते हैं (नीचे दिए गए "
 "सेटिंग से बढ़ाई जा सकती है)।"
 
@@ -8130,7 +8130,8 @@ msgstr "वीडियो: कियोस्क बना और संपा�
 #, fuzzy
 #| msgid "Allows managing kiosk displays inside Eventyay Video."
 msgid "Allows creating and editing kiosk displays inside Eventyay Video."
-msgstr "Eventyay Video के अंदर कियोस्क डिस्प्ले प्रबंधित करने की अनुमति देता है।"
+msgstr ""
+"Eventyay Video के अंदर कियोस्क डिस्प्ले प्रबंधित करने की अनुमति देता है।"
 
 #: eventyay/base/models/organizer.py:621
 #, fuzzy
@@ -23667,7 +23668,8 @@ msgstr ""
 msgid ""
 "After the setup, please go to the Payment area and set up the PayPal "
 "connection."
-msgstr "सेटअप के बाद, कृपया Payment क्षेत्र में जाएँ और Stripe कनेक्शन सेट अप करें।"
+msgstr ""
+"सेटअप के बाद, कृपया Payment क्षेत्र में जाएँ और Stripe कनेक्शन सेट अप करें।"
 
 #: eventyay/control/templates/pretixcontrol/event/settings.html:7
 #: eventyay/control/templates/pretixcontrol/event/settings.html:13
@@ -33460,7 +33462,8 @@ msgstr ""
 #, fuzzy
 #| msgid "Allow submitters to share their proposal publicly"
 msgid "Allow speakers to use Gravatar for their profile picture."
-msgstr "प्रस्ताव सबमिट करने वालों को अपना प्रस्ताव सार्वजनिक रूप से साझा करने दें"
+msgstr ""
+"प्रस्ताव सबमिट करने वालों को अपना प्रस्ताव सार्वजनिक रूप से साझा करने दें"
 
 #: eventyay/orga/forms/cfp.py:197
 #, fuzzy
@@ -39890,7 +39893,8 @@ msgstr "प्राप्तकर्ता ईमेल पतों की �
 msgid ""
 "Any changes to the Reply-To field apply only to this queued email. If left "
 "empty, the event's default Reply-To will be used."
-msgstr "Reply-To फ़ील्ड में किए गए कोई भी बदलाव केवल इस कतारबद्ध ईमेल पर लागू होंगे।"
+msgstr ""
+"Reply-To फ़ील्ड में किए गए कोई भी बदलाव केवल इस कतारबद्ध ईमेल पर लागू होंगे।"
 
 #: eventyay/plugins/sendmail/forms.py:502
 msgid "Any changes to the BCC field will apply only to this queued email."
@@ -42068,7 +42072,8 @@ msgstr ""
 msgid ""
 "Refunds for canceled tickets will be issued as a gift card for future "
 "purchases."
-msgstr "मैं बाद की खरीदारी के लिए रिफंड को गिफ्ट कार्ड के रूप में चाहता/चाहती हूं"
+msgstr ""
+"मैं बाद की खरीदारी के लिए रिफंड को गिफ्ट कार्ड के रूप में चाहता/चाहती हूं"
 
 #: eventyay/presale/templates/pretixpresale/event/order_cancel_positions.html:83
 #, fuzzy
@@ -42827,7 +42832,8 @@ msgstr "आपका खाता अक्षम कर दिया गया 
 #, fuzzy
 #| msgid "For security reasons, please wait 5 minutes before you try again."
 msgid "Too many messages sent. Please wait a few minutes before trying again."
-msgstr "सुरक्षा कारणों से, कृपया दोबारा कोशिश करने से पहले 5 मिनट प्रतीक्षा करें।"
+msgstr ""
+"सुरक्षा कारणों से, कृपया दोबारा कोशिश करने से पहले 5 मिनट प्रतीक्षा करें।"
 
 #: eventyay/presale/views/contact.py:98 eventyay/presale/views/contact.py:104
 #, fuzzy
