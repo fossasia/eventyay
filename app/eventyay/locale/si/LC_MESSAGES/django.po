@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
 "PO-Revision-Date: 2026-08-27 17:08+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Sinhala <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/si/>\n"
 "Language: si\n"
@@ -752,8 +752,8 @@ msgid ""
 "You are currently viewing the unreleased schedule preview. It may change at "
 "any time and is not visible to the public."
 msgstr ""
-"දැනට සංස්කරණය කළ හැකි කාලසටහන් අනුවාදය බැලෙයි; එය තවම නිකුත් කර නොමැති අතර ඕනෑම "
-"වේලාවක වෙනස් විය හැක।"
+"දැනට සංස්කරණය කළ හැකි කාලසටහන් අනුවාදය බැලෙයි; එය තවම නිකුත් කර නොමැති අතර ඕනෑම වේලාවක "
+"වෙනස් විය හැක।"
 
 #: eventyay/agenda/views/schedule.py:416 eventyay/multidomain/views.py:177
 #: eventyay/schedule/phrases.py:24
@@ -7190,7 +7190,8 @@ msgstr ""
 #| msgid ""
 #| "Control whether the Join Online Video link is visible on public pages."
 msgid "Controls whether the plugin is available on the platform at all."
-msgstr "පොදු පිටු වල 'මාර්ගගත වීඩියෝවට එක්වන්න' සබැඳිය දෘශ්‍ය වන්නේද යන්න පාලනය කරන්න."
+msgstr ""
+"පොදු පිටු වල 'මාර්ගගත වීඩියෝවට එක්වන්න' සබැඳිය දෘශ්‍ය වන්නේද යන්න පාලනය කරන්න."
 
 #: eventyay/base/models/global_plugin_config.py:33
 #: eventyay/control/templates/pretixcontrol/global_plugins.html:26
@@ -8445,8 +8446,8 @@ msgid ""
 msgstr ""
 "මෙම විකල්පය සක්‍රිය නම්, ඔබගේ පරිශීලකයින්ට මිල තමන්ම තෝරාගත හැක. ඉහත සකස් කළ මිල පරිශීලකයෙකු "
 "ඇතුළත් කළ යුතු අවම මිල ලෙස සලකනු ඇත. ඔබගේ උත්සවය සඳහා අමතර පරිත්‍යාග එකතු කිරීමට මෙය "
-"උදාහරණයක් ලෙස භාවිතා කළ හැක. වෙනත් නිෂ්පාදන සඳහා අතිරේකයක් ලෙස මිලදී ගන්නා නිෂ්පාදන සඳහා "
-"මෙය දැනට සහාය නොදක්වයි."
+"උදාහරණයක් ලෙස භාවිතා කළ හැක. වෙනත් නිෂ්පාදන සඳහා අතිරේකයක් ලෙස මිලදී ගන්නා නිෂ්පාදන සඳහා මෙය "
+"දැනට සහාය නොදක්වයි."
 
 #: eventyay/base/models/product.py:369
 #, fuzzy
@@ -15969,9 +15970,9 @@ msgid ""
 "reorder them — the first language (bold border) is used as your event's "
 "default language."
 msgstr ""
-"පරිශීලකයින්ට මෙම භාෂාවලින් eventyay භාවිතා කිරීමට හැකි වන අතර, ඔබට මෙම භාෂාවලින් සියලුම "
-"පාඨ ලබා දීමටද හැකි වේ. පරිශීලකයෙකු තෝරාගත් භාෂාවෙන් ඔබ පාඨයක් ලබා නොදුන්නේ නම්, එය ඔබගේ "
-"ඉසව්වේ පෙරනිමි භාෂාවෙන් පෙන්වනු ඇත."
+"පරිශීලකයින්ට මෙම භාෂාවලින් eventyay භාවිතා කිරීමට හැකි වන අතර, ඔබට මෙම භාෂාවලින් සියලුම පාඨ ලබා "
+"දීමටද හැකි වේ. පරිශීලකයෙකු තෝරාගත් භාෂාවෙන් ඔබ පාඨයක් ලබා නොදුන්නේ නම්, එය ඔබගේ ඉසව්වේ පෙරනිමි "
+"භාෂාවෙන් පෙන්වනු ඇත."
 
 #: eventyay/control/forms/event.py:111
 msgid "This is an event series"
@@ -16593,9 +16594,9 @@ msgid ""
 "Your customers will be instructed to pay the money manually. You can then "
 "mark them as paid."
 msgstr ""
-"ඔබගේ ගනුදෙනුකරුවන්ට මුදල් ඔබගේ ගිණුමට බැංකු මාරු කිරීම සඳහා උපදෙස් දෙනු ඇත. එවිට ඔබට "
-"eventyay තුළ ගෙවීම් සැකසීමට ඔබගේ බැංකු ප්‍රකාශන ආයාත කළ හැකි අතර, නැතිනම් අතින් ගෙවීම් ගෙවූ "
-"බව ලෙස සලකුණු කළ හැක."
+"ඔබගේ ගනුදෙනුකරුවන්ට මුදල් ඔබගේ ගිණුමට බැංකු මාරු කිරීම සඳහා උපදෙස් දෙනු ඇත. එවිට ඔබට eventyay "
+"තුළ ගෙවීම් සැකසීමට ඔබගේ බැංකු ප්‍රකාශන ආයාත කළ හැකි අතර, නැතිනම් අතින් ගෙවීම් ගෙවූ බව ලෙස "
+"සලකුණු කළ හැක."
 
 #: eventyay/control/forms/event.py:1839 eventyay/control/forms/product.py:575
 #, fuzzy
@@ -22932,8 +22933,8 @@ msgid ""
 "section."
 msgstr ""
 "පරිශීලකයින්ට තම ඇණවුම වෙනස් කිරීමට ඉඩදීම දැනට සංවර්ධනය වෙමින් පවතින විශේෂාංගයකි. එම නිසා, මේ "
-"වන විට විශේෂිත වෙනස්කම් පමණක් (උදාහරණයක් ලෙස නිෂ්පාදනයක විවිධත්වය වෙනස් කිරීම) කළ හැක. "
-"ඉදිරියේදී වැඩි විකල්ප එකතු විය හැක."
+"වන විට විශේෂිත වෙනස්කම් පමණක් (උදාහරණයක් ලෙස නිෂ්පාදනයක විවිධත්වය වෙනස් කිරීම) කළ හැක. ඉදිරියේදී "
+"වැඩි විකල්ප එකතු විය හැක."
 
 #: eventyay/control/templates/pretixcontrol/event/component_link.html:8
 #: eventyay/eventyay_common/templates/eventyay_common/event/component_link.html:9
@@ -23000,8 +23001,8 @@ msgid ""
 "To confirm you really want this, please type out the event's name "
 "(\"%(name)s\") here:"
 msgstr ""
-"ඔබට ඇත්තටම මෙය අවශ්‍ය බව තහවුරු කිරීමට, කරුණාකර සිදුවීමේ කෙටි නාමය (\"%(slug)s\") මෙහි "
-"ටයිප් කරන්න:"
+"ඔබට ඇත්තටම මෙය අවශ්‍ය බව තහවුරු කිරීමට, කරුණාකර සිදුවීමේ කෙටි නාමය (\"%(slug)s\") මෙහි ටයිප් "
+"කරන්න:"
 
 #: eventyay/control/templates/pretixcontrol/event/delete.html:36
 msgid "Your event can not be deleted as it already contains orders."
@@ -23648,7 +23649,8 @@ msgstr ""
 msgid ""
 "After the setup, please go to the Payment area and set up the PayPal "
 "connection."
-msgstr "සැකසුමෙන් පසු, කරුණාකර Payment ප්‍රදේශයට ගොස් Stripe සම්බන්ධතාවය සකස් කරන්න."
+msgstr ""
+"සැකසුමෙන් පසු, කරුණාකර Payment ප්‍රදේශයට ගොස් Stripe සම්බන්ධතාවය සකස් කරන්න."
 
 #: eventyay/control/templates/pretixcontrol/event/settings.html:7
 #: eventyay/control/templates/pretixcontrol/event/settings.html:13
@@ -25188,7 +25190,8 @@ msgstr ""
 #| "choose a different one."
 msgid ""
 "The user account associated with this order will remain active and untouched."
-msgstr "මෙම ඊ-තැපැල් ලිපිනයට සම්බන්ධ ගිණුමක් දැනටමත් ඇත. කරුණාකර වෙනත් එකක් තෝරන්න."
+msgstr ""
+"මෙම ඊ-තැපැල් ලිපිනයට සම්බන්ධ ගිණුමක් දැනටමත් ඇත. කරුණාකර වෙනත් එකක් තෝරන්න."
 
 #: eventyay/control/templates/pretixcontrol/order/anonymize.html:17
 msgid ""
@@ -27962,8 +27965,8 @@ msgid ""
 "The following vouchers can't be deleted as they already have been redeemed "
 "or used in an order."
 msgstr ""
-"පහත වවුචර් දැනටමත් භාවිත කර ඇති බැවින් මකාදැමිය නොහැක, නමුත් ඒවා සම්පූර්ණයෙන්ම භාවිත කළ ලෙස "
-"සකස් කරනු ඇත."
+"පහත වවුචර් දැනටමත් භාවිත කර ඇති බැවින් මකාදැමිය නොහැක, නමුත් ඒවා සම්පූර්ණයෙන්ම භාවිත කළ ලෙස සකස් "
+"කරනු ඇත."
 
 #: eventyay/control/templates/pretixcontrol/vouchers/detail.html:16
 #, python-format
@@ -28808,8 +28811,8 @@ msgid ""
 "We were not able to complete the import because the event is busy. Please "
 "try again in a moment."
 msgstr ""
-"සේවාදායකය අතිශයින් කාර්යබහුල වූ නිසා ඔබගේ ඉල්ලීම සම්පූර්ණයෙන් සැකසීමට අපට නොහැකි විය. කරුණාකර "
-"නැවත උත්සාහ කරන්න."
+"සේවාදායකය අතිශයින් කාර්යබහුල වූ නිසා ඔබගේ ඉල්ලීම සම්පූර්ණයෙන් සැකසීමට අපට නොහැකි විය. කරුණාකර නැවත "
+"උත්සාහ කරන්න."
 
 #: eventyay/control/views/orderimport.py:209
 msgid "The import was successful."
@@ -29749,7 +29752,8 @@ msgstr "මෙම ආරක්ෂක උපාංගය දැනටමත් �
 #| msgid ""
 #| "There was an error sending the confirmation mail. Please try again later."
 msgid "There was an error sending the verification email."
-msgstr "තහවුරු කිරීමේ ඊමේල් පණිවිඩය යැවීමේදී දෝෂයක් ඇතිවිය. කරුණාකර පසුව නැවත උත්සාහ කරන්න."
+msgstr ""
+"තහවුරු කිරීමේ ඊමේල් පණිවිඩය යැවීමේදී දෝෂයක් ඇතිවිය. කරුණාකර පසුව නැවත උත්සාහ කරන්න."
 
 #: eventyay/control/views/users.py:380
 #, fuzzy
@@ -30044,7 +30048,8 @@ msgstr ""
 msgid ""
 "If selected, this event will show up publicly on the list of events for your "
 "organizer account and in platform search results."
-msgstr "තේරූ විට, මෙම සිදුවීම ඔබගේ සිදුවීම සඳහා දිනයන් ලැයිස්තුවේ ප්‍රසිද්ධියේ පෙන්වයි."
+msgstr ""
+"තේරූ විට, මෙම සිදුවීම ඔබගේ සිදුවීම සඳහා දිනයන් ලැයිස්තුවේ ප්‍රසිද්ධියේ පෙන්වයි."
 
 #: eventyay/eventyay_common/forms/event.py:268
 msgid "You need to configure the custom domain in the webserver beforehand."
@@ -33694,7 +33699,8 @@ msgstr ""
 #| "You can activate either SSL or STARTTLS security, but not both at the "
 #| "same time."
 msgid "You can activate either SSL or STARTTLS, but not both at the same time."
-msgstr "ඔබට SSL හෝ STARTTLS ආරක්ෂාව සක්‍රිය කළ හැකි නමුත් එකම වේලාවේ දෙකම කළ නොහැක."
+msgstr ""
+"ඔබට SSL හෝ STARTTLS ආරක්ෂාව සක්‍රිය කළ හැකි නමුත් එකම වේලාවේ දෙකම කළ නොහැක."
 
 #: eventyay/orga/forms/email.py:236
 msgid ""
@@ -39811,7 +39817,8 @@ msgstr "කොමාවලින් වෙන් කළ ලබන්නාගේ
 msgid ""
 "Any changes to the Reply-To field apply only to this queued email. If left "
 "empty, the event's default Reply-To will be used."
-msgstr "Reply-To ක්ෂේත්‍රයට කරන ඕනෑම වෙනසක් මෙම පේළිබඳ කර ඇති ඊමේල්ට පමණක් අදාළ වේ."
+msgstr ""
+"Reply-To ක්ෂේත්‍රයට කරන ඕනෑම වෙනසක් මෙම පේළිබඳ කර ඇති ඊමේල්ට පමණක් අදාළ වේ."
 
 #: eventyay/plugins/sendmail/forms.py:502
 msgid "Any changes to the BCC field will apply only to this queued email."
@@ -42287,8 +42294,7 @@ msgid ""
 "As a registered attendee, please also check your email for the unique link "
 "to join online sessions."
 msgstr ""
-"ටිකට් හිමියෙකු ලෙස, ඔන්ලයින් සැසි සඳහා එක්වීමට ඇති අනන්‍ය සබැඳිය සඳහා ඔබගේ ඊමේල් ද පරීක්ෂා "
-"කරන්න."
+"ටිකට් හිමියෙකු ලෙස, ඔන්ලයින් සැසි සඳහා එක්වීමට ඇති අනන්‍ය සබැඳිය සඳහා ඔබගේ ඊමේල් ද පරීක්ෂා කරන්න."
 
 #: eventyay/presale/templates/pretixpresale/fragment_join_online_video.html:17
 msgid ""
@@ -42743,7 +42749,8 @@ msgstr "ඔබගේ ගිණුම අක්‍රීය කර ඇත."
 #, fuzzy
 #| msgid "For security reasons, please wait 5 minutes before you try again."
 msgid "Too many messages sent. Please wait a few minutes before trying again."
-msgstr "ආරක්ෂක හේතු නිසා, නැවත උත්සාහ කිරීමට පෙර කරුණාකර මිනිත්තු 5ක් රැඳී සිටින්න."
+msgstr ""
+"ආරක්ෂක හේතු නිසා, නැවත උත්සාහ කිරීමට පෙර කරුණාකර මිනිත්තු 5ක් රැඳී සිටින්න."
 
 #: eventyay/presale/views/contact.py:98 eventyay/presale/views/contact.py:104
 #, fuzzy
