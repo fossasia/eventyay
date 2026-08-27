@@ -3,6 +3,7 @@ from urllib.parse import urlencode
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import UploadedFile
 from django.core.validators import validate_email, MinValueValidator, MaxValueValidator
 from django.db.models import Q
 from django.forms import CheckboxSelectMultiple, formset_factory
@@ -27,7 +28,19 @@ from eventyay.timezones import common_timezones, localize_datetime
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
 from eventyay.base.forms import I18nModelForm, PlaceholderValidator, SettingsForm
-from eventyay.base.meetup import add_video_field_errors, build_video_form_fields, is_meetup_event
+from eventyay.base.meetup import (
+    CAPACITY_LIMITED,
+    CAPACITY_TYPE_CHOICES,
+    CAPACITY_UNLIMITED,
+    LOCATION_HYBRID,
+    LOCATION_IN_PERSON,
+    LOCATION_TYPE_CHOICES,
+    LOCATION_VIRTUAL,
+    add_video_field_errors,
+    build_video_form_fields,
+    is_meetup_event,
+)
+from eventyay.consts import SizeKey
 from eventyay.base.models import Event, Organizer, TaxRule, Team
 from eventyay.base.models.event import EventMetaValue, SubEvent
 from eventyay.base.reldate import RelativeDateField, RelativeDateTimeField
@@ -55,6 +68,7 @@ from eventyay.common.forms.widgets import EnhancedSelect, HtmlDateInput, HtmlDat
 from eventyay.common.language import get_language_choices_native_with_ui_name
 from eventyay.common.text.phrases import phrases
 from eventyay.control.forms import (
+    ExtFileField,
     MultipleLanguagesWidget,
     SlugWidget,
     SplitDateTimeField,
@@ -1920,13 +1934,42 @@ ConfirmTextFormset = formset_factory(
 
 
 class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
-    """Event basics for meetups: currency is implicit, video stream is inline."""
+    """Event basics for meetups: single-page quick-create form."""
 
+    location_type = forms.ChoiceField(
+        label=_('Location'),
+        choices=LOCATION_TYPE_CHOICES,
+        initial=LOCATION_IN_PERSON,
+        widget=forms.RadioSelect,
+        required=False,
+    )
+    capacity_type = forms.ChoiceField(
+        label=_('Capacity'),
+        choices=CAPACITY_TYPE_CHOICES,
+        initial=CAPACITY_UNLIMITED,
+        widget=forms.RadioSelect,
+        required=False,
+    )
     registration_limit = forms.IntegerField(
         required=False,
         min_value=1,
         label=_('Registration limit'),
-        help_text=_('Maximum number of attendees who can RSVP. Leave empty for unlimited registrations.'),
+        help_text=_('Maximum number of attendees who can RSVP.'),
+        widget=forms.NumberInput(attrs={'placeholder': _('e.g. 50')}),
+    )
+    frontpage_text = I18nFormField(
+        widget=I18nTextarea,
+        required=False,
+        label=_('Event description'),
+        help_text=_('Describe what this meetup is about, agenda, speakers, etc.'),
+        widget_kwargs={'attrs': {'rows': '4', 'placeholder': _('Tell attendees about your meetup...')}},
+    )
+    logo_image = ExtFileField(
+        label=_('Header image'),
+        ext_whitelist=('.png', '.jpg', '.gif', '.jpeg', '.webp'),
+        max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
+        required=False,
+        help_text=_('Upload a header image for your meetup banner and card. Recommended size: 1920 × 640 px.'),
     )
 
     def __init__(self, *args, **kwargs):
@@ -1936,20 +1979,92 @@ class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
                 type_help_text=_('Optional: configure a live video stream for this meetup.')
             )
         )
+        self.fields['slug'].required = False
+        self.fields['location'].required = False
         currency_field = self.fields.get('currency')
         if currency_field is not None:
             currency_field.required = False
             if not self.initial.get('currency'):
                 self.initial['currency'] = self._default_currency()
 
+        if self.initial.get('video_type') and self.initial.get('location'):
+            self.initial['location_type'] = LOCATION_HYBRID
+        elif self.initial.get('video_type') and not self.initial.get('location'):
+            self.initial['location_type'] = LOCATION_VIRTUAL
+        elif self.initial.get('location') and not self.initial.get('video_type'):
+            self.initial['location_type'] = LOCATION_IN_PERSON
+        else:
+            self.initial['location_type'] = LOCATION_IN_PERSON
+
+        if self.initial.get('registration_limit'):
+            self.initial['capacity_type'] = CAPACITY_LIMITED
+        else:
+            self.initial['capacity_type'] = CAPACITY_UNLIMITED
+
+        for name, field in self.fields.items():
+            if isinstance(field.widget, forms.ClearableFileInput):
+                field.widget.attrs['data-eventyay-file-wrapper'] = 'disabled'
+                field.widget.attrs['data-event-settings-image-tools'] = 'enabled'
+
     @staticmethod
     def _default_currency():
         return getattr(settings, 'DEFAULT_CURRENCY', 'USD')
 
-    def clean_currency(self):
-        return self.cleaned_data.get('currency', '') or self._default_currency()
+    def clean_logo_image(self):
+        img = self.cleaned_data.get('logo_image')
+        if img and isinstance(img, UploadedFile):
+            from PIL import Image, UnidentifiedImageError
+            try:
+                pil_image = Image.open(img)
+                pil_image.verify()
+                img.seek(0)
+            except (UnidentifiedImageError, OSError, Exception):
+                raise forms.ValidationError(
+                    _('Upload a valid image. The file you uploaded was either not an image or a corrupted image.')
+                )
+        return img
+
+    def clean_slug(self):
+        slug = (self.cleaned_data.get('slug') or '').strip()
+        if not slug:
+            charset = list('abcdefghjklmnpqrstuvwxyz3789')
+            length = 6
+            counter = 0
+            while True:
+                if length <= 10:
+                    candidate = get_random_string(length=length, allowed_chars=charset)
+                    length += 1
+                else:
+                    candidate = f'{get_random_string(length=4, allowed_chars=charset)}{counter}'
+                    counter += 1
+                if not self.organizer.events.filter(slug__iexact=candidate).exists():
+                    slug = candidate
+                    break
+        elif Event.objects.filter(slug__iexact=slug, organizer=self.organizer).exists():
+            raise forms.ValidationError(self.error_messages['duplicate_slug'], code='duplicate_slug')
+        return slug.lower()
 
     def clean(self):
         cleaned_data = super().clean()
-        add_video_field_errors(self, cleaned_data.get('video_type'), cleaned_data.get('video_url'))
+        loc_type = cleaned_data.get('location_type') or LOCATION_IN_PERSON
+
+        if loc_type == LOCATION_VIRTUAL:
+            cleaned_data.update({
+                'location': '',
+                'geo_lat': None,
+                'geo_lon': None,
+            })
+        elif loc_type == LOCATION_IN_PERSON:
+            cleaned_data['video_type'] = ''
+            cleaned_data['video_url'] = ''
+
+        if loc_type in (LOCATION_VIRTUAL, LOCATION_HYBRID):
+            add_video_field_errors(self, cleaned_data.get('video_type'), cleaned_data.get('video_url'))
+
+        cap_type = cleaned_data.get('capacity_type') or CAPACITY_UNLIMITED
+        if cap_type == CAPACITY_UNLIMITED:
+            cleaned_data['registration_limit'] = None
+        elif cap_type == CAPACITY_LIMITED and not cleaned_data.get('registration_limit'):
+            self.add_error('registration_limit', _('Please enter a capacity limit for limited registrations.'))
+
         return cleaned_data

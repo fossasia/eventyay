@@ -106,6 +106,19 @@
     <section class="admin-section" aria-labelledby="admin-details-heading">
         <h2 id="admin-details-heading" class="sr-only">{% trans "Details" %}</h2>
         <div class="row dashboard-panels">
+            <div class="col-md-12">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">{% trans "Video servers" %}</h3>
+                    </div>
+                    {% include "control/includes/video_server_table.html" %}
+                    <div class="panel-footer">
+                        <a href="{% url 'eventyay_admin:video_admin:index' %}">{% trans "Manage video servers" %}</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row dashboard-panels">
             <div class="col-md-6">
                 <div class="panel panel-default">
                     <div class="panel-heading">

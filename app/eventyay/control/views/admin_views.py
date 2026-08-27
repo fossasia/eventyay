@@ -13,7 +13,7 @@ from django.utils.decorators import method_decorator
 from eventyay.base.models.auth import User
 from django.db import transaction
 from django.db.models import Count, F, Max, OuterRef, Subquery
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect
 from django.utils.crypto import get_random_string
 from django.utils.functional import cached_property
@@ -60,6 +60,10 @@ from eventyay.control.forms.server_management import (
 from eventyay.base.models.log import LogEntry
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
 from eventyay.control.tasks import clear_event_data
+from eventyay.control.video.admin_dashboard import (
+    get_video_server_config,
+    get_video_server_dashboard_rows,
+)
 
 
 class AdminBase(AdministratorPermissionRequiredMixin):
@@ -139,6 +143,66 @@ class ProfileView(AdminBase, FormView):
 
 class IndexView(AdminBase, TemplateView):
     template_name = "control/index.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["video_server_rows"] = get_video_server_dashboard_rows()
+        return ctx
+
+
+class VideoServerToggleActive(AdminBase, View):
+    def post(self, request, server_type, pk, *args, **kwargs):
+        config = get_video_server_config(server_type)
+        if not config:
+            return JsonResponse(
+                {"ok": False, "error": "Unknown video server type."},
+                status=404,
+            )
+
+        try:
+            payload = json.loads(request.body.decode() or "{}")
+        except json.JSONDecodeError:
+            return JsonResponse(
+                {"ok": False, "error": "Invalid JSON payload."},
+                status=400,
+            )
+
+        active = payload.get("active")
+        if not isinstance(active, bool):
+            return JsonResponse(
+                {"ok": False, "error": "The active value must be true or false."},
+                status=400,
+            )
+
+        model = config.model
+        try:
+            server = model.objects.get(pk=pk)
+        except model.DoesNotExist:
+            return JsonResponse({"ok": False, "error": "Video server not found."}, status=404)
+
+        previous_active = bool(server.active)
+        server.active = active
+        server.save(update_fields=["active"])
+
+        LogEntry.objects.create(
+            content_object=server,
+            user=request.user,
+            action_type=f"{config.action_prefix}.active_changed",
+            data=json.dumps(
+                {
+                    "active": active,
+                    "previous_active": previous_active,
+                }
+            ),
+        )
+
+        return JsonResponse(
+            {
+                "ok": True,
+                "active": active,
+                "status": _("Active") if active else _("Inactive"),
+            }
+        )
 
 
 class EventList(AdminBase, ListView):

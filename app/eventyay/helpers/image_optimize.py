@@ -144,8 +144,17 @@ def optimize_uploaded_image(
     image = ImageOps.exif_transpose(image)
 
     if crop_box:
-        logger.info('Cropping %s to %s', setting_key, crop_box)
-        image = image.crop(crop_box)
+        left, top, right, bottom = crop_box
+        if 0 <= left < right <= image.width and 0 <= top < bottom <= image.height:
+            logger.info('Cropping %s to %s', setting_key, crop_box)
+            image = image.crop(crop_box)
+        else:
+            logger.warning(
+                'Crop box %s out of image bounds (%sx%s); ignoring crop box',
+                crop_box,
+                image.width,
+                image.height,
+            )
 
     orig_w, orig_h = image.size
     if orig_w > max_w:
