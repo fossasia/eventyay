@@ -1,84 +1,191 @@
 <template lang="pug">
 bunt-input-outline-container.c-rich-text-editor(ref="outline", :label="label")
-	.toolbar(ref="toolbar")
-		.buttongroup
-			bunt-icon-button.ql-bold(v-tooltip="$t('RichTextEditor:bold:tooltip')") format-bold
-			bunt-icon-button.ql-italic(v-tooltip="$t('RichTextEditor:italic:tooltip')") format-italic
-			bunt-icon-button.ql-underline(v-tooltip="$t('RichTextEditor:underline:tooltip')") format-underline
-			bunt-icon-button.ql-strike(v-tooltip="$t('RichTextEditor:strike:tooltip')") format-strikethrough-variant
-		.buttongroup
-			bunt-icon-button.ql-header(value="1", v-tooltip="$t('RichTextEditor:h1:tooltip')") format-header-1
-			bunt-icon-button.ql-header(value="2", v-tooltip="$t('RichTextEditor:h2:tooltip')") format-header-2
-			bunt-icon-button.ql-header(value="3", v-tooltip="$t('RichTextEditor:h3:tooltip')") format-header-3
-			bunt-icon-button.ql-header(value="4", v-tooltip="$t('RichTextEditor:h4:tooltip')") format-header-4
-			bunt-icon-button.ql-blockquote(v-tooltip="$t('RichTextEditor:blockquote:tooltip')") format-quote-open
-			bunt-icon-button.ql-code-block(v-tooltip="$t('RichTextEditor:code:tooltip')") code-tags
-		.buttongroup
-			bunt-icon-button.ql-list(value="ordered", v-tooltip="$t('RichTextEditor:list-ordered:tooltip')") format-list-numbered
-			bunt-icon-button.ql-list(value="bullet", v-tooltip="$t('RichTextEditor:list-bullet:tooltip')") format-list-bulleted
-		.buttongroup
-			bunt-icon-button.ql-align(value="", v-tooltip="$t('RichTextEditor:align-left:tooltip')") format-align-left
-			bunt-icon-button.ql-align(value="center", v-tooltip="$t('RichTextEditor:align-center:tooltip')") format-align-center
-			bunt-icon-button.ql-align(value="right", v-tooltip="$t('RichTextEditor:align-right:tooltip')") format-align-right
-			bunt-icon-button.ql-full-width(v-tooltip="$t('RichTextEditor:full-width:tooltip')") arrow-expand-horizontal
-		.buttongroup
-			bunt-icon-button.ql-link(v-tooltip="$t('RichTextEditor:link:tooltip')") link-variant
-			bunt-icon-button.ql-image(v-tooltip="$t('RichTextEditor:image:tooltip')") image
-			bunt-icon-button.ql-video(v-tooltip="$t('RichTextEditor:video:tooltip')") filmstrip-box
-		.buttongroup
-			bunt-icon-button.ql-clean(v-tooltip="$t('RichTextEditor:clean:tooltip')") format-clear
-	.editor.rich-text-content(ref="editor")
+	.tiptap-toolbar(role="toolbar", :aria-label="$t('Text formatting')")
+		button.tiptap-btn(:class="{'is-active': isActive('bold')}", type="button", :title="$t('Bold')", :aria-label="$t('Bold')", @click.prevent="cmd('toggleBold')")
+			b B
+		button.tiptap-btn(:class="{'is-active': isActive('italic')}", type="button", :title="$t('Italic')", :aria-label="$t('Italic')", @click.prevent="cmd('toggleItalic')")
+			i I
+		button.tiptap-btn(:class="{'is-active': isActive('underline')}", type="button", :title="$t('Underline')", :aria-label="$t('Underline')", @click.prevent="cmd('toggleUnderline')")
+			u U
+		button.tiptap-btn(:class="{'is-active': isActive('strike')}", type="button", :title="$t('Strikethrough')", :aria-label="$t('Strikethrough')", @click.prevent="cmd('toggleStrike')")
+			s S
+		span.tiptap-separator(aria-hidden="true")
+		button.tiptap-btn(:class="{'is-active': isActive('heading', {level: 1})}", type="button", :title="$t('Heading 1')", :aria-label="$t('Heading 1')", @click.prevent="cmdWith('toggleHeading', {level: 1})") H1
+		button.tiptap-btn(:class="{'is-active': isActive('heading', {level: 2})}", type="button", :title="$t('Heading 2')", :aria-label="$t('Heading 2')", @click.prevent="cmdWith('toggleHeading', {level: 2})") H2
+		button.tiptap-btn(:class="{'is-active': isActive('heading', {level: 3})}", type="button", :title="$t('Heading 3')", :aria-label="$t('Heading 3')", @click.prevent="cmdWith('toggleHeading', {level: 3})") H3
+		button.tiptap-btn(:class="{'is-active': isActive('blockquote')}", type="button", :title="$t('Blockquote')", :aria-label="$t('Blockquote')", @click.prevent="cmd('toggleBlockquote')") ❝
+		button.tiptap-btn(:class="{'is-active': isActive('codeBlock')}", type="button", :title="$t('Code block')", :aria-label="$t('Code block')", @click.prevent="cmd('toggleCodeBlock')") &lt;/&gt;
+		span.tiptap-separator(aria-hidden="true")
+		button.tiptap-btn(:class="{'is-active': isActive('bulletList')}", type="button", :title="$t('Bullet list')", :aria-label="$t('Bullet list')", @click.prevent="cmd('toggleBulletList')") &#8226;&#8212;
+		button.tiptap-btn(:class="{'is-active': isActive('orderedList')}", type="button", :title="$t('Numbered list')", :aria-label="$t('Numbered list')", @click.prevent="cmd('toggleOrderedList')") 1.&#8212;
+		span.tiptap-separator(aria-hidden="true")
+		button.tiptap-btn(:class="{'is-active': isActive({textAlign: 'left'})}", type="button", :title="$t('Align left')", :aria-label="$t('Align left')", @click.prevent="cmdWith('setTextAlign', 'left')") &#8676;
+		button.tiptap-btn(:class="{'is-active': isActive({textAlign: 'center'})}", type="button", :title="$t('Align center')", :aria-label="$t('Align center')", @click.prevent="cmdWith('setTextAlign', 'center')") &#8652;
+		button.tiptap-btn(:class="{'is-active': isActive({textAlign: 'right'})}", type="button", :title="$t('Align right')", :aria-label="$t('Align right')", @click.prevent="cmdWith('setTextAlign', 'right')") &#8677;
+		span.tiptap-separator(aria-hidden="true")
+		span.tiptap-link-menu(ref="linkMenuRef")
+			button.tiptap-btn(type="button", :title="$t('Insert link')", :aria-label="$t('Insert link')", @click.prevent="insertLink") &#128279;
+		button.tiptap-btn(type="button", :title="$t('Insert image')", :aria-label="$t('Insert image')", @click.prevent="triggerImageUpload") &#128247;
+		span.tiptap-separator(aria-hidden="true")
+		button.tiptap-btn(type="button", :title="$t('Clear formatting')", :aria-label="$t('Clear formatting')", @click.prevent="clearFormatting") &#10005;
+		button.tiptap-btn(type="button", :title="$t('Undo')", :aria-label="$t('Undo')", @click.prevent="cmd('undo')") &#8630;
+		button.tiptap-btn(type="button", :title="$t('Redo')", :aria-label="$t('Redo')", @click.prevent="cmd('redo')") &#8631;
+	.editor-mount(ref="editorMount")
+	input(type="file", ref="imageInput", accept="image/png, image/gif, image/jpeg, image/bmp, image/x-icon", style="display:none", @change="handleImageUpload")
 	.uploading(v-if="uploading")
 		bunt-progress-circular(size="huge")
 	error-dialog(
 		v-if="showErrorDialog"
-		:title="$t('RichTextEditor:upload:error-title')"
+		:title="$t('Upload failed')"
 		:message="uploadErrorMessage"
-		:button-text="$t('RichTextEditor:upload:error-ok')"
+		:button-text="$t('OK')"
 		@close="closeErrorDialog"
 	)
-
 </template>
 <script setup>
 /* global ENV_DEVELOPMENT */
-import { ref, markRaw, onMounted, onBeforeUnmount } from 'vue'
-import Quill from 'quill'
-import i18n from 'i18n'
-import BuntTheme from 'lib/quill/BuntTheme'
-import VideoResponsive from 'lib/quill/VideoResponsive'
-import fullWidthFormat from 'lib/quill/fullWidthFormat'
-import Emitter from 'quill/core/emitter'
+import { ref, onMounted, onBeforeUnmount, watch, markRaw } from 'vue'
+import { Editor } from '@tiptap/core'
+import StarterKit from '@tiptap/starter-kit'
+import Image from '@tiptap/extension-image'
+import Link from '@tiptap/extension-link'
+import Underline from '@tiptap/extension-underline'
+import TextAlign from '@tiptap/extension-text-align'
 import api from 'lib/api'
+import i18n from 'i18n'
 import ErrorDialog from 'components/ErrorDialog'
 
-const Delta = Quill.import('delta')
+const CustomTextAlign = TextAlign.extend({
+	addGlobalAttributes() {
+		return [
+			{
+				types: this.options.types,
+				attributes: {
+					textAlign: {
+						default: this.options.defaultAlignment,
+						parseHTML: element => {
+							if (element.classList.contains('text-left')) return 'left'
+							if (element.classList.contains('text-center')) return 'center'
+							if (element.classList.contains('text-right')) return 'right'
+							return element.style.textAlign || this.options.defaultAlignment
+						},
+						renderHTML: attributes => {
+							if (!attributes.textAlign || attributes.textAlign === this.options.defaultAlignment) {
+								return {}
+							}
+							return { class: `text-${attributes.textAlign}` }
+						},
+					},
+				},
+			},
+		]
+	},
+})
 
 const props = defineProps({
-	modelValue: Object,
+	// HTML string going forward; Object/Array kept for legacy Quill Delta values
+	modelValue: [String, Object, Array],
 	label: String,
 })
 const emit = defineEmits(['update:modelValue'])
 
 const outline = ref(null)
-const toolbar = ref(null)
-const editor = ref(null)
-
-const quill = ref(null)
+const editorMount = ref(null)
+const imageInput = ref(null)
 const uploading = ref(false)
 const showErrorDialog = ref(false)
 const uploadErrorMessage = ref('')
 
-const onTextchange = (delta, oldContents, source) => {
-	if (quill.value) emit('update:modelValue', quill.value.getContents())
+// Reactive state for toolbar active-state re-renders
+const editorState = ref(null)
+
+let editorInstance = null
+let emitTimeout = null
+
+function escapeHtml (text) {
+	return String(text)
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
 }
 
-const onSelectionchange = (range, oldRange, source) => {
-	if (!outline.value) return
-	if (range === null && oldRange !== null) {
-		outline.value.blur()
-	} else if (range !== null && oldRange === null) {
-		outline.value.focus()
+/** Normalize v-model into HTML Tiptap can load (legacy Delta → plain HTML). */
+function normalizeEditorContent (value) {
+	if (!value) return ''
+	if (typeof value === 'string') return value
+	if (typeof value === 'object') {
+		const ops = Array.isArray(value) ? value : value.ops
+		if (Array.isArray(ops)) {
+			const plain = ops
+				.map(op => (typeof op.insert === 'string' ? op.insert : ''))
+				.join('')
+			return '<p>' + escapeHtml(plain).replace(/\n/g, '<br>') + '</p>'
+		}
 	}
+	return ''
+}
+
+// Toolbar helpers — read from editorState to stay reactive
+const isActive = (nameOrAttrs, attrs) => {
+	if (!editorState.value || !editorInstance) return false
+	if (typeof nameOrAttrs === 'string') {
+		return editorInstance.isActive(nameOrAttrs, attrs)
+	}
+	return editorInstance.isActive(nameOrAttrs)
+}
+
+const cmd = (command) => {
+	if (!editorInstance) return
+	editorInstance.chain().focus()[command]().run()
+}
+
+const cmdWith = (command, arg) => {
+	if (!editorInstance) return
+	editorInstance.chain().focus()[command](arg).run()
+}
+
+const insertLink = () => {
+	if (!editorInstance) return
+	const existing = editorInstance.getAttributes('link').href || ''
+	const url = prompt(i18n.t('Enter URL'), existing)
+	if (url === null) return
+	if (url === '') {
+		editorInstance.chain().focus().extendMarkRange('link').unsetLink().run()
+	} else {
+		editorInstance.chain().focus().extendMarkRange('link').setLink({ href: url, target: '_blank', rel: 'noopener noreferrer' }).run()
+	}
+}
+
+const triggerImageUpload = () => {
+	imageInput.value?.click()
+}
+
+const handleImageUpload = (event) => {
+	const file = event.target.files?.[0]
+	if (!file) return
+	showErrorDialog.value = false
+	uploading.value = true
+	api.uploadFilePromise(file, file.name).then(data => {
+		if (data.error) {
+			uploadErrorMessage.value = i18n.t('Failed to upload the image')
+			console.error('RichTextEditor image upload failed', data.error, `File: ${file.name}`)
+			showErrorDialog.value = true
+		} else {
+			editorInstance?.chain().focus().setImage({ src: data.url }).run()
+		}
+		uploading.value = false
+		event.target.value = ''
+	}).catch(error => {
+		uploadErrorMessage.value = i18n.t('Failed to upload the image')
+		console.error('RichTextEditor image upload failed', error, `File: ${file.name}`)
+		showErrorDialog.value = true
+		uploading.value = false
+		event.target.value = ''
+	})
+}
+
+const clearFormatting = () => {
+	editorInstance?.chain().focus().clearNodes().unsetAllMarks().run()
 }
 
 const closeErrorDialog = () => {
@@ -86,72 +193,56 @@ const closeErrorDialog = () => {
 	uploadErrorMessage.value = ''
 }
 
-onBeforeUnmount(() => {
-	if (!quill.value) return
-	quill.value.off('selection-change', onSelectionchange)
-	quill.value.off('text-change', onTextchange)
+onMounted(() => {
+	editorInstance = markRaw(new Editor({
+		element: editorMount.value,
+		extensions: [
+			StarterKit,
+			Image.configure({ inline: false, allowBase64: false }),
+			Link.configure({ openOnClick: false, autolink: true, HTMLAttributes: { rel: 'noopener noreferrer', target: '_blank' } }),
+			Underline,
+			CustomTextAlign.configure({ types: ['heading', 'paragraph'] }),
+		],
+		content: normalizeEditorContent(props.modelValue),
+		editorProps: {
+			attributes: {
+				class: 'rich-text-content',
+			},
+		},
+		onUpdate: ({ editor }) => {
+			// Trigger toolbar re-render
+			editorState.value = editor.state
+			clearTimeout(emitTimeout)
+			emitTimeout = setTimeout(() => {
+				emit('update:modelValue', editor.getHTML())
+			}, 50)
+		},
+		onSelectionUpdate: ({ editor }) => {
+			editorState.value = editor.state
+		},
+		onFocus: () => {
+			outline.value?.focus?.()
+		},
+		onBlur: () => {
+			outline.value?.blur?.()
+		},
+	}))
+	editorState.value = editorInstance.state
 })
 
-onMounted(() => {
-	Quill.register('themes/bunt', BuntTheme, false)
-	Quill.register(VideoResponsive)
-	Quill.register(fullWidthFormat)
+onBeforeUnmount(() => {
+	clearTimeout(emitTimeout)
+	editorInstance?.destroy()
+	editorInstance = null
+})
 
-	const instance = markRaw(new Quill(editor.value, {
-		debug: ENV_DEVELOPMENT ? 'info' : 'warn',
-		theme: 'bunt',
-		modules: {
-			toolbar: {
-				container: toolbar.value,
-				handlers: {
-					image: () => {
-						const fileInput = document.createElement('input')
-						fileInput.setAttribute('type', 'file')
-						fileInput.setAttribute('accept', 'image/png, image/gif, image/jpeg, image/bmp, image/x-icon')
-						fileInput.addEventListener('change', () => {
-							if (fileInput.files != null && fileInput.files[0] != null) {
-								const file = fileInput.files[0]
-
-								showErrorDialog.value = false
-								uploading.value = true
-								api.uploadFilePromise(file, file.name).then(data => {
-									if (data.error) {
-										uploadErrorMessage.value = i18n.t('RichTextEditor:upload:error')
-										console.error('RichTextEditor image upload failed', data.error, `File: ${file.name}`)
-										showErrorDialog.value = true
-									} else {
-										const range = instance.getSelection(true)
-										instance.updateContents(new Delta()
-											.retain(range.index)
-											.delete(range.length)
-											.insert({ image: data.url }), Emitter.sources.USER)
-										instance.setSelection(range.index + 1, Emitter.sources.SILENT)
-									}
-									uploading.value = false
-								}).catch(error => {
-									uploadErrorMessage.value = i18n.t('RichTextEditor:upload:error')
-									console.error('RichTextEditor image upload failed', error, `File: ${file.name}`)
-									showErrorDialog.value = true
-									uploading.value = false
-								})
-							}
-						})
-						fileInput.click()
-					},
-				}
-			}
-		},
-		bounds: editor.value,
-	}))
-
-	quill.value = instance
-
-	if (props.modelValue && props.modelValue.ops && props.modelValue.ops.length > 0) {
-		instance.setContents(props.modelValue)
-	}
-
-	instance.on('selection-change', onSelectionchange)
-	instance.on('text-change', onTextchange)
+// Sync external model changes (e.g. parent resets the field)
+watch(() => props.modelValue, (newVal) => {
+	if (!editorInstance) return
+	const normalized = normalizeEditorContent(newVal)
+	const current = editorInstance.getHTML()
+	if (normalized === current) return
+	editorInstance.commands.setContent(normalized, false)
 })
 </script>
 <style lang="stylus">
@@ -175,87 +266,111 @@ onMounted(() => {
 		align-items: center
 		justify-content: center
 
-	.toolbar
-		border-bottom: 1px solid #ccc
-		display: flex
-		flex-direction: row
-		flex-wrap: wrap
-		padding: 4px
-		flex: 0 0 auto
-		.buttongroup
-			margin-right: 16px
-		.bunt-icon-button
-			border-radius: 8px
-			margin-right: 2px
-			.bunt-icon
-				color: rgba(0, 0, 0, 0.5)
-		.ql-active
-			background: #f0f0f0
-		.ql-active .bunt-icon
-			color: var(--clr-primary)
-	.editor
+	.editor-mount
 		flex: 1 1 auto
 		min-height: 0
 		overflow-y: auto
-		.ql-editor
-			padding: 12px 16px
-	.ql-hidden
-		display: none
-	.ql-tooltip  /* based on https://github.com/quilljs/quill/blob/develop/assets/snow/tooltip.styl */
-		z-index: 1000
-		position: absolute
-		background-color: #fff
-		border: 1px solid #ccc
-		box-shadow: 0px 0px 5px #ddd
-		padding: 5px 12px
-		white-space: nowrap
 
-		&::before
-			content: "Visit URL:"
-			line-height: 26px
-			margin-right: 8px
-
-		input[type=text]
-			display: none
-			border: 1px solid #ccc
-			font-size: 13px
-			height: 26px
-			margin: 0px
-			padding: 3px 5px
-			width: 170px
-
-		a.ql-preview
-			display: inline-block
-			max-width: 200px
-			overflow-x: hidden
-			text-overflow: ellipsis
-			vertical-align: top
-
-		a.ql-action::after
-			border-right: 1px solid #ccc
-			content: 'Edit'
-			margin-left: 16px
-			padding-right: 8px
-
-		a.ql-remove::before
-			content: 'Remove'
-			margin-left: 8px
-
+	// ProseMirror editor styles
+	.ProseMirror
+		padding: 12px 16px
+		min-height: 100%
+		outline: none
+		font-family: $font-stack
+		font-size: 14px
+		line-height: 1.5
+		> * + *
+			margin-top: 0.75em
+		p
+			margin: 0
+		h1, h2, h3, h4, h5, h6
+			margin: 0
+		img
+			max-width: 100%
+			display: block
+			margin: 0 auto
 		a
-			line-height: 26px
+			color: var(--clr-primary)
+			text-decoration: underline
+		ul, ol
+			padding-left: 2em
+			margin: 0
+		pre
+			background: #f4f4f4
+			border-radius: 4px
+			padding: 0.75rem 1rem
+			code
+				background: none
+				padding: 0
+				font-size: 0.875em
+		code
+			background: rgba(0,0,0,0.06)
+			border-radius: 3px
+			padding: 0.2em 0.4em
+			font-size: 0.9em
+		blockquote
+			padding-left: 1em
+			border-left: 3px solid #ccc
+			margin: 0
+			color: #666
+		&.ProseMirror-focused
+			outline: none
+		&[data-placeholder]::before
+			content: attr(data-placeholder)
+			float: left
+			color: #adb5bd
+			pointer-events: none
+			height: 0
 
-	.ql-tooltip.ql-editing
-		a.ql-preview, a.ql-remove
-			display: none
+// ── Toolbar (matches tickets/email Tiptap editor) ──────────────────────────
 
-		input[type=text]
-			display: inline-block
+.tiptap-toolbar
+	display: flex
+	flex-wrap: wrap
+	align-items: center
+	gap: 2px
+	padding: 4px 6px
+	border-bottom: 1px solid #dee2e6
+	background: #f8f9fa
+	border-radius: 4px 4px 0 0
+	flex: 0 0 auto
 
-		a.ql-action::after
-			border-right: 0px
-			content: 'Save'
-			padding-right: 0px
+.tiptap-btn
+	display: inline-flex
+	align-items: center
+	justify-content: center
+	min-width: 30px
+	height: 28px
+	padding: 0 6px
+	border: 1px solid transparent
+	border-radius: 3px
+	background: transparent
+	color: #495057
+	font-size: 13px
+	line-height: 1
+	cursor: pointer
+	white-space: nowrap
+	transition: background 0.1s, color 0.1s, border-color 0.1s
+	&:hover
+		background: #e9ecef
+		border-color: #ced4da
+	&.is-active
+		background: rgba(13, 110, 253, 0.1)
+		border-color: rgba(13, 110, 253, 0.4)
+		color: #0d6efd
+	&[disabled]
+		opacity: 0.4
+		cursor: default
 
-	.ql-tooltip[data-mode=link]::before
-		content: "Enter link:"
+.tiptap-separator
+	display: inline-block
+	width: 1px
+	height: 20px
+	background: #dee2e6
+	margin: 0 3px
+	vertical-align: middle
+
+.tiptap-link-menu
+	position: relative
+	display: inline-block
 </style>

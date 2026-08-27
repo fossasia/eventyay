@@ -1,14 +1,14 @@
 <template lang="pug">
 prompt.c-av-device-prompt(@close="$emit('close')")
 	.content
-		h2 {{ $t('AVDevicePrompt:headline:label') }}
+		h2 {{ $t('Device configuration') }}
 		bunt-select(v-if="videoInputs.length > 0", v-model="videoInput", @input="refreshVideo", :options="videoInputs", option-label="label", option-value="value", icon="camera", name="videoInput")
 		.video-wrapper
 			video(ref="video", playsinline, autoplay, muted="muted")
 		bunt-select(v-if="audioInputs.length > 0", v-model="audioInput", :options="audioInputs", option-label="label", option-value="value", icon="microphone", name="audioInput")
 		bunt-select(v-if="audioOutputs.length > 0", v-model="audioOutput", :options="audioOutputs", option-label="label", option-value="value", icon="volume-high", name="audioOutput")
-		bunt-checkbox(v-model="videoOutput", name="videoOutput") {{ $t(`AVDevicePrompt:videoout:label`) }}
-		bunt-button.btn-action(@click="save") {{ $t(`AVDevicePrompt:apply:label`) }}
+		bunt-checkbox(v-model="videoOutput", name="videoOutput") {{ $t('Show video from other users (might cause a reconnect)') }}
+		bunt-button.btn-action(@click="save") {{ $t('Apply') }}
 
 </template>
 <script>
@@ -43,26 +43,26 @@ export default {
 				await this.refreshVideo()
 			} catch (error) {
 				console.warn('Could not load video device settings.', error)
-				alert('Could not access camera or microphone, is another program on your machine using it right now?')
+				alert(this.$t('Could not access camera or microphone, is another program on your machine using it right now?'))
 			}
 		},
 		updateDevices(deviceInfos) {
 			this.videoInputs = [
 				{
 					value: '',
-					label: this.$t('AVDevicePrompt:default:label')
+					label: this.$t('System default')
 				}
 			]
 			this.audioInputs = [
 				{
 					value: '',
-					label: this.$t('AVDevicePrompt:default:label')
+					label: this.$t('System default')
 				}
 			]
 			this.audioOutputs = [
 				{
 					value: '',
-					label: this.$t('AVDevicePrompt:default:label')
+					label: this.$t('System default')
 				}
 			]
 			for (const deviceInfo of deviceInfos) {

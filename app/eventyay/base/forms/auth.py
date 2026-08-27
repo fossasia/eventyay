@@ -10,6 +10,7 @@ from django.contrib.auth.password_validation import (
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
+from eventyay.base.auth import SPAM_ACCOUNT_ERROR
 from eventyay.base.models import User
 from eventyay.helpers.dicts import move_to_end
 from eventyay.helpers.http import get_client_ip
@@ -46,7 +47,7 @@ class LoginForm(forms.Form):
         'invalid_login': _('This combination of credentials is not known to our system.'),
         'rate_limit': _('For security reasons, please wait 5 minutes before you try again.'),
         'inactive': _('This account is inactive.'),
-        'spam': _('This account has been suspended. Please contact the site administrator.'),
+        'spam': SPAM_ACCOUNT_ERROR,
     }
     
     def __init__(self, backend, request=None, *args, **kwargs):
@@ -247,7 +248,7 @@ class ReauthForm(forms.Form):
     error_messages = {
         'invalid_login': _('This combination of credentials is not known to our system.'),
         'inactive': _('This account is inactive.'),
-        'spam': _('This account has been suspended. Please contact the site administrator.'),
+        'spam': SPAM_ACCOUNT_ERROR,
     }
 
     def __init__(self, backend, user, request=None, *args, **kwargs):

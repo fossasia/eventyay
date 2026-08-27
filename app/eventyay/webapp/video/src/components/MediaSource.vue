@@ -3,9 +3,9 @@
 	transition(name="background-room")
 		router-link.background-room(v-if="background", :to="room ? {name: 'room', params: {roomId: room.id}}: {name: 'channel', params: {channelId: call.channel}}")
 			.description
-				.hint {{ $t('MediaSource:room:hint') }}
+				.hint {{ $t('Currently playing') }}
 				.room-name(v-if="room", v-html="$emojify(room.name)")
-				.room-name(v-else-if="call") {{ $t('MediaSource:call:label') }}
+				.room-name(v-else-if="call") {{ $t('Private call') }}
 			.global-placeholder
 			bunt-icon-button(@click.prevent.stop="$emit('close')") close
 	Livestream(v-if="room && shouldUseLivestream", ref="livestream", :room="room", :module="module", :size="background ? 'tiny' : 'normal'", :key="`livestream-${room.id}`", @playback-state-changed="onMainPlayerPlaybackChanged")
@@ -14,8 +14,8 @@
 	.iframe-consent-gate(v-if="consentBlockedUrl && !background")
 		iframe-blocker(:src="consentBlockedUrl", allow="camera *; autoplay *; microphone *; fullscreen *; display-capture *", allowfullscreen, @consent-given="onConsentGiven")
 	.iframe-error(v-if="!iframeEl && !consentBlockedUrl && (iframeError || iframeOffline)", :class="{background: background, 'size-tiny': background}")
-		.offline-message(v-if="iframeOffline") {{ $t('Livestream:offline-message:text') }}
-		.offline-message(v-else) {{ $t('MediaSource:iframe-error:text') }}
+		.offline-message(v-if="iframeOffline") {{ $t('Stream offline') }}
+		.offline-message(v-else) {{ $t('We could not connect to the video conference server, sorry.') }}
 	iframe#video-player-translation(v-if="languageIframeUrl", ref="translationIframeEl", :src="languageIframeUrl", style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;", frameborder="0", gesture="media", allow="autoplay; encrypted-media", referrerpolicy="strict-origin-when-cross-origin", @load="onTranslationIframeLoaded")
 	audio(ref="whepAudioEl", autoplay, style="display: none;")
 </template>
@@ -37,7 +37,6 @@ import {
 	getStagePlaybackMode,
 	PLAYBACK_MODE_SCHEDULE_DRIVEN,
 	STREAM_TYPE_HLS,
-	STREAM_TYPE_IFRAME,
 	STREAM_TYPE_VIMEO,
 	STREAM_TYPE_YOUTUBE,
 } from 'lib/stage-streams';
@@ -96,7 +95,6 @@ const module = computed(() => {
 		[
 			'livestream.native',
 			'livestream.youtube',
-			'livestream.iframe',
 			'call.bigbluebutton',
 			'call.janus',
 			'call.zoom',
@@ -109,7 +107,6 @@ const isLivestreamModule = computed(() =>
 	[
 		'livestream.native',
 		'livestream.youtube',
-		'livestream.iframe',
 	].includes(module.value?.type)
 );
 
@@ -143,11 +140,10 @@ const iframeOffline = computed(() => {
 	const currentStream = isScheduleDriven ? props.room?.currentStream : null;
 	const streamType = currentStream?.stream_type;
 	const moduleType = module.value.type;
-	const isIFrame = streamType === STREAM_TYPE_IFRAME || moduleType === 'livestream.iframe';
 	const isYouTube = streamType === STREAM_TYPE_YOUTUBE || moduleType === 'livestream.youtube';
 	const isVimeo = streamType === STREAM_TYPE_VIMEO;
 
-	if (!isIFrame && !isYouTube && !isVimeo) return false;
+	if (!isYouTube && !isVimeo) return false;
 
 	const scheduleUrl = currentStream?.url || null;
 
@@ -525,8 +521,6 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 			? 'livestream.youtube'
 			: streamType === STREAM_TYPE_VIMEO
 			? 'livestream.vimeo'
-			: streamType === STREAM_TYPE_IFRAME
-			? 'livestream.iframe'
 			: (!isScheduleDriven ? module.value.type : null);
 
 		switch (effectiveModuleType) {
@@ -550,10 +544,6 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 				});
 				iframeUrl = getJitsiRoomUrl(jitsiConfig);
 				hideIfBackground = true;
-				break;
-			}
-			case 'livestream.iframe': {
-				iframeUrl = currentStream?.url || module.value.config.url;
 				break;
 			}
 			case 'livestream.vimeo': {

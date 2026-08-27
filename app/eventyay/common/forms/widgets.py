@@ -2,6 +2,7 @@ import datetime as dt
 import json
 from pathlib import Path
 
+from django.conf import settings
 from django.core.files import File
 from django.forms import (
     ClearableFileInput,
@@ -15,10 +16,12 @@ from django.forms import (
     TimeInput,
     Widget,
 )
-from i18nfield.forms import I18nTextarea
 from django.utils.datastructures import MultiValueDict
+from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
+from i18nfield.forms import I18nTextarea
+from i18nfield.strings import LazyI18nString
 
 
 def add_class(attrs, css_class):
@@ -135,6 +138,74 @@ class RichTextWidget(Textarea):
         attrs = attrs.copy() if attrs is not None else {}
         attrs.setdefault('data-tiptap-profile', 'richtext')
         super().__init__(attrs=attrs)
+
+
+class I18nRichTextWidget(I18nTextarea):
+    """Tiptap rich text editor for i18n fields (e.g. system pages, global settings).
+
+    Wraps each locale textarea in a ``[data-tiptap-wrapper]`` container so the
+    shared editor bundle can mount one rich text editor per language.
+    """
+
+    def __init__(self, locales, field, attrs=None, **kwargs):
+        attrs = attrs.copy() if attrs is not None else {}
+        attrs.setdefault('data-tiptap-profile', 'richtext')
+        super().__init__(locales=locales, field=field, attrs=attrs)
+
+    def render(self, name: str, value, attrs=None, renderer=None) -> str:
+        if self.is_localized:
+            for widget in self.widgets:
+                widget.is_localized = self.is_localized
+
+        original_value = value
+        if not isinstance(value, list):
+            value = self.decompress(value)
+        output = []
+        final_attrs = self.build_attrs(attrs or dict())
+        id_ = final_attrs.get('id', None)
+        for i, widget in enumerate(self.widgets):
+            if self.locales[i] not in self.enabled_locales:
+                continue
+            locale_code = self.locales[i]
+            try:
+                widget_value = value[i]
+            except IndexError:
+                widget_value = None
+
+            if not widget_value and isinstance(original_value, LazyI18nString) and isinstance(original_value.data, dict):
+                firstpart = locale_code.split('-')[0]
+                if not widget_value:
+                    similar = [
+                        loc for loc in self.locales
+                        if (loc.startswith(firstpart + "-") or firstpart == loc) and loc != locale_code
+                    ]
+                    for s in similar:
+                        if original_value.data.get(s) and s not in self.enabled_locales:
+                            widget_value = original_value.data.get(s)
+                            break
+
+            final_attrs_widget = final_attrs.copy()
+            if id_:
+                human_locale_name = dict(settings.LANGUAGES).get(locale_code, locale_code)
+                final_attrs_widget['id'] = '%s_%s' % (id_, i)
+                final_attrs_widget['title'] = human_locale_name
+                final_attrs_widget.setdefault('placeholder', human_locale_name)
+
+            rendered = widget.render(name + '_%s' % i, widget_value, final_attrs_widget, renderer=renderer)
+            wrapped = (
+                f'<div class="i18n-textarea-wrapper" data-lang="{escape(locale_code)}">'
+                f'<div class="tiptap-wrapper" data-tiptap-wrapper="true">{rendered}</div>'
+                f'</div>'
+            )
+            output.append(wrapped)
+
+        return mark_safe(
+            '<div class="i18n-form-group%s" id="%s">%s</div>' % (
+                ' i18n-form-single-language' if len(output) <= 1 else '',
+                escape(id_) if id_ else '',
+                ''.join(output),
+            )
+        )
 
 
 class I18nEmailEditorWidget(I18nTextarea):

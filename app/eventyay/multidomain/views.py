@@ -15,7 +15,7 @@ from django.urls.exceptions import NoReverseMatch
 from django.utils.encoding import force_str
 from django.utils.timezone import now
 from django.utils.functional import Promise
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext as _, pgettext
 from django.views.generic import View
 from django.views.static import serve as static_serve
 from django_scopes import scope
@@ -24,6 +24,7 @@ from eventyay.base.models.room import AnonymousInvite
 from eventyay.base.models import Event  # Added for /video event context
 from eventyay.base.services.video_theme import build_video_theme_for_event
 from eventyay.agenda.views.utils import build_public_schedule_exporters
+from eventyay.common.language import get_ui_language_options
 from eventyay.common.templatetags.vite import fetch_vite_html, VIDEO_DIST_DIR, VIDEO_DEV_SERVER
 from eventyay.consts import SizeKey
 
@@ -146,7 +147,7 @@ class VideoSPAView(View):
                 'showTimes': bool(event.settings.show_times),
                 'basePath': base_path,
                 'defaultLocale': 'en',
-                'locales': ['en', 'de', 'pt_BR', 'ar', 'fr', 'es', 'uk', 'ru'],
+                'locales': get_ui_language_options(),
                 'noThemeEndpoint': True,  # Prevent frontend from requesting missing /theme endpoint
                 'translationMessages': {
                     'favs_anonymous_notice': str(_(
@@ -177,7 +178,7 @@ class VideoSPAView(View):
                     'join_room': str(_('Join room')),
                     'view_video': str(_('View Video')),
                     'watch_live': str(_('Watch live')),
-                    'speaker_fallback': str(_('Speaker')),
+                    'speaker_fallback': str(pgettext('noun', 'Speaker')),
                     'speaker_name_not_provided': str(_('Speaker name not provided')),
                     'add_to_calendar': str(_('Add to Calendar')),
                     'ical': str(_('iCal')),

@@ -4,7 +4,7 @@ from django.core.validators import validate_email
 from django.utils.translation import gettext_lazy as _
 from i18nfield.forms import I18nFormField, I18nTextarea
 
-from eventyay.base.forms import SecretKeySettingsField, SettingsForm
+from eventyay.base.forms import SecretKeySettingsField, SecretKeySettingsWidget, SettingsForm
 
 
 def multimail_validate(val):
@@ -18,6 +18,7 @@ def multimail_validate(val):
 SMTP_VENDOR_CHOICES = (
     ('smtp', _('SMTP server')),
     ('sendgrid', _('SendGrid')),
+    ('gmail_api', _('Gmail / Google Workspace API')),
 )
 
 
@@ -78,35 +79,56 @@ class CentralMailSettingsForm(SettingsForm):
     send_grid_api_key = SecretKeySettingsField(
         label=_('SendGrid API key'),
         required=False,
+        widget=SecretKeySettingsWidget(attrs={
+            'data-display-dependency': '#id_email-email_vendor_0',
+        }),
     )
     smtp_host = forms.CharField(
         label=_('SMTP hostname'),
         required=False,
-        widget=forms.TextInput(attrs={'placeholder': 'mail.example.org'}),
+        widget=forms.TextInput(attrs={
+            'placeholder': 'mail.example.org',
+            'data-display-dependency': '#id_email-email_vendor_1',
+        }),
     )
     smtp_port = forms.IntegerField(
         label=_('SMTP port'),
         required=False,
-        widget=forms.TextInput(attrs={'placeholder': 'e.g. 587, 465, 25 …'}),
+        widget=forms.TextInput(attrs={
+            'placeholder': 'e.g. 587, 465, 25 …',
+            'data-display-dependency': '#id_email-email_vendor_1',
+        }),
     )
     smtp_username = forms.CharField(
         label=_('SMTP username'),
         required=False,
-        widget=forms.TextInput(attrs={'placeholder': 'myuser@example.org'}),
+        widget=forms.TextInput(attrs={
+            'placeholder': 'myuser@example.org',
+            'data-display-dependency': '#id_email-email_vendor_1',
+        }),
     )
     smtp_password = SecretKeySettingsField(
         label=_('SMTP password'),
         required=False,
+        widget=SecretKeySettingsWidget(attrs={
+            'data-display-dependency': '#id_email-email_vendor_1',
+        }),
     )
     smtp_use_tls = forms.BooleanField(
         label=_('Use STARTTLS'),
         help_text=_('Commonly enabled on port 587.'),
         required=False,
+        widget=forms.CheckboxInput(attrs={
+            'data-display-dependency': '#id_email-email_vendor_1',
+        }),
     )
     smtp_use_ssl = forms.BooleanField(
         label=_('Use SSL'),
         help_text=_('Commonly enabled on port 465.'),
         required=False,
+        widget=forms.CheckboxInput(attrs={
+            'data-display-dependency': '#id_email-email_vendor_1',
+        }),
     )
     test_email = forms.CharField(
         label=_('Send test email to'),
@@ -174,6 +196,12 @@ class CentralMailSettingsForm(SettingsForm):
                     'send_grid_api_key',
                     ValidationError(_('An API key is required when using SendGrid.')),
                 )
+        elif vendor == 'gmail_api':
+            for field in ('smtp_host', 'smtp_port', 'smtp_username', 'smtp_password',
+                          'smtp_use_tls', 'smtp_use_ssl', 'send_grid_api_key'):
+                stored = self.initial.get(field)
+                if stored is not None:
+                    data[field] = stored
         else:
             stored_api_key = self.initial.get('send_grid_api_key')
             if stored_api_key is not None:
