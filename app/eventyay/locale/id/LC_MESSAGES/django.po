@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 08:28+0000\n"
-"Last-Translator: Arif Budiman <arifpedia@gmail.com>\n"
+"PO-Revision-Date: 2026-08-27 08:29+0000\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Indonesian <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/id/>\n"
 "Language: id\n"
@@ -34191,22 +34191,19 @@ msgstr ""
 #, fuzzy
 #| msgid "This field is required when using SendGrid as email vendor."
 msgid "A sender email address is required when using a custom email gateway."
-msgstr ""
-"Kolom ini wajib diisi saat menggunakan SendGrid sebagai penyedia email."
+msgstr "Kolom ini wajib diisi saat menggunakan SendGrid sebagai penyedia email."
 
 #: eventyay/orga/forms/email.py:197
 #, fuzzy
 #| msgid "This field is required when using SendGrid as email vendor."
 msgid "An API key is required when using SendGrid."
-msgstr ""
-"Kolom ini wajib diisi saat menggunakan SendGrid sebagai penyedia email."
+msgstr "Kolom ini wajib diisi saat menggunakan SendGrid sebagai penyedia email."
 
 #: eventyay/orga/forms/email.py:215
 #, fuzzy
 #| msgid "This field is required when using SendGrid as email vendor."
 msgid "A hostname is required when using a custom SMTP server."
-msgstr ""
-"Kolom ini wajib diisi saat menggunakan SendGrid sebagai penyedia email."
+msgstr "Kolom ini wajib diisi saat menggunakan SendGrid sebagai penyedia email."
 
 #: eventyay/orga/forms/email.py:220
 msgid "A port number is required when using a custom SMTP server."
