@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 09:03+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2026-08-27 09:04+0000\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Bulgarian <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/bg/>\n"
 "Language: bg\n"
@@ -8771,8 +8771,7 @@ msgstr "Позволете на клиентите да променят инф�
 msgid ""
 "If this is checked, customers can switch between variations of this product "
 "in their order details."
-msgstr ""
-"Клиентите могат да променят вариацията на продуктите, които са закупили"
+msgstr "Клиентите могат да променят вариацията на продуктите, които са закупили"
 
 #: eventyay/base/models/product.py:516
 msgid "Minimum amount per order"
@@ -27250,8 +27249,7 @@ msgstr ""
 #| "Generate a new token. The current token will not be usable any longer."
 msgid ""
 "Generate a new setup code? The current QR code and token will stop working."
-msgstr ""
-"Генерирайте нов токен. Текущият токен вече няма да може да се използва."
+msgstr "Генерирайте нов токен. Текущият токен вече няма да може да се използва."
 
 #: eventyay/control/templates/pretixcontrol/organizers/device_connect.html:94
 msgid ""
@@ -28639,8 +28637,8 @@ msgid ""
 "                                    "
 msgstr ""
 "\n"
-"                                    В изчакване, продуктът е наличен "
-"%(num)sx\n"
+"                                    В изчакване, продуктът е наличен %(num)"
+"sx\n"
 "                                "
 
 #: eventyay/control/templates/pretixcontrol/waitinglist/index.html:231
@@ -42779,8 +42777,7 @@ msgstr ""
 msgid ""
 "Refunds for canceled tickets will be issued as a gift card for future "
 "purchases."
-msgstr ""
-"Искам възстановяването на сумата като подаръчна карта за бъдещи покупки"
+msgstr "Искам възстановяването на сумата като подаръчна карта за бъдещи покупки"
 
 #: eventyay/presale/templates/pretixpresale/event/order_cancel_positions.html:83
 #, fuzzy
@@ -43647,8 +43644,7 @@ msgstr "Eventyay Video"
 #, fuzzy
 #| msgid "Unknown order code or not authorized to access this order."
 msgid "You are not authorized to access this order."
-msgstr ""
-"Неизвестен код на поръчката или нямате право на достъп до тази поръчка."
+msgstr "Неизвестен код на поръчката или нямате право на достъп до тази поръчка."
 
 #: eventyay/presale/views/order.py:556 eventyay/presale/views/order.py:626
 #: eventyay/presale/views/order.py:700
