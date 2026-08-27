@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-03-21 17:23+0000\n"
+"PO-Revision-Date: 2026-08-27 17:17+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/sv/>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.17-dev\n"
+"X-Generator: Weblate 2026.9.dev0\n"
 
 #: data/templates/exhibitors/exhibitor_info.html:3
 #: data/templates/exhibitors/exhibitor_info.html:5
@@ -7160,8 +7160,7 @@ msgstr "En eller flera varianter tillhör inte detta evenemang."
 
 #: eventyay/base/models/event.py:3543 eventyay/base/models/product.py:1832
 msgid "Can not contain spaces or special characters except underscores"
-msgstr ""
-"Får inte innehålla mellanslag eller specialtecken, förutom understreck."
+msgstr "Får inte innehålla mellanslag eller specialtecken, förutom understreck."
 
 #: eventyay/base/models/event.py:3547 eventyay/base/models/product.py:1836
 msgid "The property name may only contain letters, numbers and underscores."
@@ -8671,8 +8670,7 @@ msgstr "Detta fungerar bara om väntelistor är aktiverade för evenemanget."
 
 #: eventyay/base/models/product.py:430
 msgid "Publicly show how many tickets are still available."
-msgstr ""
-"Visa offentligt hur många biljetter som fortfarande finns tillgängliga."
+msgstr "Visa offentligt hur många biljetter som fortfarande finns tillgängliga."
 
 #: eventyay/base/models/product.py:436 eventyay/control/forms/product.py:621
 msgid "Product picture"
@@ -9444,8 +9442,7 @@ msgstr "lås efter"
 
 #: eventyay/base/models/question.py:154
 msgid "Set a deadline to stop changes to responses after the given date."
-msgstr ""
-"Ange en tidsfrist för att stoppa ändringar av svar efter angivet datum."
+msgstr "Ange en tidsfrist för att stoppa ändringar av svar efter angivet datum."
 
 #: eventyay/base/models/question.py:160
 msgid "Field required"
@@ -11998,8 +11995,8 @@ msgid ""
 "You can select at most %(max)s add-ons from the category %(cat)s for the "
 "product %(base)s."
 msgstr ""
-"Högst %(max)s tillägg från kategorin %(cat)s kan väljas för produkten "
-"%(base)s."
+"Högst %(max)s tillägg från kategorin %(cat)s kan väljas för produkten %(base)"
+"s."
 
 #: eventyay/base/services/cart.py:130
 #, python-format
@@ -12007,8 +12004,8 @@ msgid ""
 "You need to select at least %(min)s add-ons from the category %(cat)s for "
 "the product %(base)s."
 msgstr ""
-"Minst %(min)s tillägg från kategorin %(cat)s måste väljas för produkten "
-"%(base)s."
+"Minst %(min)s tillägg från kategorin %(cat)s måste väljas för produkten %"
+"(base)s."
 
 #: eventyay/base/services/cart.py:133
 #, python-format
@@ -12016,8 +12013,8 @@ msgid ""
 "You can select every add-ons from the category %(cat)s for the product "
 "%(base)s at most once."
 msgstr ""
-"Varje tillägg från kategorin %(cat)s kan väljas högst en gång för produkten "
-"%(base)s."
+"Varje tillägg från kategorin %(cat)s kan väljas högst en gång för produkten %"
+"(base)s."
 
 #: eventyay/base/services/cart.py:135
 msgid ""
@@ -12290,8 +12287,8 @@ msgid ""
 "Error while importing value \"{value}\" for column \"{column}\" in line "
 "\"{line}\": {message}"
 msgstr ""
-"Fel vid import av värdet \"{value}\" för kolumnen \"{column}\" på raden "
-"\"{line}\": {message}"
+"Fel vid import av värdet \"{value}\" för kolumnen \"{column}\" på raden \""
+"{line}\": {message}"
 
 #: eventyay/base/services/orderimport.py:128
 #, fuzzy, python-brace-format
@@ -13496,8 +13493,7 @@ msgstr ""
 msgid ""
 "There was an error when logging in. Please contact the organizer for further "
 "help."
-msgstr ""
-"Ett fel uppstod vid inloggningen. Kontakta arrangören för vidare hjälp."
+msgstr "Ett fel uppstod vid inloggningen. Kontakta arrangören för vidare hjälp."
 
 #: eventyay/cfp/flow.py:534 eventyay/common/templates/common/base.html:183
 #: eventyay/common/templates/common/fragment_header_user.html:130
@@ -19332,8 +19328,7 @@ msgstr ""
 #: eventyay/control/logdisplay.py:120
 #, python-brace-format
 msgid "Tax rule of fee #{fee} changed from {old_rule} to {new_rule}."
-msgstr ""
-"Skatteregel för avgift #{fee} ändrades från {old_rule} till {new_rule}."
+msgstr "Skatteregel för avgift #{fee} ändrades från {old_rule} till {new_rule}."
 
 #: eventyay/control/logdisplay.py:127
 msgid "A fee has been added"
@@ -20340,8 +20335,8 @@ msgstr "{user} har tagits bort från teamet."
 #, python-brace-format
 msgid "{user} has joined the team using the invite sent to {email}."
 msgstr ""
-"{user} har gått med i teamet med hjälp av inbjudan som skickades till "
-"{email}."
+"{user} har gått med i teamet med hjälp av inbjudan som skickades till {email}"
+"."
 
 #: eventyay/control/logdisplay.py:803
 #, python-brace-format
@@ -24201,10 +24196,10 @@ msgid ""
 "not responsible for the correct handling of taxes in your ticket shop. If in "
 "doubt, please contact a lawyer or tax consultant."
 msgstr ""
-"De här inställningarna är avsedda för avancerade användare. Se <a "
-"href=\"%(docs)s\">dokumentationen</a> för mer information. Observera att vi "
-"inte ansvarar för korrekt hantering av skatter i biljettbutiken. Vid "
-"osäkerhet, kontakta en jurist eller skatterådgivare."
+"De här inställningarna är avsedda för avancerade användare. Se <a href=\"%"
+"(docs)s\">dokumentationen</a> för mer information. Observera att vi inte "
+"ansvarar för korrekt hantering av skatter i biljettbutiken. Vid osäkerhet, "
+"kontakta en jurist eller skatterådgivare."
 
 #: eventyay/control/templates/pretixcontrol/event/tax_edit.html:43
 msgid "Custom taxation rules"
@@ -24780,8 +24775,7 @@ msgstr ""
 #: eventyay/control/templates/pretixcontrol/item/delete.html:19
 #, python-format
 msgid "Are you sure you want to delete the product <strong>%(item)s</strong>?"
-msgstr ""
-"Är du säker på att du vill ta bort produkten <strong>%(item)s</strong>?"
+msgstr "Är du säker på att du vill ta bort produkten <strong>%(item)s</strong>?"
 
 #: eventyay/control/templates/pretixcontrol/item/delete.html:22
 #: eventyay/control/templates/pretixcontrol/items/quota_delete.html:24
@@ -28548,8 +28542,8 @@ msgid ""
 "Are you sure you want to delete the following waiting list entry "
 "<strong>%(entry)s</strong>?"
 msgstr ""
-"Är det säkert att följande post i väntelistan ska tas bort "
-"<strong>%(entry)s</strong>?"
+"Är det säkert att följande post i väntelistan ska tas bort <strong>%(entry)"
+"s</strong>?"
 
 #: eventyay/control/templates/pretixcontrol/waitinglist/index.html:18
 msgid ""
@@ -33760,8 +33754,8 @@ msgid ""
 msgstr ""
 "Hej!\n"
 "\n"
-"Vi är glada att kunna meddela att vi accepterar ditt förslag "
-"”{submission_title}”\n"
+"Vi är glada att kunna meddela att vi accepterar ditt förslag ”"
+"{submission_title}”\n"
 "till {event_name}. Klicka på den här länken för att bekräfta din medverkan:\n"
 "\n"
 "{confirmation_link}\n"
@@ -37151,8 +37145,7 @@ msgid "One session has <strong>not yet been assigned a track</strong>."
 msgid_plural ""
 "%(count)s sessions have <strong>not yet been assigned a track</strong>."
 msgstr[0] "En session har <strong>ännu inte tilldelats ett spår</strong>."
-msgstr[1] ""
-"%(count)s sessioner har <strong>ännu inte tilldelats ett spår</strong>."
+msgstr[1] "%(count)s sessioner har <strong>ännu inte tilldelats ett spår</strong>."
 
 #: eventyay/orga/templates/orga/schedule/release.html:95
 msgid "Warnings"
@@ -37732,8 +37725,7 @@ msgstr "Tillämpa %(count)s väntande ändringar?"
 msgid ""
 "Please confirm that you really want to change the state of these %(count)s "
 "proposals."
-msgstr ""
-"Bekräfta att statusen för dessa %(count)s förslag verkligen ska ändras."
+msgstr "Bekräfta att statusen för dessa %(count)s förslag verkligen ska ändras."
 
 #: eventyay/orga/templates/orga/submission/apply_pending.html:33
 #: eventyay/orga/templates/orga/submission/state_change.html:34
@@ -39081,8 +39073,7 @@ msgstr "Bekräfta som betald"
 
 #: eventyay/person/forms/user.py:49
 msgid "Please fill all fields of either the login or the registration form."
-msgstr ""
-"Fyll i alla fält i antingen inloggnings- eller registreringsformuläret."
+msgstr "Fyll i alla fält i antingen inloggnings- eller registreringsformuläret."
 
 #: eventyay/person/forms/user.py:66
 msgid ""
@@ -40196,8 +40187,8 @@ msgid ""
 "We could not find bank account information for the refund {refund_id}. It "
 "was marked as failed."
 msgstr ""
-"Det gick inte att hitta bankkontoinformation för återbetalningen "
-"{refund_id}. Den markerades som misslyckad."
+"Det gick inte att hitta bankkontoinformation för återbetalningen {refund_id}"
+". Den markerades som misslyckad."
 
 #: eventyay/plugins/banktransfer/views.py:779
 msgid "No valid orders have been found."
@@ -40551,8 +40542,7 @@ msgstr ""
 
 #: eventyay/plugins/sendmail/forms.py:573
 msgid "At least one recipient must remain. You cannot remove all recipients."
-msgstr ""
-"Minst en mottagare måste finnas kvar. Alla mottagare kan inte tas bort."
+msgstr "Minst en mottagare måste finnas kvar. Alla mottagare kan inte tas bort."
 
 #: eventyay/plugins/sendmail/forms.py:578
 msgid ""
@@ -40964,8 +40954,7 @@ msgstr "Ange callback-URL:en som:"
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:31
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:47
 msgid "Add the client ID and client secret to admin settings"
-msgstr ""
-"Lägg till klient-ID och klienthemlighet i administratörsinställningarna"
+msgstr "Lägg till klient-ID och klienthemlighet i administratörsinställningarna"
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:36
 msgid "II. GitHub OAuth Application"
