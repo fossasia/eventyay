@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
 "PO-Revision-Date: 2026-08-27 18:37+0000\n"
-"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
+"Last-Translator: தமிழ்நேரம் <tamilneram247@gmail.com>\n"
 "Language-Team: Tamil <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "ta/>\n"
 "Language: ta\n"
@@ -255,8 +255,8 @@ msgid ""
 "To see our schedule, please either enable JavaScript or go <a "
 "href=\"%(href)s\">here</a> for our NoJS schedule."
 msgstr ""
-"எங்கள் அட்டவணையைப் பார்க்க, சாவாகைஉரையை இயக்கவும் அல்லது NoJS அட்டவணைக்காக <a "
-"href=\"%(href)s\">இங்கே</a> செல்லவும்."
+"எங்கள் அட்டவணையைப் பார்க்க, சாவாகைஉரையை இயக்கவும் அல்லது NoJS அட்டவணைக்காக <a href=\"%(href)"
+"s\">இங்கே</a> செல்லவும்."
 
 #: eventyay/agenda/templates/agenda/featured.html:55
 msgid ""
@@ -2266,7 +2266,8 @@ msgstr "ஒவ்வொரு இன்வாய்ஸிலும் இன்�
 msgid ""
 "e.g. Thank you for your purchase! You can find more information on the event "
 "at ..."
-msgstr "எ.கா. வாங்கியதற்கு நன்றி! நிகழ்வு குறித்த கூடுதல் தகவலை இதில் காணலாம்..."
+msgstr ""
+"எ.கா. வாங்கியதற்கு நன்றி! நிகழ்வு குறித்த கூடுதல் தகவலை இதில் காணலாம்..."
 
 #: eventyay/base/configurations/default_setting.py:864
 msgid "Additional text"
@@ -5709,7 +5710,8 @@ msgstr ""
 
 #: eventyay/base/forms/user.py:17
 msgid "Please enter your current password if you want to change your password."
-msgstr "உங்கள் கடவுச்சொல்லை மாற்ற விரும்பினால், உங்கள் தற்போதைய கடவுச்சொல்லை உள்ளிடவும்."
+msgstr ""
+"உங்கள் கடவுச்சொல்லை மாற்ற விரும்பினால், உங்கள் தற்போதைய கடவுச்சொல்லை உள்ளிடவும்."
 
 #: eventyay/base/forms/user.py:18 eventyay/person/forms/auth.py:14
 #: eventyay/person/forms/profile.py:362
@@ -8662,8 +8664,7 @@ msgid ""
 msgstr ""
 "இந்த விருப்பம் அமைக்கப்பட்டால், இந்த தயாரிப்பு பண்டில் தயாரிப்புகளின் பகுதியாக மட்டுமே "
 "விற்கப்படும். இந்த தயாரிப்பை அட்-ஆன் தயாரிப்பாக பயன்படுத்த விரும்பினால், ஆனால் நிலையான "
-"பண்டில்களுக்காக மட்டும் அல்ல என்றால், இந்த விருப்பத்தை <strong>தேர்வு செய்ய வேண்டாம்</"
-"strong>!"
+"பண்டில்களுக்காக மட்டும் அல்ல என்றால், இந்த விருப்பத்தை <strong>தேர்வு செய்ய வேண்டாம்</strong>!"
 
 #: eventyay/base/models/product.py:501
 msgid "Allow product to be canceled or changed"
@@ -9904,7 +9905,8 @@ msgstr "கூடுதல் கட்டமைப்பு"
 msgid ""
 "Extra configuration for the stream (e.g., YouTube video ID, language "
 "settings)"
-msgstr "ச்ட்ரீமிற்கான கூடுதல் உள்ளமைவு (எ.கா., YouTube வீடியோ அடையாளம், மொழி அமைப்புகள்)"
+msgstr ""
+"ச்ட்ரீமிற்கான கூடுதல் உள்ளமைவு (எ.கா., YouTube வீடியோ அடையாளம், மொழி அமைப்புகள்)"
 
 #: eventyay/base/models/stream_schedule.py:60
 msgid "Stream Schedule"
@@ -10329,8 +10331,7 @@ msgid ""
 "approval."
 msgstr ""
 "செயல்படுத்தப்பட்டால், இந்த வவுச்சர் குறியீட்டை வைத்திருப்பவர் ஏற்பாட்டாளரின் ஒப்புதலுக்காகக் "
-"காத்திருக்காமல் டிக்கெட்டுகளை வாங்கலாம். இசைவு தேவைப்படும் தயாரிப்புகளுக்கு இது "
-"பொருந்தும்."
+"காத்திருக்காமல் டிக்கெட்டுகளை வாங்கலாம். இசைவு தேவைப்படும் தயாரிப்புகளுக்கு இது பொருந்தும்."
 
 #: eventyay/base/models/vouchers.py:147 eventyay/base/models/vouchers.py:575
 msgid "Price mode"
@@ -12788,7 +12789,8 @@ msgstr ""
 #: eventyay/base/settings.py:216
 msgid ""
 "You have to ask for attendee job titles if you want to make them required."
-msgstr "பங்கேற்பாளர் வேலைப் பட்டங்களைத் தேவைப்படுத்த விரும்பினால் அவற்றைக் கேட்க வேண்டும்."
+msgstr ""
+"பங்கேற்பாளர் வேலைப் பட்டங்களைத் தேவைப்படுத்த விரும்பினால் அவற்றைக் கேட்க வேண்டும்."
 
 #: eventyay/base/settings.py:222
 msgid "You have to ask for order email if you want to make it required."
@@ -13469,8 +13471,8 @@ msgid ""
 "Your proposal can’t be withdrawn at this time – please contact us if you "
 "need to withdraw your proposal!"
 msgstr ""
-"இந்த நேரத்தில் முன்மொழிவை திரும்பப் பெற முடியாது — முன்மொழிவை திரும்பப் பெற "
-"வேண்டுமானால் தொடர்பு கொள்ளவும்!"
+"இந்த நேரத்தில் முன்மொழிவை திரும்பப் பெற முடியாது — முன்மொழிவை திரும்பப் பெற வேண்டுமானால் "
+"தொடர்பு கொள்ளவும்!"
 
 #: eventyay/cfp/phrases.py:23
 msgid "Your session has been confirmed – we’re looking forward to seeing you!"
@@ -18119,7 +18121,8 @@ msgstr "இந்த விருப்பத்தை கட்டண ஆர்
 
 #: eventyay/control/forms/orders.py:186
 msgid "This option cannot be combined with only approval pending orders."
-msgstr "இந்த விருப்பத்தை இசைவு நிலுவையில் உள்ள ஆர்டர்களுடன் மட்டும் இணைக்க முடியாது."
+msgstr ""
+"இந்த விருப்பத்தை இசைவு நிலுவையில் உள்ள ஆர்டர்களுடன் மட்டும் இணைக்க முடியாது."
 
 #: eventyay/control/forms/orders.py:216
 msgid "Re-calculate taxes"
@@ -18442,7 +18445,8 @@ msgstr ""
 
 #: eventyay/control/forms/organizer_forms/device_form.py:47
 msgid "All events (including newly created and published ones)"
-msgstr "அனைத்து நிகழ்வுகளும் (புதிதாக உருவாக்கப்பட்ட மற்றும் வெளியிடப்பட்டவை உட்பட)"
+msgstr ""
+"அனைத்து நிகழ்வுகளும் (புதிதாக உருவாக்கப்பட்ட மற்றும் வெளியிடப்பட்டவை உட்பட)"
 
 #: eventyay/control/forms/organizer_forms/device_form.py:53
 msgid ""
@@ -20580,7 +20584,8 @@ msgstr "நிகழ்வு தரவை நீக்கு"
 
 #: eventyay/control/templates/control/event_clear.html:8
 msgid "Delete statistics, systemlog, chat messages, questions, …"
-msgstr "புள்ளிவிவரங்கள், கணினிபதிவு, அரட்டை செய்திகள், கேள்விகள் ஆகியவற்றை நீக்கு, …"
+msgstr ""
+"புள்ளிவிவரங்கள், கணினிபதிவு, அரட்டை செய்திகள், கேள்விகள் ஆகியவற்றை நீக்கு, …"
 
 #: eventyay/control/templates/control/event_clear.html:9
 msgid "Delete user accounts and audit logs"
@@ -21840,7 +21845,8 @@ msgstr "eventyay பதிப்பு:"
 #: eventyay/control/templates/pretixcontrol/admin/systemconfig.html:33
 #, python-format
 msgid "You can check for updates <a href=\"%(update_url)s\">here</a>."
-msgstr "நீங்கள் புதுப்பிப்புகளை <a href=\"%(update_url)s\">இங்கே</a> சரிபார்க்கலாம்."
+msgstr ""
+"நீங்கள் புதுப்பிப்புகளை <a href=\"%(update_url)s\">இங்கே</a> சரிபார்க்கலாம்."
 
 #: eventyay/control/templates/pretixcontrol/admin/systemconfig.html:42
 msgid "Settings have been loaded from:"
@@ -22524,9 +22530,8 @@ msgid ""
 "people from actually buying tickets."
 msgstr ""
 "உங்கள் நிகழ்வில் <strong>சோதனை முறை ஆர்டர்கள்</strong> உள்ளன; <strong>சோதனை முறை "
-"முடக்கப்பட்டிருந்தாலும்</strong>. அவை அறிக்கைகள் மற்றும் புள்ளிவிவரங்களில் தோன்றாமல், "
-"மேலும் மக்கள் உண்மையில் டிக்கெட்டுகளை வாங்குவதைத் தடுக்காமல் இருக்க, அந்த ஆர்டர்களை நீக்க "
-"வேண்டும்."
+"முடக்கப்பட்டிருந்தாலும்</strong>. அவை அறிக்கைகள் மற்றும் புள்ளிவிவரங்களில் தோன்றாமல், மேலும் "
+"மக்கள் உண்மையில் டிக்கெட்டுகளை வாங்குவதைத் தடுக்காமல் இருக்க, அந்த ஆர்டர்களை நீக்க வேண்டும்."
 
 #: eventyay/control/templates/pretixcontrol/base.html:395
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:365
@@ -22837,10 +22842,10 @@ msgid ""
 "are connected on the organizer level, you do not have to create a new device "
 "for every event but can reuse them over and over again."
 msgstr ""
-"தேவையான அமைப்பாளர்-நிலை அனுமதிகள் இருந்தால், புதிய சாதனங்களை கணக்குடன் இணைத்து, "
-"அவற்றைப் பயன்படுத்தி டிக்கெட்டுகளை சரிபார்க்கலாம். சாதனங்கள் அமைப்பாளர் நிலையிலேயே "
-"இணைக்கப்படுவதால், ஒவ்வொரு நிகழ்விற்கும் புதிய சாதனத்தை உருவாக்க வேண்டியதில்லை; அவற்றை "
-"மறுநிகழ்வில் பயன்படுத்தலாம்."
+"தேவையான அமைப்பாளர்-நிலை அனுமதிகள் இருந்தால், புதிய சாதனங்களை கணக்குடன் இணைத்து, அவற்றைப் "
+"பயன்படுத்தி டிக்கெட்டுகளை சரிபார்க்கலாம். சாதனங்கள் அமைப்பாளர் நிலையிலேயே இணைக்கப்படுவதால், "
+"ஒவ்வொரு நிகழ்விற்கும் புதிய சாதனத்தை உருவாக்க வேண்டியதில்லை; அவற்றை மறுநிகழ்வில் "
+"பயன்படுத்தலாம்."
 
 #: eventyay/control/templates/pretixcontrol/checkin/lists.html:43
 msgid "Your search did not match any check-in lists."
@@ -25676,7 +25681,8 @@ msgstr "ஒட்டு விருப்பங்கள்"
 #: eventyay/presale/templates/pretixpresale/event/checkout_questions.html:180
 #: eventyay/presale/templates/pretixpresale/event/order_modify.html:79
 msgid "Please select all fields you'd like to appear on your event badge."
-msgstr "உங்கள் நிகழ்வு பேட்சில் தோன்ற விரும்பும் அனைத்து புலங்களையும் தேர்ந்தெடுக்கவும்."
+msgstr ""
+"உங்கள் நிகழ்வு பேட்சில் தோன்ற விரும்பும் அனைத்து புலங்களையும் தேர்ந்தெடுக்கவும்."
 
 #: eventyay/control/templates/pretixcontrol/order/delete.html:4
 #: eventyay/control/templates/pretixcontrol/order/delete.html:8
@@ -29572,7 +29578,8 @@ msgstr "திரும்பப் பெறவும் அகற்றவு�
 
 #: eventyay/control/views/organizer_views/device_view.py:406
 msgid "All connected devices have been revoked and removed permanently."
-msgstr "இணைக்கப்பட்ட அனைத்து சாதனங்களும் திரும்பப் பெறப்பட்டு நிரந்தரமாக அகற்றப்பட்டன."
+msgstr ""
+"இணைக்கப்பட்ட அனைத்து சாதனங்களும் திரும்பப் பெறப்பட்டு நிரந்தரமாக அகற்றப்பட்டன."
 
 #: eventyay/control/views/organizer_views/gate_view.py:125
 msgid "The selected gate has been deleted."
@@ -33548,8 +33555,7 @@ msgid ""
 msgstr ""
 "ஆய்! \n"
 "\n"
-"உங்களைப் பற்றியும் உங்கள் முன்மொழிவைப் பற்றியும் சில வெளிப்படையான கேள்விகள் எங்களிடம் "
-"உள்ளன \n"
+"உங்களைப் பற்றியும் உங்கள் முன்மொழிவைப் பற்றியும் சில வெளிப்படையான கேள்விகள் எங்களிடம் உள்ளன \n"
 "உங்களிடம் பதில் கேட்க விரும்புகிறேன்: \n"
 "\n"
 "{questions} \n"
@@ -33614,8 +33620,8 @@ msgid ""
 msgstr ""
 "ஆய்! \n"
 "\n"
-"“{proposal_title}” என்ற தலைப்பில் {event_name} இன் முன்மொழிவில் நீங்கள் "
-"சேர்க்கப்பட்டீர்கள். \n"
+"“{proposal_title}” என்ற தலைப்பில் {event_name} இன் முன்மொழிவில் நீங்கள் சேர்க்கப்பட்டீர்கள். "
+"\n"
 "உங்களுக்காக ஒரு கணக்கு உருவாக்கப்பட்டது - உங்கள் கணக்கின் கடவுச்சொல்லை அமைக்க இந்த இணைப்பைப் "
 "பின்தொடரவும். \n"
 "\n"
@@ -33642,8 +33648,8 @@ msgid ""
 msgstr ""
 "ஆய்! \n"
 "\n"
-"“{proposal_title}” என்ற தலைப்பில் {event_name} இன் முன்மொழிவில் நீங்கள் "
-"சேர்க்கப்பட்டீர்கள். \n"
+"“{proposal_title}” என்ற தலைப்பில் {event_name} இன் முன்மொழிவில் நீங்கள் சேர்க்கப்பட்டீர்கள். "
+"\n"
 "உங்கள் பயனர் சுயவிவரத்தைத் திருத்த இந்த இணைப்பைப் பின்தொடரவும் மற்றும் உங்கள் முன்மொழிவின் "
 "நிலையைப் பார்க்கவும்: \n"
 "\n"
@@ -36653,7 +36659,8 @@ msgstr "ஒதுக்கீடுகளை இறக்குமதி செ�
 msgid "Or review the missing proposal here."
 msgid_plural "Or review the missing %(count)s proposals one-by-one."
 msgstr[0] "அல்லது விடுபட்ட திட்டத்தை இங்கே மதிப்பாய்வு செய்யவும்."
-msgstr[1] "அல்லது விடுபட்ட %(count)s முன்மொழிவுகளை ஒவ்வொன்றாக மதிப்பாய்வு செய்யவும்."
+msgstr[1] ""
+"அல்லது விடுபட்ட %(count)s முன்மொழிவுகளை ஒவ்வொன்றாக மதிப்பாய்வு செய்யவும்."
 
 #: eventyay/orga/templates/orga/review/bulk.html:31
 #: eventyay/orga/templates/orga/review/dashboard.html:41
@@ -36814,8 +36821,7 @@ msgid_plural ""
 "their session slots."
 msgstr[0] ""
 "இந்தப் புதிய அட்டவணையை வெளியிடும் போது, ச்பீக்கர்களுக்கு அவர்களின் அமர்வு இடங்களைப் பற்றிச் "
-"சொல்ல, <strong>ஒரு அறிவிப்பு மின்னஞ்சல் </strong> உருவாக்கப்பட்டு அவுட்பாக்சில் "
-"வைக்கப்படும்."
+"சொல்ல, <strong>ஒரு அறிவிப்பு மின்னஞ்சல் </strong> உருவாக்கப்பட்டு அவுட்பாக்சில் வைக்கப்படும்."
 msgstr[1] ""
 "இந்தப் புதிய அட்டவணையை வெளியிடும் போது, ச்பீக்கர்களுக்கு அவர்களின் அமர்வு இடங்களைப் பற்றி "
 "தெரிவிக்க, <strong>%(count)s அறிவிப்புகள் மின்னஞ்சல்களை </strong> உருவாக்கி, "
@@ -36865,7 +36871,8 @@ msgid "One session has <strong>not yet been assigned a track</strong>."
 msgid_plural ""
 "%(count)s sessions have <strong>not yet been assigned a track</strong>."
 msgstr[0] "ஒரு அமர்வுக்கு <strong>இன்னும் டிராக் ஒதுக்கப்படவில்லை</strong>."
-msgstr[1] "%(count)s அமர்வுகளுக்கு <strong>இன்னும் டிராக் ஒதுக்கப்படவில்லை</strong>."
+msgstr[1] ""
+"%(count)s அமர்வுகளுக்கு <strong>இன்னும் டிராக் ஒதுக்கப்படவில்லை</strong>."
 
 #: eventyay/orga/templates/orga/schedule/release.html:95
 msgid "Warnings"
@@ -38962,7 +38969,8 @@ msgstr ""
 msgid ""
 "This layout does not currently contain any dynamic text fields that can be "
 "customized."
-msgstr "இந்த தளவமைப்பில் தற்போது தனிப்பயனாக்கக்கூடிய மாறும் உரை புலங்கள் எதுவும் இல்லை."
+msgstr ""
+"இந்த தளவமைப்பில் தற்போது தனிப்பயனாக்கக்கூடிய மாறும் உரை புலங்கள் எதுவும் இல்லை."
 
 #: eventyay/plugins/badges/providers.py:9
 #, fuzzy
@@ -41143,8 +41151,10 @@ msgstr ""
 #, python-format
 msgid "You need to choose exactly one option from this category."
 msgid_plural "You need to choose %(min_count)s options from this category."
-msgstr[0] "இந்த வகையிலிருந்து ஒரு விருப்பத்தை நீங்கள் சரியாகத் தேர்ந்தெடுக்க வேண்டும்."
-msgstr[1] "இந்த வகையிலிருந்து %(min_count)s விருப்பங்களை நீங்கள் தேர்வு செய்ய வேண்டும்."
+msgstr[0] ""
+"இந்த வகையிலிருந்து ஒரு விருப்பத்தை நீங்கள் சரியாகத் தேர்ந்தெடுக்க வேண்டும்."
+msgstr[1] ""
+"இந்த வகையிலிருந்து %(min_count)s விருப்பங்களை நீங்கள் தேர்வு செய்ய வேண்டும்."
 
 #: eventyay/presale/templates/pretixpresale/event/checkout_addons.html:54
 #, python-format
@@ -41987,7 +41997,8 @@ msgstr "ஒப்புதலுக்குப் பிறகு, உங்க
 #, python-format
 msgid ""
 "You will receive an email once your request has been reviewed. %(suffix)s"
-msgstr "உங்கள் கோரிக்கை மதிப்பாய்வு செய்யப்பட்டவுடன் மின்னஞ்சலைப் பெறுவீர்கள். %(suffix)s"
+msgstr ""
+"உங்கள் கோரிக்கை மதிப்பாய்வு செய்யப்பட்டவுடன் மின்னஞ்சலைப் பெறுவீர்கள். %(suffix)s"
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:53
 msgid ""
