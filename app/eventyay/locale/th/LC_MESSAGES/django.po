@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
 "PO-Revision-Date: 2026-08-27 08:49+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Thai <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "th/>\n"
 "Language: th\n"
@@ -749,7 +749,8 @@ msgstr ""
 msgid ""
 "You are currently viewing the unreleased schedule preview. It may change at "
 "any time and is not visible to the public."
-msgstr "คุณกำลังดูเวอร์ชันกำหนดการที่แก้ไขได้ ซึ่งยังไม่เผยแพร่และอาจเปลี่ยนแปลงได้ตลอดเวลา."
+msgstr ""
+"คุณกำลังดูเวอร์ชันกำหนดการที่แก้ไขได้ ซึ่งยังไม่เผยแพร่และอาจเปลี่ยนแปลงได้ตลอดเวลา."
 
 #: eventyay/agenda/views/schedule.py:416 eventyay/multidomain/views.py:177
 #: eventyay/schedule/phrases.py:24
@@ -2907,8 +2908,8 @@ msgid ""
 "Sender address for outgoing emails. When using a custom sender, replies go "
 "to this address unless a Reply-To is set."
 msgstr ""
-"Reply-To address. หากการตั้งค่านี้ว่างและคุณไม่มีผู้ส่งแบบกำหนดเอง "
-"ที่อยู่อีเมลงานของคุณจะถูกใช้เป็นที่อยู่ Reply-To."
+"Reply-To address. หากการตั้งค่านี้ว่างและคุณไม่มีผู้ส่งแบบกำหนดเอง ที่อยู่อีเมลงานของคุณจะถูกใช้เ"
+"ป็นที่อยู่ Reply-To."
 
 #: eventyay/base/configurations/default_setting.py:1664
 #, fuzzy
@@ -3672,9 +3673,9 @@ msgid ""
 "(the center 1920 × 320 px will always be visible). Images will be "
 "automatically optimized to max 3000 px wide on save."
 msgstr ""
-"ภาพนี้จะแสดงที่ส่วนบนของหน้าผู้จัดทั้งหมด แทนที่สีหรือรูปแบบเริ่มต้น จัดตำแหน่งกึ่งกลางและไม่ยืด "
-"ทำให้ส่วนกลางยังมองเห็นได้บนหน้าจอขนาดเล็ก เราแนะนำภาพขนาด 1140 px กว้าง และ 120 px "
-"สูง (สามารถเพิ่มได้ด้วยการตั้งค่าด้านล่าง)"
+"ภาพนี้จะแสดงที่ส่วนบนของหน้าผู้จัดทั้งหมด แทนที่สีหรือรูปแบบเริ่มต้น จัดตำแหน่งกึ่งกลางและไม่ยืด ทำให้ส่"
+"วนกลางยังมองเห็นได้บนหน้าจอขนาดเล็ก เราแนะนำภาพขนาด 1140 px กว้าง และ 120 px สูง (สา"
+"มารถเพิ่มได้ด้วยการตั้งค่าด้านล่าง)"
 
 #: eventyay/base/configurations/default_setting.py:2282
 msgid "Social media image"
@@ -7406,7 +7407,8 @@ msgstr "กำหนดการ"
 #| "If you check this, the emails will be sent immediately, instead of being "
 #| "put in the outbox."
 msgid "If set, the email will be sent at this time instead of immediately."
-msgstr "หากคุณเลือกตัวเลือกนี้ อีเมลจะถูกส่งทันที แทนที่จะถูกเก็บไว้ในกล่องขาออก."
+msgstr ""
+"หากคุณเลือกตัวเลือกนี้ อีเมลจะถูกส่งทันที แทนที่จะถูกเก็บไว้ในกล่องขาออก."
 
 #: eventyay/base/models/mail.py:475
 msgid "This mail has been sent already. It cannot be sent again."
@@ -7867,7 +7869,8 @@ msgstr "ชำระโดยโอนเงินผ่านธนาคาร
 #, fuzzy
 #| msgid "Can only create a bank transfer refund from an existing payment."
 msgid "Import bank data and export refunds for bank transfer payments."
-msgstr "สามารถสร้างการคืนเงินแบบโอนผ่านธนาคารได้เฉพาะจากการชำระเงินที่มีอยู่เท่านั้น"
+msgstr ""
+"สามารถสร้างการคืนเงินแบบโอนผ่านธนาคารได้เฉพาะจากการชำระเงินที่มีอยู่เท่านั้น"
 
 #: eventyay/base/models/organizer.py:408
 msgid "Can perform check-ins"
@@ -8042,8 +8045,8 @@ msgid ""
 "Can review and provide feedback on exhibitor and sponsor proposals but "
 "cannot approve, reject, or otherwise manage them."
 msgstr ""
-"สามารถตรวจและให้ข้อเสนอแนะกับการส่งผลงานได้ "
-"แต่ไม่สามารถแก้ไขรายละเอียดหรือเปลี่ยนสถานะการส่งได้"
+"สามารถตรวจและให้ข้อเสนอแนะกับการส่งผลงานได้ แต่ไม่สามารถแก้ไขรายละเอียดหรือเปลี่ยนสถานะกา"
+"รส่งได้"
 
 #: eventyay/base/models/organizer.py:583
 msgid "Hide emails of applicants"
@@ -8382,10 +8385,9 @@ msgid ""
 "additional donations for your event. This is currently not supported for "
 "products that are bought as an add-on to other products."
 msgstr ""
-"หากเปิดใช้งานตัวเลือกนี้ ผู้ใช้สามารถกำหนดราคาด้วยตนเอง "
-"ราคาที่ตั้งไว้ด้านบนจะถูกตีความเป็นราคาขั้นต่ำที่ผู้ใช้ต้องกรอก "
-"คุณสามารถใช้เพื่อรับบริจาคเพิ่มเติมสำหรับงานของคุณ "
-"ขณะนี้ยังไม่รองรับสำหรับสินค้าที่ซื้อเป็นแอดออนของสินค้าอื่น"
+"หากเปิดใช้งานตัวเลือกนี้ ผู้ใช้สามารถกำหนดราคาด้วยตนเอง ราคาที่ตั้งไว้ด้านบนจะถูกตีความเป็นราคาขั้"
+"นต่ำที่ผู้ใช้ต้องกรอก คุณสามารถใช้เพื่อรับบริจาคเพิ่มเติมสำหรับงานของคุณ ขณะนี้ยังไม่รองรับสำหรับสินค้า"
+"ที่ซื้อเป็นแอดออนของสินค้าอื่น"
 
 #: eventyay/base/models/product.py:369
 #, fuzzy
@@ -15836,9 +15838,8 @@ msgid ""
 "reorder them — the first language (bold border) is used as your event's "
 "default language."
 msgstr ""
-"ผู้ใช้จะสามารถใช้ eventyay ในภาษาต่อไปนี้ "
-"และคุณจะสามารถจัดเตรียมข้อความทั้งหมดในภาษาเหล่านี้ได้ "
-"หากคุณไม่ได้จัดเตรียมข้อความในภาษาที่ผู้ใช้เลือก ข้อความนั้นจะถูกแสดงเป็นภาษาตั้งต้นของงานแทน"
+"ผู้ใช้จะสามารถใช้ eventyay ในภาษาต่อไปนี้ และคุณจะสามารถจัดเตรียมข้อความทั้งหมดในภาษาเหล่านี้"
+"ได้ หากคุณไม่ได้จัดเตรียมข้อความในภาษาที่ผู้ใช้เลือก ข้อความนั้นจะถูกแสดงเป็นภาษาตั้งต้นของงานแทน"
 
 #: eventyay/control/forms/event.py:111
 msgid "This is an event series"
@@ -16208,7 +16209,8 @@ msgid ""
 "If the registration contains attendees with email addresses different from "
 "the person who registers, the following email will be sent out to the "
 "attendees."
-msgstr "หากคำสั่งซื้อมีผู้เข้าร่วมที่ใช้อีเมลต่างจากผู้ที่สั่งตั๋ว อีเมลต่อไปนี้จะถูกส่งไปยังผู้เข้าร่วมเหล่านั้น"
+msgstr ""
+"หากคำสั่งซื้อมีผู้เข้าร่วมที่ใช้อีเมลต่างจากผู้ที่สั่งตั๋ว อีเมลต่อไปนี้จะถูกส่งไปยังผู้เข้าร่วมเหล่านั้น"
 
 #: eventyay/control/forms/event.py:1347 eventyay/plugins/sendmail/forms.py:310
 msgid "Text (sent by admin)"
@@ -16446,9 +16448,8 @@ msgid ""
 "Your customers will be instructed to pay the money manually. You can then "
 "mark them as paid."
 msgstr ""
-"ลูกค้าของคุณจะได้รับคำแนะนำให้โอนเงินเข้าบัญชีของคุณ "
-"จากนั้นคุณสามารถนำเข้ารายการเดินบัญชีธนาคารเพื่อประมวลผลการชำระเงินภายใน eventyay "
-"หรือทำเครื่องหมายว่าชำระเงินแล้วด้วยตนเอง"
+"ลูกค้าของคุณจะได้รับคำแนะนำให้โอนเงินเข้าบัญชีของคุณ จากนั้นคุณสามารถนำเข้ารายการเดินบัญชีธนาคา"
+"รเพื่อประมวลผลการชำระเงินภายใน eventyay หรือทำเครื่องหมายว่าชำระเงินแล้วด้วยตนเอง"
 
 #: eventyay/control/forms/event.py:1839 eventyay/control/forms/product.py:575
 #, fuzzy
@@ -22754,9 +22755,8 @@ msgid ""
 "Variation changes are configured per product in the product's \"Variations\" "
 "section."
 msgstr ""
-"การอนุญาตให้ผู้ใช้แก้ไขคำสั่งซื้อเป็นฟีเจอร์ที่กำลังพัฒนา ดังนั้น ณ "
-"ตอนนี้จึงทำได้เฉพาะการเปลี่ยนแปลงบางประเภทเท่านั้น (เช่น การเปลี่ยนตัวเลือกของสินค้า) "
-"อาจมีตัวเลือกเพิ่มเติมในภายหลัง"
+"การอนุญาตให้ผู้ใช้แก้ไขคำสั่งซื้อเป็นฟีเจอร์ที่กำลังพัฒนา ดังนั้น ณ ตอนนี้จึงทำได้เฉพาะการเปลี่ยนแปลงบา"
+"งประเภทเท่านั้น (เช่น การเปลี่ยนตัวเลือกของสินค้า) อาจมีตัวเลือกเพิ่มเติมในภายหลัง"
 
 #: eventyay/control/templates/pretixcontrol/event/component_link.html:8
 #: eventyay/eventyay_common/templates/eventyay_common/event/component_link.html:9
@@ -23461,7 +23461,8 @@ msgstr ""
 msgid ""
 "After the setup, please go to the Payment area and set up the PayPal "
 "connection."
-msgstr "หลังการตั้งค่า โปรดไปที่ส่วนการชำระเงินและตั้งค่าการเชื่อมต่อกับ Stripe."
+msgstr ""
+"หลังการตั้งค่า โปรดไปที่ส่วนการชำระเงินและตั้งค่าการเชื่อมต่อกับ Stripe."
 
 #: eventyay/control/templates/pretixcontrol/event/settings.html:7
 #: eventyay/control/templates/pretixcontrol/event/settings.html:13
@@ -26529,7 +26530,8 @@ msgstr "สแกนรหัสการกำหนดค่าต่อไป
 msgid ""
 "If your device does not support scanning a QR code, you can also enter the "
 "following information:"
-msgstr "หากแอป/อุปกรณ์ของคุณไม่รองรับการสแกน QR code คุณยังสามารถกรอกข้อมูลต่อไปนี้ได้:"
+msgstr ""
+"หากแอป/อุปกรณ์ของคุณไม่รองรับการสแกน QR code คุณยังสามารถกรอกข้อมูลต่อไปนี้ได้:"
 
 #: eventyay/control/templates/pretixcontrol/organizers/device_connect.html:40
 msgid "System URL:"
@@ -27731,8 +27733,8 @@ msgid ""
 "The following vouchers can't be deleted as they already have been redeemed "
 "or used in an order."
 msgstr ""
-"บัตรกำนัลต่อไปนี้ไม่สามารถลบได้ เนื่องจากถูกแลกไปแล้ว แต่จะถูกตั้งค่าเป็นสถานะ 'แลกแล้วทั้งหมด' "
-"แทน"
+"บัตรกำนัลต่อไปนี้ไม่สามารถลบได้ เนื่องจากถูกแลกไปแล้ว แต่จะถูกตั้งค่าเป็นสถานะ 'แลกแล้วทั้งหมด' แ"
+"ทน"
 
 #: eventyay/control/templates/pretixcontrol/vouchers/detail.html:16
 #, python-format
@@ -30684,9 +30686,9 @@ msgid ""
 "premium access or Swag. Manage attendees, design custom badges, and "
 "streamline event marketing by sending targeted emails."
 msgstr ""
-"ตั้งค่าและกำหนดค่าการจำหน่ายตั๋วสำหรับกิจกรรมและขายส่วนเสริม เช่น "
-"การเข้าถึงระดับพรีเมียมหรือของที่ระลึก จัดการผู้เข้าร่วมและผู้แสดงสินค้า "
-"ออกแบบป้ายชื่อแบบกำหนดเอง และปรับปรุงการตลาดของกิจกรรมด้วยการส่งอีเมลที่เจาะจงเป้าหมาย"
+"ตั้งค่าและกำหนดค่าการจำหน่ายตั๋วสำหรับกิจกรรมและขายส่วนเสริม เช่น การเข้าถึงระดับพรีเมียมหรือขอ"
+"งที่ระลึก จัดการผู้เข้าร่วมและผู้แสดงสินค้า ออกแบบป้ายชื่อแบบกำหนดเอง และปรับปรุงการตลาดของกิจก"
+"รรมด้วยการส่งอีเมลที่เจาะจงเป้าหมาย"
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:47
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:65
@@ -31339,8 +31341,8 @@ msgid ""
 "Permanently remove proposals, speaker profiles, and uploaded talk-related "
 "content."
 msgstr ""
-"ข้อมูลที่เกี่ยวข้องทั้งหมด เช่น ข้อเสนอ โปรไฟล์ผู้บรรยาย และไฟล์ที่อัปโหลด "
-"จะถูกลบและไม่สามารถกู้คืนได้"
+"ข้อมูลที่เกี่ยวข้องทั้งหมด เช่น ข้อเสนอ โปรไฟล์ผู้บรรยาย และไฟล์ที่อัปโหลด จะถูกลบและไม่สามารถกู้คืน"
+"ได้"
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:403
 #, fuzzy
@@ -33100,7 +33102,8 @@ msgstr "ส่งอีเมลเมื่อมีข้อเสนอให
 msgid ""
 "If this setting is checked, all event admins will receive an email "
 "notification for every received proposal."
-msgstr "หากเปิดใช้งาน ตัวระบบจะส่งอีเมลไปยังที่อยู่ผู้จัดสำหรับทุกข้อเสนอที่ได้รับ"
+msgstr ""
+"หากเปิดใช้งาน ตัวระบบจะส่งอีเมลไปยังที่อยู่ผู้จัดสำหรับทุกข้อเสนอที่ได้รับ"
 
 #: eventyay/orga/forms/cfp.py:70
 msgid "Allow submitters to share their proposal publicly"
@@ -33422,8 +33425,8 @@ msgstr ""
 #| "same time."
 msgid "You can activate either SSL or STARTTLS, but not both at the same time."
 msgstr ""
-"คุณสามารถเปิดใช้งานความปลอดภัยแบบ SSL หรือ STARTTLS ได้ครั้งละอย่างเดียว "
-"ไม่สามารถเปิดทั้งสองพร้อมกันได้."
+"คุณสามารถเปิดใช้งานความปลอดภัยแบบ SSL หรือ STARTTLS ได้ครั้งละอย่างเดียว ไม่สามารถเปิดทั้งส"
+"องพร้อมกันได้."
 
 #: eventyay/orga/forms/email.py:236
 msgid ""
@@ -34030,7 +34033,8 @@ msgstr "อีเมลต้องมีผู้รับอย่างน้
 msgid ""
 "If set, the email will be sent at this time. Time is interpreted in the "
 "event timezone."
-msgstr "หากคุณเลือกตัวเลือกนี้ อีเมลจะถูกส่งทันที แทนที่จะถูกเก็บไว้ในกล่องขาออก."
+msgstr ""
+"หากคุณเลือกตัวเลือกนี้ อีเมลจะถูกส่งทันที แทนที่จะถูกเก็บไว้ในกล่องขาออก."
 
 #: eventyay/orga/forms/mails.py:221
 msgid "Send immediately"
@@ -37424,8 +37428,8 @@ msgid ""
 "ALL related data, such as proposals, speaker profiles, and uploads, will "
 "also be deleted and cannot be restored."
 msgstr ""
-"ข้อมูลที่เกี่ยวข้องทั้งหมด เช่น ข้อเสนอ โปรไฟล์ผู้บรรยาย และไฟล์ที่อัปโหลด "
-"จะถูกลบและไม่สามารถกู้คืนได้"
+"ข้อมูลที่เกี่ยวข้องทั้งหมด เช่น ข้อเสนอ โปรไฟล์ผู้บรรยาย และไฟล์ที่อัปโหลด จะถูกลบและไม่สามารถกู้คืน"
+"ได้"
 
 #: eventyay/orga/views/event.py:395 eventyay/orga/views/event.py:427
 #, fuzzy
@@ -38339,9 +38343,9 @@ msgid ""
 "texts and QR codes at the positions of your choice."
 msgstr ""
 "คุณสามารถปรับแต่งการออกแบบตั๋วได้ด้วยตัวแก้ไขตั๋วแบบ PDF ของเรา ที่นั่นคุณสามารถอัปโหลดไฟล์ "
-"PDF เพื่อใช้เป็นพื้นหลังของตั๋ว แล้ววางข้อความและรหัส QR บนพื้นหลังในตำแหน่งที่ต้องการได้ "
-"ตัวแก้ไขใช้งานง่ายด้วยอินเทอร์เฟซแบบลากแล้วปล่อย "
-"แต่ต้องใช้เบราว์เซอร์รุ่นใหม่และการเชื่อมต่ออินเทอร์เน็ตที่เสถียร"
+"PDF เพื่อใช้เป็นพื้นหลังของตั๋ว แล้ววางข้อความและรหัส QR บนพื้นหลังในตำแหน่งที่ต้องการได้ ตัวแก้ไขใ"
+"ช้งานง่ายด้วยอินเทอร์เฟซแบบลากแล้วปล่อย แต่ต้องใช้เบราว์เซอร์รุ่นใหม่และการเชื่อมต่ออินเทอร์เน็ตที่เ"
+"สถียร"
 
 #: eventyay/plugins/badges/templates/pretixplugins/badges/form.html:12
 #, fuzzy
@@ -39481,7 +39485,8 @@ msgstr "แก้ไขรายการที่อยู่อีเมลข
 msgid ""
 "Any changes to the Reply-To field apply only to this queued email. If left "
 "empty, the event's default Reply-To will be used."
-msgstr "การเปลี่ยนแปลงใดๆ ในฟิลด์ Reply-To จะมีผลเฉพาะกับอีเมลที่อยู่ในคิวนี้เท่านั้น."
+msgstr ""
+"การเปลี่ยนแปลงใดๆ ในฟิลด์ Reply-To จะมีผลเฉพาะกับอีเมลที่อยู่ในคิวนี้เท่านั้น."
 
 #: eventyay/plugins/sendmail/forms.py:502
 msgid "Any changes to the BCC field will apply only to this queued email."
@@ -41909,9 +41914,8 @@ msgid ""
 "confirmation email. On the event page there is also a link to join online "
 "sessions."
 msgstr ""
-"นี่คือกิจกรรมที่ใช้บัตร หากคุณสั่งบัตรในฐานะผู้เยี่ยมชม "
-"คุณจะไม่มีบัญชีแต่ยังสามารถเข้าถึงบัตรได้โดยใช้ลิงก์ลับในอีเมลยืนยันบัตร "
-"ในหน้าบัตรยังมีลิงก์สำหรับเข้าร่วมเซสชันออนไลน์ด้วย"
+"นี่คือกิจกรรมที่ใช้บัตร หากคุณสั่งบัตรในฐานะผู้เยี่ยมชม คุณจะไม่มีบัญชีแต่ยังสามารถเข้าถึงบัตรได้โดยใช้ลิง"
+"ก์ลับในอีเมลยืนยันบัตร ในหน้าบัตรยังมีลิงก์สำหรับเข้าร่วมเซสชันออนไลน์ด้วย"
 
 #: eventyay/presale/templates/pretixpresale/fragment_join_online_video.html:13
 #, fuzzy
@@ -41921,7 +41925,8 @@ msgstr ""
 msgid ""
 "As a registered attendee, please also check your email for the unique link "
 "to join online sessions."
-msgstr "ในฐานะผู้ถือบัตร กรุณาตรวจสอบอีเมลของคุณเพื่อหาลิงก์เฉพาะสำหรับเข้าร่วมเซสชันออนไลน์"
+msgstr ""
+"ในฐานะผู้ถือบัตร กรุณาตรวจสอบอีเมลของคุณเพื่อหาลิงก์เฉพาะสำหรับเข้าร่วมเซสชันออนไลน์"
 
 #: eventyay/presale/templates/pretixpresale/fragment_join_online_video.html:17
 msgid ""
