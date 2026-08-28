@@ -1444,7 +1444,6 @@ class StripePaymentProvider(BasePaymentProvider):
     verbose_name = _('Stripe')
     public_name = _('Credit card (Stripe)')
     abort_pending_allowed = True
-    is_implicit = True
 
     @property
     def is_enabled(self) -> bool:
@@ -1533,6 +1532,8 @@ class StripePaymentProvider(BasePaymentProvider):
                 api_key=secret_key,
             )
             if not (getattr(charge, 'paid', False) is True and getattr(charge, 'status', '') == 'succeeded'):
+                payment.state = OrderPayment.PAYMENT_STATE_FAILED
+                payment.save(update_fields=['state'])
                 raise PaymentException(_('Payment was not completed successfully.'))
 
             payment.info = json.dumps({'charge_id': charge.id, 'paid': charge.paid, 'status': charge.status})
@@ -1540,9 +1541,13 @@ class StripePaymentProvider(BasePaymentProvider):
 
             payment.confirm(send_mail=True, lock=False)
         except stripe.error.CardError as e:
+            payment.state = OrderPayment.PAYMENT_STATE_FAILED
+            payment.save(update_fields=['state'])
             raise PaymentException(_('Card error: ') + str(e.user_message or e))
         except stripe.error.StripeError as e:
             logger.warning(f'Stripe error during payment for order {payment.order.code}: {e}')
+            payment.state = OrderPayment.PAYMENT_STATE_FAILED
+            payment.save(update_fields=['state'])
             raise PaymentException(_('Payment processing error: ') + str(e.user_message or e))
 
 

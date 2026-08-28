@@ -105,7 +105,16 @@
                     </h3>
                     <button type="button" class="meetup-payment-close" aria-label="{% trans 'Close' %}">&times;</button>
                 </div>
-                <form method="post" action="{% eventurl request.event 'presale:event.rsvp' %}" class="meetup-payment-form" data-stripe-publishable-key="{{ stripe_publishable_key }}" novalidate>
+                <form method="post" action="{% eventurl request.event 'presale:event.rsvp' %}" class="meetup-payment-form"
+                      data-stripe-publishable-key="{{ stripe_publishable_key }}"
+                      data-msg-name-required="{% trans 'Please enter your full name.' %}"
+                      data-msg-email-required="{% trans 'Please enter a valid email address.' %}"
+                      data-msg-unavailable="{% trans 'Card payment is unavailable. Please refresh the page and try again.' %}"
+                      data-msg-processing="{% trans 'Processing payment...' %}"
+                      data-msg-card-failed="{% trans 'Card payment failed.' %}"
+                      data-msg-error="{% trans 'Unable to process card details. Please try again.' %}"
+                      data-msg-processing-error="{% trans 'Payment processing error:' %}"
+                      novalidate>
                     {% csrf_token %}
                     <input type="hidden" name="stripe_token" id="id_stripe_token" value="">
                     <div class="meetup-payment-body">

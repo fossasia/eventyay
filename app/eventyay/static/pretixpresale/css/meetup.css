@@ -530,3 +530,14 @@
 .btn-spinner.hidden {
     display: none;
 }
+
+.modal-backdrop,
+.modal-backdrop.in {
+    z-index: 1200;
+}
+
+#stripeConfigModal,
+#cropperModal,
+.modal.in {
+    z-index: 1300;
+}

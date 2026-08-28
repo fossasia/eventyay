@@ -233,8 +233,10 @@ class EventCommonSettingsForm(SettingsForm):
                 decimal_places=2,
                 max_digits=10,
                 label=_('Registration fee amount'),
-                help_text=_('Fee charged to attendees when registering for this meetup. Set to 0.00 for free registration.'),
-                widget=forms.NumberInput(attrs={'placeholder': _('0.00'), 'step': '0.01'}),
+                help_text=_('Fee charged to attendees when registering for this meetup (in {currency}). Set to 0.00 for free registration.').format(
+                    currency=self.obj.currency
+                ),
+                widget=forms.NumberInput(attrs={'placeholder': _('0.00 ({currency})').format(currency=self.obj.currency), 'step': '0.01'}),
             )
             if product:
                 self.initial['registration_fee'] = product.default_price or Decimal('0.00')
@@ -253,7 +255,7 @@ class EventCommonSettingsForm(SettingsForm):
                 label=_('Secret key'),
                 required=False,
                 validators=(StripeKeyValidator(['sk_live_', 'sk_test_', 'rk_live_', 'rk_test_']),),
-                widget=forms.PasswordInput(attrs={'placeholder': _('Secret key'), 'autocomplete': 'new-password'}),
+                widget=forms.PasswordInput(render_value=True, attrs={'placeholder': _('Secret key'), 'autocomplete': 'new-password'}),
             )
             self.fields['payment_stripe_merchant_country'] = forms.ChoiceField(
                 label=_('Merchant country'),

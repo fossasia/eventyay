@@ -1,7 +1,9 @@
 from datetime import timedelta
 from decimal import Decimal
+from unittest.mock import MagicMock, patch
 
 import pytest
+import stripe
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.contrib.sessions.middleware import SessionMiddleware
@@ -13,7 +15,7 @@ from eventyay.base.meetup import (
     get_rsvp_product_and_quota,
     provision_meetup_event,
 )
-from eventyay.base.models import Event, Order, OrderPosition
+from eventyay.base.models import Event, Order, OrderPayment, OrderPosition
 from eventyay.base.payment import StripePaymentProvider
 from eventyay.eventyay_common.forms.event import EventCommonSettingsForm
 from eventyay.presale.views.event import EventIndex, JoinOnlineVideoView
@@ -301,3 +303,97 @@ def test_stripe_payment_provider_is_allowed_only_for_meetups(meetup_event, organ
     standard_provider = StripePaymentProvider(standard_event)
     assert standard_provider.is_enabled is True
     assert standard_provider.is_allowed(standard_req) is False
+
+
+@pytest.mark.django_db
+@scopes_disabled()
+def test_paid_rsvp_success_creates_paid_order(meetup_event, rf):
+    """Paid RSVP successfully charges Stripe, confirms payment, and marks order paid."""
+    product, quota = get_rsvp_product_and_quota(meetup_event)
+    product.default_price = Decimal('25.00')
+    product.save(update_fields=['default_price'])
+
+    meetup_event.settings.set('payment_stripe__enabled', True)
+    meetup_event.settings.set('payment_stripe_publishable_key', 'pk_test_123')
+    meetup_event.settings.set('payment_stripe_secret_key', 'sk_test_123')
+    meetup_event.settings.set('require_registered_account_for_tickets', False)
+
+    req = rf.post(
+        f'/{meetup_event.slug}/rsvp',
+        data={
+            'attendee_name': 'Paid Attendee',
+            'attendee_email': 'paid_attendee@example.com',
+            'stripe_token': 'tok_visa',
+        },
+    )
+    req.event = meetup_event
+    req.LANGUAGE_CODE = 'en'
+    req.user = AnonymousUser()
+    SessionMiddleware(lambda r: None).process_request(req)
+    req.session.save()
+    setattr(req, '_messages', FallbackStorage(req))
+
+    mock_charge = MagicMock()
+    mock_charge.id = 'ch_test_paid_123'
+    mock_charge.paid = True
+    mock_charge.status = 'succeeded'
+
+    with patch('stripe.Charge.create', return_value=mock_charge) as mock_create:
+        view = MeetupRsvpView()
+        response = view.post(req)
+        assert response.status_code == 302
+        mock_create.assert_called_once()
+
+    order = Order.objects.get(event=meetup_event, email='paid_attendee@example.com')
+    assert order.status == Order.STATUS_PAID
+    assert order.total == Decimal('25.00')
+
+    payment = order.payments.first()
+    assert payment.state == OrderPayment.PAYMENT_STATE_CONFIRMED
+    assert payment.provider == 'stripe'
+
+
+@pytest.mark.django_db
+@scopes_disabled()
+def test_paid_rsvp_card_error_cancels_order_and_sets_payment_failed(meetup_event, rf):
+    """CardError during Stripe charge cancels order and marks payment as FAILED."""
+    product, quota = get_rsvp_product_and_quota(meetup_event)
+    product.default_price = Decimal('15.00')
+    product.save(update_fields=['default_price'])
+
+    meetup_event.settings.set('payment_stripe__enabled', True)
+    meetup_event.settings.set('payment_stripe_publishable_key', 'pk_test_123')
+    meetup_event.settings.set('payment_stripe_secret_key', 'sk_test_123')
+    meetup_event.settings.set('require_registered_account_for_tickets', False)
+
+    req = rf.post(
+        f'/{meetup_event.slug}/rsvp',
+        data={
+            'attendee_name': 'Declined User',
+            'attendee_email': 'declined@example.com',
+            'stripe_token': 'tok_declined',
+        },
+    )
+    req.event = meetup_event
+    req.LANGUAGE_CODE = 'en'
+    req.user = AnonymousUser()
+    SessionMiddleware(lambda r: None).process_request(req)
+    req.session.save()
+    setattr(req, '_messages', FallbackStorage(req))
+
+    card_err = stripe.error.CardError(
+        message='Your card was declined.',
+        param='card_number',
+        code='card_declined',
+    )
+
+    with patch('stripe.Charge.create', side_effect=card_err):
+        view = MeetupRsvpView()
+        response = view.post(req)
+        assert response.status_code == 302
+
+    order = Order.objects.get(event=meetup_event, email='declined@example.com')
+    assert order.status == Order.STATUS_CANCELED
+
+    payment = order.payments.first()
+    assert payment.state == OrderPayment.PAYMENT_STATE_FAILED

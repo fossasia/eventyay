@@ -1991,7 +1991,7 @@ class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
         required=False,
         help_text=_('Your Stripe secret key (sk_live_..., sk_test_..., rk_live_..., or rk_test_...).'),
         validators=(StripeKeyValidator(['sk_live_', 'sk_test_', 'rk_live_', 'rk_test_']),),
-        widget=forms.PasswordInput(attrs={'placeholder': _('Secret key'), 'autocomplete': 'new-password'}),
+        widget=forms.PasswordInput(render_value=True, attrs={'placeholder': _('Secret key'), 'autocomplete': 'new-password'}),
     )
     payment_stripe_merchant_country = forms.ChoiceField(
         label=_('Merchant country'),
@@ -2028,6 +2028,13 @@ class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
             currency_field.required = False
             if not self.initial.get('currency'):
                 self.initial['currency'] = self._default_currency()
+
+        event_currency = self.initial.get('currency') or (self.instance.currency if getattr(self, 'instance', None) and getattr(self.instance, 'currency', None) else self._default_currency())
+        if 'registration_fee' in self.fields:
+            self.fields['registration_fee'].help_text = _(
+                'Fee charged to attendees when registering for this meetup (in {currency}).'
+            ).format(currency=event_currency)
+            self.fields['registration_fee'].widget.attrs['placeholder'] = _('e.g. 10.00 ({currency})').format(currency=event_currency)
 
         if self.initial.get('video_type') and self.initial.get('location'):
             self.initial['location_type'] = LOCATION_HYBRID
@@ -2129,6 +2136,9 @@ class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
             cleaned_data['payment_stripe_publishable_key'] = ''
             cleaned_data['payment_stripe_secret_key'] = ''
             cleaned_data['payment_stripe_merchant_country'] = ''
+            for f in ('registration_fee', 'payment_stripe_publishable_key', 'payment_stripe_secret_key', 'payment_stripe_merchant_country'):
+                if f in self._errors:
+                    del self._errors[f]
         elif fee_type == REGISTRATION_FEE_PAID:
             fee = cleaned_data.get('registration_fee')
             if not fee or fee <= Decimal('0.00'):

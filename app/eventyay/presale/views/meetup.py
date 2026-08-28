@@ -221,6 +221,8 @@ class MeetupRsvpView(EventViewMixin, View):
                 with scope(organizer=request.event.organizer):
                     order.status = Order.STATUS_CANCELED
                     order.save(update_fields=['status'])
+                    payment.state = OrderPayment.PAYMENT_STATE_FAILED
+                    payment.save(update_fields=['state'])
                 messages.error(request, _('Payment was not completed successfully. Please try again.'))
                 return self._redirect_to_index(request)
 
@@ -238,12 +240,16 @@ class MeetupRsvpView(EventViewMixin, View):
                         logger.exception(f'Failed to auto-refund charge {charge.id} for order {order.code}: {refund_exc}')
                     order.status = Order.STATUS_CANCELED
                     order.save(update_fields=['status'])
+                    payment.state = OrderPayment.PAYMENT_STATE_FAILED
+                    payment.save(update_fields=['state'])
                     messages.error(request, _('Payment could not be completed. Any charge has been automatically refunded.'))
                     return self._redirect_to_index(request)
         except stripe.error.CardError as e:
             with scope(organizer=request.event.organizer):
                 order.status = Order.STATUS_CANCELED
                 order.save(update_fields=['status'])
+                payment.state = OrderPayment.PAYMENT_STATE_FAILED
+                payment.save(update_fields=['state'])
             messages.error(request, _('Payment failed: ') + str(e.user_message or e))
             return self._redirect_to_index(request)
         except stripe.error.StripeError as e:
@@ -251,6 +257,8 @@ class MeetupRsvpView(EventViewMixin, View):
             with scope(organizer=request.event.organizer):
                 order.status = Order.STATUS_CANCELED
                 order.save(update_fields=['status'])
+                payment.state = OrderPayment.PAYMENT_STATE_FAILED
+                payment.save(update_fields=['state'])
             messages.error(request, _('Payment processing error: ') + str(e.user_message or e))
             return self._redirect_to_index(request)
         except Exception as e:
@@ -258,6 +266,8 @@ class MeetupRsvpView(EventViewMixin, View):
             with scope(organizer=request.event.organizer):
                 order.status = Order.STATUS_CANCELED
                 order.save(update_fields=['status'])
+                payment.state = OrderPayment.PAYMENT_STATE_FAILED
+                payment.save(update_fields=['state'])
             messages.error(request, _('An unexpected error occurred while processing your payment. Please try again.'))
             return self._redirect_to_index(request)
 

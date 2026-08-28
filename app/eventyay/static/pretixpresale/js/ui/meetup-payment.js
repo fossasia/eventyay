@@ -23,6 +23,13 @@ function initMeetupPayment() {
     const originalBtnText = btnText ? btnText.textContent : 'Pay now';
     const errorAlert = form.querySelector('#meetupPaymentErrorAlert');
     const stripePublishableKey = form.dataset.stripePublishableKey || '';
+    const msgNameRequired = form.dataset.msgNameRequired || 'Please enter your full name.';
+    const msgEmailRequired = form.dataset.msgEmailRequired || 'Please enter a valid email address.';
+    const msgUnavailable = form.dataset.msgUnavailable || 'Card payment is unavailable. Please refresh the page and try again.';
+    const msgProcessing = form.dataset.msgProcessing || 'Processing payment...';
+    const msgCardFailed = form.dataset.msgCardFailed || 'Card payment failed.';
+    const msgError = form.dataset.msgError || 'Unable to process card details. Please try again.';
+    const msgProcessingError = form.dataset.msgProcessingError || 'Payment processing error: ';
 
     let stripe = null;
     let elements = null;
@@ -40,7 +47,7 @@ function initMeetupPayment() {
             btnSpinner.classList.toggle('hidden', !loading);
         }
         if (btnText) {
-            btnText.textContent = loading ? ' Processing payment...' : originalBtnText;
+            btnText.textContent = loading ? ` ${msgProcessing}` : originalBtnText;
         }
     }
 
@@ -159,13 +166,13 @@ function initMeetupPayment() {
 
         if (nameInput && !nameInput.value.trim()) {
             e.preventDefault();
-            showError('Please enter your full name.');
+            showError(msgNameRequired);
             nameInput.focus();
             return;
         }
         if (emailInput && !emailInput.value.trim()) {
             e.preventDefault();
-            showError('Please enter a valid email address.');
+            showError(msgEmailRequired);
             emailInput.focus();
             return;
         }
@@ -176,7 +183,7 @@ function initMeetupPayment() {
 
         if (!stripe || !cardNumber || !tokenInput) {
             e.preventDefault();
-            showError('Card payment is unavailable. Please refresh the page and try again.');
+            showError(msgUnavailable);
             return;
         }
 
@@ -195,21 +202,21 @@ function initMeetupPayment() {
                 if (attempt !== paymentAttempt) return;
 
                 if (result.error) {
-                    showError(result.error.message || 'Card payment failed.');
+                    showError(result.error.message || msgCardFailed);
                     isSubmitting = false;
                     setSubmitLoading(false);
                 } else if (result.token && result.token.id) {
                     tokenInput.value = result.token.id;
                     form.submit();
                 } else {
-                    showError('Unable to process card details. Please try again.');
+                    showError(msgError);
                     isSubmitting = false;
                     setSubmitLoading(false);
                 }
             })
             .catch((err) => {
                 if (attempt !== paymentAttempt) return;
-                showError('Payment processing error: ' + (err.message || err));
+                showError(`${msgProcessingError} ${err.message || err}`);
                 isSubmitting = false;
                 setSubmitLoading(false);
             });
