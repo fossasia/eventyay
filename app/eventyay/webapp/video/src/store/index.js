@@ -53,6 +53,7 @@ export default new Vuex.Store({
 				.map((d) => normalizeIframeConsentDomain(d))
 				.filter(Boolean)
 		),
+		interpretationStreamsByRoom: {},
 		youtubeTranslationsByRoom: {}
 	},
 	getters: {
@@ -123,12 +124,21 @@ export default new Vuex.Store({
 		updateNow(state) {
 			state.now = moment()
 		},
+		updateInterpretationAudio(state, {roomId, interpretation}) {
+			if (!roomId) return
+			state.interpretationStreamsByRoom = {
+				...state.interpretationStreamsByRoom,
+				[roomId]: interpretation
+			}
+			state.youtubeTranslationsByRoom = state.interpretationStreamsByRoom
+		},
 		updateYoutubeTransAudio(state, {roomId, youtubeTranslation}) {
 			if (!roomId) return
-			state.youtubeTranslationsByRoom = {
-				...state.youtubeTranslationsByRoom,
+			state.interpretationStreamsByRoom = {
+				...state.interpretationStreamsByRoom,
 				[roomId]: youtubeTranslation
 			}
+			state.youtubeTranslationsByRoom = state.interpretationStreamsByRoom
 		},
 		setStreamPollInterval(state, streamPollInterval) {
 			state.streamPollInterval = streamPollInterval

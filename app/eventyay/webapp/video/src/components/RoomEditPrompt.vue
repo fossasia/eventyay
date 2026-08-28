@@ -90,9 +90,19 @@ import ChannelZoom from 'views/admin/rooms/types-edit/channel-zoom'
 import ChannelRoulette from 'views/admin/rooms/types-edit/channel-roulette'
 import PageLanding from 'views/admin/rooms/types-edit/page-landing'
 import SidebarAddons from 'views/admin/rooms/types-edit/SidebarAddons'
+import {
+	cloneLanguageStreamEntries,
+	fetchInterpretationLanguageStreams,
+	saveInterpretationLanguageStreams,
+} from 'lib/interpretation-language-streams'
 
 export default {
 	components: { Prompt, SidebarAddons },
+	provide () {
+		return {
+			interpretationAdmin: this.interpretationAdmin,
+		}
+	},
 	props: {
 		room: {
 			type: Object,
@@ -115,6 +125,12 @@ export default {
 			deletingRoomName: '',
 			deleting: false,
 			deleteError: null,
+			interpretationAdmin: {
+				usePluginStreams: false,
+				languageStreams: [],
+				loaded: false,
+				streamsLoadFailed: false,
+			},
 			typeComponents: markRaw({
 				stage: Stage,
 				'page-landing': PageLanding,
@@ -183,6 +199,7 @@ export default {
 	},
 	async created () {
 		await this.fetchConfig()
+		await this.loadInterpretationLanguageStreams()
 	},
 	methods: {
 		async fetchConfig () {
@@ -197,6 +214,34 @@ export default {
 					: (err.message || String(err))
 			} finally {
 				this.loading = false
+			}
+		},
+		async loadInterpretationLanguageStreams () {
+			if (!this.config?.id) return
+			this.interpretationAdmin.streamsLoadFailed = false
+			try {
+				const data = await fetchInterpretationLanguageStreams(
+					this.$store,
+					this.config.id
+				)
+				this.interpretationAdmin.usePluginStreams = Boolean(
+					data.use_plugin_language_streams
+				)
+				this.config.interpretation_use_plugin_streams = this.interpretationAdmin.usePluginStreams
+				if (this.interpretationAdmin.usePluginStreams) {
+					this.interpretationAdmin.languageStreams = cloneLanguageStreamEntries(
+						data.language_streams
+					)
+				}
+			} catch (error) {
+				console.warn('interpretation language streams unavailable', error)
+				this.interpretationAdmin.streamsLoadFailed = true
+				this.interpretationAdmin.usePluginStreams = Boolean(
+					this.config.interpretation_use_plugin_streams
+				)
+				this.interpretationAdmin.languageStreams = []
+			} finally {
+				this.interpretationAdmin.loaded = true
 			}
 		},
 		changeType (type) {
@@ -243,14 +288,30 @@ export default {
 			this.$refs.settings?.beforeSave?.()
 			this.saving = true
 			try {
+				const roomId = this.config.id
 				await api.call('room.config.patch', {
-					room: this.config.id,
+					room: roomId,
 					name: this.config.name,
 					description: this.config.description,
 					picture: this.config.picture,
 					force_join: this.config.force_join,
 					module_config: this.config.module_config
 				})
+				if (this.$refs.settings?.saveStreamSchedules) {
+					await this.$refs.settings.saveStreamSchedules(roomId)
+				}
+				if (
+					this.interpretationAdmin.usePluginStreams &&
+					roomId &&
+					this.interpretationAdmin.loaded &&
+					!this.interpretationAdmin.streamsLoadFailed
+				) {
+					await saveInterpretationLanguageStreams(
+						this.$store,
+						roomId,
+						this.interpretationAdmin.languageStreams
+					)
+				}
 				this.saving = false
 				this.$emit('close')
 			} catch (err) {

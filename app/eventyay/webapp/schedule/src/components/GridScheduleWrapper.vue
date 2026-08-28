@@ -2,6 +2,7 @@
 .c-grid-schedule-wrapper
 	grid-schedule(
 		v-for="group in gridGroups",
+		ref="gridSchedules",
 		:key="group.days.join('-')",
 		:sessions="group.sessions",
 		:rooms="group.rooms",
@@ -116,6 +117,14 @@ export default {
 				group.sessions = Array.from(group.sessions);
 			}
 			return mergedGroups
+		}
+	},
+	methods: {
+		scrollToNow() {
+			const grids = this.$refs.gridSchedules || []
+			for (const grid of grids) {
+				grid?.scrollToNow?.()
+			}
 		}
 	},
 }
