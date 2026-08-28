@@ -3,6 +3,7 @@ from decimal import Decimal
 
 import pytest
 from django.contrib.auth.models import AnonymousUser
+from django.contrib.messages.storage.fallback import FallbackStorage
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.utils import timezone
 from django.utils.crypto import get_random_string
@@ -13,6 +14,7 @@ from eventyay.base.meetup import (
     provision_meetup_event,
 )
 from eventyay.base.models import Event, Order, OrderPosition
+from eventyay.base.payment import StripePaymentProvider
 from eventyay.eventyay_common.forms.event import EventCommonSettingsForm
 from eventyay.presale.views.event import EventIndex, JoinOnlineVideoView
 from eventyay.presale.views.meetup import (
@@ -121,25 +123,28 @@ def test_presale_shows_registration_closed_when_quota_full(meetup_event, rf):
 @pytest.mark.django_db
 @scopes_disabled()
 def test_create_rsvp_order_blocks_when_quota_exhausted(meetup_event, rf):
-    """_create_rsvp_order returns None when locked availability check fails."""
+    """Free RSVP is blocked and redirects when quota is exhausted."""
     product, quota = get_rsvp_product_and_quota(meetup_event)
     quota.size = 1
     quota.save(update_fields=['size'])
 
     create_paid_order(meetup_event, product, email='first@example.com')
 
-    request = rf.post(f'/{meetup_event.slug}/rsvp')
+    request = rf.post(
+        f'/{meetup_event.slug}/rsvp',
+        data={'attendee_name': 'Second Attendee', 'attendee_email': 'second@example.com'},
+    )
     request.event = meetup_event
     request.LANGUAGE_CODE = 'en'
+    request.user = AnonymousUser()
+    middleware = SessionMiddleware(lambda r: None)
+    middleware.process_request(request)
+    setattr(request, '_messages', FallbackStorage(request))
 
     view = MeetupRsvpView()
-    order = view._create_rsvp_order(
-        request,
-        product,
-        email='second@example.com',
-        name='Second Attendee',
-    )
-    assert order is None
+    response = view.post(request)
+    assert response.status_code == 302
+    assert Order.objects.filter(event=meetup_event, email='second@example.com').exists() is False
 
 
 @pytest.mark.django_db
@@ -212,3 +217,87 @@ def test_anonymous_guest_authz_by_session_order_code(meetup_event, rf):
     allowed, _, order = view.validate_access(request)
     assert allowed is True
     assert order.code == guest_order.code
+
+
+@pytest.mark.django_db
+@scopes_disabled()
+def test_provision_meetup_event_with_registration_fee(meetup_event):
+    """Provisioning meetup event sets product price and Stripe settings."""
+    provision_meetup_event(
+        meetup_event,
+        registration_fee=Decimal('15.50'),
+        payment_stripe_publishable_key='pk_test_123',
+        payment_stripe_secret_key='sk_test_456',
+        payment_stripe_merchant_country='US',
+    )
+    product, quota = get_rsvp_product_and_quota(meetup_event)
+    assert product.default_price == Decimal('15.50')
+    assert meetup_event.settings.get('payment_stripe__enabled', as_type=bool) is True
+    assert meetup_event.settings.get('payment_stripe_publishable_key') == 'pk_test_123'
+    assert meetup_event.settings.get('payment_stripe_secret_key') == 'sk_test_456'
+    assert meetup_event.settings.get('payment_stripe_merchant_country') == 'US'
+
+
+@pytest.mark.django_db
+@scopes_disabled()
+def test_settings_form_preserves_secret_key_when_empty_submitted(meetup_event):
+    """EventCommonSettingsForm preserves existing Stripe secret key on empty submission."""
+    meetup_event.settings.set('payment_stripe_secret_key', 'sk_test_existing_secret')
+    meetup_event.settings.set('payment_stripe_publishable_key', 'pk_test_existing_pub')
+    meetup_event.settings.set('payment_stripe_merchant_country', 'US')
+
+    form = EventCommonSettingsForm(obj=meetup_event)
+    data = form.initial.copy()
+    data['registration_fee'] = Decimal('10.00')
+    data['payment_stripe_publishable_key'] = 'pk_test_existing_pub'
+    data['payment_stripe_secret_key'] = ''  # PasswordInput submitted empty
+    data['payment_stripe_merchant_country'] = 'US'
+    data.setdefault('timezone', 'UTC')
+    data.setdefault('locale', 'en')
+    data.setdefault('locales', ['en'])
+
+    bound_form = EventCommonSettingsForm(data=data, obj=meetup_event)
+    assert bound_form.is_valid(), bound_form.errors
+    bound_form.save()
+
+    assert meetup_event.settings.get('payment_stripe_secret_key') == 'sk_test_existing_secret'
+
+
+@pytest.mark.django_db
+@scopes_disabled()
+def test_stripe_payment_provider_is_allowed_only_for_meetups(meetup_event, organizer, rf):
+    """StripePaymentProvider is allowed for meetup events and blocked for standard events."""
+    meetup_event.settings.set('payment_stripe__enabled', True)
+    meetup_event.settings.set('payment_stripe_secret_key', 'sk_test_123')
+
+    req = rf.get('/')
+    SessionMiddleware(lambda r: None).process_request(req)
+    req.session.save()
+    req.event = meetup_event
+    req.resolver_match = None
+
+    meetup_provider = StripePaymentProvider(meetup_event)
+    assert meetup_provider.is_enabled is True
+    assert meetup_provider.is_allowed(req) is True
+
+    standard_event = Event.objects.create(
+        organizer=organizer,
+        name='Standard Event Test',
+        slug='standard-event-test',
+        date_from=timezone.now() + timedelta(days=10),
+        date_to=timezone.now() + timedelta(days=10, hours=2),
+        currency='USD',
+        locale='en',
+    )
+    standard_event.settings.set('payment_stripe__enabled', True)
+    standard_event.settings.set('payment_stripe_secret_key', 'sk_test_123')
+
+    standard_req = rf.get('/')
+    SessionMiddleware(lambda r: None).process_request(standard_req)
+    standard_req.session.save()
+    standard_req.event = standard_event
+    standard_req.resolver_match = None
+
+    standard_provider = StripePaymentProvider(standard_event)
+    assert standard_provider.is_enabled is True
+    assert standard_provider.is_allowed(standard_req) is False

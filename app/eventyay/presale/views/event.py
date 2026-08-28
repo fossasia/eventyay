@@ -725,9 +725,14 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
         if self.request.user.is_authenticated:
             already_registered = has_rsvp_order(event, self.request.user.email)
         else:
-            already_registered = bool(self.request.session.get(MEETUP_RSVP_SESSION_KEY.format(event.pk)))
+            order_code = self.request.session.get(MEETUP_RSVP_SESSION_KEY.format(event.pk))
+            if order_code:
+                with scope(organizer=event.organizer):
+                    already_registered = event.orders.filter(code=order_code, status__in=RSVP_ORDER_STATUSES).exists()
+            else:
+                already_registered = False
 
-        with scope(event=event):
+        with scope(organizer=event.organizer):
             attendee_count = event.orders.filter(status__in=RSVP_ORDER_STATUSES).count()
             preview_positions = (
                 OrderPosition.objects.filter(
@@ -753,6 +758,8 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
                 avail, count = quota.availability()
                 rsvp_registration_closed = avail != Quota.AVAILABILITY_OK
 
+        registration_fee = product.default_price if product else Decimal('0.00')
+
         return {
             'is_meetup_event': True,
             'attendee_already_registered': already_registered,
@@ -761,6 +768,8 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
             'meetup_attendees_preview': attendees_preview,
             'rsvp_registration_closed': rsvp_registration_closed,
             'guest_checkout_allowed': not event.settings.require_registered_account_for_tickets,
+            'meetup_registration_fee': registration_fee or Decimal('0.00'),
+            'stripe_publishable_key': event.settings.get('payment_stripe_publishable_key', ''),
         }
 
     def get_context_data(self, **kwargs):
