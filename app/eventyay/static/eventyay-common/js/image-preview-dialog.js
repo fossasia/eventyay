@@ -30,9 +30,13 @@ function ensureDialog() {
 }
 
 function isImageLink(link) {
-  const href = link?.getAttribute('href');
-  if (!href || href === '#' || !link.matches(PREVIEW_LINK_SELECTOR)) {
+  if (!link || !link.matches(PREVIEW_LINK_SELECTOR)) {
     return false;
+  }
+
+  const href = link.getAttribute('href');
+  if (!href || href === '#' || href.startsWith('javascript:')) {
+    return Boolean(link.querySelector('img'));
   }
 
   if (link.querySelector('img')) {
@@ -48,11 +52,27 @@ function isImageLink(link) {
 
 function openPreview(link) {
   ensureDialog();
+  const scrollX = window.scrollX || window.pageXOffset || document.documentElement.scrollLeft || 0;
+  const scrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+
   const thumb = link.querySelector('img');
-  image.src = link.href;
-  image.alt = thumb?.alt || link.textContent.trim();
+  const previewSrc = link.getAttribute('href') && !link.getAttribute('href').startsWith('javascript:') && link.getAttribute('href') !== '#'
+    ? link.href
+    : thumb?.src;
+
+  if (!previewSrc) {
+    return;
+  }
+
+  image.src = previewSrc;
+  image.alt = thumb?.alt || link.textContent.trim() || '';
   if (!dialog.open) {
     dialog.showModal();
+    const closeBtn = dialog.querySelector('.eventyay-image-preview-dialog__close');
+    if (closeBtn) {
+      closeBtn.focus({ preventScroll: true });
+    }
+    window.scrollTo({ left: scrollX, top: scrollY, behavior: 'instant' });
   }
 }
 
@@ -61,8 +81,12 @@ function closePreview() {
     return;
   }
 
+  const scrollX = window.scrollX || window.pageXOffset || document.documentElement.scrollLeft || 0;
+  const scrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+
   dialog.close();
   image.removeAttribute('src');
+  window.scrollTo({ left: scrollX, top: scrollY, behavior: 'instant' });
 }
 
 function handleClick(event) {
@@ -70,14 +94,16 @@ function handleClick(event) {
     return;
   }
 
-  const link = event.target.closest('a');
-  if (!isImageLink(link)) {
+  const link = event.target.closest(PREVIEW_LINK_SELECTOR);
+  if (!link) {
     return;
   }
 
-  event.preventDefault();
-  event.stopPropagation();
-  openPreview(link);
+  if (isImageLink(link)) {
+    event.preventDefault();
+    event.stopPropagation();
+    openPreview(link);
+  }
 }
 
 function init() {
