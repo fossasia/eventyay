@@ -1,4 +1,4 @@
-import { isUsableAudioTranslationEntry } from 'lib/validators'
+import { isUsableAudioTranslationEntry } from './lib/validators.js'
 
 const ORIGINAL_LANGUAGE = 'Original'
 
@@ -9,7 +9,7 @@ export function roomUsesPluginLanguageStreams(room) {
 function ensureOriginalLanguageEntry(languages) {
 	const list = Array.isArray(languages) ? [...languages] : []
 	if (!list.some(entry => entry?.language === ORIGINAL_LANGUAGE)) {
-		list.unshift({ language: ORIGINAL_LANGUAGE, youtube_id: null, use_video: false })
+		list.unshift({ language: ORIGINAL_LANGUAGE, url: null, youtube_id: null, use_video: false })
 	}
 	return list
 }
