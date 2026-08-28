@@ -174,6 +174,15 @@
 				svg(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 					path(d="M9 18l6-6-6-6")
 		.toolbar-right
+			button.toolbar-btn.now-btn(
+				@click="$emit('goToNow')",
+				:aria-label="t.now",
+				:disabled="!isEventHappeningToday",
+				:title="isEventHappeningToday ? '' : t.now_disabled")
+				| {{ t.now }}
+				svg.tb-icon.now-arrow(aria-hidden="true", viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", stroke-linecap="round", stroke-linejoin="round")
+					line(x1="12", y1="5", x2="12", y2="19")
+					polyline(points="19 12 12 19 5 12")
 			.search-area(ref="searchArea")
 				.search-compact(:class="{expanded: searchExpanded}")
 					button.toolbar-btn.icon-only.search-toggle(@click="toggleSearch", :aria-label="t.search")
@@ -372,6 +381,7 @@ export default {
 		currentTimezone: String,
 		scheduleTimezone: String,
 		userTimezone: String,
+		now: { type: Object, default: null },
 		days: { type: Array, default: () => [] },
 		currentDay: { type: String, default: '' }
 		,
@@ -389,7 +399,7 @@ export default {
 		isFeaturedPage: { type: Boolean, default: false },
 		isListView: { type: Boolean, default: false }
 	},
-	emits: ['fullscreen-change', 'toggleFavs', 'resetFilters', 'saveTimezone', 'update:currentTimezone', 'update:searchQuery', 'update:recordingFilter', 'update:sortBy', 'update:includeRoomSortKey', 'update:includeDateSortKey', 'update:includePopularitySortKey', 'update:shareStarredSessions', 'filterToggle', 'selectDay', 'toggleSessionsMode', 'setTimeDensityMinutes'],
+	emits: ['fullscreen-change', 'toggleFavs', 'resetFilters', 'saveTimezone', 'update:currentTimezone', 'update:searchQuery', 'update:recordingFilter', 'update:sortBy', 'update:includeRoomSortKey', 'update:includeDateSortKey', 'update:includePopularitySortKey', 'update:shareStarredSessions', 'filterToggle', 'selectDay', 'goToNow', 'toggleSessionsMode', 'setTimeDensityMinutes'],
 	data() {
 		return {
 			exportOpen: false,
@@ -431,7 +441,7 @@ export default {
 				sort_by_title: m.sort_by_title || this.$t('A–Z'),
 				sort_by_title_desc: m.sort_by_title_desc || this.$t('Z–A'),
 				sort_by_popularity: m.sort_by_popularity || this.$t('Most popular'),
-					starred: m.starred || this.$t('Starred'),
+				starred: m.starred || this.$t('Starred'),
 				show_talk_starrers: m.show_talk_starrers || this.$t('Share starred sessions'),
 				show_talk_starrers_tooltip: m.show_talk_starrers_tooltip || this.$t('Make your starred sessions visible to others. You can open someone else\'s starred list only if they have enabled sharing.'),
 				no_schedule_available: m.no_schedule_available || this.$t('No schedule has been published yet. Please check back later.'),
@@ -446,6 +456,8 @@ export default {
 				public_schedule_only: m.public_schedule_only || this.$t('Only available on the public schedule once a schedule is released and public.'),
 				export: m.export || this.$t('Export'),
 				current: m.current || this.$t('current'),
+        now: m.now || this.$t('Now'),
+        now_disabled: m.now_disabled || this.$t('Go to now is only available on the current day'),
 				list_view: m.list_view || this.$t('List View'),
 				calendar_view: m.calendar_view || this.$t('Calendar View'),
 				search: m.search || this.$t('Search'),
@@ -622,6 +634,16 @@ export default {
 					id: day.format('YYYY-MM-DD'),
 					label: day.format('ddd D MMM')
 				}))
+		},
+		isEventHappeningToday() {
+			if (!this.now || !this.days?.length) return false
+			const today = this.currentTimezone
+				? this.now.clone().tz(this.currentTimezone)
+				: this.now.clone()
+			return this.days.some(day => {
+				const dayDate = day.clone ? day.clone().tz(this.currentTimezone) : day
+				return dayDate.format('YYYY-MM-DD') === today.format('YYYY-MM-DD')
+			})
 		}
 	},
 	watch: {
@@ -1063,6 +1085,24 @@ export default {
 			white-space: nowrap
 			&:hover
 				color: #533f03
+	.toolbar-btn.now-btn
+		display: inline-flex
+		align-items: center
+		gap: 0.35rem
+		white-space: nowrap
+		background-color: var(--pretalx-clr-primary, #3aa57c)
+		color: #fff
+		font-weight: 600
+		border-radius: 4px
+		padding: 0 10px
+		&:hover:not(:disabled)
+			background-color: var(--pretalx-clr-primary, #3aa57c)
+			color: #fff
+			filter: brightness(0.92)
+		&:disabled
+			cursor: not-allowed
+			opacity: 0.5
+			filter: none
 	.toolbar-row
 		display: flex
 		align-items: center
@@ -2032,6 +2072,14 @@ export default {
 		.toolbar-btn.mobile-toggle-btn
 			padding: 0 6px
 			gap: 4px
+
+		button.toolbar-btn.now-btn,
+		.toolbar-right button.toolbar-btn.now-btn
+			color: #fff
+			svg.tb-icon.now-arrow
+				stroke: currentColor
+				color: inherit
+				fill: none
 
 @media print
 	.c-schedule-toolbar

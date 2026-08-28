@@ -246,19 +246,11 @@ export default {
 				fragmentIsDate = true
 			}
 		}
-		if (fragmentIsDate) return
-		// Skip auto-scroll if disabled via prop
 		if (this.disableAutoScroll) return
-		const nowIndex = this.sessionBuckets.findIndex(bucket => this.now < bucket.date)
-		// do not scroll if the event has not started yet
-		if (nowIndex < 0) return
-		const nowBucket = this.sessionBuckets[Math.max(0, nowIndex - 1)]
-		const scrollTop = this.$refs[this.getBucketName(nowBucket.date)]?.[0]?.offsetTop - 90
-		if (this.scrollParent) {
-			this.scrollParent.scrollTop = scrollTop
-		} else {
-			window.scroll({top: scrollTop + this.getOffsetTop()})
-		}
+		const today = this.now.clone().tz(this.timezone).format('YYYY-MM-DD')
+		if (this.currentDay !== today) return // Auto-scroll does not trigger when viewing a non-current day
+		await new Promise(resolve => requestAnimationFrame(resolve))
+		this.scrollToNow()
 	},
 	methods: {
 		titleSortKey (session) {
@@ -316,6 +308,36 @@ export default {
 		getOffsetTop () {
 			const rect = this.$parent.$el.getBoundingClientRect()
 			return rect.top + window.scrollY
+		},
+		getStickyClearance () {
+			const root = this.$el.closest('.pretalx-schedule') || this.$el.closest('.c-schedule-view')
+			let offset = 40
+			if (root) {
+				const parsed = parseFloat(getComputedStyle(root).getPropertyValue('--pretalx-sticky-top-offset'))
+				if (Number.isFinite(parsed)) offset = parsed
+			}
+			let toolbarHeight = 0
+			const toolbar = root?.querySelector('.c-schedule-toolbar')
+			if (toolbar) toolbarHeight = toolbar.getBoundingClientRect().height
+			let versionWarning = 0
+			if (root) {
+				const vh = parseFloat(getComputedStyle(root).getPropertyValue('--pretalx-version-warning-height'))
+				versionWarning = Number.isFinite(vh) ? vh : 0
+			}
+			return Math.max(0, offset) + toolbarHeight + versionWarning + 6
+		},
+		scrollToNow() {
+			const nowIndex = this.sessionBuckets.findIndex(bucket => this.now < bucket.date)
+			if (nowIndex < 0) return
+			const nowBucket = this.sessionBuckets[Math.max(0, nowIndex - 1)]
+			const el = this.$refs[this.getBucketName(nowBucket.date)]?.[0]
+			if (!el) return
+			if (this.scrollParent) {
+				const top = el.getBoundingClientRect().top - this.scrollParent.getBoundingClientRect().top + this.scrollParent.scrollTop - this.getStickyClearance()
+				this.scrollParent.scrollTop = top
+			} else {
+				window.scroll({top: el.offsetTop + this.getOffsetTop() - this.getStickyClearance()})
+			}
 		},
 		scrollToDay (day, { force = false } = {}) {
 			if (!this.showDayHeaders || !day) return
