@@ -2,7 +2,8 @@ from django import forms
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
-from eventyay.base.models import Event
+from eventyay.base.forms.widgets import DatePickerWidget
+from eventyay.base.models import Event, Order
 
 
 class UserOrderFilterForm(forms.Form):
@@ -13,6 +14,34 @@ class UserOrderFilterForm(forms.Form):
         widget=forms.Select(attrs={'class': 'form-control'}),
         empty_label=_('Select an Event'),
     )
+    code = forms.CharField(
+        required=False,
+        label=_('Order code'),
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('Order code')}),
+    )
+    status = forms.ChoiceField(
+        required=False,
+        label=_('Status'),
+        choices=(
+            ('', _('All statuses')),
+            (Order.STATUS_PENDING, _('Pending')),
+            (Order.STATUS_PAID, _('Paid')),
+            (Order.STATUS_EXPIRED, _('Expired')),
+            (Order.STATUS_CANCELED, _('Canceled')),
+        ),
+        widget=forms.Select(attrs={'class': 'form-control'}),
+    )
+    date_from = forms.DateField(
+        required=False,
+        label=_('Date from'),
+        widget=DatePickerWidget,
+    )
+    date_to = forms.DateField(
+        required=False,
+        label=_('Date to'),
+        widget=DatePickerWidget,
+    )
+
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)  # Get the user from the kwargs

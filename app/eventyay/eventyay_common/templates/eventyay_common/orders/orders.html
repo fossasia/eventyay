@@ -19,8 +19,20 @@
                 <div class="advanced-filter-field" style="flex: 1 1 0; margin-bottom: 0;">
                     {% bootstrap_field filter_form.event layout='inline' %}
                 </div>
+                <div class="advanced-filter-field" style="flex: 1 1 0; margin-bottom: 0;">
+                    {% bootstrap_field filter_form.code layout='inline' %}
+                </div>
+                <div class="advanced-filter-field" style="flex: 1 1 0; margin-bottom: 0;">
+                    {% bootstrap_field filter_form.status layout='inline' %}
+                </div>
+                <div class="advanced-filter-field" style="flex: 1 1 0; margin-bottom: 0;">
+                    {% bootstrap_field filter_form.date_from layout='inline' %}
+                </div>
+                <div class="advanced-filter-field" style="flex: 1 1 0; margin-bottom: 0;">
+                    {% bootstrap_field filter_form.date_to layout='inline' %}
+                </div>
                 <div class="advanced-filter-search-actions">
-                    <button type="submit" class="btn btn-primary" aria-label="{% trans 'Apply filters' %}">
+                    <button type="submit" class="btn btn-primary" aria-label="{% trans 'Apply filters' %}" title="{% trans 'Apply filters' %}">
                         <span class="fa fa-filter" aria-hidden="true"></span>
                     </button>
                     <a href="{{ request.path }}" class="btn btn-default btn-clear-filter" aria-label="{% trans 'Clear filters' %}" title="{% trans 'Clear filters' %}">
