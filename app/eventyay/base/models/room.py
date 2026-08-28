@@ -382,13 +382,12 @@ class Room(VersionedModel, OrderedModel, PretalxModel):
 
     @property
     def has_interpretation(self) -> bool:
-        for module in self.module_config or []:
-            if module.get('type') != 'livestream.youtube':
-                continue
-            config = module.get('config') or {}
-            for entry in config.get('languageUrls') or []:
-                if entry.get('language') and entry.get('youtube_id'):
-                    return True
+        if getattr(self, 'interpretation_use_plugin_streams', False):
+            return True
+        if hasattr(self, 'interpretation_language_streams') and self.interpretation_language_streams:
+            return True
+        if hasattr(self, 'interpretation_config') and getattr(self.interpretation_config, 'language_streams', None):
+            return True
         return False
 
     def get_current_stream(self, at_time=None):
