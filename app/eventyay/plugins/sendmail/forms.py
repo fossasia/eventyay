@@ -54,6 +54,7 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
         widget=EnhancedSelect(attrs={'title': _('Recipient type'), 'placeholder': _('Recipient type')}),
         required=True,
         choices=[],
+        error_messages={'required': _('Please select a recipient type.')},
     )
     order_status = forms.MultipleChoiceField()  # overridden later
     subject = forms.CharField(label=_('Subject'))
@@ -62,13 +63,13 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
         label=_('Reply-To'),
         required=False,
         help_text=_('Change the Reply-To address if you do not want to use the default organiser address'),
-        widget=forms.EmailInput(attrs={'placeholder': _('Reply-To')})
+        widget=forms.EmailInput(),
     )
     bcc = forms.CharField(
         label=_('BCC'),
         required=False,
         help_text=_('Enter comma-separated BCC addresses'),
-        widget=forms.TextInput(attrs={'placeholder': _('BCC')})
+        widget=forms.TextInput(),
     )
     attachment = CachedFileField(
         label=_('Attachment'),
@@ -215,8 +216,6 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
             )
         d['has_filter_checkins'] = d.get('has_filter_checkins') == 'yes'
         d['not_checked_in'] = d.get('not_checked_in') == 'yes'
-        if not d.get('recipients'):
-            self.add_error('recipients', _('Please select a recipient type.'))
         return d
 
     def _recipient_dependency_attrs(self, *, individual=False):

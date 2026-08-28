@@ -49,14 +49,27 @@
   min-height: var(--composer-control-height);
 }
 
-.mail-composer input[type="file"] {
-  box-sizing: border-box;
-  display: block;
-  height: var(--composer-control-height);
-  max-width: 100%;
-  min-height: var(--composer-control-height);
+.mail-composer .col-md-9 > .eventyay-file-pick-wrapper label {
+  font-size: var(--composer-small-font-size);
+  line-height: 20px;
+  min-height: calc(var(--composer-control-height) - 2px);
   padding: 6px 12px;
-  width: 100%;
+}
+
+.mail-composer .col-md-9 > .eventyay-file-pick-wrapper .eventyay-file-name {
+  font-size: var(--composer-font-size);
+  padding: 6px 12px;
+}
+
+.mail-composer .col-md-9 > input[type="file"]::file-selector-button {
+  font-size: var(--composer-small-font-size);
+  line-height: 20px;
+  min-height: calc(var(--composer-control-height) - 2px);
+  padding: 6px 12px;
+}
+
+.mail-composer .card-body .form-check-label {
+  font-size: var(--composer-font-size);
 }
 
 /*
@@ -169,24 +182,97 @@
 
 .mail-composer .form-text.text-muted {
   color: var(--color-grey);
-  font-size: 13px;
+  font-size: var(--composer-small-font-size);
   font-weight: normal;
   line-height: 1.4;
 }
 
-/* Keep required Recipients on the same baseline as Optional filter fields. */
+.mail-composer .card-body > fieldset > .form-group.row > label > .optional {
+  color: var(--color-grey);
+  display: block;
+  font-weight: normal;
+}
+
+.mail-composer .composer-filters .form-group.row {
+  display: block;
+  margin-left: 0;
+  margin-right: 0;
+}
+
 .mail-composer .composer-filters .form-group.row > label,
 .mail-composer .composer-filters .form-group.row > label.col-form-label {
   box-sizing: border-box;
-  display: flex;
+  display: inline-flex;
   flex-direction: column;
-  margin: 0 0 4px;
-  padding: 0;
+  margin: 0 0 8px;
+  margin-left: 0;
+  max-width: 100%;
+  padding-bottom: 0;
+  padding-top: 0;
+  text-align: left;
+  width: 100%;
 }
 
 .mail-composer .composer-filters .form-group.row > label:not(:has(> .optional))::after {
-  color: var(--color-grey);
-  content: "Optional";
+  content: "\00a0";
+  display: block;
   font-weight: normal;
-  visibility: hidden;
+  line-height: inherit;
+}
+
+.mail-composer .composer-filters .form-group.row > .col-md-3,
+.mail-composer .composer-filters .form-group.row > .col-md-9 {
+  flex: none;
+  max-width: 100%;
+  padding-left: 0;
+  padding-right: 0;
+  width: 100%;
+}
+
+.mail-composer .composer-filters .form-group.row > label > .optional {
+  color: var(--color-grey);
+  display: block;
+  font-weight: normal;
+}
+
+.mail-composer .composer-filters .choices,
+.mail-composer .composer-filters .choices__inner,
+.mail-composer .composer-filters .select2-container,
+.mail-composer .composer-filters .select2-selection--single,
+.mail-composer .composer-filters .select2-selection--multiple {
+  width: 100%;
+}
+
+.mail-composer .composer-filters .splitdatetimerow {
+  width: 100%;
+}
+
+.mail-composer button.mail-editor-mode-tab,
+.mail-composer .mail-editor-mode-tab {
+  background-color: transparent;
+  background-image: none;
+  border-bottom: 0;
+  box-shadow: none;
+  text-shadow: none;
+}
+
+.mail-composer button.mail-editor-mode-tab:hover,
+.mail-composer button.mail-editor-mode-tab:focus,
+.mail-composer .mail-editor-mode-tab:hover,
+.mail-composer .mail-editor-mode-tab:focus {
+  background-color: transparent;
+  background-image: none;
+  box-shadow: none;
+}
+
+.mail-composer button.mail-editor-mode-tab.active,
+.mail-composer button.mail-editor-mode-tab[aria-selected="true"],
+.mail-composer .mail-editor-mode-tab.active,
+.mail-composer .mail-editor-mode-tab[aria-selected="true"] {
+  background-color: var(--color-bg);
+  background-image: none;
+  border-color: var(--color-border);
+  border-bottom: 1px solid var(--color-bg);
+  box-shadow: none;
+  color: var(--color-text);
 }

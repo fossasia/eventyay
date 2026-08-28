@@ -183,6 +183,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
 
         if action == 'preview':
             self.output = {}
+            self.mail_count = orders.count()
             for l in self.request.event.settings.locales:
                 with language(l, self.request.event.settings.region):
                     context_dict = build_email_preview_context(
@@ -265,6 +266,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data(*args, **kwargs)
         ctx['output'] = getattr(self, 'output', None)
+        ctx['mail_count'] = getattr(self, 'mail_count', 0)
         return ctx
 
 

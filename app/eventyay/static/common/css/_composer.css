@@ -7,7 +7,7 @@
   --composer-small-control-height: 32px;
   --composer-small-font-size: 14px;
 
-  font-size: 14px;
+  font-size: var(--composer-font-size);
   line-height: 1.42857143;
 }
 
@@ -38,8 +38,9 @@
 
 .mail-composer .composer-description {
   margin: 0;
-  max-width: 52rem;
+  max-width: none;
   padding: 0 2px 8px;
+  white-space: nowrap;
 }
 
 .mail-composer > .card {
@@ -163,48 +164,48 @@
 
 .composer-filters {
   display: grid;
-  gap: 0 24px;
+  gap: 16px 24px;
   grid-template-columns: 1fr;
 }
 
 .composer-filters .form-group.row {
-  display: flex;
-  flex-direction: column;
-  margin: 0 0 16px;
+  display: block;
+  margin: 0;
+  margin-left: 0;
+  margin-right: 0;
   min-width: 0;
 }
 
 .composer-filters .form-group.row > label,
 .composer-filters .form-group.row > label.col-form-label {
   box-sizing: border-box;
-  display: flex;
+  display: inline-flex;
   flex-direction: column;
   justify-content: flex-start;
-  margin: 0 0 4px;
+  margin: 0 0 8px;
+  margin-left: 0;
   max-width: 100%;
-  /* Drop base label padding so required/optional labels share one height. */
   padding: 0;
   text-align: left;
   width: 100%;
 }
 
-/*
- * Required filters omit the Optional line, which lifts their inputs.
- * Reserve an invisible Optional line so every control shares one baseline.
- */
+/* Required filters omit the Optional line; reserve the same second line height. */
 .composer-filters .form-group.row > label:not(:has(> .optional))::after {
-  color: var(--color-grey);
-  content: "Optional";
-  font-size: inherit;
+  content: "\00a0";
+  display: block;
   font-weight: normal;
   line-height: inherit;
-  visibility: hidden;
 }
 
 .composer-filters .form-group.row > label > .optional {
+  color: var(--color-grey);
+  display: block;
+  font-weight: normal;
   line-height: inherit;
 }
 
+.composer-filters .form-group.row > .col-md-3,
 .composer-filters .form-group.row > .col-md-9,
 .composer-filters .form-group.row > div {
   flex: none;
@@ -312,27 +313,230 @@
   white-space: nowrap;
 }
 
-/* Keep attachment controls the same height/width as Reply-To and other composer fields. */
-.mail-composer input[type="file"] {
+/* fileInput.js wraps uploads in .eventyay-file-pick-wrapper; stretch it like other controls. */
+.mail-composer .col-md-9 > .eventyay-file-pick-wrapper,
+.form-with-placeholder .card-body .col-md-9 > .eventyay-file-pick-wrapper {
   box-sizing: border-box;
-  display: block;
-  height: var(--composer-control-height);
   max-width: 100%;
   min-height: var(--composer-control-height);
-  padding: 6px 12px;
+  width: 100%;
+}
+
+.mail-composer .eventyay-file-pick-wrapper .eventyay-file-name,
+.form-with-placeholder .card-body .col-md-9 > .eventyay-file-pick-wrapper .eventyay-file-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Fallback before fileInput.js wraps the control. */
+.mail-composer .col-md-9 > input[type="file"],
+.form-with-placeholder .card-body .col-md-9 > input[type="file"] {
+  box-sizing: border-box;
+  display: block;
+  max-width: 100%;
+  min-height: var(--composer-control-height);
   width: 100%;
 }
 
 .mail-composer .card-body > fieldset > .form-group.row {
   align-items: flex-start;
+  display: flex;
+  flex-wrap: nowrap;
+  margin-bottom: 16px;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.mail-composer .card-body > fieldset > .form-group.row:last-child {
   margin-bottom: 0;
 }
 
-.mail-composer .card-body > fieldset > .form-group.row > .col-md-9 {
-  min-height: 0;
+.mail-composer .card-body > fieldset > .form-group.row > label.col-form-label {
+  flex: 0 0 25%;
+  margin-left: auto;
+  max-width: 25%;
+  padding-left: 15px;
+  padding-right: 12px;
+  text-align: right;
 }
 
-/* Tips and field errors sit under the control in both grid and tabular rows. */
+.mail-composer .card-body > fieldset > .form-group.row > .col-md-9 {
+  flex: 0 0 75%;
+  max-width: 75%;
+  min-height: 0;
+  padding-left: 0;
+  padding-right: 15px;
+}
+
+.mail-editor-tabs {
+  display: grid;
+  grid-template-columns: 25% 75%;
+}
+
+.mail-editor-mode-tabs {
+  align-items: flex-end;
+  display: flex;
+  gap: 4px;
+  grid-column: 2;
+  margin-bottom: 0;
+  padding-right: 15px;
+  width: auto;
+}
+
+.mail-editor-mode-tab {
+  align-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: var(--composer-border-radius) var(--composer-border-radius) 0 0;
+  color: var(--color-primary);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: var(--composer-font-size);
+  font-weight: normal;
+  gap: 6px;
+  line-height: 1.4;
+  margin: 0;
+  padding: 8px 14px;
+  text-decoration: none;
+}
+
+.mail-editor-mode-tab:hover,
+.mail-editor-mode-tab:focus,
+.mail-editor-mode-tab:focus-visible {
+  background: transparent;
+  box-shadow: var(--shadow-focus);
+  color: var(--color-primary-dark, var(--color-primary));
+  outline: none;
+  text-decoration: none;
+}
+
+.mail-editor-mode-tab:active {
+  background: transparent;
+  box-shadow: none;
+}
+
+.mail-editor-mode-tab.active,
+.mail-editor-mode-tab[aria-selected="true"] {
+  background: var(--color-bg);
+  border-color: var(--color-border);
+  border-bottom: 1px solid var(--color-bg);
+  color: var(--color-text);
+  margin-bottom: -1px;
+  position: relative;
+  z-index: 2;
+}
+
+.mail-editor-tabs #mail-message-edit {
+  grid-column: 1 / -1;
+}
+
+.mail-editor-tabs #mail-message-edit > .form-group.row {
+  align-items: flex-start;
+  display: flex;
+  flex-wrap: nowrap;
+  margin-bottom: 16px;
+  margin-left: 0;
+  margin-right: 0;
+  margin-top: 0;
+}
+
+.mail-editor-tabs #mail-message-edit > .form-group.row > label.col-form-label {
+  flex: 0 0 25%;
+  margin-left: auto;
+  max-width: 25%;
+  padding-left: 15px;
+  padding-right: 12px;
+  text-align: right;
+}
+
+.mail-editor-tabs #mail-message-edit > .form-group.row > .col-md-9 {
+  flex: 0 0 75%;
+  max-width: 75%;
+  min-height: 0;
+  min-width: 0;
+  padding-left: 0;
+  padding-right: 15px;
+}
+
+.mail-editor-tabs[data-mail-editor-active="edit"] #mail-message-edit [data-tiptap-wrapper] {
+  border-top-left-radius: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.mail-message-preview-panel {
+  border: 1px solid var(--color-border);
+  border-radius: var(--composer-border-radius);
+  box-sizing: border-box;
+  grid-column: 2;
+  margin-left: 0;
+  margin-right: 15px;
+  min-height: 192px;
+  padding: 12px;
+  position: relative;
+  width: auto;
+  z-index: 1;
+}
+
+.mail-editor-tabs [data-tiptap-wrapper] {
+  border-color: var(--color-border);
+}
+
+.mail-message-preview-panel .mail-preview[hidden] {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mail-composer .composer-description {
+    white-space: normal;
+  }
+
+  .mail-editor-tabs {
+    grid-template-columns: 100%;
+  }
+
+  .mail-editor-mode-tabs,
+  .mail-message-preview-panel {
+    grid-column: 1;
+    margin-left: 0;
+    margin-right: 0;
+    padding-right: 0;
+    width: 100%;
+  }
+
+  .mail-editor-tabs #mail-message-edit > .form-group.row {
+    flex-wrap: wrap;
+  }
+
+  .mail-editor-tabs #mail-message-edit > .form-group.row > label.col-form-label,
+  .mail-editor-tabs #mail-message-edit > .form-group.row > .col-md-9 {
+    flex: 0 0 100%;
+    margin-left: 0;
+    max-width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+    text-align: left;
+  }
+
+  .mail-composer .card-body > fieldset > .form-group.row {
+    flex-wrap: wrap;
+  }
+
+  .mail-composer .card-body > fieldset > .form-group.row > label.col-form-label,
+  .mail-composer .card-body > fieldset > .form-group.row > .col-md-9 {
+    flex: 0 0 100%;
+    margin-left: 0;
+    max-width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+    text-align: left;
+  }
+}
+
 .mail-composer .form-group .form-text,
 .mail-composer .form-group .invalid-feedback {
   display: block;
@@ -475,7 +679,9 @@
 .form-with-placeholder .card-body .i18n-form-group textarea,
 .form-with-placeholder .card-body .i18n-form-group input,
 .form-with-placeholder .card-body .col-md-9 > textarea.form-control,
-.form-with-placeholder .card-body .col-md-9 > input.form-control {
+.form-with-placeholder .card-body .col-md-9 > input.form-control,
+.form-with-placeholder .card-body .col-md-9 > input[type="file"],
+.form-with-placeholder .card-body .col-md-9 > .eventyay-file-pick-wrapper {
   max-width: 100%;
   width: 100%;
 }
@@ -525,7 +731,19 @@
 
 #send-confirm-dialog,
 #recipient-list-dialog {
+  background: var(--color-bg);
+  border: 0;
+  border-radius: var(--composer-border-radius);
+  box-shadow: var(--shadow-dialog);
+  max-width: 70vw;
   min-width: 420px;
+  padding: 0;
+}
+
+#send-confirm-dialog::backdrop,
+#recipient-list-dialog::backdrop {
+  backdrop-filter: blur(2px);
+  background-color: rgb(0 0 0 / 0.2);
 }
 
 #send-confirm-summary {
