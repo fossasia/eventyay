@@ -1,9 +1,9 @@
-import { apiErrorDetail, interpretationApiUrl, interpretationAuthHeaders } from 'lib/interpretation-api'
-import { normalizeYoutubeVideoId } from 'lib/validators'
+import { apiErrorDetail, interpretationApiUrl, interpretationAuthHeaders } from './interpretation-api.js'
+import { normalizeYoutubeVideoId } from './validators.js'
 
 export async function fetchInterpretationLanguageStreams(store, roomId) {
 	const response = await fetch(interpretationApiUrl(store, roomId, 'streams/'), {
-		headers: interpretationAuthHeaders(),
+		headers: await interpretationAuthHeaders(),
 		credentials: 'include',
 	})
 	const data = await response.json().catch(() => ({}))
@@ -16,7 +16,7 @@ export async function fetchInterpretationLanguageStreams(store, roomId) {
 export async function saveInterpretationLanguageStreams(store, roomId, languageStreams) {
 	const response = await fetch(interpretationApiUrl(store, roomId, 'config/'), {
 		method: 'PATCH',
-		headers: interpretationAuthHeaders(true),
+		headers: await interpretationAuthHeaders(true),
 		credentials: 'include',
 		body: JSON.stringify({ language_streams: languageStreams }),
 	})
@@ -32,11 +32,19 @@ export function cloneLanguageStreamEntries(entries) {
 }
 
 export function normalizeLanguageStreamEntry(entry) {
-	if (!entry?.youtube_id) return
-	const id = normalizeYoutubeVideoId(entry.youtube_id)
-	if (id) entry.youtube_id = id
+	if (!entry) return
+	const raw = (entry.url || entry.youtube_id || '').trim()
+	if (!raw) return
+	const ytId = normalizeYoutubeVideoId(raw)
+	if (ytId) {
+		entry.url = ytId
+		entry.youtube_id = ytId
+	} else {
+		entry.url = raw
+		entry.youtube_id = raw
+	}
 }
 
 export function defaultLanguageStreamEntry() {
-	return { language: '', youtube_id: '', use_video: false }
+	return { language: '', url: '', youtube_id: '', use_video: false }
 }

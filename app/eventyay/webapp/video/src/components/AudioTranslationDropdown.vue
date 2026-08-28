@@ -40,7 +40,7 @@ export default {
 			return `audio-translation-${slug}`
 		},
 		resolvedLabel() {
-			return this.label || this.$t('Audio Translation')
+			return this.label || this.$t('Interpretation')
 		},
 	},
 	watch: {
@@ -77,7 +77,7 @@ export default {
 		},
 		sendLanguageChange() {
 			const selected = this.languages.find(item => item.language === this.internalSelectedLanguage)
-			const audioSource = normalizeAudioTranslationSource(selected?.youtube_id)
+			const audioSource = normalizeAudioTranslationSource(selected?.url || selected?.youtube_id)
 			const useVideo = selected?.use_video || false
 
 			this.$emit('languageChanged', { url: audioSource, useVideo })
