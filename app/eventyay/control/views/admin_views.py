@@ -9,7 +9,6 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.core.exceptions import PermissionDenied
-from django.utils.decorators import method_decorator
 from eventyay.base.models.auth import User
 from django.db import transaction
 from django.db.models import Count, F, Max, OuterRef, Subquery
@@ -28,7 +27,6 @@ from django.views.generic import (
     UpdateView,
     View,
 )
-from django.views.decorators.clickjacking import xframe_options_sameorigin
 
 from eventyay.base.models import (
     BBBCall,
@@ -66,16 +64,7 @@ from eventyay.control.video.admin_dashboard import (
 )
 
 
-class AdminBase(AdministratorPermissionRequiredMixin):
-    """Simple View mixin for now, but will make it easier to
-    improve permissions in the future."""
-
-    @method_decorator(xframe_options_sameorigin)
-    def dispatch(self, request, *args, **kwargs):
-        return super().dispatch(request, *args, **kwargs)
-
-
-class SuperuserBase(AdminBase):
+class SuperuserBase(AdministratorPermissionRequiredMixin):
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_superuser:
             raise PermissionDenied()
@@ -118,7 +107,7 @@ class SignupView(SuperuserBase, FormView):
         return redirect("/admin/video/")
 
 
-class ProfileView(AdminBase, FormView):
+class ProfileView(AdministratorPermissionRequiredMixin, FormView):
     template_name = "control/profile.html"
     form_class = ProfileForm
     success_url = "/admin/video/auth/profile/"
@@ -141,7 +130,7 @@ class ProfileView(AdminBase, FormView):
         return result
 
 
-class IndexView(AdminBase, TemplateView):
+class IndexView(AdministratorPermissionRequiredMixin, TemplateView):
     template_name = "control/index.html"
 
     def get_context_data(self, **kwargs):
@@ -150,7 +139,7 @@ class IndexView(AdminBase, TemplateView):
         return ctx
 
 
-class VideoServerToggleActive(AdminBase, View):
+class VideoServerToggleActive(AdministratorPermissionRequiredMixin, View):
     def post(self, request, server_type, pk, *args, **kwargs):
         config = get_video_server_config(server_type)
         if not config:
@@ -205,7 +194,7 @@ class VideoServerToggleActive(AdminBase, View):
         )
 
 
-class EventList(AdminBase, ListView):
+class EventList(AdministratorPermissionRequiredMixin, ListView):
     template_name = "control/event_list.html"
     queryset = (
         Event.objects.annotate(
@@ -235,7 +224,7 @@ class EventList(AdminBase, ListView):
         return ctx
 
 
-class EventAdminToken(AdminBase, DetailView):
+class EventAdminToken(AdministratorPermissionRequiredMixin, DetailView):
     template_name = "control/event_clear.html"
     queryset = Event.objects.all()
     success_url = "/admin/video/events/"
@@ -344,7 +333,7 @@ class FormsetMixin:
         return ctx
 
 
-class EventCreate(FormsetMixin, AdminBase, CreateView):
+class EventCreate(FormsetMixin, AdministratorPermissionRequiredMixin, CreateView):
     template_name = "control/event_create.html"
     form_class = EventForm
     success_url = "/admin/video/events/"
@@ -455,7 +444,7 @@ class EventCreate(FormsetMixin, AdminBase, CreateView):
             return self.form_invalid(form)
 
 
-class EventUpdate(FormsetMixin, AdminBase, UpdateView):
+class EventUpdate(FormsetMixin, AdministratorPermissionRequiredMixin, UpdateView):
     template_name = "control/event_update.html"
     form_class = EventForm
     queryset = Event.objects.all()
@@ -487,7 +476,7 @@ class EventUpdate(FormsetMixin, AdminBase, UpdateView):
             return self.form_invalid(form)
 
 
-class EventClear(AdminBase, DetailView):
+class EventClear(AdministratorPermissionRequiredMixin, DetailView):
     template_name = "control/event_clear.html"
     queryset = Event.objects.all()
     success_url = "/admin/video/events/"
@@ -504,13 +493,13 @@ class EventClear(AdminBase, DetailView):
         return redirect(self.success_url)
 
 
-class BBBServerList(AdminBase, ListView):
+class BBBServerList(AdministratorPermissionRequiredMixin, ListView):
     template_name = "control/bbb_list.html"
     queryset = BBBServer.objects.select_related("event_exclusive").order_by("url")
     context_object_name = "servers"
 
 
-class BBBServerCreate(AdminBase, CreateView):
+class BBBServerCreate(AdministratorPermissionRequiredMixin, CreateView):
     template_name = "control/bbb_form.html"
     form_class = BBBServerForm
     success_url = "/admin/video/bbbs/"
@@ -529,7 +518,7 @@ class BBBServerCreate(AdminBase, CreateView):
         return super().form_valid(form)
 
 
-class BBBServerUpdate(AdminBase, UpdateView):
+class BBBServerUpdate(AdministratorPermissionRequiredMixin, UpdateView):
     template_name = "control/bbb_form.html"
     form_class = BBBServerForm
     queryset = BBBServer.objects.all()
@@ -548,7 +537,7 @@ class BBBServerUpdate(AdminBase, UpdateView):
         return super().form_valid(form)
 
 
-class BBBServerDelete(AdminBase, DeleteView):
+class BBBServerDelete(AdministratorPermissionRequiredMixin, DeleteView):
     template_name = "control/bbb_delete.html"
     queryset = BBBServer.objects.all()
     success_url = "/admin/video/bbbs/"
@@ -568,13 +557,13 @@ class BBBServerDelete(AdminBase, DeleteView):
         return HttpResponseRedirect(success_url)
 
 
-class JanusServerList(AdminBase, ListView):
+class JanusServerList(AdministratorPermissionRequiredMixin, ListView):
     template_name = "control/janus_list.html"
     queryset = JanusServer.objects.select_related("event_exclusive").order_by("url")
     context_object_name = "servers"
 
 
-class JanusServerCreate(AdminBase, CreateView):
+class JanusServerCreate(AdministratorPermissionRequiredMixin, CreateView):
     template_name = "control/janus_form.html"
     form_class = JanusServerForm
     success_url = "/admin/video/janus/"
@@ -593,7 +582,7 @@ class JanusServerCreate(AdminBase, CreateView):
         return super().form_valid(form)
 
 
-class JanusServerUpdate(AdminBase, UpdateView):
+class JanusServerUpdate(AdministratorPermissionRequiredMixin, UpdateView):
     template_name = "control/janus_form.html"
     form_class = JanusServerForm
     queryset = JanusServer.objects.all()
@@ -612,7 +601,7 @@ class JanusServerUpdate(AdminBase, UpdateView):
         return super().form_valid(form)
 
 
-class JanusServerDelete(AdminBase, DeleteView):
+class JanusServerDelete(AdministratorPermissionRequiredMixin, DeleteView):
     template_name = "control/janus_delete.html"
     queryset = JanusServer.objects.all()
     success_url = "/admin/video/janus/"
@@ -632,13 +621,13 @@ class JanusServerDelete(AdminBase, DeleteView):
         return HttpResponseRedirect(success_url)
 
 
-class JitsiServerList(AdminBase, ListView):
+class JitsiServerList(AdministratorPermissionRequiredMixin, ListView):
     template_name = "control/jitsi_list.html"
     queryset = JitsiServer.objects.select_related("event_exclusive").order_by("url")
     context_object_name = "servers"
 
 
-class JitsiServerCreate(AdminBase, CreateView):
+class JitsiServerCreate(AdministratorPermissionRequiredMixin, CreateView):
     template_name = "control/jitsi_form.html"
     form_class = JitsiServerForm
     success_url = "/admin/video/jitsi/"
@@ -657,7 +646,7 @@ class JitsiServerCreate(AdminBase, CreateView):
         return super().form_valid(form)
 
 
-class JitsiServerUpdate(AdminBase, UpdateView):
+class JitsiServerUpdate(AdministratorPermissionRequiredMixin, UpdateView):
     template_name = "control/jitsi_form.html"
     form_class = JitsiServerForm
     queryset = JitsiServer.objects.all()
@@ -676,7 +665,7 @@ class JitsiServerUpdate(AdminBase, UpdateView):
         return super().form_valid(form)
 
 
-class JitsiServerDelete(AdminBase, DeleteView):
+class JitsiServerDelete(AdministratorPermissionRequiredMixin, DeleteView):
     template_name = "control/jitsi_delete.html"
     queryset = JitsiServer.objects.all()
     success_url = "/admin/video/jitsi/"
@@ -703,13 +692,13 @@ def _redact_jitsi_server_log_data(data):
     }
 
 
-class TurnServerList(AdminBase, ListView):
+class TurnServerList(AdministratorPermissionRequiredMixin, ListView):
     template_name = "control/turn_list.html"
     queryset = TurnServer.objects.select_related("event_exclusive").order_by("hostname")
     context_object_name = "servers"
 
 
-class TurnServerCreate(AdminBase, CreateView):
+class TurnServerCreate(AdministratorPermissionRequiredMixin, CreateView):
     template_name = "control/turn_form.html"
     form_class = TurnServerForm
     success_url = "/admin/video/turns/"
@@ -728,7 +717,7 @@ class TurnServerCreate(AdminBase, CreateView):
         return super().form_valid(form)
 
 
-class TurnServerUpdate(AdminBase, UpdateView):
+class TurnServerUpdate(AdministratorPermissionRequiredMixin, UpdateView):
     template_name = "control/turn_form.html"
     form_class = TurnServerForm
     queryset = TurnServer.objects.all()
@@ -747,7 +736,7 @@ class TurnServerUpdate(AdminBase, UpdateView):
         return super().form_valid(form)
 
 
-class TurnServerDelete(AdminBase, DeleteView):
+class TurnServerDelete(AdministratorPermissionRequiredMixin, DeleteView):
     template_name = "control/turn_delete.html"
     queryset = TurnServer.objects.all()
     success_url = "/admin/video/turns/"
@@ -767,14 +756,14 @@ class TurnServerDelete(AdminBase, DeleteView):
         return HttpResponseRedirect(success_url)
 
 
-class SystemLogList(AdminBase, ListView):
+class SystemLogList(AdministratorPermissionRequiredMixin, ListView):
     template_name = "control/systemlog_list.html"
     queryset = SystemLog.objects.order_by("-timestamp")
     context_object_name = "systemlogs"
     paginate_by = 25
 
 
-class SystemLogDetail(AdminBase, DetailView):
+class SystemLogDetail(AdministratorPermissionRequiredMixin, DetailView):
     template_name = "control/systemlog_detail.html"
     queryset = SystemLog.objects.all()
     context_object_name = "systemlog"
@@ -785,7 +774,7 @@ class SystemLogDetail(AdminBase, DetailView):
         return ctx
 
 
-class EventCalendar(AdminBase, View):
+class EventCalendar(AdministratorPermissionRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         queryset = PlannedUsage.objects.all().select_related("event")
         calendar = icalendar.Calendar()
@@ -799,13 +788,13 @@ class EventCalendar(AdminBase, View):
         )
 
 
-class StreamingServerList(AdminBase, ListView):
+class StreamingServerList(AdministratorPermissionRequiredMixin, ListView):
     template_name = "control/streaming_list.html"
     queryset = StreamingServer.objects.order_by("name")
     context_object_name = "streamings"
 
 
-class StreamingServerCreate(AdminBase, CreateView):
+class StreamingServerCreate(AdministratorPermissionRequiredMixin, CreateView):
     template_name = "control/streaming_form.html"
     form_class = StreamingServerForm
     success_url = "/admin/video/streamingservers/"
@@ -824,7 +813,7 @@ class StreamingServerCreate(AdminBase, CreateView):
         return super().form_valid(form)
 
 
-class StreamingServerUpdate(AdminBase, UpdateView):
+class StreamingServerUpdate(AdministratorPermissionRequiredMixin, UpdateView):
     template_name = "control/streaming_form.html"
     form_class = StreamingServerForm
     queryset = StreamingServer.objects.all()
@@ -843,7 +832,7 @@ class StreamingServerUpdate(AdminBase, UpdateView):
         return super().form_valid(form)
 
 
-class StreamingServerDelete(AdminBase, DeleteView):
+class StreamingServerDelete(AdministratorPermissionRequiredMixin, DeleteView):
     template_name = "control/streaming_delete.html"
     queryset = StreamingServer.objects.all()
     success_url = "/admin/video/streamingservers/"
@@ -863,7 +852,7 @@ class StreamingServerDelete(AdminBase, DeleteView):
         return HttpResponseRedirect(success_url)
 
 
-class StreamkeyGenerator(AdminBase, FormView):
+class StreamkeyGenerator(AdministratorPermissionRequiredMixin, FormView):
     template_name = "control/streamkey.html"
     form_class = StreamKeyGeneratorForm
 
@@ -881,7 +870,7 @@ class StreamkeyGenerator(AdminBase, FormView):
         return ctx
 
 
-class BBBMoveRoom(AdminBase, FormView):
+class BBBMoveRoom(AdministratorPermissionRequiredMixin, FormView):
     template_name = "control/bbb_moveroom.html"
     form_class = BBBMoveRoomForm
 

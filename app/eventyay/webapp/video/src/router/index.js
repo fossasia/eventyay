@@ -189,11 +189,6 @@ const routes = [
 				props: true
 			},
 			{
-				path: 'event/admin/:admin_path(.*)*',
-				name: 'admin:video-admin',
-				component: () => import('views/admin/config/video-admin')
-			},
-			{
 				path: 'event/config',
 				component: () => import('views/admin/config'),
 				children: [{

@@ -1,5 +1,3 @@
-import api from 'lib/api'
-
 export function apiErrorDetail(data) {
 	const detail = data?.detail
 	if (typeof detail === 'string') return detail
@@ -13,14 +11,16 @@ export function apiErrorDetail(data) {
 }
 
 export function interpretationRouting(store) {
-	const world = store.state.world
+	const world = store?.state?.world
 	let organizer = world?.organizer_slug
 	let event = world?.slug || world?.id
 	if (!organizer || organizer === 'default') {
-		const pathParts = window.location.pathname.split('/').filter(Boolean)
-		if (pathParts.length >= 2) {
-			organizer = pathParts[0]
-			event = pathParts[1]
+		if (typeof window !== 'undefined') {
+			const pathParts = window.location.pathname.split('/').filter(Boolean)
+			if (pathParts.length >= 2) {
+				organizer = pathParts[0]
+				event = pathParts[1]
+			}
 		}
 	}
 	return { organizer, event }
@@ -31,16 +31,22 @@ export function interpretationApiUrl(store, roomId, suffix = 'config/') {
 	return `/api/v1/organizers/${organizer}/events/${event}/rooms/${roomId}/interpretation/${suffix}`
 }
 
-export function interpretationAuthHeaders(json = false) {
-	const authHeader = api._config.token
-		? `Bearer ${api._config.token}`
-		: api._config.clientId
-			? `Client ${api._config.clientId}`
-			: null
+export async function interpretationAuthHeaders(json = false) {
+	let authHeader = null
+	try {
+		const { default: api } = await import('lib/api')
+		if (api?._config?.token) {
+			authHeader = `Bearer ${api._config.token}`
+		} else if (api?._config?.clientId) {
+			authHeader = `Client ${api._config.clientId}`
+		}
+	} catch (e) {
+		// Ignore if running outside browser/vite environment
+	}
 	const headers = { Accept: 'application/json' }
 	if (json) headers['Content-Type'] = 'application/json'
 	if (authHeader) headers.Authorization = authHeader
-	if (json) {
+	if (json && typeof document !== 'undefined') {
 		const match = document.cookie.match(/eventyay_csrftoken=([^;]+)/)
 		if (match) headers['X-CSRFToken'] = match[1]
 	}

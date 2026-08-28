@@ -4,6 +4,7 @@
 {% load statici18n %}
 {% load eventsignal %}
 {% load eventurl %}
+{% load rich_text %}
 <!DOCTYPE html>
 <html{% if rtl %} dir="rtl" class="rtl"{% endif %}>
 	<head>
@@ -334,7 +335,7 @@
             {% if global_settings.banner_message %}
                 <div class="impersonate-warning">
                     <span class="fa fa-bell"></span>
-                    {{ global_settings.banner_message }}
+                    {{ global_settings.banner_message|rich_text }}
                     {% if global_settings.banner_message_detail %}
                         <a href="{% url 'eventyay_admin:admin.global.message' %}">
                             {% trans "Read more" %}
