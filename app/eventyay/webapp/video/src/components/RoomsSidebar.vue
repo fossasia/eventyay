@@ -64,7 +64,7 @@ transition(name="sidebar")
 					.notifications(v-if="channel.notifications") {{ channel.notifications }}
 					bunt-icon-button(:tooltip="removeTooltip", :tooltip-fixed="true", @click.prevent.stop="$store.dispatch('chat/leaveChannel', {channelId: channel.id})") close
 			.buffer
-			template(v-if="hasPermission('world:users.list') || hasPermission('world:update') || hasPermission('world:announce') || hasPermission('room:update') || hasPermission('world:kiosks.manage') || isAdminMode")
+			template(v-if="hasPermission('world:users.list') || hasPermission('world:update') || hasPermission('world:announce') || hasPermission('room:update') || hasPermission('world:kiosks.manage')")
 				.group-title {{ $t('Administration') }}
 				.admin
 					router-link.room(:to="{name: 'admin:announcements'}", v-if="hasPermission('world:announce')") {{ $t('Announcements') }}
@@ -72,7 +72,6 @@ transition(name="sidebar")
 					router-link.room(:to="{name: 'admin:rooms:index'}", v-if="hasPermission('room:update')") {{ $t('Rooms') }}
 					router-link.room(:to="{name: 'admin:kiosks:index'}", v-if="hasPermission('world:kiosks.manage')") {{ $t('Kiosks') }}
 					router-link.room(v-if="hasPermission('world:update')", :to="{name: 'admin:config'}") {{ $t('Config') }}
-					router-link.room(v-if="isAdminMode", :to="{name: 'admin:video-admin'}") {{ $t('Video Admin') }}
 		transition(name="prompt")
 			channel-browser(v-if="showChannelBrowser", @close="showChannelBrowser = false", @createChannel="showChannelBrowser = false, showChatCreationPrompt = true")
 			create-stage-prompt(v-else-if="showStageCreationPrompt", @close="showStageCreationPrompt = false")

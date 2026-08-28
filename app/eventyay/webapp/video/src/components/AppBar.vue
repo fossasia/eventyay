@@ -110,6 +110,7 @@ const PROFILE_MENU_ITEM_DEFS = [
 	{ key: 'organizers', externalPath: 'common/organizers/', icon: 'organizers' },
 	{ key: 'profile', route: { name: 'preferences' }, separatorBefore: true, icon: 'profile' },
 	{ key: 'account', externalPath: 'common/account/general', icon: 'account' },
+	{ key: 'admin', externalPath: 'admin/', icon: 'admin', adminOnly: true },
 	{ key: 'logout', action: 'logout', icon: 'logout', separatorBefore: true }
 ]
 
@@ -188,12 +189,15 @@ const menuItems = computed(() => {
 		organizers: i18n.t('Organizers'),
 		profile: i18n.t('Profile'),
 		account: i18n.t('Account'),
+		admin: i18n.t('Admin'),
 		logout: i18n.t('Logout'),
 	}
-	return PROFILE_MENU_ITEM_DEFS.map(item => ({
-		...item,
-		label: labels[item.key]
-	}))
+	return PROFILE_MENU_ITEM_DEFS
+		.filter(item => !item.adminOnly || isAdminMode.value)
+		.map(item => ({
+			...item,
+			label: labels[item.key]
+		}))
 })
 const languageToggleLabel = computed(() => {
 	userLocale.value
