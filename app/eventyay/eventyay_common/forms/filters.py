@@ -42,6 +42,14 @@ class UserOrderFilterForm(forms.Form):
         widget=DatePickerWidget,
     )
 
+    def clean(self):
+        data = super().clean()
+        date_from = data.get('date_from')
+        date_to = data.get('date_to')
+        if date_from and date_to and date_from > date_to:
+            self.add_error('date_from', _('The start date cannot be later than the end date.'))
+        return data
+
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)  # Get the user from the kwargs

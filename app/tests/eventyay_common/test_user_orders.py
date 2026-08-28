@@ -6,6 +6,7 @@ from django.utils import timezone
 from django_scopes import scopes_disabled
 
 from eventyay.base.models import Event, Order
+from eventyay.eventyay_common.forms.filters import UserOrderFilterForm
 
 
 @pytest.mark.django_db
@@ -241,10 +242,44 @@ def test_user_orders_combined_filters(client, user, event):
 
 
 @pytest.mark.django_db
+def test_user_order_filter_form_date_range_validation(user):
+    with scopes_disabled():
+        # date_from < date_to is valid
+        form_valid_range = UserOrderFilterForm(
+            {"date_from": "2026-05-01", "date_to": "2026-05-10"},
+            user=user,
+        )
+        assert form_valid_range.is_valid()
+
+        # date_from == date_to is valid
+        form_same_date = UserOrderFilterForm(
+            {"date_from": "2026-05-10", "date_to": "2026-05-10"},
+            user=user,
+        )
+        assert form_same_date.is_valid()
+
+        # date_from > date_to is invalid
+        form_reversed = UserOrderFilterForm(
+            {"date_from": "2026-05-10", "date_to": "2026-05-01"},
+            user=user,
+        )
+        assert not form_reversed.is_valid()
+        assert "date_from" in form_reversed.errors
+
+
+@pytest.mark.django_db
 def test_user_orders_invalid_filter_param_redirect(client, user, event):
     client.force_login(user)
     url = reverse("eventyay_common:orders")
+
+    # Invalid date format
     response = client.get(f"{url}?date_from=invalid-date&code=TEST")
     assert response.status_code == 302
     assert "code=TEST" in response.url
     assert "date_from" not in response.url
+
+    # Reversed date range (date_from > date_to)
+    response_reversed = client.get(f"{url}?date_from=2026-05-10&date_to=2026-05-01&code=TEST")
+    assert response_reversed.status_code == 302
+    assert "code=TEST" in response_reversed.url
+    assert "date_from" not in response_reversed.url
