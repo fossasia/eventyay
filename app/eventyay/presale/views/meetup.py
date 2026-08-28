@@ -154,8 +154,10 @@ class MeetupRsvpView(EventViewMixin, View):
             messages.error(request, _('Please complete the card payment details to register.'))
             return self._redirect_to_index(request)
 
+        stripe_enabled = request.event.settings.get('payment_stripe__enabled', as_type=bool, default=False)
+        publishable_key = request.event.settings.get('payment_stripe_publishable_key')
         secret_key = request.event.settings.get('payment_stripe_secret_key')
-        if not secret_key:
+        if not stripe_enabled or not publishable_key or not secret_key:
             messages.error(request, _('Payment is currently unavailable because the organizer payment settings are incomplete.'))
             return self._redirect_to_index(request)
 
@@ -225,8 +227,19 @@ class MeetupRsvpView(EventViewMixin, View):
             with scope(organizer=request.event.organizer):
                 payment.info = json.dumps({'charge_id': charge.id, 'paid': charge.paid, 'status': charge.status})
                 payment.save(update_fields=['info'])
-                payment.confirm(send_mail=True, lock=False)
-                order.refresh_from_db()
+                try:
+                    payment.confirm(send_mail=True, lock=False)
+                    order.refresh_from_db()
+                except Exception as confirm_exc:
+                    logger.exception(f'Error confirming payment for order {order.code} after charge {charge.id}: {confirm_exc}')
+                    try:
+                        stripe.Refund.create(charge=charge.id, api_key=secret_key)
+                    except Exception as refund_exc:
+                        logger.exception(f'Failed to auto-refund charge {charge.id} for order {order.code}: {refund_exc}')
+                    order.status = Order.STATUS_CANCELED
+                    order.save(update_fields=['status'])
+                    messages.error(request, _('Payment could not be completed. Any charge has been automatically refunded.'))
+                    return self._redirect_to_index(request)
         except stripe.error.CardError as e:
             with scope(organizer=request.event.organizer):
                 order.status = Order.STATUS_CANCELED

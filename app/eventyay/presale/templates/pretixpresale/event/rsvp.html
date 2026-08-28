@@ -171,9 +171,12 @@
                     <div class="meetup-payment-footer">
                         <button type="button" class="btn btn-default meetup-payment-cancel">{% trans "Cancel" %}</button>
                         <button type="submit" class="btn btn-primary btn-pay-confirm" id="btnPayConfirm">
-                            {% blocktrans trimmed with fee=meetup_registration_fee|money:request.event.currency %}
-                                Pay now {{ fee }}
-                            {% endblocktrans %}
+                            <span class="fa fa-circle-o-notch fa-spin btn-spinner hidden" aria-hidden="true"></span>
+                            <span class="btn-text">
+                                {% blocktrans trimmed with fee=meetup_registration_fee|money:request.event.currency %}
+                                    Pay now {{ fee }}
+                                {% endblocktrans %}
+                            </span>
                         </button>
                     </div>
                 </form>

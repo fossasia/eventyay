@@ -18,8 +18,10 @@ function initMeetupPayment() {
     const cardNameInput = form.querySelector('#id_card_name');
     const tokenInput = form.querySelector('#id_stripe_token');
     const submitBtn = form.querySelector('#btnPayConfirm');
+    const btnSpinner = submitBtn ? submitBtn.querySelector('.btn-spinner') : null;
+    const btnText = submitBtn ? submitBtn.querySelector('.btn-text') : null;
+    const originalBtnText = btnText ? btnText.textContent : 'Pay now';
     const errorAlert = form.querySelector('#meetupPaymentErrorAlert');
-    const originalBtnHtml = submitBtn ? submitBtn.innerHTML : 'Pay now';
     const stripePublishableKey = form.dataset.stripePublishableKey || '';
 
     let stripe = null;
@@ -30,6 +32,17 @@ function initMeetupPayment() {
     let elementsMounted = false;
     let isSubmitting = false;
     let paymentAttempt = 0;
+
+    function setSubmitLoading(loading) {
+        if (!submitBtn) return;
+        submitBtn.disabled = loading;
+        if (btnSpinner) {
+            btnSpinner.classList.toggle('hidden', !loading);
+        }
+        if (btnText) {
+            btnText.textContent = loading ? ' Processing payment...' : originalBtnText;
+        }
+    }
 
     function initStripeElements() {
         if (elementsMounted || !stripePublishableKey || !window.Stripe) return;
@@ -94,10 +107,7 @@ function initMeetupPayment() {
     function closeModal() {
         paymentAttempt += 1;
         isSubmitting = false;
-        if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalBtnHtml;
-        }
+        setSubmitLoading(false);
         modal.classList.add('is-hidden');
         modal.style.display = 'none';
     }
@@ -175,11 +185,7 @@ function initMeetupPayment() {
         isSubmitting = true;
 
         const attempt = ++paymentAttempt;
-
-        if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="fa fa-circle-o-notch fa-spin"></span> Processing payment...';
-        }
+        setSubmitLoading(true);
 
         stripe
             .createToken(cardNumber, {
@@ -191,31 +197,21 @@ function initMeetupPayment() {
                 if (result.error) {
                     showError(result.error.message || 'Card payment failed.');
                     isSubmitting = false;
-                    if (submitBtn) {
-                        submitBtn.disabled = false;
-                        submitBtn.innerHTML = originalBtnHtml;
-                    }
+                    setSubmitLoading(false);
                 } else if (result.token && result.token.id) {
                     tokenInput.value = result.token.id;
                     form.submit();
                 } else {
                     showError('Unable to process card details. Please try again.');
                     isSubmitting = false;
-                    if (submitBtn) {
-                        submitBtn.disabled = false;
-                        submitBtn.innerHTML = originalBtnHtml;
-                    }
+                    setSubmitLoading(false);
                 }
             })
             .catch((err) => {
                 if (attempt !== paymentAttempt) return;
-
                 showError('Payment processing error: ' + (err.message || err));
                 isSubmitting = false;
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = originalBtnHtml;
-                }
+                setSubmitLoading(false);
             });
     });
 }

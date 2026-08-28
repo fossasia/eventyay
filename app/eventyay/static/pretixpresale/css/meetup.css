@@ -526,3 +526,7 @@
     padding: 10px 20px;
     min-width: 120px;
 }
+.btn-spinner.is-hidden,
+.btn-spinner.hidden {
+    display: none;
+}
