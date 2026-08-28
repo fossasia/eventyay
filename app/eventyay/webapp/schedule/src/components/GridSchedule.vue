@@ -401,19 +401,12 @@ export default {
 		}
 		await this.$nextTick()
 		this.initScrollSync()
-		// scroll to now, unless URL overrides now
-		let fragmentIsDate = false
-		const fragment = window.location.hash.slice(1)
-		if (fragment && fragment.length === 10) {
-			const initialDay = moment.tz(fragment, this.timezone)
-			if (initialDay.isValid()) {
-				fragmentIsDate = true
-			}
-		}
-		if (fragmentIsDate || !this.$refs.now) return
-		// Skip auto-scroll if disabled via prop
+		if (!this.$refs.now) return
 		if (this.disableAutoScroll) return
-		this.scrollElementIntoViewWithClearance(this.$refs.now)
+		const today = this.now.clone().tz(this.timezone).format('YYYY-MM-DD')
+		if (this.currentDay !== today) return // Auto-scroll does not trigger when viewing a non-current day
+		await new Promise(resolve => requestAnimationFrame(resolve))
+		this.scrollToNow()
 	},
 	beforeUnmount () {
 		if (this._gridResizeObserver) {
@@ -562,6 +555,10 @@ export default {
 			} else {
 				window.scrollBy({ top: rect.top - clearance })
 			}
+		},
+		scrollToNow() {
+			if (!this.$refs.now) return
+			this.scrollElementIntoViewWithClearance(this.$refs.now)
 		},
 		scrollToDayStart (day) {
 			const dayStr = moment.isMoment(day) ? day.clone().tz(this.timezone).startOf('day').format('YYYY-MM-DD') : day
