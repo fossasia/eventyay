@@ -30,22 +30,31 @@ test('dropdown labels match the organiser create options', () => {
 	)
 })
 
-test('disabled feature flags hide Jitsi and Janus', () => {
-	const providers = getAvailableVideoProviders(
-		allow(['room:update']),
-		false,
-		features([])
-	)
-	assert.deepEqual(providers.map(provider => provider.id), ['stream', 'bbb'])
-})
-
-test('enabled Jitsi and Janus flags include those providers', () => {
+test('without admin mode, room:update only exposes Stream', () => {
 	const providers = getAvailableVideoProviders(
 		allow(['room:update']),
 		false,
 		features(['jitsi', 'janus'])
 	)
-	assert.deepEqual(providers.map(provider => provider.id), ['stream', 'bbb', 'jitsi', 'janus'])
+	assert.deepEqual(providers.map(provider => provider.id), ['stream'])
+})
+
+test('disabled feature flags hide Jitsi and Janus even in admin mode', () => {
+	const providers = getAvailableVideoProviders(
+		allow(['world:rooms.create.bbb', 'world:rooms.create.jitsi']),
+		true,
+		features([])
+	)
+	assert.deepEqual(providers.map(provider => provider.id), ['bbb'])
+})
+
+test('admin mode with create permissions includes gated providers', () => {
+	const providers = getAvailableVideoProviders(
+		allow(['world:rooms.create.bbb', 'world:rooms.create.jitsi']),
+		true,
+		features(['jitsi', 'janus'])
+	)
+	assert.deepEqual(providers.map(provider => provider.id), ['bbb', 'jitsi', 'janus'])
 })
 
 test('users without create or update permission see no providers', () => {
@@ -66,12 +75,20 @@ test('stage create permission is enough for Stream', () => {
 	assert.deepEqual(providers.map(provider => provider.id), ['stream'])
 })
 
-test('Jitsi does not require admin mode when the organiser can update rooms', () => {
+test('Jitsi requires admin mode even when the organiser can update rooms', () => {
 	assert.equal(
 		isVideoProviderPermitted(
 			VIDEO_CREATE_PROVIDERS.find(provider => provider.id === 'jitsi'),
-			allow(['room:update']),
+			allow(['room:update', 'world:rooms.create.jitsi']),
 			false
+		),
+		false
+	)
+	assert.equal(
+		isVideoProviderPermitted(
+			VIDEO_CREATE_PROVIDERS.find(provider => provider.id === 'jitsi'),
+			allow(['world:rooms.create.jitsi']),
+			true
 		),
 		true
 	)

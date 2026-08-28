@@ -259,6 +259,9 @@ export default {
 			const start = async() => {
 				this.offline = false
 				this.buffering = false
+				if (this.module?.config?.startMuted || this.room?.currentStream?.config?.startMuted) {
+					video.muted = true
+				}
 				if (!shouldPlay) return
 				try {
 					await video.play()

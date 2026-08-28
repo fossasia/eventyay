@@ -5,6 +5,7 @@
 {% load eventurl %}
 {% load statici18n %}
 {% load presale_locale %}
+{% load rich_text %}
 
 <!DOCTYPE html>
 <html lang="{{ html_locale }}"{% if rtl %} dir="rtl" class="rtl"{% endif %}>
@@ -199,7 +200,7 @@
                             {% block back_button %}{% endblock %}
                             <div class="event-hero-text">
                                 <div class="event-title">
-                                    {{ startpage_header_text }}
+                                    {{ startpage_header_text|rich_text }}
                                 </div>
                             </div>
                         </div>

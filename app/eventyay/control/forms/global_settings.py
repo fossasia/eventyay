@@ -169,16 +169,14 @@ class GlobalSettingsForm(SettingsForm):
                 ),
                 (
                     'banner_message',
-                    I18nFormField(
-                        widget=I18nTextarea,
+                    I18nRichTextFormField(
                         required=False,
                         label=_('Global message banner'),
                     ),
                 ),
                 (
                     'banner_message_detail',
-                    I18nFormField(
-                        widget=I18nTextarea,
+                    I18nRichTextFormField(
                         required=False,
                         label=_('Global message banner detail text'),
                     ),
@@ -947,7 +945,12 @@ class SSOConfigForm(SettingsForm):
 
 
 class StartPageSettingsForm(SettingsForm):
-    auto_fields = ['startpage_header_image', 'startpage_header_text']
+    auto_fields = ['startpage_header_image']
+
+    startpage_header_text = I18nRichTextFormField(
+        required=False,
+        label=_('Startpage Header Text'),
+    )
 
     def __init__(self, *args, **kwargs):
         self.obj = GlobalSettingsObject()

@@ -48,11 +48,12 @@ export function isVideoProviderEnabled(provider, isFeatureEnabled) {
 }
 
 export function isVideoProviderPermitted(provider, hasPermission, isAdminMode = false) {
-	if (hasPermission('room:update')) return true
-	if (provider.roomTypeId === 'channel-jitsi') {
-		return hasPermission('world:rooms.create.jitsi')
+	if (isRoomTypeAvailable(provider.roomTypeId, hasPermission, isAdminMode)) {
+		return true
 	}
-	return isRoomTypeAvailable(provider.roomTypeId, hasPermission, isAdminMode)
+	// Rooms admin users with room:update can still create Stream rooms without the
+	// dedicated stage-create permission. Server-backed providers stay admin-gated.
+	return provider.roomTypeId === 'stage' && hasPermission('room:update')
 }
 
 export function getAvailableVideoProviders(hasPermission, isAdminMode, isFeatureEnabled) {

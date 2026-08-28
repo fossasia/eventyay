@@ -70,6 +70,7 @@ from eventyay.common.text.phrases import phrases
 from eventyay.control.forms.admin.vouchers import InvoiceVoucherForm
 from eventyay.control.forms.filter import AdminOrderFilterForm, OrganizerFilterForm, SubmissionFilterForm, TaskFilterForm
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
+from eventyay.control.video.admin_dashboard import get_video_server_dashboard_rows
 from eventyay.control.views import PaginationMixin
 from eventyay.control.views.main import EventList
 
@@ -626,6 +627,8 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
             except (DatabaseError, RedisError):
                 logger.exception('AdminDashboard: failed to load API status section')
                 ctx['api_status_unavailable'] = True
+
+        ctx['video_server_rows'] = get_video_server_dashboard_rows()
 
         return ctx
 
