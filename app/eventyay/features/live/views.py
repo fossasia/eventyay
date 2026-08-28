@@ -236,14 +236,19 @@ class BBBCSSView(TemplateView):
 
 class ShortTokenView(View):
     def get(self, request, token):
-        event_domain = re.sub(r":\d+$", "", self.request.get_host())
-        event = get_object_or_404(Event, domain=event_domain)
         try:
-            st = ShortToken.objects.get(short_token=token, event=event)
-            return redirect(f"/#token={st.long_token}")
+            st = ShortToken.objects.select_related("event", "event__organizer").get(short_token=token)
+            if st.expires and st.expires < now():
+                return HttpResponse(
+                    "This access token has expired. Please request a new link.",
+                    status=403,
+                )
+            target_url = f"{st.event.urls.video_base}#token={st.long_token}"
+            return redirect(target_url)
         except ShortToken.DoesNotExist:
             return HttpResponse(
-                "Unknown access token. Please check that you clicked the correct link."
+                "Unknown access token. Please check that you clicked the correct link.",
+                status=404,
             )
 
 

@@ -207,7 +207,7 @@ class ShowPageView(TemplateView):
         url_schemes = set(getattr(nh3, 'DEFAULT_URL_SCHEMES', nh3.ALLOWED_URL_SCHEMES)) | {'data'}
 
         ctx['content'] = nh3.clean(
-            compile_markdown(str(page.text)),
+            str(page.text),
             tags=tags,
             attributes=attributes,
             url_schemes=url_schemes,
@@ -239,7 +239,13 @@ class SystemPageView(ShowPageView):
                 }
                 title = title_map.get(slug, slug.capitalize())
                 custom_text = gs.get(f'footer_page_{slug}_text', as_type=LazyI18nString)
-                text = custom_text if custom_text else f'# {title}\n\n' + str(_('Content for this page has not been configured yet.'))
+                if custom_text:
+                    text = custom_text
+                else:
+                    # Default copy is Markdown; convert so ShowPageView can render HTML.
+                    text = compile_markdown(
+                        f'# {title}\n\n' + str(_('Content for this page has not been configured yet.'))
+                    )
                 return Page(
                     title=title,
                     slug=slug,
