@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0064_gmailoauthcredential'),
+        ('base', '0066_page_text_markdown_to_html'),
     ]
 
     operations = [
