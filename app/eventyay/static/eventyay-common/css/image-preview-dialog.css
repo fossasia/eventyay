@@ -1,58 +1,77 @@
 .eventyay-image-preview-dialog {
-    position: fixed;
-    inset: 0;
     border: none;
     padding: 0;
-    margin: auto;
-    max-width: 100vw;
-    max-height: 100vh;
     background: transparent;
     overflow: visible;
 }
 
+.eventyay-image-preview-dialog[open] {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
+    margin: 0;
+    box-sizing: border-box;
+    pointer-events: auto;
+    z-index: 10000;
+}
+
 .eventyay-image-preview-dialog::backdrop {
-    background: rgba(211, 211, 211, 0.8);
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(2px);
+    pointer-events: auto;
+}
+
+.eventyay-image-preview-dialog__image {
+    display: block;
+    max-width: min(90vw, 1200px);
+    max-height: 85vh;
+    width: auto;
+    height: auto;
+    margin: auto;
+    object-fit: contain;
+    border-radius: 4px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    pointer-events: auto;
 }
 
 .eventyay-image-preview-dialog__close {
     position: fixed;
     top: 20px;
     right: 20px;
-    z-index: 1;
+    z-index: 100001;
     border: none;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.6);
     border-radius: 50%;
     color: #fff;
-    font-size: 48px;
-    font-weight: bold;
+    font-size: 36px;
+    font-weight: 300;
     line-height: 1;
     cursor: pointer;
     padding: 0;
-    width: 60px;
-    height: 60px;
+    width: 48px;
+    height: 48px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, transform 0.1s;
+    pointer-events: auto;
 }
 
 .eventyay-image-preview-dialog__close:hover,
 .eventyay-image-preview-dialog__close:focus {
     color: #fff;
-    background: rgba(0, 0, 0, 0.8);
-    opacity: 1;
+    background: rgba(0, 0, 0, 0.9);
+    transform: scale(1.08);
 }
 
 .eventyay-image-preview-dialog__close:focus-visible {
     outline: 2px solid #fff;
     outline-offset: 2px;
-}
-
-.eventyay-image-preview-dialog__image {
-    display: block;
-    max-width: min(95vw, 1200px);
-    max-height: 90vh;
-    width: auto;
-    height: auto;
-    margin: 0 auto;
 }
