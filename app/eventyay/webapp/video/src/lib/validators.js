@@ -98,7 +98,7 @@ export function normalizeAudioTranslationSource(audioSource) {
 export function isUsableAudioTranslationEntry(entry) {
 	if (!entry?.language) return false
 	if (entry.language === 'Original') return true
-	return !!normalizeAudioTranslationSource(entry.youtube_id)
+	return !!normalizeAudioTranslationSource(entry.url || entry.youtube_id)
 }
 
 export function youtubeid(message) {
