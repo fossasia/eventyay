@@ -180,9 +180,9 @@
 				:disabled="!isEventHappeningToday",
 				:title="isEventHappeningToday ? '' : t.now_disabled")
 				| {{ t.now }}
-				svg.tb-icon.now-arrow(aria-hidden="true", viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
-					line(x1="5", y1="12", x2="19", y2="12")
-					polyline(points="12 5 19 12 12 19")
+				svg.tb-icon.now-arrow(aria-hidden="true", viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", stroke-linecap="round", stroke-linejoin="round")
+					line(x1="12", y1="5", x2="12", y2="19")
+					polyline(points="19 12 12 19 5 12")
 			.search-area(ref="searchArea")
 				.search-compact(:class="{expanded: searchExpanded}")
 					button.toolbar-btn.icon-only.search-toggle(@click="toggleSearch", :aria-label="t.search")
@@ -1090,8 +1090,19 @@ export default {
 		align-items: center
 		gap: 0.35rem
 		white-space: nowrap
-	.toolbar-btn.now-btn.is-disabled
-		cursor: not-allowed
+		background-color: var(--pretalx-clr-primary, #3aa57c)
+		color: #fff
+		font-weight: 600
+		border-radius: 4px
+		padding: 0 10px
+		&:hover:not(:disabled)
+			background-color: var(--pretalx-clr-primary, #3aa57c)
+			color: #fff
+			filter: brightness(0.92)
+		&:disabled
+			cursor: not-allowed
+			opacity: 0.5
+			filter: none
 	.toolbar-row
 		display: flex
 		align-items: center
@@ -2061,6 +2072,14 @@ export default {
 		.toolbar-btn.mobile-toggle-btn
 			padding: 0 6px
 			gap: 4px
+
+		button.toolbar-btn.now-btn,
+		.toolbar-right button.toolbar-btn.now-btn
+			color: #fff
+			svg.tb-icon.now-arrow
+				stroke: currentColor
+				color: inherit
+				fill: none
 
 @media print
 	.c-schedule-toolbar
