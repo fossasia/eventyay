@@ -8,6 +8,7 @@ import uuid
 from collections import OrderedDict, defaultdict
 from contextlib import suppress
 from datetime import datetime, time, timedelta
+from functools import partial
 from operator import attrgetter
 from urllib.parse import urljoin, urlparse
 from zoneinfo import ZoneInfo
@@ -1813,6 +1814,11 @@ class Event(
 
         Runs in a transaction so a failure part-way through cannot leave the event half-scrubbed,
         with the audit trail deleted but the personal data it describes still present.
+
+        Storage-backend deletion cannot be rolled back, so files are removed only once that
+        transaction has committed. Rolling back therefore leaves the files intact and the
+        method safe to retry, at the cost of a narrow window where a failing storage backend
+        can leave a file behind after its row is gone.
         """
         from eventyay.base.models import (
             ChatEvent,
@@ -1835,8 +1841,10 @@ class Event(
         RoomQuestion.objects.filter(room__event=self).delete()
         Poll.objects.filter(room__event=self).delete()
         SystemLog.objects.filter(event=self).delete()
-        for f in StoredFile.objects.filter(event=self):
-            f.full_delete()
+        for stored_file in StoredFile.objects.filter(event=self):
+            if stored_file.file:
+                transaction.on_commit(partial(stored_file.file.delete, False))
+            stored_file.delete()
 
         self.user_set.all().delete()
         self.domain = None

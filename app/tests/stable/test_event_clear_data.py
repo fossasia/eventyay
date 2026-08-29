@@ -8,11 +8,15 @@ scrubbed. `delete_sub_objects()` in the same model already used the correct `sel
 The relation tests below need no database and would have caught that on their own.
 """
 
+import os
+
 import pytest
+from django.core.files.base import ContentFile
 from django.utils.timezone import now
 from django_scopes import scope
 
 from eventyay.base.models import Event, Organizer
+from eventyay.base.models.storage_model import StoredFile
 
 
 # Reverse relations Event.clear_data() dereferences directly off `self`.
@@ -55,3 +59,24 @@ def test_clear_data_runs_on_an_empty_event(scrub_event):
 
     scrub_event.refresh_from_db()
     assert scrub_event.domain is None
+
+
+@pytest.mark.django_db
+def test_clear_data_removes_stored_files_after_commit(scrub_event, django_capture_on_commit_callbacks):
+    """Rows go inside the transaction; the file itself is removed only once it commits."""
+    stored_file = StoredFile.objects.create(
+        event=scrub_event,
+        date=now(),
+        filename='Screenshot.png',
+        type='image/png',
+        file=ContentFile('', 'Screenshot.png'),
+        public=True,
+    )
+    path = stored_file.file.path
+    assert os.path.exists(path)
+
+    with django_capture_on_commit_callbacks(execute=True):
+        scrub_event.clear_data()
+
+    assert not StoredFile.objects.filter(event=scrub_event).exists()
+    assert not os.path.exists(path)
