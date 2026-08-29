@@ -25,7 +25,7 @@ class UserOrderFilterForm(forms.Form):
         required=False,
         label=_('Status'),
         choices=[
-            ('', _('All status')),
+            ('', _('All statuses')),
             (Order.STATUS_PENDING, _('Pending')),
             (Order.STATUS_PAID, _('Paid')),
             (Order.STATUS_EXPIRED, _('Expired')),
