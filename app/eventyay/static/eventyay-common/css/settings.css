@@ -448,3 +448,19 @@
     margin-top: 80px;
 }
 
+.user-avatar-preview {
+    margin-bottom: 12px;
+}
+
+.user-avatar-preview a {
+    display: inline-block;
+}
+
+.user-avatar-preview-image {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}

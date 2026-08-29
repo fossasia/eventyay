@@ -67,6 +67,13 @@ def avatar_path(instance, filename):
     return path_with_hash(filename, base_path='avatars')
 
 
+def profile_picture_path(instance, filename):
+    if instance.code:
+        extension = Path(filename).suffix
+        filename = f'{instance.code}{extension}'
+    return path_with_hash(filename, base_path='profile_pictures')
+
+
 class UserQuerySet(models.QuerySet):
     def with_profiles(self, event):
         from django.db.models import Prefetch
@@ -263,6 +270,17 @@ class User(
     )
     avatar_thumbnail = models.ImageField(null=True, blank=True, upload_to='avatars/')
     avatar_thumbnail_tiny = models.ImageField(null=True, blank=True, upload_to='avatars/')
+    profile_picture = models.ImageField(
+        null=True,
+        blank=True,
+        verbose_name=_('Account profile picture'),
+        help_text=_(
+            'We recommend uploading a square image at least 400px wide.'
+        ),
+        upload_to=profile_picture_path,
+    )
+    profile_picture_thumbnail = models.ImageField(null=True, blank=True, upload_to='profile_pictures/')
+    profile_picture_thumbnail_tiny = models.ImageField(null=True, blank=True, upload_to='profile_pictures/')
     default_organizer = models.ForeignKey(
         'Organizer',
         null=True,
@@ -331,11 +349,14 @@ class User(
         is_new = not self.pk
         update_fields = kwargs.get('update_fields')
 
-        # Invalidate avatar_url cache if avatar might have changed
+        # Invalidate avatar_url / profile_picture_url cache if images might have changed
         if not is_new:
             if update_fields is None or 'avatar' in update_fields:
                 if 'avatar_url' in self.__dict__:
                     del self.__dict__['avatar_url']
+            if update_fields is None or 'profile_picture' in update_fields:
+                if 'profile_picture_url' in self.__dict__:
+                    del self.__dict__['profile_picture_url']
 
         # Platform accounts back Video JWT uids via email hash. Refresh cached
         # hash→account entries when identity fields change (or on create, so a
@@ -1055,6 +1076,46 @@ the eventyay team"""
         if event and event.custom_domain:
             return urljoin(event.custom_domain, image_url)
         return urljoin(settings.SITE_URL, image_url)
+
+    @property
+    def has_profile_picture(self) -> bool:
+        return bool(self.profile_picture) and self.profile_picture != 'False'
+
+    def get_profile_picture_url(self, event=None, thumbnail=None):
+        """Returns the profile picture URL with cache-busting timestamp."""
+        if not self.profile_picture or self.profile_picture == 'False':
+            return ''
+
+        if not thumbnail:
+            image = self.profile_picture
+        else:
+            image = (
+                self.profile_picture_thumbnail_tiny
+                if thumbnail == 'tiny'
+                else self.profile_picture_thumbnail
+            )
+            if not image:
+                image = create_thumbnail(self.profile_picture, thumbnail)
+
+        if not image:
+            return ''
+
+        try:
+            file_path = image.path
+            file_mtime = os.path.getmtime(file_path)
+            timestamp = int(file_mtime * 1000)
+        except (OSError, ValueError, AttributeError, NotImplementedError):
+            timestamp = int(time.time() * 1000)
+
+        image_url = f"{image.url}?v={timestamp}"
+
+        if event and event.custom_domain:
+            return urljoin(event.custom_domain, image_url)
+        return urljoin(settings.SITE_URL, image_url)
+
+    @cached_property
+    def profile_picture_url(self) -> str:
+        return self.get_profile_picture_url()
 
     def regenerate_token(self) -> Token:
         """Generates a new API access token, deleting the old one."""

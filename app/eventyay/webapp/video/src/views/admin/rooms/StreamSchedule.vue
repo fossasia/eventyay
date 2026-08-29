@@ -52,7 +52,7 @@
 <script>
 import { useVuelidate } from '@vuelidate/core';
 import { helpers } from '@vuelidate/validators';
-import { required, url, normalizeYoutubeVideoId } from 'lib/validators';
+import { required, url, normalizeYoutubeVideoId, toYoutubeWatchUrl } from 'lib/validators';
 import api from 'lib/api';
 import Prompt from 'components/Prompt';
 import LanguageAudioSourceList from 'components/LanguageAudioSourceList';
@@ -310,7 +310,7 @@ export default {
 			let config = schedule.config ? JSON.parse(JSON.stringify(schedule.config)) : {};
 			this.formData = {
 				title: schedule.title || '',
-				url: schedule.url,
+				url: schedule.stream_type === 'youtube' ? toYoutubeWatchUrl(schedule.url) : schedule.url,
 				start_time: schedule.start_time ? this.parseApiDateTime(schedule.start_time).tz(tz) : null,
 				end_time: schedule.end_time ? this.parseApiDateTime(schedule.end_time).tz(tz) : null,
 				stream_type: schedule.stream_type,

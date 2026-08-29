@@ -224,11 +224,12 @@ export default {
 	.stage-tools
 		flex: none
 		display: flex
-		min-height: 56px
+		min-height: 40px
 		justify-content: flex-end
 		align-items: center
 		flex-wrap: wrap
-		gap: 4px
+		gap: 6px
+		padding: 4px 8px
 		user-select: none
 		.stage-tool
 			font-size: 16px
