@@ -210,14 +210,28 @@ class MeetupRsvpView(EventViewMixin, View):
             places = getattr(django_settings, 'CURRENCY_PLACES', {}).get(request.event.currency, 2)
             stripe_amount = int(round(order.total * (10 ** places)))
 
-            charge = stripe.Charge.create(
-                amount=stripe_amount,
-                currency=request.event.currency.lower(),
-                source=stripe_token,
-                description=f'Meetup RSVP {order.code} - {request.event.name}',
-                api_key=secret_key,
-            )
-            if not (getattr(charge, 'paid', False) is True and getattr(charge, 'status', '') == 'succeeded'):
+            params = {
+                'amount': stripe_amount,
+                'currency': request.event.currency.lower(),
+                'confirm': True,
+                'automatic_payment_methods': {
+                    'enabled': True,
+                    'allow_redirects': 'never',
+                },
+                'description': f'Meetup RSVP {order.code} - {request.event.name}',
+                'metadata': {
+                    'order_code': order.code,
+                    'event_slug': request.event.slug,
+                },
+                'api_key': secret_key,
+            }
+            if stripe_token.startswith('tok_'):
+                params['payment_method_data'] = {'type': 'card', 'card': {'token': stripe_token}}
+            else:
+                params['payment_method'] = stripe_token
+
+            intent = stripe.PaymentIntent.create(**params)
+            if getattr(intent, 'status', '') != 'succeeded':
                 with scope(organizer=request.event.organizer):
                     order.status = Order.STATUS_CANCELED
                     order.save(update_fields=['status'])
@@ -227,17 +241,17 @@ class MeetupRsvpView(EventViewMixin, View):
                 return self._redirect_to_index(request)
 
             with scope(organizer=request.event.organizer):
-                payment.info = json.dumps({'charge_id': charge.id, 'paid': charge.paid, 'status': charge.status})
+                payment.info = json.dumps({'payment_intent_id': intent.id, 'status': intent.status})
                 payment.save(update_fields=['info'])
                 try:
                     payment.confirm(send_mail=True, lock=False)
                     order.refresh_from_db()
                 except Exception as confirm_exc:
-                    logger.exception(f'Error confirming payment for order {order.code} after charge {charge.id}: {confirm_exc}')
+                    logger.exception(f'Error confirming payment for order {order.code} after intent {intent.id}: {confirm_exc}')
                     try:
-                        stripe.Refund.create(charge=charge.id, api_key=secret_key)
+                        stripe.Refund.create(payment_intent=intent.id, api_key=secret_key)
                     except Exception as refund_exc:
-                        logger.exception(f'Failed to auto-refund charge {charge.id} for order {order.code}: {refund_exc}')
+                        logger.exception(f'Failed to auto-refund intent {intent.id} for order {order.code}: {refund_exc}')
                     order.status = Order.STATUS_CANCELED
                     order.save(update_fields=['status'])
                     payment.state = OrderPayment.PAYMENT_STATE_FAILED

@@ -333,12 +333,11 @@ def test_paid_rsvp_success_creates_paid_order(meetup_event, rf):
     req.session.save()
     setattr(req, '_messages', FallbackStorage(req))
 
-    mock_charge = MagicMock()
-    mock_charge.id = 'ch_test_paid_123'
-    mock_charge.paid = True
-    mock_charge.status = 'succeeded'
+    mock_intent = MagicMock()
+    mock_intent.id = 'pi_test_paid_123'
+    mock_intent.status = 'succeeded'
 
-    with patch('stripe.Charge.create', return_value=mock_charge) as mock_create:
+    with patch('stripe.PaymentIntent.create', return_value=mock_intent) as mock_create:
         view = MeetupRsvpView()
         response = view.post(req)
         assert response.status_code == 302
@@ -356,7 +355,7 @@ def test_paid_rsvp_success_creates_paid_order(meetup_event, rf):
 @pytest.mark.django_db
 @scopes_disabled()
 def test_paid_rsvp_card_error_cancels_order_and_sets_payment_failed(meetup_event, rf):
-    """CardError during Stripe charge cancels order and marks payment as FAILED."""
+    """CardError during Stripe payment intent cancels order and marks payment as FAILED."""
     product, quota = get_rsvp_product_and_quota(meetup_event)
     product.default_price = Decimal('15.00')
     product.save(update_fields=['default_price'])
@@ -387,7 +386,7 @@ def test_paid_rsvp_card_error_cancels_order_and_sets_payment_failed(meetup_event
         code='card_declined',
     )
 
-    with patch('stripe.Charge.create', side_effect=card_err):
+    with patch('stripe.PaymentIntent.create', side_effect=card_err):
         view = MeetupRsvpView()
         response = view.post(req)
         assert response.status_code == 302

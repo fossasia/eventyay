@@ -160,9 +160,15 @@ class EventCommonSettingsForm(SettingsForm):
                 stripe_sec = self.cleaned_data.get('payment_stripe_secret_key') or self.event.settings.get('payment_stripe_secret_key')
                 if reg_fee > Decimal('0.00') and stripe_sec:
                     self.cleaned_data['payment_stripe__enabled'] = True
+                elif reg_fee == Decimal('0.00') and not self.cleaned_data.get('payment_stripe_publishable_key'):
+                    self.cleaned_data['payment_stripe_secret_key'] = ''
+                    self.cleaned_data['payment_stripe_publishable_key'] = ''
+                    self.cleaned_data['payment_stripe_merchant_country'] = ''
+                    self.cleaned_data['payment_stripe__enabled'] = False
 
-            if not self.cleaned_data.get('payment_stripe_secret_key'):
-                self.cleaned_data['payment_stripe_secret_key'] = self.initial.get('payment_stripe_secret_key', '')
+            if 'payment_stripe_secret_key' in self.cleaned_data and not self.cleaned_data.get('payment_stripe_secret_key'):
+                if self.cleaned_data.get('registration_fee', Decimal('0.00')) > Decimal('0.00') or self.cleaned_data.get('payment_stripe__enabled'):
+                    self.cleaned_data['payment_stripe_secret_key'] = self.initial.get('payment_stripe_secret_key', '')
 
         return super().save()
 

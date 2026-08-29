@@ -1447,7 +1447,7 @@ class StripePaymentProvider(BasePaymentProvider):
 
     @property
     def is_enabled(self) -> bool:
-        return bool(self.settings.get('_enabled', as_type=bool, default=False) or self.settings.get('secret_key'))
+        return bool(self.settings.get('_enabled', as_type=bool, default=False) and self.settings.get('secret_key'))
 
     def is_allowed(self, request: HttpRequest, total: Decimal = None):
         if not is_meetup_event(self.event):
@@ -1524,19 +1524,33 @@ class StripePaymentProvider(BasePaymentProvider):
             places = settings.CURRENCY_PLACES.get(self.event.currency, 2)
             stripe_amount = int(round(payment.amount * (10 ** places)))
 
-            charge = stripe.Charge.create(
-                amount=stripe_amount,
-                currency=self.event.currency.lower(),
-                source=stripe_token,
-                description=f'Order {payment.order.code} - {self.event.name}',
-                api_key=secret_key,
-            )
-            if not (getattr(charge, 'paid', False) is True and getattr(charge, 'status', '') == 'succeeded'):
+            params = {
+                'amount': stripe_amount,
+                'currency': self.event.currency.lower(),
+                'confirm': True,
+                'automatic_payment_methods': {
+                    'enabled': True,
+                    'allow_redirects': 'never',
+                },
+                'description': f'Order {payment.order.code} - {self.event.name}',
+                'metadata': {
+                    'order_code': payment.order.code,
+                    'event_slug': self.event.slug,
+                },
+                'api_key': secret_key,
+            }
+            if stripe_token.startswith('tok_'):
+                params['payment_method_data'] = {'type': 'card', 'card': {'token': stripe_token}}
+            else:
+                params['payment_method'] = stripe_token
+
+            intent = stripe.PaymentIntent.create(**params)
+            if getattr(intent, 'status', '') != 'succeeded':
                 payment.state = OrderPayment.PAYMENT_STATE_FAILED
                 payment.save(update_fields=['state'])
                 raise PaymentException(_('Payment was not completed successfully.'))
 
-            payment.info = json.dumps({'charge_id': charge.id, 'paid': charge.paid, 'status': charge.status})
+            payment.info = json.dumps({'payment_intent_id': intent.id, 'status': intent.status})
             payment.save(update_fields=['info'])
 
             payment.confirm(send_mail=True, lock=False)
@@ -1553,13 +1567,17 @@ class StripePaymentProvider(BasePaymentProvider):
 
 @receiver(register_payment_providers, dispatch_uid='payment_free')
 def register_payment_provider(sender, **kwargs):
-    providers = [
+    return [
         FreeOrderProvider,
         BoxOfficeProvider,
         OffsettingProvider,
         ManualPayment,
         GiftCardPayment,
     ]
+
+
+@receiver(register_payment_providers, dispatch_uid='payment_stripe_meetup')
+def register_stripe_payment_provider(sender, **kwargs):
     if is_meetup_event(sender):
-        providers.append(StripePaymentProvider)
-    return providers
+        return [StripePaymentProvider]
+    return []

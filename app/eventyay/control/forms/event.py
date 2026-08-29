@@ -2055,14 +2055,8 @@ class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
         else:
             self.initial['registration_fee_type'] = REGISTRATION_FEE_FREE
 
-        for f_name in (
-            'registration_fee',
-            'payment_stripe_publishable_key',
-            'payment_stripe_secret_key',
-            'payment_stripe_merchant_country',
-        ):
-            if f_name in self.fields:
-                self.fields[f_name]._required = True
+        if 'registration_fee' in self.fields:
+            self.fields['registration_fee']._required = True
 
         for name, field in self.fields.items():
             if isinstance(field.widget, forms.ClearableFileInput):
