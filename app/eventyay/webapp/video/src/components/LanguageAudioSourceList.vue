@@ -82,19 +82,22 @@ export default {
 			languageOptions: [],
 		}
 	},
+	watch: {
+		entries: {
+			immediate: true,
+			handler(entries) {
+				if (!Array.isArray(entries)) return
+				for (const entry of entries) {
+					normalizeLanguageStreamEntry(entry)
+				}
+			}
+		}
+	},
 	created() {
 		this.languageOptions = ISO6391.getAllCodes().map(code => ({
 			id: ISO6391.getName(code),
 			label: ISO6391.getName(code),
 		}))
-		// Ensure entry.url and entry.youtube_id are synced
-		for (const entry of this.entries) {
-			if (!entry.url && entry.youtube_id) {
-				entry.url = entry.youtube_id
-			} else if (entry.url && !entry.youtube_id) {
-				entry.youtube_id = entry.url
-			}
-		}
 	},
 	methods: {
 		addEntry() {

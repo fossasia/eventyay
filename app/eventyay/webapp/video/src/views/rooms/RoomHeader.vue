@@ -58,7 +58,7 @@ export default {
 				}
 			}
 			const wantedId = String(this.roomId)
-			return this.rooms?.find(room => String(room.id) === wantedId)
+			return this.rooms?.find(room => String(room.id) === wantedId || (room.pretalx_id != null && String(room.pretalx_id) === wantedId))
 		},
 		roomType() {
 			if (!this.room) return null

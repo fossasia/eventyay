@@ -56,6 +56,7 @@ from eventyay.base.models import (
     ProductVariation,
     Quota,
     SeatCategoryMapping,
+    User,
     Voucher,
 )
 from eventyay.base.models.event import SubEvent
@@ -734,7 +735,7 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
 
         with scope(organizer=event.organizer):
             attendee_count = event.orders.filter(status__in=RSVP_ORDER_STATUSES).count()
-            preview_positions = (
+            preview_positions = list(
                 OrderPosition.objects.filter(
                     order__event=event,
                     order__status__in=RSVP_ORDER_STATUSES,
@@ -743,9 +744,26 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
                 .order_by('order__datetime')
                 [:6]
             )
+            emails = {
+                (pos.attendee_email or pos.order.email).strip().lower()
+                for pos in preview_positions
+                if (pos.attendee_email or pos.order.email)
+            }
+            user_avatars = {}
+            if emails:
+                users = (
+                    User.objects.filter(email__in=emails, event__isnull=True)
+                    .only('id', 'email', 'profile_picture', 'profile_picture_thumbnail', 'profile_picture_thumbnail_tiny')
+                )
+                for u in users:
+                    avatar_url = u.get_profile_picture_url(event=event, thumbnail='default') or u.get_profile_picture_url(event=event)
+                    if avatar_url:
+                        user_avatars[u.email.lower()] = avatar_url
+
             attendees_preview = [
                 {
                     'name': pos.attendee_name,
+                    'avatar_url': user_avatars.get((pos.attendee_email or pos.order.email or '').strip().lower()),
                 }
                 for pos in preview_positions
                 if pos.attendee_name

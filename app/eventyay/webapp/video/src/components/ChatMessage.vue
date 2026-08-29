@@ -30,18 +30,15 @@
 				.title {{ message.content.preview_card.title }}
 				.description {{ message.content.preview_card.description }}
 			.reactions(v-if="Object.keys(message.reactions).length > 0")
-				.reaction(v-for="users, emoji of message.reactions", :class="{'reacted-by-me': users.includes(user.id)}", @click="toggleReaction(emoji, users)", @pointerenter="initReactionTooltip($event, {emoji, users})", @pointerleave="reactionTooltip = null")
+				.reaction(
+					v-for="users, emoji of message.reactions",
+					:class="{'reacted-by-me': users.includes(user.id)}",
+					v-tooltip="{text: reactionTooltipText(emoji, users), placement: 'top', fixed: true}",
+					@click="toggleReaction(emoji, users)"
+				)
 					img.emoji(:src="nativeEmojiToUrl(emoji)", :alt="emoji")
 					.count {{ users.length }}
 				emoji-picker-button(@selected="addReaction", strategy="fixed", placement="top-start", :offset="[0, 3]", icon-style="plus")
-				.reaction-tooltip(v-if="reactionTooltip", ref="reactionTooltip")
-					.arrow(data-popper-arrow="")
-					.emoji-wrapper
-						img.emoji(:src="nativeEmojiToUrl(reactionTooltip.emoji)", :alt="reactionTooltip.emoji")
-					.description
-						span.users {{ reactionTooltip.usersString }}
-						|  {{ $t('reacted with') }}
-						span.emoji-text  {{ getEmojiDataFromNative(reactionTooltip.emoji).short_names[0] }}
 		.actions(v-if="!readonly")
 			emoji-picker-button(@selected="addReaction", strategy="fixed", placement="bottom-end", :offset="[36, 3]", icon-style="plus")
 			menu-dropdown(v-if="hasMessageActions", v-model="selected", placement="bottom-end", strategy="fixed", :offset="[0, 3]")
@@ -74,7 +71,6 @@
 import moment from 'moment'
 import { mapState, mapGetters } from 'vuex'
 import { nativeToUrl as nativeEmojiToUrl, getEmojiDataFromNative } from 'lib/emoji'
-import { createPopper } from '@popperjs/core'
 import { getUserName } from 'lib/profile'
 import Avatar from 'components/Avatar'
 import ChatContent from 'components/ChatContent'
@@ -107,8 +103,6 @@ export default {
 			selected: false,
 			editing: false,
 			showDeletePrompt: false,
-			reactionTooltip: null,
-			getEmojiDataFromNative,
 			nativeEmojiToUrl
 		}
 	},
@@ -175,34 +169,20 @@ export default {
 	},
 	methods: {
 		getUserName,
+		reactionTooltipText(emoji, users) {
+			const names = users.map(userId => this.usersLookup[userId]?.profile?.display_name || '???').join(', ')
+			const shortName = getEmojiDataFromNative(emoji).short_names[0]
+			return `${names} ${this.$t('reacted with')} ${shortName}`
+		},
 		addReaction(emoji) {
 			this.$store.dispatch('chat/addReaction', {message: this.message, reaction: emoji.native})
 		},
 		toggleReaction(emoji, users) {
 			if (users.includes(this.user.id)) {
-				if (users.length === 1) {
-					this.reactionTooltip = null
-				}
 				this.$store.dispatch('chat/removeReaction', {message: this.message, reaction: emoji})
 			} else {
 				this.$store.dispatch('chat/addReaction', {message: this.message, reaction: emoji})
 			}
-		},
-		async initReactionTooltip(event, {emoji, users}) {
-			this.reactionTooltip = {
-				emoji,
-				// TODO 'and you'
-				usersString: users.map(u => this.usersLookup[u]?.profile?.display_name || '???').join(', ')
-			}
-			await this.$nextTick()
-			createPopper(event.target, this.$refs.reactionTooltip, {
-				placement: 'top',
-				strategy: 'fixed',
-				modifiers: [
-					{name: 'offset', options: {offset: [0, 8]}},
-					{name: 'arrow', options: {padding: 4}}
-				],
-			})
 		},
 		startEditingMessage() {
 			this.selected = false
@@ -344,41 +324,6 @@ export default {
 			svg
 				width: 18px
 				height: 18px
-		.reaction-tooltip
-			background-color: $clr-blue-grey-900
-			color: $clr-primary-text-dark
-			padding: 12px 8px 8px
-			border-radius: 4px
-			display: flex
-			flex-direction: column
-			align-items: center
-			max-width: 180px
-			z-index: 820
-			.emoji-wrapper
-				background-color: $clr-white
-				padding: 4px
-				border-radius: 4px
-				margin-bottom: 8px
-				.emoji
-					height: 36px
-					width: @height
-					line-height: @height
-			.description
-				text-align: center
-			.users
-				font-weight: 600
-			.emoji-text
-				font-style: italic
-			.arrow
-				background-color: $clr-blue-grey-900
-				height: 6px
-				width: 12px
-			&[data-popper-placement^='top'] > .arrow
-				bottom: -6px
-				clip-path: polygon(0 0, calc(50%) 100%, calc(50%) 100%, 100% 0)
-			&[data-popper-placement^='bottom'] > .arrow
-				top: -6px
-				clip-path: polygon(0 100%, calc(50%) 0, calc(50%) 0, 100% 100%)
 
 	.c-chat-input
 		background-color: $clr-white

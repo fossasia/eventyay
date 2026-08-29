@@ -141,8 +141,11 @@ var editor = {
     _window_loaded: false,
     _fabric_loaded: false,
     _last_active_object: null,
+    _drag_start: null,
     _PAGE_SIZE_TOLERANCE: 0.05,
     _AUTOFIT_MIN_PT: 4,
+    _NUDGE_MM: 1,
+    _NUDGE_SHIFT_MM: 10,
 
     _px2mm: function (v) {
         return v / editor.pdf_scale / 72 * editor.pdf_page.userUnit * 25.4;
@@ -227,6 +230,112 @@ var editor = {
 
     _csrf_token: function () {
         return $("input[name=csrfmiddlewaretoken]").val();
+    },
+
+    _nudge_px: function (shiftKey) {
+        return editor._mm2px(shiftKey ? editor._NUDGE_SHIFT_MM : editor._NUDGE_MM);
+    },
+
+    _is_hotkey_target: function () {
+        return !$("#source-container").is(':visible');
+    },
+
+    _get_active_object: function () {
+        return editor.fabric ? editor.fabric.getActiveObject() : null;
+    },
+
+    _is_active_selection: function (o) {
+        return !!(o && o.type === 'activeSelection');
+    },
+
+    _get_active_objects: function () {
+        if (!editor.fabric) {
+            return [];
+        }
+        var selected = editor.fabric.getActiveObjects();
+        return selected ? selected.slice() : [];
+    },
+
+    _dump_selection: function (thing) {
+        if (!thing) {
+            return [];
+        }
+        if (editor._is_active_selection(thing)) {
+            return editor.dump(thing.getObjects());
+        }
+        return editor.dump([thing]);
+    },
+
+    _set_selection: function (objs) {
+        editor.fabric.discardActiveObject();
+        if (!objs || !objs.length) {
+            editor._update_toolbox();
+            return;
+        }
+        if (objs.length === 1) {
+            editor.fabric.setActiveObject(objs[0]);
+            editor._last_active_object = objs[0];
+        } else {
+            editor.fabric.setActiveObject(new fabric.ActiveSelection(objs, {canvas: editor.fabric}));
+        }
+        editor.fabric.renderAll();
+        editor._update_toolbox();
+    },
+
+    _remove_active: function () {
+        var thing = editor._get_active_object();
+        if (!thing) {
+            return false;
+        }
+        if (editor._is_active_selection(thing)) {
+            thing.forEachObject(function (o) {
+                editor.fabric.remove(o);
+            });
+            editor.fabric.remove(thing);
+        } else {
+            editor.fabric.remove(thing);
+        }
+        editor.fabric.discardActiveObject();
+        return true;
+    },
+
+    _object_abs_rect: function (o) {
+        var r = o.getBoundingRect();
+        return {left: r.left, top: r.top, width: r.width, height: r.height};
+    },
+
+    _snap_to_step: function (value, origin, step) {
+        if (!step) {
+            return value;
+        }
+        return origin + Math.round((value - origin) / step) * step;
+    },
+
+    _nudge_active: function (dx, dy, shiftKey) {
+        var thing = editor._get_active_object();
+        if (!thing) {
+            return false;
+        }
+        var step = editor._nudge_px(shiftKey);
+        thing.set({
+            left: thing.get('left') + dx * step,
+            top: thing.get('top') + dy * step
+        });
+        thing.setCoords();
+        editor._create_savepoint();
+        return true;
+    },
+
+    _focus_canvas: function () {
+        var el = editor.$cva && editor.$cva.get(0);
+        if (!el || typeof el.focus !== 'function') {
+            return;
+        }
+        try {
+            el.focus({preventScroll: true});
+        } catch (err) {
+            el.focus();
+        }
     },
 
     _set_background_buttons_busy: function (busy, showUploadProgress) {
@@ -579,7 +688,7 @@ var editor = {
     },
 
     _get_toolbox_target_object: function (allowFallback) {
-        var activeObject = editor.fabric ? editor.fabric.getActiveObject() : null;
+        var activeObject = editor._get_active_object();
         if (activeObject) {
             editor._last_active_object = activeObject;
             return activeObject;
@@ -689,6 +798,8 @@ var editor = {
         editor.fabric.on('selection:created', editor._update_toolbox);
         editor.fabric.on('selection:updated', editor._update_toolbox);
         editor.fabric.on('object:modified', editor._update_toolbox_values);
+        editor.fabric.on('mouse:down', editor._on_canvas_mouse_down);
+        editor.fabric.on('object:moving', editor._on_object_moving);
         editor._update_toolbox();
 
         $("#toolbox-content-other").hide();
@@ -762,6 +873,15 @@ var editor = {
             }
         };
 
+        if (editor._is_active_selection(o)) {
+            var bound = editor._object_abs_rect(o);
+            var groupBottom = editor.pdf_viewport.height - bound.height - bound.top;
+            setVal("#toolbox-position-x", editor._px2mm(bound.left).toFixed(2));
+            setVal("#toolbox-position-y", editor._px2mm(groupBottom).toFixed(2));
+            editor._toolbox_update_in_progress = false;
+            return;
+        }
+
         var bottom = editor.pdf_viewport.height - o.height * o.scaleY - o.top;
         if (o.downward) {
             bottom = editor.pdf_viewport.height - o.top;
@@ -821,6 +941,25 @@ var editor = {
         }
         var o = editor._get_toolbox_target_object(true);
         if (!o) {
+            return;
+        }
+
+        if (editor._is_active_selection(o)) {
+            var bound = editor._object_abs_rect(o);
+            var newLeftMm = parseFloat($("#toolbox-position-x").val());
+            var newBottomMm = parseFloat($("#toolbox-position-y").val());
+            if (isNaN(newLeftMm) || isNaN(newBottomMm)) {
+                return;
+            }
+            var newLeft = editor._mm2px(newLeftMm);
+            var newTop = editor.pdf_viewport.height - editor._mm2px(newBottomMm) - bound.height;
+            o.set({
+                left: o.left + (newLeft - bound.left),
+                top: o.top + (newTop - bound.top)
+            });
+            o.setCoords();
+            editor.fabric.renderAll();
+            editor._update_toolbox_values();
             return;
         }
 
@@ -1095,33 +1234,23 @@ var editor = {
     },
 
     _cut: function () {
-        editor._history_modification_in_progress = true;
-        var thing = editor.fabric.getActiveObject();
-        if (thing.type === "activeSelection") {
-            editor.clipboard = editor.dump(thing._objects);
-            thing.forEachObject(function (o) {
-                editor.fabric.remove(o);
-            });
-            editor.fabric.remove(thing);
-        } else {
-            editor.clipboard = editor.dump([thing]);
-            editor.fabric.remove(thing);
+        var thing = editor._get_active_object();
+        if (!thing) {
+            return;
         }
-        editor.fabric.discardActiveObject();
+        editor._history_modification_in_progress = true;
+        editor.clipboard = editor._dump_selection(thing);
+        editor._remove_active();
         editor._history_modification_in_progress = false;
         editor._create_savepoint();
     },
 
     _copy: function () {
-        editor._history_modification_in_progress = true;
-        var thing = editor.fabric.getActiveObject();
-        if (thing.type === "activeSelection") {
-            editor.clipboard = editor.dump(thing._objects);
-        } else {
-            editor.clipboard = editor.dump([thing]);
+        var thing = editor._get_active_object();
+        if (!thing) {
+            return;
         }
-        editor._history_modification_in_progress = false;
-        editor._create_savepoint();
+        editor.clipboard = editor._dump_selection(thing);
     },
 
     _paste: function () {
@@ -1133,93 +1262,195 @@ var editor = {
         for (var i in editor.clipboard) {
             objs.push(editor._add_from_data(editor.clipboard[i]));
         }
-        editor.fabric.discardActiveObject();
-        if (editor.clipboard.length > 1) {
-            var selection = new fabric.ActiveSelection(objs, {canvas: editor.fabric});
-            editor.fabric.setActiveObject(selection);
-        } else {
-            editor.fabric.setActiveObject(objs[0]);
-        }
+        editor._set_selection(objs);
         editor._history_modification_in_progress = false;
         editor._create_savepoint();
     },
 
     _delete: function () {
-        var thing = editor.fabric.getActiveObject();
-        if (thing.type === "activeSelection") {
-            thing.forEachObject(function (o) {
-                editor.fabric.remove(o);
-            });
-            editor.fabric.remove(thing);
-            editor.fabric.discardActiveObject();
-        } else {
-            editor.fabric.remove(thing);
-            editor.fabric.discardActiveObject();
+        if (!editor._remove_active()) {
+            return;
         }
+        editor._create_savepoint();
+        editor._update_toolbox();
+    },
+
+    _on_canvas_mouse_down: function () {
+        editor._focus_canvas();
+        editor._drag_start = null;
+    },
+
+    _on_object_moving: function (opt) {
+        var o = opt.target;
+        if (!o || !opt.e) {
+            return;
+        }
+        if (!editor._drag_start) {
+            editor._drag_start = {left: o.left, top: o.top};
+        }
+        if (!opt.e.shiftKey) {
+            return;
+        }
+        var step = editor._nudge_px(true);
+        o.set({
+            left: editor._snap_to_step(o.left, editor._drag_start.left, step),
+            top: editor._snap_to_step(o.top, editor._drag_start.top, step)
+        });
+        o.setCoords();
+    },
+
+    _select_all: function () {
+        if (!editor.fabric) {
+            return;
+        }
+        editor._set_selection(editor.fabric.getObjects().slice());
+    },
+
+    _align_selection: function (alignment) {
+        var objs = editor._get_active_objects();
+        if (objs.length < 2) {
+            return;
+        }
+        editor.fabric.discardActiveObject();
+        objs.forEach(function (o) {
+            o.setCoords();
+        });
+
+        var rects = objs.map(function (o) {
+            var r = editor._object_abs_rect(o);
+            r.obj = o;
+            return r;
+        });
+        var minL = Math.min.apply(null, rects.map(function (r) { return r.left; }));
+        var minT = Math.min.apply(null, rects.map(function (r) { return r.top; }));
+        var maxR = Math.max.apply(null, rects.map(function (r) { return r.left + r.width; }));
+        var maxB = Math.max.apply(null, rects.map(function (r) { return r.top + r.height; }));
+        var centerX = (minL + maxR) / 2;
+        var centerY = (minT + maxB) / 2;
+        var deltas = {
+            left: function (r) { return {dx: minL - r.left, dy: 0}; },
+            center: function (r) { return {dx: centerX - (r.left + r.width / 2), dy: 0}; },
+            right: function (r) { return {dx: maxR - (r.left + r.width), dy: 0}; },
+            top: function (r) { return {dx: 0, dy: minT - r.top}; },
+            middle: function (r) { return {dx: 0, dy: centerY - (r.top + r.height / 2)}; },
+            bottom: function (r) { return {dx: 0, dy: maxB - (r.top + r.height)}; }
+        };
+        var deltaFor = deltas[alignment];
+        if (!deltaFor) {
+            editor._set_selection(objs);
+            return;
+        }
+
+        rects.forEach(function (r) {
+            var d = deltaFor(r);
+            r.obj.set({
+                left: r.obj.left + d.dx,
+                top: r.obj.top + d.dy
+            });
+            r.obj.setCoords();
+        });
+
+        editor._set_selection(objs);
         editor._create_savepoint();
     },
 
-    _on_keydown: function (e) {
-        var step = e.shiftKey ? editor._mm2px(10) : editor._mm2px(1);
-        var thing = editor.fabric.getActiveObject();
-        if ($("#source-container").is(':visible')) {
-            return true;
+    _on_number_shift_nudge: function (e) {
+        var isUp = e.key === 'ArrowUp' || e.keyCode === 38;
+        var isDown = e.key === 'ArrowDown' || e.keyCode === 40;
+        if ((!isUp && !isDown) || !e.shiftKey) {
+            return;
         }
+        e.preventDefault();
+        var $input = $(this);
+        var current = parseFloat($input.val());
+        if (isNaN(current)) {
+            current = 0;
+        }
+        var bigStep = $input.attr('id') === 'toolbox-fontsize' ? 1 : editor._NUDGE_SHIFT_MM;
+        current += isDown ? -bigStep : bigStep;
+        var stepAttr = ($input.attr('step') || '1').toString();
+        var decimals = stepAttr.indexOf('.') === -1 ? 0 : stepAttr.split('.')[1].length;
+        $input.val(current.toFixed(decimals));
+        $input.trigger('change');
+    },
+
+    _on_keydown: function (e) {
+        if (!editor._is_hotkey_target() || !editor.fabric) {
+            return;
+        }
+        var thing = editor._get_active_object();
+        var cmd = e.ctrlKey || e.metaKey;
+        var handled = false;
         switch (e.keyCode) {
             case 38:  /* Up arrow */
-                thing.set('top', thing.get('top') - step);
-                thing.setCoords();
-                editor._create_savepoint();
-                break;
             case 40:  /* Down arrow */
-                thing.set('top', thing.get('top') + step);
-                thing.setCoords();
-                editor._create_savepoint();
-                break;
-            case 37:  /* Left arrow  */
-                thing.set('left', thing.get('left') - step);
-                thing.setCoords();
-                editor._create_savepoint();
-                break;
-            case 39:  /* Right arrow  */
-                thing.set('left', thing.get('left') + step);
-                thing.setCoords();
-                editor._create_savepoint();
+            case 37:  /* Left arrow */
+            case 39:  /* Right arrow */
+                e.preventDefault();
+                editor._nudge_active(
+                    e.keyCode === 37 ? -1 : e.keyCode === 39 ? 1 : 0,
+                    e.keyCode === 38 ? -1 : e.keyCode === 40 ? 1 : 0,
+                    e.shiftKey
+                );
+                handled = true;
                 break;
             case 46:  /* Delete */
+                if (!thing) {
+                    return;
+                }
                 editor._delete();
+                handled = true;
+                break;
+            case 65:  /* A */
+                if (!cmd) {
+                    return;
+                }
+                editor._select_all();
+                handled = true;
                 break;
             case 89:  /* Y */
-                if (e.ctrlKey) {
-                    editor._redo();
+                if (!cmd) {
+                    return;
                 }
+                editor._redo();
+                handled = true;
                 break;
             case 90:  /* Z */
-                if (e.ctrlKey) {
-                    editor._undo();
+                if (!cmd) {
+                    return;
                 }
+                editor._undo();
+                handled = true;
                 break;
             case 88:  /* X */
-                if (e.ctrlKey) {
-                    editor._cut();
+                if (!cmd || !thing) {
+                    return;
                 }
+                editor._cut();
+                handled = true;
                 break;
             case 86:  /* V */
-                if (e.ctrlKey) {
-                    editor._paste();
+                if (!cmd || editor.clipboard.length < 1) {
+                    return;
                 }
+                editor._paste();
+                handled = true;
                 break;
             case 67:  /* C */
-                if (e.ctrlKey) {
-                    editor._copy();
+                if (!cmd || !thing) {
+                    return;
                 }
+                editor._copy();
+                handled = true;
                 break;
             default:
                 return;
         }
-        e.preventDefault();
-        editor.fabric.renderAll();
-        editor._update_toolbox_values();
+        if (handled) {
+            e.preventDefault();
+            editor.fabric.renderAll();
+            editor._update_toolbox_values();
+        }
     },
 
     _create_savepoint: function () {
@@ -1414,6 +1645,10 @@ var editor = {
 
         $("#toolbox input[type=number], #toolbox textarea:not(#toolbox-content-other), #toolbox input[type=text]").bind('change keydown keyup' +
             ' input', editor._update_values_from_toolbox);
+        $("#toolbox-position-x, #toolbox-position-y, #toolbox-width, #toolbox-height, #toolbox-squaresize, #toolbox-textwidth, #toolbox-fontsize, #toolbox-textrotation").on('keydown', editor._on_number_shift_nudge);
+        $("#toolbox-object-align").on('click', 'button[data-align]', function () {
+            editor._align_selection($(this).attr('data-align'));
+        });
         $("#toolbox input[type=number], #toolbox textarea:not(#toolbox-content-other), #toolbox input[type=text], #toolbox input[type=radio], #toolbox-autofit-width").bind('change', editor._create_savepoint);
         $("#toolbox-autofit-width").bind('change', editor._update_values_from_toolbox);
         $("#toolbox label.btn").bind('click change', editor._update_values_from_toolbox);

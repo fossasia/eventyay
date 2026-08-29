@@ -153,7 +153,7 @@ import api from 'lib/api'
 import Prompt from 'components/Prompt'
 import LanguageAudioSourceList from 'components/LanguageAudioSourceList'
 import mixin from './mixin'
-import { normalizeYoutubeVideoId } from 'lib/validators'
+import { normalizeYoutubeVideoId, toYoutubeWatchUrl } from 'lib/validators'
 import {
 	PLAYBACK_MODE_ALWAYS_ON,
 	PLAYBACK_MODE_SCHEDULE_DRIVEN,
@@ -233,7 +233,7 @@ export default defineComponent({
 				...createDefaultStream(stream_type),
 				id,
 				stream_type,
-				url,
+				url: this.formatStreamUrl(stream_type, url),
 				start_time: start_time ? this.parseDateTime(start_time) : null,
 				end_time: end_time ? this.parseDateTime(end_time) : null,
 				config: {
@@ -435,14 +435,14 @@ export default defineComponent({
 				stream.url = ''
 			}
 		},
+		formatStreamUrl(streamType, url) {
+			if (!url) return ''
+			if (streamType === STREAM_TYPE_YOUTUBE) return toYoutubeWatchUrl(url)
+			return url
+		},
 		onStreamUrlBlur(stream) {
 			if (!stream.url) return
-			if (stream.stream_type === STREAM_TYPE_YOUTUBE) {
-				const id = normalizeYoutubeVideoId(stream.url)
-				if (id && !stream.url.startsWith('http')) {
-					stream.url = `https://www.youtube.com/watch?v=${id}`
-				}
-			}
+			stream.url = this.formatStreamUrl(stream.stream_type, stream.url)
 		},
 		parseDateTime(datetime) {
 			if (!datetime) return null
