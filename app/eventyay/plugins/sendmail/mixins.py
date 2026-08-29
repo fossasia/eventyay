@@ -34,9 +34,10 @@ class CopyDraftMixin:
                 except EmailQueueFilter.DoesNotExist:
                     qmf = None
 
+                body_field = 'message' if team_mode else 'text'
                 form_kwargs['initial'].update({
                     'subject': subject,
-                    'message': message,
+                    body_field: message,
                     'reply_to': qm.reply_to,
                     'bcc': qm.bcc,
                 })

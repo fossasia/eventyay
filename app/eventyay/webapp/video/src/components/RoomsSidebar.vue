@@ -64,15 +64,15 @@ transition(name="sidebar")
 					.notifications(v-if="channel.notifications") {{ channel.notifications }}
 					bunt-icon-button(:tooltip="removeTooltip", :tooltip-fixed="true", @click.prevent.stop="$store.dispatch('chat/leaveChannel', {channelId: channel.id})") close
 			.buffer
-			template(v-if="hasPermission('world:users.list') || hasPermission('world:update') || hasPermission('world:announce') || hasPermission('room:update') || hasPermission('world:kiosks.manage') || isAdminMode")
+			template(v-if="hasPermission('world:users.list') || hasPermission('world:update') || hasPermission('world:announce') || hasPermission('room:update') || hasPermission('world:kiosks.manage')")
 				.group-title {{ $t('Administration') }}
 				.admin
 					router-link.room(:to="{name: 'admin:announcements'}", v-if="hasPermission('world:announce')") {{ $t('Announcements') }}
 					router-link.room(:to="{name: 'admin:users'}", v-if="hasPermission('world:users.list')") {{ $t('Users') }}
 					router-link.room(:to="{name: 'admin:rooms:index'}", v-if="hasPermission('room:update')") {{ $t('Rooms') }}
+					router-link.room(:to="{name: 'admin:chat:index'}", v-if="hasPermission('room:update')") {{ $t('Chat') }}
 					router-link.room(:to="{name: 'admin:kiosks:index'}", v-if="hasPermission('world:kiosks.manage')") {{ $t('Kiosks') }}
 					router-link.room(v-if="hasPermission('world:update')", :to="{name: 'admin:config'}") {{ $t('Config') }}
-					router-link.room(v-if="isAdminMode", :to="{name: 'admin:video-admin'}") {{ $t('Video Admin') }}
 		transition(name="prompt")
 			channel-browser(v-if="showChannelBrowser", @close="showChannelBrowser = false", @createChannel="showChannelBrowser = false, showChatCreationPrompt = true")
 			create-stage-prompt(v-else-if="showStageCreationPrompt", @close="showStageCreationPrompt = false")
@@ -159,9 +159,7 @@ export default {
 			return this.networkingRoomType && isRoomTypeAvailable(this.networkingRoomType.id, this.hasPermission, this.isAdminMode)
 		},
 		canCreateChatRoom() {
-			return ROOM_TYPES
-				.filter(type => ['channel-text', 'channel-bbb', 'channel-jitsi'].includes(type.id))
-				.some(type => isRoomTypeAvailable(type.id, this.hasPermission, this.isAdminMode))
+			return this.hasPermission('world:rooms.create.chat')
 		},
 		// showAdminConfigLink no longer needed; link is always visible and backend will enforce access
 		style() {

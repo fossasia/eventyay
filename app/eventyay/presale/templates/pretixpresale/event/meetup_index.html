@@ -68,7 +68,13 @@
                     <div class="meetup-avatar-names-row">
                         <div class="attendee-avatars-stack">
                             {% for attendee in meetup_attendees_preview %}
-                                <div class="avatar-circle-stacked" data-tooltip="{{ attendee.name }}">{{ attendee.name|slice:":2" }}</div>
+                                <div class="avatar-circle-stacked" data-tooltip="{{ attendee.name }}">
+                                    {% if attendee.avatar_url %}
+                                        <img src="{{ attendee.avatar_url }}" alt="{{ attendee.name }}" class="avatar-circle-img" loading="lazy">
+                                    {% else %}
+                                        {{ attendee.name|slice:":2" }}
+                                    {% endif %}
+                                </div>
                             {% endfor %}
                             {% if meetup_attendee_count > 6 %}
                                 <div class="avatar-circle-stacked overflow" data-tooltip="{% blocktrans trimmed with count=meetup_attendee_count|add:'-6' %}+{{ count }} more{% endblocktrans %}">+{{ meetup_attendee_count|add:"-6" }}</div>

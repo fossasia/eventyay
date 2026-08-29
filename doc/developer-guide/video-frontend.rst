@@ -30,9 +30,11 @@ New rooms are created from the organiser rooms page with a **Create Room** dropd
 The available video options are **Stream (YT, HLS)**, **BBB**, **Jitsi**, and **Janus**,
 filtered by platform feature flags and the organiser's permissions.
 Unconfigured rooms use **Add Video** with the same provider list instead of an
-Unconfigured badge. Exhibition halls, poster halls, static pages, iframe pages,
-and user lists have been removed from the video room catalog. Meetup embed URLs
-use a stage iframe player instead.
+Unconfigured badge. Chat channels are created from the organiser **Chat** area
+with a single **Create a new channel** action and are not part of the room
+creation catalog. Exhibition halls, poster halls,
+static pages, iframe pages, and user lists have been removed from the video
+room catalog. Meetup embed URLs use a stage iframe player instead.
 
 **Location**: ``app/eventyay/webapp/video/``
 
@@ -129,6 +131,8 @@ Collapsible sidebar showing:
 - Direct messages
 - Pinned rooms
 - Search functionality
+- Organiser administration, including **Rooms** and a dedicated **Chat**
+  area for chat channel management
 
 Dashboard Layout
 ^^^^^^^^^^^^^^^^

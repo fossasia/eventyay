@@ -139,6 +139,8 @@ def event(organiser):
         event.save()
         for team in organiser.teams.all():
             team.limit_events.add(event)
+        event.cfp.fields['biography']['visibility'] = 'optional'
+        event.cfp.save(update_fields=['fields'])
     return event
 
 

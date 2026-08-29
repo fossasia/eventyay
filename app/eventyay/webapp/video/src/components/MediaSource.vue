@@ -81,10 +81,9 @@ const janus = ref(null);
 let jitsiApi = null;
 
 // Mapped state/getters
-const streamingRoom = computed(() => store.state.streamingRoom);
-const youtubeTranslation = computed(() => {
+const activeInterpretation = computed(() => {
 	if (!props.room?.id) return null;
-	return store.state.youtubeTranslationsByRoom?.[props.room.id] || null;
+	return store.state.interpretationStreamsByRoom?.[props.room.id] || store.state.youtubeTranslationsByRoom?.[props.room.id] || null;
 });
 const autoplay = computed(() => store.getters.autoplay);
 const mainPlayerPaused = ref(!autoplay.value);
@@ -187,7 +186,7 @@ watch(module, async (value, oldValue) => {
 	destroyIframe();
 	if (shouldUseLivestream.value) return;
 	await initializeIframe(false);
-	await applyYoutubeTranslation(youtubeTranslation.value);
+	await applyInterpretation(activeInterpretation.value);
 });
 
 watch(shouldUseLivestream, async (shouldUse, oldShouldUse) => {
@@ -197,7 +196,7 @@ watch(shouldUseLivestream, async (shouldUse, oldShouldUse) => {
 		destroyIframe();
 	} else {
 		await initializeIframe(false);
-		await applyYoutubeTranslation(youtubeTranslation.value);
+		await applyInterpretation(activeInterpretation.value);
 	}
 });
 
@@ -211,7 +210,7 @@ watch(
 			}
 			destroyIframe();
 			await initializeIframe(false);
-			await applyYoutubeTranslation(youtubeTranslation.value);
+			await applyInterpretation(activeInterpretation.value);
 		}
 	},
 	{ deep: true }
@@ -235,21 +234,20 @@ watch(
 
 const isPlayingTranslationVideo = ref(false);
 const activeTranslationVideoId = ref(null);
-let translationUpdateToken = 0;
+let interpretationUpdateToken = 0;
 
-watch(youtubeTranslation, applyYoutubeTranslation);
+watch(activeInterpretation, applyInterpretation);
 
-async function applyYoutubeTranslation(transConfig) {
+async function applyInterpretation(interpConfig) {
 	if (!props.room) return;
 	const streamType = isScheduleDrivenStage.value ? props.room?.currentStream?.stream_type : null;
 	const isYouTube = streamType === STREAM_TYPE_YOUTUBE || module.value?.type === 'livestream.youtube';
-	if (!isYouTube) return;
 
-	const updateToken = ++translationUpdateToken;
+	const updateToken = ++interpretationUpdateToken;
 	disconnectWhepTranslation();
 
-	const audioSource = transConfig?.url || null;
-	const requestedUseVideo = transConfig?.useVideo || false;
+	const audioSource = interpConfig?.url || null;
+	const requestedUseVideo = interpConfig?.useVideo || false;
 	const translationVideoId = audioSource ? normalizeYoutubeVideoId(audioSource) : null;
 	const useVideo = requestedUseVideo && !!translationVideoId;
 
@@ -268,7 +266,6 @@ async function applyYoutubeTranslation(transConfig) {
 		await initializeIframe(false);
 	}
 
-	// Handle translation: mute main player and connect audio source
 	if (audioSource) {
 		let isWhep = false;
 		try {
@@ -286,37 +283,36 @@ async function applyYoutubeTranslation(transConfig) {
 			whepClient = client;
 			try {
 				await client.connect();
-				if (updateToken !== translationUpdateToken) {
+				if (updateToken !== interpretationUpdateToken) {
 					client.disconnect();
 					if (whepClient === client) whepClient = null;
 				}
 			} catch (err) {
-				console.error('Failed to connect to WHEP translation source', err);
+				console.error('Failed to connect to WHEP interpretation source', err);
 				client.disconnect();
 				if (whepClient === client) whepClient = null;
 			}
 		} else {
-			// Create hidden translation audio iframe first
+			// Create hidden interpretation audio iframe for YouTube audio translation
 			languageIframeUrl.value = getLanguageIframeUrl(audioSource);
 		}
 
-		// The main player is already loaded when changing translations dynamically.
-		muteYouTubePlayer();
+		muteMainPlayer();
 
 		if (mainPlayerPaused.value) {
 			setTimeout(() => {
-				if (updateToken !== translationUpdateToken) return;
+				if (updateToken !== interpretationUpdateToken) return;
 				pauseTranslationAudio();
 			}, 600);
 		}
 	} else {
-		// Remove translation audio iframe
 		languageIframeUrl.value = null;
-		// Restore the main player unless the organiser asked to start muted
 		setTimeout(() => {
-			if (updateToken !== translationUpdateToken) return;
-			if (getYoutubeConfig().startMuted) return;
-			unmuteYouTubePlayer();
+			if (updateToken !== interpretationUpdateToken) return;
+			const streamType = isScheduleDrivenStage.value ? props.room?.currentStream?.stream_type : null;
+			const isYouTube = streamType === STREAM_TYPE_YOUTUBE || module.value?.type === 'livestream.youtube';
+			if (isYouTube && getYoutubeConfig().startMuted) return;
+			unmuteMainPlayer();
 		}, 100);
 	}
 }
@@ -326,7 +322,7 @@ onMounted(async () => {
 	if (!props.room) return;
 	if (shouldUseLivestream.value) return;
 	await initializeIframe(false);
-	await applyYoutubeTranslation(youtubeTranslation.value);
+	await applyInterpretation(activeInterpretation.value);
 });
 
 onBeforeUnmount(() => {
@@ -341,8 +337,24 @@ onBeforeUnmount(() => {
 	if (props.room) api.call('room.leave', { room: props.room.id });
 });
 
-function hasAudioOnlyYoutubeTranslation() {
-	return Boolean(youtubeTranslation.value?.url && !youtubeTranslation.value?.useVideo);
+function hasAudioOnlyInterpretation() {
+	return Boolean(activeInterpretation.value?.url && !activeInterpretation.value?.useVideo);
+}
+
+function muteMainPlayer() {
+	muteYouTubePlayer();
+	const videoEl = livestream.value?.$refs?.video || livestream.value?.$el?.querySelector?.('video');
+	if (videoEl) {
+		videoEl.muted = true;
+	}
+}
+
+function unmuteMainPlayer() {
+	unmuteYouTubePlayer();
+	const videoEl = livestream.value?.$refs?.video || livestream.value?.$el?.querySelector?.('video');
+	if (videoEl) {
+		videoEl.muted = false;
+	}
 }
 
 function muteYouTubePlayer() {
@@ -402,7 +414,7 @@ function pauseTranslationAudio() {
 function resumeTranslationAudio() {
 	if (whepAudioEl.value && whepAudioEl.value.srcObject) {
 		whepAudioEl.value.play().catch(e =>
-			console.warn('Failed to resume WHEP translation audio:', e)
+			console.warn('Failed to resume WHEP interpretation audio:', e)
 		);
 	}
 	resumeYouTubeTranslationIframe();
@@ -436,7 +448,7 @@ function resumeYouTubeTranslationIframe() {
 
 function onMainPlayerPlaybackChanged(isPlaying) {
 	mainPlayerPaused.value = !isPlaying;
-	if (!youtubeTranslation.value?.url) return;
+	if (!activeInterpretation.value?.url) return;
 	if (isPlaying) {
 		resumeTranslationAudio();
 	} else {
@@ -561,8 +573,8 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 			case 'livestream.youtube': {
 				isYouTube = true;
 				let ytid;
-				const translationVideoId = youtubeTranslation.value?.useVideo && youtubeTranslation.value?.url
-					? normalizeYoutubeVideoId(youtubeTranslation.value.url)
+				const translationVideoId = activeInterpretation.value?.useVideo && activeInterpretation.value?.url
+					? normalizeYoutubeVideoId(activeInterpretation.value.url)
 					: null;
 				if (translationVideoId) {
 					ytid = translationVideoId;
@@ -587,7 +599,7 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 				}
 				const config = getYoutubeConfig();
 				const shouldStartMuted = Boolean(
-					mute || config.startMuted || hasAudioOnlyYoutubeTranslation()
+					mute || config.startMuted || hasAudioOnlyInterpretation()
 				);
 				const shouldAutoplay = Boolean(autoplay.value && !config.hideControls);
 				iframeUrl = getYoutubeUrl(
@@ -887,19 +899,16 @@ function getYoutubeUrl(
 	return `https://${domain}/embed/${ytid}?${params}`;
 }
 
-// Added method to get the language iframe URL
 function getLanguageIframeUrl(languageUrl) {
-	// Checks if the languageUrl is not provided then return null
 	if (!languageUrl) return null;
 	const config = getYoutubeConfig();
 	const origin = window.location.origin;
 	const params = new URLSearchParams();
 	params.append('autoplay', autoplay.value ? '1' : '0');
-	// Start muted applies to the main video, never to interpretation audio.
-	params.append('mute', '0');
+	params.append('mute', config.startMuted ? '1' : '0');
 	params.append('enablejsapi', '1');
-	params.append('origin', origin); // Required when using enablejsapi=1 (fixes Error 153)
-	params.append('controls', '0'); // Translation audio is always hidden.
+	params.append('origin', origin);
+	params.append('controls', '0');
 
 	if (config.noRelated) {
 		params.append('rel', '0');

@@ -1,7 +1,7 @@
 /* Keeps the audience summary in step with the recipient filters, and fills the
  * recipient list dialog from the same endpoint the send path filters on. */
 
-const MESSAGE_FIELDS = /^(csrfmiddlewaretoken|action|subject_|text_|reply_to|bcc|scheduled_at|delivery_mode|skip_queue|test_email)/
+const MESSAGE_FIELDS = /^(csrfmiddlewaretoken|action|subject_|text_|reply_to|bcc|scheduled_at|delivery_mode|skip_queue|test_email|attachment)/
 
 // Filters the composer was opened with live in the page URL rather than in the
 // form, so they have to be carried over separately.
@@ -10,9 +10,10 @@ const URL_FILTER_KEYS = ["q", "question", "answer", "answer__options", "unanswer
 const buildFilterQuery = (form) => {
     const params = new URLSearchParams()
     new FormData(form).forEach((value, key) => {
-        if (!MESSAGE_FIELDS.test(key) && value !== "") {
-            params.append(key, value)
+        if (MESSAGE_FIELDS.test(key) || value instanceof File || value === "") {
+            return
         }
+        params.append(key, value)
     })
     const pageParams = new URLSearchParams(window.location.search)
     URL_FILTER_KEYS.forEach((key) => {
@@ -30,17 +31,30 @@ const buildFilterQuery = (form) => {
 const fetchRecipients = async (url, form) => {
     const response = await fetch(`${url}?${buildFilterQuery(form)}`, {
         headers: { Accept: "application/json" },
+        credentials: "same-origin",
     })
     if (!response.ok) {
-        throw new Error(`Recipient lookup failed with status ${response.status}`)
+        let detail = ""
+        try {
+            const payload = await response.json()
+            detail = payload && payload.error ? ` ${JSON.stringify(payload.error)}` : ""
+        } catch {
+            // Response body is not JSON; status alone is enough for the log.
+        }
+        throw new Error(`Recipient lookup failed with status ${response.status}${detail}`)
     }
     return response.json()
 }
 
-const renderCount = (badge, count) => {
-    const label = count === 1 ? badge.dataset.labelOne : badge.dataset.labelOther
-    badge.textContent = `${count} ${label}`
-    badge.hidden = false
+const renderCount = (el, count) => {
+    const label = count === 1 ? el.dataset.labelOne : el.dataset.labelOther
+    el.textContent = `${count} ${label}`
+    // Audience badge stays quiet until there is an audience; footer summary always shows.
+    if (el.id === "recipient-count") {
+        el.hidden = count < 1
+    } else {
+        el.hidden = false
+    }
 }
 
 const clearFilters = (form) => {
@@ -57,11 +71,28 @@ const clearFilters = (form) => {
         button = nextButton()
         guard += 1
     }
+    filters.querySelectorAll("select.enhanced").forEach((select) => {
+        select.selectedIndex = 0
+        select.dispatchEvent(new Event("change", { bubbles: true }))
+        if (select.choices) {
+            select.choices.setChoiceByValue("")
+        }
+    })
+    if (window.jQuery) {
+        filters.querySelectorAll("select[data-model-select2]").forEach((select) => {
+            window.jQuery(select).val(null).trigger("change")
+        })
+    }
+    filters.querySelectorAll('input[type="date"], input[type="time"], input[type="text"]').forEach((input) => {
+        input.value = ""
+        input.dispatchEvent(new Event("change", { bubbles: true }))
+    })
 }
 
 const renderRecipients = (body, recipients) => {
     body.replaceChildren()
-    if (!recipients.length) {
+    const listData = Array.isArray(recipients) ? recipients : []
+    if (!listData.length) {
         const empty = document.createElement("p")
         empty.className = "text-muted"
         empty.textContent = body.dataset.emptyLabel
@@ -70,16 +101,16 @@ const renderRecipients = (body, recipients) => {
     }
     const list = document.createElement("ul")
     list.className = "list-group list-group-flush"
-    recipients.forEach((recipient) => {
+    listData.forEach((recipient) => {
         const item = document.createElement("li")
         item.className = "list-group-item"
         const name = document.createElement("strong")
-        name.textContent = recipient.name
+        name.textContent = recipient.name || recipient.email || ""
         const email = document.createElement("span")
         email.className = "text-muted ml-2"
-        email.textContent = recipient.email
+        email.textContent = recipient.email || ""
         item.append(name, email)
-        recipient.submissions.forEach((submission) => {
+        ;(recipient.submissions || []).forEach((submission) => {
             const line = document.createElement("div")
             line.className = "text-muted"
             line.textContent = `${submission.title} (${submission.state})`
@@ -104,6 +135,10 @@ const initRecipientPreview = () => {
 
     const form = trigger.closest("form")
     const url = trigger.dataset.recipientsUrl
+    if (!form || !url) {
+        console.error("Recipient preview is missing form or endpoint URL")
+        return
+    }
 
     const summary = document.querySelector("#recipient-summary")
 
@@ -115,12 +150,19 @@ const initRecipientPreview = () => {
         } catch (error) {
             console.error("Could not refresh the recipient count", error)
             badge.hidden = true
+            if (summary) {
+                summary.textContent = ""
+            }
         }
     }
 
     const clearButton = document.querySelector("#clear-filters")
     if (clearButton) {
-        clearButton.addEventListener("click", () => clearFilters(form))
+        clearButton.addEventListener("click", () => {
+            clearFilters(form)
+            window.clearTimeout(timer)
+            timer = window.setTimeout(refreshCount, 50)
+        })
     }
 
     let timer = null
@@ -135,6 +177,7 @@ const initRecipientPreview = () => {
         try {
             const data = await fetchRecipients(url, form)
             renderCount(badge, data.count)
+            if (summary) renderCount(summary, data.count)
             renderRecipients(body, data.recipients)
         } catch (error) {
             console.error("Could not load the recipient list", error)

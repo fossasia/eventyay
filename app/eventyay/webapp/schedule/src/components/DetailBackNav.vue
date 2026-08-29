@@ -108,9 +108,12 @@ export default {
 	@media (max-width: 480px)
 		padding: 10px 10px 0
 		gap: 8px
+		flex-wrap: wrap
 		.back-link
 			font-size: 13px
 			padding: 6px 12px 6px 8px
 		.detail-top-actions
 			gap: 4px
+			flex-wrap: wrap
+			justify-content: flex-end
 </style>

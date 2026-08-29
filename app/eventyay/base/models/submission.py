@@ -1048,7 +1048,7 @@ class Submission(GenerateCode, PretalxModel):
                 result += f'**{field_name}**: {field_content}\n\n'
             return result
 
-    def add_speaker(self, email, name=None, locale=None, user=None):
+    def add_speaker(self, email, name=None, locale=None, user=None, biography=None):
         from eventyay.common.urls import build_absolute_uri
 
         from .auth import User
@@ -1073,6 +1073,12 @@ class Submission(GenerateCode, PretalxModel):
                 'cfp:event.new_recover',
                 kwargs={'organizer': self.event.organizer.slug, 'event': self.event.slug, 'token': speaker.pw_reset_token},
             )
+
+        if biography:
+            profile = SpeakerProfile.objects.get(user=speaker, event=self.event)
+            if not profile.biography:
+                profile.biography = biography
+                profile.save(update_fields=['biography'])
 
         self.speakers.add(speaker)
         self.log_action('eventyay.submission.speakers.add', person=user, orga=True)

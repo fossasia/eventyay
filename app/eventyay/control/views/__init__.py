@@ -186,7 +186,6 @@ class LargeResultSetPaginator(object):
 
 # Import all views from admin_views.py to maintain backward compatibility
 from .admin_views import (
-    AdminBase,
     EventAdminToken,
     EventCalendar,
     EventClear,
@@ -235,7 +234,6 @@ __all__ = [
     'PaginationMixin',
     'LargeResultSetPage',
     'LargeResultSetPaginator',
-    'AdminBase',
     'EventAdminToken',
     'EventCalendar',
     'EventClear',

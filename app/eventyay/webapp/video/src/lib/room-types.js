@@ -41,9 +41,10 @@ const ROOM_TYPES = [{
 }, {
 	id: 'channel-text',
 	icon: 'pound',
-	name: 'Text Channel',
-	description: 'This type of channel allows you to enable pure-text communication between your attendees.',
-	startingModule: 'chat.native'
+	name: 'Chat Channel',
+	description: 'A chat channel for text communication between attendees. Managed separately from rooms.',
+	startingModule: 'chat.native',
+	managementArea: 'chat'
 }, {
 	id: 'channel-roulette',
 	icon: 'webcam',
@@ -64,6 +65,22 @@ const ROOM_TYPES = [{
 
 export const VIDEO_CHANNEL_MODULE_TYPES = new Set(ROOM_TYPES.filter(type => type.videoChannel).map(type => type.startingModule))
 export const NETWORKING_MODULE_TYPES = new Set(ROOM_TYPES.filter(type => type.sidebarGroup === 'networking').map(type => type.startingModule))
+export const CHAT_CHANNEL_TYPE_ID = 'channel-text'
+
+export function isChatChannel(roomOrConfig) {
+	const modules = roomOrConfig?.module_config || roomOrConfig?.modules || []
+	return Array.isArray(modules) && modules.length === 1 && modules[0]?.type === 'chat.native'
+}
+
+export function isChatManagedRoom(roomOrConfig) {
+	return isChatChannel(roomOrConfig)
+}
+
+export function mergeReorderedIds(allIds, subsetOrder) {
+	const subset = new Set(subsetOrder.map(String))
+	const queue = subsetOrder.map(String)
+	return allIds.map(id => subset.has(String(id)) ? queue.shift() : String(id))
+}
 
 export default ROOM_TYPES.filter(type => !type.behindFeatureFlag || features.enabled(type.behindFeatureFlag))
 
@@ -95,8 +112,8 @@ export function localizeRoomType(t, type) {
 			description: t('This room type allows you to connect with attendees through a Jitsi meeting.'),
 		},
 		'channel-text': {
-			name: t('Text Channel'),
-			description: t('This type of channel allows you to enable pure-text communication between your attendees.'),
+			name: t('Chat Channel'),
+			description: t('A chat channel for text communication between attendees. Managed separately from rooms.'),
 		},
 		'channel-roulette': {
 			name: t('Random video calls'),
@@ -113,7 +130,9 @@ export function localizeRoomType(t, type) {
 }
 
 export function inferType(config) {
-	const modules = config.module_config.reduce((acc, module) => {
+	if (!config) return
+	const moduleConfig = Array.isArray(config.module_config) ? config.module_config : []
+	const modules = moduleConfig.reduce((acc, module) => {
 		acc[module.type] = module
 		return acc
 	}, {})
@@ -124,8 +143,8 @@ export function inferType(config) {
 	if (mediaRoomType) return mediaRoomType
 
 	// non-media rooms should only have one module
-	if (config.module_config.length === 1) {
-		return findByModule(config.module_config[0].type)
+	if (moduleConfig.length === 1) {
+		return findByModule(moduleConfig[0].type)
 	}
 }
 

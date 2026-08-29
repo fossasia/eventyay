@@ -53,6 +53,7 @@ export default new Vuex.Store({
 				.map((d) => normalizeIframeConsentDomain(d))
 				.filter(Boolean)
 		),
+		interpretationStreamsByRoom: {},
 		youtubeTranslationsByRoom: {}
 	},
 	getters: {
@@ -123,12 +124,21 @@ export default new Vuex.Store({
 		updateNow(state) {
 			state.now = moment()
 		},
+		updateInterpretationAudio(state, {roomId, interpretation}) {
+			if (!roomId) return
+			state.interpretationStreamsByRoom = {
+				...state.interpretationStreamsByRoom,
+				[roomId]: interpretation
+			}
+			state.youtubeTranslationsByRoom = state.interpretationStreamsByRoom
+		},
 		updateYoutubeTransAudio(state, {roomId, youtubeTranslation}) {
 			if (!roomId) return
-			state.youtubeTranslationsByRoom = {
-				...state.youtubeTranslationsByRoom,
+			state.interpretationStreamsByRoom = {
+				...state.interpretationStreamsByRoom,
 				[roomId]: youtubeTranslation
 			}
+			state.youtubeTranslationsByRoom = state.interpretationStreamsByRoom
 		},
 		setStreamPollInterval(state, streamPollInterval) {
 			state.streamPollInterval = streamPollInterval
@@ -378,16 +388,17 @@ export default new Vuex.Store({
 				// preserve the last fatal error for the room without attempting to reconnect immediately
 				return
 			}
-			if (room?.modules.some(module => ['livestream.native', 'livestream.youtube', 'call.bigbluebutton', 'call.zoom', 'call.janus', 'call.jitsi'].includes(module.type))) {
+			if (room) {
 				try {
 					const { viewers } = await api.call('room.enter', {room: room.id})
-					state.roomViewers = viewers
+					state.roomViewers = viewers || []
 					if (state.roomFatalErrors?.[room.id]) {
 						const {[room.id]: _removed, ...rest} = state.roomFatalErrors
 						state.roomFatalErrors = rest
 					}
 				} catch {
 					// room.enter failures are non-critical, continue with room change
+					state.roomViewers = []
 				}
 			}
 			dispatch('question/changeRoom', room)
@@ -476,9 +487,8 @@ export default new Vuex.Store({
 			room.schedule_data = schedule_data
 		},
 		'api::user.updated'({state, dispatch}, update) {
-			for (const [key, value] of Object.entries(update)) {
-				state.user[key] = value
-			}
+			// Replace nested objects (e.g. profile/slides) so Vue tracks kiosk setting changes.
+			state.user = Object.assign({}, state.user, update)
 			dispatch('chat/updateUser', {id: state.user.id, update})
 		},
 		'api::room.viewer.added'({state}, {user}) {

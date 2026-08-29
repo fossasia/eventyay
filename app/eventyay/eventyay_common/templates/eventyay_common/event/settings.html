@@ -190,6 +190,14 @@
             <legend>{% trans "Registration limit" %}</legend>
             {% bootstrap_field sform.registration_limit layout="control" %}
         </fieldset>
+        <fieldset>
+            <legend>{% trans "Registration fee & Payment" %}</legend>
+            {% bootstrap_field sform.registration_fee layout="control" %}
+            {% bootstrap_field sform.payment_stripe__enabled layout="control" %}
+            {% bootstrap_field sform.payment_stripe_publishable_key layout="control" %}
+            {% bootstrap_field sform.payment_stripe_secret_key layout="control" %}
+            {% bootstrap_field sform.payment_stripe_merchant_country layout="control" %}
+        </fieldset>
         {% endif %}
 
         <fieldset>

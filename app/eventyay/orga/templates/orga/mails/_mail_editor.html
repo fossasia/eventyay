@@ -6,22 +6,20 @@
 {% block extra_title %}{% translate "Compose email" %} :: {% endblock extra_title %}
 
 {% block mail_content %}
-    <form method="post" class="form-with-placeholder">
+    <form method="post" class="form-with-placeholder mail-composer">
         {% csrf_token %}
-        <div class="mb-3">
-            <h2 class="d-inline">
+        {% include "common/forms/errors.html" %}
+        <div class="composer-intro mb-3">
+            <h2 class="composer-title">
                 {% block email_editor_title %}
                     {% translate "Compose email" %}
                 {% endblock email_editor_title %}
-            </h2>
-            <h3 class="d-inline ml-1">
-                <small class="text-muted">
+                <small class="composer-title-detail text-muted">
                     <span id="composer-type">{% block email_editor_title_detail %}{% endblock email_editor_title_detail %}</span>
                     {% block email_editor_info %}{% endblock email_editor_info %}
                 </small>
-            </h3>
+            </h2>
             {% block email_editor_description %}{% endblock email_editor_description %}
-            {% include "common/forms/errors.html" %}
         </div>
         <section class="card mb-3">
             <div class="card-header d-flex justify-content-between align-items-center">
@@ -63,6 +61,8 @@
                 </fieldset>
             </div>
         </section>
+
+        {% block after_message %}{% endblock after_message %}
 
         {% if form.scheduled_at %}
             <section class="card mb-3">
@@ -185,11 +185,11 @@
                     <span class="text-muted mb-2 mb-md-0">{% block email_editor_actions_summary %}{% endblock email_editor_actions_summary %}</span>
                     <span class="composer-actions">
                         {% block draft_button %}
-                            <button type="submit" class="btn btn-outline-info mr-2" name="action" value="draft">
+                            <button type="submit" class="btn btn-outline-info" name="action" value="draft">
                                 {% translate "Save draft" %}
                             </button>
                         {% endblock draft_button %}
-                        <button type="submit" class="btn btn-outline-info btn-save mr-2" name="action" value="preview">
+                        <button type="submit" class="btn btn-outline-info btn-save" name="action" value="preview">
                             {% translate "Preview email" %}
                         </button>
                         <span class="composer-send-group">

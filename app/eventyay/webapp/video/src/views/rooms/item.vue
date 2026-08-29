@@ -6,9 +6,7 @@
 		upcoming-stream-countdown(:room="room")
 		.stage-tool-blocker(v-if="activeStageTool !== null", @click="activeStageTool = null")
 		.stage-tools(v-if="hasLivestream")
-			// Added dropdown menu for audio translations near the reactions bar
 			reactions-bar(:expanded="true", @expand="activeStageTool = 'reaction'")
-			AudioTranslationDropdown(v-if="showCoreLanguageDropdown", :key="`${room.id}-core`", :languages="coreLanguages", :selected-language="selectedCoreLanguage", :label="$t('Audio Translation')", @languageChanged="handleCoreLanguageChange")
 			AudioTranslationDropdown(v-if="showPluginLanguageDropdown", :key="`${room.id}-plugin`", :languages="pluginLanguages", :selected-language="selectedPluginLanguage", :label="$t('Interpretation')", @languageChanged="handlePluginLanguageChange")
 	media-source-placeholder(v-else-if="modules['call.bigbluebutton'] || modules['call.zoom'] || modules['call.jitsi']")
 	roulette(v-else-if="modules['networking.roulette'] && $features.enabled('roulette')", :module="modules['networking.roulette']", :room="room")
@@ -39,9 +37,8 @@ import Questions from 'components/Questions'
 import MediaSourcePlaceholder from 'components/MediaSourcePlaceholder'
 import AudioTranslationDropdown from 'components/AudioTranslationDropdown'
 import UpcomingStreamCountdown from 'components/UpcomingStreamCountdown'
-import { isUsableAudioTranslationEntry, normalizeAudioTranslationSource } from 'lib/validators'
+import { normalizeAudioTranslationSource } from 'lib/validators'
 import { pluginLanguageStreams, roomUsesPluginLanguageStreams } from '../../interpretation-streams'
-import { getStagePlaybackMode, PLAYBACK_MODE_SCHEDULE_DRIVEN } from 'lib/stage-streams'
 
 export default {
 	name: 'Room',
@@ -71,29 +68,19 @@ export default {
 				polls: false
 			},
 			activeStageTool: null, // reaction, qa
-			coreLanguages: [],
 			pluginLanguages: [],
 		}
 	},
 	computed: {
-		currentYoutubeTranslation() {
+		currentInterpretation() {
 			if (!this.room?.id) return null
-			return this.$store.state.youtubeTranslationsByRoom?.[this.room.id] || null
-		},
-		showCoreLanguageDropdown() {
-			if (roomUsesPluginLanguageStreams(this.room)) {
-				return this.coreLanguages.length > 0
-			}
-			return this.coreLanguages.length > 1
+			return this.$store.state.interpretationStreamsByRoom?.[this.room.id] || this.$store.state.youtubeTranslationsByRoom?.[this.room.id] || null
 		},
 		showPluginLanguageDropdown() {
 			return roomUsesPluginLanguageStreams(this.room) && this.pluginLanguages.length > 0
 		},
-		selectedCoreLanguage() {
-			return this.getLanguageForTranslation(this.currentYoutubeTranslation, this.coreLanguages) || 'Original'
-		},
 		selectedPluginLanguage() {
-			return this.getLanguageForTranslation(this.currentYoutubeTranslation, this.pluginLanguages) || 'Original'
+			return this.getLanguageForTranslation(this.currentInterpretation, this.pluginLanguages) || 'Original'
 		},
 		usesStreamPolling() {
 			return Boolean(
@@ -156,72 +143,37 @@ export default {
 			if (tab === this.activeSidebarTab) return
 			this.unreadTabs[tab] = true
 		},
-		handleCoreLanguageChange(translationConfig) {
-			this.updateActiveTranslation(translationConfig)
-		},
 		handlePluginLanguageChange(translationConfig) {
 			this.updateActiveTranslation(translationConfig)
 		},
 		updateActiveTranslation(translationConfig) {
-			this.$store.commit('updateYoutubeTransAudio', {
+			this.$store.commit('updateInterpretationAudio', {
 				roomId: this.room?.id,
-				youtubeTranslation: translationConfig
+				interpretation: translationConfig
 			})
 		},
 		initializeLanguages() {
-			this.coreLanguages = this.buildCoreLanguages()
 			this.pluginLanguages = roomUsesPluginLanguageStreams(this.room)
 				? pluginLanguageStreams(this.room)
 				: []
 			this.clearStaleTranslation()
 		},
-		buildCoreLanguages() {
-			let languageUrls = null
-
-			const stageModule = this.modules['livestream.native'] || this.modules['livestream.youtube']
-			const isScheduleDriven = getStagePlaybackMode(stageModule) === PLAYBACK_MODE_SCHEDULE_DRIVEN
-
-			if (isScheduleDriven) {
-				if (this.room?.currentStream?.stream_type === 'youtube' && this.room.currentStream.config?.languageUrls) {
-					languageUrls = this.room.currentStream.config.languageUrls
-				}
-			} else {
-				const ytModule = this.modules['livestream.youtube']
-				if (ytModule?.config?.languageUrls) {
-					languageUrls = ytModule.config.languageUrls
-				}
-			}
-
-			const languages = languageUrls
-				? languageUrls.filter(entry => isUsableAudioTranslationEntry(entry))
-				: []
-			if (!languages.find(lang => lang.language === 'Original')) {
-				languages.unshift({language: 'Original', youtube_id: null, use_video: false})
-			}
-			return languages
-		},
 		getLanguageForTranslation(translationConfig, languages) {
 			if (!translationConfig?.url || !languages?.length) return 'Original'
 			const matchingLanguage = languages.find(entry => (
 				entry.language !== 'Original' &&
-				normalizeAudioTranslationSource(entry.youtube_id) === translationConfig.url &&
+				normalizeAudioTranslationSource(entry.url || entry.youtube_id) === translationConfig.url &&
 				!!entry.use_video === !!translationConfig.useVideo
 			))
 			return matchingLanguage?.language || null
 		},
 		clearStaleTranslation() {
-			if (!this.room?.id || !this.currentYoutubeTranslation) return
-			const matchesCore = this.getLanguageForTranslation(this.currentYoutubeTranslation, this.coreLanguages)
-			const matchesPlugin = this.getLanguageForTranslation(this.currentYoutubeTranslation, this.pluginLanguages)
-			const hasCoreList = this.showCoreLanguageDropdown
-			const hasPluginList = this.showPluginLanguageDropdown
-			if (
-				(!hasCoreList || !matchesCore) &&
-				(!hasPluginList || !matchesPlugin)
-			) {
-				this.$store.commit('updateYoutubeTransAudio', {
+			if (!this.room?.id || !this.currentInterpretation) return
+			const matchesPlugin = this.getLanguageForTranslation(this.currentInterpretation, this.pluginLanguages)
+			if (!this.showPluginLanguageDropdown || !matchesPlugin) {
+				this.$store.commit('updateInterpretationAudio', {
 					roomId: this.room.id,
-					youtubeTranslation: null
+					interpretation: null
 				})
 			}
 		}
@@ -257,7 +209,7 @@ export default {
 			.bunt-tabs-header-items
 				justify-content: center
 		for tab in chat questions polls
-			&.tab-{tab}-unread [aria-controls=\"{tab}\"] .bunt-tab-header-item-text
+			&.tab-{tab}-unread [aria-controls="{tab}"] .bunt-tab-header-item-text
 				position: relative
 				&::after
 					content: ''
@@ -272,11 +224,12 @@ export default {
 	.stage-tools
 		flex: none
 		display: flex
-		min-height: 56px
+		min-height: 40px
 		justify-content: flex-end
 		align-items: center
 		flex-wrap: wrap
-		gap: 4px
+		gap: 6px
+		padding: 4px 8px
 		user-select: none
 		.stage-tool
 			font-size: 16px
