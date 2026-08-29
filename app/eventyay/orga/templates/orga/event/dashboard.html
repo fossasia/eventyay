@@ -122,10 +122,10 @@
         {% include "orga/submission/includes/statistics.html" %}
     {% endif %}
 
-    {% if history and can_change_settings %}
+    {% if recent_talk_activity and can_change_settings %}
         <div class="dashboard-history mt-4">
             <div class="d-flex">
-                <h2>{% translate "History" %}</h2>
+                <h2>{% translate "Recent talk activity" %}</h2>
                 {% if can_change_settings %}
                     <small>
                         <a href="{{ request.event.orga_urls.history }}" class="text-muted ml-2">
@@ -135,7 +135,7 @@
                 {% endif %}
             </div>
 
-            {% include "common/logs.html" with entries=history %}
+            {% include "common/logs.html" with entries=recent_talk_activity %}
 
         </div>
     {% endif %}

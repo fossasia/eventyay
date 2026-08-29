@@ -238,9 +238,27 @@ class EventDashboardView(EventPermissionRequired, SubmissionStatsMixin, Template
         return result
 
     @context
-    def history(self):
-        return LogEntry.objects.filter(event=self.request.event).select_related('user', 'event')[:20]
-
+    @context
+    def recent_talk_activity(self):
+        return LogEntry.objects.filter(
+            event=self.request.event,
+            action_type__in={
+                'eventyay.submission.create',
+                'eventyay.submission.update',
+                'eventyay.submission.accept',
+                'eventyay.submission.cancel',
+                'eventyay.submission.confirm',
+                'eventyay.submission.reject',
+                'eventyay.submission.unconfirm',
+                'eventyay.submission.withdraw',
+                'eventyay.submission.deleted',
+                'eventyay.submission.speakers.add',
+                'eventyay.submission.speakers.invite',
+                'eventyay.submission.speakers.remove',
+                'eventyay.submission.comment.create',
+                'eventyay.submission.comment.delete',
+            },
+        ).order_by('-datetime', '-id')[:10]
     def get_context_data(self, **kwargs):
         # Tiles can have priorities
         # Priorities are meant to be between 0 and 100
