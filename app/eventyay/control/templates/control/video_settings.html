@@ -29,6 +29,8 @@
         margin-bottom: 32px;
         display: flex;
         gap: 8px;
+        padding-left: 0;
+        margin-left: 0;
     }
     .video-settings-tabs > li {
         margin-bottom: -1px;
@@ -43,6 +45,9 @@
         font-size: 14px;
         margin-right: 0;
         transition: color 0.2s ease, border-color 0.2s ease;
+    }
+    .video-settings-tabs > li:first-child > a {
+        padding-left: 0;
     }
     .video-settings-tabs > li > a:hover {
         color: #1a1f36;
@@ -128,6 +133,9 @@
     }
     
     /* Secondary Action Buttons (Stripe-style) */
+    .video-admin-actions {
+        white-space: nowrap;
+    }
     .video-admin-actions .btn-default {
         background-color: #ffffff;
         border: 1px solid #d9e2ec;
@@ -208,7 +216,7 @@
                             <th>{% trans "URL" %}</th>
                             <th>{% trans "Event" %}</th>
                             <th class="text-right">{% trans "Current cost" %}</th>
-                            <th class="text-right" colspan="2">{% trans "Actions" %}</th>
+                            <th class="text-right">{% trans "Actions" %}</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -237,7 +245,7 @@
                             </td>
                         </tr>
                         {% empty %}
-                            <tr><td colspan="6" class="text-muted text-center" style="padding: 20px;">{% trans "No servers configured yet." %}</td></tr>
+                            <tr><td colspan="5" class="text-muted text-center" style="padding: 20px;">{% trans "No servers configured yet." %}</td></tr>
                         {% endfor %}
                         </tbody>
                     </table>
@@ -262,7 +270,7 @@
                             <th>{% trans "URL" %}</th>
                             <th>{% trans "App ID" %}</th>
                             <th>{% trans "Event" %}</th>
-                            <th class="text-right" colspan="2">{% trans "Actions" %}</th>
+                            <th class="text-right">{% trans "Actions" %}</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -288,7 +296,7 @@
                             </td>
                         </tr>
                         {% empty %}
-                            <tr><td colspan="6" class="text-muted text-center" style="padding: 20px;">{% trans "No servers configured yet." %}</td></tr>
+                            <tr><td colspan="5" class="text-muted text-center" style="padding: 20px;">{% trans "No servers configured yet." %}</td></tr>
                         {% endfor %}
                         </tbody>
                     </table>
@@ -312,7 +320,7 @@
                             <th>{% trans "ID" %}</th>
                             <th>{% trans "URL" %}</th>
                             <th>{% trans "Event" %}</th>
-                            <th class="text-right" colspan="2">{% trans "Actions" %}</th>
+                            <th class="text-right">{% trans "Actions" %}</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -337,7 +345,7 @@
                             </td>
                         </tr>
                         {% empty %}
-                            <tr><td colspan="5" class="text-muted text-center" style="padding: 20px;">{% trans "No servers configured yet." %}</td></tr>
+                            <tr><td colspan="4" class="text-muted text-center" style="padding: 20px;">{% trans "No servers configured yet." %}</td></tr>
                         {% endfor %}
                         </tbody>
                     </table>
@@ -361,7 +369,7 @@
                             <th>{% trans "ID" %}</th>
                             <th>{% trans "Host name" %}</th>
                             <th>{% trans "Event" %}</th>
-                            <th class="text-right" colspan="2">{% trans "Actions" %}</th>
+                            <th class="text-right">{% trans "Actions" %}</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -386,7 +394,7 @@
                             </td>
                         </tr>
                         {% empty %}
-                            <tr><td colspan="5" class="text-muted text-center" style="padding: 20px;">{% trans "No servers configured yet." %}</td></tr>
+                            <tr><td colspan="4" class="text-muted text-center" style="padding: 20px;">{% trans "No servers configured yet." %}</td></tr>
                         {% endfor %}
                         </tbody>
                     </table>
@@ -409,7 +417,7 @@
                         <tr>
                             <th>{% trans "ID" %}</th>
                             <th>{% trans "Name" %}</th>
-                            <th class="text-right" colspan="2">{% trans "Actions" %}</th>
+                            <th class="text-right">{% trans "Actions" %}</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -427,7 +435,7 @@
                             </td>
                         </tr>
                         {% empty %}
-                            <tr><td colspan="4" class="text-muted text-center" style="padding: 20px;">{% trans "No servers configured yet." %}</td></tr>
+                            <tr><td colspan="3" class="text-muted text-center" style="padding: 20px;">{% trans "No servers configured yet." %}</td></tr>
                         {% endfor %}
                         </tbody>
                     </table>
