@@ -1805,10 +1805,14 @@ class Event(
 
         return result
 
+    @transaction.atomic
     def clear_data(self):
         """
         Clears all personal information. It generally leaves structure such as rooms intact, but to make
         sure all personal data is scrubbed, it also clears all uploaded files.
+
+        Runs in a transaction so a failure part-way through cannot leave the event half-scrubbed,
+        with the audit trail deleted but the personal data it describes still present.
         """
         from eventyay.base.models import (
             ChatEvent,
@@ -1819,7 +1823,7 @@ class Event(
         )
         from eventyay.base.models.storage_model import StoredFile
 
-        self.audit_logs.all().delete()
+        self.audits.all().delete()
         self.event_grants.all().delete()
         self.room_grants.all().delete()
         self.bbb_calls.all().delete()
