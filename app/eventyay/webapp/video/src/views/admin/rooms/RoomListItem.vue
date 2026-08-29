@@ -1,5 +1,5 @@
 <template lang="pug">
-router-link.c-room-list-item.table-row(:to="{name: 'admin:rooms:item', params: {roomId: room.id}}", draggable="false")
+router-link.c-room-list-item.table-row(:to="to", :class="{'mystery': !inferredType}", draggable="false")
 	.handle.mdi.mdi-drag-vertical(:class="{disabled}", v-handle, v-tooltip="disabled ? $t('sorting is disabled while searching') : ''")
 	.name(v-html="$emojify(room.name)")
 	.badge-cell
@@ -30,7 +30,11 @@ export default {
 	directives: { handle: HandleDirective },
 	mixins: [ElementMixin],
 	props: {
-		room: Object
+		room: Object,
+		to: {
+			type: Object,
+			required: true
+		}
 	},
 	computed: {
 		inferredType () {
@@ -39,7 +43,8 @@ export default {
 			return inferType({ module_config: this.room.module_config })
 		},
 		badgeLabel () {
-			return getConfiguredRoomLabel(this.inferredType)
+			const label = getConfiguredRoomLabel(this.inferredType)
+			return label ? this.$t(label) : ''
 		},
 		badgeIcon () {
 			return `mdi-${this.inferredType.icon}`

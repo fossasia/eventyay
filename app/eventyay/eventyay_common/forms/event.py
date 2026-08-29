@@ -1,5 +1,6 @@
 import logging
 import os
+from decimal import Decimal
 from urllib.parse import urlparse
 
 from django import forms
@@ -8,6 +9,7 @@ from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import UploadedFile
 from django.utils.translation import gettext_lazy as _
+from django_countries import countries
 from django_scopes import scope
 
 from eventyay.timezones import common_timezones
@@ -27,6 +29,7 @@ from eventyay.common.language import get_language_choices_native_with_ui_name
 from eventyay.common.urls import get_file_url_path, is_http_url
 from eventyay.multidomain.urlreverse import build_absolute_uri
 from eventyay.control.forms import MultipleLanguagesWidget, SlugWidget, SplitDateTimeField, SplitDateTimePickerWidget
+from eventyay.control.forms.global_settings import StripeKeyValidator
 from eventyay.helpers.image_optimize import optimize_uploaded_image
 from eventyay.multidomain.models import KnownDomain
 
@@ -87,6 +90,17 @@ class EventCommonSettingsForm(SettingsForm):
 
         if is_meetup_event(self.event):
             add_video_field_errors(self, data.get('video_type'), data.get('video_url'))
+            fee = data.get('registration_fee')
+            if fee and fee > Decimal('0.00'):
+                pub_key = data.get('payment_stripe_publishable_key') or self.event.settings.get('payment_stripe_publishable_key')
+                sec_key = data.get('payment_stripe_secret_key') or self.event.settings.get('payment_stripe_secret_key')
+                country = data.get('payment_stripe_merchant_country') or self.event.settings.get('payment_stripe_merchant_country')
+                if not pub_key:
+                    self.add_error('payment_stripe_publishable_key', _('Please enter your Stripe publishable key for paid registration.'))
+                if not sec_key:
+                    self.add_error('payment_stripe_secret_key', _('Please enter your Stripe secret key for paid registration.'))
+                if not country:
+                    self.add_error('payment_stripe_merchant_country', _('Please select your Stripe merchant country.'))
 
         return data
 
@@ -134,6 +148,27 @@ class EventCommonSettingsForm(SettingsForm):
                     with scope(organizer=self.event.organizer):
                         quota.size = reg_limit
                         quota.save(update_fields=['size'])
+
+            if 'registration_fee' in self.cleaned_data:
+                reg_fee = self.cleaned_data.get('registration_fee') or Decimal('0.00')
+                product, quota = get_rsvp_product_and_quota(self.event)
+                if product and product.default_price != reg_fee:
+                    with scope(organizer=self.event.organizer):
+                        product.default_price = reg_fee
+                        product.save(update_fields=['default_price'])
+
+                stripe_sec = self.cleaned_data.get('payment_stripe_secret_key') or self.event.settings.get('payment_stripe_secret_key')
+                if reg_fee > Decimal('0.00') and stripe_sec:
+                    self.cleaned_data['payment_stripe__enabled'] = True
+                elif reg_fee == Decimal('0.00') and not self.cleaned_data.get('payment_stripe_publishable_key'):
+                    self.cleaned_data['payment_stripe_secret_key'] = ''
+                    self.cleaned_data['payment_stripe_publishable_key'] = ''
+                    self.cleaned_data['payment_stripe_merchant_country'] = ''
+                    self.cleaned_data['payment_stripe__enabled'] = False
+
+            if 'payment_stripe_secret_key' in self.cleaned_data and not self.cleaned_data.get('payment_stripe_secret_key'):
+                if self.cleaned_data.get('registration_fee', Decimal('0.00')) > Decimal('0.00') or self.cleaned_data.get('payment_stripe__enabled'):
+                    self.cleaned_data['payment_stripe_secret_key'] = self.initial.get('payment_stripe_secret_key', '')
 
         return super().save()
 
@@ -183,7 +218,7 @@ class EventCommonSettingsForm(SettingsForm):
         self.event = kwargs['obj']
         super().__init__(*args, **kwargs)
 
-        # Meetup video stream support
+        # Meetup video stream & RSVP support
         if is_meetup_event(self.event):
             self.fields.update(build_video_form_fields())
             self.initial.update(get_video_config_initial(self.event))
@@ -197,6 +232,49 @@ class EventCommonSettingsForm(SettingsForm):
             product, quota = get_rsvp_product_and_quota(self.event)
             if quota and quota.size is not None:
                 self.initial['registration_limit'] = quota.size
+
+            self.fields['registration_fee'] = forms.DecimalField(
+                required=False,
+                min_value=Decimal('0.00'),
+                decimal_places=2,
+                max_digits=10,
+                label=_('Registration fee amount'),
+                help_text=_('Fee charged to attendees when registering for this meetup (in {currency}). Set to 0.00 for free registration.').format(
+                    currency=self.obj.currency
+                ),
+                widget=forms.NumberInput(attrs={'placeholder': _('0.00 ({currency})').format(currency=self.obj.currency), 'step': '0.01'}),
+            )
+            if product:
+                self.initial['registration_fee'] = product.default_price or Decimal('0.00')
+
+            self.fields['payment_stripe__enabled'] = forms.BooleanField(
+                label=_('Enable Stripe payment method'),
+                required=False,
+            )
+            self.fields['payment_stripe_publishable_key'] = forms.CharField(
+                label=_('Publishable key'),
+                required=False,
+                validators=(StripeKeyValidator(['pk_live_', 'pk_test_']),),
+                widget=forms.TextInput(attrs={'placeholder': _('Publishable key')}),
+            )
+            self.fields['payment_stripe_secret_key'] = forms.CharField(
+                label=_('Secret key'),
+                required=False,
+                validators=(StripeKeyValidator(['sk_live_', 'sk_test_', 'rk_live_', 'rk_test_']),),
+                widget=forms.PasswordInput(render_value=True, attrs={'placeholder': _('Secret key'), 'autocomplete': 'new-password'}),
+            )
+            self.fields['payment_stripe_merchant_country'] = forms.ChoiceField(
+                label=_('Merchant country'),
+                required=False,
+                choices=[('', _('Select country'))] + list(countries),
+                help_text=_('The country in which your Stripe-account is registered in. Usually, this is your country of residence.'),
+            )
+
+            self.initial['payment_stripe__enabled'] = self.event.settings.get('payment_stripe__enabled', as_type=bool, default=False)
+            self.initial['payment_stripe_publishable_key'] = self.event.settings.get('payment_stripe_publishable_key', default='')
+            self.initial['payment_stripe_secret_key'] = self.event.settings.get('payment_stripe_secret_key', default='')
+            self.initial['payment_stripe_merchant_country'] = self.event.settings.get('payment_stripe_merchant_country', default='')
+
         localized_language_choices = get_language_choices_native_with_ui_name()
         for fname in ('locales', 'content_locales'):
             if fname in self.fields:

@@ -29,7 +29,7 @@
 									:placeholder="$t('Optional short description for attendees')"
 								)
 
-					.unscheduled-setting-row(:title="unscheduledDisabledTitle", :class="{'is-disabled': config.has_linked_sessions}")
+					.unscheduled-setting-row(v-if="!isChat", :title="unscheduledDisabledTitle", :class="{'is-disabled': config.has_linked_sessions}")
 						.setting-text
 							.setting-title {{ $t('Unscheduled room') }}
 							.setting-desc {{ $t('Hide this room from the event schedule and public session listings.') }}
@@ -40,7 +40,7 @@
 								:disabled="config.has_linked_sessions"
 							)
 
-					template(v-if="inferredType && inferredType.id === 'channel-text'")
+					template(v-if="isChat")
 						.force-join-setting-row
 							.setting-text
 								.setting-title {{ $t('Force join on login') }}
@@ -61,7 +61,7 @@ import { mapGetters } from 'vuex'
 import api from 'lib/api'
 import { required } from 'lib/validators'
 import ValidationErrorsMixin from 'components/mixins/validation-errors'
-import ROOM_TYPES, { inferType } from 'lib/room-types'
+import ROOM_TYPES, { inferType, isChatChannel } from 'lib/room-types'
 import { filterRoomTypesByPermission } from 'lib/room-type-permissions'
 import Stage from './types-edit/stage'
 import ChannelBBB from './types-edit/channel-bbb'
@@ -134,6 +134,9 @@ export default {
 		},
 		inferredType() {
 			return inferType(this.config)
+		},
+		isChat() {
+			return isChatChannel(this.config)
 		},
 		unscheduledDisabledTitle() {
 			this.$store.state.userLocale
@@ -244,7 +247,10 @@ export default {
 				}
 				this.saving = false
 				if (this.creating) {
-					this.$router.push({name: 'admin:rooms:item', params: {roomId}})
+					this.$router.push({
+						name: this.isChat ? 'admin:chat:item' : 'admin:rooms:item',
+						params: {roomId}
+					})
 				}
 			} catch (error) {
 				console.error(error)

@@ -1919,15 +1919,21 @@ class Event(
         Returns a dictionary of initialized payment providers mapped by their identifiers.
         """
         from ..signals import register_payment_providers
+        from ..meetup import is_meetup_event
 
         if not cached or not hasattr(self, '_cached_payment_providers'):
             responses = register_payment_providers.send(self)
             providers = {}
+            is_meetup = is_meetup_event(self)
             for receiver, response in responses:
                 if not isinstance(response, list):
                     response = [response]
                 for p in response:
                     pp = p(self)
+                    if is_meetup and pp.identifier == 'stripe_settings':
+                        continue
+                    if not is_meetup and pp.identifier == 'stripe' and p.__module__ == 'eventyay.base.payment':
+                        continue
                     providers[pp.identifier] = pp
 
             self._cached_payment_providers = OrderedDict(

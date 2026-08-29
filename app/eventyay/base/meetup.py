@@ -53,6 +53,13 @@ CAPACITY_TYPE_CHOICES = [
     (CAPACITY_LIMITED, _('Limited')),
 ]
 
+REGISTRATION_FEE_FREE = 'free'
+REGISTRATION_FEE_PAID = 'paid'
+REGISTRATION_FEE_CHOICES = [
+    (REGISTRATION_FEE_FREE, _('Free')),
+    (REGISTRATION_FEE_PAID, _('Paid')),
+]
+
 VIDEO_MODULES = {
     VIDEO_TYPE_YOUTUBE: ('livestream.youtube', 'ytid'),
     VIDEO_TYPE_HLS: ('livestream.native', 'hls_url'),
@@ -245,7 +252,7 @@ def ensure_video_credentials(event, request=None, force=False) -> bool:
     return True
 
 
-def ensure_rsvp_product(event):
+def ensure_rsvp_product(event, price=None):
     """
     Ensure an active admission product and quota exist for a meetup event.
 
@@ -258,17 +265,21 @@ def ensure_rsvp_product(event):
     from eventyay.base.models.product import Product
 
     locale = getattr(event, 'locale', 'en') or 'en'
+    fee_price = price if price is not None else Decimal('0.00')
     with scope(organizer=event.organizer):
         product = event.products.filter(admission=True, active=True).first()
         if product is None:
             product = Product(
                 event=event,
                 name=LazyI18nString({locale: DEFAULT_PRODUCT_NAME}),
-                default_price=Decimal('0.00'),
+                default_price=fee_price,
                 admission=True,
                 active=True,
             )
             product.save()
+        elif price is not None and product.default_price != fee_price:
+            product.default_price = fee_price
+            product.save(update_fields=['default_price'])
 
         quota = product.quotas.first()
         if quota is None:
@@ -338,6 +349,10 @@ def provision_meetup_event(
     header_image=None,
     registration_limit=None,
     crop_box=None,
+    registration_fee=None,
+    payment_stripe_publishable_key='',
+    payment_stripe_secret_key='',
+    payment_stripe_merchant_country='',
 ):
     event.settings.set(EVENT_TYPE_SETTING, MEETUP_EVENT_TYPE)
 
@@ -353,7 +368,18 @@ def provision_meetup_event(
 
     ensure_video_credentials(event, request=request, force=True)
     apply_video_configuration(event, video_type, video_url)
-    product, quota = ensure_rsvp_product(event)
+
+    fee_decimal = Decimal(str(registration_fee)) if registration_fee else Decimal('0.00')
+    product, quota = ensure_rsvp_product(event, price=fee_decimal)
+
+    if fee_decimal > Decimal('0.00') and payment_stripe_secret_key:
+        event.settings.set('payment_stripe__enabled', True)
+        if payment_stripe_publishable_key:
+            event.settings.set('payment_stripe_publishable_key', payment_stripe_publishable_key)
+        if payment_stripe_secret_key:
+            event.settings.set('payment_stripe_secret_key', payment_stripe_secret_key)
+        if payment_stripe_merchant_country:
+            event.settings.set('payment_stripe_merchant_country', payment_stripe_merchant_country)
 
     if quota and registration_limit is not None:
         with scope(organizer=event.organizer):
@@ -362,5 +388,9 @@ def provision_meetup_event(
 
     event.log_action(
         'eventyay.event.meetup.created',
-        data={'video_type': video_type, 'video_url': video_url},
+        data={
+            'video_type': video_type,
+            'video_url': video_url,
+            'registration_fee': str(fee_decimal),
+        },
     )

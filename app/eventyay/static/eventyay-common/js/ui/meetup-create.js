@@ -158,10 +158,71 @@ export function initCapacityToggles() {
     updateCapacityVisibility();
 }
 
+export function initRegistrationFeeToggles() {
+    const feeGroup = document.getElementById('registration-fee-group');
+    const radios = document.querySelectorAll('input[name="basics-registration_fee_type"]');
+    const pubKeyInput = document.querySelector('input[name="basics-payment_stripe_publishable_key"]');
+    const secKeyInput = document.querySelector('input[name="basics-payment_stripe_secret_key"]');
+    const indicator = document.getElementById('stripeStatusIndicator');
+    const btnLabel = document.getElementById('stripeBtnLabel');
+    const saveBtn = document.getElementById('stripeSaveBtn');
+
+    function updateStripeStatus() {
+        const hasKeys = Boolean(pubKeyInput && pubKeyInput.value.trim() && secKeyInput && secKeyInput.value.trim());
+        if (indicator) {
+            if (hasKeys) {
+                indicator.classList.remove('hidden');
+            } else {
+                indicator.classList.add('hidden');
+            }
+        }
+        if (btnLabel) {
+            btnLabel.textContent = hasKeys ? 'Edit Stripe configuration' : 'Configure Stripe';
+        }
+    }
+
+    function updateFeeVisibility() {
+        const checked = document.querySelector('input[name="basics-registration_fee_type"]:checked');
+        const val = checked ? checked.value : 'free';
+
+        if (feeGroup) {
+            if (val === 'paid') {
+                feeGroup.classList.remove('hidden');
+                const feeInput = feeGroup.querySelector('input[name="basics-registration_fee"]');
+                if (feeInput && !feeInput.value) {
+                    feeInput.focus();
+                }
+            } else {
+                feeGroup.classList.add('hidden');
+            }
+        }
+        updateStripeStatus();
+    }
+
+    radios.forEach((radio) => {
+        radio.addEventListener('change', updateFeeVisibility);
+    });
+
+    if (saveBtn) {
+        saveBtn.addEventListener('click', () => {
+            updateStripeStatus();
+            if (window.$ && window.$.fn && window.$.fn.modal) {
+                window.$('#stripeConfigModal').modal('hide');
+            }
+        });
+    }
+
+    if (pubKeyInput) pubKeyInput.addEventListener('input', updateStripeStatus);
+    if (secKeyInput) secKeyInput.addEventListener('input', updateStripeStatus);
+
+    updateFeeVisibility();
+}
+
 function initMeetupCreate() {
     autoDetectTimezone();
     initLocationToggles();
     initCapacityToggles();
+    initRegistrationFeeToggles();
 }
 
 if (document.readyState === 'loading') {

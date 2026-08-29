@@ -1,3 +1,4 @@
+from decimal import Decimal
 from urllib.parse import urlencode
 
 from django import forms
@@ -14,6 +15,7 @@ from django.utils.safestring import mark_safe
 from django.utils.timezone import get_current_timezone_name
 from django.utils.translation import gettext, pgettext_lazy
 from django.utils.translation import gettext_lazy as _
+from django_countries import countries
 from django_countries.fields import LazyTypedChoiceField
 from i18nfield.forms import (
     I18nForm,
@@ -36,10 +38,14 @@ from eventyay.base.meetup import (
     LOCATION_IN_PERSON,
     LOCATION_TYPE_CHOICES,
     LOCATION_VIRTUAL,
+    REGISTRATION_FEE_CHOICES,
+    REGISTRATION_FEE_FREE,
+    REGISTRATION_FEE_PAID,
     add_video_field_errors,
     build_video_form_fields,
     is_meetup_event,
 )
+from eventyay.control.forms.global_settings import StripeKeyValidator
 from eventyay.consts import SizeKey
 from eventyay.base.models import Event, Organizer, TaxRule, Team
 from eventyay.base.models.event import EventMetaValue, SubEvent
@@ -1957,6 +1963,42 @@ class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
         help_text=_('Maximum number of attendees who can RSVP.'),
         widget=forms.NumberInput(attrs={'placeholder': _('e.g. 50')}),
     )
+    registration_fee_type = forms.ChoiceField(
+        label=_('Registration fee'),
+        choices=REGISTRATION_FEE_CHOICES,
+        initial=REGISTRATION_FEE_FREE,
+        widget=forms.RadioSelect,
+        required=False,
+    )
+    registration_fee = forms.DecimalField(
+        required=False,
+        min_value=Decimal('0.01'),
+        decimal_places=2,
+        max_digits=10,
+        label=_('Registration fee amount'),
+        help_text=_('Fee charged to attendees when registering for this meetup.'),
+        widget=forms.NumberInput(attrs={'placeholder': _('e.g. 10.00'), 'step': '0.01', 'min': '0.01'}),
+    )
+    payment_stripe_publishable_key = forms.CharField(
+        label=_('Publishable key'),
+        required=False,
+        help_text=_('Your Stripe publishable key (pk_live_... or pk_test_...).'),
+        validators=(StripeKeyValidator(['pk_live_', 'pk_test_']),),
+        widget=forms.TextInput(attrs={'placeholder': _('Publishable key')}),
+    )
+    payment_stripe_secret_key = forms.CharField(
+        label=_('Secret key'),
+        required=False,
+        help_text=_('Your Stripe secret key (sk_live_..., sk_test_..., rk_live_..., or rk_test_...).'),
+        validators=(StripeKeyValidator(['sk_live_', 'sk_test_', 'rk_live_', 'rk_test_']),),
+        widget=forms.PasswordInput(render_value=True, attrs={'placeholder': _('Secret key'), 'autocomplete': 'new-password'}),
+    )
+    payment_stripe_merchant_country = forms.ChoiceField(
+        label=_('Merchant country'),
+        required=False,
+        choices=[('', _('Select country'))] + list(countries),
+        help_text=_('The country in which your Stripe-account is registered in. Usually, this is your country of residence.'),
+    )
     frontpage_text = I18nFormField(
         widget=I18nTextarea,
         required=False,
@@ -1987,6 +2029,13 @@ class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
             if not self.initial.get('currency'):
                 self.initial['currency'] = self._default_currency()
 
+        event_currency = self.initial.get('currency') or (self.instance.currency if getattr(self, 'instance', None) and getattr(self.instance, 'currency', None) else self._default_currency())
+        if 'registration_fee' in self.fields:
+            self.fields['registration_fee'].help_text = _(
+                'Fee charged to attendees when registering for this meetup (in {currency}).'
+            ).format(currency=event_currency)
+            self.fields['registration_fee'].widget.attrs['placeholder'] = _('e.g. 10.00 ({currency})').format(currency=event_currency)
+
         if self.initial.get('video_type') and self.initial.get('location'):
             self.initial['location_type'] = LOCATION_HYBRID
         elif self.initial.get('video_type') and not self.initial.get('location'):
@@ -2000,6 +2049,14 @@ class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
             self.initial['capacity_type'] = CAPACITY_LIMITED
         else:
             self.initial['capacity_type'] = CAPACITY_UNLIMITED
+
+        if self.initial.get('registration_fee') and Decimal(str(self.initial.get('registration_fee'))) > Decimal('0.00'):
+            self.initial['registration_fee_type'] = REGISTRATION_FEE_PAID
+        else:
+            self.initial['registration_fee_type'] = REGISTRATION_FEE_FREE
+
+        if 'registration_fee' in self.fields:
+            self.fields['registration_fee']._required = True
 
         for name, field in self.fields.items():
             if isinstance(field.widget, forms.ClearableFileInput):
@@ -2066,5 +2123,25 @@ class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
             cleaned_data['registration_limit'] = None
         elif cap_type == CAPACITY_LIMITED and not cleaned_data.get('registration_limit'):
             self.add_error('registration_limit', _('Please enter a capacity limit for limited registrations.'))
+
+        fee_type = cleaned_data.get('registration_fee_type') or REGISTRATION_FEE_FREE
+        if fee_type == REGISTRATION_FEE_FREE:
+            cleaned_data['registration_fee'] = Decimal('0.00')
+            cleaned_data['payment_stripe_publishable_key'] = ''
+            cleaned_data['payment_stripe_secret_key'] = ''
+            cleaned_data['payment_stripe_merchant_country'] = ''
+            for f in ('registration_fee', 'payment_stripe_publishable_key', 'payment_stripe_secret_key', 'payment_stripe_merchant_country'):
+                if f in self._errors:
+                    del self._errors[f]
+        elif fee_type == REGISTRATION_FEE_PAID:
+            fee = cleaned_data.get('registration_fee')
+            if not fee or fee <= Decimal('0.00'):
+                self.add_error('registration_fee', _('Please enter a valid registration fee greater than 0.'))
+            if not cleaned_data.get('payment_stripe_publishable_key'):
+                self.add_error('payment_stripe_publishable_key', _('Please enter your Stripe publishable key.'))
+            if not cleaned_data.get('payment_stripe_secret_key'):
+                self.add_error('payment_stripe_secret_key', _('Please enter your Stripe secret key.'))
+            if not cleaned_data.get('payment_stripe_merchant_country'):
+                self.add_error('payment_stripe_merchant_country', _('Please select your Stripe merchant country.'))
 
         return cleaned_data

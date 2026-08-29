@@ -347,6 +347,7 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
                 email=email,
                 name=form.cleaned_data.get('name'),
                 locale=form.cleaned_data.get('locale'),
+                biography=form.cleaned_data.get('biography'),
                 user=self.request.user,
             )
             messages.success(self.request, _('The speaker has been added to the proposal.'))
@@ -357,6 +358,7 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
         kwargs = super().get_form_kwargs()
         kwargs['event'] = self.request.event
         kwargs['require_name'] = True
+        kwargs['include_biography'] = True
         return kwargs
 
     def get_success_url(self):
@@ -418,6 +420,8 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
                 data=self.request.POST if self.request.method == 'POST' else None,
                 event=self.request.event,
                 prefix='speaker',
+                include_biography=True,
+                draft_save=self.request.POST.get('state') == SubmissionStates.DRAFT,
             )
 
     @cached_property
@@ -549,6 +553,7 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
             messages.error(self.request, phrases.base.error_saving_changes)
             return self.get(self.request, *self.args, **self.kwargs)
         if created and not self.new_speaker_form.is_valid():
+            messages.error(self.request, phrases.base.error_saving_changes)
             return self.form_invalid(form)
 
         self.object = form.instance
@@ -565,6 +570,7 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
                     name=self.new_speaker_form.cleaned_data['name'],
                     locale=self.new_speaker_form.cleaned_data.get('locale'),
                     user=self.request.user,
+                    biography=self.new_speaker_form.cleaned_data.get('biography'),
                 )
         else:
             formset_result = self.save_formset(form.instance)
