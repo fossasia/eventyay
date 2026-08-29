@@ -7,6 +7,7 @@
 
 {% block custom_header %}
     <link type="text/css" rel="stylesheet" href="{% static 'vendored/cropperjs/cropper.min.css' %}">
+    <link type="text/css" rel="stylesheet" href="{% static 'pretixpresale/css/meetup.css' %}">
     <script defer src="{% static "eventyay-common/js/ui/event-create.js" %}"></script>
     <script type="module" src="{% static "eventyay-common/js/ui/meetup-create.js" %}"></script>
     <script defer src="{% static 'vendored/cropperjs/cropper.min.js' %}"></script>
@@ -128,7 +129,9 @@
             <fieldset>
                 <legend>{% trans "Registration limit" %}</legend>
                 <div class="form-group{% if basics_form.capacity_type.errors %} has-error{% endif %}">
-                    <label class="col-md-3 control-label">{{ basics_form.capacity_type.label }}</label>
+                    <label class="col-md-3 control-label">
+                        {{ basics_form.capacity_type.label }} <span class="text-danger">*</span>
+                    </label>
                     <div class="col-md-9">
                         {% for radio in basics_form.capacity_type %}
                             <label class="radio-inline" for="{{ radio.id_for_label }}">
@@ -148,6 +151,81 @@
                     {% bootstrap_field basics_form.registration_limit layout="control" %}
                 </div>
             </fieldset>
+
+            <fieldset>
+                <legend>{% trans "Registration fee" %}</legend>
+                <div class="form-group{% if basics_form.registration_fee_type.errors %} has-error{% endif %}">
+                    <label class="col-md-3 control-label">
+                        {{ basics_form.registration_fee_type.label }} <span class="text-danger">*</span>
+                    </label>
+                    <div class="col-md-9">
+                        {% for radio in basics_form.registration_fee_type %}
+                            <label class="radio-inline" for="{{ radio.id_for_label }}">
+                                {{ radio.tag }} {{ radio.choice_label }}
+                            </label>
+                        {% endfor %}
+                        {% if basics_form.registration_fee_type.help_text %}
+                            <div class="help-block">{{ basics_form.registration_fee_type.help_text }}</div>
+                        {% endif %}
+                        {% if basics_form.registration_fee_type.errors %}
+                            <div class="help-block text-danger">{{ basics_form.registration_fee_type.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div id="registration-fee-group" class="hidden">
+                    {% bootstrap_field basics_form.registration_fee layout="control" %}
+
+                    <div class="form-group{% if basics_form.payment_stripe_publishable_key.errors or basics_form.payment_stripe_secret_key.errors or basics_form.payment_stripe_merchant_country.errors %} has-error{% endif %}">
+                        <label class="col-md-3 control-label">{% trans "Payment method" %}</label>
+                        <div class="col-md-9">
+                            <button type="button" class="btn btn-default" id="openStripeModalBtn" data-toggle="modal" data-target="#stripeConfigModal">
+                                <span id="stripeBtnLabel">{% trans "Configure Stripe" %}</span>
+                            </button>
+                            <span id="stripeStatusIndicator" class="text-success hidden meetup-stripe-status-indicator">
+                                <span class="fa fa-check-circle"></span> {% trans "Stripe configured" %}
+                            </span>
+                            {% if basics_form.payment_stripe_publishable_key.errors %}
+                                <div class="help-block text-danger">{{ basics_form.payment_stripe_publishable_key.errors }}</div>
+                            {% endif %}
+                            {% if basics_form.payment_stripe_secret_key.errors %}
+                                <div class="help-block text-danger">{{ basics_form.payment_stripe_secret_key.errors }}</div>
+                            {% endif %}
+                            {% if basics_form.payment_stripe_merchant_country.errors %}
+                                <div class="help-block text-danger">{{ basics_form.payment_stripe_merchant_country.errors }}</div>
+                            {% endif %}
+                            <div class="help-block text-muted">{% trans "Stripe credentials are required to accept paid registrations." %}</div>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+            <div class="modal fade" id="stripeConfigModal" tabindex="-1" role="dialog" aria-labelledby="stripeConfigModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-md" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                            <h4 class="modal-title" id="stripeConfigModalLabel">
+                                {% trans "Configure Stripe" %}
+                            </h4>
+                        </div>
+                        <div class="modal-body">
+                            <p class="text-muted">
+                                {% trans "Enter your Stripe API keys to accept online payments for this meetup." %}
+                            </p>
+                            {% bootstrap_field basics_form.payment_stripe_publishable_key layout="control" %}
+                            {% bootstrap_field basics_form.payment_stripe_secret_key layout="control" %}
+                            {% bootstrap_field basics_form.payment_stripe_merchant_country layout="control" %}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Cancel" %}</button>
+                            <button type="button" class="btn btn-primary" id="stripeSaveBtn" data-dismiss="modal">{% trans "Save & Apply" %}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <div class="form-group submit-group">
                 <button type="submit" class="btn btn-primary btn-save pull-right flip">

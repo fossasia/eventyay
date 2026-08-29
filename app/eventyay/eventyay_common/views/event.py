@@ -626,6 +626,10 @@ class EventCreateView(TemplateView):
                     header_image=basics_form.cleaned_data.get('logo_image'),
                     registration_limit=basics_data.get('registration_limit'),
                     crop_box=crop_box,
+                    registration_fee=basics_data.get('registration_fee'),
+                    payment_stripe_publishable_key=basics_data.get('payment_stripe_publishable_key', ''),
+                    payment_stripe_secret_key=basics_data.get('payment_stripe_secret_key', ''),
+                    payment_stripe_merchant_country=basics_data.get('payment_stripe_merchant_country', ''),
                 )
 
         return redirect(

@@ -4,9 +4,12 @@ from eventyay.common.urls import OrganizerSlugConverter  # noqa: F401 (registers
 
 from . import views
 
+
 urlpatterns = [
     path('mails/compose/', views.ComposeMailChoice.as_view(), name='event.mail.compose'),
     path('mails/compose/teams/', views.ComposeTeamsMail.as_view(), name='event.mail.compose_teams'),
+    path('mails/attendees/select2/', views.attendees_select2, name='event.mail.attendees.select2'),
+    path('mails/compose/attendees/recipients/', views.TicketMailRecipients.as_view(), name='event.mail.recipients'),
     path('mails/<int:pk>/', views.EditEmailQueueView.as_view(), name='event.mail.edit'),
     path('outbox/', views.OutboxListView.as_view(), name='event.mail.outbox'),
     path('outbox/send/<int:pk>/', views.SendEmailQueueView.as_view(), name='event.mail.outbox.send'),

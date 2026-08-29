@@ -8,13 +8,13 @@
 {% endblock email_editor_title_detail %}
 
 {% block email_editor_info %}
-  <span data-toggle="tooltip" title="{% translate 'Emails are addressed to the speakers, authors and submitters of the proposals matching your filters.' %}">
+  <span data-toggle="tooltip" data-placement="bottom" title="{% translate 'Emails are addressed to the speakers, authors and submitters of the proposals matching your filters.' %}">
     <i class="fa fa-question-circle-o text-info ml-1"></i>
   </span>
 {% endblock email_editor_info %}
 
 {% block email_editor_description %}
-  <p class="text-muted mb-0">
+  <p class="composer-description text-muted">
     {% translate "Send emails to speakers, authors and submitters based on the filters you select below." %}
   </p>
 {% endblock email_editor_description %}
@@ -69,7 +69,7 @@
 
 {% block audience_actions %}
   <span>
-    <button type="button" class="btn btn-sm btn-outline-info mr-2" id="show-recipient-list" data-dialog-target="#recipient-list-dialog" data-recipients-url="{{ request.event.orga_urls.compose_mails_sessions_recipients }}">
+    <button type="button" class="btn btn-sm btn-outline-info" id="show-recipient-list" data-dialog-target="#recipient-list-dialog" data-recipients-url="{{ request.event.orga_urls.compose_mails_sessions_recipients }}">
       {% translate "Show recipient list" %}
     </button>
     <button type="button" class="btn btn-sm btn-link" id="clear-filters">

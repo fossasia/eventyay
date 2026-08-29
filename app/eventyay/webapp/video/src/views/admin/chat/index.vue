@@ -1,35 +1,30 @@
 <template lang="pug">
-.c-admin-rooms
+.c-admin-chat
 	.header
 		.actions
-			h2 {{ $t('Rooms') }}
-			VideoProviderDropdown(
-				:label="$t('Create Room')",
-				:show-empty-message="true",
-				@select="createRoomWithProvider"
-			)
-		.right-actions
-			.export-actions(v-if="canExportBroadcastConfiguration")
-				a.export-button(:href="exportUrl('xlsx')") {{ $t('Export XLSX') }}
-				a.export-button.secondary(:href="exportUrl('csv-excel')") {{ $t('CSV') }}
-			bunt-input.search(name="search", :placeholder="$t('Search rooms')", icon="search", v-model="search")
+			h2 {{ $t('Chat') }}
+			bunt-link-button.btn-create(
+				v-if="canCreate",
+				:to="{name: 'admin:chat:new'}"
+			) {{ $t('Create a new channel') }}
+		bunt-input.search(name="search", :placeholder="$t('Search channels')", icon="search", v-model="search")
 	.error(v-if="error")
-		span {{ $t('Failed to load rooms.') }}
+		span {{ $t('Failed to load chat channels.') }}
 		span(v-if="errorCode")  ({{ errorCode }})
 		span(v-if="errorCode === 'protocol.denied'")  {{ $t('You likely lack admin permissions.') }}
 	.rooms-list(v-else)
 		.header
 			.drag
 			.name {{ $t('Name') }}
-		SlickList.tbody(v-if="rooms", v-model:list="rooms", lockAxis="y", :useDragHandle="true", helperClass="sorting-helper", v-scrollbar.y="", @update:list="onListSort")
+		SlickList.tbody(v-if="channels", v-model:list="channels", lockAxis="y", :useDragHandle="true", helperClass="sorting-helper", v-scrollbar.y="", @update:list="onListSort")
 			RoomListItem(
-				v-for="(room, index) of rooms",
+				v-for="(room, index) of channels",
 				:index="index",
 				:key="room.id",
 				:room="room",
-				:to="{name: 'admin:rooms:item', params: {roomId: room.id}}",
+				:to="{name: 'admin:chat:item', params: {roomId: room.id}}",
 				:disabled="!!search",
-				v-show="isRoomVisible(room)"
+				v-show="isChannelVisible(room)"
 			)
 		bunt-progress-circular(v-else, size="huge", :page="true")
 </template>
@@ -39,16 +34,15 @@ import fuzzysearch from 'lib/fuzzysearch'
 import { isChatManagedRoom, mergeReorderedIds } from 'lib/room-types'
 import { mapGetters } from 'vuex'
 import { SlickList } from 'vue-slicksort'
-import VideoProviderDropdown from 'components/VideoProviderDropdown'
-import RoomListItem from './RoomListItem'
+import RoomListItem from 'views/admin/rooms/RoomListItem'
 
 export default {
-	name: 'AdminRooms',
-	components: { SlickList, RoomListItem, VideoProviderDropdown },
+	name: 'AdminChat',
+	components: { SlickList, RoomListItem },
 	data() {
 		return {
 			allRooms: null,
-			rooms: null,
+			channels: null,
 			search: '',
 			error: null,
 			errorCode: null,
@@ -64,7 +58,7 @@ export default {
 				currentIds.length !== storeIds.length ||
 				currentIds.some((id, i) => id !== storeIds[i])
 			if (changed) {
-				this.fetchRooms()
+				this.fetchChannels()
 			}
 		}
 	},
@@ -75,57 +69,49 @@ export default {
 		if (this._unwatchConnected) this._unwatchConnected()
 	},
 	computed: {
-		...mapGetters(['eventRouting', 'hasPermission']),
-		canExportBroadcastConfiguration() {
-			return this.hasPermission('room:update') && this.eventRouting.organizer && this.eventRouting.event
+		...mapGetters(['hasPermission']),
+		canCreate() {
+			return this.hasPermission('world:rooms.create.chat')
 		}
 	},
 	methods: {
-		exportUrl(format) {
-			const organizer = encodeURIComponent(this.eventRouting.organizer)
-			const event = encodeURIComponent(this.eventRouting.event)
-			return `/api/v1/organizers/${organizer}/events/${event}/rooms/export-broadcast-configuration/?_format=${encodeURIComponent(format)}`
+		visibleChannels(rooms) {
+			return rooms.filter(room => isChatManagedRoom(room))
 		},
-		visibleRooms(rooms) {
-			return rooms.filter(room => !isChatManagedRoom(room))
-		},
-		isRoomVisible(room) {
+		isChannelVisible(room) {
 			if (!this.search) return true
 			const search = this.search.trim()
 			return String(room.id) === search || fuzzysearch(this.search.toLowerCase(), this.$localize(room.name).toLowerCase())
 		},
 		async ensureConnectedAndFetch() {
-			if (this.$store.state.connected) return this.fetchRooms()
+			if (this.$store.state.connected) return this.fetchChannels()
 			this._unwatchConnected = this.$store.watch(
 				state => state.connected,
 				(connected) => {
 					if (connected) {
 						if (this._unwatchConnected) this._unwatchConnected()
 						this._unwatchConnected = null
-						this.fetchRooms()
+						this.fetchChannels()
 					}
 				}
 			)
 		},
-		async fetchRooms() {
+		async fetchChannels() {
 			try {
 				this.error = null
 				this.errorCode = null
 				const listed = await api.call('room.config.list')
 				this.allRooms = listed
-				this.rooms = this.visibleRooms(listed)
+				this.channels = this.visibleChannels(listed)
 			} catch (e) {
 				this.error = e
 				this.errorCode = e?.code || e?.message || String(e)
 				console.error(e)
 			}
 		},
-		createRoomWithProvider(provider) {
-			this.$router.push({name: 'admin:rooms:new', params: {type: provider.roomTypeId}})
-		},
 		async onListSort(newList) {
 			if (this.search) return
-			const previousRooms = [...this.rooms]
+			const previousChannels = [...this.channels]
 			const previousAll = [...this.allRooms]
 			const orderedIds = mergeReorderedIds(
 				this.allRooms.map(room => room.id),
@@ -134,10 +120,10 @@ export default {
 			const byId = Object.fromEntries(this.allRooms.map(room => [String(room.id), room]))
 			try {
 				this.allRooms = orderedIds.map(id => byId[String(id)])
-				this.rooms = this.visibleRooms(this.allRooms)
+				this.channels = this.visibleChannels(this.allRooms)
 				await api.call('room.config.reorder', orderedIds)
 			} catch (e) {
-				this.rooms = previousRooms
+				this.channels = previousChannels
 				this.allRooms = previousAll
 				console.error(e)
 			}
@@ -148,7 +134,7 @@ export default {
 <style lang="stylus">
 @import 'flex-table'
 
-.c-admin-rooms
+.c-admin-chat
 	display: flex
 	flex-direction: column
 	min-height: 0
@@ -162,37 +148,8 @@ export default {
 			display: flex
 			flex: none
 			align-items: center
-			.bunt-button:not(:last-child)
-				margin-right: 16px
 			.btn-create
 				themed-button-primary()
-			.c-video-provider-dropdown
-				margin-right: 8px
-		.right-actions
-			display: flex
-			align-items: center
-			margin-left: auto
-		.export-actions
-			display: flex
-			align-items: center
-			.export-button
-				display: inline-flex
-				align-items: center
-				height: 32px
-				padding: 0 12px
-				margin-right: 8px
-				border-radius: 3px
-				background-color: $clr-primary
-				color: $clr-white
-				font-size: 13px
-				font-weight: 500
-				text-decoration: none
-				&.secondary
-					background-color: transparent
-					color: $clr-primary
-				&:focus
-					outline: 2px solid $clr-primary
-					outline-offset: 2px
 	h2
 		margin: 16px
 	.search
@@ -203,10 +160,6 @@ export default {
 		background-color: $clr-white
 	.rooms-list
 		flex-table()
-		.room
-			display: flex
-			align-items: center
-			color: $clr-primary-text-light
 		.drag
 			width: 24px
 		.name
