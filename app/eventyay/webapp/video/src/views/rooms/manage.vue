@@ -12,13 +12,13 @@
 				h3 {{ $t('Polls') }}
 				.actions
 					bunt-button#btn-create-poll(@click="showCreatePollPrompt") {{ $t('Create Poll') }}
-					bunt-icon-button(@click="showUrlPopup('poll')") presentation
+					bunt-icon-button(@click="showUrlPopup('poll', $event)") presentation
 			polls(:module="modules['poll']", @edit="startEditingPoll")
 		panel.questions(v-if="modules['question']")
 			.header
 				h3 {{ $t('Questions') }}
 				.actions
-					bunt-icon-button(@click="showUrlPopup('question')") presentation
+					bunt-icon-button(@click="showUrlPopup('question', $event)") presentation
 					menu-dropdown(v-if="hasPermission('room:question.moderate')", v-model="showingQuestionsMenu", strategy="fixed")
 						template(#button="{toggle}")
 							bunt-icon-button(@click="toggle") dots-vertical
@@ -26,22 +26,64 @@
 							.archive-all(@click="$store.dispatch('question/archiveAll')") {{ $t('Archive All') }}
 			questions(:module="modules['question']")
 		panel.chat(v-if="modules['chat.native']")
-			.header
+			.header.chat-manage-header
 				h3 {{ $t('Chat') }}
-				bunt-icon-button(@click="showUrlPopup('chat')") presentation
-			chat(:room="room", :module="modules['chat.native']", mode="compact", :key="room.id")
+				.chat-toolbar
+					bunt-switch(
+						v-if="canModerateChat",
+						name="chat-moderation",
+						v-model="moderationEnabled",
+						:label="$t('Moderation')"
+					)
+					label.delay-field(v-if="canModerateChat && moderationEnabled")
+						span {{ $t('Delay') }}
+						select(v-model.number="moderationDelay")
+							option(:value="3") 3s
+							option(:value="5") 5s
+							option(:value="10") 10s
+							option(:value="15") 15s
+							option(:value="0") {{ $t('Off') }}
+					bunt-icon-button(@click="showUrlPopup('chat', $event)", :title="$t('Presentation Link')") presentation
+
+			.moderation-queue(v-if="canModerateChat && moderationEnabled && pendingQueue.length > 0")
+				.queue-header
+					i.mdi.mdi-shield-clock-outline
+					span {{ $t('Pending Moderation Queue') }} ({{ pendingQueue.length }})
+				.queue-items
+					.queue-item(v-for="item in pendingQueue", :key="item.id")
+						.item-top
+							span.author {{ item.authorName }}
+							span.timer-badge {{ item.remainingSeconds || 10 }}s
+						.item-text {{ item.content }}
+						.progress-track
+							.progress-fill(:style="{ width: item.progressPercent + '%' }")
+						.item-actions
+							button.btn-mod-approve(@click="approveMessage(item)")
+								i.mdi.mdi-check
+								span {{ $t('Approve') }}
+							button.btn-mod-reject(@click="rejectMessage(item)")
+								i.mdi.mdi-close
+								span {{ $t('Reject') }}
+
+			chat(:room="room", :module="modules['chat.native']", mode="compact", :key="room.id", :hidden-message-ids="pendingMessageIds")
 		panel.no-modules(v-if="Object.keys(modules).length === 1")
 			p {{ $t('No modules to manage in this room') }}
 	.ui-background-blocker(v-if="showingPresentationUrlFor", @click="showingPresentationUrlFor = null")
 	.url-popup(v-if="showingPresentationUrlFor", ref="urlPopup", :class="{'url-copied': copiedUrl}")
-		.copy-success(v-if="copiedUrl") {{ $t('Copied!') }}
+		.copy-success(v-if="copiedUrl")
+			i.mdi.mdi-check-circle-outline
+			span {{ $t('Copied to Clipboard!') }}
 		template(v-else)
+			.popup-header
+				span.title {{ $t('Presentation Link') }}
+				a.open-link(:href="getPresentationUrl(showingPresentationUrlFor)", target="_blank", rel="noopener", :title="$t('Open in new tab')")
+					i.mdi.mdi-open-in-new
 			.copy-url
 				bunt-input(ref="urlInput", name="presentation-url", :readonly="true", :modelValue="getPresentationUrl(showingPresentationUrlFor)")
-				bunt-button(@click="copyUrl") {{ $t('Copy') }}
-			.hint {{ $t('This url contains your personal token.') }}
-				br
-				| {{ $t("Don't make this url publicly accessible!") }}
+				bunt-button(@click="copyUrl")
+					i.mdi.mdi-content-copy
+					span {{ $t('Copy') }}
+			.hint {{ $t('This URL contains your presentation access token. Keep it secure.') }}
 	transition(name="prompt")
 		// TODO less hacks
 		prompt.create-poll-prompt(v-if="editedPoll", @close="editedPoll = null")
@@ -88,19 +130,69 @@ export default {
 			showingPresentationUrlFor: null,
 			copiedUrl: false,
 			showingQuestionsMenu: false,
-			editedPoll: null
+			editedPoll: null,
+			moderationEnabled: true,
+			moderationDelay: 10,
+			pendingQueue: [],
+			queueTimer: null,
+			processedMessageIds: new Set(),
+			moderationReady: false
 		}
 	},
 	computed: {
 		...mapState(['world', 'token']),
-		...mapGetters(['hasPermission']),
-		...mapGetters('schedule', ['sessions', 'sessionsScheduledNow'])
+		...mapGetters(['hasPermission', 'isAdminMode']),
+		...mapGetters('schedule', ['sessions', 'sessionsScheduledNow']),
+		canModerateChat() {
+			return this.hasPermission('room:chat.moderate') || this.hasPermission('world:moderate') || this.isAdminMode
+		},
+		pendingMessageIds() {
+			return this.pendingQueue.map(item => item.id)
+		},
+		chatTimeline() {
+			return this.$store.state.chat?.timeline || []
+		}
+	},
+	watch: {
+		chatTimeline(newTimeline) {
+			if (!this.moderationReady) return
+			if (!this.moderationEnabled || this.moderationDelay <= 0 || !this.canModerateChat) return
+			for (const msg of newTimeline) {
+				if (!msg.event_id || this.processedMessageIds.has(msg.event_id)) continue
+				this.processedMessageIds.add(msg.event_id)
+				if (msg.event_type !== 'channel.message' || msg.content?.type === 'deleted' || msg.replaces) continue
+				const delay = this.moderationDelay
+				this.pendingQueue.push({
+					id: msg.event_id,
+					message: msg,
+					authorName: msg.sender?.profile?.display_name || msg.sender?.name || 'Attendee',
+					content: msg.content?.body || msg.content?.text || (typeof msg.content === 'string' ? msg.content : ''),
+					remaining: delay,
+					totalTime: delay,
+					remainingSeconds: delay,
+					progressPercent: 100
+				})
+			}
+		},
+		moderationEnabled(enabled) {
+			if (!enabled) this.pendingQueue = []
+		}
+	},
+	mounted() {
+		for (const message of this.chatTimeline) {
+			if (message.event_id) this.processedMessageIds.add(message.event_id)
+		}
+		this.moderationReady = true
+		this.queueTimer = setInterval(this.tickQueueTimers, 100)
+	},
+	beforeUnmount() {
+		if (this.queueTimer) clearInterval(this.queueTimer)
 	},
 	methods: {
-		async showUrlPopup(type) {
+		async showUrlPopup(type, event) {
 			this.showingPresentationUrlFor = type
 			await this.$nextTick()
-			createPopper(event.target, this.$refs.urlPopup, {
+			createPopper(event.currentTarget, this.$refs.urlPopup, {
 				placement: 'bottom-end',
 				modifiers: [
 					{name: 'offset', options: {offset: [16, 12]}}
@@ -140,8 +232,12 @@ export default {
 			this.editedPoll = null
 		},
 		getPresentationUrl(type) {
-			console.log(type)
-			return window.location.origin + this.$router.resolve({name: `standalone:${type}`}).href + '#token=' + this.token
+			if (!this.room) return ''
+			const resolved = this.$router.resolve({
+				name: `standalone:${type}`,
+				params: { roomId: this.room.id }
+			})
+			return window.location.origin + resolved.href + '#token=' + this.token
 		},
 		copyUrl() {
 			this.$refs.urlInput.$refs.input.select()
@@ -151,6 +247,30 @@ export default {
 				this.copiedUrl = false
 				this.showingPresentationUrlFor = null
 			}, 600)
+		},
+		tickQueueTimers() {
+			if (this.pendingQueue.length === 0) return
+			const delta = 0.1
+			for (let i = this.pendingQueue.length - 1; i >= 0; i--) {
+				const item = this.pendingQueue[i]
+				item.remaining -= delta
+				item.remainingSeconds = Math.max(0, Math.ceil(item.remaining))
+				item.progressPercent = Math.max(0, (item.remaining / item.totalTime) * 100)
+				if (item.remaining <= 0) {
+					this.pendingQueue.splice(i, 1)
+				}
+			}
+		},
+		approveMessage(item) {
+			const idx = this.pendingQueue.findIndex(q => q.id === item.id)
+			if (idx !== -1) this.pendingQueue.splice(idx, 1)
+		},
+		rejectMessage(item) {
+			const idx = this.pendingQueue.findIndex(q => q.id === item.id)
+			if (idx !== -1) this.pendingQueue.splice(idx, 1)
+			if (item.message) {
+				this.$store.dispatch('chat/deleteMessage', item.message)
+			}
 		}
 	}
 }
@@ -204,11 +324,30 @@ export default {
 		display: flex
 		flex-direction: column
 		justify-content: center
-		align-items: center
+		align-items: stretch
 		width: var(--chatbar-width)
-		height: 140px
+		padding: 16px
 		z-index: 1000
-		transition: background-color .2s ease
+		background: var(--clr-surface, #fff)
+		border-radius: 8px
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15)
+		transition: all .2s ease
+		.popup-header
+			display: flex
+			justify-content: space-between
+			align-items: center
+			margin-bottom: 12px
+			.title
+				font-weight: 600
+				font-size: 14px
+				color: var(--clr-primary, #1e2327)
+			.open-link
+				color: var(--clr-primary, #3b82f6)
+				font-size: 18px
+				display: flex
+				align-items: center
+				&:hover
+					opacity: 0.8
 		.copy-url
 			display: flex
 			align-items: center
@@ -274,4 +413,160 @@ export default {
 		flex-direction: column
 		.modules
 			justify-content: flex-end
+
+
+.c-room-manager .c-dashboard-layout-panel.chat > .header.chat-manage-header
+	display: flex
+	flex-direction: row
+	justify-content: space-between
+	align-items: center
+	flex-wrap: nowrap
+	gap: 12px
+	height: 56px
+	min-height: 56px
+	box-sizing: border-box
+	h3
+		flex: none
+		margin: 0
+		line-height: 1
+		font-size: 16px
+	.chat-toolbar
+		display: flex
+		flex-direction: row
+		align-items: center
+		flex-wrap: nowrap
+		gap: 14px
+		margin-left: auto
+		height: 32px
+		> *
+			display: inline-flex
+			align-items: center
+			margin: 0
+			height: 32px
+			box-sizing: border-box
+		.bunt-switch
+			flex: none
+			height: 20px
+			margin: 0
+			margin-bottom: 0
+			align-self: center
+			white-space: nowrap
+			label
+				line-height: 20px
+				display: inline-flex
+				align-items: center
+		.delay-field
+			flex: none
+			gap: 6px
+			font-size: 12px
+			font-weight: 500
+			color: $clr-secondary-text-light
+			white-space: nowrap
+			line-height: 1
+			span
+				line-height: 32px
+			select
+				height: 28px
+				padding: 0 8px
+				border-radius: 4px
+				border: 1px solid rgba(0, 0, 0, 0.15)
+				background: #ffffff
+				font-size: 12px
+				line-height: 26px
+				color: $clr-primary-text-light
+				margin: 0
+		.bunt-icon-button
+			flex: none
+			align-self: center
+			width: 32px
+			height: 32px
+
+.panel.chat
+	.moderation-queue
+		background: #fff8f8
+		border: 1px solid #fecaca
+		border-radius: 8px
+		padding: 10px
+		margin: 8px 12px
+		display: flex
+		flex-direction: column
+		gap: 8px
+		.queue-header
+			display: flex
+			align-items: center
+			gap: 6px
+			font-size: 12px
+			font-weight: 700
+			color: #dc2626
+		.queue-items
+			display: flex
+			flex-direction: column
+			gap: 8px
+			max-height: 180px
+			overflow-y: auto
+		.queue-item
+			background: #ffffff
+			border: 1px solid rgba(0, 0, 0, 0.08)
+			border-radius: 6px
+			padding: 8px 10px
+			display: flex
+			flex-direction: column
+			gap: 4px
+			box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04)
+			.item-top
+				display: flex
+				justify-content: space-between
+				font-size: 12px
+				.author
+					font-weight: 600
+				.timer-badge
+					background: #fee2e2
+					color: #dc2626
+					padding: 1px 6px
+					border-radius: 10px
+					font-weight: 700
+			.item-text
+				font-size: 13px
+				color: #374151
+				word-break: break-word
+			.progress-track
+				height: 4px
+				background: #e5e7eb
+				border-radius: 2px
+				overflow: hidden
+				.progress-fill
+					height: 100%
+					background: linear-gradient(90deg, #ef4444, #f59e0b)
+					transition: width 0.1s linear
+			.item-actions
+				display: flex
+				gap: 8px
+				margin-top: 4px
+				button
+					display: inline-flex
+					align-items: center
+					gap: 4px
+					padding: 3px 10px
+					border-radius: 4px
+					font-size: 12px
+					font-weight: 600
+					cursor: pointer
+					border: none
+					&.btn-mod-approve
+						background: #10b981
+						color: #ffffff
+						&:hover
+							background: #059669
+					&.btn-mod-reject
+						background: #ef4444
+						color: #ffffff
+						&:hover
+							background: #dc2626
+
+@media (max-width: 768px)
+	.c-room-manager
+		flex-direction: column
+		.c-dashboard-layout-panel
+			width: 100% !important
+			flex: auto
 </style>

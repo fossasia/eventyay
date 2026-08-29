@@ -55,6 +55,10 @@ const props = defineProps({
 	showUserlist: {
 		type: Boolean,
 		default: true
+	},
+	hiddenMessageIds: {
+		type: Array,
+		default: () => []
 	}
 })
 const emit = defineEmits(['change'])
@@ -90,6 +94,7 @@ const filteredTimeline = computed(() => {
 		(showJoinleave || message.event_type !== 'channel.member') &&
 		message.content.type !== 'deleted' &&
 		!message.replaces &&
+		!props.hiddenMessageIds.includes(message.event_id) &&
 		(!message.content.poll_id || polls.value?.find(poll => poll.id === message.content.poll_id))
 	)
 })

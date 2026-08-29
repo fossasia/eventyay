@@ -279,10 +279,9 @@ class RoomModule(BaseModule):
             data["viewers"] = await get_viewers(
                 self.consumer.event,
                 self.room,
-                include_private=await self.consumer.event.has_organizer_role_async(
-                    user=self.consumer.user,
-                    room=self.room,
-                ),
+                # Anyone allowed to see the viewer list (incl. kiosk displays)
+                # should see all people currently in the room.
+                include_private=True,
             )
 
         await self.consumer.send_success(data)
@@ -461,14 +460,17 @@ class RoomModule(BaseModule):
     @event("viewer.added")
     async def push_viewer_added(self, body):
         room = self._room_from_viewer_event(body)
-        if (
-            not body.get("_show_publicly", True)
-            and not await self.consumer.event.has_organizer_role_async(
+        if not body.get("_show_publicly", True):
+            can_view_private = await self.consumer.event.has_permission_async(
+                user=self.consumer.user,
+                room=room,
+                permission=Permission.ROOM_VIEWERS,
+            ) or await self.consumer.event.has_organizer_role_async(
                 user=self.consumer.user,
                 room=room,
             )
-        ):
-            return
+            if not can_view_private:
+                return
         await self.consumer.send_json(
             [
                 body["type"],
@@ -483,7 +485,11 @@ class RoomModule(BaseModule):
     @event("viewer.removed")
     async def push_viewer_removed(self, body):
         room = self._room_from_viewer_event(body)
-        can_view_private = await self.consumer.event.has_organizer_role_async(
+        can_view_private = await self.consumer.event.has_permission_async(
+            user=self.consumer.user,
+            room=room,
+            permission=Permission.ROOM_VIEWERS,
+        ) or await self.consumer.event.has_organizer_role_async(
             user=self.consumer.user,
             room=room,
         )

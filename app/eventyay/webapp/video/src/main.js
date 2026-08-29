@@ -122,8 +122,10 @@ async function init({ token, inviteToken }) {
   if (store.state.token && jwtDecode(store.state.token).traits?.includes?.('-kiosk')) {
     store.watch(
       state => state.user,
-      ({ profile }) => {
-        router.replace({ name: 'standalone:kiosk', params: { roomId: profile.room_id } })
+      (user) => {
+        const roomId = user?.profile?.room_id
+        if (!roomId) return
+        router.replace({ name: 'standalone:kiosk', params: { roomId: String(roomId) } })
       },
       { deep: true }
     )
