@@ -143,14 +143,16 @@ class RichTextField(CharField):
 
 
 class I18nRichTextFormField(I18nFormField):
-    """I18n form field using the Tiptap rich text editor.
+    """I18n form field for rich text using the Tiptap richtext editor.
 
-    Sanitizes each locale value with ``sanitize_rich_text`` after validation.
+    Sanitizes each locale value with the provided sanitizer (defaults to ``sanitize_rich_text``)
+    after validation.
     """
 
     widget = I18nRichTextWidget
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args, sanitizer=None, **kwargs):
+        self.sanitizer = sanitizer or sanitize_rich_text
         kwargs.setdefault('widget', I18nRichTextWidget)
         super().__init__(*args, **kwargs)
 
@@ -159,12 +161,12 @@ class I18nRichTextFormField(I18nFormField):
         if isinstance(result, LazyI18nString):
             if isinstance(result.data, dict):
                 return LazyI18nString(
-                    {locale: sanitize_rich_text(text) if text else text for locale, text in result.data.items()}
+                    {locale: self.sanitizer(text) if text else text for locale, text in result.data.items()}
                 )
             elif isinstance(result.data, str):
-                return LazyI18nString(sanitize_rich_text(result.data) if result.data else result.data)
+                return LazyI18nString(self.sanitizer(result.data) if result.data else result.data)
         elif isinstance(result, str):
-            return sanitize_rich_text(result) if result else result
+            return self.sanitizer(result) if result else result
         return result
 
 

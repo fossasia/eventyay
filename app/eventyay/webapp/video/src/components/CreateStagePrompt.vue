@@ -4,26 +4,6 @@ prompt.c-create-stage-prompt(@close="$emit('close')")
 		h1 {{ $t('Create a new stage') }}
 		form(@submit.prevent="create")
 			bunt-input(name="name", :label="$t('Name')", icon="theater", :placeholder="$t('Stage name')", v-model="name", :validation="v$.name")
-			.stage-mode
-				.fieldset-label {{ $t('Stream type') }}
-				.ui-radio-options
-					label.ui-radio-option(v-for="option in playbackModeOptions", :key="option.id")
-						input(type="radio", name="playbackMode", :value="option.id", v-model="playbackMode")
-						.radio-copy
-							.ui-radio-title {{ option.label }}
-							.ui-radio-description {{ option.description }}
-			.default-source(v-if="playbackMode === PLAYBACK_MODE_ALWAYS_ON")
-				.stream-source
-					.fieldset-label {{ $t('Default stream source') }}
-					.ui-radio-options
-						label.ui-radio-option(v-for="option in streamSourceOptions", :key="option.id")
-							input(type="radio", name="streamSource", :value="option.id", v-model="streamSource")
-							.radio-copy
-								.ui-radio-title {{ option.label }}
-				bunt-input(v-if="streamSource === 'hls'", name="url", :label="$t('Stream URL')", icon="link", :placeholder="$t('https://example.com/stream.m3u8')", v-model="url", :validation="v$.url")
-				template(v-else-if="streamSource === 'youtube'")
-					bunt-input(name="youtubeId", :label="$t('YouTube Video ID or URL')", icon="youtube", :placeholder="$t('https://www.youtube.com/watch?v=...')", v-model="youtubeId", :validation="v$.youtubeId", @blur="normalizeYoutubeId")
-					bunt-checkbox(name="start-muted", v-model="startMuted", :label="$t('Start muted')")
 			bunt-input-outline-container(:label="$t('Description')")
 				template(#default="{focus, blur}")
 					textarea(v-model="description", @focus="focus", @blur="blur")
@@ -33,101 +13,59 @@ prompt.c-create-stage-prompt(@close="$emit('close')")
 import { useVuelidate } from '@vuelidate/core'
 import { mapGetters } from 'vuex'
 import Prompt from 'components/Prompt'
-import { required, url, youtubeid, normalizeYoutubeVideoId } from 'lib/validators'
-import {
-	PLAYBACK_MODE_ALWAYS_ON,
-	STREAM_SOURCE_OPTIONS,
-	translatePlaybackModeOptions,
-	translateStreamSourceOptions
-} from 'lib/stage-streams'
+import { required } from 'lib/validators'
+import { PLAYBACK_MODE_ALWAYS_ON } from 'lib/stage-streams'
 
 export default {
+	name: 'CreateStagePrompt',
 	components: { Prompt },
 	emits: ['close'],
 	setup: () => ({ v$: useVuelidate() }),
 	data() {
 		return {
 			name: '',
-			playbackMode: PLAYBACK_MODE_ALWAYS_ON,
-			streamSource: 'hls',
-			url: '',
-			youtubeId: '',
-			startMuted: false,
 			description: '',
 			loading: false,
 			error: null,
-			PLAYBACK_MODE_ALWAYS_ON,
 		}
 	},
 	computed: {
 		...mapGetters(['hasPermission']),
-		playbackModeOptions() {
-			return translatePlaybackModeOptions(this.$t.bind(this))
-		},
-		streamSourceOptions() {
-			return translateStreamSourceOptions(this.$t.bind(this), STREAM_SOURCE_OPTIONS)
-		},
 	},
 	validations() {
-		const urlRules = {}
-		const youtubeRules = {}
-		if (this.playbackMode === PLAYBACK_MODE_ALWAYS_ON && this.streamSource === 'hls') {
-			urlRules.required = required(this.$t('Stream URL is required'))
-			urlRules.url = url(this.$t('must be a valid url'))
-		}
-		if (this.playbackMode === PLAYBACK_MODE_ALWAYS_ON && this.streamSource === 'youtube') {
-			youtubeRules.required = required(this.$t('YouTube Video ID or URL is required'))
-			youtubeRules.youtubeid = youtubeid(this.$t('not a valid YouTube video ID or URL'))
-		}
 		return {
-			url: urlRules,
-			youtubeId: youtubeRules,
 			name: {
 				required: required(this.$t('Name is required'))
 			}
 		}
 	},
 	methods: {
-		normalizeYoutubeId() {
-			const id = normalizeYoutubeVideoId(this.youtubeId)
-			if (id) this.youtubeId = id
-		},
-		buildLivestreamModule() {
-			const config = {
-				playback_mode: this.playbackMode,
-			}
-			if (this.playbackMode !== PLAYBACK_MODE_ALWAYS_ON) {
-				// Schedule entries provide the concrete source type and URL at playback time.
-				return { type: 'livestream.native', config }
-			}
-			if (this.streamSource === 'youtube') {
-				config.ytid = normalizeYoutubeVideoId(this.youtubeId) || this.youtubeId
-				if (this.startMuted) config.startMuted = true
-				return { type: 'livestream.youtube', config }
-			}
-			config.hls_url = this.url
-			return { type: 'livestream.native', config }
-		},
 		async create() {
 			this.error = null
 			this.v$.$touch()
 			if (this.v$.$invalid) return
 
-			// Check permission before creating
 			if (!this.hasPermission('world:rooms.create.stage')) {
 				this.error = this.$t('You do not have permission to create stages.')
 				return
 			}
 
 			this.loading = true
-			const modules = []
-			modules.push({
-				type: 'chat.native',
-				config: {
-					volatile: true,
+			const modules = [
+				{
+					type: 'chat.native',
+					config: {
+						volatile: true,
+					}
+				},
+				{
+					type: 'livestream.youtube',
+					config: {
+						playback_mode: PLAYBACK_MODE_ALWAYS_ON,
+						ytid: '',
+					}
 				}
-			})
-			modules.push(this.buildLivestreamModule())
+			]
 			let room
 			try {
 				({ room } = await this.$store.dispatch('createRoom', {
@@ -154,16 +92,16 @@ export default {
 		padding: 32px
 		position: relative
 		h1
-			margin: 0
+			margin: 0 0 16px 0
 			text-align: center
-		p
-			max-width: 320px
+			font-size: 20px
+			font-weight: 600
 		form
 			display: flex
 			flex-direction: column
 			align-self: stretch
+			gap: 16px
 			.bunt-input-outline-container
-				margin-top: 16px
 				textarea
 					background-color: transparent
 					border: none
@@ -171,17 +109,9 @@ export default {
 					resize: vertical
 					min-height: 64px
 					padding: 0 8px
-			.stage-mode, .stream-source
-				margin-top: 16px
-				.fieldset-label
-					font-size: 12px
-					font-weight: 500
-					color: $clr-secondary-text-light
-					margin-bottom: 8px
-			.default-source
-				display: flex
-				flex-direction: column
+					font-family: inherit
+					font-size: 14px
 			.bunt-button
 				themed-button-primary()
-				margin-top: 16px
+				margin-top: 8px
 </style>

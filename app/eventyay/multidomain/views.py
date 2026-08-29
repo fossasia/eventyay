@@ -176,6 +176,7 @@ class VideoSPAView(View):
                     )),
                     'version_warning_old': str(_('You are currently viewing an older schedule version.')),
                     'join_room': str(_('Join room')),
+                    'join_session': str(_('Join session')),
                     'view_video': str(_('View Video')),
                     'watch_live': str(_('Watch live')),
                     'speaker_fallback': str(pgettext('noun', 'Speaker')),

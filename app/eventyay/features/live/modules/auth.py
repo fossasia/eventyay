@@ -682,3 +682,43 @@ class AuthModule(BaseModule):
             await self.consumer.send_success(user)
         else:
             await self.consumer.send_error(code="user.not_found")
+
+    @command("kiosk.update")
+    @require_event_permission(Permission.EVENT_KIOSKS_MANAGE)
+    async def kiosk_update(self, body):
+        """Update a kiosk user profile (slides, room, display name, etc.)."""
+        kiosk_id = body.get("id")
+        profile = body.get("profile")
+        if not kiosk_id or not isinstance(profile, dict):
+            await self.consumer.send_error(code="auth.invalid_input")
+            return
+
+        @database_sync_to_async
+        def load_kiosk(uid):
+            user = get_user_by_id(self.consumer.event.pk, uid)
+            if not user or user.type != User.UserType.KIOSK:
+                return None
+            return user
+
+        kiosk_user = await load_kiosk(kiosk_id)
+        if not kiosk_user:
+            await self.consumer.send_error(code="user.not_found")
+            return
+
+        user = await database_sync_to_async(update_user)(
+            self.consumer.event.id,
+            kiosk_id,
+            data={"profile": profile},
+            is_admin=True,
+            serialize=False,
+        )
+        await user_broadcast(
+            "user.updated",
+            user.serialize_public(
+                trait_badges_map=self._event_config().get("trait_badges_map"),
+                include_client_state=True,
+            ),
+            user.pk,
+            self.consumer.socket_id,
+        )
+        await self.consumer.send_success()

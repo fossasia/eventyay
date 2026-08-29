@@ -208,6 +208,10 @@ class I18nRichTextWidget(I18nTextarea):
         )
 
 
+# Backward-compatible alias used by older tests and imports.
+I18nRichTextEditorWidget = I18nRichTextWidget
+
+
 class I18nEmailEditorWidget(I18nTextarea):
     """Tiptap email editor for i18n message fields in the Message center.
 
@@ -215,7 +219,7 @@ class I18nEmailEditorWidget(I18nTextarea):
     shared editor bundle can mount one editor per language tab.
     """
 
-    def __init__(self, locales, field, attrs=None, placeholders=None, preview_url='', **kwargs):
+    def __init__(self, locales, field, attrs=None, placeholders=None, preview_url=''):
         attrs = attrs.copy() if attrs is not None else {}
         attrs.setdefault('data-tiptap-profile', 'email')
         if placeholders:
@@ -226,7 +230,10 @@ class I18nEmailEditorWidget(I18nTextarea):
 
     def format_output(self, rendered_widgets, id_):
         wrapped = [
-            f'<div class="tiptap-wrapper" data-tiptap-wrapper="true" data-email-editor="true">{widget}</div>'
+            (
+                f'<div class="tiptap-wrapper" data-tiptap-wrapper="true" '
+                f'data-email-editor="true">{widget}</div>'
+            )
             for widget in rendered_widgets
         ]
         return super().format_output(wrapped, id_)

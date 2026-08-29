@@ -1,28 +1,31 @@
 <template lang="pug">
 .c-reactions-bar(:class="{expanded}")
 	.actions(@click="expand")
-		bunt-icon-button(v-for="reaction of availableReactions", @click.stop="react(reaction.emoji)")
-			img.emoji(:src="reaction.url", :alt="reaction.emoji")
+		bunt-icon-button(
+			v-for="reaction of availableReactions",
+			:key="reaction.emoji",
+			:tooltip="reaction.label",
+			tooltip-placement="top",
+			:tooltip-fixed="true",
+			@click.stop="react(reaction.emoji)"
+		)
+			img.emoji(:src="reaction.url", :alt="reaction.label")
 </template>
 <script>
-import { nativeToUrl as nativeEmojiToUrl } from 'lib/emoji'
+import { nativeToUrl as nativeEmojiToUrl, getEmojiDataFromNative } from 'lib/emoji'
 
 export default {
 	props: {
 		expanded: Boolean
 	},
 	emits: ['expand'],
-	data() {
-		return {
-			particlePool: [],
-			freeParticles: [],
-			overlayHeight: null
-		}
-	},
 	computed: {
 		availableReactions() {
-			const emoji = ['👏', '❤️', '👍', '🤣', '😮']
-			return emoji.map(e => ({emoji: e, url: nativeEmojiToUrl(e)}))
+			return ['👏', '❤️', '👍', '🤣', '😮'].map(emoji => ({
+				emoji,
+				url: nativeEmojiToUrl(emoji),
+				label: getEmojiDataFromNative(emoji).short_names[0],
+			}))
 		}
 	},
 	methods: {
@@ -32,56 +35,43 @@ export default {
 		},
 		react(emoji) {
 			this.$store.dispatch('addReaction', emoji)
-			// TODO display immediately and add own cooldown
 		}
 	}
 }
 </script>
 <style lang="stylus">
 .c-reactions-bar
-	position: relative
-	margin-left: 10px
-	height: 56px
-	+above('m')
-		right: 160px
+	display: flex
+	align-items: center
+	flex: none
 	.actions
-		position: absolute
-		bottom: 5px
-		left: 0
 		display: flex
-		pointer-events: all
+		align-items: center
+		gap: 0
 		background-color: $clr-white
 		border: border-separator()
-		border-radius: 24px
-		padding: 4px
-		transition: transform .3s ease
+		border-radius: 18px
+		padding: 1px
 	.bunt-icon-button
 		icon-button-style()
-		height: 27px !important
-		width: 27px !important
+		height: 24px !important
+		width: 24px !important
+		min-width: 24px !important
+		padding: 0 !important
+		margin: 0 !important
 		-webkit-tap-highlight-color: transparent
 		outline: none
 		&:focus-visible
 			outline: 2px solid var(--clr-primary, $clr-primary)
 			outline-offset: 2px
-		&:not(:first-child)
-			margin-left: 8px
 	.emoji
-		height: 26px
+		height: 20px
 		width: @height
-		display: inline-block
+		display: block
 	&:not(.expanded)
-		width: 40px
-		+below('m')
-			left: -150px
 		.actions:hover
 			cursor: pointer
 			background-color: $clr-grey-100
 		.bunt-icon-button
 			pointer-events: none
-	&.expanded
-		.actions
-			transform: translateX(calc(50px - 21% - 15px));
-			+above('m')
-				transform: translateX(calc(50px - 21% - 50px));
 </style>

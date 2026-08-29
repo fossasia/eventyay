@@ -3,7 +3,7 @@
 	.ui-page-header
 		bunt-icon-button(@click="$router.replace({name: 'admin:rooms:index'})") arrow_left
 		h1 {{ $t('New room') }}
-			template(v-if="chosenProvider")  : {{ chosenProvider.label }}
+			template(v-if="chosenProvider")  : {{ $t(chosenProvider.label) }}
 	edit-form(v-if="config", :config="config", :creating="true")
 </template>
 <script>
@@ -49,6 +49,10 @@ export default {
 	methods: {
 		updateType() {
 			this.type = this.$route.params.type
+			if (this.type === 'channel-text') {
+				this.$router.replace({name: 'admin:chat:new'})
+				return
+			}
 			if (!this.type || !this.chosenType) {
 				this.$router.replace({name: 'admin:rooms:index'})
 				return

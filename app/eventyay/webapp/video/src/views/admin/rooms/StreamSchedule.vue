@@ -43,11 +43,6 @@
 					.timezone-hint
 						i {{ $t('All times in') }} {{ eventTimezone }}
 					bunt-select(name="stream_type", v-model="formData.stream_type", :label="$t('Stream Type')", :options="streamTypeOptions", option-value="id", option-label="label", :validation="v$.formData.stream_type")
-					.language-urls(v-if="formData.stream_type === 'youtube'")
-						LanguageAudioSourceList(
-							:title="$t('Languages and Audio Source')"
-							:entries="formData.config.languageUrls"
-						)
 					.form-error(v-if="saveError")
 						| {{ saveError }}
 					.form-actions
@@ -57,7 +52,7 @@
 <script>
 import { useVuelidate } from '@vuelidate/core';
 import { helpers } from '@vuelidate/validators';
-import { required, url, normalizeYoutubeVideoId } from 'lib/validators';
+import { required, url, normalizeYoutubeVideoId, toYoutubeWatchUrl } from 'lib/validators';
 import api from 'lib/api';
 import Prompt from 'components/Prompt';
 import LanguageAudioSourceList from 'components/LanguageAudioSourceList';
@@ -218,7 +213,6 @@ export default {
 				stream_type: this.formData.stream_type,
 				config: {
 					...this.formData.config,
-					languageUrls: this.formData.config.languageUrls || [],
 				},
 			};
 		},
@@ -238,7 +232,6 @@ export default {
 					stream_type: draft.stream_type || 'youtube',
 					config: {
 						...(draft.config || {}),
-						languageUrls: draft.config?.languageUrls || [],
 					},
 				};
 			} catch (error) {
@@ -315,10 +308,9 @@ export default {
 			this.editingSchedule = schedule;
 			const tz = this.eventTimezone || 'UTC';
 			let config = schedule.config ? JSON.parse(JSON.stringify(schedule.config)) : {};
-			config.languageUrls = config.languageUrls || [];
 			this.formData = {
 				title: schedule.title || '',
-				url: schedule.url,
+				url: schedule.stream_type === 'youtube' ? toYoutubeWatchUrl(schedule.url) : schedule.url,
 				start_time: schedule.start_time ? this.parseApiDateTime(schedule.start_time).tz(tz) : null,
 				end_time: schedule.end_time ? this.parseApiDateTime(schedule.end_time).tz(tz) : null,
 				stream_type: schedule.stream_type,
@@ -334,7 +326,7 @@ export default {
 				start_time: null,
 				end_time: null,
 				stream_type: 'youtube',
-				config: { languageUrls: [] },
+				config: {},
 			};
 			this.saveError = null;
 			this.v$.$reset();

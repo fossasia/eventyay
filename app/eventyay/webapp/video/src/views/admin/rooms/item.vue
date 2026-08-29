@@ -34,7 +34,7 @@ import { mapGetters } from 'vuex'
 import api from 'lib/api'
 import RoomEditPrompt from 'components/RoomEditPrompt'
 import VideoProviderDropdown from 'components/VideoProviderDropdown'
-import { getRoomTypeById, inferType } from 'lib/room-types'
+import { getRoomTypeById, inferType, isChatManagedRoom } from 'lib/room-types'
 import {
 	applyVideoProviderToConfig,
 	getAvailableVideoProviders,
@@ -65,7 +65,8 @@ export default {
 			return inferType(this.config)
 		},
 		roomTypeLabel() {
-			return getConfiguredRoomLabel(this.inferredType)
+			const label = getConfiguredRoomLabel(this.inferredType)
+			return label ? this.$t(label) : ''
 		},
 		availableProviders() {
 			return getAvailableVideoProviders(
@@ -101,6 +102,10 @@ export default {
 				this.error = null
 				this.errorCode = null
 				this.config = await api.call('room.config.get', {room: this.roomId})
+				if (isChatManagedRoom(this.config)) {
+					this.$router.replace({name: 'admin:chat:item', params: {roomId: this.roomId}})
+					return
+				}
 				await this.applyProviderFromQuery()
 			} catch (error) {
 				this.error = error

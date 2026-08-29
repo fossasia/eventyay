@@ -415,6 +415,7 @@ def schedule_messages(request, **kwargs):
         ),
         'version_warning_old': _('You are currently viewing an older schedule version.'),
         'join_room': _('Join room'),
+        'join_session': _('Join session'),
         'view_video': _('View Video'),
         'watch_live': _('Watch live'),
         'speaker_fallback': pgettext_lazy('noun', 'Speaker'),

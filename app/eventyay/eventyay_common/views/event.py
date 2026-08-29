@@ -197,6 +197,11 @@ class EventCreateView(TemplateView):
     template_name = 'eventyay_common/events/create.html'
     legacy_session_key = 'event_create_legacy_wizard_data'
 
+    def get_template_names(self):
+        if self.is_meetup_request:
+            return ['eventyay_common/events/meetup_create.html']
+        return [self.template_name]
+
     def get_create_organizer_queryset(self):
         queryset = Organizer.objects.all()
         if not self.request.user.has_active_staff_session(self.request.session.session_key):
@@ -345,6 +350,7 @@ class EventCreateView(TemplateView):
         form_class = MeetupEventWizardBasicsForm if self.is_meetup_request else EventWizardBasicsForm
         return form_class(
             data=self.request.POST if bind and self.request.method == 'POST' else None,
+            files=self.request.FILES if bind and self.request.method == 'POST' else None,
             initial=self.get_basics_initial(foundation_data),
             prefix='basics',
             user=self.request.user,
@@ -356,6 +362,7 @@ class EventCreateView(TemplateView):
             is_video_creation=foundation_data.get('is_video_creation', True),
             restrict_locale_choices=False,
         )
+
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -599,19 +606,31 @@ class EventCreateView(TemplateView):
                 )
 
             if self.is_meetup_request:
+                crop_box = None
+                try:
+                    crop_x = int(float(self.request.POST.get('basics-logo_image_crop_x', '')))
+                    crop_y = int(float(self.request.POST.get('basics-logo_image_crop_y', '')))
+                    crop_w = int(float(self.request.POST.get('basics-logo_image_crop_w', '')))
+                    crop_h = int(float(self.request.POST.get('basics-logo_image_crop_h', '')))
+                    if crop_w > 0 and crop_h > 0 and crop_x >= 0 and crop_y >= 0:
+                        crop_box = (crop_x, crop_y, crop_x + crop_w, crop_y + crop_h)
+                except (OverflowError, ValueError, TypeError):
+                    crop_box = None
+
                 provision_meetup_event(
                     event,
                     video_type=basics_data.get('video_type', ''),
                     video_url=basics_data.get('video_url', ''),
                     request=self.request,
+                    frontpage_text=basics_data.get('frontpage_text'),
+                    header_image=basics_form.cleaned_data.get('logo_image'),
+                    registration_limit=basics_data.get('registration_limit'),
+                    crop_box=crop_box,
+                    registration_fee=basics_data.get('registration_fee'),
+                    payment_stripe_publishable_key=basics_data.get('payment_stripe_publishable_key', ''),
+                    payment_stripe_secret_key=basics_data.get('payment_stripe_secret_key', ''),
+                    payment_stripe_merchant_country=basics_data.get('payment_stripe_merchant_country', ''),
                 )
-                reg_limit = basics_data.get('registration_limit')
-                if reg_limit is not None:
-                    product, quota = get_rsvp_product_and_quota(event)
-                    if quota and quota.size != reg_limit:
-                        with scope(organizer=event.organizer):
-                            quota.size = reg_limit
-                            quota.save(update_fields=['size'])
 
         return redirect(
             reverse(

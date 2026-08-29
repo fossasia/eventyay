@@ -162,6 +162,22 @@ const routes = [
 				props: true
 			},
 			{
+				path: 'event/chat',
+				name: 'admin:chat:index',
+				component: () => import('views/admin/chat/index')
+			},
+			{
+				path: 'event/chat/new',
+				name: 'admin:chat:new',
+				component: () => import('views/admin/chat/new')
+			},
+			{
+				path: 'event/chat/:roomId',
+				name: 'admin:chat:item',
+				component: () => import('views/admin/chat/item'),
+				props: true
+			},
+			{
 				path: 'event/announcements',
 				name: 'admin:announcements',
 				component: () => import('views/admin/announcements'),
@@ -187,11 +203,6 @@ const routes = [
 				name: 'admin:kiosks:item',
 				component: () => import('views/admin/kiosks/item'),
 				props: true
-			},
-			{
-				path: 'event/admin/:admin_path(.*)*',
-				name: 'admin:video-admin',
-				component: () => import('views/admin/config/video-admin')
 			},
 			{
 				path: 'event/config',

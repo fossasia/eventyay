@@ -56,6 +56,7 @@ from eventyay.base.models import (
     ProductVariation,
     Quota,
     SeatCategoryMapping,
+    User,
     Voucher,
 )
 from eventyay.base.models.event import SubEvent
@@ -725,11 +726,16 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
         if self.request.user.is_authenticated:
             already_registered = has_rsvp_order(event, self.request.user.email)
         else:
-            already_registered = bool(self.request.session.get(MEETUP_RSVP_SESSION_KEY.format(event.pk)))
+            order_code = self.request.session.get(MEETUP_RSVP_SESSION_KEY.format(event.pk))
+            if order_code:
+                with scope(organizer=event.organizer):
+                    already_registered = event.orders.filter(code=order_code, status__in=RSVP_ORDER_STATUSES).exists()
+            else:
+                already_registered = False
 
-        with scope(event=event):
+        with scope(organizer=event.organizer):
             attendee_count = event.orders.filter(status__in=RSVP_ORDER_STATUSES).count()
-            preview_positions = (
+            preview_positions = list(
                 OrderPosition.objects.filter(
                     order__event=event,
                     order__status__in=RSVP_ORDER_STATUSES,
@@ -738,9 +744,26 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
                 .order_by('order__datetime')
                 [:6]
             )
+            emails = {
+                (pos.attendee_email or pos.order.email).strip().lower()
+                for pos in preview_positions
+                if (pos.attendee_email or pos.order.email)
+            }
+            user_avatars = {}
+            if emails:
+                users = (
+                    User.objects.filter(email__in=emails, event__isnull=True)
+                    .only('id', 'email', 'profile_picture', 'profile_picture_thumbnail', 'profile_picture_thumbnail_tiny')
+                )
+                for u in users:
+                    avatar_url = u.get_profile_picture_url(event=event, thumbnail='default') or u.get_profile_picture_url(event=event)
+                    if avatar_url:
+                        user_avatars[u.email.lower()] = avatar_url
+
             attendees_preview = [
                 {
                     'name': pos.attendee_name,
+                    'avatar_url': user_avatars.get((pos.attendee_email or pos.order.email or '').strip().lower()),
                 }
                 for pos in preview_positions
                 if pos.attendee_name
@@ -753,6 +776,8 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
                 avail, count = quota.availability()
                 rsvp_registration_closed = avail != Quota.AVAILABILITY_OK
 
+        registration_fee = product.default_price if product else Decimal('0.00')
+
         return {
             'is_meetup_event': True,
             'attendee_already_registered': already_registered,
@@ -761,6 +786,8 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
             'meetup_attendees_preview': attendees_preview,
             'rsvp_registration_closed': rsvp_registration_closed,
             'guest_checkout_allowed': not event.settings.require_registered_account_for_tickets,
+            'meetup_registration_fee': registration_fee or Decimal('0.00'),
+            'stripe_publishable_key': event.settings.get('payment_stripe_publishable_key', ''),
         }
 
     def get_context_data(self, **kwargs):

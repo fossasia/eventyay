@@ -27,6 +27,7 @@
 				:index="index",
 				:key="room.id",
 				:room="room",
+				:to="{name: 'admin:rooms:item', params: {roomId: room.id}}",
 				:disabled="!!search",
 				v-show="isRoomVisible(room)"
 			)
@@ -35,6 +36,7 @@
 <script>
 import api from 'lib/api'
 import fuzzysearch from 'lib/fuzzysearch'
+import { isChatManagedRoom, mergeReorderedIds } from 'lib/room-types'
 import { mapGetters } from 'vuex'
 import { SlickList } from 'vue-slicksort'
 import VideoProviderDropdown from 'components/VideoProviderDropdown'
@@ -45,6 +47,7 @@ export default {
 	components: { SlickList, RoomListItem, VideoProviderDropdown },
 	data() {
 		return {
+			allRooms: null,
 			rooms: null,
 			search: '',
 			error: null,
@@ -54,8 +57,8 @@ export default {
 	},
 	watch: {
 		'$store.state.rooms'(storeRooms) {
-			if (!Array.isArray(this.rooms) || !Array.isArray(storeRooms)) return
-			const currentIds = this.rooms.map(r => r.id)
+			if (!Array.isArray(this.allRooms) || !Array.isArray(storeRooms)) return
+			const currentIds = this.allRooms.map(r => r.id)
 			const storeIds = storeRooms.map(r => r.id)
 			const changed =
 				currentIds.length !== storeIds.length ||
@@ -83,6 +86,9 @@ export default {
 			const event = encodeURIComponent(this.eventRouting.event)
 			return `/api/v1/organizers/${organizer}/events/${event}/rooms/export-broadcast-configuration/?_format=${encodeURIComponent(format)}`
 		},
+		visibleRooms(rooms) {
+			return rooms.filter(room => !isChatManagedRoom(room))
+		},
 		isRoomVisible(room) {
 			if (!this.search) return true
 			const search = this.search.trim()
@@ -105,7 +111,9 @@ export default {
 			try {
 				this.error = null
 				this.errorCode = null
-				this.rooms = await api.call('room.config.list')
+				const listed = await api.call('room.config.list')
+				this.allRooms = listed
+				this.rooms = this.visibleRooms(listed)
 			} catch (e) {
 				this.error = e
 				this.errorCode = e?.code || e?.message || String(e)
@@ -118,10 +126,19 @@ export default {
 		async onListSort(newList) {
 			if (this.search) return
 			const previousRooms = [...this.rooms]
+			const previousAll = [...this.allRooms]
+			const orderedIds = mergeReorderedIds(
+				this.allRooms.map(room => room.id),
+				newList.map(room => room.id)
+			)
+			const byId = Object.fromEntries(this.allRooms.map(room => [String(room.id), room]))
 			try {
-				await api.call('room.config.reorder', newList.map(room => room.id))
+				this.allRooms = orderedIds.map(id => byId[String(id)])
+				this.rooms = this.visibleRooms(this.allRooms)
+				await api.call('room.config.reorder', orderedIds)
 			} catch (e) {
 				this.rooms = previousRooms
+				this.allRooms = previousAll
 				console.error(e)
 			}
 		}

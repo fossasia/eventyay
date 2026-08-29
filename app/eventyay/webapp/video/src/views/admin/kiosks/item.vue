@@ -14,14 +14,13 @@
 					copyable-text(:text="loginUrl")
 				bunt-input(name="name", v-model="kiosk.profile.display_name", :label="$t('Name')", :validation="v$.kiosk.profile.display_name")
 				bunt-select(v-model="kiosk.profile.room_id", :label="$t('Room')", name="room", :options="rooms", option-label="name", :validation="v$.kiosk.profile.room_id")
-				color-picker(name="background_color", v-model="kiosk.profile.background_color", :label="$t('Background color')", :validation="v$.kiosk.profile.background_color")
 				bunt-switch(name="show_reactions", v-model="kiosk.profile.show_reactions", :label="$t('Show reaction cloud')")
 				h2 {{ $t('Slides') }}
-				p {{ $t('Select which slides to show on the kiosk. Slides will only show when they have content to show. Pinned poll and question slides will always take priority over others, there is no need to manually intervene during a session.') }}
-				bunt-checkbox(name="show_pinned_poll", v-model="kiosk.profile.slides.pinned_poll", :label="$t('Pinned poll')")
-				bunt-checkbox(name="show_pinned_question", v-model="kiosk.profile.slides.pinned_question", :label="$t('Pinned question')")
-				bunt-checkbox(name="show_next_session", v-model="kiosk.profile.slides.next_session", :label="$t('Next session')")
-				bunt-checkbox(name="show_viewers", v-model="kiosk.profile.slides.viewers", :label="$t('Active viewers')")
+				p {{ $t('Choose which panels appear on the kiosk. Multiple items are shown together; pin a poll or question to take over the full screen (unpin to return). If only one item has content, it is shown full screen automatically.') }}
+				bunt-checkbox(name="show_pinned_poll", :model-value="!!kiosk.profile.slides.pinned_poll", @update:model-value="setSlide('pinned_poll', $event)", :label="$t('Poll')")
+				bunt-checkbox(name="show_pinned_question", :model-value="!!kiosk.profile.slides.pinned_question", @update:model-value="setSlide('pinned_question', $event)", :label="$t('Question')")
+				bunt-checkbox(name="show_next_session", :model-value="!!kiosk.profile.slides.next_session", @update:model-value="setSlide('next_session', $event)", :label="$t('Next session')")
+				bunt-checkbox(name="show_viewers", :model-value="!!kiosk.profile.slides.viewers", @update:model-value="setSlide('viewers', $event)", :label="$t('Active viewers')")
 		.ui-form-actions
 			bunt-button.btn-save(@click="save", :loading="saving", :error-message="saveError") {{ $t('Save') }}
 			.errors {{ validationErrors.join(', ') }}
@@ -40,16 +39,15 @@
 <script>
 import { useVuelidate } from '@vuelidate/core'
 import api from 'lib/api'
-import { color, required } from 'lib/validators'
+import { required } from 'lib/validators'
 import { inferRoomType } from 'lib/room-types'
-import ColorPicker from 'components/ColorPicker'
 import CopyableText from 'components/CopyableText'
 import Prompt from 'components/Prompt'
 import ValidationErrorsMixin from 'components/mixins/validation-errors'
 
 export default {
 	name: 'AdminKiosk',
-	components: { ColorPicker, CopyableText, Prompt },
+	components: { CopyableText, Prompt },
 	mixins: [ValidationErrorsMixin],
 	props: {
 		kioskId: String
@@ -84,10 +82,7 @@ export default {
 					},
 					room_id: {
 						required: required(this.$t('Room is required'))
-					},
-					background_color: {
-						color: color(this.$t('color must be in 3 or 6 digit hex format'))
-					},
+					}
 				}
 			}
 		}
@@ -95,13 +90,24 @@ export default {
 	async created() {
 		try {
 			this.kiosk = await api.call('user.kiosk.fetch', {id: this.kioskId})
-			if (!this.kiosk.profile.show_reactions) this.kiosk.profile.show_reactions = true
-			if (!this.kiosk.profile.slides) this.kiosk.profile.slides = {
-				pinned_poll: true,
-				pinned_question: true,
-				next_session: true,
-				viewers: true,
-				reactions: true
+			if (this.kiosk.profile.show_reactions == null) this.kiosk.profile.show_reactions = true
+			if (!this.kiosk.profile.slides || typeof this.kiosk.profile.slides !== 'object') {
+				// Never configured: classic panels on, viewers opt-in.
+				this.kiosk.profile.slides = {
+					pinned_poll: true,
+					pinned_question: true,
+					next_session: true,
+					viewers: false
+				}
+			} else {
+				const slides = this.kiosk.profile.slides
+				// Keep unchecked boxes as false (not undefined) so Save persists correctly.
+				this.kiosk.profile.slides = {
+					pinned_poll: slides.pinned_poll === true,
+					pinned_question: slides.pinned_question === true,
+					next_session: slides.next_session === true,
+					viewers: slides.viewers === true
+				}
 			}
 		} catch (error) {
 			this.error = error
@@ -109,13 +115,36 @@ export default {
 		}
 	},
 	methods: {
+		setSlide(key, value) {
+			if (!this.kiosk?.profile) return
+			if (!this.kiosk.profile.slides || typeof this.kiosk.profile.slides !== 'object') {
+				this.kiosk.profile.slides = {
+					pinned_poll: false,
+					pinned_question: false,
+					next_session: false,
+					viewers: false
+				}
+			}
+			this.kiosk.profile.slides = {
+				...this.kiosk.profile.slides,
+				[key]: value === true
+			}
+		},
 		async save() {
 			this.saveError = null
 			this.v$.$touch()
 			if (this.v$.$invalid) return
 			this.saving = true
 			try {
-				await api.call('user.admin.update', {
+				if (!this.kiosk.profile.slides) this.kiosk.profile.slides = {}
+				const slides = this.kiosk.profile.slides
+				this.kiosk.profile.slides = {
+					pinned_poll: slides.pinned_poll === true,
+					pinned_question: slides.pinned_question === true,
+					next_session: slides.next_session === true,
+					viewers: slides.viewers === true
+				}
+				await api.call('user.kiosk.update', {
 					id: this.kiosk.id,
 					profile: this.kiosk.profile
 				})

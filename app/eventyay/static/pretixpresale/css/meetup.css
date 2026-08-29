@@ -121,6 +121,33 @@
     flex-direction: column;
     gap: 12px;
 }
+.meetup-modal-divider {
+    margin: 16px 0 14px 0;
+    border: 0;
+    border-top: 1px solid #e2e8f0;
+}
+.meetup-payment-unconfigured-alert {
+    margin-top: 10px;
+    font-size: 0.9rem;
+}
+.meetup-stripe-status-indicator {
+    margin-left: 10px;
+    font-weight: 600;
+}
+#stripeConfigModal .modal-dialog {
+    margin-top: 80px;
+}
+@media (min-width: 768px) {
+    #stripeConfigModal .modal-dialog {
+        width: 680px;
+    }
+}
+.meetup-payment-overlay.is-hidden {
+    display: none;
+}
+.meetup-payment-error-alert.is-hidden {
+    display: none;
+}
 .meetup-rsvp-text {
     line-height: 1.35;
     color: var(--color-text, #333);
@@ -213,6 +240,13 @@
     cursor: pointer;
     transition: transform 0.15s ease, z-index 0.15s ease;
     position: relative;
+}
+.attendee-avatars-stack .avatar-circle-stacked .avatar-circle-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
 }
 .attendee-avatars-stack .avatar-circle-stacked:hover {
     transform: scale(1.12);
@@ -356,4 +390,161 @@
     height: 100%;
     width: 100%;
     border-radius: 0;
+}
+
+.meetup-payment-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1500;
+    padding: 16px;
+}
+
+.meetup-payment-popup {
+    background: #ffffff;
+    width: 100%;
+    max-width: 480px;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+    position: relative;
+    animation: meetupModalFadeIn 0.2s ease-out;
+}
+
+@keyframes meetupModalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.meetup-payment-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.meetup-payment-header h3 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.meetup-payment-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    color: #6c757d;
+}
+
+.meetup-payment-close:hover {
+    color: #212529;
+}
+
+.meetup-payment-body {
+    padding: 20px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.meetup-modal-fee-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f1f5f9;
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+}
+
+.meetup-modal-fee-badge {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #004978;
+}
+
+.meetup-payment-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.meetup-payment-card-header h5 {
+    margin: 0;
+}
+
+.meetup-card-icons {
+    font-size: 1.25rem;
+    color: #6c757d;
+    display: flex;
+    gap: 6px;
+}
+
+.stripe-element-container {
+    height: 34px;
+    padding: 7px 12px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+}
+
+.stripe-element-container.StripeElement--focus {
+    border-color: #66afe9;
+    outline: 0;
+    box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102, 175, 233, .6);
+}
+
+.stripe-element-container.StripeElement--invalid {
+    border-color: #a94442;
+}
+
+.meetup-payment-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 20px;
+    background: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+}
+.meetup-payment-footer .btn {
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 10px 20px;
+    min-width: 120px;
+}
+.btn-spinner.is-hidden,
+.btn-spinner.hidden {
+    display: none;
+}
+
+.modal-backdrop,
+.modal-backdrop.in {
+    z-index: 1200;
+}
+
+#stripeConfigModal,
+#cropperModal,
+.modal.in {
+    z-index: 1300;
 }
