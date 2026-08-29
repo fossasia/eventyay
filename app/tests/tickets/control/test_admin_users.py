@@ -225,12 +225,14 @@ class UserToggleViewsTest(TestCase):
 
     def test_toggle_spam_flips_field(self):
         self.assertFalse(self.target_user.is_spam)
+        old_session_token = self.target_user.session_token
         response = self._post_as_admin('toggle_spam', self.target_user.pk)
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
         self.assertEqual(data['status'], 'ok')
         self.target_user.refresh_from_db()
         self.assertTrue(self.target_user.is_spam)
+        self.assertNotEqual(self.target_user.session_token, old_session_token)
 
     def test_toggle_spam_on_admin_is_blocked(self):
         other_admin = _make_admin(email='otheradmin@example.com')

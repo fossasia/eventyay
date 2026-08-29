@@ -18,17 +18,24 @@ function initRichTextPreviewTabs() {
     if (!wrapper) return
 
     const previewUrl = wrapper.getAttribute('data-richtext-preview-url')
-    const previewEl = wrapper.querySelector('.richtext-preview')
-    if (!previewUrl || !previewEl) return
+    const blocks = wrapper.querySelectorAll('.richtext-preview')
+    if (!previewUrl || !blocks.length) return
 
     const form = wrapper.closest('form')
 
     tab.addEventListener('click', async () => {
-      const textarea = wrapper.querySelector('textarea[data-tiptap-profile], textarea')
-      if (!textarea) return
-
       const params = new URLSearchParams()
-      params.append('content', textarea.value)
+      const textareas = wrapper.querySelectorAll('textarea')
+      if (!textareas.length) return
+
+      textareas.forEach((textarea) => {
+        const lang = textarea.getAttribute('lang')
+        params.append(lang ? `body_${lang}` : 'content', textarea.value)
+      })
+
+      if (textareas.length === 1 && !textareas[0].getAttribute('lang')) {
+        params.set('content', textareas[0].value)
+      }
 
       try {
         const response = await fetch(previewUrl, {
@@ -42,10 +49,21 @@ function initRichTextPreviewTabs() {
         })
         if (!response.ok) throw new Error(`Preview request failed: ${response.status}`)
         const data = await response.json()
-        replaceHtml(previewEl, data.html)
+        if (data.previews) {
+          blocks.forEach((block) => {
+            const lang = block.getAttribute('lang')
+            if (lang && data.previews[lang] !== undefined) {
+              replaceHtml(block, data.previews[lang])
+            } else if (data.previews['en'] !== undefined) {
+              replaceHtml(block, data.previews['en'])
+            }
+          })
+        } else if (data.html !== undefined) {
+          blocks.forEach((block) => replaceHtml(block, data.html))
+        }
       } catch (err) {
         console.error('Rich text preview failed:', err)
-        showPreviewError(previewEl)
+        blocks.forEach((block) => showPreviewError(block))
       }
     })
   })

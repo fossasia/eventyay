@@ -22,6 +22,7 @@ from eventyay.presale.views.startpage import (
     UpcomingEventsView,
 )
 
+from eventyay.control.views.pages import SystemPageView
 from .views import AnonymousInviteRedirectView, VideoAssetView, VideoSPAView
 from eventyay.plugins.ticketoutputpdf import urls as ticketoutputpdf_urls
 
@@ -42,6 +43,10 @@ presale_patterns_main = [
                     path('all-events/upcoming/', RedirectView.as_view(url=reverse_lazy('presale:events.upcoming'), permanent=True)),
                     path('all-events/past/', RedirectView.as_view(url=reverse_lazy('presale:events.past'), permanent=True)),
                     path('all-events/', RedirectView.as_view(url=reverse_lazy('presale:index'), permanent=True)),
+                    path('terms/', SystemPageView.as_view(slug='terms'), name='page.terms'),
+                    path('privacy/', SystemPageView.as_view(slug='privacy'), name='page.privacy'),
+                    path('pricing/', SystemPageView.as_view(slug='pricing'), name='page.pricing'),
+                    path('support/', SystemPageView.as_view(slug='support'), name='page.support'),
                     path('<orgslug:organizer>/', include(organizer_patterns)),
                     path(
                         '<orgslug:organizer>/<slug:event>/',

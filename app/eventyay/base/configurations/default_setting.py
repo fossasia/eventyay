@@ -2676,6 +2676,7 @@ Your {event} team"""
         'form_class': forms.CharField,
         'form_kwargs': dict(
             label=_('Homepage title'),
+            help_text=_('e.g. {sample}').format(sample='Eventyay – Open Source Event Management Platform'),
             required=False,
         ),
     },
@@ -2685,6 +2686,7 @@ Your {event} team"""
         'form_class': forms.CharField,
         'form_kwargs': dict(
             label=_('Homepage description'),
+            help_text=_('e.g. {sample}').format(sample='The comprehensive platform for all your event needs.'),
             widget=forms.Textarea(attrs={'rows': 2}),
             required=False,
         ),
@@ -2695,6 +2697,7 @@ Your {event} team"""
         'form_class': forms.CharField,
         'form_kwargs': dict(
             label=_('Open Graph title'),
+            help_text=_('e.g. {sample}').format(sample='Eventyay - Social Share Title'),
             required=False,
         ),
     },
@@ -2704,6 +2707,7 @@ Your {event} team"""
         'form_class': forms.CharField,
         'form_kwargs': dict(
             label=_('Open Graph description'),
+            help_text=_('e.g. {sample}').format(sample='Description used when sharing on Facebook/LinkedIn.'),
             widget=forms.Textarea(attrs={'rows': 2}),
             required=False,
         ),
@@ -2714,6 +2718,7 @@ Your {event} team"""
         'form_class': forms.CharField,
         'form_kwargs': dict(
             label=_('Twitter title'),
+            help_text=_('e.g. {sample}').format(sample='Eventyay - Twitter Title'),
             required=False,
         ),
     },
@@ -2723,6 +2728,7 @@ Your {event} team"""
         'form_class': forms.CharField,
         'form_kwargs': dict(
             label=_('Twitter description'),
+            help_text=_('e.g. {sample}').format(sample='Description used when sharing on Twitter.'),
             widget=forms.Textarea(attrs={'rows': 2}),
             required=False,
         ),
@@ -2733,6 +2739,7 @@ Your {event} team"""
         'form_class': forms.CharField,
         'form_kwargs': dict(
             label=_('Fallback SEO text'),
+            help_text=_('e.g. {sample}').format(sample='General fallback text for social sharing.'),
             required=False,
         ),
     },

@@ -2,13 +2,13 @@
 .c-admin-kiosk-new
 	.ui-page-header
 		bunt-icon-button(@click="$router.replace({name: 'admin:kiosks:index'})") arrow_left
-		h1 New kiosk
+		h1 {{ $t('New kiosk') }}
 	.scroll-wrapper(v-scrollbar.y="")
 		.ui-form-body
-			bunt-input(name="name", v-model="profile.display_name", label="Name", :validation="v$.profile.display_name")
-			bunt-select(v-model="profile.room_id", label="Room", name="room", :options="rooms", option-label="name", :validation="v$.profile.room_id")
+			bunt-input(name="name", v-model="profile.display_name", :label="$t('Name')", :validation="v$.profile.display_name")
+			bunt-select(v-model="profile.room_id", :label="$t('Room')", name="room", :options="rooms", option-label="name", :validation="v$.profile.room_id")
 	.ui-form-actions
-		bunt-button.btn-save(@click="save", :loading="saving", :error-message="error") create
+		bunt-button.btn-save(@click="save", :loading="saving", :error-message="error") {{ $t('create') }}
 		.errors {{ validationErrors.join(', ') }}
 </template>
 <script>
@@ -25,7 +25,14 @@ export default {
 	data() {
 		return {
 			profile: {
-				display_name: ''
+				display_name: '',
+				show_reactions: true,
+				slides: {
+					pinned_poll: true,
+					pinned_question: true,
+					next_session: true,
+					viewers: false
+				}
 			},
 			saving: false,
 			error: null
@@ -36,13 +43,15 @@ export default {
 			return this.$store.state.rooms.filter(room => inferRoomType(room)?.id === 'stage')
 		},
 	},
-	validations: {
-		profile: {
-			display_name: {
-				required: required('Name is required')
-			},
-			room_id: {
-				required: required('Room is required')
+	validations() {
+		return {
+			profile: {
+				display_name: {
+					required: required(this.$t('Name is required'))
+				},
+				room_id: {
+					required: required(this.$t('Room is required'))
+				}
 			}
 		}
 	},

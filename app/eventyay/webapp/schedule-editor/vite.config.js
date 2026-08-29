@@ -1,6 +1,6 @@
 import path from 'path'
 import vue from '@vitejs/plugin-vue'
-import gettext from './vite-gettext-plugin'
+import {createGettextPlugin} from '../i18n/vite-plugin.js'
 import BuntpapierStylus from 'buntpapier/stylus.js'
 
 const stylusOptions = {
@@ -21,7 +21,7 @@ export default {
 	},
 	base: process.env.BASE_URL || '/',
 	plugins: [
-		gettext(), vue()
+		createGettextPlugin('schedule-editor'), vue()
 	],
 	css: {
 		preprocessorMaxWorkers: 0,
@@ -73,6 +73,13 @@ export default {
 		include: ['fuzzysearch', 'popper.js', 'resize-observer-polyfill'],
 	},
 	server: {
-	  port: '8080'
+	  port: '8080',
+	  fs: {
+		allow: [
+			path.resolve(__dirname),
+			path.resolve(__dirname, '../../locale'),
+			path.resolve(__dirname, '../i18n'),
+		]
+	  }
 	}
 }

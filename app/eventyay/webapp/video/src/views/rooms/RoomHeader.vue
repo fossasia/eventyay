@@ -6,7 +6,7 @@
 			.room-session(v-if="currentSession") {{ $localize(currentSession.title) }}
 		//- bunt-icon-button(v-if="$features.enabled('schedule-control')", @click="showEditSchedule = true") calendar_edit
 		.actions
-			bunt-icon-button(v-if="modules['call.bigbluebutton'] && hasPermission('room:bbb.recordings')", :tooltip="$t('Room:recordings:tooltip')", tooltipPlacement="bottom-end", @click="showRecordingsPrompt = true") file-video-outline
+			bunt-icon-button(v-if="modules['call.bigbluebutton'] && hasPermission('room:bbb.recordings')", :tooltip="$t('Recordings')", tooltipPlacement="bottom-end", @click="showRecordingsPrompt = true") file-video-outline
 			.button-group(v-if="['stage', 'channel-bbb', 'channel-janus', 'channel-zoom', 'channel-jitsi'].includes(roomType) && canManage")
 				// TODO buntpapier does not support replace
 				// hardlink params so home page alias works
@@ -58,7 +58,7 @@ export default {
 				}
 			}
 			const wantedId = String(this.roomId)
-			return this.rooms?.find(room => String(room.id) === wantedId)
+			return this.rooms?.find(room => String(room.id) === wantedId || (room.pretalx_id != null && String(room.pretalx_id) === wantedId))
 		},
 		roomType() {
 			if (!this.room) return null

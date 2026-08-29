@@ -3,5 +3,10 @@
 
 {% block video_admin_content %}
 <h1 class="page-header">{% trans "Video admin dashboard" %}</h1>
-<p class="text-muted">{% trans "More insights coming soon." %}</p>
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <h2 class="panel-title">{% trans "Video servers" %}</h2>
+    </div>
+    {% include "control/includes/video_server_table.html" %}
+</div>
 {% endblock %}

@@ -3,21 +3,22 @@ import vue from '@vitejs/plugin-vue'
 import ReactivityTransform from '@vue-macros/reactivity-transform/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import visualizer from 'rollup-plugin-visualizer'
-import path from 'path'
-import commonjs from '@rollup/plugin-commonjs'
+import path from 'node:path'
 import eslint from 'vite-plugin-eslint'
+import {createGettextPlugin} from '../i18n/vite-plugin.js'
 
+const dirname = import.meta.dirname
 const stylusOptions = {
   paths: [
-    path.resolve(__dirname, './src/styles'),
-    path.resolve(__dirname, '../schedule/src/styles'),
-    path.resolve(__dirname, 'node_modules'),
-    path.resolve(__dirname, 'node_modules/buntpapier')
+    path.resolve(dirname, './src/styles'),
+    path.resolve(dirname, '../schedule/src/styles'),
+    path.resolve(dirname, 'node_modules'),
+    path.resolve(dirname, 'node_modules/buntpapier')
   ],
   imports: [
     'buntpapier/buntpapier/index.styl',
-    path.resolve(__dirname, 'src/styles/variables.styl'),
-    path.resolve(__dirname, 'src/styles/themed-buntpapier.styl'),
+    path.resolve(dirname, 'src/styles/variables.styl'),
+    path.resolve(dirname, 'src/styles/themed-buntpapier.styl'),
   ]
 }
 
@@ -50,6 +51,13 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',
       port: 8880,
       origin: mode === 'development' ? 'http://localhost:8880' : undefined,
+      fs: {
+        allow: [
+          path.resolve(dirname),
+          path.resolve(dirname, '../../locale'),
+          path.resolve(dirname, '../i18n'),
+        ]
+      },
       hmr: {
         host: 'localhost',
         port: 8880
@@ -64,6 +72,7 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       exportJanusGateway(),
+      createGettextPlugin('video'),
       vue(),
       ReactivityTransform(),
       // Enable PWA only in production builds (avoid SW claim issues during dev)
@@ -105,10 +114,10 @@ export default defineConfig(({ mode }) => {
           maximumFileSizeToCacheInBytes: 3 * 1024 * 1024
         }
       }),
-      // Lint-on-save during Vite transforms
-      eslint({
+      // Lint during dev only; production uses `npm run lint`
+      mode === 'development' && eslint({
         include: ['src/**/*.js', 'src/**/*.vue'],
-        cache: false
+        cache: true
       }),
       mode === 'production' && process.env.ANALYZE && visualizer({
         open: true,
@@ -125,33 +134,35 @@ export default defineConfig(({ mode }) => {
     resolve: {
       extensions: ['.js', '.json', '.vue'],
       preserveSymlinks: true,
-      dedupe: ['vue'],
+      dedupe: ['vue', 'i18next'],
       alias: [
+        { find: 'i18next', replacement: path.resolve(dirname, 'node_modules/i18next') },
+        { find: 'vue', replacement: path.resolve(dirname, 'node_modules/vue') },
         { find: 'lodash', replacement: 'lodash-es' },
-        { find: '~', replacement: path.resolve(__dirname, 'src') },
-        { find: /^buntpapier$/, replacement: path.resolve(__dirname, 'node_modules/buntpapier/src/index.js') },
-        { find: 'config', replacement: path.resolve(__dirname, 'config.js') },
+        { find: '~', replacement: path.resolve(dirname, 'src') },
+        { find: /^buntpapier$/, replacement: path.resolve(dirname, 'node_modules/buntpapier/src/index.js') },
+        { find: 'config', replacement: path.resolve(dirname, 'config.js') },
         { find: 'react', replacement: 'preact/compat' },
         { find: 'react-dom', replacement: 'preact/compat' },
         { find: 'preact/hooks/dist/hooks.js', replacement: 'preact/hooks' },
-        { find: 'assets', replacement: path.resolve(__dirname, 'src/assets') },
-        { find: 'components', replacement: path.resolve(__dirname, 'src/components') },
-        { find: 'lib', replacement: path.resolve(__dirname, 'src/lib') },
-        { find: 'locales', replacement: path.resolve(__dirname, 'src/locales') },
-        { find: 'router', replacement: path.resolve(__dirname, 'src/router') },
-        { find: 'store', replacement: path.resolve(__dirname, 'src/store') },
-        { find: 'styles', replacement: path.resolve(__dirname, 'src/styles') },
-        { find: 'views', replacement: path.resolve(__dirname, 'src/views') },
-        { find: '@schedule', replacement: path.resolve(__dirname, '../schedule/src') },
-        { find: 'features', replacement: path.resolve(__dirname, 'src/features') },
-        { find: 'i18n', replacement: path.resolve(__dirname, 'src/i18n') },
-        { find: 'theme', replacement: path.resolve(__dirname, 'src/theme') },
-        { find: 'has-emoji', replacement: path.resolve(__dirname, 'build/has-emoji/emoji.json') },
-        { find: 'moment-timezone', replacement: path.resolve(__dirname, 'node_modules/moment-timezone/builds/moment-timezone-with-data-10-year-range.js') },
-        { find: 'markdown-it', replacement: path.resolve(__dirname, 'node_modules/markdown-it') },
-        { find: 'markdown-it-multimd-table', replacement: path.resolve(__dirname, 'node_modules/markdown-it-multimd-table') },
-        { find: 'dompurify', replacement: path.resolve(__dirname, 'node_modules/dompurify') },
-        { find: 'sdp', replacement: path.resolve(__dirname, 'src/shims/sdp-default.js') },
+        { find: 'assets', replacement: path.resolve(dirname, 'src/assets') },
+        { find: 'components', replacement: path.resolve(dirname, 'src/components') },
+        { find: 'lib', replacement: path.resolve(dirname, 'src/lib') },
+        { find: 'locales', replacement: path.resolve(dirname, 'src/locales') },
+        { find: 'router', replacement: path.resolve(dirname, 'src/router') },
+        { find: 'store', replacement: path.resolve(dirname, 'src/store') },
+        { find: 'styles', replacement: path.resolve(dirname, 'src/styles') },
+        { find: 'views', replacement: path.resolve(dirname, 'src/views') },
+        { find: '@schedule', replacement: path.resolve(dirname, '../schedule/src') },
+        { find: 'features', replacement: path.resolve(dirname, 'src/features') },
+        { find: 'i18n', replacement: path.resolve(dirname, 'src/i18n') },
+        { find: 'theme', replacement: path.resolve(dirname, 'src/theme') },
+        { find: 'has-emoji', replacement: path.resolve(dirname, 'build/has-emoji/emoji.json') },
+        { find: 'moment-timezone', replacement: path.resolve(dirname, 'node_modules/moment-timezone/builds/moment-timezone-with-data-10-year-range.js') },
+        { find: 'markdown-it', replacement: path.resolve(dirname, 'node_modules/markdown-it') },
+        { find: 'markdown-it-multimd-table', replacement: path.resolve(dirname, 'node_modules/markdown-it-multimd-table') },
+        { find: 'dompurify', replacement: path.resolve(dirname, 'node_modules/dompurify') },
+        { find: 'sdp', replacement: path.resolve(dirname, 'src/shims/sdp-default.js') },
       ]
     },
     optimizeDeps: {
@@ -166,21 +177,18 @@ export default defineConfig(({ mode }) => {
         'janus-gateway',
         'janus-gateway/html/janus.js',
         'buntpapier',
-      ],
-      esbuildOptions: {
-        target: 'esnext'
-      }
+      ]
     },
     build: {
       outDir: process.env.OUT_DIR ? `${process.env.OUT_DIR}/video` : 'dist',
-      emptyOutDir: false,
+      emptyOutDir: true,
       target: 'esnext',
       sourcemap: false, // Added for debugging vendor-webrtc issue
       chunkSizeWarningLimit: 1250,
       rollupOptions: {
         input: {
-          main: path.resolve(__dirname, 'index.html'),
-          preloader: path.resolve(__dirname, 'src/preloader.js')
+          main: path.resolve(dirname, 'index.html'),
+          preloader: path.resolve(dirname, 'src/preloader.js')
         },
         output: {
           entryFileNames: (chunkInfo) => {
@@ -197,7 +205,6 @@ export default defineConfig(({ mode }) => {
               if (id.includes('materialdesignicons-webfont') || id.match(/materialdesignicons/)) return 'vendor-mdi'
               if (id.includes('moment') || id.includes('moment-timezone')) return 'vendor-moment'
               if (id.includes('lodash') || id.includes('lodash-es')) return 'vendor-lodash'
-              if (id.includes('quill')) return 'vendor-quill'
               if (id.includes('markdown-it')) return 'vendor-markdown'
               if (id.includes('i18next')) return 'vendor-i18n'
               if (id.includes('preact')) return 'vendor-preact'
@@ -212,18 +219,11 @@ export default defineConfig(({ mode }) => {
               if (id.includes('uuid')) return 'vendor-uuid'
               if (id.includes('register-service-worker')) return 'vendor-sw'
               if (id.includes('mux-embed') || id.includes('mux.js')) return 'vendor-mux'
-              if (id.includes('random-js')) return 'vendor-randomjs'
               if (id.includes('web-animations-js')) return 'vendor-webanimations'
               return 'vendor'
             }
           }
-        },
-        plugins: [
-          commonjs({
-            include: /node_modules\/janus-gateway/,
-            requireReturnsDefault: 'auto'
-          })
-        ]
+        }
       }
     },
     define: {

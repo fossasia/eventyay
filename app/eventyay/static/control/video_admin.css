@@ -23,3 +23,71 @@
 
 /* Active highlight for nested video admin children */
 .sidebar-nav .nav-second-level a.active { font-weight: 600; }
+
+.video-server-link {
+    font-weight: 600;
+}
+
+.video-server-status {
+    display: inline-block;
+    min-width: 68px;
+}
+
+.video-server-row-saving {
+    opacity: .65;
+}
+
+.video-server-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    position: relative;
+    width: 44px;
+    height: 24px;
+    margin: 0;
+}
+
+.video-server-toggle input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+}
+
+.video-server-toggle-slider {
+    position: absolute;
+    inset: 0;
+    cursor: pointer;
+    background: #8a8f98;
+    border-radius: 12px;
+    transition: background-color .15s ease, box-shadow .15s ease;
+}
+
+.video-server-toggle-slider::before {
+    content: "";
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    top: 3px;
+    left: 3px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .25);
+    transition: transform .15s ease;
+}
+
+.video-server-toggle input:checked + .video-server-toggle-slider {
+    background: #2e8540;
+}
+
+.video-server-toggle input:checked + .video-server-toggle-slider::before {
+    transform: translateX(20px);
+}
+
+.video-server-toggle input:focus + .video-server-toggle-slider {
+    box-shadow: 0 0 0 3px rgba(33, 133, 208, .3);
+}
+
+.video-server-toggle input:disabled + .video-server-toggle-slider {
+    cursor: wait;
+}

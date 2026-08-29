@@ -2,45 +2,52 @@
 .c-admin-rooms
 	.header
 		.actions
-			h2 Rooms
-			bunt-link-button.btn-create(:to="{name: 'admin:rooms:new'}") Create a new room
+			h2 {{ $t('Rooms') }}
+			VideoProviderDropdown(
+				:label="$t('Create Room')",
+				:show-empty-message="true",
+				@select="createRoomWithProvider"
+			)
 		.right-actions
 			.export-actions(v-if="canExportBroadcastConfiguration")
-				a.export-button(:href="exportUrl('xlsx')") Export XLSX
-				a.export-button.secondary(:href="exportUrl('csv-excel')") CSV
-			bunt-input.search(name="search", placeholder="Search rooms", icon="search", v-model="search")
+				a.export-button(:href="exportUrl('xlsx')") {{ $t('Export XLSX') }}
+				a.export-button.secondary(:href="exportUrl('csv-excel')") {{ $t('CSV') }}
+			bunt-input.search(name="search", :placeholder="$t('Search rooms')", icon="search", v-model="search")
 	.error(v-if="error")
-		span Failed to load rooms.
+		span {{ $t('Failed to load rooms.') }}
 		span(v-if="errorCode")  ({{ errorCode }})
-		span(v-if="errorCode === 'protocol.denied'")  You likely lack admin permissions.
+		span(v-if="errorCode === 'protocol.denied'")  {{ $t('You likely lack admin permissions.') }}
 	.rooms-list(v-else)
 		.header
 			.drag
-			.name Name
+			.name {{ $t('Name') }}
 		SlickList.tbody(v-if="rooms", v-model:list="rooms", lockAxis="y", :useDragHandle="true", helperClass="sorting-helper", v-scrollbar.y="", @update:list="onListSort")
 			RoomListItem(
 				v-for="(room, index) of rooms",
 				:index="index",
 				:key="room.id",
 				:room="room",
+				:to="{name: 'admin:rooms:item', params: {roomId: room.id}}",
 				:disabled="!!search",
 				v-show="isRoomVisible(room)"
 			)
 		bunt-progress-circular(v-else, size="huge", :page="true")
 </template>
 <script>
-// TODO show inferred type
 import api from 'lib/api'
 import fuzzysearch from 'lib/fuzzysearch'
+import { isChatManagedRoom, mergeReorderedIds } from 'lib/room-types'
 import { mapGetters } from 'vuex'
 import { SlickList } from 'vue-slicksort'
+import VideoProviderDropdown from 'components/VideoProviderDropdown'
 import RoomListItem from './RoomListItem'
 
 export default {
 	name: 'AdminRooms',
-	components: { SlickList, RoomListItem },
+	components: { SlickList, RoomListItem, VideoProviderDropdown },
 	data() {
 		return {
+			allRooms: null,
 			rooms: null,
 			search: '',
 			error: null,
@@ -50,8 +57,8 @@ export default {
 	},
 	watch: {
 		'$store.state.rooms'(storeRooms) {
-			if (!Array.isArray(this.rooms) || !Array.isArray(storeRooms)) return
-			const currentIds = this.rooms.map(r => r.id)
+			if (!Array.isArray(this.allRooms) || !Array.isArray(storeRooms)) return
+			const currentIds = this.allRooms.map(r => r.id)
 			const storeIds = storeRooms.map(r => r.id)
 			const changed =
 				currentIds.length !== storeIds.length ||
@@ -79,6 +86,9 @@ export default {
 			const event = encodeURIComponent(this.eventRouting.event)
 			return `/api/v1/organizers/${organizer}/events/${event}/rooms/export-broadcast-configuration/?_format=${encodeURIComponent(format)}`
 		},
+		visibleRooms(rooms) {
+			return rooms.filter(room => !isChatManagedRoom(room))
+		},
 		isRoomVisible(room) {
 			if (!this.search) return true
 			const search = this.search.trim()
@@ -101,20 +111,34 @@ export default {
 			try {
 				this.error = null
 				this.errorCode = null
-				this.rooms = await api.call('room.config.list')
+				const listed = await api.call('room.config.list')
+				this.allRooms = listed
+				this.rooms = this.visibleRooms(listed)
 			} catch (e) {
 				this.error = e
 				this.errorCode = e?.code || e?.message || String(e)
 				console.error(e)
 			}
 		},
+		createRoomWithProvider(provider) {
+			this.$router.push({name: 'admin:rooms:new', params: {type: provider.roomTypeId}})
+		},
 		async onListSort(newList) {
 			if (this.search) return
 			const previousRooms = [...this.rooms]
+			const previousAll = [...this.allRooms]
+			const orderedIds = mergeReorderedIds(
+				this.allRooms.map(room => room.id),
+				newList.map(room => room.id)
+			)
+			const byId = Object.fromEntries(this.allRooms.map(room => [String(room.id), room]))
 			try {
-				await api.call('room.config.reorder', newList.map(room => room.id))
+				this.allRooms = orderedIds.map(id => byId[String(id)])
+				this.rooms = this.visibleRooms(this.allRooms)
+				await api.call('room.config.reorder', orderedIds)
 			} catch (e) {
 				this.rooms = previousRooms
+				this.allRooms = previousAll
 				console.error(e)
 			}
 		}
@@ -142,6 +166,8 @@ export default {
 				margin-right: 16px
 			.btn-create
 				themed-button-primary()
+			.c-video-provider-dropdown
+				margin-right: 8px
 		.right-actions
 			display: flex
 			align-items: center

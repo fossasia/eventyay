@@ -8,16 +8,16 @@
 				chat-message(v-for="(message, index) of filteredTimeline", :key="message.event_id", :message="message", :previousMessage="filteredTimeline[index - 1]", :nextMessage="filteredTimeline[index + 1]", :mode="mode", @showUserCard="showUserCard")
 			.warning(v-if="mergedWarning")
 				.content
-					ChatContent(:content="$t('Chat:warning:missed-users', {count: mergedWarning.missed_users.length, missedUsers: mergedWarning.missed_users})", @clickMention="showUserCard")
+					ChatContent(:content="$t('This message was not visible to {{count}} people.', {count: mergedWarning.missed_users.length, missedUsers: mergedWarning.missed_users})", @clickMention="showUserCard")
 				bunt-icon-button(@click="$store.dispatch('chat/dismissWarnings')") close
 			.chat-input
-				.no-permission(v-if="room && !room.permissions.includes('room:chat.join')") {{ $t('Chat:permission-block:room:chat.join') }}
-				bunt-button(v-else-if="!activeJoinedChannel", @click="join", :tooltip="$t('Chat:join-button:tooltip')") {{ $t('Chat:join-button:label') }}
-				.no-permission(v-else-if="room && !room.permissions.includes('room:chat.send')") {{ $t('Chat:permission-block:room:chat.send') }}
+				.no-permission(v-if="room && !room.permissions.includes('room:chat.join')") {{ $t("Sorry, you can't join this channel.") }}
+				bunt-button(v-else-if="!activeJoinedChannel", @click="join", :tooltip="$t('Join this chat')") {{ $t('join chat') }}
+				.no-permission(v-else-if="room && !room.permissions.includes('room:chat.send')") {{ $t('This channel is readonly.') }}
 				chat-input(v-else, @send="send")
 		.user-list(v-if="mode === 'standalone' && showUserlist && $mq.above['m']")
 			.user-list-info(v-if="sortedMembers.length > 2")
-				span Channel members
+				span {{ $t('Channel members') }}
 				.user-count
 					| {{ sortedMembers.length }}
 			scrollbars(y)
@@ -55,6 +55,10 @@ const props = defineProps({
 	showUserlist: {
 		type: Boolean,
 		default: true
+	},
+	hiddenMessageIds: {
+		type: Array,
+		default: () => []
 	}
 })
 const emit = defineEmits(['change'])
@@ -90,6 +94,7 @@ const filteredTimeline = computed(() => {
 		(showJoinleave || message.event_type !== 'channel.member') &&
 		message.content.type !== 'deleted' &&
 		!message.replaces &&
+		!props.hiddenMessageIds.includes(message.event_id) &&
 		(!message.content.poll_id || polls.value?.find(poll => poll.id === message.content.poll_id))
 	)
 })

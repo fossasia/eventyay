@@ -83,6 +83,18 @@ export function normalizeYoutubeVideoId(input) {
 	return null
 }
 
+// Expand a raw YouTube ID into a watch URL so form fields show a URL on load,
+// not only after the user focuses/blurs the input.
+export function toYoutubeWatchUrl(input) {
+	if (input === null || input === undefined) return ''
+	const raw = String(input).trim()
+	if (!raw) return ''
+	const id = normalizeYoutubeVideoId(raw)
+	if (!id) return raw
+	if (/^https?:\/\//i.test(raw)) return raw
+	return `https://www.youtube.com/watch?v=${id}`
+}
+
 export function normalizeAudioTranslationSource(audioSource) {
 	if (!audioSource) return null
 	const youtubeId = normalizeYoutubeVideoId(audioSource)
@@ -98,7 +110,7 @@ export function normalizeAudioTranslationSource(audioSource) {
 export function isUsableAudioTranslationEntry(entry) {
 	if (!entry?.language) return false
 	if (entry.language === 'Original') return true
-	return !!normalizeAudioTranslationSource(entry.youtube_id)
+	return !!normalizeAudioTranslationSource(entry.url || entry.youtube_id)
 }
 
 export function youtubeid(message) {

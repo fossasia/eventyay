@@ -1,6 +1,6 @@
 <template lang="pug">
 .c-admin-kiosk
-	.error(v-if="error") We could not fetch the current configuration.
+	.error(v-if="error") {{ $t('We could not fetch the current configuration.') }}
 	template(v-else-if="kiosk")
 		.ui-page-header
 			bunt-icon-button(@click="$router.push({name: 'admin:kiosks:index'})") arrow_left
@@ -10,46 +10,44 @@
 		.scroll-wrapper(v-scrollbar.y="")
 			.ui-form-body
 				.kiosk-url
-					label Kiosk Login URL:
+					label {{ $t('Kiosk Login URL:') }}
 					copyable-text(:text="loginUrl")
-				bunt-input(name="name", v-model="kiosk.profile.display_name", label="Name", :validation="v$.kiosk.profile.display_name")
-				bunt-select(v-model="kiosk.profile.room_id", label="Room", name="room", :options="rooms", option-label="name", :validation="v$.kiosk.profile.room_id")
-				color-picker(name="background_color", v-model="kiosk.profile.background_color", label="Background color", :validation="v$.kiosk.profile.background_color")
-				bunt-switch(name="show_reactions", v-model="kiosk.profile.show_reactions", label="Show reaction cloud")
-				h2 Slides
-				p Select which slides to show on the kiosk. Slides will only show when they have content to show. Pinned poll and question slides will always take priority over others, there is no need to manually intervene during a session.
-				bunt-checkbox(name="show_pinned_poll", v-model="kiosk.profile.slides.pinned_poll", label="Pinned poll")
-				bunt-checkbox(name="show_pinned_question", v-model="kiosk.profile.slides.pinned_question", label="Pinned question")
-				bunt-checkbox(name="show_next_session", v-model="kiosk.profile.slides.next_session", label="Next session")
-				bunt-checkbox(name="show_viewers", v-model="kiosk.profile.slides.viewers", label="Active viewers")
+				bunt-input(name="name", v-model="kiosk.profile.display_name", :label="$t('Name')", :validation="v$.kiosk.profile.display_name")
+				bunt-select(v-model="kiosk.profile.room_id", :label="$t('Room')", name="room", :options="rooms", option-label="name", :validation="v$.kiosk.profile.room_id")
+				bunt-switch(name="show_reactions", v-model="kiosk.profile.show_reactions", :label="$t('Show reaction cloud')")
+				h2 {{ $t('Slides') }}
+				p {{ $t('Choose which panels appear on the kiosk. Multiple items are shown together; pin a poll or question to take over the full screen (unpin to return). If only one item has content, it is shown full screen automatically.') }}
+				bunt-checkbox(name="show_pinned_poll", :model-value="!!kiosk.profile.slides.pinned_poll", @update:model-value="setSlide('pinned_poll', $event)", :label="$t('Poll')")
+				bunt-checkbox(name="show_pinned_question", :model-value="!!kiosk.profile.slides.pinned_question", @update:model-value="setSlide('pinned_question', $event)", :label="$t('Question')")
+				bunt-checkbox(name="show_next_session", :model-value="!!kiosk.profile.slides.next_session", @update:model-value="setSlide('next_session', $event)", :label="$t('Next session')")
+				bunt-checkbox(name="show_viewers", :model-value="!!kiosk.profile.slides.viewers", @update:model-value="setSlide('viewers', $event)", :label="$t('Active viewers')")
 		.ui-form-actions
-			bunt-button.btn-save(@click="save", :loading="saving", :error-message="saveError") Save
+			bunt-button.btn-save(@click="save", :loading="saving", :error-message="saveError") {{ $t('Save') }}
 			.errors {{ validationErrors.join(', ') }}
 	bunt-progress-circular(v-else, size="huge")
 	transition(name="prompt")
 		prompt.delete-prompt(v-if="showDeletePrompt", @close="showDeletePrompt = false")
 			.content
 				.prompt-header
-					h3 Are you ABSOLUTELY sure?
-				p This action #[b CANNOT] be undone. This will permanently delete the kiosk
+					h3 {{ $t('Are you ABSOLUTELY sure?') }}
+				p {{ $t('This action CANNOT be undone. This will permanently delete the kiosk') }}
 				.kiosk-name {{ kiosk.profile.display_name }}
-				p Please type in the name of the kiosk to confirm.
-				bunt-input(name="deletingKioskName", label="Kiosk name", v-model="deletingKioskName", @keypress.enter="deleteKiosk")
-				bunt-button.delete-kiosk(icon="delete", :disabled="deletingKioskName !== kiosk.profile.display_name", @click="deleteKiosk", :loading="deleting", :error-message="deleteError") delete this kiosk
+				p {{ $t('Please type in the name of the kiosk to confirm.') }}
+				bunt-input(name="deletingKioskName", :label="$t('Kiosk name')", v-model="deletingKioskName", @keypress.enter="deleteKiosk")
+				bunt-button.delete-kiosk(icon="delete", :disabled="deletingKioskName !== kiosk.profile.display_name", @click="deleteKiosk", :loading="deleting", :error-message="deleteError") {{ $t('delete this kiosk') }}
 </template>
 <script>
 import { useVuelidate } from '@vuelidate/core'
 import api from 'lib/api'
-import { color, required } from 'lib/validators'
+import { required } from 'lib/validators'
 import { inferRoomType } from 'lib/room-types'
-import ColorPicker from 'components/ColorPicker'
 import CopyableText from 'components/CopyableText'
 import Prompt from 'components/Prompt'
 import ValidationErrorsMixin from 'components/mixins/validation-errors'
 
 export default {
 	name: 'AdminKiosk',
-	components: { ColorPicker, CopyableText, Prompt },
+	components: { CopyableText, Prompt },
 	mixins: [ValidationErrorsMixin],
 	props: {
 		kioskId: String
@@ -75,31 +73,41 @@ export default {
 			return `${window.location.origin}/login/${this.kiosk.token}`
 		}
 	},
-	validations: {
-		kiosk: {
-			profile: {
-				display_name: {
-					required: required('Name is required')
-				},
-				room_id: {
-					required: required('Room is required')
-				},
-				background_color: {
-					color: color('color must be in 3 or 6 digit hex format')
-				},
+	validations() {
+		return {
+			kiosk: {
+				profile: {
+					display_name: {
+						required: required(this.$t('Name is required'))
+					},
+					room_id: {
+						required: required(this.$t('Room is required'))
+					}
+				}
 			}
 		}
 	},
 	async created() {
 		try {
 			this.kiosk = await api.call('user.kiosk.fetch', {id: this.kioskId})
-			if (!this.kiosk.profile.show_reactions) this.kiosk.profile.show_reactions = true
-			if (!this.kiosk.profile.slides) this.kiosk.profile.slides = {
-				pinned_poll: true,
-				pinned_question: true,
-				next_session: true,
-				viewers: true,
-				reactions: true
+			if (this.kiosk.profile.show_reactions == null) this.kiosk.profile.show_reactions = true
+			if (!this.kiosk.profile.slides || typeof this.kiosk.profile.slides !== 'object') {
+				// Never configured: classic panels on, viewers opt-in.
+				this.kiosk.profile.slides = {
+					pinned_poll: true,
+					pinned_question: true,
+					next_session: true,
+					viewers: false
+				}
+			} else {
+				const slides = this.kiosk.profile.slides
+				// Keep unchecked boxes as false (not undefined) so Save persists correctly.
+				this.kiosk.profile.slides = {
+					pinned_poll: slides.pinned_poll === true,
+					pinned_question: slides.pinned_question === true,
+					next_session: slides.next_session === true,
+					viewers: slides.viewers === true
+				}
 			}
 		} catch (error) {
 			this.error = error
@@ -107,13 +115,36 @@ export default {
 		}
 	},
 	methods: {
+		setSlide(key, value) {
+			if (!this.kiosk?.profile) return
+			if (!this.kiosk.profile.slides || typeof this.kiosk.profile.slides !== 'object') {
+				this.kiosk.profile.slides = {
+					pinned_poll: false,
+					pinned_question: false,
+					next_session: false,
+					viewers: false
+				}
+			}
+			this.kiosk.profile.slides = {
+				...this.kiosk.profile.slides,
+				[key]: value === true
+			}
+		},
 		async save() {
 			this.saveError = null
 			this.v$.$touch()
 			if (this.v$.$invalid) return
 			this.saving = true
 			try {
-				await api.call('user.admin.update', {
+				if (!this.kiosk.profile.slides) this.kiosk.profile.slides = {}
+				const slides = this.kiosk.profile.slides
+				this.kiosk.profile.slides = {
+					pinned_poll: slides.pinned_poll === true,
+					pinned_question: slides.pinned_question === true,
+					next_session: slides.next_session === true,
+					viewers: slides.viewers === true
+				}
+				await api.call('user.kiosk.update', {
 					id: this.kiosk.id,
 					profile: this.kiosk.profile
 				})
@@ -131,7 +162,7 @@ export default {
 				await api.call('user.delete', {id: this.kiosk.id})
 				this.$router.replace({name: 'admin:kiosks:index'})
 			} catch (error) {
-				this.deleteError = this.$t(`error:${error.code}`)
+				this.deleteError = error?.message || this.$t('Something went wrong.')
 			}
 			this.deleting = false
 		}

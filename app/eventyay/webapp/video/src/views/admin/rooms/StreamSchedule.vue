@@ -1,20 +1,20 @@
 <template lang="pug">
 .c-stream-schedule
-	h2 Stream Schedules
+	h2 {{ $t('Stream Schedules') }}
 	.error(v-if="error") {{ error }}
 	.loading(v-if="loading")
 		bunt-progress-circular(size="large")
 	template(v-else)
 		.interpretation-plugin-language-streams(v-if="roomId && showPluginLanguageStreams")
 			LanguageAudioSourceList(
-				title="Interpretation source"
+				:title="$t('Interpretation source')"
 				:entries="pluginLanguageStreamEntries"
 			)
-			p.plugin-language-streams-hint Room-level plugin streams used when “Use plugin language streams” is enabled on the Interpretation overview.
+			p.plugin-language-streams-hint {{ $t('Room-level plugin streams used when “Use plugin language streams” is enabled on the Interpretation overview.') }}
 		.stream-schedules-list(v-scrollbar.y="", v-if="streamSchedules && streamSchedules.length > 0")
 			.stream-schedule-item(v-for="schedule in streamSchedules", :key="schedule.id")
 				.info
-					.title {{ schedule.title || 'Untitled Stream' }}
+					.title {{ schedule.title || $t('Untitled Stream') }}
 					.url {{ schedule.url }}
 					.time {{ formatDateTime(schedule.start_time) }} - {{ formatDateTime(schedule.end_time) }} ({{ eventTimezone }})
 					.type {{ schedule.stream_type }}
@@ -22,48 +22,41 @@
 					bunt-icon-button(@click="editSchedule(schedule)") pencil
 					bunt-icon-button(@click="deleteSchedule(schedule)") delete-outline
 		.empty-state(v-else-if="streamSchedules !== null")
-			p No stream schedules configured yet.
-			p Click "Add Stream Schedule" to create one.
-	bunt-button.add-btn(@click="openCreateForm") + Add Stream Schedule
+			p {{ $t('No stream schedules configured yet.') }}
+			p {{ $t('Click "Add Stream Schedule" to create one.') }}
+	bunt-button.add-btn(@click="openCreateForm") {{ $t('+ Add Stream Schedule') }}
 	transition(name="prompt")
 		prompt.c-stream-schedule-prompt(v-if="showCreateForm || editingSchedule", @close="closeForm", :scrollable="false")
 			.content
-				h1 {{ editingSchedule ? 'Edit' : 'Create' }} Stream Schedule
+				h1 {{ editingSchedule ? $t('Edit Stream Schedule') : $t('Create Stream Schedule') }}
 				form.stream-schedule-form(@submit.prevent="saveSchedule")
-					bunt-input(name="title", v-model="formData.title", label="Title (optional)", placeholder="e.g., Day 1 Stream, Keynotes")
-					bunt-input(name="url", v-model="formData.url", label="Stream URL", :validation="v$.formData.url", required, placeholder="https://youtube.com/watch?v=...")
+					bunt-input(name="title", v-model="formData.title", :label="$t('Title (optional)')", :placeholder="$t('e.g., Day 1 Stream, Keynotes')")
+					bunt-input(name="url", v-model="formData.url", :label="$t('Stream URL')", :validation="v$.formData.url", required, :placeholder="$t('https://youtube.com/watch?v=...')")
 					.datetime-field
-						label.datetime-label Start Time ({{ eventTimezone }})
+						label.datetime-label {{ $t('Start Time') }} ({{ eventTimezone }})
 						input.datetime-input(type="datetime-local", v-model="plainStartTime", :class="{'has-error': v$.formData.start_time.$error}")
-						.error-message(v-if="v$.formData.start_time.$error") Start time is required
+						.error-message(v-if="v$.formData.start_time.$error") {{ $t('Start time is required') }}
 					.datetime-field
-						label.datetime-label End Time ({{ eventTimezone }})
+						label.datetime-label {{ $t('End Time') }} ({{ eventTimezone }})
 						input.datetime-input(type="datetime-local", v-model="plainEndTime", :class="{'has-error': v$.formData.end_time.$error}")
-						.error-message(v-if="v$.formData.end_time.$error") End time is required
+						.error-message(v-if="v$.formData.end_time.$error") {{ $t('End time is required') }}
 					.timezone-hint
-						i All times in {{ eventTimezone }}
-					bunt-select(name="stream_type", v-model="formData.stream_type", label="Stream Type", :options="streamTypes", option-value="id", option-label="label", :validation="v$.formData.stream_type")
-					.field-hint(v-if="formData.stream_type === 'iframe'") {{ IFRAME_PROVIDER_HELP_TEXT }}
-					.language-urls(v-if="formData.stream_type === 'youtube'")
-						LanguageAudioSourceList(
-							title="Languages and Audio Source"
-							:entries="formData.config.languageUrls"
-						)
+						i {{ $t('All times in') }} {{ eventTimezone }}
+					bunt-select(name="stream_type", v-model="formData.stream_type", :label="$t('Stream Type')", :options="streamTypeOptions", option-value="id", option-label="label", :validation="v$.formData.stream_type")
 					.form-error(v-if="saveError")
 						| {{ saveError }}
 					.form-actions
-						bunt-button.btn-save(type="submit", :loading="saving") {{ editingSchedule ? 'Save' : 'Create' }}
-						bunt-button.btn-cancel(@click="closeForm") Cancel
+						bunt-button.btn-save(type="submit", :loading="saving") {{ editingSchedule ? $t('Save') : $t('Create') }}
+						bunt-button.btn-cancel(@click="closeForm") {{ $t('Cancel') }}
 </template>
 <script>
 import { useVuelidate } from '@vuelidate/core';
 import { helpers } from '@vuelidate/validators';
-import { required, url, normalizeYoutubeVideoId } from 'lib/validators';
+import { required, url, normalizeYoutubeVideoId, toYoutubeWatchUrl } from 'lib/validators';
 import api from 'lib/api';
 import Prompt from 'components/Prompt';
 import LanguageAudioSourceList from 'components/LanguageAudioSourceList';
 import moment from 'lib/timetravelMoment';
-import { IFRAME_PROVIDER_HELP_TEXT } from 'lib/stage-streams';
 
 export default {
 	name: 'StreamSchedule',
@@ -100,12 +93,6 @@ export default {
 			editingSchedule: null,
 			saving: false,
 			saveError: null,
-			streamTypes: [
-				{ id: 'youtube', label: 'YouTube' },
-				{ id: 'hls', label: 'HLS' },
-				{ id: 'iframe', label: 'Iframe' },
-			],
-			IFRAME_PROVIDER_HELP_TEXT,
 			formData: {
 				title: '',
 				url: '',
@@ -122,6 +109,13 @@ export default {
 		},
 		pluginLanguageStreamEntries() {
 			return this.interpretationAdmin?.languageStreams ?? []
+		},
+		streamTypeOptions() {
+			this.$store.state.userLocale
+			return [
+				{ id: 'youtube', label: this.$t('YouTube') },
+				{ id: 'hls', label: this.$t('HLS') },
+			]
 		},
 		eventTimezone() {
 			return this.$store.state.world?.timezone || 'UTC';
@@ -159,28 +153,28 @@ export default {
 	},
 	validations() {
 		const urlRules = {
-			required: required('Stream URL is required')
+			required: required(this.$t('Stream URL is required'))
 		};
 		if (this.formData.stream_type === 'youtube') {
-			urlRules.youtubeid = helpers.withMessage('Must be a valid YouTube URL', (value) => {
+			urlRules.youtubeid = helpers.withMessage(this.$t('Must be a valid YouTube URL'), (value) => {
 				if (!value) return true;
 				return !!normalizeYoutubeVideoId(value);
 			});
 		} else {
-			urlRules.url = url('Must be a valid URL');
+			urlRules.url = url(this.$t('Must be a valid URL'));
 		}
 
 		const rules = {
 			formData: {
 				url: urlRules,
 				start_time: {
-					required: required('Start time is required'),
+					required: required(this.$t('Start time is required')),
 				},
 				end_time: {
-					required: required('End time is required'),
+					required: required(this.$t('End time is required')),
 				},
 				stream_type: {
-					required: required('Stream type is required'),
+					required: required(this.$t('Stream type is required')),
 				},
 			},
 		};
@@ -219,7 +213,6 @@ export default {
 				stream_type: this.formData.stream_type,
 				config: {
 					...this.formData.config,
-					languageUrls: this.formData.config.languageUrls || [],
 				},
 			};
 		},
@@ -239,7 +232,6 @@ export default {
 					stream_type: draft.stream_type || 'youtube',
 					config: {
 						...(draft.config || {}),
-						languageUrls: draft.config?.languageUrls || [],
 					},
 				};
 			} catch (error) {
@@ -301,7 +293,7 @@ export default {
 				// Handle both array and paginated response
 				this.streamSchedules = Array.isArray(data) ? data : data.results || [];
 			} catch (error) {
-				this.error = error.message || 'Failed to load stream schedules';
+				this.error = error.message || this.$t('Failed to load stream schedules');
 				this.streamSchedules = [];
 			} finally {
 				this.loading = false;
@@ -316,10 +308,9 @@ export default {
 			this.editingSchedule = schedule;
 			const tz = this.eventTimezone || 'UTC';
 			let config = schedule.config ? JSON.parse(JSON.stringify(schedule.config)) : {};
-			config.languageUrls = config.languageUrls || [];
 			this.formData = {
 				title: schedule.title || '',
-				url: schedule.url,
+				url: schedule.stream_type === 'youtube' ? toYoutubeWatchUrl(schedule.url) : schedule.url,
 				start_time: schedule.start_time ? this.parseApiDateTime(schedule.start_time).tz(tz) : null,
 				end_time: schedule.end_time ? this.parseApiDateTime(schedule.end_time).tz(tz) : null,
 				stream_type: schedule.stream_type,
@@ -335,7 +326,7 @@ export default {
 				start_time: null,
 				end_time: null,
 				stream_type: 'youtube',
-				config: { languageUrls: [] },
+				config: {},
 			};
 			this.saveError = null;
 			this.v$.$reset();
@@ -350,7 +341,7 @@ export default {
 			if (this.formData.start_time) {
 				const startTimeUtc = this.formData.start_time.clone().utc();
 				if (!this.editingSchedule && startTimeUtc.isBefore(now)) {
-					this.saveError = 'Start time cannot be in the past.';
+					this.saveError = this.$t('Start time cannot be in the past.');
 					return;
 				}
 				if (
@@ -359,19 +350,19 @@ export default {
 					this.parseApiDateTime(this.editingSchedule.start_time).utc().isSameOrAfter(now) &&
 					startTimeUtc.isBefore(now)
 				) {
-					this.saveError = 'Start time cannot be in the past.';
+					this.saveError = this.$t('Start time cannot be in the past.');
 					return;
 				}
 			}
 			if (this.formData.start_time && this.formData.end_time) {
 				if (this.formData.end_time.isSameOrBefore(this.formData.start_time)) {
-					this.saveError = 'End time must be after start time.';
+					this.saveError = this.$t('End time must be after start time.');
 					return;
 				}
 			}
 			if (!this.roomId) {
 				if (!this.roomName.trim()) {
-					this.saveError = 'Room name is required.';
+					this.saveError = this.$t('Room name is required.');
 					return;
 				}
 				this.$emit('create-requires-room', this.serializeFormData());
@@ -467,7 +458,7 @@ export default {
 					}
 
 					if (!errorMessage) {
-						errorMessage = 'Bad Request';
+						errorMessage = this.$t('Bad Request');
 					}
 
 					throw new Error(errorMessage);
@@ -478,11 +469,11 @@ export default {
 				await this.fetchStreamSchedules();
 			} catch (error) {
 				this.saving = false;
-				this.saveError = error.message || 'Failed to save stream schedule';
+				this.saveError = error.message || this.$t('Failed to save stream schedule');
 			}
 		},
 		async deleteSchedule(schedule) {
-			if (!confirm(`Delete stream schedule "${schedule.title || 'Untitled'}"?`))
+			if (!confirm(`${this.$t('Delete stream schedule')} "${schedule.title || this.$t('Untitled')}"?`))
 				return;
 
 			try {
@@ -507,7 +498,7 @@ export default {
 
 				await this.fetchStreamSchedules();
 			} catch (error) {
-				this.error = error.message || 'Failed to delete stream schedule';
+				this.error = error.message || this.$t('Failed to delete stream schedule');
 			}
 		},
 		formatDateTime(datetime) {
