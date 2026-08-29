@@ -29,20 +29,20 @@ class UserOrderFilterForm(forms.Form):
     )
     date_from = forms.DateField(
         required=False,
-        label=_('From'),
+        label=_('Start date'),
         input_formats=['%Y-%m-%d'],
         widget=forms.DateInput(
             format='%Y-%m-%d',
-            attrs={'class': 'form-control', 'type': 'date'},
+            attrs={'class': 'form-control', 'type': 'date', 'autocomplete': 'off'},
         ),
     )
     date_to = forms.DateField(
         required=False,
-        label=_('To'),
+        label=_('End date'),
         input_formats=['%Y-%m-%d'],
         widget=forms.DateInput(
             format='%Y-%m-%d',
-            attrs={'class': 'form-control', 'type': 'date'},
+            attrs={'class': 'form-control', 'type': 'date', 'autocomplete': 'off'},
         ),
     )
 

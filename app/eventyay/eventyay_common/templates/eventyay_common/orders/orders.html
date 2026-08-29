@@ -84,4 +84,15 @@
         </div>
         {% include 'pretixcontrol/pagination.html' %}
     </div>
+    <script>
+        (function () {
+            var params = new URLSearchParams(window.location.search);
+            ['date_from', 'date_to'].forEach(function (name) {
+                if (!params.get(name)) {
+                    var input = document.querySelector('input[name="' + name + '"]');
+                    if (input) input.value = '';
+                }
+            });
+        })();
+    </script>
 {% endblock %}
