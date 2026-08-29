@@ -490,9 +490,12 @@ def get_admin_navigation(request):
                 'url': reverse('eventyay_admin:video_admin:settings'),
                 'active': is_video_route and (
                     url.url_name == 'settings' or
-                    url.url_name.endswith('server.create') or
-                    url.url_name.endswith('server.update') or
-                    url.url_name.endswith('server.delete')
+                    url.url_name.startswith('bbbserver.') or
+                    url.url_name.startswith('janusserver.') or
+                    url.url_name.startswith('jitsiserver.') or
+                    url.url_name.startswith('turnserver.') or
+                    url.url_name.startswith('streamingserver.') or
+                    url.url_name == 'server.toggle-active'
                 ),
             },
             {
