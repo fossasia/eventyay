@@ -24,18 +24,26 @@ class UserOrderFilterForm(forms.Form):
     status = forms.ChoiceField(
         required=False,
         label=_('Status'),
-        choices=[('', _('All statuses'))] + list(Order.STATUS_CHOICE),
+        choices=[('', _('All status'))] + list(Order.STATUS_CHOICE),
         widget=forms.Select(attrs={'class': 'form-control'}),
     )
     date_from = forms.DateField(
         required=False,
         label=_('From'),
-        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+        input_formats=['%Y-%m-%d'],
+        widget=forms.DateInput(
+            format='%Y-%m-%d',
+            attrs={'class': 'form-control', 'type': 'date'},
+        ),
     )
     date_to = forms.DateField(
         required=False,
         label=_('To'),
-        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+        input_formats=['%Y-%m-%d'],
+        widget=forms.DateInput(
+            format='%Y-%m-%d',
+            attrs={'class': 'form-control', 'type': 'date'},
+        ),
     )
 
     def __init__(self, *args, **kwargs):
