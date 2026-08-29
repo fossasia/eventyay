@@ -488,7 +488,12 @@ def get_admin_navigation(request):
             {
                 'label': _('Video settings'),
                 'url': reverse('eventyay_admin:video_admin:settings'),
-                'active': is_video_route and url.url_name == 'settings',
+                'active': is_video_route and (
+                    url.url_name == 'settings' or
+                    url.url_name.endswith('server.create') or
+                    url.url_name.endswith('server.update') or
+                    url.url_name.endswith('server.delete')
+                ),
             },
             {
                 'label': _('Events'),
