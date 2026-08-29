@@ -26,14 +26,17 @@
     <div class="tab-content">
         <!-- BBB Tab -->
         <div role="tabpanel" class="tab-pane {% if active_tab == 'bbb' %}active{% endif %}" id="bbb">
-            <p>
-                <a href="{% url 'eventyay_admin:video_admin:bbbserver.create' %}" class="btn btn-default">
-                    <span class="fa fa-plus" aria-hidden="true"></span> {% trans "Add new server" %}
-                </a>
-                <a href="{% url 'eventyay_admin:video_admin:bbbserver.moveroom' %}" class="btn btn-default">
-                    <span class="fa fa-exchange" aria-hidden="true"></span> {% trans "Move BBB room" %}
-                </a>
-            </p>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; margin-top: 15px;">
+                <h3 style="margin: 0; font-weight: bold; font-size: 16px;">{% trans "BBB Server Configurations" %}</h3>
+                <div>
+                    <a href="{% url 'eventyay_admin:video_admin:bbbserver.moveroom' %}" class="btn btn-default">
+                        <span class="fa fa-exchange" aria-hidden="true"></span> {% trans "Move BBB room" %}
+                    </a>
+                    <a href="{% url 'eventyay_admin:video_admin:bbbserver.create' %}" class="btn btn-primary">
+                        <span class="fa fa-plus" aria-hidden="true"></span> {% trans "Add new server" %}
+                    </a>
+                </div>
+            </div>
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
@@ -80,11 +83,14 @@
 
         <!-- Jitsi Tab -->
         <div role="tabpanel" class="tab-pane {% if active_tab == 'jitsi' %}active{% endif %}" id="jitsi">
-            <p>
-                <a href="{% url 'eventyay_admin:video_admin:jitsiserver.create' %}" class="btn btn-default">
-                    <span class="fa fa-plus" aria-hidden="true"></span> {% trans "Add new server" %}
-                </a>
-            </p>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; margin-top: 15px;">
+                <h3 style="margin: 0; font-weight: bold; font-size: 16px;">{% trans "Jitsi Server Configurations" %}</h3>
+                <div>
+                    <a href="{% url 'eventyay_admin:video_admin:jitsiserver.create' %}" class="btn btn-primary">
+                        <span class="fa fa-plus" aria-hidden="true"></span> {% trans "Add new server" %}
+                    </a>
+                </div>
+            </div>
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
@@ -128,11 +134,14 @@
 
         <!-- Janus Tab -->
         <div role="tabpanel" class="tab-pane {% if active_tab == 'janus' %}active{% endif %}" id="janus">
-            <p>
-                <a href="{% url 'eventyay_admin:video_admin:janusserver.create' %}" class="btn btn-default">
-                    <span class="fa fa-plus"></span> {% trans "Add new server" %}
-                </a>
-            </p>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; margin-top: 15px;">
+                <h3 style="margin: 0; font-weight: bold; font-size: 16px;">{% trans "Janus Server Configurations" %}</h3>
+                <div>
+                    <a href="{% url 'eventyay_admin:video_admin:janusserver.create' %}" class="btn btn-primary">
+                        <span class="fa fa-plus"></span> {% trans "Add new server" %}
+                    </a>
+                </div>
+            </div>
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
@@ -174,11 +183,14 @@
 
         <!-- TURN Tab -->
         <div role="tabpanel" class="tab-pane {% if active_tab == 'turn' %}active{% endif %}" id="turn">
-            <p>
-                <a href="{% url 'eventyay_admin:video_admin:turnserver.create' %}" class="btn btn-default">
-                    <span class="fa fa-plus"></span> {% trans "Add new server" %}
-                </a>
-            </p>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; margin-top: 15px;">
+                <h3 style="margin: 0; font-weight: bold; font-size: 16px;">{% trans "TURN Server Configurations" %}</h3>
+                <div>
+                    <a href="{% url 'eventyay_admin:video_admin:turnserver.create' %}" class="btn btn-primary">
+                        <span class="fa fa-plus"></span> {% trans "Add new server" %}
+                    </a>
+                </div>
+            </div>
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
@@ -220,11 +232,14 @@
 
         <!-- Streaming Tab -->
         <div role="tabpanel" class="tab-pane {% if active_tab == 'streaming' %}active{% endif %}" id="streaming">
-            <p>
-                <a href="{% url 'eventyay_admin:video_admin:streamingserver.create' %}" class="btn btn-default">
-                    <span class="fa fa-plus"></span> {% trans "Add new server" %}
-                </a>
-            </p>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; margin-top: 15px;">
+                <h3 style="margin: 0; font-weight: bold; font-size: 16px;">{% trans "Streaming Server Configurations" %}</h3>
+                <div>
+                    <a href="{% url 'eventyay_admin:video_admin:streamingserver.create' %}" class="btn btn-primary">
+                        <span class="fa fa-plus"></span> {% trans "Add new server" %}
+                    </a>
+                </div>
+            </div>
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
