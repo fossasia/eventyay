@@ -8,7 +8,6 @@ from rest_framework import routers
 from eventyay.api.views import cart
 from eventyay.common.urls import OrganizerSlugConverter  # noqa: F401 (registers converter)
 
-from ..eventyay_common.views.billing import BillingInvoicePreview
 from .views import (
     access_code,
     checkin,
@@ -233,11 +232,6 @@ urlpatterns = [
     path('upload', upload.UploadView.as_view(), name='upload'),
     path('me', user.MeView.as_view(), name='user.me'),
     path('version', version.VersionView.as_view(), name='version'),
-    path(
-        'billing-testing/<task>',
-        BillingInvoicePreview.as_view(),
-        name='billing-testing',
-    ),
     path('webhook/stripe', stripe_webhook_view, name='stripe-webhook'),
     path('webhook/stripe/', stripe_webhook_view, name='stripe-webhook-slash'),
     path(
