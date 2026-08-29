@@ -24,7 +24,13 @@ class UserOrderFilterForm(forms.Form):
     status = forms.ChoiceField(
         required=False,
         label=_('Status'),
-        choices=[('', _('All status'))] + list(Order.STATUS_CHOICE),
+        choices=[
+            ('', _('All status')),
+            (Order.STATUS_PENDING, _('Pending')),
+            (Order.STATUS_PAID, _('Paid')),
+            (Order.STATUS_EXPIRED, _('Expired')),
+            (Order.STATUS_CANCELED, _('Canceled')),
+        ],
         widget=forms.Select(attrs={'class': 'form-control'}),
     )
     date_from = forms.DateField(
