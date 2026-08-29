@@ -25,6 +25,9 @@
             <script defer src="{% static "orga/js/stats.js" %}"></script>
         {% endcompress %}
     {% endif %}
+    {% compress js %}
+        <script defer src="{% static "orga/js/internalNote.js" %}"></script>
+    {% endcompress %}
 {% endblock scripts %}
 
 {% block content %}
@@ -122,21 +125,37 @@
         {% include "orga/submission/includes/statistics.html" %}
     {% endif %}
 
-    {% if history and can_change_settings %}
-        <div class="dashboard-history mt-4">
-            <div class="d-flex">
-                <h2>{% translate "History" %}</h2>
-                {% if can_change_settings %}
-                    <small>
-                        <a href="{{ request.event.orga_urls.history }}" class="text-muted ml-2">
-                            ({% translate "Full history" %})
-                        </a>
-                    </small>
-                {% endif %}
+       {% if can_change_settings %}
+        <div class="dashboard-history card mt-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">{% translate "Recent talk activity" %}</h2>
+                <a href="{{ request.event.orga_urls.history }}" class="text-muted">
+                    {% translate "View all activity" %} &raquo;
+                </a>
             </div>
+            <div class="card-body p-0">
+                {% include "orga/event/includes/talk_activity.html" with entries=history %}
+            </div>
+        </div>
 
-            {% include "common/logs.html" with entries=history %}
-
+        <div class="dashboard-internal-note card mt-4">
+            <div class="card-header">
+                <h2 class="mb-0">{% translate "Internal note" %}</h2>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {{ internal_note_form.comment }}
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <small class="text-muted">
+                            <span id="internal-note-counter">0</span>/1000
+                        </small>
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            {% translate "Save note" %}
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     {% endif %}
 {% endblock content %}

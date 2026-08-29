@@ -142,3 +142,38 @@ def test_event_dashboard_different_times(event, orga_client, start_diff, end_dif
         event.save()
     response = orga_client.get(event.orga_urls.base)
     assert response.status_code == 200
+
+@pytest.mark.django_db
+def test_dashboard_history_only_shows_talk_activity(orga_user, orga_client, event, slot):
+    from eventyay.base.models.log import LogEntry
+
+    submission = slot.submission
+    LogEntry.objects.create(
+        event=event,
+        content_object=submission,
+        action_type='eventyay.submission.create',
+    )
+    LogEntry.objects.create(
+        event=event,
+        content_object=event,
+        action_type='eventyay.event.order.placed',
+    )
+
+    response = orga_client.get(event.orga_urls.base)
+
+    assert response.status_code == 200
+    assert 'eventyay.submission.create' in response.text
+    assert 'eventyay.event.order.placed' not in response.text
+
+
+@pytest.mark.django_db
+def test_dashboard_internal_note_save(orga_user, orga_client, event):
+    response = orga_client.post(
+        event.orga_urls.base,
+        {'comment': 'Follow up with the AV team before the event.'},
+        follow=True,
+    )
+
+    event.refresh_from_db()
+    assert response.status_code == 200
+    assert event.comment == 'Follow up with the AV team before the event.'

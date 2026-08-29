@@ -253,3 +253,24 @@
 .dashboard-live {
   margin-top: 12px;
 }
+.dashboard-history,
+.dashboard-internal-note {
+  overflow: hidden;
+}
+
+.talk-activity-table th,
+.talk-activity-table td {
+  vertical-align: middle;
+}
+
+#id_internal_note {
+  width: 100%;
+  resize: vertical;
+}
+
+@media (max-width: 767px) {
+  .talk-activity-table th:nth-child(3),
+  .talk-activity-table td:nth-child(3) {
+    display: none;
+  }
+}
