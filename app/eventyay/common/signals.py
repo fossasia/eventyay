@@ -245,6 +245,13 @@ plugin is enabled in the current event context if your locale should be scoped t
 events with your plugin activated.
 """
 
+user_dashboard_links = django.dispatch.Signal()
+"""
+Sent to collect additional ``<a class="dropdown-item">`` entries for the global
+user dashboard dropdown (the control/orga area header). The sender is the
+``request`` object. Receivers should return an HTML string or empty string.
+"""
+
 
 @receiver(periodic_task, dispatch_uid="process_scheduled_emails")
 @scopes_disabled()
