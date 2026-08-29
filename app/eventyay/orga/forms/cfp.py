@@ -35,7 +35,6 @@ from eventyay.common.forms.widgets import (
     HtmlDateInput,
     HtmlDateTimeInput,
     TextInputWithAddon,
-    I18nRichTextWidget,
 )
 from eventyay.common.language import get_language_choices_native_with_ui_name
 from eventyay.common.text.phrases import phrases
