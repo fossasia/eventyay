@@ -1,0 +1,213 @@
+{% extends "pretixcontrol/event/base.html" %}
+{% load i18n %}
+{% load bootstrap3 %}
+{% load order_overview %}
+{% load static %}
+{% load captureas %}
+
+{% block title %}{% trans "Import / Export" %}{% endblock %}
+
+{% block custom_header %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/import-export.css' %}" />
+    <script type="application/javascript" src="{% static 'pretixcontrol/js/ui/import_export.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+    {% trans "Import / Export" as header_title_var %}
+    {% captureas header_extra_var %}
+        {% if "identifier" in request.GET %}
+            <a href="?" class="btn btn-default">{% trans "Show all" %}</a>
+        {% endif %}
+    {% endcaptureas %}
+    {% include "common/includes/header_nav.html" with header_title=header_title_var header_title_extra=header_extra_var header_component_link="pretixcontrol/event/component_link.html" %}
+
+    <ul class="nav nav-tabs import-export-nav-tabs" role="tablist">
+        {% if "can_view_orders" in request.eventpermset %}
+        <li role="presentation" {% if active_tab == "export" %}class="active"{% endif %}>
+            <a href="#tab-export" aria-controls="tab-export" role="tab" data-toggle="tab">{% trans "Export data" %}</a>
+        </li>
+        {% endif %}
+        {% if can_change_orders or has_banktransfer %}
+        <li role="presentation" {% if active_tab == "import" %}class="active"{% endif %}>
+            <a href="#tab-import" aria-controls="tab-import" role="tab" data-toggle="tab">{% trans "Import data" %}</a>
+        </li>
+        {% endif %}
+    </ul>
+
+    <div class="tab-content import-export-tab-content">
+        {% if "can_view_orders" in request.eventpermset %}
+        <!-- Export Tab -->
+        <div role="tabpanel" class="tab-pane {% if active_tab == "export" %}active{% endif %}" id="tab-export">
+            {% for e in exporters %}
+                <details class="panel panel-default" {% if "identifier" in request.GET or "exporter" in request.POST %}open{% endif %}>
+                    <summary class="panel-heading">
+                        <h3 class="panel-title">
+                            {{ e.verbose_name }}
+                            <i class="fa fa-angle-down collapse-indicator"></i>
+                        </h3>
+                    </summary>
+                    <div id="{{ e.identifier }}">
+                        <div class="panel-body">
+                            <form action="{% url 'control:event.orders.import_export.export_do' event=request.event.slug organizer=request.organizer.slug %}"
+                                    method="post" class="form-horizontal" data-asynctask data-asynctask-download
+                                    data-asynctask-long>
+                                {% csrf_token %}
+                                <input type="hidden" name="exporter" value="{{ e.identifier }}" />
+                                {% bootstrap_form e.form layout='control' %}
+                                <button class="btn btn-primary pull-right flip" type="submit">
+                                    <span class="icon icon-upload"></span> {% trans "Start export" %}
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </details>
+            {% endfor %}
+
+            {% if banktransfer_active and "identifier" not in request.GET and "exporter" not in request.POST %}
+                <details class="panel panel-default">
+                    <summary class="panel-heading">
+                        <h3 class="panel-title">
+                            {% trans "Export bank transfer refunds" %}
+                            <i class="fa fa-angle-down collapse-indicator"></i>
+                        </h3>
+                    </summary>
+                    <div class="panel-body">
+                        <p>
+                            {% blocktrans trimmed %}
+                                Export placed refunds that have not yet been transferred.
+                            {% endblocktrans %}
+                        </p>
+                        <a href="{% url 'plugins:banktransfer:refunds.list' event=request.event.slug organizer=request.organizer.slug %}" class="btn btn-primary">
+                            <span class="fa fa-university"></span> {% trans "Go to bank transfer refunds export" %}
+                        </a>
+                    </div>
+                </details>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if can_change_orders or has_banktransfer %}
+        <!-- Import Tab -->
+        <div role="tabpanel" class="tab-pane {% if active_tab == "import" %}active{% endif %}" id="tab-import">
+            <p class="import-tab-description">
+                {% blocktrans trimmed %}
+                    Upload a file and choose whether the file contains attendees or bank transfers.
+                    In the next step you will be able to map columns or preview the data.
+                {% endblocktrans %}
+            </p>
+
+            <form id="import-form" class="form-horizontal"
+                  data-attendees-url="{% if can_change_orders %}{% url 'control:event.orders.import' event=request.event.slug organizer=request.organizer.slug %}{% else %}#{% endif %}"
+                  data-banktransfer-url="{% if has_banktransfer %}{% url 'plugins:banktransfer:import' event=request.event.slug organizer=request.organizer.slug %}{% else %}#{% endif %}"
+                  data-default-type="{% if not can_change_orders and has_banktransfer %}banktransfer{% else %}attendees{% endif %}"
+                  action="{% if request.GET.import_type == 'banktransfer' and has_banktransfer %}{% url 'plugins:banktransfer:import' event=request.event.slug organizer=request.organizer.slug %}{% else %}{% url 'control:event.orders.import' event=request.event.slug organizer=request.organizer.slug %}{% endif %}" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="tab" value="import" />
+
+                {% if can_change_orders and has_banktransfer %}
+                <div class="import-file-group">
+                    <label class="import-file-label" style="min-width: 120px;" for="import-type-select">{% trans "Import target" %}</label>
+                    <div class="import-file-input-wrapper">
+                        <select id="import-type-select" name="import_type" class="form-control" >
+                            <option value="attendees" {% if not request.GET.import_type or request.GET.import_type == 'attendees' %}selected{% endif %}>{% trans "Attendees" %}</option>
+                            <option value="banktransfer" {% if request.GET.import_type == 'banktransfer' %}selected{% endif %}>{% trans "Bank Transfers" %}</option>
+                        </select>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="import-file-group">
+                    <label class="import-file-label" style="min-width: 120px;" for="import-file">{% trans "Import file" %} *</label>
+                    <div class="import-file-input-wrapper">
+                        <input id="import-file" type="file" name="file" required class="import-file-input"/>
+                        <p id="import-help-attendees" class="help-block {% if request.GET.import_type == 'banktransfer' %}hide{% endif %}">
+                            {% trans "The uploaded file should be a CSV file with a header row." %}
+                        </p>
+                        <p id="import-help-banktransfer" class="help-block {% if not request.GET.import_type or request.GET.import_type == 'attendees' %}hide{% endif %}">
+                            {% trans "Currently, this feature supports .csv files and files in the MT940 format." %}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="submit-group panel">
+                    <span></span>
+                    <span>
+                        <button class="btn btn-primary btn-lg" type="submit">
+                            <i class="fa fa-upload"></i> {% trans "Upload and continue" %}
+                        </button>
+                    </span>
+                </div>
+            </form>
+
+            
+
+            {% if has_banktransfer %}
+                {% if transactions_unhandled|length > 0 or filter_form.is_valid %}
+                    <div id="unresolved-transactions" class="panel panel-default {% if can_change_orders and request.GET.import_type != 'banktransfer' %}hide{% endif %}">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">{% trans "Unresolved transactions" %}</h3>
+                        </div>
+                        <div class="panel-body">
+                            <p>
+                                {% blocktrans trimmed %}
+                                    On this page, you can import banking data on a per-event level. You also only see
+                                    unmatched transactions imported directly for this event.
+                                {% endblocktrans %}
+                                <a href="{% url 'plugins:banktransfer:import' organizer=request.organizer.slug %}"
+                                   class="btn btn-default btn-xs">{% trans "Go to organizer-level import" %}</a>
+                                <a href="{% url 'plugins:banktransfer:refunds.list' event=request.event.slug organizer=request.organizer.slug %}"
+                                   class="btn btn-default btn-xs"><span class="fa fa-university"></span> {% trans "Export bank transfer refunds" %}</a>
+                            </p>
+
+                            <div class="row banktransfer-filter-row">
+                                <form class="form-inline helper-display-inline" action="" method="get">
+                                    <input type="hidden" name="tab" value="import" />
+                                    <input type="hidden" name="import_type" value="banktransfer" />
+                                    <div class="col-md-3">
+                                        {% trans "Amount from" %}
+                                        {{ filter_form.amount_min }}
+                                        {% trans "up to" %}
+                                        {{ filter_form.amount_max }}
+                                    </div>
+                                    <div class="col-md-3">
+                                        {% trans "Date from" %}
+                                        {{ filter_form.date_min }}
+                                        {% trans "up to" %}
+                                        {{ filter_form.date_max }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        {{ filter_form.search_text }}
+                                        <button class="btn btn-primary" type="submit">{% trans "Filter" %}</button>
+                                        <a class="btn btn-default" href="?tab=import&import_type=banktransfer">{% trans "Clear" %}</a>
+                                    </div>
+                                </form>
+                                <div class="col-md-2">
+                                    {% if not filter_form.is_valid %}
+                                        <form action="{% url 'plugins:banktransfer:import' event=request.event.slug organizer=request.organizer.slug %}" method="post" class="helper-display-inline pull-right flip">
+                                            {% csrf_token %}
+                                            <button class="btn btn-delete btn-danger" type="submit" name="discard" value="all">
+                                                <span class="fa fa-trash"></span>
+                                                {% trans "Discard all" %}
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            {% if transactions_unhandled|length > 0 %}
+                                {% include "pretixcontrol/pagination.html" %}
+                                {% include "pretixplugins/banktransfer/transaction_list.html" with list=transactions_unhandled %}
+                                {% include "pretixcontrol/pagination.html" %}
+                            {% else %}
+                                <div>{% trans "Your search matched no transactions." %}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+                <script type="application/javascript" src="{% static 'pretixplugins/banktransfer/ui.js' %}"></script>
+                
+            {% endif %}
+        </div>
+        {% endif %}    </div>
+{% endblock %}

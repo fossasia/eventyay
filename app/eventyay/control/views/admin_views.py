@@ -58,10 +58,7 @@ from eventyay.control.forms.server_management import (
 from eventyay.base.models.log import LogEntry
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
 from eventyay.control.tasks import clear_event_data
-from eventyay.control.video.admin_dashboard import (
-    get_video_server_config,
-    get_video_server_dashboard_rows,
-)
+from eventyay.control.video.admin_dashboard import get_video_server_config
 
 
 class SuperuserBase(AdministratorPermissionRequiredMixin):
@@ -130,12 +127,18 @@ class ProfileView(AdministratorPermissionRequiredMixin, FormView):
         return result
 
 
-class IndexView(AdministratorPermissionRequiredMixin, TemplateView):
-    template_name = "control/index.html"
+class VideoSettings(AdministratorPermissionRequiredMixin, TemplateView):
+    template_name = "control/video_settings.html"
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["video_server_rows"] = get_video_server_dashboard_rows()
+        ctx["bbb_servers"] = BBBServer.objects.select_related("event_exclusive").order_by("url")
+        ctx["janus_servers"] = JanusServer.objects.select_related("event_exclusive").order_by("url")
+        ctx["jitsi_servers"] = JitsiServer.objects.select_related("event_exclusive").order_by("url")
+        ctx["turn_servers"] = TurnServer.objects.select_related("event_exclusive").order_by("hostname")
+        ctx["streaming_servers"] = StreamingServer.objects.order_by("name")
+        # Define the tabs logic, active tab can default to bbb
+        ctx["active_tab"] = self.request.GET.get("tab", "bbb")
         return ctx
 
 
@@ -493,10 +496,7 @@ class EventClear(AdministratorPermissionRequiredMixin, DetailView):
         return redirect(self.success_url)
 
 
-class BBBServerList(AdministratorPermissionRequiredMixin, ListView):
-    template_name = "control/bbb_list.html"
-    queryset = BBBServer.objects.select_related("event_exclusive").order_by("url")
-    context_object_name = "servers"
+
 
 
 class BBBServerCreate(AdministratorPermissionRequiredMixin, CreateView):
@@ -557,10 +557,7 @@ class BBBServerDelete(AdministratorPermissionRequiredMixin, DeleteView):
         return HttpResponseRedirect(success_url)
 
 
-class JanusServerList(AdministratorPermissionRequiredMixin, ListView):
-    template_name = "control/janus_list.html"
-    queryset = JanusServer.objects.select_related("event_exclusive").order_by("url")
-    context_object_name = "servers"
+
 
 
 class JanusServerCreate(AdministratorPermissionRequiredMixin, CreateView):
@@ -621,10 +618,7 @@ class JanusServerDelete(AdministratorPermissionRequiredMixin, DeleteView):
         return HttpResponseRedirect(success_url)
 
 
-class JitsiServerList(AdministratorPermissionRequiredMixin, ListView):
-    template_name = "control/jitsi_list.html"
-    queryset = JitsiServer.objects.select_related("event_exclusive").order_by("url")
-    context_object_name = "servers"
+
 
 
 class JitsiServerCreate(AdministratorPermissionRequiredMixin, CreateView):
@@ -692,10 +686,7 @@ def _redact_jitsi_server_log_data(data):
     }
 
 
-class TurnServerList(AdministratorPermissionRequiredMixin, ListView):
-    template_name = "control/turn_list.html"
-    queryset = TurnServer.objects.select_related("event_exclusive").order_by("hostname")
-    context_object_name = "servers"
+
 
 
 class TurnServerCreate(AdministratorPermissionRequiredMixin, CreateView):
@@ -788,10 +779,7 @@ class EventCalendar(AdministratorPermissionRequiredMixin, View):
         )
 
 
-class StreamingServerList(AdministratorPermissionRequiredMixin, ListView):
-    template_name = "control/streaming_list.html"
-    queryset = StreamingServer.objects.order_by("name")
-    context_object_name = "streamings"
+
 
 
 class StreamingServerCreate(AdministratorPermissionRequiredMixin, CreateView):

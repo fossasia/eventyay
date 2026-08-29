@@ -198,6 +198,7 @@ def logged_in_client(client, event):
         ('/control/event/{orga}/{event}/orders/{order_code}/', 200),
         ('/control/event/{orga}/{event}/orders/overview/', 200),
         ('/control/event/{orga}/{event}/orders/export/', 200),
+        ('/control/event/{orga}/{event}/orders/import-export/', 200),
         ('/control/event/{orga}/{event}/orders/go', 302),
         ('/control/event/{orga}/{event}/orders/search', 200),
         ('/control/event/{orga}/{event}/orders/', 200),

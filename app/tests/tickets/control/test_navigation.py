@@ -119,3 +119,38 @@ def test_orders_parent_nav_links_to_overview(event, rf):
     assert orders is not None
     assert orders['url'].endswith('/orders/overview/')
     assert any(str(child.get('label')) == 'Overview' for child in orders.get('children', []))
+
+
+@pytest.mark.django_db
+def test_banktransfer_only_navigation_shows_import_export(event, rf):
+    event.plugins = 'eventyay.plugins.banktransfer'
+    event.save()
+    user = User.objects.create_user('bank@example.com', 'dummy')
+    team = Team.objects.create(
+        organizer=event.organizer,
+        can_manage_bank_transfers=True,
+        all_events=True,
+    )
+    team.members.add(user)
+
+    request = rf.get(f'/control/event/{event.organizer.slug}/{event.slug}/')
+    request.user = user
+    request.event = event
+    request.organizer = event.organizer
+    request.eventpermset = user.get_event_permission_set(event.organizer, event)
+    request.resolver_match = resolve(
+        f'/control/event/{event.organizer.slug}/{event.slug}/'
+    )
+
+    nav = get_event_navigation(request)
+    orders_nav = None
+    for item in nav:
+        if str(item.get('label')) == 'Orders':
+            orders_nav = item
+            break
+
+    assert orders_nav is not None
+    assert any(str(child.get('label')) == 'Import / Export' for child in orders_nav.get('children', []))
+    assert not any(str(child.get('label')) == 'Overview' for child in orders_nav.get('children', []))
+    assert not any(str(child.get('label')) == 'All orders' for child in orders_nav.get('children', []))
+

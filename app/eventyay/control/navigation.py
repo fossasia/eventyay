@@ -229,82 +229,92 @@ def get_event_navigation(request: HttpRequest):
             }
         )
 
+    children = []
     if 'can_view_orders' in request.eventpermset:
-        children = [
-            {
-                'label': _('Overview'),
-                'url': reverse(
-                    'control:event.orders.overview',
-                    kwargs={
-                        'event': request.event.slug,
-                        'organizer': request.event.organizer.slug,
-                    },
-                ),
-                'active': 'event.orders.overview' in url.url_name,
-            },
-            {
-                'label': _('All orders'),
-                'url': reverse(
-                    'control:event.orders',
-                    kwargs={
-                        'event': request.event.slug,
-                        'organizer': request.event.organizer.slug,
-                    },
-                ),
-                'active': url.url_name in ('event.orders', 'event.order', 'event.orders.search')
-                or 'event.order.' in url.url_name,
-            },
-            {
-                'label': _('Waiting list'),
-                'url': reverse(
-                    'control:event.orders.waitinglist',
-                    kwargs={
-                        'event': request.event.slug,
-                        'organizer': request.event.organizer.slug,
-                    },
-                ),
-                'active': 'event.orders.waitinglist' in url.url_name,
-            },
-            {
-                'label': _('Refunds'),
-                'url': reverse(
-                    'control:event.orders.refunds',
-                    kwargs={
-                        'event': request.event.slug,
-                        'organizer': request.event.organizer.slug,
-                    },
-                ),
-                'active': 'event.orders.refunds' in url.url_name,
-            },
-        ]
-        if 'can_change_orders' in request.eventpermset:
-            children.append(
+        children.extend(
+            [
                 {
-                    'label': _('Import'),
+                    'label': _('Overview'),
                     'url': reverse(
-                        'control:event.orders.import',
+                        'control:event.orders.overview',
                         kwargs={
                             'event': request.event.slug,
                             'organizer': request.event.organizer.slug,
                         },
                     ),
-                    'active': 'event.orders.import' in url.url_name,
-                }
-            )
+                    'active': 'event.orders.overview' in url.url_name,
+                },
+                {
+                    'label': _('All orders'),
+                    'url': reverse(
+                        'control:event.orders',
+                        kwargs={
+                            'event': request.event.slug,
+                            'organizer': request.event.organizer.slug,
+                        },
+                    ),
+                    'active': url.url_name in ('event.orders', 'event.order', 'event.orders.search')
+                    or 'event.order.' in url.url_name,
+                },
+                {
+                    'label': _('Waiting list'),
+                    'url': reverse(
+                        'control:event.orders.waitinglist',
+                        kwargs={
+                            'event': request.event.slug,
+                            'organizer': request.event.organizer.slug,
+                        },
+                    ),
+                    'active': 'event.orders.waitinglist' in url.url_name,
+                },
+                {
+                    'label': _('Refunds'),
+                    'url': reverse(
+                        'control:event.orders.refunds',
+                        kwargs={
+                            'event': request.event.slug,
+                            'organizer': request.event.organizer.slug,
+                        },
+                    ),
+                    'active': 'event.orders.refunds' in url.url_name,
+                },
+            ]
+        )
+
+    has_banktransfer = (
+        'eventyay.plugins.banktransfer' in request.event.get_plugins()
+        and 'can_manage_bank_transfers' in request.eventpermset
+    )
+    if 'can_view_orders' in request.eventpermset or 'can_change_orders' in request.eventpermset or has_banktransfer:
         children.append(
             {
-                'label': _('Export'),
+                'label': _('Import / Export'),
                 'url': reverse(
-                    'control:event.orders.export',
+                    'control:event.orders.import_export',
                     kwargs={
                         'event': request.event.slug,
                         'organizer': request.event.organizer.slug,
                     },
                 ),
-                'active': 'event.orders.export' in url.url_name,
+                'active': (
+                    'event.orders.import_export' in url.url_name
+                    or 'event.orders.export' in url.url_name
+                    or 'event.orders.import' in url.url_name
+                    or (url.namespace == 'plugins:banktransfer' and url.url_name in ('import', 'refunds.list', 'import.job'))
+                ),
             }
         )
-        
+
+    if children:
+        parent_url = children[0]['url']
+        if 'can_view_orders' in request.eventpermset:
+            parent_url = reverse(
+                'control:event.orders',
+                kwargs={
+                    'event': request.event.slug,
+                    'organizer': request.event.organizer.slug,
+                },
+            )
         nav.append(
             {
                 'label': _('Orders'),
@@ -486,44 +496,22 @@ def get_admin_navigation(request):
         is_video_route = 'video_admin' in url.namespaces
         video_children = [
             {
-                'label': _('Dashboard'),
-                'url': reverse('eventyay_admin:video_admin:index'),
-                'active': is_video_route and url.url_name == 'index',
+                'label': _('Video settings'),
+                'url': reverse('eventyay_admin:video_admin:settings'),
+                'active': is_video_route and (
+                    url.url_name == 'settings' or
+                    url.url_name.startswith('bbbserver.') or
+                    url.url_name.startswith('janusserver.') or
+                    url.url_name.startswith('jitsiserver.') or
+                    url.url_name.startswith('turnserver.') or
+                    url.url_name.startswith('streamingserver.') or
+                    url.url_name == 'server.toggle-active'
+                ),
             },
             {
                 'label': _('Events'),
                 'url': reverse('eventyay_admin:video_admin:event.list'),
                 'active': is_video_route and url.url_name.startswith('event.'),
-            },
-            {
-                'label': _('BBB servers'),
-                'url': reverse('eventyay_admin:video_admin:bbbserver.list'),
-                'active': is_video_route and url.url_name.startswith('bbbserver.') and url.url_name != 'bbbserver.moveroom',
-            },
-            {
-                'label': _('Move BBB room'),
-                'url': reverse('eventyay_admin:video_admin:bbbserver.moveroom'),
-                'active': is_video_route and url.url_name == 'bbbserver.moveroom',
-            },
-            {
-                'label': _('Janus servers'),
-                'url': reverse('eventyay_admin:video_admin:janusserver.list'),
-                'active': is_video_route and url.url_name.startswith('janusserver.'),
-            },
-            {
-                'label': _('Jitsi servers'),
-                'url': reverse('eventyay_admin:video_admin:jitsiserver.list'),
-                'active': is_video_route and url.url_name.startswith('jitsiserver.'),
-            },
-            {
-                'label': _('TURN servers'),
-                'url': reverse('eventyay_admin:video_admin:turnserver.list'),
-                'active': is_video_route and url.url_name.startswith('turnserver.'),
-            },
-            {
-                'label': _('Streaming servers'),
-                'url': reverse('eventyay_admin:video_admin:streamingserver.list'),
-                'active': is_video_route and url.url_name.startswith('streamingserver.'),
             },
             {
                 'label': _('Streamkey generator'),
@@ -540,7 +528,7 @@ def get_admin_navigation(request):
         nav.append(
             {
                 'label': _('Video'),
-                'url': reverse('eventyay_admin:video_admin:index'),
+                'url': reverse('eventyay_admin:video_admin:settings'),
                 'active': parent_active,
                 'icon': 'video-camera',
                 'children': video_children,
