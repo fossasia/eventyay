@@ -350,14 +350,14 @@ class FeedbackSettingsForm(ReadOnlyFlag, JsonSubfieldMixin, forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance:
-            flags = self.instance.feature_flags or {}
+            flags = self.instance.feature_flags_as_mapping()
             if 'feedback_anonymous_mode' not in flags and flags.get('feedback_allow_anonymous'):
                 self.fields['feedback_anonymous_mode'].initial = 'optional'
 
     def clean(self):
         cleaned_data = super().clean()
         if not cleaned_data.get('use_feedback'):
-            flags = (self.instance.feature_flags or {}) if self.instance else {}
+            flags = self.instance.feature_flags_as_mapping() if self.instance else {}
             for field in [
                 'feedback_close_after_days',
                 'feedback_who_can_comment',
@@ -389,7 +389,7 @@ class FeedbackSettingsForm(ReadOnlyFlag, JsonSubfieldMixin, forms.Form):
 
     def save(self, *args, **kwargs):
         instance = super().save(*args, **kwargs)
-        flags = instance.feature_flags or {}
+        flags = instance.feature_flags_as_mapping()
         mode = flags.get('feedback_anonymous_mode', 'public')
         flags['feedback_allow_anonymous'] = mode in ('optional', 'always')
         instance.feature_flags = flags
