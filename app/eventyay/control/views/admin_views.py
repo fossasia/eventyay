@@ -58,7 +58,7 @@ from eventyay.control.forms.server_management import (
 from eventyay.base.models.log import LogEntry
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
 from eventyay.control.tasks import clear_event_data
-
+from eventyay.control.video.admin_dashboard import get_video_server_config
 
 
 class SuperuserBase(AdministratorPermissionRequiredMixin):
