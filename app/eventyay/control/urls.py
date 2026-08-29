@@ -512,6 +512,21 @@ urlpatterns = [
                 url(r'^orders/(?P<code>[0-9A-Z]+)/$', orders.OrderDetail.as_view(), name='event.order'),
                 url(r'^invoice/(?P<invoice>[^/]+)$', orders.InvoiceDownload.as_view(), name='event.invoice.download'),
                 url(r'^orders/overview/$', orders.OverView.as_view(), name='event.orders.overview'),
+                url(
+                    r'^orders/import-export/$',
+                    orders.ExportView.as_view(),
+                    name='event.orders.import_export',
+                ),
+                url(
+                    r'^orders/import-export/attendees/import/(?P<file>[^/]+)/$',
+                    orderimport.ProcessView.as_view(),
+                    name='event.orders.import_export.attendees_import_process',
+                ),
+                url(
+                    r'^orders/import-export/export/do$',
+                    orders.ExportDoView.as_view(),
+                    name='event.orders.import_export.export_do',
+                ),
                 url(r'^orders/import/$', orderimport.ImportView.as_view(), name='event.orders.import'),
                 url(
                     r'^orders/import/(?P<file>[^/]+)/$',
