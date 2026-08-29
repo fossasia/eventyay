@@ -70,6 +70,7 @@ transition(name="sidebar")
 					router-link.room(:to="{name: 'admin:announcements'}", v-if="hasPermission('world:announce')") {{ $t('Announcements') }}
 					router-link.room(:to="{name: 'admin:users'}", v-if="hasPermission('world:users.list')") {{ $t('Users') }}
 					router-link.room(:to="{name: 'admin:rooms:index'}", v-if="hasPermission('room:update')") {{ $t('Rooms') }}
+					router-link.room(:to="{name: 'admin:chat:index'}", v-if="hasPermission('room:update')") {{ $t('Chat') }}
 					router-link.room(:to="{name: 'admin:kiosks:index'}", v-if="hasPermission('world:kiosks.manage')") {{ $t('Kiosks') }}
 					router-link.room(v-if="hasPermission('world:update')", :to="{name: 'admin:config'}") {{ $t('Config') }}
 		transition(name="prompt")
@@ -158,9 +159,7 @@ export default {
 			return this.networkingRoomType && isRoomTypeAvailable(this.networkingRoomType.id, this.hasPermission, this.isAdminMode)
 		},
 		canCreateChatRoom() {
-			return ROOM_TYPES
-				.filter(type => ['channel-text', 'channel-bbb', 'channel-jitsi'].includes(type.id))
-				.some(type => isRoomTypeAvailable(type.id, this.hasPermission, this.isAdminMode))
+			return this.hasPermission('world:rooms.create.chat')
 		},
 		// showAdminConfigLink no longer needed; link is always visible and backend will enforce access
 		style() {

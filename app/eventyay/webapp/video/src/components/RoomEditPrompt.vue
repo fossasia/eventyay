@@ -2,14 +2,14 @@
 prompt.c-room-edit-prompt(:scrollable="false", @close="$emit('close')")
 	.content
 		.prompt-header
-			h2 {{ $t('Edit Room') }}
+			h2 {{ promptTitle }}
 		bunt-progress-circular(v-if="loading", size="large")
 		.error(v-else-if="error")
 			p {{ error }}
 			bunt-button(@click="fetchConfig") {{ $t('Retry') }}
 		template(v-else-if="config")
 			.edit-body(v-scrollbar.y="")
-				.reset-section(v-if="wasConfigured")
+				.reset-section(v-if="wasConfigured && mode !== 'chat'")
 					.section-header
 						h3 {{ $t('Reset Room') }}
 						bunt-button.btn-reset(
@@ -22,7 +22,7 @@ prompt.c-room-edit-prompt(:scrollable="false", @close="$emit('close')")
 						.confirmation-actions
 							bunt-button.btn-cancel(@click="confirmingReset = false") {{ $t('Cancel') }}
 							bunt-button.btn-reset(@click="resetRoom", :loading="resetting", :error-message="resetError") {{ $t('Confirm reset') }}
-				.type-section
+				.type-section(v-if="mode !== 'chat'")
 					h3 {{ $t('Video option') }}
 					.current-type(v-if="inferredType")
 						.mdi(:class="[`mdi-${inferredType.icon}`]")
@@ -58,14 +58,15 @@ prompt.c-room-edit-prompt(:scrollable="false", @close="$emit('close')")
 				)
 				.danger-zone(v-if="wasConfigured && hasPermission('room:delete')")
 					h3 {{ $t('Danger Zone') }}
-					p {{ $t('Deleting this room will remove it from the schedule, but the sessions will remain safe.') }} {{ $t('Sessions assigned to this room will no longer have a room assigned.') }}
+					p(v-if="mode === 'chat'") {{ $t('Deleting this channel removes it for attendees. Messages and calls in this channel will no longer be available.') }}
+					p(v-else) {{ $t('Deleting this room will remove it from the schedule, but the sessions will remain safe.') }} {{ $t('Sessions assigned to this room will no longer have a room assigned.') }}
 					bunt-button.btn-delete-room(v-if="!confirmingDelete", @click="confirmingDelete = true") {{ $t('Delete') }}
 					.delete-confirmation(v-else)
 						p {{ $t('Please type') }} #[b {{ localizedRoomName }}] {{ $t('to confirm deletion.') }}
-						bunt-input(name="deletingRoomName", :label="$t('Room name')", v-model="deletingRoomName", @keypress.enter="deleteRoom")
+						bunt-input(name="deletingRoomName", :label="mode === 'chat' ? $t('Channel name') : $t('Room name')", v-model="deletingRoomName", @keypress.enter="deleteRoom")
 						.confirmation-actions
 							bunt-button.btn-cancel(@click="cancelDelete") {{ $t('Cancel') }}
-							bunt-button.btn-delete-room(icon="delete", :disabled="deletingRoomName !== localizedRoomName", @click="deleteRoom", :loading="deleting", :error-message="deleteError") {{ $t('Delete this room') }}
+							bunt-button.btn-delete-room(icon="delete", :disabled="deletingRoomName !== localizedRoomName", @click="deleteRoom", :loading="deleting", :error-message="deleteError") {{ mode === 'chat' ? $t('Delete this channel') : $t('Delete this room') }}
 			.edit-actions
 				bunt-button.btn-cancel(@click="$emit('close')") {{ $t('Cancel') }}
 				bunt-button.btn-save(@click="save", :loading="saving", :error-message="saveError") {{ $t('Save') }}
@@ -107,6 +108,10 @@ export default {
 		room: {
 			type: Object,
 			required: true
+		},
+		mode: {
+			type: String,
+			default: 'room'
 		}
 	},
 	emits: ['close', 'deleted'],
@@ -173,6 +178,10 @@ export default {
 		inferredType () {
 			if (!this.config) return null
 			return inferType(this.config)
+		},
+		promptTitle () {
+			if (this.mode !== 'chat') return this.$t('Edit Room')
+			return this.$t('Edit Chat Channel')
 		},
 		localizedName: {
 			get () {
