@@ -1,0 +1,278 @@
+/* The ticket control app uses Bootstrap 3 for its native date and Select2 widgets. */
+
+/* Beat Bootstrap 3 / base.css button fills so outline buttons match Talks. */
+.mail-composer button.btn.btn-outline-info,
+.mail-composer .btn.btn-outline-info {
+  background-color: var(--color-bg);
+  background-image: none;
+  border: 1px solid var(--color-primary);
+  box-shadow: none;
+  color: var(--color-primary);
+  text-shadow: none;
+}
+
+.mail-composer button.btn.btn-outline-info:hover,
+.mail-composer button.btn.btn-outline-info:focus,
+.mail-composer button.btn.btn-outline-info:active,
+.mail-composer .btn.btn-outline-info:hover,
+.mail-composer .btn.btn-outline-info:focus,
+.mail-composer .btn.btn-outline-info:active {
+  background-color: var(--color-primary);
+  background-image: none;
+  border-color: var(--color-primary);
+  color: var(--color-white);
+}
+
+.mail-composer .composer-filters .splitdatetimepart {
+  border-left: 1px solid var(--color-border);
+  border-radius: var(--composer-border-radius);
+}
+
+.mail-composer .composer-filters .choices {
+  position: relative;
+}
+
+.mail-composer .composer-filters .choices.is-open {
+  z-index: 200;
+}
+
+.mail-composer .composer-filters .select2-container {
+  max-width: 100%;
+  min-width: 0;
+  width: 100%;
+}
+
+.mail-composer .composer-filters .select2-selection--multiple,
+.mail-composer .composer-filters .select2-selection--single {
+  border-color: var(--color-border);
+  border-radius: var(--composer-border-radius);
+  min-height: var(--composer-control-height);
+}
+
+.mail-composer .col-md-9 > .eventyay-file-pick-wrapper label {
+  font-size: var(--composer-small-font-size);
+  line-height: 20px;
+  min-height: calc(var(--composer-control-height) - 2px);
+  padding: 6px 12px;
+}
+
+.mail-composer .col-md-9 > .eventyay-file-pick-wrapper .eventyay-file-name {
+  font-size: var(--composer-font-size);
+  padding: 6px 12px;
+}
+
+.mail-composer .col-md-9 > input[type="file"]::file-selector-button {
+  font-size: var(--composer-small-font-size);
+  line-height: 20px;
+  min-height: calc(var(--composer-control-height) - 2px);
+  padding: 6px 12px;
+}
+
+.mail-composer .card-body .form-check-label {
+  font-size: var(--composer-font-size);
+}
+
+/*
+ * Talks base.css and pretixcontrol both style .alert differently. On this page
+ * both sheets load, so reset to one Talks-like layout that stays inside the
+ * content column (no sidebar overlap, no double icon padding).
+ */
+#page-wrapper .container-fluid > .alert,
+.mail-composer .alert {
+  align-items: stretch;
+  background: var(--color-bg);
+  border: 2px solid var(--highlight-color, var(--color-danger));
+  border-radius: var(--composer-border-radius, 4px);
+  box-shadow: none;
+  color: var(--highlight-color-text, var(--color-danger-text-dark));
+  display: flex;
+  margin: 0 0 16px;
+  padding: 16px;
+  padding-left: 16px;
+  position: relative;
+  text-align: left;
+}
+
+.mail-composer fieldset.mt-4 {
+  margin-bottom: 24px;
+  padding-bottom: 8px;
+}
+
+.mail-composer fieldset.mt-4 > legend {
+  margin-bottom: 16px;
+}
+
+.mail-composer fieldset.mt-4 > .alert {
+  margin-bottom: 24px;
+  margin-top: 8px;
+}
+
+.mail-composer fieldset.mt-4 + section.card {
+  margin-top: 8px;
+}
+
+#page-wrapper .container-fluid > .alert-danger,
+.mail-composer .alert-danger {
+  --highlight-color: var(--color-danger);
+  --highlight-color-text: var(--color-danger-text-dark);
+}
+
+#page-wrapper .container-fluid > .alert-info,
+.mail-composer .alert-info {
+  --highlight-color: var(--color-info);
+  --highlight-color-text: var(--color-info-text-dark);
+}
+
+#page-wrapper .container-fluid > .alert-warning,
+.mail-composer .alert-warning {
+  --highlight-color: var(--color-warning);
+  --highlight-color-text: var(--color-warning-text-dark);
+}
+
+#page-wrapper .container-fluid > .alert-success,
+.mail-composer .alert-success {
+  --highlight-color: var(--color-success);
+  --highlight-color-text: var(--color-success-text-dark);
+}
+
+#page-wrapper .container-fluid > .alert::before,
+.mail-composer .alert::before {
+  align-items: center;
+  align-self: stretch;
+  background-color: var(--highlight-color);
+  color: var(--color-white);
+  display: flex;
+  flex: 0 0 48px;
+  font-family: FontAwesome, "Font Awesome 5 Free", sans-serif;
+  font-size: 20px;
+  height: auto;
+  justify-content: center;
+  left: auto;
+  margin: -16px 16px -16px -16px;
+  min-width: 48px;
+  padding: 0;
+  position: static;
+  top: auto;
+  width: 48px;
+}
+
+#page-wrapper .container-fluid > .alert > *,
+.mail-composer .alert > * {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Keep field tips/errors under the control, not under the label column. */
+.mail-composer .form-group.row > .col-md-9 > .form-text,
+.mail-composer .form-group.row > .col-md-9 > .invalid-feedback,
+.mail-composer .composer-filters .form-group .form-text,
+.mail-composer .composer-filters .form-group .invalid-feedback {
+  display: block;
+  margin-top: 6px;
+  max-width: 100%;
+  text-align: left;
+  width: 100%;
+}
+
+.mail-composer .invalid-feedback {
+  color: var(--color-danger);
+  font-size: 13px;
+  font-weight: normal;
+}
+
+.mail-composer .form-text.text-muted {
+  color: var(--color-grey);
+  font-size: var(--composer-small-font-size);
+  font-weight: normal;
+  line-height: 1.4;
+}
+
+.mail-composer .card-body > fieldset > .form-group.row > label > .optional {
+  color: var(--color-grey);
+  display: block;
+  font-weight: normal;
+}
+
+.mail-composer .composer-filters .form-group.row {
+  display: block;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.mail-composer .composer-filters .form-group.row > label,
+.mail-composer .composer-filters .form-group.row > label.col-form-label {
+  box-sizing: border-box;
+  display: inline-flex;
+  flex-direction: column;
+  margin: 0 0 8px;
+  margin-left: 0;
+  max-width: 100%;
+  padding-bottom: 0;
+  padding-top: 0;
+  text-align: left;
+  width: 100%;
+}
+
+.mail-composer .composer-filters .form-group.row > label:not(:has(> .optional))::after {
+  content: "\00a0";
+  display: block;
+  font-weight: normal;
+  line-height: inherit;
+}
+
+.mail-composer .composer-filters .form-group.row > .col-md-3,
+.mail-composer .composer-filters .form-group.row > .col-md-9 {
+  flex: none;
+  max-width: 100%;
+  padding-left: 0;
+  padding-right: 0;
+  width: 100%;
+}
+
+.mail-composer .composer-filters .form-group.row > label > .optional {
+  color: var(--color-grey);
+  display: block;
+  font-weight: normal;
+}
+
+.mail-composer .composer-filters .choices,
+.mail-composer .composer-filters .choices__inner,
+.mail-composer .composer-filters .select2-container,
+.mail-composer .composer-filters .select2-selection--single,
+.mail-composer .composer-filters .select2-selection--multiple {
+  width: 100%;
+}
+
+.mail-composer .composer-filters .splitdatetimerow {
+  width: 100%;
+}
+
+.mail-composer button.mail-editor-mode-tab,
+.mail-composer .mail-editor-mode-tab {
+  background-color: transparent;
+  background-image: none;
+  border-bottom: 0;
+  box-shadow: none;
+  text-shadow: none;
+}
+
+.mail-composer button.mail-editor-mode-tab:hover,
+.mail-composer button.mail-editor-mode-tab:focus,
+.mail-composer .mail-editor-mode-tab:hover,
+.mail-composer .mail-editor-mode-tab:focus {
+  background-color: transparent;
+  background-image: none;
+  box-shadow: none;
+}
+
+.mail-composer button.mail-editor-mode-tab.active,
+.mail-composer button.mail-editor-mode-tab[aria-selected="true"],
+.mail-composer .mail-editor-mode-tab.active,
+.mail-composer .mail-editor-mode-tab[aria-selected="true"] {
+  background-color: var(--color-bg);
+  background-image: none;
+  border-color: var(--color-border);
+  border-bottom: 1px solid var(--color-bg);
+  box-shadow: none;
+  color: var(--color-text);
+}

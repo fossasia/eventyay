@@ -33,6 +33,7 @@ const showLocale = (groups, tabs, code) => {
         tab.setAttribute("aria-selected", active ? "true" : "false")
         tab.tabIndex = active ? 0 : -1
     })
+    document.dispatchEvent(new CustomEvent("mail-language-change", { detail: { locale: code } }))
 }
 
 const buildLanguageTabs = (container, groups) => {
