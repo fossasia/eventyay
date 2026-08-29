@@ -36,7 +36,7 @@
                 <a href="{% url "plugins:badges:add" organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-default"><i class="fa fa-plus"></i> {% trans "Create a new badge layout" %}
                 </a>
             {% endif %}
-            <a href="{% url "control:event.orders.export" organizer=request.event.organizer.slug event=request.event.slug %}?identifier=badges" class="btn btn-primary"><i class="fa fa-print"></i> {% trans "Print badges" %}
+            <a href="{% url 'control:event.orders.import_export' organizer=request.event.organizer.slug event=request.event.slug %}?identifier=badges" class="btn btn-primary"><i class="fa fa-print"></i> {% trans "Print badges" %}
             </a>
         </p>
         <div class="table-responsive">

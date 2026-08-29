@@ -4,6 +4,7 @@ import sys
 from asgiref.sync import async_to_sync
 from channels.db import database_sync_to_async
 from channels.layers import get_channel_layer
+from django.core.cache import cache
 from django.db.transaction import atomic
 from django.dispatch import receiver
 from django.utils.timezone import now
