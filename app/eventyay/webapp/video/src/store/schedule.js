@@ -112,9 +112,9 @@ export default {
 			if (!state.schedule) return
 			const rootByPretalxId = new Map()
 			for (const r of rootState.rooms || []) {
-				if (r?.pretalx_id != null) rootByPretalxId.set(r.pretalx_id, r)
+				if (r?.pretalx_id != null) rootByPretalxId.set(String(r.pretalx_id), r)
 			}
-			return state.schedule.rooms.map(room => rootByPretalxId.get(room.id) || room)
+			return state.schedule.rooms.map(room => rootByPretalxId.get(String(room.id)) || room)
 		},
 		roomsLookup (state, getters) {
 			if (!state.schedule) return {}
