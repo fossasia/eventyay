@@ -9,7 +9,6 @@ from django_scopes.forms import SafeModelChoiceField, SafeModelMultipleChoiceFie
 from i18nfield.forms import I18nFormMixin, I18nModelForm
 from i18nfield.strings import LazyI18nString
 
-from eventyay.base.forms import I18nMarkdownTextarea
 from eventyay.base.models import (
     AnswerOption,
     SubmissionType,
@@ -35,6 +34,7 @@ from eventyay.common.forms.widgets import (
     HtmlDateInput,
     HtmlDateTimeInput,
     TextInputWithAddon,
+    I18nRichTextWidget,
 )
 from eventyay.common.language import get_language_choices_native_with_ui_name
 from eventyay.common.text.phrases import phrases
@@ -387,7 +387,7 @@ class CfPForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         fields = ['headline', 'text', 'deadline']
         widgets = {
             'deadline': HtmlDateTimeInput,
-            'text': I18nMarkdownTextarea,
+            'text': I18nRichTextWidget,
         }
         # These are JSON fields on cfp.settings
         json_fields = {
