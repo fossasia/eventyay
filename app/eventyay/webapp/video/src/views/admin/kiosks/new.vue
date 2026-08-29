@@ -25,7 +25,14 @@ export default {
 	data() {
 		return {
 			profile: {
-				display_name: ''
+				display_name: '',
+				show_reactions: true,
+				slides: {
+					pinned_poll: true,
+					pinned_question: true,
+					next_session: true,
+					viewers: false
+				}
 			},
 			saving: false,
 			error: null

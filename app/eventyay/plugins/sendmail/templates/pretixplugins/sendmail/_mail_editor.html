@@ -1,12 +1,23 @@
-{% extends "orga/mails/base.html" %}
+{% extends "pretixcontrol/event/base.html" %}
 
 {% load i18n %}
 {% load static %}
 
-{% block extra_title %}{% translate "Compose email" %} :: {% endblock extra_title %}
+{% block title %}{% translate "Compose email" %} :: {{ request.event.name }}{% endblock title %}
 
-{% block mail_content %}
-    <form method="post" class="form-with-placeholder mail-composer">
+{% block custom_header %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'common/css/_fonts.css' %}">
+<link rel="stylesheet" href="{% static 'common/css/base.css' %}">
+<link rel="stylesheet" href="{% static 'vendored/choices/choices.min.css' %}">
+<link rel="stylesheet" href="{% static 'common/css/_forms.css' %}">
+<link rel="stylesheet" href="{% static 'common/css/_composer.css' %}">
+<link rel="stylesheet" href="{% static 'pretixplugins/sendmail/tickets_email.css' %}">
+<script src="{% static 'vendored/choices/choices.min.js' %}"></script>
+{% endblock custom_header %}
+
+{% block content %}
+    <form method="post" enctype="multipart/form-data" class="form-with-placeholder mail-composer">
         {% csrf_token %}
         {% include "common/forms/errors.html" %}
         <div class="composer-intro mb-3">
@@ -57,7 +68,34 @@
                 <div id="mail-language-tabs" class="mb-3" hidden></div>
                 <fieldset>
                     {{ form.subject.as_field_group }}
-                    {{ form.text.as_field_group }}
+                    <div class="mail-editor-tabs"
+                         data-email-preview-wrapper
+                         data-email-preview-url="{% url 'control:event.editor.email.preview' organizer=request.event.organizer.slug event=request.event.slug %}">
+                        <div class="mail-editor-mode-tabs" role="tablist" aria-label="{% translate 'Message view' %}">
+                            <button type="button" class="mail-editor-mode-tab active"
+                                    role="tab" aria-selected="true" aria-controls="mail-message-edit"
+                                    data-mail-editor-mode="edit">
+                                <i class="fa fa-pencil-square-o fa-fw" aria-hidden="true"></i>
+                                {% translate "Edit" %}
+                            </button>
+                            <button type="button" class="mail-editor-mode-tab"
+                                    role="tab" aria-selected="false" aria-controls="mail-message-preview"
+                                    data-mail-editor-mode="preview" data-email-preview-tab>
+                                <i class="fa fa-tv fa-fw" aria-hidden="true"></i>
+                                {% translate "Preview" %}
+                            </button>
+                        </div>
+                        <div id="mail-message-edit" role="tabpanel">
+                            {{ form.text.as_field_group }}
+                        </div>
+                        <div id="mail-message-preview" class="mail-message-preview-panel" role="tabpanel" hidden>
+                            <div class="mail-preview-group">
+                                {% for locale in request.event.settings.locales %}
+                                    <div lang="{{ locale }}" class="mail-preview"></div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
                 </fieldset>
             </div>
         </section>
@@ -132,9 +170,9 @@
             <input type="search" id="placeholder-search" class="form-control" placeholder="{% translate 'Search placeholders' %}" autocomplete="off">
             <p class="text-muted d-none" id="placeholder-empty">{% translate "No placeholders match your search." %}</p>
 
-            {% include "orga/mails/_placeholder_group.html" with placeholders=form.grouped_placeholders.user tag="user" %}
-            {% include "orga/mails/_placeholder_group.html" with placeholders=form.grouped_placeholders.submission tag="submission" %}
-            {% include "orga/mails/_placeholder_group.html" with placeholders=form.grouped_placeholders.slot tag="slot" %}
+            {% include "orga/mails/_placeholder_group.html" with placeholders=form.grouped_placeholders.order tag="order" %}
+            {% include "orga/mails/_placeholder_group.html" with placeholders=form.grouped_placeholders.ticket tag="ticket" %}
+            {% include "orga/mails/_placeholder_group.html" with placeholders=form.grouped_placeholders.invoice tag="invoice" %}
             {% include "orga/mails/_placeholder_group.html" with placeholders=form.grouped_placeholders.event tag="event" %}
             {% include "orga/mails/_placeholder_group.html" with placeholders=form.grouped_placeholders.other tag="other" %}
         </div>
@@ -189,7 +227,7 @@
                                 {% translate "Save draft" %}
                             </button>
                         {% endblock draft_button %}
-                        <button type="submit" class="btn btn-outline-info btn-save" name="action" value="preview">
+                        <button type="submit" class="btn btn-outline-info btn-save" name="action" value="preview" formnovalidate>
                             {% translate "Preview email" %}
                         </button>
                         <span class="composer-send-group">
@@ -240,7 +278,7 @@
                     <button type="button" class="btn btn-default" data-confirm-cancel>
                         {% translate "Cancel" %}
                     </button>
-                    <button type="submit" class="btn btn-primary" name="action" value="send" id="send-confirm-submit"
+                    <button type="submit" class="btn btn-primary" name="action" value="send" id="send-confirm-submit" formnovalidate
                             data-label-send="{% translate 'Send email' %}"
                             data-label-schedule="{% translate 'Schedule email' %}">{% translate "Send email" %}</button>
                 </div>
@@ -252,6 +290,7 @@
 
     <script src="{% static 'orga/js/placeholder.js' %}" defer></script>
     <script type="module" src="{% static 'orga/js/mail-language-tabs.js' %}"></script>
+    <script type="module" src="{% static 'orga/js/mail-editor-tabs.js' %}"></script>
     <script type="module" src="{% static 'orga/js/mail-delivery.js' %}"></script>
     <script type="module" src="{% static 'orga/js/mail-confirm.js' %}"></script>
-{% endblock mail_content %}
+{% endblock content %}
