@@ -427,6 +427,10 @@ class EventDashboardView(EventPermissionRequired, SubmissionStatsMixin, Template
     def internal_note_form(self):
         return EventInternalNoteForm(instance=self.request.event)
 
+    @context
+    def can_edit_internal_note(self):
+        return self.request.user.has_perm('base.update_event', self.request.event)
+
     def post(self, request, *args, **kwargs):
         if not request.user.has_perm('base.update_event', request.event):
             raise Http404()

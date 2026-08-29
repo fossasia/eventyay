@@ -23,7 +23,7 @@
                             {% endif %}
                         </td>
                         <td>{{ log.action_type }}</td>
-                        <td>{{ log.display_object|default:"—" }}</td>
+                        <td>{{ log.display_object|default:"—"|safe }}</td>
                         <td>{{ log.display }}</td>
                     </tr>
                 {% endfor %}
