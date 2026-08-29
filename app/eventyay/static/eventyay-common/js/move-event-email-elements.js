@@ -1,12 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
-    moveElement('email-send_grid_api_key', 'email-email_vendor', 0)
+    moveElement('email-send_grid_api_key', 'email-email_vendor', 1)
     moveGmailPanel('email-email_vendor', 2)
-    moveElement('email-smtp_host', 'email-email_vendor', 1)
-    moveElement('email-smtp_port', 'email-email_vendor', 1)
-    moveElement('email-smtp_username', 'email-email_vendor', 1)
-    moveElement('email-smtp_password', 'email-email_vendor', 1)
-    moveElement('email-smtp_use_tls', 'email-email_vendor', 1)
-    moveElement('email-smtp_use_ssl', 'email-email_vendor', 1)
+    moveElement('email-smtp_host', 'email-email_vendor', 0)
+    moveElement('email-smtp_port', 'email-email_vendor', 0)
+    moveElement('email-smtp_username', 'email-email_vendor', 0)
+    moveElement('email-smtp_password', 'email-email_vendor', 0)
+    moveElement('email-smtp_use_tls', 'email-email_vendor', 0)
+    moveElement('email-smtp_use_ssl', 'email-email_vendor', 0)
 
     function toggleGmailPanel() {
         const selected = document.querySelector('input[name="email-email_vendor"]:checked')
