@@ -26,7 +26,7 @@
     /* Modern Tabs (Stripe-style) */
     .video-settings-tabs {
         border-bottom: 1px solid #e3e8ee;
-        margin-bottom: 32px;
+        margin-bottom: 0;
         display: flex;
         gap: 8px;
         padding-left: 0;
@@ -63,14 +63,10 @@
     /* Clean Card (Stripe-style) */
     .video-server-card {
         background: #ffffff;
-        border: 1px solid #e3e8ee;
-        border-radius: 8px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.08);
         margin-bottom: 32px;
-        overflow: hidden;
     }
     .video-server-header {
-        padding: 20px 24px;
+        padding: 20px 0;
         border-bottom: 1px solid #e3e8ee;
         display: flex;
         justify-content: space-between;
@@ -115,15 +111,27 @@
         font-size: 12px;
         text-transform: uppercase;
         letter-spacing: 0.03em;
-        padding: 12px 24px;
+        padding: 12px 0;
         background-color: #f7fafc;
     }
+    .video-admin-table thead th:first-child {
+        padding-left: 8px;
+    }
+    .video-admin-table thead th:last-child {
+        padding-right: 8px;
+    }
     .video-admin-table tbody td {
-        padding: 16px 24px;
+        padding: 16px 0;
         border-bottom: 1px solid #e3e8ee;
         font-size: 14px;
         color: #3c4257;
         vertical-align: middle !important;
+    }
+    .video-admin-table tbody td:first-child {
+        padding-left: 8px;
+    }
+    .video-admin-table tbody td:last-child {
+        padding-right: 8px;
     }
     .video-admin-table > tbody > tr:last-child > td {
         border-bottom: none;
