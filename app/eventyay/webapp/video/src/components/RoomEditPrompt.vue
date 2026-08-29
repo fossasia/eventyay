@@ -36,8 +36,8 @@ prompt.c-room-edit-prompt(:scrollable="false", @close="$emit('close')")
 						)
 							.icon.mdi(:class="[`mdi-${type.icon}`]")
 							.text
-								.name {{ type.name }}
-								.description {{ type.description }}
+								.name {{ $t(type.name) }}
+								.description {{ $t(type.description) }}
 				.generic-settings
 					bunt-input(name="name", v-model="localizedName", :label="$t('Name')")
 					bunt-input(name="description", v-model="localizedDescription", :label="$t('Description')")
@@ -203,7 +203,8 @@ export default {
 			return this.$localize(this.config?.name)
 		},
 		currentTypeLabel () {
-			return getConfiguredRoomLabel(this.inferredType)
+			const label = getConfiguredRoomLabel(this.inferredType)
+			return label ? this.$t(label) : ''
 		}
 	},
 	async created () {

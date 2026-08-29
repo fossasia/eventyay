@@ -65,7 +65,8 @@ export default {
 			return inferType(this.config)
 		},
 		roomTypeLabel() {
-			return getConfiguredRoomLabel(this.inferredType)
+			const label = getConfiguredRoomLabel(this.inferredType)
+			return label ? this.$t(label) : ''
 		},
 		availableProviders() {
 			return getAvailableVideoProviders(

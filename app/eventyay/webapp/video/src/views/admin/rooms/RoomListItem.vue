@@ -43,7 +43,8 @@ export default {
 			return inferType({ module_config: this.room.module_config })
 		},
 		badgeLabel () {
-			return getConfiguredRoomLabel(this.inferredType)
+			const label = getConfiguredRoomLabel(this.inferredType)
+			return label ? this.$t(label) : ''
 		},
 		badgeIcon () {
 			return `mdi-${this.inferredType.icon}`

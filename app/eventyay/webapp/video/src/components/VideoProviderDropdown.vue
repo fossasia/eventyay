@@ -25,7 +25,7 @@
 						@keydown="onItemKeydown($event, index)"
 					)
 						i.mdi(:class="`mdi-${provider.icon}`", aria-hidden="true")
-						span {{ provider.label }}
+						span {{ $t(provider.label) }}
 	template(v-else)
 		bunt-button.dropdown-toggle(
 			:class="buttonClass",
@@ -96,7 +96,7 @@ export default {
 			return this.variant === 'action' ? 'btn-add-video' : 'btn-create'
 		},
 		emptyMessage() {
-			return 'No video options are enabled for this event.'
+			return this.$t('No video options are enabled for this event.')
 		},
 		offset() {
 			return [0, 4]
