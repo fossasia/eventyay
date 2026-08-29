@@ -93,6 +93,26 @@
                     if (input) input.value = '';
                 }
             });
+
+            var fromInput = document.querySelector('input[name="date_from"]');
+            var toInput = document.querySelector('input[name="date_to"]');
+            if (fromInput && toInput) {
+                function syncRangeLimits() {
+                    if (fromInput.value) {
+                        toInput.min = fromInput.value;
+                    } else {
+                        toInput.removeAttribute('min');
+                    }
+                    if (toInput.value) {
+                        fromInput.max = toInput.value;
+                    } else {
+                        fromInput.removeAttribute('max');
+                    }
+                }
+                fromInput.addEventListener('change', syncRangeLimits);
+                toInput.addEventListener('change', syncRangeLimits);
+                syncRangeLimits();
+            }
         })();
     </script>
 {% endblock %}
