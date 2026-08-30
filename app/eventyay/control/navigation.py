@@ -587,7 +587,7 @@ def get_admin_navigation(request):
                 ],
             },
             {
-                'label': _('Vouchers'),
+                'label': _('Event vouchers'),
                 'url': reverse('eventyay_admin:admin.vouchers'),
                 'active': 'voucher' in url.url_name,
                 'icon': 'tags',
