@@ -2726,9 +2726,24 @@ class OrderGo(EventPermissionRequiredMixin, View):
             )
 
 
+def get_banktransfer_import_context(request):
+    if (
+        'eventyay.plugins.banktransfer' in request.event.get_plugins()
+        and request.user.has_event_permission(
+            request.organizer, request.event, 'can_manage_bank_transfers', request=request
+        )
+    ):
+        from eventyay.plugins.banktransfer.views import get_event_banktransfer_context
+
+        return get_event_banktransfer_context(request)
+    return {}
+
+
 class ExportMixin:
     @cached_property
     def exporters(self) -> list[BaseExporter]:
+        if 'can_view_orders' not in self.request.eventpermset:
+            return []
         exporters = []
         responses = register_data_exporters.send(self.request.event)
         for ex in sorted(
@@ -2760,6 +2775,31 @@ class ExportMixin:
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['exporters'] = self.exporters
+        ctx.update(get_banktransfer_import_context(self.request))
+
+        can_view_orders = 'can_view_orders' in self.request.eventpermset
+        can_change_orders = 'can_change_orders' in self.request.eventpermset
+        has_banktransfer = (
+            'can_manage_bank_transfers' in self.request.eventpermset
+            and 'eventyay.plugins.banktransfer' in self.request.event.get_plugins()
+        )
+
+        default_tab = 'export'
+        if not can_view_orders:
+            if can_change_orders or has_banktransfer:
+                default_tab = 'import'
+
+        active_tab = self.request.GET.get('tab', default_tab)
+        if active_tab == 'export' and not can_view_orders:
+            active_tab = default_tab
+        elif active_tab == 'import' and not (can_change_orders or has_banktransfer):
+            active_tab = default_tab
+        elif active_tab == 'banktransfer':
+            active_tab = 'import'
+
+        ctx['active_tab'] = active_tab
+        ctx['has_banktransfer'] = has_banktransfer
+        ctx['can_change_orders'] = can_change_orders
         return ctx
 
 
@@ -2767,7 +2807,7 @@ class ExportDoView(EventPermissionRequiredMixin, ExportMixin, AsyncAction, Templ
     permission = 'can_view_orders'
     known_errortypes = ['ExportError']
     task = export
-    template_name = 'pretixcontrol/orders/export.html'
+    template_name = 'pretixcontrol/orders/import_export.html'
 
     def get_success_message(self, value):
         return None
@@ -2780,7 +2820,7 @@ class ExportDoView(EventPermissionRequiredMixin, ExportMixin, AsyncAction, Templ
         if self.exporter:
             query['identifier'] = self.exporter.identifier
         base_url = reverse(
-            'control:event.orders.export',
+            'control:event.orders.import_export',
             kwargs={
                 'event': self.request.event.slug,
                 'organizer': self.request.event.organizer.slug,
@@ -2804,7 +2844,7 @@ class ExportDoView(EventPermissionRequiredMixin, ExportMixin, AsyncAction, Templ
             messages.error(self.request, _('The selected exporter was not found.'))
             return redirect(
                 reverse(
-                    'control:event.orders.export',
+                    'control:event.orders.import_export',
                     kwargs={
                         'event': self.request.event.slug,
                         'organizer': self.request.event.organizer.slug,
@@ -2832,8 +2872,8 @@ class ExportDoView(EventPermissionRequiredMixin, ExportMixin, AsyncAction, Templ
 
 
 class ExportView(EventPermissionRequiredMixin, ExportMixin, TemplateView):
-    permission = 'can_view_orders'
-    template_name = 'pretixcontrol/orders/export.html'
+    permission = ('can_view_orders', 'can_change_orders', 'can_manage_bank_transfers')
+    template_name = 'pretixcontrol/orders/import_export.html'
 
 
 class RefundList(EventPermissionRequiredMixin, PaginationMixin, ListView):
