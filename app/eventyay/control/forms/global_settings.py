@@ -11,9 +11,17 @@ from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
 from eventyay.base.forms import SECRET_REDACTED, SecretKeySettingsField, SecretKeySettingsWidget, SettingsForm
 from eventyay.base.settings import EVENT_SERIES_CREATION_ENABLED, MEETUP_CREATION_ENABLED, GlobalSettingsObject
 from eventyay.base.signals import register_global_settings
+from eventyay.control.forms import ExtFileField, MultipleLanguagesWidget
+from eventyay.consts import SizeKey
+from django.core.files.uploadedfile import UploadedFile
+from eventyay.helpers.image_optimize import optimize_uploaded_image
+from django.core.files.storage import default_storage
+import os
+import logging
 from eventyay.common.forms.fields import I18nRichTextFormField
-from eventyay.control.forms import MultipleLanguagesWidget
 
+
+logger = logging.getLogger(__name__)
 
 class GlobalSettingsForm(SettingsForm):
     auto_fields = ['region', 'mail_from']
@@ -950,6 +958,79 @@ class StartPageSettingsForm(SettingsForm):
     startpage_header_text = I18nRichTextFormField(
         required=False,
         label=_('Startpage Header Text'),
+        help_text=_('e.g. {sample}').format(sample='Welcome to our event platform!'),
+    )
+    
+    startpage_show_hero = forms.BooleanField(
+        required=False,
+        label=_('Show hero section'),
+        help_text=_('Enable the hero section at the top of the start page.')
+    )
+    startpage_hero_title = I18nFormField(
+        required=False,
+        label=_('Hero Title'),
+        widget=I18nTextInput,
+        help_text=_('e.g. {sample}').format(sample='Eventyay – Open Source Event Management Platform'),
+    )
+    startpage_hero_text = I18nFormField(
+        required=False,
+        label=_('Hero Text'),
+        widget=I18nTextarea,
+        help_text=_('e.g. {sample}').format(sample='The comprehensive platform for all your event needs. Ticketing, Call for Speakers, Scheduling, Check-in, and more.'),
+    )
+
+    startpage_show_features = forms.BooleanField(
+        required=False,
+        label=_('Show feature boxes'),
+        help_text=_('Enable the feature boxes section on the start page.')
+    )
+    startpage_feature_1_title = I18nFormField(
+        required=False,
+        label=_('Feature 1 Title'),
+        widget=I18nTextInput,
+        help_text=_('e.g. {sample}').format(sample='Ticketing'),
+    )
+    startpage_feature_1_text = I18nFormField(
+        required=False,
+        label=_('Feature 1 Text'),
+        widget=I18nTextarea,
+        help_text=_('e.g. {sample}').format(sample='Sell tickets, manage orders, and handle check-ins effortlessly.'),
+    )
+    startpage_feature_2_title = I18nFormField(
+        required=False,
+        label=_('Feature 2 Title'),
+        widget=I18nTextInput,
+        help_text=_('e.g. {sample}').format(sample='Call for Speakers'),
+    )
+    startpage_feature_2_text = I18nFormField(
+        required=False,
+        label=_('Feature 2 Text'),
+        widget=I18nTextarea,
+        help_text=_('e.g. {sample}').format(sample='Accept submissions, review proposals, and build your schedule.'),
+    )
+    startpage_feature_3_title = I18nFormField(
+        required=False,
+        label=_('Feature 3 Title'),
+        widget=I18nTextInput,
+        help_text=_('e.g. {sample}').format(sample='Schedules'),
+    )
+    startpage_feature_3_text = I18nFormField(
+        required=False,
+        label=_('Feature 3 Text'),
+        widget=I18nTextarea,
+        help_text=_('e.g. {sample}').format(sample='Create interactive schedules and allow attendees to plan their visit.'),
+    )
+    startpage_feature_4_title = I18nFormField(
+        required=False,
+        label=_('Feature 4 Title'),
+        widget=I18nTextInput,
+        help_text=_('e.g. {sample}').format(sample='Open Source'),
+    )
+    startpage_feature_4_text = I18nFormField(
+        required=False,
+        label=_('Feature 4 Text'),
+        widget=I18nTextarea,
+        help_text=_('e.g. {sample}').format(sample='Built on open source technology. Fully customizable and transparent.'),
     )
 
     def __init__(self, *args, **kwargs):
@@ -995,3 +1076,58 @@ class StripeKeyValidator:
                 }
 
             raise forms.ValidationError(message, code='invalid-stripe-key', params=params)
+
+
+class MetaDataSettingsForm(SettingsForm):
+    auto_fields = [
+        'seo_homepage_title',
+        'seo_homepage_description',
+        'seo_og_title',
+        'seo_og_description',
+        'seo_twitter_title',
+        'seo_twitter_description',
+        'seo_fallback_text',
+    ]
+
+    seo_social_image = ExtFileField(
+        label=_('Social preview image'),
+        ext_whitelist=('.png', '.jpg', '.gif', '.jpeg', '.webp'),
+        max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
+        required=False,
+        help_text=_(
+            'This image is used for Open Graph and Twitter cards. '
+            'We recommend an image 1200 px wide and 630 px in height.'
+        ),
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.obj = GlobalSettingsObject()
+        super().__init__(*args, obj=self.obj, **kwargs)
+        for name, field in self.fields.items():
+            if isinstance(field.widget, forms.ClearableFileInput):
+                field.widget.attrs['data-eventyay-file-wrapper'] = 'disabled'
+                field.widget.attrs['data-event-settings-image-tools'] = 'enabled'
+
+    def save(self):
+        image_field = 'seo_social_image'
+        current_value = self.obj.settings.get(image_field, as_type=str, default='') or ''
+        new_value = self.cleaned_data.get(image_field)
+        
+        # Simplified storage logic
+        if isinstance(new_value, UploadedFile):
+            from eventyay.common.urls import get_file_url_path
+            current_file = get_file_url_path(current_value)
+            if current_file:
+                default_storage.delete(current_file)
+            
+            clean_name, ext = os.path.splitext(new_value.name or image_field)
+            new_filename = self.get_new_filename(clean_name)
+            base_path, _ = os.path.splitext(new_filename)
+            optimized_name = f'{base_path}{ext}'
+            try:
+                optimized_path = default_storage.save(optimized_name, new_value)
+                self.cleaned_data[image_field] = f"file://{optimized_path}"
+            except OSError:
+                logger.exception('Could not store original image for %s', image_field)
+
+        return super().save()
