@@ -10,7 +10,8 @@ from django.core.files.base import ContentFile
 from django.utils.timezone import now
 from django_countries.fields import Country
 from django_scopes import scope, scopes_disabled
-from pytz import UTC
+import datetime
+UTC = datetime.timezone.utc
 
 from eventyay.base.models import (
     InvoiceAddress,
@@ -52,12 +53,12 @@ class Object:
 
 @pytest.fixture
 def item(event):
-    return event.items.create(name='Budget Ticket', default_price=23)
+    return event.products.create(name='Budget Ticket', default_price=23)
 
 
 @pytest.fixture
 def item2(event2):
-    return event2.items.create(name='Budget Ticket', default_price=23)
+    return event2.products.create(name='Budget Ticket', default_price=23)
 
 
 @pytest.fixture
@@ -68,7 +69,7 @@ def taxrule(event):
 @pytest.fixture
 def question(event, item):
     q = event.questions.create(question='T-Shirt size', type='S', identifier='ABC')
-    q.items.add(item)
+    q.products.add(item)
     q.options.create(answer='XL', identifier='LVETRWVU')
     return q
 
@@ -76,14 +77,14 @@ def question(event, item):
 @pytest.fixture
 def question2(event2, item2):
     q = event2.questions.create(question='T-Shirt size', type='S', identifier='ABC')
-    q.items.add(item2)
+    q.products.add(item2)
     return q
 
 
 @pytest.fixture
 def quota(event, item):
     q = event.quotas.create(name='Budget Quota', size=200)
-    q.items.add(item)
+    q.products.add(item)
     return q
 
 
@@ -149,7 +150,7 @@ def order(event, item, taxrule, question):
         )
         op = OrderPosition.objects.create(
             order=o,
-            item=item,
+            product=item,
             variation=None,
             price=Decimal('23'),
             attendee_name_parts={'full_name': 'Peter', '_scheme': 'full'},
@@ -158,7 +159,7 @@ def order(event, item, taxrule, question):
         )
         OrderPosition.objects.create(
             order=o,
-            item=item,
+            product=item,
             variation=None,
             price=Decimal('23'),
             attendee_name_parts={'full_name': 'Peter', '_scheme': 'full'},
@@ -5001,3 +5002,67 @@ def test_position_update_question_handling(token_client, organizer, event, order
         answ = op.answers.get()
     assert answ.file
     assert answ.answer.startswith('file://')
+@pytest.mark.django_db
+def test_order_anonymize_event_not_ended(token_client, organizer, event, order):
+    event.date_from = now() + datetime.timedelta(days=1)
+    event.date_to = now() + datetime.timedelta(days=2)
+    event.save()
+
+    resp = token_client.post(
+        '/api/v1/organizers/{}/events/{}/orders/{}/anonymize/'.format(organizer.slug, event.slug, order.code)
+    )
+    assert resp.status_code == 400
+    assert 'cannot be anonymized' in resp.data['detail']
+
+
+@pytest.mark.django_db
+def test_order_anonymize_success(token_client, organizer, event, order):
+    event.date_from = now() - datetime.timedelta(days=2)
+    event.date_to = now() - datetime.timedelta(days=1)
+    event.save()
+
+    resp = token_client.post(
+        '/api/v1/organizers/{}/events/{}/orders/{}/anonymize/'.format(organizer.slug, event.slug, order.code)
+    )
+    assert resp.status_code == 200
+    assert resp.data['email'] == f'anonymized-order-{order.code}@eventyay.local'
+    assert resp.data['phone'] is None
+
+    order.refresh_from_db()
+    assert order.email == f'anonymized-order-{order.code}@eventyay.local'
+
+
+@pytest.mark.django_db
+def test_order_anonymize_permission(token_client, organizer, event, order, team):
+    event.date_from = now() - datetime.timedelta(days=2)
+    event.date_to = now() - datetime.timedelta(days=1)
+    event.save()
+
+    team.can_change_orders = False
+    team.save()
+
+    resp = token_client.post(
+        '/api/v1/organizers/{}/events/{}/orders/{}/anonymize/'.format(organizer.slug, event.slug, order.code)
+    )
+    assert resp.status_code == 403
+
+
+def test_order_serializers_without_context():
+    """
+    Regression test for #4311 where OpenAPI schema generation would crash due to
+    missing 'request' or 'event' in the serializer context.
+    """
+    from eventyay.api.serializers.order import (
+        CheckinListOrderPositionSerializer,
+        OrderCreateSerializer,
+        OrderSerializer,
+    )
+    import pytest
+    
+    try:
+        OrderSerializer(context={})
+        OrderCreateSerializer(context={})
+        CheckinListOrderPositionSerializer(context={})
+    except KeyError as e:
+        pytest.fail(f"Serializer raised KeyError when initialized without context: {e}")
+

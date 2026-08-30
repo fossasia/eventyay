@@ -3,8 +3,7 @@ import logging
 import os
 import re
 import smtplib
-from datetime import datetime, timedelta
-from datetime import timezone as tz
+from datetime import datetime, timedelta, timezone
 from enum import StrEnum
 from urllib.parse import urlparse
 
@@ -28,20 +27,29 @@ from django.utils.encoding import iri_to_uri
 from django.utils.functional import cached_property
 from django.utils.timezone import get_current_timezone_name
 from django.utils.translation import gettext_lazy as _
-from django.views.generic import ListView, TemplateView
+from django.views.generic import FormView, ListView, TemplateView
 from django_scopes import scope
-from pytz import timezone
+from zoneinfo import ZoneInfo
 from rest_framework import views
 from django.views import View
 from django.apps import apps
 
+from eventyay.timezones import localize_datetime
+
 from eventyay.base.i18n import language
+from eventyay.base.gmail.errors import (
+    GmailDailyLimitError,
+    GmailPermanentError,
+    GmailRateLimitError,
+    GmailTemporaryError,
+)
 from eventyay.base.meetup import (
+    get_rsvp_product_and_quota,
     get_video_config_initial,
     is_meetup_event,
     provision_meetup_event,
 )
-from eventyay.base.models import Event, EventMetaValue, Organizer, Quota
+from eventyay.base.models import Event, EventMetaValue, GlobalPluginConfig, Organizer, Quota
 from eventyay.base.services.notifications import notify_organizer_followers
 from eventyay.base.models.cfp import default_fields
 from eventyay.consts import DEFAULT_PLUGINS
@@ -79,7 +87,7 @@ from eventyay.orga.forms.event import EventFooterLinkFormset, EventHeaderLinkFor
 from eventyay.eventyay_common.video.permissions import collect_user_video_traits
 from eventyay.helpers.plugin_enable import is_video_enabled
 from eventyay.multidomain.urlreverse import build_absolute_uri
-from ..forms.event import EventUpdateForm
+from ..forms.event import EventCloneForm, EventUpdateForm
 
 logger = logging.getLogger(__name__)
 
@@ -189,6 +197,11 @@ class EventCreateView(TemplateView):
     template_name = 'eventyay_common/events/create.html'
     legacy_session_key = 'event_create_legacy_wizard_data'
 
+    def get_template_names(self):
+        if self.is_meetup_request:
+            return ['eventyay_common/events/meetup_create.html']
+        return [self.template_name]
+
     def get_create_organizer_queryset(self):
         queryset = Organizer.objects.all()
         if not self.request.user.has_active_staff_session(self.request.session.session_key):
@@ -198,7 +211,12 @@ class EventCreateView(TemplateView):
         return queryset
 
     def get_fallback_organizer(self):
-        return self.get_create_organizer_queryset().first()
+        queryset = self.get_create_organizer_queryset()
+        if self.request.user.is_authenticated:
+            default_org = self.request.user.get_default_organizer(can_create_events=True)
+            if default_org and queryset.filter(pk=default_org.pk).exists():
+                return default_org
+        return queryset.first()
 
     def get_organizer_slug_options(self):
         return {
@@ -231,6 +249,12 @@ class EventCreateView(TemplateView):
                 pass
         elif queryset.count() == 1:
             initial_form['organizer'] = queryset.first()
+        elif self.request.user.is_authenticated:
+            default_org = self.request.user.get_default_organizer(can_create_events=True)
+            if default_org and queryset.filter(pk=default_org.pk).exists():
+                initial_form['organizer'] = default_org
+            elif queryset.exists():
+                initial_form['organizer'] = queryset.first()
 
         return initial_form
 
@@ -262,8 +286,8 @@ class EventCreateView(TemplateView):
             initial_form['locale'] = 'en'
 
             # Set default dates: 3 months from now, 9 AM to 5 PM in user's timezone
-            user_tz = timezone(get_current_timezone_name())
-            now = user_tz.localize(datetime.now())
+            user_tz = ZoneInfo(get_current_timezone_name())
+            now = datetime.now(user_tz)
             default_start = now + timedelta(days=90)
             default_start = default_start.replace(hour=9, minute=0, second=0, microsecond=0)
             default_end = default_start.replace(hour=17, minute=0, second=0, microsecond=0)
@@ -303,8 +327,11 @@ class EventCreateView(TemplateView):
         is_series = request.GET.get('series') == '1' or request.POST.get('has_subevents') == 'on'
         if is_series and not is_event_series_creation_enabled(request):
             raise PermissionDenied(_('Event series creation is currently disabled.'))
-        if self.is_meetup_request and not is_meetup_creation_enabled(request):
-            raise PermissionDenied(_('Meetup creation is currently disabled.'))
+        if self.is_meetup_request:
+            if not is_meetup_creation_enabled(request):
+                raise PermissionDenied(_('Meetup creation is currently disabled.'))
+            if not self.get_create_organizer_queryset().exists():
+                raise PermissionDenied(_('You do not have permission to create meetup events.'))
         return super().dispatch(request, *args, **kwargs)
 
     def get_foundation_form(self):
@@ -323,6 +350,7 @@ class EventCreateView(TemplateView):
         form_class = MeetupEventWizardBasicsForm if self.is_meetup_request else EventWizardBasicsForm
         return form_class(
             data=self.request.POST if bind and self.request.method == 'POST' else None,
+            files=self.request.FILES if bind and self.request.method == 'POST' else None,
             initial=self.get_basics_initial(foundation_data),
             prefix='basics',
             user=self.request.user,
@@ -334,6 +362,7 @@ class EventCreateView(TemplateView):
             is_video_creation=foundation_data.get('is_video_creation', True),
             restrict_locale_choices=False,
         )
+
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -497,11 +526,20 @@ class EventCreateView(TemplateView):
         has_permission = check_create_permission(self.request)
         final_is_video_creation = foundation_data.get('is_video_creation', True) and has_permission
 
-        with transaction.atomic(), language(basics_data['locale']):
+        # Derive the default locale: use whatever the form provides (set by the
+        # hidden input that JS syncs from the language-order tray), but always fall
+        # back to the first selected locale so the UI change is backward-compatible.
+        locales_list = foundation_data['locales']
+        chosen_locale = basics_data.get('locale') or (locales_list[0] if locales_list else 'en')
+        if chosen_locale not in locales_list and locales_list:
+            chosen_locale = locales_list[0]
+
+        with transaction.atomic(), language(chosen_locale):
             event = basics_form.instance
             event.organizer = foundation_data['organizer']
 
             default_plugins = list(settings.EVENTYAY_PLUGINS_DEFAULT)
+            global_default_plugins = GlobalPluginConfig.get_default_enabled_modules()
 
             ticketing_plugins = [
                 'eventyay.plugins.banktransfer',
@@ -514,7 +552,9 @@ class EventCreateView(TemplateView):
                 if plugin_name in installed_apps:
                     ticketing_plugins.append(plugin_name)
 
-            all_plugins = list(dict.fromkeys(default_plugins + ticketing_plugins))
+            all_plugins = list(dict.fromkeys(default_plugins + global_default_plugins + ticketing_plugins))
+            globally_disabled = GlobalPluginConfig.get_disabled_modules()
+            all_plugins = [m for m in all_plugins if m not in globally_disabled]
             event.plugins = ','.join(all_plugins)
 
             event.has_subevents = foundation_data['has_subevents']
@@ -528,13 +568,16 @@ class EventCreateView(TemplateView):
 
             with scope(organizer=event.organizer):
                 event.checkin_lists.create(name=_('Default'), all_products=True)
+                for team in self.request.user.teams.filter(organizer=event.organizer):
+                    if not team.all_events and team.can_create_events:
+                        team.limit_events.add(event)
             event.set_defaults()
             event.settings.set('timezone', basics_data['timezone'])
             content_locales = foundation_data.get('content_locales') or foundation_data['locales']
             event.update_language_configuration(
                 locales=foundation_data['locales'],
                 content_locales=content_locales,
-                default_locale=basics_data['locale']
+                default_locale=chosen_locale,
             )
             event.refresh_from_db()
             cfp = event.cfp
@@ -555,21 +598,7 @@ class EventCreateView(TemplateView):
             create_for = EventCreatedFor.BOTH.value
             event.settings.set('create_for', create_for)
 
-            # Smart defaults work for all event types
-            if create_for in [EventCreatedFor.BOTH.value, EventCreatedFor.TICKET.value, EventCreatedFor.TALK.value]:
-                event_dict = {
-                    'organiser_slug': event.organizer.slug,
-                    'name': event.name.data,
-                    'slug': event.slug,
-                    'is_public': event.live,
-                    'date_from': str(event.date_from),
-                    'date_to': str(event.date_to),
-                    'timezone': str(basics_data.get('timezone')),
-                    'locale': event.settings.locale,
-                    'locales': event.settings.locales,
-                    'content_locales': content_locales,
-                    'is_video_creation': final_is_video_creation,
-                }
+
 
             event.log_action(
                     action='eventyay.event.added',
@@ -577,11 +606,30 @@ class EventCreateView(TemplateView):
                 )
 
             if self.is_meetup_request:
+                crop_box = None
+                try:
+                    crop_x = int(float(self.request.POST.get('basics-logo_image_crop_x', '')))
+                    crop_y = int(float(self.request.POST.get('basics-logo_image_crop_y', '')))
+                    crop_w = int(float(self.request.POST.get('basics-logo_image_crop_w', '')))
+                    crop_h = int(float(self.request.POST.get('basics-logo_image_crop_h', '')))
+                    if crop_w > 0 and crop_h > 0 and crop_x >= 0 and crop_y >= 0:
+                        crop_box = (crop_x, crop_y, crop_x + crop_w, crop_y + crop_h)
+                except (OverflowError, ValueError, TypeError):
+                    crop_box = None
+
                 provision_meetup_event(
                     event,
                     video_type=basics_data.get('video_type', ''),
                     video_url=basics_data.get('video_url', ''),
                     request=self.request,
+                    frontpage_text=basics_data.get('frontpage_text'),
+                    header_image=basics_form.cleaned_data.get('logo_image'),
+                    registration_limit=basics_data.get('registration_limit'),
+                    crop_box=crop_box,
+                    registration_fee=basics_data.get('registration_fee'),
+                    payment_stripe_publishable_key=basics_data.get('payment_stripe_publishable_key', ''),
+                    payment_stripe_secret_key=basics_data.get('payment_stripe_secret_key', ''),
+                    payment_stripe_merchant_country=basics_data.get('payment_stripe_merchant_country', ''),
                 )
 
         return redirect(
@@ -660,12 +708,24 @@ class EventUpdate(
         context['is_video_enabled'] = is_video_enabled(self.object)
         context['is_meetup_event'] = is_meetup_event(self.object)
         context['is_talk_event_created'] = False
+        from eventyay.base.gmail.models import GmailOAuthCredential
+
+        context['gmail_migration_pending'] = not GmailOAuthCredential.is_table_available()
+        context['gmail_credential'] = GmailOAuthCredential.get_active_for_event_safe(self.object)
+        gmail_kwargs = {'organizer': self.object.organizer.slug, 'event': self.object.slug}
+        context['gmail_callback_url'] = self.request.build_absolute_uri(
+            reverse('eventyay_common:event.gmail.callback', kwargs=gmail_kwargs)
+        )
+        context['gmail_connect_url'] = reverse('eventyay_common:event.gmail.connect', kwargs=gmail_kwargs)
+        context['gmail_disconnect_url'] = reverse('eventyay_common:event.gmail.disconnect', kwargs=gmail_kwargs)
         if (
             self.object.settings.create_for == EventCreatedFor.BOTH
             or self.object.settings.talk_schedule_public is not None
         ):
             # Ignore case Event is created only for Talk as it not enable yet.
             context['is_talk_event_created'] = True
+            
+        
         return context
 
     def _run_email_test(self):
@@ -675,10 +735,19 @@ class EventUpdate(
             messages.error(self.request, _('Custom email gateway is not enabled.'))
             return
         vendor = event.settings.get('email_vendor', 'smtp')
-        if vendor == 'sendgrid' and not event.settings.get('send_grid_api_key'):
+        if vendor == 'gmail_api':
+            from eventyay.base.gmail.models import GmailOAuthCredential
+
+            if not GmailOAuthCredential.get_active_for_event(event):
+                messages.error(
+                    self.request,
+                    _('Gmail is selected but no account is connected. Connect Gmail in the email settings first.'),
+                )
+                return
+        elif vendor == 'sendgrid' and not event.settings.get('send_grid_api_key'):
             messages.error(self.request, _('SendGrid API key is missing. Please configure it and save.'))
             return
-        if vendor != 'sendgrid' and (not event.settings.get('smtp_host') or not event.settings.get('smtp_port')):
+        if vendor != 'sendgrid' and vendor != 'gmail_api' and (not event.settings.get('smtp_host') or not event.settings.get('smtp_port')):
             messages.error(self.request, _('SMTP host or port is missing. Please configure them and save.'))
             return
 
@@ -699,6 +768,16 @@ class EventUpdate(
                 self.request,
                 _('SendGrid test failed with HTTP error %(code)s. Check your API key and try again.')
                 % {'code': e.response.status_code if hasattr(e, 'response') and e.response is not None else '?'},
+            )
+        except (GmailRateLimitError, GmailTemporaryError) as e:
+            messages.warning(
+                self.request,
+                _('Gmail test email is temporarily delayed because of rate limits: %(err)s') % {'err': e},
+            )
+        except (GmailDailyLimitError, GmailPermanentError) as e:
+            messages.error(
+                self.request,
+                _('Gmail test email could not be sent: %(err)s') % {'err': e},
             )
         except (smtplib.SMTPException, OSError):
             logger.exception('Central SMTP test failed (event=%s)', event.slug)
@@ -859,7 +938,7 @@ class EventUpdate(
                 and self.header_links_formset.is_valid()
                 and self.footer_links_formset.is_valid()
             ):
-                zone = timezone(self.sform.cleaned_data['timezone'])
+                zone = ZoneInfo(self.sform.cleaned_data['timezone'])
                 event = form.instance
                 event.date_from = self.reset_timezone(zone, event.date_from)
                 event.date_to = self.reset_timezone(zone, event.date_to)
@@ -875,8 +954,8 @@ class EventUpdate(
             return HttpResponseRedirect(self.request.path)
 
     @staticmethod
-    def reset_timezone(tz, dt):
-        return tz.localize(dt.replace(tzinfo=None)) if dt is not None else None
+    def reset_timezone(zone, dt):
+        return localize_datetime(dt, zone)
 
 
 class EventPlugins(ControlEventPlugins):
@@ -924,15 +1003,30 @@ class EventLive(TemplateView):
         ctx['tickets_published'] = self.request.event.tickets_published
         ctx['talks_published'] = self.request.event.talks_published
         ctx['schedule_released'] = bool(self.request.event.current_schedule)
-        private_tickets = self.request.event.settings.get('private_testmode_tickets', True, as_type=bool)
+        private_tickets = self.request.event.settings.get('private_testmode_tickets', False, as_type=bool)
         private_talks = self.request.event.settings.get('private_testmode_talks', False, as_type=bool)
         if not self.request.event.private_testmode:
             private_tickets = False
             private_talks = False
         ctx['private_testmode_tickets'] = private_tickets
         ctx['private_testmode_talks'] = private_talks
-        ctx['talks_testmode'] = self.request.event.settings.get('talks_testmode', False, as_type=bool)
         ctx['is_video_enabled'] = is_video_enabled(self.request.event)
+        
+        components_ready = 0
+        if self.request.event.live:
+            components_ready += 1
+        if self.request.event.tickets_published:
+            components_ready += 1
+        if self.request.event.talks_published:
+            components_ready += 1
+        if ctx['is_video_enabled'] and self.request.event.settings.venueless_show_public_link:
+            components_ready += 1
+            
+        ctx['setup_progress'] = components_ready
+        ctx['setup_progress_percent'] = int((components_ready / 4) * 100)
+        
+        ctx['setup_progress_color'] = '#007bff'
+        
         public_pages = []
         if self.request.event.live:
             public_pages.append(_('Info'))
@@ -945,40 +1039,49 @@ class EventLive(TemplateView):
         ctx['public_pages'] = public_pages
         warnings = []
         suggestions = []
-        if not self.request.event.cfp.text or len(str(self.request.event.cfp.text)) < 50:
-            warnings.append(
-                {
-                    'text': _('The CfP doesn’t have a full text yet.'),
-                    'url': self.request.event.cfp.urls.text,
-                }
-            )
-        if (
-            self.request.event.get_feature_flag('use_tracks')
-            and self.request.event.cfp.request_track
-            and self.request.event.tracks.count() < 2
-        ):
-            suggestions.append(
-                {
-                    'text': _(
-                        'You want submitters to choose the tracks for their proposals, but you do not offer tracks for selection. Add at least one track!'
-                    ),
-                    'url': self.request.event.cfp.urls.tracks,
-                }
-            )
-        if self.request.event.submission_types.count() == 1:
-            suggestions.append(
-                {
-                    'text': _('You have configured only one session type so far.'),
-                    'url': self.request.event.cfp.urls.types,
-                }
-            )
-        if not self.request.event.talkquestions.exists():
-            suggestions.append(
-                {
-                    'text': _('You have configured no custom fields yet.'),
-                    'url': self.request.event.cfp.urls.new_question,
-                }
-            )
+        if hasattr(self.request.event, 'cfp'):
+            cfp = self.request.event.cfp
+            if not cfp.text:
+                warnings.append(
+                    {
+                        'text': _('The Call for Proposals text is missing. Please add a description.'),
+                        'url': cfp.urls.text,
+                    }
+                )
+            elif len(str(cfp.text)) < 50:
+                warnings.append(
+                    {
+                        'text': _('The Call for Proposals text is too short (needs at least 50 characters).'),
+                        'url': cfp.urls.text,
+                    }
+                )
+            if (
+                self.request.event.get_feature_flag('use_tracks')
+                and cfp.request_track
+                and self.request.event.tracks.count() < 2
+            ):
+                suggestions.append(
+                    {
+                        'text': _(
+                            'You want submitters to choose the tracks for their proposals, but you do not offer tracks for selection. Add at least one track!'
+                        ),
+                        'url': cfp.urls.tracks,
+                    }
+                )
+            if self.request.event.submission_types.count() == 1:
+                suggestions.append(
+                    {
+                        'text': _('You have configured only one session type so far.'),
+                        'url': cfp.urls.types,
+                    }
+                )
+            if not self.request.event.talkquestions.exists():
+                suggestions.append(
+                    {
+                        'text': _('You have configured no custom fields yet.'),
+                        'url': cfp.urls.new_question,
+                    }
+                )
         ctx['warnings'] = warnings
         ctx['suggestions'] = suggestions
         return ctx
@@ -1003,6 +1106,19 @@ class EventLive(TemplateView):
             messages.success(self.request, _('Your event is now online.'))
 
         elif request.POST.get('live') == 'false':
+            if event.tickets_published:
+                messages.error(
+                    self.request,
+                    _('You cannot unpublish the event while tickets are published. Please switch ticketing to private test mode first.'),
+                )
+                return redirect(self.request.path)
+            if event.talks_published:
+                messages.error(
+                    self.request,
+                    _('You cannot unpublish the event while talks are published. Please switch talks to private test mode first.'),
+                )
+                return redirect(self.request.path)
+
             with transaction.atomic():
                 event.live = False
                 event.save()
@@ -1011,223 +1127,100 @@ class EventLive(TemplateView):
                 self.request,
                 _('Your event has been unpublished.'),
             )
-        elif request.POST.get('tickets_published') == 'true':
-            if not event.live:
-                messages.error(self.request, _('Publish the event before publishing tickets.'))
-                return redirect(self.request.path)
+
+        elif request.POST.get('ticketing_mode'):
+            mode = request.POST.get('ticketing_mode')
             if not ticketing_ready:
-                messages.error(self.request, _('Please set up ticketing before publishing tickets.'))
-                return redirect(self.request.path)
-            if ticket_issues:
-                messages.error(self.request, _('Please resolve the ticketing issues before publishing tickets.'))
+                messages.error(self.request, _('Please set up ticketing before changing ticket modes.'))
                 return redirect(self.request.path)
             with transaction.atomic():
+                previous_testmode = event.testmode
                 previous_private = event.private_testmode
-                event.tickets_published = True
-                event.settings.private_testmode_tickets = False
-                event.private_testmode = event.settings.get('private_testmode_talks', False, as_type=bool)
-                event.save()
-                if previous_private != event.private_testmode:
-                    self.request.event.log_action(
-                        'eventyay.event.private_testmode.deactivated',
-                        user=self.request.user,
-                        data={},
-                    )
-            messages.success(self.request, _('Tickets are now published.'))
-        elif request.POST.get('tickets_published') == 'false':
-            with transaction.atomic():
-                event.tickets_published = False
-                event.settings.private_testmode_tickets = True
-                event.private_testmode = True
-                if event.testmode:
+                if mode == 'private_test':
+                    event.tickets_published = False
                     event.testmode = False
-                    self.request.event.log_action(
-                        'eventyay.event.testmode.deactivated',
-                        user=self.request.user,
-                        data={'delete': False},
-                    )
-                event.save()
-            messages.success(self.request, _('Tickets have been unpublished.'))
-        elif request.POST.get('testmode') == 'true':
-            if not event.tickets_published or not ticketing_ready:
-                messages.error(
-                    self.request,
-                    _('Tickets must be published and set up before enabling test mode.'),
-                )
-                return redirect(self.request.path)
-            with transaction.atomic():
-                previous_private = event.private_testmode
-                event.testmode = True
-                if event.startpage_visible or event.startpage_featured:
-                    event.startpage_visible = False
-                    event.startpage_featured = False
-                if event.settings.get('private_testmode_tickets', True, as_type=bool):
+                    event.settings.private_testmode_tickets = True
+                    event.private_testmode = True
+                    messages.success(self.request, _('Private test mode is now enabled for tickets.'))
+                elif mode == 'public_test':
+                    if not event.live:
+                        messages.error(self.request, _('Publish the event before testing tickets publicly.'))
+                        return redirect(self.request.path)
+                    event.tickets_published = True
                     event.settings.private_testmode_tickets = False
-                event.private_testmode = event.settings.get('private_testmode_talks', False, as_type=bool)
-                event.save()
-                if previous_private != event.private_testmode:
-                    self.request.event.log_action(
-                        'eventyay.event.private_testmode.activated'
-                        if event.private_testmode
-                        else 'eventyay.event.private_testmode.deactivated',
-                        user=self.request.user,
-                        data={},
-                    )
-                self.request.event.log_action('eventyay.event.testmode.activated', user=self.request.user, data={})
-            messages.success(self.request, _('Your shop is now in test mode!'))
-        elif request.POST.get('testmode') == 'false':
-            with transaction.atomic():
-                event.testmode = False
-                event.save()
-                self.request.event.log_action(
-                    'eventyay.event.testmode.deactivated',
-                    user=self.request.user,
-                    data={'delete': (request.POST.get('delete') == 'yes')},
-                )
-            event.cache.delete('complain_testmode_orders')
-            if request.POST.get('delete') == 'yes':
-                try:
-                    with transaction.atomic():
-                        for order in event.orders.filter(testmode=True):
-                            order.gracefully_delete(user=self.request.user)
-                except ProtectedError:
-                    messages.error(
-                        self.request,
-                        _(
-                            'An order could not be deleted as some constraints (e.g. data '
-                            'created by plug-ins) do not allow it.'
-                        ),
-                    )
-                else:
-                    event.cache.set('complain_testmode_orders', False, 30)
-            event.cartposition_set.filter(addon_to__isnull=False).delete()
-            event.cartposition_set.all().delete()
-            messages.success(
-                self.request,
-                _("We've disabled test mode for you. Let's sell some real tickets!"),
-            )
-        elif request.POST.get('talks_published') == 'true':
-            if not event.live:
-                messages.error(self.request, _('Publish the event before publishing talks.'))
-                return redirect(self.request.path)
-            with transaction.atomic():
-                previous_private = event.private_testmode
-                event.talks_published = True
-                event.settings.private_testmode_talks = False
-                event.private_testmode = event.settings.get('private_testmode_tickets', True, as_type=bool)
-                event.save()
-                if previous_private != event.private_testmode:
-                    self.request.event.log_action(
-                        'eventyay.event.private_testmode.deactivated',
-                        user=self.request.user,
-                        data={},
-                    )
-            messages.success(self.request, _('Talk pages are now published.'))
-        elif request.POST.get('talks_published') == 'false':
-            with transaction.atomic():
-                previous_private = event.private_testmode
-                event.talks_published = False
-                event.settings.private_testmode_talks = True
-                event.private_testmode = True
-                # Leave ticket test mode untouched when unpublishing talks.
-                if event.settings.get('talks_testmode', False, as_type=bool):
-                    event.settings.talks_testmode = False
-                event.save()
-                if previous_private != event.private_testmode:
-                    self.request.event.log_action(
-                        'eventyay.event.private_testmode.activated',
-                        user=self.request.user,
-                        data={},
-                    )
-            messages.success(self.request, _('Talk pages have been unpublished.'))
-        elif request.POST.get('talk_testmode') == 'true':
-            if not event.talks_published:
-                messages.error(
-                    self.request,
-                    _('Talk pages must be published before enabling talk test mode.'),
-                )
-                return redirect(self.request.path)
-            with transaction.atomic():
-                previous_private = event.private_testmode
-                event.settings.talks_testmode = True
-                if event.startpage_visible or event.startpage_featured:
-                    event.startpage_visible = False
-                    event.startpage_featured = False
-                if event.settings.get('private_testmode_talks', False, as_type=bool):
-                    event.settings.private_testmode_talks = False
-                    event.private_testmode = event.settings.get('private_testmode_tickets', True, as_type=bool)
-                event.save()
-                if previous_private and not event.private_testmode:
-                    self.request.event.log_action(
-                        'eventyay.event.private_testmode.deactivated',
-                        user=self.request.user,
-                        data={},
-                    )
-                self.request.event.log_action('eventyay.event.talk_testmode.activated', user=self.request.user, data={})
-            messages.success(self.request, _('Talk pages are now in test mode!'))
-        elif request.POST.get('talk_testmode') == 'false':
-            with transaction.atomic():
-                event.settings.talks_testmode = False
-                event.save()
-                self.request.event.log_action('eventyay.event.talk_testmode.deactivated', user=self.request.user, data={})
-            messages.success(self.request, _('Talk pages are now in production mode.'))
-        elif request.POST.get('private_testmode_tickets_action'):
-            enable = request.POST.get('private_testmode_tickets_action') == 'enable'
-            if enable and event.tickets_published:
-                messages.error(self.request, _('Private test mode cannot be enabled while tickets are published.'))
-                return redirect(self.request.path)
-            with transaction.atomic():
-                previous_private = event.private_testmode
-                event.settings.private_testmode_tickets = enable
-                if enable:
-                    event.private_testmode = True
-                    if event.testmode:
-                        event.testmode = False
-                        self.request.event.log_action(
-                            'eventyay.event.testmode.deactivated',
-                            user=self.request.user,
-                            data={'delete': False},
-                        )
-                else:
                     event.private_testmode = event.settings.get('private_testmode_talks', False, as_type=bool)
-                if event.private_testmode and event.testmode:
+                    event.testmode = True
+                    messages.success(self.request, _('Your shop is now in public test mode!'))
+                elif mode == 'public_sales':
+                    if not event.live:
+                        messages.error(self.request, _('Publish the event before publishing tickets.'))
+                        return redirect(self.request.path)
+                    if ticket_issues:
+                        messages.error(self.request, _('Please resolve the ticketing issues before publishing tickets.'))
+                        return redirect(self.request.path)
+
+                    if event.testmode and self.request.POST.get('delete_test_orders') == 'yes':
+                        try:
+                            with transaction.atomic():
+                                for order in event.orders.filter(testmode=True):
+                                    order.gracefully_delete(user=self.request.user)
+                            event.cache.delete('complain_testmode_orders')
+                        except ProtectedError:
+                            messages.error(
+                                self.request,
+                                _(
+                                    'An order could not be deleted as some constraints (e.g. data '
+                                    'created by plug-ins) do not allow it.'
+                                ),
+                            )
+                            return redirect(self.request.path)
+
+                    event.tickets_published = True
+                    event.settings.private_testmode_tickets = False
+                    event.private_testmode = event.settings.get('private_testmode_talks', False, as_type=bool)
                     event.testmode = False
-                    self.request.event.log_action(
-                        'eventyay.event.testmode.deactivated',
-                        user=self.request.user,
-                        data={'delete': False},
-                    )
+                    event.cartposition_set.filter(addon_to__isnull=False).delete()
+                    event.cartposition_set.all().delete()
+                    messages.success(self.request, _('Tickets are now publicly sold.'))
+                else:
+                    messages.error(self.request, _('Unknown ticketing mode.'))
+                    return redirect(self.request.path)
                 event.save()
+                if previous_testmode != event.testmode:
+                    self.request.event.log_action(
+                        'eventyay.event.testmode.activated' if event.testmode else 'eventyay.event.testmode.deactivated',
+                        user=self.request.user,
+                        data={},
+                    )
                 if previous_private != event.private_testmode:
                     self.request.event.log_action(
                         'eventyay.event.private_testmode.activated' if event.private_testmode else 'eventyay.event.private_testmode.deactivated',
                         user=self.request.user,
                         data={},
                     )
-            messages.success(
-                self.request,
-                _('Private test mode is now enabled for tickets.') if enable else _('Private test mode is now disabled for tickets.'),
-            )
-        elif request.POST.get('private_testmode_talks_action'):
-            enable = request.POST.get('private_testmode_talks_action') == 'enable'
-            if enable and event.talks_published:
-                messages.error(self.request, _('Private test mode cannot be enabled while talks are published.'))
-                return redirect(self.request.path)
+
+        elif request.POST.get('talk_mode'):
+            mode = request.POST.get('talk_mode')
             with transaction.atomic():
                 previous_private = event.private_testmode
-                event.settings.private_testmode_talks = enable
-                if enable:
-                    event.private_testmode = True
+                if mode == 'private_test':
+                    event.talks_published = False
+                    event.settings.private_testmode_talks = True
                     event.settings.talks_testmode = False
+                    event.private_testmode = True
+                    messages.success(self.request, _('Private test mode is now enabled for talks.'))
+                elif mode == 'public':
+                    if not event.live:
+                        messages.error(self.request, _('Publish the event before publishing talks.'))
+                        return redirect(self.request.path)
+                    event.talks_published = True
+                    event.settings.private_testmode_talks = False
+                    event.settings.talks_testmode = False
+                    event.private_testmode = event.settings.get('private_testmode_tickets', False, as_type=bool)
+                    messages.success(self.request, _('Talk pages are now published.'))
                 else:
-                    event.private_testmode = event.settings.get('private_testmode_tickets', True, as_type=bool)
-                if event.private_testmode and event.testmode:
-                    event.testmode = False
-                    self.request.event.log_action(
-                        'eventyay.event.testmode.deactivated',
-                        user=self.request.user,
-                        data={'delete': False},
-                    )
+                    messages.error(self.request, _('Unknown talk mode.'))
+                    return redirect(self.request.path)
                 event.save()
                 if previous_private != event.private_testmode:
                     self.request.event.log_action(
@@ -1235,13 +1228,16 @@ class EventLive(TemplateView):
                         user=self.request.user,
                         data={},
                     )
-            messages.success(
-                self.request,
-                _('Private test mode is now enabled for talks.') if enable else _('Private test mode is now disabled for talks.'),
-            )
+
         elif request.POST.get('toggle_video_visibility') is not None:
+            if not is_video_enabled(event):
+                messages.error(self.request, _('Please configure video settings before changing visibility.'))
+                return redirect(self.request.path)
             current_setting = event.settings.get('venueless_show_public_link', False)
             new_setting = not current_setting
+            if new_setting and not event.live:
+                messages.error(self.request, _('Publish the event before enabling public video link.'))
+                return redirect(self.request.path)
             event.settings.set('venueless_show_public_link', new_setting)
             if new_setting:
                 messages.success(self.request, _('Video link is now visible on public pages.'))
@@ -1404,9 +1400,11 @@ class VideoAccessAuthenticator(View):
                 event.slug,
                 event.settings.venueless_url,
             )
+            return
 
-        # If the saved URL points to a different host than the current request (e.g., prod domain),
-        # adjust it to the current host so local development goes to localhost.
+        if not settings.DEBUG:
+            return
+
         try:
             saved = urlparse(str(event.settings.venueless_url))
             current_host = request.get_host()
@@ -1428,7 +1426,7 @@ class VideoAccessAuthenticator(View):
 
     def generate_token_url(self, request, traits, resume_suffix: str | None = None):
         uid_token = encode_email(request.user.email)
-        iat = datetime.now(tz.utc)
+        iat = datetime.now(timezone.utc)
         exp = iat + dt.timedelta(days=1)
         payload = {
             'iss': self.request.event.settings.venueless_issuer,
@@ -1465,3 +1463,175 @@ class EventSearchView(views.APIView):
                 results.append({'name': event.name, 'slug': event.slug, 'organizer': event.organizer.slug})
 
         return JsonResponse(results, safe=False)
+
+
+class EventCloneView(EventSettingsViewMixin, EventPermissionRequiredMixin, FormView):
+    template_name = 'eventyay_common/event/clone.html'
+    permission = 'can_change_event_settings'
+    form_class = EventCloneForm
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get('ajax') == 'event-i18n-fields':
+            return self.render_event_i18n_fields()
+        return super().post(request, *args, **kwargs)
+
+    def render_event_i18n_fields(self):
+        valid_locale_codes = {code for code, _name in settings.LANGUAGES}
+        locales = [
+            locale for locale in self.request.POST.getlist('locales') if locale in valid_locale_codes
+        ]
+        if not locales:
+            from django.http import JsonResponse
+            from django.utils.translation import gettext as _
+            return JsonResponse({'error': _('Select at least one active language.')}, status=400)
+
+        clone_from = self.request.event
+        user_tz = ZoneInfo(get_current_timezone_name())
+        now_dt = datetime.now(user_tz)
+        default_start = now_dt + timedelta(days=90)
+        default_start = default_start.replace(hour=9, minute=0, second=0, microsecond=0)
+        default_end = default_start.replace(hour=17, minute=0, second=0, microsecond=0)
+
+        initial = {
+            'name': clone_from.name,
+            'date_from': default_start,
+            'date_to': default_end,
+            'timezone': clone_from.settings.get('timezone') or clone_from.timezone,
+            'locale': clone_from.settings.get('locale') or clone_from.locale,
+            'locales': locales,
+        }
+        name_values = {}
+        for index, locale in enumerate(locales):
+            key = f'name_{index}'
+            if key in self.request.POST:
+                value = self.request.POST.get(key, '').strip()
+                if value:
+                    name_values[locale] = value
+        if name_values:
+            initial['name'] = name_values
+
+        form = self.form_class(
+            data=None,
+            initial=initial,
+            organizer=clone_from.organizer,
+            locales=locales,
+        )
+
+        from django.template.loader import render_to_string
+        from django.http import JsonResponse
+        fields = render_to_string(
+            'eventyay_common/event/fragment_event_clone_i18n_fields.html',
+            {'form': form},
+            request=self.request,
+        )
+        return JsonResponse({'fields': fields})
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['organizer'] = self.request.event.organizer
+        clone_from = self.request.event
+        clone_locales = list(clone_from.settings.get('locales') or [clone_from.locale or 'en'])
+        kwargs['locales'] = clone_locales
+        user_tz = ZoneInfo(get_current_timezone_name())
+        now_dt = datetime.now(user_tz)
+        default_start = now_dt + timedelta(days=90)
+        default_start = default_start.replace(hour=9, minute=0, second=0, microsecond=0)
+        default_end = default_start.replace(hour=17, minute=0, second=0, microsecond=0)
+
+        kwargs['initial'] = {
+            'name': clone_from.name,
+            'date_from': default_start,
+            'date_to': default_end,
+            'timezone': clone_from.settings.get('timezone') or clone_from.timezone,
+            'locale': clone_from.settings.get('locale') or clone_from.locale,
+            'locales': clone_locales,
+            'clone_common_data': True,
+            'clone_ticketing_data': True,
+            'clone_talk_data': True,
+        }
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['organizer_slug_rng_url'] = reverse('control:events.add.slugrng', kwargs={'organizer': self.request.event.organizer.slug})
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        if not check_create_permission(request):
+            raise PermissionDenied(_('You do not have permission to create events.'))
+        return super().dispatch(request, *args, **kwargs)
+
+    @transaction.atomic
+    def form_valid(self, form):
+        old_event = self.request.event
+        new_event = form.instance
+        
+        clone_options = {
+            'clone_common_data': form.cleaned_data.get('clone_common_data'),
+            'clone_settings': form.cleaned_data.get('clone_settings'),
+            'clone_design_texts': form.cleaned_data.get('clone_design_texts'),
+            'clone_email_settings': form.cleaned_data.get('clone_email_settings'),
+            'clone_ticketing_data': form.cleaned_data.get('clone_ticketing_data'),
+            'clone_products': form.cleaned_data.get('clone_products'),
+            'clone_questions': form.cleaned_data.get('clone_questions'),
+            'clone_checkin_lists': form.cleaned_data.get('clone_checkin_lists'),
+            'clone_payment_settings': form.cleaned_data.get('clone_payment_settings'),
+            'clone_talk_data': form.cleaned_data.get('clone_talk_data'),
+            'clone_cfp': form.cleaned_data.get('clone_cfp'),
+            'clone_session_types_tracks': form.cleaned_data.get('clone_session_types_tracks'),
+            'clone_review_settings': form.cleaned_data.get('clone_review_settings'),
+        }
+
+        new_event.organizer = old_event.organizer
+        if clone_options.get('clone_common_data') and clone_options.get('clone_settings'):
+            new_event.plugins = old_event.plugins
+        new_event.has_subevents = old_event.has_subevents
+        new_event.is_video_creation = old_event.is_video_creation
+        new_event.testmode = False
+        new_event.private_testmode = False
+        
+        new_event.timezone = form.cleaned_data['timezone']
+        new_event.locale = form.cleaned_data['locale']
+        form.save()
+
+        new_event.clone_from(old_event, new_secrets=True)
+        new_event.copy_data_from(old_event, clone_options=clone_options)
+        
+        new_event.settings.set('locales', form.cleaned_data['locales'])
+        
+        if clone_options.get('clone_talk_data') and clone_options.get('clone_cfp', True) and getattr(old_event, 'cfp', None):
+            new_event.cfp.copy_data_from(old_event.cfp)
+
+        with scope(organizer=new_event.organizer):
+            if not new_event.checkin_lists.exists():
+                new_event.checkin_lists.create(name=_('Default'), all_products=True)
+            for team in self.request.user.teams.filter(organizer=new_event.organizer):
+                if not team.all_events and team.can_create_events:
+                    team.limit_events.add(new_event)
+
+        new_event.set_defaults()
+        
+        # Override the values potentially cloned from the old event to the ones chosen in the form
+        new_event.timezone = form.cleaned_data['timezone']
+        new_event.locale = form.cleaned_data['locale']
+        new_event.save(update_fields=['timezone', 'locale'])
+        new_event.settings.set('timezone', form.cleaned_data['timezone'])
+        new_event.settings.set('locale', form.cleaned_data['locale'])
+        
+        cloned_locales = new_event.settings.get('locales', as_type=list) or []
+        if form.cleaned_data['locale'] not in cloned_locales:
+            cloned_locales.append(form.cleaned_data['locale'])
+        new_event.settings.set('locales', cloned_locales)
+
+        new_event.log_action(
+            action='eventyay.event.added',
+            user=self.request.user,
+        )
+
+        messages.success(self.request, _('Event has been cloned successfully.'))
+        return redirect(
+            reverse(
+                'eventyay_common:event.update',
+                kwargs={'event': new_event.slug, 'organizer': new_event.organizer.slug},
+            )
+        )

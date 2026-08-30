@@ -10,8 +10,6 @@ import Talk from '@schedule/components/TalkDetail'
 import Speakers from '@schedule/components/SpeakersList'
 import Speaker from '@schedule/components/SpeakerDetail'
 import PublicStars from '@schedule/components/PublicStars'
-import Exhibitor from 'views/exhibitors/item'
-import ContactRequests from 'views/contact-requests'
 import Preferences from 'views/preferences'
 import config from 'config'
 
@@ -127,57 +125,9 @@ const routes = [
 				})
 			},
 			{
-				path: 'exhibitors/:exhibitorId',
-				name: 'exhibitor',
-				component: Exhibitor,
-				props: true
-			},
-			{
-				path: 'contact-requests',
-				name: 'contactRequests',
-				component: ContactRequests,
-				props: true
-			},
-			{
 				path: 'preferences',
 				name: 'preferences',
 				component: Preferences
-			},
-			{
-				path: 'posters/:posterId',
-				name: 'poster',
-				component: () => import('views/posters/item'),
-				props: true
-			},
-			{
-				path: 'manage-exhibitors',
-				name: 'exhibitors',
-				component: () => import('views/exhibitor-manager')
-			},
-			{
-				path: 'manage-exhibitors/:exhibitorId',
-				name: 'exhibitors:exhibitor',
-				component: () => import('views/exhibitor-manager/exhibitor'),
-				props: true
-			},
-			{
-				path: 'manage-posters',
-				name: 'posters',
-				component: () => import('views/poster-manager')
-			},
-			{
-				path: 'manage-posters/create',
-				name: 'posters:create-poster',
-				component: () => import('views/poster-manager/poster'),
-				props: {
-					create: true
-				}
-			},
-			{
-				path: 'manage-posters/:posterId',
-				name: 'posters:poster',
-				component: () => import('views/poster-manager/poster'),
-				props: true
 			},
 			{
 				path: 'event',
@@ -212,6 +162,22 @@ const routes = [
 				props: true
 			},
 			{
+				path: 'event/chat',
+				name: 'admin:chat:index',
+				component: () => import('views/admin/chat/index')
+			},
+			{
+				path: 'event/chat/new',
+				name: 'admin:chat:new',
+				component: () => import('views/admin/chat/new')
+			},
+			{
+				path: 'event/chat/:roomId',
+				name: 'admin:chat:item',
+				component: () => import('views/admin/chat/item'),
+				props: true
+			},
+			{
 				path: 'event/announcements',
 				name: 'admin:announcements',
 				component: () => import('views/admin/announcements'),
@@ -237,11 +203,6 @@ const routes = [
 				name: 'admin:kiosks:item',
 				component: () => import('views/admin/kiosks/item'),
 				props: true
-			},
-			{
-				path: 'event/admin/:admin_path(.*)*',
-				name: 'admin:video-admin',
-				component: () => import('views/admin/config/video-admin')
 			},
 			{
 				path: 'event/config',

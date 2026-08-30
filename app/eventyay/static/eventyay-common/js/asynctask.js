@@ -108,6 +108,10 @@ const poll = () => {
                         bigIcon.style.animation = 'none'
                         bigIcon.style.color = '#5cb85c'
                     }
+                    // Disable import submit buttons to prevent re-submission while redirect is pending
+                    document.querySelectorAll('form[data-import-task] button[type="submit"]').forEach(btn => {
+                        btn.disabled = true
+                    })
                 } else {
                     if (bar) bar.classList.add('bg-danger', 'progress-bar-danger')
                     if (btnIcon) btnIcon.className = 'fa fa-times'
@@ -123,6 +127,9 @@ const poll = () => {
 
                 setTimeout(() => {
                     hide()
+                    if (data.redirect) {
+                        location.href = data.redirect
+                    }
                 }, 2000)
                 return
             }

@@ -20,6 +20,7 @@ BADGE_TICKET_PROVIDER = 'badge'
 BADGE_LAYOUT_PERSISTED_FIELDS = (
     'layout',
     'ask_user_fields',
+    'required_badge_fields',
     'allow_customization',
     'allow_badge_editing',
     'background',
@@ -65,6 +66,7 @@ def get_badge_layout_renderer_token(layout):
     return (
         layout.layout or '',
         layout.ask_user_fields or '',
+        layout.required_badge_fields or '',
         bool(layout.allow_customization),
         bool(getattr(layout, 'allow_badge_editing', False)),
         background,
@@ -157,6 +159,25 @@ def get_badge_layout_for_position(event, position):
     return default_layout
 
 
+def resolve_badge_layout_override(event, layout_id):
+    """Return a BadgeLayout for ``layout_id`` belonging to ``event``, or None.
+
+    Raises ``ValidationError`` when ``layout_id`` is provided but invalid.
+    """
+    from django.core.exceptions import ValidationError as DjangoValidationError
+
+    if layout_id is None or layout_id == '':
+        return None
+    try:
+        pk = int(layout_id)
+    except (TypeError, ValueError) as exc:
+        raise DjangoValidationError(_('Invalid badge layout id.')) from exc
+    try:
+        return event.badge_layouts.get(pk=pk)
+    except BadgeLayout.DoesNotExist as exc:
+        raise DjangoValidationError(_('Unknown badge layout.')) from exc
+
+
 def position_has_printable_badge(event, position):
     return get_badge_layout_for_position(event, position) is not None
 
@@ -245,6 +266,17 @@ def validate_badge_hidden_fields(event, position, hidden_fields):
         raise ValidationError(
             _('Invalid badge field keys: {keys}').format(keys=', '.join(invalid_keys))
         )
+        
+    layout = _badge_customization_layout(event, position)
+    required_keys = set(layout.required_badge_fields_data)
+    hidden_required = required_keys & set(normalized)
+    if hidden_required:
+        raise ValidationError(
+            _('Badge field(s) {keys} are required and cannot be hidden.').format(
+                keys=', '.join(sorted(hidden_required))
+            )
+        )
+        
     return normalized
 
 

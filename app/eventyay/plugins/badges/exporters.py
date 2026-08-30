@@ -50,9 +50,10 @@ def searchable_scrolling_checkbox_widget():
 
 
 class BadgeRenderer(Renderer):
-    def __init__(self, event, layout, bgf, ask_user_fields=None):
+    def __init__(self, event, layout, bgf, ask_user_fields=None, required_fields=None):
         super().__init__(event, layout, bgf)
         self.ask_user_fields = {str(value) for value in (ask_user_fields or [])}
+        self.required_fields = {str(value) for value in (required_fields or [])}
 
     def _get_layout_hidden_fields(self, op: OrderPosition):
         if not self.ask_user_fields:
@@ -62,7 +63,10 @@ class BadgeRenderer(Renderer):
         if hidden_fields is None:
             hidden_fields = {str(value) for value in get_badge_hidden_fields(op)}
             op._badge_hidden_fields_cache = hidden_fields
-        return {field for field in hidden_fields if field in self.ask_user_fields}
+            
+        effective = {field for field in hidden_fields if field in self.ask_user_fields}
+        effective -= self.required_fields
+        return effective
 
     def _get_text_content(self, op: OrderPosition, order: Order, o: dict, inner=False):
         content = normalize_badge_content_key(o.get('content'))
@@ -148,6 +152,7 @@ def _renderer(event, layout, version):
         layout.layout_data,
         bgf,
         ask_user_fields=(layout.ask_user_fields_data if layout.allow_customization else []),
+        required_fields=layout.required_badge_fields_data,
     )
     _renderer_cache[cache_key] = renderer
     return renderer
@@ -395,7 +400,7 @@ def render_nup(input_files: list[str], num_pages: int, output_file: BinaryIO, op
                 pass
 
 
-def render_badges(event, positions, opt, apply_output_pagesize=False):
+def render_badges(event, positions, opt, apply_output_pagesize=False, layout_override=None):
     from itertools import groupby
 
     # Always resolve assignments from the database for this render call.
@@ -408,7 +413,7 @@ def render_badges(event, positions, opt, apply_output_pagesize=False):
 
     op_renderers = []
     for op in positions:
-        layout = get_badge_layout_for_position(event, op)
+        layout = layout_override or get_badge_layout_for_position(event, op)
         if layout is None:
             continue
         if layout.pk not in refreshed_layouts:
@@ -451,20 +456,24 @@ def render_badges(event, positions, opt, apply_output_pagesize=False):
     return badge_pdf, len(badge_pdf.pages)
 
 
-def render_pdf(event, positions, opt):
+def render_pdf(event, positions, opt, layout_override=None):
     Renderer._register_fonts()
     badges_per_page = opt['cols'] * opt['rows']
     outbuffer = BytesIO()
 
     if badges_per_page == 1:
-        badge_pdf, _ = render_badges(event, positions, opt, apply_output_pagesize=True)
+        badge_pdf, _ = render_badges(
+            event, positions, opt, apply_output_pagesize=True, layout_override=layout_override
+        )
         badge_pdf.write(outbuffer)
     else:
         with tempfile.TemporaryDirectory() as tmp_dir:
             page_pdfs = []
             total_num_pages = 0
             for position_chunk in chunks(list(positions), 200):
-                badge_pdf, num_pages = render_badges(event, position_chunk, opt)
+                badge_pdf, num_pages = render_badges(
+                    event, position_chunk, opt, layout_override=layout_override
+                )
                 out_pdf_name = os.path.join(tmp_dir, f'chunk-{len(page_pdfs)}.pdf')
                 with open(out_pdf_name, 'wb') as out_pdf:
                     badge_pdf.write(out_pdf)

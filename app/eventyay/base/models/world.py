@@ -23,24 +23,20 @@ from eventyay.core.permissions import (
 )
 from eventyay.core.utils.json import CustomJSONEncoder
 from eventyay.base.models.chat import ChatEvent, Membership
-from eventyay.base.models.exhibitor import ContactRequest, ExhibitorStaff, ExhibitorView
 from eventyay.base.models.feedback import Feedback
 from eventyay.base.models.poll import Poll
-from eventyay.base.models.poster import PosterPresenter
 from eventyay.base.models.room import Reaction, RoomView
 from eventyay.base.models.storage_model import StoredFile
 
 
 FEATURE_FLAGS = [
     "schedule-control",
-    "iframe-player",
     "roulette",
     "muxdata",
     "page.landing",
     "zoom",
     "janus",
     "polls",
-    "poster",
     "conftool",
     "cross-origin-isolation",
 ]
@@ -247,9 +243,8 @@ class World(VersionedModel):
 
     def clear_data(self):
         """
-        Clears all personal information. It generally leaves structure such as rooms and exhibitors intact, but to make
-        sure all personal data is scrubbed, it also clears all uploaded files, which includes things like exhibitor
-        logos.
+        Clears all personal information. It generally leaves structure such as rooms intact, but to make
+        sure all personal data is scrubbed, it also clears all uploaded files.
         """
 
         self.audit_logs.all().delete()
@@ -258,10 +253,6 @@ class World(VersionedModel):
         self.bbb_calls.all().delete()
         ChatEvent.objects.filter(channel__world=self).delete()
         Membership.objects.filter(channel__world=self).delete()
-        ExhibitorStaff.objects.filter(exhibitor__world=self).delete()
-        PosterPresenter.objects.filter(poster__world=self).delete()
-        ContactRequest.objects.filter(exhibitor__world=self).delete()
-        ExhibitorView.objects.filter(exhibitor__world=self).delete()
         Reaction.objects.filter(room__world=self).delete()
         RoomView.objects.filter(room__world=self).delete()
         WorldView.objects.filter(world=self).delete()
@@ -340,50 +331,18 @@ class World(VersionedModel):
         self.external_auth_url = old.external_auth_url
         self.save()
 
-        room_map = {}
         for r in old.rooms.all():
             try:
                 has_channel = r.channel
             except Exception:
                 has_channel = False
 
-            old_id = r.pk
             r.pk = None
             r.world = self
             r.module_config = clone_stored_files(struct=r.module_config)
             r.save()
-            room_map[old_id] = r
             if has_channel:
                 Channel.objects.create(room=r, world=self)
-
-        for r in old.rooms.prefetch_related(
-            "exhibitors", "exhibitors__links", "exhibitors__social_media_links"
-        ):
-            for ex in r.exhibitors.all():
-                old_links = list(ex.links.all())
-                old_smlinks = list(ex.social_media_links.all())
-
-                ex.pk = None
-                ex.world = self
-                ex.room = room_map[ex.room_id]
-                if ex.highlighted_room_id:
-                    ex.highlighted_room = room_map[ex.highlighted_room_id]
-                clone_stored_files(
-                    inst=ex, attrs=["logo", "banner_list", "banner_detail"]
-                )
-                ex.text_content = clone_stored_files(struct=ex.text_content)
-                ex.save()
-
-                for link in old_smlinks:
-                    link.pk = None
-                    link.exhibitor = ex
-                    link.save()
-
-                for link in old_links:
-                    link.pk = None
-                    clone_stored_files(inst=link, attrs=["url"])
-                    link.exhibitor = ex
-                    link.save()
 
 
 class PlannedUsage(models.Model):

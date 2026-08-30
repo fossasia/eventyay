@@ -90,7 +90,6 @@
 .team-permission-children {
     margin-left: 24px;
     padding-left: 10px;
-    border-left: 2px solid #ddd;
 }
 
 .team-permission-children--disabled {
@@ -277,6 +276,24 @@
     display: none;
 }
 
+.gmail-connection-panel--nested {
+    margin-top: 10px;
+}
+
+.gmail-connection-panel--nested .alert {
+    margin-bottom: 10px;
+}
+
+.gmail-connection-panel--nested .gmail-connection-row + .gmail-connection-row {
+    margin-top: 12px;
+}
+
+.gmail-callback-uri {
+    word-break: break-all;
+    display: inline-block;
+    max-width: 100%;
+}
+
 /* Event schedule row (creation + settings) */
 .event-schedule-row {
     display: flex;
@@ -342,4 +359,108 @@
 .settings-footer-contact-fields .help-block {
     margin-top: 6px;
     margin-bottom: 0;
+}
+
+/* Two-Factor Authentication Status & Toggle Switch */
+.two-factor-status-panel .panel-body {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.two-factor-status-info {
+    flex: 1 1 auto;
+}
+
+.two-factor-status-info p {
+    margin: 0;
+}
+
+.two-factor-status-info p + p {
+    margin-top: 4px;
+}
+
+.inline-block-form {
+    display: inline-block;
+    margin: 0;
+    padding: 0;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    background-color: #ccc;
+    border: none;
+    border-radius: 24px;
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-left: 16px;
+    padding: 0;
+    outline: none;
+}
+
+.toggle-switch:focus-visible {
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.35);
+}
+
+.toggle-slider {
+    position: absolute;
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    display: block;
+}
+
+.toggle-switch.active {
+    background-color: #28a745;
+}
+
+.toggle-switch.active .toggle-slider {
+    transform: translateX(20px);
+}
+
+.toggle-switch.disabled,
+.toggle-switch[disabled] {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+    opacity: 0.65;
+    pointer-events: none;
+}
+
+.toggle-switch.disabled .toggle-slider,
+.toggle-switch[disabled] .toggle-slider {
+    background-color: #adb5bd;
+}
+
+#disable-2fa-modal {
+    z-index: 1060;
+}
+
+#disable-2fa-modal .modal-dialog {
+    margin-top: 80px;
+}
+
+.user-avatar-preview {
+    margin-bottom: 12px;
+}
+
+.user-avatar-preview a {
+    display: inline-block;
+}
+
+.user-avatar-preview-image {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }

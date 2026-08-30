@@ -361,6 +361,11 @@ urlpatterns = [
                     typeahead.productvarquota_select2,
                     name='event.vouchers.productselect2',
                 ),
+                url(
+                    r'^vouchers/(?P<voucher>\d+)/members$',
+                    vouchers.VoucherGroupMembers.as_view(),
+                    name='event.voucher.members',
+                ),
                 url(r'^vouchers/(?P<voucher>\d+)/$', vouchers.VoucherUpdate.as_view(), name='event.voucher'),
                 url(
                     r'^vouchers/(?P<voucher>\d+)/delete$', vouchers.VoucherDelete.as_view(), name='event.voucher.delete'
@@ -433,6 +438,7 @@ urlpatterns = [
                 url(r'^orders/(?P<code>[0-9A-Z]+)/approve', orders.OrderApprove.as_view(), name='event.order.approve'),
                 url(r'^orders/(?P<code>[0-9A-Z]+)/deny$', orders.OrderDeny.as_view(), name='event.order.deny'),
                 url(r'^orders/(?P<code>[0-9A-Z]+)/delete$', orders.OrderDelete.as_view(), name='event.order.delete'),
+                url(r'^orders/(?P<code>[0-9A-Z]+)/anonymize$', orders.OrderAnonymize.as_view(), name='event.order.anonymize'),
                 url(
                     r'^orders/(?P<code>[0-9A-Z]+)/info',
                     orders.OrderModifyInformation.as_view(),
@@ -444,9 +450,19 @@ urlpatterns = [
                     name='event.order.sendmail',
                 ),
                 url(
+                    r'^orders/(?P<code>[0-9A-Z]+)/sendmail/preview$',
+                    orders.OrderMailPreview.as_view(),
+                    name='event.order.sendmail.preview',
+                ),
+                url(
                     r'^orders/(?P<code>[0-9A-Z]+)/(?P<position>[0-9A-Z]+)/sendmail$',
                     orders.OrderPositionSendMail.as_view(),
                     name='event.order.position.sendmail',
+                ),
+                url(
+                    r'^orders/(?P<code>[0-9A-Z]+)/(?P<position>\d+)/sendmail/preview$',
+                    orders.OrderMailPreview.as_view(),
+                    name='event.order.position.sendmail.preview',
                 ),
                 url(
                     r'^orders/(?P<code>[0-9A-Z]+)/(?P<position>\d+)/reinstate$',
@@ -496,6 +512,21 @@ urlpatterns = [
                 url(r'^orders/(?P<code>[0-9A-Z]+)/$', orders.OrderDetail.as_view(), name='event.order'),
                 url(r'^invoice/(?P<invoice>[^/]+)$', orders.InvoiceDownload.as_view(), name='event.invoice.download'),
                 url(r'^orders/overview/$', orders.OverView.as_view(), name='event.orders.overview'),
+                url(
+                    r'^orders/import-export/$',
+                    orders.ExportView.as_view(),
+                    name='event.orders.import_export',
+                ),
+                url(
+                    r'^orders/import-export/attendees/import/(?P<file>[^/]+)/$',
+                    orderimport.ProcessView.as_view(),
+                    name='event.orders.import_export.attendees_import_process',
+                ),
+                url(
+                    r'^orders/import-export/export/do$',
+                    orders.ExportDoView.as_view(),
+                    name='event.orders.import_export.export_do',
+                ),
                 url(r'^orders/import/$', orderimport.ImportView.as_view(), name='event.orders.import'),
                 url(
                     r'^orders/import/(?P<file>[^/]+)/$',
@@ -509,7 +540,6 @@ urlpatterns = [
                 url(r'^orders/bulk-action$', orders.OrderBulkAction.as_view(), name='event.orders.bulk_action'),
                 url(r'^orders/$', orders.OrderList.as_view(), name='event.orders'),
                 url(r'^orders/search$', orders.OrderSearch.as_view(), name='event.orders.search'),
-                url(r'^dangerzone/$', event.DangerZone.as_view(), name='event.dangerzone'),
                 url(r'^cancel/$', orders.EventCancel.as_view(), name='event.cancel'),
                 url(r'^shredder/$', shredder.StartShredView.as_view(), name='event.shredder.start'),
                 url(r'^shredder/export$', shredder.ShredExportView.as_view(), name='event.shredder.export'),

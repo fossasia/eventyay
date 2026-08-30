@@ -36,6 +36,7 @@ from eventyay.base.i18n import (
     LazyExpiresDate,
     LazyNumber,
 )
+from eventyay.base.meetup import is_meetup_event
 from eventyay.base.models import Event
 from eventyay.base.settings import PERSON_NAME_SCHEMES
 from eventyay.base.signals import (
@@ -386,6 +387,16 @@ class BaseMailTextPlaceholder:
         """
         raise NotImplementedError()
 
+    @property
+    def is_visible(self):
+        """Whether this placeholder is shown in the placeholder help drawer."""
+        return True
+
+    @property
+    def explanation(self):
+        """Short description shown in the placeholder help drawer."""
+        return ''
+
     def render(self, context):
         """
         This method is called to generate the actual text that is being
@@ -404,11 +415,13 @@ class BaseMailTextPlaceholder:
 
 
 class SimpleFunctionalMailTextPlaceholder(BaseMailTextPlaceholder):
-    def __init__(self, identifier, args, func, sample):
+    def __init__(self, identifier, args, func, sample, explanation=None, is_visible=True):
         self._identifier = identifier
         self._args = args
         self._func = func
         self._sample = sample
+        self._explanation = explanation or ''
+        self._is_visible = is_visible
 
     @property
     def identifier(self):
@@ -417,6 +430,14 @@ class SimpleFunctionalMailTextPlaceholder(BaseMailTextPlaceholder):
     @property
     def required_context(self):
         return self._args
+
+    @property
+    def is_visible(self):
+        return self._is_visible
+
+    @property
+    def explanation(self):
+        return self._explanation
 
     def render(self, context):
         return self._func(**{k: context[k] for k in self._args})
@@ -607,8 +628,7 @@ def base_placeholders(sender: Event, **kwargs):
     )
     def render_video_join_link(event: Event, order) -> str:
         url = build_join_video_url(event, order)
-        # TODO: Make the label translatable.
-        return f'<a href="{url}" class="button">Join online event</a>'
+        return f'<a href="{url}" class="button">{_("Join online event")}</a>'
 
     def sample_ticket_qr(event=None):
         return render_qr_code_img(
@@ -1005,3 +1025,40 @@ def base_placeholders(sender: Event, **kwargs):
         )
 
     return ph
+
+
+@receiver(register_mail_placeholders, dispatch_uid='pretixbase_register_meetup_mail_placeholders')
+def meetup_placeholders(sender: Event, **kwargs):
+    """Placeholders only available for meetup events."""
+    from eventyay.multidomain.urlreverse import build_absolute_uri
+
+    if not is_meetup_event(sender):
+        return []
+    return [
+        SimpleFunctionalMailTextPlaceholder(
+            'organizer',
+            ['event'],
+            lambda event: event.organizer.name,
+            lambda event: event.organizer.name,
+        ),
+        SimpleFunctionalMailTextPlaceholder(
+            'event_url',
+            ['event'],
+            lambda event: build_absolute_uri(
+                event,
+                'presale:event.index',
+                kwargs={
+                    'event': event.slug,
+                    'organizer': event.organizer.slug,
+                },
+            ),
+            lambda event: build_absolute_uri(
+                event,
+                'presale:event.index',
+                kwargs={
+                    'event': event.slug,
+                    'organizer': event.organizer.slug,
+                },
+            ),
+        ),
+    ]

@@ -121,7 +121,8 @@ class SubmissionForm(ReadOnlyFlag, RequestRequire, forms.ModelForm):
         elif 'track' in self.fields:
             self.fields['track'].queryset = event.tracks.all()
         if 'content_locale' in self.fields:
-            saved_visibility = self.event.cfp.fields.get('content_locale', default_fields()['content_locale']).get('visibility')
+            _cfp = getattr(self.event, 'cfp', None) if hasattr(self.event, 'cfp') else None
+            saved_visibility = (_cfp.fields.get('content_locale', default_fields()['content_locale']).get('visibility') if _cfp else 'do_not_ask')
             if len(self.event.content_locales) <= 1 or saved_visibility == 'do_not_ask':
                 self.fields.pop('content_locale')
             else:
@@ -316,6 +317,11 @@ class AddSpeakerForm(forms.Form):
         help_text=_('The name of the speaker that should be displayed publicly.'),
         required=False,
     )
+    biography = forms.CharField(
+        label=_('Biography'),
+        required=False,
+        widget=MarkdownWidget,
+    )
     locale = forms.ChoiceField(
         label=_('Invite language'),
         choices=[],
@@ -324,9 +330,33 @@ class AddSpeakerForm(forms.Form):
         widget=EnhancedSelect,
     )
 
-    def __init__(self, *args, event=None, form_renderer=None, require_name=False, **kwargs):
+    def __init__(
+        self,
+        *args,
+        event=None,
+        form_renderer=None,
+        require_name=False,
+        include_biography=False,
+        draft_save=False,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
+        self.event = event
         self.require_name = require_name
+        self.draft_save = draft_save
+
+        self.biography_required = False
+        if not include_biography:
+            self.fields.pop('biography', None)
+        else:
+            cfp_fields = event.cfp.fields if hasattr(event, 'cfp') else default_fields()
+            visibility = cfp_fields.get('biography', default_fields()['biography'])['visibility']
+            if visibility == 'do_not_ask':
+                self.fields.pop('biography', None)
+            else:
+                # Keep optional unless a speaker is actually added; validate in clean().
+                self.biography_required = visibility == 'required'
+                self.fields['biography'].required = False
         email_key = self.add_prefix('email')
         name_key = self.add_prefix('name')
         email_widget = self.fields['email'].widget
@@ -351,8 +381,23 @@ class AddSpeakerForm(forms.Form):
         data = super().clean()
         if data.get('name') and not data.get('email'):
             self.add_error('email', _('Please provide an email address.'))
+
+        existing_biography = False
+        email = data.get('email')
+        if email:
+            existing_user = User.objects.filter(email__iexact=email).first()
+            if existing_user:
+                existing_profile = existing_user.profiles.filter(event=self.event).first()
+                existing_biography = bool(existing_profile and existing_profile.biography)
+
+        if (
+            not self.draft_save
+            and email
+            and getattr(self, 'biography_required', False)
+            and not existing_biography
+            and not data.get('biography')
+        ):
+            self.add_error('biography', _('This field is required.'))
         return data
-
-
 class AddSpeakerInlineForm(AddSpeakerForm):
     default_renderer = InlineFormLabelRenderer

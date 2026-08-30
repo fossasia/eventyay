@@ -12,7 +12,6 @@ from eventyay.base.exporter import ListExporter
 BROADCAST_MODULE_TYPES = {
     "livestream.native",
     "livestream.youtube",
-    "livestream.iframe",
 }
 
 YOUTUBE_BOOLEAN_OPTIONS = (
@@ -62,7 +61,6 @@ class VideoRoomBroadcastConfigurationExporter(ListExporter):
             "module_type",
             "playback_mode",
             "hls_url",
-            "iframe_url",
             "youtube_id",
             "subtitles_url",
             "stream_offline_image",
@@ -70,18 +68,12 @@ class VideoRoomBroadcastConfigurationExporter(ListExporter):
             *[label for label, _key in YOUTUBE_BOOLEAN_OPTIONS],
             "alternative_label",
             "alternative_hls_url",
-            "language",
-            "language_youtube_id",
-            "language_url",
-            "language_use_video",
             "stream_schedule_id",
             "stream_schedule_title",
             "stream_schedule_url",
             "stream_schedule_start_time",
             "stream_schedule_end_time",
             "stream_schedule_type",
-            "stream_schedule_language",
-            "stream_schedule_use_video",
         ]
 
     def iterate_list(self, form_data):
@@ -126,7 +118,6 @@ class VideoRoomBroadcastConfigurationExporter(ListExporter):
             "module_type": module.get("type", ""),
             "playback_mode": config.get("playback_mode") or "always_on",
             "hls_url": config.get("hls_url", ""),
-            "iframe_url": config.get("url", ""),
             "youtube_id": config.get("ytid", ""),
             "subtitles_url": config.get("subtitle_url", ""),
             "stream_offline_image": config.get("streamOfflineImage", ""),
@@ -144,19 +135,7 @@ class VideoRoomBroadcastConfigurationExporter(ListExporter):
                 alternative_hls_url=alternative.get("hls_url", ""),
             )
 
-        for language_url in config.get("languageUrls") or []:
-            yield self._row(
-                room_data,
-                module_data,
-                row_type="youtube_language_stream",
-                language=language_url.get("language", ""),
-                language_youtube_id=language_url.get("youtube_id", ""),
-                language_url=language_url.get("url", ""),
-                language_use_video=bool(language_url.get("use_video")),
-            )
-
     def _stream_schedule_rows(self, room_data, stream_schedule):
-        config = stream_schedule.config or {}
         schedule_data = {
             "row_type": "stream_schedule",
             "stream_schedule_id": stream_schedule.id,
@@ -165,20 +144,8 @@ class VideoRoomBroadcastConfigurationExporter(ListExporter):
             "stream_schedule_start_time": stream_schedule.start_time,
             "stream_schedule_end_time": stream_schedule.end_time,
             "stream_schedule_type": stream_schedule.stream_type,
-            "stream_schedule_language": _value(config, "language"),
-            "stream_schedule_use_video": bool(_value(config, "use_video", "useVideo")),
         }
         yield self._row(room_data, schedule_data)
-        for language_url in config.get("languageUrls") or []:
-            yield self._row(
-                room_data,
-                schedule_data,
-                row_type="stream_schedule_language",
-                language=language_url.get("language", ""),
-                language_youtube_id=language_url.get("youtube_id", ""),
-                language_url=language_url.get("url", ""),
-                language_use_video=bool(language_url.get("use_video")),
-            )
 
     def _row(self, *sources, **overrides):
         data = {}
@@ -199,12 +166,6 @@ class VideoRoomBroadcastConfigurationExporter(ListExporter):
             return "zoom"
         if "chat.native" in module_types:
             return "chat"
-        if "exhibition.native" in module_types:
-            return "exhibition"
-        if "poster.native" in module_types:
-            return "poster"
         if "page.landing" in module_types:
             return "landing_page"
-        if "page.iframe" in module_types:
-            return "iframe_page"
         return ""

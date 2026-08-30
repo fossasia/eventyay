@@ -11,8 +11,8 @@
     "lint:eslint": "eslint src --ext .js,.ts,.vue",
     "lint:stylelint": "stylelint \"**/*.styl\"",
     "lint:tsc": "tsc --noEmit",
-    "i18n:extract": "npx i18next-parser 'src/**/*.vue' -c i18next-parser.config.cjs",
-    "i18n:convert2gettext": "i18next-conv -K -l en -s locales/en/translation.json -t locales/en/translation.po",
+    "i18n:extract": "node ../i18n/extract.mjs extract --domain schedule-editor",
+    "test:i18n": "node --test \"../i18n/*.test.js\"",
     "test": "echo \"Error: no test specified\" && exit 1",
     "analyze": "ANALYZE=true npm run build",
     "prepublishOnly": "npm run build"
@@ -21,7 +21,7 @@
   "main": "dist/schedule-editor.common.js",
   "dependencies": {
     "buntpapier": "^2.0.0-alpha.34",
-    "i18next": "^26.3.6",
+    "i18next": "^26.4.0",
     "lodash": "^4.18.1",
     "markdown-it": "^15.0.0",
     "moment": "^2.30.1",
@@ -33,17 +33,17 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/lodash": "^4.17.24",
-    "@types/markdown-it": "^14.1.2",
-    "@types/node": "^26.1.2",
-    "@typescript-eslint/eslint-plugin": "^8.66.0",
-    "@typescript-eslint/parser": "^8.66.0",
+    "@types/markdown-it": "^14.2.0",
+    "@types/node": "^26.3.0",
+    "@typescript-eslint/eslint-plugin": "^8.68.0",
+    "@typescript-eslint/parser": "^8.68.0",
     "@vitejs/plugin-vue": "^6.0.8",
     "@vue/eslint-config-typescript": "^14.9.0",
     "@vue/tsconfig": "^0.9.1",
-    "eslint": "^10.6.0",
+    "eslint": "^10.9.1",
     "eslint-plugin-vue": "^10.9.2",
     "eslint-plugin-vue-pug": "^1.0.0-alpha.6",
-    "globals": "^17.7.0",
+    "globals": "^17.11.0",
     "i18next-conv": "^17.0.0",
     "i18next-parser": "^9.4.0",
     "pug": "^3.0.4",
@@ -53,10 +53,10 @@
     "stylelint-stylus": "^1.0.0",
     "stylus": "^0.64.0",
     "typescript": "^6.0.3",
-    "vite": "^8.2.1",
+    "vite": "^8.2.2",
     "vite-bundle-visualizer": "^1.2.1",
     "vite-plugin-checker": "^0.14.5",
-    "vue-tsc": "^3.3.8"
+    "vue-tsc": "^3.3.11"
   },
   "bugs": {
     "url": "https://github.com/pretalx/schedule-editor/issues"

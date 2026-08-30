@@ -2,7 +2,7 @@
 .c-copyable-text(@click="copy")
 	.text {{ text }}
 	.mdi.mdi-content-copy
-	.copy-success(v-if="copied", v-tooltip="{text: 'Copied!', show: true, placement: 'top', fixed: true}")
+	.copy-success(v-if="copied", v-tooltip="{text: $t('Copied!'), show: true, placement: 'top', fixed: true}")
 </template>
 <script>
 export default {

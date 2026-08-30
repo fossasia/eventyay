@@ -18,13 +18,28 @@
 
 {% block content %}
 <h1>{{ _('Account settings') }}</h1>
-<form action='' method='post' class='form-horizontal'>
+<form action='' method='post' enctype='multipart/form-data' class='form-horizontal'>
     {% csrf_token %}
     {% bootstrap_form_errors form %}
     <fieldset>
         <legend>{{ _('General settings') }}</legend>
         {% bootstrap_field form.fullname layout='horizontal' %}
         {% bootstrap_field form.wikimedia_username layout='horizontal' readonly='readonly' %}
+        {% if request.user.get_profile_picture_url %}
+            <div class='form-group'>
+                <div class='col-md-9 col-md-offset-3'>
+                    <div class='user-avatar-preview'>
+                        <a href='{{ request.user.get_profile_picture_url }}' data-lightbox='{{ request.user.get_profile_picture_url }}'>
+                            <img src='{{ request.user.get_profile_picture_url }}' class='user-avatar-preview-image' alt='{{ _("Profile picture") }}' />
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+        {% bootstrap_field form.profile_picture layout='horizontal' %}
+        {% if request.user.profile_picture %}
+            {% bootstrap_field form.clear_profile_picture layout='horizontal' %}
+        {% endif %}
         {% bootstrap_field form.locale layout='horizontal' %}
         {% bootstrap_field form.timezone layout='horizontal' %}
         <div class='form-group'>

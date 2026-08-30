@@ -37,13 +37,16 @@
                     {% bootstrap_field form.domain layout="control" %}
                 {% endif %}
                 {% endcomment %}
+                {% if form.set_as_default %}
+                    {% bootstrap_field form.set_as_default layout="control" %}
+                {% endif %}
                 {% bootstrap_field sform.imprint_url layout="control" %}
                 {% bootstrap_field sform.contact_mail layout="control" %}
                 {% bootstrap_field sform.organizer_info_text layout="control" %}
                 {% bootstrap_field sform.event_team_provisioning layout="control" %}
             </fieldset>
             <fieldset>
-                <legend>{% trans "Organizer page" %}</legend>
+                <legend>{% trans "Design" %}</legend>
                 {% bootstrap_field sform.organizer_logo_image layout="control" %}
                 {% bootstrap_field sform.organizer_header_image layout="control" %}
                 {% bootstrap_field sform.organizer_header_image_large layout="control" %}
@@ -51,19 +54,6 @@
                 {% bootstrap_field sform.event_list_type layout="control" %}
                 {% bootstrap_field sform.event_list_availability layout="control" %}
                 {% bootstrap_field sform.organizer_link_back layout="control" %}
-            </fieldset>
-            <fieldset>
-                <legend>{% trans "Community" %}</legend>
-                {% bootstrap_field sform.community_follow_enabled layout="control" %}
-                {% bootstrap_field sform.community_show_follower_count layout="control" %}
-            </fieldset>
-            <fieldset>
-                <legend>{% trans "Localization" %}</legend>
-                {% bootstrap_field sform.locales layout="control" %}
-                {% bootstrap_field sform.region layout="control" %}
-            </fieldset>
-            <fieldset>
-                <legend>{% trans "Shop design" %}</legend>
                 <p class="help-block">
                     {% blocktrans trimmed %}
                         These settings will be used for the organizer page as well as for the default settings
@@ -81,6 +71,16 @@
                 {% bootstrap_field sform.hover_button_color layout="control" %}
                 {% bootstrap_field sform.theme_round_borders layout="control" %}
                 {% bootstrap_field sform.primary_font layout="control" %}
+            </fieldset>
+            <fieldset>
+                <legend>{% trans "Community" %}</legend>
+                {% bootstrap_field sform.community_follow_enabled layout="control" %}
+                {% bootstrap_field sform.community_show_follower_count layout="control" %}
+            </fieldset>
+            <fieldset>
+                <legend>{% trans "Localization" %}</legend>
+                {% bootstrap_field sform.locales layout="control" %}
+                {% bootstrap_field sform.region layout="control" %}
             </fieldset>
             <fieldset>
                 <legend>{% trans "Video area" %}</legend>
@@ -115,7 +115,7 @@
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="{% trans 'Close' %}">
                         <span aria-hidden="true">&times;</span>
                     </button>
                     <h4 class="modal-title" id="cropperModalLabel">{% trans "Crop Image" %}</h4>

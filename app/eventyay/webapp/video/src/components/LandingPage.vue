@@ -31,8 +31,8 @@
 					.split-left(v-if="(featuredSessions && featuredSessions.length) || (nextSessions && nextSessions.length)")
 						.landing-section(v-if="featuredSessions && featuredSessions.length")
 							.section-header
-								h3 {{ $t('LandingPage:sessions:featured:header') }}
-								bunt-link-button.section-link(:to="{name: 'schedule'}") {{ $t('LandingPage:sessions:featured:link') }}
+								h3 {{ $t('Featured sessions') }}
+								bunt-link-button.section-link(:to="{name: 'schedule'}") {{ $t('Complete schedule') }}
 							.sessions
 								session(
 									v-for="session of featuredSessions",
@@ -44,8 +44,8 @@
 								)
 						.landing-section(v-if="nextSessions && nextSessions.length")
 							.section-header
-								h3 {{ $t('LandingPage:sessions:next:header') }}
-								bunt-link-button.section-link(:to="{name: 'schedule'}") {{ $t('LandingPage:sessions:next:link') }}
+								h3 {{ $t('Upcoming sessions') }}
+								bunt-link-button.section-link(:to="{name: 'schedule'}") {{ $t('Complete schedule') }}
 							.sessions
 								session(
 									v-for="session of nextSessions",
@@ -58,20 +58,20 @@
 					.split-right
 						.landing-section(v-if="activeRooms && activeRooms.length")
 							.section-header
-								h3 {{ $t('LandingPage:rooms:header') }}
+								h3 {{ $t('Stages') }}
 							.active-rooms.active-rooms-list
 								router-link.room-card(v-for="item of activeRooms", :key="item.room.id", :to="{name: 'room', params: {roomId: item.room.id}}")
 									.room-info
 										.room-name(v-html="$emojify(item.room.name)")
 										.current-session(v-if="item.session")
-											span.live-badge(v-if="item.isLive") {{ $t('LandingPage:rooms:live') }}
+											span.live-badge(v-if="item.isLive") {{ $t('Live') }}
 											span {{ item.session.title }}
 									svg.room-arrow(viewBox="0 0 24 24", stroke="currentColor", stroke-width="2", fill="none")
 										path(d="M5 12h14M12 5l7 7-7 7")
 						.landing-section.speakers-section(v-if="featuredSpeakers.length")
 							.section-header
-								h3 {{ $t('LandingPage:speakers:header') }}
-								bunt-link-button.section-link(:to="{name: 'schedule:speakers'}") {{ $t('LandingPage:speakers:link') }}
+								h3 {{ $t('Featured speakers') }}
+								bunt-link-button.section-link(:to="{name: 'schedule:speakers'}") {{ $t('All speakers') }}
 							speakers-list(:hideToolbar="true", viewMode="list", :speakers="featuredSpeakers")
 </template>
 <script>
@@ -107,17 +107,27 @@ export default {
 		},
 		mainContentIsRichText() {
 			const content = this.mainContent
-			if (!content || typeof content !== 'object') return false
-			if (Array.isArray(content)) {
-				return content.some(op => typeof op?.insert === 'string' && op.insert.trim() !== '')
+			if (!content) return false
+			// Legacy Quill Delta (array of ops or { ops: [...] })
+			if (typeof content === 'object') {
+				if (Array.isArray(content)) {
+					return content.some(op => typeof op?.insert === 'string' && op.insert.trim() !== '')
+				}
+				if (Array.isArray(content.ops)) {
+					return content.ops.some(op => typeof op?.insert === 'string' && op.insert.trim() !== '')
+				}
+				return false
 			}
-			if (Array.isArray(content.ops)) {
-				return content.ops.some(op => typeof op?.insert === 'string' && op.insert.trim() !== '')
+			// Tiptap HTML strings (vs legacy plain Markdown)
+			if (typeof content === 'string') {
+				return /^\s*</.test(content)
 			}
 			return false
 		},
 		mainContentIsMarkdown() {
-			return typeof this.mainContent === 'string' && this.mainContent.trim().length > 0
+			return typeof this.mainContent === 'string' &&
+				this.mainContent.trim().length > 0 &&
+				!this.mainContentIsRichText
 		},
 		hasContent() {
 			return this.mainContentIsRichText ||
@@ -181,7 +191,7 @@ export default {
 			return {
 				'--landing-hero-background-color': headerBackground,
 				'--landing-hero-text-color': headerText,
-				'--landing-hero-background-image': this.heroBackgroundImage ? `url("${this.heroBackgroundImage}")` : 'none'
+				'--landing-hero-background-image': this.heroBackgroundImage ? `url('${this.heroBackgroundImage}')` : 'none'
 			}
 		},
 		presaleHomeUrl() {
@@ -195,7 +205,7 @@ export default {
 				return {
 					href: navigation.organizer_presale_url,
 					label: navigation.organizer_name || '',
-					ariaLabel: this.$t('LandingPage:home-back:organizer', {
+					ariaLabel: this.$t('Back to {{name}}', {
 						name: navigation.organizer_name || ''
 					})
 				}
@@ -204,8 +214,8 @@ export default {
 			if (!href) return null
 			return {
 				href,
-				label: this.$t('LandingPage:home-back:label'),
-				ariaLabel: this.$t('LandingPage:home-back:label')
+				label: this.$t('Home'),
+				ariaLabel: this.$t('Home')
 			}
 		},
 		eventTitle() {
@@ -249,7 +259,7 @@ export default {
 		},
 		eventEndLine() {
 			if (!this.showEventEndLine) return ''
-			return this.$t('LandingPage:dateRange:to', { date: this.formatEventDateTime(this.eventDateRange.end) })
+			return this.$t('To {{- date}}', { date: this.formatEventDateTime(this.eventDateRange.end) })
 		},
 		featuredSessions() {
 			if (!this.sessions) return
@@ -274,15 +284,15 @@ export default {
 			if (!this.rooms) return []
 			// Shared list used for both the inclusion filter and the hasVideo flag.
 			// Using the same constant avoids the bug where rooms with only
-			// livestream.youtube / livestream.iframe are shown as active but
+			// livestream.youtube rooms are shown as active but
 			// not marked as having video.
 			const videoModuleTypes = [
 				'livestream.native',
 				'livestream.youtube',
-				'livestream.iframe',
 				'call.bigbluebutton',
 				'call.zoom',
-				'call.janus'
+				'call.janus',
+				'call.jitsi'
 			]
 			return this.rooms.filter(r => r.schedule_data || r.modules?.some(m => videoModuleTypes.includes(m.type))).map(room => {
 				const sessionInfo = this.currentSessionPerRoom?.[room.id]

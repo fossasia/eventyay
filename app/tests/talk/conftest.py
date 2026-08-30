@@ -9,28 +9,38 @@ from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
 from lxml import etree
 
-from eventyay.base.models.settings import GlobalSettings
-from eventyay.base.models import Event, Organizer as Organiser, Team, TeamInvite
-from eventyay.base.models import MailTemplate
-from eventyay.base.models import SpeakerProfile, User
-from eventyay.base.models.information import SpeakerInformation
-from eventyay.base.models.auth_token import ENDPOINTS, UserApiToken, generate_api_token
-from eventyay.base.models import Availability, Room, TalkSlot
 from eventyay.base.models import (
     Answer,
     AnswerOption,
+    Availability,
+    Event,
     Feedback,
+    MailTemplate,
     Resource,
     Review,
+    Room,
+    SpeakerProfile,
     Submission,
     SubmissionType,
     SubmitterAccessCode,
     Tag,
+    TalkSlot,
+    Team,
+    TeamInvite,
     Track,
+    User,
+)
+from eventyay.base.models import Organizer as Organiser
+from eventyay.base.models import (
     TalkQuestion as Question,
+)
+from eventyay.base.models import (
     TalkQuestionVariant as QuestionVariant,
 )
+from eventyay.base.models.auth_token import ENDPOINTS, UserApiToken, generate_api_token
+from eventyay.base.models.information import SpeakerInformation
 from eventyay.base.models.question import TalkQuestionRequired as QuestionRequired
+from eventyay.base.models.settings import GlobalSettings
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -113,7 +123,7 @@ def other_organiser(instance_identifier):
 
 @pytest.fixture
 def event(organiser):
-    today = dt.date.today()
+    today = now()
     with scopes_disabled():
         event = Event.objects.create(
             name="Fancy testevent",
@@ -129,6 +139,8 @@ def event(organiser):
         event.save()
         for team in organiser.teams.all():
             team.limit_events.add(event)
+        event.cfp.fields['biography']['visibility'] = 'optional'
+        event.cfp.save(update_fields=['fields'])
     return event
 
 
@@ -140,8 +152,8 @@ def other_event(other_organiser):
             is_public=True,
             slug="other",
             email="orga2@orga.org",
-            date_from=dt.date.today() + dt.timedelta(days=1),
-            date_to=dt.date.today() + dt.timedelta(days=1),
+            date_from=now() + dt.timedelta(days=1),
+            date_to=now() + dt.timedelta(days=1),
             organizer=other_organiser,
         )
         event.feature_flags["export_html_on_release"] = False
@@ -154,7 +166,7 @@ def other_event(other_organiser):
 @pytest.fixture
 def multilingual_event(organiser):
     with scopes_disabled():
-        today = dt.date.today()
+        today = now()
         event = Event.objects.create(
             name="Fancy testevent",
             is_public=True,

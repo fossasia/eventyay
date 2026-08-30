@@ -98,14 +98,14 @@
                             <div class="event-track-group-header">
                                 <span class="event-track-group-title">
                                     <i class="fa fa-calendar-o" aria-hidden="true"></i> {{ event_data.name }}
-                                </span>
+                                </label>
                                 <span class="event-track-selection-count text-muted"
                                       data-selection-count
                                       data-total="{{ event_data.tracks|length }}">
                                     {% if event_data.tracks %}
                                         0 / {{ event_data.tracks|length }}
                                     {% endif %}
-                                </span>
+                                </label>
                             </div>
                             {% if event_data.tracks %}
                             <div class="event-track-search-row"{% if event_data.tracks|length < 8 %} hidden{% endif %}>
@@ -170,12 +170,17 @@
     {% endwith %}
 </fieldset>
 
-<fieldset>
+{% if form.exhibition_plugin_enabled %}
+<fieldset class="team-exhibition-permissions"
+          data-exhibition-events="{{ form.exhibition_event_ids|join:"," }}"
+          data-all-events-id="{{ form.all_events.auto_id }}"
+          data-limit-events-name="{{ form.limit_events.html_name }}">
     <legend>{% translate "Exhibition permissions" %}</legend>
     {% bootstrap_field form.can_change_exhibition_proposals layout="control" %}
     {% bootstrap_field form.is_exhibition_reviewer layout="control" %}
     {% bootstrap_field form.hide_exhibition_applicant_emails layout="control" %}
 </fieldset>
+{% endif %}
 
 <fieldset>
     <legend>{% translate "Video permissions" %}</legend>
@@ -192,5 +197,132 @@
 </fieldset>
 {% endif %}
 
+
+
+{% if form.teamshifts_plugin_enabled %}
+<fieldset>
+    <legend>{% translate "TeamShifts Permissions" %}</legend>
+    <div class="form-group">
+        <div class="col-md-offset-3 col-md-9">
+            <div class="radio">
+                <label>
+                    <input type="radio" name="{{ form.teamshifts_role.html_name }}" value="coordinator" {% if form.teamshifts_role.value == "coordinator" %}checked{% endif %}>
+                    {% translate "Event Coordinator" %}
+                </label>
+                <p class="help-block">
+                    {% translate "Full access to everything in TeamShifts — create and edit roles and shifts, manage the call for applicants, accept and reject applications, send custom emails, and assign members to shifts. Always has access to all roles." %}
+                </p>
+            </div>
+            <div class="radio">
+                <label>
+                    <input type="radio" name="{{ form.teamshifts_role.html_name }}" value="lead" {% if form.teamshifts_role.value == "lead" %}checked{% endif %}>
+                    {% translate "Team Lead" %}
+                </label>
+                <p class="help-block">
+                    {% translate "Can create and edit shifts, assign members to shifts, and send custom emails. Cannot manage applications or create roles." %}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="teamshifts-lead-options" data-role-name="{{ form.teamshifts_role.html_name }}" {% if form.teamshifts_role.value != "lead" %}hidden{% endif %}>
+        <div class="form-group">
+            <label class="control-label col-md-3">
+                {% translate "Role access" %}
+            </label>
+            <div class="col-md-9">
+                <div class="radio">
+                    <label>
+                        <input type="radio" name="{{ form.all_teamshifts_roles.html_name }}" value="True" {% if form.all_teamshifts_roles.value == True or form.all_teamshifts_roles.value == "True" %}checked{% endif %}>
+                        {% translate "All roles (This person can see and manage all roles in the event.)" %}
+                    </label>
+                </div>
+                <div class="radio">
+                    <label>
+                        <input type="radio" name="{{ form.all_teamshifts_roles.html_name }}" value="False" {% if form.all_teamshifts_roles.value == False or form.all_teamshifts_roles.value == "False" %}checked{% endif %}>
+                        {% translate "Selected roles only (This person can see everything across all roles but can only act on the roles they are assigned to manage.)" %}
+                    </label>
+                </div>
+
+                <div class="teamshifts-roles-selector" data-radio-name="{{ form.all_teamshifts_roles.html_name }}">
+                    {% if form.limit_teamshifts_roles.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{% translate "Error:" %}</strong>
+                        {% for error in form.limit_teamshifts_roles.errors %}
+                        {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% if form.events_with_teamshifts_roles %}
+                        <div class="event-track-selector" id="event-teamshifts-roles-selector-{{ form.prefix }}">
+                            <div class="event-track-filter-row">
+                                <label class="text-muted event-track-filter-label">
+                                    <i class="fa fa-users" aria-hidden="true"></i> {% translate "Select event to configure roles:" %}
+                                </label>
+                                <select class="form-control event-track-filter" data-target-prefix="{{ form.prefix }}-roles">
+                                    <option value="">{% translate "— Select an event —" %}</option>
+                                    {% for event_data in form.events_with_teamshifts_roles %}
+                                    <option value="{{ event_data.id }}"
+                                        data-track-count="{{ event_data.tracks|length }}"
+                                        data-base-label="{{ event_data.name }} ({{ event_data.slug }})"
+                                        data-no-tracks-label="{% translate 'no roles' %}">{{ event_data.name }} ({{ event_data.slug }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="event-tracks-wrapper">
+                                <div class="event-tracks-placeholder text-muted">
+                                    <i class="fa fa-info-circle" aria-hidden="true"></i> {% translate "Select an event above to configure its roles." %}
+                                </div>
+
+                                {% for event_data in form.events_with_teamshifts_roles %}
+                                <div class="event-track-group" data-event-group-id="{{ event_data.id }}" hidden>
+                                    <div class="event-track-group-header">
+                                        <i class="fa fa-calendar-o" aria-hidden="true"></i> {{ event_data.name }}
+                                    </div>
+                                    <div class="scrolling-multiple-choice event-track-list">
+                                        {% for role in event_data.tracks %}
+                                        <div class="event-track-item">
+                                            <label class="event-track-item">
+                                                <input type="checkbox" name="{{ form.limit_teamshifts_roles.html_name }}"
+                                                    value="{{ role.id }}" {% if role.id in form.selected_teamshifts_role_ids %}checked{% endif %}>
+                                                {{ role.name }}
+                                            </label>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    <div class="event-track-actions">
+                                        <button type="button" class="btn btn-link btn-xs track-select-all" data-event-id="{{ event_data.id }}">{% translate "All" %}</button> / <button type="button" class="btn btn-link btn-xs track-select-none" data-event-id="{{ event_data.id }}">{% translate "None" %}</button>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% else %}
+                        <p class="text-muted track-hint">
+                            <i class="fa fa-info-circle" aria-hidden="true"></i> {% translate "No team roles are configured for any events." %}
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-md-3">
+                {% translate "Hide email addresses" %}
+            </label>
+            <div class="col-md-9">
+                <div class="checkbox">
+                    <label>
+                        <input type="checkbox" name="{{ form.hide_teamshifts_emails.html_name }}" {% if form.hide_teamshifts_emails.value %}checked{% endif %}>
+                        {% translate "When enabled, email addresses of team members are hidden throughout the platform. They can still send emails through TeamShifts but cannot see the actual addresses." %}
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+</fieldset>
+
+{% endif %}
+<script type="module" src="{% static 'common/js/teamshiftsRoleToggle.js' %}"></script>
 
 <script type="module" src="{% static 'common/js/eventTrackSelector.js' %}"></script>

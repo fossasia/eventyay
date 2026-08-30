@@ -39,7 +39,7 @@ from webauthn.helpers.structs import PublicKeyCredentialDescriptor
 
 from eventyay.base.i18n import language
 from eventyay.base.models.cache import VersionedModel
-from eventyay.common.image import create_thumbnail
+from eventyay.common.image import get_thumbnail
 from eventyay.common.text.path import path_with_hash
 from eventyay.common.urls import EventUrls
 from eventyay.helpers.urls import build_absolute_uri
@@ -65,6 +65,13 @@ def avatar_path(instance, filename):
         extension = Path(filename).suffix
         filename = f'{instance.code}{extension}'
     return path_with_hash(filename, base_path='avatars')
+
+
+def profile_picture_path(instance, filename):
+    if instance.code:
+        extension = Path(filename).suffix
+        filename = f'{instance.code}{extension}'
+    return path_with_hash(filename, base_path='profile_pictures')
 
 
 class UserQuerySet(models.QuerySet):
@@ -263,6 +270,25 @@ class User(
     )
     avatar_thumbnail = models.ImageField(null=True, blank=True, upload_to='avatars/')
     avatar_thumbnail_tiny = models.ImageField(null=True, blank=True, upload_to='avatars/')
+    profile_picture = models.ImageField(
+        null=True,
+        blank=True,
+        verbose_name=_('Account profile picture'),
+        help_text=_(
+            'We recommend uploading a square image at least 400px wide.'
+        ),
+        upload_to=profile_picture_path,
+    )
+    profile_picture_thumbnail = models.ImageField(null=True, blank=True, upload_to='profile_pictures/')
+    profile_picture_thumbnail_tiny = models.ImageField(null=True, blank=True, upload_to='profile_pictures/')
+    default_organizer = models.ForeignKey(
+        'Organizer',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='default_for_users',
+        verbose_name=_('Default organizer'),
+    )
     get_gravatar = models.BooleanField(
         default=False,
         verbose_name=_('Retrieve profile picture via gravatar'),
@@ -323,11 +349,14 @@ class User(
         is_new = not self.pk
         update_fields = kwargs.get('update_fields')
 
-        # Invalidate avatar_url cache if avatar might have changed
+        # Invalidate avatar_url / profile_picture_url cache if images might have changed
         if not is_new:
             if update_fields is None or 'avatar' in update_fields:
                 if 'avatar_url' in self.__dict__:
                     del self.__dict__['avatar_url']
+            if update_fields is None or 'profile_picture' in update_fields:
+                if 'profile_picture_url' in self.__dict__:
+                    del self.__dict__['profile_picture_url']
 
         # Platform accounts back Video JWT uids via email hash. Refresh cached
         # hash→account entries when identity fields change (or on create, so a
@@ -367,7 +396,15 @@ class User(
 
         # Check if we need to get the profile picture from gravatar
         update_gravatar = not update_fields or 'get_gravatar' in update_fields
+        should_invalidate_avatar_caches = not is_new and (
+            update_fields is None
+            or {'avatar', 'avatar_thumbnail', 'avatar_thumbnail_tiny'} & set(update_fields)
+        )
         super().save(*args, **kwargs)
+        if should_invalidate_avatar_caches:
+            from eventyay.common.image import invalidate_speaker_avatar_caches
+
+            invalidate_speaker_avatar_caches(self)
         if account_hash_invalidate or account_hash_refresh:
             from eventyay.base.services.user import (
                 invalidate_account_hash_cache_for_emails,
@@ -637,6 +674,32 @@ class User(
             q |= Q(**{p: True})
 
         return Organizer.objects.filter(id__in=self.teams.filter(q).values_list('organizer', flat=True))
+
+    @scopes_disabled()
+    def get_default_organizer(self, can_create_events=False):
+        """
+        Returns the user's default organizer.
+        If default_organizer is set and valid (the user still belongs to it), returns it.
+        If default_organizer is invalid or unset, dynamically returns the first organizer the user
+        was added to (or None if the user belongs to no organizers), without mutating the database.
+        """
+        if not self.pk:
+            return None
+
+        if self.default_organizer_id:
+            if self.teams.filter(organizer_id=self.default_organizer_id).exists():
+                if not can_create_events or self.teams.filter(
+                    organizer_id=self.default_organizer_id, can_create_events=True
+                ).exists():
+                    return self.default_organizer
+
+        # Fallback to the first organizer the user was added to
+        teams_qs = self.teams.all()
+        if can_create_events:
+            teams_qs = teams_qs.filter(can_create_events=True)
+
+        first_team = teams_qs.order_by('created', 'id').select_related('organizer').first()
+        return first_team.organizer if first_team else None
 
 
     def has_active_staff_session(self, session_key=None):
@@ -981,12 +1044,22 @@ the eventyay team"""
         if not thumbnail:
             image = self.avatar
         else:
-            image = self.avatar_thumbnail_tiny if thumbnail == 'tiny' else self.avatar_thumbnail
-            if not image:
-                image = create_thumbnail(self.avatar, thumbnail)
+            if str(self.avatar.name).lower().endswith('.svg'):
+                image = self.avatar
+            else:
+                image = get_thumbnail(self.avatar, thumbnail)
 
         if not image:
             return ''
+
+        if not thumbnail and image.name and not image.storage.exists(image.name):
+            for size in ('default', 'tiny'):
+                fallback = get_thumbnail(self.avatar, size)
+                if fallback and fallback.name and fallback.storage.exists(fallback.name):
+                    image = fallback
+                    break
+            else:
+                return ''
 
         # Build base URL with cache-busting
         try:
@@ -1003,6 +1076,46 @@ the eventyay team"""
         if event and event.custom_domain:
             return urljoin(event.custom_domain, image_url)
         return urljoin(settings.SITE_URL, image_url)
+
+    @property
+    def has_profile_picture(self) -> bool:
+        return bool(self.profile_picture) and self.profile_picture != 'False'
+
+    def get_profile_picture_url(self, event=None, thumbnail=None):
+        """Returns the profile picture URL with cache-busting timestamp."""
+        if not self.profile_picture or self.profile_picture == 'False':
+            return ''
+
+        if not thumbnail:
+            image = self.profile_picture
+        else:
+            image = (
+                self.profile_picture_thumbnail_tiny
+                if thumbnail == 'tiny'
+                else self.profile_picture_thumbnail
+            )
+            if not image:
+                image = create_thumbnail(self.profile_picture, thumbnail)
+
+        if not image:
+            return ''
+
+        try:
+            file_path = image.path
+            file_mtime = os.path.getmtime(file_path)
+            timestamp = int(file_mtime * 1000)
+        except (OSError, ValueError, AttributeError, NotImplementedError):
+            timestamp = int(time.time() * 1000)
+
+        image_url = f"{image.url}?v={timestamp}"
+
+        if event and event.custom_domain:
+            return urljoin(event.custom_domain, image_url)
+        return urljoin(settings.SITE_URL, image_url)
+
+    @cached_property
+    def profile_picture_url(self) -> str:
+        return self.get_profile_picture_url()
 
     def regenerate_token(self) -> Token:
         """Generates a new API access token, deleting the old one."""
@@ -1056,8 +1169,6 @@ the eventyay team"""
                 "new": {"__redacted": True},
             }
         )
-        self.exhibitor_staff.all().delete()
-        self.poster_presenter.all().delete()
         self.chat_channels.filter(channel__room__isnull=False).delete()
 
         for dm_channel in self.chat_channels.filter(channel__room__isnull=True):
@@ -1130,6 +1241,7 @@ the eventyay team"""
             d["client_state"] = self.client_state
         if include_personal_data:
             d["wikimedia_username"] = self.wikimedia_username
+            d["show_publicly"] = bool(self.show_publicly)
         return d
 
     @property

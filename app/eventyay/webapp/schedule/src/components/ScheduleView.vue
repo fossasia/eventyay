@@ -22,6 +22,7 @@
 			:fullscreenTarget="$refs.scheduleRoot",
 			:days="computedDays",
 			:currentDay="currentDay",
+			:now="resolvedNow",
 			:sessionsMode="sessionsMode",
 			:timeDensityMinutes="timeDensityMinutes",
 			v-model:searchQuery="searchQuery",
@@ -33,6 +34,7 @@
 			:popularityFeatureEnabled="popularityFeatureEnabled",
 			:popularitySortAvailable="popularitySortAvailable",
 			@selectDay="changeDay($event)",
+			@goToNow="goToNow",
 			@filterToggle="onFilterChange",
 			@toggleFavs="toggleFavs",
 			@update:shareStarredSessions="updateShareStarredSessions",
@@ -42,6 +44,7 @@
 			@setTimeDensityMinutes="setTimeDensityMinutes($event)")
 		.schedule-content(ref="scrollParent")
 			grid-schedule-wrapper(v-if="showGrid && !sessionsMode",
+				ref="scheduleDisplay",
 				:sessions="filteredSessions",
 				:rooms="computedRooms",
 				:days="computedDays",
@@ -59,6 +62,7 @@
 				@fav="onFav",
 				@unfav="onUnfav")
 			linear-schedule(v-else,
+				ref="scheduleDisplay",
 				:sessions="filteredSessions",
 				:forceScrollDay="forceScrollDay",
 				:rooms="computedRooms",
@@ -225,7 +229,7 @@ export default {
 		t() {
 			const m = this.translationMessages || {}
 			return {
-				no_schedule_available: m.no_schedule_available || 'No schedule has been published yet. Please check back later.'
+				no_schedule_available: m.no_schedule_available || this.$t('No schedule has been published yet. Please check back later.')
 			}
 		},
 		showFavCountOnSchedule() {
@@ -396,12 +400,12 @@ export default {
 		},
 		filterGroups() {
 			const groups = [
-				{ refKey: 'track', title: 'Tracks', data: this.filterState.tracks },
-				{ refKey: 'room', title: 'Rooms', data: this.filterState.rooms },
-				{ refKey: 'session_type', title: 'Types', data: this.filterState.types }
+				{ refKey: 'track', title: this.$t('Tracks'), data: this.filterState.tracks },
+				{ refKey: 'room', title: this.$t('Rooms'), data: this.filterState.rooms },
+				{ refKey: 'session_type', title: this.$t('Types'), data: this.filterState.types }
 			]
 			if (this.filterState.languages.length > 1) {
-				groups.push({ refKey: 'language', title: 'Language', data: this.filterState.languages })
+				groups.push({ refKey: 'language', title: this.$t('Language'), data: this.filterState.languages })
 			}
 			return groups
 		},
@@ -468,14 +472,20 @@ export default {
 		this.userTimezone = moment.tz.guess()
 		this.currentTimezone = localStorage.getItem('userTimezone') || this.timezone || this.scheduleData?.timezone || this.userTimezone
 		this.readRecordingQueryParam()
+		if (this.computedDays?.length) {
+			const today = this.resolvedNow.clone().tz(this.currentTimezone).format('YYYY-MM-DD')
+			const fragment = window.location.hash.slice(1)
+			const fragmentDay = /^\d{4}-\d{2}-\d{2}$/.test(fragment) && this.computedDays.some(day => day.format('YYYY-MM-DD') === fragment)
+				? fragment
+				: null
+			const todayExists = this.computedDays.some(day => day.format('YYYY-MM-DD') === today)
+			this.currentDay = fragmentDay || (todayExists ? today : this.computedDays[0].format('YYYY-MM-DD'))
+		}
 	},
 	mounted() {
 		this.onResize()
 		this._resizeObserver = new ResizeObserver(() => this.onResize())
 		this._resizeObserver.observe(this.$el)
-		if (this.computedDays?.length) {
-			this.currentDay = this.computedDays[0].format('YYYY-MM-DD')
-		}
 		if (this.loadStarredSharingPreference) {
 			this.loadStarredSharingPreference().then((enabled) => {
 				this.shareStarredSessions = !!enabled
@@ -581,6 +591,15 @@ export default {
 			if (this.linearScheduleGroupByDay) {
 				this.forceScrollDay++
 			}
+		},
+		goToNow() {
+			const today = this.resolvedNow.clone().tz(this.currentTimezone).format('YYYY-MM-DD')
+			const todayExists = this.computedDays.some(day => day.format('YYYY-MM-DD') === today)
+			if (!todayExists) return
+			this.changeDay(today)
+			this.$nextTick(() => {
+				this.$refs.scheduleDisplay?.scrollToNow?.()
+			})
 		},
 		setCurrentDay(day) {
 			this.changeDay(day)

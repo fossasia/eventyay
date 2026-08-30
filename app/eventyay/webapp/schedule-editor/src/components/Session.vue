@@ -6,7 +6,8 @@
 			.ampm(v-if="startTime.ampm") {{ startTime.ampm }}
 		.duration {{ durationPretty }}
 	.info
-		.title(:class="{'title-clamped': isShortSession}") {{ getLocalizedString(session.title) }}
+		.title-row(style="display: flex; justify-content: space-between; align-items: flex-start;")
+			.title(:class="{'title-clamped': isShortSession}") {{ getLocalizedString(session.title) }}
 		.speakers(v-if="hasSpeakersWithNames", :class="{'speakers-clamped': isShortSession}") {{ speakerNames }}
 		.pending-line(v-if="session.state === 'pending'")
 			i.fa.fa-exclamation-circle
@@ -28,7 +29,9 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
 import moment, { Moment } from 'moment-timezone'
+import { translate } from '~/lib/i18n'
 import { getLocalizedString } from '~/utils'
+import { resolveMode, resolveSessionKind } from '~/teamshifts-adapter'
 
 interface Speaker {
   name: string
@@ -75,9 +78,12 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'startDragging', payload: { session: Session; event: PointerEvent }): void
+  (e: 'editSession', payload: Session): void
+  (e: 'deleteSession', payload: Session): void
 }>()
-const isBreak = computed(() => props.session.code == null)
 
+const mode = resolveMode()
+const isBreak = computed(() => resolveSessionKind(mode, props.session) === 'break')
 
 const hasSpeakersWithNames = computed(() => {
   return props.session.speakers && props.session.speakers.some(speaker => speaker.name)
@@ -86,7 +92,7 @@ const hasSpeakersWithNames = computed(() => {
 const speakerNames = computed(() => {
   if (!props.session.speakers) return ''
   return props.session.speakers
-    .filter(speaker => speaker.name) // Only include speakers with names
+    .filter(speaker => speaker.name)
     .map(speaker => speaker.name)
     .join(', ')
 })
@@ -108,7 +114,6 @@ const classes = computed(() => {
     ) {
       cls.push('unconfirmed')
     } else if (props.session.state !== 'confirmed') {
-      // covers null / undefined / empty state
       cls.push('unconfirmed')
     }
   }
@@ -120,12 +125,12 @@ const classes = computed(() => {
   return cls
 })
 
+const style = computed(() => {
+  const trackColor = props.session.track?.color || 'var(--color-primary)'
+  return { '--track-color': trackColor }
+})
 
-const style = computed(() => ({
-  '--track-color': props.session.track?.color || 'var(--color-primary)'
-}))
-
-const startTime = computed< { time: string; ampm?: string } | undefined>(() => {
+const startTime = computed<{ time: string; ampm?: string } | undefined>(() => {
   const time: Moment | undefined = props.overrideStart || props.session.start
   if (!time) return undefined
 
@@ -152,16 +157,18 @@ const isShortSession = computed<boolean>(() => {
 const durationPretty = computed<string | undefined>(() => {
   const minutes = durationMinutes.value
   if (!minutes) return undefined
+  const minLabel = translate('min')
+  const hourLabel = translate('h')
 
   if (minutes <= 60) {
-    return `${minutes}min`
+    return `${minutes}${minLabel}`
   }
   const hours = Math.floor(minutes / 60)
   const leftoverMinutes = minutes % 60
   if (leftoverMinutes) {
-    return `${hours}h${leftoverMinutes}min`
+    return `${hours}${hourLabel}${leftoverMinutes}${minLabel}`
   }
-  return `${hours}h`
+  return `${hours}${hourLabel}`
 })
 
 function onPointerDown(event: PointerEvent): void {
@@ -318,16 +325,18 @@ sessionTextExpand()
 		position: absolute
 		top: 0
 		right: 0
-		padding: 4px 4px
+		padding: 4px
 		margin: 4px
 		color: #b23e65
 		font-size: 16px
 		.warning-icon span
 			padding-right: 4px
+
 	@media (hover: hover) and (pointer: fine)
-		&:hover:not(.dragging):not(.clone)
+		&:hover:not(.dragging, .clone)
 			.title.title-clamped, .speakers.speakers-clamped
 				sessionTextExpand()
+
 @media print
 	.c-linear-schedule-session.isbreak
 		border: 2px solid $clr-grey-300 !important

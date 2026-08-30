@@ -1,15 +1,24 @@
+import logging
+import os
 from decimal import Decimal
 from urllib.parse import urljoin
 
 from django import forms
 from django.conf import settings as django_settings
 from django.core.exceptions import ValidationError
+from django.core.files.storage import default_storage
+from django.core.files.uploadedfile import UploadedFile
 from django.core.validators import URLValidator
 from django.db import transaction
 from django.utils.crypto import get_random_string
 from django.utils.translation import gettext_lazy as _
 from django_scopes import scope
 from i18nfield.strings import LazyI18nString
+from PIL import UnidentifiedImageError
+
+from eventyay.helpers.image_optimize import optimize_uploaded_image
+
+logger = logging.getLogger(__name__)
 
 EVENT_TYPE_SETTING = 'event_type'
 MEETUP_EVENT_TYPE = 'meetup'
@@ -21,30 +30,48 @@ DEFAULT_QUOTA_NAME = 'RSVP'
 
 VIDEO_TYPE_YOUTUBE = 'youtube'
 VIDEO_TYPE_HLS = 'hls'
-VIDEO_TYPE_IFRAME = 'iframe'
 
 VIDEO_TYPE_CHOICES = [
     ('', _('No video stream')),
     (VIDEO_TYPE_YOUTUBE, _('YouTube')),
     (VIDEO_TYPE_HLS, _('HLS stream')),
-    (VIDEO_TYPE_IFRAME, _('Embed URL / iframe')),
+]
+
+LOCATION_IN_PERSON = 'in_person'
+LOCATION_VIRTUAL = 'virtual'
+LOCATION_HYBRID = 'hybrid'
+LOCATION_TYPE_CHOICES = [
+    (LOCATION_IN_PERSON, _('In-Person')),
+    (LOCATION_VIRTUAL, _('Virtual')),
+    (LOCATION_HYBRID, _('Both (Hybrid)')),
+]
+
+CAPACITY_UNLIMITED = 'unlimited'
+CAPACITY_LIMITED = 'limited'
+CAPACITY_TYPE_CHOICES = [
+    (CAPACITY_UNLIMITED, _('Unlimited')),
+    (CAPACITY_LIMITED, _('Limited')),
+]
+
+REGISTRATION_FEE_FREE = 'free'
+REGISTRATION_FEE_PAID = 'paid'
+REGISTRATION_FEE_CHOICES = [
+    (REGISTRATION_FEE_FREE, _('Free')),
+    (REGISTRATION_FEE_PAID, _('Paid')),
 ]
 
 VIDEO_MODULES = {
     VIDEO_TYPE_YOUTUBE: ('livestream.youtube', 'ytid'),
     VIDEO_TYPE_HLS: ('livestream.native', 'hls_url'),
-    VIDEO_TYPE_IFRAME: ('page.iframe', 'url'),
 }
 
 VIDEO_TYPES_BY_MODULE = {
     module_type: (video_type, config_key) for video_type, (module_type, config_key) in VIDEO_MODULES.items()
 }
-VIDEO_TYPES_BY_MODULE['livestream.iframe'] = (VIDEO_TYPE_IFRAME, 'url')
 
-URL_VIDEO_TYPES = (VIDEO_TYPE_HLS, VIDEO_TYPE_IFRAME)
+URL_VIDEO_TYPES = (VIDEO_TYPE_HLS,)
 
 LIVESTREAM_MODULE_PREFIX = 'livestream.'
-EMBEDDED_PAGE_MODULE_TYPE = 'page.iframe'
 
 VIDEO_SETTINGS_KEYS = (
     'venueless_url',
@@ -82,7 +109,7 @@ def get_video_config_from_modules(module_config) -> dict:
 
 def _is_video_module(module) -> bool:
     module_type = (module or {}).get('type', '') or ''
-    return module_type.startswith(LIVESTREAM_MODULE_PREFIX) or module_type == EMBEDDED_PAGE_MODULE_TYPE
+    return module_type.startswith(LIVESTREAM_MODULE_PREFIX)
 
 
 def has_video_stream(event) -> bool:
@@ -137,7 +164,7 @@ def build_video_form_fields(type_help_text=None) -> dict:
             required=False,
             max_length=255,
             label=_('Video URL / stream identifier'),
-            help_text=_('YouTube video URL, HLS stream URL, or embed URL.'),
+            help_text=_('YouTube video URL or HLS stream URL.'),
         ),
     }
 
@@ -225,24 +252,38 @@ def ensure_video_credentials(event, request=None, force=False) -> bool:
     return True
 
 
-def ensure_rsvp_product(event):
+def ensure_rsvp_product(event, price=None):
+    """
+    Ensure an active admission product and quota exist for a meetup event.
+
+    Note: Product and Quota models in Eventyay are scoped by organizer
+    (`event__organizer`) in the ORM, so this helper establishes organizer
+    scope internally. Callers should not wrap calls to this helper in
+    redundant `scope(organizer=...)` blocks.
+    """
     from eventyay.base.models import Quota
     from eventyay.base.models.product import Product
 
     locale = getattr(event, 'locale', 'en') or 'en'
-    with scope(event=event):
+    fee_price = price if price is not None else Decimal('0.00')
+    with scope(organizer=event.organizer):
         product = event.products.filter(admission=True, active=True).first()
         if product is None:
             product = Product(
                 event=event,
                 name=LazyI18nString({locale: DEFAULT_PRODUCT_NAME}),
-                default_price=Decimal('0.00'),
+                default_price=fee_price,
                 admission=True,
                 active=True,
             )
             product.save()
+        elif price is not None and product.default_price != fee_price:
+            product.default_price = fee_price
+            product.save(update_fields=['default_price'])
 
-        quota = event.quotas.first()
+        quota = product.quotas.first()
+        if quota is None:
+            quota = event.quotas.filter(name=DEFAULT_QUOTA_NAME).first()
         if quota is None:
             quota = Quota(event=event, name=DEFAULT_QUOTA_NAME, size=None)
             quota.save()
@@ -251,26 +292,105 @@ def ensure_rsvp_product(event):
 
 
 def get_rsvp_product_and_quota(event):
-    with scope(event=event):
+    """
+    Retrieve the active RSVP product and associated quota for a meetup event.
+
+    Note: Product and Quota models in Eventyay are scoped by organizer
+    (`event__organizer`) in the ORM, so this helper establishes organizer
+    scope internally. Callers should not wrap calls to this helper in
+    redundant `scope(organizer=...)` blocks.
+    """
+    with scope(organizer=event.organizer):
         product = event.products.filter(admission=True, active=True).first()
         if product is None:
             return None, None
-        quota = product.quotas.filter(size__isnull=True).first() or product.quotas.first()
+        quota = product.quotas.first()
         return product, quota
 
 
-def provision_meetup_event(event, video_type='', video_url='', request=None):
+def _save_meetup_header_image(event, header_image, crop_box=None):
+    if not isinstance(header_image, UploadedFile):
+        return
+
+    setting_key = 'logo_image'
+    try:
+        result = optimize_uploaded_image(header_image, setting_key, crop_box=crop_box)
+    except (OSError, ValueError, UnidentifiedImageError):
+        logger.warning('Could not optimize uploaded header image for event %s', event.slug, exc_info=True)
+        header_image.seek(0)
+        result = None
+
+    nonce = get_random_string(length=8)
+    clean_name, _ = os.path.splitext(header_image.name or setting_key)
+    base_path = f'pub/{event.organizer.slug}/{event.slug}/{clean_name}.{nonce}'
+
+    if result:
+        optimized_name = f'{base_path}.{result.optimized_ext}'
+        optimized_path = default_storage.save(optimized_name, result.optimized)
+        original_name = f'{base_path}_original.{result.original_ext}'
+        try:
+            default_storage.save(original_name, result.original)
+            event.settings.set(f'{setting_key}_original_ext', result.original_ext)
+        except OSError:
+            pass
+        event.settings.set(setting_key, f'file://{optimized_path}')
+    else:
+        ext = os.path.splitext(header_image.name)[1] if header_image.name else '.jpg'
+        file_path = default_storage.save(f'{base_path}{ext}', header_image)
+        event.settings.set(setting_key, f'file://{file_path}')
+
+
+def provision_meetup_event(
+    event,
+    video_type='',
+    video_url='',
+    request=None,
+    frontpage_text=None,
+    header_image=None,
+    registration_limit=None,
+    crop_box=None,
+    registration_fee=None,
+    payment_stripe_publishable_key='',
+    payment_stripe_secret_key='',
+    payment_stripe_merchant_country='',
+):
     event.settings.set(EVENT_TYPE_SETTING, MEETUP_EVENT_TYPE)
 
     event.live = True
     event.tickets_published = True
     event.save(update_fields=['live', 'tickets_published'])
 
+    if frontpage_text is not None:
+        event.settings.set('frontpage_text', frontpage_text)
+
+    if header_image:
+        _save_meetup_header_image(event, header_image, crop_box=crop_box)
+
     ensure_video_credentials(event, request=request, force=True)
     apply_video_configuration(event, video_type, video_url)
-    ensure_rsvp_product(event)
+
+    fee_decimal = Decimal(str(registration_fee)) if registration_fee else Decimal('0.00')
+    product, quota = ensure_rsvp_product(event, price=fee_decimal)
+
+    if fee_decimal > Decimal('0.00') and payment_stripe_secret_key:
+        event.settings.set('payment_stripe__enabled', True)
+        if payment_stripe_publishable_key:
+            event.settings.set('payment_stripe_publishable_key', payment_stripe_publishable_key)
+        if payment_stripe_secret_key:
+            event.settings.set('payment_stripe_secret_key', payment_stripe_secret_key)
+        if payment_stripe_merchant_country:
+            event.settings.set('payment_stripe_merchant_country', payment_stripe_merchant_country)
+
+    if quota and registration_limit is not None:
+        with scope(organizer=event.organizer):
+            quota.size = registration_limit
+            quota.save(update_fields=['size'])
 
     event.log_action(
         'eventyay.event.meetup.created',
-        data={'video_type': video_type, 'video_url': video_url},
+        data={
+            'video_type': video_type,
+            'video_url': video_url,
+            'registration_fee': str(fee_decimal),
+        },
     )

@@ -3,20 +3,20 @@
 	.fatal-connection-error(v-if="fatalConnectionError")
 		template(v-if="fatalConnectionError.code === 'world.unknown_world'")
 			.mdi.mdi-help-circle
-			h1 {{ $t('App:fatal-connection-error:world.unknown_world:headline') }}
+			h1 {{ $t('Event not found') }}
 		template(v-else-if="fatalConnectionError.code === 'connection.replaced'")
 			.mdi.mdi-alert-octagon
-			h1 {{ $t('App:fatal-connection-error:connection.replaced:headline') }}
-			bunt-button(@click="reload") {{ $t('App:fatal-connection-error:connection.replaced:action') }}
+			h1 {{ $t('You opened this event on a new device or tab.') }}
+			bunt-button(@click="reload") {{ $t('Continue (disconnect other device)') }}
 		template(v-else-if="['auth.denied', 'auth.invalid_token', 'auth.missing_token', 'auth.expired_token'].includes(fatalConnectionError.code)")
 			.mdi.mdi-alert-octagon
-			h1 {{ $t('App:fatal-connection-error:' + fatalConnectionError.code + ':headline') }}
+			h1 {{ fatalAuthHeadline }}
 				br
-				small {{ $t('App:fatal-connection-error:' + fatalConnectionError.code + ':text') }}
-			bunt-button(v-if="fatalConnectionError.code != 'auth.missing_token'", @click="clearTokenAndReload") {{ $t('App:fatal-connection-error:' + fatalConnectionError.code + ':action') }}
+				small {{ fatalAuthText }}
+			bunt-button(v-if="fatalConnectionError.code != 'auth.missing_token'", @click="clearTokenAndReload") {{ fatalAuthAction }}
 		template(v-else)
-			h1 {{ $t('App:fatal-connection-error:else:headline') }}
-		p.code error code: {{ fatalConnectionError.code }}
+			h1 {{ $t('Connection refused') }}
+		p.code {{ $t('error code:') }} {{ fatalConnectionError.code }}
 	template(v-else-if="world")
 		// AppBar stays fixed; only main content shifts
 		app-bar(:show-actions="true", :show-user="true", @toggle-sidebar="toggleSidebar")
@@ -31,15 +31,15 @@
 			media-source(v-if="call", ref="channelCallSource", :call="call", :background="call.channel !== $route.params.channelId", :key="call.id", @close="$store.dispatch('chat/leaveCall')")
 			#media-source-iframes
 			notifications(:hasBackgroundMedia="isStreamInBackground")
-			.disconnected-warning(v-if="!connected") {{ $t('App:disconnected-warning:text') }}
+			.disconnected-warning(v-if="!connected") {{ $t('Connection lost! Trying to reconnect…') }}
 			transition(name="prompt")
 				greeting-prompt(v-if="!user.profile.greeted")
 			.native-permission-blocker(v-if="askingPermission")
 		rooms-sidebar(:show="showSidebar", @close="showSidebar = false")
 	.connecting(v-else-if="!currentFatalError")
 		bunt-progress-circular(size="huge")
-		.details(v-if="socketCloseCode == 1006") {{ $t('App:error-code:1006') }}
-		.details(v-if="socketCloseCode") {{ $t('App:error-code:text') }}: {{ socketCloseCode }}
+		.details(v-if="socketCloseCode == 1006") {{ $t("Connection failed. We'll retry, but if this error occurs repeatedly, the connection might be blocked by a firewall in your network or by a VPN on your device.") }}
+		.details(v-if="socketCloseCode") {{ $t('Error code') }}: {{ socketCloseCode }}
 	.fatal-error(v-if="currentFatalError") {{ currentFatalError.message || currentFatalError.code }}
 </template>
 <script>
@@ -54,8 +54,8 @@ import MediaSource from 'components/MediaSource'
 import Notifications from 'components/notifications'
 import GreetingPrompt from 'components/profile/GreetingPrompt'
 
-const mediaModules = ['livestream.native', 'livestream.youtube', 'livestream.iframe', 'call.bigbluebutton', 'call.janus', 'call.zoom']
-const stageToolModules = ['livestream.native', 'livestream.youtube', 'livestream.iframe', 'call.janus']
+const mediaModules = ['livestream.native', 'livestream.youtube', 'call.bigbluebutton', 'call.janus', 'call.zoom', 'call.jitsi']
+const stageToolModules = ['livestream.native', 'livestream.youtube', 'call.janus']
 const chatbarModules = ['chat.native', 'question', 'poll']
 
 export default {
@@ -103,12 +103,15 @@ export default {
 			},
 			showJoinRoom: true,
 			getJoinRoomLink: (session) => {
-				// Mirror agenda logic: only show join room link when the session
-				// has both a room and either a stream_url or a video room
 				if ((!session?.stream_url && !session?.has_video_room) || !session?.room) return ''
-				const roomId = typeof session.room === 'object' ? session.room.id : session.room
-				if (!roomId) return ''
-				return this.$router.resolve({name: 'room', params: {roomId}}).href
+				const room = session.room
+				const rawId = typeof room === 'object' ? (room.pretalx_id ?? room.id) : room
+				const worldRoom = (this.rooms || []).find(r =>
+					String(r.id) === String(typeof room === 'object' ? room.id : room) ||
+					(r.pretalx_id != null && String(r.pretalx_id) === String(rawId))
+				)
+				if (!worldRoom?.id) return ''
+				return this.$router.resolve({name: 'room', params: {roomId: worldRoom.id}}).href
 			},
 			generateStarrerLinkUrl: (user) => {
 				if (!user?.url || !user?.code) return ''
@@ -149,6 +152,25 @@ export default {
 			}
 			return this.fatalError?.roomId ? (this.room && this.fatalError.roomId === this.room.id ? this.fatalError : null) : this.fatalError
 		},
+		fatalAuthHeadline() {
+			return {
+				'auth.denied': this.$t('Access denied'),
+				'auth.invalid_token': this.$t('Your login is invalid'),
+				'auth.missing_token': this.$t('You are not logged in'),
+				'auth.expired_token': this.$t('Your login has expired'),
+			}[this.fatalConnectionError?.code] || this.$t('Authentication failed')
+		},
+		fatalAuthText() {
+			return {
+				'auth.denied': this.$t('You do not have permission to join this event.'),
+				'auth.invalid_token': this.$t('Please log in again to continue.'),
+				'auth.missing_token': this.$t('Log in to join this event.'),
+				'auth.expired_token': this.$t('Please log in again to continue.'),
+			}[this.fatalConnectionError?.code] || ''
+		},
+		fatalAuthAction() {
+			return this.$t('Try again')
+		},
 		room() {
 			const routeName = this.$route?.name
 			if (!routeName) return
@@ -158,7 +180,7 @@ export default {
 				return rooms.find(room => room && room.modules && room.modules.some(m => m.type === 'page.landing'))
 			}
 			const wantedId = String(this.$route.params.roomId)
-			return rooms.find(room => String(room.id) === wantedId)
+			return rooms.find(room => String(room.id) === wantedId || (room.pretalx_id != null && String(room.pretalx_id) === wantedId))
 		},
 		isAdminRoute() {
 			const isAdminRouteName = name => typeof name === 'string' && name.startsWith('admin')
@@ -360,7 +382,7 @@ export default {
 				return
 			}
 			this.$store.dispatch('changeRoom', newRoom)
-			const isExclusive = module => module.type === 'call.bigbluebutton' || module.type === 'call.zoom'
+			const isExclusive = module => module.type === 'call.bigbluebutton' || module.type === 'call.zoom' || module.type === 'call.jitsi'
 			if (!this.$mq.above.m) return // no background rooms for mobile
 			if (this.call) return // When a DM call is running, we never want background media
 			const newRoomHasMedia = newRoom && newRoom.modules && newRoom.modules.some(module => mediaModules.includes(module.type))

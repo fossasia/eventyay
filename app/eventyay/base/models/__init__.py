@@ -28,18 +28,13 @@ from .event import (
     SubEventMetaValue,
     generate_invite_token,
 )
-from .exhibitor import (
-    ContactRequest,
-    Exhibitor,
-    ExhibitorLink,
-    ExhibitorSocialMediaLink,
-    ExhibitorStaff,
-    ExhibitorView,
-)
-from .feedback import Feedback
+from .feedback import Feedback, FeedbackReaction
 from .giftcards import GiftCard, GiftCardAcceptance, GiftCardTransaction
+from eventyay.base.gmail.models import GmailOAuthCredential
+from .global_plugin_config import GlobalPluginConfig
 from .invoices import Invoice, InvoiceLine, invoice_filename
 from .janus import JanusServer
+from .jitsi import JitsiServer
 from .log import ActivityLog, LogEntry
 from .mail import MailTemplate, MailTemplateRoles, QueuedMail
 from .mixins import FileCleanupMixin, GenerateCode, LogMixin, OrderedModel, PretalxModel, TimestampedModel
@@ -71,7 +66,6 @@ from .organizer import (
 )
 from .organizer_follower import OrganizerFollower
 from .poll import Poll, PollOption, PollVote
-from .poster import Poster, PosterLink, PosterPresenter, PosterVote
 from .product import (
     Product,
     ProductAddOn,
@@ -143,7 +137,6 @@ __all__ = [
     'Checkin',
     'CheckinList',
     'Choices',
-    'ContactRequest',
     'Device',
     'Event',
     'Event_SettingsStore',
@@ -152,18 +145,15 @@ __all__ = [
     'EventMetaValue',
     'EventPlannedUsage',
     'EventView',
-    'Exhibitor',
-    'ExhibitorLink',
-    'ExhibitorSocialMediaLink',
-    'ExhibitorStaff',
-    'ExhibitorView',
     'Feedback',
+    'FeedbackReaction',
     'FileCleanupMixin',
     'Gate',
     'GenerateCode',
     'GiftCard',
     'GiftCardAcceptance',
     'GiftCardTransaction',
+    'GlobalPluginConfig',
     'GlobalSettings',
     'Invoice',
     'InvoiceAddress',
@@ -177,6 +167,7 @@ __all__ = [
     'ProductMetaValue',
     'ProductVariation',
     'JanusServer',
+    'JitsiServer',
     'LogEntry',
     'LogMixin',
     'LoggedModel',
@@ -198,10 +189,6 @@ __all__ = [
     'Poll',
     'PollOption',
     'PollVote',
-    'Poster',
-    'PosterLink',
-    'PosterPresenter',
-    'PosterVote',
     'PretalxModel',
     'PriceModeChoices',
     'Question',

@@ -14,7 +14,7 @@ from django.views.defaults import permission_denied
 from django_scopes import scope
 
 from eventyay.base.middleware import LocaleMiddleware
-from eventyay.base.models import Event, Organizer
+from eventyay.base.models import Event, GlobalPluginConfig, Organizer
 from eventyay.multidomain.urlreverse import (
     get_event_domain,
     get_organizer_domain,
@@ -147,8 +147,12 @@ def _detect_event(request, require_live=True, require_plugin=None):
 
             if require_plugin:
                 is_core = any(require_plugin.startswith(m) for m in settings.CORE_MODULES)
-                if require_plugin not in request.event.get_plugins() and not is_core:
-                    raise Http404(_('This feature is not enabled.'))
+                if not is_core:
+                    if require_plugin in GlobalPluginConfig.get_disabled_modules():
+                        raise Http404(_('This feature is not enabled.'))
+                    if require_plugin not in GlobalPluginConfig.get_platform_managed_modules():
+                        if require_plugin not in request.event.get_plugins():
+                            raise Http404(_('This feature is not enabled.'))
 
             for receiver, response in process_request.send(request.event, request=request):
                 if response:

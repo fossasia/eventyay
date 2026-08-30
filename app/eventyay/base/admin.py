@@ -5,11 +5,11 @@ from django_scopes import scopes_disabled
 from .models import (
     Announcement, AuditLog, auth, base, BBBCall, BBBServer, BillingInvoice,
     billing, Channel, ChatEvent, checkin, choices, Device, devices, event,
-    Exhibitor, SystemLog, fields, Gate, GiftCard, GiftCardAcceptance,
-    GiftCardTransaction, giftcards, Invoice, invoices, JanusServer, log, notifications, Order, OrderPayment, OrderRefund,
-    orders, organizer, page, Poll, Poster, roomquestion, Quota, Room, roulette,
+    SystemLog, fields, Gate, GiftCard, GiftCardAcceptance,
+    GiftCardTransaction, giftcards, Invoice, invoices, JanusServer, JitsiServer, log, notifications, Order, OrderPayment, OrderRefund,
+    orders, organizer, page, Poll, roomquestion, Quota, Room, roulette,
     seating, StreamingServer, tax, Team, TeamInvite, TurnServer, vouchers,
-    WaitingListEntry, waitinglist, room, exhibitor, poll, poster, chat
+    WaitingListEntry, waitinglist, room, poll, chat
 )
 from ..api.models import OAuthApplication, OAuthAccessToken, OAuthRefreshToken, OAuthIDToken, WebHook, WebHookCall, ApiCall, WebHookEventListener
 
@@ -85,26 +85,12 @@ admin.site.register(Room)
 admin.site.register(room.RoomView)
 admin.site.register(room.Reaction)
 
-# Exhibitors
-admin.site.register(Exhibitor)
-admin.site.register(exhibitor.ExhibitorLink)
-admin.site.register(exhibitor.ExhibitorSocialMediaLink)
-admin.site.register(exhibitor.ExhibitorStaff)
-admin.site.register(exhibitor.ExhibitorView)
-admin.site.register(exhibitor.ContactRequest)
-
 # Polls and Questions
 admin.site.register(Poll)
 admin.site.register(poll.PollOption)
 admin.site.register(poll.PollVote)
 admin.site.register(roomquestion.RoomQuestion)
 admin.site.register(roomquestion.QuestionVote)
-
-# Posters
-admin.site.register(Poster)
-admin.site.register(poster.PosterPresenter)
-admin.site.register(poster.PosterVote)
-admin.site.register(poster.PosterLink)
 
 # Chat and Communication
 admin.site.register(Channel)
@@ -121,6 +107,7 @@ admin.site.register(roulette.RoulettePairing)
 admin.site.register(BBBServer)
 admin.site.register(BBBCall)
 admin.site.register(JanusServer)
+admin.site.register(JitsiServer)
 admin.site.register(TurnServer)
 admin.site.register(StreamingServer)
 

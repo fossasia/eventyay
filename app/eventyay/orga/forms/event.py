@@ -68,11 +68,6 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         help_text=SHOW_FEATURED_SPEAKERS_HELP,
         required=True,
     )
-    use_feedback = forms.BooleanField(
-        label=_('Enable anonymous feedback'),
-        help_text=_('Attendees will be able to send in feedback after a session is over.'),
-        required=False,
-    )
     session_popularity_enabled = forms.BooleanField(
         label=_('Activate most popular session feature'),
         help_text=_('Enables session popularity (favourites) counts and sorting options in the schedule webapp.'),
@@ -196,7 +191,6 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         json_fields = {
             'show_featured': 'feature_flags',
             'show_featured_speakers': 'feature_flags',
-            'use_feedback': 'feature_flags',
             'session_popularity_enabled': 'feature_flags',
             'session_popularity_show_on_schedule': 'feature_flags',
             'header_pattern': 'display_settings',
@@ -295,6 +289,123 @@ class ReviewSettingsForm(
             'use_submission_comments': 'feature_flags',
         }
         hierarkey_fields = ('review_help_text',)
+
+
+class FeedbackSettingsForm(ReadOnlyFlag, JsonSubfieldMixin, forms.Form):
+    use_feedback = forms.BooleanField(
+        label=_('Enable feedback for sessions'),
+        help_text=_('Allow attendees to submit feedback on session pages.'),
+        required=False,
+    )
+    feedback_close_after_days = forms.IntegerField(
+        label=_('Automatically close comments after'),
+        help_text=_('Close the comment form after the selected number of days from the end of the session.'),
+        min_value=0,
+        required=False,
+    )
+    feedback_who_can_comment = forms.ChoiceField(
+        label=_('Who can comment'),
+        help_text=_('Choose who is allowed to leave public comments.'),
+        choices=[
+            ('attendees', _('Only attendees can comment')),
+            ('registered', _('Any registered user can comment')),
+        ],
+        required=True,
+        widget=forms.RadioSelect,
+        initial='attendees'
+    )
+    feedback_enable_time = forms.ChoiceField(
+        label=_('Comments enabled time'),
+        choices=[
+            ('published', _('Comments are enabled after session is published')),
+            ('finished', _('Comments are enabled after session is finished')),
+        ],
+        required=True,
+        widget=forms.RadioSelect,
+        initial='finished'
+    )
+    feedback_show_public = forms.BooleanField(
+        label=_('Show public feedback on session pages'),
+        help_text=_('Display published comments publicly.'),
+        required=False,
+    )
+    feedback_require_review = forms.BooleanField(
+        label=_('Require public feedback to be reviewed'),
+        help_text=_('New public feedback will be added to a review queue before it becomes visible.'),
+        required=False,
+    )
+    feedback_anonymous_mode = forms.ChoiceField(
+        label=_('Anonymous feedback'),
+        help_text=_('Choose whether users can post feedback anonymously.'),
+        choices=[
+            ('public', _('All feedback is public')),
+            ('optional', _('Users can choose to post anonymously')),
+            ('always', _('All feedback is anonymous')),
+        ],
+        required=True,
+        widget=forms.RadioSelect,
+        initial='public',
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance:
+            flags = self.instance.feature_flags_as_mapping()
+            if 'feedback_anonymous_mode' not in flags and flags.get('feedback_allow_anonymous'):
+                self.fields['feedback_anonymous_mode'].initial = 'optional'
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if not cleaned_data.get('use_feedback'):
+            flags = self.instance.feature_flags_as_mapping() if self.instance else {}
+            for field in [
+                'feedback_close_after_days',
+                'feedback_who_can_comment',
+                'feedback_enable_time',
+                'feedback_show_public',
+                'feedback_require_review',
+                'feedback_anonymous_mode',
+            ]:
+                if field in self.errors:
+                    del self.errors[field]
+                # Keep submitted values when present; otherwise preserve saved
+                # settings instead of wiping them back to form defaults.
+                if field not in cleaned_data:
+                    cleaned_data[field] = flags.get(field, self.fields[field].initial)
+        return cleaned_data
+
+    def clean_feedback_who_can_comment(self):
+        return self.cleaned_data.get('feedback_who_can_comment') or 'attendees'
+
+    def clean_feedback_enable_time(self):
+        return self.cleaned_data.get('feedback_enable_time') or 'finished'
+
+    def clean_feedback_close_after_days(self):
+        value = self.cleaned_data.get('feedback_close_after_days')
+        return 0 if value in (None, '') else value
+
+    def clean_feedback_anonymous_mode(self):
+        return self.cleaned_data.get('feedback_anonymous_mode') or 'public'
+
+    def save(self, *args, **kwargs):
+        instance = super().save(*args, **kwargs)
+        flags = instance.feature_flags_as_mapping()
+        mode = flags.get('feedback_anonymous_mode', 'public')
+        flags['feedback_allow_anonymous'] = mode in ('optional', 'always')
+        instance.feature_flags = flags
+        instance.save(update_fields=['feature_flags'])
+        return instance
+
+    class Meta:
+        json_fields = {
+            'use_feedback': 'feature_flags',
+            'feedback_close_after_days': 'feature_flags',
+            'feedback_who_can_comment': 'feature_flags',
+            'feedback_enable_time': 'feature_flags',
+            'feedback_show_public': 'feature_flags',
+            'feedback_require_review': 'feature_flags',
+            'feedback_anonymous_mode': 'feature_flags',
+        }
 
 
 class WidgetSettingsForm(JsonSubfieldMixin, forms.Form):
@@ -451,6 +562,7 @@ class ReviewScoreCategoryForm(I18nHelpText, I18nModelForm):
     def clean(self):
         data = super().clean()
         existing_ids = [score['score'].id for score in self.label_fields]
+        seen_values = {}
         for score_id in [*existing_ids, *self.new_label_ids]:
             value = data.get(f'value_{score_id}')
             label = data.get(f'label_{score_id}')
@@ -462,6 +574,17 @@ class ReviewScoreCategoryForm(I18nHelpText, I18nModelForm):
                 self.add_error(f'value_{score_id}', _('Please provide a numeric score.'))
             elif not value_empty and not label:
                 self.add_error(f'label_{score_id}', _('Please provide a label for the score.'))
+
+            if not value_empty:
+                seen_values.setdefault(value, []).append(score_id)
+
+        for val, ids in seen_values.items():
+            if len(ids) > 1:
+                for score_id in ids[1:]:
+                    self.add_error(
+                        f'value_{score_id}',
+                        _('Duplicate score values are not allowed within the same category.')
+                    )
         return data
 
     def save(self, *args, **kwargs):

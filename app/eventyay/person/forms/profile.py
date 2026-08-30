@@ -15,6 +15,7 @@ from eventyay.base.models.cfp import default_fields
 from eventyay.base.models.information import SpeakerInformation
 from eventyay.base.models.submission import SubmissionStates
 from eventyay.cfp.forms.cfp import CfPFormMixin
+from eventyay.common.templatetags.filesize import filesize
 from eventyay.common.forms.fields import (
     ImageField,
     NewPasswordConfirmationField,
@@ -153,13 +154,14 @@ class SpeakerProfileForm(
                     self.fields[field_name].widget.is_required = not self.not_strict
 
         cfp_defaults = default_fields()
-        count_length_in = self.event.cfp.settings.get('count_length_in', 'chars')
+        _cfp = getattr(self.event, 'cfp', None) if hasattr(self.event, 'cfp') else None
+        count_length_in = (_cfp.settings.get('count_length_in', 'chars') if _cfp else 'chars')
         count_chars = count_length_in == 'chars'
         for key in ('avatar_source', 'avatar_license', 'additional_speaker'):
             if key not in self.fields:
                 continue
             default_config = cfp_defaults.get(key, {})
-            config = self.event.cfp.fields.get(key, default_config)
+            config = (_cfp.fields.get(key, default_config) if _cfp else default_config)
             visibility = config.get('visibility', default_config.get('visibility', 'optional'))
             if visibility == 'do_not_ask':
                 self.fields.pop(key, None)
@@ -189,17 +191,26 @@ class SpeakerProfileForm(
                     part for part in (field.original_help_text, field.added_help_text) if part
                 )
 
-        if not self.event.cfp.request_avatar:
+        if not (_cfp and _cfp.request_avatar):
             self.fields.pop('avatar', None)
             self.fields.pop('avatar_source', None)
             self.fields.pop('avatar_license', None)
             self.fields.pop('get_gravatar', None)
         else:
-            if not self.event.cfp.enable_gravatar:
+            if not _cfp.enable_gravatar:
                 self.fields.pop('get_gravatar', None)
             if 'avatar' in self.fields:
                 self.fields['avatar'].required = False
                 self.fields['avatar'].widget.is_required = False
+                svg_limit = filesize(getattr(settings, 'IMAGE_SVG_MAX_SIZE', 1024 * 1024))
+                self.fields['avatar'].help_text = ' '.join(
+                    part
+                    for part in (
+                        self.fields['avatar'].help_text,
+                        _('SVG files are limited to {size}.').format(size=svg_limit),
+                    )
+                    if part
+                )
 
         self.inject_questions_into_fields(
             target=TalkQuestionTarget.SPEAKER,
@@ -245,8 +256,9 @@ class SpeakerProfileForm(
 
     def clean(self):
         data = super().clean()
-        if not getattr(self, 'not_strict', False) and self.event.cfp.require_avatar and not data.get('avatar') and not data.get('get_gravatar'):
-            if self.event.cfp.enable_gravatar:
+        _cfp = getattr(self.event, 'cfp', None) if hasattr(self.event, 'cfp') else None
+        if not getattr(self, 'not_strict', False) and _cfp and _cfp.require_avatar and not data.get('avatar') and not data.get('get_gravatar'):
+            if _cfp.enable_gravatar:
                 msg = _('Please provide a profile picture or allow us to load your picture from gravatar!')
             else:
                 msg = _('Please provide a profile picture!')
@@ -272,19 +284,25 @@ class SpeakerProfileForm(
         return data
 
     def save(self, **kwargs):
+        avatar_changed = 'avatar' in self.changed_data
+        old_thumbnails_to_delete = []
+        if avatar_changed:
+            for field_name in ('avatar_thumbnail', 'avatar_thumbnail_tiny'):
+                thumbnail = getattr(self.user, field_name, None)
+                if thumbnail and thumbnail.name:
+                    old_thumbnails_to_delete.append(thumbnail)
+
         for user_attribute in self.user_fields:
             value = self.cleaned_data.get(user_attribute)
             if user_attribute == 'avatar':
                 if value is False:
                     self.user.avatar = None
-                    # Clear thumbnails when removing avatar
                     self.user.avatar_thumbnail = None
                     self.user.avatar_thumbnail_tiny = None
                 elif value:
-                    # Clear old thumbnails before assigning new avatar
+                    self.user.avatar = value
                     self.user.avatar_thumbnail = None
                     self.user.avatar_thumbnail_tiny = None
-                    self.user.avatar = value
             elif value is None and user_attribute == 'get_gravatar':
                 # Only reset get_gravatar if the field was actually present on
                 # the form (i.e. Gravatar is enabled). If the field was popped
@@ -305,8 +323,11 @@ class SpeakerProfileForm(
         self.instance.user = self.user
         result = super().save(**kwargs)
 
-        if self.user.avatar and 'avatar' in self.changed_data:
-            self.user.process_image('avatar', generate_thumbnail=True)
+        if avatar_changed:
+            if self.user.avatar:
+                self.user.process_image('avatar', generate_thumbnail=True)
+            for thumbnail in old_thumbnails_to_delete:
+                thumbnail.delete(save=False)
         for key, value in self.cleaned_data.items():
             if key.startswith('question_'):
                 self.save_questions(key, value)

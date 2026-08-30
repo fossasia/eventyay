@@ -1,6 +1,7 @@
 from django.urls import include, path
 from django.views.generic import RedirectView, TemplateView
 
+from eventyay.control.views import gmail_oauth
 from eventyay.control.views import organizer as organizer_control
 from eventyay.control.views import organizer_views
 from eventyay.eventyay_common.views import (
@@ -25,8 +26,16 @@ class DashboardView(TemplateView):
 
 urlpatterns = [
     path('logout/', auth.logout, name='auth.logout'),
-    path('login/', auth.login, name='auth.login'),
-    path('login/2fa/', auth.Login2FAView.as_view(), name='auth.login.2fa'),
+    path(
+        'login/',
+        RedirectView.as_view(pattern_name='auth.login', permanent=True, query_string=True),
+        name='auth.login.legacy',
+    ),
+    path(
+        'login/2fa/',
+        RedirectView.as_view(pattern_name='auth.login.2fa', permanent=True, query_string=True),
+        name='auth.login.2fa.legacy',
+    ),
     path('invite/<str:token>/', auth.invite, name='auth.invite'),
     path('forgot/', auth.Forgot.as_view(), name='auth.forgot'),
     path('forgot/recover/', auth.Recover.as_view(), name='auth.forgot.recover'),
@@ -135,8 +144,24 @@ urlpatterns = [
                 path('', dashboards.EventIndexView.as_view(), name='event.index'),
                 path('widgets.json', dashboards.event_index_widgets_lazy, name='event.index.widgets'),
                 path('settings/', event.EventUpdate.as_view(), name='event.update'),
+                path(
+                    'settings/gmail/connect/',
+                    gmail_oauth.EventGmailOAuthConnectView.as_view(),
+                    name='event.gmail.connect',
+                ),
+                path(
+                    'settings/gmail/callback/',
+                    gmail_oauth.EventGmailOAuthCallbackView.as_view(),
+                    name='event.gmail.callback',
+                ),
+                path(
+                    'settings/gmail/disconnect/',
+                    gmail_oauth.EventGmailOAuthDisconnectView.as_view(),
+                    name='event.gmail.disconnect',
+                ),
                 path('plugins/', event.EventPlugins.as_view(), name='event.plugins'),
                 path('live/', event.EventLive.as_view(), name='event.live'),
+                path('settings/clone/', event.EventCloneView.as_view(), name='event.clone'),
                 path('video-access/', event.VideoAccessAuthenticator.as_view(), name='event.create_access_to_video'),
             ]
         ),

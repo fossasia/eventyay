@@ -1,13 +1,13 @@
 <template lang="pug">
 .c-roulette
 	.call(v-if="server")
-		janus-videoroom(:server="server", :token="token", :iceServers="iceServers", :sessionId="sessionId", :screenShareSessionId="screenShareSessionId", :roomId="roomId", size="normal", :automute="false", :key="`janus-videoroom-${roomId}`", @hangup="stopCall")
+		janus-videoroom(:server="server", :token="token", :iceServers="iceServers", :sessionId="sessionId", :audioSessionId="audioSessionId", :videoSessionId="videoSessionId", :screenShareSessionId="screenShareSessionId", :roomId="roomId", size="normal", :automute="false", :key="`janus-videoroom-${roomId}`", @hangup="stopCall")
 	.status(v-else-if="loading && !callId")
-		div {{ $t('Roulette:waiting:text') }}
-		.detail {{ $t('Roulette:waiting-' + (recentPairs > 10 ? 'many' : (recentPairs > 0 ? 'few' : 'empty')) + ':text') }}
-	.status(v-else-if="loading && callId") {{ $t('Roulette:connecting:text') }}
+		div {{ $t('Waiting for a person to talk to …') }}
+		.detail {{ waitingDetail }}
+	.status(v-else-if="loading && callId") {{ $t('We found someone! Connecting …') }}
 	.welcome(v-else)
-		.status {{ hasPreviousCall ? $t('Roulette:instructions-repeated:text') : $t('Roulette:instructions:text') }}
+		.status {{ hasPreviousCall ? $t('Your call has ended. Click the button below to start a new one!') : $t('Click the button below to start a video call with a random other person at the event!') }}
 		.preview-video-wrapper
 			video(ref="video", playsinline, autoplay, muted="muted")
 			bunt-icon-button(@click="showDevicePrompt = true") cog
@@ -17,7 +17,7 @@
 				.bar(:style="'width: ' + soundBarWidth + '%'")
 		.error(v-if="videoError") {{ videoError }}
 	.next
-		bunt-button.btn-next(@click="findNewCall", :disabled="!videoReady", :error-message="error", :loading="loading") {{ $t('Roulette:btn-start:label') }}
+		bunt-button.btn-next(@click="findNewCall", :disabled="!videoReady", :error-message="error", :loading="loading") {{ $t('Start a new call') }}
 	transition(name="prompt")
 		a-v-device-prompt(v-if="showDevicePrompt", @close="showDevicePrompt = false; startVideo()")
 
@@ -54,10 +54,15 @@ export default {
 	},
 	computed: {
 		...mapState(['connected']),
-		...mapState('roulette', ['callId', 'server', 'iceServers', 'token', 'roomId', 'sessionId', 'screenShareSessionId', 'loading', 'error', 'recentPairs']),
+		...mapState('roulette', ['callId', 'server', 'iceServers', 'token', 'roomId', 'sessionId', 'audioSessionId', 'videoSessionId', 'screenShareSessionId', 'loading', 'error', 'recentPairs']),
 
 		soundBarWidth() {
 			return Math.min(1, this.soundLevel * 10) * 100
+		},
+		waitingDetail() {
+			if (this.recentPairs > 10) return this.$t('There are lots of people waiting, this should be quick.')
+			if (this.recentPairs > 0) return this.$t('There are a few people waiting, this should not take too long.')
+			return this.$t('You are first in line. We will connect you as soon as someone else arrives.')
 		}
 	},
 	watch: {
@@ -136,15 +141,15 @@ export default {
 				}
 			}).catch((err) => {
 				if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-					this.videoError = this.$t('AVDevice:error:notfound')
+					this.videoError = this.$t('No camera or microphone found.')
 				} else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-					this.videoError = this.$t('AVDevice:error:notreadable')
+					this.videoError = this.$t('Your camera or microphone is not available, maybe another program uses it right now?')
 				} else if (err.name === 'OverconstrainedError' || err.name === 'ConstraintNotSatisfiedError') {
 					localStorage.videoInput = ''
 					localStorage.audioInput = ''
 					this.startVideo()
 				} else if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-					this.videoError = this.$t('AVDevice:error:notallowed')
+					this.videoError = this.$t('Camera or microphone permissions denied. Please allow camera or microphone access in your browser and reload the page.')
 				} else if (err.name === 'TypeError' || err.name === 'TypeError') {
 					this.videoError = err.name
 				}

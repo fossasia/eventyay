@@ -4,6 +4,7 @@ from decimal import Decimal
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.template.defaultfilters import floatformat
 from django.urls import reverse
@@ -531,15 +532,10 @@ class OrderMailForm(forms.Form):
         self.fields['sendto'] = forms.EmailField(label=_('Recipient'), required=True, initial=order.email)
         self.fields['sendto'].widget.attrs['readonly'] = 'readonly'
         placeholder_names = self._placeholder_names(['event', 'order'])
-        preview_url = reverse(
-            'control:event.editor.email.preview',
-            kwargs={'organizer': order.event.organizer.slug, 'event': order.event.slug},
-        )
         self.fields['message'] = EmailBodyField(
             label=_('Message'),
             required=True,
             placeholders=placeholder_names,
-            preview_url=preview_url,
             initial=str(order.event.settings.mail_text_order_custom_mail.localize(order.locale)),
         )
         self._add_placeholder_help_text('message', placeholder_names)
@@ -551,15 +547,10 @@ class OrderPositionMailForm(OrderMailForm):
         super().__init__(*args, **kwargs)
         self.fields['sendto'].initial = position.attendee_email
         placeholder_names = self._placeholder_names(['event', 'order', 'position'])
-        preview_url = reverse(
-            'control:event.editor.email.preview',
-            kwargs={'organizer': self.order.event.organizer.slug, 'event': self.order.event.slug},
-        )
         self.fields['message'] = EmailBodyField(
             label=_('Message'),
             required=True,
             placeholders=placeholder_names,
-            preview_url=preview_url,
             initial=str(self.order.event.settings.mail_text_order_custom_mail.localize(self.order.locale)),
         )
         self._add_placeholder_help_text('message', placeholder_names)
@@ -692,6 +683,7 @@ class EventCancelForm(forms.Form):
         max_digits=10,
         decimal_places=2,
         required=False,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
     )
     keep_fees = forms.MultipleChoiceField(
         label=_('Keep fees'),

@@ -13,7 +13,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.files import File
-from django.db import transaction
+from django.db import DatabaseError, transaction
 from django.db.models import (
     Count,
     Exists,
@@ -55,6 +55,7 @@ from eventyay.base.decimal import round_decimal
 from eventyay.base.email import get_email_context
 from eventyay.base.exporter import BaseExporter
 from eventyay.base.i18n import language
+from eventyay.base.services.anonymize import anonymize_order, is_order_event_ended
 from eventyay.base.models import (
     CachedCombinedTicket,
     CachedFile,
@@ -94,7 +95,6 @@ from eventyay.base.services.invoices import (
 from eventyay.base.services.locking import LockTimeoutException
 from eventyay.base.services.mail import (
     SendMailException,
-    TolerantDict,
     render_mail,
 )
 from eventyay.base.services.orders import (
@@ -118,7 +118,7 @@ from eventyay.base.services.system_questions import (
     get_system_question_base_states,
     get_system_question_product_overrides,
 )
-from eventyay.base.services.stats import order_overview
+from eventyay.base.services.stats import group_overview_by_classification, order_overview
 from eventyay.base.services.tickets import generate
 from eventyay.base.signals import (
     order_modified,
@@ -496,6 +496,7 @@ class OrderDetail(OrderView):
         ctx['download_buttons'] = self.download_buttons
         ctx['payment_refund_sum'] = self.order.payment_refund_sum
         ctx['pending_sum'] = self.order.pending_sum
+        ctx['can_anonymize'] = is_order_event_ended(self.order)
         return ctx
 
     @cached_property
@@ -785,6 +786,42 @@ class OrderDelete(OrderView):
                 'order': self.order,
             },
         )
+
+
+class OrderAnonymize(OrderView):
+    permission = 'can_change_orders'
+
+    def get(self, *args, **kwargs):
+        if not is_order_event_ended(self.order):
+            messages.error(
+                self.request,
+                _('Order ticketing data cannot be anonymized before the associated event has ended.')
+            )
+            return redirect(self.get_order_url())
+        return render(
+            self.request,
+            'pretixcontrol/order/anonymize.html',
+            {
+                'order': self.order,
+            },
+        )
+
+    def post(self, *args, **kwargs):
+        try:
+            anonymize_order(self.order, user=self.request.user)
+            messages.success(
+                self.request,
+                _('The ticket sales and personal attendee data for this order have been anonymized.')
+            )
+        except ValidationError as e:
+            messages.error(
+                self.request,
+                e.message if hasattr(e, 'message') else (e.messages[0] if hasattr(e, 'messages') else str(e))
+            )
+        except DatabaseError:
+            logger.exception('Failed to anonymize order %s', self.order.code)
+            messages.error(self.request, _('An error occurred while anonymizing the order ticketing data.'))
+        return redirect(self.get_order_url())
 
 
 class OrderDeny(OrderView):
@@ -2441,38 +2478,28 @@ class OrderSendMail(EventPermissionRequiredMixin, OrderViewMixin, FormView):
 
     def form_valid(self, form):
         order = Order.objects.get(event=self.request.event, code=self.kwargs['code'].upper())
-        self.preview_output = {}
         with language(order.locale, self.request.event.settings.region):
             email_context = get_email_context(event=order.event, order=order)
         email_template = LazyI18nString(form.cleaned_data['message'])
-        email_subject = str(form.cleaned_data['subject']).format_map(TolerantDict(email_context))
-        email_content = render_mail(email_template, email_context)
-        if self.request.POST.get('action') == 'preview':
-            self.preview_output = {
-                'subject': _('Subject: {subject}').format(subject=email_subject),
-                'html': compile_email_body(email_content),
-            }
-            return self.get(self.request, *self.args, **self.kwargs)
-        else:
-            try:
-                order.send_mail(
-                    form.cleaned_data['subject'],
-                    email_template,
-                    email_context,
-                    'eventyay.event.order.email.custom_sent',
-                    self.request.user,
-                    auto_email=False,
-                )
-                messages.success(
-                    self.request,
-                    _('Your message has been queued and will be sent to {}.'.format(order.email)),
-                )
-            except SendMailException:
-                messages.error(
-                    self.request,
-                    _('Failed to send mail to the following user: {}'.format(order.email)),
-                )
-            return super(OrderSendMail, self).form_valid(form)
+        try:
+            order.send_mail(
+                form.cleaned_data['subject'],
+                email_template,
+                email_context,
+                'eventyay.event.order.email.custom_sent',
+                self.request.user,
+                auto_email=False,
+            )
+            messages.success(
+                self.request,
+                _('Your message has been queued and will be sent to %(email)s.') % {'email': order.email},
+            )
+        except SendMailException:
+            messages.error(
+                self.request,
+                _('Failed to send mail to the following user: %(email)s.') % {'email': order.email},
+            )
+        return super(OrderSendMail, self).form_valid(form)
 
     def get_success_url(self):
         return reverse(
@@ -2486,8 +2513,34 @@ class OrderSendMail(EventPermissionRequiredMixin, OrderViewMixin, FormView):
 
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data(*args, **kwargs)
-        ctx['preview_output'] = getattr(self, 'preview_output', None)
+        ctx['order_mail_preview_url'] = reverse(
+            'control:event.order.sendmail.preview',
+            kwargs={
+                'event': self.request.event.slug,
+                'organizer': self.request.event.organizer.slug,
+                'code': self.kwargs['code'],
+            },
+        )
         return ctx
+
+
+class OrderMailPreview(EventPermissionRequiredMixin, OrderViewMixin, View):
+    permission = 'can_change_orders'
+
+    def post(self, request, *args, **kwargs):
+        order = self.order
+        position = None
+        if kwargs.get('position'):
+            position = get_object_or_404(
+                OrderPosition,
+                order=order,
+                pk=kwargs['position'],
+                attendee_email__isnull=False,
+            )
+        with language(order.locale, request.event.settings.region):
+            email_context = get_email_context(event=order.event, order=order, position=position)
+        email_content = render_mail(LazyI18nString(request.POST.get('content', '')), email_context)
+        return JsonResponse({'html': compile_email_body(email_content)})
 
 
 class OrderPositionSendMail(OrderSendMail):
@@ -2512,37 +2565,40 @@ class OrderPositionSendMail(OrderSendMail):
             pk=self.kwargs['position'],
             attendee_email__isnull=False,
         )
-        self.preview_output = {}
         with language(position.order.locale, self.request.event.settings.region):
             email_context = get_email_context(event=position.order.event, order=position.order, position=position)
         email_template = LazyI18nString(form.cleaned_data['message'])
-        email_subject = str(form.cleaned_data['subject']).format_map(TolerantDict(email_context))
-        email_content = render_mail(email_template, email_context)
-        if self.request.POST.get('action') == 'preview':
-            self.preview_output = {
-                'subject': _('Subject: {subject}').format(subject=email_subject),
-                'html': compile_email_body(email_content),
-            }
-            return self.get(self.request, *self.args, **self.kwargs)
-        else:
-            try:
-                position.send_mail(
-                    form.cleaned_data['subject'],
-                    email_template,
-                    email_context,
-                    'eventyay.event.order.position.email.custom_sent',
-                    self.request.user,
-                )
-                messages.success(
-                    self.request,
-                    _('Your message has been queued and will be sent to {}.'.format(position.attendee_email)),
-                )
-            except SendMailException:
-                messages.error(
-                    self.request,
-                    _('Failed to send mail to the following user: {}'.format(position.attendee_email)),
-                )
-            return super(OrderSendMail, self).form_valid(form)
+        try:
+            position.send_mail(
+                form.cleaned_data['subject'],
+                email_template,
+                email_context,
+                'eventyay.event.order.position.email.custom_sent',
+                self.request.user,
+            )
+            messages.success(
+                self.request,
+                _('Your message has been queued and will be sent to %(email)s.') % {'email': position.attendee_email},
+            )
+        except SendMailException:
+            messages.error(
+                self.request,
+                _('Failed to send mail to the following user: %(email)s.') % {'email': position.attendee_email},
+            )
+        return super(OrderSendMail, self).form_valid(form)
+
+    def get_context_data(self, *args, **kwargs):
+        ctx = super().get_context_data(*args, **kwargs)
+        ctx['order_mail_preview_url'] = reverse(
+            'control:event.order.position.sendmail.preview',
+            kwargs={
+                'event': self.request.event.slug,
+                'organizer': self.request.event.organizer.slug,
+                'code': self.kwargs['code'],
+                'position': self.kwargs['position'],
+            },
+        )
+        return ctx
 
 
 class OrderEmailHistory(EventPermissionRequiredMixin, OrderViewMixin, ListView):
@@ -2595,7 +2651,7 @@ class OverView(EventPermissionRequiredMixin, TemplateView):
         ctx = super().get_context_data()
 
         if self.filter_form.is_valid():
-            ctx['products_by_category'], ctx['total'] = order_overview(
+            products_by_category, ctx['total'] = order_overview(
                 self.request.event,
                 subevent=self.filter_form.cleaned_data.get('subevent'),
                 date_filter=self.filter_form.cleaned_data['date_axis'],
@@ -2605,7 +2661,8 @@ class OverView(EventPermissionRequiredMixin, TemplateView):
                 browser_timezone=self.filter_form.cleaned_data.get('browser_timezone'),
             )
         else:
-            ctx['products_by_category'], ctx['total'] = order_overview(self.request.event, fees=True)
+            products_by_category, ctx['total'] = order_overview(self.request.event, fees=True)
+        ctx['items_by_classification'] = group_overview_by_classification(products_by_category)
         ctx['subevent_warning'] = (
             self.request.event.has_subevents
             and self.filter_form.is_valid()
@@ -2669,9 +2726,24 @@ class OrderGo(EventPermissionRequiredMixin, View):
             )
 
 
+def get_banktransfer_import_context(request):
+    if (
+        'eventyay.plugins.banktransfer' in request.event.get_plugins()
+        and request.user.has_event_permission(
+            request.organizer, request.event, 'can_manage_bank_transfers', request=request
+        )
+    ):
+        from eventyay.plugins.banktransfer.views import get_event_banktransfer_context
+
+        return get_event_banktransfer_context(request)
+    return {}
+
+
 class ExportMixin:
     @cached_property
     def exporters(self) -> list[BaseExporter]:
+        if 'can_view_orders' not in self.request.eventpermset:
+            return []
         exporters = []
         responses = register_data_exporters.send(self.request.event)
         for ex in sorted(
@@ -2703,6 +2775,31 @@ class ExportMixin:
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['exporters'] = self.exporters
+        ctx.update(get_banktransfer_import_context(self.request))
+
+        can_view_orders = 'can_view_orders' in self.request.eventpermset
+        can_change_orders = 'can_change_orders' in self.request.eventpermset
+        has_banktransfer = (
+            'can_manage_bank_transfers' in self.request.eventpermset
+            and 'eventyay.plugins.banktransfer' in self.request.event.get_plugins()
+        )
+
+        default_tab = 'export'
+        if not can_view_orders:
+            if can_change_orders or has_banktransfer:
+                default_tab = 'import'
+
+        active_tab = self.request.GET.get('tab', default_tab)
+        if active_tab == 'export' and not can_view_orders:
+            active_tab = default_tab
+        elif active_tab == 'import' and not (can_change_orders or has_banktransfer):
+            active_tab = default_tab
+        elif active_tab == 'banktransfer':
+            active_tab = 'import'
+
+        ctx['active_tab'] = active_tab
+        ctx['has_banktransfer'] = has_banktransfer
+        ctx['can_change_orders'] = can_change_orders
         return ctx
 
 
@@ -2710,7 +2807,7 @@ class ExportDoView(EventPermissionRequiredMixin, ExportMixin, AsyncAction, Templ
     permission = 'can_view_orders'
     known_errortypes = ['ExportError']
     task = export
-    template_name = 'pretixcontrol/orders/export.html'
+    template_name = 'pretixcontrol/orders/import_export.html'
 
     def get_success_message(self, value):
         return None
@@ -2723,7 +2820,7 @@ class ExportDoView(EventPermissionRequiredMixin, ExportMixin, AsyncAction, Templ
         if self.exporter:
             query['identifier'] = self.exporter.identifier
         base_url = reverse(
-            'control:event.orders.export',
+            'control:event.orders.import_export',
             kwargs={
                 'event': self.request.event.slug,
                 'organizer': self.request.event.organizer.slug,
@@ -2747,7 +2844,7 @@ class ExportDoView(EventPermissionRequiredMixin, ExportMixin, AsyncAction, Templ
             messages.error(self.request, _('The selected exporter was not found.'))
             return redirect(
                 reverse(
-                    'control:event.orders.export',
+                    'control:event.orders.import_export',
                     kwargs={
                         'event': self.request.event.slug,
                         'organizer': self.request.event.organizer.slug,
@@ -2775,8 +2872,8 @@ class ExportDoView(EventPermissionRequiredMixin, ExportMixin, AsyncAction, Templ
 
 
 class ExportView(EventPermissionRequiredMixin, ExportMixin, TemplateView):
-    permission = 'can_view_orders'
-    template_name = 'pretixcontrol/orders/export.html'
+    permission = ('can_view_orders', 'can_change_orders', 'can_manage_bank_transfers')
+    template_name = 'pretixcontrol/orders/import_export.html'
 
 
 class RefundList(EventPermissionRequiredMixin, PaginationMixin, ListView):

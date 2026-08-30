@@ -16,9 +16,7 @@ import dynamicLineClamp from './components/directives/dynamic-line-clamp'
 import scrollbarDirective from './components/directives/scrollbar'
 import 'styles/global.styl'
 import '@mdi/font/css/materialdesignicons.css'
-import 'quill/dist/quill.core.css'
 // import '@pretalx/schedule/style'
-import 'styles/quill.styl'
 import i18n, { init as i18nInit } from 'i18n'
 import { emojiPlugin } from 'lib/emoji'
 import features from 'features'
@@ -124,8 +122,10 @@ async function init({ token, inviteToken }) {
   if (store.state.token && jwtDecode(store.state.token).traits?.includes?.('-kiosk')) {
     store.watch(
       state => state.user,
-      ({ profile }) => {
-        router.replace({ name: 'standalone:kiosk', params: { roomId: profile.room_id } })
+      (user) => {
+        const roomId = user?.profile?.room_id
+        if (!roomId) return
+        router.replace({ name: 'standalone:kiosk', params: { roomId: String(roomId) } })
       },
       { deep: true }
     )
@@ -138,7 +138,7 @@ async function init({ token, inviteToken }) {
     setInterval(() => store.commit('updateNow'), 60000)
   }, 60000 - (Date.now() % 60000))
 
-  setInterval(() => store.dispatch('notifications/pollExternals'), 1000)
+  store.dispatch('notifications/startExternalPolling')
   window.__venueless__release = RELEASE
 
   window.addEventListener('beforeinstallprompt', function (event) {

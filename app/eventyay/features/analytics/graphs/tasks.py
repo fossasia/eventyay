@@ -4,7 +4,8 @@ from datetime import timedelta
 from io import BytesIO
 
 import dateutil
-import pytz
+import datetime
+from zoneinfo import ZoneInfo
 from django.core.files.base import ContentFile
 from django.db.models import Prefetch, Q
 from django.utils.timezone import is_naive, make_aware, now
@@ -13,7 +14,7 @@ from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 
 from eventyay.celery_app import app
-from eventyay.base.models import Channel, ExhibitorView, PollVote, Room, RoomView, User
+from eventyay.base.models import Channel, PollVote, Room, RoomView, User
 from eventyay.base.models.event import EventView
 from eventyay.core.tasks import EventTask
 from eventyay.features.analytics.graphs.report import ReportGenerator
@@ -85,7 +86,7 @@ def generate_attendee_list(event, input=None):
 @app.task(base=EventTask)
 def generate_chat_history(event, input=None):
     channel = Channel.objects.get(pk=input.get("channel"))
-    tz = pytz.timezone(event.timezone)
+    tz = ZoneInfo(event.timezone)
     io = BytesIO()
 
     wb = Workbook(write_only=True)
@@ -140,7 +141,7 @@ def generate_chat_history(event, input=None):
 @app.task(base=EventTask)
 def generate_question_history(event, input=None):
     room = Room.objects.get(pk=input.get("room"))
-    tz = pytz.timezone(event.timezone)
+    tz = ZoneInfo(event.timezone)
     io = BytesIO()
 
     wb = Workbook(write_only=True)
@@ -184,7 +185,7 @@ def generate_question_history(event, input=None):
 def generate_room_views(event, input=None):
     wb = Workbook(write_only=True)
     io = BytesIO()
-    tz = pytz.timezone(event.timezone)
+    tz = ZoneInfo(event.timezone)
     begin = dateutil.parser.parse(input.get("begin"))
     if is_naive(begin):
         make_aware(begin, tz)
@@ -269,7 +270,7 @@ def generate_room_views(event, input=None):
 def generate_session_views(event, input=None):
     wb = Workbook(write_only=True)
     io = BytesIO()
-    tz = pytz.timezone(event.timezone)
+    tz = ZoneInfo(event.timezone)
     begin = dateutil.parser.parse(input.get("begin"))
     if is_naive(begin):
         make_aware(begin, tz)
@@ -346,7 +347,7 @@ def generate_session_views(event, input=None):
 def generate_views(event, input=None):
     wb = Workbook(write_only=True)
     io = BytesIO()
-    tz = pytz.timezone(event.timezone)
+    tz = ZoneInfo(event.timezone)
     begin = dateutil.parser.parse(input.get("begin"))
     if is_naive(begin):
         make_aware(begin, tz)
@@ -383,11 +384,11 @@ def generate_views(event, input=None):
             ws.append(
                 [
                     v.room.name,
-                    v.start.astimezone(pytz.timezone(event.timezone)).strftime(
+                    v.start.astimezone(ZoneInfo(event.timezone)).strftime(
                         "%d.%m.%Y %H:%M:%S"
                     ),
                     (v.end or now())
-                    .astimezone(pytz.timezone(event.timezone))
+                    .astimezone(ZoneInfo(event.timezone))
                     .strftime("%d.%m.%Y %H:%M:%S"),
                     str(u.pk),
                     u.token_id,
@@ -424,53 +425,12 @@ def generate_views(event, input=None):
         if u.profile.get("display_name"):
             ws.append(
                 [
-                    v.start.astimezone(pytz.timezone(event.timezone)).strftime(
+                    v.start.astimezone(ZoneInfo(event.timezone)).strftime(
                         "%d.%m.%Y %H:%M:%S"
                     ),
                     (v.end or now())
-                    .astimezone(pytz.timezone(event.timezone))
+                    .astimezone(ZoneInfo(event.timezone))
                     .strftime("%d.%m.%Y %H:%M:%S"),
-                    str(u.pk),
-                    u.token_id,
-                    u.profile.get("display_name"),
-                ]
-                + [
-                    (u.profile["fields"].get(n.get("id"), "") or "").strip()
-                    for n in event.config.get("profile_fields", [])
-                ]
-            )
-
-    ws = wb.create_sheet("Exhibitor views")
-    header = [
-        "Exhibition room",
-        "Exhibitor",
-        "Datetime",
-        "User ID",
-        "External ID",
-        "User name",
-    ]
-    for n in event.config.get("profile_fields", []):
-        header.append(n.get("label") or "")
-    ws.append(header)
-    rvq = (
-        ExhibitorView.objects.filter(
-            datetime__gte=begin,
-            datetime__lte=end,
-            exhibitor__event=event,
-        )
-        .select_related("exhibitor__room", "exhibitor", "user")
-        .order_by("datetime")
-    )
-    for v in rvq:
-        u = v.user
-        if u.profile.get("display_name"):
-            ws.append(
-                [
-                    v.exhibitor.room.name,
-                    v.exhibitor.name,
-                    v.datetime.astimezone(pytz.timezone(event.timezone)).strftime(
-                        "%d.%m.%Y %H:%M:%S"
-                    ),
                     str(u.pk),
                     u.token_id,
                     u.profile.get("display_name"),
@@ -553,7 +513,7 @@ def generate_poll_history(event, input=None):
 @app.task(base=EventTask)
 def generate_attendee_session_list(event, input=None):
     io = BytesIO()
-    tz = pytz.timezone(event.timezone)
+    tz = ZoneInfo(event.timezone)
 
     wb = Workbook(write_only=True)
 

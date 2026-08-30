@@ -1,27 +1,18 @@
 <template lang="pug">
 prompt.c-create-chat-prompt(@close="$emit('close')")
 	.content
-		h1 {{ $t('CreateChatPrompt:headline:text') }}
-		p {{ $t('CreateChatPrompt:intro:text') }}
+		h1 {{ $t('Create a new channel') }}
+		p {{ $t("Create a new place to discuss a topic you'd like to talk about.") }}
 		form(@submit.prevent="create")
-			.channel-type
-				.fieldset-label {{ $t('CreateChatPrompt:type:label') }}
-				.ui-radio-options
-					label.ui-radio-option(v-for="option in types", :key="option.id")
-						input(type="radio", name="type", :value="option.id", v-model="type")
-						.radio-copy
-							.ui-radio-title
-								i.mdi(:class="`mdi-${option.icon}`", style="margin-right: 6px; font-size: 16px; line-height: 1;")
-								span {{ option.label }}
-			bunt-input.name-input(:class="{ 'has-error': !!error }", name="name", :label="$t('CreateChatPrompt:name:label')", :icon="selectedType ? selectedType.icon : null", :placeholder="$t('CreateChatPrompt:name:placeholder')", v-model="name", :validation="error ? { $error: true, $errors: [{ $message: error }] } : null")
-			bunt-input-outline-container(:label="$t('CreateChatPrompt:description:label')")
+			bunt-input.name-input(:class="{ 'has-error': !!error }", name="name", :label="$t('Name')", icon="pound", :placeholder="$t('Channel name')", v-model="name", :validation="error ? { $error: true, $errors: [{ $message: error }] } : null")
+			bunt-input-outline-container(:label="$t('Description')")
 				template(#default= "{focus, blur}")
 					textarea(v-model="description", @focus="focus", @blur="blur")
-			bunt-button(type="submit", :loading="loading", :disabled="!!error", :error="!!error") {{ $t('CreateChatPrompt:submit:label') }}
+			bunt-button(type="submit", :loading="loading", :disabled="!!error", :error="!!error") {{ $t('Create') }}
 </template>
 <script>
-import {mapGetters} from 'vuex'
 import Prompt from 'components/Prompt'
+import { mapGetters } from 'vuex'
 
 export default {
 	components: { Prompt },
@@ -30,89 +21,33 @@ export default {
 		return {
 			name: '',
 			description: '',
-			type: 'text',
 			loading: false,
 			error: null
 		}
 	},
 	computed: {
-		...mapGetters(['hasPermission']),
-		types() {
-			const types = []
-			if (this.hasPermission('world:rooms.create.chat')) {
-				types.push({
-					id: 'text',
-					label: this.$t('CreateChatPrompt:type.text:label'),
-					icon: 'pound'
-				})
-			}
-			if (this.hasPermission('world:rooms.create.bbb')) {
-				types.push({
-					id: 'video',
-					label: this.$t('CreateChatPrompt:type.video:label'),
-					icon: 'webcam'
-				})
-			}
-			return types
-		},
-		selectedType() {
-			return this.types.find(type => type.id === this.type)
-		}
+		...mapGetters(['hasPermission'])
 	},
 	watch: {
 		name() {
 			this.error = null
-		},
-		types: {
-			immediate: true,
-			handler(types) {
-				// If no types available, reset to null
-				if (types.length === 0) {
-					this.type = null
-				} else if (!types.find(t => t.id === this.type)) {
-					// If current type is not available, select first available
-					this.type = types[0].id
-				}
-			}
 		}
 	},
 	methods: {
 		async create() {
 			this.error = null
-			// Check if any types are available
-			if (this.types.length === 0) {
-				this.error = this.$t('CreateChatPrompt:error:no-permission') || 'You do not have permission to create channels.'
-				return
-			}
-
-			// Verify permission for selected type
-			if (this.type === 'text' && !this.hasPermission('world:rooms.create.chat')) {
-				this.error = this.$t('CreateChatPrompt:error:no-text-permission') || 'You do not have permission to create text channels.'
-				return
-			}
-			if (this.type === 'video' && !this.hasPermission('world:rooms.create.bbb')) {
-				this.error = this.$t('CreateChatPrompt:error:no-video-permission') || 'You do not have permission to create video channels.'
+			if (!this.hasPermission('world:rooms.create.chat')) {
+				this.error = this.$t('You do not have permission to create channels.')
 				return
 			}
 
 			this.loading = true
-			const modules = []
-			if (this.type === 'text') {
-				modules.push({
-					type: 'chat.native'
-				})
-			} else {
-				modules.push({
-					type: 'call.bigbluebutton'
-				})
-			}
-			let room
 			try {
-				({ room } = await this.$store.dispatch('createRoom', {
+				const { room } = await this.$store.dispatch('createRoom', {
 					name: this.name,
 					description: this.description,
-					modules
-				}))
+					modules: [{ type: 'chat.native' }]
+				})
 				this.loading = false
 				this.$router.push({name: 'room', params: {roomId: room}})
 				this.$emit('close')
@@ -148,14 +83,6 @@ export default {
 			.bunt-button
 				themed-button-primary()
 				margin-top: 16px
-			.channel-type
-				margin-top: 8px
-				margin-bottom: 16px
-				.fieldset-label
-					font-size: 12px
-					font-weight: 500
-					color: $clr-secondary-text-light
-					margin-bottom: 8px
 			.name-input
 				&.has-error
 					margin-bottom: 24px

@@ -1,9 +1,11 @@
+from decimal import Decimal
 from urllib.parse import urlencode
 
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.validators import validate_email
+from django.core.files.uploadedfile import UploadedFile
+from django.core.validators import validate_email, MinValueValidator, MaxValueValidator
 from django.db.models import Q
 from django.forms import CheckboxSelectMultiple, formset_factory
 from django.urls import reverse
@@ -13,6 +15,7 @@ from django.utils.safestring import mark_safe
 from django.utils.timezone import get_current_timezone_name
 from django.utils.translation import gettext, pgettext_lazy
 from django.utils.translation import gettext_lazy as _
+from django_countries import countries
 from django_countries.fields import LazyTypedChoiceField
 from i18nfield.forms import (
     I18nForm,
@@ -21,12 +24,29 @@ from i18nfield.forms import (
     I18nTextarea,
     I18nTextInput,
 )
-from pytz import common_timezones, timezone
+from zoneinfo import ZoneInfo
+from eventyay.timezones import common_timezones, localize_datetime
 
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
 from eventyay.base.forms import I18nModelForm, PlaceholderValidator, SettingsForm
-from eventyay.base.meetup import add_video_field_errors, build_video_form_fields
+from eventyay.base.meetup import (
+    CAPACITY_LIMITED,
+    CAPACITY_TYPE_CHOICES,
+    CAPACITY_UNLIMITED,
+    LOCATION_HYBRID,
+    LOCATION_IN_PERSON,
+    LOCATION_TYPE_CHOICES,
+    LOCATION_VIRTUAL,
+    REGISTRATION_FEE_CHOICES,
+    REGISTRATION_FEE_FREE,
+    REGISTRATION_FEE_PAID,
+    add_video_field_errors,
+    build_video_form_fields,
+    is_meetup_event,
+)
+from eventyay.control.forms.global_settings import StripeKeyValidator
+from eventyay.consts import SizeKey
 from eventyay.base.models import Event, Organizer, TaxRule, Team
 from eventyay.base.models.event import EventMetaValue, SubEvent
 from eventyay.base.reldate import RelativeDateField, RelativeDateTimeField
@@ -54,6 +74,7 @@ from eventyay.common.forms.widgets import EnhancedSelect, HtmlDateInput, HtmlDat
 from eventyay.common.language import get_language_choices_native_with_ui_name
 from eventyay.common.text.phrases import phrases
 from eventyay.control.forms import (
+    ExtFileField,
     MultipleLanguagesWidget,
     SlugWidget,
     SplitDateTimeField,
@@ -102,8 +123,8 @@ class EventWizardFoundationForm(forms.Form):
         widget=MultipleLanguagesWidget,
         help_text=_(
             "Users will be able to use eventyay in these languages, and you will be able to provide all texts in "
-            "these languages. If you don't provide a text in the language a user selects, it will be shown in your "
-            "event's default language instead."
+            "these languages. Drag and drop selected languages to reorder them — the first language (bold border) "
+            "is used as your event's default language."
         ),
     )
     has_subevents = forms.BooleanField(
@@ -130,13 +151,15 @@ class EventWizardFoundationForm(forms.Form):
         organizer_count = qs.count()
         is_required = organizer_count > 1
 
+        select2_url = reverse('control:organizers.select2') + '?can_create=1'
+
         self.fields['organizer'] = forms.ModelChoiceField(
             label=_('Organizer'),
             queryset=qs,
             widget=Select2(
                 attrs={
                     'data-model-select2': 'generic',
-                    'data-select2-url': reverse('control:organizers.select2') + '?can_create=1',
+                    'data-select2-url': select2_url,
                     'data-placeholder': _('Organizer'),
                 }
             ),
@@ -145,10 +168,15 @@ class EventWizardFoundationForm(forms.Form):
         )
         self.fields['organizer'].widget.choices = self.fields['organizer'].choices
 
-        # Auto-select if only one organizer exists
-        if organizer_count == 1:
-            self.fields['organizer'].initial = qs.first()
-            self.fields['organizer'].required = False
+        # Auto-select if only one organizer exists or user has default organizer
+        if 'organizer' not in self.initial:
+            if organizer_count == 1:
+                self.fields['organizer'].initial = qs.first()
+                self.fields['organizer'].required = False
+            elif self.user and self.user.is_authenticated:
+                default_org = self.user.get_default_organizer(can_create_events=True)
+                if default_org and qs.filter(pk=default_org.pk).exists():
+                    self.fields['organizer'].initial = default_org
 
     def clean(self):
         cleaned_data = super().clean()
@@ -177,6 +205,7 @@ class EventWizardBasicsForm(I18nModelForm):
     locale = forms.ChoiceField(
         choices=settings.LANGUAGES,
         label=_('Default language'),
+        required=False,
     )
     tax_rate = forms.DecimalField(
         label=_('Sales tax rate'),
@@ -186,6 +215,7 @@ class EventWizardBasicsForm(I18nModelForm):
             'detailed configuration later.'
         ),
         required=False,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
     )
     team = forms.ModelChoiceField(
         label=_('Grant access to team'),
@@ -285,15 +315,20 @@ class EventWizardBasicsForm(I18nModelForm):
 
     def clean(self):
         data = super().clean()
+        if not data.get('locale') and self.locales:
+            data['locale'] = self.locales[0]
         if data.get('locale') not in self.locales:
-            raise ValidationError(
-                {'locale': _('Your default locale must also be enabled for your event (see box above).')}
-            )
+            if self.locales:
+                data['locale'] = self.locales[0]
+            else:
+                raise ValidationError(
+                    {'locale': _('Your default locale must also be enabled for your event (see box above).')}
+                )
         if data.get('timezone') not in common_timezones:
             raise ValidationError({'timezone': _('Your default locale must be specified.')})
 
         # change timezone
-        zone = timezone(data.get('timezone'))
+        zone = ZoneInfo(data.get('timezone'))
         data['date_from'] = self.reset_timezone(zone, data.get('date_from'))
         data['date_to'] = self.reset_timezone(zone, data.get('date_to'))
         data['presale_start'] = self.reset_timezone(zone, data.get('presale_start'))
@@ -301,8 +336,8 @@ class EventWizardBasicsForm(I18nModelForm):
         return data
 
     @staticmethod
-    def reset_timezone(tz, dt):
-        return tz.localize(dt.replace(tzinfo=None)) if dt is not None else None
+    def reset_timezone(zone, dt):
+        return localize_datetime(dt, zone)
 
     def clean_slug(self):
         slug = self.cleaned_data['slug']
@@ -625,7 +660,6 @@ class EventSettingsForm(SettingsForm):
         'allow_modifications',
         'last_order_modification_date',
         'allow_modifications_after_checkin',
-        'checkout_show_copy_answers_button',
         'primary_color',
         'theme_color_success',
         'theme_color_danger',
@@ -807,7 +841,6 @@ class OrderFormSettingsForm(EventSettingsForm):
         'order_email_asked_twice',
         'require_registered_account_for_tickets',
         'include_wikimedia_username',
-        'checkout_show_copy_answers_button',
     ]
 
     def __init__(self, *args, **kwargs):
@@ -1306,6 +1339,25 @@ class MailSettingsForm(SettingsForm):
         widget=I18nTextarea,
     )
 
+    mail_text_meetup_registration = I18nFormField(
+        label=_('Text sent to registration contact address'),
+        required=False,
+        widget=I18nTextarea,
+    )
+    mail_send_meetup_registration_attendee = forms.BooleanField(
+        label=_('Send an email to attendees'),
+        help_text=_(
+            'If the registration contains attendees with email addresses different from the person who '
+            'registers, the following email will be sent out to the attendees.'
+        ),
+        required=False,
+    )
+    mail_text_meetup_registration_attendee = I18nFormField(
+        label=_('Text sent to attendees'),
+        required=False,
+        widget=I18nTextarea,
+    )
+
     mail_text_order_changed = I18nFormField(
         label=_('Text'),
         required=False,
@@ -1416,6 +1468,8 @@ class MailSettingsForm(SettingsForm):
         'mail_text_order_paid_attendee': ['event', 'order', 'position'],
         'mail_text_order_free': ['event', 'order'],
         'mail_text_order_free_attendee': ['event', 'order', 'position'],
+        'mail_text_meetup_registration': ['event', 'order'],
+        'mail_text_meetup_registration_attendee': ['event', 'order', 'position'],
         'mail_text_order_changed': ['event', 'order'],
         'mail_text_order_canceled': ['event', 'order'],
         'mail_text_order_expire_warning': ['event', 'order'],
@@ -1442,8 +1496,15 @@ class MailSettingsForm(SettingsForm):
         self.fields['mail_html_renderer'].choices = [
             (r.identifier, r.verbose_name) for r in event.get_html_mail_renderers().values()
         ]
+
+        if not is_meetup_event(event):
+            for field in ('mail_text_meetup_registration', 'mail_send_meetup_registration_attendee',
+                          'mail_text_meetup_registration_attendee'):
+                self.fields.pop(field, None)
+
         for k, v in self.base_context.items():
-            self._set_field_placeholders(k, v)
+            if k in self.fields:
+                self._set_field_placeholders(k, v)
 
         for k, v in list(self.fields.items()):
             if k.endswith('_attendee') and not event.settings.attendee_emails_asked:
@@ -1628,25 +1689,25 @@ class WidgetCodeForm(forms.Form):
 
 class EventDeleteForm(forms.Form):
     error_messages = {
-        'slug_wrong': _('The slug you entered was not correct.'),
+        'name_wrong': _('The event name you entered was not correct.'),
     }
-    slug = forms.CharField(
+    name = forms.CharField(
         max_length=255,
-        label=_('Event slug'),
+        label=_('Event name'),
     )
 
     def __init__(self, *args, **kwargs):
         self.event = kwargs.pop('event')
         super().__init__(*args, **kwargs)
 
-    def clean_slug(self):
-        slug = self.cleaned_data.get('slug')
-        if slug != self.event.slug:
+    def clean_name(self):
+        name = self.cleaned_data.get('name')
+        if name != str(self.event.name):
             raise forms.ValidationError(
-                self.error_messages['slug_wrong'],
-                code='slug_wrong',
+                self.error_messages['name_wrong'],
+                code='name_wrong',
             )
-        return slug
+        return name
 
 
 class QuickSetupForm(I18nForm):
@@ -1666,6 +1727,7 @@ class QuickSetupForm(I18nForm):
         required=False,
         max_digits=10,
         decimal_places=2,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
     )
     tax_price_includes_tax = forms.BooleanField(
         label=_('The configured product prices include the tax amount'),
@@ -1713,11 +1775,26 @@ class QuickSetupForm(I18nForm):
         ),
         required=False,
     )
+    payment_paypal__enabled = forms.BooleanField(
+        label=_('Payment via PayPal'),
+        help_text=_(
+            'PayPal is a widely used online payment service. To accept payments via PayPal, '
+            'the platform must have PayPal configured in global settings.'
+        ),
+        required=False,
+    )
     payment_banktransfer__enabled = forms.BooleanField(
         label=_('Payment by bank transfer'),
         help_text=_(
             'Your customers will be instructed to wire the money to your account. You can then import your '
             'bank statements to process the payments within eventyay, or mark them as paid manually.'
+        ),
+        required=False,
+    )
+    payment_manualpayment__enabled = forms.BooleanField(
+        label=_('Manual payment'),
+        help_text=_(
+            'Your customers will be instructed to pay the money manually. You can then mark them as paid.'
         ),
         required=False,
     )
@@ -1735,16 +1812,37 @@ class QuickSetupForm(I18nForm):
     payment_banktransfer_bank_details = btf['bank_details']
 
     def __init__(self, *args, **kwargs):
+        from eventyay.base.plugins import get_all_plugins
+
         self.obj = kwargs.pop('event', None)
         self.locales = self.obj.settings.get('locales') if self.obj else kwargs.pop('locales', None)
         kwargs['locales'] = self.locales
         super().__init__(*args, **kwargs)
-        plugins_active = self.obj.get_plugins()
-        if ('eventyay_stripe' not in plugins_active) or (not self.obj.settings.payment_stripe_client_id):
+        
+        plugins_available = {
+            p.module for p in get_all_plugins(self.obj)
+            if getattr(p, 'visible', True) and not p.name.startswith('.')
+        }
+
+        if 'eventyay.plugins.stripe' not in plugins_available:
             del self.fields['payment_stripe__enabled']
-        if 'eventyay.plugins.banktransfer' not in plugins_active:
+        if 'eventyay.plugins.paypal' not in plugins_available:
+            del self.fields['payment_paypal__enabled']
+            
+        if 'eventyay.plugins.banktransfer' not in plugins_available:
             del self.fields['payment_banktransfer__enabled']
-        self.fields['payment_banktransfer_bank_details'].required = False
+            del self.fields['payment_banktransfer_bank_details_type']
+            del self.fields['payment_banktransfer_bank_details_sepa_name']
+            del self.fields['payment_banktransfer_bank_details_sepa_iban']
+            del self.fields['payment_banktransfer_bank_details_sepa_bic']
+            del self.fields['payment_banktransfer_bank_details_sepa_bank']
+            del self.fields['payment_banktransfer_bank_details']
+        else:
+            self.fields['payment_banktransfer_bank_details'].required = False
+            
+        if 'eventyay.plugins.manualpayment' not in plugins_available:
+            del self.fields['payment_manualpayment__enabled']
+
         for f in self.fields.values():
             if 'data-required-if' in f.widget.attrs:
                 del f.widget.attrs['data-required-if']
@@ -1773,7 +1871,7 @@ class QuickSetupProductForm(I18nForm):
     )
     default_price = forms.DecimalField(
         label=_('Price (optional)'),
-        max_digits=7,
+        max_digits=13,
         decimal_places=2,
         required=False,
         localize=True,
@@ -1786,6 +1884,12 @@ class QuickSetupProductForm(I18nForm):
         initial=100,
         required=False,
     )
+
+    def clean_default_price(self):
+        value = self.cleaned_data.get('default_price')
+        if value is not None and value < 0:
+            raise ValidationError(_('The price must not be negative.'))
+        return value
 
 
 class BaseQuickSetupProductFormSet(I18nFormSetMixin, forms.BaseFormSet):
@@ -1836,7 +1940,79 @@ ConfirmTextFormset = formset_factory(
 
 
 class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
-    """Event basics for meetups: currency is implicit, video stream is inline."""
+    """Event basics for meetups: single-page quick-create form."""
+
+    location_type = forms.ChoiceField(
+        label=_('Location'),
+        choices=LOCATION_TYPE_CHOICES,
+        initial=LOCATION_IN_PERSON,
+        widget=forms.RadioSelect,
+        required=False,
+    )
+    capacity_type = forms.ChoiceField(
+        label=_('Capacity'),
+        choices=CAPACITY_TYPE_CHOICES,
+        initial=CAPACITY_UNLIMITED,
+        widget=forms.RadioSelect,
+        required=False,
+    )
+    registration_limit = forms.IntegerField(
+        required=False,
+        min_value=1,
+        label=_('Registration limit'),
+        help_text=_('Maximum number of attendees who can RSVP.'),
+        widget=forms.NumberInput(attrs={'placeholder': _('e.g. 50')}),
+    )
+    registration_fee_type = forms.ChoiceField(
+        label=_('Registration fee'),
+        choices=REGISTRATION_FEE_CHOICES,
+        initial=REGISTRATION_FEE_FREE,
+        widget=forms.RadioSelect,
+        required=False,
+    )
+    registration_fee = forms.DecimalField(
+        required=False,
+        min_value=Decimal('0.01'),
+        decimal_places=2,
+        max_digits=10,
+        label=_('Registration fee amount'),
+        help_text=_('Fee charged to attendees when registering for this meetup.'),
+        widget=forms.NumberInput(attrs={'placeholder': _('e.g. 10.00'), 'step': '0.01', 'min': '0.01'}),
+    )
+    payment_stripe_publishable_key = forms.CharField(
+        label=_('Publishable key'),
+        required=False,
+        help_text=_('Your Stripe publishable key (pk_live_... or pk_test_...).'),
+        validators=(StripeKeyValidator(['pk_live_', 'pk_test_']),),
+        widget=forms.TextInput(attrs={'placeholder': _('Publishable key')}),
+    )
+    payment_stripe_secret_key = forms.CharField(
+        label=_('Secret key'),
+        required=False,
+        help_text=_('Your Stripe secret key (sk_live_..., sk_test_..., rk_live_..., or rk_test_...).'),
+        validators=(StripeKeyValidator(['sk_live_', 'sk_test_', 'rk_live_', 'rk_test_']),),
+        widget=forms.PasswordInput(render_value=True, attrs={'placeholder': _('Secret key'), 'autocomplete': 'new-password'}),
+    )
+    payment_stripe_merchant_country = forms.ChoiceField(
+        label=_('Merchant country'),
+        required=False,
+        choices=[('', _('Select country'))] + list(countries),
+        help_text=_('The country in which your Stripe-account is registered in. Usually, this is your country of residence.'),
+    )
+    frontpage_text = I18nFormField(
+        widget=I18nTextarea,
+        required=False,
+        label=_('Event description'),
+        help_text=_('Describe what this meetup is about, agenda, speakers, etc.'),
+        widget_kwargs={'attrs': {'rows': '4', 'placeholder': _('Tell attendees about your meetup...')}},
+    )
+    logo_image = ExtFileField(
+        label=_('Header image'),
+        ext_whitelist=('.png', '.jpg', '.gif', '.jpeg', '.webp'),
+        max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
+        required=False,
+        help_text=_('Upload a header image for your meetup banner and card. Recommended size: 1920 × 640 px.'),
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -1845,20 +2021,127 @@ class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
                 type_help_text=_('Optional: configure a live video stream for this meetup.')
             )
         )
+        self.fields['slug'].required = False
+        self.fields['location'].required = False
         currency_field = self.fields.get('currency')
         if currency_field is not None:
             currency_field.required = False
             if not self.initial.get('currency'):
                 self.initial['currency'] = self._default_currency()
 
+        event_currency = self.initial.get('currency') or (self.instance.currency if getattr(self, 'instance', None) and getattr(self.instance, 'currency', None) else self._default_currency())
+        if 'registration_fee' in self.fields:
+            self.fields['registration_fee'].help_text = _(
+                'Fee charged to attendees when registering for this meetup (in {currency}).'
+            ).format(currency=event_currency)
+            self.fields['registration_fee'].widget.attrs['placeholder'] = _('e.g. 10.00 ({currency})').format(currency=event_currency)
+
+        if self.initial.get('video_type') and self.initial.get('location'):
+            self.initial['location_type'] = LOCATION_HYBRID
+        elif self.initial.get('video_type') and not self.initial.get('location'):
+            self.initial['location_type'] = LOCATION_VIRTUAL
+        elif self.initial.get('location') and not self.initial.get('video_type'):
+            self.initial['location_type'] = LOCATION_IN_PERSON
+        else:
+            self.initial['location_type'] = LOCATION_IN_PERSON
+
+        if self.initial.get('registration_limit'):
+            self.initial['capacity_type'] = CAPACITY_LIMITED
+        else:
+            self.initial['capacity_type'] = CAPACITY_UNLIMITED
+
+        if self.initial.get('registration_fee') and Decimal(str(self.initial.get('registration_fee'))) > Decimal('0.00'):
+            self.initial['registration_fee_type'] = REGISTRATION_FEE_PAID
+        else:
+            self.initial['registration_fee_type'] = REGISTRATION_FEE_FREE
+
+        if 'registration_fee' in self.fields:
+            self.fields['registration_fee']._required = True
+
+        for name, field in self.fields.items():
+            if isinstance(field.widget, forms.ClearableFileInput):
+                field.widget.attrs['data-eventyay-file-wrapper'] = 'disabled'
+                field.widget.attrs['data-event-settings-image-tools'] = 'enabled'
+
     @staticmethod
     def _default_currency():
         return getattr(settings, 'DEFAULT_CURRENCY', 'USD')
 
-    def clean_currency(self):
-        return self.cleaned_data.get('currency', '') or self._default_currency()
+    def clean_logo_image(self):
+        img = self.cleaned_data.get('logo_image')
+        if img and isinstance(img, UploadedFile):
+            from PIL import Image, UnidentifiedImageError
+            try:
+                pil_image = Image.open(img)
+                pil_image.verify()
+                img.seek(0)
+            except (UnidentifiedImageError, OSError, Exception):
+                raise forms.ValidationError(
+                    _('Upload a valid image. The file you uploaded was either not an image or a corrupted image.')
+                )
+        return img
+
+    def clean_slug(self):
+        slug = (self.cleaned_data.get('slug') or '').strip()
+        if not slug:
+            charset = list('abcdefghjklmnpqrstuvwxyz3789')
+            length = 6
+            counter = 0
+            while True:
+                if length <= 10:
+                    candidate = get_random_string(length=length, allowed_chars=charset)
+                    length += 1
+                else:
+                    candidate = f'{get_random_string(length=4, allowed_chars=charset)}{counter}'
+                    counter += 1
+                if not self.organizer.events.filter(slug__iexact=candidate).exists():
+                    slug = candidate
+                    break
+        elif Event.objects.filter(slug__iexact=slug, organizer=self.organizer).exists():
+            raise forms.ValidationError(self.error_messages['duplicate_slug'], code='duplicate_slug')
+        return slug.lower()
 
     def clean(self):
         cleaned_data = super().clean()
-        add_video_field_errors(self, cleaned_data.get('video_type'), cleaned_data.get('video_url'))
+        loc_type = cleaned_data.get('location_type') or LOCATION_IN_PERSON
+
+        if loc_type == LOCATION_VIRTUAL:
+            cleaned_data.update({
+                'location': '',
+                'geo_lat': None,
+                'geo_lon': None,
+            })
+        elif loc_type == LOCATION_IN_PERSON:
+            cleaned_data['video_type'] = ''
+            cleaned_data['video_url'] = ''
+
+        if loc_type in (LOCATION_VIRTUAL, LOCATION_HYBRID):
+            add_video_field_errors(self, cleaned_data.get('video_type'), cleaned_data.get('video_url'))
+
+        cap_type = cleaned_data.get('capacity_type') or CAPACITY_UNLIMITED
+        if cap_type == CAPACITY_UNLIMITED:
+            cleaned_data['registration_limit'] = None
+        elif cap_type == CAPACITY_LIMITED and not cleaned_data.get('registration_limit'):
+            self.add_error('registration_limit', _('Please enter a capacity limit for limited registrations.'))
+
+        fee_type = cleaned_data.get('registration_fee_type') or REGISTRATION_FEE_FREE
+        if fee_type == REGISTRATION_FEE_FREE:
+            cleaned_data['registration_fee'] = Decimal('0.00')
+            cleaned_data['payment_stripe_publishable_key'] = ''
+            cleaned_data['payment_stripe_secret_key'] = ''
+            cleaned_data['payment_stripe_merchant_country'] = ''
+            for f in ('registration_fee', 'payment_stripe_publishable_key', 'payment_stripe_secret_key', 'payment_stripe_merchant_country'):
+                if f in self._errors:
+                    del self._errors[f]
+        elif fee_type == REGISTRATION_FEE_PAID:
+            fee = cleaned_data.get('registration_fee')
+            if not fee or fee <= Decimal('0.00'):
+                self.add_error('registration_fee', _('Please enter a valid registration fee greater than 0.'))
+            if not cleaned_data.get('payment_stripe_publishable_key'):
+                self.add_error('payment_stripe_publishable_key', _('Please enter your Stripe publishable key.'))
+            if not cleaned_data.get('payment_stripe_secret_key'):
+                self.add_error('payment_stripe_secret_key', _('Please enter your Stripe secret key.'))
+            if not cleaned_data.get('payment_stripe_merchant_country'):
+                self.add_error('payment_stripe_merchant_country', _('Please select your Stripe merchant country.'))
+
         return cleaned_data

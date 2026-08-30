@@ -158,7 +158,12 @@ class EventDashboardView(EventPermissionRequired, SubmissionStatsMixin, Template
 
     def get_cfp_tiles(self, _now, can_change_submissions=False):
         result = []
-        if self.request.event.cfp.is_open:
+        if not hasattr(self.request.event, 'cfp'):
+            return result
+        if self.request.event.cfp.is_open and (
+            self.request.event.talks_published
+            or self.request.event.private_testmode_talks_enabled
+        ):
             result.append(
                 {
                     'url': self.request.event.cfp.urls.public,

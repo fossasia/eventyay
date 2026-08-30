@@ -21,6 +21,10 @@ export default {
 			type: String,
 			default: ''
 		},
+		hideBack: {
+			type: Boolean,
+			default: false
+		},
 	},
 	computed: {
 		resolvedEventUrl () {
@@ -28,9 +32,10 @@ export default {
 		},
 		backLabel () {
 			const messages = this.translationMessages || {}
-			return messages.back || 'Back'
+			return messages.back || this.$t('Back')
 		},
 		showBack () {
+			if (this.hideBack) return false;
 			return Boolean(this.resolvedEventUrl || (typeof window !== 'undefined' && window.history.length > 1))
 		},
 	},
@@ -103,9 +108,12 @@ export default {
 	@media (max-width: 480px)
 		padding: 10px 10px 0
 		gap: 8px
+		flex-wrap: wrap
 		.back-link
 			font-size: 13px
 			padding: 6px 12px 6px 8px
 		.detail-top-actions
 			gap: 4px
+			flex-wrap: wrap
+			justify-content: flex-end
 </style>

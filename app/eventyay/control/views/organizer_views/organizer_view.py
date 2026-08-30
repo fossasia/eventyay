@@ -79,9 +79,15 @@ class OrganizerCreate(OrganizerCreationPermissionMixin, CreateView):
             )
         return super().dispatch(request, *args, **kwargs)
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
     @transaction.atomic
     def form_valid(self, form):
         messages.success(self.request, _('The new organizer has been created.'))
+        had_default = bool(self.request.user.get_default_organizer())
         ret = super().form_valid(form)
         t = Team.objects.create(
             organizer=form.instance,
@@ -111,6 +117,9 @@ class OrganizerCreate(OrganizerCreationPermissionMixin, CreateView):
             can_video_view_analytics=True,
         )
         t.members.add(self.request.user)
+        if form.cleaned_data.get('set_as_default') or not had_default:
+            self.request.user.default_organizer = self.object
+            self.request.user.save(update_fields=['default_organizer'])
         return ret
 
     def get_success_url(self) -> str:
@@ -176,7 +185,19 @@ class OrganizerUpdate(OrganizerPermissionRequiredMixin, UpdateView):
                 data={k: form.cleaned_data.get(k) for k in form.changed_data},
             )
 
+        if 'set_as_default' in form.cleaned_data:
+            if form.cleaned_data['set_as_default']:
+                if self.request.user.teams.filter(organizer=self.object).exists():
+                    self.request.user.default_organizer = self.object
+                    self.request.user.save(update_fields=['default_organizer'])
+            else:
+                if self.request.user.default_organizer_id == self.object.id:
+                    self.request.user.default_organizer = None
+                    self.request.user.save(update_fields=['default_organizer'])
+
         if change_css:
+            # Force CSS regeneration even if a checksum exists.
+            self.request.organizer.settings.delete('presale_css_checksum')
             transaction.on_commit(lambda: regenerate_organizer_css.apply_async(args=(self.request.organizer.pk,)))
             messages.success(
                 self.request,
@@ -192,6 +213,7 @@ class OrganizerUpdate(OrganizerPermissionRequiredMixin, UpdateView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
         if self.request.user.has_active_staff_session(self.request.session.session_key):
             # Custom domain feature is temporarily disabled.
             # Uncomment when the feature is ready for re-enablement.
@@ -456,6 +478,9 @@ class OrganizerList(OrganizerCreationPermissionMixin, PaginationMixin, ListView)
         ctx = super().get_context_data(**kwargs)
         ctx['filter_form'] = self.filter_form
         ctx['can_create_organizer'] = self._can_create_organizer(self.request.user)
+        ctx['default_organizer'] = (
+            self.request.user.get_default_organizer() if self.request.user.is_authenticated else None
+        )
         return ctx
 
     @cached_property

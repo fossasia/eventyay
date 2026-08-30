@@ -10,6 +10,7 @@
 <link type="text/css" rel="stylesheet" href='{% url "control:pdf.css" %}'>
 <link type="text/css" rel="stylesheet" href="{% static 'vendored/cropperjs/cropper.min.css' %}">
 <script defer src="{% static 'eventyay-common/js/smtp-toggle.js' %}"></script>
+<script type="text/javascript" src="{% static 'eventyay-common/js/move-event-email-elements.js' %}"></script>
 <script defer src="{% static 'eventyay-common/js/contact-form-toggle.js' %}"></script>
 <script type="module" src="{% static 'pretixcontrol/js/ui/secret-toggle.js' %}"></script>
 {{ sform.media }}
@@ -18,34 +19,10 @@
 {% endif %}
 {% endblock %}
 {% block inside %}
-<nav id="event-nav" class="header-nav">
-    <div class="navigation">
-        <div class="navigation-title">
-            <h1>{{ request.event.name|event_localize }} {% trans "- Settings" %}</h1>
-        </div>
-        <div class="navigation-button">
-            <a href="{% url 'eventyay_common:event.index' organizer=request.event.organizer.slug event=request.event.slug %}"
-                class="header-nav btn btn-outline-success active">
-                <i class="fa fa-home"></i> {% trans "Home" %}
-            </a>
-            <a href='{% url "control:event.index" organizer=request.event.organizer.slug event=request.event.slug %}'
-                class="header-nav btn btn-outline-success">
-                <i class="fa fa-ticket"></i> {% trans "Tickets" %}
-            </a>
-            {% if is_talk_event_created and not is_meetup_event %}
-            <a href='{% url "orga:event.dashboard" organizer=request.event.organizer.slug event=request.event.slug %}'
-                class="header-nav btn btn-outline-success">
-                <i class="fa fa-group"></i> {% trans "Talks" %}
-            </a>
-            {% endif %}
-            <a class="header-nav btn btn-outline-success"
-                href='{% url "eventyay_common:event.create_access_to_video" organizer=request.event.organizer.slug event=request.event.slug %}'
-                title="{% trans 'Access videos related to this event' %}">
-                <i class="fa fa-video-camera"></i> {% trans "Videos" %}
-            </a>
-        </div>
-    </div>
-</nav>
+{% blocktrans trimmed with name=request.event.name|event_localize asvar header_title %}
+{{ name }} - Settings
+{% endblocktrans %}
+{% include "common/includes/header_nav.html" with header_title=header_title header_component_link="eventyay_common/event/component_link.html" %}
 <form action="" method="post" class="form-horizontal" enctype="multipart/form-data">
     {% csrf_token %}
     {% bootstrap_form_errors form %}
@@ -209,6 +186,18 @@
                 {% bootstrap_field sform.video_url layout="control" %}
             </div>
         </fieldset>
+        <fieldset>
+            <legend>{% trans "Registration limit" %}</legend>
+            {% bootstrap_field sform.registration_limit layout="control" %}
+        </fieldset>
+        <fieldset>
+            <legend>{% trans "Registration fee & Payment" %}</legend>
+            {% bootstrap_field sform.registration_fee layout="control" %}
+            {% bootstrap_field sform.payment_stripe__enabled layout="control" %}
+            {% bootstrap_field sform.payment_stripe_publishable_key layout="control" %}
+            {% bootstrap_field sform.payment_stripe_secret_key layout="control" %}
+            {% bootstrap_field sform.payment_stripe_merchant_country layout="control" %}
+        </fieldset>
         {% endif %}
 
         <fieldset>
@@ -274,17 +263,14 @@
             {% bootstrap_field email_form.smtp_use_custom layout="control" %}
             <div id="smtp-custom-fields">
                 {% bootstrap_field email_form.email_vendor layout="control" %}
-                <div id="sendgrid-fields">
-                    {% bootstrap_field email_form.send_grid_api_key layout="control" %}
-                </div>
-                <div id="smtp-server-fields">
-                    {% bootstrap_field email_form.smtp_host layout="control" %}
-                    {% bootstrap_field email_form.smtp_port layout="control" %}
-                    {% bootstrap_field email_form.smtp_username layout="control" %}
-                    {% bootstrap_field email_form.smtp_password layout="control" %}
-                    {% bootstrap_field email_form.smtp_use_tls layout="control" %}
-                    {% bootstrap_field email_form.smtp_use_ssl layout="control" %}
-                </div>
+                {% bootstrap_field email_form.send_grid_api_key layout="control" %}
+                {% include "pretixcontrol/includes/gmail_connection.html" with gmail_panel_nested=True gmail_event_level=True gmail_disconnect_form_id="event-gmail-disconnect-form" %}
+                {% bootstrap_field email_form.smtp_host layout="control" %}
+                {% bootstrap_field email_form.smtp_port layout="control" %}
+                {% bootstrap_field email_form.smtp_username layout="control" %}
+                {% bootstrap_field email_form.smtp_password layout="control" %}
+                {% bootstrap_field email_form.smtp_use_tls layout="control" %}
+                {% bootstrap_field email_form.smtp_use_ssl layout="control" %}
                 {% bootstrap_field email_form.test_email layout="control" %}
                 <div class="form-group">
                     <div class="col-md-9 col-md-offset-3">
@@ -329,11 +315,125 @@
                 </div>
             </div>
         </fieldset>
+
+                        <fieldset id="danger-zone-tab" class="danger-zone-container">
+            <legend class="text-danger">{% trans "Danger zone" %}</legend>
+
+            <!-- Top Alert -->
+            <div class="danger-zone-alert">
+                {% blocktrans trimmed %}
+                    <strong>Danger zone:</strong> These actions can affect your event and may be irreversible. Please proceed with caution.
+                {% endblocktrans %}
+            </div>
+
+            <!-- Section 1: Event status -->
+            <div class="danger-zone-section">
+                <h4>{% trans "Event status" %}</h4>
+                <p class="text-muted">{% trans "Manage the visibility or status of your event." %}</p>
+                
+                <div class="row">
+                    <!-- Go offline -->
+                    <div class="col-md-6">
+                        <div class="danger-card">
+                            <div class="danger-card-content">
+                                <strong>{% trans "Take event offline" %}</strong>
+                                <p>{% blocktrans trimmed %}Hide this event from attendees. You can bring it back online anytime.{% endblocktrans %}</p>
+                            </div>
+                            <div class="danger-card-action">
+                                <a href="{% url 'eventyay_common:event.live' event=request.event.slug organizer=request.event.organizer.slug %}" class="btn btn-default text-danger danger-action-btn">
+                                    {% trans "Go offline" %}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Cancel event -->
+                    <div class="col-md-6">
+                        <div class="danger-card">
+                            <div class="danger-card-content">
+                                <strong>{% trans "Cancel event" %}</strong>
+                                <p>{% blocktrans trimmed %}Cancel this event and start the cancellation process. Ticket holders may need to be refunded.{% endblocktrans %}</p>
+                            </div>
+                            <div class="danger-card-action">
+                                <a href="{% url 'control:event.cancel' organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-default text-danger danger-action-btn">
+                                    {% trans "Cancel event" %}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2: Data management -->
+            <div class="danger-zone-section">
+                <h4>{% trans "Data management" %}</h4>
+                <p class="text-muted">{% trans "Manage and remove specific data while retaining required financial records." %}</p>
+                
+                <div class="row">
+                    <!-- Delete personal data -->
+                    <div class="col-md-6">
+                        <div class="danger-card">
+                            <div class="danger-card-content">
+                                <strong>{% trans "Delete personal data" %}</strong>
+                                <p>{% blocktrans trimmed %}Remove personal information such as attendee names and email addresses while retaining required financial records.{% endblocktrans %}</p>
+                            </div>
+                            <div class="danger-card-action">
+                                <a href="{% url 'control:event.shredder.start' event=request.event.slug organizer=request.event.organizer.slug %}" class="btn btn-default text-danger danger-action-btn">
+                                    {% trans "Delete data" %}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Delete talk data -->
+                    {% if is_talk_event_created %}
+                    <div class="col-md-6">
+                        <div class="danger-card">
+                            <div class="danger-card-content">
+                                <strong>{% trans "Delete talk data" %}</strong>
+                                <p>{% blocktrans trimmed %}Permanently remove proposals, speaker profiles, and uploaded talk-related content.{% endblocktrans %}</p>
+                            </div>
+                            <div class="danger-card-action">
+                                <a href="{% url 'orga:event.delete_talk_data' organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-default text-danger danger-action-btn">
+                                    {% trans "Delete talk data" %}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Section 3: Permanent deletion -->
+            <div class="danger-zone-section section-red-bg">
+                <h4 class="text-danger">{% trans "Permanent deletion" %}</h4>
+                <p class="text-danger">{% trans "These actions cannot be undone. Please be absolutely sure." %}</p>
+                
+                <div class="danger-card danger-card-solid-red">
+                    <div class="danger-card-content">
+                        <strong>{% trans "Delete event" %}</strong>
+                        <p>{% blocktrans trimmed %}Permanently delete this event and all deletable associated data. Events containing protected records, such as completed orders outside test mode, cannot be deleted.{% endblocktrans %}</p>
+                    </div>
+                    <div class="danger-card-action">
+                        <a href="{% url 'control:event.delete' organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-danger {% if not request.event.allow_delete %}disabled{% endif %}">
+                            {% trans "Delete event" %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </fieldset>
     </div>
-    <div class="form-group submit-group">
+    <div class="form-group submit-group event-settings-submit">
         <button type="submit" class="btn btn-primary btn-save">
             {% trans "Save" %}
         </button>
+        <div class="pull-left event-settings-danger-actions">
+            <a href="{% url "eventyay_common:event.clone" organizer=request.event.organizer.slug event=request.event.slug %}"
+               class="btn btn-default btn-lg">
+                <span class="fa fa-copy"></span>
+                {% trans "Clone event" %}
+            </a>
+        </div>
     </div>
 
     {% comment %}
@@ -413,7 +513,7 @@
         <div class="modal-dialog modal-lg" role="document" style="margin-top: 80px;">
             <div class="modal-content">
                 <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="{% trans 'Close' %}">
                         <span aria-hidden="true">&times;</span>
                     </button>
                     <h4 class="modal-title" id="cropperModalLabel">{% trans "Crop Image" %}</h4>
@@ -434,6 +534,11 @@
 
     <script src="{% static 'vendored/cropperjs/cropper.min.js' %}"></script>
     <script src="{% static 'eventyay-common/image_cropper.js' %}"></script>
+</form>
+<form id="event-gmail-disconnect-form"
+      action="{{ gmail_disconnect_url }}"
+      method="post">
+    {% csrf_token %}
 </form>
 <script src="{% static 'eventyay-common/js/event-settings-images.js' %}" type="module"></script>
 {% endblock %}

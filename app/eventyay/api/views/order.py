@@ -1,10 +1,13 @@
 import datetime
+import logging
 import mimetypes
 import os
 from decimal import Decimal
 
 import django_filters
-import pytz
+
+from django.core.exceptions import ValidationError as DjangoValidationError
+from zoneinfo import ZoneInfo
 from django.db import transaction
 from django.db.models import Exists, F, OuterRef, Prefetch, Q
 from django.db.models.functions import Coalesce, Concat
@@ -25,12 +28,25 @@ from rest_framework.exceptions import (
 )
 from rest_framework.filters import OrderingFilter
 from rest_framework.mixins import CreateModelMixin
+from rest_framework.renderers import BaseRenderer, JSONRenderer
 from rest_framework.response import Response
 
+from drf_spectacular.utils import (
+    OpenApiParameter,
+    OpenApiResponse,
+    OpenApiTypes,
+    extend_schema,
+    extend_schema_view,
+)
 from eventyay.api.models import OAuthAccessToken
+from eventyay.base.services.anonymize import anonymize_order
 from eventyay.api.serializers.order import (
     CheckinListOrderPositionSerializer,
     InvoiceSerializer,
+    OrderActionCancelSerializer,
+    OrderActionDenySerializer,
+    OrderActionExtendSerializer,
+    OrderActionSendEmailSerializer,
     OrderCreateSerializer,
     OrderPaymentCreateSerializer,
     OrderPaymentSerializer,
@@ -43,6 +59,7 @@ from eventyay.api.serializers.order import (
     SimulatedOrderSerializer,
 )
 from eventyay.base.i18n import language
+from eventyay.base.meetup import is_meetup_event
 from eventyay.base.models import (
     CachedCombinedTicket,
     CachedTicket,
@@ -97,6 +114,23 @@ from eventyay.base.signals import (
 )
 from eventyay.base.templatetags.money import money_filter
 from eventyay.control.signals import order_search_filter_q
+
+
+logger = logging.getLogger(__name__)
+
+
+class BinaryPDFRenderer(BaseRenderer):
+    """Satisfy Accept: application/pdf for download actions that return HttpResponse."""
+
+    media_type = 'application/pdf'
+    format = 'pdf'
+    charset = None
+    render_style = 'binary'
+
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        if isinstance(data, (bytes, bytearray)):
+            return data
+        return data
 
 
 with scopes_disabled():
@@ -186,6 +220,175 @@ with scopes_disabled():
             return qs.annotate(has_pos=Exists(matching_positions)).filter(mainq)
 
 
+@extend_schema_view(
+    list=extend_schema(
+        summary="List orders",
+        description="Returns a list of all orders within a given event.",
+        parameters=[
+            OpenApiParameter('exclude', OpenApiTypes.STR, OpenApiParameter.QUERY, many=True, description='Fields to exclude from the response (e.g. fees, payments, refunds, invoice_address).'),
+            OpenApiParameter('include_canceled_fees', OpenApiTypes.BOOL, OpenApiParameter.QUERY, description='Include canceled fees in the response (default false).'),
+            OpenApiParameter('include_canceled_positions', OpenApiTypes.BOOL, OpenApiParameter.QUERY, description='Include canceled positions in the response (default false).'),
+            OpenApiParameter('pdf_data', OpenApiTypes.BOOL, OpenApiParameter.QUERY, description='Include PDF generation data in positions (default false).'),
+            OpenApiParameter('X-Page-Generated', OpenApiTypes.DATETIME, OpenApiParameter.HEADER, response=[200], description='The server time at the beginning of the operation.'),
+        ],
+        responses={
+            200: OpenApiResponse(
+                response=OrderSerializer(many=True),
+                description='Successful response.',
+            )
+        },
+    ),
+    retrieve=extend_schema(
+        summary="Retrieve an order",
+        description="Returns the details of a specific order.",
+        parameters=[
+            OpenApiParameter('exclude', OpenApiTypes.STR, OpenApiParameter.QUERY, many=True, description='Fields to exclude from the response.'),
+            OpenApiParameter('include_canceled_fees', OpenApiTypes.BOOL, OpenApiParameter.QUERY, description='Include canceled fees in the response.'),
+            OpenApiParameter('include_canceled_positions', OpenApiTypes.BOOL, OpenApiParameter.QUERY, description='Include canceled positions in the response.'),
+            OpenApiParameter('pdf_data', OpenApiTypes.BOOL, OpenApiParameter.QUERY, description='Include PDF generation data in positions.'),
+        ],
+    ),
+    create=extend_schema(
+        summary="Create an order",
+        description="Places a new order.",
+        request=OrderCreateSerializer,
+        responses={
+            201: OrderSerializer,
+        }
+    ),
+    partial_update=extend_schema(
+        summary="Update an order",
+        description="Partially updates an existing order. Currently only modifying comment, checkin_attention, email, phone, locale, and invoice_address is supported.",
+        request=OrderSerializer,
+        responses={
+            200: OrderSerializer,
+        }
+    ),
+    destroy=extend_schema(
+        summary="Delete an order",
+        description="Deletes an order.",
+    ),
+    download=extend_schema(
+        summary="Download order tickets",
+        description="Downloads the tickets for this order. Returns either a binary file or a text/uri-list depending on the provider.",
+        parameters=[
+            OpenApiParameter('output', OpenApiTypes.STR, OpenApiParameter.PATH, required=True, description='The identifier of the ticket output provider.'),
+        ],
+        responses={
+            200: OpenApiTypes.BINARY,
+            403: OpenApiResponse(description="Downloads are not available for unpaid orders."),
+        },
+    ),
+    mark_paid=extend_schema(
+        summary="Mark order as paid",
+        description="Marks a pending order as paid.",
+        request=OrderActionSendEmailSerializer,
+        responses={
+            200: OrderSerializer,
+            400: OpenApiResponse(description="The order is not pending or expired, or payment/quota errors."),
+        },
+    ),
+    mark_canceled=extend_schema(
+        summary="Cancel an order",
+        description="Cancels an order.",
+        request=OrderActionCancelSerializer,
+        responses={
+            200: OrderSerializer,
+            400: OpenApiResponse(description="The order is not allowed to be canceled or cancellation errors."),
+        },
+    ),
+    reactivate=extend_schema(
+        summary="Reactivate an order",
+        description="Reactivates a canceled order.",
+        request=None,
+        responses={
+            200: OrderSerializer,
+            400: OpenApiResponse(description="The order is not allowed to be reactivated or reactivation errors."),
+        },
+    ),
+    approve=extend_schema(
+        summary="Approve an order",
+        description="Approves a pending order.",
+        request=OrderActionSendEmailSerializer,
+        responses={
+            200: OrderSerializer,
+            400: OpenApiResponse(description="Order errors."),
+            409: OpenApiResponse(description="Quota exceeded."),
+        },
+    ),
+    deny=extend_schema(
+        summary="Deny an order",
+        description="Denies a pending order.",
+        request=OrderActionDenySerializer,
+        responses={
+            200: OrderSerializer,
+            400: OpenApiResponse(description="Order errors."),
+        },
+    ),
+    mark_pending=extend_schema(
+        summary="Mark order as pending",
+        description="Marks a paid order as pending.",
+        request=None,
+        responses={
+            200: OrderSerializer,
+            400: OpenApiResponse(description="The order is not paid."),
+        },
+    ),
+    mark_expired=extend_schema(
+        summary="Mark order as expired",
+        description="Marks a pending order as expired.",
+        request=None,
+        responses={
+            200: OrderSerializer,
+            400: OpenApiResponse(description="The order is not pending."),
+        },
+    ),
+    mark_refunded=extend_schema(
+        summary="Mark order as refunded",
+        description="Marks a paid order as refunded.",
+        request=None,
+        responses={
+            200: OrderSerializer,
+            400: OpenApiResponse(description="The order is not paid."),
+        },
+    ),
+    create_invoice=extend_schema(
+        summary="Create an invoice",
+        description="Generates an invoice for the order.",
+        request=None,
+        responses={
+            201: InvoiceSerializer,
+            400: OpenApiResponse(description="Invoice cannot be generated or already exists."),
+        },
+    ),
+    resend_link=extend_schema(
+        summary="Resend order link",
+        description="Resends the order link email to the buyer.",
+        request=None,
+        responses={
+            204: OpenApiResponse(description="Mail sent successfully."),
+            400: OpenApiResponse(description="No email address associated."),
+            503: OpenApiResponse(description="Mail sending failed."),
+        },
+    ),
+    regenerate_secrets=extend_schema(
+        summary="Regenerate secrets",
+        description="Regenerates secrets for the order and its tickets.",
+        request=None,
+        responses={
+            200: OrderSerializer,
+        },
+    ),
+    extend=extend_schema(
+        summary="Extend order expiration",
+        description="Extends the expiration date of a pending order.",
+        request=OrderActionExtendSerializer,
+        responses={
+            200: OrderSerializer,
+            400: OpenApiResponse(description="Invalid date or order errors."),
+        },
+    ),
+)
 class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer
     queryset = Order.objects.none()
@@ -581,6 +784,20 @@ class OrderViewSet(viewsets.ModelViewSet):
         return self.retrieve(request, [], **kwargs)
 
     @action(detail=True, methods=['POST'])
+    def anonymize(self, request, **kwargs):
+        order = self.get_object()
+        try:
+            anonymize_order(
+                order,
+                user=self.request.user if self.request.user.is_authenticated else None,
+                auth=self.request.auth,
+            )
+        except DjangoValidationError as e:
+            msg = e.message if hasattr(e, 'message') else (e.messages[0] if hasattr(e, 'messages') else str(e))
+            return Response({'detail': msg}, status=status.HTTP_400_BAD_REQUEST)
+        return self.retrieve(request, [], **kwargs)
+
+    @action(detail=True, methods=['POST'])
     def extend(self, request, **kwargs):
         new_date = request.data.get('expires', None)
         force = request.data.get('force', False)
@@ -593,7 +810,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         except:
             return Response({'detail': 'New date is invalid.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        tz = pytz.timezone(self.request.event.settings.timezone)
+        tz = ZoneInfo(self.request.event.settings.timezone)
         new_date = make_aware(
             datetime.datetime.combine(new_date, datetime.time(hour=23, minute=59, second=59)),
             tz,
@@ -657,6 +874,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
             if send_mail:
                 payment = order.payments.last()
+                is_meetup = is_meetup_event(request.event)
                 free_flow = (
                     payment
                     and order.total == Decimal('0.00')
@@ -664,7 +882,12 @@ class OrderViewSet(viewsets.ModelViewSet):
                     and not order.require_approval
                     and payment.provider == 'free'
                 )
-                if free_flow:
+                if is_meetup:
+                    email_template = request.event.settings.mail_text_meetup_registration
+                    log_entry = 'eventyay.event.order.email.meetup_registration'
+                    email_attendees = request.event.settings.mail_send_meetup_registration_attendee
+                    email_attendees_template = request.event.settings.mail_text_meetup_registration_attendee
+                elif free_flow:
                     email_template = request.event.settings.mail_text_order_free
                     log_entry = 'eventyay.event.order.email.order_free'
                     email_attendees = request.event.settings.mail_send_order_free_attendee
@@ -695,7 +918,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                                 log_entry,
                             )
 
-                if not free_flow and order.status == Order.STATUS_PAID and payment:
+                if not is_meetup and not free_flow and order.status == Order.STATUS_PAID and payment:
                     payment._send_paid_mail(invoice, None, '')
                     if self.request.event.settings.mail_send_order_paid_attendee:
                         for p in order.positions.all():
@@ -1075,7 +1298,12 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
         )
         return resp
 
-    @action(detail=True, url_name='download', url_path='download/(?P<output>[^/]+)')
+    @action(
+        detail=True,
+        url_name='download',
+        url_path='download/(?P<output>[^/]+)',
+        renderer_classes=[JSONRenderer, BinaryPDFRenderer],
+    )
     def download(self, request, output, **kwargs):
         provider = self._get_output_provider(output)
         pos = self.get_object()
@@ -1083,11 +1311,46 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
             output == 'badge' and 'eventyay.plugins.badges' in self.request.event.plugins
         )
 
+        layout_override = None
+        if badge_download:
+            from django.core.exceptions import ValidationError as DjangoValidationError
+
+            from eventyay.plugins.badges.utils import resolve_badge_layout_override
+
+            try:
+                layout_override = resolve_badge_layout_override(
+                    self.request.event, request.query_params.get('layout')
+                )
+            except DjangoValidationError as exc:
+                raise ValidationError({'layout': exc.messages})
+
         if not badge_download:
             if pos.order.status != Order.STATUS_PAID:
                 raise PermissionDenied('Downloads are not available for unpaid orders.')
             if not pos.generate_ticket:
                 raise PermissionDenied('Downloads are not enabled for this product.')
+
+        # Always generate badge PDFs immediately so check-in print works without CachedTicket.
+        if badge_download:
+            from eventyay.base.services.export import ExportError
+            from eventyay.plugins.badges.providers import BadgeOutputProvider
+
+            try:
+                _filename, mimetype, pdf_content = BadgeOutputProvider(self.request.event).generate(
+                    pos, layout=layout_override
+                )
+            except ExportError as exc:
+                raise ValidationError(str(exc))
+            except Exception:
+                logger.exception('Badge generation failed for position %s', pos.pk)
+                raise ValidationError(_('Could not generate the badge PDF.'))
+            resp = HttpResponse(pdf_content, content_type=mimetype or 'application/pdf')
+            resp['Content-Disposition'] = 'attachment; filename="{}-{}-{}-badge.pdf"'.format(
+                self.request.event.slug.upper(),
+                pos.order.code,
+                pos.positionid,
+            )
+            return resp
 
         ct = CachedTicket.objects.filter(order_position=pos, provider=provider.identifier, file__isnull=False).last()
         if not ct or not ct.file:

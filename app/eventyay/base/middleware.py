@@ -1,9 +1,13 @@
+import os
+import re
+import threading
 import zoneinfo
 from collections import OrderedDict
 from urllib.parse import urlsplit
 
+from django.apps import apps
 from django.conf import settings
-from django.http import Http404, HttpRequest, HttpResponse
+from django.http import Http404, HttpRequest, HttpResponse, JsonResponse
 from django.middleware.common import CommonMiddleware
 from django.urls import get_script_prefix
 from django.utils import timezone, translation
@@ -17,6 +21,7 @@ from django.utils.translation.trans_real import (
 )
 
 from eventyay.base.i18n import get_language_without_region
+from eventyay.base.models import GlobalPluginConfig
 from eventyay.base.settings import global_settings_object
 from eventyay.common.urls import get_url_origin
 from eventyay.multidomain.urlreverse import (
@@ -338,6 +343,7 @@ class SecurityMiddleware(MiddlewareMixin):
             + img_src,
             'font-src': [
                 '{static}',
+                'data:',
                 'https://fonts.gstatic.com',  # fix Google Fonts
                 *vite_http,
             ],
@@ -435,3 +441,101 @@ class CustomCommonMiddleware(CommonMiddleware):
         if request.method in ('POST', 'PUT', 'PATCH'):
             raise Http404('Please append a / at the end of the URL')
         return new_path
+
+
+class GloballyDisabledPluginMiddleware(MiddlewareMixin):
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        module = getattr(view_func, '__module__', None)
+        if not module:
+            return None
+
+        app_config = apps.get_containing_app_config(module)
+        if app_config is None or not hasattr(app_config, 'EventyayPluginMeta'):
+            return None
+
+        if app_config.name in GlobalPluginConfig.get_disabled_modules():
+            raise Http404
+        return None
+
+
+try:
+    MAX_CONCURRENT_REQUESTS = int(os.environ.get('MAX_CONCURRENT_REQUESTS', '4'))
+except ValueError:
+    MAX_CONCURRENT_REQUESTS = 4
+
+CHECKIN_EXEMPT_RE = re.compile(
+    r'/checkin/redeem/?(?:$|\?)|/checkinlists(?:/\d+)?(?:/|$|\?)'
+)
+
+
+def request_prefers_html(request):
+    accept = request.headers.get('Accept', '')
+    return 'text/html' in accept and 'application/json' not in accept
+
+
+def request_prefers_json_api(request):
+    path = request.path or ''
+    if path.startswith('/api/'):
+        return True
+    accept = request.headers.get('Accept', '')
+    return 'application/json' in accept and 'text/html' not in accept
+
+
+def is_load_shed_exempt(path):
+    if path.startswith('/healthcheck') or '/video/assets/' in path:
+        return True
+    return bool(CHECKIN_EXEMPT_RE.search(path))
+
+
+def should_skip_session_save(response, modified):
+    return response.status_code == 404 and not modified
+
+
+def overloaded_response(request: HttpRequest) -> HttpResponse:
+    if request_prefers_html(request) and not request.path.startswith('/api/'):
+        response = HttpResponse(
+            'Server is temporarily overloaded. Please try again shortly.',
+            status=503,
+            content_type='text/plain',
+        )
+    else:
+        response = JsonResponse(
+            {'detail': 'Server is temporarily overloaded. Please try again shortly.'},
+            status=503,
+        )
+    response['Retry-After'] = '10'
+    return response
+
+
+class LoadSheddingMiddleware:
+    """Per-process HTTP concurrency cap (not cluster-wide).
+
+    Default 4 concurrent requests per Gunicorn worker process, aligned with
+    ``gthread`` ``--threads 4`` in production compose. With ``workers=2`` the
+    effective container cap is roughly 8. Set ``MAX_CONCURRENT_REQUESTS=0`` to
+    disable. Overloaded responses include ``Retry-After`` and keep JSON for API
+    callers while returning a simple 503 page to browsers.
+    """
+
+    active_requests = 0
+    lock = threading.Lock()
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if MAX_CONCURRENT_REQUESTS <= 0:
+            return self.get_response(request)
+        if is_load_shed_exempt(request.path):
+            return self.get_response(request)
+
+        with LoadSheddingMiddleware.lock:
+            if LoadSheddingMiddleware.active_requests >= MAX_CONCURRENT_REQUESTS:
+                return overloaded_response(request)
+            LoadSheddingMiddleware.active_requests += 1
+
+        try:
+            return self.get_response(request)
+        finally:
+            with LoadSheddingMiddleware.lock:
+                LoadSheddingMiddleware.active_requests -= 1

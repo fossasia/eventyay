@@ -1596,9 +1596,52 @@ div.mail-preview {
   }
 }
 
-.form-with-placeholder {
-  margin-right: 300px;
+.composer-filters {
+  display: grid;
+  gap: 0 24px;
+  grid-template-columns: 1fr;
 }
+
+.composer-filters .form-group.row {
+  display: block;
+  margin: 0 0 16px;
+  min-width: 0;
+}
+
+.composer-filters .form-group.row > label,
+.composer-filters .form-group.row > label.col-form-label {
+  display: inline-flex;
+  flex-direction: column;
+  margin-left: 0;
+  max-width: 100%;
+  padding-left: 0;
+  padding-right: 0;
+  text-align: left;
+  width: 100%;
+}
+
+.composer-filters .form-group.row > .col-md-9,
+.composer-filters .form-group.row > div {
+  flex: none;
+  max-width: 100%;
+  padding-left: 0;
+  padding-right: 0;
+  text-align: left;
+  width: 100%;
+}
+
+@media (min-width: 769px) {
+  .composer-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1025px) {
+  .composer-filters {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
 
 .form-with-placeholder .splitdatetimerow {
   align-items: center;
@@ -1617,48 +1660,321 @@ div.mail-preview {
   width: 10rem;
 }
 
-#placeholder-column {
-  width: 270px;
-  max-height: calc(100vh - 55px);
+@media (min-width: 769px) {
+  .form-with-placeholder.placeholder-drawer-open {
+    margin-right: 316px;
+  }
+}
+
+.delivery-test {
+  margin-bottom: var(--size-spacer, 1rem);
+}
+
+.delivery-test-controls {
+  --delivery-control-height: calc(1.5em + 0.75rem + 2px);
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.delivery-test-controls > input,
+.delivery-test-controls > .form-control {
+  box-sizing: border-box;
+  flex: 1 1 12rem;
+  height: var(--delivery-control-height);
+  min-height: var(--delivery-control-height);
+  min-width: 0;
+  width: auto;
+}
+
+.delivery-test-controls > .btn {
+  align-items: center;
+  box-sizing: border-box;
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: var(--delivery-control-height);
+  justify-content: center;
+  line-height: 1.2;
+  margin: 0;
+  min-height: var(--delivery-control-height);
+  padding: 0 0.75rem;
+  white-space: nowrap;
+}
+
+/* Keep action buttons consistent: light outline, dark fill on hover. */
+.composer-actions {
+  align-items: stretch;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.composer-actions > .btn,
+.composer-send-group > .btn,
+.composer-send-group > .dropdown > summary.btn {
+  border-radius: var(--size-border-radius, 0.25rem);
+  border-style: solid;
+  border-width: 1px;
+}
+
+.composer-actions > .btn.mr-2 {
+  margin-right: 0 !important;
+}
+
+/* Send email and its options menu read as one control: the seam between them
+ * is square, the outer corners keep the theme radius. */
+.composer-send-group {
+  align-items: stretch;
+  display: inline-flex;
+}
+
+.composer-send-group > .dropdown {
+  display: flex;
+  overflow: visible;
+}
+
+.composer-send-group > .btn {
+  align-items: center;
+  border-bottom-right-radius: 0;
+  border-top-right-radius: 0;
+  display: inline-flex;
+  gap: 8px;
+}
+
+.composer-send-group > .dropdown > summary.btn {
+  align-items: center;
+  border-bottom-left-radius: 0;
+  border-left-width: 0;
+  border-top-left-radius: 0;
+  display: inline-flex;
+  margin-left: -1px;
+}
+
+.composer-send-group > .dropdown > summary.btn.btn-primary {
+  border-left: 1px solid var(--color-bg);
+  color: #fff;
+}
+
+.composer-send-group > .dropdown > summary.btn.btn-primary:hover,
+.composer-send-group > .dropdown > summary.btn.btn-primary:focus {
+  background-color: var(--color-primary-hover, #0056b3);
+  color: #fff;
+}
+
+/* Open upward so the menu does not create a second page scrollbar at the
+ * bottom of the composer, and drop overflow so a three-item menu never scrolls. */
+.composer-send-group details.dropdown .dropdown-content {
+  bottom: calc(100% + 8px);
+  left: auto;
+  max-height: none;
+  overflow: visible;
+  right: 0;
+  top: auto;
+  transform: none;
+}
+
+.composer-send-group details.dropdown .dropdown-content::before {
+  bottom: -8px;
+  left: auto;
+  right: 12px;
+  top: auto;
+  border-top: 8px solid rgb(27 31 35 / 0.15);
+  border-right: 8px solid transparent;
+  border-bottom: 0;
+  border-left: 8px solid transparent;
+}
+
+.composer-send-group details.dropdown .dropdown-content::after {
+  bottom: -7px;
+  left: auto;
+  right: 13px;
+  top: auto;
+  border-top: 7px solid #fff;
+  border-right: 7px solid transparent;
+  border-bottom: 0;
+  border-left: 7px solid transparent;
+}
+
+/* Keep the standard tabular label | field row from common/_forms.css
+ * (fit-content labels pulled next to the controls). Do not force full-width
+ * left-aligned labels here — that recreates a large gap before the fields. */
+.form-with-placeholder .card-body .i18n-form-group,
+.form-with-placeholder .card-body .i18n-form-group textarea,
+.form-with-placeholder .card-body .i18n-form-group input,
+.form-with-placeholder .card-body .col-md-9 > textarea.form-control,
+.form-with-placeholder .card-body .col-md-9 > input.form-control {
+  max-width: 100%;
+  width: 100%;
+}
+
+.form-with-placeholder .card-body .col-md-9 > textarea.form-control:not([data-tiptap-profile]) {
+  min-height: 12rem;
+}
+
+.form-with-placeholder .card-body .col-md-9 .tiptap-wrapper,
+.form-with-placeholder .card-body .col-md-9 .tiptap-editor-content,
+.form-with-placeholder .card-body .col-md-9 .tiptap-prosemirror {
+  max-width: 100%;
+  width: 100%;
+}
+
+.form-with-placeholder .card-body .col-md-9 .tiptap-editor-content {
+  min-height: 12rem;
+}
+
+/* Audience header actions stay the same size. */
+.card-header .btn-sm {
+  min-height: 2rem;
+}
+
+#send-confirm-dialog,
+#recipient-list-dialog {
+  min-width: 420px;
+}
+
+#send-confirm-summary {
+  column-gap: 16px;
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  margin: 0;
+  row-gap: 4px;
+}
+
+#send-confirm-summary dt,
+#send-confirm-summary dd {
+  margin: 0;
+}
+
+#send-confirm-dialog .dialog-content,
+#recipient-list-dialog .dialog-content {
+  padding: 20px;
+}
+
+#recipient-list-dialog .dialog-content {
+  max-height: 70vh;
   overflow-y: auto;
+}
+
+#send-confirm-dialog .dialog-footer,
+#recipient-list-dialog .dialog-footer {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+  #send-confirm-dialog,
+  #recipient-list-dialog {
+    min-width: auto;
+    width: 95%;
+  }
+}
+
+.form-with-placeholder > .card > .card-header {
+  /* Keep the header divider above language tabs / focus styles. */
+  position: relative;
+  z-index: 1;
+}
+
+#mail-language-tabs {
+  border-bottom: 1px solid var(--color-grey-lighter);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 1rem;
+}
+
+.mail-language-tab {
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  box-shadow: none;
+  color: inherit;
+  margin-bottom: -1px;
+  padding: 6px 12px;
+  text-decoration: none;
+}
+
+.mail-language-tab:hover,
+.mail-language-tab:focus,
+.mail-language-tab:focus-visible,
+.mail-language-tab:active {
+  background: transparent;
+  box-shadow: none;
+  color: inherit;
+  outline: none;
+  text-decoration: none;
+}
+
+.mail-language-tab.active,
+.mail-language-tab[aria-selected="true"] {
+  border-bottom-color: var(--color-primary);
+  font-weight: bold;
+}
+
+#placeholder-drawer {
+  background: white;
+  border-left: 1px solid var(--color-grey-lighter);
+  bottom: 0;
+  box-shadow: var(--shadow-wide);
+  overflow-y: auto;
+  padding: 12px;
   position: fixed;
   right: 0;
-  padding: 0 12px;
   top: 50px;
-  border-left: 1px solid var(--color-grey-lighter);
-  box-shadow: var(--shadow-wide);
+  width: 300px;
+  z-index: 1030;
+}
 
-  legend {
-    background: white;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    padding: 16px 0 8px 0;
-  }
+#placeholder-drawer[hidden] {
+  display: none;
+}
 
-  .list-group-item.placeholder {
-    cursor: pointer;
+#placeholder-drawer-head {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
 
-    .placeholder-content {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
+#placeholder-drawer-head .btn-link {
+  font-size: 1.5rem;
+  line-height: 1;
+}
 
-      .placeholder-text {
-        white-space: nowrap;
-      }
-    }
+#placeholder-search {
+  margin-bottom: 12px;
+}
 
-    i {
-      padding: 8px;
-      width: 30px;
-      border-radius: 50%;
-      text-align: center;
-    }
+#placeholder-drawer .list-group-item.placeholder {
+  cursor: pointer;
+}
 
-    i:hover {
-      background: var(--color-grey-lighter);
-    }
+#placeholder-drawer .list-group-item.placeholder .placeholder-content {
+  align-items: baseline;
+  display: flex;
+  justify-content: space-between;
+}
+
+#placeholder-drawer .list-group-item.placeholder .placeholder-text {
+  white-space: nowrap;
+}
+
+#placeholder-drawer .list-group-item.placeholder i {
+  border-radius: 50%;
+  padding: 8px;
+  text-align: center;
+  width: 30px;
+}
+
+#placeholder-drawer .list-group-item.placeholder i:hover {
+  background: var(--color-grey-lighter);
+}
+
+@media (max-width: 768px) {
+  #placeholder-drawer {
+    width: 100%;
   }
 }
 
@@ -2768,7 +3084,7 @@ h2 .user-name-display img {
     gap: 0.35rem;
     min-width: 0;
     max-width: 100%;
-    overflow: hidden;
+    overflow: visible;
   }
 
   /* td.nowrap forces a min-content width larger than the card at ~320px,
@@ -3021,4 +3337,86 @@ button.btn-speaker-not-arrived {
   .speaker-action-label--short {
     display: inline;
   }
+}
+
+.feedback-comment-cell {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.feedback-comment-cell__text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.feedback-comment-cell__text > :last-child {
+  margin-bottom: 0;
+}
+
+.feedback-report-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background-color: #dc3545;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-top: 0.1rem;
+}
+
+.feedback-confirm-dialog {
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+  padding: 24px;
+  width: 450px;
+  max-width: 95vw;
+  background: #fff;
+  overflow: hidden;
+  color: #333;
+  z-index: 9999;
+}
+
+.feedback-confirm-dialog-title {
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.feedback-confirm-dialog-message {
+  margin-top: 0;
+  margin-bottom: 24px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #555;
+}
+
+.feedback-confirm-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.feedback-confirm-dialog-btn-cancel {
+  margin-right: 12px;
+  padding: 8px 16px;
+}
+
+.feedback-confirm-dialog-btn-confirm {
+  padding: 8px 16px;
+}
+
+.tag-hidden { display: none; }
+.review-tags-list:hover .tag-hidden { display: inline-block; }
+.review-tags-list:hover .tag-ellipsis { display: none; }
+
+.review-tags-list .badge {
+  background-color: var(--tag-color, #cccccc);
 }

@@ -3,9 +3,9 @@
 	transition(name="background-room")
 		router-link.background-room(v-if="background", :to="room ? {name: 'room', params: {roomId: room.id}}: {name: 'channel', params: {channelId: call.channel}}")
 			.description
-				.hint {{ $t('MediaSource:room:hint') }}
+				.hint {{ $t('Currently playing') }}
 				.room-name(v-if="room", v-html="$emojify(room.name)")
-				.room-name(v-else-if="call") {{ $t('MediaSource:call:label') }}
+				.room-name(v-else-if="call") {{ $t('Private call') }}
 			.global-placeholder
 			bunt-icon-button(@click.prevent.stop="$emit('close')") close
 	Livestream(v-if="room && shouldUseLivestream", ref="livestream", :room="room", :module="module", :size="background ? 'tiny' : 'normal'", :key="`livestream-${room.id}`", @playback-state-changed="onMainPlayerPlaybackChanged")
@@ -14,15 +14,15 @@
 	.iframe-consent-gate(v-if="consentBlockedUrl && !background")
 		iframe-blocker(:src="consentBlockedUrl", allow="camera *; autoplay *; microphone *; fullscreen *; display-capture *", allowfullscreen, @consent-given="onConsentGiven")
 	.iframe-error(v-if="!iframeEl && !consentBlockedUrl && (iframeError || iframeOffline)", :class="{background: background, 'size-tiny': background}")
-		.offline-message(v-if="iframeOffline") {{ $t('Livestream:offline-message:text') }}
-		.offline-message(v-else) {{ $t('MediaSource:iframe-error:text') }}
+		.offline-message(v-if="iframeOffline") {{ $t('Stream offline') }}
+		.offline-message(v-else) {{ $t('We could not connect to the video conference server, sorry.') }}
 	iframe#video-player-translation(v-if="languageIframeUrl", ref="translationIframeEl", :src="languageIframeUrl", style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;", frameborder="0", gesture="media", allow="autoplay; encrypted-media", referrerpolicy="strict-origin-when-cross-origin", @load="onTranslationIframeLoaded")
 	audio(ref="whepAudioEl", autoplay, style="display: none;")
 </template>
 <script setup>
 // TODO functional component?
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 import { isEqual } from 'lodash';
 import api from 'lib/api';
@@ -37,10 +37,11 @@ import {
 	getStagePlaybackMode,
 	PLAYBACK_MODE_SCHEDULE_DRIVEN,
 	STREAM_TYPE_HLS,
-	STREAM_TYPE_IFRAME,
 	STREAM_TYPE_VIMEO,
 	STREAM_TYPE_YOUTUBE,
 } from 'lib/stage-streams';
+
+const jitsiExternalApiLoaders = new Map();
 
 // Props & Emits
 defineOptions({
@@ -58,6 +59,7 @@ const emit = defineEmits(['close']);
 
 const store = useStore();
 const route = useRoute();
+const router = useRouter();
 
 const iframeError = ref(null);
 const iframeEl = ref(null);
@@ -76,12 +78,12 @@ let whepClient = null;
 // Template refs
 const livestream = ref(null);
 const janus = ref(null);
+let jitsiApi = null;
 
 // Mapped state/getters
-const streamingRoom = computed(() => store.state.streamingRoom);
-const youtubeTranslation = computed(() => {
+const activeInterpretation = computed(() => {
 	if (!props.room?.id) return null;
-	return store.state.youtubeTranslationsByRoom?.[props.room.id] || null;
+	return store.state.interpretationStreamsByRoom?.[props.room.id] || store.state.youtubeTranslationsByRoom?.[props.room.id] || null;
 });
 const autoplay = computed(() => store.getters.autoplay);
 const mainPlayerPaused = ref(!autoplay.value);
@@ -92,18 +94,29 @@ const module = computed(() => {
 		[
 			'livestream.native',
 			'livestream.youtube',
-			'livestream.iframe',
 			'call.bigbluebutton',
 			'call.janus',
 			'call.zoom',
+			'call.jitsi',
 		].includes(m.type)
 	);
 });
 
+const isLivestreamModule = computed(() =>
+	[
+		'livestream.native',
+		'livestream.youtube',
+	].includes(module.value?.type)
+);
+
+const isScheduleDrivenStage = computed(() =>
+	isLivestreamModule.value &&
+	getStagePlaybackMode(module.value) === PLAYBACK_MODE_SCHEDULE_DRIVEN
+);
+
 const shouldUseLivestream = computed(() => {
 	if (!props.room || !module.value) return false;
-	const isScheduleDriven = getStagePlaybackMode(module.value) === PLAYBACK_MODE_SCHEDULE_DRIVEN;
-	const streamType = isScheduleDriven ? props.room?.currentStream?.stream_type : null;
+	const streamType = isScheduleDrivenStage.value ? props.room?.currentStream?.stream_type : null;
 
 	if (streamType) {
 		return streamType === STREAM_TYPE_HLS;
@@ -122,15 +135,14 @@ const iframeOffline = computed(() => {
 	if (!props.room || !module.value) return false;
 	if (shouldUseLivestream.value) return false;
 
-	const isScheduleDriven = getStagePlaybackMode(module.value) === PLAYBACK_MODE_SCHEDULE_DRIVEN;
+	const isScheduleDriven = isScheduleDrivenStage.value;
 	const currentStream = isScheduleDriven ? props.room?.currentStream : null;
 	const streamType = currentStream?.stream_type;
 	const moduleType = module.value.type;
-	const isIFrame = streamType === STREAM_TYPE_IFRAME || moduleType === 'livestream.iframe';
 	const isYouTube = streamType === STREAM_TYPE_YOUTUBE || moduleType === 'livestream.youtube';
 	const isVimeo = streamType === STREAM_TYPE_VIMEO;
 
-	if (!isIFrame && !isYouTube && !isVimeo) return false;
+	if (!isYouTube && !isVimeo) return false;
 
 	const scheduleUrl = currentStream?.url || null;
 
@@ -174,7 +186,7 @@ watch(module, async (value, oldValue) => {
 	destroyIframe();
 	if (shouldUseLivestream.value) return;
 	await initializeIframe(false);
-	await applyYoutubeTranslation(youtubeTranslation.value);
+	await applyInterpretation(activeInterpretation.value);
 });
 
 watch(shouldUseLivestream, async (shouldUse, oldShouldUse) => {
@@ -184,7 +196,7 @@ watch(shouldUseLivestream, async (shouldUse, oldShouldUse) => {
 		destroyIframe();
 	} else {
 		await initializeIframe(false);
-		await applyYoutubeTranslation(youtubeTranslation.value);
+		await applyInterpretation(activeInterpretation.value);
 	}
 });
 
@@ -198,7 +210,7 @@ watch(
 			}
 			destroyIframe();
 			await initializeIframe(false);
-			await applyYoutubeTranslation(youtubeTranslation.value);
+			await applyInterpretation(activeInterpretation.value);
 		}
 	},
 	{ deep: true }
@@ -222,22 +234,20 @@ watch(
 
 const isPlayingTranslationVideo = ref(false);
 const activeTranslationVideoId = ref(null);
-let translationUpdateToken = 0;
+let interpretationUpdateToken = 0;
 
-watch(youtubeTranslation, applyYoutubeTranslation);
+watch(activeInterpretation, applyInterpretation);
 
-async function applyYoutubeTranslation(transConfig) {
+async function applyInterpretation(interpConfig) {
 	if (!props.room) return;
-	const isScheduleDriven = module.value && getStagePlaybackMode(module.value) === PLAYBACK_MODE_SCHEDULE_DRIVEN;
-	const streamType = isScheduleDriven ? props.room?.currentStream?.stream_type : null;
+	const streamType = isScheduleDrivenStage.value ? props.room?.currentStream?.stream_type : null;
 	const isYouTube = streamType === STREAM_TYPE_YOUTUBE || module.value?.type === 'livestream.youtube';
-	if (!isYouTube) return;
 
-	const updateToken = ++translationUpdateToken;
+	const updateToken = ++interpretationUpdateToken;
 	disconnectWhepTranslation();
 
-	const audioSource = transConfig?.url || null;
-	const requestedUseVideo = transConfig?.useVideo || false;
+	const audioSource = interpConfig?.url || null;
+	const requestedUseVideo = interpConfig?.useVideo || false;
 	const translationVideoId = audioSource ? normalizeYoutubeVideoId(audioSource) : null;
 	const useVideo = requestedUseVideo && !!translationVideoId;
 
@@ -256,7 +266,6 @@ async function applyYoutubeTranslation(transConfig) {
 		await initializeIframe(false);
 	}
 
-	// Handle translation: mute main player and connect audio source
 	if (audioSource) {
 		let isWhep = false;
 		try {
@@ -274,39 +283,36 @@ async function applyYoutubeTranslation(transConfig) {
 			whepClient = client;
 			try {
 				await client.connect();
-				if (updateToken !== translationUpdateToken) {
+				if (updateToken !== interpretationUpdateToken) {
 					client.disconnect();
 					if (whepClient === client) whepClient = null;
 				}
 			} catch (err) {
-				console.error('Failed to connect to WHEP translation source', err);
+				console.error('Failed to connect to WHEP interpretation source', err);
 				client.disconnect();
 				if (whepClient === client) whepClient = null;
 			}
 		} else {
-			// Create hidden translation audio iframe first
+			// Create hidden interpretation audio iframe for YouTube audio translation
 			languageIframeUrl.value = getLanguageIframeUrl(audioSource);
 		}
-		
-		// Mute the main player using postMessage after a short delay
-		setTimeout(() => {
-			if (updateToken !== translationUpdateToken) return;
-			muteYouTubePlayer();
-		}, 500);
+
+		muteMainPlayer();
 
 		if (mainPlayerPaused.value) {
 			setTimeout(() => {
-				if (updateToken !== translationUpdateToken) return;
+				if (updateToken !== interpretationUpdateToken) return;
 				pauseTranslationAudio();
 			}, 600);
 		}
 	} else {
-		// Remove translation audio iframe
 		languageIframeUrl.value = null;
-		// Unmute the main player using postMessage after a short delay
 		setTimeout(() => {
-			if (updateToken !== translationUpdateToken) return;
-			unmuteYouTubePlayer();
+			if (updateToken !== interpretationUpdateToken) return;
+			const streamType = isScheduleDrivenStage.value ? props.room?.currentStream?.stream_type : null;
+			const isYouTube = streamType === STREAM_TYPE_YOUTUBE || module.value?.type === 'livestream.youtube';
+			if (isYouTube && getYoutubeConfig().startMuted) return;
+			unmuteMainPlayer();
 		}, 100);
 	}
 }
@@ -316,7 +322,7 @@ onMounted(async () => {
 	if (!props.room) return;
 	if (shouldUseLivestream.value) return;
 	await initializeIframe(false);
-	await applyYoutubeTranslation(youtubeTranslation.value);
+	await applyInterpretation(activeInterpretation.value);
 });
 
 onBeforeUnmount(() => {
@@ -330,6 +336,26 @@ onBeforeUnmount(() => {
 	// TODO move to store?
 	if (props.room) api.call('room.leave', { room: props.room.id });
 });
+
+function hasAudioOnlyInterpretation() {
+	return Boolean(activeInterpretation.value?.url && !activeInterpretation.value?.useVideo);
+}
+
+function muteMainPlayer() {
+	muteYouTubePlayer();
+	const videoEl = livestream.value?.$refs?.video || livestream.value?.$el?.querySelector?.('video');
+	if (videoEl) {
+		videoEl.muted = true;
+	}
+}
+
+function unmuteMainPlayer() {
+	unmuteYouTubePlayer();
+	const videoEl = livestream.value?.$refs?.video || livestream.value?.$el?.querySelector?.('video');
+	if (videoEl) {
+		videoEl.muted = false;
+	}
+}
 
 function muteYouTubePlayer() {
 	if (!iframeEl.value || !iframeEl.value.contentWindow) return;
@@ -345,6 +371,15 @@ function muteYouTubePlayer() {
 			error,
 		});
 	}
+}
+
+function getYoutubeConfig() {
+	const streamType = isScheduleDrivenStage.value ? props.room?.currentStream?.stream_type : null;
+	const currentStream = streamType === STREAM_TYPE_YOUTUBE ? props.room?.currentStream : null;
+	return {
+		...(currentStream?.config || {}),
+		...(module.value?.config || {}),
+	};
 }
 
 function disconnectWhepTranslation() {
@@ -379,7 +414,7 @@ function pauseTranslationAudio() {
 function resumeTranslationAudio() {
 	if (whepAudioEl.value && whepAudioEl.value.srcObject) {
 		whepAudioEl.value.play().catch(e =>
-			console.warn('Failed to resume WHEP translation audio:', e)
+			console.warn('Failed to resume WHEP interpretation audio:', e)
 		);
 	}
 	resumeYouTubeTranslationIframe();
@@ -413,7 +448,7 @@ function resumeYouTubeTranslationIframe() {
 
 function onMainPlayerPlaybackChanged(isPlaying) {
 	mainPlayerPaused.value = !isPlaying;
-	if (!youtubeTranslation.value?.url) return;
+	if (!activeInterpretation.value?.url) return;
 	if (isPlaying) {
 		resumeTranslationAudio();
 	} else {
@@ -490,15 +525,14 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 		let iframeUrl;
 		let hideIfBackground = false;
 		let isYouTube = false;
-		const isScheduleDriven = getStagePlaybackMode(module.value) === PLAYBACK_MODE_SCHEDULE_DRIVEN;
+		let jitsiConfig = null;
+		const isScheduleDriven = isScheduleDrivenStage.value;
 		const currentStream = isScheduleDriven ? props.room?.currentStream : null;
 		const streamType = currentStream?.stream_type;
 		const effectiveModuleType = streamType === STREAM_TYPE_YOUTUBE
 			? 'livestream.youtube'
 			: streamType === STREAM_TYPE_VIMEO
 			? 'livestream.vimeo'
-			: streamType === STREAM_TYPE_IFRAME
-			? 'livestream.iframe'
 			: (!isScheduleDriven ? module.value.type : null);
 
 		switch (effectiveModuleType) {
@@ -516,8 +550,12 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 				hideIfBackground = true;
 				break;
 			}
-			case 'livestream.iframe': {
-				iframeUrl = currentStream?.url || module.value.config.url;
+			case 'call.jitsi': {
+				jitsiConfig = await api.call('jitsi.room_config', {
+					room: props.room.id,
+				});
+				iframeUrl = getJitsiRoomUrl(jitsiConfig);
+				hideIfBackground = true;
 				break;
 			}
 			case 'livestream.vimeo': {
@@ -535,8 +573,8 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 			case 'livestream.youtube': {
 				isYouTube = true;
 				let ytid;
-				const translationVideoId = youtubeTranslation.value?.useVideo && youtubeTranslation.value?.url
-					? normalizeYoutubeVideoId(youtubeTranslation.value.url)
+				const translationVideoId = activeInterpretation.value?.useVideo && activeInterpretation.value?.url
+					? normalizeYoutubeVideoId(activeInterpretation.value.url)
 					: null;
 				if (translationVideoId) {
 					ytid = translationVideoId;
@@ -559,9 +597,11 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 					iframeError.value = new Error('Invalid YouTube video ID');
 					break;
 				}
-				const config = module.value.config || {};
-				const shouldStartMuted = mute || !!config.startMuted;
-				const shouldAutoplay = autoplay.value && !config.hideControls && shouldStartMuted;
+				const config = getYoutubeConfig();
+				const shouldStartMuted = Boolean(
+					mute || config.startMuted || hasAudioOnlyInterpretation()
+				);
+				const shouldAutoplay = Boolean(autoplay.value && !config.hideControls);
 				iframeUrl = getYoutubeUrl(
 					ytid,
 					shouldAutoplay,
@@ -593,6 +633,11 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 		}
 		// Consent is satisfied (or not required); clear any previous gate.
 		consentBlockedUrl.value = null
+
+		if (jitsiConfig) {
+			await createJitsiIframe(jitsiConfig, hideIfBackground);
+			return;
+		}
 
 		const iframe = document.createElement('iframe');
 		iframe.src = iframeUrl;
@@ -627,10 +672,6 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 		if (isYouTube) {
 			iframe.onload = () => {
 				subscribeToYouTubePlayerEvents();
-				// If translation is already selected, mute the main player (if audio-only)
-				if (youtubeTranslation.value?.url && !youtubeTranslation.value?.useVideo) {
-					setTimeout(() => muteYouTubePlayer(), 1000);
-				}
 			};
 		}
 	} catch (error) {
@@ -641,11 +682,139 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 }
 
 function destroyIframe() {
+	if (jitsiApi) {
+		const api = jitsiApi;
+		jitsiApi = null;
+		api.dispose();
+	}
 	iframeEl.value?.remove();
 	iframeEl.value = null;
 	languageIframeUrl.value = null;
 	disconnectWhepTranslation();
 	consentBlockedUrl.value = null;
+}
+
+function createJitsiIframe(config, hideIfBackground) {
+	const container = document.querySelector('#media-source-iframes');
+	if (!container) return;
+	return createJitsiApiIframe(config, hideIfBackground, container);
+}
+
+async function createJitsiApiIframe(config, hideIfBackground, container) {
+	const JitsiMeetExternalAPI = await loadJitsiExternalApi(config);
+	if (isUnmounted.value) return;
+
+	jitsiApi = new JitsiMeetExternalAPI(config.domain, {
+		roomName: config.roomName,
+		parentNode: container,
+		jwt: config.jwt,
+		noSSL: config.protocol === 'http',
+		configOverwrite: config.configOverwrite,
+		interfaceConfigOverwrite: config.interfaceConfigOverwrite,
+		userInfo: config.userInfo,
+	});
+
+	const iframe = jitsiApi.getIFrame();
+	iframe.classList.add('iframe-media-source');
+	iframe.classList.add('jitsi-media-source');
+	if (hideIfBackground) {
+		iframe.classList.add('hide-if-background');
+	}
+	if (props.background) {
+		iframe.classList.add('background');
+		iframe.classList.add('size-tiny');
+	}
+	iframe.allow =
+		'screen-wake-lock *; camera *; microphone *; fullscreen *; display-capture *' +
+		(autoplay.value ? '; autoplay *' : '');
+	iframe.allowFullscreen = true;
+	iframe.setAttribute('allowusermedia', 'true');
+	iframe.setAttribute('allowfullscreen', '');
+	iframeEl.value = iframe;
+	jitsiApi.addListener('videoConferenceJoined', () => applyJitsiDisplayOverrides(config));
+	jitsiApi.addListener('videoConferenceLeft', closeJitsiIframe);
+	jitsiApi.addListener('readyToClose', closeJitsiIframe);
+}
+
+function closeJitsiIframe() {
+	destroyIframe();
+	emit('close');
+	router.push({ name: 'about' }).catch(() => {});
+}
+
+function applyJitsiDisplayOverrides(config) {
+	if (!jitsiApi) return;
+	const commands = {};
+	if (config.roomDisplayName) {
+		commands.subject = [config.roomDisplayName];
+		commands.localSubject = [config.roomDisplayName];
+	}
+	if (!Object.keys(commands).length) return;
+	try {
+		jitsiApi.executeCommands(commands);
+	} catch (error) {
+		console.warn('Failed to apply Jitsi display overrides', {
+			roomId: props.room?.id,
+			error,
+		});
+	}
+}
+
+function loadJitsiExternalApi(config) {
+	const url = new URL(config.url || `https://${config.domain}`);
+	url.pathname = '/external_api.js';
+	url.search = '';
+	url.hash = '';
+	const scriptUrl = url.toString();
+	if (window.JitsiMeetExternalAPI) {
+		return Promise.resolve(window.JitsiMeetExternalAPI);
+	}
+	if (jitsiExternalApiLoaders.has(scriptUrl)) {
+		return jitsiExternalApiLoaders.get(scriptUrl);
+	}
+	const loader = new Promise((resolve, reject) => {
+		const script = document.createElement('script');
+		script.src = scriptUrl;
+		script.async = true;
+		const rejectAndForget = (error) => {
+			jitsiExternalApiLoaders.delete(scriptUrl);
+			reject(error);
+		};
+		script.onload = () => {
+			if (window.JitsiMeetExternalAPI) {
+				resolve(window.JitsiMeetExternalAPI);
+			} else {
+				rejectAndForget(new Error('Jitsi external API did not load'));
+			}
+		};
+		script.onerror = () => rejectAndForget(new Error('Jitsi external API could not be loaded'));
+		document.head.appendChild(script);
+	});
+	jitsiExternalApiLoaders.set(scriptUrl, loader);
+	return loader;
+}
+
+function encodeJitsiHash(prefix, values) {
+	return Object.entries(values || {})
+		.filter(([, value]) => value !== undefined && value !== null)
+		.map(([key, value]) => `${prefix}.${key}=${encodeURIComponent(JSON.stringify(value))}`);
+}
+
+function getJitsiRoomUrl(config) {
+	const url = new URL(config.url || `https://${config.domain}`);
+	url.pathname = `/${encodeURIComponent(config.roomName)}`;
+	if (config.jwt) {
+		url.searchParams.set('jwt', config.jwt);
+	}
+	const hash = [
+		...encodeJitsiHash('config', config.configOverwrite),
+		...encodeJitsiHash('interfaceConfig', config.interfaceConfigOverwrite),
+		...encodeJitsiHash('userInfo', config.userInfo),
+	];
+	if (hash.length) {
+		url.hash = hash.join('&');
+	}
+	return url.toString();
 }
 
 function onConsentGiven(persistent) {
@@ -730,25 +899,33 @@ function getYoutubeUrl(
 	return `https://${domain}/embed/${ytid}?${params}`;
 }
 
-// Added method to get the language iframe URL
 function getLanguageIframeUrl(languageUrl) {
-	// Checks if the languageUrl is not provided then return null
 	if (!languageUrl) return null;
-	const config = module.value?.config || {};
+	const config = getYoutubeConfig();
 	const origin = window.location.origin;
-	const params = new URLSearchParams({
-		enablejsapi: '1',
-		autoplay: '1',
-		mute: '0', // Ensure translation audio is not muted
-		modestbranding: '1',
-		loop: '1',
-		controls: '0',
-		disablekb: '1',
-		rel: '0',
-		showinfo: '0',
-		playlist: languageUrl,
-		origin, // Required when using enablejsapi=1 (fixes Error 153)
-	});
+	const params = new URLSearchParams();
+	params.append('autoplay', autoplay.value ? '1' : '0');
+	params.append('mute', config.startMuted ? '1' : '0');
+	params.append('enablejsapi', '1');
+	params.append('origin', origin);
+	params.append('controls', '0');
+
+	if (config.noRelated) {
+		params.append('rel', '0');
+	}
+	if (config.showInfo) {
+		params.append('showinfo', '0');
+	}
+	if (config.disableKb) {
+		params.append('disablekb', '1');
+	}
+	if (config.loop) {
+		params.append('loop', '1');
+		params.append('playlist', languageUrl);
+	}
+	if (config.modestBranding) {
+		params.append('modestbranding', '1');
+	}
 
 	const domain = config.enablePrivacyEnhancedMode
 		? 'www.youtube-nocookie.com'
@@ -820,14 +997,22 @@ defineExpose({ isPlaying });
 iframe.iframe-media-source
 	transition: all .3s ease
 	border: none
+	&.jitsi-media-source
+		// Jitsi External API writes inline width/height on the generated iframe.
+		// Force it back into the same measured media placeholder used by BBB/Zoom.
+		&:not(.size-tiny):not(.background)
+			top: var(--mediasource-placeholder-top, 104px) !important
+			left: var(--mediasource-placeholder-left, var(--sidebar-width)) !important
+			width: var(--mediasource-placeholder-width, 100vw) !important
+			height: var(--mediasource-placeholder-height, var(--mobile-media-height, 40vh)) !important
 	&.background
 		pointer-events: none
-		height: 48px
-		width: 86px
+		height: 48px !important
+		width: 86px !important
 		z-index: 101
 		&.hide-if-background
-			width: 0
-			height: 0
+			width: 0 !important
+			height: 0 !important
 .c-media-source .iframe-consent-gate
 	position: fixed
 	display: flex

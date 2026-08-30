@@ -3,7 +3,8 @@ import tempfile
 from datetime import timedelta
 
 import dateutil.parser
-import pytz
+import datetime
+from zoneinfo import ZoneInfo
 from django.core.files.base import ContentFile
 from django.db import models
 from django.db.models import (
@@ -37,7 +38,6 @@ from reportlab.platypus import (
 )
 
 from eventyay.base.models import Channel, ChatEvent, Room, User
-from eventyay.base.models.exhibitor import ContactRequest, ExhibitorView
 from eventyay.base.models.room import RoomView
 from eventyay.features.analytics.graphs.utils import PdfImage, get_schedule, median_value, pretalx_uni18n
 from eventyay.features.analytics.graphs.views import build_room_view_fig
@@ -165,7 +165,7 @@ class ReportGenerator:
 
     @cached_property
     def tz(self):
-        return pytz.timezone(self.event.timezone)
+        return ZoneInfo(self.event.timezone)
 
     @cached_property
     def date_begin(self):
@@ -202,7 +202,6 @@ class ReportGenerator:
             Paragraph(str(self.event.name), self.stylesheet["Heading1"]),
         ]
         s += self.global_sums()
-        s += self.story_for_exhibitors()
 
         for room in self.event.rooms.all():
             types = [m["type"] for m in room.module_config]
@@ -405,91 +404,6 @@ class ReportGenerator:
 
         return s
 
-    def story_for_exhibitors(self):
-        s = [
-            Paragraph(_("Exhibitors"), self.stylesheet["Heading2"]),
-        ]
-        tstyledata = [
-            ("ALIGN", (0, 0), (-1, 0), "LEFT"),
-            ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
-            ("VALIGN", (0, 0), (-1, -1), "TOP"),
-            ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
-            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-            ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),
-            ("BOX", (0, 0), (-1, -1), 0.25, colors.black),
-            ("INNERGRID", (0, 0), (-1, -1), 0.25, colors.black),
-            ("FONTSIZE", (0, 0), (-1, -1), 10),
-        ]
-
-        tdata = [
-            [
-                _("Exhibitor"),
-                _("Views"),
-                _("Unique viewers"),
-                _("Contact requests"),
-            ]
-        ]
-
-        qs = self.event.exhibitors.annotate(
-            c_views=Subquery(
-                ExhibitorView.objects.filter(
-                    exhibitor=OuterRef("pk"),
-                    datetime__gte=self.date_begin,
-                    datetime__lte=self.date_end,
-                )
-                .order_by()
-                .values("exhibitor")
-                .annotate(c=Count("*"))
-                .values("c")
-            ),
-            c_unique_viewers=Subquery(
-                ExhibitorView.objects.filter(
-                    exhibitor=OuterRef("pk"),
-                    datetime__gte=self.date_begin,
-                    datetime__lte=self.date_end,
-                )
-                .order_by()
-                .values("exhibitor")
-                .annotate(c=Count("user", distinct=True))
-                .values("c")
-            ),
-            c_contact_requests=Subquery(
-                ContactRequest.objects.filter(
-                    exhibitor=OuterRef("pk"),
-                    timestamp__gte=self.date_begin,
-                    timestamp__lte=self.date_end,
-                )
-                .order_by()
-                .values("exhibitor")
-                .annotate(c=Count("*"))
-                .values("c")
-            ),
-        )
-        for e in qs:
-            tdata.append(
-                [
-                    Paragraph(e.name, self.stylesheet["Normal"]),
-                    str(e.c_views or 0),
-                    str(e.c_unique_viewers or 0),
-                    str(e.c_contact_requests or 0),
-                ]
-            )
-        tdata.append(
-            [
-                _("Sum"),
-                str(sum(e.c_views or 0 for e in qs)),
-                str(sum(e.c_unique_viewers or 0 for e in qs)),
-                str(sum(e.c_contact_requests or 0 for e in qs)),
-            ]
-        )
-
-        w = self.pagesize[0] - 30 * mm
-        colwidths = [0.4 * w, 0.2 * w, 0.2 * w, 0.2 * w]
-        table = Table(tdata, colWidths=colwidths, repeatRows=1)
-        table.setStyle(TableStyle(tstyledata))
-        s.append(table)
-        return s
-
     def global_sums(self):
         s = []
         tstyledata = [
@@ -519,10 +433,6 @@ class ReportGenerator:
                         token_id__isnull=False, type=User.UserType.PERSON
                     ).count()
                 ),
-            ],
-            [
-                _("Exhibitors (total)"),
-                str(self.event.exhibitors.count()),
             ],
             [
                 _(
@@ -597,7 +507,7 @@ class ReportGenerator:
                         ),
                         Paragraph(
                             "Counts the number of people currently either in a video room or live stream room."
-                            "Does not count people only watching static pages or pure-text channels.",
+                            " Does not count people only in text channels.",
                             self.stylesheet["Normal"],
                         ),
                         self._graph(fig),

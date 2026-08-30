@@ -1,3 +1,5 @@
+from urllib.parse import parse_qs, urlparse
+
 import pytest
 from django.conf import settings
 from django.core import mail as djmail
@@ -5,8 +7,8 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from django_scopes import scope
 
-from eventyay.submission.forms.submission import AUTO_DRAFT_TITLE
 from eventyay.base.models import SubmissionStates
+from eventyay.submission.forms.submission import AUTO_DRAFT_TITLE
 
 
 @pytest.mark.django_db
@@ -14,6 +16,16 @@ def test_can_see_submission_list(speaker_client, submission):
     response = speaker_client.get(submission.event.urls.user_submissions, follow=True)
     assert response.status_code == 200
     assert submission.title in response.text
+
+
+@pytest.mark.django_db
+def test_anonymous_submission_list_redirects_to_shared_login(client, event):
+    response = client.get(event.urls.user_submissions)
+
+    assert response.status_code == 302
+    parsed = urlparse(response.url)
+    assert parsed.path == reverse("auth.login")
+    assert parse_qs(parsed.query) == {"next": [str(event.urls.user_submissions)]}
 
 
 @pytest.mark.django_db
@@ -642,11 +654,32 @@ def test_can_accept_invitation(orga_client, submission):
 def test_wrong_acceptance_link(orga_client, submission):
     assert submission.speakers.count() == 1
     response = orga_client.post(
-        submission.urls.accept_invitation + "olololol", follow=True
+        submission.urls.accept_invitation + "olololol", follow=False
     )
     submission.refresh_from_db()
-    assert response.status_code == 404
+    # Now correctly returns a 302 redirect with an error message instead of 404
+    assert response.status_code == 302
     assert submission.speakers.count() == 1
+
+
+@pytest.mark.django_db
+def test_anonymous_invite_acceptance_redirect(client, submission):
+    response = client.get(submission.urls.accept_invitation, follow=False)
+    assert response.status_code == 302
+    assert "login" in response.url
+    assert "next=" in response.url
+
+
+@pytest.mark.django_db
+def test_authenticated_user_without_permission_gets_403(client, submission, event, django_user_model):
+    user = django_user_model.objects.create_user(
+        email='testuser@example.com',
+        password='password123',
+    )
+    client.force_login(user)
+    # Trying to access the submission edit page should give 403 because they are not a speaker
+    response = client.get(submission.urls.edit, follow=False)
+    assert response.status_code == 403
 
 
 @pytest.mark.django_db

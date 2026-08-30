@@ -1,4 +1,5 @@
 from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -11,11 +12,24 @@ from drf_spectacular.utils import (
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_flex_fields import is_expanded
+from eventyay.api.throttles import EventyayUserRateThrottle, PublicScheduleThrottle
 
 from eventyay.agenda.views.utils import get_schedule_exporter_content
 from eventyay.api.documentation import build_expand_docs, build_search_docs
 from eventyay.api.filters.schedule import TalkSlotFilter
-from eventyay.api.mixins import PretalxViewSetMixin
+from eventyay.api.mixins import (
+    PretalxViewSetMixin,
+    cached_json_response,
+    prefetch_talk_slots,
+)
+from eventyay.base.services.stale_cache import (
+    SCHEDULE_HOT_TTL,
+    api_locale_key,
+    get_cached_schedule_detail,
+    get_cached_talk_slots_list,
+    talk_slots_filter_key,
+)
 from eventyay.api.serializers.legacy import LegacyScheduleSerializer
 from eventyay.api.serializers.schedule import (
     ScheduleListSerializer,
@@ -26,7 +40,11 @@ from eventyay.api.serializers.schedule import (
 )
 from eventyay.base.models.schedule import Schedule
 from eventyay.base.models.slot import TalkSlot
-from eventyay.talk_rules.tracks import apply_track_limit_to_slots, user_has_track_limits
+from eventyay.talk_rules.tracks import (
+    apply_track_limit_to_slots,
+    schedule_cache_user_scope,
+    user_has_track_limits,
+)
 
 
 @extend_schema_view(
@@ -60,9 +78,11 @@ from eventyay.talk_rules.tracks import apply_track_limit_to_slots, user_has_trac
 )
 class ScheduleViewSet(PretalxViewSetMixin, viewsets.ReadOnlyModelViewSet):
     serializer_class = LegacyScheduleSerializer
+    throttle_classes = [PublicScheduleThrottle, EventyayUserRateThrottle]
     queryset = Schedule.objects.none()
     endpoint = 'schedules'
     search_fields = ('version',)
+    allow_public_read = True
     # We look up schedules by IDs, but we permit the special names "wip" and "latest"
     lookup_value_regex = '[^/]+'
     permission_map = {
@@ -87,8 +107,60 @@ class ScheduleViewSet(PretalxViewSetMixin, viewsets.ReadOnlyModelViewSet):
             return self.queryset
         current_schedule = self.event.current_schedule.pk if self.event.current_schedule else None
         if self.has_perm('release', self.event):
-            return self.event.schedules.all()
-        return self.event.schedules.filter(pk=current_schedule)
+            queryset = self.event.schedules.all()
+        else:
+            queryset = self.event.schedules.filter(pk=current_schedule)
+
+        if is_expanded(self.request, 'slots'):
+            talks = TalkSlot.objects.select_related(
+                'room',
+                'submission',
+                'submission__track',
+                'submission__submission_type',
+            )
+            expanded = [
+                field
+                for field in (
+                    'submission.speakers',
+                    'submission.resources',
+                    'submission.answers',
+                    'submission.answers.question',
+                    'submission.tags',
+                )
+                if is_expanded(self.request, f'slots.{field}')
+            ]
+            talks = prefetch_talk_slots(talks, self.event, expanded)
+            queryset = queryset.prefetch_related(Prefetch('talks', queryset=talks))
+        return queryset
+
+    def _schedule_cache_scope(self):
+        if not self.event or self.kwargs.get(self.lookup_field) == 'wip':
+            return None
+        # Orga responses include hidden slots; never share cache entries with public users.
+        if self.has_perm('orga_view', self.event):
+            return None
+        return schedule_cache_user_scope(self.event, self.request.user)
+
+    def retrieve(self, request, *args, **kwargs):
+        scope = self._schedule_cache_scope()
+        if scope is None:
+            return super().retrieve(request, *args, **kwargs)
+
+        instance = self.get_object()
+        if not instance.version:
+            return super().retrieve(request, *args, **kwargs)
+
+        expand_key = request.query_params.get('expand', '')
+        locale_key = api_locale_key(request, self.event)
+
+        def loader():
+            serializer = self.get_serializer(instance)
+            return serializer.data
+
+        data, etag = get_cached_schedule_detail(
+            self.event.pk, instance.pk, expand_key, scope, locale_key, loader
+        )
+        return cached_json_response(request, data, max_age=SCHEDULE_HOT_TTL, etag=etag)
 
     def get_object(self):
         identifier = self.kwargs.get(self.lookup_field)
@@ -266,10 +338,12 @@ class TalkSlotViewSet(
     viewsets.GenericViewSet,
 ):
     serializer_class = TalkSlotSerializer
+    throttle_classes = [PublicScheduleThrottle, EventyayUserRateThrottle]
     queryset = TalkSlot.objects.none()
     endpoint = 'slots'
     search_fields = ('submission__title', 'submission__speakers__fullname')
     filterset_class = TalkSlotFilter
+    allow_public_read = True
     permission_map = {'ical': 'schedule.view_talkslot'}
 
     @cached_property
@@ -285,21 +359,30 @@ class TalkSlotViewSet(
         if not self.event:
             return self.queryset
 
-        queryset = TalkSlot.objects.filter(schedule__event=self.event).select_related('submission', 'room', 'schedule')
+        queryset = TalkSlot.objects.filter(schedule__event=self.event).select_related(
+            'submission',
+            'submission__track',
+            'submission__submission_type',
+            'room',
+            'schedule',
+        )
         if not self.is_orga:
             queryset = (
                 queryset.filter(is_visible=True).exclude(room__deleted=True).exclude(schedule__version__isnull=True)
             )
 
-        if fields := self.check_expanded_fields(
-            'submission.speakers',
-            'submission.resources',
-            'submission.answers',
-            'submission.question',
-        ):
-            queryset = queryset.prefetch_related(*[f.replace('.', '__') for f in fields])
-        if fields := self.check_expanded_fields('submission.track', 'submission.submission_type'):
-            queryset = queryset.select_related(*[f.replace('.', '__') for f in fields])
+        expanded_fields = list(
+            self.check_expanded_fields(
+                'submission.speakers',
+                'submission.resources',
+                'submission.answers',
+                'submission.answers.question',
+                'submission.answers.question.tracks',
+                'submission.answers.question.submission_types',
+                'submission.tags',
+            )
+        )
+        queryset = prefetch_talk_slots(queryset, self.event, expanded_fields)
 
         if self.action != 'list':
             return queryset
@@ -317,6 +400,36 @@ class TalkSlotViewSet(
             queryset = apply_track_limit_to_slots(queryset, self.event, self.request.user)
 
         return queryset
+
+    def list(self, request, *args, **kwargs):
+        if self.is_orga or not self.event:
+            return super().list(request, *args, **kwargs)
+
+        user_scope = schedule_cache_user_scope(self.event, request.user)
+        expand_key = request.query_params.get('expand', '')
+        filter_key = talk_slots_filter_key(request, self.filterset_class.get_fields().keys())
+        locale_key = api_locale_key(request, self.event)
+
+        def loader():
+            queryset = self.filter_queryset(self.get_queryset())
+            paginator = self.paginator
+            if paginator is not None:
+                page = paginator.paginate_queryset(queryset, request, view=self)
+                if page is not None:
+                    serializer = self.get_serializer(page, many=True)
+                    return paginator.get_paginated_response(serializer.data).data
+            serializer = self.get_serializer(queryset, many=True)
+            return serializer.data
+
+        data, etag = get_cached_talk_slots_list(
+            self.event.pk,
+            user_scope,
+            expand_key,
+            filter_key,
+            locale_key,
+            loader,
+        )
+        return cached_json_response(request, data, max_age=SCHEDULE_HOT_TTL, etag=etag)
 
     @action(detail=True, methods=['get'])
     def ical(self, request, event, pk=None):

@@ -1,16 +1,27 @@
+import json
 from collections import OrderedDict
 from typing import List, Union
 
 from django import forms
 from django.conf import settings
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext_lazy as _
 from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
 
-from eventyay.base.forms import SecretKeySettingsField, SecretKeySettingsWidget, SettingsForm
+from eventyay.base.forms import SECRET_REDACTED, SecretKeySettingsField, SecretKeySettingsWidget, SettingsForm
 from eventyay.base.settings import EVENT_SERIES_CREATION_ENABLED, MEETUP_CREATION_ENABLED, GlobalSettingsObject
 from eventyay.base.signals import register_global_settings
+from eventyay.control.forms import ExtFileField, MultipleLanguagesWidget
+from eventyay.consts import SizeKey
+from django.core.files.uploadedfile import UploadedFile
+from eventyay.helpers.image_optimize import optimize_uploaded_image
+from django.core.files.storage import default_storage
+import os
+import logging
+from eventyay.common.forms.fields import I18nRichTextFormField
 
+
+logger = logging.getLogger(__name__)
 
 class GlobalSettingsForm(SettingsForm):
     auto_fields = ['region', 'mail_from']
@@ -45,12 +56,69 @@ class GlobalSettingsForm(SettingsForm):
         if global_settings.get('email_vendor') is None or global_settings.get('email_vendor') == '':
             self.obj.settings.set('email_vendor', 'smtp')
 
+        # Core platform footer link defaults
+        footer_defaults = {
+            'footer_link_events_enabled': True,
+            'footer_link_events_url': '/upcoming',
+            'footer_link_terms_enabled': True,
+            'footer_link_terms_url': '/terms',
+            'footer_link_privacy_enabled': True,
+            'footer_link_privacy_url': '/privacy',
+            'footer_link_pricing_enabled': True,
+            'footer_link_pricing_url': '/pricing',
+            'footer_link_documentation_enabled': True,
+            'footer_link_documentation_url': 'https://docs.eventyay.com',
+            'footer_link_support_enabled': True,
+            'footer_link_support_url': '/support',
+        }
+        for key, default_val in footer_defaults.items():
+            if global_settings.get(key) is None:
+                global_settings.set(key, default_val)
+
+        # Default page locales to English
+        if global_settings.get('page_locales') is None:
+            global_settings.set('page_locales', json.dumps(['en']))
+
     def __init__(self, *args, **kwargs):
         self.obj = GlobalSettingsObject()
         self._setting_default()
+
+        # Parse saved page locales for I18nFormMixin
+        raw_page_locales = self.obj.settings.get('page_locales')
+        if isinstance(raw_page_locales, str):
+            try:
+                page_locales = json.loads(raw_page_locales)
+            except (json.JSONDecodeError, TypeError):
+                page_locales = ['en']
+        elif isinstance(raw_page_locales, list):
+            page_locales = raw_page_locales
+        else:
+            page_locales = ['en']
+
+        # Auto-include locales with existing saved content
+        page_content_keys = [
+            'footer_page_terms_text', 'footer_page_privacy_text',
+            'footer_page_pricing_text', 'footer_page_support_text',
+        ]
+        for content_key in page_content_keys:
+            raw = self.obj.settings.get(content_key)
+            if isinstance(raw, str):
+                try:
+                    parsed = json.loads(raw)
+                except (json.JSONDecodeError, TypeError):
+                    parsed = None
+                if isinstance(parsed, dict):
+                    for lang, text in parsed.items():
+                        if text and lang not in page_locales:
+                            page_locales.append(lang)
+
+        # Inject as 'locales' so I18nFormMixin sets enabled_locales
+        self.obj.settings.set('locales', page_locales)
+        self._page_locales = page_locales
+
         super().__init__(*args, obj=self.obj, **kwargs)
 
-        smtp_select = [('sendgrid', _('SendGrid')), ('smtp', _('SMTP'))]
+        smtp_select = [('sendgrid', _('SendGrid')), ('smtp', _('SMTP')), ('gmail_api', _('Gmail / Google Workspace API'))]
 
         self.fields = OrderedDict(
             list(self.fields.items())
@@ -109,16 +177,14 @@ class GlobalSettingsForm(SettingsForm):
                 ),
                 (
                     'banner_message',
-                    I18nFormField(
-                        widget=I18nTextarea,
+                    I18nRichTextFormField(
                         required=False,
                         label=_('Global message banner'),
                     ),
                 ),
                 (
                     'banner_message_detail',
-                    I18nFormField(
-                        widget=I18nTextarea,
+                    I18nRichTextFormField(
                         required=False,
                         label=_('Global message banner detail text'),
                     ),
@@ -178,12 +244,37 @@ class GlobalSettingsForm(SettingsForm):
                 ),
                 (
                     'send_grid_api_key',
-                    forms.CharField(
+                    SecretKeySettingsField(
                         required=False,
                         label=_('Sendgrid token'),
-                        widget=forms.TextInput(attrs={
+                        widget=SecretKeySettingsWidget(attrs={
                             'placeholder': 'SG.xxxxxxxx',
                             'data-display-dependency': '#id_email_vendor_0',
+                        }),
+                    ),
+                ),
+                (
+                    'gmail_client_id',
+                    forms.CharField(
+                        required=False,
+                        label=_('Gmail OAuth client ID'),
+                        help_text=_(
+                            'Create an OAuth client in Google Cloud Console. The connect flow requests '
+                            'Gmail send and user email scopes. Use the OAuth redirect URI shown below '
+                            'as an authorized redirect URI.'
+                        ),
+                        widget=forms.TextInput(attrs={
+                            'data-display-dependency': '#id_email_vendor_2',
+                        }),
+                    ),
+                ),
+                (
+                    'gmail_client_secret',
+                    SecretKeySettingsField(
+                        required=False,
+                        label=_('Gmail OAuth client secret'),
+                        widget=SecretKeySettingsWidget(attrs={
+                            'data-display-dependency': '#id_email_vendor_2',
                         }),
                     ),
                 ),
@@ -366,7 +457,7 @@ class GlobalSettingsForm(SettingsForm):
                         decimal_places=2,
                         max_digits=10,
                         help_text=_('Percentage fee charged on ticket payments.'),
-                        validators=[MinValueValidator(0)],
+                        validators=[MinValueValidator(0), MaxValueValidator(100)],
                     ),
                 ),
                 (
@@ -424,7 +515,7 @@ class GlobalSettingsForm(SettingsForm):
                         decimal_places=2,
                         max_digits=10,
                         help_text=_('A percentage fee will be charged for each ticket sold.'),
-                        validators=[MinValueValidator(0)],
+                        validators=[MinValueValidator(0), MaxValueValidator(100)],
                     ),
                 ),
                 (
@@ -499,18 +590,169 @@ class GlobalSettingsForm(SettingsForm):
                         required=True,
                     ),
                 ),
+                # Core platform footer links
+                (
+                    'footer_link_events_enabled',
+                    forms.BooleanField(
+                        label=_('Show "Events" footer link'),
+                        required=False,
+                    ),
+                ),
+                (
+                    'footer_link_events_url',
+                    forms.CharField(
+                        label=_('"Events" link URL'),
+                        required=False,
+                    ),
+                ),
+                (
+                    'footer_link_terms_enabled',
+                    forms.BooleanField(
+                        label=_('Show "Terms" footer link'),
+                        required=False,
+                    ),
+                ),
+                (
+                    'footer_link_terms_url',
+                    forms.CharField(
+                        label=_('"Terms" link URL'),
+                        required=False,
+                    ),
+                ),
+                (
+                    'footer_link_privacy_enabled',
+                    forms.BooleanField(
+                        label=_('Show "Privacy" footer link'),
+                        required=False,
+                    ),
+                ),
+                (
+                    'footer_link_privacy_url',
+                    forms.CharField(
+                        label=_('"Privacy" link URL'),
+                        required=False,
+                    ),
+                ),
+                (
+                    'footer_link_pricing_enabled',
+                    forms.BooleanField(
+                        label=_('Show "Pricing" footer link'),
+                        required=False,
+                    ),
+                ),
+                (
+                    'footer_link_pricing_url',
+                    forms.CharField(
+                        label=_('"Pricing" link URL'),
+                        required=False,
+                    ),
+                ),
+                (
+                    'footer_link_documentation_enabled',
+                    forms.BooleanField(
+                        label=_('Show "Documentation" footer link'),
+                        required=False,
+                    ),
+                ),
+                (
+                    'footer_link_documentation_url',
+                    forms.CharField(
+                        label=_('"Documentation" link URL'),
+                        required=False,
+                    ),
+                ),
+                (
+                    'footer_link_support_enabled',
+                    forms.BooleanField(
+                        label=_('Show "Support" footer link'),
+                        required=False,
+                    ),
+                ),
+                (
+                    'footer_link_support_url',
+                    forms.CharField(
+                        label=_('"Support" link URL'),
+                        required=False,
+                    ),
+                ),
+                # Page rich text content fields
+                (
+                    'footer_page_terms_text',
+                    I18nRichTextFormField(
+                        required=False,
+                        label=_('"Terms of Service" page content'),
+                        help_text=_('Rich text content for the /terms page.'),
+                    ),
+                ),
+                (
+                    'footer_page_privacy_text',
+                    I18nRichTextFormField(
+                        required=False,
+                        label=_('"Privacy Policy" page content'),
+                        help_text=_('Rich text content for the /privacy page.'),
+                    ),
+                ),
+                (
+                    'footer_page_pricing_text',
+                    I18nRichTextFormField(
+                        required=False,
+                        label=_('"Pricing" page content'),
+                        help_text=_('Rich text content for the /pricing page.'),
+                    ),
+                ),
+                (
+                    'footer_page_support_text',
+                    I18nRichTextFormField(
+                        required=False,
+                        label=_('"Support" page content'),
+                        help_text=_('Rich text content for the /support page.'),
+                    ),
+                ),
             ]
         )
+
+        # Page language selector
+        self.fields['page_locales'] = forms.MultipleChoiceField(
+            choices=settings.LANGUAGES,
+            widget=MultipleLanguagesWidget,
+            required=True,
+            label=_('Page languages'),
+            help_text=_(
+                'Select the languages for page content (Terms, Privacy, Pricing, Support). '
+                'Only selected languages will be shown for editing.'
+            ),
+        )
+        self.initial['page_locales'] = self._page_locales
 
         self.field_groups = [
             ('basics', _('Basics'), [
                 'footer_text', 'footer_link', 'banner_message', 'banner_message_detail',
+            ]),
+            ('pages', _('Pages'), [
+                'page_locales',
+                'footer_link_events_enabled',
+                'footer_link_events_url',
+                'footer_link_terms_enabled',
+                'footer_link_terms_url',
+                'footer_page_terms_text',
+                'footer_link_privacy_enabled',
+                'footer_link_privacy_url',
+                'footer_page_privacy_text',
+                'footer_link_pricing_enabled',
+                'footer_link_pricing_url',
+                'footer_page_pricing_text',
+                'footer_link_documentation_enabled',
+                'footer_link_documentation_url',
+                'footer_link_support_enabled',
+                'footer_link_support_url',
+                'footer_page_support_text',
             ]),
             ('localization', _('Localization'), [
                 'region',
             ]),
             ('email', _('Email'), [
                 'mail_from', 'email_vendor', 'send_grid_api_key',
+                'gmail_client_id', 'gmail_client_secret',
                 'smtp_host', 'smtp_port', 'smtp_username', 'smtp_password',
                 'smtp_use_tls', 'smtp_use_ssl',
             ]),
@@ -566,7 +808,36 @@ class GlobalSettingsForm(SettingsForm):
             ]),
         ]
 
+        if 'interpretation' in settings.INSTALLED_APPS:
+            self.field_groups.append(
+                ('voxbento', _('VoxBento'), [
+                    'voxbento_base_url',
+                    'voxbento_client_id',
+                    'voxbento_client_secret',
+                ])
+            )
+
+        if 'hubspot' in settings.INSTALLED_APPS:
+            self.field_groups.append(
+                ('hubspot', _('HubSpot'), [
+                    'hubspot_client_id',
+                    'hubspot_client_secret',
+                    'hubspot_property_sync_ttl_minutes',
+                ])
+            )
+
+
+
+    def clean_voxbento_base_url(self):
+        url = (self.cleaned_data.get('voxbento_base_url') or '').strip()
+        if url:
+            if url.endswith('/'):
+                url = url[:-1]
+            if not url.startswith('http://') and not url.startswith('https://'):
+                url = 'https://' + url
+        return url
     def clean_etherpad_pad_name_pattern(self):
+
         pattern = (self.cleaned_data.get('etherpad_pad_name_pattern') or '').strip()
         if pattern and '{submission}' not in pattern and '{token}' not in pattern:
             raise forms.ValidationError(
@@ -581,10 +852,36 @@ class GlobalSettingsForm(SettingsForm):
         if data.get('email_vendor') == 'sendgrid':
             if not data.get('send_grid_api_key'):
                 raise forms.ValidationError({'send_grid_api_key': _('This field is required when using SendGrid as email vendor.')})
+        if data.get('email_vendor') == 'gmail_api':
+            if not (data.get('gmail_client_id') or '').strip():
+                raise forms.ValidationError({'gmail_client_id': _('This field is required when using Gmail as email vendor.')})
+            secret = data.get('gmail_client_secret')
+            has_secret = (
+                secret == SECRET_REDACTED
+                or bool((secret or '').strip())
+                or self.obj.settings.get('gmail_client_secret')
+            )
+            if not has_secret:
+                raise forms.ValidationError({'gmail_client_secret': _('This field is required when using Gmail as email vendor.')})
 
 
 
         return data
+
+    def save(self):
+        # Persist page_locales as JSON string
+        page_locales = self.cleaned_data.get('page_locales', ['en'])
+        self.obj.settings.set('page_locales', json.dumps(page_locales))
+
+        # Remove temporary 'locales' key before base save
+        self.cleaned_data.pop('locales', None)
+        super().save()
+
+        # Clean up temporary 'locales' setting
+        try:
+            del self.obj.settings['locales']
+        except KeyError:
+            pass
 
 
 class UpdateSettingsForm(SettingsForm):
@@ -656,7 +953,85 @@ class SSOConfigForm(SettingsForm):
 
 
 class StartPageSettingsForm(SettingsForm):
-    auto_fields = ['startpage_header_image', 'startpage_header_text']
+    auto_fields = ['startpage_header_image']
+
+    startpage_header_text = I18nRichTextFormField(
+        required=False,
+        label=_('Startpage Header Text'),
+        help_text=_('e.g. {sample}').format(sample='Welcome to our event platform!'),
+    )
+    
+    startpage_show_hero = forms.BooleanField(
+        required=False,
+        label=_('Show hero section'),
+        help_text=_('Enable the hero section at the top of the start page.')
+    )
+    startpage_hero_title = I18nFormField(
+        required=False,
+        label=_('Hero Title'),
+        widget=I18nTextInput,
+        help_text=_('e.g. {sample}').format(sample='Eventyay – Open Source Event Management Platform'),
+    )
+    startpage_hero_text = I18nFormField(
+        required=False,
+        label=_('Hero Text'),
+        widget=I18nTextarea,
+        help_text=_('e.g. {sample}').format(sample='The comprehensive platform for all your event needs. Ticketing, Call for Speakers, Scheduling, Check-in, and more.'),
+    )
+
+    startpage_show_features = forms.BooleanField(
+        required=False,
+        label=_('Show feature boxes'),
+        help_text=_('Enable the feature boxes section on the start page.')
+    )
+    startpage_feature_1_title = I18nFormField(
+        required=False,
+        label=_('Feature 1 Title'),
+        widget=I18nTextInput,
+        help_text=_('e.g. {sample}').format(sample='Ticketing'),
+    )
+    startpage_feature_1_text = I18nFormField(
+        required=False,
+        label=_('Feature 1 Text'),
+        widget=I18nTextarea,
+        help_text=_('e.g. {sample}').format(sample='Sell tickets, manage orders, and handle check-ins effortlessly.'),
+    )
+    startpage_feature_2_title = I18nFormField(
+        required=False,
+        label=_('Feature 2 Title'),
+        widget=I18nTextInput,
+        help_text=_('e.g. {sample}').format(sample='Call for Speakers'),
+    )
+    startpage_feature_2_text = I18nFormField(
+        required=False,
+        label=_('Feature 2 Text'),
+        widget=I18nTextarea,
+        help_text=_('e.g. {sample}').format(sample='Accept submissions, review proposals, and build your schedule.'),
+    )
+    startpage_feature_3_title = I18nFormField(
+        required=False,
+        label=_('Feature 3 Title'),
+        widget=I18nTextInput,
+        help_text=_('e.g. {sample}').format(sample='Schedules'),
+    )
+    startpage_feature_3_text = I18nFormField(
+        required=False,
+        label=_('Feature 3 Text'),
+        widget=I18nTextarea,
+        help_text=_('e.g. {sample}').format(sample='Create interactive schedules and allow attendees to plan their visit.'),
+    )
+    startpage_feature_4_title = I18nFormField(
+        required=False,
+        label=_('Feature 4 Title'),
+        widget=I18nTextInput,
+        help_text=_('e.g. {sample}').format(sample='Open Source'),
+    )
+    startpage_feature_4_text = I18nFormField(
+        required=False,
+        label=_('Feature 4 Text'),
+        widget=I18nTextarea,
+        help_text=_('e.g. {sample}').format(sample='Built on open source technology. Fully customizable and transparent.'),
+    )
 
     def __init__(self, *args, **kwargs):
         self.obj = GlobalSettingsObject()
@@ -701,3 +1076,58 @@ class StripeKeyValidator:
                 }
 
             raise forms.ValidationError(message, code='invalid-stripe-key', params=params)
+
+
+class MetaDataSettingsForm(SettingsForm):
+    auto_fields = [
+        'seo_homepage_title',
+        'seo_homepage_description',
+        'seo_og_title',
+        'seo_og_description',
+        'seo_twitter_title',
+        'seo_twitter_description',
+        'seo_fallback_text',
+    ]
+
+    seo_social_image = ExtFileField(
+        label=_('Social preview image'),
+        ext_whitelist=('.png', '.jpg', '.gif', '.jpeg', '.webp'),
+        max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
+        required=False,
+        help_text=_(
+            'This image is used for Open Graph and Twitter cards. '
+            'We recommend an image 1200 px wide and 630 px in height.'
+        ),
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.obj = GlobalSettingsObject()
+        super().__init__(*args, obj=self.obj, **kwargs)
+        for name, field in self.fields.items():
+            if isinstance(field.widget, forms.ClearableFileInput):
+                field.widget.attrs['data-eventyay-file-wrapper'] = 'disabled'
+                field.widget.attrs['data-event-settings-image-tools'] = 'enabled'
+
+    def save(self):
+        image_field = 'seo_social_image'
+        current_value = self.obj.settings.get(image_field, as_type=str, default='') or ''
+        new_value = self.cleaned_data.get(image_field)
+        
+        # Simplified storage logic
+        if isinstance(new_value, UploadedFile):
+            from eventyay.common.urls import get_file_url_path
+            current_file = get_file_url_path(current_value)
+            if current_file:
+                default_storage.delete(current_file)
+            
+            clean_name, ext = os.path.splitext(new_value.name or image_field)
+            new_filename = self.get_new_filename(clean_name)
+            base_path, _ = os.path.splitext(new_filename)
+            optimized_name = f'{base_path}{ext}'
+            try:
+                optimized_path = default_storage.save(optimized_name, new_value)
+                self.cleaned_data[image_field] = f"file://{optimized_path}"
+            except OSError:
+                logger.exception('Could not store original image for %s', image_field)
+
+        return super().save()

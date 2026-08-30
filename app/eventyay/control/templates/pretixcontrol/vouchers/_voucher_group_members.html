@@ -1,0 +1,16 @@
+{% load i18n %}
+{% for member in members %}
+    {% include 'pretixcontrol/vouchers/_voucher_row.html' with v=member row_class='voucher-group-member hidden' group_id=group_id %}
+{% endfor %}
+{% if next_members_url %}
+    <tr class="voucher-group-load-more hidden" data-voucher-group-load-more="{{ group_id }}">
+        <td colspan="{% if request.event.has_subevents %}8{% else %}7{% endif %}" class="text-center">
+            <button type="button"
+                    class="btn btn-default btn-sm"
+                    data-voucher-group-load-more-button
+                    data-voucher-group-members-url="{{ next_members_url }}">
+                {% trans "Load more vouchers" %}
+            </button>
+        </td>
+    </tr>
+{% endif %}

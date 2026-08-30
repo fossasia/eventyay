@@ -1,8 +1,12 @@
+import datetime as dt
+
 import pytest
 from django.core import mail as djmail
+from django.utils.timezone import now
 from django_scopes import scope
 
 from eventyay.base.models import MailTemplate, MailTemplateRoles, QueuedMail
+from eventyay.orga.forms.mails import MailDetailForm
 
 
 @pytest.mark.django_db
@@ -354,12 +358,15 @@ def test_orga_can_delete_template(orga_client, event, mail_template):
 
 
 @pytest.mark.django_db
-def test_orga_can_compose_single_mail_team(orga_client, review_user, event):
+def test_orga_can_compose_single_mail_team(orga_user, orga_client, review_user, event):
     response = orga_client.get(
         event.orga_urls.compose_mails_teams,
         follow=True,
     )
     assert response.status_code == 200
+    assert "Reviewer and team member emails are sent directly and are not placed in the outbox first." in response.text
+    assert "They will appear in the Sent email list after sending." in response.text
+    assert "They also do not show up in the list of sent mails." not in response.text
     djmail.outbox = []
     with scope(event=event):
         assert QueuedMail.objects.filter(sent__isnull=False).count() == 0
@@ -373,12 +380,32 @@ def test_orga_can_compose_single_mail_team(orga_client, review_user, event):
         },
     )
     assert response.status_code == 200
+    assert response.redirect_chain[-1][0] == event.orga_urls.sent_mails
     with scope(event=event):
-        assert QueuedMail.objects.filter(sent__isnull=False).count() == 0
+        sent_mails = QueuedMail.objects.filter(sent__isnull=False)
+        assert sent_mails.count() == 1
+        saved_mail = sent_mails.first()
+        assert saved_mail.subject == f"foo {review_user.fullname}"
+        assert saved_mail.text == f"bar {review_user.fullname}"
+        assert review_user in saved_mail.to_users.all()
         assert len(djmail.outbox) == 1
         mail = djmail.outbox[0]
         assert mail.subject == f"foo {review_user.fullname}"
         assert mail.body == f"bar {review_user.fullname}"
+        action = saved_mail.logged_actions().filter(action_type="eventyay.mail.sent").first()
+        assert action is not None
+        assert action.person == orga_user
+
+    # Verify that the sent reviewer email appears in the sent list view
+    sent_list_response = orga_client.get(event.orga_urls.sent_mails)
+    assert sent_list_response.status_code == 200
+    assert f"foo {review_user.fullname}" in sent_list_response.text
+
+    # Verify that the sent reviewer email can be viewed in the mail detail view
+    detail_response = orga_client.get(saved_mail.urls.base)
+    assert detail_response.status_code == 200
+    assert f"foo {review_user.fullname}" in detail_response.text
+    assert f"bar {review_user.fullname}" in detail_response.text
 
 
 @pytest.mark.django_db
@@ -400,12 +427,69 @@ def test_orga_can_compose_single_mail_team_by_pk(
         },
     )
     assert response.status_code == 200
+    assert response.redirect_chain[-1][0] == event.orga_urls.sent_mails
     with scope(event=event):
-        assert QueuedMail.objects.filter(sent__isnull=False).count() == 0
+        assert QueuedMail.objects.filter(sent__isnull=False).count() == 2
         assert len(djmail.outbox) == 2
         for user in (orga_user, review_user):
             mail = [m for m in djmail.outbox if m.subject == f"foo {user.fullname}"][0]
             assert mail.body == f"bar {user.email}"
+            saved_mail = QueuedMail.objects.filter(to_users=user).first()
+            assert saved_mail is not None
+            assert saved_mail.sent is not None
+            assert saved_mail.subject == f"foo {user.fullname}"
+            assert saved_mail.text == f"bar {user.email}"
+            action = saved_mail.logged_actions().filter(action_type="eventyay.mail.sent").first()
+            assert action is not None
+            assert action.person == orga_user
+
+
+@pytest.mark.django_db
+def test_orga_can_compose_team_mail_default_all_teams(
+    orga_user, orga_client, review_user, event
+):
+    team = orga_user.teams.first()
+    assert team in event.teams.all()
+    djmail.outbox = []
+    with scope(event=event):
+        assert QueuedMail.objects.filter(sent__isnull=False).count() == 0
+
+    # Test preview without selecting any recipient group
+    preview_response = orga_client.post(
+        event.orga_urls.compose_mails_teams,
+        follow=True,
+        data={
+            "action": "preview",
+            "subject_0": "foo {name}",
+            "text_0": "bar {email}",
+        },
+    )
+    assert preview_response.status_code == 200
+    assert "There are no recipients matching this selection." not in preview_response.text
+
+    # Test sending without selecting any recipient group
+    response = orga_client.post(
+        event.orga_urls.compose_mails_teams,
+        follow=True,
+        data={
+            "subject_0": "foo {name}",
+            "text_0": "bar {email}",
+        },
+    )
+    assert response.status_code == 200
+    assert response.redirect_chain[-1][0] == event.orga_urls.sent_mails
+    with scope(event=event):
+        assert QueuedMail.objects.filter(sent__isnull=False).count() == 2
+        assert len(djmail.outbox) == 2
+        for user in (orga_user, review_user):
+            saved_mail = QueuedMail.objects.filter(to_users=user).first()
+            assert saved_mail is not None
+            assert saved_mail.sent is not None
+            assert saved_mail.subject == f"foo {user.fullname}"
+            assert saved_mail.text == f"bar {user.email}"
+            action = saved_mail.logged_actions().filter(action_type="eventyay.mail.sent").first()
+            assert action is not None
+            assert action.person == orga_user
 
 
 @pytest.mark.django_db
@@ -809,3 +893,220 @@ def test_mail_template_list_hides_auto_created_templates(orga_client, event, mai
     assert response.status_code == 200
     assert 'Hidden duplicate' not in response.text
     assert str(mail_template.subject) in response.text
+
+
+@pytest.mark.django_db
+def test_orga_can_see_session_mail_recipients(orga_client, event, speaker, submission):
+    response = orga_client.get(
+        event.orga_urls.compose_mails_sessions_recipients,
+        follow=True,
+    )
+    assert response.status_code == 200
+    content = response.json()
+    assert content["count"] == 1
+    assert content["recipients"][0]["email"] == speaker.email
+    assert content["recipients"][0]["submissions"][0]["title"] == submission.title
+
+
+@pytest.mark.django_db
+def test_session_mail_recipients_follow_the_state_filter(
+    orga_client, event, submission
+):
+    matching = orga_client.get(
+        event.orga_urls.compose_mails_sessions_recipients,
+        {"state": submission.state},
+        follow=True,
+    )
+    assert matching.json()["count"] == 1
+
+    other = orga_client.get(
+        event.orga_urls.compose_mails_sessions_recipients,
+        {"state": "rejected"},
+        follow=True,
+    )
+    assert other.json()["count"] == 0
+    assert other.json()["recipients"] == []
+
+
+@pytest.mark.django_db
+def test_reviewer_cannot_see_session_mail_recipients(review_client, event, submission):
+    # EventPermissionRequired refuses a login redirect and raises Http404 instead.
+    response = review_client.get(event.orga_urls.compose_mails_sessions_recipients)
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_orga_can_save_session_mail_draft(orga_client, event, speaker, submission):
+    djmail.outbox = []
+    response = orga_client.post(
+        event.orga_urls.compose_mails_sessions,
+        follow=True,
+        data={
+            "action": "draft",
+            # Saving a draft must win over an immediate send.
+            "skip_queue": "on",
+            "state": submission.state,
+            "bcc": "",
+            "reply_to": "",
+            "subject_0": "draft subject",
+            "text_0": "draft body",
+        },
+    )
+    assert response.status_code == 200
+    with scope(event=event):
+        mails = QueuedMail.objects.all()
+        assert mails.count() == 1
+        assert mails.first().subject == "draft subject"
+        assert mails.first().sent is None
+        assert mails.first().is_draft is True
+    assert djmail.outbox == []
+
+
+@pytest.mark.django_db
+def test_session_mail_draft_drops_its_send_time(orga_client, event, speaker, submission):
+    # A draft is never dispatched, so a send time left in the form must not
+    # survive the save and schedule the mail behind the organiser's back.
+    djmail.outbox = []
+    scheduled_at = now() + dt.timedelta(days=1)
+    response = orga_client.post(
+        event.orga_urls.compose_mails_sessions,
+        follow=True,
+        data={
+            "action": "draft",
+            "scheduled_at_0": f"{scheduled_at:%Y-%m-%d}",
+            "scheduled_at_1": f"{scheduled_at:%H:%M}",
+            "state": submission.state,
+            "bcc": "",
+            "reply_to": "",
+            "subject_0": "draft subject",
+            "text_0": "draft body",
+        },
+    )
+    assert response.status_code == 200
+    with scope(event=event):
+        draft = QueuedMail.objects.get()
+        assert draft.is_draft is True
+        assert draft.scheduled_at is None
+        assert draft.sent is None
+    assert djmail.outbox == []
+
+
+@pytest.mark.django_db
+def test_teams_mail_cannot_be_saved_as_a_draft(orga_client, review_user, event):
+    # WriteTeamsMailForm sends as it builds, so a draft action there would send
+    # the mail while reporting that it had been saved.
+    djmail.outbox = []
+    response = orga_client.post(
+        event.orga_urls.compose_mails_teams,
+        follow=True,
+        data={
+            "action": "draft",
+            "recipients": f"{review_user.teams.first().pk}",
+            "subject_0": "draft subject",
+            "text_0": "draft body",
+        },
+    )
+    assert response.status_code == 200
+    assert djmail.outbox == []
+    with scope(event=event):
+        assert QueuedMail.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_teams_composer_offers_no_draft_button(orga_client, event):
+    response = orga_client.get(event.orga_urls.compose_mails_teams, follow=True)
+    assert response.status_code == 200
+    assert 'value="draft"' not in response.text
+
+
+@pytest.mark.django_db
+def test_drafts_are_not_listed_or_sent_with_the_outbox(orga_client, event, mail):
+    with scope(event=event):
+        mail.is_draft = True
+        mail.save()
+
+    outbox = orga_client.get(event.orga_urls.outbox, follow=True)
+    assert outbox.status_code == 200
+    assert mail.subject not in outbox.text
+
+    drafts = orga_client.get(event.orga_urls.drafts, follow=True)
+    assert drafts.status_code == 200
+    assert mail.subject in drafts.text
+
+    djmail.outbox = []
+    orga_client.post(event.orga_urls.send_outbox, follow=True)
+    with scope(event=event):
+        mail.refresh_from_db()
+        assert mail.sent is None
+    assert djmail.outbox == []
+
+
+@pytest.mark.django_db
+def test_orga_can_send_session_test_mail(orga_client, event, speaker, submission):
+    djmail.outbox = []
+    response = orga_client.post(
+        event.orga_urls.compose_mails_sessions,
+        follow=True,
+        data={
+            "action": "test",
+            "test_email": "tester@example.org",
+            "state": submission.state,
+            "bcc": "",
+            "reply_to": "",
+            "subject_0": "test subject",
+            "text_0": "test body",
+        },
+    )
+    assert response.status_code == 200
+    assert len(djmail.outbox) == 1
+    assert djmail.outbox[0].to == ["tester@example.org"]
+    with scope(event=event):
+        assert QueuedMail.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_session_test_mail_requires_an_address(orga_client, event, submission):
+    djmail.outbox = []
+    response = orga_client.post(
+        event.orga_urls.compose_mails_sessions,
+        follow=True,
+        data={
+            "action": "test",
+            "test_email": "",
+            "state": submission.state,
+            "bcc": "",
+            "reply_to": "",
+            "subject_0": "test subject",
+            "text_0": "test body",
+        },
+    )
+    assert response.status_code == 200
+    assert djmail.outbox == []
+    with scope(event=event):
+        assert QueuedMail.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_orga_can_move_a_draft_to_the_outbox(orga_client, event, mail):
+    with scope(event=event):
+        mail.is_draft = True
+        mail.save()
+
+    response = orga_client.post(mail.urls.to_outbox, follow=True)
+    assert response.status_code == 200
+    with scope(event=event):
+        mail.refresh_from_db()
+        assert mail.is_draft is False
+        assert mail.sent is None
+
+    outbox = orga_client.get(event.orga_urls.outbox, follow=True)
+    assert mail.subject in outbox.text
+
+
+@pytest.mark.django_db
+def test_mail_detail_form_preserves_external_historical_to_users(event, mail, other_speaker):
+    with scope(event=event):
+        mail.to_users.add(other_speaker)
+        form = MailDetailForm(instance=mail)
+        assert other_speaker in form.fields['to_users'].queryset
+

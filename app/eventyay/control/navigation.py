@@ -3,6 +3,7 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 
+from eventyay.base.meetup import is_meetup_event
 from eventyay.control.checkin_app import get_eventyay_checkin_app_url, user_can_open_checkin_app
 from eventyay.control.signals import (
     nav_event,
@@ -124,7 +125,7 @@ def get_event_navigation(request: HttpRequest):
         )
         nav.append(
             {
-                'label': _('Ticket settings'),
+                'label': _('Registration settings') if is_meetup_event(request.event) else _('Ticket settings'),
                 'url': reverse(
                     'control:event.settings',
                     kwargs={
@@ -228,87 +229,97 @@ def get_event_navigation(request: HttpRequest):
             }
         )
 
+    children = []
     if 'can_view_orders' in request.eventpermset:
-        children = [
-            {
-                'label': _('Overview'),
-                'url': reverse(
-                    'control:event.orders.overview',
-                    kwargs={
-                        'event': request.event.slug,
-                        'organizer': request.event.organizer.slug,
-                    },
-                ),
-                'active': 'event.orders.overview' in url.url_name,
-            },
-            {
-                'label': _('All orders'),
-                'url': reverse(
-                    'control:event.orders',
-                    kwargs={
-                        'event': request.event.slug,
-                        'organizer': request.event.organizer.slug,
-                    },
-                ),
-                'active': url.url_name in ('event.orders', 'event.order', 'event.orders.search')
-                or 'event.order.' in url.url_name,
-            },
-            {
-                'label': _('Waiting list'),
-                'url': reverse(
-                    'control:event.orders.waitinglist',
-                    kwargs={
-                        'event': request.event.slug,
-                        'organizer': request.event.organizer.slug,
-                    },
-                ),
-                'active': 'event.orders.waitinglist' in url.url_name,
-            },
-            {
-                'label': _('Refunds'),
-                'url': reverse(
-                    'control:event.orders.refunds',
-                    kwargs={
-                        'event': request.event.slug,
-                        'organizer': request.event.organizer.slug,
-                    },
-                ),
-                'active': 'event.orders.refunds' in url.url_name,
-            },
-        ]
-        if 'can_change_orders' in request.eventpermset:
-            children.append(
+        children.extend(
+            [
                 {
-                    'label': _('Import'),
+                    'label': _('Overview'),
                     'url': reverse(
-                        'control:event.orders.import',
+                        'control:event.orders.overview',
                         kwargs={
                             'event': request.event.slug,
                             'organizer': request.event.organizer.slug,
                         },
                     ),
-                    'active': 'event.orders.import' in url.url_name,
-                }
-            )
+                    'active': 'event.orders.overview' in url.url_name,
+                },
+                {
+                    'label': _('All orders'),
+                    'url': reverse(
+                        'control:event.orders',
+                        kwargs={
+                            'event': request.event.slug,
+                            'organizer': request.event.organizer.slug,
+                        },
+                    ),
+                    'active': url.url_name in ('event.orders', 'event.order', 'event.orders.search')
+                    or 'event.order.' in url.url_name,
+                },
+                {
+                    'label': _('Waiting list'),
+                    'url': reverse(
+                        'control:event.orders.waitinglist',
+                        kwargs={
+                            'event': request.event.slug,
+                            'organizer': request.event.organizer.slug,
+                        },
+                    ),
+                    'active': 'event.orders.waitinglist' in url.url_name,
+                },
+                {
+                    'label': _('Refunds'),
+                    'url': reverse(
+                        'control:event.orders.refunds',
+                        kwargs={
+                            'event': request.event.slug,
+                            'organizer': request.event.organizer.slug,
+                        },
+                    ),
+                    'active': 'event.orders.refunds' in url.url_name,
+                },
+            ]
+        )
+
+    has_banktransfer = (
+        'eventyay.plugins.banktransfer' in request.event.get_plugins()
+        and 'can_manage_bank_transfers' in request.eventpermset
+    )
+    if 'can_view_orders' in request.eventpermset or 'can_change_orders' in request.eventpermset or has_banktransfer:
         children.append(
             {
-                'label': _('Export'),
+                'label': _('Import / Export'),
                 'url': reverse(
-                    'control:event.orders.export',
+                    'control:event.orders.import_export',
                     kwargs={
                         'event': request.event.slug,
                         'organizer': request.event.organizer.slug,
                     },
                 ),
-                'active': 'event.orders.export' in url.url_name,
+                'active': (
+                    'event.orders.import_export' in url.url_name
+                    or 'event.orders.export' in url.url_name
+                    or 'event.orders.import' in url.url_name
+                    or (url.namespace == 'plugins:banktransfer' and url.url_name in ('import', 'refunds.list', 'import.job'))
+                ),
             }
         )
-        
+
+    if children:
+        parent_url = children[0]['url']
+        if 'can_view_orders' in request.eventpermset:
+            parent_url = reverse(
+                'control:event.orders',
+                kwargs={
+                    'event': request.event.slug,
+                    'organizer': request.event.organizer.slug,
+                },
+            )
         nav.append(
             {
                 'label': _('Orders'),
                 'url': reverse(
-                    'control:event.orders',
+                    'control:event.orders.overview',
                     kwargs={
                         'event': request.event.slug,
                         'organizer': request.event.organizer.slug,
@@ -516,9 +527,29 @@ def get_admin_navigation(request):
                     'active': (url.url_name == 'admin.global.settings'),
                 },
                 {
+                    'label': _('System information'),
+                    'url': reverse('eventyay_admin:admin.config'),
+                    'active': 'config' in url.url_name,
+                },
+                {
+                    'label': _('Pages'),
+                    'url': reverse('eventyay_admin:admin.pages'),
+                    'active': 'pages' in url.url_name,
+                },
+                {
+                    'label': _('Start page'),
+                    'url': reverse('eventyay_admin:admin.startpage'),
+                    'active': (url.url_name == 'admin.startpage'),
+                },
+                {
                     'label': _('Update check'),
                     'url': reverse('eventyay_admin:admin.global.update'),
                     'active': (url.url_name == 'admin.global.update'),
+                },
+                {
+                    'label': _('Meta data'),
+                    'url': reverse('eventyay_admin:admin.global.metadata'),
+                    'active': (url.url_name == 'admin.global.metadata'),
                 },
                 {
                     'label': _('Generate keys for SSO'),
@@ -530,93 +561,125 @@ def get_admin_navigation(request):
                     'url': reverse('plugins:socialauth:admin.global.social.auth.settings'),
                     'active': (url.url_name == 'admin.global.social.auth.settings'),
                 },
+                {
+                    'label': _('Plugins'),
+                    'url': reverse('eventyay_admin:admin.global.plugins'),
+                    'active': (url.url_name == 'admin.global.plugins'),
+                },
             ],
         },
         {
-            'label': _('System information'),
-            'url': reverse('eventyay_admin:admin.config'),
-            'active': 'config' in url.url_name,
-            'icon': 'cog',
+            'label': _('Task management'),
+            'url': reverse('eventyay_admin:admin.task_management'),
+            'active': 'task_management' in url.url_name,
+            'icon': 'tasks',
         },
     ]
 
-    # --- Inject Video Admin navigation (now part of admin sidebar) -------------
-    if request.user.is_authenticated and request.user.is_staff:
-        path = request.path.rstrip('/')
-        video_root = '/admin/video'
-        def is_active(prefix, exact=False):
-            if exact:
-                return path == prefix.rstrip('/')
-            return path == prefix.rstrip('/') or path.startswith(prefix.rstrip('/') + '/')
+    # --- Inject Video navigation (now part of admin sidebar) ------------------
+    user = request.user
+    if user.is_authenticated and user.is_staff:
+        is_video_route = 'video_admin' in url.namespaces
         video_children = [
             {
-                'label': _('Dashboard'),
-                'url': reverse('eventyay_admin:video_admin:index'),
-                'active': is_active('/admin/video', exact=True),
+                'label': _('Video settings'),
+                'url': reverse('eventyay_admin:video_admin:settings'),
+                'active': is_video_route and (
+                    url.url_name == 'settings' or
+                    url.url_name.startswith('bbbserver.') or
+                    url.url_name.startswith('janusserver.') or
+                    url.url_name.startswith('jitsiserver.') or
+                    url.url_name.startswith('turnserver.') or
+                    url.url_name.startswith('streamingserver.') or
+                    url.url_name == 'server.toggle-active'
+                ),
             },
             {
                 'label': _('Events'),
                 'url': reverse('eventyay_admin:video_admin:event.list'),
-                'active': is_active('/admin/video/events'),
-            },
-            {
-                'label': _('BBB servers'),
-                'url': reverse('eventyay_admin:video_admin:bbbserver.list'),
-                'active': is_active('/admin/video/bbbs') and 'moveroom' not in path,
-            },
-            {
-                'label': _('Move BBB room'),
-                'url': reverse('eventyay_admin:video_admin:bbbserver.moveroom'),
-                'active': is_active('/admin/video/bbbs/moveroom', exact=True),
-            },
-            {
-                'label': _('Janus servers'),
-                'url': reverse('eventyay_admin:video_admin:janusserver.list'),
-                'active': is_active('/admin/video/janus'),
-            },
-            {
-                'label': _('TURN servers'),
-                'url': reverse('eventyay_admin:video_admin:turnserver.list'),
-                'active': is_active('/admin/video/turns'),
-            },
-            {
-                'label': _('Streaming servers'),
-                'url': reverse('eventyay_admin:video_admin:streamingserver.list'),
-                'active': is_active('/admin/video/streamingservers'),
+                'active': is_video_route and url.url_name.startswith('event.'),
             },
             {
                 'label': _('Streamkey generator'),
                 'url': reverse('eventyay_admin:video_admin:streamkey'),
-                'active': is_active('/admin/video/streamkey', exact=True),
+                'active': is_video_route and url.url_name == 'streamkey',
             },
             {
                 'label': _('System log'),
                 'url': reverse('eventyay_admin:video_admin:systemlog.list'),
-                'active': is_active('/admin/video/systemlog'),
+                'active': is_video_route and url.url_name.startswith('systemlog.'),
             },
-            {
-                'label': _('Conftool posters'),
-                'url': reverse('eventyay_admin:video_admin:conftool.syncposters'),
-                'active': is_active('/admin/video/conftool/syncposters', exact=True),
-            },
-            
-            # {
-            #     'label': _('Users'),
-            #     'url': f'{video_root}/users/',
-            #     'active': is_active(f'{video_root}/users'),
-            # },
         ]
-        parent_active = any(c['active'] for c in video_children) or is_active(video_root)
+        parent_active = any(c['active'] for c in video_children)
         nav.append(
             {
-                'label': _('Video Admin'),
-                'url': reverse('eventyay_admin:video_admin:index'),
+                'label': _('Video'),
+                'url': reverse('eventyay_admin:video_admin:settings'),
                 'active': parent_active,
                 'icon': 'video-camera',
                 'children': video_children,
             }
         )
     # --------------------------------------------------------------------------
+
+    nav.extend(
+        [
+            {
+                'label': _('All Events'),
+                'url': reverse('eventyay_admin:admin.events'),
+                'active': 'events' in url.url_name,
+                'icon': 'calendar',
+            },
+            {
+                'label': _('All Organizers'),
+                'url': reverse('eventyay_admin:admin.organizers'),
+                'active': 'organizers' in url.url_name,
+                'icon': 'group',
+            },
+            {
+                'label': _('All Attendees'),
+                'url': reverse('eventyay_admin:admin.attendees'),
+                'active': 'attendees' in url.url_name,
+                'icon': 'ticket',
+            },
+            {
+                'label': _('All Sessions'),
+                'url': reverse('eventyay_admin:admin.submissions'),
+                'active': 'submissions' in url.url_name,
+                'icon': 'sticky-note-o',
+            },
+            {
+                'label': _('All Orders'),
+                'url': reverse('eventyay_admin:admin.orders'),
+                'active': 'orders' in url.url_name,
+                'icon': 'shopping-cart',
+            },
+            {
+                'label': _('Users'),
+                'url': reverse('eventyay_admin:admin.users'),
+                'active': False,
+                'icon': 'user',
+                'children': [
+                    {
+                        'label': _('All users'),
+                        'url': reverse('eventyay_admin:admin.users'),
+                        'active': ('users' in url.url_name),
+                    },
+                    {
+                        'label': _('Admin sessions'),
+                        'url': reverse('eventyay_admin:admin.user.sudo.list'),
+                        'active': ('sudo' in url.url_name),
+                    },
+                ],
+            },
+            {
+                'label': _('Vouchers'),
+                'url': reverse('eventyay_admin:admin.vouchers'),
+                'active': 'voucher' in url.url_name,
+                'icon': 'tags',
+            },
+        ]
+    )
 
     merge_in(
         nav,

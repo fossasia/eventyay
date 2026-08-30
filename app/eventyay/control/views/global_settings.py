@@ -1,15 +1,15 @@
+import json
 import logging
 import secrets
 import smtplib
-
 
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.mail import EmailMessage
 from django.core.validators import validate_email
-from django.db import IntegrityError
-from django.http import JsonResponse
+from django.db import IntegrityError, OperationalError, ProgrammingError
+from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, reverse
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
@@ -19,15 +19,18 @@ from python_http_client.exceptions import HTTPError
 
 from eventyay.api.models import OAuthApplication
 from eventyay.base.email import CustomSMTPBackend, SendGridEmail
-from eventyay.base.models import LogEntry, OrderPayment, OrderRefund
+from eventyay.base.models import Event, GlobalPluginConfig, LogEntry, OrderPayment, OrderRefund
+from eventyay.base.plugins import get_all_plugins
 from eventyay.base.services.mail import get_mail_backend
 from eventyay.base.services.update_check import check_result_table, update_check
 from eventyay.base.settings import GlobalSettingsObject
+from eventyay.common.sanitizers import sanitize_rich_text
 from eventyay.control.forms.global_settings import (
     GlobalSettingsForm,
     SSOConfigForm,
     UpdateSettingsForm,
     StartPageSettingsForm,
+    MetaDataSettingsForm,
 )
 from eventyay.control.permissions import (
     AdministratorPermissionRequiredMixin,
@@ -41,6 +44,20 @@ class GlobalSettingsView(AdministratorPermissionRequiredMixin, FormView):
     template_name = 'pretixcontrol/global_settings.html'
     form_class = GlobalSettingsForm
 
+    def get_context_data(self, **kwargs):
+        from eventyay.base.gmail.models import GmailOAuthCredential
+
+        context = super().get_context_data(**kwargs)
+        context['gmail_migration_pending'] = not GmailOAuthCredential.is_table_available()
+        context['gmail_credential'] = GmailOAuthCredential.get_active_global_safe()
+        context['gmail_callback_url'] = self.request.build_absolute_uri(
+            reverse('eventyay_admin:admin.global.gmail.callback')
+        )
+        context['gmail_connect_url'] = reverse('eventyay_admin:admin.global.gmail.connect')
+        context['gmail_disconnect_url'] = reverse('eventyay_admin:admin.global.gmail.disconnect')
+        context['test_email_feedback'] = self.request.session.pop('admin_test_email_feedback', None)
+        return context
+
     def form_valid(self, form):
         form.save()
         messages.success(self.request, _('Your changes have been saved.'))
@@ -49,11 +66,6 @@ class GlobalSettingsView(AdministratorPermissionRequiredMixin, FormView):
     def form_invalid(self, form):
         messages.error(self.request, _('Your changes have not been saved, see below for errors.'))
         return super().form_invalid(form)
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx['test_email_feedback'] = self.request.session.pop('admin_test_email_feedback', None)
-        return ctx
 
     def get_success_url(self):
         return reverse('eventyay_admin:admin.global.settings')
@@ -74,6 +86,22 @@ class StartPageSettingsView(AdministratorPermissionRequiredMixin, FormView):
 
     def get_success_url(self):
         return reverse('eventyay_admin:admin.startpage')
+
+class MetaDataSettingsView(AdministratorPermissionRequiredMixin, FormView):
+    template_name = 'pretixcontrol/admin/metadata.html'
+    form_class = MetaDataSettingsForm
+
+    def form_valid(self, form):
+        form.save()
+        messages.success(self.request, _('Your changes have been saved.'))
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        messages.error(self.request, _('Your changes have not been saved, see below for errors.'))
+        return super().form_invalid(form)
+
+    def get_success_url(self):
+        return reverse('eventyay_admin:admin.global.metadata')
 
 
 class SSOView(AdministratorPermissionRequiredMixin, FormView):
@@ -257,6 +285,18 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
                         _('SendGrid API key is missing. Please configure it and save.'),
                     )
                 backend = SendGridEmail(api_key=gs.settings.send_grid_api_key)
+                backend.test(from_addr=mail_from, to_addrs=recipients)
+            elif gs.settings.email_vendor == 'gmail_api':
+                from eventyay.base.gmail.resolver import get_gmail_mail_backend
+
+                backend = get_gmail_mail_backend(timeout=10)
+                if not backend:
+                    messages.error(
+                        request,
+                        _('Gmail is selected but no account is connected. Connect Gmail in the settings first.'),
+                    )
+                    return redirect(reverse('eventyay_admin:admin.global.settings'))
+                backend.test(from_addr=mail_from, to_addrs=recipients)
             elif gs.settings.email_vendor == 'smtp':
                 if not gs.settings.smtp_host or not gs.settings.smtp_port:
                     return self._respond(
@@ -274,17 +314,24 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
                     fail_silently=False,
                     timeout=10,
                 )
+                email = EmailMessage(
+                    subject=_('Eventyay system - test email'),
+                    body=_('This is a test email from your Eventyay system email configuration.'),
+                    from_email=mail_from,
+                    to=recipients,
+                    connection=backend,
+                )
+                email.send(fail_silently=False)
             else:
                 backend = get_mail_backend(timeout=10)
-
-            email = EmailMessage(
-                subject=_('Eventyay system - test email'),
-                body=_('This is a test email from your Eventyay system email configuration.'),
-                from_email=mail_from,
-                to=recipients,
-                connection=backend,
-            )
-            email.send(fail_silently=False)
+                email = EmailMessage(
+                    subject=_('Eventyay system - test email'),
+                    body=_('This is a test email from your Eventyay system email configuration.'),
+                    from_email=mail_from,
+                    to=recipients,
+                    connection=backend,
+                )
+                email.send(fail_silently=False)
         except UnicodeEncodeError:
             # Stored credentials or recipient may contain non-ASCII (e.g. NBSP from clipboard).
             logger.warning(
@@ -308,13 +355,38 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
                 'error',
                 _('SendGrid test email failed to connect or send. HTTP Error: %(err)s') % {'err': e},
             )
-        except (smtplib.SMTPException, OSError) as e:
-            logger.exception('Admin SMTP test failed (from=%s)', mail_from)
-            return self._respond(
-                request,
-                'error',
-                _('Test email failed to connect or send: %(err)s') % {'err': e},
+        except ImportError as e:
+            logger.exception('Admin Gmail test failed because dependencies are missing (from=%s)', mail_from)
+            return self._respond(request, 'error', str(e))
+        except Exception as e:
+            from eventyay.base.gmail.errors import (
+                GmailDailyLimitError,
+                GmailPermanentError,
+                GmailRateLimitError,
+                GmailTemporaryError,
             )
+
+            if isinstance(e, (GmailRateLimitError, GmailTemporaryError)):
+                return self._respond(
+                    request,
+                    'warning',
+                    _('Gmail test email is temporarily delayed because of rate limits: %(err)s') % {'err': e},
+                )
+            elif isinstance(e, (GmailDailyLimitError, GmailPermanentError)):
+                return self._respond(
+                    request,
+                    'error',
+                    _('Gmail test email could not be sent: %(err)s') % {'err': e},
+                )
+            elif isinstance(e, (smtplib.SMTPException, OSError)):
+                logger.exception('Admin SMTP test failed (from=%s)', mail_from)
+                return self._respond(
+                    request,
+                    'error',
+                    _('Test email failed to connect or send: %(err)s') % {'err': e},
+                )
+            else:
+                raise
 
         recipients_str = ', '.join(recipients)
         logger.info('Admin test email sent to %d recipient(s)', len(recipients))
@@ -334,6 +406,94 @@ class LogDetailView(AdministratorPermissionRequiredMixin, View):
         return JsonResponse({'data': data})
 
 
+class GlobalPluginManagementView(AdministratorPermissionRequiredMixin, TemplateView):
+    template_name = 'pretixcontrol/global_plugins.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        all_plugins = get_all_plugins(include_inactive=True)
+
+        try:
+            configs = {c.module: c for c in GlobalPluginConfig.objects.all()}
+        except (ProgrammingError, OperationalError):
+            configs = {}
+
+        plugin_rows = []
+        for plugin in all_plugins:
+            module = plugin.module
+            config = configs.get(module)
+            plugin_rows.append({
+                'module': module,
+                'name': str(plugin.name),
+                'description': str(getattr(plugin, 'description', '')),
+                'version': getattr(plugin, 'version', ''),
+                'category': str(getattr(plugin, 'category', '')),
+                'is_active': config.is_active if config else True,
+                'enable_by_default': config.enable_by_default if config else False,
+                'show_in_organizer_list': config.show_in_organizer_list if config else True,
+            })
+
+        context['plugin_rows'] = plugin_rows
+        return context
+
+    def post(self, request, *args, **kwargs):
+        all_plugins = get_all_plugins(include_inactive=True)
+        known_modules = {p.module for p in all_plugins}
+        newly_disabled = set()
+        platform_managed = set()
+
+        try:
+            for module in known_modules:
+                is_active = request.POST.get(f'is_active_{module}') == 'on'
+                enable_by_default = request.POST.get(f'enable_by_default_{module}') == 'on'
+                show_in_organizer_list = request.POST.get(f'show_in_organizer_list_{module}') == 'on'
+
+                if not is_active:
+                    enable_by_default = False
+                    show_in_organizer_list = False
+                    newly_disabled.add(module)
+                elif not show_in_organizer_list:
+                    platform_managed.add(module)
+
+                GlobalPluginConfig.objects.update_or_create(
+                    module=module,
+                    defaults={
+                        'is_active': is_active,
+                        'enable_by_default': enable_by_default,
+                        'show_in_organizer_list': show_in_organizer_list,
+                    },
+                )
+        except (ProgrammingError, OperationalError):
+            messages.error(request, _('Plugin configuration table is not available. Please run migrations.'))
+            return redirect(reverse('eventyay_admin:admin.global.plugins'))
+
+        if newly_disabled:
+            self._strip_disabled_from_events(newly_disabled)
+        if platform_managed:
+            self._ensure_enabled_on_all_events(platform_managed)
+
+        messages.success(request, _('Plugin settings have been saved.'))
+        return redirect(reverse('eventyay_admin:admin.global.plugins'))
+
+    @staticmethod
+    def _strip_disabled_from_events(disabled_modules: set[str]):
+        for event in Event.objects.exclude(plugins='').exclude(plugins__isnull=True).iterator():
+            current = [p for p in event.plugins.split(',') if p]
+            filtered = [p for p in current if p not in disabled_modules]
+            if len(filtered) != len(current):
+                event.plugins = ','.join(filtered)
+                event.save(update_fields=['plugins'])
+
+    @staticmethod
+    def _ensure_enabled_on_all_events(modules: set[str]):
+        for event in Event.objects.iterator():
+            current = [p for p in (event.plugins or '').split(',') if p]
+            missing = [m for m in modules if m not in current]
+            if missing:
+                event.plugins = ','.join(current + missing)
+                event.save(update_fields=['plugins'])
+
+
 class PaymentDetailView(AdministratorPermissionRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         p = get_object_or_404(OrderPayment, pk=request.GET.get('pk'))
@@ -344,3 +504,39 @@ class RefundDetailView(AdministratorPermissionRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         p = get_object_or_404(OrderRefund, pk=request.GET.get('pk'))
         return JsonResponse({'data': p.info_data})
+
+
+class GlobalSettingsPagePreviewView(AdministratorPermissionRequiredMixin, View):
+    """AJAX endpoint for previewing multi-lingual rich text page content."""
+
+    def post(self, request, *args, **kwargs):
+        content_type = request.content_type or ''
+        if 'application/json' in content_type:
+            try:
+                payload = json.loads(request.body)
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                return HttpResponseBadRequest('Invalid JSON body')
+            raw_html = payload.get('html', '')
+            safe_html = sanitize_rich_text(raw_html) if isinstance(raw_html, str) else ''
+            return JsonResponse({'html': safe_html})
+
+        previews = {}
+        for key, values in request.POST.lists():
+            if not values:
+                continue
+            body = values[0]
+            safe_html = sanitize_rich_text(body) if body else ''
+            if key.startswith('body_'):
+                locale = key[5:]
+                previews[locale] = safe_html
+            elif key == 'content':
+                return JsonResponse({'html': safe_html})
+
+        if not previews:
+            body = request.POST.get('body', '')
+            if body:
+                safe_html = sanitize_rich_text(body)
+                previews['en'] = safe_html
+
+        return JsonResponse({'previews': previews})
+

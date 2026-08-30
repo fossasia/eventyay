@@ -41,33 +41,44 @@
 {% block content %}
     {% trans "Data export" as header_title_var %}
     {% captureas header_extra_var %}
-        {% if "identifier" in request.GET %}
+        {% if 'identifier' in request.GET %}
             <a href="?" class="btn btn-default">{% trans "Show all" %}</a>
         {% endif %}
     {% endcaptureas %}
     {% include "common/includes/header_nav.html" with header_title=header_title_var header_title_extra=header_extra_var header_component_link="pretixcontrol/event/component_link.html" %}
-    {% for e in exporters %}
-        <details class="panel panel-default" {% if "identifier" in request.GET or "exporter" in request.POST %}open{% endif %}>
-            <summary class="panel-heading">
-                <h3 class="panel-title">
-                    {{ e.verbose_name }}
-                    <i class="fa fa-angle-down collapse-indicator"></i>
-                </h3>
-            </summary>
-            <div id="{{ e.identifier }}">
-                <div class="panel-body">
-                    <form action="{% url "control:event.orders.export.do" event=request.event.slug organizer=request.organizer.slug %}"
-                            method="post" class="form-horizontal" data-asynctask data-asynctask-download
-                            data-asynctask-long>
-                        {% csrf_token %}
-                        <input type="hidden" name="exporter" value="{{ e.identifier }}" />
-                        {% bootstrap_form e.form layout='control' %}
-                        <button class="btn btn-primary pull-right flip" type="submit">
-                            <span class="icon icon-upload"></span> {% trans "Start export" %}
-                        </button>
-                    </form>
+    {% if exporters %}
+        {% for e in exporters %}
+            <details class="panel panel-default" {% if 'identifier' in request.GET or 'exporter' in request.POST %}open{% endif %}>
+                <summary class="panel-heading">
+                    <h3 class="panel-title">
+                        {{ e.verbose_name }}
+                        <i class="fa fa-angle-down collapse-indicator"></i>
+                    </h3>
+                </summary>
+                <div id="{{ e.identifier }}">
+                    <div class="panel-body">
+                        <form action="{% url 'control:event.orders.export.do' event=request.event.slug organizer=request.organizer.slug %}"
+                                method="post" class="form-horizontal" data-asynctask data-asynctask-download
+                                data-asynctask-long>
+                            {% csrf_token %}
+                            <input type="hidden" name="exporter" value="{{ e.identifier }}" />
+                            {% bootstrap_form e.form layout='control' %}
+                            <button class="btn btn-primary pull-right flip" type="submit">
+                                <span class="icon icon-upload"></span> {% trans "Start export" %}
+                            </button>
+                        </form>
+                    </div>
                 </div>
-            </div>
-        </details>
-    {% endfor %}
+            </details>
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-info">
+            {% if 'identifier' in request.GET %}
+                {% trans "No export matching this request is available." %}
+                <a href="?">{% trans "Show all available exports" %}</a>
+            {% else %}
+                {% trans "No data exports are available for this event." %}
+            {% endif %}
+        </div>
+    {% endif %}
 {% endblock %}

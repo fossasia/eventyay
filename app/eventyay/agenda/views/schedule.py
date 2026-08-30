@@ -18,7 +18,7 @@ from django.urls import resolve, reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.http import urlencode
-from django.utils.translation import get_language, gettext_lazy as _
+from django.utils.translation import get_language, gettext_lazy as _, pgettext_lazy
 from django.views.decorators.cache import cache_page
 from django.views.decorators.http import require_http_methods
 from django.views.generic import TemplateView
@@ -38,6 +38,7 @@ from eventyay.agenda.views.utils import (
 )
 from eventyay.common.signals import register_my_data_exporters
 from eventyay.common.urls import get_base_url
+from eventyay.common.views.helpers import build_login_url_with_next
 from eventyay.common.views.mixins import EventPermissionRequired, PermissionRequired
 from eventyay.schedule.ascii import draw_ascii_schedule
 from eventyay.schedule.exporters import ScheduleData
@@ -173,6 +174,11 @@ class ExporterView(EventPermissionRequired, ScheduleMixin, TemplateView):
         if self.request.GET.get('featured') == 'true':
             return can_use_featured_exports(self.request.user, self.request.event)
         return False
+
+    def handle_no_permission(self):
+        if self.request.user.is_anonymous:
+            raise Http404()
+        return super().handle_no_permission()
 
     def dispatch(self, request, *args, **kwargs):
         self.ensure_wip_schedule_access(kwargs, request)
@@ -409,9 +415,10 @@ def schedule_messages(request, **kwargs):
         ),
         'version_warning_old': _('You are currently viewing an older schedule version.'),
         'join_room': _('Join room'),
+        'join_session': _('Join session'),
         'view_video': _('View Video'),
         'watch_live': _('Watch live'),
-        'speaker_fallback': _('Speaker'),
+        'speaker_fallback': pgettext_lazy('noun', 'Speaker'),
         'speaker_name_not_provided': _('Speaker name not provided'),
         'add_to_calendar': _('Add to Calendar'),
         'public_schedule_only': _(
@@ -562,7 +569,7 @@ class CalendarRedirectView(EventPermissionRequired, ScheduleMixin, TemplateView)
 
         if is_my:
             if not request.user.is_authenticated:
-                return HttpResponseRedirect(self.request.event.urls.login)
+                return HttpResponseRedirect(build_login_url_with_next(self.request.get_full_path()))
 
             existing_token = request.session.get(STARRED_ICS_TOKEN_SESSION_KEY)
             generate_new_token = True

@@ -1,0 +1,234 @@
+{% extends "pretixpresale/event/base.html" %}
+{% load i18n %}
+{% load l10n %}
+{% load eventurl %}
+{% load money %}
+{% load thumb %}
+{% load eventsignal %}
+{% load rich_text %}
+{% load compress %}
+{% load static %}
+{% load presale_locale %}
+{% load event_tags %}
+{% load staff_session %}
+
+{% block container_width %} presale-container page-presale-meetup-index{% endblock %}
+
+{% block custom_header %}
+    {{ block.super }}
+    <meta property="og:title" content="{{ ev.name|event_localize }}" />
+    <meta property="og:description" content="{{ ev.get_date_range_display }}" />
+    <meta property="og:url" content="{{ request.build_absolute_uri }}" />
+    {% compress css %}
+        <link rel="stylesheet" type="text/css" href="{% static 'pretixpresale/css/meetup.css' %}" />
+    {% endcompress %}
+    {% if ev.location or venue_map_location %}
+        {% compress css %}
+            <link rel="stylesheet" type="text/css" href="{% static 'pretixpresale/css/venue-map.css' %}" />
+        {% endcompress %}
+    {% endif %}
+    {% if venue_map_location %}
+        {% compress css %}
+            <link rel="stylesheet" type="text/css" href="{% static 'leaflet/leaflet.css' %}" />
+        {% endcompress %}
+        <script type="text/javascript" src="{% static 'leaflet/leaflet.js' %}"></script>
+        <script type="module" src="{% static 'pretixpresale/js/ui/public_geo.js' %}"></script>
+    {% endif %}
+{% endblock %}
+
+{% block testmode_alert %}{% endblock testmode_alert %}
+
+{% block content %}
+    {% autoescape off %}
+        <script type="application/ld+json">
+            {{ ev.event_microdata }}
+        </script>
+    {% endautoescape %}
+
+    {% eventurl request.event 'presale:event.index' as event_public_presale_home %}
+    {% has_event_perm "base.orga_access_event" request.user request request.event as is_organiser %}
+    {% include "pretixpresale/event/fragment_testmode_alert.html" %}
+
+
+    <div class="meetup-layout">
+        <div>
+            {% if frontpage_text %}
+                <div class="meetup-description">
+                    {{ frontpage_text|event_localize|rich_text }}
+                </div>
+            {% endif %}
+
+            {% eventsignal event "eventyay.presale.signals.front_page_top" request=request subevent=subevent %}
+
+            <div class="meetup-section-divider"></div>
+            <h2 class="meetup-section-heading">{% trans "Attendees" %} ({{ meetup_attendee_count }})</h2>
+
+            {% if meetup_attendee_count > 0 %}
+                <div class="meetup-went-summary">
+                    <div class="meetup-avatar-names-row">
+                        <div class="attendee-avatars-stack">
+                            {% for attendee in meetup_attendees_preview %}
+                                <div class="avatar-circle-stacked" data-tooltip="{{ attendee.name }}">
+                                    {% if attendee.avatar_url %}
+                                        <img src="{{ attendee.avatar_url }}" alt="{{ attendee.name }}" class="avatar-circle-img" loading="lazy">
+                                    {% else %}
+                                        {{ attendee.name|slice:":2" }}
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                            {% if meetup_attendee_count > 6 %}
+                                <div class="avatar-circle-stacked overflow" data-tooltip="{% blocktrans trimmed with count=meetup_attendee_count|add:'-6' %}+{{ count }} more{% endblocktrans %}">+{{ meetup_attendee_count|add:"-6" }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <p class="text-muted">{% trans "Be the first to register for this event!" %}</p>
+            {% endif %}
+
+            <div class="meetup-registered-section">
+                <h2 class="meetup-section-heading">{% trans "Organised by" %}</h2>
+                <div class="meetup-attendees-grid">
+                    <div class="meetup-attendee-card">
+                        {% if organizer_logo %}
+                            {% if organizer_logo|lower|slice:"-4:" == ".gif" or organizer_logo|lower|slice:"-4:" == ".svg" %}
+                                <img loading="lazy" src="{{ organizer_logo_url }}" alt="{{ request.organizer.name }}" class="meetup-attendee-avatar-img">
+                            {% else %}
+                                <img loading="lazy" src="{{ organizer_logo|thumb:'500x500' }}" alt="{{ request.organizer.name }}" class="meetup-attendee-avatar-img">
+                            {% endif %}
+                        {% else %}
+                            <div class="meetup-attendee-avatar">
+                                {{ request.organizer.name|slice:":2" }}
+                            </div>
+                        {% endif %}
+                        <div class="meetup-attendee-info">
+                            <div class="meetup-attendee-name">{{ request.organizer.name }}</div>
+                            <div class="meetup-attendee-role">{% trans "Organizer" %}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if ev.location or venue_map_location %}
+                <div class="meetup-section-divider"></div>
+                <div class="meetup-registered-section">
+                    <h2 class="meetup-section-heading">{% trans "Location" %}</h2>
+                    {% if ev.location %}
+                        <div class="meetup-location-address">
+                            <p>{{ ev.location|event_localize|linebreaksbr }}</p>
+                        </div>
+                    {% endif %}
+                    {% if venue_map_location %}
+                        <div class="public-geodata-group meetup-location-map"
+                             data-lat="{{ venue_map_location.lat }}"
+                             data-lon="{{ venue_map_location.lon }}"
+                             data-tiles="{{ global_settings.leaflet_tiles }}"
+                             data-attrib="{{ global_settings.leaflet_tiles_attribution }}"
+                             data-icon="{% static 'leaflet/images/marker-icon.png' %}"
+                             data-shadow="{% static 'leaflet/images/marker-shadow.png' %}">
+                            <div class="public-geodata-map meetup-map-container" aria-hidden="true"></div>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+
+
+            {% eventsignal event "eventyay.presale.signals.front_page_bottom" subevent=subevent request=request %}
+        </div>
+
+        <div>
+            <div class="meetup-card meetup-card-sticky">
+
+                {% if ev.presale_has_ended or rsvp_registration_closed %}
+                    <div class="meetup-card-header">
+                        <i class="fa fa-calendar-times-o" aria-hidden="true"></i>
+                        {% trans "Registration closed" %}
+                    </div>
+                {% elif ev.presale_is_running %}
+                    <div class="meetup-card-header open">
+                        <i class="fa fa-circle meetup-status-dot" aria-hidden="true"></i>
+                        {% trans "Registration open" %}
+                    </div>
+                {% else %}
+                    <div class="meetup-card-header">
+                        <i class="fa fa-clock-o" aria-hidden="true"></i>
+                        {% trans "Registration not yet open" %}
+                    </div>
+                {% endif %}
+
+                <div class="meetup-card-body">
+
+                    <div class="meetup-info-row">
+                        <div class="meetup-date-badge">
+                            <div class="badge-month">{{ ev.date_from|date:"M" }}</div>
+                            <div class="badge-day">{{ ev.date_from|date:"j" }}</div>
+                        </div>
+                        <div>
+                            <strong>{{ ev.date_from|date:"l, N j, Y" }}</strong>
+                            {% if event.settings.show_times %}
+                                <br>
+                                <span>{{ ev.date_from|date:"H:i" }}</span>{% if event.settings.show_date_to and ev.date_to %} &ndash; <span>{{ ev.date_to|date:"H:i" }}</span>{% endif %} ({{ request.event.settings.timezone }})
+                            {% endif %}
+                            <br>
+                            {% if subevent %}
+                                <a href="{% eventurl event "presale:event.ical.download" subevent=subevent.pk %}" class="text-muted meetup-ical-link">
+                            {% else %}
+                                <a href="{% eventurl event "presale:event.ical.download" %}" class="text-muted meetup-ical-link">
+                            {% endif %}
+                                <i class="fa fa-calendar-plus-o" aria-hidden="true"></i> {% trans "Add to Calendar" %}
+                            </a>
+                        </div>
+                    </div>
+
+                    {% if ev.location %}
+                        <div class="meetup-info-row">
+                            <i class="fa fa-map-marker fa-fw" aria-hidden="true"></i>
+                            <div>
+                                <span class="sr-only">{% trans "Location" %}:</span>
+                                {{ ev.location|event_localize|linebreaksbr }}
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="meetup-info-row">
+                            <i class="fa fa-calendar-check-o fa-fw" aria-hidden="true"></i>
+                            <div>
+                                <strong>{% trans "Online Event" %}</strong>
+                                <div class="meetup-online-hint">{% trans "Link provided upon registration" %}</div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+
+                    <hr class="meetup-card-divider">
+
+                    {% if ev.presale_is_running %}
+                        {% include "pretixpresale/event/rsvp.html" %}
+                    {% elif ev.presale_has_ended %}
+                        <div class="alert alert-info meetup-alert-marginless">
+                            {% if event.settings.presale_has_ended_text %}
+                                {{ event.settings.presale_has_ended_text|event_localize|rich_text }}
+                            {% else %}
+                                {% blocktrans trimmed %}
+                                    The registration period for this event is over.
+                                {% endblocktrans %}
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info meetup-alert-marginless">
+                            {% if event.settings.presale_start_show_date %}
+                                {% blocktrans trimmed with date=ev.effective_presale_start|date:"SHORT_DATE_FORMAT" time=ev.effective_presale_start|time:"TIME_FORMAT" %}
+                                    Registration for this event will open on {{ date }} at {{ time }}.
+                                {% endblocktrans %}
+                            {% else %}
+                                {% blocktrans trimmed %}
+                                    Registration for this event has not yet started.
+                                {% endblocktrans %}
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

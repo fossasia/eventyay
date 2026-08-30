@@ -1,19 +1,19 @@
 <template lang="pug">
-.pretalx-schedule(:style="{'--scrollparent-width': scrollParentWidth + 'px'}", :class="draggedSession ? ['is-dragging'] : []", @pointerup="stopDragging")
+.pretalx-schedule(:style="{'--scrollparent-width': scrollParentWidth + 'px'}", :class="[draggedSession ? 'is-dragging' : '', !caps.canDrag ? 'is-public-shifts' : '']", @pointerup="caps.canDrag ? stopDragging() : null")
 	template(v-if="schedule")
 		#main-wrapper
-			#unassigned.no-print(v-scrollbar.y="", @pointerenter="isUnassigning = true", @pointerleave="onUnassignedLeave")
+			#unassigned.no-print(v-if="caps.canDrag", v-scrollbar.y="", @pointerenter="isUnassigning = true", @pointerleave="onUnassignedLeave")
 				.unassigned-header
 					.density-controls
 						button.density-btn(:class="{active: condensedView}", @click="toggleCondensedView", :title="condensedView ? $t('Normal view') : $t('Condensed view')", :aria-pressed="condensedView.toString()")
 							i.fa(:class="condensedView ? 'fa-expand' : 'fa-compress'", aria-hidden="true")
 							span.density-btn-text {{ condensedView ? $t('Normal view') : $t('Condensed view') }}
 						.select-wrapper.custom-dropdown(ref="customDropdownRef", @click="showTimeDensityMenu = !showTimeDensityMenu", :class="{'active': showTimeDensityMenu}")
-							span.time-density-display {{ timeDensityMinutes }} min
+							span.time-density-display {{ timeDensityMinutes }} {{ $t('min') }}
 							i.fa.fa-chevron-down(aria-hidden="true")
 							.time-density-menu.vue-dropdown(v-if="showTimeDensityMenu")
 								.density-option(v-for="mins in [5, 15, 30, 60]", @click.stop="timeDensityMinutes = mins; onTimeDensityChange(); showTimeDensityMenu = false", :class="{active: timeDensityMinutes === mins}")
-									span {{ mins }} min
+									span {{ mins }} {{ $t('min') }}
 									i.fa.fa-check(v-if="timeDensityMinutes === mins")
 					.title
 						bunt-input#filter-input(v-model="unassignedFilterString", :placeholder="translations.filterSessions", icon="search", name="filter-input")
@@ -24,12 +24,12 @@
 								span {{ method.label }}
 								i.fa.fa-sort-amount-asc(v-if="unassignedSort === method.name && unassignedSortDirection === 1")
 								i.fa.fa-sort-amount-desc(v-if="unassignedSort === method.name && unassignedSortDirection === -1")
-					session.new-break(:session="{title: '+ ' + translations.newBreak}", :isDragged="false", tabindex="0", @startDragging="startNewBreak", @click.stop="showNewBreakHint", @focus="showNewBreakHint", @blur="removeNewBreakHint", @keydown="onNewBreakKeydown", @pointerleave="removeNewBreakHint", :aria-describedby="newBreakTooltip ? 'new-break-hint' : undefined")
+					session.new-break(v-if="caps.canCreateBreak", :session="{title: '+ ' + translations.newBreak}", :isDragged="false", tabindex="0", @startDragging="startNewBreak", @click.stop="showNewBreakHint", @focus="showNewBreakHint", @blur="removeNewBreakHint", @keydown="onNewBreakKeydown", @pointerleave="removeNewBreakHint", :aria-describedby="newBreakTooltip ? 'new-break-hint' : undefined")
 					.new-break-hint(v-if="newBreakTooltip", id="new-break-hint", role="tooltip") {{ newBreakTooltip }}
-				session(v-for="un in unscheduled", :key="un.id", :session="un", @startDragging="startDragging", :isDragged="draggedSession && un.id === draggedSession.id")
+				session(v-for="un in unscheduled", :key="un.id", :session="un", @startDragging="startDragging", :isDragged="draggedSession && un.id === draggedSession.id", @editSession="editorStart($event)", @deleteSession="deleteSessionDirect($event)", @assignMembers="openAssignModal($event)")
 				.deleted-room-sessions(v-if="deletedRoomSessions.length")
-					h3 {{ $t('Deleted Room Sessions') }}
-					p {{ $t('These sessions were assigned to a room that has been deleted. Drag them into another room to restore them to the schedule.') }}
+					h3 {{ caps.showRoles ? $t('Deleted Room Shifts') : $t('Deleted Room Sessions') }}
+					p {{ caps.showRoles ? $t('These shifts were assigned to a room that has been deleted. Drag them into another room to restore them to the schedule.') : $t('These sessions were assigned to a room that has been deleted. Drag them into another room to restore them to the schedule.') }}
 					session(v-for="session in deletedRoomSessions", :key="session.id", :session="session", @startDragging="startDragging", :isDragged="draggedSession && session.id === draggedSession.id")
 			#schedule-wrapper(v-scrollbar.x.y="")
 				.schedule-controls
@@ -45,22 +45,25 @@
 					:end="days.at(-1).clone().endOf('day')",
 					:currentDay="currentDay",
 					:draggedSession="draggedSession",
+					:allowOverlap="caps.allowOverlap",
 					@changeDay="changeDay",
-					@startDragging="startDragging",
-					@rescheduleSession="rescheduleSession",
-					@createSession="createSession",
-					@editSession="editorStart($event)")
-			#session-editor-wrapper(v-if="editorSession", @click="editorSession = null")
+					@startDragging="caps.canDrag ? startDragging($event) : null",
+					@rescheduleSession="caps.canDrag ? rescheduleSession($event) : null",
+					@createSession="caps.canEdit ? createSession($event) : null",
+					@editSession="caps.canEdit ? editorStart($event) : null",
+					@deleteSession="caps.canDelete ? deleteSessionDirect($event) : null",
+					@assignMembers="caps.canAssignMembers ? openAssignModal($event) : null")
+			#session-editor-wrapper(v-if="editorSession && caps.canEdit", @click="editorSession = null")
 				form#session-editor(@click.stop="", @submit.prevent="editorSave")
 					h3.session-editor-title(v-if="editorSession.code")
-						a(v-if="organizerSlug && eventSlug", :href="`${api.getOrgaEventBase()}/submissions/${editorSession.code}/`") {{ getLocalizedString(editorSession.title) }}
+						a(v-if="caps.showSubmissionLinks && organizerSlug && eventSlug", :href="`${api.getOrgaEventBase()}/submissions/${editorSession.code}/`") {{ getLocalizedString(editorSession.title) }}
 						span(v-else) {{ getLocalizedString(editorSession.title) }}
 					.data
-						.data-row(v-if="editorSession.code && editorSession.speakers && editorSession.speakers.length > 0").form-group.row
+						.data-row(v-if="editorSession.code && editorSession.speakers && editorSession.speakers.length > 0 && caps.showSpeakers").form-group.row
 							label.data-label.col-form-label.col-md-3 {{ $t('Speakers') }}
 							.col-md-9.data-value
 								span(v-for="speaker, index of editorSession.speakers")
-									a(v-if="organizerSlug && eventSlug && speaker.code", :href="`${api.getOrgaEventBase()}/speakers/${speaker.code}/`") {{ speaker.name || speaker.code }}
+									a(v-if="caps.showSubmissionLinks && organizerSlug && eventSlug && speaker.code", :href="`${api.getOrgaEventBase()}/speakers/${speaker.code}/`") {{ speaker.name || speaker.code }}
 									span(v-else) {{ speaker.name }}
 									span(v-if="index != editorSession.speakers.length - 1") {{', '}}
 								span.text-warning(v-if="editorSession.speakers.some(s => !s.name)")  ({{ $t('some speakers have not shared their names') }})
@@ -69,19 +72,33 @@
 							.col-md-9
 								.i18n-form-group
 									template(v-for="locale of locales")
-										input(v-model="editorSession.title[locale]", :required="true", :lang="locale", type="text")
-						.data-row(v-if="editorSession.track").form-group.row
+										input.form-control(v-model="editorSession.title[locale]", :required="true", :lang="locale", type="text")
+						.data-row(v-if="editorSession.track && caps.showTracks").form-group.row
 							label.data-label.col-form-label.col-md-3 {{ $t('Track') }}
 							.col-md-9.data-value {{ getLocalizedString(editorSession.track.name) }}
 						.data-row(v-if="editorSession.room").form-group.row
 							label.data-label.col-form-label.col-md-3 {{ $t('Room') }}
 							.col-md-9.data-value {{ getLocalizedString(editorSession.room.name) }}
-						.data-row.form-control.form-group.row
+						.data-row.form-group.row
 							label.data-label.col-form-label.col-md-3 {{ $t('Duration') }}
 							.col-md-9.number.input-group
-								input(v-model="editorSession.duration", type="number", min="1", max="1440", step="1", :required="true")
+								input.form-control(v-model="editorSession.duration", type="number", min="1", max="1440", step="1", :required="true")
 								.input-group-append
 									span.input-group-text {{ $t('minutes') }}
+						.data-row(v-if="caps.canEditRoles").form-group.row
+							label.data-label.col-form-label.col-md-3 {{ $t('Roles') }}
+							.col-md-9
+								.role-row(v-for="(r, index) in editorSession.roles" :key="index")
+									select.form-control.role-select(v-model="r.id", required)
+										option(:value="undefined" disabled) {{ $t('Select a role') }}
+										option(v-for="role in schedule?.roles", :key="role.id", :value="role.id") {{ getLocalizedString(role.name) }}
+									input.form-control.role-capacity(v-model.number="r.capacity", type="number", min="1", required, :title="$t('Capacity')")
+									a.text-danger(href="#", @click.prevent="editorSession.roles.splice(index, 1)")
+										i.fa.fa-trash
+								a(href="#", @click.prevent="editorSession.roles.push({id: undefined, capacity: 1})")
+									i.fa.fa-plus
+									|  {{ $t('Add Role') }}
+
 
 						.data-row(v-if="editorSession.code && warnings[editorSession.code] && warnings[editorSession.code].length").form-group.row
 							label.data-label.col-form-label.col-md-3
@@ -93,8 +110,61 @@
 								span(v-else) {{ warnings[editorSession.code][0].message }}
 					.button-row
 						input(type="submit")
-						bunt-button#btn-delete(v-if="!editorSession.code", @click="editorDelete", :loading="editorSessionWaiting") {{ $t('Delete') }}
+						bunt-button#btn-delete(v-if="caps.canEditRoles ? editorSession.id : !editorSession.code", @click="editorDelete", :loading="editorSessionWaiting") {{ $t('Delete') }}
 						bunt-button#btn-save(@click="editorSave", :loading="editorSessionWaiting") {{ $t('Save') }}
+			
+			#assign-modal-wrapper(v-if="assigningSession && caps.canAssignMembers", @click="closeAssignModal")
+				#session-editor(@click.stop="")
+					h3.session-editor-title
+						span {{ assignMembersHeading }}
+						button.modal-close-btn(type="button", @click="closeAssignModal", :aria-label="$t('Close')")
+							i.fa.fa-times(aria-hidden="true")
+					
+					.assign-modal-error(v-if="assignModalError")
+						span {{ assignModalError }}
+						button.assign-modal-error-dismiss(type="button", @click="assignModalError = ''", :aria-label="$t('Dismiss')")
+							i.fa.fa-times(aria-hidden="true")
+					
+					.data.assign-data
+						.assign-role(v-for="role in assigningSession.roles", :key="role.id")
+							h4 {{ getLocalizedString(role.name) }} ({{ role.assigned.length }}/{{ role.capacity }} {{ $t('assigned') }})
+							
+							.assigned-list
+								span.member-chip(v-for="user in role.assigned", :key="user.id")
+									| {{ user.name }}
+									button.member-chip-remove(type="button", @click="unassignMember(role.id, user.id)", :aria-label="$t('Unassign')", :title="$t('Unassign')")
+										i.fa.fa-times(aria-hidden="true")
+								p.text-muted(v-if="!role.assigned.length") {{ $t('No members assigned yet.') }}
+							
+							.assign-new.form-group.row
+								.col-md-8
+									select.form-control(v-model="selectedMemberIds[role.id]")
+										option(:value="undefined" disabled) {{ $t('Select a member to assign') }}
+										option(v-for="vol in availableMembersByRole[role.id]", :key="vol.id", :value="vol.id") {{ vol.name }}{{ vol.email ? ` (${vol.email})` : '' }}
+								.col-md-4
+									button.assign-btn(type="button", @click="assignMember(role.id)", :disabled="assigningWaiting") {{ $t('Assign') }}
+
+		confirm-dialog(
+			v-if="caps.showRoles",
+			ref="confirmDialogRef",
+			:title="confirmDialogTitle",
+			:lead="confirmDialogLead",
+			:confirm-label="confirmDialogLabel",
+			:confirm-class="confirmDialogClass",
+			:busy="confirmDialogBusy",
+			:error="confirmDialogError",
+			@confirm="onConfirmDialogConfirm",
+			@cancel="onConfirmDialogCancel")
+
+		dialog.break-confirm-dialog(ref="breakConfirmDialogEl", @click="onBreakDialogBackdrop", @cancel.prevent="cancelBreakDelete")
+			.dialog-inner(@click.stop="")
+				h3 {{ breakConfirmTitle }}
+				p {{ breakConfirmLead }}
+				p.break-confirm-error(v-if="breakConfirmError") {{ breakConfirmError }}
+				.break-confirm-actions
+					button.btn.btn-sm.btn-default(type="button", :disabled="breakConfirmBusy", @click="cancelBreakDelete") {{ $t('Cancel') }}
+					button.btn.btn-sm.btn-danger(type="button", :disabled="breakConfirmBusy", @click="confirmBreakDelete") {{ $t('Delete') }}
+
 	bunt-progress-circular(v-else, size="huge", :page="true")
 </template>
 
@@ -102,10 +172,15 @@
 import { ref, reactive, computed, onMounted, onUnmounted, onBeforeMount, nextTick } from 'vue'
 import moment, { Moment } from 'moment-timezone'
 import GridSchedule from '~/components/GridSchedule.vue'
-import Session from '~/components/Session.vue'
+import TalkSession from '~/components/Session.vue'
+import ShiftSession from '~/teamshifts-adapter/Session.vue'
+import ConfirmDialog from '~/teamshifts-adapter/ConfirmDialog.vue'
 import api from '~/api'
+import { resolveMode, getCapabilities } from '~/teamshifts-adapter'
+import type { Capabilities } from '~/teamshifts-adapter/types'
 import { getLocalizedString } from '~/utils'
-import type { AvailabilityEntry } from '~/schemas';
+import {translate as $t} from '~/lib/i18n'
+import type { AvailabilityEntry, RoleAssignment, ScheduleRole } from '~/schemas';
 
 interface Speaker {
   code?: string | null
@@ -114,7 +189,7 @@ interface Speaker {
 
 interface Track {
   id: string | number
-  name: Record<string, string> // localized names
+  name: Record<string, string>
 }
 
 interface Room {
@@ -143,6 +218,14 @@ interface Talk {
   uncreated?: boolean
   availabilities?: AvailabilityEntry[]
   do_not_record?: boolean
+  roles?: RoleAssignment[]
+  role?: string | number
+  capacity?: number
+}
+
+interface EditorRoleEntry {
+  id?: number
+  capacity: number
 }
 
 interface SessionData {
@@ -161,6 +244,9 @@ interface SessionData {
   uncreated?: boolean
   availabilities?: AvailabilityEntry[]
   do_not_record?: boolean
+  roles?: (RoleAssignment | EditorRoleEntry)[]
+  role?: string | number
+  capacity?: number
 }
 
 interface SortMethod {
@@ -179,11 +265,16 @@ interface Schedule {
   speakers: Speaker[]
   talks: Talk[]
   now?: string
+  roles?: ScheduleRole[]
 }
 
 const props = defineProps<{
   locale: string
 }>()
+
+const mode = resolveMode()
+const caps: Capabilities = getCapabilities(mode)
+const Session = mode === 'shifts' || mode === 'public-shifts' ? ShiftSession : TalkSession
 
 const eventSlug = ref<string | null>(null)
 const organizerSlug = ref<string | null>(null)
@@ -193,11 +284,123 @@ const availabilities = reactive<{ rooms: Record<string, AvailabilityEntry[]>; ta
   rooms: {},
   talks: {},
 })
+const availableMembersByRole = ref<Record<string, { id: number; name: string; email?: string }[]>>({})
 const warnings = reactive<Record<string, Warning[]>>({})
 const currentDay = ref<Moment | null>(null)
 const draggedSession = ref<SessionData | null>(null)
 const editorSession = ref<SessionData | null>(null)
 const editorSessionWaiting = ref<boolean>(false)
+const assigningSession = ref<SessionData | null>(null)
+const assigningWaiting = ref<boolean>(false)
+const assignModalError = ref<string>('')
+const selectedMemberIds = ref<Record<string, number | undefined>>({})
+
+const confirmDialogRef = ref<InstanceType<typeof ConfirmDialog> | null>(null)
+const confirmDialogTitle = ref('')
+const confirmDialogLead = ref('')
+const confirmDialogLabel = ref('')
+const confirmDialogClass = ref('btn-primary')
+const confirmDialogBusy = ref(false)
+const confirmDialogError = ref('')
+let confirmDialogResolve: ((value: boolean) => void) | null = null
+let confirmDialogAction: (() => Promise<void>) | null = null
+
+const breakConfirmDialogEl = ref<HTMLDialogElement | null>(null)
+const breakConfirmTitle = ref('')
+const breakConfirmLead = ref('')
+const breakConfirmError = ref('')
+const breakConfirmBusy = ref(false)
+let breakConfirmResolve: ((value: boolean) => void) | null = null
+let breakDeleteId: number | null = null
+
+function showBreakConfirmDialog(id: number): Promise<boolean> {
+  breakDeleteId = id
+  breakConfirmTitle.value = $t('Delete break')
+  breakConfirmLead.value = $t('Are you sure you want to delete this break?')
+  breakConfirmError.value = ''
+  breakConfirmBusy.value = false
+  return new Promise((resolve) => {
+    breakConfirmResolve = resolve
+    nextTick(() => breakConfirmDialogEl.value?.showModal?.())
+  })
+}
+
+async function confirmBreakDelete() {
+  if (!breakDeleteId) return
+  breakConfirmBusy.value = true
+  breakConfirmError.value = ''
+  try {
+    await api.deleteTalk({ id: breakDeleteId })
+    if (schedule.value) {
+      schedule.value.talks = schedule.value.talks.filter((s) => s.id !== breakDeleteId)
+    }
+    await fetchAdditionalScheduleData()
+    breakConfirmDialogEl.value?.close()
+    breakConfirmResolve?.(true)
+  } catch (error) {
+    breakConfirmError.value = $t('Failed to delete break. Please try again.')
+    breakConfirmResolve?.(false)
+  } finally {
+    breakConfirmBusy.value = false
+    breakConfirmResolve = null
+    breakDeleteId = null
+  }
+}
+
+function cancelBreakDelete() {
+  breakConfirmDialogEl.value?.close()
+  breakConfirmResolve?.(false)
+  breakConfirmResolve = null
+  breakDeleteId = null
+}
+
+function onBreakDialogBackdrop(event: MouseEvent) {
+  if (event.target === breakConfirmDialogEl.value) cancelBreakDelete()
+}
+
+function showConfirmDialog(opts: { title: string; lead: string; confirmLabel: string; confirmClass?: string; onConfirm?: () => Promise<void> }): Promise<boolean> {
+  confirmDialogTitle.value = opts.title
+  confirmDialogLead.value = opts.lead
+  confirmDialogLabel.value = opts.confirmLabel
+  confirmDialogClass.value = opts.confirmClass || 'btn-primary'
+  confirmDialogBusy.value = false
+  confirmDialogError.value = ''
+  confirmDialogAction = opts.onConfirm || null
+  return new Promise((resolve) => {
+    confirmDialogResolve = resolve
+    nextTick(() => confirmDialogRef.value?.show())
+  })
+}
+
+async function onConfirmDialogConfirm() {
+  if (confirmDialogAction) {
+    confirmDialogBusy.value = true
+    confirmDialogError.value = ''
+    try {
+      await confirmDialogAction()
+      confirmDialogRef.value?.close()
+      confirmDialogResolve?.(true)
+    } catch (error) {
+      confirmDialogError.value = (error as Error).message || $t('An error occurred. Please try again.')
+      confirmDialogResolve?.(false)
+    } finally {
+      confirmDialogBusy.value = false
+      confirmDialogResolve = null
+      confirmDialogAction = null
+    }
+  } else {
+    confirmDialogRef.value?.close()
+    confirmDialogResolve?.(true)
+    confirmDialogResolve = null
+    confirmDialogAction = null
+  }
+}
+
+function onConfirmDialogCancel() {
+  confirmDialogResolve?.(false)
+  confirmDialogResolve = null
+  confirmDialogAction = null
+}
 const isUnassigning = ref<boolean>(false)
 const locales = ref<string[]>(['en'])
 const unassignedFilterString = ref<string>('')
@@ -214,8 +417,6 @@ const condensedView = ref<boolean>(localStorage.getItem('schedule-editor-condens
 const timeDensityMinutes = ref<number>(Number(localStorage.getItem('schedule-time-density-minutes') || 30))
 
 const gridDensity = computed<'compact' | 'default' | 'comfortable'>(() => {
-  // Condensed view only affects how dense the grid looks (zoom/spacing).
-  // Time density only affects how the schedule timeslices are generated.
   return condensedView.value ? 'compact' : 'default'
 })
 
@@ -228,20 +429,21 @@ function onTimeDensityChange (): void {
   localStorage.setItem('schedule-time-density-minutes', String(timeDensityMinutes.value))
 }
 
-function $t(key: string): string {
-  return typeof window !== 'undefined' && (window as { $t?: (key: string) => string }).$t?.(key) || key;
-}
 
-const translations = reactive({
-  filterSessions: $t('Filter sessions'),
+const translations = computed(() => ({
+  filterSessions: caps.showRoles ? $t('Filter shifts') : $t('Filter sessions'),
   newBreak: $t('New break'),
+}))
+
+const assignMembersHeading = computed(() => {
+  if (!assigningSession.value) return $t('Assign Members')
+  return $t('Assign Members for {{title}}', {title: getLocalizedString(assigningSession.value.title)})
 })
 
 function lookupKey(value?: string | number | null): string {
   return value == null ? '' : String(value)
 }
 
-// Lookups
 const roomsLookup = computed<Record<string, Room>>(() => {
   if (!schedule.value) return {}
   return schedule.value.rooms.reduce((acc, room) => {
@@ -275,24 +477,25 @@ function resolveSessionSpeakers(speakers?: string[]): Speaker[] {
     .filter((speaker): speaker is Speaker => Boolean(speaker))
 }
 
-// Sort methods for unassigned sessions
 const unassignedSortMethods = computed<SortMethod[]>(() => {
   const sortMethods: SortMethod[] = [
     { label: $t('Title'), name: 'title' },
-    { label: $t('Speakers'), name: 'speakers' },
   ]
-  if (schedule.value && schedule.value.tracks.length > 1) {
+  if (caps.showSpeakers) {
+    sortMethods.push({ label: $t('Speakers'), name: 'speakers' })
+  }
+  if (schedule.value && schedule.value.tracks.length > 1 && caps.showTracks) {
     sortMethods.push({ label: $t('Track'), name: 'track' })
   }
   sortMethods.push({ label: $t('Duration'), name: 'duration' })
   return sortMethods
 })
 
-// Sessions without start (unassigned)
 const unscheduled = computed<SessionData[]>(() => {
   if (!schedule.value) return []
   let sessions: SessionData[] = []
-  for (const session of schedule.value.talks.filter((s) => !s.start)) {
+  const isShifts = mode === 'shifts' || mode === 'public-shifts'
+  for (const session of schedule.value.talks.filter((s) => isShifts ? !s.room : !s.start)) {
     sessions.push({
       id: session.id,
       code: session.code,
@@ -303,6 +506,7 @@ const unscheduled = computed<SessionData[]>(() => {
       duration: session.duration,
       state: session.state,
       do_not_record: session.do_not_record,
+      roles: session.roles ?? [],
     } as SessionData)
   }
   if (unassignedFilterString.value.length) {
@@ -340,6 +544,8 @@ const unscheduled = computed<SessionData[]>(() => {
 
 const deletedRoomSessions = computed<SessionData[]>(() => {
   if (!schedule.value) return []
+  const isShifts = mode === 'shifts' || mode === 'public-shifts'
+  if (isShifts) return []
   return schedule.value.talks
     .filter(
       (session) =>
@@ -391,6 +597,7 @@ const sessions = computed<SessionData[]>(() => {
     state: session.state,
     room: roomsLookup.value[lookupKey(session.room)],
     do_not_record: session.do_not_record,
+    roles: session.roles || [],
   }))
 
   sessionList.sort((a, b) => a.start!.diff(b.start!))
@@ -402,8 +609,6 @@ const days = computed<Moment[]>(() => {
   let firstDay = moment(schedule.value.event_start).startOf('day')
   let lastDay = moment(schedule.value.event_end).startOf('day')
 
-  // Keep editor tabs aligned with real talk dates as well, since imported
-  // schedules may contain talks outside the event date window.
   const startedTalks = schedule.value.talks
     .map((talk) => talk.start)
     .filter((start): start is string => typeof start === 'string')
@@ -459,7 +664,7 @@ const dateFormat = computed<string>(() => {
   return 'ddd DD. MMM'
 })
 
-async function fetchSchedule(options?: Record<string, any>): Promise<Schedule> {
+async function fetchSchedule(options?: { since?: string; warnings?: boolean }): Promise<Schedule> {
   const sched = await api.fetchTalks(options) as unknown as Schedule
   return sched
 }
@@ -521,7 +726,15 @@ async function createSession(e: CreateSessionEvent): Promise<void> {
 }
 
 function editorStart(session: SessionData | Talk): void {
-  editorSession.value = { ...session } as SessionData
+  const newEditorSession = { ...session } as SessionData
+  if (caps.canEditRoles) {
+    if (!newEditorSession.roles || newEditorSession.roles.length === 0) {
+      newEditorSession.roles = [{ id: undefined, capacity: 1 }]
+    } else {
+      newEditorSession.roles = newEditorSession.roles.map((r) => ({ ...r }))
+    }
+  }
+  editorSession.value = newEditorSession
 }
 
 async function editorSave(): Promise<void> {
@@ -540,8 +753,8 @@ async function editorSave(): Promise<void> {
       ? { en: editorSession.value.title } 
       : editorSession.value.title,
     duration: editorSession.value.duration ?? 0,
-    start: editorSession.value.start?.toISOString(),
-    end: editorSession.value.end?.toISOString(),
+    start: typeof editorSession.value.start === 'string' ? editorSession.value.start : editorSession.value.start?.toISOString(),
+    end: typeof editorSession.value.end === 'string' ? editorSession.value.end : editorSession.value.end?.toISOString(),
     room: editorSession.value.room?.id,
     speakers: editorSession.value.speakers?.map(s => 
       typeof s === 'string' ? s : s.name
@@ -550,16 +763,25 @@ async function editorSave(): Promise<void> {
     abstract: editorSession.value.abstract,
     state: editorSession.value.state
   }
+
+  if (caps.canEditRoles) {
+    talk.roles = editorSession.value.roles?.filter((r) => r.id !== undefined)
+  }
   
   await saveTalk(talk)
 
   const sessionInSchedule = schedule.value?.talks.find((s) => s.id === editorSession.value?.id)
   if (sessionInSchedule && editorSession.value) {
-    sessionInSchedule.end = editorSession.value.end?.toISOString()
+    sessionInSchedule.end = typeof editorSession.value.end === 'string' ? editorSession.value.end : editorSession.value.end?.toISOString()
     if (!('submission' in sessionInSchedule)) {
       sessionInSchedule.title = editorSession.value.title as Record<string, string>
     }
   }
+  
+  if (caps.showRoles) {
+    schedule.value = await fetchSchedule()
+  }
+  
   editorSessionWaiting.value = false
   editorSession.value = null
   await fetchAdditionalScheduleData()
@@ -567,14 +789,133 @@ async function editorSave(): Promise<void> {
 
 async function editorDelete(): Promise<void> {
   if (!editorSession.value) return
-  editorSessionWaiting.value = true
-  await api.deleteTalk({ id: String(editorSession.value.id) } as any)
-  if (schedule.value) {
-    schedule.value.talks = schedule.value.talks.filter((s) => s.id !== editorSession.value?.id)
+  let deleted = false
+  if (mode === 'shifts' || mode === 'public-shifts') {
+    deleted = await deleteShiftById(editorSession.value.id)
+  } else {
+    if (editorSession.value.code) return
+    deleted = await deleteTalkBreakById(editorSession.value.id)
   }
-  editorSessionWaiting.value = false
-  editorSession.value = null
-  await fetchAdditionalScheduleData()
+  if (deleted) {
+    editorSession.value = null
+  }
+}
+
+async function deleteSessionDirect(session: SessionData | Talk): Promise<void> {
+  if (mode === 'shifts' || mode === 'public-shifts') {
+    await deleteShiftById(session.id)
+  } else {
+    if (session.code) return
+    await deleteTalkBreakById(session.id)
+  }
+}
+
+async function deleteShiftById(id: number): Promise<boolean> {
+  return showConfirmDialog({
+    title: $t('Delete shift'),
+    lead: $t('Are you sure you want to delete this shift? This action cannot be undone.'),
+    confirmLabel: $t('Delete'),
+    confirmClass: 'btn-danger',
+    onConfirm: async () => {
+      await api.deleteTalk({ id })
+      if (schedule.value) {
+        schedule.value.talks = schedule.value.talks.filter((s) => s.id !== id)
+      }
+      await fetchAdditionalScheduleData()
+    },
+  })
+}
+
+async function deleteTalkBreakById(id: number): Promise<boolean> {
+  return showBreakConfirmDialog(id)
+}
+
+async function openAssignModal(session: SessionData | Talk): Promise<void> {
+  assignModalError.value = ''
+  assigningSession.value = { ...session } as SessionData
+  if (assigningSession.value.roles && assigningSession.value.roles.length > 0) {
+    for (const role of assigningSession.value.roles) {
+      selectedMemberIds.value[String(role.id)] = undefined
+    }
+    await Promise.all(assigningSession.value.roles.map((role) => loadMembers(role.id)))
+  }
+}
+
+function closeAssignModal(): void {
+  assigningSession.value = null
+  assignModalError.value = ''
+  selectedMemberIds.value = {}
+  availableMembersByRole.value = {}
+}
+
+async function loadMembers(roleId: number): Promise<void> {
+  try {
+    const response = await api.fetchMembers(roleId)
+    availableMembersByRole.value[String(roleId)] = response.members ?? []
+  } catch (error) {
+    console.error('Failed to fetch members', error)
+    assignModalError.value = $t('Failed to load members. Please try again.')
+  }
+}
+
+async function assignMember(roleId: number): Promise<void> {
+  const selectedMemberId = selectedMemberIds.value[String(roleId)]
+  if (!assigningSession.value || !selectedMemberId) return
+  
+  assigningWaiting.value = true
+  try {
+    await api.assignMember(Number(assigningSession.value.id), roleId, selectedMemberId)
+    
+    const sched = await fetchSchedule({ warnings: true })
+    if (schedule.value) {
+      schedule.value.talks = sched.talks
+      if (sched.roles) schedule.value.roles = sched.roles
+      const updatedSession = sched.talks.find(t => t.id === assigningSession.value?.id)
+      if (updatedSession) {
+        assigningSession.value = { ...updatedSession } as SessionData
+      }
+    }
+    await fetchAdditionalScheduleData()
+    await loadMembers(roleId)
+    selectedMemberIds.value[String(roleId)] = undefined
+  } catch (error) {
+    console.error('Failed to assign member', error)
+    assignModalError.value = $t('Failed to assign member. Please try again.')
+  } finally {
+    assigningWaiting.value = false
+  }
+}
+
+async function unassignMember(roleId: number, userId: number): Promise<void> {
+  if (!assigningSession.value) return
+  const confirmed = await showConfirmDialog({
+    title: $t('Unassign member'),
+    lead: $t('Are you sure you want to unassign this member?'),
+    confirmLabel: $t('Unassign'),
+    confirmClass: 'btn-danger',
+  })
+  if (!confirmed) return
+  
+  assigningWaiting.value = true
+  try {
+    await api.unassignMember(Number(assigningSession.value.id), roleId, userId)
+    
+    const sched = await fetchSchedule({ warnings: true })
+    if (schedule.value) {
+      schedule.value.talks = sched.talks
+      if (sched.roles) schedule.value.roles = sched.roles
+      const updatedSession = sched.talks.find(t => t.id === assigningSession.value?.id)
+      if (updatedSession) {
+        assigningSession.value = { ...updatedSession } as SessionData
+      }
+    }
+    await fetchAdditionalScheduleData()
+  } catch (error) {
+    console.error('Failed to unassign member', error)
+    assignModalError.value = $t('Failed to unassign member. Please try again.')
+  } finally {
+    assigningWaiting.value = false
+  }
 }
 
 function showNewBreakHint() {
@@ -623,15 +964,19 @@ async function stopDragging(): Promise<void> {
       if (draggedSession.value.code && !draggedSession.value.deletedRoom) {
         const movedSession = schedule.value?.talks.find((s) => s.id === draggedSession.value!.id)
         if (movedSession) {
-          movedSession.start = null
-          movedSession.end = null
-          movedSession.room = undefined
+          if (mode === 'shifts' || mode === 'public-shifts') {
+            movedSession.room = undefined
+          } else {
+            movedSession.start = null
+            movedSession.end = null
+            movedSession.room = undefined
+          }
           await saveTalk(movedSession)
           await fetchAdditionalScheduleData()
         }
       } else if (schedule.value?.talks.find((s) => s.id === draggedSession.value!.id)) {
         schedule.value.talks = schedule.value.talks.filter((s) => s.id !== draggedSession.value!.id)
-        await api.deleteTalk({ id: String(draggedSession.value.id) } as any)
+        await api.deleteTalk({ id: Number(draggedSession.value.id) })
         await fetchAdditionalScheduleData()
       }
     }
@@ -747,6 +1092,12 @@ onUnmounted(() => {
 		flex: auto
 		min-height: 0
 		min-width: 0
+	&.is-public-shifts
+		#main-wrapper
+			display: block
+		#schedule-wrapper
+			width: 100%
+			margin-right: 0
 	.settings
 		margin-left: 18px
 		align-self: flex-start
@@ -794,6 +1145,8 @@ onUnmounted(() => {
 			padding-bottom: 8px
 			display: flex
 			flex-direction: column
+			
+
 		.unassigned-header > .density-controls
 			display: flex
 			align-items: center
@@ -884,7 +1237,7 @@ onUnmounted(() => {
 					white-space: nowrap
 		.unassigned-header > .title
 			position: relative
-			padding 4px 0
+			padding: 4px 0
 			font-size: 18px
 			text-align: center
 			background-color: $clr-white
@@ -937,7 +1290,7 @@ onUnmounted(() => {
 			cursor: pointer
 			z-index: 1000
 			box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5)
-			text-align: left;
+			text-align: left
 			.sort-method
 				padding: 8px 16px
 				display: flex
@@ -973,54 +1326,213 @@ onUnmounted(() => {
 	#schedule-wrapper
 		width: 100%
 		margin-right: 40px
-  #session-editor-wrapper
+#session-editor-wrapper, #assign-modal-wrapper
+	position: fixed
+	z-index: 1000
+	top: 0
+	left: 0
+	width: 100%
+	height: 100%
+	background-color: rgba(0, 0, 0, 0.5)
+
+	#session-editor
+		background-color: $clr-white
+		border-radius: 4px
+		padding: 32px 40px
 		position: absolute
-		z-index: 1000
-		top: 0
-		left: 0
-		width: 100%
-		height: 100%
-		background-color: rgba(0, 0, 0, 0.5)
+		top: 50%
+		left: 50%
+		transform: translate(-50%, -50%)
+		width: 680px
+		max-height: calc(100vh - 48px)
+		overflow-y: auto
 
-		#session-editor
-			background-color: $clr-white
+		.session-editor-title
+			font-size: 22px
+			margin-bottom: 16px
+			display: flex
+			justify-content: space-between
+			align-items: center
+			.modal-close-btn
+				background: none
+				border: none
+				font-size: 20px
+				color: #666
+				cursor: pointer
+				padding: 4px 8px
+				line-height: 1
+				border-radius: 4px
+				&:hover
+					color: #333
+					background-color: rgba(0, 0, 0, 0.05)
+		.button-row
+			display: flex
+			width: 100%
+			margin-top: 24px
+
+			.bunt-button-content
+				font-size: 16px !important
+			#btn-delete
+				button-style(color: $clr-danger, text-color: $clr-white)
+				font-weight: bold
+			#btn-save
+				margin-left: auto
+				font-weight: bold
+				button-style(color: #2185d0)
+			[type="submit"]
+				display: none
+		.data
+			display: flex
+			flex-direction: column
+			font-size: 16px
+			.data-row
+				.data-value
+					padding-top: 8px
+					ul
+						list-style: none
+						padding: 0
+			.input-group
+				position: relative
+				display: flex
+				flex-wrap: wrap
+				align-items: stretch
+				> input
+					flex: 1 1 auto
+					width: 1%
+					min-width: 0
+					border-top-right-radius: 0
+					border-bottom-right-radius: 0
+			.input-group-append
+				display: flex
+				margin-left: -1px
+			.input-group-text
+				display: flex
+				align-items: center
+				padding: 0.375rem 0.75rem
+				color: var(--color-text-input)
+				white-space: nowrap
+				background-color: var(--color-grey-lighter)
+				border: 1px solid var(--color-border)
+				border-top-right-radius: var(--size-border-radius)
+				border-bottom-right-radius: var(--size-border-radius)
+			.role-row
+				display: flex
+				align-items: center
+				gap: 10px
+				margin-bottom: 10px
+				.role-select
+					flex: auto
+				.role-capacity
+					flex: none
+					width: 100px
+		.warning
+			color: #b23e65
+		.assign-data
+			.assign-role
+				margin-bottom: 24px
+			.assign-new
+				align-items: center
+		.assign-modal-error
+			display: flex
+			align-items: center
+			justify-content: space-between
+			gap: 8px
+			padding: 10px 14px
+			margin-bottom: 16px
+			background-color: #fdecea
+			border: 1px solid #f5c6cb
 			border-radius: 4px
-			padding: 32px 40px
-			position: absolute
-			top: 50%
-			left: 50%
-			transform: translate(-50%, -50%)
-			width: 680px
-
-			.session-editor-title
-				font-size: 22px
-				margin-bottom: 16px
-			.button-row
-				display: flex
-				width: 100%
-				margin-top: 24px
-
-				.bunt-button-content
-					font-size: 16px !important
-				#btn-delete
-					button-style(color: $clr-danger, text-color: $clr-white)
-					font-weight: bold;
-				#btn-save
-					margin-left: auto
-					font-weight: bold;
-					button-style(color: #2185d0)
-				[type=submit]
-					display: none
-			.data
-				display: flex
-				flex-direction: column
-				font-size: 16px
-				.data-row
-					.data-value
-						padding-top: 8px
-						ul
-							list-style: none
-							padding: 0
-			.warning
-				color: #b23e65
+			color: #721c24
+			font-size: 14px
+			.assign-modal-error-dismiss
+				background: none
+				border: none
+				color: #721c24
+				cursor: pointer
+				padding: 2px 6px
+				font-size: 14px
+				&:hover
+					opacity: 0.7
+		.member-chip
+			display: inline-flex
+			align-items: center
+			gap: 6px
+			background-color: $clr-grey-200
+			color: $clr-primary-text-light
+			border-radius: 14px
+			padding: 4px 6px 4px 12px
+			margin: 0 6px 6px 0
+			font-size: 13px
+			line-height: 1.4
+			.member-chip-remove
+				display: inline-flex
+				align-items: center
+				justify-content: center
+				width: 18px
+				height: 18px
+				border: none
+				border-radius: 50%
+				background: none
+				color: $clr-danger
+				cursor: pointer
+				padding: 0
+				font-size: 11px
+				&:hover
+					background-color: rgba(0, 0, 0, 0.08)
+		.assign-btn
+			width: 100%
+			height: 100%
+			min-height: 38px
+			border: none
+			border-radius: 4px
+			background-color: #2185d0
+			color: $clr-white
+			font-weight: bold
+			cursor: pointer
+			&:hover
+				background-color: #1c71b1
+			&:disabled
+				opacity: 0.6
+				cursor: default
+.break-confirm-dialog
+	border: none
+	border-radius: 4px
+	padding: 0
+	max-width: 400px
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2)
+	&::backdrop
+		background: rgba(0, 0, 0, 0.5)
+	.dialog-inner
+		padding: 32px 40px
+		h3
+			margin: 0 0 12px
+			font-size: 18px
+		p
+			margin: 0 0 16px
+			color: $clr-grey-700
+			line-height: 1.4
+		.break-confirm-error
+			color: $clr-danger
+			margin: 0 0 12px
+		.break-confirm-actions
+			display: flex
+			justify-content: flex-end
+			gap: 8px
+			.btn
+				display: inline-block
+				padding: 6px 12px
+				font-size: 14px
+				line-height: 1.4
+				border-radius: 4px
+				border: 1px solid transparent
+				cursor: pointer
+				&:disabled
+					opacity: 0.65
+					cursor: default
+			.btn-default
+				background: $clr-white
+				border-color: $clr-dividers-light
+				color: $clr-grey-900
+			.btn-danger
+				button-style(color: $clr-danger, text-color: $clr-white)
 </style>

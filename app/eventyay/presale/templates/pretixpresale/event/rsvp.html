@@ -1,76 +1,197 @@
 {% load i18n %}
+{% load static %}
 {% load eventurl %}
+{% load money %}
 {% load bootstrap3 %}
 
 <section class="meetup-rsvp" aria-label="{% trans 'Event registration' %}">
 
     {% if attendee_already_registered %}
-            <div class="panel panel-success" role="status">
-                <div class="panel-heading">
-                    <h3 class="panel-title">
-                        <span class="fa fa-check-circle" aria-hidden="true"></span>
-                        {% trans "You're registered!" %}
-                    </h3>
-                </div>
-                <div class="panel-body">
-                    <p>{% trans "You're all set for this event. We look forward to seeing you!" %}</p>
-                </div>
+        <div class="meetup-rsvp-status registered" role="status">
+            <i class="fa fa-check-circle" aria-hidden="true"></i>
+            <div>
+                <strong>{% trans "You're registered!" %}</strong><br>
+                <small>{% trans "You're all set for this event. We look forward to seeing you!" %}</small>
             </div>
+        </div>
+
+    {% elif rsvp_registration_closed %}
+        <div class="meetup-rsvp-status closed" role="alert">
+            <i class="fa fa-ban" aria-hidden="true"></i>
+            <div>
+                <strong>{% trans "Registration is closed" %}</strong><br>
+                <small>{% trans "This event has reached its maximum number of registrations." %}</small>
+            </div>
+        </div>
 
     {% elif request.user.is_authenticated %}
-            <div class="panel panel-primary">
-                <div class="panel-heading">
-                    <h3 class="panel-title">{% trans "Reserve your spot" %}</h3>
-                </div>
-                <div class="panel-body">
-                    <p>{% trans "Click the button below to register for this event instantly." %}</p>
-                    <form method="post" action="{% eventurl request.event 'presale:event.rsvp' %}">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-primary btn-lg">
-                            <span class="fa fa-calendar-check-o" aria-hidden="true"></span>
-                            {% trans "Register" %}
-                        </button>
-                    </form>
-                </div>
+        <div class="meetup-rsvp-block">
+            <div class="meetup-rsvp-text">
+                <strong>{% trans "Reserve your spot" %}</strong><br>
+                <small>{% trans "Click the button below to register for this event." %}</small>
             </div>
 
+            {% if meetup_registration_fee and meetup_registration_fee > 0 %}
+                {% if stripe_publishable_key %}
+                    <button type="button" class="btn btn-primary btn-block open-meetup-payment-btn">
+                        {% blocktrans trimmed with fee=meetup_registration_fee|money:request.event.currency %}
+                            Pay now {{ fee }}
+                        {% endblocktrans %}
+                    </button>
+                {% else %}
+                    <div class="alert alert-warning meetup-payment-unconfigured-alert">
+                        {% trans "Paid registration is currently unavailable because payment is being configured." %}
+                    </div>
+                {% endif %}
+            {% else %}
+                <form method="post" action="{% eventurl request.event 'presale:event.rsvp' %}" class="meetup-rsvp-form">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary btn-block">
+                        {% trans "Register" %}
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+
     {% elif guest_checkout_allowed %}
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">{% trans "Register for this event" %}</h3>
+        <div class="meetup-rsvp-block">
+            <div class="meetup-rsvp-text">
+                <strong>{% trans "Register for this event" %}</strong>
             </div>
-            <div class="panel-body">
-                <form method="post" action="{% eventurl request.event 'presale:event.rsvp' %}" novalidate>
+
+            {% if meetup_registration_fee and meetup_registration_fee > 0 %}
+                {% if stripe_publishable_key %}
+                    <button type="button" class="btn btn-primary btn-block open-meetup-payment-btn">
+                        {% blocktrans trimmed with fee=meetup_registration_fee|money:request.event.currency %}
+                            Pay now {{ fee }}
+                        {% endblocktrans %}
+                    </button>
+                {% else %}
+                    <div class="alert alert-warning meetup-payment-unconfigured-alert">
+                        {% trans "Paid registration is currently unavailable because payment is being configured." %}
+                    </div>
+                {% endif %}
+            {% else %}
+                <form method="post" action="{% eventurl request.event 'presale:event.rsvp' %}" novalidate class="meetup-rsvp-form">
                     {% csrf_token %}
                     {% bootstrap_form_errors rsvp_guest_form %}
-                    {% bootstrap_field rsvp_guest_form.attendee_name layout="horizontal" %}
-                    {% bootstrap_field rsvp_guest_form.attendee_email layout="horizontal" %}
-                    <div class="form-group">
-                        <div class="col-md-offset-3 col-md-9">
-                            <button type="submit" class="btn btn-primary">
-                                <span class="fa fa-user-plus" aria-hidden="true"></span>
-                                {% trans "Register" %}
-                            </button>
+                    {% bootstrap_field rsvp_guest_form.attendee_name %}
+                    {% bootstrap_field rsvp_guest_form.attendee_email %}
+                    <button type="submit" class="btn btn-primary btn-block">
+                        {% trans "Register" %}
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+
+    {% else %}
+        <div class="meetup-rsvp-block">
+            <div class="meetup-rsvp-text">
+                <strong>{% trans "Registration required" %}</strong><br>
+                <small>{% trans "Please log in to register for this event." %}</small>
+            </div>
+            <a href="{% url 'auth.login' %}?next={{ request.path|urlencode }}" class="btn btn-primary btn-block">
+                {% trans "Log in" %}
+            </a>
+        </div>
+    {% endif %}
+
+    {% if meetup_registration_fee and meetup_registration_fee > 0 and stripe_publishable_key and not attendee_already_registered and not rsvp_registration_closed %}
+        <div id="meetup-payment-modal" class="meetup-payment-overlay is-hidden" role="dialog" aria-modal="true" aria-labelledby="meetupPaymentModalLabel">
+            <div class="meetup-payment-popup">
+                <div class="meetup-payment-header">
+                    <h3 id="meetupPaymentModalLabel">
+                        {% trans "Payment details" %}
+                    </h3>
+                    <button type="button" class="meetup-payment-close" aria-label="{% trans 'Close' %}">&times;</button>
+                </div>
+                <form method="post" action="{% eventurl request.event 'presale:event.rsvp' %}" class="meetup-payment-form"
+                      data-stripe-publishable-key="{{ stripe_publishable_key }}"
+                      data-msg-name-required="{% trans 'Please enter your full name.' %}"
+                      data-msg-email-required="{% trans 'Please enter a valid email address.' %}"
+                      data-msg-unavailable="{% trans 'Card payment is unavailable. Please refresh the page and try again.' %}"
+                      data-msg-processing="{% trans 'Processing payment...' %}"
+                      data-msg-card-failed="{% trans 'Card payment failed.' %}"
+                      data-msg-error="{% trans 'Unable to process card details. Please try again.' %}"
+                      data-msg-processing-error="{% trans 'Payment processing error:' %}"
+                      novalidate>
+                    {% csrf_token %}
+                    <input type="hidden" name="stripe_token" id="id_stripe_token" value="">
+                    <div class="meetup-payment-body">
+                        <div id="meetupPaymentErrorAlert" class="alert alert-danger meetup-payment-error-alert is-hidden" role="alert"></div>
+
+                        <div class="meetup-modal-fee-summary">
+                            <div>
+                                <div class="meetup-modal-event-title"><strong>{{ request.event.name }}</strong></div>
+                                <div class="text-muted small">{% trans "Meetup Registration Fee" %}</div>
+                            </div>
+                            <div class="meetup-modal-fee-badge">
+                                {{ meetup_registration_fee|money:request.event.currency }}
+                            </div>
                         </div>
+
+                        {% if not request.user.is_authenticated %}
+                            <div class="form-group">
+                                <label class="control-label" for="id_attendee_name">{% trans "Your name" %} <span class="text-danger">*</span></label>
+                                <input type="text" name="attendee_name" id="id_attendee_name" class="form-control" required placeholder="{% trans 'Full Name' %}">
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label" for="id_attendee_email">{% trans "Your email" %} <span class="text-danger">*</span></label>
+                                <input type="email" name="attendee_email" id="id_attendee_email" class="form-control" required placeholder="{% trans 'you@example.com' %}">
+                            </div>
+                            <hr class="meetup-modal-divider">
+                        {% endif %}
+
+                        <div class="meetup-payment-card-header">
+                            <h5><strong><span class="fa fa-credit-card"></span> {% trans "Credit or Debit Card" %}</strong></h5>
+                            <div class="meetup-card-icons">
+                                <i class="fa fa-cc-visa" title="Visa"></i>
+                                <i class="fa fa-cc-mastercard" title="Mastercard"></i>
+                                <i class="fa fa-cc-amex" title="American Express"></i>
+                                <i class="fa fa-cc-discover" title="Discover"></i>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="control-label" for="id_card_name">{% trans "Name on card" %}</label>
+                            <input type="text" name="card_name" id="id_card_name" class="form-control" placeholder="{% trans 'Name on card' %}" value="{% if request.user.is_authenticated %}{{ request.user.fullname|default:'' }}{% endif %}">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="control-label" for="stripe-card-number">{% trans "Card number" %} <span class="text-danger">*</span></label>
+                            <div id="stripe-card-number" class="form-control stripe-element-container"></div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-xs-6">
+                                <div class="form-group">
+                                    <label class="control-label" for="stripe-card-expiry">{% trans "Expiration date" %} <span class="text-danger">*</span></label>
+                                    <div id="stripe-card-expiry" class="form-control stripe-element-container"></div>
+                                </div>
+                            </div>
+                            <div class="col-xs-6">
+                                <div class="form-group">
+                                    <label class="control-label" for="stripe-card-cvc">{% trans "CVC / CVV" %} <span class="text-danger">*</span></label>
+                                    <div id="stripe-card-cvc" class="form-control stripe-element-container"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="meetup-payment-footer">
+                        <button type="button" class="btn btn-default meetup-payment-cancel">{% trans "Cancel" %}</button>
+                        <button type="submit" class="btn btn-primary btn-pay-confirm" id="btnPayConfirm">
+                            <span class="fa fa-circle-o-notch fa-spin btn-spinner hidden" aria-hidden="true"></span>
+                            <span class="btn-text">
+                                {% blocktrans trimmed with fee=meetup_registration_fee|money:request.event.currency %}
+                                    Pay now {{ fee }}
+                                {% endblocktrans %}
+                            </span>
+                        </button>
                     </div>
                 </form>
             </div>
         </div>
-
-    {% else %}
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">{% trans "Registration required" %}</h3>
-            </div>
-            <div class="panel-body">
-                <p>{% trans "Please log in to register for this event." %}</p>
-                <a href="{% url 'eventyay_common:auth.login' %}?next={{ request.path|urlencode }}" class="btn btn-primary">
-                    <span class="fa fa-sign-in" aria-hidden="true"></span>
-                    {% trans "Log in" %}
-                </a>
-            </div>
-        </div>
-
+        <script type="text/javascript" src="https://js.stripe.com/v3/"></script>
+        <script type="text/javascript" src="{% static 'pretixpresale/js/ui/meetup-payment.js' %}"></script>
     {% endif %}
-
 </section>

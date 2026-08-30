@@ -63,6 +63,15 @@ def test_event_with_custom_domain_on_main_domain(event_on_foobar, client):
 
 
 @pytest.mark.django_db
+@override_settings(DEBUG=False, SITE_URL="https://eventyay.example", SITE_NETLOC="eventyay.example")
+def test_login_on_custom_domain_redirects_to_main_domain(event_on_foobar, client):
+    r = client.get("/login/?next=/wm/event/online-video/join/", HTTP_HOST="foobar", secure=True)
+
+    assert r.status_code == 302
+    assert r["Location"] == "https://eventyay.example/login/?next=/wm/event/online-video/join/"
+
+
+@pytest.mark.django_db
 def test_event_with_custom_port_on_main_domain(event_on_custom_port, client):
     """redirect from common domain to custom domain."""
     r = client.get(f"/{event_on_custom_port.slug}/", HTTP_HOST="testserver")

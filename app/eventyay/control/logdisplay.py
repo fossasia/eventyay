@@ -4,7 +4,8 @@ from decimal import Decimal
 
 import dateutil.parser
 import nh3
-import pytz
+import datetime
+from zoneinfo import ZoneInfo
 from django.core.exceptions import ObjectDoesNotExist
 from django.dispatch import receiver
 from django.urls import reverse
@@ -239,7 +240,7 @@ def _display_checkin(event, logentry, action_type: str):
     if 'datetime' in data:
         dt = dateutil.parser.parse(data.get('datetime'))
         show_dt = abs((logentry.datetime - dt).total_seconds()) > 5 or 'forced' in data
-        tz = pytz.timezone(event.settings.timezone)
+        tz = ZoneInfo(event.settings.timezone)
         dt_formatted = date_format(dt.astimezone(tz), 'SHORT_DATETIME_FORMAT')
 
     checkin_list = _get_checkin_list_name(event, data.get('list'))
@@ -562,6 +563,9 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
         'eventyay.event.order.email.order_free': _(
             'An email has been sent to notify the user that the order has been received.'
         ),
+        'eventyay.event.order.email.meetup_registration': _(
+            'An email has been sent to confirm the meetup registration.'
+        ),
         'eventyay.event.order.email.order_paid': _(
             'An email has been sent to notify the user that payment has been received.'
         ),
@@ -580,6 +584,7 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
         'eventyay.event.order.email.resend': _(
             'An email with a link to the order detail page has been resent to the user.'
         ),
+        'eventyay.event.order.anonymized': _('The order ticketing data has been anonymized.'),
         'eventyay.event.order.payment.confirmed': _('Payment {local_id} has been confirmed.'),
         'eventyay.event.order.payment.canceled': _('Payment {local_id} has been canceled.'),
         'eventyay.event.order.payment.canceled.failed': _('Canceling payment {local_id} has failed.'),
@@ -758,7 +763,7 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
     if action_type == 'eventyay.control.views.checkin':
         # deprecated
         dt = dateutil.parser.parse(data.get('datetime'))
-        tz = pytz.timezone(sender.settings.timezone)
+        tz = ZoneInfo(sender.settings.timezone)
         dt_formatted = date_format(dt.astimezone(tz), 'SHORT_DATETIME_FORMAT')
         checkin_list = _get_checkin_list_name(sender, data.get('list'))
 

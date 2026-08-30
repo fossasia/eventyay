@@ -46,15 +46,11 @@ from eventyay.celery_app import app
 from eventyay.consts import SizeKey
 
 
-try:
-    from pytz.exceptions import AmbiguousTimeError, NonExistentTimeError
-except ImportError:
+class AmbiguousTimeError(ValueError):
+    pass
 
-    class AmbiguousTimeError(ValueError):
-        pass
-
-    class NonExistentTimeError(ValueError):
-        pass
+class NonExistentTimeError(ValueError):
+    pass
 
 
 logger = logging.getLogger(__name__)
@@ -1024,7 +1020,12 @@ def _import_speaker_row(event, settings, record, acting_user, caches=None):
 
 @app.task(base=ProfiledEventTask, bind=True, throws=(ImportExecutionError,))
 def import_submissions(self, event: Event, fileid: str, settings: dict, locale: str, user_id) -> ImportResult:
-    cf = CachedFile.objects.get(id=fileid)
+    try:
+        cf = CachedFile.objects.get(id=fileid)
+    except CachedFile.DoesNotExist:
+        raise ImportExecutionError(
+            _('The uploaded session file could not be found. Please upload it again and restart the import.')
+        )
     try:
         acting_user = User.objects.get(pk=user_id)
         with language(locale, event.settings.region):

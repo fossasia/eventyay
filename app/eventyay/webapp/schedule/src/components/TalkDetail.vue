@@ -1,6 +1,6 @@
 <template lang="pug">
 .c-talk-detail
-	detail-back-nav
+	detail-back-nav(hide-back)
 		detail-top-actions(
 			:export-options="talkExportOptions",
 			:qrcodes-url="talkQrcodesUrl",
@@ -11,23 +11,27 @@
 		.talk
 			.talk-header
 				h1 {{ getLocalizedString(resolvedTalk.title) }}
+				a.join-session-btn(
+					v-if="showJoinSession",
+					:href="computedJoinRoomLink",
+					@click="onJoinRoomClick") {{ t.join_session }}
 			.info
 				span.info-main {{ sessionTimeLabel }}
 				span.session-language(v-if="!isSchedulePending && sessionLanguageLabel")  · {{ t.session_language }}: {{ sessionLanguageLabel }}
 			.recording-embed(v-if="resolvedTalk.recording_iframe", v-html="resolvedTalk.recording_iframe")
 			.field-section.abstract-section(v-if="resolvedTalk.abstract")
-				h2.field-heading Abstract
+				h2.field-heading {{ $t('Abstract') }}
 				.field-content
 					markdown-content(:markdown="resolvedTalk.abstract")
 			.field-section.description-section(v-if="resolvedTalk.description")
-				h2.field-heading Description
+				h2.field-heading {{ $t('Description') }}
 				.field-content
 					markdown-content(:markdown="resolvedTalk.description")
 			.field-section.video-embed-section(v-for="(answer, index) in videoAnswers", :key="'api-video-' + index + '-' + (answer.embed_url || answer.answer)")
 				.video-embed
 					iframe(
 						:src="videoEmbedSrc(answer)",
-						title="Session video",
+						:title="$t('Session video')",
 						allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share",
 						allowfullscreen,
 						loading="lazy",
@@ -36,7 +40,7 @@
 				.video-embed(v-if="videoEmbedSrc(answer)")
 					iframe(
 						:src="videoEmbedSrc(answer)",
-						title="Session video",
+						:title="$t('Session video')",
 						allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share",
 						allowfullscreen,
 						loading="lazy",
@@ -65,8 +69,6 @@
 					svg(viewBox="0 0 24 24", width="18", height="18", fill="currentColor")
 						path(d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z")
 					span {{ t.view_video }}
-			slot(name="actions")
-				a.join-room-btn(v-if="showJoinRoom && computedJoinRoomLink", :href="computedJoinRoomLink", @click="onJoinRoomClick") {{ t.join_room }}
 		.downloads(v-if="displayResources.length > 0")
 			.header {{ t.downloads }}
 			a.download(v-for="{resource, link, description} of displayResources", :href="getAbsoluteResourceUrl(resource || link)", target="_blank", rel="noopener noreferrer")
@@ -206,18 +208,18 @@ export default {
 		t() {
 			const m = this.translationMessages || {}
 			return {
-				join_room: m.join_room || 'Join room',
-				speaker_name_not_provided: m.speaker_name_not_provided || 'Speaker name not provided',
-				downloads: m.downloads || 'Downloads',
-				speakers: m.speakers || 'Speakers',
-				view_video: m.view_video || 'View Video',
-				starred_by: m.starred_by || 'Starred by',
-				anonymous_attendee: m.anonymous_attendee || 'Anonymous (name not shared)',
-				view_all: m.view_all || 'View all',
-				hide_list: m.hide_list || 'Hide',
-				session_language: m.session_language || 'Language',
-				yes: m.yes || 'Yes',
-				no: m.no || 'No',
+				join_session: m.join_session || this.$t('Join session'),
+				speaker_name_not_provided: m.speaker_name_not_provided || this.$t('Speaker name not provided'),
+				downloads: m.downloads || this.$t('Downloads'),
+				speakers: m.speakers || this.$t('Speakers'),
+				view_video: m.view_video || this.$t('View Video'),
+				starred_by: m.starred_by || this.$t('Starred by'),
+				anonymous_attendee: m.anonymous_attendee || this.$t('Anonymous (name not shared)'),
+				view_all: m.view_all || this.$t('View all'),
+				hide_list: m.hide_list || this.$t('Hide'),
+				session_language: m.session_language || this.$t('Language'),
+				yes: m.yes || this.$t('Yes'),
+				no: m.no || this.$t('No'),
 			}
 		},
 		uiLocale () {
@@ -270,7 +272,10 @@ export default {
 		},
 		computedJoinRoomLink() {
 			if (!this.resolvedTalk) return ''
-			return this.getJoinRoomLink(this.resolvedTalk) || ''
+			return this.getJoinRoomLink?.(this.resolvedTalk) || ''
+		},
+		showJoinSession() {
+			return Boolean(this.computedJoinRoomLink && this.isLive)
 		},
 		isFaved() {
 			if (!this.resolvedTalk) return false
@@ -289,7 +294,7 @@ export default {
 		},
 		schedulePendingText () {
 			const m = this.translationMessages || {}
-			return m.schedule_pending_secondary || 'Coming soon'
+			return m.schedule_pending_secondary || this.$t('Coming soon')
 		},
 		sessionTimeLabel () {
 			if (this.isSchedulePending) return this.schedulePendingText
@@ -304,9 +309,11 @@ export default {
 			return getLocalizedString(room.name || room)
 		},
 		isLive() {
-			const now = this.scheduleData?.now
-			if (!now || !this.resolvedTalk) return false
-			return this.resolvedTalk.start < now && this.resolvedTalk.end > now
+			const talk = this.resolvedTalk
+			if (!talk?.start || !talk?.end) return false
+			const nowSource = this.scheduleData?.now
+			const now = nowSource?.value ?? nowSource ?? moment()
+			return moment(talk.start) < moment(now) && moment(talk.end) > moment(now)
 		},
 		effectiveApiContent() {
 			return this.apiContent || this.fetchedApiContent
@@ -488,14 +495,14 @@ export default {
 			return resolveAbsoluteUrl(resource, this.baseUrl)
 		},
 		getFileExtensionLabel(path) {
-			if (!path) return 'Resource'
+			if (!path) return this.$t('Resource')
 			if (/^https?:\/\//i.test(path) && !/\.[a-z0-9]+$/i.test(path)) {
-				return 'External Link'
+				return this.$t('External Link')
 			}
 			const parts = path.split(/[#?]/)[0].split('.')
-			if (parts.length < 2) return 'Resource'
+			if (parts.length < 2) return this.$t('Resource')
 			const ext = parts[parts.length - 1].toUpperCase()
-			return `${ext} Document`
+			return this.$t('{{ext}} Document', {ext})
 		},
 		getSpeakerLink(speaker) {
 			return this.generateSpeakerLinkUrl({speaker})
@@ -550,6 +557,28 @@ export default {
 	display: flex
 	flex-direction: column
 	background-color: $clr-white
+	.join-session-btn
+		display: inline-flex
+		align-items: center
+		justify-content: center
+		padding: 8px 18px
+		border-radius: 6px
+		font-weight: 600
+		font-size: 14px
+		line-height: 1.2
+		text-decoration: none
+		white-space: nowrap
+		color: $clr-white
+		background-color: var(--pretalx-clr-primary, var(--clr-primary, #2185d0))
+		&:hover
+			opacity: 0.9
+		&:focus-visible
+			outline: 2px solid var(--pretalx-clr-primary, var(--clr-primary, #2185d0))
+			outline-offset: 2px
+	@media (max-width: 480px)
+		.join-session-btn
+			padding: 8px 14px
+			font-size: 13px
 	.talk-wrapper
 		flex: auto
 		display: flex
@@ -558,9 +587,25 @@ export default {
 		flex: none
 		margin: 16px
 		.talk-header
+			display: flex
+			align-items: flex-start
+			justify-content: space-between
+			gap: 12px
 			margin-bottom: 8px
 			h1
 				margin: 0
+				flex: 1
+				min-width: 0
+			.join-session-btn
+				flex-shrink: 0
+				margin-top: 4px
+		@media (max-width: 600px)
+			.talk-header
+				flex-direction: column
+				align-items: stretch
+				.join-session-btn
+					align-self: flex-start
+					margin-top: 0
 		.info
 			font-size: 18px
 			color: $clr-secondary-text-light
@@ -616,17 +661,6 @@ export default {
 					opacity: 0.9
 				svg
 					flex-shrink: 0
-		.join-room-btn
-			display: inline-block
-			margin-top: 16px
-			padding: 8px 24px
-			border-radius: 4px
-			font-weight: 600
-			text-decoration: none
-			color: $clr-white
-			background-color: var(--pretalx-clr-primary, var(--clr-primary))
-			&:hover
-				opacity: 0.9
 	.starrers
 		margin: 0 16px 32px
 		display: flex

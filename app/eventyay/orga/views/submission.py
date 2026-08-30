@@ -347,6 +347,7 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
                 email=email,
                 name=form.cleaned_data.get('name'),
                 locale=form.cleaned_data.get('locale'),
+                biography=form.cleaned_data.get('biography'),
                 user=self.request.user,
             )
             messages.success(self.request, _('The speaker has been added to the proposal.'))
@@ -357,6 +358,7 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
         kwargs = super().get_form_kwargs()
         kwargs['event'] = self.request.event
         kwargs['require_name'] = True
+        kwargs['include_biography'] = True
         return kwargs
 
     def get_success_url(self):
@@ -418,6 +420,8 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
                 data=self.request.POST if self.request.method == 'POST' else None,
                 event=self.request.event,
                 prefix='speaker',
+                include_biography=True,
+                draft_save=self.request.POST.get('state') == SubmissionStates.DRAFT,
             )
 
     @cached_property
@@ -549,6 +553,7 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
             messages.error(self.request, phrases.base.error_saving_changes)
             return self.get(self.request, *self.args, **self.kwargs)
         if created and not self.new_speaker_form.is_valid():
+            messages.error(self.request, phrases.base.error_saving_changes)
             return self.form_invalid(form)
 
         self.object = form.instance
@@ -565,6 +570,7 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
                     name=self.new_speaker_form.cleaned_data['name'],
                     locale=self.new_speaker_form.cleaned_data.get('locale'),
                     user=self.request.user,
+                    biography=self.new_speaker_form.cleaned_data.get('biography'),
                 )
         else:
             formset_result = self.save_formset(form.instance)
@@ -604,6 +610,24 @@ class SubmissionContentView(SubmissionContent):
         if 'code' in self.kwargs:
             return ['base.orga_list_submission']  # View permission for reviewers
         return ['base.create_submission']
+
+    @context
+    def available_tags_json(self):
+        tags = []
+        for tag in self.request.event.tags.all().order_by('tag'):
+            description = tag.description
+            if description is not None and not isinstance(description, str):
+                description = str(description)
+            tags.append(
+                {
+                    'id': tag.id,
+                    'tag': tag.tag,
+                    'color': tag.color,
+                    'foreground_color': tag.foreground_color,
+                    'description': description or '',
+                }
+            )
+        return tags
 
 
 class BaseSubmissionList(Sortable, ReviewerSubmissionFilter, PaginationMixin, ListView):
@@ -936,7 +960,7 @@ class SubmissionStatsMixin:
             )
             for submission_type in self.request.event.submission_types.filter(deadline__isnull=False)
         ]
-        if self.request.event.cfp.deadline:
+        if hasattr(self.request.event, 'cfp') and self.request.event.cfp.deadline:
             deadlines.append(
                 (
                     self.request.event.cfp.deadline.astimezone(self.request.event.tz).strftime('%Y-%m-%d'),
@@ -1220,7 +1244,112 @@ class AllFeedbacksList(EventPermissionRequired, PaginationMixin, ListView):
     paginate_by = 25
 
     def get_queryset(self):
-        return Feedback.objects.order_by('-pk').select_related('talk').filter(talk__event=self.request.event)
+        qs = Feedback.objects.order_by('-pk').select_related('talk', 'author').filter(talk__event=self.request.event)
+        
+        tab = self.request.GET.get('tab', 'published')
+        if tab == 'published':
+            qs = qs.filter(status='published', is_public=True)
+        elif tab == 'pending':
+            qs = qs.filter(status='pending', is_public=True)
+        elif tab == 'hidden':
+            qs = qs.filter(status='hidden', is_public=True)
+        elif tab == 'anonymous':
+            qs = qs.filter(is_public=False)
+            
+        return qs
+        
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['current_tab'] = self.request.GET.get('tab', 'published')
+        context['banned_user_ids'] = list(self.request.event.banned_users.values_list('id', flat=True))
+        return context
+
+class FeedbackBulkAction(EventPermissionRequired, View):
+    permission_required = 'base.orga_update_submission'
+
+    def post(self, request, *args, **kwargs):
+        action = request.POST.get('action')
+        feedback_ids = request.POST.getlist('feedback_ids')
+        
+        if not feedback_ids:
+            messages.warning(request, _('No items selected.'))
+            return redirect(request.GET.get('next', request.event.orga_urls.feedback))
+            
+        feedbacks = Feedback.objects.filter(pk__in=feedback_ids, talk__event=request.event)
+        
+        if action == 'approve':
+            count = feedbacks.filter(status='pending').update(status='published')
+            messages.success(request, _('Successfully approved %d feedback(s).') % count)
+        elif action == 'hide':
+            count = feedbacks.exclude(status='hidden').update(status='hidden')
+            messages.success(request, _('Successfully hid %d feedback(s).') % count)
+        elif action == 'delete':
+            count = feedbacks.exclude(status='deleted').update(status='deleted')
+            messages.success(request, _('Successfully deleted %d feedback(s).') % count)
+            
+        return redirect(request.GET.get('next', request.event.orga_urls.feedback))
+
+class FeedbackUpdateStatus(EventPermissionRequired, View):
+    permission_required = 'base.orga_update_submission'
+
+    def get(self, request, *args, **kwargs):
+        feedback = get_object_or_404(Feedback, pk=self.kwargs['pk'], talk__event=request.event)
+        action = request.GET.get('action')
+        if action == 'delete':
+            from django.shortcuts import render
+            return render(request, 'orga/submission/feedback_delete.html', {'object': feedback})
+        return redirect(request.GET.get('next', request.event.orga_urls.feedback))
+
+    def post(self, request, *args, **kwargs):
+        feedback = get_object_or_404(Feedback, pk=self.kwargs['pk'], talk__event=request.event)
+        action = request.POST.get('action')
+        
+        if action == 'approve' and feedback.status == 'pending':
+            feedback.status = 'published'
+            feedback.save()
+            messages.success(request, _('Feedback approved.'))
+        elif action == 'hide' and feedback.status != 'hidden':
+            feedback.status = 'hidden'
+            feedback.save()
+            messages.success(request, _('Feedback hidden.'))
+        elif action == 'delete':
+            feedback.status = 'deleted'
+            feedback.save()
+            messages.success(request, _('Feedback deleted.'))
+        elif action == 'ban':
+            if feedback.author:
+                request.event.banned_users.add(feedback.author)
+                feedback.status = 'hidden'
+                feedback.save()
+                messages.success(request, _('User banned successfully.'))
+            else:
+                messages.error(request, _('Cannot ban anonymous user.'))
+        elif action == 'unban':
+            if feedback.author:
+                request.event.banned_users.remove(feedback.author)
+                messages.success(request, _('User unbanned successfully.'))
+            else:
+                messages.error(request, _('Cannot unban anonymous user.'))
+            
+        next_url = request.GET.get('next')
+        if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
+            return redirect(next_url)
+        return redirect(request.event.orga_urls.feedback)
+
+
+class FeedbackExportView(EventPermissionRequired, View):
+    permission_required = 'base.orga_list_submission'
+
+    def get(self, request, *args, **kwargs):
+        fmt = request.GET.get('format', 'csv')
+        from eventyay.base.exporters.feedback import FeedbackCSVExporter, FeedbackJSONExporter
+
+        exporter_cls = FeedbackJSONExporter if fmt == 'json' else FeedbackCSVExporter
+        exporter = exporter_cls(request.event)
+        filename, content_type, content = exporter.render()
+        response = HttpResponse(content, content_type=content_type)
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
 
 
 class TagView(OrgaCRUDView):

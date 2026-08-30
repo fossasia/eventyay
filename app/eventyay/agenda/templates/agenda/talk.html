@@ -4,6 +4,8 @@
 {% load vite %}
 {% load html_signal %}
 {% load static %}
+{% load rich_text %}
+{% load i18n %}
 
 {% load presale_locale %}
 {% block title %}{{ submission.title|event_localize }} ::{% endblock title %}
@@ -37,6 +39,187 @@
         <h1>{{ submission.title|event_localize }}</h1>
         <p>{{ submission_description|event_localize }}</p>
     </noscript>
+    {% if request.event|get_feature_flag:"use_feedback" and not is_html_export %}
+        <div class="mt-5 border-top feedback-section">
+            <h3 class="mb-4">
+                {% if public_feedback %}
+                    {{ public_feedback|length }} {% translate "Comments" %}
+                {% else %}
+                    0 {% translate "Comments" %}
+                {% endif %}
+            </h3>
+
+            {% if feedback_form %}
+                <div class="mb-1 d-flex youtube-comment-form">
+                    <div class="mr-3 mt-1">
+                        <div class="comment-avatar">
+                            {% if request.user.is_authenticated %}{{ request.user.get_display_name|slice:":1"|upper|default:"U" }}{% else %}<i class="fa fa-user"></i>{% endif %}
+                        </div>
+                    </div>
+                    <div class="flex-grow-1">
+                        <form method="post" action="">
+                            {% csrf_token %}
+                            {{ feedback_form.media }}
+
+                            
+                            <div class="d-flex align-items-end form-group mb-0">
+                                <textarea name="{{ feedback_form.review.name }}" class="form-control youtube-comment-input main-comment-input flex-grow-1" rows="1" placeholder="{% translate 'Add a comment...' %}" required id="{{ feedback_form.review.id_for_label }}"></textarea>
+                                <button type="submit" class="btn btn-link p-1 mb-0" title="{% translate 'Send' %}">
+                                    <i class="fa fa-paper-plane text-primary"></i>
+                                </button>
+                                {{ feedback_form.review.errors }}
+                            </div>
+                            
+                            <div class="justify-content-between align-items-center flex-wrap comment-action-container d-flex mt-2">
+                                <div class="d-flex align-items-center mt-0">
+                                    {% if feedback_form.speaker %}
+                                        <div class="mr-3">
+                                            {{ feedback_form.speaker }}
+                                        </div>
+                                    {% endif %}
+                                    {% if feedback_anonymous_mode == 'optional' %}
+                                    <div class="form-check m-0">
+                                        {{ feedback_form.is_public }}
+                                        <label class="form-check-label text-muted comment-visibility-label" for="{{ feedback_form.is_public.id_for_label }}">
+                                            {% translate "Visible to public" %}
+                                        </label>
+                                    </div>
+                                    {% else %}
+                                        {{ feedback_form.is_public }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            {% else %}
+                <div class="alert alert-info mb-5">
+                    {% if not request.user.is_authenticated %}
+                        {% translate "You must log in to leave a comment." %}
+                    {% elif not feedback_period_open %}
+                        {% translate "Comments are currently closed for this session." %}
+                    {% else %}
+                        {% translate "Only attendees can leave comments on this session." %}
+                    {% endif %}
+                </div>
+            {% endif %}
+            
+            {% if public_feedback %}
+                <div class="mb-1 mt-4">
+                {% for fb in public_feedback %}
+                    <div class="comment-item d-flex" id="feedback-{{ fb.id }}">
+                        <div class="mr-3">
+                            <div class="comment-avatar">
+                                {% if fb.author %}{{ fb.author.get_display_name|slice:":1"|upper|default:"U" }}{% else %}A{% endif %}
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-baseline mb-0">
+                                <strong class="mr-2 comment-author-name">{% if fb.author %}{{ fb.author.get_display_name }}{% else %}{{ phrases.agenda.anonymous|default:"Anonymous" }}{% endif %}</strong>
+                                <small class="text-muted">{{ fb.created|timesince }} {% translate "ago" %}</small>
+                            </div>
+                            <div class="mb-0 comment-text-content comment-text-collapsed">
+                                {{ fb.review|rich_text }}
+                            </div>
+                            <button class="read-more-btn d-none" data-expanded="false" data-read-more="{% translate 'Read more' %}" data-show-less="{% translate 'Show less' %}">{% translate "Read more" %}</button>
+                            <div class="comment-actions d-flex align-items-center">
+                                {% if request.user.is_authenticated %}
+                                <button class="btn react-btn mr-1 {% if fb.user_vote == True %}active-vote{% endif %}" data-action="upvote" data-id="{{ fb.id }}" data-url="{% url 'agenda:feedback.react' organizer=request.event.organizer.slug event=request.event.slug slug=submission.code feedback_id=fb.id %}">
+                                    <i class="fa {% if fb.user_vote == True %}fa-thumbs-up text-success{% else %}fa-thumbs-o-up{% endif %}"></i> <span class="upvote-count ml-1">{{ fb.upvote_count|default:"" }}</span>
+                                </button>
+                                <button class="btn react-btn mr-2 {% if fb.user_vote == False %}active-vote{% endif %}" data-action="downvote" data-id="{{ fb.id }}" data-url="{% url 'agenda:feedback.react' organizer=request.event.organizer.slug event=request.event.slug slug=submission.code feedback_id=fb.id %}">
+                                    <i class="fa {% if fb.user_vote == False %}fa-thumbs-down text-danger{% else %}fa-thumbs-o-down{% endif %}"></i> <span class="downvote-count ml-1">{{ fb.downvote_count|default:"" }}</span>
+                                </button>
+                                {% endif %}
+                                {% if feedback_form %}
+                                    <button class="btn reply-btn" data-form-id="{{ fb.id }}" data-parent-id="{{ fb.id }}">
+                                        {% translate "Reply" %}
+                                    </button>
+                                {% endif %}
+                                {% if request.user.is_authenticated %}
+                                    <details class="dropdown d-inline-block ml-2" aria-haspopup="menu" role="menu">
+                                        <summary class="btn btn-sm btn-link text-muted p-0 border-0 comment-dropdown-toggle">
+                                            <i class="fa fa-ellipsis-v"></i>
+                                        </summary>
+                                        <div class="dropdown-content dropdown-content-se shadow-sm">
+                                            <form method="post" action="{% url 'agenda:feedback.public_action' organizer=request.event.organizer.slug event=request.event.slug slug=submission.code feedback_id=fb.id %}" class="m-0 p-0">
+                                                {% csrf_token %}
+                                                <button type="submit" name="action" value="report" class="dropdown-item dropdown-item-clean">
+                                                    {% translate 'Report' %}
+                                                </button>
+                                                {% if fb.author == request.user or can_moderate_feedback %}
+                                                    <button type="submit" name="action" value="delete" class="dropdown-item dropdown-item-clean" data-confirm-message="{% translate 'Are you sure you want to delete this comment?' %}">
+                                                        {% translate 'Delete' %}
+                                                    </button>
+                                                {% endif %}
+                                                {% if can_moderate_feedback %}
+                                                    <button type="submit" name="action" value="hide" class="dropdown-item dropdown-item-clean">
+                                                        {% translate 'Hide' %}
+                                                    </button>
+                                                    {% if fb.author %}
+                                                        {% if fb.author.id in banned_user_ids %}
+                                                            <button type="submit" name="action" value="unban" class="dropdown-item dropdown-item-clean">
+                                                                {% translate 'Unban User' %}
+                                                            </button>
+                                                        {% else %}
+                                                            <button type="submit" name="action" value="ban" class="dropdown-item dropdown-item-clean" data-confirm-message="{% translate 'Are you sure you want to ban this user?' %}">
+                                                                {% translate 'Ban User' %}
+                                                            </button>
+                                                        {% endif %}
+                                                    {% endif %}
+                                                {% endif %}
+                                            </form>
+                                        </div>
+                                    </details>
+                                {% endif %}
+                            </div>
+
+                            {% if feedback_form %}
+                                <div class="reply-form-container mt-1 d-none" id="reply-form-{{ fb.id }}">
+                                    <div class="d-flex youtube-comment-form">
+                                        <div class="mr-3 mt-1">
+                                            <div class="comment-avatar reply-avatar">
+                                                {% if request.user.is_authenticated %}{{ request.user.get_display_name|slice:":1"|upper|default:"U" }}{% else %}<i class="fa fa-user"></i>{% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <form method="post" action="">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="parent" value="{{ fb.id }}">
+                                                <input type="hidden" name="is_public" value="{% if feedback_anonymous_mode == 'always' %}False{% else %}True{% endif %}">
+                                                <div class="d-flex align-items-end form-group mb-0">
+                                                    <textarea name="{{ feedback_form.review.name }}" class="form-control youtube-comment-input flex-grow-1" rows="1" placeholder="{% translate 'Add a reply...' %}" required></textarea>
+                                                    <button type="submit" class="btn btn-link p-1 mb-0" title="{% translate 'Send' %}">
+                                                        <i class="fa fa-paper-plane text-primary"></i>
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            {% if fb.cached_replies %}
+                                <div>
+                                    <button class="replies-toggle-btn" data-target="replies-{{ fb.id }}" data-expanded="false">
+                                        <i class="fa fa-caret-down mr-2"></i> {{ fb.cached_replies|length }} {% if fb.cached_replies|length == 1 %}{% translate "reply" %}{% else %}{% translate "replies" %}{% endif %}
+                                    </button>
+                                    <div class="replies-container d-none" id="replies-{{ fb.id }}">
+                                        {% for reply in fb.cached_replies %}
+                                            {% include "agenda/includes/feedback_reply.html" with reply=reply root_fb=fb %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    <script type="module" src="{% static 'agenda/js/talk-feedback.js' %}"></script>
 </div>
 {% html_signal "eventyay.agenda.signals.html_below_session_pages" sender=request.event request=request submission=submission %}
 {% endblock agenda_content %}

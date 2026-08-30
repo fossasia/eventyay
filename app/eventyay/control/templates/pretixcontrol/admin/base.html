@@ -2,6 +2,8 @@
 {% load i18n static %}
 {% block custom_header %}
     {{ block.super }}
+    <link rel="stylesheet" href="{% static 'control/video_admin.css' %}">
+    <script defer src="{% static 'control/js/video-server-toggle.js' %}"></script>
 {% endblock %}
 {% block content %}
 <div class="video-admin-wrapper">
@@ -10,14 +12,14 @@
 {% endblock %}
 
 {% block nav_top_header %}
-    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+    <a href="{% url 'eventyay_admin:admin.dashboard' %}" class="dropdown-toggle">
         <span class="fa-stack fa-lg">
           <i class="fa fa-circle fa-stack-2x"></i>
-          <i class="fa fa-user fa-stack-1x fa-inverse"></i>
+          <i class="fa fa-dashboard fa-stack-1x fa-inverse"></i>
         </span>
 
         <div class="context-indicator">
-            <span class="context-name">Admin</span>
+            <span class="context-name">{% trans "Admin" %}</span>
         </div>
     </a>
 {% endblock %}

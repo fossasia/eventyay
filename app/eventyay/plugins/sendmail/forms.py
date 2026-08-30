@@ -1,7 +1,13 @@
+from collections import defaultdict
+
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.db.models import Exists, OuterRef, Q
 from django.urls import reverse
+from django.utils.functional import cached_property
+from django.utils.html import escape
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 from django_scopes.forms import SafeModelMultipleChoiceField
@@ -10,20 +16,23 @@ from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
 from eventyay.base.forms import PlaceholderValidator, SettingsForm
-from eventyay.common.forms.fields import I18nEmailBodyFormField
-from eventyay.common.forms.widgets import I18nEmailEditorWidget
 from eventyay.base.forms.widgets import SplitDateTimePickerWidget
-from eventyay.control.forms import SplitDateTimeField
+from eventyay.base.meetup import is_meetup_event
 from eventyay.base.models.base import CachedFile
 from eventyay.base.models.checkin import CheckinList
 from eventyay.base.models.event import SubEvent
-from eventyay.base.models.product import Product
+from eventyay.base.models.orders import Order, OrderPosition
 from eventyay.base.models.organizer import Team
-from eventyay.base.models.orders import Order
+from eventyay.base.models.product import Product
+from eventyay.common.forms.fields import I18nEmailBodyFormField
 from eventyay.common.forms.mixins import ScheduledAtValidationMixin
+from eventyay.common.forms.renderers import TabularFormRenderer
+from eventyay.common.forms.widgets import EnhancedSelect, EnhancedSelectMultiple, I18nEmailEditorWidget
 from eventyay.consts import SizeKey
-from eventyay.control.forms import CachedFileField
+from eventyay.control.forms import CachedFileField, SplitDateTimeField
 from eventyay.control.forms.widgets import Select2, Select2Multiple
+from eventyay.helpers.timezone import attach_timezone_to_naive_clock_time, get_browser_timezone
+from eventyay.orga.forms.mails import TalkSplitDateTimePickerWidget
 from eventyay.plugins.sendmail.models import ComposingFor, EmailQueue, EmailQueueToUser
 
 
@@ -33,11 +42,35 @@ def contains_web_channel_validate(value):
     if 'web' not in value:
         raise ValidationError(_("The 'web' sales channel must be selected."))
 
+RECIPIENTS_DEPENDENCY = 'select[name=recipients]'
+RECIPIENTS_INDIVIDUAL = 'individual'
+
+
 class MailForm(ScheduledAtValidationMixin, forms.Form):
-    recipients = forms.ChoiceField(label=_('Send email to'), widget=forms.RadioSelect, initial='orders', choices=[])
+    default_renderer = TabularFormRenderer
+
+    recipients = forms.ChoiceField(
+        label=_('Recipients'),
+        widget=EnhancedSelect(attrs={'title': _('Recipient type'), 'placeholder': _('Recipient type')}),
+        required=True,
+        choices=[],
+        error_messages={'required': _('Please select a recipient type.')},
+    )
     order_status = forms.MultipleChoiceField()  # overridden later
     subject = forms.CharField(label=_('Subject'))
-    message = forms.CharField(label=_('Message'))
+    text = forms.CharField(label=_('Message'))
+    reply_to = forms.CharField(
+        label=_('Reply-To'),
+        required=False,
+        help_text=_('Change the Reply-To address if you do not want to use the default organiser address'),
+        widget=forms.EmailInput(),
+    )
+    bcc = forms.CharField(
+        label=_('BCC'),
+        required=False,
+        help_text=_('Enter comma-separated BCC addresses'),
+        widget=forms.TextInput(),
+    )
     attachment = CachedFileField(
         label=_('Attachment'),
         required=False,
@@ -71,16 +104,26 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
         max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_OTHER],
     )  # TODO i18n
     products = forms.ModelMultipleChoiceField(
-        widget=forms.CheckboxSelectMultiple(attrs={'class': 'scrolling-multiple-choice'}),
-        label=_('Only send to people who bought'),
-        required=True,
+        widget=EnhancedSelectMultiple(attrs={'title': _('Ticket types'), 'placeholder': _('Ticket types')}),
+        label=_('Ticket types'),
+        required=False,
         queryset=Product.objects.none(),
     )
-    has_filter_checkins = forms.BooleanField(label=_('Filter check-in status'), required=False)
+    has_filter_checkins = forms.ChoiceField(
+        label=_('Check-in filter'),
+        choices=[('', _('No filter')), ('yes', _('Yes'))],
+        required=False,
+        widget=EnhancedSelect(attrs={'title': _('Check-in filter'), 'placeholder': _('Check-in filter')}),
+    )
     checkin_lists = SafeModelMultipleChoiceField(
         queryset=CheckinList.objects.none(), required=False
     )  # overridden later
-    not_checked_in = forms.BooleanField(label=_('Send to customers not checked in'), required=False)
+    not_checked_in = forms.ChoiceField(
+        label=_('Not checked in'),
+        choices=[('', _('No')), ('yes', _('Yes'))],
+        required=False,
+        widget=EnhancedSelect(attrs={'title': _('Not checked in'), 'placeholder': _('Not checked in')}),
+    )
     subevent = forms.ModelChoiceField(
         SubEvent.objects.none(),
         label=_('Only send to customers of'),
@@ -98,13 +141,13 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
         required=False,
     )
     order_created_from = forms.SplitDateTimeField(
-        widget=SplitDateTimePickerWidget(),
-        label=pgettext_lazy('subevent', 'Only send to customers with orders created after'),
+        widget=TalkSplitDateTimePickerWidget(),
+        label=_('Orders created after'),
         required=False,
     )
     order_created_to = forms.SplitDateTimeField(
-        widget=SplitDateTimePickerWidget(),
-        label=pgettext_lazy('subevent', 'Only send to customers with orders created before'),
+        widget=TalkSplitDateTimePickerWidget(),
+        label=_('Orders created before'),
         required=False,
     )
     scheduled_at = SplitDateTimeField(
@@ -113,11 +156,47 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
         required=False,
         help_text=_('Leave empty to send immediately. If set, the email will be sent at this time. Time is interpreted in the event timezone.'),
     )
+    test_email = forms.EmailField(
+        label=_('Test email address'),
+        required=False,
+    )
+    individual_attendees = SafeModelMultipleChoiceField(
+        queryset=Product.objects.none(), required=False
+    )
     browser_timezone = forms.CharField(
         widget=forms.HiddenInput(attrs={'class': 'browser-timezone-field'}),
         required=False,
         initial='UTC',
     )
+
+    @cached_property
+    def valid_placeholders(self):
+        message_placeholders = ['event', 'order', 'position_or_address']
+        return get_available_placeholders(self.event, message_placeholders)
+
+    @cached_property
+    def grouped_placeholders(self):
+        placeholders = self.valid_placeholders
+        grouped = defaultdict(list)
+        # Ticket placeholders use order/attendee/invoice context, not talk session keys.
+        specificity = (
+            ('position_or_address', 'ticket'),
+            ('position', 'ticket'),
+            ('invoice_address', 'invoice'),
+            ('order', 'order'),
+            ('event', 'event'),
+        )
+        for placeholder in placeholders.values():
+            if getattr(placeholder, 'is_visible', True) is False:
+                continue
+            placeholder.rendered_sample = escape(placeholder.render_sample(self.event))
+            for arg, group in specificity:
+                if arg in placeholder.required_context:
+                    grouped[group].append(placeholder)
+                    break
+            else:
+                grouped['other'].append(placeholder)
+        return grouped
 
     def clean(self):
         d = super().clean()
@@ -135,22 +214,30 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
                     'If you set a date range, please set both a start and an end.',
                 )
             )
+        d['has_filter_checkins'] = d.get('has_filter_checkins') == 'yes'
+        d['not_checked_in'] = d.get('not_checked_in') == 'yes'
         return d
 
-    def _set_field_placeholders(self, fn, base_parameters):
-        phs = ['{%s}' % p for p in sorted(get_available_placeholders(self.event, base_parameters).keys())]
-        ht = _('Available placeholders: {list}').format(list=', '.join(phs))
-        if self.fields[fn].help_text:
-            self.fields[fn].help_text += ' ' + str(ht)
+    def _recipient_dependency_attrs(self, *, individual=False):
+        attrs = {'data-display-dependency': RECIPIENTS_DEPENDENCY}
+        if individual:
+            attrs['data-display-dependency-value'] = RECIPIENTS_INDIVIDUAL
         else:
-            self.fields[fn].help_text = ht
+            attrs['data-display-dependency-value'] = RECIPIENTS_INDIVIDUAL
+            attrs['data-inverse'] = 'true'
+        return attrs
+
+    def _set_field_placeholders(self, fn, base_parameters):
+        """Validate placeholders without rendering the long help-text list (drawer covers that)."""
+        phs = [f'{{{p}}}' for p in sorted(get_available_placeholders(self.event, base_parameters).keys())]
         self.fields[fn].validators.append(PlaceholderValidator(phs))
 
     def __init__(self, *args, **kwargs):
         event = self.event = kwargs.pop('event')
         super().__init__(*args, **kwargs)
 
-        recp_choices = [('orders', _('Everyone who created a ticket order'))]
+        recp_choices = [('', _('Recipient type'))]
+        recp_choices.append(('orders', _('Everyone who created a ticket order')))
         if event.settings.attendee_emails_asked:
             recp_choices += [
                 (
@@ -162,7 +249,9 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
                     _('Both (all order contact addresses and all attendee email addresses)'),
                 ),
             ]
+        recp_choices.append(('individual', _('Specific attendees')))
         self.fields['recipients'].choices = recp_choices
+        self.fields['recipients'].initial = ''
 
         self.fields['subject'] = I18nFormField(
             label=_('Subject'),
@@ -172,55 +261,58 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
         )
         message_placeholders = ['event', 'order', 'position_or_address']
         placeholder_names = sorted(get_available_placeholders(self.event, message_placeholders).keys())
-        preview_url = reverse(
-            'control:event.editor.email.preview',
-            kwargs={'organizer': event.organizer.slug, 'event': event.slug},
-        )
-        self.fields['message'] = I18nEmailBodyFormField(
+        self.fields['text'] = I18nEmailBodyFormField(
             label=_('Message'),
             widget=I18nEmailEditorWidget,
-            widget_kwargs={'placeholders': placeholder_names, 'preview_url': preview_url},
+            widget_kwargs={'placeholders': placeholder_names},
             required=True,
             locales=event.settings.get('locales'),
         )
         self._set_field_placeholders('subject', message_placeholders)
-        self._set_field_placeholders('message', message_placeholders)
+        self._set_field_placeholders('text', message_placeholders)
         choices = [(e, l) for e, l in Order.STATUS_CHOICE if e != 'n']
         choices.insert(0, ('na', _('payment pending (except unapproved)')))
         choices.insert(0, ('pa', _('approval pending')))
         if not event.settings.get('payment_term_expire_automatically', as_type=bool):
             choices.append(('overdue', _('pending with payment overdue')))
         self.fields['order_status'] = forms.MultipleChoiceField(
-            label=_('Send to customers with order status'),
-            widget=forms.CheckboxSelectMultiple(attrs={'class': 'scrolling-multiple-choice'}),
+            label=_('Order status'),
+            required=False,
+            widget=EnhancedSelectMultiple(
+                attrs={
+                    'title': _('Order statuses'),
+                    'placeholder': _('Order statuses'),
+                    **self._recipient_dependency_attrs(),
+                }
+            ),
             choices=choices,
         )
-        if not self.initial.get('order_status'):
-            self.initial['order_status'] = ['p', 'na']
-        elif 'n' in self.initial['order_status']:
+        if self.initial.get('order_status') and 'n' in self.initial['order_status']:
             self.initial['order_status'].append('pa')
             self.initial['order_status'].append('na')
 
+        self.fields['products'].label = _('Ticket types')
         self.fields['products'].queryset = event.products.all()
-        if not self.initial.get('products'):
-            self.initial['products'] = event.products.all()
+        self.fields['products'].required = False
+        self.fields['products'].widget.attrs.update(
+            {'title': _('Ticket types'), **self._recipient_dependency_attrs()}
+        )
 
         self.fields['checkin_lists'].queryset = event.checkin_lists.all()
-        self.fields['checkin_lists'].widget = Select2Multiple(
+        self.fields['checkin_lists'].widget = EnhancedSelectMultiple(
             attrs={
-                'data-model-select2': 'generic',
-                'data-select2-url': reverse(
-                    'control:event.orders.checkinlists.select2',
-                    kwargs={
-                        'event': event.slug,
-                        'organizer': event.organizer.slug,
-                    },
-                ),
-                'data-placeholder': _('Send to customers checked in on list'),
+                'title': _('Check-in lists'),
+                'placeholder': _('Check-in lists'),
+                **self._recipient_dependency_attrs(),
             }
         )
-        self.fields['checkin_lists'].widget.choices = self.fields['checkin_lists'].choices
-        self.fields['checkin_lists'].label = _('Send to customers checked in on list')
+        self.fields['checkin_lists'].label = _('Check-in lists')
+        self.fields['has_filter_checkins'].widget.attrs.update(
+            {'title': _('Check-in filter'), **self._recipient_dependency_attrs()}
+        )
+        self.fields['not_checked_in'].widget.attrs.update(
+            {'title': _('Not checked in'), **self._recipient_dependency_attrs()}
+        )
 
         if event.has_subevents:
             self.fields['subevent'].queryset = event.subevents.all()
@@ -235,13 +327,232 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
                         },
                     ),
                     'data-placeholder': pgettext_lazy('subevent', 'Date'),
+                    **self._recipient_dependency_attrs(),
                 }
             )
             self.fields['subevent'].widget.choices = self.fields['subevent'].choices
+            self.fields['subevents_from'].widget.attrs.update(self._recipient_dependency_attrs())
+            self.fields['subevents_to'].widget.attrs.update(self._recipient_dependency_attrs())
         else:
             del self.fields['subevent']
             del self.fields['subevents_from']
             del self.fields['subevents_to']
+
+        self.fields['order_created_from'].widget.attrs.update(self._recipient_dependency_attrs())
+        self.fields['order_created_to'].widget.attrs.update(self._recipient_dependency_attrs())
+
+        self.fields['individual_attendees'].queryset = OrderPosition.objects.filter(order__event=event)
+        self.fields['individual_attendees'].widget = Select2Multiple(
+            attrs={
+                'data-model-select2': 'generic',
+                'data-select2-url': reverse(
+                    'control:event.mail.attendees.select2',
+                    kwargs={
+                        'event': event.slug,
+                        'organizer': event.organizer.slug,
+                    },
+                ),
+                'data-placeholder': _('Search for attendees (name, email, or order code)'),
+                **self._recipient_dependency_attrs(individual=True),
+            }
+        )
+        self.fields['individual_attendees'].label = _('Specific attendees')
+        self.fields['individual_attendees'].help_text = _(
+            'Select attendees that should receive the email regardless of the other filters.'
+        )
+        self.fields['individual_attendees'].widget.choices = self.fields['individual_attendees'].choices
+
+        for field_name, initial_value in list(self.initial.items()):
+            if field_name in ('has_filter_checkins', 'not_checked_in') and isinstance(initial_value, bool):
+                self.initial[field_name] = 'yes' if initial_value else ''
+
+    def resolve_orders(self):
+        cleaned = self.cleaned_data
+        event = self.event
+        if not cleaned.get('recipients'):
+            return Order.objects.none()
+        if cleaned.get('recipients') == 'individual':
+            individual_attendees = cleaned.get('individual_attendees')
+            if not individual_attendees:
+                return Order.objects.none()
+            return Order.objects.filter(event=event, positions__in=individual_attendees).distinct()
+
+        qs = Order.objects.filter(event=event)
+        # Only apply status/product defaults once a recipient type is chosen; empty
+        # filters must not silently select the whole audience on page load.
+        order_status = cleaned.get('order_status') or ['p', 'na']
+        statusq = Q(status__in=order_status)
+        if 'overdue' in order_status:
+            statusq |= Q(status=Order.STATUS_PENDING, expires__lt=now())
+        if 'pa' in order_status:
+            statusq |= Q(status=Order.STATUS_PENDING, require_approval=True)
+        if 'na' in order_status:
+            statusq |= Q(status=Order.STATUS_PENDING, require_approval=False)
+        orders = qs.filter(statusq)
+
+        products = cleaned.get('products') or list(event.products.all())
+        opq = OrderPosition.objects.filter(
+            order=OuterRef('pk'),
+            canceled=False,
+            product_id__in=[p.pk for p in products] if products else [],
+        )
+
+        if cleaned.get('has_filter_checkins'):
+            ql = []
+            if cleaned.get('not_checked_in'):
+                ql.append(Q(checkins__list_id=None))
+            if cleaned.get('checkin_lists'):
+                ql.append(
+                    Q(
+                        checkins__list_id__in=[i.pk for i in cleaned.get('checkin_lists', [])],
+                    )
+                )
+            if len(ql) == 2:
+                opq = opq.filter(ql[0] | ql[1])
+            elif ql:
+                opq = opq.filter(ql[0])
+            else:
+                opq = opq.none()
+
+        if cleaned.get('subevent'):
+            opq = opq.filter(subevent=cleaned.get('subevent'))
+        if cleaned.get('subevents_from'):
+            opq = opq.filter(subevent__date_from__gte=cleaned.get('subevents_from'))
+        if cleaned.get('subevents_to'):
+            opq = opq.filter(subevent__date_from__lt=cleaned.get('subevents_to'))
+        if cleaned.get('order_created_from') or cleaned.get('order_created_to'):
+            browser_tz = get_browser_timezone(cleaned.get('browser_timezone'))
+
+            def attach_timezone(dt_value):
+                return attach_timezone_to_naive_clock_time(dt_value, browser_tz)
+
+            if cleaned.get('order_created_from'):
+                opq = opq.filter(order__datetime__gte=attach_timezone(cleaned['order_created_from']))
+            if cleaned.get('order_created_to'):
+                opq = opq.filter(order__datetime__lt=attach_timezone(cleaned['order_created_to']))
+
+        return orders.annotate(match_pos=Exists(opq)).filter(match_pos=True).distinct()
+
+    def get_recipient_preview(self):
+        if not self.cleaned_data.get('recipients'):
+            return []
+        orders = self.resolve_orders().prefetch_related('positions__product')
+        recipients_mode = self.cleaned_data.get('recipients') or 'orders'
+        individual_positions = (
+            {pos.pk for pos in self.cleaned_data.get('individual_attendees', [])}
+            if recipients_mode == 'individual'
+            else None
+        )
+        recipients = {}
+
+        for order in orders:
+            order_fallback_needed = False
+            attendee_found = False
+
+            for pos in order.positions.all():
+                if pos.canceled:
+                    continue
+                if individual_positions is not None and pos.pk not in individual_positions:
+                    continue
+                if pos.attendee_email:
+                    attendee_found = True
+                    email = pos.attendee_email.strip().lower()
+                    entry = recipients.setdefault(
+                        email,
+                        {
+                            'name': str(pos.attendee_name_cached or pos.attendee_email),
+                            'email': pos.attendee_email,
+                            'submissions': [],
+                            'directly_selected': recipients_mode == 'individual',
+                        },
+                    )
+                    entry['submissions'].append(
+                        {
+                            'title': f'{order.code} – {str(pos.product.name)}',
+                            'state': str(order.get_status_display()),
+                        }
+                    )
+                else:
+                    order_fallback_needed = True
+
+            if (
+                order_fallback_needed
+                and not attendee_found
+                and recipients_mode == 'attendees'
+                and order.email
+            ):
+                email = order.email.strip().lower()
+                recipients.setdefault(
+                    email,
+                    {
+                        'name': order.email,
+                        'email': order.email,
+                        'submissions': [],
+                        'directly_selected': False,
+                    },
+                )['submissions'].append(
+                    {
+                        'title': order.code,
+                        'state': str(order.get_status_display()),
+                    }
+                )
+
+            if recipients_mode in ('both', 'orders') and order.email:
+                email = order.email.strip().lower()
+                entry = recipients.setdefault(
+                    email,
+                    {
+                        'name': order.email,
+                        'email': order.email,
+                        'submissions': [],
+                        'directly_selected': False,
+                    },
+                )
+                if not any(item['title'].startswith(order.code) for item in entry['submissions']):
+                    entry['submissions'].append(
+                        {
+                            'title': order.code,
+                            'state': str(order.get_status_display()),
+                        }
+                    )
+
+        return sorted(recipients.values(), key=lambda recipient: recipient['email'])
+
+
+class TicketMailRecipientsForm(MailForm):
+    """Audience preview variant of the ticket mail form."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name in ('subject', 'text', 'attachment', 'reply_to', 'bcc', 'scheduled_at', 'test_email'):
+            self.fields.pop(name, None)
+        self.fields['products'].required = False
+        # Audience preview may load before a recipient type is chosen.
+        self.fields['recipients'].required = False
+        self.fields['recipients'].initial = ''
+
+    def clean(self):
+        # Preview may load with no audience chosen yet; send still requires recipients.
+        d = forms.Form.clean(self)
+        if d is None:
+            return d
+        if d.get('subevent') and (d.get('subevents_from') or d.get('subevents_to')):
+            raise ValidationError(
+                pgettext_lazy(
+                    'subevent',
+                    'Please either select a specific date or a date range, not both.',
+                )
+            )
+        if bool(d.get('subevents_from')) != bool(d.get('subevents_to')):
+            raise ValidationError(
+                pgettext_lazy(
+                    'subevent',
+                    'If you set a date range, please set both a start and an end.',
+                )
+            )
+        d['has_filter_checkins'] = d.get('has_filter_checkins') == 'yes'
+        d['not_checked_in'] = d.get('not_checked_in') == 'yes'
+        return d
 
 
 class MailContentSettingsForm(SettingsForm):
@@ -288,6 +599,22 @@ class MailContentSettingsForm(SettingsForm):
         required=False,
     )
     mail_text_order_free_attendee = I18nFormField(
+        label=_('Text sent to attendees'),
+        required=False,
+        widget=I18nTextarea,
+    )
+
+    mail_text_meetup_registration = I18nFormField(
+        label=_('Text sent to registration contact address'),
+        required=False,
+        widget=I18nTextarea,
+    )
+    mail_send_meetup_registration_attendee = forms.BooleanField(
+        label=_('Send an email to attendees'),
+        help_text=MAIL_SEND_ORDER_PLACED_ATTENDEE_HELP,
+        required=False,
+    )
+    mail_text_meetup_registration_attendee = I18nFormField(
         label=_('Text sent to attendees'),
         required=False,
         widget=I18nTextarea,
@@ -417,6 +744,8 @@ class MailContentSettingsForm(SettingsForm):
         'mail_text_order_paid_attendee': ['event', 'order', 'position'],
         'mail_text_order_free': ['event', 'order'],
         'mail_text_order_free_attendee': ['event', 'order', 'position'],
+        'mail_text_meetup_registration': ['event', 'order'],
+        'mail_text_meetup_registration_attendee': ['event', 'order', 'position'],
         'mail_text_order_changed': ['event', 'order'],
         'mail_text_order_canceled': ['event', 'order'],
         'mail_text_order_expire_warning': ['event', 'order'],
@@ -440,6 +769,14 @@ class MailContentSettingsForm(SettingsForm):
     def __init__(self, *args, **kwargs):
         self.event = kwargs.get('obj')
         super().__init__(*args, **kwargs)
+        self.base_context = dict(self.base_context)
+
+        if not is_meetup_event(self.event):
+            for field in ('mail_text_meetup_registration', 'mail_send_meetup_registration_attendee',
+                          'mail_text_meetup_registration_attendee'):
+                self.fields.pop(field, None)
+                self.base_context.pop(field, None)
+
         for k, v in self.base_context.items():
             if k in self.fields:
                 self._set_field_placeholders(k, v)
@@ -516,14 +853,10 @@ class EmailQueueEditForm(ScheduledAtValidationMixin, forms.ModelForm):
             initial=self.instance.subject
         )
         placeholder_names = sorted(get_available_placeholders(self.event, base_placeholders).keys())
-        preview_url = reverse(
-            'control:event.editor.email.preview',
-            kwargs={'organizer': self.event.organizer.slug, 'event': self.event.slug},
-        )
         self.fields['message'] = I18nEmailBodyFormField(
             label=_('Message'),
             widget=I18nEmailEditorWidget,
-            widget_kwargs={'placeholders': placeholder_names, 'preview_url': preview_url},
+            widget_kwargs={'placeholders': placeholder_names},
             required=False,
             locales=list(allowed_locales),
             initial=self.instance.message,
@@ -613,10 +946,6 @@ class TeamMailForm(ScheduledAtValidationMixin, forms.Form):
         team_placeholders = ['event', 'team']
         placeholder_names = sorted(get_available_placeholders(self.event, team_placeholders).keys())
         placeholder_text = _("Available placeholders: ") + ', '.join(f"{{{key}}}" for key in placeholder_names)
-        preview_url = reverse(
-            'control:event.editor.email.preview',
-            kwargs={'organizer': self.event.organizer.slug, 'event': self.event.slug},
-        )
 
         self.fields['subject'] = I18nFormField(
             label=_('Subject'),
@@ -628,7 +957,7 @@ class TeamMailForm(ScheduledAtValidationMixin, forms.Form):
         self.fields['message'] = I18nEmailBodyFormField(
             label=_('Message'),
             widget=I18nEmailEditorWidget,
-            widget_kwargs={'placeholders': placeholder_names, 'preview_url': preview_url},
+            widget_kwargs={'placeholders': placeholder_names},
             required=True,
             locales=locales,
             help_text=placeholder_text,

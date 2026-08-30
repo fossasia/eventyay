@@ -17,10 +17,23 @@ from django.urls import resolve
 from django.utils.cache import patch_vary_headers
 from django.utils.http import http_date
 
+from eventyay.base.middleware import should_skip_session_save
 from eventyay.base.models import Event
 
 LOCAL_HOST_NAMES = ('testserver', 'localhost', '127.0.0.1')
 ANY_DOMAIN_ALLOWED = ('robots.txt', 'redirect')
+MAIN_DOMAIN_AUTH_ROUTES = (
+    'account_signup',
+    'auth.forgot',
+    'auth.forgot.recover',
+    'auth.invite',
+    'auth.login',
+    'auth.login.2fa',
+    'auth.login.legacy',
+    'auth.login.2fa.legacy',
+    'auth.logout',
+    'social.oauth.login',
+)
 
 
 class MultiDomainMiddleware:
@@ -133,6 +146,8 @@ class MultiDomainMiddleware:
         ).order_by('-date_from')
         if events:
             request.uses_custom_domain = True
+            if resolved.url_name in MAIN_DOMAIN_AUTH_ROUTES:
+                return redirect(urljoin(settings.SITE_URL, request.get_full_path()))
             public_event = events.filter(is_public=True).first()
             if public_event:
                 return redirect(public_event.urls.base.full())
@@ -189,6 +204,8 @@ class SessionMiddleware(BaseSessionMiddleware):
                 return response
             if accessed:
                 patch_vary_headers(response, ('Cookie',))
+            if should_skip_session_save(response, modified):
+                return response
             if modified or settings.SESSION_SAVE_EVERY_REQUEST:
                 max_age = None
                 expires = None

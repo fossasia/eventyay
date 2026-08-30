@@ -1462,9 +1462,10 @@ DEFAULT_SETTINGS = {
         'type': Decimal,
         'form_class': forms.DecimalField,
         'serializer_class': serializers.DecimalField,
-        'serializer_kwargs': dict(max_digits=10, decimal_places=2),
+        'serializer_kwargs': dict(max_digits=10, decimal_places=2, validators=[MinValueValidator(0), MaxValueValidator(100)]),
         'form_kwargs': dict(
             label=_('Keep a percentual cancellation fee'),
+            validators=[MinValueValidator(0), MaxValueValidator(100)],
         ),
     },
     'cancel_allow_user_paid_adjust_fees': {
@@ -1753,6 +1754,47 @@ Your {event} team"""
         ),
     },
     'mail_send_order_free_attendee': {'type': bool, 'default': 'False'},
+    'mail_text_meetup_registration_attendee': {
+        'type': LazyI18nString,
+        'default': LazyI18nString.from_gettext(
+            gettext_noop(
+                """Hello {attendee_name},
+
+thank you for registering for {event}.
+
+You are successfully registered for the meetup. Here are the details of your registration:
+Event: {event}
+Organizer: {organizer}
+
+You can view the details and status of your registration here:
+{event_url}
+
+Best regards,
+Your {event} team"""
+            )
+        ),
+    },
+    'mail_text_meetup_registration': {
+        'type': LazyI18nString,
+        'default': LazyI18nString.from_gettext(
+            gettext_noop(
+                """Hello,
+
+thank you for registering for {event}.
+
+You are successfully registered for the meetup. Here are the details of your registration:
+Event: {event}
+Organizer: {organizer}
+
+You can view the details and status of your registration at:
+{event_url}
+
+Best regards,
+Your {event} team"""
+            )
+        ),
+    },
+    'mail_send_meetup_registration_attendee': {'type': bool, 'default': 'False'},
     'mail_text_order_placed_require_approval': {
         'type': LazyI18nString,
         'default': LazyI18nString.from_gettext(
@@ -2569,15 +2611,6 @@ Your {event} team"""
     'seating_minimal_distance': {'default': '0', 'type': float},
     'seating_allow_blocked_seats_for_channel': {'default': [], 'type': list},
     'seating_distance_within_row': {'default': 'False', 'type': bool},
-    'checkout_show_copy_answers_button': {
-        'default': 'True',
-        'type': bool,
-        'form_class': forms.BooleanField,
-        'serializer_class': serializers.BooleanField,
-        'form_kwargs': dict(
-            label=_('Show button to copy user input from other products'),
-        ),
-    },
     'startpage_header_image': {
         'default': None,
         'type': File,
@@ -2604,6 +2637,92 @@ Your {event} team"""
             widget=I18nTextInput,
             help_text=_('Short text displayed on the public start page banner.'),
         ),
+    },
+    'startpage_show_hero': {
+        'default': 'False',
+        'type': bool,
+    },
+    'startpage_hero_title': {
+        'default': '',
+        'type': LazyI18nString,
+        'serializer_class': I18nField,
+        'form_class': I18nFormField,
+        'form_kwargs': dict(
+            label=_('Hero Title'),
+            widget=I18nTextInput,
+            help_text=_('e.g. {sample}').format(sample='Eventyay – Open Source Event Management Platform'),
+        ),
+    },
+    'startpage_hero_text': {
+        'default': '',
+        'type': LazyI18nString,
+        'serializer_class': I18nField,
+        'form_class': I18nFormField,
+        'form_kwargs': dict(
+            label=_('Hero Text'),
+            widget=I18nTextarea,
+            help_text=_('e.g. {sample}').format(sample='The comprehensive platform for all your event needs. Ticketing, Call for Speakers, Scheduling, Check-in, and more.'),
+        ),
+    },
+    'startpage_show_features': {
+        'default': 'False',
+        'type': bool,
+    },
+    'startpage_feature_1_title': {
+        'default': '',
+        'type': LazyI18nString,
+        'serializer_class': I18nField,
+        'form_class': I18nFormField,
+        'form_kwargs': dict(label=_('Feature 1 Title'), widget=I18nTextInput),
+    },
+    'startpage_feature_1_text': {
+        'default': '',
+        'type': LazyI18nString,
+        'serializer_class': I18nField,
+        'form_class': I18nFormField,
+        'form_kwargs': dict(label=_('Feature 1 Text'), widget=I18nTextarea),
+    },
+    'startpage_feature_2_title': {
+        'default': '',
+        'type': LazyI18nString,
+        'serializer_class': I18nField,
+        'form_class': I18nFormField,
+        'form_kwargs': dict(label=_('Feature 2 Title'), widget=I18nTextInput),
+    },
+    'startpage_feature_2_text': {
+        'default': '',
+        'type': LazyI18nString,
+        'serializer_class': I18nField,
+        'form_class': I18nFormField,
+        'form_kwargs': dict(label=_('Feature 2 Text'), widget=I18nTextarea),
+    },
+    'startpage_feature_3_title': {
+        'default': '',
+        'type': LazyI18nString,
+        'serializer_class': I18nField,
+        'form_class': I18nFormField,
+        'form_kwargs': dict(label=_('Feature 3 Title'), widget=I18nTextInput),
+    },
+    'startpage_feature_3_text': {
+        'default': '',
+        'type': LazyI18nString,
+        'serializer_class': I18nField,
+        'form_class': I18nFormField,
+        'form_kwargs': dict(label=_('Feature 3 Text'), widget=I18nTextarea),
+    },
+    'startpage_feature_4_title': {
+        'default': '',
+        'type': LazyI18nString,
+        'serializer_class': I18nField,
+        'form_class': I18nFormField,
+        'form_kwargs': dict(label=_('Feature 4 Title'), widget=I18nTextInput),
+    },
+    'startpage_feature_4_text': {
+        'default': '',
+        'type': LazyI18nString,
+        'serializer_class': I18nField,
+        'form_class': I18nFormField,
+        'form_kwargs': dict(label=_('Feature 4 Text'), widget=I18nTextarea),
     },
     'menu_label_tickets': {
         'default': '',
@@ -2636,6 +2755,83 @@ Your {event} team"""
             widget_kwargs={'attrs': {'placeholder': _('Live Video')}},
             required=False,
         ),
+    },
+    'seo_homepage_title': {
+        'default': '',
+        'type': str,
+        'form_class': forms.CharField,
+        'form_kwargs': dict(
+            label=_('Homepage title'),
+            help_text=_('e.g. {sample}').format(sample='Eventyay – Open Source Event Management Platform'),
+            required=False,
+        ),
+    },
+    'seo_homepage_description': {
+        'default': '',
+        'type': str,
+        'form_class': forms.CharField,
+        'form_kwargs': dict(
+            label=_('Homepage description'),
+            help_text=_('e.g. {sample}').format(sample='The comprehensive platform for all your event needs.'),
+            widget=forms.Textarea(attrs={'rows': 2}),
+            required=False,
+        ),
+    },
+    'seo_og_title': {
+        'default': '',
+        'type': str,
+        'form_class': forms.CharField,
+        'form_kwargs': dict(
+            label=_('Open Graph title'),
+            help_text=_('e.g. {sample}').format(sample='Eventyay - Social Share Title'),
+            required=False,
+        ),
+    },
+    'seo_og_description': {
+        'default': '',
+        'type': str,
+        'form_class': forms.CharField,
+        'form_kwargs': dict(
+            label=_('Open Graph description'),
+            help_text=_('e.g. {sample}').format(sample='Description used when sharing on Facebook/LinkedIn.'),
+            widget=forms.Textarea(attrs={'rows': 2}),
+            required=False,
+        ),
+    },
+    'seo_twitter_title': {
+        'default': '',
+        'type': str,
+        'form_class': forms.CharField,
+        'form_kwargs': dict(
+            label=_('Twitter title'),
+            help_text=_('e.g. {sample}').format(sample='Eventyay - Twitter Title'),
+            required=False,
+        ),
+    },
+    'seo_twitter_description': {
+        'default': '',
+        'type': str,
+        'form_class': forms.CharField,
+        'form_kwargs': dict(
+            label=_('Twitter description'),
+            help_text=_('e.g. {sample}').format(sample='Description used when sharing on Twitter.'),
+            widget=forms.Textarea(attrs={'rows': 2}),
+            required=False,
+        ),
+    },
+    'seo_fallback_text': {
+        'default': '',
+        'type': str,
+        'form_class': forms.CharField,
+        'form_kwargs': dict(
+            label=_('Fallback SEO text'),
+            help_text=_('e.g. {sample}').format(sample='General fallback text for social sharing.'),
+            required=False,
+        ),
+    },
+    'seo_social_image': {
+        'default': None,
+        'type': File,
     },
 }
 

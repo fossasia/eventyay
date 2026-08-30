@@ -3,17 +3,55 @@
 	.scroll-wrapper(v-scrollbar.y="")
 		.ui-form-body
 			.generic-settings
-				bunt-input(name="name", v-model="localizedName", label="Name", :validation="v$.config.name")
-				bunt-input(name="description", v-model="localizedDescription", label="Description")
-				div(:title="config.has_linked_sessions ? \"Room has linked sessions and can't be marked unscheduled\" : ''")
-					bunt-checkbox(name="is_unscheduled", v-model="config.is_unscheduled", label="Unscheduled room (hide from schedule/sessions)", :disabled="config.has_linked_sessions")
-				template(v-if="inferredType")
-					bunt-checkbox(v-if="inferredType.id === 'channel-text'", name="force_join", v-model="config.force_join", label="Force join on login (use for non-volatile, text-based chats only!!)")
+				.room-info-card
+					.form-grid
+						.field-group.name-field
+							label.field-label
+								| {{ $t('Name') }}
+								span.required-star *
+							.input-wrapper
+								input.text-input(
+									type="text"
+									v-model="localizedName"
+									:placeholder="$t('e.g. Main Stage')"
+									:class="{'has-error': v$.config.name.$error}"
+								)
+							.field-error(v-if="v$.config.name.$error")
+								| {{ v$.config.name.$errors[0]?.$message || $t('Name is required') }}
+
+						.field-group.desc-field
+							label.field-label
+								| {{ $t('Description') }}
+							.input-wrapper
+								input.text-input(
+									type="text"
+									v-model="localizedDescription"
+									:placeholder="$t('Optional short description for attendees')"
+								)
+
+					.unscheduled-setting-row(v-if="!isChat", :title="unscheduledDisabledTitle", :class="{'is-disabled': config.has_linked_sessions}")
+						.setting-text
+							.setting-title {{ $t('Unscheduled room') }}
+							.setting-desc {{ $t('Hide this room from the event schedule and public session listings.') }}
+						.setting-control
+							bunt-switch(
+								name="is_unscheduled"
+								v-model="config.is_unscheduled"
+								:disabled="config.has_linked_sessions"
+							)
+
+					template(v-if="isChat")
+						.force-join-setting-row
+							.setting-text
+								.setting-title {{ $t('Force join on login') }}
+								.setting-desc {{ $t('Automatically join attendees to this chat on login (use for text-based chats only).') }}
+							.setting-control
+								bunt-switch(name="force_join", v-model="config.force_join")
+
 			component.stage-settings(ref="settings", v-if="inferredType && typeComponents[inferredType.id]", :is="typeComponents[inferredType.id]", :config="config", :modules="modules", :creating="creating")
-			stream-schedule(ref="streamSchedule", v-if="showStreamSchedule", :room-id="config.id ? String(config.id) : null", :room-name="localizedName", :open-create-on-mount="openStreamScheduleCreateOnMount", @opened-create-on-mount="clearOpenStreamScheduleCreateQuery", @create-requires-room="createRoomForStreamSchedule")
 			sidebar-addons(v-if="inferredType && inferredType.id === 'stage'", :config="config", :modules="modules", :creating="creating")
 	.ui-form-actions
-		bunt-button.btn-save(@click="save", :loading="saving", :error="!!error") {{ creating ? 'create' : 'save' }}
+		bunt-button.btn-save(@click="save", :loading="saving", :error="!!error") {{ creating ? $t('Create') : $t('Save') }}
 		.errors {{ error || validationErrors.join(', ') }}
 </template>
 <script>
@@ -23,24 +61,30 @@ import { mapGetters } from 'vuex'
 import api from 'lib/api'
 import { required } from 'lib/validators'
 import ValidationErrorsMixin from 'components/mixins/validation-errors'
-import ROOM_TYPES, { inferType } from 'lib/room-types'
+import ROOM_TYPES, { inferType, isChatChannel } from 'lib/room-types'
 import { filterRoomTypesByPermission } from 'lib/room-type-permissions'
-import { PLAYBACK_MODE_SCHEDULE_DRIVEN, getStagePlaybackMode } from 'lib/stage-streams'
 import Stage from './types-edit/stage'
-import PageStatic from './types-edit/page-static'
-import PageIframe from './types-edit/page-iframe'
 import ChannelBBB from './types-edit/channel-bbb'
 import ChannelJanus from './types-edit/channel-janus'
+import ChannelJitsi from './types-edit/channel-jitsi'
 import ChannelZoom from './types-edit/channel-zoom'
 import ChannelRoulette from './types-edit/channel-roulette'
-import Posters from './types-edit/posters'
 import PageLanding from './types-edit/page-landing'
-import StreamSchedule from './StreamSchedule'
 import SidebarAddons from './types-edit/SidebarAddons'
+import {
+	cloneLanguageStreamEntries,
+	fetchInterpretationLanguageStreams,
+	saveInterpretationLanguageStreams,
+} from 'lib/interpretation-language-streams'
 
 export default {
-	components: { StreamSchedule, SidebarAddons },
+	components: { SidebarAddons },
 	mixins: [ValidationErrorsMixin],
+	provide() {
+		return {
+			interpretationAdmin: this.interpretationAdmin,
+		}
+	},
 	props: {
 		config: {
 			type: Object,
@@ -57,23 +101,30 @@ export default {
 			allRoomTypes: ROOM_TYPES,
 			typeComponents: markRaw({
 				stage: Stage,
-				'page-static': PageStatic,
-				'page-iframe': PageIframe,
 				'page-landing': PageLanding,
 				'channel-bbb': ChannelBBB,
 				'channel-roulette': ChannelRoulette,
 				'channel-janus': ChannelJanus,
+				'channel-jitsi': ChannelJitsi,
 				'channel-zoom': ChannelZoom,
-				posters: Posters
 			}),
 			saving: false,
-			error: null
+			error: null,
+			interpretationAdmin: {
+				usePluginStreams: false,
+				languageStreams: [],
+				loaded: false,
+				streamsLoadFailed: false,
+			},
 		}
 	},
+	async created() {
+		await this.loadInterpretationLanguageStreams()
+	},
 	computed: {
-		...mapGetters(['hasPermission']),
+		...mapGetters(['hasPermission', 'isAdminMode']),
 		roomTypes() {
-			return filterRoomTypesByPermission(this.allRoomTypes, this.hasPermission)
+			return filterRoomTypesByPermission(this.allRoomTypes, this.hasPermission, this.isAdminMode)
 		},
 		modules() {
 			return this.config?.module_config.reduce((acc, module) => {
@@ -84,17 +135,13 @@ export default {
 		inferredType() {
 			return inferType(this.config)
 		},
-		stagePlaybackMode() {
-			if (!this.modules) return null
-			const module = this.modules['livestream.native'] || this.modules['livestream.youtube'] || this.modules['livestream.iframe']
-			return getStagePlaybackMode(module)
+		isChat() {
+			return isChatChannel(this.config)
 		},
-		showStreamSchedule() {
-			return this.inferredType?.id === 'stage' &&
-				this.stagePlaybackMode === PLAYBACK_MODE_SCHEDULE_DRIVEN
-		},
-		openStreamScheduleCreateOnMount() {
-			return !this.creating && this.config.id && this.showStreamSchedule && this.$route.query.schedule === 'new'
+		unscheduledDisabledTitle() {
+			this.$store.state.userLocale
+			if (!this.config.has_linked_sessions) return ''
+			return this.$t('Room has linked sessions and cannot be marked unscheduled')
 		},
 		localizedName: {
 			get() {
@@ -117,16 +164,49 @@ export default {
 		return {
 			config: {
 				name: {
-					required: required('name is required')
+					required: required(this.$t('name is required'))
 				},
 			},
 		}
 	},
 	methods: {
-		async save({ openScheduleAfterCreate = false, streamScheduleDraft = null } = {}) {
+		async loadInterpretationLanguageStreams() {
+			if (this.creating || !this.config?.id) return
+			this.interpretationAdmin.streamsLoadFailed = false
+			try {
+				const data = await fetchInterpretationLanguageStreams(
+					this.$store,
+					this.config.id
+				)
+				this.interpretationAdmin.usePluginStreams = Boolean(
+					data.use_plugin_language_streams
+				)
+				this.config.interpretation_use_plugin_streams = this.interpretationAdmin.usePluginStreams
+				if (this.interpretationAdmin.usePluginStreams) {
+					this.interpretationAdmin.languageStreams = cloneLanguageStreamEntries(
+						data.language_streams
+					)
+				}
+			} catch (error) {
+				console.warn('interpretation language streams unavailable', error)
+				this.interpretationAdmin.streamsLoadFailed = true
+				this.interpretationAdmin.usePluginStreams = Boolean(
+					this.config.interpretation_use_plugin_streams
+				)
+				this.interpretationAdmin.languageStreams = []
+			} finally {
+				this.interpretationAdmin.loaded = true
+			}
+		},
+		async save() {
 			this.error = null
 			this.v$.$touch()
 			if (this.v$.$invalid) return
+
+			if (this.$refs.settings?.validate && !this.$refs.settings.validate()) {
+				return
+			}
+
 			this.$refs.settings?.beforeSave?.()
 			this.saving = true
 			try {
@@ -148,17 +228,29 @@ export default {
 					module_config: this.config.module_config,
 				})
 				Object.assign(this.config, updated)
+
+				if (this.$refs.settings?.saveStreamSchedules) {
+					await this.$refs.settings.saveStreamSchedules(roomId)
+				}
+
+				if (
+					this.interpretationAdmin.usePluginStreams &&
+					roomId &&
+					this.interpretationAdmin.loaded &&
+					!this.interpretationAdmin.streamsLoadFailed
+				) {
+					await saveInterpretationLanguageStreams(
+						this.$store,
+						roomId,
+						this.interpretationAdmin.languageStreams
+					)
+				}
 				this.saving = false
 				if (this.creating) {
-					if (streamScheduleDraft) {
-						sessionStorage.setItem(`streamScheduleDraft:${roomId}`, JSON.stringify(streamScheduleDraft))
-					}
-					const query = this.inferredType?.id === 'stage' &&
-						this.stagePlaybackMode === PLAYBACK_MODE_SCHEDULE_DRIVEN &&
-						openScheduleAfterCreate
-						? { schedule: 'new' }
-						: undefined
-					this.$router.push({name: 'admin:rooms:item', params: {roomId}, query})
+					this.$router.push({
+						name: this.isChat ? 'admin:chat:item' : 'admin:rooms:item',
+						params: {roomId}
+					})
 				}
 			} catch (error) {
 				console.error(error)
@@ -166,15 +258,6 @@ export default {
 				this.error = error.message || error
 			}
 		},
-		clearOpenStreamScheduleCreateQuery() {
-			if (this.$route.query.schedule !== 'new') return
-			const query = { ...this.$route.query }
-			delete query.schedule
-			this.$router.replace({ query })
-		},
-		createRoomForStreamSchedule(streamScheduleDraft) {
-			return this.save({ openScheduleAfterCreate: true, streamScheduleDraft })
-		}
 	}
 }
 </script>
@@ -190,4 +273,86 @@ export default {
 		min-height: 0
 		display: flex
 		flex-direction: column
+
+	.generic-settings
+		margin-bottom: 20px
+		.room-info-card
+			background: #ffffff
+			border: 1px solid $clr-grey-200
+			border-radius: 8px
+			box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04)
+			padding: 16px
+			display: flex
+			flex-direction: column
+			gap: 16px
+
+		.form-grid
+			display: grid
+			grid-template-columns: minmax(200px, 300px) 1fr
+			gap: 16px
+			@media (max-width: 640px)
+				grid-template-columns: 1fr
+
+		.field-group
+			display: flex
+			flex-direction: column
+			gap: 6px
+			.field-label
+				font-size: 13px
+				font-weight: 500
+				color: $clr-grey-700
+				.required-star
+					color: $clr-danger
+
+		.input-wrapper
+			.text-input
+				width: 100%
+				height: 40px
+				padding: 0 12px
+				border: 1px solid $clr-grey-300
+				border-radius: 6px
+				font-size: 14px
+				font-family: inherit
+				background: #ffffff
+				color: $clr-grey-800
+				box-sizing: border-box
+				outline: none
+				transition: border-color 0.15s ease, box-shadow 0.15s ease
+				&:focus
+					border-color: var(--clr-primary)
+					box-shadow: 0 0 0 2px rgba(187, 0, 17, 0.15)
+				&.has-error
+					border-color: $clr-danger
+
+		.field-error
+			font-size: 12px
+			color: $clr-danger
+			margin-top: 2px
+
+		.unscheduled-setting-row, .force-join-setting-row
+			display: flex
+			align-items: center
+			justify-content: space-between
+			padding-top: 14px
+			border-top: 1px solid $clr-grey-100
+			gap: 16px
+			&.is-disabled
+				opacity: 0.6
+				cursor: not-allowed
+			.setting-text
+				display: flex
+				flex-direction: column
+				gap: 2px
+				.setting-title
+					font-size: 14px
+					font-weight: 500
+					color: $clr-grey-900
+				.setting-desc
+					font-size: 13px
+					color: $clr-secondary-text-light
+					line-height: 18px
+			.setting-control
+				flex-shrink: 0
+				.bunt-switch
+					margin: 0
 </style>

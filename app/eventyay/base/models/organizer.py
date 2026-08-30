@@ -6,9 +6,12 @@ from urllib.parse import urlencode
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from django.core.validators import MinLengthValidator, RegexValidator
 from django.db import models, transaction
 from django.db.models import Exists, OuterRef, Q
+from django.db.models.signals import m2m_changed
+from django.dispatch import receiver
 from django.urls import reverse
 from django.utils.crypto import get_random_string
 from django.utils.functional import cached_property
@@ -37,7 +40,7 @@ from .auth import User
 logger = logging.getLogger(__name__)
 
 
-class TeamPermissionError(Exception):
+class TeamPermissionError(PermissionDenied):
     """Raised when team access permission checks fail to preserve administrator access."""
 
     pass
@@ -214,7 +217,6 @@ class Organizer(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, me
         this organizer, so you don't have to prefix your cache keys. In addition, the cache
         is being cleared every time the organizer changes.
         """
-        # FIXME: This "cache" module is missing.
         from eventyay.base.cache import ObjectRelatedCache
 
         return ObjectRelatedCache(self)
@@ -412,6 +414,22 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
     can_view_vouchers = models.BooleanField(default=False, verbose_name=_('Can view vouchers'))
     can_change_vouchers = models.BooleanField(default=False, verbose_name=_('Can change vouchers'))
 
+    TEAMSHIFTS_ROLE_CHOICES = [
+        ('coordinator', _('Event Coordinator')),
+        ('lead', _('Team Lead')),
+    ]
+
+    teamshifts_role = models.CharField(
+        max_length=20,
+        choices=TEAMSHIFTS_ROLE_CHOICES,
+        default='',
+        blank=True,
+        verbose_name=_('TeamShifts role'),
+    )
+    all_teamshifts_roles = models.BooleanField(default=False, verbose_name=_('All teamshifts roles'))
+    limit_teamshifts_roles = models.JSONField(default=list, blank=True, verbose_name=_('Limit teamshifts roles'))
+    hide_teamshifts_emails = models.BooleanField(default=False, verbose_name=_('Hide email addresses'))
+
     def __str__(self) -> str:
         return _('%(name)s on %(object)s') % {
             'name': str(self.name),
@@ -582,8 +600,7 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
         default=False,
         verbose_name=_('Video: Can manage rooms and content'),
         help_text=_(
-            'Create and edit stages, chat/video channels, exhibition booths, and poster '
-            'sessions; edit and delete rooms.'
+            'Create and edit stages and chat/video channels; edit and delete rooms.'
         ),
     )
     can_video_moderate = models.BooleanField(
@@ -883,3 +900,27 @@ class OrganizerBillingModel(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         self.organizer.cache.clear()
+
+
+@receiver(m2m_changed, sender=Team.members.through)
+@scopes_disabled()
+def handle_team_members_changed(sender, instance, action, reverse, pk_set, **kwargs):
+    if action in ('post_remove', 'post_clear'):
+        if reverse:
+            user = instance
+            if user.default_organizer_id and not user.teams.filter(organizer_id=user.default_organizer_id).exists():
+                User.objects.filter(pk=user.pk).update(default_organizer=None)
+        else:
+            team = instance
+            users_to_check = (
+                User.objects.filter(pk__in=pk_set, default_organizer=team.organizer)
+                if pk_set
+                else User.objects.filter(default_organizer=team.organizer)
+            )
+            users_with_other_teams = set(
+                Team.objects.filter(organizer=team.organizer, members__in=users_to_check)
+                .values_list('members', flat=True)
+            )
+            users_to_clear = [u.pk for u in users_to_check if u.pk not in users_with_other_teams]
+            if users_to_clear:
+                User.objects.filter(pk__in=users_to_clear).update(default_organizer=None)

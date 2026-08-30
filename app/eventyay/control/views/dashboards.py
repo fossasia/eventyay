@@ -2,7 +2,8 @@ from datetime import timedelta
 from decimal import Decimal
 from zoneinfo import ZoneInfo
 
-import pytz
+import datetime
+
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import (
@@ -31,6 +32,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext, pgettext
 
 from eventyay.base.decimal import round_decimal
+from eventyay.base.meetup import is_meetup_event
 from eventyay.base.models import (
     Product,
     ProductCategory,
@@ -295,7 +297,10 @@ def quota_widgets(sender, subevent=None, lazy=False, **kwargs):
 def shop_state_widget(sender, **kwargs):
     request = kwargs.get('request')
     is_common = bool(request and request.path.startswith('/common/'))
-    label = _('Event is') if is_common else _('Ticket shop is')
+    if is_meetup_event(sender):
+        label = _('Meetup is') if is_common else _('Registration is')
+    else:
+        label = _('Event is') if is_common else _('Ticket shop is')
     url_name = 'eventyay_common:event.live' if is_common else 'control:event.live'
     if is_common:
         state = (
@@ -623,7 +628,7 @@ def widgets_for_event_qs(request, qs, user, nmax, lazy=False):
     for event in events:
         if not lazy:
             tzname = event.cache.get_or_set('timezone', lambda: event.settings.timezone)
-            tz = pytz.timezone(tzname)
+            tz = ZoneInfo(tzname)
             if event.has_subevents:
                 if event.min_from is None:
                     dr = pgettext('subevent', 'No dates')

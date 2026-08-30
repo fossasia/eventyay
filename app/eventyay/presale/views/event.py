@@ -12,7 +12,7 @@ from urllib.parse import urlparse, urlunparse
 
 import isoweek
 import jwt
-import pytz
+from zoneinfo import ZoneInfo
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import AnonymousUser
@@ -48,13 +48,15 @@ from eventyay.agenda.views.utils import (
     serialize_widget_schedule_data,
 )
 from eventyay.base.channels import get_all_sales_channels
-from eventyay.base.meetup import ensure_video_credentials, is_meetup_event
+from eventyay.base.meetup import ensure_video_credentials, get_rsvp_product_and_quota, is_meetup_event
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.models import (
     Order,
+    OrderPosition,
     ProductVariation,
     Quota,
     SeatCategoryMapping,
+    User,
     Voucher,
 )
 from eventyay.base.models.event import SubEvent
@@ -74,6 +76,7 @@ from eventyay.presale.ical import get_ical
 from eventyay.presale.signals import product_description
 from eventyay.presale.views.meetup import (
     MEETUP_RSVP_SESSION_KEY,
+    RSVP_ORDER_STATUSES,
     GuestRsvpForm,
     has_rsvp_order,
 )
@@ -647,6 +650,11 @@ def event_has_redeemable_voucher_products(event, subevent=None, channel='web'):
 class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
     template_name = 'pretixpresale/event/index.html'
 
+    def get_template_names(self):
+        if is_meetup_event(self.request.event):
+            return ['pretixpresale/event/meetup_index.html']
+        return [self.template_name]
+
     def get(self, request, *args, **kwargs):
         from eventyay.presale.views.cart import get_or_create_cart_id
 
@@ -713,17 +721,73 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
     def get_meetup_context(self):
         event = self.request.event
         if not is_meetup_event(event):
-            return {'is_meetup_event': False, 'attendee_already_registered': False}
+            return {'is_meetup_event': False, 'attendee_already_registered': False, 'rsvp_registration_closed': False}
 
         if self.request.user.is_authenticated:
             already_registered = has_rsvp_order(event, self.request.user.email)
         else:
-            already_registered = bool(self.request.session.get(MEETUP_RSVP_SESSION_KEY.format(event.pk)))
+            order_code = self.request.session.get(MEETUP_RSVP_SESSION_KEY.format(event.pk))
+            if order_code:
+                with scope(organizer=event.organizer):
+                    already_registered = event.orders.filter(code=order_code, status__in=RSVP_ORDER_STATUSES).exists()
+            else:
+                already_registered = False
+
+        with scope(organizer=event.organizer):
+            attendee_count = event.orders.filter(status__in=RSVP_ORDER_STATUSES).count()
+            preview_positions = list(
+                OrderPosition.objects.filter(
+                    order__event=event,
+                    order__status__in=RSVP_ORDER_STATUSES,
+                )
+                .select_related('order')
+                .order_by('order__datetime')
+                [:6]
+            )
+            emails = {
+                (pos.attendee_email or pos.order.email).strip().lower()
+                for pos in preview_positions
+                if (pos.attendee_email or pos.order.email)
+            }
+            user_avatars = {}
+            if emails:
+                users = (
+                    User.objects.filter(email__in=emails, event__isnull=True)
+                    .only('id', 'email', 'profile_picture', 'profile_picture_thumbnail', 'profile_picture_thumbnail_tiny')
+                )
+                for u in users:
+                    avatar_url = u.get_profile_picture_url(event=event, thumbnail='default') or u.get_profile_picture_url(event=event)
+                    if avatar_url:
+                        user_avatars[u.email.lower()] = avatar_url
+
+            attendees_preview = [
+                {
+                    'name': pos.attendee_name,
+                    'avatar_url': user_avatars.get((pos.attendee_email or pos.order.email or '').strip().lower()),
+                }
+                for pos in preview_positions
+                if pos.attendee_name
+            ]
+
+        rsvp_registration_closed = False
+        product, quota = get_rsvp_product_and_quota(event)
+        if quota and quota.size is not None:
+            with scope(organizer=event.organizer):
+                avail, count = quota.availability()
+                rsvp_registration_closed = avail != Quota.AVAILABILITY_OK
+
+        registration_fee = product.default_price if product else Decimal('0.00')
 
         return {
             'is_meetup_event': True,
             'attendee_already_registered': already_registered,
             'rsvp_guest_form': getattr(self.request, '_rsvp_guest_form', None) or GuestRsvpForm(),
+            'meetup_attendee_count': attendee_count,
+            'meetup_attendees_preview': attendees_preview,
+            'rsvp_registration_closed': rsvp_registration_closed,
+            'guest_checkout_allowed': not event.settings.require_registered_account_for_tickets,
+            'meetup_registration_fee': registration_fee or Decimal('0.00'),
+            'stripe_publishable_key': event.settings.get('payment_stripe_publishable_key', ''),
         }
 
     def get_context_data(self, **kwargs):
@@ -874,7 +938,7 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
 
         if context['list_type'] == 'calendar':
             self._set_month_year()
-            tz = pytz.timezone(self.request.event.settings.timezone)
+            tz = ZoneInfo(self.request.event.settings.timezone)
             _, ndays = calendar.monthrange(self.year, self.month)
             before = datetime(self.year, self.month, 1, 0, 0, 0, tzinfo=tz) - timedelta(days=1)
             after = datetime(self.year, self.month, ndays, 0, 0, 0, tzinfo=tz) + timedelta(days=1)
@@ -909,7 +973,7 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
             context['years'] = range(now().year - 2, now().year + 3)
         elif context['list_type'] == 'week':
             self._set_week_year()
-            tz = pytz.timezone(self.request.event.settings.timezone)
+            tz = ZoneInfo(self.request.event.settings.timezone)
             week = isoweek.Week(self.year, self.week)
             before = datetime(
                 week.monday().year,
@@ -1124,25 +1188,44 @@ class JoinOnlineVideoView(EventViewMixin, View):
         return redirect_or_json_redirect(request, redirect_url)
 
     def validate_access(self, request, *args, **kwargs):
-        if not self.request.user.is_authenticated:
+        session_order_code = (
+            request.session.get(MEETUP_RSVP_SESSION_KEY.format(self.request.event.pk))
+            if is_meetup_event(self.request.event)
+            else None
+        )
+        if not self.request.user.is_authenticated and not session_order_code:
             return False, None, None
         
         allowed_statuses = [Order.STATUS_PAID]
         if self.request.event.settings.venueless_allow_pending:
             allowed_statuses.append(Order.STATUS_PENDING)
 
-        # Get all PAID orders of customer which belong to this event
-        with scope(event=self.request.event):
-            order_list = list(
-                Order.objects.filter(
-                    Q(event=self.request.event)
-                    & (
-                        Q(email__iexact=self.request.user.email)
-                        | Q(all_positions__attendee_email__iexact=self.request.user.email)
-                    )
-                    & Q(status__in=allowed_statuses)
+        with scope(organizer=self.request.event.organizer):
+            filters = Q(event=self.request.event) & Q(status__in=allowed_statuses)
+            if self.request.user.is_authenticated:
+                filters &= (
+                    Q(email__iexact=self.request.user.email)
+                    | Q(all_positions__attendee_email__iexact=self.request.user.email)
                 )
+            elif session_order_code:
+                filters &= Q(code=session_order_code)
+            else:
+                return False, None, None
+
+            order_list = list(
+                Order.objects.filter(filters)
                 .select_related('event')
+                .prefetch_related(
+                    'positions',
+                    'positions__product',
+                    'positions__product__category',
+                    'positions__variation',
+                    'positions__addons',
+                    'positions__addons__product',
+                    'positions__addons__variation',
+                    'positions__answers',
+                    'positions__answers__question',
+                )
                 .order_by('-datetime')
                 .distinct()
             )

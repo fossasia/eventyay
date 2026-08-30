@@ -12,7 +12,6 @@ from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
-from django.utils.translation import ngettext_lazy
 from django.views.generic import FormView, ListView, TemplateView, UpdateView, View
 from django_context_decorator import context
 
@@ -33,6 +32,7 @@ from eventyay.orga.forms.event import (
     ReviewPhaseForm,
     ReviewScoreCategoryForm,
     ReviewSettingsForm,
+    FeedbackSettingsForm,
     ScheduleHtmlExportForm,
     WidgetGenerationForm,
     WidgetSettingsForm,
@@ -77,7 +77,7 @@ class EventDetail(EventSettingsPermission, ActionFromUrl, UpdateView):
     @context
     def tablist(self):
         return {
-            'display': _('Display settings'),
+            'general': _('General settings'),
         }
 
     def get_success_url(self) -> str:
@@ -129,7 +129,7 @@ class EventReviewSettings(EventSettingsPermission, ActionFromUrl, FormView):
     @context
     def tablist(self):
         return {
-            'general': _('General information'),
+            'general': _('Review settings'),
             'scores': _('Review scoring'),
             'phases': _('Review phases'),
         }
@@ -275,6 +275,25 @@ class EventReviewSettings(EventSettingsPermission, ActionFromUrl, FormView):
         return True
 
 
+class FeedbackSettings(EventSettingsPermission, ActionFromUrl, FormView):
+    form_class = FeedbackSettingsForm
+    template_name = 'orga/settings/feedback.html'
+
+    def get_success_url(self) -> str:
+        return self.request.event.orga_urls.feedback_settings
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['obj'] = self.request.event
+        return kwargs
+
+    @transaction.atomic
+    def form_valid(self, form):
+        form.save()
+        messages.success(self.request, phrases.base.saved)
+        return super().form_valid(form)
+
+
 class PhaseActivate(EventSettingsPermission, View):
     def get_object(self):
         return get_object_or_404(ReviewPhase, event=self.request.event, pk=self.kwargs.get('pk'))
@@ -353,26 +372,68 @@ class EventDelete(PermissionRequired, ActionConfirmMixin, TemplateView):
     model = Event
     action_text = (
         _(
-            'ALL related data, such as proposals, and speaker profiles, and '
+            'ALL related data, such as proposals, speaker profiles, and '
             'uploads, will also be deleted and cannot be restored.'
         )
         + ' '
         + phrases.base.delete_warning
     )
+    template_name = 'orga/settings/delete_confirm.html'
 
     def get_object(self):
         return self.request.event
 
     def action_object_name(self):
-        return ngettext_lazy('Event', 'Events', 1) + f': {self.get_object().name}'
+        return _('Event') + f': {self.get_object().name}'
 
     @property
     def action_back_url(self):
         return self.get_object().orga_urls.settings
 
     def post(self, request, *args, **kwargs):
+        if request.POST.get('event_name_confirm') != str(self.get_object().name):
+            messages.error(self.request, _('The event name you entered was incorrect.'))
+            return redirect(self.request.path)
         self.get_object().shred(person=self.request.user)
+        messages.success(self.request, _('The event has been deleted.'))
         return redirect(reverse('eventyay_common:dashboard'))
+
+
+class EventDeleteTalkData(PermissionRequired, ActionConfirmMixin, TemplateView):
+    permission_required = 'base.administrator_user'
+    model = Event
+    action_text = (
+        _(
+            'ALL related data, such as proposals, speaker profiles, and '
+            'uploads, will also be deleted and cannot be restored.'
+        )
+        + ' '
+        + phrases.base.delete_warning
+    )
+    template_name = 'orga/settings/delete_confirm.html'
+
+    def get_object(self):
+        return self.request.event
+
+    def action_object_name(self):
+        return _('Talk Data for') + f' {self.get_object().name}'
+
+    @property
+    def action_back_url(self):
+        return self.get_object().orga_urls.settings
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get('event_name_confirm') != str(self.get_object().name):
+            messages.error(self.request, _('The event name you entered was incorrect.'))
+            return redirect(self.request.path)
+        self.get_object().delete_talk_data()
+        self.get_object().log_action('eventyay.event.talk_data.deleted', person=self.request.user, orga=True)
+        messages.success(self.request, _('Talk data has been successfully deleted.'))
+        url = reverse(
+            'eventyay_common:event.update', 
+            kwargs={'organizer': self.request.organizer.slug, 'event': self.get_object().slug}
+        ) + '#danger-zone-tab'
+        return redirect(url)
 
 @method_decorator(csp_update({'SCRIPT_SRC': "'self' 'unsafe-eval'"}), name='dispatch')
 class WidgetSettings(EventSettingsPermission, FormView):

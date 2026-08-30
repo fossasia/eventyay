@@ -16,6 +16,7 @@ import eventyay.presale.urls
 from eventyay.api.views.stripe import stripe_webhook_view
 from eventyay.base.views import cachedfiles, csp, health, js_catalog, js_helpers, metrics, redirect
 from eventyay.control.views import pages
+from eventyay.eventyay_common.views import auth
 from eventyay.eventyay_common.views.custom import ConfirmEmailView, SignupView
 
 logger = logging.getLogger(__name__)
@@ -92,6 +93,8 @@ base_patterns = [
     # account_signup references in the app route to our customized Jinja view.
     path('accounts/signup/', SignupView.as_view(), name='account_signup'),
     path('accounts/', include('allauth.urls')),
+    path('login/', auth.login, name='auth.login'),
+    path('login/2fa/', auth.Login2FAView.as_view(), name='auth.login.2fa'),
 ]
 
 control_patterns = [
@@ -104,6 +107,10 @@ eventyay_common_patterns = [
 
 
 page_patterns = [
+    path('terms/', pages.SystemPageView.as_view(slug='terms'), name='page.terms'),
+    path('privacy/', pages.SystemPageView.as_view(slug='privacy'), name='page.privacy'),
+    path('pricing/', pages.SystemPageView.as_view(slug='pricing'), name='page.pricing'),
+    path('support/', pages.SystemPageView.as_view(slug='support'), name='page.support'),
     path('page/<slug:slug>/', pages.ShowPageView.as_view(), name='page'),
 ]
 
@@ -120,7 +127,7 @@ orga_patterns = [
 
 debug_patterns = []
 
-if settings.DEBUG and importlib.util.find_spec('debug_toolbar'):
+if settings.DEBUG and importlib.util.find_spec('debug_toolbar') and 'debug_toolbar' in settings.INSTALLED_APPS:
     debug_patterns.append(path('__debug__/', include('debug_toolbar.urls')))
     debug_patterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
