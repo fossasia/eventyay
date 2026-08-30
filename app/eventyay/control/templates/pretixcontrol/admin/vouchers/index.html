@@ -231,35 +231,28 @@
               <td>{{ v.created_by }}</td>
               <td>{{ v.updated_at|date:"d M Y, H:i" }}</td>
               <td class="text-right">
-                <div class="pfv-actions-dropdown">
-                  <button class="btn btn-default btn-sm pfv-actions-toggle">
-                    <i class="fa fa-ellipsis-h"></i>
+                <a href="{% url 'eventyay_admin:admin.voucher.detail' voucher=v.id %}" class="btn btn-default btn-sm" title="{% trans 'View details' %}" aria-label="{% trans 'View details' %}">
+                  <i class="fa fa-eye"></i>
+                </a>
+                <a href="{% url 'eventyay_admin:admin.voucher' voucher=v.id %}" class="btn btn-default btn-sm" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}">
+                  <i class="fa fa-pencil"></i>
+                </a>
+                <form method="post" action="{% url 'eventyay_admin:admin.voucher.duplicate' voucher=v.id %}" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-default btn-sm" title="{% trans 'Duplicate' %}" aria-label="{% trans 'Duplicate' %}">
+                    <i class="fa fa-copy"></i>
                   </button>
-                  <div class="pfv-actions-menu">
-                    <a href="{% url 'eventyay_admin:admin.voucher.detail' voucher=v.id %}">
-                      <i class="fa fa-eye"></i> {% trans "View details" %}
-                    </a>
-                    <a href="{% url 'eventyay_admin:admin.voucher' voucher=v.id %}">
-                      <i class="fa fa-pencil"></i> {% trans "Edit" %}
-                    </a>
-                    <form method="post" action="{% url 'eventyay_admin:admin.voucher.duplicate' voucher=v.id %}" class="pfv-inline-form">
-                      {% csrf_token %}
-                      <button type="submit" class="pfv-action-btn">
-                        <i class="fa fa-copy"></i> {% trans "Duplicate" %}
-                      </button>
-                    </form>
-                    {% if v.computed_status == 'active' %}
-                      <a href="{% url 'eventyay_admin:admin.voucher.disable' voucher=v.id %}">
-                        <i class="fa fa-ban"></i> {% trans "Disable" %}
-                      </a>
-                    {% endif %}
-                    {% if v.allow_delete %}
-                      <a href="{% url 'eventyay_admin:admin.voucher.delete' voucher=v.id %}" class="text-danger">
-                        <i class="fa fa-trash"></i> {% trans "Delete draft" %}
-                      </a>
-                    {% endif %}
-                  </div>
-                </div>
+                </form>
+                {% if v.computed_status == 'active' %}
+                  <a href="{% url 'eventyay_admin:admin.voucher.disable' voucher=v.id %}" class="btn btn-default btn-sm" title="{% trans 'Disable' %}" aria-label="{% trans 'Disable' %}">
+                    <i class="fa fa-ban text-warning"></i>
+                  </a>
+                {% endif %}
+                {% if v.allow_delete %}
+                  <a href="{% url 'eventyay_admin:admin.voucher.delete' voucher=v.id %}" class="btn btn-default btn-sm" title="{% trans 'Delete draft' %}" aria-label="{% trans 'Delete draft' %}">
+                    <i class="fa fa-trash text-danger"></i>
+                  </a>
+                {% endif %}
               </td>
             </tr>
           {% empty %}
