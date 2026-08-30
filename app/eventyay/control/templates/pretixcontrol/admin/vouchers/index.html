@@ -31,7 +31,7 @@
     {% trans "Platform fee vouchers only affect Eventyay platform fees. They do not reduce attendee ticket prices, ticket fees, payment gateway fees, or taxes." %}
   </div>
 
-  {% if not vouchers and not filter_form.filtered %}
+  {% if status_counts.all == 0 %}
     <div class="empty-collection">
       <p>
         {% blocktrans trimmed %}
