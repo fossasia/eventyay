@@ -27,7 +27,7 @@ VIDEO_SERVER_CONFIGS = {
     "bbb": VideoServerConfig(
         model=BBBServer,
         label=_("BBB"),
-        list_url_name="eventyay_admin:video_admin:bbbserver.list",
+        list_url_name="eventyay_admin:video_admin:settings",
         update_url_name="eventyay_admin:video_admin:bbbserver.update",
         order_by="url",
         display_attr="url",
@@ -36,7 +36,7 @@ VIDEO_SERVER_CONFIGS = {
     "janus": VideoServerConfig(
         model=JanusServer,
         label=_("Janus"),
-        list_url_name="eventyay_admin:video_admin:janusserver.list",
+        list_url_name="eventyay_admin:video_admin:settings",
         update_url_name="eventyay_admin:video_admin:janusserver.update",
         order_by="url",
         display_attr="url",
@@ -45,7 +45,7 @@ VIDEO_SERVER_CONFIGS = {
     "jitsi": VideoServerConfig(
         model=JitsiServer,
         label=_("Jitsi"),
-        list_url_name="eventyay_admin:video_admin:jitsiserver.list",
+        list_url_name="eventyay_admin:video_admin:settings",
         update_url_name="eventyay_admin:video_admin:jitsiserver.update",
         order_by="url",
         display_attr="url",
@@ -54,7 +54,7 @@ VIDEO_SERVER_CONFIGS = {
     "turn": VideoServerConfig(
         model=TurnServer,
         label=_("TURN"),
-        list_url_name="eventyay_admin:video_admin:turnserver.list",
+        list_url_name="eventyay_admin:video_admin:settings",
         update_url_name="eventyay_admin:video_admin:turnserver.update",
         order_by="hostname",
         display_attr="hostname",
@@ -63,7 +63,7 @@ VIDEO_SERVER_CONFIGS = {
     "streaming": VideoServerConfig(
         model=StreamingServer,
         label=_("Streaming"),
-        list_url_name="eventyay_admin:video_admin:streamingserver.list",
+        list_url_name="eventyay_admin:video_admin:settings",
         update_url_name="eventyay_admin:video_admin:streamingserver.update",
         order_by="name",
         display_attr="name",
@@ -100,7 +100,7 @@ def get_video_server_dashboard_rows():
                     "edit_url": reverse(
                         config.update_url_name, kwargs={"pk": server.pk}
                     ),
-                    "list_url": reverse(config.list_url_name),
+                    "list_url": reverse(config.list_url_name) + f"?tab={server_type}",
                     "toggle_url": reverse(
                         "eventyay_admin:video_admin:server.toggle-active",
                         kwargs={"server_type": server_type, "pk": server.pk},

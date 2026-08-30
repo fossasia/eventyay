@@ -76,19 +76,12 @@ class CentralMailSettingsForm(SettingsForm):
         required=False,
         initial='smtp',
     )
-    send_grid_api_key = SecretKeySettingsField(
-        label=_('SendGrid API key'),
-        required=False,
-        widget=SecretKeySettingsWidget(attrs={
-            'data-display-dependency': '#id_email-email_vendor_0',
-        }),
-    )
     smtp_host = forms.CharField(
         label=_('SMTP hostname'),
         required=False,
         widget=forms.TextInput(attrs={
             'placeholder': 'mail.example.org',
-            'data-display-dependency': '#id_email-email_vendor_1',
+            'data-display-dependency': '#id_email-email_vendor_0',
         }),
     )
     smtp_port = forms.IntegerField(
@@ -96,7 +89,7 @@ class CentralMailSettingsForm(SettingsForm):
         required=False,
         widget=forms.TextInput(attrs={
             'placeholder': 'e.g. 587, 465, 25 …',
-            'data-display-dependency': '#id_email-email_vendor_1',
+            'data-display-dependency': '#id_email-email_vendor_0',
         }),
     )
     smtp_username = forms.CharField(
@@ -104,14 +97,14 @@ class CentralMailSettingsForm(SettingsForm):
         required=False,
         widget=forms.TextInput(attrs={
             'placeholder': 'myuser@example.org',
-            'data-display-dependency': '#id_email-email_vendor_1',
+            'data-display-dependency': '#id_email-email_vendor_0',
         }),
     )
     smtp_password = SecretKeySettingsField(
         label=_('SMTP password'),
         required=False,
         widget=SecretKeySettingsWidget(attrs={
-            'data-display-dependency': '#id_email-email_vendor_1',
+            'data-display-dependency': '#id_email-email_vendor_0',
         }),
     )
     smtp_use_tls = forms.BooleanField(
@@ -119,7 +112,7 @@ class CentralMailSettingsForm(SettingsForm):
         help_text=_('Commonly enabled on port 587.'),
         required=False,
         widget=forms.CheckboxInput(attrs={
-            'data-display-dependency': '#id_email-email_vendor_1',
+            'data-display-dependency': '#id_email-email_vendor_0',
         }),
     )
     smtp_use_ssl = forms.BooleanField(
@@ -127,6 +120,13 @@ class CentralMailSettingsForm(SettingsForm):
         help_text=_('Commonly enabled on port 465.'),
         required=False,
         widget=forms.CheckboxInput(attrs={
+            'data-display-dependency': '#id_email-email_vendor_0',
+        }),
+    )
+    send_grid_api_key = SecretKeySettingsField(
+        label=_('SendGrid API key'),
+        required=False,
+        widget=SecretKeySettingsWidget(attrs={
             'data-display-dependency': '#id_email-email_vendor_1',
         }),
     )
