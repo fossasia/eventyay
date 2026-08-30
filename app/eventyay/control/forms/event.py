@@ -1611,7 +1611,17 @@ class TaxRuleLineForm(I18nForm):
             ('block', _('Sale not allowed')),
         ],
     )
-    rate = forms.DecimalField(label=_('Deviating tax rate'), max_digits=10, decimal_places=2, required=False)
+    rate = forms.DecimalField(
+        label=_('Deviating tax rate'),
+        max_digits=10,
+        decimal_places=2,
+        required=False,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        error_messages={
+            'min_value': _('Tax rate must be between 0 and 100.'),
+            'max_value': _('Tax rate must be between 0 and 100.'),
+        },
+    )
     invoice_text = I18nFormField(label=_('Text on invoice'), required=False, widget=I18nTextInput)
 
 
