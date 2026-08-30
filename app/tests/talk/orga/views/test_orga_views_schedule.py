@@ -466,6 +466,17 @@ def test_delete_used_room(orga_client, event, room, slot):
     with scope(event=event):
         assert event.rooms.count() == 1
 
+    # Deleting a room is a soft delete, which bypasses the PROTECT on TalkSlot.room, so the
+    # POST has to be refused explicitly. Otherwise the room vanishes from the organiser UI
+    # while the sessions scheduled in it keep pointing at it.
+    response = orga_client.post(room.urls.delete, follow=True)
+    assert response.status_code == 200
+    with scope(event=event):
+        room.refresh_from_db()
+        assert room.deleted is False
+        slot.refresh_from_db()
+        assert slot.room == room
+
 
 @pytest.mark.django_db
 def test_regenerate_speaker_notifications(orga_client, event, slot):

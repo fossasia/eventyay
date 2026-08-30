@@ -45,6 +45,10 @@ UNSCHEDULED_LINKED_SUBMISSIONS_MESSAGE = _(
 UNSCHEDULED_ROOM_SCHEDULING_MESSAGE = _(
     'Unscheduled rooms cannot be linked to talk sessions.'
 )
+DELETE_LINKED_SUBMISSIONS_MESSAGE = _(
+    'This room still has sessions scheduled in it, so it cannot be deleted. '
+    'Please move those sessions to another room or unschedule them first.'
+)
 _LINKED_SUBMISSION_TALK_FILTER = {'submission__isnull': False}
 
 

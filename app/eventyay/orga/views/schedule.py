@@ -22,7 +22,11 @@ from i18nfield.utils import I18nJSONEncoder
 from eventyay.agenda.management.commands.export_schedule_html import get_export_zip_path
 from eventyay.agenda.tasks import export_schedule_html
 from eventyay.base.models import Availability, Room, TalkSlot
-from eventyay.base.models.room import rooms_for_talk_assignment
+from eventyay.base.models.room import (
+    DELETE_LINKED_SUBMISSIONS_MESSAGE,
+    room_has_linked_submissions,
+    rooms_for_talk_assignment,
+)
 from eventyay.common.language import get_current_language_information
 from eventyay.common.text.path import safe_filename
 from eventyay.common.text.phrases import phrases
@@ -547,9 +551,21 @@ class RoomView(OrderActionMixin, OrgaCRUDView):
                 )
         return self.list(request, *args, **kwargs)
 
+    def delete_view(self, request, *args, **kwargs):
+        # Warn on the confirmation page rather than only rejecting the POST.
+        if room_has_linked_submissions(self.object):
+            messages.warning(request, DELETE_LINKED_SUBMISSIONS_MESSAGE)
+        return super().delete_view(request, *args, **kwargs)
+
     def delete_handler(self, request, *args, **kwargs):
         # Use soft delete to sync with video component
         obj = self.get_object()
+        # Soft deletion bypasses the PROTECT on TalkSlot.room, so guard it here: without
+        # this the room disappears from the organiser UI while its scheduled sessions stay
+        # pointing at it.
+        if room_has_linked_submissions(obj):
+            messages.error(request, DELETE_LINKED_SUBMISSIONS_MESSAGE)
+            return redirect(self.get_success_url())
         obj.deleted = True
         obj.save(update_fields=['deleted'])
         request.event.wip_schedule.talks.filter(room=obj, submission__isnull=True).delete()
