@@ -430,34 +430,37 @@ def get_admin_navigation(request):
             'icon': 'dashboard',
         },
         {
-            'label': _('All Events'),
+            'label': _('Platform Data'),
             'url': reverse('eventyay_admin:admin.events'),
-            'active': 'events' in url.url_name,
-            'icon': 'calendar',
-        },
-        {
-            'label': _('All Organizers'),
-            'url': reverse('eventyay_admin:admin.organizers'),
-            'active': 'organizers' in url.url_name,
-            'icon': 'group',
-        },
-        {
-            'label': _('All Attendees'),
-            'url': reverse('eventyay_admin:admin.attendees'),
-            'active': 'attendees' in url.url_name,
-            'icon': 'ticket',
-        },
-        {
-            'label': _('All Sessions'),
-            'url': reverse('eventyay_admin:admin.submissions'),
-            'active': 'submissions' in url.url_name,
-            'icon': 'sticky-note-o',
-        },
-        {
-            'label': _('All Orders'),
-            'url': reverse('eventyay_admin:admin.orders'),
-            'active': 'orders' in url.url_name,
-            'icon': 'shopping-cart',
+            'active': False,
+            'icon': 'database',
+            'children': [
+                {
+                    'label': _('Events'),
+                    'url': reverse('eventyay_admin:admin.events'),
+                    'active': 'events' in url.url_name,
+                },
+                {
+                    'label': _('Organizers'),
+                    'url': reverse('eventyay_admin:admin.organizers'),
+                    'active': 'organizers' in url.url_name,
+                },
+                {
+                    'label': _('Attendees'),
+                    'url': reverse('eventyay_admin:admin.attendees'),
+                    'active': 'attendees' in url.url_name,
+                },
+                {
+                    'label': _('Sessions'),
+                    'url': reverse('eventyay_admin:admin.submissions'),
+                    'active': 'submissions' in url.url_name,
+                },
+                {
+                    'label': _('Orders'),
+                    'url': reverse('eventyay_admin:admin.orders'),
+                    'active': 'orders' in url.url_name,
+                },
+            ],
         },
         {
             'label': _('Task management'),
