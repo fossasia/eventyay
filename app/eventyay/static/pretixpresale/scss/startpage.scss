@@ -442,6 +442,52 @@ body.startpage-search-results-page #main-card {
   margin-top: 2rem;
 }
 
+.startpage-features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+  margin-bottom: 4rem;
+}
+
+.feature-card {
+  text-align: center;
+  padding: 2.5rem 2rem;
+  background: #fff;
+  border: 1px solid var(--color-grey-light, #e2e8f0);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.feature-card i {
+  color: var(--color-primary, #2185d0);
+  margin-bottom: 1.25rem;
+  transition: transform 0.25s ease;
+}
+
+.feature-card:hover i {
+  transform: scale(1.1);
+}
+
+.feature-card h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--color-text, #1a202c);
+}
+
+.feature-card p {
+  font-size: 0.95rem;
+  color: var(--color-grey-dark, #4a5568);
+  line-height: 1.5;
+  margin: 0;
+}
+
 .startpage-event-list {
   display: grid;
   gap: 1.5rem;
@@ -468,13 +514,19 @@ body.startpage-search-results-page #main-card {
 
 .startpage-event-card {
   background: #fff;
-  border: 1px solid var(--color-grey-light);
+  border: 1px solid var(--color-grey-light, #e2e8f0);
   border-radius: 12px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
   display: flex;
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.startpage-event-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 

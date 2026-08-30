@@ -466,6 +466,11 @@ def get_admin_navigation(request):
                     'active': (url.url_name == 'admin.global.update'),
                 },
                 {
+                    'label': _('Meta data'),
+                    'url': reverse('eventyay_admin:admin.global.metadata'),
+                    'active': (url.url_name == 'admin.global.metadata'),
+                },
+                {
                     'label': _('Generate keys for SSO'),
                     'url': reverse('eventyay_admin:admin.global.sso'),
                     'active': (url.url_name == 'admin.global.sso'),
@@ -496,44 +501,22 @@ def get_admin_navigation(request):
         is_video_route = 'video_admin' in url.namespaces
         video_children = [
             {
-                'label': _('Dashboard'),
-                'url': reverse('eventyay_admin:video_admin:index'),
-                'active': is_video_route and url.url_name == 'index',
+                'label': _('Video settings'),
+                'url': reverse('eventyay_admin:video_admin:settings'),
+                'active': is_video_route and (
+                    url.url_name == 'settings' or
+                    url.url_name.startswith('bbbserver.') or
+                    url.url_name.startswith('janusserver.') or
+                    url.url_name.startswith('jitsiserver.') or
+                    url.url_name.startswith('turnserver.') or
+                    url.url_name.startswith('streamingserver.') or
+                    url.url_name == 'server.toggle-active'
+                ),
             },
             {
                 'label': _('Events'),
                 'url': reverse('eventyay_admin:video_admin:event.list'),
                 'active': is_video_route and url.url_name.startswith('event.'),
-            },
-            {
-                'label': _('BBB servers'),
-                'url': reverse('eventyay_admin:video_admin:bbbserver.list'),
-                'active': is_video_route and url.url_name.startswith('bbbserver.') and url.url_name != 'bbbserver.moveroom',
-            },
-            {
-                'label': _('Move BBB room'),
-                'url': reverse('eventyay_admin:video_admin:bbbserver.moveroom'),
-                'active': is_video_route and url.url_name == 'bbbserver.moveroom',
-            },
-            {
-                'label': _('Janus servers'),
-                'url': reverse('eventyay_admin:video_admin:janusserver.list'),
-                'active': is_video_route and url.url_name.startswith('janusserver.'),
-            },
-            {
-                'label': _('Jitsi servers'),
-                'url': reverse('eventyay_admin:video_admin:jitsiserver.list'),
-                'active': is_video_route and url.url_name.startswith('jitsiserver.'),
-            },
-            {
-                'label': _('TURN servers'),
-                'url': reverse('eventyay_admin:video_admin:turnserver.list'),
-                'active': is_video_route and url.url_name.startswith('turnserver.'),
-            },
-            {
-                'label': _('Streaming servers'),
-                'url': reverse('eventyay_admin:video_admin:streamingserver.list'),
-                'active': is_video_route and url.url_name.startswith('streamingserver.'),
             },
             {
                 'label': _('Streamkey generator'),
@@ -550,7 +533,7 @@ def get_admin_navigation(request):
         nav.append(
             {
                 'label': _('Video'),
-                'url': reverse('eventyay_admin:video_admin:index'),
+                'url': reverse('eventyay_admin:video_admin:settings'),
                 'active': parent_active,
                 'icon': 'video-camera',
                 'children': video_children,
