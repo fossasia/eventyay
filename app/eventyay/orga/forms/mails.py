@@ -234,6 +234,7 @@ class WriteMailBaseForm(ScheduledAtValidationMixin, MailTemplateForm):
         label=_('Send immediately'),
         required=False,
         help_text=_('If you check this, the emails will be sent immediately, instead of being put in the outbox.'),
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
     )
     scheduled_at = forms.SplitDateTimeField(
         label=_('Send later'),
