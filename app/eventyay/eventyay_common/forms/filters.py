@@ -39,7 +39,7 @@ class UserOrderFilterForm(forms.Form):
         input_formats=['%Y-%m-%d'],
         widget=forms.DateInput(
             format='%Y-%m-%d',
-            attrs={'class': 'form-control', 'type': 'date', 'autocomplete': 'off'},
+            attrs={'class': 'form-control datepickerfield', 'type': 'text', 'autocomplete': 'off', 'placeholder': _('Start date')},
         ),
     )
     date_to = forms.DateField(
@@ -48,7 +48,7 @@ class UserOrderFilterForm(forms.Form):
         input_formats=['%Y-%m-%d'],
         widget=forms.DateInput(
             format='%Y-%m-%d',
-            attrs={'class': 'form-control', 'type': 'date', 'autocomplete': 'off'},
+            attrs={'class': 'form-control datepickerfield', 'type': 'text', 'autocomplete': 'off', 'placeholder': _('End date')},
         ),
     )
 

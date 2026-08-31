@@ -26,10 +26,22 @@
                     {% bootstrap_field filter_form.status layout='inline' %}
                 </div>
                 <div class="advanced-filter-field" style="flex: 1 1 160px; margin-bottom: 0;">
-                    {% bootstrap_field filter_form.date_from layout='inline' %}
+                    <label class="sr-only" for="{{ filter_form.date_from.id_for_label }}">{{ filter_form.date_from.label }}</label>
+                    <div class="input-group date">
+                        {{ filter_form.date_from }}
+                        <span class="input-group-addon" aria-hidden="true">
+                            <span class="fa fa-calendar"></span>
+                        </span>
+                    </div>
                 </div>
                 <div class="advanced-filter-field" style="flex: 1 1 160px; margin-bottom: 0;">
-                    {% bootstrap_field filter_form.date_to layout='inline' %}
+                    <label class="sr-only" for="{{ filter_form.date_to.id_for_label }}">{{ filter_form.date_to.label }}</label>
+                    <div class="input-group date">
+                        {{ filter_form.date_to }}
+                        <span class="input-group-addon" aria-hidden="true">
+                            <span class="fa fa-calendar"></span>
+                        </span>
+                    </div>
                 </div>
                 <div class="advanced-filter-search-actions">
                     <button type="submit" class="btn btn-primary" aria-label="{% trans 'Apply filters' %}" title="{% trans 'Apply filters' %}">
