@@ -332,7 +332,7 @@
                     </form>
                 </div>
             {% endif %}
-            {% if global_settings.banner_message %}
+            {% if global_settings.banner_message_enabled and global_settings.banner_message %}
                 <div class="impersonate-warning">
                     <span class="fa fa-bell"></span>
                     {{ global_settings.banner_message|rich_text }}

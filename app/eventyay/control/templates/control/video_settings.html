@@ -1,0 +1,274 @@
+{% extends "pretixcontrol/admin/base.html" %}
+{% load i18n %}
+
+{% block video_admin_content %}
+    <h1>{% trans "Video settings" %}</h1>
+    <p>{% trans "Server configurations" %}</p>
+
+    <ul class="nav nav-tabs" role="tablist">
+        <li role="presentation" class="{% if active_tab == 'bbb' %}active{% endif %}">
+            <a href="#bbb" aria-controls="bbb" role="tab" data-toggle="tab">{% trans "BBB" %}</a>
+        </li>
+        <li role="presentation" class="{% if active_tab == 'jitsi' %}active{% endif %}">
+            <a href="#jitsi" aria-controls="jitsi" role="tab" data-toggle="tab">{% trans "Jitsi" %}</a>
+        </li>
+        <li role="presentation" class="{% if active_tab == 'janus' %}active{% endif %}">
+            <a href="#janus" aria-controls="janus" role="tab" data-toggle="tab">{% trans "Janus" %}</a>
+        </li>
+        <li role="presentation" class="{% if active_tab == 'turn' %}active{% endif %}">
+            <a href="#turn" aria-controls="turn" role="tab" data-toggle="tab">{% trans "TURN" %}</a>
+        </li>
+        <li role="presentation" class="{% if active_tab == 'streaming' %}active{% endif %}">
+            <a href="#streaming" aria-controls="streaming" role="tab" data-toggle="tab">{% trans "Streaming" %}</a>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- BBB Tab -->
+        <div role="tabpanel" class="tab-pane {% if active_tab == 'bbb' %}active{% endif %}" id="bbb">
+            <div class="video-tab-header">
+                <h3 class="video-tab-title">{% trans "BBB Server Configurations" %}</h3>
+                <div>
+                    <a href="{% url 'eventyay_admin:video_admin:bbbserver.moveroom' %}" class="btn btn-default">
+                        <span class="fa fa-exchange" aria-hidden="true"></span> {% trans "Move BBB room" %}
+                    </a>
+                    <a href="{% url 'eventyay_admin:video_admin:bbbserver.create' %}" class="btn btn-primary">
+                        <span class="fa fa-plus" aria-hidden="true"></span> {% trans "Add new server" %}
+                    </a>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th>{% trans "ID" %}</th>
+                        <th>{% trans "URL" %}</th>
+                        <th>{% trans "Event" %}</th>
+                        <th class="text-right">{% trans "Current cost" %}</th>
+                        <th class="text-right">{% trans "Actions" %}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for s in bbb_servers %}
+                    <tr class="{% if not s.active %}deleted{% endif %}">
+                        <td><code>{{ s.pk }}</code></td>
+                        <td>{{ s.url }}</td>
+                        <td>
+                            {% if s.event_exclusive %}
+                                {{ s.event_exclusive }}
+                            {% else %}
+                                {% trans "All" %}
+                            {% endif %}
+                            {% if s.rooms_only %}
+                                <span class="label label-info">rooms only</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-right">{{ s.cost }}</td>
+                        <td class="text-right">
+                            <a href="{% url 'eventyay_admin:video_admin:bbbserver.update' pk=s.pk %}" class="btn btn-default btn-xs">
+                                <span class="fa fa-pencil"></span> {% trans "Edit" %}
+                            </a>
+                            <a href="{% url 'eventyay_admin:video_admin:bbbserver.delete' pk=s.pk %}" class="btn btn-danger btn-xs">
+                                <span class="fa fa-trash"></span> {% trans "Delete" %}
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                        <tr><td colspan="5" class="text-muted text-center">{% trans "No servers configured yet." %}</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Jitsi Tab -->
+        <div role="tabpanel" class="tab-pane {% if active_tab == 'jitsi' %}active{% endif %}" id="jitsi">
+            <div class="video-tab-header">
+                <h3 class="video-tab-title">{% trans "Jitsi Server Configurations" %}</h3>
+                <div>
+                    <a href="{% url 'eventyay_admin:video_admin:jitsiserver.create' %}" class="btn btn-primary">
+                        <span class="fa fa-plus" aria-hidden="true"></span> {% trans "Add new server" %}
+                    </a>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th>{% trans "ID" %}</th>
+                        <th>{% trans "URL" %}</th>
+                        <th>{% trans "App ID" %}</th>
+                        <th>{% trans "Event" %}</th>
+                        <th class="text-right">{% trans "Actions" %}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for s in jitsi_servers %}
+                    <tr class="{% if not s.active %}deleted{% endif %}">
+                        <td><code>{{ s.pk }}</code></td>
+                        <td>{{ s.url }}</td>
+                        <td>{{ s.app_id }}</td>
+                        <td>
+                            {% if s.event_exclusive %}
+                                {{ s.event_exclusive }}
+                            {% else %}
+                                {% trans "All" %}
+                            {% endif %}
+                        </td>
+                        <td class="text-right">
+                            <a href="{% url 'eventyay_admin:video_admin:jitsiserver.update' pk=s.pk %}" class="btn btn-default btn-xs">
+                                <span class="fa fa-pencil"></span> {% trans "Edit" %}
+                            </a>
+                            <a href="{% url 'eventyay_admin:video_admin:jitsiserver.delete' pk=s.pk %}" class="btn btn-danger btn-xs">
+                                <span class="fa fa-trash"></span> {% trans "Delete" %}
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                        <tr><td colspan="5" class="text-muted text-center">{% trans "No servers configured yet." %}</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Janus Tab -->
+        <div role="tabpanel" class="tab-pane {% if active_tab == 'janus' %}active{% endif %}" id="janus">
+            <div class="video-tab-header">
+                <h3 class="video-tab-title">{% trans "Janus Server Configurations" %}</h3>
+                <div>
+                    <a href="{% url 'eventyay_admin:video_admin:janusserver.create' %}" class="btn btn-primary">
+                        <span class="fa fa-plus"></span> {% trans "Add new server" %}
+                    </a>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th>{% trans "ID" %}</th>
+                        <th>{% trans "URL" %}</th>
+                        <th>{% trans "Event" %}</th>
+                        <th class="text-right">{% trans "Actions" %}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for s in janus_servers %}
+                    <tr class="{% if not s.active %}deleted{% endif %}">
+                        <td><code>{{ s.pk }}</code></td>
+                        <td>{{ s.url }}</td>
+                        <td>
+                            {% if s.event_exclusive %}
+                                {{ s.event_exclusive }}
+                            {% else %}
+                                {% trans "All" %}
+                            {% endif %}
+                        </td>
+                        <td class="text-right">
+                            <a href="{% url 'eventyay_admin:video_admin:janusserver.update' pk=s.pk %}" class="btn btn-default btn-xs">
+                                <span class="fa fa-pencil"></span> {% trans "Edit" %}
+                            </a>
+                            <a href="{% url 'eventyay_admin:video_admin:janusserver.delete' pk=s.pk %}" class="btn btn-danger btn-xs">
+                                <span class="fa fa-trash"></span> {% trans "Delete" %}
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                        <tr><td colspan="4" class="text-muted text-center">{% trans "No servers configured yet." %}</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TURN Tab -->
+        <div role="tabpanel" class="tab-pane {% if active_tab == 'turn' %}active{% endif %}" id="turn">
+            <div class="video-tab-header">
+                <h3 class="video-tab-title">{% trans "TURN Server Configurations" %}</h3>
+                <div>
+                    <a href="{% url 'eventyay_admin:video_admin:turnserver.create' %}" class="btn btn-primary">
+                        <span class="fa fa-plus"></span> {% trans "Add new server" %}
+                    </a>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th>{% trans "ID" %}</th>
+                        <th>{% trans "Host name" %}</th>
+                        <th>{% trans "Event" %}</th>
+                        <th class="text-right">{% trans "Actions" %}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for s in turn_servers %}
+                    <tr class="{% if not s.active %}deleted{% endif %}">
+                        <td><code>{{ s.pk }}</code></td>
+                        <td>{{ s.hostname }}</td>
+                        <td>
+                            {% if s.event_exclusive %}
+                                {{ s.event_exclusive }}
+                            {% else %}
+                                {% trans "All" %}
+                            {% endif %}
+                        </td>
+                        <td class="text-right">
+                            <a href="{% url 'eventyay_admin:video_admin:turnserver.update' pk=s.pk %}" class="btn btn-default btn-xs">
+                                <span class="fa fa-pencil"></span> {% trans "Edit" %}
+                            </a>
+                            <a href="{% url 'eventyay_admin:video_admin:turnserver.delete' pk=s.pk %}" class="btn btn-danger btn-xs">
+                                <span class="fa fa-trash"></span> {% trans "Delete" %}
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                        <tr><td colspan="4" class="text-muted text-center">{% trans "No servers configured yet." %}</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Streaming Tab -->
+        <div role="tabpanel" class="tab-pane {% if active_tab == 'streaming' %}active{% endif %}" id="streaming">
+            <div class="video-tab-header">
+                <h3 class="video-tab-title">{% trans "Streaming Server Configurations" %}</h3>
+                <div>
+                    <a href="{% url 'eventyay_admin:video_admin:streamingserver.create' %}" class="btn btn-primary">
+                        <span class="fa fa-plus"></span> {% trans "Add new server" %}
+                    </a>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th>{% trans "ID" %}</th>
+                        <th>{% trans "Name" %}</th>
+                        <th class="text-right">{% trans "Actions" %}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for s in streaming_servers %}
+                    <tr class="{% if not s.active %}deleted{% endif %}">
+                        <td><code>{{ s.pk }}</code></td>
+                        <td>{{ s.name }}</td>
+                        <td class="text-right">
+                            <a href="{% url 'eventyay_admin:video_admin:streamingserver.update' pk=s.pk %}" class="btn btn-default btn-xs">
+                                <span class="fa fa-pencil"></span> {% trans "Edit" %}
+                            </a>
+                            <a href="{% url 'eventyay_admin:video_admin:streamingserver.delete' pk=s.pk %}" class="btn btn-danger btn-xs">
+                                <span class="fa fa-trash"></span> {% trans "Delete" %}
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                        <tr><td colspan="3" class="text-muted text-center">{% trans "No servers configured yet." %}</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

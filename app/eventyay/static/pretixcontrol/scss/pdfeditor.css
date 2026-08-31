@@ -7,6 +7,11 @@
     position: relative;
     min-height: 250px;
 }
+#fabric-container,
+#fabric-container canvas {
+    -webkit-user-select: none;
+    user-select: none;
+}
 body {
     overflow-y: scroll;
 }
@@ -20,7 +25,8 @@ body {
 #toolbox[data-type] .pdf-info,
 #toolbox .text,
 #toolbox .imagecontent,
-#toolbox .object-buttons {
+#toolbox .object-buttons,
+#toolbox .group-align {
     display: none;
 }
 #toolbox[data-type] .position,
@@ -30,8 +36,22 @@ body {
 #toolbox[data-type=poweredby] .poweredby,
 #toolbox[data-type=text] .text,
 #toolbox[data-type=textarea] .text,
-#toolbox[data-type] .object-buttons {
+#toolbox[data-type] .object-buttons,
+#toolbox[data-type=group] .group-align {
     display: block;
+}
+#toolbox[data-type] .editor-hint {
+    display: none;
+}
+#toolbox[data-type=group] .editor-hint {
+    display: block;
+}
+#toolbox-object-align .btn-group-justified + .btn-group-justified {
+    margin-top: 4px;
+}
+#editor-canvas-area:focus {
+    outline: 2px solid #337ab7;
+    outline-offset: 2px;
 }
 #loading-container {
     position: absolute;
@@ -65,7 +85,8 @@ body {
     width: 100%;
     height: 250px;
 }
-.pdf-info .help-inline p {
+.pdf-info .help-inline p,
+#toolbox .editor-hint .help-inline p {
     margin-top: 10px;
     margin-bottom: 0;
 }

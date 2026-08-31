@@ -14,50 +14,6 @@ def register_payment_provider(sender, **kwargs):
     return BankTransfer
 
 
-@receiver(nav_event, dispatch_uid='payment_banktransfer_nav')
-def control_nav_import(sender, request=None, **kwargs):
-    url = resolve(request.path_info)
-    if not request.user.has_event_permission(
-        request.organizer, request.event, 'can_manage_bank_transfers', request=request
-    ):
-        return []
-    return [
-        {
-            'label': _('Bank transfer'),
-            'url': reverse(
-                'plugins:banktransfer:import',
-                kwargs={
-                    'event': request.event.slug,
-                    'organizer': request.event.organizer.slug,
-                },
-            ),
-            'icon': 'university',
-            'children': [
-                {
-                    'label': _('Import bank data'),
-                    'url': reverse(
-                        'plugins:banktransfer:import',
-                        kwargs={
-                            'event': request.event.slug,
-                            'organizer': request.event.organizer.slug,
-                        },
-                    ),
-                    'active': (url.namespace == 'plugins:banktransfer' and url.url_name == 'import'),
-                },
-                {
-                    'label': _('Export refunds'),
-                    'url': reverse(
-                        'plugins:banktransfer:refunds.list',
-                        kwargs={
-                            'event': request.event.slug,
-                            'organizer': request.event.organizer.slug,
-                        },
-                    ),
-                    'active': (url.namespace == 'plugins:banktransfer' and url.url_name.startswith('refunds')),
-                },
-            ],
-        },
-    ]
 
 
 @receiver(nav_organizer, dispatch_uid='payment_banktransfer_organav')
