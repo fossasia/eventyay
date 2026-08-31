@@ -1,0 +1,26 @@
+{% extends "pretixcontrol/admin/pages/tabs_base.html" %}
+{% load i18n %}
+{% load bootstrap3 %}
+{% block pages_content %}
+    <form action="" method="post" class="form-horizontal pages-form" data-page-i18n-form>
+        {% csrf_token %}
+        {% bootstrap_form_errors form %}
+        {% include "pretixcontrol/admin/pages/_language_switcher.html" %}
+
+        <fieldset>
+            <legend>{% trans "Global banner" %}</legend>
+            {% bootstrap_field form.banner_message_enabled layout="control" %}
+            {% bootstrap_field form.banner_message layout="control" %}
+            {% bootstrap_field form.banner_message_detail layout="control" %}
+        </fieldset>
+
+        <div class="form-group submit-group">
+            <a href="/" target="_blank" rel="noopener" class="btn btn-default btn-lg pull-left flip">
+                <i class="fa fa-eye" aria-hidden="true"></i> {% trans "Preview banner" %}
+            </a>
+            <button type="submit" class="btn btn-primary btn-save">
+                {% trans "Save" %}
+            </button>
+        </div>
+    </form>
+{% endblock %}
