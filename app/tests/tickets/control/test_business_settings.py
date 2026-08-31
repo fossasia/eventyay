@@ -99,7 +99,8 @@ class TestBusinessSettingsView:
         assert response.status_code == 200
 
         content = response.content.decode('utf-8')
-        # Check all 4 tab fieldset IDs exist
+        # Check page heading and 4 tab fieldset IDs exist
+        assert '<h1>Business Settings</h1>' in content
         assert 'id="tab-organizer_billing"' in content
         assert 'id="tab-ticket_fee"' in content
         assert 'id="tab-billing_validation"' in content
@@ -186,6 +187,7 @@ class TestGlobalSettingsCleanUp:
         # Payment Gateways MUST still contain ticket payments
         assert 'id="tab-payment_gateways"' in content
         assert 'Stripe — Ticket Payments' in content
+        assert 'PayPal — Ticket Payments' in content
         assert 'payment_stripe_connect_client_id' in content
         assert 'payment_stripe_connect_publishable_key' in content
         assert 'payment_paypal_connect_client_id' in content
