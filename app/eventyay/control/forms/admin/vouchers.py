@@ -219,7 +219,7 @@ class VoucherFilterForm(forms.Form):
     status = forms.ChoiceField(
         required=False,
         choices=[
-            ('', _('All')),
+            ('', _('All statuses')),
             ('active', _('Active')),
             ('disabled', _('Disabled')),
             ('expired', _('Expired')),
@@ -232,7 +232,7 @@ class VoucherFilterForm(forms.Form):
     scope = forms.ChoiceField(
         required=False,
         choices=[
-            ('', _('All')),
+            ('', _('All scopes')),
             ('events', _('Specific events')),
             ('organisers', _('By organisers')),
             ('platform_wide', _('Platform-wide')),
@@ -243,7 +243,7 @@ class VoucherFilterForm(forms.Form):
     effect = forms.ChoiceField(
         required=False,
         choices=[
-            ('', _('All')),
+            ('', _('All effects')),
             ('percent', _('Percentage discount')),
             ('subtract', _('Fixed credit')),
             ('set', _('Set price')),
