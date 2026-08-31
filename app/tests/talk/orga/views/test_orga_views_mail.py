@@ -1110,3 +1110,28 @@ def test_mail_detail_form_preserves_external_historical_to_users(event, mail, ot
         form = MailDetailForm(instance=mail)
         assert other_speaker in form.fields['to_users'].queryset
 
+
+@pytest.mark.django_db
+def test_session_test_mail_uses_fallbacks_for_empty_subject_and_body(orga_client, event, submission):
+    djmail.outbox = []
+    response = orga_client.post(
+        event.orga_urls.compose_mails_sessions,
+        follow=True,
+        data={
+            "action": "test",
+            "test_email": "tester@example.org",
+            "state": submission.state,
+            "bcc": "",
+            "reply_to": "",
+            "subject_0": "",
+            "text_0": "",
+        },
+    )
+    assert response.status_code == 200
+    assert len(djmail.outbox) == 1
+    assert djmail.outbox[0].to == ["tester@example.org"]
+    assert "Example Subject" in djmail.outbox[0].subject
+    assert "example test email" in djmail.outbox[0].body
+    with scope(event=event):
+        assert QueuedMail.objects.count() == 0
+

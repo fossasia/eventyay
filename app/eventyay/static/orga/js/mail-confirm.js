@@ -77,13 +77,27 @@ const buildSendSummary = (summary, form) => {
 
 const applyScheduleWording = (form) => {
     const scheduled = isScheduled(form)
+    const skipQueue = form.querySelector("#id_skip_queue")
+    const immediate = skipQueue && skipQueue.checked
     const title = document.querySelector("#send-confirm-title")
     const submit = document.querySelector("#send-confirm-submit")
     if (title) {
-        title.textContent = scheduled ? title.dataset.titleSchedule : title.dataset.titleSend
+        if (scheduled) {
+            title.textContent = title.dataset.titleSchedule
+        } else if (immediate) {
+            title.textContent = title.dataset.titleSendImmediate
+        } else {
+            title.textContent = title.dataset.titleSend
+        }
     }
     if (submit) {
-        submit.textContent = scheduled ? submit.dataset.labelSchedule : submit.dataset.labelSend
+        if (scheduled) {
+            submit.textContent = submit.dataset.labelSchedule
+        } else if (immediate) {
+            submit.textContent = submit.dataset.labelSendImmediate
+        } else {
+            submit.textContent = submit.dataset.labelSend
+        }
     }
 }
 
@@ -135,6 +149,20 @@ const initSendConfirm = () => {
             }
         })
     })
+
+    const skipQueue = form.querySelector("#id_skip_queue")
+    const mainButtonLabel = form.querySelector("#main-send-button-label")
+    if (skipQueue && mainButtonLabel) {
+        const updateMainButton = () => {
+            if (skipQueue.checked) {
+                mainButtonLabel.textContent = mainButtonLabel.dataset.labelImmediate || "Send email"
+            } else {
+                mainButtonLabel.textContent = mainButtonLabel.dataset.labelOutbox || "Send to Outbox"
+            }
+        }
+        skipQueue.addEventListener("change", updateMainButton)
+        updateMainButton()
+    }
 }
 
 if (document.readyState === "loading") {

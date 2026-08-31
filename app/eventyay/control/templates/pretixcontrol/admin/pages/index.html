@@ -1,21 +1,20 @@
-{% extends "pretixcontrol/admin/base.html" %}
+{% extends "pretixcontrol/admin/pages/tabs_base.html" %}
 {% load i18n %}
 {% load compress %}
 {% load static %}
 {% load eventurl %}
-{% block title %}{% trans "Page settings" %}{% endblock %}
+{% block title %}{% trans "Pages" %}{% endblock %}
 {% block custom_header %}
     {{ block.super }}
     <link rel="stylesheet" href="{% static 'pretixcontrol/css/order-form-toggles.css' %}">
     <script defer src="{% static 'pretixcontrol/js/admin-pages-visibility-toggle.js' %}"></script>
 {% endblock %}
-{% block content %}
-    <h1>{% trans "Page settings" %}</h1>
+{% block pages_content %}
     {% if pages|length == 0 %}
         <div class="empty-collection">
             <p>
                 {% blocktrans trimmed %}
-                    You haven't created any pages yet.
+                    No additional pages have been created yet.
                 {% endblocktrans %}
             </p>
 
@@ -33,6 +32,7 @@
                 <thead>
                 <tr>
                     <th>{% trans "Page title" %}</th>
+                    <th>{% trans "URL" %}</th>
                     <th class="text-center">{% trans "Start page" %}</th>
                     <th class="text-center">{% trans "System" %}</th>
                     <th></th>
@@ -43,6 +43,9 @@
                     <tr>
                         <td>
                             <strong><a href="{% url "eventyay_admin:admin.pages.edit" id=p.id%}">{{ p.title }}</a></strong>
+                        </td>
+                        <td>
+                            <a href="{% url "page" slug=p.slug %}" target="_blank" rel="noopener">/{{ p.slug }}</a>
                         </td>
                         <td class="text-center">
                             <label class="toggle-switch">
@@ -73,9 +76,9 @@
                             </label>
                         </td>
                         <td class="text-right">
-                            <a href="{% url "page" slug=p.slug %}" class="btn btn-default btn-sm" target="_blank"><i class="fa fa-eye"></i></a>
-                            <a href="{% url "eventyay_admin:admin.pages.edit" id=p.id %}" class="btn btn-default btn-sm"><i class="fa fa-edit"></i></a>
-                            <a href="{% url "eventyay_admin:admin.pages.delete" id=p.id %}" class="btn btn-danger btn-sm"><i class="fa fa-trash"></i></a>
+                            <a href="{% url "page" slug=p.slug %}" class="btn btn-default btn-sm" target="_blank" rel="noopener" title="{% trans 'Preview' %}"><i class="fa fa-eye"></i></a>
+                            <a href="{% url "eventyay_admin:admin.pages.edit" id=p.id %}" class="btn btn-default btn-sm" title="{% trans 'Edit' %}"><i class="fa fa-edit"></i></a>
+                            <a href="{% url "eventyay_admin:admin.pages.delete" id=p.id %}" class="btn btn-danger btn-sm" title="{% trans 'Delete' %}"><i class="fa fa-trash"></i></a>
                         </td>
                     </tr>
                 {% endfor %}
