@@ -2,6 +2,7 @@ from logging import getLogger
 
 from django.db.models import Q
 from django.shortcuts import redirect
+from django.utils.functional import cached_property
 from django.views.generic.list import ListView
 
 from eventyay.base.models import Order
@@ -16,16 +17,16 @@ class MyOrdersView(PaginationMixin, ListView):
     template_name = 'eventyay_common/orders/orders.html'
     paginate_by = 25
 
-    def _build_filter_form(self):
+    @cached_property
+    def filter_form(self):
         return UserOrderFilterForm(self.request.GET, user=self.request.user, request=self.request)
 
     def get_queryset(self):
         user = self.request.user
         qs = Order.objects.filter(Q(email__iexact=user.email)).select_related('event').order_by('-datetime')
 
-        filter_form = self._build_filter_form()
-        if filter_form.is_valid():
-            cleaned = filter_form.cleaned_data
+        if self.filter_form.is_valid():
+            cleaned = self.filter_form.cleaned_data
             if cleaned.get('event'):
                 qs = qs.filter(event=cleaned['event'])
             if code := (cleaned.get('code') or '').strip():
@@ -41,15 +42,14 @@ class MyOrdersView(PaginationMixin, ListView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['filter_form'] = self._build_filter_form()
+        ctx['filter_form'] = self.filter_form
         return ctx
 
     def get(self, request, *args, **kwargs):
-        filter_form = self._build_filter_form()
         # If filter form is invalid, strip the invalid inputs and redirect to a clean URL.
-        if not filter_form.is_valid():
+        if not self.filter_form.is_valid():
             new_url_query = request.GET.copy()
-            for field_name in filter_form.errors:
+            for field_name in self.filter_form.errors:
                 new_url_query.pop(field_name, None)
             new_url = request.path + '?' + new_url_query.urlencode()
             logger.info('To redirect to "%s" because the filter values are invalid.', new_url)
