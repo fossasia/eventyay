@@ -229,11 +229,6 @@ urlpatterns = [
                     name='submissions.feedback',
                 ),
                 path(
-                    'submissions/feedback/export/',
-                    submission.FeedbackExportView.as_view(),
-                    name='submissions.feedback.export',
-                ),
-                path(
                     'submissions/feedback/bulk/',
                     submission.FeedbackBulkAction.as_view(),
                     name='submissions.feedback.bulk',
