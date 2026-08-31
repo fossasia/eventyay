@@ -169,6 +169,12 @@ class TaxRule(LoggedModel):
 
     class Meta:
         ordering = ('event', 'rate', 'id')
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(rate__gte=0) & models.Q(rate__lte=100),
+                name='tax_rate_between_0_and_100',
+            ),
+        ]
 
     class SaleNotAllowed(Exception):  # NOQA: N818
         pass
