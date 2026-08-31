@@ -11,17 +11,6 @@
     {% trans "Attendee feedback" as header_title %}
     {% include "common/includes/header_nav.html" with header_title=header_title %}
 
-    <div class="mb-3">
-        <a href="{% url 'orga:submissions.feedback.export' organizer=request.event.organizer.slug event=request.event.slug %}?format=csv"
-           class="btn btn-outline-secondary btn-sm">
-            <i class="fa fa-download"></i> {% trans "Export CSV" %}
-        </a>
-        <a href="{% url 'orga:submissions.feedback.export' organizer=request.event.organizer.slug event=request.event.slug %}?format=json"
-           class="btn btn-outline-secondary btn-sm ml-2">
-            <i class="fa fa-download"></i> {% trans "Export JSON" %}
-        </a>
-    </div>
-
     <div class="submission-page-tabs mb-4">
         <div role="tablist" class="submission-page-tabs__nav">
             <a role="tab" href="?tab=published" {% if current_tab == 'published' %}aria-selected="true"{% else %}aria-selected="false"{% endif %}>
