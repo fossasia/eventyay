@@ -1066,6 +1066,25 @@ class VoucherList(PaginationMixin, AdministratorPermissionRequiredMixin, ListVie
                     | Q(limit_organizer__name__icontains=search)
                 ).distinct()
 
+            if fdata.get('status'):
+                status_val = fdata['status']
+                if status_val == 'active':
+                    qs = qs.filter(status=InvoiceVoucher.STATUS_ACTIVE)
+                elif status_val == 'disabled':
+                    qs = qs.filter(status=InvoiceVoucher.STATUS_DISABLED)
+                elif status_val == 'draft':
+                    qs = qs.filter(status=InvoiceVoucher.STATUS_DRAFT)
+                elif status_val == 'expired':
+                    qs = qs.filter(
+                        status=InvoiceVoucher.STATUS_ACTIVE,
+                        valid_until__lt=now(),
+                    )
+                elif status_val == 'used_up':
+                    qs = qs.filter(
+                        status=InvoiceVoucher.STATUS_ACTIVE,
+                        redeemed__gte=F('max_usages'),
+                    )
+
             if fdata.get('effect'):
                 qs = qs.filter(price_mode=fdata['effect'])
 
