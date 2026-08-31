@@ -35,7 +35,7 @@
                     <button type="submit" class="btn btn-primary" aria-label="{% trans 'Apply filters' %}" title="{% trans 'Apply filters' %}">
                         <span class="fa fa-filter" aria-hidden="true"></span>
                     </button>
-                    <a href="{{ request.path }}" class="btn btn-default btn-clear-filter" data-clear-filters aria-label="{% trans 'Clear filters' %}" title="{% trans 'Clear filters' %}">
+                    <a href="{{ request.path }}" class="btn btn-default btn-clear-filter" aria-label="{% trans 'Clear filters' %}" title="{% trans 'Clear filters' %}">
                         <span class="fa fa-eraser" aria-hidden="true"></span>
                         <span class="sr-only">{% trans "Clear filters" %}</span>
                     </a>
@@ -86,7 +86,6 @@
     </div>
     <script>
         (function () {
-            var form = document.querySelector('.filter-form');
             var params = new URLSearchParams(window.location.search);
             ['date_from', 'date_to'].forEach(function (name) {
                 if (!params.get(name)) {
@@ -113,20 +112,6 @@
                 fromInput.addEventListener('change', syncRangeLimits);
                 toInput.addEventListener('change', syncRangeLimits);
                 syncRangeLimits();
-            }
-
-            var clearBtn = document.querySelector('[data-clear-filters]');
-            if (clearBtn && form) {
-                clearBtn.addEventListener('click', function () {
-                    form.querySelectorAll('input, select').forEach(function (el) {
-                        if (el.type === 'submit' || el.type === 'button' || el.type === 'hidden') return;
-                        if (el.tagName === 'SELECT') {
-                            el.selectedIndex = 0;
-                        } else {
-                            el.value = '';
-                        }
-                    });
-                });
             }
         })();
     </script>
