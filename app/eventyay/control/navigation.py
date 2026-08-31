@@ -433,54 +433,60 @@ def get_admin_navigation(request):
     url = request.resolver_match
     if not url:
         return []
+    global_settings_children = [
+        {
+            'label': _('Settings'),
+            'url': reverse('eventyay_admin:admin.global.settings'),
+            'active': (url.url_name == 'admin.global.settings'),
+        },
+        {
+            'label': _('Business'),
+            'url': reverse('eventyay_admin:admin.global.business'),
+            'active': (url.url_name == 'admin.global.business' or 'voucher' in url.url_name),
+        },
+        {
+            'label': _('System information'),
+            'url': reverse('eventyay_admin:admin.config'),
+            'active': 'config' in url.url_name,
+        },
+        {
+            'label': _('Pages'),
+            'url': reverse('eventyay_admin:admin.pages'),
+            'active': 'pages' in url.url_name,
+        },
+        {
+            'label': _('Update check'),
+            'url': reverse('eventyay_admin:admin.global.update'),
+            'active': (url.url_name == 'admin.global.update'),
+        },
+        {
+            'label': _('Meta data'),
+            'url': reverse('eventyay_admin:admin.global.metadata'),
+            'active': (url.url_name == 'admin.global.metadata'),
+        },
+        {
+            'label': _('Generate keys for SSO'),
+            'url': reverse('eventyay_admin:admin.global.sso'),
+            'active': (url.url_name == 'admin.global.sso'),
+        },
+        {
+            'label': _('Social login settings'),
+            'url': reverse('plugins:socialauth:admin.global.social.auth.settings'),
+            'active': (url.url_name == 'admin.global.social.auth.settings'),
+        },
+        {
+            'label': _('Plugins'),
+            'url': reverse('eventyay_admin:admin.global.plugins'),
+            'active': (url.url_name == 'admin.global.plugins'),
+        },
+    ]
     nav = [
         {
             'label': _('Global settings'),
             'url': reverse('eventyay_admin:admin.global.settings'),
-            'active': False,
+            'active': any(c['active'] for c in global_settings_children),
             'icon': 'wrench',
-            'children': [
-                {
-                    'label': _('Settings'),
-                    'url': reverse('eventyay_admin:admin.global.settings'),
-                    'active': (url.url_name == 'admin.global.settings'),
-                },
-                {
-                    'label': _('System information'),
-                    'url': reverse('eventyay_admin:admin.config'),
-                    'active': 'config' in url.url_name,
-                },
-                {
-                    'label': _('Pages'),
-                    'url': reverse('eventyay_admin:admin.pages'),
-                    'active': 'pages' in url.url_name,
-                },
-                {
-                    'label': _('Update check'),
-                    'url': reverse('eventyay_admin:admin.global.update'),
-                    'active': (url.url_name == 'admin.global.update'),
-                },
-                {
-                    'label': _('Meta data'),
-                    'url': reverse('eventyay_admin:admin.global.metadata'),
-                    'active': (url.url_name == 'admin.global.metadata'),
-                },
-                {
-                    'label': _('Generate keys for SSO'),
-                    'url': reverse('eventyay_admin:admin.global.sso'),
-                    'active': (url.url_name == 'admin.global.sso'),
-                },
-                {
-                    'label': _('Social login settings'),
-                    'url': reverse('plugins:socialauth:admin.global.social.auth.settings'),
-                    'active': (url.url_name == 'admin.global.social.auth.settings'),
-                },
-                {
-                    'label': _('Plugins'),
-                    'url': reverse('eventyay_admin:admin.global.plugins'),
-                    'active': (url.url_name == 'admin.global.plugins'),
-                },
-            ],
+            'children': global_settings_children,
         },
         {
             'label': _('Task management'),
@@ -590,12 +596,6 @@ def get_admin_navigation(request):
                         'active': ('sudo' in url.url_name),
                     },
                 ],
-            },
-            {
-                'label': _('Vouchers'),
-                'url': reverse('eventyay_admin:admin.vouchers'),
-                'active': 'voucher' in url.url_name,
-                'icon': 'tags',
             },
         ]
     )
