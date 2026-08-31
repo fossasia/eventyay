@@ -32,6 +32,42 @@
             </div>
         </section>
     {% else %}
+        {% if global_settings.startpage_show_hero %}
+        <section class="startpage-hero-content" style="text-align: center; margin-bottom: 3rem; padding: 2rem 1rem;">
+            <h1>{% if global_settings.startpage_hero_title %}{{ global_settings.startpage_hero_title }}{% else %}Eventyay – Open Source Event Management Platform{% endif %}</h1>
+            <p class="lead" style="font-size: 1.25rem; color: #555; max-width: 800px; margin: 1rem auto;">
+                {% if global_settings.startpage_hero_text %}{{ global_settings.startpage_hero_text }}{% else %}
+                The comprehensive platform for all your event needs. Ticketing, Call for Speakers, Scheduling, Check-in, and more.
+                {% endif %}
+            </p>
+        </section>
+        {% endif %}
+
+        {% if global_settings.startpage_show_features %}
+        <section class="startpage-features">
+            <div class="feature-card">
+                <i class="fa fa-ticket fa-3x" aria-hidden="true"></i>
+                <h3>{% if global_settings.startpage_feature_1_title %}{{ global_settings.startpage_feature_1_title }}{% else %}{% trans "Ticketing" %}{% endif %}</h3>
+                <p>{% if global_settings.startpage_feature_1_text %}{{ global_settings.startpage_feature_1_text }}{% else %}{% trans "Sell tickets, manage orders, and handle check-ins effortlessly." %}{% endif %}</p>
+            </div>
+            <div class="feature-card">
+                <i class="fa fa-bullhorn fa-3x" aria-hidden="true"></i>
+                <h3>{% if global_settings.startpage_feature_2_title %}{{ global_settings.startpage_feature_2_title }}{% else %}{% trans "Call for Speakers" %}{% endif %}</h3>
+                <p>{% if global_settings.startpage_feature_2_text %}{{ global_settings.startpage_feature_2_text }}{% else %}{% trans "Accept submissions, review proposals, and build your schedule." %}{% endif %}</p>
+            </div>
+            <div class="feature-card">
+                <i class="fa fa-calendar fa-3x" aria-hidden="true"></i>
+                <h3>{% if global_settings.startpage_feature_3_title %}{{ global_settings.startpage_feature_3_title }}{% else %}{% trans "Schedules" %}{% endif %}</h3>
+                <p>{% if global_settings.startpage_feature_3_text %}{{ global_settings.startpage_feature_3_text }}{% else %}{% trans "Create interactive schedules and allow attendees to plan their visit." %}{% endif %}</p>
+            </div>
+            <div class="feature-card">
+                <i class="fa fa-code fa-3x" aria-hidden="true"></i>
+                <h3>{% if global_settings.startpage_feature_4_title %}{{ global_settings.startpage_feature_4_title }}{% else %}{% trans "Open Source" %}{% endif %}</h3>
+                <p>{% if global_settings.startpage_feature_4_text %}{{ global_settings.startpage_feature_4_text }}{% else %}{% trans "Built on open source technology. Fully customizable and transparent." %}{% endif %}</p>
+            </div>
+        </section>
+        {% endif %}
+
         {% if featured_events %}
             <section class="startpage-events" aria-label="{% trans "Featured events" %}">
                 <h2>{% trans "Featured events" %}</h2>

@@ -91,3 +91,16 @@
 .video-server-toggle input:disabled + .video-server-toggle-slider {
     cursor: wait;
 }
+
+.video-tab-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 15px 0;
+}
+
+.video-tab-title {
+    margin: 0;
+    font-weight: bold;
+    font-size: 16px;
+}

@@ -1,0 +1,29 @@
+{% load i18n %}
+{% comment %}
+Compact language switcher shared across the Pages tabs. Shows one language at a
+time; the switcher toggles the visibility of the per-locale i18n widgets in the
+surrounding form. "Add language" enables an additional page language.
+{% endcomment %}
+<div class="page-language-switcher" data-page-language-switcher
+     data-remove-url="{% url 'eventyay_admin:admin.pages.locale.remove' %}">
+    <span class="page-language-switcher-label">{% trans "Language" %}</span>
+    <div class="btn-group page-language-pills" role="group" aria-label="{% trans 'Select language' %}">
+        {% for code, name in form.page_locale_choices %}
+            <button type="button"
+                    class="btn btn-default btn-sm page-language-pill{% if forloop.first %} active{% endif %}"
+                    data-locale="{{ code }}">
+                <span class="page-language-pill-name">{{ name }}</span>
+                <span class="page-language-pill-dot" aria-hidden="true" title="{% trans 'Has content' %}"></span>
+            </button>
+        {% endfor %}
+    </div>
+    {% if form.available_locale_choices %}
+        <select class="form-control input-sm page-language-add" aria-label="{% trans 'Add language' %}">
+            <option value="">{% trans "+ Add language" %}</option>
+            {% for code, name in form.available_locale_choices %}
+                <option value="{{ code }}">{{ name }}</option>
+            {% endfor %}
+        </select>
+    {% endif %}
+    {{ form.page_locales }}
+</div>

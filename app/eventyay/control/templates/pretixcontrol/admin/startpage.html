@@ -15,6 +15,24 @@
         {% bootstrap_form_errors form %}
         {% bootstrap_field form.startpage_header_image layout="control" %}
         {% bootstrap_field form.startpage_header_text layout="control" %}
+        <fieldset>
+            <legend>{% trans "Hero Section" %}</legend>
+            {% bootstrap_field form.startpage_show_hero layout="control" %}
+            {% bootstrap_field form.startpage_hero_title layout="control" %}
+            {% bootstrap_field form.startpage_hero_text layout="control" %}
+        </fieldset>
+        <fieldset>
+            <legend>{% trans "Feature Boxes" %}</legend>
+            {% bootstrap_field form.startpage_show_features layout="control" %}
+            {% bootstrap_field form.startpage_feature_1_title layout="control" %}
+            {% bootstrap_field form.startpage_feature_1_text layout="control" %}
+            {% bootstrap_field form.startpage_feature_2_title layout="control" %}
+            {% bootstrap_field form.startpage_feature_2_text layout="control" %}
+            {% bootstrap_field form.startpage_feature_3_title layout="control" %}
+            {% bootstrap_field form.startpage_feature_3_text layout="control" %}
+            {% bootstrap_field form.startpage_feature_4_title layout="control" %}
+            {% bootstrap_field form.startpage_feature_4_text layout="control" %}
+        </fieldset>
         <div class="form-group submit-group">
             <button type="submit" class="btn btn-primary btn-save">
                 {% trans "Save" %}

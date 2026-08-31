@@ -185,3 +185,15 @@ class BadgeLayoutFormTest(SoupTest):
             i_new = ev.items.first()
             bl_new = ev.badge_layouts.first()
             assert BadgeItem.objects.get(item=i_new, layout=bl_new)
+
+    def test_editor_exposes_multi_object_align_controls(self):
+        with scopes_disabled():
+            layout = self.event1.badge_layouts.create(name='Layout 1', default=True)
+        doc = self.get_doc(
+            '/control/event/%s/%s/badges/%s/editor' % (self.orga1.slug, self.event1.slug, layout.id)
+        )
+        align = doc.select_one('#toolbox-object-align')
+        assert align is not None
+        for edge in ('left', 'center', 'right', 'top', 'middle', 'bottom'):
+            assert align.select_one('button[data-align=%s]' % edge) is not None
+        assert 'Shift-click' in doc.select_one('#toolbox').text

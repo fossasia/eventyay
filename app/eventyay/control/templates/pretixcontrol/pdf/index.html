@@ -227,6 +227,16 @@
                             </select>
                         </div>
                     </div>
+                    <div class="row control-group editor-hint">
+                        <div class="col-sm-12 help-inline">
+                            <p>
+                                {% blocktrans trimmed %}
+                                    Shift-click or drag a box to select several objects, then move them together.
+                                    Arrow keys nudge by 1 mm; hold Shift for 10 mm jumps (also while dragging).
+                                {% endblocktrans %}
+                            </p>
+                        </div>
+                    </div>
                     <div class="row control-group position">
                         <div class="col-sm-6">
                             <label>{% trans "x (mm)" %}</label><br>
@@ -237,6 +247,57 @@
                             <label>{% trans "y (mm)" %}</label><br>
                             <input type="number" value="13" class="input-block-level form-control show-spinner" step="0.01"
                                     id="toolbox-position-y">
+                        </div>
+                    </div>
+                    <div class="row control-group group-align" id="toolbox-object-align">
+                        <div class="col-sm-12">
+                            <label>{% trans "Align objects" %}</label><br>
+                            <div class="btn-group btn-group-justified" role="group" aria-label="{% trans 'Horizontal alignment' %}">
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-default" data-align="left"
+                                            title="{% trans 'Align left' %}">
+                                        <span class="fa fa-align-left" aria-hidden="true"></span>
+                                        <span class="sr-only">{% trans "Align left" %}</span>
+                                    </button>
+                                </div>
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-default" data-align="center"
+                                            title="{% trans 'Align center' %}">
+                                        <span class="fa fa-align-center" aria-hidden="true"></span>
+                                        <span class="sr-only">{% trans "Align center" %}</span>
+                                    </button>
+                                </div>
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-default" data-align="right"
+                                            title="{% trans 'Align right' %}">
+                                        <span class="fa fa-align-right" aria-hidden="true"></span>
+                                        <span class="sr-only">{% trans "Align right" %}</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="btn-group btn-group-justified" role="group" aria-label="{% trans 'Vertical alignment' %}">
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-default" data-align="top"
+                                            title="{% trans 'Align top' %}">
+                                        <span class="fa fa-arrow-up" aria-hidden="true"></span>
+                                        <span class="sr-only">{% trans "Align top" %}</span>
+                                    </button>
+                                </div>
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-default" data-align="middle"
+                                            title="{% trans 'Align middle' %}">
+                                        <span class="fa fa-arrows-v" aria-hidden="true"></span>
+                                        <span class="sr-only">{% trans "Align middle" %}</span>
+                                    </button>
+                                </div>
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-default" data-align="bottom"
+                                            title="{% trans 'Align bottom' %}">
+                                        <span class="fa fa-arrow-down" aria-hidden="true"></span>
+                                        <span class="sr-only">{% trans "Align bottom" %}</span>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="row control-group rectsize">
@@ -463,7 +524,7 @@
 
     <script type="text/javascript" src="{% static "pdfjs/pdf.js" %}"></script>
     <script type="text/javascript" src="{% static "fabric/fabric.min.js" %}"></script>
-    <script type="text/javascript" src="{% static "pretixcontrol/js/ui/editor.js" %}?v=autofit4"></script>
+    <script type="text/javascript" src="{% static "pretixcontrol/js/ui/editor.js" %}?v=multiselect1"></script>
     <img src="{% static 'pretixpresale/pdf/powered_by_eventyay_dark.png' %}" id="poweredby-dark" class="sr-only">
     <img src="{% static 'pretixpresale/pdf/powered_by_eventyay_white.png' %}" id="poweredby-white" class="sr-only">
     {% for family, styles in fonts.items %}

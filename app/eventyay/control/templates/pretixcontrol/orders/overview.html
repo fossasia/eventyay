@@ -18,12 +18,10 @@
     {% url "control:event.orders.export" event=request.event.slug organizer=request.event.organizer.slug as exporturl %}
     {% trans "Order overview" as header_title_var %}
     {% captureas header_extra_var %}
-        <a href="{{ exporturl }}?identifier=pdfreport"
-           class="btn btn-default btn-sm order-overview-export"
-           target="_blank"
-           rel="noopener">
-            <span class="fa fa-download" aria-hidden="true"></span>
-            {% trans "Export PDF" %}
+        <a href="{% url 'control:event.orders.import_export' event=request.event.slug organizer=request.event.organizer.slug %}?identifier=pdfreport"
+           class="btn btn-default" target="_blank">
+            <span class="fa fa-download"></span>
+            {% trans "PDF" %}
         </a>
     {% endcaptureas %}
     {% include "common/includes/header_nav.html" with header_title=header_title_var header_title_extra=header_extra_var header_component_link="pretixcontrol/event/component_link.html" %}
