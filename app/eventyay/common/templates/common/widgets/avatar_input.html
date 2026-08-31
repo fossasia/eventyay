@@ -12,5 +12,5 @@
         <label for="{{ widget.attrs.id }}">{% translate "Choose file" %}</label>
         <span class="eventyay-file-name text-muted small" aria-live="polite"></span>
     </div>
-    <input type="{{ widget.type }}" name="{{ widget.name }}" class="eventyay-image-file"{% include "django/forms/widgets/attrs.html" %}>
+    <input type="{{ widget.type }}" name="{{ widget.name }}" class="eventyay-image-file" data-eventyay-file-wrapper="disabled"{% include "django/forms/widgets/attrs.html" %}>
 </div>
