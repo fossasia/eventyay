@@ -6,7 +6,11 @@
 {% load money %}
 {% load urlreplace %}
 
-{% block inner %}
+{% block title %}{% trans "Business" %}{% endblock %}
+
+{% block content %}
+    <h1>{% trans "Business" %}</h1>
+    {% block inner %}
     <form action="" method="post" class="form-horizontal">
         {% csrf_token %}
         {% bootstrap_form_errors form %}
@@ -132,4 +136,5 @@
             </button>
         </div>
     </form>
+    {% endblock %}
 {% endblock %}
