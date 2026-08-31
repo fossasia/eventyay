@@ -7,11 +7,14 @@ export function initCopyButtons() {
       const code = btn.getAttribute('data-code');
       if (code) {
         navigator.clipboard.writeText(code).then(() => {
-          const originalIcon = btn.innerHTML;
-          btn.innerHTML = '<i class="fa fa-check text-success"></i>';
-          setTimeout(() => {
-            btn.innerHTML = originalIcon;
-          }, 2000);
+          const icon = btn.querySelector('i');
+          if (icon) {
+            const originalClassName = icon.className;
+            icon.className = 'fa fa-check text-success';
+            setTimeout(() => {
+              icon.className = originalClassName;
+            }, 2000);
+          }
         });
       }
     });
