@@ -56,7 +56,6 @@ urlpatterns = [
 
     url(r'^global/update/$', global_settings.UpdateCheckView.as_view(), name='admin.global.update'),
     url(r'^global/message/$', global_settings.MessageView.as_view(), name='admin.global.message'),
-    path('startpage/', global_settings.StartPageSettingsView.as_view(), name='admin.startpage'),
     url(r'^vouchers/$', admin.VoucherList.as_view(), name='admin.vouchers'),
     url(r'^vouchers/add$', admin.VoucherCreate.as_view(), name='admin.vouchers.add'),
     url(r'^vouchers/(?P<voucher>\d+)/$', admin.VoucherUpdate.as_view(), name='admin.voucher'),
@@ -67,7 +66,14 @@ urlpatterns = [
         global_settings.DeleteOAuthApplicationView.as_view(),
         name='admin.global.sso.delete',
     ),
-    url(r'^pages/$', pages.PageList.as_view(), name='admin.pages'),
+    url(r'^pages/$', pages.PagesStartPageView.as_view(), name='admin.pages'),
+    path('pages/footer/', pages.PagesFooterView.as_view(), name='admin.pages.footer'),
+    path('pages/banner/', pages.PagesGlobalBannerView.as_view(), name='admin.pages.banner'),
+    path('pages/additional/', pages.PageList.as_view(), name='admin.pages.additional'),
+    path('pages/content/<slug:slug>/', pages.PagesDefaultPageView.as_view(), name='admin.pages.default'),
+    path('pages/locale/remove/', pages.PagesLocaleRemoveView.as_view(), name='admin.pages.locale.remove'),
+    # Legacy redirect so existing /admin/startpage/ bookmarks still work.
+    path('startpage/', RedirectView.as_view(pattern_name='eventyay_admin:admin.pages', permanent=True), name='admin.startpage'),
     url(r'^pages/add$', pages.PageCreate.as_view(), name='admin.pages.add'),
     path('pages/<int:id>/toggle/<str:scope>/', pages.PageVisibilityToggle.as_view(), name='admin.pages.toggle'),
     url(r'^pages/(?P<id>\d+)/edit$', pages.PageUpdate.as_view(), name='admin.pages.edit'),

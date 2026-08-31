@@ -29,7 +29,6 @@ from eventyay.control.forms.global_settings import (
     GlobalSettingsForm,
     SSOConfigForm,
     UpdateSettingsForm,
-    StartPageSettingsForm,
     MetaDataSettingsForm,
 )
 from eventyay.control.permissions import (
@@ -70,22 +69,6 @@ class GlobalSettingsView(AdministratorPermissionRequiredMixin, FormView):
     def get_success_url(self):
         return reverse('eventyay_admin:admin.global.settings')
 
-
-class StartPageSettingsView(AdministratorPermissionRequiredMixin, FormView):
-    template_name = 'pretixcontrol/admin/startpage.html'
-    form_class = StartPageSettingsForm
-
-    def form_valid(self, form):
-        form.save()
-        messages.success(self.request, _('Your changes have been saved.'))
-        return super().form_valid(form)
-
-    def form_invalid(self, form):
-        messages.error(self.request, _('Your changes have not been saved, see below for errors.'))
-        return super().form_invalid(form)
-
-    def get_success_url(self):
-        return reverse('eventyay_admin:admin.startpage')
 
 class MetaDataSettingsView(AdministratorPermissionRequiredMixin, FormView):
     template_name = 'pretixcontrol/admin/metadata.html'

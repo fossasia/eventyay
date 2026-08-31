@@ -429,6 +429,22 @@ class ComposeMailBaseView(EventPermissionRequired, FormView):
         ctx['mail_count'] = getattr(self, 'mail_count', None) or 0
         return ctx
 
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+        if request.POST.get('action') == 'test':
+            for field_name in list(form.fields.keys()):
+                if field_name == 'subject' or field_name.startswith('subject_'):
+                    form.fields[field_name].required = False
+                    if hasattr(form.fields[field_name], 'one_required'):
+                        form.fields[field_name].one_required = False
+                if field_name == 'text' or field_name.startswith('text_'):
+                    form.fields[field_name].required = False
+                    if hasattr(form.fields[field_name], 'one_required'):
+                        form.fields[field_name].one_required = False
+        if form.is_valid():
+            return self.form_valid(form)
+        return self.form_invalid(form)
+
     def send_test_email(self, form):
         address = form.cleaned_data.get('test_email')
         if not address:
@@ -446,9 +462,21 @@ class ComposeMailBaseView(EventPermissionRequired, FormView):
             context_dict = TolerantDict()
             for key, value in form.get_valid_placeholders().items():
                 context_dict[key] = value.render_sample(event)
-            subject = nh3.clean(form.cleaned_data['subject'].localize(locale), tags=set())
+                
+            subject_data = form.cleaned_data.get('subject')
+            subject = nh3.clean(subject_data.localize(locale), tags=set()) if subject_data else ""
+            if not subject.strip():
+                subject = str(_("Example Subject for {event_name}"))
             subject = get_prefixed_subject(event, subject.format_map(context_dict))
-            text = form.cleaned_data['text'].localize(locale).format_map(context_dict)
+            
+            text_data = form.cleaned_data.get('text')
+            text = text_data.localize(locale) if text_data else ""
+            if not text.strip():
+                if 'proposal_title' in context_dict:
+                    text = str(_("Hello {name},\n\nThis is an example test email for your proposal \"{proposal_title}\" at {event_name}.\n\nBest regards,\nThe {event_name} team"))
+                else:
+                    text = str(_("Hello {name},\n\nThis is an example test email for {event_name}.\n\nBest regards,\nThe {event_name} team"))
+            text = text.format_map(context_dict)
 
         mail_send_task.apply_async(
             kwargs={
