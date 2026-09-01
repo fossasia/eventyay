@@ -7,9 +7,9 @@ from channels.db import database_sync_to_async
 from channels.layers import get_channel_layer
 from django.core.cache import cache
 from django.core.paginator import InvalidPage, Paginator
-from django.db.models import Exists, OuterRef, Q
+from django.db.models import CharField, Exists, OuterRef, Q
 from django.db.models.fields.json import KeyTextTransform
-from django.db.models.functions import Lower
+from django.db.models.functions import Cast, Lower
 from django.db.transaction import atomic
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
@@ -1171,6 +1171,27 @@ def list_users(
             conditions.append(
                 Q(**{"profile__fields__" + field + "__icontains": search_term})
             )
+
+        if include_admin_info:
+            conditions.append(Q(token_id__icontains=search_term))
+            conditions.append(
+                Q(email__icontains=search_term) | Q(profile__contact_email__icontains=search_term)
+            )
+            conditions.append(Q(wikimedia_username__icontains=search_term))
+
+            qs = qs.annotate(id_text=Cast('id', output_field=CharField()))
+            conditions.append(Q(id_text__istartswith=search_term))
+
+            with scopes_disabled():
+                matching_tokens = set(
+                    OrderPosition.objects.filter(
+                        Q(secret__icontains=search_term) | Q(order__code__icontains=search_term),
+                        order__event_id=event_id,
+                    ).values_list("pseudonymization_id", flat=True)
+                )
+            if matching_tokens:
+                conditions.append(Q(token_id__in=[t for t in matching_tokens if t]))
+
         qs = qs.filter(reduce(operator.or_, conditions))
 
     try:
