@@ -11,132 +11,439 @@
     {% compress css %}
         <link rel="stylesheet" href="{% static "orga/css/dashboard.css" %}">
     {% endcompress %}
-    {% has_event_perm "base.orga_list_submission" request.user request request.event as can_view_submission_stats %}
-    {% if can_view_submission_stats %}
-        <link rel="stylesheet" type="text/css" href="{% static "vendored/apexcharts/apexcharts.css" %}" />
-    {% endif %}
+    {# Cache-busted + outside compress so local redesign CSS always refreshes #}
+    <link rel="stylesheet" href="{% static "orga/css/talks_dashboard.css" %}?v=20260826-stephover">
+    <link rel="stylesheet" type="text/css" href="{% static "vendored/apexcharts/apexcharts.css" %}" />
 {% endblock stylesheets %}
 
 {% block scripts %}
     {% has_event_perm "base.orga_list_submission" request.user request request.event as can_view_submission_stats %}
+    <script defer src="{% static "vendored/apexcharts/apexcharts.min.js" %}"></script>
     {% if can_view_submission_stats %}
-        {% compress js %}
-            <script defer src="{% static "vendored/apexcharts/apexcharts.min.js" %}"></script>
-            <script defer src="{% static "orga/js/stats.js" %}"></script>
-        {% endcompress %}
+        <script defer src="{% static "orga/js/stats.js" %}?v=20260826-polish2"></script>
     {% endif %}
+    <script defer src="{% static "orga/js/talks_dashboard_charts.js" %}?v=20260826-padrows"></script>
 {% endblock scripts %}
 
 {% block content %}
-    {% has_event_perm "base.orga_list_speakerprofile" request.user request request.event as can_view_speakers %}
-    {% has_event_perm "base.update_event" request.user request request.event as can_change_settings %}
-    {% if "congratulations" in request.GET %}
-        <div class="alert alert-success congratulations">
-            <span></span>
-            {% blocktranslate trimmed %}
-                Your event has been created and you’re ready to go! Check out the
-                event settings, set up your Call for Papers with session types and custom fields,
-                and you’re ready to go!
-            {% endblocktranslate %}
-        </div>
-    {% endif %}
-    {% with date_range=request.event.get_date_range_display %}
-    {% with header_extra="<small class='event-date text-muted'>"|add:date_range|add:"</small>" %}
-        {% include "common/includes/header_nav.html" with header_title=request.event.name|event_localize header_title_extra=header_extra %}
-    {% endwith %}
-    {% endwith %}
-    <div id="timeline-steps" class="stages">
-        {% for stp in timeline %}
-            <div {% if stp.phase == "done" and stp.url %}href="{{ stp.url }}"{% endif %} class="step step-{{ stp.phase }}">
-                <div class="step-icon">
-                    <span class="fa {% if stp.icon %}fa-{{ stp.icon }}{% else %}fa-check{% endif %}"></span>
-                </div>
-                <div class="step-label">
-                    {{ stp.label }}
-                </div>
-                {% if stp.links and can_change_settings %}
-                    <div class="step-links">
-                        <ul>
-                            {% for link in stp.links %}
-                                <li>
-                                    <a {% if link.url %}href="{{ link.url }}"{% endif %}>
-                                        {{ link.title }}
-                                    </a>
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    </div>
+{% has_event_perm "base.orga_list_speakerprofile" request.user request request.event as can_view_speakers %}
+{% has_event_perm "base.update_event" request.user request request.event as can_change_settings %}
+
+{% if "congratulations" in request.GET %}
+    <div class="alert alert-success congratulations">
+        <span></span>
+        {% blocktranslate trimmed %}
+            Your event has been created and you're ready to go! Check out the
+            event settings, set up your Call for Papers with session types and custom fields,
+            and you're ready to go!
+        {% endblocktranslate %}
+    </div>
+{% endif %}
+
+<div class="td-dashboard">
+
+    {# ─── Event header ─────────────────────────────────────────────────── #}
+    <header class="td-page-header">
+        <div class="td-page-header-main">
+            <div class="td-page-title-row">
+                <h1 class="td-page-title">{% trans "Talks dashboard" %}</h1>
+                {% if event_status %}
+                    <span class="td-status-badge td-status-badge-{{ event_status.tone }}">
+                        <span class="td-status-dot" aria-hidden="true"></span>
+                        {{ event_status.text }}
+                    </span>
                 {% endif %}
             </div>
-        {% endfor %}
-    </div>
+            <p class="td-page-subtitle">
+                {{ request.event.name|event_localize }}
+                <span class="td-page-subtitle-sep" aria-hidden="true">·</span>
+                {{ event_date_range }}
+            </p>
+        </div>
+        <div class="td-page-header-actions">
+            {% include "orga/event/component_link.html" %}
+        </div>
+    </header>
 
-    <div class="dashboard-list dashboard-list-metrics">
-        {% if can_change_settings %}
-            <a href="{% url 'eventyay_common:event.live' organizer=request.event.organizer.slug event=request.event.slug %}" class="dashboard-block">
-                <div class="dashboard-live-text">
-                    {% translate "Your talk component is currently" %}
-                </div>
-                {% with talk_status=request.event.talk_component_presale_status %}
-                    <div class="dashboard-live {{ talk_status.text_class }}">
-                        <i class="fa {{ talk_status.icon }}"></i>
-                        {{ talk_status.text }}
-                    </div>
-                {% endwith %}
-                <div class="dashboard-live-text">
-                    {% translate "Click here to change" %}
-                </div>
-            </a>
-        {% endif %}
-        {% for tile in tiles %}
-            <div class="dashboard-block-wrapper">
-                <{% if tile.url %}a href="{{ tile.url }}"{% else %}div{% endif %} class="dashboard-block{% if tile.left or tile.right %} dashboard-block-extended{% endif %}">
-                <h1>{{ tile.large }}</h1>
-                <div class="dashboard-description">
-                    {{ tile.small }}
-                </div>
-            </{% if tile.url %}a{% else %}div{% endif %}>
-            {% if tile.left or tile.right %}
-                <div class="dashboard-block-extension">
-                    {% if tile.left %}
-                        <{% if tile.left.url %}a href="{{ tile.left.url }}"{% else %}div{% endif %} class="dashboard-block-addon{% if tile.left.color %} dashboard-block-addon-{{ tile.left.color }}{% endif %}">
-                        {{ tile.left.text }}
+    {# ─── Workflow / tunnel ────────────────────────────────────────────── #}
+    <section class="td-section td-workflow-section" aria-label="{% trans "Talk workflow timeline" %}">
+        <div class="td-workflow-card">
+            <div class="td-workflow-scroll">
+                <ol class="td-workflow stages" id="timeline-steps">
+                    {% for stp in timeline %}
+                        <li class="td-workflow-step step step-{{ stp.phase }}">
+                            <div class="td-workflow-node step-icon" aria-hidden="true">
+                                <span class="fa {% if stp.phase == "done" %}fa-check{% elif stp.icon %}fa-{{ stp.icon }}{% else %}fa-circle{% endif %}"></span>
+                            </div>
+                            <div class="td-workflow-meta">
+                                <div class="td-workflow-label step-label">{{ stp.name }}</div>
+                                {% if stp.status_label %}
+                                    <div class="td-workflow-status">{{ stp.status_label }}</div>
+                                {% endif %}
+                                {% if stp.detail %}
+                                    <div class="td-workflow-detail">{{ stp.detail }}</div>
+                                {% endif %}
+                            </div>
+                            {% if stp.links and can_change_settings %}
+                                <div class="step-links">
+                                    <ul>
+                                        {% for link in stp.links %}
+                                            <li>
+                                                {% if link.url %}
+                                                    <a href="{{ link.url }}">{{ link.title }}</a>
+                                                {% else %}
+                                                    <span>{{ link.title }}</span>
+                                                {% endif %}
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ol>
+            </div>
+        </div>
+    </section>
 
-                        </{% if tile.left.url %}a{% else %}div{% endif %}>
-                    {% endif %}
-                    {% if tile.right %}
-                        <{% if tile.right.url %}a href="{{ tile.right.url }}"{% else %}div{% endif %} class="dashboard-block-addon{% if tile.right.color %} dashboard-block-addon-{{ tile.right.color }}{% endif %}">
-                        {{ tile.right.text }}
-
-                        </{% if tile.right.url %}a{% else %}div{% endif %}>
-                    {% endif %}
-                </div>
-            {% endif %}
+    {# ─── Needs your attention + Upcoming ──────────────────────────────── #}
+    <section class="td-section" aria-labelledby="td-attention-title">
+        <div class="td-section-heading">
+            <h2 id="td-attention-title" class="td-section-title">
+                <span class="fa fa-exclamation-circle" aria-hidden="true"></span>
+                {% trans "Needs your attention" %}
+            </h2>
+        </div>
+        <div class="td-attention-layout">
+            <div class="td-action-grid">
+                {% for item in action_items %}
+                    <article class="td-action-card td-action-{{ item.color }} {% if item.active %}td-action-card-active{% else %}td-action-card-inactive{% endif %}" id="action-card-{{ forloop.counter }}">
+                        <div class="td-action-header">
+                            <span class="td-action-icon" aria-hidden="true">
+                                <span class="fa fa-{{ item.icon }}"></span>
+                            </span>
+                            <span class="td-action-title">{{ item.title }}</span>
+                        </div>
+                        {% if item.count %}
+                            <div class="td-action-count">{{ item.count }}</div>
+                        {% endif %}
+                        <p class="td-action-desc">{{ item.desc }}</p>
+                        {% if item.active %}
+                            <a href="{{ item.url }}" class="td-action-btn">{{ item.btn }} <span aria-hidden="true">></span></a>
+                        {% else %}
+                            <span class="td-action-ok"><span class="fa fa-check" aria-hidden="true"></span> {% trans "All good" %}</span>
+                        {% endif %}
+                    </article>
+                {% endfor %}
             </div>
 
-        {% endfor %}
-    </div>
+            <aside class="td-upcoming-card" aria-labelledby="td-upcoming-title">
+                <div class="td-upcoming-header">
+                    <h3 id="td-upcoming-title" class="td-card-title">
+                        <span class="fa fa-clock-o" aria-hidden="true"></span>
+                        {% trans "Upcoming" %}
+                    </h3>
+                </div>
+                {% if upcoming_items %}
+                    <ul class="td-upcoming-list">
+                        {% regroup upcoming_items by day_label as upcoming_groups %}
+                        {% for group in upcoming_groups %}
+                            <li class="td-upcoming-group">
+                                <div class="td-upcoming-day">{{ group.grouper }}</div>
+                                <ul>
+                                    {% for item in group.list %}
+                                        <li class="td-upcoming-item">
+                                            <span class="td-upcoming-time">{{ item.time_label }}</span>
+                                            <span class="td-upcoming-label">{{ item.label }}</span>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="td-upcoming-empty">{% trans "No upcoming deadlines." %}</p>
+                {% endif %}
+                <a href="{{ request.event.orga_urls.base }}#timeline-steps" class="td-view-all-link">{% trans "View full deadlines" %} <span aria-hidden="true">></span></a>
+            </aside>
+        </div>
+    </section>
 
+    {# ─── Quick actions ────────────────────────────────────────────────── #}
+    <section class="td-section td-quick-section" aria-labelledby="td-quick-title">
+        <h2 id="td-quick-title" class="td-section-title td-section-title-inline">
+            <span class="fa fa-star" aria-hidden="true"></span>
+            {% trans "Quick actions" %}
+        </h2>
+        <div class="td-quick-actions" role="toolbar" aria-label="{% trans "Quick actions" %}">
+            {% for action in quick_actions %}
+                <a href="{{ action.url }}" class="td-quick-btn">
+                    <span class="fa fa-{{ action.icon }}" aria-hidden="true"></span>
+                    {{ action.label }}
+                </a>
+            {% endfor %}
+        </div>
+    </section>
+
+    {# ─── At a glance ──────────────────────────────────────────────────── #}
+    <section class="td-section" aria-labelledby="td-overview-title">
+        <div class="td-section-heading">
+            <h2 id="td-overview-title" class="td-section-title">
+                <span class="fa fa-tachometer" aria-hidden="true"></span>
+                {% trans "At a glance" %}
+            </h2>
+        </div>
+
+        <div class="td-kpi-grid">
+            <a href="{{ kpi_cards.talk_status.url }}" class="td-kpi-card td-status-card td-status-card-{{ kpi_cards.talk_status.css }}" title="{% trans "Talk component status" %}">
+                <div class="td-kpi-top">
+                    <span class="td-kpi-icon" aria-hidden="true"><span class="fa fa-desktop"></span></span>
+                    <span class="td-kpi-label">{{ kpi_cards.talk_status.label }}</span>
+                </div>
+                <div class="td-status-card-value">
+                    <span class="td-status-dot" aria-hidden="true"></span>
+                    {{ kpi_cards.talk_status.text }}
+                </div>
+                <div class="td-kpi-hint td-kpi-hint-spacer" aria-hidden="true"></div>
+                <div class="td-kpi-link">{{ kpi_cards.talk_status.link }} ></div>
+            </a>
+            {% for card in kpi_cards.primary %}
+                <a href="{{ card.url }}" class="td-kpi-card td-kpi-{{ card.color }}{% if card.sparkline %} td-kpi-sparkline td-kpi-sparkline-{{ card.sparkline }}{% endif %}" id="kpi-card-{{ forloop.counter }}" title="{{ card.label }}">
+                    <div class="td-kpi-top">
+                        <span class="td-kpi-icon" aria-hidden="true"><span class="fa fa-{{ card.icon }}"></span></span>
+                        <span class="td-kpi-label">{{ card.label }}</span>
+                    </div>
+                    <div class="td-kpi-value">{{ card.value }}</div>
+                    <div class="td-kpi-hint{% if not card.hint %} td-kpi-hint-spacer{% endif %}">{% if card.hint %}{{ card.hint }}{% endif %}</div>
+                    <div class="td-kpi-link">{{ card.link }} ></div>
+                </a>
+            {% endfor %}
+            {% for card in kpi_cards.secondary %}
+                <a href="{{ card.url }}" class="td-kpi-card td-kpi-{{ card.color }}{% if card.sparkline %} td-kpi-sparkline td-kpi-sparkline-{{ card.sparkline }}{% endif %}" title="{{ card.label }}">
+                    <div class="td-kpi-top">
+                        <span class="td-kpi-icon" aria-hidden="true"><span class="fa fa-{{ card.icon }}"></span></span>
+                        <span class="td-kpi-label">{{ card.label }}</span>
+                    </div>
+                    <div class="td-kpi-value">{{ card.value }}</div>
+                    <div class="td-kpi-hint td-kpi-hint-spacer" aria-hidden="true"></div>
+                    <div class="td-kpi-link">{{ card.link }} ></div>
+                </a>
+            {% endfor %}
+        </div>
+    </section>
+
+    {# ─── Readiness + Submission funnel (equal card family) ─────────────── #}
+    <section class="td-section" aria-labelledby="td-readiness-title">
+        <div class="td-section-heading">
+            <h2 id="td-readiness-title" class="td-section-title">
+                <span class="fa fa-heartbeat" aria-hidden="true"></span>
+                {% trans "Readiness" %}
+            </h2>
+        </div>
+        <div class="td-readiness-grid">
+            <article class="td-section-card" id="submission-funnel-card">
+                <div class="td-section-card-header">
+                    <span id="td-funnel-title">{% trans "Submission funnel" %}</span>
+                    <span class="td-card-filter ms-auto">{% trans "All time" %}</span>
+                </div>
+                <div class="td-section-card-body td-funnel-body">
+                    <div class="td-funnel-chart" role="img" aria-label="{% trans "Submission funnel" %}">
+                        {% for row in funnel_data.rows %}
+                            <div class="td-funnel-row td-funnel-{{ row.key }}">
+                                <span class="td-funnel-label">{{ row.label }}</span>
+                                <div class="td-funnel-track">
+                                    <div
+                                        class="td-funnel-bar"
+                                        style="width: {{ row.width }}%"
+                                        aria-hidden="true"
+                                    ></div>
+                                </div>
+                                <span class="td-funnel-value">{{ row.count }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="td-funnel-footer">
+                        <span>{% trans "Conversion rate (accepted)" %}</span>
+                        <strong>{{ funnel_data.conversion }}%</strong>
+                    </div>
+                </div>
+            </article>
+
+            <article class="td-section-card" id="session-readiness-card">
+                <div class="td-section-card-header">
+                    {% trans "Session readiness" %}
+                </div>
+                <div class="td-section-card-body td-readiness-body">
+                    <table class="td-readiness-table no-hover">
+                        <tr>
+                            <td>{% trans "Confirmed sessions" %}</td>
+                            <td><span class="td-readiness-pill">{{ session_readiness.confirmed }}</span></td>
+                        </tr>
+                        <tr>
+                            <td>{% trans "Scheduled sessions" %}</td>
+                            <td><span class="td-readiness-pill success">{{ session_readiness.scheduled }}</span></td>
+                        </tr>
+                        <tr>
+                            <td>{% trans "Unscheduled sessions" %}</td>
+                            <td><span class="td-readiness-pill {% if session_readiness.unscheduled %}danger{% endif %}">{{ session_readiness.unscheduled }}</span></td>
+                        </tr>
+                        <tr>
+                            <td>{% trans "Sessions missing room / time" %}</td>
+                            <td><span class="td-readiness-pill {% if session_readiness.missing_room_or_time %}danger{% endif %}">{{ session_readiness.missing_room_or_time }}</span></td>
+                        </tr>
+                        <tr>
+                            <td>{% trans "Sessions with conflicts" %}</td>
+                            <td><span class="td-readiness-pill {% if session_readiness.conflicts %}warning{% endif %}">{{ session_readiness.conflicts }}</span></td>
+                        </tr>
+                        <tr>
+                            <td>{% trans "Cancelled sessions" %}</td>
+                            <td><span class="td-readiness-pill">{{ session_readiness.canceled }}</span></td>
+                        </tr>
+                    </table>
+                    <div class="td-readiness-footer">
+                        <a href="{{ session_readiness.sessions_url }}" class="td-view-all-link">{% trans "View all session list" %} <span aria-hidden="true">></span></a>
+                    </div>
+                </div>
+            </article>
+
+            {% if can_view_speakers %}
+            <article class="td-section-card" id="speaker-readiness-card">
+                <div class="td-section-card-header">
+                    {% trans "Speaker readiness" %}
+                </div>
+                <div class="td-section-card-body td-readiness-body">
+                    <table class="td-readiness-table no-hover">
+                        <tr>
+                            <td>{% trans "Total speakers" %}</td>
+                            <td><span class="td-readiness-pill">{{ speaker_readiness.total }}</span></td>
+                        </tr>
+                        <tr>
+                            <td>{% trans "Confirmed speakers" %}</td>
+                            <td><span class="td-readiness-pill success">{{ speaker_readiness.confirmed }}</span></td>
+                        </tr>
+                        <tr>
+                            <td>{% trans "Missing biography" %}</td>
+                            <td><span class="td-readiness-pill {% if speaker_readiness.missing_bio %}danger{% endif %}">{{ speaker_readiness.missing_bio }}</span></td>
+                        </tr>
+                        <tr>
+                            <td>{% trans "Missing profile image" %}</td>
+                            <td><span class="td-readiness-pill {% if speaker_readiness.missing_avatar %}danger{% endif %}">{{ speaker_readiness.missing_avatar }}</span></td>
+                        </tr>
+                        <tr>
+                            <td>{% trans "Speakers without session" %}</td>
+                            <td><span class="td-readiness-pill {% if speaker_readiness.speakers_without_session %}danger{% endif %}">{{ speaker_readiness.speakers_without_session }}</span></td>
+                        </tr>
+                    </table>
+                    <div class="td-readiness-footer">
+                        <a href="{{ speaker_readiness.speakers_url }}" class="td-view-all-link">{% trans "View speakers list" %} <span aria-hidden="true">></span></a>
+                    </div>
+                </div>
+            </article>
+            {% endif %}
+        </div>
+    </section>
+
+    {# ─── Analytics ────────────────────────────────────────────────────── #}
     {% has_event_perm "base.orga_list_submission" request.user request request.event as can_view_submission_stats %}
     {% if can_view_submission_stats %}
-        {% include "orga/submission/includes/statistics.html" %}
+        <section class="td-section" id="analytics" aria-labelledby="td-analytics-title">
+            <div class="td-section-heading">
+                <h2 id="td-analytics-title" class="td-section-title">
+                    <span class="fa fa-bar-chart" aria-hidden="true"></span>
+                    {% trans "Analytics" %}
+                </h2>
+            </div>
+            <div class="td-analytics-shell">
+                {% include "orga/submission/includes/statistics.html" %}
+            </div>
+        </section>
     {% endif %}
 
-    {% if history and can_change_settings %}
-        <div class="dashboard-history mt-4">
-            <div class="d-flex">
-                <h2>{% translate "History" %}</h2>
-                {% if can_change_settings %}
-                    <small>
-                        <a href="{{ request.event.orga_urls.history }}" class="text-muted ml-2">
-                            ({% translate "Full history" %})
-                        </a>
-                    </small>
+    {# ─── Recent activity + Internal note ──────────────────────────────── #}
+    <section class="td-section td-bottom-grid" aria-label="{% trans "Activity and notes" %}">
+        <article class="td-section-card" id="recent-activity-card">
+            <div class="td-section-card-header">
+                <span class="fa fa-history" aria-hidden="true"></span>
+                {% trans "Recent talk activity" %}
+            </div>
+            <div class="td-section-card-body p-0">
+                {% if recent_activity %}
+                    <div class="td-activity-table-wrap">
+                        <table class="td-activity-table">
+                            <thead>
+                                <tr>
+                                    <th>{% trans "When" %}</th>
+                                    <th>{% trans "User" %}</th>
+                                    <th>{% trans "Type" %}</th>
+                                    <th>{% trans "Reference" %}</th>
+                                    <th>{% trans "Message" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for entry in recent_activity %}
+                                    <tr>
+                                        <td class="td-activity-time">{{ entry.datetime|date:"M d, H:i" }}</td>
+                                        <td>{% if entry.user %}{{ entry.user.get_display_name }}{% else %}–{% endif %}</td>
+                                        <td>
+                                            <span class="td-activity-badge {{ entry.badge }}">
+                                                <span class="fa fa-{{ entry.icon }}" aria-hidden="true"></span>
+                                                {{ entry.type_label }}
+                                            </span>
+                                        </td>
+                                        <td class="td-activity-ref">
+                                            {% if entry.reference_url %}
+                                                <a href="{{ entry.reference_url }}">{{ entry.reference|truncatechars:40 }}</a>
+                                            {% elif entry.reference %}
+                                                {{ entry.reference|truncatechars:40 }}
+                                            {% else %}
+                                                –
+                                            {% endif %}
+                                        </td>
+                                        <td class="td-activity-msg" title="{{ entry.message }}">{{ entry.message|truncatechars:60 }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="td-activity-footer">
+                        <a href="{{ request.event.orga_urls.history }}" class="td-view-all-link">{% trans "View all activity" %} <span aria-hidden="true">></span></a>
+                    </div>
+                {% else %}
+                    <div class="td-activity-empty">
+                        <span class="fa fa-inbox" aria-hidden="true"></span>
+                        {% trans "No recent talk-related activity." %}
+                    </div>
                 {% endif %}
             </div>
+        </article>
 
-            {% include "common/logs.html" with entries=history %}
+        {% if can_change_settings %}
+        <article class="td-section-card td-note-card" id="internal-note-card">
+            <div class="td-section-card-header">
+                <span class="fa fa-sticky-note" aria-hidden="true"></span>
+                {% trans "Internal note" %}
+            </div>
+            <div class="td-section-card-body">
+                <form method="post" action="" id="internal-note-form">
+                    {% csrf_token %}
+                    <label class="visually-hidden" for="internal-note-textarea">{% trans "Internal note" %}</label>
+                    <textarea
+                        id="internal-note-textarea"
+                        name="internal_note"
+                        class="td-note-textarea"
+                        placeholder="{% trans "Add an internal note visible only to organisers…" %}"
+                        maxlength="1000"
+                        data-note-counter="#note-char-count">{{ event_comment }}</textarea>
+                    <div class="td-note-footer">
+                        <span class="td-note-counter" id="note-char-count">{{ event_comment|length }}/1000</span>
+                        <button type="submit" name="save_internal_note" value="1" class="td-note-save-btn">{% trans "Save note" %}</button>
+                    </div>
+                </form>
+            </div>
+        </article>
+        {% endif %}
+    </section>
 
-        </div>
-    {% endif %}
+</div>{# end .td-dashboard #}
+
 {% endblock content %}
