@@ -295,16 +295,6 @@ class EventDashboardView(EventPermissionRequired, SubmissionStatsMixin, Template
         event = self.request.event
         stages = get_stages(event)
         
-        if event.talks_published:
-            result['event_status'] = _('Live')
-            result['event_status_color'] = 'success'
-        elif event.private_testmode_talks_enabled:
-            result['event_status'] = _('Test')
-            result['event_status_color'] = 'info'
-        else:
-            result['event_status'] = _('Offline')
-            result['event_status_color'] = 'default'
-            
         result['timeline'] = self.enhance_timeline(event, stages)
         result['go_to_target'] = 'schedule' if stages['REVIEW']['phase'] == 'done' else 'cfp'
         _now = now()

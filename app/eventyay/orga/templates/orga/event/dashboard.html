@@ -47,7 +47,6 @@
                 <div class="navigation-title">
                     <h2 style="margin: 0; padding-top: 8px;">
                         {% trans "Talks dashboard" %}
-                        <span class="badge badge-{{ event_status_color }} dashboard-header-status-badge">&bull; {{ event_status }}</span>
                     </h2>
                     <div class="text-muted dashboard-header-extra">{{ request.event.name|event_localize }} &middot; {{ request.event.get_date_range_display }}</div>
                 </div>
