@@ -19,6 +19,7 @@
 {% endblock email_editor_description %}
 
 {% block recipient_form %}
+  {% if draft_id %}<input type="hidden" name="draft_id" value="{{ draft_id }}">{% endif %}
   <div class="composer-filters">
     {{ form.recipients.as_field_group }}
     {{ form.order_status.as_field_group }}
@@ -63,7 +64,11 @@
         data-label-other="{% translate 'recipients selected' %}"></span>
 {% endblock email_editor_actions_summary %}
 
-{% block draft_button %}{% endblock draft_button %}
+{% block draft_button %}
+  <button type="submit" class="btn btn-outline-info" name="action" value="draft" formnovalidate>
+    {% translate "Save draft" %}
+  </button>
+{% endblock draft_button %}
 
 {% block after_message %}
   <section class="card mb-3">
@@ -71,6 +76,9 @@
       <div class="card-body">
           <fieldset>
               {{ form.attachment.as_field_group }}
+              <p class="help-block text-muted">
+                  <i class="fa fa-info-circle"></i> {% translate "Attachments are not saved in drafts. Please reattach files before sending." %}
+              </p>
           </fieldset>
       </div>
   </section>

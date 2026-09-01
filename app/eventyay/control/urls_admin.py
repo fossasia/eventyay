@@ -44,6 +44,7 @@ urlpatterns = [
     ),
     url(r'^users/(?P<id>\d+)/anonymize', users.UserAnonymizeView.as_view(), name='admin.users.anonymize'),
     url(r'^global/settings/$', global_settings.GlobalSettingsView.as_view(), name='admin.global.settings'),
+    path('global/business/', global_settings.GlobalBusinessSettingsView.as_view(), name='admin.global.business'),
     path('global/settings/preview/', global_settings.GlobalSettingsPagePreviewView.as_view(), name='admin.global.settings.preview'),
     path('global/settings/test-email/', global_settings.GlobalSettingsTestEmailView.as_view(), name='admin.global.settings.test_email'),
     path('global/metadata/', global_settings.MetaDataSettingsView.as_view(), name='admin.global.metadata'),
