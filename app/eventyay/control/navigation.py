@@ -514,11 +514,6 @@ def get_admin_navigation(request):
                 'active': is_video_route and url.url_name.startswith('event.'),
             },
             {
-                'label': _('Streamkey generator'),
-                'url': reverse('eventyay_admin:video_admin:streamkey'),
-                'active': is_video_route and url.url_name == 'streamkey',
-            },
-            {
                 'label': _('System log'),
                 'url': reverse('eventyay_admin:video_admin:systemlog.list'),
                 'active': is_video_route and url.url_name.startswith('systemlog.'),
