@@ -53,19 +53,18 @@ export default {
 				this.$router.replace({name: 'admin:chat:new'})
 				return
 			}
-			if (!this.type || !this.chosenType) {
-				this.$router.replace({name: 'admin:rooms:index'})
-				return
-			}
 			this.config = {
 				name: '',
 				description: '',
 				sorting_priority: '',
 				pretalx_id: '',
 				force_join: false,
+				is_unscheduled: false,
 				module_config: [],
 			}
-			applyVideoProviderToConfig(this.config, this.chosenType)
+			if (this.type && this.chosenType) {
+				applyVideoProviderToConfig(this.config, this.chosenType)
+			}
 		}
 	}
 }

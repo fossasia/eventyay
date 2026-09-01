@@ -471,15 +471,19 @@ export default new Vuex.Store({
 			dispatch('schedule/fetch', {root: true})
 		},
 		'api::world.user_count_change'({state, commit, dispatch}, {room, users}) {
-			room = state.rooms.find(r => r.id === room)
-			room.users = users
-			commit('updateRooms', state.rooms)
+			const targetRoom = state.rooms?.find(r => String(r.id) === String(room))
+			if (targetRoom) {
+				targetRoom.users = users
+				commit('updateRooms', [...state.rooms])
+			}
 		},
 		// Backwards-compat: server emits 'event.user_count_change'
 		'api::event.user_count_change'({state, commit, dispatch}, {room, users}) {
-			room = state.rooms.find(r => r.id === room)
-			room.users = users
-			commit('updateRooms', state.rooms)
+			const targetRoom = state.rooms?.find(r => String(r.id) === String(room))
+			if (targetRoom) {
+				targetRoom.users = users
+				commit('updateRooms', [...state.rooms])
+			}
 		},
 		'api::room.schedule'({state}, {room, schedule_data}) {
 			room = state.rooms.find(r => r.id === room)
