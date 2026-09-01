@@ -126,7 +126,9 @@ class CentralMailSettingsForm(SettingsForm):
     send_grid_api_key = SecretKeySettingsField(
         label=_('SendGrid API key'),
         required=False,
-        widget=SecretKeySettingsWidget(attrs={}),
+        widget=SecretKeySettingsWidget(attrs={
+            'data-display-dependency': '#id_email-email_vendor_1',
+        }),
     )
     test_email = forms.CharField(
         label=_('Send test email to'),
