@@ -56,31 +56,51 @@ export default {
 		}
 	},
 	async created() {
-		// TODO: Force reloading if world.updated is received from the server
-		try {
-			this.config = await api.call('world.config.get')
-			const defaultEntry = this.config.iframe_blockers?.default
-			// always have a default first entry
-			this.iframeDomains = [{
-				domain: 'default',
-				enabled: defaultEntry?.enabled ?? false,
-				policy_url: defaultEntry?.policy_url ?? ''
-			}]
-			this.iframeDomains.push(...Object.entries(this.config.iframe_blockers)
-				.filter(([domain, domainConfig]) => domain !== 'default')
-				.map(([domain, {enabled, policy_url}]) => ({
-					domain,
-					enabled,
-					policy_url
-				}))
-			)
-			// Enforce some defaults
-		} catch (error) {
-			this.error = error.message || error.toString()
-			console.log(error)
-		}
+		this.ensureConnectedAndFetch()
+	},
+	beforeUnmount() {
+		if (this._unwatchConnected) this._unwatchConnected()
 	},
 	methods: {
+		ensureConnectedAndFetch() {
+			if (this.$store.state.connected) {
+				this.fetchConfig()
+			} else {
+				this._unwatchConnected = this.$store.watch(
+					state => state.connected,
+					connected => {
+						if (connected) {
+							this.fetchConfig()
+							if (this._unwatchConnected) this._unwatchConnected()
+						}
+					}
+				)
+			}
+		},
+		async fetchConfig() {
+			try {
+				this.config = await api.call('world.config.get')
+				const blockers = this.config?.iframe_blockers || {}
+				const defaultEntry = blockers.default
+				// always have a default first entry
+				this.iframeDomains = [{
+					domain: 'default',
+					enabled: defaultEntry?.enabled ?? false,
+					policy_url: defaultEntry?.policy_url ?? ''
+				}]
+				this.iframeDomains.push(...Object.entries(blockers)
+					.filter(([domain]) => domain !== 'default')
+					.map(([domain, val]) => ({
+						domain,
+						enabled: val?.enabled ?? false,
+						policy_url: val?.policy_url ?? ''
+					}))
+				)
+			} catch (error) {
+				this.error = error.message || error.toString()
+				console.error(error)
+			}
+		},
 		async save() {
 			this.v$.$touch()
 			if (this.v$.$invalid) return

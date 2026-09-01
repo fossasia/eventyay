@@ -27,7 +27,7 @@
 				:index="index",
 				:key="room.id",
 				:room="room",
-				:to="{name: 'admin:rooms:item', params: {roomId: room.id}}",
+				:to="getRoomTargetRoute(room)",
 				:disabled="!!search",
 				v-show="isRoomVisible(room)"
 			)
@@ -36,7 +36,7 @@
 <script>
 import api from 'lib/api'
 import fuzzysearch from 'lib/fuzzysearch'
-import { isChatManagedRoom, mergeReorderedIds } from 'lib/room-types'
+import { inferType, isChatManagedRoom, mergeReorderedIds } from 'lib/room-types'
 import { mapGetters } from 'vuex'
 import { SlickList } from 'vue-slicksort'
 import VideoProviderDropdown from 'components/VideoProviderDropdown'
@@ -141,6 +141,16 @@ export default {
 				this.allRooms = previousAll
 				console.error(e)
 			}
+		},
+		getRoomTargetRoute(room) {
+			if (!room) return { name: 'admin:rooms:index' }
+			// room.config.list rooms use module_config array (admin config format)
+			const isConfigured = Array.isArray(room.module_config) && room.module_config.length > 0 &&
+				!!inferType({ module_config: room.module_config })
+			if (isConfigured) {
+				return { name: 'room:manage', params: { roomId: room.id } }
+			}
+			return { name: 'admin:rooms:item', params: { roomId: room.id } }
 		}
 	}
 }

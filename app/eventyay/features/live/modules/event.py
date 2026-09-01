@@ -97,6 +97,9 @@ class EventModule(BaseModule):
             )
             return
 
+        if "track_world_views" in body and "track_event_views" not in body:
+            body["track_event_views"] = body["track_world_views"]
+
         old = _config_serializer(self.consumer.event).data
         s = _config_serializer(self.consumer.event, data=body, partial=True)
         if s.is_valid():
@@ -105,15 +108,14 @@ class EventModule(BaseModule):
                 "connection_limit",
                 "bbb_defaults",
                 "pretalx",
+                "video_player",
                 "videoPlayer",
-                "profile_fields",
                 "track_room_views",
                 "track_event_views",
                 "onsite_traits",
                 "conftool_url",
                 "conftool_password",
                 "iframe_blockers",
-                "social_logins",
             )
             model_fields = {
                 "title": "name",

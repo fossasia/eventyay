@@ -8,7 +8,6 @@
 				.online-status(v-if="!user.deleted", :class="onlineStatus ? 'online' : (onlineStatus === false ? 'offline' : 'unknown')", v-tooltip="onlineStatus ? $t('Online') : (onlineStatus === false ? $t('Offline') : '')")
 				| {{ getUserName(user) }}
 				.ui-badge(v-for="badge in user.badges") {{ badge }}
-			ProfileFields(:user="user")
 			.state {{ userStates.join(', ') }}
 			.actions(v-if="user.id !== ownUser.id && user.id && !user.deleted")
 				bunt-button.btn-dm(v-if="hasPermission('world:chat.direct')", @click="openDM") {{ $t('message') }}
@@ -36,10 +35,9 @@ import { getUserName } from 'lib/profile'
 import Avatar from 'components/Avatar'
 import MenuDropdown from 'components/MenuDropdown'
 import UserActionPrompt from 'components/UserActionPrompt'
-import ProfileFields from 'components/profile/ProfileFields'
 
 export default {
-	components: { Avatar, MenuDropdown, UserActionPrompt, ProfileFields },
+	components: { Avatar, MenuDropdown, UserActionPrompt },
 	props: {
 		user: Object,
 	},
