@@ -2,10 +2,19 @@ from io import BytesIO
 
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db.backends.signals import connection_created
+from django.dispatch import receiver
 from django.urls import reverse
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 from PIL import Image
+
+
+@receiver(connection_created)
+def _enable_pg_trgm(sender, connection, **kwargs):
+    if connection.vendor == 'postgresql':
+        with connection.cursor() as cursor:
+            cursor.execute('CREATE EXTENSION IF NOT EXISTS pg_trgm;')
 
 from eventyay.base.meetup import (
     get_rsvp_product_and_quota,
@@ -250,3 +259,178 @@ def test_meetup_create_validation_errors(orga_client, organizer):
     response_limited = orga_client.post(url, data_limited)
     assert response_limited.status_code == 200
     assert 'registration_limit' in response_limited.context['basics_form'].errors
+
+
+@pytest.mark.django_db
+def test_meetup_create_context_includes_header_presets(orga_client):
+    url = reverse('eventyay_common:events.add') + '?meetup=1'
+    response = orga_client.get(url)
+    assert response.status_code == 200
+    assert 'header_presets' in response.context
+    assert len(response.context['header_presets']) > 0
+    assert 'preset_categories' in response.context
+    assert 'initial_preset_id' in response.context
+    assert bool(response.context['initial_preset_id']) is True
+    assert 'initial_preset_url' in response.context
+    assert bool(response.context['initial_preset_url']) is True
+
+
+@pytest.mark.django_db
+def test_meetup_create_with_preset(orga_client, organizer):
+    url = reverse('eventyay_common:events.add')
+    data = {
+        'is_meetup': 'on',
+        'foundation-organizer': organizer.pk,
+        'foundation-locales': ['en'],
+        'basics-locale': 'en',
+        'basics-name_0': 'Preset Banner Meetup',
+        'basics-date_from_0': '2026-11-15',
+        'basics-date_from_1': '10:00:00',
+        'basics-date_to_0': '2026-11-15',
+        'basics-date_to_1': '12:00:00',
+        'basics-timezone': 'UTC',
+        'basics-location_type': 'in_person',
+        'basics-location_0': 'Innovation Lab',
+        'basics-capacity_type': 'unlimited',
+        'basics-header_image_preset': 'gradient-sunset',
+    }
+    response = orga_client.post(url, data)
+    assert response.status_code == 302
+
+    with scopes_disabled():
+        event = Event.objects.filter(organizer=organizer, name__icontains='Preset Banner Meetup').first()
+        assert event is not None
+        assert is_meetup_event(event) is True
+        assert event.settings.get('logo_image', as_type=str) == 'preset:gradient-sunset'
+        assert event.visible_header_image_url is not None
+        assert 'gradient-sunset.jpg' in event.visible_header_image_url
+        assert event.visible_header_image_file is None
+        assert event.preview_image_url_with_fallback is not None
+        assert 'gradient-sunset.jpg' in event.preview_image_url_with_fallback
+
+
+@pytest.mark.django_db
+def test_meetup_create_custom_image_overrides_preset(orga_client, organizer):
+    url = reverse('eventyay_common:events.add')
+    test_image = _create_test_image()
+    data = {
+        'is_meetup': 'on',
+        'foundation-organizer': organizer.pk,
+        'foundation-locales': ['en'],
+        'basics-locale': 'en',
+        'basics-name_0': 'Custom Upload Overrides Preset Meetup',
+        'basics-date_from_0': '2026-11-20',
+        'basics-date_from_1': '14:00:00',
+        'basics-date_to_0': '2026-11-20',
+        'basics-date_to_1': '16:00:00',
+        'basics-timezone': 'UTC',
+        'basics-location_type': 'in_person',
+        'basics-location_0': 'Studio 1',
+        'basics-capacity_type': 'unlimited',
+        'basics-header_image_preset': 'abstract-waves',
+        'basics-logo_image': test_image,
+    }
+    response = orga_client.post(url, data)
+    assert response.status_code == 302
+
+    with scopes_disabled():
+        event = Event.objects.filter(organizer=organizer, name__icontains='Custom Upload Overrides Preset Meetup').first()
+        assert event is not None
+        logo_setting = event.settings.get('logo_image', as_type=str)
+        assert logo_setting.startswith('file://')
+        assert not logo_setting.startswith('preset:')
+        assert event.visible_header_image_url is not None
+
+
+@pytest.mark.django_db
+def test_meetup_create_invalid_preset_rejected(orga_client, organizer):
+    url = reverse('eventyay_common:events.add')
+    data = {
+        'is_meetup': 'on',
+        'foundation-organizer': organizer.pk,
+        'foundation-locales': ['en'],
+        'basics-locale': 'en',
+        'basics-name_0': 'Invalid Preset Meetup',
+        'basics-date_from_0': '2026-11-20',
+        'basics-date_from_1': '14:00:00',
+        'basics-date_to_0': '2026-11-20',
+        'basics-date_to_1': '16:00:00',
+        'basics-timezone': 'UTC',
+        'basics-location_type': 'in_person',
+        'basics-location_0': 'Studio 1',
+        'basics-capacity_type': 'unlimited',
+        'basics-header_image_preset': 'non-existent-preset-id',
+    }
+    response = orga_client.post(url, data)
+    assert response.status_code == 200
+    assert 'basics_form' in response.context
+    assert 'header_image_preset' in response.context['basics_form'].errors
+
+
+@pytest.mark.django_db
+def test_preset_resolution_in_event_model(organizer):
+    with scopes_disabled():
+        event = Event.objects.create(
+            organizer=organizer,
+            name='Direct Model Preset Test',
+            slug='direct-model-preset-test',
+            date_from=now(),
+            date_to=now(),
+        )
+        event.settings.set('logo_image', 'preset:gradient-ocean')
+
+        assert event._visible_header_image_path == 'preset:gradient-ocean'
+        assert event.visible_header_image_url is not None
+        assert 'gradient-ocean.jpg' in event.visible_header_image_url
+        assert event.visible_header_image_file is None
+        assert event.preview_image_url_with_fallback is not None
+        assert 'gradient-ocean.jpg' in event.preview_image_url_with_fallback
+        assert event.preview_image_url_small is not None
+        assert 'gradient-ocean.jpg' in event.preview_image_url_small
+
+
+@pytest.mark.django_db
+def test_meetup_create_get_without_organizer_renders_warning_gracefully(client):
+    GlobalSettingsObject().settings.set('meetup_creation_enabled', True)
+    user = User.objects.create_user('no_orga_user@test.org', 'testpass123')
+    client.force_login(user)
+    user.staffsession_set.create(date_start=now(), session_key=client.session.session_key)
+
+    # Standard event creation handles missing organizer gracefully in template
+    url = reverse('eventyay_common:events.add')
+    response = client.get(url)
+    assert response.status_code == 200
+    assert response.context['has_organizer'] is False
+    assert response.context['basics_form'] is None
+
+    # Meetup creation without organizer permission raises PermissionDenied (403)
+    meetup_url = reverse('eventyay_common:events.add') + '?meetup=1'
+    meetup_response = client.get(meetup_url)
+    assert meetup_response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_meetup_create_preset_preserved_on_validation_error(orga_client, organizer):
+    url = reverse('eventyay_common:events.add')
+    data = {
+        'is_meetup': 'on',
+        'foundation-organizer': organizer.pk,
+        'foundation-locales': ['en'],
+        'basics-locale': 'en',
+        'basics-name_0': '',  # missing name triggers validation error
+        'basics-date_from_0': '2026-11-20',
+        'basics-date_from_1': '14:00:00',
+        'basics-date_to_0': '2026-11-20',
+        'basics-date_to_1': '16:00:00',
+        'basics-timezone': 'UTC',
+        'basics-location_type': 'in_person',
+        'basics-location_0': 'Studio 1',
+        'basics-capacity_type': 'unlimited',
+        'basics-header_image_preset': 'abstract-waves',
+    }
+    response = orga_client.post(url, data)
+    assert response.status_code == 200
+    assert 'basics_form' in response.context
+    assert 'name' in response.context['basics_form'].errors
+    assert response.context['initial_preset_id'] == 'abstract-waves'
+    assert 'abstract-waves.jpg' in response.context['initial_preset_url']

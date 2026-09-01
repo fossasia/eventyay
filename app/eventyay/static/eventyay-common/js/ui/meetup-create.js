@@ -218,11 +218,171 @@ export function initRegistrationFeeToggles() {
     updateFeeVisibility();
 }
 
+function dismissModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    const dismissBtn = modal.querySelector('[data-dismiss="modal"]');
+    if (dismissBtn) {
+        dismissBtn.click();
+    }
+}
+
+export function initHeaderImagePicker() {
+    const presetInput = document.querySelector('input[name="basics-header_image_preset"]');
+    const fileInput = document.getElementById('id_basics-logo_image');
+    const previewImg = document.getElementById('headerImagePreviewImg');
+    const sourceBadge = document.getElementById('headerImageSourceBadge');
+    const presetCards = document.querySelectorAll('.header-preset-card');
+    const categoryPills = document.querySelectorAll('.preset-category-pill');
+    const uploadDropzone = document.getElementById('headerUploadDropzone');
+    const uploadBtn = document.getElementById('headerUploadBtn');
+    const cropperSaveBtn = document.getElementById('cropperSaveBtn');
+
+    if (!previewImg && !presetCards.length) {
+        return;
+    }
+
+    // Category filter pills
+    categoryPills.forEach((pill) => {
+        pill.addEventListener('click', () => {
+            const category = pill.dataset.category;
+            categoryPills.forEach((p) => p.classList.remove('active'));
+            pill.classList.add('active');
+
+            presetCards.forEach((card) => {
+                if (category === 'all' || card.dataset.category === category) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    // Preset card selection
+    presetCards.forEach((card) => {
+        card.addEventListener('click', () => {
+            const presetId = card.dataset.presetId;
+            const presetUrl = card.dataset.presetUrl;
+            const presetName = card.dataset.presetName;
+
+            if (presetInput) {
+                presetInput.value = presetId;
+            }
+            if (fileInput) {
+                fileInput.value = '';
+            }
+
+            ['x', 'y', 'w', 'h'].forEach((coord) => {
+                const hiddenCoord = document.getElementById(`id_basics-logo_image_crop_${coord}`);
+                if (hiddenCoord) hiddenCoord.value = '';
+            });
+
+            if (previewImg && presetUrl) {
+                previewImg.src = presetUrl;
+            }
+            if (sourceBadge && presetName) {
+                sourceBadge.textContent = presetName;
+            }
+
+            presetCards.forEach((c) => c.classList.remove('active'));
+            card.classList.add('active');
+
+            dismissModal('headerImagePickerModal');
+        });
+    });
+
+    // Custom upload dropzone
+    function triggerFileInput() {
+        if (fileInput) {
+            fileInput.click();
+        }
+    }
+
+    if (uploadDropzone) {
+        uploadDropzone.addEventListener('click', triggerFileInput);
+
+        uploadDropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadDropzone.classList.add('drag-over');
+        });
+
+        uploadDropzone.addEventListener('dragleave', () => {
+            uploadDropzone.classList.remove('drag-over');
+        });
+
+        uploadDropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadDropzone.classList.remove('drag-over');
+            if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0 && fileInput) {
+                fileInput.files = e.dataTransfer.files;
+                fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
+    }
+
+    if (uploadBtn) {
+        uploadBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            triggerFileInput();
+        });
+    }
+
+    if (fileInput) {
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files.length > 0) {
+                const selectedFile = e.target.files[0];
+                if (presetInput) {
+                    presetInput.value = '';
+                }
+                presetCards.forEach((c) => c.classList.remove('active'));
+                if (sourceBadge) {
+                    sourceBadge.textContent = 'Custom upload';
+                }
+                if (previewImg && selectedFile && selectedFile.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (evt) => {
+                        if (evt.target && evt.target.result) {
+                            previewImg.src = evt.target.result;
+                        }
+                    };
+                    reader.readAsDataURL(selectedFile);
+                }
+                dismissModal('headerImagePickerModal');
+            }
+        });
+    }
+
+    // Sync live preview when cropper applies
+    if (cropperSaveBtn) {
+        cropperSaveBtn.addEventListener('click', () => {
+            setTimeout(() => {
+                const cropperImage = document.getElementById('cropperImage');
+                const fileContainer = fileInput ? fileInput.closest('.form-group') : null;
+                const thumbImg = fileContainer ? fileContainer.querySelector('img') : null;
+                if (thumbImg && thumbImg.src && previewImg && thumbImg !== previewImg) {
+                    previewImg.src = thumbImg.src;
+                } else if (cropperImage && cropperImage.src && previewImg) {
+                    previewImg.src = cropperImage.src;
+                }
+                if (sourceBadge) {
+                    sourceBadge.textContent = 'Custom upload';
+                }
+                if (presetInput) {
+                    presetInput.value = '';
+                }
+                presetCards.forEach((c) => c.classList.remove('active'));
+            }, 100);
+        });
+    }
+}
+
 function initMeetupCreate() {
     autoDetectTimezone();
     initLocationToggles();
     initCapacityToggles();
     initRegistrationFeeToggles();
+    initHeaderImagePicker();
 }
 
 if (document.readyState === 'loading') {

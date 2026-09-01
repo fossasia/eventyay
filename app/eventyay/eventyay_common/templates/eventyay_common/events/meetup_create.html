@@ -8,6 +8,7 @@
 {% block custom_header %}
     <link type="text/css" rel="stylesheet" href="{% static 'vendored/cropperjs/cropper.min.css' %}">
     <link type="text/css" rel="stylesheet" href="{% static 'pretixpresale/css/meetup.css' %}">
+    <link type="text/css" rel="stylesheet" href="{% static 'eventyay-common/css/header_image_picker.css' %}">
     <script defer src="{% static "eventyay-common/js/ui/event-create.js" %}"></script>
     <script type="module" src="{% static "eventyay-common/js/ui/meetup-create.js" %}"></script>
     <script defer src="{% static 'vendored/cropperjs/cropper.min.js' %}"></script>
@@ -62,7 +63,46 @@
 
                 {% bootstrap_field basics_form.frontpage_text layout="control" %}
 
-                {% bootstrap_field basics_form.logo_image layout="control" %}
+                <div class="form-group header-image-form-group{% if basics_form.logo_image.errors or basics_form.header_image_preset.errors %} has-error{% endif %}">
+                    <label class="col-md-3 control-label">
+                        {% trans "Header image" %}
+                    </label>
+                    <div class="col-md-9">
+                        <div class="header-image-preview-container">
+                            <div class="header-image-preview-card">
+                                <img id="headerImagePreviewImg" class="header-image-preview-img" src="{{ initial_preset_url|default:'' }}" alt="{% trans 'Header image preview' %}">
+                                <div class="header-image-overlay">
+                                    <button type="button" class="btn btn-default header-image-change-btn" data-toggle="modal" data-target="#headerImagePickerModal">
+                                        <i class="fa fa-image"></i> {% trans "Change Header Image" %}
+                                    </button>
+                                </div>
+                                <div id="headerImageSourceBadge" class="header-image-source-badge">
+                                    {% for preset in header_presets %}
+                                        {% if preset.id == initial_preset_id %}{{ preset.name }}{% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="header-image-preview-actions">
+                                <button type="button" class="btn btn-default btn-sm header-image-action-btn" data-toggle="modal" data-target="#headerImagePickerModal">
+                                    <i class="fa fa-image"></i> {% trans "Change Header Image" %}
+                                </button>
+                            </div>
+                        </div>
+                        <p class="help-block">
+                            {% trans "Choose a preset or upload your own image. Recommended size: 1920 × 640 px." %}
+                        </p>
+                        {{ basics_form.header_image_preset }}
+                        <div class="hidden">
+                            {% bootstrap_field basics_form.logo_image show_label=False %}
+                        </div>
+                        {% if basics_form.logo_image.errors %}
+                            <div class="help-block text-danger">{{ basics_form.logo_image.errors }}</div>
+                        {% endif %}
+                        {% if basics_form.header_image_preset.errors %}
+                            <div class="help-block text-danger">{{ basics_form.header_image_preset.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
             </fieldset>
 
             <fieldset>
@@ -233,6 +273,70 @@
                 </button>
             </div>
         </form>
+
+        <div class="modal fade" id="headerImagePickerModal" tabindex="-1" role="dialog" aria-labelledby="headerImagePickerModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        <h4 class="modal-title" id="headerImagePickerModalLabel">
+                            {% trans "Select Header Image" %}
+                        </h4>
+                    </div>
+                    <div class="modal-body header-picker-modal-body">
+                        <div id="headerUploadDropzone" class="header-upload-section">
+                            <div class="header-upload-icon">
+                                <i class="fa fa-cloud-upload"></i>
+                            </div>
+                            <div class="header-upload-text">
+                                {% trans "Drag & drop your image here, or" %}
+                                <button type="button" id="headerUploadBtn" class="btn btn-sm btn-primary" style="margin-left: 6px;">
+                                    {% trans "Browse Files" %}
+                                </button>
+                            </div>
+                            <div class="header-upload-hint">
+                                {% trans "Supports JPG, PNG, WEBP, GIF up to 10MB (recommended 1920×640)" %}
+                            </div>
+                        </div>
+
+                        <div class="header-picker-divider">
+                            <span>{% trans "Or choose from gallery" %}</span>
+                        </div>
+
+                        <div class="header-preset-categories">
+                            {% for cat_slug, cat_label in preset_categories %}
+                                <button type="button" class="preset-category-pill{% if forloop.first %} active{% endif %}" data-category="{{ cat_slug }}">
+                                    {{ cat_label }}
+                                </button>
+                            {% endfor %}
+                        </div>
+
+                        <div class="header-preset-grid">
+                            {% for preset in header_presets_data %}
+                                <button type="button"
+                                        class="header-preset-card{% if preset.id == initial_preset_id %} active{% endif %}"
+                                        data-preset-id="{{ preset.id }}"
+                                        data-preset-name="{{ preset.name }}"
+                                        data-preset-url="{{ preset.url }}"
+                                        data-category="{{ preset.category }}"
+                                        aria-label="{{ preset.name }}">
+                                    <img src="{{ preset.thumbnailUrl }}" alt="" class="header-preset-thumb" loading="lazy">
+                                    <div class="header-preset-name">{{ preset.name }}</div>
+                                    <div class="header-preset-check" aria-hidden="true">
+                                        <i class="fa fa-check"></i>
+                                    </div>
+                                </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Close" %}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <div class="modal fade" id="cropperModal" tabindex="-1" role="dialog" aria-labelledby="cropperModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg" role="document">

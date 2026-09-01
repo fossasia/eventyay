@@ -30,6 +30,7 @@ from eventyay.timezones import common_timezones, localize_datetime
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
 from eventyay.base.forms import I18nModelForm, PlaceholderValidator, SettingsForm
+from eventyay.base.header_presets import PRESET_BY_ID
 from eventyay.base.meetup import (
     CAPACITY_LIMITED,
     CAPACITY_TYPE_CHOICES,
@@ -2013,6 +2014,16 @@ class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
         required=False,
         help_text=_('Upload a header image for your meetup banner and card. Recommended size: 1920 × 640 px.'),
     )
+    header_image_preset = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput,
+    )
+
+    def clean_header_image_preset(self):
+        preset_id = (self.cleaned_data.get('header_image_preset') or '').strip()
+        if preset_id and preset_id not in PRESET_BY_ID:
+            raise forms.ValidationError(_('Invalid header image preset.'))
+        return preset_id
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -2103,6 +2114,9 @@ class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
 
     def clean(self):
         cleaned_data = super().clean()
+        if cleaned_data.get('logo_image'):
+            cleaned_data['header_image_preset'] = ''
+
         loc_type = cleaned_data.get('location_type') or LOCATION_IN_PERSON
 
         if loc_type == LOCATION_VIRTUAL:
