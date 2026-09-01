@@ -1553,7 +1553,7 @@ class TicketSettingsForm(SettingsForm):
     def clean(self):
         # required=True files should only be required if the feature is enabled
         cleaned_data = super().clean()
-        enabled = cleaned_data.get('ticket_download') == 'True'
+        enabled = cleaned_data.get('ticket_download') is True
         if not enabled:
             return cleaned_data
         for k, v in self.fields.items():
