@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: 1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 09:23+0000\n"
-"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
+"PO-Revision-Date: 2026-09-02 04:04+0000\n"
+"Last-Translator: Andreas Kleinert <Andy.Kleinert@gmail.com>\n"
 "Language-Team: German <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "de/>\n"
 "Language: de\n"
@@ -3761,6 +3761,14 @@ msgid ""
 "recommend an aspect ratio of 16:9, and at least 800 x 450 px for best "
 "display results."
 msgstr ""
+"Diese Grafik wird speziell für die Veranstaltungskarten auf der Startseite "
+"der Plattform und andere Veranstaltungslisten verwendet. Ist keine Grafik "
+"festgelegt, greift die Plattform auf die Grafik der Kopfzeile der "
+"Veranstaltung, dann auf das Logo der Veranstaltung und schließlich auf ein "
+"Standard-Platzhalter-Symbol für den Kalender zurück. Die Grafik sollte für "
+"eine rechteckige Karte optimiert sein. Wir empfehlen ein Seitenverhältnis "
+"von 16:9 und eine Größe von mindestens 800 x 450 px, um optimale "
+"Anzeigeergebnisse zu erzielen."
 
 #: eventyay/base/configurations/default_setting.py:2191
 #: eventyay/base/configurations/default_setting.py:2231
@@ -3777,6 +3785,12 @@ msgid ""
 "save (max 1000 px wide), except for SVG and animated images which remain "
 "unmodified."
 msgstr ""
+"Laden Sie Ihr Veranstaltungslogo hoch. Das Logo wird mit einer Höhe von bis "
+"zu 160 px (maximale Höhe) angezeigt, die Breite passt sich proportional an. "
+"Wir empfehlen eine Mindesthöhe von 320 px, um eine scharfe Darstellung auf "
+"Retina-Bildschirmen zu gewährleisten. Das Logo wird beim Speichern "
+"automatisch optimiert (max. 1000 px breit), mit Ausnahme von SVG- und "
+"animierten Bildern, die unverändert bleiben."
 
 #: eventyay/base/configurations/default_setting.py:2212
 #: eventyay/base/configurations/default_setting.py:2273
@@ -3805,6 +3819,12 @@ msgid ""
 "save (max 1000 px wide), except for SVG and animated images which remain "
 "unmodified."
 msgstr ""
+"Laden Sie Ihr Veranstalterlogo hoch. Das Logo wird mit einer Höhe von bis zu "
+"160 px (maximale Höhe) angezeigt, die Breite passt sich proportional an. Wir "
+"empfehlen eine Mindesthöhe von 320 px für eine scharfe Darstellung auf "
+"Retina-Bildschirmen. Das Logo wird beim Speichern automatisch optimiert "
+"(maximal 1000 px breit), mit Ausnahme von SVG- und animierten Bildern, die "
+"unverändert bleiben."
 
 #: eventyay/base/configurations/default_setting.py:2256
 #: eventyay/control/forms/organizer_forms/organizer_settings_form.py:71
@@ -4014,6 +4034,9 @@ msgid ""
 "When enabled, logged-in users can follow your organizer profile and receive "
 "notifications when you publish new public events."
 msgstr ""
+"Wenn diese Funktion aktiviert ist, können angemeldete Nutzer Ihrem "
+"Veranstalterprofil folgen und Benachrichtigungen erhalten, sobald Sie neue "
+"öffentliche Veranstaltungen veröffentlichen."
 
 #: eventyay/base/configurations/default_setting.py:2547
 #, fuzzy
@@ -4122,6 +4145,9 @@ msgid ""
 "Custom label for the \"Tickets\" menu item. Leave empty to use the default "
 "label or locale-specific translation."
 msgstr ""
+"Benutzerdefinierte Bezeichnung für den Menüpunkt „Tickets“. Lassen Sie das "
+"Feld leer, um die Standardbezeichnung oder die landesspezifische Übersetzung "
+"zu verwenden."
 
 #: eventyay/base/configurations/default_setting.py:2653
 #: eventyay/eventyay_common/templates/eventyay_common/auth/_login_form.html:42
@@ -4142,6 +4168,9 @@ msgid ""
 "Custom label for the \"Join online video\" menu item. Leave empty to use the "
 "default label or locale-specific translation."
 msgstr ""
+"Benutzerdefinierte Bezeichnung für den Menüpunkt „An Online-Video teilnehmen"
+"“. Lassen Sie das Feld leer, um die Standardbezeichnung oder die "
+"landesspezifische Übersetzung zu verwenden."
 
 #: eventyay/base/configurations/default_setting.py:2669
 #, fuzzy
@@ -4308,6 +4337,8 @@ msgid ""
 "This is a test email sent from Eventyay. If you received this email, your "
 "email settings are correct."
 msgstr ""
+"Dies ist eine Test-E-Mail von Eventyay. Wenn Sie diese E-Mail erhalten "
+"haben, sind Ihre E-Mail-Einstellungen korrekt."
 
 #: eventyay/base/email.py:351 eventyay/eventyay_common/views/event.py:563
 #: eventyay/eventyay_common/views/event.py:1588
@@ -6017,7 +6048,7 @@ msgstr "Seite %(page)s von %(of)s"
 #: eventyay/base/invoice.py:272
 msgctxt "invoice"
 msgid "Classic"
-msgstr ""
+msgstr "Klassisch"
 
 #: eventyay/base/invoice.py:326
 msgctxt "invoice"
@@ -6222,15 +6253,15 @@ msgstr ""
 
 #: eventyay/base/invoice.py:839
 msgid "Modern"
-msgstr ""
+msgstr "Modern"
 
 #: eventyay/base/meetup.py:26
 msgid "No video stream"
-msgstr ""
+msgstr "Kein Videostream"
 
 #: eventyay/base/meetup.py:27 eventyay/common/social_links.py:157
 msgid "YouTube"
-msgstr ""
+msgstr "YouTube"
 
 #: eventyay/base/meetup.py:28
 #, fuzzy
@@ -6252,7 +6283,7 @@ msgstr "Video-Plattform für diese Veranstaltung erstellen."
 
 #: eventyay/base/meetup.py:134
 msgid "Video URL / stream identifier"
-msgstr ""
+msgstr "Video-URL / Stream-ID"
 
 #: eventyay/base/meetup.py:135
 msgid "YouTube video URL or HLS stream URL."
@@ -6260,11 +6291,11 @@ msgstr ""
 
 #: eventyay/base/meetup.py:143
 msgid "A URL is required when a video type is selected."
-msgstr ""
+msgstr "Bei Auswahl eines Videotyps ist die Angabe einer URL erforderlich."
 
 #: eventyay/base/meetup.py:145
 msgid "A video type is required when a URL is provided."
-msgstr ""
+msgstr "Wenn eine URL angegeben wird, muss ein Videotyp angegeben werden."
 
 #: eventyay/base/meetup.py:150
 #, fuzzy
@@ -6340,6 +6371,8 @@ msgstr "Bestellung als bezahlt markiert"
 #: eventyay/base/models/auth.py:196
 msgid "Spam accounts are blocked from logging in but remain in the database."
 msgstr ""
+"Spam-Konten werden am Anmelden gehindert, bleiben jedoch in der Datenbank "
+"erhalten."
 
 #: eventyay/base/models/auth.py:198
 msgid "Date joined"
