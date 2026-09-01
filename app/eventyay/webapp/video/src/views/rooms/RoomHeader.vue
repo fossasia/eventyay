@@ -1,17 +1,12 @@
 <template lang="pug">
 .c-room-header
-	.ui-page-header(v-if="!modules['page.markdown'] && !modules['page.landing']")
+	.ui-page-header(v-if="!modules['page.markdown'] && !modules['page.landing'] && $route.name !== 'room:manage'")
 		.room-info
 			.room-name(v-html="$emojify(room.name)")
 			.room-session(v-if="currentSession") {{ $localize(currentSession.title) }}
 		//- bunt-icon-button(v-if="$features.enabled('schedule-control')", @click="showEditSchedule = true") calendar_edit
 		.actions
 			bunt-icon-button(v-if="modules['call.bigbluebutton'] && hasPermission('room:bbb.recordings')", :tooltip="$t('Recordings')", tooltipPlacement="bottom-end", @click="showRecordingsPrompt = true") file-video-outline
-			.button-group(v-if="['stage', 'channel-bbb', 'channel-janus', 'channel-zoom', 'channel-jitsi'].includes(roomType) && canManage")
-				// TODO buntpapier does not support replace
-				// hardlink params so home page alias works
-				bunt-link-button(:to="{name: 'room:manage', params: {roomId: room.id}}", replace) manage
-				bunt-link-button(:to="{name: 'room', params: {roomId: room.id}}", replace) view
 	router-view(:room="room", :modules="modules")
 	transition(name="prompt")
 		recordings-prompt(v-if="showRecordingsPrompt && room", :room="room", @close="showRecordingsPrompt = false")
@@ -169,19 +164,8 @@ export default {
 		.actions
 			flex: none
 			display: flex
+			align-items: center
 			gap: 8px
 			.bunt-icon-button
 				icon-button-style(style: clear)
-			.button-group
-				> .bunt-link-button
-					box-sizing: border-box
-					&.router-link-exact-active
-						themed-button-primary()
-					&:not(.router-link-exact-active)
-						themed-button-secondary()
-						border: 2px solid var(--clr-primary)
-					&:first-child
-						border-radius: 4px 0 0 4px
-					&:last-child
-						border-radius: 0 4px 4px 0
 </style>

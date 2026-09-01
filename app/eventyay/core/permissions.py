@@ -169,6 +169,8 @@ ORGANIZER_ROLES = frozenset(
         'admin',
         'apiuser',
         'scheduleuser',
+        'moderator',
+        'room_creator',
         *VIDEO_ROLE_PERMISSIONS,
         *LEGACY_VIDEO_ROLE_PERMISSIONS,
     }

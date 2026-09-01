@@ -3,12 +3,12 @@
 	.ui-page-header
 		h1 {{ $t('Event Config') }}
 	scrollbars(y)
-		bunt-progress-circular(size="huge", v-if="!config && !error")
+		bunt-progress-circular(size="huge", v-if="!loaded && !error")
 		.error(v-if="error") {{ $t('We could not fetch the current configuration.') }}
-		.ui-form-body(v-if="config")
+		.ui-form-body(v-if="loaded")
 			h2 {{ $t('System details') }}
 			bunt-input(v-model="config.connection_limit", :label="$t('Max connections')", name="connection_limit", :hint="$t('Set to 0 to allow unlimited connections per user')", :validation="v$.config.connection_limit")
-			template(v-if="$features.enabled('conftool')")
+			template(v-if="$features?.enabled('conftool')")
 				h2 {{ $t('Conftool') }}
 				bunt-input(v-model="config.conftool_url", :label="$t('Conftool REST API URL')", name="conftool_url", :validation="v$.config.conftool_url")
 				bunt-input(v-model="config.conftool_password", :label="$t('Conftool REST API Password')", name="conftool_password")
@@ -28,19 +28,38 @@
 			bunt-input-outline-container(:label="$t('hls.js config')", :class="{error: v$.hlsConfig.$invalid}")
 				template(#default="{focus, blur}")
 					textarea(@focus="focus", @blur="blur", v-model="hlsConfig")
-			.json-error-message {{ v$.hlsConfig.isJson.$message }}
-	.ui-form-actions
+			.json-error-message(v-if="v$.hlsConfig.$invalid") {{ v$.hlsConfig.$errors[0]?.$message || $t('Invalid JSON') }}
+	.ui-form-actions(v-if="loaded")
 		bunt-button.btn-save(@click="save", :loading="saving", :error-message="error") {{ $t('Save') }}
 		.errors {{ validationErrors.join(', ') }}
 </template>
 <script setup>
 import { ref, computed, onMounted, getCurrentInstance } from 'vue'
+import { useStore } from 'vuex'
 import { useVuelidate } from '@vuelidate/core'
 import api from 'lib/api'
 import i18n from 'i18n'
 import { required, integer, isJson, url } from 'lib/validators'
 
-const config = ref(null)
+const store = useStore()
+const loaded = ref(false)
+const config = ref({
+	connection_limit: 0,
+	conftool_url: '',
+	conftool_password: '',
+	track_room_views: true,
+	track_world_views: true,
+	bbb_defaults: {
+		record: false,
+		hide_presentation: false,
+		waiting_room: false,
+		auto_microphone: false,
+		auto_camera: false,
+		bbb_mute_on_start: false,
+		bbb_disable_cam: false,
+		bbb_disable_chat: false
+	}
+})
 const hlsConfig = ref('')
 const saving = ref(false)
 const error = ref(null)
@@ -50,26 +69,59 @@ const features = instance?.proxy?.$features
 const validationErrors = computed(() => v$.value.$errors?.map(e => e.$message) || [])
 
 // Validation rules
-const rules = {
+const rules = computed(() => ({
 	config: {
 		connection_limit: {
 			required: required(i18n.t('Max connections is required')),
 			integer: integer(i18n.t('Max connections must be a number'))
 		},
-		conftool_url: {url: url(i18n.t('Conftool URL must be a URL'))}
+		...(features?.enabled('conftool') && config.value?.conftool_url ? {
+			conftool_url: { url: url(i18n.t('Conftool URL must be a URL')) }
+		} : {})
 	},
-	hlsConfig: { isJson: isJson() }
-}
+	hlsConfig: { isJson: isJson(i18n.t('Invalid JSON')) }
+}))
 
 const v$ = useVuelidate(rules, { config, hlsConfig })
 
-onMounted(async () => {
+async function fetchConfig() {
 	try {
-		config.value = await api.call('world.config.get')
-		hlsConfig.value = JSON.stringify(config.value.video_player?.['hls.js'] || undefined, null, 2)
+		const data = await api.call('world.config.get')
+		data.bbb_defaults = Object.assign({
+			record: false,
+			hide_presentation: false,
+			waiting_room: false,
+			auto_microphone: false,
+			auto_camera: false,
+			bbb_mute_on_start: false,
+			bbb_disable_cam: false,
+			bbb_disable_chat: false
+		}, data.bbb_defaults || {})
+		config.value = {
+			...data,
+			track_world_views: data.track_world_views ?? data.track_event_views ?? true
+		}
+		hlsConfig.value = data.video_player?.['hls.js'] ? JSON.stringify(data.video_player['hls.js'], null, 2) : ''
+		loaded.value = true
 	} catch (e) {
 		error.value = e.message || e.toString()
-		console.log(e)
+		console.error(e)
+	}
+}
+
+onMounted(() => {
+	if (store.state.connected) {
+		fetchConfig()
+	} else {
+		const unwatch = store.watch(
+			state => state.connected,
+			connected => {
+				if (connected) {
+					fetchConfig()
+					unwatch()
+				}
+			}
+		)
 	}
 })
 
@@ -80,17 +132,18 @@ async function save() {
 	saving.value = true
 	try {
 		const patch = {
-			connection_limit: config.value.connection_limit,
+			connection_limit: parseInt(config.value.connection_limit, 10) || 0,
 			bbb_defaults: config.value.bbb_defaults,
-			track_room_views: config.value.track_room_views,
-			track_world_views: config.value.track_world_views
+			track_room_views: Boolean(config.value.track_room_views),
+			track_event_views: Boolean(config.value.track_world_views),
+			track_world_views: Boolean(config.value.track_world_views)
 		}
 		if (features?.enabled('conftool')) {
-			patch.conftool_url = config.value.conftool_url
-			patch.conftool_password = config.value.conftool_password
+			patch.conftool_url = config.value.conftool_url || ''
+			patch.conftool_password = config.value.conftool_password || ''
 		}
-		if (hlsConfig.value) {
-			patch.video_player = { 'hls.js': JSON.parse(hlsConfig.value) }
+		if (hlsConfig.value && hlsConfig.value.trim()) {
+			patch.video_player = { 'hls.js': JSON.parse(hlsConfig.value.trim()) }
 		} else {
 			patch.video_player = null
 		}

@@ -39,20 +39,40 @@ export default {
 		}
 	},
 	async created() {
-		// TODO: Force reloading if world.updated is received from the server
-		try {
-			this.config = await api.call('world.config.get')
-
-			// Enforce some defaults
-			this.config.theme = {logo: {}, colors: {}, streamOfflineImage: null, textOverwrites: {}, ...this.config.theme}
-			this.config.theme.colors = {...DEFAULT_COLORS, ...this.config.theme.colors}
-			this.config.theme.logo = {...DEFAULT_LOGO, ...this.config.theme.logo}
-		} catch (error) {
-			this.error = error
-			console.log(error)
-		}
+		this.ensureConnectedAndFetch()
+	},
+	beforeUnmount() {
+		if (this._unwatchConnected) this._unwatchConnected()
 	},
 	methods: {
+		ensureConnectedAndFetch() {
+			if (this.$store.state.connected) {
+				this.fetchConfig()
+			} else {
+				this._unwatchConnected = this.$store.watch(
+					state => state.connected,
+					connected => {
+						if (connected) {
+							this.fetchConfig()
+							if (this._unwatchConnected) this._unwatchConnected()
+						}
+					}
+				)
+			}
+		},
+		async fetchConfig() {
+			try {
+				this.config = await api.call('world.config.get')
+
+				// Enforce some defaults
+				this.config.theme = {logo: {}, colors: {}, streamOfflineImage: null, textOverwrites: {}, ...this.config.theme}
+				this.config.theme.colors = {...DEFAULT_COLORS, ...this.config.theme.colors}
+				this.config.theme.logo = {...DEFAULT_LOGO, ...this.config.theme.logo}
+			} catch (error) {
+				this.error = error
+				console.error(error)
+			}
+		},
 		set_traits(t) {
 			this.traits = t.split(',').map((i) => i.trim())
 		},

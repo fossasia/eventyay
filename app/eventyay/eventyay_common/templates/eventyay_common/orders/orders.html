@@ -16,11 +16,35 @@
     <div class="advanced-filter-search" data-advanced-filter-search>
         <form class="filter-form advanced-filter-search-form" action="" method="get">
             <div class="advanced-filter-search-bar">
-                <div class="advanced-filter-field" style="flex: 1 1 0; margin-bottom: 0;">
+                <div class="advanced-filter-field" style="flex: 1 1 200px; margin-bottom: 0;">
+                    {% bootstrap_field filter_form.code layout='inline' %}
+                </div>
+                <div class="advanced-filter-field" style="flex: 1 1 200px; margin-bottom: 0;">
                     {% bootstrap_field filter_form.event layout='inline' %}
                 </div>
+                <div class="advanced-filter-field" style="flex: 1 1 160px; margin-bottom: 0;">
+                    {% bootstrap_field filter_form.status layout='inline' %}
+                </div>
+                <div class="advanced-filter-field" style="flex: 1 1 160px; margin-bottom: 0;">
+                    <label class="sr-only" for="{{ filter_form.date_from.id_for_label }}">{{ filter_form.date_from.label }}</label>
+                    <div class="input-group date">
+                        {{ filter_form.date_from }}
+                        <span class="input-group-addon" aria-hidden="true">
+                            <span class="fa fa-calendar"></span>
+                        </span>
+                    </div>
+                </div>
+                <div class="advanced-filter-field" style="flex: 1 1 160px; margin-bottom: 0;">
+                    <label class="sr-only" for="{{ filter_form.date_to.id_for_label }}">{{ filter_form.date_to.label }}</label>
+                    <div class="input-group date">
+                        {{ filter_form.date_to }}
+                        <span class="input-group-addon" aria-hidden="true">
+                            <span class="fa fa-calendar"></span>
+                        </span>
+                    </div>
+                </div>
                 <div class="advanced-filter-search-actions">
-                    <button type="submit" class="btn btn-primary" aria-label="{% trans 'Apply filters' %}">
+                    <button type="submit" class="btn btn-primary" aria-label="{% trans 'Apply filters' %}" title="{% trans 'Apply filters' %}">
                         <span class="fa fa-filter" aria-hidden="true"></span>
                     </button>
                     <a href="{{ request.path }}" class="btn btn-default btn-clear-filter" aria-label="{% trans 'Clear filters' %}" title="{% trans 'Clear filters' %}">
@@ -72,4 +96,35 @@
         </div>
         {% include 'pretixcontrol/pagination.html' %}
     </div>
+    <script>
+        (function () {
+            var params = new URLSearchParams(window.location.search);
+            ['date_from', 'date_to'].forEach(function (name) {
+                if (!params.get(name)) {
+                    var input = document.querySelector('input[name="' + name + '"]');
+                    if (input) input.value = '';
+                }
+            });
+
+            var fromInput = document.querySelector('input[name="date_from"]');
+            var toInput = document.querySelector('input[name="date_to"]');
+            if (fromInput && toInput) {
+                function syncRangeLimits() {
+                    if (fromInput.value) {
+                        toInput.min = fromInput.value;
+                    } else {
+                        toInput.removeAttribute('min');
+                    }
+                    if (toInput.value) {
+                        fromInput.max = toInput.value;
+                    } else {
+                        fromInput.removeAttribute('max');
+                    }
+                }
+                fromInput.addEventListener('change', syncRangeLimits);
+                toInput.addEventListener('change', syncRangeLimits);
+                syncRangeLimits();
+            }
+        })();
+    </script>
 {% endblock %}
