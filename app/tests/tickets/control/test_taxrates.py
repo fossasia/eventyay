@@ -166,7 +166,7 @@ class TaxRateFormTest(SoupTest):
         )
         assert not form.is_valid()
         assert 'rate' in form.errors
-        assert 'Tax rate must be between 0 and 100.' in form.errors['rate']
+        assert any('greater than or equal to 0' in err for err in form.errors['rate'])
 
         form = TaxRuleLineForm(
             data={
@@ -179,7 +179,7 @@ class TaxRateFormTest(SoupTest):
         )
         assert not form.is_valid()
         assert 'rate' in form.errors
-        assert 'Tax rate must be between 0 and 100.' in form.errors['rate']
+        assert any('less than or equal to 100' in err for err in form.errors['rate'])
 
         form = TaxRuleLineForm(
             data={

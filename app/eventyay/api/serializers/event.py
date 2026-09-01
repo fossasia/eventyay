@@ -3,7 +3,6 @@ import logging
 from django.conf import settings
 from django.core.exceptions import SuspiciousFileOperation, ValidationError
 from django.core.files.storage import default_storage
-from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import transaction
 from django.utils.crypto import get_random_string
 from django.utils.functional import cached_property
@@ -664,7 +663,8 @@ class TaxRuleSerializer(CountryFieldMixin, I18nAwareModelSerializer):
     rate = serializers.DecimalField(
         max_digits=10,
         decimal_places=2,
-        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        min_value=0,
+        max_value=100,
     )
 
     class Meta:
