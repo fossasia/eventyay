@@ -15,8 +15,9 @@
     </div>
 </nav>
 
-<form class="form-horizontal" method="post" enctype="multipart/form-data">
+<form class="form-horizontal" method="post" enctype="multipart/form-data" novalidate>
     {% csrf_token %}
+    {% if draft_id %}<input type="hidden" name="draft_id" value="{{ draft_id }}">{% endif %}
     {% bootstrap_form_errors form %}
 
     <div class="tabbed-form">
@@ -64,6 +65,9 @@
                 </div>
             </div>
             {% bootstrap_field form.attachment layout='horizontal' %}
+            <p class="help-block col-md-9 col-md-offset-3 text-muted">
+                <i class="fa fa-info-circle"></i> {% translate "Attachments are not saved in drafts. Please reattach files before sending." %}
+            </p>
         </fieldset>
 
         <!-- Scheduling Section -->
@@ -87,13 +91,25 @@
         </fieldset>
     {% endif %}
 
-    <div class="form-group submit-group">
-        <button type="submit" class="btn btn-default btn-save" name="action" value="preview">
-            {% translate "Preview email" %}
-        </button>
-        <button type="submit" class="btn btn-primary btn-save">
-            {% translate "Send to outbox" %}
-        </button>
+    <div class="form-group submit-group clearfix">
+        <span class="text-muted pull-left" id="recipient-summary" style="padding-top: 7px;">
+            {% blocktranslate count count=recipient_count|default:0 %}
+                {{ count }} recipient selected
+            {% plural %}
+                {{ count }} recipients selected
+            {% endblocktranslate %}
+        </span>
+        <div class="pull-right">
+            <button type="submit" class="btn btn-default btn-save" name="action" value="draft" formnovalidate>
+                {% translate "Save draft" %}
+            </button>
+            <button type="submit" class="btn btn-default btn-save" name="action" value="preview">
+                {% translate "Preview email" %}
+            </button>
+            <button type="submit" class="btn btn-primary btn-save" name="action" value="send">
+                {% translate "Send to outbox" %}
+            </button>
+        </div>
     </div>
 </form>
 {% endblock %}
