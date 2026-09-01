@@ -15,6 +15,7 @@ from eventyay.base.models.auth import User
 from eventyay.eventyay_common.utils import encode_email
 from eventyay.eventyay_common.video.permissions import (
     collect_user_video_traits,
+    managed_video_trait_values,
     replace_managed_video_traits,
 )
 from eventyay.features.live.channels import GROUP_USER
@@ -22,16 +23,29 @@ from eventyay.features.live.channels import GROUP_USER
 logger = logging.getLogger(__name__)
 
 
+def is_organizer_token_traits(event_slug: str, traits: Iterable[str] | None) -> bool:
+    """Check if traits indicate an organizer session (admin, organizer, or managed video traits)."""
+    traits_set = set(traits or [])
+    if 'admin' in traits_set or f'eventyay-video-event-{event_slug}-organizer' in traits_set:
+        return True
+    managed = managed_video_trait_values(event_slug)
+    return bool(traits_set.intersection(managed))
+
+
 def apply_live_team_video_traits(event, token_id, traits):
     """
     Replace team-managed Video traits using live Organizer → Teams grants.
 
     Cached JWTs (localStorage) can outlive team permission changes. When the JWT
-    uid maps to a platform account, recompute managed traits from current teams.
-    Ticket-only tokens without a platform account are left unchanged.
+    was issued for an organizer session and maps to a platform account, recompute
+    managed traits from current teams.
+    Attendee tokens (e.g. ticket purchase) are not upgraded to organizer sessions.
     """
     traits = list(traits or [])
     if not event or not token_id:
+        return traits
+
+    if not is_organizer_token_traits(event.slug, traits):
         return traits
 
     from eventyay.base.services.user import (
@@ -58,6 +72,19 @@ def apply_live_team_video_traits(event, token_id, traits):
         )
     if not platform_user:
         return traits
+
+    # Check if this platform user has an active staff session
+    has_active_staff = False
+    with scopes_disabled():
+        from eventyay.base.models.auth import StaffSession
+        has_active_staff = StaffSession.objects.filter(
+            user=platform_user,
+            date_end__isnull=True,
+        ).exists()
+
+    # If the user does not have an active staff session, strip 'admin' from traits
+    if not has_active_staff and 'admin' in traits:
+        traits = [t for t in traits if t != 'admin']
 
     # Fresh team membership after permission edits (avoid request-scoped cache).
     platform_user._teamcache = {}
@@ -91,6 +118,7 @@ def sync_video_traits_for_platform_users(
     Recomputes team-managed traits from current Team membership and optionally
     force-reloads connected clients so revoked access applies immediately.
     """
+    from eventyay.base.models.auth import StaffSession
     from eventyay.base.services.user import update_user
 
     users_by_token: dict[str, User] = {}
@@ -102,16 +130,19 @@ def sync_video_traits_for_platform_users(
     if not users_by_token:
         return
 
+    filter_kwargs = {
+        '_token_id_upper__in': list(users_by_token.keys()),
+        'deleted': False,
+    }
+    if organizer:
+        filter_kwargs['event__organizer'] = organizer
+
     with scopes_disabled():
         # Match token_id case-insensitively: JWT uids are uppercased by
         # encode_email, but older rows may store a different case.
         video_users = list(
             User.objects.annotate(_token_id_upper=Upper('token_id'))
-            .filter(
-                event__organizer=organizer,
-                _token_id_upper__in=list(users_by_token.keys()),
-                deleted=False,
-            )
+            .filter(**filter_kwargs)
             .select_related('event', 'event__organizer')
         )
 
@@ -120,13 +151,25 @@ def sync_video_traits_for_platform_users(
         if not platform_user or not video_user.event_id:
             continue
 
+        if not is_organizer_token_traits(video_user.event.slug, video_user.traits):
+            continue
+
+        has_active_staff = StaffSession.objects.filter(
+            user=platform_user,
+            date_end__isnull=True,
+        ).exists()
+
+        current_traits = list(video_user.traits or [])
+        if not has_active_staff and 'admin' in current_traits:
+            current_traits = [t for t in current_traits if t != 'admin']
+
         platform_user._teamcache = {}
         permission_set = platform_user.get_event_permission_set(
-            organizer, video_user.event
+            video_user.event.organizer, video_user.event
         )
         new_traits = replace_managed_video_traits(
             video_user.event.slug,
-            list(video_user.traits or []),
+            current_traits,
             collect_user_video_traits(video_user.event.slug, permission_set),
         )
         if list(video_user.traits or []) == new_traits:

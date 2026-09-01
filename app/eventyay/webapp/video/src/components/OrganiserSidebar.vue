@@ -1,9 +1,9 @@
 <template lang="pug">
-aside.c-rooms-sidebar(
+aside.c-organiser-sidebar(
 	:class="{'sidebar-collapsed': collapsed, 'sidebar-mobile-open': showMobile && !snapBack}",
-	:style="style",
+	:style="sidebarStyle",
 	role="navigation",
-	:aria-label="$t('Video Navigation')",
+	:aria-label="$t('Video Organiser Navigation')",
 	@pointerdown="onPointerdown",
 	@pointermove="onPointermove",
 	@pointerup="onPointerup",
@@ -11,13 +11,13 @@ aside.c-rooms-sidebar(
 )
 		.startpage-sidebar-inner
 			.startpage-sidebar-context
-				router-link.dropdown-toggle(:to="{name: 'about'}", @click="onNavClick")
+				router-link.dropdown-toggle(:to="{name: 'admin'}", @click="onNavClick")
 					span.fa-stack.context-icon-badge
 						i.mdi.mdi-video-vintage
 					.context-indicator
 						span.context-name(v-if="world && world.title", v-html="$emojify(world.title)")
-						span.context-name(v-else) {{ $t('Live Video') }}
-						span.context-meta {{ $t('Event stream') }}
+						span.context-name(v-else) {{ $t('Video Management') }}
+						span.context-meta {{ eventDateSubtitle }}
 				bunt-icon-button.btn-close-mobile(
 					v-if="$mq.below.m",
 					icon="close",
@@ -25,149 +25,152 @@ aside.c-rooms-sidebar(
 					@click="$emit('close')"
 				)
 
-			ul.startpage-sidebar-nav(role="group", :aria-label="$t('Attendee Navigation')")
+			ul.startpage-sidebar-nav(role="group", :aria-label="$t('Organiser Navigation')")
 				//- Overview
 				li
-					router-link.nav-link(:to="{name: 'about'}", exact, @click="onNavClick")
-						span.fa.mdi.mdi-information-outline(aria-hidden="true")
+					router-link.nav-link(:to="{name: 'admin'}", exact, @click="onNavClick")
+						span.fa.mdi.mdi-view-dashboard-outline(aria-hidden="true")
 						span.sidebar-text {{ $t('Overview') }}
 
-				//- Schedule
-				li
-					router-link.nav-link(:to="{name: 'schedule'}", @click="onNavClick")
-						span.fa.mdi.mdi-calendar-blank-outline(aria-hidden="true")
-						span.sidebar-text {{ $t('Schedule') }}
-
-				//- Speakers
-				li
-					router-link.nav-link(:to="{name: 'schedule:speakers'}", @click="onNavClick")
-						span.fa.mdi.mdi-account-voice(aria-hidden="true")
-						span.sidebar-text {{ $t('Speakers') }}
-
-				//- Custom Pages
-				li(v-for="page of roomsByType.page", :key="page.id")
-					router-link.nav-link(:to="{name: 'room', params: {roomId: page.id}}", @click="onNavClick")
-						span.fa.mdi.mdi-file-document-outline(aria-hidden="true")
-						span.sidebar-text(v-html="$emojify(page.name)")
-
-				//- Stages & Streams (collapsible, expanded by default)
-				li.nav-fold(v-if="hasStagesOrRooms")
+				//- Rooms & Stages (collapsible)
+				li.nav-fold(v-if="hasPermission('room:update')")
 					.has-children
-						span.nav-link.nav-link-inner(@click="toggleFold('stages')")
-							span.fa.mdi.mdi-video-vintage(aria-hidden="true")
-							span.sidebar-text {{ $t('Stages & Rooms') }}
-						button.arrow-btn(type="button", :aria-expanded="String(openFolds.stages)", @click.stop="toggleFold('stages')")
-							i.fa(:class="openFolds.stages ? 'fa-angle-down' : 'fa-angle-left'", aria-hidden="true")
+						router-link.nav-link.nav-link-inner(:to="{name: 'admin:rooms:index'}", :class="{active: isRoomsActive}", @click="onNavClick")
+							span.fa.mdi.mdi-door-open(aria-hidden="true")
+							span.sidebar-text {{ $t('Rooms & Stages') }}
+						button.arrow-btn(type="button", :aria-expanded="String(openFolds.rooms)", @click.stop="toggleFold('rooms')")
+							i.fa(:class="openFolds.rooms ? 'fa-angle-down' : 'fa-angle-left'", aria-hidden="true")
 					transition(name="fold")
-						.nav-sub-list(v-show="openFolds.stages")
+						.nav-sub-list(v-show="openFolds.rooms")
 							router-link.nav-sub-link(
-								v-for="stage of roomsByType.stage",
-								:key="stage.room.id",
-								:to="{name: 'room', params: {roomId: stage.room.id}}",
-								:class="{active: stage.room.id === $route.params.roomId}",
+								:to="{name: 'admin:rooms:index'}",
+								:class="{active: $route.name === 'admin:rooms:index'}",
 								@click="onNavClick"
 							)
-								span.room-name(v-html="$emojify(stage.room.name)")
-								span.viewer-count-badge(:title="getOccupancyTitle(stage.room)", :aria-label="getOccupancyTitle(stage.room)")
-									i.mdi.mdi-account-outline(aria-hidden="true")
-									span {{ getOccupancyCount(stage.room) }}
-								span.notifications(v-if="stage.notifications") {{ stage.notifications }}
-							router-link.nav-sub-link(
-								v-for="room of roomsByType.networking",
+								span {{ $t('All Rooms') }}
+							router-link.nav-sub-link.nav-sub-link--nested(
+								v-for="room of individualRooms",
 								:key="room.id",
-								:to="{name: 'room', params: {roomId: room.id}}",
-								:class="{active: room.id === $route.params.roomId}",
+								:to="getRoomTargetRoute(room)",
+								:class="{active: ($route.name === 'room:manage' || $route.name === 'admin:rooms:item') && String($route.params.roomId) === String(room.id)}",
 								@click="onNavClick"
 							)
 								span.room-name(v-html="$emojify(room.name)")
 								span.viewer-count-badge(:title="getOccupancyTitle(room)", :aria-label="getOccupancyTitle(room)")
 									i.mdi.mdi-account-outline(aria-hidden="true")
 									span {{ getOccupancyCount(room) }}
-
-				//- Chat Channels (collapsible, expanded by default)
-				li.nav-fold(v-if="hasChatChannels")
-					.has-children
-						span.nav-link.nav-link-inner(@click="toggleFold('channels')")
-							span.fa.mdi.mdi-chat-processing-outline(aria-hidden="true")
-							span.sidebar-text {{ $t('Chat Channels') }}
-						button.arrow-btn(type="button", :aria-expanded="String(openFolds.channels)", @click.stop="toggleFold('channels')")
-							i.fa(:class="openFolds.channels ? 'fa-angle-down' : 'fa-angle-left'", aria-hidden="true")
-					transition(name="fold")
-						.nav-sub-list(v-show="openFolds.channels")
-							router-link.nav-sub-link(
-								v-for="chat of roomsByType.textChat",
-								:key="chat.room.id",
-								:to="{name: 'room', params: {roomId: chat.room.id}}",
-								:class="{active: chat.room.id === $route.params.roomId, unread: hasUnreadMessages(chat.room.modules[0].channel_id)}",
-								@click="onNavClick"
-							)
-								span.room-name(v-html="$emojify(chat.room.name)")
-								span.viewer-count-badge(:title="getOccupancyTitle(chat.room)", :aria-label="getOccupancyTitle(chat.room)")
-									i.mdi.mdi-account-outline(aria-hidden="true")
-									span {{ getOccupancyCount(chat.room) }}
-								span.notifications(v-if="chat.notifications") {{ chat.notifications }}
-							router-link.nav-sub-link(
-								v-for="chat of roomsByType.videoChat",
-								:key="chat.id",
-								:to="{name: 'room', params: {roomId: chat.id}}",
-								:class="{active: chat.id === $route.params.roomId}",
-								@click="onNavClick"
-							)
-								span.room-name(v-html="$emojify(chat.name)")
-								span.viewer-count-badge(:title="getOccupancyTitle(chat)", :aria-label="getOccupancyTitle(chat)")
-									i.mdi.mdi-account-outline(aria-hidden="true")
-									span {{ getOccupancyCount(chat) }}
-							a.nav-sub-link.nav-sub-link--action(v-if="worldHasTextChannels", @click.prevent="showChannelBrowser = true; onNavClick()")
-								span.mdi.mdi-compass-outline(aria-hidden="true")
-								span {{ $t('Browse Channels') }}
-
-				//- Direct Messages (distinct collapsible section, expanded by default)
-				li.nav-fold(v-if="hasPermission('world:chat.direct')")
-					.has-children
-						span.nav-link.nav-link-inner(@click="toggleFold('dms')")
-							span.fa.mdi.mdi-account-multiple-outline(aria-hidden="true")
-							span.sidebar-text {{ $t('Direct Messages') }}
-						button.arrow-btn(type="button", :aria-expanded="String(openFolds.dms)", @click.stop="toggleFold('dms')")
-							i.fa(:class="openFolds.dms ? 'fa-angle-down' : 'fa-angle-left'", aria-hidden="true")
-					transition(name="fold")
-						.nav-sub-list(v-show="openFolds.dms")
-							router-link.nav-sub-link(
-								v-for="channel of directMessageChannels",
-								:key="channel.id",
-								:to="{name: 'channel', params: {channelId: channel.id}}",
-								:class="{active: channel.id === $route.params.channelId, unread: hasUnreadMessages(channel.id)}",
-								@click="onNavClick"
-							)
-								span.mdi(aria-hidden="true", :class="call && call.channel === channel.id ? 'mdi-phone' : 'mdi-account-outline'")
-								span {{ getDMChannelName(channel) }}
-							a.nav-sub-link.nav-sub-link--add(@click.prevent="showDMCreationPrompt = true; onNavClick()")
+							router-link.nav-sub-link.nav-sub-link--add.nav-sub-link--nested(:to="{name: 'admin:rooms:new'}", @click="onNavClick")
 								span.mdi.mdi-plus(aria-hidden="true")
-								span {{ $t('New Message') }}
+								span {{ $t('New Room') }}
+
+				//- Chat Rooms (collapsible)
+				li.nav-fold(v-if="hasPermission('room:update')")
+					.has-children
+						router-link.nav-link.nav-link-inner(:to="{name: 'admin:chat:index'}", :class="{active: isChatActive}", @click="onNavClick")
+							span.fa.mdi.mdi-chat-processing-outline(aria-hidden="true")
+							span.sidebar-text {{ $t('Chat Rooms') }}
+						button.arrow-btn(type="button", :aria-expanded="String(openFolds.chat)", @click.stop="toggleFold('chat')")
+							i.fa(:class="openFolds.chat ? 'fa-angle-down' : 'fa-angle-left'", aria-hidden="true")
+					transition(name="fold")
+						.nav-sub-list(v-show="openFolds.chat")
+							router-link.nav-sub-link(
+								:to="{name: 'admin:chat:index'}",
+								:class="{active: $route.name === 'admin:chat:index'}",
+								@click="onNavClick"
+							)
+								span {{ $t('All Channels') }}
+							router-link.nav-sub-link.nav-sub-link--nested(
+								v-for="channel of individualChannels",
+								:key="channel.id",
+								:to="{name: 'admin:chat:item', params: {roomId: channel.id}}",
+								:class="{active: $route.name === 'admin:chat:item' && $route.params.roomId === channel.id}",
+								@click="onNavClick"
+							)
+								span.room-name(v-html="$emojify(channel.name)")
+								span.viewer-count-badge(:title="getOccupancyTitle(channel)", :aria-label="getOccupancyTitle(channel)")
+									i.mdi.mdi-account-outline(aria-hidden="true")
+									span {{ getOccupancyCount(channel) }}
+							router-link.nav-sub-link.nav-sub-link--add.nav-sub-link--nested(:to="{name: 'admin:chat:new'}", @click="onNavClick")
+								span.mdi.mdi-plus(aria-hidden="true")
+								span {{ $t('New Channel') }}
+
+				//- Announcements
+				li(v-if="hasPermission('world:announce')")
+					router-link.nav-link(:to="{name: 'admin:announcements'}", @click="onNavClick")
+						span.fa.mdi.mdi-bullhorn-outline(aria-hidden="true")
+						span.sidebar-text {{ $t('Announcements') }}
+
+				//- Kiosks (collapsible)
+				li.nav-fold(v-if="hasPermission('world:kiosks.manage')")
+					.has-children
+						router-link.nav-link.nav-link-inner(:to="{name: 'admin:kiosks:index'}", :class="{active: isKiosksActive}", @click="onNavClick")
+							span.fa.mdi.mdi-monitor-dashboard(aria-hidden="true")
+							span.sidebar-text {{ $t('Kiosks') }}
+						button.arrow-btn(type="button", :aria-expanded="String(openFolds.kiosks)", @click.stop="toggleFold('kiosks')")
+							i.fa(:class="openFolds.kiosks ? 'fa-angle-down' : 'fa-angle-left'", aria-hidden="true")
+					transition(name="fold")
+						.nav-sub-list(v-show="openFolds.kiosks")
+							router-link.nav-sub-link(
+								:to="{name: 'admin:kiosks:index'}",
+								:class="{active: $route.name === 'admin:kiosks:index'}",
+								@click="onNavClick"
+							)
+								span {{ $t('All Kiosks') }}
+							router-link.nav-sub-link.nav-sub-link--nested(
+								v-for="kiosk of individualKiosks",
+								:key="kiosk.id",
+								:to="{name: 'admin:kiosks:item', params: {kioskId: kiosk.id}}",
+								:class="{active: $route.name === 'admin:kiosks:item' && $route.params.kioskId === kiosk.id}",
+								@click="onNavClick"
+							)
+								span(v-html="$emojify(kiosk.profile?.display_name || kiosk.profile?.name || kiosk.id)")
+							router-link.nav-sub-link.nav-sub-link--add.nav-sub-link--nested(:to="{name: 'admin:kiosks:new'}", @click="onNavClick")
+								span.mdi.mdi-plus(aria-hidden="true")
+								span {{ $t('New Kiosk') }}
+
+				//- Users
+				li(v-if="hasPermission('world:users.list')")
+					router-link.nav-link(:to="{name: 'admin:users'}", @click="onNavClick")
+						span.fa.mdi.mdi-account-multiple-outline(aria-hidden="true")
+						span.sidebar-text {{ $t('Users') }}
+
+				//- Configuration / Settings (collapsible)
+				li.nav-fold(v-if="hasPermission('world:update')")
+					.has-children
+						router-link.nav-link.nav-link-inner(:to="{name: 'admin:config'}", :class="{active: isConfigActive}", @click="onNavClick")
+							span.fa.mdi.mdi-wrench(aria-hidden="true")
+							span.sidebar-text {{ $t('Configuration') }}
+						button.arrow-btn(type="button", :aria-expanded="String(openFolds.config)", @click.stop="toggleFold('config')")
+							i.fa(:class="openFolds.config ? 'fa-angle-down' : 'fa-angle-left'", aria-hidden="true")
+					transition(name="fold")
+						.nav-sub-list(v-show="openFolds.config")
+							router-link.nav-sub-link(:to="{name: 'admin:config'}", exact, @click="onNavClick")
+								span {{ $t('General') }}
+							router-link.nav-sub-link(:to="{name: 'admin:config:privacy'}", @click="onNavClick")
+								span {{ $t('Privacy') }}
+							router-link.nav-sub-link(:to="{name: 'admin:config:token-generator'}", @click="onNavClick")
+								span {{ $t('Token Generator') }}
+							router-link.nav-sub-link(:to="{name: 'admin:config:reports'}", @click="onNavClick")
+								span {{ $t('Reports') }}
+							router-link.nav-sub-link(:to="{name: 'admin:config:audit-log'}", @click="onNavClick")
+								span {{ $t('Audit Log') }}
 
 			.buffer
 
-			.sidebar-footer-action(v-if="hasOrganiserPermissions")
-				router-link.btn-manage-video(:to="{name: 'admin'}", @click="onNavClick")
-					i.fa.fa-cog(aria-hidden="true")
-					span {{ $t('Manage') }}
-
-		teleport(to="body")
-			transition(name="prompt")
-				channel-browser(v-if="showChannelBrowser", @close="showChannelBrowser = false")
-				create-dm-prompt(v-else-if="showDMCreationPrompt && hasPermission('world:chat.direct')", @close="showDMCreationPrompt = false")
+			.sidebar-footer-action
+				router-link.btn-public-view(:to="{name: 'about'}", @click="onNavClick")
+					i.fa.fa-eye(aria-hidden="true")
+					span {{ $t('View Public Video') }}
 </template>
 <script>
 import { mapState, mapGetters } from 'vuex'
 import theme from 'theme'
-import ROOM_TYPES, { NETWORKING_MODULE_TYPES, VIDEO_CHANNEL_MODULE_TYPES, inferRoomType, inferType } from 'lib/room-types'
+import api from 'lib/api'
+import { inferRoomType, isChatManagedRoom } from 'lib/room-types'
 import { getRoomOccupancyCount, usesParticipantOccupancy } from 'lib/room-occupancy'
-import Avatar from 'components/Avatar'
-import ChannelBrowser from 'components/ChannelBrowser'
-import CreateDmPrompt from 'components/CreateDmPrompt'
 
 export default {
-	name: 'RoomsSidebar',
-	components: { Avatar, ChannelBrowser, CreateDmPrompt },
+	name: 'OrganiserSidebar',
 	props: {
 		collapsed: {
 			type: Boolean,
@@ -185,110 +188,86 @@ export default {
 			lastPointer: null,
 			pointerMovementX: 0,
 			snapBack: false,
-			showChannelBrowser: false,
-			showDMCreationPrompt: false,
+			kiosks: [],
 			openFolds: {
-				stages: true,
-				channels: true,
-				dms: true
+				rooms: false,
+				chat: false,
+				kiosks: false,
+				config: false
 			}
 		}
 	},
 	computed: {
-		...mapState(['world', 'rooms', 'activeRoom', 'call']),
+		...mapState(['world', 'rooms']),
 		...mapGetters(['hasPermission', 'isAdminMode']),
-		...mapGetters('chat', ['joinedChannels', 'directMessageChannels', 'notificationCount']),
-		...mapGetters('schedule', ['currentSessionPerRoom']),
-		networkingTitle() {
-			return this.networkingRoomType?.name || this.$t('Networking')
+		eventDateSubtitle() {
+			return this.$t('Organizer account')
 		},
-		browseChannelsTooltip() {
-			return this.$t('Browse all channels')
+		individualRooms() {
+			if (!Array.isArray(this.rooms)) return []
+			return this.rooms.filter(room => !isChatManagedRoom(room))
 		},
-		openDirectMessageTooltip() {
-			return this.$t('open a direct message')
+		individualChannels() {
+			if (!Array.isArray(this.rooms)) return []
+			return this.rooms.filter(room => isChatManagedRoom(room))
 		},
-		networkingRoomType() {
-			return ROOM_TYPES.find(type => type.sidebarGroup === 'networking')
+		individualKiosks() {
+			return this.kiosks || []
 		},
-		hasStagesOrRooms() {
-			return (this.roomsByType.stage?.length > 0 || this.roomsByType.networking?.length > 0)
+		isRoomsActive() {
+			return this.$route.name?.startsWith('admin:rooms') || this.$route.name === 'room:manage'
 		},
-		hasChatChannels() {
-			return (this.roomsByType.textChat?.length > 0 || this.roomsByType.videoChat?.length > 0 || this.worldHasTextChannels)
+		isChatActive() {
+			return this.$route.name?.startsWith('admin:chat')
 		},
-		hasOrganiserPermissions() {
-			return (
-				this.isAdminMode ||
-				this.hasPermission('world:users.list') ||
-				this.hasPermission('world:update') ||
-				this.hasPermission('world:announce') ||
-				this.hasPermission('room:update') ||
-				this.hasPermission('world:kiosks.manage')
-			)
+		isKiosksActive() {
+			return this.$route.name?.startsWith('admin:kiosks')
 		},
-		style() {
+		isConfigActive() {
+			return this.$route.name?.startsWith('admin:config')
+		},
+		sidebarStyle() {
 			if (this.$mq?.above?.m) return null
 			if (this.pointerMovementX === 0) return null
 			return {
 				transform: `translateX(${this.pointerMovementX}px)`
 			}
-		},
-		roomsByType() {
-			const rooms = {
-				page: [],
-				stage: [],
-				networking: [],
-				textChat: [],
-				videoChat: []
-			}
-			if (!this.rooms) return rooms
-
-			for (const room of this.rooms) {
-				const inferred = Array.isArray(room.module_config)
-					? inferType({ module_config: room.module_config })
-					: inferRoomType(room)
-				if (!inferred) continue
-
-				if (room.modules.length === 1 && room.modules[0].type === 'chat.native') {
-					if (this.joinedChannels && !this.joinedChannels.some(channel => channel.id === room.modules[0].channel_id)) continue
-					const notifications = this.notificationCount ? this.notificationCount(room.modules[0].channel_id) : 0
-					rooms.textChat.push({
-						room,
-						notifications: notifications > 99 ? '99+' : notifications
-					})
-				} else if (room.modules.some(module => NETWORKING_MODULE_TYPES.has(module.type))) {
-					rooms.networking.push(room)
-				} else if (room.modules.some(module => VIDEO_CHANNEL_MODULE_TYPES.has(module.type))) {
-					rooms.videoChat.push(room)
-				} else if (room.modules.some(module => ['livestream.native', 'livestream.youtube'].includes(module.type))) {
-					let session
-					if (this.$features?.enabled?.('schedule-control')) {
-						session = this.currentSessionPerRoom?.[room.id]?.session
-					}
-					const notifications = this.notificationCount ? this.notificationCount(room.modules.find(m => m.type === 'chat.native')?.channel_id) : 0
-					rooms.stage.push({
-						room,
-						session,
-						notifications: notifications > 99 ? '99+' : notifications
-					})
-				} else {
-					rooms.page.push(room)
-				}
-			}
-			return rooms
-		},
-		directMessageChannels() {
-			if (!this.hasPermission('world:chat.direct')) {
-				return []
-			}
-			return this.$store.getters['chat/directMessageChannels'] || []
-		},
-		worldHasTextChannels() {
-			return (this.rooms || []).some(room => room.modules?.length === 1 && room.modules[0].type === 'chat.native')
 		}
 	},
+	watch: {
+		'$store.state.connected': {
+			immediate: true,
+			handler(connected) {
+				if (connected) this.fetchKiosks()
+			}
+		},
+		'$route.name': {
+			immediate: true,
+			handler(name) {
+				if (!name) return
+				if (name.startsWith('admin:rooms') || name === 'room:manage') this.openFolds.rooms = true
+				if (name.startsWith('admin:chat')) this.openFolds.chat = true
+				if (name.startsWith('admin:kiosks')) {
+					this.openFolds.kiosks = true
+					this.fetchKiosks()
+				}
+				if (name.startsWith('admin:config')) this.openFolds.config = true
+			}
+		}
+	},
+	created() {
+		this.fetchKiosks()
+	},
 	methods: {
+		getRoomTargetRoute(room) {
+			if (!room) return { name: 'admin:rooms:index' }
+			// inferRoomType reads room.modules (the store shape)
+			const isConfigured = !!inferRoomType(room)
+			if (isConfigured) {
+				return { name: 'room:manage', params: { roomId: room.id } }
+			}
+			return { name: 'admin:rooms:item', params: { roomId: room.id } }
+		},
 		getOccupancyCount(room) {
 			return getRoomOccupancyCount(room, {
 				rooms: this.rooms,
@@ -304,20 +283,25 @@ export default {
 			}
 			return `${count} ${count === 1 ? this.$t('active viewer') : this.$t('active viewers')}`
 		},
+		async fetchKiosks() {
+			if (!this.hasPermission('world:kiosks.manage')) return
+			try {
+				const res = await api.call('user.list', {type: 'kiosk'})
+				this.kiosks = res?.results || []
+			} catch (e) {
+				console.error('Failed to fetch kiosks for sidebar', e)
+			}
+		},
 		toggleFold(key) {
 			this.openFolds[key] = !this.openFolds[key]
+			if (key === 'kiosks' && this.openFolds.kiosks) {
+				this.fetchKiosks()
+			}
 		},
 		onNavClick() {
 			if (this.$mq?.below?.m) {
 				this.$emit('close')
 			}
-		},
-		hasUnreadMessages(channelId) {
-			return this.notificationCount ? this.notificationCount(channelId) > 0 : false
-		},
-		getDMChannelName(channel) {
-			const otherUser = channel?.users?.find(u => u?.id !== this.$store?.state?.user?.id)
-			return otherUser?.profile?.display_name || otherUser?.profile?.name || this.$t('Unknown User')
 		},
 		onPointerdown(event) {
 			if (this.$mq?.above?.m) return
@@ -351,7 +335,7 @@ export default {
 }
 </script>
 <style lang="stylus">
-.c-rooms-sidebar
+.c-organiser-sidebar
 	background-color: #f8f8f8
 	border-right: 1px solid #e7e7e7
 	bottom: 0
@@ -520,7 +504,6 @@ export default {
 			line-height: 20px
 			padding: 10px 15px
 			text-decoration: none
-			cursor: pointer
 			white-space: nowrap
 			overflow: hidden
 			transition: background-color 0.15s ease, color 0.15s ease
@@ -543,15 +526,6 @@ export default {
 				display: inline-block
 				ellipsis()
 				flex: auto
-
-			.notifications
-				margin-left: 6px
-				background-color: #2185d0
-				color: #ffffff
-				border-radius: 9999px
-				padding: 1px 7px
-				font-size: 11px
-				font-weight: 600
 
 			&:hover, &:focus
 				background-color: #eeeeee
@@ -631,7 +605,6 @@ export default {
 					padding: 10px 15px
 					text-decoration: none
 					border: none
-					cursor: pointer
 					transition: background-color 0.15s ease, color 0.15s ease
 
 					> .room-name, > span:first-child
@@ -660,17 +633,11 @@ export default {
 							font-size: 12px
 							color: $clr-primary
 
-					.notifications
-						margin-left: 6px
-						background-color: #2185d0
-						color: #ffffff
-						border-radius: 9999px
-						padding: 1px 7px
-						font-size: 11px
-						font-weight: 600
-						flex-shrink: 0
+					&.nav-sub-link--nested
+						> .room-name, > span:first-child
+							padding-left: 2.6em
 
-					&.nav-sub-link--action, &.nav-sub-link--add
+					&.nav-sub-link--add, &.nav-sub-link--action
 						font-style: italic
 						color: #337ab7
 						gap: 6px
@@ -714,15 +681,15 @@ export default {
 		padding: 12px 15px
 		background: #f8f8f8
 
-		.btn-manage-video
+		.btn-public-view
 			align-items: center
 			background-color: #ffffff
-			border: 1px solid #337ab7
+			border: 1px solid #2185d0
 			border-radius: 4px
 			box-sizing: border-box
-			color: #337ab7
+			color: #2185d0
 			display: flex
-			font-size: 13.5px
+			font-size: 13px
 			font-weight: 600
 			justify-content: center
 			padding: 8px 12px
@@ -731,10 +698,10 @@ export default {
 			transition: background-color 0.15s ease, color 0.15s ease
 
 			.fa, .mdi
-				font-size: 15px
+				font-size: 16px
 
 			&:hover, &:focus
-				background-color: #337ab7
+				background-color: #2185d0
 				color: #ffffff
 				text-decoration: none
 </style>

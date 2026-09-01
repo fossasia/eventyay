@@ -1269,13 +1269,14 @@ class VideoAccessAuthenticator(View):
         @return: redirect to the video system
         """
         has_staff_video_access = self._has_staff_video_access()
-        video_traits = self._collect_user_video_traits()
+        permission_set = self.request.user.get_event_permission_set(self.request.organizer, self.request.event)
+        video_traits = self._collect_user_video_traits(permission_set)
 
         # Auto-setup video configuration if missing
         self._ensure_video_configuration()
 
         # Generate token and include in url to video system
-        token_traits = self._build_token_traits(has_staff_video_access, video_traits)
+        token_traits = self._build_token_traits(has_staff_video_access, video_traits, permission_set)
         resume_suffix = self._resume_suffix_from_request(request)
         return redirect(self.generate_token_url(request, token_traits, resume_suffix=resume_suffix))
 
@@ -1283,24 +1284,36 @@ class VideoAccessAuthenticator(View):
         request = self.request
         return request.user.has_active_staff_session(request.session.session_key)
 
-    def _collect_user_video_traits(self):
-        permission_set = self.request.user.get_event_permission_set(self.request.organizer, self.request.event)
+    def _collect_user_video_traits(self, permission_set):
         return collect_user_video_traits(self.request.event.slug, permission_set)
 
-    def _build_token_traits(self, has_staff_video_access: bool, video_traits):
+    def _is_event_admin(self, permission_set, has_staff_video_access: bool) -> bool:
+        if has_staff_video_access:
+            return True
+        admin_perms = {
+            'can_change_event_settings',
+            'can_change_teams',
+            'can_change_organizer_settings',
+        }
+        return bool(admin_perms.intersection(permission_set))
+
+    def _build_token_traits(self, has_staff_video_access: bool, video_traits, permission_set):
         """
         Build the list of traits to include in the JWT token.
         - All users get 'attendee' trait for basic access
         - Users get specific video permission traits based on their team permissions
-        - Only staff users (superuser, is_staff, or active staff session) get 'admin' trait
+        - Active staff session (sudo) gets 'admin' trait
+        - Organizers with video permissions or event admin permissions get organizer trait
         """
         traits = ['attendee', video_attendee_trait(self.request.event.slug)]
         traits.extend(video_traits)
-        # Only add 'admin' trait for staff users - this grants full admin access
-        # Regular organizers should NOT get 'admin' trait, only specific video permission traits
+        organizer_trait = f'eventyay-video-event-{self.request.event.slug}-organizer'
+
         if has_staff_video_access:
-            organizer_trait = f'eventyay-video-event-{self.request.event.slug}-organizer'
             traits.extend(['admin', organizer_trait])
+        elif video_traits or self._is_event_admin(permission_set, False):
+            traits.append(organizer_trait)
+
         # Deduplicate while preserving order
         seen = set()
         deduped_traits = []
@@ -1440,11 +1453,25 @@ class VideoAccessAuthenticator(View):
         }
         token = jwt.encode(payload, self.request.event.settings.venueless_secret, algorithm='HS256')
         base_url = str(self.request.event.settings.venueless_url).rstrip('/')
+        is_organizer = any(
+            t == 'admin' or (isinstance(t, str) and (t.endswith('-organizer') or 'video-' in t))
+            for t in traits
+        )
+        if not is_organizer and resume_suffix:
+            # Prevent non-organizers from landing on administrative or management routes
+            cleaned_suffix = re.sub(r'(^|/)manage(/|$)', r'\1', resume_suffix).strip('/')
+            if cleaned_suffix.startswith('event'):
+                resume_suffix = None
+            elif 'rooms/' in resume_suffix and re.search(r'(^|/)manage(/|$)', resume_suffix):
+                resume_suffix = cleaned_suffix if cleaned_suffix else None
+            elif resume_suffix.startswith('event') or re.search(r'(^|/)manage(/|$)', resume_suffix):
+                resume_suffix = None
+
         if resume_suffix:
             tail = resume_suffix.lstrip('/')
             target = iri_to_uri(f'{base_url}/{tail}')
         else:
-            target = f'{base_url}/'
+            target = f'{base_url}/event' if is_organizer else base_url
         return f'{target}#token={token}'.replace('//#', '/#')
 
 
