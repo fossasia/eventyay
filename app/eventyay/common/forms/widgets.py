@@ -111,15 +111,6 @@ class ImageInput(ClearableBasenameFileInput):
         return ctx
 
 
-class MarkdownWidget(Textarea):
-    template_name = 'common/widgets/markdown.html'
-
-    def __init__(self, attrs=None):
-        attrs = attrs.copy() if attrs is not None else {}
-        attrs.setdefault('data-markdown-field', 'true')
-        super().__init__(attrs=attrs)
-
-
 class RichTextWidget(Textarea):
     """Tiptap-enhanced textarea for simple rich text editing.
 
@@ -138,6 +129,16 @@ class RichTextWidget(Textarea):
         attrs = attrs.copy() if attrs is not None else {}
         attrs.setdefault('data-tiptap-profile', 'richtext')
         super().__init__(attrs=attrs)
+
+
+class MarkdownWidget(RichTextWidget):
+    """Backward-compatible alias for RichTextWidget.
+
+    Previously rendered a plain textarea with a ``data-markdown-wrapper``
+    attribute.  All call sites have been migrated to ``RichTextWidget``
+    directly; this alias remains so that any third-party plugin that
+    still imports ``MarkdownWidget`` continues to work without change.
+    """
 
 
 class I18nRichTextWidget(I18nTextarea):
