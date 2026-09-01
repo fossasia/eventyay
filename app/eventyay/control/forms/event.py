@@ -1530,11 +1530,7 @@ class TicketSettingsForm(SettingsForm):
         widget=forms.RadioSelect,
         choices=[],
     )
-    require_registered_account_for_tickets = forms.BooleanField(
-        label=REQUIRE_REGISTERED_ACCOUNT_LABEL,
-        help_text=REQUIRE_REGISTERED_ACCOUNT_HELP_TEXT,
-        required=False,
-    )
+
 
     def __init__(self, *args, **kwargs):
         event = kwargs.get('obj')
@@ -1557,13 +1553,14 @@ class TicketSettingsForm(SettingsForm):
     def clean(self):
         # required=True files should only be required if the feature is enabled
         cleaned_data = super().clean()
-        enabled = cleaned_data.get('ticket_download') == 'True'
+        enabled = cleaned_data.get('ticket_download') is True
         if not enabled:
-            return
+            return cleaned_data
         for k, v in self.fields.items():
             val = cleaned_data.get(k)
             if v._required and (val is None or val == ''):
                 self.add_error(k, _('This field is required.'))
+        return cleaned_data
 
 
 class CommentForm(I18nModelForm):

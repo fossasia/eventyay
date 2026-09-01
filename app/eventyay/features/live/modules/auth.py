@@ -437,13 +437,8 @@ class AuthModule(BaseModule):
         list_conf = self._event_config().get("user_list", {})
         page_size = list_conf.get("page_size", 20)
         search_min_chars = list_conf.get("search_min_chars", 0)
-        profile_fields = self._event_config().get("profile_fields", {})
         badge = body.get("badge")
-        search_fields = [
-            field["id"]
-            for field in filter(lambda f: f.get("searchable", False), profile_fields)
-            if "id" in field
-        ]
+        search_fields = []
         if len(body["search_term"]) < search_min_chars and not badge:
             result = {
                 "results": [],
@@ -586,35 +581,6 @@ class AuthModule(BaseModule):
     async def online_state(self, body):
         resp = {i: (await get_user_connection_count(i)) > 0 for i in body.get("ids")}
         await self.consumer.send_success(resp)
-
-    @command("social.connect")
-    @require_event_permission(Permission.EVENT_VIEW)
-    async def social_connect(self, body):
-        network = body.get("network")
-
-        if not body.get("return_url"):
-            await self.consumer.send_error(code="user.social.return_url_required")
-            return
-
-        if network not in ("twitter", "linkedin"):
-            await self.consumer.send_error(code="user.social.unknown")
-            return
-
-        payload = {
-            "network": network,
-            "return_url": body.get("return_url"),
-            "event": self.consumer.event.pk,
-            "user": str(self.consumer.user.pk),
-        }
-        token = dumps(payload, salt="eventyay.base.social.start", compress=True)
-
-        await self.consumer.send_success(
-            {
-                "url": urljoin(settings.SITE_URL, reverse(f"social:{network}.start"))
-                + "?token="
-                + token,
-            }
-        )
 
     @command("kiosk.create")
     @require_event_permission(Permission.EVENT_KIOSKS_MANAGE)

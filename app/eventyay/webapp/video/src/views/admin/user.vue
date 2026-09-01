@@ -26,7 +26,6 @@
 			bunt-input(name="order_code", :label="$t('Order code')", :modelValue="user.order_code || '–'", :disabled="true")
 			bunt-input(name="ticket_code", :label="$t('Ticket code (position secret)')", :modelValue="user.ticket_code || '–'", :disabled="true")
 			bunt-input(name="mod_state", :label="$t('Moderation state')", :modelValue="user.moderation_state || '-'", :disabled="true")
-			change-additional-fields(v-model="user.profile.fields", :disabled="!edit")
 	bunt-progress-circular(v-else, size="huge")
 	transition(name="prompt")
 		user-action-prompt(v-if="userAction", :action="userAction", :user="user", :closeDelay="0", @close="completedUserAction")
@@ -46,11 +45,10 @@ import Avatar from 'components/Avatar'
 import Prompt from 'components/Prompt'
 import ChangeAvatar from 'components/profile/ChangeAvatar'
 import UserActionPrompt from 'components/UserActionPrompt'
-import ChangeAdditionalFields from 'components/profile/ChangeAdditionalFields'
 import { required } from 'lib/validators'
 
 export default {
-	components: { Avatar, Prompt, UserActionPrompt, ChangeAdditionalFields, ChangeAvatar },
+	components: { Avatar, Prompt, UserActionPrompt, ChangeAvatar },
 	props: {
 		userId: String
 	},

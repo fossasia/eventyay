@@ -14,6 +14,7 @@ from eventyay.base.services.chat import (
     extract_mentioned_user_ids,
     get_channel,
 )
+from eventyay.base.services.event import is_chat_channel_room
 from eventyay.base.services.user import get_public_users
 from eventyay.core.utils.redis import aredis
 from eventyay.features.live.channels import GROUP_CHAT, GROUP_USER
@@ -346,10 +347,15 @@ class ChatModule(BaseModule):
                         str(self.consumer.user.id),
                     )
         await self.consumer.send_success(reply)
+        if joined and self.channel.room and is_chat_channel_room(self.room):
+            count = await self.service.get_participant_count(self.channel_id)
+            await self.service.broadcast_participant_count(
+                self.channel.room_id, count
+            )
 
     async def _leave(self, volatile=False):
-        await self.service.remove_channel_user(self.channel_id, self.consumer.user.id)
         if not volatile:
+            await self.service.remove_channel_user(self.channel_id, self.consumer.user.id)
             await self.consumer.channel_layer.group_send(
                 GROUP_CHAT.format(channel=self.channel_id),
                 await self.service.create_event(
