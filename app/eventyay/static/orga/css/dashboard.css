@@ -253,3 +253,112 @@
 .dashboard-live {
   margin-top: 12px;
 }
+
+/* Readiness dashboard */
+.readiness-dashboard {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+  max-width: 900px;
+}
+
+.readiness-card {
+  background: var(--color-bg);
+  border: 1px solid var(--color-grey-light);
+  border-radius: 6px;
+  padding: 16px 18px 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.readiness-card h2 {
+  margin: 0 0 14px;
+  font-size: 22px;
+  line-height: 1.4;
+  font-weight: 600;
+  color: var(--color-primary-text-dark);
+}
+
+.readiness-metrics {
+  display: flex;
+  flex-direction: column;
+}
+
+.readiness-metric {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 34px;
+  padding: 5px 7px;
+  border-radius: 4px;
+  color: var(--color-primary-text-dark);
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+
+.readiness-metric:hover {
+  color: var(--color-primary-text-dark);
+  background-color: var(--color-grey-pale);
+  text-decoration: none;
+}
+
+.readiness-metric:active {
+  transform: scale(0.995);
+}
+
+.readiness-metric:hover .readiness-label {
+  color: var(--color-primary);
+}
+
+.readiness-label {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-primary-text-dark);
+  transition: color 0.15s ease;
+}
+
+.readiness-count {
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 400;
+  margin-left: 16px;
+  color: var(--color-primary-text-dark);
+}
+
+/* Readiness status colors */
+.readiness-card .readiness-metric:nth-child(2) .readiness-count {
+  color: var(--color-success);
+}
+
+.readiness-card .readiness-metric:nth-child(3) .readiness-count,
+.readiness-card .readiness-metric:nth-child(4) .readiness-count {
+  color: #f28b32;
+}
+
+.readiness-card .readiness-metric:nth-child(5) .readiness-count,
+.readiness-card .readiness-metric:nth-child(6) .readiness-count {
+  color: var(--color-danger);
+}
+
+/* Readiness list links */
+.readiness-link {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.readiness-link:hover {
+  color: var(--color-primary-text-dark);
+  text-decoration: underline;
+}
+
+@media (max-width: 767px) {
+  .readiness-dashboard {
+    grid-template-columns: 1fr;
+    max-width: 100%;
+  }
+}

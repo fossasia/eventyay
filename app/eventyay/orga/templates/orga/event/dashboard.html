@@ -117,32 +117,43 @@
         {% endfor %}
     </div>
 
-    {% if session_readiness %}
-        <section class="mt-4" id="session-readiness">
-            <h2>{% translate "Session readiness" %}</h2>
-            <div class="dashboard-list dashboard-list-metrics">
-                {% for metric in session_readiness %}
-                    <a href="{{ metric.url }}" class="dashboard-block">
-                        <h1>{{ metric.count }}</h1>
-                        <div class="dashboard-description">{{ metric.label }}</div>
+    {% if session_readiness or speaker_readiness %}
+        <div class="readiness-dashboard">
+            {% if session_readiness %}
+                <section class="readiness-card" id="session-readiness">
+                    <h2>{% translate "Session readiness" %}</h2>
+                    <div class="readiness-metrics">
+                        {% for metric in session_readiness %}
+                            <a href="{{ metric.url }}" class="readiness-metric">
+                                <span class="readiness-label">{{ metric.label }}</span>
+                                <span class="readiness-count">{{ metric.count }}</span>
+                            </a>
+                        {% endfor %}
+                    </div>
+                    <a href="{{ request.event.orga_urls.submissions }}"
+                    class="readiness-link">
+                        {% translate "Open session list" %}
                     </a>
-                {% endfor %}
-            </div>
-        </section>
-    {% endif %}
-
-    {% if speaker_readiness %}
-        <section class="mt-4" id="speaker-readiness">
-            <h2>{% translate "Speaker readiness" %}</h2>
-            <div class="dashboard-list dashboard-list-metrics">
-                {% for metric in speaker_readiness %}
-                    <a href="{{ metric.url }}" class="dashboard-block">
-                        <h1>{{ metric.count }}</h1>
-                        <div class="dashboard-description">{{ metric.label }}</div>
+                </section>
+            {% endif %}
+            {% if speaker_readiness %}
+                <section class="readiness-card" id="speaker-readiness">
+                    <h2>{% translate "Speaker readiness" %}</h2>
+                    <div class="readiness-metrics">
+                        {% for metric in speaker_readiness %}
+                            <a href="{{ metric.url }}" class="readiness-metric">
+                                <span class="readiness-label">{{ metric.label }}</span>
+                                <span class="readiness-count">{{ metric.count }}</span>
+                            </a>
+                        {% endfor %}
+                    </div>
+                    <a href="{{ request.event.orga_urls.speakers }}"
+                    class="readiness-link">
+                        {% translate "Open speaker list" %}
                     </a>
-                {% endfor %}
-            </div>
-        </section>
+                </section>
+            {% endif %}
+        </div>
     {% endif %}
 
     {% has_event_perm "base.orga_list_submission" request.user request request.event as can_view_submission_stats %}
