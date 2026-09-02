@@ -65,17 +65,6 @@ class GlobalSettingsForm(SettingsForm):
             list(self.fields.items())
             + [
                 (
-                    'billing_validation',
-                    forms.BooleanField(
-                        required=False,
-                        label=_('Billing validation'),
-                        help_text=_(
-                            'Billing validation lets you require organizers to set up a billing method before they can create events. '
-                            'When this option is enabled, no new event can be created until a valid billing method has been added.'
-                        ),
-                    ),
-                ),
-                (
                     EVENT_SERIES_CREATION_ENABLED,
                     forms.BooleanField(
                         required=False,
@@ -266,51 +255,6 @@ class GlobalSettingsForm(SettingsForm):
         self.fields = OrderedDict(
             list(self.fields.items())
             + [
-                # Stripe for organizer billing
-                (
-                    'payment_stripe_publishable_key',
-                    forms.CharField(
-                        label=_('Publishable key (Live)'),
-                        required=False,
-                        validators=(StripeKeyValidator('pk_live_'),),
-                        help_text=_('Live publishable key for organizer billing and platform fees.'),
-                    ),
-                ),
-                (
-                    'payment_stripe_secret_key',
-                    SecretKeySettingsField(
-                        label=_('Secret key (Live)'),
-                        required=False,
-                        validators=(StripeKeyValidator(['sk_live_', 'rk_live_']),),
-                        help_text=_('Live secret key for organizer billing and platform fees.'),
-                    ),
-                ),
-                (
-                    'payment_stripe_test_publishable_key',
-                    forms.CharField(
-                        label=_('Publishable key (Test)'),
-                        required=False,
-                        validators=(StripeKeyValidator('pk_test_'),),
-                        help_text=_('Test publishable key for organizer billing and platform fees.'),
-                    ),
-                ),
-                (
-                    'payment_stripe_test_secret_key',
-                    SecretKeySettingsField(
-                        label=_('Secret key (Test)'),
-                        required=False,
-                        validators=(StripeKeyValidator(['sk_test_', 'rk_test_']),),
-                        help_text=_('Test secret key for organizer billing and platform fees.'),
-                    ),
-                ),
-                (
-                    'stripe_webhook_secret_key',
-                    SecretKeySettingsField(
-                        label=_('Webhook secret key'),
-                        required=False,
-                        help_text=_('Configure this endpoint in your Stripe dashboard to receive billing events.'),
-                    ),
-                ),
                 # Stripe for ticket payments
                 (
                     'payment_stripe_connect_client_id',
@@ -415,17 +359,6 @@ class GlobalSettingsForm(SettingsForm):
                     ),
                 ),
                 (
-                    'ticket_fee_percentage',
-                    forms.DecimalField(
-                        label=_('Ticket fee percentage'),
-                        required=False,
-                        decimal_places=2,
-                        max_digits=10,
-                        help_text=_('A percentage fee will be charged for each ticket sold.'),
-                        validators=[MinValueValidator(0), MaxValueValidator(100)],
-                    ),
-                ),
-                (
                     'allow_all_users_create_organizer',
                     forms.BooleanField(
                         label=_('All registered users can create organizers'),
@@ -511,13 +444,6 @@ class GlobalSettingsForm(SettingsForm):
                 'smtp_use_tls', 'smtp_use_ssl',
             ]),
             ('payment_gateways', _('Payment Gateways'), [
-                # Stripe for Organizer Billing
-                'payment_stripe_publishable_key',
-                'payment_stripe_secret_key',
-                'payment_stripe_test_publishable_key',
-                'payment_stripe_test_secret_key',
-                'stripe_webhook_secret_key',
-
                 # Stripe for Ticket Payments
                 'payment_stripe_connect_client_id',
                 'payment_stripe_connect_publishable_key',
@@ -536,12 +462,6 @@ class GlobalSettingsForm(SettingsForm):
             ('cart', _('Cart'), [
                 'reservation_time',
                 'max_products_per_order',
-            ]),
-            ('ticket_fee', _('Ticket fee'), [
-                'ticket_fee_percentage',
-            ]),
-            ('billing_validation', _('Billing validation'), [
-                'billing_validation',
             ]),
             ('maps', _('Maps'), [
                 'opencagedata_apikey', 'mapquest_apikey', 'nominatim_geocoding_enabled', 'leaflet_tiles', 'leaflet_tiles_attribution',
@@ -562,7 +482,22 @@ class GlobalSettingsForm(SettingsForm):
             ]),
         ]
 
-        if 'interpretation' in settings.INSTALLED_APPS:
+        if any(app.endswith('interpretation') or app == 'interpretation' for app in settings.INSTALLED_APPS):
+            self.fields['voxbento_base_url'] = forms.URLField(
+                label=_('VoxBento Base URL'),
+                required=False,
+                help_text=_('Base URL of the VoxBento interpretation server (e.g. https://interpretation.eventyay.com).'),
+            )
+            self.fields['voxbento_client_id'] = forms.CharField(
+                label=_('VoxBento Client ID'),
+                required=False,
+                help_text=_('Client ID for authenticating with VoxBento API.'),
+            )
+            self.fields['voxbento_client_secret'] = SecretKeySettingsField(
+                label=_('VoxBento Client Secret'),
+                required=False,
+                help_text=_('Client Secret for authenticating with VoxBento API.'),
+            )
             self.field_groups.append(
                 ('voxbento', _('VoxBento'), [
                     'voxbento_base_url',
@@ -571,7 +506,21 @@ class GlobalSettingsForm(SettingsForm):
                 ])
             )
 
-        if 'hubspot' in settings.INSTALLED_APPS:
+        if any(app.endswith('hubspot') or app == 'hubspot' for app in settings.INSTALLED_APPS):
+            self.fields['hubspot_client_id'] = forms.CharField(
+                label=_('HubSpot Client ID'),
+                required=False,
+            )
+            self.fields['hubspot_client_secret'] = SecretKeySettingsField(
+                label=_('HubSpot Client Secret'),
+                required=False,
+            )
+            self.fields['hubspot_property_sync_ttl_minutes'] = forms.IntegerField(
+                label=_('HubSpot Property Sync TTL (minutes)'),
+                required=False,
+                min_value=0,
+                initial=60,
+            )
             self.field_groups.append(
                 ('hubspot', _('HubSpot'), [
                     'hubspot_client_id',
@@ -784,3 +733,100 @@ class MetaDataSettingsForm(SettingsForm):
                 logger.exception('Could not store original image for %s', image_field)
 
         return super().save()
+
+
+class GlobalBusinessSettingsForm(SettingsForm):
+    def __init__(self, *args, **kwargs):
+        self.obj = GlobalSettingsObject()
+        super().__init__(*args, obj=self.obj, **kwargs)
+
+        self.fields.update(
+            OrderedDict([
+                # Stripe for Organizer Billing
+                (
+                    'payment_stripe_publishable_key',
+                    forms.CharField(
+                        label=_('Publishable key (Live)'),
+                        required=False,
+                        validators=(StripeKeyValidator('pk_live_'),),
+                        help_text=_('Live publishable key for organizer billing and platform fees.'),
+                    ),
+                ),
+                (
+                    'payment_stripe_secret_key',
+                    SecretKeySettingsField(
+                        label=_('Secret key (Live)'),
+                        required=False,
+                        validators=(StripeKeyValidator(['sk_live_', 'rk_live_']),),
+                        help_text=_('Live secret key for organizer billing and platform fees.'),
+                    ),
+                ),
+                (
+                    'payment_stripe_test_publishable_key',
+                    forms.CharField(
+                        label=_('Publishable key (Test)'),
+                        required=False,
+                        validators=(StripeKeyValidator('pk_test_'),),
+                        help_text=_('Test publishable key for organizer billing and platform fees.'),
+                    ),
+                ),
+                (
+                    'payment_stripe_test_secret_key',
+                    SecretKeySettingsField(
+                        label=_('Secret key (Test)'),
+                        required=False,
+                        validators=(StripeKeyValidator(['sk_test_', 'rk_test_']),),
+                        help_text=_('Test secret key for organizer billing and platform fees.'),
+                    ),
+                ),
+                (
+                    'stripe_webhook_secret_key',
+                    SecretKeySettingsField(
+                        label=_('Webhook secret key'),
+                        required=False,
+                        help_text=_('Configure this endpoint in your Stripe dashboard to receive billing events.'),
+                    ),
+                ),
+                (
+                    'ticket_fee_percentage',
+                    forms.DecimalField(
+                        label=_('Ticket fee percentage'),
+                        required=False,
+                        decimal_places=2,
+                        max_digits=10,
+                        help_text=_('A percentage fee will be charged for each ticket sold.'),
+                        validators=[MinValueValidator(0), MaxValueValidator(100)],
+                    ),
+                ),
+                (
+                    'billing_validation',
+                    forms.BooleanField(
+                        required=False,
+                        label=_('Billing validation'),
+                        help_text=_(
+                            'Billing validation lets you require organizers to set up a billing method before they can create events. '
+                            'When this option is enabled, no new event can be created until a valid billing method has been added.'
+                        ),
+                    ),
+                ),
+            ])
+        )
+
+        if 'billing_validation' not in self.initial or self.initial['billing_validation'] is None:
+            self.initial['billing_validation'] = self.obj.settings.get('billing_validation', as_type=bool, default=True)
+
+        self.field_groups = [
+            ('organizer_billing', _('Organizer Billing'), [
+                'payment_stripe_publishable_key',
+                'payment_stripe_secret_key',
+                'payment_stripe_test_publishable_key',
+                'payment_stripe_test_secret_key',
+                'stripe_webhook_secret_key',
+            ]),
+            ('ticket_fee', _('Ticket Fee'), [
+                'ticket_fee_percentage',
+            ]),
+            ('billing_validation', _('Billing Validation'), [
+                'billing_validation',
+            ]),
+        ]

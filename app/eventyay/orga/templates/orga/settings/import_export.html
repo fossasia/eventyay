@@ -68,7 +68,7 @@
   <section role='tabpanel' id='tabpanel-export' aria-labelledby='tab-export' tabindex='0' {% if active_tab == 'export' %}aria-hidden='false'{% else %}aria-hidden='true'{% endif %}>
     <p>
       {% blocktranslate trimmed %}
-        Choose whether to export speaker data or schedule data, then select fields and format.
+        Choose the data you want to export, then select fields and format.
       {% endblocktranslate %}
     </p>
 
@@ -545,6 +545,45 @@
         </span>
         </div>
         </div>
+      </div>
+      <div data-export-panel='feedback'>
+        <form method='post' action='{{ request.path }}#tab-export'>
+          {% csrf_token %}
+          <input type='hidden' name='action' value='export'>
+          <input type='hidden' name='export_target' value='feedback'>
+
+          {% if feedback_export_form.non_field_errors %}
+            <div class='alert alert-danger'>{{ feedback_export_form.non_field_errors }}</div>
+          {% endif %}
+
+          <fieldset>
+            <legend>{% translate "Export settings" %}</legend>
+            <div class='form-group row'>
+              <label class='col-md-3 col-form-label text-md-right' for='{{ feedback_export_form.export_format.id_for_label }}'>
+                {{ feedback_export_form.export_format.label }}
+                {% if feedback_export_form.export_format.field.required %}*{% endif %}
+              </label>
+              <div class='col-md-9'>
+                {% for radio in feedback_export_form.export_format %}
+                  <div class='form-check'>{{ radio.tag }} <label class='form-check-label' for='{{ radio.id_for_label }}'>{{ radio.choice_label }}</label></div>
+                {% endfor %}
+                {% if feedback_export_form.export_format.help_text %}
+                  <small class="form-text text-muted d-block mt-2">{{ feedback_export_form.export_format.help_text }}</small>
+                {% endif %}
+              </div>
+            </div>
+          </fieldset>
+
+          <div class="submit-group panel">
+            <span></span>
+            <span>
+              <button type='submit' class='btn btn-success btn-lg'>
+                <i class='fa fa-download'></i>
+                {% translate 'Export attendee feedback' %}
+              </button>
+            </span>
+          </div>
+        </form>
       </div>
     </div>
   </section>
