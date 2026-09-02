@@ -32,6 +32,7 @@ from eventyay.common.forms.mixins import (
 )
 from eventyay.common.forms.renderers import InlineFormLabelRenderer, InlineFormRenderer
 from eventyay.common.forms.widgets import (
+    AvatarInput,
     ClearableBasenameFileInput,
     EnhancedSelect,
     EnhancedSelectMultiple,
@@ -339,7 +340,7 @@ class SpeakerProfileForm(
         public_fields = ['fullname', 'biography', 'avatar']
         widgets = {
             'biography': MarkdownWidget,
-            'avatar': ClearableBasenameFileInput,
+            'avatar': AvatarInput,
             'avatar_source': MarkdownWidget,
             'avatar_license': MarkdownWidget,
         }
