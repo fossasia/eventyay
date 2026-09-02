@@ -60,7 +60,10 @@ urlpatterns = [
     url(r'^vouchers/$', admin.VoucherList.as_view(), name='admin.vouchers'),
     url(r'^vouchers/add$', admin.VoucherCreate.as_view(), name='admin.vouchers.add'),
     url(r'^vouchers/(?P<voucher>\d+)/$', admin.VoucherUpdate.as_view(), name='admin.voucher'),
+    url(r'^vouchers/(?P<voucher>\d+)/detail$', admin.VoucherDetail.as_view(), name='admin.voucher.detail'),
     url(r'^vouchers/(?P<voucher>\d+)/delete$', admin.VoucherDelete.as_view(), name='admin.voucher.delete'),
+    url(r'^vouchers/(?P<voucher>\d+)/disable$', admin.VoucherDisable.as_view(), name='admin.voucher.disable'),
+    url(r'^vouchers/(?P<voucher>\d+)/duplicate$', admin.VoucherDuplicate.as_view(), name='admin.voucher.duplicate'),
     url(r'^global/sso/$', global_settings.SSOView.as_view(), name='admin.global.sso'),
     url(
         r'^global/sso/(?P<pk>\d+)/delete/$',
