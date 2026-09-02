@@ -1,3 +1,28 @@
+/* Redirect legacy business-tab hashes to the dedicated business-settings page.
+ *
+ * The <script> tag loading this file must carry a data-business-redirect-url
+ * attribute set to the resolved Django URL for the business-settings page.
+ * This runs at parse time so the redirect happens before the page renders. */
+{
+    const scriptEl = document.currentScript;
+    const businessRedirectUrl = scriptEl && scriptEl.getAttribute('data-business-redirect-url');
+    if (businessRedirectUrl && location.hash) {
+        const businessTabs = [
+            '#tab-organizer_billing', '#tab-organizer_billing-open',
+            '#tab-ticket_fee', '#tab-ticket_fee-open',
+            '#tab-billing_validation', '#tab-billing_validation-open',
+            '#tab-event_vouchers', '#tab-event_vouchers-open',
+            '#tab-vouchers', '#tab-vouchers-open',
+        ];
+        if (businessTabs.indexOf(location.hash) !== -1) {
+            const targetHash = (location.hash.indexOf('voucher') !== -1)
+                ? '#tab-event_vouchers'
+                : location.hash;
+            window.location.replace(businessRedirectUrl + targetHash);
+        }
+    }
+}
+
 /* Real-time synchronization of page content fields with page_locales language selector. */
 
 (() => {
