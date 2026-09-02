@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
-from pathlib import Path
-from urllib.parse import urlparse
+
 
 from django import forms
 from django.conf import settings
