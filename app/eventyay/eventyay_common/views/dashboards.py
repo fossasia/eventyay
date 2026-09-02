@@ -1,8 +1,6 @@
 import logging
 from datetime import timedelta
 from typing import Any, Dict, List, Optional, Tuple
-
-import datetime
 from zoneinfo import ZoneInfo
 from bs4 import BeautifulSoup
 from django.contrib.contenttypes.models import ContentType
@@ -44,6 +42,7 @@ from eventyay.base.models import (
     SubEvent,
     Voucher,
 )
+from eventyay.base.meetup import is_meetup_event
 from eventyay.base.settings import is_event_series_creation_enabled, is_meetup_creation_enabled
 from eventyay.base.timeline import timeline_for_event
 from eventyay.control.forms.event import CommentForm
@@ -51,9 +50,12 @@ from eventyay.control.signals import (
     event_dashboard_widgets,
     user_dashboard_widgets,
 )
+from eventyay.plugins.statistics.views import get_statistics_context
 from eventyay.helpers.daterange import daterange
 from eventyay.helpers.plugin_enable import is_video_enabled
 from eventyay.multidomain.urlreverse import eventreverse
+
+from .meetup import get_meetup_analytics_context
 
 from ...base.models.orders import CancellationRequest
 from ..permissions import (
@@ -205,6 +207,18 @@ class EventIndexView(TemplateView):
     """
 
     template_name = 'eventyay_common/event/index.html'
+
+    def get_template_names(self):
+        if is_meetup_event(self.request.event):
+            return ['eventyay_common/event/meetup_dashboard.html']
+        return [self.template_name]
+
+    def render_to_response(self, context, **response_kwargs):
+        resp = super().render_to_response(context, **response_kwargs)
+        if context.get('can_view_orders') and context.get('stats_has_orders'):
+            resp['Content-Security-Policy'] = "script-src 'unsafe-eval'; style-src 'unsafe-inline'"
+            resp._csp_update = {'script-src': ["'unsafe-eval'"], 'style-src': ["'unsafe-inline'"]}
+        return resp
 
     @staticmethod
     def rearrange(widgets: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -359,6 +373,11 @@ class EventIndexView(TemplateView):
         )
         qs = self._filter_log_entries(qs, permissions)
 
+        access = get_cached_event_dashboard_access(
+            request, request.user, request.organizer, request.event
+        )
+        can_view_orders = permissions['can_view_orders']
+
         # Prepare context
         context.update(
             {
@@ -374,18 +393,23 @@ class EventIndexView(TemplateView):
                 ),
                 'is_video_enabled': is_video_enabled(request.event),
                 'can_change_event_settings': permissions['can_change_event_settings'],
-                **self._check_event_statuses(permissions['can_view_orders']),
+                'can_view_orders': can_view_orders,
+                **self._check_event_statuses(can_view_orders),
             }
         )
+
+        if is_meetup_event(request.event):
+            if can_view_orders:
+                tz = ZoneInfo(request.event.timezone)
+                context.update(get_meetup_analytics_context(request.event, tz=tz))
+        elif can_view_orders:
+            context.update(get_statistics_context(request, subevent=subevent))
 
         # Process actions
         for action in context['actions']:
             action.display = action.display(request)
 
         # Add timeline information
-        access = get_cached_event_dashboard_access(
-            request, request.user, request.organizer, request.event
-        )
         context['timeline'] = [
             {
                 'date': t.datetime.astimezone(ZoneInfo(request.event.timezone)).date(),

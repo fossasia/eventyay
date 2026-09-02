@@ -82,6 +82,7 @@
   direction: ltr;
   text-align: start;
   unicode-bidi: isolate;
+  box-sizing: border-box;
 }
 
 .tiptap-prosemirror[dir='rtl'] {
@@ -255,60 +256,26 @@
   gap: 6px;
 }
 
-/* ── Preview modal ───────────────────────────────────────────────────────── */
-
-.tiptap-preview-modal {
-  border: none;
-  border-radius: 6px;
-  padding: 0;
-  max-width: 680px;
-  width: 92vw;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.22);
-}
-
-.tiptap-preview-modal::backdrop {
-  background: rgba(0, 0, 0, 0.5);
-}
-
-.tiptap-preview-modal-inner {
-  padding: 24px;
-}
-
-.tiptap-preview-close {
-  float: right;
-  background: none;
-  border: none;
-  font-size: 22px;
-  cursor: pointer;
-  color: #6c757d;
-  line-height: 1;
-  padding: 0 4px;
-}
-
-.tiptap-preview-close:hover {
-  color: #212529;
-}
-
-.tiptap-preview-modal h2 {
-  margin: 0 0 16px;
-  font-size: 18px;
-}
-
-.tiptap-preview-body {
-  border: 1px solid #dee2e6;
-  border-radius: 4px;
-  padding: 16px;
-  background: #fff;
+.tiptap-inline-preview {
+  min-height: 120px;
+  padding: 8px 12px;
+  outline: none;
   font-size: 14px;
   line-height: 1.6;
+  color: #212529;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  box-sizing: border-box;
 }
 
-.tiptap-preview-body .placeholder {
-  display: inline-block;
+.tiptap-inline-preview .placeholder {
+  display: inline;
   padding: 1px 6px;
   border-radius: 3px;
   background: #e8f0fe;
   border: 1px solid #aac4f5;
   color: #1a56db;
   font-size: 0.9em;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
