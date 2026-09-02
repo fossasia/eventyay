@@ -126,6 +126,28 @@ def test_event_dashboard_with_accepted(
 
 
 @pytest.mark.django_db
+def test_event_dashboard_speaker_readiness_includes_speakers_without_submission(
+    event, orga_client
+):
+    from eventyay.base.models import SpeakerProfile, User
+
+    speaker_without_submission = User.objects.create(
+        email="speaker-without-submission@example.com",
+        fullname="Speaker Without Submission",
+    )
+    SpeakerProfile.objects.create(
+        event=event,
+        user=speaker_without_submission,
+    )
+
+    response = orga_client.get(event.orga_urls.base)
+
+    assert response.status_code == 200
+    assert "Speaker readiness" in response.text
+    assert "Speakers without session" in response.text
+    
+
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     "start_diff,end_diff",
     (
