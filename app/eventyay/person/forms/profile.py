@@ -213,6 +213,14 @@ class SpeakerProfileForm(
                     if part
                 )
 
+        if _cfp and _cfp.request_social_links:
+            self.fields['social_links'] = forms.CharField(
+                required=False,
+                label=_('Social Media'),
+                widget=forms.HiddenInput,
+            )
+            self._update_cfp_texts('social_links')
+
         self.inject_questions_into_fields(
             target=TalkQuestionTarget.SPEAKER,
             event=self.event,
