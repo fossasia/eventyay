@@ -48,6 +48,31 @@ SHOW_FEATURED_SPEAKERS_HELP = _(
     'Mark speakers as featured for content — Always alone does not populate the page.'
 )
 
+class EventInternalNoteForm(forms.ModelForm):
+    """A short internal note for organisers, shown on the event dashboard."""
+
+    class Meta:
+        model = Event
+        fields = ['comment']
+        widgets = {
+            'comment': forms.Textarea(
+                attrs={
+                    'rows': 4,
+                    'maxlength': 1000,
+                    'class': 'form-control',
+                    'id': 'id_internal_note',
+                    'placeholder': _('Add an internal note for your team…'),
+                }
+            ),
+        }
+        labels = {'comment': ''}
+
+    def clean_comment(self):
+        comment = self.cleaned_data.get('comment', '')
+        if len(comment) > 1000:
+            raise forms.ValidationError(_('Internal note must be 1000 characters or fewer.'))
+        return comment
+
 
 class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
     custom_css_text = forms.CharField(

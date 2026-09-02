@@ -9,8 +9,28 @@ from django.utils.translation import ngettext_lazy
 from django.views.generic import TemplateView
 from django_context_decorator import context
 from django_scopes import scopes_disabled
+from django.contrib import messages
+from eventyay.orga.forms.event import EventInternalNoteForm
 
 from django.http import Http404
+
+TALK_ACTIVITY_PREFIXES = (
+    'eventyay.submission.',
+    'eventyay.submission_type.',
+    'eventyay.cfp.',
+    'eventyay.schedule.',
+    'eventyay.user.profile.update',
+    'eventyay.event.talk_data.deleted',
+)
+
+
+def talk_activity_filter():
+    """Q object matching LogEntry action_types that relate to talks,
+    sessions or speakers (excludes orders, payments, products, etc.)."""
+    q = Q()
+    for prefix in TALK_ACTIVITY_PREFIXES:
+        q |= Q(action_type__startswith=prefix)
+    return q
 
 def legacy_orga_event_redirect(request, event):
     from eventyay.base.models import Event
@@ -237,9 +257,15 @@ class EventDashboardView(EventPermissionRequired, SubmissionStatsMixin, Template
                 )
         return result
 
+    RECENT_ACTIVITY_LIMIT = 10
+
     @context
     def history(self):
-        return LogEntry.objects.filter(event=self.request.event).select_related('user', 'event')[:20]
+        return (
+            LogEntry.objects.filter(event=self.request.event)
+            .filter(talk_activity_filter())
+            .select_related('user', 'event')[: self.RECENT_ACTIVITY_LIMIT]
+        )
 
     def get_context_data(self, **kwargs):
         # Tiles can have priorities
@@ -396,3 +422,22 @@ class EventDashboardView(EventPermissionRequired, SubmissionStatsMixin, Template
         result['tiles'] += self.get_review_tiles(can_change_settings=can_change_settings)
         result['tiles'].sort(key=lambda tile: tile.get('priority') or 100)
         return result
+
+    @context
+    def internal_note_form(self):
+        return EventInternalNoteForm(instance=self.request.event)
+
+    @context
+    def can_edit_internal_note(self):
+        return self.request.user.has_perm('base.update_event', self.request.event)
+
+    def post(self, request, *args, **kwargs):
+        if not request.user.has_perm('base.update_event', request.event):
+            raise Http404()
+        form = EventInternalNoteForm(request.POST, instance=request.event)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _('Your internal note has been saved.'))
+        else:
+            messages.error(request, _('We could not save your note, please try again.'))
+        return redirect(request.event.orga_urls.base)

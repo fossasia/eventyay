@@ -1,0 +1,35 @@
+{% load i18n %}
+{% if entries %}
+    <div class="table-responsive">
+        <table class="table talk-activity-table mb-0">
+            <thead>
+                <tr>
+                    <th>{% translate "When" %}</th>
+                    <th>{% translate "User" %}</th>
+                    <th>{% translate "Type" %}</th>
+                    <th>{% translate "Reference" %}</th>
+                    <th>{% translate "Message" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in entries %}
+                    <tr>
+                        <td class="text-nowrap">{{ log.timestamp|date:"SHORT_DATETIME_FORMAT" }}</td>
+                        <td>
+                            {% if log.person %}
+                                {% include "orga/includes/user_name.html" with user=log.person lightbox=True %}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td>{{ log.action_type }}</td>
+                        <td>{{ log.display_object|default:"—"|safe }}</td>
+                        <td>{{ log.display }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="alert alert-info mb-0">{% translate "No recent talk activity yet." %}</div>
+{% endif %}
