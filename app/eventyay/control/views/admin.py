@@ -1179,9 +1179,6 @@ class VoucherList(PaginationMixin, AdministratorPermissionRequiredMixin, ListVie
         ctx['current_tab'] = self.request.GET.get('tab', 'all')
         return ctx
 
-    def get(self, request, *args, **kwargs):
-        return redirect(reverse('eventyay_admin:admin.global.business') + '#tab-event_vouchers')
-
 
 class VoucherCreate(AdministratorPermissionRequiredMixin, CreateView):
     model = InvoiceVoucher

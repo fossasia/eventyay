@@ -19,6 +19,7 @@ SCOPE_TYPE_CHOICES = [
     ('specific_events', _('Specific events')),
     ('all_by_organisers', _('All events by selected organisers')),
     ('both', _('Both selected events and selected organisers')),
+    ('platform_wide', _('Platform-wide (all events and organisers)')),
 ]
 
 
@@ -129,8 +130,10 @@ class InvoiceVoucherForm(I18nModelForm):
                 self.fields['scope_type'].initial = 'both'
             elif has_orgs:
                 self.fields['scope_type'].initial = 'all_by_organisers'
-            else:
+            elif has_events:
                 self.fields['scope_type'].initial = 'specific_events'
+            else:
+                self.fields['scope_type'].initial = 'platform_wide'
         else:
             self.fields['waiver_type'].initial = 'none'
             self.fields['scope_type'].initial = 'specific_events'
@@ -165,6 +168,15 @@ class InvoiceVoucherForm(I18nModelForm):
             data['price_mode'] = 'none'
             data['value'] = None
 
+        scope_type = data.get('scope_type')
+        if scope_type == 'platform_wide':
+            data['event_effect'] = []
+            data['organizer_effect'] = []
+        elif scope_type == 'specific_events':
+            data['organizer_effect'] = []
+        elif scope_type == 'all_by_organisers':
+            data['event_effect'] = []
+
         # Validate scope for active vouchers
         status = data.get('status', InvoiceVoucher.STATUS_ACTIVE)
         if status == InvoiceVoucher.STATUS_ACTIVE:
@@ -174,7 +186,7 @@ class InvoiceVoucherForm(I18nModelForm):
                 self.add_error('valid_until', _('Valid until is required for active vouchers.'))
             if waiver_type == 'none':
                 self.add_error('waiver_type', _('Please select a waiver type for active vouchers.'))
-            if not data.get('event_effect') and not data.get('organizer_effect'):
+            if scope_type != 'platform_wide' and not data.get('event_effect') and not data.get('organizer_effect'):
                 self.add_error(
                     'event_effect',
                     _('Select at least one event or organiser, or explicitly choose platform-wide scope.'),
