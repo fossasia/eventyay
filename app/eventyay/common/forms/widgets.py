@@ -388,7 +388,7 @@ class SlidesWidget(Widget):
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
         if isinstance(value, dict):
-            if 'existing_resources' in value or 'links' in value:
+            if 'existing_resources' in value:
                 # Value came from InfoForm.__init__ setting initial from DB resources
                 current_resources = list(value.get('existing_resources', []))
             else:

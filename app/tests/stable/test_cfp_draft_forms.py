@@ -103,8 +103,8 @@ def test_slides_widget_get_context_re_render():
     ctx2 = widget.get_context('slides', [], {})
     assert ctx2['widget']['is_re_render'] is False
 
-    # Initial values from DB (dict with existing_resources or links)
-    ctx3 = widget.get_context('slides', {'existing_resources': [], 'links': []}, {})
+    # Initial values from DB (dict with existing_resources)
+    ctx3 = widget.get_context('slides', {'existing_resources': []}, {})
     assert ctx3['widget']['is_re_render'] is False
 
     # Validation error re-render (raw dict from value_from_datadict without database keys)
