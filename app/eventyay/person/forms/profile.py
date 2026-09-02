@@ -448,6 +448,7 @@ class SpeakerFilterForm(forms.Form):
             ('missing_biography', _('Missing biography')),
             ('missing_profile_image', _('Missing profile image')),
             ('missing_affiliation', _('Missing affiliation')),
+            ('without_session', _('Speakers without session')),
         ),
         widget=forms.HiddenInput(),
     )

@@ -10,7 +10,6 @@ from django.views.generic import TemplateView
 from django_context_decorator import context
 from django_scopes import scope
 from django_scopes import scopes_disabled
-
 from django.http import Http404
 
 def legacy_orga_event_redirect(request, event):
@@ -39,6 +38,7 @@ def legacy_orga_event_redirect(request, event):
 from eventyay.base.models import Submission, SubmissionStates
 from eventyay.base.models.event import Event
 from eventyay.base.models.log import LogEntry
+from eventyay.base.models.profile import SpeakerProfile
 from eventyay.base.models.organizer import Organizer
 from eventyay.base.settings import is_event_series_creation_enabled, is_meetup_creation_enabled
 from eventyay.common.text.phrases import phrases
@@ -48,7 +48,7 @@ from eventyay.event.stages import get_stages
 from eventyay.orga.views.submission import SubmissionStatsMixin
 from eventyay.person.forms.profile import get_speaker_readiness_queryset
 from eventyay.submission.forms.submission import get_session_readiness_queryset
-from eventyay.talk_rules.submission import get_missing_reviews, speaker_profiles_for_user, submissions_for_user
+from eventyay.talk_rules.submission import get_missing_reviews, submissions_for_user
 
 
 def start_redirect_view(request):
@@ -185,7 +185,7 @@ class EventDashboardView(EventPermissionRequired, SubmissionStatsMixin, Template
 
     def get_speaker_readiness(self):
         event = self.request.event
-        profiles = speaker_profiles_for_user(event, self.request.user)
+        profiles = SpeakerProfile.objects.filter(event=event)
         metrics = (
             (_('Total speakers'), profiles, ''),
             (_('Confirmed speakers'), get_speaker_readiness_queryset(profiles, event, 'confirmed'), 'readiness=confirmed'),
