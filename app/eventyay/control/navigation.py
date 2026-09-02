@@ -31,7 +31,120 @@ def _vouchers_nav_item(request, url) -> dict:
     }
 
 
+def get_meetup_event_navigation(request: HttpRequest):
+    url = request.resolver_match
+    if not url:
+        return []
+    nav = []
+    event = request.event
+    has_settings_perm = 'can_change_event_settings' in request.eventpermset
+    has_items_perm = 'can_change_items' in request.eventpermset
+    has_orders_perm = 'can_view_orders' in request.eventpermset
+    has_mail_perm = 'can_change_orders' in request.eventpermset
+
+    if has_settings_perm:
+        nav.append(
+            {
+                'label': _('Meetup settings'),
+                'url': reverse(
+                    'eventyay_common:event.update',
+                    kwargs={
+                        'event': event.slug,
+                        'organizer': event.organizer.slug,
+                    },
+                ),
+                'active': (url.url_name == 'event.update'),
+                'icon': 'wrench',
+            }
+        )
+
+    if has_orders_perm:
+        nav.append(
+            {
+                'label': _('Registrations'),
+                'url': reverse(
+                    'control:event.orders',
+                    kwargs={
+                        'event': event.slug,
+                        'organizer': event.organizer.slug,
+                    },
+                ),
+                'active': url.url_name in ('event.orders', 'event.order', 'event.orders.search')
+                or 'event.order.' in url.url_name,
+                'icon': 'list-alt',
+            }
+        )
+
+    if has_items_perm:
+        nav.append(
+            {
+                'label': _('Products'),
+                'url': reverse(
+                    'control:event.products',
+                    kwargs={
+                        'event': event.slug,
+                        'organizer': event.organizer.slug,
+                    },
+                ),
+                'active': url.url_name in ('event.product', 'event.products.add', 'event.products')
+                or 'event.product.' in url.url_name,
+                'icon': 'ticket',
+            }
+        )
+        nav.append(
+            {
+                'label': _('Quotas'),
+                'url': reverse(
+                    'control:event.products.quotas',
+                    kwargs={
+                        'event': event.slug,
+                        'organizer': event.organizer.slug,
+                    },
+                ),
+                'active': 'event.products.quota' in url.url_name,
+                'icon': 'tasks',
+            }
+        )
+
+    if has_settings_perm:
+        nav.append(
+            {
+                'label': _('Payment'),
+                'url': reverse(
+                    'control:event.settings.payment',
+                    kwargs={
+                        'event': event.slug,
+                        'organizer': event.organizer.slug,
+                    },
+                ),
+                'active': url.url_name == 'event.settings.payment',
+                'icon': 'credit-card',
+            }
+        )
+
+    if 'eventyay.plugins.sendmail' in event.get_plugins() and has_mail_perm:
+        nav.append(
+            {
+                'label': _('Message center'),
+                'url': reverse(
+                    'control:event.mail.compose',
+                    kwargs={
+                        'event': event.slug,
+                        'organizer': event.organizer.slug,
+                    },
+                ),
+                'active': 'event.mail' in url.url_name,
+                'icon': 'envelope',
+            }
+        )
+
+    return nav
+
+
 def get_event_navigation(request: HttpRequest):
+    if is_meetup_event(request.event):
+        return get_meetup_event_navigation(request)
+
     url = request.resolver_match
     if not url:
         return []
@@ -125,7 +238,7 @@ def get_event_navigation(request: HttpRequest):
         )
         nav.append(
             {
-                'label': _('Registration settings') if is_meetup_event(request.event) else _('Ticket settings'),
+                'label': _('Ticket settings'),
                 'url': reverse(
                     'control:event.settings',
                     kwargs={
@@ -591,6 +704,12 @@ def get_admin_navigation(request):
                         'active': ('sudo' in url.url_name),
                     },
                 ],
+            },
+            {
+                'label': _('Event vouchers'),
+                'url': reverse('eventyay_admin:admin.vouchers'),
+                'active': 'voucher' in url.url_name,
+                'icon': 'tags',
             },
         ]
     )

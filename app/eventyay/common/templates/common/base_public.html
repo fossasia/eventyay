@@ -91,6 +91,8 @@
             <script defer src="{% static 'common/js/nav-tabs.js' %}"></script>
             <script type="module" src="{% static 'common/js/contact-modal.js' %}"></script>
         {% endcompress %}
+        {# Keep tiptapLoader outside the compress block so document.currentScript keeps data-tiptap-* attributes (see common/js/tiptapLoader.js). #}
+        <script type="module" src="{% static 'common/js/tiptapLoader.js' %}" data-tiptap-js="{% static 'editor/editor.js' %}" data-tiptap-css="{% static 'editor/editor.css' %}"></script>
         <meta id="eventyay-file-input-i18n" data-choose-file="{% translate 'Choose file' %}">
         {% block scripts %}{% endblock scripts %}
         {% block custom_header %}{% endblock custom_header %}
