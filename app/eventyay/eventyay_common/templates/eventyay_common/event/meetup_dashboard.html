@@ -4,7 +4,6 @@
 {% load bootstrap3 %}
 {% load static %}
 {% load eventsignal %}
-{% load compress %}
 
 {% block title %}{{ request.event.name }}{% endblock %}
 
@@ -12,10 +11,8 @@
     {{ block.super }}
     <link rel="stylesheet" type="text/css" href="{% static 'vendored/apexcharts/apexcharts.css' %}" />
     <link rel="stylesheet" href="{% static 'eventyay-common/css/meetup_dashboard.css' %}">
-    {% compress js %}
-        <script defer src="{% static 'vendored/apexcharts/apexcharts.min.js' %}"></script>
-        <script defer src="{% static 'eventyay-common/js/meetup-analytics.js' %}"></script>
-    {% endcompress %}
+    <script defer src="{% static 'vendored/apexcharts/apexcharts.min.js' %}"></script>
+    <script type="module" src="{% static 'eventyay-common/js/meetup-analytics.js' %}"></script>
 {% endblock %}
 
 {% block content %}
@@ -61,7 +58,26 @@
             {% include "pretixcontrol/event/fragment_subevent_choice_simple.html" %}
         </form>
     {% endif %}
-    {% include "eventyay_common/event/fragment_dashboard.html" %}
+    <div class="dashboard custom">
+        <div class="panel panel-default items widget-container widget-full no-padding">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    {% trans "Meetup Dashboard" %}
+                </h3>
+            </div>
+            <div class="panel-body">
+                <p>
+                    {% trans "The meetup dashboard provides a streamlined overview of your core components: Registrations and Video. Manage RSVPs, track attendee lists, and set up live video streams." %}
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="dashboard custom">
+        {% if not request.event.has_subevents or subevent %}
+            {% include "pretixcontrol/event/fragment_timeline.html" %}
+        {% endif %}
+        {% include "pretixcontrol/event/fragment_info_box.html" %}
+    </div>
 
     {% if can_view_orders %}
         <div class="analytics-section">
@@ -107,9 +123,7 @@
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="analytics-section">
             <div class="row">
                 <div class="col-md-12">
                     <div class="panel panel-default">

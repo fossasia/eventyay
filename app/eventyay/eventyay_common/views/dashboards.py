@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Any, Dict, List, Optional, Tuple
 from zoneinfo import ZoneInfo
 from bs4 import BeautifulSoup
@@ -376,12 +376,7 @@ class EventIndexView(TemplateView):
         access = get_cached_event_dashboard_access(
             request, request.user, request.organizer, request.event
         )
-        can_view_orders = (
-            permissions['can_view_orders']
-            or access.get('can_view_orders', False)
-            or access.get('has_ticket_access', False)
-            or request.user.is_staff
-        )
+        can_view_orders = permissions['can_view_orders']
 
         # Prepare context
         context.update(

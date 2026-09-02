@@ -29,6 +29,7 @@ function drawMeetupOrdersOverTime() {
         ],
         chart: {
             type: 'area',
+            width: '100%',
             height: 240,
             fontFamily: FONT_FAMILY,
             redrawOnParentResize: true,
@@ -72,6 +73,7 @@ function drawMeetupOrdersByStatus() {
         labels: series.map((d) => d.label),
         chart: {
             type: 'donut',
+            width: '100%',
             height: 240,
             fontFamily: FONT_FAMILY,
             redrawOnParentResize: true,
@@ -127,6 +129,7 @@ function drawMeetupRevenueOverTime() {
         ],
         chart: {
             type: 'area',
+            width: '100%',
             height: 240,
             fontFamily: FONT_FAMILY,
             redrawOnParentResize: true,
@@ -171,10 +174,17 @@ function drawMeetupRevenueOverTime() {
     new ApexCharts(chartEl, options).render()
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    if (typeof ApexCharts !== 'undefined') {
+function init() {
+    if (typeof ApexCharts === 'undefined') return
+    setTimeout(() => {
         drawMeetupOrdersOverTime()
         drawMeetupOrdersByStatus()
         drawMeetupRevenueOverTime()
-    }
-})
+    }, 50)
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init)
+} else {
+    init()
+}
