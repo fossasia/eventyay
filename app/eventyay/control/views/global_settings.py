@@ -85,8 +85,6 @@ class GlobalBusinessSettingsView(AdministratorPermissionRequiredMixin, FormView)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        from eventyay.base.models import InvoiceVoucher
-        ctx['vouchers'] = InvoiceVoucher.objects.all().order_by('-created_at')
         ctx['currency'] = settings.DEFAULT_CURRENCY
         return ctx
 
