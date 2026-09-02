@@ -187,9 +187,18 @@
                     </button>
 
                     <!-- Save Button -->
-                    <button type="submit" name="action" value="save" form="edit-form" class="btn btn-primary btn-lg">
-                        {% translate "Save" %}
-                    </button>
+                    {% if form.instance.is_draft %}
+                        <button type="submit" name="action" value="draft" form="edit-form" class="btn btn-default btn-lg">
+                            {% translate "Save draft" %}
+                        </button>
+                        <button type="submit" name="action" value="send" form="edit-form" class="btn btn-primary btn-lg">
+                            {% translate "Send to outbox" %}
+                        </button>
+                    {% else %}
+                        <button type="submit" name="action" value="send" form="edit-form" class="btn btn-primary btn-lg">
+                            {% translate "Save" %}
+                        </button>
+                    {% endif %}
                 </div>
             </div>
         </form>

@@ -1025,21 +1025,9 @@ class TaskList(AdministratorPermissionRequiredMixin, PaginationMixin, ListView):
         return HttpResponseRedirect(reverse('eventyay_admin:admin.task_management'))
 
 
-class VoucherList(PaginationMixin, AdministratorPermissionRequiredMixin, ListView):
-    model = InvoiceVoucher
-    context_object_name = 'vouchers'
-    template_name = 'pretixcontrol/admin/vouchers/index.html'
-
-    def get_queryset(self):
-        qs = InvoiceVoucher.objects.all()
-        return qs
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        return ctx
-
+class VoucherList(AdministratorPermissionRequiredMixin, View):
     def get(self, request, *args, **kwargs):
-        return super().get(request, *args, **kwargs)
+        return redirect(reverse('eventyay_admin:admin.global.business') + '#tab-event_vouchers')
 
 
 class VoucherCreate(AdministratorPermissionRequiredMixin, CreateView):
@@ -1057,7 +1045,7 @@ class VoucherCreate(AdministratorPermissionRequiredMixin, CreateView):
         return ctx
 
     def get_success_url(self) -> str:
-        return reverse('eventyay_admin:admin.vouchers')
+        return reverse('eventyay_admin:admin.global.business') + '#tab-event_vouchers'
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -1096,7 +1084,7 @@ class VoucherUpdate(AdministratorPermissionRequiredMixin, UpdateView):
         return super().form_valid(form)
 
     def get_success_url(self) -> str:
-        return reverse('eventyay_admin:admin.vouchers')
+        return reverse('eventyay_admin:admin.global.business') + '#tab-event_vouchers'
 
 
 class VoucherDelete(AdministratorPermissionRequiredMixin, DeleteView):
@@ -1134,7 +1122,7 @@ class VoucherDelete(AdministratorPermissionRequiredMixin, DeleteView):
         return HttpResponseRedirect(success_url)
 
     def get_success_url(self) -> str:
-        return reverse('eventyay_admin:admin.vouchers')
+        return reverse('eventyay_admin:admin.global.business') + '#tab-event_vouchers'
 
 
 class SystemConfigView(AdministratorPermissionRequiredMixin, TemplateView):
