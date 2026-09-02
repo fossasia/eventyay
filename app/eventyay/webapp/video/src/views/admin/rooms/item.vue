@@ -17,22 +17,12 @@
 				bunt-icon-button(@click="$router.push({name: 'admin:rooms:index'})") arrow_left
 				h1 {{ roomTypeLabel }} :
 					span.room-name(v-html="$emojify(config.name)")
-				.actions
-					bunt-button(v-if="hasPermission('room:update')", @click="showRoomEditPrompt = true") {{ $t('Edit') }}
 			edit-form(:config="config")
 	bunt-progress-circular(v-else, size="huge")
-	transition(name="prompt")
-		RoomEditPrompt(
-			v-if="showRoomEditPrompt && config",
-			:room="{id: config.id}",
-			@close="closeRoomEditPrompt",
-			@deleted="roomDeleted"
-		)
 </template>
 <script>
 import { mapGetters } from 'vuex'
 import api from 'lib/api'
-import RoomEditPrompt from 'components/RoomEditPrompt'
 import VideoProviderDropdown from 'components/VideoProviderDropdown'
 import { getRoomTypeById, inferType, isChatManagedRoom } from 'lib/room-types'
 import {
@@ -45,7 +35,7 @@ import EditForm from './EditForm'
 
 export default {
 	name: 'AdminRoom',
-	components: { EditForm, RoomEditPrompt, VideoProviderDropdown },
+	components: { EditForm, VideoProviderDropdown },
 	props: {
 		roomId: String
 	},
@@ -54,7 +44,6 @@ export default {
 			error: null,
 			errorCode: null,
 			config: null,
-			showRoomEditPrompt: false,
 			_unwatchConnected: null
 		}
 	},
@@ -74,6 +63,16 @@ export default {
 				this.isAdminMode,
 				(flag) => features.enabled(flag)
 			)
+		}
+	},
+	watch: {
+		roomId: {
+			handler() {
+				this.config = null
+				this.error = null
+				this.errorCode = null
+				this.ensureConnectedAndFetch()
+			}
 		}
 	},
 	async created() {
@@ -143,10 +142,6 @@ export default {
 		},
 		addVideoProvider(provider) {
 			return this.applyProvider(provider.roomTypeId)
-		},
-		closeRoomEditPrompt() {
-			this.showRoomEditPrompt = false
-			this.fetchConfig()
 		},
 		roomDeleted() {
 			this.$router.replace({name: 'admin:rooms:index'})
