@@ -51,7 +51,7 @@ def _choose_preferred_server(servers, event, prefer_server):
     preferred_servers = [
         server
         for server in servers.filter(
-            Q(event_exclusive=event) | Q(event_exclusive__isnull=True)
+            Q(events_exclusive=event) | Q(events_exclusive__isnull=True)
         )
         if _server_matches_preference(server, preferred)
     ]
@@ -62,8 +62,8 @@ def _choose_preferred_server(servers, event, prefer_server):
 
 def _choose_any_available_server(servers, event):
     querysets = (
-        servers.filter(event_exclusive=event),
-        servers.filter(event_exclusive__isnull=True),
+        servers.filter(events_exclusive=event),
+        servers.filter(events_exclusive__isnull=True),
     )
     for qs in querysets:
         available_servers = list(qs)

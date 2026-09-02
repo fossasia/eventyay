@@ -1,11 +1,11 @@
 <template lang="pug">
-.c-sidebar-addons
+.c-sidebar-addons(v-if="hasAnySidebarAddon")
 	.addons-section-header
 		h2 {{ $t('Sidebar add-ons') }}
 		p.subtitle {{ $t('Enhance the attendee experience on the player.') }}
 
 	.addons-card
-		.addon-row
+		.addon-row(v-if="$features.enabled('chat')")
 			.addon-info
 				.addon-icon
 					i.mdi.mdi-message-text-outline(aria-hidden="true")
@@ -15,7 +15,7 @@
 			.addon-toggle
 				bunt-switch(name="enable-chat", v-model="hasChat")
 
-		.addon-nested-config(v-if="hasChat")
+		.addon-nested-config(v-if="hasChat && $features.enabled('chat')")
 			.webhook-container
 				button.webhook-header-btn(
 					type="button"
@@ -79,7 +79,7 @@
 						i.mdi.mdi-information-outline(aria-hidden="true")
 						span {{ $t('Every chat message and reaction will be POSTed to this URL with an HMAC-SHA256 signature in the request headers.') }}
 
-		.addon-row
+		.addon-row(v-if="$features.enabled('question')")
 			.addon-info
 				.addon-icon
 					i.mdi.mdi-help-circle-outline(aria-hidden="true")
@@ -89,7 +89,7 @@
 			.addon-toggle
 				bunt-switch(name="enable-qa", v-model="hasQuestions")
 
-		.addon-nested-config(v-if="hasQuestions")
+		.addon-nested-config(v-if="hasQuestions && $features.enabled('question')")
 			.qa-options
 				bunt-checkbox(v-model="modules['question'].config.active", :label="$t('Active')", name="active")
 				bunt-checkbox(v-model="modules['question'].config.requires_moderation", :label="$t('Questions require moderation')", name="requires_moderation")
@@ -107,6 +107,7 @@
 
 <script>
 import mixin from './mixin'
+import { hasAnySidebarAddonFeature } from 'lib/video-component-flags'
 
 export default {
 	mixins: [mixin],
@@ -117,6 +118,9 @@ export default {
 		}
 	},
 	computed: {
+		hasAnySidebarAddon() {
+			return hasAnySidebarAddonFeature(flag => this.$features.enabled(flag))
+		},
 		webhookConfigured() {
 			const config = this.modules['chat.native']?.config
 			return !!(config?.webhook_url && config?.webhook_hmac_secret)
@@ -165,7 +169,23 @@ export default {
 			}
 		}
 	},
+	created() {
+		this.stripGloballyDisabledModules()
+	},
 	methods: {
+		stripGloballyDisabledModules() {
+			if (!this.$features.enabled('chat') && this.modules['chat.native']) {
+				this.clearChatWebhookConfig()
+				this.removeModule('chat.native')
+				this.showWebhookConfig = false
+			}
+			if (!this.$features.enabled('question') && this.modules.question) {
+				this.removeModule('question')
+			}
+			if (!this.$features.enabled('polls') && this.modules.poll) {
+				this.removeModule('poll')
+			}
+		},
 		toggleWebhookConfig() {
 			this.showWebhookConfig = !this.showWebhookConfig
 			if (!this.showWebhookConfig) {

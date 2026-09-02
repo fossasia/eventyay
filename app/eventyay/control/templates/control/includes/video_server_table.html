@@ -20,14 +20,14 @@
                             <a class="video-server-link" href="{{ server.edit_url }}">{{ server.name }}</a>
                         </td>
                         <td>
-                            {% if server.event_exclusive %}
-                                {{ server.event_exclusive.name }}
+                            {% if server.events_exclusive %}
+                                {{ server.events_exclusive|join:", " }}
                             {% else %}
                                 <span class="text-muted">{% trans "All events" %}</span>
                             {% endif %}
                         </td>
                         <td>
-                            <span class="label {% if server.active %}label-success{% else %}label-default{% endif %} video-server-status" data-video-server-status>
+                            <span class="label {% if server.feature_enabled == False %}label-default{% elif server.active %}label-success{% else %}label-danger{% endif %} video-server-status" data-video-server-status>
                                 {{ server.status }}
                             </span>
                         </td>

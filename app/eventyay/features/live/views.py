@@ -164,7 +164,7 @@ class AppView(View):
                             "scheduleImport": reverse("storage:schedule_import", kwargs={"event_id": event.pk}),
                             "systemlog": reverse("live:systemlog"),
                         },
-                        "features": event.feature_flags,
+                        "features": event.get_active_feature_flags(),
                         "externalAuthUrl": event.external_auth_url,
                         "locale": event.locale,
                         "date_locale": event.config.get("date_locale", "en-ie"),

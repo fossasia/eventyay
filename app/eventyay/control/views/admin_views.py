@@ -55,6 +55,8 @@ from eventyay.control.forms.server_management import (
     EventForm,
 )
 from eventyay.base.models.log import LogEntry
+from eventyay.base.video_components import SETTING_LABELS, get_video_component_usage
+from eventyay.control.forms.global_settings import VideoFeaturesSettingsForm
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
 from eventyay.control.tasks import clear_event_data
 from eventyay.control.video.admin_dashboard import get_video_server_config
@@ -126,18 +128,40 @@ class ProfileView(AdministratorPermissionRequiredMixin, FormView):
         return result
 
 
-class VideoSettings(AdministratorPermissionRequiredMixin, TemplateView):
+class VideoSettings(AdministratorPermissionRequiredMixin, FormView):
     template_name = "control/video_settings.html"
+    form_class = VideoFeaturesSettingsForm
+
+    def form_valid(self, form):
+        pending = form.get_pending_disables()
+        if pending and self.request.POST.get('confirm_disable') != '1':
+            messages.error(
+                self.request,
+                _('Please confirm disabling components that are currently in use.'),
+            )
+            return self.form_invalid(form)
+
+        form.save()
+        messages.success(self.request, _('Your changes have been saved.'))
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        from django.urls import reverse
+
+        return reverse('eventyay_admin:video_admin:settings') + "?tab=features"
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["bbb_servers"] = BBBServer.objects.select_related("event_exclusive").order_by("url")
-        ctx["janus_servers"] = JanusServer.objects.select_related("event_exclusive").order_by("url")
-        ctx["jitsi_servers"] = JitsiServer.objects.select_related("event_exclusive").order_by("url")
-        ctx["turn_servers"] = TurnServer.objects.select_related("event_exclusive").order_by("hostname")
+        ctx["bbb_servers"] = BBBServer.objects.prefetch_related("events_exclusive").order_by("url")
+        ctx["janus_servers"] = JanusServer.objects.prefetch_related("events_exclusive").order_by("url")
+        ctx["jitsi_servers"] = JitsiServer.objects.prefetch_related("events_exclusive").order_by("url")
+        ctx["turn_servers"] = TurnServer.objects.prefetch_related("events_exclusive").order_by("hostname")
         ctx["streaming_servers"] = StreamingServer.objects.order_by("name")
-        # Define the tabs logic, active tab can default to bbb
-        ctx["active_tab"] = self.request.GET.get("tab", "bbb")
+        ctx["active_tab"] = self.request.GET.get("tab", "features")
+        ctx["video_component_usage"] = get_video_component_usage()
+        ctx["video_component_labels"] = SETTING_LABELS
+        from eventyay.base.settings import GlobalSettingsObject
+        ctx["global_video_settings"] = GlobalSettingsObject().settings
         return ctx
 
 

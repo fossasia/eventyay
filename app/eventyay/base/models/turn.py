@@ -13,8 +13,8 @@ class TurnServer(models.Model):
     active = models.BooleanField(default=True)
     hostname = models.CharField(max_length=300)
     auth_secret = models.CharField(max_length=300)
-    event_exclusive = models.ForeignKey(
-        "Event", null=True, blank=True, on_delete=models.PROTECT
+    events_exclusive = models.ManyToManyField(
+        "Event", blank=True
     )
 
     def generate_credentials(self):

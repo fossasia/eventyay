@@ -145,7 +145,6 @@ aside.c-rooms-sidebar(
 								span {{ $t('New Message') }}
 
 			.buffer
-
 			.sidebar-footer-action(v-if="hasOrganiserPermissions")
 				router-link.btn-manage-video(:to="{name: 'admin'}", @click="onNavClick")
 					i.fa.fa-cog(aria-hidden="true")
@@ -158,6 +157,7 @@ aside.c-rooms-sidebar(
 </template>
 <script>
 import { mapState, mapGetters } from 'vuex'
+import features from 'features'
 import theme from 'theme'
 import ROOM_TYPES, { NETWORKING_MODULE_TYPES, VIDEO_CHANNEL_MODULE_TYPES, inferRoomType, inferType } from 'lib/room-types'
 import { getRoomOccupancyCount, usesParticipantOccupancy } from 'lib/room-occupancy'

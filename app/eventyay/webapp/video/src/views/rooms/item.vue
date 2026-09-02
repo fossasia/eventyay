@@ -1,26 +1,29 @@
 <template lang="pug">
 .c-room(v-if="room", :class="{'standalone-chat': modules['chat.native'] && room.modules.length === 1}")
-	.stage(v-if="modules['livestream.native'] || modules['livestream.youtube'] || modules['call.janus']")
-		media-source-placeholder
-		reactions-overlay(v-if="hasLivestream")
-		upcoming-stream-countdown(:room="room")
-		.stage-tool-blocker(v-if="activeStageTool !== null", @click="activeStageTool = null")
-		.stage-tools(v-if="hasLivestream")
-			reactions-bar(:expanded="true", @expand="activeStageTool = 'reaction'")
-			AudioTranslationDropdown(v-if="showPluginLanguageDropdown", :key="`${room.id}-plugin`", :languages="pluginLanguages", :selected-language="selectedPluginLanguage", :label="$t('Interpretation')", @languageChanged="handlePluginLanguageChange")
-	media-source-placeholder(v-else-if="modules['call.bigbluebutton'] || modules['call.zoom'] || modules['call.jitsi']")
-	roulette(v-else-if="modules['networking.roulette'] && $features.enabled('roulette')", :module="modules['networking.roulette']", :room="room")
-	landing-page(v-else-if="modules['page.landing']", :module="modules['page.landing']")
-	markdown-page(v-else-if="modules['page.markdown']", :module="modules['page.markdown']")
-	chat(v-if="room.modules.length === 1 && modules['chat.native']", :room="room", :module="modules['chat.native']", mode="standalone", :key="room.id")
-	.room-sidebar(v-else-if="modules['chat.native'] || modules['question'] || modules['poll']", :class="unreadTabsClasses", role="complementary")
-		bunt-tabs(v-if="(!!modules['question'] + !!modules['poll'] + !!modules['chat.native']) > 1 && activeSidebarTab", :active-tab="activeSidebarTab")
-			bunt-tab(v-if="modules['chat.native']", id="chat", :header="$t('Chat')", @selected="activeSidebarTab = 'chat'")
-			bunt-tab(v-if="modules['question']", id="questions", :header="$t('Questions')", @selected="activeSidebarTab = 'questions'")
-			bunt-tab(v-if="modules['poll']", id="polls", :header="$t('Polls')", @selected="activeSidebarTab = 'polls'")
-		chat(v-if="modules['chat.native']", v-show="activeSidebarTab === 'chat'", :room="room", :module="modules['chat.native']", mode="compact", :key="room.id", @change="changedTabContent('chat')")
-		questions(v-if="modules['question']", v-show="activeSidebarTab === 'questions'", :module="modules['question']", @change="changedTabContent('questions')")
-		polls(v-if="modules['poll']", v-show="activeSidebarTab === 'polls'", :module="modules['poll']", @change="changedTabContent('polls')")
+	.stage.disabled-stage(v-if="disabledModuleType")
+		disabled-video-component(:module-type="disabledModuleType")
+	template(v-else)
+		.stage(v-if="modules['livestream.native'] || modules['livestream.youtube'] || modules['call.janus']")
+			media-source-placeholder
+			reactions-overlay(v-if="hasLivestream")
+			upcoming-stream-countdown(:room="room")
+			.stage-tool-blocker(v-if="activeStageTool !== null", @click="activeStageTool = null")
+			.stage-tools(v-if="hasLivestream")
+				reactions-bar(:expanded="true", @expand="activeStageTool = 'reaction'")
+				AudioTranslationDropdown(v-if="showPluginLanguageDropdown", :key="`${room.id}-plugin`", :languages="pluginLanguages", :selected-language="selectedPluginLanguage", :label="$t('Interpretation')", @languageChanged="handlePluginLanguageChange")
+		media-source-placeholder(v-else-if="modules['call.bigbluebutton'] || modules['call.zoom'] || modules['call.jitsi']")
+		roulette(v-else-if="modules['networking.roulette'] && $features.enabled('roulette')", :module="modules['networking.roulette']", :room="room")
+		landing-page(v-else-if="modules['page.landing']", :module="modules['page.landing']")
+		markdown-page(v-else-if="modules['page.markdown']", :module="modules['page.markdown']")
+		chat(v-if="room.modules.length === 1 && modules['chat.native'] && $features.enabled('chat')", :room="room", :module="modules['chat.native']", mode="standalone", :key="room.id")
+		.room-sidebar(v-else-if="(modules['chat.native'] && $features.enabled('chat')) || (modules['question'] && $features.enabled('question')) || (modules['poll'] && $features.enabled('polls'))", :class="unreadTabsClasses", role="complementary")
+			bunt-tabs(v-if="(!!(modules['question'] && $features.enabled('question')) + !!(modules['poll'] && $features.enabled('polls')) + !!(modules['chat.native'] && $features.enabled('chat'))) > 1 && activeSidebarTab", :active-tab="activeSidebarTab")
+				bunt-tab(v-if="modules['chat.native'] && $features.enabled('chat')", id="chat", :header="$t('Chat')", @selected="activeSidebarTab = 'chat'")
+				bunt-tab(v-if="modules['question'] && $features.enabled('question')", id="questions", :header="$t('Questions')", @selected="activeSidebarTab = 'questions'")
+				bunt-tab(v-if="modules['poll'] && $features.enabled('polls')", id="polls", :header="$t('Polls')", @selected="activeSidebarTab = 'polls'")
+			chat(v-if="modules['chat.native'] && $features.enabled('chat')", v-show="activeSidebarTab === 'chat'", :room="room", :module="modules['chat.native']", mode="compact", :key="room.id", @change="changedTabContent('chat')")
+			questions(v-if="modules['question'] && $features.enabled('question')", v-show="activeSidebarTab === 'questions'", :module="modules['question']", @change="changedTabContent('questions')")
+			polls(v-if="modules['poll'] && $features.enabled('polls')", v-show="activeSidebarTab === 'polls'", :module="modules['poll']", @change="changedTabContent('polls')")
 </template>
 <script>
 // TODO
@@ -35,8 +38,10 @@ import Roulette from 'components/Roulette'
 import Polls from 'components/Polls'
 import Questions from 'components/Questions'
 import MediaSourcePlaceholder from 'components/MediaSourcePlaceholder'
+import DisabledVideoComponent from 'components/DisabledVideoComponent'
 import AudioTranslationDropdown from 'components/AudioTranslationDropdown'
 import UpcomingStreamCountdown from 'components/UpcomingStreamCountdown'
+import { getDisabledPrimaryModule } from 'lib/video-component-flags'
 import { normalizeAudioTranslationSource } from 'lib/validators'
 import { pluginLanguageStreams, roomUsesPluginLanguageStreams } from '../../interpretation-streams'
 
@@ -51,6 +56,7 @@ export default {
 		Roulette,
 		Polls,
 		Questions,
+		DisabledVideoComponent,
 		MediaSourcePlaceholder,
 		AudioTranslationDropdown,
 		UpcomingStreamCountdown,
@@ -95,6 +101,13 @@ export default {
 			return Boolean(
 				this.modules['livestream.native'] ||
 				this.modules['livestream.youtube']
+			)
+		},
+		disabledModuleType() {
+			return getDisabledPrimaryModule(
+				this.modules,
+				flag => this.$features.enabled(flag),
+				this.room?.modules?.length || 0
 			)
 		}
 	},
@@ -193,6 +206,8 @@ export default {
 		flex: auto
 		overflow: hidden
 		position: relative
+		&.disabled-stage
+			min-height: min(56.25vw, 50vh)
 	.c-media-source-placeholder
 		flex: auto
 	.room-sidebar

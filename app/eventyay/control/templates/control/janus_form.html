@@ -1,5 +1,6 @@
 {% extends "pretixcontrol/admin/base.html" %}
 {% load i18n %}
+{% load bootstrap3 %}
 {% load formset_tags %}
 
 {% block video_admin_content %}
@@ -7,7 +8,7 @@
 <form method="post" class="form-horizontal">
     {% csrf_token %}
     <div class="form-body">
-        {{ form.as_p }}
+        {% bootstrap_form form layout='horizontal' %}
     </div>
     <div class="video-admin-btn-row">
         <button type="submit" class="btn btn-primary">

@@ -90,6 +90,16 @@ def room_action(
                 raise ConsumerException("room.unknown", "Unknown room ID")
 
             if module_required is not None:
+                from channels.db import database_sync_to_async
+
+                from eventyay.base.video_components import get_disabled_module_error, is_module_type_enabled
+
+                if not await database_sync_to_async(is_module_type_enabled)(module_required):
+                    raise ConsumerException(
+                        "module.disabled",
+                        get_disabled_module_error(module_required),
+                    )
+
                 module_config = [
                     m.get("config", {})
                     for m in self.room.module_config

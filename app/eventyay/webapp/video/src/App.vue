@@ -54,6 +54,8 @@ import OrganiserSidebar from 'components/OrganiserSidebar'
 import MediaSource from 'components/MediaSource'
 import Notifications from 'components/notifications'
 import GreetingPrompt from 'components/profile/GreetingPrompt'
+import features from 'features'
+import { roomHasEnabledMediaModule } from 'lib/video-component-flags'
 
 const mediaModules = ['livestream.native', 'livestream.youtube', 'call.bigbluebutton', 'call.janus', 'call.zoom', 'call.jitsi']
 const stageToolModules = ['livestream.native', 'livestream.youtube', 'call.janus']
@@ -203,15 +205,14 @@ export default {
 			}, {}) || {}
 		},
 		roomHasMedia() {
-			if (this.hasFatalError(this.room)) return false
-			return this.room?.modules.some(module => mediaModules.includes(module.type))
+			return this.roomHasEnabledMedia(this.room)
 		},
 		// Single source of truth for which room should be streaming
 		// Returns the current room if it has media, otherwise the background room
 		streamingRoom() {
 			if (this.roomHasMedia) return this.room
 			if (this.isAdminRoute) return null
-			if (this.backgroundRoom && !this.hasFatalError(this.backgroundRoom)) return this.backgroundRoom
+			if (this.roomHasEnabledMedia(this.backgroundRoom)) return this.backgroundRoom
 			return null
 		},
 		// Determines if the streaming room should be shown in background (mini-window) mode
@@ -314,6 +315,10 @@ export default {
 		window.removeEventListener('keydown', this.onKeydown, true)
 	},
 	methods: {
+		roomHasEnabledMedia(room) {
+			if (!room || this.hasFatalError(room)) return false
+			return roomHasEnabledMediaModule(room, flag => features.enabled(flag))
+		},
 		async loadStarredSharingPreference() {
 			if (!this.$store.state.user) {
 				this.shareStarredSessions = false
@@ -422,7 +427,7 @@ export default {
 				this.backgroundRoom = null
 				return
 			}
-			const newRoomHasMedia = newRoom && newRoom.modules && newRoom.modules.some(module => mediaModules.includes(module.type))
+			const newRoomHasMedia = this.roomHasEnabledMedia(newRoom)
 			// We treat "undefined / not callable" as true to avoid race conditions.
 			let primaryWasPlaying = true
 			const mediaRef = this.mediaSourceRefs.media
@@ -433,7 +438,7 @@ export default {
 			if (oldRoom &&
 				this.rooms.includes(oldRoom) &&
 				!this.backgroundRoom &&
-				oldRoom.modules.some(module => mediaModules.includes(module.type)) &&
+				this.roomHasEnabledMedia(oldRoom) &&
 				!this.hasFatalError(oldRoom) &&
 				primaryWasPlaying &&
 				// don't background bbb room when switching to new bbb room

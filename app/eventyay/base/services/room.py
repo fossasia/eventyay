@@ -188,6 +188,25 @@ def validate_room_config_patch(room, body):
         partial=True,
     )
     if "module_config" in body:
+        from django.core.exceptions import ValidationError
+
+        from eventyay.base.video_components import get_disabled_module_error, is_module_type_enabled
+
+        existing_modules = {m.get("type"): m for m in (room.module_config or []) if isinstance(m, dict)}
+
+        for mod in body.get("module_config", []):
+            mod_type = mod.get("type")
+            if mod_type and not is_module_type_enabled(mod_type):
+                existing = existing_modules.get(mod_type)
+                if not existing or existing != mod:
+                    raise ValidationError(
+                        {
+                            "module_config": [
+                                f'{get_disabled_module_error(mod_type)} '
+                                'It cannot be added or modified.'
+                            ]
+                        }
+                    )
         _sanitize_jitsi_config(body["module_config"])
     return partial_validated_update(serializer, body)
 

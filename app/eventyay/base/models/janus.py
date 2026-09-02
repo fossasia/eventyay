@@ -8,6 +8,6 @@ class JanusServer(models.Model):
     active = models.BooleanField(default=True)
     url = models.CharField(max_length=200)
     room_create_key = models.CharField(max_length=300)
-    event_exclusive = models.ForeignKey(
-        "Event", null=True, blank=True, on_delete=models.PROTECT
+    events_exclusive = models.ManyToManyField(
+        "Event", blank=True
     )

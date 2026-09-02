@@ -216,11 +216,19 @@ class BBBServerForm(HasSecretsMixin, forms.ModelForm):
         fields = (
             "url",
             "active",
-            "event_exclusive",
+            "events_exclusive",
             "rooms_only",
             "secret",
         )
         field_classes = {"secret": SecretKeyField}
+        widgets = {
+            "events_exclusive": forms.SelectMultiple(
+                attrs={
+                    "class": "form-control select2-static",
+                    "data-placeholder": _("Select events (optional)"),
+                }
+            )
+        }
 
 
 class JanusServerForm(HasSecretsMixin, forms.ModelForm):
@@ -230,9 +238,17 @@ class JanusServerForm(HasSecretsMixin, forms.ModelForm):
             "url",
             "active",
             "room_create_key",
-            "event_exclusive",
+            "events_exclusive",
         )
         field_classes = {"room_create_key": SecretKeyField}
+        widgets = {
+            "events_exclusive": forms.SelectMultiple(
+                attrs={
+                    "class": "form-control select2-static",
+                    "data-placeholder": _("Select events (optional)"),
+                }
+            )
+        }
 
 
 class JitsiServerForm(HasSecretsMixin, forms.ModelForm):
@@ -250,9 +266,17 @@ class JitsiServerForm(HasSecretsMixin, forms.ModelForm):
             "app_id",
             "key_id",
             "app_secret",
-            "event_exclusive",
+            "events_exclusive",
         )
         field_classes = {"app_secret": SecretKeyField}
+        widgets = {
+            "events_exclusive": forms.SelectMultiple(
+                attrs={
+                    "class": "form-control select2-static",
+                    "data-placeholder": _("Select events (optional)"),
+                }
+            )
+        }
 
 
 class TurnServerForm(HasSecretsMixin, forms.ModelForm):
@@ -262,9 +286,17 @@ class TurnServerForm(HasSecretsMixin, forms.ModelForm):
             "active",
             "hostname",
             "auth_secret",
-            "event_exclusive",
+            "events_exclusive",
         )
         field_classes = {"auth_secret": SecretKeyField}
+        widgets = {
+            "events_exclusive": forms.SelectMultiple(
+                attrs={
+                    "class": "form-control select2-static",
+                    "data-placeholder": _("Select events (optional)"),
+                }
+            )
+        }
 
 
 class StreamingServerForm(HasSecretsMixin, forms.ModelForm):

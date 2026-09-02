@@ -105,7 +105,7 @@ class VideoSPAView(View):
                     'scheduleImport': safe_reverse('storage:schedule_import', event_id=event.pk) or '',
                     'systemlog': safe_reverse('live:systemlog') or '',
                 },
-                'features': getattr(event, 'feature_flags', {}) or {},
+                'features': event.get_active_feature_flags(),
                 'externalAuthUrl': getattr(event, 'external_auth_url', None),
                 'locale': event.locale,
                 'date_locale': cfg.get('date_locale', 'en-ie'),

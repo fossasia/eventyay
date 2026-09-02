@@ -10,8 +10,8 @@ class JitsiServer(models.Model):
     app_id = models.CharField(max_length=200)
     app_secret = models.CharField(max_length=300)
     key_id = models.CharField(max_length=200, blank=True)
-    event_exclusive = models.ForeignKey(
-        "Event", null=True, blank=True, on_delete=models.PROTECT
+    events_exclusive = models.ManyToManyField(
+        "Event", blank=True
     )
 
     def __str__(self):

@@ -30,20 +30,30 @@ test('dropdown labels match the organiser create options', () => {
 	)
 })
 
-test('without admin mode, room:update only exposes Stream', () => {
-	const providers = getAvailableVideoProviders(
-		allow(['room:update']),
-		false,
-		features(['jitsi', 'janus'])
+test('room:update only exposes providers enabled by platform settings', () => {
+	assert.deepEqual(
+		getAvailableVideoProviders(
+			allow(['room:update']),
+			false,
+			features(['jitsi'])
+		).map(provider => provider.id),
+		['jitsi']
 	)
-	assert.deepEqual(providers.map(provider => provider.id), ['stream'])
+	assert.equal(
+		getAvailableVideoProviders(
+			allow(['room:update']),
+			false,
+			features([])
+		).length,
+		0
+	)
 })
 
 test('disabled feature flags hide Jitsi and Janus even in admin mode', () => {
 	const providers = getAvailableVideoProviders(
 		allow(['world:rooms.create.bbb', 'world:rooms.create.jitsi']),
 		true,
-		features([])
+		features(['bbb'])
 	)
 	assert.deepEqual(providers.map(provider => provider.id), ['bbb'])
 })
@@ -52,7 +62,7 @@ test('admin mode with create permissions includes gated providers', () => {
 	const providers = getAvailableVideoProviders(
 		allow(['world:rooms.create.bbb', 'world:rooms.create.jitsi']),
 		true,
-		features(['jitsi', 'janus'])
+		features(['bbb', 'jitsi', 'janus'])
 	)
 	assert.deepEqual(providers.map(provider => provider.id), ['bbb', 'jitsi', 'janus'])
 })
@@ -66,29 +76,21 @@ test('users without create or update permission see no providers', () => {
 	assert.equal(providers.length, 0)
 })
 
-test('stage create permission is enough for Stream', () => {
+test('stage create permission is enough for Stream when streaming is enabled', () => {
 	const providers = getAvailableVideoProviders(
 		allow(['world:rooms.create.stage']),
 		false,
-		features([])
+		features(['stream'])
 	)
 	assert.deepEqual(providers.map(provider => provider.id), ['stream'])
 })
 
-test('Jitsi requires admin mode even when the organiser can update rooms', () => {
+test('organisers with room:update can create Jitsi when it is enabled', () => {
 	assert.equal(
 		isVideoProviderPermitted(
 			VIDEO_CREATE_PROVIDERS.find(provider => provider.id === 'jitsi'),
-			allow(['room:update', 'world:rooms.create.jitsi']),
+			allow(['room:update']),
 			false
-		),
-		false
-	)
-	assert.equal(
-		isVideoProviderPermitted(
-			VIDEO_CREATE_PROVIDERS.find(provider => provider.id === 'jitsi'),
-			allow(['world:rooms.create.jitsi']),
-			true
 		),
 		true
 	)

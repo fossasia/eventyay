@@ -31,6 +31,7 @@
 <script>
 import api from 'lib/api'
 import fuzzysearch from 'lib/fuzzysearch'
+import features from 'features'
 import { isChatManagedRoom, mergeReorderedIds } from 'lib/room-types'
 import { mapGetters } from 'vuex'
 import { SlickList } from 'vue-slicksort'
@@ -71,7 +72,7 @@ export default {
 	computed: {
 		...mapGetters(['hasPermission']),
 		canCreate() {
-			return this.hasPermission('world:rooms.create.chat')
+			return features.enabled('chat') && this.hasPermission('world:rooms.create.chat')
 		}
 	},
 	methods: {

@@ -77,26 +77,47 @@ def get_video_server_config(server_type):
 
 
 def get_video_server_dashboard_rows():
+    from eventyay.base.settings import GlobalSettingsObject
+    global_settings = GlobalSettingsObject().settings
+
     rows = []
     for server_type, config in VIDEO_SERVER_CONFIGS.items():
         queryset = config.model.objects.all().order_by(config.order_by)
-        # event_exclusive is a nullable ForeignKey on BBB/Janus/Jitsi/TURN;
-        # StreamingServer has no such field. Prefer the model field check over
-        # getattr so we never touch a reverse OneToOne that could raise.
-        has_event_exclusive = any(
-            field.name == "event_exclusive" for field in config.model._meta.fields
+        has_events_exclusive = any(
+            field.name == "events_exclusive" for field in config.model._meta.get_fields()
         )
-        if has_event_exclusive:
-            queryset = queryset.select_related("event_exclusive")
+        if has_events_exclusive:
+            queryset = queryset.prefetch_related("events_exclusive")
+
+        # Map server_type to the corresponding global setting key
+        setting_key = None
+        if server_type == "jitsi":
+            setting_key = "video_jitsi_enabled"
+        elif server_type == "bbb":
+            setting_key = "video_bbb_enabled"
+        elif server_type == "janus":
+            setting_key = "video_janus_enabled"
+        elif server_type == "streaming":
+            setting_key = "video_streaming_enabled"
+            
+        feature_enabled = True
+        if setting_key:
+            feature_enabled = global_settings.get(setting_key, True)
 
         for server in queryset:
             active = bool(server.active)
+            
+            if not feature_enabled:
+                status_str = str(_("Disabled Globally"))
+            else:
+                status_str = str(_("Active")) if active else str(_("Inactive"))
+
             rows.append(
                 {
                     "server_type": server_type,
                     "type_label": config.label,
                     "name": getattr(server, config.display_attr),
-                    "event_exclusive": server.event_exclusive if has_event_exclusive else None,
+                    "events_exclusive": list(server.events_exclusive.all()) if has_events_exclusive else None,
                     "edit_url": reverse(
                         config.update_url_name, kwargs={"pk": server.pk}
                     ),
@@ -106,7 +127,8 @@ def get_video_server_dashboard_rows():
                         kwargs={"server_type": server_type, "pk": server.pk},
                     ),
                     "active": active,
-                    "status": _("Active") if active else _("Inactive"),
+                    "feature_enabled": feature_enabled,
+                    "status": status_str,
                 }
             )
     return rows

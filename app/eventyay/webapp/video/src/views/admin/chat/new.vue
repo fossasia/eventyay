@@ -10,7 +10,8 @@
 </template>
 <script>
 import { mapGetters, mapState } from 'vuex'
-import { CHAT_CHANNEL_TYPE_ID, getRoomTypeById } from 'lib/room-types'
+import features from 'features'
+import ROOM_TYPES, { CHAT_CHANNEL_TYPE_ID, getRoomTypeById } from 'lib/room-types'
 import EditForm from 'views/admin/rooms/EditForm'
 
 export default {
@@ -24,7 +25,7 @@ export default {
 		...mapState(['connected']),
 		...mapGetters(['hasPermission']),
 		canCreate() {
-			return this.hasPermission('world:rooms.create.chat')
+			return features.enabled('chat') && this.hasPermission('world:rooms.create.chat')
 		}
 	},
 	watch: {
@@ -37,9 +38,16 @@ export default {
 	methods: {
 		ensureConfig() {
 			if (!this.connected || !this.canCreate) return
+			if (!features.enabled('chat')) {
+				this.$router.replace({name: 'admin:rooms:index'})
+				return
+			}
 			if (this.config?.module_config?.[0]?.type === 'chat.native') return
 			const channelType = getRoomTypeById(CHAT_CHANNEL_TYPE_ID)
-			if (!channelType) return
+			if (!channelType) {
+				this.$router.replace({name: 'admin:rooms:index'})
+				return
+			}
 			this.config = {
 				name: '',
 				description: '',

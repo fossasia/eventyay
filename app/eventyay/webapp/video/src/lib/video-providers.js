@@ -9,7 +9,7 @@ export const VIDEO_CREATE_PROVIDERS = [
 		shortLabel: 'Stream',
 		icon: 'theater',
 		description: 'Present a live HLS or YouTube stream, optionally with chat and Q&A.',
-		featureFlag: null
+		featureFlag: 'stream'
 	},
 	{
 		id: 'bbb',
@@ -19,7 +19,7 @@ export const VIDEO_CREATE_PROVIDERS = [
 		shortLabel: 'BBB',
 		icon: 'webcam',
 		description: 'Connect attendees in real time for workshops or panels powered by BigBlueButton.',
-		featureFlag: null
+		featureFlag: 'bbb'
 	},
 	{
 		id: 'jitsi',
@@ -48,12 +48,7 @@ export function isVideoProviderEnabled(provider, isFeatureEnabled) {
 }
 
 export function isVideoProviderPermitted(provider, hasPermission, isAdminMode = false) {
-	if (isRoomTypeAvailable(provider.roomTypeId, hasPermission, isAdminMode)) {
-		return true
-	}
-	// Rooms admin users with room:update can still create Stream rooms without the
-	// dedicated stage-create permission. Server-backed providers stay admin-gated.
-	return provider.roomTypeId === 'stage' && hasPermission('room:update')
+	return isRoomTypeAvailable(provider.roomTypeId, hasPermission, isAdminMode)
 }
 
 export function getAvailableVideoProviders(hasPermission, isAdminMode, isFeatureEnabled) {

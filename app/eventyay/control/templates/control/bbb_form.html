@@ -1,12 +1,13 @@
 {% extends "pretixcontrol/admin/base.html" %}
 {% load i18n %}
+{% load bootstrap3 %}
 {% load formset_tags %}
 
 {% block video_admin_content %}
 <h1 class="page-header">{% trans "Create or update BBB server" %}</h1>
 <form method="post" class="form-horizontal">
     {% csrf_token %}
-    <div class="form-body">{{ form.as_p }}</div>
+    <div class="form-body">{% bootstrap_form form layout='horizontal' %}</div>
     <div class="video-admin-btn-row">
         <button type="submit" class="btn btn-primary"><span class="fa fa-save"></span> {% trans "Save" %}</button>
         <a href="{% url 'eventyay_admin:video_admin:bbbserver.list' %}" class="btn btn-default">{% trans "Cancel" %}</a>

@@ -39,6 +39,7 @@ def _patch_room_creation(monkeypatch):
     return created
 
 
+@pytest.mark.django_db
 def test_create_schedule_driven_stage_without_base_stream(monkeypatch):
     created = _patch_room_creation(monkeypatch)
     event = SimpleNamespace(id="event-id", has_permission_async=_allow_permission)
@@ -69,6 +70,7 @@ def test_create_schedule_driven_stage_without_base_stream(monkeypatch):
     assert livestream["config"] == {"playback_mode": "schedule_driven"}
 
 
+@pytest.mark.django_db
 def test_create_always_on_hls_stage_stores_base_stream(monkeypatch):
     created = _patch_room_creation(monkeypatch)
     event = SimpleNamespace(id="event-id", has_permission_async=_allow_permission)

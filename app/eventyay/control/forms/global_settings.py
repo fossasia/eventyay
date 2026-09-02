@@ -735,6 +735,98 @@ class MetaDataSettingsForm(SettingsForm):
         return super().save()
 
 
+class VideoFeaturesSettingsForm(SettingsForm):
+    SETTING_FIELDS = (
+        'video_jitsi_enabled',
+        'video_bbb_enabled',
+        'video_janus_enabled',
+        'video_streaming_enabled',
+        'video_chat_channels_enabled',
+        'video_qna_enabled',
+        'video_polls_enabled',
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.obj = GlobalSettingsObject()
+        super().__init__(*args, obj=self.obj, **kwargs)
+
+        self.fields = OrderedDict(
+            list(self.fields.items())
+            + [
+                (
+                    'video_jitsi_enabled',
+                    forms.BooleanField(
+                        label=_('Enable Jitsi'),
+                        required=False,
+                        help_text=_('Allow organizers to create Jitsi video channels.'),
+                    ),
+                ),
+                (
+                    'video_bbb_enabled',
+                    forms.BooleanField(
+                        label=_('Enable BigBlueButton'),
+                        required=False,
+                        help_text=_('Allow organizers to create BigBlueButton video channels.'),
+                    ),
+                ),
+                (
+                    'video_janus_enabled',
+                    forms.BooleanField(
+                        label=_('Enable Janus'),
+                        required=False,
+                        help_text=_('Allow organizers to create Janus video channels.'),
+                    ),
+                ),
+                (
+                    'video_streaming_enabled',
+                    forms.BooleanField(
+                        label=_('Enable Streaming'),
+                        required=False,
+                        help_text=_('Allow organizers to create stages with stream sources (e.g. YouTube, HLS).'),
+                    ),
+                ),
+                (
+                    'video_chat_channels_enabled',
+                    forms.BooleanField(
+                        label=_('Enable Chat'),
+                        required=False,
+                        help_text=_('Allow organizers to add text chat features to rooms.'),
+                    ),
+                ),
+                (
+                    'video_qna_enabled',
+                    forms.BooleanField(
+                        label=_('Enable Q&A'),
+                        required=False,
+                        help_text=_('Allow organizers to enable Q&A for rooms.'),
+                    ),
+                ),
+                (
+                    'video_polls_enabled',
+                    forms.BooleanField(
+                        label=_('Enable Polls'),
+                        required=False,
+                        help_text=_('Allow organizers to create polls for rooms.'),
+                    ),
+                ),
+            ]
+        )
+
+    def get_pending_disables(self):
+        from eventyay.base.video_components import get_video_component_usage
+
+        usage = get_video_component_usage()
+        pending = {}
+        for setting_key in self.SETTING_FIELDS:
+            was_enabled = self.obj.settings.get(setting_key, as_type=bool, default=True)
+            will_be_enabled = self.cleaned_data.get(setting_key, False)
+            if was_enabled and not will_be_enabled:
+                component_usage = usage.get(setting_key, {})
+                if component_usage.get('rooms', 0) > 0:
+                    pending[setting_key] = component_usage
+        return pending
+
+
 class GlobalBusinessSettingsForm(SettingsForm):
     def __init__(self, *args, **kwargs):
         self.obj = GlobalSettingsObject()

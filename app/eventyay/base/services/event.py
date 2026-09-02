@@ -402,6 +402,19 @@ def _create_room(data, with_channel=False, permission_preset="public", creator=N
 
 
 async def create_room(event, data, creator):
+    from asgiref.sync import sync_to_async
+    from django.core.exceptions import ValidationError
+
+    from eventyay.base.video_components import get_disabled_module_error, is_module_type_enabled
+
+    def validate_modules_enabled(modules):
+        for mod in modules:
+            mod_type = mod.get("type")
+            if mod_type and not is_module_type_enabled(mod_type):
+                raise ValidationError({"modules": [get_disabled_module_error(mod_type)]})
+
+    await sync_to_async(validate_modules_enabled)(data.get("modules", []))
+
     types = {m["type"] for m in data.get("modules", [])}
     livestream_types = {
         "livestream.native",

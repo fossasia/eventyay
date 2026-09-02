@@ -6,14 +6,16 @@ const ROOM_TYPES = [{
 	name: 'Stage',
 	description: 'A stage allows you to present a live stream to your audience, optionally combined with chat and Q&A features.',
 	startingModule: 'livestream.native',
-	inferModules: ['livestream.native', 'livestream.youtube', 'livestream.iframe']
+	inferModules: ['livestream.native', 'livestream.youtube', 'livestream.iframe'],
+	behindFeatureFlag: 'stream'
 }, {
 	id: 'channel-bbb',
 	icon: 'webcam',
 	name: 'Video Channel',
 	description: 'A video channel allows you to connect with attendees in real time and host workshops or panels. The video channels are powered by BigBlueButton and support 25-80 people, depending on usage.',
 	startingModule: 'call.bigbluebutton',
-	videoChannel: true
+	videoChannel: true,
+	behindFeatureFlag: 'bbb'
 }, {
 	id: 'channel-janus',
 	icon: 'webcam',
@@ -44,7 +46,8 @@ const ROOM_TYPES = [{
 	name: 'Chat Channel',
 	description: 'A chat channel for text communication between attendees. Managed separately from rooms.',
 	startingModule: 'chat.native',
-	managementArea: 'chat'
+	managementArea: 'chat',
+	behindFeatureFlag: 'chat'
 }, {
 	id: 'channel-roulette',
 	icon: 'webcam',

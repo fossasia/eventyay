@@ -90,10 +90,10 @@ def choose_server(event, room=None, prefer_server=None):
 
     search_order = [
         servers.filter(url=prefer_server).filter(
-            Q(event_exclusive=event) | Q(event_exclusive__isnull=True)
+            Q(events_exclusive=event) | Q(events_exclusive__isnull=True)
         ),
-        servers.filter(event_exclusive=event),
-        servers.filter(event_exclusive__isnull=True),
+        servers.filter(events_exclusive=event),
+        servers.filter(events_exclusive__isnull=True),
     ]
     for qs in search_order:
         servers = list(qs)
@@ -388,7 +388,7 @@ class BBBService:
     def _get_possible_servers(self):
         return list(
             BBBServer.objects.filter(
-                Q(event_exclusive=self.event) | Q(event_exclusive__isnull=True),
+                Q(events_exclusive=self.event) | Q(events_exclusive__isnull=True),
                 active=True,
             )
         )

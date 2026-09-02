@@ -3,7 +3,7 @@ prompt.c-channel-browser(@close="$emit('close')", :scrollable="false")
 	.content
 		h2 {{ $t('Browse channels') }}
 		p {{ $t('Here, we show you a list of all channels that you can join for this event.') }}
-			a(href="#", @click="$emit('createChannel')", v-if="hasPermission('world:rooms.create.chat')")  {{ $t('Alternatively, you can create a new channel.') }}
+			a(href="#", @click="$emit('createChannel')", v-if="hasPermission('world:rooms.create.chat') && $features.enabled('chat')")  {{ $t('Alternatively, you can create a new channel.') }}
 		bunt-input(icon="search", name="search", :placeholder="$t('Search channels')", v-model="search")
 		scrollbars.channels(y)
 			router-link.channel(v-for="channel of searchedChannels", :to="{name: 'room', params: {roomId: channel.room.id}}", @click="$emit('close')")
