@@ -8,6 +8,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext_lazy
 from django.views.generic import TemplateView
 from django_context_decorator import context
+from django_scopes import scope
 from django_scopes import scopes_disabled
 
 from django.http import Http404
@@ -45,7 +46,9 @@ from eventyay.common.permissions import is_admin_mode_active
 from eventyay.common.views.mixins import EventPermissionRequired, PermissionRequired
 from eventyay.event.stages import get_stages
 from eventyay.orga.views.submission import SubmissionStatsMixin
-from eventyay.talk_rules.submission import get_missing_reviews
+from eventyay.person.forms.profile import get_speaker_readiness_queryset
+from eventyay.submission.forms.submission import get_session_readiness_queryset
+from eventyay.talk_rules.submission import get_missing_reviews, speaker_profiles_for_user, submissions_for_user
 
 
 def start_redirect_view(request):
@@ -156,6 +159,66 @@ class EventDashboardView(EventPermissionRequired, SubmissionStatsMixin, Template
     template_name = 'orga/event/dashboard.html'
     permission_required = 'base.talk_orga_access_event'
 
+    def get_session_readiness(self):
+        event = self.request.event
+        submissions = submissions_for_user(event, self.request.user)
+        metrics = (
+            (_('Confirmed sessions'), submissions.filter(state=SubmissionStates.CONFIRMED), 'state=confirmed'),
+            (_('Scheduled sessions'), get_session_readiness_queryset(submissions, event, 'scheduled'), 'readiness=scheduled'),
+            (_('Unscheduled sessions'), get_session_readiness_queryset(submissions, event, 'unscheduled'), 'readiness=unscheduled'),
+            (
+                _('Sessions missing room/time'),
+                get_session_readiness_queryset(submissions, event, 'missing_room_time'),
+                'readiness=missing_room_time',
+            ),
+            (_('Sessions with conflicts'), get_session_readiness_queryset(submissions, event, 'conflicts'), 'readiness=conflicts'),
+            (_('Canceled sessions'), submissions.filter(state=SubmissionStates.CANCELED), 'state=canceled'),
+        )
+        return [
+            {
+                'count': queryset.distinct().count(),
+                'label': label,
+                'url': f'{event.orga_urls.submissions}?{query}',
+            }
+            for label, queryset, query in metrics
+        ]
+
+    def get_speaker_readiness(self):
+        event = self.request.event
+        profiles = speaker_profiles_for_user(event, self.request.user)
+        metrics = (
+            (_('Total speakers'), profiles, ''),
+            (_('Confirmed speakers'), get_speaker_readiness_queryset(profiles, event, 'confirmed'), 'readiness=confirmed'),
+            (
+                _('Missing biography'),
+                get_speaker_readiness_queryset(profiles, event, 'missing_biography'),
+                'readiness=missing_biography',
+            ),
+            (
+                _('Missing profile image'),
+                get_speaker_readiness_queryset(profiles, event, 'missing_profile_image'),
+                'readiness=missing_profile_image',
+            ),
+            (
+                _('Missing affiliation'),
+                get_speaker_readiness_queryset(profiles, event, 'missing_affiliation'),
+                'readiness=missing_affiliation',
+            ),
+            (
+                _('Speakers without session'),
+                get_speaker_readiness_queryset(profiles, event, 'without_session'),
+                'role=false',
+            ),
+        )
+        return [
+            {
+                'count': queryset.distinct().count(),
+                'label': label,
+                'url': f'{event.orga_urls.speakers}{f"?{query}" if query else ""}',
+            }
+            for label, queryset, query in metrics
+        ]
+
     def get_cfp_tiles(self, _now, can_change_submissions=False):
         result = []
         if not hasattr(self.request.event, 'cfp'):
@@ -257,6 +320,12 @@ class EventDashboardView(EventPermissionRequired, SubmissionStatsMixin, Template
         today = _now
         can_change_settings = self.request.user.has_perm('base.change_settings.event', event)
         can_change_submissions = self.request.user.has_perm('base.orga_update_submission', event)
+        if self.request.user.has_perm('base.orga_list_submission', event):
+            with scope(event=event):
+                result['session_readiness'] = self.get_session_readiness()
+        if self.request.user.has_perm('base.orga_list_speakerprofile', event):
+            with scope(event=event):
+                result['speaker_readiness'] = self.get_speaker_readiness()
         result['tiles'] = self.get_cfp_tiles(_now, can_change_submissions=can_change_submissions)
         if today < event.date_from:
             days = (event.date_from - today).days

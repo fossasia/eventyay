@@ -437,7 +437,45 @@ class CountableOption:
         return str(self.name)
 
 
+def get_session_readiness_queryset(queryset, event, readiness):
+    schedule = event.wip_schedule
+    scheduled_slots = schedule.talks.filter(
+        submission__isnull=False,
+        room__isnull=False,
+        room__deleted=False,
+        room__is_unscheduled=False,
+        start__isnull=False,
+    )
+    if readiness == 'scheduled':
+        return queryset.filter(pk__in=scheduled_slots.values('submission_id'))
+    if readiness == 'unscheduled':
+        return queryset.exclude(pk__in=schedule.talks.filter(submission__isnull=False).values('submission_id'))
+    if readiness == 'missing_room_time':
+        incomplete_slots = schedule.talks.filter(submission__isnull=False).filter(
+            Q(room__isnull=True) | Q(room__deleted=True) | Q(room__is_unscheduled=True) | Q(start__isnull=True)
+        )
+        return queryset.filter(pk__in=incomplete_slots.values('submission_id'))
+    if readiness == 'conflicts':
+        conflicting_submission_ids = {
+            talk.submission_id
+            for talk, warnings in schedule.get_all_talk_warnings().items()
+            if warnings
+        }
+        return queryset.filter(pk__in=conflicting_submission_ids)
+    return queryset
+
+
 class SubmissionFilterForm(forms.Form):
+    readiness = forms.ChoiceField(
+        required=False,
+        choices=(
+            ('scheduled', _('Scheduled sessions')),
+            ('unscheduled', _('Unscheduled sessions')),
+            ('missing_room_time', _('Sessions missing room/time')),
+            ('conflicts', _('Sessions with conflicts')),
+        ),
+        widget=forms.HiddenInput(),
+    )
     state = forms.MultipleChoiceField(
         required=False,
         choices=[
@@ -605,6 +643,10 @@ class SubmissionFilterForm(forms.Form):
         return qs
 
     def filter_queryset(self, qs):
+        readiness = self.cleaned_data.get('readiness')
+        if readiness:
+            qs = get_session_readiness_queryset(qs, self.event, readiness)
+
         for field in ('submission_type', 'content_locale', 'track', 'tags'):
             value = self.cleaned_data.get(field)
             if value:

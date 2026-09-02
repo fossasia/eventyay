@@ -4,7 +4,7 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth.hashers import check_password
 from django.core.exceptions import ValidationError
-from django.db.models import Count, Q
+from django.db.models import Count, Exists, OuterRef, Q
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django_scopes.forms import SafeModelChoiceField, SafeModelMultipleChoiceField
@@ -12,6 +12,7 @@ from i18nfield.forms import I18nModelForm
 
 from eventyay.base.models import Event, SpeakerProfile, TalkQuestion, TalkQuestionTarget, User
 from eventyay.base.models.cfp import default_fields
+from eventyay.base.models.question import Answer
 from eventyay.base.models.information import SpeakerInformation
 from eventyay.base.models.submission import SubmissionStates
 from eventyay.cfp.forms.cfp import CfPFormMixin
@@ -440,6 +441,17 @@ class SpeakerInformationForm(I18nHelpText, I18nModelForm):
 class SpeakerFilterForm(forms.Form):
     default_renderer = InlineFormLabelRenderer
 
+    readiness = forms.ChoiceField(
+        required=False,
+        choices=(
+            ('confirmed', _('Confirmed speakers')),
+            ('missing_biography', _('Missing biography')),
+            ('missing_profile_image', _('Missing profile image')),
+            ('missing_affiliation', _('Missing affiliation')),
+        ),
+        widget=forms.HiddenInput(),
+    )
+
     role = forms.ChoiceField(
         label=_('Role'),
         choices=(
@@ -481,7 +493,49 @@ class SpeakerFilterForm(forms.Form):
             )
         if has_arrived := data.get('arrived'):
             queryset = queryset.filter(has_arrived=(has_arrived == 'true'))
+        if readiness := data.get('readiness'):
+            queryset = get_speaker_readiness_queryset(queryset, self.event, readiness)
         return queryset
+
+
+def get_speaker_readiness_queryset(queryset, event, readiness):
+    if readiness == 'confirmed':
+        return queryset.filter(
+            user__submissions__in=event.submissions.filter(state=SubmissionStates.CONFIRMED)
+        )
+    if readiness == 'missing_biography':
+        return queryset.filter(Q(biography__isnull=True) | Q(biography=''))
+    if readiness == 'missing_profile_image':
+        return queryset.filter(
+            (
+                Q(user__avatar__isnull=True)
+                | Q(user__avatar='')
+                | Q(user__avatar='False')
+            )
+            & (
+                Q(user__profile__avatar__isnull=True)
+                | Q(user__profile__avatar__url__isnull=True)
+                | Q(user__profile__avatar__url='')
+            )
+        )
+    if readiness == 'missing_affiliation':
+        affiliation_questions = event.talkquestions.filter(
+            target=TalkQuestionTarget.SPEAKER,
+            active=True,
+            question__icontains='affiliation',
+        )
+        if not affiliation_questions.exists():
+            return queryset.none()
+        has_affiliation = Answer.objects.filter(
+            person_id=OuterRef('user_id'),
+            question__in=affiliation_questions,
+        ).exclude(answer='')
+        return queryset.annotate(has_affiliation=Exists(has_affiliation)).filter(has_affiliation=False)
+    if readiness == 'without_session':
+        return queryset.exclude(
+            user__submissions__in=event.submissions.filter(state__in=SubmissionStates.accepted_states)
+        )
+    return queryset
 
 
 class UserSpeakerFilterForm(forms.Form):
