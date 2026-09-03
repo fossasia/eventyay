@@ -44,11 +44,11 @@ from eventyay.base.gmail.errors import (
     GmailTemporaryError,
 )
 from eventyay.base.header_presets import (
-    HEADER_IMAGE_PRESETS,
-    PRESET_CATEGORIES,
+    get_active_categories,
+    get_active_presets,
     get_random_preset_id,
     resolve_preset_thumbnail_url,
-    resolve_preset_to_static_url,
+    resolve_preset_to_url,
 )
 from eventyay.base.meetup import (
     get_rsvp_product_and_quota,
@@ -398,23 +398,27 @@ class EventCreateView(TemplateView):
         context['type_preselected'] = 'series' in self.request.GET
         context['is_meetup'] = self.is_meetup_request
         if self.is_meetup_request:
-            context['header_presets'] = HEADER_IMAGE_PRESETS
-            context['preset_categories'] = PRESET_CATEGORIES
-            context['header_presets_data'] = [
-                {
-                    'id': p['id'],
-                    'name': str(p['name']),
-                    'category': p['category'],
-                    'url': resolve_preset_to_static_url(p['id']),
-                    'thumbnailUrl': resolve_preset_thumbnail_url(p['id']),
-                }
-                for p in HEADER_IMAGE_PRESETS
-            ]
+            active_presets = get_active_presets()
+            context['header_presets'] = active_presets
+            context['preset_categories'] = get_active_categories()
+            presets_data = []
+            for p in active_presets:
+                url = resolve_preset_to_url(str(p.id))
+                thumb = resolve_preset_thumbnail_url(str(p.id)) or url
+                if url:
+                    presets_data.append({
+                        'id': str(p.id),
+                        'name': str(p.name),
+                        'category': str(p.category_id),
+                        'url': url,
+                        'thumbnailUrl': thumb,
+                    })
+            context['header_presets_data'] = presets_data
             initial_preset_id = ''
             if basics_form and 'header_image_preset' in basics_form.fields:
                 initial_preset_id = str(basics_form['header_image_preset'].value() or '')
             context['initial_preset_id'] = initial_preset_id
-            context['initial_preset_url'] = resolve_preset_to_static_url(initial_preset_id) if initial_preset_id else ''
+            context['initial_preset_url'] = resolve_preset_to_url(initial_preset_id) or ''
         return context
 
     def post(self, request, *args, **kwargs):

@@ -681,6 +681,11 @@ def get_admin_navigation(request):
             'url': reverse('eventyay_admin:admin.orders'),
             'active': 'orders' in url.url_name,
         },
+        {
+            'label': _('Header Presets'),
+            'url': reverse('eventyay_admin:admin.header_presets'),
+            'active': 'header_presets' in url.url_name,
+        },
     ]
 
     nav.extend(

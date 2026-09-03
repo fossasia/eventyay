@@ -2775,7 +2775,7 @@ class Event(
         This method itself is a ``@cached_property``, so it is only invoked once per ``Event``
         instance per request — no thundering-herd risk within a single request.
         """
-        from eventyay.base.header_presets import extract_preset_id, resolve_preset_to_static_url
+        from eventyay.base.header_presets import extract_preset_id, resolve_preset_to_url
 
         path = self._visible_preview_image_path or self._visible_header_image_path or self._visible_logo_path
         if not path:
@@ -2786,7 +2786,7 @@ class Event(
 
         preset_id = extract_preset_id(str(path))
         if preset_id:
-            return resolve_preset_to_static_url(preset_id)
+            return resolve_preset_to_url(preset_id)
 
         try:
             return get_thumbnail(path, '800x450^').thumb.url
@@ -2805,7 +2805,7 @@ class Event(
         from eventyay.base.header_presets import (
             extract_preset_id,
             resolve_preset_thumbnail_url,
-            resolve_preset_to_static_url,
+            resolve_preset_to_url,
         )
 
         path = self._visible_preview_image_path or self._visible_header_image_path or self._visible_logo_path
@@ -2817,7 +2817,7 @@ class Event(
 
         preset_id = extract_preset_id(str(path))
         if preset_id:
-            return resolve_preset_thumbnail_url(preset_id) or resolve_preset_to_static_url(preset_id)
+            return resolve_preset_thumbnail_url(preset_id) or resolve_preset_to_url(preset_id)
 
         try:
             return get_thumbnail(path, '400x225^').thumb.url
@@ -2851,14 +2851,14 @@ class Event(
     @cached_property
     def visible_header_image_url(self):
         from django.core.files.storage import default_storage
-        from eventyay.base.header_presets import extract_preset_id, resolve_preset_to_static_url
+        from eventyay.base.header_presets import extract_preset_id, resolve_preset_to_url
 
         if not self._visible_header_image_path:
             return None
         preset_id = extract_preset_id(str(self._visible_header_image_path))
         if preset_id:
-            return resolve_preset_to_static_url(preset_id)
-        with suppress(Exception):
+            return resolve_preset_to_url(preset_id)
+        with suppress(ValueError, AttributeError, OSError):
             if is_http_url(str(self._visible_header_image_path)):
                 return self._visible_header_image_path
             return default_storage.url(self._visible_header_image_path)
@@ -2873,7 +2873,7 @@ class Event(
             return None
         if is_preset_value(str(self._visible_header_image_path)):
             return None
-        with suppress(Exception):
+        with suppress(ValueError, AttributeError, OSError):
             if is_http_url(str(self._visible_header_image_path)):
                 return None
             return default_storage.open(self._visible_header_image_path)

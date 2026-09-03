@@ -267,3 +267,28 @@
 .header-preset-card.active .header-preset-check {
     display: flex;
 }
+
+.header-image-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #64748b;
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+}
+
+.header-image-placeholder span {
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.header-upload-btn-inline {
+    margin-left: 6px;
+}
+
+.header-image-preview-img.header-image-hidden,
+.header-image-placeholder.header-image-hidden,
+.header-image-source-badge.header-image-hidden,
+.header-image-hidden {
+    display: none;
+}

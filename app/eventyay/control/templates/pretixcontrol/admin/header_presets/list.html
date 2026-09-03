@@ -1,0 +1,137 @@
+{% extends "pretixcontrol/admin/base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "Header Presets" %}{% endblock %}
+
+{% block custom_header %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'pretixcontrol/css/header_presets_admin.css' %}">
+    <script type="module" src="{% static 'pretixcontrol/js/admin-header-presets-filter.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+    <div class="preset-admin-header">
+        <div class="preset-admin-header-row">
+            <h1>{% trans "Header Presets" %}</h1>
+            <div class="preset-admin-actions">
+                <a href="{% url 'eventyay_admin:admin.header_presets.add' %}" class="btn btn-primary">
+                    <i class="fa fa-plus"></i> {% trans "Upload New Preset" %}
+                </a>
+            </div>
+        </div>
+        <p class="text-muted">
+            {% blocktrans trimmed %}
+                Manage curated default header images available across events.
+            {% endblocktrans %}
+        </p>
+    </div>
+
+    <div class="preset-category-filter-bar">
+        <div class="preset-category-filter-left">
+            <label for="headerPresetCategoryFilter" class="preset-category-filter-label">
+                <i class="fa fa-filter"></i> {% trans "Category" %}
+            </label>
+            <select id="headerPresetCategoryFilter" class="form-control input-sm preset-category-select" aria-label="{% trans 'Filter by category' %}">
+                <option value="all">{% trans "All Categories" %} ({{ total_presets_count }})</option>
+                {% for cat in categories %}
+                    <option value="{{ cat.id }}"
+                            data-edit-url="{% url 'eventyay_admin:admin.header_presets.category.edit' pk=cat.pk %}"
+                            data-delete-url="{% url 'eventyay_admin:admin.header_presets.category.delete' pk=cat.pk %}"
+                            {% if current_category == cat.id|stringformat:"s" %}selected{% endif %}>
+                        {{ cat.name }} ({{ cat.preset_count }})
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="preset-category-filter-actions">
+            <div id="selectedCategoryActions" class="preset-selected-cat-actions" {% if current_category == 'all' %}style="display: none;"{% endif %}>
+                <a id="editCategoryBtn" href="#" class="btn btn-default btn-sm" title="{% trans 'Edit Category' %}">
+                    <i class="fa fa-edit"></i> {% trans "Edit Category" %}
+                </a>
+                <a id="deleteCategoryBtn" href="#" class="btn btn-danger btn-sm" aria-label="{% trans 'Delete Category' %}" title="{% trans 'Delete Category' %}">
+                    <i class="fa fa-trash"></i> {% trans "Delete Category" %}
+                </a>
+            </div>
+            <a href="{% url 'eventyay_admin:admin.header_presets.category.add' %}" class="btn btn-default btn-sm">
+                <i class="fa fa-folder-plus"></i> {% trans "Add Category" %}
+            </a>
+        </div>
+    </div>
+
+    {% if presets|length == 0 %}
+        <div class="empty-collection preset-empty-collection">
+            <p class="text-muted preset-empty-text">
+                {% blocktrans trimmed %}
+                    No header presets created yet.
+                {% endblocktrans %}
+            </p>
+            <a href="{% url 'eventyay_admin:admin.header_presets.add' %}" class="btn btn-primary btn-lg">
+                <i class="fa fa-plus"></i> {% trans "Upload New Preset" %}
+            </a>
+        </div>
+    {% else %}
+        <div id="presetCategoryEmptyMsg" class="empty-collection preset-empty-collection" style="display: none;">
+            <p class="text-muted preset-empty-text">
+                {% blocktrans trimmed %}
+                    No header presets found in this category.
+                {% endblocktrans %}
+            </p>
+            <a href="{% url 'eventyay_admin:admin.header_presets.add' %}" class="btn btn-primary btn-lg">
+                <i class="fa fa-plus"></i> {% trans "Upload New Preset" %}
+            </a>
+        </div>
+
+        <div id="presetAdminGrid" class="preset-grid">
+            {% for preset in presets %}
+                <div class="preset-admin-card" data-category-id="{{ preset.category_id }}">
+                    <div class="preset-card-img-wrapper">
+                        {% if preset.thumbnail %}
+                            <img src="{{ preset.thumbnail.url }}" alt="{{ preset.name }}" class="preset-card-img" loading="lazy">
+                        {% elif preset.image %}
+                            <img src="{{ preset.image.url }}" alt="{{ preset.name }}" class="preset-card-img" loading="lazy">
+                        {% else %}
+                            <div class="preset-card-placeholder-icon">
+                                <i class="fa fa-image fa-2x"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="preset-card-body">
+                        <div>
+                            <h3 class="preset-card-title">{{ preset.name }}</h3>
+                            <div class="preset-card-meta">
+                                <span class="label label-default">{{ preset.category.name }}</span>
+                                {% if preset.is_active %}
+                                    <span class="label label-success">{% trans "Active" %}</span>
+                                {% else %}
+                                    <span class="label label-danger">{% trans "Inactive" %}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="preset-card-actions">
+                            <form method="post" action="{% url 'eventyay_admin:admin.header_presets.toggle' pk=preset.pk %}" class="preset-action-inline-form">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-xs {% if preset.is_active %}btn-default{% else %}btn-success{% endif %}">
+                                    {% if preset.is_active %}
+                                        <i class="fa fa-eye-slash"></i> {% trans "Disable" %}
+                                    {% else %}
+                                        <i class="fa fa-eye"></i> {% trans "Enable" %}
+                                    {% endif %}
+                                </button>
+                            </form>
+                            <div>
+                                <a href="{% url 'eventyay_admin:admin.header_presets.edit' pk=preset.pk %}" class="btn btn-default btn-xs">
+                                    <i class="fa fa-edit"></i> {% trans "Edit" %}
+                                </a>
+                                <a href="{% url 'eventyay_admin:admin.header_presets.delete' pk=preset.pk %}" class="btn btn-danger btn-xs" aria-label="{% trans 'Delete preset' %}" title="{% trans 'Delete preset' %}">
+                                    <i class="fa fa-trash" aria-hidden="true"></i>
+                                    <span class="sr-only">{% trans "Delete preset" %}</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}

@@ -16,7 +16,7 @@ from django_scopes import scope
 from i18nfield.strings import LazyI18nString
 from PIL import UnidentifiedImageError
 
-from eventyay.base.header_presets import PRESET_BY_ID, PRESET_PREFIX
+from eventyay.base.header_presets import PRESET_PREFIX, get_preset_by_id
 from eventyay.helpers.image_optimize import optimize_uploaded_image
 
 logger = logging.getLogger(__name__)
@@ -368,7 +368,7 @@ def provision_meetup_event(
     if header_image:
         _save_meetup_header_image(event, header_image, crop_box=crop_box)
     elif header_image_preset:
-        if header_image_preset in PRESET_BY_ID:
+        if str(header_image_preset) in get_preset_by_id():
             event.settings.set('logo_image', f'{PRESET_PREFIX}{header_image_preset}')
 
     ensure_video_credentials(event, request=request, force=True)

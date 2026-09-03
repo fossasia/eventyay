@@ -30,7 +30,7 @@ from eventyay.timezones import common_timezones, localize_datetime
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
 from eventyay.base.forms import I18nModelForm, PlaceholderValidator, SettingsForm
-from eventyay.base.header_presets import PRESET_BY_ID
+from eventyay.base.header_presets import get_preset_by_id
 from eventyay.base.meetup import (
     CAPACITY_LIMITED,
     CAPACITY_TYPE_CHOICES,
@@ -2027,7 +2027,7 @@ class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
 
     def clean_header_image_preset(self):
         preset_id = (self.cleaned_data.get('header_image_preset') or '').strip()
-        if preset_id and preset_id not in PRESET_BY_ID:
+        if preset_id and str(preset_id) not in get_preset_by_id():
             raise forms.ValidationError(_('Invalid header image preset.'))
         return preset_id
 

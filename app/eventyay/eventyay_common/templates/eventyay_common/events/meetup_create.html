@@ -70,15 +70,22 @@
                     <div class="col-md-9">
                         <div class="header-image-preview-container">
                             <div class="header-image-preview-card">
-                                <img id="headerImagePreviewImg" class="header-image-preview-img" src="{{ initial_preset_url|default:'' }}" alt="{% trans 'Header image preview' %}">
+                                {% if initial_preset_url %}
+                                    <img id="headerImagePreviewImg" class="header-image-preview-img" src="{{ initial_preset_url }}" alt="{% trans 'Header image preview' %}">
+                                {% else %}
+                                    <img id="headerImagePreviewImg" class="header-image-preview-img header-image-hidden" src="" alt="{% trans 'Header image preview' %}">
+                                    <div id="headerImagePlaceholder" class="header-image-placeholder">
+                                        <span><i class="fa fa-image"></i> {% trans "Add or choose header image" %}</span>
+                                    </div>
+                                {% endif %}
                                 <div class="header-image-overlay">
                                     <button type="button" class="btn btn-default header-image-change-btn" data-toggle="modal" data-target="#headerImagePickerModal">
                                         <i class="fa fa-image"></i> {% trans "Change Header Image" %}
                                     </button>
                                 </div>
-                                <div id="headerImageSourceBadge" class="header-image-source-badge">
+                                <div id="headerImageSourceBadge" class="header-image-source-badge{% if not initial_preset_id %} header-image-hidden{% endif %}">
                                     {% for preset in header_presets %}
-                                        {% if preset.id == initial_preset_id %}{{ preset.name }}{% endif %}
+                                        {% if preset.id|stringformat:"s" == initial_preset_id %}{{ preset.name }}{% endif %}
                                     {% endfor %}
                                 </div>
                             </div>
@@ -292,7 +299,7 @@
                             </div>
                             <div class="header-upload-text">
                                 {% trans "Drag & drop your image here, or" %}
-                                <button type="button" id="headerUploadBtn" class="btn btn-sm btn-primary" style="margin-left: 6px;">
+                                <button type="button" id="headerUploadBtn" class="btn btn-sm btn-primary header-upload-btn-inline">
                                     {% trans "Browse Files" %}
                                 </button>
                             </div>
@@ -301,35 +308,37 @@
                             </div>
                         </div>
 
-                        <div class="header-picker-divider">
-                            <span>{% trans "Or choose from gallery" %}</span>
-                        </div>
+                        {% if header_presets_data %}
+                            <div class="header-picker-divider">
+                                <span>{% trans "Or choose from gallery" %}</span>
+                            </div>
 
-                        <div class="header-preset-categories">
-                            {% for cat_slug, cat_label in preset_categories %}
-                                <button type="button" class="preset-category-pill{% if forloop.first %} active{% endif %}" data-category="{{ cat_slug }}">
-                                    {{ cat_label }}
-                                </button>
-                            {% endfor %}
-                        </div>
+                            <div class="header-preset-categories">
+                                {% for cat_slug, cat_label in preset_categories %}
+                                    <button type="button" class="preset-category-pill{% if forloop.first %} active{% endif %}" data-category="{{ cat_slug }}">
+                                        {{ cat_label }}
+                                    </button>
+                                {% endfor %}
+                            </div>
 
-                        <div class="header-preset-grid">
-                            {% for preset in header_presets_data %}
-                                <button type="button"
-                                        class="header-preset-card{% if preset.id == initial_preset_id %} active{% endif %}"
-                                        data-preset-id="{{ preset.id }}"
-                                        data-preset-name="{{ preset.name }}"
-                                        data-preset-url="{{ preset.url }}"
-                                        data-category="{{ preset.category }}"
-                                        aria-label="{{ preset.name }}">
-                                    <img src="{{ preset.thumbnailUrl }}" alt="" class="header-preset-thumb" loading="lazy">
-                                    <div class="header-preset-name">{{ preset.name }}</div>
-                                    <div class="header-preset-check" aria-hidden="true">
-                                        <i class="fa fa-check"></i>
-                                    </div>
-                                </button>
-                            {% endfor %}
-                        </div>
+                            <div class="header-preset-grid">
+                                {% for preset in header_presets_data %}
+                                    <button type="button"
+                                            class="header-preset-card{% if preset.id == initial_preset_id %} active{% endif %}"
+                                            data-preset-id="{{ preset.id }}"
+                                            data-preset-name="{{ preset.name }}"
+                                            data-preset-url="{{ preset.url|default_if_none:'' }}"
+                                            data-category="{{ preset.category }}"
+                                            aria-label="{{ preset.name }}">
+                                        <img src="{{ preset.thumbnailUrl|default_if_none:'' }}" alt="" class="header-preset-thumb" loading="lazy">
+                                        <div class="header-preset-name">{{ preset.name }}</div>
+                                        <div class="header-preset-check" aria-hidden="true">
+                                            <i class="fa fa-check"></i>
+                                        </div>
+                                    </button>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Close" %}</button>

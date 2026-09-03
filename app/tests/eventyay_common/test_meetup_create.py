@@ -21,7 +21,7 @@ from eventyay.base.meetup import (
     has_video_stream,
     is_meetup_event,
 )
-from eventyay.base.models import Event, Team, User
+from eventyay.base.models import Event, EventHeaderPreset, EventHeaderPresetCategory, Team, User
 from eventyay.base.settings import GlobalSettingsObject
 
 
@@ -54,6 +54,23 @@ def _create_test_image():
     im.save(out, format='PNG')
     out.seek(0)
     return SimpleUploadedFile('test_cover.png', out.read(), content_type='image/png')
+
+
+def _create_test_preset(category_name=None, category_slug=None, name='Sunset Glow'):
+    effective_name = category_name or (category_slug.title() if category_slug else 'Gradients')
+    category, _ = EventHeaderPresetCategory.objects.get_or_create(
+        name=effective_name,
+    )
+    preset = EventHeaderPreset.objects.create(
+        name=name,
+        category=category,
+        image=_create_test_image(),
+        thumbnail=_create_test_image(),
+        is_active=True,
+    )
+    from eventyay.base.header_presets import invalidate_preset_cache
+    invalidate_preset_cache()
+    return preset
 
 
 @pytest.mark.django_db
@@ -263,6 +280,7 @@ def test_meetup_create_validation_errors(orga_client, organizer):
 
 @pytest.mark.django_db
 def test_meetup_create_context_includes_header_presets(orga_client):
+    preset = _create_test_preset(category_slug='gradients', name='Sunset Glow')
     url = reverse('eventyay_common:events.add') + '?meetup=1'
     response = orga_client.get(url)
     assert response.status_code == 200
@@ -277,6 +295,7 @@ def test_meetup_create_context_includes_header_presets(orga_client):
 
 @pytest.mark.django_db
 def test_meetup_create_with_preset(orga_client, organizer):
+    preset = _create_test_preset(category_slug='gradients', name='Sunset Glow')
     url = reverse('eventyay_common:events.add')
     data = {
         'is_meetup': 'on',
@@ -292,7 +311,7 @@ def test_meetup_create_with_preset(orga_client, organizer):
         'basics-location_type': 'in_person',
         'basics-location_0': 'Innovation Lab',
         'basics-capacity_type': 'unlimited',
-        'basics-header_image_preset': 'gradient-sunset',
+        'basics-header_image_preset': str(preset.pk),
     }
     response = orga_client.post(url, data)
     assert response.status_code == 302
@@ -301,16 +320,15 @@ def test_meetup_create_with_preset(orga_client, organizer):
         event = Event.objects.filter(organizer=organizer, name__icontains='Preset Banner Meetup').first()
         assert event is not None
         assert is_meetup_event(event) is True
-        assert event.settings.get('logo_image', as_type=str) == 'preset:gradient-sunset'
+        assert event.settings.get('logo_image', as_type=str) == f'preset:{preset.pk}'
         assert event.visible_header_image_url is not None
-        assert 'gradient-sunset.jpg' in event.visible_header_image_url
         assert event.visible_header_image_file is None
         assert event.preview_image_url_with_fallback is not None
-        assert 'gradient-sunset.jpg' in event.preview_image_url_with_fallback
 
 
 @pytest.mark.django_db
 def test_meetup_create_custom_image_overrides_preset(orga_client, organizer):
+    preset = _create_test_preset(category_slug='abstract', name='Abstract Waves')
     url = reverse('eventyay_common:events.add')
     test_image = _create_test_image()
     data = {
@@ -327,7 +345,7 @@ def test_meetup_create_custom_image_overrides_preset(orga_client, organizer):
         'basics-location_type': 'in_person',
         'basics-location_0': 'Studio 1',
         'basics-capacity_type': 'unlimited',
-        'basics-header_image_preset': 'abstract-waves',
+        'basics-header_image_preset': str(preset.pk),
         'basics-logo_image': test_image,
     }
     response = orga_client.post(url, data)
@@ -359,7 +377,7 @@ def test_meetup_create_invalid_preset_rejected(orga_client, organizer):
         'basics-location_type': 'in_person',
         'basics-location_0': 'Studio 1',
         'basics-capacity_type': 'unlimited',
-        'basics-header_image_preset': 'non-existent-preset-id',
+        'basics-header_image_preset': '999999',
     }
     response = orga_client.post(url, data)
     assert response.status_code == 200
@@ -369,6 +387,7 @@ def test_meetup_create_invalid_preset_rejected(orga_client, organizer):
 
 @pytest.mark.django_db
 def test_preset_resolution_in_event_model(organizer):
+    preset = _create_test_preset(category_slug='gradients', name='Ocean Breeze')
     with scopes_disabled():
         event = Event.objects.create(
             organizer=organizer,
@@ -377,16 +396,13 @@ def test_preset_resolution_in_event_model(organizer):
             date_from=now(),
             date_to=now(),
         )
-        event.settings.set('logo_image', 'preset:gradient-ocean')
+        event.settings.set('logo_image', f'preset:{preset.pk}')
 
-        assert event._visible_header_image_path == 'preset:gradient-ocean'
+        assert event._visible_header_image_path == f'preset:{preset.pk}'
         assert event.visible_header_image_url is not None
-        assert 'gradient-ocean.jpg' in event.visible_header_image_url
         assert event.visible_header_image_file is None
         assert event.preview_image_url_with_fallback is not None
-        assert 'gradient-ocean.jpg' in event.preview_image_url_with_fallback
         assert event.preview_image_url_small is not None
-        assert 'gradient-ocean.jpg' in event.preview_image_url_small
 
 
 @pytest.mark.django_db
@@ -411,6 +427,7 @@ def test_meetup_create_get_without_organizer_renders_warning_gracefully(client):
 
 @pytest.mark.django_db
 def test_meetup_create_preset_preserved_on_validation_error(orga_client, organizer):
+    preset = _create_test_preset(category_slug='abstract', name='Abstract Waves')
     url = reverse('eventyay_common:events.add')
     data = {
         'is_meetup': 'on',
@@ -426,11 +443,25 @@ def test_meetup_create_preset_preserved_on_validation_error(orga_client, organiz
         'basics-location_type': 'in_person',
         'basics-location_0': 'Studio 1',
         'basics-capacity_type': 'unlimited',
-        'basics-header_image_preset': 'abstract-waves',
+        'basics-header_image_preset': str(preset.pk),
     }
     response = orga_client.post(url, data)
     assert response.status_code == 200
     assert 'basics_form' in response.context
     assert 'name' in response.context['basics_form'].errors
-    assert response.context['initial_preset_id'] == 'abstract-waves'
-    assert 'abstract-waves.jpg' in response.context['initial_preset_url']
+    assert response.context['initial_preset_id'] == str(preset.pk)
+    assert response.context['initial_preset_url'] is not None
+
+
+@pytest.mark.django_db
+def test_meetup_create_with_no_presets_in_db(orga_client):
+    from eventyay.base.header_presets import invalidate_preset_cache
+    EventHeaderPreset.objects.all().delete()
+    invalidate_preset_cache()
+
+    url = reverse('eventyay_common:events.add') + '?meetup=1'
+    response = orga_client.get(url)
+    assert response.status_code == 200
+    assert response.context['header_presets'] == []
+    assert response.context['initial_preset_id'] == ''
+    assert response.context['initial_preset_url'] == ''

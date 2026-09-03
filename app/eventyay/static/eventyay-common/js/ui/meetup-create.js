@@ -259,6 +259,24 @@ export function initHeaderImagePicker() {
         });
     });
 
+    function showPreviewImage(url, badgeText) {
+        const placeholder = document.getElementById('headerImagePlaceholder');
+        if (previewImg && url) {
+            previewImg.src = url;
+            previewImg.classList.remove('header-image-hidden');
+            previewImg.style.display = 'block';
+        }
+        if (placeholder) {
+            placeholder.classList.add('header-image-hidden');
+            placeholder.style.display = 'none';
+        }
+        if (sourceBadge && badgeText) {
+            sourceBadge.textContent = badgeText;
+            sourceBadge.classList.remove('header-image-hidden');
+            sourceBadge.style.display = '';
+        }
+    }
+
     // Preset card selection
     presetCards.forEach((card) => {
         card.addEventListener('click', () => {
@@ -278,11 +296,8 @@ export function initHeaderImagePicker() {
                 if (hiddenCoord) hiddenCoord.value = '';
             });
 
-            if (previewImg && presetUrl) {
-                previewImg.src = presetUrl;
-            }
-            if (sourceBadge && presetName) {
-                sourceBadge.textContent = presetName;
+            if (presetUrl) {
+                showPreviewImage(presetUrl, presetName);
             }
 
             presetCards.forEach((c) => c.classList.remove('active'));
@@ -336,14 +351,11 @@ export function initHeaderImagePicker() {
                     presetInput.value = '';
                 }
                 presetCards.forEach((c) => c.classList.remove('active'));
-                if (sourceBadge) {
-                    sourceBadge.textContent = 'Custom upload';
-                }
-                if (previewImg && selectedFile && selectedFile.type.startsWith('image/')) {
+                if (selectedFile && selectedFile.type.startsWith('image/')) {
                     const reader = new FileReader();
                     reader.onload = (evt) => {
                         if (evt.target && evt.target.result) {
-                            previewImg.src = evt.target.result;
+                            showPreviewImage(evt.target.result, 'Custom upload');
                         }
                     };
                     reader.readAsDataURL(selectedFile);
@@ -360,13 +372,14 @@ export function initHeaderImagePicker() {
                 const cropperImage = document.getElementById('cropperImage');
                 const fileContainer = fileInput ? fileInput.closest('.form-group') : null;
                 const thumbImg = fileContainer ? fileContainer.querySelector('img') : null;
+                let newSrc = null;
                 if (thumbImg && thumbImg.src && previewImg && thumbImg !== previewImg) {
-                    previewImg.src = thumbImg.src;
-                } else if (cropperImage && cropperImage.src && previewImg) {
-                    previewImg.src = cropperImage.src;
+                    newSrc = thumbImg.src;
+                } else if (cropperImage && cropperImage.src) {
+                    newSrc = cropperImage.src;
                 }
-                if (sourceBadge) {
-                    sourceBadge.textContent = 'Custom upload';
+                if (newSrc) {
+                    showPreviewImage(newSrc, 'Custom upload');
                 }
                 if (presetInput) {
                     presetInput.value = '';
