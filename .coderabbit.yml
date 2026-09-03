@@ -6,12 +6,12 @@ reviews:
     drafts: true
 
 path_instructions:
-  - path: "agents.md"
+  - path: "**/*"
     instructions: |
       Treat `agents.md` as the canonical policy file for this repository.
       Verify every pull request follows the applicable requirements in that file.
 
-  - path: ".github/instructions/**/*.md"
+  - path: "**/*"
     instructions: |
-      For each changed file, identify every matching file-specific instruction in `.github/instructions/*.md`.
+      For each changed file, load every applicable file-specific instruction in `.github/instructions/*.md` according to its `applyTo` pattern.
       Confirm the pull request follows all matched instruction files and call out violations explicitly.
