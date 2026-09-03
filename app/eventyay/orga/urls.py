@@ -229,11 +229,6 @@ urlpatterns = [
                     name='submissions.feedback',
                 ),
                 path(
-                    'submissions/feedback/export/',
-                    submission.FeedbackExportView.as_view(),
-                    name='submissions.feedback.export',
-                ),
-                path(
                     'submissions/feedback/bulk/',
                     submission.FeedbackBulkAction.as_view(),
                     name='submissions.feedback.bulk',
@@ -520,6 +515,11 @@ urlpatterns = [
                     'mails/compose',
                     mails.ComposeMailChoice.as_view(),
                     name='mails.compose.choose',
+                ),
+                path(
+                    'mails/compose/preview',
+                    mails.ComposeMailPreview.as_view(),
+                    name='mails.compose.preview',
                 ),
                 path(
                     'mails/compose/teams/',

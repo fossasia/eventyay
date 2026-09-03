@@ -50,7 +50,6 @@ from eventyay.control.forms.server_management import (
     ProfileForm,
     SignupForm,
     StreamingServerForm,
-    StreamKeyGeneratorForm,
     TurnServerForm,
     UserForm,
     EventForm,
@@ -312,12 +311,12 @@ class EventAdminToken(AdministratorPermissionRequiredMixin, DetailView):
 
         # Use the appropriate URL based on environment
         if event.domain:
-            video_url = f"https://{event.domain}#token={token}"
+            video_url = f"https://{event.domain}/event#token={token}"
         else:
             # For local development, use the current request's host
             scheme = 'https' if request.is_secure() else 'http'
             host = request.get_host()
-            video_url = f"{scheme}://{host}{event.urls.video_base}#token={token}"
+            video_url = f"{scheme}://{host}{event.urls.video_base}event#token={token}"
 
         return redirect(video_url)
 
@@ -840,22 +839,6 @@ class StreamingServerDelete(AdministratorPermissionRequiredMixin, DeleteView):
         return HttpResponseRedirect(success_url)
 
 
-class StreamkeyGenerator(AdministratorPermissionRequiredMixin, FormView):
-    template_name = "control/streamkey.html"
-    form_class = StreamKeyGeneratorForm
-
-    def form_valid(self, form):
-        return self.get(self.request, *self.args, **self.kwargs)
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        form = ctx["form"]
-        if self.request.method == "POST" and form.is_valid():
-            ctx["result"] = form.cleaned_data["server"].generate_streamkey(
-                form.cleaned_data["name"],
-                form.cleaned_data["days"],
-            )
-        return ctx
 
 
 class BBBMoveRoom(AdministratorPermissionRequiredMixin, FormView):

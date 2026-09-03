@@ -44,6 +44,7 @@ urlpatterns = [
     ),
     url(r'^users/(?P<id>\d+)/anonymize', users.UserAnonymizeView.as_view(), name='admin.users.anonymize'),
     url(r'^global/settings/$', global_settings.GlobalSettingsView.as_view(), name='admin.global.settings'),
+    path('global/business/', global_settings.GlobalBusinessSettingsView.as_view(), name='admin.global.business'),
     path('global/settings/preview/', global_settings.GlobalSettingsPagePreviewView.as_view(), name='admin.global.settings.preview'),
     path('global/settings/test-email/', global_settings.GlobalSettingsTestEmailView.as_view(), name='admin.global.settings.test_email'),
     path('global/metadata/', global_settings.MetaDataSettingsView.as_view(), name='admin.global.metadata'),
@@ -59,7 +60,10 @@ urlpatterns = [
     url(r'^vouchers/$', admin.VoucherList.as_view(), name='admin.vouchers'),
     url(r'^vouchers/add$', admin.VoucherCreate.as_view(), name='admin.vouchers.add'),
     url(r'^vouchers/(?P<voucher>\d+)/$', admin.VoucherUpdate.as_view(), name='admin.voucher'),
+    url(r'^vouchers/(?P<voucher>\d+)/detail$', admin.VoucherDetail.as_view(), name='admin.voucher.detail'),
     url(r'^vouchers/(?P<voucher>\d+)/delete$', admin.VoucherDelete.as_view(), name='admin.voucher.delete'),
+    url(r'^vouchers/(?P<voucher>\d+)/disable$', admin.VoucherDisable.as_view(), name='admin.voucher.disable'),
+    url(r'^vouchers/(?P<voucher>\d+)/duplicate$', admin.VoucherDuplicate.as_view(), name='admin.voucher.duplicate'),
     url(r'^global/sso/$', global_settings.SSOView.as_view(), name='admin.global.sso'),
     url(
         r'^global/sso/(?P<pk>\d+)/delete/$',

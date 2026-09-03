@@ -200,6 +200,12 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
 
     def clean(self):
         d = super().clean()
+        if d is None:
+            return d
+        d['has_filter_checkins'] = d.get('has_filter_checkins') in ('yes', True)
+        d['not_checked_in'] = d.get('not_checked_in') in ('yes', True)
+        if self.draft_save:
+            return d
         if d.get('subevent') and (d.get('subevents_from') or d.get('subevents_to')):
             raise ValidationError(
                 pgettext_lazy(
@@ -214,8 +220,6 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
                     'If you set a date range, please set both a start and an end.',
                 )
             )
-        d['has_filter_checkins'] = d.get('has_filter_checkins') == 'yes'
-        d['not_checked_in'] = d.get('not_checked_in') == 'yes'
         return d
 
     def _recipient_dependency_attrs(self, *, individual=False):
@@ -234,6 +238,7 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
 
     def __init__(self, *args, **kwargs):
         event = self.event = kwargs.pop('event')
+        self.draft_save = kwargs.pop('draft_save', False)
         super().__init__(*args, **kwargs)
 
         recp_choices = [('', _('Recipient type'))]
@@ -337,7 +342,6 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
             del self.fields['subevent']
             del self.fields['subevents_from']
             del self.fields['subevents_to']
-
         self.fields['order_created_from'].widget.attrs.update(self._recipient_dependency_attrs())
         self.fields['order_created_to'].widget.attrs.update(self._recipient_dependency_attrs())
 
@@ -365,6 +369,11 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
         for field_name, initial_value in list(self.initial.items()):
             if field_name in ('has_filter_checkins', 'not_checked_in') and isinstance(initial_value, bool):
                 self.initial[field_name] = 'yes' if initial_value else ''
+
+        if self.draft_save:
+            for field_name in ('recipients', 'order_status', 'products', 'subject', 'text'):
+                if field_name in self.fields:
+                    self.fields[field_name].required = False
 
     def resolve_orders(self):
         cleaned = self.cleaned_data
@@ -937,6 +946,7 @@ class TeamMailForm(ScheduledAtValidationMixin, forms.Form):
 
     def __init__(self, *args, **kwargs):
         self.event = kwargs.pop('event')
+        self.draft_save = kwargs.pop('draft_save', False)
         super().__init__(*args, **kwargs)
 
         locales = self.event.settings.get('locales') or [self.event.locale or 'en']
@@ -973,3 +983,7 @@ class TeamMailForm(ScheduledAtValidationMixin, forms.Form):
             required=False,
             help_text=_('Leave empty to send immediately. If set, the email will be sent at this time. Time is interpreted in the event timezone.'),
         )
+
+        if self.draft_save:
+            for field_name in ('teams', 'subject', 'message'):
+                self.fields[field_name].required = False

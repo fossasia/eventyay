@@ -21,6 +21,7 @@ import i18n, { init as i18nInit } from 'i18n'
 import { emojiPlugin } from 'lib/emoji'
 import features from 'features'
 import config from 'config'
+import { hasOrganizerTraits } from 'lib/traitGrants'
 import { loadThemeConfig } from 'theme'
 import 'webrtc-adapter'
 
@@ -73,8 +74,30 @@ async function init({ token, inviteToken }) {
   // Handle base path for routing early so RouterLink can resolve named routes
   const basePath = config.basePath || ''
   let relativePath = location.pathname.replace(basePath, '')
-  if (!relativePath) {
-    relativePath = '/'
+  let tokenTraits = []
+  if (token) {
+    try {
+      tokenTraits = jwtDecode(token)?.traits || []
+    } catch (e) { /* ignore */ }
+  } else if (localStorage.token) {
+    try {
+      tokenTraits = jwtDecode(localStorage.token)?.traits || []
+    } catch (e) { /* ignore */ }
+  }
+  const isOrganizer = hasOrganizerTraits(tokenTraits)
+
+  if (!relativePath || relativePath === '/') {
+    if (isOrganizer) {
+      relativePath = '/event'
+    } else {
+      relativePath = '/'
+    }
+  } else if (!isOrganizer) {
+    if (relativePath.startsWith('/event') || relativePath === 'event') {
+      relativePath = '/'
+    } else if (relativePath.includes('/manage')) {
+      relativePath = relativePath.replace(/\/manage$/, '') || '/'
+    }
   }
 
   // Ensure router's current route is set before mounting the app so that

@@ -14,7 +14,7 @@ from eventyay.timezones import common_timezones
 from rest_framework import serializers
 
 from eventyay.base.models.audit import AuditLog
-from eventyay.base.models.chat import Channel
+from eventyay.base.models.chat import Channel, ChatEvent, Membership
 from eventyay.base.models.event import Event
 from eventyay.base.models.room import Room, RoomConfigSerializer, RoomView
 from eventyay.base.services.room_creation_gate import (
@@ -38,10 +38,6 @@ class EventConfigSerializer(serializers.Serializer):
     timezone = serializers.ChoiceField(choices=[(a, a) for a in common_timezones])
     connection_limit = serializers.IntegerField(allow_null=True)
     available_permissions = serializers.SerializerMethodField("_available_permissions")
-    profile_fields = serializers.JSONField()
-    social_logins = serializers.ListSerializer(
-        child=serializers.CharField(), required=False, allow_empty=True
-    )
     iframe_blockers = serializers.JSONField()
     track_room_views = serializers.BooleanField()
     track_event_views = serializers.BooleanField()
@@ -58,25 +54,6 @@ class EventConfigSerializer(serializers.Serializer):
 
     def _available_permissions(self, *args):
         return [d.value for d in Permission]
-
-    def validate_social_logins(self, val):
-        known = ("gravatar", "twitter", "linkedin")
-        if any(v not in known for v in val):
-            raise ValidationError("Invalid value for social_logins")
-
-        if "twitter" in val and not settings.TWITTER_CLIENT_ID:
-            raise ValidationError(
-                "Twitter login can't be enabled since there's no Twitter API keys set for this "
-                "Eventyay installation."
-            )
-
-        if "linkedin" in val and not settings.LINKEDIN_CLIENT_ID:
-            raise ValidationError(
-                "LinkedIn login can't be enabled since there's no LinkedIn API keys set for this "
-                "Eventyay installation."
-            )
-
-        return val
 
 
 @database_sync_to_async
@@ -107,8 +84,7 @@ def get_rooms(event, user):
                     .values("room_id")
                     .order_by()
                     .annotate(
-                        # Count('user_id', distinct=True) would be more accurate, but might be slow, and we don't need accurate
-                        c=Count("user_id")
+                        c=Count("user_id", distinct=True)
                     )
                     .values("c")
                 )
@@ -237,6 +213,37 @@ def batch_room_current_stream_data(rooms):
 
 _UNSET = object()
 
+_MEDIA_MODULE_TYPES = frozenset({
+    'livestream.native',
+    'livestream.youtube',
+    'call.bigbluebutton',
+    'call.janus',
+    'call.zoom',
+    'call.jitsi',
+    'networking.roulette',
+    'page.landing',
+})
+
+
+def is_chat_channel_room(room):
+    modules = room.module_config or []
+    if not isinstance(modules, list) or not modules:
+        return False
+    types = [module.get('type') for module in modules if isinstance(module, dict)]
+    return 'chat.native' in types and not any(module_type in _MEDIA_MODULE_TYPES for module_type in types)
+
+
+def count_chat_participants(channel_id):
+    member_ids = Membership.objects.filter(
+        channel_id=channel_id,
+        user_id__isnull=False,
+    ).values_list("user_id", flat=True)
+    sender_ids = ChatEvent.objects.filter(
+        channel_id=channel_id,
+        sender_id__isnull=False,
+    ).values_list("sender_id", flat=True)
+    return len(set(member_ids) | set(sender_ids))
+
 
 def get_room_config(room, permissions, *, current_stream=_UNSET):
     str_permissions = [p if isinstance(p, str) else getattr(p, "value", p) for p in permissions]
@@ -258,9 +265,15 @@ def get_room_config(room, permissions, *, current_stream=_UNSET):
         "currentStream": stream_data,
     }
 
-    if hasattr(room, "current_roomviews"):
-        # set actual viewer count instead of approximate text
-        room_config["users"] = room.current_roomviews
+    if is_chat_channel_room(room):
+        try:
+            room_config["users"] = count_chat_participants(room.channel.id)
+        except Channel.DoesNotExist:
+            room_config["users"] = 0
+    elif hasattr(room, "current_roomviews"):
+        room_config["users"] = room.current_roomviews or 0
+    else:
+        room_config["users"] = 0
 
     for module in room.module_config:
         module_config = copy.deepcopy(module)
@@ -304,8 +317,6 @@ def get_event_config_for_user(event, user):
         "visible_logo_url": event.visible_logo_url,
         "visible_header_image_url": event.visible_header_image_url,
         "pretalx": pretalx_public,
-        "profile_fields": cfg.get("profile_fields", []),
-        "social_logins": cfg.get("social_logins", []),
         "iframe_blockers": cfg.get(
             "iframe_blockers",
             {"default": {"enabled": False, "policy_url": None}},
@@ -608,8 +619,6 @@ def _config_serializer(event, *args, **kwargs):
             "timezone": event.timezone,
             "trait_grants": event.trait_grants,
             "connection_limit": cfg.get("connection_limit", 0),
-            "profile_fields": cfg.get("profile_fields", []),
-            "social_logins": cfg.get("social_logins", []),
             "onsite_traits": cfg.get("onsite_traits", []),
             "conftool_url": cfg.get("conftool_url", ""),
             "conftool_password": cfg.get("conftool_password", ""),
