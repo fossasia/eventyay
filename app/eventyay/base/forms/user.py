@@ -137,7 +137,7 @@ class UserSettingsForm(forms.ModelForm):
                 if crop_w <= 0 or crop_h <= 0:
                     raise ValueError('Invalid crop dimensions')
                 if crop_w != crop_h:
-                    raise ValueError('Crop dimensions must be square')
+                    raise forms.ValidationError(_('Crop dimensions must be square'))
                 crop_box = (crop_x, crop_y, crop_x + crop_w, crop_y + crop_h)
             except (ValueError, TypeError, OverflowError):
                 crop_box = None
