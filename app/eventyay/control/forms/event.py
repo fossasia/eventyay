@@ -5,7 +5,7 @@ from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import UploadedFile
-from django.core.validators import validate_email, MinValueValidator, MaxValueValidator
+from django.core.validators import validate_email
 from django.db.models import Q
 from django.forms import CheckboxSelectMultiple, formset_factory
 from django.urls import reverse
@@ -215,7 +215,8 @@ class EventWizardBasicsForm(I18nModelForm):
             'detailed configuration later.'
         ),
         required=False,
-        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        min_value=0,
+        max_value=100,
     )
     team = forms.ModelChoiceField(
         label=_('Grant access to team'),
@@ -1608,7 +1609,14 @@ class TaxRuleLineForm(I18nForm):
             ('block', _('Sale not allowed')),
         ],
     )
-    rate = forms.DecimalField(label=_('Deviating tax rate'), max_digits=10, decimal_places=2, required=False)
+    rate = forms.DecimalField(
+        label=_('Deviating tax rate'),
+        max_digits=10,
+        decimal_places=2,
+        required=False,
+        min_value=0,
+        max_value=100,
+    )
     invoice_text = I18nFormField(label=_('Text on invoice'), required=False, widget=I18nTextInput)
 
 
@@ -1724,7 +1732,8 @@ class QuickSetupForm(I18nForm):
         required=False,
         max_digits=10,
         decimal_places=2,
-        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        min_value=0,
+        max_value=100,
     )
     tax_price_includes_tax = forms.BooleanField(
         label=_('The configured product prices include the tax amount'),
