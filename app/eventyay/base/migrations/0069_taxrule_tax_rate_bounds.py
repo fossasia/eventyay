@@ -4,10 +4,16 @@ import django.core.validators
 from django.db import migrations, models
 
 
+def normalize_legacy_tax_rates(apps, schema_editor):
+    TaxRule = apps.get_model('base', 'TaxRule')
+    TaxRule.objects.filter(rate__lt=0).update(rate=0)
+    TaxRule.objects.filter(rate__gt=100).update(rate=100)
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0067_user_profile_picture_user_profile_picture_thumbnail_and_more'),
+        ('base', '0068_invoicevoucher_status_comment_partial_usage'),
     ]
 
     operations = [
@@ -15,6 +21,10 @@ class Migration(migrations.Migration):
             model_name='taxrule',
             name='rate',
             field=models.DecimalField(decimal_places=2, max_digits=10, validators=[django.core.validators.MinValueValidator(0), django.core.validators.MaxValueValidator(100)], verbose_name='Tax rate'),
+        ),
+        migrations.RunPython(
+            normalize_legacy_tax_rates,
+            reverse_code=migrations.RunPython.noop,
         ),
         migrations.AddConstraint(
             model_name='taxrule',
