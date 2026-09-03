@@ -1,7 +1,8 @@
 <template lang="pug">
 .c-auditlog
 	.ui-page-header
-		h1 {{ $t('Audit Log') }}
+		bunt-icon-button(@click="$router.push({name: 'organizer'})", :tooltip="$t('Back to Overview')", tooltip-placement="bottom-start", :tooltip-fixed="true") arrow-left
+		h1 {{ $t('Logs') }}
 	bunt-input.search(name="search", :placeholder="$t('Search log')", icon="search", v-model="search")
 	.auditlog-list
 		.header
@@ -22,7 +23,7 @@
 		transition(name="prompt")
 			prompt.details-prompt(v-if="detailsPrompt != null", @close="detailsPrompt = null")
 				.content
-					h2 {{ $t('Audit Log Entry') }}
+					h2 {{ $t('Log Entry') }}
 					.detail-meta
 						.meta-item
 							span.label {{ $t('Timestamp') }}:

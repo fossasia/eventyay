@@ -10,8 +10,8 @@
 				.ui-badge(v-for="badge in user.badges") {{ badge }}
 			.state {{ userStates.join(', ') }}
 			.actions(v-if="user.id !== ownUser.id && user.id && !user.deleted")
-				bunt-button.btn-dm(v-if="hasPermission('world:chat.direct')", @click="openDM") {{ $t('message') }}
-				bunt-button.btn-call(v-if="hasPermission('world:chat.direct')", @click="startCall") {{ $t('call') }}
+				bunt-button.btn-dm(v-if="hasPermission('world:chat.direct') && liveFeatures.direct_messaging", @click="openDM") {{ $t('message') }}
+				bunt-button.btn-call(v-if="hasPermission('world:chat.direct') && liveFeatures.direct_messaging", @click="startCall") {{ $t('call') }}
 				menu-dropdown(v-model="showMoreActions", :blockBackground="false", @mousedown.stop="")
 					template(#button="{toggle}")
 						bunt-icon-button(@click="toggle") dots-vertical
@@ -57,6 +57,14 @@ export default {
 			world: 'world'
 		}),
 		...mapGetters(['hasPermission']),
+		liveFeatures() {
+			return Object.assign({
+				chat_rooms: false,
+				kiosks: false,
+				direct_messaging: false,
+				announcements: true
+			}, this.world?.live_features || window.eventyay?.liveFeatures || {})
+		},
 		isBlocked() {
 			if (!this.blockedUsers) return
 			return this.blockedUsers.some(user => user.id === this.user.id)

@@ -32,11 +32,54 @@ def is_organizer_token_traits(event_slug: str, traits: Iterable[str] | None) -> 
     return bool(traits_set.intersection(managed))
 
 
-def apply_live_team_video_traits(event, token_id, traits):
-    """
-    Replace team-managed Video traits using live Organizer → Teams grants.
+def check_has_active_staff_session(user, session_key: str | None = None) -> bool:
+    """Check if the platform user has an active StaffSession."""
+    if not user or not getattr(user, 'is_authenticated', True):
+        return False
+    if hasattr(user, 'has_active_staff_session'):
+        try:
+            if session_key:
+                return bool(user.has_active_staff_session(session_key))
+            return bool(user.has_active_staff_session())
+        except Exception:
+            pass
+    if getattr(user, 'is_staff', False) and getattr(user, 'pk', None):
+        try:
+            with scopes_disabled():
+                from eventyay.base.models.auth import StaffSession
+                qs = StaffSession.objects.filter(
+                    user=user,
+                    date_end__isnull=True,
+                )
+                if session_key:
+                    qs = qs.filter(session_key=session_key)
+                return qs.exists()
+        except Exception:
+            pass
+    return False
 
-    Cached JWTs (localStorage) can outlive team permission changes. When the JWT
+
+def is_platform_event_admin(user, session_key: str | None = None) -> bool:
+    """Return True if the user is a superuser or has an active staff session."""
+    if not user:
+        return False
+    return bool(
+        getattr(user, 'is_superuser', False)
+        or check_has_active_staff_session(user, session_key=session_key)
+    )
+
+
+def apply_live_team_video_traits(
+    event: Event,
+    token_id: str,
+    traits: Iterable[str] | None,
+    platform_user=None,
+    session_key: str | None = None,
+) -> list[str]:
+    """
+    Refresh video traits from the database for the platform user associated with this token.
+
+    Staff video traits are managed only in the team dashboard. If the token
     was issued for an organizer session and maps to a platform account, recompute
     managed traits from current teams.
     Attendee tokens (e.g. ticket purchase) are not upgraded to organizer sessions.
@@ -48,47 +91,42 @@ def apply_live_team_video_traits(event, token_id, traits):
     if not is_organizer_token_traits(event.slug, traits):
         return traits
 
-    from eventyay.base.services.user import (
-        _ticket_lookup,
-        resolve_account_fields_by_token_ids,
-    )
-
-    account = _ticket_lookup(
-        resolve_account_fields_by_token_ids([token_id]),
-        token_id,
-    )
-    if not account:
-        return traits
-
-    email = (account.get('email') or '').strip()
-    if not email:
-        return traits
-
-    with scopes_disabled():
-        platform_user = (
-            User.objects.filter(event__isnull=True, email__iexact=email)
-            .order_by('id')
-            .first()
-        )
     if not platform_user:
-        return traits
+        from eventyay.base.services.user import (
+            _ticket_lookup,
+            resolve_account_fields_by_token_ids,
+        )
 
-    # Check if this platform user has an active staff session
-    has_active_staff = False
-    with scopes_disabled():
-        from eventyay.base.models.auth import StaffSession
-        has_active_staff = StaffSession.objects.filter(
-            user=platform_user,
-            date_end__isnull=True,
-        ).exists()
+        account = _ticket_lookup(
+            resolve_account_fields_by_token_ids([token_id]),
+            token_id,
+        )
+        if not account:
+            return traits
 
-    # If the user does not have an active staff session, strip 'admin' from traits
-    if not has_active_staff and 'admin' in traits:
-        traits = [t for t in traits if t != 'admin']
+        email = (account.get('email') or '').strip()
+        if not email:
+            return traits
+
+        with scopes_disabled():
+            platform_user = (
+                User.objects.filter(event__isnull=True, email__iexact=email)
+                .order_by('id')
+                .first()
+            )
+        if not platform_user:
+            return traits
 
     # Fresh team membership after permission edits (avoid request-scoped cache).
     platform_user._teamcache = {}
     permission_set = platform_user.get_event_permission_set(event.organizer, event)
+    is_event_admin = is_platform_event_admin(platform_user, session_key=session_key)
+
+    if not is_event_admin and 'admin' in traits:
+        traits = [t for t in traits if t != 'admin']
+    elif is_event_admin and 'admin' not in traits:
+        traits.append('admin')
+
     return replace_managed_video_traits(
         event.slug,
         traits,
@@ -154,14 +192,12 @@ def sync_video_traits_for_platform_users(
         if not is_organizer_token_traits(video_user.event.slug, video_user.traits):
             continue
 
-        has_active_staff = StaffSession.objects.filter(
-            user=platform_user,
-            date_end__isnull=True,
-        ).exists()
-
+        is_event_admin = is_platform_event_admin(platform_user)
         current_traits = list(video_user.traits or [])
-        if not has_active_staff and 'admin' in current_traits:
+        if not is_event_admin and 'admin' in current_traits:
             current_traits = [t for t in current_traits if t != 'admin']
+        elif is_event_admin and 'admin' not in current_traits:
+            current_traits.append('admin')
 
         platform_user._teamcache = {}
         permission_set = platform_user.get_event_permission_set(

@@ -1,10 +1,11 @@
 <template lang="pug">
 .c-admin-kiosk
-	.header
+	.ui-page-header
+		bunt-icon-button(@click="$router.push({name: 'organizer'})", :tooltip="$t('Back to Overview')", tooltip-placement="bottom-start", :tooltip-fixed="true") arrow-left
+		h2 {{ $t('Kiosks') }}
 		.actions
-			h2 {{ $t('Kiosks') }}
 			bunt-link-button.btn-create(:to="{name: 'admin:kiosks:new'}") {{ $t('Create a new kiosk') }}
-		bunt-input.search(name="search", :placeholder="$t('Search kiosks')", icon="search", v-model="search")
+			bunt-input.search(name="search", :placeholder="$t('Search kiosks')", icon="search", v-model="search")
 	.kiosks-list
 		.header
 			.name {{ $t('Name') }}
@@ -59,25 +60,20 @@ export default {
 	flex-direction: column
 	min-height: 0
 	background-color: $clr-white
-	.header
-		justify-content: space-between
-		background-color: $clr-grey-50
+	.ui-page-header
 		.actions
 			display: flex
-			flex: none
 			align-items: center
-			.bunt-button:not(:last-child)
-				margin-right: 16px
+			gap: 8px
+			margin-left: auto
 			.btn-create
 				themed-button-primary()
-	h2
-		margin: 16px
-	.search
-		input-style(size: compact)
-		padding: 0
-		margin: 8px
-		flex: none
-		background-color: $clr-white
+		.search
+			input-style(size: compact)
+			padding: 0
+			margin: 0
+			flex: none
+			background-color: $clr-white
 	.kiosks-list
 		flex-table()
 		.kiosk
