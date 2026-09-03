@@ -4,7 +4,6 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 
 from eventyay.base.meetup import is_meetup_event
-from eventyay.control.checkin_app import get_eventyay_checkin_app_url, user_can_open_checkin_app
 from eventyay.control.signals import (
     nav_event,
     nav_event_settings,
@@ -458,15 +457,6 @@ def get_event_navigation(request: HttpRequest):
                 'active': 'event.orders.checkin' in url.url_name,
             },
         ]
-        if user_can_open_checkin_app(request):
-            checkin_children.append(
-                {
-                    'label': _('eventyay Check-in'),
-                    'url': get_eventyay_checkin_app_url(request),
-                    'external': True,
-                    'active': False,
-                }
-            )
         nav.append(
             {
                 'label': pgettext_lazy('navigation', 'Check-in'),
