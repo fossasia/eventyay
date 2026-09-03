@@ -124,14 +124,20 @@ class UserSettingsForm(forms.ModelForm):
         from django.core.files.uploadedfile import UploadedFile
         if pic and isinstance(pic, UploadedFile):
             try:
-                crop_x = int(float(self.data.get('profile_picture_crop_x', '')))
-                crop_y = int(float(self.data.get('profile_picture_crop_y', '')))
-                crop_w = int(float(self.data.get('profile_picture_crop_w', '')))
-                crop_h = int(float(self.data.get('profile_picture_crop_h', '')))
+                crop_x = float(self.data.get('profile_picture_crop_x', ''))
+                crop_y = float(self.data.get('profile_picture_crop_y', ''))
+                crop_w = float(self.data.get('profile_picture_crop_w', ''))
+                crop_h = float(self.data.get('profile_picture_crop_h', ''))
+                if not all(-float('inf') < value < float('inf') for value in (crop_x, crop_y, crop_w, crop_h)):
+                    raise ValueError('Invalid crop coordinates')
+                crop_x = int(crop_x)
+                crop_y = int(crop_y)
+                crop_w = int(crop_w)
+                crop_h = int(crop_h)
                 if crop_w <= 0 or crop_h <= 0:
                     raise ValueError('Invalid crop dimensions')
                 crop_box = (crop_x, crop_y, crop_x + crop_w, crop_y + crop_h)
-            except (ValueError, TypeError):
+            except (ValueError, TypeError, OverflowError):
                 crop_box = None
 
             from eventyay.helpers.image_optimize import optimize_uploaded_image
