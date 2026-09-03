@@ -136,6 +136,8 @@ class UserSettingsForm(forms.ModelForm):
                 crop_h = int(crop_h)
                 if crop_w <= 0 or crop_h <= 0:
                     raise ValueError('Invalid crop dimensions')
+                if crop_w != crop_h:
+                    raise ValueError('Crop dimensions must be square')
                 crop_box = (crop_x, crop_y, crop_x + crop_w, crop_y + crop_h)
             except (ValueError, TypeError, OverflowError):
                 crop_box = None
@@ -152,7 +154,9 @@ class UserSettingsForm(forms.ModelForm):
                     content_type=f"image/{result.optimized_ext}"
                 )
             except Exception:
-                pass
+                import logging
+                logging.getLogger(__name__).exception("Failed to process profile picture")
+                raise forms.ValidationError(_('Failed to process image.'))
         return pic
 
     def clean(self):
