@@ -11,7 +11,6 @@
     {% endblock %}
 
     {% block field_content_right %}
-        {# Radio button and checkbox lists show their help text above the first option. #}
         {% if help_text_above and field.help_text %}<small class="form-text text-muted"{% if field.auto_id %} id="{{ field.auto_id }}_helptext"{% endif %}>{{ field.help_text|safe }}</small>{% endif %}
         {% if field.use_fieldset %}<fieldset{% if field.help_text and field.auto_id and "aria-describedby" not in field.field.widget.attrs %} aria-describedby="{{ field.auto_id }}_helptext"{% endif %}>{% endif %}
         {% if field.field.widget.input_type == "checkbox" and not field.field.widget.allow_multiple_selected %}

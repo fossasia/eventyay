@@ -19,8 +19,6 @@ class TabularFormRenderer(TemplatesSetting):
     field_template_name = 'common/forms/tabular_field.html'
     form_group_class = 'row'
     label_class = 'col-md-3 col-form-label'
-    # Radio and checkbox lists show their help text above the first option in this
-    # layout. Renderers that lay fields out differently can opt out.
     help_text_above_options = True
 
     def render(self, template_name, context, request=None):

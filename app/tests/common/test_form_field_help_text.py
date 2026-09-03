@@ -1,10 +1,3 @@
-"""Help text placement in the shared form field template.
-
-In the tabular layout, radio button and checkbox lists render their help text
-above the first option, and every other field type keeps it below the input.
-Inline-rendered forms keep the help text below the input for every field type.
-"""
-
 from django import forms
 
 from eventyay.common.forms.renderers import (
