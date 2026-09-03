@@ -546,16 +546,24 @@ def get_admin_navigation(request):
     url = request.resolver_match
     if not url:
         return []
+    business_children = [
+        {
+            'label': _('Business Settings'),
+            'url': reverse('eventyay_admin:admin.global.business'),
+            'active': (url.url_name == 'admin.global.business'),
+        },
+        {
+            'label': _('Event vouchers'),
+            'url': reverse('eventyay_admin:admin.vouchers'),
+            'active': 'voucher' in url.url_name,
+        },
+    ]
+
     global_settings_children = [
         {
             'label': _('Settings'),
             'url': reverse('eventyay_admin:admin.global.settings'),
             'active': (url.url_name == 'admin.global.settings'),
-        },
-        {
-            'label': _('Business'),
-            'url': reverse('eventyay_admin:admin.global.business'),
-            'active': (url.url_name == 'admin.global.business' or 'voucher' in url.url_name),
         },
         {
             'label': _('System information'),
@@ -600,6 +608,13 @@ def get_admin_navigation(request):
             'active': any(c['active'] for c in global_settings_children),
             'icon': 'wrench',
             'children': global_settings_children,
+        },
+        {
+            'label': _('Business'),
+            'url': reverse('eventyay_admin:admin.global.business'),
+            'active': any(c['active'] for c in business_children),
+            'icon': 'briefcase',
+            'children': business_children,
         },
         {
             'label': _('Task management'),
@@ -704,12 +719,6 @@ def get_admin_navigation(request):
                         'active': ('sudo' in url.url_name),
                     },
                 ],
-            },
-            {
-                'label': _('Event vouchers'),
-                'url': reverse('eventyay_admin:admin.vouchers'),
-                'active': 'voucher' in url.url_name,
-                'icon': 'tags',
             },
         ]
     )
