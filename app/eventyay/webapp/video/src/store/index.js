@@ -63,6 +63,8 @@ export default new Vuex.Store({
 			}
 		},
 		isAdminMode(state) {
+			if (Array.isArray(state.user?.traits) && state.user.traits.includes('admin')) return true
+			if (typeof window !== 'undefined' && window.eventyay?.hasStaffSession) return true
 			if (!state.token) return false
 			try {
 				const token = jwtDecode(state.token)
@@ -447,7 +449,7 @@ export default new Vuex.Store({
 		},
 		'api::world.updated'({state, commit, dispatch}, {world, rooms, permissions}) {
 			state.world = world
-			state.permission = permissions
+			state.permissions = permissions
 			commit('updateRooms', rooms)
 		},
 		// Backwards-compat: server emits 'event.updated' with a payload that contains both
@@ -457,7 +459,7 @@ export default new Vuex.Store({
 			const rooms = payload.rooms || []
 			const permissions = payload.permissions
 			state.world = world
-			state.permission = permissions
+			state.permissions = permissions
 			commit('updateRooms', rooms)
 		},
 		'api::world.schedule.updated'({state, commit, dispatch}, pretalx) {

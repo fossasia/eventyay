@@ -1,9 +1,10 @@
-import pytest
 from decimal import Decimal
-from django.test import Client
-from django.urls import resolve, reverse
 
-from eventyay.base.models import InvoiceVoucher, User
+import pytest
+from django.urls import resolve, reverse
+from django.utils.timezone import now
+
+from eventyay.base.models import User
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.control.forms.global_settings import (
     GlobalBusinessSettingsForm,
@@ -14,65 +15,49 @@ from eventyay.control.navigation import get_admin_navigation
 
 @pytest.fixture
 def admin_user():
-    return User.objects.create_superuser('admin@example.com', 'adminpassword')
+    return User.objects.create_user('admin@example.com', 'dummy', is_staff=True)
 
 
 @pytest.fixture
 def staff_client(client, admin_user):
     client.force_login(admin_user)
-    # Start sudo staff session required by AdministratorPermissionRequiredMixin
-    session = client.session
-    session['staff_session'] = admin_user.pk
-    session.save()
-    from eventyay.base.models.auth import StaffSession
-    StaffSession.objects.create(user=admin_user, session_key=session.session_key)
+    admin_user.staffsession_set.create(date_start=now(), session_key=client.session.session_key)
     return client
 
 
 @pytest.mark.django_db
-class TestBusinessSettingsNavigation:
-    def test_navigation_structure_and_order(self, rf, admin_user):
-        request = rf.get('/admin/global/settings/')
-        request.user = admin_user
-        request.resolver_match = resolve('/admin/global/settings/')
-
-        nav = get_admin_navigation(request)
-        global_settings = next((item for item in nav if str(item.get('label')) == 'Global settings'), None)
-        assert global_settings is not None
-
-        child_labels = [str(child['label']) for child in global_settings['children']]
-        assert 'Business' in child_labels
-        assert 'Settings' in child_labels
-        assert 'System information' in child_labels
-
-        # Verify exact ordering: Settings, Business, System information, Pages, ...
-        settings_idx = child_labels.index('Settings')
-        business_idx = child_labels.index('Business')
-        sysinfo_idx = child_labels.index('System information')
-        assert settings_idx < business_idx < sysinfo_idx
-
-        # Standalone Vouchers must NOT be present in nav
-        top_labels = [str(item.get('label')) for item in nav]
-        assert 'Vouchers' not in top_labels
-
-    def test_navigation_active_states(self, rf, admin_user):
-        # When visiting Business page
+class TestAdminNavigationBusiness:
+    def test_admin_sidebar_has_business_top_level_and_subitems(self, rf, admin_user):
         request = rf.get('/admin/global/business/')
         request.user = admin_user
         request.resolver_match = resolve('/admin/global/business/')
 
         nav = get_admin_navigation(request)
-        global_settings = next((item for item in nav if str(item.get('label')) == 'Global settings'), None)
-        assert global_settings is not None
-        assert global_settings['active'] is True
+        labels = [str(item.get('label')) for item in nav]
+        assert labels == [
+            'Global settings',
+            'Business',
+            'Task management',
+            'Video',
+            'Platform Data',
+            'Users',
+        ]
 
-        business_item = next((c for c in global_settings['children'] if str(c['label']) == 'Business'), None)
+        business_item = next((item for item in nav if str(item.get('label')) == 'Business'), None)
         assert business_item is not None
         assert business_item['active'] is True
+        assert business_item.get('icon') == 'briefcase'
 
-        settings_item = next((c for c in global_settings['children'] if str(c['label']) == 'Settings'), None)
-        assert settings_item is not None
-        assert settings_item['active'] is False
+        child_labels = [str(c['label']) for c in business_item['children']]
+        assert child_labels == ['Business Settings', 'Event vouchers']
+
+        settings_child = next(c for c in business_item['children'] if str(c['label']) == 'Business Settings')
+        assert settings_child['url'] == reverse('eventyay_admin:admin.global.business')
+        assert settings_child['active'] is True
+
+        vouchers_child = next(c for c in business_item['children'] if str(c['label']) == 'Event vouchers')
+        assert vouchers_child['url'] == reverse('eventyay_admin:admin.vouchers')
+        assert vouchers_child['active'] is False
 
 
 @pytest.mark.django_db
@@ -93,18 +78,18 @@ class TestBusinessSettingsPermissions:
 
 @pytest.mark.django_db
 class TestBusinessSettingsView:
-    def test_business_page_renders_all_tabs(self, staff_client):
+    def test_business_page_renders_only_three_tabs(self, staff_client):
         url = reverse('eventyay_admin:admin.global.business')
         response = staff_client.get(url)
         assert response.status_code == 200
 
         content = response.content.decode('utf-8')
-        # Check page heading and 4 tab fieldset IDs exist
+        # Check page heading and the ONLY 3 tab fieldset IDs exist
         assert '<h1>Business Settings</h1>' in content
         assert 'id="tab-organizer_billing"' in content
         assert 'id="tab-ticket_fee"' in content
         assert 'id="tab-billing_validation"' in content
-        assert 'id="tab-event_vouchers"' in content
+        assert 'id="tab-event_vouchers"' not in content
 
         # Check Organizer Billing texts and fields
         assert 'Stripe — Organizer Billing' in content
@@ -118,25 +103,6 @@ class TestBusinessSettingsView:
         # Check Ticket Fee and Billing Validation fields
         assert 'ticket_fee_percentage' in content
         assert 'billing_validation' in content
-
-        # Check Event Vouchers texts and action
-        assert 'Event vouchers are used by platform admins to waive or reduce Eventyay platform fees' in content
-        assert reverse('eventyay_admin:admin.vouchers.add') in content
-
-    def test_business_page_renders_vouchers_table(self, staff_client):
-        InvoiceVoucher.objects.create(
-            code='TESTVOUCHER2026',
-            max_usages=10,
-            redeemed=2,
-            price_mode='percent',
-            value=Decimal('20.00'),
-        )
-        url = reverse('eventyay_admin:admin.global.business')
-        response = staff_client.get(url)
-        assert response.status_code == 200
-        content = response.content.decode('utf-8')
-        assert 'TESTVOUCHER2026' in content
-        assert '2 / 10' in content
 
     def test_business_settings_save(self, staff_client):
         url = reverse('eventyay_admin:admin.global.business')
@@ -157,12 +123,6 @@ class TestBusinessSettingsView:
         assert gs.settings.get('payment_stripe_publishable_key') == 'pk_live_business_test_123'
         assert gs.settings.get('ticket_fee_percentage', as_type=Decimal) == Decimal('3.50')
         assert gs.settings.get('billing_validation', as_type=bool) is True
-
-    def test_vouchers_url_redirects_to_business_tab(self, staff_client):
-        url = reverse('eventyay_admin:admin.vouchers')
-        response = staff_client.get(url)
-        assert response.status_code == 302
-        assert response['Location'] == f"{reverse('eventyay_admin:admin.global.business')}#tab-event_vouchers"
 
 
 @pytest.mark.django_db
@@ -195,11 +155,15 @@ class TestGlobalSettingsCleanUp:
     def test_global_settings_redirects_for_legacy_tabs(self, staff_client):
         url = reverse('eventyay_admin:admin.global.settings')
 
-        for tab in ('organizer_billing', 'ticket_fee', 'billing_validation', 'vouchers', 'event_vouchers'):
-            expected_tab = 'event_vouchers' if tab == 'vouchers' else tab
+        for tab in ('organizer_billing', 'ticket_fee', 'billing_validation'):
             response = staff_client.get(f'{url}?tab={tab}')
             assert response.status_code == 302
-            assert response['Location'] == f"{reverse('eventyay_admin:admin.global.business')}#tab-{expected_tab}"
+            assert response['Location'] == f"{reverse('eventyay_admin:admin.global.business')}#tab-{tab}"
+
+        for tab in ('vouchers', 'event_vouchers'):
+            response = staff_client.get(f'{url}?tab={tab}')
+            assert response.status_code == 302
+            assert response['Location'] == reverse('eventyay_admin:admin.vouchers')
 
 
 @pytest.mark.django_db
