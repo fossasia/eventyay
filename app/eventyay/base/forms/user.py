@@ -119,6 +119,36 @@ class UserSettingsForm(forms.ModelForm):
         if password1 and password1 != password2:
             raise forms.ValidationError(self.error_messages['pw_mismatch'], code='pw_mismatch')
 
+    def clean_profile_picture(self):
+        pic = self.cleaned_data.get('profile_picture')
+        from django.core.files.uploadedfile import UploadedFile
+        if pic and isinstance(pic, UploadedFile):
+            try:
+                crop_x = int(float(self.data.get('profile_picture_crop_x', '')))
+                crop_y = int(float(self.data.get('profile_picture_crop_y', '')))
+                crop_w = int(float(self.data.get('profile_picture_crop_w', '')))
+                crop_h = int(float(self.data.get('profile_picture_crop_h', '')))
+                if crop_w <= 0 or crop_h <= 0:
+                    raise ValueError('Invalid crop dimensions')
+                crop_box = (crop_x, crop_y, crop_x + crop_w, crop_y + crop_h)
+            except (ValueError, TypeError):
+                crop_box = None
+
+            from eventyay.helpers.image_optimize import optimize_uploaded_image
+            try:
+                result = optimize_uploaded_image(pic, 'profile_picture', crop_box)
+                import os
+                from django.core.files.uploadedfile import SimpleUploadedFile
+                base_name, _ = os.path.splitext(pic.name)
+                pic = SimpleUploadedFile(
+                    f"{base_name}.{result.optimized_ext}",
+                    result.optimized.read(),
+                    content_type=f"image/{result.optimized_ext}"
+                )
+            except Exception:
+                pass
+        return pic
+
     def clean(self):
         cleaned_data = super().clean()
         has_new_profile_picture_upload = bool(self.files and self.files.get('profile_picture'))
