@@ -50,6 +50,10 @@ class GlobalSettingsView(AdministratorPermissionRequiredMixin, FormView):
         if tab in ('organizer_billing', 'ticket_fee', 'billing_validation', 'business'):
             target_hash = f'#tab-{tab}' if tab in ('organizer_billing', 'ticket_fee', 'billing_validation') else ''
             return redirect(reverse('eventyay_admin:admin.global.business') + target_hash)
+        if tab in ('payment_gateways', 'cart', 'payment-gateways'):
+            # Convert legacy underscore to dash if needed
+            target_tab = tab.replace('_', '-')
+            return redirect(reverse('eventyay_admin:admin.global.ticketing') + f'#tab-{target_tab}')
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -141,6 +145,9 @@ class SSOView(AdministratorPermissionRequiredMixin, FormView):
         context['gs'] = GlobalSettingsObject()
         context['gs'].settings.set('update_check_ack', True)
         context['tbl'] = check_result_table()
+        
+        oauth_applications = OAuthApplication.objects.all()
+        context['oauth_applications'] = oauth_applications
         
         return context
 
