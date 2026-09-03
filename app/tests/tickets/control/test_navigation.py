@@ -192,6 +192,21 @@ def test_admin_navigation_structure_and_hierarchy(rf):
     event_vouchers = next(c for c in business_nav['children'] if str(c.get('label')) == 'Event vouchers')
     assert event_vouchers['url'] == '/admin/vouchers/'
 
+    # Check Global settings subitems
+    global_nav = next(item for item in nav if str(item.get('label')) == 'Global settings')
+    assert 'children' in global_nav
+
+    global_children_labels = [str(c.get('label')) for c in global_nav['children']]
+    assert 'Settings' in global_children_labels
+    assert 'Ticketing' in global_children_labels
+    
+    # Update check and Meta data are now tabs, so they should not be in the sidebar
+    assert 'Update check' not in global_children_labels
+    assert 'Meta data' not in global_children_labels
+
+    ticketing_settings = next(c for c in global_nav['children'] if str(c.get('label')) == 'Ticketing')
+    assert ticketing_settings['url'] == '/admin/global/ticketing/'
+
 
 @pytest.mark.django_db
 def test_admin_navigation_voucher_active_state(rf):

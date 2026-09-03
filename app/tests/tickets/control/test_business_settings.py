@@ -144,13 +144,9 @@ class TestGlobalSettingsCleanUp:
         assert 'id="tab-billing_validation"' not in content
         assert 'id="tab-organizer_billing"' not in content
 
-        # Payment Gateways MUST still contain ticket payments
-        assert 'id="tab-payment_gateways"' in content
-        assert 'Stripe — Ticket Payments' in content
-        assert 'PayPal — Ticket Payments' in content
-        assert 'payment_stripe_connect_client_id' in content
-        assert 'payment_stripe_connect_publishable_key' in content
-        assert 'payment_paypal_connect_client_id' in content
+        # Payment Gateways and Cart MUST NOT be in Global Settings (Moved to Ticketing)
+        assert 'id="tab-payment-gateways"' not in content
+        assert 'id="tab-cart"' not in content
 
     def test_global_settings_redirects_for_legacy_tabs(self, staff_client):
         url = reverse('eventyay_admin:admin.global.settings')
@@ -164,6 +160,17 @@ class TestGlobalSettingsCleanUp:
             response = staff_client.get(f'{url}?tab={tab}')
             assert response.status_code == 302
             assert response['Location'] == reverse('eventyay_admin:admin.vouchers')
+
+        for tab in ('payment-gateways', 'cart'):
+            response = staff_client.get(f'{url}?tab={tab}')
+            assert response.status_code == 302
+            assert response['Location'] == f"{reverse('eventyay_admin:admin.global.ticketing')}#tab-{tab}"
+
+        for tab in ('meta-data', 'update-check'):
+            # These are now merged into GlobalSettingsView, so they should redirect to #tab-meta-data, #tab-update-check
+            response = staff_client.get(f'{url}?tab={tab}')
+            assert response.status_code == 302
+            assert response['Location'] == f"{url}#tab-{tab}"
 
 
 @pytest.mark.django_db

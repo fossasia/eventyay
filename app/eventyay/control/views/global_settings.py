@@ -29,8 +29,7 @@ from eventyay.control.forms.global_settings import (
     GlobalBusinessSettingsForm,
     GlobalSettingsForm,
     SSOConfigForm,
-    UpdateSettingsForm,
-    MetaDataSettingsForm,
+    TicketingSettingsForm,
 )
 from eventyay.control.permissions import (
     AdministratorPermissionRequiredMixin,
@@ -55,6 +54,7 @@ class GlobalSettingsView(AdministratorPermissionRequiredMixin, FormView):
 
     def get_context_data(self, **kwargs):
         from eventyay.base.gmail.models import GmailOAuthCredential
+        from eventyay.base.services.update_check import check_result_table
 
         context = super().get_context_data(**kwargs)
         context['gmail_migration_pending'] = not GmailOAuthCredential.is_table_available()
@@ -65,7 +65,20 @@ class GlobalSettingsView(AdministratorPermissionRequiredMixin, FormView):
         context['gmail_connect_url'] = reverse('eventyay_admin:admin.global.gmail.connect')
         context['gmail_disconnect_url'] = reverse('eventyay_admin:admin.global.gmail.disconnect')
         context['test_email_feedback'] = self.request.session.pop('admin_test_email_feedback', None)
+        
+        # Update check context
+        context['gs'] = GlobalSettingsObject()
+        context['gs'].settings.set('update_check_ack', True)
+        context['tbl'] = check_result_table()
+        
         return context
+
+    def post(self, request, *args, **kwargs):
+        if 'trigger' in request.POST:
+            from eventyay.base.services.update_check import update_check
+            update_check.apply()
+            return redirect(self.get_success_url() + '#tab-update-check')
+        return super().post(request, *args, **kwargs)
 
     def form_valid(self, form):
         form.save()
@@ -84,6 +97,13 @@ class GlobalBusinessSettingsView(AdministratorPermissionRequiredMixin, FormView)
     template_name = 'pretixcontrol/admin/business_settings.html'
     form_class = GlobalBusinessSettingsForm
 
+    def post(self, request, *args, **kwargs):
+        if 'trigger' in request.POST:
+            from eventyay.base.services.update_check import update_check
+            update_check.apply()
+            return redirect(self.get_success_url() + '#tab-update-check')
+        return super().post(request, *args, **kwargs)
+
     def form_valid(self, form):
         form.save()
         messages.success(self.request, _('Your changes have been saved.'))
@@ -97,21 +117,6 @@ class GlobalBusinessSettingsView(AdministratorPermissionRequiredMixin, FormView)
         return reverse('eventyay_admin:admin.global.business')
 
 
-class MetaDataSettingsView(AdministratorPermissionRequiredMixin, FormView):
-    template_name = 'pretixcontrol/admin/metadata.html'
-    form_class = MetaDataSettingsForm
-
-    def form_valid(self, form):
-        form.save()
-        messages.success(self.request, _('Your changes have been saved.'))
-        return super().form_valid(form)
-
-    def form_invalid(self, form):
-        messages.error(self.request, _('Your changes have not been saved, see below for errors.'))
-        return super().form_invalid(form)
-
-    def get_success_url(self):
-        return reverse('eventyay_admin:admin.global.metadata')
 
 
 class SSOView(AdministratorPermissionRequiredMixin, FormView):
@@ -119,10 +124,32 @@ class SSOView(AdministratorPermissionRequiredMixin, FormView):
     form_class = SSOConfigForm
 
     def get_context_data(self, **kwargs):
+        from eventyay.base.gmail.models import GmailOAuthCredential
+        from eventyay.base.services.update_check import check_result_table
+
         context = super().get_context_data(**kwargs)
-        oauth_applications = OAuthApplication.objects.all()
-        context['oauth_applications'] = oauth_applications
+        context['gmail_migration_pending'] = not GmailOAuthCredential.is_table_available()
+        context['gmail_credential'] = GmailOAuthCredential.get_active_global_safe()
+        context['gmail_callback_url'] = self.request.build_absolute_uri(
+            reverse('eventyay_admin:admin.global.gmail.callback')
+        )
+        context['gmail_connect_url'] = reverse('eventyay_admin:admin.global.gmail.connect')
+        context['gmail_disconnect_url'] = reverse('eventyay_admin:admin.global.gmail.disconnect')
+        context['test_email_feedback'] = self.request.session.pop('admin_test_email_feedback', None)
+        
+        # Update check context
+        context['gs'] = GlobalSettingsObject()
+        context['gs'].settings.set('update_check_ack', True)
+        context['tbl'] = check_result_table()
+        
         return context
+
+    def post(self, request, *args, **kwargs):
+        if 'trigger' in request.POST:
+            from eventyay.base.services.update_check import update_check
+            update_check.apply()
+            return redirect(self.get_success_url() + '#tab-update-check')
+        return super().post(request, *args, **kwargs)
 
     def form_valid(self, form):
         url = form.cleaned_data['redirect_url']
@@ -174,34 +201,6 @@ class DeleteOAuthApplicationView(AdministratorPermissionRequiredMixin, DeleteVie
     success_url = reverse_lazy('eventyay_admin:admin.global.sso')
 
 
-class UpdateCheckView(StaffMemberRequiredMixin, FormView):
-    template_name = 'pretixcontrol/global_update.html'
-    form_class = UpdateSettingsForm
-
-    def post(self, request, *args, **kwargs):
-        if 'trigger' in request.POST:
-            update_check.apply()
-            return redirect(self.get_success_url())
-        return super().post(request, *args, **kwargs)
-
-    def form_valid(self, form):
-        form.save()
-        messages.success(self.request, _('Your changes have been saved.'))
-        return super().form_valid(form)
-
-    def form_invalid(self, form):
-        messages.error(self.request, _('Your changes have not been saved, see below for errors.'))
-        return super().form_invalid(form)
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data()
-        ctx['gs'] = GlobalSettingsObject()
-        ctx['gs'].settings.set('update_check_ack', True)
-        ctx['tbl'] = check_result_table()
-        return ctx
-
-    def get_success_url(self):
-        return reverse('eventyay_admin:admin.global.update')
 
 
 class MessageView(AdministratorPermissionRequiredMixin, TemplateView):
@@ -420,30 +419,24 @@ class GlobalPluginManagementView(AdministratorPermissionRequiredMixin, TemplateV
     template_name = 'pretixcontrol/global_plugins.html'
 
     def get_context_data(self, **kwargs):
+        from eventyay.base.gmail.models import GmailOAuthCredential
+        from eventyay.base.services.update_check import check_result_table
+
         context = super().get_context_data(**kwargs)
-        all_plugins = get_all_plugins(include_inactive=True)
-
-        try:
-            configs = {c.module: c for c in GlobalPluginConfig.objects.all()}
-        except (ProgrammingError, OperationalError):
-            configs = {}
-
-        plugin_rows = []
-        for plugin in all_plugins:
-            module = plugin.module
-            config = configs.get(module)
-            plugin_rows.append({
-                'module': module,
-                'name': str(plugin.name),
-                'description': str(getattr(plugin, 'description', '')),
-                'version': getattr(plugin, 'version', ''),
-                'category': str(getattr(plugin, 'category', '')),
-                'is_active': config.is_active if config else True,
-                'enable_by_default': config.enable_by_default if config else False,
-                'show_in_organizer_list': config.show_in_organizer_list if config else True,
-            })
-
-        context['plugin_rows'] = plugin_rows
+        context['gmail_migration_pending'] = not GmailOAuthCredential.is_table_available()
+        context['gmail_credential'] = GmailOAuthCredential.get_active_global_safe()
+        context['gmail_callback_url'] = self.request.build_absolute_uri(
+            reverse('eventyay_admin:admin.global.gmail.callback')
+        )
+        context['gmail_connect_url'] = reverse('eventyay_admin:admin.global.gmail.connect')
+        context['gmail_disconnect_url'] = reverse('eventyay_admin:admin.global.gmail.disconnect')
+        context['test_email_feedback'] = self.request.session.pop('admin_test_email_feedback', None)
+        
+        # Update check context
+        context['gs'] = GlobalSettingsObject()
+        context['gs'].settings.set('update_check_ack', True)
+        context['tbl'] = check_result_table()
+        
         return context
 
     def post(self, request, *args, **kwargs):
@@ -550,3 +543,19 @@ class GlobalSettingsPagePreviewView(AdministratorPermissionRequiredMixin, View):
 
         return JsonResponse({'previews': previews})
 
+
+class TicketingSettingsView(AdministratorPermissionRequiredMixin, FormView):
+    template_name = 'pretixcontrol/admin/ticketing_settings.html'
+    form_class = TicketingSettingsForm
+
+    def form_valid(self, form):
+        form.save()
+        messages.success(self.request, _('Your changes have been saved.'))
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        messages.error(self.request, _('Your changes have not been saved, see below for errors.'))
+        return super().form_invalid(form)
+
+    def get_success_url(self):
+        return reverse('eventyay_admin:admin.global.ticketing')

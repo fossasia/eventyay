@@ -47,7 +47,8 @@ urlpatterns = [
     path('global/business/', global_settings.GlobalBusinessSettingsView.as_view(), name='admin.global.business'),
     path('global/settings/preview/', global_settings.GlobalSettingsPagePreviewView.as_view(), name='admin.global.settings.preview'),
     path('global/settings/test-email/', global_settings.GlobalSettingsTestEmailView.as_view(), name='admin.global.settings.test_email'),
-    path('global/metadata/', global_settings.MetaDataSettingsView.as_view(), name='admin.global.metadata'),
+    path('global/ticketing/', global_settings.TicketingSettingsView.as_view(), name='admin.global.ticketing'),
+    path('global/metadata/', RedirectView.as_view(url='/admin/global/settings/#tab-meta-data', permanent=True), name='admin.global.metadata'),
 
     path('global/gmail/connect/', gmail_oauth.GmailOAuthConnectView.as_view(), name='admin.global.gmail.connect'),
     path('global/gmail/callback/', gmail_oauth.GmailOAuthCallbackView.as_view(), name='admin.global.gmail.callback'),
@@ -55,7 +56,7 @@ urlpatterns = [
 
     path('global/plugins/', global_settings.GlobalPluginManagementView.as_view(), name='admin.global.plugins'),
 
-    url(r'^global/update/$', global_settings.UpdateCheckView.as_view(), name='admin.global.update'),
+    url(r'^global/update/$', RedirectView.as_view(url='/admin/global/settings/#tab-update-check', permanent=True), name='admin.global.update'),
     url(r'^global/message/$', global_settings.MessageView.as_view(), name='admin.global.message'),
     url(r'^vouchers/$', admin.VoucherList.as_view(), name='admin.vouchers'),
     url(r'^vouchers/add$', admin.VoucherCreate.as_view(), name='admin.vouchers.add'),
