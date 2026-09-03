@@ -2,11 +2,11 @@
 .c-admin-user
 	template(v-if="user")
 		.ui-page-header
-			bunt-icon-button(@click="$router.push({name: 'admin:users'})") arrow_left
+			bunt-icon-button(@click="$router.push({name: 'admin:users'})", :tooltip="$t('Back to Users')", tooltip-placement="bottom-start", :tooltip-fixed="true") arrow-left
 			h1 {{ $t('User') }} {{ (user.profile && user.profile.display_name) || user.id }}
 			.actions(v-if="user.id !== ownUser.id")
-				bunt-button.btn-dm(v-if="hasPermission('world:chat.direct') && !user.deleted", @click="openDM") {{ $t('message') }}
-				bunt-button.btn-call(v-if="hasPermission('world:chat.direct') && !user.deleted", @click="startCall") {{ $t('call') }}
+				bunt-button.btn-dm(v-if="hasPermission('world:chat.direct') && liveFeatures.direct_messaging && !user.deleted", @click="openDM") {{ $t('message') }}
+				bunt-button.btn-call(v-if="hasPermission('world:chat.direct') && liveFeatures.direct_messaging && !user.deleted", @click="startCall") {{ $t('call') }}
 				bunt-button.btn-delete(v-if="hasPermission('world:users.manage') && !user.deleted", @click="userAction = 'delete'") {{ $t('delete') }}
 				bunt-button.btn-ban(v-if="hasPermission('world:users.manage') && !user.deleted && user.moderation_state !== 'banned'", @click="userAction = 'ban'") {{ $t('ban') }}
 				bunt-button.btn-silence(v-if="hasPermission('world:users.manage') && !user.deleted && !user.moderation_state", @click="userAction = 'silence'") {{ $t('silence') }}
@@ -77,9 +77,18 @@ export default {
 	},
 	computed: {
 		...mapState({
-			ownUser: 'user'
+			ownUser: 'user',
+			world: 'world'
 		}),
 		...mapGetters(['hasPermission']),
+		liveFeatures() {
+			return Object.assign({
+				chat_rooms: false,
+				kiosks: false,
+				direct_messaging: false,
+				announcements: true
+			}, this.world?.live_features || window.eventyay?.liveFeatures || {})
+		},
 	},
 	async created() {
 		this.user = await api.call('user.fetch', {id: this.userId})

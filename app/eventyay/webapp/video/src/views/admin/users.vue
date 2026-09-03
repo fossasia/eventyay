@@ -1,8 +1,10 @@
 <template lang="pug">
 .c-admin-users
-	.header
+	.ui-page-header
+		bunt-icon-button(@click="$router.push({name: 'organizer'})", :tooltip="$t('Back to Overview')", tooltip-placement="bottom-start", :tooltip-fixed="true") arrow-left
 		h2 {{ $t('Users') }}
-		bunt-input.search(name="search", :placeholder="$t('Search users')", icon="search", v-model="search")
+		.actions
+			bunt-input.search(name="search", :placeholder="$t('Search users')", icon="search", v-model="search")
 	.users-list
 		.header
 			.avatar
@@ -47,7 +49,7 @@
 					.wikimedia(:title="user.wikimedia_username || ''") {{ user.wikimedia_username || '–' }}
 					.state {{ user.moderation_state || '–' }}
 					.row-actions(v-if="user.id !== ownUser.id", @click.stop="")
-						bunt-button.btn-open-dm(v-if="hasPermission('world:chat.direct')", @click="$store.dispatch('chat/openDirectMessage', {users: [user]})") message
+						bunt-button.btn-open-dm(v-if="hasPermission('world:chat.direct') && liveFeatures.direct_messaging", @click="$store.dispatch('chat/openDirectMessage', {users: [user]})") message
 						bunt-button.btn-ban(
 							v-if="hasPermission('world:users.manage') && user.moderation_state !== 'banned'",
 							:key="`${user.id}-ban`",
@@ -99,9 +101,18 @@ export default {
 	},
 	computed: {
 		...mapState({
-			ownUser: 'user'
+			ownUser: 'user',
+			world: 'world'
 		}),
-		...mapGetters(['hasPermission', 'eventRouting'])
+		...mapGetters(['hasPermission', 'eventRouting']),
+		liveFeatures() {
+			return Object.assign({
+				chat_rooms: false,
+				kiosks: false,
+				direct_messaging: false,
+				announcements: true
+			}, this.world?.live_features || window.eventyay?.liveFeatures || {})
+		},
 	},
 	watch: {
 		search() {
@@ -192,16 +203,13 @@ export default {
 	flex-direction: column
 	min-height: 0
 	background-color: $clr-white
-	.header
-		background-color: $clr-grey-50
-	h2
-		margin: 8px 12px 4px
-		font-size: 20px
-	.search
-		input-style(size: compact)
-		padding: 0
-		margin: 4px 8px 6px
-		flex: none
+	.ui-page-header
+		.search
+			input-style(size: compact)
+			padding: 0
+			margin: 0
+			flex: none
+			background-color: $clr-white
 	.users-list
 		flex-table()
 		font-size: 12px

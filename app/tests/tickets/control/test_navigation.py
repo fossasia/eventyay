@@ -3,7 +3,7 @@ from django.urls import resolve
 from django.utils.timezone import now
 
 from eventyay.base.models import Event, Organizer, Team, User
-from eventyay.control.navigation import get_event_navigation
+from eventyay.control.navigation import get_admin_navigation, get_event_navigation
 
 
 @pytest.fixture
@@ -153,4 +153,78 @@ def test_banktransfer_only_navigation_shows_import_export(event, rf):
     assert any(str(child.get('label')) == 'Import / Export' for child in orders_nav.get('children', []))
     assert not any(str(child.get('label')) == 'Overview' for child in orders_nav.get('children', []))
     assert not any(str(child.get('label')) == 'All orders' for child in orders_nav.get('children', []))
+
+
+@pytest.mark.django_db
+def test_admin_navigation_structure_and_hierarchy(rf):
+    user = User.objects.create_user('admin@example.com', 'dummy', is_staff=True)
+    request = rf.get('/admin/global/settings/')
+    request.user = user
+    request.resolver_match = resolve('/admin/global/settings/')
+
+    nav = get_admin_navigation(request)
+    labels = [str(item.get('label')) for item in nav]
+
+    assert labels == [
+        'Global settings',
+        'Business',
+        'Task management',
+        'Video',
+        'Platform Data',
+        'Users',
+    ]
+
+    # Vouchers is no longer a standalone top-level sidebar item
+    assert 'Vouchers' not in labels
+
+    # Check Business subitems
+    business_nav = next(item for item in nav if str(item.get('label')) == 'Business')
+    assert business_nav.get('icon') == 'briefcase'
+    assert 'children' in business_nav
+
+    business_children_labels = [str(c.get('label')) for c in business_nav['children']]
+    assert business_children_labels == ['Business Settings', 'Event vouchers']
+
+    # Check URLs of Business children
+    business_settings = next(c for c in business_nav['children'] if str(c.get('label')) == 'Business Settings')
+    assert business_settings['url'] == '/admin/global/business/'
+
+    event_vouchers = next(c for c in business_nav['children'] if str(c.get('label')) == 'Event vouchers')
+    assert event_vouchers['url'] == '/admin/vouchers/'
+
+
+@pytest.mark.django_db
+def test_admin_navigation_voucher_active_state(rf):
+    user = User.objects.create_user('admin@example.com', 'dummy', is_staff=True)
+    request = rf.get('/admin/vouchers/')
+    request.user = user
+    request.resolver_match = resolve('/admin/vouchers/')
+
+    nav = get_admin_navigation(request)
+    business_nav = next(item for item in nav if str(item.get('label')) == 'Business')
+    assert business_nav['active'] is True
+
+    event_vouchers = next(c for c in business_nav['children'] if str(c.get('label')) == 'Event vouchers')
+    assert event_vouchers['active'] is True
+
+    business_settings = next(c for c in business_nav['children'] if str(c.get('label')) == 'Business Settings')
+    assert business_settings['active'] is False
+
+
+@pytest.mark.django_db
+def test_admin_navigation_business_settings_active_state(rf):
+    user = User.objects.create_user('admin@example.com', 'dummy', is_staff=True)
+    request = rf.get('/admin/global/business/')
+    request.user = user
+    request.resolver_match = resolve('/admin/global/business/')
+
+    nav = get_admin_navigation(request)
+    business_nav = next(item for item in nav if str(item.get('label')) == 'Business')
+    assert business_nav['active'] is True
+
+    business_settings = next(c for c in business_nav['children'] if str(c.get('label')) == 'Business Settings')
+    assert business_settings['active'] is True
+
+    event_vouchers = next(c for c in business_nav['children'] if str(c.get('label')) == 'Event vouchers')
+    assert event_vouchers['active'] is False
 

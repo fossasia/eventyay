@@ -3,7 +3,7 @@
 	.error(v-if="error") {{ $t('We could not fetch the current configuration.') }}
 	template(v-else-if="kiosk")
 		.ui-page-header
-			bunt-icon-button(@click="$router.push({name: 'admin:kiosks:index'})") arrow_left
+			bunt-icon-button(@click="$router.push({name: 'admin:kiosks:index'})", :tooltip="$t('Back to Kiosks')", tooltip-placement="bottom-start", :tooltip-fixed="true") arrow-left
 			h1 {{ kiosk.profile.display_name }}
 			.actions
 				bunt-button.btn-delete-kiosk(@click="showDeletePrompt = true") delete

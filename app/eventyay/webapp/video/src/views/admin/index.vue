@@ -5,6 +5,19 @@
 			h1 {{ $t('Video Management') }}
 			.event-subtitle(v-if="world && world.title")
 				span.event-name(v-html="$emojify(world.title)")
+		.navigation-button(v-if="hasModuleNav")
+			a.header-nav.btn.btn-outline-success(:href="homeUrl", v-if="homeUrl")
+				i.fa.fa-home
+				| {{ $t('Home') }}
+			a.header-nav.btn.btn-outline-success(:href="ticketUrl", v-if="ticketUrl")
+				i.fa.fa-ticket
+				| {{ $t('Tickets') }}
+			a.header-nav.btn.btn-outline-success(:href="talkUrl", v-if="talkUrl")
+				i.fa.fa-group
+				| {{ $t('Talks') }}
+			a.header-nav.btn.btn-outline-success.active(:href="videoUrl")
+				i.fa.fa-video-camera
+				| {{ $t('Videos') }}
 
 	.stats-grid
 		.stat-card
@@ -17,15 +30,15 @@
 			.stat-icon.rooms
 				i.mdi.mdi-door-open
 			.stat-content
-				.stat-value {{ allRooms.length }}
-				.stat-label {{ $t('Total Rooms') }}
+				.stat-value {{ regularRooms.length }}
+				.stat-label {{ $t('Rooms') }}
 		.stat-card
 			.stat-icon.viewers
 				i.mdi.mdi-account-group
 			.stat-content
 				.stat-value {{ totalViewersCount }}
 				.stat-label {{ $t('Active Viewers') }}
-		.stat-card
+		.stat-card(v-if="(hasPermission('world:announce') || isAdminMode) && liveFeatures.announcements !== false")
 			.stat-icon.announcements
 				i.mdi.mdi-bullhorn
 			.stat-content
@@ -36,35 +49,53 @@
 		.section-header
 			h2 {{ $t('Quick Actions') }}
 		.quick-actions-grid
-			router-link.action-card(:to="{name: 'admin:rooms:index'}", v-if="hasPermission('room:update')")
+			router-link.action-card(:to="{name: 'admin:rooms:index'}", v-if="hasPermission('room:update') || hasPermission('world:rooms.create.stage') || isAdminMode")
 				.card-icon
 					i.mdi.mdi-door-open
 				.card-details
 					.card-title {{ $t('Rooms & Stages') }}
 					.card-desc {{ $t('Create, configure and manage video rooms') }}
-			router-link.action-card(:to="{name: 'admin:announcements'}", v-if="hasPermission('world:announce')")
+			router-link.action-card(:to="{name: 'admin:announcements'}", v-if="(hasPermission('world:announce') || isAdminMode) && liveFeatures.announcements !== false")
 				.card-icon
 					i.mdi.mdi-bullhorn
 				.card-details
 					.card-title {{ $t('Announcements') }}
 					.card-desc {{ $t('Broadcast announcements to all attendees') }}
-			router-link.action-card(:to="{name: 'admin:users'}", v-if="hasPermission('world:users.list')")
+			router-link.action-card(:to="{name: 'admin:users'}", v-if="hasPermission('world:users.list') || isAdminMode")
 				.card-icon
 					i.mdi.mdi-account-multiple
 				.card-details
 					.card-title {{ $t('User Management') }}
 					.card-desc {{ $t('View attendees, grant roles, and moderate') }}
-			router-link.action-card(:to="{name: 'admin:chat:index'}", v-if="hasPermission('room:update')")
+			router-link.action-card(:to="{name: 'admin:config'}", v-if="hasPermission('world:update') || hasPermission('world:rooms.create.stage') || hasPermission('world:rooms.create.bbb') || isAdminMode")
+				.card-icon
+					i.mdi.mdi-cog-outline
+				.card-details
+					.card-title {{ $t('Video settings') }}
+					.card-desc {{ $t('Manage live features, statistics and integrations') }}
+			router-link.action-card(:to="{name: 'admin:chat:index'}", v-if="(hasPermission('room:update') || hasPermission('world:rooms.create.chat') || isAdminMode) && liveFeatures.chat_rooms")
 				.card-icon
 					i.mdi.mdi-chat-processing
 				.card-details
-					.card-title {{ $t('Chat Rooms') }}
+					.card-title {{ $t('Chat rooms') }}
 					.card-desc {{ $t('Configure public and private chat channels') }}
+			router-link.action-card(:to="{name: 'admin:kiosks:index'}", v-if="(hasPermission('world:kiosks.manage') || isAdminMode) && liveFeatures.kiosks")
+				.card-icon
+					i.mdi.mdi-monitor-dashboard
+				.card-details
+					.card-title {{ $t('Kiosks') }}
+					.card-desc {{ $t('Manage display kiosks and terminals') }}
+			router-link.action-card(:to="{name: 'admin:reports'}", v-if="hasPermission('world:graphs') || isAdminMode")
+				.card-icon
+					i.mdi.mdi-file-chart-outline
+				.card-details
+					.card-title {{ $t('Reports') }}
+					.card-desc {{ $t('Download analytics, session and attendee data') }}
 
 	.section-block
 		.section-header
 			h2 {{ $t('Live Rooms & Streams') }}
-			router-link.section-link(:to="{name: 'admin:rooms:index'}", v-if="hasPermission('room:update')")
+			router-link.section-link(:to="{name: 'admin:rooms:index'}", v-if="hasPermission('room:update') || hasPermission('world:rooms.create.stage') || isAdminMode")
 				span {{ $t('View all rooms') }}
 				i.mdi.mdi-chevron-right(aria-hidden="true")
 		.rooms-table-card
@@ -79,15 +110,17 @@
 					tbody
 						tr(v-for="room in allRooms.slice(0, 8)", :key="room.id")
 							td.room-name-cell
-								i.mdi(:class="getRoomIcon(room)")
-								span(v-html="$emojify(room.name)")
+								.room-title-wrapper
+									i.mdi(:class="getRoomIcon(room)")
+									span(v-html="$emojify(room.name)")
 							td
 								span.type-badge {{ getRoomTypeLabel(room) }}
 							td.viewers-cell
-								i.mdi.mdi-account-outline
-								span {{ getRoomViewerCount(room) }}
+								.viewers-wrapper
+									i.mdi.mdi-account-outline
+									span {{ getRoomViewerCount(room) }}
 							td.actions-col
-								router-link.btn-table-action(:to="{name: 'admin:rooms:item', params: {roomId: room.id}}", v-if="hasPermission('room:update')")
+								router-link.btn-table-action(:to="{name: 'admin:rooms:item', params: {roomId: room.id}}", v-if="hasPermission('room:update') || isAdminMode")
 									i.mdi.mdi-pencil(aria-hidden="true")
 									span {{ $t('Edit') }}
 								router-link.btn-table-action.secondary(:to="{name: 'room', params: {roomId: room.id}}")
@@ -95,12 +128,12 @@
 									span {{ $t('Preview') }}
 			.empty-state(v-if="!allRooms.length")
 				p {{ $t('No rooms created yet.') }}
-				router-link.btn-primary(:to="{name: 'admin:rooms:index'}", v-if="hasPermission('room:update')") {{ $t('Create First Room') }}
+				router-link.btn-primary(:to="{name: 'admin:rooms:index'}", v-if="hasPermission('room:update') || hasPermission('world:rooms.create.stage') || isAdminMode") {{ $t('Create First Room') }}
 
-	.section-block(v-if="announcementsList.length")
+	.section-block(v-if="announcementsList.length && (hasPermission('world:announce') || isAdminMode) && liveFeatures.announcements !== false")
 		.section-header
 			h2 {{ $t('Recent Announcements') }}
-			router-link.section-link(:to="{name: 'admin:announcements'}", v-if="hasPermission('world:announce')")
+			router-link.section-link(:to="{name: 'admin:announcements'}", v-if="(hasPermission('world:announce') || isAdminMode) && liveFeatures.announcements !== false")
 				span {{ $t('Manage announcements') }}
 				i.mdi.mdi-chevron-right(aria-hidden="true")
 		.announcements-card
@@ -115,20 +148,34 @@
 <script>
 import { mapState, mapGetters } from 'vuex'
 import moment from 'lib/timetravelMoment'
-import { inferRoomType, inferType } from 'lib/room-types'
+import { inferRoomType, inferType, isChatManagedRoom } from 'lib/room-types'
 
 export default {
 	name: 'VideoOrganiserOverview',
 	computed: {
 		...mapState(['world', 'connected', 'rooms', 'roomViewers']),
-		...mapGetters(['hasPermission']),
+		...mapGetters(['hasPermission', 'isAdminMode']),
+		liveFeatures() {
+			return Object.assign({
+				chat_rooms: false,
+				kiosks: false,
+				direct_messaging: false,
+				announcements: true
+			}, this.world?.live_features || window.eventyay?.liveFeatures || {})
+		},
 		allRooms() {
-			return this.rooms || []
+			return (this.rooms || []).filter(room => !isChatManagedRoom(room))
 		},
 		stageRooms() {
-			return this.allRooms.filter(room =>
-				room.modules && room.modules.some(m => ['livestream.native', 'livestream.youtube', 'call.janus'].includes(m.type))
-			)
+			return this.allRooms.filter(room => {
+				const inferred = inferRoomType(room)
+				if (inferred?.id === 'stage') return true
+				return room.modules && room.modules.some(m => ['livestream.native', 'livestream.youtube', 'livestream.iframe'].includes(m.type) || m.type.startsWith('livestream.'))
+			})
+		},
+		regularRooms() {
+			const stageIds = new Set(this.stageRooms.map(r => r.id))
+			return this.allRooms.filter(room => !stageIds.has(room.id))
 		},
 		totalViewersCount() {
 			if (!this.allRooms.length) return 0
@@ -142,6 +189,21 @@ export default {
 		},
 		announcementsList() {
 			return this.$store.getters['announcement/announcements'] || []
+		},
+		homeUrl() {
+			return window.eventyay?.homeUrl || null
+		},
+		ticketUrl() {
+			return window.eventyay?.ticketUrl || null
+		},
+		talkUrl() {
+			return window.eventyay?.talkUrl || null
+		},
+		videoUrl() {
+			return window.eventyay?.videoUrl || '/video/event/'
+		},
+		hasModuleNav() {
+			return Boolean(window.eventyay?.isOrganizerArea || this.homeUrl)
 		}
 	},
 	methods: {
@@ -212,6 +274,36 @@ export default {
 
 				.event-name
 					font-weight: 500
+
+		.navigation-button
+			display: flex
+			flex-wrap: wrap
+			align-items: center
+			gap: 8px
+			a.header-nav.btn
+				display: inline-flex
+				align-items: center
+				gap: 6px
+				border: 1px solid var(--color-primary, #2185d0)
+				background-color: #ffffff
+				color: var(--color-primary, #2185d0)
+				font-size: 15px
+				font-weight: normal
+				border-radius: 0
+				padding: 7px 10px
+				box-shadow: none
+				text-decoration: none
+				transition: all 0.15s ease
+				i
+					font-size: 14px
+				&:hover, &:focus
+					background-color: var(--color-primary, #2185d0)
+					border-color: var(--color-primary-hover, #1a69a4)
+					color: #ffffff
+				&.active
+					background-color: var(--color-primary, #2185d0)
+					border-color: var(--color-primary-hover, #1a69a4)
+					color: #ffffff
 
 	.stats-grid
 		display: grid
@@ -367,7 +459,7 @@ export default {
 		text-align: left
 
 		th
-			padding: 11px 16px
+			padding: 12px 16px
 			font-size: 11.5px
 			font-weight: 700
 			text-transform: uppercase
@@ -380,13 +472,17 @@ export default {
 			padding: 12px 16px
 			font-size: 13.5px
 			color: #334155
-			border-bottom: 1px solid #f1f5f9
+			border-bottom: 1px solid #e7e7e7
+			vertical-align: middle
 
 		tr:last-child td
 			border-bottom: none
 
-		.room-name-cell
-			display: flex
+		tr:hover td
+			background-color: #fbfcfd
+
+		.room-title-wrapper
+			display: inline-flex
 			align-items: center
 			gap: 8px
 			font-weight: 500
@@ -405,7 +501,7 @@ export default {
 			background-color: #f1f5f9
 			color: #475569
 
-		.viewers-cell
+		.viewers-wrapper
 			display: inline-flex
 			align-items: center
 			gap: 5px
@@ -417,12 +513,13 @@ export default {
 
 		.actions-col
 			text-align: right
+			white-space: nowrap
 
 		.btn-table-action
 			display: inline-flex
 			align-items: center
 			gap: 4px
-			padding: 3px 8px
+			padding: 4px 10px
 			margin-left: 6px
 			border-radius: 4px
 			font-size: 12px
