@@ -1255,8 +1255,6 @@ a.event-public-text-link:visited {
   .navigation-button,
   .page-header-with-actions .btn,
   .submission-page-actions,
-  .impersonate-warning,
-  .global-top-warning,
   .advanced-filter-search,
   .filter-form,
   .submit-group,
@@ -1311,6 +1309,10 @@ a.event-public-text-link:visited {
 
   thead {
     display: table-header-group;
+  }
+
+  .table-responsive {
+    overflow: visible;
   }
 
   /* Enforce desktop tabular layout for tables and table-flip in print */

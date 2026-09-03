@@ -78,8 +78,6 @@
   .navbar-default.sidebar,
   .navigation-button,
   .page-header-with-actions .btn,
-  .impersonate-warning,
-  .global-top-warning,
   .advanced-filter-search,
   .filter-form,
   .submit-group,
@@ -162,6 +160,10 @@
 
   .morris-hover {
     display: none;
+  }
+
+  .table-responsive {
+    overflow: visible;
   }
 
   /* Keep desktop tabular layout for tables */
