@@ -3,6 +3,7 @@
 	dashboard-layout
 		panel.media
 			.manage-room-header
+				bunt-icon-button.btn-back(@click="$router.push({name: 'admin:rooms:index'})", :tooltip="$t('Back to Rooms & Stages')", tooltip-placement="bottom-start", :tooltip-fixed="true") arrow-left
 				.manage-room-title(v-if="room") {{ room.name }}
 				router-link.btn-edit-settings(v-if="hasPermission('room:update')", :to="{name: 'admin:rooms:item', params: {roomId: room.id}}")
 					i.mdi.mdi-cog-outline
@@ -344,12 +345,19 @@ export default {
 	.media .manage-room-header
 		display: flex
 		align-items: center
-		justify-content: space-between
-		height: 48px
+		height: 56px
+		min-height: 56px
+		box-sizing: border-box
 		padding: 0 16px
+		gap: 8px
 		border-bottom: border-separator()
+		background-color: $clr-white
+		.btn-back
+			icon-button-style(style: clear)
+			flex: none
+			margin-right: 4px
 		.manage-room-title
-			font-size: 15px
+			font-size: 20px
 			font-weight: 600
 			flex: auto
 			min-width: 0

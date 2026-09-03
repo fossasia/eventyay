@@ -17,7 +17,8 @@ aside.c-rooms-sidebar(
 					.context-indicator
 						span.context-name(v-if="world && world.title", v-html="$emojify(world.title)")
 						span.context-name(v-else) {{ $t('Live Video') }}
-						span.context-meta {{ $t('Event stream') }}
+						span.context-meta(v-if="eventDateSubtitle") {{ eventDateSubtitle }}
+						span.context-meta(v-else) {{ $t('Live Video') }}
 				bunt-icon-button.btn-close-mobile(
 					v-if="$mq.below.m",
 					icon="close",
@@ -117,12 +118,12 @@ aside.c-rooms-sidebar(
 								span.viewer-count-badge(:title="getOccupancyTitle(chat)", :aria-label="getOccupancyTitle(chat)")
 									i.mdi.mdi-account-outline(aria-hidden="true")
 									span {{ getOccupancyCount(chat) }}
-							a.nav-sub-link.nav-sub-link--action(v-if="worldHasTextChannels", @click.prevent="showChannelBrowser = true; onNavClick()")
+							button.nav-sub-link.nav-sub-link--action(type="button", v-if="worldHasTextChannels", @click.prevent="showChannelBrowser = true; onNavClick()")
 								span.mdi.mdi-compass-outline(aria-hidden="true")
 								span {{ $t('Browse Channels') }}
 
 				//- Direct Messages (distinct collapsible section, expanded by default)
-				li.nav-fold(v-if="hasPermission('world:chat.direct')")
+				li.nav-fold(v-if="hasPermission('world:chat.direct') && liveFeatures.direct_messaging")
 					.has-children
 						span.nav-link.nav-link-inner(@click="toggleFold('dms')")
 							span.fa.mdi.mdi-account-multiple-outline(aria-hidden="true")
@@ -140,30 +141,32 @@ aside.c-rooms-sidebar(
 							)
 								span.mdi(aria-hidden="true", :class="call && call.channel === channel.id ? 'mdi-phone' : 'mdi-account-outline'")
 								span {{ getDMChannelName(channel) }}
-							a.nav-sub-link.nav-sub-link--add(@click.prevent="showDMCreationPrompt = true; onNavClick()")
+							button.nav-sub-link.nav-sub-link--add(type="button", @click.prevent="showDMCreationPrompt = true; onNavClick()")
 								span.mdi.mdi-plus(aria-hidden="true")
 								span {{ $t('New Message') }}
 
 			.buffer
 
 			.sidebar-footer-action(v-if="hasOrganiserPermissions")
-				router-link.btn-manage-video(:to="{name: 'admin'}", @click="onNavClick")
+				a.btn-manage-video(:href="manageVideoUrl", @click="onNavClick")
 					i.fa.fa-cog(aria-hidden="true")
 					span {{ $t('Manage') }}
 
 		teleport(to="body")
 			transition(name="prompt")
-				channel-browser(v-if="showChannelBrowser", @close="showChannelBrowser = false")
-				create-dm-prompt(v-else-if="showDMCreationPrompt && hasPermission('world:chat.direct')", @close="showDMCreationPrompt = false")
+				channel-browser(v-if="showChannelBrowser && liveFeatures.chat_rooms", @close="showChannelBrowser = false")
+				create-dm-prompt(v-else-if="showDMCreationPrompt && hasPermission('world:chat.direct') && liveFeatures.direct_messaging", @close="showDMCreationPrompt = false")
 </template>
 <script>
 import { mapState, mapGetters } from 'vuex'
+import moment from 'lib/timetravelMoment'
 import theme from 'theme'
 import ROOM_TYPES, { NETWORKING_MODULE_TYPES, VIDEO_CHANNEL_MODULE_TYPES, inferRoomType, inferType } from 'lib/room-types'
 import { getRoomOccupancyCount, usesParticipantOccupancy } from 'lib/room-occupancy'
 import Avatar from 'components/Avatar'
 import ChannelBrowser from 'components/ChannelBrowser'
 import CreateDmPrompt from 'components/CreateDmPrompt'
+import { hasOrganizerTraits } from 'lib/traitGrants'
 
 export default {
 	name: 'RoomsSidebar',
@@ -199,6 +202,23 @@ export default {
 		...mapGetters(['hasPermission', 'isAdminMode']),
 		...mapGetters('chat', ['joinedChannels', 'directMessageChannels', 'notificationCount']),
 		...mapGetters('schedule', ['currentSessionPerRoom']),
+		eventDateSubtitle() {
+			const dateFrom = this.world?.date_from || window.eventyay?.eventDates?.date_from
+			const dateTo = this.world?.date_to || window.eventyay?.eventDates?.date_to
+			if (!dateFrom) return ''
+			const fromMoment = moment(dateFrom)
+			if (!dateTo || fromMoment.isSame(moment(dateTo), 'day')) {
+				return fromMoment.format('ll')
+			}
+			const toMoment = moment(dateTo)
+			if (fromMoment.isSame(toMoment, 'month')) {
+				return `${fromMoment.format('MMM D')} – ${toMoment.format('D, YYYY')}`
+			}
+			if (fromMoment.isSame(toMoment, 'year')) {
+				return `${fromMoment.format('MMM D')} – ${toMoment.format('MMM D, YYYY')}`
+			}
+			return `${fromMoment.format('ll')} – ${toMoment.format('ll')}`
+		},
 		networkingTitle() {
 			return this.networkingRoomType?.name || this.$t('Networking')
 		},
@@ -214,16 +234,47 @@ export default {
 		hasStagesOrRooms() {
 			return (this.roomsByType.stage?.length > 0 || this.roomsByType.networking?.length > 0)
 		},
+		liveFeatures() {
+			return Object.assign({
+				chat_rooms: false,
+				kiosks: false,
+				direct_messaging: false,
+				announcements: true
+			}, this.world?.live_features || window.eventyay?.liveFeatures || {})
+		},
 		hasChatChannels() {
+			if (!this.liveFeatures.chat_rooms) return false
 			return (this.roomsByType.textChat?.length > 0 || this.roomsByType.videoChat?.length > 0 || this.worldHasTextChannels)
 		},
+		manageVideoUrl() {
+			if (window.eventyay?.videoUrl) return window.eventyay.videoUrl
+			return this.$router.resolve({ name: 'organizer' }).href
+		},
 		hasOrganiserPermissions() {
-			return (
+			if (window.eventyay?.isOrganizerArea) return true
+			const hasToken = Boolean(this.$store.state.token)
+			if (hasToken) {
+				const tokenPayload = this.$store.getters.tokenPayload
+				const traits = Array.isArray(tokenPayload?.traits) ? tokenPayload.traits : []
+				return Boolean(
+					hasOrganizerTraits(traits) ||
+					this.hasPermission('world:update') ||
+					this.hasPermission('world:users.list') ||
+					this.hasPermission('world:announce') ||
+					this.hasPermission('world:rooms.create.stage') ||
+					this.hasPermission('world:rooms.create.bbb') ||
+					this.hasPermission('world:kiosks.manage')
+				)
+			}
+			return Boolean(
+				window.eventyay?.hasOrganiserPermissions ||
 				this.isAdminMode ||
-				this.hasPermission('world:users.list') ||
+				(Array.isArray(this.$store.state.user?.traits) && this.$store.state.user.traits.includes('admin')) ||
 				this.hasPermission('world:update') ||
+				this.hasPermission('world:users.list') ||
 				this.hasPermission('world:announce') ||
-				this.hasPermission('room:update') ||
+				this.hasPermission('world:rooms.create.stage') ||
+				this.hasPermission('world:rooms.create.bbb') ||
 				this.hasPermission('world:kiosks.manage')
 			)
 		},
@@ -251,6 +302,7 @@ export default {
 				if (!inferred) continue
 
 				if (room.modules.length === 1 && room.modules[0].type === 'chat.native') {
+					if (!this.liveFeatures.chat_rooms) continue
 					if (this.joinedChannels && !this.joinedChannels.some(channel => channel.id === room.modules[0].channel_id)) continue
 					const notifications = this.notificationCount ? this.notificationCount(room.modules[0].channel_id) : 0
 					rooms.textChat.push({
@@ -260,6 +312,7 @@ export default {
 				} else if (room.modules.some(module => NETWORKING_MODULE_TYPES.has(module.type))) {
 					rooms.networking.push(room)
 				} else if (room.modules.some(module => VIDEO_CHANNEL_MODULE_TYPES.has(module.type))) {
+					if (!this.liveFeatures.chat_rooms) continue
 					rooms.videoChat.push(room)
 				} else if (room.modules.some(module => ['livestream.native', 'livestream.youtube'].includes(module.type))) {
 					let session
@@ -279,12 +332,13 @@ export default {
 			return rooms
 		},
 		directMessageChannels() {
-			if (!this.hasPermission('world:chat.direct')) {
+			if (!this.hasPermission('world:chat.direct') || !this.liveFeatures.direct_messaging) {
 				return []
 			}
 			return this.$store.getters['chat/directMessageChannels'] || []
 		},
 		worldHasTextChannels() {
+			if (!this.liveFeatures.chat_rooms) return false
 			return (this.rooms || []).some(room => room.modules?.length === 1 && room.modules[0].type === 'chat.native')
 		}
 	},
@@ -631,7 +685,11 @@ export default {
 					padding: 10px 15px
 					text-decoration: none
 					border: none
+					background: none
 					cursor: pointer
+					font-family: inherit
+					text-align: left
+					width: 100%
 					transition: background-color 0.15s ease, color 0.15s ease
 
 					> .room-name, > span:first-child

@@ -16,6 +16,7 @@ from eventyay.base.models import User
 from eventyay.base.models.auth import ShortToken
 from eventyay.core.permissions import Permission
 from eventyay.base.services.announcement import get_announcements
+from eventyay.features.live.modules.announcement import is_announcements_enabled
 from eventyay.base.services.chat import ChatService
 from eventyay.base.services.connections import (
     get_user_connection_count,
@@ -74,17 +75,37 @@ class AuthModule(BaseModule):
         }
         body = body or {}
         if "token" not in body or not body.get("token"):
-            client_id = body.get("client_id")
-            if not client_id:
-                async with statsd() as s:
-                    s.increment(
-                        f"authentication.failed,reason=missing_token,event={self.consumer.event.pk}"
+            session_user = self.consumer.scope.get("user")
+            session = self.consumer.scope.get("session")
+            session_key = getattr(session, "session_key", None)
+            is_authorized_session_user = False
+            if session_user and getattr(session_user, "is_authenticated", False):
+                from eventyay.eventyay_common.video.traits_sync import is_platform_event_admin
+                is_admin = await database_sync_to_async(is_platform_event_admin)(session_user, session_key=session_key)
+                has_perm = await database_sync_to_async(
+                    lambda: session_user.has_event_permission(
+                        self.consumer.event.organizer, self.consumer.event
+                    ) or session_user.has_organizer_permission(
+                        self.consumer.event.organizer
                     )
-                await self.consumer.send_error(code="auth.missing_id_or_token")
-                return
-            kwargs["client_id"] = client_id
-            if "invite_token" in body:
-                kwargs["invite_token"] = body.get("invite_token")
+                )()
+                is_authorized_session_user = bool(is_admin or has_perm)
+
+            if is_authorized_session_user:
+                kwargs["platform_user"] = session_user
+                kwargs["session_key"] = session_key
+            else:
+                client_id = body.get("client_id")
+                if not client_id:
+                    async with statsd() as s:
+                        s.increment(
+                            f"authentication.failed,reason=missing_token,event={self.consumer.event.pk}"
+                        )
+                    await self.consumer.send_error(code="auth.missing_id_or_token")
+                    return
+                kwargs["client_id"] = client_id
+                if "invite_token" in body:
+                    kwargs["invite_token"] = body.get("invite_token")
         else:
             try:
                 # decode_token may read event.settings (DB-backed) when JWT_secrets are unset
@@ -145,8 +166,12 @@ class AuthModule(BaseModule):
                     "chat.channels": login_result.chat_channels,
                     "chat.read_pointers": read_pointers,
                     "chat.notification_counts": login_result.chat_notification_counts,
-                    "announcements": await get_announcements(
-                        event=self.consumer.event.id, moderator=False
+                    "announcements": (
+                        await get_announcements(
+                            event=self.consumer.event.id, moderator=False
+                        )
+                        if is_announcements_enabled(self.consumer.event)
+                        else []
                     ),
                 },
             ]
@@ -411,7 +436,7 @@ class AuthModule(BaseModule):
         if self._current_view and self.consumer.event:
             await database_sync_to_async(end_view)(
                 self._current_view,
-                delete=not self._event_config().get("track_event_views", False),
+                delete=not self._event_config().get("track_event_views", True),
             )
 
     @command("list")
