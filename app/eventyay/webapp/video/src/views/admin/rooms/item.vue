@@ -7,14 +7,14 @@
 	template(v-else-if="config")
 		template(v-if="!inferredType")
 			.ui-page-header
-				bunt-icon-button(@click="$router.push({name: 'admin:rooms:index'})") arrow_left
+				bunt-icon-button(@click="$router.push({name: 'admin:rooms:index'})", :tooltip="$t('Back to Rooms & Stages')", tooltip-placement="bottom-start", :tooltip-fixed="true") arrow-left
 				h1(v-html="$emojify(config.name)")
 			.mystery-room
 				p {{ $t('This room does not have a video option yet.') }}
 				VideoProviderDropdown(:label="$t('Add Video')", variant="action", @select="addVideoProvider")
 		template(v-else)
 			.ui-page-header
-				bunt-icon-button(@click="$router.push({name: 'admin:rooms:index'})") arrow_left
+				bunt-icon-button(@click="$router.push({name: 'admin:rooms:index'})", :tooltip="$t('Back to Rooms & Stages')", tooltip-placement="bottom-start", :tooltip-fixed="true") arrow-left
 				h1 {{ roomTypeLabel }} :
 					span.room-name(v-html="$emojify(config.name)")
 			edit-form(:config="config")

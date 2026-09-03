@@ -1,6 +1,7 @@
 <template lang="pug">
 .v-preferences
 	.ui-page-header
+		bunt-icon-button.btn-back(@click="onBack", :tooltip="$t('Back to Overview')", tooltip-placement="bottom-start", :tooltip-fixed="true") arrow-left
 		h1 {{ $t('Your profile') }}
 	scrollbars(y)
 		.inputs
@@ -122,6 +123,15 @@ export default {
 				console.error(error)
 			}
 			this.saving = false
+		},
+		onBack() {
+			if (window.history.state && window.history.state.back) {
+				this.$router.back()
+			} else if (window.eventyay?.isOrganizerArea) {
+				this.$router.replace({ name: 'organizer' })
+			} else {
+				this.$router.replace({ name: 'about' })
+			}
 		}
 	}
 }

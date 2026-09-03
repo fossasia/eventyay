@@ -37,10 +37,10 @@ class EventConfigSerializer(serializers.Serializer):
     video_player = serializers.DictField(allow_null=True)
     timezone = serializers.ChoiceField(choices=[(a, a) for a in common_timezones])
     connection_limit = serializers.IntegerField(allow_null=True)
-    available_permissions = serializers.SerializerMethodField("_available_permissions")
-    iframe_blockers = serializers.JSONField()
-    track_room_views = serializers.BooleanField()
-    track_event_views = serializers.BooleanField()
+    iframe_blockers = serializers.JSONField(required=False, allow_null=True)
+    track_room_views = serializers.BooleanField(required=False)
+    track_event_views = serializers.BooleanField(required=False)
+    live_features = serializers.DictField(required=False)
     onsite_traits = serializers.JSONField(
         required=False,
         allow_null=False,
@@ -92,7 +92,11 @@ def get_rooms(event, user):
         )
         if user:
             qs = qs.with_permission(event=event, user=user)
-        return list(qs)
+        rooms_list = list(qs)
+        live_features = (getattr(event, 'config', None) or {}).get('live_features', {})
+        if not live_features.get('chat_rooms', False):
+            rooms_list = [r for r in rooms_list if not is_chat_channel_room(r)]
+        return rooms_list
 
 
 @database_sync_to_async
@@ -317,10 +321,15 @@ def get_event_config_for_user(event, user):
         "visible_logo_url": event.visible_logo_url,
         "visible_header_image_url": event.visible_header_image_url,
         "pretalx": pretalx_public,
-        "iframe_blockers": cfg.get(
-            "iframe_blockers",
-            {"default": {"enabled": False, "policy_url": None}},
-        ),
+        "track_event_views": cfg.get("track_event_views", True),
+        "track_video_event_views": cfg.get("track_event_views", True),
+        "live_features": {
+            "chat_rooms": False,
+            "kiosks": False,
+            "direct_messaging": False,
+            "announcements": True,
+            **(cfg.get("live_features") or {}),
+        },
         "onsite_traits": cfg.get("onsite_traits", []),
     }
     # Build permission strings and include world:* aliases for event:* permissions for frontend compatibility
@@ -335,6 +344,12 @@ def get_event_config_for_user(event, user):
             world_aliases.append("world:update")
         elif p.startswith("event:"):
             world_aliases.append("world:" + p[len("event:"):])
+        elif p == "world:view":
+            world_aliases.append("event.view")
+        elif p == "world:update":
+            world_aliases.append("event.update")
+        elif p.startswith("world:"):
+            world_aliases.append("event:" + p[len("world:"):])
     merged_permissions = sorted(set(event_perm_values) | set(world_aliases))
 
     result = {
@@ -464,7 +479,13 @@ async def create_room(event, data, creator):
         if "chat.native" in types:
             m = [m for m in data.get("modules", []) if m["type"] == "chat.native"][0]
             m["config"] = {"volatile": m.get("config", {}).get("volatile", False)}
-    elif "chat.native" in types:
+    elif types == {"chat.native"}:
+        live_features = (event.config or {}).get("live_features", {})
+        if not live_features.get("chat_rooms", False):
+            raise ValidationError(
+                "Chat rooms are currently disabled.",
+                code="chat_rooms_disabled",
+            )
         if not await event.has_permission_async(
             user=creator, permission=Permission.EVENT_ROOMS_CREATE_CHAT
         ):
@@ -613,7 +634,14 @@ def _config_serializer(event, *args, **kwargs):
             "roles": event.roles,
             "bbb_defaults": bbb_defaults,
             "track_room_views": cfg.get("track_room_views", True),
-            "track_event_views": cfg.get("track_event_views", False),
+            "track_event_views": cfg.get("track_event_views", True),
+            "live_features": {
+                "chat_rooms": False,
+                "kiosks": False,
+                "direct_messaging": False,
+                "announcements": True,
+                **(cfg.get("live_features") or {}),
+            },
             "pretalx": cfg.get("pretalx", {}),
             "video_player": cfg.get("video_player"),
             "timezone": event.timezone,
@@ -622,10 +650,6 @@ def _config_serializer(event, *args, **kwargs):
             "onsite_traits": cfg.get("onsite_traits", []),
             "conftool_url": cfg.get("conftool_url", ""),
             "conftool_password": cfg.get("conftool_password", ""),
-            "iframe_blockers": cfg.get(
-                "iframe_blockers",
-                {"default": {"enabled": False, "policy_url": None}},
-            ),
         },
         *args,
         **kwargs,

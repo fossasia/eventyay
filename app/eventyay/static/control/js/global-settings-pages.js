@@ -11,14 +11,9 @@
             '#tab-organizer_billing', '#tab-organizer_billing-open',
             '#tab-ticket_fee', '#tab-ticket_fee-open',
             '#tab-billing_validation', '#tab-billing_validation-open',
-            '#tab-event_vouchers', '#tab-event_vouchers-open',
-            '#tab-vouchers', '#tab-vouchers-open',
         ];
         if (businessTabs.indexOf(location.hash) !== -1) {
-            const targetHash = (location.hash.indexOf('voucher') !== -1)
-                ? '#tab-event_vouchers'
-                : location.hash;
-            window.location.replace(businessRedirectUrl + targetHash);
+            window.location.replace(businessRedirectUrl + location.hash);
         }
     }
 }

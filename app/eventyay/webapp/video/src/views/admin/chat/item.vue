@@ -6,7 +6,7 @@
 		span(v-if="errorCode === 'protocol.denied'")  {{ $t('You likely lack admin permissions.') }}
 	template(v-else-if="currentRoom")
 		.ui-page-header
-			bunt-icon-button(@click="$router.push({name: 'admin:chat:index'})") arrow_left
+			bunt-icon-button(@click="$router.push({name: 'admin:chat:index'})", :tooltip="$t('Back to Chat Channels')", tooltip-placement="bottom-start", :tooltip-fixed="true") arrow-left
 			h1 {{ inferredType ? inferredType.name : $t('Channel') }} :
 				span.room-name(v-html="$emojify(currentRoom.name)")
 			.actions
