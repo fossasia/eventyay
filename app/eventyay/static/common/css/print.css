@@ -1,4 +1,4 @@
-// Print stylesheet overrides for pretixcontrol and eventyay_common
+/* Print stylesheet overrides for pretixcontrol and eventyay_common */
 @media print {
   *,
   *::before,
@@ -65,7 +65,6 @@
     padding-right: 6px;
   }
 
-
   /* Hide navigation, sidebars, buttons, toolbars, and action UI */
   body nav.navbar,
   nav.navbar.navbar-inverse,
@@ -101,7 +100,6 @@
   .d-print-none {
     display: none;
   }
-
 
   /* Suppress printing raw URLs on links/buttons */
   a[href]:after,
