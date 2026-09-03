@@ -19,11 +19,14 @@ class TabularFormRenderer(TemplatesSetting):
     field_template_name = 'common/forms/tabular_field.html'
     form_group_class = 'row'
     label_class = 'col-md-3 col-form-label'
+    # Radio and checkbox lists show their help text above the first option in this
+    # layout. Renderers that lay fields out differently can opt out.
+    help_text_above_options = True
 
     def render(self, template_name, context, request=None):
         context['form_group_class'] = self.form_group_class
         context['label_class'] = self.label_class
-        if (field := context.get('field')) is not None:
+        if self.help_text_above_options and (field := context.get('field')) is not None:
             context['help_text_above'] = renders_option_list(field.field.widget)
         return super().render(template_name, context, request)
 
@@ -33,6 +36,7 @@ class InlineFormRenderer(TabularFormRenderer):
     render_label = False
     form_group_class = 'form-group-inline'
     label_class = 'sr-only'
+    help_text_above_options = False
 
 
 class InlineFormLabelRenderer(InlineFormRenderer):
