@@ -481,7 +481,8 @@ class EventCreateView(TemplateView):
             basics_post = legacy_data.get('basics')
             if not basics_post:
                 return redirect(request.path)
-            basics_form = EventWizardBasicsForm(
+            basics_form_class = MeetupEventWizardBasicsForm if self.is_meetup_request else EventWizardBasicsForm
+            basics_form = basics_form_class(
                 data=basics_post,
                 initial=self.get_basics_initial(foundation_form.cleaned_data),
                 prefix='basics',

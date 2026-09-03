@@ -110,7 +110,6 @@ class MeetupRsvpView(EventViewMixin, View):
                         messages.error(request, _('Sorry, this event is already full.'))
                         return self._redirect_to_index(request)
 
-                effective_testmode = request.event.testmode or request.event.private_testmode_tickets_enabled
                 order = Order(
                     status=Order.STATUS_PENDING,
                     event=request.event,
@@ -120,7 +119,7 @@ class MeetupRsvpView(EventViewMixin, View):
                     datetime=now(),
                     sales_channel='web',
                     require_approval=False,
-                    testmode=effective_testmode,
+                    testmode=request.event.testmode,
                     meta_info='{}',
                 )
                 order.set_expires(now(), [])

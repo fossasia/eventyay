@@ -235,7 +235,7 @@ class EventCommonSettingsForm(SettingsForm):
                 choices=PRIVACY_CHOICES,
                 initial=privacy_initial,
                 widget=forms.Select(attrs={'class': 'form-control'}),
-                required=False,
+                required=True,
                 help_text=_(
                     'Public meetups appear on your organizer profile and search. '
                     'Private meetups are unlisted from your profile and accessible only via direct link.'
