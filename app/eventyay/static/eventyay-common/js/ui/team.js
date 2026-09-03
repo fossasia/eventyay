@@ -19,6 +19,48 @@ document.addEventListener('DOMContentLoaded', function () {
         toggle();
     });
 
+    document.querySelectorAll('.team-exhibition-permissions').forEach(function (container) {
+        const eventIds = (container.getAttribute('data-exhibition-events') || '')
+            .split(',')
+            .filter(Boolean);
+        const allEventsId = container.getAttribute('data-all-events-id');
+        const limitEventsName = container.getAttribute('data-limit-events-name');
+
+        const allEvents = allEventsId ? document.getElementById(allEventsId) : null;
+        const limitEvents = limitEventsName
+            ? document.querySelectorAll('input[name="' + limitEventsName + '"]')
+            : [];
+        const permissions = container.querySelectorAll('input[type="checkbox"]');
+
+        if (!allEvents && limitEvents.length === 0) return;
+
+        function appliesToSelection() {
+            if (eventIds.length === 0) return false;
+            if (allEvents && allEvents.checked) return true;
+            return Array.from(limitEvents).some(function (input) {
+                return input.checked && eventIds.indexOf(input.value) !== -1;
+            });
+        }
+
+        function toggle(clearHidden) {
+            const visible = appliesToSelection();
+            container.style.display = visible ? '' : 'none';
+            if (!visible && clearHidden) {
+                permissions.forEach(function (permission) {
+                    permission.checked = false;
+                });
+            }
+        }
+
+        if (allEvents) {
+            allEvents.addEventListener('change', function () { toggle(true); });
+        }
+        limitEvents.forEach(function (input) {
+            input.addEventListener('change', function () { toggle(true); });
+        });
+        toggle(false);
+    });
+
     document.querySelectorAll('.team-permission-children').forEach(function (container) {
         const parentId = container.getAttribute('data-parent');
         const parent = document.getElementById(parentId);
@@ -26,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const children = container.querySelectorAll('input[type="checkbox"]');
 
-        function syncFromParent() {
+        function syncFromParent(event) {
             const enabled = parent.checked;
             children.forEach(function (child) {
                 child.disabled = !enabled;

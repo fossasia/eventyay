@@ -5,12 +5,20 @@ from django import forms
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext_lazy as _
-from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
 
-from eventyay.base.forms import SecretKeySettingsField, SecretKeySettingsWidget, SettingsForm
+from eventyay.base.forms import SECRET_REDACTED, SecretKeySettingsField, SecretKeySettingsWidget, SettingsForm
 from eventyay.base.settings import EVENT_SERIES_CREATION_ENABLED, MEETUP_CREATION_ENABLED, GlobalSettingsObject
 from eventyay.base.signals import register_global_settings
+from eventyay.control.forms import ExtFileField
+from eventyay.consts import SizeKey
+from django.core.files.uploadedfile import UploadedFile
+from eventyay.helpers.image_optimize import optimize_uploaded_image
+from django.core.files.storage import default_storage
+import os
+import logging
 
+
+logger = logging.getLogger(__name__)
 
 class GlobalSettingsForm(SettingsForm):
     auto_fields = ['region', 'mail_from']
@@ -48,24 +56,14 @@ class GlobalSettingsForm(SettingsForm):
     def __init__(self, *args, **kwargs):
         self.obj = GlobalSettingsObject()
         self._setting_default()
+
         super().__init__(*args, obj=self.obj, **kwargs)
 
-        smtp_select = [('sendgrid', _('SendGrid')), ('smtp', _('SMTP'))]
+        smtp_select = [('sendgrid', _('SendGrid')), ('smtp', _('SMTP')), ('gmail_api', _('Gmail / Google Workspace API'))]
 
         self.fields = OrderedDict(
             list(self.fields.items())
             + [
-                (
-                    'billing_validation',
-                    forms.BooleanField(
-                        required=False,
-                        label=_('Billing validation'),
-                        help_text=_(
-                            'Billing validation lets you require organizers to set up a billing method before they can create events. '
-                            'When this option is enabled, no new event can be created until a valid billing method has been added.'
-                        ),
-                    ),
-                ),
                 (
                     EVENT_SERIES_CREATION_ENABLED,
                     forms.BooleanField(
@@ -89,40 +87,6 @@ class GlobalSettingsForm(SettingsForm):
                     ),
                 ),
 
-                (
-                    'footer_text',
-                    I18nFormField(
-                        widget=I18nTextInput,
-                        required=False,
-                        label=_('Additional footer text'),
-                        help_text=_('Will be included as additional text in the footer, site-wide.'),
-                    ),
-                ),
-                (
-                    'footer_link',
-                    I18nFormField(
-                        widget=I18nTextInput,
-                        required=False,
-                        label=_('Additional footer link'),
-                        help_text=_('Will be included as the link in the additional footer text.'),
-                    ),
-                ),
-                (
-                    'banner_message',
-                    I18nFormField(
-                        widget=I18nTextarea,
-                        required=False,
-                        label=_('Global message banner'),
-                    ),
-                ),
-                (
-                    'banner_message_detail',
-                    I18nFormField(
-                        widget=I18nTextarea,
-                        required=False,
-                        label=_('Global message banner detail text'),
-                    ),
-                ),
                 (
                     'opencagedata_apikey',
                     SecretKeySettingsField(
@@ -178,12 +142,37 @@ class GlobalSettingsForm(SettingsForm):
                 ),
                 (
                     'send_grid_api_key',
-                    forms.CharField(
+                    SecretKeySettingsField(
                         required=False,
                         label=_('Sendgrid token'),
-                        widget=forms.TextInput(attrs={
+                        widget=SecretKeySettingsWidget(attrs={
                             'placeholder': 'SG.xxxxxxxx',
                             'data-display-dependency': '#id_email_vendor_0',
+                        }),
+                    ),
+                ),
+                (
+                    'gmail_client_id',
+                    forms.CharField(
+                        required=False,
+                        label=_('Gmail OAuth client ID'),
+                        help_text=_(
+                            'Create an OAuth client in Google Cloud Console. The connect flow requests '
+                            'Gmail send and user email scopes. Use the OAuth redirect URI shown below '
+                            'as an authorized redirect URI.'
+                        ),
+                        widget=forms.TextInput(attrs={
+                            'data-display-dependency': '#id_email_vendor_2',
+                        }),
+                    ),
+                ),
+                (
+                    'gmail_client_secret',
+                    SecretKeySettingsField(
+                        required=False,
+                        label=_('Gmail OAuth client secret'),
+                        widget=SecretKeySettingsWidget(attrs={
+                            'data-display-dependency': '#id_email_vendor_2',
                         }),
                     ),
                 ),
@@ -263,56 +252,9 @@ class GlobalSettingsForm(SettingsForm):
                 # We need to be this explicit, since OrderedDict.update does not retain ordering
                 self.fields[key] = value
 
-        self.fields['banner_message'].widget.attrs['rows'] = '2'
-        self.fields['banner_message_detail'].widget.attrs['rows'] = '3'
         self.fields = OrderedDict(
             list(self.fields.items())
             + [
-                # Stripe for organizer billing
-                (
-                    'payment_stripe_publishable_key',
-                    forms.CharField(
-                        label=_('Publishable key (Live)'),
-                        required=False,
-                        validators=(StripeKeyValidator('pk_live_'),),
-                        help_text=_('Live publishable key for organizer billing and platform fees.'),
-                    ),
-                ),
-                (
-                    'payment_stripe_secret_key',
-                    SecretKeySettingsField(
-                        label=_('Secret key (Live)'),
-                        required=False,
-                        validators=(StripeKeyValidator(['sk_live_', 'rk_live_']),),
-                        help_text=_('Live secret key for organizer billing and platform fees.'),
-                    ),
-                ),
-                (
-                    'payment_stripe_test_publishable_key',
-                    forms.CharField(
-                        label=_('Publishable key (Test)'),
-                        required=False,
-                        validators=(StripeKeyValidator('pk_test_'),),
-                        help_text=_('Test publishable key for organizer billing and platform fees.'),
-                    ),
-                ),
-                (
-                    'payment_stripe_test_secret_key',
-                    SecretKeySettingsField(
-                        label=_('Secret key (Test)'),
-                        required=False,
-                        validators=(StripeKeyValidator(['sk_test_', 'rk_test_']),),
-                        help_text=_('Test secret key for organizer billing and platform fees.'),
-                    ),
-                ),
-                (
-                    'stripe_webhook_secret_key',
-                    SecretKeySettingsField(
-                        label=_('Webhook secret key'),
-                        required=False,
-                        help_text=_('Configure this endpoint in your Stripe dashboard to receive billing events.'),
-                    ),
-                ),
                 # Stripe for ticket payments
                 (
                     'payment_stripe_connect_client_id',
@@ -417,17 +359,6 @@ class GlobalSettingsForm(SettingsForm):
                     ),
                 ),
                 (
-                    'ticket_fee_percentage',
-                    forms.DecimalField(
-                        label=_('Ticket fee percentage'),
-                        required=False,
-                        decimal_places=2,
-                        max_digits=10,
-                        help_text=_('A percentage fee will be charged for each ticket sold.'),
-                        validators=[MinValueValidator(0), MaxValueValidator(100)],
-                    ),
-                ),
-                (
                     'allow_all_users_create_organizer',
                     forms.BooleanField(
                         label=_('All registered users can create organizers'),
@@ -503,25 +434,16 @@ class GlobalSettingsForm(SettingsForm):
         )
 
         self.field_groups = [
-            ('basics', _('Basics'), [
-                'footer_text', 'footer_link', 'banner_message', 'banner_message_detail',
-            ]),
             ('localization', _('Localization'), [
                 'region',
             ]),
             ('email', _('Email'), [
                 'mail_from', 'email_vendor', 'send_grid_api_key',
+                'gmail_client_id', 'gmail_client_secret',
                 'smtp_host', 'smtp_port', 'smtp_username', 'smtp_password',
                 'smtp_use_tls', 'smtp_use_ssl',
             ]),
             ('payment_gateways', _('Payment Gateways'), [
-                # Stripe for Organizer Billing
-                'payment_stripe_publishable_key',
-                'payment_stripe_secret_key',
-                'payment_stripe_test_publishable_key',
-                'payment_stripe_test_secret_key',
-                'stripe_webhook_secret_key',
-
                 # Stripe for Ticket Payments
                 'payment_stripe_connect_client_id',
                 'payment_stripe_connect_publishable_key',
@@ -540,12 +462,6 @@ class GlobalSettingsForm(SettingsForm):
             ('cart', _('Cart'), [
                 'reservation_time',
                 'max_products_per_order',
-            ]),
-            ('ticket_fee', _('Ticket fee'), [
-                'ticket_fee_percentage',
-            ]),
-            ('billing_validation', _('Billing validation'), [
-                'billing_validation',
             ]),
             ('maps', _('Maps'), [
                 'opencagedata_apikey', 'mapquest_apikey', 'nominatim_geocoding_enabled', 'leaflet_tiles', 'leaflet_tiles_attribution',
@@ -566,7 +482,22 @@ class GlobalSettingsForm(SettingsForm):
             ]),
         ]
 
-        if 'interpretation' in settings.INSTALLED_APPS:
+        if any(app.endswith('interpretation') or app == 'interpretation' for app in settings.INSTALLED_APPS):
+            self.fields['voxbento_base_url'] = forms.URLField(
+                label=_('VoxBento Base URL'),
+                required=False,
+                help_text=_('Base URL of the VoxBento interpretation server (e.g. https://interpretation.eventyay.com).'),
+            )
+            self.fields['voxbento_client_id'] = forms.CharField(
+                label=_('VoxBento Client ID'),
+                required=False,
+                help_text=_('Client ID for authenticating with VoxBento API.'),
+            )
+            self.fields['voxbento_client_secret'] = SecretKeySettingsField(
+                label=_('VoxBento Client Secret'),
+                required=False,
+                help_text=_('Client Secret for authenticating with VoxBento API.'),
+            )
             self.field_groups.append(
                 ('voxbento', _('VoxBento'), [
                     'voxbento_base_url',
@@ -575,7 +506,21 @@ class GlobalSettingsForm(SettingsForm):
                 ])
             )
 
-        if 'hubspot' in settings.INSTALLED_APPS:
+        if any(app.endswith('hubspot') or app == 'hubspot' for app in settings.INSTALLED_APPS):
+            self.fields['hubspot_client_id'] = forms.CharField(
+                label=_('HubSpot Client ID'),
+                required=False,
+            )
+            self.fields['hubspot_client_secret'] = SecretKeySettingsField(
+                label=_('HubSpot Client Secret'),
+                required=False,
+            )
+            self.fields['hubspot_property_sync_ttl_minutes'] = forms.IntegerField(
+                label=_('HubSpot Property Sync TTL (minutes)'),
+                required=False,
+                min_value=0,
+                initial=60,
+            )
             self.field_groups.append(
                 ('hubspot', _('HubSpot'), [
                     'hubspot_client_id',
@@ -583,6 +528,8 @@ class GlobalSettingsForm(SettingsForm):
                     'hubspot_property_sync_ttl_minutes',
                 ])
             )
+
+
 
     def clean_voxbento_base_url(self):
         url = (self.cleaned_data.get('voxbento_base_url') or '').strip()
@@ -608,6 +555,17 @@ class GlobalSettingsForm(SettingsForm):
         if data.get('email_vendor') == 'sendgrid':
             if not data.get('send_grid_api_key'):
                 raise forms.ValidationError({'send_grid_api_key': _('This field is required when using SendGrid as email vendor.')})
+        if data.get('email_vendor') == 'gmail_api':
+            if not (data.get('gmail_client_id') or '').strip():
+                raise forms.ValidationError({'gmail_client_id': _('This field is required when using Gmail as email vendor.')})
+            secret = data.get('gmail_client_secret')
+            has_secret = (
+                secret == SECRET_REDACTED
+                or bool((secret or '').strip())
+                or self.obj.settings.get('gmail_client_secret')
+            )
+            if not has_secret:
+                raise forms.ValidationError({'gmail_client_secret': _('This field is required when using Gmail as email vendor.')})
 
 
 
@@ -682,14 +640,6 @@ class SSOConfigForm(SettingsForm):
         super().__init__(*args, obj=self.obj, **kwargs)
 
 
-class StartPageSettingsForm(SettingsForm):
-    auto_fields = ['startpage_header_image', 'startpage_header_text']
-
-    def __init__(self, *args, **kwargs):
-        self.obj = GlobalSettingsObject()
-        super().__init__(*args, obj=self.obj, **kwargs)
-
-
 class StripeKeyValidator:
     """
     Validates that a given Stripe key starts with the expected prefix(es).
@@ -728,3 +678,155 @@ class StripeKeyValidator:
                 }
 
             raise forms.ValidationError(message, code='invalid-stripe-key', params=params)
+
+
+class MetaDataSettingsForm(SettingsForm):
+    auto_fields = [
+        'seo_homepage_title',
+        'seo_homepage_description',
+        'seo_og_title',
+        'seo_og_description',
+        'seo_twitter_title',
+        'seo_twitter_description',
+        'seo_fallback_text',
+    ]
+
+    seo_social_image = ExtFileField(
+        label=_('Social preview image'),
+        ext_whitelist=('.png', '.jpg', '.gif', '.jpeg', '.webp'),
+        max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
+        required=False,
+        help_text=_(
+            'This image is used for Open Graph and Twitter cards. '
+            'We recommend an image 1200 px wide and 630 px in height.'
+        ),
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.obj = GlobalSettingsObject()
+        super().__init__(*args, obj=self.obj, **kwargs)
+        for name, field in self.fields.items():
+            if isinstance(field.widget, forms.ClearableFileInput):
+                field.widget.attrs['data-eventyay-file-wrapper'] = 'disabled'
+                field.widget.attrs['data-event-settings-image-tools'] = 'enabled'
+
+    def save(self):
+        image_field = 'seo_social_image'
+        current_value = self.obj.settings.get(image_field, as_type=str, default='') or ''
+        new_value = self.cleaned_data.get(image_field)
+        
+        # Simplified storage logic
+        if isinstance(new_value, UploadedFile):
+            from eventyay.common.urls import get_file_url_path
+            current_file = get_file_url_path(current_value)
+            if current_file:
+                default_storage.delete(current_file)
+            
+            clean_name, ext = os.path.splitext(new_value.name or image_field)
+            new_filename = self.get_new_filename(clean_name)
+            base_path, _ = os.path.splitext(new_filename)
+            optimized_name = f'{base_path}{ext}'
+            try:
+                optimized_path = default_storage.save(optimized_name, new_value)
+                self.cleaned_data[image_field] = f"file://{optimized_path}"
+            except OSError:
+                logger.exception('Could not store original image for %s', image_field)
+
+        return super().save()
+
+
+class GlobalBusinessSettingsForm(SettingsForm):
+    def __init__(self, *args, **kwargs):
+        self.obj = GlobalSettingsObject()
+        super().__init__(*args, obj=self.obj, **kwargs)
+
+        self.fields.update(
+            OrderedDict([
+                # Stripe for Organizer Billing
+                (
+                    'payment_stripe_publishable_key',
+                    forms.CharField(
+                        label=_('Publishable key (Live)'),
+                        required=False,
+                        validators=(StripeKeyValidator('pk_live_'),),
+                        help_text=_('Live publishable key for organizer billing and platform fees.'),
+                    ),
+                ),
+                (
+                    'payment_stripe_secret_key',
+                    SecretKeySettingsField(
+                        label=_('Secret key (Live)'),
+                        required=False,
+                        validators=(StripeKeyValidator(['sk_live_', 'rk_live_']),),
+                        help_text=_('Live secret key for organizer billing and platform fees.'),
+                    ),
+                ),
+                (
+                    'payment_stripe_test_publishable_key',
+                    forms.CharField(
+                        label=_('Publishable key (Test)'),
+                        required=False,
+                        validators=(StripeKeyValidator('pk_test_'),),
+                        help_text=_('Test publishable key for organizer billing and platform fees.'),
+                    ),
+                ),
+                (
+                    'payment_stripe_test_secret_key',
+                    SecretKeySettingsField(
+                        label=_('Secret key (Test)'),
+                        required=False,
+                        validators=(StripeKeyValidator(['sk_test_', 'rk_test_']),),
+                        help_text=_('Test secret key for organizer billing and platform fees.'),
+                    ),
+                ),
+                (
+                    'stripe_webhook_secret_key',
+                    SecretKeySettingsField(
+                        label=_('Webhook secret key'),
+                        required=False,
+                        help_text=_('Configure this endpoint in your Stripe dashboard to receive billing events.'),
+                    ),
+                ),
+                (
+                    'ticket_fee_percentage',
+                    forms.DecimalField(
+                        label=_('Ticket fee percentage'),
+                        required=False,
+                        decimal_places=2,
+                        max_digits=10,
+                        help_text=_('A percentage fee will be charged for each ticket sold.'),
+                        validators=[MinValueValidator(0), MaxValueValidator(100)],
+                    ),
+                ),
+                (
+                    'billing_validation',
+                    forms.BooleanField(
+                        required=False,
+                        label=_('Billing validation'),
+                        help_text=_(
+                            'Billing validation lets you require organizers to set up a billing method before they can create events. '
+                            'When this option is enabled, no new event can be created until a valid billing method has been added.'
+                        ),
+                    ),
+                ),
+            ])
+        )
+
+        if 'billing_validation' not in self.initial or self.initial['billing_validation'] is None:
+            self.initial['billing_validation'] = self.obj.settings.get('billing_validation', as_type=bool, default=True)
+
+        self.field_groups = [
+            ('organizer_billing', _('Organizer Billing'), [
+                'payment_stripe_publishable_key',
+                'payment_stripe_secret_key',
+                'payment_stripe_test_publishable_key',
+                'payment_stripe_test_secret_key',
+                'stripe_webhook_secret_key',
+            ]),
+            ('ticket_fee', _('Ticket Fee'), [
+                'ticket_fee_percentage',
+            ]),
+            ('billing_validation', _('Billing Validation'), [
+                'billing_validation',
+            ]),
+        ]

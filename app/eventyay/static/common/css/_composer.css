@@ -1,0 +1,886 @@
+/* Shared mail composer layout (orga talks + ticket sendmail). */
+
+.mail-composer {
+  --composer-border-radius: 4px;
+  --composer-control-height: 40px;
+  --composer-font-size: 16px;
+  --composer-small-control-height: 32px;
+  --composer-small-font-size: 14px;
+
+  font-size: var(--composer-font-size);
+  line-height: 1.42857143;
+}
+
+.mail-composer > .alert {
+  margin-bottom: 20px;
+}
+
+.mail-composer .composer-intro {
+  margin-bottom: 24px;
+  padding: 0 4px;
+}
+
+.mail-composer .composer-title {
+  display: block;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.25;
+  margin: 0 0 12px;
+}
+
+.mail-composer .composer-title-detail {
+  display: inline;
+  font-size: 16px;
+  font-weight: 400;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.mail-composer .composer-description {
+  margin: 0;
+  max-width: none;
+  padding: 0 2px 8px;
+  white-space: nowrap;
+}
+
+.mail-composer > .card {
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--composer-border-radius);
+  box-shadow: none;
+  margin-bottom: 16px;
+}
+
+.mail-composer > .card > .card-header {
+  background-color: var(--color-card-header);
+  border-bottom: 1px solid var(--color-card-border);
+  padding: 12px 20px;
+}
+
+.mail-composer > .card > .card-body {
+  padding: 20px;
+}
+
+.mail-composer button,
+.mail-composer [role="button"],
+.mail-composer a.btn,
+.mail-composer summary.btn {
+  border-radius: var(--composer-border-radius);
+  font-size: var(--composer-font-size);
+  line-height: 24px;
+  padding: 6px 12px;
+}
+
+.mail-composer button.btn-sm,
+.mail-composer [role="button"].btn-sm,
+.mail-composer a.btn-sm,
+.mail-composer summary.btn-sm {
+  font-size: var(--composer-small-font-size);
+  line-height: 21px;
+  min-height: var(--composer-small-control-height);
+  padding: 4px 8px;
+}
+
+.mail-composer button.btn.btn-outline-info,
+.mail-composer .btn.btn-outline-info {
+  background-color: var(--color-bg);
+  background-image: none;
+  border: 1px solid var(--color-primary);
+  box-shadow: none;
+  color: var(--color-primary);
+  text-shadow: none;
+}
+
+.mail-composer button.btn.btn-outline-info:hover,
+.mail-composer button.btn.btn-outline-info:focus,
+.mail-composer .btn.btn-outline-info:hover,
+.mail-composer .btn.btn-outline-info:focus {
+  background-color: var(--color-primary);
+  background-image: none;
+  border-color: var(--color-primary);
+  color: var(--color-white);
+}
+
+.mail-composer .btn-link {
+  background-color: transparent;
+  border-color: transparent;
+  color: var(--color-primary-text);
+}
+
+.mail-composer .btn-link:hover,
+.mail-composer .btn-link:focus {
+  background-color: transparent;
+  border-color: transparent;
+  color: var(--color-primary-text-dark);
+}
+
+.mail-composer input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+.mail-composer select,
+.mail-composer textarea {
+  border-color: var(--color-border);
+  border-radius: var(--composer-border-radius);
+  box-sizing: border-box;
+  font-size: var(--composer-font-size);
+}
+
+.mail-composer input[lang],
+.mail-composer textarea[lang] {
+  background-position: 10px center;
+  background-repeat: no-repeat;
+  padding-left: 34px;
+}
+
+.mail-composer textarea[lang] {
+  background-position: 10px 12px;
+}
+
+.mail-composer .i18n-form-single-language input[lang],
+.mail-composer .i18n-form-single-language textarea[lang] {
+  background-image: none;
+  padding-left: 12px;
+}
+
+.mail-composer .choices {
+  margin-bottom: 0;
+  width: 100%;
+}
+
+.mail-composer .choices__inner {
+  border-color: var(--color-border);
+  border-radius: var(--composer-border-radius);
+  min-height: var(--composer-control-height);
+  padding: 2px 5px;
+}
+
+.mail-composer .choices__inner .choices__item,
+.mail-composer .choices__list.choices__list--dropdown .choices__item {
+  font-size: var(--composer-font-size);
+}
+
+.mail-composer .choices input[type="search"] {
+  font-size: var(--composer-font-size);
+  height: 34px;
+  min-height: 0;
+}
+
+.composer-filters {
+  display: grid;
+  gap: 16px 24px;
+  grid-template-columns: 1fr;
+}
+
+.composer-filters .form-group.row {
+  display: block;
+  margin: 0;
+  margin-left: 0;
+  margin-right: 0;
+  min-width: 0;
+}
+
+.composer-filters .form-group.row > label,
+.composer-filters .form-group.row > label.col-form-label {
+  box-sizing: border-box;
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  margin: 0 0 8px;
+  margin-left: 0;
+  max-width: 100%;
+  padding: 0;
+  text-align: left;
+  width: 100%;
+}
+
+/* Required filters omit the Optional line; reserve the same second line height. */
+.composer-filters .form-group.row > label:not(:has(> .optional))::after {
+  content: "\00a0";
+  display: block;
+  font-weight: normal;
+  line-height: inherit;
+}
+
+.composer-filters .form-group.row > label > .optional {
+  color: var(--color-grey);
+  display: block;
+  font-weight: normal;
+  line-height: inherit;
+}
+
+.composer-filters .form-group.row > .col-md-3,
+.composer-filters .form-group.row > .col-md-9,
+.composer-filters .form-group.row > div {
+  flex: none;
+  max-width: 100%;
+  padding-left: 0;
+  padding-right: 0;
+  text-align: left;
+  width: 100%;
+}
+
+.composer-filters > .composer-filter-full {
+  grid-column: 1 / -1;
+}
+
+.composer-filters > .composer-filter-span-2 {
+  grid-column: span 2;
+}
+
+@media (min-width: 769px) {
+  .composer-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1025px) {
+  .composer-filters {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .composer-filters > .composer-filter-span-2 {
+    grid-column: span 1;
+  }
+}
+
+.form-with-placeholder .splitdatetimerow {
+  align-items: center;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 12px;
+}
+
+.form-with-placeholder .splitdatetimerow input[type="date"] {
+  flex: 0 0 224px;
+  width: 224px;
+}
+
+.form-with-placeholder .splitdatetimerow input[type="time"] {
+  flex: 0 0 160px;
+  width: 160px;
+}
+
+.mail-composer .composer-filters .splitdatetimerow {
+  gap: 8px;
+  width: 100%;
+}
+
+.mail-composer .composer-filters .splitdatetimerow input[type="date"],
+.mail-composer .composer-filters .splitdatetimerow input[type="time"] {
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+}
+
+@media (min-width: 769px) {
+  .form-with-placeholder.placeholder-drawer-open {
+    margin-right: 316px;
+  }
+}
+
+.delivery-test {
+  margin-bottom: 16px;
+}
+
+.delivery-test-controls {
+  --delivery-control-height: var(--composer-control-height);
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.delivery-test-controls > input,
+.delivery-test-controls > .form-control {
+  box-sizing: border-box;
+  flex: 1 1 192px;
+  height: var(--delivery-control-height);
+  min-height: var(--delivery-control-height);
+  min-width: 0;
+  width: auto;
+}
+
+.delivery-test-controls > .btn {
+  align-items: center;
+  box-sizing: border-box;
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: var(--delivery-control-height);
+  justify-content: center;
+  line-height: 1.2;
+  margin: 0;
+  min-height: var(--delivery-control-height);
+  padding: 0 12px;
+  white-space: nowrap;
+}
+
+/* fileInput.js wraps uploads in .eventyay-file-pick-wrapper; stretch it like other controls. */
+.mail-composer .col-md-9 > .eventyay-file-pick-wrapper,
+.form-with-placeholder .card-body .col-md-9 > .eventyay-file-pick-wrapper {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-height: var(--composer-control-height);
+  width: 100%;
+}
+
+.mail-composer .eventyay-file-pick-wrapper .eventyay-file-name,
+.form-with-placeholder .card-body .col-md-9 > .eventyay-file-pick-wrapper .eventyay-file-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Fallback before fileInput.js wraps the control. */
+.mail-composer .col-md-9 > input[type="file"],
+.form-with-placeholder .card-body .col-md-9 > input[type="file"] {
+  box-sizing: border-box;
+  display: block;
+  max-width: 100%;
+  min-height: var(--composer-control-height);
+  width: 100%;
+}
+
+.mail-composer .card-body > fieldset > .form-group.row {
+  align-items: flex-start;
+  display: flex;
+  flex-wrap: nowrap;
+  margin-bottom: 16px;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.mail-composer .card-body > fieldset > .form-group.row:last-child {
+  margin-bottom: 0;
+}
+
+.mail-composer .card-body > fieldset > .form-group.row > label.col-form-label {
+  flex: 0 0 25%;
+  margin-left: auto;
+  max-width: 25%;
+  padding-left: 15px;
+  padding-right: 12px;
+  text-align: right;
+}
+
+.mail-composer .card-body > fieldset > .form-group.row > .col-md-9 {
+  flex: 0 0 75%;
+  max-width: 75%;
+  min-height: 0;
+  padding-left: 0;
+  padding-right: 15px;
+}
+
+.mail-editor-tabs {
+  display: grid;
+  grid-template-columns: 25% 75%;
+}
+
+.mail-editor-mode-tabs {
+  align-items: flex-end;
+  display: flex;
+  gap: 4px;
+  grid-column: 2;
+  margin-bottom: 0;
+  padding-right: 15px;
+  width: auto;
+}
+
+.mail-editor-mode-tab {
+  align-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: var(--composer-border-radius) var(--composer-border-radius) 0 0;
+  color: var(--color-primary);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: var(--composer-font-size);
+  font-weight: normal;
+  gap: 6px;
+  line-height: 1.4;
+  margin: 0;
+  padding: 8px 14px;
+  text-decoration: none;
+}
+
+.mail-editor-mode-tab:hover,
+.mail-editor-mode-tab:focus,
+.mail-editor-mode-tab:focus-visible {
+  background: transparent;
+  box-shadow: var(--shadow-focus);
+  color: var(--color-primary-dark, var(--color-primary));
+  outline: none;
+  text-decoration: none;
+}
+
+.mail-editor-mode-tab:active {
+  background: transparent;
+  box-shadow: none;
+}
+
+.mail-editor-mode-tab.active,
+.mail-editor-mode-tab[aria-selected="true"] {
+  background: var(--color-bg);
+  border-color: var(--color-border);
+  border-bottom: 1px solid var(--color-bg);
+  color: var(--color-text);
+  margin-bottom: -1px;
+  position: relative;
+  z-index: 2;
+}
+
+.mail-editor-tabs #mail-message-edit {
+  grid-column: 1 / -1;
+}
+
+.mail-editor-tabs #mail-message-edit > .form-group.row {
+  align-items: flex-start;
+  display: flex;
+  flex-wrap: nowrap;
+  margin-bottom: 16px;
+  margin-left: 0;
+  margin-right: 0;
+  margin-top: 0;
+}
+
+.mail-editor-tabs #mail-message-edit > .form-group.row > label.col-form-label {
+  flex: 0 0 25%;
+  margin-left: auto;
+  max-width: 25%;
+  padding-left: 15px;
+  padding-right: 12px;
+  text-align: right;
+}
+
+.mail-editor-tabs #mail-message-edit > .form-group.row > .col-md-9 {
+  flex: 0 0 75%;
+  max-width: 75%;
+  min-height: 0;
+  min-width: 0;
+  padding-left: 0;
+  padding-right: 15px;
+}
+
+.mail-editor-tabs[data-mail-editor-active="edit"] #mail-message-edit [data-tiptap-wrapper] {
+  border-top-left-radius: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.mail-message-preview-panel {
+  border: 1px solid var(--color-border);
+  border-radius: var(--composer-border-radius);
+  box-sizing: border-box;
+  grid-column: 2;
+  margin-left: 0;
+  margin-right: 15px;
+  min-height: 192px;
+  padding: 12px;
+  position: relative;
+  width: auto;
+  z-index: 1;
+}
+
+.mail-editor-tabs [data-tiptap-wrapper] {
+  border-color: var(--color-border);
+}
+
+.mail-message-preview-panel .mail-preview[hidden] {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mail-composer .composer-description {
+    white-space: normal;
+  }
+
+  .mail-editor-tabs {
+    grid-template-columns: 100%;
+  }
+
+  .mail-editor-mode-tabs,
+  .mail-message-preview-panel {
+    grid-column: 1;
+    margin-left: 0;
+    margin-right: 0;
+    padding-right: 0;
+    width: 100%;
+  }
+
+  .mail-editor-tabs #mail-message-edit > .form-group.row {
+    flex-wrap: wrap;
+  }
+
+  .mail-editor-tabs #mail-message-edit > .form-group.row > label.col-form-label,
+  .mail-editor-tabs #mail-message-edit > .form-group.row > .col-md-9 {
+    flex: 0 0 100%;
+    margin-left: 0;
+    max-width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+    text-align: left;
+  }
+
+  .mail-composer .card-body > fieldset > .form-group.row {
+    flex-wrap: wrap;
+  }
+
+  .mail-composer .card-body > fieldset > .form-group.row > label.col-form-label,
+  .mail-composer .card-body > fieldset > .form-group.row > .col-md-9 {
+    flex: 0 0 100%;
+    margin-left: 0;
+    max-width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+    text-align: left;
+  }
+}
+
+.mail-composer .form-group .form-text,
+.mail-composer .form-group .invalid-feedback {
+  display: block;
+  margin-top: 6px;
+  max-width: 100%;
+  text-align: left;
+}
+
+.mail-composer .form-group.row > .col-md-9 > .form-text,
+.mail-composer .form-group.row > .col-md-9 > .invalid-feedback {
+  width: 100%;
+}
+
+.mail-composer .alert {
+  align-items: stretch;
+  display: flex;
+  margin: 0 0 16px;
+  padding: 16px;
+  text-align: left;
+}
+
+.mail-composer .alert::before {
+  align-items: center;
+  align-self: stretch;
+  display: flex;
+  flex: 0 0 48px;
+  justify-content: center;
+  margin: -16px 16px -16px -16px;
+  min-width: 48px;
+  padding: 0;
+  position: static;
+  width: 48px;
+}
+
+/* Preview tip sits below the legend rule and above the actions card. */
+.mail-composer fieldset.mt-4 {
+  margin-bottom: 24px;
+  padding-bottom: 8px;
+}
+
+.mail-composer fieldset.mt-4 > legend {
+  margin-bottom: 16px;
+}
+
+.mail-composer fieldset.mt-4 > .alert {
+  margin-bottom: 24px;
+  margin-top: 8px;
+}
+
+.mail-composer fieldset.mt-4 + section.card {
+  margin-top: 8px;
+}
+
+.composer-actions {
+  align-items: stretch;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.composer-actions > .btn,
+.composer-send-group > .btn,
+.composer-send-group > .dropdown > summary.btn {
+  border-radius: var(--composer-border-radius);
+  border-style: solid;
+  border-width: 1px;
+}
+
+.composer-send-group {
+  align-items: stretch;
+  display: inline-flex;
+}
+
+.composer-send-group > .dropdown {
+  display: flex;
+  overflow: visible;
+}
+
+.composer-send-group > .btn {
+  align-items: center;
+  border-bottom-right-radius: 0;
+  border-top-right-radius: 0;
+  display: inline-flex;
+  gap: 8px;
+}
+
+.composer-send-group > .dropdown > summary.btn {
+  align-items: center;
+  border-bottom-left-radius: 0;
+  border-left-width: 0;
+  border-top-left-radius: 0;
+  display: inline-flex;
+  margin-left: -1px;
+}
+
+.composer-send-group > .dropdown > summary.btn.btn-primary {
+  border-left: 1px solid var(--color-bg);
+  color: var(--color-white);
+}
+
+.composer-send-group > .dropdown > summary.btn.btn-primary:hover,
+.composer-send-group > .dropdown > summary.btn.btn-primary:focus {
+  background-color: var(--color-primary-hover);
+  color: var(--color-white);
+}
+
+.composer-send-group details.dropdown .dropdown-content {
+  bottom: calc(100% + 8px);
+  left: auto;
+  max-height: none;
+  overflow: visible;
+  right: 0;
+  top: auto;
+  transform: none;
+}
+
+.composer-send-group details.dropdown .dropdown-content::before {
+  border-bottom: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid var(--color-card-border);
+  bottom: -8px;
+  left: auto;
+  right: 12px;
+  top: auto;
+}
+
+.composer-send-group details.dropdown .dropdown-content::after {
+  border-bottom: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 7px solid var(--color-bg);
+  bottom: -7px;
+  left: auto;
+  right: 13px;
+  top: auto;
+}
+
+.form-with-placeholder .card-body .i18n-form-group,
+.form-with-placeholder .card-body .i18n-form-group textarea,
+.form-with-placeholder .card-body .i18n-form-group input,
+.form-with-placeholder .card-body .col-md-9 > textarea.form-control,
+.form-with-placeholder .card-body .col-md-9 > input.form-control,
+.form-with-placeholder .card-body .col-md-9 > input[type="file"],
+.form-with-placeholder .card-body .col-md-9 > .eventyay-file-pick-wrapper {
+  max-width: 100%;
+  width: 100%;
+}
+
+.form-with-placeholder .card-body .col-md-9 > textarea.form-control:not([data-tiptap-profile]) {
+  min-height: 192px;
+}
+
+.form-with-placeholder .card-body .col-md-9 .tiptap-wrapper,
+.form-with-placeholder .card-body .col-md-9 .tiptap-editor-content,
+.form-with-placeholder .card-body .col-md-9 .tiptap-prosemirror {
+  max-width: 100%;
+  width: 100%;
+}
+
+.form-with-placeholder .card-body .col-md-9 .tiptap-editor-content {
+  min-height: 192px;
+}
+
+.card-header .btn-sm {
+  min-height: var(--composer-small-control-height);
+}
+
+.form-with-placeholder > .card > .card-header {
+  position: relative;
+  z-index: 1;
+}
+
+.form-with-placeholder .card-header > span:last-child {
+  align-items: center;
+  display: inline-flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.badge.bg-info.text-white {
+  background-color: var(--color-info);
+  border-radius: 999px;
+  color: var(--color-white);
+  font-size: var(--composer-small-font-size);
+  font-weight: 600;
+  margin-left: 8px;
+  padding: 4px 10px;
+  vertical-align: middle;
+}
+
+#send-confirm-dialog,
+#recipient-list-dialog {
+  background: var(--color-bg);
+  border: 0;
+  border-radius: var(--composer-border-radius);
+  box-shadow: var(--shadow-dialog);
+  max-width: 70vw;
+  min-width: 420px;
+  padding: 0;
+}
+
+#send-confirm-dialog::backdrop,
+#recipient-list-dialog::backdrop {
+  backdrop-filter: blur(2px);
+  background-color: rgb(0 0 0 / 0.2);
+}
+
+#send-confirm-summary {
+  column-gap: 16px;
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  margin: 0;
+  row-gap: 4px;
+}
+
+#send-confirm-summary dt,
+#send-confirm-summary dd {
+  margin: 0;
+}
+
+#send-confirm-dialog .dialog-content,
+#recipient-list-dialog .dialog-content {
+  padding: 20px;
+}
+
+#recipient-list-dialog .dialog-content {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+#send-confirm-dialog .dialog-footer,
+#recipient-list-dialog .dialog-footer {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+@media (max-width: 768px) {
+  #send-confirm-dialog,
+  #recipient-list-dialog {
+    min-width: auto;
+    width: 95%;
+  }
+}
+
+#mail-language-tabs {
+  border-bottom: 1px solid var(--color-grey-lighter);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.mail-language-tab {
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  box-shadow: none;
+  color: inherit;
+  margin-bottom: -1px;
+  padding: 6px 12px;
+  text-decoration: none;
+}
+
+.mail-language-tab:hover,
+.mail-language-tab:focus,
+.mail-language-tab:focus-visible,
+.mail-language-tab:active {
+  background: transparent;
+  box-shadow: none;
+  color: inherit;
+  outline: none;
+  text-decoration: none;
+}
+
+.mail-language-tab.active,
+.mail-language-tab[aria-selected="true"] {
+  border-bottom-color: var(--color-primary);
+  font-weight: bold;
+}
+
+#placeholder-drawer {
+  background: white;
+  border-left: 1px solid var(--color-grey-lighter);
+  bottom: 0;
+  box-shadow: var(--shadow-wide);
+  overflow-y: auto;
+  padding: 12px;
+  position: fixed;
+  right: 0;
+  top: 50px;
+  width: 300px;
+  z-index: 1030;
+}
+
+#placeholder-drawer[hidden] {
+  display: none;
+}
+
+#placeholder-drawer-head {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+#placeholder-drawer-head .btn-link {
+  font-size: 24px;
+  line-height: 1;
+}
+
+#placeholder-search {
+  margin-bottom: 12px;
+}
+
+#placeholder-drawer .list-group-item.placeholder {
+  cursor: pointer;
+}
+
+#placeholder-drawer .list-group-item.placeholder .placeholder-content {
+  align-items: baseline;
+  display: flex;
+  justify-content: space-between;
+}
+
+#placeholder-drawer .list-group-item.placeholder .placeholder-text {
+  white-space: nowrap;
+}
+
+#placeholder-drawer .list-group-item.placeholder i {
+  border-radius: 50%;
+  padding: 8px;
+  text-align: center;
+  width: 30px;
+}
+
+#placeholder-drawer .list-group-item.placeholder i:hover {
+  background: var(--color-grey-lighter);
+}
+
+@media (max-width: 768px) {
+  #placeholder-drawer {
+    width: 100%;
+  }
+}

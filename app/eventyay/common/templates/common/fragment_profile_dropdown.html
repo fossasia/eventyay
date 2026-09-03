@@ -1,5 +1,6 @@
 {% load i18n %}
 {% load event_tags %}
+{% load eventsignal %}
 
 <li class="nav-item">
     <details class="dropdown fix-height" id="profile-dropdown">
@@ -18,6 +19,7 @@
             <a class="dropdown-item" href="{{ base_path }}/common/orders/">
                 <i class="fa fa-shopping-cart"></i> {% translate "My orders" %}
             </a>
+            {% signal "eventyay.common.signals.user_dashboard_links" request %}
             <a class="dropdown-item" href="{{ base_path }}/common/sessions/">
                 <i class="fa fa-sticky-note-o"></i> {% translate "My sessions" %}
             </a>

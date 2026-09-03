@@ -6,9 +6,14 @@
  * @param {string[]} options.placeholders - list of placeholder variable names (email profile only)
  * @param {string} options.previewUrl - URL for email preview endpoint (email profile only)
  * @param {string} options.locale - BCP 47 locale for the active editor tab (email profile only)
+ * @param {HTMLElement} [options.editorEl] - visual editor root used for HTML source toggle
+ * @param {HTMLTextAreaElement} [options.textarea] - backing form textarea
  * @returns {HTMLElement}
  */
-export function buildToolbar(editor, { profile, placeholders = [], previewUrl = '', locale = '' }) {
+export function buildToolbar(
+  editor,
+  { profile, placeholders = [], previewUrl = '', locale = '', editorEl = null, textarea = null },
+) {
   const bar = document.createElement('div')
   bar.className = 'tiptap-toolbar'
   bar.setAttribute('role', 'toolbar')
@@ -56,6 +61,10 @@ export function buildToolbar(editor, { profile, placeholders = [], previewUrl = 
 
   bar.append(boldBtn, italicBtn, underlineBtn, separator(), ulBtn, olBtn, separator(), linkWrapper, separator(), clearBtn, separator(), undoBtn, redoBtn)
 
+  if (editorEl) {
+    bar.append(separator(), buildHtmlSourceButton(editor, editorEl, textarea, bar))
+  }
+
   if (profile === 'email') {
     if (placeholders.length > 0) {
       bar.append(separator(), buildPlaceholderMenu(editor, placeholders))
@@ -79,6 +88,92 @@ export function buildToolbar(editor, { profile, placeholders = [], previewUrl = 
   editor.on('transaction', syncActive)
 
   return bar
+}
+
+/**
+ * Toggle between visual editing and raw HTML source editing.
+ * @param {import('@tiptap/core').Editor} editor
+ * @param {HTMLElement} editorEl
+ * @param {HTMLTextAreaElement|null} textarea
+ * @param {HTMLElement} toolbar
+ * @returns {HTMLButtonElement}
+ */
+function buildHtmlSourceButton(editor, editorEl, textarea, toolbar) {
+  const btn = document.createElement('button')
+  btn.type = 'button'
+  btn.className = 'tiptap-btn tiptap-html-btn'
+  btn.title = 'HTML'
+  btn.setAttribute('aria-label', 'Edit HTML source')
+  btn.setAttribute('aria-pressed', 'false')
+  btn.innerHTML = '&lt;/&gt;'
+
+  let sourceMode = false
+  let sourceView = null
+
+  const setFormattingEnabled = (enabled) => {
+    toolbar.querySelectorAll('.tiptap-btn').forEach((other) => {
+      if (other === btn) {
+        return
+      }
+      other.disabled = !enabled
+    })
+  }
+
+  const enterSourceMode = () => {
+    sourceView = document.createElement('textarea')
+    sourceView.className = 'tiptap-html-source'
+    sourceView.value = editor.getHTML()
+    sourceView.setAttribute('aria-label', 'HTML source')
+    sourceView.spellcheck = false
+
+    sourceView.addEventListener('input', () => {
+      if (textarea) {
+        textarea.value = sourceView.value
+      }
+    })
+
+    editorEl.hidden = true
+    editorEl.parentNode.insertBefore(sourceView, editorEl.nextSibling)
+    sourceMode = true
+    btn.classList.add('is-active')
+    btn.setAttribute('aria-pressed', 'true')
+    btn.title = 'Visual editor'
+    btn.setAttribute('aria-label', 'Return to visual editor')
+    setFormattingEnabled(false)
+    sourceView.focus()
+  }
+
+  const exitSourceMode = () => {
+    const html = sourceView ? sourceView.value : ''
+    editor.commands.setContent(html, { emitUpdate: true })
+    // Keep the backing form field in sync even if TipTap normalizes the HTML.
+    if (textarea) {
+      textarea.value = editor.getHTML()
+    }
+    if (sourceView) {
+      sourceView.remove()
+      sourceView = null
+    }
+    editorEl.hidden = false
+    sourceMode = false
+    btn.classList.remove('is-active')
+    btn.setAttribute('aria-pressed', 'false')
+    btn.title = 'HTML'
+    btn.setAttribute('aria-label', 'Edit HTML source')
+    setFormattingEnabled(true)
+    editor.view.focus()
+  }
+
+  btn.addEventListener('click', (e) => {
+    e.preventDefault()
+    if (sourceMode) {
+      exitSourceMode()
+    } else {
+      enterSourceMode()
+    }
+  })
+
+  return btn
 }
 
 function showLinkPopover(editor, anchor) {
@@ -187,7 +282,7 @@ function buildPlaceholderMenu(editor, placeholders) {
   const toggle = document.createElement('button')
   toggle.type = 'button'
   toggle.className = 'tiptap-btn'
-  toggle.textContent = '{ } Insert placeholder'
+  toggle.textContent = '{ } Placeholder'
   toggle.setAttribute('aria-haspopup', 'listbox')
   toggle.setAttribute('aria-expanded', 'false')
 
@@ -240,9 +335,37 @@ function buildPreviewButton(editor, previewUrl, locale = '') {
   btn.textContent = 'Preview'
   btn.setAttribute('aria-label', 'Preview email')
 
+  let isPreviewMode = false
+  let previewEl = null
+
   btn.addEventListener('click', async (e) => {
     e.preventDefault()
+
+    const editorEl = editor.options.element
+    const toolbar = btn.closest('.tiptap-toolbar')
+    const allButtons = Array.from(toolbar.querySelectorAll('button, select')).filter(b => b !== btn)
+
+    if (isPreviewMode) {
+      // Switch to Edit Mode
+      isPreviewMode = false
+      btn.textContent = 'Preview'
+      btn.classList.remove('is-active')
+      if (previewEl) {
+        previewEl.style.display = 'none'
+      }
+      editorEl.style.display = ''
+      allButtons.forEach(b => b.disabled = false)
+      editor.commands.focus()
+      return
+    }
+
     const html = editor.getHTML()
+    
+    // Disable all other buttons in the toolbar while in preview mode
+    allButtons.forEach(b => b.disabled = true)
+    btn.disabled = true
+    btn.textContent = 'Loading...'
+
     try {
       const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
       const response = await fetch(previewUrl, {
@@ -255,34 +378,33 @@ function buildPreviewButton(editor, previewUrl, locale = '') {
       })
       if (!response.ok) throw new Error(`Preview request failed: ${response.status}`)
       const data = await response.json()
-      showPreviewModal(data.html)
+      
+      if (!previewEl) {
+        previewEl = document.createElement('div')
+        previewEl.className = 'tiptap-inline-preview tiptap-prosemirror ProseMirror'
+        editorEl.parentNode.insertBefore(previewEl, editorEl.nextSibling)
+      }
+      
+      const doc = new DOMParser().parseFromString(data.html, 'text/html')
+      previewEl.replaceChildren(...doc.body.childNodes)
+      
+      isPreviewMode = true
+      btn.textContent = 'Edit'
+      btn.classList.add('is-active')
+      
+      editorEl.style.display = 'none'
+      previewEl.style.display = 'block'
     } catch (err) {
       console.error('Email preview failed:', err)
       alert('An error occurred while generating the preview. Please try again.')
+      allButtons.forEach(b => b.disabled = false)
+    } finally {
+      btn.disabled = false
+      if (!isPreviewMode) {
+        btn.textContent = 'Preview'
+      }
     }
   })
 
   return btn
-}
-
-function showPreviewModal(html) {
-  let modal = document.getElementById('tiptap-preview-modal')
-  if (!modal) {
-    modal = document.createElement('dialog')
-    modal.id = 'tiptap-preview-modal'
-    modal.className = 'tiptap-preview-modal'
-    modal.innerHTML = `
-      <div class="tiptap-preview-modal-inner">
-        <button type="button" class="tiptap-preview-close" aria-label="Close preview">&times;</button>
-        <h2>Email Preview</h2>
-        <div class="tiptap-preview-body"></div>
-      </div>
-    `
-    modal.querySelector('.tiptap-preview-close').addEventListener('click', () => modal.close())
-    document.body.appendChild(modal)
-  }
-  const body = modal.querySelector('.tiptap-preview-body')
-  const doc = new DOMParser().parseFromString(html, 'text/html')
-  body.replaceChildren(...doc.body.childNodes)
-  modal.showModal()
 }

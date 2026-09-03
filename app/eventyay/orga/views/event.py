@@ -12,7 +12,6 @@ from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
-from django.utils.translation import ngettext_lazy
 from django.views.generic import FormView, ListView, TemplateView, UpdateView, View
 from django_context_decorator import context
 
@@ -38,6 +37,7 @@ from eventyay.orga.forms.event import (
     WidgetGenerationForm,
     WidgetSettingsForm,
 )
+from eventyay.orga.forms.feedback import FeedbackExportForm
 from eventyay.orga.forms.importers import CSVImportForm
 from eventyay.orga.forms.review import ReviewExportForm
 from eventyay.orga.forms.schedule import ScheduleExportForm
@@ -385,7 +385,7 @@ class EventDelete(PermissionRequired, ActionConfirmMixin, TemplateView):
         return self.request.event
 
     def action_object_name(self):
-        return ngettext_lazy('Event', 'Events', 1) + f': {self.get_object().name}'
+        return _('Event') + f': {self.get_object().name}'
 
     @property
     def action_back_url(self):
@@ -496,6 +496,7 @@ class ExportTargetChoice(models.TextChoices):
     SPEAKER = 'speaker', _('Speakers')
     SCHEDULE = 'session', _('Schedule')
     REVIEW = 'review', _('Reviews')
+    FEEDBACK = 'feedback', _('Attendee feedback')
 
     @classmethod
     def export_choices(cls):
@@ -534,6 +535,10 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
             event=self.request.event,
             user=self.request.user,
             prefix='review',
+        )
+        result['feedback_export_form'] = kwargs.get('feedback_export_form') or FeedbackExportForm(
+            event=self.request.event,
+            prefix='feedback',
         )
         result['schedule_html_export_form'] = kwargs.get('schedule_html_export_form') or ScheduleHtmlExportForm(
             obj=self.request.event,
@@ -617,22 +622,27 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
         speaker_kwargs = {'event': self.request.event, 'prefix': 'speaker'}
         session_kwargs = {'event': self.request.event, 'prefix': 'session'}
         review_kwargs = {'event': self.request.event, 'user': self.request.user, 'prefix': 'review'}
+        feedback_kwargs = {'event': self.request.event, 'prefix': 'feedback'}
 
         if target == ExportTargetChoice.SPEAKER:
             speaker_kwargs['data'] = self.request.POST
         elif target == ExportTargetChoice.SCHEDULE:
             session_kwargs['data'] = self.request.POST
+        elif target == ExportTargetChoice.FEEDBACK:
+            feedback_kwargs['data'] = self.request.POST
         else:  # ExportTargetChoice.REVIEW
             review_kwargs['data'] = self.request.POST
 
         speaker_export_form = SpeakerExportForm(**speaker_kwargs)
         session_export_form = ScheduleExportForm(**session_kwargs)
         review_export_form = ReviewExportForm(**review_kwargs)
+        feedback_export_form = FeedbackExportForm(**feedback_kwargs)
 
         active_form = {
             ExportTargetChoice.SPEAKER: speaker_export_form,
             ExportTargetChoice.SCHEDULE: session_export_form,
             ExportTargetChoice.REVIEW: review_export_form,
+            ExportTargetChoice.FEEDBACK: feedback_export_form,
         }[target]
 
         if not active_form.is_valid():
@@ -641,6 +651,7 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
                 speaker_export_form=speaker_export_form,
                 session_export_form=session_export_form,
                 review_export_form=review_export_form,
+                feedback_export_form=feedback_export_form,
                 active_tab='export',
             )
             return self.render_to_response(context, status=400)

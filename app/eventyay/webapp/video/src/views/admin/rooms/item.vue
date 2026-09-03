@@ -1,40 +1,30 @@
 <template lang="pug">
 .c-admin-room
 	.error(v-if="error")
-		span We could not fetch the current configuration.
+		span {{ $t('We could not fetch the current configuration.') }}
 		span(v-if="errorCode")  ({{ errorCode }})
-		span(v-if="errorCode === 'protocol.denied'")  You likely lack admin permissions.
+		span(v-if="errorCode === 'protocol.denied'")  {{ $t('You likely lack admin permissions.') }}
 	template(v-else-if="config")
 		template(v-if="!inferredType")
 			.ui-page-header
 				bunt-icon-button(@click="$router.push({name: 'admin:rooms:index'})") arrow_left
 				h1(v-html="$emojify(config.name)")
 			.mystery-room
-				p This room does not have a video option yet.
-				VideoProviderDropdown(label="Add Video", variant="action", @select="addVideoProvider")
+				p {{ $t('This room does not have a video option yet.') }}
+				VideoProviderDropdown(:label="$t('Add Video')", variant="action", @select="addVideoProvider")
 		template(v-else)
 			.ui-page-header
 				bunt-icon-button(@click="$router.push({name: 'admin:rooms:index'})") arrow_left
 				h1 {{ roomTypeLabel }} :
 					span.room-name(v-html="$emojify(config.name)")
-				.actions
-					bunt-button(v-if="hasPermission('room:update')", @click="showRoomEditPrompt = true") Edit
 			edit-form(:config="config")
 	bunt-progress-circular(v-else, size="huge")
-	transition(name="prompt")
-		RoomEditPrompt(
-			v-if="showRoomEditPrompt && config",
-			:room="{id: config.id}",
-			@close="closeRoomEditPrompt",
-			@deleted="roomDeleted"
-		)
 </template>
 <script>
 import { mapGetters } from 'vuex'
 import api from 'lib/api'
-import RoomEditPrompt from 'components/RoomEditPrompt'
 import VideoProviderDropdown from 'components/VideoProviderDropdown'
-import { getRoomTypeById, inferType } from 'lib/room-types'
+import { getRoomTypeById, inferType, isChatManagedRoom } from 'lib/room-types'
 import {
 	applyVideoProviderToConfig,
 	getAvailableVideoProviders,
@@ -45,7 +35,7 @@ import EditForm from './EditForm'
 
 export default {
 	name: 'AdminRoom',
-	components: { EditForm, RoomEditPrompt, VideoProviderDropdown },
+	components: { EditForm, VideoProviderDropdown },
 	props: {
 		roomId: String
 	},
@@ -54,7 +44,6 @@ export default {
 			error: null,
 			errorCode: null,
 			config: null,
-			showRoomEditPrompt: false,
 			_unwatchConnected: null
 		}
 	},
@@ -65,7 +54,8 @@ export default {
 			return inferType(this.config)
 		},
 		roomTypeLabel() {
-			return getConfiguredRoomLabel(this.inferredType)
+			const label = getConfiguredRoomLabel(this.inferredType)
+			return label ? this.$t(label) : ''
 		},
 		availableProviders() {
 			return getAvailableVideoProviders(
@@ -73,6 +63,16 @@ export default {
 				this.isAdminMode,
 				(flag) => features.enabled(flag)
 			)
+		}
+	},
+	watch: {
+		roomId: {
+			handler() {
+				this.config = null
+				this.error = null
+				this.errorCode = null
+				this.ensureConnectedAndFetch()
+			}
 		}
 	},
 	async created() {
@@ -101,6 +101,10 @@ export default {
 				this.error = null
 				this.errorCode = null
 				this.config = await api.call('room.config.get', {room: this.roomId})
+				if (isChatManagedRoom(this.config)) {
+					this.$router.replace({name: 'admin:chat:item', params: {roomId: this.roomId}})
+					return
+				}
 				await this.applyProviderFromQuery()
 			} catch (error) {
 				this.error = error
@@ -138,10 +142,6 @@ export default {
 		},
 		addVideoProvider(provider) {
 			return this.applyProvider(provider.roomTypeId)
-		},
-		closeRoomEditPrompt() {
-			this.showRoomEditPrompt = false
-			this.fetchConfig()
 		},
 		roomDeleted() {
 			this.$router.replace({name: 'admin:rooms:index'})

@@ -1,42 +1,72 @@
 <template lang="pug">
 .c-app-bar
 	.left
-		button.hamburger(v-if="showActions", type="button", @click.stop="$emit('toggleSidebar')", aria-label="Toggle navigation")
-			span.bar
-			span.bar
-			span.bar
-		router-link.logo(:to="{name: 'about'}", :class="{anonymous: isAnonymous}")
-			img(:src="brandLogoUrl", :alt="world.title")
+		button.navbar-toggle-sidebar.navbar-toggle(
+			v-if="showActions",
+			type="button",
+			@click.stop="$emit('toggleSidebar')",
+			:aria-label="toggleNavigationLabel"
+		)
+			i.fa.fa-bars.fa-lg(aria-hidden="true")
+		router-link.navbar-brand(:to="{name: 'about'}", :class="{anonymous: isAnonymous}")
+			img(src="/eventyay-logo.svg", alt="eventyay")
+			span.brand-text eventyay
+		a.nav-view-event(:href="publicEventUrl", v-if="isAdminRoute")
+			i.fa.fa-eye(aria-hidden="true")
+			span {{ $t('View event') }}
 	.nav-actions
 		.admin-session-actions(v-if="showAdminModeStart || showAdminModeEnd")
 			button.admin-mode-btn(
 				v-if="showAdminModeStart"
 				type="button"
 				@click="startAdminSession"
-				:aria-label="$t('AppBar:admin-mode:start')"
+				:aria-label="$t('Admin mode')"
 			)
 				i.fa.fa-id-card(aria-hidden="true")
-				span {{ $t('AppBar:admin-mode:start') }}
+				span {{ $t('Admin mode') }}
 			button.admin-mode-btn.admin-mode-btn--end(
 				v-if="showAdminModeEnd"
 				type="button"
 				@click="endAdminSession"
-				:aria-label="$t('AppBar:admin-mode:end')"
+				:aria-label="$t('End admin session')"
 			)
 				i.fa.fa-id-card(aria-hidden="true")
-				span {{ $t('AppBar:admin-mode:end') }}
+				span {{ $t('End admin session') }}
+		.language-menu(v-if="languages.length", ref="languageMenuEl")
+			button.language-toggle(
+				type="button"
+				:aria-label="languageToggleLabel"
+				:aria-expanded="String(languageMenuOpen)"
+				aria-haspopup="menu"
+				:class="{open: languageMenuOpen}"
+				@click.stop="toggleLanguageMenu"
+			)
+				i.fa.fa-globe(aria-hidden="true")
+				span.current-locale(aria-hidden="true") {{ currentLanguageCode }}
+				span.sr-only {{ currentLanguageLabel }}
+				i.fa.fa-caret-down(aria-hidden="true")
+			transition(name="dropdown-reveal")
+				.language-dropdown(v-if="languageMenuOpen", role="menu")
+					button.language-option(
+						v-for="option in languages"
+						:key="option.code"
+						type="button"
+						role="menuitem"
+						:class="{active: option.code === currentLanguage}"
+						@click="selectLanguage(option.code)"
+					) {{ option.nativeLabel }}
 		.user-section(v-if="showUser")
 			.user-menu(ref="userMenuEl")
 				div.user-profile(:class="{open: profileMenuOpen}", @click.stop="toggleProfileMenu")
 					avatar(v-if="!isAnonymous", :user="user", :size="32")
 					span.display-name(v-if="!isAnonymous") {{ user.profile.display_name }}
-					span.display-name(v-else) {{ $t('AppBar:user-anonymous') }}
+					span.display-name(v-else) {{ $t('anonymous') }}
 					span.user-caret(role="button", :aria-expanded="String(profileMenuOpen)", aria-haspopup="true", tabindex="0", @click.stop="toggleProfileMenu", @keydown.enter.prevent="toggleProfileMenu", @keydown.space.prevent="toggleProfileMenu", :class="{open: profileMenuOpen}")
 				transition(name="dropdown-reveal")
 					.profile-dropdown(v-if="profileMenuOpen", role="menu", @click.stop)
 						.visibility-row(v-if="!isAnonymous")
-							span.visibility-label Profile visibility
-							span.visibility-badge(:class="isPublic ? 'badge-public' : 'badge-private'") {{ isPublic ? 'Public' : 'Private' }}
+							span.visibility-label {{ $t('Profile visibility') }}
+							span.visibility-badge(:class="isPublic ? 'badge-public' : 'badge-private'") {{ isPublic ? $t('Public') : $t('Private') }}
 						div.menu-separator(v-if="!isAnonymous")
 						template(v-for="item in menuItems", :key="item.key")
 							div.menu-separator(v-if="item.separatorBefore")
@@ -52,6 +82,8 @@ import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
 import Avatar from 'components/Avatar'
 import config from 'config'
+import i18n from 'i18n'
+import { resolveLanguageOptions } from 'locales'
 
 const props = defineProps({
 	showActions: {
@@ -77,15 +109,16 @@ const ICON_CLASSES = {
 	profile: 'fa fa-user-circle'
 }
 
-const PROFILE_MENU_ITEMS = [
-	{ key: 'dashboard', label: 'Dashboard', icon: 'dashboard', externalPath: 'common/' },
-	{ key: 'orders', label: 'My Orders', externalPath: 'common/orders/', icon: 'orders' },
-	{ key: 'sessions', label: 'My Sessions', externalPath: 'common/sessions/', icon: 'tickets' },
-	{ key: 'events', label: 'My Events', externalPath: 'common/events/', icon: 'events' },
-	{ key: 'organizers', label: 'Organizers', externalPath: 'common/organizers/', icon: 'organizers' },
-	{ key: 'profile', label: 'Profile', route: { name: 'preferences' }, separatorBefore: true, icon: 'profile' },
-	{ key: 'account', label: 'Account', externalPath: 'common/account/general', icon: 'account' },
-	{ key: 'logout', label: 'Logout', action: 'logout', icon: 'logout', separatorBefore: true }
+const PROFILE_MENU_ITEM_DEFS = [
+	{ key: 'dashboard', icon: 'dashboard', externalPath: 'common/' },
+	{ key: 'orders', externalPath: 'common/orders/', icon: 'orders' },
+	{ key: 'sessions', externalPath: 'common/sessions/', icon: 'tickets' },
+	{ key: 'events', externalPath: 'common/events/', icon: 'events' },
+	{ key: 'organizers', externalPath: 'common/organizers/', icon: 'organizers' },
+	{ key: 'profile', route: { name: 'preferences' }, separatorBefore: true, icon: 'profile' },
+	{ key: 'account', externalPath: 'common/account/general', icon: 'account' },
+	{ key: 'admin', externalPath: 'admin/', icon: 'admin', adminOnly: true },
+	{ key: 'logout', action: 'logout', icon: 'logout', separatorBefore: true }
 ]
 
 const emit = defineEmits(['toggleSidebar'])
@@ -123,7 +156,35 @@ const canStartStaffSession = computed(() => {
 	return p?.is_staff === true || p?.is_superuser === true
 })
 
+const isAdminRoute = computed(() => {
+	const name = router.currentRoute.value?.name
+	return typeof name === 'string' && name.startsWith('admin')
+})
+
+const hasOrganiserPermissions = computed(() => {
+	return (
+		isAdminMode.value ||
+		store.getters.hasPermission('world:users.list') ||
+		store.getters.hasPermission('world:update') ||
+		store.getters.hasPermission('world:announce') ||
+		store.getters.hasPermission('room:update') ||
+		store.getters.hasPermission('world:kiosks.manage')
+	)
+})
+
 const eventRouting = computed(() => store.getters.eventRouting)
+
+const publicEventUrl = computed(() => {
+	if (window.eventyay?.eventUrl) {
+		return window.eventyay.eventUrl
+	}
+	const { organizer, event } = eventRouting.value || {}
+	if (organizer && event) {
+		const base = buildBaseSansVideo()
+		return `${base}${organizer}/${event}/`
+	}
+	return buildBaseSansVideo()
+})
 
 const showAdminModeStart = computed(() => {
 	if (!canStartStaffSession.value || isAdminMode.value) return false
@@ -151,12 +212,49 @@ const brandLogoUrl = computed(() => {
 })
 
 const profileMenuOpen = ref(false)
-const menuItems = ref(PROFILE_MENU_ITEMS)
+const languageMenuOpen = ref(false)
+const userLocale = computed(() => store.state.userLocale)
+const menuItems = computed(() => {
+	userLocale.value
+	const labels = {
+		dashboard: i18n.t('Dashboard'),
+		orders: i18n.t('My Orders'),
+		sessions: i18n.t('My Sessions'),
+		events: i18n.t('My Events'),
+		organizers: i18n.t('Organizers'),
+		profile: i18n.t('Profile'),
+		account: i18n.t('Account'),
+		admin: i18n.t('Admin'),
+		logout: i18n.t('Logout'),
+	}
+	return PROFILE_MENU_ITEM_DEFS
+		.filter(item => !item.adminOnly || isAdminMode.value)
+		.map(item => ({
+			...item,
+			label: labels[item.key]
+		}))
+})
+const languageToggleLabel = computed(() => {
+	userLocale.value
+	return i18n.t('Language')
+})
+const toggleNavigationLabel = computed(() => {
+	userLocale.value
+	return i18n.t('Toggle navigation')
+})
 const iconClasses = ICON_CLASSES
 const userMenuEl = ref(null)
+const languageMenuEl = ref(null)
+const currentLanguage = computed(() => userLocale.value || i18n.resolvedLanguage || 'en')
+const languages = computed(() => resolveLanguageOptions(config.locales))
+const currentLanguageMeta = computed(() => {
+	return languages.value.find(locale => locale.code === currentLanguage.value) || languages.value[0]
+})
+const currentLanguageCode = computed(() => (currentLanguage.value || 'en').slice(0, 2).toUpperCase())
+const currentLanguageLabel = computed(() => currentLanguageMeta.value?.nativeLabel || currentLanguage.value)
 
 function getCsrfToken() {
-	const match = document.cookie.match(/eventyay_csrftoken=([^;]+)/)
+	const match = document.cookie.match(/(?:eventyay_csrftoken|csrftoken)=([^;]+)/)
 	return match ? decodeURIComponent(match[1]) : null
 }
 
@@ -192,48 +290,36 @@ function videoAccessRefreshPath() {
 
 function startAdminSession() {
 	const nextUrl = videoAccessRefreshPath()
-	const csrf = getCsrfToken()
-	if (!nextUrl || !csrf) {
+	if (!nextUrl) {
 		if (process.env.NODE_ENV === 'development') {
-			console.warn('Cannot start admin session: missing next URL or CSRF cookie.')
+			console.warn('Cannot start admin session: missing next URL.')
 		}
 		return
 	}
 	const action = new URL('control/sudo/', buildBaseSansVideo())
 	action.searchParams.set('next', nextUrl)
-	const form = document.createElement('form')
-	form.method = 'POST'
-	form.action = action.toString()
-	const input = document.createElement('input')
-	input.type = 'hidden'
-	input.name = 'csrfmiddlewaretoken'
-	input.value = csrf
-	form.appendChild(input)
-	document.body.appendChild(form)
-	form.submit()
+	const csrf = getCsrfToken()
+	if (csrf) {
+		const form = document.createElement('form')
+		form.method = 'POST'
+		form.action = action.toString()
+		const input = document.createElement('input')
+		input.type = 'hidden'
+		input.name = 'csrfmiddlewaretoken'
+		input.value = csrf
+		form.appendChild(input)
+		document.body.appendChild(form)
+		form.submit()
+	} else {
+		window.location.href = action.toString()
+	}
 }
 
 function endAdminSession() {
-	const csrf = getCsrfToken()
-	if (!csrf) {
-		if (process.env.NODE_ENV === 'development') {
-			console.warn('Cannot end admin session: missing CSRF cookie.')
-		}
-		return
-	}
 	const action = new URL('control/sudo/stop/', buildBaseSansVideo())
 	const nextUrl = videoAccessRefreshPath()
 	if (nextUrl) action.searchParams.set('next', nextUrl)
-	const form = document.createElement('form')
-	form.method = 'POST'
-	form.action = action.toString()
-	const input = document.createElement('input')
-	input.type = 'hidden'
-	input.name = 'csrfmiddlewaretoken'
-	input.value = csrf
-	form.appendChild(input)
-	document.body.appendChild(form)
-	form.submit()
+	window.location.href = action.toString()
 }
 
 function buildBaseSansVideo() {
@@ -257,9 +343,26 @@ function buildBaseSansVideo() {
 }
 function toggleProfileMenu() {
 	profileMenuOpen.value = !profileMenuOpen.value
+	if (profileMenuOpen.value) languageMenuOpen.value = false
 }
 function closeProfileMenu() {
 	profileMenuOpen.value = false
+}
+function toggleLanguageMenu() {
+	languageMenuOpen.value = !languageMenuOpen.value
+	if (languageMenuOpen.value) profileMenuOpen.value = false
+}
+function closeLanguageMenu() {
+	languageMenuOpen.value = false
+}
+async function selectLanguage(locale) {
+	closeLanguageMenu()
+	if (locale === currentLanguage.value) return
+	try {
+		await store.dispatch('updateUserLocale', locale)
+	} catch (error) {
+		console.error('Failed to change interface language', error)
+	}
 }
 function logout() {
 	localStorage.removeItem('token')
@@ -310,12 +413,20 @@ function getItemHref(item) {
 }
 
 function handleClickOutside(e) {
-	if (!profileMenuOpen.value) return
-	const el = userMenuEl.value
-	if (el && !el.contains(e.target)) closeProfileMenu()
+	if (profileMenuOpen.value) {
+		const el = userMenuEl.value
+		if (el && !el.contains(e.target)) closeProfileMenu()
+	}
+	if (languageMenuOpen.value) {
+		const el = languageMenuEl.value
+		if (el && !el.contains(e.target)) closeLanguageMenu()
+	}
 }
 function handleGlobalKeydown(e) {
-	if (e.key === 'Escape' && profileMenuOpen.value) closeProfileMenu()
+	if (e.key === 'Escape') {
+		if (profileMenuOpen.value) closeProfileMenu()
+		if (languageMenuOpen.value) closeLanguageMenu()
+	}
 }
 
 onMounted(() => {
@@ -342,11 +453,11 @@ onBeforeUnmount(() => {
 	top: 0
 	left: 0
 	right: 0
-	height: 48px
+	height: 50px
 	display: flex
 	align-items: center
 	justify-content: space-between
-	padding: 0 8px
+	padding: 0 12px 0 8px
 	font-size: 14px
 	font-weight: 400
 	background-color: var(--app-bar-background)
@@ -361,6 +472,77 @@ onBeforeUnmount(() => {
 		align-self: stretch
 		gap: 4px
 		margin-left: auto
+	.language-menu
+		position: relative
+		align-self: stretch
+		display: flex
+		align-items: stretch
+	.language-toggle
+		appearance: none
+		background: none
+		border: none
+		padding: 0 12px
+		margin: 0
+		min-height: 50px
+		display: inline-flex
+		align-items: center
+		gap: 6px
+		font: inherit
+		font-size: 14px
+		color: var(--app-bar-text)
+		cursor: pointer
+		&:hover
+			background-color: rgba(0, 0, 0, 0.08)
+		&:focus-visible
+			outline: 2px solid var(--clr-primary)
+			outline-offset: -2px
+		&.open .fa-caret-down
+			transform: rotate(180deg)
+		.current-locale
+			font-weight: 500
+			letter-spacing: 0.02em
+		.fa-caret-down
+			font-size: 12px
+			transition: transform 0.15s ease-in-out
+	.language-dropdown
+		position: absolute
+		top: calc(100% + 2px)
+		right: 0
+		min-width: 180px
+		max-height: 320px
+		overflow-y: auto
+		background: white
+		color: #495057
+		border: 1px solid #e9ecef
+		border-radius: var(--size-border-radius, 0.25rem)
+		box-shadow: var(--shadow-light, 0 0 6px 1px rgb(0 0 0 / 0.1))
+		z-index: 120
+		padding: 4px 0
+	.language-option
+		appearance: none
+		background: none
+		border: none
+		display: block
+		width: 100%
+		text-align: left
+		padding: 8px 16px
+		font: inherit
+		color: inherit
+		cursor: pointer
+		&:hover, &.active
+			background-color: rgba(0, 0, 0, 0.06)
+		&.active
+			font-weight: 600
+	.sr-only
+		position: absolute
+		width: 1px
+		height: 1px
+		padding: 0
+		margin: -1px
+		overflow: hidden
+		clip: rect(0, 0, 0, 0)
+		white-space: nowrap
+		border: 0
 	.admin-session-actions
 		display: flex
 		align-items: stretch
@@ -373,7 +555,7 @@ onBeforeUnmount(() => {
 			border: none
 			padding: 0 12px
 			margin: 0
-			min-height: 48px
+			min-height: 50px
 			height: 100%
 			box-sizing: border-box
 			display: inline-flex
@@ -413,46 +595,88 @@ onBeforeUnmount(() => {
 	.left
 		display: flex
 		align-items: center
-		gap: 4px
+		gap: 2px
 		position: relative
-		.hamburger
+		.navbar-toggle-sidebar
 			appearance: none
-			background: none
-			border: none
-			padding: 0.5rem
-			margin: 0
-			width: auto
-			height: auto
-			display: flex
-			flex-direction: column
+			background: transparent !important
+			background-color: transparent !important
+			border: none !important
+			padding: 7px 9px
+			margin: 1px 0 0 0
+			color: #fff
+			font-size: 14px
+			display: inline-flex
+			align-items: center
 			justify-content: center
-			align-items: flex-start
 			cursor: pointer
 			-webkit-tap-highlight-color: transparent
-			outline: none
+			outline: none !important
+			box-shadow: none !important
+			border-radius: 0
+			transition: color 0.15s ease
+			&:hover, &:focus, &:active
+				background: transparent !important
+				background-color: transparent !important
+				color: rgba(255, 255, 255, 0.8)
+				outline: none !important
+				box-shadow: none !important
 			&:focus-visible
-				outline: 2px solid var(--clr-primary)
-				outline-offset: 2px
-			.bar
-				display: block
-				width: 22px
-				height: 3px
-				background: var(--app-bar-text)
-				border-radius: 2px
-				&:not(:last-child)
-					margin-bottom: 5px
-	.logo
-		margin-left: 0
-		font-size: 24px
-		height: 40px
-		&.anonymous
-			pointer-events: none
-		img
-			height: 100%
-			max-width: 100%
-			object-fit: contain
-			margin: 0
-			padding: 0
+				outline: none !important
+			.fa-bars
+				font-size: 18px
+				color: inherit
+				line-height: 1
+		.navbar-brand
+			display: inline-flex
+			align-items: center
+			height: 50px
+			padding: 5px 0
+			margin-right: 16px
+			margin-left: 2px
+			font-size: 20px
+			font-weight: 500
+			line-height: inherit
+			white-space: nowrap
+			color: #f8f9fa
+			text-decoration: none
+			font-family: inherit
+			&.anonymous
+				pointer-events: none
+			img
+				display: inline-block
+				vertical-align: middle
+				height: 30px
+				width: auto
+				margin-top: 0
+				margin-right: 0.2em
+			.brand-text
+				font-size: 20px
+				font-weight: 500
+				color: #f8f9fa
+				line-height: 1
+				letter-spacing: normal
+			&:hover, &:focus
+				color: #fff
+				text-decoration: none
+		.nav-view-event
+			display: inline-flex
+			align-items: center
+			gap: 6px
+			color: rgba(255, 255, 255, 0.9)
+			font-size: 14px
+			text-decoration: none
+			padding: 0 12px
+			height: 50px
+			line-height: 50px
+			margin-left: 8px
+			font-weight: normal
+			transition: color 0.15s ease
+			.fa
+				font-size: 14px
+			&:hover, &:focus
+				color: #ffffff
+				text-decoration: none
 	.user-section
 		display: flex
 		align-items: center
@@ -676,12 +900,73 @@ onBeforeUnmount(() => {
 	transform: translateY(-4px)
 
 
-@media (max-width: 560px)
+@media (max-width: 991px)
 	.c-app-bar
+		padding: 0 10px 0 6px
+		.nav-view-event
+			padding: 0 8px
+			margin-left: 4px
+			span
+				display: none
+		.admin-session-actions .admin-mode-btn
+			padding: 0 8px
+			span
+				display: none
 		.user-profile .display-name
+			max-width: 90px
+
+@media (max-width: 767px)
+	.c-app-bar
+		height: 50px
+		padding: 0 8px 0 4px
+		.left
+			gap: 0
+			.navbar-brand
+				margin-right: 6px
+				margin-left: 0
+				padding: 0
+				img
+					height: 28px
+					margin-right: 4px
+		.nav-actions
+			gap: 2px
+		.language-toggle
+			padding: 0 6px
+			gap: 3px
+			font-size: 13px
+		.user-profile
+			padding: 4px
+			gap: 4px
+			.display-name
+				display: none
+			.user-caret
+				margin-left: 0
+		.language-dropdown
+			right: 4px
+			max-width: calc(100vw - 12px)
+		.user-section
+			.profile-dropdown
+				right: 4px
+				max-width: calc(100vw - 12px)
+				&::before
+					right: 14px
+				&::after
+					right: 15px
+				.profile-submenu
+					position: static
+					right: auto
+					top: auto
+					margin: 4px 0 4px 12px
+					box-shadow: none
+					border: 1px solid #e9ecef
+					border-left: 3px solid var(--clr-primary, #2185d0)
+					&::before, &::after
+						display: none
+
+@media (max-width: 480px)
+	.c-app-bar
+		.left .navbar-brand .brand-text
 			display: none
-		.logo img
-			max-width: 120px
 
 #app.override-sidebar-collapse .c-app-bar
 	border-bottom: none

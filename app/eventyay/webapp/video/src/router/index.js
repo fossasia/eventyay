@@ -162,6 +162,22 @@ const routes = [
 				props: true
 			},
 			{
+				path: 'event/chat',
+				name: 'admin:chat:index',
+				component: () => import('views/admin/chat/index')
+			},
+			{
+				path: 'event/chat/new',
+				name: 'admin:chat:new',
+				component: () => import('views/admin/chat/new')
+			},
+			{
+				path: 'event/chat/:roomId',
+				name: 'admin:chat:item',
+				component: () => import('views/admin/chat/item'),
+				props: true
+			},
+			{
 				path: 'event/announcements',
 				name: 'admin:announcements',
 				component: () => import('views/admin/announcements'),
@@ -189,52 +205,71 @@ const routes = [
 				props: true
 			},
 			{
-				path: 'event/admin/:admin_path(.*)*',
-				name: 'admin:video-admin',
-				component: () => import('views/admin/config/video-admin')
+				path: 'event/config',
+				name: 'admin:config',
+				component: () => import('views/admin/config/main')
 			},
 			{
-				path: 'event/config',
-				component: () => import('views/admin/config'),
-				children: [{
-					path: '',
-					name: 'admin:config',
-					component: () => import('views/admin/config/main')
-				},
-				{
-					path: 'token-generator',
-					name: 'admin:config:token-generator',
-					component: () => import('views/admin/config/token-generator')
-				},
-				{
-					path: 'registration',
-					name: 'admin:config:registration',
-					component: () => import('views/admin/config/registration')
-				},
-				{
-					path: 'privacy',
-					name: 'admin:config:privacy',
-					component: () => import('views/admin/config/privacy')
-				},
-				{
-					path: 'audit-log',
-					name: 'admin:config:audit-log',
-					component: () => import('views/admin/config/audit-log')
-				},
-				{
-					path: 'reports',
-					name: 'admin:config:reports',
-					component: () => import('views/admin/config/reports')
-				}
-				]
+				path: 'event/config/token-generator',
+				name: 'admin:config:token-generator',
+				component: () => import('views/admin/config/token-generator')
+			},
+			{
+				path: 'event/config/privacy',
+				name: 'admin:config:privacy',
+				component: () => import('views/admin/config/privacy')
+			},
+			{
+				path: 'event/config/audit-log',
+				name: 'admin:config:audit-log',
+				component: () => import('views/admin/config/audit-log')
+			},
+			{
+				path: 'event/config/reports',
+				name: 'admin:config:reports',
+				component: () => import('views/admin/config/reports')
 			}
 		]
 	}
 ]
 
+import { jwtDecode } from 'jwt-decode'
+import store from 'store'
+import { hasOrganizerTraits } from 'lib/traitGrants'
+
 const router = createRouter({
 	history: createWebHistory(config.basePath),
 	routes
+})
+
+router.beforeEach((to, from, next) => {
+	const isOrganizerRoute = (typeof to.name === 'string' && (to.name.startsWith('admin') || to.name === 'room:manage')) ||
+		(typeof to.path === 'string' && (to.path.startsWith('/event') || to.path.includes('/manage')))
+	if (isOrganizerRoute) {
+		const token = store.state.token || localStorage.getItem('token')
+		let tokenTraits = []
+		if (token) {
+			try {
+				tokenTraits = jwtDecode(token)?.traits || []
+			} catch (e) {}
+		}
+		const hasManager = hasOrganizerTraits(tokenTraits)
+		const hasStorePerm = store.getters.hasPermission('world:users.list') ||
+			store.getters.hasPermission('world:update') ||
+			store.getters.hasPermission('world:announce') ||
+			store.getters.hasPermission('room:update') ||
+			store.getters.hasPermission('room:chat.moderate') ||
+			store.getters.hasPermission('room:poll.manage') ||
+			store.getters.hasPermission('room:question.moderate') ||
+			store.getters.hasPermission('world:kiosks.manage')
+		if (!hasManager && !hasStorePerm) {
+			if (to.params?.roomId) {
+				return next({ name: 'room', params: { roomId: to.params.roomId } })
+			}
+			return next({ name: 'about' })
+		}
+	}
+	next()
 })
 
 export default router

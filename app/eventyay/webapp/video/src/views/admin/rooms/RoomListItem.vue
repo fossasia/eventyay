@@ -1,20 +1,21 @@
 <template lang="pug">
-router-link.c-room-list-item.table-row(:to="{name: 'admin:rooms:item', params: {roomId: room.id}}", draggable="false")
-	.handle.mdi.mdi-drag-vertical(:class="{disabled}", v-handle, v-tooltip="disabled ? 'sorting is disabled while searching' : ''")
+router-link.c-room-list-item.table-row(:to="to", :class="{'mystery': !inferredType}", draggable="false")
+	.handle.mdi.mdi-drag-vertical(:class="{disabled}", v-handle, v-tooltip="disabled ? $t('sorting is disabled while searching') : ''")
 	.name(v-html="$emojify(room.name)")
 	.badge-cell
 		.badges-wrapper
 			.room-type-badge.unscheduled-room-badge(v-if="room.is_unscheduled")
 				.mdi.mdi-calendar-remove
-				span Unscheduled
+				span {{ $t('Unscheduled') }}
 			.room-type-badge(v-if="inferredType", :class="badgeClass")
 				.mdi(:class="badgeIcon")
 				span {{ badgeLabel }}
 			VideoProviderDropdown(
 				v-else,
-				label="Add Video",
+				:label="$t('Add Video')",
 				variant="action",
 				placement="bottom-end",
+				strategy="fixed",
 				@select="addVideo"
 			)
 </template>
@@ -29,7 +30,11 @@ export default {
 	directives: { handle: HandleDirective },
 	mixins: [ElementMixin],
 	props: {
-		room: Object
+		room: Object,
+		to: {
+			type: Object,
+			required: true
+		}
 	},
 	computed: {
 		inferredType () {
@@ -38,7 +43,8 @@ export default {
 			return inferType({ module_config: this.room.module_config })
 		},
 		badgeLabel () {
-			return getConfiguredRoomLabel(this.inferredType)
+			const label = getConfiguredRoomLabel(this.inferredType)
+			return label ? this.$t(label) : ''
 		},
 		badgeIcon () {
 			return `mdi-${this.inferredType.icon}`

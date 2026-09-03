@@ -2,10 +2,12 @@ import logging
 
 import i18nfield.forms
 from django import forms
+from django.conf import settings
 from django.core.files import File
 from django.core.validators import URLValidator
 from django.forms.models import ModelFormMetaclass
 from django.utils.crypto import get_random_string
+from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from formtools.wizard.views import SessionWizardView
@@ -250,6 +252,35 @@ class I18nMarkdownTextarea(i18nfield.forms.I18nTextarea):
         attrs = attrs.copy() if attrs is not None else {}
         attrs.setdefault('data-markdown-field', 'true')
         super().__init__(attrs=attrs, **kwargs)
+
+    def render(self, name, value, attrs=None, renderer=None):
+        if not isinstance(value, dict):
+            value = self.decompress(value)
+
+        output = []
+        id_ = attrs.get('id') if attrs else None
+        lang_dict = dict(settings.LANGUAGES)
+        for i, widget in enumerate(self.widgets):
+            locale_code = self.locales[i]
+            human_locale_name = str(lang_dict.get(locale_code, locale_code))
+            widget_value = value.get(locale_code, '') if isinstance(value, dict) else ''
+
+            final_attrs_widget = (attrs or {}).copy()
+            if id_:
+                final_attrs_widget['id'] = f'{id_}_{i}'
+                final_attrs_widget['title'] = human_locale_name
+                final_attrs_widget.setdefault('placeholder', human_locale_name)
+
+            textarea_html = widget.render(f'{name}_{i}', widget_value, final_attrs_widget, renderer=renderer)
+
+            wrapped_html = f'''
+            <div class="i18n-textarea-wrapper" data-lang="{escape(locale_code)}">
+                {textarea_html}
+            </div>
+            '''
+            output.append(wrapped_html)
+
+        return mark_safe(f'<div class="i18n-form-group" id="{escape(id_) if id_ else ""}">{  "".join(output) }</div>')
 
 
 class I18nAutoExpandingTextarea(i18nfield.forms.I18nTextarea):

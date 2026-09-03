@@ -70,8 +70,142 @@ def get_global_navigation(request: HttpRequest) -> List[MenuItem]:
     return nav
 
 
+def get_meetup_event_navigation(request: HttpRequest, event: Event) -> List[MenuItem]:
+    """Generate flat navigation items for a meetup event."""
+    url = request.resolver_match
+    if not url:
+        return []
+
+    nav = []
+    has_settings_perm = request.user.has_event_permission(
+        event.organizer,
+        event,
+        'can_change_event_settings',
+        request=request,
+    )
+    has_items_perm = request.user.has_event_permission(
+        event.organizer,
+        event,
+        'can_change_items',
+        request=request,
+    )
+    has_orders_perm = request.user.has_event_permission(
+        event.organizer,
+        event,
+        'can_view_orders',
+        request=request,
+    )
+    has_mail_perm = request.user.has_event_permission(
+        event.organizer,
+        event,
+        'can_change_orders',
+        request=request,
+    )
+
+    if has_settings_perm:
+        nav.append(
+            {
+                'label': _('Meetup settings'),
+                'url': reverse(
+                    'eventyay_common:event.update',
+                    kwargs={
+                        'event': event.slug,
+                        'organizer': event.organizer.slug,
+                    },
+                ),
+                'active': (url.url_name == 'event.update'),
+                'icon': 'wrench',
+            }
+        )
+
+    if has_orders_perm:
+        nav.append(
+            {
+                'label': _('Registrations'),
+                'url': reverse(
+                    'control:event.orders',
+                    kwargs={
+                        'event': event.slug,
+                        'organizer': event.organizer.slug,
+                    },
+                ),
+                'active': url.url_name in ('event.orders', 'event.order', 'event.orders.search')
+                or 'event.order.' in url.url_name,
+                'icon': 'list-alt',
+            }
+        )
+
+    if has_items_perm:
+        nav.append(
+            {
+                'label': _('Products'),
+                'url': reverse(
+                    'control:event.products',
+                    kwargs={
+                        'event': event.slug,
+                        'organizer': event.organizer.slug,
+                    },
+                ),
+                'active': url.url_name in ('event.product', 'event.products.add', 'event.products')
+                or 'event.product.' in url.url_name,
+                'icon': 'ticket',
+            }
+        )
+        nav.append(
+            {
+                'label': _('Quotas'),
+                'url': reverse(
+                    'control:event.products.quotas',
+                    kwargs={
+                        'event': event.slug,
+                        'organizer': event.organizer.slug,
+                    },
+                ),
+                'active': 'event.products.quota' in url.url_name,
+                'icon': 'tasks',
+            }
+        )
+
+    if has_settings_perm:
+        nav.append(
+            {
+                'label': _('Payment'),
+                'url': reverse(
+                    'control:event.settings.payment',
+                    kwargs={
+                        'event': event.slug,
+                        'organizer': event.organizer.slug,
+                    },
+                ),
+                'active': url.url_name == 'event.settings.payment',
+                'icon': 'credit-card',
+            }
+        )
+
+    if 'eventyay.plugins.sendmail' in event.get_plugins() and has_mail_perm:
+        nav.append(
+            {
+                'label': _('Message center'),
+                'url': reverse(
+                    'control:event.mail.compose',
+                    kwargs={
+                        'event': event.slug,
+                        'organizer': event.organizer.slug,
+                    },
+                ),
+                'active': 'event.mail' in url.url_name,
+                'icon': 'envelope',
+            }
+        )
+
+    return nav
+
+
 def get_event_navigation(request: HttpRequest, event: Event) -> List[MenuItem]:
     """Generate navigation items for an event."""
+    if is_meetup_event(event):
+        return get_meetup_event_navigation(request, event)
+
     url = request.resolver_match
     if not url:
         return []
@@ -86,7 +220,7 @@ def get_event_navigation(request: HttpRequest, event: Event) -> List[MenuItem]:
     if has_settings_perm:
         nav = [
             {
-                'label': _('Meetup settings') if is_meetup_event(event) else _('Event settings'),
+                'label': _('Event settings'),
                 'url': reverse(
                     'eventyay_common:event.update',
                     kwargs={
@@ -96,6 +230,18 @@ def get_event_navigation(request: HttpRequest, event: Event) -> List[MenuItem]:
                 ),
                 'active': (url.url_name == 'event.update'),
                 'icon': 'wrench',
+            },
+            {
+                'label': _('Event status'),
+                'url': reverse(
+                    'eventyay_common:event.live',
+                    kwargs={
+                        'event': event.slug,
+                        'organizer': event.organizer.slug,
+                    },
+                ),
+                'active': (url.url_name == 'event.live'),
+                'icon': 'tachometer',
             },
             {
                 'label': _('Plugins'),
@@ -124,6 +270,19 @@ def get_event_navigation(request: HttpRequest, event: Event) -> List[MenuItem]:
     merge_in(nav, sorted_plugin_items)
 
     return nav
+
+
+def _is_hubspot_nav_item(item: dict) -> bool:
+    url = item.get('url', '')
+    label = str(item.get('label', '')).lower()
+    return 'hubspot' in url or label == 'hubspot'
+
+
+def _is_social_media_nav_item(item: dict) -> bool:
+    url = item.get('url', '')
+    label = str(item.get('label', '')).lower()
+    return 'socialmedia' in url or 'social_media' in url or 'social-media' in url or label == 'social media accounts'
+
 
 def get_organizer_navigation(request: HttpRequest) -> List[MenuItem]:
     url = request.resolver_match
@@ -252,20 +411,48 @@ def get_organizer_navigation(request: HttpRequest) -> List[MenuItem]:
         }
     )
 
-
-    merge_in(
-        nav,
-        sorted(
-            sum(
-                (
-                    list(a[1])
-                    for a in nav_organizer.send(request.organizer, request=request, organizer=request.organizer)
-                ),
-                [],
-            ),
-            key=lambda r: (1 if r.get('parent') else 0, r['label']),
-        ),
+    plugin_responses = nav_organizer.send(
+        request.organizer,
+        request=request,
+        organizer=request.organizer,
     )
+    plugin_nav_items = []
+    for receiver, response in plugin_responses:
+        if response:
+            plugin_nav_items.extend(response)
+
+    hubspot_item = None
+    social_media_item = None
+    other_plugin_items = []
+
+    for item in plugin_nav_items:
+        if _is_hubspot_nav_item(item):
+            hubspot_item = item
+        elif _is_social_media_nav_item(item):
+            social_media_item = item
+        else:
+            other_plugin_items.append(item)
+
+    settings_url = reverse(
+        'eventyay_common:organizer.edit',
+        kwargs={'organizer': request.organizer.slug},
+    )
+    settings_item = next((n for n in nav if n.get('url') == settings_url), None)
+
+    if settings_item is not None:
+        if hubspot_item:
+            settings_item['children'].append(hubspot_item)
+        if social_media_item:
+            settings_item['children'].append(social_media_item)
+
+    # Sort remaining navigation items, prioritizing non-parent items and alphabetically
+    sorted_plugin_items = sorted(
+        other_plugin_items,
+        key=lambda r: (1 if r.get('parent') else 0, r['label']),
+    )
+
+    # Merge plugin items into default navigation
+    merge_in(nav, sorted_plugin_items)
     return nav
 
 

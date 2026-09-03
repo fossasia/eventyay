@@ -5,6 +5,7 @@
 {% load eventurl %}
 {% load statici18n %}
 {% load presale_locale %}
+{% load rich_text %}
 
 <!DOCTYPE html>
 <html lang="{{ html_locale }}"{% if rtl %} dir="rtl" class="rtl"{% endif %}>
@@ -12,8 +13,41 @@
         <meta charset="utf-8">
         <title>{{ site_name }}</title>
         {% block meta_tags %}
-        <meta name="title" content="{% trans 'Start page' %} {{ site_name }}">
-        <meta name="description" content="{% trans 'Browse live events on' %} {{ site_name }}">
+        <meta name="title" content="{% if global_settings.seo_homepage_title %}{{ global_settings.seo_homepage_title }}{% else %}{% trans 'Start page' %} {{ site_name }}{% endif %}">
+        <meta name="description" content="{% if global_settings.seo_homepage_description %}{{ global_settings.seo_homepage_description }}{% else %}{% trans 'Browse live events on' %} {{ site_name }}{% endif %}">
+        
+        <meta property="og:title" content="{% if global_settings.seo_og_title %}{{ global_settings.seo_og_title }}{% elif global_settings.seo_homepage_title %}{{ global_settings.seo_homepage_title }}{% else %}{% trans 'Start page' %} {{ site_name }}{% endif %}">
+        <meta property="og:description" content="{% if global_settings.seo_og_description %}{{ global_settings.seo_og_description }}{% elif global_settings.seo_homepage_description %}{{ global_settings.seo_homepage_description }}{% else %}{% trans 'Browse live events on' %} {{ site_name }}{% endif %}">
+        <meta property="og:url" content="{{ request.build_absolute_uri }}">
+        {% if global_settings.seo_social_image %}
+            <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ global_settings.seo_social_image.url }}">
+            <meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{{ global_settings.seo_social_image.url }}">
+            <meta name="twitter:card" content="summary_large_image">
+        {% else %}
+            <meta name="twitter:card" content="summary">
+        {% endif %}
+        <meta name="twitter:title" content="{% if global_settings.seo_twitter_title %}{{ global_settings.seo_twitter_title }}{% elif global_settings.seo_og_title %}{{ global_settings.seo_og_title }}{% elif global_settings.seo_homepage_title %}{{ global_settings.seo_homepage_title }}{% else %}{% trans 'Start page' %} {{ site_name }}{% endif %}">
+        <meta name="twitter:description" content="{% if global_settings.seo_twitter_description %}{{ global_settings.seo_twitter_description }}{% elif global_settings.seo_og_description %}{{ global_settings.seo_og_description }}{% elif global_settings.seo_homepage_description %}{{ global_settings.seo_homepage_description }}{% else %}{% trans 'Browse live events on' %} {{ site_name }}{% endif %}">
+        {% endblock %}
+        
+        {% block structured_data %}
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "{% if global_settings.seo_homepage_title %}{{ global_settings.seo_homepage_title }}{% else %}{{ site_name }}{% endif %}",
+            "url": "{{ request.build_absolute_uri }}"
+        }
+        </script>
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": "{{ site_name }}",
+            "url": "{{ request.build_absolute_uri }}",
+            "logo": "{% if global_settings.seo_social_image %}{{ request.scheme }}://{{ request.get_host }}{{ global_settings.seo_social_image.url }}{% endif %}"
+        }
+        </script>
         {% endblock %}
         <meta name="application-name" content="{{ site_name }}">
         <meta name="generator" content="{{ site_name }}">
@@ -42,6 +76,7 @@
             <link rel="stylesheet" type="text/css" href="{% static "agenda/css/_speaker.css" %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'common/css/_navbar.css' %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'common/css/_component_nav_mobile.css' %}" />
+            <link rel="stylesheet" type="text/css" href="{% static 'common/css/_footer.css' %}" />
             <link rel="stylesheet" type="text/x-scss" href="{% static "pretixpresale/scss/startpage.scss" %}" />
         {% endcompress %}
         {% if css_file %}
@@ -198,7 +233,7 @@
                             {% block back_button %}{% endblock %}
                             <div class="event-hero-text">
                                 <div class="event-title">
-                                    {{ startpage_header_text }}
+                                    {{ startpage_header_text|rich_text }}
                                 </div>
                             </div>
                         </div>
@@ -223,6 +258,7 @@
                 {% for footer in footer_links %}
                     · <a href="{% safelink footer.url %}" target="_blank" rel="noopener">{{ footer.label }}</a>
                 {% endfor %}
+                {% include "common/includes/core_footer.html" %}
                 <ul class="list-inline text-center startpage-footer-links">
                     {% if show_link_in_footer_for_start_page %}
                         {% for page in show_link_in_footer_for_start_page %}

@@ -1,0 +1,268 @@
+{% extends "eventyay_common/base.html" %}
+{% load i18n %}
+{% load bootstrap3 %}
+{% load static %}
+
+{% block title %}{% trans "Create a meetup" %}{% endblock %}
+
+{% block custom_header %}
+    <link type="text/css" rel="stylesheet" href="{% static 'vendored/cropperjs/cropper.min.css' %}">
+    <link type="text/css" rel="stylesheet" href="{% static 'pretixpresale/css/meetup.css' %}">
+    <script defer src="{% static "eventyay-common/js/ui/event-create.js" %}"></script>
+    <script type="module" src="{% static "eventyay-common/js/ui/meetup-create.js" %}"></script>
+    <script defer src="{% static 'vendored/cropperjs/cropper.min.js' %}"></script>
+    <script defer src="{% static 'eventyay-common/image_cropper.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+    <h1>{% trans "Create a meetup" %}</h1>
+    {% if has_organizer %}
+        {{ organizer_slug_options|json_script:"event-create-organizers" }}
+        <form action="" method="post" enctype="multipart/form-data" class="form-horizontal">
+            {% csrf_token %}
+            <input type="hidden" name="is_meetup" value="on">
+            <input type="hidden" name="{{ foundation_form.has_subevents.html_name }}" value="">
+            <input type="hidden" name="{{ foundation_form.is_video_creation.html_name }}" value="">
+
+            {% bootstrap_form_errors foundation_form %}
+            {% bootstrap_form_errors basics_form %}
+
+            {% if foundation_form.organizer.field.queryset.count > 1 %}
+            <fieldset>
+                <legend>{% trans "Organizer" %}</legend>
+                <div class="form-group{% if foundation_form.organizer.errors %} has-error{% endif %}">
+                    <label class="col-md-3 control-label" for="{{ foundation_form.organizer.id_for_label }}">
+                        {{ foundation_form.organizer.label }}
+                        {% if foundation_form.organizer.field.required %}<span class="text-danger">*</span>{% endif %}
+                    </label>
+                    <div class="col-md-9">
+                        {% bootstrap_field foundation_form.organizer layout="inline" show_label=False form_group_class="" %}
+                    </div>
+                </div>
+            </fieldset>
+            {% else %}
+                <div class="hidden">
+                    {% bootstrap_field foundation_form.organizer %}
+                </div>
+            {% endif %}
+
+            <fieldset>
+                <legend>{% trans "Localization" %}</legend>
+                {% bootstrap_field foundation_form.locales layout="control" %}
+                <input type="hidden" name="basics-locale" id="id_basics-locale" value="{% firstof basics_form.locale.value foundation_form.locales.value|first 'en' %}">
+            </fieldset>
+
+            <fieldset>
+                <legend>{% trans "General information" %}</legend>
+                <div id="event-name-field">
+                    {% bootstrap_field basics_form.name layout="control" %}
+                </div>
+
+                {% include "eventyay_common/includes/event_schedule_row.html" with date_from_form=basics_form.date_from date_to_form=basics_form.date_to timezone_form=basics_form.timezone %}
+
+                {% bootstrap_field basics_form.frontpage_text layout="control" %}
+
+                {% bootstrap_field basics_form.logo_image layout="control" %}
+            </fieldset>
+
+            <fieldset>
+                <legend>{% trans "Location" %}</legend>
+                <div class="form-group{% if basics_form.location_type.errors %} has-error{% endif %}">
+                    <div class="col-md-9 col-md-offset-3">
+                        {% for radio in basics_form.location_type %}
+                            <label class="radio-inline" for="{{ radio.id_for_label }}">
+                                {{ radio.tag }} {{ radio.choice_label }}
+                            </label>
+                        {% endfor %}
+                        {% if basics_form.location_type.help_text %}
+                            <div class="help-block">{{ basics_form.location_type.help_text }}</div>
+                        {% endif %}
+                        {% if basics_form.location_type.errors %}
+                            <div class="help-block text-danger">{{ basics_form.location_type.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div id="physical-location-group">
+                    {% with form=basics_form %}
+                        <div class="geodata-section">
+                            <div id="event-location-field">
+                                {% bootstrap_field form.location layout="control" %}
+                            </div>
+                            {% include "pretixcontrol/event/fragment_geodata_autoupdate.html" %}
+                            <div class="form-group geodata-group"
+                                 data-tiles="{{ global_settings.leaflet_tiles }}"
+                                 data-attrib="{{ global_settings.leaflet_tiles_attribution }}"
+                                 data-icon="{% static 'leaflet/images/marker-icon.png' %}"
+                                 data-shadow="{% static 'leaflet/images/marker-shadow.png' %}">
+                                <label class="col-md-3 control-label">
+                                    {% trans "Geo coordinates" %}<br>
+                                    <span class="optional">{% trans "Optional" %}</span>
+                                </label>
+                                <div class="col-md-4">
+                                    {% bootstrap_field form.geo_lat layout="inline" %}
+                                    {% if global_settings.opencagedata_apikey %}
+                                        <p class="attrib">
+                                            <a href="https://openstreetmap.org/" target="_blank">
+                                                {% trans "Geocoding data © OpenStreetMap" %}
+                                            </a>
+                                        </p>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4">
+                                    {% bootstrap_field form.geo_lon layout="inline" %}
+                                </div>
+                                <div class="col-md-1"></div>
+                            </div>
+                        </div>
+                    {% endwith %}
+                </div>
+
+                <div id="virtual-video-group" class="hidden">
+                    {% bootstrap_field basics_form.video_type layout="control" %}
+                    <div id="video-url-group">
+                        {% bootstrap_field basics_form.video_url layout="control" %}
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>{% trans "Registration limit" %}</legend>
+                <div class="form-group{% if basics_form.capacity_type.errors %} has-error{% endif %}">
+                    <label class="col-md-3 control-label">
+                        {{ basics_form.capacity_type.label }} <span class="text-danger">*</span>
+                    </label>
+                    <div class="col-md-9">
+                        {% for radio in basics_form.capacity_type %}
+                            <label class="radio-inline" for="{{ radio.id_for_label }}">
+                                {{ radio.tag }} {{ radio.choice_label }}
+                            </label>
+                        {% endfor %}
+                        {% if basics_form.capacity_type.help_text %}
+                            <div class="help-block">{{ basics_form.capacity_type.help_text }}</div>
+                        {% endif %}
+                        {% if basics_form.capacity_type.errors %}
+                            <div class="help-block text-danger">{{ basics_form.capacity_type.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div id="registration-limit-group" class="hidden">
+                    {% bootstrap_field basics_form.registration_limit layout="control" %}
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>{% trans "Registration fee" %}</legend>
+                <div class="form-group{% if basics_form.registration_fee_type.errors %} has-error{% endif %}">
+                    <label class="col-md-3 control-label">
+                        {{ basics_form.registration_fee_type.label }} <span class="text-danger">*</span>
+                    </label>
+                    <div class="col-md-9">
+                        {% for radio in basics_form.registration_fee_type %}
+                            <label class="radio-inline" for="{{ radio.id_for_label }}">
+                                {{ radio.tag }} {{ radio.choice_label }}
+                            </label>
+                        {% endfor %}
+                        {% if basics_form.registration_fee_type.help_text %}
+                            <div class="help-block">{{ basics_form.registration_fee_type.help_text }}</div>
+                        {% endif %}
+                        {% if basics_form.registration_fee_type.errors %}
+                            <div class="help-block text-danger">{{ basics_form.registration_fee_type.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div id="registration-fee-group" class="hidden">
+                    {% bootstrap_field basics_form.registration_fee layout="control" %}
+
+                    <div class="form-group{% if basics_form.payment_stripe_publishable_key.errors or basics_form.payment_stripe_secret_key.errors or basics_form.payment_stripe_merchant_country.errors %} has-error{% endif %}">
+                        <label class="col-md-3 control-label">{% trans "Payment method" %}</label>
+                        <div class="col-md-9">
+                            <button type="button" class="btn btn-default" id="openStripeModalBtn" data-toggle="modal" data-target="#stripeConfigModal">
+                                <span id="stripeBtnLabel">{% trans "Configure Stripe" %}</span>
+                            </button>
+                            <span id="stripeStatusIndicator" class="text-success hidden meetup-stripe-status-indicator">
+                                <span class="fa fa-check-circle"></span> {% trans "Stripe configured" %}
+                            </span>
+                            {% if basics_form.payment_stripe_publishable_key.errors %}
+                                <div class="help-block text-danger">{{ basics_form.payment_stripe_publishable_key.errors }}</div>
+                            {% endif %}
+                            {% if basics_form.payment_stripe_secret_key.errors %}
+                                <div class="help-block text-danger">{{ basics_form.payment_stripe_secret_key.errors }}</div>
+                            {% endif %}
+                            {% if basics_form.payment_stripe_merchant_country.errors %}
+                                <div class="help-block text-danger">{{ basics_form.payment_stripe_merchant_country.errors }}</div>
+                            {% endif %}
+                            <div class="help-block text-muted">{% trans "Stripe credentials are required to accept paid registrations." %}</div>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+            <div class="modal fade" id="stripeConfigModal" tabindex="-1" role="dialog" aria-labelledby="stripeConfigModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-md" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                            <h4 class="modal-title" id="stripeConfigModalLabel">
+                                {% trans "Configure Stripe" %}
+                            </h4>
+                        </div>
+                        <div class="modal-body">
+                            <p class="text-muted">
+                                {% trans "Enter your Stripe API keys to accept online payments for this meetup." %}
+                            </p>
+                            {% bootstrap_field basics_form.payment_stripe_publishable_key layout="control" %}
+                            {% bootstrap_field basics_form.payment_stripe_secret_key layout="control" %}
+                            {% bootstrap_field basics_form.payment_stripe_merchant_country layout="control" %}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Cancel" %}</button>
+                            <button type="button" class="btn btn-primary" id="stripeSaveBtn" data-dismiss="modal">{% trans "Save & Apply" %}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group submit-group">
+                <button type="submit" class="btn btn-primary btn-save pull-right flip">
+                    {% trans "Create meetup" %}
+                </button>
+            </div>
+        </form>
+
+        <div class="modal fade" id="cropperModal" tabindex="-1" role="dialog" aria-labelledby="cropperModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        <h4 class="modal-title" id="cropperModalLabel">{% trans "Crop Image" %}</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="img-container">
+                            <img id="cropperImage" src="" alt="Picture">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Cancel" %}</button>
+                        <button type="button" class="btn btn-primary" id="cropperSaveBtn">{% trans "Apply Crop" %}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-danger">
+            {% trans "Every meetup needs to be created as part of an organizer account. Currently, you do not have access to any organizer accounts." %}
+        </div>
+        {% if staff_session %}
+            <a href='{% url "eventyay_common:organizers.add" %}' class="btn btn-default">
+                {% trans "Create a new organizer" %}
+            </a>
+        {% endif %}
+    {% endif %}
+{% endblock %}

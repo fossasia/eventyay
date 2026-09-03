@@ -34,6 +34,12 @@ from django_scopes import scope, scopes_disabled
 from i18nfield.strings import LazyI18nString
 
 from eventyay.base.email import ClassicMailRenderer
+from eventyay.base.gmail.errors import (
+    GmailDailyLimitError,
+    GmailPermanentError,
+    GmailRateLimitError,
+    GmailTemporaryError,
+)
 from eventyay.base.i18n import language
 from eventyay.base.models import (
     CachedFile,
@@ -533,6 +539,42 @@ def mail_send_task(
             logger.info('Try to send email to %s with subject "%s"', to, subject)
             logger.debug('Email backend: %s', backend)
             backend.send_messages([email])
+        except (
+            GmailRateLimitError,
+            GmailTemporaryError,
+        ) as e:
+            countdown = getattr(backend, 'retry_countdown', 60)
+            try:
+                self.retry(
+                    max_retries=5,
+                    countdown=min(countdown * (2 ** self.request.retries), 300),
+                )
+            except MaxRetriesExceededError:
+                if order:
+                    order.log_action(
+                        'eventyay.event.order.email.error',
+                        data={
+                            'subject': 'Gmail temporary error',
+                            'message': str(e),
+                            'recipient': '',
+                            'invoices': [],
+                        },
+                    )
+                raise SendMailException(f'Failed to send an email to {to}.') from e
+            raise
+        except (GmailDailyLimitError, GmailPermanentError) as e:
+            logger.warning('Gmail delivery rejected without further retries: %s', e)
+            if order:
+                order.log_action(
+                    'eventyay.event.order.email.error',
+                    data={
+                        'subject': 'Gmail delivery rejected',
+                        'message': str(e),
+                        'recipient': '',
+                        'invoices': [],
+                    },
+                )
+            raise SendMailException(f'Failed to send an email to {to}.') from e
         except (smtplib.SMTPResponseException, smtplib.SMTPSenderRefused) as e:
             logger.debug('Got error %s. Retry...', e)
             if e.smtp_code in (101, 111, 421, 422, 431, 442, 447, 452):
@@ -808,12 +850,17 @@ def get_mail_backend(timeout=None):
     or by returning a custom one based on the system's settings.
     """
     from eventyay.base.email import CustomSMTPBackend, SendGridEmail
+    from eventyay.base.gmail.resolver import get_gmail_mail_backend
 
     gs = GlobalSettingsObject()
     smtp_host = gs.settings.smtp_host
     smtp_port = gs.settings.smtp_port
 
     if gs.settings.email_vendor is not None:
+        if gs.settings.email_vendor == 'gmail_api':
+            backend = get_gmail_mail_backend(timeout=timeout)
+            if backend:
+                return backend
         if gs.settings.email_vendor == 'sendgrid':
             return SendGridEmail(api_key=gs.settings.send_grid_api_key)
         if smtp_reachable(smtp_host, smtp_port, timeout=timeout):

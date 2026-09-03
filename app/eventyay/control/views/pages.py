@@ -12,24 +12,221 @@ from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic import FormView, ListView, TemplateView, UpdateView
 
+from i18nfield.strings import LazyI18nString
+
 from eventyay.base.models.page import Page
+from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.templatetags.rich_text import compile_markdown
+from eventyay.common.permissions import is_admin_mode_active
 from eventyay.control.forms.page import PageSettingsForm
+from eventyay.control.forms.pages_admin import (
+    ALL_PAGE_I18N_KEYS,
+    DEFAULT_PAGE_LOCALE,
+    DEFAULT_PAGE_SLUGS,
+    PAGE_TITLES,
+    DefaultPageContentForm,
+    FooterContentForm,
+    GlobalBannerContentForm,
+    StartPageContentForm,
+)
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
+from eventyay.eventyay_common.navigation import get_global_navigation
 from eventyay.helpers.compat import CompatDeleteView
 
 
-class PageList(AdministratorPermissionRequiredMixin, ListView):
+def build_pages_tabs(active):
+    """Return the tab definitions for the consolidated admin *Pages* area.
+
+    ``active`` is either a static tab key ("startpage", "footer", "banner",
+    "additional") or a default-page slug (e.g. "terms").
+    """
+    tabs = [
+        {'key': 'startpage', 'label': _('Start page'), 'url': reverse('eventyay_admin:admin.pages')},
+        {'key': 'footer', 'label': _('Footer'), 'url': reverse('eventyay_admin:admin.pages.footer')},
+    ]
+    for slug in DEFAULT_PAGE_SLUGS:
+        tabs.append(
+            {
+                'key': slug,
+                'label': PAGE_TITLES[slug],
+                'url': reverse('eventyay_admin:admin.pages.default', kwargs={'slug': slug}),
+            }
+        )
+    tabs.append({'key': 'banner', 'label': _('Global banner'), 'url': reverse('eventyay_admin:admin.pages.banner')})
+    tabs.append(
+        {'key': 'additional', 'label': _('Additional pages'), 'url': reverse('eventyay_admin:admin.pages.additional')}
+    )
+    for tab in tabs:
+        tab['active'] = tab['key'] == active
+    return tabs
+
+
+class PagesTabMixin:
+    """Shared context (tab bar) for every view rendered inside the Pages area."""
+
+    tab_key = None
+
+    def get_active_tab(self):
+        return self.tab_key
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['page_tabs'] = build_pages_tabs(self.get_active_tab())
+        return ctx
+
+
+class PagesSettingsView(PagesTabMixin, AdministratorPermissionRequiredMixin, FormView):
+    """Base FormView for the settings-backed Pages tabs."""
+
+    def form_valid(self, form):
+        form.save()
+        messages.success(self.request, _('Your changes have been saved.'))
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        messages.error(self.request, _('Your changes have not been saved, see below for errors.'))
+        return super().form_invalid(form)
+
+
+class PagesStartPageView(PagesSettingsView):
+    template_name = 'pretixcontrol/admin/pages/startpage.html'
+    form_class = StartPageContentForm
+    tab_key = 'startpage'
+
+    def get_success_url(self):
+        return reverse('eventyay_admin:admin.pages')
+
+
+class PagesFooterView(PagesSettingsView):
+    template_name = 'pretixcontrol/admin/pages/footer.html'
+    form_class = FooterContentForm
+    tab_key = 'footer'
+
+    def get_success_url(self):
+        return reverse('eventyay_admin:admin.pages.footer')
+
+
+class PagesGlobalBannerView(PagesSettingsView):
+    template_name = 'pretixcontrol/admin/pages/banner.html'
+    form_class = GlobalBannerContentForm
+    tab_key = 'banner'
+
+    def get_success_url(self):
+        return reverse('eventyay_admin:admin.pages.banner')
+
+
+class PagesDefaultPageView(PagesSettingsView):
+    template_name = 'pretixcontrol/admin/pages/default_page.html'
+    form_class = DefaultPageContentForm
+
+    def dispatch(self, request, *args, **kwargs):
+        self.slug = kwargs.get('slug')
+        if self.slug not in DEFAULT_PAGE_SLUGS:
+            raise Http404(_('The requested page does not exist.'))
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_active_tab(self):
+        return self.slug
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['slug'] = self.slug
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['slug'] = self.slug
+        ctx['page_title'] = PAGE_TITLES.get(self.slug, self.slug)
+        ctx['has_content'] = self.slug in ('terms', 'privacy', 'pricing', 'support')
+        ctx['enabled_field'] = f'footer_link_{self.slug}_enabled'
+        ctx['url_field'] = f'footer_link_{self.slug}_url'
+        ctx['content_field'] = f'footer_page_{self.slug}_text'
+        if self.slug == 'documentation':
+            gs = GlobalSettingsObject().settings
+            ctx['preview_url'] = gs.get('footer_link_documentation_url') or 'https://docs.eventyay.com'
+        else:
+            ctx['preview_url'] = f'/{self.slug}/'
+        return ctx
+
+    def get_success_url(self):
+        return reverse('eventyay_admin:admin.pages.default', kwargs={'slug': self.slug})
+
+
+class PagesLocaleRemoveView(AdministratorPermissionRequiredMixin, View):
+    """Remove a language from all page content and from page_locales globally."""
+
+    def post(self, request, *args, **kwargs):
+        locale = (request.POST.get('locale') or '').strip().lower()
+        valid_codes = {code for code, _name in settings.LANGUAGES}
+        if not locale or locale not in valid_codes:
+            messages.error(request, _('Invalid language code.'))
+            return redirect(reverse('eventyay_admin:admin.pages'))
+
+        gs = GlobalSettingsObject().settings
+
+        raw = gs.get('page_locales')
+        if isinstance(raw, str):
+            try:
+                locales = json.loads(raw)
+            except (json.JSONDecodeError, TypeError):
+                locales = [DEFAULT_PAGE_LOCALE]
+        elif isinstance(raw, (list, tuple)):
+            locales = list(raw)
+        else:
+            locales = [DEFAULT_PAGE_LOCALE]
+
+        if locale not in locales:
+            messages.warning(request, _('That language is not currently active.'))
+            return redirect(reverse('eventyay_admin:admin.pages'))
+
+        if len(locales) <= 1:
+            messages.error(request, _('You must keep at least one language.'))
+            return redirect(reverse('eventyay_admin:admin.pages'))
+
+        # Strip the locale from every i18n content key across all tabs.
+        for key in ALL_PAGE_I18N_KEYS:
+            raw_val = gs.get(key)
+            if raw_val is None:
+                continue
+            if isinstance(raw_val, LazyI18nString):
+                data = raw_val.data
+            elif isinstance(raw_val, str):
+                try:
+                    data = json.loads(raw_val)
+                except (json.JSONDecodeError, TypeError):
+                    data = raw_val
+            else:
+                data = raw_val
+            if isinstance(data, dict) and locale in data:
+                del data[locale]
+                gs.set(key, LazyI18nString(data))
+
+        locales = [c for c in locales if c != locale]
+        gs.set('page_locales', json.dumps(locales))
+
+        messages.success(request, _('Language removed from all page content.'))
+
+        referer = request.POST.get('next') or request.META.get('HTTP_REFERER') or ''
+        if referer and url_has_allowed_host_and_scheme(
+            referer, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+        ):
+            return redirect(referer)
+        return redirect(reverse('eventyay_admin:admin.pages'))
+
+
+class PageList(PagesTabMixin, AdministratorPermissionRequiredMixin, ListView):
     model = Page
     context_object_name = 'pages'
     paginate_by = 20
     template_name = 'pretixcontrol/admin/pages/index.html'
+    tab_key = 'additional'
 
 
-class PageCreate(AdministratorPermissionRequiredMixin, FormView):
+class PageCreate(PagesTabMixin, AdministratorPermissionRequiredMixin, FormView):
     model = Page
     template_name = 'pretixcontrol/admin/pages/form.html'
     form_class = PageSettingsForm
+    tab_key = 'additional'
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -38,7 +235,7 @@ class PageCreate(AdministratorPermissionRequiredMixin, FormView):
 
     def get_success_url(self) -> str:
         return reverse(
-            'eventyay_admin:admin.pages',
+            'eventyay_admin:admin.pages.additional',
         )
 
     def form_valid(self, form):
@@ -60,7 +257,7 @@ class PageDetailMixin:
 
     def get_success_url(self) -> str:
         return reverse(
-            'eventyay_admin:admin.pages',
+            'eventyay_admin:admin.pages.additional',
         )
 
 
@@ -71,11 +268,12 @@ class PageEditForm(PageSettingsForm):
         return self.instance.slug
 
 
-class PageUpdate(AdministratorPermissionRequiredMixin, PageDetailMixin, UpdateView):
+class PageUpdate(PagesTabMixin, AdministratorPermissionRequiredMixin, PageDetailMixin, UpdateView):
     model = Page
     form_class = PageEditForm
     template_name = 'pretixcontrol/admin/pages/form.html'
     context_object_name = 'page'
+    tab_key = 'additional'
 
     def get_success_url(self) -> str:
         return reverse(
@@ -157,7 +355,7 @@ class PageVisibilityToggle(AdministratorPermissionRequiredMixin, PageDetailMixin
             require_https=request.is_secure(),
         ):
             return redirect(next_url)
-        return redirect('eventyay_admin:admin.pages')
+        return redirect('eventyay_admin:admin.pages.additional')
 
 
 class PageDelete(AdministratorPermissionRequiredMixin, PageDetailMixin, CompatDeleteView):
@@ -185,6 +383,8 @@ class ShowPageView(TemplateView):
         ctx = super().get_context_data()
         page = self.get_page()
         ctx['page'] = page
+        ctx['staff_session'] = is_admin_mode_active(self.request)
+        ctx['nav_items'] = get_global_navigation(self.request) if self.request.user.is_authenticated else []
         ctx['show_link_in_header_for_all_pages'] = Page.objects.filter(link_in_system=True, link_in_header=True)
         ctx['show_link_in_footer_for_all_pages'] = Page.objects.filter(link_in_system=True, link_in_footer=True)
 
@@ -200,9 +400,49 @@ class ShowPageView(TemplateView):
         url_schemes = set(getattr(nh3, 'DEFAULT_URL_SCHEMES', nh3.ALLOWED_URL_SCHEMES)) | {'data'}
 
         ctx['content'] = nh3.clean(
-            compile_markdown(str(page.text)),
+            str(page.text),
             tags=tags,
             attributes=attributes,
             url_schemes=url_schemes,
         )
         return ctx
+
+
+class SystemPageView(ShowPageView):
+    """Render system pages (terms, privacy, pricing, support) from DB or with default content if enabled."""
+
+    slug = None
+
+    def get_slug(self):
+        return self.slug or self.kwargs.get('slug')
+
+    def get_page(self):
+        slug = self.get_slug()
+        try:
+            return Page.objects.get(slug=slug)
+        except Page.DoesNotExist:
+            gs = GlobalSettingsObject().settings
+            enabled_key = f'footer_link_{slug}_enabled'
+            if gs.get(enabled_key, as_type=bool, default=True):
+                title_map = {
+                    'terms': _('Terms of Service'),
+                    'privacy': _('Privacy Policy'),
+                    'pricing': _('Pricing'),
+                    'support': _('Support & Help'),
+                }
+                title = title_map.get(slug, slug.capitalize())
+                custom_text = gs.get(f'footer_page_{slug}_text', as_type=LazyI18nString)
+                if custom_text:
+                    text = custom_text
+                else:
+                    # Default copy is Markdown; convert so ShowPageView can render HTML.
+                    text = compile_markdown(
+                        f'# {title}\n\n' + str(_('Content for this page has not been configured yet.'))
+                    )
+                return Page(
+                    title=title,
+                    slug=slug,
+                    text=text,
+                )
+            raise Http404(_('The requested page does not exist.'))
+

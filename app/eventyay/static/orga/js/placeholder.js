@@ -13,15 +13,45 @@ const makePlaceholderInactive = (placeholder) => {
     placeholder.querySelector(".list-group").classList.add("d-none")
 }
 
-const updateVisiblePlaceholders = () => {
-    if (document.querySelector("#id_speakers").selectedOptions.length === 0) {
-        makePlaceholderActive(document.querySelector("#placeholder-submission"))
-        makePlaceholderActive(document.querySelector("#placeholder-slot"))
-    } else {
-        makePlaceholderInactive(
-            document.querySelector("#placeholder-submission"),
-        )
-        makePlaceholderInactive(document.querySelector("#placeholder-slot"))
+const updateVisiblePlaceholders = (speakerSelect) => {
+    const groups = ["#placeholder-submission", "#placeholder-slot"]
+        .map((selector) => document.querySelector(selector))
+        .filter((group) => group)
+    const update = speakerSelect.selectedOptions.length === 0
+        ? makePlaceholderActive
+        : makePlaceholderInactive
+    groups.forEach(update)
+}
+
+const setDrawerOpen = (drawer, toggle, search, open) => {
+    drawer.hidden = !open
+    const form = drawer.closest("form")
+    if (form) {
+        form.classList.toggle("placeholder-drawer-open", open)
+    }
+    if (toggle) {
+        toggle.setAttribute("aria-expanded", open ? "true" : "false")
+    }
+    if (open && search) {
+        search.focus()
+    }
+}
+
+const filterPlaceholders = (drawer, empty, query) => {
+    const needle = query.trim().toLowerCase()
+    let matches = 0
+    drawer.querySelectorAll(".card").forEach((group) => {
+        let groupMatches = 0
+        group.querySelectorAll(".placeholder").forEach((item) => {
+            const match = item.dataset.placeholder.toLowerCase().includes(needle)
+            item.classList.toggle("d-none", !match)
+            if (match) groupMatches++
+        })
+        group.classList.toggle("d-none", groupMatches === 0)
+        matches += groupMatches
+    })
+    if (empty) {
+        empty.classList.toggle("d-none", matches > 0)
     }
 }
 
@@ -72,9 +102,41 @@ onReady(() => {
         })
     })
 
-    // When an individual speaker is added, hide all placeholders that are proposal-specific
-    document.querySelector("#id_speakers").addEventListener("change", () => {
-        updateVisiblePlaceholders()
-    })
-    updateVisiblePlaceholders()
+    const drawer = document.querySelector("#placeholder-drawer")
+    if (drawer) {
+        const toggle = document.querySelector("[data-placeholder-toggle]")
+        const search = document.querySelector("#placeholder-search")
+        const empty = document.querySelector("#placeholder-empty")
+
+        if (toggle) {
+            toggle.addEventListener("click", () => {
+                setDrawerOpen(drawer, toggle, search, drawer.hidden)
+            })
+        }
+        document.querySelectorAll("[data-placeholder-close]").forEach((button) => {
+            button.addEventListener("click", () => {
+                setDrawerOpen(drawer, toggle, search, false)
+            })
+        })
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && !drawer.hidden) {
+                setDrawerOpen(drawer, toggle, search, false)
+                if (toggle) toggle.focus()
+            }
+        })
+        if (search) {
+            search.addEventListener("input", () => {
+                filterPlaceholders(drawer, empty, search.value)
+            })
+        }
+    }
+
+    // The teams composer has no speaker filter, so these groups never change there.
+    const speakerSelect = document.querySelector("#id_speakers")
+    if (speakerSelect) {
+        speakerSelect.addEventListener("change", () => {
+            updateVisiblePlaceholders(speakerSelect)
+        })
+        updateVisiblePlaceholders(speakerSelect)
+    }
 })

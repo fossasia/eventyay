@@ -83,6 +83,18 @@ export function normalizeYoutubeVideoId(input) {
 	return null
 }
 
+// Expand a raw YouTube ID into a watch URL so form fields show a URL on load,
+// not only after the user focuses/blurs the input.
+export function toYoutubeWatchUrl(input) {
+	if (input === null || input === undefined) return ''
+	const raw = String(input).trim()
+	if (!raw) return ''
+	const id = normalizeYoutubeVideoId(raw)
+	if (!id) return raw
+	if (/^https?:\/\//i.test(raw)) return raw
+	return `https://www.youtube.com/watch?v=${id}`
+}
+
 export function normalizeAudioTranslationSource(audioSource) {
 	if (!audioSource) return null
 	const youtubeId = normalizeYoutubeVideoId(audioSource)
@@ -98,7 +110,7 @@ export function normalizeAudioTranslationSource(audioSource) {
 export function isUsableAudioTranslationEntry(entry) {
 	if (!entry?.language) return false
 	if (entry.language === 'Original') return true
-	return !!normalizeAudioTranslationSource(entry.youtube_id)
+	return !!normalizeAudioTranslationSource(entry.url || entry.youtube_id)
 }
 
 export function youtubeid(message) {
@@ -113,17 +125,14 @@ const devurl = helpers.regex(/^http:\/\/localhost.*$/) // vuelidate does not all
 export function url(message) {
 	return helpers.withMessage(message, (value) => (!helpers.req(value) || _url(value) || relative(value) || (ENV_DEVELOPMENT && devurl(value))))
 }
-export function isJson() {
-	return helpers.withMessage(({ $response }) => $response?.message, value => {
-		if (!value || value.length === 0) return { $valid: true }
+export function isJson(message = 'Invalid JSON') {
+	return helpers.withMessage(message, (value) => {
+		if (value == null || !String(value).trim()) return true
 		try {
 			JSON.parse(value)
-			return { $valid: true }
-		} catch (exception) {
-			return {
-				$valid: false,
-				message: exception.message
-			}
+			return true
+		} catch (e) {
+			return false
 		}
 	})
 }

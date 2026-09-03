@@ -8,13 +8,13 @@ from rest_framework import routers
 from eventyay.api.views import cart
 from eventyay.common.urls import OrganizerSlugConverter  # noqa: F401 (registers converter)
 
-from ..eventyay_common.views.billing import BillingInvoicePreview
 from .views import (
     access_code,
     checkin,
     device,
     event,
     exporters,
+    feedback,
     mail,
     oauth,
     order,
@@ -100,11 +100,8 @@ event_router.register('rooms', room.RoomViewSet, basename='room')
 event_router.register('talkquestions', question.QuestionViewSet, basename='talkquestion')
 event_router.register('answers', question.AnswerViewSet, basename='answer')
 event_router.register('question-options', question.AnswerOptionViewSet, basename='question_option')
-event_router.register(
-    'speaker-information',
-    speaker_information.SpeakerInformationViewSet,
-    basename='speaker_information',
-)
+event_router.register('speaker-information', speaker_information.SpeakerInformationViewSet, basename='speaker_information')
+event_router.register('feedback', feedback.FeedbackViewSet, basename='feedback')
 
 checkinlist_router = routers.DefaultRouter()
 checkinlist_router.register(r'positions', checkin.CheckinListPositionViewSet, basename='checkinlistpos')
@@ -235,11 +232,6 @@ urlpatterns = [
     path('upload', upload.UploadView.as_view(), name='upload'),
     path('me', user.MeView.as_view(), name='user.me'),
     path('version', version.VersionView.as_view(), name='version'),
-    path(
-        'billing-testing/<task>',
-        BillingInvoicePreview.as_view(),
-        name='billing-testing',
-    ),
     path('webhook/stripe', stripe_webhook_view, name='stripe-webhook'),
     path('webhook/stripe/', stripe_webhook_view, name='stripe-webhook-slash'),
     path(

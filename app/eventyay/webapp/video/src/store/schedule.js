@@ -112,9 +112,9 @@ export default {
 			if (!state.schedule) return
 			const rootByPretalxId = new Map()
 			for (const r of rootState.rooms || []) {
-				if (r?.pretalx_id != null) rootByPretalxId.set(r.pretalx_id, r)
+				if (r?.pretalx_id != null) rootByPretalxId.set(String(r.pretalx_id), r)
 			}
-			return state.schedule.rooms.map(room => rootByPretalxId.get(room.id) || room)
+			return state.schedule.rooms.map(room => rootByPretalxId.get(String(room.id)) || room)
 		},
 		roomsLookup (state, getters) {
 			if (!state.schedule) return {}
@@ -133,7 +133,7 @@ export default {
 		},
 		sessions (state, getters, rootState) {
 			if (!state.schedule) return
-			const videoModuleTypes = ['livestream.native', 'livestream.youtube', 'livestream.iframe', 'call.bigbluebutton', 'call.janus', 'call.zoom', 'call.jitsi']
+			const videoModuleTypes = ['livestream.native', 'livestream.youtube', 'call.bigbluebutton', 'call.janus', 'call.zoom', 'call.jitsi']
 			const videoRooms = new Set((rootState.rooms || []).filter(r => r.modules?.some(m => videoModuleTypes.includes(m.type))).map(r => r.pretalx_id ? String(r.pretalx_id) : null).filter(Boolean))
 			const sessions = []
 			for (const session of state.schedule.talks) {

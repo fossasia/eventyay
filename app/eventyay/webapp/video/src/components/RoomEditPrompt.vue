@@ -2,28 +2,28 @@
 prompt.c-room-edit-prompt(:scrollable="false", @close="$emit('close')")
 	.content
 		.prompt-header
-			h2 Edit Room
+			h2 {{ promptTitle }}
 		bunt-progress-circular(v-if="loading", size="large")
 		.error(v-else-if="error")
 			p {{ error }}
-			bunt-button(@click="fetchConfig") Retry
+			bunt-button(@click="fetchConfig") {{ $t('Retry') }}
 		template(v-else-if="config")
 			.edit-body(v-scrollbar.y="")
-				.reset-section(v-if="wasConfigured")
+				.reset-section(v-if="wasConfigured && mode !== 'chat'")
 					.section-header
-						h3 Reset Room
+						h3 {{ $t('Reset Room') }}
 						bunt-button.btn-reset(
 							v-if="!confirmingReset",
 							@click="confirmingReset = true",
-						) Reset
-					p Return this room to the unconfigured state. The room itself and assigned sessions stay in place.
+						) {{ $t('Reset') }}
+					p {{ $t('Return this room to the unconfigured state. The room itself and assigned sessions stay in place.') }}
 					.confirmation(v-if="confirmingReset")
-						p Are you sure you want to reset this room to the unconfigured state?
+						p {{ $t('Are you sure you want to reset this room to the unconfigured state?') }}
 						.confirmation-actions
-							bunt-button.btn-cancel(@click="confirmingReset = false") Cancel
-							bunt-button.btn-reset(@click="resetRoom", :loading="resetting", :error-message="resetError") Confirm reset
-				.type-section
-					h3 Video option
+							bunt-button.btn-cancel(@click="confirmingReset = false") {{ $t('Cancel') }}
+							bunt-button.btn-reset(@click="resetRoom", :loading="resetting", :error-message="resetError") {{ $t('Confirm reset') }}
+				.type-section(v-if="mode !== 'chat'")
+					h3 {{ $t('Video option') }}
 					.current-type(v-if="inferredType")
 						.mdi(:class="[`mdi-${inferredType.icon}`]")
 						span {{ currentTypeLabel }}
@@ -36,11 +36,11 @@ prompt.c-room-edit-prompt(:scrollable="false", @close="$emit('close')")
 						)
 							.icon.mdi(:class="[`mdi-${type.icon}`]")
 							.text
-								.name {{ type.name }}
-								.description {{ type.description }}
+								.name {{ $t(type.name) }}
+								.description {{ $t(type.description) }}
 				.generic-settings
-					bunt-input(name="name", v-model="localizedName", label="Name")
-					bunt-input(name="description", v-model="localizedDescription", label="Description")
+					bunt-input(name="name", v-model="localizedName", :label="$t('Name')")
+					bunt-input(name="description", v-model="localizedDescription", :label="$t('Description')")
 				component.type-settings(
 					ref="settings",
 					v-if="inferredType && typeComponents[inferredType.id]",
@@ -57,18 +57,19 @@ prompt.c-room-edit-prompt(:scrollable="false", @close="$emit('close')")
 					:creating="!wasConfigured"
 				)
 				.danger-zone(v-if="wasConfigured && hasPermission('room:delete')")
-					h3 Danger Zone
-					p #[b Deleting this room will remove it from the schedule, but the sessions will remain safe.] Sessions assigned to this room will no longer have a room assigned.
-					bunt-button.btn-delete-room(v-if="!confirmingDelete", @click="confirmingDelete = true") Delete
+					h3 {{ $t('Danger Zone') }}
+					p(v-if="mode === 'chat'") {{ $t('Deleting this channel removes it for attendees. Messages and calls in this channel will no longer be available.') }}
+					p(v-else) {{ $t('Deleting this room will remove it from the schedule, but the sessions will remain safe.') }} {{ $t('Sessions assigned to this room will no longer have a room assigned.') }}
+					bunt-button.btn-delete-room(v-if="!confirmingDelete", @click="confirmingDelete = true") {{ $t('Delete') }}
 					.delete-confirmation(v-else)
-						p Please type #[b {{ localizedRoomName }}] to confirm deletion.
-						bunt-input(name="deletingRoomName", label="Room name", v-model="deletingRoomName", @keypress.enter="deleteRoom")
+						p {{ $t('Please type') }} #[b {{ localizedRoomName }}] {{ $t('to confirm deletion.') }}
+						bunt-input(name="deletingRoomName", :label="mode === 'chat' ? $t('Channel name') : $t('Room name')", v-model="deletingRoomName", @keypress.enter="deleteRoom")
 						.confirmation-actions
-							bunt-button.btn-cancel(@click="cancelDelete") Cancel
-							bunt-button.btn-delete-room(icon="delete", :disabled="deletingRoomName !== localizedRoomName", @click="deleteRoom", :loading="deleting", :error-message="deleteError") Delete this room
+							bunt-button.btn-cancel(@click="cancelDelete") {{ $t('Cancel') }}
+							bunt-button.btn-delete-room(icon="delete", :disabled="deletingRoomName !== localizedRoomName", @click="deleteRoom", :loading="deleting", :error-message="deleteError") {{ mode === 'chat' ? $t('Delete this channel') : $t('Delete this room') }}
 			.edit-actions
-				bunt-button.btn-cancel(@click="$emit('close')") Cancel
-				bunt-button.btn-save(@click="save", :loading="saving", :error-message="saveError") Save
+				bunt-button.btn-cancel(@click="$emit('close')") {{ $t('Cancel') }}
+				bunt-button.btn-save(@click="save", :loading="saving", :error-message="saveError") {{ $t('Save') }}
 </template>
 <script>
 import { markRaw } from 'vue'
@@ -90,13 +91,27 @@ import ChannelZoom from 'views/admin/rooms/types-edit/channel-zoom'
 import ChannelRoulette from 'views/admin/rooms/types-edit/channel-roulette'
 import PageLanding from 'views/admin/rooms/types-edit/page-landing'
 import SidebarAddons from 'views/admin/rooms/types-edit/SidebarAddons'
+import {
+	cloneLanguageStreamEntries,
+	fetchInterpretationLanguageStreams,
+	saveInterpretationLanguageStreams,
+} from 'lib/interpretation-language-streams'
 
 export default {
 	components: { Prompt, SidebarAddons },
+	provide () {
+		return {
+			interpretationAdmin: this.interpretationAdmin,
+		}
+	},
 	props: {
 		room: {
 			type: Object,
 			required: true
+		},
+		mode: {
+			type: String,
+			default: 'room'
 		}
 	},
 	emits: ['close', 'deleted'],
@@ -115,6 +130,12 @@ export default {
 			deletingRoomName: '',
 			deleting: false,
 			deleteError: null,
+			interpretationAdmin: {
+				usePluginStreams: false,
+				languageStreams: [],
+				loaded: false,
+				streamsLoadFailed: false,
+			},
 			typeComponents: markRaw({
 				stage: Stage,
 				'page-landing': PageLanding,
@@ -158,6 +179,10 @@ export default {
 			if (!this.config) return null
 			return inferType(this.config)
 		},
+		promptTitle () {
+			if (this.mode !== 'chat') return this.$t('Edit Room')
+			return this.$t('Edit Chat Channel')
+		},
 		localizedName: {
 			get () {
 				return this.$localize(this.config.name)
@@ -178,11 +203,13 @@ export default {
 			return this.$localize(this.config?.name)
 		},
 		currentTypeLabel () {
-			return getConfiguredRoomLabel(this.inferredType)
+			const label = getConfiguredRoomLabel(this.inferredType)
+			return label ? this.$t(label) : ''
 		}
 	},
 	async created () {
 		await this.fetchConfig()
+		await this.loadInterpretationLanguageStreams()
 	},
 	methods: {
 		async fetchConfig () {
@@ -193,10 +220,38 @@ export default {
 				this.wasConfigured = !!inferType(this.config)
 			} catch (err) {
 				this.error = err.code === 'protocol.denied'
-					? 'You do not have permission to edit this room.'
+					? this.$t('You do not have permission to edit this room.')
 					: (err.message || String(err))
 			} finally {
 				this.loading = false
+			}
+		},
+		async loadInterpretationLanguageStreams () {
+			if (!this.config?.id) return
+			this.interpretationAdmin.streamsLoadFailed = false
+			try {
+				const data = await fetchInterpretationLanguageStreams(
+					this.$store,
+					this.config.id
+				)
+				this.interpretationAdmin.usePluginStreams = Boolean(
+					data.use_plugin_language_streams
+				)
+				this.config.interpretation_use_plugin_streams = this.interpretationAdmin.usePluginStreams
+				if (this.interpretationAdmin.usePluginStreams) {
+					this.interpretationAdmin.languageStreams = cloneLanguageStreamEntries(
+						data.language_streams
+					)
+				}
+			} catch (error) {
+				console.warn('interpretation language streams unavailable', error)
+				this.interpretationAdmin.streamsLoadFailed = true
+				this.interpretationAdmin.usePluginStreams = Boolean(
+					this.config.interpretation_use_plugin_streams
+				)
+				this.interpretationAdmin.languageStreams = []
+			} finally {
+				this.interpretationAdmin.loaded = true
 			}
 		},
 		changeType (type) {
@@ -243,14 +298,30 @@ export default {
 			this.$refs.settings?.beforeSave?.()
 			this.saving = true
 			try {
+				const roomId = this.config.id
 				await api.call('room.config.patch', {
-					room: this.config.id,
+					room: roomId,
 					name: this.config.name,
 					description: this.config.description,
 					picture: this.config.picture,
 					force_join: this.config.force_join,
 					module_config: this.config.module_config
 				})
+				if (this.$refs.settings?.saveStreamSchedules) {
+					await this.$refs.settings.saveStreamSchedules(roomId)
+				}
+				if (
+					this.interpretationAdmin.usePluginStreams &&
+					roomId &&
+					this.interpretationAdmin.loaded &&
+					!this.interpretationAdmin.streamsLoadFailed
+				) {
+					await saveInterpretationLanguageStreams(
+						this.$store,
+						roomId,
+						this.interpretationAdmin.languageStreams
+					)
+				}
 				this.saving = false
 				this.$emit('close')
 			} catch (err) {

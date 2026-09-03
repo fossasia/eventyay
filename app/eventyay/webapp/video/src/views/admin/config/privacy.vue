@@ -1,30 +1,30 @@
 <template lang="pug">
 .c-privacyconfig
 	.ui-page-header
-		h1 Theme Config
+		h1 {{ $t('Theme Config') }}
 	scrollbars(y)
 		bunt-progress-circular(size="huge", v-if="!error && !config")
-		.error(v-if="error") We could not fetch the current configuration.
+		.error(v-if="error") {{ $t('We could not fetch the current configuration.') }}
 		template(v-if="config")
 			.ui-form-body
-				h3 IFrame Consent Blocker
-				p Enable or disable iframe blocking behaviour for matching domains and the default behaviour if no matching domains are found. Every iframe url domain that ends with a configured domain here will match. For example: configuring "youtube.com" on this page will match all iframes with "www.youtube.com".
+				h3 {{ $t('IFrame Consent Blocker') }}
+				p {{ $t('Enable or disable iframe blocking behaviour for matching domains and the default behaviour if no matching domains are found. Every iframe url domain that ends with a configured domain here will match. For example: configuring "youtube.com" on this page will match all iframes with "www.youtube.com".') }}
 			.iframe-domains
 				.header
-					.enabled Enable block
-					.domain For domain
-					.policy-link Privacy policy link
+					.enabled {{ $t('Enable block') }}
+					.domain {{ $t('For domain') }}
+					.policy-link {{ $t('Privacy policy link') }}
 					.actions
 				.iframe-domain(v-for="iframeDomain of iframeDomains")
 					bunt-checkbox.enabled(name="enabled", v-model="iframeDomain.enabled")
-					div.domain(v-if="iframeDomain.domain === 'default'") default
-					bunt-input.domain(v-else, name="domain", v-model="iframeDomain.domain", placeholder="example.com")
-					bunt-input.policy-link(name="policy-link", v-model="iframeDomain.policy_url", placeholder="https://example.com/privacy")
+					div.domain(v-if="iframeDomain.domain === 'default'") {{ $t('default') }}
+					bunt-input.domain(v-else, name="domain", v-model="iframeDomain.domain", :placeholder="$t('example.com')")
+					bunt-input.policy-link(name="policy-link", v-model="iframeDomain.policy_url", :placeholder="$t('https://example.com/privacy')")
 					.actions
 						bunt-icon-button(v-if="iframeDomain.domain !== 'default'", @click="removeIframeDomain(iframeDomain)") delete-outline
-				bunt-button.btn-add-domain(@click="addIframeDomain") Add domain
+				bunt-button.btn-add-domain(@click="addIframeDomain") {{ $t('Add domain') }}
 	.ui-form-actions
-		bunt-button.btn-save(@click="save", :loading="saving", :error-message="error") Save
+		bunt-button.btn-save(@click="save", :loading="saving", :error-message="error") {{ $t('Save') }}
 		.errors {{ validationErrors.join(', ') }}
 </template>
 <script>
@@ -56,31 +56,51 @@ export default {
 		}
 	},
 	async created() {
-		// TODO: Force reloading if world.updated is received from the server
-		try {
-			this.config = await api.call('world.config.get')
-			const defaultEntry = this.config.iframe_blockers?.default
-			// always have a default first entry
-			this.iframeDomains = [{
-				domain: 'default',
-				enabled: defaultEntry?.enabled ?? false,
-				policy_url: defaultEntry?.policy_url ?? ''
-			}]
-			this.iframeDomains.push(...Object.entries(this.config.iframe_blockers)
-				.filter(([domain, domainConfig]) => domain !== 'default')
-				.map(([domain, {enabled, policy_url}]) => ({
-					domain,
-					enabled,
-					policy_url
-				}))
-			)
-			// Enforce some defaults
-		} catch (error) {
-			this.error = error.message || error.toString()
-			console.log(error)
-		}
+		this.ensureConnectedAndFetch()
+	},
+	beforeUnmount() {
+		if (this._unwatchConnected) this._unwatchConnected()
 	},
 	methods: {
+		ensureConnectedAndFetch() {
+			if (this.$store.state.connected) {
+				this.fetchConfig()
+			} else {
+				this._unwatchConnected = this.$store.watch(
+					state => state.connected,
+					connected => {
+						if (connected) {
+							this.fetchConfig()
+							if (this._unwatchConnected) this._unwatchConnected()
+						}
+					}
+				)
+			}
+		},
+		async fetchConfig() {
+			try {
+				this.config = await api.call('world.config.get')
+				const blockers = this.config?.iframe_blockers || {}
+				const defaultEntry = blockers.default
+				// always have a default first entry
+				this.iframeDomains = [{
+					domain: 'default',
+					enabled: defaultEntry?.enabled ?? false,
+					policy_url: defaultEntry?.policy_url ?? ''
+				}]
+				this.iframeDomains.push(...Object.entries(blockers)
+					.filter(([domain]) => domain !== 'default')
+					.map(([domain, val]) => ({
+						domain,
+						enabled: val?.enabled ?? false,
+						policy_url: val?.policy_url ?? ''
+					}))
+				)
+			} catch (error) {
+				this.error = error.message || error.toString()
+				console.error(error)
+			}
+		},
 		async save() {
 			this.v$.$touch()
 			if (this.v$.$invalid) return

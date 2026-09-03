@@ -2,35 +2,43 @@
 .pretalx-schedule(:style="{'--scrollparent-width': scrollParentWidth + 'px'}", :class="[draggedSession ? 'is-dragging' : '', !caps.canDrag ? 'is-public-shifts' : '']", @pointerup="caps.canDrag ? stopDragging() : null")
 	template(v-if="schedule")
 		#main-wrapper
-			#unassigned.no-print(v-if="caps.canDrag", v-scrollbar.y="", @pointerenter="isUnassigning = true", @pointerleave="onUnassignedLeave")
-				.unassigned-header
-					.density-controls
-						button.density-btn(:class="{active: condensedView}", @click="toggleCondensedView", :title="condensedView ? $t('Normal view') : $t('Condensed view')", :aria-pressed="condensedView.toString()")
-							i.fa(:class="condensedView ? 'fa-expand' : 'fa-compress'", aria-hidden="true")
-							span.density-btn-text {{ condensedView ? $t('Normal view') : $t('Condensed view') }}
-						.select-wrapper.custom-dropdown(ref="customDropdownRef", @click="showTimeDensityMenu = !showTimeDensityMenu", :class="{'active': showTimeDensityMenu}")
-							span.time-density-display {{ timeDensityMinutes }} min
-							i.fa.fa-chevron-down(aria-hidden="true")
-							.time-density-menu.vue-dropdown(v-if="showTimeDensityMenu")
-								.density-option(v-for="mins in [5, 15, 30, 60]", @click.stop="timeDensityMinutes = mins; onTimeDensityChange(); showTimeDensityMenu = false", :class="{active: timeDensityMinutes === mins}")
-									span {{ mins }} min
-									i.fa.fa-check(v-if="timeDensityMinutes === mins")
-					.title
-						bunt-input#filter-input(v-model="unassignedFilterString", :placeholder="translations.filterSessions", icon="search", name="filter-input")
-						#unassigned-sort(@click="showUnassignedSortMenu = !showUnassignedSortMenu", :class="{'active': showUnassignedSortMenu}")
-							i.fa.fa-sort
-						#unassigned-sort-menu(v-if="showUnassignedSortMenu")
-							.sort-method(v-for="method of unassignedSortMethods", @click="unassignedSort === method.name ? unassignedSortDirection = unassignedSortDirection * -1 : unassignedSort = method.name; showUnassignedSortMenu = false")
-								span {{ method.label }}
-								i.fa.fa-sort-amount-asc(v-if="unassignedSort === method.name && unassignedSortDirection === 1")
-								i.fa.fa-sort-amount-desc(v-if="unassignedSort === method.name && unassignedSortDirection === -1")
-					session.new-break(v-if="caps.canCreateBreak", :session="{title: '+ ' + translations.newBreak}", :isDragged="false", tabindex="0", @startDragging="startNewBreak", @click.stop="showNewBreakHint", @focus="showNewBreakHint", @blur="removeNewBreakHint", @keydown="onNewBreakKeydown", @pointerleave="removeNewBreakHint", :aria-describedby="newBreakTooltip ? 'new-break-hint' : undefined")
-					.new-break-hint(v-if="newBreakTooltip", id="new-break-hint", role="tooltip") {{ newBreakTooltip }}
-				session(v-for="un in unscheduled", :key="un.id", :session="un", @startDragging="startDragging", :isDragged="draggedSession && un.id === draggedSession.id", @editSession="editorStart($event)", @deleteSession="deleteSessionDirect($event)", @assignMembers="openAssignModal($event)")
-				.deleted-room-sessions(v-if="deletedRoomSessions.length")
-					h3 {{ $t('Deleted Room Sessions') }}
-					p {{ $t('These sessions were assigned to a room that has been deleted. Drag them into another room to restore them to the schedule.') }}
-					session(v-for="session in deletedRoomSessions", :key="session.id", :session="session", @startDragging="startDragging", :isDragged="draggedSession && session.id === draggedSession.id")
+			#unassigned.no-print(v-if="caps.canDrag", v-scrollbar.y="", :class="{'is-collapsed': isUnassignedCollapsed}", @pointerenter="isUnassigning = true", @pointerleave="onUnassignedLeave")
+				.unassigned-mobile-header(@click="isUnassignedCollapsed = !isUnassignedCollapsed")
+					span.unassigned-title
+						i.fa.fa-list
+						span {{ $t('Unassigned Sessions') }} ({{ unscheduled.length }})
+						span.drop-hint(v-if="draggedSession")  - {{ $t('Drop here to unassign') }}
+					span.unassigned-collapse-icon
+						i.fa(:class="isUnassignedCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'")
+				.unassigned-body
+					.unassigned-header
+						.density-controls
+							button.density-btn(:class="{active: condensedView}", @click="toggleCondensedView", :title="condensedView ? $t('Normal view') : $t('Condensed view')", :aria-pressed="condensedView.toString()")
+								i.fa(:class="condensedView ? 'fa-expand' : 'fa-compress'", aria-hidden="true")
+								span.density-btn-text {{ condensedView ? $t('Normal view') : $t('Condensed view') }}
+							.select-wrapper.custom-dropdown(ref="customDropdownRef", @click="showTimeDensityMenu = !showTimeDensityMenu", :class="{'active': showTimeDensityMenu}")
+								span.time-density-display {{ timeDensityMinutes }} {{ $t('min') }}
+								i.fa.fa-chevron-down(aria-hidden="true")
+								.time-density-menu.vue-dropdown(v-if="showTimeDensityMenu")
+									.density-option(v-for="mins in [5, 15, 30, 60]", @click.stop="timeDensityMinutes = mins; onTimeDensityChange(); showTimeDensityMenu = false", :class="{active: timeDensityMinutes === mins}")
+							session.new-break.small-break(v-if="caps.canCreateBreak", :session="{title: '+ ' + translations.newBreak}", :isDragged="false", tabindex="0", @startDragging="startNewBreak", @click.stop="showNewBreakHint", @focus="showNewBreakHint", @blur="removeNewBreakHint", @keydown="onNewBreakKeydown", @pointerleave="removeNewBreakHint", :aria-describedby="newBreakTooltip ? 'new-break-hint' : undefined")
+							.new-break-hint(v-if="newBreakTooltip", id="new-break-hint", role="tooltip") {{ newBreakTooltip }}
+						.title
+							bunt-input#filter-input(v-model="unassignedFilterString", :placeholder="translations.filterSessions", icon="search", name="filter-input")
+							#unassigned-sort(@click="showUnassignedSortMenu = !showUnassignedSortMenu", :class="{'active': showUnassignedSortMenu}")
+								i.fa.fa-sort
+							#unassigned-sort-menu(v-if="showUnassignedSortMenu")
+								.sort-method(v-for="method of unassignedSortMethods", @click="unassignedSort === method.name ? unassignedSortDirection = unassignedSortDirection * -1 : unassignedSort = method.name; showUnassignedSortMenu = false")
+									span {{ method.label }}
+									i.fa.fa-sort-amount-asc(v-if="unassignedSort === method.name && unassignedSortDirection === 1")
+									i.fa.fa-sort-amount-desc(v-if="unassignedSort === method.name && unassignedSortDirection === -1")
+						session.new-break.desktop-break(v-if="caps.canCreateBreak", :session="{title: '+ ' + translations.newBreak}", :isDragged="false", tabindex="0", @startDragging="startNewBreak", @click.stop="showNewBreakHint", @focus="showNewBreakHint", @blur="removeNewBreakHint", @keydown="onNewBreakKeydown", @pointerleave="removeNewBreakHint", :aria-describedby="newBreakTooltip ? 'new-break-hint' : undefined")
+						.new-break-hint(v-if="newBreakTooltip", id="new-break-hint", role="tooltip") {{ newBreakTooltip }}
+					session(v-for="un in unscheduled", :key="un.id", :session="un", @startDragging="startDragging", :isDragged="draggedSession && un.id === draggedSession.id", @editSession="editorStart($event)", @deleteSession="deleteSessionDirect($event)", @assignMembers="openAssignModal($event)")
+					.deleted-room-sessions(v-if="deletedRoomSessions.length")
+						h3 {{ caps.showRoles ? $t('Deleted Room Shifts') : $t('Deleted Room Sessions') }}
+						p {{ caps.showRoles ? $t('These shifts were assigned to a room that has been deleted. Drag them into another room to restore them to the schedule.') : $t('These sessions were assigned to a room that has been deleted. Drag them into another room to restore them to the schedule.') }}
+						session(v-for="session in deletedRoomSessions", :key="session.id", :session="session", @startDragging="startDragging", :isDragged="draggedSession && session.id === draggedSession.id")
 			#schedule-wrapper(v-scrollbar.x.y="")
 				.schedule-controls
 					bunt-tabs.days(v-if="days", :modelValue="currentDay.format()", ref="tabs" :class="['grid-tabs']")
@@ -92,7 +100,7 @@
 									select.form-control.role-select(v-model="r.id", required)
 										option(:value="undefined" disabled) {{ $t('Select a role') }}
 										option(v-for="role in schedule?.roles", :key="role.id", :value="role.id") {{ getLocalizedString(role.name) }}
-									input.form-control.role-capacity(v-model.number="r.capacity", type="number", min="1", required, title="Capacity")
+									input.form-control.role-capacity(v-model.number="r.capacity", type="number", min="1", required, :title="$t('Capacity')")
 									a.text-danger(href="#", @click.prevent="editorSession.roles.splice(index, 1)")
 										i.fa.fa-trash
 								a(href="#", @click.prevent="editorSession.roles.push({id: undefined, capacity: 1})")
@@ -116,7 +124,14 @@
 			#assign-modal-wrapper(v-if="assigningSession && caps.canAssignMembers", @click="closeAssignModal")
 				#session-editor(@click.stop="")
 					h3.session-editor-title
-						span {{ $t('Assign Members for ') }} {{ getLocalizedString(assigningSession.title) }}
+						span {{ assignMembersHeading }}
+						button.modal-close-btn(type="button", @click="closeAssignModal", :aria-label="$t('Close')")
+							i.fa.fa-times(aria-hidden="true")
+					
+					.assign-modal-error(v-if="assignModalError")
+						span {{ assignModalError }}
+						button.assign-modal-error-dismiss(type="button", @click="assignModalError = ''", :aria-label="$t('Dismiss')")
+							i.fa.fa-times(aria-hidden="true")
 					
 					.data.assign-data
 						.assign-role(v-for="role in assigningSession.roles", :key="role.id")
@@ -136,22 +151,43 @@
 										option(v-for="vol in availableMembersByRole[role.id]", :key="vol.id", :value="vol.id") {{ vol.name }}{{ vol.email ? ` (${vol.email})` : '' }}
 								.col-md-4
 									button.assign-btn(type="button", @click="assignMember(role.id)", :disabled="assigningWaiting") {{ $t('Assign') }}
-					
-					.button-row
-						bunt-button(@click="closeAssignModal") {{ $t('Close') }}
+
+		confirm-dialog(
+			v-if="caps.showRoles",
+			ref="confirmDialogRef",
+			:title="confirmDialogTitle",
+			:lead="confirmDialogLead",
+			:confirm-label="confirmDialogLabel",
+			:confirm-class="confirmDialogClass",
+			:busy="confirmDialogBusy",
+			:error="confirmDialogError",
+			@confirm="onConfirmDialogConfirm",
+			@cancel="onConfirmDialogCancel")
+
+		dialog.break-confirm-dialog(ref="breakConfirmDialogEl", @click="onBreakDialogBackdrop", @cancel.prevent="cancelBreakDelete")
+			.dialog-inner(@click.stop="")
+				h3 {{ breakConfirmTitle }}
+				p {{ breakConfirmLead }}
+				p.break-confirm-error(v-if="breakConfirmError") {{ breakConfirmError }}
+				.break-confirm-actions
+					button.btn.btn-sm.btn-default(type="button", :disabled="breakConfirmBusy", @click="cancelBreakDelete") {{ $t('Cancel') }}
+					button.btn.btn-sm.btn-danger(type="button", :disabled="breakConfirmBusy", @click="confirmBreakDelete") {{ $t('Delete') }}
 
 	bunt-progress-circular(v-else, size="huge", :page="true")
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, computed, onMounted, onUnmounted, onBeforeMount, nextTick } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onUnmounted, onBeforeMount, nextTick } from 'vue'
 import moment, { Moment } from 'moment-timezone'
 import GridSchedule from '~/components/GridSchedule.vue'
-import Session from '~/components/Session.vue'
+import TalkSession from '~/components/Session.vue'
+import ShiftSession from '~/teamshifts-adapter/Session.vue'
+import ConfirmDialog from '~/teamshifts-adapter/ConfirmDialog.vue'
 import api from '~/api'
 import { resolveMode, getCapabilities } from '~/teamshifts-adapter'
 import type { Capabilities } from '~/teamshifts-adapter/types'
 import { getLocalizedString } from '~/utils'
+import {translate as $t} from '~/lib/i18n'
 import type { AvailabilityEntry, RoleAssignment, ScheduleRole } from '~/schemas';
 
 interface Speaker {
@@ -246,11 +282,13 @@ const props = defineProps<{
 
 const mode = resolveMode()
 const caps: Capabilities = getCapabilities(mode)
+const Session = mode === 'shifts' || mode === 'public-shifts' ? ShiftSession : TalkSession
 
 const eventSlug = ref<string | null>(null)
 const organizerSlug = ref<string | null>(null)
 const scrollParentWidth = ref<number>(Infinity)
 const schedule = ref<Schedule | null>(null)
+const isUnassignedCollapsed = ref<boolean>(true)
 const availabilities = reactive<{ rooms: Record<string, AvailabilityEntry[]>; talks: Record<string, AvailabilityEntry[]> }>({
   rooms: {},
   talks: {},
@@ -263,7 +301,115 @@ const editorSession = ref<SessionData | null>(null)
 const editorSessionWaiting = ref<boolean>(false)
 const assigningSession = ref<SessionData | null>(null)
 const assigningWaiting = ref<boolean>(false)
+const assignModalError = ref<string>('')
 const selectedMemberIds = ref<Record<string, number | undefined>>({})
+
+const confirmDialogRef = ref<InstanceType<typeof ConfirmDialog> | null>(null)
+const confirmDialogTitle = ref('')
+const confirmDialogLead = ref('')
+const confirmDialogLabel = ref('')
+const confirmDialogClass = ref('btn-primary')
+const confirmDialogBusy = ref(false)
+const confirmDialogError = ref('')
+let confirmDialogResolve: ((value: boolean) => void) | null = null
+let confirmDialogAction: (() => Promise<void>) | null = null
+
+const breakConfirmDialogEl = ref<HTMLDialogElement | null>(null)
+const breakConfirmTitle = ref('')
+const breakConfirmLead = ref('')
+const breakConfirmError = ref('')
+const breakConfirmBusy = ref(false)
+let breakConfirmResolve: ((value: boolean) => void) | null = null
+let breakDeleteId: number | null = null
+
+function showBreakConfirmDialog(id: number): Promise<boolean> {
+  breakDeleteId = id
+  breakConfirmTitle.value = $t('Delete break')
+  breakConfirmLead.value = $t('Are you sure you want to delete this break?')
+  breakConfirmError.value = ''
+  breakConfirmBusy.value = false
+  return new Promise((resolve) => {
+    breakConfirmResolve = resolve
+    nextTick(() => breakConfirmDialogEl.value?.showModal?.())
+  })
+}
+
+async function confirmBreakDelete() {
+  if (!breakDeleteId) return
+  breakConfirmBusy.value = true
+  breakConfirmError.value = ''
+  try {
+    await api.deleteTalk({ id: breakDeleteId })
+    if (schedule.value) {
+      schedule.value.talks = schedule.value.talks.filter((s) => s.id !== breakDeleteId)
+    }
+    await fetchAdditionalScheduleData()
+    breakConfirmDialogEl.value?.close()
+    breakConfirmResolve?.(true)
+  } catch (error) {
+    breakConfirmError.value = $t('Failed to delete break. Please try again.')
+    breakConfirmResolve?.(false)
+  } finally {
+    breakConfirmBusy.value = false
+    breakConfirmResolve = null
+    breakDeleteId = null
+  }
+}
+
+function cancelBreakDelete() {
+  breakConfirmDialogEl.value?.close()
+  breakConfirmResolve?.(false)
+  breakConfirmResolve = null
+  breakDeleteId = null
+}
+
+function onBreakDialogBackdrop(event: MouseEvent) {
+  if (event.target === breakConfirmDialogEl.value) cancelBreakDelete()
+}
+
+function showConfirmDialog(opts: { title: string; lead: string; confirmLabel: string; confirmClass?: string; onConfirm?: () => Promise<void> }): Promise<boolean> {
+  confirmDialogTitle.value = opts.title
+  confirmDialogLead.value = opts.lead
+  confirmDialogLabel.value = opts.confirmLabel
+  confirmDialogClass.value = opts.confirmClass || 'btn-primary'
+  confirmDialogBusy.value = false
+  confirmDialogError.value = ''
+  confirmDialogAction = opts.onConfirm || null
+  return new Promise((resolve) => {
+    confirmDialogResolve = resolve
+    nextTick(() => confirmDialogRef.value?.show())
+  })
+}
+
+async function onConfirmDialogConfirm() {
+  if (confirmDialogAction) {
+    confirmDialogBusy.value = true
+    confirmDialogError.value = ''
+    try {
+      await confirmDialogAction()
+      confirmDialogRef.value?.close()
+      confirmDialogResolve?.(true)
+    } catch (error) {
+      confirmDialogError.value = (error as Error).message || $t('An error occurred. Please try again.')
+      confirmDialogResolve?.(false)
+    } finally {
+      confirmDialogBusy.value = false
+      confirmDialogResolve = null
+      confirmDialogAction = null
+    }
+  } else {
+    confirmDialogRef.value?.close()
+    confirmDialogResolve?.(true)
+    confirmDialogResolve = null
+    confirmDialogAction = null
+  }
+}
+
+function onConfirmDialogCancel() {
+  confirmDialogResolve?.(false)
+  confirmDialogResolve = null
+  confirmDialogAction = null
+}
 const isUnassigning = ref<boolean>(false)
 const locales = ref<string[]>(['en'])
 const unassignedFilterString = ref<string>('')
@@ -292,14 +438,16 @@ function onTimeDensityChange (): void {
   localStorage.setItem('schedule-time-density-minutes', String(timeDensityMinutes.value))
 }
 
-function $t(key: string): string {
-  return typeof window !== 'undefined' && (window as { $t?: (key: string) => string }).$t?.(key) || key;
-}
 
 const translations = computed(() => ({
   filterSessions: caps.showRoles ? $t('Filter shifts') : $t('Filter sessions'),
   newBreak: $t('New break'),
 }))
+
+const assignMembersHeading = computed(() => {
+  if (!assigningSession.value) return $t('Assign Members')
+  return $t('Assign Members for {{title}}', {title: getLocalizedString(assigningSession.value.title)})
+})
 
 function lookupKey(value?: string | number | null): string {
   return value == null ? '' : String(value)
@@ -355,7 +503,8 @@ const unassignedSortMethods = computed<SortMethod[]>(() => {
 const unscheduled = computed<SessionData[]>(() => {
   if (!schedule.value) return []
   let sessions: SessionData[] = []
-  for (const session of schedule.value.talks.filter((s) => !s.start)) {
+  const isShifts = mode === 'shifts' || mode === 'public-shifts'
+  for (const session of schedule.value.talks.filter((s) => isShifts ? !s.room : !s.start)) {
     sessions.push({
       id: session.id,
       code: session.code,
@@ -404,6 +553,8 @@ const unscheduled = computed<SessionData[]>(() => {
 
 const deletedRoomSessions = computed<SessionData[]>(() => {
   if (!schedule.value) return []
+  const isShifts = mode === 'shifts' || mode === 'public-shifts'
+  if (isShifts) return []
   return schedule.value.talks
     .filter(
       (session) =>
@@ -647,50 +798,61 @@ async function editorSave(): Promise<void> {
 
 async function editorDelete(): Promise<void> {
   if (!editorSession.value) return
-  const deleted = await deleteSessionById(editorSession.value.id)
+  let deleted = false
+  if (mode === 'shifts' || mode === 'public-shifts') {
+    deleted = await deleteShiftById(editorSession.value.id)
+  } else {
+    if (editorSession.value.code) return
+    deleted = await deleteTalkBreakById(editorSession.value.id)
+  }
   if (deleted) {
     editorSession.value = null
   }
 }
 
 async function deleteSessionDirect(session: SessionData | Talk): Promise<void> {
-  await deleteSessionById(session.id)
-}
-
-async function deleteSessionById(id: number): Promise<boolean> {
-  if (!window.confirm($t('Are you sure you want to delete this session?'))) return false
-
-  editorSessionWaiting.value = true
-  try {
-    await api.deleteTalk({ id })
-    if (schedule.value) {
-      schedule.value.talks = schedule.value.talks.filter((s) => s.id !== id)
-    }
-    await fetchAdditionalScheduleData()
-    return true
-  } catch (error) {
-    console.error('Failed to delete session', error)
-    window.alert($t('Failed to delete session. Please try again.'))
-    return false
-  } finally {
-    editorSessionWaiting.value = false
+  if (mode === 'shifts' || mode === 'public-shifts') {
+    await deleteShiftById(session.id)
+  } else {
+    if (session.code) return
+    await deleteTalkBreakById(session.id)
   }
 }
 
+async function deleteShiftById(id: number): Promise<boolean> {
+  return showConfirmDialog({
+    title: $t('Delete shift'),
+    lead: $t('Are you sure you want to delete this shift? This action cannot be undone.'),
+    confirmLabel: $t('Delete'),
+    confirmClass: 'btn-danger',
+    onConfirm: async () => {
+      await api.deleteTalk({ id })
+      if (schedule.value) {
+        schedule.value.talks = schedule.value.talks.filter((s) => s.id !== id)
+      }
+      await fetchAdditionalScheduleData()
+    },
+  })
+}
+
+async function deleteTalkBreakById(id: number): Promise<boolean> {
+  return showBreakConfirmDialog(id)
+}
+
 async function openAssignModal(session: SessionData | Talk): Promise<void> {
+  assignModalError.value = ''
   assigningSession.value = { ...session } as SessionData
   if (assigningSession.value.roles && assigningSession.value.roles.length > 0) {
-    const promises = []
     for (const role of assigningSession.value.roles) {
       selectedMemberIds.value[String(role.id)] = undefined
-      promises.push(loadMembers(role.id))
     }
-    await Promise.all(promises)
+    await Promise.all(assigningSession.value.roles.map((role) => loadMembers(role.id)))
   }
 }
 
 function closeAssignModal(): void {
   assigningSession.value = null
+  assignModalError.value = ''
   selectedMemberIds.value = {}
   availableMembersByRole.value = {}
 }
@@ -701,7 +863,7 @@ async function loadMembers(roleId: number): Promise<void> {
     availableMembersByRole.value[String(roleId)] = response.members ?? []
   } catch (error) {
     console.error('Failed to fetch members', error)
-    window.alert($t('Failed to load members. Please try again.'))
+    assignModalError.value = $t('Failed to load members. Please try again.')
   }
 }
 
@@ -727,7 +889,7 @@ async function assignMember(roleId: number): Promise<void> {
     selectedMemberIds.value[String(roleId)] = undefined
   } catch (error) {
     console.error('Failed to assign member', error)
-    window.alert($t('Failed to assign member. Please try again.'))
+    assignModalError.value = $t('Failed to assign member. Please try again.')
   } finally {
     assigningWaiting.value = false
   }
@@ -735,7 +897,13 @@ async function assignMember(roleId: number): Promise<void> {
 
 async function unassignMember(roleId: number, userId: number): Promise<void> {
   if (!assigningSession.value) return
-  if (!window.confirm($t('Are you sure you want to unassign this member?'))) return
+  const confirmed = await showConfirmDialog({
+    title: $t('Unassign member'),
+    lead: $t('Are you sure you want to unassign this member?'),
+    confirmLabel: $t('Unassign'),
+    confirmClass: 'btn-danger',
+  })
+  if (!confirmed) return
   
   assigningWaiting.value = true
   try {
@@ -753,7 +921,7 @@ async function unassignMember(roleId: number, userId: number): Promise<void> {
     await fetchAdditionalScheduleData()
   } catch (error) {
     console.error('Failed to unassign member', error)
-    window.alert($t('Failed to unassign member. Please try again.'))
+    assignModalError.value = $t('Failed to unassign member. Please try again.')
   } finally {
     assigningWaiting.value = false
   }
@@ -805,9 +973,13 @@ async function stopDragging(): Promise<void> {
       if (draggedSession.value.code && !draggedSession.value.deletedRoom) {
         const movedSession = schedule.value?.talks.find((s) => s.id === draggedSession.value!.id)
         if (movedSession) {
-          movedSession.start = null
-          movedSession.end = null
-          movedSession.room = undefined
+          if (mode === 'shifts' || mode === 'public-shifts') {
+            movedSession.room = undefined
+          } else {
+            movedSession.start = null
+            movedSession.end = null
+            movedSession.room = undefined
+          }
           await saveTalk(movedSession)
           await fetchAdditionalScheduleData()
         }
@@ -891,7 +1063,14 @@ const onWindowClick = (e: MouseEvent) => {
   }
 }
 
+const preventScrollOnDrag = (e: TouchEvent) => {
+  if (draggedSession.value) {
+    e.preventDefault()
+  }
+}
+
 onMounted(() => {
+  document.addEventListener('touchmove', preventScrollOnDrag, { passive: false })
   window.addEventListener('click', onWindowClick)
   window.addEventListener('resize', onWindowResize)
   window.addEventListener('storage', onStorageChange)
@@ -899,6 +1078,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  document.removeEventListener('touchmove', preventScrollOnDrag)
   window.removeEventListener('click', onWindowClick)
   window.removeEventListener('resize', onWindowResize)
   window.removeEventListener('storage', onStorageChange)
@@ -952,18 +1132,32 @@ onUnmounted(() => {
 	.days
 		background-color: $clr-white
 		tabs-style(active-color: var(--color-primary), indicator-color: var(--color-primary), background-color: transparent)
-		overflow-x: auto
 		margin-bottom: 0
 		flex: 1
 		min-width: 0
 		height: 48px
+		max-height: 48px
+		overflow-x: auto
+		overflow-y: hidden
+		scrollbar-width: thin
+		.bunt-tabs
+			height: 48px
 		.bunt-tabs-header
-			min-width: min-content
+			width: 100%
+			min-width: max-content
+			height: 48px
 		.bunt-tabs-header-items
-			justify-content: center
-			min-width: min-content
+			display: flex
+			flex-wrap: nowrap
+			width: 100%
+			min-width: max-content
+			height: 48px
+			margin: 0
+			padding: 0
 			.bunt-tab-header-item
-				min-width: min-content
+				flex-shrink: 0
+				white-space: nowrap
+				height: 48px
 			.bunt-tab-header-item-text
 				white-space: nowrap
 	#unassigned
@@ -1104,6 +1298,10 @@ onUnmounted(() => {
 			&:focus-visible
 				outline: 2px solid var(--color-primary, #3b82f6)
 				outline-offset: 2px
+		.new-break.c-linear-schedule-session.small-break
+			display: none
+		.new-break.c-linear-schedule-session.desktop-break
+			display: flex
 		.new-break-hint
 			display: block
 			background: rgba(0, 0, 0, 0.6)
@@ -1156,13 +1354,153 @@ onUnmounted(() => {
 		position: sticky
 		left: 0
 		top: 0
-		z-index: 30
+		z-index: 50
 		background-color: $clr-white
-		.days
-			flex: 1
+		width: 100%
+		height: 48px
+		max-height: 48px
+		box-sizing: border-box
+		overflow: hidden
 	#schedule-wrapper
+		flex: 1
+		min-height: 0
+		min-width: 0
 		width: 100%
 		margin-right: 40px
+	#unassigned
+		.unassigned-mobile-header
+			display: none
+			@media (max-width: 767px)
+				display: flex
+				align-items: center
+				justify-content: space-between
+				padding: 10px 14px
+				background-color: #f8fafc
+				border: 1px solid #cbd5e1
+				border-radius: 6px
+				margin-bottom: 8px
+				cursor: pointer
+				user-select: none
+				.unassigned-title
+					display: flex
+					align-items: center
+					gap: 8px
+					font-weight: 600
+					font-size: 14px
+					color: #1e293b
+					.drop-hint
+						color: var(--color-primary, #2185d0)
+						font-weight: normal
+				.unassigned-collapse-icon
+					color: #64748b
+					font-size: 14px
+
+@media (max-width: 767px)
+	.pretalx-schedule
+		margin-left: 0
+		margin-right: 0
+		padding: 0 12px
+		width: 100%
+		box-sizing: border-box
+		min-height: calc(100vh - 160px)
+		#main-wrapper
+			flex-direction: column
+			width: 100%
+			box-sizing: border-box
+		#unassigned
+			width: 100%
+			box-sizing: border-box
+			margin-top: 0
+			margin-bottom: 12px
+			background-color: $clr-white
+			padding-top: 8px
+			padding-bottom: 4px
+			flex: none
+			&.is-collapsed
+				.unassigned-body
+					display: none
+			.unassigned-body
+				max-height: 300px
+				overflow-y: auto
+				padding-bottom: 8px
+				border-bottom: 1px solid #e2e8f0
+				margin-bottom: 8px
+				box-sizing: border-box
+			> *
+				margin-right: 0
+			.c-linear-schedule-session
+				margin: 8px 0
+				width: 100%
+				min-width: 0
+				box-sizing: border-box
+			.unassigned-header
+				width: 100%
+				box-sizing: border-box
+				> .density-controls
+					flex-wrap: nowrap
+					align-items: center
+					width: 100%
+					box-sizing: border-box
+					.density-btn
+						padding: 4px 8px
+						.density-btn-text
+							display: none
+					.small-break.c-linear-schedule-session
+						display: inline-flex
+						align-items: center
+						justify-content: center
+						margin-left: auto
+						margin-top: 0
+						margin-bottom: 0
+						margin-right: 0
+						height: 30px
+						min-height: 30px
+						max-height: 30px
+						padding: 0 12px
+						background: #f1f5f9
+						border: 1px solid #94a3b8
+						border-radius: 6px
+						color: #0f172a
+						font-weight: 600
+						font-size: 13px
+						cursor: grab
+						user-select: none
+						box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05)
+						transition: all 0.15s ease
+						box-sizing: border-box
+						flex-shrink: 0
+						min-width: 0
+						width: auto
+						&:hover, &:active
+							background: #e2e8f0
+							border-color: var(--color-primary, #2185d0)
+							color: var(--color-primary, #2185d0)
+						.time-box
+							display: none
+						.info
+							display: flex
+							align-items: center
+							padding: 0
+							margin: 0
+							.title-row
+								display: flex
+								align-items: center
+								.title
+									font-size: 13px
+									font-weight: 600
+									color: inherit
+									white-space: nowrap
+									overflow: hidden
+									text-overflow: ellipsis
+									max-width: 120px
+			.desktop-break.c-linear-schedule-session
+				display: none
+		#schedule-wrapper
+			width: 100%
+			margin-right: 0
+			box-sizing: border-box
+			overflow: auto
+
 #session-editor-wrapper, #assign-modal-wrapper
 	position: fixed
 	z-index: 1000
@@ -1180,18 +1518,36 @@ onUnmounted(() => {
 		top: 50%
 		left: 50%
 		transform: translate(-50%, -50%)
-		width: 680px
+		width: min(680px, 95vw)
+		max-width: 95vw
+		max-height: calc(100vh - 48px)
+		overflow-y: auto
 
 		.session-editor-title
 			font-size: 22px
 			margin-bottom: 16px
+			display: flex
+			justify-content: space-between
+			align-items: center
+			.modal-close-btn
+				background: none
+				border: none
+				font-size: 20px
+				color: #666
+				cursor: pointer
+				padding: 4px 8px
+				line-height: 1
+				border-radius: 4px
+				&:hover
+					color: #333
+					background-color: rgba(0, 0, 0, 0.05)
 		.button-row
 			display: flex
 			width: 100%
 			margin-top: 24px
 
 			.bunt-button-content
-				font-size: 16px !important
+				font-size: 16px
 			#btn-delete
 				button-style(color: $clr-danger, text-color: $clr-white)
 				font-weight: bold
@@ -1252,6 +1608,27 @@ onUnmounted(() => {
 				margin-bottom: 24px
 			.assign-new
 				align-items: center
+		.assign-modal-error
+			display: flex
+			align-items: center
+			justify-content: space-between
+			gap: 8px
+			padding: 10px 14px
+			margin-bottom: 16px
+			background-color: #fdecea
+			border: 1px solid #f5c6cb
+			border-radius: 4px
+			color: #721c24
+			font-size: 14px
+			.assign-modal-error-dismiss
+				background: none
+				border: none
+				color: #721c24
+				cursor: pointer
+				padding: 2px 6px
+				font-size: 14px
+				&:hover
+					opacity: 0.7
 		.member-chip
 			display: inline-flex
 			align-items: center
@@ -1293,4 +1670,45 @@ onUnmounted(() => {
 			&:disabled
 				opacity: 0.6
 				cursor: default
+.break-confirm-dialog
+	border: none
+	border-radius: 4px
+	padding: 0
+	max-width: 400px
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2)
+	&::backdrop
+		background: rgba(0, 0, 0, 0.5)
+	.dialog-inner
+		padding: 32px 40px
+		h3
+			margin: 0 0 12px
+			font-size: 18px
+		p
+			margin: 0 0 16px
+			color: $clr-grey-700
+			line-height: 1.4
+		.break-confirm-error
+			color: $clr-danger
+			margin: 0 0 12px
+		.break-confirm-actions
+			display: flex
+			justify-content: flex-end
+			gap: 8px
+			.btn
+				display: inline-block
+				padding: 6px 12px
+				font-size: 14px
+				line-height: 1.4
+				border-radius: 4px
+				border: 1px solid transparent
+				cursor: pointer
+				&:disabled
+					opacity: 0.65
+					cursor: default
+			.btn-default
+				background: $clr-white
+				border-color: $clr-dividers-light
+				color: $clr-grey-900
+			.btn-danger
+				button-style(color: $clr-danger, text-color: $clr-white)
 </style>
