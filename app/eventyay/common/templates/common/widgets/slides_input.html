@@ -64,7 +64,7 @@
       {% endif %}
       {% translate 'Only PDF is supported right now.' %}
       {% if widget.max_size %}
-        {% blocktranslate with size=widget.max_size|filesize %}Maximum file size: {{ size }}.{% endblocktranslate %}
+        {% blocktranslate with size=widget.max_size|filesize %}The upload limit is {{ size }}.{% endblocktranslate %}
       {% endif %}
     </small>
   </div>
