@@ -894,10 +894,10 @@ class Event(
                 logger.warning('Failed to load og_image thumbnail for %s: %s', og_file, exc)
 
         if not img:
-            if self.visible_logo_url:
-                img = self.visible_logo_url
-            elif self.visible_header_image_url:
+            if self.visible_header_image_url:
                 img = self.visible_header_image_url
+            elif self.visible_logo_url:
+                img = self.visible_logo_url
 
         if img:
             if is_http_url(img):
@@ -909,7 +909,7 @@ class Event(
     @property
     def social_image_signature(self):
         og_image = self.settings.get('og_image', as_type=str, default='') or ''
-        image_source = og_image or self.visible_logo_url or self.visible_header_image_url or ''
+        image_source = og_image or self.visible_header_image_url or self.visible_logo_url or ''
         if not image_source:
             return ''
         return hashlib.sha1(image_source.encode('utf-8')).hexdigest()[:12]

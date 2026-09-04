@@ -36,6 +36,7 @@
                     {% append_si event_social_image request.GET.si as event_social_image_url %}
                     <meta property="thumbnail" content="{{ event_social_image_url }}">
                     <meta property="og:image" content="{{ event_social_image_url }}">
+                    <meta name="twitter:image" content="{{ event_social_image_url }}">
                 {% endwith %}
             {% endif %}
         {% endblock meta_image %}
