@@ -322,7 +322,7 @@ def test_meetup_create_with_preset(orga_client, organizer):
         assert is_meetup_event(event) is True
         assert event.settings.get('logo_image', as_type=str) == f'preset:{preset.pk}'
         assert event.visible_header_image_url is not None
-        assert event.visible_header_image_file is None
+        assert event.visible_header_image_file is not None
         assert event.preview_image_url_with_fallback is not None
 
 
@@ -400,7 +400,7 @@ def test_preset_resolution_in_event_model(organizer):
 
         assert event._visible_header_image_path == f'preset:{preset.pk}'
         assert event.visible_header_image_url is not None
-        assert event.visible_header_image_file is None
+        assert event.visible_header_image_file is not None
         assert event.preview_image_url_with_fallback is not None
         assert event.preview_image_url_small is not None
 

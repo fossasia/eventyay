@@ -60,33 +60,39 @@ class EventHeaderPresetForm(I18nModelForm):
 
     class Meta:
         model = EventHeaderPreset
-        fields = ['name', 'category', 'image', 'is_active']
+        fields = ['name', 'category', 'image']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk and self.instance.image:
             self.fields['image'].required = False
 
+    MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10 MB
+
     def clean_image(self):
         image = self.cleaned_data.get('image')
         if image and isinstance(image, UploadedFile):
+            if image.size > self.MAX_IMAGE_SIZE:
+                raise forms.ValidationError(_('The uploaded image exceeds the maximum allowed size of 10 MB.'))
             try:
                 img = Image.open(image)
                 img.verify()
                 image.seek(0)
-            except (UnidentifiedImageError, OSError, ValueError):
+            except (UnidentifiedImageError, OSError, ValueError, Image.DecompressionBombError):
                 raise forms.ValidationError(_('The uploaded file is not a valid or supported image format.'))
         return image
 
     def save(self, commit=True):
-        instance = super().save(commit=False)
-        uploaded_image = self.cleaned_data.get('image')
-
         old_image = None
         old_thumbnail = None
         if self.instance and self.instance.pk:
-            old_image = self.instance.image.name if self.instance.image else None
-            old_thumbnail = self.instance.thumbnail.name if self.instance.thumbnail else None
+            current = EventHeaderPreset.objects.filter(pk=self.instance.pk).values('image', 'thumbnail').first()
+            if current:
+                old_image = current.get('image')
+                old_thumbnail = current.get('thumbnail')
+
+        instance = super().save(commit=False)
+        uploaded_image = self.cleaned_data.get('image')
 
         has_new_upload = bool(uploaded_image and isinstance(uploaded_image, UploadedFile))
         if has_new_upload:
@@ -98,11 +104,14 @@ class EventHeaderPresetForm(I18nModelForm):
             instance.save()
             if has_new_upload and (old_image or old_thumbnail):
                 def _cleanup_old_files():
+                    from contextlib import suppress
                     from django.core.files.storage import default_storage
                     if old_image and old_image != instance.image.name:
-                        default_storage.delete(old_image)
+                        with suppress(OSError):
+                            default_storage.delete(old_image)
                     if old_thumbnail and old_thumbnail != instance.thumbnail.name:
-                        default_storage.delete(old_thumbnail)
+                        with suppress(OSError):
+                            default_storage.delete(old_thumbnail)
 
                 from django.db import transaction
                 transaction.on_commit(_cleanup_old_files)

@@ -1,7 +1,7 @@
 from contextlib import suppress
 from django.core.files.storage import default_storage
 from django.db import models, transaction
-from django.db.models.signals import post_delete
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 from i18nfield.fields import I18nCharField
@@ -88,5 +88,13 @@ def cleanup_event_header_preset_files(sender, instance, **kwargs):
 @receiver(post_delete, sender=EventHeaderPresetCategory)
 def cleanup_event_header_preset_category(sender, instance, **kwargs):
     """Invalidate cache when a preset category is deleted."""
+    from eventyay.base.header_presets import invalidate_preset_cache
+    transaction.on_commit(invalidate_preset_cache)
+
+
+@receiver(post_save, sender=EventHeaderPreset)
+@receiver(post_save, sender=EventHeaderPresetCategory)
+def invalidate_cache_on_save(sender, instance, **kwargs):
+    """Invalidate cache when a preset or category is created or updated."""
     from eventyay.base.header_presets import invalidate_preset_cache
     transaction.on_commit(invalidate_preset_cache)

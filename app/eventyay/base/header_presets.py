@@ -86,11 +86,6 @@ def resolve_preset_to_url(preset_id: str):
             Q(name__icontains=slug_name) | Q(image__icontains=raw_id)
         ).first()
 
-    if not fallback:
-        active_presets = get_active_presets()
-        if active_presets:
-            fallback = active_presets[0]
-
     if fallback and fallback.image:
         with suppress(ValueError, AttributeError, OSError):
             return default_storage.url(fallback.image.name)
@@ -99,6 +94,12 @@ def resolve_preset_to_url(preset_id: str):
     if not raw_id.isdigit():
         legacy_filename = raw_id if raw_id.endswith('.jpg') else f'{raw_id}.jpg'
         return static(f'eventyay-common/images/header_presets/{legacy_filename}')
+
+    # Final fallback to first active preset if available
+    active_presets = get_active_presets()
+    if active_presets and active_presets[0].image:
+        with suppress(ValueError, AttributeError, OSError):
+            return default_storage.url(active_presets[0].image.name)
 
     return None
 
@@ -134,11 +135,6 @@ def resolve_preset_thumbnail_url(preset_id: str):
             Q(name__icontains=slug_name) | Q(image__icontains=raw_id)
         ).first()
 
-    if not fallback:
-        active_presets = get_active_presets()
-        if active_presets:
-            fallback = active_presets[0]
-
     if fallback:
         if fallback.thumbnail:
             with suppress(ValueError, AttributeError, OSError):
@@ -150,6 +146,16 @@ def resolve_preset_thumbnail_url(preset_id: str):
     if not raw_id.isdigit():
         legacy_filename = raw_id if raw_id.endswith('.jpg') else f'{raw_id}.jpg'
         return static(f'eventyay-common/images/header_presets/thumbs/{legacy_filename}')
+
+    active_presets = get_active_presets()
+    if active_presets:
+        first = active_presets[0]
+        if first.thumbnail:
+            with suppress(ValueError, AttributeError, OSError):
+                return default_storage.url(first.thumbnail.name)
+        if first.image:
+            with suppress(ValueError, AttributeError, OSError):
+                return default_storage.url(first.image.name)
 
     return None
 

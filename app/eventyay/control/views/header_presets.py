@@ -1,12 +1,9 @@
-import json
 from django.contrib import messages
 from django.db.models import Count
-from django.http import Http404, HttpResponseRedirect, JsonResponse
+from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
-from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext_lazy as _
-from django.views import View
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
 from eventyay.base.header_presets import invalidate_preset_cache
@@ -85,39 +82,6 @@ class HeaderPresetDeleteView(AdministratorPermissionRequiredMixin, DeleteView):
 
     def delete(self, request, *args, **kwargs):
         return self.form_valid(None)
-
-
-class HeaderPresetToggleActiveView(AdministratorPermissionRequiredMixin, View):
-    def post(self, request, *args, **kwargs):
-        preset = get_object_or_404(EventHeaderPreset, pk=kwargs['pk'])
-        is_json = (request.content_type or '').startswith('application/json')
-
-        data = {}
-        if is_json:
-            try:
-                data = json.loads(request.body.decode('utf-8'))
-            except (ValueError, AttributeError):
-                data = {}
-
-        if 'is_active' in data:
-            preset.is_active = bool(data['is_active'])
-        else:
-            preset.is_active = not preset.is_active
-
-        preset.save(update_fields=['is_active'])
-        invalidate_preset_cache()
-
-        if is_json:
-            return JsonResponse({'ok': True, 'is_active': preset.is_active})
-
-        status_text = _('enabled') if preset.is_active else _('disabled')
-        messages.success(request, _('Preset "%(name)s" has been %(status)s.') % {'name': preset.name, 'status': status_text})
-        referer = request.META.get('HTTP_REFERER')
-        if referer and url_has_allowed_host_and_scheme(
-            referer, allowed_hosts={request.get_host()}, require_https=request.is_secure()
-        ):
-            return redirect(referer)
-        return redirect(reverse('eventyay_admin:admin.header_presets'))
 
 
 class HeaderPresetCategoryCreateView(AdministratorPermissionRequiredMixin, CreateView):

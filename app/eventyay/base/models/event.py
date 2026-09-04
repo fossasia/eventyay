@@ -2867,13 +2867,21 @@ class Event(
     @cached_property
     def visible_header_image_file(self):
         from django.core.files.storage import default_storage
-        from eventyay.base.header_presets import is_preset_value
+        from eventyay.base.header_presets import (
+            extract_preset_id,
+            get_preset_by_id,
+            is_preset_value,
+        )
 
         if not self._visible_header_image_path:
             return None
-        if is_preset_value(str(self._visible_header_image_path)):
-            return None
         with suppress(ValueError, AttributeError, OSError):
+            if is_preset_value(str(self._visible_header_image_path)):
+                preset_id = extract_preset_id(str(self._visible_header_image_path))
+                preset = get_preset_by_id().get(preset_id)
+                if preset and preset.image:
+                    return default_storage.open(preset.image.name)
+                return None
             if is_http_url(str(self._visible_header_image_path)):
                 return None
             return default_storage.open(self._visible_header_image_path)

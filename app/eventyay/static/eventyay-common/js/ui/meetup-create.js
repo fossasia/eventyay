@@ -219,6 +219,10 @@ export function initRegistrationFeeToggles() {
 }
 
 function dismissModal(modalId) {
+    if (window.$ && window.$.fn && window.$.fn.modal) {
+        window.$('#' + modalId).modal('hide');
+        return;
+    }
     const modal = document.getElementById(modalId);
     if (!modal) return;
     const dismissBtn = modal.querySelector('[data-dismiss="modal"]');
@@ -241,6 +245,12 @@ export function initHeaderImagePicker() {
     if (!previewImg && !presetCards.length) {
         return;
     }
+
+    let lastPresetId = presetInput ? presetInput.value : '';
+    let lastPresetUrl = previewImg ? previewImg.src : '';
+    let lastPresetName = sourceBadge ? sourceBadge.textContent : '';
+
+    const getCustomUploadText = () => (window.gettext ? window.gettext('Custom upload') : 'Custom upload');
 
     // Category filter pills
     categoryPills.forEach((pill) => {
@@ -283,6 +293,10 @@ export function initHeaderImagePicker() {
             const presetId = card.dataset.presetId;
             const presetUrl = card.dataset.presetUrl;
             const presetName = card.dataset.presetName;
+
+            lastPresetId = presetId;
+            lastPresetUrl = presetUrl;
+            lastPresetName = presetName;
 
             if (presetInput) {
                 presetInput.value = presetId;
@@ -355,12 +369,35 @@ export function initHeaderImagePicker() {
                     const reader = new FileReader();
                     reader.onload = (evt) => {
                         if (evt.target && evt.target.result) {
-                            showPreviewImage(evt.target.result, 'Custom upload');
+                            showPreviewImage(evt.target.result, getCustomUploadText());
                         }
                     };
                     reader.readAsDataURL(selectedFile);
                 }
                 dismissModal('headerImagePickerModal');
+            }
+        });
+    }
+
+    // Restore previous preset if user closes/cancels cropper without cropping
+    if (window.$) {
+        window.$('#cropperModal').on('hidden.bs.modal', () => {
+            if (!fileInput || !fileInput.value) {
+                if (lastPresetId) {
+                    if (presetInput) {
+                        presetInput.value = lastPresetId;
+                    }
+                    if (lastPresetUrl) {
+                        showPreviewImage(lastPresetUrl, lastPresetName);
+                    }
+                    presetCards.forEach((c) => {
+                        if (c.dataset.presetId === lastPresetId) {
+                            c.classList.add('active');
+                        } else {
+                            c.classList.remove('active');
+                        }
+                    });
+                }
             }
         });
     }
@@ -379,7 +416,7 @@ export function initHeaderImagePicker() {
                     newSrc = cropperImage.src;
                 }
                 if (newSrc) {
-                    showPreviewImage(newSrc, 'Custom upload');
+                    showPreviewImage(newSrc, getCustomUploadText());
                 }
                 if (presetInput) {
                     presetInput.value = '';

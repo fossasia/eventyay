@@ -101,33 +101,16 @@
                             <h3 class="preset-card-title">{{ preset.name }}</h3>
                             <div class="preset-card-meta">
                                 <span class="label label-default">{{ preset.category.name }}</span>
-                                {% if preset.is_active %}
-                                    <span class="label label-success">{% trans "Active" %}</span>
-                                {% else %}
-                                    <span class="label label-danger">{% trans "Inactive" %}</span>
-                                {% endif %}
                             </div>
                         </div>
                         <div class="preset-card-actions">
-                            <form method="post" action="{% url 'eventyay_admin:admin.header_presets.toggle' pk=preset.pk %}" class="preset-action-inline-form">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-xs {% if preset.is_active %}btn-default{% else %}btn-success{% endif %}">
-                                    {% if preset.is_active %}
-                                        <i class="fa fa-eye-slash"></i> {% trans "Disable" %}
-                                    {% else %}
-                                        <i class="fa fa-eye"></i> {% trans "Enable" %}
-                                    {% endif %}
-                                </button>
-                            </form>
-                            <div>
-                                <a href="{% url 'eventyay_admin:admin.header_presets.edit' pk=preset.pk %}" class="btn btn-default btn-xs">
-                                    <i class="fa fa-edit"></i> {% trans "Edit" %}
-                                </a>
-                                <a href="{% url 'eventyay_admin:admin.header_presets.delete' pk=preset.pk %}" class="btn btn-danger btn-xs" aria-label="{% trans 'Delete preset' %}" title="{% trans 'Delete preset' %}">
-                                    <i class="fa fa-trash" aria-hidden="true"></i>
-                                    <span class="sr-only">{% trans "Delete preset" %}</span>
-                                </a>
-                            </div>
+                            <a href="{% url 'eventyay_admin:admin.header_presets.edit' pk=preset.pk %}" class="btn btn-default btn-xs">
+                                <i class="fa fa-edit"></i> {% trans "Edit" %}
+                            </a>
+                            <a href="{% url 'eventyay_admin:admin.header_presets.delete' pk=preset.pk %}" class="btn btn-danger btn-xs" aria-label="{% trans 'Delete preset' %}" title="{% trans 'Delete preset' %}">
+                                <i class="fa fa-trash" aria-hidden="true"></i>
+                                <span class="sr-only">{% trans "Delete preset" %}</span>
+                            </a>
                         </div>
                     </div>
                 </div>

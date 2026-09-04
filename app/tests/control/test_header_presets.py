@@ -62,7 +62,6 @@ def test_admin_preset_create_view(client, admin_user, test_category):
         'name_0': 'Admin Uploaded Sunset',
         'category': test_category.pk,
         'image': test_image,
-        'is_active': 'on',
     }
     response = client.post(url, data)
     assert response.status_code == 302
@@ -84,7 +83,6 @@ def test_admin_preset_create_invalid_image_fails(client, admin_user, test_catego
         'name_0': 'Invalid Image Preset',
         'category': test_category.pk,
         'image': fake_file,
-        'is_active': 'on',
     }
     response = client.post(url, data)
     assert response.status_code == 200
@@ -101,42 +99,21 @@ def test_admin_preset_update_view(client, admin_user, test_category):
         thumbnail=_create_test_image(),
         is_active=True,
     )
+    original_image_name = preset.image.name
+    original_thumbnail_name = preset.thumbnail.name
 
     url = reverse('eventyay_admin:admin.header_presets.edit', kwargs={'pk': preset.pk})
     data = {
         'name_0': 'Updated Preset Name',
         'category': test_category.pk,
-        'is_active': 'on',
     }
     response = client.post(url, data)
     assert response.status_code == 302
 
     preset.refresh_from_db()
     assert 'Updated Preset Name' in str(preset.name)
-
-
-@pytest.mark.django_db
-def test_admin_preset_toggle_active(client, admin_user, test_category):
-    preset = EventHeaderPreset.objects.create(
-        name='Toggleable Preset',
-        category=test_category,
-        image=_create_test_image(),
-        thumbnail=_create_test_image(),
-        is_active=True,
-    )
-
-    url = reverse('eventyay_admin:admin.header_presets.toggle', kwargs={'pk': preset.pk})
-    response = client.post(url)
-    assert response.status_code == 302
-
-    preset.refresh_from_db()
-    assert preset.is_active is False
-
-    # Toggle back
-    response = client.post(url)
-    assert response.status_code == 302
-    preset.refresh_from_db()
-    assert preset.is_active is True
+    assert preset.image.name == original_image_name
+    assert preset.thumbnail.name == original_thumbnail_name
 
 
 @pytest.mark.django_db

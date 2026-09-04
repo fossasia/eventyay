@@ -23,7 +23,6 @@ urlpatterns = [
     path('header-presets/add/', header_presets.HeaderPresetCreateView.as_view(), name='admin.header_presets.add'),
     path('header-presets/<int:pk>/edit/', header_presets.HeaderPresetUpdateView.as_view(), name='admin.header_presets.edit'),
     path('header-presets/<int:pk>/delete/', header_presets.HeaderPresetDeleteView.as_view(), name='admin.header_presets.delete'),
-    path('header-presets/<int:pk>/toggle/', header_presets.HeaderPresetToggleActiveView.as_view(), name='admin.header_presets.toggle'),
     path('header-presets/category/add/', header_presets.HeaderPresetCategoryCreateView.as_view(), name='admin.header_presets.category.add'),
     path('header-presets/category/<int:pk>/edit/', header_presets.HeaderPresetCategoryUpdateView.as_view(), name='admin.header_presets.category.edit'),
     path('header-presets/category/<int:pk>/delete/', header_presets.HeaderPresetCategoryDeleteView.as_view(), name='admin.header_presets.category.delete'),

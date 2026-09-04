@@ -153,14 +153,11 @@
 .preset-card-actions {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
+    gap: 8px;
     border-top: 1px solid #f1f5f9;
     padding-top: 10px;
     margin-top: auto;
-}
-
-.preset-action-inline-form {
-    display: inline;
 }
 
 .preset-current-preview-wrapper {
