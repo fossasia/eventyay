@@ -1,6 +1,7 @@
 <template lang="pug">
 .c-room-header
 	.ui-page-header(v-if="!modules['page.markdown'] && !modules['page.landing'] && $route.name !== 'room:manage'")
+		bunt-icon-button.btn-back(@click="onBack", :tooltip="$t('Back to Overview')", tooltip-placement="bottom-start", :tooltip-fixed="true") arrow-left
 		.room-info
 			.room-name(v-html="$emojify(room.name)")
 			.room-session(v-if="currentSession") {{ $localize(currentSession.title) }}
@@ -117,6 +118,15 @@ export default {
 				if (this.$route.name === 'about') return
 				this.$router.replace({name: 'about'})
 			}
+		},
+		onBack() {
+			if (window.history.state && window.history.state.back) {
+				this.$router.back()
+			} else if (window.eventyay?.isOrganizerArea) {
+				this.$router.replace({ name: 'organizer' })
+			} else {
+				this.$router.replace({ name: 'about' })
+			}
 		}
 	},
 	beforeUnmount() {
@@ -137,8 +147,12 @@ export default {
 	min-width: 0
 	> .ui-page-header
 		justify-content: space-between
+		.btn-back
+			icon-button-style(style: clear)
+			flex: none
 		.room-info
-			padding: 0 24px
+			padding: 0 12px
+			flex: 1
 			display: flex
 			align-items: baseline
 			min-width: 0

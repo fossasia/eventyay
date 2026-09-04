@@ -11,7 +11,7 @@ aside.c-organiser-sidebar(
 )
 		.startpage-sidebar-inner
 			.startpage-sidebar-context
-				router-link.dropdown-toggle(:to="{name: 'admin'}", @click="onNavClick")
+				a.dropdown-toggle(:href="commonAccountUrl", @click="onNavClick")
 					span.fa-stack.context-icon-badge
 						i.mdi.mdi-video-vintage
 					.context-indicator
@@ -26,14 +26,14 @@ aside.c-organiser-sidebar(
 				)
 
 			ul.startpage-sidebar-nav(role="group", :aria-label="$t('Organiser Navigation')")
-				//- Overview
+				//- 1. Overview
 				li
-					router-link.nav-link(:to="{name: 'admin'}", exact, @click="onNavClick")
+					router-link.nav-link(:to="{name: 'organizer'}", exact, @click="onNavClick")
 						span.fa.mdi.mdi-view-dashboard-outline(aria-hidden="true")
 						span.sidebar-text {{ $t('Overview') }}
 
-				//- Rooms & Stages (collapsible)
-				li.nav-fold(v-if="hasPermission('room:update')")
+				//- 2. Rooms & Stages (collapsible)
+				li.nav-fold(v-if="hasPermission('room:update') || hasPermission('world:rooms.create.stage') || isAdminMode")
 					.has-children
 						router-link.nav-link.nav-link-inner(:to="{name: 'admin:rooms:index'}", :class="{active: isRoomsActive}", @click="onNavClick")
 							span.fa.mdi.mdi-door-open(aria-hidden="true")
@@ -63,12 +63,12 @@ aside.c-organiser-sidebar(
 								span.mdi.mdi-plus(aria-hidden="true")
 								span {{ $t('New Room') }}
 
-				//- Chat Rooms (collapsible)
-				li.nav-fold(v-if="hasPermission('room:update')")
+				//- 3. Chat rooms (collapsible, hidden if chat_rooms is disabled)
+				li.nav-fold(v-if="(hasPermission('room:update') || hasPermission('world:rooms.create.chat') || isAdminMode) && liveFeatures.chat_rooms")
 					.has-children
 						router-link.nav-link.nav-link-inner(:to="{name: 'admin:chat:index'}", :class="{active: isChatActive}", @click="onNavClick")
 							span.fa.mdi.mdi-chat-processing-outline(aria-hidden="true")
-							span.sidebar-text {{ $t('Chat Rooms') }}
+							span.sidebar-text {{ $t('Chat rooms') }}
 						button.arrow-btn(type="button", :aria-expanded="String(openFolds.chat)", @click.stop="toggleFold('chat')")
 							i.fa(:class="openFolds.chat ? 'fa-angle-down' : 'fa-angle-left'", aria-hidden="true")
 					transition(name="fold")
@@ -94,14 +94,8 @@ aside.c-organiser-sidebar(
 								span.mdi.mdi-plus(aria-hidden="true")
 								span {{ $t('New Channel') }}
 
-				//- Announcements
-				li(v-if="hasPermission('world:announce')")
-					router-link.nav-link(:to="{name: 'admin:announcements'}", @click="onNavClick")
-						span.fa.mdi.mdi-bullhorn-outline(aria-hidden="true")
-						span.sidebar-text {{ $t('Announcements') }}
-
-				//- Kiosks (collapsible)
-				li.nav-fold(v-if="hasPermission('world:kiosks.manage')")
+				//- 4. Kiosks (collapsible, hidden if kiosks is disabled)
+				li.nav-fold(v-if="(hasPermission('world:kiosks.manage') || isAdminMode) && liveFeatures.kiosks")
 					.has-children
 						router-link.nav-link.nav-link-inner(:to="{name: 'admin:kiosks:index'}", :class="{active: isKiosksActive}", @click="onNavClick")
 							span.fa.mdi.mdi-monitor-dashboard(aria-hidden="true")
@@ -128,49 +122,82 @@ aside.c-organiser-sidebar(
 								span.mdi.mdi-plus(aria-hidden="true")
 								span {{ $t('New Kiosk') }}
 
-				//- Users
-				li(v-if="hasPermission('world:users.list')")
+				//- 5. Direct Messages (collapsible, hidden if direct_messaging is disabled)
+				li.nav-fold(v-if="(hasPermission('world:chat.direct') || isAdminMode) && liveFeatures.direct_messaging")
+					.has-children
+						span.nav-link.nav-link-inner(@click="toggleFold('dms')")
+							span.fa.mdi.mdi-account-multiple-outline(aria-hidden="true")
+							span.sidebar-text {{ $t('Direct Messages') }}
+						button.arrow-btn(type="button", :aria-expanded="String(openFolds.dms)", @click.stop="toggleFold('dms')")
+							i.fa(:class="openFolds.dms ? 'fa-angle-down' : 'fa-angle-left'", aria-hidden="true")
+					transition(name="fold")
+						.nav-sub-list(v-show="openFolds.dms")
+							router-link.nav-sub-link(
+								v-for="channel of directMessageChannels",
+								:key="channel.id",
+								:to="{name: 'channel', params: {channelId: channel.id}}",
+								:class="{active: channel.id === $route.params.channelId, unread: hasUnreadMessages(channel.id)}",
+								@click="onNavClick"
+							)
+								span.mdi(aria-hidden="true", :class="call && call.channel === channel.id ? 'mdi-phone' : 'mdi-account-outline'")
+								span {{ getDMChannelName(channel) }}
+							button.nav-sub-link.nav-sub-link--add(type="button", @click.prevent="showDMCreationPrompt = true; onNavClick()")
+								span.mdi.mdi-plus(aria-hidden="true")
+								span {{ $t('New Message') }}
+
+				//- 6. Users
+				li(v-if="hasPermission('world:users.list') || isAdminMode")
 					router-link.nav-link(:to="{name: 'admin:users'}", @click="onNavClick")
 						span.fa.mdi.mdi-account-multiple-outline(aria-hidden="true")
 						span.sidebar-text {{ $t('Users') }}
 
-				//- Configuration / Settings (collapsible)
-				li.nav-fold(v-if="hasPermission('world:update')")
-					.has-children
-						router-link.nav-link.nav-link-inner(:to="{name: 'admin:config'}", :class="{active: isConfigActive}", @click="onNavClick")
-							span.fa.mdi.mdi-wrench(aria-hidden="true")
-							span.sidebar-text {{ $t('Configuration') }}
-						button.arrow-btn(type="button", :aria-expanded="String(openFolds.config)", @click.stop="toggleFold('config')")
-							i.fa(:class="openFolds.config ? 'fa-angle-down' : 'fa-angle-left'", aria-hidden="true")
-					transition(name="fold")
-						.nav-sub-list(v-show="openFolds.config")
-							router-link.nav-sub-link(:to="{name: 'admin:config'}", exact, @click="onNavClick")
-								span {{ $t('General') }}
-							router-link.nav-sub-link(:to="{name: 'admin:config:privacy'}", @click="onNavClick")
-								span {{ $t('Privacy') }}
-							router-link.nav-sub-link(:to="{name: 'admin:config:token-generator'}", @click="onNavClick")
-								span {{ $t('Token Generator') }}
-							router-link.nav-sub-link(:to="{name: 'admin:config:reports'}", @click="onNavClick")
-								span {{ $t('Reports') }}
-							router-link.nav-sub-link(:to="{name: 'admin:config:audit-log'}", @click="onNavClick")
-								span {{ $t('Audit Log') }}
+				//- 7. Announcements
+				li(v-if="(hasPermission('world:announce') || isAdminMode) && liveFeatures.announcements !== false")
+					router-link.nav-link(:to="{name: 'admin:announcements'}", @click="onNavClick")
+						span.fa.mdi.mdi-bullhorn-outline(aria-hidden="true")
+						span.sidebar-text {{ $t('Announcements') }}
+
+				//- 8. Reports
+				li(v-if="hasPermission('world:graphs') || isAdminMode")
+					router-link.nav-link(:to="{name: 'admin:reports'}", :class="{active: isReportsActive}", @click="onNavClick")
+						span.fa.mdi.mdi-file-chart-outline(aria-hidden="true")
+						span.sidebar-text {{ $t('Reports') }}
+
+				//- 9. Logs
+				li(v-if="hasPermission('world:update') || isAdminMode")
+					router-link.nav-link(:to="{name: 'admin:logs'}", :class="{active: isLogsActive}", @click="onNavClick")
+						span.fa.mdi.mdi-history(aria-hidden="true")
+						span.sidebar-text {{ $t('Logs') }}
+
+				//- 10. Settings (formerly Video settings, now below Logs)
+				li(v-if="hasPermission('world:update') || hasPermission('world:rooms.create.stage') || hasPermission('world:rooms.create.bbb') || isAdminMode")
+					router-link.nav-link(:to="{name: 'admin:config'}", :class="{active: isConfigActive}", @click="onNavClick")
+						span.fa.mdi.mdi-cog-outline(aria-hidden="true")
+						span.sidebar-text {{ $t('Settings') }}
 
 			.buffer
 
 			.sidebar-footer-action
-				router-link.btn-public-view(:to="{name: 'about'}", @click="onNavClick")
+				a.btn-public-view(:href="publicVideoUrl", @click="onViewPublicVideo")
 					i.fa.fa-eye(aria-hidden="true")
 					span {{ $t('View Public Video') }}
+
+		teleport(to="body")
+			transition(name="prompt")
+				create-dm-prompt(v-if="showDMCreationPrompt && (hasPermission('world:chat.direct') || isAdminMode) && liveFeatures.direct_messaging", @close="showDMCreationPrompt = false")
 </template>
 <script>
 import { mapState, mapGetters } from 'vuex'
+import moment from 'lib/timetravelMoment'
 import theme from 'theme'
 import api from 'lib/api'
 import { inferRoomType, isChatManagedRoom } from 'lib/room-types'
 import { getRoomOccupancyCount, usesParticipantOccupancy } from 'lib/room-occupancy'
+import CreateDmPrompt from 'components/CreateDmPrompt'
 
 export default {
 	name: 'OrganiserSidebar',
+	components: { CreateDmPrompt },
 	props: {
 		collapsed: {
 			type: Boolean,
@@ -189,10 +216,12 @@ export default {
 			pointerMovementX: 0,
 			snapBack: false,
 			kiosks: [],
+			showDMCreationPrompt: false,
 			openFolds: {
 				rooms: false,
 				chat: false,
 				kiosks: false,
+				dms: false,
 				config: false
 			}
 		}
@@ -200,8 +229,36 @@ export default {
 	computed: {
 		...mapState(['world', 'rooms']),
 		...mapGetters(['hasPermission', 'isAdminMode']),
+		commonAccountUrl() {
+			return window.eventyay?.commonAccountUrl || window.eventyay?.homeUrl || '/'
+		},
+		publicVideoUrl() {
+			return window.eventyay?.publicVideoUrl || '/'
+		},
+		liveFeatures() {
+			return Object.assign({
+				chat_rooms: false,
+				kiosks: false,
+				direct_messaging: false,
+				announcements: true
+			}, this.world?.live_features || window.eventyay?.liveFeatures || {})
+		},
 		eventDateSubtitle() {
-			return this.$t('Organizer account')
+			const dateFrom = this.world?.date_from || window.eventyay?.eventDates?.date_from
+			const dateTo = this.world?.date_to || window.eventyay?.eventDates?.date_to
+			if (!dateFrom) return this.$t('Organizer account')
+			const fromMoment = moment(dateFrom)
+			if (!dateTo || fromMoment.isSame(moment(dateTo), 'day')) {
+				return fromMoment.format('ll')
+			}
+			const toMoment = moment(dateTo)
+			if (fromMoment.isSame(toMoment, 'month')) {
+				return `${fromMoment.format('MMM D')} – ${toMoment.format('D, YYYY')}`
+			}
+			if (fromMoment.isSame(toMoment, 'year')) {
+				return `${fromMoment.format('MMM D')} – ${toMoment.format('MMM D, YYYY')}`
+			}
+			return `${fromMoment.format('ll')} – ${toMoment.format('ll')}`
 		},
 		individualRooms() {
 			if (!Array.isArray(this.rooms)) return []
@@ -224,7 +281,25 @@ export default {
 			return this.$route.name?.startsWith('admin:kiosks')
 		},
 		isConfigActive() {
-			return this.$route.name?.startsWith('admin:config')
+			return this.$route.name === 'admin:config'
+		},
+		isReportsActive() {
+			return this.$route.name === 'admin:reports' || this.$route.name === 'admin:config:reports'
+		},
+		isLogsActive() {
+			return this.$route.name === 'admin:logs' || this.$route.name === 'admin:config:audit-log'
+		},
+		call() {
+			return this.$store.state.chat?.call
+		},
+		directMessageChannels() {
+			if (!this.hasPermission('world:chat.direct') && !this.isAdminMode) {
+				return []
+			}
+			return this.$store.getters['chat/directMessageChannels'] || []
+		},
+		notificationCount() {
+			return this.$store.getters['chat/notificationCount']
 		},
 		sidebarStyle() {
 			if (this.$mq?.above?.m) return null
@@ -284,7 +359,7 @@ export default {
 			return `${count} ${count === 1 ? this.$t('active viewer') : this.$t('active viewers')}`
 		},
 		async fetchKiosks() {
-			if (!this.hasPermission('world:kiosks.manage')) return
+			if (!this.hasPermission('world:kiosks.manage') && !this.isAdminMode) return
 			try {
 				const res = await api.call('user.list', {type: 'kiosk'})
 				this.kiosks = res?.results || []
@@ -302,6 +377,20 @@ export default {
 			if (this.$mq?.below?.m) {
 				this.$emit('close')
 			}
+		},
+		onViewPublicVideo() {
+			try {
+				sessionStorage.setItem('video_auth_mode', 'organizer')
+				localStorage.removeItem('token')
+			} catch (e) {}
+			this.onNavClick()
+		},
+		hasUnreadMessages(channelId) {
+			return this.notificationCount ? this.notificationCount(channelId) > 0 : false
+		},
+		getDMChannelName(channel) {
+			const otherUser = channel?.users?.find(u => u?.id !== this.$store?.state?.user?.id)
+			return otherUser?.profile?.display_name || otherUser?.profile?.name || this.$t('Unknown User')
 		},
 		onPointerdown(event) {
 			if (this.$mq?.above?.m) return
@@ -605,6 +694,11 @@ export default {
 					padding: 10px 15px
 					text-decoration: none
 					border: none
+					background: none
+					cursor: pointer
+					font-family: inherit
+					text-align: left
+					width: 100%
 					transition: background-color 0.15s ease, color 0.15s ease
 
 					> .room-name, > span:first-child
