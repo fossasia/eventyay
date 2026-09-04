@@ -464,3 +464,32 @@
     border: 1px solid #ddd;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
+
+.profile-picture-cropper {
+    border: 0;
+    border-radius: 4px;
+    max-width: min(90vw, 640px);
+    padding: 24px;
+    width: 100%;
+}
+
+.profile-picture-cropper::backdrop {
+    background: rgba(0, 0, 0, 0.65);
+}
+
+.profile-picture-cropper-image-container {
+    max-height: 70vh;
+}
+
+.profile-picture-cropper-image-container img {
+    display: block;
+    max-height: 70vh;
+    max-width: 100%;
+}
+
+.profile-picture-cropper-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 16px;
+}

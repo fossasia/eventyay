@@ -1,6 +1,7 @@
 {% extends 'eventyay_common/base.html' %}
 {% load i18n %}
 {% load bootstrap3 %}
+{% load static %}
 {% block title %}{{ _('Account settings') }}{% endblock %}
 
 {% block nav_top_header %}
@@ -25,17 +26,15 @@
         <legend>{{ _('General settings') }}</legend>
         {% bootstrap_field form.fullname layout='horizontal' %}
         {% bootstrap_field form.wikimedia_username layout='horizontal' readonly='readonly' %}
-        {% if request.user.get_profile_picture_url %}
-            <div class='form-group'>
-                <div class='col-md-9 col-md-offset-3'>
-                    <div class='user-avatar-preview'>
-                        <a href='{{ request.user.get_profile_picture_url }}' data-lightbox='{{ request.user.get_profile_picture_url }}'>
-                            <img src='{{ request.user.get_profile_picture_url }}' class='user-avatar-preview-image' alt='{{ _("Profile picture") }}' />
-                        </a>
-                    </div>
+        <div class='form-group'>
+            <div class='col-md-9 col-md-offset-3'>
+                <div class='user-avatar-preview{% if not request.user.get_profile_picture_url %} d-none{% endif %}'>
+                    <a href='{{ request.user.get_profile_picture_url }}' data-lightbox='{{ request.user.get_profile_picture_url }}'>
+                        <img src='{{ request.user.get_profile_picture_url }}' class='user-avatar-preview-image' data-original-src='{{ request.user.get_profile_picture_url }}' alt='{{ _("Profile picture") }}' />
+                    </a>
                 </div>
             </div>
-        {% endif %}
+        </div>
         {% bootstrap_field form.profile_picture layout='horizontal' %}
         {% if request.user.profile_picture %}
             {% bootstrap_field form.clear_profile_picture layout='horizontal' %}
@@ -137,4 +136,19 @@
         </div>
     </form>
 {% endif %}
+<dialog id='profile-picture-cropper' class='profile-picture-cropper' aria-labelledby='profile-picture-cropper-title'>
+    <form method='dialog'>
+        <h2 id='profile-picture-cropper-title'>{{ _('Crop profile picture') }}</h2>
+        <div class='profile-picture-cropper-image-container'>
+            <img id='profile-picture-cropper-image' alt='{{ _('Profile picture preview') }}'>
+        </div>
+        <div class='profile-picture-cropper-actions'>
+            <button type='button' class='btn btn-default' data-profile-picture-crop-cancel>{{ _('Cancel') }}</button>
+            <button type='button' class='btn btn-primary' data-profile-picture-crop-apply>{{ _('Apply crop') }}</button>
+        </div>
+    </form>
+</dialog>
+<link rel='stylesheet' href="{% static 'vendored/cropperjs/cropper.min.css' %}">
+<script defer src="{% static 'vendored/cropperjs/cropper.min.js' %}"></script>
+<script type='module' src="{% static 'eventyay-common/js/account-profile-picture.js' %}"></script>
 {% endblock content %}
