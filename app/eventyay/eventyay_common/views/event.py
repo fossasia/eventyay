@@ -43,6 +43,13 @@ from eventyay.base.gmail.errors import (
     GmailRateLimitError,
     GmailTemporaryError,
 )
+from eventyay.base.header_presets import (
+    get_active_categories,
+    get_active_presets,
+    get_random_preset_id,
+    resolve_preset_thumbnail_url,
+    resolve_preset_to_url,
+)
 from eventyay.base.meetup import (
     get_rsvp_product_and_quota,
     get_video_config_initial,
@@ -298,6 +305,9 @@ class EventCreateView(TemplateView):
         if initial_form.get('locale') not in locales:
             initial_form['locale'] = locales[0]
 
+        if self.is_meetup_request and not clone_from and 'header_image_preset' not in initial_form:
+            initial_form['header_image_preset'] = get_random_preset_id()
+
         return initial_form
 
     @cached_property
@@ -387,6 +397,28 @@ class EventCreateView(TemplateView):
         context['meetup_creation_enabled'] = is_meetup_creation_enabled(self.request)
         context['type_preselected'] = 'series' in self.request.GET
         context['is_meetup'] = self.is_meetup_request
+        if self.is_meetup_request:
+            active_presets = get_active_presets()
+            context['header_presets'] = active_presets
+            context['preset_categories'] = get_active_categories()
+            presets_data = []
+            for p in active_presets:
+                url = resolve_preset_to_url(str(p.id))
+                thumb = resolve_preset_thumbnail_url(str(p.id)) or url
+                if url:
+                    presets_data.append({
+                        'id': str(p.id),
+                        'name': str(p.name),
+                        'category': str(p.category_id),
+                        'url': url,
+                        'thumbnailUrl': thumb,
+                    })
+            context['header_presets_data'] = presets_data
+            initial_preset_id = ''
+            if basics_form and 'header_image_preset' in basics_form.fields:
+                initial_preset_id = str(basics_form['header_image_preset'].value() or '')
+            context['initial_preset_id'] = initial_preset_id
+            context['initial_preset_url'] = resolve_preset_to_url(initial_preset_id) or ''
         return context
 
     def post(self, request, *args, **kwargs):
@@ -613,15 +645,19 @@ class EventCreateView(TemplateView):
                 except (OverflowError, ValueError, TypeError):
                     crop_box = None
 
+                header_image = basics_form.cleaned_data.get('logo_image')
+                header_image_preset = basics_form.cleaned_data.get('header_image_preset', '')
+
                 provision_meetup_event(
                     event,
                     video_type=basics_data.get('video_type', ''),
                     video_url=basics_data.get('video_url', ''),
                     request=self.request,
                     frontpage_text=basics_data.get('frontpage_text'),
-                    header_image=basics_form.cleaned_data.get('logo_image'),
+                    header_image=header_image,
                     registration_limit=basics_data.get('registration_limit'),
                     crop_box=crop_box,
+                    header_image_preset=header_image_preset if not header_image else '',
                     registration_fee=basics_data.get('registration_fee'),
                     payment_stripe_publishable_key=basics_data.get('payment_stripe_publishable_key', ''),
                     payment_stripe_secret_key=basics_data.get('payment_stripe_secret_key', ''),
