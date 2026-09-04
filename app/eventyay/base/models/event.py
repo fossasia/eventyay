@@ -877,21 +877,18 @@ class Event(
     def social_image(self):
         from eventyay.multidomain.urlreverse import build_absolute_uri
 
-        def get_image_value(setting_name: str) -> str:
-            value = self.settings.get(setting_name, as_type=str, default='') or ''
-            if value.startswith('file://'):
-                return value[7:]
-            return value
-
         img = None
-        og_file = get_image_value('og_image')
+        og_file = self.settings.get('og_image', as_type=str, default=None)
         if og_file:
             if is_http_url(og_file):
                 return og_file
-            try:
-                img = get_thumbnail(og_file, '1200').thumb.url
-            except (OSError, SuspiciousFileOperation, ThumbnailError) as exc:
-                logger.warning('Failed to load og_image thumbnail for %s: %s', og_file, exc)
+            
+            og_path = _resolve_media_path(og_file)
+            if og_path:
+                try:
+                    img = get_thumbnail(og_path, '1200').thumb.url
+                except (OSError, SuspiciousFileOperation, ThumbnailError) as exc:
+                    logger.warning('Failed to load og_image thumbnail for %s: %s', og_path, exc)
 
         if not img:
             if self.visible_logo_url:
