@@ -1,3 +1,6 @@
+import logging
+import os
+
 from django import forms
 from django.conf import settings
 from django.contrib.auth.hashers import check_password
@@ -5,12 +8,14 @@ from django.contrib.auth.password_validation import (
     password_validators_help_texts,
     validate_password,
 )
+from django.core.files.uploadedfile import SimpleUploadedFile, UploadedFile
 from django.utils.translation import gettext_lazy as _
 from eventyay.timezones import common_timezones
 
 from eventyay.base.models import User
 from eventyay.common.image import validate_image
 from eventyay.control.forms import SingleLanguageWidget
+from eventyay.helpers.image_optimize import optimize_uploaded_image
 
 
 class UserSettingsForm(forms.ModelForm):
@@ -121,7 +126,6 @@ class UserSettingsForm(forms.ModelForm):
 
     def clean_profile_picture(self):
         pic = self.cleaned_data.get('profile_picture')
-        from django.core.files.uploadedfile import UploadedFile
         if pic and isinstance(pic, UploadedFile):
             try:
                 crop_x = float(self.data.get('profile_picture_crop_x', ''))
@@ -132,21 +136,20 @@ class UserSettingsForm(forms.ModelForm):
                     raise ValueError('Invalid crop coordinates')
                 crop_x = int(crop_x)
                 crop_y = int(crop_y)
-                crop_w = int(crop_w)
-                crop_h = int(crop_h)
+                crop_w = round(crop_w)
+                crop_h = round(crop_h)
                 if crop_w <= 0 or crop_h <= 0:
                     raise ValueError('Invalid crop dimensions')
-                if crop_w != crop_h:
+                if abs(crop_w - crop_h) > 1:
                     raise forms.ValidationError(_('Crop dimensions must be square'))
+                # Force a perfect square for the final crop box
+                crop_h = crop_w
                 crop_box = (crop_x, crop_y, crop_x + crop_w, crop_y + crop_h)
             except (ValueError, TypeError, OverflowError):
                 crop_box = None
 
-            from eventyay.helpers.image_optimize import optimize_uploaded_image
             try:
                 result = optimize_uploaded_image(pic, 'profile_picture', crop_box)
-                import os
-                from django.core.files.uploadedfile import SimpleUploadedFile
                 base_name, _ = os.path.splitext(pic.name)
                 pic = SimpleUploadedFile(
                     f"{base_name}.{result.optimized_ext}",
@@ -154,7 +157,6 @@ class UserSettingsForm(forms.ModelForm):
                     content_type=f"image/{result.optimized_ext}"
                 )
             except Exception:
-                import logging
                 logging.getLogger(__name__).exception("Failed to process profile picture")
                 raise forms.ValidationError(_('Failed to process image.'))
         return pic
