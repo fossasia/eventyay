@@ -51,6 +51,11 @@ from eventyay.features.live.modules.base import BaseModule
 logger = logging.getLogger(__name__)
 
 
+def is_kiosks_enabled(event) -> bool:
+    live_features = (getattr(event, "config", None) or {}).get("live_features", {})
+    return bool(live_features.get("kiosks", False))
+
+
 class AuthModule(BaseModule):
     prefix = "user"
 
@@ -610,6 +615,10 @@ class AuthModule(BaseModule):
     @command("kiosk.create")
     @require_event_permission(Permission.EVENT_KIOSKS_MANAGE)
     async def kiosk_create(self, body):
+        if not is_kiosks_enabled(self.consumer.event):
+            await self.consumer.send_error(code="kiosks.disabled")
+            return
+
         uid = str(uuid.uuid4())
 
         @database_sync_to_async
@@ -634,6 +643,10 @@ class AuthModule(BaseModule):
     @command("kiosk.fetch")
     @require_event_permission(Permission.EVENT_KIOSKS_MANAGE)
     async def kiosk_fetch(self, body):
+        if not is_kiosks_enabled(self.consumer.event):
+            await self.consumer.send_error(code="kiosks.disabled")
+            return
+
         @database_sync_to_async
         def get_user(uid):
             user = get_user_by_id(self.consumer.event.pk, uid)
@@ -678,6 +691,10 @@ class AuthModule(BaseModule):
     @require_event_permission(Permission.EVENT_KIOSKS_MANAGE)
     async def kiosk_update(self, body):
         """Update a kiosk user profile (slides, room, display name, etc.)."""
+        if not is_kiosks_enabled(self.consumer.event):
+            await self.consumer.send_error(code="kiosks.disabled")
+            return
+
         kiosk_id = body.get("id")
         profile = body.get("profile")
         if not kiosk_id or not isinstance(profile, dict):

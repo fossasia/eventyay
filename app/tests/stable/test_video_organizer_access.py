@@ -98,21 +98,39 @@ def test_get_user_with_platform_user(monkeypatch):
     assert user == fake_video_user
 
 
-def test_video_announcements_live_feature_default():
+def test_video_live_features_defaults_and_preservation():
     from eventyay.base.services.event import _config_serializer
 
+    # 1. Defaults for new / unconfigured events: all 4 settings must be False
     fake_event = MagicMock()
     fake_event.id = 1
     fake_event.slug = 'demo-event'
-    fake_event.config = {'live_features': {'chat_rooms': True}}
+    fake_event.config = {}
     fake_event.locale = 'en'
     fake_event.roles = {}
     fake_event.trait_grants = {}
     fake_event.timezone = 'UTC'
 
     data = _config_serializer(fake_event).data
-    assert data['live_features']['announcements'] is True
-    assert data['live_features']['chat_rooms'] is True
+    assert data['live_features']['chat_rooms'] is False
+    assert data['live_features']['kiosks'] is False
+    assert data['live_features']['direct_messaging'] is False
+    assert data['live_features']['announcements'] is False
+
+    # 2. Existing saved values must be preserved
+    fake_event.config = {
+        'live_features': {
+            'chat_rooms': True,
+            'kiosks': True,
+            'direct_messaging': True,
+            'announcements': True,
+        }
+    }
+    data_saved = _config_serializer(fake_event).data
+    assert data_saved['live_features']['chat_rooms'] is True
+    assert data_saved['live_features']['kiosks'] is True
+    assert data_saved['live_features']['direct_messaging'] is True
+    assert data_saved['live_features']['announcements'] is True
 
 
 @pytest.mark.asyncio
@@ -130,6 +148,23 @@ async def test_announcement_module_disabled_check():
     module = AnnouncementModule(fake_consumer)
     await module.create_announcement({'text': 'Hello'})
     fake_consumer.send_error.assert_called_once_with(code='announcements.disabled')
+
+
+@pytest.mark.asyncio
+async def test_kiosk_module_disabled_check():
+    from unittest.mock import AsyncMock
+    from eventyay.features.live.modules.auth import AuthModule
+
+    fake_consumer = MagicMock()
+    fake_consumer.user = MagicMock()
+    fake_consumer.event = MagicMock()
+    fake_consumer.event.has_permission_async = AsyncMock(return_value=True)
+    fake_consumer.event.config = {'live_features': {'kiosks': False}}
+    fake_consumer.send_error = AsyncMock()
+
+    module = AuthModule(fake_consumer)
+    await module.kiosk_create({'profile': {}})
+    fake_consumer.send_error.assert_called_once_with(code='kiosks.disabled')
 
 
 def test_video_permission_definitions_mapping():
@@ -456,7 +491,7 @@ def test_is_announcements_enabled_helper():
     from eventyay.features.live.modules.announcement import is_announcements_enabled
 
     event_default = MagicMock(config={})
-    assert is_announcements_enabled(event_default) is True
+    assert is_announcements_enabled(event_default) is False
 
     event_enabled = MagicMock(config={'live_features': {'announcements': True}})
     assert is_announcements_enabled(event_enabled) is True
@@ -465,7 +500,26 @@ def test_is_announcements_enabled_helper():
     assert is_announcements_enabled(event_disabled) is False
 
     event_none_config = MagicMock(config=None)
-    assert is_announcements_enabled(event_none_config) is True
+    assert is_announcements_enabled(event_none_config) is False
+
+    event_none_live_features = MagicMock(config={'live_features': None})
+    assert is_announcements_enabled(event_none_live_features) is False
+
+
+def test_is_kiosks_enabled_helper():
+    from eventyay.features.live.modules.auth import is_kiosks_enabled
+
+    event_default = MagicMock(config={})
+    assert is_kiosks_enabled(event_default) is False
+
+    event_enabled = MagicMock(config={'live_features': {'kiosks': True}})
+    assert is_kiosks_enabled(event_enabled) is True
+
+    event_disabled = MagicMock(config={'live_features': {'kiosks': False}})
+    assert is_kiosks_enabled(event_disabled) is False
+
+    event_none_config = MagicMock(config=None)
+    assert is_kiosks_enabled(event_none_config) is False
 
 
 @pytest.mark.asyncio

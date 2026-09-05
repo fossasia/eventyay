@@ -253,7 +253,7 @@ export function checkRoutePermission(to) {
 		chat_rooms: false,
 		kiosks: false,
 		direct_messaging: false,
-		announcements: true
+		announcements: false
 	}, store.state.world?.live_features || window.eventyay?.liveFeatures || {})
 
 	if (name === 'admin:config') {
@@ -269,7 +269,7 @@ export function checkRoutePermission(to) {
 		return hasPerm('world:users.list')
 	}
 	if (name.startsWith('admin:announcements')) {
-		return liveFeatures.announcements !== false && hasPerm('world:announce')
+		return Boolean(liveFeatures.announcements) && hasPerm('world:announce')
 	}
 	if (name.startsWith('admin:kiosks')) {
 		return liveFeatures.kiosks && hasPerm('world:kiosks.manage')
