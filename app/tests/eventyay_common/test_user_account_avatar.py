@@ -58,9 +58,6 @@ def test_user_account_profile_picture_crop_tolerance(client):
 
     image_file = create_test_image_file()
 
-    # Raw dimensions differ by 1, e.g. 200.5 and 201.5
-    # Python round(200.5) = 200, round(201.5) = 202
-    # The form should check tolerance based on the raw float dimensions (200.5 and 201.5)
     response = client.post(
         reverse('eventyay_common:account.general'),
         {
