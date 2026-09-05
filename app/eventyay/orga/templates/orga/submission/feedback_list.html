@@ -10,10 +10,11 @@
         <div class="card mb-2">
             <div class="card-body pb-0">
                 {% if entry.rating %}
-                    <div class="feedback-rating mb-2" aria-label="{% translate 'Rating' %}: {{ entry.rating }} / 5" title="{% translate 'Rating' %}: {{ entry.rating }} / 5">
-                        {% for i in "12345"|make_list %}
-                            <span class="{% if forloop.counter <= entry.rating %}text-warning{% else %}text-muted{% endif %}">★</span>
-                        {% endfor %}
+                    <div class="feedback-rating mb-2" aria-label="{% translate 'Feedback Rating' %}: {{ entry.rating_emoji }} {{ entry.rating_label }}" title="{% translate 'Feedback Rating' %}: {{ entry.rating_emoji }} {{ entry.rating_label }}">
+                        <span class="feedback-rating-badge">
+                            <span class="feedback-rating-emoji feedback-rating-badge-emoji">{{ entry.rating_emoji }}</span>
+                            <span class="feedback-rating-label feedback-rating-badge-label">{{ entry.rating_label }}</span>
+                        </span>
                     </div>
                 {% endif %}
                 {{ entry.review|rich_text }}

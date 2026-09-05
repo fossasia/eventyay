@@ -72,3 +72,33 @@ def test_feedback_create_unauthenticated(client, past_slot):
         },
     )
     assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_feedback_create_with_rating(client, past_slot, user):
+    submission = past_slot.submission
+    event = submission.event
+    _enable_feedback(
+        event,
+        feedback_who_can_comment='registered',
+        feedback_close_after_days=0,
+    )
+    client.force_login(user)
+    url = reverse('api:feedback-list', kwargs={'event': event.slug})
+    response = client.post(
+        url,
+        {
+            'talk': submission.code,
+            'review': 'Loved this talk!',
+            'rating': 5,
+            'is_public': True,
+        },
+    )
+    assert response.status_code == 201
+    assert response.data['rating'] == 5
+    assert response.data['rating_emoji'] == '😍'
+    assert response.data['rating_label'] == 'Excellent'
+    fb = Feedback.objects.first()
+    assert fb.rating == 5
+    assert fb.rating_emoji == '😍'
+

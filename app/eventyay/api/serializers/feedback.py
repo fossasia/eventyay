@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
 from eventyay.api.serializers.i18n import I18nAwareModelSerializer
@@ -23,14 +24,16 @@ class AuthorSerializer(serializers.ModelSerializer):
 @register_serializer(versions=CURRENT_VERSIONS)
 class FeedbackReplySerializer(I18nAwareModelSerializer):
     author = serializers.SerializerMethodField()
+    rating_emoji = serializers.CharField(read_only=True)
+    rating_label = serializers.CharField(read_only=True)
 
     class Meta:
         model = Feedback
         fields = (
-            'id', 'talk', 'speaker', 'rating', 'review', 'author',
+            'id', 'talk', 'speaker', 'rating', 'rating_emoji', 'rating_label', 'review', 'author',
             'is_public', 'status', 'parent', 'created', 'updated'
         )
-        read_only_fields = ('author', 'status', 'created', 'updated', 'is_public')
+        read_only_fields = ('author', 'status', 'created', 'updated', 'is_public', 'rating', 'rating_emoji', 'rating_label')
 
     def get_author(self, obj):
         if not obj.is_public:
@@ -44,14 +47,33 @@ class FeedbackReplySerializer(I18nAwareModelSerializer):
 class FeedbackSerializer(I18nAwareModelSerializer):
     author = serializers.SerializerMethodField()
     replies = serializers.SerializerMethodField()
+    rating = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        min_value=1,
+        max_value=5,
+    )
+    rating_emoji = serializers.CharField(read_only=True)
+    rating_label = serializers.CharField(read_only=True)
 
     class Meta:
         model = Feedback
         fields = (
-            'id', 'talk', 'speaker', 'rating', 'review', 'author',
+            'id', 'talk', 'speaker', 'rating', 'rating_emoji', 'rating_label', 'review', 'author',
             'is_public', 'status', 'parent', 'created', 'updated', 'replies'
         )
-        read_only_fields = ('author', 'status', 'created', 'updated')
+        read_only_fields = ('author', 'status', 'created', 'updated', 'rating_emoji', 'rating_label')
+
+    def validate_rating(self, value):
+        if value is not None and value not in Feedback.EMOJI_RATING_MAP:
+            raise serializers.ValidationError(_('Rating must be between 1 and 5.'))
+        return value
+
+    def validate(self, data):
+        data = super().validate(data)
+        if data.get('parent') and data.get('rating'):
+            data['rating'] = None
+        return data
 
     def get_author(self, obj):
         if not obj.is_public:

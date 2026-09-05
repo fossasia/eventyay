@@ -3516,6 +3516,44 @@ button.btn-speaker-not-arrived {
   margin-top: 0.1rem;
 }
 
+.feedback-rating-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 12px;
+  background-color: #f1f3f5;
+  font-size: 0.85rem;
+  vertical-align: middle;
+}
+
+.feedback-rating-badge .feedback-rating-emoji,
+.feedback-rating-badge .feedback-rating-badge-emoji {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.feedback-rating-badge .feedback-rating-label,
+.feedback-rating-badge .feedback-rating-badge-label {
+  font-weight: 500;
+  color: #495057;
+  font-size: 0.8rem;
+}
+
+.feedback-table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  min-width: 220px;
+}
+
+.feedback-table-actions .btn {
+  margin: 0;
+  white-space: nowrap;
+}
+
 .feedback-confirm-dialog {
   border: none;
   border-radius: 8px;

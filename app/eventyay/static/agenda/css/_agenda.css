@@ -686,12 +686,16 @@ dialog.agenda-wip-preview-leave-dialog::backdrop {
   border-bottom: 1px solid #ccc;
   border-radius: 0;
   box-shadow: none;
-  resize: none;
-  overflow: hidden;
+  resize: vertical;
+  overflow-y: auto;
   min-height: 38px;
+  max-height: 300px;
+  line-height: 1.5;
   background: transparent;
-  padding-left: 0;
+  padding: 6px 0;
   width: 100%;
+  box-sizing: border-box;
+  transition: border-bottom-color 0.15s ease;
 }
 .youtube-comment-form textarea:focus {
   border-bottom: 2px solid #000;
@@ -774,23 +778,119 @@ dialog.agenda-wip-preview-leave-dialog::backdrop {
   font-size: 0.8rem;
 }
 
-.youtube-rating-stars {
+.emoji-rating-container {
+  margin: 0.5rem 0;
+}
+
+.emoji-rating-group {
   display: inline-flex;
-  gap: 0.25rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
 }
-.youtube-rating-stars input[type="radio"] {
-  display: none;
+
+.emoji-rating-option {
+  position: relative;
 }
-.youtube-rating-stars label {
-  font-size: 1.25rem;
-  color: #ccc;
+
+.emoji-rating-option input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.emoji-rating-label {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: auto;
+  padding: 0.4rem 0.8rem;
+  gap: 0.4rem;
+  border-radius: 8px;
+  border: 1.5px solid transparent;
+  box-sizing: border-box;
+  text-align: center;
   cursor: pointer;
   margin: 0;
-  transition: color 0.2s;
+  user-select: none;
+  background-color: #f8f9fa;
+  transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+  opacity: 0.7;
 }
-.youtube-rating-stars label.active,
-.youtube-rating-stars label:hover {
-  color: #ffc107;
+
+.emoji-rating-label:hover {
+  opacity: 1;
+  transform: scale(1.05);
+  background-color: #fff8e6;
+}
+
+.emoji-rating-option input[type="radio"]:focus + .emoji-rating-label {
+  outline: 2px solid #ffc107;
+  outline-offset: 2px;
+  opacity: 1;
+}
+
+.emoji-rating-option input[type="radio"]:checked + .emoji-rating-label,
+.emoji-rating-label.selected {
+  opacity: 1;
+  background-color: #fff3cd;
+  border-color: #ffc107;
+  transform: scale(1.05);
+}
+
+.emoji-rating-label .emoji-icon,
+.emoji-rating-label .emoji-rating-icon {
+  font-size: 1.4rem;
+  line-height: 1.2;
+}
+
+.emoji-rating-label .emoji-text,
+.emoji-rating-label .emoji-rating-text {
+  font-size: 0.85rem;
+  margin-top: 0;
+  color: #555;
+  font-weight: 500;
+  white-space: nowrap;
+  text-align: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.emoji-rating-option input[type="radio"]:checked + .emoji-rating-label .emoji-text,
+.emoji-rating-option input[type="radio"]:checked + .emoji-rating-label .emoji-rating-text,
+.emoji-rating-label.selected .emoji-text,
+.emoji-rating-label.selected .emoji-rating-text {
+  color: #856404;
+  font-weight: 600;
+}
+
+.feedback-rating-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 12px;
+  background-color: #f1f3f5;
+  font-size: 0.85rem;
+  vertical-align: middle;
+}
+
+.feedback-rating-badge .feedback-rating-emoji,
+.feedback-rating-badge .feedback-rating-badge-emoji {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.feedback-rating-badge .feedback-rating-label,
+.feedback-rating-badge .feedback-rating-badge-label {
+  font-weight: 500;
+  color: #495057;
+  font-size: 0.8rem;
 }
 
 .dropdown-item-clean {

@@ -102,51 +102,55 @@ export function initTalkFeedback(root = document) {
     });
   });
 
-  const starContainers = root.querySelectorAll('.youtube-rating-stars');
-  starContainers.forEach((container) => {
-    if (container.dataset.talkFeedbackStarsInit === 'true') {
+  const emojiGroups = root.querySelectorAll('.emoji-rating-group');
+  emojiGroups.forEach((group) => {
+    if (group.dataset.talkFeedbackEmojiInit === 'true') {
       return;
     }
-    container.dataset.talkFeedbackStarsInit = 'true';
-    const labels = Array.from(container.querySelectorAll('.star-label'));
+    group.dataset.talkFeedbackEmojiInit = 'true';
 
-    function updateStars(index) {
-      labels.forEach((lbl, i) => {
-        if (i <= index) {
-          lbl.classList.add('active');
+    const radios = group.querySelectorAll('input[type="radio"]');
+
+    function updateSelectedVisuals() {
+      radios.forEach((radio) => {
+        const label = group.querySelector(`label[for="${radio.id}"]`);
+        if (label) {
+          label.classList.toggle('selected', radio.checked);
+        }
+      });
+    }
+
+    let activeRadio = group.querySelector('input[type="radio"]:checked');
+
+    group.querySelectorAll('.emoji-rating-label').forEach((label) => {
+      label.addEventListener('click', (e) => {
+        e.preventDefault();
+        const forId = label.getAttribute('for');
+        const radio = group.querySelector(`#${forId}`);
+        if (!radio) {
+          return;
+        }
+
+        if (radio === activeRadio) {
+          radio.checked = false;
+          activeRadio = null;
         } else {
-          lbl.classList.remove('active');
-        }
-      });
-    }
-
-    labels.forEach((label, index) => {
-      label.addEventListener('mouseover', () => {
-        updateStars(index);
-      });
-
-      label.addEventListener('click', () => {
-        labels.forEach((lbl) => lbl.classList.remove('selected'));
-        label.classList.add('selected');
-        const radio = label.querySelector('input[type="radio"]');
-        if (radio) {
           radio.checked = true;
+          activeRadio = radio;
         }
+        radio.dispatchEvent(new Event('change', { bubbles: true }));
+        updateSelectedVisuals();
       });
     });
 
-    container.addEventListener('mouseleave', () => {
-      labels.forEach((lbl) => lbl.classList.remove('active'));
-      const selectedIndex = labels.findIndex((lbl) => lbl.classList.contains('selected'));
-      if (selectedIndex !== -1) {
-        updateStars(selectedIndex);
-      }
+    radios.forEach((radio) => {
+      radio.addEventListener('change', () => {
+        activeRadio = group.querySelector('input[type="radio"]:checked');
+        updateSelectedVisuals();
+      });
     });
 
-    const initialSelected = labels.findIndex((lbl) => lbl.classList.contains('selected'));
-    if (initialSelected !== -1) {
-      updateStars(initialSelected);
-    }
+    updateSelectedVisuals();
   });
 
   root.querySelectorAll('.reply-form-container').forEach((form) => {
@@ -220,6 +224,26 @@ export function initTalkFeedback(root = document) {
         event.preventDefault();
       }
     });
+  });
+
+  const commentTextareas = root.querySelectorAll('.youtube-comment-form textarea');
+  commentTextareas.forEach((textarea) => {
+    if (textarea.dataset.talkFeedbackAutoResizeInit === 'true') {
+      return;
+    }
+    textarea.dataset.talkFeedbackAutoResizeInit = 'true';
+
+    function autoResize() {
+      textarea.style.height = 'auto';
+      const newHeight = Math.max(38, textarea.scrollHeight);
+      textarea.style.height = newHeight + 'px';
+    }
+
+    textarea.addEventListener('input', autoResize);
+    textarea.addEventListener('focus', autoResize);
+    if (textarea.value) {
+      autoResize();
+    }
   });
 }
 

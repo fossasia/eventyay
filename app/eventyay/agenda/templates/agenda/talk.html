@@ -69,6 +69,10 @@
                                 </button>
                                 {{ feedback_form.review.errors }}
                             </div>
+
+                            <div class="mt-2 talk-feedback-rating-select">
+                                {{ feedback_form.rating }}
+                            </div>
                             
                             <div class="justify-content-between align-items-center flex-wrap comment-action-container d-flex mt-2">
                                 <div class="d-flex align-items-center mt-0">
@@ -117,6 +121,12 @@
                             <div class="d-flex align-items-baseline mb-0">
                                 <strong class="mr-2 comment-author-name">{% if fb.author %}{{ fb.author.get_display_name }}{% else %}{{ phrases.agenda.anonymous|default:"Anonymous" }}{% endif %}</strong>
                                 <small class="text-muted">{{ fb.created|timesince }} {% translate "ago" %}</small>
+                                {% if fb.rating %}
+                                    <span class="feedback-rating-badge ml-2" aria-label="{% translate 'Feedback Rating' %}: {{ fb.rating_emoji }} {{ fb.rating_label }}" title="{% translate 'Feedback Rating' %}: {{ fb.rating_emoji }} {{ fb.rating_label }}">
+                                        <span class="feedback-rating-emoji feedback-rating-badge-emoji">{{ fb.rating_emoji }}</span>
+                                        <span class="feedback-rating-label feedback-rating-badge-label">{{ fb.rating_label }}</span>
+                                    </span>
+                                {% endif %}
                             </div>
                             <div class="mb-0 comment-text-content comment-text-collapsed">
                                 {{ fb.review|rich_text }}

@@ -23,7 +23,7 @@ class FeedbackCSVExporter(CSVExporterMixin, BaseExporter):
         return f'{self.event.slug}-feedback.csv'
 
     def get_data(self, **kwargs):
-        fieldnames = ['session_title', 'session_code', 'speaker_name', 'rating', 'review']
+        fieldnames = ['session_title', 'session_code', 'speaker_name', 'rating', 'rating_emoji', 'rating_label', 'review']
         data = []
         feedbacks = Feedback.objects.filter(talk__event=self.event).select_related('talk', 'speaker')
         for feedback in feedbacks:
@@ -33,6 +33,8 @@ class FeedbackCSVExporter(CSVExporterMixin, BaseExporter):
                     'session_code': feedback.talk.code if feedback.talk else '',
                     'speaker_name': feedback.speaker.get_display_name() if feedback.speaker else '',
                     'rating': feedback.rating if feedback.rating is not None else '',
+                    'rating_emoji': feedback.rating_emoji,
+                    'rating_label': feedback.rating_label,
                     'review': feedback.review or '',
                 }
             )
@@ -65,6 +67,8 @@ class FeedbackJSONExporter(BaseExporter):
                     'session_code': feedback.talk.code if feedback.talk else '',
                     'speaker_name': feedback.speaker.get_display_name() if feedback.speaker else '',
                     'rating': feedback.rating,
+                    'rating_emoji': feedback.rating_emoji,
+                    'rating_label': feedback.rating_label,
                     'review': feedback.review or '',
                 }
             )

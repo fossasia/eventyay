@@ -1,0 +1,16 @@
+{% load i18n %}
+<div class="emoji-rating-container">
+  <div class="emoji-rating-group" role="radiogroup" aria-label="{% translate 'Feedback Rating' %}">
+    {% for group, options, index in widget.optgroups %}
+      {% for opt in options %}
+        <div class="emoji-rating-option">
+          <input type="{{ opt.type }}" name="{{ opt.name }}" value="{{ opt.value }}"{% include "django/forms/widgets/attrs.html" with widget=opt %}>
+          <label for="{{ opt.attrs.id }}" class="emoji-rating-label{% if opt.attrs.checked or opt.selected %} selected{% endif %}" title="{{ opt.emoji }} {{ opt.rating_label }}" aria-label="{{ opt.emoji }} {{ opt.rating_label }}">
+            <span class="emoji-rating-icon emoji-icon" aria-hidden="true">{{ opt.emoji }}</span>
+            <span class="emoji-rating-text emoji-text">{{ opt.rating_label }}</span>
+          </label>
+        </div>
+      {% endfor %}
+    {% endfor %}
+  </div>
+</div>
