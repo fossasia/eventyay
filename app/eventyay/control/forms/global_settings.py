@@ -1,21 +1,19 @@
+import logging
+import os
 from collections import OrderedDict
-from typing import List, Union
 
 from django import forms
 from django.conf import settings
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.files.storage import default_storage
+from django.core.files.uploadedfile import UploadedFile
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.forms import SECRET_REDACTED, SecretKeySettingsField, SecretKeySettingsWidget, SettingsForm
 from eventyay.base.settings import EVENT_SERIES_CREATION_ENABLED, MEETUP_CREATION_ENABLED, GlobalSettingsObject
 from eventyay.base.signals import register_global_settings
-from eventyay.control.forms import ExtFileField
 from eventyay.consts import SizeKey
-from django.core.files.uploadedfile import UploadedFile
-from eventyay.helpers.image_optimize import optimize_uploaded_image
-from django.core.files.storage import default_storage
-import os
-import logging
+from eventyay.control.forms import ExtFileField
 
 
 logger = logging.getLogger(__name__)
@@ -52,6 +50,15 @@ class GlobalSettingsForm(SettingsForm):
             self.obj.settings.set('smtp_use_ssl', settings.EMAIL_USE_SSL)
         if global_settings.get('email_vendor') is None or global_settings.get('email_vendor') == '':
             self.obj.settings.set('email_vendor', 'smtp')
+        if global_settings.get('anti_abuse_provider') is None or global_settings.get('anti_abuse_provider') == '':
+            self.obj.settings.set('anti_abuse_provider', 'disabled')
+        if global_settings.get('turnstile_login_mode') is None or global_settings.get('turnstile_login_mode') == '':
+            self.obj.settings.set('turnstile_login_mode', 'disabled')
+        if (
+            global_settings.get('turnstile_failed_login_threshold') is None
+            or global_settings.get('turnstile_failed_login_threshold') == ''
+        ):
+            self.obj.settings.set('turnstile_failed_login_threshold', 3)
 
     def __init__(self, *args, **kwargs):
         self.obj = GlobalSettingsObject()
@@ -60,10 +67,117 @@ class GlobalSettingsForm(SettingsForm):
         super().__init__(*args, obj=self.obj, **kwargs)
 
         smtp_select = [('sendgrid', _('SendGrid')), ('smtp', _('SMTP')), ('gmail_api', _('Gmail / Google Workspace API'))]
+        anti_abuse_providers = [
+            ('disabled', _('Disabled')),
+            ('turnstile', _('Cloudflare Turnstile')),
+        ]
+        login_modes = [
+            ('disabled', _('Disabled')),
+            ('always', _('Always require')),
+            ('failed_attempts_only', _('Only after repeated failed login attempts')),
+        ]
 
         self.fields = OrderedDict(
             list(self.fields.items())
             + [
+                (
+                    'anti_abuse_provider',
+                    forms.ChoiceField(
+                        label=_('Anti-Abuse / CAPTCHA Provider'),
+                        required=True,
+                        widget=forms.RadioSelect,
+                        choices=anti_abuse_providers,
+                        initial='disabled',
+                    ),
+                ),
+                (
+                    'turnstile_site_key',
+                    forms.CharField(
+                        required=False,
+                        label=_('Cloudflare Turnstile Site Key'),
+                        widget=forms.TextInput(attrs={
+                            'placeholder': '0x4AAAAAA...',
+                            'data-display-dependency': '#id_anti_abuse_provider_1',
+                        }),
+                    ),
+                ),
+                (
+                    'turnstile_secret_key',
+                    SecretKeySettingsField(
+                        required=False,
+                        label=_('Cloudflare Turnstile Secret Key'),
+                        widget=SecretKeySettingsWidget(attrs={
+                            'data-display-dependency': '#id_anti_abuse_provider_1',
+                        }),
+                    ),
+                ),
+                (
+                    'turnstile_on_registration',
+                    forms.BooleanField(
+                        required=False,
+                        label=_('Require Turnstile on user registration / signup'),
+                        widget=forms.CheckboxInput(attrs={
+                            'data-display-dependency': '#id_anti_abuse_provider_1',
+                        }),
+                    ),
+                ),
+                (
+                    'turnstile_login_mode',
+                    forms.ChoiceField(
+                        label=_('Turnstile on user login'),
+                        required=False,
+                        choices=login_modes,
+                        initial='disabled',
+                        widget=forms.Select(attrs={
+                            'data-display-dependency': '#id_anti_abuse_provider_1',
+                        }),
+                    ),
+                ),
+                (
+                    'turnstile_failed_login_threshold',
+                    forms.IntegerField(
+                        label=_('Failed login attempt threshold'),
+                        required=False,
+                        min_value=1,
+                        initial=3,
+                        help_text=_(
+                            'Number of consecutive failed login attempts before Turnstile challenge is required.'
+                        ),
+                        widget=forms.NumberInput(attrs={
+                            'data-display-dependency': '#id_anti_abuse_provider_1',
+                        }),
+                    ),
+                ),
+                (
+                    'turnstile_on_password_reset',
+                    forms.BooleanField(
+                        required=False,
+                        label=_('Require Turnstile on password reset requests'),
+                        widget=forms.CheckboxInput(attrs={
+                            'data-display-dependency': '#id_anti_abuse_provider_1',
+                        }),
+                    ),
+                ),
+                (
+                    'turnstile_on_organizer_create',
+                    forms.BooleanField(
+                        required=False,
+                        label=_('Require Turnstile on organizer creation'),
+                        widget=forms.CheckboxInput(attrs={
+                            'data-display-dependency': '#id_anti_abuse_provider_1',
+                        }),
+                    ),
+                ),
+                (
+                    'turnstile_on_contact',
+                    forms.BooleanField(
+                        required=False,
+                        label=_('Require Turnstile on public contact and inquiry forms'),
+                        widget=forms.CheckboxInput(attrs={
+                            'data-display-dependency': '#id_anti_abuse_provider_1',
+                        }),
+                    ),
+                ),
                 (
                     EVENT_SERIES_CREATION_ENABLED,
                     forms.BooleanField(
@@ -480,6 +594,17 @@ class GlobalSettingsForm(SettingsForm):
                 'etherpad_api_key',
                 'etherpad_pad_name_pattern',
             ]),
+            ('security', _('Security & Anti-Abuse'), [
+                'anti_abuse_provider',
+                'turnstile_site_key',
+                'turnstile_secret_key',
+                'turnstile_on_registration',
+                'turnstile_login_mode',
+                'turnstile_failed_login_threshold',
+                'turnstile_on_password_reset',
+                'turnstile_on_organizer_create',
+                'turnstile_on_contact',
+            ]),
         ]
 
         if any(app.endswith('interpretation') or app == 'interpretation' for app in settings.INSTALLED_APPS):
@@ -531,6 +656,11 @@ class GlobalSettingsForm(SettingsForm):
 
 
 
+        if 'turnstile_site_key' in self.fields:
+            self.fields['turnstile_site_key']._required = True
+        if 'turnstile_secret_key' in self.fields:
+            self.fields['turnstile_secret_key']._required = True
+
     def clean_voxbento_base_url(self):
         url = (self.cleaned_data.get('voxbento_base_url') or '').strip()
         if url:
@@ -567,7 +697,24 @@ class GlobalSettingsForm(SettingsForm):
             if not has_secret:
                 raise forms.ValidationError({'gmail_client_secret': _('This field is required when using Gmail as email vendor.')})
 
-
+        if data.get('anti_abuse_provider') == 'turnstile':
+            turnstile_errors = {}
+            if not (data.get('turnstile_site_key') or '').strip():
+                turnstile_errors['turnstile_site_key'] = _(
+                    'This field is required when Cloudflare Turnstile is enabled.'
+                )
+            turnstile_secret = data.get('turnstile_secret_key')
+            has_turnstile_secret = (
+                turnstile_secret == SECRET_REDACTED
+                or bool((turnstile_secret or '').strip())
+                or self.obj.settings.get('turnstile_secret_key')
+            )
+            if not has_turnstile_secret:
+                turnstile_errors['turnstile_secret_key'] = _(
+                    'This field is required when Cloudflare Turnstile is enabled.'
+                )
+            if turnstile_errors:
+                raise forms.ValidationError(turnstile_errors)
 
         return data
 
@@ -593,7 +740,7 @@ class UpdateSettingsForm(SettingsForm):
             'locally.'
         ),
     )
-    
+
     # Telemetry settings
     telemetry_enabled = forms.BooleanField(
         required=False,
@@ -649,7 +796,7 @@ class StripeKeyValidator:
     multiple prefix validation.
     """
 
-    def __init__(self, prefix: Union[str, List[str]]) -> None:
+    def __init__(self, prefix: str | list[str]) -> None:
         if not prefix:
             raise ValueError('Prefix cannot be empty')
 
@@ -714,14 +861,11 @@ class MetaDataSettingsForm(SettingsForm):
         image_field = 'seo_social_image'
         current_value = self.obj.settings.get(image_field, as_type=str, default='') or ''
         new_value = self.cleaned_data.get(image_field)
-        
+
         # Simplified storage logic
         if isinstance(new_value, UploadedFile):
             from eventyay.common.urls import get_file_url_path
-            current_file = get_file_url_path(current_value)
-            if current_file:
-                default_storage.delete(current_file)
-            
+
             clean_name, ext = os.path.splitext(new_value.name or image_field)
             new_filename = self.get_new_filename(clean_name)
             base_path, _ = os.path.splitext(new_filename)
@@ -729,6 +873,9 @@ class MetaDataSettingsForm(SettingsForm):
             try:
                 optimized_path = default_storage.save(optimized_name, new_value)
                 self.cleaned_data[image_field] = f"file://{optimized_path}"
+                current_file = get_file_url_path(current_value)
+                if current_file:
+                    default_storage.delete(current_file)
             except OSError:
                 logger.exception('Could not store original image for %s', image_field)
 
