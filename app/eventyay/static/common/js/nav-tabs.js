@@ -15,10 +15,28 @@ const updateTabActiveState = () => {
     }
 }
 
+const alignTicketsSection = () => {
+    if (window.location.hash !== '#tickets') return
+
+    const targetElement = document.querySelector('#ticket-list h3') || document.getElementById('tickets')
+    const stickyTabs = document.querySelector('.presale-sticky-tabs-wrap')
+
+    if (targetElement) {
+        const headerHeight = stickyTabs ? stickyTabs.getBoundingClientRect().height : 0
+        const offsetPosition = targetElement.getBoundingClientRect().top + window.scrollY - headerHeight
+        window.scrollTo({ top: offsetPosition })
+    }
+}
+
 const initNavTabs = () => {
     updateTabActiveState()
 
-    window.addEventListener('hashchange', updateTabActiveState)
+    window.addEventListener('hashchange', () => {
+        updateTabActiveState()
+        alignTicketsSection()
+    })
+
+    window.addEventListener('load', alignTicketsSection)
 }
 
 if (
