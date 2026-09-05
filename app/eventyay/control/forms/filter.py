@@ -1243,16 +1243,10 @@ class EventFilterForm(FilterForm):
     status = forms.ChoiceField(
         label=_('Status'),
         choices=(
-            ('', _('All events')),
-            ('my_events', _('My Events')),
-            ('live', _('Shop live')),
-            ('running', _('Shop live and presale running')),
-            ('notlive', _('Shop not live')),
-            ('future', _('Presale not started')),
-            ('past', _('Presale over')),
-            ('date_future', _('Single event running or in the future')),
-            ('date_past', _('Single event in the past')),
-            ('series', _('Event series')),
+            ('all', _('All Events')),
+            ('live', _('Live')),
+            ('draft', _('Draft')),
+            ('past', _('Past')),
         ),
         required=False,
     )
@@ -1278,6 +1272,11 @@ class EventFilterForm(FilterForm):
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
         self.organizer = kwargs.pop('organizer', None)
+        data = kwargs.get('data')
+        if data is not None and 'status' not in data:
+            data = data.copy()
+            data['status'] = 'live'
+            kwargs['data'] = data
         super().__init__(*args, **kwargs)
         seen = set()
         for p in self.meta_properties.all():
@@ -1313,49 +1312,13 @@ class EventFilterForm(FilterForm):
     def filter_qs(self, qs):
         fdata = self.cleaned_data
 
-        if fdata.get('status') == 'my_events':
-            # Filter for events where user is a team member
-            user = self.request.user
-            qs = qs.filter(
-                Q(organizer__teams__members=user)
-                & (
-                    Q(organizer__teams__all_events=True)
-                    | Q(organizer__teams__limit_events__in=qs.values_list('pk', flat=True))
-                )
-            ).distinct()
-        elif fdata.get('status') == 'live':
-            qs = qs.filter(live=True)
-        elif fdata.get('status') == 'running':
-            qs = (
-                qs.filter(live=True)
-                .annotate(p_end=Coalesce(F('presale_end'), F('date_to'), F('date_from')))
-                .filter(Q(presale_start__isnull=True) | Q(presale_start__lte=now()))
-                .filter(Q(p_end__gte=now()))
-            )
-        elif fdata.get('status') == 'notlive':
-            qs = qs.filter(live=False)
-        elif fdata.get('status') == 'future':
-            qs = qs.filter(presale_start__gte=now())
-        elif fdata.get('status') == 'past':
-            qs = qs.filter(presale_end__lte=now())
-        elif fdata.get('status') == 'date_future':
-            qs = qs.filter(
-                Q(has_subevents=False)
-                & Q(
-                    Q(Q(date_to__isnull=True) & Q(date_from__gte=now()))
-                    | Q(Q(date_to__isnull=False) & Q(date_to__gte=now()))
-                )
-            )
-        elif fdata.get('status') == 'date_past':
-            qs = qs.filter(
-                Q(has_subevents=False)
-                & Q(
-                    Q(Q(date_to__isnull=True) & Q(date_from__lt=now()))
-                    | Q(Q(date_to__isnull=False) & Q(date_to__lt=now()))
-                )
-            )
-        elif fdata.get('status') == 'series':
-            qs = qs.filter(has_subevents=True)
+        status = fdata.get('status')
+        if status == 'live':
+            qs = qs.filter(live=True, order_to__gte=now())
+        elif status == 'draft':
+            qs = qs.filter(live=False, order_to__gte=now())
+        elif status == 'past':
+            qs = qs.filter(order_to__lt=now())
 
         if fdata.get('organizer'):
             qs = qs.filter(organizer=fdata.get('organizer'))
@@ -1393,6 +1356,18 @@ class EventFilterForm(FilterForm):
             qs = qs.order_by(self.get_order_by())
 
         return qs
+
+    @property
+    def filtered(self):
+        if not self.is_valid():
+            return False
+        for k, v in self.cleaned_data.items():
+            if k == 'status' and v == 'live':
+                continue
+            if v is None or (isinstance(v, (list, str, QuerySet)) and len(v) == 0):
+                continue
+            return True
+        return False
 
     @cached_property
     def meta_properties(self):

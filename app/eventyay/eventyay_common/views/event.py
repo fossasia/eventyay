@@ -17,7 +17,7 @@ from django.core.files import File
 from django.core.files.storage import default_storage
 from django.db import transaction
 from django.db.models.deletion import ProtectedError
-from django.db.models import Case, F, Max, Min, Prefetch, Q, Sum, When, IntegerField
+from django.db.models import Case, F, Max, Min, Prefetch, Q, Sum, When, IntegerField, Count, OuterRef, Subquery
 from django.db.models.functions import Coalesce, Greatest
 from django.http import HttpRequest, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect
@@ -28,7 +28,7 @@ from django.utils.functional import cached_property
 from django.utils.timezone import get_current_timezone_name
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, ListView, TemplateView
-from django_scopes import scope
+from django_scopes import scope, scopes_disabled
 from zoneinfo import ZoneInfo
 from rest_framework import views
 from django.views import View
@@ -51,6 +51,7 @@ from eventyay.base.meetup import (
     provision_meetup_event,
 )
 from eventyay.base.models import Event, EventMetaValue, GlobalPluginConfig, Organizer, Quota
+from eventyay.base.models.submission import Submission
 from eventyay.base.services.notifications import notify_organizer_followers
 from eventyay.base.models.cfp import default_fields
 from eventyay.consts import DEFAULT_PLUGINS
@@ -106,57 +107,88 @@ class EventList(PaginationMixin, ListView):
     ]
 
     def get_queryset(self):
-        query_set = self.request.user.get_events_with_any_permission(self.request).prefetch_related(
-            'organizer',
-            '_settings_objects',
-            'organizer___settings_objects',
-            'organizer__meta_properties',
-            Prefetch(
-                'meta_values',
-                EventMetaValue.objects.select_related('property'),
-                to_attr='meta_values_cached',
-            ),
-        )
-
-        query_set = query_set.annotate(
-            min_from=Min('subevents__date_from'),
-            max_from=Max('subevents__date_from'),
-            max_to=Max('subevents__date_to'),
-            max_fromto=Greatest(Max('subevents__date_to'), Max('subevents__date_from')),
-            total_quota=Sum(
-                Case(When(quotas__subevent__isnull=True, then='quotas__size'), default=0, output_field=IntegerField())
-            ),
-        ).annotate(
-            order_from=Coalesce('min_from', 'date_from'),
-            order_to=Coalesce('max_fromto', 'max_to', 'max_from', 'date_to', 'date_from'),
-        )
-
-        ordering = self.request.GET.get('ordering')
-        if ordering and ordering.lstrip('-') in self.ordering_fields:
-            if ordering == 'date_from':
-                query_set = query_set.order_by('order_from')
-            elif ordering == '-date_from':
-                query_set = query_set.order_by('-order_from')
-            elif ordering == 'date_to':
-                query_set = query_set.order_by('order_to')
-            elif ordering == '-date_to':
-                query_set = query_set.order_by('-order_to')
-            else:
-                query_set = query_set.order_by(ordering)
-        else:
-            query_set = query_set.order_by('-date_from')
-
-        query_set = query_set.prefetch_related(
-            Prefetch(
-                'quotas',
-                queryset=Quota.objects.filter(subevent__isnull=True).annotate(s=Coalesce(F('size'), 0)).order_by('-s'),
-                to_attr='first_quotas',
+        with scopes_disabled():
+            query_set = self.request.user.get_events_with_any_permission(self.request).prefetch_related(
+                'organizer',
+                '_settings_objects',
+                'organizer___settings_objects',
+                'organizer__meta_properties',
+                Prefetch(
+                    'meta_values',
+                    EventMetaValue.objects.select_related('property'),
+                    to_attr='meta_values_cached',
+                ),
             )
-        )
 
-        if self.filter_form.is_valid():
-            query_set = self.filter_form.filter_qs(query_set)
-        return query_set
+            def session_sq(state=None, pending=False):
+                qs = Submission.objects.filter(event=OuterRef('pk'))
+                if pending:
+                    qs = qs.filter(pending_state__isnull=False)
+                elif state:
+                    qs = qs.filter(state=state)
+                return Coalesce(Subquery(qs.values('event').annotate(cnt=Count('id')).values('cnt'), output_field=IntegerField()), 0)
+
+            def speaker_sq(state=None, pending=False):
+                qs = Submission.objects.filter(event=OuterRef('pk'))
+                if pending:
+                    qs = qs.filter(pending_state__isnull=False)
+                elif state:
+                    qs = qs.filter(state=state)
+                return Coalesce(Subquery(qs.values('event').annotate(cnt=Count('speakers', distinct=True)).values('cnt'), output_field=IntegerField()), 0)
+
+            query_set = query_set.annotate(
+                min_from=Min('subevents__date_from'),
+                max_from=Max('subevents__date_from'),
+                max_to=Max('subevents__date_to'),
+                max_fromto=Greatest(Max('subevents__date_to'), Max('subevents__date_from')),
+                total_quota=Sum(
+                    Case(When(quotas__subevent__isnull=True, then='quotas__size'), default=0, output_field=IntegerField())
+                ),
+                sessions_submitted=session_sq(state='submitted'),
+                sessions_accepted=session_sq(state='accepted'),
+                sessions_confirmed=session_sq(state='confirmed'),
+                sessions_pending=session_sq(pending=True),
+                sessions_rejected=session_sq(state='rejected'),
+                sessions_withdrawn=session_sq(state='withdrawn'),
+                sessions_canceled=session_sq(state='canceled'),
+                speakers_total=speaker_sq(),
+                speakers_accepted=speaker_sq(state='accepted'),
+                speakers_confirmed=speaker_sq(state='confirmed'),
+                speakers_pending=speaker_sq(pending=True),
+                speakers_rejected=speaker_sq(state='rejected'),
+                speakers_withdrawn=speaker_sq(state='withdrawn'),
+                speakers_canceled=speaker_sq(state='canceled'),
+            ).annotate(
+                order_from=Coalesce('min_from', 'date_from'),
+                order_to=Coalesce('max_fromto', 'max_to', 'max_from', 'date_to', 'date_from'),
+            )
+
+            ordering = self.request.GET.get('ordering')
+            if ordering and ordering.lstrip('-') in self.ordering_fields:
+                if ordering == 'date_from':
+                    query_set = query_set.order_by('order_from')
+                elif ordering == '-date_from':
+                    query_set = query_set.order_by('-order_from')
+                elif ordering == 'date_to':
+                    query_set = query_set.order_by('order_to')
+                elif ordering == '-date_to':
+                    query_set = query_set.order_by('-order_to')
+                else:
+                    query_set = query_set.order_by(ordering)
+            else:
+                query_set = query_set.order_by('-date_from')
+
+            query_set = query_set.prefetch_related(
+                Prefetch(
+                    'quotas',
+                    queryset=Quota.objects.filter(subevent__isnull=True).annotate(s=Coalesce(F('size'), 0)).order_by('-s'),
+                    to_attr='first_quotas',
+                )
+            )
+
+            if self.filter_form.is_valid():
+                query_set = self.filter_form.filter_qs(query_set)
+            return query_set
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -1262,12 +1294,15 @@ class VideoAccessAuthenticator(View):
     def get(self, request, *args, **kwargs):
         """
         Check if the video configuration is complete, the plugin is enabled, and the user has permission to modify the event settings.
-        If configuration is missing, automatically set it up. Then redirect directly to the session-authenticated video organizer dashboard.
+        Require can_change_event_settings before auto-setting up video configuration. Then redirect directly to the session-authenticated video organizer dashboard.
         @param request: user request
         @param args: arguments
         @param kwargs: keyword arguments
         @return: redirect to the video organizer dashboard
         """
+        if not request.user.has_event_permission(request.organizer, request.event, 'can_change_event_settings', request=request):
+            raise PermissionDenied(_('You do not have permission to change event settings.'))
+
         # Auto-setup video configuration if missing
         self._ensure_video_configuration()
 

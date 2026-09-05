@@ -45,9 +45,11 @@ def redirect_or_json_redirect(request, redirect_url):
 
 
 def get_static(request, path, content_type, organizer=None, event=None, **kwargs):  # pragma: no cover
-    path = settings.BASE_DIR / 'static' / path
-    if not path.exists():
+    file_path = settings.BASE_DIR / 'static' / path
+    if not file_path.exists():
+        file_path = settings.BASE_DIR / 'static.dist' / path
+    if not file_path.exists():
         logger.warning("Static asset %s not found", path)
         raise Http404()
-    logger.debug("Serving static asset %s", path)
-    return FileResponse(open(path, 'rb'), content_type=content_type, as_attachment=False)
+    logger.debug("Serving static asset %s", file_path)
+    return FileResponse(open(file_path, 'rb'), content_type=content_type, as_attachment=False)
