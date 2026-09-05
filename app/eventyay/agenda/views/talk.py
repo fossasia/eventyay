@@ -289,7 +289,7 @@ class TalkView(TalkMixin, TemplateView):
             if self.request.event.get_feature_flag('feedback_show_public'):
                 all_published = Feedback.objects.filter(
                     is_public=True, status='published', talk=self.submission
-                ).select_related('author').annotate(
+                ).select_related('author', 'speaker').annotate(
                     upvote_count=Count('reactions', filter=Q(reactions__is_upvote=True)),
                     downvote_count=Count('reactions', filter=Q(reactions__is_upvote=False))
                 ).order_by('created')
