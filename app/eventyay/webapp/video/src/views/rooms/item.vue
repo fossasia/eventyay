@@ -147,7 +147,18 @@ export default {
 			this.updateActiveTranslation(translationConfig)
 		},
 		updateActiveTranslation(translationConfig) {
-			this.$store.commit('updateInterpretationAudio', {
+			this.activeTranslationConfig = translationConfig;
+			this.recomputeInterpretationAudio();
+		},
+		recomputeInterpretationAudio() {
+                        let finalConfig = this.activeTranslationConfig;
+                        if (finalConfig && finalConfig.language === 'Original') {
+                                finalConfig = null;
+                        }
+                        if (finalConfig && !finalConfig.url && !finalConfig.youtube_id) {
+                                finalConfig = null;
+                        }
+                        this.$store.commit('updateInterpretationAudio', {
 				roomId: this.room?.id,
 				interpretation: translationConfig
 			})
