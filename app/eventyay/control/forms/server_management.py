@@ -9,8 +9,8 @@ from eventyay.base.models import (
     BBBServer,
     JanusServer,
     JitsiServer,
+    LoungeMeshServer,
     Room,
-    StreamingServer,
     TurnServer,
 )
 from eventyay.base.models.event import (
@@ -217,7 +217,6 @@ class BBBServerForm(HasSecretsMixin, forms.ModelForm):
             "url",
             "active",
             "event_exclusive",
-            "rooms_only",
             "secret",
         )
         field_classes = {"secret": SecretKeyField}
@@ -267,18 +266,27 @@ class TurnServerForm(HasSecretsMixin, forms.ModelForm):
         field_classes = {"auth_secret": SecretKeyField}
 
 
-class StreamingServerForm(HasSecretsMixin, forms.ModelForm):
+class LoungeMeshServerForm(HasSecretsMixin, forms.ModelForm):
     class Meta:
-        model = StreamingServer
+        model = LoungeMeshServer
         fields = (
+            "url",
             "active",
-            "name",
-            "token_secret",
-            "url_input",
-            "url_output",
+            "api_secret",
+            "jitsi_app_id",
+            "jitsi_app_secret",
+            "event_exclusive",
         )
-        field_classes = {"token_secret": SecretKeyField}
+        field_classes = {
+            "api_secret": SecretKeyField,
+            "jitsi_app_secret": SecretKeyField,
+        }
 
+    def clean_url(self):
+        url = self.cleaned_data.get("url")
+        if url:
+            url = url.strip().rstrip("/")
+        return url
 
 
 

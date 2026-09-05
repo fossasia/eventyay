@@ -68,6 +68,11 @@ def _choose_any_available_server(servers, event):
     for qs in querysets:
         available_servers = list(qs)
         if available_servers:
+            self_hosted = [
+                s for s in available_servers if "meet.jit.si" not in (s.url or "")
+            ]
+            if self_hosted:
+                return random.choice(self_hosted)
             return random.choice(available_servers)
     return None
 
@@ -83,6 +88,9 @@ def choose_server_for_room(room, prefer_server=None):
     server = None
     for preferred_url in (selected_server_url, prefer_server):
         if not preferred_url:
+            continue
+        # Avoid routing to meet.jit.si when self-hosted servers exist to prevent external authentication barrier
+        if "meet.jit.si" in preferred_url and servers.exclude(url__icontains="meet.jit.si").exists():
             continue
         server = _choose_preferred_server(servers, locked_room.event, preferred_url)
         if server:
@@ -147,10 +155,10 @@ def normalize_server_url(url):
     if not parsed.netloc:
         return None
     domain = parsed.netloc.lower()
-    protocol = parsed.scheme.lower() + ":"
     scheme = parsed.scheme.lower()
-    if scheme != "https":
+    if scheme not in ("https", "http"):
         return None
+    protocol = f"{scheme}:"
     return {
         "domain": domain,
         "url": f"{scheme}://{domain}",

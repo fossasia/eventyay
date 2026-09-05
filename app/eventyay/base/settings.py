@@ -69,6 +69,33 @@ settings_hierarkey.add_default('telemetry_endpoint', '', str)
 settings_hierarkey.add_default('telemetry_api_key', '', str)
 settings_hierarkey.add_default('telemetry_contact_email', '', str)
 
+# Video Room Platform Defaults
+settings_hierarkey.add_default('video_default_provider', 'bbb', str)
+
+settings_hierarkey.add_default('video_bbb_record', False, bool)
+settings_hierarkey.add_default('video_bbb_auto_mute', False, bool)
+settings_hierarkey.add_default('video_bbb_auto_mic', False, bool)
+settings_hierarkey.add_default('video_bbb_auto_cam', False, bool)
+settings_hierarkey.add_default('video_bbb_waiting_room', False, bool)
+settings_hierarkey.add_default('video_bbb_disable_cam', False, bool)
+settings_hierarkey.add_default('video_bbb_disable_chat', False, bool)
+settings_hierarkey.add_default('video_bbb_hide_presentation', False, bool)
+
+settings_hierarkey.add_default('video_jitsi_start_audio_muted', False, bool)
+settings_hierarkey.add_default('video_jitsi_start_video_muted', False, bool)
+settings_hierarkey.add_default('video_jitsi_record', False, bool)
+settings_hierarkey.add_default('video_jitsi_livestreaming', False, bool)
+settings_hierarkey.add_default('video_jitsi_waiting_room', False, bool)
+settings_hierarkey.add_default('video_jitsi_disable_cam', False, bool)
+settings_hierarkey.add_default('video_jitsi_disable_chat', False, bool)
+settings_hierarkey.add_default('video_jitsi_require_display_name', False, bool)
+
+settings_hierarkey.add_default('video_janus_start_audio_muted', False, bool)
+settings_hierarkey.add_default('video_janus_start_video_muted', False, bool)
+settings_hierarkey.add_default('video_janus_waiting_room', False, bool)
+settings_hierarkey.add_default('video_janus_disable_cam', False, bool)
+settings_hierarkey.add_default('video_janus_disable_chat', False, bool)
+
 
 def i18n_uns(v):
     try:

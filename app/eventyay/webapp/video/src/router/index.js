@@ -66,12 +66,6 @@ const routes = [
 			{
 				path: 'about',
 				alias: 'info',
-				redirect: () => {
-					if (window.eventyay?.isOrganizerArea) {
-						return { name: 'organizer' }
-					}
-					return undefined
-				},
 				component: RoomHeader,
 				children: [{
 					path: '',

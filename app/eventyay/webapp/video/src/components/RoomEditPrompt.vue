@@ -51,7 +51,7 @@ prompt.c-room-edit-prompt(:scrollable="false", @close="$emit('close')")
 					:creating="!wasConfigured"
 				)
 				sidebar-addons(
-					v-if="inferredType && inferredType.id === 'stage'",
+					v-if="inferredType && (inferredType.id === 'stage' || inferredType.id === 'channel-janus' || inferredType.id === 'channel-zoom')",
 					:config="config",
 					:modules="modules",
 					:creating="!wasConfigured"
@@ -299,13 +299,19 @@ export default {
 			this.saving = true
 			try {
 				const roomId = this.config.id
+				let moduleConfig = this.config.module_config || []
+				if (this.inferredType?.videoChannel) {
+					moduleConfig = moduleConfig.filter(
+						m => !['chat.native', 'question', 'poll'].includes(m.type)
+					)
+				}
 				await api.call('room.config.patch', {
 					room: roomId,
 					name: this.config.name,
 					description: this.config.description,
 					picture: this.config.picture,
 					force_join: this.config.force_join,
-					module_config: this.config.module_config
+					module_config: moduleConfig
 				})
 				if (this.$refs.settings?.saveStreamSchedules) {
 					await this.$refs.settings.saveStreamSchedules(roomId)

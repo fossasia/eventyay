@@ -21,10 +21,9 @@ aside.c-rooms-sidebar(
 						span.context-meta(v-else) {{ $t('Live Video') }}
 				bunt-icon-button.btn-close-mobile(
 					v-if="$mq.below.m",
-					icon="close",
 					:aria-label="$t('Close sidebar')",
 					@click="$emit('close')"
-				)
+				) close
 
 			ul.startpage-sidebar-nav(role="group", :aria-label="$t('Attendee Navigation')")
 				//- Overview
@@ -75,6 +74,17 @@ aside.c-rooms-sidebar(
 								span.notifications(v-if="stage.notifications") {{ stage.notifications }}
 							router-link.nav-sub-link(
 								v-for="room of roomsByType.networking",
+								:key="room.id",
+								:to="{name: 'room', params: {roomId: room.id}}",
+								:class="{active: room.id === $route.params.roomId}",
+								@click="onNavClick"
+							)
+								span.room-name(v-html="$emojify(room.name)")
+								span.viewer-count-badge(:title="getOccupancyTitle(room)", :aria-label="getOccupancyTitle(room)")
+									i.mdi.mdi-account-outline(aria-hidden="true")
+									span {{ getOccupancyCount(room) }}
+							router-link.nav-sub-link(
+								v-for="room of roomsByType.videoChat",
 								:key="room.id",
 								:to="{name: 'room', params: {roomId: room.id}}",
 								:class="{active: room.id === $route.params.roomId}",
@@ -199,9 +209,16 @@ export default {
 	},
 	computed: {
 		...mapState(['world', 'rooms', 'activeRoom', 'call']),
+		...mapState('chat', ['joinedChannels']),
 		...mapGetters(['hasPermission', 'isAdminMode']),
-		...mapGetters('chat', ['joinedChannels', 'directMessageChannels', 'notificationCount']),
+		...mapGetters('chat', ['notificationCount']),
 		...mapGetters('schedule', ['currentSessionPerRoom']),
+		directMessageChannels() {
+			if (!this.hasPermission?.('world:chat.direct') || !this.liveFeatures?.direct_messaging) {
+				return []
+			}
+			return this.joinedChannels?.filter(c => c.members && c.members.some(m => m.id !== this.$store.state.user?.id)) || []
+		},
 		eventDateSubtitle() {
 			const dateFrom = this.world?.date_from || window.eventyay?.eventDates?.date_from
 			const dateTo = this.world?.date_to || window.eventyay?.eventDates?.date_to
@@ -232,7 +249,7 @@ export default {
 			return ROOM_TYPES.find(type => type.sidebarGroup === 'networking')
 		},
 		hasStagesOrRooms() {
-			return (this.roomsByType.stage?.length > 0 || this.roomsByType.networking?.length > 0)
+			return (this.roomsByType.stage?.length > 0 || this.roomsByType.networking?.length > 0 || this.roomsByType.videoChat?.length > 0)
 		},
 		liveFeatures() {
 			return Object.assign({
@@ -312,7 +329,6 @@ export default {
 				} else if (room.modules.some(module => NETWORKING_MODULE_TYPES.has(module.type))) {
 					rooms.networking.push(room)
 				} else if (room.modules.some(module => VIDEO_CHANNEL_MODULE_TYPES.has(module.type))) {
-					if (!this.liveFeatures.chat_rooms) continue
 					rooms.videoChat.push(room)
 				} else if (room.modules.some(module => ['livestream.native', 'livestream.youtube'].includes(module.type))) {
 					let session
@@ -330,12 +346,6 @@ export default {
 				}
 			}
 			return rooms
-		},
-		directMessageChannels() {
-			if (!this.hasPermission('world:chat.direct') || !this.liveFeatures.direct_messaging) {
-				return []
-			}
-			return this.$store.getters['chat/directMessageChannels'] || []
 		},
 		worldHasTextChannels() {
 			if (!this.liveFeatures.chat_rooms) return false

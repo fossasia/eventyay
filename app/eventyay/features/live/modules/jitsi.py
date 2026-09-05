@@ -81,25 +81,52 @@ def get_jitsi_room_display_name(room):
     return str(room.name or "room")
 
 
+def get_safe_avatar_url(profile):
+    if not isinstance(profile, dict):
+        return ""
+    raw = profile.get("avatar")
+    if isinstance(raw, dict):
+        return str(raw.get("url") or "")
+    if isinstance(raw, str):
+        return raw.strip()
+    return ""
+
+
 def build_jitsi_config_overwrite(
     module_config,
     is_moderator,
     room_display_name=None,
+    has_jwt=False,
 ):
+    start_audio_muted = bool(
+        module_config.get("start_with_audio_muted") or module_config.get("auto_mute")
+    )
+    start_video_muted = bool(
+        module_config.get("start_with_video_muted")
+    )
+    waiting_room = bool(
+        module_config.get("waiting_room") or module_config.get("enable_lobby")
+    )
+    record = bool(module_config.get("record", False))
+    livestreaming = bool(module_config.get("livestreaming", False))
+    disable_cam = bool(module_config.get("disable_cam"))
+    disable_chat = bool(module_config.get("disable_chat"))
+    require_display_name = bool(module_config.get("require_display_name"))
+
     config_overwrite = {
-        "startWithAudioMuted": module_config.get(
-            "start_with_audio_muted", False
-        ),
-        "startWithVideoMuted": module_config.get(
-            "start_with_video_muted", False
-        ),
-        "enableUserRolesBasedOnToken": True,
-        "readOnlyName": True,
+        "startWithAudioMuted": start_audio_muted,
+        "startWithVideoMuted": start_video_muted or (disable_cam and not is_moderator),
+        "enableUserRolesBasedOnToken": bool(has_jwt),
+        "tokenAuthUrl": None,
+        "securityUi": {"hideLobbyButton": not is_moderator},
+        "readOnlyName": not require_display_name,
         "enableClosePage": False,
         "disableInviteFunctions": True,
         "disablePolls": True,
         "hiddenPremeetingButtons": ["invite"],
         "disableSelfView": False,
+        "fileRecordingsEnabled": record,
+        "liveStreamingEnabled": livestreaming,
         "breakoutRooms": {
             "hideAddRoomButton": True,
             "hideAutoAssignButton": True,
@@ -108,16 +135,36 @@ def build_jitsi_config_overwrite(
             "disableKick": not is_moderator,
             "disableGrantModerator": not is_moderator,
         },
+        "prejoinPageEnabled": require_display_name,
+        "prejoinConfig": {"enabled": require_display_name},
+        "requireDisplayName": require_display_name,
+        "enableLobby": waiting_room,
+        "lobby": {"enable": waiting_room},
+        "disableDeepLinking": True,
+        "enableWelcomePage": False,
+        "welcomePage": {"disabled": True},
+        "doNotStoreRoom": True,
     }
     if room_display_name:
         config_overwrite["subject"] = room_display_name
     if is_moderator:
-        config_overwrite["toolbarButtons"] = JITSI_MODERATOR_TOOLBAR_BUTTONS
+        mod_buttons = list(JITSI_MODERATOR_TOOLBAR_BUTTONS)
+        if not record and "recording" in mod_buttons:
+            mod_buttons.remove("recording")
+        if not livestreaming and "livestreaming" in mod_buttons:
+            mod_buttons.remove("livestreaming")
+        config_overwrite["toolbarButtons"] = mod_buttons
     if not is_moderator:
+        part_buttons = list(JITSI_PARTICIPANT_TOOLBAR_BUTTONS)
+        if disable_cam and "camera" in part_buttons:
+            part_buttons.remove("camera")
+        if disable_chat and "chat" in part_buttons:
+            part_buttons.remove("chat")
         config_overwrite.update(
             {
                 "disableRemoteMute": True,
                 "disableModeratorIndicator": True,
+                "disableChat": disable_chat,
                 "participantsPane": {
                     "hideModeratorSettingsTab": True,
                     "hideMoreActionsButton": True,
@@ -130,7 +177,7 @@ def build_jitsi_config_overwrite(
                     "hideMoreActionsButton": True,
                     "hideMuteAllButton": True,
                 },
-                "toolbarButtons": JITSI_PARTICIPANT_TOOLBAR_BUTTONS,
+                "toolbarButtons": part_buttons,
             }
         )
     return config_overwrite
@@ -143,15 +190,44 @@ def build_jitsi_interface_config_overwrite():
 class JitsiModule(BaseModule):
     prefix = "jitsi"
 
+    async def can_moderate_room(self) -> bool:
+        """
+        Map Eventyay user moderation permissions to room moderator status.
+        Checks if the user holds room moderation permission, BBB/Janus moderation,
+        chat moderation, or event/room administrative update rights.
+        """
+        return bool(
+            await self.consumer.event.has_permission_async(
+                user=self.consumer.user,
+                permission=[
+                    Permission.ROOM_JITSI_MODERATE,
+                    Permission.ROOM_BBB_MODERATE,
+                    Permission.ROOM_JANUSCALL_MODERATE,
+                    Permission.ROOM_CHAT_MODERATE,
+                    Permission.ROOM_UPDATE,
+                    Permission.EVENT_UPDATE,
+                ],
+                room=self.room,
+            )
+        )
+
     @command("room_config")
     @room_action(
         permission_required=Permission.ROOM_JITSI_JOIN,
         module_required="call.jitsi",
     )
     async def room_config(self, body):
-        display_name = self.consumer.user.profile.get("display_name")
-        if not display_name:
-            raise ConsumerException("jitsi.join.missing_profile")
+        display_name = (
+            (self.consumer.user.profile or {}).get("display_name")
+            or getattr(self.consumer.user, "fullname", None)
+            or (self.consumer.user.email.split("@")[0] if getattr(self.consumer.user, "email", None) else None)
+            or "Attendee"
+        )
+        if hasattr(self.consumer.user, "profile") and isinstance(self.consumer.user.profile, dict):
+            if not self.consumer.user.profile.get("display_name"):
+                self.consumer.user.profile["display_name"] = display_name
+        elif not getattr(self.consumer.user, "profile", None):
+            self.consumer.user.profile = {"display_name": display_name}
 
         try:
             server_model = await database_sync_to_async(choose_server_for_room)(
@@ -169,14 +245,8 @@ class JitsiModule(BaseModule):
         room_display_name = get_jitsi_room_display_name(self.room)
         if not domain:
             raise ConsumerException("jitsi.missing_domain")
-        if not server_model.app_id or not server_model.app_secret:
-            raise ConsumerException("jitsi.missing_jwt_config")
 
-        is_moderator = bool(await self.consumer.event.has_permission_async(
-            user=self.consumer.user,
-            permission=Permission.ROOM_JITSI_MODERATE,
-            room=self.room,
-        ))
+        is_moderator = await self.can_moderate_room()
         logger.info(
             "Jitsi room_config user=%s room=%s jitsi_room=%s moderator=%s domain=%s server=%s",
             self.consumer.user.pk,
@@ -187,6 +257,24 @@ class JitsiModule(BaseModule):
             server_model.pk,
         )
 
+        has_jwt = bool(server_model.app_id and server_model.app_secret)
+        jwt_token = None
+        if has_jwt:
+            jwt_token = self._build_jwt(
+                server=server_model,
+                domain=domain,
+                room_name=room_name,
+                display_name=display_name,
+                is_moderator=is_moderator,
+            )
+
+        user_email = (
+            getattr(self.consumer.user, "email", "")
+            or (self.consumer.user.profile or {}).get("email")
+            or ""
+        )
+        user_avatar = get_safe_avatar_url(self.consumer.user.profile)
+
         result = {
             "domain": domain,
             "url": server["url"],
@@ -195,24 +283,19 @@ class JitsiModule(BaseModule):
             "roomDisplayName": room_display_name,
             "userInfo": {
                 "displayName": display_name,
-                "email": self.consumer.user.profile.get("email") or "",
+                "email": user_email,
+                "avatar": user_avatar,
             },
             "configOverwrite": build_jitsi_config_overwrite(
                 self.module_config,
                 is_moderator,
                 room_display_name,
+                has_jwt=has_jwt,
             ),
             "interfaceConfigOverwrite": build_jitsi_interface_config_overwrite(),
             "moderator": is_moderator,
+            "jwt": jwt_token,
         }
-
-        result["jwt"] = self._build_jwt(
-            server=server_model,
-            domain=domain,
-            room_name=room_name,
-            display_name=display_name,
-            is_moderator=is_moderator,
-        )
 
         await self.consumer.send_success(result)
 
@@ -230,6 +313,12 @@ class JitsiModule(BaseModule):
             raise ConsumerException("jitsi.missing_jwt_config")
 
         now = int(time.time())
+        user_email = (
+            getattr(self.consumer.user, "email", "")
+            or (self.consumer.user.profile or {}).get("email")
+            or ""
+        )
+        user_avatar = get_safe_avatar_url(self.consumer.user.profile)
         payload = {
             "aud": "jitsi",
             "iss": app_id,
@@ -241,10 +330,17 @@ class JitsiModule(BaseModule):
                 "user": {
                     "id": str(self.consumer.user.pk),
                     "name": display_name,
-                    "email": self.consumer.user.profile.get("email") or "",
+                    "email": user_email,
+                    "avatar": user_avatar,
                     "moderator": bool(is_moderator),
                     "affiliation": "owner" if is_moderator else "member",
-                }
+                },
+                "features": {
+                    "livestreaming": bool(is_moderator and self.module_config.get("livestreaming", False)),
+                    "recording": bool(is_moderator and self.module_config.get("record", False)),
+                    "transcription": bool(is_moderator),
+                    "outbound-call": False,
+                },
             },
         }
         headers = {}

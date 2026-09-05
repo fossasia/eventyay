@@ -8,6 +8,9 @@ export function isRoomTypeAvailable(typeId, hasPermission, isAdminMode = false) 
 	if (typeId === 'channel-jitsi') {
 		return hasPermission('world:rooms.create.jitsi') || isAdminMode
 	}
+	if (typeId === 'channel-loungemesh') {
+		return hasPermission('world:rooms.create.loungemesh') || hasPermission('world:rooms.create.bbb') || isAdminMode
+	}
 	if (typeId === 'channel-text') {
 		return hasPermission('world:rooms.create.chat') || isAdminMode
 	}

@@ -22,6 +22,16 @@ export const VIDEO_CREATE_PROVIDERS = [
 		featureFlag: null
 	},
 	{
+		id: 'zoom',
+		roomTypeId: 'channel-zoom',
+		label: 'Zoom',
+		roomKind: 'Video Channel',
+		shortLabel: 'Zoom',
+		icon: 'webcam',
+		description: 'Embed a Zoom meeting or webinar directly into eventyay.',
+		featureFlag: null
+	},
+	{
 		id: 'jitsi',
 		roomTypeId: 'channel-jitsi',
 		label: 'Jitsi',
@@ -40,6 +50,16 @@ export const VIDEO_CREATE_PROVIDERS = [
 		icon: 'webcam',
 		description: 'Connect attendees in real time for workshops or panels powered by Janus.',
 		featureFlag: 'janus'
+	},
+	{
+		id: 'loungemesh',
+		roomTypeId: 'channel-loungemesh',
+		label: 'LoungeMesh',
+		roomKind: 'Video Channel',
+		shortLabel: 'LoungeMesh',
+		icon: 'webcam',
+		description: 'Spatial proximity networking and workshop lounge powered by LoungeMesh.',
+		featureFlag: null
 	}
 ]
 
@@ -72,6 +92,7 @@ export function getConfiguredRoomLabel(type) {
 	const provider = getVideoProviderByRoomTypeId(type.id)
 	if (provider) return `${provider.roomKind}: ${provider.shortLabel}`
 	if (type.id === 'channel-zoom') return 'Video Channel: Zoom'
+	if (type.id === 'channel-loungemesh') return 'Video Channel: LoungeMesh'
 	return type.name
 }
 
@@ -79,18 +100,99 @@ export function getVideoProviderStartingConfig(type) {
 	if (type?.id === 'stage') {
 		return { playback_mode: 'always_on' }
 	}
+	if (type?.id === 'channel-bbb') {
+		return {
+			record: false,
+			hide_presentation: false,
+			waiting_room: false,
+			auto_microphone: false,
+			auto_camera: false,
+			bbb_mute_on_start: false,
+			bbb_disable_cam: false,
+			bbb_disable_chat: false
+		}
+	}
+	if (type?.id === 'channel-zoom') {
+		return {
+			meeting_number: '',
+			password: '',
+			disable_chat: false
+		}
+	}
+	if (type?.id === 'channel-jitsi') {
+		return {
+			prefer_server: '',
+			start_with_audio_muted: false,
+			start_with_video_muted: false,
+			waiting_room: false,
+			record: false,
+			livestreaming: false,
+			disable_cam: false,
+			disable_chat: false,
+			require_display_name: false
+		}
+	}
+	if (type?.id === 'channel-janus') {
+		return {
+			prefer_server: '',
+			start_with_audio_muted: false,
+			start_with_video_muted: false,
+			waiting_room: false,
+			disable_cam: false,
+			disable_chat: false
+		}
+	}
+	if (type?.id === 'channel-loungemesh') {
+		return {
+			prefer_server: '',
+			enable_notes: true,
+			enable_whiteboard: true,
+			enable_spatial_chat: true
+		}
+	}
 	return {}
 }
 
 export function applyVideoProviderToConfig(config, type) {
 	if (!config || !type) return false
-	config.module_config = [{
+	const moduleConfig = [{
 		type: type.startingModule,
 		config: getVideoProviderStartingConfig(type)
 	}]
+	if (type.id === 'channel-zoom') {
+		moduleConfig.push({
+			type: 'chat.native',
+			config: { volatile: true }
+		})
+	}
+	config.module_config = moduleConfig
 	return true
 }
 
 export function canManageVideoRooms(hasPermission) {
 	return hasPermission('room:update')
+}
+
+export const EMBEDDED_SUITE_MODULE_TYPES = [
+	'call.bigbluebutton',
+	'call.jitsi'
+]
+
+export function hasEmbeddedSuite(modules) {
+	if (!modules) return false
+	if (Array.isArray(modules)) {
+		return modules.some(m => EMBEDDED_SUITE_MODULE_TYPES.includes(m?.type || m))
+	}
+	return EMBEDDED_SUITE_MODULE_TYPES.some(type => Boolean(modules[type]))
+}
+
+export function supportsPlatformSidebar(modules) {
+	if (!modules) return false
+	if (hasEmbeddedSuite(modules)) return false
+	if (Array.isArray(modules)) {
+		if (modules.length === 1 && modules[0]?.type === 'chat.native') return false
+		return modules.some(m => ['chat.native', 'question', 'poll'].includes(m?.type))
+	}
+	if (modules['chat.native'] && Object.keys(modules).length === 1) return false
+	return Boolean(modules['chat.native'] || modules.question || modules.poll)
 }

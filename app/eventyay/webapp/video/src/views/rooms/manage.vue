@@ -13,14 +13,14 @@
 			.header
 				h3 {{ $t('Schedule') }}
 			SchedulePanel(:room="room")
-		panel.polls(v-if="modules['poll']")
+		panel.polls(v-if="!isEmbeddedSuiteRoom && modules['poll']")
 			.header
 				h3 {{ $t('Polls') }}
 				.actions
 					bunt-button#btn-create-poll(@click="showCreatePollPrompt") {{ $t('Create Poll') }}
 					bunt-icon-button(@click="showUrlPopup('poll', $event)") presentation
 			polls(:module="modules['poll']", @edit="startEditingPoll")
-		panel.questions(v-if="modules['question']")
+		panel.questions(v-if="!isEmbeddedSuiteRoom && modules['question']")
 			.header
 				h3 {{ $t('Questions') }}
 				.actions
@@ -31,7 +31,7 @@
 						template(#menu)
 							.archive-all(@click="$store.dispatch('question/archiveAll')") {{ $t('Archive All') }}
 			questions(:module="modules['question']")
-		panel.chat(v-if="modules['chat.native']")
+		panel.chat(v-if="!isEmbeddedSuiteRoom && modules['chat.native']")
 			.header.chat-manage-header
 				h3 {{ $t('Chat') }}
 				.chat-toolbar
@@ -116,6 +116,7 @@ import Polls from 'components/Polls'
 import Prompt from 'components/Prompt'
 import Questions from 'components/Questions'
 import SchedulePanel from './ManagePanels/Schedule'
+import { hasEmbeddedSuite } from 'lib/video-providers'
 
 export default {
 	name: 'RoomManager',
@@ -144,6 +145,9 @@ export default {
 		...mapState(['world', 'token']),
 		...mapGetters(['hasPermission']),
 		...mapGetters('schedule', ['sessions', 'sessionsScheduledNow']),
+		isEmbeddedSuiteRoom() {
+			return hasEmbeddedSuite(this.modules)
+		},
 		canModerateChat() {
 			return this.hasPermission('room:chat.moderate') || this.hasPermission('world:moderate')
 		},

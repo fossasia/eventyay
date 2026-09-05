@@ -1,7 +1,7 @@
 <template lang="pug">
 .c-media-source(:class="{'in-background': background, 'in-room-manager': inRoomManager}")
 	transition(name="background-room")
-		router-link.background-room(v-if="background", :to="backgroundRoomLink")
+		router-link.background-room(v-if="background && !isVideoCall && !call", :to="backgroundRoomLink")
 			.description
 				.hint {{ $t('Currently playing') }}
 				.room-name(v-if="room", v-html="$emojify(room.name)")
@@ -9,8 +9,8 @@
 			.global-placeholder
 			bunt-icon-button(@click.prevent.stop="$emit('close')") close
 	Livestream(v-if="room && shouldUseLivestream", ref="livestream", :room="room", :module="module", :size="background ? 'tiny' : 'normal'", :key="`livestream-${room.id}`", @playback-state-changed="onMainPlayerPlaybackChanged")
-	JanusCall(v-else-if="room && module.type === 'call.janus'", ref="janus", :room="room", :module="module", :background="background", :size="background ? 'tiny' : 'normal'", :key="`janus-${room.id}`")
-	JanusChannelCall(v-else-if="call", ref="janus", :call="call", :background="background", :size="background ? 'tiny' : 'normal'", :key="`call-${call.id}`", @close="$emit('close')")
+	VideoCallFrame(v-else-if="room && isVideoCall", ref="videoCallFrame", :room="room", :module="module", :background="background", :size="background ? 'tiny' : 'normal'", :key="`call-${room.id}`", @close="$emit('close')", @leave="$emit('leave', room)")
+	VideoCallFrame(v-else-if="call", ref="channelCallFrame", :call="call", :background="background", :size="background ? 'tiny' : 'normal'", :key="`call-${call.id}`", @close="$emit('close')", @leave="$emit('leave', null)")
 	.iframe-consent-gate(v-if="consentBlockedUrl && !background")
 		iframe-blocker(:src="consentBlockedUrl", allow="camera *; autoplay *; microphone *; fullscreen *; display-capture *", allowfullscreen, @consent-given="onConsentGiven")
 	.iframe-error(v-if="!iframeEl && !consentBlockedUrl && (iframeError || iframeOffline)", :class="{background: background, 'size-tiny': background}")
@@ -29,6 +29,7 @@ import api from 'lib/api';
 import { normalizeYoutubeVideoId } from 'lib/validators';
 import { isDomainBlocked, getUrlDomain } from 'lib/iframeConsent';
 import IframeBlocker from 'components/IframeBlocker';
+import VideoCallFrame from 'components/VideoCallFrame';
 import JanusCall from 'components/JanusCall';
 import JanusChannelCall from 'components/JanusChannelCall';
 import Livestream from 'components/Livestream';
@@ -41,11 +42,11 @@ import {
 	STREAM_TYPE_YOUTUBE,
 } from 'lib/stage-streams';
 
-const jitsiExternalApiLoaders = new Map();
+
 
 // Props & Emits
 defineOptions({
-	components: { Livestream, JanusCall, JanusChannelCall, IframeBlocker },
+	components: { Livestream, VideoCallFrame, JanusCall, JanusChannelCall, IframeBlocker },
 });
 const props = defineProps({
 	room: Object,
@@ -55,7 +56,7 @@ const props = defineProps({
 		default: false,
 	},
 });
-const emit = defineEmits(['close']);
+const emit = defineEmits(['close', 'leave']);
 
 const store = useStore();
 const route = useRoute();
@@ -78,7 +79,6 @@ let whepClient = null;
 // Template refs
 const livestream = ref(null);
 const janus = ref(null);
-let jitsiApi = null;
 
 // Mapped state/getters
 const activeInterpretation = computed(() => {
@@ -98,6 +98,7 @@ const module = computed(() => {
 			'call.janus',
 			'call.zoom',
 			'call.jitsi',
+			'call.loungemesh',
 		].includes(m.type)
 	);
 });
@@ -107,6 +108,17 @@ const isLivestreamModule = computed(() =>
 		'livestream.native',
 		'livestream.youtube',
 	].includes(module.value?.type)
+);
+
+const isVideoCall = computed(() =>
+	Boolean(
+		props.call ||
+		[
+			'call.janus',
+			'call.jitsi',
+			'call.bigbluebutton',
+		].includes(module.value?.type)
+	)
 );
 
 const isScheduleDrivenStage = computed(() =>
@@ -472,8 +484,6 @@ function onTranslationIframeLoaded() {
 }
 
 function onWindowMessage(event) {
-	if (!iframeEl.value?.contentWindow || event.source !== iframeEl.value.contentWindow) return;
-
 	let data = event.data;
 	if (typeof data === 'string') {
 		try {
@@ -483,6 +493,29 @@ function onWindowMessage(event) {
 		}
 	}
 	if (!data || typeof data !== 'object') return;
+
+	if (!iframeEl.value?.contentWindow || event.source !== iframeEl.value.contentWindow) return;
+
+	if (
+		data.event === 'zoom:leave' ||
+		data.action === 'leave' ||
+		data.event === 'hangup' ||
+		data.type === 'hangup' ||
+		data.type === 'loungemesh:leave' ||
+		data.action === 'loungemesh:leave' ||
+		data.event === 'loungemesh:leave' ||
+		data.type === 'leave' ||
+		data.event === 'leave'
+	) {
+		emit('leave', props.room);
+		destroyIframe();
+		if (route.name === 'room' || route.name === 'room:manage' || route.params?.roomId) {
+			router.push({ name: 'about' }).catch(() => {
+				router.push('/').catch(() => {});
+			});
+		}
+		return;
+	}
 
 	let playerState = null;
 	if (data.event === 'onStateChange' && typeof data.info === 'number') {
@@ -521,6 +554,7 @@ function subscribeToYouTubePlayerEvents() {
 async function initializeIframe(mute, skipConsentCheck = false) {
 	if (!module.value) return;
 	if (shouldUseLivestream.value) return;
+	if (isVideoCall.value) return;
 	if (iframeOffline.value) return;
 	if (iframeEl.value) return; // already initialised
 	if (iframeInitInProgress) return;
@@ -541,13 +575,6 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 			: (!isScheduleDriven ? module.value.type : null);
 
 		switch (effectiveModuleType) {
-			case 'call.bigbluebutton': {
-				({ url: iframeUrl } = await api.call('bbb.room_url', {
-					room: props.room.id,
-				}));
-				hideIfBackground = true;
-				break;
-			}
 			case 'call.zoom': {
 				({ url: iframeUrl } = await api.call('zoom.room_url', {
 					room: props.room.id,
@@ -555,11 +582,10 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 				hideIfBackground = true;
 				break;
 			}
-			case 'call.jitsi': {
-				jitsiConfig = await api.call('jitsi.room_config', {
+			case 'call.loungemesh': {
+				({ url: iframeUrl } = await api.call('loungemesh.room_url', {
 					room: props.room.id,
-				});
-				iframeUrl = getJitsiRoomUrl(jitsiConfig);
+				}));
 				hideIfBackground = true;
 				break;
 			}
@@ -639,11 +665,6 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 		// Consent is satisfied (or not required); clear any previous gate.
 		consentBlockedUrl.value = null
 
-		if (jitsiConfig) {
-			await createJitsiIframe(jitsiConfig, hideIfBackground);
-			return;
-		}
-
 		const iframe = document.createElement('iframe');
 		iframe.src = iframeUrl;
 		iframe.classList.add('iframe-media-source');
@@ -657,7 +678,7 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 		}
 		// Set iframe permissions and attributes
 		iframe.allow =
-			'screen-wake-lock *; camera *; microphone *; fullscreen *; display-capture *; encrypted-media *' +
+			'screen-wake-lock *; camera *; microphone *; fullscreen *; display-capture *; encrypted-media *; clipboard-write *; clipboard-read *' +
 			(autoplay.value ? '; autoplay *' : '');
 		iframe.allowFullscreen = true;
 		iframe.setAttribute('allowusermedia', 'true');
@@ -687,11 +708,6 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 }
 
 function destroyIframe() {
-	if (jitsiApi) {
-		const api = jitsiApi;
-		jitsiApi = null;
-		api.dispose();
-	}
 	iframeEl.value?.remove();
 	iframeEl.value = null;
 	languageIframeUrl.value = null;
@@ -699,128 +715,7 @@ function destroyIframe() {
 	consentBlockedUrl.value = null;
 }
 
-function createJitsiIframe(config, hideIfBackground) {
-	const container = document.querySelector('#media-source-iframes');
-	if (!container) return;
-	return createJitsiApiIframe(config, hideIfBackground, container);
-}
 
-async function createJitsiApiIframe(config, hideIfBackground, container) {
-	const JitsiMeetExternalAPI = await loadJitsiExternalApi(config);
-	if (isUnmounted.value) return;
-
-	jitsiApi = new JitsiMeetExternalAPI(config.domain, {
-		roomName: config.roomName,
-		parentNode: container,
-		jwt: config.jwt,
-		noSSL: config.protocol === 'http',
-		configOverwrite: config.configOverwrite,
-		interfaceConfigOverwrite: config.interfaceConfigOverwrite,
-		userInfo: config.userInfo,
-	});
-
-	const iframe = jitsiApi.getIFrame();
-	iframe.classList.add('iframe-media-source');
-	iframe.classList.add('jitsi-media-source');
-	if (hideIfBackground) {
-		iframe.classList.add('hide-if-background');
-	}
-	if (props.background) {
-		iframe.classList.add('background');
-		iframe.classList.add('size-tiny');
-	}
-	iframe.allow =
-		'screen-wake-lock *; camera *; microphone *; fullscreen *; display-capture *' +
-		(autoplay.value ? '; autoplay *' : '');
-	iframe.allowFullscreen = true;
-	iframe.setAttribute('allowusermedia', 'true');
-	iframe.setAttribute('allowfullscreen', '');
-	iframeEl.value = iframe;
-	jitsiApi.addListener('videoConferenceJoined', () => applyJitsiDisplayOverrides(config));
-	jitsiApi.addListener('videoConferenceLeft', closeJitsiIframe);
-	jitsiApi.addListener('readyToClose', closeJitsiIframe);
-}
-
-function closeJitsiIframe() {
-	destroyIframe();
-	emit('close');
-	router.push({ name: 'about' }).catch(() => {});
-}
-
-function applyJitsiDisplayOverrides(config) {
-	if (!jitsiApi) return;
-	const commands = {};
-	if (config.roomDisplayName) {
-		commands.subject = [config.roomDisplayName];
-		commands.localSubject = [config.roomDisplayName];
-	}
-	if (!Object.keys(commands).length) return;
-	try {
-		jitsiApi.executeCommands(commands);
-	} catch (error) {
-		console.warn('Failed to apply Jitsi display overrides', {
-			roomId: props.room?.id,
-			error,
-		});
-	}
-}
-
-function loadJitsiExternalApi(config) {
-	const url = new URL(config.url || `https://${config.domain}`);
-	url.pathname = '/external_api.js';
-	url.search = '';
-	url.hash = '';
-	const scriptUrl = url.toString();
-	if (window.JitsiMeetExternalAPI) {
-		return Promise.resolve(window.JitsiMeetExternalAPI);
-	}
-	if (jitsiExternalApiLoaders.has(scriptUrl)) {
-		return jitsiExternalApiLoaders.get(scriptUrl);
-	}
-	const loader = new Promise((resolve, reject) => {
-		const script = document.createElement('script');
-		script.src = scriptUrl;
-		script.async = true;
-		const rejectAndForget = (error) => {
-			jitsiExternalApiLoaders.delete(scriptUrl);
-			reject(error);
-		};
-		script.onload = () => {
-			if (window.JitsiMeetExternalAPI) {
-				resolve(window.JitsiMeetExternalAPI);
-			} else {
-				rejectAndForget(new Error('Jitsi external API did not load'));
-			}
-		};
-		script.onerror = () => rejectAndForget(new Error('Jitsi external API could not be loaded'));
-		document.head.appendChild(script);
-	});
-	jitsiExternalApiLoaders.set(scriptUrl, loader);
-	return loader;
-}
-
-function encodeJitsiHash(prefix, values) {
-	return Object.entries(values || {})
-		.filter(([, value]) => value !== undefined && value !== null)
-		.map(([key, value]) => `${prefix}.${key}=${encodeURIComponent(JSON.stringify(value))}`);
-}
-
-function getJitsiRoomUrl(config) {
-	const url = new URL(config.url || `https://${config.domain}`);
-	url.pathname = `/${encodeURIComponent(config.roomName)}`;
-	if (config.jwt) {
-		url.searchParams.set('jwt', config.jwt);
-	}
-	const hash = [
-		...encodeJitsiHash('config', config.configOverwrite),
-		...encodeJitsiHash('interfaceConfig', config.interfaceConfigOverwrite),
-		...encodeJitsiHash('userInfo', config.userInfo),
-	];
-	if (hash.length) {
-		url.hash = hash.join('&');
-	}
-	return url.toString();
-}
 
 function onConsentGiven(persistent) {
 	if (persistent) {
@@ -838,6 +733,9 @@ function isPlaying() {
 	}
 	if (shouldUseLivestream.value) {
 		return livestream.value?.playing && !livestream.value?.offline;
+	}
+	if (isVideoCall.value) {
+		return true;
 	}
 	if (module.value?.type === 'call.janus') {
 		return janus.value?.roomId;
@@ -986,7 +884,7 @@ defineExpose({ isPlaying });
 	// 	transition-delay: .1s
 	.background-room-enter-from, .background-room-leave-to
 		transform: translate(calc(-1 * var(--chatbar-width)), 52px)
-.c-media-source .c-livestream, .c-media-source .c-januscall, .c-media-source .c-januschannelcall, .c-media-source .iframe-error, iframe.iframe-media-source
+.c-media-source .c-livestream, .c-media-source .iframe-error, iframe.iframe-media-source
 	position: fixed
 	transition: all .3s ease
 	&.size-tiny, &.background
@@ -999,6 +897,28 @@ defineExpose({ isPlaying });
 		left: var(--mediasource-placeholder-left, var(--sidebar-width))
 		width: var(--mediasource-placeholder-width, 100vw)
 		height: var(--mediasource-placeholder-height, var(--mobile-media-height, 40vh))
+
+.c-media-source .c-video-call-frame
+	position: fixed
+	transition: all .25s ease
+	&:not(.size-tiny):not(.background)
+		top: var(--mediasource-placeholder-top, 104px)
+		left: var(--mediasource-placeholder-left, var(--sidebar-width))
+		width: var(--mediasource-placeholder-width, 100vw)
+		height: var(--mediasource-placeholder-height, var(--mobile-media-height, 40vh))
+	&.size-tiny, &.background
+		top: auto
+		left: auto
+		bottom: 24px
+		right: 24px
+		width: 380px
+		height: 240px
+		border-radius: 12px
+		box-shadow: 0 16px 36px rgba(0, 0, 0, 0.22)
+		border: 1px solid #e2e8f0
+		z-index: 9999
+		overflow: hidden
+		background-color: #ffffff
 iframe.iframe-media-source
 	transition: all .3s ease
 	border: none

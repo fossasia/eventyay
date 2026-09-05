@@ -9,8 +9,10 @@ import {
 	applyVideoProviderToConfig,
 	getAvailableVideoProviders,
 	getConfiguredRoomLabel,
+	hasEmbeddedSuite,
 	isVideoProviderEnabled,
 	isVideoProviderPermitted,
+	supportsPlatformSidebar,
 } from './video-providers.js'
 
 function allow(permissions) {
@@ -26,7 +28,7 @@ function features(enabledFlags) {
 test('dropdown labels match the organiser create options', () => {
 	assert.deepEqual(
 		VIDEO_CREATE_PROVIDERS.map(provider => provider.label),
-		['Stream (YT, HLS)', 'BBB', 'Jitsi', 'Janus']
+		['Stream (YT, HLS)', 'BBB', 'Zoom', 'Jitsi', 'Janus', 'LoungeMesh']
 	)
 })
 
@@ -45,7 +47,7 @@ test('disabled feature flags hide Jitsi and Janus even in admin mode', () => {
 		true,
 		features([])
 	)
-	assert.deepEqual(providers.map(provider => provider.id), ['bbb'])
+	assert.deepEqual(providers.map(provider => provider.id), ['stream', 'bbb', 'zoom', 'loungemesh'])
 })
 
 test('admin mode with create permissions includes gated providers', () => {
@@ -54,7 +56,7 @@ test('admin mode with create permissions includes gated providers', () => {
 		true,
 		features(['jitsi', 'janus'])
 	)
-	assert.deepEqual(providers.map(provider => provider.id), ['bbb', 'jitsi', 'janus'])
+	assert.deepEqual(providers.map(provider => provider.id), ['stream', 'bbb', 'zoom', 'jitsi', 'janus', 'loungemesh'])
 })
 
 test('users without create or update permission see no providers', () => {
@@ -75,11 +77,11 @@ test('stage create permission is enough for Stream', () => {
 	assert.deepEqual(providers.map(provider => provider.id), ['stream'])
 })
 
-test('Jitsi requires admin mode even when the organiser can update rooms', () => {
+test('Jitsi requires permission when not in admin mode', () => {
 	assert.equal(
 		isVideoProviderPermitted(
 			VIDEO_CREATE_PROVIDERS.find(provider => provider.id === 'jitsi'),
-			allow(['room:update', 'world:rooms.create.jitsi']),
+			allow(['room:update']),
 			false
 		),
 		false
@@ -88,7 +90,7 @@ test('Jitsi requires admin mode even when the organiser can update rooms', () =>
 		isVideoProviderPermitted(
 			VIDEO_CREATE_PROVIDERS.find(provider => provider.id === 'jitsi'),
 			allow(['world:rooms.create.jitsi']),
-			true
+			false
 		),
 		true
 	)
@@ -110,6 +112,7 @@ test('configured room labels include the video provider', () => {
 	assert.equal(getConfiguredRoomLabel({id: 'channel-jitsi', name: 'Video Channel (Jitsi)'}), 'Video Channel: Jitsi')
 	assert.equal(getConfiguredRoomLabel({id: 'channel-janus', name: 'Video Channel (beta)'}), 'Video Channel: Janus')
 	assert.equal(getConfiguredRoomLabel({id: 'channel-zoom', name: 'Video Channel (Zoom)'}), 'Video Channel: Zoom')
+	assert.equal(getConfiguredRoomLabel({id: 'channel-loungemesh', name: 'Spatial Lounge (LoungeMesh)'}), 'Video Channel: LoungeMesh')
 	assert.equal(getConfiguredRoomLabel({id: 'channel-text', name: 'Text Channel'}), 'Text Channel')
 })
 
@@ -123,4 +126,72 @@ test('applying a provider sets the starting module config', () => {
 		type: 'livestream.native',
 		config: { playback_mode: 'always_on' }
 	}])
+
+	const zoomConfig = { module_config: [] }
+	assert.equal(
+		applyVideoProviderToConfig(zoomConfig, {id: 'channel-zoom', startingModule: 'call.zoom'}),
+		true
+	)
+	assert.deepEqual(zoomConfig.module_config, [
+		{
+			type: 'call.zoom',
+			config: {
+				meeting_number: '',
+				password: '',
+				disable_chat: false
+			}
+		},
+		{
+			type: 'chat.native',
+			config: { volatile: true }
+		}
+	])
+
+	const lmConfig = { module_config: [] }
+	assert.equal(
+		applyVideoProviderToConfig(lmConfig, {id: 'channel-loungemesh', startingModule: 'call.loungemesh'}),
+		true
+	)
+	assert.deepEqual(lmConfig.module_config, [
+		{
+			type: 'call.loungemesh',
+			config: {
+				prefer_server: '',
+				enable_notes: true,
+				enable_whiteboard: true,
+				enable_spatial_chat: true
+			}
+		}
+	])
+})
+
+test('hasEmbeddedSuite identifies BBB and Jitsi but not Janus, Zoom, or LoungeMesh', () => {
+	assert.equal(hasEmbeddedSuite({ 'call.bigbluebutton': {} }), true)
+	assert.equal(hasEmbeddedSuite({ 'call.jitsi': {} }), true)
+	assert.equal(hasEmbeddedSuite({ 'call.zoom': {} }), false)
+	assert.equal(hasEmbeddedSuite({ 'call.janus': {} }), false)
+	assert.equal(hasEmbeddedSuite({ 'call.loungemesh': {} }), false)
+	assert.equal(hasEmbeddedSuite([{ type: 'call.janus' }]), false)
+	assert.equal(hasEmbeddedSuite([{ type: 'call.jitsi' }]), true)
+	assert.equal(hasEmbeddedSuite([{ type: 'call.zoom' }]), false)
+	assert.equal(hasEmbeddedSuite([{ type: 'call.loungemesh' }]), false)
+})
+
+test('supportsPlatformSidebar allows chat/polls for Janus, stage, Zoom, and LoungeMesh addons, but suppresses for embedded suites', () => {
+	// Janus with chat.native
+	assert.equal(supportsPlatformSidebar({ 'call.janus': {}, 'chat.native': {} }), true)
+	// Zoom with chat.native (supported via platform sidebar)
+	assert.equal(supportsPlatformSidebar({ 'call.zoom': {}, 'chat.native': {} }), true)
+	// LoungeMesh with question addon (supported via platform sidebar)
+	assert.equal(supportsPlatformSidebar({ 'call.loungemesh': {}, question: {} }), true)
+	// LoungeMesh alone (suppressed by default for spatial immersion)
+	assert.equal(supportsPlatformSidebar({ 'call.loungemesh': {} }), false)
+	// BBB with chat.native (suppressed because BBB has native chat)
+	assert.equal(supportsPlatformSidebar({ 'call.bigbluebutton': {}, 'chat.native': {} }), false)
+	// Jitsi with poll (suppressed because Jitsi has native polls)
+	assert.equal(supportsPlatformSidebar({ 'call.jitsi': {}, poll: {} }), false)
+	// Stage with chat.native
+	assert.equal(supportsPlatformSidebar({ 'livestream.native': {}, 'chat.native': {} }), true)
+	// Standalone chat only
+	assert.equal(supportsPlatformSidebar({ 'chat.native': {} }), false)
 })
