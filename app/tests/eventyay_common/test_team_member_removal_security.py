@@ -100,3 +100,45 @@ def test_legacy_team_member_view_rejects_non_member():
         team.log_action.assert_not_called()
         mock_sync.assert_not_called()
         assert result == 'redirected'
+
+
+@override_settings(
+    CACHES={
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        },
+    },
+)
+def test_legacy_team_member_view_removes_member_when_in_team():
+    """Verify legacy TeamMemberView removes legitimate member, logs action, and syncs traits."""
+    view = TeamMemberView()
+    view.request = MagicMock()
+    view.request.user = MagicMock(pk=1)
+    view.request.organizer = MagicMock()
+    view.request.POST = {'remove-member': '99'}
+    view.get_object = MagicMock()
+    view.get_success_url = MagicMock(return_value='/success/')
+
+    team = MagicMock(pk=10, can_change_teams=False)
+    member = MagicMock(pk=99, email='member@example.com')
+    team.members.get.return_value = member
+    team.members.count.return_value = 2
+    view.get_object.return_value = team
+
+    with (
+        patch('eventyay.eventyay_common.views.team.sync_video_traits_for_team') as mock_sync,
+        patch('eventyay.eventyay_common.views.team.redirect') as mock_redirect,
+    ):
+        mock_redirect.return_value = 'redirected'
+        post_func = getattr(view.post, '__wrapped__', view.post)
+        result = post_func(view, view.request)
+
+        team.members.get.assert_called_once_with(pk='99')
+        team.members.remove.assert_called_once_with(member)
+        team.log_action.assert_called_once_with(
+            'eventyay.team.member.removed',
+            user=view.request.user,
+            data={'email': 'member@example.com', 'user': 99},
+        )
+        mock_sync.assert_called_once_with(team, members=[member])
+        assert result == 'redirected'
