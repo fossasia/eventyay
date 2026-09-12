@@ -42,6 +42,11 @@ updates:
       time: "06:00"
       timezone: "Asia/Singapore"
     open-pull-requests-limit: 15
+    groups:
+      # Group Tiptap packages together as they are tightly coupled and updated together.
+      tiptap:
+        patterns:
+          - "@tiptap/*"
 
   - package-ecosystem: "npm"
     directory: "/app/eventyay/webapp/schedule"
