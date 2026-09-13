@@ -1030,11 +1030,24 @@ class GlobalBusinessSettingsForm(SettingsForm):
                         ),
                     ),
                 ),
+                (
+                    'business_grace_period_days',
+                    forms.IntegerField(
+                        label=_('Business subscription grace period (days)'),
+                        required=False,
+                        min_value=0,
+                        initial=7,
+                        help_text=_('Number of days past-due subscriptions remain active before being expired.'),
+                    ),
+                ),
             ])
         )
 
         if 'billing_validation' not in self.initial or self.initial['billing_validation'] is None:
             self.initial['billing_validation'] = self.obj.settings.get('billing_validation', as_type=bool, default=True)
+        grace_days = self.obj.settings.get('business_grace_period_days', as_type=int, default=7)
+        if grace_days is not None:
+            self.initial['business_grace_period_days'] = int(grace_days)
 
         self.field_groups = [
             ('organizer_billing', _('Organizer Billing'), [
@@ -1043,6 +1056,7 @@ class GlobalBusinessSettingsForm(SettingsForm):
                 'payment_stripe_test_publishable_key',
                 'payment_stripe_test_secret_key',
                 'stripe_webhook_secret_key',
+                'business_grace_period_days',
             ]),
             ('ticket_fee', _('Ticket Fee'), [
                 'ticket_fee_percentage',

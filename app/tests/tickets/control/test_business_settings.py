@@ -186,6 +186,7 @@ class TestFormStructures:
             'stripe_webhook_secret_key',
             'ticket_fee_percentage',
             'billing_validation',
+            'business_grace_period_days',
         }
         assert set(form.fields.keys()) == expected_fields
         groups = [g[0] for g in form.field_groups]
@@ -201,6 +202,7 @@ class TestFormStructures:
             'stripe_webhook_secret_key',
             'ticket_fee_percentage',
             'billing_validation',
+            'business_grace_period_days',
         }
         for field in business_fields:
             assert field not in form.fields
