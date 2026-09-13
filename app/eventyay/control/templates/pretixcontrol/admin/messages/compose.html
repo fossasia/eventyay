@@ -10,11 +10,16 @@
   <link rel="stylesheet" href="{% static 'vendored/choices/choices.min.css' %}">
   <link rel="stylesheet" href="{% static 'common/css/_forms.css' %}">
   <link rel="stylesheet" href="{% static 'common/css/_composer.css' %}">
+  <link rel="stylesheet" href="{% static 'pretixplugins/sendmail/tickets_email.css' %}">
   <link rel="stylesheet" href="{% static 'pretixcontrol/css/admin-messages.css' %}">
   <script src="{% static 'vendored/choices/choices.min.js' %}"></script>
+  <script type="module" src="{% static 'common/js/tiptapLoader.js' %}"
+          data-tiptap-js="{% static 'editor/editor.js' %}"
+          data-tiptap-css="{% static 'editor/editor.css' %}"></script>
 {% endblock %}
 
 {% block content %}
+<div class="mt-4">
 <form method="post" enctype="multipart/form-data" class="form-with-placeholder mail-composer" novalidate>
   {% csrf_token %}
   {% if draft %}
@@ -36,7 +41,7 @@
       {% blocktranslate with count=high_count %}
         You are about to send this email to {{ count }} recipients.
       {% endblocktranslate %}
-      <input type="hidden" name="confirm_send" value="1">
+      <input type="hidden" name="confirm_send" value="{{ confirm_send_token }}">
     </div>
   {% endif %}
 
@@ -130,7 +135,14 @@
   </section>
 
   <section class="card mb-3">
-    <div class="card-header"><strong>{% translate "Attachment" %}</strong></div>
+    <div class="card-header d-flex align-items-center">
+      <strong>{% translate "Attachment" %}</strong>
+      <span data-toggle="tooltip" data-placement="right"
+            title="{% translate 'Attachments are not saved in drafts. Please reattach files before sending.' %}"
+            class="ml-1" role="button" tabindex="0" aria-label="{% translate 'Attachment info' %}">
+        <i class="fa fa-info-circle text-info"></i>
+      </span>
+    </div>
     <div class="card-body">
       <fieldset>
         {{ form.attachment.as_field_group }}
@@ -164,7 +176,6 @@
         <div id="delivery-schedule" hidden>
           {{ form.scheduled_at.as_field_group }}
         </div>
-        {{ form.send_immediately.as_field_group }}
       </fieldset>
     </div>
   </section>
@@ -226,6 +237,9 @@
               data-label-other="{% translate 'recipients selected' %}">0 {% translate "recipients selected" %}</span>
       </span>
       <span class="composer-actions">
+        <label class="form-check-label mr-2">
+          {{ form.send_immediately }} {% translate "Send immediately" %}
+        </label>
         <button type="submit" class="btn btn-outline-info" name="action" value="draft" formnovalidate>
           {% translate "Save draft" %}
         </button>
@@ -268,4 +282,5 @@
 <script defer src="{% static 'orga/js/placeholder.js' %}"></script>
 <script type="module" src="{% static 'orga/js/mail-recipients.js' %}"></script>
 <script type="module" src="{% static 'pretixcontrol/js/admin-messages-compose.js' %}"></script>
+</div>
 {% endblock %}

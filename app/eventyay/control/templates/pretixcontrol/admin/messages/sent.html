@@ -11,14 +11,7 @@
 {% endblock %}
 
 {% block content %}
-<div id="sendmail-sent-content">
-  <nav id="event-nav" class="header-nav">
-    <div class="navigation">
-      <div class="navigation-title">
-        <h1>{% translate "Sent emails" %}</h1>
-      </div>
-    </div>
-  </nav>
+  <h1>{% translate "Sent emails" %}</h1>
 
   <div class="table-responsive">
     <table class="table mt-4 table-flip tickets-table outbox-table">
@@ -35,9 +28,7 @@
       <tbody>
         {% for mail in mails %}
           <tr>
-            <td class="list-name-cell">
-              <strong>{{ mail.subject|default:"—" }}</strong>
-            </td>
+            <td class="list-name-cell"><strong>{{ mail.subject|default:"—" }}</strong></td>
             <td class="list-meta">
               <span class="label label-default">{{ mail.get_recipient_group_display }}</span>
             </td>
@@ -67,5 +58,4 @@
   </div>
 
   {% include "pretixcontrol/pagination.html" %}
-</div>
 {% endblock %}

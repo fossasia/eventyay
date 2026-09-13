@@ -8,31 +8,22 @@
   <link rel="stylesheet" href="{% static 'pretixcontrol/css/tickets-mobile.css' %}">
   <link rel="stylesheet" href="{% static 'pretixcontrol/css/orders-mobile.css' %}">
   <link rel="stylesheet" href="{% static 'pretixcontrol/css/admin-messages.css' %}">
+  <link rel="stylesheet" href="{% static 'pretixcontrol/css/platform-fee-vouchers.css' %}">
 {% endblock %}
 
 {% block content %}
-<div id="sendmail-outbox-content">
-  <nav id="event-nav" class="header-nav">
-    <div class="navigation">
-      <div class="navigation-title">
-        <h1>
-          {% blocktranslate count count=pending_count %}
-            {{ count }} pending email
-          {% plural %}
-            {{ count }} pending emails
-          {% endblocktranslate %}
-        </h1>
-      </div>
-    </div>
-  </nav>
-
-  <div class="tickets-outbox-toolbar submit-group clearfix">
-    <div class="pull-right">
-      <a href="{% url 'eventyay_admin:admin.messages.compose' %}" class="btn btn-primary">
-        <i class="fa fa-plus" aria-hidden="true"></i>
-        {% translate "Compose new email" %}
-      </a>
-    </div>
+  <div class="pfv-header">
+    <h1>
+      {% blocktranslate count count=pending_count %}
+        {{ count }} pending email
+      {% plural %}
+        {{ count }} pending emails
+      {% endblocktranslate %}
+    </h1>
+    <a href="{% url 'eventyay_admin:admin.messages.compose' %}" class="btn btn-primary">
+      <i class="fa fa-plus" aria-hidden="true"></i>
+      {% translate "Compose new email" %}
+    </a>
   </div>
 
   <div class="table-responsive">
@@ -109,5 +100,4 @@
   </div>
 
   {% include "pretixcontrol/pagination.html" %}
-</div>
 {% endblock %}

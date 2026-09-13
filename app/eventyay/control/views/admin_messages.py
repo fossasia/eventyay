@@ -36,6 +36,12 @@ logger = logging.getLogger(__name__)
 HIGH_RECIPIENT_THRESHOLD = 500
 
 
+def _audience_fingerprint(filters: dict) -> str:
+    import hashlib
+    payload = json.dumps(filters, sort_keys=True, default=str)
+    return hashlib.sha256(payload.encode()).hexdigest()[:16]
+
+
 def resolve_admin_recipients(filters: dict) -> list[dict]:
     """
     Resolve recipients based on admin filter criteria.
@@ -161,22 +167,20 @@ def resolve_admin_recipients(filters: dict) -> list[dict]:
             ).exclude(attendee_email='')
             if selected_event_ids:
                 pos_qs = pos_qs.filter(order__event__pk__in=selected_event_ids)
-            attendee_email_set = set(
-                pos_qs.values_list('attendee_email', flat=True).distinct()
-            )
             order_qs = Order.objects.filter(
                 status__in=['p', 'n']
             ).exclude(email__isnull=True).exclude(email='')
             if selected_event_ids:
                 order_qs = order_qs.filter(event__pk__in=selected_event_ids)
-            attendee_email_set.update(
-                order_qs.values_list('email', flat=True).distinct()
-            )
-            all_user_emails = set(
-                qs.filter(email__in=attendee_email_set).values_list('email', flat=True)
-            )
-            extra_emails = {e.strip().lower() for e in attendee_email_set} - {e.lower() for e in all_user_emails}
-            qs = qs.filter(email__in=attendee_email_set)
+            qs = qs.filter(
+                Q(email__in=pos_qs.values('attendee_email'))
+                | Q(email__in=order_qs.values('email'))
+            ).distinct()
+            all_user_emails = set(qs.values_list('email', flat=True))
+            all_attendee_emails = set(
+                pos_qs.values_list('attendee_email', flat=True).distinct()
+            ) | set(order_qs.values_list('email', flat=True).distinct())
+            extra_emails = {e.strip().lower() for e in all_attendee_emails} - {e.lower() for e in all_user_emails}
 
         elif recipient_group == AdminRecipientGroup.SELECTED_USERS:
             if selected_user_ids:
@@ -224,30 +228,38 @@ def resolve_admin_recipients(filters: dict) -> list[dict]:
 
                 elif recipient_group == AdminRecipientGroup.ATTENDEES:
                     from eventyay.base.models.orders import Order, OrderPosition
-                    filtered_pos_emails = set(
-                        OrderPosition.objects.filter(
-                            order__event__pk__in=event_pks,
-                            attendee_email__isnull=False,
-                        ).exclude(attendee_email='').values_list('attendee_email', flat=True).distinct()
+                    filtered_pos_qs = OrderPosition.objects.filter(
+                        order__event__pk__in=event_pks,
+                        attendee_email__isnull=False,
+                    ).exclude(attendee_email='')
+                    filtered_order_qs = Order.objects.filter(
+                        event__pk__in=event_pks,
+                        status__in=['p', 'n'],
+                    ).exclude(email__isnull=True).exclude(email='')
+                    qs = qs.filter(
+                        Q(email__in=filtered_pos_qs.values('attendee_email'))
+                        | Q(email__in=filtered_order_qs.values('email'))
+                    ).distinct()
+                    all_user_emails_evt = set(qs.values_list('email', flat=True))
+                    all_event_emails = (
+                        set(filtered_pos_qs.values_list('attendee_email', flat=True).distinct())
+                        | set(filtered_order_qs.values_list('email', flat=True).distinct())
                     )
-                    filtered_order_emails = set(
-                        Order.objects.filter(
-                            event__pk__in=event_pks,
-                            status__in=['p', 'n'],
-                        ).exclude(email__isnull=True).exclude(email='').values_list('email', flat=True).distinct()
-                    )
-                    event_emails = filtered_pos_emails | filtered_order_emails
-                    qs = qs.filter(email__in=event_emails)
-                    extra_emails = {e.strip().lower() for e in event_emails} - {
-                        e.strip().lower() for e in qs.values_list('email', flat=True)
+                    extra_emails = {e.strip().lower() for e in all_event_emails} - {
+                        e.strip().lower() for e in all_user_emails_evt
                     }
 
     seen: set[str] = set()
     result: list[dict] = []
     reason = str(dict(AdminRecipientGroup.choices).get(recipient_group, recipient_group))
+    skipped = 0
 
     for user in qs.only('pk', 'email', 'fullname', 'is_active', 'is_staff', 'is_administrator'):
-        email_lower = user.email.strip().lower()
+        raw_email = user.email or ''
+        if not raw_email.strip():
+            skipped += 1
+            continue
+        email_lower = raw_email.strip().lower()
         if email_lower in seen:
             continue
         seen.add(email_lower)
@@ -274,7 +286,7 @@ def resolve_admin_recipients(filters: dict) -> list[dict]:
                 'reason': reason,
             })
 
-    return result
+    return result, skipped
 
 
 def _extract_filter_dict(form_data: dict) -> dict:
@@ -307,7 +319,7 @@ def _extract_filter_dict(form_data: dict) -> dict:
 
 
 def _save_filters(mail: AdminEmailQueue, filters: dict) -> AdminEmailQueueFilter:
-    obj, _ = AdminEmailQueueFilter.objects.update_or_create(
+    obj, _created = AdminEmailQueueFilter.objects.update_or_create(
         mail=mail,
         defaults={
             'account_status': filters.get('account_status', ''),
@@ -412,7 +424,7 @@ class AdminMessageComposeView(AdministratorPermissionRequiredMixin, FormView):
         draft_pk = self.request.GET.get('draft')
         if draft_pk:
             draft = AdminEmailQueue.objects.filter(
-                pk=draft_pk, status__in=[AdminEmailStatus.DRAFT, AdminEmailStatus.QUEUED]
+                pk=draft_pk, status=AdminEmailStatus.DRAFT
             ).first()
             if draft:
                 self._draft = draft
@@ -448,6 +460,7 @@ class AdminMessageComposeView(AdministratorPermissionRequiredMixin, FormView):
                         initial['selected_users'] = User.objects.filter(pk__in=f.selected_user_ids)
                 except AdminEmailQueueFilter.DoesNotExist:
                     pass
+        return initial
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -457,7 +470,7 @@ class AdminMessageComposeView(AdministratorPermissionRequiredMixin, FormView):
         ctx['placeholders'] = PLACEHOLDER_GROUPS
         draft = ctx['draft']
         if draft and draft.recipient_count_snapshot:
-            current = resolve_admin_recipients(_extract_filter_dict(ctx['form'].initial))
+            current, _skipped = resolve_admin_recipients(_extract_filter_dict(ctx['form'].initial))
             if len(current) != draft.recipient_count_snapshot:
                 ctx['recipient_count_changed'] = True
                 ctx['old_recipient_count'] = draft.recipient_count_snapshot
@@ -477,7 +490,7 @@ class AdminMessageComposeView(AdministratorPermissionRequiredMixin, FormView):
             return self._send_test_email(form, test_email)
 
         if action == 'preview':
-            recipients = resolve_admin_recipients(filters)
+            recipients, _skipped = resolve_admin_recipients(filters)
             self.recipient_count = len(recipients)
             self.output = self._build_preview(cd)
             return self.render_to_response(self.get_context_data(form=form))
@@ -488,7 +501,7 @@ class AdminMessageComposeView(AdministratorPermissionRequiredMixin, FormView):
         draft_pk = self.request.POST.get('draft_id') or self.request.GET.get('draft')
         if draft_pk and not draft:
             draft = AdminEmailQueue.objects.filter(
-                pk=draft_pk, status__in=[AdminEmailStatus.DRAFT, AdminEmailStatus.QUEUED]
+                pk=draft_pk, status=AdminEmailStatus.DRAFT
             ).first()
 
         attachment = cd.get('attachment')
@@ -518,14 +531,14 @@ class AdminMessageComposeView(AdministratorPermissionRequiredMixin, FormView):
             )
 
         if is_draft:
-            resolved = resolve_admin_recipients(filters)
+            resolved, _skipped = resolve_admin_recipients(filters)
             mail.recipient_count_snapshot = len(resolved)
             mail.save()
             _save_filters(mail, filters)
             messages.success(self.request, _('The draft has been saved.'))
             return redirect('eventyay_admin:admin.messages.drafts')
 
-        resolved = resolve_admin_recipients(filters)
+        resolved, _skipped = resolve_admin_recipients(filters)
         count = len(resolved)
 
         if count >= HIGH_RECIPIENT_THRESHOLD and not self.request.POST.get('confirm_send'):
@@ -533,7 +546,17 @@ class AdminMessageComposeView(AdministratorPermissionRequiredMixin, FormView):
             ctx = self.get_context_data(form=form)
             ctx['confirm_high_count'] = True
             ctx['high_count'] = count
+            ctx['confirm_send_token'] = _audience_fingerprint(filters)
             return self.render_to_response(ctx)
+
+        if count >= HIGH_RECIPIENT_THRESHOLD:
+            if self.request.POST.get('confirm_send') != _audience_fingerprint(filters):
+                self.recipient_count = count
+                ctx = self.get_context_data(form=form)
+                ctx['confirm_high_count'] = True
+                ctx['high_count'] = count
+                ctx['confirm_send_token'] = _audience_fingerprint(filters)
+                return self.render_to_response(ctx)
 
         mail.recipient_count_snapshot = count
         with transaction.atomic():
@@ -742,7 +765,8 @@ class AdminMessageTemplateDetailView(AdministratorPermissionRequiredMixin, Templ
         role = self.kwargs.get('role', '')
         from eventyay.base.models.mail import MailTemplate, MailTemplateRoles
 
-        template = MailTemplate.objects.filter(role=role).first()
+        with scopes_disabled():
+            template = MailTemplate.objects.filter(role=role).first()
         ctx['mail_template'] = template
         ctx['role'] = role
         ctx['role_label'] = dict(MailTemplateRoles.choices).get(role, role)
@@ -816,7 +840,7 @@ class AdminMessageRecipientsView(AdministratorPermissionRequiredMixin, View):
             return JsonResponse({'count': 0, 'recipients': [], 'errors': form.errors}, status=400)
 
         filters = _extract_filter_dict(form.cleaned_data)
-        recipients = resolve_admin_recipients(filters)
+        recipients, skipped = resolve_admin_recipients(filters)
 
         preview = [
             {
@@ -829,9 +853,8 @@ class AdminMessageRecipientsView(AdministratorPermissionRequiredMixin, View):
             for r in recipients[:100]
         ]
 
-        no_email_count = sum(1 for r in recipients if not r.get('email'))
         return JsonResponse({
             'count': len(recipients),
-            'skipped': no_email_count,
+            'skipped': skipped,
             'recipients': preview,
         })

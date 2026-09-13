@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0071_admin_message_center'),
+        ('base', '0073_admin_message_center'),
     ]
 
     operations = [

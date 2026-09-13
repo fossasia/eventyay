@@ -5,10 +5,10 @@ from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.forms.widgets import SplitDateTimePickerWidget
 from eventyay.base.models import Event, Organizer, User
-from eventyay.base.models.admin_mail import (
-    AdminRecipientGroup,
-)
+from eventyay.base.models.admin_mail import AdminRecipientGroup
+from eventyay.common.forms.fields import EmailBodyField
 from eventyay.common.forms.mixins import ScheduledAtValidationMixin
+from eventyay.common.forms.renderers import TabularFormRenderer
 from eventyay.common.forms.widgets import EnhancedSelect, EnhancedSelectMultiple
 from eventyay.consts import SizeKey
 from eventyay.control.forms import CachedFileField, SplitDateTimeField
@@ -44,6 +44,7 @@ DELIVERY_MODE_CHOICES = [
 
 
 class AdminComposeForm(ScheduledAtValidationMixin, forms.Form):
+    default_renderer = TabularFormRenderer
     recipient_group = forms.ChoiceField(
         label=_('Recipient group'),
         choices=AdminRecipientGroup.choices,
@@ -183,14 +184,15 @@ class AdminComposeForm(ScheduledAtValidationMixin, forms.Form):
         widget=forms.TextInput(attrs={'placeholder': _('Email subject')}),
     )
 
-    message = forms.CharField(
+    message = EmailBodyField(
         label=_('Message'),
-        widget=forms.Textarea(attrs={
-            'rows': 12,
-            'class': 'rich-editor-content',
-        }),
+        placeholders=[
+            'user_name', 'first_name', 'last_name', 'email', 'account_url',
+            'organiser_name', 'organiser_url',
+            'event_name', 'event_url', 'event_start_date', 'event_end_date',
+            'platform_name', 'platform_url', 'support_email', 'support_url',
+        ],
     )
-
     attachment = CachedFileField(
         label=_('Attachment'),
         required=False,
@@ -200,7 +202,8 @@ class AdminComposeForm(ScheduledAtValidationMixin, forms.Form):
             '.jfif', '.heic', '.heif', '.pages', '.bmp', '.tif', '.tiff',
         ),
         help_text=_(
-            'Support for up to 10.0MB. Recommended: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, PNG, JPG, JPEG.'
+            'Sending an attachment increases the chance of your email not arriving or being sorted into spam '
+            'folders. We recommend only using PDFs of no more than 2 MB in size.'
         ),
         max_size=settings.MAX_SIZE_CONFIG.get(SizeKey.UPLOAD_SIZE_OTHER, 10 * 1024 * 1024),
     )
@@ -252,6 +255,8 @@ class AdminComposeForm(ScheduledAtValidationMixin, forms.Form):
         if draft_save:
             self.fields['subject'].required = False
             self.fields['message'].required = False
+
+        self.fields['message'].widget.attrs['id'] = 'id_message_0'
 
     def clean(self):
         cleaned = super().clean()

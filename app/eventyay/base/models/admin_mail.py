@@ -243,23 +243,24 @@ class AdminEmailQueue(models.Model):
                 recipient.save(update_fields=['error'])
 
         if bcc_list and any_dispatched:
-            try:
-                mail_send_task.apply_async(
-                    kwargs={
-                        'to': bcc_list,
-                        'subject': self.subject,
-                        'body': self.message,
-                        'html': AdminEmailQueue.make_html(self.message),
-                        'reply_to': [],
-                        'event': None,
-                        'cc': [],
-                        'bcc': [],
-                        'attachments': attachments,
-                    },
-                    ignore_result=True,
-                )
-            except Exception:
-                logger.exception('Error dispatching BCC copy for AdminEmailQueue %s', self.pk)
+            for bcc_addr in bcc_list:
+                try:
+                    mail_send_task.apply_async(
+                        kwargs={
+                            'to': [bcc_addr],
+                            'subject': self.subject,
+                            'body': self.message,
+                            'html': AdminEmailQueue.make_html(self.message),
+                            'reply_to': [],
+                            'event': None,
+                            'cc': [],
+                            'bcc': [],
+                            'attachments': attachments,
+                        },
+                        ignore_result=True,
+                    )
+                except Exception:
+                    logger.exception('Error dispatching BCC copy to %s for AdminEmailQueue %s', bcc_addr, self.pk)
 
         unsent_valid = (
             self.recipients

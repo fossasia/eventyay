@@ -9,56 +9,67 @@
 {% endblock %}
 
 {% block content %}
-<nav id="event-nav" class="header-nav">
-  <div class="navigation">
-    <div class="navigation-title">
-      <h1>{{ role_label }}</h1>
+  <h1>{{ role_label }}</h1>
+
+  <p>
+    <a href="{% url 'eventyay_admin:admin.messages.templates' %}">
+      <i class="fa fa-arrow-left" aria-hidden="true"></i> {% translate "Back to templates" %}
+    </a>
+  </p>
+
+  {% if mail_template %}
+    <div class="panel panel-default">
+      <div class="panel-body">
+        <table class="table table-condensed">
+          <tbody>
+            <tr>
+              <th class="col-md-2">{% translate "Role" %}</th>
+              <td><code>{{ role }}</code></td>
+            </tr>
+            <tr>
+              <th>{% translate "Subject" %}</th>
+              <td>{{ mail_template.subject }}</td>
+            </tr>
+            {% if mail_template.reply_to %}
+              <tr>
+                <th>{% translate "Reply-To" %}</th>
+                <td>{{ mail_template.reply_to }}</td>
+              </tr>
+            {% endif %}
+            {% if mail_template.bcc %}
+              <tr>
+                <th>{% translate "BCC" %}</th>
+                <td>{{ mail_template.bcc }}</td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
     </div>
-  </div>
-</nav>
 
-<p>
-  <a href="{% url 'eventyay_admin:admin.messages.templates' %}">
-    <i class="fa fa-arrow-left" aria-hidden="true"></i> {% translate "Back to templates" %}
-  </a>
-</p>
-
-<div class="card">
-  <div class="card-body">
-    <dl>
-      <dt>{% translate "Template name" %}</dt>
-      <dd>{{ role_label }}</dd>
-
-      <dt>{% translate "Role / System identifier" %}</dt>
-      <dd><code>{{ role }}</code></dd>
-
-      {% if mail_template %}
-        <dt>{% translate "Subject" %}</dt>
-        <dd>{{ mail_template.subject }}</dd>
-
-        <dt>{% translate "Body preview" %}</dt>
-        <dd>
-          <div class="mail-preview">
-            {{ mail_template.text|linebreaksbr }}
-          </div>
-        </dd>
-
-        {% if mail_template.reply_to %}
-          <dt>{% translate "Reply-To" %}</dt>
-          <dd>{{ mail_template.reply_to }}</dd>
-        {% endif %}
-
-        {% if mail_template.bcc %}
-          <dt>{% translate "BCC" %}</dt>
-          <dd>{{ mail_template.bcc }}</dd>
-        {% endif %}
-      {% else %}
-        <dt>{% translate "Template data" %}</dt>
-        <dd class="text-muted">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">{% translate "Body preview" %}</h3>
+      </div>
+      <div class="panel-body">
+        {{ mail_template.text|linebreaksbr }}
+      </div>
+    </div>
+  {% else %}
+    <div class="panel panel-default">
+      <div class="panel-body">
+        <table class="table table-condensed">
+          <tbody>
+            <tr>
+              <th class="col-md-2">{% translate "Role" %}</th>
+              <td><code>{{ role }}</code></td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="text-muted">
           {% translate "This is a system template. Its content is defined in code and varies by event configuration." %}
-        </dd>
-      {% endif %}
-    </dl>
-  </div>
-</div>
+        </p>
+      </div>
+    </div>
+  {% endif %}
 {% endblock %}
