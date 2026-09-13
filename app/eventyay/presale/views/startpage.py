@@ -96,6 +96,7 @@ class StartPageView(TemplateView):
 
             ctx['featured_events'] = list(featured_qs)
             ctx['upcoming_events'] = list(upcoming_qs)
+            ctx['upcoming_has_ongoing'] = any(event.is_ongoing for event in ctx['upcoming_events'])
             ctx['past_events'] = list(past_qs)
 
             followed_upcoming_events = []
@@ -175,6 +176,7 @@ class UpcomingEventsView(PaginationMixin, ListView):
         ctx = super().get_context_data(**kwargs)
         ctx['pagination_sizes'] = [20, 50, 100]
         ctx['cfp_open_filter'] = self.request.GET.get('cfp') == 'open'
+        ctx['has_ongoing'] = any(event.is_ongoing for event in ctx['events'])
         ctx.update(_common_base_context(self.request))
         return ctx
 

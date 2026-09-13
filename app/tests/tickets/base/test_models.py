@@ -2507,6 +2507,23 @@ class EventTest(TestCase):
         assert not event.presale_is_running
 
     @classscope(attr='organizer')
+    def test_is_ongoing(self):
+        event = Event.objects.create(
+            organizer=self.organizer,
+            name='Download',
+            slug='download',
+            date_from=now() + timedelta(hours=1),
+            date_to=now() + timedelta(days=1),
+        )
+        assert not event.is_ongoing
+
+        event.date_from = now() - timedelta(hours=1)
+        assert event.is_ongoing
+
+        event.date_to = now() - timedelta(minutes=1)
+        assert not event.is_ongoing
+
+    @classscope(attr='organizer')
     def test_active_quotas_annotation(self):
         event = Event.objects.create(organizer=self.organizer, name='Download', slug='download', date_from=now())
         q = Quota.objects.create(event=event, name='Quota', size=2)
