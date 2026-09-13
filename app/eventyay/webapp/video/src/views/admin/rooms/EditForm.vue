@@ -126,9 +126,9 @@ export default {
 		await this.loadInterpretationLanguageStreams()
 	},
 	computed: {
-		...mapGetters(['hasPermission', 'isAdminMode']),
+		...mapGetters(['hasPermission', 'isAdminMode', 'isBbbAvailable']),
 		availableRoomTypes() {
-			return filterRoomTypesByPermission(this.allRoomTypes, this.hasPermission, this.isAdminMode)
+			return filterRoomTypesByPermission(this.allRoomTypes, this.hasPermission, this.isAdminMode, this.isBbbAvailable)
 		},
 		modules() {
 			return this.config?.module_config.reduce((acc, module) => {
