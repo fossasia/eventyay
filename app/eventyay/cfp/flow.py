@@ -317,7 +317,23 @@ class FormFlowStep(TemplateFlowStep):
         for field, file_list in self.request.FILES.lists():
             if field.endswith('_files'):
                 for f in file_list:
-                    files.appendlist(field, f)
+                    existing_files = files.getlist(field)
+                    is_dup = False
+                    for existing_file in existing_files:
+                        if getattr(existing_file, 'name', None) == getattr(f, 'name', None) and \
+                           getattr(existing_file, 'size', None) == getattr(f, 'size', None):
+                            
+                            f_content = f.read()
+                            existing_content = existing_file.read()
+                            f.seek(0)
+                            existing_file.seek(0)
+                            
+                            if f_content == existing_content:
+                                is_dup = True
+                                break
+
+                    if not is_dup:
+                        files.appendlist(field, f)
             else:
                 files.setlist(field, file_list)
 
@@ -355,8 +371,58 @@ class FormFlowStep(TemplateFlowStep):
             prev_url = self.get_prev_url(request)
             return redirect(prev_url) if prev_url else redirect(request.path)
 
-        # For "submit" and "draft" actions, validate as before
         if not form.is_valid():
+            # Merge any newly uploaded files into the session and remove session
+            # files from form.files so the widgets fall back to rendering `initial`
+            # data (which contains the URLs for the 'Currently: ...' links).
+            if form.files:
+                existing = self.cfp_session['files'].get(self.identifier, {})
+                for field, field_files in list(form.files.lists()):
+                    new_uploads = []
+                    new_entries = []
+                    for field_file in field_files:
+                        if getattr(field_file, 'is_session_file', False):
+                            continue
+                        tmp_filename = self.file_storage.save(field_file.name, field_file)
+                        new_entries.append({
+                            'tmp_name': tmp_filename,
+                            'name': field_file.name,
+                            'content_type': field_file.content_type,
+                            'size': field_file.size,
+                            'charset': field_file.charset,
+                        })
+                        new_uploads.append(field_file)
+                    
+                    if new_entries:
+                        if field.endswith('_files'):
+                            current = existing.get(field, [])
+                            if not isinstance(current, list):
+                                current = [current]
+                            existing[field] = current + new_entries
+                        else:
+                            old_entry = existing.get(field)
+                            if old_entry and isinstance(old_entry, dict) and 'tmp_name' in old_entry:
+                                try:
+                                    self.file_storage.delete(old_entry['tmp_name'])
+                                except Exception:
+                                    pass
+                            
+                            existing[field] = new_entries if len(new_entries) > 1 else new_entries[0]
+                            # Inject initial data so the widget can render the "Currently: link"
+                            if hasattr(form, 'initial'):
+                                form.initial[field] = SimpleNamespace(
+                                    name=new_entries[0]['name'],
+                                    url=self.file_storage.url(new_entries[0]['tmp_name'])
+                                )
+                            # Invalidate the bound field cache so it picks up the new initial data
+                            if hasattr(form, '_bound_fields_cache'):
+                                form._bound_fields_cache.pop(field, None)
+                    
+                    if new_uploads:
+                        form.files.setlist(field, new_uploads)
+                    else:
+                        del form.files[field]
+                self.cfp_session['files'][self.identifier] = existing
             warning_messages = getattr(form, 'warning_messages', None) or []
             for warning in filter(None, warning_messages):
                 messages.warning(self.request, warning)
@@ -749,6 +815,55 @@ class ProfileStep(GenericFlowStep, FormFlowStep):
         formset_valid = self.social_media_formset_is_valid(formset)
 
         if not form_valid or not formset_valid:
+            # Merge any newly uploaded files into the session and remove session
+            # files from form.files so the widgets fall back to rendering `initial`
+            # data (which contains the URLs for the 'Currently: ...' links).
+            if form.files:
+                existing = self.cfp_session['files'].get(self.identifier, {})
+                for field, field_files in list(form.files.lists()):
+                    new_uploads = []
+                    new_entries = []
+                    for field_file in field_files:
+                        if getattr(field_file, 'is_session_file', False):
+                            continue
+                        tmp_filename = self.file_storage.save(field_file.name, field_file)
+                        new_entries.append({
+                            'tmp_name': tmp_filename,
+                            'name': field_file.name,
+                            'content_type': field_file.content_type,
+                            'size': field_file.size,
+                            'charset': field_file.charset,
+                        })
+                        new_uploads.append(field_file)
+                    
+                    if new_entries:
+                        if field.endswith('_files'):
+                            current = existing.get(field, [])
+                            if not isinstance(current, list):
+                                current = [current]
+                            existing[field] = current + new_entries
+                        else:
+                            old_entry = existing.get(field)
+                            if old_entry and isinstance(old_entry, dict) and 'tmp_name' in old_entry:
+                                try:
+                                    self.file_storage.delete(old_entry['tmp_name'])
+                                except Exception:
+                                    pass
+                            
+                            existing[field] = new_entries if len(new_entries) > 1 else new_entries[0]
+                            if hasattr(form, 'initial'):
+                                form.initial[field] = SimpleNamespace(
+                                    name=new_entries[0]['name'],
+                                    url=self.file_storage.url(new_entries[0]['tmp_name'])
+                                )
+                            if hasattr(form, '_bound_fields_cache'):
+                                form._bound_fields_cache.pop(field, None)
+                    
+                    if new_uploads:
+                        form.files.setlist(field, new_uploads)
+                    else:
+                        del form.files[field]
+                self.cfp_session['files'][self.identifier] = existing
             warning_messages = getattr(form, 'warning_messages', None) or []
             for warning in filter(None, warning_messages):
                 messages.warning(self.request, warning)

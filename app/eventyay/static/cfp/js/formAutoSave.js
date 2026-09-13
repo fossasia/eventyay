@@ -164,10 +164,18 @@ function restoreFormData() {
         }
 
         // If all saved fields match current values AND we checked some fields,
-        // it means the form was successfully submitted - clear sessionStorage
+        // it means the form was successfully submitted - clear sessionStorage.
+        // BUT: if there are validation errors on the page, the server just echoed
+        // back our POST data — don't clear, or the data will be lost on refresh.
         if (allFieldsMatch && checkedFields > 0) {
-            clearFormData();
-            return;
+            const hasValidationErrors =
+                document.querySelector('.alert-danger') ||
+                document.querySelector('.has-error') ||
+                document.querySelector('.is-invalid');
+            if (!hasValidationErrors) {
+                clearFormData();
+                return;
+            }
         }
 
         // Otherwise, restore from sessionStorage
