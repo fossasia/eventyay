@@ -4,7 +4,7 @@ import pytest
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
-from eventyay.base.models import Event, Organizer
+from eventyay.base.models import Event, Organizer, OrganizerFollower, User
 
 
 @pytest.fixture
@@ -131,3 +131,85 @@ def test_startpage_hides_events_with_talks_testmode_true(startpage_events, clien
     assert response.status_code == 200
     names = [str(e.name) for e in response.context['featured_events']]
     assert 'Featured Event' not in names
+
+
+@pytest.mark.django_db
+def test_startpage_hides_non_public_events(startpage_events, client):
+    _, e_featured, e_upcoming, e_past = startpage_events
+    with scopes_disabled():
+        e_featured.is_public = False
+        e_featured.save(update_fields=['is_public'])
+        e_upcoming.is_public = False
+        e_upcoming.save(update_fields=['is_public'])
+        e_past.is_public = False
+        e_past.save(update_fields=['is_public'])
+
+    response = client.get('/')
+    assert response.status_code == 200
+    featured_names = [str(e.name) for e in response.context['featured_events']]
+    upcoming_names = [str(e.name) for e in response.context['upcoming_events']]
+    past_names = [str(e.name) for e in response.context['past_events']]
+
+    assert 'Featured Event' not in featured_names
+    assert 'Upcoming Event' not in upcoming_names
+    assert 'Past Event' not in past_names
+
+
+@pytest.mark.django_db
+def test_past_events_page_hides_non_public_events(startpage_events, client):
+    o, _, _, e_past = startpage_events
+    with scopes_disabled():
+        Event.objects.create(
+            organizer=o,
+            name='Private Past Event',
+            slug='past-private',
+            date_from=now() - timedelta(days=10),
+            date_to=now() - timedelta(days=9),
+            live=True,
+            is_public=False,
+            startpage_visible=True,
+            startpage_featured=False,
+        )
+
+    response = client.get('/past/')
+    assert response.status_code == 200
+    event_names = [str(e.name) for e in response.context['events']]
+    assert 'Past Event' in event_names
+    assert 'Private Past Event' not in event_names
+
+
+@pytest.mark.django_db
+def test_followed_events_page_hides_non_public_events(startpage_events, client):
+    o, _, _, _ = startpage_events
+    with scopes_disabled():
+        user = User.objects.create_user('follower@example.com', 'testpass123')
+        OrganizerFollower.objects.create(user=user, organizer=o)
+        Event.objects.create(
+            organizer=o,
+            name='Private Followed Event',
+            slug='followed-private',
+            date_from=now() + timedelta(days=5),
+            live=True,
+            is_public=False,
+            startpage_visible=True,
+        )
+        Event.objects.create(
+            organizer=o,
+            name='Public Followed Event',
+            slug='followed-public',
+            date_from=now() + timedelta(days=6),
+            live=True,
+            is_public=True,
+            startpage_visible=True,
+        )
+
+    client.force_login(user)
+    response = client.get('/followed-events/')
+    assert response.status_code == 200
+    all_names = [
+        str(e.name)
+        for group in response.context['organizer_groups']
+        for e in group['events']
+    ]
+    assert 'Public Followed Event' in all_names
+    assert 'Private Followed Event' not in all_names

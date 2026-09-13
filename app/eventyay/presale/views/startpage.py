@@ -77,7 +77,7 @@ class StartPageView(TemplateView):
             base_qs = Event.exclude_talks_testmode(
                 Event.objects.select_related('organizer')
                 .prefetch_related('_settings_objects')
-                .filter(live=True, testmode=False)
+                .filter(live=True, is_public=True, testmode=False)
             )
             future_filter = Q(date_to__gte=today_datetime) | Q(date_to__isnull=True, date_from__gte=today_datetime)
             past_filter = Q(date_to__lt=today_datetime) | Q(date_to__isnull=True, date_from__lt=today_datetime)
@@ -191,7 +191,7 @@ class PastEventsView(PaginationMixin, ListView):
         return Event.exclude_talks_testmode(
             Event.objects.select_related('organizer')
             .prefetch_related('_settings_objects')
-            .filter(live=True)
+            .filter(live=True, is_public=True)
             .filter(Q(startpage_visible=True) | Q(startpage_featured=True))
             .filter(Q(date_to__lt=today_datetime) | Q(date_to__isnull=True, date_from__lt=today_datetime))
             .filter(testmode=False)
@@ -226,6 +226,7 @@ class FollowedEventsView(TemplateView):
                 Event.objects.filter(
                     organizer=org,
                     live=True,
+                    is_public=True,
                 )
                 .filter(Q(startpage_visible=True) | Q(startpage_featured=True))
                 .filter(Q(date_to__gte=today_datetime) | Q(date_to__isnull=True, date_from__gte=today_datetime))
