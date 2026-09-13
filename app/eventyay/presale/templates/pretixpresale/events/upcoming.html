@@ -3,6 +3,8 @@
 {% block page_title %}
   {% if cfp_open_filter %}
     {% trans "Open calls for proposals" %}
+  {% elif has_ongoing_events %}
+    {% trans "Upcoming and Ongoing Events" %}
   {% else %}
     {% trans "Upcoming Events" %}
   {% endif %}
@@ -17,10 +19,12 @@
 </a>
 {% endblock %}
 {% block content %}
-<section class="startpage-events" aria-label="{% if cfp_open_filter %}{% trans 'Open calls for proposals' %}{% else %}{% trans 'Upcoming events' %}{% endif %}">
+<section class="startpage-events" aria-label="{% if cfp_open_filter %}{% trans 'Open calls for proposals' %}{% elif has_ongoing_events %}{% trans 'Upcoming and ongoing events' %}{% else %}{% trans 'Upcoming events' %}{% endif %}">
   <h2>
     {% if cfp_open_filter %}
       {% trans "Open calls for proposals" %}
+    {% elif has_ongoing_events %}
+      {% trans "Upcoming and Ongoing Events" %}
     {% else %}
       {% trans "Upcoming Events" %}
     {% endif %}

@@ -279,6 +279,23 @@ class EventMixin:
             return self.presale_end
 
     @property
+    def is_ongoing(self) -> bool:
+        """
+        Is true if the current time falls within the event duration.
+        """
+        if not self.date_from:
+            return False
+        current_time = now()
+        if self.date_to:
+            return self.date_from <= current_time <= self.date_to
+        else:
+            tz = self.timezone
+            return (
+                self.date_from <= current_time
+                and current_time.astimezone(tz).date() <= self.date_from.astimezone(tz).date()
+            )
+
+    @property
     def presale_has_ended(self):
         """
         Is true, when ``presale_end`` is set and in the past.
@@ -931,6 +948,14 @@ class Event(
             return self.presale_end and now() > self.presale_end
         else:
             return super().presale_has_ended
+
+    @property
+    def is_ongoing(self) -> bool:
+        if self.has_subevents:
+            if hasattr(self, '_prefetched_objects_cache') and 'subevents' in self._prefetched_objects_cache:
+                return any(s.is_ongoing for s in self.subevents.all() if s.active)
+            return any(s.is_ongoing for s in self.subevents.filter(active=True))
+        return super().is_ongoing
 
     def delete_all_orders(self, really=False):
         from .orders import OrderFee, OrderPayment, OrderPosition, OrderRefund
