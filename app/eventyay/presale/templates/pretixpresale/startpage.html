@@ -78,9 +78,14 @@
                 </div>
             </section>
         {% endif %}
-        <section class="startpage-events" aria-label="{% trans "Upcoming events" %}">
+        {% if upcoming_has_ongoing %}
+            {% trans "Upcoming and ongoing events" as upcoming_heading %}
+        {% else %}
+            {% trans "Upcoming events" as upcoming_heading %}
+        {% endif %}
+        <section class="startpage-events" aria-label="{{ upcoming_heading }}">
             <div class="startpage-section-header">
-                <h2>{% trans "Upcoming events" %}</h2>
+                <h2>{{ upcoming_heading }}</h2>
                 <a class="btn btn-link hidden-xs hidden-sm" href="{% url 'presale:events.upcoming' %}">{% trans "View all upcoming events" %}</a>
             </div>
             <div class="startpage-event-list">
