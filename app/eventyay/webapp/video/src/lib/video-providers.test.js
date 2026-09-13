@@ -46,7 +46,7 @@ test('disabled feature flags hide Jitsi and Janus even in admin mode', () => {
 		true,
 		features([])
 	)
-	assert.deepEqual(providers.map(provider => provider.id), ['bbb'])
+	assert.deepEqual(providers.map(provider => provider.id), ['stream', 'bbb'])
 })
 
 test('admin mode with create permissions includes gated providers', () => {
@@ -55,7 +55,7 @@ test('admin mode with create permissions includes gated providers', () => {
 		true,
 		features(['jitsi', 'janus'])
 	)
-	assert.deepEqual(providers.map(provider => provider.id), ['bbb', 'jitsi', 'janus'])
+	assert.deepEqual(providers.map(provider => provider.id), ['stream', 'bbb', 'jitsi', 'janus'])
 })
 
 test('users without create or update permission see no providers', () => {
@@ -76,11 +76,11 @@ test('stage create permission is enough for Stream', () => {
 	assert.deepEqual(providers.map(provider => provider.id), ['stream'])
 })
 
-test('Jitsi requires admin mode even when the organiser can update rooms', () => {
+test('Jitsi requires specific permission or admin mode and is not unlocked by room:update alone', () => {
 	assert.equal(
 		isVideoProviderPermitted(
 			VIDEO_CREATE_PROVIDERS.find(provider => provider.id === 'jitsi'),
-			allow(['room:update', 'world:rooms.create.jitsi']),
+			allow(['room:update']),
 			false
 		),
 		false
@@ -89,6 +89,14 @@ test('Jitsi requires admin mode even when the organiser can update rooms', () =>
 		isVideoProviderPermitted(
 			VIDEO_CREATE_PROVIDERS.find(provider => provider.id === 'jitsi'),
 			allow(['world:rooms.create.jitsi']),
+			false
+		),
+		true
+	)
+	assert.equal(
+		isVideoProviderPermitted(
+			VIDEO_CREATE_PROVIDERS.find(provider => provider.id === 'jitsi'),
+			allow(['room:update']),
 			true
 		),
 		true
@@ -133,7 +141,7 @@ test('when BBB is unavailable, BBB is hidden from available providers even in ad
 		features(['jitsi', 'janus']),
 		false // isBbbAvailable = false
 	)
-	assert.deepEqual(providers.map(provider => provider.id), ['jitsi', 'janus'])
+	assert.deepEqual(providers.map(provider => provider.id), ['stream', 'jitsi', 'janus'])
 	assert.equal(providers.some(provider => provider.id === 'bbb'), false)
 })
 
@@ -164,5 +172,28 @@ test('when BBB is unavailable, isVideoProviderPermitted returns false for BBB', 
 		isVideoProviderPermitted(bbbProvider, allow(['world:rooms.create.bbb']), true, true),
 		true
 	)
+})
+
+test('admin mode grants access to room types without explicit create permissions', () => {
+	assert.equal(isRoomTypeAvailable('stage', allow([]), true), true)
+	assert.equal(isRoomTypeAvailable('channel-bbb', allow([]), true, true), true)
+	assert.equal(isRoomTypeAvailable('channel-bbb', allow([]), true, false), false)
+	assert.equal(isRoomTypeAvailable('channel-jitsi', allow([]), true), true)
+	assert.equal(isRoomTypeAvailable('channel-janus', allow([]), true), true)
+	assert.equal(isRoomTypeAvailable('channel-text', allow([]), true), true)
+	assert.equal(isRoomTypeAvailable('channel-roulette', allow([]), true), true)
+	assert.equal(isRoomTypeAvailable('page-landing', allow([]), true), true)
+})
+
+test('non-admin mode requires explicit permissions for room types', () => {
+	assert.equal(isRoomTypeAvailable('stage', allow([]), false), false)
+	assert.equal(isRoomTypeAvailable('stage', allow(['world:rooms.create.stage']), false), true)
+	assert.equal(isRoomTypeAvailable('channel-bbb', allow([]), false, true), false)
+	assert.equal(isRoomTypeAvailable('channel-bbb', allow(['world:rooms.create.bbb']), false, true), true)
+	assert.equal(isRoomTypeAvailable('channel-bbb', allow(['world:rooms.create.bbb']), false, false), false)
+	assert.equal(isRoomTypeAvailable('channel-jitsi', allow([]), false), false)
+	assert.equal(isRoomTypeAvailable('channel-jitsi', allow(['world:rooms.create.jitsi']), false), true)
+	assert.equal(isRoomTypeAvailable('channel-text', allow([]), false), false)
+	assert.equal(isRoomTypeAvailable('channel-text', allow(['world:rooms.create.chat']), false), true)
 })
 
