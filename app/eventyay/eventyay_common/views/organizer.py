@@ -476,7 +476,7 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
     def _handle_remove_member(self, team, post):
         """Handle removing a member from the team."""
         try:
-            user = User.objects.get(pk=post.get('remove-member'))
+            user = team.members.get(pk=post.get('remove-member'))
         except (User.DoesNotExist, ValueError):
             return self._redirect_to_team_permissions(team.pk)
 
