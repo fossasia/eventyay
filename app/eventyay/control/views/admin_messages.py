@@ -64,6 +64,13 @@ def resolve_admin_recipients(filters: dict) -> tuple[list[dict], int]:
     exclude_admins = filters.get('exclude_admins', False)
     exclude_inactive = filters.get('exclude_inactive', False)
     exclude_unconfirmed = filters.get('exclude_unconfirmed_email', False)
+    event_date_from = filters.get('event_date_from')
+    event_date_to = filters.get('event_date_to')
+    organiser_status = filters.get('organiser_status', '')
+    billing_status = filters.get('billing_status', '')
+    ticketing_status = filters.get('ticketing_status', '')
+    cfp_status = filters.get('cfp_status', '')
+    setup_status = filters.get('setup_status', '')
 
     qs = User.objects.exclude(email__isnull=True).exclude(email='').exclude(deleted=True)
 
@@ -236,6 +243,159 @@ def resolve_admin_recipients(filters: dict) -> tuple[list[dict], int]:
                         e.strip().lower() for e in all_user_emails_evt
                     }
 
+    if (event_date_from or event_date_to) and recipient_group not in (
+        AdminRecipientGroup.ALL_USERS,
+        AdminRecipientGroup.SELECTED_USERS,
+    ):
+        with scopes_disabled():
+            event_date_qs = Event.objects.all()
+            if event_date_from:
+                event_date_qs = event_date_qs.filter(date_from__date__gte=event_date_from)
+            if event_date_to:
+                event_date_qs = event_date_qs.filter(date_from__date__lte=event_date_to)
+            date_event_pks = list(event_date_qs.values_list('pk', flat=True))
+            qs = qs.filter(
+                Q(teams__all_events=True, teams__organizer__events__pk__in=date_event_pks)
+                | Q(teams__limit_events__pk__in=date_event_pks)
+            ).distinct()
+
+    if organiser_status and recipient_group in (
+        AdminRecipientGroup.ALL_ORGANISERS,
+        AdminRecipientGroup.EVENT_ORGANISERS,
+        AdminRecipientGroup.EVENT_TEAM_MEMBERS,
+    ):
+        with scopes_disabled():
+            n = tz_now()
+            if organiser_status == 'has_active':
+                active_org_ids = Event.objects.filter(live=True).values_list('organizer_id', flat=True).distinct()
+                qs = qs.filter(teams__organizer__pk__in=active_org_ids).distinct()
+            elif organiser_status == 'has_draft':
+                draft_org_ids = Event.objects.filter(live=False).values_list('organizer_id', flat=True).distinct()
+                qs = qs.filter(teams__organizer__pk__in=draft_org_ids).distinct()
+            elif organiser_status == 'has_past':
+                past_org_ids = Event.objects.filter(
+                    Q(date_to__lt=n) | Q(date_to__isnull=True, date_from__lt=n)
+                ).values_list('organizer_id', flat=True).distinct()
+                qs = qs.filter(teams__organizer__pk__in=past_org_ids).distinct()
+            elif organiser_status == 'no_events':
+                org_with_events = Event.objects.values_list('organizer_id', flat=True).distinct()
+                qs = qs.filter(teams__organizer__isnull=False).exclude(
+                    teams__organizer__pk__in=org_with_events
+                ).distinct()
+
+    if billing_status and recipient_group in (
+        AdminRecipientGroup.ALL_ORGANISERS,
+        AdminRecipientGroup.EVENT_ORGANISERS,
+        AdminRecipientGroup.EVENT_TEAM_MEMBERS,
+    ):
+        from eventyay.base.models.organizer import OrganizerBillingModel
+        with scopes_disabled():
+            if billing_status == 'configured':
+                billed_org_ids = OrganizerBillingModel.objects.filter(
+                    stripe_customer_id__isnull=False
+                ).exclude(stripe_customer_id='').values_list('organizer_id', flat=True)
+                qs = qs.filter(teams__organizer__pk__in=billed_org_ids).distinct()
+            elif billing_status == 'missing':
+                billed_org_ids = OrganizerBillingModel.objects.filter(
+                    stripe_customer_id__isnull=False
+                ).exclude(stripe_customer_id='').values_list('organizer_id', flat=True)
+                qs = qs.filter(teams__organizer__isnull=False).exclude(
+                    teams__organizer__pk__in=billed_org_ids
+                ).distinct()
+
+    # Ticketing status filter
+    if ticketing_status and recipient_group in (
+        AdminRecipientGroup.EVENT_ORGANISERS,
+        AdminRecipientGroup.EVENT_TEAM_MEMBERS,
+    ):
+        with scopes_disabled():
+            from eventyay.base.models.product import Product
+            if ticketing_status == 'shop_enabled':
+                shop_event_ids = Event.objects.filter(live=True).values_list('pk', flat=True)
+            elif ticketing_status == 'shop_disabled':
+                shop_event_ids = Event.objects.filter(live=False).values_list('pk', flat=True)
+            elif ticketing_status == 'has_paid':
+                shop_event_ids = Product.objects.filter(
+                    free_price=False
+                ).values_list('event_id', flat=True).distinct()
+            elif ticketing_status == 'has_free':
+                shop_event_ids = Product.objects.filter(
+                    free_price=True
+                ).values_list('event_id', flat=True).distinct()
+            else:
+                shop_event_ids = None
+            if shop_event_ids is not None:
+                qs = qs.filter(
+                    Q(teams__all_events=True, teams__organizer__events__pk__in=shop_event_ids)
+                    | Q(teams__limit_events__pk__in=shop_event_ids)
+                ).distinct()
+
+    if cfp_status and recipient_group in (
+        AdminRecipientGroup.EVENT_ORGANISERS,
+        AdminRecipientGroup.EVENT_TEAM_MEMBERS,
+        AdminRecipientGroup.SPEAKERS,
+        AdminRecipientGroup.REVIEWERS,
+    ):
+        from eventyay.base.models.cfp import CfP
+        from eventyay.base.models.submission import Submission, SubmissionStates
+        with scopes_disabled():
+            if cfp_status == 'cfp_open':
+                cfp_event_ids = CfP.objects.filter(
+                    deadline__isnull=True
+                ).values_list('event_id', flat=True).distinct() | CfP.objects.filter(
+                    deadline__gte=tz_now()
+                ).values_list('event_id', flat=True).distinct()
+            elif cfp_status == 'cfp_closed':
+                cfp_event_ids = CfP.objects.filter(
+                    deadline__lt=tz_now()
+                ).values_list('event_id', flat=True).distinct()
+            elif cfp_status == 'has_pending':
+                cfp_event_ids = Submission.objects.filter(
+                    state=SubmissionStates.SUBMITTED
+                ).values_list('event_id', flat=True).distinct()
+            else:
+                cfp_event_ids = None
+            if cfp_event_ids is not None:
+                qs = qs.filter(
+                    Q(teams__all_events=True, teams__organizer__events__pk__in=cfp_event_ids)
+                    | Q(teams__limit_events__pk__in=cfp_event_ids)
+                ).distinct()
+
+    if setup_status and recipient_group in (
+        AdminRecipientGroup.EVENT_ORGANISERS,
+        AdminRecipientGroup.EVENT_TEAM_MEMBERS,
+    ):
+        with scopes_disabled():
+            from eventyay.base.models.product import Product, Question
+            if setup_status == 'missing_ticket':
+                events_with_tickets = Product.objects.values_list('event_id', flat=True).distinct()
+                setup_event_ids = Event.objects.exclude(
+                    pk__in=events_with_tickets
+                ).values_list('pk', flat=True)
+            elif setup_status == 'missing_payment':
+                from eventyay.base.models.event import Event_SettingsStore
+                events_with_payment = Event_SettingsStore.objects.filter(
+                    key__in=['payment_stripe__publishable_key', 'payment_paypal__client_id']
+                ).values_list('object_id', flat=True).distinct()
+                setup_event_ids = Event.objects.exclude(
+                    pk__in=events_with_payment
+                ).values_list('pk', flat=True)
+            elif setup_status == 'missing_schedule':
+                from eventyay.base.models.submission import Submission
+                events_with_schedule = Submission.objects.filter(
+                    slot__isnull=False
+                ).values_list('event_id', flat=True).distinct()
+                setup_event_ids = Event.objects.exclude(
+                    pk__in=events_with_schedule
+                ).values_list('pk', flat=True)
+            else:
+                setup_event_ids = None
+            if setup_event_ids is not None:
+                qs = qs.filter(
+                    Q(teams__all_events=True, teams__organizer__events__pk__in=setup_event_ids)
+                    | Q(teams__limit_events__pk__in=setup_event_ids)
+                ).distinct()
+
     seen: set[str] = set()
     result: list[dict] = []
     reason = str(dict(AdminRecipientGroup.choices).get(recipient_group, recipient_group))
@@ -283,6 +443,13 @@ def _extract_filter_dict(form_data: dict) -> dict:
         'user_role': form_data.get('user_role', ''),
         'language': form_data.get('language', ''),
         'event_status': form_data.get('event_status', ''),
+        'event_date_from': form_data.get('event_date_from'),
+        'event_date_to': form_data.get('event_date_to'),
+        'organiser_status': form_data.get('organiser_status', ''),
+        'billing_status': form_data.get('billing_status', ''),
+        'ticketing_status': form_data.get('ticketing_status', ''),
+        'cfp_status': form_data.get('cfp_status', ''),
+        'setup_status': form_data.get('setup_status', ''),
         'created_after': form_data.get('created_after'),
         'created_before': form_data.get('created_before'),
         'last_active_after': form_data.get('last_active_after'),
@@ -535,6 +702,17 @@ class AdminMessageComposeView(AdministratorPermissionRequiredMixin, FormView):
             mail.recipient_count_snapshot = len(resolved)
             mail.save()
             _save_filters(mail, filters)
+            LogEntry.objects.create(
+                content_type=ContentType.objects.get_for_model(AdminEmailQueue),
+                object_id=mail.pk,
+                user=self.request.user,
+                action_type='eventyay.admin.mail.draft_saved',
+                data=json.dumps({
+                    'admin_email_id': mail.pk,
+                    'subject': mail.subject,
+                    'recipient_group': mail.recipient_group,
+                }),
+            )
             messages.success(self.request, _('The draft has been saved.'))
             return redirect('eventyay_admin:admin.messages.drafts')
 
@@ -780,6 +958,13 @@ class AdminMessageSendView(AdministratorPermissionRequiredMixin, View):
             messages.warning(request, _('Drafts cannot be sent directly. Move to outbox first.'))
         else:
             send_admin_email.apply_async(args=[mail.pk])
+            LogEntry.objects.create(
+                content_type=ContentType.objects.get_for_model(AdminEmailQueue),
+                object_id=mail.pk,
+                user=request.user,
+                action_type='eventyay.admin.mail.sent',
+                data=json.dumps({'admin_email_id': mail.pk, 'subject': mail.subject}),
+            )
             messages.success(request, _('The email has been queued for sending.'))
 
         return redirect('eventyay_admin:admin.messages.outbox')
@@ -816,6 +1001,13 @@ class AdminMessageCancelView(AdministratorPermissionRequiredMixin, View):
 class AdminMessageDeleteView(AdministratorPermissionRequiredMixin, View):
     def post(self, request, pk):
         mail = get_object_or_404(AdminEmailQueue, pk=pk, status=AdminEmailStatus.DRAFT)
+        LogEntry.objects.create(
+            content_type=ContentType.objects.get_for_model(AdminEmailQueue),
+            object_id=pk,
+            user=request.user,
+            action_type='eventyay.admin.mail.deleted',
+            data=json.dumps({'admin_email_id': pk, 'subject': mail.subject}),
+        )
         mail.delete()
         messages.success(request, _('The draft has been deleted.'))
         return redirect('eventyay_admin:admin.messages.drafts')
@@ -825,6 +1017,13 @@ class AdminMessageDuplicateView(AdministratorPermissionRequiredMixin, View):
     def post(self, request, pk):
         mail = get_object_or_404(AdminEmailQueue, pk=pk)
         new_mail = mail.duplicate()
+        LogEntry.objects.create(
+            content_type=ContentType.objects.get_for_model(AdminEmailQueue),
+            object_id=new_mail.pk,
+            user=request.user,
+            action_type='eventyay.admin.mail.duplicated',
+            data=json.dumps({'source_id': pk, 'new_id': new_mail.pk, 'subject': new_mail.subject}),
+        )
         messages.success(request, _('The email has been duplicated as a draft.'))
         return redirect(new_mail.get_edit_url())
 

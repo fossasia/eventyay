@@ -37,6 +37,43 @@ EVENT_STATUS_CHOICES = [
     ('past', _('Past')),
 ]
 
+ORGANISER_STATUS_CHOICES = [
+    ('', _('All')),
+    ('has_active', _('Has active events')),
+    ('has_draft', _('Has draft events')),
+    ('has_past', _('Has past events')),
+    ('no_events', _('Has no events')),
+]
+
+BILLING_STATUS_CHOICES = [
+    ('', _('All')),
+    ('configured', _('Billing configured')),
+    ('missing', _('Billing missing')),
+    ('pending', _('Billing validation pending')),
+]
+
+TICKETING_STATUS_CHOICES = [
+    ('', _('All')),
+    ('shop_enabled', _('Shop enabled')),
+    ('shop_disabled', _('Shop disabled')),
+    ('has_paid', _('Has paid tickets')),
+    ('has_free', _('Has free tickets')),
+]
+
+CFP_STATUS_CHOICES = [
+    ('', _('All')),
+    ('cfp_open', _('CfP open')),
+    ('cfp_closed', _('CfP closed')),
+    ('has_pending', _('Has pending proposals')),
+]
+
+SETUP_STATUS_CHOICES = [
+    ('', _('All')),
+    ('missing_ticket', _('Missing ticket setup')),
+    ('missing_payment', _('Missing payment setup')),
+    ('missing_schedule', _('Missing schedule')),
+]
+
 DELIVERY_MODE_CHOICES = [
     ('now', _('Send now')),
     ('later', _('Schedule for later')),
@@ -121,6 +158,68 @@ class AdminComposeForm(ScheduledAtValidationMixin, forms.Form):
         required=False,
         widget=EnhancedSelect(attrs={
             'title': _('Event status'),
+            'placeholder': _('All'),
+        }),
+    )
+
+    event_date_from = forms.DateField(
+        label=_('Event starts after'),
+        required=False,
+        widget=forms.DateInput(attrs={'type': 'date'}),
+    )
+
+    event_date_to = forms.DateField(
+        label=_('Event starts before'),
+        required=False,
+        widget=forms.DateInput(attrs={'type': 'date'}),
+    )
+
+    organiser_status = forms.ChoiceField(
+        label=_('Organiser status'),
+        choices=ORGANISER_STATUS_CHOICES,
+        required=False,
+        widget=EnhancedSelect(attrs={
+            'title': _('Organiser status'),
+            'placeholder': _('All'),
+        }),
+    )
+
+    billing_status = forms.ChoiceField(
+        label=_('Billing status'),
+        choices=BILLING_STATUS_CHOICES,
+        required=False,
+        widget=EnhancedSelect(attrs={
+            'title': _('Billing status'),
+            'placeholder': _('All'),
+        }),
+    )
+
+    ticketing_status = forms.ChoiceField(
+        label=_('Ticketing status'),
+        choices=TICKETING_STATUS_CHOICES,
+        required=False,
+        widget=EnhancedSelect(attrs={
+            'title': _('Ticketing status'),
+            'placeholder': _('All'),
+        }),
+    )
+
+    cfp_status = forms.ChoiceField(
+        label=_('CfP status'),
+        choices=CFP_STATUS_CHOICES,
+        required=False,
+        widget=EnhancedSelect(attrs={
+            'title': _('CfP status'),
+            'placeholder': _('All'),
+        }),
+    )
+
+    setup_status = forms.ChoiceField(
+        label=_('Event setup status'),
+        choices=SETUP_STATUS_CHOICES,
+        required=False,
+        widget=EnhancedSelect(attrs={
+            'title': _('Setup status'),
             'placeholder': _('All'),
         }),
     )
@@ -300,6 +399,13 @@ class AdminComposeRecipientsForm(forms.Form):
     user_role = forms.ChoiceField(choices=USER_ROLE_CHOICES, required=False)
     language = forms.ChoiceField(choices=[], required=False)
     event_status = forms.ChoiceField(choices=EVENT_STATUS_CHOICES, required=False)
+    event_date_from = forms.DateField(required=False)
+    event_date_to = forms.DateField(required=False)
+    organiser_status = forms.ChoiceField(choices=ORGANISER_STATUS_CHOICES, required=False)
+    billing_status = forms.ChoiceField(choices=BILLING_STATUS_CHOICES, required=False)
+    ticketing_status = forms.ChoiceField(choices=TICKETING_STATUS_CHOICES, required=False)
+    cfp_status = forms.ChoiceField(choices=CFP_STATUS_CHOICES, required=False)
+    setup_status = forms.ChoiceField(choices=SETUP_STATUS_CHOICES, required=False)
     created_after = forms.DateTimeField(required=False)
     created_before = forms.DateTimeField(required=False)
     last_active_after = forms.DateTimeField(required=False)
