@@ -31,6 +31,9 @@
                 <i class="fa fa-calendar"></i>
             </div>
         {% endif %}
+        {% if event.is_ongoing %}
+            <div class="startpage-event-ongoing-sash">{% trans "Ongoing" %}</div>
+        {% endif %}
     </a>
     <div class="startpage-event-body">
         <h3 class="startpage-event-title">

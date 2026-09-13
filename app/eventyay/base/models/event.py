@@ -313,6 +313,18 @@ class EventMixin:
         return not self.presale_has_ended
 
     @property
+    def is_ongoing(self):
+        """
+        Is true when the current time is between date_from and date_to.
+        If date_to is not set, it is true when the current date matches date_from's date.
+        """
+        _now = now()
+        if self.date_to:
+            return self.date_from <= _now <= self.date_to
+        else:
+            return self.date_from.astimezone(self.timezone).date() == _now.astimezone(self.timezone).date()
+
+    @property
     def event_microdata(self):
         import json
 
