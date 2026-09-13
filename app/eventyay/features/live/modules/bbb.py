@@ -1,4 +1,8 @@
-from eventyay.base.services.bbb import BBBServerUnavailable, BBBService
+from eventyay.base.services.bbb import (
+    BBBServerUnavailable,
+    BBBService,
+    is_bbb_available_async,
+)
 from eventyay.core.permissions import Permission
 from eventyay.features.live.decorators import command, room_action
 from eventyay.features.live.exceptions import ConsumerException
@@ -15,7 +19,10 @@ class BBBModule(BaseModule):
         try:
             return await join_url
         except BBBServerUnavailable as exc:
-            raise ConsumerException("bbb.failed") from exc
+            raise ConsumerException(
+                "bbb.unavailable",
+                "BBB is currently deactivated by the admin.",
+            ) from exc
 
     @command("room_url")
     @room_action(
@@ -23,6 +30,11 @@ class BBBModule(BaseModule):
         module_required="call.bigbluebutton",
     )
     async def room_url(self, body):
+        if not await is_bbb_available_async(self.consumer.event):
+            raise ConsumerException(
+                "bbb.unavailable",
+                "BBB is currently deactivated by the admin.",
+            )
         service = BBBService(self.consumer.event)
         if not self.consumer.user.profile.get("display_name"):
             raise ConsumerException("bbb.join.missing_profile")
@@ -44,6 +56,11 @@ class BBBModule(BaseModule):
 
     @command("call_url")
     async def call_url(self, body):
+        if not await is_bbb_available_async(self.consumer.event):
+            raise ConsumerException(
+                "bbb.unavailable",
+                "BBB is currently deactivated by the admin.",
+            )
         service = BBBService(self.consumer.event)
         if not self.consumer.user.profile.get("display_name"):
             raise ConsumerException("bbb.join.missing_profile")
@@ -64,6 +81,11 @@ class BBBModule(BaseModule):
         module_required="call.bigbluebutton",
     )
     async def recordings(self, body):
+        if not await is_bbb_available_async(self.consumer.event):
+            raise ConsumerException(
+                "bbb.unavailable",
+                "BBB is currently deactivated by the admin.",
+            )
         service = BBBService(self.consumer.event)
         recordings = await service.get_recordings_for_room(
             self.room,

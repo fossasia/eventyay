@@ -10,8 +10,11 @@ router-link.c-room-list-item.table-row(:to="to", :class="{'mystery': !inferredTy
 			.room-type-badge(v-if="inferredType", :class="badgeClass")
 				.mdi(:class="badgeIcon")
 				span {{ badgeLabel }}
+			.room-type-badge.bbb-unavailable-badge(v-if="isBBBRoom && !isBbbAvailable")
+				.mdi.mdi-alert-circle-outline
+				span {{ $t('BBB is currently deactivated by the admin.') }}
 			VideoProviderDropdown(
-				v-else,
+				v-else-if="!inferredType",
 				:label="$t('Add Video')",
 				variant="action",
 				placement="bottom-end",
@@ -20,6 +23,7 @@ router-link.c-room-list-item.table-row(:to="to", :class="{'mystery': !inferredTy
 			)
 </template>
 <script>
+import { mapGetters } from 'vuex'
 import { ElementMixin, HandleDirective } from 'vue-slicksort'
 import { inferType } from 'lib/room-types'
 import { getConfiguredRoomLabel } from 'lib/video-providers'
@@ -37,10 +41,14 @@ export default {
 		}
 	},
 	computed: {
+		...mapGetters(['isBbbAvailable']),
 		inferredType () {
 			// Only treat rooms as configured when they have module_config.
 			if (!Array.isArray(this.room?.module_config) || this.room.module_config.length === 0) return null
 			return inferType({ module_config: this.room.module_config })
+		},
+		isBBBRoom () {
+			return this.inferredType?.id === 'channel-bbb' || (Array.isArray(this.room?.module_config) && this.room.module_config.some(m => m.type === 'call.bigbluebutton'))
 		},
 		badgeLabel () {
 			const label = getConfiguredRoomLabel(this.inferredType)
@@ -131,4 +139,10 @@ export default {
 			background-color: $clr-grey-50
 			color: $clr-grey-800
 			border-color: $clr-grey-200
+		&.bbb-unavailable-badge
+			background-color: #fff4e5
+			color: #b76e00
+			border-color: #ffd599
+			font-weight: 500
+			max-width: 320px
 </style>

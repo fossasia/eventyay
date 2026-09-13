@@ -575,6 +575,15 @@ class RoomModule(BaseModule):
             body.get("module_config"),
         )
         if "module_config" in body and newly_added_server_modules:
+            if any(m.get("type") == "call.bigbluebutton" for m in newly_added_server_modules):
+                from eventyay.base.services.bbb import is_bbb_available
+
+                if not await database_sync_to_async(is_bbb_available)(self.consumer.event):
+                    await self.consumer.send_error(
+                        code="bbb.unavailable",
+                        message="BBB is currently deactivated by the admin.",
+                    )
+                    return
             if not await user_can_create_server_backed_room_during_development(
                 self.consumer.user
             ):

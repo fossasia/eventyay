@@ -1,25 +1,29 @@
-export function isRoomTypeAvailable(typeId, hasPermission, isAdminMode = false) {
+export function isRoomTypeAvailable(typeId, hasPermission, isAdminMode = false, isBbbAvailable = true) {
 	if (typeId === 'stage') {
-		return hasPermission('world:rooms.create.stage') || isAdminMode
+		return hasPermission('world:rooms.create.stage')
 	}
-	if (typeId === 'channel-bbb' || typeId === 'channel-janus' || typeId === 'channel-zoom') {
-		return hasPermission('world:rooms.create.bbb') || isAdminMode
+	if (typeId === 'channel-bbb') {
+		if (!isBbbAvailable) return false
+		return isAdminMode && hasPermission('world:rooms.create.bbb')
+	}
+	if (typeId === 'channel-janus' || typeId === 'channel-zoom') {
+		return isAdminMode && hasPermission('world:rooms.create.bbb')
 	}
 	if (typeId === 'channel-jitsi') {
-		return hasPermission('world:rooms.create.jitsi') || isAdminMode
+		return isAdminMode && hasPermission('world:rooms.create.jitsi')
 	}
 	if (typeId === 'channel-text') {
-		return hasPermission('world:rooms.create.chat') || isAdminMode
+		return hasPermission('world:rooms.create.chat')
 	}
 	if (typeId === 'channel-roulette') {
-		return hasPermission('room:update') || isAdminMode
+		return isAdminMode && hasPermission('room:update')
 	}
 	if (typeId === 'page-landing') {
-		return hasPermission('room:update') || isAdminMode
+		return hasPermission('room:update')
 	}
 	return true
 }
 
-export function filterRoomTypesByPermission(roomTypes, hasPermission, isAdminMode = false) {
-	return roomTypes.filter(type => isRoomTypeAvailable(type.id, hasPermission, isAdminMode))
+export function filterRoomTypesByPermission(roomTypes, hasPermission, isAdminMode = false, isBbbAvailable = true) {
+	return roomTypes.filter(type => isRoomTypeAvailable(type.id, hasPermission, isAdminMode, isBbbAvailable))
 }

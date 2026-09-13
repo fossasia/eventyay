@@ -17,6 +17,9 @@
 				bunt-icon-button(@click="$router.push({name: 'admin:rooms:index'})", :tooltip="$t('Back to Rooms & Stages')", tooltip-placement="bottom-start", :tooltip-fixed="true") arrow-left
 				h1 {{ roomTypeLabel }} :
 					span.room-name(v-html="$emojify(config.name)")
+			.bbb-deactivated-banner(v-if="isBBBRoom && !isBbbAvailable")
+				i.mdi.mdi-alert-circle-outline(aria-hidden="true")
+				span {{ $t('BBB is currently deactivated by the admin.') }}
 			edit-form(:config="config")
 	bunt-progress-circular(v-else, size="huge")
 </template>
@@ -48,10 +51,13 @@ export default {
 		}
 	},
 	computed: {
-		...mapGetters(['hasPermission', 'isAdminMode']),
+		...mapGetters(['hasPermission', 'isAdminMode', 'isBbbAvailable']),
 		inferredType() {
 			if (!this.config) return null
 			return inferType(this.config)
+		},
+		isBBBRoom() {
+			return this.inferredType?.id === 'channel-bbb' || (Array.isArray(this.config?.module_config) && this.config.module_config.some(m => m.type === 'call.bigbluebutton'))
 		},
 		roomTypeLabel() {
 			const label = getConfiguredRoomLabel(this.inferredType)
@@ -61,7 +67,8 @@ export default {
 			return getAvailableVideoProviders(
 				this.hasPermission,
 				this.isAdminMode,
-				(flag) => features.enabled(flag)
+				(flag) => features.enabled(flag),
+				this.isBbbAvailable
 			)
 		}
 	},
@@ -198,4 +205,18 @@ export default {
 			margin: 0
 			font-size: 16px
 			color: $clr-secondary-text-light
+	.bbb-deactivated-banner
+		display: flex
+		align-items: center
+		gap: 8px
+		margin: 12px 16px 0
+		padding: 10px 14px
+		background-color: #fff4e5
+		color: #b76e00
+		border: 1px solid #ffd599
+		border-radius: 4px
+		font-weight: 500
+		font-size: 14px
+		.mdi
+			font-size: 20px
 </style>

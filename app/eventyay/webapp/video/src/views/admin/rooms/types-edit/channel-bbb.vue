@@ -1,5 +1,8 @@
 <template lang="pug">
 .c-channel-bbb-settings
+	.bbb-deactivated-banner(v-if="!isBbbAvailable")
+		i.mdi.mdi-alert-circle-outline(aria-hidden="true")
+		span {{ $t('BBB is currently deactivated by the admin.') }}
 	bunt-checkbox(name="record", v-model="module.config.record", :label="$t('Allow recording (needs to be set before first join)')")
 	bunt-checkbox(name="hide-presentation", v-model="module.config.hide_presentation", :label="$t('Hide presentation when users join')")
 	bunt-checkbox(name="waiting-room", v-model="module.config.waiting_room", :label="$t('Put new users in waiting room first (needs to be set before first join)')")
@@ -14,6 +17,7 @@
 	sidebar-addons(v-bind="$props")
 </template>
 <script>
+import { mapGetters } from 'vuex'
 import UploadUrlInput from 'components/UploadUrlInput'
 import mixin from './mixin'
 import SidebarAddons from './SidebarAddons'
@@ -22,6 +26,7 @@ export default {
 	components: { UploadUrlInput, SidebarAddons },
 	mixins: [mixin],
 	computed: {
+		...mapGetters(['isBbbAvailable']),
 		module() {
 			return this.modules['call.bigbluebutton']
 		}
@@ -29,4 +34,19 @@ export default {
 }
 </script>
 <style lang="stylus">
+.c-channel-bbb-settings
+	.bbb-deactivated-banner
+		display: flex
+		align-items: center
+		gap: 8px
+		margin-bottom: 16px
+		padding: 10px 14px
+		background-color: #fff4e5
+		color: #b76e00
+		border: 1px solid #ffd599
+		border-radius: 4px
+		font-weight: 500
+		font-size: 14px
+		.mdi
+			font-size: 20px
 </style>

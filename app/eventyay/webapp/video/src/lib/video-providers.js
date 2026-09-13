@@ -43,12 +43,18 @@ export const VIDEO_CREATE_PROVIDERS = [
 	}
 ]
 
-export function isVideoProviderEnabled(provider, isFeatureEnabled) {
+export function isVideoProviderEnabled(provider, isFeatureEnabled, isBbbAvailable = true) {
+	if (provider.id === 'bbb' && !isBbbAvailable) {
+		return false
+	}
 	return !provider.featureFlag || Boolean(isFeatureEnabled(provider.featureFlag))
 }
 
-export function isVideoProviderPermitted(provider, hasPermission, isAdminMode = false) {
-	if (isRoomTypeAvailable(provider.roomTypeId, hasPermission, isAdminMode)) {
+export function isVideoProviderPermitted(provider, hasPermission, isAdminMode = false, isBbbAvailable = true) {
+	if (provider.id === 'bbb' && !isBbbAvailable) {
+		return false
+	}
+	if (isRoomTypeAvailable(provider.roomTypeId, hasPermission, isAdminMode, isBbbAvailable)) {
 		return true
 	}
 	// Rooms admin users with room:update can still create Stream rooms without the
@@ -56,10 +62,10 @@ export function isVideoProviderPermitted(provider, hasPermission, isAdminMode = 
 	return provider.roomTypeId === 'stage' && hasPermission('room:update')
 }
 
-export function getAvailableVideoProviders(hasPermission, isAdminMode, isFeatureEnabled) {
+export function getAvailableVideoProviders(hasPermission, isAdminMode, isFeatureEnabled, isBbbAvailable = true) {
 	return VIDEO_CREATE_PROVIDERS.filter(provider =>
-		isVideoProviderEnabled(provider, isFeatureEnabled) &&
-		isVideoProviderPermitted(provider, hasPermission, isAdminMode)
+		isVideoProviderEnabled(provider, isFeatureEnabled, isBbbAvailable) &&
+		isVideoProviderPermitted(provider, hasPermission, isAdminMode, isBbbAvailable)
 	)
 }
 

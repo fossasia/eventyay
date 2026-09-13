@@ -99,6 +99,18 @@ export default new Vuex.Store({
 			}
 			return { organizer: null, event: null }
 		},
+		isBbbAvailable(state) {
+			if (state.world && typeof state.world.bbb_available === 'boolean') {
+				return state.world.bbb_available
+			}
+			if (state.world?.live_features && typeof state.world.live_features.bbb === 'boolean') {
+				return state.world.live_features.bbb
+			}
+			if (typeof window !== 'undefined' && typeof window.eventyay?.bbb_available === 'boolean') {
+				return window.eventyay.bbb_available
+			}
+			return true
+		},
 	},
 	mutations: {
 		updateRooms(state, rooms) {

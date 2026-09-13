@@ -24,6 +24,9 @@ prompt.c-room-edit-prompt(:scrollable="false", @close="$emit('close')")
 							bunt-button.btn-reset(@click="resetRoom", :loading="resetting", :error-message="resetError") {{ $t('Confirm reset') }}
 				.type-section(v-if="mode !== 'chat'")
 					h3 {{ $t('Video option') }}
+					.bbb-deactivated-banner(v-if="inferredType && inferredType.id === 'channel-bbb' && !isBbbAvailable")
+						i.mdi.mdi-alert-circle-outline(aria-hidden="true")
+						span {{ $t('BBB is currently deactivated by the admin.') }}
 					.current-type(v-if="inferredType")
 						.mdi(:class="[`mdi-${inferredType.icon}`]")
 						span {{ currentTypeLabel }}
@@ -148,12 +151,13 @@ export default {
 		}
 	},
 	computed: {
-		...mapGetters(['hasPermission', 'isAdminMode']),
+		...mapGetters(['hasPermission', 'isAdminMode', 'isBbbAvailable']),
 		availableRoomTypes () {
 			const videoTypes = getAvailableVideoProviders(
 				this.hasPermission,
 				this.isAdminMode,
-				(flag) => features.enabled(flag)
+				(flag) => features.enabled(flag),
+				this.isBbbAvailable
 			).map(provider => {
 				const type = getRoomTypeById(provider.roomTypeId)
 				if (!type) return null
@@ -472,4 +476,18 @@ export default {
 			themed-button-secondary()
 		.btn-save
 			themed-button-primary()
+	.bbb-deactivated-banner
+		display: flex
+		align-items: center
+		gap: 8px
+		margin-bottom: 12px
+		padding: 10px 14px
+		background-color: #fff4e5
+		color: #b76e00
+		border: 1px solid #ffd599
+		border-radius: 4px
+		font-weight: 500
+		font-size: 14px
+		.mdi
+			font-size: 20px
 </style>

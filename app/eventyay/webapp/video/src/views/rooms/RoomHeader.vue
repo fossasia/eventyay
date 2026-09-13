@@ -7,7 +7,7 @@
 			.room-session(v-if="currentSession") {{ $localize(currentSession.title) }}
 		//- bunt-icon-button(v-if="$features.enabled('schedule-control')", @click="showEditSchedule = true") calendar_edit
 		.actions
-			bunt-icon-button(v-if="modules['call.bigbluebutton'] && hasPermission('room:bbb.recordings')", :tooltip="$t('Recordings')", tooltipPlacement="bottom-end", @click="showRecordingsPrompt = true") file-video-outline
+			bunt-icon-button(v-if="modules['call.bigbluebutton'] && isBbbAvailable && hasPermission('room:bbb.recordings')", :tooltip="$t('Recordings')", tooltipPlacement="bottom-end", @click="showRecordingsPrompt = true") file-video-outline
 	router-view(:room="room", :modules="modules")
 	transition(name="prompt")
 		recordings-prompt(v-if="showRecordingsPrompt && room", :room="room", @close="showRecordingsPrompt = false")
@@ -37,7 +37,7 @@ export default {
 		}
 	},
 	computed: {
-		...mapGetters(['hasPermission']),
+		...mapGetters(['hasPermission', 'isBbbAvailable']),
 		...mapState(['rooms']),
 		...mapGetters('schedule', ['sessions', 'currentSessionPerRoom']),
 		room() {

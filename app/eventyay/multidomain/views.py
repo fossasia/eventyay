@@ -26,6 +26,7 @@ from i18nfield.strings import LazyI18nString
 from eventyay.agenda.views.utils import build_public_schedule_exporters
 from eventyay.base.models import Event
 from eventyay.base.models.room import AnonymousInvite
+from eventyay.base.services.bbb import is_bbb_available
 from eventyay.base.services.video_theme import build_video_theme_for_event
 from eventyay.common.language import get_ui_language_options
 from eventyay.common.templatetags.vite import fetch_vite_html, VIDEO_DIST_DIR, VIDEO_DEV_SERVER
@@ -210,6 +211,7 @@ class VideoSPAView(View):
                 'basePath': base_path,
                 'defaultLocale': 'en',
                 'locales': get_ui_language_options(),
+                'bbb_available': is_bbb_available(event),
                 'noThemeEndpoint': True,  # Prevent frontend from requesting missing /theme endpoint
                 'translationMessages': {
                     'favs_anonymous_notice': str(_(

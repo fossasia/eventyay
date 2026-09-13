@@ -12,6 +12,7 @@ import {
 	isVideoProviderEnabled,
 	isVideoProviderPermitted,
 } from './video-providers.js'
+import { isRoomTypeAvailable } from './room-type-permissions.js'
 
 function allow(permissions) {
 	const permitted = new Set(permissions)
@@ -124,3 +125,44 @@ test('applying a provider sets the starting module config', () => {
 		config: { playback_mode: 'always_on' }
 	}])
 })
+
+test('when BBB is unavailable, BBB is hidden from available providers even in admin mode', () => {
+	const providers = getAvailableVideoProviders(
+		allow(['world:rooms.create.bbb', 'world:rooms.create.jitsi']),
+		true,
+		features(['jitsi', 'janus']),
+		false // isBbbAvailable = false
+	)
+	assert.deepEqual(providers.map(provider => provider.id), ['jitsi', 'janus'])
+	assert.equal(providers.some(provider => provider.id === 'bbb'), false)
+})
+
+test('when BBB is unavailable, isVideoProviderEnabled returns false for BBB', () => {
+	const bbbProvider = VIDEO_CREATE_PROVIDERS.find(provider => provider.id === 'bbb')
+	assert.equal(isVideoProviderEnabled(bbbProvider, features([]), false), false)
+	assert.equal(isVideoProviderEnabled(bbbProvider, features([]), true), true)
+})
+
+test('when BBB is unavailable, isRoomTypeAvailable returns false for channel-bbb', () => {
+	assert.equal(
+		isRoomTypeAvailable('channel-bbb', allow(['world:rooms.create.bbb']), true, false),
+		false
+	)
+	assert.equal(
+		isRoomTypeAvailable('channel-bbb', allow(['world:rooms.create.bbb']), true, true),
+		true
+	)
+})
+
+test('when BBB is unavailable, isVideoProviderPermitted returns false for BBB', () => {
+	const bbbProvider = VIDEO_CREATE_PROVIDERS.find(provider => provider.id === 'bbb')
+	assert.equal(
+		isVideoProviderPermitted(bbbProvider, allow(['world:rooms.create.bbb']), true, false),
+		false
+	)
+	assert.equal(
+		isVideoProviderPermitted(bbbProvider, allow(['world:rooms.create.bbb']), true, true),
+		true
+	)
+})
+

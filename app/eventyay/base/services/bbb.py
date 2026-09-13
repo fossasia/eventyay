@@ -27,6 +27,32 @@ class BBBServerUnavailable(Exception):
     pass
 
 
+def is_bbb_available(event=None):
+    """Return True when at least one active BBB server is configured and BBB is not disabled."""
+    if event is not None:
+        cfg = getattr(event, "config", None) or {}
+        if cfg.get("bbb_disabled"):
+            return False
+        live_features = cfg.get("live_features") or {}
+        if live_features.get("bbb") is False:
+            return False
+        if getattr(event, "pk", None) is not None:
+            qs = BBBServer.objects.filter(active=True).filter(
+                Q(event_exclusive=event) | Q(event_exclusive__isnull=True)
+            )
+        else:
+            qs = BBBServer.objects.filter(active=True, event_exclusive__isnull=True)
+    else:
+        qs = BBBServer.objects.filter(active=True)
+    return qs.exists()
+
+
+@database_sync_to_async
+def is_bbb_available_async(event=None):
+    """Async wrapper around :func:`is_bbb_available`."""
+    return is_bbb_available(event=event)
+
+
 def get_url(operation, params, base_url, secret):
     encoded = urlencode(params)
     payload = operation + encoded + secret

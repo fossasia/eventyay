@@ -81,7 +81,7 @@ export default {
 		}
 	},
 	computed: {
-		...mapGetters(['hasPermission', 'isAdminMode']),
+		...mapGetters(['hasPermission', 'isAdminMode', 'isBbbAvailable']),
 		canManage() {
 			return canManageVideoRooms(this.hasPermission)
 		},
@@ -89,7 +89,8 @@ export default {
 			return getAvailableVideoProviders(
 				this.hasPermission,
 				this.isAdminMode,
-				(flag) => features.enabled(flag)
+				(flag) => features.enabled(flag),
+				this.isBbbAvailable
 			)
 		},
 		buttonClass() {

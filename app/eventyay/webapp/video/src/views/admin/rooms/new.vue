@@ -25,12 +25,13 @@ export default {
 		}
 	},
 	computed: {
-		...mapGetters(['hasPermission', 'isAdminMode']),
+		...mapGetters(['hasPermission', 'isAdminMode', 'isBbbAvailable']),
 		availableProviders() {
 			return getAvailableVideoProviders(
 				this.hasPermission,
 				this.isAdminMode,
-				(flag) => features.enabled(flag)
+				(flag) => features.enabled(flag),
+				this.isBbbAvailable
 			)
 		},
 		chosenProvider() {
@@ -49,6 +50,10 @@ export default {
 	methods: {
 		updateType() {
 			this.type = this.$route.params.type
+			if (this.type === 'channel-bbb' && !this.isBbbAvailable) {
+				this.$router.replace({name: 'admin:rooms:index'})
+				return
+			}
 			if (this.type === 'channel-text') {
 				this.$router.replace({name: 'admin:chat:new'})
 				return

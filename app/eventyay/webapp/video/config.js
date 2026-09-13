@@ -54,9 +54,11 @@ if (!window.venueless && !window.eventyay) {
 		basePath
 	}
 } else {
-	// load from index.html as injected config: prefer window.eventyay (new) else fallback to legacy window.venueless
 	const injected = window.eventyay || window.venueless
 	config = cloneDeep(injected)
+	if (typeof injected?.bbb_available === 'boolean') {
+		config.bbb_available = injected.bbb_available
+	}
 	// Normalize features to array for consumer convenience (feature flags object => enabled keys array)
 	if (config.features && !Array.isArray(config.features)) {
 		config.features = Object.keys(config.features).filter(k => config.features[k])

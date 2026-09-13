@@ -13,8 +13,9 @@
 	JanusChannelCall(v-else-if="call", ref="janus", :call="call", :background="background", :size="background ? 'tiny' : 'normal'", :key="`call-${call.id}`", @close="$emit('close')")
 	.iframe-consent-gate(v-if="consentBlockedUrl && !background")
 		iframe-blocker(:src="consentBlockedUrl", allow="camera *; autoplay *; microphone *; fullscreen *; display-capture *", allowfullscreen, @consent-given="onConsentGiven")
-	.iframe-error(v-if="!iframeEl && !consentBlockedUrl && (iframeError || iframeOffline)", :class="{background: background, 'size-tiny': background}")
+	.iframe-error(v-if="!iframeEl && !consentBlockedUrl && (iframeError || iframeOffline || isBBBUnavailableError)", :class="{background: background, 'size-tiny': background}")
 		.offline-message(v-if="iframeOffline") {{ $t('Stream offline') }}
+		.offline-message(v-else-if="isBBBUnavailableError") {{ $t('BBB is currently deactivated by the admin.') }}
 		.offline-message(v-else) {{ $t('We could not connect to the video conference server, sorry.') }}
 	iframe#video-player-translation(v-if="languageIframeUrl", ref="translationIframeEl", :src="languageIframeUrl", style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;", frameborder="0", gesture="media", allow="autoplay; encrypted-media", referrerpolicy="strict-origin-when-cross-origin", @load="onTranslationIframeLoaded")
 	audio(ref="whepAudioEl", autoplay, style="display: none;")
@@ -62,6 +63,15 @@ const route = useRoute();
 const router = useRouter();
 
 const iframeError = ref(null);
+const isBbbAvailable = computed(() => store.getters['isBbbAvailable'] ?? true);
+const isBBBUnavailableError = computed(() => {
+	if (module.value?.type === 'call.bigbluebutton') {
+		if (!isBbbAvailable.value) return true;
+		const err = iframeError.value;
+		if (err?.code === 'bbb.unavailable' || err?.message?.includes('deactivated')) return true;
+	}
+	return false;
+});
 const iframeEl = ref(null);
 const languageIframeUrl = ref(null);
 const isUnmounted = ref(false);
@@ -546,6 +556,11 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 
 		switch (effectiveModuleType) {
 			case 'call.bigbluebutton': {
+				if (!isBbbAvailable.value) {
+					const err = new Error('BBB is currently deactivated by the admin.');
+					err.code = 'bbb.unavailable';
+					throw err;
+				}
 				({ url: iframeUrl } = await api.call('bbb.room_url', {
 					room: props.room.id,
 				}));

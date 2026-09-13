@@ -21,6 +21,28 @@ class RoomSerializer(RoomLinkedSessionsSerializerMixin, I18nAwareModelSerializer
         max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
     )
 
+    def validate_module_config(self, value):
+        from eventyay.base.services.bbb import is_bbb_available
+
+        has_bbb = any(
+            isinstance(m, dict) and m.get("type") == "call.bigbluebutton"
+            for m in (value or [])
+        )
+        if has_bbb:
+            existing_bbb = False
+            if self.instance and self.instance.module_config:
+                existing_bbb = any(
+                    isinstance(m, dict) and m.get("type") == "call.bigbluebutton"
+                    for m in self.instance.module_config
+                )
+            request = self.context.get("request")
+            event = getattr(request, "event", None) if request else None
+            if not existing_bbb and not is_bbb_available(event):
+                raise serializers.ValidationError(
+                    "BBB is currently deactivated by the admin."
+                )
+        return value
+
     class Meta:
         model = Room
         fields = [

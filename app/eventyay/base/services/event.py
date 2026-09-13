@@ -310,6 +310,15 @@ def get_event_config_for_user(event, user):
     pretalx_cfg = (cfg.get("pretalx") or {})
     pretalx_public = {k: pretalx_cfg.get(k) for k in ("url", "conftool") if k in pretalx_cfg}
 
+    from eventyay.base.services.bbb import is_bbb_available
+
+    bbb_available = is_bbb_available(event)
+    live_features_cfg = dict(cfg.get("live_features") or {})
+    if not bbb_available:
+        live_features_cfg["bbb"] = False
+    else:
+        live_features_cfg.setdefault("bbb", True)
+
     world_block = {
         "id": str(event.id),
         "title": getattr(event, "title", getattr(event, "name", "")),
@@ -323,12 +332,13 @@ def get_event_config_for_user(event, user):
         "pretalx": pretalx_public,
         "track_event_views": cfg.get("track_event_views", True),
         "track_video_event_views": cfg.get("track_event_views", True),
+        "bbb_available": bbb_available,
         "live_features": {
             "chat_rooms": False,
             "kiosks": False,
             "direct_messaging": False,
             "announcements": True,
-            **(cfg.get("live_features") or {}),
+            **live_features_cfg,
         },
         "onsite_traits": cfg.get("onsite_traits", []),
     }
@@ -425,6 +435,15 @@ async def create_room(event, data, creator):
     livestream_modules = [
         m for m in data.get("modules", []) if m.get("type") in livestream_types
     ]
+
+    if any(m.get("type") == "call.bigbluebutton" for m in data.get("modules", [])):
+        from eventyay.base.services.bbb import is_bbb_available_async
+
+        if not await is_bbb_available_async(event):
+            raise ValidationError(
+                "BBB is currently deactivated by the admin.",
+                code="bbb_unavailable",
+            )
 
     if types & SERVER_BACKED_ROOM_MODULE_TYPES:
         if not await user_can_create_server_backed_room_during_development(creator):
