@@ -9,6 +9,7 @@ from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.models.auth import User
+from eventyay.base.models.base import CachedFile
 
 logger = logging.getLogger(__name__)
 
@@ -152,7 +153,6 @@ class AdminEmailQueue(models.Model):
     def _resolve_attachment(self) -> list[dict] | None:
         if not self.attachment:
             return None
-        from eventyay.base.models.base import CachedFile
         try:
             cf = CachedFile.objects.get(id=self.attachment)
             try:

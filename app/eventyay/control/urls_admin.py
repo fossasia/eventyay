@@ -96,6 +96,7 @@ urlpatterns = [
     path('messages/templates/', admin_messages.AdminMessageTemplatesView.as_view(), name='admin.messages.templates'),
     path('messages/templates/<str:role>/', admin_messages.AdminMessageTemplateDetailView.as_view(), name='admin.messages.template_detail'),
     path('messages/recipients/', admin_messages.AdminMessageRecipientsView.as_view(), name='admin.messages.recipients'),
+    path('messages/preview/', admin_messages.AdminMessagePreviewView.as_view(), name='admin.messages.preview'),
     path('messages/<int:pk>/send/', admin_messages.AdminMessageSendView.as_view(), name='admin.messages.send'),
     path('messages/<int:pk>/cancel/', admin_messages.AdminMessageCancelView.as_view(), name='admin.messages.cancel'),
     path('messages/<int:pk>/delete/', admin_messages.AdminMessageDeleteView.as_view(), name='admin.messages.delete'),

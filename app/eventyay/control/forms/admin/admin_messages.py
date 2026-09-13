@@ -6,7 +6,7 @@ from django.utils.translation import gettext_lazy as _
 from eventyay.base.forms.widgets import SplitDateTimePickerWidget
 from eventyay.base.models import Event, Organizer, User
 from eventyay.base.models.admin_mail import AdminRecipientGroup
-from eventyay.common.forms.fields import EmailBodyField
+from eventyay.common.forms.fields import I18nEmailBodyFormField
 from eventyay.common.forms.mixins import ScheduledAtValidationMixin
 from eventyay.common.forms.renderers import TabularFormRenderer
 from eventyay.common.forms.widgets import EnhancedSelect, EnhancedSelectMultiple
@@ -184,7 +184,7 @@ class AdminComposeForm(ScheduledAtValidationMixin, forms.Form):
         widget=forms.TextInput(attrs={'placeholder': _('Email subject')}),
     )
 
-    message = EmailBodyField(
+    message = I18nEmailBodyFormField(
         label=_('Message'),
         placeholders=[
             'user_name', 'first_name', 'last_name', 'email', 'account_url',
@@ -192,6 +192,7 @@ class AdminComposeForm(ScheduledAtValidationMixin, forms.Form):
             'event_name', 'event_url', 'event_start_date', 'event_end_date',
             'platform_name', 'platform_url', 'support_email', 'support_url',
         ],
+        locales=['en'],
     )
     attachment = CachedFileField(
         label=_('Attachment'),
@@ -255,8 +256,6 @@ class AdminComposeForm(ScheduledAtValidationMixin, forms.Form):
         if draft_save:
             self.fields['subject'].required = False
             self.fields['message'].required = False
-
-        self.fields['message'].widget.attrs['id'] = 'id_message_0'
 
     def clean(self):
         cleaned = super().clean()

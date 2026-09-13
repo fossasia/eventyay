@@ -1,3 +1,4 @@
+import hashlib
 import json
 import logging
 
@@ -23,12 +24,18 @@ from eventyay.base.models.admin_mail import (
     AdminEmailStatus,
     AdminRecipientGroup,
 )
+from eventyay.base.models.mail import MailTemplate, MailTemplateRoles
+from eventyay.base.models.orders import Order, OrderPosition
 from eventyay.base.models.organizer import Team
+from eventyay.base.models.submission import Submission
+from eventyay.common.mail import mail_send_task
+from eventyay.common.sanitizers import sanitize_email_html
 from eventyay.control.forms.admin.admin_messages import (
     AdminComposeForm,
     AdminComposeRecipientsForm,
 )
-from eventyay.control.permissions import AdministratorPermissionRequiredMixin
+from eventyay.control.permissions import AdministratorPermissionRequiredMixin, StaffMemberRequiredMixin
+from eventyay.control.tasks import send_admin_email
 from eventyay.control.views import PaginationMixin
 
 logger = logging.getLogger(__name__)
@@ -36,18 +43,12 @@ logger = logging.getLogger(__name__)
 HIGH_RECIPIENT_THRESHOLD = 500
 
 
-def _audience_fingerprint(filters: dict) -> str:
-    import hashlib
-    payload = json.dumps(filters, sort_keys=True, default=str)
+def _audience_fingerprint(filters: dict, count: int = 0) -> str:
+    payload = json.dumps({'filters': filters, 'count': count}, sort_keys=True, default=str)
     return hashlib.sha256(payload.encode()).hexdigest()[:16]
 
 
-def resolve_admin_recipients(filters: dict) -> list[dict]:
-    """
-    Resolve recipients based on admin filter criteria.
-    Returns a deduplicated list of dicts with user_id, email, name, reason, status, role.
-    Attendee emails without a matching User record are included with user_id=None.
-    """
+def resolve_admin_recipients(filters: dict) -> tuple[list[dict], int]:
     recipient_group = filters.get('recipient_group', AdminRecipientGroup.ALL_USERS)
     account_status = filters.get('account_status', '')
     user_role = filters.get('user_role', '')
@@ -145,7 +146,6 @@ def resolve_admin_recipients(filters: dict) -> list[dict]:
             qs = qs.filter(team_filter).distinct()
 
         elif recipient_group == AdminRecipientGroup.SPEAKERS:
-            from eventyay.base.models.submission import Submission
             speaker_qs = Submission.objects.all()
             if selected_event_ids:
                 speaker_qs = speaker_qs.filter(event__pk__in=selected_event_ids)
@@ -161,7 +161,6 @@ def resolve_admin_recipients(filters: dict) -> list[dict]:
                 ).distinct()
 
         elif recipient_group == AdminRecipientGroup.ATTENDEES:
-            from eventyay.base.models.orders import Order, OrderPosition
             pos_qs = OrderPosition.objects.filter(
                 attendee_email__isnull=False
             ).exclude(attendee_email='')
@@ -220,26 +219,14 @@ def resolve_admin_recipients(filters: dict) -> list[dict]:
                     ).distinct()
 
                 elif recipient_group == AdminRecipientGroup.SPEAKERS:
-                    from eventyay.base.models.submission import Submission
                     speaker_ids = Submission.objects.filter(
                         event__pk__in=event_pks
                     ).values_list('speakers__pk', flat=True).distinct()
                     qs = qs.filter(pk__in=speaker_ids)
 
                 elif recipient_group == AdminRecipientGroup.ATTENDEES:
-                    from eventyay.base.models.orders import Order, OrderPosition
-                    filtered_pos_qs = OrderPosition.objects.filter(
-                        order__event__pk__in=event_pks,
-                        attendee_email__isnull=False,
-                    ).exclude(attendee_email='')
-                    filtered_order_qs = Order.objects.filter(
-                        event__pk__in=event_pks,
-                        status__in=['p', 'n'],
-                    ).exclude(email__isnull=True).exclude(email='')
-                    qs = qs.filter(
-                        Q(email__in=filtered_pos_qs.values('attendee_email'))
-                        | Q(email__in=filtered_order_qs.values('email'))
-                    ).distinct()
+                    filtered_pos_qs = pos_qs.filter(order__event__pk__in=event_pks)
+                    filtered_order_qs = order_qs.filter(event__pk__in=event_pks)
                     all_user_emails_evt = set(qs.values_list('email', flat=True))
                     all_event_emails = (
                         set(filtered_pos_qs.values_list('attendee_email', flat=True).distinct())
@@ -365,29 +352,42 @@ def _populate_recipients(mail: AdminEmailQueue, recipients: list[dict]) -> int:
     return len(objs)
 
 
+def _get_message_text(cd: dict) -> str:
+    """Extract plain string from message field (handles LazyI18nString from I18nEmailBodyFormField)."""
+    msg = cd.get('message', '')
+    if msg is None:
+        return ''
+    if hasattr(msg, 'data'):
+        data = msg.data
+        if isinstance(data, dict):
+            return data.get('en', '') or (next(iter(data.values()), '') if data else '')
+        return str(data) if data else ''
+    return str(msg) if msg else ''
+
+
 PLACEHOLDER_GROUPS = {
     'user': [
-        {'key': 'user_name', 'label': _('Full name')},
-        {'key': 'first_name', 'label': _('First name')},
-        {'key': 'last_name', 'label': _('Last name')},
-        {'key': 'email', 'label': _('Email address')},
-        {'key': 'account_url', 'label': _('Account URL')},
+        {'key': 'user_name', 'label': _('Full name'), 'example': 'Jane Doe'},
+        {'key': 'first_name', 'label': _('First name'), 'example': 'Jane'},
+        {'key': 'last_name', 'label': _('Last name'), 'example': 'Doe'},
+        {'key': 'email', 'label': _('Email address'), 'example': 'jane@example.com'},
+        {'key': 'account_url', 'label': _('Account URL'), 'example': 'https://eventyay.com/account/'},
     ],
     'organiser': [
-        {'key': 'organiser_name', 'label': _('Organiser name')},
-        {'key': 'organiser_url', 'label': _('Organiser URL')},
+        {'key': 'organiser_name', 'label': _('Organiser name'), 'example': 'FOSSASIA'},
+        {'key': 'organiser_url', 'label': _('Organiser URL'), 'example': 'https://eventyay.com/organiser/fossasia/'},
     ],
     'event': [
-        {'key': 'event_name', 'label': _('Event name')},
-        {'key': 'event_url', 'label': _('Event URL')},
-        {'key': 'event_start_date', 'label': _('Event start date')},
-        {'key': 'event_end_date', 'label': _('Event end date')},
+        {'key': 'event_name', 'label': _('Event name'), 'example': 'FOSSASIA Summit 2026'},
+        {'key': 'event_url', 'label': _('Event URL'), 'example': 'https://eventyay.com/event/fossasia-2026/'},
+        {'key': 'event_start_date', 'label': _('Event start date'), 'example': '2026-03-14'},
+        {'key': 'event_end_date', 'label': _('Event end date'), 'example': '2026-03-16'},
     ],
     'platform': [
-        {'key': 'platform_name', 'label': _('Platform name')},
-        {'key': 'platform_url', 'label': _('Platform URL')},
-        {'key': 'support_email', 'label': _('Support email')},
-        {'key': 'support_url', 'label': _('Support URL')},
+        {'key': 'platform_name', 'label': _('Platform name'), 'example': 'Eventyay'},
+        {'key': 'platform_url', 'label': _('Platform URL'), 'example': 'https://eventyay.com/'},
+        {'key': 'support_email', 'label': _('Support email'), 'example': 'support@eventyay.com'},
+        {'key': 'support_url', 'label': _('Support URL'), 'example': 'https://eventyay.com/support/'},
     ],
 }
 
@@ -469,7 +469,7 @@ class AdminMessageComposeView(AdministratorPermissionRequiredMixin, FormView):
         ctx['recipient_count'] = getattr(self, 'recipient_count', 0)
         ctx['placeholders'] = PLACEHOLDER_GROUPS
         draft = ctx['draft']
-        if draft and draft.recipient_count_snapshot:
+        if draft and draft.recipient_count_snapshot is not None:
             current, _skipped = resolve_admin_recipients(_extract_filter_dict(ctx['form'].initial))
             if len(current) != draft.recipient_count_snapshot:
                 ctx['recipient_count_changed'] = True
@@ -510,7 +510,7 @@ class AdminMessageComposeView(AdministratorPermissionRequiredMixin, FormView):
             mail = draft
             mail.recipient_group = cd['recipient_group']
             mail.subject = cd.get('subject', '')
-            mail.message = cd.get('message', '')
+            mail.message = _get_message_text(cd)
             mail.reply_to = cd.get('reply_to', '')
             mail.bcc = cd.get('bcc', '')
             mail.attachment = attachment.id if attachment else None
@@ -522,7 +522,7 @@ class AdminMessageComposeView(AdministratorPermissionRequiredMixin, FormView):
                 user=self.request.user,
                 recipient_group=cd['recipient_group'],
                 subject=cd.get('subject', ''),
-                message=cd.get('message', ''),
+                message=_get_message_text(cd),
                 reply_to=cd.get('reply_to', ''),
                 bcc=cd.get('bcc', ''),
                 attachment=attachment.id if attachment else None,
@@ -546,16 +546,16 @@ class AdminMessageComposeView(AdministratorPermissionRequiredMixin, FormView):
             ctx = self.get_context_data(form=form)
             ctx['confirm_high_count'] = True
             ctx['high_count'] = count
-            ctx['confirm_send_token'] = _audience_fingerprint(filters)
+            ctx['confirm_send_token'] = _audience_fingerprint(filters, count)
             return self.render_to_response(ctx)
 
         if count >= HIGH_RECIPIENT_THRESHOLD:
-            if self.request.POST.get('confirm_send') != _audience_fingerprint(filters):
+            if self.request.POST.get('confirm_send') != _audience_fingerprint(filters, count):
                 self.recipient_count = count
                 ctx = self.get_context_data(form=form)
                 ctx['confirm_high_count'] = True
                 ctx['high_count'] = count
-                ctx['confirm_send_token'] = _audience_fingerprint(filters)
+                ctx['confirm_send_token'] = _audience_fingerprint(filters, count)
                 return self.render_to_response(ctx)
 
         mail.recipient_count_snapshot = count
@@ -579,7 +579,6 @@ class AdminMessageComposeView(AdministratorPermissionRequiredMixin, FormView):
             }),
         )
 
-        from eventyay.control.tasks import send_admin_email
 
         send_immediately = cd.get('send_immediately', False)
         if send_immediately:
@@ -600,11 +599,10 @@ class AdminMessageComposeView(AdministratorPermissionRequiredMixin, FormView):
         return redirect('eventyay_admin:admin.messages.outbox')
 
     def _send_test_email(self, form, test_email: str):
-        from eventyay.common.mail import mail_send_task
 
         cd = form.cleaned_data
         subject = cd.get('subject', _('(No subject)'))
-        body = cd.get('message', '')
+        body = _get_message_text(cd)
 
         sample = dict(SAMPLE_CONTEXT)
         sample['email'] = test_email
@@ -642,7 +640,7 @@ class AdminMessageComposeView(AdministratorPermissionRequiredMixin, FormView):
 
     def _build_preview(self, cd: dict) -> dict:
         subject = cd.get('subject', '')
-        body = cd.get('message', '')
+        body = _get_message_text(cd)
         for key, value in SAMPLE_CONTEXT.items():
             subject = subject.replace('{' + key + '}', value)
             body = body.replace('{' + key + '}', value)
@@ -715,7 +713,7 @@ class AdminMessageTemplatesView(AdministratorPermissionRequiredMixin, TemplateVi
         return ctx
 
     def _get_platform_templates(self) -> list[dict]:
-        from eventyay.base.models.mail import MailTemplate, MailTemplateRoles
+
 
         templates = []
         for role_value, role_label in MailTemplateRoles.choices:
@@ -763,7 +761,6 @@ class AdminMessageTemplateDetailView(AdministratorPermissionRequiredMixin, Templ
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         role = self.kwargs.get('role', '')
-        from eventyay.base.models.mail import MailTemplate, MailTemplateRoles
 
         with scopes_disabled():
             template = MailTemplate.objects.filter(role=role).first()
@@ -782,7 +779,6 @@ class AdminMessageSendView(AdministratorPermissionRequiredMixin, View):
         elif mail.status == AdminEmailStatus.DRAFT:
             messages.warning(request, _('Drafts cannot be sent directly. Move to outbox first.'))
         else:
-            from eventyay.control.tasks import send_admin_email
             send_admin_email.apply_async(args=[mail.pk])
             messages.success(request, _('The email has been queued for sending.'))
 
@@ -831,6 +827,32 @@ class AdminMessageDuplicateView(AdministratorPermissionRequiredMixin, View):
         new_mail = mail.duplicate()
         messages.success(request, _('The email has been duplicated as a draft.'))
         return redirect(new_mail.get_edit_url())
+
+
+class AdminMessagePreviewView(StaffMemberRequiredMixin, View):
+    """AJAX endpoint — sanitises and renders admin email preview HTML."""
+
+    def post(self, request):
+        content_type = request.content_type or ''
+        if 'application/json' not in content_type:
+            logger.debug('AdminMessagePreviewView: unexpected content_type %r', content_type)
+            return JsonResponse({'html': AdminEmailQueue.make_html('')})
+
+        try:
+            payload = json.loads(request.body)
+        except (ValueError, UnicodeDecodeError):
+            return JsonResponse({'html': ''}, status=400)
+
+        raw_html = payload.get('html', '')
+        if not isinstance(raw_html, str):
+            return JsonResponse({'html': ''}, status=400)
+
+        safe_html = sanitize_email_html(raw_html)
+        preview_html = safe_html
+        for key, value in SAMPLE_CONTEXT.items():
+            preview_html = preview_html.replace('{' + key + '}', str(value))
+
+        return JsonResponse({'html': AdminEmailQueue.make_html(preview_html)})
 
 
 class AdminMessageRecipientsView(AdministratorPermissionRequiredMixin, View):
