@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0070_alter_voucher_budget_alter_voucher_value'),
+        ('base', '0071_global_plugin_config_classification'),
     ]
 
     operations = [
