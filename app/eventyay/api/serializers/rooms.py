@@ -6,6 +6,7 @@ from eventyay.base.models.event import Event
 from django.conf import settings
 from eventyay.consts import SizeKey
 from eventyay.base.models.room import Room, RoomLinkedSessionsSerializerMixin
+from eventyay.base.services.bbb import is_bbb_available
 
 
 class RoomSerializer(RoomLinkedSessionsSerializerMixin, I18nAwareModelSerializer):
@@ -22,8 +23,6 @@ class RoomSerializer(RoomLinkedSessionsSerializerMixin, I18nAwareModelSerializer
     )
 
     def validate_module_config(self, value):
-        from eventyay.base.services.bbb import is_bbb_available
-
         has_bbb = any(
             isinstance(m, dict) and m.get("type") == "call.bigbluebutton"
             for m in (value or [])

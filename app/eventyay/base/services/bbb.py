@@ -44,7 +44,10 @@ def is_bbb_available(event=None):
             qs = BBBServer.objects.filter(active=True, event_exclusive__isnull=True)
     else:
         qs = BBBServer.objects.filter(active=True)
-    return qs.exists()
+    try:
+        return qs.exists()
+    except Exception:
+        return False
 
 
 @database_sync_to_async
