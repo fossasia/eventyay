@@ -311,8 +311,6 @@ def get_event_config_for_user(event, user):
     pretalx_cfg = (cfg.get("pretalx") or {})
     pretalx_public = {k: pretalx_cfg.get(k) for k in ("url", "conftool") if k in pretalx_cfg}
 
-    from eventyay.base.services.bbb import is_bbb_available
-
     bbb_available = is_bbb_available(event)
     live_features_cfg = dict(cfg.get("live_features") or {})
     if not bbb_available:
@@ -438,8 +436,6 @@ async def create_room(event, data, creator):
     ]
 
     if any(m.get("type") == "call.bigbluebutton" for m in data.get("modules", [])):
-        from eventyay.base.services.bbb import is_bbb_available_async
-
         if not await is_bbb_available_async(event):
             raise ValidationError(
                 "BBB is currently deactivated by the admin.",
