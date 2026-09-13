@@ -203,7 +203,7 @@ def _default_context(request):
     ctx['show_organizer_area'] = False
     ctx['user_has_cfp_submissions'] = False
     ctx['talks_published'] = False
-    if request.user and request.user.is_authenticated and hasattr(request, 'event') and request.event:
+    if hasattr(request, 'user') and request.user and request.user.is_authenticated and hasattr(request, 'event') and request.event:
         ctx['show_organizer_area'] = is_event_organiser(request.user, request, request.event)
         ctx['talks_published'] = request.event.talks_published
         if ctx['talks_published']:

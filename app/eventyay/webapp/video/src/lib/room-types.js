@@ -6,7 +6,7 @@ const ROOM_TYPES = [{
 	name: 'Stage',
 	description: 'A stage allows you to present a live stream to your audience, optionally combined with chat and Q&A features.',
 	startingModule: 'livestream.native',
-	inferModules: ['livestream.native', 'livestream.youtube', 'livestream.iframe']
+	inferModules: ['livestream.native', 'livestream.youtube', 'livestream.vimeo', 'livestream.iframe']
 }, {
 	id: 'channel-bbb',
 	icon: 'webcam',
@@ -28,8 +28,7 @@ const ROOM_TYPES = [{
 	name: 'Video Channel (Zoom)',
 	description: 'This room type allows you to embed a Zoom meeting or webinar directly into eventyay.',
 	startingModule: 'call.zoom',
-	videoChannel: true,
-	behindFeatureFlag: 'zoom'
+	videoChannel: true
 }, {
 	id: 'channel-jitsi',
 	icon: 'webcam',
@@ -38,6 +37,14 @@ const ROOM_TYPES = [{
 	startingModule: 'call.jitsi',
 	videoChannel: true,
 	behindFeatureFlag: 'jitsi'
+}, {
+	id: 'channel-loungemesh',
+	icon: 'webcam',
+	name: 'Spatial Lounge (LoungeMesh)',
+	description: 'A spatial video lounge where attendees move freely around the room and talk to whoever is nearby, with shared notes and whiteboard.',
+	startingModule: 'call.loungemesh',
+	videoChannel: true,
+	sidebarGroup: 'networking'
 }, {
 	id: 'channel-text',
 	icon: 'pound',
@@ -70,7 +77,7 @@ export const CHAT_CHANNEL_TYPE_ID = 'channel-text'
 export function isChatChannel(roomOrConfig) {
 	const modules = roomOrConfig?.module_config || roomOrConfig?.modules || []
 	if (!Array.isArray(modules) || !modules.length) return false
-	return modules.some(m => m.type === 'chat.native') && !modules.some(m => ['livestream.native', 'livestream.youtube', 'call.bigbluebutton', 'call.janus', 'call.zoom', 'call.jitsi', 'networking.roulette', 'page.landing'].includes(m.type))
+	return modules.some(m => m.type === 'chat.native') && !modules.some(m => ['livestream.native', 'livestream.youtube', 'livestream.vimeo', 'call.bigbluebutton', 'call.janus', 'call.zoom', 'call.jitsi', 'call.loungemesh', 'networking.roulette', 'page.landing'].includes(m.type))
 }
 
 export function isChatManagedRoom(roomOrConfig) {
@@ -111,6 +118,10 @@ export function localizeRoomType(t, type) {
 		'channel-jitsi': {
 			name: t('Video Channel (Jitsi)'),
 			description: t('This room type allows you to connect with attendees through a Jitsi meeting.'),
+		},
+		'channel-loungemesh': {
+			name: t('Spatial Lounge (LoungeMesh)'),
+			description: t('A spatial video lounge where attendees move freely around the room and talk to whoever is nearby, with shared notes and whiteboard.'),
 		},
 		'channel-text': {
 			name: t('Chat Channel'),

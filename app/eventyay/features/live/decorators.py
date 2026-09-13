@@ -90,10 +90,15 @@ def room_action(
                 raise ConsumerException("room.unknown", "Unknown room ID")
 
             if module_required is not None:
+                reqs = (
+                    set(module_required)
+                    if isinstance(module_required, (list, tuple, set))
+                    else {module_required}
+                )
                 module_config = [
                     m.get("config", {})
                     for m in self.room.module_config
-                    if m["type"] == module_required
+                    if m.get("type") in reqs
                 ]
                 if module_config:
                     self.module_config = module_config[0]

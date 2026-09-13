@@ -1,6 +1,12 @@
 <template lang="pug">
 .c-room(v-if="room", :class="{'standalone-chat': modules['chat.native'] && room.modules.length === 1}")
-	.stage(v-if="modules['livestream.native'] || modules['livestream.youtube'] || modules['call.janus']")
+	.room-feature-disabled(v-if="roomIsDisabled")
+		.disabled-card
+			i.mdi.mdi-alert-circle-outline(aria-hidden="true")
+			h2 {{ $t('Feature No Longer Available') }}
+			p.disabled-message {{ roomDisabledReason }}
+			router-link.btn-back-dashboard(:to="{name: 'home'}") {{ $t('Back to Dashboard') }}
+	.stage(v-else-if="modules['livestream.native'] || modules['livestream.youtube'] || modules['livestream.vimeo']")
 		media-source-placeholder
 		LiveCaptions(v-if="ccEnabled", :ws-url="selectedCcWsUrl")
 		reactions-overlay(v-if="hasLivestream")
@@ -17,12 +23,13 @@
 					i.mdi.mdi-translate
 					AudioTranslationDropdown(:key="`${room.id}-cc`", :languages="pluginLanguages", :selected-language="selectedCcLanguage", :label="$t('Caption Language')", @languageChanged="handleCcLanguageChange")
 			reactions-bar(:expanded="true", @expand="activeStageTool = 'reaction'")
-	media-source-placeholder(v-else-if="modules['call.bigbluebutton'] || modules['call.zoom'] || modules['call.jitsi']")
+	.stage(v-else-if="modules['call.janus'] || modules['call.bigbluebutton'] || modules['call.zoom'] || modules['call.jitsi'] || modules['call.loungemesh']")
+		media-source-placeholder
 	roulette(v-else-if="modules['networking.roulette'] && $features.enabled('roulette')", :module="modules['networking.roulette']", :room="room")
 	landing-page(v-else-if="modules['page.landing']", :module="modules['page.landing']")
 	markdown-page(v-else-if="modules['page.markdown']", :module="modules['page.markdown']")
-	chat(v-if="room.modules.length === 1 && modules['chat.native']", :room="room", :module="modules['chat.native']", mode="standalone", :key="room.id")
-	.room-sidebar(v-else-if="modules['chat.native'] || modules['question'] || modules['poll']", :class="unreadTabsClasses", role="complementary")
+	chat(v-else-if="room.modules.length === 1 && modules['chat.native']", :room="room", :module="modules['chat.native']", mode="standalone", :key="room.id")
+	.room-sidebar(v-if="hasSidebar", :class="unreadTabsClasses", role="complementary")
 		bunt-tabs(v-if="(!!modules['question'] + !!modules['poll'] + !!modules['chat.native']) > 1 && activeSidebarTab", :active-tab="activeSidebarTab")
 			bunt-tab(v-if="modules['chat.native']", id="chat", :header="$t('Chat')", @selected="activeSidebarTab = 'chat'")
 			bunt-tab(v-if="modules['question']", id="questions", :header="$t('Questions')", @selected="activeSidebarTab = 'questions'")
@@ -50,6 +57,8 @@ import UpcomingStreamCountdown from 'components/UpcomingStreamCountdown'
 import { normalizeAudioTranslationSource } from 'lib/validators'
 import { pluginLanguageStreams, roomUsesPluginLanguageStreams } from '../../interpretation-streams'
 import { interpretationApiUrl, interpretationAuthHeaders } from 'lib/interpretation-api'
+import { hasOrganizerTraits } from 'lib/traitGrants'
+import { hasEmbeddedSuite, isRoomVisibleToAttendee } from 'lib/video-providers'
 
 export default {
 	name: 'Room',
@@ -73,7 +82,7 @@ export default {
 	},
 	data() {
 		return {
-			activeSidebarTab: null, // chat, questions, polls
+			localActiveSidebarTab: null,
 			unreadTabs: {
 				chat: false,
 				questions: false,
@@ -89,6 +98,55 @@ export default {
 		}
 	},
 	computed: {
+		activeSidebarTab: {
+			get() {
+				return this.$store.state.activeRoomSidebarTab || this.localActiveSidebarTab || (this.modules['chat.native'] ? 'chat' : this.modules.question ? 'questions' : this.modules.poll ? 'polls' : null)
+			},
+			set(tab) {
+				this.localActiveSidebarTab = tab
+				this.$store.commit('setActiveRoomSidebarTab', tab)
+			}
+		},
+		rooms() {
+			return this.$store.state.rooms
+		},
+		roomIsDisabled() {
+			if (!this.room) return false
+			if (this.room.is_disabled) return true
+			if (this.hasOrganiserPermissions) return false
+			return !isRoomVisibleToAttendee(this.room, this.$store.state.world?.video_providers)
+		},
+		roomDisabledReason() {
+			return this.room?.disabled_reason || this.$t('This feature is no longer available. Please contact system administrator.')
+		},
+		hasOrganiserPermissions() {
+			if (!window.eventyay?.isOrganizerArea) return false
+			if (window.eventyay?.hasOrganiserPermissions) return true
+			const tokenTraits = this.$store.state.user?.traits || []
+			return (
+				hasOrganizerTraits(tokenTraits) ||
+				this.hasPermission('world:users.list') ||
+				this.hasPermission('world:update') ||
+				this.hasPermission('room:update')
+			)
+		},
+		hasEmbeddedCallSuite() {
+			return hasEmbeddedSuite(this.modules)
+		},
+		hasSidebar() {
+			if (this.roomIsDisabled) return false
+			// Video conference suites (BigBlueButton, Jitsi, Zoom) have their own native in-frame
+			// options for chats, polls, questions, etc.; do not show platform native sidebar for them.
+			// Janus WebRTC uses native platform chat and displays the sidebar when chat.native is attached.
+			if (this.hasEmbeddedCallSuite) return false
+			if (this.room?.modules?.length === 1 && this.modules['chat.native']) return false
+			if (this.$store.state.roomSidebarCollapsedByRoom?.[this.room?.id]) return false
+			return Boolean(
+				this.modules['chat.native'] ||
+				this.modules['question'] ||
+				this.modules['poll']
+			)
+		},
 		currentInterpretation() {
 			if (!this.room?.id) return null
 			return this.$store.state.interpretationStreamsByRoom?.[this.room.id] || this.$store.state.youtubeTranslationsByRoom?.[this.room.id] || null
@@ -110,7 +168,8 @@ export default {
 		usesStreamPolling() {
 			return Boolean(
 				this.modules['livestream.native'] ||
-				this.modules['livestream.youtube']
+				this.modules['livestream.youtube'] ||
+				this.modules['livestream.vimeo']
 			)
 		},
 		unreadTabsClasses() {
@@ -119,7 +178,8 @@ export default {
 		hasLivestream() {
 			return Boolean(
 				this.modules['livestream.native'] ||
-				this.modules['livestream.youtube']
+				this.modules['livestream.youtube'] ||
+				this.modules['livestream.vimeo']
 			)
 		},
 
@@ -141,6 +201,13 @@ export default {
 					}
 				}
 				this.initializeLanguages()
+				this.checkDirectAccess()
+			},
+			immediate: true
+		},
+		rooms: {
+			handler() {
+				this.checkDirectAccess()
 			},
 			immediate: true
 		},
@@ -175,6 +242,9 @@ export default {
 			this.$store.dispatch('startStreamPolling', this.room.id)
 		}
 	},
+	mounted() {
+		this.checkDirectAccess()
+	},
 	beforeUnmount() {
 		this.$store.dispatch('stopStreamPolling')
 	},
@@ -199,6 +269,15 @@ export default {
 			} catch (err) {
 				if (this.room?.id === currentRoomId) {
 					console.error('Failed to fetch listener token', err);
+				}
+			}
+		},
+		checkDirectAccess() {
+			if (!this.rooms) return
+			if (!this.hasOrganiserPermissions) {
+				const roomId = this.roomId || this.$route.params.roomId
+				if (roomId && (!this.room || this.roomIsDisabled)) {
+					this.$router.replace({ name: 'about' })
 				}
 			}
 		},
@@ -273,13 +352,17 @@ export default {
 	display: flex
 	min-height: 0
 	min-width: 0
+	max-width: 100%
+	overflow: hidden
 	.stage
-		flex: auto
 		display: flex
 		flex-direction: column
-		position: relative
 		min-height: 0
+		min-width: 0
+		max-width: 100%
+		flex: auto
 		overflow: hidden
+		position: relative
 		+below('m')
 			height: auto
 	.c-media-source-placeholder
@@ -392,4 +475,56 @@ export default {
 				flex: auto
 				width: 100%
 				min-height: 0
+	.room-feature-disabled
+		display: flex
+		flex-direction: column
+		align-items: center
+		justify-content: center
+		width: 100%
+		height: 100%
+		min-height: 60vh
+		padding: 32px
+		background-color: $clr-grey-50
+		flex: auto
+
+		.disabled-card
+			max-width: 520px
+			text-align: center
+			padding: 40px 32px
+			background-color: $clr-white
+			border: 1px solid $clr-grey-200
+			border-radius: 8px
+			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05)
+
+			i.mdi
+				font-size: 56px
+				color: #d9534f
+				margin-bottom: 16px
+				display: block
+
+			h2
+				font-size: 22px
+				font-weight: 600
+				color: $clr-grey-900
+				margin: 0 0 12px
+
+			.disabled-message
+				font-size: 15px
+				line-height: 1.5
+				color: $clr-grey-700
+				margin: 0 0 24px
+
+			.btn-back-dashboard
+				display: inline-block
+				padding: 9px 22px
+				background-color: #337ab7
+				color: #ffffff
+				border-radius: 4px
+				font-size: 14px
+				font-weight: 500
+				text-decoration: none
+				transition: background-color 0.15s ease
+				&:hover
+					background-color: #286090
+					text-decoration: none
 </style>

@@ -5,10 +5,12 @@
 const MEDIA_MODULE_TYPES = new Set([
 	'livestream.native',
 	'livestream.youtube',
+	'livestream.vimeo',
 	'call.bigbluebutton',
 	'call.janus',
 	'call.zoom',
 	'call.jitsi',
+	'call.loungemesh',
 	'networking.roulette',
 	'page.landing',
 ])
