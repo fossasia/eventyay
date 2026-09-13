@@ -212,13 +212,13 @@ export default {
 				? inferType({ module_config: room.module_config })
 				: inferRoomType(room)
 			if (inferred?.name) return this.$localize(inferred.name)
-			if (room.modules?.some(m => ['livestream.native', 'livestream.youtube'].includes(m.type))) return this.$t('Stage')
+			if (room.modules?.some(m => ['livestream.native', 'livestream.youtube', 'livestream.vimeo'].includes(m.type))) return this.$t('Stage')
 			if (room.modules?.some(m => m.type.startsWith('call.'))) return this.$t('Video Call')
 			if (room.modules?.some(m => m.type === 'chat.native')) return this.$t('Text Channel')
 			return this.$t('Room')
 		},
 		getRoomIcon(room) {
-			if (room.modules?.some(m => ['livestream.native', 'livestream.youtube'].includes(m.type))) return 'mdi-video-vintage'
+			if (room.modules?.some(m => ['livestream.native', 'livestream.youtube', 'livestream.vimeo'].includes(m.type))) return 'mdi-video-vintage'
 			if (room.modules?.some(m => m.type.startsWith('call.'))) return 'mdi-video'
 			if (room.modules?.some(m => m.type === 'chat.native')) return 'mdi-chat-outline'
 			return 'mdi-door-open'

@@ -56,8 +56,8 @@ import Notifications from 'components/notifications'
 import GreetingPrompt from 'components/profile/GreetingPrompt'
 import { isRoomVisibleToAttendee } from 'lib/video-providers'
 
-const mediaModules = ['livestream.native', 'livestream.youtube', 'call.bigbluebutton', 'call.janus', 'call.zoom', 'call.jitsi', 'call.loungemesh']
-const stageToolModules = ['livestream.native', 'livestream.youtube', 'call.janus']
+const mediaModules = ['livestream.native', 'livestream.youtube', 'livestream.vimeo', 'call.bigbluebutton', 'call.janus', 'call.zoom', 'call.jitsi', 'call.loungemesh']
+const stageToolModules = ['livestream.native', 'livestream.youtube', 'livestream.vimeo', 'call.janus']
 const chatbarModules = ['chat.native', 'question', 'poll']
 
 export default {

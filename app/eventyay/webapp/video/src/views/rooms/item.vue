@@ -6,7 +6,7 @@
 			h2 {{ $t('Feature No Longer Available') }}
 			p.disabled-message {{ roomDisabledReason }}
 			router-link.btn-back-dashboard(:to="{name: 'home'}") {{ $t('Back to Dashboard') }}
-	.stage(v-else-if="modules['livestream.native'] || modules['livestream.youtube']")
+	.stage(v-else-if="modules['livestream.native'] || modules['livestream.youtube'] || modules['livestream.vimeo']")
 		media-source-placeholder
 		LiveCaptions(v-if="ccEnabled", :ws-url="selectedCcWsUrl")
 		reactions-overlay(v-if="hasLivestream")
@@ -168,7 +168,8 @@ export default {
 		usesStreamPolling() {
 			return Boolean(
 				this.modules['livestream.native'] ||
-				this.modules['livestream.youtube']
+				this.modules['livestream.youtube'] ||
+				this.modules['livestream.vimeo']
 			)
 		},
 		unreadTabsClasses() {
@@ -177,7 +178,8 @@ export default {
 		hasLivestream() {
 			return Boolean(
 				this.modules['livestream.native'] ||
-				this.modules['livestream.youtube']
+				this.modules['livestream.youtube'] ||
+				this.modules['livestream.vimeo']
 			)
 		},
 

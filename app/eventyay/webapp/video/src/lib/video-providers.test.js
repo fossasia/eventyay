@@ -29,7 +29,7 @@ function features(enabledFlags) {
 test('dropdown labels match the organiser create options', () => {
 	assert.deepEqual(
 		VIDEO_CREATE_PROVIDERS.map(provider => provider.label),
-		['Stream (YT, HLS)', 'BBB', 'Zoom', 'Jitsi', 'Janus', 'LoungeMesh']
+		['Stream (YT, Vimeo, HLS)', 'BBB', 'Zoom', 'Jitsi', 'Janus', 'LoungeMesh']
 	)
 })
 

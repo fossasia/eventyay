@@ -41,6 +41,7 @@ import {
 	STREAM_TYPE_VIMEO,
 	STREAM_TYPE_YOUTUBE,
 } from 'lib/stage-streams';
+import { getVimeoEmbedUrl, parseVimeoUrl } from 'lib/vimeo';
 import { isRoomVisibleToAttendee } from 'lib/video-providers';
 
 
@@ -95,6 +96,7 @@ const module = computed(() => {
 		[
 			'livestream.native',
 			'livestream.youtube',
+			'livestream.vimeo',
 			'call.bigbluebutton',
 			'call.janus',
 			'call.zoom',
@@ -115,6 +117,7 @@ const isLivestreamModule = computed(() => {
 	return [
 		'livestream.native',
 		'livestream.youtube',
+		'livestream.vimeo',
 	].includes(module.value?.type);
 });
 
@@ -162,7 +165,7 @@ const iframeOffline = computed(() => {
 	const streamType = currentStream?.stream_type;
 	const moduleType = module.value.type;
 	const isYouTube = streamType === STREAM_TYPE_YOUTUBE || moduleType === 'livestream.youtube';
-	const isVimeo = streamType === STREAM_TYPE_VIMEO;
+	const isVimeo = streamType === STREAM_TYPE_VIMEO || moduleType === 'livestream.vimeo';
 
 	if (!isYouTube && !isVimeo) return false;
 
@@ -176,10 +179,15 @@ const iframeOffline = computed(() => {
 		return true;
 	}
 
-	if (scheduleUrl) return false;
-	if (isScheduleDriven) return true;
-	const moduleUrl = module.value.config?.url || null;
-	return !moduleUrl;
+	if (isVimeo) {
+		if (scheduleUrl && parseVimeoUrl(scheduleUrl)) return false;
+		if (isScheduleDriven) return true;
+		const vimeoUrl = module.value.config?.url || null;
+		if (vimeoUrl && parseVimeoUrl(vimeoUrl)) return false;
+		return true;
+	}
+
+	return false;
 });
 
 const inRoomManager = computed(() => route.name === 'room:manage');
@@ -342,7 +350,9 @@ async function applyInterpretation(interpConfig) {
 			if (updateToken !== interpretationUpdateToken) return;
 			const streamType = isScheduleDrivenStage.value ? props.room?.currentStream?.stream_type : null;
 			const isYouTube = streamType === STREAM_TYPE_YOUTUBE || module.value?.type === 'livestream.youtube';
+			const isVimeo = streamType === STREAM_TYPE_VIMEO || module.value?.type === 'livestream.vimeo';
 			if (isYouTube && getYoutubeConfig().startMuted) return;
+			if (isVimeo && getVimeoConfig().startMuted) return;
 			unmuteMainPlayer();
 		}, 100);
 	}
@@ -374,6 +384,7 @@ function hasAudioOnlyInterpretation() {
 
 function muteMainPlayer() {
 	muteYouTubePlayer();
+	muteVimeoPlayer();
 	const videoEl = livestream.value?.$refs?.video || livestream.value?.$el?.querySelector?.('video');
 	if (videoEl) {
 		videoEl.muted = true;
@@ -382,10 +393,83 @@ function muteMainPlayer() {
 
 function unmuteMainPlayer() {
 	unmuteYouTubePlayer();
+	unmuteVimeoPlayer();
 	const videoEl = livestream.value?.$refs?.video || livestream.value?.$el?.querySelector?.('video');
 	if (videoEl) {
 		videoEl.muted = false;
 	}
+}
+
+function muteVimeoPlayer() {
+	if (!iframeEl.value || !iframeEl.value.contentWindow) return;
+	try {
+		subscribeToVimeoPlayerEvents();
+		iframeEl.value.contentWindow.postMessage(
+			JSON.stringify({ method: 'setMuted', value: true }),
+			'*'
+		);
+		iframeEl.value.contentWindow.postMessage(
+			JSON.stringify({ method: 'setVolume', value: 0 }),
+			'*'
+		);
+	} catch (error) {
+		console.warn('Failed to mute embedded Vimeo player', {
+			roomId: props.room?.id,
+			error,
+		});
+	}
+}
+
+function unmuteVimeoPlayer() {
+	if (!iframeEl.value || !iframeEl.value.contentWindow) return;
+	try {
+		subscribeToVimeoPlayerEvents();
+		iframeEl.value.contentWindow.postMessage(
+			JSON.stringify({ method: 'setMuted', value: false }),
+			'*'
+		);
+		iframeEl.value.contentWindow.postMessage(
+			JSON.stringify({ method: 'setVolume', value: 1 }),
+			'*'
+		);
+	} catch (error) {
+		console.warn('Failed to unmute embedded Vimeo player', {
+			roomId: props.room?.id,
+			error,
+		});
+	}
+}
+
+function subscribeToVimeoPlayerEvents() {
+	if (!iframeEl.value?.contentWindow) return;
+	try {
+		iframeEl.value.contentWindow.postMessage(
+			JSON.stringify({ method: 'addEventListener', value: 'play' }),
+			'*'
+		);
+		iframeEl.value.contentWindow.postMessage(
+			JSON.stringify({ method: 'addEventListener', value: 'pause' }),
+			'*'
+		);
+		iframeEl.value.contentWindow.postMessage(
+			JSON.stringify({ method: 'addEventListener', value: 'ended' }),
+			'*'
+		);
+	} catch (error) {
+		console.warn('Failed to subscribe to embedded Vimeo player events', {
+			roomId: props.room?.id,
+			error,
+		});
+	}
+}
+
+function getVimeoConfig() {
+	const streamType = isScheduleDrivenStage.value ? props.room?.currentStream?.stream_type : null;
+	const currentStream = streamType === STREAM_TYPE_VIMEO ? props.room?.currentStream : null;
+	return {
+		...(currentStream?.config || {}),
+		...(module.value?.config || {}),
+	};
 }
 
 function muteYouTubePlayer() {
@@ -529,6 +613,20 @@ function onWindowMessage(event) {
 		return;
 	}
 
+	// Vimeo player events
+	if (data.event === 'ready') {
+		subscribeToVimeoPlayerEvents();
+		return;
+	}
+	if (data.event === 'play') {
+		onMainPlayerPlaybackChanged(true);
+		return;
+	}
+	if (data.event === 'pause' || data.event === 'ended') {
+		onMainPlayerPlaybackChanged(false);
+		return;
+	}
+
 	let playerState = null;
 	if (data.event === 'onStateChange' && typeof data.info === 'number') {
 		playerState = data.info;
@@ -577,6 +675,7 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 		let iframeUrl;
 		let hideIfBackground = false;
 		let isYouTube = false;
+		let isVimeo = false;
 		let jitsiConfig = null;
 		const isScheduleDriven = isScheduleDrivenStage.value;
 		const currentStream = isScheduleDriven ? props.room?.currentStream : null;
@@ -603,15 +702,32 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 				break;
 			}
 			case 'livestream.vimeo': {
-				const vimeoUrl = currentStream?.url || module.value.config?.url;
-				if (vimeoUrl) {
-					const vimeoMatch = vimeoUrl.match(/vimeo\.com\/(?:.*\/)?(\d+)/);
-					if (vimeoMatch) {
-						iframeUrl = `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=${autoplay.value ? '1' : '0'}&muted=${mute ? '1' : '0'}`;
-					} else {
-						iframeUrl = vimeoUrl;
-					}
+				isVimeo = true;
+				let vimeoUrl = null;
+				if (streamType === STREAM_TYPE_VIMEO && currentStream?.url) {
+					vimeoUrl = currentStream.url;
+				} else if (!isScheduleDriven && module.value.type === 'livestream.vimeo' && module.value.config?.url) {
+					vimeoUrl = module.value.config.url;
 				}
+				if (!vimeoUrl || !parseVimeoUrl(vimeoUrl)) {
+					iframeError.value = new Error('Invalid Vimeo URL');
+					break;
+				}
+				const config = getVimeoConfig();
+				const shouldStartMuted = Boolean(
+					mute || config.startMuted || hasAudioOnlyInterpretation()
+				);
+				const shouldAutoplay = Boolean(autoplay.value);
+				iframeUrl = getVimeoEmbedUrl(vimeoUrl, {
+					autoplay: shouldAutoplay,
+					startMuted: shouldStartMuted,
+					loop: Boolean(config.loop),
+					hideControls: Boolean(config.hideControls),
+					disableKb: Boolean(config.disableKb),
+					dnt: Boolean(config.dnt || config.enablePrivacyEnhancedMode),
+					showInfo: Boolean(config.showInfo),
+					password: config.password || '',
+				});
 				break;
 			}
 			case 'livestream.youtube': {
@@ -701,6 +817,8 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 		if (isYouTube) {
 			iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
 			iframe.id = `youtube-player-${Date.now()}`;
+		} else if (isVimeo) {
+			iframe.id = `vimeo-player-${Date.now()}`;
 		}
 		const container = document.querySelector('#media-source-iframes');
 		if (!container) return;
@@ -711,6 +829,10 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 		if (isYouTube) {
 			iframe.onload = () => {
 				subscribeToYouTubePlayerEvents();
+			};
+		} else if (isVimeo) {
+			iframe.onload = () => {
+				subscribeToVimeoPlayerEvents();
 			};
 		}
 	} catch (error) {

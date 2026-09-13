@@ -318,7 +318,7 @@ export default {
 					rooms.networking.push(room)
 				} else if (room.modules.some(module => VIDEO_CHANNEL_MODULE_TYPES.has(module.type))) {
 					rooms.videoChat.push(room)
-				} else if (room.modules.some(module => ['livestream.native', 'livestream.youtube'].includes(module.type))) {
+				} else if (room.modules.some(module => ['livestream.native', 'livestream.youtube', 'livestream.vimeo'].includes(module.type))) {
 					let session
 					if (this.$features?.enabled?.('schedule-control')) {
 						session = this.currentSessionPerRoom?.[room.id]?.session

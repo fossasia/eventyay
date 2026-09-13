@@ -4,11 +4,11 @@ export const VIDEO_CREATE_PROVIDERS = [
 	{
 		id: 'stream',
 		roomTypeId: 'stage',
-		label: 'Stream (YT, HLS)',
+		label: 'Stream (YT, Vimeo, HLS)',
 		roomKind: 'Stage',
 		shortLabel: 'Stream',
 		icon: 'theater',
-		description: 'Present a live HLS or YouTube stream, optionally with chat and Q&A.',
+		description: 'Present a live HLS, YouTube, or Vimeo stream, optionally with chat and Q&A.',
 		featureFlag: null
 	},
 	{

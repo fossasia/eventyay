@@ -247,6 +247,7 @@ _UNSET = object()
 _MEDIA_MODULE_TYPES = frozenset({
     'livestream.native',
     'livestream.youtube',
+    'livestream.vimeo',
     'call.bigbluebutton',
     'call.janus',
     'call.zoom',
@@ -514,6 +515,7 @@ async def create_room(event, data, creator):
     livestream_types = {
         "livestream.native",
         "livestream.youtube",
+        "livestream.vimeo",
     }
     livestream_modules = [
         m for m in data.get("modules", []) if m.get("type") in livestream_types
@@ -578,6 +580,20 @@ async def create_room(event, data, creator):
                 ):
                     if config.get(key):
                         clean_config[key] = True
+            elif module["type"] == "livestream.vimeo":
+                clean_config["url"] = config.get("url", "")
+                for key in (
+                    "startMuted",
+                    "dnt",
+                    "loop",
+                    "hideControls",
+                    "disableKb",
+                    "showInfo",
+                ):
+                    if config.get(key):
+                        clean_config[key] = True
+                if config.get("password"):
+                    clean_config["password"] = str(config["password"]).strip()
         module["config"] = clean_config
 
         if "chat.native" in types:

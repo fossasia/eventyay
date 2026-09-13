@@ -35,10 +35,12 @@ const PLAYBACK_MODES = new Set([PLAYBACK_MODE_ALWAYS_ON, PLAYBACK_MODE_SCHEDULE_
 const STAGE_MODULE_TYPES = new Set([
 	'livestream.native',
 	'livestream.youtube',
+	'livestream.vimeo',
 ])
 
 export const STREAM_SOURCE_OPTIONS = [
 	{ id: STREAM_TYPE_YOUTUBE, label: 'YouTube', module: 'livestream.youtube', icon: 'youtube' },
+	{ id: STREAM_TYPE_VIMEO, label: 'Vimeo', module: 'livestream.vimeo', icon: 'vimeo' },
 	{ id: STREAM_TYPE_HLS, label: 'HLS', module: 'livestream.native', icon: 'video-outline' },
 ]
 
@@ -49,7 +51,7 @@ export function getStagePlaybackMode(module) {
 	const config = module.config || {}
 	if (PLAYBACK_MODES.has(config.playback_mode)) return config.playback_mode
 
-	const hasDefaultStreamSource = ['hls_url', 'ytid'].some(key =>
+	const hasDefaultStreamSource = ['hls_url', 'ytid', 'url'].some(key =>
 		Object.prototype.hasOwnProperty.call(config, key)
 	)
 	if (hasDefaultStreamSource) return PLAYBACK_MODE_ALWAYS_ON

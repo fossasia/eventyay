@@ -6,7 +6,7 @@ const ROOM_TYPES = [{
 	name: 'Stage',
 	description: 'A stage allows you to present a live stream to your audience, optionally combined with chat and Q&A features.',
 	startingModule: 'livestream.native',
-	inferModules: ['livestream.native', 'livestream.youtube', 'livestream.iframe']
+	inferModules: ['livestream.native', 'livestream.youtube', 'livestream.vimeo', 'livestream.iframe']
 }, {
 	id: 'channel-bbb',
 	icon: 'webcam',
@@ -77,7 +77,7 @@ export const CHAT_CHANNEL_TYPE_ID = 'channel-text'
 export function isChatChannel(roomOrConfig) {
 	const modules = roomOrConfig?.module_config || roomOrConfig?.modules || []
 	if (!Array.isArray(modules) || !modules.length) return false
-	return modules.some(m => m.type === 'chat.native') && !modules.some(m => ['livestream.native', 'livestream.youtube', 'call.bigbluebutton', 'call.janus', 'call.zoom', 'call.jitsi', 'call.loungemesh', 'networking.roulette', 'page.landing'].includes(m.type))
+	return modules.some(m => m.type === 'chat.native') && !modules.some(m => ['livestream.native', 'livestream.youtube', 'livestream.vimeo', 'call.bigbluebutton', 'call.janus', 'call.zoom', 'call.jitsi', 'call.loungemesh', 'networking.roulette', 'page.landing'].includes(m.type))
 }
 
 export function isChatManagedRoom(roomOrConfig) {

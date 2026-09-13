@@ -290,6 +290,7 @@ export default {
 			const videoModuleTypes = [
 				'livestream.native',
 				'livestream.youtube',
+				'livestream.vimeo',
 				'call.bigbluebutton',
 				'call.zoom',
 				'call.janus',
