@@ -45,6 +45,14 @@ class ConsentProvider(models.TextChoices):
     EXTERNAL = 'external', _('External CMP script')
 
 
+class DPAStatus(models.TextChoices):
+    """Whether a data processing agreement is in place with the provider."""
+
+    NOT_REQUIRED = 'not_required', _('Not required')
+    PENDING = 'pending', _('Pending')
+    SIGNED = 'signed', _('Signed')
+
+
 class ThirdPartyService(models.Model):
     """
     Admin-managed registry of third-party services and the consent category
@@ -81,6 +89,23 @@ class ThirdPartyService(models.Model):
         blank=True,
         verbose_name=_('Cookie names'),
         help_text=_('One cookie name per line.'),
+    )
+    data_processed = models.TextField(
+        blank=True,
+        verbose_name=_('Data processed'),
+        help_text=_('What personal data the service receives, e.g. IP address, email address.'),
+    )
+    region = models.CharField(
+        max_length=200,
+        blank=True,
+        verbose_name=_('Country / region'),
+        help_text=_('Where the provider processes the data.'),
+    )
+    dpa_status = models.CharField(
+        max_length=20,
+        choices=DPAStatus.choices,
+        default=DPAStatus.NOT_REQUIRED,
+        verbose_name=_('DPA status'),
     )
 
     class Meta:

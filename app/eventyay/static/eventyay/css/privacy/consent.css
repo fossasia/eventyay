@@ -1,0 +1,7 @@
+/* Klaro stacks its banner and modal at z-index 1000, which puts them behind
+   page elements such as the start page card (1030). Consent has to stay on top
+   of everything, including Bootstrap modals (1050). */
+.klaro .cookie-notice:not(.cookie-modal-notice),
+.klaro .cookie-modal {
+    z-index: 1060;
+}

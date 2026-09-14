@@ -1,3 +1,5 @@
+from urllib.parse import urlsplit
+
 from django import template
 from django.utils.html import json_script
 
@@ -13,6 +15,17 @@ from eventyay.base.settings import GlobalSettingsObject
 register = template.Library()
 
 CONFIG_ELEMENT_ID = 'klaro-config'
+
+
+def _url_with_scheme(value, schemes):
+    """
+    Return ``value`` only if it uses one of ``schemes``, otherwise ``''``.
+
+    The settings form already validates these URLs, but values stored before
+    that validation existed, or written from the shell, never pass through it.
+    """
+    value = (value or '').strip()
+    return value if urlsplit(value).scheme.lower() in schemes else ''
 
 
 def build_consent_config():
@@ -36,8 +49,8 @@ def build_consent_config():
         'elementID': 'klaro',
         'storageMethod': 'cookie',
         'cookieName': 'eventyay_consent',
-        'privacyPolicy': settings.get('privacy_policy_url') or '',
-        'cookiePolicy': settings.get('privacy_cookie_policy_url') or '',
+        'privacyPolicy': _url_with_scheme(settings.get('privacy_policy_url'), ('http', 'https')),
+        'cookiePolicy': _url_with_scheme(settings.get('privacy_cookie_policy_url'), ('http', 'https')),
         # Opt-in: nothing optional runs until the visitor accepts it.
         'default': False,
         'mustConsent': False,
@@ -79,7 +92,8 @@ def external_cmp_script():
     gs = GlobalSettingsObject()
     if (gs.settings.get('privacy_consent_provider') or '') != ConsentProvider.EXTERNAL:
         return ''
-    return gs.settings.get('privacy_cmp_script_url') or ''
+    # An http:// script is blocked on https:// pages, so never emit one.
+    return _url_with_scheme(gs.settings.get('privacy_cmp_script_url'), ('https',))
 
 
 @register.inclusion_tag('eventyay/privacy/embed_placeholder.html')
@@ -87,12 +101,13 @@ def consent_embed(service, src, title=''):
     """
     Render a third-party embed behind contextual consent.
 
-    Only the built-in banner can unblock a placeholder, because
-    ``revealConsentedEmbeds`` ships with the Klaro bootstrap. Under the other
-    providers the embed is rendered directly instead: with consent disabled
-    there is nothing to gate on, and an external CMP does its own blocking of
-    third-party frames. Emitting a placeholder in those modes would leave the
-    content permanently unreachable.
+    Whenever a consent layer is active the frame URL is only emitted as
+    ``data-consent-src``, never as an iframe ``src``, so the browser contacts
+    the third party only after consent. An external CMP loads asynchronously
+    and cannot reliably stop a frame that is already navigating. The built-in
+    banner reveals the frame through ``consent.js``, an external CMP through
+    the ``consent-external.js`` bridge. With consent disabled there is nothing
+    to gate on, so the frame is rendered directly.
     """
     gs = GlobalSettingsObject()
     provider = gs.settings.get('privacy_consent_provider') or ConsentProvider.DISABLED
@@ -100,5 +115,6 @@ def consent_embed(service, src, title=''):
         'service': service,
         'src': src,
         'title': title,
-        'blocked': provider == ConsentProvider.KLARO,
+        'blocked': provider in (ConsentProvider.KLARO, ConsentProvider.EXTERNAL),
+        'external': provider == ConsentProvider.EXTERNAL,
     }

@@ -6,6 +6,8 @@
  * script tag rather than an inline script, which keeps the page free of inline
  * JavaScript and compatible with a strict CSP.
  */
+import { syncConsentedEmbeds } from './embeds.js';
+
 const configElement = document.getElementById('klaro-config');
 const klaro = window.klaro;
 
@@ -25,41 +27,10 @@ if (configElement && klaro) {
         });
     });
 
-    // Contextual consent: the wrapper stays in the DOM for the life of the page
-    // so that accepting a category builds the embed and withdrawing it again
-    // tears the embed back down.
+    // Contextual consent for embeds; see embeds.js.
     const manager = klaro.getManager(config);
+    const syncEmbeds = () => syncConsentedEmbeds((service) => manager.getConsent(service));
 
-    const buildEmbed = (wrapper) => {
-        const iframe = document.createElement('iframe');
-        iframe.src = wrapper.dataset.consentSrc;
-        iframe.title = wrapper.dataset.consentTitle || '';
-        iframe.loading = 'lazy';
-        iframe.allowFullscreen = true;
-        return iframe;
-    };
-
-    const syncConsentedEmbeds = () => {
-        document.querySelectorAll('[data-consent-embed]').forEach((wrapper) => {
-            const placeholder = wrapper.querySelector('[data-consent-placeholder]');
-            const iframe = wrapper.querySelector('iframe');
-            const consented = manager.getConsent(wrapper.dataset.consentEmbed);
-
-            if (consented && !iframe) {
-                wrapper.appendChild(buildEmbed(wrapper));
-                if (placeholder) {
-                    placeholder.hidden = true;
-                }
-            } else if (!consented && iframe) {
-                // Withdrawal: drop the frame so the third party stops loading.
-                iframe.remove();
-                if (placeholder) {
-                    placeholder.hidden = false;
-                }
-            }
-        });
-    };
-
-    manager.watch({ update: syncConsentedEmbeds });
-    syncConsentedEmbeds();
+    manager.watch({ update: syncEmbeds });
+    syncEmbeds();
 }

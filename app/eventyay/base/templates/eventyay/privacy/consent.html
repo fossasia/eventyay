@@ -7,9 +7,11 @@
 {% if klaro_config %}
     {# Config travels as an escaped JSON script element, so no inline script is needed. #}
     {{ klaro_config }}
+    <link rel="stylesheet" href="{% static 'eventyay/css/privacy/consent.css' %}">
     <script src="{% static 'klaro/klaro.js' %}" defer></script>
     <script type="module" src="{% static 'eventyay/js/privacy/consent.js' %}"></script>
 {% elif cmp_script %}
     {# External CMP mode: consent behaviour is managed outside Eventyay. #}
     <script src="{{ cmp_script }}" async></script>
+    <script type="module" src="{% static 'eventyay/js/privacy/consent-external.js' %}"></script>
 {% endif %}

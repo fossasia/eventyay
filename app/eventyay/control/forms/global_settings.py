@@ -1169,14 +1169,24 @@ class PrivacySettingsForm(SettingsForm):
         data = super().clean()
         provider = data.get('privacy_consent_provider')
 
-        if provider == ConsentProvider.EXTERNAL and not data.get('privacy_cmp_script_url'):
+        # Skip these checks when the URL itself was rejected, so the admin
+        # sees why it failed instead of being told the field is empty.
+        if (
+            provider == ConsentProvider.EXTERNAL
+            and not data.get('privacy_cmp_script_url')
+            and not self.has_error('privacy_cmp_script_url')
+        ):
             raise ValidationError(
                 {'privacy_cmp_script_url': _('An external CMP needs a script URL to load.')}
             )
 
         # A banner that points at a missing policy page is worse than no banner,
         # so refuse the combination instead of silently rendering a dead link.
-        if provider == ConsentProvider.KLARO and not data.get('privacy_cookie_policy_url'):
+        if (
+            provider == ConsentProvider.KLARO
+            and not data.get('privacy_cookie_policy_url')
+            and not self.has_error('privacy_cookie_policy_url')
+        ):
             raise ValidationError(
                 {'privacy_cookie_policy_url': _('Publish a Cookie Policy before enabling the banner.')}
             )

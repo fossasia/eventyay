@@ -109,6 +109,26 @@ def test_external_script_not_emitted_in_klaro_mode(gs):
 
 
 @pytest.mark.django_db
+def test_stored_http_cmp_script_is_not_emitted(gs):
+    """A non-HTTPS script URL saved before validation existed must not reach the page."""
+    gs.settings.set('privacy_consent_provider', ConsentProvider.EXTERNAL)
+    gs.settings.set('privacy_cmp_script_url', 'http://cdn.example.org/cmp.js')
+
+    assert external_cmp_script() == ''
+
+
+@pytest.mark.django_db
+def test_stored_non_http_policy_links_are_dropped(gs):
+    gs.settings.set('privacy_policy_url', 'javascript:alert(1)')
+    gs.settings.set('privacy_cookie_policy_url', 'not a url')
+
+    config = build_consent_config()
+
+    assert config['privacyPolicy'] == ''
+    assert config['cookiePolicy'] == ''
+
+
+@pytest.mark.django_db
 def test_service_title_cannot_break_out_of_the_config_script(gs):
     """A service title containing `</script>` must not close the JSON element."""
     gs.settings.set('privacy_category_analytics_enabled', True)
@@ -135,23 +155,46 @@ def test_service_title_cannot_break_out_of_the_config_script(gs):
 
 
 @pytest.mark.django_db
-def test_embed_is_blocked_only_under_the_builtin_banner(gs):
-    """Embed is blocked only under the builtin banner."""
-    context = consent_embed('youtube', 'https://example.org/v', 'Talk recording')
-    assert context['blocked'] is True
+@pytest.mark.parametrize('provider', [ConsentProvider.KLARO, ConsentProvider.EXTERNAL])
+def test_embed_url_is_not_loaded_before_consent(gs, provider):
+    """
+    With any consent layer active, the frame URL must not be an iframe src, or
+    the browser contacts the third party before the visitor has agreed.
+    """
+    gs.settings.set('privacy_consent_provider', provider)
+
+    html = render_to_string(
+        'eventyay/privacy/embed_placeholder.html',
+        consent_embed('youtube', 'https://example.org/v', 'Talk recording'),
+    )
+
+    assert '<iframe' not in html
+    assert 'data-consent-src="https://example.org/v"' in html
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize('provider', [ConsentProvider.DISABLED, ConsentProvider.EXTERNAL])
-def test_embed_renders_directly_without_the_builtin_banner(gs, provider):
-    """
-    Nothing swaps placeholders in under these providers, so a placeholder here
-    would make the embed permanently unreachable.
-    """
-    gs.settings.set('privacy_consent_provider', provider)
-    context = consent_embed('youtube', 'https://example.org/v', 'Talk recording')
-    assert context['blocked'] is False
-    assert context['src'] == 'https://example.org/v'
+def test_external_cmp_mode_loads_the_embed_bridge(gs):
+    """Blocked embeds under an external CMP need the bridge, or they never load."""
+    gs.settings.set('privacy_consent_provider', ConsentProvider.EXTERNAL)
+    gs.settings.set('privacy_cmp_script_url', 'https://cdn.example.org/cmp.js')
+
+    html = render_to_string('eventyay/privacy/consent.html')
+
+    assert 'https://cdn.example.org/cmp.js' in html
+    assert 'eventyay/js/privacy/consent-external.js' in html
+
+
+@pytest.mark.django_db
+def test_embed_renders_directly_when_consent_is_disabled(gs):
+    """Nothing would ever swap a placeholder in, so render the frame itself."""
+    gs.settings.set('privacy_consent_provider', ConsentProvider.DISABLED)
+
+    html = render_to_string(
+        'eventyay/privacy/embed_placeholder.html',
+        consent_embed('youtube', 'https://example.org/v', 'Talk recording'),
+    )
+
+    assert '<iframe src="https://example.org/v"' in html
 
 
 @pytest.mark.django_db
