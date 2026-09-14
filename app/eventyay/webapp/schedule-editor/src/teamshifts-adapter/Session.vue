@@ -18,7 +18,7 @@
 			.role-item(v-for="role in session.roles", :key="role.id")
 				.role-header
 					span.role-name
-						| {{ getLocalizedString(role.name) }}
+						span.role-name-text {{ getLocalizedString(role.name) }}
 						span.role-restricted-tag(v-if="role.is_restricted", :title="$t('Volunteers cannot self-claim this role; requires manual assignment.')") {{ $t('Restricted') }}
 					span.role-badge(:class="getCapacityClass(role)") {{ role.assigned.length }}/{{ role.capacity }} {{ $t('assigned') }}
 				.role-assignees
@@ -337,10 +337,25 @@ function onPointerDown(event: PointerEvent): void {
 				display: flex
 				justify-content: space-between
 				align-items: center
+				gap: 4px
 				font-size: 13px
 				font-weight: 600
+				min-width: 0
+				.role-name
+					display: flex
+					align-items: center
+					gap: 4px
+					flex: 1 1 auto
+					min-width: 0
+					overflow: hidden
+					.role-name-text
+						overflow: hidden
+						text-overflow: ellipsis
+						white-space: nowrap
+						min-width: 0
 				.role-restricted-tag
-					margin-left: 6px
+					flex-shrink: 0
+					margin-left: 4px
 					font-size: 10px
 					font-weight: 700
 					text-transform: uppercase
@@ -350,6 +365,7 @@ function onPointerDown(event: PointerEvent): void {
 					background-color: #6c757d
 					color: $clr-white
 				.role-badge
+					flex-shrink: 0
 					font-size: 11px
 					font-weight: 600
 					line-height: 1.3

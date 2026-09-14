@@ -313,6 +313,13 @@ class EventMixin:
         return not self.presale_has_ended
 
     @property
+    def is_ongoing(self):
+        """
+        Is true, when the event has started and has not yet ended.
+        """
+        return self.date_from <= now() <= self.date_to
+
+    @property
     def event_microdata(self):
         import json
 
