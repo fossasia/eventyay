@@ -587,6 +587,24 @@ select.required-status-dropdown[data-current="optional"] {
     padding: 0;
 }
 
+.admin-users-alert-region {
+    position: fixed;
+    top: 64px;
+    right: 16px;
+    z-index: 1050;
+    width: 420px;
+    max-width: calc(100vw - 32px);
+}
+
+.admin-users-alert-region .admin-users-alert {
+    margin-bottom: 0;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.user-action-form[aria-busy="true"] button.btn-dropdown-link {
+    cursor: progress;
+}
+
 .dropdown-menu li .user-action-form button.btn-dropdown-link {
     --dropdown-item-accent: var(--color-primary, #2185d0);
     --dropdown-item-accent-contrast: #fff;

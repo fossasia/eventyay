@@ -1,6 +1,7 @@
 import json
 import logging
 from contextlib import contextmanager
+from smtplib import SMTPException
 
 from allauth.account.models import EmailAddress
 from django.conf import settings
@@ -362,17 +363,13 @@ class UserListView(AdministratorPermissionRequiredMixin, ListView):
                 messages.warning(request, _('This user is already verified.'))
                 return redirect(reverse('eventyay_admin:admin.users'))
 
-            try:
-                email_address.send_confirmation(request)
-            except Exception as e:
-                raise SendMailException(str(e)) from e
-        except SendMailException:
+            email_address.send_confirmation(request)
+        except (SendMailException, SMTPException, OSError):
+            logger.exception('Could not send verification email to user %s', target_user.pk)
+            msg = _('Verification email could not be sent. Please check the email settings and try again.')
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse(
-                    {'status': 'error', 'message': str(_('There was an error sending the verification email.'))},
-                    status=500,
-                )
-            messages.error(request, _('There was an error sending the verification email.'))
+                return JsonResponse({'status': 'error', 'message': str(msg)}, status=500)
+            messages.error(request, msg)
             return redirect(reverse('eventyay_admin:admin.users'))
 
         target_user.log_action(
@@ -380,15 +377,10 @@ class UserListView(AdministratorPermissionRequiredMixin, ListView):
             user=request.user,
             data={'target_user': target_user.pk},
         )
+        msg = _('Verification email sent to %(email)s.') % {'email': target_user.email}
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({
-                'status': 'ok',
-                'message': str(_('Verification email sent successfully.'))
-            })
-        messages.success(
-            request,
-            _('Verification email sent to %(email)s.') % {'email': target_user.email},
-        )
+            return JsonResponse({'status': 'ok', 'message': str(msg)})
+        messages.success(request, msg)
         return redirect(reverse('eventyay_admin:admin.users'))
 
     def _handle_reset_password(self, request, target_user):
@@ -403,25 +395,19 @@ class UserListView(AdministratorPermissionRequiredMixin, ListView):
 
         try:
             target_user.send_password_reset(request)
-        except SendMailException:
+        except (SendMailException, SMTPException, OSError):
+            logger.exception('Could not send password reset email to user %s', target_user.pk)
+            msg = _('Password reset email could not be sent. Please check the email settings and try again.')
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse(
-                    {'status': 'error', 'message': str(_('There was an error sending the mail. Please try again later.'))},
-                    status=500,
-                )
-            messages.error(request, _('There was an error sending the mail. Please try again later.'))
+                return JsonResponse({'status': 'error', 'message': str(msg)}, status=500)
+            messages.error(request, msg)
             return redirect(reverse('eventyay_admin:admin.users'))
 
         target_user.log_action('eventyay.control.auth.user.forgot_password.mail_sent', user=request.user)
+        msg = _('Password reset email sent to %(email)s.') % {'email': target_user.email}
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({
-                'status': 'ok',
-                'message': str(_('Password reset email sent successfully.'))
-            })
-        messages.success(
-            request,
-            _('Password reset email sent to %(email)s.') % {'email': target_user.email},
-        )
+            return JsonResponse({'status': 'ok', 'message': str(msg)})
+        messages.success(request, msg)
         return redirect(reverse('eventyay_admin:admin.users'))
 
 
@@ -500,15 +486,16 @@ class UserResetView(AdministratorPermissionRequiredMixin, RecentAuthenticationRe
         self.object = get_object_or_404(User, pk=self.kwargs.get('id'))
         try:
             self.object.send_password_reset(request)
-        except SendMailException:
+        except (SendMailException, SMTPException, OSError):
+            logger.exception('Could not send password reset email to user %s', self.object.pk)
             messages.error(
                 request,
-                _('There was an error sending the mail. Please try again later.'),
+                _('Password reset email could not be sent. Please check the email settings and try again.'),
             )
             return redirect(self.get_success_url())
 
         self.object.log_action('eventyay.control.auth.user.forgot_password.mail_sent', user=request.user)
-        messages.success(request, _('We sent out an e-mail containing further instructions.'))
+        messages.success(request, _('Password reset email sent to %(email)s.') % {'email': self.object.email})
         return redirect(self.get_success_url())
 
     def get_success_url(self):
