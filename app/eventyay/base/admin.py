@@ -7,8 +7,8 @@ from .models import (
     billing, Channel, ChatEvent, checkin, choices, Device, devices, event,
     SystemLog, fields, Gate, GiftCard, GiftCardAcceptance,
     GiftCardTransaction, giftcards, Invoice, invoices, JanusServer, JitsiServer, log, notifications, Order, OrderPayment, OrderRefund,
-    orders, organizer, page, Poll, roomquestion, Quota, Room, roulette,
-    seating, StreamingServer, tax, Team, TeamInvite, TurnServer, vouchers,
+    orders, organizer, page, Poll, roomquestion, Quota, Room,
+    seating, tax, Team, TeamInvite, TurnServer, vouchers,
     WaitingListEntry, waitinglist, room, poll, chat
 )
 from ..api.models import OAuthApplication, OAuthAccessToken, OAuthRefreshToken, OAuthIDToken, WebHook, WebHookCall, ApiCall, WebHookEventListener
@@ -99,17 +99,12 @@ admin.site.register(chat.ChatEventReaction)
 admin.site.register(chat.ChatEventNotification)
 admin.site.register(chat.Membership)
 
-# Roulette
-admin.site.register(roulette.RouletteRequest)
-admin.site.register(roulette.RoulettePairing)
-
 # Servers and Infrastructure
 admin.site.register(BBBServer)
 admin.site.register(BBBCall)
 admin.site.register(JanusServer)
 admin.site.register(JitsiServer)
 admin.site.register(TurnServer)
-admin.site.register(StreamingServer)
 
 # Tax and Billing
 admin.site.register(tax.TaxRule)

@@ -44,11 +44,15 @@
 	transition(name="prompt")
 		prompt.report-result-prompt(v-if="running || result", @close="clear")
 			.content
+				.status-icon-wrap
+					svg.spinner-svg(v-if="running", viewBox="0 0 50 50", xmlns="http://www.w3.org/2000/svg")
+						circle.spinner-track(cx="25", cy="25", r="20", fill="none", stroke-width="4")
+						circle.spinner-head(cx="25", cy="25", r="20", fill="none", stroke-width="4")
+					i.mdi.mdi-check-circle-outline(v-else)
 				h1(v-if="running") {{ $t('Preparing report…') }}
 				h1(v-else) {{ $t('Report ready') }}
-				bunt-progress-circular(v-if="running", size="huge")
+				p.status-desc(v-if="running") {{ $t('If your event is large, this might take multiple minutes.') }}
 				bunt-button.btn-download(v-else, @click="open") {{ $t('Download report') }}
-				p(v-if="running") {{ $t('If your event is large, this might take multiple minutes.') }}
 
 </template>
 <script>
@@ -289,8 +293,60 @@ export default {
 
 	.report-result-prompt
 		.content
-			padding: 0 20px 20px
+			padding: 32px 28px 28px
 			text-align: center
+			display: flex
+			flex-direction: column
+			align-items: center
+			gap: 12px
+			h1
+				margin: 0
+				font-size: 20px
+				font-weight: 600
+				color: $clr-grey-900
+			.status-icon-wrap
+				width: 64px
+				height: 64px
+				display: flex
+				align-items: center
+				justify-content: center
+				.spinner-svg
+					width: 56px
+					height: 56px
+					animation: spinner-rotate 1.4s linear infinite
+					.spinner-track
+						stroke: rgba(0, 0, 0, 0.08)
+					.spinner-head
+						stroke: var(--clr-primary, #bb0011)
+						stroke-dasharray: 80 200
+						stroke-dashoffset: 0
+						stroke-linecap: round
+						animation: spinner-dash 1.4s ease-in-out infinite
+				.mdi
+					font-size: 56px
+					color: var(--clr-primary, #bb0011)
+					opacity: 0.85
+			.status-desc
+				margin: 0
+				font-size: 14px
+				color: $clr-secondary-text-light
+				max-width: 280px
 			.btn-download
 				themed-button-primary()
+				margin-top: 4px
+
+@keyframes spinner-rotate
+	100%
+		transform: rotate(360deg)
+
+@keyframes spinner-dash
+	0%
+		stroke-dasharray: 1 200
+		stroke-dashoffset: 0
+	50%
+		stroke-dasharray: 89 200
+		stroke-dashoffset: -35px
+	100%
+		stroke-dasharray: 89 200
+		stroke-dashoffset: -124px
 </style>
