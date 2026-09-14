@@ -13,4 +13,5 @@
 {% elif cmp_script %}
     {# External CMP mode: consent behaviour is managed outside Eventyay. #}
     <script src="{{ cmp_script }}" async></script>
+    <script type="module" src="{% static 'eventyay/js/privacy/consent-external.js' %}"></script>
 {% endif %}

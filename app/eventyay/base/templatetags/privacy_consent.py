@@ -18,9 +18,9 @@ register = template.Library()
 CONFIG_ELEMENT_ID = 'klaro-config'
 
 
-def public_http_url(value):
+def public_http_url(value, schemes=('http', 'https')):
     """
-    Return ``value`` only when it is an absolute http(s) URL, else ``''``.
+    Return ``value`` only when it is an absolute URL using one of ``schemes``, else ``''``.
 
     Policy URLs end up in ``href`` attributes on every public page. The settings
     form validates them, but values stored before that validation existed (or
@@ -29,7 +29,7 @@ def public_http_url(value):
     """
     value = (value or '').strip()
     parts = urlsplit(value)
-    if parts.scheme.lower() in ('http', 'https') and parts.netloc:
+    if parts.scheme.lower() in schemes and parts.netloc:
         return value
     return ''
 
@@ -108,7 +108,8 @@ def external_cmp_script():
     gs = GlobalSettingsObject()
     if (gs.settings.get('privacy_consent_provider') or '') != ConsentProvider.EXTERNAL:
         return ''
-    return gs.settings.get('privacy_cmp_script_url') or ''
+    # An http:// script is blocked on https:// pages, so never emit one.
+    return public_http_url(gs.settings.get('privacy_cmp_script_url'), schemes=('https',))
 
 
 @register.inclusion_tag('eventyay/privacy/embed_placeholder.html')
@@ -116,21 +117,25 @@ def consent_embed(service, src, title=''):
     """
     Render a third-party embed behind contextual consent.
 
-    A placeholder is only emitted when the visitor can actually unblock it: the
-    built-in banner must be active, and ``service`` must be published in the
-    Klaro configuration. consent.js swaps the placeholder in once
+    While an embed is blocked the frame URL is only emitted as
+    ``data-consent-src``, never as an iframe ``src``, so the browser contacts
+    the third party only after consent. An external CMP loads asynchronously
+    and cannot reliably stop a frame that is already navigating, so under one
+    every embed is blocked and revealed through the ``consent-external.js``
+    bridge.
+
+    Under the built-in banner a placeholder is only emitted when the visitor can
+    actually unblock it: ``service`` must be published in the Klaro
+    configuration. consent.js swaps the placeholder in once
     ``getConsent(service)`` is true, which never happens for a service Klaro
     does not know about (unregistered, disabled, or in a category that is
-    switched off).
-
-    In every other case the embed is rendered directly. With consent disabled
-    there is nothing to gate on, and an external CMP does its own blocking of
-    third-party frames. Emitting a placeholder there would leave the content
-    permanently unreachable.
+    switched off), so such an embed is rendered directly instead of being left
+    permanently unreachable. With consent disabled there is nothing to gate on.
     """
     gs = GlobalSettingsObject()
     provider = gs.settings.get('privacy_consent_provider') or ConsentProvider.DISABLED
-    blocked = (
+    external = provider == ConsentProvider.EXTERNAL
+    blocked = external or (
         provider == ConsentProvider.KLARO
         and published_services(gs.settings).filter(name=service).exists()
     )
@@ -139,4 +144,5 @@ def consent_embed(service, src, title=''):
         'src': src,
         'title': title,
         'blocked': blocked,
+        'external': external,
     }

@@ -11,6 +11,7 @@ from django.core.validators import (
     MaxValueValidator,
     MinValueValidator,
     RegexValidator,
+    URLValidator,
 )
 from django.utils.text import format_lazy
 from django.utils.translation import gettext_lazy as _
@@ -3223,7 +3224,21 @@ DEFAULT_SETTINGS.update(
             'type': str,
             'form_class': forms.URLField,
             'serializer_class': serializers.URLField,
-            'form_kwargs': dict(required=False, label=_('External CMP script URL')),
+            # Browsers block an http:// script on an https:// page, which would
+            # leave the site without any consent manager at all.
+            'serializer_kwargs': dict(validators=[URLValidator(schemes=['https'])]),
+            'form_kwargs': dict(
+                required=False,
+                label=_('External CMP script URL'),
+                # A code other than 'invalid', or URLField swaps in its generic message.
+                validators=[
+                    URLValidator(
+                        schemes=['https'],
+                        message=_('The script URL must use HTTPS.'),
+                        code='https_required',
+                    )
+                ],
+            ),
         },
         'privacy_policy_url': {
             'default': '',
