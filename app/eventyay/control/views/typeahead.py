@@ -25,6 +25,7 @@ from eventyay.base.models import (
     Voucher,
 )
 from eventyay.control.forms.event import EventWizardCopyForm
+from eventyay.control.forms.vouchers import ALL_PRODUCTS
 from eventyay.control.permissions import event_permission_required
 from eventyay.helpers.daterange import daterange
 from eventyay.helpers.i18n import i18ncomp
@@ -480,6 +481,10 @@ def productvarquota_select2(request, **kwargs):
         page = 1
 
     choices = []
+
+    all_products_label = str(_('All products'))
+    if page == 1 and all_products_label.lower().startswith(query.strip().lower()):
+        choices.append((ALL_PRODUCTS, all_products_label, ''))
 
     if not request.event.has_subevents:
         # We are very unlikely to need pagination
