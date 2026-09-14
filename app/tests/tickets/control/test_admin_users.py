@@ -9,6 +9,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from allauth.account.models import EmailAddress
+from celery.exceptions import Retry
 from eventyay.base.forms.auth import LoginForm
 from eventyay.base.models import User
 from eventyay.base.services.mail import SendMailException
@@ -402,6 +403,43 @@ class UserEmailActionsTest(TestCase):
         response = self._post_as_admin('reset_password', self.target_user.pk)
         self.assertEqual(response.status_code, 500)
         self.assertEqual(json.loads(response.content)['status'], 'error')
+
+    @patch('eventyay.base.models.User.send_password_reset', side_effect=Retry('Retry in 1s'))
+    def test_reset_password_retry_exhausted(self, mock_send):
+        response = self._post_as_admin('reset_password', self.target_user.pk)
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(json.loads(response.content)['status'], 'error')
+
+    @patch(
+        'eventyay.base.models.User.send_password_reset',
+        side_effect=RuntimeError('provider api key invalid'),
+    )
+    def test_reset_password_backend_specific_error(self, mock_send):
+        with self.assertLogs('eventyay.control.views.users', level='ERROR'):
+            response = self._post_as_admin('reset_password', self.target_user.pk)
+        self.assertEqual(response.status_code, 500)
+        data = json.loads(response.content)
+        self.assertEqual(data['status'], 'error')
+        self.assertNotIn('api key', data['message'])
+
+    @patch('eventyay.base.models.User.send_password_reset', side_effect=RuntimeError('provider down'))
+    def test_edit_page_reset_password_backend_specific_error(self, mock_send):
+        self.client.force_login(self.admin)
+        session = self.client.session
+        session['eventyay_auth_login_time'] = int(time.time())
+        session.save()
+        with patch.object(self.admin.__class__, 'has_active_staff_session', return_value=True):
+            response = self.client.post(
+                reverse('eventyay_admin:admin.users.reset', kwargs={'id': self.target_user.pk}),
+                follow=True,
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Password reset email could not be sent.')
+
+    @patch('eventyay.base.models.User.send_password_reset')
+    def test_reset_password_sends_synchronously(self, mock_send):
+        self._post_as_admin('reset_password', self.target_user.pk)
+        self.assertTrue(mock_send.call_args.kwargs['sync_send'])
 
     def test_list_renders_email_action_feedback_hooks(self):
         self.client.force_login(self.admin)

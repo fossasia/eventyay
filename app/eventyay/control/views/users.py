@@ -1,7 +1,6 @@
 import json
 import logging
 from contextlib import contextmanager
-from smtplib import SMTPException
 
 from allauth.account.models import EmailAddress
 from django.conf import settings
@@ -17,7 +16,7 @@ from django.db import DatabaseError, transaction
 from django.db.models import CharField, Exists, OuterRef, Value
 from django.db.models.fields.json import KeyTextTransform
 from django.db.models.functions import Coalesce
-from django.http import JsonResponse
+from django.http import HttpRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -53,6 +52,22 @@ def get_used_backend(request):
     backend_str = request.session[BACKEND_SESSION_KEY]
     backend = load_backend(backend_str)
     return backend
+
+
+def send_admin_password_reset(request: HttpRequest, user: User) -> None:
+    """
+    Send a password reset email synchronously so the admin learns about delivery failures.
+
+    :raises SendMailException: when the email could not be sent, whatever the mail backend raised
+    """
+    try:
+        user.send_password_reset(request, sync_send=True)
+    except SendMailException:
+        raise
+    except Exception as e:
+        # Mail backends and Celery's eager retry raise their own exception types. Normalise them
+        # so the admin always gets the safe error response instead of a server error.
+        raise SendMailException('Failed to send password reset email.') from e
 
 
 @contextmanager
@@ -400,8 +415,8 @@ class UserListView(AdministratorPermissionRequiredMixin, ListView):
             return redirect(reverse('eventyay_admin:admin.users'))
 
         try:
-            target_user.send_password_reset(request)
-        except (SendMailException, SMTPException, OSError):
+            send_admin_password_reset(request, target_user)
+        except SendMailException:
             logger.exception('Could not send password reset email to user %s', target_user.pk)
             msg = _('Password reset email could not be sent. Please check the email settings and try again.')
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
@@ -491,8 +506,8 @@ class UserResetView(AdministratorPermissionRequiredMixin, RecentAuthenticationRe
     def post(self, request, *args, **kwargs):
         self.object = get_object_or_404(User, pk=self.kwargs.get('id'))
         try:
-            self.object.send_password_reset(request)
-        except (SendMailException, SMTPException, OSError):
+            send_admin_password_reset(request, self.object)
+        except SendMailException:
             logger.exception('Could not send password reset email to user %s', self.object.pk)
             messages.error(
                 request,
