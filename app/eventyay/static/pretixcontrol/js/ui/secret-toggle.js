@@ -22,13 +22,15 @@ function initSecretToggle() {
         const hideLabel = button.dataset.labelHide || 'Hide secret key';
         
         // Toggle input type and update button state
-        if (input.type === 'password') {
+        if (input.getAttribute('type') === 'password' || input.type === 'password') {
+            input.setAttribute('type', 'text');
             input.type = 'text';
             icon.classList.remove('fa-eye');
             icon.classList.add('fa-eye-slash');
             button.setAttribute('aria-pressed', 'true');
             button.setAttribute('aria-label', hideLabel);
         } else {
+            input.setAttribute('type', 'password');
             input.type = 'password';
             icon.classList.remove('fa-eye-slash');
             icon.classList.add('fa-eye');

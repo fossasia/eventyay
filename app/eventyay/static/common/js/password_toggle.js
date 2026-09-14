@@ -57,7 +57,7 @@ export function initPasswordToggles(root = document) {
             const container = this.closest('.password-input-wrapper');
             if (!container) return;
             
-            const input = container.querySelector('input');
+            const input = container.querySelector('input:not([type="hidden"])');
             const iconEye = this.querySelector('.icon-eye');
             const iconEyeSlash = this.querySelector('.icon-eye-slash');
             
@@ -66,13 +66,15 @@ export function initPasswordToggles(root = document) {
                 const showLabel = passwordToggleLabels.show || 'Show password';
                 const hideLabel = passwordToggleLabels.hide || 'Hide password';
 
-                if (input.type === 'password') {
+                if (input.getAttribute('type') === 'password' || input.type === 'password') {
+                    input.setAttribute('type', 'text');
                     input.type = 'text';
                     iconEye.style.display = 'none';
                     iconEyeSlash.style.display = 'block';
                     btn.setAttribute('aria-pressed', 'true');
                     btn.setAttribute('aria-label', hideLabel);
                 } else {
+                    input.setAttribute('type', 'password');
                     input.type = 'password';
                     iconEye.style.display = 'block';
                     iconEyeSlash.style.display = 'none';
