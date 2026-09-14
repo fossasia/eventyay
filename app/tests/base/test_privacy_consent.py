@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 from django.conf import settings
+from django.template.loader import render_to_string
 
 from eventyay.base.models.privacy import ConsentCategory, ConsentProvider, ThirdPartyService
 from eventyay.base.settings import GlobalSettingsObject
@@ -189,3 +190,25 @@ def test_footer_link_and_consent_layer_ship_together():
 
     assert 'data-privacy-settings' in footer
     assert 'eventyay/privacy/consent.html' in footer
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'template_name, context',
+    [
+        ('common/includes/core_footer.html', {}),
+        (
+            'eventyay/privacy/embed_placeholder.html',
+            {'blocked': True, 'service': 'youtube', 'src': 'https://example.org/v', 'title': 'Talk'},
+        ),
+    ],
+)
+def test_template_comments_are_not_shown_to_visitors(gs, template_name, context):
+    """
+    Django's ``{# #}`` comments cannot span lines. A multi-line one is printed
+    verbatim, and the footer partial is on every public page.
+    """
+    html = render_to_string(template_name, context)
+
+    assert '{#' not in html
+    assert '#}' not in html
