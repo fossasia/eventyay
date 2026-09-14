@@ -580,7 +580,7 @@ def get_admin_navigation(request):
         {
             'label': _('Privacy & Compliance'),
             'url': reverse('eventyay_admin:admin.global.privacy'),
-            'active': (url.url_name == 'admin.global.privacy'),
+            'active': url.url_name.startswith('admin.global.privacy'),
         },
         {
             'label': _('Generate keys for SSO'),

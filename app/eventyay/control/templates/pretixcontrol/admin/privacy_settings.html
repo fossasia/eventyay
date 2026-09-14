@@ -61,26 +61,48 @@
         </div>
     </form>
 
-    <h2>{% trans "Third-party services" %}</h2>
+    <h2 id="services">{% trans "Third-party services" %}</h2>
+    <p>
+        <a href="{% url "eventyay_admin:admin.global.privacy.service.add" %}" class="btn btn-default">
+            <span class="fa fa-plus"></span> {% trans "Add service" %}
+        </a>
+    </p>
     <table class="table">
         <thead>
             <tr>
                 <th>{% trans "Service" %}</th>
                 <th>{% trans "Provider" %}</th>
                 <th>{% trans "Consent category" %}</th>
+                <th>{% trans "Country / region" %}</th>
+                <th>{% trans "DPA status" %}</th>
                 <th>{% trans "Enabled" %}</th>
+                <th class="text-right">{% trans "Actions" %}</th>
             </tr>
         </thead>
         <tbody>
             {% for service in services %}
                 <tr>
-                    <td>{{ service.title }}</td>
+                    <td>
+                        <a href="{% url "eventyay_admin:admin.global.privacy.service.edit" pk=service.pk %}">{{ service.title }}</a>
+                    </td>
                     <td>{{ service.provider }}</td>
                     <td>{{ service.get_category_display }}</td>
+                    <td>{{ service.region }}</td>
+                    <td>{{ service.get_dpa_status_display }}</td>
                     <td>{% if service.enabled %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
+                    <td class="text-right">
+                        <a href="{% url "eventyay_admin:admin.global.privacy.service.edit" pk=service.pk %}"
+                           class="btn btn-default btn-sm" title="{% trans "Edit" %}">
+                            <span class="fa fa-edit"></span>
+                        </a>
+                        <a href="{% url "eventyay_admin:admin.global.privacy.service.delete" pk=service.pk %}"
+                           class="btn btn-danger btn-sm" title="{% trans "Delete" %}">
+                            <span class="fa fa-trash"></span>
+                        </a>
+                    </td>
                 </tr>
             {% empty %}
-                <tr><td colspan="4">{% trans "No third-party services are registered yet." %}</td></tr>
+                <tr><td colspan="7">{% trans "No third-party services are registered yet." %}</td></tr>
             {% endfor %}
         </tbody>
     </table>
