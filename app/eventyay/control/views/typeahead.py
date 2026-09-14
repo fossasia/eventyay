@@ -483,7 +483,7 @@ def productvarquota_select2(request, **kwargs):
     choices = []
 
     all_products_label = str(_('All products'))
-    if page == 1 and query.lower() in all_products_label.lower():
+    if page == 1 and all_products_label.lower().startswith(query.strip().lower()):
         choices.append((ALL_PRODUCTS, all_products_label, ''))
 
     if not request.event.has_subevents:

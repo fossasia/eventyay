@@ -49,7 +49,7 @@ def test_voucher_detail_hides_optional_for_valid_until_and_product(client, env):
 
 @override_settings(DEBUG=True)
 @pytest.mark.django_db
-@pytest.mark.parametrize('query', ['', 'all'])
+@pytest.mark.parametrize('query', ['', 'all', 'All prod'])
 def test_product_select2_lists_all_products_option(client, env, query):
     organizer, event, user, product = env
     client.force_login(user)
@@ -70,7 +70,8 @@ def test_product_select2_lists_all_products_option(client, env, query):
 
 @override_settings(DEBUG=True)
 @pytest.mark.django_db
-def test_product_select2_omits_all_products_for_unrelated_query(client, env):
+@pytest.mark.parametrize('query', ['Early', 'duct', 'pro'])
+def test_product_select2_omits_all_products_for_unrelated_query(client, env, query):
     organizer, event, user, product = env
     client.force_login(user)
 
@@ -79,11 +80,11 @@ def test_product_select2_omits_all_products_for_unrelated_query(client, env):
             'control:event.vouchers.productselect2',
             kwargs={'organizer': organizer.slug, 'event': event.slug},
         ),
-        {'query': 'Early'},
+        {'query': query},
     )
 
     assert response.status_code == 200
-    assert [r['id'] for r in response.json()['results']] == [str(product.pk)]
+    assert ALL_PRODUCTS not in [r['id'] for r in response.json()['results']]
 
 
 @pytest.mark.django_db

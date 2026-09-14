@@ -80,7 +80,7 @@ class VoucherForm(I18nModelForm):
                 else:
                     initial['productvar'] = ALL_PRODUCTS
             except Product.DoesNotExist:
-                pass
+                initial['productvar'] = ALL_PRODUCTS
         else:
             self.initial_instance_data = None
         super().__init__(*args, **kwargs)
