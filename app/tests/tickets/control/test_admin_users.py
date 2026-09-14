@@ -334,6 +334,27 @@ class UserEmailActionsTest(TestCase):
         self.assertNotIn('connection refused', data['message'])
         self.assertIn('connection refused', ' '.join(logs.output))
 
+    @patch('allauth.account.models.EmailAddress.send_confirmation')
+    def test_resend_verification_reports_primary_address(self, mock_send):
+        self.email_address.email = 'primary.inbox@example.com'
+        self.email_address.save(update_fields=['email'])
+        response = self._post_as_admin('resend_verification', self.target_user.pk)
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertEqual(data['message'], 'Verification email sent to primary.inbox@example.com.')
+
+    @patch(
+        'allauth.account.models.EmailAddress.send_confirmation',
+        side_effect=RuntimeError('provider api key invalid'),
+    )
+    def test_resend_verification_backend_specific_error(self, mock_send):
+        with self.assertLogs('eventyay.control.views.users', level='ERROR'):
+            response = self._post_as_admin('resend_verification', self.target_user.pk)
+        self.assertEqual(response.status_code, 500)
+        data = json.loads(response.content)
+        self.assertEqual(data['status'], 'error')
+        self.assertNotIn('api key', data['message'])
+
     def test_resend_verification_already_verified_guard(self):
         self.email_address.verified = True
         self.email_address.save(update_fields=['verified'])

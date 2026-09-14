@@ -363,8 +363,14 @@ class UserListView(AdministratorPermissionRequiredMixin, ListView):
                 messages.warning(request, _('This user is already verified.'))
                 return redirect(reverse('eventyay_admin:admin.users'))
 
-            email_address.send_confirmation(request)
-        except (SendMailException, SMTPException, OSError):
+            try:
+                email_address.send_confirmation(request)
+            except Exception as e:
+                # allauth sends through the configured EMAIL_BACKEND, which may be any
+                # third-party backend with its own exception types. Normalise them so the
+                # admin always gets the safe error response instead of a server error.
+                raise SendMailException('Failed to send verification email.') from e
+        except SendMailException:
             logger.exception('Could not send verification email to user %s', target_user.pk)
             msg = _('Verification email could not be sent. Please check the email settings and try again.')
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
@@ -377,7 +383,7 @@ class UserListView(AdministratorPermissionRequiredMixin, ListView):
             user=request.user,
             data={'target_user': target_user.pk},
         )
-        msg = _('Verification email sent to %(email)s.') % {'email': target_user.email}
+        msg = _('Verification email sent to %(email)s.') % {'email': email_address.email}
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
             return JsonResponse({'status': 'ok', 'message': str(msg)})
         messages.success(request, msg)
