@@ -26,6 +26,7 @@ from eventyay.base.services.mail import get_mail_backend
 from eventyay.base.services.turnstile import test_turnstile_connection
 from eventyay.base.services.update_check import check_result_table, update_check
 from eventyay.base.models.privacy import ThirdPartyService, enabled_consent_categories
+from eventyay.base.services.privacy_audit import log_settings_changes
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.sanitizers import sanitize_rich_text
 from eventyay.control.forms.global_settings import (
@@ -848,7 +849,10 @@ class PrivacySettingsView(AdministratorPermissionRequiredMixin, FormView):
 
     def form_valid(self, form):
         """form_valid method."""
+        keys = ['privacy_consent_provider', *form.auto_fields]
+        before = {key: form.obj.settings.get(key) for key in keys}
         form.save()
+        log_settings_changes(self.request.user, before, {key: form.obj.settings.get(key) for key in keys})
         messages.success(self.request, _('Your changes have been saved.'))
         return super().form_valid(form)
 

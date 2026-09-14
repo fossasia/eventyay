@@ -719,6 +719,16 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
         'eventyay.event.question.option.deleted': _('The answer option has been deleted.'),
         'eventyay.control.auth.user.impersonated': _('User impersonation has started.'),
         'eventyay.control.auth.user.impersonate_stopped': _('User impersonation has been stopped.'),
+        'eventyay.privacy.provider.changed': _('The consent provider has been changed from "{old}" to "{new}".'),
+        'eventyay.privacy.category.enabled': _('The consent category "{category}" has been enabled.'),
+        'eventyay.privacy.category.disabled': _('The consent category "{category}" has been disabled.'),
+        'eventyay.privacy.cmp.changed': _('The external CMP configuration has been changed.'),
+        'eventyay.privacy.legal_urls.changed': _('The privacy or cookie policy link has been changed.'),
+        'eventyay.privacy.service.added': _('The third-party service "{title}" has been added.'),
+        'eventyay.privacy.service.changed': _('The third-party service "{title}" has been changed.'),
+        'eventyay.privacy.service.enabled': _('The third-party service "{title}" has been enabled.'),
+        'eventyay.privacy.service.disabled': _('The third-party service "{title}" has been disabled.'),
+        'eventyay.privacy.service.deleted': _('The third-party service "{title}" has been deleted.'),
     }
 
     try:

@@ -2,9 +2,15 @@ from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.urls import reverse, reverse_lazy
 from django.utils.translation import gettext_lazy as _
-from django.views.generic import CreateView, UpdateView
+from django.views.generic import CreateView, ListView, UpdateView
 
+from eventyay.base.models import LogEntry
 from eventyay.base.models.privacy import ThirdPartyService
+from eventyay.base.services.privacy_audit import (
+    PRIVACY_ACTION_PREFIX,
+    log_privacy_change,
+    service_snapshot,
+)
 from eventyay.control.forms.privacy import ThirdPartyServiceForm
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
 from eventyay.helpers.compat import CompatDeleteView
@@ -29,11 +35,36 @@ class ServiceFormMixin:
 
 
 class ServiceCreate(AdministratorPermissionRequiredMixin, ServiceFormMixin, CreateView):
-    pass
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        log_privacy_change(
+            self.request.user, 'service.added', self.object,
+            name=self.object.name, title=self.object.title, category=self.object.category,
+        )
+        return response
 
 
 class ServiceUpdate(AdministratorPermissionRequiredMixin, ServiceFormMixin, UpdateView):
-    pass
+    def form_valid(self, form):
+        before = service_snapshot(ThirdPartyService.objects.get(pk=self.object.pk))
+        response = super().form_valid(form)
+        after = service_snapshot(self.object)
+
+        if before['enabled'] != after['enabled']:
+            action = 'service.enabled' if after['enabled'] else 'service.disabled'
+            log_privacy_change(self.request.user, action, self.object, name=self.object.name, title=self.object.title)
+
+        changes = {
+            field: {'old': before[field], 'new': after[field]}
+            for field in before
+            if field != 'enabled' and before[field] != after[field]
+        }
+        if changes:
+            log_privacy_change(
+                self.request.user, 'service.changed', self.object,
+                name=self.object.name, title=self.object.title, changes=changes,
+            )
+        return response
 
 
 class ServiceDelete(AdministratorPermissionRequiredMixin, CompatDeleteView):
@@ -44,6 +75,24 @@ class ServiceDelete(AdministratorPermissionRequiredMixin, CompatDeleteView):
 
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
+        # Logged before the delete so the entry can still point at the row's id.
+        log_privacy_change(
+            request.user, 'service.deleted', self.object,
+            name=self.object.name, title=self.object.title, category=self.object.category,
+        )
         self.object.delete()
         messages.success(request, _('The service has been deleted.'))
         return HttpResponseRedirect(self.get_success_url())
+
+
+class PrivacyAuditLog(AdministratorPermissionRequiredMixin, ListView):
+    template_name = 'pretixcontrol/admin/privacy_audit_log.html'
+    context_object_name = 'entries'
+    paginate_by = 50
+
+    def get_queryset(self):
+        return (
+            LogEntry.objects.filter(action_type__startswith=PRIVACY_ACTION_PREFIX)
+            .select_related('user')
+            .order_by('-datetime', '-pk')
+        )

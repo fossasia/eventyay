@@ -55,6 +55,7 @@ urlpatterns = [
     path('global/privacy/services/add/', privacy.ServiceCreate.as_view(), name='admin.global.privacy.service.add'),
     path('global/privacy/services/<int:pk>/', privacy.ServiceUpdate.as_view(), name='admin.global.privacy.service.edit'),
     path('global/privacy/services/<int:pk>/delete/', privacy.ServiceDelete.as_view(), name='admin.global.privacy.service.delete'),
+    path('global/privacy/audit-log/', privacy.PrivacyAuditLog.as_view(), name='admin.global.privacy.audit'),
 
     path('global/gmail/connect/', gmail_oauth.GmailOAuthConnectView.as_view(), name='admin.global.gmail.connect'),
     path('global/gmail/callback/', gmail_oauth.GmailOAuthCallbackView.as_view(), name='admin.global.gmail.callback'),

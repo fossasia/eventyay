@@ -5,7 +5,12 @@
 {% block title %}{% trans "Privacy & Compliance" %}{% endblock %}
 
 {% block content %}
-    <h1>{% trans "Privacy & Compliance" %}</h1>
+    <h1>
+        {% trans "Privacy & Compliance" %}
+        <a href="{% url "eventyay_admin:admin.global.privacy.audit" %}" class="btn btn-default btn-sm pull-right">
+            <span class="fa fa-history"></span> {% trans "Audit log" %}
+        </a>
+    </h1>
 
     {% if missing_cookie_policy %}
         <div class="alert alert-warning">
