@@ -17,7 +17,7 @@ def env():
     team = Team.objects.create(organizer=organizer, can_view_vouchers=True, can_change_vouchers=True)
     team.members.add(user)
     team.limit_events.add(event)
-    with scope(organizer=organizer):
+    with scope(organizer=organizer, event=event):
         product = Product.objects.create(event=event, name='Early-bird ticket', default_price=23)
         quota = Quota.objects.create(event=event, name='Tickets', size=5)
         quota.products.add(product)
