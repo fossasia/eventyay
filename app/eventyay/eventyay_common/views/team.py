@@ -117,9 +117,9 @@ class TeamMemberView(
 
         if 'remove-member' in request.POST:
             try:
-                user = User.objects.get(pk=request.POST.get('remove-member'))
+                user = self.object.members.get(pk=request.POST.get('remove-member'))
             except (User.DoesNotExist, ValueError):
-                pass
+                return redirect(self.get_success_url())
             else:
                 other_admin_teams = (
                     self.request.organizer.teams.exclude(pk=self.object.pk)

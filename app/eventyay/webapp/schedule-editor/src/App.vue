@@ -6,7 +6,7 @@
 				.unassigned-mobile-header(@click="isUnassignedCollapsed = !isUnassignedCollapsed")
 					span.unassigned-title
 						i.fa.fa-list
-						span {{ $t('Unassigned Sessions') }} ({{ unscheduled.length }})
+						span {{ translations.unassignedTitle }} ({{ unscheduled.length }})
 						span.drop-hint(v-if="draggedSession")  - {{ $t('Drop here to unassign') }}
 					span.unassigned-collapse-icon
 						i.fa(:class="isUnassignedCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'")
@@ -66,6 +66,10 @@
 					h3.session-editor-title(v-if="editorSession.code")
 						a(v-if="caps.showSubmissionLinks && organizerSlug && eventSlug", :href="`${api.getOrgaEventBase()}/submissions/${editorSession.code}/`") {{ getLocalizedString(editorSession.title) }}
 						span(v-else) {{ getLocalizedString(editorSession.title) }}
+					.session-editor-error(v-if="editorSessionError")
+						span {{ editorSessionError }}
+						button.session-editor-error-dismiss(type="button", @click="editorSessionError = ''", :aria-label="$t('Dismiss')")
+							i.fa.fa-times(aria-hidden="true")
 					.data
 						.data-row(v-if="editorSession.code && editorSession.speakers && editorSession.speakers.length > 0 && caps.showSpeakers").form-group.row
 							label.data-label.col-form-label.col-md-3 {{ $t('Speakers') }}
@@ -299,6 +303,7 @@ const currentDay = ref<Moment | null>(null)
 const draggedSession = ref<SessionData | null>(null)
 const editorSession = ref<SessionData | null>(null)
 const editorSessionWaiting = ref<boolean>(false)
+const editorSessionError = ref<string>('')
 const assigningSession = ref<SessionData | null>(null)
 const assigningWaiting = ref<boolean>(false)
 const assignModalError = ref<string>('')
@@ -441,6 +446,7 @@ function onTimeDensityChange (): void {
 
 const translations = computed(() => ({
   filterSessions: caps.showRoles ? $t('Filter shifts') : $t('Filter sessions'),
+  unassignedTitle: caps.showRoles ? $t('Unassigned Shifts') : $t('Unassigned Sessions'),
   newBreak: $t('New break'),
 }))
 
@@ -735,6 +741,7 @@ async function createSession(e: CreateSessionEvent): Promise<void> {
 }
 
 function editorStart(session: SessionData | Talk): void {
+  editorSessionError.value = ''
   const newEditorSession = { ...session } as SessionData
   if (caps.canEditRoles) {
     if (!newEditorSession.roles || newEditorSession.roles.length === 0) {
@@ -776,24 +783,33 @@ async function editorSave(): Promise<void> {
   if (caps.canEditRoles) {
     talk.roles = editorSession.value.roles?.filter((r) => r.id !== undefined)
   }
-  
-  await saveTalk(talk)
 
-  const sessionInSchedule = schedule.value?.talks.find((s) => s.id === editorSession.value?.id)
-  if (sessionInSchedule && editorSession.value) {
-    sessionInSchedule.end = typeof editorSession.value.end === 'string' ? editorSession.value.end : editorSession.value.end?.toISOString()
-    if (!('submission' in sessionInSchedule)) {
-      sessionInSchedule.title = editorSession.value.title as Record<string, string>
+  try {
+    await saveTalk(talk)
+
+    const sessionInSchedule = schedule.value?.talks.find((s) => s.id === editorSession.value?.id)
+    if (sessionInSchedule && editorSession.value) {
+      sessionInSchedule.end = typeof editorSession.value.end === 'string' ? editorSession.value.end : editorSession.value.end?.toISOString()
+      if (!('submission' in sessionInSchedule)) {
+        sessionInSchedule.title = editorSession.value.title as Record<string, string>
+      }
     }
+    editorSession.value = null
+
+    try {
+      if (caps.showRoles) {
+        schedule.value = await fetchSchedule()
+      }
+      await fetchAdditionalScheduleData()
+    } catch (refreshError) {
+      console.error('Failed to refresh schedule after save', refreshError)
+    }
+  } catch (error) {
+    console.error('Failed to save', error)
+    editorSessionError.value = $t('Failed to save. Please try again.')
+  } finally {
+    editorSessionWaiting.value = false
   }
-  
-  if (caps.showRoles) {
-    schedule.value = await fetchSchedule()
-  }
-  
-  editorSessionWaiting.value = false
-  editorSession.value = null
-  await fetchAdditionalScheduleData()
 }
 
 async function editorDelete(): Promise<void> {
@@ -1548,7 +1564,7 @@ onUnmounted(() => {
 		top: 50%
 		left: 50%
 		transform: translate(-50%, -50%)
-		width: min(680px, 95vw)
+		width: unquote("min(680px, 95vw)")
 		max-width: 95vw
 		max-height: calc(100vh - 48px)
 		overflow-y: auto
@@ -1633,6 +1649,27 @@ onUnmounted(() => {
 					width: 100px
 		.warning
 			color: #b23e65
+		.session-editor-error
+			display: flex
+			align-items: center
+			justify-content: space-between
+			gap: 8px
+			padding: 10px 14px
+			margin-bottom: 16px
+			background-color: #fdecea
+			border: 1px solid #f5c6cb
+			border-radius: 4px
+			color: #721c24
+			font-size: 14px
+			.session-editor-error-dismiss
+				background: none
+				border: none
+				color: #721c24
+				cursor: pointer
+				padding: 2px 6px
+				font-size: 14px
+				&:hover
+					opacity: 0.7
 		.assign-data
 			.assign-role
 				margin-bottom: 24px

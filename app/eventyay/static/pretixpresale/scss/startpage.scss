@@ -521,12 +521,38 @@ body.startpage-search-results-page #main-card {
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+  position: relative;
   transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .startpage-event-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.startpage-event-ongoing {
+  background: #db2828;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  left: -3.2em;
+  letter-spacing: 0.02em;
+  line-height: 1.5;
+  padding: 0.35em 0;
+  pointer-events: none;
+  position: absolute;
+  text-align: center;
+  top: 1.7em;
+  transform: rotate(-45deg);
+  width: 12em;
+  z-index: 1;
+}
+
+html.rtl .startpage-event-ongoing {
+  left: auto;
+  right: -3.2em;
+  transform: rotate(45deg);
 }
 
 
