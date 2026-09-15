@@ -52,6 +52,9 @@
             if (window.initAllLanguageGrids) {
                 window.initAllLanguageGrids();
             }
+            if (window.form_handlers && window.$) {
+                window.form_handlers(window.$(newContent));
+            }
             if (push) {
                 history.pushState({ pagesTab: url }, '', url);
             }
