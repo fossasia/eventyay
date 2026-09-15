@@ -213,6 +213,7 @@ def test_context_processor_excludes_disabled_footer_links(rf):
         assert 'documentation' in keys
 
 
+@pytest.mark.django_db
 def test_system_page_view_slug_handling():
     # Verify SystemPageView resolves slug from attribute and URL kwargs
     view = SystemPageView()

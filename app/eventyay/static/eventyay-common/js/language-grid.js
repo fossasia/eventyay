@@ -151,6 +151,8 @@ export function initAllLanguageGrids() {
   document.querySelectorAll('.language-grid-widget').forEach(initLanguageGrid);
 }
 
+window.initAllLanguageGrids = initAllLanguageGrids;
+
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initAllLanguageGrids);
 } else {

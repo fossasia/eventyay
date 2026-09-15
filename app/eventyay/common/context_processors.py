@@ -129,6 +129,13 @@ def system_information(request):
     core_footer_links = []
     for key, label, default_url in core_footer_items:
         enabled = gs.get(f'footer_link_{key}_enabled', as_type=bool, default=True)
+
+        # If the page itself is disabled, do not show the footer link
+        if key in ('terms', 'privacy', 'pricing', 'support'):
+            page_enabled = gs.get(f'page_{key}_enabled', as_type=bool, default=True)
+            if not page_enabled:
+                enabled = False
+
         url = gs.get(f'footer_link_{key}_url', as_type=str, default=default_url).strip()
         if enabled and url:
             core_footer_links.append({
