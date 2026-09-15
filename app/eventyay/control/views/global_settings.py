@@ -19,7 +19,7 @@ from python_http_client.exceptions import HTTPError
 
 from eventyay.api.models import OAuthApplication
 from eventyay.base.email import CustomSMTPBackend, SendGridEmail
-from eventyay.base.models import Event, GlobalPluginConfig, LogEntry, OrderPayment, OrderRefund
+from eventyay.base.models import Event, GlobalPluginConfig, LogEntry, Organizer, OrderPayment, OrderRefund
 from eventyay.base.plugins import get_all_plugins
 from eventyay.base.forms import SECRET_REDACTED
 from eventyay.base.services.mail import get_mail_backend
@@ -832,7 +832,6 @@ class RevealSecretSettingView(View):
             organizer_slug = request.POST.get('organizer', '')
             if not organizer_slug:
                 return JsonResponse({'error': 'forbidden', 'detail': 'Organizer slug required.'}, status=403)
-            from eventyay.base.models import Organizer
             try:
                 organizer = Organizer.objects.get(slug=organizer_slug)
             except Organizer.DoesNotExist:

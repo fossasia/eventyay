@@ -1,16 +1,6 @@
 /**
  * Reveal-on-demand for SecretKeySettingsWidget fields.
- *
- * Flow:
- * 1. User clicks the "Show" button (.secret-reveal-btn) on a masked field.
- * 2. If the field shows '*****' (a saved-and-redacted secret), a password modal
- *    opens asking the admin to confirm their account password.
- * 3. On submit, the password is POSTed to the reveal-secret endpoint.
- * 4. On success, the real value is displayed in the input for AUTO_HIDE_SECONDS
- *    seconds, after which it automatically reverts to masked state.
- * 5. The "Show" button turns into "Hide" while the value is visible.
- * 6. If the field does NOT contain '*****' (user just typed a new password),
- *    a simple type toggle (password <-> text) is used without re-auth.
+ * Saved secrets require password re-auth; newly typed values use a simple type toggle.
  */
 
 const AUTO_HIDE_SECONDS = 30;
@@ -70,17 +60,6 @@ function revealField(input, btn, value) {
     if (!badge && btn.parentElement) {
         badge = document.createElement('span');
         badge.className = 'secret-reveal-countdown';
-        // Inline styles to guarantee layout even if SCSS is aggressively cached
-        badge.style.position = 'absolute';
-        badge.style.right = '36px';
-        badge.style.top = '50%';
-        badge.style.transform = 'translateY(-50%)';
-        badge.style.fontSize = '10px';
-        badge.style.color = '#aaa';
-        badge.style.pointerEvents = 'none';
-        badge.style.whiteSpace = 'nowrap';
-        badge.style.lineHeight = '1';
-        
         btn.parentElement.appendChild(badge);
     }
     let remaining = AUTO_HIDE_SECONDS;

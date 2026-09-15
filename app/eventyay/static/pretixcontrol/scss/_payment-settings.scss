@@ -35,8 +35,7 @@
   width: 100%;
 
   input {
-    // Extra right padding so the button never overlaps text
-    padding-right: 80px !important;
+    padding-right: 80px;
   }
 
   // The reveal toggle button, floated inside the input via absolute positioning
