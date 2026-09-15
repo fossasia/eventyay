@@ -143,6 +143,9 @@ class EventSerializer(I18nAwareModelSerializer):
             'valid_keys',
             'sales_channels',
         )
+        # is_public is no longer user-settable (the UI toggle was removed and events are
+        # public by default); keep it readable but reject writes via the API.
+        read_only_fields = ('is_public',)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -391,7 +394,6 @@ class CloneEventSerializer(EventSerializer):
     @transaction.atomic
     def create(self, validated_data):
         plugins = validated_data.pop('plugins', None)
-        is_public = validated_data.pop('is_public', None)
         testmode = validated_data.pop('testmode', None)
         has_subevents = validated_data.pop('has_subevents', None)
         tz = validated_data.pop('timezone', None)
@@ -402,8 +404,6 @@ class CloneEventSerializer(EventSerializer):
 
         if plugins is not None:
             new_event.set_active_plugins(plugins)
-        if is_public is not None:
-            new_event.is_public = is_public
         if testmode is not None:
             new_event.testmode = testmode
         if has_subevents is not None:
@@ -712,7 +712,6 @@ class EventSettingsSerializer(SettingsSerializer):
         'contact_mail',
         'show_variations_expanded',
         'hide_sold_out',
-        'meta_noindex',
         'redirect_to_checkout_directly',
         'frontpage_subevent_ordering',
         'event_list_type',
