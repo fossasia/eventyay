@@ -769,3 +769,87 @@ class GlobalSettingsPagePreviewView(AdministratorPermissionRequiredMixin, View):
 
         return JsonResponse({'previews': previews})
 
+
+class RevealSecretSettingView(AdministratorPermissionRequiredMixin, View):
+    """
+    Step-up authentication endpoint that reveals a stored secret setting value.
+
+    Security:
+    - Requires an active administrator (staff) session (via AdministratorPermissionRequiredMixin).
+    - Additionally re-validates the user's account password inline before returning anything.
+    - Only whitelisted setting keys can be revealed; any other key yields HTTP 403.
+    - Requires a valid CSRF token (standard Django POST protection).
+    - The real secret is NEVER included in the initial page HTML; it only travels
+      over this endpoint after the user has proved their identity.
+
+    Allowed key scopes:
+    - Global settings: smtp_password, send_grid_api_key, etc.
+    - Event/organizer settings are NOT exposed here (scope='global' only).
+    """
+
+    ALLOWED_KEYS: frozenset[str] = frozenset({
+        # Global email
+        'smtp_password',
+        'send_grid_api_key',
+        'gmail_client_secret',
+        # Global security
+        'turnstile_secret_key',
+        # Global maps
+        'opencagedata_apikey',
+        'mapquest_apikey',
+        # Global telemetry
+        'telemetry_api_key',
+        # Global integrations
+        'etherpad_api_key',
+        'voxbento_client_secret',
+        'hubspot_client_secret',
+        # Global payment (ticketing)
+        'payment_stripe_connect_secret_key',
+        'payment_stripe_connect_test_secret_key',
+        'payment_stripe_connect_publishable_key',
+        'payment_stripe_connect_test_publishable_key',
+        'payment_paypal_connect_secret_key',
+    })
+
+    def post(self, request, *args, **kwargs):
+        key = (request.POST.get('key') or '').strip()
+        password = request.POST.get('password', '')
+
+        if not key or key not in self.ALLOWED_KEYS:
+            return JsonResponse({'error': 'forbidden', 'detail': 'Key not allowed.'}, status=403)
+
+        if not password:
+            return JsonResponse(
+                {'error': 'invalid_password', 'detail': str(_('Please enter your password.'))},
+                status=403,
+            )
+
+        # Step-up: verify the administrator's current account password directly.
+        # Using check_password() is simpler and avoids ReauthForm's disabled-field
+        # quirks while remaining equally secure (session + staff check already passed).
+        if not request.user.check_password(password):
+            logger.warning(
+                'Secret reveal re-auth failed for user %s (key=%s)',
+                request.user.pk,
+                key,
+            )
+            return JsonResponse(
+                {'error': 'invalid_password', 'detail': str(_('The password you entered was invalid.'))},
+                status=403,
+            )
+
+        gs = GlobalSettingsObject()
+        value = gs.settings.get(key, as_type=str, default='') or ''
+
+        if not value:
+            return JsonResponse(
+                {'error': 'not_set', 'detail': str(_('No value is stored for this setting.'))},
+                status=404,
+            )
+
+        logger.info(
+            'Admin user %s revealed secret setting key=%s via step-up auth',
+            request.user.pk,
+            key,
+        )
+        return JsonResponse({'value': value})

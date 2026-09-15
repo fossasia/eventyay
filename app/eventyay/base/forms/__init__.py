@@ -243,17 +243,18 @@ class SecretKeySettingsWidget(forms.TextInput):
         show_label = str(_('Show secret key'))
         hide_label = str(_('Hide secret key'))
         toggle_html = (
-            '<div class="secret-key-wrapper">'
+            '<div class="secret-key-wrapper" data-setting-key="{key}">'
             f'{output}'
             '<button type="button" class="secret-toggle" '
             f'aria-label="{show_label}" '
             f'data-label-show="{show_label}" '
             f'data-label-hide="{hide_label}" '
+            f'data-key="{name}" '
             'aria-pressed="false">'
             '<i class="fa fa-eye"></i>'
             '</button>'
             '</div>'
-        )
+        ).format(key=name)
         return mark_safe(toggle_html)
 
 

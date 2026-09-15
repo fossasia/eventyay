@@ -61,6 +61,11 @@ export function initPasswordToggles(root = document) {
             const iconEye = this.querySelector('.icon-eye');
             const iconEyeSlash = this.querySelector('.icon-eye-slash');
             
+            if (input && input.value === '*****') {
+                alert('For security reasons, saved passwords cannot be revealed. Please type a new password if you wish to change it.');
+                return;
+            }
+            
             if (input && iconEye && iconEyeSlash) {
                 const passwordToggleLabels = getPasswordToggleLabels();
                 const showLabel = passwordToggleLabels.show || 'Show password';
