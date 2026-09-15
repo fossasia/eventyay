@@ -13,6 +13,7 @@ from eventyay.base.templatetags.privacy_consent import (
     consent_embed,
     external_cmp_script,
 )
+from eventyay.control.forms.global_settings import PrivacySettingsForm
 
 
 @pytest.fixture
@@ -212,3 +213,49 @@ def test_template_comments_are_not_shown_to_visitors(gs, template_name, context)
 
     assert '{#' not in html
     assert '#}' not in html
+
+
+@pytest.mark.django_db
+class TestPrivacySettingsFormRequiresPolicyLinks:
+    """
+    Enabling the Klaro banner without a policy page to link to leaves the
+    banner pointing at a dead link, so both policy URLs are required together
+    with the provider switch.
+    """
+
+    def _data(self, **overrides):
+        data = {
+            'privacy_consent_provider': ConsentProvider.KLARO,
+            'privacy_policy_url': 'https://example.org/privacy',
+            'privacy_cookie_policy_url': 'https://example.org/cookies',
+        }
+        data.update(overrides)
+        return data
+
+    def test_klaro_without_privacy_policy_url_is_rejected(self):
+        form = PrivacySettingsForm(data=self._data(privacy_policy_url=''))
+
+        assert not form.is_valid()
+        assert 'privacy_policy_url' in form.errors
+
+    def test_klaro_without_cookie_policy_url_is_rejected(self):
+        form = PrivacySettingsForm(data=self._data(privacy_cookie_policy_url=''))
+
+        assert not form.is_valid()
+        assert 'privacy_cookie_policy_url' in form.errors
+
+    def test_klaro_with_both_policy_urls_is_accepted(self):
+        form = PrivacySettingsForm(data=self._data())
+
+        assert form.is_valid(), form.errors
+
+    def test_disabled_provider_does_not_require_policy_urls(self):
+        form = PrivacySettingsForm(
+            data=self._data(
+                privacy_consent_provider=ConsentProvider.DISABLED,
+                privacy_policy_url='',
+                privacy_cookie_policy_url='',
+            )
+        )
+
+        assert form.is_valid(), form.errors

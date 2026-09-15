@@ -1122,4 +1122,11 @@ class PrivacySettingsForm(SettingsForm):
                 {'privacy_cookie_policy_url': _('Publish a Cookie Policy before enabling the banner.')}
             )
 
+        # GDPR/ePrivacy require the banner to link to the overarching Privacy
+        # Policy as well as the Cookie Policy, so enforce both the same way.
+        if provider == ConsentProvider.KLARO and not data.get('privacy_policy_url'):
+            raise ValidationError(
+                {'privacy_policy_url': _('Publish a Privacy Policy before enabling the banner.')}
+            )
+
         return data
