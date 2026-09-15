@@ -182,7 +182,23 @@ class PageContentSettingsForm(SettingsForm):
         self.cleaned_data.pop('locales', None)
         page_locales = self.cleaned_data.get('page_locales') or [DEFAULT_PAGE_LOCALE]
         self.cleaned_data['page_locales'] = page_locales
+
+        dropped_locales = [loc for loc in self._page_locales if loc not in page_locales]
+
         super().save()
+
+        if dropped_locales:
+            for key in ALL_PAGE_I18N_KEYS:
+                data = self._locale_dict(self.obj.settings.get(key))
+                changed = False
+
+                for loc in dropped_locales:
+                    if loc in data:
+                        del data[loc]
+                        changed = True
+
+                if changed:
+                    self.obj.settings.set(key, LazyI18nString(data))
 
 
 class StartPageContentForm(PageContentSettingsForm):
@@ -375,11 +391,6 @@ class DefaultPageContentForm(PageContentSettingsForm):
             self.obj.settings.set(enabled_key, FOOTER_LINK_DEFAULTS.get(enabled_key, True))
         if self.obj.settings.get(url_key) is None:
             self.obj.settings.set(url_key, FOOTER_LINK_DEFAULTS.get(url_key, f'/{self.slug}'))
-
-        if self.has_content:
-            page_enabled_key = f'page_{self.slug}_enabled'
-            if self.obj.settings.get(page_enabled_key) is None:
-                self.obj.settings.set(page_enabled_key, True)
 
         if self.has_content:
             page_enabled_key = f'page_{self.slug}_enabled'

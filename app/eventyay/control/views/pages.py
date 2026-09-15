@@ -16,11 +16,11 @@ from i18nfield.strings import LazyI18nString
 
 from eventyay.base.models.page import Page
 from eventyay.base.settings import GlobalSettingsObject
-from eventyay.base.templatetags.rich_text import compile_markdown
 from eventyay.common.permissions import is_admin_mode_active
 from eventyay.control.forms.page import PageSettingsForm
 from eventyay.control.forms.pages_admin import (
     ALL_PAGE_I18N_KEYS,
+    CONTENT_PAGE_SLUGS,
     DEFAULT_PAGE_LOCALE,
     DEFAULT_PAGE_SLUGS,
     PAGE_TITLES,
@@ -361,36 +361,28 @@ class SystemPageView(ShowPageView):
         slug = self.get_slug()
         gs = GlobalSettingsObject().settings
 
-        from eventyay.control.forms.pages_admin import CONTENT_PAGE_SLUGS
         if slug in CONTENT_PAGE_SLUGS:
             enabled = gs.get(f'page_{slug}_enabled', as_type=bool, default=True)
             if not enabled:
-                from django.http import Http404
                 raise Http404(_('The requested page does not exist.'))
 
         try:
             return Page.objects.get(slug=slug)
         except Page.DoesNotExist:
-            if True:
+            if slug in CONTENT_PAGE_SLUGS:
                 title_map = {
                     'terms': _('Terms of Service'),
                     'privacy': _('Privacy Policy'),
                     'pricing': _('Pricing'),
                     'support': _('Support & Help'),
                 }
-                title = title_map.get(slug, slug.capitalize())
+                title = title_map[slug]
                 custom_text = gs.get(f'footer_page_{slug}_text', as_type=LazyI18nString)
                 if custom_text:
-                    text = custom_text
-                else:
-                    # Default copy is Markdown; convert so ShowPageView can render HTML.
-                    text = compile_markdown(
-                        f'# {title}\n\n' + str(_('Content for this page has not been configured yet.'))
+                    return Page(
+                        title=title,
+                        slug=slug,
+                        text=custom_text,
                     )
-                return Page(
-                    title=title,
-                    slug=slug,
-                    text=text,
-                )
             raise Http404(_('The requested page does not exist.'))
 
