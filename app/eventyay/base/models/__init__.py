@@ -67,6 +67,7 @@ from .organizer import (
 )
 from .organizer_follower import OrganizerFollower
 from .poll import Poll, PollOption, PollVote
+from .privacy import ConsentCategory, ConsentProvider, ThirdPartyService
 from .product import (
     Product,
     ProductAddOn,
@@ -115,6 +116,9 @@ __all__ = [
     'AbstractPosition',
     'ActivityLog',
     'Announcement',
+    'ConsentCategory',
+    'ConsentProvider',
+    'ThirdPartyService',
     'Answer',
     'AnswerOption',
     'AuditLog',
