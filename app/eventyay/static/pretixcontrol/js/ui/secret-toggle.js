@@ -171,7 +171,16 @@ async function handleRevealClick(btn) {
     // HIDE: already revealed
     if (btn.getAttribute('aria-pressed') === 'true') {
         clearAutoHide(key);
-        maskField(input, btn);
+        if (btn.classList.contains('secret-toggle--revealed')) {
+            maskField(input, btn);
+        } else {
+            input.type = 'password';
+            input.setAttribute('type', 'password');
+            const icon = btn.querySelector('i');
+            if (icon) { icon.classList.remove('fa-eye-slash'); icon.classList.add('fa-eye'); }
+            btn.setAttribute('aria-pressed', 'false');
+            btn.setAttribute('aria-label', btn.dataset.labelShow || 'Show secret key');
+        }
         return;
     }
 
