@@ -126,6 +126,17 @@ function closeModal() {
     if (modal.close) { modal.close(); } else { modal.setAttribute('hidden', ''); }
 }
 
+function reopenModal() {
+    const modal = getModal();
+    if (!modal) return;
+    if (modal.showModal) {
+        if (!modal.open) modal.showModal();
+    } else {
+        modal.removeAttribute('hidden');
+        modal.style.display = '';
+    }
+}
+
 function showModalError(message) {
     const modal = getModal();
     if (!modal) return;
@@ -211,6 +222,7 @@ async function handleRevealClick(btn) {
         }
 
         if (!password) {
+            reopenModal();
             showModalError('Please enter your password.');
             continue;
         }
@@ -230,10 +242,7 @@ async function handleRevealClick(btn) {
         }
         
         // Re-open modal so it stays visible while fetching
-        if (modal) {
-            if (modal.showModal && !modal.open) modal.showModal();
-            else if (!modal.showModal) { modal.removeAttribute('hidden'); modal.style.display = ''; }
-        }
+        reopenModal();
 
         try {
             const resp = await fetch(getRevealUrl(), {
