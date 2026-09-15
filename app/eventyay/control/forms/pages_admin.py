@@ -18,6 +18,7 @@ from i18nfield.strings import LazyI18nString
 from eventyay.base.forms import SettingsForm
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.forms.fields import I18nRichTextFormField
+from eventyay.control.forms import MultipleLanguagesWidget
 
 DEFAULT_PAGE_LOCALE = 'en'
 
@@ -154,7 +155,8 @@ class PageContentSettingsForm(SettingsForm):
         self.fields['page_locales'] = forms.MultipleChoiceField(
             choices=settings.LANGUAGES,
             required=False,
-            widget=forms.MultipleHiddenInput,
+            widget=MultipleLanguagesWidget,
+            label=_('Page languages'),
         )
         self.initial['page_locales'] = self._page_locales
 
@@ -180,7 +182,23 @@ class PageContentSettingsForm(SettingsForm):
         self.cleaned_data.pop('locales', None)
         page_locales = self.cleaned_data.get('page_locales') or [DEFAULT_PAGE_LOCALE]
         self.cleaned_data['page_locales'] = page_locales
+
+        dropped_locales = [loc for loc in self._page_locales if loc not in page_locales]
+
         super().save()
+
+        if dropped_locales:
+            for key in ALL_PAGE_I18N_KEYS:
+                data = self._locale_dict(self.obj.settings.get(key))
+                changed = False
+
+                for loc in dropped_locales:
+                    if loc in data:
+                        del data[loc]
+                        changed = True
+
+                if changed:
+                    self.obj.settings.set(key, LazyI18nString(data))
 
 
 class StartPageContentForm(PageContentSettingsForm):
@@ -374,6 +392,11 @@ class DefaultPageContentForm(PageContentSettingsForm):
         if self.obj.settings.get(url_key) is None:
             self.obj.settings.set(url_key, FOOTER_LINK_DEFAULTS.get(url_key, f'/{self.slug}'))
 
+        if self.has_content:
+            page_enabled_key = f'page_{self.slug}_enabled'
+            if self.obj.settings.get(page_enabled_key) is None:
+                self.obj.settings.set(page_enabled_key, True)
+
     def _build_dynamic_fields(self):
         slug = self.slug
         enabled_key = f'footer_link_{slug}_enabled'
@@ -382,9 +405,22 @@ class DefaultPageContentForm(PageContentSettingsForm):
 
         self.fields[enabled_key] = forms.BooleanField(
             required=False,
-            label=_('Show in footer'),
+            label=_('Show footer link'),
+            help_text=_('When enabled, a link to this page will be displayed in the footer.'),
         )
         self.initial[enabled_key] = gs.get(enabled_key, as_type=bool, default=True)
+
+        if self.has_content:
+            page_enabled_key = f'page_{slug}_enabled'
+            self.fields[page_enabled_key] = forms.BooleanField(
+                required=False,
+                label=_('Enable page'),
+                help_text=_(
+                    'When enabled, this page is publicly accessible. '
+                    'When disabled, the page returns a 404.'
+                ),
+            )
+            self.initial[page_enabled_key] = gs.get(page_enabled_key, as_type=bool, default=True)
 
         self.fields[url_key] = forms.CharField(
             required=False,

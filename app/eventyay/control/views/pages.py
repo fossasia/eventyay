@@ -16,11 +16,11 @@ from i18nfield.strings import LazyI18nString
 
 from eventyay.base.models.page import Page
 from eventyay.base.settings import GlobalSettingsObject
-from eventyay.base.templatetags.rich_text import compile_markdown
 from eventyay.common.permissions import is_admin_mode_active
 from eventyay.control.forms.page import PageSettingsForm
 from eventyay.control.forms.pages_admin import (
     ALL_PAGE_I18N_KEYS,
+    CONTENT_PAGE_SLUGS,
     DEFAULT_PAGE_LOCALE,
     DEFAULT_PAGE_SLUGS,
     PAGE_TITLES,
@@ -141,6 +141,7 @@ class PagesDefaultPageView(PagesSettingsView):
         ctx['enabled_field'] = f'footer_link_{self.slug}_enabled'
         ctx['url_field'] = f'footer_link_{self.slug}_url'
         ctx['content_field'] = f'footer_page_{self.slug}_text'
+        ctx['page_enabled_field'] = f'page_{self.slug}_enabled'
         if self.slug == 'documentation':
             gs = GlobalSettingsObject().settings
             ctx['preview_url'] = gs.get('footer_link_documentation_url') or 'https://docs.eventyay.com'
@@ -152,66 +153,6 @@ class PagesDefaultPageView(PagesSettingsView):
         return reverse('eventyay_admin:admin.pages.default', kwargs={'slug': self.slug})
 
 
-class PagesLocaleRemoveView(AdministratorPermissionRequiredMixin, View):
-    """Remove a language from all page content and from page_locales globally."""
-
-    def post(self, request, *args, **kwargs):
-        locale = (request.POST.get('locale') or '').strip().lower()
-        valid_codes = {code for code, _name in settings.LANGUAGES}
-        if not locale or locale not in valid_codes:
-            messages.error(request, _('Invalid language code.'))
-            return redirect(reverse('eventyay_admin:admin.pages'))
-
-        gs = GlobalSettingsObject().settings
-
-        raw = gs.get('page_locales')
-        if isinstance(raw, str):
-            try:
-                locales = json.loads(raw)
-            except (json.JSONDecodeError, TypeError):
-                locales = [DEFAULT_PAGE_LOCALE]
-        elif isinstance(raw, (list, tuple)):
-            locales = list(raw)
-        else:
-            locales = [DEFAULT_PAGE_LOCALE]
-
-        if locale not in locales:
-            messages.warning(request, _('That language is not currently active.'))
-            return redirect(reverse('eventyay_admin:admin.pages'))
-
-        if len(locales) <= 1:
-            messages.error(request, _('You must keep at least one language.'))
-            return redirect(reverse('eventyay_admin:admin.pages'))
-
-        # Strip the locale from every i18n content key across all tabs.
-        for key in ALL_PAGE_I18N_KEYS:
-            raw_val = gs.get(key)
-            if raw_val is None:
-                continue
-            if isinstance(raw_val, LazyI18nString):
-                data = raw_val.data
-            elif isinstance(raw_val, str):
-                try:
-                    data = json.loads(raw_val)
-                except (json.JSONDecodeError, TypeError):
-                    data = raw_val
-            else:
-                data = raw_val
-            if isinstance(data, dict) and locale in data:
-                del data[locale]
-                gs.set(key, LazyI18nString(data))
-
-        locales = [c for c in locales if c != locale]
-        gs.set('page_locales', json.dumps(locales))
-
-        messages.success(request, _('Language removed from all page content.'))
-
-        referer = request.POST.get('next') or request.META.get('HTTP_REFERER') or ''
-        if referer and url_has_allowed_host_and_scheme(
-            referer, allowed_hosts={request.get_host()}, require_https=request.is_secure()
-        ):
-            return redirect(referer)
-        return redirect(reverse('eventyay_admin:admin.pages'))
 
 
 class PageList(PagesTabMixin, AdministratorPermissionRequiredMixin, ListView):
@@ -418,31 +359,30 @@ class SystemPageView(ShowPageView):
 
     def get_page(self):
         slug = self.get_slug()
+        gs = GlobalSettingsObject().settings
+
+        if slug in CONTENT_PAGE_SLUGS:
+            enabled = gs.get(f'page_{slug}_enabled', as_type=bool, default=True)
+            if not enabled:
+                raise Http404(_('The requested page does not exist.'))
+
         try:
             return Page.objects.get(slug=slug)
         except Page.DoesNotExist:
-            gs = GlobalSettingsObject().settings
-            enabled_key = f'footer_link_{slug}_enabled'
-            if gs.get(enabled_key, as_type=bool, default=True):
+            if slug in CONTENT_PAGE_SLUGS:
                 title_map = {
                     'terms': _('Terms of Service'),
                     'privacy': _('Privacy Policy'),
                     'pricing': _('Pricing'),
                     'support': _('Support & Help'),
                 }
-                title = title_map.get(slug, slug.capitalize())
+                title = title_map[slug]
                 custom_text = gs.get(f'footer_page_{slug}_text', as_type=LazyI18nString)
                 if custom_text:
-                    text = custom_text
-                else:
-                    # Default copy is Markdown; convert so ShowPageView can render HTML.
-                    text = compile_markdown(
-                        f'# {title}\n\n' + str(_('Content for this page has not been configured yet.'))
+                    return Page(
+                        title=title,
+                        slug=slug,
+                        text=custom_text,
                     )
-                return Page(
-                    title=title,
-                    slug=slug,
-                    text=text,
-                )
             raise Http404(_('The requested page does not exist.'))
 
