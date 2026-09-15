@@ -435,10 +435,7 @@ class SystemPageView(ShowPageView):
                 if custom_text:
                     text = custom_text
                 else:
-                    # Default copy is Markdown; convert so ShowPageView can render HTML.
-                    text = compile_markdown(
-                        f'# {title}\n\n' + str(_('Content for this page has not been configured yet.'))
-                    )
+                    raise Http404(_('The requested page does not exist.'))
                 return Page(
                     title=title,
                     slug=slug,

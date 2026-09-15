@@ -382,7 +382,7 @@ class DefaultPageContentForm(PageContentSettingsForm):
 
         self.fields[enabled_key] = forms.BooleanField(
             required=False,
-            label=_('Show in footer'),
+            label=_('Enable page'),
         )
         self.initial[enabled_key] = gs.get(enabled_key, as_type=bool, default=True)
 
