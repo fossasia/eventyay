@@ -5,12 +5,14 @@ from typing import List, Union
 
 from django import forms
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import UploadedFile
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.forms import SECRET_REDACTED, SecretKeySettingsField, SecretKeySettingsWidget, SettingsForm
+from eventyay.base.models.privacy import ConsentProvider
 from eventyay.base.settings import EVENT_SERIES_CREATION_ENABLED, MEETUP_CREATION_ENABLED, GlobalSettingsObject
 from eventyay.base.signals import register_global_settings
 from eventyay.common.urls import get_file_url_path
@@ -36,6 +38,7 @@ def paypal_connect_endpoint_choice(value: str | None) -> str:
 
 
 class GlobalSettingsForm(SettingsForm):
+    """GlobalSettingsForm class implementation."""
     auto_fields = [
         'region',
         'mail_from',
@@ -86,6 +89,7 @@ class GlobalSettingsForm(SettingsForm):
             self.obj.settings.set('email_vendor', 'smtp')
 
     def __init__(self, *args, **kwargs):
+        """__init__ method."""
         self.obj = GlobalSettingsObject()
         self._setting_default()
 
@@ -634,6 +638,7 @@ class GlobalSettingsForm(SettingsForm):
                 field.widget.attrs['data-event-settings-image-tools'] = 'enabled'
 
     def clean_voxbento_base_url(self):
+        """clean_voxbento_base_url method."""
         url = (self.cleaned_data.get('voxbento_base_url') or '').strip()
         if url:
             if url.endswith('/'):
@@ -643,6 +648,7 @@ class GlobalSettingsForm(SettingsForm):
         return url
 
     def clean_etherpad_pad_name_pattern(self):
+        """clean_etherpad_pad_name_pattern method."""
         pattern = (self.cleaned_data.get('etherpad_pad_name_pattern') or '').strip()
         if pattern and '{submission}' not in pattern and '{token}' not in pattern:
             raise forms.ValidationError(
@@ -651,6 +657,7 @@ class GlobalSettingsForm(SettingsForm):
         return pattern
 
     def clean(self):
+        """clean method."""
         data = super().clean()
 
         # Validate SendGrid token is provided when SendGrid is selected
@@ -691,6 +698,7 @@ class GlobalSettingsForm(SettingsForm):
         return data
 
     def save(self):
+        """save method."""
         image_field = 'seo_social_image'
         current_value = self.obj.settings.get(image_field, as_type=str, default='') or ''
         new_value = self.cleaned_data.get(image_field)
@@ -714,7 +722,9 @@ class GlobalSettingsForm(SettingsForm):
 
 
 class GlobalTicketingSettingsForm(SettingsForm):
+    """GlobalTicketingSettingsForm class implementation."""
     def _setting_default(self):
+        """_setting_default method."""
         global_settings = self.obj.settings
         if global_settings.get('reservation_time') is None or global_settings.get('reservation_time') == '':
             global_settings.set('reservation_time', 30)
@@ -722,6 +732,7 @@ class GlobalTicketingSettingsForm(SettingsForm):
             global_settings.set('max_products_per_order', 0)
 
     def __init__(self, *args, **kwargs):
+        """__init__ method."""
         self.obj = GlobalSettingsObject()
         self._setting_default()
         super().__init__(*args, obj=self.obj, **kwargs)
@@ -901,10 +912,12 @@ class GlobalTicketingSettingsForm(SettingsForm):
             self.data = data
 
     def clean_payment_paypal_connect_endpoint(self):
+        """clean_payment_paypal_connect_endpoint method."""
         return paypal_connect_endpoint_choice(self.cleaned_data.get('payment_paypal_connect_endpoint'))
 
 
 class SSOConfigForm(SettingsForm):
+    """SSOConfigForm class implementation."""
     redirect_url = forms.URLField(
         required=True,
         label=_('Redirect URL'),
@@ -912,6 +925,7 @@ class SSOConfigForm(SettingsForm):
     )
 
     def __init__(self, *args, **kwargs):
+        """__init__ method."""
         self.obj = GlobalSettingsObject()
         super().__init__(*args, obj=self.obj, **kwargs)
 
@@ -926,6 +940,7 @@ class StripeKeyValidator:
     """
 
     def __init__(self, prefix: Union[str, List[str]]) -> None:
+        """__init__ method."""
         if not prefix:
             raise ValueError('Prefix cannot be empty')
 
@@ -939,6 +954,7 @@ class StripeKeyValidator:
             self._prefixes = [prefix]
 
     def __call__(self, value: str) -> None:
+        """__call__ method."""
         if not value:
             raise forms.ValidationError(_('The Stripe key cannot be empty.'), code='invalid-stripe-key')
 
@@ -957,7 +973,9 @@ class StripeKeyValidator:
 
 
 class GlobalBusinessSettingsForm(SettingsForm):
+    """GlobalBusinessSettingsForm class implementation."""
     def __init__(self, *args, **kwargs):
+        """__init__ method."""
         self.obj = GlobalSettingsObject()
         super().__init__(*args, obj=self.obj, **kwargs)
 
@@ -1065,3 +1083,64 @@ class GlobalBusinessSettingsForm(SettingsForm):
                 'billing_validation',
             ]),
         ]
+
+
+class PrivacySettingsForm(SettingsForm):
+    """
+    Privacy & Compliance configuration.
+
+    The consent provider is a single choice rather than independent switches,
+    which is what keeps the built-in Klaro banner and an external CMP from ever
+    running at the same time (issue #5414, section 9).
+    """
+
+    auto_fields = [
+        'privacy_cmp_provider_name',
+        'privacy_cmp_script_url',
+        'privacy_policy_url',
+        'privacy_cookie_policy_url',
+        'privacy_category_functional_enabled',
+        'privacy_category_analytics_enabled',
+        'privacy_category_marketing_enabled',
+        'privacy_category_embed_enabled',
+    ]
+
+    def __init__(self, *args, **kwargs):
+        """__init__ method."""
+        self.obj = GlobalSettingsObject()
+        super().__init__(*args, obj=self.obj, **kwargs)
+
+        self.fields['privacy_consent_provider'] = forms.ChoiceField(
+            label=_('Consent provider'),
+            choices=ConsentProvider.choices,
+            required=True,
+            help_text=_(
+                'Existing deployments stay on "Disabled" until an administrator turns consent on.'
+            ),
+        )
+
+    def clean(self):
+        """clean method."""
+        data = super().clean()
+        provider = data.get('privacy_consent_provider')
+
+        if provider == ConsentProvider.EXTERNAL and not data.get('privacy_cmp_script_url'):
+            raise ValidationError(
+                {'privacy_cmp_script_url': _('An external CMP needs a script URL to load.')}
+            )
+
+        # A banner that points at a missing policy page is worse than no banner,
+        # so refuse the combination instead of silently rendering a dead link.
+        if provider == ConsentProvider.KLARO and not data.get('privacy_cookie_policy_url'):
+            raise ValidationError(
+                {'privacy_cookie_policy_url': _('Publish a Cookie Policy before enabling the banner.')}
+            )
+
+        # GDPR/ePrivacy require the banner to link to the overarching Privacy
+        # Policy as well as the Cookie Policy, so enforce both the same way.
+        if provider == ConsentProvider.KLARO and not data.get('privacy_policy_url'):
+            raise ValidationError(
+                {'privacy_policy_url': _('Publish a Privacy Policy before enabling the banner.')}
+            )
+
+        return data
