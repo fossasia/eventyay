@@ -1,9 +1,9 @@
+import logging
 import mimetypes
 import uuid
 
 import requests
 from bs4 import BeautifulSoup
-
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.utils.timezone import now
@@ -12,17 +12,20 @@ from eventyay.base.models.storage_model import StoredFile
 from eventyay.consts import SizeKey
 
 
+logger = logging.getLogger(__name__)
+
+
 def get_extension_from_response(response):
-    content_type = response.headers.get("Content-Type")
+    content_type = response.headers.get('Content-Type')
     if not content_type:
         return
-    content_type = content_type.split(";")[0].strip()
+    content_type = content_type.split(';')[0].strip()
     extension = mimetypes.guess_extension(content_type)
     ext_whitelist = (
-        ".png",
-        ".jpg",
-        ".gif",
-        ".jpeg",
+        '.png',
+        '.jpg',
+        '.gif',
+        '.jpeg',
     )
     if extension in ext_whitelist:
         return content_type, extension
@@ -32,7 +35,7 @@ def get_extension_from_response(response):
 def find_data(html, key):
     elements = html.select(f'meta[property="{key}"], meta[name="{key}"]')
     if elements:
-        return elements[0].attrs.get("content")
+        return elements[0].attrs.get('content')
 
 
 def store_image(response, event):  # TODO deduplicate
@@ -45,7 +48,7 @@ def store_image(response, event):  # TODO deduplicate
         return
 
     uid = uuid.uuid4()
-    filename = f"{uid}{extension}"
+    filename = f'{uid}{extension}'
     stored_file = StoredFile.objects.create(
         id=uid,
         event=event,
@@ -59,10 +62,17 @@ def store_image(response, event):  # TODO deduplicate
     return stored_file.file.url
 
 
-def retrieve_url(url):
-    response = requests.get(url, timeout=10)  # TODO: user agent
-    if response.status_code == 200:
-        return response
+def retrieve_url(url: str) -> requests.Response | None:
+    headers = {
+        'User-Agent': f'{settings.INSTANCE_NAME}/1.0 ({settings.SITE_URL})',
+    }
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        if response.status_code == 200:
+            return response
+    except requests.RequestException as e:
+        logger.warning('Failed to fetch external URL %s: %s', url, e)
+    return None
 
 
 def fetch_preview_data(url, event):
@@ -84,47 +94,45 @@ def fetch_preview_data(url, event):
     response = retrieve_url(url)
     if not response:
         return
-    content_type = response.headers.get("Content-Type", "text/html")  # Assume HTML
+    content_type = response.headers.get('Content-Type', 'text/html')  # Assume HTML
 
-    if "image/" in content_type:
+    if 'image/' in content_type:
         image_url = store_image(response, event)
         if image_url:  # We don't store huge images
-            return {"image": image_url}
+            return {'image': image_url}
 
-    elif "text/html" in content_type:
+    elif 'text/html' in content_type:
         text = response.content.decode()
-        header_end = text.find("</head>")
+        header_end = text.find('</head>')
         if not header_end:  # Avoid parsing huge HTML docs for now
             return
         try:
-            html = BeautifulSoup(text[: header_end + 7], "html.parser")
+            html = BeautifulSoup(text[: header_end + 7], 'html.parser')
         except Exception:  # Ignore faulty websites
             return
 
         result = {}
-        title = find_data(html, "og:title") or find_data(html, "title")
-        if not title and html.find("title"):
-            title = html.find("title").text
+        title = find_data(html, 'og:title') or find_data(html, 'title')
+        if not title and html.find('title'):
+            title = html.find('title').text
         if title:
-            result["title"] = title
-        result["description"] = find_data(html, "og:description") or find_data(
-            html, "description"
-        )
-        result["format"] = find_data(html, "twitter:card")
-        result["video"] = find_data(html, "og:video")
-        result["site_name"] = find_data(html, "og:site-name")
+            result['title'] = title
+        result['description'] = find_data(html, 'og:description') or find_data(html, 'description')
+        result['format'] = find_data(html, 'twitter:card')
+        result['video'] = find_data(html, 'og:video')
+        result['site_name'] = find_data(html, 'og:site_name') or find_data(html, 'og:site-name')
 
         result = {key: value for key, value in result.items() if value}
 
-        image = find_data(html, "og:image")
+        image = find_data(html, 'og:image')
         if image:
             response = retrieve_url(image)
             if response:
                 image_url = store_image(response, event)
                 if image_url:  # We don't store huge images
-                    result["image"] = image_url
+                    result['image'] = image_url
 
         if result:
-            result["url"] = find_data(html, "og:url") or url
+            result['url'] = find_data(html, 'og:url') or url
 
         return result or None
