@@ -184,7 +184,6 @@ dependencies = [
     "rpds-py>=2026.6.3",
     "rules>=3.5",
     "sendgrid>=6.12.5",
-
     "google-api-python-client>=2.160.0",
     "google-auth-httplib2>=0.2.0",
     "google-auth-oauthlib>=1.2.0",
@@ -216,6 +215,7 @@ dependencies = [
     "yarl>=1.24.5",
     "zipp>=4.1.0",
     "zxcvbn>=4.4.28",
+    "wallet-py3k>=0.0.3",
 ]
 
 [build-system]

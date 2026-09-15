@@ -1407,6 +1407,7 @@ dependencies = [
     { name = "vat-moss-lite" },
     { name = "vine" },
     { name = "vobject" },
+    { name = "wallet-py3k" },
     { name = "wcwidth" },
     { name = "webauthn" },
     { name = "webencodings" },
@@ -1656,6 +1657,7 @@ requires-dist = [
     { name = "vat-moss-lite", specifier = ">=0.12.1" },
     { name = "vine", specifier = ">=5.1.0" },
     { name = "vobject", specifier = ">=0.9.9" },
+    { name = "wallet-py3k", specifier = ">=0.0.3" },
     { name = "wcwidth", specifier = ">=0.8.2" },
     { name = "webauthn", specifier = ">=2.8.0" },
     { name = "webencodings", specifier = ">=0.5.1" },
@@ -3793,6 +3795,15 @@ sdist = { url = "https://files.pythonhosted.org/packages/d0/8a/15c34b3d27c43fc81
 wheels = [
     { url = "https://files.pythonhosted.org/packages/68/20/6bba813bbd498c28edbbcf8253a6398cf4266ecf7bfa6129835c0a2bfbb1/vobject-0.9.9-py2.py3-none-any.whl", hash = "sha256:0fbdb982065cf4d1843a5d5950c88510041c6de026bda49c3502721de1c6ac3d", size = 47526, upload-time = "2024-12-16T07:31:08.493Z" },
 ]
+
+[[package]]
+name = "wallet-py3k"
+version = "0.0.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "six" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d3/bd/2495dd79d9b27c16b3a80d9e225b5d0a3e4c83e278b8d1c1a30bbbb5d577/wallet-py3k-0.0.4.tar.gz", hash = "sha256:9321d287ca876f32ba8052c69cbe9d509fc62c91d3342f3a8e35dafc03ea2332", size = 6151, upload-time = "2018-12-17T17:01:57.696Z" }
 
 [[package]]
 name = "wcwidth"
