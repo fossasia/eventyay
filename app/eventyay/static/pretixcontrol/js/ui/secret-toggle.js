@@ -186,16 +186,7 @@ async function handleRevealClick(btn) {
     // HIDE: already revealed
     if (btn.getAttribute('aria-pressed') === 'true') {
         clearAutoHide(key);
-        if (btn.classList.contains('secret-toggle--revealed')) {
-            maskField(input, btn);
-        } else {
-            input.type = 'password';
-            input.setAttribute('type', 'password');
-            const icon = btn.querySelector('i');
-            if (icon) { icon.classList.remove('fa-eye-slash'); icon.classList.add('fa-eye'); }
-            btn.setAttribute('aria-pressed', 'false');
-            btn.setAttribute('aria-label', btn.dataset.labelShow || 'Show secret key');
-        }
+        maskField(input, btn);
         return;
     }
 
@@ -245,6 +236,14 @@ async function handleRevealClick(btn) {
         reopenModal();
 
         try {
+            const body = new URLSearchParams({ key, password });
+            if (document.body.dataset.organizer) {
+                body.append('scope', 'organizer');
+                body.append('organizer', document.body.dataset.organizer);
+            } else {
+                body.append('scope', 'global');
+            }
+
             const resp = await fetch(getRevealUrl(), {
                 method: 'POST',
                 headers: {
@@ -252,7 +251,7 @@ async function handleRevealClick(btn) {
                     'X-CSRFToken': getCsrfToken(),
                 },
                 credentials: 'same-origin',
-                body: new URLSearchParams({ key, password }),
+                body: body,
             });
 
             const data = await resp.json().catch(() => ({}));

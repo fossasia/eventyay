@@ -85,11 +85,11 @@
 
 // Step-up re-auth modal — matches .pretix-confirm-dialog theme
 .secret-reveal-modal {
-  border: none;
+  border: 1px solid #e0e0e0;
   border-radius: $border-radius-large;
-  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.2);
-  padding: 20px;
-  width: 400px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+  width: 420px;
   max-width: 90vw;
   background: $body-bg;
   overflow: hidden;
@@ -100,18 +100,18 @@
   }
 
   &__form {
-    // no extra padding – outer dialog already has padding: 20px
+    // no extra padding
   }
 
   &__header {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 4px;
+    gap: 10px;
+    margin-bottom: 8px;
   }
 
   &__icon {
-    font-size: 16px;
+    font-size: 18px;
     color: $brand-primary;
     flex-shrink: 0;
   }
@@ -121,12 +121,13 @@
     font-size: 16px;
     font-weight: 700;
     color: $text-color;
+    line-height: 1.2;
   }
 
   &__desc {
-    font-size: 13px;
-    color: $text-muted;
-    margin: 6px 0 16px 0;
+    font-size: 14px;
+    color: #4a4a4a;
+    margin: 0 0 16px 0;
     line-height: 1.5;
   }
 

@@ -770,21 +770,17 @@ class GlobalSettingsPagePreviewView(AdministratorPermissionRequiredMixin, View):
         return JsonResponse({'previews': previews})
 
 
-class RevealSecretSettingView(AdministratorPermissionRequiredMixin, View):
+class RevealSecretSettingView(View):
     """
     Step-up authentication endpoint that reveals a stored secret setting value.
 
     Security:
-    - Requires an active administrator (staff) session (via AdministratorPermissionRequiredMixin).
-    - Additionally re-validates the user's account password inline before returning anything.
+    - Requires an active session.
+    - Re-validates the user's account password inline before returning anything.
     - Only whitelisted setting keys can be revealed; any other key yields HTTP 403.
-    - Requires a valid CSRF token (standard Django POST protection).
-    - The real secret is NEVER included in the initial page HTML; it only travels
-      over this endpoint after the user has proved their identity.
-
-    Allowed key scopes:
-    - Global settings: smtp_password, send_grid_api_key, etc.
-    - Event/organizer settings are NOT exposed here (scope='global' only).
+    - Scope parameter determines if we check global settings or organizer settings.
+    - If scope=global, requires staff access.
+    - If scope=organizer, requires 'can_change_organizer_settings' permission on the organizer.
     """
 
     ALLOWED_KEYS: frozenset[str] = frozenset({
@@ -812,8 +808,12 @@ class RevealSecretSettingView(AdministratorPermissionRequiredMixin, View):
     })
 
     def post(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return JsonResponse({'error': 'forbidden', 'detail': 'Authentication required.'}, status=403)
+
         key = (request.POST.get('key') or '').strip()
         password = request.POST.get('password', '')
+        scope = request.POST.get('scope', 'global')
 
         if not key or key not in self.ALLOWED_KEYS:
             return JsonResponse({'error': 'forbidden', 'detail': 'Key not allowed.'}, status=403)
@@ -824,21 +824,39 @@ class RevealSecretSettingView(AdministratorPermissionRequiredMixin, View):
                 status=403,
             )
 
-        # Step-up: verify the administrator's current account password directly.
-        # Using check_password() is simpler and avoids ReauthForm's disabled-field
-        # quirks while remaining equally secure (session + staff check already passed).
+        if scope == 'global':
+            if not (request.user.is_staff or request.user.is_superuser):
+                return JsonResponse({'error': 'forbidden', 'detail': 'Administrator access required.'}, status=403)
+            gs = GlobalSettingsObject()
+        elif scope == 'organizer':
+            organizer_slug = request.POST.get('organizer', '')
+            if not organizer_slug:
+                return JsonResponse({'error': 'forbidden', 'detail': 'Organizer slug required.'}, status=403)
+            from eventyay.base.models import Organizer
+            try:
+                organizer = Organizer.objects.get(slug=organizer_slug)
+            except Organizer.DoesNotExist:
+                return JsonResponse({'error': 'not_found', 'detail': 'Organizer not found.'}, status=404)
+            
+            if not (request.user.is_staff or request.user.is_superuser or request.user.has_organizer_permission(organizer, 'can_change_organizer_settings', request=request)):
+                return JsonResponse({'error': 'forbidden', 'detail': 'Organizer permission required.'}, status=403)
+            gs = organizer
+        else:
+            return JsonResponse({'error': 'forbidden', 'detail': 'Invalid scope.'}, status=403)
+
+        # Step-up: verify the administrator's/organizer's current account password directly.
         if not request.user.check_password(password):
             logger.warning(
-                'Secret reveal re-auth failed for user %s (key=%s)',
+                'Secret reveal re-auth failed for user %s (key=%s, scope=%s)',
                 request.user.pk,
                 key,
+                scope,
             )
             return JsonResponse(
                 {'error': 'invalid_password', 'detail': str(_('The password you entered was invalid.'))},
                 status=403,
             )
 
-        gs = GlobalSettingsObject()
         value = gs.settings.get(key, as_type=str, default='') or ''
 
         if not value:
@@ -848,9 +866,10 @@ class RevealSecretSettingView(AdministratorPermissionRequiredMixin, View):
             )
 
         logger.info(
-            'Admin user %s revealed secret setting key=%s via step-up auth',
+            'User %s revealed secret setting key=%s via step-up auth (scope=%s)',
             request.user.pk,
             key,
+            scope,
         )
         response = JsonResponse({'value': value})
         response['Cache-Control'] = 'no-store'
