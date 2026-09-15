@@ -40,7 +40,10 @@ const countdownIntervals = {};
 function maskField(input, btn) {
     input.type = 'password';
     input.setAttribute('type', 'password');
-    input.value = REDACTED;
+    if (input.dataset.serverRevealed === 'true') {
+        input.value = REDACTED;
+        delete input.dataset.serverRevealed;
+    }
     const icon = btn.querySelector('i');
     if (icon) { icon.classList.remove('fa-eye-slash'); icon.classList.add('fa-eye'); }
     btn.setAttribute('aria-pressed', 'false');
@@ -52,6 +55,7 @@ function maskField(input, btn) {
 
 function revealField(input, btn, value) {
     const key = btn.dataset.key || '';
+    input.dataset.serverRevealed = 'true';
     input.type = 'text';
     input.setAttribute('type', 'text');
     input.value = value;
@@ -197,88 +201,92 @@ async function handleRevealClick(btn) {
 
     // Redacted value: step-up auth required
     openModal();
-    let password;
-    try {
-        password = await waitForModalAction();
-    } catch {
-        return; // cancelled
-    }
-
-    if (!password) {
-        openModal();
-        showModalError('Please enter your password.');
-        return;
-    }
-
-    // Set loading state on the button
-    const modal = getModal();
-    const confirmBtn = modal && modal.querySelector('#secret-reveal-confirm');
-    const spinner = modal && modal.querySelector('#secret-reveal-spinner');
-    const btnText = modal && modal.querySelector('#secret-reveal-btn-text');
-    let originalText = 'Show secret';
     
-    if (confirmBtn) confirmBtn.disabled = true;
-    if (spinner) spinner.hidden = false;
-    if (btnText) {
-        originalText = btnText.textContent;
-        btnText.textContent = 'Verifying...';
-    }
-    
-    // Re-open modal so it stays visible while fetching
-    if (modal) {
-        if (modal.showModal && !modal.open) modal.showModal();
-        else if (!modal.showModal) { modal.removeAttribute('hidden'); modal.style.display = ''; }
-    }
+    while (true) {
+        let password;
+        try {
+            password = await waitForModalAction();
+        } catch {
+            return; // cancelled
+        }
 
-    try {
-        const resp = await fetch(getRevealUrl(), {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'X-CSRFToken': getCsrfToken(),
-            },
-            credentials: 'same-origin',
-            body: new URLSearchParams({ key, password }),
-        });
+        if (!password) {
+            showModalError('Please enter your password.');
+            continue;
+        }
 
-        const data = await resp.json().catch(() => ({}));
+        // Set loading state on the button
+        const modal = getModal();
+        const confirmBtn = modal && modal.querySelector('#secret-reveal-confirm');
+        const spinner = modal && modal.querySelector('#secret-reveal-spinner');
+        const btnText = modal && modal.querySelector('#secret-reveal-btn-text');
+        let originalText = 'Show secret';
+        
+        if (confirmBtn) confirmBtn.disabled = true;
+        if (spinner) spinner.hidden = false;
+        if (btnText) {
+            originalText = btnText.textContent;
+            btnText.textContent = 'Verifying...';
+        }
+        
+        // Re-open modal so it stays visible while fetching
+        if (modal) {
+            if (modal.showModal && !modal.open) modal.showModal();
+            else if (!modal.showModal) { modal.removeAttribute('hidden'); modal.style.display = ''; }
+        }
 
-        // Reset loading state
-        if (confirmBtn) confirmBtn.disabled = false;
-        if (spinner) spinner.hidden = true;
-        if (btnText) btnText.textContent = originalText;
+        try {
+            const resp = await fetch(getRevealUrl(), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': getCsrfToken(),
+                },
+                credentials: 'same-origin',
+                body: new URLSearchParams({ key, password }),
+            });
 
-        if (resp.ok && data.value) {
+            const data = await resp.json().catch(() => ({}));
+
+            // Reset loading state
+            if (confirmBtn) confirmBtn.disabled = false;
+            if (spinner) spinner.hidden = true;
+            if (btnText) btnText.textContent = originalText;
+
+            if (resp.ok && data.value) {
+                closeModal();
+                revealField(input, btn, data.value);
+                return;
+            }
+
+            if (data.error === 'invalid_password') {
+                // Keep modal open, show error
+                showModalError(data.detail || 'Incorrect password. Please try again.');
+                continue;
+            }
+            
             closeModal();
-            revealField(input, btn, data.value);
+            if (data.error === 'not_set') {
+                alert(data.detail || 'No value is stored for this setting.');
+                return;
+            }
+            if (data.error === 'no_password_backend') {
+                alert(data.detail || 'Re-authentication is not supported for your account type.');
+                return;
+            }
+            alert('An error occurred. Please try again.');
+            return;
+        } catch (err) {
+            // Reset loading state
+            if (confirmBtn) confirmBtn.disabled = false;
+            if (spinner) spinner.hidden = true;
+            if (btnText) btnText.textContent = originalText;
+            closeModal();
+            
+            alert('Network error. Please check your connection and try again.');
+            console.error('RevealSecretSetting fetch error:', err);
             return;
         }
-
-        if (data.error === 'invalid_password') {
-            // Keep modal open, show error
-            showModalError(data.detail || 'Incorrect password. Please try again.');
-            return;
-        }
-        
-        closeModal();
-        if (data.error === 'not_set') {
-            alert(data.detail || 'No value is stored for this setting.');
-            return;
-        }
-        if (data.error === 'no_password_backend') {
-            alert(data.detail || 'Re-authentication is not supported for your account type.');
-            return;
-        }
-        alert('An error occurred. Please try again.');
-    } catch (err) {
-        // Reset loading state
-        if (confirmBtn) confirmBtn.disabled = false;
-        if (spinner) spinner.hidden = true;
-        if (btnText) btnText.textContent = originalText;
-        closeModal();
-        
-        alert('Network error. Please check your connection and try again.');
-        console.error('RevealSecretSetting fetch error:', err);
     }
 }
 

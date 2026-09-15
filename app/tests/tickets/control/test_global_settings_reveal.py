@@ -27,9 +27,12 @@ def normal_user():
     return user
 
 
+from eventyay.base.models.auth import StaffSession
+
 @pytest.fixture
 def staff_client(client, admin_user):
     client.force_login(admin_user)
+    StaffSession.objects.create(user=admin_user, session_key=client.session.session_key)
     return client
 
 

@@ -852,4 +852,6 @@ class RevealSecretSettingView(AdministratorPermissionRequiredMixin, View):
             request.user.pk,
             key,
         )
-        return JsonResponse({'value': value})
+        response = JsonResponse({'value': value})
+        response['Cache-Control'] = 'no-store'
+        return response
