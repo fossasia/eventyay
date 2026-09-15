@@ -492,7 +492,7 @@ class User(
         except SendMailException:
             pass  # Already logged
 
-    def send_password_reset(self, request: HttpRequest):
+    def send_password_reset(self, request: HttpRequest, *, sync_send: bool = False):
         from eventyay.base.services.mail import mail
 
         subject = _('Password recovery')
@@ -513,6 +513,7 @@ class User(
             None,
             locale=self.locale,
             user=self,
+            sync_send=sync_send,
         )
 
     @property

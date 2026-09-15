@@ -7,6 +7,7 @@
 {% block custom_header %}
     {{ block.super }}
     <link rel="stylesheet" href="{% static 'pretixcontrol/css/order-form-toggles.css' %}">
+    <link rel="stylesheet" href="{% static 'pretixcontrol/css/admin-users.css' %}">
     <script type="module" src="{% static 'pretixcontrol/js/ui/admin-users.js' %}"></script>
     <script defer src="{% static 'cfp/js/localDateTime.js' %}"></script>
 {% endblock %}
@@ -57,6 +58,7 @@
             {% trans "Create a new user" %}
         </a>
     </p>
+    <div class="admin-users-alert-region" aria-live="polite"></div>
     <div data-ajax-results-region>
         <div class="table-responsive">
             <table class="table table-condensed table-hover admin-users-table">
@@ -257,8 +259,8 @@
                         <td class="text-right flip">
                             {% if not u.event_id and u.email and u.auth_backend == "native" %}
                                 <div class="btn-group">
-                                    <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                        <span class="fa fa-envelope"></span>
+                                    <button type="button" class="btn btn-default btn-sm dropdown-toggle user-email-actions-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <span class="fa fa-envelope" aria-hidden="true"></span>
                                         <span class="caret"></span>
                                         <span class="sr-only">{% trans "Email actions" %}</span>
                                     </button>
@@ -268,13 +270,15 @@
                                                 action='{% url "eventyay_admin:admin.users" %}'
                                                 method="post"
                                                 class="user-action-form"
+                                                data-pending-message="{% trans 'Sending verification email…' %}"
+                                                data-error-message="{% trans 'Verification email could not be sent. Please check the email settings and try again.' %}"
                                             >
                                                 {% csrf_token %}
                                                 <input type="hidden" name="user_id" value="{{ u.pk }}">
                                                 <input type="hidden" name="action" value="resend_verification">
                                                 <button type="button" class="btn btn-link btn-block text-left btn-dropdown-link">
-                                                    <span class="fa fa-envelope-o"></span>
-                                                    {% trans "Resend Verification Email" %}
+                                                    <span class="fa fa-envelope-o" aria-hidden="true"></span>
+                                                    <span class="user-action-label">{% trans "Resend Verification Email" %}</span>
                                                 </button>
                                             </form>
                                         </li>
@@ -283,13 +287,15 @@
                                                 action='{% url "eventyay_admin:admin.users" %}'
                                                 method="post"
                                                 class="user-action-form"
+                                                data-pending-message="{% trans 'Sending password reset email…' %}"
+                                                data-error-message="{% trans 'Password reset email could not be sent. Please check the email settings and try again.' %}"
                                             >
                                                 {% csrf_token %}
                                                 <input type="hidden" name="user_id" value="{{ u.pk }}">
                                                 <input type="hidden" name="action" value="reset_password">
                                                 <button type="button" class="btn btn-link btn-block text-left btn-dropdown-link">
-                                                    <span class="fa fa-key"></span>
-                                                    {% trans "Reset Password Email" %}
+                                                    <span class="fa fa-key" aria-hidden="true"></span>
+                                                    <span class="user-action-label">{% trans "Reset Password Email" %}</span>
                                                 </button>
                                             </form>
                                         </li>
