@@ -305,9 +305,10 @@ nav.navbar #language-dropdown > summary {
   gap: 6px;
 }
 
+/* The gap already spaces the caret; reset the extra margin from _dropdown.css and .ml-1 */
 nav.navbar #profile-dropdown > summary i.fa-caret-down,
 nav.navbar #language-dropdown > summary i.fa-caret-down {
-  margin-left: 6px !important;
+  margin-left: 0 !important;
 }
 
 /* ============================================
