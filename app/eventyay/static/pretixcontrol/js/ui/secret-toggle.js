@@ -95,7 +95,7 @@ function openModal() {
     if (passwordInput) passwordInput.value = '';
     if (errorEl) { errorEl.textContent = ''; errorEl.hidden = true; }
     if (confirmBtn) confirmBtn.disabled = false;
-    if (modal.showModal) { modal.showModal(); } else { modal.removeAttribute('hidden'); modal.style.display = ''; }
+    if (modal.showModal) { modal.showModal(); }
     if (passwordInput) setTimeout(() => passwordInput.focus(), 50);
 }
 
@@ -108,12 +108,7 @@ function closeModal() {
 function reopenModal() {
     const modal = getModal();
     if (!modal) return;
-    if (modal.showModal) {
-        if (!modal.open) modal.showModal();
-    } else {
-        modal.removeAttribute('hidden');
-        modal.style.display = '';
-    }
+    if (modal.showModal && !modal.open) { modal.showModal(); }
 }
 
 function showModalError(message) {
