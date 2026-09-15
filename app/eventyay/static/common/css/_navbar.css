@@ -207,7 +207,7 @@ nav.navbar.navbar-inverse .navbar-brand img,
   vertical-align: middle;
   height: 30px;
   width: auto;
-  margin-top: 2px;
+  margin-top: 0;
   margin-right: 0.2em;
 }
 
@@ -298,6 +298,8 @@ nav.navbar .danger:active {
   background: #db2828 !important;
   color: #fff !important;
   font-size: 14px;
+  display: flex;
+  align-items: center;
 }
 
 /* ============================================
@@ -316,7 +318,9 @@ nav.navbar.navbar-inverse #button-sudo,
   color: #f8f9fa;
   background: transparent;
   line-height: 20px;
-  margin-left: 2px;
+  margin-left: 0;
+  display: flex;
+  align-items: center;
 }
 
 nav.navbar.navbar-inverse #button-shop i,
@@ -503,7 +507,7 @@ nav.navbar.navbar-inverse #button-sudo:focus i,
     min-height: 50px;
   }
 
-  nav.navbar.navbar-inverse .navbar-top-links li a,
+  nav.navbar.navbar-inverse .navbar-top-links li a:not(.dropdown-item):not(.startpage-search-item):not(.danger),
   nav.navbar.navbar-inverse .navbar-top-links li form button.btn-link,
   nav.navbar.navbar-inverse .navbar-top-links #profile-dropdown > summary,
   nav.navbar.navbar-inverse .navbar-top-links #language-dropdown > summary {
@@ -525,10 +529,16 @@ nav.navbar.navbar-inverse #button-sudo:focus i,
 
   nav.navbar.navbar-inverse #button-sudo,
   nav.navbar.navbar-inverse #button-shop,
+  nav.navbar.navbar-inverse .danger,
   .navbar-inverse #button-sudo,
-  .navbar-inverse #button-shop {
+  .navbar-inverse #button-shop,
+  .navbar-inverse .danger {
     font-size: 13px;
     padding: 0 8px;
+    display: flex;
+    align-items: center;
+    height: 50px;
+    min-height: 50px;
   }
 
 }

@@ -729,7 +729,7 @@ details.dropdown .dropdown-content-se::after {
 .navbar-inverse #language-dropdown > summary,
 .navbar #language-dropdown > summary {
   box-sizing: border-box;
-  padding: 16px;
+  padding: 15px;
   min-height: 50px;
   height: 50px;
   display: inline-flex;

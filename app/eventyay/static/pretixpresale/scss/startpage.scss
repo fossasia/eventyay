@@ -8,15 +8,7 @@ nav.navbar.navbar-inverse.navbar-static-top {
   border-radius: 0;
 }
 
-/* Logged-out: no burger; align brand with dashboard left gutter (toggle uses 10px margin-left). */
-body.startpage-body:not(.startpage-auth) nav.navbar .navbar-header > .navbar-brand:first-child {
-  margin-left: 10px;
-}
 
-/* Logged-in: brand sits after #sidebar-toggle — do not add extra margin (matches /common/ navbar). */
-body.startpage-auth nav.navbar .navbar-header > .navbar-brand {
-  margin-left: 0;
-}
 
 .startpage-sidebar {
   background: #f8f8f8;
@@ -686,77 +678,6 @@ html.rtl .startpage-event-ongoing {
   }
 
   body.startpage-body {
-    nav.navbar.navbar-inverse {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 50px;
-      min-height: 50px;
-      padding: 0 10px;
-
-      .navbar-header {
-        margin: 0;
-      }
-
-      .navbar-brand {
-        padding: 0;
-        margin: 0;
-
-        img {
-          height: 30px;
-          margin: 0;
-        }
-      }
-
-      #sidebar-toggle {
-        margin: 0 10px 0 0;
-        padding: 5px;
-      }
-
-      .navbar-top-links {
-        display: flex;
-        align-items: center;
-        margin: 0 0 0 auto;
-        padding: 0;
-        gap: 4px;
-
-        li {
-          margin: 0;
-        }
-
-        li a:not(.dropdown-item):not(.startpage-search-item),
-        #profile-dropdown>summary,
-        #language-dropdown>summary {
-          display: flex;
-          align-items: center;
-          height: 50px;
-          min-height: 50px;
-          font-size: 13px;
-          padding: 0 8px;
-          font-weight: normal;
-          margin: 0;
-        }
-      }
-
-      .language-form {
-        margin: 0;
-      }
-
-      #button-sudo {
-        display: flex;
-        align-items: center;
-        height: 50px;
-        min-height: 50px;
-        font-size: 13px;
-        padding: 0 6px;
-        margin: 0;
-      }
-    }
-
-    nav.navbar {
-      padding-bottom: 0;
-    }
-
     .startpage-search-form {
       display: flex;
       align-items: center;
@@ -810,6 +731,23 @@ html.rtl .startpage-event-ongoing {
       top: 50px;
       width: auto;
       max-width: none;
+
+      a.startpage-search-item {
+        display: grid;
+        grid-template-columns: 44px 1fr;
+        column-gap: 0.75rem;
+        row-gap: 0.75rem;
+        align-items: center;
+        height: auto;
+        min-height: 0;
+        padding: 0.75rem 1rem;
+        color: var(--color-text);
+        font-size: 14px;
+        font-weight: normal;
+        white-space: normal;
+        text-decoration: none;
+        background: var(--color-white, #fff);
+      }
     }
   }
 }
