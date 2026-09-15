@@ -156,6 +156,8 @@ class BaseSettings(_BaseSettings):
     call_for_speaker_login_button_label: str = 'default'
     # Set to 1 to enable Vite dev servers with HMR for live frontend development.
     npm_dev: bool = False
+    # Set to 1 to enable local plugin development mode.
+    plugin_dev_mode: bool = False
     fetch_ecb_rates: bool = True
     cache_tickets_hours: int = Field(default=24, ge=1)
 
@@ -1591,6 +1593,7 @@ STATSD_PREFIX = conf.statsd_prefix
 
 FRONTEND_DIR = BASE_DIR / 'webapp'
 VITE_DEV_MODE = conf.npm_dev
+PLUGIN_DEV_MODE = conf.plugin_dev_mode
 VITE_DEV_SERVER_PORTS = {
     'schedule-editor': 'http://localhost:8080',
     'video': 'http://localhost:8880',

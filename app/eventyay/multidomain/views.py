@@ -148,10 +148,11 @@ class VideoSPAView(View):
                 'commonAccountUrl': safe_reverse('eventyay_common:event.index', organizer=event.organizer.slug, event=event.slug),
                 'api': {
                     'base': api_base,
-                    'socket': '{}://{}/ws/event/{}/'.format(
+                    'socket': '{}://{}/ws/event/{}/{}'.format(
                         'wss' if request.is_secure() else 'ws',
                         request.get_host(),
                         event.pk,
+                        '?organizer=1' if self.is_organizer else '?organizer=0',
                     ),
                     'upload': safe_reverse('storage:upload', event_id=event.pk) or '',
                     'uploadMaxSize': settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_OTHER],
@@ -163,7 +164,7 @@ class VideoSPAView(View):
                     'chat_rooms': False,
                     'kiosks': False,
                     'direct_messaging': False,
-                    'announcements': True,
+                    'announcements': False,
                     **(cfg.get('live_features') or {}),
                 },
                 'externalAuthUrl': getattr(event, 'external_auth_url', None),

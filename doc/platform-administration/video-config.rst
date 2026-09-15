@@ -75,7 +75,6 @@ Experimental Features
 ---------------------
 
 * schedule-control
-* roulette
 * muxdata
 * zoom
 * janus

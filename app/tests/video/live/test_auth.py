@@ -134,7 +134,6 @@ async def test_auth_with_jwt_token(index, world):
             "room:question.ask",
             "room:poll.vote",
             "room:poll.read",
-            "room:roulette.join",
         }
         assert set(response[1].keys()) == {
             "world.config",
@@ -467,7 +466,6 @@ async def test_auth_with_jwt_token_and_permission_traits(world):
             "room:chat.read",
             "room:chat.join",
             "room:chat.send",
-            "room:roulette.join",
             "room:bbb.join",
             "room:bbb.moderate",
             "room:chat.moderate",
@@ -489,7 +487,6 @@ async def test_auth_with_jwt_token_and_permission_traits(world):
             "room:chat.read",
             "room:chat.join",
             "room:chat.send",
-            "room:roulette.join",
             "room:bbb.join",
             "room:bbb.moderate",
             "room:bbb.recordings",

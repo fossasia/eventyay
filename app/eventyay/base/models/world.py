@@ -27,12 +27,12 @@ from eventyay.base.models.chat import ChatEvent, Membership
 from eventyay.base.models.feedback import Feedback
 from eventyay.base.models.poll import Poll
 from eventyay.base.models.room import Reaction, RoomView
+from eventyay.base.models.roomquestion import RoomQuestion
 from eventyay.base.models.storage_model import StoredFile
 
 
 FEATURE_FLAGS = [
     "schedule-control",
-    "roulette",
     "muxdata",
     "page.landing",
     "zoom",
@@ -265,7 +265,7 @@ class World(VersionedModel):
         Reaction.objects.filter(room__world=self).delete()
         RoomView.objects.filter(room__world=self).delete()
         WorldView.objects.filter(world=self).delete()
-        Question.objects.filter(room__world=self).delete()
+        RoomQuestion.objects.filter(room__world=self).delete()
         Poll.objects.filter(room__world=self).delete()
         Feedback.objects.filter(world=self).delete()
 
