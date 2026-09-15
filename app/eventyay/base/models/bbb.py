@@ -20,6 +20,11 @@ class BBBServer(models.Model):
     )
     rooms_only = models.BooleanField(default=False)
     cost = models.IntegerField(default=0)
+    disable_ssl = models.BooleanField(
+        default=False,
+        verbose_name="Disable SSL enforcement",
+        help_text="Allow non-HTTPS or bypass SSL verification for self-signed certificates.",
+    )
 
     def __str__(self):
         return self.url
