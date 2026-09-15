@@ -81,6 +81,7 @@
     {% else %}
         <script src="{% statici18n request.LANGUAGE_CODE %}" async></script>
     {% endif %}
+    {% include "eventyay_common/theme_includes.html" %}
     {{ block.super }}
 {% endblock %}
 
@@ -92,7 +93,12 @@
     data-timeformat="{{ js_time_format }}"
     data-dateformat="{{ js_date_format }}"
     data-datetimelocale="{{ js_locale }}"
-    {% if request.event %}data-currency="{{ request.event.currency }}"{% endif %}
+    {% if request.event %}
+    data-currency="{{ request.event.currency }}"
+    data-organizer-slug="{{ request.event.organizer.slug }}" data-event-slug="{{ request.event.slug }}"
+    {% elif request.organizer %}
+    data-organizer-slug="{{ request.organizer.slug }}"
+    {% endif %}
 {% endblock %}
 
 {% block body_top %}

@@ -7,6 +7,7 @@
 {% load i18n %}
 {% load rules %}
 {% load safelink %}
+{% load static %}
 
 {% load presale_locale %}
 {% load nav_tags %}
@@ -16,6 +17,7 @@
         <link rel="alternate" type="application/atom+xml" title="{{ request.event.name|event_localize }} Schedule Versions" href="{{ request.event.urls.feed }}" />
         <link rel="alternate" type="application/json" title="{{ request.event.name|event_localize }} API" href="{{ request.event.api_urls.base.full }}" />
     {% endblock alternate_link %}
+    {% include "eventyay_common/theme_includes.html" %}
     {% block agenda_custom_header %}{% endblock agenda_custom_header %}
 {% endblock custom_header %}
 

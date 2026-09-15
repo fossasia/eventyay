@@ -1,0 +1,298 @@
+{
+  "version": "1.0.0",
+  "metadata": {
+    "name": "Eventyay Default Theme",
+    "displayName": "Eventyay Base Theme",
+    "description": "Default design tokens for Eventyay platform",
+    "author": "Eventyay Team"
+  },
+  "colors": {
+    "primary": "#EB2188",
+    "primaryLight": "#FF69B4",
+    "primaryDark": "#C71769",
+    "secondary": "#3B82F6",
+    "secondaryLight": "#60A5FA",
+    "secondaryDark": "#1E40AF",
+    "surface": "#FFFFFF",
+    "surfaceLight": "#F9FAFB",
+    "surfaceDark": "#F3F4F6",
+    "background": "#FFFFFF",
+    "backgroundAlt": "#F9FAFB",
+    "text": "#111827",
+    "textSecondary": "#6B7280",
+    "textTertiary": "#9CA3AF",
+    "textInverse": "#FFFFFF",
+    "success": "#10B981",
+    "successLight": "#A7F3D0",
+    "successDark": "#047857",
+    "warning": "#F59E0B",
+    "warningLight": "#FCD34D",
+    "warningDark": "#D97706",
+    "error": "#EF4444",
+    "errorLight": "#FCA5A5",
+    "errorDark": "#DC2626",
+    "info": "#0EA5E9",
+    "infoLight": "#BAE6FD",
+    "infoDark": "#0284C7",
+    "border": "#E5E7EB",
+    "borderLight": "#F3F4F6",
+    "borderDark": "#D1D5DB",
+    "divider": "#E5E7EB"
+  },
+  "typography": {
+    "fontFamily": {
+      "body": "\"Inter\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+      "heading": "\"Poppins\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+      "mono": "\"Fira Code\", \"Monaco\", \"Courier New\", monospace"
+    },
+    "fontSize": {
+      "xs": "12px",
+      "sm": "14px",
+      "base": "16px",
+      "lg": "18px",
+      "xl": "20px",
+      "2xl": "24px",
+      "3xl": "30px",
+      "4xl": "36px",
+      "5xl": "48px"
+    },
+    "fontWeight": {
+      "thin": "100",
+      "extralight": "200",
+      "light": "300",
+      "normal": "400",
+      "medium": "500",
+      "semibold": "600",
+      "bold": "700",
+      "extrabold": "800",
+      "black": "900"
+    },
+    "lineHeight": {
+      "none": "1",
+      "tight": "1.25",
+      "snug": "1.375",
+      "normal": "1.5",
+      "relaxed": "1.625",
+      "loose": "2"
+    },
+    "letterSpacing": {
+      "tighter": "-0.05em",
+      "tight": "-0.025em",
+      "normal": "0em",
+      "wide": "0.025em",
+      "wider": "0.05em",
+      "widest": "0.1em"
+    }
+  },
+  "spacing": {
+    "0": "0px",
+    "1": "4px",
+    "2": "8px",
+    "3": "12px",
+    "4": "16px",
+    "5": "20px",
+    "6": "24px",
+    "7": "28px",
+    "8": "32px",
+    "9": "36px",
+    "10": "40px",
+    "11": "44px",
+    "12": "48px",
+    "14": "56px",
+    "16": "64px",
+    "20": "80px",
+    "24": "96px",
+    "28": "112px",
+    "32": "128px",
+    "36": "144px",
+    "40": "160px",
+    "44": "176px",
+    "48": "192px",
+    "52": "208px",
+    "56": "224px",
+    "60": "240px",
+    "64": "256px",
+    "72": "288px",
+    "80": "320px",
+    "96": "384px"
+  },
+  "borderRadius": {
+    "none": "0px",
+    "sm": "4px",
+    "base": "6px",
+    "md": "8px",
+    "lg": "12px",
+    "xl": "16px",
+    "2xl": "20px",
+    "3xl": "24px",
+    "full": "9999px"
+  },
+  "borderWidth": {
+    "0": "0px",
+    "1": "1px",
+    "2": "2px",
+    "4": "4px",
+    "8": "8px"
+  },
+  "shadows": {
+    "none": "none",
+    "sm": "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+    "base": "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
+    "md": "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+    "lg": "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+    "xl": "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+    "2xl": "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+    "inner": "inset 0 2px 4px 0 rgba(0, 0, 0, 0.05)"
+  },
+  "semanticTokens": {
+    "button": {
+      "primary": {
+        "background": "{colors.primary}",
+        "backgroundHover": "{colors.primaryDark}",
+        "backgroundActive": "{colors.primaryDark}",
+        "foreground": "{colors.textInverse}",
+        "border": "transparent"
+      },
+      "secondary": {
+        "background": "{colors.secondary}",
+        "backgroundHover": "{colors.secondaryDark}",
+        "backgroundActive": "{colors.secondaryDark}",
+        "foreground": "{colors.textInverse}",
+        "border": "transparent"
+      },
+      "outline": {
+        "background": "transparent",
+        "backgroundHover": "{colors.surfaceDark}",
+        "backgroundActive": "{colors.borderDark}",
+        "foreground": "{colors.text}",
+        "border": "{colors.border}"
+      },
+      "ghost": {
+        "background": "transparent",
+        "backgroundHover": "{colors.surfaceDark}",
+        "backgroundActive": "{colors.borderDark}",
+        "foreground": "{colors.text}",
+        "border": "transparent"
+      }
+    },
+    "input": {
+      "background": "{colors.surface}",
+      "backgroundFocus": "{colors.surface}",
+      "foreground": "{colors.text}",
+      "border": "{colors.border}",
+      "borderFocus": "{colors.primary}",
+      "placeholder": "{colors.textTertiary}"
+    },
+    "header": {
+      "background": "{colors.primary}",
+      "foreground": "{colors.textInverse}",
+      "borderBottom": "{colors.primaryDark}"
+    },
+    "footer": {
+      "background": "{colors.surfaceDark}",
+      "foreground": "{colors.text}",
+      "borderTop": "{colors.border}"
+    },
+    "card": {
+      "background": "{colors.surface}",
+      "foreground": "{colors.text}",
+      "border": "{colors.border}",
+      "shadow": "{shadows.md}"
+    },
+    "badge": {
+      "success": {
+        "background": "{colors.successLight}",
+        "foreground": "{colors.successDark}"
+      },
+      "warning": {
+        "background": "{colors.warningLight}",
+        "foreground": "{colors.warningDark}"
+      },
+      "error": {
+        "background": "{colors.errorLight}",
+        "foreground": "{colors.errorDark}"
+      },
+      "info": {
+        "background": "{colors.infoLight}",
+        "foreground": "{colors.infoDark}"
+      }
+    },
+    "alert": {
+      "success": {
+        "background": "{colors.successLight}",
+        "border": "{colors.success}",
+        "foreground": "{colors.successDark}"
+      },
+      "warning": {
+        "background": "{colors.warningLight}",
+        "border": "{colors.warning}",
+        "foreground": "{colors.warningDark}"
+      },
+      "error": {
+        "background": "{colors.errorLight}",
+        "border": "{colors.error}",
+        "foreground": "{colors.errorDark}"
+      },
+      "info": {
+        "background": "{colors.infoLight}",
+        "border": "{colors.info}",
+        "foreground": "{colors.infoDark}"
+      }
+    },
+    "link": {
+      "foreground": "{colors.primary}",
+      "foregroundHover": "{colors.primaryDark}",
+      "foregroundVisited": "{colors.primaryDark}",
+      "textDecoration": "underline"
+    }
+  },
+  "darkMode": {
+    "colors": {
+      "surface": "#1F1F1F",
+      "surfaceLight": "#2A2A2A",
+      "surfaceDark": "#151515",
+      "background": "#0F0F0F",
+      "backgroundAlt": "#1A1A1A",
+      "text": "#F5F5F5",
+      "textSecondary": "#B4B4B4",
+      "textTertiary": "#808080",
+      "textInverse": "#111827",
+      "border": "#404040",
+      "borderLight": "#303030",
+      "borderDark": "#505050",
+      "divider": "#404040"
+    },
+    "semanticTokens": {
+      "button": {
+        "outline": {
+          "background": "transparent",
+          "backgroundHover": "{darkMode.colors.surfaceLight}",
+          "backgroundActive": "{darkMode.colors.borderDark}",
+          "foreground": "{darkMode.colors.text}",
+          "border": "{darkMode.colors.border}"
+        },
+        "ghost": {
+          "background": "transparent",
+          "backgroundHover": "{darkMode.colors.surfaceLight}",
+          "backgroundActive": "{darkMode.colors.borderDark}",
+          "foreground": "{darkMode.colors.text}",
+          "border": "transparent"
+        }
+      },
+      "input": {
+        "background": "{darkMode.colors.surfaceLight}",
+        "backgroundFocus": "{darkMode.colors.surface}",
+        "foreground": "{darkMode.colors.text}",
+        "border": "{darkMode.colors.border}",
+        "borderFocus": "{colors.primary}",
+        "placeholder": "{darkMode.colors.textTertiary}"
+      },
+      "card": {
+        "background": "{darkMode.colors.surface}",
+        "foreground": "{darkMode.colors.text}",
+        "border": "{darkMode.colors.border}",
+        "shadow": "{shadows.lg}"
+      }
+    }
+  }
+}

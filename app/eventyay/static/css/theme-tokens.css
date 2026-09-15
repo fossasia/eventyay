@@ -1,0 +1,97 @@
+/**
+ * Theme Tokens CSS Framework
+ * 
+ * This file provides the baseline CSS variable declarations.
+ * Runtime tokens are injected via JavaScript from the theme system.
+ */
+
+:root {
+  /* Default CSS variables - these are overridden by theme manager */
+  --color-primary: #EB2188;
+  --color-primary-light: #FF69B4;
+  --color-primary-dark: #C71769;
+  
+  --color-secondary: #3B82F6;
+  --color-secondary-light: #60A5FA;
+  --color-secondary-dark: #1E40AF;
+  
+  --color-surface: #FFFFFF;
+  --color-surface-light: #F9FAFB;
+  --color-surface-dark: #F3F4F6;
+  
+  --color-background: #FFFFFF;
+  --color-background-alt: #F9FAFB;
+  
+  --color-text: #111827;
+  --color-text-secondary: #6B7280;
+  --color-text-tertiary: #9CA3AF;
+  --color-text-inverse: #FFFFFF;
+  
+  --color-success: #10B981;
+  --color-success-light: #A7F3D0;
+  --color-success-dark: #047857;
+  
+  --color-warning: #F59E0B;
+  --color-warning-light: #FCD34D;
+  --color-warning-dark: #D97706;
+  
+  --color-error: #EF4444;
+  --color-error-light: #FCA5A5;
+  --color-error-dark: #DC2626;
+  
+  --color-info: #0EA5E9;
+  --color-info-light: #BAE6FD;
+  --color-info-dark: #0284C7;
+  
+  --color-border: #E5E7EB;
+  --color-border-light: #F3F4F6;
+  --color-border-dark: #D1D5DB;
+  --color-divider: #E5E7EB;
+  
+  --typography-font-family-body: "Inter", system-ui, sans-serif;
+  --typography-font-family-heading: "Poppins", system-ui, sans-serif;
+  --typography-font-family-mono: "Fira Code", monospace;
+  
+  --typography-font-size-xs: 12px;
+  --typography-font-size-sm: 14px;
+  --typography-font-size-base: 16px;
+  --typography-font-size-lg: 18px;
+  --typography-font-size-xl: 20px;
+  --typography-font-size-2xl: 24px;
+  --typography-font-size-3xl: 30px;
+  
+  --typography-font-weight-normal: 400;
+  --typography-font-weight-medium: 500;
+  --typography-font-weight-semibold: 600;
+  --typography-font-weight-bold: 700;
+  
+  --typography-line-height-none: 1;
+  --typography-line-height-tight: 1.25;
+  --typography-line-height-normal: 1.5;
+  --typography-line-height-relaxed: 1.625;
+  --typography-line-height-loose: 2;
+  
+  --spacing-0: 0;
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-10: 40px;
+  --spacing-12: 48px;
+}
+
+[data-theme="dark"] {
+  --color-surface: #1F2937;
+  --color-surface-light: #374151;
+  --color-surface-dark: #111827;
+  
+  --color-background: #111827;
+  --color-background-alt: #1F2937;
+  
+  --color-text: #F9FAFB;
+  --color-text-secondary: #D1D5DB;
+  --color-text-tertiary: #9CA3AF;
+}
