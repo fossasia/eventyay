@@ -23,7 +23,7 @@ The video frontend is a full-featured virtual event platform built with Vue 3, p
 - **Live Video Streaming**: HLS/RTMP streams and WebRTC calls
 - **Interactive Chat**: Real-time messaging with channels and DMs
 - **Audience Engagement**: Polls, Q&A, emoji reactions
-- **Networking**: Speed networking (roulette) and direct messaging
+- **Networking**: Direct messaging and proximity lounges
 - **Recordings**: On-demand video playback
 
 New rooms are created from the organiser rooms page with a **Create Room** dropdown.
@@ -315,19 +315,6 @@ Q&A system:
 - Mark as answered
 - Pin important questions
 
-Roulette Component
-^^^^^^^^^^^^^^^^^^
-
-**File**: ``components/Roulette.vue``
-
-Speed networking/roulette matching:
-- Join networking queue
-- Automatic random matching
-- Video call integration
-- Match history
-- Availability status
-- Time limits per match
-
 ReactionsBar & ReactionsOverlay
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -613,15 +600,6 @@ Q&A functionality:
 - Upvotes
 - Answers
 - Moderation status
-
-roulette.js
-^^^^^^^^^^^
-
-Networking state:
-- Queue status
-- Current match
-- Match history
-- Availability
 
 schedule.js
 ^^^^^^^^^^^

@@ -103,6 +103,7 @@ class TestBusinessSettingsView:
         # Check Ticket Fee and Billing Validation fields
         assert 'ticket_fee_percentage' in content
         assert 'billing_validation' in content
+        assert 'business_grace_period_days' in content
 
     def test_business_settings_save(self, staff_client):
         url = reverse('eventyay_admin:admin.global.business')
@@ -114,6 +115,7 @@ class TestBusinessSettingsView:
             'stripe_webhook_secret_key': 'whsec_business_test_123',
             'ticket_fee_percentage': '3.50',
             'billing_validation': 'on',
+            'business_grace_period_days': '14',
         }
         response = staff_client.post(url, post_data)
         assert response.status_code == 302
@@ -123,6 +125,7 @@ class TestBusinessSettingsView:
         assert gs.settings.get('payment_stripe_publishable_key') == 'pk_live_business_test_123'
         assert gs.settings.get('ticket_fee_percentage', as_type=Decimal) == Decimal('3.50')
         assert gs.settings.get('billing_validation', as_type=bool) is True
+        assert gs.settings.get('business_grace_period_days', as_type=int) == 14
 
 
 @pytest.mark.django_db
@@ -186,6 +189,7 @@ class TestFormStructures:
             'stripe_webhook_secret_key',
             'ticket_fee_percentage',
             'billing_validation',
+            'business_grace_period_days',
         }
         assert set(form.fields.keys()) == expected_fields
         groups = [g[0] for g in form.field_groups]
@@ -201,6 +205,7 @@ class TestFormStructures:
             'stripe_webhook_secret_key',
             'ticket_fee_percentage',
             'billing_validation',
+            'business_grace_period_days',
         }
         for field in business_fields:
             assert field not in form.fields

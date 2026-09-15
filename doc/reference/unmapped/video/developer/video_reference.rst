@@ -75,10 +75,6 @@ Interactive Modules
    :members:
    :no-index:
 
-.. automodule:: eventyay.features.live.modules.roulette
-   :members:
-   :no-index:
-
 .. automodule:: eventyay.features.live.modules.zoom
    :members:
    :no-index:

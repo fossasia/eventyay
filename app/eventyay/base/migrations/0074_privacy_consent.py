@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0072_sync_model_state'),
+        ('base', '0073_loungemeshaccesstoken_loungemeshserver_and_more'),
     ]
 
     operations = [

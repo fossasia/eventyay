@@ -9,9 +9,6 @@
 				:show-empty-message="true",
 				@select="createRoomWithProvider"
 			)
-			.export-actions(v-if="canExportBroadcastConfiguration")
-				a.export-button(:href="exportUrl('xlsx')") {{ $t('Export XLSX') }}
-				a.export-button.secondary(:href="exportUrl('csv-excel')") {{ $t('CSV') }}
 			bunt-input.search(name="search", :placeholder="$t('Search rooms')", icon="search", v-model="search")
 	.error(v-if="error")
 		span {{ $t('Failed to load rooms.') }}
@@ -36,7 +33,7 @@
 <script>
 import api from 'lib/api'
 import fuzzysearch from 'lib/fuzzysearch'
-import { inferType, isChatManagedRoom, mergeReorderedIds } from 'lib/room-types'
+import { isChatManagedRoom, mergeReorderedIds } from 'lib/room-types'
 import { mapGetters } from 'vuex'
 import { SlickList } from 'vue-slicksort'
 import VideoProviderDropdown from 'components/VideoProviderDropdown'
@@ -76,16 +73,8 @@ export default {
 	},
 	computed: {
 		...mapGetters(['eventRouting', 'hasPermission']),
-		canExportBroadcastConfiguration() {
-			return this.hasPermission('room:update') && this.eventRouting.organizer && this.eventRouting.event
-		}
 	},
 	methods: {
-		exportUrl(format) {
-			const organizer = encodeURIComponent(this.eventRouting.organizer)
-			const event = encodeURIComponent(this.eventRouting.event)
-			return `/api/v1/organizers/${organizer}/events/${event}/rooms/export-broadcast-configuration/?_format=${encodeURIComponent(format)}`
-		},
 		visibleRooms(rooms) {
 			return rooms.filter(room => !isChatManagedRoom(room))
 		},
@@ -144,12 +133,6 @@ export default {
 		},
 		getRoomTargetRoute(room) {
 			if (!room) return { name: 'admin:rooms:index' }
-			// room.config.list rooms use module_config array (admin config format)
-			const isConfigured = Array.isArray(room.module_config) && room.module_config.length > 0 &&
-				!!inferType({ module_config: room.module_config })
-			if (isConfigured) {
-				return { name: 'room:manage', params: { roomId: room.id } }
-			}
 			return { name: 'admin:rooms:item', params: { roomId: room.id } }
 		}
 	}
@@ -173,27 +156,6 @@ export default {
 				themed-button-primary()
 			.c-video-provider-dropdown
 				margin-right: 0
-		.export-actions
-			display: flex
-			align-items: center
-			.export-button
-				display: inline-flex
-				align-items: center
-				height: 32px
-				padding: 0 12px
-				margin-right: 8px
-				border-radius: 3px
-				background-color: $clr-primary
-				color: $clr-white
-				font-size: 13px
-				font-weight: 500
-				text-decoration: none
-				&.secondary
-					background-color: transparent
-					color: $clr-primary
-				&:focus
-					outline: 2px solid $clr-primary
-					outline-offset: 2px
 		.search
 			input-style(size: compact)
 			padding: 0

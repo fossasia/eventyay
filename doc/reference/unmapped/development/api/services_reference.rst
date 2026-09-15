@@ -96,11 +96,6 @@ Interactive Features
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: eventyay.base.services.roulette
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 .. automodule:: eventyay.base.services.reactions
    :members:
    :undoc-members:

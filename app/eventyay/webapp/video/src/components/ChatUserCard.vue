@@ -62,7 +62,7 @@ export default {
 				chat_rooms: false,
 				kiosks: false,
 				direct_messaging: false,
-				announcements: true
+				announcements: false
 			}, this.world?.live_features || window.eventyay?.liveFeatures || {})
 		},
 		isBlocked() {

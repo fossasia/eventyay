@@ -1,3 +1,4 @@
+from pathlib import Path
 from urllib.parse import urlparse
 
 from django.conf import settings
@@ -13,9 +14,13 @@ def request_hostname_for_dev_url(request):
     return hostname
 
 
-def is_eventyay_checkin_app_dev():
+def is_eventyay_checkin_app_dev() -> bool:
     """True when the check-in app should use the local Vite dev server."""
-    return settings.VITE_DEV_MODE
+    if not (settings.VITE_DEV_MODE and getattr(settings, 'PLUGIN_DEV_MODE', False)):
+        return False
+    container_checkin_dir = Path('/usr/src/plugins/eventyay-checkin')
+    repo_checkin_dir = settings.PROJECT_ROOT.parent / 'plugins' / 'eventyay-checkin'
+    return container_checkin_dir.is_dir() or repo_checkin_dir.is_dir()
 
 
 def get_eventyay_checkin_app_url(request):
