@@ -6,7 +6,7 @@
 {% block extra_title %}{% translate "Compose email" %} :: {% endblock extra_title %}
 
 {% block mail_content %}
-    <form method="post" class="form-with-placeholder">
+    <form method="post" class="form-with-placeholder mail-composer">
         {% csrf_token %}
         <div class="mb-3">
             <h2 class="d-inline">
