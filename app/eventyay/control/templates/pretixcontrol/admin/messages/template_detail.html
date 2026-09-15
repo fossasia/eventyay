@@ -1,0 +1,75 @@
+{% extends "pretixcontrol/admin/base.html" %}
+{% load i18n static %}
+
+{% block title %}{% translate "Template detail" %} — {{ role_label }}{% endblock %}
+
+{% block custom_header %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'pretixcontrol/css/admin-messages.css' %}">
+{% endblock %}
+
+{% block content %}
+  <h1>{{ role_label }}</h1>
+
+  <p>
+    <a href="{% url 'eventyay_admin:admin.messages.templates' %}">
+      <i class="fa fa-arrow-left" aria-hidden="true"></i> {% translate "Back to templates" %}
+    </a>
+  </p>
+
+  {% if mail_template %}
+    <div class="panel panel-default">
+      <div class="panel-body">
+        <table class="table table-condensed">
+          <tbody>
+            <tr>
+              <th class="col-md-2">{% translate "Role" %}</th>
+              <td><code>{{ role }}</code></td>
+            </tr>
+            <tr>
+              <th>{% translate "Subject" %}</th>
+              <td>{{ mail_template.subject }}</td>
+            </tr>
+            {% if mail_template.reply_to %}
+              <tr>
+                <th>{% translate "Reply-To" %}</th>
+                <td>{{ mail_template.reply_to }}</td>
+              </tr>
+            {% endif %}
+            {% if mail_template.bcc %}
+              <tr>
+                <th>{% translate "BCC" %}</th>
+                <td>{{ mail_template.bcc }}</td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">{% translate "Body preview" %}</h3>
+      </div>
+      <div class="panel-body">
+        {{ mail_template.text|linebreaksbr }}
+      </div>
+    </div>
+  {% else %}
+    <div class="panel panel-default">
+      <div class="panel-body">
+        <table class="table table-condensed">
+          <tbody>
+            <tr>
+              <th class="col-md-2">{% translate "Role" %}</th>
+              <td><code>{{ role }}</code></td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="text-muted">
+          {% translate "This is a system template. Its content is defined in code and varies by event configuration." %}
+        </p>
+      </div>
+    </div>
+  {% endif %}
+{% endblock %}
