@@ -272,6 +272,8 @@ class Voucher(LoggedModel):
                 'value': self.value,
                 'price_mode': self.price_mode,
                 'budget': self.budget,
+                'all_addons_included': self.all_addons_included,
+                'all_bundles_included': self.all_bundles_included,
             }
         )
 
@@ -289,6 +291,16 @@ class Voucher(LoggedModel):
 
         if budget is not None and budget < Decimal('0.00'):
             raise ValidationError({'budget': _('Voucher budget cannot be negative.')})
+
+        if budget is not None and (data.get('all_addons_included') or data.get('all_bundles_included')):
+            raise ValidationError(
+                {
+                    'budget': _(
+                        'A discount budget cannot be combined with free add-on or included bundle products, '
+                        'since those discounts are not tracked against the budget.'
+                    )
+                }
+            )
 
     @staticmethod
     def clean_product_properties(data, event, quota, product, variation, block_quota=False, seats_given=False):

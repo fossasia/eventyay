@@ -2,10 +2,11 @@ from datetime import timedelta
 from decimal import Decimal
 
 import pytest
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django_scopes import scopes_disabled
 
-from eventyay.base.models import CartPosition, Event, Organizer, Quota
+from eventyay.base.models import CartPosition, Event, Organizer, Quota, Voucher
 from eventyay.base.models.product import Product, ProductAddOn, ProductBundle, ProductCategory
 from eventyay.base.services.cart import CartManager
 
@@ -111,3 +112,14 @@ def test_apply_voucher_later_frees_existing_addons_and_bundles(setup):
         assert cp.voucher == voucher
         assert cp.price == Decimal('23.00')
         assert all(a.price == Decimal('0.00') for a in cp.addons.all())
+
+
+@pytest.mark.parametrize('option', ['all_addons_included', 'all_bundles_included'])
+def test_budget_cannot_be_combined_with_included_options(option):
+    with pytest.raises(ValidationError) as exc:
+        Voucher.clean_value_and_budget({'budget': Decimal('5.00'), option: True})
+    assert 'budget' in exc.value.message_dict
+
+
+def test_included_options_allowed_without_budget():
+    Voucher.clean_value_and_budget({'budget': None, 'all_addons_included': True, 'all_bundles_included': True})

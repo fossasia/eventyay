@@ -1231,7 +1231,9 @@ def _perform_order(
 
     with lockfn() as now_dt:
         positions = list(
-            positions.select_related('product', 'variation', 'subevent', 'seat', 'addon_to').prefetch_related('addons')
+            positions.select_related(
+                'product', 'variation', 'subevent', 'seat', 'addon_to', 'addon_to__voucher'
+            ).prefetch_related('addons')
         )
         positions.sort(key=lambda k: position_ids.index(k.pk))
         if len(positions) == 0:
