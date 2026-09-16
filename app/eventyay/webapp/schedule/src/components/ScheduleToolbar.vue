@@ -175,10 +175,9 @@
 					path(d="M9 18l6-6-6-6")
 		.toolbar-right
 			button.toolbar-btn.now-btn(
+				v-if="isEventHappeningToday",
 				@click="$emit('goToNow')",
-				:aria-label="t.now",
-				:disabled="!isEventHappeningToday",
-				:title="isEventHappeningToday ? '' : t.now_disabled")
+				:aria-label="t.now")
 				| {{ t.now }}
 				svg.tb-icon.now-arrow(aria-hidden="true", viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", stroke-linecap="round", stroke-linejoin="round")
 					line(x1="12", y1="5", x2="12", y2="19")
@@ -457,7 +456,6 @@ export default {
 				export: m.export || this.$t('Export'),
 				current: m.current || this.$t('current'),
         now: m.now || this.$t('Now'),
-        now_disabled: m.now_disabled || this.$t('Go to now is only available on the current day'),
 				list_view: m.list_view || this.$t('List View'),
 				calendar_view: m.calendar_view || this.$t('Calendar View'),
 				search: m.search || this.$t('Search'),
@@ -1095,14 +1093,10 @@ export default {
 		font-weight: 600
 		border-radius: 4px
 		padding: 0 10px
-		&:hover:not(:disabled)
+		&:hover, &:focus-visible
 			background-color: var(--pretalx-clr-primary, #3aa57c)
 			color: #fff
 			filter: brightness(0.92)
-		&:disabled
-			cursor: not-allowed
-			opacity: 0.5
-			filter: none
 	.toolbar-row
 		display: flex
 		align-items: center
@@ -1717,7 +1711,7 @@ export default {
 		&.icon-only
 			padding: 0 5px
 			gap: 3px
-		&:hover
+		&:hover:not(.now-btn)
 			background-color: rgba(0, 0, 0, 0.05)
 		&.sessions-toggle.active
 			color: var(--pretalx-clr-primary, #3aa57c)
@@ -1915,6 +1909,19 @@ export default {
 			align-items: center
 			justify-content: flex-end
 			max-width: 100%
+			min-width: 0
+			button.toolbar-btn.now-btn
+				padding: 0 8px
+				height: 28px
+				font-size: 12px
+				gap: 2px
+				flex-shrink: 0
+				svg.tb-icon.now-arrow
+					width: 12px
+					height: 12px
+			.tz-btn
+				.tz-label, .chevron-icon
+					display: none
 			.fullscreen-quick
 				display: inline-flex
 				order: 98
@@ -1926,6 +1933,7 @@ export default {
 				display: flex
 				align-items: center
 				gap: 2px
+				flex-shrink: 0
 			.toolbar-secondary
 				display: none
 				position: absolute
@@ -2056,8 +2064,9 @@ export default {
 				width: 130px
 				font-size: 13px
 			.toolbar-right-quick
-				.timezone-label
-					display: none
+				.tz-btn
+					.tz-label, .chevron-icon
+						display: none
 			.toolbar-btn,
 			.toolbar-btn.icon-only,
 			button.toolbar-btn,
@@ -2076,7 +2085,15 @@ export default {
 		button.toolbar-btn.now-btn,
 		.toolbar-right button.toolbar-btn.now-btn
 			color: #fff
+			padding: 0 7px
+			height: 28px
+			font-size: 12px
+			gap: 0
+			&:hover, &:focus-visible
+				color: #fff
+				background-color: var(--pretalx-clr-primary, #3aa57c)
 			svg.tb-icon.now-arrow
+				display: none
 				stroke: currentColor
 				color: inherit
 				fill: none

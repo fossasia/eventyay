@@ -142,3 +142,47 @@ def test_event_dashboard_different_times(event, orga_client, start_diff, end_dif
         event.save()
     response = orga_client.get(event.orga_urls.base)
     assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_event_dashboard_internal_note_uses_settings_not_comment(event, orga_client):
+    with scope(event=event):
+        event.comment = 'tickets comment'
+        event.save(update_fields=['comment'])
+
+    response = orga_client.post(
+        event.orga_urls.base,
+        {'internal_note': 'talks organizer note'},
+        follow=True,
+    )
+    assert response.status_code == 200
+    with scope(event=event):
+        from eventyay.base.models.log import LogEntry
+
+        event.refresh_from_db()
+        assert event.comment == 'tickets comment'
+        assert event.settings.get('orga_internal_note') == 'talks organizer note'
+        assert LogEntry.objects.filter(event=event, action_type='eventyay.orga.internal_note').exists()
+
+    page = orga_client.get(event.orga_urls.base)
+    assert 'talks organizer note' in page.text
+    assert 'tickets comment' not in page.text
+
+
+@pytest.mark.django_db
+def test_event_dashboard_includes_schedule_releases(event, orga_client, orga_user):
+    from eventyay.base.models.log import LogEntry
+
+    with scope(event=event):
+        LogEntry.objects.create(
+            event=event,
+            user=orga_user,
+            content_object=event,
+            action_type='eventyay.schedule.release',
+            data='{}',
+        )
+
+    response = orga_client.get(event.orga_urls.base)
+    assert response.status_code == 200
+    assert 'Schedule' in response.text
+    assert '<div></div>' not in response.text

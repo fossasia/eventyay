@@ -229,10 +229,11 @@ class BBBService:
     def __init__(self, event):
         self.event = event
 
-    async def _get(self, url, timeout=30):
+    async def _get(self, url, timeout=30, disable_ssl=False):
         try:
+            ssl_opt = False if disable_ssl else None
             async with aiohttp.ClientSession() as session:
-                async with session.get(URL(url, encoded=True), timeout=timeout) as resp:
+                async with session.get(URL(url, encoded=True), timeout=timeout, ssl=ssl_opt) as resp:
                     if resp.status != 200:
                         logger.error(
                             f"Could not contact BBB. Return code: {resp.status}"
@@ -250,13 +251,15 @@ class BBBService:
             return False
         return root
 
-    async def _post(self, url, xmldata):
+    async def _post(self, url, xmldata, disable_ssl=False):
         try:
+            ssl_opt = False if disable_ssl else None
             async with aiohttp.ClientSession() as session:
                 async with session.post(
                     URL(url, encoded=True),
                     data=xmldata,
                     headers={"Content-Type": "application/xml"},
+                    ssl=ssl_opt,
                 ) as resp:
                     if resp.status != 200:
                         logger.error(
@@ -292,11 +295,12 @@ class BBBService:
         create_url = get_url("create", create_params, server.url, server.secret)
 
         presentation = config.get("presentation", None)
+        disable_ssl = getattr(server, "disable_ssl", False)
         if presentation and presentation.strip():
             xml = get_presentation_xml(presentation)
-            req = await self._post(create_url, xml)
+            req = await self._post(create_url, xml, disable_ssl=disable_ssl)
         else:
-            req = await self._get(create_url)
+            req = await self._get(create_url, disable_ssl=disable_ssl)
 
         if req is False:
             return
@@ -372,7 +376,7 @@ class BBBService:
         if not create_params:
             return
         create_url = get_url("create", create_params, server.url, server.secret)
-        if await self._get(create_url) is False:
+        if await self._get(create_url, disable_ssl=getattr(server, "disable_ssl", False)) is False:
             return
 
         if user.profile.get("avatar", {}).get("url"):
@@ -434,7 +438,14 @@ class BBBService:
             for server in servers
         ]
         responses = await asyncio.gather(
-            *(self._get(url, timeout=10) for url in recording_urls)
+            *(
+                self._get(
+                    url,
+                    timeout=10,
+                    disable_ssl=getattr(server, "disable_ssl", False),
+                )
+                for url, server in zip(recording_urls, servers)
+            )
         )
         for server, recordings_url, root in zip(servers, recording_urls, responses):
             try:

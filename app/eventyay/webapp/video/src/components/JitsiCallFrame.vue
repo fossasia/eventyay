@@ -68,6 +68,9 @@ export default {
 				if (this.isDestroyed) return
 
 				const isHttp = (config.protocol && config.protocol.startsWith('http:')) || (config.url && config.url.startsWith('http:'))
+				if (typeof window !== 'undefined' && window.location && window.location.protocol === 'https:' && isHttp) {
+					throw new Error('Jitsi server must use HTTPS when Eventyay is served over HTTPS')
+				}
 				const scheme = isHttp ? 'http' : 'https'
 				const wsScheme = isHttp ? 'ws' : 'wss'
 				const serverUrl = config.url || `${scheme}://${config.domain}`
@@ -283,24 +286,13 @@ export default {
 			this.$emit('hangup')
 		},
 		async loadJitsiExternalApi(config) {
-			const patchExternalAPI = (api) => {
-				if (api && api.prototype && !api._patchedForHttp) {
-					const origCreateIFrame = api.prototype._createIFrame
-					api.prototype._createIFrame = function(height, width, sandbox) {
-						if (this._url && location.protocol === 'http:' && this._url.startsWith('https:')) {
-							this._url = this._url.replace(/^https:/, 'http:')
-						}
-						return origCreateIFrame.call(this, height, width, sandbox)
-					}
-					api._patchedForHttp = true
-				}
-				return api
-			}
-
-			if (window.JitsiMeetExternalAPI) {
-				return patchExternalAPI(window.JitsiMeetExternalAPI)
-			}
 			const baseUrl = config.url || (String(config.protocol).startsWith('http:') ? `http://${config.domain}` : `https://${config.domain}`)
+			if (typeof window !== 'undefined' && window.location && window.location.protocol === 'https:' && baseUrl.startsWith('http:')) {
+				throw new Error('Jitsi server must use HTTPS when Eventyay is served over HTTPS')
+			}
+			if (window.JitsiMeetExternalAPI) {
+				return window.JitsiMeetExternalAPI
+			}
 			const scriptUrl = `${baseUrl.replace(/\/+$/, '')}/external_api.js`
 
 			return new Promise((resolve, reject) => {
@@ -309,7 +301,7 @@ export default {
 				script.async = true
 				script.onload = () => {
 					if (window.JitsiMeetExternalAPI) {
-						resolve(patchExternalAPI(window.JitsiMeetExternalAPI))
+						resolve(window.JitsiMeetExternalAPI)
 					} else {
 						reject(new Error('JitsiMeetExternalAPI missing on window'))
 					}
