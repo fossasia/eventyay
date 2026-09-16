@@ -448,8 +448,11 @@ def retry_failed_payment(self):
         if not reminder_dates or not invoice.stripe_payment_intent_id:
             continue
         reminder_dates.sort()
-        for reminder_date in reminder_dates:
-            reminder_date = datetime(today.year, today.month, reminder_date)
+        for reminder_day in reminder_dates:
+            try:
+                reminder_date = datetime(today.year, today.month, reminder_day)
+            except ValueError:
+                continue
             reminder_date = reminder_date.replace(tzinfo=timezone)
             if (
                 not invoice.last_reminder_datetime or invoice.last_reminder_datetime < reminder_date
@@ -488,8 +491,11 @@ def check_billing_status_for_warning(self):
             invoice.event.live = False
             invoice.event.save()
             continue
-        for reminder_date in reminder_dates:
-            reminder_date = datetime(today.year, today.month, reminder_date)
+        for reminder_day in reminder_dates:
+            try:
+                reminder_date = datetime(today.year, today.month, reminder_day)
+            except ValueError:
+                continue
             reminder_date = reminder_date.replace(tzinfo=timezone)
             if (
                 not invoice.last_reminder_datetime or invoice.last_reminder_datetime < reminder_date
