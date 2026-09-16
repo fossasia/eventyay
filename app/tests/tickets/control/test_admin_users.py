@@ -9,6 +9,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from allauth.account.models import EmailAddress
+from celery.exceptions import Retry
 from eventyay.base.forms.auth import LoginForm
 from eventyay.base.models import User
 from eventyay.base.services.mail import SendMailException
@@ -307,6 +308,7 @@ class UserEmailActionsTest(TestCase):
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
         self.assertEqual(data['status'], 'ok')
+        self.assertEqual(data['message'], 'Verification email sent to emailtarget@example.com.')
         mock_send.assert_called_once()
 
     def test_resend_verification_missing_email(self):
@@ -321,11 +323,38 @@ class UserEmailActionsTest(TestCase):
 
     @patch('allauth.account.models.EmailAddress.send_confirmation', side_effect=smtplib.SMTPException('connection refused'))
     def test_resend_verification_mail_error(self, mock_send):
-        response = self._post_as_admin('resend_verification', self.target_user.pk)
+        with self.assertLogs('eventyay.control.views.users', level='ERROR') as logs:
+            response = self._post_as_admin('resend_verification', self.target_user.pk)
         self.assertEqual(response.status_code, 500)
         data = json.loads(response.content)
         self.assertEqual(data['status'], 'error')
-        self.assertIn('error sending the verification email', data['message'])
+        self.assertEqual(
+            data['message'],
+            'Verification email could not be sent. Please check the email settings and try again.',
+        )
+        self.assertNotIn('connection refused', data['message'])
+        self.assertIn('connection refused', ' '.join(logs.output))
+
+    @patch('allauth.account.models.EmailAddress.send_confirmation')
+    def test_resend_verification_reports_primary_address(self, mock_send):
+        self.email_address.email = 'primary.inbox@example.com'
+        self.email_address.save(update_fields=['email'])
+        response = self._post_as_admin('resend_verification', self.target_user.pk)
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertEqual(data['message'], 'Verification email sent to primary.inbox@example.com.')
+
+    @patch(
+        'allauth.account.models.EmailAddress.send_confirmation',
+        side_effect=RuntimeError('provider api key invalid'),
+    )
+    def test_resend_verification_backend_specific_error(self, mock_send):
+        with self.assertLogs('eventyay.control.views.users', level='ERROR'):
+            response = self._post_as_admin('resend_verification', self.target_user.pk)
+        self.assertEqual(response.status_code, 500)
+        data = json.loads(response.content)
+        self.assertEqual(data['status'], 'error')
+        self.assertNotIn('api key', data['message'])
 
     def test_resend_verification_already_verified_guard(self):
         self.email_address.verified = True
@@ -342,6 +371,7 @@ class UserEmailActionsTest(TestCase):
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
         self.assertEqual(data['status'], 'ok')
+        self.assertEqual(data['message'], 'Password reset email sent to emailtarget@example.com.')
         mock_send.assert_called_once()
 
     def test_reset_password_missing_email(self):
@@ -354,10 +384,72 @@ class UserEmailActionsTest(TestCase):
         self.assertEqual(data['status'], 'error')
         self.assertIn('has no email address', data['message'])
 
-    @patch('eventyay.base.models.User.send_password_reset', side_effect=SendMailException())
+    @patch('eventyay.base.models.User.send_password_reset', side_effect=SendMailException('smtp auth failed'))
     def test_reset_password_mail_error(self, mock_send):
-        response = self._post_as_admin('reset_password', self.target_user.pk)
+        with self.assertLogs('eventyay.control.views.users', level='ERROR') as logs:
+            response = self._post_as_admin('reset_password', self.target_user.pk)
         self.assertEqual(response.status_code, 500)
         data = json.loads(response.content)
         self.assertEqual(data['status'], 'error')
-        self.assertIn('error sending the mail', data['message'])
+        self.assertEqual(
+            data['message'],
+            'Password reset email could not be sent. Please check the email settings and try again.',
+        )
+        self.assertNotIn('smtp auth failed', data['message'])
+        self.assertIn('smtp auth failed', ' '.join(logs.output))
+
+    @patch('eventyay.base.models.User.send_password_reset', side_effect=smtplib.SMTPServerDisconnected('gone'))
+    def test_reset_password_smtp_error(self, mock_send):
+        response = self._post_as_admin('reset_password', self.target_user.pk)
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(json.loads(response.content)['status'], 'error')
+
+    @patch('eventyay.base.models.User.send_password_reset', side_effect=Retry('Retry in 1s'))
+    def test_reset_password_retry_exhausted(self, mock_send):
+        response = self._post_as_admin('reset_password', self.target_user.pk)
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(json.loads(response.content)['status'], 'error')
+
+    @patch(
+        'eventyay.base.models.User.send_password_reset',
+        side_effect=RuntimeError('provider api key invalid'),
+    )
+    def test_reset_password_backend_specific_error(self, mock_send):
+        with self.assertLogs('eventyay.control.views.users', level='ERROR'):
+            response = self._post_as_admin('reset_password', self.target_user.pk)
+        self.assertEqual(response.status_code, 500)
+        data = json.loads(response.content)
+        self.assertEqual(data['status'], 'error')
+        self.assertNotIn('api key', data['message'])
+
+    @patch('eventyay.base.models.User.send_password_reset', side_effect=RuntimeError('provider down'))
+    def test_edit_page_reset_password_backend_specific_error(self, mock_send):
+        self.client.force_login(self.admin)
+        session = self.client.session
+        session['eventyay_auth_login_time'] = int(time.time())
+        session.save()
+        with patch.object(self.admin.__class__, 'has_active_staff_session', return_value=True):
+            response = self.client.post(
+                reverse('eventyay_admin:admin.users.reset', kwargs={'id': self.target_user.pk}),
+                follow=True,
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Password reset email could not be sent.')
+
+    @patch('eventyay.base.models.User.send_password_reset')
+    def test_reset_password_sends_synchronously(self, mock_send):
+        self._post_as_admin('reset_password', self.target_user.pk)
+        self.assertTrue(mock_send.call_args.kwargs['sync_send'])
+
+    def test_list_renders_email_action_feedback_hooks(self):
+        self.client.force_login(self.admin)
+        session = self.client.session
+        session['pretix_auth_login_time'] = int(time.time())
+        session.save()
+        with patch.object(self.admin.__class__, 'has_active_staff_session', return_value=True):
+            response = self.client.get(reverse('eventyay_admin:admin.users'))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn('class="admin-users-alert-region"', content)
+        self.assertIn('data-pending-message="Sending verification email…"', content)
+        self.assertIn('data-pending-message="Sending password reset email…"', content)
