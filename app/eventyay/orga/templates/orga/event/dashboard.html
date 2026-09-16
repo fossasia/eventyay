@@ -20,8 +20,8 @@
     {% if can_view_submission_stats %}
         {% compress js %}
             <script defer src="{% static "vendored/apexcharts/apexcharts.min.js" %}"></script>
-            <script defer src="{% static "orga/js/stats.js" %}"></script>
         {% endcompress %}
+        <script type="module" src="{% static "orga/js/stats.js" %}"></script>
     {% endif %}
     {% compress js %}
         <script defer src="{% static "orga/js/internal-note.js" %}"></script>
@@ -104,11 +104,11 @@
         
 
         {% include "orga/includes/dashboard_kpi_cards.html" %}
-    </div>
 
-    {% if can_view_submission_stats %}
-        {% include "orga/submission/includes/statistics.html" %}
-    {% endif %}
+        {% if can_view_submission_stats %}
+            {% include "orga/submission/includes/statistics.html" %}
+        {% endif %}
+    </div>
 
     <div class="td-dashboard pt-0">
         {% if can_update_event or recent_talk_activity and can_change_settings %}
