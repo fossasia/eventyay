@@ -14,13 +14,13 @@ from django.views.generic import FormView, ListView, TemplateView, UpdateView
 
 from i18nfield.strings import LazyI18nString
 
-from eventyay.base.models.page import Page
+from eventyay.base.models.page import CONTENT_PAGE_SLUGS, Page
 from eventyay.base.settings import GlobalSettingsObject
+from eventyay.base.templatetags.rich_text import compile_markdown
 from eventyay.common.permissions import is_admin_mode_active
 from eventyay.control.forms.page import PageSettingsForm
 from eventyay.control.forms.pages_admin import (
     ALL_PAGE_I18N_KEYS,
-    CONTENT_PAGE_SLUGS,
     DEFAULT_PAGE_LOCALE,
     DEFAULT_PAGE_SLUGS,
     PAGE_TITLES,
@@ -376,13 +376,19 @@ class SystemPageView(ShowPageView):
                     'pricing': _('Pricing'),
                     'support': _('Support & Help'),
                 }
-                title = title_map[slug]
+                title = title_map.get(slug, slug.capitalize())
                 custom_text = gs.get(f'footer_page_{slug}_text', as_type=LazyI18nString)
                 if custom_text:
-                    return Page(
-                        title=title,
-                        slug=slug,
-                        text=custom_text,
+                    text = custom_text
+                else:
+                    # Default copy is Markdown; convert so ShowPageView can render HTML.
+                    text = compile_markdown(
+                        f'# {title}\n\n' + str(_('Content for this page has not been configured yet.'))
                     )
+                return Page(
+                    title=title,
+                    slug=slug,
+                    text=text,
+                )
             raise Http404(_('The requested page does not exist.'))
 

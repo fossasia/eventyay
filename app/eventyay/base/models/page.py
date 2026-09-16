@@ -2,7 +2,10 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from i18nfield.fields import I18nCharField, I18nTextField
 
-from eventyay.base.models import LoggedModel
+from .base import LoggedModel
+
+# Slugs that map to editable rich-text system pages accessible via /slug/ URLs.
+CONTENT_PAGE_SLUGS = ('terms', 'privacy', 'pricing', 'support')
 
 
 class Page(LoggedModel):

@@ -16,14 +16,13 @@ from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
 from i18nfield.strings import LazyI18nString
 
 from eventyay.base.forms import SettingsForm
+from eventyay.base.models.page import CONTENT_PAGE_SLUGS
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.forms.fields import I18nRichTextFormField
 from eventyay.control.forms import MultipleLanguagesWidget
 
 DEFAULT_PAGE_LOCALE = 'en'
 
-# Slugs that expose editable rich-text page content in addition to a footer link.
-CONTENT_PAGE_SLUGS = ('terms', 'privacy', 'pricing', 'support')
 # Slugs handled by the default-page tab (Documentation is an external link only).
 DEFAULT_PAGE_SLUGS = ('terms', 'privacy', 'pricing', 'documentation', 'support')
 

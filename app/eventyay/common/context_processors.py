@@ -10,6 +10,7 @@ from django.utils.translation import gettext_lazy as _
 from django_scopes import get_scope
 
 from eventyay.base.meetup import has_video_stream, is_meetup_event
+from eventyay.base.models.page import CONTENT_PAGE_SLUGS
 from eventyay.base.models.settings import GlobalSettings
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.cfp.signals import footer_link, html_head
@@ -131,7 +132,7 @@ def system_information(request):
         enabled = gs.get(f'footer_link_{key}_enabled', as_type=bool, default=True)
 
         # If the page itself is disabled, do not show the footer link
-        if key in ('terms', 'privacy', 'pricing', 'support'):
+        if key in CONTENT_PAGE_SLUGS:
             page_enabled = gs.get(f'page_{key}_enabled', as_type=bool, default=True)
             if not page_enabled:
                 enabled = False

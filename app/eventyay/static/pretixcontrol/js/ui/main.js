@@ -864,6 +864,11 @@ $(function () {
     $("[data-formset]").on("formAdded", "div", function (event) {
         form_handlers($(event.target));
     });
+    document.addEventListener('eventyay:ajax-results-replaced', function (e) {
+        if (e.target) {
+            form_handlers($(e.target));
+        }
+    });
     $(document).on("click", ".variations .variations-select-all", function (e) {
         $(this).parent().parent().find("input[type=checkbox]").prop("checked", true).change();
         e.stopPropagation();
