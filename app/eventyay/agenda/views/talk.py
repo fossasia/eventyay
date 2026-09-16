@@ -555,8 +555,16 @@ class SingleCalendarRedirectView(EventPageMixin, TalkMixin, View):
         return HttpResponseRedirect(url)
 
 
-class FeedbackView(TalkMixin, FormView):
-    form_class = FeedbackForm
+class FeedbackView(TalkMixin, TemplateView):
+    """Speakers read the feedback on their session here.
+
+    Everyone else is sent to the comment section on the session page, which
+    enforces login, bans, the ticket requirement and the review queue. This
+    view used to render its own form that saved feedback without any of those
+    checks, so it must not accept submissions.
+    """
+
+    template_name = 'agenda/feedback.html'
     permission_required = 'base.view_feedback_page_submission'
 
     def get_queryset(self):
@@ -573,23 +581,12 @@ class FeedbackView(TalkMixin, FormView):
 
     @context
     @cached_property
-    def can_give_feedback(self):
-        return self.request.user.has_perm('base.give_feedback_submission', self.talk)
-
-    @context
-    @cached_property
     def speakers(self):
         return self.talk.speakers.all()
 
     @cached_property
     def is_speaker(self):
         return self.request.user in self.speakers
-
-    @cached_property
-    def template_name(self):
-        if self.is_speaker:
-            return 'agenda/feedback.html'
-        return 'agenda/feedback_form.html'
 
     @context
     @cached_property
@@ -600,21 +597,11 @@ class FeedbackView(TalkMixin, FormView):
             'speaker'
         )
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['talk'] = self.talk
-        return kwargs
-
-    def form_valid(self, form):
-        if not self.can_give_feedback:
-            return super().form_invalid(form)
-        result = super().form_valid(form)
-        form.save()
-        messages.success(self.request, phrases.agenda.feedback_success)
-        return result
-
-    def get_success_url(self):
-        return self.submission.urls.public
+    def get(self, request, *args, **kwargs):
+        if not self.is_speaker:
+            from django.http import HttpResponseRedirect
+            return HttpResponseRedirect(self.submission.urls.public + '#feedback')
+        return super().get(request, *args, **kwargs)
 
 
 class TalkSocialMediaCard(SocialMediaCardMixin, TalkView):

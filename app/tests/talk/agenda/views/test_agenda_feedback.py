@@ -11,9 +11,15 @@ from eventyay.base.models import TalkSlot
 def test_can_create_feedback(django_assert_num_queries, past_slot, client, event):
     with scope(event=event):
         assert past_slot.submission.speakers.count() == 1
-    with django_assert_num_queries(42):
+    
+    # Log in as an attendee to leave feedback on the session page
+    client.force_login(past_slot.submission.speakers.first()) # Assuming a logged-in user, but ideally an attendee
+    # We just need any logged-in user to post to the public page
+    
+    with django_assert_num_queries(45):
+        # Post to the public session page instead of the old feedback URL
         response = client.post(
-            past_slot.submission.urls.feedback, {"review": "cool!"}, follow=True
+            past_slot.submission.urls.public, {"review": "cool!", "rating": 5}, follow=True
         )
     assert response.status_code == 200
     with scope(event=event):
@@ -33,9 +39,12 @@ def test_can_create_feedback_for_multiple_speakers(
         past_slot.submission.speakers.add(other_speaker)
         past_slot.submission.speakers.add(speaker)
         assert past_slot.submission.speakers.count() == 2
-    with django_assert_num_queries(41):
+        
+    client.force_login(speaker)
+    
+    with django_assert_num_queries(44):
         response = client.post(
-            past_slot.submission.urls.feedback, {"review": "cool!"}, follow=True
+            past_slot.submission.urls.public, {"review": "cool!", "rating": 5}, follow=True
         )
     assert response.status_code == 200
     with scope(event=event):
@@ -54,9 +63,10 @@ def test_cannot_create_feedback_before_talk(
             start=_now + dt.timedelta(minutes=30),
             end=_now + dt.timedelta(minutes=60),
         )
-    with django_assert_num_queries(13):
+    client.force_login(slot.submission.speakers.first())
+    with django_assert_num_queries(14):
         response = client.post(
-            slot.submission.urls.feedback, {"review": "cool!"}, follow=True
+            slot.submission.urls.public, {"review": "cool!", "rating": 5}, follow=True
         )
     assert response.status_code == 200
     with scope(event=event):
@@ -75,13 +85,24 @@ def test_can_see_feedback(django_assert_num_queries, feedback, client):
 
 @pytest.mark.django_db()
 def test_can_see_feedback_form(django_assert_num_queries, past_slot, client):
+    # This should now redirect to the public page
     with django_assert_num_queries(13):
         response = client.get(past_slot.submission.urls.feedback, follow=True)
     assert response.status_code == 200
+    assert response.redirect_chain[0][0] == past_slot.submission.urls.public + '#feedback'
 
 
 @pytest.mark.django_db()
 def test_cannot_see_feedback_form_before_talk(django_assert_num_queries, slot, client):
+    # This should now redirect to the public page
     with django_assert_num_queries(15):
         response = client.get(slot.submission.urls.feedback, follow=True)
     assert response.status_code == 200
+    assert response.redirect_chain[0][0] == slot.submission.urls.public + '#feedback'
+
+
+@pytest.mark.django_db()
+def test_anonymous_post_to_feedback_returns_405(client, past_slot):
+    response = client.post(past_slot.submission.urls.feedback, {"review": "cool!"})
+    assert response.status_code == 405
+    assert past_slot.submission.feedback.count() == 0
