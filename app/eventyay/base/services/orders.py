@@ -770,7 +770,10 @@ def _check_positions(
             if cp.is_bundled:
                 try:
                     bundle = cp.addon_to.product.bundles.get(bundled_product=cp.product, bundled_variation=cp.variation)
-                    bprice = bundle.designated_price or 0
+                    if cp.addon_to.voucher_id and cp.addon_to.voucher.all_bundles_included:
+                        bprice = Decimal('0.00')
+                    else:
+                        bprice = bundle.designated_price or 0
                 except ProductBundle.DoesNotExist:
                     bprice = cp.price
                 except ProductBundle.MultipleObjectsReturned:

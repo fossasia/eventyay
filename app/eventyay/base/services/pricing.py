@@ -29,6 +29,8 @@ def get_price(
     tax_rule=None,
 ) -> TaxedPrice:
     if addon_to:
+        if addon_to.voucher_id and addon_to.voucher.all_addons_included:
+            return TAXED_ZERO
         try:
             iao = addon_to.product.addons.get(addon_category_id=product.category_id)
             if iao.price_included:

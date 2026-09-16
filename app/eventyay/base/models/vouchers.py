@@ -144,6 +144,14 @@ class Voucher(LoggedModel):
             'organiser. This is applicable for products that require approval.'
         ),
     )
+    all_addons_included = models.BooleanField(
+        default=False,
+        verbose_name=_('Offer all add-on products for free when redeeming this voucher'),
+    )
+    all_bundles_included = models.BooleanField(
+        default=False,
+        verbose_name=_('Include all bundled products without a designated price when redeeming this voucher'),
+    )
     price_mode = models.CharField(
         verbose_name=_('Price mode'),
         max_length=100,

@@ -51,6 +51,8 @@ class VoucherForm(I18nModelForm):
             'price_mode',
             'subevent',
             'show_hidden_products',
+            'all_addons_included',
+            'all_bundles_included',
             'budget',
         ]
         field_classes = {
@@ -346,6 +348,8 @@ class VoucherBulkForm(VoucherForm):
             'price_mode',
             'subevent',
             'show_hidden_products',
+            'all_addons_included',
+            'all_bundles_included',
             'budget',
         ]
         field_classes = {
