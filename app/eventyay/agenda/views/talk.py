@@ -8,7 +8,6 @@ from urllib.parse import unquote, urljoin, urlparse
 import jwt
 import vobject
 from django.conf import settings
-from django.contrib import messages
 from django.db.models import Q
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404
@@ -16,7 +15,7 @@ from django.template.loader import get_template
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
-from django.views.generic import FormView, TemplateView, View
+from django.views.generic import TemplateView, View
 from django_context_decorator import context
 from django_scopes import scope
 from i18nfield.utils import I18nJSONEncoder
@@ -43,7 +42,6 @@ from eventyay.base.models import (
     User,
 )
 from eventyay.cfp.views.event import EventPageMixin
-from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import get_base_url
 from eventyay.common.utils.language import localize_event_text
 from eventyay.common.video_embed import get_video_embed_info, parse_video_urls
@@ -53,7 +51,6 @@ from eventyay.common.views.mixins import (
     PermissionRequired,
     SocialMediaCardMixin,
 )
-from eventyay.submission.forms import FeedbackForm
 from eventyay.talk_rules.agenda import agenda_schedule_for_user, filter_agenda_slots
 from eventyay.orga.utils.colors import get_contrast_color
 
