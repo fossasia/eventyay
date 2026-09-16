@@ -38,7 +38,6 @@ def paypal_connect_endpoint_choice(value: str | None) -> str:
 
 
 class GlobalSettingsForm(SettingsForm):
-    """GlobalSettingsForm class implementation."""
     auto_fields = [
         'region',
         'mail_from',
@@ -89,7 +88,6 @@ class GlobalSettingsForm(SettingsForm):
             self.obj.settings.set('email_vendor', 'smtp')
 
     def __init__(self, *args, **kwargs):
-        """__init__ method."""
         self.obj = GlobalSettingsObject()
         self._setting_default()
 
@@ -638,7 +636,6 @@ class GlobalSettingsForm(SettingsForm):
                 field.widget.attrs['data-event-settings-image-tools'] = 'enabled'
 
     def clean_voxbento_base_url(self):
-        """clean_voxbento_base_url method."""
         url = (self.cleaned_data.get('voxbento_base_url') or '').strip()
         if url:
             if url.endswith('/'):
@@ -648,7 +645,6 @@ class GlobalSettingsForm(SettingsForm):
         return url
 
     def clean_etherpad_pad_name_pattern(self):
-        """clean_etherpad_pad_name_pattern method."""
         pattern = (self.cleaned_data.get('etherpad_pad_name_pattern') or '').strip()
         if pattern and '{submission}' not in pattern and '{token}' not in pattern:
             raise forms.ValidationError(
@@ -657,7 +653,6 @@ class GlobalSettingsForm(SettingsForm):
         return pattern
 
     def clean(self):
-        """clean method."""
         data = super().clean()
 
         # Validate SendGrid token is provided when SendGrid is selected
@@ -698,7 +693,6 @@ class GlobalSettingsForm(SettingsForm):
         return data
 
     def save(self):
-        """save method."""
         image_field = 'seo_social_image'
         current_value = self.obj.settings.get(image_field, as_type=str, default='') or ''
         new_value = self.cleaned_data.get(image_field)
@@ -722,9 +716,7 @@ class GlobalSettingsForm(SettingsForm):
 
 
 class GlobalTicketingSettingsForm(SettingsForm):
-    """GlobalTicketingSettingsForm class implementation."""
     def _setting_default(self):
-        """_setting_default method."""
         global_settings = self.obj.settings
         if global_settings.get('reservation_time') is None or global_settings.get('reservation_time') == '':
             global_settings.set('reservation_time', 30)
@@ -732,7 +724,6 @@ class GlobalTicketingSettingsForm(SettingsForm):
             global_settings.set('max_products_per_order', 0)
 
     def __init__(self, *args, **kwargs):
-        """__init__ method."""
         self.obj = GlobalSettingsObject()
         self._setting_default()
         super().__init__(*args, obj=self.obj, **kwargs)
@@ -912,12 +903,10 @@ class GlobalTicketingSettingsForm(SettingsForm):
             self.data = data
 
     def clean_payment_paypal_connect_endpoint(self):
-        """clean_payment_paypal_connect_endpoint method."""
         return paypal_connect_endpoint_choice(self.cleaned_data.get('payment_paypal_connect_endpoint'))
 
 
 class SSOConfigForm(SettingsForm):
-    """SSOConfigForm class implementation."""
     redirect_url = forms.URLField(
         required=True,
         label=_('Redirect URL'),
@@ -925,7 +914,6 @@ class SSOConfigForm(SettingsForm):
     )
 
     def __init__(self, *args, **kwargs):
-        """__init__ method."""
         self.obj = GlobalSettingsObject()
         super().__init__(*args, obj=self.obj, **kwargs)
 
@@ -940,7 +928,6 @@ class StripeKeyValidator:
     """
 
     def __init__(self, prefix: Union[str, List[str]]) -> None:
-        """__init__ method."""
         if not prefix:
             raise ValueError('Prefix cannot be empty')
 
@@ -954,7 +941,6 @@ class StripeKeyValidator:
             self._prefixes = [prefix]
 
     def __call__(self, value: str) -> None:
-        """__call__ method."""
         if not value:
             raise forms.ValidationError(_('The Stripe key cannot be empty.'), code='invalid-stripe-key')
 
@@ -973,9 +959,7 @@ class StripeKeyValidator:
 
 
 class GlobalBusinessSettingsForm(SettingsForm):
-    """GlobalBusinessSettingsForm class implementation."""
     def __init__(self, *args, **kwargs):
-        """__init__ method."""
         self.obj = GlobalSettingsObject()
         super().__init__(*args, obj=self.obj, **kwargs)
 
