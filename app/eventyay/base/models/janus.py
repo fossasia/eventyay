@@ -17,3 +17,8 @@ class JanusServer(models.Model):
     events = models.ManyToManyField(
         "Event", blank=True, related_name="janus_servers"
     )
+    disable_ssl = models.BooleanField(
+        default=False,
+        verbose_name="Disable SSL enforcement",
+        help_text="Allow non-WSS/WS or bypass SSL verification for self-signed certificates.",
+    )

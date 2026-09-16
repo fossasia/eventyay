@@ -171,6 +171,7 @@ LOG_NAMES = {
     'eventyay.room.update': _('A room was modified.'),
     'eventyay.room.delete': _('A room was deleted.'),
     'eventyay.schedule.release': _('A new schedule version was released.'),
+    'eventyay.orga.internal_note': _('The talks organizer internal note has been updated.'),
     'eventyay.submission.accept': _('The proposal was accepted.'),
     'eventyay.submission.cancel': _('The proposal was cancelled.'),
     'eventyay.submission.confirm': _('The proposal was confirmed.'),

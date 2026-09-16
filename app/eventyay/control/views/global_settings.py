@@ -9,7 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.mail import EmailMessage
 from django.core.validators import validate_email
 from django.db import IntegrityError, OperationalError, ProgrammingError
-from django.http import HttpResponseBadRequest, JsonResponse
+from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, reverse
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
@@ -222,10 +222,15 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
     Tests the current system-level email configuration without saving settings.
     """
 
-    EMAIL_TAB_HASH = '#tab3'
+    EMAIL_TAB_HASH = '#tab-email'
 
-    def _respond(self, request, level, message):
-        """Redirect back to the email tab with inline feedback. Does not save settings."""
+    def _respond(self, request: HttpRequest, level: str, message: str) -> HttpResponse:
+        """Return JSON for AJAX callers; redirect with session feedback for plain form POSTs."""
+        if (
+            request.headers.get('Accept', '').startswith('application/json')
+            or request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        ):
+            return JsonResponse({'status': level, 'message': str(message)})
         request.session['admin_test_email_feedback'] = {
             'level': level,
             'message': str(message),
@@ -310,11 +315,11 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
 
                 backend = get_gmail_mail_backend(timeout=10)
                 if not backend:
-                    messages.error(
+                    return self._respond(
                         request,
+                        'error',
                         _('Gmail is selected but no account is connected. Connect Gmail in the settings first.'),
                     )
-                    return redirect(reverse('eventyay_admin:admin.global.settings'))
                 backend.test(from_addr=mail_from, to_addrs=recipients)
             elif gs.settings.email_vendor == 'smtp':
                 if not gs.settings.smtp_host or not gs.settings.smtp_port:
