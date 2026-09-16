@@ -1,20 +1,18 @@
 import base64
 import logging
-from datetime import datetime
-from datetime import timezone as tz
+from datetime import UTC, datetime
 from decimal import Decimal
-from typing import Optional, Tuple
-
 from zoneinfo import ZoneInfo
+
 import requests
 from celery import shared_task
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
-from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import DatabaseError
 from django.db.models import Q
+from django.utils import timezone
 from django_scopes import scopes_disabled
 
 from eventyay.base.models.vouchers import InvoiceVoucher
@@ -31,6 +29,7 @@ from ..consts import EVENTYAY_EMAIL_NONE_VALUE
 from ..helpers.jwt_generate import generate_sso_token
 from .billing_invoice import InvoicePDFGenerator
 from .schemas.billing import CollectBillingResponse
+
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +88,7 @@ def collect_billing_invoice(
     event: Event,
     last_month_date: datetime,
     ticket_rate: Decimal,
-    invoice_voucher: Optional[InvoiceVoucher],
+    invoice_voucher: InvoiceVoucher | None,
 ) -> CollectBillingResponse:
     """
     Collect billing data for an event on a monthly basis.
@@ -161,7 +160,7 @@ def monthly_billing_collect(self):
         """
         Get the current billing period details
         """
-        today = datetime.now(tz.utc)
+        today = datetime.now(UTC)
         first_day_of_current_month = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         last_month_date = first_day_of_current_month - relativedelta(months=1)
         return last_month_date
@@ -327,8 +326,8 @@ def calculate_ticket_fee(
     amount: Decimal,
     rate: Decimal,
     event: Event,
-    invoice_voucher: Optional[InvoiceVoucher] = None,
-) -> Tuple[Decimal, Decimal, Decimal]:
+    invoice_voucher: InvoiceVoucher | None = None,
+) -> tuple[Decimal, Decimal, Decimal]:
     """
     Calculate the ticket fee for an event based on the given rate and amount
 
@@ -345,7 +344,7 @@ def calculate_ticket_fee(
 
     def _apply_voucher(
         ticket_fee: Decimal, voucher_discount: Decimal, invoice_voucher: InvoiceVoucher
-    ) -> Tuple[Decimal, Decimal]:
+    ) -> tuple[Decimal, Decimal]:
         final_ticket_fee = invoice_voucher.calculate_price(original_price=ticket_fee, event=event)
         voucher_discount = ticket_fee - final_ticket_fee
         return final_ticket_fee, voucher_discount
@@ -395,8 +394,15 @@ def get_next_reminder_datetime(reminder_schedule):
         # Handle month wrapping (December to January)
         next_month = today.month + 1 if today.month < 12 else 1
         next_year = today.year if today.month < 12 else today.year + 1
-        # Select the first date in BILLING_REMIND_SCHEDULE for the next month
-        next_reminder = today.replace(year=next_year, month=next_month, day=reminder_schedule[0], hour=0, minute=0, second=0, microsecond=0)
+        # Select the first valid date in BILLING_REMIND_SCHEDULE for the next month
+        for day in reminder_schedule:
+            try:
+                next_reminder = today.replace(
+                    year=next_year, month=next_month, day=day, hour=0, minute=0, second=0, microsecond=0
+                )
+                break
+            except ValueError:
+                continue
 
     return next_reminder
 
@@ -438,7 +444,7 @@ def billing_invoice_notification(self):
 @scopes_disabled()
 def retry_failed_payment(self):
     pending_invoices = BillingInvoice.objects.filter(status=BillingInvoice.STATUS_PENDING)
-    today = datetime.now(tz.utc)
+    today = datetime.now(UTC)
     logger.info('Start - running task to retry failed payment: %s', today)
     timezone = ZoneInfo(settings.TIME_ZONE)
     for invoice in pending_invoices:
@@ -471,7 +477,7 @@ def retry_failed_payment(self):
 @scopes_disabled()
 def check_billing_status_for_warning(self):
     pending_invoices = BillingInvoice.objects.filter(status=BillingInvoice.STATUS_PENDING, reminder_enabled=True)
-    today = datetime.now(tz.utc)
+    today = datetime.now(UTC)
     logger.info('Start - running task to check billing status for warning on: %s', today)
     timezone = ZoneInfo(settings.TIME_ZONE)
     for invoice in pending_invoices:

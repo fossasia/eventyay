@@ -37,7 +37,10 @@ def billing_invoice_factory(organizer, event):
             stripe_payment_intent_id='pi_test',
         )
         defaults.update(kwargs)
-        return BillingInvoice.objects.create(**defaults)
+
+        with mock.patch('django.utils.timezone.now') as mock_now:
+            mock_now.return_value = FakeDatetime.now()
+            return BillingInvoice.objects.create(**defaults)
 
     return _factory
 
