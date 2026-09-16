@@ -20,4 +20,15 @@ class Migration(migrations.Migration):
             name='all_bundles_included',
             field=models.BooleanField(default=False, verbose_name='Include all bundled products without a designated price when redeeming this voucher'),
         ),
+        migrations.AddConstraint(
+            model_name='voucher',
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    ('budget__isnull', True),
+                    models.Q(('all_addons_included', False), ('all_bundles_included', False)),
+                    _connector='OR',
+                ),
+                name='voucher_budget_not_with_included_products',
+            ),
+        ),
     ]

@@ -3,6 +3,7 @@ from decimal import Decimal
 
 import pytest
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError, transaction
 from django.utils import timezone
 from django_scopes import scopes_disabled
 
@@ -123,3 +124,10 @@ def test_budget_cannot_be_combined_with_included_options(option):
 
 def test_included_options_allowed_without_budget():
     Voucher.clean_value_and_budget({'budget': None, 'all_addons_included': True, 'all_bundles_included': True})
+
+
+@pytest.mark.parametrize('option', ['all_addons_included', 'all_bundles_included'])
+def test_database_rejects_budget_with_included_options(setup, option):
+    event = setup[0]
+    with scopes_disabled(), pytest.raises(IntegrityError), transaction.atomic():
+        Voucher.objects.create(event=event, code=f'DB-{option}', budget=Decimal('5.00'), **{option: True})

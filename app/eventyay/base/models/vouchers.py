@@ -248,6 +248,13 @@ class Voucher(LoggedModel):
                 ),
                 name='voucher_percent_value_lte_100',
             ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(budget__isnull=True)
+                    | models.Q(all_addons_included=False, all_bundles_included=False)
+                ),
+                name='voucher_budget_not_with_included_products',
+            ),
         ]
 
     def __str__(self):
