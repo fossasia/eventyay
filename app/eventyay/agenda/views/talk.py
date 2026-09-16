@@ -596,7 +596,6 @@ class FeedbackView(TalkMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         if not self.is_speaker:
-            from django.http import HttpResponseRedirect
             return HttpResponseRedirect(self.submission.urls.public + '#feedback')
         return super().get(request, *args, **kwargs)
 
