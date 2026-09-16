@@ -20,6 +20,9 @@ from eventyay.control.signals import voucher_form_validation
 from eventyay.helpers.models import modelcopy
 
 
+ALL_PRODUCTS = 'all'
+
+
 class FakeChoiceField(forms.ChoiceField):
     def valid_value(self, value):
         return True
@@ -74,8 +77,10 @@ class VoucherForm(I18nModelForm):
                     initial['productvar'] = str(instance.product.pk)
                 elif instance.quota:
                     initial['productvar'] = 'q-%d' % instance.quota.pk
+                else:
+                    initial['productvar'] = ALL_PRODUCTS
             except Product.DoesNotExist:
-                pass
+                initial['productvar'] = ALL_PRODUCTS
         else:
             self.initial_instance_data = None
         super().__init__(*args, **kwargs)
@@ -103,7 +108,9 @@ class VoucherForm(I18nModelForm):
         choices = []
         if 'productvar' in initial or (self.data and 'productvar' in self.data):
             iv = self.data.get('productvar') or initial.get('productvar', '')
-            if iv.startswith('q-'):
+            if iv == ALL_PRODUCTS:
+                choices.append((ALL_PRODUCTS, _('All products')))
+            elif iv.startswith('q-'):
                 q = self.instance.event.quotas.get(pk=iv[2:])
                 choices.append(('q-%d' % q.pk, _('Any product in quota "{quota}"').format(quota=q)))
             elif '-' in iv:
@@ -133,7 +140,10 @@ class VoucherForm(I18nModelForm):
             }
         )
         self.fields['productvar'].required = False
+        self.fields['productvar'].hide_optional = True
         self.fields['productvar'].widget.choices = self.fields['productvar'].choices
+        if 'valid_until' in self.fields:
+            self.fields['valid_until'].hide_optional = True
 
         if (
             self.instance.event.seating_plan
@@ -155,6 +165,8 @@ class VoucherForm(I18nModelForm):
             try:
                 productid = quotaid = None
                 iv = self.data.get('productvar', '')
+                if iv == ALL_PRODUCTS:
+                    iv = ''
                 if iv.startswith('q-'):
                     quotaid = iv[2:]
                 elif '-' in iv:
