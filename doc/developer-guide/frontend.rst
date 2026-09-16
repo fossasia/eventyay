@@ -34,7 +34,7 @@ Architecture
 
 **Styling**: Stylus with custom theming
 
-**i18n**: vue-i18n for internationalization
+**i18n**: shared ``webapp/i18n`` gettext runtime (``video.po`` / ``schedule.po`` / ``schedule-editor.po``)
 
 Core Application Structure
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -100,7 +100,6 @@ Interactive Features
 - ``components/Polls.vue`` - Polls listing
 - ``components/Question.vue`` - Single Q&A question
 - ``components/Questions.vue`` - Q&A question list
-- ``components/Roulette.vue`` - Speed networking roulette
 
 User Interface
 ^^^^^^^^^^^^^^
@@ -202,10 +201,6 @@ Vuex Store Modules (``src/store/``)
   - Q&A questions
   - Voting and moderation
 
-**roulette.js**
-  - Networking queue
-  - Match history
-
 **schedule.js**
   - Event schedule
   - Session bookmarks
@@ -253,27 +248,21 @@ Other Utilities
 Internationalization
 ~~~~~~~~~~~~~~~~~~~~
 
-**Supported Languages** (``src/locales/``):
-- English (en)
-- German (de)
-- Spanish (es)
-- French (fr)
-- Portuguese (pt_BR)
-- Russian (ru)
-- Ukrainian (uk)
-- Arabic (ar)
+**Supported Languages**: same UI languages as tickets/talk (Django ``LANGUAGES``).
+Catalogs live in ``app/eventyay/locale/*/LC_MESSAGES/{video,schedule,schedule-editor}.po``.
+Untranslated locales always fall back to English; they never show raw keys.
 
-**Implementation**: vue-i18n with JSON translation files
+**Implementation**: i18next loading gettext catalogs (Weblate)
 
 **Usage**:
 
 .. code-block:: javascript
 
    // In components
-   this.$t('key.path')
+   this.$t('Search')
    
    // In templates
-   {{ $t('key.path') }}
+   {{ $t('Save') }}
 
 Styling & Theming
 ~~~~~~~~~~~~~~~~~

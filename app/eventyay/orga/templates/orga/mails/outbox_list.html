@@ -13,26 +13,30 @@
     <div class="d-md-flex justify-content-between align-items-center mb-2">
         <h2 id="orga-mail-outbox-count" data-outbox-refresh>
             <span>
-                {{ page_obj.paginator.count }}
-                {% blocktranslate trimmed count count=page_obj.paginator.count %}
-                    pending email
-                {% plural %}
-                    pending emails
-                {% endblocktranslate %}
+                {% block mail_list_heading %}
+                    {{ page_obj.paginator.count }}
+                    {% blocktranslate trimmed count count=page_obj.paginator.count %}
+                        pending email
+                    {% plural %}
+                        pending emails
+                    {% endblocktranslate %}
+                {% endblock mail_list_heading %}
             </span>
         </h2>
         {% include "orga/event/component_link.html" %}
     </div>
     <div class="submit-group outbox-submit-group">
         {% include "common/includes/search_form.html" with omit_wrapper=True form_id="outbox-search" no_filter_form=True %}
-        <div class="outbox-bulk-actions">
-            <button type="submit" form="outbox-search" formaction="{{ request.event.orga_urls.send_outbox }}" formmethod="get" class="btn btn-success">
-                {% translate "Send all" %}
-            </button>
-            <button type="submit" form="outbox-search" formaction="{{ request.event.orga_urls.purge_outbox }}" formmethod="get" class="btn btn-danger">
-                {% translate "Discard all" %}
-            </button>
-        </div>
+        {% block mail_list_bulk_actions %}
+            <div class="outbox-bulk-actions">
+                <button type="submit" form="outbox-search" formaction="{{ request.event.orga_urls.send_outbox }}" formmethod="get" class="btn btn-success">
+                    {% translate "Send all" %}
+                </button>
+                <button type="submit" form="outbox-search" formaction="{{ request.event.orga_urls.purge_outbox }}" formmethod="get" class="btn btn-danger">
+                    {% translate "Discard all" %}
+                </button>
+            </div>
+        {% endblock mail_list_bulk_actions %}
     </div>
     <div data-ajax-results-region>
         {% if is_filtered or is_paginated and page_obj.paginator.num_pages > 1 %}
@@ -45,11 +49,13 @@
                         </span>
                     {% endif %}
                 </div>
-                {% if is_paginated and page_obj.paginator.num_pages > 1 %}
-                    <a href="{{ request.event.orga_urls.send_outbox }}?pks={% for mail in mails %}{{ mail.pk }}{% if not forloop.last %},{% endif %}{% endfor %}">
-                        <button class="btn btn-outline-success">{% translate "Send all on this page" %}</button>
-                    </a>
-                {% endif %}
+                {% block mail_list_page_actions %}
+                    {% if is_paginated and page_obj.paginator.num_pages > 1 %}
+                        <a href="{{ request.event.orga_urls.send_outbox }}?pks={% for mail in mails %}{{ mail.pk }}{% if not forloop.last %},{% endif %}{% endfor %}">
+                            <button class="btn btn-outline-success">{% translate "Send all on this page" %}</button>
+                        </a>
+                    {% endif %}
+                {% endblock mail_list_page_actions %}
             </div>
         {% endif %}
     <div id="orga-mail-outbox-list" data-outbox-refresh>
@@ -117,9 +123,11 @@
                             {% include "orga/includes/mail_template_role.html" with template=mail.template %}
                         </td>
                         <td class="action-column">
-                            <a href="{{ mail.urls.send }}" title="{{ phrases.base.send }}" class="btn btn-sm btn-success">
-                                <i class="fa fa-mail-forward"></i>
-                            </a>
+                            {% block mail_row_primary_action %}
+                                <a href="{{ mail.urls.send }}" title="{{ phrases.base.send }}" class="btn btn-sm btn-success">
+                                    <i class="fa fa-mail-forward"></i>
+                                </a>
+                            {% endblock mail_row_primary_action %}
                             <a href="{{ mail.urls.edit }}" title="{{ phrases.base.edit }}" class="btn btn-sm btn-info">
                                 <i class="fa fa-edit"></i>
                             </a>

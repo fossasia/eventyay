@@ -1,5 +1,6 @@
 /* global ENV_DEVELOPMENT */
 import cloneDeep from 'lodash/cloneDeep'
+import { resolveLanguageOptions } from './src/locales/index.js'
 let config
 if (!window.venueless && !window.eventyay) {
 	const { protocol, hostname, port, pathname } = window.location
@@ -35,7 +36,7 @@ if (!window.venueless && !window.eventyay) {
 			feedback: `${protocol}//${hostPort}/_feedback/`,
 		},
 		defaultLocale: 'en',
-		locales: ['en', 'de', 'pt_BR', 'ar', 'fr', 'es', 'uk', 'ru'],
+		locales: resolveLanguageOptions(),
 		// Mark that there is no theme endpoint so theme.js can skip fetch
 		noThemeEndpoint: true,
 		features: [],

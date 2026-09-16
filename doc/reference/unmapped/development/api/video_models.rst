@@ -36,9 +36,6 @@ Chat & Communication
 Streaming Infrastructure
 ------------------------
 
-.. autoclass:: eventyay.base.models.StreamingServer
-   :members:
-
 .. autoclass:: eventyay.base.models.BBBServer
    :members:
 
@@ -67,14 +64,5 @@ Interactive Features
    :members:
 
 .. autoclass:: eventyay.base.models.QuestionVote
-   :members:
-
-Networking
-----------
-
-.. autoclass:: eventyay.base.models.RouletteRequest
-   :members:
-
-.. autoclass:: eventyay.base.models.RoulettePairing
    :members:
 

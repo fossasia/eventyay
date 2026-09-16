@@ -360,6 +360,10 @@ def w_pos_info(sender: Event, request, order: Order, position, **kwargs):
 
 @receiver(signal=event_copy_data, dispatch_uid='venueless_event_copy_data')
 def venueless_event_copy_data(sender, other, product_map, question_map, **kwargs):
+    clone_options = kwargs.get('clone_options') or {}
+    if not clone_options.get('clone_ticketing_data', True):
+        return
+
     sender.settings['venueless_products'] = [
         product_map[product].pk
         for product in other.settings.get('venueless_products', default=[])

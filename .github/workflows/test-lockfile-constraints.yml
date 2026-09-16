@@ -1,0 +1,78 @@
+name: Test Lockfile Constraints
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  test-locked-build:
+    name: Verify uv --locked constraint during Docker build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v7
+
+      - name: Extract Lockfile SHA
+        id: get_sha
+        run: |
+          # Extract the expected commit SHA for eventyay-interpretation from uv.lock
+          LOCK_SHA=$(grep -A2 "name = \"eventyay-interpretation\"" app/uv.lock | grep 'source = { git' | grep -oP '#\K[0-9a-f]+' | head -n 1 || echo "")
+          echo "lock_sha=$LOCK_SHA" >> "$GITHUB_OUTPUT"
+          echo "Expected SHA from lockfile: $LOCK_SHA"
+
+      - name: Build Docker Image (Production Mode)
+        id: docker_build
+        run: |
+          # Build the Docker image in production mode and capture the output
+          # Dockerfile.prod outputs the installed plugin versions using uv pip freeze
+          cd app
+          
+          # We use set +e to capture the exit code so we can report it explicitly later
+          set +e
+          DOCKER_BUILDKIT=1 docker build \
+            --progress=plain \
+            --build-arg BUILD_MODE=production \
+            -f Dockerfile.prod . > build_output.txt 2>&1
+          BUILD_EXIT_CODE=$?
+          set -e
+            
+          # Extract the installed SHA from the build output
+          # uv pip freeze outputs something like: eventyay-interpretation @ git+https://github.com/fossasia/eventyay-interpretation.git@abcdef...
+          # Taking head -n 1 in case of multiple matches from docker output
+          INSTALLED_SHA=$(grep "eventyay-interpretation @ git" build_output.txt | rev | cut -d'@' -f1 | rev | head -n 1 || echo "")
+          echo "installed_sha=$INSTALLED_SHA" >> "$GITHUB_OUTPUT"
+          echo "Installed SHA in Docker image: $INSTALLED_SHA"
+          
+          # Assert that the build succeeded
+          if [ $BUILD_EXIT_CODE -ne 0 ]; then
+            echo "❌ Docker build failed with exit code $BUILD_EXIT_CODE"
+            cat build_output.txt
+            exit $BUILD_EXIT_CODE
+          fi
+
+      - name: Assert SHAs Match
+        run: |
+          LOCK_SHA="${{ steps.get_sha.outputs.lock_sha }}"
+          INSTALLED_SHA="${{ steps.docker_build.outputs.installed_sha }}"
+          
+          if [ -z "$LOCK_SHA" ]; then
+            echo "Skipping test: eventyay-interpretation not in uv.lock"
+            exit 0
+          fi
+          
+          if [ -z "$INSTALLED_SHA" ]; then
+            echo "Failed to extract installed SHA from Docker build output!"
+            exit 1
+          fi
+          
+          # The installed SHA should exactly match the lockfile SHA
+          if [[ "$INSTALLED_SHA" == *"$LOCK_SHA"* ]]; then
+             echo "✅ Success: Installed commit matches lockfile exactly ($LOCK_SHA)."
+          else
+             echo "❌ Verification failed! Installed package does not match locked SHA."
+             echo "Lock SHA: $LOCK_SHA"
+             echo "Installed SHA: $INSTALLED_SHA"
+             exit 1
+          fi

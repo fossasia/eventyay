@@ -1,12 +1,13 @@
 <template lang="pug">
 .c-channel(:class="{'has-call': hasCall}")
 	.ui-page-header
+		bunt-icon-button.btn-back(@click="onBack", :tooltip="$t('Back to Overview')", tooltip-placement="bottom-start", :tooltip-fixed="true") arrow-left
 		h2
 			span.user(v-for="(u, key) in otherUsers", :class="{deleted: u.deleted}")
 				span(v-if="key !== 0") {{ ', ' }}
-				.online-status(v-if="!u.deleted", :class="onlineStatus[u.id] ? 'online' : (onlineStatus[u.id] === false ? 'offline' : 'unknown')", v-tooltip="onlineStatus[u.id] ? $t('UserAction:state.online:tooltip') : (onlineStatus[u.id] === false ? $t('UserAction:state.offline:tooltip') : '')")
-				span {{ u.deleted ? $t('User:label:deleted') : u.profile.display_name }}
-		bunt-icon-button(@click="startCall", tooltip="start video call", tooltipPlacement="left") phone_outline
+				.online-status(v-if="!u.deleted", :class="onlineStatus[u.id] ? 'online' : (onlineStatus[u.id] === false ? 'offline' : 'unknown')", v-tooltip="onlineStatus[u.id] ? $t('Online') : (onlineStatus[u.id] === false ? $t('Offline') : '')")
+				span {{ u.deleted ? $t('Deleted User') : u.profile.display_name }}
+		bunt-icon-button(@click="startCall", :tooltip="$t('start video call')", tooltipPlacement="left") phone_outline
 	.main
 		media-source-placeholder.channel-call(v-if="hasCall")
 		chat(:mode="hasCall ? 'compact' : 'standalone'", :module="{channel_id: channelId}", :showUserlist="false")
@@ -57,6 +58,15 @@ export default {
 		async pollOnlineStatus() {
 			this.onlineStatus = (await api.call('user.online_status', {ids: this.otherUsers.map(u => u.id)}))
 			this.pollOnlineStatusStatusTimeout = window.setTimeout(this.pollOnlineStatus, 20000)
+		},
+		onBack() {
+			if (window.history.state && window.history.state.back) {
+				this.$router.back()
+			} else if (window.eventyay?.isOrganizerArea) {
+				this.$router.replace({ name: 'organizer' })
+			} else {
+				this.$router.replace({ name: 'about' })
+			}
 		}
 	}
 }

@@ -1,0 +1,63 @@
+{% extends "pretixcontrol/admin/pages/tabs_base.html" %}
+{% load i18n %}
+{% load bootstrap3 %}
+{% block pages_content %}
+    <form action="" method="post" class="form-horizontal pages-form" data-page-i18n-form>
+        {% csrf_token %}
+        {% bootstrap_form_errors form %}
+        {% include "pretixcontrol/admin/pages/_language_switcher.html" %}
+
+        <fieldset>
+            <legend>{% trans "Additional footer text" %}</legend>
+            {% bootstrap_field form.footer_text layout="control" %}
+            {% bootstrap_field form.footer_link layout="control" %}
+        </fieldset>
+
+        <fieldset>
+            <legend>{% trans "Footer links" %}</legend>
+            <p class="help-block">
+                {% trans "Choose which links are shown in the site-wide footer and where they point." %}
+            </p>
+
+            <div class="footer-link-row">
+                <h4>{% trans "Events" %}</h4>
+                {% bootstrap_field form.footer_link_events_enabled layout="control" %}
+                {% bootstrap_field form.footer_link_events_url layout="control" %}
+            </div>
+            <div class="footer-link-row">
+                <h4>{% trans "Terms" %}</h4>
+                {% bootstrap_field form.footer_link_terms_enabled layout="control" %}
+                {% bootstrap_field form.footer_link_terms_url layout="control" %}
+            </div>
+            <div class="footer-link-row">
+                <h4>{% trans "Privacy" %}</h4>
+                {% bootstrap_field form.footer_link_privacy_enabled layout="control" %}
+                {% bootstrap_field form.footer_link_privacy_url layout="control" %}
+            </div>
+            <div class="footer-link-row">
+                <h4>{% trans "Pricing" %}</h4>
+                {% bootstrap_field form.footer_link_pricing_enabled layout="control" %}
+                {% bootstrap_field form.footer_link_pricing_url layout="control" %}
+            </div>
+            <div class="footer-link-row">
+                <h4>{% trans "Documentation" %}</h4>
+                {% bootstrap_field form.footer_link_documentation_enabled layout="control" %}
+                {% bootstrap_field form.footer_link_documentation_url layout="control" %}
+            </div>
+            <div class="footer-link-row">
+                <h4>{% trans "Support" %}</h4>
+                {% bootstrap_field form.footer_link_support_enabled layout="control" %}
+                {% bootstrap_field form.footer_link_support_url layout="control" %}
+            </div>
+        </fieldset>
+
+        <div class="form-group submit-group">
+            <a href="/" target="_blank" rel="noopener" class="btn btn-default btn-lg pull-left flip">
+                <i class="fa fa-eye" aria-hidden="true"></i> {% trans "Preview footer" %}
+            </a>
+            <button type="submit" class="btn btn-primary btn-save">
+                {% trans "Save" %}
+            </button>
+        </div>
+    </form>
+{% endblock %}

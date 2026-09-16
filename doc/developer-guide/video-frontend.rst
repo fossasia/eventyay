@@ -23,16 +23,18 @@ The video frontend is a full-featured virtual event platform built with Vue 3, p
 - **Live Video Streaming**: HLS/RTMP streams and WebRTC calls
 - **Interactive Chat**: Real-time messaging with channels and DMs
 - **Audience Engagement**: Polls, Q&A, emoji reactions
-- **Networking**: Speed networking (roulette) and direct messaging
+- **Networking**: Direct messaging and proximity lounges
 - **Recordings**: On-demand video playback
 
 New rooms are created from the organiser rooms page with a **Create Room** dropdown.
 The available video options are **Stream (YT, HLS)**, **BBB**, **Jitsi**, and **Janus**,
 filtered by platform feature flags and the organiser's permissions.
 Unconfigured rooms use **Add Video** with the same provider list instead of an
-Unconfigured badge. Exhibition halls, poster halls, static pages, iframe pages,
-and user lists have been removed from the video room catalog. Meetup embed URLs
-use a stage iframe player instead.
+Unconfigured badge. Chat channels are created from the organiser **Chat** area
+with a single **Create a new channel** action and are not part of the room
+creation catalog. Exhibition halls, poster halls,
+static pages, iframe pages, and user lists have been removed from the video
+room catalog. Meetup embed URLs use a stage iframe player instead.
 
 **Location**: ``app/eventyay/webapp/video/``
 
@@ -129,6 +131,8 @@ Collapsible sidebar showing:
 - Direct messages
 - Pinned rooms
 - Search functionality
+- Organiser administration, including **Rooms** and a dedicated **Chat**
+  area for chat channel management
 
 Dashboard Layout
 ^^^^^^^^^^^^^^^^
@@ -310,19 +314,6 @@ Q&A system:
 - Answer posting
 - Mark as answered
 - Pin important questions
-
-Roulette Component
-^^^^^^^^^^^^^^^^^^
-
-**File**: ``components/Roulette.vue``
-
-Speed networking/roulette matching:
-- Join networking queue
-- Automatic random matching
-- Video call integration
-- Match history
-- Availability status
-- Time limits per match
 
 ReactionsBar & ReactionsOverlay
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -609,15 +600,6 @@ Q&A functionality:
 - Upvotes
 - Answers
 - Moderation status
-
-roulette.js
-^^^^^^^^^^^
-
-Networking state:
-- Queue status
-- Current match
-- Match history
-- Availability
 
 schedule.js
 ^^^^^^^^^^^

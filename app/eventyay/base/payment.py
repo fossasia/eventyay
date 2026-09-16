@@ -8,6 +8,7 @@ from typing import Any, Dict, Union
 
 import datetime
 from zoneinfo import ZoneInfo
+import stripe
 from django import forms
 from django.conf import settings
 from django.contrib import messages
@@ -22,11 +23,13 @@ from django.utils.crypto import get_random_string
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
+from django_countries import countries
 from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
 from i18nfield.strings import LazyI18nString
 
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.forms import PlaceholderValidator
+from eventyay.base.meetup import is_meetup_event
 from eventyay.base.models import (
     CartPosition,
     Event,
@@ -1436,6 +1439,132 @@ class GiftCardPayment(BasePaymentProvider):
         refund.done()
 
 
+class StripePaymentProvider(BasePaymentProvider):
+    identifier = 'stripe'
+    verbose_name = _('Stripe')
+    public_name = _('Credit card (Stripe)')
+    abort_pending_allowed = True
+
+    @property
+    def is_enabled(self) -> bool:
+        return bool(self.settings.get('_enabled', as_type=bool, default=False) and self.settings.get('secret_key'))
+
+    def is_allowed(self, request: HttpRequest, total: Decimal = None):
+        if not is_meetup_event(self.event):
+            return False
+        return self.is_enabled and super().is_allowed(request, total)
+
+    def order_change_allowed(self, order: Order):
+        if not is_meetup_event(self.event):
+            return False
+        return self.is_enabled and super().order_change_allowed(order)
+
+    def checkout_confirm_render(self, request: HttpRequest, order: Order = None) -> str:
+        return _('Payment via credit card (Stripe)')
+
+    def payment_form_render(self, request: HttpRequest, total: Decimal, order: Order = None) -> str:
+        return _('Payment will be processed via credit card.')
+
+    @property
+    def settings_form_fields(self) -> dict:
+        from eventyay.control.forms.global_settings import StripeKeyValidator
+
+        d = OrderedDict(
+            [
+                (
+                    'publishable_key',
+                    forms.CharField(
+                        label=_('Publishable key'),
+                        required=False,
+                        validators=(StripeKeyValidator(['pk_live_', 'pk_test_']),),
+                        help_text=_('Your Stripe publishable key (pk_live_... or pk_test_...).'),
+                    ),
+                ),
+                (
+                    'secret_key',
+                    forms.CharField(
+                        label=_('Secret key'),
+                        required=False,
+                        validators=(StripeKeyValidator(['sk_live_', 'sk_test_', 'rk_live_', 'rk_test_']),),
+                        widget=forms.PasswordInput(attrs={'autocomplete': 'new-password'}),
+                        help_text=_('Your Stripe secret key (sk_live_..., sk_test_..., rk_live_..., or rk_test_...).'),
+                    ),
+                ),
+                (
+                    'merchant_country',
+                    forms.ChoiceField(
+                        label=_('Merchant country'),
+                        required=False,
+                        choices=[('', _('Select country'))] + list(countries),
+                        help_text=_('The country in which your Stripe-account is registered in.'),
+                    ),
+                ),
+            ]
+            + list(super().settings_form_fields.items())
+        )
+        d.move_to_end('_enabled', last=False)
+        return d
+
+    def checkout_prepare(self, request, cart):
+        return True
+
+    def payment_is_valid_session(self, request):
+        return True
+
+    def execute_payment(self, request: HttpRequest, payment: OrderPayment):
+        secret_key = self.settings.get('secret_key')
+        if not secret_key:
+            raise PaymentException(_('Stripe secret key is not configured.'))
+
+        stripe_token = (request.POST.get('stripe_token') or '').strip()
+        if not stripe_token:
+            raise PaymentException(_('Please complete the card payment details.'))
+
+        try:
+            places = settings.CURRENCY_PLACES.get(self.event.currency, 2)
+            stripe_amount = int(round(payment.amount * (10 ** places)))
+
+            params = {
+                'amount': stripe_amount,
+                'currency': self.event.currency.lower(),
+                'confirm': True,
+                'automatic_payment_methods': {
+                    'enabled': True,
+                    'allow_redirects': 'never',
+                },
+                'description': f'Order {payment.order.code} - {self.event.name}',
+                'metadata': {
+                    'order_code': payment.order.code,
+                    'event_slug': self.event.slug,
+                },
+                'api_key': secret_key,
+            }
+            if stripe_token.startswith('tok_'):
+                params['payment_method_data'] = {'type': 'card', 'card': {'token': stripe_token}}
+            else:
+                params['payment_method'] = stripe_token
+
+            intent = stripe.PaymentIntent.create(**params)
+            if getattr(intent, 'status', '') != 'succeeded':
+                payment.state = OrderPayment.PAYMENT_STATE_FAILED
+                payment.save(update_fields=['state'])
+                raise PaymentException(_('Payment was not completed successfully.'))
+
+            payment.info = json.dumps({'payment_intent_id': intent.id, 'status': intent.status})
+            payment.save(update_fields=['info'])
+
+            payment.confirm(send_mail=True, lock=False)
+        except stripe.error.CardError as e:
+            payment.state = OrderPayment.PAYMENT_STATE_FAILED
+            payment.save(update_fields=['state'])
+            raise PaymentException(_('Card error: ') + str(e.user_message or e))
+        except stripe.error.StripeError as e:
+            logger.warning(f'Stripe error during payment for order {payment.order.code}: {e}')
+            payment.state = OrderPayment.PAYMENT_STATE_FAILED
+            payment.save(update_fields=['state'])
+            raise PaymentException(_('Payment processing error: ') + str(e.user_message or e))
+
+
 @receiver(register_payment_providers, dispatch_uid='payment_free')
 def register_payment_provider(sender, **kwargs):
     return [
@@ -1445,3 +1574,10 @@ def register_payment_provider(sender, **kwargs):
         ManualPayment,
         GiftCardPayment,
     ]
+
+
+@receiver(register_payment_providers, dispatch_uid='payment_stripe_meetup')
+def register_stripe_payment_provider(sender, **kwargs):
+    if is_meetup_event(sender):
+        return [StripePaymentProvider]
+    return []

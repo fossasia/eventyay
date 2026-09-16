@@ -1,32 +1,30 @@
 <template lang="pug">
 .c-admin-rooms
-	.header
+	.ui-page-header
+		bunt-icon-button(@click="$router.push({name: 'organizer'})", :tooltip="$t('Back to Overview')", tooltip-placement="bottom-start", :tooltip-fixed="true") arrow-left
+		h2 {{ $t('Rooms & Stages') }}
 		.actions
-			h2 Rooms
 			VideoProviderDropdown(
-				label="Create Room",
+				:label="$t('Create Room')",
 				:show-empty-message="true",
 				@select="createRoomWithProvider"
 			)
-		.right-actions
-			.export-actions(v-if="canExportBroadcastConfiguration")
-				a.export-button(:href="exportUrl('xlsx')") Export XLSX
-				a.export-button.secondary(:href="exportUrl('csv-excel')") CSV
-			bunt-input.search(name="search", placeholder="Search rooms", icon="search", v-model="search")
+			bunt-input.search(name="search", :placeholder="$t('Search rooms')", icon="search", v-model="search")
 	.error(v-if="error")
-		span Failed to load rooms.
+		span {{ $t('Failed to load rooms.') }}
 		span(v-if="errorCode")  ({{ errorCode }})
-		span(v-if="errorCode === 'protocol.denied'")  You likely lack admin permissions.
+		span(v-if="errorCode === 'protocol.denied'")  {{ $t('You likely lack admin permissions.') }}
 	.rooms-list(v-else)
 		.header
 			.drag
-			.name Name
+			.name {{ $t('Name') }}
 		SlickList.tbody(v-if="rooms", v-model:list="rooms", lockAxis="y", :useDragHandle="true", helperClass="sorting-helper", v-scrollbar.y="", @update:list="onListSort")
 			RoomListItem(
 				v-for="(room, index) of rooms",
 				:index="index",
 				:key="room.id",
 				:room="room",
+				:to="getRoomTargetRoute(room)",
 				:disabled="!!search",
 				v-show="isRoomVisible(room)"
 			)
@@ -35,6 +33,7 @@
 <script>
 import api from 'lib/api'
 import fuzzysearch from 'lib/fuzzysearch'
+import { isChatManagedRoom, mergeReorderedIds } from 'lib/room-types'
 import { mapGetters } from 'vuex'
 import { SlickList } from 'vue-slicksort'
 import VideoProviderDropdown from 'components/VideoProviderDropdown'
@@ -45,6 +44,7 @@ export default {
 	components: { SlickList, RoomListItem, VideoProviderDropdown },
 	data() {
 		return {
+			allRooms: null,
 			rooms: null,
 			search: '',
 			error: null,
@@ -54,8 +54,8 @@ export default {
 	},
 	watch: {
 		'$store.state.rooms'(storeRooms) {
-			if (!Array.isArray(this.rooms) || !Array.isArray(storeRooms)) return
-			const currentIds = this.rooms.map(r => r.id)
+			if (!Array.isArray(this.allRooms) || !Array.isArray(storeRooms)) return
+			const currentIds = this.allRooms.map(r => r.id)
 			const storeIds = storeRooms.map(r => r.id)
 			const changed =
 				currentIds.length !== storeIds.length ||
@@ -73,15 +73,10 @@ export default {
 	},
 	computed: {
 		...mapGetters(['eventRouting', 'hasPermission']),
-		canExportBroadcastConfiguration() {
-			return this.hasPermission('room:update') && this.eventRouting.organizer && this.eventRouting.event
-		}
 	},
 	methods: {
-		exportUrl(format) {
-			const organizer = encodeURIComponent(this.eventRouting.organizer)
-			const event = encodeURIComponent(this.eventRouting.event)
-			return `/api/v1/organizers/${organizer}/events/${event}/rooms/export-broadcast-configuration/?_format=${encodeURIComponent(format)}`
+		visibleRooms(rooms) {
+			return rooms.filter(room => !isChatManagedRoom(room))
 		},
 		isRoomVisible(room) {
 			if (!this.search) return true
@@ -105,7 +100,9 @@ export default {
 			try {
 				this.error = null
 				this.errorCode = null
-				this.rooms = await api.call('room.config.list')
+				const listed = await api.call('room.config.list')
+				this.allRooms = listed
+				this.rooms = this.visibleRooms(listed)
 			} catch (e) {
 				this.error = e
 				this.errorCode = e?.code || e?.message || String(e)
@@ -118,12 +115,25 @@ export default {
 		async onListSort(newList) {
 			if (this.search) return
 			const previousRooms = [...this.rooms]
+			const previousAll = [...this.allRooms]
+			const orderedIds = mergeReorderedIds(
+				this.allRooms.map(room => room.id),
+				newList.map(room => room.id)
+			)
+			const byId = Object.fromEntries(this.allRooms.map(room => [String(room.id), room]))
 			try {
-				await api.call('room.config.reorder', newList.map(room => room.id))
+				this.allRooms = orderedIds.map(id => byId[String(id)])
+				this.rooms = this.visibleRooms(this.allRooms)
+				await api.call('room.config.reorder', orderedIds)
 			} catch (e) {
 				this.rooms = previousRooms
+				this.allRooms = previousAll
 				console.error(e)
 			}
+		},
+		getRoomTargetRoute(room) {
+			if (!room) return { name: 'admin:rooms:index' }
+			return { name: 'admin:rooms:item', params: { roomId: room.id } }
 		}
 	}
 }
@@ -136,54 +146,22 @@ export default {
 	flex-direction: column
 	min-height: 0
 	background-color: $clr-white
-	> .header
-		display: flex
-		align-items: center
-		justify-content: space-between
-		background-color: $clr-grey-50
+	.ui-page-header
 		.actions
 			display: flex
-			flex: none
 			align-items: center
-			.bunt-button:not(:last-child)
-				margin-right: 16px
+			gap: 8px
+			margin-left: auto
 			.btn-create
 				themed-button-primary()
 			.c-video-provider-dropdown
-				margin-right: 8px
-		.right-actions
-			display: flex
-			align-items: center
-			margin-left: auto
-		.export-actions
-			display: flex
-			align-items: center
-			.export-button
-				display: inline-flex
-				align-items: center
-				height: 32px
-				padding: 0 12px
-				margin-right: 8px
-				border-radius: 3px
-				background-color: $clr-primary
-				color: $clr-white
-				font-size: 13px
-				font-weight: 500
-				text-decoration: none
-				&.secondary
-					background-color: transparent
-					color: $clr-primary
-				&:focus
-					outline: 2px solid $clr-primary
-					outline-offset: 2px
-	h2
-		margin: 16px
-	.search
-		input-style(size: compact)
-		padding: 0
-		margin: 8px
-		flex: none
-		background-color: $clr-white
+				margin-right: 0
+		.search
+			input-style(size: compact)
+			padding: 0
+			margin: 0
+			flex: none
+			background-color: $clr-white
 	.rooms-list
 		flex-table()
 		.room

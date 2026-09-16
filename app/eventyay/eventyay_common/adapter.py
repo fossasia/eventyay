@@ -3,13 +3,15 @@ from urllib.parse import urlencode
 
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.core import context
+from allauth.core.exceptions import ImmediateHttpResponse
 from django.conf import settings
-from django.http import HttpRequest
+from django.contrib import messages
+from django.http import HttpRequest, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from pydantic import ValidationError
 
-from eventyay.base.auth import get_auth_backends
+from eventyay.base.auth import SPAM_ACCOUNT_ERROR, get_auth_backends
 from eventyay.common.consts import KEY_LAST_FORCE_LOGIN, KEY_LONG_SESSION, KEY_SOCIAL_KEEP_LOGGED_IN
 from eventyay.plugins.socialauth.schemas.oauth2_params import OAuth2Params
 
@@ -41,6 +43,33 @@ class CustomAccountAdapter(DefaultAccountAdapter):
             return next_url
 
         return super().get_login_redirect_url(request)
+
+    def pre_login(
+        self,
+        request: HttpRequest,
+        user,
+        *,
+        email_verification,
+        signal_kwargs,
+        email,
+        signup,
+        redirect_url,
+    ):
+        # Reject login for accounts marked as spam.
+        if user.is_spam:
+            messages.error(request, SPAM_ACCOUNT_ERROR)
+            raise ImmediateHttpResponse(
+                HttpResponseRedirect(reverse('auth.login'))
+            )
+        return super().pre_login(
+            request,
+            user,
+            email_verification=email_verification,
+            signal_kwargs=signal_kwargs,
+            email=email,
+            signup=signup,
+            redirect_url=redirect_url,
+        )
 
     def post_login(
         self,

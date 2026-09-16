@@ -1,7 +1,7 @@
+import json
 import logging
 import secrets
 import smtplib
-
 
 from django.conf import settings
 from django.contrib import messages
@@ -9,7 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.mail import EmailMessage
 from django.core.validators import validate_email
 from django.db import IntegrityError, OperationalError, ProgrammingError
-from django.http import JsonResponse
+from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, reverse
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
@@ -21,19 +21,23 @@ from eventyay.api.models import OAuthApplication
 from eventyay.base.email import CustomSMTPBackend, SendGridEmail
 from eventyay.base.models import Event, GlobalPluginConfig, LogEntry, OrderPayment, OrderRefund
 from eventyay.base.plugins import get_all_plugins
+from eventyay.base.forms import SECRET_REDACTED
 from eventyay.base.services.mail import get_mail_backend
+from eventyay.base.services.turnstile import test_turnstile_connection
 from eventyay.base.services.update_check import check_result_table, update_check
 from eventyay.base.settings import GlobalSettingsObject
+from eventyay.common.sanitizers import sanitize_rich_text
 from eventyay.control.forms.global_settings import (
+    GlobalBusinessSettingsForm,
     GlobalSettingsForm,
+    GlobalTicketingSettingsForm,
     SSOConfigForm,
-    UpdateSettingsForm,
-    StartPageSettingsForm,
 )
 from eventyay.control.permissions import (
     AdministratorPermissionRequiredMixin,
     StaffMemberRequiredMixin,
 )
+
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +46,48 @@ class GlobalSettingsView(AdministratorPermissionRequiredMixin, FormView):
     template_name = 'pretixcontrol/global_settings.html'
     form_class = GlobalSettingsForm
 
+    def get(self, request, *args, **kwargs):
+        tab = request.GET.get('tab', '').lower()
+        if tab in ('vouchers', 'event_vouchers'):
+            return redirect(reverse('eventyay_admin:admin.vouchers'))
+        if tab in ('organizer_billing', 'ticket_fee', 'billing_validation', 'business'):
+            target_hash = f'#tab-{tab}' if tab in ('organizer_billing', 'ticket_fee', 'billing_validation') else ''
+            return redirect(reverse('eventyay_admin:admin.global.business') + target_hash)
+        if tab in ('payment_gateways', 'payment-gateways', 'payment', 'gateways'):
+            return redirect(reverse('eventyay_admin:admin.global.ticketing') + '#tab-payment-gateways')
+        if tab in ('cart',):
+            return redirect(reverse('eventyay_admin:admin.global.ticketing') + '#tab-cart')
+        if tab in ('meta_data', 'metadata', 'meta-data'):
+            return redirect(reverse('eventyay_admin:admin.global.settings') + '#tab-meta-data')
+        if tab in ('update_check', 'update', 'update-check'):
+            return redirect(reverse('eventyay_admin:admin.global.settings') + '#tab-update-check')
+        return super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        if 'trigger' in request.POST:
+            update_check.apply()
+            messages.success(request, _('Update check has been performed.'))
+            return redirect(reverse('eventyay_admin:admin.global.settings') + '#tab-update-check')
+        return super().post(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        from eventyay.base.gmail.models import GmailOAuthCredential
+
+        context = super().get_context_data(**kwargs)
+        context['gmail_migration_pending'] = not GmailOAuthCredential.is_table_available()
+        context['gmail_credential'] = GmailOAuthCredential.get_active_global_safe()
+        context['gmail_callback_url'] = self.request.build_absolute_uri(
+            reverse('eventyay_admin:admin.global.gmail.callback')
+        )
+        context['gmail_connect_url'] = reverse('eventyay_admin:admin.global.gmail.connect')
+        context['gmail_disconnect_url'] = reverse('eventyay_admin:admin.global.gmail.disconnect')
+        context['test_email_feedback'] = self.request.session.pop('admin_test_email_feedback', None)
+        context['test_turnstile_feedback'] = self.request.session.pop('admin_test_turnstile_feedback', None)
+        context['gs'] = GlobalSettingsObject()
+        context['gs'].settings.set('update_check_ack', True)
+        context['tbl'] = check_result_table()
+        return context
+
     def form_valid(self, form):
         form.save()
         messages.success(self.request, _('Your changes have been saved.'))
@@ -50,19 +96,14 @@ class GlobalSettingsView(AdministratorPermissionRequiredMixin, FormView):
     def form_invalid(self, form):
         messages.error(self.request, _('Your changes have not been saved, see below for errors.'))
         return super().form_invalid(form)
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx['test_email_feedback'] = self.request.session.pop('admin_test_email_feedback', None)
-        return ctx
 
     def get_success_url(self):
         return reverse('eventyay_admin:admin.global.settings')
 
 
-class StartPageSettingsView(AdministratorPermissionRequiredMixin, FormView):
-    template_name = 'pretixcontrol/admin/startpage.html'
-    form_class = StartPageSettingsForm
+class GlobalTicketingSettingsView(AdministratorPermissionRequiredMixin, FormView):
+    template_name = 'pretixcontrol/admin/ticketing_settings.html'
+    form_class = GlobalTicketingSettingsForm
 
     def form_valid(self, form):
         form.save()
@@ -74,7 +115,42 @@ class StartPageSettingsView(AdministratorPermissionRequiredMixin, FormView):
         return super().form_invalid(form)
 
     def get_success_url(self):
-        return reverse('eventyay_admin:admin.startpage')
+        return reverse('eventyay_admin:admin.global.ticketing')
+
+
+class GlobalBusinessSettingsView(AdministratorPermissionRequiredMixin, FormView):
+    template_name = 'pretixcontrol/admin/business_settings.html'
+    form_class = GlobalBusinessSettingsForm
+
+    def form_valid(self, form):
+        form.save()
+        messages.success(self.request, _('Your changes have been saved.'))
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        messages.error(self.request, _('Your changes have not been saved, see below for errors.'))
+        return super().form_invalid(form)
+
+    def get_success_url(self):
+        return reverse('eventyay_admin:admin.global.business')
+
+
+class MetaDataSettingsView(AdministratorPermissionRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        return redirect(reverse('eventyay_admin:admin.global.settings') + '#tab-meta-data')
+
+    def post(self, request, *args, **kwargs):
+        return redirect(reverse('eventyay_admin:admin.global.settings') + '#tab-meta-data')
+
+
+class UpdateRedirectView(StaffMemberRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        return redirect(reverse('eventyay_admin:admin.global.settings') + '#tab-update-check')
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get('trigger') == '1':
+            update_check.apply()
+        return redirect(reverse('eventyay_admin:admin.global.settings') + '#tab-update-check')
 
 
 class SSOView(AdministratorPermissionRequiredMixin, FormView):
@@ -135,36 +211,6 @@ class SSOView(AdministratorPermissionRequiredMixin, FormView):
 class DeleteOAuthApplicationView(AdministratorPermissionRequiredMixin, DeleteView):
     model = OAuthApplication
     success_url = reverse_lazy('eventyay_admin:admin.global.sso')
-
-
-class UpdateCheckView(StaffMemberRequiredMixin, FormView):
-    template_name = 'pretixcontrol/global_update.html'
-    form_class = UpdateSettingsForm
-
-    def post(self, request, *args, **kwargs):
-        if 'trigger' in request.POST:
-            update_check.apply()
-            return redirect(self.get_success_url())
-        return super().post(request, *args, **kwargs)
-
-    def form_valid(self, form):
-        form.save()
-        messages.success(self.request, _('Your changes have been saved.'))
-        return super().form_valid(form)
-
-    def form_invalid(self, form):
-        messages.error(self.request, _('Your changes have not been saved, see below for errors.'))
-        return super().form_invalid(form)
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data()
-        ctx['gs'] = GlobalSettingsObject()
-        ctx['gs'].settings.set('update_check_ack', True)
-        ctx['tbl'] = check_result_table()
-        return ctx
-
-    def get_success_url(self):
-        return reverse('eventyay_admin:admin.global.update')
 
 
 class MessageView(AdministratorPermissionRequiredMixin, TemplateView):
@@ -258,6 +304,18 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
                         _('SendGrid API key is missing. Please configure it and save.'),
                     )
                 backend = SendGridEmail(api_key=gs.settings.send_grid_api_key)
+                backend.test(from_addr=mail_from, to_addrs=recipients)
+            elif gs.settings.email_vendor == 'gmail_api':
+                from eventyay.base.gmail.resolver import get_gmail_mail_backend
+
+                backend = get_gmail_mail_backend(timeout=10)
+                if not backend:
+                    messages.error(
+                        request,
+                        _('Gmail is selected but no account is connected. Connect Gmail in the settings first.'),
+                    )
+                    return redirect(reverse('eventyay_admin:admin.global.settings'))
+                backend.test(from_addr=mail_from, to_addrs=recipients)
             elif gs.settings.email_vendor == 'smtp':
                 if not gs.settings.smtp_host or not gs.settings.smtp_port:
                     return self._respond(
@@ -275,17 +333,24 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
                     fail_silently=False,
                     timeout=10,
                 )
+                email = EmailMessage(
+                    subject=_('Eventyay system - test email'),
+                    body=_('This is a test email from your Eventyay system email configuration.'),
+                    from_email=mail_from,
+                    to=recipients,
+                    connection=backend,
+                )
+                email.send(fail_silently=False)
             else:
                 backend = get_mail_backend(timeout=10)
-
-            email = EmailMessage(
-                subject=_('Eventyay system - test email'),
-                body=_('This is a test email from your Eventyay system email configuration.'),
-                from_email=mail_from,
-                to=recipients,
-                connection=backend,
-            )
-            email.send(fail_silently=False)
+                email = EmailMessage(
+                    subject=_('Eventyay system - test email'),
+                    body=_('This is a test email from your Eventyay system email configuration.'),
+                    from_email=mail_from,
+                    to=recipients,
+                    connection=backend,
+                )
+                email.send(fail_silently=False)
         except UnicodeEncodeError:
             # Stored credentials or recipient may contain non-ASCII (e.g. NBSP from clipboard).
             logger.warning(
@@ -309,13 +374,38 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
                 'error',
                 _('SendGrid test email failed to connect or send. HTTP Error: %(err)s') % {'err': e},
             )
-        except (smtplib.SMTPException, OSError) as e:
-            logger.exception('Admin SMTP test failed (from=%s)', mail_from)
-            return self._respond(
-                request,
-                'error',
-                _('Test email failed to connect or send: %(err)s') % {'err': e},
+        except ImportError as e:
+            logger.exception('Admin Gmail test failed because dependencies are missing (from=%s)', mail_from)
+            return self._respond(request, 'error', str(e))
+        except Exception as e:
+            from eventyay.base.gmail.errors import (
+                GmailDailyLimitError,
+                GmailPermanentError,
+                GmailRateLimitError,
+                GmailTemporaryError,
             )
+
+            if isinstance(e, (GmailRateLimitError, GmailTemporaryError)):
+                return self._respond(
+                    request,
+                    'warning',
+                    _('Gmail test email is temporarily delayed because of rate limits: %(err)s') % {'err': e},
+                )
+            elif isinstance(e, (GmailDailyLimitError, GmailPermanentError)):
+                return self._respond(
+                    request,
+                    'error',
+                    _('Gmail test email could not be sent: %(err)s') % {'err': e},
+                )
+            elif isinstance(e, (smtplib.SMTPException, OSError)):
+                logger.exception('Admin SMTP test failed (from=%s)', mail_from)
+                return self._respond(
+                    request,
+                    'error',
+                    _('Test email failed to connect or send: %(err)s') % {'err': e},
+                )
+            else:
+                raise
 
         recipients_str = ', '.join(recipients)
         logger.info('Admin test email sent to %d recipient(s)', len(recipients))
@@ -323,6 +413,42 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
             request,
             'success',
             _('Test email sent to %(email)s — check inbox.') % {'email': recipients_str},
+        )
+
+
+class GlobalSettingsTestTurnstileView(AdministratorPermissionRequiredMixin, View):
+    """
+    Tests the Cloudflare Turnstile configuration (connectivity and secret key) with Cloudflare API.
+    """
+
+    SECURITY_TAB_HASH = '#tab-security'
+
+    def _respond(self, request, level, message):
+        """Redirect back to the security tab with inline feedback. Does not save settings."""
+        request.session['admin_test_turnstile_feedback'] = {
+            'level': level,
+            'message': str(message),
+        }
+        return redirect(reverse('eventyay_admin:admin.global.settings') + self.SECURITY_TAB_HASH)
+
+    def post(self, request, *args, **kwargs):
+        gs = GlobalSettingsObject()
+        secret = request.POST.get('turnstile_secret_key', '').strip()
+        if not secret or secret == SECRET_REDACTED:
+            secret = gs.settings.get('turnstile_secret_key', as_type=str, default='') or ''
+
+        if not secret:
+            return self._respond(
+                request,
+                'error',
+                _('Turnstile secret key is not configured. Please enter and save the secret key first.'),
+            )
+
+        success, message = test_turnstile_connection(secret_key=secret)
+        return self._respond(
+            request,
+            'success' if success else 'error',
+            message,
         )
 
 
@@ -338,6 +464,109 @@ class LogDetailView(AdministratorPermissionRequiredMixin, View):
 class GlobalPluginManagementView(AdministratorPermissionRequiredMixin, TemplateView):
     template_name = 'pretixcontrol/global_plugins.html'
 
+    CONFIGURED_VIA_LABELS: dict[str, str] = {
+        'payment_settings': _('Payment settings'),
+        'platform': _('Platform'),
+    }
+
+    KNOWN_SYSTEM_MODULES: frozenset[str] = frozenset({
+        'eventyay.plugins.socialauth',
+        'eventyay.plugins.reports',
+        'eventyay.plugins.checkinlists',
+    })
+
+    # Report exporter and Check-in list exporter are deeply integrated
+    # system features used across many parts of the platform (PDF exports,
+    # check-in infrastructure, etc.).  They are always active behind the
+    # scenes and are not meaningful for admins to manage through this page,
+    # so they are excluded from the UI while remaining fully functional in
+    # the system.
+    HIDDEN_SYSTEM_MODULES: frozenset[str] = frozenset({
+        'eventyay.plugins.reports',
+        'eventyay.plugins.checkinlists',
+    })
+
+    REQUIRED_MODULES: frozenset[str] = frozenset({
+        'eventyay.plugins.checkinlists',
+    })
+
+    @classmethod
+    def _classify_plugin(cls, plugin) -> tuple[str, bool, str]:
+        """
+        Derive plugin classification from runtime metadata.
+
+        Returns (plugin_type, is_required, configured_via) based on
+        the plugin's EventyayPluginMeta attributes.
+        """
+        module = plugin.module
+        category = str(getattr(plugin, 'category', ''))
+
+        if category == 'PAYMENT':
+            return (
+                GlobalPluginConfig.PluginType.PAYMENT_PROVIDER,
+                False,
+                'payment_settings',
+            )
+
+        if module in cls.KNOWN_SYSTEM_MODULES or not getattr(plugin, 'visible', True):
+            return (
+                GlobalPluginConfig.PluginType.SYSTEM,
+                module in cls.REQUIRED_MODULES,
+                'platform',
+            )
+
+        return (GlobalPluginConfig.PluginType.EXTERNAL, False, '')
+
+    @staticmethod
+    def _count_events_using_plugins(modules: set[str]) -> dict[str, int]:
+        counts: dict[str, int] = {m: 0 for m in modules}
+        for event in Event.objects.exclude(plugins='').exclude(plugins__isnull=True).iterator():
+            active = set(event.plugins.split(','))
+            for m in modules & active:
+                counts[m] += 1
+        return counts
+
+    def _build_row(self, plugin, config: GlobalPluginConfig | None, usage_count: int = 0) -> dict:
+        module = plugin.module
+
+        # Runtime classification is the source of truth for type/required/configured_via.
+        # DB config may override these if a row exists with a non-default plugin_type.
+        rt_type, rt_required, rt_configured_via = self._classify_plugin(plugin)
+
+        if config and config.plugin_type != GlobalPluginConfig.PluginType.EXTERNAL:
+            plugin_type = config.plugin_type
+        else:
+            plugin_type = rt_type
+
+        is_required = (config.is_required if config else False) or rt_required
+        configured_via_raw = config.configured_via if config and config.configured_via else rt_configured_via
+
+        is_platform = plugin_type in (
+            GlobalPluginConfig.PluginType.PAYMENT_PROVIDER,
+            GlobalPluginConfig.PluginType.SYSTEM,
+        )
+
+        return {
+            'module': module,
+            'name': str(plugin.name),
+            'description': str(getattr(plugin, 'description', '')),
+            'version': getattr(plugin, 'version', ''),
+            'category': str(getattr(plugin, 'category', '')),
+            'plugin_type': plugin_type,
+            'plugin_type_label': str(
+                GlobalPluginConfig.PluginType(plugin_type).label
+            ),
+            'is_platform': is_platform,
+            'is_active': config.is_active if config else True,
+            'is_required': is_required,
+            'enable_by_default': config.enable_by_default if config else False,
+            'show_in_organizer_list': config.show_in_organizer_list if config else (not is_platform),
+            'configured_via': str(
+                self.CONFIGURED_VIA_LABELS.get(configured_via_raw, configured_via_raw)
+            ),
+            'usage_count': usage_count,
+        }
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         all_plugins = get_all_plugins(include_inactive=True)
@@ -347,35 +576,97 @@ class GlobalPluginManagementView(AdministratorPermissionRequiredMixin, TemplateV
         except (ProgrammingError, OperationalError):
             configs = {}
 
-        plugin_rows = []
         for plugin in all_plugins:
-            module = plugin.module
-            config = configs.get(module)
-            plugin_rows.append({
-                'module': module,
-                'name': str(plugin.name),
-                'description': str(getattr(plugin, 'description', '')),
-                'version': getattr(plugin, 'version', ''),
-                'category': str(getattr(plugin, 'category', '')),
-                'is_active': config.is_active if config else True,
-                'enable_by_default': config.enable_by_default if config else False,
-                'show_in_organizer_list': config.show_in_organizer_list if config else True,
-            })
+            if plugin.module not in configs:
+                rt_type, rt_required, rt_configured_via = self._classify_plugin(plugin)
+                is_platform = rt_type in (
+                    GlobalPluginConfig.PluginType.PAYMENT_PROVIDER,
+                    GlobalPluginConfig.PluginType.SYSTEM,
+                )
+                try:
+                    obj, created = GlobalPluginConfig.objects.get_or_create(
+                        module=plugin.module,
+                        defaults={
+                            'plugin_type': rt_type,
+                            'is_active': True,
+                            'is_required': rt_required,
+                            'enable_by_default': False,
+                            'show_in_organizer_list': not is_platform,
+                            'configured_via': rt_configured_via,
+                        },
+                    )
+                    if created:
+                        configs[plugin.module] = obj
+                except (ProgrammingError, OperationalError):
+                    pass
 
-        context['plugin_rows'] = plugin_rows
+        all_modules = {p.module for p in all_plugins}
+        try:
+            usage_counts = self._count_events_using_plugins(all_modules)
+        except (ProgrammingError, OperationalError):
+            usage_counts = {}
+
+        platform_rows = []
+        external_rows = []
+        for plugin in all_plugins:
+            if plugin.module in self.HIDDEN_SYSTEM_MODULES:
+                continue
+            row = self._build_row(
+                plugin,
+                configs.get(plugin.module),
+                usage_count=usage_counts.get(plugin.module, 0),
+            )
+            if row['is_platform']:
+                platform_rows.append(row)
+            else:
+                external_rows.append(row)
+
+        context['platform_plugin_rows'] = platform_rows
+        context['external_plugin_rows'] = external_rows
+        active_tab = self.request.GET.get('tab', 'platform')
+        context['active_tab'] = active_tab if active_tab in ('platform', 'external') else 'platform'
         return context
 
     def post(self, request, *args, **kwargs):
         all_plugins = get_all_plugins(include_inactive=True)
-        known_modules = {p.module for p in all_plugins}
+        plugins_by_module = {p.module: p for p in all_plugins}
         newly_disabled = set()
         platform_managed = set()
 
         try:
-            for module in known_modules:
+            configs = {c.module: c for c in GlobalPluginConfig.objects.all()}
+        except (ProgrammingError, OperationalError):
+            configs = {}
+
+        try:
+            for module, plugin in plugins_by_module.items():
+                if module in self.HIDDEN_SYSTEM_MODULES:
+                    continue
+                config = configs.get(module)
+                rt_type, rt_required, rt_configured_via = self._classify_plugin(plugin)
+
+                if config and config.plugin_type != GlobalPluginConfig.PluginType.EXTERNAL:
+                    plugin_type = config.plugin_type
+                else:
+                    plugin_type = rt_type
+
+                is_platform = plugin_type in (
+                    GlobalPluginConfig.PluginType.PAYMENT_PROVIDER,
+                    GlobalPluginConfig.PluginType.SYSTEM,
+                )
+                is_required = (config.is_required if config else False) or rt_required
+
                 is_active = request.POST.get(f'is_active_{module}') == 'on'
-                enable_by_default = request.POST.get(f'enable_by_default_{module}') == 'on'
-                show_in_organizer_list = request.POST.get(f'show_in_organizer_list_{module}') == 'on'
+
+                if is_required:
+                    is_active = True
+
+                if is_platform:
+                    enable_by_default = False
+                    show_in_organizer_list = False
+                else:
+                    enable_by_default = request.POST.get(f'enable_by_default_{module}') == 'on'
+                    show_in_organizer_list = request.POST.get(f'show_in_organizer_list_{module}') == 'on'
 
                 if not is_active:
                     enable_by_default = False
@@ -387,9 +678,15 @@ class GlobalPluginManagementView(AdministratorPermissionRequiredMixin, TemplateV
                 GlobalPluginConfig.objects.update_or_create(
                     module=module,
                     defaults={
+                        'plugin_type': plugin_type,
                         'is_active': is_active,
+                        'is_required': is_required,
                         'enable_by_default': enable_by_default,
                         'show_in_organizer_list': show_in_organizer_list,
+                        'configured_via': (
+                            config.configured_via if config and config.configured_via
+                            else rt_configured_via
+                        ),
                     },
                 )
         except (ProgrammingError, OperationalError):
@@ -402,7 +699,10 @@ class GlobalPluginManagementView(AdministratorPermissionRequiredMixin, TemplateV
             self._ensure_enabled_on_all_events(platform_managed)
 
         messages.success(request, _('Plugin settings have been saved.'))
-        return redirect(reverse('eventyay_admin:admin.global.plugins'))
+        active_tab = request.POST.get('active_tab', 'platform')
+        if active_tab not in ('platform', 'external'):
+            active_tab = 'platform'
+        return redirect(reverse('eventyay_admin:admin.global.plugins') + f'?tab={active_tab}')
 
     @staticmethod
     def _strip_disabled_from_events(disabled_modules: set[str]):
@@ -433,3 +733,39 @@ class RefundDetailView(AdministratorPermissionRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         p = get_object_or_404(OrderRefund, pk=request.GET.get('pk'))
         return JsonResponse({'data': p.info_data})
+
+
+class GlobalSettingsPagePreviewView(AdministratorPermissionRequiredMixin, View):
+    """AJAX endpoint for previewing multi-lingual rich text page content."""
+
+    def post(self, request, *args, **kwargs):
+        content_type = request.content_type or ''
+        if 'application/json' in content_type:
+            try:
+                payload = json.loads(request.body)
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                return HttpResponseBadRequest('Invalid JSON body')
+            raw_html = payload.get('html', '')
+            safe_html = sanitize_rich_text(raw_html) if isinstance(raw_html, str) else ''
+            return JsonResponse({'html': safe_html})
+
+        previews = {}
+        for key, values in request.POST.lists():
+            if not values:
+                continue
+            body = values[0]
+            safe_html = sanitize_rich_text(body) if body else ''
+            if key.startswith('body_'):
+                locale = key[5:]
+                previews[locale] = safe_html
+            elif key == 'content':
+                return JsonResponse({'html': safe_html})
+
+        if not previews:
+            body = request.POST.get('body', '')
+            if body:
+                safe_html = sanitize_rich_text(body)
+                previews['en'] = safe_html
+
+        return JsonResponse({'previews': previews})
+

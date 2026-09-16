@@ -8,7 +8,9 @@
     {% compress css %}
         <link rel="stylesheet" type="text/x-scss" href="{% static "pretixcontrol/scss/auth.scss" %}"/>
         <link rel="stylesheet" type="text/x-scss" href="{% static "pretixcontrol/scss/main.scss" %}" />
+        <link rel="stylesheet" type="text/css" href="{% static "common/css/_footer.css" %}"/>
     {% endcompress %}
+    <link rel="stylesheet" type="text/css" href="{% static "common/css/password_toggle.css" %}" />
     {% compress js %}
         <script type="text/javascript" src="{% static "jquery/js/jquery-3.7.1.min.js" %}"></script>
         <script type="text/javascript" src="{% static "bootstrap/js/bootstrap.js" %}"></script>
@@ -31,6 +33,13 @@
     <meta name="msapplication-TileColor" content="#2185d0">
     {% comment %} <meta name="msapplication-config" content="{% url "presale:browserconfig.xml" %}"> {% endcomment %}
     <meta name="theme-color" content="#2185d0">
+    <script type="application/json" id="password-toggle-labels">
+        {
+            "show": "{{ _('Show password')|escapejs }}",
+            "hide": "{{ _('Hide password')|escapejs }}"
+        }
+    </script>
+    <script type="module" src="{% static 'common/js/password_toggle.js' %}"></script>
 </head>
 <body>
     <div id="wrapper">
@@ -98,6 +107,7 @@
                 {% endfor %}
             {% endif %}
         </ul>
+        {% include "common/includes/core_footer.html" %}
     </footer>
 </div>
 </body>

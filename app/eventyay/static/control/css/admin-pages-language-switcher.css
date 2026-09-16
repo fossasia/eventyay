@@ -1,0 +1,108 @@
+/* Styling for the consolidated admin Pages area (tab bar + language switcher). */
+
+.pages-nav-tabs {
+    margin-bottom: 20px;
+}
+
+.pages-tab-content {
+    margin-top: 10px;
+}
+
+.pages-form fieldset {
+    margin-bottom: 24px;
+}
+
+.page-language-switcher {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    margin-bottom: 20px;
+    background: #f7f7f9;
+    border: 1px solid #e1e1e8;
+    border-radius: 4px;
+}
+
+.page-language-switcher-label {
+    font-weight: 600;
+    color: #555;
+    margin-right: 4px;
+}
+
+.page-language-pill {
+    position: relative;
+}
+
+.page-language-pill.active {
+    background-color: #2185d0;
+    border-color: #2185d0;
+    color: #fff;
+}
+
+.page-language-pill-dot {
+    display: none;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #21ba45;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+.page-language-pill.has-content .page-language-pill-dot {
+    display: inline-block;
+}
+
+.page-language-pill.active.has-content .page-language-pill-dot {
+    background: #fff;
+}
+
+.page-language-pill-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 5px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: bold;
+    line-height: 1;
+    cursor: pointer;
+    color: inherit;
+    background: rgba(0,0,0,0.15);
+    vertical-align: middle;
+}
+
+.page-language-pill.active .page-language-pill-remove {
+    background: rgba(255,255,255,0.3);
+}
+
+.page-language-pill-remove:hover {
+    background: rgba(0,0,0,0.35) !important;
+}
+
+.page-language-pill-remove:hover {
+    background: rgba(0,0,0,0.15);
+}
+
+.page-language-add {
+    width: auto;
+    max-width: 220px;
+    margin-left: 8px;
+}
+
+.footer-link-row {
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.footer-link-row:last-child {
+    border-bottom: none;
+}
+
+.footer-link-row h4 {
+    margin-top: 4px;
+    color: #333;
+}

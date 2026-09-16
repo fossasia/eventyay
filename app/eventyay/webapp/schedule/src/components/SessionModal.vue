@@ -18,16 +18,16 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 				.text-content
 					.recording-embed(v-if="modalContent.contentObject.recording_iframe", v-html="modalContent.contentObject.recording_iframe")
 					.field-section(v-if="modalContent.contentObject.abstract")
-						h4.field-heading Abstract
+						h4.field-heading {{ $t('Abstract') }}
 						.field-content(v-html="renderRichText(modalContent.contentObject.abstract)")
 					.field-section(v-if="modalContent.contentObject.apiContent?.description?.length > 0 || modalContent.contentObject.description?.length > 0")
-						h4.field-heading Description
+						h4.field-heading {{ $t('Description') }}
 						.field-content(v-html="renderRichText(modalContent.contentObject.apiContent?.description || modalContent.contentObject.description)")
 					.field-section.video-embed-section(v-for="(answer, index) in videoAnswers", :key="'api-video-' + index + '-' + videoEmbedSrc(answer)")
 						.video-embed
 							iframe(
 								:src="videoEmbedSrc(answer)",
-								title="Session video",
+								:title="$t('Session video')",
 								allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share",
 								allowfullscreen,
 								loading="lazy",
@@ -40,7 +40,7 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 								.video-embed(v-if="videoEmbedSrc(answer)")
 									iframe(
 										:src="videoEmbedSrc(answer)",
-										title="Session video",
+										:title="$t('Session video')",
 										allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share",
 										allowfullscreen,
 										loading="lazy",
@@ -221,13 +221,13 @@ export default {
 		t() {
 			const m = this.translationMessages || {}
 			return {
-				yes: m.yes || 'Yes',
-				no: m.no || 'No',
-				join_room: m.join_room || 'Join room',
-				downloads: m.downloads || 'Downloads',
-				no_file_provided: m.no_file_provided || 'No file provided',
-				no_response: m.no_response || 'No response',
-				ical: m.ical || 'iCal',
+				yes: m.yes || this.$t('Yes'),
+				no: m.no || this.$t('No'),
+				join_room: m.join_room || this.$t('Join room'),
+				downloads: m.downloads || this.$t('Downloads'),
+				no_file_provided: m.no_file_provided || this.$t('No file provided'),
+				no_response: m.no_response || this.$t('No response'),
+				ical: m.ical || this.$t('iCal'),
 			}
 		},
 		isFaved () {

@@ -54,11 +54,14 @@ const routes = [
 		props: route => ({ worldName: route.params.worldName ?? '' }),
 		children: [
 			{
-				// we can't alias this because vue-router links seem to explode
-				// manage view gets linked to room url
-				// use a relative empty path instead of absolute '/' so parent params (like worldName) are preserved
+				// In organizer area, default root route to the organizer overview dashboard
 				path: '',
-				redirect: { name: 'about' }
+				redirect: () => {
+					if (window.eventyay?.isOrganizerArea) {
+						return { name: 'organizer' }
+					}
+					return { name: 'about' }
+				}
 			},
 			{
 				path: 'about',
@@ -131,7 +134,8 @@ const routes = [
 			},
 			{
 				path: 'event',
-				name: 'admin',
+				name: 'organizer',
+				alias: 'admin',
 				component: () => import('views/admin')
 			},
 			{
@@ -162,6 +166,22 @@ const routes = [
 				props: true
 			},
 			{
+				path: 'event/chat',
+				name: 'admin:chat:index',
+				component: () => import('views/admin/chat/index')
+			},
+			{
+				path: 'event/chat/new',
+				name: 'admin:chat:new',
+				component: () => import('views/admin/chat/new')
+			},
+			{
+				path: 'event/chat/:roomId',
+				name: 'admin:chat:item',
+				component: () => import('views/admin/chat/item'),
+				props: true
+			},
+			{
 				path: 'event/announcements',
 				name: 'admin:announcements',
 				component: () => import('views/admin/announcements'),
@@ -189,52 +209,174 @@ const routes = [
 				props: true
 			},
 			{
-				path: 'event/admin/:admin_path(.*)*',
-				name: 'admin:video-admin',
-				component: () => import('views/admin/config/video-admin')
+				path: 'event/config',
+				name: 'admin:config',
+				component: () => import('views/admin/config/main')
 			},
 			{
-				path: 'event/config',
-				component: () => import('views/admin/config'),
-				children: [{
-					path: '',
-					name: 'admin:config',
-					component: () => import('views/admin/config/main')
-				},
-				{
-					path: 'token-generator',
-					name: 'admin:config:token-generator',
-					component: () => import('views/admin/config/token-generator')
-				},
-				{
-					path: 'registration',
-					name: 'admin:config:registration',
-					component: () => import('views/admin/config/registration')
-				},
-				{
-					path: 'privacy',
-					name: 'admin:config:privacy',
-					component: () => import('views/admin/config/privacy')
-				},
-				{
-					path: 'audit-log',
-					name: 'admin:config:audit-log',
-					component: () => import('views/admin/config/audit-log')
-				},
-				{
-					path: 'reports',
-					name: 'admin:config:reports',
-					component: () => import('views/admin/config/reports')
-				}
-				]
+				path: 'event/reports',
+				alias: 'event/config/reports',
+				name: 'admin:reports',
+				component: () => import('views/admin/config/reports')
+			},
+			{
+				path: 'event/logs',
+				alias: 'event/config/audit-log',
+				name: 'admin:logs',
+				component: () => import('views/admin/config/audit-log')
 			}
 		]
 	}
 ]
 
+import { jwtDecode } from 'jwt-decode'
+import store from 'store'
+import { hasOrganizerTraits } from 'lib/traitGrants'
+import { isRoomVisibleToAttendee } from 'lib/video-providers'
+
 const router = createRouter({
 	history: createWebHistory(config.basePath),
 	routes
 })
+
+export function checkRoutePermission(to) {
+	if (!store.state.permissions) return true
+	const name = typeof to.name === 'string' ? to.name : ''
+	const hasPerm = store.getters.hasPermission
+	const isAdmin = Boolean(store.getters.isAdminMode)
+	const liveFeatures = Object.assign({
+		chat_rooms: false,
+		kiosks: false,
+		direct_messaging: false,
+		announcements: false
+	}, store.state.world?.live_features || window.eventyay?.liveFeatures || {})
+
+	if (name.startsWith('admin:announcements')) {
+		if (!liveFeatures.announcements) return false
+		return isAdmin || hasPerm('world:announce')
+	}
+	if (name.startsWith('admin:kiosks') || name === 'standalone:kiosk') {
+		if (!liveFeatures.kiosks) return false
+		return name === 'standalone:kiosk' || isAdmin || hasPerm('world:kiosks.manage')
+	}
+	if (name.startsWith('admin:chat')) {
+		if (!liveFeatures.chat_rooms) return false
+		return isAdmin || hasPerm('room:update') || hasPerm('world:rooms.create.chat')
+	}
+	if (name === 'channel') {
+		if (!liveFeatures.direct_messaging) return false
+		return isAdmin || hasPerm('world:chat.direct')
+	}
+	if (name === 'room' && to.params?.roomId) {
+		const room = store.state.rooms?.find(r => r.id === to.params.roomId)
+		if (room && !liveFeatures.chat_rooms) {
+			const isChatRoom = (room.modules?.length === 1 && room.modules[0].type === 'chat.native') ||
+				room.modules?.some(module => ['channel.janus', 'channel.zoom', 'channel.jitsi'].includes(module.type))
+			if (isChatRoom) return false
+		}
+	}
+	if (isAdmin) return true
+	if (name === 'admin:config') {
+		return hasPerm('world:update') || hasPerm('world:rooms.create.stage') || hasPerm('world:rooms.create.bbb')
+	}
+	if (name === 'admin:logs') {
+		return hasPerm('world:update')
+	}
+	if (name === 'admin:reports') {
+		return hasPerm('world:graphs')
+	}
+	if (name.startsWith('admin:users') || name === 'admin:user') {
+		return hasPerm('world:users.list')
+	}
+	if (name.startsWith('admin:rooms') || name === 'room:manage') {
+		return hasPerm('room:update') || hasPerm('world:rooms.create.stage') || hasPerm('world:rooms.create.bbb') || hasPerm('world:rooms.create.jitsi')
+	}
+	return true
+}
+
+router.beforeEach((to, from, next) => {
+	const isOrganizerRoute = (typeof to.name === 'string' && (to.name.startsWith('admin') || to.name === 'organizer' || to.name === 'room:manage')) ||
+		(typeof to.path === 'string' && (to.path.startsWith('/event') || to.path.includes('/manage')))
+	if (isOrganizerRoute) {
+		const isOrganizerArea = Boolean(window.eventyay?.isOrganizerArea)
+		if (!isOrganizerArea) {
+			if (to.params?.roomId) {
+				return next({ name: 'room', params: { roomId: to.params.roomId } })
+			}
+			return next({ name: 'about' })
+		}
+		const token = store.state.token || localStorage.getItem('token')
+		let tokenTraits = []
+		if (token) {
+			try {
+				tokenTraits = jwtDecode(token)?.traits || []
+			} catch (e) {}
+		}
+		const hasManager = hasOrganizerTraits(tokenTraits)
+		const hasStorePerm = store.getters.hasPermission('world:users.list') ||
+			store.getters.hasPermission('world:update') ||
+			store.getters.hasPermission('world:announce') ||
+			store.getters.hasPermission('room:update') ||
+			store.getters.hasPermission('room:chat.moderate') ||
+			store.getters.hasPermission('room:poll.manage') ||
+			store.getters.hasPermission('room:question.moderate') ||
+			store.getters.hasPermission('world:kiosks.manage') ||
+			store.getters.hasPermission('world:graphs')
+		const isPermittedWithoutToken = !token && Boolean(
+			window.eventyay?.isOrganizerArea ||
+			window.eventyay?.hasOrganiserPermissions
+		)
+		if (!isPermittedWithoutToken && !hasManager && !hasStorePerm) {
+			if (to.params?.roomId) {
+				return next({ name: 'room', params: { roomId: to.params.roomId } })
+			}
+			return next({ name: 'about' })
+		}
+		if (!checkRoutePermission(to)) {
+			return next({ name: 'organizer' })
+		}
+	} else {
+		if (to.name === 'room' && to.params?.roomId) {
+			const token = store.state.token || localStorage.getItem('token')
+			let tokenTraits = []
+			if (token) {
+				try {
+					tokenTraits = jwtDecode(token)?.traits || []
+				} catch (e) {}
+			}
+			const hasManager = hasOrganizerTraits(tokenTraits)
+			const isOrganizer = Boolean(
+				window.eventyay?.isOrganizerArea && (
+					window.eventyay?.hasOrganiserPermissions ||
+					hasManager ||
+					store.getters.hasPermission('room:update')
+				)
+			)
+			if (!isOrganizer && store.state.rooms && store.state.rooms.length > 0) {
+				const targetRoom = store.state.rooms.find(r => r.id === to.params.roomId)
+				if (!targetRoom || targetRoom.is_disabled || !isRoomVisibleToAttendee(targetRoom, store.state.world?.video_providers)) {
+					return next({ name: 'about' })
+				}
+			}
+		}
+		if (!checkRoutePermission(to)) {
+			return next({ name: 'about' })
+		}
+	}
+	next()
+})
+
+store.watch(
+	state => state.permissions,
+	(permissions) => {
+		if (permissions && router.currentRoute.value) {
+			if (!checkRoutePermission(router.currentRoute.value)) {
+				const isOrganizerRoute = typeof router.currentRoute.value.name === 'string' &&
+					(router.currentRoute.value.name.startsWith('admin') || router.currentRoute.value.name === 'organizer' || router.currentRoute.value.name === 'room:manage')
+				router.replace({ name: isOrganizerRoute ? 'organizer' : 'about' })
+			}
+		}
+	}
+)
 
 export default router

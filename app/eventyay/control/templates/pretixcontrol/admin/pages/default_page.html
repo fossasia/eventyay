@@ -1,0 +1,35 @@
+{% extends "pretixcontrol/admin/pages/tabs_base.html" %}
+{% load i18n %}
+{% load bootstrap3 %}
+{% load getitem %}
+{% block pages_content %}
+    <form action="" method="post" class="form-horizontal pages-form" data-page-i18n-form>
+        {% csrf_token %}
+        {% bootstrap_form_errors form %}
+        {% if has_content %}
+            {% include "pretixcontrol/admin/pages/_language_switcher.html" %}
+        {% endif %}
+
+        <fieldset>
+            <legend>{{ page_title }}</legend>
+            {% bootstrap_field form|getitem:enabled_field layout="control" %}
+            {% bootstrap_field form|getitem:url_field layout="control" %}
+            {% if has_content %}
+                {% bootstrap_field form|getitem:content_field layout="control" %}
+            {% else %}
+                <p class="help-block col-md-9 col-md-offset-3">
+                    {% trans "This page links to an external destination, so it has no editable content." %}
+                </p>
+            {% endif %}
+        </fieldset>
+
+        <div class="form-group submit-group">
+            <a href="{{ preview_url }}" target="_blank" rel="noopener" class="btn btn-default btn-lg pull-left flip">
+                <i class="fa fa-eye" aria-hidden="true"></i> {% trans "Preview" %}
+            </a>
+            <button type="submit" class="btn btn-primary btn-save">
+                {% trans "Save" %}
+            </button>
+        </div>
+    </form>
+{% endblock %}

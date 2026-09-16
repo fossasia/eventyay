@@ -245,6 +245,13 @@ plugin is enabled in the current event context if your locale should be scoped t
 events with your plugin activated.
 """
 
+user_dashboard_links = django.dispatch.Signal()
+"""
+Sent to collect additional ``<a class="dropdown-item">`` entries for the global
+user dashboard dropdown (the control/orga area header). The sender is the
+``request`` object. Receivers should return an HTML string or empty string.
+"""
+
 
 @receiver(periodic_task, dispatch_uid="process_scheduled_emails")
 @scopes_disabled()
@@ -267,7 +274,7 @@ def process_scheduled_emails(sender, **kwargs):
         with transaction.atomic():
             mail = (
                 QueuedMail.objects
-                .filter(scheduled_at__isnull=False, scheduled_at__lte=now(), sent__isnull=True)
+                .filter(scheduled_at__isnull=False, scheduled_at__lte=now(), sent__isnull=True, is_draft=False)
                 .select_for_update(skip_locked=True)
                 .order_by('pk')
                 .first()

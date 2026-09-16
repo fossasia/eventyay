@@ -8,180 +8,278 @@
 {% block custom_header %}
     {{ block.super }}
     <script type="module" src="{% static 'common/js/timezone.js' %}" defer></script>
+    <script type="module" src="{% static 'pretixcontrol/js/order-overview.js' %}" defer></script>
     <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/tickets-mobile.css' %}" />
     <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/orders-mobile.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/order-overview.css' %}" />
 {% endblock %}
 {% block content %}
     {% url "control:event.orders" organizer=request.event.organizer.slug event=request.event.slug as listurl %}
+    {% url "control:event.orders.export" event=request.event.slug organizer=request.event.organizer.slug as exporturl %}
     {% trans "Order overview" as header_title_var %}
     {% captureas header_extra_var %}
-        <a href="{% url "control:event.orders.export" event=request.event.slug organizer=request.event.organizer.slug %}?identifier=pdfreport"
+        <a href="{% url 'control:event.orders.import_export' event=request.event.slug organizer=request.event.organizer.slug %}?identifier=pdfreport"
            class="btn btn-default" target="_blank">
             <span class="fa fa-download"></span>
             {% trans "PDF" %}
         </a>
     {% endcaptureas %}
     {% include "common/includes/header_nav.html" with header_title=header_title_var header_title_extra=header_extra_var header_component_link="pretixcontrol/event/component_link.html" %}
-    <div class="advanced-filter-search" data-advanced-filter-search>
-        <form class="filter-form advanced-filter-search-form" action="" method="get">
-            <div class="advanced-filter-search-bar">
-                {% if request.event.has_subevents %}
-                    <div class="input-group advanced-filter-search-query-group">
-                        {% bootstrap_field filter_form.subevent layout='inline' %}
-                    </div>
-                {% endif %}
-                <div class="input-group advanced-filter-search-query-group">
-                    {% bootstrap_field filter_form.date_axis layout='inline' %}
-                </div>
-                <div class="input-group advanced-filter-search-query-group">
-                    {% bootstrap_field filter_form.date_from layout='inline' %}
-                </div>
-                <div class="input-group advanced-filter-search-query-group">
-                    {% bootstrap_field filter_form.date_until layout='inline' %}
-                </div>
-                {{ filter_form.browser_timezone }}
-                <div class="advanced-filter-search-actions">
-                    <a href="{{ request.path }}" class="btn btn-default btn-clear-filter" aria-label="{% trans 'Clear filters' %}" title="{% trans 'Clear filters' %}">
-                        <span class="fa fa-eraser" aria-hidden="true"></span>
-                        <span class="sr-only">{% trans "Clear filters" %}</span>
-                    </a>
-                    <button class="btn btn-primary" type="submit" aria-label="{% trans 'Apply filters' %}">
-                        <span class="fa fa-filter" aria-hidden="true"></span>
-                    </button>
-                </div>
+
+    <div class="order-overview" data-order-overview-report>
+        <div class="order-overview-toolbar">
+            <div class="btn-group order-overview-mode-toggle" role="group" aria-label="{% trans 'Report mode' %}">
+                <button type="button" class="btn btn-default active" data-report-mode=".count" aria-selected="true">
+                    {% trans "Sales" %}
+                </button>
+                <button type="button" class="btn btn-default" data-report-mode=".sum-gross" aria-selected="false">
+                    {% trans "Revenue (gross)" %}
+                </button>
+                <button type="button" class="btn btn-default" data-report-mode=".sum-net" aria-selected="false">
+                    {% trans "Revenue (net)" %}
+                </button>
             </div>
-        </form>
-    </div>
-    <div id="sumtoggle" data-ajax-results-region>
-        <button type="button" data-target=".count" class="btn btn-default active">{% trans "Sales" %}</button>
-        <button type="button" data-target=".sum-gross" class="btn btn-default">{% trans "Revenue (gross)" %}</button>
-        <button type="button" data-target=".sum-net" class="btn btn-default">{% trans "Revenue (net)" %}</button>
+        </div>
+
+        <div class="panel panel-default order-overview-filter-card">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    {% trans "Filter report" %}
+                    <span class="fa fa-info-circle text-muted order-overview-info-icon" data-toggle="tooltip_html" data-container=".order-overview" title="{% blocktrans trimmed with eurl=exporturl %}This report shows the current state of orders. Date filters may not reflect historical order changes. For accounting exports, use the <a href='{{ eurl }}'>export section</a>.{% endblocktrans %}"></span>
+                </h3>
+            </div>
+            <div class="panel-body">
+                <form class="order-overview-filter-form filter-form" action="" method="get">
+                    <div class="order-overview-filter-grid">
+                        {% if request.event.has_subevents %}
+                            <div class="order-overview-filter-field">
+                                {% bootstrap_field filter_form.subevent layout='inline' %}
+                            </div>
+                        {% endif %}
+                        <div class="order-overview-filter-field">
+                            {% bootstrap_field filter_form.date_axis layout='inline' %}
+                        </div>
+                        <div class="order-overview-filter-field">
+                            <label class="sr-only" for="{{ filter_form.date_from.id_for_label }}">{{ filter_form.date_from.label }}</label>
+                            <div class="input-group date">
+                                {{ filter_form.date_from }}
+                                <span class="input-group-addon" aria-hidden="true">
+                                    <span class="fa fa-calendar"></span>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="order-overview-filter-field">
+                            <label class="sr-only" for="{{ filter_form.date_until.id_for_label }}">{{ filter_form.date_until.label }}</label>
+                            <div class="input-group date">
+                                {{ filter_form.date_until }}
+                                <span class="input-group-addon" aria-hidden="true">
+                                    <span class="fa fa-calendar"></span>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="order-overview-filter-actions">
+                            {% include "eventyay_common/filter_actions.html" %}
+                        </div>
+                    </div>
+                    {{ filter_form.browser_timezone }}
+                </form>
+            </div>
+        </div>
+
+        <div class="order-overview-summary" aria-label="{% trans 'Summary' %}">
+            <a href="{{ listurl }}" class="order-overview-summary-card order-overview-summary-card-total" data-summary-card>
+                <span class="order-overview-summary-icon fa fa-shopping-bag" aria-hidden="true"></span>
+                <span class="order-overview-summary-content">
+                    <span class="order-overview-summary-label">
+                        {% trans "Total purchased" %}
+                        <span class="fa fa-info-circle text-muted" data-toggle="tooltip" data-container=".order-overview" title="{% trans 'All valid orders (paid and pending).' %}"></span>
+                    </span>
+                    <span class="order-overview-summary-value">{{ total.num.total|togglesum:request.event.currency }}</span>
+                </span>
+            </a>
+            <a href="{{ listurl }}?status=p" class="order-overview-summary-card order-overview-summary-card-paid" data-summary-card>
+                <span class="order-overview-summary-icon fa fa-check-circle" aria-hidden="true"></span>
+                <span class="order-overview-summary-content">
+                    <span class="order-overview-summary-label">
+                        {% trans "Paid" %}
+                        <span class="fa fa-info-circle text-muted" data-toggle="tooltip" data-container=".order-overview" title="{% trans 'Orders that have been successfully paid.' %}"></span>
+                    </span>
+                    <span class="order-overview-summary-value">{{ total.num.paid|togglesum:request.event.currency }}</span>
+                </span>
+            </a>
+            <a href="{{ listurl }}?status=n" class="order-overview-summary-card order-overview-summary-card-pending" data-summary-card>
+                <span class="order-overview-summary-icon fa fa-clock-o" aria-hidden="true"></span>
+                <span class="order-overview-summary-content">
+                    <span class="order-overview-summary-label">
+                        {% trans "Pending" %}
+                        <span class="fa fa-info-circle text-muted" data-toggle="tooltip" data-container=".order-overview" title="{% trans 'Orders that are currently pending payment.' %}"></span>
+                    </span>
+                    <span class="order-overview-summary-value">{{ total.num.pending|togglesum:request.event.currency }}</span>
+                </span>
+            </a>
+            <a href="{{ listurl }}?status=c" class="order-overview-summary-card order-overview-summary-card-canceled" data-summary-card>
+                <span class="order-overview-summary-icon fa fa-times-circle" aria-hidden="true"></span>
+                <span class="order-overview-summary-content">
+                    <span class="order-overview-summary-label">
+                        {% trans "Canceled" %}
+                        <span class="fa fa-info-circle text-muted" data-toggle="tooltip" data-container=".order-overview" title="{% trans 'Orders that have been canceled.' %}"></span>
+                    </span>
+                    <span class="order-overview-summary-value">{{ total.num.canceled|togglesum:request.event.currency }}</span>
+                </span>
+            </a>
+            <a href="{{ listurl }}?status=e" class="order-overview-summary-card order-overview-summary-card-expired" data-summary-card>
+                <span class="order-overview-summary-icon fa fa-hourglass-end" aria-hidden="true"></span>
+                <span class="order-overview-summary-content">
+                    <span class="order-overview-summary-label">
+                        {% trans "Expired" %}
+                        <span class="fa fa-info-circle text-muted" data-toggle="tooltip" data-container=".order-overview" title="{% trans 'Orders where the payment deadline has passed.' %}"></span>
+                    </span>
+                    <span class="order-overview-summary-value">{{ total.num.expired|togglesum:request.event.currency }}</span>
+                </span>
+            </a>
+            <a href="{{ listurl }}?status=pa" class="order-overview-summary-card order-overview-summary-card-approval" data-summary-card>
+                <span class="order-overview-summary-icon fa fa-user" aria-hidden="true"></span>
+                <span class="order-overview-summary-content">
+                    <span class="order-overview-summary-label">
+                        {% trans "Approval pending" %}
+                        <span class="fa fa-info-circle text-muted" data-toggle="tooltip" data-container=".order-overview" title="{% trans 'Orders that require approval by an organizer before they can be paid.' %}"></span>
+                    </span>
+                    <span class="order-overview-summary-value">{{ total.num.unapproved|togglesum:request.event.currency }}</span>
+                </span>
+            </a>
+        </div>
+
         {% if subevent_warning %}
-            <div class="alert alert-info">
+            <div class="alert alert-info order-overview-warning">
                 {% blocktrans trimmed context "subevent" %}
                     If you select a single date, fees will not be listed here as it might not be clear which
                     date they belong to.
                 {% endblocktrans %}
             </div>
         {% endif %}
-        <div class="table-responsive">
-            <table class="table table-condensed table-hover table-product-overview">
-            <thead>
-                <tr>
-                    <th>{% trans "Product" %}</th>
-                    <th>{% trans "Canceled" %}¹</th>
-                    <th>{% trans "Expired" %}</th>
-                    <th>{% trans "Approval pending" %}</th>
-                    <th colspan="3" class="text-center">{% trans "Purchased" %}</th>
-                </tr>
-                <tr>
-                    <th></th>
-                    <th></th>
-                    <th></th>
-                    <th></th>
-                    <th>{% trans "Pending" %}</th>
-                    <th>{% trans "Paid" %}</th>
-                    <th>{% trans "Total" %}</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for tup in items_by_category %}
-                    {% if tup.0 %}
-                        <tr class="category">
-                            <th>{{ tup.0 }}</th>
-                            <th>{{ tup.0.num.canceled|togglesum:request.event.currency }}</th>
-                            <th>{{ tup.0.num.expired|togglesum:request.event.currency }}</th>
-                            <th>{{ tup.0.num.unapproved|togglesum:request.event.currency }}</th>
-                            <th>{{ tup.0.num.pending|togglesum:request.event.currency }}</th>
-                            <th>{{ tup.0.num.paid|togglesum:request.event.currency }}</th>
-                            <th>{{ tup.0.num.total|togglesum:request.event.currency }}</th>
-                        </tr>
-                    {% endif %}
-                    {% for item in tup.1 %}
-                        <tr class="item {% if tup.0 %}categorized{% endif %}">
-                            <td>{{ item }}</td>
-                            <td>
-                                <a href="{{ listurl }}?item={{ item.id }}&amp;status=c&amp;provider={{ item.provider }}">
-                                    {{ item.num.canceled|togglesum:request.event.currency }}
-                                </a>
-                            </td>
-                            <td>
-                                <a href="{{ listurl }}?item={{ item.id }}&amp;status=e&amp;provider={{ item.provider }}">
-                                    {{ item.num.expired|togglesum:request.event.currency }}
-                                </a>
-                            </td>
-                            <td>
-                                <a href="{{ listurl }}?item={{ item.id }}&amp;status=pa&amp;provider={{ item.provider }}">
-                                    {{ item.num.unapproved|togglesum:request.event.currency }}
-                                </a>
-                            </td>
-                            <td>
-                                <a href="{{ listurl }}?item={{ item.id }}&amp;status=na&amp;provider={{ item.provider }}">
-                                    {{ item.num.pending|togglesum:request.event.currency }}
-                                </a>
-                            </td>
-                            <td>
-                                <a href="{{ listurl }}?item={{ item.id }}&amp;status=p&amp;provider={{ item.provider }}">
-                                    {{ item.num.paid|togglesum:request.event.currency }}
-                                </a>
-                            </td>
-                            <td>
-                                {{ item.num.total|togglesum:request.event.currency }}
-                            </td>
-                        </tr>
-                        {% if item.has_variations %}
-                            {% for var in item.all_variations %}
-                                <tr class="variation {% if tup.0 %}categorized{% endif %}">
-                                    <td>{{ var }}</td>
-                                    <td>
-                                        <a href="{{ listurl }}?item={{ item.id }}-{{ var.id }}&amp;status=c&amp;provider={{ item.provider }}">
-                                            {{ var.num.canceled|togglesum:request.event.currency }}
+
+        <div class="panel panel-default order-overview-table-card">
+            <div class="panel-heading order-overview-table-heading">
+                <h3 class="panel-title order-overview-table-title"
+                    data-report-table-heading
+                    data-heading-sales="{% trans 'Sales breakdown by product' %}"
+                    data-heading-gross="{% trans 'Revenue breakdown by product (gross)' %}"
+                    data-heading-net="{% trans 'Revenue breakdown by product (net)' %}">
+                    {% trans "Sales breakdown by product" %}
+                </h3>
+                <span id="report-table-tooltip" class="fa fa-info-circle text-muted order-overview-info-icon-large" data-toggle="tooltip_html" data-container=".order-overview" 
+                    title="{% blocktrans trimmed %}Displays the number of items sold.<br><b>Paid:</b> fully completed payments.<br><b>Pending:</b> awaiting payment.<br><b>Canceled:</b> includes individual canceled items within valid orders.{% endblocktrans %}"
+                    data-tooltip-sales="{% blocktrans trimmed %}Displays the number of items sold.<br><b>Paid:</b> fully completed payments.<br><b>Pending:</b> awaiting payment.<br><b>Canceled:</b> includes individual canceled items within valid orders.{% endblocktrans %}"
+                    data-tooltip-gross="{% blocktrans trimmed %}Displays the gross monetary value (including taxes).<br><b>Paid:</b> fully completed payments.<br><b>Pending:</b> awaiting payment.<br><b>Canceled:</b> includes individual canceled items within valid orders.{% endblocktrans %}"
+                    data-tooltip-net="{% blocktrans trimmed %}Displays the net monetary value (excluding taxes).<br><b>Paid:</b> fully completed payments.<br><b>Pending:</b> awaiting payment.<br><b>Canceled:</b> includes individual canceled items within valid orders.{% endblocktrans %}"></span>
+            </div>
+            <div class="panel-body">
+                <div class="table-responsive">
+                    <table class="table table-condensed table-hover table-product-overview order-overview-table table-flip">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Product" %}</th>
+                                <th>{% trans "Canceled" %}</th>
+                                <th>{% trans "Expired" %}</th>
+                                <th>{% trans "Approval pending" %}</th>
+                                <th colspan="3" class="text-center order-overview-purchased-header">{% trans "Purchased" %}</th>
+                            </tr>
+                            <tr>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                                <th>{% trans "Pending" %}</th>
+                                <th>{% trans "Paid" %}</th>
+                                <th>{% trans "Total" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for group, items in items_by_classification %}
+                                <tr class="classification">
+                                    <th data-label="{% trans 'Category' %}">
+                                        <span class="fa fa-chevron-down order-overview-group-icon" aria-hidden="true"></span>
+                                        {{ group }}
+                                    </th>
+                                    <th data-label="{% trans 'Canceled' %}">
+                                        <a href="{{ listurl }}?status=c">
+                                            {{ group.num.canceled|togglesum:request.event.currency }}
                                         </a>
-                                    </td>
-                                    <td>
-                                        <a href="{{ listurl }}?item={{ item.id }}-{{ var.id }}&amp;status=e&amp;provider={{ item.provider }}">
-                                            {{ var.num.expired|togglesum:request.event.currency }}
+                                    </th>
+                                    <th data-label="{% trans 'Expired' %}">
+                                        <a href="{{ listurl }}?status=e">
+                                            {{ group.num.expired|togglesum:request.event.currency }}
                                         </a>
-                                    </td>
-                                    <td>
-                                        <a href="{{ listurl }}?item={{ item.id }}-{{ var.id }}&amp;status=pa&amp;provider={{ item.provider }}">
-                                            {{ var.num.unapproved|togglesum:request.event.currency }}
+                                    </th>
+                                    <th data-label="{% trans 'Approval pending' %}">
+                                        <a href="{{ listurl }}?status=pa">
+                                            {{ group.num.unapproved|togglesum:request.event.currency }}
                                         </a>
-                                    </td>
-                                    <td>
-                                        <a href="{{ listurl }}?item={{ item.id }}-{{ var.id }}&amp;status=na&amp;provider={{ item.provider }}">
-                                            {{ var.num.pending|togglesum:request.event.currency }}
+                                    </th>
+                                    <th data-label="{% trans 'Pending' %}">
+                                        <a href="{{ listurl }}?status=na">
+                                            {{ group.num.pending|togglesum:request.event.currency }}
                                         </a>
-                                    </td>
-                                    <td>
-                                        <a href="{{ listurl }}?item={{ item.id }}-{{ var.id }}&amp;status=p&amp;provider={{ item.provider }}">
-                                            {{ var.num.paid|togglesum:request.event.currency }}
+                                    </th>
+                                    <th data-label="{% trans 'Paid' %}">
+                                        <a href="{{ listurl }}?status=p">
+                                            {{ group.num.paid|togglesum:request.event.currency }}
                                         </a>
-                                    </td>
-                                    <td>
-                                        {{ var.num.total|togglesum:request.event.currency }}
-                                    </td>
+                                    </th>
+                                    <th data-label="{% trans 'Total' %}">
+                                        <a href="{{ listurl }}?status=np">
+                                            {{ group.num.total|togglesum:request.event.currency }}
+                                        </a>
+                                    </th>
                                 </tr>
+                                {% for item in items %}
+                                    {% include "pretixcontrol/orders/includes/overview_item_row.html" with row_class="item classified" label=item item=item num=item.num %}
+                                    {% if item.has_variations %}
+                                        {% for var in item.all_variations %}
+                                            {% include "pretixcontrol/orders/includes/overview_item_row.html" with row_class="variation classified" label=var item=item var=var num=var.num %}
+                                        {% endfor %}
+                                    {% endif %}
+                                {% endfor %}
                             {% endfor %}
-                        {% endif %}
-                    {% endfor %}
-                {% endfor %}
-            </tbody>
-            <tfoot>
-                <tr class="total">
-                    <th>{% trans "Total" %}</th>
-                    <th>{{ total.num.canceled|togglesum:request.event.currency }}</th>
-                    <th>{{ total.num.expired|togglesum:request.event.currency }}</th>
-                    <th>{{ total.num.unapproved|togglesum:request.event.currency }}</th>
-                    <th>{{ total.num.pending|togglesum:request.event.currency }}</th>
-                    <th>{{ total.num.paid|togglesum:request.event.currency }}</th>
-                    <th>{{ total.num.total|togglesum:request.event.currency }}</th>
-                </tr>
-            </tfoot>
-            </table>
+                        </tbody>
+                        <tfoot>
+                            <tr class="total">
+                                <th data-label="{% trans 'Total' %}">{% trans "Total" %}</th>
+                                <th data-label="{% trans 'Canceled' %}">
+                                    <a href="{{ listurl }}?status=c">
+                                        {{ total.num.canceled|togglesum:request.event.currency }}
+                                    </a>
+                                </th>
+                                <th data-label="{% trans 'Expired' %}">
+                                    <a href="{{ listurl }}?status=e">
+                                        {{ total.num.expired|togglesum:request.event.currency }}
+                                    </a>
+                                </th>
+                                <th data-label="{% trans 'Approval pending' %}">
+                                    <a href="{{ listurl }}?status=pa">
+                                        {{ total.num.unapproved|togglesum:request.event.currency }}
+                                    </a>
+                                </th>
+                                <th data-label="{% trans 'Pending' %}">
+                                    <a href="{{ listurl }}?status=na">
+                                        {{ total.num.pending|togglesum:request.event.currency }}
+                                    </a>
+                                </th>
+                                <th data-label="{% trans 'Paid' %}">
+                                    <a href="{{ listurl }}?status=p">
+                                        {{ total.num.paid|togglesum:request.event.currency }}
+                                    </a>
+                                </th>
+                                <th data-label="{% trans 'Total' %}">
+                                    <a href="{{ listurl }}?status=np">
+                                        {{ total.num.total|togglesum:request.event.currency }}
+                                    </a>
+                                </th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
         </div>
-        <p class="help-block">
-            ¹ {% trans "If you click links in this column, you will only find orders that are canceled completely, while the numbers also include single canceled positions within valid orders." %}
-        </p>
     </div>
 {% endblock %}

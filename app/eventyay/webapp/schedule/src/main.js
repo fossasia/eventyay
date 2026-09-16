@@ -3,13 +3,18 @@
 import { createApp } from 'vue'
 import Buntpapier from 'buntpapier'
 import App from '~/App.vue'
+import { createI18nPlugin, changeScheduleLanguage } from './i18n.js'
 import '~/styles/global.styl'
 
-createApp(
+const app = createApp(
 	App,
 	{
 		eventUrl: 'https://pretalx.com/democon/',
 		locale: 'en-ie',
 		// format: 'list',
 	}
-).use(Buntpapier).mount('#app')
+)
+app.use(Buntpapier)
+app.use(createI18nPlugin())
+await changeScheduleLanguage('en-ie')
+app.mount('#app')

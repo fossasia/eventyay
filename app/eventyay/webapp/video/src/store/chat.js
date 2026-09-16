@@ -31,6 +31,12 @@ export default {
 		warnings: []
 	},
 	getters: {
+		joinedChannels(state) {
+			return state.joinedChannels
+		},
+		directMessageChannels(state, getters) {
+			return state.joinedChannels?.filter(getters.isDirectMessageChannel) || []
+		},
 		activeJoinedChannel(state) {
 			return state.joinedChannels?.find(channel => channel.id === state.channel)
 		},
@@ -210,14 +216,16 @@ export default {
 		async moderateUser({state}, {user, action}) {
 			const postStates = {
 				ban: 'banned',
-				silence: 'silence',
+				silence: 'silenced',
 				reactivate: null
 			}
 			await api.call(`user.${action}`, {id: user.id})
 			if (state.usersLookup[user.id] && typeof postStates[action] !== 'undefined') {
 				state.usersLookup[user.id].moderation_state = postStates[action]
 			}
-			// user.moderation_state = postStates[action]
+			if (user && typeof postStates[action] !== 'undefined') {
+				user.moderation_state = postStates[action]
+			}
 		},
 		async blockUser({state}, {user}) {
 			await api.call('user.block', {id: user.id})
@@ -372,7 +380,7 @@ export default {
 			// Increment notification count
 			state.notificationCounts[channel.id] = (state.notificationCounts[channel.id] || 0) + 1
 			// TODO show desktop notification when window in focus but route is somewhere else?
-			let body = i18n.t('DirectMessage:notification-unread:text')
+			let body = i18n.t('New messages')
 			if (data.event.content.type === 'text') {
 				// TODO parse @uuid mentions
 				body = data.event.content.body

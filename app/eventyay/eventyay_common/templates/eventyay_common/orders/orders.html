@@ -5,22 +5,47 @@
 {% load money %}
 {% load static %}
 
-{% block title %}{% trans "My Orders" %}{% endblock %}
+{% block title %}{% trans "My Tickets" %}{% endblock %}
 
 {% block custom_header %}
     {{ block.super }}
+    <script type="module" src="{% static 'eventyay-common/js/orders-filter.js' %}"></script>
 {% endblock %}
 
 {% block content %}
-    <h1>{% trans "My Orders" %}</h1>
+    <h1>{% trans "My Tickets" %}</h1>
     <div class="advanced-filter-search" data-advanced-filter-search>
         <form class="filter-form advanced-filter-search-form" action="" method="get">
             <div class="advanced-filter-search-bar">
-                <div class="advanced-filter-field" style="flex: 1 1 0; margin-bottom: 0;">
+                <div class="advanced-filter-field" style="flex: 1 1 200px; margin-bottom: 0;">
+                    {% bootstrap_field filter_form.code layout='inline' %}
+                </div>
+                <div class="advanced-filter-field" style="flex: 1 1 200px; margin-bottom: 0;">
                     {% bootstrap_field filter_form.event layout='inline' %}
                 </div>
+                <div class="advanced-filter-field" style="flex: 1 1 160px; margin-bottom: 0;">
+                    {% bootstrap_field filter_form.status layout='inline' %}
+                </div>
+                <div class="advanced-filter-field" style="flex: 1 1 160px; margin-bottom: 0;">
+                    <label class="sr-only" for="{{ filter_form.date_from.id_for_label }}">{{ filter_form.date_from.label }}</label>
+                    <div class="input-group date">
+                        {{ filter_form.date_from }}
+                        <span class="input-group-addon" aria-hidden="true">
+                            <span class="fa fa-calendar"></span>
+                        </span>
+                    </div>
+                </div>
+                <div class="advanced-filter-field" style="flex: 1 1 160px; margin-bottom: 0;">
+                    <label class="sr-only" for="{{ filter_form.date_to.id_for_label }}">{{ filter_form.date_to.label }}</label>
+                    <div class="input-group date">
+                        {{ filter_form.date_to }}
+                        <span class="input-group-addon" aria-hidden="true">
+                            <span class="fa fa-calendar"></span>
+                        </span>
+                    </div>
+                </div>
                 <div class="advanced-filter-search-actions">
-                    <button type="submit" class="btn btn-primary" aria-label="{% trans 'Apply filters' %}">
+                    <button type="submit" class="btn btn-primary" aria-label="{% trans 'Apply filters' %}" title="{% trans 'Apply filters' %}">
                         <span class="fa fa-filter" aria-hidden="true"></span>
                     </button>
                     <a href="{{ request.path }}" class="btn btn-default btn-clear-filter" aria-label="{% trans 'Clear filters' %}" title="{% trans 'Clear filters' %}">
@@ -32,6 +57,7 @@
         </form>
     </div>
     <div data-ajax-results-region>
+        {% if order_list %}
         <div class="table-responsive">
             <table class="table table-condensed table-hover table-quotas events-table">
                 <thead>
@@ -62,14 +88,23 @@
                             {% include "eventyay_common/orders/fragment_order_status.html" with order=order event=order.event %}
                         </td>
                     </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="text-center">{{ _('You have no orders.') }}</td>
-                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
         {% include 'pretixcontrol/pagination.html' %}
+        {% else %}
+          {% if has_active_filters %}
+            <div class="alert alert-info">{% trans "No tickets match your filters." %}</div>
+          {% else %}
+            {% url 'presale:events.upcoming' as browse_events_url %}
+            {% url 'eventyay_common:dashboard' as dashboard_url %}
+            {% trans "No tickets yet" as empty_title %}
+            {% trans "Browse upcoming events and register to see your tickets here." as empty_description %}
+            {% trans "Browse events" as empty_primary_label %}
+            {% trans "Go to dashboard" as empty_secondary_label %}
+            {% include "eventyay_common/includes/personal_empty_state.html" with icon="ticket" title=empty_title description=empty_description primary_url=browse_events_url primary_label=empty_primary_label secondary_url=dashboard_url secondary_label=empty_secondary_label %}
+          {% endif %}
+        {% endif %}
     </div>
 {% endblock %}

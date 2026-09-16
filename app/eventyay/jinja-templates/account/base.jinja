@@ -34,6 +34,10 @@
   </style>
 
   {% block extra_head %}{% endblock extra_head %}
+  <script type="application/json" id="password-toggle-labels">
+    {{ {'show': _('Show password'), 'hide': _('Hide password')} | tojson }}
+  </script>
+  <script type="module" src="{{ static_url('common/js/password_toggle.js') }}"></script>
 </head>
 <body>
   <div class='page-wrapper'>

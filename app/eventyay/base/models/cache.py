@@ -1,5 +1,7 @@
+import copy
 import logging
 import os
+import pickle
 import random
 import time
 
@@ -39,8 +41,16 @@ class VersionedModel(models.Model):
         self.clear_caches()
 
     def save(self, *args, **kwargs):
-        if "update_fields" in kwargs and "version" not in kwargs.get("update_fields"):
-            kwargs["update_fields"].append("version")
+        if "update_fields" in kwargs and kwargs["update_fields"] is not None:
+            update_fields = kwargs["update_fields"]
+            if not isinstance(update_fields, (list, set)):
+                update_fields = list(update_fields)
+                kwargs["update_fields"] = update_fields
+            if "version" not in update_fields:
+                if isinstance(update_fields, set):
+                    update_fields.add("version")
+                else:
+                    update_fields.append("version")
         self.version += 1
         r = super().save(*args, **kwargs)
         transaction.on_commit(self._set_cache_version_sync)
@@ -54,6 +64,15 @@ class VersionedModel(models.Model):
     def touch(self):
         self.save(update_fields=["version"])
         self.clear_caches()
+
+    def __getstate__(self):
+        # Process-cache only needs concrete fields. Related objects (e.g. Room.event
+        # with Hierarkey settings) can embed callables that Twisted fails to unpickle.
+        state = super().__getstate__()
+        state["_state"] = copy.copy(state["_state"])
+        state["_state"].fields_cache = {}
+        state.pop("_prefetched_objects_cache", None)
+        return state
 
     async def refresh_from_db_if_outdated(self, allowed_age=0):
         if allowed_age:
@@ -82,14 +101,38 @@ class VersionedModel(models.Model):
         if latest_version == self.version:
             return
 
-        cache = caches["process"]
-        cached_instance = cache.get(self._cachekey)
-        if cached_instance and cached_instance.version == latest_version:
+        cache = caches["process"] if "process" in caches.settings else caches["default"]
+        try:
+            cached_instance = cache.get(self._cachekey)
+        except (
+            AttributeError,
+            TypeError,
+            ValueError,
+            EOFError,
+            ImportError,
+            IndexError,
+            pickle.UnpicklingError,
+        ):
+            logger.warning(
+                "VersionedModel.refresh_from_db_if_outdated: dropping unreadable cache for %s",
+                self._cachekey,
+            )
+            cache.delete(self._cachekey)
+            cached_instance = None
+
+        if cached_instance is not None and getattr(cached_instance, "version", None) == latest_version:
             self._refresh_from_cache(cached_instance)
             return
 
         await database_sync_to_async(self.refresh_from_db)()
-        cache.set(self._cachekey, self, timeout=600)
+        try:
+            cache.set(self._cachekey, self, timeout=600)
+        except (TypeError, AttributeError):
+            logger.debug(
+                "VersionedModel.refresh_from_db_if_outdated: skipping unpicklable %s pk=%s",
+                self.__class__.__name__,
+                self.pk,
+            )
         if latest_version < self.version:
             await self._set_cache_version_async()
 
@@ -120,7 +163,9 @@ class VersionedModel(models.Model):
         self.__refresh_time = time.time()
 
     def refresh_from_db(self, *args, **kwargs):
-        super().refresh_from_db(*args, **kwargs)
+        from django_scopes import scopes_disabled
+        with scopes_disabled():
+            super().refresh_from_db(*args, **kwargs)
         self.clear_caches()
         self.__refresh_time = time.time()
 
@@ -147,7 +192,7 @@ class VersionedModel(models.Model):
         self._cache_post_update()
 
     def _cache_post_update(self):
-        cache = caches["process"]
+        cache = caches["process"] if "process" in caches.settings else caches["default"]
         try:
             cache.set(self._cachekey, self, timeout=600)
         except (TypeError, AttributeError):

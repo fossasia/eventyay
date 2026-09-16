@@ -298,11 +298,15 @@ class SecurityMiddleware(MiddlewareMixin):
         if settings.DEBUG or settings.VITE_DEV_MODE:
             vite_http, vite_ws = self._vite_dev_csp_entries()
 
+        dev_frame_src = ['http:'] if settings.DEBUG or settings.VITE_DEV_MODE else []
+        dev_connect_src = ['http:', 'ws:'] if settings.DEBUG or settings.VITE_DEV_MODE else []
+
         h = {
             'default-src': ['{static}'],
             'script-src': [
                 '{static}',
                 'https://static.cloudflareinsights.com',
+                'https://challenges.cloudflare.com',
                 'https://checkout.stripe.com',
                 'https://js.stripe.com',
                 *vite_http,
@@ -311,11 +315,13 @@ class SecurityMiddleware(MiddlewareMixin):
             'object-src': ["'none'"],
             'frame-src': [
                 '{static}',
+                'https://challenges.cloudflare.com',
                 'https://checkout.stripe.com',
                 'https://js.stripe.com',
                 'https://www.youtube.com',
                 'https://www.youtube-nocookie.com',  # Privacy-enhanced YouTube embeds
                 'https:',  # Allow all HTTPS iframes
+                *dev_frame_src,
             ],
             'style-src': [
                 '{static}',
@@ -325,10 +331,12 @@ class SecurityMiddleware(MiddlewareMixin):
             'connect-src': [
                 '{dynamic}',
                 '{media}',
+                'https://challenges.cloudflare.com',
                 'https://checkout.stripe.com',
                 'https://static.cloudflareinsights.com',
                 'https:',
                 'blob:',
+                *dev_connect_src,
             ],
             'img-src': [
                 '{static}',

@@ -2,11 +2,11 @@
 .c-iframe-blocker
 	iframe(v-if="showIframe", :src="src", v-bind="$attrs")
 	.consent-blocker(v-else)
-		.warning This content is hosted by a third party on
+		.warning {{ $t('This content is hosted by a third party on') }}
 		.domain {{ domain }}
-		.toc(v-if="config.policy_url") By showing this external content you accept their #[a(:href="config.policy_url") terms and conditions].
-		bunt-button#btn-show(@click="showOnce") Show external content
-		bunt-checkbox(name="remember", v-model="remember") Remember my choice
+		.toc(v-if="config.policy_url") {{ $t('By showing this external content you accept their') }} #[a(:href="config.policy_url") {{ $t('terms and conditions') }}].
+		bunt-button#btn-show(@click="showOnce") {{ $t('Show external content') }}
+		bunt-checkbox(name="remember", v-model="remember") {{ $t('Remember my choice') }}
 </template>
 <script>
 import store from 'store'

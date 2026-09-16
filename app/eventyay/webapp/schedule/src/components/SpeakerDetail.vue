@@ -118,13 +118,13 @@ export default {
 		t() {
 			const m = this.translationMessages || {}
 			return {
-				speaker_fallback: m.speaker_fallback || 'Speaker',
-				ical: m.ical || 'iCal',
-				sessions: m.sessions || 'Sessions',
-				export: m.export || 'Exports',
-				yes: m.yes || 'Yes',
-				no: m.no || 'No',
-				biography: m.biography || 'Biography',
+				speaker_fallback: m.speaker_fallback || this.$t('Speaker'),
+				ical: m.ical || this.$t('iCal'),
+				sessions: m.sessions || this.$t('Sessions'),
+				export: m.export || this.$t('Exports'),
+				yes: m.yes || this.$t('Yes'),
+				no: m.no || this.$t('No'),
+				biography: m.biography || this.$t('Biography'),
 			}
 		},
 		resolvedSpeaker() {

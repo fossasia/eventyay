@@ -1,27 +1,31 @@
 <template lang="pug">
-router-link.c-room-list-item.table-row(:to="{name: 'admin:rooms:item', params: {roomId: room.id}}", draggable="false")
-	.handle.mdi.mdi-drag-vertical(:class="{disabled}", v-handle, v-tooltip="disabled ? 'sorting is disabled while searching' : ''")
+router-link.c-room-list-item.table-row(:to="to", :class="{'mystery': !inferredType, 'is-provider-disabled': isProviderDisabled}", draggable="false")
+	.handle.mdi.mdi-drag-vertical(:class="{disabled}", v-handle, v-tooltip="disabled ? $t('sorting is disabled while searching') : ''")
 	.name(v-html="$emojify(room.name)")
 	.badge-cell
 		.badges-wrapper
+			.room-type-badge.disabled-badge(v-if="isProviderDisabled")
+				.mdi.mdi-cancel
+				span {{ $t('Disabled by admin') }}
 			.room-type-badge.unscheduled-room-badge(v-if="room.is_unscheduled")
 				.mdi.mdi-calendar-remove
-				span Unscheduled
+				span {{ $t('Unscheduled') }}
 			.room-type-badge(v-if="inferredType", :class="badgeClass")
 				.mdi(:class="badgeIcon")
 				span {{ badgeLabel }}
 			VideoProviderDropdown(
-				v-else,
-				label="Add Video",
+				v-else-if="!isProviderDisabled",
+				:label="$t('Add Video')",
 				variant="action",
 				placement="bottom-end",
+				strategy="fixed",
 				@select="addVideo"
 			)
 </template>
 <script>
 import { ElementMixin, HandleDirective } from 'vue-slicksort'
 import { inferType } from 'lib/room-types'
-import { getConfiguredRoomLabel } from 'lib/video-providers'
+import { getConfiguredRoomLabel, MODULE_TYPE_TO_PROVIDER, isVideoProviderDisabled } from 'lib/video-providers'
 import VideoProviderDropdown from 'components/VideoProviderDropdown'
 
 export default {
@@ -29,7 +33,11 @@ export default {
 	directives: { handle: HandleDirective },
 	mixins: [ElementMixin],
 	props: {
-		room: Object
+		room: Object,
+		to: {
+			type: Object,
+			required: true
+		}
 	},
 	computed: {
 		inferredType () {
@@ -37,8 +45,18 @@ export default {
 			if (!Array.isArray(this.room?.module_config) || this.room.module_config.length === 0) return null
 			return inferType({ module_config: this.room.module_config })
 		},
+		isProviderDisabled () {
+			const videoProviders = this.$store?.state?.world?.video_providers
+			if (!videoProviders) return false
+			const modules = this.room?.module_config || []
+			return modules.some(m => {
+				const providerId = MODULE_TYPE_TO_PROVIDER[m?.type]
+				return providerId && isVideoProviderDisabled(providerId, videoProviders)
+			})
+		},
 		badgeLabel () {
-			return getConfiguredRoomLabel(this.inferredType)
+			const label = getConfiguredRoomLabel(this.inferredType)
+			return label ? this.$t(label) : ''
 		},
 		badgeIcon () {
 			return `mdi-${this.inferredType.icon}`
@@ -63,6 +81,9 @@ export default {
 	display: flex
 	align-items: center
 	color: $clr-primary-text-light
+	&.is-provider-disabled
+		.name
+			color: $clr-secondary-text-light
 	.handle
 		user-select: none
 		cursor: row-resize
@@ -104,6 +125,13 @@ export default {
 			overflow: hidden
 			text-overflow: ellipsis
 			display: block
+		&.disabled-badge
+			background-color: #fff1e0
+			color: #92400e
+			border-color: #f59e0b
+			font-weight: 600
+			.mdi
+				color: #d97706
 		&.unscheduled-room-badge
 			background-color: $clr-cyan-100
 			color: $clr-cyan-900
@@ -116,7 +144,7 @@ export default {
 		&.type-channel-janus,
 		&.type-channel-jitsi,
 		&.type-channel-zoom,
-		&.type-channel-roulette
+		&.type-channel-loungemesh
 			background-color: $clr-blue-grey-200
 			color: $clr-blue-grey-900
 			border-color: $clr-blue-grey-200

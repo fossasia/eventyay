@@ -1,0 +1,112 @@
+{% load i18n %}
+
+<dialog id="videoNotConfiguredDialog" class="permission-required-dialog" aria-labelledby="video-dialog-title" aria-describedby="video-dialog-message">
+    <form method="dialog" class="modal-card-stacked-permission">
+        <p class="modal-card-stacked-permission__icon">
+            <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
+        </p>
+        <h3 id="video-dialog-title">{% trans "Video not configured" %}</h3>
+        <p id="video-dialog-message" class="modal-card-stacked-permission__message">
+            {% blocktrans trimmed %}
+                To show the video link publicly, you need to create or configure at least one video room.
+                Please set up the video integration first.
+            {% endblocktrans %}
+        </p>
+        <button type="submit" class="btn btn-primary">{% trans "OK" %}</button>
+    </form>
+</dialog>
+
+<dialog id="unpublishErrorDialog" class="permission-required-dialog" aria-labelledby="unpublish-dialog-title" aria-describedby="unpublish-dialog-message">
+    <form method="dialog" class="modal-card-stacked-permission">
+        <p class="modal-card-stacked-permission__icon">
+            <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
+        </p>
+        <h3 id="unpublish-dialog-title">{% trans "Cannot unpublish event" %}</h3>
+        <p id="unpublish-dialog-message" class="modal-card-stacked-permission__message">
+            {% if request.event.tickets_published and request.event.talks_published %}
+                {% trans "You cannot unpublish the event while tickets and talks are published. Please switch both to private test mode first." %}
+            {% elif request.event.tickets_published %}
+                {% trans "You cannot unpublish the event while tickets are published. Please switch ticketing to private test mode first." %}
+            {% elif request.event.talks_published %}
+                {% trans "You cannot unpublish the event while talks are published. Please switch talks to private test mode first." %}
+            {% endif %}
+        </p>
+        <button type="submit" class="btn btn-primary">{% trans "OK" %}</button>
+    </form>
+</dialog>
+
+<dialog id="publishEventErrorDialog" class="permission-required-dialog" aria-labelledby="publish-dialog-title" aria-describedby="publish-dialog-message">
+    <form method="dialog" class="modal-card-stacked-permission">
+        <p class="modal-card-stacked-permission__icon">
+            <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
+        </p>
+        <h3 id="publish-dialog-title">{% trans "Cannot publish event" %}</h3>
+        <p id="publish-dialog-message" class="modal-card-stacked-permission__message">
+            {% trans "Please resolve the following issues before publishing the event:" %}
+        </p>
+        <ul class="modal-card-stacked-permission__message text-left">
+            {% for issue in info_publish_issues %}
+                <li>{{ issue|safe }}</li>
+            {% endfor %}
+        </ul>
+        <button type="submit" class="btn btn-primary">{% trans "OK" %}</button>
+    </form>
+</dialog>
+
+<dialog id="ticketingTestErrorDialog" class="permission-required-dialog" aria-labelledby="ticketing-test-dialog-title" aria-describedby="ticketing-test-dialog-message">
+    <form method="dialog" class="modal-card-stacked-permission">
+        <p class="modal-card-stacked-permission__icon">
+            <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
+        </p>
+        <h3 id="ticketing-test-dialog-title">{% trans "Cannot enable public test mode" %}</h3>
+        <p id="ticketing-test-dialog-message" class="modal-card-stacked-permission__message">
+            {% if not request.event.live %}
+                {% trans "You must publish the event main page before enabling public test mode for tickets." %}
+            {% elif not ticketing_ready %}
+                {% trans "You must set up ticketing and create at least one product before enabling test mode." %}
+            {% endif %}
+        </p>
+        <button type="submit" class="btn btn-primary">{% trans "OK" %}</button>
+    </form>
+</dialog>
+
+<dialog id="ticketingLiveErrorDialog" class="permission-required-dialog" aria-labelledby="ticketing-live-dialog-title" aria-describedby="ticketing-live-dialog-message">
+    <form method="dialog" class="modal-card-stacked-permission">
+        <p class="modal-card-stacked-permission__icon">
+            <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
+        </p>
+        <h3 id="ticketing-live-dialog-title">{% trans "Cannot publish ticket sales" %}</h3>
+        {% if not request.event.live %}
+            <p id="ticketing-live-dialog-message" class="modal-card-stacked-permission__message">
+                {% trans "You must publish the event main page before going live with ticket sales." %}
+            </p>
+        {% elif not ticketing_ready %}
+            <p id="ticketing-live-dialog-message" class="modal-card-stacked-permission__message">
+                {% trans "You must set up ticketing and create at least one product before going live." %}
+            </p>
+        {% elif ticket_issues %}
+            <p id="ticketing-live-dialog-message" class="modal-card-stacked-permission__message">
+                {% trans "Please resolve the following issues before publishing tickets:" %}
+            </p>
+            <ul class="modal-card-stacked-permission__message text-left">
+                {% for issue in ticket_issues %}
+                    <li>{{ issue|safe }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        <button type="submit" class="btn btn-primary">{% trans "OK" %}</button>
+    </form>
+</dialog>
+
+<dialog id="talksLiveErrorDialog" class="permission-required-dialog" aria-labelledby="talks-live-dialog-title" aria-describedby="talks-live-dialog-message">
+    <form method="dialog" class="modal-card-stacked-permission">
+        <p class="modal-card-stacked-permission__icon">
+            <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
+        </p>
+        <h3 id="talks-live-dialog-title">{% trans "Cannot publish talks" %}</h3>
+        <p id="talks-live-dialog-message" class="modal-card-stacked-permission__message">
+            {% trans "You must publish the event main page before publishing talks." %}
+        </p>
+        <button type="submit" class="btn btn-primary">{% trans "OK" %}</button>
+    </form>
+</dialog>

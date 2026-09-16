@@ -8,14 +8,16 @@
           {{ phrases.schedule.sessions }}
         {% elif tag == "slot" %}
           {{ phrases.schedule.schedule }}
-        {% elif tag == "user" %}
-          {% translate "User" %}
+        {% elif tag == "user" or tag == "recipient" %}
+          {% translate "Recipient" %}
+        {% elif tag == "order" %}
+          {% translate "Order" %}
+        {% elif tag == "ticket" %}
+          {% translate "Ticket / attendee" %}
+        {% elif tag == "invoice" %}
+          {% translate "Invoice / payment" %}
         {% elif tag == "event" %}
-          {% blocktranslate trimmed count count=1 %}
-            Event
-          {% plural %}
-            Events
-          {% endblocktranslate %}
+          {% translate "Event" %}
         {% elif tag == "other" %}
           {% translate "Other" context "category of items" %}
         {% else %}
@@ -27,7 +29,7 @@
       </span>
     </div>
     <ul class="list-group list-group-flush">
-      {% for placeholder in placeholders %}{% if placeholder.is_visible %}
+      {% for placeholder in placeholders %}{% if placeholder.is_visible != False %}
         <li class="list-group-item list-group-item-action placeholder" data-placeholder="{{ placeholder.identifier }}">
           <div class="placeholder-content">
             <span class="placeholder-text">
@@ -38,7 +40,7 @@
             </span>
           </div>
           <small class="text-muted collapse" id="collapse{{ placeholder.identifier }}" data-parent="#placeholder-{{ tag }}">
-            {{ placeholder.explanation }}, {% translate "e.g." %} {{ placeholder.rendered_sample|rich_text }}
+            {% if placeholder.explanation %}{{ placeholder.explanation }}, {% endif %}{% translate "e.g." %} {{ placeholder.rendered_sample|rich_text }}
           </small>
         </li>
       {% endif %}{% endfor %}

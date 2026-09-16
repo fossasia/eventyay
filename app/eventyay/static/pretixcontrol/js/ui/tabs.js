@@ -19,7 +19,7 @@ $(function () {
             var $tablink = $("<a>").attr("role", "tab")
                 .attr("data-toggle", "tab")
                 .attr("href", "#" + tid)
-                .text($fieldset.find("legend").text())
+                .text($fieldset.children("legend").text())
                 .appendTo($tabli);
             if ($fieldset.find(".has-error, .alert-danger").length > 0) {
                 $tablink.append(" ");
@@ -38,16 +38,21 @@ $(function () {
                     $tablink.click();
                 }
             });
-            $fieldset.find("legend").remove();
+            $fieldset.children("legend").remove();
             $fieldset.addClass("tab-pane").attr("id", tid);
-            if (location.hash && ($fieldset.find(location.hash).length || location.hash === "#" + tid + "-open") && hash_preselect === null) {
+            var normHash = location.hash ? location.hash.replace(/_/g, "-") : "";
+            var normTid = tid ? tid.replace(/_/g, "-") : "";
+            if (location.hash && (location.hash === "#" + tid || location.hash === "#" + tid + "-open" || normHash === "#" + normTid || normHash === "#" + normTid + "-open" || $fieldset.find(location.hash).length) && hash_preselect === null) {
                 hash_preselect = i;
             }
             i++;
         });
         var preselect = error_preselect !== null ? error_preselect : (hash_preselect !== null ? hash_preselect : 0);
+        var initial_load = true;
         $tabs.find("a").on('shown.bs.tab', function (e) {
-            history.replaceState(null, null, e.target.getAttribute("href") + "-open");
+            if (!initial_load || location.hash) {
+                history.replaceState(null, null, e.target.getAttribute("href"));
+            }
             var targetId = e.target.getAttribute("href");
             var $targetPane = $(targetId);
             var $submitGroup = $form.closest("form").find(".submit-group");
@@ -57,7 +62,19 @@ $(function () {
                 $submitGroup.show();
             }
         });
-        $tabs.find("a").get(preselect).click();
+        $tabs.find("a").eq(preselect).tab('show');
+        initial_load = false;
+        $(window).on("hashchange", function () {
+            if (!location.hash) return;
+            var normHash = location.hash.replace(/_/g, "-");
+            $tabs.find("a").each(function () {
+                var href = $(this).attr("href");
+                var normHref = href ? href.replace(/_/g, "-") : "";
+                if (location.hash === href || location.hash === href + "-open" || normHash === normHref || normHash === normHref + "-open") {
+                    $(this).tab('show');
+                }
+            });
+        });
         $form.closest("form").on("submit", function () {
             validity_error = false;
         });

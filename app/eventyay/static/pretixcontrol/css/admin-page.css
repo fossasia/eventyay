@@ -1,3 +1,23 @@
+.admin-dashboard-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+.admin-dashboard-title h1 {
+  margin: 0;
+}
+
+.admin-dashboard-title form {
+  margin: 0;
+}
+
+.admin-dashboard-title .btn {
+  margin-top: 0;
+}
+
 .admin-section {
   margin-top: 16px;
   margin-bottom: 16px;
@@ -115,4 +135,39 @@
 
 .dashboard-panels .panel-body .event-table {
   margin-bottom: 0;
+}
+
+.config-status-ok {
+  color: #3c763d;
+  font-weight: 600;
+}
+
+.config-status-warn {
+  color: #8a6d3b;
+  font-weight: 600;
+}
+
+.dashboard-panels .list-group-item {
+  border-left: none;
+  border-right: none;
+  padding: 10px 15px;
+}
+
+.dashboard-panels .list-group-item:first-child {
+  border-top: none;
+}
+
+.dashboard-panels .list-group-item:last-child {
+  border-bottom: none;
+}
+
+.dashboard-panels .list-group-item-heading {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: #333;
+}
+
+.dashboard-panels .list-group-item:hover .list-group-item-heading {
+  color: #2b4970;
 }

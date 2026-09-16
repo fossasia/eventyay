@@ -6,7 +6,9 @@
   "scripts": {
     "start": "vite",
     "build": "vite build",
-    "analyze": "ANALYZE=true npm run build"
+    "analyze": "ANALYZE=true npm run build",
+    "i18n:extract": "node ../i18n/extract.mjs extract --domain schedule",
+    "test:i18n": "node --test \"../i18n/*.test.js\""
   },
   "main": "./dist/pretalx-schedule.js",
   "type": "module",
@@ -24,6 +26,7 @@
   "dependencies": {
     "buntpapier": "^2.0.0-alpha.34",
     "dompurify": "^3.4.11",
+    "i18next": "^26.3.6",
     "markdown-it": "^15.0.0",
     "markdown-it-multimd-table": "^4.2.3",
     "moment-timezone": "^0.6.2",
@@ -31,6 +34,8 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.7",
+    "i18next-conv": "^17.0.0",
+    "i18next-parser": "^9.4.0",
     "pug": "^3.0.4",
     "stylus": "^0.64.0",
     "vite": "^8.2.0"

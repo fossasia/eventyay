@@ -107,7 +107,7 @@ def test_create_always_on_hls_stage_stores_base_stream(monkeypatch):
 @pytest.mark.django_db
 def test_stream_schedule_choices_do_not_expose_native():
     choices = [choice[0] for choice in StreamSchedule._meta.get_field("stream_type").choices]
-    assert choices == ["youtube", "vimeo", "hls", "iframe"]
+    assert choices == ["youtube", "vimeo", "hls"]
     assert "native" not in choices
 
 

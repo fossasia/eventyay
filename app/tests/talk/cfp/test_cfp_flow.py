@@ -1,11 +1,13 @@
 import pytest
+from types import SimpleNamespace
+from unittest.mock import MagicMock
 from django import forms
 from django.http import HttpResponseNotAllowed
 from django_scopes import scope
 from i18nfield.strings import LazyI18nString
 
 from eventyay.cfp.forms.cfp import CfPFormMixin
-from eventyay.cfp.flow import BaseCfPStep, i18n_string
+from eventyay.cfp.flow import BaseCfPStep, FormFlowStep, i18n_string
 
 
 @pytest.mark.parametrize(
@@ -88,6 +90,32 @@ def test_base_cfp_step_attributes():
     assert isinstance(step.get(None), HttpResponseNotAllowed)
     assert isinstance(step.post(None), HttpResponseNotAllowed)
 
+def test_form_flow_step_handles_none_file_content_type():
+    class TestFormFlowStep(FormFlowStep):
+        @property
+        def identifier(self):
+            return 'test'
+
+    step = TestFormFlowStep(None)
+    step.cfp_session = {
+        'files': {
+            'test': {
+                'image': {
+                    'name': 'test.png',
+                    'tmp_name': 'test.png',
+                    'content_type': None,
+                }
+            }
+        }
+    }
+
+    assert step.get_form_initial() == {
+        'image': SimpleNamespace(
+            name='test.png',
+            url='/media/cfp_uploads/test.png'
+        )
+    }
+
 
 def test_cfp_form_mixin_scrubs_incomplete_errors_in_not_strict_mode():
     class PartialValueField(forms.MultiValueField):
@@ -118,3 +146,124 @@ def test_cfp_form_mixin_scrubs_incomplete_errors_in_not_strict_mode():
 
     assert form.is_valid()
     assert not form.errors
+
+
+def test_form_flow_step_clears_last_session_file():
+    
+    class TestFormFlowStep(FormFlowStep):
+        @property
+        def identifier(self):
+            return 'test'
+            
+    step = TestFormFlowStep(None)
+    step.request = MagicMock()
+    step.request.method = 'POST'
+    step.request.POST = {'slide-clear': '1'}
+    step.file_storage = MagicMock()
+    
+    step.cfp_session = {
+        'files': {
+            'test': {
+                'slide': {
+                    'name': 'test.pdf',
+                    'tmp_name': 'test_tmp.pdf',
+                    'content_type': 'application/pdf',
+                }
+            }
+        }
+    }
+    
+    files = step.get_files()
+    
+    assert files is None
+    assert 'slide' not in step.cfp_session['files']['test']
+
+
+def test_form_flow_step_invalid_post_retains_session_file():
+    
+    class TestForm(forms.Form):
+        name = forms.CharField(required=True)
+        document = forms.FileField(required=False)
+        
+    class TestFormFlowStep(FormFlowStep):
+        form_class = TestForm
+        @property
+        def identifier(self):
+            return 'test'
+            
+        def get_form_kwargs(self):
+            return {}
+            
+    step = TestFormFlowStep(None)
+    step.request = MagicMock()
+    step.request.method = 'POST'
+    step.request.POST = {'name': ''}  # Invalid POST (missing required 'name')
+    step.request.FILES = MagicMock()
+    step.request.FILES.lists.return_value = []
+    step.file_storage = MagicMock()
+    
+    step.cfp_session = {
+        'initial': {},
+        'data': {},
+        'files': {
+            'test': {
+                'document': {
+                    'name': 'test.pdf',
+                    'tmp_name': 'test_tmp.pdf',
+                    'content_type': 'application/pdf',
+                }
+            }
+        }
+    }
+    
+    form = step.get_form()
+    
+    assert not form.is_valid()
+    assert 'name' in form.errors
+    # Verify the previously uploaded file's initial data remains available on the form
+    assert 'document' in form.initial
+    assert form.initial['document'].name == 'test.pdf'
+
+
+def test_form_flow_step_invalid_post_cleared_file_not_in_initial():
+    class TestForm(forms.Form):
+        name = forms.CharField(required=True)
+        document = forms.FileField(required=False)
+        
+    class TestFormFlowStep(FormFlowStep):
+        form_class = TestForm
+        @property
+        def identifier(self):
+            return 'test'
+            
+        def get_form_kwargs(self):
+            return {}
+            
+    step = TestFormFlowStep(None)
+    step.request = MagicMock()
+    step.request.method = 'POST'
+    step.request.POST = {'name': '', 'document-clear': '1'}  # Invalid POST + clear file
+    step.request.FILES = MagicMock()
+    step.request.FILES.lists.return_value = []
+    step.file_storage = MagicMock()
+    
+    step.cfp_session = {
+        'initial': {},
+        'data': {},
+        'files': {
+            'test': {
+                'document': {
+                    'name': 'test.pdf',
+                    'tmp_name': 'test_tmp.pdf',
+                    'content_type': 'application/pdf',
+                }
+            }
+        }
+    }
+    
+    form = step.get_form()
+    
+    assert not form.is_valid()
+    assert 'name' in form.errors
+    # Verify the cleared file is removed from the form initial data
+    assert 'document' not in form.initial or not form.initial['document']

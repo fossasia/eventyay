@@ -1,5 +1,5 @@
 import Vuex from 'vuex'
-import i18n from 'i18n'
+import { persistLanguage, changeLanguage } from 'i18n'
 import { jwtDecode } from 'jwt-decode'
 import api, { initApi } from 'lib/api'
 import { doesTraitsMatchGrants } from 'lib/traitGrants'
@@ -7,7 +7,6 @@ import announcement from './announcement'
 import chat from './chat'
 import question from './question'
 import poll from './poll'
-import roulette from './roulette'
 import schedule from './schedule'
 import notifications from './notifications'
 import moment from 'lib/timetravelMoment'
@@ -53,7 +52,10 @@ export default new Vuex.Store({
 				.map((d) => normalizeIframeConsentDomain(d))
 				.filter(Boolean)
 		),
-		youtubeTranslationsByRoom: {}
+		interpretationStreamsByRoom: {},
+		youtubeTranslationsByRoom: {},
+		activeRoomSidebarTab: null,
+		roomSidebarCollapsedByRoom: {}
 	},
 	getters: {
 		hasPermission(state) {
@@ -62,6 +64,8 @@ export default new Vuex.Store({
 			}
 		},
 		isAdminMode(state) {
+			if (Array.isArray(state.user?.traits) && state.user.traits.includes('admin')) return true
+			if (typeof window !== 'undefined' && window.eventyay?.hasStaffSession) return true
 			if (!state.token) return false
 			try {
 				const token = jwtDecode(state.token)
@@ -123,12 +127,21 @@ export default new Vuex.Store({
 		updateNow(state) {
 			state.now = moment()
 		},
+		updateInterpretationAudio(state, {roomId, interpretation}) {
+			if (!roomId) return
+			state.interpretationStreamsByRoom = {
+				...state.interpretationStreamsByRoom,
+				[roomId]: interpretation
+			}
+			state.youtubeTranslationsByRoom = state.interpretationStreamsByRoom
+		},
 		updateYoutubeTransAudio(state, {roomId, youtubeTranslation}) {
 			if (!roomId) return
-			state.youtubeTranslationsByRoom = {
-				...state.youtubeTranslationsByRoom,
+			state.interpretationStreamsByRoom = {
+				...state.interpretationStreamsByRoom,
 				[roomId]: youtubeTranslation
 			}
+			state.youtubeTranslationsByRoom = state.interpretationStreamsByRoom
 		},
 		setStreamPollInterval(state, streamPollInterval) {
 			state.streamPollInterval = streamPollInterval
@@ -165,6 +178,36 @@ export default new Vuex.Store({
 			if (!normalized) return
 			// Replace the Set so watchers that track the reference see the change.
 			state.unblockedIframeDomains = new Set([...state.unblockedIframeDomains, normalized])
+		},
+		setActiveRoomSidebarTab(state, tab) {
+			state.activeRoomSidebarTab = tab
+		},
+		toggleRoomSidebar(state, { roomId, tab = 'chat' } = {}) {
+			if (!roomId) return
+			const isCurrentlyCollapsed = Boolean(state.roomSidebarCollapsedByRoom[roomId])
+			if (isCurrentlyCollapsed) {
+				state.roomSidebarCollapsedByRoom = {
+					...state.roomSidebarCollapsedByRoom,
+					[roomId]: false
+				}
+				if (tab) {
+					state.activeRoomSidebarTab = tab
+				}
+			} else if (state.activeRoomSidebarTab && state.activeRoomSidebarTab !== tab) {
+				state.activeRoomSidebarTab = tab
+			} else {
+				state.roomSidebarCollapsedByRoom = {
+					...state.roomSidebarCollapsedByRoom,
+					[roomId]: true
+				}
+			}
+		},
+		setRoomSidebarCollapsed(state, { roomId, collapsed }) {
+			if (!roomId) return
+			state.roomSidebarCollapsedByRoom = {
+				...state.roomSidebarCollapsedByRoom,
+				[roomId]: Boolean(collapsed)
+			}
 		}
 	},
 	actions: {
@@ -378,16 +421,17 @@ export default new Vuex.Store({
 				// preserve the last fatal error for the room without attempting to reconnect immediately
 				return
 			}
-			if (room?.modules.some(module => ['livestream.native', 'livestream.youtube', 'livestream.iframe', 'call.bigbluebutton', 'call.zoom', 'call.janus', 'call.jitsi'].includes(module.type))) {
+			if (room) {
 				try {
 					const { viewers } = await api.call('room.enter', {room: room.id})
-					state.roomViewers = viewers
+					state.roomViewers = viewers || []
 					if (state.roomFatalErrors?.[room.id]) {
 						const {[room.id]: _removed, ...rest} = state.roomFatalErrors
 						state.roomFatalErrors = rest
 					}
 				} catch {
 					// room.enter failures are non-critical, continue with room change
+					state.roomViewers = []
 				}
 			}
 			dispatch('question/changeRoom', room)
@@ -401,7 +445,8 @@ export default new Vuex.Store({
 			return await api.call('room.schedule', {room: room.id, schedule_data})
 		},
 		async updateUserLocale({state}, locale) {
-			await i18n.changeLanguage(locale)
+			await persistLanguage(locale)
+			await changeLanguage(locale)
 			state.userLocale = locale
 		},
 		updateUserTimezone({state}, timezone) {
@@ -435,7 +480,7 @@ export default new Vuex.Store({
 		},
 		'api::world.updated'({state, commit, dispatch}, {world, rooms, permissions}) {
 			state.world = world
-			state.permission = permissions
+			state.permissions = permissions
 			commit('updateRooms', rooms)
 		},
 		// Backwards-compat: server emits 'event.updated' with a payload that contains both
@@ -445,7 +490,7 @@ export default new Vuex.Store({
 			const rooms = payload.rooms || []
 			const permissions = payload.permissions
 			state.world = world
-			state.permission = permissions
+			state.permissions = permissions
 			commit('updateRooms', rooms)
 		},
 		'api::world.schedule.updated'({state, commit, dispatch}, pretalx) {
@@ -459,15 +504,19 @@ export default new Vuex.Store({
 			dispatch('schedule/fetch', {root: true})
 		},
 		'api::world.user_count_change'({state, commit, dispatch}, {room, users}) {
-			room = state.rooms.find(r => r.id === room)
-			room.users = users
-			commit('updateRooms', state.rooms)
+			const targetRoom = state.rooms?.find(r => String(r.id) === String(room))
+			if (targetRoom) {
+				targetRoom.users = users
+				commit('updateRooms', [...state.rooms])
+			}
 		},
 		// Backwards-compat: server emits 'event.user_count_change'
 		'api::event.user_count_change'({state, commit, dispatch}, {room, users}) {
-			room = state.rooms.find(r => r.id === room)
-			room.users = users
-			commit('updateRooms', state.rooms)
+			const targetRoom = state.rooms?.find(r => String(r.id) === String(room))
+			if (targetRoom) {
+				targetRoom.users = users
+				commit('updateRooms', [...state.rooms])
+			}
 		},
 		'api::room.schedule'({state}, {room, schedule_data}) {
 			room = state.rooms.find(r => r.id === room)
@@ -475,9 +524,8 @@ export default new Vuex.Store({
 			room.schedule_data = schedule_data
 		},
 		'api::user.updated'({state, dispatch}, update) {
-			for (const [key, value] of Object.entries(update)) {
-				state.user[key] = value
-			}
+			// Replace nested objects (e.g. profile/slides) so Vue tracks kiosk setting changes.
+			state.user = Object.assign({}, state.user, update)
 			dispatch('chat/updateUser', {id: state.user.id, update})
 		},
 		'api::room.viewer.added'({state}, {user}) {
@@ -527,7 +575,6 @@ export default new Vuex.Store({
 		question,
 		poll,
 		schedule,
-		roulette,
 		notifications
 	}
 })

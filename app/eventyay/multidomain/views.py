@@ -2,30 +2,35 @@ import json
 import logging
 import os
 from mimetypes import guess_type
+from urllib.parse import quote
 from urllib.request import urlopen
 
-from django.shortcuts import redirect
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import Http404, HttpResponse
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import ensure_csrf_cookie
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.urls.exceptions import NoReverseMatch
+from django.utils.decorators import method_decorator
 from django.utils.encoding import force_str
-from django.utils.timezone import now
 from django.utils.functional import Promise
-from django.utils.translation import gettext as _
+from django.utils.timezone import now
+from django.utils.translation import gettext as _, pgettext
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.generic import View
 from django.views.static import serve as static_serve
 from django_scopes import scope
 from i18nfield.strings import LazyI18nString
-from eventyay.base.models.room import AnonymousInvite
-from eventyay.base.models import Event  # Added for /video event context
-from eventyay.base.services.video_theme import build_video_theme_for_event
+
 from eventyay.agenda.views.utils import build_public_schedule_exporters
+from eventyay.base.models import Event
+from eventyay.base.models.room import AnonymousInvite
+from eventyay.base.services.video_theme import build_video_theme_for_event
+from eventyay.common.language import get_ui_language_options
 from eventyay.common.templatetags.vite import fetch_vite_html, VIDEO_DIST_DIR, VIDEO_DEV_SERVER
 from eventyay.consts import SizeKey
+from eventyay.eventyay_common.video.traits_sync import check_has_active_staff_session
 
 logger = logging.getLogger(__name__)
 
@@ -39,20 +44,34 @@ def safe_reverse(name: str, **kw) -> str:
 
 
 class VideoSPAView(View):
+    is_organizer = False
+
     @method_decorator(ensure_csrf_cookie)
     def get(self, request, *args, **kwargs):
-        # Now expecting organizer and event from URL pattern: /{organizer}/{event}/video
         organizer_slug = kwargs.get('organizer')
         event_slug = kwargs.get('event')
         event_identifier = kwargs.get('event_identifier')
 
-        # TODO remove debug logging once new video routing is stable
         event = None
         if organizer_slug and event_slug:
             try:
                 event = Event.objects.select_related('organizer').get(slug=event_slug, organizer__slug=organizer_slug)
             except Event.DoesNotExist:
                 return HttpResponse('Event not found', status=404)
+
+        if self.is_organizer and event:
+            if not request.user.is_authenticated:
+                login_url = safe_reverse('auth.login')
+                return redirect(f"{login_url}?next={quote(request.get_full_path())}")
+
+            has_access = (
+                request.user.is_staff
+                or getattr(request.user, 'is_superuser', False)
+                or request.user.has_event_permission(event.organizer, event, request=request)
+                or request.user.has_organizer_permission(event.organizer, request=request)
+            )
+            if not has_access:
+                raise PermissionDenied(_("You do not have permission to access the video organizer area."))
 
         index_path = VIDEO_DIST_DIR / 'index.html'
         if settings.VITE_DEV_MODE:
@@ -64,13 +83,7 @@ class VideoSPAView(View):
 
         base_href = '/video/'
         if event:
-            # Inject window.venueless config (frontend still expects this name)
-            # Mirror structure used in legacy live AppView but adjusted basePath
-
-            # Quick fix: avoid reverse('api:root') which is currently not included -> NoReverseMatch
-            api_base = f'/api/v1/events/{event.slug}/'  # TODO replace with reverse once API namespace wired
-
-            # Best effort reverse for optional endpoints
+            api_base = f'/api/v1/events/{event.slug}/'
 
             cfg = event.config or {}
 
@@ -89,15 +102,57 @@ class VideoSPAView(View):
                 schedule_version = schedule.version if schedule else None
                 schedule_exporters = build_public_schedule_exporters(event, version=schedule_version)
 
-            base_path = event.urls.video_base.rstrip('/')
-            base_href = event.urls.video_base
+            if self.is_organizer:
+                base_path = f'/video/event/{event.organizer.slug}/{event.slug}'
+                base_href = f'/video/event/{event.organizer.slug}/{event.slug}/'
+            else:
+                base_path = event.urls.video_base.rstrip('/')
+                base_href = event.urls.video_base
+
+            has_ticket_access = bool(
+                request.user.is_authenticated
+                and (
+                    request.user.is_staff
+                    or getattr(request.user, 'is_superuser', False)
+                    or request.user.has_event_permission(event.organizer, event, 'can_view_orders', request=request)
+                    or request.user.has_event_permission(event.organizer, event, 'can_change_items', request=request)
+                    or request.user.has_event_permission(event.organizer, event, 'can_change_event_settings', request=request)
+                )
+            )
+            has_talk_access = bool(
+                request.user.is_authenticated
+                and (
+                    request.user.is_staff
+                    or getattr(request.user, 'is_superuser', False)
+                    or request.user.has_event_permission(event.organizer, event, 'can_change_submissions', request=request)
+                )
+            )
+            can_manage = bool(
+                request.user.is_authenticated
+                and (
+                    request.user.is_staff
+                    or getattr(request.user, 'is_superuser', False)
+                    or request.user.has_event_permission(event.organizer, event, request=request)
+                    or request.user.has_organizer_permission(event.organizer, request=request)
+                )
+            )
+
             injected = {
+                'isOrganizerArea': self.is_organizer,
+                'hasOrganiserPermissions': can_manage,
+                'publicVideoUrl': f'/{event.organizer.slug}/{event.slug}/video',
+                'homeUrl': safe_reverse('eventyay_common:event.index', organizer=event.organizer.slug, event=event.slug),
+                'ticketUrl': safe_reverse('control:event.index', organizer=event.organizer.slug, event=event.slug) if has_ticket_access else None,
+                'talkUrl': safe_reverse('orga:event.dashboard', organizer=event.organizer.slug, event=event.slug) if has_talk_access else None,
+                'videoUrl': f'/video/event/{event.organizer.slug}/{event.slug}/',
+                'commonAccountUrl': safe_reverse('eventyay_common:event.index', organizer=event.organizer.slug, event=event.slug),
                 'api': {
                     'base': api_base,
-                    'socket': '{}://{}/ws/event/{}/'.format(
+                    'socket': '{}://{}/ws/event/{}/{}'.format(
                         'wss' if request.is_secure() else 'ws',
                         request.get_host(),
                         event.pk,
+                        '?organizer=1' if self.is_organizer else '?organizer=0',
                     ),
                     'upload': safe_reverse('storage:upload', event_id=event.pk) or '',
                     'uploadMaxSize': settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_OTHER],
@@ -105,6 +160,13 @@ class VideoSPAView(View):
                     'systemlog': safe_reverse('live:systemlog') or '',
                 },
                 'features': getattr(event, 'feature_flags', {}) or {},
+                'liveFeatures': {
+                    'chat_rooms': False,
+                    'kiosks': False,
+                    'direct_messaging': False,
+                    'announcements': False,
+                    **(cfg.get('live_features') or {}),
+                },
                 'externalAuthUrl': getattr(event, 'external_auth_url', None),
                 'locale': event.locale,
                 'date_locale': cfg.get('date_locale', 'en-ie'),
@@ -132,6 +194,8 @@ class VideoSPAView(View):
                 # Extra values expected by config.js/theme
                 'eventUrl': str(event.urls.base),
                 'showPublicly': bool(request.user.is_authenticated and request.user.show_publicly),
+                'isStaff': bool(request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser)),
+                'hasStaffSession': check_has_active_staff_session(request.user, request.session.session_key),
                 'eventSlug': event.slug,
                 'organizerSlug': event.organizer.slug if event.organizer else None,
                 'eventDates': {
@@ -146,7 +210,7 @@ class VideoSPAView(View):
                 'showTimes': bool(event.settings.show_times),
                 'basePath': base_path,
                 'defaultLocale': 'en',
-                'locales': ['en', 'de', 'pt_BR', 'ar', 'fr', 'es', 'uk', 'ru'],
+                'locales': get_ui_language_options(),
                 'noThemeEndpoint': True,  # Prevent frontend from requesting missing /theme endpoint
                 'translationMessages': {
                     'favs_anonymous_notice': str(_(
@@ -175,9 +239,10 @@ class VideoSPAView(View):
                     )),
                     'version_warning_old': str(_('You are currently viewing an older schedule version.')),
                     'join_room': str(_('Join room')),
+                    'join_session': str(_('Join session')),
                     'view_video': str(_('View Video')),
                     'watch_live': str(_('Watch live')),
-                    'speaker_fallback': str(_('Speaker')),
+                    'speaker_fallback': str(pgettext('noun', 'Speaker')),
                     'speaker_name_not_provided': str(_('Speaker name not provided')),
                     'add_to_calendar': str(_('Add to Calendar')),
                     'ical': str(_('iCal')),
@@ -306,4 +371,20 @@ class AnonymousInviteRedirectView(View):
         # Redirect to /{organizer}/{event}/video/standalone/{room_id}/anonymous#invite={token}
         redirect_url = f"/{organizer_slug}/{event_slug}/video/standalone/{room_id}/anonymous#invite={token}"
         return redirect(redirect_url)
+
+
+class VideoAdminRedirectView(View):
+    """
+    Redirects legacy /<organizer>/<event>/video/admin/* or /<organizer>/<event>/video/event/* routes
+    to the new organizer area: /video/event/<organizer>/<event>/*
+    """
+    def get(self, request, organizer, event, subpath=None, *args, **kwargs):
+        target = f'/video/event/{organizer}/{event}/'
+        if subpath:
+            target = f"{target.rstrip('/')}/{subpath.lstrip('/')}"
+        query = request.META.get('QUERY_STRING')
+        if query:
+            target = f"{target}?{query}"
+        return redirect(target)
+
 

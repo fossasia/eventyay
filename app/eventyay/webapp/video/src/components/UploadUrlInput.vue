@@ -6,7 +6,7 @@
 		.file-selector(v-else)
 			bunt-icon-button upload
 			input(ref="fileInput", type="file", :accept="accept", @change="upload")
-	.upload-hint(v-if="maxFileSize") Maximum file size: {{ formatFileSize(maxFileSize) }}.
+	.upload-hint(v-if="maxFileSize") {{ $t('Maximum file size:') }} {{ formatFileSize(maxFileSize) }}.
 	.upload-error(v-if="uploadError", role="alert") {{ uploadError }}
 
 </template>
@@ -71,10 +71,10 @@ export default {
 				const apiError = error.apiError || {}
 				if (apiError.status === 413 || apiError.error === 'file.size') {
 					this.uploadError = this.maxFileSize
-						? `The file is too large. Maximum upload size is ${formatFileSize(this.maxFileSize)}.`
-						: 'The file is too large. Please choose a smaller file.'
+						? this.$t('The file is too large. Maximum upload size is {{size}}.', {size: formatFileSize(this.maxFileSize)})
+						: this.$t('The file is too large. Please choose a smaller file.')
 				} else {
-					this.uploadError = 'The file could not be uploaded. Please try again.'
+					this.uploadError = this.$t('The file could not be uploaded. Please try again.')
 				}
 			} finally {
 				this.uploading = false

@@ -1,0 +1,43 @@
+{% extends "pretixcontrol/admin/pages/tabs_base.html" %}
+{% load i18n %}
+{% load bootstrap3 %}
+{% block pages_content %}
+    <form action="" method="post" class="form-horizontal pages-form" enctype="multipart/form-data" data-page-i18n-form>
+        {% csrf_token %}
+        {% bootstrap_form_errors form %}
+        {% include "pretixcontrol/admin/pages/_language_switcher.html" %}
+
+        <fieldset>
+            <legend>{% trans "Header" %}</legend>
+            {% bootstrap_field form.startpage_header_image layout="control" %}
+            {% bootstrap_field form.startpage_header_text layout="control" %}
+        </fieldset>
+        <fieldset>
+            <legend>{% trans "Hero section" %}</legend>
+            {% bootstrap_field form.startpage_show_hero layout="control" %}
+            {% bootstrap_field form.startpage_hero_title layout="control" %}
+            {% bootstrap_field form.startpage_hero_text layout="control" %}
+        </fieldset>
+        <fieldset>
+            <legend>{% trans "Feature boxes" %}</legend>
+            {% bootstrap_field form.startpage_show_features layout="control" %}
+            {% bootstrap_field form.startpage_feature_1_title layout="control" %}
+            {% bootstrap_field form.startpage_feature_1_text layout="control" %}
+            {% bootstrap_field form.startpage_feature_2_title layout="control" %}
+            {% bootstrap_field form.startpage_feature_2_text layout="control" %}
+            {% bootstrap_field form.startpage_feature_3_title layout="control" %}
+            {% bootstrap_field form.startpage_feature_3_text layout="control" %}
+            {% bootstrap_field form.startpage_feature_4_title layout="control" %}
+            {% bootstrap_field form.startpage_feature_4_text layout="control" %}
+        </fieldset>
+
+        <div class="form-group submit-group">
+            <a href="/" target="_blank" rel="noopener" class="btn btn-default btn-lg pull-left flip">
+                <i class="fa fa-eye" aria-hidden="true"></i> {% trans "Preview" %}
+            </a>
+            <button type="submit" class="btn btn-primary btn-save">
+                {% trans "Save" %}
+            </button>
+        </div>
+    </form>
+{% endblock %}

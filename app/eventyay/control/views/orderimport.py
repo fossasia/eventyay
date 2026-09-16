@@ -47,30 +47,40 @@ def import_settings_from_form(form):
 
 
 class ImportView(EventPermissionRequiredMixin, TemplateView):
-    template_name = 'pretixcontrol/orders/import_start.html'
+    template_name = 'pretixcontrol/orders/import_export.html'
     permission = 'can_change_orders'
+
+    def get_context_data(self, **kwargs):
+        from eventyay.control.views.orders import get_banktransfer_import_context
+        ctx = super().get_context_data(**kwargs)
+        ctx['active_tab'] = self.request.GET.get('tab', 'import')
+        ctx['exporters'] = []
+        ctx.update(get_banktransfer_import_context(self.request))
+        return ctx
 
     def post(self, request, *args, **kwargs):
         if 'file' not in request.FILES:
             return redirect(
                 reverse(
-                    'control:event.orders.import',
+                    'control:event.orders.import_export',
                     kwargs={
                         'event': request.event.slug,
                         'organizer': request.organizer.slug,
                     },
                 )
+                + '?tab=import'
             )
         if not request.FILES['file'].name.lower().endswith('.csv'):
             messages.error(request, _('Please only upload CSV files.'))
             return redirect(
                 reverse(
-                    'control:event.orders.import',
+                    'control:event.orders.import_export',
                     kwargs={
                         'event': request.event.slug,
                         'organizer': request.organizer.slug,
                     },
                 )
+                + '?tab=import'
             )
         if request.FILES['file'].size > settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_OTHER]:
             max_size_bytes = settings.MAX_SIZE_CONFIG["other"]
@@ -83,12 +93,13 @@ class ImportView(EventPermissionRequiredMixin, TemplateView):
             )
             return redirect(
                 reverse(
-                    'control:event.orders.import',
+                    'control:event.orders.import_export',
                     kwargs={
                         'event': request.event.slug,
                         'organizer': request.organizer.slug,
                     },
                 )
+                + '?tab=import'
             )
 
         cf = CachedFile.objects.create(
@@ -100,7 +111,7 @@ class ImportView(EventPermissionRequiredMixin, TemplateView):
         cf.file.save('import.csv', request.FILES['file'])
         return redirect(
             reverse(
-                'control:event.orders.import.process',
+                'control:event.orders.import_export.attendees_import_process',
                 kwargs={
                     'event': request.event.slug,
                     'organizer': request.organizer.slug,
@@ -231,18 +242,19 @@ class ProcessView(EventPermissionRequiredMixin, AsyncAction, FormView):
             )
             return redirect(
                 reverse(
-                    'control:event.orders.import',
+                    'control:event.orders.import_export',
                     kwargs={
                         'event': request.event.slug,
                         'organizer': request.organizer.slug,
                     },
                 )
+                + '?tab=import'
             )
         return super().dispatch(request, *args, **kwargs)
 
     def get_error_url(self):
         return reverse(
-            'control:event.orders.import.process',
+            'control:event.orders.import_export.attendees_import_process',
             kwargs={
                 'event': self.request.event.slug,
                 'organizer': self.request.organizer.slug,

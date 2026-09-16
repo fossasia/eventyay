@@ -18,7 +18,7 @@ from django.urls import resolve, reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.http import urlencode
-from django.utils.translation import get_language, gettext_lazy as _
+from django.utils.translation import get_language, gettext_lazy as _, pgettext_lazy
 from django.views.decorators.cache import cache_page
 from django.views.decorators.http import require_http_methods
 from django.views.generic import TemplateView
@@ -415,9 +415,10 @@ def schedule_messages(request, **kwargs):
         ),
         'version_warning_old': _('You are currently viewing an older schedule version.'),
         'join_room': _('Join room'),
+        'join_session': _('Join session'),
         'view_video': _('View Video'),
         'watch_live': _('Watch live'),
-        'speaker_fallback': _('Speaker'),
+        'speaker_fallback': pgettext_lazy('noun', 'Speaker'),
         'speaker_name_not_provided': _('Speaker name not provided'),
         'add_to_calendar': _('Add to Calendar'),
         'public_schedule_only': _(

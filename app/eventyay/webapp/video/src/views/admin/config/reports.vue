@@ -1,53 +1,58 @@
 <template lang="pug">
 .c-reports
 	.ui-page-header
-		h1 Generate Reports
+		bunt-icon-button(@click="$router.push({name: 'organizer'})", :tooltip="$t('Back to Overview')", tooltip-placement="bottom-start", :tooltip-fixed="true") arrow-left
+		h1 {{ $t('Generate Reports') }}
 	scrollbars(y).ui-form-body
 		.report-section
 			.section-header-with-controls
-				h3 Analytics Reports
+				h3 {{ $t('Analytics Reports') }}
 				.date-controls
 					.quick-presets
-						bunt-button(@click="setToday", :class="{active: activePreset === 'today'}", :aria-pressed="activePreset === 'today'") Today
-						bunt-button(@click="setYesterday", :class="{active: activePreset === 'yesterday'}", :aria-pressed="activePreset === 'yesterday'") Yesterday
-						bunt-button(@click="setLast7Days", :class="{active: activePreset === 'last7days'}", :aria-pressed="activePreset === 'last7days'") Last 7 Days
-						bunt-button(@click="setThisWeek", :class="{active: activePreset === 'thisweek'}", :aria-pressed="activePreset === 'thisweek'") This Week
-						bunt-button(@click="toggleCustom", :class="{active: activePreset === 'custom'}", :aria-pressed="activePreset === 'custom'") Custom
+						bunt-button(@click="setToday", :class="{active: activePreset === 'today'}", :aria-pressed="activePreset === 'today'") {{ $t('Today') }}
+						bunt-button(@click="setYesterday", :class="{active: activePreset === 'yesterday'}", :aria-pressed="activePreset === 'yesterday'") {{ $t('Yesterday') }}
+						bunt-button(@click="setLast7Days", :class="{active: activePreset === 'last7days'}", :aria-pressed="activePreset === 'last7days'") {{ $t('Last 7 Days') }}
+						bunt-button(@click="setThisWeek", :class="{active: activePreset === 'thisweek'}", :aria-pressed="activePreset === 'thisweek'") {{ $t('This Week') }}
+						bunt-button(@click="toggleCustom", :class="{active: activePreset === 'custom'}", :aria-pressed="activePreset === 'custom'") {{ $t('Custom') }}
 					.date-time-inputs(v-if="showCustom")
-						bunt-input(v-model="datetimeStart", name="datetime_start", type="datetime-local", label="From")
-						bunt-input(v-model="datetimeEnd", name="datetime_end", type="datetime-local", label="To")
+						bunt-input(v-model="datetimeStart", name="datetime_start", type="datetime-local", :label="$t('From')")
+						bunt-input(v-model="datetimeEnd", name="datetime_end", type="datetime-local", :label="$t('To')")
 			.report-buttons
-				bunt-button(@click="generateSummary", :error="task == 'summary' && error") Summary
-				bunt-button(@click="generateRoomviews", :error="task == 'roomviews' && error") Room Activity
-				bunt-button(v-if="world.pretalx", @click="generateSessionviews", :error="task == 'sessionviews' && error") Session Activity
-				bunt-button(@click="generateViews", :error="task == 'views' && error") Raw Tracking
+				bunt-button(@click="generateSummary", :error="task == 'summary' && error") {{ $t('Summary') }}
+				bunt-button(@click="generateRoomviews", :error="task == 'roomviews' && error") {{ $t('Room Activity') }}
+				bunt-button(v-if="world.pretalx", @click="generateSessionviews", :error="task == 'sessionviews' && error") {{ $t('Session Activity') }}
+				bunt-button(@click="generateViews", :error="task == 'views' && error") {{ $t('Raw Tracking') }}
 
 		.report-section
-			h3 Attendee Reports
+			h3 {{ $t('Attendee Reports') }}
 			.report-buttons
-				bunt-button(@click="run('attendee_list', {})", :error="task == 'attendee_list' && error") All Attendees
-				bunt-button(@click="run('attendee_session_list', {})", :error="task == 'attendee_session_list' && error") By Session
+				bunt-button(@click="run('attendee_list', {})", :error="task == 'attendee_list' && error") {{ $t('All Attendees') }}
+				bunt-button(@click="run('attendee_session_list', {})", :error="task == 'attendee_session_list' && error") {{ $t('By Session') }}
 		
 		.report-section
-			h3 Room-Specific Reports
+			h3 {{ $t('Room-Specific Reports') }}
 			.room-report-item
-				bunt-select(v-model="channel", label="Chat History", name="channel", :options="channels", option-label="name")
-				bunt-button(@click="run('chat_history', {channel})", :disabled="!channel", :error="task == 'chat_history' && error") Generate
+				bunt-select(v-model="channel", :label="$t('Chat History')", name="channel", :options="channels", option-label="name")
+				bunt-button(@click="run('chat_history', {channel})", :disabled="!channel", :error="task == 'chat_history' && error") {{ $t('Generate') }}
 			.room-report-item
-				bunt-select(v-model="questionRoom", label="Questions", name="questionRoom", :options="questionRooms", option-label="name")
-				bunt-button(@click="run('question_history', {room: questionRoom})", :disabled="!questionRoom", :error="task == 'question_history' && error") Generate
+				bunt-select(v-model="questionRoom", :label="$t('Questions')", name="questionRoom", :options="questionRooms", option-label="name")
+				bunt-button(@click="run('question_history', {room: questionRoom})", :disabled="!questionRoom", :error="task == 'question_history' && error") {{ $t('Generate') }}
 			.room-report-item
-				bunt-select(v-model="pollRoom", label="Polls", name="pollRoom", :options="pollRooms", option-label="name")
-				bunt-button(@click="run('poll_history', {room: pollRoom})", :disabled="!pollRoom", :error="task == 'poll_history' && error") Generate
+				bunt-select(v-model="pollRoom", :label="$t('Polls')", name="pollRoom", :options="pollRooms", option-label="name")
+				bunt-button(@click="run('poll_history', {room: pollRoom})", :disabled="!pollRoom", :error="task == 'poll_history' && error") {{ $t('Generate') }}
 
 	transition(name="prompt")
 		prompt.report-result-prompt(v-if="running || result", @close="clear")
 			.content
-				h1(v-if="running") Preparing report…
-				h1(v-else) Report ready
-				bunt-progress-circular(v-if="running", size="huge")
-				bunt-button.btn-download(v-else, @click="open") Download report
-				p(v-if="running") If your event is large, this might take multiple minutes.
+				.status-icon-wrap
+					svg.spinner-svg(v-if="running", viewBox="0 0 50 50", xmlns="http://www.w3.org/2000/svg")
+						circle.spinner-track(cx="25", cy="25", r="20", fill="none", stroke-width="4")
+						circle.spinner-head(cx="25", cy="25", r="20", fill="none", stroke-width="4")
+					i.mdi.mdi-check-circle-outline(v-else)
+				h1(v-if="running") {{ $t('Preparing report…') }}
+				h1(v-else) {{ $t('Report ready') }}
+				p.status-desc(v-if="running") {{ $t('If your event is large, this might take multiple minutes.') }}
+				bunt-button.btn-download(v-else, @click="open") {{ $t('Download report') }}
 
 </template>
 <script>
@@ -288,8 +293,60 @@ export default {
 
 	.report-result-prompt
 		.content
-			padding: 0 20px 20px
+			padding: 32px 28px 28px
 			text-align: center
+			display: flex
+			flex-direction: column
+			align-items: center
+			gap: 12px
+			h1
+				margin: 0
+				font-size: 20px
+				font-weight: 600
+				color: $clr-grey-900
+			.status-icon-wrap
+				width: 64px
+				height: 64px
+				display: flex
+				align-items: center
+				justify-content: center
+				.spinner-svg
+					width: 56px
+					height: 56px
+					animation: spinner-rotate 1.4s linear infinite
+					.spinner-track
+						stroke: rgba(0, 0, 0, 0.08)
+					.spinner-head
+						stroke: var(--clr-primary, #bb0011)
+						stroke-dasharray: 80 200
+						stroke-dashoffset: 0
+						stroke-linecap: round
+						animation: spinner-dash 1.4s ease-in-out infinite
+				.mdi
+					font-size: 56px
+					color: var(--clr-primary, #bb0011)
+					opacity: 0.85
+			.status-desc
+				margin: 0
+				font-size: 14px
+				color: $clr-secondary-text-light
+				max-width: 280px
 			.btn-download
 				themed-button-primary()
+				margin-top: 4px
+
+@keyframes spinner-rotate
+	100%
+		transform: rotate(360deg)
+
+@keyframes spinner-dash
+	0%
+		stroke-dasharray: 1 200
+		stroke-dashoffset: 0
+	50%
+		stroke-dasharray: 89 200
+		stroke-dashoffset: -35px
+	100%
+		stroke-dasharray: 89 200
+		stroke-dashoffset: -124px
 </style>

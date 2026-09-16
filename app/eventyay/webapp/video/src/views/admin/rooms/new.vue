@@ -1,10 +1,15 @@
 <template lang="pug">
 .c-admin-rooms-new
 	.ui-page-header
-		bunt-icon-button(@click="$router.replace({name: 'admin:rooms:index'})") arrow_left
-		h1 New room
-			template(v-if="chosenProvider")  : {{ chosenProvider.label }}
-	edit-form(v-if="config", :config="config", :creating="true")
+		bunt-icon-button(@click="$router.replace({name: 'admin:rooms:index'})", :tooltip="$t('Back to Rooms & Stages')", tooltip-placement="bottom-start", :tooltip-fixed="true") arrow-left
+		h1 {{ $t('New room') }}
+			template(v-if="chosenProvider")  : {{ $t(chosenProvider.label) }}
+	.provider-disabled-warning(v-if="type && !chosenProvider")
+		i.mdi.mdi-alert-circle-outline
+		h2 {{ $t('Room Type Disabled') }}
+		p {{ $t('This video provider has been disabled by the system administrator.') }}
+		bunt-button(@click="$router.replace({name: 'admin:rooms:index'})") {{ $t('Back to Rooms & Stages') }}
+	edit-form(v-else-if="config", :config="config", :creating="true")
 </template>
 <script>
 import { mapGetters } from 'vuex'
@@ -30,7 +35,8 @@ export default {
 			return getAvailableVideoProviders(
 				this.hasPermission,
 				this.isAdminMode,
-				(flag) => features.enabled(flag)
+				(flag) => features.enabled(flag),
+				this.$store.state.world?.video_providers
 			)
 		},
 		chosenProvider() {
@@ -49,8 +55,8 @@ export default {
 	methods: {
 		updateType() {
 			this.type = this.$route.params.type
-			if (!this.type || !this.chosenType) {
-				this.$router.replace({name: 'admin:rooms:index'})
+			if (this.type === 'channel-text') {
+				this.$router.replace({name: 'admin:chat:new'})
 				return
 			}
 			this.config = {
@@ -59,9 +65,12 @@ export default {
 				sorting_priority: '',
 				pretalx_id: '',
 				force_join: false,
+				is_unscheduled: false,
 				module_config: [],
 			}
-			applyVideoProviderToConfig(this.config, this.chosenType)
+			if (this.type && this.chosenType) {
+				applyVideoProviderToConfig(this.config, this.chosenType)
+			}
 		}
 	}
 }
@@ -82,4 +91,26 @@ export default {
 	h1
 		font-size: 24px
 		font-weight: 500
+	.provider-disabled-warning
+		margin: 40px auto
+		max-width: 500px
+		text-align: center
+		padding: 32px 24px
+		background-color: $clr-grey-50
+		border: 1px solid $clr-grey-200
+		border-radius: 8px
+		i.mdi
+			font-size: 48px
+			color: $clr-warning
+			margin-bottom: 16px
+			display: block
+		h2
+			font-size: 20px
+			font-weight: 600
+			margin: 0 0 8px
+			color: $clr-grey-900
+		p
+			font-size: 14px
+			color: $clr-grey-700
+			margin: 0 0 24px
 </style>

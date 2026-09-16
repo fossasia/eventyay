@@ -1,9 +1,9 @@
 <template lang="pug">
 prompt.c-create-dm-prompt(:scrollable="false", @close="$emit('close')")
 	.content
-		h1 {{ $t('CreateDMPrompt:headline:text') }}
-		p {{ $t('CreateDMPrompt:intro:text') }}
-		user-select(:button-label="$t('CreateDMPrompt:create-button:label')", @selected="create", :exclude="[user.id]")
+		h1 {{ $t('Chat with another person') }}
+		p {{ $t('Start typing the name of one or more persons you want to talk to!') }}
+		user-select(:button-label="$t('Start chat')", @selected="create", :exclude="[user.id]")
 </template>
 <script>
 import {mapGetters, mapState} from 'vuex'
@@ -20,12 +20,20 @@ export default {
 	},
 	computed: {
 		...mapGetters(['hasPermission']),
-		...mapState(['user'])
+		...mapState(['user', 'world']),
+		liveFeatures() {
+			return Object.assign({
+				chat_rooms: false,
+				kiosks: false,
+				direct_messaging: false,
+				announcements: false
+			}, this.world?.live_features || window.eventyay?.liveFeatures || {})
+		}
 	},
 	methods: {
 		async create(users) {
-			// Check permission before creating direct message
-			if (!this.hasPermission('world:chat.direct')) {
+			// Check permission and feature flag before creating direct message
+			if (!this.hasPermission('world:chat.direct') || !this.liveFeatures.direct_messaging) {
 				this.$emit('close')
 				return
 			}

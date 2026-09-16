@@ -1,40 +1,36 @@
 /* global ENV_DEVELOPMENT */
 import i18next from 'i18next'
 import config from 'config'
-// Vue.use(VueI18n)
-//
-// function loadLocaleMessages () {
-// 	const locales = require.context('./locales', true, /[A-Za-z0-9-_,\s]+\.js$/i)
-// 	const messages = {}
-// 	locales.keys().forEach(key => {
-// 		const matched = key.match(/([A-Za-z0-9-_]+)\./i)
-// 		if (matched && matched.length > 1) {
-// 			const locale = matched[1]
-// 			messages[locale] = Object.assign({}, locales(key).default, config.theme?.textOverwrites ?? {})
-// 		}
-// 	})
-// 	return messages
-// }
-//
-// export default new VueI18n({
-// 	locale: config.locale || 'en',
-// 	fallbackLocale: 'en',
-// 	messages: loadLocaleMessages()
-// })
+import {createVueGettextRuntime} from '../../i18n/vue-runtime.js'
+import {notifyLocaleChange, toDjangoLanguage} from '../../i18n/index.js'
 
 export default i18next
+export {notifyLocaleChange}
 
-const LANGUAGE_COOKIE_NAME = 'eventyay_language'
-const localeLoaders = import.meta.glob('./locales/*.json')
+export const LANGUAGE_COOKIE_NAME = 'eventyay_language'
+const runtime = createVueGettextRuntime({
+	domain: 'video',
+	i18next,
+	localeLoaders: import.meta.glob('../../../locale/*/LC_MESSAGES/video.po'),
+	debug: ENV_DEVELOPMENT,
+	warnOnMissing: Boolean(ENV_DEVELOPMENT),
+	extraPlugins: [
+		{
+			type: 'postProcessor',
+			name: 'themeOverwrites',
+			process(value, key) {
+				return config.theme?.textOverwrites?.[key[0]] ?? value
+			},
+		},
+	],
+	extraInitOptions: {
+		postProcess: ['themeOverwrites'],
+	},
+})
 
-export function localize(string) {
-	if (!string) return ''
-	if (typeof string === 'string') return string
-	for (const lang of i18next.languages || []) {
-		if (string[lang]) return string[lang]
-	}
-	return Object.values(string)[0] || ''
-}
+export const translate = runtime.translate
+export const localize = runtime.localize
+export const changeLanguage = runtime.changeLanguage
 
 function getStoredLanguage() {
 	try {
@@ -62,33 +58,78 @@ function getLanguageFromCookie() {
 	}
 }
 
-function resolveLocaleLoader(language) {
-	if (!language) return null
-	const normalized = language.replace('-', '_')
-	const [base, region] = normalized.split('_')
-	const candidates = new Set([language, normalized])
-	if (base && region) {
-		candidates.add(`${base}-${region}`)
-		candidates.add(`${base}-${region.toUpperCase()}`)
-		candidates.add(`${base}_${region.toUpperCase()}`)
+function getCsrfToken() {
+	try {
+		const match = document.cookie.match(/(?:^|; )eventyay_csrftoken=([^;]+)/)
+		return match ? decodeURIComponent(match[1]) : null
+	} catch (error) {
+		return null
 	}
-	if (base) {
-		candidates.add(base)
-	}
+}
 
-	for (const candidate of candidates) {
-		const path = `./locales/${candidate}.json`
-		if (localeLoaders[path]) {
-			return localeLoaders[path]
-		}
+function localeSwitchUrl() {
+	const { protocol, host } = window.location
+	const basePath = config?.basePath ?? ''
+	if (!basePath) {
+		return `${protocol}//${host}/common/account/locale`
 	}
-	return null
+	const segments = basePath.split('/').filter(Boolean)
+	const videoIndex = segments.lastIndexOf('video')
+	if (videoIndex === -1) {
+		return `${protocol}//${host}/common/account/locale`
+	}
+	const prefixEnd = Math.max(0, videoIndex - 2)
+	const prefixSegments = segments.slice(0, prefixEnd)
+	const prefix = prefixSegments.length > 0 ? `/${prefixSegments.join('/')}` : ''
+	return `${protocol}//${host}${prefix}/common/account/locale`
+}
+
+export function setLanguageCookie(language) {
+	try {
+		const maxAge = 10 * 365 * 24 * 60 * 60
+		document.cookie = `${LANGUAGE_COOKIE_NAME}=${encodeURIComponent(language)}; path=/; max-age=${maxAge}; SameSite=Lax`
+	} catch (error) {
+		console.error('Failed to persist language cookie', error)
+	}
+}
+
+export async function syncLanguageToServer(language) {
+	const csrf = getCsrfToken()
+	if (!csrf) return
+	try {
+		const body = new URLSearchParams({
+			locale: language,
+			next: window.location.href,
+			csrfmiddlewaretoken: csrf,
+		})
+		if (config?.eventSlug) body.set('event', config.eventSlug)
+		if (config?.organizerSlug) body.set('organizer', config.organizerSlug)
+		await fetch(localeSwitchUrl(), {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded',
+				'X-CSRFToken': csrf,
+			},
+			body,
+			credentials: 'same-origin',
+			redirect: 'manual',
+		})
+	} catch (error) {
+		console.error('Failed to persist language on the server', error)
+	}
+}
+
+export async function persistLanguage(language) {
+	const djangoLanguage = toDjangoLanguage(language)
+	setStoredLanguage(djangoLanguage)
+	setLanguageCookie(djangoLanguage)
+	await syncLanguageToServer(djangoLanguage)
 }
 
 function getInitialLanguage() {
-	const stored = getStoredLanguage()
-	const cookie = getLanguageFromCookie()
-	const language = stored || cookie || config.defaultLocale || config.locale || 'en'
+	const stored = toDjangoLanguage(getStoredLanguage())
+	const cookie = toDjangoLanguage(getLanguageFromCookie())
+	const language = stored || cookie || toDjangoLanguage(config.defaultLocale) || toDjangoLanguage(config.locale) || 'en'
 	if (!stored && cookie) {
 		setStoredLanguage(cookie)
 	}
@@ -96,42 +137,10 @@ function getInitialLanguage() {
 }
 
 export async function init(app) {
-	const initialLanguage = getInitialLanguage()
-	await i18next
-		// dynamic locale loader using webpack chunks
-		.use({
-			type: 'backend',
-			init(services, backendOptions, i18nextOptions) {},
-			async read(language, namespace, callback) {
-				try {
-					const loader = resolveLocaleLoader(language)
-					if (!loader) {
-						throw new Error(`Missing locale bundle for "${language}"`)
-					}
-					const locale = await loader()
-					callback(null, locale.default)
-				} catch (error) {
-					callback(error)
-				}
-			}
-		})
-		// inject custom theme text overwrites
-		.use({
-			type: 'postProcessor',
-			name: 'themeOverwrites',
-			process(value, key, options, translator) {
-				return config.theme?.textOverwrites?.[key[0]] ?? value
-			}
-		})
-		.init({
-			lng: initialLanguage,
-			fallbackLng: 'en',
-			debug: ENV_DEVELOPMENT,
-			keySeparator: false,
-			nsSeparator: false,
-			postProcess: ['themeOverwrites']
-		})
-	app.config.globalProperties.$i18n = i18next
-	app.config.globalProperties.$t = i18next.t.bind(i18next)
-	app.config.globalProperties.$localize = localize
+	try {
+		await runtime.init({lng: getInitialLanguage()})
+	} catch (error) {
+		console.error('Failed to initialize Video translations', error)
+	}
+	runtime.install(app)
 }

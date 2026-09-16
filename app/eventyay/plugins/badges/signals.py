@@ -96,6 +96,9 @@ def copy_product(sender, source, target, **kwargs):
 
 @receiver(signal=event_copy_data, dispatch_uid='badges_copy_data')
 def event_copy_data_receiver(sender, other, question_map, product_map, voucher_map=None, **kwargs):
+    clone_options = kwargs.get('clone_options') or {}
+    if not clone_options.get('clone_ticketing_data', True):
+        return
     layout_map = {}
     for bl in other.badge_layouts.all():
         oldid = bl.pk

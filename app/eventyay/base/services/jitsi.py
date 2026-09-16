@@ -5,6 +5,7 @@ from django.db import transaction
 from django.db.models import Q
 
 from eventyay.base.models import JitsiServer, Room
+from .video_server_routing import filter_servers_for_event, is_server_available_for_event
 
 
 class JitsiServerUnavailable(Exception):
@@ -50,26 +51,33 @@ def _choose_preferred_server(servers, event, prefer_server):
         return None
     preferred_servers = [
         server
-        for server in servers.filter(
-            Q(event_exclusive=event) | Q(event_exclusive__isnull=True)
-        )
-        if _server_matches_preference(server, preferred)
+        for server in servers
+        if _server_matches_preference(server, preferred) and is_server_available_for_event(server, event)
     ]
     if preferred_servers:
         return random.choice(preferred_servers)
     return None
 
 
+def _is_meet_jitsi_server(url):
+    norm = normalize_server_url(url)
+    domain = (norm.get("domain") or norm.get("host") or "") if norm else (url or "").lower()
+    return "meet.jit.si" in domain
+
+
 def _choose_any_available_server(servers, event):
-    querysets = (
-        servers.filter(event_exclusive=event),
-        servers.filter(event_exclusive__isnull=True),
-    )
+    querysets = filter_servers_for_event(servers, event)
     for qs in querysets:
         available_servers = list(qs)
         if available_servers:
+            self_hosted = [
+                s for s in available_servers if not _is_meet_jitsi_server(s.url)
+            ]
+            if self_hosted:
+                return random.choice(self_hosted)
             return random.choice(available_servers)
     return None
+
 
 
 @transaction.atomic
@@ -83,6 +91,9 @@ def choose_server_for_room(room, prefer_server=None):
     server = None
     for preferred_url in (selected_server_url, prefer_server):
         if not preferred_url:
+            continue
+        # Avoid routing to meet.jit.si when self-hosted servers exist to prevent external authentication barrier
+        if _is_meet_jitsi_server(preferred_url) and servers.exclude(url__icontains="meet.jit.si").exists():
             continue
         server = _choose_preferred_server(servers, locked_room.event, preferred_url)
         if server:
@@ -140,6 +151,7 @@ def normalize_server_url(url):
         normalized = url.strip("/").lower()
         return {
             "domain": normalized,
+            "host": normalized,
             "url": f"https://{normalized}",
             "protocol": "https:",
         }
@@ -147,12 +159,13 @@ def normalize_server_url(url):
     if not parsed.netloc:
         return None
     domain = parsed.netloc.lower()
-    protocol = parsed.scheme.lower() + ":"
     scheme = parsed.scheme.lower()
-    if scheme != "https":
+    if scheme not in ("https", "http"):
         return None
+    protocol = f"{scheme}:"
     return {
         "domain": domain,
+        "host": domain,
         "url": f"{scheme}://{domain}",
         "protocol": protocol,
     }

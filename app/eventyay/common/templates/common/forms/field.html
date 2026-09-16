@@ -3,14 +3,15 @@
     {% block field_label_left %}
         {% if field.field.widget.input_type != "checkbox" or field.field.widget.allow_multiple_selected %}
             <label for="{{ field.auto_id }}" class="{{ label_class }}">
-                <span>{{ field.label }}<span class="d-inline text-danger">{% if field.field.required %} *{% endif %}</span></span>
-                {% if not field.field.required %}<span class="optional">{% translate "Optional" %}</span>{% endif %}
+                <span>{{ field.label }}<span class="d-inline text-danger">{% if field.field.required or field.field.one_required %} *{% endif %}</span></span>
+                {% if not field.field.required and not field.field.one_required %}<span class="optional">{% translate "Optional" %}</span>{% endif %}
                 {% if field.help_text %}<span class="field-help-toggle" role="button" tabindex="0" aria-label="{% translate 'Show help' %}">?</span>{% endif %}
             </label>
         {% endif %}
     {% endblock %}
 
     {% block field_content_right %}
+        {% if help_text_above and field.help_text %}<small class="form-text text-muted"{% if field.auto_id %} id="{{ field.auto_id }}_helptext"{% endif %}>{{ field.help_text|safe }}</small>{% endif %}
         {% if field.use_fieldset %}<fieldset{% if field.help_text and field.auto_id and "aria-describedby" not in field.field.widget.attrs %} aria-describedby="{{ field.auto_id }}_helptext"{% endif %}>{% endif %}
         {% if field.field.widget.input_type == "checkbox" and not field.field.widget.allow_multiple_selected %}
             <div class="form-check">
@@ -28,6 +29,6 @@
                 <div class="invalid-feedback d-block">{{ text }}</div>
             {% endfor %}
         {% endif %}
-        {% if field.help_text %}<small class="form-text text-muted"{% if field.auto_id %} id="{{ field.auto_id }}_helptext"{% endif %}>{{ field.help_text|safe }}</small>{% endif %}
+        {% if field.help_text and not help_text_above %}<small class="form-text text-muted"{% if field.auto_id %} id="{{ field.auto_id }}_helptext"{% endif %}>{{ field.help_text|safe }}</small>{% endif %}
     {% endblock %}
 </div>

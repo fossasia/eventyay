@@ -60,7 +60,8 @@ class VoucherForm(I18nModelForm):
 
     def __init__(self, *args, **kwargs):
         instance = kwargs.get('instance')
-        initial = kwargs.get('initial')
+        kwargs.setdefault('initial', {})
+        initial = kwargs['initial']
         if instance:
             self.initial_instance_data = modelcopy(instance)
             try:
@@ -230,6 +231,7 @@ class VoucherForm(I18nModelForm):
                 self.instance.variation,
             )
         Voucher.clean_voucher_code(data, self.instance.event, self.instance.pk)
+        Voucher.clean_value_and_budget(data)
         if 'seat' in self.fields and data.get('seat'):
             self.instance.seat = Voucher.clean_seat_id(
                 data,
@@ -244,6 +246,18 @@ class VoucherForm(I18nModelForm):
 
         return data
 
+    def _post_clean(self):
+        super()._post_clean()
+        for field, error_list in list(self._errors.items()):
+            seen = set()
+            unique_errors = []
+            for err in error_list:
+                msg = str(err)
+                if msg not in seen:
+                    seen.add(msg)
+                    unique_errors.append(err)
+            self._errors[field] = self.error_class(unique_errors, renderer=self.renderer)
+
     def save(self, commit=True):
         return super().save(commit)
 
@@ -254,6 +268,11 @@ class VoucherBulkForm(VoucherForm):
         label=_('Codes'),
         help_text=_('Add one voucher code per line. We suggest that you copy this list and save it into a file.'),
         required=True,
+    )
+    use_tag_as_prefix = forms.BooleanField(
+        label=_('Use tag as voucher code prefix'),
+        help_text=_('Prefix every voucher code with the tag.'),
+        required=False,
     )
     send = forms.BooleanField(label=_('Send vouchers via email'), required=False)
     send_subject = forms.CharField(
@@ -304,12 +323,12 @@ class VoucherBulkForm(VoucherForm):
         model = Voucher
         localized_fields = '__all__'
         fields = [
+            'tag',
             'valid_until',
             'block_quota',
             'allow_ignore_quota',
             'allow_ignore_approval',
             'value',
-            'tag',
             'comment',
             'max_usages',
             'price_mode',
@@ -325,7 +344,10 @@ class VoucherBulkForm(VoucherForm):
             'valid_until': SplitDateTimePickerWidget(),
         }
         labels = {'max_usages': _('Maximum usages per voucher')}
-        help_texts = {'max_usages': _('Number of times EACH of these vouchers can be redeemed.')}
+        help_texts = {
+            'tag': _('Vouchers with the same tag are shown together in the voucher list.'),
+            'max_usages': _('Number of times EACH of these vouchers can be redeemed.'),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -392,11 +414,30 @@ class VoucherBulkForm(VoucherForm):
     def clean(self):
         data = super().clean()
 
-        vouchers = self.instance.event.vouchers.annotate(code_upper=Upper('code')).filter(
-            code_upper__in=[c.upper() for c in data['codes']]
-        )
-        if vouchers.exists():
-            raise ValidationError(_('A voucher with one of these codes already exists.'))
+        if data.get('use_tag_as_prefix'):
+            tag = data.get('tag')
+            if not tag:
+                self.add_error('tag', _('A tag is required when it is used as a voucher code prefix.'))
+            elif data.get('codes'):
+                tag_upper = tag.upper()
+                data['codes'] = [
+                    code if code.upper().startswith(tag_upper) else f'{tag}{code}'
+                    for code in data['codes']
+                ]
+
+        codes = data.get('codes', [])
+        if data.get('use_tag_as_prefix') and codes:
+            if len(codes) != len({code.upper() for code in codes}):
+                self.add_error('codes', _('Voucher codes must be unique.'))
+            elif any(len(code) > 255 for code in codes):
+                self.add_error('codes', _('Voucher codes cannot be longer than 255 characters.'))
+
+        if codes:
+            vouchers = self.instance.event.vouchers.annotate(code_upper=Upper('code')).filter(
+                code_upper__in=[code.upper() for code in codes]
+            )
+            if vouchers.exists():
+                raise ValidationError(_('A voucher with one of these codes already exists.'))
 
         if data.get('send') and not all(
             [
@@ -409,9 +450,9 @@ class VoucherBulkForm(VoucherForm):
                 _('If vouchers should be sent by email, subject, message and recipients need to be specified.')
             )
 
-        if data.get('codes') and data.get('send'):
+        if codes and data.get('send'):
             recp = self.cleaned_data.get('send_recipients', [])
-            code_len = len(data.get('codes'))
+            code_len = len(codes)
             recp_len = sum(r.number for r in recp)
             if code_len != recp_len:
                 raise ValidationError(
@@ -422,7 +463,7 @@ class VoucherBulkForm(VoucherForm):
 
         if data.get('seats'):
             seatids = [s.strip() for s in data.get('seats').strip().split('\n') if s]
-            if len(seatids) != len(data.get('codes')):
+            if len(seatids) != len(codes):
                 raise ValidationError(_('You need to specify as many seats as voucher codes.'))
             data['seats'] = []
             for s in seatids:

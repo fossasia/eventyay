@@ -43,6 +43,18 @@
     margin-top: 20px;
 }
 
+.order-overview-table {
+    .item.classified td:first-child {
+        padding-left: 28px;
+    }
+    .variation.classified td:first-child {
+        padding-left: 44px;
+    }
+    .classification th {
+        background: #f8f8f8;
+    }
+}
+
 .logentry {
     word-break: break-word;
     word-wrap: break-word;

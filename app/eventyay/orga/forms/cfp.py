@@ -8,8 +8,8 @@ from django.utils.translation import override
 from django_scopes.forms import SafeModelChoiceField, SafeModelMultipleChoiceField
 from i18nfield.forms import I18nFormMixin, I18nModelForm
 from i18nfield.strings import LazyI18nString
-
-from eventyay.base.forms import I18nMarkdownTextarea
+from eventyay.common.forms.fields import I18nRichTextFormField
+from eventyay.common.sanitizers import sanitize_rich_text
 from eventyay.base.models import (
     AnswerOption,
     SubmissionType,
@@ -368,6 +368,12 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
 
 
 class CfPForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
+    text = I18nRichTextFormField(
+    required=False,
+    label=_('Page content'),
+    help_text=_('Enter the content using the rich-text editor.'),
+    sanitizer=sanitize_rich_text,
+    )
     show_deadline = forms.BooleanField(
         label=_('Display deadline publicly'),
         required=False,
@@ -387,7 +393,6 @@ class CfPForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         fields = ['headline', 'text', 'deadline']
         widgets = {
             'deadline': HtmlDateTimeInput,
-            'text': I18nMarkdownTextarea,
         }
         # These are JSON fields on cfp.settings
         json_fields = {

@@ -1,0 +1,54 @@
+{% load i18n %}
+{% load money %}
+<tr{% if row_class %} class="{{ row_class }}"{% endif %}{% if group_id %} data-voucher-group-member="{{ group_id }}"{% endif %}>
+    <td class="list-select">
+        {% if "can_change_vouchers" in request.eventpermset %}
+            <input type="checkbox" name="voucher" class="" value="{{ v.pk }}"/>
+        {% endif %}
+    </td>
+    <td class="list-name-cell">
+        {% if not v.is_active %}<del>{% endif %}
+        <strong><a href="{% url 'control:event.voucher' organizer=request.event.organizer.slug event=request.event.slug voucher=v.id %}">{{ v.code }}</a></strong>
+        {% if not v.is_active %}</del>{% endif %}
+    </td>
+    <td class="list-meta">
+        <span class="category-pill">{{ v.redeemed }} / {{ v.max_usages }}</span>
+        {% if v.budget|default_if_none:"NONE" != "NONE" %}
+            <small class="text-muted">
+                {{ v.budget_used_orders|money:request.event.currency }} / {{ v.budget|money:request.event.currency }}
+            </small>
+        {% endif %}
+    </td>
+    <td>{{ v.valid_until|date }}</td>
+    <td class="list-meta">
+        {% if v.tag %}<span class="category-pill">{{ v.tag }}</span>{% endif %}
+    </td>
+    <td>
+        {% if v.item %}
+            {{ v.item }}
+            {% if v.variation %}
+                – {{ v.variation }}
+            {% endif %}
+        {% elif v.quota %}
+            {% blocktrans trimmed with quota=v.quota.name %}
+                Any product in quota "{{ quota }}"
+            {% endblocktrans %}
+        {% endif %}
+        {% if v.seat %}<small class="text-muted">{{ v.seat }}</small>{% endif %}
+    </td>
+    {% if request.event.has_subevents %}
+        <td>
+            {{ v.subevent.name }} – {{ v.subevent.get_date_range_display }}
+            {% if request.event.settings.show_times %}
+                {{ v.subevent.date_from|date:"TIME_FORMAT" }}
+            {% endif %}
+        </td>
+    {% endif %}
+    <td class="list-actions text-right flip">
+        <a href="{% url 'control:event.vouchers.bulk' organizer=request.event.organizer.slug event=request.event.slug %}?copy_from={{ v.id }}"
+           class="btn btn-sm btn-default" title="{% trans 'Use as a template for new vouchers' %}" data-toggle="tooltip">
+            <span class="fa fa-copy"></span>
+        </a>
+        <a href="{% url 'control:event.voucher.delete' organizer=request.event.organizer.slug event=request.event.slug voucher=v.id %}" class="btn btn-delete btn-danger btn-sm"><i class="fa fa-trash"></i></a>
+    </td>
+</tr>

@@ -1,4 +1,10 @@
 {% extends "orga/base.html" %}
+{% load static %}
+
+{% block stylesheets %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'common/css/_composer.css' %}">
+{% endblock stylesheets %}
 
 {% block content %}
     {% block mail_content %}{% endblock mail_content %}

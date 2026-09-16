@@ -1,11 +1,15 @@
 import logging
+import os
 
 import i18nfield.forms
 from django import forms
+from django.conf import settings
 from django.core.files import File
+from django.core.files.uploadedfile import SimpleUploadedFile, UploadedFile
 from django.core.validators import URLValidator
 from django.forms.models import ModelFormMetaclass
 from django.utils.crypto import get_random_string
+from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from formtools.wizard.views import SessionWizardView
@@ -14,7 +18,7 @@ from i18nfield.strings import LazyI18nString
 
 from eventyay.base.reldate import RelativeDateField, RelativeDateTimeField
 from eventyay.common.urls import is_http_url
-
+from eventyay.helpers.image_optimize import optimize_uploaded_image
 from .validators import PlaceholderValidator  # NOQA
 
 
@@ -141,6 +145,28 @@ class SettingsForm(i18nfield.forms.I18nFormMixin, HierarkeyForm):
                 return value
         return settings_proxy.get(key, as_type=declared_type, default=default)
 
+    def clean(self):
+        cleaned_data = super().clean()
+        
+        for k, v in list(cleaned_data.items()):
+            if isinstance(v, UploadedFile) and k in {
+                'invoice_logo_image', 'startpage_header_image',
+            }:
+                try:
+                    opt = optimize_uploaded_image(v, k)
+                    orig_name = os.path.splitext(v.name or 'upload')[0]
+                    new_name = f'{orig_name}.{opt.optimized_ext}'
+                    cleaned_data[k] = SimpleUploadedFile(
+                        name=new_name,
+                        content=opt.optimized.read(),
+                        content_type=getattr(v, 'content_type', None)
+                    )
+                except (ValueError, OSError) as e:
+                    self.add_error(k, str(e))
+                    if hasattr(v, 'seek'):
+                        v.seek(0)
+        return cleaned_data
+
     def save(self):
         for k, v in self.cleaned_data.items():
             if isinstance(self.fields.get(k), SecretKeySettingsField) and self.cleaned_data.get(k) == SECRET_REDACTED:
@@ -250,6 +276,35 @@ class I18nMarkdownTextarea(i18nfield.forms.I18nTextarea):
         attrs = attrs.copy() if attrs is not None else {}
         attrs.setdefault('data-markdown-field', 'true')
         super().__init__(attrs=attrs, **kwargs)
+
+    def render(self, name, value, attrs=None, renderer=None):
+        if not isinstance(value, dict):
+            value = self.decompress(value)
+
+        output = []
+        id_ = attrs.get('id') if attrs else None
+        lang_dict = dict(settings.LANGUAGES)
+        for i, widget in enumerate(self.widgets):
+            locale_code = self.locales[i]
+            human_locale_name = str(lang_dict.get(locale_code, locale_code))
+            widget_value = value.get(locale_code, '') if isinstance(value, dict) else ''
+
+            final_attrs_widget = (attrs or {}).copy()
+            if id_:
+                final_attrs_widget['id'] = f'{id_}_{i}'
+                final_attrs_widget['title'] = human_locale_name
+                final_attrs_widget.setdefault('placeholder', human_locale_name)
+
+            textarea_html = widget.render(f'{name}_{i}', widget_value, final_attrs_widget, renderer=renderer)
+
+            wrapped_html = f'''
+            <div class="i18n-textarea-wrapper" data-lang="{escape(locale_code)}">
+                {textarea_html}
+            </div>
+            '''
+            output.append(wrapped_html)
+
+        return mark_safe(f'<div class="i18n-form-group" id="{escape(id_) if id_ else ""}">{  "".join(output) }</div>')
 
 
 class I18nAutoExpandingTextarea(i18nfield.forms.I18nTextarea):

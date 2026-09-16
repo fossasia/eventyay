@@ -83,22 +83,113 @@ def test_orga_live_url_redirects_to_central(organizer_client, event):
 
 @pytest.mark.django_db
 @override_settings(SITE_URL='https://testserver')
-def test_central_status_disables_private_testmode_redirect(organizer_client, event):
-    """After disabling private test mode for talks on the central page, stay on central page."""
-    event.private_testmode = True
-    event.settings.set('private_testmode_talks', True)
+def test_central_status_talk_mode_public_blocked_when_unpublished(organizer_client, event):
+    """Talks cannot be published if the event main page is not live."""
+    event.live = False
     event.save()
+    central_url = reverse(
+        'eventyay_common:event.live',
+        kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+    )
+    response = organizer_client.post(central_url, {'talk_mode': 'public'})
+    assert response.status_code in {301, 302}
+    event.refresh_from_db()
+    assert event.talks_published is False
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_central_status_talk_mode_public(organizer_client, event):
+    """Talks can be published if the event main page is live."""
+    event.live = True
+    event.save()
+    central_url = reverse(
+        'eventyay_common:event.live',
+        kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+    )
+    response = organizer_client.post(central_url, {'talk_mode': 'public'})
+    assert response.status_code in {301, 302}
+    event.refresh_from_db()
+    assert event.talks_published is True
+    assert event.settings.get('private_testmode_talks', default=False, as_type=bool) is False
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_central_status_ticketing_mode_public_test_blocked_when_unpublished(organizer_client, event):
+    """Public test mode cannot be enabled if event is not live."""
+    event.live = False
+    event.save()
+    from eventyay.base.models import Product, Quota
+    product = Product.objects.create(event=event, name="Ticket", default_price=10)
+    quota = Quota.objects.create(event=event, name="Quota", size=100)
+    quota.products.add(product)
+    
+    central_url = reverse(
+        'eventyay_common:event.live',
+        kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+    )
+    response = organizer_client.post(central_url, {'ticketing_mode': 'public_test'})
+    assert response.status_code in {301, 302}
+    event.refresh_from_db()
+    assert event.testmode is False
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_central_status_ticketing_mode_public_sales_with_delete_test_orders(organizer_client, event):
+    """Public sales can be enabled and test orders deleted."""
+    event.live = True
+    event.testmode = True
+    event.save()
+    from django_scopes import scope
+    from eventyay.base.models import Product, Quota, Order
+    with scope(organizer=event.organizer):
+        product = Product.objects.create(event=event, name="Ticket", default_price=10)
+        quota = Quota.objects.create(event=event, name="Quota", size=100)
+        quota.products.add(product)
+
+        Order.objects.create(event=event, status=Order.STATUS_PENDING, testmode=True, expires=timezone.now(), total=0)
+        Order.objects.create(event=event, status=Order.STATUS_PENDING, testmode=False, expires=timezone.now(), total=0)
 
     central_url = reverse(
         'eventyay_common:event.live',
         kwargs={'organizer': event.organizer.slug, 'event': event.slug},
     )
-    response = organizer_client.post(
-        central_url, {'private_testmode_talks_action': 'disable'}
-    )
+    response = organizer_client.post(central_url, {'ticketing_mode': 'public_sales', 'delete_test_orders': 'yes'})
     assert response.status_code in {301, 302}
-    assert response.headers['Location'].endswith(central_url)
-
     event.refresh_from_db()
-    event.settings.flush()
-    assert event.settings.get('private_testmode_talks', as_type=bool) is False
+    assert event.tickets_published is True
+    assert event.testmode is False
+    with scope(organizer=event.organizer):
+        assert Order.objects.filter(event=event, testmode=True).count() == 0
+        assert Order.objects.filter(event=event, testmode=False).count() == 1
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_central_status_ticketing_mode_public_sales_without_delete_test_orders(organizer_client, event):
+    """Public sales can be enabled and test orders retained."""
+    event.live = True
+    event.testmode = True
+    event.save()
+    from django_scopes import scope
+    from eventyay.base.models import Product, Quota, Order
+    with scope(organizer=event.organizer):
+        product = Product.objects.create(event=event, name="Ticket", default_price=10)
+        quota = Quota.objects.create(event=event, name="Quota", size=100)
+        quota.products.add(product)
+
+        Order.objects.create(event=event, status=Order.STATUS_PENDING, testmode=True, expires=timezone.now(), total=0)
+
+    central_url = reverse(
+        'eventyay_common:event.live',
+        kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+    )
+    response = organizer_client.post(central_url, {'ticketing_mode': 'public_sales'})
+    assert response.status_code in {301, 302}
+    event.refresh_from_db()
+    assert event.tickets_published is True
+    assert event.testmode is False
+    with scope(organizer=event.organizer):
+        assert Order.objects.filter(event=event, testmode=True).count() == 1

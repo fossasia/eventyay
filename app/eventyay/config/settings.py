@@ -150,16 +150,14 @@ class BaseSettings(_BaseSettings):
     statsd_host: str = ''
     statsd_port: int = 8125
     statsd_prefix: str = 'eventyay'
-    twitter_client_id: str = ''
-    twitter_client_secret: str = ''
-    linkedin_client_id: str = ''
-    linkedin_client_secret: str = ''
     # Ask to provide comments when making changes in the admin interface.
     admin_audit_comments_asked: bool = False
     # To select a variant from CALL_FOR_SPEAKER_LOGIN_BTN_LABELS.
     call_for_speaker_login_button_label: str = 'default'
     # Set to 1 to enable Vite dev servers with HMR for live frontend development.
     npm_dev: bool = False
+    # Set to 1 to enable local plugin development mode.
+    plugin_dev_mode: bool = False
     fetch_ecb_rates: bool = True
     cache_tickets_hours: int = Field(default=24, ge=1)
 
@@ -351,7 +349,6 @@ _OURS_APPS = (
     'eventyay.features.analytics.graphs.GraphsConfig',
     'eventyay.features.importers.ImportersConfig',
     'eventyay.storage.StorageConfig',
-    'eventyay.features.social.SocialConfig',
     'eventyay.features.integrations.zoom.ZoomConfig',
     'eventyay.helpers',
     'eventyay.mail',
@@ -1593,13 +1590,10 @@ CONTROL_SECRET = conf.control_secret
 STATSD_HOST = conf.statsd_host
 STATSD_PORT = conf.statsd_port
 STATSD_PREFIX = conf.statsd_prefix
-TWITTER_CLIENT_ID = conf.twitter_client_id
-TWITTER_CLIENT_SECRET = conf.twitter_client_secret
-LINKEDIN_CLIENT_ID = conf.linkedin_client_id
-LINKEDIN_CLIENT_SECRET = conf.linkedin_client_secret
 
 FRONTEND_DIR = BASE_DIR / 'webapp'
 VITE_DEV_MODE = conf.npm_dev
+PLUGIN_DEV_MODE = conf.plugin_dev_mode
 VITE_DEV_SERVER_PORTS = {
     'schedule-editor': 'http://localhost:8080',
     'video': 'http://localhost:8880',
@@ -1621,6 +1615,9 @@ HTMLEXPORT_ROOT = DATA_DIR / 'htmlexport'
 EVENTYAY_PRIMARY_COLOR = '#2185d0'
 DEFAULT_EVENT_PRIMARY_COLOR = '#2185d0'
 PRETIX_PRIMARY_COLOR = EVENTYAY_PRIMARY_COLOR
+
+IMAGE_DEFAULT_MAX_WIDTH = 2000
+IMAGE_DEFAULT_MAX_HEIGHT = 2000
 
 CALL_FOR_SPEAKER_LOGIN_BUTTON_LABEL = conf.call_for_speaker_login_button_label
 

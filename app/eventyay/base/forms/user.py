@@ -1,3 +1,6 @@
+import logging
+import os
+
 from django import forms
 from django.conf import settings
 from django.contrib.auth.hashers import check_password
@@ -5,11 +8,14 @@ from django.contrib.auth.password_validation import (
     password_validators_help_texts,
     validate_password,
 )
+from django.core.files.uploadedfile import SimpleUploadedFile, UploadedFile
 from django.utils.translation import gettext_lazy as _
 from eventyay.timezones import common_timezones
 
 from eventyay.base.models import User
+from eventyay.common.image import validate_image
 from eventyay.control.forms import SingleLanguageWidget
+from eventyay.helpers.image_optimize import optimize_uploaded_image
 
 
 class UserSettingsForm(forms.ModelForm):
@@ -20,6 +26,17 @@ class UserSettingsForm(forms.ModelForm):
         'rate_limit': _('For security reasons, please wait 5 minutes before you try again.'),
     }
 
+    profile_picture = forms.ImageField(
+        required=False,
+        label=_('Profile picture'),
+        validators=[validate_image],
+        widget=forms.FileInput(attrs={'data-eventyay-file-wrapper': 'disabled'}),
+        help_text=_('We recommend uploading a square image at least 400px wide.'),
+    )
+    clear_profile_picture = forms.BooleanField(
+        required=False,
+        label=_('Remove profile picture'),
+    )
     old_pw = forms.CharField(
         max_length=255,
         required=False,
@@ -49,7 +66,7 @@ class UserSettingsForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ['fullname', 'wikimedia_username', 'locale', 'timezone', 'email']
+        fields = ['fullname', 'wikimedia_username', 'profile_picture', 'locale', 'timezone', 'email']
         widgets = {'locale': SingleLanguageWidget}
 
     def __init__(self, *args, **kwargs):
@@ -107,9 +124,56 @@ class UserSettingsForm(forms.ModelForm):
         if password1 and password1 != password2:
             raise forms.ValidationError(self.error_messages['pw_mismatch'], code='pw_mismatch')
 
+    def clean_profile_picture(self):
+        pic = self.cleaned_data.get('profile_picture')
+        if pic and isinstance(pic, UploadedFile):
+            try:
+                crop_x = float(self.data.get('profile_picture_crop_x', ''))
+                crop_y = float(self.data.get('profile_picture_crop_y', ''))
+                crop_w = float(self.data.get('profile_picture_crop_w', ''))
+                crop_h = float(self.data.get('profile_picture_crop_h', ''))
+                if not all(-float('inf') < value < float('inf') for value in (crop_x, crop_y, crop_w, crop_h)):
+                    raise ValueError('Invalid crop coordinates')
+                if abs(crop_w - crop_h) > 1:
+                    raise forms.ValidationError(_('Crop dimensions must be square'))
+                crop_x = int(crop_x)
+                crop_y = int(crop_y)
+                crop_w = round(crop_w)
+                crop_h = round(crop_h)
+                if crop_w <= 0 or crop_h <= 0:
+                    raise ValueError('Invalid crop dimensions')
+                # Force a perfect square for the final crop box
+                crop_h = crop_w
+                crop_box = (crop_x, crop_y, crop_x + crop_w, crop_y + crop_h)
+            except (ValueError, TypeError, OverflowError):
+                crop_box = None
+
+            try:
+                result = optimize_uploaded_image(pic, 'profile_picture', crop_box)
+                base_name, _ = os.path.splitext(pic.name)
+                pic = SimpleUploadedFile(
+                    f"{base_name}.{result.optimized_ext}",
+                    result.optimized.read(),
+                    content_type=f"image/{result.optimized_ext}"
+                )
+            except OSError:
+                logging.getLogger(__name__).exception("Failed to process profile picture")
+                raise forms.ValidationError(_('Failed to process image.'))
+        return pic
+
     def clean(self):
-        password1 = self.cleaned_data.get('new_pw')
-        old_pw = self.cleaned_data.get('old_pw')
+        cleaned_data = super().clean()
+        has_new_profile_picture_upload = bool(self.files and self.files.get('profile_picture'))
+        if cleaned_data.get('clear_profile_picture') and has_new_profile_picture_upload:
+            raise forms.ValidationError(
+                _('Cannot upload a new profile picture and remove the existing one at the same time.')
+            )
+
+        if cleaned_data.get('clear_profile_picture'):
+            cleaned_data['profile_picture'] = None
+
+        password1 = cleaned_data.get('new_pw')
+        old_pw = cleaned_data.get('old_pw')
 
         if not self.requires_password_reset and password1 and not old_pw:
             raise forms.ValidationError(self.error_messages['pw_current'], code='pw_current')
@@ -117,7 +181,7 @@ class UserSettingsForm(forms.ModelForm):
         if password1:
             self.instance.set_password(password1)
 
-        return self.cleaned_data
+        return cleaned_data
 
 
 class User2FADeviceAddForm(forms.Form):

@@ -4,18 +4,18 @@
 {% block title %}{% trans "Import attendees" %}{% endblock %}
 {% block custom_header %}
     {{ block.super }}
-    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/orders-mobile.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/import-export.css' %}" />
 {% endblock %}
 {% block content %}
     {% trans "Import attendees" as header_title %}
     {% include "common/includes/header_nav.html" with header_title=header_title header_component_link="pretixcontrol/event/component_link.html" %}
 
-    <div class="panel panel-default orders-import-panel">
+    <div class="panel panel-default orders-import-panel tickets-import-panel">
         <div class="panel-heading">
             <h3 class="panel-title">{% trans "Upload a new file" %}</h3>
         </div>
         <div class="panel-body">
-            <form action="" method="post" enctype="multipart/form-data" class="form-horizontal">
+            <form action="" method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 <p>
                     {% blocktrans trimmed %}
@@ -23,16 +23,19 @@
                         meanings of the different columns in the next step.
                     {% endblocktrans %}
                 </p>
-                <div class="form-group">
-                    <label class="col-md-2 control-label" for="file">{% trans "Import file" %}:</label>
-                    <div class="col-md-5">
-                        <input id="file" type="file" name="file" accept=".csv" required data-eventyay-file-wrapper="disabled"/>
+                <div class="import-file-group">
+                    <span class="import-file-label">{% trans "Import file" %} *</span>
+                    <div class="import-file-input-wrapper">
+                        <input id="file" type="file" name="file" accept=".csv" required/>
                     </div>
                 </div>
-                <div class="form-group submit-group">
-                    <button class="btn btn-primary btn-save" type="submit">
-                        <span class="icon icon-upload"></span> {% trans "Upload and continue" %}
-                    </button>
+                <div class="submit-group panel">
+                    <span></span>
+                    <span>
+                        <button class="btn btn-primary btn-lg" type="submit">
+                            <i class="fa fa-upload"></i> {% trans "Upload and continue" %}
+                        </button>
+                    </span>
                 </div>
             </form>
         </div>

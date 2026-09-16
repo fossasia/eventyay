@@ -387,6 +387,16 @@ class BaseMailTextPlaceholder:
         """
         raise NotImplementedError()
 
+    @property
+    def is_visible(self):
+        """Whether this placeholder is shown in the placeholder help drawer."""
+        return True
+
+    @property
+    def explanation(self):
+        """Short description shown in the placeholder help drawer."""
+        return ''
+
     def render(self, context):
         """
         This method is called to generate the actual text that is being
@@ -405,11 +415,13 @@ class BaseMailTextPlaceholder:
 
 
 class SimpleFunctionalMailTextPlaceholder(BaseMailTextPlaceholder):
-    def __init__(self, identifier, args, func, sample):
+    def __init__(self, identifier, args, func, sample, explanation=None, is_visible=True):
         self._identifier = identifier
         self._args = args
         self._func = func
         self._sample = sample
+        self._explanation = explanation or ''
+        self._is_visible = is_visible
 
     @property
     def identifier(self):
@@ -418,6 +430,14 @@ class SimpleFunctionalMailTextPlaceholder(BaseMailTextPlaceholder):
     @property
     def required_context(self):
         return self._args
+
+    @property
+    def is_visible(self):
+        return self._is_visible
+
+    @property
+    def explanation(self):
+        return self._explanation
 
     def render(self, context):
         return self._func(**{k: context[k] for k in self._args})

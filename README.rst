@@ -479,10 +479,24 @@ Example:
    .
    └── eventyay/
        └── plugins/
-           ├── eventyay-exhibitor/
-           └── eventyay-loungemesh/
+           ├── eventyay-exhibition/
+           ├── eventyay-interpretation/
+           └── eventyay-checkin/
 
-When using the Docker development setup, the startup script scans ``./plugins/`` and installs detected plugins in editable mode. Installation status is cached in ``/tmp/eventyay-plugin-stamps/`` to speed up container boot times.
+Local plugin development is controlled by two flags in ``.env.dev``:
+
+* ``EVY_PLUGIN_DEV_MODE=1`` (default): scans ``./plugins/`` and installs Python plugins in editable mode so code changes reflect instantly. If ``EVY_NPM_DEV=1`` and ``./plugins/eventyay-checkin`` exists, its Vite dev server runs on port ``8085``.
+* ``EVY_PLUGIN_DEV_MODE=0``: skips editable installs and uses locked image dependencies.
+* ``EVY_NPM_DEV=1`` (default): starts Vite HMR dev servers on ports ``8080``, ``8082``, ``8880`` for live frontend changes.
+* ``EVY_NPM_DEV=0``: serves pre-built static assets instead.
+
+.. note::
+
+   Changing ``EVY_PLUGIN_DEV_MODE`` or ``EVY_NPM_DEV`` requires a container restart to take effect::
+
+      docker compose restart web worker beat
+
+   No image rebuild is needed. Both flags have no effect when ``EVY_RUNNING_ENVIRONMENT`` is not ``development``.
 
 Separate Eventyay components
 ----------------------------

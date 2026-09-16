@@ -165,3 +165,32 @@
   font-size: 12px;
   font-weight: 600;
 }
+
+.i18n-textarea-wrapper {
+  margin-bottom: 24px;
+  position: relative;
+}
+
+.i18n-textarea-wrapper:last-child {
+  margin-bottom: 8px;
+}
+
+.i18n-lang-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  margin-top: 8px;
+}
+
+.i18n-lang-name {
+  color: #495057;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.i18n-form-group .i18n-textarea-wrapper .toastui-editor-defaultUI {
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+}

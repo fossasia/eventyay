@@ -12,6 +12,12 @@ declare module 'buntpapier' {
 
 declare module '~/lib/i18n' {
   import { Plugin } from 'vue'
+  export function translate(key: string, options?: Record<string, unknown>): string
   const plugin: (locale: string) => Promise<Plugin>
   export default plugin
+}
+
+declare module '*.po' {
+  const catalog: Record<string, string>
+  export default catalog
 }

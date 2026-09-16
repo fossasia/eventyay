@@ -51,7 +51,15 @@ function mountEditor(textarea) {
     }
   })
 
-  const toolbar = buildToolbar(editor, { profile, placeholders, previewUrl, locale: fieldLang || '' })
+  textarea.__eventyayTiptapEditor = editor
+  const toolbar = buildToolbar(editor, {
+    profile,
+    placeholders,
+    previewUrl,
+    locale: fieldLang || '',
+    editorEl,
+    textarea,
+  })
 
   textarea.style.display = 'none'
   wrapper.insertBefore(toolbar, textarea)
@@ -83,3 +91,4 @@ if (document.readyState === 'loading') {
 }
 
 window.eventyayTiptap = { init, mountEditor }
+window.dispatchEvent(new CustomEvent('eventyay:tiptap-ready'))

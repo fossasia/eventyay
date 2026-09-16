@@ -1,17 +1,13 @@
 <template lang="pug">
 .c-room-header
-	.ui-page-header(v-if="!modules['page.markdown'] && !modules['page.landing']")
+	.ui-page-header(v-if="!modules['page.markdown'] && !modules['page.landing'] && $route.name !== 'room:manage' && !isVideoCallRoom")
+		bunt-icon-button.btn-back(@click="onBack", :tooltip="$t('Back to Overview')", tooltip-placement="bottom-start", :tooltip-fixed="true") arrow-left
 		.room-info
-			.room-name(v-html="$emojify(room.name)")
+			.room-name(v-if="room && room.name", v-html="$emojify(room.name)")
 			.room-session(v-if="currentSession") {{ $localize(currentSession.title) }}
 		//- bunt-icon-button(v-if="$features.enabled('schedule-control')", @click="showEditSchedule = true") calendar_edit
 		.actions
-			bunt-icon-button(v-if="modules['call.bigbluebutton'] && hasPermission('room:bbb.recordings')", :tooltip="$t('Room:recordings:tooltip')", tooltipPlacement="bottom-end", @click="showRecordingsPrompt = true") file-video-outline
-			.button-group(v-if="['stage', 'channel-bbb', 'channel-janus', 'channel-zoom', 'channel-jitsi'].includes(roomType) && canManage")
-				// TODO buntpapier does not support replace
-				// hardlink params so home page alias works
-				bunt-link-button(:to="{name: 'room:manage', params: {roomId: room.id}}", replace) manage
-				bunt-link-button(:to="{name: 'room', params: {roomId: room.id}}", replace) view
+			bunt-icon-button(v-if="modules['call.bigbluebutton'] && hasPermission('room:bbb.recordings')", :tooltip="$t('Recordings')", tooltipPlacement="bottom-end", @click="showRecordingsPrompt = true") file-video-outline
 	router-view(:room="room", :modules="modules")
 	transition(name="prompt")
 		recordings-prompt(v-if="showRecordingsPrompt && room", :room="room", @close="showRecordingsPrompt = false")
@@ -21,6 +17,8 @@
 // better ellipsing for room name + session title on small screens
 import {mapGetters, mapState} from 'vuex'
 import { inferRoomType, inferType } from 'lib/room-types'
+import { hasOrganizerTraits } from 'lib/traitGrants'
+import { isRoomVisibleToAttendee } from 'lib/video-providers'
 import RecordingsPrompt from 'components/RecordingsPrompt'
 
 const PERMISSIONS_TO_MANAGE = [
@@ -58,7 +56,7 @@ export default {
 				}
 			}
 			const wantedId = String(this.roomId)
-			return this.rooms?.find(room => String(room.id) === wantedId)
+			return this.rooms?.find(room => String(room.id) === wantedId || (room.pretalx_id != null && String(room.pretalx_id) === wantedId))
 		},
 		roomType() {
 			if (!this.room) return null
@@ -83,17 +81,34 @@ export default {
 				if (this.hasPermission(permission)) return true
 			}
 			return false
+		},
+		hasOrganiserPermissions() {
+			if (!window.eventyay?.isOrganizerArea) return false
+			if (window.eventyay?.hasOrganiserPermissions) return true
+			const tokenTraits = this.$store.state.user?.traits || []
+			return (
+				hasOrganizerTraits(tokenTraits) ||
+				this.hasPermission('world:users.list') ||
+				this.hasPermission('world:update') ||
+				this.hasPermission('room:update')
+			)
+		},
+		isVideoCallRoom() {
+			return Boolean(
+				this.modules['call.bigbluebutton'] ||
+				this.modules['call.jitsi'] ||
+				this.modules['call.janus'] ||
+				this.modules['call.zoom'] ||
+				this.modules['call.loungemesh']
+			)
 		}
 	},
 	watch: {
 		room: {
 			handler: 'scheduleRedirectIfUninitiated',
-			immediate: true
-		},
-		rooms: {
-			handler: 'scheduleRedirectIfUninitiated',
 			deep: true
 		},
+		rooms: 'scheduleRedirectIfUninitiated',
 		roomId: 'scheduleRedirectIfUninitiated'
 	},
 	methods: {
@@ -111,7 +126,15 @@ export default {
 			// Home ('/') will always show the first available room.
 			if (this.roomId === undefined) return
 			// Wait until rooms have loaded.
-			if (!this.rooms || this.rooms.length === 0) return
+			if (!this.rooms) return
+			// If user is attendee, prevent direct URL access to disabled rooms
+			if (!this.hasOrganiserPermissions) {
+				if (!this.room || this.room.is_disabled || !isRoomVisibleToAttendee(this.room, this.$store.state.world?.video_providers)) {
+					if (this.$route.name === 'about') return
+					this.$router.replace({name: 'about'})
+					return
+				}
+			}
 			// If the room does not exist or is unconfigured, redirect to home.
 			const inferred = this.room
 				? (Array.isArray(this.room.module_config)
@@ -121,6 +144,15 @@ export default {
 			if (!inferred) {
 				if (this.$route.name === 'about') return
 				this.$router.replace({name: 'about'})
+			}
+		},
+		onBack() {
+			if (window.history.state && window.history.state.back) {
+				this.$router.back()
+			} else if (window.eventyay?.isOrganizerArea) {
+				this.$router.replace({ name: 'organizer' })
+			} else {
+				this.$router.replace({ name: 'about' })
 			}
 		}
 	},
@@ -142,8 +174,12 @@ export default {
 	min-width: 0
 	> .ui-page-header
 		justify-content: space-between
+		.btn-back
+			icon-button-style(style: clear)
+			flex: none
 		.room-info
-			padding: 0 24px
+			padding: 0 12px
+			flex: 1
 			display: flex
 			align-items: baseline
 			min-width: 0
@@ -169,19 +205,8 @@ export default {
 		.actions
 			flex: none
 			display: flex
+			align-items: center
 			gap: 8px
 			.bunt-icon-button
 				icon-button-style(style: clear)
-			.button-group
-				> .bunt-link-button
-					box-sizing: border-box
-					&.router-link-exact-active
-						themed-button-primary()
-					&:not(.router-link-exact-active)
-						themed-button-secondary()
-						border: 2px solid var(--clr-primary)
-					&:first-child
-						border-radius: 4px 0 0 4px
-					&:last-child
-						border-radius: 0 4px 4px 0
 </style>

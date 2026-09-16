@@ -1,5 +1,7 @@
 import contextlib
+from collections import Counter
 from copy import copy
+from functools import lru_cache
 
 from django.conf import global_settings, settings
 from django.utils import translation
@@ -60,6 +62,48 @@ def get_language_choices_native_with_ui_name(codes=None) -> list[tuple[str, str]
             label = f'\u200e{natural_name} ({english_name})'
         choices.append((code, label))
     return choices
+
+
+@lru_cache(maxsize=None)
+def _native_language_name(code: str) -> str:
+    language_info = settings.LANGUAGES_INFORMATION.get(code, {})
+    language_name = language_info.get('name')
+    if language_name is None:
+        return code
+    with translation.override(code):
+        return str(language_name)
+
+
+def get_ui_language_options(codes=None) -> list[dict]:
+    """Language picker entries used by tickets, talk, and Video.
+
+    Labels match ``fragment_language_switch.html``: native name, with extra
+    disambiguation when two locales share the same native name.
+    """
+    available_codes = [code for code, __ in settings.LANGUAGES]
+    ordered_codes = [code for code, __ in get_language_choices_native_with_ui_name(codes if codes is not None else available_codes)]
+    supported_languages = [
+        (code, settings.LANGUAGES_INFORMATION.get(code, {}).get('natural_name', code))
+        for code in ordered_codes
+    ]
+    natural_name_counts = Counter(natural_name for __, natural_name in supported_languages)
+    labels_by_code = {}
+    for code, natural_name in supported_languages:
+        label = natural_name
+        if natural_name_counts[natural_name] > 1:
+            native_language_name = _native_language_name(code)
+            if native_language_name:
+                label = native_language_name
+        labels_by_code[code] = label
+
+    label_counts = Counter(labels_by_code.values())
+    options = []
+    for code, __ in supported_languages:
+        label = labels_by_code[code]
+        if label_counts[label] > 1:
+            label = f'{label} ({code})'
+        options.append({'code': code, 'label': label, 'nativeLabel': label})
+    return options
 
 
 @contextlib.contextmanager

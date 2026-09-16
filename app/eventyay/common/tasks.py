@@ -88,7 +88,7 @@ def send_scheduled_queuedmail(self, mail_pk: int):
             mail = (
                 QueuedMail.objects
                 .select_for_update(skip_locked=True)
-                .filter(pk=mail_pk, sent__isnull=True)
+                .filter(pk=mail_pk, sent__isnull=True, is_draft=False)
                 .first()
             )
 

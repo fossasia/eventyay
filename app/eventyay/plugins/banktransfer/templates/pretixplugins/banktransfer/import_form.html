@@ -3,50 +3,7 @@
 {% load bootstrap3 %}
 {% load static %}
 {% block inner %}
-    {% if no_more_payments %}
-        <div class="alert alert-danger">
-            {% blocktrans trimmed with date=request.event.settings.payment_term_last|date:"SHORT_DATE_FORMAT" %}
-                In the payment settings of your event, you set the {{ date }} as the last date of any payments.
-                Therefore, you won't be able to mark any order as paid here.
-            {% endblocktrans %}
-        </div>
-    {% else %}
-        <div class="panel panel-default orders-import-panel tickets-import-panel">
-            <div class="panel-heading">
-                <h3 class="panel-title">{% trans "Upload a new file" %}</h3>
-            </div>
-            <div class="panel-body">
-                <p>{% blocktrans trimmed %}
-                    This page allows you to upload bank statement files to process incoming payments.
-                {% endblocktrans %}</p>
-                <p>{% blocktrans trimmed %}
-                    Currently, this feature supports <code>.csv</code> files and files in the MT940 format.
-                {% endblocktrans %}</p>
-                {% if job_running %}
-                    <div class="alert alert-info" data-job-waiting
-                         data-job-waiting-url="{% if request.event %}{% url "plugins:banktransfer:import.job" event=request.event.slug organizer=request.event.organizer.slug job=job_running.pk %}{% else %}{% url "plugins:banktransfer:import.job" organizer=request.organizer.slug job=job_running.pk %}{% endif %}?ajax=1">
-                        <span class="fa fa-cog fa-spin"></span>
-                        {% trans "An import is currently being processed, please try again in a few minutes." %}
-                    </div>
-                {% else %}
-                    <form action="" method="post" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        <div class="banktransfer-file-group">
-                            <label class="banktransfer-file-label" for="file" onclick="event.preventDefault();">{% trans "Import file" %} *</label>
-                            <div class="banktransfer-file-input-wrapper">
-                                <input id="file" type="file" name="file" required/>
-                            </div>
-                        </div>
-                        <div class="banktransfer-submit-group">
-                            <button class="btn btn-primary btn-lg" type="submit">
-                                <i class="fa fa-upload"></i> {% trans "Upload and continue" %}
-                            </button>
-                        </div>
-                    </form>
-                {% endif %}
-            </div>
-        </div>
-    {% endif %}
+    {% include "pretixplugins/banktransfer/_banktransfer_upload.html" %}
     {% if transactions_unhandled|length > 0 or filter_form.is_valid %}
         <div class="panel panel-default">
             <div class="panel-heading">

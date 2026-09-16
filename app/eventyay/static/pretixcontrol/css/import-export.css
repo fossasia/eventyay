@@ -1,0 +1,190 @@
+/* Unified Import/Export Page Styles */
+
+/* Remove outer box/borders and padding from the tab content container */
+#page-wrapper .import-export-tab-content,
+#page-wrapper .tab-content.import-export-tab-content {
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.import-export-nav-tabs {
+  border-bottom: #ccc solid 1px;
+  margin-bottom: 20px;
+}
+
+.import-export-nav-tabs > li {
+  margin-bottom: -1px;
+}
+
+.import-export-nav-tabs > li > a {
+  border: none !important;
+  color: #337ab7;
+  padding: 0.5rem 1rem;
+  margin-right: 0;
+  font-weight: normal;
+}
+
+.import-export-nav-tabs > li > a:hover,
+.import-export-nav-tabs > li > a:focus {
+  background: transparent;
+  border-bottom: #337ab7 solid 2px !important;
+}
+
+.import-export-nav-tabs > li.active > a,
+.import-export-nav-tabs > li.active > a:hover,
+.import-export-nav-tabs > li.active > a:focus {
+  border: none !important;
+  border-bottom: #337ab7 solid 4px !important;
+  color: #333;
+  background: transparent;
+}
+
+.banktransfer-filter-row {
+  margin-bottom: 20px;
+}
+
+/* File Picker Wrapper Styles */
+.eventyay-file-pick-wrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.eventyay-file-pick-wrapper:focus-within {
+  border-color: #80bdff;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.eventyay-file-pick-wrapper label {
+  background-color: #e9ecef;
+  border-right: 1px solid #ccc;
+  padding: 6px 12px;
+  font-size: 14px;
+  font-weight: 400;
+  color: #333;
+  cursor: pointer;
+  white-space: nowrap;
+  margin-bottom: 0;
+}
+
+.eventyay-file-pick-wrapper label:hover {
+  background-color: #dde0e3;
+}
+
+.eventyay-file-pick-wrapper input[type="file"],
+.eventyay-file-pick-wrapper input[type="file"]:disabled {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.eventyay-file-name {
+  font-size: 14px;
+  color: #6c757d;
+  padding: 6px 12px;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Form layout for Import Attendees & Bank Transfers */
+.import-file-group,
+.banktransfer-file-group {
+  display: flex;
+  align-items: center;
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+.import-file-label,
+.banktransfer-file-label {
+  font-weight: bold;
+  margin-bottom: 0;
+  margin-right: 15px;
+  white-space: nowrap;
+}
+
+.import-file-input-wrapper,
+.banktransfer-file-input-wrapper {
+  width: 50%;
+}
+
+.submit-group.panel,
+.import-submit-group,
+.banktransfer-submit-group {
+  background-color: #fff;
+  border: 1px solid #e3e3e3;
+  border-radius: 4px;
+  padding: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.submit-group.panel .btn,
+.import-submit-group .btn,
+.banktransfer-submit-group .btn {
+  width: auto;
+  display: inline-block;
+}
+
+/* Banktransfer unresolved transactions table */
+table.transaction-list td.actions {
+  width: 100px;
+}
+
+table.transaction-list td.discard {
+  width: 50px;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 767px) {
+  .import-file-group,
+  .banktransfer-file-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .import-file-label,
+  .banktransfer-file-label {
+    margin-right: 0;
+  }
+
+  .import-file-input-wrapper,
+  .banktransfer-file-input-wrapper {
+    width: 100%;
+  }
+
+  .submit-group.panel,
+  .import-submit-group,
+  .banktransfer-submit-group {
+    text-align: center;
+    flex-direction: column;
+  }
+
+  .submit-group.panel .btn,
+  .import-submit-group .btn,
+  .banktransfer-submit-group .btn {
+    width: 100%;
+  }
+}
+
+.import-tab-description { margin-bottom: 20px; }
+.import-file-input { margin-top: 7px; }
+.import-submit-panel { margin-top: 20px; }
+.back-button-row { margin-bottom: 15px; }

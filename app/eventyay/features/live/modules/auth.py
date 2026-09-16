@@ -16,6 +16,7 @@ from eventyay.base.models import User
 from eventyay.base.models.auth import ShortToken
 from eventyay.core.permissions import Permission
 from eventyay.base.services.announcement import get_announcements
+from eventyay.features.live.modules.announcement import is_announcements_enabled
 from eventyay.base.services.chat import ChatService
 from eventyay.base.services.connections import (
     get_user_connection_count,
@@ -73,18 +74,51 @@ class AuthModule(BaseModule):
             "event": self.consumer.event,
         }
         body = body or {}
+        query_string = self.consumer.scope.get("query_string", b"").decode()
+        # Only true organizer area connections can ever request organizer mode
+        is_organizer_requested = bool(
+            body.get("is_organizer")
+            and "organizer=1" in query_string
+        )
+
         if "token" not in body or not body.get("token"):
-            client_id = body.get("client_id")
-            if not client_id:
-                async with statsd() as s:
-                    s.increment(
-                        f"authentication.failed,reason=missing_token,event={self.consumer.event.pk}"
+            session_user = self.consumer.scope.get("user")
+            session = self.consumer.scope.get("session")
+            session_key = getattr(session, "session_key", None)
+            is_authorized_session_user = False
+            if session_user and getattr(session_user, "is_authenticated", False):
+                from eventyay.eventyay_common.video.traits_sync import is_platform_event_admin
+                is_admin = await database_sync_to_async(is_platform_event_admin)(session_user, session_key=session_key)
+                has_perm = await database_sync_to_async(
+                    lambda: session_user.has_event_permission(
+                        self.consumer.event.organizer, self.consumer.event
+                    ) or session_user.has_organizer_permission(
+                        self.consumer.event.organizer
                     )
-                await self.consumer.send_error(code="auth.missing_id_or_token")
-                return
-            kwargs["client_id"] = client_id
-            if "invite_token" in body:
-                kwargs["invite_token"] = body.get("invite_token")
+                )()
+                is_authorized_session_user = bool(is_admin or has_perm)
+
+            if is_authorized_session_user and is_organizer_requested:
+                kwargs["platform_user"] = session_user
+                kwargs["session_key"] = session_key
+                kwargs["is_organizer"] = True
+            elif session_user and getattr(session_user, "is_authenticated", False):
+                kwargs["platform_user"] = session_user
+                kwargs["session_key"] = session_key
+                kwargs["is_organizer"] = False
+            else:
+                client_id = body.get("client_id")
+                if not client_id:
+                    async with statsd() as s:
+                        s.increment(
+                            f"authentication.failed,reason=missing_token,event={self.consumer.event.pk}"
+                        )
+                    await self.consumer.send_error(code="auth.missing_id_or_token")
+                    return
+                kwargs["client_id"] = client_id
+                kwargs["is_organizer"] = False
+                if "invite_token" in body:
+                    kwargs["invite_token"] = body.get("invite_token")
         else:
             try:
                 # decode_token may read event.settings (DB-backed) when JWT_secrets are unset
@@ -105,7 +139,15 @@ class AuthModule(BaseModule):
                     )
                     await self.consumer.send_error(code="auth.invalid_token")
                     return
+
+            token_traits = token.get("traits") or []
+            token_has_organizer = any(
+                t == "admin" or (isinstance(t, str) and t.endswith("-organizer"))
+                for t in token_traits
+            )
             kwargs["token"] = token
+            # Only grant organizer mode to tokens if requested in organizer area AND holding organizer traits
+            kwargs["is_organizer"] = bool(is_organizer_requested and token_has_organizer)
 
         try:
             login_result = await database_sync_to_async(login)(**kwargs)
@@ -119,6 +161,11 @@ class AuthModule(BaseModule):
 
         self.consumer.user = login_result.user
         self._current_view = login_result.view
+
+        live_features = (getattr(self.consumer.event, "config", None) or {}).get("live_features", {})
+        if self.consumer.user.type == User.UserType.KIOSK and not live_features.get("kiosks", False):
+            await self.consumer.send_error(code="kiosks.disabled", message="Kiosks are currently disabled.")
+            return
         if settings.SENTRY_DSN:
             with configure_scope() as scope:
                 scope.user = {"id": str(self.consumer.user.id)}
@@ -145,8 +192,12 @@ class AuthModule(BaseModule):
                     "chat.channels": login_result.chat_channels,
                     "chat.read_pointers": read_pointers,
                     "chat.notification_counts": login_result.chat_notification_counts,
-                    "announcements": await get_announcements(
-                        event=self.consumer.event.id, moderator=False
+                    "announcements": (
+                        await get_announcements(
+                            event=self.consumer.event.id, moderator=False
+                        )
+                        if is_announcements_enabled(self.consumer.event)
+                        else []
                     ),
                 },
             ]
@@ -411,13 +462,18 @@ class AuthModule(BaseModule):
         if self._current_view and self.consumer.event:
             await database_sync_to_async(end_view)(
                 self._current_view,
-                delete=not self._event_config().get("track_event_views", False),
+                delete=not self._event_config().get("track_event_views", True),
             )
 
     @command("list")
     @require_event_permission(Permission.EVENT_USERS_LIST)
     async def list(self, body):
         body = body or {}
+        if body.get("type") == User.UserType.KIOSK:
+            live_features = (getattr(self.consumer.event, "config", None) or {}).get("live_features", {})
+            if not live_features.get("kiosks", False):
+                await self.consumer.send_error(code="kiosks.disabled", message="Kiosks are currently disabled.")
+                return
         users = await get_public_users(
             self.consumer.event.pk,
             include_admin_info=await self._include_admin_user_info(),
@@ -437,13 +493,8 @@ class AuthModule(BaseModule):
         list_conf = self._event_config().get("user_list", {})
         page_size = list_conf.get("page_size", 20)
         search_min_chars = list_conf.get("search_min_chars", 0)
-        profile_fields = self._event_config().get("profile_fields", {})
         badge = body.get("badge")
-        search_fields = [
-            field["id"]
-            for field in filter(lambda f: f.get("searchable", False), profile_fields)
-            if "id" in field
-        ]
+        search_fields = []
         if len(body["search_term"]) < search_min_chars and not badge:
             result = {
                 "results": [],
@@ -587,38 +638,14 @@ class AuthModule(BaseModule):
         resp = {i: (await get_user_connection_count(i)) > 0 for i in body.get("ids")}
         await self.consumer.send_success(resp)
 
-    @command("social.connect")
-    @require_event_permission(Permission.EVENT_VIEW)
-    async def social_connect(self, body):
-        network = body.get("network")
-
-        if not body.get("return_url"):
-            await self.consumer.send_error(code="user.social.return_url_required")
-            return
-
-        if network not in ("twitter", "linkedin"):
-            await self.consumer.send_error(code="user.social.unknown")
-            return
-
-        payload = {
-            "network": network,
-            "return_url": body.get("return_url"),
-            "event": self.consumer.event.pk,
-            "user": str(self.consumer.user.pk),
-        }
-        token = dumps(payload, salt="eventyay.base.social.start", compress=True)
-
-        await self.consumer.send_success(
-            {
-                "url": urljoin(settings.SITE_URL, reverse(f"social:{network}.start"))
-                + "?token="
-                + token,
-            }
-        )
-
     @command("kiosk.create")
     @require_event_permission(Permission.EVENT_KIOSKS_MANAGE)
     async def kiosk_create(self, body):
+        live_features = (getattr(self.consumer.event, "config", None) or {}).get("live_features", {})
+        if not live_features.get("kiosks", False):
+            await self.consumer.send_error(code="kiosks.disabled", message="Kiosks are currently disabled.")
+            return
+
         uid = str(uuid.uuid4())
 
         @database_sync_to_async
@@ -643,6 +670,11 @@ class AuthModule(BaseModule):
     @command("kiosk.fetch")
     @require_event_permission(Permission.EVENT_KIOSKS_MANAGE)
     async def kiosk_fetch(self, body):
+        live_features = (getattr(self.consumer.event, "config", None) or {}).get("live_features", {})
+        if not live_features.get("kiosks", False):
+            await self.consumer.send_error(code="kiosks.disabled", message="Kiosks are currently disabled.")
+            return
+
         @database_sync_to_async
         def get_user(uid):
             user = get_user_by_id(self.consumer.event.pk, uid)
@@ -682,3 +714,48 @@ class AuthModule(BaseModule):
             await self.consumer.send_success(user)
         else:
             await self.consumer.send_error(code="user.not_found")
+
+    @command("kiosk.update")
+    @require_event_permission(Permission.EVENT_KIOSKS_MANAGE)
+    async def kiosk_update(self, body):
+        """Update a kiosk user profile (slides, room, display name, etc.)."""
+        live_features = (getattr(self.consumer.event, "config", None) or {}).get("live_features", {})
+        if not live_features.get("kiosks", False):
+            await self.consumer.send_error(code="kiosks.disabled", message="Kiosks are currently disabled.")
+            return
+
+        kiosk_id = body.get("id")
+        profile = body.get("profile")
+        if not kiosk_id or not isinstance(profile, dict):
+            await self.consumer.send_error(code="auth.invalid_input")
+            return
+
+        @database_sync_to_async
+        def load_kiosk(uid):
+            user = get_user_by_id(self.consumer.event.pk, uid)
+            if not user or user.type != User.UserType.KIOSK:
+                return None
+            return user
+
+        kiosk_user = await load_kiosk(kiosk_id)
+        if not kiosk_user:
+            await self.consumer.send_error(code="user.not_found")
+            return
+
+        user = await database_sync_to_async(update_user)(
+            self.consumer.event.id,
+            kiosk_id,
+            data={"profile": profile},
+            is_admin=True,
+            serialize=False,
+        )
+        await user_broadcast(
+            "user.updated",
+            user.serialize_public(
+                trait_badges_map=self._event_config().get("trait_badges_map"),
+                include_client_state=True,
+            ),
+            user.pk,
+            self.consumer.socket_id,
+        )
+        await self.consumer.send_success()

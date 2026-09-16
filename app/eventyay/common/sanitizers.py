@@ -44,10 +44,13 @@ def _attribute_filter(allowed: Mapping[str, set[str]]) -> Callable[[str, str, st
     def filter_attr(tag: str, attr: str, value: str) -> str | None:
         if attr not in allowed.get(tag, ()):
             return None
-        if tag == 'a' and attr == 'href' and value.lstrip().lower().startswith('data:'):
-            return None
+        
+        normalized = value.lstrip().lower()
+        if normalized.startswith('data:'):
+            if not (tag == 'img' and attr == 'src' and normalized.startswith('data:image/')):
+                return None
+
         if tag == 'img' and attr == 'src':
-            normalized = value.lstrip().lower()
             if not normalized.startswith(('data:image/', 'http://', 'https://', '/')):
                 return None
         return value
@@ -81,6 +84,16 @@ def _clean(
     )
 
 
+_PAGE_TAGS: frozenset[str] = _RICH_TEXT_TAGS | frozenset({
+    'img', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'
+})
+_PAGE_ATTRIBUTES: dict[str, set[str]] = {
+    'a': {'href', 'rel'},
+    'img': {'src', 'alt', 'width', 'height', 'title'}
+}
+
+_PAGE_ATTR_FILTER = _attribute_filter(_PAGE_ATTRIBUTES)
+
 def sanitize_rich_text(html: str) -> str:
     """Sanitize HTML from the simple rich text editor profile."""
     return _clean(
@@ -89,6 +102,18 @@ def sanitize_rich_text(html: str) -> str:
         attributes=_LINK_ATTRIBUTES,
         attribute_filter=_RICH_TEXT_ATTR_FILTER,
         link_rel='noopener noreferrer',
+    )
+
+
+def sanitize_page_rich_text(html: str) -> str:
+    """Sanitize HTML from the page text editor profile which allows inline images."""
+    return _clean(
+        html,
+        tags=_PAGE_TAGS,
+        attributes=_PAGE_ATTRIBUTES,
+        attribute_filter=_PAGE_ATTR_FILTER,
+        link_rel='noopener noreferrer',
+        url_schemes=_EMAIL_URL_SCHEMES,  # to allow data:image URLs for initial upload
     )
 
 

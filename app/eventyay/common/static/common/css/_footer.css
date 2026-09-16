@@ -1,0 +1,54 @@
+/* Core Platform Footer Styles */
+.core-footer-nav {
+    margin-top: 8px;
+}
+
+.core-footer-links-container {
+    margin-top: 8px;
+}
+
+.core-footer-links-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 8px 16px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.core-footer-link-item {
+    display: inline-flex;
+    align-items: center;
+}
+
+.core-footer-link {
+    margin: 0 10px;
+    color: inherit;
+    text-decoration: none;
+}
+
+.core-footer-link:hover {
+    text-decoration: underline;
+}
+
+/* Multi-language Textarea Widget Styles */
+.i18n-textarea-wrapper {
+    margin-bottom: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 8px;
+    background: #fdfdfd;
+}
+
+.i18n-lang-header {
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 4px;
+    color: #555;
+}
+
+.i18n-lang-name {
+    display: inline-block;
+}

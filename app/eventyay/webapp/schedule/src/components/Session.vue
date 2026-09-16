@@ -18,7 +18,7 @@ a.c-linear-schedule-session(:class="{faved, 'has-date': showDate, 'short-session
 				.ampm(v-if="startTime.ampm") {{ startTime.ampm }}
 				.duration {{ getPrettyDuration(session.start, session.end) }}
 		.buffer(v-if="!isSchedulePending")
-		.is-live(v-if="showLiveBadge && isLive") live
+		.is-live(v-if="showLiveBadge && isLive") {{ $t('live') }}
 	.info(:class="{'has-icons': hasAnyRightIcons, 'grid-session-info': showSessionType, 'has-bottom-icons': hasBottomIcons}", :style="bottomIconsPaddingStyle")
 		template(v-if="showSessionType")
 			.title(:class="gridTitleClampClass", :title="gridMetaTitle(getLocalizedString(session.title))") {{ getLocalizedString(session.title) }}
@@ -184,7 +184,7 @@ export default {
 		},
 		schedulePendingText () {
 			const m = this.translationMessages || {}
-			return m.schedule_pending_secondary || 'Coming soon'
+			return m.schedule_pending_secondary || this.$t('Coming soon')
 		},
 		weekdayLabel () {
 			return this.session.start.clone().tz(this.effectiveTimezone).locale(this.locale || 'en').format('ddd')
@@ -208,7 +208,7 @@ export default {
 		},
 		streamTooltip () {
 			const m = this.translationMessages || {}
-			return m.watch_live || m.watchLive || 'Watch live'
+			return m.watch_live || m.watchLive || this.$t('Watch live')
 		},
 		abstractText () {
 			try {
@@ -225,11 +225,11 @@ export default {
 		},
 		doNotRecordTooltip () {
 			const m = this.translationMessages || {}
-			return m.schedule_do_not_record || 'This session will not be recorded.'
+			return m.schedule_do_not_record || this.$t('This session will not be recorded.')
 		},
 		roomInterpretationTooltip () {
 			const m = this.translationMessages || {}
-			return m.schedule_room_has_interpretation || 'This room has live interpretation.'
+			return m.schedule_room_has_interpretation || this.$t('This room has live interpretation.')
 		},
 		showRoomInterpretation () {
 			return Boolean(this.session.room?.has_interpretation)
@@ -283,14 +283,16 @@ export default {
 		speakersOverflowHint () {
 			if (!this.speakersHiddenCount) return ''
 			const m = this.translationMessages || {}
-			const template = m.schedule_speakers_overflow_hint || '+%(count)s more'
-			return template.replace('%(count)s', this.speakersHiddenCount)
+			const template = m.schedule_speakers_overflow_hint
+			if (template) return template.replace('%(count)s', this.speakersHiddenCount)
+			return this.$t('+{{count}} more', {count: this.speakersHiddenCount})
 		},
 		speakersOverflowLabel () {
 			if (!this.speakersHiddenCount) return ''
 			const m = this.translationMessages || {}
-			const template = m.schedule_speakers_overflow_label || '+%(count)s more speakers'
-			return template.replace('%(count)s', this.speakersHiddenCount)
+			const template = m.schedule_speakers_overflow_label
+			if (template) return template.replace('%(count)s', this.speakersHiddenCount)
+			return this.$t('+{{count}} more speakers', {count: this.speakersHiddenCount})
 		}
 	},
 	watch: {

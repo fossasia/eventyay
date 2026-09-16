@@ -1,14 +1,14 @@
 <template lang="pug">
 prompt.c-feedback-prompt(@close="$emit('close')")
 	.content
-		h1 {{ $t('FeedbackPrompt:headline:text') }}
-		p {{ $t('FeedbackPrompt:intro:text') }}
+		h1 {{ $t('Send feedback') }}
+		p {{ $t('Having trouble? Had a great time? Let us know!') }}
 		form(@submit.prevent="submit")
-			bunt-input-outline-container(:label="$t('FeedbackPrompt:message:label')")
+			bunt-input-outline-container(:label="$t('Message')")
 				template(#default="{focus, blur}")
 					textarea(v-model="message", @focus="focus", @blur="blur")
-			p.privacy {{ $t('FeedbackPrompt:privacy:text') }}
-			bunt-button(type="submit", :loading="loading") {{ $t('FeedbackPrompt:submit:label') }}
+			p.privacy {{ $t("In addition to your message, we'll store technical information about your call, such as connection times, error logs, browser version, etc. We will not store any conversation contents.") }}
+			bunt-button(type="submit", :loading="loading") {{ $t('Submit') }}
 </template>
 <script>
 import Prompt from 'components/Prompt'

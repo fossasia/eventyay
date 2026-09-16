@@ -48,9 +48,6 @@ Views
 .. automodule:: eventyay.eventyay_common.views.sessions
    :members:
 
-.. automodule:: eventyay.eventyay_common.views.billing
-   :members:
-
 .. automodule:: eventyay.eventyay_common.views.dashboards
    :members:
 

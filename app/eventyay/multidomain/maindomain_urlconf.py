@@ -22,6 +22,7 @@ from eventyay.presale.views.startpage import (
     UpcomingEventsView,
 )
 
+from eventyay.control.views.pages import SystemPageView
 from .views import AnonymousInviteRedirectView, VideoAssetView, VideoSPAView
 from eventyay.plugins.ticketoutputpdf import urls as ticketoutputpdf_urls
 
@@ -42,6 +43,10 @@ presale_patterns_main = [
                     path('all-events/upcoming/', RedirectView.as_view(url=reverse_lazy('presale:events.upcoming'), permanent=True)),
                     path('all-events/past/', RedirectView.as_view(url=reverse_lazy('presale:events.past'), permanent=True)),
                     path('all-events/', RedirectView.as_view(url=reverse_lazy('presale:index'), permanent=True)),
+                    path('terms/', SystemPageView.as_view(slug='terms'), name='page.terms'),
+                    path('privacy/', SystemPageView.as_view(slug='privacy'), name='page.privacy'),
+                    path('pricing/', SystemPageView.as_view(slug='pricing'), name='page.pricing'),
+                    path('support/', SystemPageView.as_view(slug='support'), name='page.support'),
                     path('<orgslug:organizer>/', include(organizer_patterns)),
                     path(
                         '<orgslug:organizer>/<slug:event>/',
@@ -100,7 +105,32 @@ live_patterns = [
     path('', include(('eventyay.features.live.urls', 'live'))),
 ]
 
-unified_event_patterns = [
+from .views import (
+    AnonymousInviteRedirectView,
+    VideoAdminRedirectView,
+    VideoAssetView,
+    VideoSPAView,
+)
+
+video_organizer_patterns = [
+    re_path(
+        r'^video/event/(?P<organizer>[^/]+)/(?P<event>[^/]+)/assets/(?P<path>.*)$',
+        VideoAssetView.as_view(),
+        name='video.organizer.assets',
+    ),
+    re_path(
+        r'^video/event/(?P<organizer>[^/]+)/(?P<event>[^/]+)/(?P<path>[^?]*\.[a-zA-Z0-9._-]+)$',
+        VideoAssetView.as_view(),
+        name='video.organizer.assets.file',
+    ),
+    re_path(
+        r'^video/event/(?P<organizer>[^/]+)/(?P<event>[^/]+)(?:/(?P<subpath>.*))?$',
+        VideoSPAView.as_view(is_organizer=True),
+        name='video.organizer.spa',
+    ),
+]
+
+video_attendee_patterns = [
     path(
         '<orgslug:organizer>/<slug:event>/',
         include(
@@ -113,10 +143,24 @@ unified_event_patterns = [
                     VideoAssetView.as_view(),
                     name='video.assets.file',
                 ),
-                # The frontend Video SPA app is not served by Nginx so the Django view needs to
-                # serve all paths under /video/ to allow client-side routing.
-                # This catch-all must come after the asset pattern to allow SPA routes like /video/admin/rooms
-                re_path(r'^video(?:/.*)?$', VideoSPAView.as_view(), name='video.spa'),
+                # Legacy organizer admin routes redirect to /video/event/{organizer}/{event}/...
+                re_path(
+                    r'^video/(?:admin|event)(?:/(?P<subpath>.*))?$',
+                    VideoAdminRedirectView.as_view(),
+                    name='video.admin.redirect',
+                ),
+                # Public attendee-facing video SPA app
+                re_path(r'^video(?:/.*)?$', VideoSPAView.as_view(is_organizer=False), name='video.spa'),
+            ]
+        ),
+    ),
+]
+
+unified_event_patterns = [
+    path(
+        '<orgslug:organizer>/<slug:event>/',
+        include(
+            [
                 path('', include(('eventyay.agenda.urls', 'agenda'))),
                 path('', include(('eventyay.cfp.urls', 'cfp'))),
             ]
@@ -139,6 +183,8 @@ urlpatterns = (
     common_patterns
     + storage_patterns
     + live_patterns
+    + video_organizer_patterns
+    + video_attendee_patterns
     # The plugins patterns must be before presale_patterns_main
     # to avoid misdetection of plugin prefixes and organizer/event slugs.
     # Anonymous invite short token redirects (before presale to avoid slug conflict)
@@ -150,3 +196,4 @@ urlpatterns = (
 
 handler404 = 'eventyay.base.views.errors.page_not_found'
 handler500 = 'eventyay.base.views.errors.server_error'
+

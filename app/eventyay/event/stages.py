@@ -2,7 +2,6 @@ import copy
 
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
-from django.utils.translation import ngettext_lazy
 
 from eventyay.common.text.phrases import phrases
 from eventyay.base.models import SubmissionStates
@@ -93,7 +92,7 @@ STAGES = {
         ],
     },
     'EVENT': {
-        'name': ngettext_lazy('Event', 'Events', 1),
+        'name': _('Event'),
         'method': _is_running,
         'icon': 'play',
         'links': [

@@ -75,13 +75,11 @@ Experimental Features
 ---------------------
 
 * schedule-control
-* roulette
 * muxdata
 * zoom
 * janus
 * jitsi
 * page.landing
-* iframe-player
 * polls
 
 Jitsi Rooms

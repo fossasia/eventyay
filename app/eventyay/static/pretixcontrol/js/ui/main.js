@@ -936,7 +936,7 @@ $(function () {
             var url = $(this).attr("data-rng-url");
             $("#id_codes").html("Generating...");
             $(".form-group:has(#voucher-bulk-codes-num)").removeClass("has-error");
-            $.getJSON(url + '?num=' + num + '&prefix=' + escape(prefix), function (data) {
+            $.getJSON(url + '?num=' + num + '&prefix=' + encodeURIComponent(prefix), function (data) {
                 $("#id_codes").val(data.codes.join("\n"));
             });
         } else {
@@ -988,8 +988,14 @@ $(function () {
         });
         var $table = $toggle.closest("table");
         var $selectAll = $table.find(".table-select-all");
-        var $rows = $table.find("tbody tr");
-        var $checkboxes = $rows.find("td:first-child input[type=checkbox]");
+        var $rows = $table.find("tbody tr").filter(function () {
+            var firstCell = this.firstElementChild;
+            return firstCell && firstCell.querySelector("input[type=checkbox][name]");
+        });
+        var $checkboxes = $rows.map(function () {
+            return this.firstElementChild.querySelector("input[type=checkbox][name]");
+        });
+        var $selectionRows = $rows;
         var firstIndex, lastIndex, selectionChecked, onChangeSelectionHappened = false;
         var suppressRowClick = null;
         var updateSelection = function(a, b, checked) {
@@ -1000,7 +1006,7 @@ $(function () {
                 b = tmp;
             }
             for (var i = a; i <= b; i++) {
-                var checkbox = $checkboxes.get(i);
+                var checkbox = $selectionRows.get(i).firstElementChild.querySelector("input[type=checkbox][name]");
                 if (!checkbox.hasAttribute("data-inital")) checkbox.setAttribute("data-inital", checkbox.checked);
                 if (checked === undefined || checked === null) checkbox.checked = checkbox.getAttribute("data-inital") === "true";
                 else checkbox.checked = checked;
@@ -1010,10 +1016,8 @@ $(function () {
             onChangeSelectionHappened = true;
 
             var row = ev.target.closest("tr");
-            var currentIndex = 0;
-            while(row = row.previousSibling) {
-                if (row.tagName) currentIndex++;
-            }
+            var currentIndex = $selectionRows.index(row);
+            if (currentIndex < 0) return;
             var dCurrent = currentIndex - firstIndex;
             var dLast = lastIndex - firstIndex;
             if (dCurrent*dLast < 0) {
@@ -1030,20 +1034,20 @@ $(function () {
             ev.preventDefault();
         };
         $table.on("pointerdown", function(ev) {
-            if (!ev.target.closest("td:first-child")) return;
             var row = ev.target.closest("tr");
             if (!row || !row.closest("tbody")) return;
+            var firstCell = row.firstElementChild;
+            var rowCheckbox = firstCell && firstCell.querySelector("input[type=checkbox][name]");
+            if (!rowCheckbox || !firstCell.contains(ev.target)) return;
             suppressRowClick = row;
-            selectionChecked = !row.querySelector("td:first-child input[type=checkbox]").checked;
+            selectionChecked = !rowCheckbox.checked;
 
-            firstIndex = 0;
-            while(row = row.previousSibling) {
-                if (row.tagName) firstIndex++;
-            }
+            $selectionRows = $rows.filter(":visible");
+            firstIndex = $selectionRows.index(row);
             lastIndex = firstIndex;
 
             ev.preventDefault();
-            $rows.on("pointerenter", onChangeSelection);
+            $selectionRows.on("pointerenter", onChangeSelection);
 
             $(document).one("pointerup", function(ev) {
                 if (onChangeSelectionHappened) {
@@ -1053,7 +1057,7 @@ $(function () {
 
                     update();
                 } else if (suppressRowClick) {
-                    var checkbox = suppressRowClick.querySelector("td:first-child input[type=checkbox]");
+                    var checkbox = suppressRowClick.firstElementChild.querySelector("input[type=checkbox][name]");
                     if (checkbox) {
                         $(checkbox).prop("checked", selectionChecked).trigger("change");
                     } else {
@@ -1066,7 +1070,8 @@ $(function () {
                     });
                 }
                 suppressRowClick = null;
-                $rows.off("pointerenter", onChangeSelection);
+                $selectionRows.off("pointerenter", onChangeSelection);
+                $selectionRows = $rows;
             });
         });
 
@@ -1252,15 +1257,14 @@ $(function () {
     // Voucher page specific delete selected toggle
     var $vouchersDeleteBtn = $('button[name="action"][value="delete"]');
     var $vouchersForm = $vouchersDeleteBtn.closest('form');
-    var $vouchersCheckboxes = $vouchersForm.find('input[name="voucher"]');
-
     // Only run this behavior on the voucher list (other pages also use .table-quotas + a delete button).
-    if ($vouchersCheckboxes.length) {
+    if ($vouchersForm.length) {
         var updateVouchersDeleteBtn = function () {
+            var $vouchersCheckboxes = $vouchersForm.find('input[name="voucher"], input[name="voucher_group"]');
             $vouchersDeleteBtn.toggleClass('hidden', $vouchersCheckboxes.filter(':checked').length === 0);
         };
 
-        $vouchersForm.on('change', 'input[name="voucher"], input[data-toggle-table]', function () {
+        $vouchersForm.on('change', 'input[name="voucher"], input[name="voucher_group"], input[data-toggle-table]', function () {
             setTimeout(updateVouchersDeleteBtn, 50);
         });
 
@@ -1281,4 +1285,3 @@ $(function () {
         $("#preview-modal").appendTo("body");
     }
 });
-

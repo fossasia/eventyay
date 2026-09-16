@@ -3,6 +3,7 @@ import path from 'path'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import BuntpapierStylus from 'buntpapier/stylus.js'
+import {createGettextPlugin} from '../i18n/vite-plugin.js'
 
 const stylusOptions = {
 	paths: [
@@ -24,6 +25,13 @@ export default defineConfig({
 	server: {
 		host: '0.0.0.0',
 		port: 8082,
+		fs: {
+			allow: [
+				path.resolve(__dirname),
+				path.resolve(__dirname, '../../locale'),
+				path.resolve(__dirname, '../i18n'),
+			]
+		},
 	},
 	define: {
 		"process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV),
@@ -31,6 +39,7 @@ export default defineConfig({
 		__SERVER_FORWARD_CONSOLE__: 'false',
 	},
 	plugins: [
+		createGettextPlugin('schedule'),
 		vue({
 			template: {
 				compilerOptions: {
@@ -68,6 +77,7 @@ export default defineConfig({
 			fileName: 'pretalx-schedule',
 			formats: ['es']
 		},
+		target: 'es2022',
 		rollupOptions: {
 			output: {
 				entryFileNames: 'pretalx-schedule.js',
@@ -79,6 +89,7 @@ export default defineConfig({
 						if (id.includes('moment')) return 'vendor-moment'
 						if (id.includes('markdown-it')) return 'vendor-markdown'
 						if (id.includes('dompurify')) return 'vendor-dompurify'
+						if (id.includes('i18next')) return 'vendor-i18n'
 						return 'vendor'
 					}
 					if (id.includes('/src/components/GridSchedule')) return 'chunk-grid'

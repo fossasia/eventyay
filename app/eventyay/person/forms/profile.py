@@ -1,6 +1,7 @@
 from functools import partial
 
 from django import forms
+from django.forms import Textarea
 from django.conf import settings
 from django.contrib.auth.hashers import check_password
 from django.core.exceptions import ValidationError
@@ -32,10 +33,10 @@ from eventyay.common.forms.mixins import (
 )
 from eventyay.common.forms.renderers import InlineFormLabelRenderer, InlineFormRenderer
 from eventyay.common.forms.widgets import (
-    ClearableBasenameFileInput,
+    AvatarInput,
     EnhancedSelect,
     EnhancedSelectMultiple,
-    MarkdownWidget,
+    RichTextWidget,
 )
 from eventyay.common.text.phrases import phrases
 from eventyay.consts import SizeKey
@@ -201,7 +202,7 @@ class SpeakerProfileForm(
                 self.fields.pop('get_gravatar', None)
             if 'avatar' in self.fields:
                 self.fields['avatar'].required = False
-                self.fields['avatar'].widget.is_required = False
+                self.fields['avatar'].widget.is_required = _cfp.require_avatar and not getattr(self, 'not_strict', False)
                 svg_limit = filesize(getattr(settings, 'IMAGE_SVG_MAX_SIZE', 1024 * 1024))
                 self.fields['avatar'].help_text = ' '.join(
                     part
@@ -218,6 +219,12 @@ class SpeakerProfileForm(
             speaker=self.user,
             readonly=read_only,
         )
+
+        if _cfp and _cfp.request_social_links:
+            self.fields['social_links'] = forms.CharField(
+                required=False,
+                widget=forms.HiddenInput(),
+            )
 
         # Reorder fields based on configuration
         self.order_fields_by_config('speaker')
@@ -338,13 +345,10 @@ class SpeakerProfileForm(
         fields = ('biography',)
         public_fields = ['fullname', 'biography', 'avatar']
         widgets = {
-            'biography': MarkdownWidget,
-            'avatar': ClearableBasenameFileInput,
-            'avatar_source': MarkdownWidget,
-            'avatar_license': MarkdownWidget,
-        }
-        field_classes = {
-            'avatar': ImageField,
+            'biography': RichTextWidget,
+            'avatar': AvatarInput,
+            'avatar_source': Textarea,
+            'avatar_license': Textarea,
         }
         field_classes = {
             'avatar': ImageField,

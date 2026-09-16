@@ -3,29 +3,29 @@
 	AppBar(:showActions="false", :showUser="true")
 	.content-wrapper
 		h2.room
-			| {{ $t('standalone/Anonymous:header_room') }}:&nbsp;
+			| {{ $t('Room') }}:&nbsp;
 			span.room-name(v-html="$emojify(room.name)")
 		.session(v-if="session")
 			.title {{ $localize(session.title) }}
 			.speakers {{ session.speakers ? session.speakers.map(s => s.name).join(', ') : '' }}
 		.room-content(v-if="modules['question'] || modules['poll']", :class="unreadTabsClasses")
 			bunt-tabs(v-if="(!!modules['question'] + !!modules['poll']) > 1 && activeSidebarTab", :active-tab="activeSidebarTab")
-				bunt-tab(v-if="modules['poll']", id="polls", :header="$t('Room:sidebar:tabs-header:polls')", @selected="activeSidebarTab = 'polls'")
-				bunt-tab(v-if="modules['question']", id="questions", :header="$t('Room:sidebar:tabs-header:questions')", @selected="activeSidebarTab = 'questions'")
-				bunt-tab(v-if="sessions", id="schedule", :header="$t('standalone/Anonymous:tabs-header:schedule')", @selected="activeSidebarTab = 'schedule'")
+				bunt-tab(v-if="modules['poll']", id="polls", :header="$t('Polls')", @selected="activeSidebarTab = 'polls'")
+				bunt-tab(v-if="modules['question']", id="questions", :header="$t('Questions')", @selected="activeSidebarTab = 'questions'")
+				bunt-tab(v-if="sessions", id="schedule", :header="$t('Schedule')", @selected="activeSidebarTab = 'schedule'")
 			Scrollbars(y="")
 				questions(v-if="modules['question']", v-show="activeSidebarTab === 'questions'", :module="modules['question']", @change="changedTabContent('questions')")
 				polls(v-if="modules['poll']", v-show="activeSidebarTab === 'polls'", :module="modules['poll']", @change="changedTabContent('polls')")
 				.schedule(v-if="activeSidebarTab === 'schedule'")
 					template(v-if="session")
-						h3 {{ $t('standalone/Anonymous:schedule:current-session') }}
+						h3 {{ $t('Current Session') }}
 						Session(:session="session", :now="now")
 					template(v-if="nextSessions.length")
-						h3 {{ $t('standalone/Anonymous:schedule:next-sessions') }}
+						h3 {{ $t('Next Sessions') }}
 						Session(v-for="session of nextSessions", :session="session", :now="now")
-					.no-sessions(v-if="!session && !nextSessions.length") {{ $t('standalone/Anonymous:no-sessions') }}
-			.hint(v-if="activeSidebarTab !== 'schedule' && isAnonymous") {{ $t('standalone/Anonymous:footer-anonymously') }}
-		.no-content(v-else) {{ $t('standalone/Anonymous:no-content') }}
+					.no-sessions(v-if="!session && !nextSessions.length") {{ $t('No sessions happening soon in this room.') }}
+			.hint(v-if="activeSidebarTab !== 'schedule' && isAnonymous") {{ $t("You're voting anonymously") }}
+		.no-content(v-else) {{ $t('Sorry, no polls or questions currently active in this room!') }}
 </template>
 <script>
 // TODO

@@ -34,7 +34,7 @@ export default {
 		t() {
 			const m = this.translationMessages || {}
 			return {
-				tracks: m.tracks || 'Tracks',
+				tracks: m.tracks || this.$t('Tracks'),
 			}
 		}
 	},

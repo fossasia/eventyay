@@ -2,6 +2,7 @@ import datetime as dt
 import json
 from pathlib import Path
 
+from django.conf import settings
 from django.core.files import File
 from django.forms import (
     ClearableFileInput,
@@ -15,10 +16,12 @@ from django.forms import (
     TimeInput,
     Widget,
 )
-from i18nfield.forms import I18nTextarea
 from django.utils.datastructures import MultiValueDict
+from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
+from i18nfield.forms import I18nTextarea
+from i18nfield.strings import LazyI18nString
 
 
 def add_class(attrs, css_class):
@@ -97,6 +100,12 @@ class ClearableBasenameFileInput(ClearableFileInput):
         return ctx
 
 
+class AvatarInput(ClearableBasenameFileInput):
+    """Render the current image, its delete action and the replace action as one control."""
+
+    template_name = 'common/widgets/avatar_input.html'
+
+
 class ImageInput(ClearableBasenameFileInput):
     template_name = 'common/widgets/image_input.html'
 
@@ -106,15 +115,6 @@ class ImageInput(ClearableBasenameFileInput):
         alt = widget_attrs.pop('alt', None) or (self.attrs or {}).get('alt') or _('Image preview')
         ctx['widget']['alt_text'] = alt
         return ctx
-
-
-class MarkdownWidget(Textarea):
-    template_name = 'common/widgets/markdown.html'
-
-    def __init__(self, attrs=None):
-        attrs = attrs.copy() if attrs is not None else {}
-        attrs.setdefault('data-markdown-field', 'true')
-        super().__init__(attrs=attrs)
 
 
 class RichTextWidget(Textarea):
@@ -137,6 +137,88 @@ class RichTextWidget(Textarea):
         super().__init__(attrs=attrs)
 
 
+class MarkdownWidget(RichTextWidget):
+    """Backward-compatible alias for RichTextWidget.
+
+    Previously rendered a plain textarea with a ``data-markdown-wrapper``
+    attribute.  All call sites have been migrated to ``RichTextWidget``
+    directly; this alias remains so that any third-party plugin that
+    still imports ``MarkdownWidget`` continues to work without change.
+    """
+
+
+class I18nRichTextWidget(I18nTextarea):
+    """Tiptap rich text editor for i18n fields (e.g. system pages, global settings).
+
+    Wraps each locale textarea in a ``[data-tiptap-wrapper]`` container so the
+    shared editor bundle can mount one rich text editor per language.
+    """
+
+    def __init__(self, locales, field, attrs=None, **kwargs):
+        attrs = attrs.copy() if attrs is not None else {}
+        attrs.setdefault('data-tiptap-profile', 'richtext')
+        super().__init__(locales=locales, field=field, attrs=attrs)
+
+    def render(self, name: str, value, attrs=None, renderer=None) -> str:
+        if self.is_localized:
+            for widget in self.widgets:
+                widget.is_localized = self.is_localized
+
+        original_value = value
+        if not isinstance(value, list):
+            value = self.decompress(value)
+        output = []
+        final_attrs = self.build_attrs(attrs or dict())
+        id_ = final_attrs.get('id', None)
+        for i, widget in enumerate(self.widgets):
+            if self.locales[i] not in self.enabled_locales:
+                continue
+            locale_code = self.locales[i]
+            try:
+                widget_value = value[i]
+            except IndexError:
+                widget_value = None
+
+            if not widget_value and isinstance(original_value, LazyI18nString) and isinstance(original_value.data, dict):
+                firstpart = locale_code.split('-')[0]
+                if not widget_value:
+                    similar = [
+                        loc for loc in self.locales
+                        if (loc.startswith(firstpart + "-") or firstpart == loc) and loc != locale_code
+                    ]
+                    for s in similar:
+                        if original_value.data.get(s) and s not in self.enabled_locales:
+                            widget_value = original_value.data.get(s)
+                            break
+
+            final_attrs_widget = final_attrs.copy()
+            if id_:
+                human_locale_name = dict(settings.LANGUAGES).get(locale_code, locale_code)
+                final_attrs_widget['id'] = '%s_%s' % (id_, i)
+                final_attrs_widget['title'] = human_locale_name
+                final_attrs_widget.setdefault('placeholder', human_locale_name)
+
+            rendered = widget.render(name + '_%s' % i, widget_value, final_attrs_widget, renderer=renderer)
+            wrapped = (
+                f'<div class="i18n-textarea-wrapper" data-lang="{escape(locale_code)}">'
+                f'<div class="tiptap-wrapper" data-tiptap-wrapper="true">{rendered}</div>'
+                f'</div>'
+            )
+            output.append(wrapped)
+
+        return mark_safe(
+            '<div class="i18n-form-group%s" id="%s">%s</div>' % (
+                ' i18n-form-single-language' if len(output) <= 1 else '',
+                escape(id_) if id_ else '',
+                ''.join(output),
+            )
+        )
+
+
+# Backward-compatible alias used by older tests and imports.
+I18nRichTextEditorWidget = I18nRichTextWidget
+
+
 class I18nEmailEditorWidget(I18nTextarea):
     """Tiptap email editor for i18n message fields in the Message center.
 
@@ -144,7 +226,7 @@ class I18nEmailEditorWidget(I18nTextarea):
     shared editor bundle can mount one editor per language tab.
     """
 
-    def __init__(self, locales, field, attrs=None, placeholders=None, preview_url='', **kwargs):
+    def __init__(self, locales, field, attrs=None, placeholders=None, preview_url=''):
         attrs = attrs.copy() if attrs is not None else {}
         attrs.setdefault('data-tiptap-profile', 'email')
         if placeholders:
@@ -155,7 +237,10 @@ class I18nEmailEditorWidget(I18nTextarea):
 
     def format_output(self, rendered_widgets, id_):
         wrapped = [
-            f'<div class="tiptap-wrapper" data-tiptap-wrapper="true" data-email-editor="true">{widget}</div>'
+            (
+                f'<div class="tiptap-wrapper" data-tiptap-wrapper="true" '
+                f'data-email-editor="true">{widget}</div>'
+            )
             for widget in rendered_widgets
         ]
         return super().format_output(wrapped, id_)
@@ -303,27 +388,22 @@ class SlidesWidget(Widget):
         self.max_size = None
 
     @staticmethod
-    def links_field_name(name):
-        return f'{name}_links'
-
-    @staticmethod
     def files_field_name(name):
         return f'{name}_files'
 
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
+        
+        clear_ids = []
         if isinstance(value, dict):
-            if 'existing_resources' in value or 'links' in value:
-                # Value came from InfoForm.__init__ setting initial from DB resources
-                current_resources = list(value.get('existing_resources', []))
-                links_value = '\n'.join(value.get('links', []))
-            else:
-                # Raw dict from value_from_datadict (POST submission, possibly invalid form re-render)
-                current_resources = []
-                links_value = value.get('links_text', '')
-        else:
-            current_resources = list(value or [])
-            links_value = ''
+            clear_ids = value.get('clear_ids', [])
+
+        existing_resources = getattr(self, 'existing_resources', [])
+        current_resources = [
+            resource for resource in existing_resources
+            if str(resource.pk) not in clear_ids
+        ]
+
         context['widget']['current_resources'] = current_resources
         context['widget']['existing_value'] = bool(current_resources)
         context['widget']['max_items'] = self.max_items
@@ -332,13 +412,10 @@ class SlidesWidget(Widget):
         context['widget']['remaining_items'] = (
             max(self.max_items - len(current_resources), 0) if self.max_items else None
         )
-        context['widget']['links_name'] = self.links_field_name(name)
         context['widget']['files_name'] = self.files_field_name(name)
-        context['widget']['links_id'] = f'id_{self.links_field_name(name)}'
         context['widget']['files_id'] = f'id_{self.files_field_name(name)}'
         context['widget']['clear_name'] = self.clear_checkbox_name(name)
-        context['widget']['links_value'] = links_value
-        context['widget']['is_re_render'] = isinstance(value, dict) and 'existing_resources' not in value and 'links' not in value
+        context['widget']['is_re_render'] = isinstance(value, dict) and 'existing_resources' not in value
         return context
 
     @staticmethod
@@ -348,16 +425,13 @@ class SlidesWidget(Widget):
     def value_from_datadict(self, data, files, name):
         stored_value = data.get(name)
         if isinstance(stored_value, dict):
-            links_text = '\n'.join(stored_value.get('links', []))
             clear_ids = stored_value.get('clear_ids', [])
         else:
-            links_text = data.get(self.links_field_name(name), '')
             if isinstance(data, MultiValueDict):
                 clear_ids = data.getlist(self.clear_checkbox_name(name))
             else:
                 clear_ids = data.get(self.clear_checkbox_name(name), [])
         return {
-            'links_text': links_text,
             'resources': files.getlist(self.files_field_name(name)),
             'clear_ids': clear_ids,
         }

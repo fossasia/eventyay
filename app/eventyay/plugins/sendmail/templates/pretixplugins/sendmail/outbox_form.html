@@ -47,7 +47,7 @@
             </div>
             <div class="row form-group">
                 <div class="col-md-12 pt-2 text-right">
-                    {% bootstrap_field form.message layout='horizontal' %}
+                    {% bootstrap_field form.text layout='horizontal' %}
                 </div>
             </div>
 
@@ -123,7 +123,7 @@
                 <div class="form-group"
                      data-email-preview-wrapper
                      data-email-preview-url="{% url 'control:event.editor.email.preview' organizer=request.event.organizer.slug event=request.event.slug %}">
-                    <label class="col-md-3 control-label" for="{{ form.message.id_for_label }}">{{ form.message.label }}</label>
+                    <label class="col-md-3 control-label" for="{{ form.text.id_for_label }}">{{ form.text.label }}</label>
                     <div class="col-md-9">
                         <ul class="nav nav-tabs" role="tablist">
                             <li role="presentation" class="active">
@@ -139,7 +139,7 @@
                         </ul>
                         <div class="tab-content">
                             <div id="outbox_message_edit" class="tab-pane fade in active">
-                                {% bootstrap_field form.message show_label=False form_group_class="" %}
+                                {% bootstrap_field form.text show_label=False form_group_class="" %}
                             </div>
                             <div id="outbox_message_preview" class="tab-pane">
                                 <div class="mail-preview-group">
@@ -159,19 +159,7 @@
 
             </fieldset>
 
-            {% if request.method == "POST" %}
-                <fieldset>
-                    <legend>{% translate "E-mail preview" %}</legend>
-                        <div class="tab-pane mail-preview-group">
-                            {% for locale, out in output.items %}
-                                <div lang="{{ locale }}" class="mail-preview">
-                                    <strong>{{ out.subject|safe }}</strong><br><br>
-                                    {{ out.html|safe }}
-                                </div>
-                            {% endfor %}
-                        </div>
-                </fieldset>
-            {% endif %}
+
 
             <!-- Button container -->
             <div class="form-group submit-group row" style="margin-bottom: 15px;">
@@ -182,17 +170,33 @@
                 </div>
                 <div class="col-xs-6 text-right">
                     <!-- Preview Button -->
-                    <button type="submit" class="btn btn-default btn-save" name="action" value="preview">
+                    <button type="submit" class="btn btn-default" name="action" value="preview" formnovalidate data-no-loading>
                         {% translate "Preview email" %}
                     </button>
 
                     <!-- Save Button -->
-                    <button type="submit" name="action" value="save" form="edit-form" class="btn btn-primary btn-lg">
-                        {% translate "Save" %}
-                    </button>
+                    {% if form.instance.is_draft %}
+                        <button type="submit" name="action" value="draft" form="edit-form" class="btn btn-default btn-lg">
+                            {% translate "Save draft" %}
+                        </button>
+                        <button type="submit" name="action" value="send" form="edit-form" class="btn btn-primary btn-lg">
+                            {% translate "Send to outbox" %}
+                        </button>
+                    {% else %}
+                        <button type="submit" name="action" value="send" form="edit-form" class="btn btn-primary btn-lg">
+                            {% translate "Save" %}
+                        </button>
+                    {% endif %}
                 </div>
+            </div>
+            
+            <div id="ajax-preview-container">
+            {% if output %}
+                {% include "pretixplugins/sendmail/_mail_preview.html" with preview_warning=preview_warning %}
+            {% endif %}
             </div>
         </form>
 
     {% endif %}
+    <script type="module" src="{% static 'common/js/mail-preview.js' %}" defer></script>
 {% endblock %}

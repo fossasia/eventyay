@@ -9,6 +9,9 @@ from django.conf import settings
 from django.contrib.auth import authenticate
 from django.utils.translation import gettext_lazy as _
 
+# Error message shown when a spam-marked user attempts to authenticate.
+SPAM_ACCOUNT_ERROR = _('This account has been suspended. Please contact the site administrator.')
+
 
 class BaseAuthBackend:
     """

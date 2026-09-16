@@ -24,7 +24,6 @@ Live module handlers are in ``eventyay.features.live.modules`` package:
 - ``poll.py`` - Poll functionality
 - ``bbb.py`` - BigBlueButton integration
 - ``question.py`` - Q&A management
-- ``roulette.py`` - Speed networking
 - ``zoom.py`` - Zoom integration
 - ``januscall.py`` - Janus WebRTC calls
 
@@ -77,24 +76,5 @@ Storage Integrations
 .. automodule:: eventyay.features.integrations.platforms.storage.nanocdn
    :members:
 
-Social Features
----------------
 
-Twitter Integration
-~~~~~~~~~~~~~~~~~~~
-
-.. automodule:: eventyay.features.social.views.twitter
-   :members:
-
-LinkedIn Integration
-~~~~~~~~~~~~~~~~~~~~
-
-.. automodule:: eventyay.features.social.views.linkedin
-   :members:
-
-Social Utilities
-~~~~~~~~~~~~~~~~
-
-.. automodule:: eventyay.features.social.utils
-   :members:
 

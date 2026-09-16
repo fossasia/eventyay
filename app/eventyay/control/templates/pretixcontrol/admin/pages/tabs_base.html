@@ -1,0 +1,29 @@
+{% extends "pretixcontrol/admin/base.html" %}
+{% load i18n %}
+{% load static %}
+{% block title %}{% trans "Pages" %}{% endblock %}
+{% block custom_header %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'control/css/admin-pages-language-switcher.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'orga/css/_flags.css' %}" />
+    <script defer src="{% static 'control/js/admin-pages-language-switcher.js' %}"></script>
+{% endblock %}
+{% block content %}
+    <h1>{% trans "Pages" %}</h1>
+    <p class="text-muted">
+        {% blocktrans trimmed %}
+            Manage the public start page, footer, default pages, the global banner and your
+            custom pages from one place.
+        {% endblocktrans %}
+    </p>
+    <ul class="nav nav-tabs pages-nav-tabs" role="tablist">
+        {% for tab in page_tabs %}
+            <li role="presentation" class="{% if tab.active %}active{% endif %}">
+                <a href="{{ tab.url }}">{{ tab.label }}</a>
+            </li>
+        {% endfor %}
+    </ul>
+    <div class="tab-content pages-tab-content">
+        {% block pages_content %}{% endblock %}
+    </div>
+{% endblock %}

@@ -1,7 +1,7 @@
 <template lang="pug">
 .c-announcement-notification.ui-notification
 	bunt-icon-button#btn-close(@click="dismiss") close
-	.title {{ $t('notifications/Announcment:title') }}
+	.title {{ $t('Announcement') }}
 	.details {{ announcement.text }}
 </template>
 <script>

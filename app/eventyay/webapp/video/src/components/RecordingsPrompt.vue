@@ -2,18 +2,18 @@
 prompt.c-recordings-prompt(@close="$emit('close')")
 	.content
 		bunt-icon-button#btn-close(@click="$emit('close')") close
-		h1 {{ $t('RecordingsPrompt:headline:text') }}
-		p {{ $t('RecordingsPrompt:info:text') }}
+		h1 {{ $t('Recordings') }}
+		p {{ $t('Please note that recordings start processing and showing up here only a few minutes after the meeting has ended (usually, if the room was empty for a while).') }}
 		bunt-progress-circular(v-if="loading")
-		p(v-else-if="error != null") {{ $t('RecordingsPrompt:error:text') }}
-		p(v-else-if="recordings.length === 0") {{ $t('RecordingsPrompt:empty:text') }}
+		p(v-else-if="error != null") {{ $t('Failed to load recordings from the server.') }}
+		p(v-else-if="recordings.length === 0") {{ $t('No recordings are available.') }}
 		.recordings(v-else)
 			.recording(v-for="r in recordings")
 				.recording-dates {{ moment(r.start).format('l, LT') }} – {{ moment(r.end).format('LT') }}
-				a.link.bunt-button(v-if="r.url && (r.state == 'published' || r.state == 'available')", :href="r.url", target="_blank") {{ $t('RecordingsPrompt:view:label') }}
-				a.link.bunt-button(v-if="r.url_screenshare && (r.state == 'published' || r.state == 'available')", :href="r.url_screenshare", target="_blank") {{ $t('RecordingsPrompt:view-screenshare:label') }}
-				a.link.bunt-button(v-if="r.url_video && (r.state == 'published' || r.state == 'available')", :href="r.url_video", target="_blank") {{ $t('RecordingsPrompt:view-video:label') }}
-				a.link.bunt-button(v-if="r.url_notes && (r.state == 'published' || r.state == 'available')", :href="r.url_notes", target="_blank") {{ $t('RecordingsPrompt:view-notes:label') }}
+				a.link.bunt-button(v-if="r.url && (r.state == 'published' || r.state == 'available')", :href="r.url", target="_blank") {{ $t('Playback') }}
+				a.link.bunt-button(v-if="r.url_screenshare && (r.state == 'published' || r.state == 'available')", :href="r.url_screenshare", target="_blank") {{ $t('Screenshare') }}
+				a.link.bunt-button(v-if="r.url_video && (r.state == 'published' || r.state == 'available')", :href="r.url_video", target="_blank") {{ $t('Video') }}
+				a.link.bunt-button(v-if="r.url_notes && (r.state == 'published' || r.state == 'available')", :href="r.url_notes", target="_blank") {{ $t('Notes') }}
 				span(v-if="!r.url && !r.url_screenshare") {{ r.state }}
 </template>
 <script>

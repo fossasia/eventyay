@@ -12,6 +12,8 @@ from operator import attrgetter
 from urllib.parse import urljoin, urlparse
 from zoneinfo import ZoneInfo
 
+from asgiref.sync import sync_to_async
+from channels.db import database_sync_to_async
 import icalendar
 import jwt
 from dateutil.relativedelta import relativedelta
@@ -104,8 +106,6 @@ def event_logo_path(instance, filename):
 
 FEATURE_FLAGS = [
     'schedule-control',
-    'iframe-player',
-    'roulette',
     'muxdata',
     'page.landing',
     'zoom',
@@ -127,7 +127,7 @@ def default_feature_flags():
         'session_popularity_show_on_schedule': True,
         'export_html_on_release': False,
         'use_tracks': True,
-        'use_feedback': True,
+        'use_feedback': False,
         'use_submission_comments': True,
         'present_multiple_times': False,
         'submission_public_review': True,
@@ -312,6 +312,13 @@ class EventMixin:
         if self.effective_presale_start and now() < self.effective_presale_start:
             return False
         return not self.presale_has_ended
+
+    @property
+    def is_ongoing(self):
+        """
+        Is true, when the event has started and has not yet ended.
+        """
+        return self.date_from <= now() <= self.date_to
 
     @property
     def event_microdata(self):
@@ -611,6 +618,13 @@ class Event(
         help_text=_('Create Video platform for Event.'),
         default=False,
     )
+    banned_users = models.ManyToManyField(
+        'User',
+        related_name='banned_events',
+        blank=True,
+        verbose_name=_('Banned users'),
+        help_text=_('Users who are banned from submitting feedback or interacting with this event.'),
+    )
 
     # Fields for talk
     timezone = models.CharField(
@@ -752,11 +766,13 @@ class Event(
         mail = '{base}mails/'
         compose_mails = '{mail}compose'
         compose_mails_sessions = '{compose_mails}/sessions/'
+        compose_mails_sessions_recipients = '{compose_mails}/sessions/recipients'
         compose_mails_teams = '{compose_mails}/teams/'
         send_drafts_reminder = '{compose_mails}/reminders'
         mail_templates = '{mail}templates/'
         new_template = '{mail_templates}new/'
         outbox = '{mail}outbox/'
+        drafts = '{mail}drafts/'
         sent_mails = '{mail}sent'
         send_outbox = '{outbox}send'
         purge_outbox = '{outbox}purge'
@@ -869,21 +885,18 @@ class Event(
     def social_image(self):
         from eventyay.multidomain.urlreverse import build_absolute_uri
 
-        def get_image_value(setting_name: str) -> str:
-            value = self.settings.get(setting_name, as_type=str, default='') or ''
-            if value.startswith('file://'):
-                return value[7:]
-            return value
-
         img = None
-        og_file = get_image_value('og_image')
+        og_file = self.settings.get('og_image', as_type=str, default=None)
         if og_file:
             if is_http_url(og_file):
                 return og_file
-            try:
-                img = get_thumbnail(og_file, '1200').thumb.url
-            except (OSError, SuspiciousFileOperation, ThumbnailError) as exc:
-                logger.warning('Failed to load og_image thumbnail for %s: %s', og_file, exc)
+            
+            og_path = _resolve_media_path(og_file)
+            if og_path:
+                try:
+                    img = get_thumbnail(og_path, '1200').thumb.url
+                except (OSError, SuspiciousFileOperation, ThumbnailError) as exc:
+                    logger.warning('Failed to load og_image thumbnail for %s: %s', og_path, exc)
 
         if not img:
             if self.visible_logo_url:
@@ -1046,10 +1059,15 @@ class Event(
         or by returning a custom one based on the event's settings.
         """
         from eventyay.base.email import CustomSMTPBackend, SendGridEmail
+        from eventyay.base.gmail.resolver import get_gmail_mail_backend
 
         gs = GlobalSettingsObject()
 
         if self.settings.smtp_use_custom or force_custom:
+            if self.settings.email_vendor == 'gmail_api':
+                backend = get_gmail_mail_backend(event=self, timeout=timeout, force_custom=force_custom)
+                if backend:
+                    return backend
             if self.settings.email_vendor == 'sendgrid':
                 return SendGridEmail(api_key=self.settings.send_grid_api_key)
             if not force_custom and not smtp_reachable(self.settings.smtp_host, self.settings.smtp_port, timeout=timeout):
@@ -1070,6 +1088,10 @@ class Event(
                 timeout=timeout,
             )
         elif gs.settings.email_vendor is not None:
+            if gs.settings.email_vendor == 'gmail_api':
+                backend = get_gmail_mail_backend(timeout=timeout)
+                if backend:
+                    return backend
             if gs.settings.email_vendor == 'sendgrid':
                 return SendGridEmail(api_key=gs.settings.send_grid_api_key)
             if not smtp_reachable(gs.settings.smtp_host, gs.settings.smtp_port, timeout=timeout):
@@ -1105,7 +1127,7 @@ class Event(
             tz,
         )
 
-    def copy_data_from(self, other):
+    def copy_data_from(self, other, clone_options=None):
         from ..signals import event_copy_data
         from . import (
             Product,
@@ -1117,8 +1139,37 @@ class Event(
             Quota,
         )
 
-        self.plugins = other.plugins
-        self.is_public = other.is_public
+        clone_options = clone_options or {}
+        clone_common = clone_options.get('clone_common_data', True)
+        clone_settings = clone_options.get('clone_settings', True)
+        clone_design_texts = clone_options.get('clone_design_texts', True)
+        clone_email_settings = clone_options.get('clone_email_settings', True)
+        
+        clone_ticketing = clone_options.get('clone_ticketing_data', True)
+        clone_products = clone_options.get('clone_products', True)
+        clone_questions = clone_options.get('clone_questions', True)
+        clone_checkin_lists = clone_options.get('clone_checkin_lists', True)
+        clone_payment_settings = clone_options.get('clone_payment_settings', True)
+        
+        clone_talks = clone_options.get('clone_talk_data', True)
+        clone_cfp = clone_options.get('clone_cfp', True)
+        clone_session_types_tracks = clone_options.get('clone_session_types_tracks', True)
+        clone_review_settings = clone_options.get('clone_review_settings', True)
+
+        if clone_common and clone_settings:
+            self.plugins = other.plugins
+            self.is_public = other.is_public
+            self.location = other.location
+            self.geo_lat = other.geo_lat
+            self.geo_lon = other.geo_lon
+            self.currency = other.currency
+            
+            for extra_link in other.extra_links.all():
+                extra_link.pk = None
+                extra_link.event = self
+                extra_link.save()
+                extra_link.log_action('eventyay.object.cloned')
+
         if other.date_admission:
             self.date_admission = self.date_from + (other.date_admission - other.date_from)
         self.testmode = other.testmode
@@ -1129,194 +1180,327 @@ class Event(
         self.log_action('eventyay.object.cloned', data={'source': other.slug, 'source_id': other.pk})
 
         tax_map = {}
-        for t in other.tax_rules.all():
-            tax_map[t.pk] = t
-            t.pk = None
-            t.event = self
-            t.save()
-            t.log_action('eventyay.object.cloned')
+        if clone_ticketing and clone_products:
+            for t in other.tax_rules.all():
+                tax_map[t.pk] = t
+                t.pk = None
+                t.event = self
+                t.save()
+                t.log_action('eventyay.object.cloned')
 
         category_map = {}
-        for c in ProductCategory.objects.filter(event=other):
-            category_map[c.pk] = c
-            c.pk = None
-            c.event = self
-            c.save()
-            c.log_action('eventyay.object.cloned')
-
         product_meta_properties_map = {}
-        for imp in other.product_meta_properties.all():
-            product_meta_properties_map[imp.pk] = imp
-            imp.pk = None
-            imp.event = self
-            imp.save()
-            imp.log_action('eventyay.object.cloned')
-
         product_map = {}
         variation_map = {}
-        for i in Product.objects.filter(event=other).prefetch_related('variations'):
-            vars = list(i.variations.all())
-            product_map[i.pk] = i
-            i.pk = None
-            i.event = self
-            if i.picture:
-                i.picture.save(i.picture.name, i.picture)
-            if i.category_id:
-                i.category = category_map[i.category_id]
-            if i.tax_rule_id:
-                i.tax_rule = tax_map[i.tax_rule_id]
-            i.save()
-            i.log_action('eventyay.object.cloned')
-            for v in vars:
-                variation_map[v.pk] = v
-                v.pk = None
-                v.product = i
-                v.save()
-
-        for imv in ProductMetaValue.objects.filter(product__event=other).prefetch_related('product', 'property'):
-            imv.pk = None
-            imv.property = product_meta_properties_map[imv.property.pk]
-            imv.product = product_map[imv.product.pk]
-            imv.save()
-
-        for ia in ProductAddOn.objects.filter(base_product__event=other).prefetch_related(
-            'base_product', 'addon_category'
-        ):
-            ia.pk = None
-            ia.base_product = product_map[ia.base_product.pk]
-            ia.addon_category = category_map[ia.addon_category.pk]
-            ia.save()
-
-        for ia in ProductBundle.objects.filter(base_product__event=other).prefetch_related(
-            'base_product', 'bundled_product', 'bundled_variation'
-        ):
-            ia.pk = None
-            ia.base_product = product_map[ia.base_product.pk]
-            ia.bundled_product = product_map[ia.bundled_product.pk]
-            if ia.bundled_variation:
-                ia.bundled_variation = variation_map[ia.bundled_variation.pk]
-            ia.save()
-
-        for q in Quota.objects.filter(event=other, subevent__isnull=True).prefetch_related('products', 'variations'):
-            products = list(q.products.all())
-            vars = list(q.variations.all())
-            oldid = q.pk
-            q.pk = None
-            q.event = self
-            q.closed = False
-            q.save()
-            q.log_action('eventyay.object.cloned')
-            for i in products:
-                if i.pk in product_map:
-                    q.products.add(product_map[i.pk])
-            for v in vars:
-                q.variations.add(variation_map[v.pk])
-            self.products.filter(hidden_if_available_id=oldid).update(hidden_if_available=q)
-
         question_map = {}
-        for q in Question.objects.filter(event=other).prefetch_related('products', 'options'):
-            products = list(q.products.all())
-            opts = list(q.options.all())
-            question_map[q.pk] = q
-            q.pk = None
-            q.event = self
-            q.save()
-            q.log_action('eventyay.object.cloned')
-
-            for i in products:
-                q.products.add(product_map[i.pk])
-            for o in opts:
-                o.pk = None
-                o.question = q
-                o.save()
-
-        for q in self.questions.filter(dependency_question__isnull=False):
-            q.dependency_question = question_map[q.dependency_question_id]
-            q.save(update_fields=['dependency_question'])
-
-        def _walk_rules(rules):
-            if isinstance(rules, dict):
-                for k, v in rules.items():
-                    if k == 'lookup':
-                        if v[0] == 'product':
-                            v[1] = str(product_map.get(int(v[1]), 0).pk) if int(v[1]) in product_map else '0'
-                        elif v[0] == 'variation':
-                            v[1] = str(variation_map.get(int(v[1]), 0).pk) if int(v[1]) in variation_map else '0'
-                    else:
-                        _walk_rules(v)
-            elif isinstance(rules, list):
-                for i in rules:
-                    _walk_rules(i)
-
         checkin_list_map = {}
-        for cl in other.checkin_lists.filter(subevent__isnull=True).prefetch_related('limit_products'):
-            products = list(cl.limit_products.all())
-            checkin_list_map[cl.pk] = cl
-            cl.pk = None
-            cl.event = self
-            rules = cl.rules
-            _walk_rules(rules)
-            cl.rules = rules
-            cl.save()
-            cl.log_action('eventyay.object.cloned')
-            for i in products:
-                cl.limit_products.add(product_map[i.pk])
+        
+        if clone_ticketing:
+            if clone_products:
+                for c in ProductCategory.objects.filter(event=other):
+                    category_map[c.pk] = c
+                    c.pk = None
+                    c.event = self
+                    c.save()
+                    c.log_action('eventyay.object.cloned')
+    
+                for imp in other.product_meta_properties.all():
+                    product_meta_properties_map[imp.pk] = imp
+                    imp.pk = None
+                    imp.event = self
+                    imp.save()
+                    imp.log_action('eventyay.object.cloned')
+    
+                for i in Product.objects.filter(event=other).prefetch_related('variations'):
+                    vars = list(i.variations.all())
+                    product_map[i.pk] = i
+                    i.pk = None
+                    i.event = self
+                    if i.picture:
+                        i.picture.save(i.picture.name, i.picture)
+                    if i.category_id:
+                        i.category = category_map.get(i.category_id)
+                    if i.tax_rule_id:
+                        i.tax_rule = tax_map.get(i.tax_rule_id)
+                    i.save()
+                    i.log_action('eventyay.object.cloned')
+                    for v in vars:
+                        variation_map[v.pk] = v
+                        v.pk = None
+                        v.product = i
+                        v.save()
+    
+                for imv in ProductMetaValue.objects.filter(product__event=other).prefetch_related('product', 'property'):
+                    imv.pk = None
+                    imv.property = product_meta_properties_map.get(imv.property.pk)
+                    imv.product = product_map.get(imv.product.pk)
+                    imv.save()
+    
+                for ia in ProductAddOn.objects.filter(base_product__event=other).prefetch_related(
+                    'base_product', 'addon_category'
+                ):
+                    ia.pk = None
+                    ia.base_product = product_map.get(ia.base_product.pk)
+                    ia.addon_category = category_map.get(ia.addon_category.pk)
+                    ia.save()
+    
+                for ia in ProductBundle.objects.filter(base_product__event=other).prefetch_related(
+                    'base_product', 'bundled_product', 'bundled_variation'
+                ):
+                    ia.pk = None
+                    ia.base_product = product_map.get(ia.base_product.pk)
+                    ia.bundled_product = product_map.get(ia.bundled_product.pk)
+                    if ia.bundled_variation:
+                        ia.bundled_variation = variation_map.get(ia.bundled_variation.pk)
+                    ia.save()
+    
+                for q in Quota.objects.filter(event=other, subevent__isnull=True).prefetch_related('products', 'variations'):
+                    products = list(q.products.all())
+                    vars = list(q.variations.all())
+                    oldid = q.pk
+                    q.pk = None
+                    q.event = self
+                    q.closed = False
+                    q.save()
+                    q.log_action('eventyay.object.cloned')
+                    for i in products:
+                        if i.pk in product_map:
+                            q.products.add(product_map[i.pk])
+                    for v in vars:
+                        if v.pk in variation_map:
+                            q.variations.add(variation_map[v.pk])
+                    self.products.filter(hidden_if_available_id=oldid).update(hidden_if_available=q)
 
-        if other.seating_plan:
-            if other.seating_plan.organizer_id == self.organizer_id:
-                self.seating_plan = other.seating_plan
-            else:
-                self.organizer.seating_plans.create(name=other.seating_plan.name, layout=other.seating_plan.layout)
-            self.save()
+            if clone_questions:
+                for q in Question.objects.filter(event=other).prefetch_related('products', 'options'):
+                    products = list(q.products.all())
+                    opts = list(q.options.all())
+                    question_map[q.pk] = q
+                    q.pk = None
+                    q.event = self
+                    q.save()
+                    q.log_action('eventyay.object.cloned')
+    
+                    for i in products:
+                        if i.pk in product_map:
+                            q.products.add(product_map[i.pk])
+                    for o in opts:
+                        o.pk = None
+                        o.question = q
+                        o.save()
+    
+                for q in self.questions.filter(dependency_question__isnull=False):
+                    q.dependency_question = question_map[q.dependency_question_id]
+                    q.save(update_fields=['dependency_question'])
 
-        for m in other.seat_category_mappings.filter(subevent__isnull=True):
-            m.pk = None
-            m.event = self
-            m.product = product_map[m.product_id]
-            m.save()
+            def _walk_rules(rules):
+                if isinstance(rules, dict):
+                    for k, v in rules.items():
+                        if k == 'lookup':
+                            if v[0] == 'product':
+                                v[1] = str(product_map.get(int(v[1]), 0).pk) if int(v[1]) in product_map else '0'
+                            elif v[0] == 'variation':
+                                v[1] = str(variation_map.get(int(v[1]), 0).pk) if int(v[1]) in variation_map else '0'
+                        else:
+                            _walk_rules(v)
+                elif isinstance(rules, list):
+                    for i in rules:
+                        _walk_rules(i)
 
-        for s in other.seats.filter(subevent__isnull=True):
-            s.pk = None
-            s.event = self
-            if s.product_id:
-                s.product = product_map[s.product_id]
-            s.save()
+            if clone_checkin_lists:
+                for cl in other.checkin_lists.filter(subevent__isnull=True).prefetch_related('limit_products'):
+                    products = list(cl.limit_products.all())
+                    checkin_list_map[cl.pk] = cl
+                    cl.pk = None
+                    cl.event = self
+                    rules = cl.rules
+                    _walk_rules(rules)
+                    cl.rules = rules
+                    cl.save()
+                    cl.log_action('eventyay.object.cloned')
+                    for i in products:
+                        if i.pk in product_map:
+                            cl.limit_products.add(product_map[i.pk])
+    
+                if other.seating_plan:
+                    if other.seating_plan.organizer_id == self.organizer_id:
+                        self.seating_plan = other.seating_plan
+                    else:
+                        self.organizer.seating_plans.create(name=other.seating_plan.name, layout=other.seating_plan.layout)
+                    self.save()
+
+            for m in other.seat_category_mappings.filter(subevent__isnull=True):
+                m.pk = None
+                m.event = self
+                if m.product_id in product_map:
+                    m.product = product_map[m.product_id]
+                    m.save()
+
+            for s in other.seats.filter(subevent__isnull=True):
+                s.pk = None
+                s.event = self
+                if s.product_id:
+                    s.product = product_map.get(s.product_id)
+                s.save()
 
         skip_settings = (
             'ticket_secrets_eventyay_sig1_pubkey',
             'ticket_secrets_eventyay_sig1_privkey',
+            'frontpage_text',
         )
-        for s in other.settings._objects.all():
-            if s.key in skip_settings:
-                continue
+        def is_email_key(k):
+            return k.startswith('mail_') or k.startswith('smtp_')
+            
+        def is_design_key(k):
+            return k in (
+                'primary_color', 'theme_color_success', 'theme_color_danger', 'theme_color_background', 'theme_round_borders',
+                'hover_button_color', 'video_navigation_background_color', 'video_sidebar_text_color', 'video_sidebar_hover_color',
+                'primary_font', 'header_background_color', 'header_text_color', 'navigation_text_color', 'menu_text_scroll_over_color',
+                'logo_image', 'logo_image_large', 'event_logo_image', 'event_preview_image', 'og_image',
+                'banner_text', 'banner_text_bottom', 'header_pattern', 'logo_show_title',
+                'menu_label_tickets', 'menu_label_join_video'
+            )
 
-            s.object = self
-            s.pk = None
-            if s.value.startswith('file://'):
-                fi = default_storage.open(s.value[7:], 'rb')
-                nonce = get_random_string(length=8)
-                # TODO: make sure pub is always correct
-                fname = 'pub/%s/%s/%s.%s.%s' % (
-                    self.organizer.slug,
-                    self.slug,
-                    s.key,
-                    nonce,
-                    s.value.split('.')[-1],
-                )
-                newname = default_storage.save(fname, fi)
-                s.value = 'file://' + newname
-                s.save()
-            elif s.key == 'tax_rate_default':
-                try:
-                    if int(s.value) in tax_map:
-                        s.value = tax_map.get(int(s.value)).pk
-                        s.save()
-                except ValueError:
-                    pass
-            else:
-                s.save()
+        def is_payment_key(k):
+            return k.startswith('payment_') or k.startswith('invoice_')
 
-        self.settings.flush()
+        if clone_common or clone_payment_settings:
+            for s in other.settings._objects.all():
+                if s.key in skip_settings:
+                    continue
+                if is_email_key(s.key) and not (clone_common and clone_email_settings):
+                    continue
+                if is_design_key(s.key) and not (clone_common and clone_design_texts):
+                    continue
+                if is_payment_key(s.key) and not clone_payment_settings:
+                    continue
+                if not is_email_key(s.key) and not is_design_key(s.key) and not is_payment_key(s.key) and not (clone_common and clone_settings):
+                    continue
+
+                s.object = self
+                s.pk = None
+                if s.value.startswith('file://'):
+                    fi = default_storage.open(s.value[7:], 'rb')
+                    nonce = get_random_string(length=8)
+                    # TODO: make sure pub is always correct
+                    fname = 'pub/%s/%s/%s.%s.%s' % (
+                        self.organizer.slug,
+                        self.slug,
+                        s.key,
+                        nonce,
+                        s.value.split('.')[-1],
+                    )
+                    newname = default_storage.save(fname, fi)
+                    s.value = 'file://' + newname
+                    s.save()
+                elif s.key == 'tax_rate_default':
+                    try:
+                        if int(s.value) in tax_map:
+                            s.value = tax_map.get(int(s.value)).pk
+                            s.save()
+                    except ValueError:
+                        pass
+                else:
+                    s.save()
+
+            self.settings.flush()
+            
+        if clone_talks:
+            from eventyay.base.models.type import SubmissionType
+            from eventyay.base.models.track import Track
+            from eventyay.base.models.question import TalkQuestion
+            from eventyay.base.models.access_code import SubmitterAccessCode
+            
+            if hasattr(self, 'cfp') and getattr(self.cfp, 'default_type_id', None):
+                self.cfp.default_type = None
+                self.cfp.save(update_fields=['default_type'])
+            
+            if clone_session_types_tracks:
+                SubmissionType.objects.filter(event=self).delete()
+                submission_type_map = {}
+                for st in other.submission_types.all():
+                    submission_type_map[st.pk] = st
+                    st.pk = None
+                    st.event = self
+                    st.save()
+                    st.log_action('eventyay.object.cloned')
+    
+                track_map = {}
+                for tr in other.tracks.all():
+                    track_map[tr.pk] = tr
+                    tr.pk = None
+                    tr.event = self
+                    tr.save()
+                    tr.log_action('eventyay.object.cloned')
+                
+                talk_question_map = {}
+                talk_question_deps = {}
+                for tq in other.talkquestions.prefetch_related('options', 'tracks', 'submission_types'):
+                    tq_tracks = list(tq.tracks.all())
+                    tq_submission_types = list(tq.submission_types.all())
+                    tq_options = list(tq.options.all())
+                    old_dep_id = tq.dependency_question_id
+                    
+                    talk_question_map[tq.pk] = tq
+                    tq.pk = None
+                    tq.event = self
+                    tq.dependency_question = None
+                    tq.save()
+                    tq.log_action('eventyay.object.cloned')
+                    
+                    if old_dep_id:
+                        talk_question_deps[tq] = old_dep_id
+                    
+                    for o in tq_options:
+                        o.pk = None
+                        o.question = tq
+                        o.save()
+                    for tr in tq_tracks:
+                        tq.tracks.add(track_map[tr.pk])
+                    for st in tq_submission_types:
+                        tq.submission_types.add(submission_type_map[st.pk])
+                        
+                for tq, old_dep_id in talk_question_deps.items():
+                    tq.dependency_question = talk_question_map.get(old_dep_id)
+                    if tq.dependency_question:
+                        tq.save(update_fields=['dependency_question'])
+                
+                if hasattr(self, 'cfp') and hasattr(other, 'cfp') and getattr(other.cfp, 'default_type_id', None):
+                    self.cfp.default_type = submission_type_map.get(other.cfp.default_type_id)
+                    self.cfp.save(update_fields=['default_type'])
+                    
+                for ac in other.submitter_access_codes.all():
+                    ac.pk = None
+                    ac.event = self
+                    if ac.track_id:
+                        ac.track = track_map.get(ac.track_id)
+                    if ac.submission_type_id:
+                        ac.submission_type = submission_type_map.get(ac.submission_type_id)
+                    ac.save()
+                    ac.log_action('eventyay.object.cloned')
+
+            if clone_review_settings:
+                from eventyay.base.models import ReviewPhase, ReviewScoreCategory, ReviewScore
+
+                self.review_phases.all().delete()
+                for rp in other.review_phases.all():
+                    rp.pk = None
+                    rp.event = self
+                    rp.save()
+                    rp.log_action('eventyay.object.cloned')
+
+                self.score_categories.all().delete()
+                for sc in other.score_categories.prefetch_related('scores'):
+                    scores = list(sc.scores.all())
+                    sc.pk = None
+                    sc.event = self
+                    sc.save()
+                    sc.log_action('eventyay.object.cloned')
+                    for score in scores:
+                        score.pk = None
+                        score.category = sc
+                        score.save()
+        
         event_copy_data.send(
             sender=self,
             other=other,
@@ -1326,6 +1510,7 @@ class Event(
             variation_map=variation_map,
             question_map=question_map,
             checkin_list_map=checkin_list_map,
+            clone_options=clone_options,
         )
 
     def decode_token(self, token, allow_raise=False):
@@ -1405,9 +1590,15 @@ class Event(
         """
         if event_roles is None:
             event_roles = self.roles if self.roles is not None else {}
-        if role_name in event_roles and event_roles[role_name] is not None:
-            return event_roles[role_name]
         defaults = self._get_default_roles()
+        if role_name in event_roles and event_roles[role_name] is not None:
+            perms = list(event_roles[role_name])
+            if role_name in defaults:
+                current_perms_set = {normalize_permission_value(p) for p in perms}
+                for default_perm in defaults[role_name]:
+                    if normalize_permission_value(default_perm) not in current_perms_set:
+                        perms.append(default_perm)
+            return perms
         if role_name in defaults:
             return defaults[role_name]
         return SYSTEM_ROLES.get(role_name, [])
@@ -1445,20 +1636,30 @@ class Event(
         for role, required_traits in event_trait_grants.items():
             if role == 'attendee':
                 continue
-            if traits_match_required(traits, required_traits) and (required_traits or allow_empty_traits):
-                role_permissions = self._permissions_for_role(role, event_roles)
-                role_permissions_str = [normalize_permission_value(rp) for rp in role_permissions]
-                if any(normalize_permission_value(p) in role_permissions_str for p in permissions):
-                    return True
+            if role in ORGANIZER_ROLES:
+                if not required_traits or not traits_match_required(traits, required_traits):
+                    continue
+            else:
+                if not (traits_match_required(traits, required_traits) and (required_traits or allow_empty_traits)):
+                    continue
+            role_permissions = self._permissions_for_role(role, event_roles)
+            role_permissions_str = [normalize_permission_value(rp) for rp in role_permissions]
+            if any(normalize_permission_value(p) in role_permissions_str for p in permissions):
+                return True
 
         if room:
             room_trait_grants = room.trait_grants if room.trait_grants is not None else {}
             for role, required_traits in room_trait_grants.items():
-                if traits_match_required(traits, required_traits) and (required_traits or allow_empty_traits):
-                    role_permissions = self._permissions_for_role(role, event_roles)
-                    role_permissions_str = [normalize_permission_value(rp) for rp in role_permissions]
-                    if any(normalize_permission_value(p) in role_permissions_str for p in permissions):
-                        return True
+                if role in ORGANIZER_ROLES:
+                    if not required_traits or not traits_match_required(traits, required_traits):
+                        continue
+                else:
+                    if not (traits_match_required(traits, required_traits) and (required_traits or allow_empty_traits)):
+                        continue
+                role_permissions = self._permissions_for_role(role, event_roles)
+                role_permissions_str = [normalize_permission_value(rp) for rp in role_permissions]
+                if any(normalize_permission_value(p) in role_permissions_str for p in permissions):
+                    return True
 
         # Return False if no permission was granted
         return False
@@ -1532,6 +1733,41 @@ class Event(
         if user.is_silenced and not any(p in MAX_PERMISSIONS_IF_SILENCED for p in permission):
             return False
 
+        # Staff, superusers, administrators, or users holding Eventyay team permissions
+        if (
+            getattr(user, "is_administrator", False)
+            or getattr(user, "is_superuser", False)
+            or getattr(user, "is_staff", False)
+        ):
+            return True
+
+        if hasattr(user, "has_event_permission"):
+            try:
+                # can_change_event_settings grants administrative control over video & rooms
+                if user.has_event_permission(self.organizer, self, "can_change_event_settings"):
+                    return True
+
+                # Non-settings team permissions (submissions/items) cannot pass sensitive operations
+                sensitive_perms = {
+                    Permission.EVENT_SECRETS,
+                    Permission.EVENT_UPDATE,
+                    Permission.ROOM_DELETE,
+                    Permission.EVENT_API,
+                    Permission.EVENT_USERS_MANAGE,
+                }
+                sensitive_str = {p.value if hasattr(p, "value") else str(p) for p in sensitive_perms}
+                req_perms_str = {p.value if hasattr(p, "value") else str(p) for p in permission}
+
+                if not req_perms_str.intersection(sensitive_str):
+                    if user.has_event_permission(
+                        self.organizer,
+                        self,
+                        ["can_change_submissions", "can_change_items"],
+                    ):
+                        return True
+            except Exception:
+                pass
+
         if self.has_permission_implicit(
             traits=user.traits or [],
             permissions=permission,
@@ -1554,32 +1790,9 @@ class Event(
         Returns whether a user holds a given permission either on the world or on a specific room.
         ``permission`` can be one ``Permission`` or a list of these, in which case it will perform an OR lookup.
         """
-        if user.is_banned:  # pragma: no cover
-            # safeguard only
-            return False
-
-        if not isinstance(permission, list):
-            permission = [permission]
-
-        if user.is_silenced and not any(p in MAX_PERMISSIONS_IF_SILENCED for p in permission):
-            return False
-
-        if self.has_permission_implicit(
-            traits=user.traits or [],
-            permissions=permission,
-            room=room,
-            allow_empty_traits=user.type == User.UserType.PERSON,
-        ):
-            return True
-
-        roles = await user.get_role_grants_async(room)
-        event_roles = self.roles if self.roles is not None else self._get_default_roles()
-        for r in roles:
-            role_perms = self._permissions_for_role(r, event_roles)
-            role_perms_str = [normalize_permission_value(rp) for rp in role_perms]
-            if any(normalize_permission_value(p) in role_perms_str for p in permission):
-                return True
-        return False
+        return await database_sync_to_async(self.has_permission)(
+            user=user, permission=permission, room=room
+        )
 
     def get_all_permissions(self, user):
         result = defaultdict(set)
@@ -1595,8 +1808,13 @@ class Event(
         user_traits = user.traits or []
 
         for role, required_traits in event_trait_grants.items():
-            if traits_match_required(user_traits, required_traits) and (required_traits or allow_empty_traits):
-                result[self].update(self._permissions_for_role(role, event_roles))
+            if role in ORGANIZER_ROLES:
+                if not required_traits or not traits_match_required(user_traits, required_traits):
+                    continue
+            else:
+                if not (traits_match_required(user_traits, required_traits) and (required_traits or allow_empty_traits)):
+                    continue
+            result[self].update(self._permissions_for_role(role, event_roles))
 
         # Admin mode in the ticket/talk system is represented by the ``admin`` trait on the video side.
         # When admin mode is ON, the user has the ``admin`` trait and should retain full access.
@@ -1614,8 +1832,13 @@ class Event(
         for room in self.rooms.all():
             room_trait_grants = room.trait_grants if room.trait_grants is not None else {}
             for role, required_traits in room_trait_grants.items():
-                if traits_match_required(user_traits, required_traits) and (required_traits or allow_empty_traits):
-                    result[room].update(self._permissions_for_role(role, event_roles))
+                if role in ORGANIZER_ROLES:
+                    if not required_traits or not traits_match_required(user_traits, required_traits):
+                        continue
+                else:
+                    if not (traits_match_required(user_traits, required_traits) and (required_traits or allow_empty_traits)):
+                        continue
+                result[room].update(self._permissions_for_role(role, event_roles))
 
         for grant in user.room_grants.select_related('room'):
             result[grant.room].update(self._permissions_for_role(grant.role, event_roles))
@@ -1664,7 +1887,6 @@ class Event(
 
         if self.pk == old.pk:
             raise ValueError('Illegal attempt to clone into same event')
-
         def clone_stored_files(*, inst=None, attrs=None, struct=None, url=None):
             if inst and attrs:
                 for a in attrs:
@@ -1740,15 +1962,21 @@ class Event(
         Returns a dictionary of initialized payment providers mapped by their identifiers.
         """
         from ..signals import register_payment_providers
+        from ..meetup import is_meetup_event
 
         if not cached or not hasattr(self, '_cached_payment_providers'):
             responses = register_payment_providers.send(self)
             providers = {}
+            is_meetup = is_meetup_event(self)
             for receiver, response in responses:
                 if not isinstance(response, list):
                     response = [response]
                 for p in response:
                     pp = p(self)
+                    if is_meetup and pp.identifier == 'stripe_settings':
+                        continue
+                    if not is_meetup and pp.identifier == 'stripe' and p.__module__ == 'eventyay.base.payment':
+                        continue
                     providers[pp.identifier] = pp
 
             self._cached_payment_providers = OrderedDict(
@@ -1969,6 +2197,25 @@ class Event(
     def has_component_testmode(self):
         return bool(self.testmode or self.talks_testmode)
 
+    @staticmethod
+    def exclude_talks_testmode(qs):
+        """Exclude events whose talks component is in test mode.
+
+        Django's ``.exclude(related__a=x, related__b=y)`` splits into two
+        independent EXISTS checks, so events with a ``talks_testmode`` row
+        (even False) plus any other setting value ``True`` are wrongly dropped.
+        Use a same-row NOT EXISTS instead.
+        """
+        return qs.exclude(
+            Exists(
+                Event_SettingsStore.objects.filter(
+                    object_id=OuterRef('pk'),
+                    key='talks_testmode',
+                    value='True',
+                )
+            )
+        )
+
     def user_can_view_tickets(self, user=None, request=None):
         private_tickets = self.private_testmode_tickets_enabled
         if not self.tickets_published and not private_tickets:
@@ -2183,6 +2430,7 @@ class Event(
         self.janusserver_set.update(event_exclusive=None)
         self.jitsiserver_set.update(event_exclusive=None)
         self.turnserver_set.update(event_exclusive=None)
+        self.loungemeshserver_set.update(event_exclusive=None)
 
         self.vouchers.all().delete()
         self.products.all().delete()
@@ -2581,6 +2829,23 @@ class Event(
                 return default_storage.url(path)
             except Exception:
                 return None
+
+    @cached_property
+    def preview_image_url_small(self):
+        """
+        Return a smaller 400×225 resolved URL of the preview image for responsive srcset delivery.
+        """
+        path = self._visible_preview_image_path or self._visible_header_image_path or self._visible_logo_path
+        if not path:
+            return None
+
+        if is_http_url(str(path)):
+            return path
+
+        try:
+            return get_thumbnail(path, '400x225^').thumb.url
+        except Exception:
+            return self.preview_image_url_with_fallback
 
     @cached_property
     def visible_logo_url(self):
@@ -3044,7 +3309,7 @@ class Event(
 
         :class:`~eventyay.base.models.mail.QueuedMail` objects.
         """
-        return self.queued_mails.filter(sent__isnull=True).count()
+        return self.queued_mails.filter(sent__isnull=True, is_draft=False).count()
 
 
 class EventExtraLink(OrderedModel, PretalxModel):

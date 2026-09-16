@@ -7,9 +7,9 @@ from channels.db import database_sync_to_async
 from channels.layers import get_channel_layer
 from django.core.cache import cache
 from django.core.paginator import InvalidPage, Paginator
-from django.db.models import Exists, OuterRef, Q
+from django.db.models import CharField, Exists, OuterRef, Q
 from django.db.models.fields.json import KeyTextTransform
-from django.db.models.functions import Lower
+from django.db.models.functions import Cast, Lower
 from django.db.transaction import atomic
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
@@ -708,6 +708,9 @@ def get_user(
     with_token=None,
     with_client_id=None,
     with_invite_token=None,
+    with_platform_user=None,
+    with_session_key=None,
+    is_organizer=False,
 ):
     if with_id:
         user = get_user_by_id(event.id, with_id)
@@ -716,14 +719,69 @@ def get_user(
     token_id = None
     anonymous_invite = None
     token_traits = None
-    if with_token:
-        from eventyay.eventyay_common.video.traits_sync import apply_live_team_video_traits
-
-        token_id = with_token["uid"]
-        # Team Video traits must follow live Organizer → Teams grants, not a cached JWT.
-        token_traits = apply_live_team_video_traits(
-            event, token_id, with_token.get("traits")
+    if with_platform_user:
+        from eventyay.eventyay_common.video.traits_sync import (
+            apply_live_team_video_traits,
+            is_platform_event_admin,
         )
+        from eventyay.eventyay_common.video.permissions import video_attendee_trait
+        from eventyay.eventyay_common.utils import encode_email
+
+        token_id = encode_email(with_platform_user.email)
+        base_traits = ['attendee', video_attendee_trait(event.slug)]
+        if is_organizer:
+            token_id = f"{token_id}:orga"
+            permission_set = with_platform_user.get_event_permission_set(event.organizer, event)
+            is_event_admin = is_platform_event_admin(with_platform_user, session_key=with_session_key)
+            if is_event_admin:
+                base_traits.extend(['admin', f'eventyay-video-event-{event.slug}-organizer'])
+            elif permission_set:
+                base_traits.append(f'eventyay-video-event-{event.slug}-organizer')
+
+            token_traits = apply_live_team_video_traits(
+                event, token_id, base_traits, platform_user=with_platform_user, session_key=with_session_key
+            )
+        else:
+            # On attendee side, account MUST ONLY have attendee traits!
+            token_traits = base_traits
+
+        user = get_user_by_token_id(event.id, token_id)
+        if not user:
+            user = create_user(
+                event_id=event.id,
+                token_id=token_id,
+                traits=token_traits,
+                profile={
+                    'display_name': with_platform_user.fullname or with_platform_user.email.split('@')[0],
+                    'contact_email': with_platform_user.email,
+                },
+            )
+            return user
+    elif with_token:
+        from eventyay.eventyay_common.video.traits_sync import apply_live_team_video_traits
+        from eventyay.eventyay_common.video.permissions import video_attendee_trait
+
+        if is_organizer:
+            token_id = f"{with_token['uid']}:orga"
+            # Team Video traits must follow live Organizer → Teams grants, not a cached JWT.
+            token_traits = apply_live_team_video_traits(
+                event, token_id, with_token.get("traits")
+            )
+        else:
+            token_id = with_token["uid"]
+            # On attendee side, attendee sessions only have attendee traits.
+            # Strip any organizer, admin, or moderator traits.
+            raw_traits = with_token.get("traits") or []
+            token_traits = [
+                t for t in raw_traits
+                if t != 'admin'
+                and not (isinstance(t, str) and (t.endswith('-organizer') or t.endswith('-moderator') or t.endswith('-video-moderator')))
+            ]
+            attendee_trait = video_attendee_trait(event.slug)
+            if 'attendee' not in token_traits:
+                token_traits.append('attendee')
+            if attendee_trait not in token_traits:
+                token_traits.append(attendee_trait)
         user = get_user_by_token_id(event.id, token_id)
     elif with_client_id:
         user = get_user_by_client_id(event.id, with_client_id)
@@ -738,12 +796,12 @@ def get_user(
                 return None
     else:
         raise Exception(
-            "get_user was called without valid with_token, with_id or with_client_id"
+            "get_user was called without valid with_token, with_id, with_platform_user or with_client_id"
         )
 
     if user:
-        if with_token:
-            if list(user.traits or []) != list(token_traits or []):
+        if with_token or with_platform_user:
+            if set(user.traits or []) != set(token_traits or []):
                 update_user(event.id, id=user.id, traits=token_traits, serialize=False)
                 user = get_user_by_id(event.id, user.id)
             if token_id:
@@ -955,6 +1013,9 @@ def login(
     token=None,
     client_id=None,
     invite_token=None,
+    platform_user=None,
+    session_key=None,
+    is_organizer=False,
 ) -> LoginResult:
     from .chat import ChatService
     from .event import get_event_config_for_user
@@ -964,6 +1025,9 @@ def login(
         with_client_id=client_id,
         with_token=token,
         with_invite_token=invite_token,
+        with_platform_user=platform_user,
+        with_session_key=session_key,
+        is_organizer=is_organizer,
     )
 
     if user and user.is_banned:
@@ -977,12 +1041,12 @@ def login(
         else:
             raise AuthError("auth.missing_token")
 
+    event_config_obj = getattr(event, "config", None) or {}
+    track_event_views = bool(event_config_obj.get("track_event_views", True))
+
     user.last_login = now()
     user.save(update_fields=["last_login"])
 
-    # Safely handle missing event.config (can be None for newly created events or misconfigured instances)
-    event_config_obj = getattr(event, "config", None) or {}
-    track_event_views = bool(event_config_obj.get("track_event_views", False))
     if track_event_views:
         view = start_view(user)
     else:
@@ -1171,6 +1235,27 @@ def list_users(
             conditions.append(
                 Q(**{"profile__fields__" + field + "__icontains": search_term})
             )
+
+        if include_admin_info:
+            conditions.append(Q(token_id__icontains=search_term))
+            conditions.append(
+                Q(email__icontains=search_term) | Q(profile__contact_email__icontains=search_term)
+            )
+            conditions.append(Q(wikimedia_username__icontains=search_term))
+
+            qs = qs.annotate(id_text=Cast('id', output_field=CharField()))
+            conditions.append(Q(id_text__istartswith=search_term))
+
+            with scopes_disabled():
+                matching_tokens = set(
+                    OrderPosition.objects.filter(
+                        Q(secret__icontains=search_term) | Q(order__code__icontains=search_term),
+                        order__event_id=event_id,
+                    ).values_list("pseudonymization_id", flat=True)
+                )
+            if matching_tokens:
+                conditions.append(Q(token_id__in=[t for t in matching_tokens if t]))
+
         qs = qs.filter(reduce(operator.or_, conditions))
 
     try:

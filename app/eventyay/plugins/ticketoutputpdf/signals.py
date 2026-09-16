@@ -76,6 +76,9 @@ def copy_product(sender, source, target, **kwargs):
 def pdf_event_copy_data_receiver(sender, other, product_map, question_map, **kwargs):
     if sender.ticket_layouts.exists():  # idempotency
         return
+    clone_options = kwargs.get('clone_options') or {}
+    if not clone_options.get('clone_ticketing_data', True):
+        return
     layout_map = {}
     for bl in other.ticket_layouts.all():
         oldid = bl.pk

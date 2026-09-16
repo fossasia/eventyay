@@ -826,6 +826,40 @@ input.password_strength {
   margin-right: 1rem;
 }
 
+/* Password visibility toggle wrapper */
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+.password-input-wrapper input[type="password"],
+.password-input-wrapper input[type="text"] {
+  width: 100%;
+  padding-right: 40px;
+}
+.password-input-wrapper .js-password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: none;
+  color: #6b7280;
+  outline: none;
+  z-index: 10;
+  cursor: pointer;
+}
+.password-input-wrapper .js-password-toggle:hover {
+  color: #374151;
+}
 .teamshifts-roles-selector {
   margin-top: 15px;
 }

@@ -129,6 +129,18 @@
     min-width: 640px;
   }
 
+  #page-wrapper .order-overview-mode-toggle {
+    width: 100%;
+  }
+
+  #page-wrapper .order-overview-mode-toggle > .btn {
+    flex: 1 1 0;
+    min-width: 0;
+    white-space: normal;
+    font-size: 12px;
+    padding: 8px 6px;
+  }
+
   #page-wrapper #sumtoggle {
     display: flex;
     flex-wrap: wrap;

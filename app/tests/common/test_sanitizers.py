@@ -1,9 +1,7 @@
 """Tests for eventyay.common.sanitizers."""
 
 import pytest
-
-from eventyay.common.sanitizers import sanitize_email_html, sanitize_rich_text
-
+from eventyay.common.sanitizers import sanitize_email_html, sanitize_rich_text, sanitize_page_rich_text
 
 @pytest.mark.parametrize('sanitize', [sanitize_rich_text, sanitize_email_html])
 @pytest.mark.parametrize(
@@ -98,6 +96,33 @@ class TestSanitizeRichText:
     def test_br_allowed(self):
         result = sanitize_rich_text('<p>line1<br>line2</p>')
         assert '<br>' in result or '<br/>' in result or '<br />' in result
+
+
+class TestSanitizePageRichText:
+    def test_headings_allowed(self):
+        html = '<h1>H1</h1><h2>H2</h2><h3>H3</h3><h4>H4</h4><h5>H5</h5><h6>H6</h6>'
+        assert sanitize_page_rich_text(html) == html
+
+    def test_img_data_uri_allowed(self):
+        html = '<img src="data:image/png;base64,abc" alt="img">'
+        result = sanitize_page_rich_text(html)
+        assert 'src="data:image/png;base64,abc"' in result
+        assert 'alt="img"' in result
+
+    def test_a_href_data_uri_stripped(self):
+        result = sanitize_page_rich_text('<a href="data:text/html,<script>alert(1)</script>">x</a>')
+        assert 'data:' not in result
+        assert '<script>' not in result
+        assert 'href=' not in result
+
+    def test_javascript_protocol_stripped(self):
+        result = sanitize_page_rich_text('<a href="javascript:alert(1)">xss</a>')
+        assert 'javascript:' not in result
+
+    def test_external_link_gets_rel(self):
+        result = sanitize_page_rich_text('<a href="https://external.example.com">link</a>')
+        assert 'noopener' in result
+        assert 'noreferrer' in result
 
 
 class TestSanitizeEmailHtml:

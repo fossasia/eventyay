@@ -4,7 +4,8 @@
 		.bucket-label(:ref="getBucketName(date)", :data-date="date.toISOString()")
 			.day(v-if="showDayHeaders && (index === 0 || date.clone().startOf('day').diff(sessionBuckets[index - 1].date.clone().startOf('day'), 'days') > 0)")  {{ date.clone().tz(timezone).format('dddd, D MMMM') }}
 			template(v-for="session of sessions")
-				session(
+				component(
+					:is="SessionComponent",
 					v-if="isProperSession(session)",
 					:session="session",
 					:now="now",
@@ -24,10 +25,15 @@
 <script>
 import moment from 'moment-timezone'
 import { getLocalizedString, normalizePopularityCount } from '../utils'
-import Session from './Session'
+import TalkSession from './Session'
+import ShiftSession from '../teamshifts-adapter/Session.vue'
+import { isShiftSchedule } from '../teamshifts-adapter'
 
 export default {
-	components: { Session },
+	components: { TalkSession, ShiftSession },
+	inject: {
+		scheduleData: { default: null },
+	},
 	props: {
 		sessions: Array,
 		rooms: Array,
@@ -84,6 +90,10 @@ export default {
 		}
 	},
 	computed: {
+		SessionComponent () {
+			const data = this.scheduleData?.value ?? this.scheduleData
+			return isShiftSchedule(data) ? ShiftSession : TalkSession
+		},
 		popularitySortEnabled () {
 			return this.includePopularitySortKey || this.sortBy === 'popularity'
 		},
@@ -236,19 +246,11 @@ export default {
 				fragmentIsDate = true
 			}
 		}
-		if (fragmentIsDate) return
-		// Skip auto-scroll if disabled via prop
 		if (this.disableAutoScroll) return
-		const nowIndex = this.sessionBuckets.findIndex(bucket => this.now < bucket.date)
-		// do not scroll if the event has not started yet
-		if (nowIndex < 0) return
-		const nowBucket = this.sessionBuckets[Math.max(0, nowIndex - 1)]
-		const scrollTop = this.$refs[this.getBucketName(nowBucket.date)]?.[0]?.offsetTop - 90
-		if (this.scrollParent) {
-			this.scrollParent.scrollTop = scrollTop
-		} else {
-			window.scroll({top: scrollTop + this.getOffsetTop()})
-		}
+		const today = this.now.clone().tz(this.timezone).format('YYYY-MM-DD')
+		if (this.currentDay !== today) return // Auto-scroll does not trigger when viewing a non-current day
+		await new Promise(resolve => requestAnimationFrame(resolve))
+		this.scrollToNow()
 	},
 	methods: {
 		titleSortKey (session) {
@@ -306,6 +308,36 @@ export default {
 		getOffsetTop () {
 			const rect = this.$parent.$el.getBoundingClientRect()
 			return rect.top + window.scrollY
+		},
+		getStickyClearance () {
+			const root = this.$el.closest('.pretalx-schedule') || this.$el.closest('.c-schedule-view')
+			let offset = 40
+			if (root) {
+				const parsed = parseFloat(getComputedStyle(root).getPropertyValue('--pretalx-sticky-top-offset'))
+				if (Number.isFinite(parsed)) offset = parsed
+			}
+			let toolbarHeight = 0
+			const toolbar = root?.querySelector('.c-schedule-toolbar')
+			if (toolbar) toolbarHeight = toolbar.getBoundingClientRect().height
+			let versionWarning = 0
+			if (root) {
+				const vh = parseFloat(getComputedStyle(root).getPropertyValue('--pretalx-version-warning-height'))
+				versionWarning = Number.isFinite(vh) ? vh : 0
+			}
+			return Math.max(0, offset) + toolbarHeight + versionWarning + 6
+		},
+		scrollToNow() {
+			const nowIndex = this.sessionBuckets.findIndex(bucket => this.now < bucket.date)
+			if (nowIndex < 0) return
+			const nowBucket = this.sessionBuckets[Math.max(0, nowIndex - 1)]
+			const el = this.$refs[this.getBucketName(nowBucket.date)]?.[0]
+			if (!el) return
+			if (this.scrollParent) {
+				const top = el.getBoundingClientRect().top - this.scrollParent.getBoundingClientRect().top + this.scrollParent.scrollTop - this.getStickyClearance()
+				this.scrollParent.scrollTop = top
+			} else {
+				window.scroll({top: el.offsetTop + this.getOffsetTop() - this.getStickyClearance()})
+			}
 		},
 		scrollToDay (day, { force = false } = {}) {
 			if (!this.showDayHeaders || !day) return

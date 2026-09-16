@@ -11,8 +11,9 @@ from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from lxml import etree
 
-from eventyay.base.forms import I18nMarkdownTextarea
 from eventyay.base.models.page import Page
+from eventyay.common.forms.fields import I18nRichTextFormField
+from eventyay.common.sanitizers import sanitize_page_rich_text
 
 
 logger = logging.getLogger(__name__)
@@ -34,9 +35,12 @@ class PageSettingsForm(forms.ModelForm):
             'confirmation_required',
             'text',
         )
-        widgets = {
-            'text': I18nMarkdownTextarea,
-        }
+
+    text = I18nRichTextFormField(
+        required=False,
+        label=_('Page content'),
+        sanitizer=sanitize_page_rich_text
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
