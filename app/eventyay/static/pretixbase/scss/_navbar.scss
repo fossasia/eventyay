@@ -318,7 +318,10 @@ nav.navbar .navbar-top-links #language-dropdown > summary i.fa-caret-down {
 
 nav.navbar a.danger,
 nav.navbar a.danger:hover,
-nav.navbar a.danger:active {
+nav.navbar a.danger:active,
+nav.navbar.navbar-inverse .navbar-top-links a.danger,
+nav.navbar.navbar-inverse .navbar-top-links a.danger:hover,
+nav.navbar.navbar-inverse .navbar-top-links a.danger:active {
   background: $brand-danger;
   color: #fff;
   font-size: 14px;
