@@ -252,6 +252,9 @@ _MEDIA_MODULE_TYPES = frozenset({
     'call.janus',
     'call.zoom',
     'call.jitsi',
+    'call.loungemesh',
+    'channel.loungemesh',
+    'iframe',
     'page.landing',
 })
 
