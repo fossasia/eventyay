@@ -50,6 +50,7 @@
 								i.mdi(:class="providerIcon(stream.stream_type)" aria-hidden="true")
 							select.provider-select(v-model="stream.stream_type" @change="onStreamTypeChange(stream)")
 								option(value="youtube") YouTube
+								option(value="vimeo") Vimeo
 								option(value="hls") HLS
 							i.mdi.mdi-chevron-down.dropdown-arrow(aria-hidden="true")
 
@@ -122,6 +123,20 @@
 							bunt-switch(name="noRelated", v-model="stream.config.noRelated", :label="$t('Limit related videos to same channel')")
 							bunt-switch(name="disableKb", v-model="stream.config.disableKb", :label="$t('Disable Keyboard Controls')")
 							bunt-switch(name="showInfo", v-model="stream.config.showInfo", :label="$t('Hide Video Info')")
+						template(v-else-if="stream.stream_type === 'vimeo'")
+							bunt-switch(name="dnt", v-model="stream.config.dnt", :label="$t('Privacy / Do Not Track (DNT)')")
+							bunt-switch(name="loop", v-model="stream.config.loop", :label="$t('Loop')")
+							bunt-switch(name="hideControls", v-model="stream.config.hideControls", :label="$t('Hide Controls')")
+							bunt-switch(name="disableKb", v-model="stream.config.disableKb", :label="$t('Disable Keyboard Controls')")
+							bunt-switch(name="showInfo", v-model="stream.config.showInfo", :label="$t('Hide Video Info')")
+							.field-group.password-group
+								label.field-label {{ $t('Password (optional, for password-protected streams)') }}
+								.input-wrapper
+									input.text-input(
+										type="password"
+										v-model="stream.config.password"
+										:placeholder="$t('Stream password')"
+									)
 
 		.scheduled-actions-footer(v-if="isScheduledMode")
 			bunt-button.btn-add-another(@click="addScheduledStream")
@@ -154,10 +169,12 @@ import Prompt from 'components/Prompt'
 import LanguageAudioSourceList from 'components/LanguageAudioSourceList'
 import mixin from './mixin'
 import { normalizeYoutubeVideoId, toYoutubeWatchUrl } from 'lib/validators'
+import { parseVimeoUrl } from 'lib/vimeo'
 import {
 	PLAYBACK_MODE_ALWAYS_ON,
 	PLAYBACK_MODE_SCHEDULE_DRIVEN,
 	STREAM_TYPE_HLS,
+	STREAM_TYPE_VIMEO,
 	STREAM_TYPE_YOUTUBE,
 	createDefaultStream,
 	inferPlaybackModeFromStreams,
@@ -203,17 +220,24 @@ export default defineComponent({
 	methods: {
 		providerIcon(streamType) {
 			if (streamType === STREAM_TYPE_YOUTUBE) return 'mdi-youtube'
+			if (streamType === STREAM_TYPE_VIMEO) return 'mdi-vimeo'
 			return 'mdi-video-outline'
 		},
 		streamUrlLabel(streamType) {
 			if (streamType === STREAM_TYPE_YOUTUBE) {
 				return this.$t('Stream URL / Input (YouTube ID or URL)')
 			}
+			if (streamType === STREAM_TYPE_VIMEO) {
+				return this.$t('Stream URL / Input (Vimeo URL or ID)')
+			}
 			return this.$t('Stream URL / Input (HLS URL)')
 		},
 		streamUrlPlaceholder(streamType) {
 			if (streamType === STREAM_TYPE_YOUTUBE) {
 				return 'https://youtube.com/watch?v=...'
+			}
+			if (streamType === STREAM_TYPE_VIMEO) {
+				return 'https://vimeo.com/...'
 			}
 			return 'https://stream.example.com/live/stream.m3u8'
 		},
@@ -245,6 +269,8 @@ export default defineComponent({
 					noRelated: !!config.noRelated,
 					disableKb: !!config.disableKb,
 					showInfo: !!config.showInfo,
+					dnt: !!config.dnt,
+					password: config.password ? String(config.password).trim() : '',
 				},
 				showAdvanced: false,
 			})
@@ -315,6 +341,7 @@ export default defineComponent({
 		},
 		loadFromModuleConfig() {
 			const ytModule = this.modules['livestream.youtube']
+			const vimeoModule = this.modules['livestream.vimeo']
 			const nativeModule = this.modules['livestream.native']
 
 			if (ytModule?.config?.ytid) {
@@ -331,6 +358,22 @@ export default defineComponent({
 							noRelated: ytModule.config.noRelated,
 							disableKb: ytModule.config.disableKb,
 							showInfo: ytModule.config.showInfo,
+						},
+					}),
+				]
+			} else if (vimeoModule?.config?.url) {
+				this.streams = [
+					this.createStreamItem({
+						stream_type: STREAM_TYPE_VIMEO,
+						url: vimeoModule.config.url,
+						config: {
+							startMuted: vimeoModule.config.startMuted,
+							dnt: vimeoModule.config.dnt,
+							loop: vimeoModule.config.loop,
+							hideControls: vimeoModule.config.hideControls,
+							disableKb: vimeoModule.config.disableKb,
+							showInfo: vimeoModule.config.showInfo,
+							password: vimeoModule.config.password || '',
 						},
 					}),
 				]
@@ -429,9 +472,11 @@ export default defineComponent({
 		},
 		onStreamTypeChange(stream) {
 			// Clear URL when switching provider if incompatible
-			if (stream.stream_type === STREAM_TYPE_YOUTUBE && stream.url.includes('.m3u8')) {
+			if (stream.stream_type === STREAM_TYPE_YOUTUBE && (stream.url.includes('.m3u8') || stream.url.includes('vimeo'))) {
 				stream.url = ''
-			} else if (stream.stream_type === STREAM_TYPE_HLS && (stream.url.includes('youtube') || stream.url.includes('youtu.be'))) {
+			} else if (stream.stream_type === STREAM_TYPE_VIMEO && (stream.url.includes('.m3u8') || stream.url.includes('youtube') || stream.url.includes('youtu.be'))) {
+				stream.url = ''
+			} else if (stream.stream_type === STREAM_TYPE_HLS && (stream.url.includes('youtube') || stream.url.includes('youtu.be') || stream.url.includes('vimeo'))) {
 				stream.url = ''
 			}
 		},
@@ -463,6 +508,9 @@ export default defineComponent({
 					isValid = false
 				} else if (stream.stream_type === STREAM_TYPE_YOUTUBE && !normalizeYoutubeVideoId(stream.url)) {
 					this.validationErrors[`${index}.url`] = this.$t('Invalid YouTube URL or Video ID')
+					isValid = false
+				} else if (stream.stream_type === STREAM_TYPE_VIMEO && !parseVimeoUrl(stream.url)) {
+					this.validationErrors[`${index}.url`] = this.$t('Invalid Vimeo URL or Video ID')
 					isValid = false
 				}
 
@@ -511,7 +559,7 @@ export default defineComponent({
 			}
 			// Remove any existing livestream modules
 			this.config.module_config = this.config.module_config.filter(
-				m => m.type !== 'livestream.native' && m.type !== 'livestream.youtube'
+				m => m.type !== 'livestream.native' && m.type !== 'livestream.youtube' && m.type !== 'livestream.vimeo'
 			)
 
 			if (!this.isScheduledMode && this.streams.length > 0) {
@@ -533,6 +581,23 @@ export default defineComponent({
 
 					this.config.module_config.push({
 						type: 'livestream.youtube',
+						config,
+					})
+				} else if (primary.stream_type === STREAM_TYPE_VIMEO) {
+					const config = {
+						playback_mode: PLAYBACK_MODE_ALWAYS_ON,
+						url: primary.url,
+					}
+					if (primary.config.startMuted) config.startMuted = true
+					if (primary.config.dnt) config.dnt = true
+					if (primary.config.loop) config.loop = true
+					if (primary.config.hideControls) config.hideControls = true
+					if (primary.config.disableKb) config.disableKb = true
+					if (primary.config.showInfo) config.showInfo = true
+					if (primary.config.password) config.password = primary.config.password
+
+					this.config.module_config.push({
+						type: 'livestream.vimeo',
 						config,
 					})
 				} else {
@@ -617,6 +682,8 @@ export default defineComponent({
 							noRelated: stream.config?.noRelated,
 							disableKb: stream.config?.disableKb,
 							showInfo: stream.config?.showInfo,
+							dnt: stream.config?.dnt,
+							password: stream.config?.password || undefined,
 						},
 					}
 
@@ -845,6 +912,8 @@ export default defineComponent({
 				pointer-events: none
 				.mdi-youtube
 					color: #FF0000
+				.mdi-vimeo
+					color: #1AB7EA
 				.mdi-video-outline
 					color: #1976D2
 			.provider-select
@@ -971,6 +1040,9 @@ export default defineComponent({
 			gap: 8px
 			margin-top: 8px
 			padding-left: 4px
+			.password-group
+				margin-top: 6px
+				max-width: 380px
 
 	.scheduled-actions-footer
 		display: flex

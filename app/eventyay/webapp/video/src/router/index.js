@@ -66,12 +66,6 @@ const routes = [
 			{
 				path: 'about',
 				alias: 'info',
-				redirect: () => {
-					if (window.eventyay?.isOrganizerArea) {
-						return { name: 'organizer' }
-					}
-					return undefined
-				},
 				component: RoomHeader,
 				children: [{
 					path: '',
@@ -238,6 +232,7 @@ const routes = [
 import { jwtDecode } from 'jwt-decode'
 import store from 'store'
 import { hasOrganizerTraits } from 'lib/traitGrants'
+import { isRoomVisibleToAttendee } from 'lib/video-providers'
 
 const router = createRouter({
 	history: createWebHistory(config.basePath),
@@ -246,16 +241,41 @@ const router = createRouter({
 
 export function checkRoutePermission(to) {
 	if (!store.state.permissions) return true
-	if (store.getters.isAdminMode) return true
 	const name = typeof to.name === 'string' ? to.name : ''
 	const hasPerm = store.getters.hasPermission
+	const isAdmin = Boolean(store.getters.isAdminMode)
 	const liveFeatures = Object.assign({
 		chat_rooms: false,
 		kiosks: false,
 		direct_messaging: false,
-		announcements: true
+		announcements: false
 	}, store.state.world?.live_features || window.eventyay?.liveFeatures || {})
 
+	if (name.startsWith('admin:announcements')) {
+		if (!liveFeatures.announcements) return false
+		return isAdmin || hasPerm('world:announce')
+	}
+	if (name.startsWith('admin:kiosks') || name === 'standalone:kiosk') {
+		if (!liveFeatures.kiosks) return false
+		return name === 'standalone:kiosk' || isAdmin || hasPerm('world:kiosks.manage')
+	}
+	if (name.startsWith('admin:chat')) {
+		if (!liveFeatures.chat_rooms) return false
+		return isAdmin || hasPerm('room:update') || hasPerm('world:rooms.create.chat')
+	}
+	if (name === 'channel') {
+		if (!liveFeatures.direct_messaging) return false
+		return isAdmin || hasPerm('world:chat.direct')
+	}
+	if (name === 'room' && to.params?.roomId) {
+		const room = store.state.rooms?.find(r => r.id === to.params.roomId)
+		if (room && !liveFeatures.chat_rooms) {
+			const isChatRoom = (room.modules?.length === 1 && room.modules[0].type === 'chat.native') ||
+				room.modules?.some(module => ['channel.janus', 'channel.zoom', 'channel.jitsi'].includes(module.type))
+			if (isChatRoom) return false
+		}
+	}
+	if (isAdmin) return true
 	if (name === 'admin:config') {
 		return hasPerm('world:update') || hasPerm('world:rooms.create.stage') || hasPerm('world:rooms.create.bbb')
 	}
@@ -268,28 +288,8 @@ export function checkRoutePermission(to) {
 	if (name.startsWith('admin:users') || name === 'admin:user') {
 		return hasPerm('world:users.list')
 	}
-	if (name.startsWith('admin:announcements')) {
-		return liveFeatures.announcements !== false && hasPerm('world:announce')
-	}
-	if (name.startsWith('admin:kiosks')) {
-		return liveFeatures.kiosks && hasPerm('world:kiosks.manage')
-	}
-	if (name.startsWith('admin:chat')) {
-		return liveFeatures.chat_rooms && (hasPerm('room:update') || hasPerm('world:rooms.create.chat'))
-	}
 	if (name.startsWith('admin:rooms') || name === 'room:manage') {
 		return hasPerm('room:update') || hasPerm('world:rooms.create.stage') || hasPerm('world:rooms.create.bbb') || hasPerm('world:rooms.create.jitsi')
-	}
-	if (name === 'channel') {
-		return Boolean(liveFeatures.direct_messaging) && hasPerm('world:chat.direct')
-	}
-	if (name === 'room' && to.params?.roomId) {
-		const room = store.state.rooms?.find(r => r.id === to.params.roomId)
-		if (room && !liveFeatures.chat_rooms) {
-			const isChatRoom = (room.modules?.length === 1 && room.modules[0].type === 'chat.native') ||
-				room.modules?.some(module => ['channel.janus', 'channel.zoom', 'channel.jitsi'].includes(module.type))
-			if (isChatRoom) return false
-		}
 	}
 	return true
 }
@@ -298,6 +298,13 @@ router.beforeEach((to, from, next) => {
 	const isOrganizerRoute = (typeof to.name === 'string' && (to.name.startsWith('admin') || to.name === 'organizer' || to.name === 'room:manage')) ||
 		(typeof to.path === 'string' && (to.path.startsWith('/event') || to.path.includes('/manage')))
 	if (isOrganizerRoute) {
+		const isOrganizerArea = Boolean(window.eventyay?.isOrganizerArea)
+		if (!isOrganizerArea) {
+			if (to.params?.roomId) {
+				return next({ name: 'room', params: { roomId: to.params.roomId } })
+			}
+			return next({ name: 'about' })
+		}
 		const token = store.state.token || localStorage.getItem('token')
 		let tokenTraits = []
 		if (token) {
@@ -329,6 +336,29 @@ router.beforeEach((to, from, next) => {
 			return next({ name: 'organizer' })
 		}
 	} else {
+		if (to.name === 'room' && to.params?.roomId) {
+			const token = store.state.token || localStorage.getItem('token')
+			let tokenTraits = []
+			if (token) {
+				try {
+					tokenTraits = jwtDecode(token)?.traits || []
+				} catch (e) {}
+			}
+			const hasManager = hasOrganizerTraits(tokenTraits)
+			const isOrganizer = Boolean(
+				window.eventyay?.isOrganizerArea && (
+					window.eventyay?.hasOrganiserPermissions ||
+					hasManager ||
+					store.getters.hasPermission('room:update')
+				)
+			)
+			if (!isOrganizer && store.state.rooms && store.state.rooms.length > 0) {
+				const targetRoom = store.state.rooms.find(r => r.id === to.params.roomId)
+				if (!targetRoom || targetRoom.is_disabled || !isRoomVisibleToAttendee(targetRoom, store.state.world?.video_providers)) {
+					return next({ name: 'about' })
+				}
+			}
+		}
 		if (!checkRoutePermission(to)) {
 			return next({ name: 'about' })
 		}

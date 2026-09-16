@@ -18,24 +18,23 @@ from eventyay.base.services.connections import (
     unregister_connection,
 )
 from eventyay.base.services.event import get_event
-from eventyay.features.live.exceptions import ConsumerException
-
 from eventyay.core.utils.redis import aredis
 from eventyay.core.utils.statsd import statsd
+from eventyay.features.live.exceptions import ConsumerException
+
 from .channels import GROUP_VERSION
 from .modules.announcement import AnnouncementModule
 from .modules.auth import AuthModule
 from .modules.bbb import BBBModule
 from .modules.chat import ChatModule
+from .modules.event import EventModule
 from .modules.januscall import JanusCallModule
 from .modules.jitsi import JitsiModule
+from .modules.loungemesh import LoungeMeshModule
 from .modules.poll import PollModule
 from .modules.question import QuestionModule
 from .modules.room import RoomModule
-from .modules.roulette import RouletteModule
-from .modules.event import EventModule
 from .modules.zoom import ZoomModule
-from eventyay.base.models.cache import VersionedModel
 
 logger = logging.getLogger(__name__)
 
@@ -120,10 +119,10 @@ class MainConsumer(AsyncJsonWebsocketConsumer):
             "zoom": ZoomModule(self),
             "januscall": JanusCallModule(self),
             "jitsi": JitsiModule(self),
+            "loungemesh": LoungeMeshModule(self),
             "question": QuestionModule(self),
             "poll": PollModule(self),
             "room": RoomModule(self),
-            "roulette": RouletteModule(self),
             "user": AuthModule(self),
             "event": EventModule(self),
         }

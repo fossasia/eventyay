@@ -24,7 +24,6 @@ Live module handlers are in ``eventyay.features.live.modules`` package:
 - ``poll.py`` - Poll functionality
 - ``bbb.py`` - BigBlueButton integration
 - ``question.py`` - Q&A management
-- ``roulette.py`` - Speed networking
 - ``zoom.py`` - Zoom integration
 - ``januscall.py`` - Janus WebRTC calls
 

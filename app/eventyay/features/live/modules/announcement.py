@@ -15,9 +15,9 @@ logger = logging.getLogger(__name__)
 
 
 def is_announcements_enabled(event) -> bool:
-    """Return True if announcements feature is enabled for the event (default True)."""
+    """Return True if announcements feature is enabled for the event (default False)."""
     live_features = (getattr(event, "config", None) or {}).get("live_features", {})
-    return live_features.get("announcements") is not False
+    return bool(live_features.get("announcements", False))
 
 
 class AnnouncementModule(BaseModule):

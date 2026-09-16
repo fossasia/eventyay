@@ -581,6 +581,7 @@ export default {
 			margin: 4px 0
 	.add-btn
 		margin-top: 16px
+		themed-button-primary()
 	.field-hint
 		margin-top: 4px
 		font-size: 12px
