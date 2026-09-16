@@ -259,6 +259,7 @@ class BBBServerForm(VideoServerScopeMixin, HasSecretsMixin, forms.ModelForm):
         fields = (
             "url",
             "active",
+            "disable_ssl",
             "organizers",
             "events",
             "event_exclusive",
@@ -273,6 +274,7 @@ class JanusServerForm(VideoServerScopeMixin, HasSecretsMixin, forms.ModelForm):
         fields = (
             "url",
             "active",
+            "disable_ssl",
             "room_create_key",
             "organizers",
             "events",
@@ -283,9 +285,16 @@ class JanusServerForm(VideoServerScopeMixin, HasSecretsMixin, forms.ModelForm):
 
 class JitsiServerForm(VideoServerScopeMixin, HasSecretsMixin, forms.ModelForm):
     def clean_url(self):
-        normalized = normalize_server_url(self.cleaned_data["url"])
-        if not normalized or normalized["protocol"] != "https:":
+        url_val = self.cleaned_data.get("url")
+        disable_ssl = bool(
+            self.cleaned_data.get("disable_ssl")
+            or self.data.get("disable_ssl") in (True, "true", "True", "1", 1, "on")
+        )
+        normalized = normalize_server_url(url_val)
+        if not normalized:
             raise ValidationError(_("Enter a valid Jitsi server URL."))
+        if not disable_ssl and normalized["protocol"] != "https:":
+            raise ValidationError(_("HTTPS is required unless 'Disable SSL enforcement' is checked."))
         return normalized["url"]
 
     class Meta:
@@ -293,6 +302,7 @@ class JitsiServerForm(VideoServerScopeMixin, HasSecretsMixin, forms.ModelForm):
         fields = (
             "url",
             "active",
+            "disable_ssl",
             "app_id",
             "key_id",
             "app_secret",
@@ -309,6 +319,7 @@ class TurnServerForm(VideoServerScopeMixin, HasSecretsMixin, forms.ModelForm):
         fields = (
             "active",
             "hostname",
+            "disable_ssl",
             "auth_secret",
             "organizers",
             "events",

@@ -1,0 +1,242 @@
+name: eventyay-video-servers
+
+# Profiles: proxy | janus | turn | jitsi (set COMPOSE_PROFILES in .env)
+# TLS: sslip.io trusted TLS enabled by default; override with DOMAIN= or USE_SSLIP=0
+
+services:
+  caddy:
+    profiles: [proxy]
+    image: caddy:latest
+    container_name: eventyay-video-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - PUBLIC_IP=${PUBLIC_IP:-}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        PUB_IP="$${PUBLIC_IP:-$$(wget -qO- --timeout=3 https://api.ipify.org 2>/dev/null | tr -d '[:space:]')}"
+        PUB_IP="$${PUB_IP:-127.0.0.1}"
+        HOST="${DOMAIN:-}"
+        TLS=""
+        if [ -z "$$HOST" ]; then
+          if [ "${USE_SSLIP:-1}" != "0" ] && [ "$$PUB_IP" != "127.0.0.1" ]; then
+            HOST="$${PUB_IP}.sslip.io"
+          else
+            HOST="$$PUB_IP"; TLS="tls internal"
+          fi
+        fi
+
+        cat <<CADDYFILE > /etc/caddy/Caddyfile
+        :80 {
+            redir https://{host}{uri} permanent
+        }
+        https://$$HOST {
+            $$TLS
+            header {
+                Access-Control-Allow-Origin *
+                Access-Control-Allow-Methods "GET, POST, OPTIONS, PUT, DELETE"
+                Access-Control-Allow-Headers "*"
+                Cross-Origin-Opener-Policy "same-origin-allow-popups"
+                Cross-Origin-Embedder-Policy "unsafe-none"
+            }
+            handle /janus-ws* {
+                uri strip_prefix /janus-ws
+                reverse_proxy janus:8188
+            }
+            handle /janus* {
+                uri strip_prefix /janus
+                reverse_proxy janus:8088
+            }
+            handle {
+                reverse_proxy jitsi-web:80
+            }
+        }
+        CADDYFILE
+
+        exec caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
+    depends_on:
+      janus:
+        condition: service_started
+        required: false
+      jitsi-web:
+        condition: service_started
+        required: false
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+
+  janus:
+    profiles: [janus]
+    image: canyan/janus-gateway:latest
+    platform: linux/amd64
+    container_name: eventyay-janus
+    restart: unless-stopped
+    ports:
+      - "8188:8188"
+      - "8088:8088"
+      - "7088:7088"
+      - "20000-20050:20000-20050/udp"
+    environment:
+      - JANUS_ROOM_CREATE_KEY=${JANUS_ROOM_CREATE_KEY}
+
+  coturn:
+    profiles: [turn]
+    image: coturn/coturn:latest
+    platform: linux/amd64
+    container_name: eventyay-coturn
+    restart: unless-stopped
+    network_mode: host  # required so TURN candidates advertise the real public IP
+    environment:
+      - COTURN_AUTH_SECRET=${COTURN_AUTH_SECRET}
+      - COTURN_EXTERNAL_IP=${COTURN_EXTERNAL_IP:-}
+      - COTURN_REALM=${COTURN_REALM:-}
+      - PUBLIC_IP=${PUBLIC_IP:-}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        EXT_IP="$${COTURN_EXTERNAL_IP:-$${PUBLIC_IP:-$$(wget -qO- --timeout=3 https://api.ipify.org 2>/dev/null | tr -d '[:space:]')}}"
+        exec turnserver \
+          --use-auth-secret \
+          --static-auth-secret="$${COTURN_AUTH_SECRET}" \
+          --realm="$${COTURN_REALM:-$$EXT_IP}" \
+          --external-ip="$$EXT_IP" \
+          --listening-port=3478 \
+          --min-port=49152 \
+          --max-port=49200 \
+          --stale-nonce \
+          --no-cli
+
+  jitsi-prosody:
+    profiles: [jitsi]
+    image: jitsi/prosody:stable-10888
+    platform: linux/amd64
+    container_name: eventyay-jitsi-prosody
+    restart: unless-stopped
+    expose:
+      - "5222"
+      - "5269"
+      - "5347"
+      - "5280"
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        PUB_IP="$${PUBLIC_IP:-$$(wget -qO- --timeout=3 https://api.ipify.org 2>/dev/null | tr -d '[:space:]')}"
+        HOST="${DOMAIN:-}"
+        [ -z "$$HOST" ] && [ "${USE_SSLIP:-1}" != "0" ] && [ "$$PUB_IP" != "127.0.0.1" ] && HOST="$${PUB_IP}.sslip.io"
+        export PUBLIC_URL="$${PUBLIC_URL:-https://$${HOST:-$$PUB_IP}}"
+        exec /init
+    environment:
+      - XMPP_DOMAIN=meet.jitsi
+      - XMPP_AUTH_DOMAIN=auth.meet.jitsi
+      - XMPP_MUC_DOMAIN=muc.meet.jitsi
+      - XMPP_INTERNAL_MUC_DOMAIN=internal-muc.meet.jitsi
+      - ENABLE_AUTH=1
+      - ENABLE_GUESTS=1
+      - AUTH_TYPE=jwt
+      - JWT_APP_ID=${JWT_APP_ID}
+      - JWT_APP_SECRET=${JWT_APP_SECRET}
+      - JWT_ACCEPTED_ISSUERS=${JWT_APP_ID}
+      - JWT_ACCEPTED_AUDIENCES=jitsi
+      - JICOFO_AUTH_PASSWORD=${JICOFO_AUTH_PASSWORD}
+      - JVB_AUTH_PASSWORD=${JVB_AUTH_PASSWORD}
+    volumes:
+      - eventyay_jitsi_prosody_config:/config
+    networks:
+      default:
+        aliases:
+          - xmpp.meet.jitsi
+
+  jitsi-jicofo:
+    profiles: [jitsi]
+    image: jitsi/jicofo:stable-10888
+    platform: linux/amd64
+    container_name: eventyay-jitsi-jicofo
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8889:8888"
+    environment:
+      - XMPP_DOMAIN=meet.jitsi
+      - XMPP_SERVER=jitsi-prosody
+      - XMPP_AUTH_DOMAIN=auth.meet.jitsi
+      - XMPP_MUC_DOMAIN=muc.meet.jitsi
+      - JICOFO_AUTH_USER=focus
+      - JICOFO_AUTH_PASSWORD=${JICOFO_AUTH_PASSWORD}
+    volumes:
+      - eventyay_jitsi_jicofo_config:/config
+    depends_on:
+      - jitsi-prosody
+
+  jitsi-jvb:
+    profiles: [jitsi]
+    image: jitsi/jvb:stable-10888
+    platform: linux/amd64
+    container_name: eventyay-jitsi-jvb
+    restart: unless-stopped
+    ports:
+      - "10001:10001/udp"
+      - "127.0.0.1:8091:8080"
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        export JVB_ADVERTISE_IPS="$${PUBLIC_IP:-$${JVB_ADVERTISE_IPS:-$$(wget -qO- --timeout=3 https://api.ipify.org 2>/dev/null | tr -d '[:space:]')}}"
+        exec /init
+    environment:
+      - XMPP_DOMAIN=meet.jitsi
+      - XMPP_SERVER=jitsi-prosody
+      - XMPP_AUTH_DOMAIN=auth.meet.jitsi
+      - JVB_AUTH_USER=jvb
+      - JVB_AUTH_PASSWORD=${JVB_AUTH_PASSWORD}
+      - JVB_PORT=10001
+    volumes:
+      - eventyay_jitsi_jvb_config:/config
+    depends_on:
+      - jitsi-prosody
+
+  jitsi-web:
+    profiles: [jitsi]
+    image: jitsi/web:stable-10888
+    platform: linux/amd64
+    container_name: eventyay-jitsi-web
+    restart: unless-stopped
+    ports:
+      - "8443:443"
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        PUB_IP="$${PUBLIC_IP:-$$(wget -qO- --timeout=3 https://api.ipify.org 2>/dev/null | tr -d '[:space:]')}"
+        HOST="${DOMAIN:-}"
+        [ -z "$$HOST" ] && [ "${USE_SSLIP:-1}" != "0" ] && [ "$$PUB_IP" != "127.0.0.1" ] && HOST="$${PUB_IP}.sslip.io"
+        export PUBLIC_URL="$${PUBLIC_URL:-https://$${HOST:-$$PUB_IP}}"
+        mkdir -p /config
+        printf "config.bosh = '/http-bind';\nconfig.websocket = 'wss://' + location.host + '/xmpp-websocket';\n" > /config/custom-config.js
+        exec /init
+    environment:
+      - XMPP_DOMAIN=meet.jitsi
+      - XMPP_SERVER=jitsi-prosody
+      - XMPP_AUTH_DOMAIN=auth.meet.jitsi
+      - XMPP_MUC_DOMAIN=muc.meet.jitsi
+      - ENABLE_AUTH=1
+      - ENABLE_GUESTS=1
+      - AUTH_TYPE=jwt
+      - JWT_APP_ID=${JWT_APP_ID}
+      - ENABLE_XMPP_WEBSOCKET=1
+    volumes:
+      - eventyay_jitsi_web_config:/config
+    depends_on:
+      - jitsi-jvb
+
+volumes:
+  caddy_data:
+  caddy_config:
+  eventyay_jitsi_prosody_config:
+  eventyay_jitsi_jicofo_config:
+  eventyay_jitsi_jvb_config:
+  eventyay_jitsi_web_config:

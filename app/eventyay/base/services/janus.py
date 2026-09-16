@@ -4,6 +4,7 @@ import json
 import logging
 import random
 from contextlib import asynccontextmanager
+from urllib.parse import urlsplit, urlunsplit
 
 import websockets
 from django.utils.crypto import get_random_string
@@ -47,16 +48,36 @@ async def _janus_websocket(server):
     if not server:
         raise JanusConfigurationError("No active Janus server configured")
 
-    try:
-        async with websockets.connect(
-            server.url,
-            subprotocols=["janus-protocol"],
-            open_timeout=JANUS_CONNECT_TIMEOUT,
-            close_timeout=5,
-        ) as websocket:
-            yield websocket
-    except (TimeoutError, OSError, WebSocketException) as e:
-        raise JanusError(f"Could not connect to Janus server {server.url}: {e}") from e
+    urls_to_try = [server.url]
+    parsed = urlsplit(server.url)
+    if parsed.hostname in ("localhost", "127.0.0.1"):
+        netloc = f"janus:{parsed.port}" if parsed.port else "janus"
+        container_url = urlunsplit(parsed._replace(netloc=netloc))
+        if container_url not in urls_to_try:
+            urls_to_try.append(container_url)
+
+    ssl_context = True
+    if getattr(server, "disable_ssl", False):
+        import ssl
+        ssl_context = ssl._create_unverified_context()
+
+    last_exception = None
+    for url in urls_to_try:
+        try:
+            async with websockets.connect(
+                url,
+                subprotocols=["janus-protocol"],
+                open_timeout=JANUS_CONNECT_TIMEOUT,
+                close_timeout=5,
+                ssl=ssl_context if url.startswith("wss://") else None,
+            ) as websocket:
+                yield websocket
+                return
+        except (TimeoutError, OSError, WebSocketException) as e:
+            last_exception = e
+            continue
+
+    raise JanusError(f"Could not connect to Janus server {server.url}: {last_exception}") from last_exception
 
 
 async def _recv_response(websocket, transaction):
