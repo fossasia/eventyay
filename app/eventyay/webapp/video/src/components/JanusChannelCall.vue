@@ -56,6 +56,12 @@ export default {
 		this.videoSessionId = this.call.parameters.videoSessionId
 		this.screenShareSessionId = this.call.parameters.screenShareSessionId
 	},
+	beforeUnmount() {
+		this.cleanupMedia()
+	},
+	unmounted() {
+		this.cleanupMedia()
+	},
 	methods: {
 		toggleMic() {
 			return this.$refs.videoroom?.toggleMic?.()
