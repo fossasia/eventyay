@@ -374,7 +374,7 @@ def _handle_file_upload(data, user, auth):
         raise BaseValidationError(
             'The submitted file "{fid}" has a file type that is not allowed in this field.'.format(fid=data)
         )
-    if cf.file.size > settings.FILE_UPLOAD_MAX_SIZE_OTHER:
+    if cf.file.size > settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_OTHER]:
         raise BaseValidationError('The submitted file "{fid}" is too large to be used in this field.'.format(fid=data))
 
     return cf.file
