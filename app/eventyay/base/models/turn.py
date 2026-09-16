@@ -22,6 +22,11 @@ class TurnServer(models.Model):
     events = models.ManyToManyField(
         "Event", blank=True, related_name="turn_servers"
     )
+    disable_ssl = models.BooleanField(
+        default=False,
+        verbose_name="Disable SSL enforcement",
+        help_text="Allow non-TLS/STUN or bypass SSL verification.",
+    )
 
     def generate_credentials(self):
         username = get_random_string(16)
@@ -45,20 +50,22 @@ class TurnServer(models.Model):
         else:
             host = raw_host
 
-        return [
+        ice_servers = [
             {
                 "urls": f"stun:{raw_host}",
                 "username": username,
                 "credential": credential,
             },
-            {
+        ]
+        if not getattr(self, "disable_ssl", False) and (":" not in raw_host or ":443" in raw_host):
+            ice_servers.append({
                 "urls": f"turns:{host}:443?transport=tcp",
                 "username": username,
                 "credential": credential,
-            },
-            {
-                "urls": f"turn:{raw_host}?transport=tcp" if ":" in raw_host else f"turn:{raw_host}:3478?transport=tcp",
-                "username": username,
-                "credential": credential,
-            },
-        ]
+            })
+        ice_servers.append({
+            "urls": f"turn:{raw_host}?transport=tcp" if ":" in raw_host else f"turn:{raw_host}:3478?transport=tcp",
+            "username": username,
+            "credential": credential,
+        })
+        return ice_servers

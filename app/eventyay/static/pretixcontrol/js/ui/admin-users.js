@@ -29,31 +29,36 @@ function getCsrfToken(form) {
 
 let pendingAdminAction = null;
 
-function showAlert(message, type = 'success') {
-    const existingAlert = document.querySelector('.admin-users-alert');
-    if (existingAlert) {
-        existingAlert.remove();
-    }
+function showAlert(message, type = 'success', { autoDismiss = true } = {}) {
+    const region = document.querySelector('.admin-users-alert-region');
+    if (!region) return;
+
+    region.querySelector('.admin-users-alert')?.remove();
 
     const alert = document.createElement('div');
-    alert.className = `alert alert-${type} admin-users-alert`;
-    alert.setAttribute('role', 'alert');
-    alert.textContent = message;
+    alert.className = `alert alert-${type} alert-dismissible admin-users-alert`;
+    alert.setAttribute('role', type === 'danger' ? 'alert' : 'status');
 
-    const table = document.querySelector('.admin-users-table');
-    if (table && table.parentNode) {
-        table.parentNode.insertBefore(alert, table);
+    const closeButton = document.createElement('button');
+    closeButton.type = 'button';
+    closeButton.className = 'close';
+    closeButton.setAttribute('aria-label', gettext('Close'));
+    closeButton.innerHTML = '<span aria-hidden="true">&times;</span>';
+    closeButton.addEventListener('click', () => alert.remove());
+
+    const text = document.createElement('span');
+    text.textContent = message;
+
+    alert.append(closeButton, text);
+    region.append(alert);
+
+    if (autoDismiss) {
+        setTimeout(() => alert.remove(), 6000);
     }
-
-    setTimeout(() => {
-        if (alert.parentNode) {
-            alert.remove();
-        }
-    }, 4000);
 }
 
 async function handleToggleChange(event) {
-    const checkbox = event.currentTarget;
+    const checkbox = event.target;
     const form = getClosest(checkbox, 'form');
     if (!form) return;
 
@@ -211,18 +216,37 @@ function getSuccessMessage(toggleType, newValue) {
     return messages[toggleType] || gettext('Action completed successfully.');
 }
 
-async function handleActionClick(event) {
-    event.preventDefault();
-    const button = event.currentTarget;
+async function handleActionClick(button) {
     const form = getClosest(button, 'form');
-    if (!form) return;
+    if (!form || form.getAttribute('aria-busy') === 'true') return;
 
+    const errorMessage = form.dataset.errorMessage || gettext('An error occurred. Please try again.');
     const icon = button.querySelector('.fa');
-    const originalClasses = icon ? icon.className : '';
+    const originalIconClasses = icon ? icon.className : '';
+    const label = button.querySelector('.user-action-label');
+    const originalLabel = label ? label.textContent : '';
 
+    const row = getClosest(form, 'tr');
+    const toggle = row?.querySelector('.user-email-actions-toggle');
+    const toggleIcon = toggle?.querySelector('.fa');
+    const originalToggleIconClasses = toggleIcon ? toggleIcon.className : '';
+
+    form.setAttribute('aria-busy', 'true');
     button.disabled = true;
     if (icon) {
         icon.className = 'fa fa-spinner fa-spin';
+    }
+    if (label && form.dataset.pendingMessage) {
+        label.textContent = form.dataset.pendingMessage;
+    }
+    if (toggle) {
+        toggle.disabled = true;
+    }
+    if (toggleIcon) {
+        toggleIcon.className = 'fa fa-spinner fa-spin';
+    }
+    if (form.dataset.pendingMessage) {
+        showAlert(form.dataset.pendingMessage, 'info', { autoDismiss: false });
     }
 
     try {
@@ -236,40 +260,60 @@ async function handleActionClick(event) {
         });
 
         const contentType = response.headers.get('content-type');
-        let data = {};
-        if (contentType && contentType.indexOf('application/json') !== -1) {
-            data = await response.json();
-        } else {
-            showAlert(gettext('Session expired or access denied. Please refresh the page.'), 'danger');
+        if (!contentType || !contentType.includes('application/json')) {
+            showAlert(gettext('Session expired or access denied. Please refresh the page.'), 'danger', { autoDismiss: false });
             return;
         }
 
+        const data = await response.json();
         if (response.ok && data.status === 'ok') {
             showAlert(data.message || gettext('Email sent successfully.'), 'success');
         } else {
-            showAlert(data.message || gettext('An error occurred. Please try again.'), 'danger');
+            showAlert(data.message || errorMessage, 'danger', { autoDismiss: false });
         }
     } catch (err) {
-        showAlert(gettext('Network error. Please try again.'), 'danger');
+        console.error('Admin user email action failed', { action: form.elements.action?.value, error: err });
+        showAlert(errorMessage, 'danger', { autoDismiss: false });
     } finally {
         if (icon) {
-            icon.className = originalClasses;
+            icon.className = originalIconClasses;
+        }
+        if (label) {
+            label.textContent = originalLabel;
+        }
+        if (toggle) {
+            toggle.disabled = false;
+        }
+        if (toggleIcon) {
+            toggleIcon.className = originalToggleIconClasses;
         }
         button.disabled = false;
+        form.removeAttribute('aria-busy');
     }
 }
 
+/* The results table is swapped out by ajax-filter.js on search, filter, sort and
+ * pagination, so listeners are delegated from the document instead of being bound
+ * to the rows present at page load. */
 function init() {
-    document.querySelectorAll('.user-toggle-form').forEach((form) => {
-        form.addEventListener('submit', (e) => e.preventDefault());
-        const checkbox = form.querySelector('.js-user-toggle');
-        if (checkbox) {
-            checkbox.addEventListener('change', handleToggleChange);
+    document.addEventListener('submit', (event) => {
+        if (event.target.matches('.user-toggle-form, .user-action-form')) {
+            event.preventDefault();
         }
     });
 
-    document.querySelectorAll('.user-action-form button').forEach((button) => {
-        button.addEventListener('click', handleActionClick);
+    document.addEventListener('change', (event) => {
+        if (event.target.matches('.user-toggle-form .js-user-toggle')) {
+            handleToggleChange(event);
+        }
+    });
+
+    document.addEventListener('click', (event) => {
+        const button = event.target.closest('.user-action-form button');
+        if (button) {
+            event.preventDefault();
+            handleActionClick(button);
+        }
     });
 }
 

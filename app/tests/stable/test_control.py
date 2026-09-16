@@ -138,7 +138,7 @@ class TestGlobalSettingsEmail:
         url = reverse('eventyay_admin:admin.global.settings.test_email')
         response = admin_client.post(url, {'test_email': 'invalid-email'})
         assert response.status_code == 302
-        assert response['Location'].endswith('#tab3')
+        assert response['Location'].endswith('#tab-email')
 
     def test_test_email_invalid_sender(self, admin_client):
         from django.urls import reverse
@@ -150,7 +150,7 @@ class TestGlobalSettingsEmail:
         url = reverse('eventyay_admin:admin.global.settings.test_email')
         response = admin_client.post(url, {'test_email': 'test@example.com'})
         assert response.status_code == 302
-        assert response['Location'].endswith('#tab3')
+        assert response['Location'].endswith('#tab-email')
 
     def test_test_email_smtp_unreachable(self, admin_client, monkeypatch):
         from django.urls import reverse
@@ -169,4 +169,4 @@ class TestGlobalSettingsEmail:
         url = reverse('eventyay_admin:admin.global.settings.test_email')
         response = admin_client.post(url, {'test_email': 'test@example.com'})
         assert response.status_code == 302
-        assert response['Location'].endswith('#tab3')
+        assert response['Location'].endswith('#tab-email')

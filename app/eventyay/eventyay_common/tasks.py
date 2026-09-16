@@ -207,8 +207,11 @@ def update_billing_invoice_information(invoice_id: str):
         if not invoice_id:
             logger.error('Missing invoice_id in Stripe webhook metadata')
             return None
+        # Only pending invoices: concurrent Stripe retries must not overwrite
+        # an already-set paid_datetime.
         invoice_information_updated = BillingInvoice.objects.filter(
             id=invoice_id,
+            status=BillingInvoice.STATUS_PENDING,
         ).update(
             status=BillingInvoice.STATUS_PAID,
             paid_datetime=timezone.now(),
