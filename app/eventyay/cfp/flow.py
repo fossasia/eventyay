@@ -317,7 +317,16 @@ class FormFlowStep(TemplateFlowStep):
         for field, file_list in self.request.FILES.lists():
             if field.endswith('_files'):
                 for f in file_list:
-                    files.appendlist(field, f)
+                    existing_files = files.getlist(field)
+                    is_dup = False
+                    for existing_file in existing_files:
+                        if getattr(existing_file, 'name', None) == getattr(f, 'name', None) and \
+                           getattr(existing_file, 'size', None) == getattr(f, 'size', None):
+                            is_dup = True
+                            break
+
+                    if not is_dup:
+                        files.appendlist(field, f)
             else:
                 files.setlist(field, file_list)
 
@@ -340,6 +349,57 @@ class FormFlowStep(TemplateFlowStep):
         result['submission_title'] = '' if submission_title == AUTO_DRAFT_TITLE else submission_title
         return result
 
+    def handle_invalid_form_files(self, form):
+        """Preserve session files across validation failures and correctly populate form.initial."""
+        existing = self.cfp_session.get('files', {}).get(self.identifier, {})
+        for field, field_files in list(form.files.lists()):
+            new_uploads = []
+            new_entries = []
+            for field_file in field_files:
+                if getattr(field_file, 'is_session_file', False):
+                    continue
+                tmp_filename = self.file_storage.save(field_file.name, field_file)
+                new_entries.append({
+                    'tmp_name': tmp_filename,
+                    'name': field_file.name,
+                    'content_type': field_file.content_type,
+                    'size': field_file.size,
+                    'charset': field_file.charset,
+                })
+                new_uploads.append(field_file)
+            
+            if new_entries:
+                if field.endswith('_files'):
+                    current = existing.get(field, [])
+                    if not isinstance(current, list):
+                        current = [current]
+                    existing[field] = current + new_entries
+                else:
+                    old_entry = existing.get(field)
+                    if old_entry and isinstance(old_entry, dict) and 'tmp_name' in old_entry:
+                        try:
+                            self.file_storage.delete(old_entry['tmp_name'])
+                        except Exception:
+                            pass
+                    
+                    existing[field] = new_entries if len(new_entries) > 1 else new_entries[0]
+                    if hasattr(form, 'initial'):
+                        form.initial[field] = SimpleNamespace(
+                            name=new_entries[0]['name'],
+                            url=self.file_storage.url(new_entries[0]['tmp_name'])
+                        )
+            
+            if new_uploads:
+                form.files.setlist(field, new_uploads)
+            else:
+                del form.files[field]
+                
+            # ALWAYS invalidate the bound field cache so the widget re-renders correctly.
+            if hasattr(form, '_bound_fields_cache'):
+                form._bound_fields_cache.pop(field, None)
+                
+        self.cfp_session['files'][self.identifier] = existing
+
     def post(self, request):
         self.request = request
         form = self.get_form()
@@ -355,8 +415,10 @@ class FormFlowStep(TemplateFlowStep):
             prev_url = self.get_prev_url(request)
             return redirect(prev_url) if prev_url else redirect(request.path)
 
-        # For "submit" and "draft" actions, validate as before
         if not form.is_valid():
+            # Merge any newly uploaded files into the session and remove session
+            # marker files from form.files so they aren't incorrectly accessed later.
+            self.handle_invalid_form_files(form)
             warning_messages = getattr(form, 'warning_messages', None) or []
             for warning in filter(None, warning_messages):
                 messages.warning(self.request, warning)
@@ -426,7 +488,18 @@ class FormFlowStep(TemplateFlowStep):
 
         for field, field_files in files.lists():
             file_entries = []
+            existing_field_data = data.get(field, [])
+            if not isinstance(existing_field_data, list):
+                existing_field_data = [existing_field_data]
+
             for field_file in field_files:
+                if getattr(field_file, 'is_session_file', False):
+                    for entry in existing_field_data:
+                        if entry['name'] == field_file.name and entry['size'] == field_file.size:
+                            file_entries.append(entry)
+                            break
+                    continue
+                
                 tmp_filename = self.file_storage.save(field_file.name, field_file)
                 file_entries.append(
                     {
@@ -437,7 +510,9 @@ class FormFlowStep(TemplateFlowStep):
                         'charset': field_file.charset,
                     }
                 )
-            data[field] = file_entries if len(file_entries) > 1 else file_entries[0]
+            
+            if file_entries:
+                data[field] = file_entries if len(file_entries) > 1 else file_entries[0]
         self.cfp_session['files'][self.identifier] = data
 
 
@@ -749,6 +824,9 @@ class ProfileStep(GenericFlowStep, FormFlowStep):
         formset_valid = self.social_media_formset_is_valid(formset)
 
         if not form_valid or not formset_valid:
+            # Merge any newly uploaded files into the session and remove session
+            # marker files from form.files so they aren't incorrectly accessed later.
+            self.handle_invalid_form_files(form)
             warning_messages = getattr(form, 'warning_messages', None) or []
             for warning in filter(None, warning_messages):
                 messages.warning(self.request, warning)
