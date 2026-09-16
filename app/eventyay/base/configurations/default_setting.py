@@ -29,6 +29,7 @@ from eventyay.base.configurations.lazy_i18n_string_list_base import (
     LazyI18nStringList,
 )
 from eventyay.base.forms import I18nAutoExpandingTextarea, I18nURLFormField
+from eventyay.base.models.privacy import ConsentProvider
 from eventyay.base.models.tax import TaxRule
 from eventyay.base.reldate import (
     RelativeDateField,
@@ -3205,9 +3206,11 @@ DEFAULT_SETTINGS.update(
             'form_class': forms.ChoiceField,
             'serializer_class': serializers.ChoiceField,
             'form_kwargs': dict(
+                choices=ConsentProvider.choices,
                 label=_('Consent provider'),
                 help_text=_('Existing deployments stay disabled until an administrator opts in.'),
             ),
+            'serializer_kwargs': dict(choices=ConsentProvider.choices),
         },
         'privacy_cmp_provider_name': {
             'default': '',

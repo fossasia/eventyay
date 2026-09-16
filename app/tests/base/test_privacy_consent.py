@@ -4,6 +4,11 @@ from pathlib import Path
 import pytest
 from django.conf import settings
 from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils.timezone import now
+
+from eventyay.base.configurations.default_setting import DEFAULT_SETTINGS
+from eventyay.base.models import User
 
 from eventyay.base.models.privacy import ConsentCategory, ConsentProvider, ThirdPartyService
 from eventyay.base.settings import GlobalSettingsObject
@@ -259,3 +264,79 @@ class TestPrivacySettingsFormRequiresPolicyLinks:
         )
 
         assert form.is_valid(), form.errors
+
+
+@pytest.mark.django_db
+def test_cookie_regex_pattern_reaches_the_payload_unchanged(gs):
+    """Klaro compiles lines starting with ^ into a RegExp, so they must not be altered."""
+    gs.settings.set('privacy_category_analytics_enabled', True)
+    ThirdPartyService.objects.create(
+        name='google-analytics',
+        title='Google Analytics',
+        category=ConsentCategory.ANALYTICS,
+        cookie_names='_ga\n^_ga_',
+    )
+
+    service = ThirdPartyService.objects.get(name='google-analytics')
+
+    assert service.serialize_public()['cookies'] == ['_ga', '^_ga_']
+
+
+def test_consent_provider_setting_declares_its_choices():
+    """Fields built straight from DEFAULT_SETTINGS (e.g. the API serializer) need the allowed values."""
+    definition = DEFAULT_SETTINGS['privacy_consent_provider']
+
+    assert definition['form_kwargs']['choices'] == ConsentProvider.choices
+    assert definition['serializer_kwargs']['choices'] == ConsentProvider.choices
+
+
+@pytest.fixture
+def staff_client(client):
+    """Client logged in as an administrator with an active staff session."""
+    admin_user = User.objects.create_user('admin@example.com', 'dummy', is_staff=True)
+    client.force_login(admin_user)
+    admin_user.staffsession_set.create(date_start=now(), session_key=client.session.session_key)
+    return client
+
+
+@pytest.mark.django_db
+class TestPrivacyOverviewWarnings:
+    """The overview surfaces every misconfiguration that keeps a service out of the banner."""
+
+    url = 'eventyay_admin:admin.global.privacy'
+
+    def test_unclassified_service_asks_for_a_category(self, gs, staff_client):
+        ThirdPartyService.objects.create(name='vimeo', title='Vimeo', category='')
+
+        response = staff_client.get(reverse(self.url))
+
+        assert response.status_code == 200
+        assert [s.name for s in response.context['unclassified_services']] == ['vimeo']
+        assert response.context['category_disabled_services'] == []
+        content = response.content.decode()
+        assert 'Vimeo is enabled but has no consent category.' in content
+        assert 'consent category () is turned off' not in content
+
+    def test_service_in_disabled_category_names_the_category(self, gs, staff_client):
+        ThirdPartyService.objects.create(name='matomo', title='Matomo', category=ConsentCategory.ANALYTICS)
+
+        response = staff_client.get(reverse(self.url))
+
+        assert response.context['unclassified_services'] == []
+        assert [s.name for s in response.context['category_disabled_services']] == ['matomo']
+        assert 'its consent category (Analytics) is turned off' in response.content.decode()
+
+    def test_missing_privacy_policy_is_flagged(self, gs, staff_client):
+        response = staff_client.get(reverse(self.url))
+
+        assert response.context['missing_privacy_policy'] is True
+        assert response.context['missing_cookie_policy'] is False
+        assert 'No Privacy Policy URL is configured.' in response.content.decode()
+
+    def test_no_policy_warnings_when_both_urls_are_set(self, gs, staff_client):
+        gs.settings.set('privacy_policy_url', 'https://example.org/privacy')
+
+        response = staff_client.get(reverse(self.url))
+
+        assert response.context['missing_privacy_policy'] is False
+        assert response.context['missing_cookie_policy'] is False

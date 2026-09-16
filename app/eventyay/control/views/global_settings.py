@@ -831,19 +831,24 @@ class PrivacySettingsView(AdministratorPermissionRequiredMixin, FormView):
         # Surfaced as warnings on the overview so misconfiguration is visible
         # rather than silently shipping a banner that blocks nothing.
         #
-        # `category` is non-null and defaulted, so an enabled service is always
-        # classified. What an administrator can still get wrong is enabling a
-        # service whose category is switched off: it is dropped from the consent
-        # config entirely, so the banner never mentions or blocks it.
+        # An enabled optional service is left out of the consent config in two
+        # distinct ways, which need different fixes from the administrator:
+        # it has no category assigned yet (`category` is blank by default), or
+        # its category exists but is switched off.
         enabled_categories = enabled_consent_categories(gs.settings)
-        context['unpublished_services'] = [
+        unpublished = [
             service
             for service in services
             if service.enabled
             and not service.required
             and service.category not in enabled_categories
         ]
+        context['unclassified_services'] = [service for service in unpublished if not service.category]
+        context['category_disabled_services'] = [service for service in unpublished if service.category]
+        # Mirrors PrivacySettingsForm.clean(), which requires both pages before
+        # the built-in banner can be enabled.
         context['missing_cookie_policy'] = not gs.settings.get('privacy_cookie_policy_url')
+        context['missing_privacy_policy'] = not gs.settings.get('privacy_policy_url')
         return context
 
     def form_valid(self, form):

@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0073_loungemeshaccesstoken_loungemeshserver_and_more'),
+        ('base', '0074_bbbserver_disable_ssl_janusserver_disable_ssl_and_more'),
     ]
 
     operations = [
@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
                 ('category', models.CharField(blank=True, choices=[('necessary', 'Strictly necessary'), ('functional', 'Functional'), ('analytics', 'Analytics'), ('marketing', 'Marketing'), ('embed', 'Embedded content')], default='', max_length=20, verbose_name='Consent category')),
                 ('enabled', models.BooleanField(default=True, verbose_name='Enabled')),
                 ('privacy_policy_url', models.CharField(blank=True, max_length=500, validators=[django.core.validators.URLValidator()], verbose_name='Privacy policy URL')),
-                ('cookie_names', models.TextField(blank=True, help_text='One cookie name per line.', verbose_name='Cookie names')),
+                ('cookie_names', models.TextField(blank=True, help_text='One cookie name per line, matched exactly. For services that set dynamic cookies, start the line with ^ to use a regular expression, e.g. ^_ga_ for Google Analytics; otherwise those cookies are not cleared when consent is withdrawn.', verbose_name='Cookie names')),
             ],
             options={
                 'verbose_name': 'Third-party service',

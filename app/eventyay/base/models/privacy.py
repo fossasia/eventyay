@@ -80,7 +80,12 @@ class ThirdPartyService(models.Model):
     cookie_names = models.TextField(
         blank=True,
         verbose_name=_('Cookie names'),
-        help_text=_('One cookie name per line.'),
+        help_text=_(
+            'One cookie name per line, matched exactly. For services that set '
+            'dynamic cookies, start the line with ^ to use a regular expression, '
+            'e.g. ^_ga_ for Google Analytics; otherwise those cookies are not '
+            'cleared when consent is withdrawn.'
+        ),
     )
 
     class Meta:
