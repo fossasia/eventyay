@@ -362,6 +362,33 @@ def calculate_ticket_fee(
         return invoice_voucher.limit_events.filter(id=event.id).exists()
 
     ticket_fee = amount * (rate / 100)
+
+    max_fee = None
+    try:
+        from eventyay_business.models import CountryFeeSetting
+        country = event.settings.get('invoice_address_from_country') or event.settings.get('region')
+        if country and event.currency:
+            override = CountryFeeSetting.objects.filter(
+                country=str(country).strip().upper(),
+                currency=str(event.currency).strip().upper(),
+            ).first()
+            if override:
+                ticket_fee = amount * (override.service_fee_percent / Decimal('100.0'))
+                max_fee = override.maximum_fee
+    except Exception:
+        pass
+
+    if max_fee is None:
+        try:
+            from eventyay.base.settings import GlobalSettingsObject
+            gs = GlobalSettingsObject()
+            max_fee = gs.settings.get('ticket_fee_maximum', as_type=Decimal, default=Decimal('0.00'))
+        except Exception:
+            max_fee = Decimal('0.00')
+
+    if max_fee and max_fee > Decimal('0.00') and ticket_fee > max_fee:
+        ticket_fee = max_fee
+
     final_ticket_fee = ticket_fee
     voucher_discount = Decimal('0.00')
 
