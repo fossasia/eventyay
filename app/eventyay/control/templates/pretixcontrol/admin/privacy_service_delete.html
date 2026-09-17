@@ -1,0 +1,25 @@
+{% extends "pretixcontrol/admin/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Delete third-party service" %}{% endblock %}
+
+{% block content %}
+    <h1>{% trans "Delete third-party service" %}</h1>
+    <form action="" method="post" class="form-horizontal">
+        {% csrf_token %}
+        <p>
+            {% blocktrans trimmed with name=service.title %}
+                Are you sure you want to delete <strong>{{ name }}</strong>?
+            {% endblocktrans %}
+        </p>
+        <p class="help-block">
+            {% trans "It will no longer appear in the consent banner. If you only want to stop it for now, disable it instead." %}
+        </p>
+        <div class="form-group submit-group">
+            <a href="{% url "eventyay_admin:admin.global.privacy" %}" class="btn btn-default btn-cancel">
+                {% trans "Cancel" %}
+            </a>
+            <button type="submit" class="btn btn-danger btn-save">{% trans "Delete" %}</button>
+        </div>
+    </form>
+{% endblock %}

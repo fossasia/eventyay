@@ -1,0 +1,52 @@
+{% extends "pretixcontrol/admin/base.html" %}
+{% load i18n %}
+{% load bootstrap3 %}
+
+{% block title %}
+    {% if service %}{% trans "Edit third-party service" %}{% else %}{% trans "Add third-party service" %}{% endif %}
+{% endblock %}
+
+{% block content %}
+    <h1>
+        {% if service %}
+            {% blocktrans trimmed with name=service.title %}Edit service: {{ name }}{% endblocktrans %}
+        {% else %}
+            {% trans "Add third-party service" %}
+        {% endif %}
+    </h1>
+
+    <form action="" method="post" class="form-horizontal">
+        {% csrf_token %}
+        {% bootstrap_form_errors form %}
+
+        <fieldset>
+            <legend>{% trans "Service" %}</legend>
+            {% bootstrap_field form.title layout="horizontal" %}
+            {% bootstrap_field form.name layout="horizontal" %}
+            {% bootstrap_field form.provider layout="horizontal" %}
+            {% bootstrap_field form.purpose layout="horizontal" %}
+        </fieldset>
+
+        <fieldset>
+            <legend>{% trans "Consent" %}</legend>
+            {% bootstrap_field form.category layout="horizontal" %}
+            {% bootstrap_field form.enabled layout="horizontal" %}
+            {% bootstrap_field form.cookie_names layout="horizontal" %}
+        </fieldset>
+
+        <fieldset>
+            <legend>{% trans "Data protection" %}</legend>
+            {% bootstrap_field form.privacy_policy_url layout="horizontal" %}
+            {% bootstrap_field form.data_processed layout="horizontal" %}
+            {% bootstrap_field form.region layout="horizontal" %}
+            {% bootstrap_field form.dpa_status layout="horizontal" %}
+        </fieldset>
+
+        <div class="form-group submit-group">
+            <a href="{% url "eventyay_admin:admin.global.privacy" %}" class="btn btn-default btn-cancel">
+                {% trans "Cancel" %}
+            </a>
+            <button type="submit" class="btn btn-primary btn-save">{% trans "Save" %}</button>
+        </div>
+    </form>
+{% endblock %}

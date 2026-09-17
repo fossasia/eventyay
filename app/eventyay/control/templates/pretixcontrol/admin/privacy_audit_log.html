@@ -1,0 +1,54 @@
+{% extends "pretixcontrol/admin/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Privacy audit log" %}{% endblock %}
+
+{% block content %}
+    <h1>
+        {% trans "Privacy audit log" %}
+        <a href="{% url "eventyay_admin:admin.global.privacy" %}" class="btn btn-default btn-sm pull-right">
+            <span class="fa fa-arrow-left"></span> {% trans "Back to Privacy & Compliance" %}
+        </a>
+    </h1>
+    <p class="help-block">
+        {% trans "Every change an administrator makes to consent settings and third-party services is recorded here." %}
+    </p>
+
+    <table class="table table-condensed">
+        <thead>
+            <tr>
+                <th>{% trans "When" %}</th>
+                <th>{% trans "Administrator" %}</th>
+                <th>{% trans "Change" %}</th>
+                <th>{% trans "Details" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in entries %}
+                <tr>
+                    <td class="text-nowrap">{{ entry.datetime|date:"SHORT_DATETIME_FORMAT" }}</td>
+                    <td>{% if entry.user %}{{ entry.user.email }}{% else %}<em>{% trans "System" %}</em>{% endif %}</td>
+                    <td>{{ entry.display }}</td>
+                    <td>
+                        {% with changes=entry.parsed_data.changes %}
+                            {% if changes %}
+                                <ul class="list-unstyled">
+                                    {% for field, change in changes.items %}
+                                        <li>
+                                            <code>{{ field }}</code>:
+                                            {{ change.old|default:"—" }} → {{ change.new|default:"—" }}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        {% endwith %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="4">{% trans "No privacy configuration changes have been recorded yet." %}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% include "pretixcontrol/pagination.html" %}
+{% endblock %}
