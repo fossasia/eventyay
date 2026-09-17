@@ -23,16 +23,19 @@ export function pluginLanguageStreams(room) {
 		? streams.filter(entry => isUsableAudioTranslationEntry(entry))
 		: []
 
-	const uniqueStreams = []
-	const seenLanguages = new Set()
-
+	// A language is offered once: either a human booth or the AI voice, never both.
+	// When the backend sends both, the human interpreter wins.
+	const byLanguage = new Map()
 	for (const entry of usable) {
-		// Deduplicate strictly by language so we don't show AI and Booth for the same language
-		if (!seenLanguages.has(entry.language)) {
-			seenLanguages.add(entry.language)
-			uniqueStreams.push(entry)
+		const existing = byLanguage.get(entry.language)
+		if (!existing || (!isHumanStream(existing) && isHumanStream(entry))) {
+			byLanguage.set(entry.language, entry)
 		}
 	}
 
-	return ensureOriginalLanguageEntry(uniqueStreams)
+	return ensureOriginalLanguageEntry(Array.from(byLanguage.values()))
+}
+
+function isHumanStream(entry) {
+	return Boolean(entry?.whep_url || entry?.whip_url)
 }

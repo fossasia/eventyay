@@ -307,7 +307,8 @@ export default {
 			if (finalConfig && finalConfig.language === 'Original') {
 				finalConfig = null;
 			}
-			if (finalConfig && !finalConfig.url && !finalConfig.youtube_id) {
+			// Human (WHEP) and AI (TTS) tracks carry no url/youtube_id, only a stream endpoint.
+			if (finalConfig && !finalConfig.url && !finalConfig.youtube_id && !finalConfig.whepUrl && !finalConfig.ttsWsUrl) {
 				finalConfig = null;
 			}
 			this.$store.commit('updateInterpretationAudio', {
