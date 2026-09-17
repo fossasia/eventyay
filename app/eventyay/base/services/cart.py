@@ -488,7 +488,7 @@ class CartManager:
             self.positions.filter(expires__lte=self.now_dt)
             .select_related('product', 'variation', 'voucher', 'addon_to', 'addon_to__product', 'addon_to__voucher')
             .annotate(requires_seat=requires_seat)
-            .prefetch_related('product__quotas', 'variation__quotas', 'addons')
+            .prefetch_related('product__quotas', 'variation__quotas', 'addons', 'addon_to__product__addons')
             .order_by('-is_bundled')
         )
         err = None

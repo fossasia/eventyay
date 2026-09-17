@@ -3,7 +3,8 @@ from decimal import Decimal
 
 import pytest
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError, connection, transaction
+from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 from django_scopes import scopes_disabled
 
@@ -147,3 +148,30 @@ def test_free_addon_stays_free_after_cart_expiry(setup):
         addon = cp.addons.get(is_bundled=False)
         assert addon.expires > timezone.now()
         assert addon.price == Decimal('0.00')
+
+
+def test_expired_repricing_loads_addon_rules_once(setup):
+    event, ticket, workshop, _ = setup
+    with scopes_disabled():
+        workshop2 = Product.objects.create(
+            event=event, name='Workshop 2', category=workshop.category, default_price=Decimal('8.00')
+        )
+        Quota.objects.get(event=event).products.add(workshop2)
+        ProductAddOn.objects.filter(base_product=ticket).update(max_count=2)
+        cp = _add_ticket(event, ticket)
+        cm = CartManager(event=event, cart_id=CART_ID)
+        cm.set_addons(
+            [
+                {'addon_to': cp.pk, 'product': workshop.pk, 'variation': None},
+                {'addon_to': cp.pk, 'product': workshop2.pk, 'variation': None},
+            ]
+        )
+        cm.commit()
+        CartPosition.objects.filter(cart_id=CART_ID).update(expires=timezone.now() - timedelta(minutes=5))
+        cm = CartManager(event=event, cart_id=CART_ID)
+        with CaptureQueriesContext(connection) as ctx:
+            cm.commit()
+        addon_rule_queries = [q for q in ctx.captured_queries if ProductAddOn._meta.db_table in q['sql']]
+        assert len(addon_rule_queries) <= 1
+        prices = sorted(a.price for a in cp.addons.filter(is_bundled=False))
+        assert prices == [Decimal('8.00'), Decimal('12.00')]
