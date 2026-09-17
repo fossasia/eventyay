@@ -1,8 +1,11 @@
 from dataclasses import dataclass, field
+from pathlib import Path
 
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.files import File
+from django.core.files.storage import FileSystemStorage
 from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.models import Resource, ResourceKind
@@ -59,10 +62,6 @@ def save_slides_resource(submission, slides: SlidesData):
     created_resources = []
     for resource_file in slides.resources:
         created_resources.append(create_slide_resource(submission, resource_file=resource_file))
-
-    from django.core.files import File
-    from django.core.files.storage import FileSystemStorage
-    from pathlib import Path
 
     for resource in slides.kept_existing_resources:
         if str(resource.pk).startswith('tmp:'):
