@@ -131,3 +131,19 @@ def test_database_rejects_budget_with_included_options(setup, option):
     event = setup[0]
     with scopes_disabled(), pytest.raises(IntegrityError), transaction.atomic():
         Voucher.objects.create(event=event, code=f'DB-{option}', budget=Decimal('5.00'), **{option: True})
+
+
+def test_free_addon_stays_free_after_cart_expiry(setup):
+    event, ticket, workshop, _ = setup
+    with scopes_disabled():
+        voucher = event.vouchers.create(code='EXPIRE', product=ticket, all_addons_included=True)
+        cp = _add_ticket(event, ticket, voucher)
+        cm = CartManager(event=event, cart_id=CART_ID)
+        cm.set_addons([{'addon_to': cp.pk, 'product': workshop.pk, 'variation': None}])
+        cm.commit()
+        CartPosition.objects.filter(cart_id=CART_ID).update(expires=timezone.now() - timedelta(minutes=5))
+        cm = CartManager(event=event, cart_id=CART_ID)
+        cm.commit()
+        addon = cp.addons.get(is_bundled=False)
+        assert addon.expires > timezone.now()
+        assert addon.price == Decimal('0.00')
