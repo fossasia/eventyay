@@ -642,7 +642,7 @@ class CartManager:
         if not voucher.is_active():
             raise CartError(error_messages['voucher_expired'])
 
-        for p in self.positions:
+        for p in self.positions.prefetch_related('addons'):
             if p.voucher_id:
                 continue
 
