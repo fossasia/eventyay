@@ -91,11 +91,11 @@
                                                     {% endif %}
                                                 </td>
                                                 <td class="text-right">
-                                                    <a href="{% url "plugins:eventyay_business:fees.edit" pk=setting.pk %}" class="btn btn-default btn-sm">
-                                                        <i class="fa fa-edit"></i>
+                                                    <a href="{% url "plugins:eventyay_business:fees.edit" pk=setting.pk %}" class="btn btn-default btn-sm" aria-label="{% trans "Edit country fee override" %}">
+                                                        <i class="fa fa-edit" aria-hidden="true"></i>
                                                     </a>
-                                                    <a href="{% url "plugins:eventyay_business:fees.delete" pk=setting.pk %}" class="btn btn-danger btn-sm">
-                                                        <i class="fa fa-trash"></i>
+                                                    <a href="{% url "plugins:eventyay_business:fees.delete" pk=setting.pk %}" class="btn btn-danger btn-sm" aria-label="{% trans "Delete country fee override" %}">
+                                                        <i class="fa fa-trash" aria-hidden="true"></i>
                                                     </a>
                                                 </td>
                                             </tr>

@@ -271,3 +271,99 @@ class TestTicketFeeCalculation:
         )
         assert ticket_fee == Decimal('50.00')
         assert final_ticket_fee == Decimal('50.00')
+
+    def test_calculate_ticket_fee_country_override_and_fallback(self, db):
+        from eventyay.base.models import Event, Organizer
+        from eventyay.eventyay_common.tasks import calculate_ticket_fee
+        from eventyay_business.models import CountryFeeSetting
+
+        CountryFeeSetting.objects.create(
+            country="DE",
+            currency="EUR",
+            service_fee_percent=Decimal("1.50"),
+            maximum_fee=Decimal("10.00"),
+        )
+
+        org = Organizer.objects.create(name="Fee Org DE", slug="fee-org-de")
+        event = Event.objects.create(
+            organizer=org,
+            name="Fee Event DE",
+            slug="fee-event-de",
+            currency="EUR",
+            date_from=now(),
+        )
+        event.settings.set("invoice_address_from_country", "DE")
+
+        gs = GlobalSettingsObject()
+        gs.settings.set("ticket_fee_percentage", "5.00")
+        gs.settings.set("ticket_fee_maximum", "30.00")
+
+        # 1. Matching country and currency:
+        # Override service_fee_percent is 1.50%
+        # 1.50% of 1000 = 15.00 EUR, capped by override maximum_fee (10.00 EUR)
+        ticket_fee, final_ticket_fee, voucher_discount = calculate_ticket_fee(
+            amount=Decimal("1000.00"),
+            rate=Decimal("5.00"),
+            event=event,
+        )
+        assert ticket_fee == Decimal("10.00")
+        assert final_ticket_fee == Decimal("10.00")
+        assert voucher_discount == Decimal("0.00")
+
+        # Under cap: 1.50% of 200 = 3.00 EUR (< 10.00 EUR cap)
+        ticket_fee, final_ticket_fee, _ = calculate_ticket_fee(
+            amount=Decimal("200.00"),
+            rate=Decimal("5.00"),
+            event=event,
+        )
+        assert ticket_fee == Decimal("3.00")
+        assert final_ticket_fee == Decimal("3.00")
+
+        # 2. Non-matching country: falls back to global settings (5.00%, cap 30.00 EUR)
+        event.settings.set("invoice_address_from_country", "FR")
+        # 5.00% of 1000 = 50.00 EUR, capped by global ticket_fee_maximum (30.00 EUR)
+        ticket_fee, final_ticket_fee, voucher_discount = calculate_ticket_fee(
+            amount=Decimal("1000.00"),
+            rate=Decimal("5.00"),
+            event=event,
+        )
+        assert ticket_fee == Decimal("30.00")
+        assert final_ticket_fee == Decimal("30.00")
+        assert voucher_discount == Decimal("0.00")
+
+        # Under cap: 5.00% of 200 = 10.00 EUR (< 30.00 EUR cap)
+        ticket_fee, final_ticket_fee, _ = calculate_ticket_fee(
+            amount=Decimal("200.00"),
+            rate=Decimal("5.00"),
+            event=event,
+        )
+        assert ticket_fee == Decimal("10.00")
+        assert final_ticket_fee == Decimal("10.00")
+
+    def test_calculate_ticket_fee_global_maximum_currency_conversion(self, db):
+        import json
+        from django.core.serializers.json import DjangoJSONEncoder
+        from eventyay.base.models import Event, Organizer
+        from eventyay.eventyay_common.tasks import calculate_ticket_fee
+
+        org = Organizer.objects.create(name="Currency Org", slug="currency-org")
+        event = Event.objects.create(
+            organizer=org,
+            name="Currency Event",
+            slug="currency-event",
+            currency="EUR",
+            date_from=now(),
+        )
+
+        gs = GlobalSettingsObject()
+        gs.settings.set("ticket_fee_maximum", "100.00")
+        # ECB rates: EUR = 1.0, USD = 1.25 -> 100 USD converts to 80 EUR
+        gs.settings.ecb_rates_dict = json.dumps({"EUR": "1.0", "USD": "1.25"}, cls=DjangoJSONEncoder)
+
+        ticket_fee, final_ticket_fee, _ = calculate_ticket_fee(
+            amount=Decimal("1000.00"),
+            rate=Decimal("10.00"),
+            event=event,
+        )
+        assert ticket_fee == Decimal("80.00")
+        assert final_ticket_fee == Decimal("80.00")
