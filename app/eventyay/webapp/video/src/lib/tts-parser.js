@@ -1,126 +1,54 @@
-// Guards against a desynchronised or corrupt stream claiming an absurd frame size.
-const MAX_FRAME_LENGTH = 16 * 1024 * 1024;
+export const TTS_PROTOCOL_VERSION = 1;
+// Voxbento synthesises 16-bit little-endian mono PCM at 24 kHz.
+export const TTS_DEFAULT_SAMPLE_RATE = 24000;
+
+const PREAMBLE_LENGTH = 5;
 
 /**
- * Parses Voxbento binary frame format: [1-byte version][4-byte length][JSON header][audio bytes]
+ * Parses one Voxbento TTS frame.
+ *
+ * Wire format, packed server-side with struct.pack('>BI', 1, len(header)):
+ *   [1-byte version][4-byte big-endian JSON header length][JSON header][PCM audio bytes]
+ *
+ * WebSocket messages are delimited by the protocol, so each binary message
+ * carries exactly one frame; everything after the header is audio.
  */
-export class TtsParser {
-	constructor() {
-		this.buffer = new Uint8Array(0);
-		this.frames = [];
+export function parseTtsFrame(buffer) {
+	if (!(buffer instanceof ArrayBuffer)) {
+		throw new TypeError('TTS frame must be an ArrayBuffer');
+	}
+	if (buffer.byteLength < PREAMBLE_LENGTH) {
+		throw new Error('TTS frame too short');
 	}
 
-	append(data) {
-		const incoming = data instanceof Uint8Array ? data : new Uint8Array(data);
-		const newBuffer = new Uint8Array(this.buffer.length + incoming.length);
-		newBuffer.set(this.buffer);
-		newBuffer.set(incoming, this.buffer.length);
-		this.buffer = newBuffer;
-		this.parseFrames();
+	const view = new DataView(buffer);
+	const version = view.getUint8(0);
+	if (version !== TTS_PROTOCOL_VERSION) {
+		throw new Error(`Unsupported TTS protocol version: ${version}`);
 	}
 
-	parseFrames() {
-		while (this.buffer.length >= 5) {
-			const version = this.buffer[0];
-			if (version !== 1) {
-				console.warn(`Unexpected TTS frame version: ${version}`);
-				this.buffer = this.buffer.slice(1);
-				continue;
-			}
-
-			const lengthView = new DataView(this.buffer.buffer, this.buffer.byteOffset + 1, 4);
-			const frameLength = lengthView.getUint32(0, false);
-
-			if (frameLength > MAX_FRAME_LENGTH) {
-				console.warn(`TTS frame length ${frameLength} exceeds ${MAX_FRAME_LENGTH}, resynchronising`);
-				this.buffer = this.buffer.slice(1);
-				continue;
-			}
-
-			const totalLength = 5 + frameLength;
-			if (this.buffer.length < totalLength) {
-				break;
-			}
-
-			try {
-				const frame = this.parseFrame(totalLength);
-				if (frame) {
-					this.frames.push(frame);
-				}
-			} catch (error) {
-				console.error('Error parsing TTS frame:', error);
-			}
-
-			this.buffer = this.buffer.slice(totalLength);
-		}
+	const headerLength = view.getUint32(1, false);
+	if (buffer.byteLength < PREAMBLE_LENGTH + headerLength) {
+		throw new Error('TTS frame truncated');
 	}
 
-	parseFrame(totalLength) {
-		const frameData = this.buffer.slice(0, totalLength);
-		const headerEnd = this.findHeaderEnd(frameData, 5);
+	const headerBytes = new Uint8Array(buffer, PREAMBLE_LENGTH, headerLength);
+	const header = JSON.parse(new TextDecoder('utf-8').decode(headerBytes));
+	const audioBytes = new Uint8Array(buffer, PREAMBLE_LENGTH + headerLength);
 
-		if (headerEnd === -1) {
-			console.warn('Could not find JSON header terminator in TTS frame');
-			return null;
-		}
+	return { header, audioBytes };
+}
 
-		try {
-			const headerJson = new TextDecoder().decode(frameData.slice(5, headerEnd));
-			const header = JSON.parse(headerJson);
-			const audioData = frameData.slice(headerEnd, totalLength);
-
-			return {
-				header,
-				audioData
-			};
-		} catch (error) {
-			console.error('Failed to parse TTS frame header:', error);
-			return null;
-		}
+/**
+ * Converts 16-bit little-endian PCM into Web Audio float samples in [-1, 1).
+ * A trailing odd byte, which cannot form a sample, is ignored.
+ */
+export function pcm16ToFloat32(audioBytes) {
+	const sampleCount = Math.floor(audioBytes.byteLength / 2);
+	const view = new DataView(audioBytes.buffer, audioBytes.byteOffset, sampleCount * 2);
+	const samples = new Float32Array(sampleCount);
+	for (let i = 0; i < sampleCount; i++) {
+		samples[i] = view.getInt16(i * 2, true) / 32768;
 	}
-
-	findHeaderEnd(data, startIndex) {
-		let braceCount = 0;
-		let inString = false;
-		let escaped = false;
-
-		for (let i = startIndex; i < data.length; i++) {
-			const byte = data[i];
-			const char = String.fromCharCode(byte);
-
-			if (escaped) {
-				escaped = false;
-				continue;
-			}
-
-			if (char === '\\') {
-				escaped = true;
-				continue;
-			}
-
-			if (char === '"' && !escaped) {
-				inString = !inString;
-				continue;
-			}
-
-			if (!inString) {
-				if (char === '{') {
-					braceCount++;
-				} else if (char === '}') {
-					braceCount--;
-					if (braceCount === 0) {
-						return i + 1;
-					}
-				}
-			}
-		}
-
-		return -1;
-	}
-
-	getFrames() {
-		const result = this.frames;
-		this.frames = [];
-		return result;
-	}
+	return samples;
 }

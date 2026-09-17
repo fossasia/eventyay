@@ -527,16 +527,16 @@ async function startWhepTranslation(url, updateToken) {
 }
 
 async function startTtsTranslation(url, updateToken) {
-	const scheduler = new AudioScheduler(url, whepAudioEl.value);
+	const scheduler = new AudioScheduler(url);
 	ttsScheduler = scheduler;
 	try {
 		await scheduler.connect();
-		if (updateToken !== interpretationUpdateToken) {
-			scheduler.disconnect();
-			if (ttsScheduler === scheduler) ttsScheduler = null;
-		}
 	} catch (error) {
+		// Keep the scheduler: its onclose handler retries with backoff, and
+		// switching tracks or leaving the room still tears it down.
 		console.error('Failed to connect to TTS interpretation source', { url, error });
+	}
+	if (updateToken !== interpretationUpdateToken) {
 		scheduler.disconnect();
 		if (ttsScheduler === scheduler) ttsScheduler = null;
 	}

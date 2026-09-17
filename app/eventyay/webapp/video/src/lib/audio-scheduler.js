@@ -1,162 +1,159 @@
-import { TtsParser } from './tts-parser.js';
+import { parseTtsFrame, pcm16ToFloat32, TTS_DEFAULT_SAMPLE_RATE } from './tts-parser.js';
+
+// Safety margin when playback re-anchors after the queue ran dry, so small
+// network jitter does not immediately cause another gap (same as Voxbento's listener).
+const JITTER_BUFFER_SEC = 0.25;
+// Same backoff shape as LiveCaptions.vue: 1s, 2s, 4s, ... capped at 10s.
+const BASE_RETRY_DELAY_MS = 1000;
+const MAX_RETRY_DELAY_MS = 10000;
 
 /**
- * Manages WebSocket connection to Voxbento TTS endpoint and schedules audio playback
+ * Plays Voxbento AI interpretation audio: owns the TTS WebSocket, decodes
+ * each frame and queues it for gapless playback through the Web Audio API.
  */
 export class AudioScheduler {
-	constructor(wsUrl, audioElement) {
+	constructor(wsUrl) {
 		this.wsUrl = wsUrl;
-		this.audioElement = audioElement;
 		this.ws = null;
-		this.parser = new TtsParser();
 		this.audioContext = null;
 		this.isConnected = false;
 		this.isDisposed = false;
+		this.isPaused = false;
 		this.retryCount = 0;
 		this.maxRetries = 5;
-		this.retryDelay = 1000; // exponential backoff starts at 1s
+		this.retryDelay = BASE_RETRY_DELAY_MS;
 		this.reconnectTimer = null;
 		this.nextStartTime = 0;
+		this.activeSources = new Set();
 	}
 
-	async connect() {
-		if (this.isDisposed) {
-			return;
-		}
-		if (this.isConnected) {
-			console.warn('AudioScheduler already connected');
-			return;
-		}
+	connect() {
+		if (this.isDisposed) return Promise.resolve();
+		if (this.isConnected) return Promise.resolve();
 
 		return new Promise((resolve, reject) => {
+			let ws;
 			try {
-				this.ws = new WebSocket(this.wsUrl);
-				this.ws.binaryType = 'arraybuffer';
-
-				this.ws.onopen = () => {
-					this.isConnected = true;
-					this.retryCount = 0;
-					console.log('AudioScheduler connected to TTS endpoint');
-					resolve();
-				};
-
-				this.ws.onmessage = (event) => {
-					this.handleMessage(event.data);
-				};
-
-				this.ws.onerror = (error) => {
-					console.error('AudioScheduler WebSocket error:', error);
-					this.handleError(error, reject);
-				};
-
-				this.ws.onclose = () => {
-					this.handleClose();
-				};
+				ws = new WebSocket(this.wsUrl);
 			} catch (error) {
-				console.error('Failed to create WebSocket connection:', error);
-				this.handleError(error, reject);
+				reject(error);
+				return;
 			}
+			ws.binaryType = 'arraybuffer';
+			this.ws = ws;
+
+			ws.onopen = () => {
+				if (this.ws !== ws) return;
+				this.isConnected = true;
+				this.retryCount = 0;
+				resolve();
+			};
+			ws.onmessage = (event) => {
+				if (this.ws !== ws) return;
+				this.handleMessage(event.data);
+			};
+			ws.onerror = (error) => {
+				if (this.ws !== ws) return;
+				reject(error);
+			};
+			ws.onclose = () => {
+				if (this.ws !== ws) return;
+				this.ws = null;
+				this.handleClose();
+			};
 		});
 	}
 
-	handleError(error, reject) {
-		this.isConnected = false;
-		if (reject) {
-			reject(error);
-		}
+	getRetryDelay(attempt) {
+		return Math.min(this.retryDelay * Math.pow(2, attempt), MAX_RETRY_DELAY_MS);
 	}
 
 	handleClose() {
 		this.isConnected = false;
 		if (this.isDisposed) return;
-
-		if (this.retryCount < this.maxRetries) {
-			const delay = this.retryDelay * Math.pow(2, this.retryCount);
-			this.retryCount++;
-			console.log(`Attempting to reconnect to TTS endpoint (attempt ${this.retryCount}/${this.maxRetries}) after ${delay}ms`);
-			this.reconnectTimer = setTimeout(() => {
-				this.reconnectTimer = null;
-				if (this.isDisposed) return;
-				this.connect().catch(error => {
-					console.error('Reconnection failed:', error);
-				});
-			}, delay);
-		} else {
-			console.error('Max retries reached for TTS connection');
+		if (this.retryCount >= this.maxRetries) {
+			console.error('TTS interpretation stream: max reconnect attempts reached');
+			return;
 		}
+		const delay = this.getRetryDelay(this.retryCount);
+		this.retryCount++;
+		this.reconnectTimer = setTimeout(() => {
+			this.reconnectTimer = null;
+			if (this.isDisposed) return;
+			this.connect().catch(error => {
+				console.warn('TTS interpretation stream: reconnect failed', error);
+			});
+		}, delay);
 	}
 
 	handleMessage(data) {
 		if (this.isDisposed) return;
+		if (!(data instanceof ArrayBuffer)) return;
 
-		if (!(data instanceof ArrayBuffer)) {
-			console.warn('Received non-binary TTS message');
+		let frame;
+		try {
+			frame = parseTtsFrame(data);
+		} catch (error) {
+			console.warn('TTS interpretation stream: dropping malformed frame', error);
 			return;
 		}
-
-		this.parser.append(data);
-		const frames = this.parser.getFrames();
-
-		for (const frame of frames) {
-			this.scheduleAudioFrame(frame);
-		}
+		if (frame.header?.error || !frame.audioBytes.byteLength) return;
+		this.scheduleAudio(frame);
 	}
 
-	scheduleAudioFrame(frame) {
-		if (!frame.audioData || frame.audioData.length === 0) {
+	ensureAudioContext() {
+		if (this.audioContext) return this.audioContext;
+		const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+		this.audioContext = new AudioContextClass();
+		this.nextStartTime = 0;
+		if (this.isPaused) {
+			this.audioContext.suspend?.();
+		} else if (this.audioContext.state === 'suspended') {
+			this.audioContext.resume?.().catch(() => {});
+		}
+		return this.audioContext;
+	}
+
+	scheduleAudio(frame) {
+		const samples = pcm16ToFloat32(frame.audioBytes);
+		if (!samples.length) return;
+
+		let ctx;
+		try {
+			ctx = this.ensureAudioContext();
+		} catch (error) {
+			console.error('TTS interpretation stream: failed to create AudioContext', error);
 			return;
 		}
 
-		// Initialize audio context if needed
-		if (!this.audioContext) {
-			try {
-				const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-				this.audioContext = new AudioContextClass();
-				this.nextStartTime = 0;
-			} catch (error) {
-				console.error('Failed to create AudioContext:', error);
-				return;
-			}
-		}
+		const sampleRate = Number(frame.header?.sample_rate) || TTS_DEFAULT_SAMPLE_RATE;
+		const audioBuffer = ctx.createBuffer(1, samples.length, sampleRate);
+		audioBuffer.getChannelData(0).set(samples);
 
-		const audioData = new Float32Array(frame.audioData.length);
-		for (let i = 0; i < frame.audioData.length; i++) {
-			// Convert byte to float32 (-1 to 1 range)
-			audioData[i] = (frame.audioData[i] - 128) / 128;
-		}
+		const source = ctx.createBufferSource();
+		source.buffer = audioBuffer;
+		source.connect(ctx.destination);
 
-		try {
-			const audioBuffer = this.audioContext.createBuffer(
-				1, // mono
-				audioData.length,
-				this.audioContext.sampleRate
-			);
-			audioBuffer.getChannelData(0).set(audioData);
-
-			const source = this.audioContext.createBufferSource();
-			source.buffer = audioBuffer;
-			source.connect(this.audioContext.destination);
-
-			// Queue each frame after the previous one so consecutive frames neither
-			// overlap nor leave a gap when several arrive in the same tick.
-			const startTime = Math.max(this.audioContext.currentTime, this.nextStartTime);
-			source.start(startTime);
-			this.nextStartTime = startTime + audioBuffer.duration;
-		} catch (error) {
-			console.error('Error scheduling audio frame:', error);
-		}
+		// Queue each segment right after the previous one; if the queue ran dry,
+		// re-anchor slightly in the future to absorb jitter.
+		const now = ctx.currentTime;
+		const startTime = this.nextStartTime > now ? this.nextStartTime : now + JITTER_BUFFER_SEC;
+		source.onended = () => this.activeSources.delete(source);
+		this.activeSources.add(source);
+		source.start(startTime);
+		this.nextStartTime = startTime + audioBuffer.duration;
 	}
 
 	pause() {
-		if (this.audioContext) {
-			this.audioContext.suspend();
-		}
+		this.isPaused = true;
+		this.audioContext?.suspend?.();
 	}
 
 	resume() {
-		if (this.audioContext && this.audioContext.state === 'suspended') {
+		this.isPaused = false;
+		if (this.audioContext?.state === 'suspended') {
 			this.audioContext.resume().catch(error => {
-				console.warn('Failed to resume AudioContext:', error);
+				console.warn('TTS interpretation stream: failed to resume audio', error);
 			});
 		}
 	}
@@ -164,29 +161,30 @@ export class AudioScheduler {
 	disconnect() {
 		this.isDisposed = true;
 		this.isConnected = false;
-		this.retryCount = this.maxRetries; // Prevent reconnection
 
 		if (this.reconnectTimer) {
 			clearTimeout(this.reconnectTimer);
 			this.reconnectTimer = null;
 		}
 
-		if (this.ws) {
-			this.ws.close();
-			this.ws = null;
+		const ws = this.ws;
+		this.ws = null;
+		ws?.close();
+
+		// Stop queued segments explicitly so nothing already scheduled keeps playing.
+		for (const source of this.activeSources) {
+			try {
+				source.stop();
+			} catch {
+				// Already stopped.
+			}
 		}
+		this.activeSources.clear();
 
 		if (this.audioContext) {
-			try {
-				this.audioContext.close();
-			} catch (error) {
-				console.warn('Error closing AudioContext:', error);
-			}
+			this.audioContext.close?.()?.catch?.(() => {});
 			this.audioContext = null;
 		}
-
 		this.nextStartTime = 0;
-		this.parser = new TtsParser();
-		console.log('AudioScheduler disconnected');
 	}
 }
