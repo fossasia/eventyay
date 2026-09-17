@@ -132,6 +132,7 @@ export default {
 			const useVideo = selected?.use_video || false
 
 			this.$emit('languageChanged', {
+				...(selected || {}),
 				url: audioSource,
 				useVideo,
 				whepUrl: selected?.whep_url || selected?.whip_url || null,
@@ -222,6 +223,7 @@ export default {
 		align-items: center
 		height: 32px
 		padding: 0 2px 0 8px
+		min-width: 120px
 		border: 1px solid $clr-grey-400
 		border-radius: 4px
 		background: $clr-white

@@ -244,6 +244,15 @@
                                 </div>
                                 <div class="col-md-6">
                                     <h4>{% translate "API tokens" %}</h4>
+                                    <p class="help-block">
+                                        {% blocktrans trimmed %}
+                                            Team tokens inherit this team’s permissions across every event
+                                            the team can access. They do not have a separate per-token scope.
+                                            For endpoint documentation, access levels, and event-scoped token
+                                            management, use each event’s API area. Token create/revoke here is
+                                            the same organiser-team capability shown on the event API page.
+                                        {% endblocktrans %}
+                                    </p>
                                     <form action="" method="post" class="team-token-form">
                                         {% csrf_token %}
                                         <input type="hidden" name="team_action" value="tokens">

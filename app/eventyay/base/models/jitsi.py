@@ -13,6 +13,17 @@ class JitsiServer(models.Model):
     event_exclusive = models.ForeignKey(
         "Event", null=True, blank=True, on_delete=models.PROTECT
     )
+    organizers = models.ManyToManyField(
+        "Organizer", blank=True, related_name="jitsi_servers"
+    )
+    events = models.ManyToManyField(
+        "Event", blank=True, related_name="jitsi_servers"
+    )
+    disable_ssl = models.BooleanField(
+        default=False,
+        verbose_name="Disable SSL enforcement",
+        help_text="Allow non-HTTPS/HTTP or bypass SSL verification for self-signed certificates.",
+    )
 
     def __str__(self):
         return self.url

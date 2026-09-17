@@ -100,7 +100,6 @@ Interactive Features
 - ``components/Polls.vue`` - Polls listing
 - ``components/Question.vue`` - Single Q&A question
 - ``components/Questions.vue`` - Q&A question list
-- ``components/Roulette.vue`` - Speed networking roulette
 
 User Interface
 ^^^^^^^^^^^^^^
@@ -201,10 +200,6 @@ Vuex Store Modules (``src/store/``)
 **question.js**
   - Q&A questions
   - Voting and moderation
-
-**roulette.js**
-  - Networking queue
-  - Match history
 
 **schedule.js**
   - Event schedule

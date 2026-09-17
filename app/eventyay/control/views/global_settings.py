@@ -9,7 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.mail import EmailMessage
 from django.core.validators import validate_email
 from django.db import IntegrityError, OperationalError, ProgrammingError
-from django.http import HttpResponseBadRequest, JsonResponse
+from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, reverse
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
@@ -222,10 +222,15 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
     Tests the current system-level email configuration without saving settings.
     """
 
-    EMAIL_TAB_HASH = '#tab3'
+    EMAIL_TAB_HASH = '#tab-email'
 
-    def _respond(self, request, level, message):
-        """Redirect back to the email tab with inline feedback. Does not save settings."""
+    def _respond(self, request: HttpRequest, level: str, message: str) -> HttpResponse:
+        """Return JSON for AJAX callers; redirect with session feedback for plain form POSTs."""
+        if (
+            request.headers.get('Accept', '').startswith('application/json')
+            or request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        ):
+            return JsonResponse({'status': level, 'message': str(message)})
         request.session['admin_test_email_feedback'] = {
             'level': level,
             'message': str(message),
@@ -310,11 +315,11 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
 
                 backend = get_gmail_mail_backend(timeout=10)
                 if not backend:
-                    messages.error(
+                    return self._respond(
                         request,
+                        'error',
                         _('Gmail is selected but no account is connected. Connect Gmail in the settings first.'),
                     )
-                    return redirect(reverse('eventyay_admin:admin.global.settings'))
                 backend.test(from_addr=mail_from, to_addrs=recipients)
             elif gs.settings.email_vendor == 'smtp':
                 if not gs.settings.smtp_host or not gs.settings.smtp_port:
@@ -464,6 +469,109 @@ class LogDetailView(AdministratorPermissionRequiredMixin, View):
 class GlobalPluginManagementView(AdministratorPermissionRequiredMixin, TemplateView):
     template_name = 'pretixcontrol/global_plugins.html'
 
+    CONFIGURED_VIA_LABELS: dict[str, str] = {
+        'payment_settings': _('Payment settings'),
+        'platform': _('Platform'),
+    }
+
+    KNOWN_SYSTEM_MODULES: frozenset[str] = frozenset({
+        'eventyay.plugins.socialauth',
+        'eventyay.plugins.reports',
+        'eventyay.plugins.checkinlists',
+    })
+
+    # Report exporter and Check-in list exporter are deeply integrated
+    # system features used across many parts of the platform (PDF exports,
+    # check-in infrastructure, etc.).  They are always active behind the
+    # scenes and are not meaningful for admins to manage through this page,
+    # so they are excluded from the UI while remaining fully functional in
+    # the system.
+    HIDDEN_SYSTEM_MODULES: frozenset[str] = frozenset({
+        'eventyay.plugins.reports',
+        'eventyay.plugins.checkinlists',
+    })
+
+    REQUIRED_MODULES: frozenset[str] = frozenset({
+        'eventyay.plugins.checkinlists',
+    })
+
+    @classmethod
+    def _classify_plugin(cls, plugin) -> tuple[str, bool, str]:
+        """
+        Derive plugin classification from runtime metadata.
+
+        Returns (plugin_type, is_required, configured_via) based on
+        the plugin's EventyayPluginMeta attributes.
+        """
+        module = plugin.module
+        category = str(getattr(plugin, 'category', ''))
+
+        if category == 'PAYMENT':
+            return (
+                GlobalPluginConfig.PluginType.PAYMENT_PROVIDER,
+                False,
+                'payment_settings',
+            )
+
+        if module in cls.KNOWN_SYSTEM_MODULES or not getattr(plugin, 'visible', True):
+            return (
+                GlobalPluginConfig.PluginType.SYSTEM,
+                module in cls.REQUIRED_MODULES,
+                'platform',
+            )
+
+        return (GlobalPluginConfig.PluginType.EXTERNAL, False, '')
+
+    @staticmethod
+    def _count_events_using_plugins(modules: set[str]) -> dict[str, int]:
+        counts: dict[str, int] = {m: 0 for m in modules}
+        for event in Event.objects.exclude(plugins='').exclude(plugins__isnull=True).iterator():
+            active = set(event.plugins.split(','))
+            for m in modules & active:
+                counts[m] += 1
+        return counts
+
+    def _build_row(self, plugin, config: GlobalPluginConfig | None, usage_count: int = 0) -> dict:
+        module = plugin.module
+
+        # Runtime classification is the source of truth for type/required/configured_via.
+        # DB config may override these if a row exists with a non-default plugin_type.
+        rt_type, rt_required, rt_configured_via = self._classify_plugin(plugin)
+
+        if config and config.plugin_type != GlobalPluginConfig.PluginType.EXTERNAL:
+            plugin_type = config.plugin_type
+        else:
+            plugin_type = rt_type
+
+        is_required = (config.is_required if config else False) or rt_required
+        configured_via_raw = config.configured_via if config and config.configured_via else rt_configured_via
+
+        is_platform = plugin_type in (
+            GlobalPluginConfig.PluginType.PAYMENT_PROVIDER,
+            GlobalPluginConfig.PluginType.SYSTEM,
+        )
+
+        return {
+            'module': module,
+            'name': str(plugin.name),
+            'description': str(getattr(plugin, 'description', '')),
+            'version': getattr(plugin, 'version', ''),
+            'category': str(getattr(plugin, 'category', '')),
+            'plugin_type': plugin_type,
+            'plugin_type_label': str(
+                GlobalPluginConfig.PluginType(plugin_type).label
+            ),
+            'is_platform': is_platform,
+            'is_active': config.is_active if config else True,
+            'is_required': is_required,
+            'enable_by_default': config.enable_by_default if config else False,
+            'show_in_organizer_list': config.show_in_organizer_list if config else (not is_platform),
+            'configured_via': str(
+                self.CONFIGURED_VIA_LABELS.get(configured_via_raw, configured_via_raw)
+            ),
+            'usage_count': usage_count,
+        }
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         all_plugins = get_all_plugins(include_inactive=True)
@@ -473,35 +581,97 @@ class GlobalPluginManagementView(AdministratorPermissionRequiredMixin, TemplateV
         except (ProgrammingError, OperationalError):
             configs = {}
 
-        plugin_rows = []
         for plugin in all_plugins:
-            module = plugin.module
-            config = configs.get(module)
-            plugin_rows.append({
-                'module': module,
-                'name': str(plugin.name),
-                'description': str(getattr(plugin, 'description', '')),
-                'version': getattr(plugin, 'version', ''),
-                'category': str(getattr(plugin, 'category', '')),
-                'is_active': config.is_active if config else True,
-                'enable_by_default': config.enable_by_default if config else False,
-                'show_in_organizer_list': config.show_in_organizer_list if config else True,
-            })
+            if plugin.module not in configs:
+                rt_type, rt_required, rt_configured_via = self._classify_plugin(plugin)
+                is_platform = rt_type in (
+                    GlobalPluginConfig.PluginType.PAYMENT_PROVIDER,
+                    GlobalPluginConfig.PluginType.SYSTEM,
+                )
+                try:
+                    obj, created = GlobalPluginConfig.objects.get_or_create(
+                        module=plugin.module,
+                        defaults={
+                            'plugin_type': rt_type,
+                            'is_active': True,
+                            'is_required': rt_required,
+                            'enable_by_default': False,
+                            'show_in_organizer_list': not is_platform,
+                            'configured_via': rt_configured_via,
+                        },
+                    )
+                    if created:
+                        configs[plugin.module] = obj
+                except (ProgrammingError, OperationalError):
+                    pass
 
-        context['plugin_rows'] = plugin_rows
+        all_modules = {p.module for p in all_plugins}
+        try:
+            usage_counts = self._count_events_using_plugins(all_modules)
+        except (ProgrammingError, OperationalError):
+            usage_counts = {}
+
+        platform_rows = []
+        external_rows = []
+        for plugin in all_plugins:
+            if plugin.module in self.HIDDEN_SYSTEM_MODULES:
+                continue
+            row = self._build_row(
+                plugin,
+                configs.get(plugin.module),
+                usage_count=usage_counts.get(plugin.module, 0),
+            )
+            if row['is_platform']:
+                platform_rows.append(row)
+            else:
+                external_rows.append(row)
+
+        context['platform_plugin_rows'] = platform_rows
+        context['external_plugin_rows'] = external_rows
+        active_tab = self.request.GET.get('tab', 'platform')
+        context['active_tab'] = active_tab if active_tab in ('platform', 'external') else 'platform'
         return context
 
     def post(self, request, *args, **kwargs):
         all_plugins = get_all_plugins(include_inactive=True)
-        known_modules = {p.module for p in all_plugins}
+        plugins_by_module = {p.module: p for p in all_plugins}
         newly_disabled = set()
         platform_managed = set()
 
         try:
-            for module in known_modules:
+            configs = {c.module: c for c in GlobalPluginConfig.objects.all()}
+        except (ProgrammingError, OperationalError):
+            configs = {}
+
+        try:
+            for module, plugin in plugins_by_module.items():
+                if module in self.HIDDEN_SYSTEM_MODULES:
+                    continue
+                config = configs.get(module)
+                rt_type, rt_required, rt_configured_via = self._classify_plugin(plugin)
+
+                if config and config.plugin_type != GlobalPluginConfig.PluginType.EXTERNAL:
+                    plugin_type = config.plugin_type
+                else:
+                    plugin_type = rt_type
+
+                is_platform = plugin_type in (
+                    GlobalPluginConfig.PluginType.PAYMENT_PROVIDER,
+                    GlobalPluginConfig.PluginType.SYSTEM,
+                )
+                is_required = (config.is_required if config else False) or rt_required
+
                 is_active = request.POST.get(f'is_active_{module}') == 'on'
-                enable_by_default = request.POST.get(f'enable_by_default_{module}') == 'on'
-                show_in_organizer_list = request.POST.get(f'show_in_organizer_list_{module}') == 'on'
+
+                if is_required:
+                    is_active = True
+
+                if is_platform:
+                    enable_by_default = False
+                    show_in_organizer_list = False
+                else:
+                    enable_by_default = request.POST.get(f'enable_by_default_{module}') == 'on'
+                    show_in_organizer_list = request.POST.get(f'show_in_organizer_list_{module}') == 'on'
 
                 if not is_active:
                     enable_by_default = False
@@ -513,9 +683,15 @@ class GlobalPluginManagementView(AdministratorPermissionRequiredMixin, TemplateV
                 GlobalPluginConfig.objects.update_or_create(
                     module=module,
                     defaults={
+                        'plugin_type': plugin_type,
                         'is_active': is_active,
+                        'is_required': is_required,
                         'enable_by_default': enable_by_default,
                         'show_in_organizer_list': show_in_organizer_list,
+                        'configured_via': (
+                            config.configured_via if config and config.configured_via
+                            else rt_configured_via
+                        ),
                     },
                 )
         except (ProgrammingError, OperationalError):
@@ -528,7 +704,10 @@ class GlobalPluginManagementView(AdministratorPermissionRequiredMixin, TemplateV
             self._ensure_enabled_on_all_events(platform_managed)
 
         messages.success(request, _('Plugin settings have been saved.'))
-        return redirect(reverse('eventyay_admin:admin.global.plugins'))
+        active_tab = request.POST.get('active_tab', 'platform')
+        if active_tab not in ('platform', 'external'):
+            active_tab = 'platform'
+        return redirect(reverse('eventyay_admin:admin.global.plugins') + f'?tab={active_tab}')
 
     @staticmethod
     def _strip_disabled_from_events(disabled_modules: set[str]):

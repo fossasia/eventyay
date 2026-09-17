@@ -1,0 +1,17 @@
+.admin-users-alert-region {
+    position: fixed;
+    top: 64px;
+    right: 16px;
+    z-index: 1050;
+    width: 420px;
+    max-width: calc(100vw - 32px);
+}
+
+.admin-users-alert-region .admin-users-alert {
+    margin-bottom: 0;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.user-action-form[aria-busy="true"] button.btn-dropdown-link {
+    cursor: progress;
+}

@@ -5,13 +5,14 @@ from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import OuterRef, Q, Subquery
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.functional import cached_property
+from django.template.loader import render_to_string
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext_lazy
-from django.views.generic import FormView, ListView, TemplateView, UpdateView, View
+from django.views.generic import CreateView, DeleteView, FormView, ListView, TemplateView, UpdateView, View
 
 from eventyay.base.i18n import language
 from i18nfield.strings import LazyI18nString
@@ -34,11 +35,17 @@ from eventyay.plugins.sendmail.mixins import (
     QueryFilterOrderingMixin,
     ensure_draft_defaults,
 )
-from eventyay.plugins.sendmail.models import ComposingFor, EmailQueue, EmailQueueFilter, EmailQueueToUser
+from eventyay.plugins.sendmail.models import ComposingFor, EmailQueue, EmailQueueFilter, EmailQueueToUser, TicketMailTemplate
 from eventyay.plugins.sendmail.tasks import send_queued_mail
 
 from . import forms
-from .forms import MailContentSettingsForm, TeamMailForm, TicketMailRecipientsForm
+from .forms import (
+    MailContentSettingsForm,
+    TeamMailForm,
+    TicketMailRecipientsForm,
+    TicketMailTemplateForm,
+    get_system_mail_template_defs,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -161,6 +168,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
         kwargs['event'] = self.request.event
         kwargs['draft_save'] = self.request.POST.get('action') == 'draft'
         self.load_copy_draft(self.request, kwargs)
+        self.load_custom_template(self.request, kwargs)
 
         if self.request.method == 'POST' and self.request.POST.get('action') == 'draft':
             data = kwargs.get('data')
@@ -168,6 +176,48 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
                 kwargs['data'] = ensure_draft_defaults(data)
 
         return kwargs
+
+    def load_custom_template(self, request, form_kwargs):
+        """Prefill the composer from a custom TicketMailTemplate via ?template=<pk>."""
+        if request.method != 'GET' or 'template' not in request.GET:
+            return
+        try:
+            template_id = int(request.GET.get('template'))
+        except (TypeError, ValueError):
+            return
+        template = TicketMailTemplate.objects.filter(pk=template_id, event=request.event).first()
+        if not template:
+            return
+        initial = form_kwargs.setdefault('initial', {})
+        initial.setdefault('subject', template.subject)
+        # MailForm uses ``text`` for the body (TeamMailForm uses ``message``).
+        initial.setdefault('text', template.text)
+        initial.setdefault('message', template.text)
+        if template.reply_to:
+            initial.setdefault('reply_to', template.reply_to)
+        if template.bcc:
+            initial.setdefault('bcc', template.bcc)
+
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+        if request.POST.get('action') == 'preview':
+            # Relax ALL required validation for preview — preview should always
+            # work regardless of recipient/filter selection, showing a warning
+            # if no recipients match.
+            for field_name in list(form.fields.keys()):
+                form.fields[field_name].required = False
+                if hasattr(form.fields[field_name], 'one_required'):
+                    form.fields[field_name].one_required = False
+            # Also bypass cross-field clean() validation
+            form.draft_save = True
+        if form.is_valid():
+            return self.form_valid(form)
+        return self.form_invalid(form)
+
+    def form_invalid(self, form):
+        if self.request.POST.get('action') == 'preview' and self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'error': True}, status=400)
+        return super().form_invalid(form)
 
     def form_valid(self, form):
         action = self.request.POST.get('action')
@@ -216,15 +266,23 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
         if form.cleaned_data.get('recipients') == 'individual':
             individual_attendees = form.cleaned_data.get('individual_attendees')
             if not individual_attendees and not is_draft:
-                form.add_error('individual_attendees', _('Please select at least one attendee.'))
-                return self.form_invalid(form)
-            orders = form.resolve_orders()
+                if self.request.headers.get('x-requested-with') == 'XMLHttpRequest' and action == 'preview':
+                    orders = form.resolve_orders()
+                else:
+                    form.add_error('individual_attendees', _('Please select at least one attendee.'))
+                    return self.form_invalid(form)
+            else:
+                orders = form.resolve_orders()
         else:
             orders = form.resolve_orders()
 
+        self.preview_warning = None
         if not orders and not is_draft:
-            messages.error(self.request, _('There are no orders matching this selection.'))
-            return self.get(self.request, *self.args, **self.kwargs)
+            if self.request.headers.get('x-requested-with') == 'XMLHttpRequest' and action == 'preview':
+                self.preview_warning = _('Preview generated with sample recipient data because no recipient is currently selected.')
+            else:
+                messages.error(self.request, _('There are no orders matching this selection.'))
+                return self.get(self.request, *self.args, **self.kwargs)
 
         if action == 'preview':
             self.output = {}
@@ -234,9 +292,11 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
                     context_dict = build_email_preview_context(
                         self.request.event, ['event', 'order', 'position_or_address']
                     )
-                    subject = nh3.clean(form.cleaned_data['subject'].localize(l), tags=set())
+                    subject_val = form.cleaned_data.get('subject') or LazyI18nString({self.request.event.settings.locale or 'en': ''})
+                    subject = nh3.clean(subject_val.localize(l), tags=set())
                     preview_subject = nh3.clean(subject.format_map(context_dict), tags=set())
-                    message = form.cleaned_data['text'].localize(l)
+                    text_val = form.cleaned_data.get('text') or LazyI18nString({self.request.event.settings.locale or 'en': ''})
+                    message = text_val.localize(l)
                     message_preview = expand_email_variable_chips(
                         message.format_map(context_dict), dict(context_dict)
                     )
@@ -246,6 +306,15 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
                         'subject': _('Subject: {subject}').format(subject=preview_subject),
                         'html': preview_text,
                     }
+
+            if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                html = render_to_string('pretixplugins/sendmail/_mail_preview.html', {
+                    'output': self.output,
+                    'mail_count': self.mail_count,
+                    'form': form,
+                    'preview_warning': self.preview_warning,
+                }, request=self.request)
+                return JsonResponse({'success': True, 'html': html})
 
             return self.get(self.request, *self.args, **self.kwargs)
 
@@ -369,21 +438,104 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
         ctx = super().get_context_data(*args, **kwargs)
         ctx['output'] = getattr(self, 'output', None)
         ctx['mail_count'] = getattr(self, 'mail_count', 0)
+        ctx['preview_warning'] = getattr(self, 'preview_warning', None)
         ctx['draft_id'] = getattr(self, 'draft_id', self.request.POST.get('draft_id', None))
         ctx['recipient_count'] = getattr(self, 'recipient_count', 0)
         ctx['is_draft'] = bool(ctx['draft_id'])
         return ctx
 
 
-class MailTemplatesView(EventSettingsViewMixin, EventSettingsFormView):
-    model = Event
+class MailTemplatesView(EventPermissionRequiredMixin, TemplateView):
+    """Talk-style list of custom + transactional email templates."""
+
     template_name = 'pretixplugins/sendmail/mail_templates.html'
-    form_class = MailContentSettingsForm
-    permission = 'can_change_event_settings'
+    permission = 'can_change_orders'
+
+    def get_system_templates(self):
+        event = self.request.event
+        locale = event.settings.locale or 'en'
+        defs = get_system_mail_template_defs(event)
+
+        def subject_preview(setting_key):
+            value = event.settings.get(setting_key)
+            if value is None:
+                return ''
+            if hasattr(value, 'localize'):
+                text = str(value.localize(locale))
+            else:
+                text = str(value)
+            text = ' '.join(text.split())
+            if len(text) > 120:
+                return text[:117] + '…'
+            return text
+
+        rows = []
+        for key, meta in defs.items():
+            rows.append(
+                {
+                    'key': key,
+                    'label': meta['label'],
+                    'badge_class': meta['badge_class'],
+                    'subject': subject_preview(meta['preview_key']),
+                    'edit_url': reverse(
+                        'control:event.mail.templates.system',
+                        kwargs={
+                            'organizer': event.organizer.slug,
+                            'event': event.slug,
+                            'template_key': key,
+                        },
+                    ),
+                }
+            )
+        return rows
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['is_meetup_event'] = is_meetup_event(self.request.event)
+        context['custom_templates'] = TicketMailTemplate.objects.filter(
+            event=self.request.event
+        ).select_related('event__organizer')
+        context['system_templates'] = self.get_system_templates()
+        context['can_manage_custom_templates'] = self.request.user.has_event_permission(
+            self.request.organizer,
+            self.request.event,
+            'can_change_orders',
+            request=self.request,
+        )
+        context['can_change_event_settings'] = self.request.user.has_event_permission(
+            self.request.organizer,
+            self.request.event,
+            'can_change_event_settings',
+            request=self.request,
+        )
+        return context
+
+
+class MailSystemTemplateUpdateView(EventSettingsViewMixin, EventSettingsFormView):
+    """Edit a single transactional template — matches Talk's one-template edit page."""
+
+    model = Event
+    template_name = 'pretixplugins/sendmail/mail_template_system_edit.html'
+    form_class = MailContentSettingsForm
+    permission = 'can_change_event_settings'
+
+    def dispatch(self, request, *args, **kwargs):
+        self.template_key = kwargs.get('template_key')
+        self.template_meta = get_system_mail_template_defs(request.event).get(self.template_key)
+        if not self.template_meta:
+            raise Http404(_('Unknown email template.'))
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['template_key'] = self.template_key
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['template_key'] = self.template_key
+        context['template_label'] = self.template_meta['label']
+        context['template_fields'] = self.template_meta['fields']
+        context['template_exclude'] = self.template_meta.get('exclude') or ()
         return context
 
     def form_invalid(self, form):
@@ -407,13 +559,130 @@ class MailTemplatesView(EventSettingsViewMixin, EventSettingsFormView):
                 data={k: form.cleaned_data.get(k) for k in form.changed_data},
             )
         messages.success(self.request, _('Your changes have been saved.'))
-        return redirect(reverse(
+        return redirect(
+            reverse(
+                'control:event.mail.templates',
+                kwargs={
+                    'organizer': self.request.event.organizer.slug,
+                    'event': self.request.event.slug,
+                },
+            )
+        )
+
+
+class TicketMailTemplateMixin:
+    """Shared helpers for custom Ticket mail template CRUD."""
+
+    permission = 'can_change_orders'
+    model = TicketMailTemplate
+    context_object_name = 'template'
+
+    def get_queryset(self):
+        return TicketMailTemplate.objects.filter(event=self.request.event)
+
+    def get_success_url(self):
+        return reverse(
             'control:event.mail.templates',
             kwargs={
                 'organizer': self.request.event.organizer.slug,
                 'event': self.request.event.slug,
             },
-        ))
+        )
+
+
+class TicketMailTemplateCreateView(TicketMailTemplateMixin, EventPermissionRequiredMixin, CreateView):
+    form_class = TicketMailTemplateForm
+    template_name = 'pretixplugins/sendmail/custom_template_form.html'
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['event'] = self.request.event
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['is_create'] = True
+        locales = self.request.event.settings.get('locales') or [self.request.event.locale or 'en']
+        if isinstance(locales, str):
+            locales = [locales]
+        ctx['normalized_locales'] = locales
+        return ctx
+
+    @transaction.atomic
+    def form_valid(self, form):
+        form.instance.event = self.request.event
+        response = super().form_valid(form)
+        self.request.event.log_action(
+            'eventyay.plugins.sendmail.ticket_mail_template.created',
+            user=self.request.user,
+            data={'id': self.object.pk, 'subject': str(self.object.subject)},
+        )
+        messages.success(self.request, _('The template has been created.'))
+        return response
+
+
+class TicketMailTemplateUpdateView(TicketMailTemplateMixin, EventPermissionRequiredMixin, UpdateView):
+    form_class = TicketMailTemplateForm
+    template_name = 'pretixplugins/sendmail/custom_template_form.html'
+    pk_url_kwarg = 'pk'
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['event'] = self.request.event
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['is_create'] = False
+        locales = self.request.event.settings.get('locales') or [self.request.event.locale or 'en']
+        if isinstance(locales, str):
+            locales = [locales]
+        ctx['normalized_locales'] = locales
+        return ctx
+
+    @transaction.atomic
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        if form.has_changed():
+            self.request.event.log_action(
+                'eventyay.plugins.sendmail.ticket_mail_template.changed',
+                user=self.request.user,
+                data={
+                    'id': self.object.pk,
+                    **{
+                        k: self._serialize_log_value(form.cleaned_data.get(k))
+                        for k in form.changed_data
+                    },
+                },
+            )
+        messages.success(self.request, _('The template has been saved.'))
+        return response
+
+    @staticmethod
+    def _serialize_log_value(value):
+        """Make log_action payloads JSON-safe (LazyI18nString → dict/str)."""
+        if isinstance(value, LazyI18nString):
+            data = getattr(value, 'data', None)
+            if isinstance(data, dict):
+                return {str(k): str(v) for k, v in data.items()}
+            return str(value)
+        return value
+
+
+class TicketMailTemplateDeleteView(TicketMailTemplateMixin, EventPermissionRequiredMixin, DeleteView):
+    template_name = 'pretixplugins/sendmail/custom_template_delete.html'
+    pk_url_kwarg = 'pk'
+
+    @transaction.atomic
+    def form_valid(self, form):
+        self.object = self.get_object()
+        self.request.event.log_action(
+            'eventyay.plugins.sendmail.ticket_mail_template.deleted',
+            user=self.request.user,
+            data={'id': self.object.pk, 'subject': str(self.object.subject)},
+        )
+        messages.success(self.request, _('The template has been deleted.'))
+        return super().form_valid(form)
 
 
 class OutboxListView(EventPermissionRequiredMixin, QueryFilterOrderingMixin, ListView):
@@ -587,10 +856,27 @@ class EditEmailQueueView(EventPermissionRequiredMixin, UpdateView):
             ctx['attachments_files'] = []
 
         ctx['output'] = getattr(self, 'output', None)
+        ctx['mail_count'] = getattr(self, 'mail_count', None) or 0
+        ctx['preview_warning'] = getattr(self, 'preview_warning', None)
 
         return ctx
 
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.get_form()
+        if request.POST.get('action') == 'preview':
+            # Relax ALL required validation for preview
+            for field_name in list(form.fields.keys()):
+                form.fields[field_name].required = False
+                if hasattr(form.fields[field_name], 'one_required'):
+                    form.fields[field_name].one_required = False
+        if form.is_valid():
+            return self.form_valid(form)
+        return self.form_invalid(form)
+
     def form_invalid(self, form):
+        if self.request.POST.get('action') == 'preview' and self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'error': True}, status=400)
         messages.error(self.request, _('We could not save the email. See below for details.'))
         return super().form_invalid(form)
 
@@ -641,6 +927,20 @@ class EditEmailQueueView(EventPermissionRequiredMixin, UpdateView):
                         'subject': _('Subject: {subject}').format(subject=subject_preview),
                         'html': compile_email_body(message_preview),
                     }
+
+            self.mail_count = len(form.cleaned_data.get('emails', []))
+            self.preview_warning = None
+            if self.mail_count == 0:
+                self.preview_warning = _('Preview generated with sample recipient data because no recipient is currently selected.')
+
+            if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                html = render_to_string('pretixplugins/sendmail/_mail_preview.html', {
+                    'output': self.output,
+                    'mail_count': getattr(self, 'mail_count', 0),
+                    'form': form,
+                    'preview_warning': self.preview_warning
+                }, request=self.request)
+                return JsonResponse({'success': True, 'html': html})
 
             return self.get(self.request, *self.args, **self.kwargs)
 
@@ -867,12 +1167,28 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyTo
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['output'] = getattr(self, 'output', None)
+        ctx['mail_count'] = getattr(self, 'mail_count', 0)
+        ctx['preview_warning'] = getattr(self, 'preview_warning', None)
         ctx['draft_id'] = getattr(self, 'draft_id', self.request.POST.get('draft_id', None))
         ctx['recipient_count'] = getattr(self, 'recipient_count', 0)
         ctx['is_draft'] = bool(ctx['draft_id'])
         return ctx
 
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+        if request.POST.get('action') == 'preview':
+            # Relax ALL required validation for preview
+            for field_name in list(form.fields.keys()):
+                form.fields[field_name].required = False
+                if hasattr(form.fields[field_name], 'one_required'):
+                    form.fields[field_name].one_required = False
+        if form.is_valid():
+            return self.form_valid(form)
+        return self.form_invalid(form)
+
     def form_invalid(self, form):
+        if self.request.POST.get('action') == 'preview' and self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'error': True}, status=400)
         messages.error(self.request, _('We could not save the email. See below for details.'))
         return super().form_invalid(form)
 
@@ -922,8 +1238,8 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyTo
                 messages.error(self.request, _('Failed to send test email: {error}').format(error=str(e)))
 
             return self.render_to_response(self.get_context_data(form=form))
-        subject = form.cleaned_data['subject']
-        message = form.cleaned_data['message']
+        subject = form.cleaned_data.get('subject') or LazyI18nString({self.request.event.settings.locale or 'en': ''})
+        message = form.cleaned_data.get('message') or LazyI18nString({self.request.event.settings.locale or 'en': ''})
 
         self.output = {}
         for l in event.settings.locales:
@@ -954,7 +1270,26 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyTo
                         'html': compile_email_body(message_preview),
                     }
 
+        preview_recipients = form.get_recipient_preview(user=user)
+        
+        self.mail_count = len(preview_recipients)
+        self.preview_warning = None
+        if not preview_recipients and not is_draft:
+            if self.request.headers.get('x-requested-with') == 'XMLHttpRequest' and self.request.POST.get('action') == 'preview':
+                self.preview_warning = _('Preview generated with sample recipient data because no recipient is currently selected.')
+            else:
+                messages.error(self.request, _('There are no team members matching this selection.'))
+                return self.get(self.request, *self.args, **self.kwargs)
+
         if self.request.POST.get('action') == 'preview':
+            if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                html = render_to_string('pretixplugins/sendmail/_mail_preview.html', {
+                    'output': self.output,
+                    'mail_count': self.mail_count if hasattr(self, 'mail_count') else 0,
+                    'form': form,
+                    'preview_warning': getattr(self, 'preview_warning', None),
+                }, request=self.request)
+                return JsonResponse({'success': True, 'html': html})
             return self.get(self.request, *self.args, **self.kwargs)
 
         recipients_list = []

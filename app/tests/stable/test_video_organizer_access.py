@@ -111,7 +111,7 @@ def test_video_announcements_live_feature_default():
     fake_event.timezone = 'UTC'
 
     data = _config_serializer(fake_event).data
-    assert data['live_features']['announcements'] is True
+    assert data['live_features']['announcements'] is False
     assert data['live_features']['chat_rooms'] is True
 
 
@@ -456,7 +456,7 @@ def test_is_announcements_enabled_helper():
     from eventyay.features.live.modules.announcement import is_announcements_enabled
 
     event_default = MagicMock(config={})
-    assert is_announcements_enabled(event_default) is True
+    assert is_announcements_enabled(event_default) is False
 
     event_enabled = MagicMock(config={'live_features': {'announcements': True}})
     assert is_announcements_enabled(event_enabled) is True
@@ -465,7 +465,7 @@ def test_is_announcements_enabled_helper():
     assert is_announcements_enabled(event_disabled) is False
 
     event_none_config = MagicMock(config=None)
-    assert is_announcements_enabled(event_none_config) is True
+    assert is_announcements_enabled(event_none_config) is False
 
 
 @pytest.mark.asyncio
@@ -531,6 +531,74 @@ def test_apply_live_team_video_traits_passes_session_key(monkeypatch):
     # With matching session key: admin should be present
     result_valid = apply_live_team_video_traits(fake_event, 'token123', initial_traits, session_key='valid_session')
     assert 'admin' in result_valid
+
+
+@pytest.mark.asyncio
+async def test_kiosk_commands_disabled_when_kiosks_feature_disabled():
+    from unittest.mock import AsyncMock
+    from eventyay.features.live.modules.auth import AuthModule
+
+    fake_consumer = MagicMock()
+    fake_consumer.user = MagicMock()
+    fake_consumer.event = MagicMock()
+    fake_consumer.event.has_permission_async = AsyncMock(return_value=True)
+    fake_consumer.event.config = {'live_features': {'kiosks': False}}
+    fake_consumer.send_error = AsyncMock()
+
+    module = AuthModule(fake_consumer)
+    await module.kiosk_create({'profile': {'name': 'Test Kiosk'}})
+    fake_consumer.send_error.assert_called_with(code='kiosks.disabled', message='Kiosks are currently disabled.')
+
+    fake_consumer.send_error.reset_mock()
+    await module.kiosk_fetch({'id': 'some-id'})
+    fake_consumer.send_error.assert_called_with(code='kiosks.disabled', message='Kiosks are currently disabled.')
+
+    fake_consumer.send_error.reset_mock()
+    await module.kiosk_update({'id': 'some-id', 'profile': {'name': 'Updated'}})
+    fake_consumer.send_error.assert_called_with(code='kiosks.disabled', message='Kiosks are currently disabled.')
+
+
+def test_live_features_existing_saved_settings_preserved():
+    from eventyay.base.services.event import _config_serializer
+
+    fake_event = MagicMock()
+    fake_event.id = 1
+    fake_event.slug = 'demo-event'
+    fake_event.config = {
+        'live_features': {
+            'chat_rooms': True,
+            'kiosks': True,
+            'direct_messaging': True,
+            'announcements': True,
+        }
+    }
+    fake_event.locale = 'en'
+    fake_event.roles = {}
+    fake_event.trait_grants = {}
+    fake_event.timezone = 'UTC'
+
+    data = _config_serializer(fake_event).data
+    assert data['live_features']['chat_rooms'] is True
+    assert data['live_features']['kiosks'] is True
+    assert data['live_features']['direct_messaging'] is True
+    assert data['live_features']['announcements'] is True
+
+    # Empty config -> all False by default
+    fake_event_empty = MagicMock()
+    fake_event_empty.id = 2
+    fake_event_empty.slug = 'empty-event'
+    fake_event_empty.config = {}
+    fake_event_empty.locale = 'en'
+    fake_event_empty.roles = {}
+    fake_event_empty.trait_grants = {}
+    fake_event_empty.timezone = 'UTC'
+
+    data_empty = _config_serializer(fake_event_empty).data
+    assert data_empty['live_features']['chat_rooms'] is False
+    assert data_empty['live_features']['kiosks'] is False
+    assert data_empty['live_features']['direct_messaging'] is False
+    assert data_empty['live_features']['announcements'] is False
+
 
 
 
