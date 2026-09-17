@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
             name='ThirdPartyService',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.SlugField(help_text='Short machine name, e.g. "google-analytics". Used to match blocked scripts.', max_length=100, unique=True, verbose_name='Service identifier')),
+                ('name', models.SlugField(help_text='Short machine name, e.g. "google-analytics". Consent-gated embeds refer to the service by this name.', max_length=100, unique=True, verbose_name='Service identifier')),
                 ('title', models.CharField(max_length=200, verbose_name='Display name')),
                 ('provider', models.CharField(blank=True, max_length=200, verbose_name='Provider')),
                 ('purpose', models.TextField(blank=True, verbose_name='Description / purpose')),

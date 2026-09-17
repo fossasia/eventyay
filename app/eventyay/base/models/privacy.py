@@ -1,5 +1,6 @@
 from django.core.validators import URLValidator
 from django.db import models
+from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
 
@@ -38,6 +39,20 @@ def enabled_consent_categories(settings):
     ]
 
 
+def published_services(settings):
+    """
+    Services that are published in the Klaro configuration.
+
+    Only these can ever be consented to: strictly necessary services, plus
+    enabled services whose category an administrator has switched on. Anything
+    gated on consent must check against this set, otherwise it waits on a
+    service Klaro does not know about and stays blocked forever.
+    """
+    return ThirdPartyService.objects.filter(enabled=True).filter(
+        Q(category=ConsentCategory.NECESSARY) | Q(category__in=enabled_consent_categories(settings))
+    )
+
+
 class ConsentProvider(models.TextChoices):
     """ConsentProvider class implementation."""
     DISABLED = 'disabled', _('Disabled')
@@ -50,15 +65,20 @@ class ThirdPartyService(models.Model):
     Admin-managed registry of third-party services and the consent category
     each one belongs to.
 
-    The registry is what the frontend consent layer is built from: every
-    optional service listed here is blocked until its category is accepted.
+    The registry is what the Klaro configuration is built from. Registering a
+    service lists it in the consent modal and lets Klaro clear its cookies when
+    consent is declined or withdrawn. It does not block anything on its own:
+    only content rendered through a consent-gated tag such as
+    ``{% consent_embed %}`` is held back until the visitor consents.
     """
 
     name = models.SlugField(
         max_length=100,
         unique=True,
         verbose_name=_('Service identifier'),
-        help_text=_('Short machine name, e.g. "google-analytics". Used to match blocked scripts.'),
+        help_text=_(
+            'Short machine name, e.g. "google-analytics". Consent-gated embeds refer to the service by this name.'
+        ),
     )
     title = models.CharField(max_length=200, verbose_name=_('Display name'))
     provider = models.CharField(max_length=200, blank=True, verbose_name=_('Provider'))

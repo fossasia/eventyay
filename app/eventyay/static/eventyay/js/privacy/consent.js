@@ -16,6 +16,38 @@ if (configElement && klaro) {
     window.klaroConfig = config;
     klaro.setup(config);
 
+    // Klaro only knows how to link a privacy policy, so the cookie policy link
+    // is added to the notice and to the preference modal here. Klaro re-renders
+    // its own markup, so the link is restored whenever it is dropped.
+    const cookiePolicy = config.eventyayCookiePolicy;
+    if (cookiePolicy) {
+        const buildCookiePolicyLink = () => {
+            const paragraph = document.createElement('p');
+            paragraph.className = 'eventyay-cookie-policy';
+            const link = document.createElement('a');
+            link.href = cookiePolicy.url;
+            link.textContent = cookiePolicy.label;
+            paragraph.appendChild(link);
+            return paragraph;
+        };
+
+        const ensureCookiePolicyLinks = () => {
+            const noticeText = document.getElementById('id-cookie-notice');
+            if (noticeText && !noticeText.parentElement.querySelector('.eventyay-cookie-policy')) {
+                noticeText.after(buildCookiePolicyLink());
+            }
+            document.querySelectorAll('.cm-header').forEach((header) => {
+                if (!header.querySelector('.eventyay-cookie-policy')) {
+                    header.appendChild(buildCookiePolicyLink());
+                }
+            });
+        };
+
+        const klaroRoot = document.getElementById(config.elementID) || document.body;
+        new MutationObserver(ensureCookiePolicyLinks).observe(klaroRoot, { childList: true, subtree: true });
+        ensureCookiePolicyLinks();
+    }
+
     // Footer "Privacy settings" entry point, and the button inside every
     // blocked-embed placeholder.
     document.querySelectorAll('[data-privacy-settings]').forEach((trigger) => {

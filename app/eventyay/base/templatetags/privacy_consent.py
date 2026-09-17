@@ -1,11 +1,14 @@
+from urllib.parse import urlsplit
+
 from django import template
 from django.utils.html import json_script
+from django.utils.translation import gettext
 
 from eventyay.base.models.privacy import (
     ConsentCategory,
     ConsentProvider,
-    ThirdPartyService,
     enabled_consent_categories,
+    published_services,
 )
 from eventyay.base.settings import GlobalSettingsObject
 
@@ -13,6 +16,22 @@ from eventyay.base.settings import GlobalSettingsObject
 register = template.Library()
 
 CONFIG_ELEMENT_ID = 'klaro-config'
+
+
+def public_http_url(value):
+    """
+    Return ``value`` only when it is an absolute http(s) URL, else ``''``.
+
+    Policy URLs end up in ``href`` attributes on every public page. The settings
+    form validates them, but values stored before that validation existed (or
+    written outside the form) must still never reach visitors as, for example,
+    a ``javascript:`` link.
+    """
+    value = (value or '').strip()
+    parts = urlsplit(value)
+    if parts.scheme.lower() in ('http', 'https') and parts.netloc:
+        return value
+    return ''
 
 
 def build_consent_config():
@@ -29,25 +48,28 @@ def build_consent_config():
     if provider != ConsentProvider.KLARO:
         return None
 
-    enabled = enabled_consent_categories(settings)
-    services = ThirdPartyService.objects.filter(enabled=True)
-
-    return {
+    config = {
         'elementID': 'klaro',
         'storageMethod': 'cookie',
         'cookieName': 'eventyay_consent',
-        'privacyPolicy': settings.get('privacy_policy_url') or '',
-        'cookiePolicy': settings.get('privacy_cookie_policy_url') or '',
-        # Opt-in: nothing optional runs until the visitor accepts it.
+        # Klaro links this from the preference modal.
+        'privacyPolicy': public_http_url(settings.get('privacy_policy_url')),
+        # Opt-in: Klaro reports no consent for optional services until accepted.
         'default': False,
         'mustConsent': False,
         'acceptAll': True,
         'hideDeclineAll': False,
-        'purposes': [ConsentCategory.NECESSARY.value] + enabled,
-        'services': [
-            service.serialize_public() for service in services if service.required or service.category in enabled
-        ],
+        'purposes': [ConsentCategory.NECESSARY.value] + enabled_consent_categories(settings),
+        'services': [service.serialize_public() for service in published_services(settings)],
     }
+
+    # Klaro has no cookie policy option, so consent.js adds this link to the
+    # notice and the preference modal itself. Klaro ignores keys it does not know.
+    cookie_policy_url = public_http_url(settings.get('privacy_cookie_policy_url'))
+    if cookie_policy_url:
+        config['eventyayCookiePolicy'] = {'url': cookie_policy_url, 'label': gettext('Cookie Policy')}
+
+    return config
 
 
 @register.simple_tag
@@ -74,6 +96,13 @@ def consent_provider():
 
 
 @register.simple_tag
+def cookie_policy_url():
+    """The Cookie Policy URL, if it is safe to link to from a public page."""
+    gs = GlobalSettingsObject()
+    return public_http_url(gs.settings.get('privacy_cookie_policy_url'))
+
+
+@register.simple_tag
 def external_cmp_script():
     """external_cmp_script method."""
     gs = GlobalSettingsObject()
@@ -87,18 +116,27 @@ def consent_embed(service, src, title=''):
     """
     Render a third-party embed behind contextual consent.
 
-    Only the built-in banner can unblock a placeholder, because
-    ``revealConsentedEmbeds`` ships with the Klaro bootstrap. Under the other
-    providers the embed is rendered directly instead: with consent disabled
+    A placeholder is only emitted when the visitor can actually unblock it: the
+    built-in banner must be active, and ``service`` must be published in the
+    Klaro configuration. consent.js swaps the placeholder in once
+    ``getConsent(service)`` is true, which never happens for a service Klaro
+    does not know about (unregistered, disabled, or in a category that is
+    switched off).
+
+    In every other case the embed is rendered directly. With consent disabled
     there is nothing to gate on, and an external CMP does its own blocking of
-    third-party frames. Emitting a placeholder in those modes would leave the
-    content permanently unreachable.
+    third-party frames. Emitting a placeholder there would leave the content
+    permanently unreachable.
     """
     gs = GlobalSettingsObject()
     provider = gs.settings.get('privacy_consent_provider') or ConsentProvider.DISABLED
+    blocked = (
+        provider == ConsentProvider.KLARO
+        and published_services(gs.settings).filter(name=service).exists()
+    )
     return {
         'service': service,
         'src': src,
         'title': title,
-        'blocked': provider == ConsentProvider.KLARO,
+        'blocked': blocked,
     }

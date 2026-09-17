@@ -24,9 +24,13 @@
 
 {% consent_provider as provider %}
 {% if provider == 'klaro' %}
+    {% cookie_policy_url as cookie_policy %}
     <nav class="core-footer-nav" aria-label="{% translate 'Privacy' %}">
         <div class="core-footer-links-container">
             <a href="#" class="core-footer-link" data-privacy-settings>{% translate "Privacy settings" %}</a>
+            {% if cookie_policy %}
+                <a href="{% safelink cookie_policy %}" class="core-footer-link">{% translate "Cookie Policy" %}</a>
+            {% endif %}
         </div>
     </nav>
 {% endif %}

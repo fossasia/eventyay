@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 import pytest
+from django import forms
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -9,7 +10,6 @@ from django.utils.timezone import now
 
 from eventyay.base.configurations.default_setting import DEFAULT_SETTINGS
 from eventyay.base.models import User
-
 from eventyay.base.models.privacy import ConsentCategory, ConsentProvider, ThirdPartyService
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.templatetags.privacy_consent import (
@@ -140,11 +140,41 @@ def test_service_title_cannot_break_out_of_the_config_script(gs):
     assert service['title'] == '</script><script>window.pwned = true;</script>'
 
 
+@pytest.fixture
+def youtube(gs):
+    """An embed service that is published in the Klaro config."""
+    gs.settings.set('privacy_category_embed_enabled', True)
+    return ThirdPartyService.objects.create(name='youtube', title='YouTube', category=ConsentCategory.EMBED)
+
+
 @pytest.mark.django_db
-def test_embed_is_blocked_only_under_the_builtin_banner(gs):
-    """Embed is blocked only under the builtin banner."""
+def test_embed_is_blocked_when_klaro_can_grant_consent(youtube):
+    """The placeholder is only worth rendering when Klaro knows the service."""
     context = consent_embed('youtube', 'https://example.org/v', 'Talk recording')
     assert context['blocked'] is True
+
+
+@pytest.mark.django_db
+def test_embed_renders_directly_when_embed_category_is_off(gs, youtube):
+    """With the category off the service is left out of the config, so consent could never be given."""
+    gs.settings.set('privacy_category_embed_enabled', False)
+    context = consent_embed('youtube', 'https://example.org/v', 'Talk recording')
+    assert context['blocked'] is False
+
+
+@pytest.mark.django_db
+def test_embed_renders_directly_when_service_is_disabled(youtube):
+    youtube.enabled = False
+    youtube.save()
+    context = consent_embed('youtube', 'https://example.org/v', 'Talk recording')
+    assert context['blocked'] is False
+
+
+@pytest.mark.django_db
+def test_embed_renders_directly_when_service_is_not_registered(gs):
+    gs.settings.set('privacy_category_embed_enabled', True)
+    context = consent_embed('vimeo', 'https://example.org/v', 'Talk recording')
+    assert context['blocked'] is False
 
 
 @pytest.mark.django_db
@@ -249,6 +279,13 @@ class TestPrivacySettingsFormRequiresPolicyLinks:
         assert not form.is_valid()
         assert 'privacy_cookie_policy_url' in form.errors
 
+    @pytest.mark.parametrize('field', ['privacy_policy_url', 'privacy_cookie_policy_url'])
+    def test_javascript_policy_url_is_rejected(self, field):
+        form = PrivacySettingsForm(data=self._data(**{field: 'javascript:alert(1)'}))
+
+        assert not form.is_valid()
+        assert field in form.errors
+
     def test_klaro_with_both_policy_urls_is_accepted(self):
         form = PrivacySettingsForm(data=self._data())
 
@@ -280,6 +317,56 @@ def test_cookie_regex_pattern_reaches_the_payload_unchanged(gs):
     service = ThirdPartyService.objects.get(name='google-analytics')
 
     assert service.serialize_public()['cookies'] == ['_ga', '^_ga_']
+
+
+@pytest.mark.django_db
+def test_cookie_policy_is_passed_as_a_link_klaro_can_show(gs):
+    """Klaro has no ``cookiePolicy`` option; the link is handed to consent.js instead."""
+    config = build_consent_config()
+
+    assert 'cookiePolicy' not in config
+    assert config['eventyayCookiePolicy'] == {'url': 'https://example.org/cookies', 'label': 'Cookie Policy'}
+
+
+@pytest.mark.django_db
+def test_privacy_policy_reaches_klaro(gs):
+    gs.settings.set('privacy_policy_url', 'https://example.org/privacy')
+
+    assert build_consent_config()['privacyPolicy'] == 'https://example.org/privacy'
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('unsafe', ['javascript:alert(1)', ' JavaScript:alert(1)', 'data:text/html,x', '/relative'])
+def test_non_http_policy_urls_never_reach_the_public_config(gs, unsafe):
+    """Values stored before URL validation (or outside the form) must not become links."""
+    gs.settings.set('privacy_policy_url', unsafe)
+    gs.settings.set('privacy_cookie_policy_url', unsafe)
+
+    config = build_consent_config()
+
+    assert config['privacyPolicy'] == ''
+    assert 'eventyayCookiePolicy' not in config
+
+
+@pytest.mark.django_db
+def test_footer_links_the_cookie_policy_under_klaro(gs):
+    html = render_to_string('common/includes/core_footer.html', {})
+
+    assert 'Cookie Policy' in html
+
+
+@pytest.mark.django_db
+def test_footer_omits_an_unsafe_cookie_policy_link(gs):
+    gs.settings.set('privacy_cookie_policy_url', 'javascript:alert(1)')
+
+    html = render_to_string('common/includes/core_footer.html', {})
+
+    assert 'Cookie Policy' not in html
+
+
+@pytest.mark.parametrize('key', ['privacy_policy_url', 'privacy_cookie_policy_url'])
+def test_policy_url_settings_are_url_fields(key):
+    assert DEFAULT_SETTINGS[key]['form_class'] is forms.URLField
 
 
 def test_consent_provider_setting_declares_its_choices():

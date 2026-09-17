@@ -3193,8 +3193,8 @@ COUNTRIES_WITH_STATE = {
 
 
 # --- Privacy & Compliance -------------------------------------------------
-# Consent is opt-in: every optional category defaults to False so that no
-# non-essential script can run before the visitor has actively accepted it.
+# Consent is opt-in: every optional category defaults to False, so Klaro
+# reports no consent for optional services until the visitor accepts them.
 DEFAULT_SETTINGS.update(
     {
         'privacy_consent_provider': {
@@ -3226,15 +3226,17 @@ DEFAULT_SETTINGS.update(
         'privacy_policy_url': {
             'default': '',
             'type': str,
-            'form_class': forms.CharField,
-            'serializer_class': serializers.CharField,
+            # Both policy URLs are rendered as links on every public page, so
+            # reject non-URL values such as ``javascript:`` at input time.
+            'form_class': forms.URLField,
+            'serializer_class': serializers.URLField,
             'form_kwargs': dict(required=False, label=_('Privacy Policy URL')),
         },
         'privacy_cookie_policy_url': {
             'default': '',
             'type': str,
-            'form_class': forms.CharField,
-            'serializer_class': serializers.CharField,
+            'form_class': forms.URLField,
+            'serializer_class': serializers.URLField,
             'form_kwargs': dict(required=False, label=_('Cookie Policy URL')),
         },
     }

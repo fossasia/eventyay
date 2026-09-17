@@ -75,6 +75,13 @@
     </form>
 
     <h2>{% trans "Third-party services" %}</h2>
+    <p class="help-block">
+        {% blocktrans trimmed %}
+            Registering a service lists it in the consent banner and lets the banner clear its cookies when
+            consent is declined or withdrawn. It does not block the service's scripts by itself: only embedded
+            content shown through a consent placeholder waits for the visitor's consent.
+        {% endblocktrans %}
+    </p>
     <table class="table">
         <thead>
             <tr>
