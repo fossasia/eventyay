@@ -383,26 +383,25 @@ def calculate_ticket_fee(
                 max_fee = round_decimal(override.maximum_fee, currency=event.currency)
 
     if max_fee is None:
-        try:
-            gs = GlobalSettingsObject()
-            raw_max_fee = gs.settings.get('ticket_fee_maximum', as_type=Decimal, default=Decimal('0.00'))
-        except Exception:
-            raw_max_fee = Decimal('0.00')
+        gs = GlobalSettingsObject()
+        raw_max_fee = gs.settings.get('ticket_fee_maximum', as_type=Decimal, default=Decimal('0.00'))
 
         if raw_max_fee and raw_max_fee > Decimal('0.00'):
             base_currency = getattr(settings, 'DEFAULT_CURRENCY', 'USD')
             if event.currency and event.currency != base_currency:
-                try:
-                    rates_dict = gs.settings.get('ecb_rates_dict', as_type=dict)
-                    if rates_dict and base_currency in rates_dict and event.currency in rates_dict:
-                        rate_conv = (
-                            Decimal(rates_dict[event.currency]) / Decimal(rates_dict[base_currency])
-                        ).quantize(Decimal('0.0001'), ROUND_HALF_UP)
-                        max_fee = round_decimal(raw_max_fee * rate_conv, currency=event.currency)
-                    else:
-                        max_fee = round_decimal(raw_max_fee, currency=event.currency)
-                except Exception:
-                    max_fee = round_decimal(raw_max_fee, currency=event.currency)
+                rates_dict = gs.settings.get('ecb_rates_dict', as_type=dict) or {}
+                if base_currency in rates_dict and event.currency in rates_dict:
+                    rate_conv = (
+                        Decimal(str(rates_dict[event.currency])) / Decimal(str(rates_dict[base_currency]))
+                    ).quantize(Decimal('0.0001'), ROUND_HALF_UP)
+                    max_fee = round_decimal(raw_max_fee * rate_conv, currency=event.currency)
+                else:
+                    logger.warning(
+                        'ECB rates unavailable for %s→%s; skipping global fee cap for ticket fee calculation.',
+                        base_currency,
+                        event.currency,
+                    )
+                    max_fee = Decimal('0.00')
             else:
                 max_fee = round_decimal(raw_max_fee, currency=event.currency)
         else:

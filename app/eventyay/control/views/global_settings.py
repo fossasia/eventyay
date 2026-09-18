@@ -136,7 +136,7 @@ class GlobalBusinessSettingsView(AdministratorPermissionRequiredMixin, FormView)
         try:
             from eventyay_business.models import CountryFeeSetting
             ctx['country_fee_settings'] = CountryFeeSetting.objects.all().order_by('country', 'currency')
-        except (ImportError, Exception):
+        except ImportError:
             ctx['country_fee_settings'] = None
         return ctx
 
