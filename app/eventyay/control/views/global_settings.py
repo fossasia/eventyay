@@ -131,6 +131,15 @@ class GlobalBusinessSettingsView(AdministratorPermissionRequiredMixin, FormView)
         messages.error(self.request, _('Your changes have not been saved, see below for errors.'))
         return super().form_invalid(form)
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        try:
+            from eventyay_business.models import CountryFeeSetting
+            ctx['country_fee_settings'] = CountryFeeSetting.objects.all().order_by('country', 'currency')
+        except ImportError:
+            ctx['country_fee_settings'] = None
+        return ctx
+
     def get_success_url(self):
         return reverse('eventyay_admin:admin.global.business')
 

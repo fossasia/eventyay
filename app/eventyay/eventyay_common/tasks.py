@@ -1,8 +1,9 @@
 import base64
+import calendar
 import logging
 from datetime import datetime
 from datetime import timezone as tz
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from typing import Optional, Tuple
 
 from zoneinfo import ZoneInfo
@@ -17,6 +18,7 @@ from django.db import DatabaseError
 from django.db.models import Q
 from django_scopes import scopes_disabled
 
+from eventyay.base.decimal import round_decimal
 from eventyay.base.models.vouchers import InvoiceVoucher
 from eventyay.helpers.stripe_utils import (
     confirm_payment_intent,
@@ -362,6 +364,53 @@ def calculate_ticket_fee(
         return invoice_voucher.limit_events.filter(id=event.id).exists()
 
     ticket_fee = amount * (rate / 100)
+
+    max_fee = None
+    try:
+        from eventyay_business.models import CountryFeeSetting
+    except ImportError:
+        CountryFeeSetting = None
+
+    if CountryFeeSetting is not None:
+        country = event.settings.get('invoice_address_from_country') or event.settings.get('region')
+        if country and event.currency:
+            override = CountryFeeSetting.objects.filter(
+                country=str(country).strip().upper(),
+                currency=str(event.currency).strip().upper(),
+            ).first()
+            if override:
+                ticket_fee = amount * (override.service_fee_percent / Decimal('100.0'))
+                max_fee = round_decimal(override.maximum_fee, currency=event.currency)
+
+    if max_fee is None:
+        gs = GlobalSettingsObject()
+        raw_max_fee = gs.settings.get('ticket_fee_maximum', as_type=Decimal, default=Decimal('0.00'))
+
+        if raw_max_fee and raw_max_fee > Decimal('0.00'):
+            base_currency = getattr(settings, 'DEFAULT_CURRENCY', 'USD')
+            if event.currency and event.currency != base_currency:
+                rates_dict = gs.settings.get('ecb_rates_dict', as_type=dict) or {}
+                if base_currency in rates_dict and event.currency in rates_dict:
+                    rate_conv = (
+                        Decimal(str(rates_dict[event.currency])) / Decimal(str(rates_dict[base_currency]))
+                    ).quantize(Decimal('0.0001'), ROUND_HALF_UP)
+                    max_fee = round_decimal(raw_max_fee * rate_conv, currency=event.currency)
+                else:
+                    logger.warning(
+                        'ECB rates unavailable for %s→%s; skipping global fee cap for ticket fee calculation.',
+                        base_currency,
+                        event.currency,
+                    )
+                    max_fee = Decimal('0.00')
+            else:
+                max_fee = round_decimal(raw_max_fee, currency=event.currency)
+        else:
+            max_fee = Decimal('0.00')
+
+    ticket_fee = round_decimal(ticket_fee, currency=event.currency)
+    if max_fee and max_fee > Decimal('0.00') and ticket_fee > max_fee:
+        ticket_fee = max_fee
+
     final_ticket_fee = ticket_fee
     voucher_discount = Decimal('0.00')
 
@@ -371,34 +420,31 @@ def calculate_ticket_fee(
     return ticket_fee, final_ticket_fee, voucher_discount
 
 
+def _reminder_datetime(year: int, month: int, day: int, *, tzinfo=None) -> Optional[datetime]:
+    """Build a datetime for ``day`` in ``year``/``month``, or ``None`` if that day does not exist."""
+    if day > calendar.monthrange(year, month)[1]:
+        return None
+    return datetime(year, month, day, tzinfo=tzinfo)
+
+
 def get_next_reminder_datetime(reminder_schedule):
     """
-    Get the next reminder datetime based on the reminder schedule
-    @param reminder_schedule:
-    @return:
-    """
-    reminder_schedule.sort()
-    today = timezone.localtime()
-    # Find the next scheduled day in the current month
-    next_reminder = None
-    for day in reminder_schedule:
-        # Create a datetime object for each scheduled
-        try:
-            reminder_date = today.replace(day=day, hour=0, minute=0, second=0, microsecond=0)
-        except ValueError:
-            continue
-        # Check if the scheduled day is in the future
-        if reminder_date > today:
-            next_reminder = reminder_date
-            break
-    if not next_reminder:
-        # Handle month wrapping (December to January)
-        next_month = today.month + 1 if today.month < 12 else 1
-        next_year = today.year if today.month < 12 else today.year + 1
-        # Select the first date in BILLING_REMIND_SCHEDULE for the next month
-        next_reminder = today.replace(year=next_year, month=next_month, day=reminder_schedule[0], hour=0, minute=0, second=0, microsecond=0)
+    Get the next reminder datetime based on the reminder schedule.
 
-    return next_reminder
+    Days that do not exist in a given month (e.g. 29–31 in February) are
+    skipped; search continues into later months until a valid day is found.
+    """
+    days = sorted(reminder_schedule)
+    today = timezone.localtime()
+    cursor = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    # Search current and subsequent months; every month has days 1–28.
+    for _ in range(14):
+        for day in days:
+            reminder_date = _reminder_datetime(cursor.year, cursor.month, day, tzinfo=today.tzinfo)
+            if reminder_date and reminder_date > today:
+                return reminder_date
+        cursor += relativedelta(months=1)
+    return today
 
 
 @shared_task(bind=True)
@@ -440,17 +486,17 @@ def retry_failed_payment(self):
     pending_invoices = BillingInvoice.objects.filter(status=BillingInvoice.STATUS_PENDING)
     today = datetime.now(tz.utc)
     logger.info('Start - running task to retry failed payment: %s', today)
-    timezone = ZoneInfo(settings.TIME_ZONE)
+    local_tz = ZoneInfo(settings.TIME_ZONE)
     for invoice in pending_invoices:
         if invoice.final_ticket_fee <= 0:
             continue
         reminder_dates = invoice.reminder_schedule
         if not reminder_dates or not invoice.stripe_payment_intent_id:
             continue
-        reminder_dates.sort()
-        for reminder_date in reminder_dates:
-            reminder_date = datetime(today.year, today.month, reminder_date)
-            reminder_date = reminder_date.replace(tzinfo=timezone)
+        for reminder_day in sorted(reminder_dates):
+            reminder_date = _reminder_datetime(today.year, today.month, reminder_day, tzinfo=local_tz)
+            if reminder_date is None:
+                continue
             if (
                 not invoice.last_reminder_datetime or invoice.last_reminder_datetime < reminder_date
             ) and reminder_date <= today:
@@ -470,14 +516,13 @@ def check_billing_status_for_warning(self):
     pending_invoices = BillingInvoice.objects.filter(status=BillingInvoice.STATUS_PENDING, reminder_enabled=True)
     today = datetime.now(tz.utc)
     logger.info('Start - running task to check billing status for warning on: %s', today)
-    timezone = ZoneInfo(settings.TIME_ZONE)
+    local_tz = ZoneInfo(settings.TIME_ZONE)
     for invoice in pending_invoices:
         if invoice.final_ticket_fee <= 0:
             continue
         reminder_dates = invoice.reminder_schedule  # [15, 29]
         if not reminder_dates:
             continue
-        reminder_dates.sort()
         # marked invoice as expired if the due date is passed
         if today > (invoice.created_at + relativedelta(months=1)):
             logger.info('Invoice is expired for event %s', invoice.event.name)
@@ -488,9 +533,10 @@ def check_billing_status_for_warning(self):
             invoice.event.live = False
             invoice.event.save()
             continue
-        for reminder_date in reminder_dates:
-            reminder_date = datetime(today.year, today.month, reminder_date)
-            reminder_date = reminder_date.replace(tzinfo=timezone)
+        for reminder_day in sorted(reminder_dates):
+            reminder_date = _reminder_datetime(today.year, today.month, reminder_day, tzinfo=local_tz)
+            if reminder_date is None:
+                continue
             if (
                 not invoice.last_reminder_datetime or invoice.last_reminder_datetime < reminder_date
             ) and reminder_date <= today:

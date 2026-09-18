@@ -2,14 +2,16 @@ import uuid
 from functools import cached_property
 
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Exists, JSONField, OuterRef, Q
 from django.db.models.expressions import RawSQL, Value
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.utils.crypto import get_random_string
 from django.utils.text import slugify
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
+from django_scopes import scope, scopes_disabled
 from rest_framework import serializers
 from i18nfield.fields import I18nCharField
 
@@ -45,6 +47,12 @@ UNSCHEDULED_LINKED_SUBMISSIONS_MESSAGE = _(
 UNSCHEDULED_ROOM_SCHEDULING_MESSAGE = _(
     'Unscheduled rooms cannot be linked to talk sessions.'
 )
+ROOM_DELETE_LINKED_SESSIONS_MESSAGE = _(
+    'This room has linked schedules/sessions. Move or delete those sessions before deleting the room.'
+)
+DELETED_ROOM_SCHEDULING_MESSAGE = _(
+    'Deleted rooms cannot be linked to talk sessions.'
+)
 _LINKED_SUBMISSION_TALK_FILTER = {'submission__isnull': False}
 
 
@@ -56,12 +64,77 @@ def _linked_submission_talkslots(**filters):
 
 def room_has_linked_submissions(room) -> bool:
     """Return whether the room has scheduled talks linked to submissions."""
-    from django_scopes import scope
-
     if 'has_linked_sessions' in room.__dict__:
         return bool(room.has_linked_sessions)
     with scope(event=room.event):
         return _linked_submission_talkslots(room=room).exists()
+
+
+def linked_submission_talks_for_room(room):
+    """
+    Return submission-linked talk slots that block deleting this room.
+
+    Includes every schedule. When the same submission appears more than once,
+    prefer the WIP slot so the delete UI stays one row per session.
+    """
+    with scope(event=room.event):
+        slots = list(
+            _linked_submission_talkslots(room=room)
+            .select_related('submission', 'schedule')
+            .prefetch_related('submission__speakers')
+            .order_by('start', 'submission__title')
+        )
+
+    by_submission = {}
+    for slot in slots:
+        existing = by_submission.get(slot.submission_id)
+        if existing is None:
+            by_submission[slot.submission_id] = slot
+            continue
+        # Prefer WIP (version is null) over released schedule copies.
+        if existing.schedule.version is not None and slot.schedule.version is None:
+            by_submission[slot.submission_id] = slot
+    return list(by_submission.values())
+
+
+def schedule_editor_room_url(event, room) -> str:
+    """Build a schedule-editor URL that focuses a single room."""
+    return f'{event.orga_urls.schedule}?room={room.pk}'
+
+
+@transaction.atomic
+def unassign_linked_sessions_from_room(room) -> int:
+    """
+    Remove this room from all submission-linked talk slots.
+
+    WIP slots are fully unscheduled (room/start/end cleared), matching the
+    schedule editor unassign action. Released schedule slots only clear the
+    room so historical times remain but the room can be deleted.
+
+    Returns the number of distinct linked sessions (matches the delete UI list).
+    """
+    with scope(event=room.event):
+        linked = _linked_submission_talkslots(room=room)
+        session_count = linked.values('submission_id').distinct().count()
+        wip_schedule = room.event.wip_schedule
+        timestamp = now()
+        linked.filter(schedule=wip_schedule).update(
+            room=None,
+            start=None,
+            end=None,
+            updated=timestamp,
+        )
+        linked.exclude(schedule=wip_schedule).update(
+            room=None,
+            updated=timestamp,
+        )
+        return session_count
+
+
+def validate_room_can_be_deleted(room) -> None:
+    """Raise ValidationError if the room has submission-linked schedule slots."""
+    if room.pk and room_has_linked_submissions(room):
+        raise ValidationError(ROOM_DELETE_LINKED_SESSIONS_MESSAGE)
 
 
 def validate_is_unscheduled_change(room) -> None:
@@ -72,7 +145,11 @@ def validate_is_unscheduled_change(room) -> None:
 
 def validate_talk_slot_room(room) -> None:
     """Raise ValidationError when a submission cannot be scheduled in this room."""
-    if room is not None and room.is_unscheduled:
+    if room is None:
+        return
+    if room.deleted:
+        raise ValidationError({'room': DELETED_ROOM_SCHEDULING_MESSAGE})
+    if room.is_unscheduled:
         raise ValidationError({'room': UNSCHEDULED_ROOM_SCHEDULING_MESSAGE})
 
 
@@ -119,8 +196,6 @@ def partial_validated_update(serializer, body):
 
 class RoomQuerySet(models.QuerySet):
     def with_has_linked_sessions(self):
-        from django_scopes import scopes_disabled
-
         # TalkSlot uses ScopedManager; the parent queryset is already event-scoped.
         with scopes_disabled():
             linked_talks = _linked_submission_talkslots(
@@ -392,8 +467,6 @@ class Room(VersionedModel, OrderedModel, PretalxModel):
 
     def get_current_stream(self, at_time=None):
         """Get the currently active stream schedule for this room."""
-        from django.utils.timezone import now
-
         from .stream_schedule import StreamSchedule
 
         at_time = at_time or now()
@@ -408,8 +481,6 @@ class Room(VersionedModel, OrderedModel, PretalxModel):
 
     def get_next_stream(self, at_time=None):
         """Get the next upcoming stream schedule for this room."""
-        from django.utils.timezone import now
-
         from .stream_schedule import StreamSchedule
 
         at_time = at_time or now()
@@ -458,8 +529,6 @@ class RoomView(models.Model):
 
 def get_room_with_linked_sessions(room):
     """Return the room annotated with has_linked_sessions when possible."""
-    from django_scopes import scope
-
     with scope(event=room.event):
         annotated = (
             room.event.rooms.filter(pk=room.pk).with_has_linked_sessions().first()
