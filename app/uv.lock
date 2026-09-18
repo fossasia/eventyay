@@ -1166,7 +1166,7 @@ dependencies = [
 [[package]]
 name = "eventyay-business"
 version = "1.0.0"
-source = { git = "https://github.com/fossasia/eventyay-business.git?rev=main#1c2dbb6919e768e33ed40702579b473d093e3d3a" }
+source = { git = "https://github.com/fossasia/eventyay-business.git?rev=main#90b40c2e428f7917312019c585b1a342e563e311" }
 
 [[package]]
 name = "eventyay-hubspot"
@@ -1188,8 +1188,8 @@ dependencies = [
 
 [[package]]
 name = "eventyay-paypal"
-version = "1.1.0"
-source = { git = "https://github.com/fossasia/eventyay-paypal.git?rev=main#f67ff7ecf41e9cd36f3908b2d63a086a3148fe9b" }
+version = "1.2.0"
+source = { git = "https://github.com/fossasia/eventyay-paypal.git?rev=main#d430af821b979af975abba45a06fcf784f2adc2e" }
 
 [[package]]
 name = "eventyay-socialmedia"
