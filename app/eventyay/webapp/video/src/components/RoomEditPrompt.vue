@@ -58,15 +58,19 @@ prompt.c-room-edit-prompt(:scrollable="false", @close="$emit('close')")
 				)
 				.danger-zone(v-if="wasConfigured && hasPermission('room:delete')")
 					h3 {{ $t('Danger Zone') }}
-					p(v-if="mode === 'chat'") {{ $t('Deleting this channel removes it for attendees. Messages and calls in this channel will no longer be available.') }}
-					p(v-else) {{ $t('Deleting this room will remove it from the schedule, but the sessions will remain safe.') }} {{ $t('Sessions assigned to this room will no longer have a room assigned.') }}
-					bunt-button.btn-delete-room(v-if="!confirmingDelete", @click="confirmingDelete = true") {{ $t('Delete') }}
-					.delete-confirmation(v-else)
-						p {{ $t('Please type') }} #[b {{ localizedRoomName }}] {{ $t('to confirm deletion.') }}
-						bunt-input(name="deletingRoomName", :label="mode === 'chat' ? $t('Channel name') : $t('Room name')", v-model="deletingRoomName", @keypress.enter="deleteRoom")
-						.confirmation-actions
-							bunt-button.btn-cancel(@click="cancelDelete") {{ $t('Cancel') }}
-							bunt-button.btn-delete-room(icon="delete", :disabled="deletingRoomName !== localizedRoomName", @click="deleteRoom", :loading="deleting", :error-message="deleteError") {{ mode === 'chat' ? $t('Delete this channel') : $t('Delete this room') }}
+					template(v-if="config.has_linked_sessions")
+						p {{ $t('This room has linked schedules/sessions. Move or delete those sessions before deleting the room.') }}
+						bunt-button.btn-delete-room(:disabled="true") {{ $t('Delete') }}
+					template(v-else)
+						p(v-if="mode === 'chat'") {{ $t('Deleting this channel removes it for attendees. Messages and calls in this channel will no longer be available.') }}
+						p(v-else) {{ $t('Deleting this room removes it from the event. Sessions assigned to this room must be moved first if any remain linked.') }}
+						bunt-button.btn-delete-room(v-if="!confirmingDelete", @click="confirmingDelete = true") {{ $t('Delete') }}
+						.delete-confirmation(v-else)
+							p {{ $t('Please type') }} #[b {{ localizedRoomName }}] {{ $t('to confirm deletion.') }}
+							bunt-input(name="deletingRoomName", :label="mode === 'chat' ? $t('Channel name') : $t('Room name')", v-model="deletingRoomName", @keypress.enter="deleteRoom")
+							.confirmation-actions
+								bunt-button.btn-cancel(@click="cancelDelete") {{ $t('Cancel') }}
+								bunt-button.btn-delete-room(icon="delete", :disabled="deletingRoomName !== localizedRoomName", @click="deleteRoom", :loading="deleting", :error-message="deleteError") {{ mode === 'chat' ? $t('Delete this channel') : $t('Delete this room') }}
 			.edit-actions
 				bunt-button.btn-cancel(@click="$emit('close')") {{ $t('Cancel') }}
 				bunt-button.btn-save(@click="save", :loading="saving", :error-message="saveError") {{ $t('Save') }}
@@ -282,6 +286,10 @@ export default {
 			this.deleteError = null
 		},
 		async deleteRoom () {
+			if (this.config?.has_linked_sessions) {
+				this.deleteError = this.$t('This room has linked schedules/sessions. Move or delete those sessions before deleting the room.')
+				return
+			}
 			if (this.deletingRoomName !== this.localizedRoomName) return
 			this.deleteError = null
 			this.deleting = true

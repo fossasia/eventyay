@@ -150,6 +150,18 @@ const dragStart = ref<DragStartData | null>(null)
 const hiddenRooms = ref<Room[]>([])
 const timesliceRefs = ref<HTMLElement[]>([])
 
+function applyRoomFocusFromQuery() {
+  const params = new URLSearchParams(window.location.search)
+  const roomParam = params.get('room')
+  if (!roomParam || !props.rooms?.length) return
+  const focusId = String(roomParam)
+  const focusRoom = props.rooms.find((room) => String(room.id) === focusId)
+  if (!focusRoom) return
+  hiddenRooms.value = props.rooms.filter((room) => room !== focusRoom)
+}
+
+watch(() => props.rooms, () => applyRoomFocusFromQuery(), { immediate: true })
+
 let observer: IntersectionObserver | null = null
 const layoutObservers: ResizeObserver[] = []
 let windowResizeListener: (() => void) | null = null

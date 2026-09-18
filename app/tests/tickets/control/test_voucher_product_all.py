@@ -5,7 +5,16 @@ from django.urls import reverse
 from django.utils.timezone import now
 from django_scopes import scope
 
-from eventyay.base.models import Event, Organizer, Product, Quota, Team, User, Voucher
+from eventyay.base.models import (
+    Event,
+    Organizer,
+    Product,
+    ProductVariation,
+    Quota,
+    Team,
+    User,
+    Voucher,
+)
 from eventyay.control.forms.vouchers import ALL_PRODUCTS, VoucherForm
 
 
@@ -43,8 +52,10 @@ def test_voucher_detail_hides_optional_for_valid_until_and_product(client, env):
     assert not _label(doc, 'Valid until').select('.optional')
     assert not _label(doc, 'Product').select('.optional')
     assert _label(doc, 'Comment').select('.optional')
-    selected = doc.select_one('#id_productvar option[selected]')
-    assert selected['value'] == ALL_PRODUCTS
+    assert doc.select_one('.language-grid-widget[data-product-grid-widget]')
+    selected = doc.select_one(f'input[name="productvar"][value="{ALL_PRODUCTS}"]')
+    assert selected is not None
+    assert selected.has_attr('checked')
 
 
 @override_settings(DEBUG=True)
@@ -98,7 +109,7 @@ def test_voucher_form_all_products_clears_product_and_quota(env):
                 'code': voucher.code,
                 'max_usages': '1',
                 'price_mode': 'none',
-                'productvar': ALL_PRODUCTS,
+                'productvar': [ALL_PRODUCTS],
             },
         )
 
@@ -109,3 +120,78 @@ def test_voucher_form_all_products_clears_product_and_quota(env):
     assert voucher.product is None
     assert voucher.variation is None
     assert voucher.quota is None
+    assert voucher.limit_products.count() == 0
+    assert voucher.limit_variations.count() == 0
+
+
+@pytest.mark.django_db
+def test_voucher_form_multi_product_selection(env):
+    organizer, event, user, product = env
+    with scope(organizer=organizer, event=event):
+        product_b = Product.objects.create(event=event, name='Regular ticket', default_price=42)
+        voucher = Voucher.objects.create(event=event)
+        form = VoucherForm(
+            instance=voucher,
+            data={
+                'code': voucher.code,
+                'max_usages': '1',
+                'price_mode': 'none',
+                'productvar': [str(product.pk), str(product_b.pk)],
+            },
+        )
+
+        assert form.is_valid(), form.errors
+        form.save()
+        voucher.refresh_from_db()
+
+        assert voucher.product is None
+        assert voucher.quota is None
+        assert set(voucher.limit_products.values_list('pk', flat=True)) == {product.pk, product_b.pk}
+        assert voucher.applies_to(product)
+        assert voucher.applies_to(product_b)
+
+        other = Product.objects.create(event=event, name='Other', default_price=10)
+        assert not voucher.applies_to(other)
+
+
+@pytest.mark.django_db
+def test_voucher_form_drops_variations_covered_by_product_wide(env):
+    organizer, event, user, product = env
+    with scope(organizer=organizer, event=event):
+        product_with_vars = Product.objects.create(event=event, name='Shirt', default_price=12)
+        red = ProductVariation.objects.create(product=product_with_vars, value='Red', default_price=12)
+        ProductVariation.objects.create(product=product_with_vars, value='Blue', default_price=12)
+        voucher = Voucher.objects.create(event=event)
+        form = VoucherForm(
+            instance=voucher,
+            data={
+                'code': voucher.code,
+                'max_usages': '1',
+                'price_mode': 'none',
+                'productvar': [str(product_with_vars.pk), f'{product_with_vars.pk}-{red.pk}', str(product.pk)],
+            },
+        )
+
+        assert form.is_valid(), form.errors
+        form.save()
+        voucher.refresh_from_db()
+
+        assert set(voucher.limit_products.values_list('pk', flat=True)) == {
+            product.pk,
+            product_with_vars.pk,
+        }
+        assert voucher.limit_variations.count() == 0
+        assert voucher.applies_to(product_with_vars, red)
+
+
+@pytest.mark.django_db
+def test_voucher_form_copy_initial_keeps_selected_products_in_choices(env):
+    organizer, event, user, product = env
+    with scope(organizer=organizer, event=event):
+        voucher = Voucher(event=event)
+        form = VoucherForm(
+            instance=voucher,
+            initial={'productvar': [str(product.pk)]},
+        )
+        choice_ids = {value for value, _label in form.fields['productvar'].choices}
+        assert str(product.pk) in choice_ids

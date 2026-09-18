@@ -1020,6 +1020,17 @@ class GlobalBusinessSettingsForm(SettingsForm):
                     ),
                 ),
                 (
+                    'ticket_fee_maximum',
+                    forms.DecimalField(
+                        label=_('Global maximum ticket fee'),
+                        required=False,
+                        decimal_places=2,
+                        max_digits=12,
+                        min_value=0,
+                        help_text=_('Global maximum fee limit per order in platform base currency. Set to 0 or leave empty for no limit.'),
+                    ),
+                ),
+                (
                     'billing_validation',
                     forms.BooleanField(
                         required=False,
@@ -1060,6 +1071,7 @@ class GlobalBusinessSettingsForm(SettingsForm):
             ]),
             ('ticket_fee', _('Ticket Fee'), [
                 'ticket_fee_percentage',
+                'ticket_fee_maximum',
             ]),
             ('billing_validation', _('Billing Validation'), [
                 'billing_validation',

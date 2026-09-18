@@ -160,6 +160,11 @@ class BaseSettings(_BaseSettings):
     plugin_dev_mode: bool = False
     fetch_ecb_rates: bool = True
     cache_tickets_hours: int = Field(default=24, ge=1)
+    # Days of the month to send unpaid billing invoice reminders.
+    billing_reminder_schedule: Annotated[
+        list[Annotated[int, Field(ge=1, le=31)]],
+        Field(min_length=1),
+    ] = [15, 29]
 
     @classmethod
     def settings_customise_sources(
@@ -257,6 +262,7 @@ SECRET_KEY = conf.secret_key
 DATABASE_REPLICA = 'default'
 FETCH_ECB_RATES = conf.fetch_ecb_rates
 CACHE_TICKETS_MAX_AGE = timedelta(hours=conf.cache_tickets_hours)
+BILLING_REMINDER_SCHEDULE = conf.billing_reminder_schedule
 
 DATA_DIR = BASE_DIR / 'data'
 LOG_DIR = DATA_DIR / 'logs'

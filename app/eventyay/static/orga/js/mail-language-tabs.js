@@ -43,7 +43,7 @@ const buildLanguageTabs = (container, groups) => {
     const tabs = locales.map((locale) => {
         const tab = document.createElement("button")
         tab.type = "button"
-        tab.className = "btn btn-link mail-language-tab"
+        tab.className = "mail-language-tab"
         tab.dataset.locale = locale.code
         tab.setAttribute("role", "tab")
         tab.textContent = locale.label
