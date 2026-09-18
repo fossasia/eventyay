@@ -1,8 +1,11 @@
 from dataclasses import dataclass, field
+from pathlib import Path
 
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.files import File
+from django.core.files.storage import FileSystemStorage
 from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.models import Resource, ResourceKind
@@ -60,13 +63,13 @@ def save_slides_resource(submission, slides: SlidesData):
     for resource_file in slides.resources:
         created_resources.append(create_slide_resource(submission, resource_file=resource_file))
 
-    from django.core.files import File
-    from django.core.files.storage import default_storage
-
     for resource in slides.kept_existing_resources:
         if str(resource.pk).startswith('tmp:'):
             tmp_name = str(resource.pk)[4:]
-            file_obj = File(default_storage.open(tmp_name), name=resource.filename)
+            file_obj = File(
+                FileSystemStorage(str(Path(settings.MEDIA_ROOT) / 'cfp_uploads')).open(tmp_name),
+                name=resource.filename,
+            )
             created_resources.append(create_slide_resource(submission, resource_file=file_obj))
 
     return created_resources
