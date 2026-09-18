@@ -189,7 +189,12 @@ def filter_available(qs, channel='web', voucher=None, allow_addons=False):
         q &= Q(Q(category__isnull=True) | Q(category__is_addon=False))
 
     if voucher:
-        if voucher.product_id:
+        if voucher.pk and (voucher.limit_products.exists() or voucher.limit_variations.exists()):
+            # Use product pk subqueries (not variations__pk__in) to avoid duplicate Product rows.
+            q &= Q(pk__in=voucher.limit_products.values_list('pk', flat=True)) | Q(
+                pk__in=voucher.limit_variations.values_list('product_id', flat=True)
+            )
+        elif voucher.product_id:
             q &= Q(pk=voucher.product_id)
         elif voucher.quota_id:
             q &= Q(quotas__in=[voucher.quota_id])
