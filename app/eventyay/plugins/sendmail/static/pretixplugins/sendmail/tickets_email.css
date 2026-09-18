@@ -46,7 +46,62 @@
 .mail-composer .composer-filters .select2-selection--single {
   border-color: var(--color-border);
   border-radius: var(--composer-border-radius);
+  box-shadow: none;
   min-height: var(--composer-control-height);
+}
+
+.mail-composer .composer-filters .select2-container--bootstrap .select2-selection--multiple {
+  height: auto;
+  max-height: none;
+  min-height: var(--composer-control-height);
+  overflow-y: visible;
+  padding: 2px 5px;
+}
+
+.mail-composer .composer-filters .select2-container--bootstrap .select2-selection--multiple .select2-selection__rendered {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 0;
+}
+
+.mail-composer .composer-filters .select2-container--bootstrap .select2-selection--multiple .select2-search--inline .select2-search__field {
+  margin-top: 0;
+  min-height: calc(var(--composer-control-height) - 6px);
+  padding: 4px 0;
+}
+
+.mail-composer .composer-filters .select2-container--bootstrap.select2-container--focus .select2-selection,
+.mail-composer .composer-filters .select2-container--bootstrap.select2-container--open .select2-selection {
+  border-color: var(--color-primary-light, var(--color-primary));
+  box-shadow: var(--shadow-focus, 0 0 0 0.2rem rgb(33 133 208 / 0.25));
+}
+
+.mail-composer .composer-filters .select2-container--bootstrap.select2-container--open .select2-selection--multiple,
+.mail-composer .composer-filters .select2-container--bootstrap.select2-container--open .select2-selection--single {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+/* Select2 appends the menu to body; keep it aligned with composer controls. */
+body > .select2-container.mail-composer-dropdown .select2-dropdown {
+  border-color: var(--color-border, #ccc);
+  border-radius: 0 0 var(--composer-border-radius, 8px) var(--composer-border-radius, 8px);
+  box-shadow: none;
+  margin-top: -1px;
+  overflow: hidden;
+}
+
+body > .select2-container.mail-composer-dropdown .select2-dropdown--above {
+  border-radius: var(--composer-border-radius, 8px) var(--composer-border-radius, 8px) 0 0;
+  margin-bottom: -1px;
+  margin-top: 0;
+}
+
+body > .select2-container.mail-composer-dropdown .select2-results__option {
+  border-radius: 0;
+  font-size: var(--composer-font-size, 14px);
+  padding: 8px 12px;
 }
 
 .mail-composer .col-md-9 > .eventyay-file-pick-wrapper label {
@@ -390,4 +445,223 @@
   max-height: min(280px, 50vh);
   right: 0;
   z-index: 1060;
+}
+
+/* Custom / system template form actions — large equal Cancel + Save */
+.mail-template-form-actions.submit-group,
+.submit-group.mail-template-form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+}
+
+.mail-template-form-actions .btn-lg {
+  min-width: 9rem;
+  min-height: 2.75rem;
+  padding: 0.6rem 1.25rem;
+  font-size: 1.125rem;
+  line-height: 1.4;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.mail-template-form-actions .btn-default {
+  background: #fff;
+  background-image: none;
+  border: 1px solid #ccc;
+  color: #333;
+}
+
+.mail-template-form-actions .btn-default:hover,
+.mail-template-form-actions .btn-default:focus {
+  background: #f5f5f5;
+  border-color: #adadad;
+  color: #333;
+}
+
+.mail-template-form-actions .btn-success {
+  background: var(--color-success, #21ba45);
+  background-image: none;
+  border-color: var(--color-success, #21ba45);
+  color: #fff;
+}
+
+.mail-template-form-actions .btn-success:hover,
+.mail-template-form-actions .btn-success:focus {
+  background: #16ab39;
+  border-color: #16ab39;
+  color: #fff;
+}
+
+/* Templates list action buttons — match platform control sizing */
+.mail-templates-actions {
+  white-space: nowrap;
+}
+
+.mail-templates-actions .btn {
+  margin-left: 6px;
+  min-height: 2.25rem;
+  min-width: 2.25rem;
+  padding: 0.4rem 0.75rem;
+  font-size: 1rem;
+  line-height: 1.4;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+}
+
+.mail-templates-actions .btn:first-child {
+  margin-left: 0;
+}
+
+.mail-templates-actions .btn .fa {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+/* Email templates list — Talks-aligned header + help dialog */
+
+#event-nav.mail-templates-nav {
+  margin-bottom: 8px;
+}
+
+#event-nav.mail-templates-nav .navigation {
+  justify-content: flex-end;
+  align-items: flex-start;
+}
+
+.mail-templates-title-row {
+  gap: 12px;
+}
+
+.mail-templates-title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.mail-templates-help-trigger {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 10px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  background-image: none;
+  box-shadow: none;
+  text-shadow: none;
+  color: #2185d0;
+  line-height: 1;
+  vertical-align: middle;
+  height: auto;
+  width: auto;
+  font-size: inherit;
+}
+
+.mail-templates-help-trigger:hover {
+  color: #1a69a4;
+  background: transparent;
+  background-image: none;
+  border: none;
+  box-shadow: none;
+}
+
+.mail-templates-help-trigger:focus {
+  outline: none;
+}
+
+.mail-templates-help-trigger:focus-visible {
+  color: #1a69a4;
+  outline: 2px solid #2185d0;
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.mail-templates-help-trigger .fa {
+  font-size: 28px;
+  line-height: 1;
+}
+
+dialog.mail-templates-info-dialog:not([open]) {
+  display: none;
+}
+
+dialog.mail-templates-info-dialog[open] {
+  display: block;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  right: auto;
+  bottom: auto;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  opacity: 1;
+  max-width: min(640px, 92vw);
+  width: 100%;
+  z-index: 2000;
+}
+
+dialog.mail-templates-info-dialog::backdrop {
+  background-color: rgb(0 0 0 / 0.25);
+  backdrop-filter: blur(2px);
+}
+
+.mail-templates-info-dialog__card {
+  display: flex;
+  align-items: stretch;
+  margin: 0;
+  border: 2px solid #2185d0;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 0 10px rgb(0 0 0 / 0.35);
+  overflow: hidden;
+  width: 100%;
+  color: #276f86;
+}
+
+form.mail-templates-info-dialog__card {
+  padding: 0;
+}
+
+.mail-templates-info-dialog__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 72px;
+  min-width: 72px;
+  background: #2185d0;
+  color: #fff;
+}
+
+.mail-templates-info-dialog__icon .fa {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.mail-templates-info-dialog__body {
+  flex: 1 1 auto;
+  padding: 16px 20px;
+  min-width: 0;
+}
+
+.mail-templates-info-dialog__body p {
+  margin: 0 0 12px;
+  line-height: 1.45;
+}
+
+.mail-templates-info-dialog__body p:last-of-type {
+  margin-bottom: 12px;
 }

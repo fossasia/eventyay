@@ -52,3 +52,10 @@ class Select2ProductVarQuotaMixin(Select2Mixin):
 
 class Select2ProductVarQuota(Select2ProductVarQuotaMixin, forms.Select):
     pass
+
+
+class MultipleProductVarQuotaWidget(forms.CheckboxSelectMultiple):
+    """Searchable checkbox grid for voucher product / variation / quota scope."""
+
+    template_name = 'pretixcontrol/product_grid_select.html'
+    option_template_name = 'pretixcontrol/multi_languages_grid_option.html'

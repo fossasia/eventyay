@@ -61,6 +61,9 @@ settings_hierarkey.add_default('etherpad_base_url', '', str)
 settings_hierarkey.add_default('etherpad_api_key', '', str)
 settings_hierarkey.add_default('etherpad_pad_name_pattern', '{event}-{submission}-{token}', str)
 
+# Talks organizer dashboard internal note (separate from tickets Event.comment)
+settings_hierarkey.add_default('orga_internal_note', '', str)
+
 # Telemetry settings for anonymous usage data collection
 # These are used by GlobalSettingsObject via settings_hierarkey
 settings_hierarkey.add_default('telemetry_enabled', False, bool)

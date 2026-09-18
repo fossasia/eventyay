@@ -943,6 +943,9 @@ export default {
 		}, 10000)
 		this.audioLevelInterval = window.setInterval(this.refreshAudioLevels, AUDIO_LEVEL_INTERVAL)
 	},
+	beforeUnmount() {
+		this.cleanup()
+	},
 	unmounted() {
 		if (this.apiMessageHandler) {
 			api.off('message', this.apiMessageHandler)

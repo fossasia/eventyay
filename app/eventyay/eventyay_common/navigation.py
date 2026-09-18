@@ -1,6 +1,6 @@
 import logging
 from collections.abc import Sequence
-from typing import List, TypedDict
+from typing import List, Optional, TypedDict
 
 from django.http import HttpRequest
 from django.urls import reverse
@@ -83,6 +83,25 @@ def get_global_navigation(request: HttpRequest) -> List[MenuItem]:
     return nav
 
 
+def _event_api_nav_item(request: HttpRequest, event: Event, url) -> Optional[MenuItem]:
+    from eventyay.eventyay_common.api_catalog import user_can_access_event_api
+
+    if not user_can_access_event_api(request, event):
+        return None
+    return {
+        'label': _('API'),
+        'url': reverse(
+            'eventyay_common:event.api',
+            kwargs={
+                'event': event.slug,
+                'organizer': event.organizer.slug,
+            },
+        ),
+        'active': (url.url_name == 'event.api'),
+        'icon': 'code',
+    }
+
+
 def get_meetup_event_navigation(request: HttpRequest, event: Event) -> List[MenuItem]:
     """Generate flat navigation items for a meetup event."""
     url = request.resolver_match
@@ -130,6 +149,10 @@ def get_meetup_event_navigation(request: HttpRequest, event: Event) -> List[Menu
                 'icon': 'wrench',
             }
         )
+
+    api_item = _event_api_nav_item(request, event, url)
+    if api_item:
+        nav.append(api_item)
 
     if has_orders_perm:
         nav.append(
@@ -269,6 +292,10 @@ def get_event_navigation(request: HttpRequest, event: Event) -> List[MenuItem]:
                 'icon': 'plug',
             },
         ]
+
+    api_item = _event_api_nav_item(request, event, url)
+    if api_item:
+        nav.append(api_item)
 
     plugin_responses = nav_event_common.send(event, request=request)
     plugin_nav_items = []
