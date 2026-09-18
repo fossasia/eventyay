@@ -46,6 +46,7 @@ from eventyay.base.models import (
     Question,
     QuestionAnswer,
     SubEvent,
+    Voucher,
 )
 from eventyay.base.signals import register_payment_providers
 from eventyay.control.forms.widgets import Select2
@@ -1774,12 +1775,27 @@ class VoucherFilterForm(FilterForm):
             if fdata.get('productvar').startswith('q-'):
                 qs = qs.filter(quota_id=fdata.get('productvar').split('-')[1])
             elif '-' in fdata.get('productvar'):
+                product_id, variation_id = fdata.get('productvar').split('-', 1)
                 qs = qs.filter(
-                    product_id=fdata.get('productvar').split('-')[0],
-                    variation_id=fdata.get('productvar').split('-')[1],
+                    Q(product_id=product_id, variation_id=variation_id)
+                    | Q(limit_variations__pk=variation_id)
+                    | (
+                        Q(limit_products__pk=product_id)
+                        & ~Exists(
+                            Voucher.objects.filter(
+                                pk=OuterRef('pk'),
+                                limit_variations__product_id=product_id,
+                            )
+                        )
+                    )
                 )
             else:
-                qs = qs.filter(product_id=fdata.get('productvar'))
+                product_id = fdata.get('productvar')
+                qs = qs.filter(
+                    Q(product_id=product_id)
+                    | Q(limit_products__pk=product_id)
+                    | Q(limit_variations__product_id=product_id)
+                )
 
         if fdata.get('subevent'):
             qs = qs.filter(subevent_id=fdata.get('subevent').pk)
