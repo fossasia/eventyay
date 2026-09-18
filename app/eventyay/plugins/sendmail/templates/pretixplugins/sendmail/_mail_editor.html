@@ -131,7 +131,7 @@
                         <div class="mb-3">
                             <div class="form-check form-check-inline">
                                 <input class="form-check-input" type="radio" name="delivery_mode" id="delivery-mode-now" value="now" checked>
-                                <label class="form-check-label" for="delivery-mode-now">{% translate "Send now" %}</label>
+                                <label class="form-check-label" for="delivery-mode-now">{% translate "Send to outbox" %}</label>
                             </div>
                             <div class="form-check form-check-inline">
                                 <input class="form-check-input" type="radio" name="delivery_mode" id="delivery-mode-later" value="later">
@@ -195,7 +195,7 @@
                             <button type="submit" class="btn btn-primary" name="action" value="send" data-confirm-send>
                                 <i class="fa fa-paper-plane" aria-hidden="true"></i>
                                 {% block send_button_label %}
-                                    {% translate "Send email" %}
+                                    {% translate "Send to Outbox" %}
                                 {% endblock send_button_label %}
                             </button>
                             {% if form.scheduled_at %}
@@ -205,7 +205,7 @@
                                 </summary>
                                 <div class="dropdown-content dropdown-content-sw">
                                     <button type="button" class="dropdown-item" role="menuitem" tabindex="-1" data-send-option="now">
-                                        {% translate "Send now" %}
+                                        {% translate "Send to outbox" %}
                                     </button>
                                     <button type="button" class="dropdown-item" role="menuitem" tabindex="-1" data-send-option="schedule">
                                         {% translate "Schedule email" %}
@@ -233,8 +233,8 @@
         <dialog class="info-dialog" id="send-confirm-dialog" aria-label="{% translate 'Send to outbox?' %}" style="position: fixed;">
             <div class="dialog-content">
                 <h5 id="send-confirm-title"
-                    data-title-send="{% translate 'Send email?' %}"
-                    data-title-schedule="{% translate 'Schedule email?' %}">{% translate "Send email?" %}</h5>
+                    data-title-send="{% translate 'Send to outbox?' %}"
+                    data-title-schedule="{% translate 'Schedule email?' %}">{% translate "Send to outbox?" %}</h5>
                 <dl id="send-confirm-summary"
                     data-label-audience="{% translate 'Audience' %}"
                     data-label-type="{% translate 'Type' %}"
@@ -249,8 +249,8 @@
                         {% translate "Cancel" %}
                     </button>
                     <button type="submit" class="btn btn-primary" name="action" value="send" id="send-confirm-submit" formnovalidate
-                            data-label-send="{% translate 'Send email' %}"
-                            data-label-schedule="{% translate 'Schedule email' %}">{% translate "Send email" %}</button>
+                            data-label-send="{% translate 'Send to outbox' %}"
+                            data-label-schedule="{% translate 'Schedule email' %}">{% translate "Send to outbox" %}</button>
                 </div>
             </div>
         </dialog>
