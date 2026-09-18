@@ -1,0 +1,35 @@
+{% load i18n %}
+{% if blocked %}
+    {% comment %}
+        The wrapper is never replaced, so withdrawing consent can still find the
+        embed and tear it down again.
+    {% endcomment %}
+    <div class="consent-embed"
+         data-consent-embed="{{ service }}"
+         data-consent-src="{{ src }}"
+         data-consent-title="{{ title }}">
+        <div class="consent-embed-placeholder" data-consent-placeholder>
+            {% if external %}
+                <p>
+                    {% blocktrans trimmed %}
+                        This content is provided by an external service. It loads once you allow
+                        it in the cookie settings.
+                    {% endblocktrans %}
+                </p>
+            {% else %}
+                <p>
+                    {% blocktrans trimmed %}
+                        This content is provided by an external service. To view it, allow embedded
+                        content in Privacy settings.
+                    {% endblocktrans %}
+                </p>
+                <button type="button" class="btn btn-default" data-privacy-settings>
+                    {% trans "Allow embedded content" %}
+                </button>
+            {% endif %}
+        </div>
+    </div>
+{% else %}
+    {# Consent is disabled, so there is nothing to wait for. #}
+    <iframe src="{{ src }}" title="{{ title }}" loading="lazy" allowfullscreen></iframe>
+{% endif %}
