@@ -804,12 +804,15 @@ class RevealSecretSettingView(View):
         'etherpad_api_key',
         'voxbento_client_secret',
         'hubspot_client_secret',
-        # Global payment (ticketing)
+        # Global payment (ticketing & billing)
         'payment_stripe_connect_secret_key',
         'payment_stripe_connect_test_secret_key',
         'payment_stripe_connect_publishable_key',
         'payment_stripe_connect_test_publishable_key',
         'payment_paypal_connect_secret_key',
+        'payment_stripe_secret_key',
+        'payment_stripe_test_secret_key',
+        'stripe_webhook_secret_key',
     })
 
     def post(self, request, *args, **kwargs):
