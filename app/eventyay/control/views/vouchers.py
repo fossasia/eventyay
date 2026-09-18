@@ -50,7 +50,7 @@ class VoucherList(PaginationMixin, EventPermissionRequiredMixin, ListView):
     def get_filtered_queryset(self):
         qs = self.request.event.vouchers.filter(waitinglistentries__isnull=True).select_related(
             'product', 'variation', 'seat', 'quota', 'subevent'
-        )
+        ).prefetch_related('limit_products', 'limit_variations', 'limit_variations__product')
         if self.filter_form and self.filter_form.is_valid():
             qs = self.filter_form.filter_qs(qs)
 
@@ -126,7 +126,11 @@ class VoucherList(PaginationMixin, EventPermissionRequiredMixin, ListView):
         writer.writerow(headers)
 
         for v in Voucher.annotate_budget_used_orders(self.get_filtered_queryset()):
-            if v.product:
+            if v.limit_products.exists() or v.limit_variations.exists():
+                parts = [str(p) for p in v.limit_products.all()]
+                parts += ['%s – %s' % (str(var.product), str(var)) for var in v.limit_variations.all()]
+                prod = ', '.join(parts)
+            elif v.product:
                 if v.variation:
                     prod = '%s – %s' % (str(v.product), str(v.variation))
                 else:
@@ -184,6 +188,7 @@ class VoucherGroupMembers(EventPermissionRequiredMixin, View):
                 pk__gt=after,
             )
             .select_related('product', 'variation', 'seat', 'quota', 'subevent')
+            .prefetch_related('limit_products', 'limit_variations', 'limit_variations__product')
             .order_by('pk')
         )
         members = list(members[: self.MEMBER_PAGE_SIZE + 1])
@@ -424,6 +429,11 @@ class VoucherBulkCreate(EventPermissionRequiredMixin, AsyncFormView):
             i.pk = None
             i.redeemed = 0
             kwargs['instance'] = i
+            if self.copy_from.limit_products.exists() or self.copy_from.limit_variations.exists():
+                kwargs.setdefault('initial', {})
+                kwargs['initial']['productvar'] = [str(p.pk) for p in self.copy_from.limit_products.all()] + [
+                    '%d-%d' % (v.product_id, v.pk) for v in self.copy_from.limit_variations.all()
+                ]
         else:
             kwargs['instance'] = Voucher(event=self.request.event, code=None)
         return kwargs
