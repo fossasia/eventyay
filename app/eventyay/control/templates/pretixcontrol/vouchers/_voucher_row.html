@@ -24,8 +24,15 @@
         {% if v.tag %}<span class="category-pill">{{ v.tag }}</span>{% endif %}
     </td>
     <td>
-        {% if v.item %}
-            {{ v.item }}
+        {% if v.limit_products.all or v.limit_variations.all %}
+            {% for p in v.limit_products.all %}
+                {{ p }}{% if not forloop.last or v.limit_variations.all %}, {% endif %}
+            {% endfor %}
+            {% for var in v.limit_variations.all %}
+                {{ var.product }} – {{ var }}{% if not forloop.last %}, {% endif %}
+            {% endfor %}
+        {% elif v.product %}
+            {{ v.product }}
             {% if v.variation %}
                 – {{ v.variation }}
             {% endif %}
