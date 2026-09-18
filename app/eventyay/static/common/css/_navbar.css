@@ -57,6 +57,7 @@ nav.navbar {
   z-index: 1100;
   font-weight: 500;
   min-height: 50px;
+  border-width: 0;
 }
 
 /* ============================================
@@ -67,33 +68,33 @@ nav.navbar {
    ============================================ */
 
 nav.navbar.navbar-inverse {
-  background-color: $navbar-inverse-bg;
+  background-color: #2185d0;
   border-color: transparent;
 }
 
 nav.navbar.navbar-inverse .navbar-top-links a,
 nav.navbar.navbar-inverse .btn-link {
-  color: $navbar-link-color;
+  color: #f8f9fa;
   font-weight: 500;
 }
 
 nav.navbar.navbar-inverse .navbar-top-links a i,
 nav.navbar.navbar-inverse .btn-link i {
-  color: $navbar-link-color;
+  color: #f8f9fa;
 }
 
 nav.navbar.navbar-inverse .navbar-top-links a:hover,
 nav.navbar.navbar-inverse .navbar-top-links a:focus,
 nav.navbar.navbar-inverse .btn-link:hover,
 nav.navbar.navbar-inverse .btn-link:focus {
-  color: $navbar-link-hover-color;
+  color: #fff;
 }
 
 nav.navbar.navbar-inverse .navbar-top-links a:hover i,
 nav.navbar.navbar-inverse .navbar-top-links a:focus i,
 nav.navbar.navbar-inverse .btn-link:hover i,
 nav.navbar.navbar-inverse .btn-link:focus i {
-  color: $navbar-link-hover-color;
+  color: #fff;
 }
 
 /* ============================================
@@ -145,13 +146,13 @@ nav.navbar.navbar-inverse #sidebar-toggle,
   margin-right: 10px;
   margin-bottom: 8px;
   margin-left: 10px;
-  background-color: transparent;
+  background-color: transparent !important;
   border: none;
   padding-top: 5px;
   padding-right: 5px;
   padding-bottom: 5px;
   padding-left: 5px;
-  color: $navbar-link-hover-color;
+  color: #fff;
   z-index: 1;
   cursor: pointer;
 }
@@ -162,8 +163,8 @@ nav.navbar.navbar-inverse #sidebar-toggle:hover,
 nav.navbar.navbar-inverse #sidebar-toggle:focus,
 .navbar-inverse #sidebar-toggle:hover,
 .navbar-inverse #sidebar-toggle:focus {
-  background-color: transparent;
-  color: $navbar-link-hover-color;
+  background-color: transparent !important;
+  color: rgba(255, 255, 255, 0.8);
   outline: none;
 }
 
@@ -172,7 +173,7 @@ nav.navbar.navbar-inverse #sidebar-toggle .fa-bars,
 nav.navbar.navbar-inverse #sidebar-toggle i.fa-bars,
 .navbar-inverse #sidebar-toggle .fa-bars,
 .navbar-inverse #sidebar-toggle i.fa-bars {
-  color: $navbar-link-hover-color;
+  color: #fff;
   margin-top: 3px;
 }
 
@@ -189,15 +190,14 @@ nav.navbar.navbar-inverse .navbar-brand,
   display: flex;
   align-items: center;
   height: 50px;
-  padding-top: 5px;
-  padding-bottom: 5px;
+  padding: 5px 0;
   margin-right: 16px;
   margin-top: 0;
   font-size: 20px;
   line-height: inherit;
   white-space: nowrap;
   font-family: inherit;
-  color: $navbar-link-color;
+  color: #f8f9fa;
   text-decoration: none;
 }
 
@@ -215,7 +215,7 @@ nav.navbar.navbar-inverse .navbar-brand:hover,
 nav.navbar.navbar-inverse .navbar-brand:focus,
 .navbar-inverse .navbar-brand:hover,
 .navbar-inverse .navbar-brand:focus {
-  color: $navbar-link-hover-color;
+  color: #fff;
   text-decoration: none;
 }
 
@@ -239,12 +239,12 @@ nav.navbar.navbar-inverse .navbar-brand:focus,
 }
 
 .navbar-top-links.navbar-right {
-  float: right;
+  float: right !important;
   margin-right: 2px;
 }
 
 .navbar-top-links.navbar-left {
-  float: left;
+  float: left !important;
 }
 
 .navbar-top-links li {
@@ -305,9 +305,9 @@ nav.navbar #language-dropdown > summary {
   gap: 6px;
 }
 
-/* The gap already spaces the caret; reset the extra margin from _dropdown.css and .ml-1 */
-nav.navbar .navbar-top-links #profile-dropdown > summary i.fa-caret-down,
-nav.navbar .navbar-top-links #language-dropdown > summary i.fa-caret-down {
+/* The gap already spaces the caret; reset the extra margin from _dropdown.css */
+nav.navbar #profile-dropdown > summary i.fa-caret-down,
+nav.navbar #language-dropdown > summary i.fa-caret-down {
   margin-left: 0;
 }
 
@@ -316,14 +316,11 @@ nav.navbar .navbar-top-links #language-dropdown > summary i.fa-caret-down {
    $brand-danger: #db2828
    ============================================ */
 
-nav.navbar a.danger,
-nav.navbar a.danger:hover,
-nav.navbar a.danger:active,
-nav.navbar.navbar-inverse .navbar-top-links a.danger,
-nav.navbar.navbar-inverse .navbar-top-links a.danger:hover,
-nav.navbar.navbar-inverse .navbar-top-links a.danger:active {
-  background: $brand-danger;
-  color: #fff;
+nav.navbar .danger,
+nav.navbar .danger:hover,
+nav.navbar .danger:active {
+  background: #db2828 !important;
+  color: #fff !important;
   font-size: 14px;
 }
 
@@ -340,7 +337,7 @@ nav.navbar.navbar-inverse #button-sudo,
   height: 50px;
   border: none;
   font-size: 14px;
-  color: $navbar-link-color;
+  color: #f8f9fa;
   background: transparent;
   line-height: 20px;
   margin-left: 2px;
@@ -350,7 +347,7 @@ nav.navbar.navbar-inverse #button-shop i,
 nav.navbar.navbar-inverse #button-sudo i,
 .navbar-inverse #button-shop i,
 .navbar-inverse #button-sudo i {
-  color: $navbar-link-color;
+  color: #f8f9fa;
 }
 
 nav.navbar.navbar-inverse #button-shop:hover,
@@ -366,7 +363,7 @@ nav.navbar.navbar-inverse #button-sudo:active,
 .navbar-inverse #button-sudo:focus,
 .navbar-inverse #button-sudo:active {
   text-decoration: none;
-  color: $navbar-link-hover-color;
+  color: #fff;
 }
 
 nav.navbar.navbar-inverse #button-shop:hover i,
@@ -377,7 +374,7 @@ nav.navbar.navbar-inverse #button-sudo:focus i,
 .navbar-inverse #button-shop:focus i,
 .navbar-inverse #button-sudo:hover i,
 .navbar-inverse #button-sudo:focus i {
-  color: $navbar-link-hover-color;
+  color: #fff;
 }
 
 /* ============================================
@@ -470,7 +467,7 @@ nav.navbar.navbar-inverse #button-sudo:focus i,
   }
 
   .hidden-xs {
-    display: none;
+    display: none !important;
   }
 
   nav.navbar.navbar-inverse {

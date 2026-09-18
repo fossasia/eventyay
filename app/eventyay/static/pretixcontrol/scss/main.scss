@@ -45,12 +45,6 @@ footer {
     text-decoration: none;
 }
 
-
-
-
-
-
-
 #wrapper {
     padding-top: var(--navbar-height, 50px);
 }
@@ -60,8 +54,6 @@ footer {
     width: 1.28571em;
 }
 
-
-
 .navbar-header .navbar-events {
     color: white;
     padding-top: 6px;
@@ -70,8 +62,6 @@ footer {
 .nav-pills {
     margin-bottom: 10px;
 }
-
-
 
 .product-row {
     padding: 10px 0;
@@ -312,8 +302,6 @@ p.bigger {
         max-width: 80%;
     }
 }
-
-
 
 @media (min-width: $screen-md-min) {
     .row-plugins {
@@ -1217,5 +1205,3 @@ h1 .label {
         }
     }
 }
-
-@import '../../pretixbase/scss/_navbar.scss';
