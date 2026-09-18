@@ -1166,7 +1166,7 @@ dependencies = [
 [[package]]
 name = "eventyay-business"
 version = "1.0.0"
-source = { git = "https://github.com/fossasia/eventyay-business.git?rev=main#77f602c7d5691e9fbd787822d6f7e6e6c1791603" }
+source = { git = "https://github.com/fossasia/eventyay-business.git?rev=main#1c2dbb6919e768e33ed40702579b473d093e3d3a" }
 
 [[package]]
 name = "eventyay-hubspot"
@@ -1180,7 +1180,7 @@ dependencies = [
 [[package]]
 name = "eventyay-interpretation"
 version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-interpretation.git?rev=main#910e1d460a10deaea1eb9ffa7d53e98ab407b787" }
+source = { git = "https://github.com/fossasia/eventyay-interpretation.git?rev=main#72cce70fcdfcfdec77c805bac53166782e932e9c" }
 dependencies = [
     { name = "cryptography" },
     { name = "requests" },
@@ -1189,12 +1189,12 @@ dependencies = [
 [[package]]
 name = "eventyay-paypal"
 version = "1.1.0"
-source = { git = "https://github.com/fossasia/eventyay-paypal.git?rev=main#0d963b1e5dc68d622c2109abbbf149939c55d638" }
+source = { git = "https://github.com/fossasia/eventyay-paypal.git?rev=main#f67ff7ecf41e9cd36f3908b2d63a086a3148fe9b" }
 
 [[package]]
 name = "eventyay-socialmedia"
 version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-socialmedia.git?rev=main#fa7c644b2d275563afacfb7a479097027ba92b12" }
+source = { git = "https://github.com/fossasia/eventyay-socialmedia.git?rev=main#ec8e894317a467ea80e8f75064a9c472e3ad6725" }
 dependencies = [
     { name = "cryptography" },
     { name = "mastodon-py" },
@@ -1204,7 +1204,7 @@ dependencies = [
 [[package]]
 name = "eventyay-stripe"
 version = "1.0.1"
-source = { git = "https://github.com/fossasia/eventyay-stripe.git?rev=main#16a591159e5893a1a4cad30f98614ac6eab3d8e3" }
+source = { git = "https://github.com/fossasia/eventyay-stripe.git?rev=main#eb31e99de2aca6b36ce96ffe9de348eecc567bff" }
 dependencies = [
     { name = "pydantic" },
     { name = "stripe" },
@@ -1213,7 +1213,7 @@ dependencies = [
 [[package]]
 name = "eventyay-teamshifts"
 version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-teamshifts.git?rev=main#77169f237865db8eb7aecaca098b92471056768b" }
+source = { git = "https://github.com/fossasia/eventyay-teamshifts.git?rev=main#845349fbda9828c46441e4679dc070031710a163" }
 
 [[package]]
 name = "eventyay-unified"
@@ -1705,7 +1705,7 @@ wheels = [
 [[package]]
 name = "exhibition"
 version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-exhibition.git?rev=main#e421f46fcfd906065441728086d7fd534db11805" }
+source = { git = "https://github.com/fossasia/eventyay-exhibition.git?rev=main#6ee382be516ac9c888a2d207afffcf33e1aeb52d" }
 
 [[package]]
 name = "faker"
