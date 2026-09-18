@@ -49,6 +49,7 @@ export function buildToolbar(
   const boldBtn = button('<b>B</b>', 'Bold', () => editor.chain().focus().toggleBold().run(), 'bold')
   const italicBtn = button('<i>I</i>', 'Italic', () => editor.chain().focus().toggleItalic().run(), 'italic')
   const underlineBtn = button('<u>U</u>', 'Underline', () => editor.chain().focus().toggleUnderline().run(), 'underline')
+  const headingMenu = buildHeadingMenu(editor)
   const ulBtn = button('&#8226;&#8212;', 'Bullet list', () => editor.chain().focus().toggleBulletList().run(), 'bulletList')
   const olBtn = button('1.&#8212;', 'Numbered list', () => editor.chain().focus().toggleOrderedList().run(), 'orderedList')
   const linkWrapper = document.createElement('span')
@@ -59,7 +60,23 @@ export function buildToolbar(
   const undoBtn = button('&#8630;', 'Undo', () => editor.chain().focus().undo().run())
   const redoBtn = button('&#8631;', 'Redo', () => editor.chain().focus().redo().run())
 
-  bar.append(boldBtn, italicBtn, underlineBtn, separator(), ulBtn, olBtn, separator(), linkWrapper, separator(), clearBtn, separator(), undoBtn, redoBtn)
+  bar.append(
+    boldBtn,
+    italicBtn,
+    underlineBtn,
+    separator(),
+    headingMenu,
+    separator(),
+    ulBtn,
+    olBtn,
+    separator(),
+    linkWrapper,
+    separator(),
+    clearBtn,
+    separator(),
+    undoBtn,
+    redoBtn,
+  )
 
   if (editorEl) {
     bar.append(separator(), buildHtmlSourceButton(editor, editorEl, textarea, bar))
@@ -80,6 +97,7 @@ export function buildToolbar(
       btn.classList.toggle('is-active', editor.isActive(key))
       btn.setAttribute('aria-pressed', String(editor.isActive(key)))
     })
+    headingMenu.syncActive()
     undoBtn.disabled = !editor.can().undo()
     redoBtn.disabled = !editor.can().redo()
   }
@@ -275,6 +293,151 @@ function showLinkPopover(editor, anchor) {
   input.select()
 }
 
+const HEADING_LEVELS = [1, 2, 3, 4, 5, 6]
+
+function buildHeadingMenu(editor) {
+  const wrapper = document.createElement('span')
+  wrapper.className = 'tiptap-heading-menu'
+
+  const toggle = document.createElement('button')
+  toggle.type = 'button'
+  toggle.className = 'tiptap-btn'
+  toggle.textContent = 'Paragraph'
+  toggle.title = 'Heading'
+  toggle.setAttribute('aria-label', 'Heading level')
+  toggle.setAttribute('aria-haspopup', 'listbox')
+  toggle.setAttribute('aria-expanded', 'false')
+
+  const dropdown = document.createElement('ul')
+  dropdown.className = 'tiptap-heading-dropdown'
+  dropdown.setAttribute('role', 'listbox')
+  dropdown.hidden = true
+
+  const options = [
+    { level: null, sample: 'Paragraph' },
+    ...HEADING_LEVELS.map((level) => ({
+      level,
+      sample: `Heading ${level}`,
+    })),
+  ]
+
+  const optionEls = []
+
+  options.forEach(({ level, sample }) => {
+    const li = document.createElement('li')
+    li.className = 'tiptap-heading-item'
+    li.setAttribute('role', 'option')
+    li.tabIndex = 0
+    li.dataset.headingLevel = level == null ? '' : String(level)
+    if (level) {
+      const sampleEl = document.createElement('span')
+      sampleEl.className = 'tiptap-heading-sample'
+      sampleEl.dataset.level = String(level)
+      sampleEl.textContent = sample
+      li.append(sampleEl)
+    } else {
+      li.textContent = sample
+    }
+
+    const apply = () => {
+      if (level == null) {
+        editor.chain().focus().setParagraph().run()
+      } else {
+        editor.chain().focus().toggleHeading({ level }).run()
+      }
+      dropdown.hidden = true
+      toggle.setAttribute('aria-expanded', 'false')
+      editor.view.focus()
+      wrapper.syncActive()
+    }
+    li.addEventListener('click', apply)
+    li.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault()
+        apply()
+      }
+    })
+    optionEls.push(li)
+    dropdown.appendChild(li)
+  })
+
+  const closeOthers = () => {
+    document.querySelectorAll('.tiptap-heading-dropdown, .tiptap-placeholder-dropdown').forEach((d) => {
+      if (d !== dropdown) {
+        d.hidden = true
+        const btn = d
+          .closest('.tiptap-heading-menu, .tiptap-placeholder-menu')
+          ?.querySelector('.tiptap-btn[aria-haspopup="listbox"]')
+        if (btn) btn.setAttribute('aria-expanded', 'false')
+      }
+    })
+  }
+
+  toggle.addEventListener('click', (e) => {
+    e.stopPropagation()
+    const open = !dropdown.hidden
+    closeOthers()
+    dropdown.hidden = open
+    toggle.setAttribute('aria-expanded', String(!open))
+  })
+
+  const onDocumentClick = () => {
+    dropdown.hidden = true
+    toggle.setAttribute('aria-expanded', 'false')
+  }
+  document.addEventListener('click', onDocumentClick)
+  editor.on('destroy', () => {
+    document.removeEventListener('click', onDocumentClick)
+  })
+
+  wrapper.addEventListener('keydown', (e) => {
+    if (dropdown.hidden) return
+
+    if (e.key === 'Escape') {
+      e.preventDefault()
+      dropdown.hidden = true
+      toggle.setAttribute('aria-expanded', 'false')
+      toggle.focus()
+      return
+    }
+
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault()
+      const currentIdx = optionEls.findIndex(el => el === document.activeElement)
+      let nextIdx = 0
+      if (currentIdx !== -1) {
+        nextIdx = e.key === 'ArrowDown'
+          ? (currentIdx + 1) % optionEls.length
+          : (currentIdx - 1 + optionEls.length) % optionEls.length
+      }
+      optionEls[nextIdx].focus()
+    }
+  })
+
+  wrapper.syncActive = () => {
+    let activeLevel = null
+    for (const level of HEADING_LEVELS) {
+      if (editor.isActive('heading', { level })) {
+        activeLevel = level
+        break
+      }
+    }
+    toggle.textContent = activeLevel ? `H${activeLevel}` : 'Paragraph'
+    toggle.classList.toggle('is-active', activeLevel != null)
+    optionEls.forEach((li) => {
+      const level = li.dataset.headingLevel
+      const selected =
+        (activeLevel == null && level === '') ||
+        (activeLevel != null && level === String(activeLevel))
+      li.classList.toggle('is-selected', selected)
+      li.setAttribute('aria-selected', String(selected))
+    })
+  }
+
+  wrapper.append(toggle, dropdown)
+  return wrapper
+}
+
 function buildPlaceholderMenu(editor, placeholders) {
   const wrapper = document.createElement('span')
   wrapper.className = 'tiptap-placeholder-menu'
@@ -326,9 +489,13 @@ function buildPlaceholderMenu(editor, placeholders) {
     toggle.setAttribute('aria-expanded', String(!open))
   })
 
-  document.addEventListener('click', () => {
+  const onDocumentClick = () => {
     dropdown.hidden = true
     toggle.setAttribute('aria-expanded', 'false')
+  }
+  document.addEventListener('click', onDocumentClick)
+  editor.on('destroy', () => {
+    document.removeEventListener('click', onDocumentClick)
   })
 
   wrapper.append(toggle, dropdown)

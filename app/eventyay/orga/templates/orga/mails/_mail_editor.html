@@ -6,7 +6,7 @@
 {% block extra_title %}{% translate "Compose email" %} :: {% endblock extra_title %}
 
 {% block mail_content %}
-    <form method="post" class="form-with-placeholder mail-composer"{% if form.always_send_immediately %} data-always-immediate{% endif %}>
+    <form method="post" class="form-with-placeholder mail-composer mail-composer-horizontal"{% if form.always_send_immediately %} data-always-immediate{% endif %}>
         {% csrf_token %}
         <div class="composer-intro mb-3">
             <h2 class="composer-title">

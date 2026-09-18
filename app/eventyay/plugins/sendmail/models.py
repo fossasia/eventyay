@@ -425,7 +425,7 @@ class EmailQueue(models.Model):
         orders_qs = Order.objects.filter(
             pk__in=filters.orders,
             event=self.event
-        ).prefetch_related('positions__product', 'positions__addons', 'positions__checkins')
+        ).prefetch_related('all_positions__product', 'all_positions__addons', 'all_positions__checkins')
 
         recipients = defaultdict(lambda: {
             "orders": set(),
@@ -438,7 +438,9 @@ class EmailQueue(models.Model):
             attendee_found = False
             individual_positions = set(filters.individual_attendees) if recipients_mode == "individual" else None
 
-            for pos in order.positions.all():
+            for pos in order.all_positions.all():
+                if pos.canceled:
+                    continue
                 if individual_positions is not None and pos.pk not in individual_positions:
                     continue
                 if pos.attendee_email:
@@ -455,12 +457,16 @@ class EmailQueue(models.Model):
             if (
                 order_fallback_needed and
                 not attendee_found and
-                recipients_mode == "attendees" and
+                recipients_mode in ("attendees", "individual") and
                 order.email
             ):
                 email = order.email.strip().lower()
                 recipients[email]["orders"].add(order.pk)
-                for pos in order.positions.all():
+                for pos in order.all_positions.all():
+                    if pos.canceled:
+                        continue
+                    if individual_positions is not None and pos.pk not in individual_positions:
+                        continue
                     recipients[email]["positions"].add(pos.pk)
                     recipients[email]["products"].add(pos.product_id)
 
@@ -469,7 +475,9 @@ class EmailQueue(models.Model):
             if recipients_mode in ("both", "orders") and order.email:
                 email = order.email.strip().lower()
                 recipients[email]["orders"].add(order.pk)
-                for pos in order.positions.all():
+                for pos in order.all_positions.all():
+                    if pos.canceled:
+                        continue
                     recipients[email]["positions"].add(pos.pk)
                     recipients[email]["products"].add(pos.product_id)
 

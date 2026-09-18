@@ -2029,41 +2029,6 @@ div.mail-preview {
   z-index: 1;
 }
 
-#mail-language-tabs {
-  border-bottom: 1px solid var(--color-grey-lighter);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-bottom: 1rem;
-}
-
-.mail-language-tab {
-  border-bottom: 2px solid transparent;
-  border-radius: 0;
-  box-shadow: none;
-  color: inherit;
-  margin-bottom: -1px;
-  padding: 6px 12px;
-  text-decoration: none;
-}
-
-.mail-language-tab:hover,
-.mail-language-tab:focus,
-.mail-language-tab:focus-visible,
-.mail-language-tab:active {
-  background: transparent;
-  box-shadow: none;
-  color: inherit;
-  outline: none;
-  text-decoration: none;
-}
-
-.mail-language-tab.active,
-.mail-language-tab[aria-selected="true"] {
-  border-bottom-color: var(--color-primary);
-  font-weight: bold;
-}
-
 #placeholder-drawer {
   background: white;
   border-left: 1px solid var(--color-grey-lighter);

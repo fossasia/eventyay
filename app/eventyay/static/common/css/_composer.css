@@ -621,6 +621,11 @@
     white-space: normal;
   }
 
+  #mail-language-tabs {
+    margin-left: 0;
+    padding-right: 0;
+  }
+
   .mail-editor-tabs {
     grid-template-columns: 100%;
   }
@@ -924,38 +929,122 @@
 }
 
 #mail-language-tabs {
-  border-bottom: 1px solid var(--color-grey-lighter);
+  border-bottom: none;
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 8px;
+  /* Align with Subject/Message inputs (label column is 25%). */
   margin-bottom: 16px;
+  padding-bottom: 0;
+  padding-right: 15px;
 }
 
-.mail-language-tab {
-  border-bottom: 2px solid transparent;
-  border-radius: 0;
+.form-horizontal #mail-language-tabs,
+.mail-composer-horizontal #mail-language-tabs {
+  margin-left: 25%;
+}
+
+/* Keep chip styles above shared .mail-composer button rules (tickets + talks). */
+.mail-language-tab,
+.mail-composer .mail-language-tab {
+  align-items: center;
+  background-color: var(--color-bg);
+  background-image: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--composer-border-radius, 4px);
   box-shadow: none;
-  color: inherit;
-  margin-bottom: -1px;
-  padding: 6px 12px;
+  color: var(--color-text);
+  cursor: pointer;
+  display: inline-flex;
+  font-weight: 500;
+  gap: 6px;
+  line-height: 1.4;
+  margin-bottom: 0;
+  padding: 6px 14px 6px 14px;
   text-decoration: none;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.mail-language-tab::before,
+.mail-composer .mail-language-tab::before {
+  content: "✓";
+  display: inline-block;
+  font-weight: 700;
+  opacity: 0;
+  width: 0.9em;
 }
 
 .mail-language-tab:hover,
 .mail-language-tab:focus,
-.mail-language-tab:focus-visible,
-.mail-language-tab:active {
-  background: transparent;
+.mail-composer .mail-language-tab:hover,
+.mail-composer .mail-language-tab:focus {
+  background-color: var(--color-primary-lighter);
+  background-image: none;
+  border-color: var(--color-primary);
   box-shadow: none;
-  color: inherit;
+  color: var(--color-primary-text);
   outline: none;
   text-decoration: none;
 }
 
+.mail-language-tab:focus-visible,
+.mail-composer .mail-language-tab:focus-visible {
+  background-color: var(--color-primary-lighter);
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-focus);
+  color: var(--color-primary-text);
+  outline: none;
+  text-decoration: none;
+}
+
+.mail-language-tab:active,
+.mail-composer .mail-language-tab:active {
+  background-color: var(--color-primary-light);
+  box-shadow: none;
+  text-decoration: none;
+}
+
 .mail-language-tab.active,
-.mail-language-tab[aria-selected="true"] {
-  border-bottom-color: var(--color-primary);
-  font-weight: bold;
+.mail-language-tab[aria-selected="true"],
+.mail-composer .mail-language-tab.active,
+.mail-composer .mail-language-tab[aria-selected="true"] {
+  background-color: var(--color-primary);
+  background-image: none;
+  border-color: var(--color-primary);
+  color: var(--color-white);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* Brighten selected chips on hover instead of darkening with --color-primary-hover. */
+.mail-language-tab.active:hover,
+.mail-language-tab[aria-selected="true"]:hover,
+.mail-language-tab.active:focus-visible,
+.mail-language-tab[aria-selected="true"]:focus-visible,
+.mail-composer .mail-language-tab.active:hover,
+.mail-composer .mail-language-tab[aria-selected="true"]:hover,
+.mail-composer .mail-language-tab.active:focus-visible,
+.mail-composer .mail-language-tab[aria-selected="true"]:focus-visible {
+  background-color: color-mix(in srgb, var(--color-primary), white 16%);
+  border-color: color-mix(in srgb, var(--color-primary), white 16%);
+  color: var(--color-white);
+  text-decoration: none;
+}
+
+.mail-language-tab.active:focus-visible,
+.mail-language-tab[aria-selected="true"]:focus-visible,
+.mail-composer .mail-language-tab.active:focus-visible,
+.mail-composer .mail-language-tab[aria-selected="true"]:focus-visible {
+  box-shadow: var(--shadow-focus);
+}
+
+.mail-language-tab.active::before,
+.mail-language-tab[aria-selected="true"]::before {
+  opacity: 1;
 }
 
 #placeholder-drawer {

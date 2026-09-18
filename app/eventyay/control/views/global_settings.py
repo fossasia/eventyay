@@ -19,7 +19,7 @@ from python_http_client.exceptions import HTTPError
 
 from eventyay.api.models import OAuthApplication
 from eventyay.base.email import CustomSMTPBackend, SendGridEmail
-from eventyay.base.models import Event, GlobalPluginConfig, LogEntry, OrderPayment, OrderRefund
+from eventyay.base.models import Event, GlobalPluginConfig, LogEntry, Organizer, OrderPayment, OrderRefund
 from eventyay.base.plugins import get_all_plugins
 from eventyay.base.forms import SECRET_REDACTED
 from eventyay.base.services.mail import get_mail_backend
@@ -130,6 +130,15 @@ class GlobalBusinessSettingsView(AdministratorPermissionRequiredMixin, FormView)
     def form_invalid(self, form):
         messages.error(self.request, _('Your changes have not been saved, see below for errors.'))
         return super().form_invalid(form)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        try:
+            from eventyay_business.models import CountryFeeSetting
+            ctx['country_fee_settings'] = CountryFeeSetting.objects.all().order_by('country', 'currency')
+        except ImportError:
+            ctx['country_fee_settings'] = None
+        return ctx
 
     def get_success_url(self):
         return reverse('eventyay_admin:admin.global.business')
@@ -774,3 +783,110 @@ class GlobalSettingsPagePreviewView(AdministratorPermissionRequiredMixin, View):
 
         return JsonResponse({'previews': previews})
 
+
+class RevealSecretSettingView(View):
+    """
+    Step-up authentication endpoint that reveals a stored secret setting value.
+
+    Security:
+    - Requires an active session.
+    - Re-validates the user's account password inline before returning anything.
+    - Only whitelisted setting keys can be revealed; any other key yields HTTP 403.
+    - Scope parameter determines if we check global settings or organizer settings.
+    - If scope=global, requires staff access.
+    - If scope=organizer, requires 'can_change_organizer_settings' permission on the organizer.
+    """
+
+    ALLOWED_KEYS: frozenset[str] = frozenset({
+        # Global email
+        'smtp_password',
+        'send_grid_api_key',
+        'gmail_client_secret',
+        # Global security
+        'turnstile_secret_key',
+        # Global maps
+        'opencagedata_apikey',
+        'mapquest_apikey',
+        # Global telemetry
+        'telemetry_api_key',
+        # Global integrations
+        'etherpad_api_key',
+        'voxbento_client_secret',
+        'hubspot_client_secret',
+        # Global payment (ticketing & billing)
+        'payment_stripe_connect_secret_key',
+        'payment_stripe_connect_test_secret_key',
+        'payment_stripe_connect_publishable_key',
+        'payment_stripe_connect_test_publishable_key',
+        'payment_paypal_connect_secret_key',
+        'payment_stripe_secret_key',
+        'payment_stripe_test_secret_key',
+        'stripe_webhook_secret_key',
+    })
+
+    def post(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return JsonResponse({'error': 'forbidden', 'detail': 'Authentication required.'}, status=403)
+
+        key = (request.POST.get('key') or '').strip()
+        password = request.POST.get('password', '')
+        scope = request.POST.get('scope', 'global')
+
+        if not key or key not in self.ALLOWED_KEYS:
+            return JsonResponse({'error': 'forbidden', 'detail': 'Key not allowed.'}, status=403)
+
+        if not password:
+            return JsonResponse(
+                {'error': 'invalid_password', 'detail': str(_('Please enter your password.'))},
+                status=403,
+            )
+
+        if scope == 'global':
+            if not (request.user.is_staff or request.user.is_superuser):
+                return JsonResponse({'error': 'forbidden', 'detail': 'Administrator access required.'}, status=403)
+            gs = GlobalSettingsObject()
+        elif scope == 'organizer':
+            organizer_slug = request.POST.get('organizer', '')
+            if not organizer_slug:
+                return JsonResponse({'error': 'forbidden', 'detail': 'Organizer slug required.'}, status=403)
+            try:
+                organizer = Organizer.objects.get(slug=organizer_slug)
+            except Organizer.DoesNotExist:
+                return JsonResponse({'error': 'not_found', 'detail': 'Organizer not found.'}, status=404)
+            
+            if not (request.user.is_staff or request.user.is_superuser or request.user.has_organizer_permission(organizer, 'can_change_organizer_settings', request=request)):
+                return JsonResponse({'error': 'forbidden', 'detail': 'Organizer permission required.'}, status=403)
+            gs = organizer
+        else:
+            return JsonResponse({'error': 'forbidden', 'detail': 'Invalid scope.'}, status=403)
+
+        # Step-up: verify the administrator's/organizer's current account password directly.
+        if not request.user.check_password(password):
+            logger.warning(
+                'Secret reveal re-auth failed for user %s (key=%s, scope=%s)',
+                request.user.pk,
+                key,
+                scope,
+            )
+            return JsonResponse(
+                {'error': 'invalid_password', 'detail': str(_('The password you entered was invalid.'))},
+                status=403,
+            )
+
+        value = gs.settings.get(key, as_type=str, default='') or ''
+
+        if not value:
+            return JsonResponse(
+                {'error': 'not_set', 'detail': str(_('No value is stored for this setting.'))},
+                status=404,
+            )
+
+        logger.info(
+            'User %s revealed secret setting key=%s via step-up auth (scope=%s)',
+            request.user.pk,
+            key,
+            scope,
+        )
+        response = JsonResponse({'value': value})
+        response['Cache-Control'] = 'no-store'
+        return response

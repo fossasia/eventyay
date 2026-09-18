@@ -160,7 +160,7 @@ EMAIL_ALLOWED_ATTRIBUTES = {
 EMAIL_ALLOWED_PROTOCOLS = ALLOWED_PROTOCOLS | {'data'}
 
 _TIPTAP_BLOCK_START_RE = re.compile(
-    r'^\s*<(p|ul|ol|blockquote)(\s|>)',
+    r'^\s*<(p|ul|ol|blockquote|h[1-6])(\s|>)',
     re.IGNORECASE | re.DOTALL,
 )
 
