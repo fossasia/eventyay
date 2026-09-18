@@ -37,6 +37,7 @@
 <script>
 import { createPopper } from '@popperjs/core'
 import { normalizeAudioTranslationSource } from 'lib/validators'
+import { interpretationStreamType } from '../interpretation-streams'
 
 let dropdownId = 0
 
@@ -106,8 +107,9 @@ export default {
 	},
 	methods: {
 		resolveStreamTypeLabel(entry) {
-			if (entry.tts_ws_url) return this.$t('AI')
-			if (entry.whep_url || entry.whip_url) return this.$t('Human')
+			const streamType = interpretationStreamType(entry)
+			if (streamType === 'ai') return this.$t('AI')
+			if (streamType === 'human') return this.$t('Human')
 			return null
 		},
 		findLanguageIndex(language) {
