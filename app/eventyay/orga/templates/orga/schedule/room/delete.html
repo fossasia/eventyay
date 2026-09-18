@@ -1,0 +1,71 @@
+{% extends "orga/base.html" %}
+
+{% load i18n %}
+
+{% block extra_title %}{{ generic_title }} :: {% endblock extra_title %}
+
+{% block content %}
+  {% if has_linked_sessions %}
+    <h2>{% translate "Confirm deletion" %}</h2>
+    <hr>
+    <p><strong>{{ generic_title }}</strong></p>
+    <p class="alert alert-warning" role="alert">{{ linked_sessions_message }}</p>
+
+    <div class="linked-sessions mb-4">
+      <h3 class="h5 mb-3">
+        {% blocktranslate count counter=linked_sessions|length %}
+          {{ counter }} linked session
+        {% plural %}
+          {{ counter }} linked sessions
+        {% endblocktranslate %}
+      </h3>
+      <div class="list-group">
+        {% for session in linked_sessions %}
+          <a href="{{ session.submission_url }}" class="list-group-item list-group-item-action">
+            <div class="d-flex w-100 justify-content-between align-items-baseline">
+              <span class="font-weight-bold">{{ session.title }}</span>
+              <small class="text-muted ml-3">{{ session.code }}</small>
+            </div>
+            <div class="text-muted small mt-1">
+              {% if session.speakers %}
+                <span class="mr-3">
+                  <i class="fa fa-user" aria-hidden="true"></i>
+                  {{ session.speakers }}
+                </span>
+              {% endif %}
+              {% if session.when %}
+                <span>
+                  <i class="fa fa-clock-o" aria-hidden="true"></i>
+                  {{ session.when }}
+                </span>
+              {% else %}
+                <span>{% translate "Not scheduled yet" %}</span>
+              {% endif %}
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="submit-group">
+        <a href="{{ list_url }}" class="btn btn-lg btn-outline-info">
+          {{ phrases.base.back_button }}
+        </a>
+        <div>
+          <a href="{{ schedule_room_url }}" class="btn btn-lg btn-info">
+            <i class="fa fa-calendar"></i>
+            {% translate "Open room in schedule editor" %}
+          </a>
+          <button type="submit" name="action" value="unassign_sessions" class="btn btn-lg btn-warning">
+            <i class="fa fa-unlink"></i>
+            {% translate "Unassign all sessions" %}
+          </button>
+        </div>
+      </div>
+    </form>
+  {% else %}
+    {% include "common/includes/action_confirm.html" with action_object_name=generic_title action_back_url=list_url %}
+  {% endif %}
+{% endblock content %}

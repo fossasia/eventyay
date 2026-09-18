@@ -117,7 +117,7 @@ class RoomViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
                 return super().perform_destroy(instance)
         except ProtectedError:
             raise exceptions.ValidationError(
-                "You cannot delete a room that has been used in the schedule."
+                "This room has linked schedules/sessions. Move or delete those sessions before deleting the room."
             )
 
     @extend_schema(

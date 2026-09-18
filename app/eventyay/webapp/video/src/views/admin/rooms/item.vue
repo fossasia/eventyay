@@ -5,19 +5,15 @@
 		span(v-if="errorCode")  ({{ errorCode }})
 		span(v-if="errorCode === 'protocol.denied'")  {{ $t('You likely lack admin permissions.') }}
 	template(v-else-if="config")
-		template(v-if="!inferredType")
-			.ui-page-header
-				bunt-icon-button(@click="$router.push({name: 'admin:rooms:index'})", :tooltip="$t('Back to Rooms & Stages')", tooltip-placement="bottom-start", :tooltip-fixed="true") arrow-left
-				h1(v-html="$emojify(config.name)")
-			.mystery-room
-				p {{ $t('This room does not have a video option yet.') }}
-				VideoProviderDropdown(:label="$t('Add Video')", variant="action", @select="addVideoProvider")
-		template(v-else)
-			.ui-page-header
-				bunt-icon-button(@click="$router.push({name: 'admin:rooms:index'})", :tooltip="$t('Back to Rooms & Stages')", tooltip-placement="bottom-start", :tooltip-fixed="true") arrow-left
-				h1 {{ roomTypeLabel }} :
-					span.room-name(v-html="$emojify(config.name)")
-			edit-form(:config="config")
+		.ui-page-header
+			bunt-icon-button(@click="$router.push({name: 'admin:rooms:index'})", :tooltip="$t('Back to Rooms & Stages')", tooltip-placement="bottom-start", :tooltip-fixed="true") arrow-left
+			h1(v-if="!inferredType", v-html="$emojify(config.name)")
+			h1(v-else) {{ roomTypeLabel }} :
+				span.room-name(v-html="$emojify(config.name)")
+		.mystery-room(v-if="!inferredType")
+			p {{ $t('This room does not have a video option yet.') }}
+			VideoProviderDropdown(:label="$t('Add Video')", variant="action", @select="addVideoProvider")
+		edit-form(:config="config", @deleted="roomDeleted")
 	bunt-progress-circular(v-else, size="huge")
 </template>
 <script>
@@ -188,13 +184,12 @@ export default {
 			.bunt-button:not(:last-child)
 				margin-right: 16px
 	.mystery-room
-		flex: auto
 		display: flex
 		flex-direction: column
-		justify-content: center
-		align-items: center
+		align-items: flex-start
 		gap: 12px
-		padding: 24px
+		padding: 16px 24px
+		border-bottom: 1px solid $clr-grey-200
 		p
 			margin: 0
 			font-size: 16px

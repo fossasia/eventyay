@@ -747,7 +747,12 @@ class RoomModule(BaseModule):
     @command("delete")
     @room_action(permission_required=Permission.ROOM_DELETE)
     async def delete(self, body):
-        await delete_room(self.consumer.event, self.room, by_user=self.consumer.user)
+        try:
+            await delete_room(self.consumer.event, self.room, by_user=self.consumer.user)
+        except ValidationError as e:
+            message = e.messages[0] if getattr(e, 'messages', None) else str(e)
+            await self.consumer.send_error(code='room.delete.linked_sessions', message=message)
+            return
         await self.consumer.send_success()
         await get_channel_layer().group_send(
             f"event.{self.consumer.event.id}",
