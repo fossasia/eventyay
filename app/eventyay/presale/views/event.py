@@ -506,11 +506,11 @@ def event_has_redeemable_voucher_products(event, subevent=None, channel='web'):
     if event.has_subevents:
         vouchers = list(active_vouchers.filter(
             Q(subevent__in=subevents_to_check) | Q(subevent__isnull=True)
-        ).select_related('product', 'quota'))
+        ).select_related('product', 'quota').prefetch_related('limit_products', 'limit_variations'))
     else:
         vouchers = list(active_vouchers.filter(
             Q(subevent__isnull=True)
-        ).select_related('product', 'quota'))
+        ).select_related('product', 'quota').prefetch_related('limit_products', 'limit_variations'))
 
     if not vouchers:
         event.cache.set(cache_key, False, 10)
@@ -603,15 +603,7 @@ def event_has_redeemable_voucher_products(event, subevent=None, channel='web'):
         quota_cache = {q.pk: r for q, r in qa.results.items()}
 
     def voucher_applies_to(v, p, var=None):
-        if v.quota_id:
-            if var:
-                return any(q.pk == v.quota_id for q in var.quotas.all())
-            return any(q.pk == v.quota_id for q in p.quotas.all())
-        if v.product_id and not v.variation_id:
-            return v.product_id == p.pk
-        if v.product_id:
-            return v.product_id == p.pk and var and v.variation_id == var.pk
-        return True
+        return v.applies_to(p, var)
 
     def check_item_avail(quotas, se, ignore_quota=False):
         if ignore_quota:

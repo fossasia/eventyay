@@ -72,6 +72,10 @@ class Voucher(LoggedModel):
     :type variation: ProductVariation
     :param quota: If set, the quota to choose an product from
     :type quota: Quota
+    :param limit_products: If set, the voucher applies only to this subset of products
+    :type limit_products: list of Product
+    :param limit_variations: If set, the voucher applies only to these specific variations
+    :type limit_variations: list of ProductVariation
     :param comment: An internal comment that will only be visible to staff, and never displayed to the user
     :type comment: str
     :param tag: Use this field to group multiple vouchers together. If you enter the same value for multiple
@@ -80,7 +84,8 @@ class Voucher(LoggedModel):
 
     Various constraints apply:
 
-    * You need to either select a quota or an product
+    * You need to either select a quota or a product (or leave both empty for all products)
+    * You cannot combine a quota with product limits
     * If you select an product that has variations but do not select a variation, you cannot set block_quota
     """
 
@@ -187,6 +192,20 @@ class Voucher(LoggedModel):
         verbose_name=_('Quota'),
         help_text=_('If enabled, the voucher is valid for any product affected by this quota.'),
     )
+    limit_products = models.ManyToManyField(
+        Product,
+        blank=True,
+        related_name='limiting_vouchers',
+        verbose_name=_('Limited products'),
+        help_text=_('If set, the voucher only applies to these products (any variation unless a variation is listed).'),
+    )
+    limit_variations = models.ManyToManyField(
+        ProductVariation,
+        blank=True,
+        related_name='limiting_vouchers',
+        verbose_name=_('Limited variations'),
+        help_text=_('If set, the voucher only applies to these specific product variations.'),
+    )
     seat = models.ForeignKey(
         Seat,
         related_name='vouchers',
@@ -258,6 +277,8 @@ class Voucher(LoggedModel):
             self.product,
             self.variation,
             seats_given=bool(self.seat),
+            limit_products=list(self.limit_products.all()) if self.pk else [],
+            limit_variations=list(self.limit_variations.all()) if self.pk else [],
         )
         Voucher.clean_value_and_budget(
             {
@@ -283,12 +304,45 @@ class Voucher(LoggedModel):
             raise ValidationError({'budget': _('Voucher budget cannot be negative.')})
 
     @staticmethod
-    def clean_product_properties(data, event, quota, product, variation, block_quota=False, seats_given=False):
+    def clean_product_properties(
+        data,
+        event,
+        quota,
+        product,
+        variation,
+        block_quota=False,
+        seats_given=False,
+        limit_products=None,
+        limit_variations=None,
+    ):
+        limit_products = list(limit_products or [])
+        limit_variations = list(limit_variations or [])
+        if quota and (product or limit_products or limit_variations):
+            raise ValidationError(_('You cannot select a quota and a specific product at the same time.'))
         if quota:
             if quota.event != event:
                 raise ValidationError(_('You cannot select a quota that belongs to a different event.'))
-            if product:
-                raise ValidationError(_('You cannot select a quota and a specific product at the same time.'))
+        elif limit_products or limit_variations:
+            for p in limit_products:
+                if p.event_id != event.pk:
+                    raise ValidationError(_('You cannot select an product that belongs to a different event.'))
+                if p.category and p.category.is_addon:
+                    raise ValidationError(_('It is currently not possible to create vouchers for add-on products.'))
+            for v in limit_variations:
+                if v.product.event_id != event.pk:
+                    raise ValidationError(_('You cannot select an product that belongs to a different event.'))
+                if v.product.category and v.product.category.is_addon:
+                    raise ValidationError(_('It is currently not possible to create vouchers for add-on products.'))
+            if data.get('block_quota'):
+                variation_product_ids = {v.product_id for v in limit_variations}
+                for p in limit_products:
+                    if p.has_variations and p.pk not in variation_product_ids:
+                        raise ValidationError(
+                            _(
+                                'You can only block quota if you specify a specific product variation. '
+                                'Otherwise it might be unclear which quotas to block.'
+                            )
+                        )
         elif product:
             if product.event != event:
                 raise ValidationError(_('You cannot select an product that belongs to a different event.'))
@@ -375,6 +429,14 @@ class Voucher(LoggedModel):
         if old_instance and old_instance.block_quota and was_valid:
             if old_instance.quota:
                 quotas.add(old_instance.quota)
+            elif old_instance.pk and (
+                old_instance.limit_variations.exists() or old_instance.limit_products.exists()
+            ):
+                for variation in old_instance.limit_variations.all():
+                    quotas |= set(variation.quotas.filter(subevent=old_instance.subevent))
+                for product in old_instance.limit_products.all():
+                    if not product.has_variations:
+                        quotas |= set(product.quotas.filter(subevent=old_instance.subevent))
             elif old_instance.variation:
                 quotas |= set(old_instance.variation.quotas.filter(subevent=old_instance.subevent))
             elif old_instance.product:
@@ -382,8 +444,10 @@ class Voucher(LoggedModel):
         return quotas
 
     @staticmethod
-    def clean_quota_check(data, cnt, old_instance, event, quota, product, variation):
+    def clean_quota_check(data, cnt, old_instance, event, quota, product, variation, limit_products=None, limit_variations=None):
         old_quotas = Voucher.clean_quota_get_ignored(old_instance)
+        limit_products = list(limit_products or [])
+        limit_variations = list(limit_variations or [])
 
         if event.has_subevents and data.get('block_quota') and not data.get('subevent'):
             raise ValidationError(_('If you want this voucher to block quota, you need to select a specific date.'))
@@ -393,6 +457,29 @@ class Voucher(LoggedModel):
                 return
             else:
                 avail = quota.availability(count_waitinglist=False)
+        elif limit_products or limit_variations:
+            targets = list(limit_variations)
+            variation_product_ids = {v.product_id for v in limit_variations}
+            for p in limit_products:
+                if p.has_variations and p.pk not in variation_product_ids:
+                    raise ValidationError(
+                        _(
+                            'You can only block quota if you specify a specific product variation. '
+                            'Otherwise it might be unclear which quotas to block.'
+                        )
+                    )
+                if not p.has_variations:
+                    targets.append(p)
+            for target in targets:
+                avail = target.check_quotas(ignored_quotas=old_quotas, subevent=data.get('subevent'))
+                if avail[0] != Quota.AVAILABILITY_OK or (avail[1] is not None and avail[1] < cnt):
+                    raise ValidationError(
+                        _(
+                            'You cannot create a voucher that blocks quota as the selected product or '
+                            'quota is currently sold out or completely reserved.'
+                        )
+                    )
+            return
         elif product and product.has_variations and not variation:
             raise ValidationError(
                 _(
@@ -492,6 +579,27 @@ class Voucher(LoggedModel):
             if variation:
                 return variation.quotas.filter(pk=self.quota_id).exists()
             return product.quotas.filter(pk=self.quota_id).exists()
+
+        if self.pk:
+            # Prefer .all() so prefetched relations are reused (values_list bypasses prefetch).
+            limit_variations = list(self.limit_variations.all())
+            limit_products = list(self.limit_products.all())
+            limit_variation_ids = {v.pk for v in limit_variations}
+            limit_product_ids = {p.pk for p in limit_products}
+            limit_variation_product_ids = {v.product_id for v in limit_variations}
+        else:
+            limit_variation_ids = set()
+            limit_product_ids = set()
+            limit_variation_product_ids = set()
+
+        if limit_product_ids or limit_variation_ids:
+            if variation:
+                if variation.pk in limit_variation_ids:
+                    return True
+                # Product listed as "any variation" when no specific variations of it are listed
+                return product.pk in limit_product_ids and product.pk not in limit_variation_product_ids
+            return product.pk in limit_product_ids or product.pk in limit_variation_product_ids
+
         if self.product_id and not self.variation_id:
             return self.product_id == product.pk
         if self.product_id:
