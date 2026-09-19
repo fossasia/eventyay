@@ -1,7 +1,7 @@
 {% load i18n %}
 
 {% if entries|length %}
-    <div class="card">
+    <div class="{% if not borderless %}card{% endif %}">
         <ul class="list-group list-group-flush">
             {% for log in entries %}
                 <li class="list-group-item logentry">
