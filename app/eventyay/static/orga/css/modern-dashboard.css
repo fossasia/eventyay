@@ -108,16 +108,6 @@
     margin-bottom: 4px;
 }
 
-.timeline-step-status {
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    margin-bottom: 4px;
-}
-
-.timeline-step.done .timeline-step-status { color: var(--color-primary); }
-.timeline-step.current .timeline-step-status { color: var(--color-primary); }
-.timeline-step.todo .timeline-step-status { color: var(--color-grey-dark); }
 
 .timeline-step-summary {
     font-size: 12px;
@@ -245,7 +235,7 @@
 }
 
 body:has(.td-dashboard) #page-content {
-  background: #f9fafb;
+  background: #ffffff;
   /* Same L/R padding as tickets (orga default #page-content) */
   padding-left: 44px;
   padding-right: 44px;
@@ -790,40 +780,7 @@ body:has(.td-dashboard) #page-content {
   color: var(--td-red);
 }
 
-/* Subtle decorative sparklines behind KPI values */
-.td-kpi-sparkline {
-  position: relative;
-  overflow: hidden;
-}
 
-.td-kpi-sparkline::after {
-  content: "";
-  position: absolute;
-  right: 8px;
-  bottom: 36px;
-  width: 72px;
-  height: 28px;
-  opacity: 0.35;
-  pointer-events: none;
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
-}
-
-.td-kpi-sparkline-blue::after {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 72 28' fill='none'%3E%3Cpath d='M1 22 C10 20 14 8 22 10 C30 12 34 24 42 18 C50 12 58 4 71 6' stroke='%232185d0' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
-}
-
-.td-kpi-sparkline-green::after {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 72 28' fill='none'%3E%3Cpath d='M1 20 C12 22 16 6 26 8 C36 10 40 22 50 14 C58 8 64 4 71 5' stroke='%2316a34a' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
-}
-
-.td-kpi-sparkline .td-kpi-value,
-.td-kpi-sparkline .td-kpi-top,
-.td-kpi-sparkline .td-kpi-hint,
-.td-kpi-sparkline .td-kpi-link {
-  position: relative;
-  z-index: 1;
-}
 
 /* --------------------------------------------------------------------------
    Accessibility helpers
