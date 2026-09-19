@@ -273,8 +273,21 @@ a {
 .markdown-content ul li > p:last-child,
 .markdown-content ol li > p:last-child,
 .tiptap-content ul li > p:last-child,
-.tiptap-content ol li > p:last-child {
+.tiptap-content ol li > p:last-child,
+#main-card ul li > p:last-child,
+#main-card ol li > p:last-child {
   margin-bottom: 0;
+}
+
+.rich-text ul li > p:first-child,
+.rich-text ol li > p:first-child,
+.markdown-content ul li > p:first-child,
+.markdown-content ol li > p:first-child,
+.tiptap-content ul li > p:first-child,
+.tiptap-content ol li > p:first-child,
+#main-card ul li > p:first-child,
+#main-card ol li > p:first-child {
+  margin-top: 0;
 }
 
 /* Conventions and custom elements */
