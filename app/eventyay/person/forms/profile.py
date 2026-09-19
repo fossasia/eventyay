@@ -97,7 +97,7 @@ class SpeakerProfileForm(
     ]
     FIRST_TIME_EXCLUDE = ['email']
 
-    def __init__(self, *args, name=None, enforce_account_name_match=False, **kwargs):
+    def __init__(self, *args, name=None, enforce_account_name_match=False, for_reviewers=False, **kwargs):
         self.add_additional_speaker = kwargs.pop('add_additional_speaker', False)
         self.user = kwargs.pop('user', None)
         self.event = kwargs.pop('event', None)
@@ -218,6 +218,7 @@ class SpeakerProfileForm(
             event=self.event,
             speaker=self.user,
             readonly=read_only,
+            for_reviewers=for_reviewers,
         )
 
         if _cfp and _cfp.request_social_links:

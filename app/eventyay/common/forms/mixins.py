@@ -185,13 +185,15 @@ class QuestionFieldsMixin:
             return default_answer
         return []
 
-    def get_question_queryset(self, target, event):
+    def get_question_queryset(self, target, event, for_reviewers=False):
         qs = TalkQuestion.all_objects.filter(
             event=event,
             active=True,
             is_imported=False,
             target=target,
         )
+        if for_reviewers:
+            qs = qs.filter(is_visible_to_reviewers=True)
         return exclude_session_video_from_cfp_questions(qs).order_by('position')
 
     def inject_questions_into_fields(
@@ -204,6 +206,7 @@ class QuestionFieldsMixin:
         track=None,
         submission_type=None,
         readonly=False,
+        for_reviewers=False,
     ):
         """
         Injects custom question fields into the form, filtered by track/type and pre-filled with answers.
@@ -214,8 +217,9 @@ class QuestionFieldsMixin:
             submission, speaker, review: Answer contexts.
             track, submission_type: Visibility filters.
             readonly (bool): If True, fields are disabled.
+            for_reviewers (bool): If True, only include questions visible to reviewers.
         """
-        questions = self.get_question_queryset(target, event)
+        questions = self.get_question_queryset(target, event, for_reviewers=for_reviewers)
         # Apply filters based on submission context
         if track:
             questions = questions.filter(Q(tracks__in=[track]) | Q(tracks__isnull=True))

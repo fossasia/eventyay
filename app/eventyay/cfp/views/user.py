@@ -73,23 +73,6 @@ class ProfileView(SpeakerSocialLinksMixin, LoggedInEventPageMixin, TemplateView)
             files=self.request.FILES if bind else None,
         )
 
-    @context
-    @context
-    @cached_property
-    def questions_form(self):
-        bind = is_form_bound(self.request, 'questions')
-        return TalkQuestionsForm(
-            data=self.request.POST if bind else None,
-            files=self.request.FILES if bind else None,
-            speaker=self.request.user,
-            event=self.request.event,
-            target='speaker',
-        )
-
-    @context
-    def profile_question_fields(self):
-        return [field for field in self.profile_form if field.name.startswith('question_')]
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(self.get_social_links_context())
@@ -109,10 +92,6 @@ class ProfileView(SpeakerSocialLinksMixin, LoggedInEventPageMixin, TemplateView)
                     self.request.event.cache.set('rebuild_schedule_export', True, None)
             else:
                 return super().get(request, *args, **kwargs)
-        elif self.questions_form.is_bound and self.questions_form.is_valid():
-            self.questions_form.save()
-            if self.questions_form.has_changed():
-                self.request.event.cache.set('rebuild_schedule_export', True, None)
         else:
             return super().get(request, *args, **kwargs)
 
