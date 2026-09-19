@@ -104,7 +104,7 @@ html.rtl {
     border-right: 0;
   }
 
-  .sidebar-minimized .sidebar .nav > li > a .fa, body.sidebar-minimized .sidebar .nav > li > a svg{
+  .sidebar-minimized .sidebar:not(:hover) .nav > li > a .fa, body.sidebar-minimized .sidebar:not(:hover) .nav > li > a svg{
     margin : auto;
   }
 

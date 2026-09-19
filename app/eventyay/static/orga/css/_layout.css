@@ -26,8 +26,7 @@ body {
   max-width: 100%;
 }
 
-#page-wrapper:has(aside.sidebar:hover),
-#page-wrapper:has(aside.sidebar.sidebar-uncollapsed) {
+aside.sidebar.sidebar-uncollapsed ~ #page-content {
   --sidebar-width: 250px;
 }
 
