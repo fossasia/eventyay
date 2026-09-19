@@ -5,7 +5,7 @@
 {% block submission_content %}
     <div class="dashboard-history">
 
-        {% include "common/logs.html" with entries=log_entries hide_object=True %}
+        {% include "common/logs.html" with entries=log_entries hide_object=True borderless=True %}
         {% include "orga/includes/pagination.html" %}
 
     </div>
