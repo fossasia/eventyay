@@ -1,0 +1,25 @@
+{% comment %}
+Theme-aware base template includes and initialization.
+
+This template snippet should be included in your base template to enable
+the token-based theming system across your application.
+{% endcomment %}
+
+{% load static %}
+
+{# Include theme styles and CSS variables #}
+<link rel="stylesheet" href="{% static 'css/theme-tokens.css' %}">
+{% if event_theme_custom_css %}
+  <style id="event-theme-custom-css">{{ event_theme_custom_css|escape }}</style>
+{% endif %}
+
+{# Theme initialization configuration and external ES module script #}
+<script id="eventyay-theme-config" type="application/json">
+{
+  "inlineTokens": {% if event_theme_tokens %}{{ event_theme_tokens|safe }}{% elif organizer_theme_tokens %}{{ organizer_theme_tokens|safe }}{% else %}null{% endif %},
+  "inlineColorMode": {% if event_theme_color_mode %}"{{ event_theme_color_mode|escapejs }}"{% elif organizer_theme_color_mode %}"{{ organizer_theme_color_mode|escapejs }}"{% else %}null{% endif %},
+  "organizer": {% if request.event %}"{{ request.event.organizer.slug|escapejs }}"{% elif request.organizer %}"{{ request.organizer.slug|escapejs }}"{% else %}null{% endif %},
+  "event": {% if request.event %}"{{ request.event.slug|escapejs }}"{% else %}null{% endif %}
+}
+</script>
+<script type="module" src="{% static 'js/theme-init.js' %}"></script>
