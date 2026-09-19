@@ -141,7 +141,7 @@
                     {% for submission in submissions %}
                         <tr class="{{ submission.state }}">
                             {% if can_see_all_reviews %}
-                                <td class="text-center col-score-avg numeric">
+                                <td class="text-center col-score-avg numeric review-current-score">
                                     {% review_score submission %}
                                 </td>
                                 {% for score in submission.independent_scores %}
@@ -149,17 +149,39 @@
                                 {% endfor %}
                             {% endif %}
                             {% if can_review or submissions_reviewed %}
-                                <td class="text-center col-score-user numeric">
-                                    {% review_score submission True %}
-                                </td>
+                            <td class="text-center col-score-user numeric">
+                                <div class="d-inline-flex align-items-center">
+                                    <select
+                                         class="form-control review-score-select"
+                                         data-url="{% url 'orga:submissions.reviews.score' organizer=request.event.organizer.slug event=request.event.slug code=submission.code %}"
+                                         data-category="{% for category in submission.score_categories %}{% if not category.is_independent %}{{ category.pk }}{% endif %}{% endfor %}"
+                                         aria-label="{% translate "Your score" %}"
+                                    >
+                                        <option value="" {% if submission.user_score is None %}selected{% endif %}>
+                                            {% translate "No score" %}
+                                        </option>
+                                        {% for category in submission.score_categories %}
+                                            {% for score in category.scores.all %}
+                                                <option value="{{ score.pk }}" {% if submission.user_score == score.value %}selected{% endif %}>
+                                                    {{ score.label }} ({{ score.value|floatformat:"-2" }})
+                                                </option>
+                                            {% endfor %}
+                                        {% endfor %}
+                                    </select>
+                                    <i class="working fa fa-spinner fa-spin d-none"></i>
+                                    <i class="done fa fa-check d-none text-success"></i>
+                                    <i class="fail fa fa-times d-none"></i>
+                                </div>
+                                <div class="review-score-error text-danger d-none"></div>
+                            </td>
                                 {% if independent_categories and not can_see_all_reviews %}
                                     {% for score in submission.independent_scores %}
                                         <td class="col-score-user numeric"> {% if score is None %}-{% else %}{{ score }}{% endif %}</td>
                                     {% endfor %}
                                 {% endif %}
                             {% endif %}
-                            <td class="text-center col-review-count numeric">
-                                {{ submission.review_nonnull_count|default:"-" }}
+                            <td class="text-center col-review-count numeric review-count">
+                                <span class="review-count-value">{{ submission.review_nonnull_count|default:"-" }}</span>
                                 {% if submission.review_count != submission.review_nonnull_count %}({{ submission.review_count|default:"-" }}){% endif %}
                                 {% if submission.pk in submissions_reviewed %}
                                     <i class="fa fa-check text-success" title="{% translate "You have reviewed this proposal" %}"></i>

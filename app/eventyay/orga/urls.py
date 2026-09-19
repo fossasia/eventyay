@@ -21,8 +21,8 @@ from eventyay.orga.views import (
 app_name = 'orga'
 urlpatterns = [
     path('', RedirectView.as_view(pattern_name='eventyay_common:dashboard', permanent=False), name='base'),
-    path("reset/", auth.ResetView.as_view(), name="auth.reset"),
-    path("reset/<token>", auth.RecoverView.as_view(), name="auth.recover"),
+    path('reset/', auth.ResetView.as_view(), name='auth.reset'),
+    path('reset/<token>', auth.RecoverView.as_view(), name='auth.recover'),
     path('me', person.UserSettings.as_view(), name='user.view'),  # Change this to common/account/general.
     path('me/subuser', person.SubuserView.as_view(), name='user.subuser'),
     path(
@@ -32,37 +32,36 @@ urlpatterns = [
     ),
     path('nav/typeahead/', typeahead.nav_typeahead, name='nav.typeahead'),
     path(
-        "organizer/",
+        'organizer/',
         dashboard.DashboardOrganizerListView.as_view(),
-        name="organizer.list",
+        name='organizer.list',
     ),
-    path("organizer/new", organizer.OrganizerDetail.as_view(), name="organizer.create"),
+    path('organizer/new', organizer.OrganizerDetail.as_view(), name='organizer.create'),
     path(
-        "organizer/<slug:organizer>/",
+        'organizer/<slug:organizer>/',
         include(
             [
                 path(
-                    "",
+                    '',
                     dashboard.DashboardOrganizerEventListView.as_view(),
-                    name="organizer.dashboard",
+                    name='organizer.dashboard',
                 ),
                 path(
-                    "settings/",
+                    'settings/',
                     organizer.OrganizerDetail.as_view(),
-                    name="organizer.settings",
+                    name='organizer.settings',
                 ),
                 path(
-                    "settings/delete/",
+                    'settings/delete/',
                     organizer.OrganizerDelete.as_view(),
-                    name="organizer.delete",
+                    name='organizer.delete',
                 ),
-                path("api/users", organizer.speaker_search, name="organizer.user_list"),
+                path('api/users', organizer.speaker_search, name='organizer.user_list'),
                 path(
-                    "speakers/",
+                    'speakers/',
                     organizer.OrganizerSpeakerList.as_view(),
-                    name="organizer.speakers",
+                    name='organizer.speakers',
                 ),
-
             ]
         ),
     ),
@@ -72,13 +71,13 @@ urlpatterns = [
         'event/<orgslug:organizer>/<slug:event>/',
         include(
             [
-                path("delete", event.EventDelete.as_view(), name="event.delete"),
-                path("delete_talk_data", event.EventDeleteTalkData.as_view(), name="event.delete_talk_data"),
-                path("reset/", auth.ResetView.as_view(), name="event.auth.reset"),
+                path('delete', event.EventDelete.as_view(), name='event.delete'),
+                path('delete_talk_data', event.EventDeleteTalkData.as_view(), name='event.delete_talk_data'),
+                path('reset/', auth.ResetView.as_view(), name='event.auth.reset'),
                 path(
-                    "reset/<token>",
+                    'reset/<token>',
                     auth.RecoverView.as_view(),
-                    name="event.auth.recover",
+                    name='event.auth.recover',
                 ),
                 path('live', event.EventLive.as_view(), name='event.live'),
                 path('', dashboard.EventDashboardView.as_view(), name='event.dashboard'),
@@ -250,12 +249,12 @@ urlpatterns = [
                             path(
                                 '',
                                 submission.SubmissionContentView.as_view(),  # Read-only view
-                                name="submissions.content",
+                                name='submissions.content',
                             ),
                             path(
                                 'edit',
                                 submission.SubmissionContent.as_view(),  # Edit view
-                                name="submissions.content.edit",
+                                name='submissions.content.edit',
                             ),
                             path(
                                 'submit',
@@ -311,6 +310,11 @@ urlpatterns = [
                                 'reviews/',
                                 review.ReviewSubmission.as_view(),
                                 name='submissions.reviews',
+                            ),
+                            path(
+                                'reviews/score',
+                                review.ReviewScoreUpdate.as_view(),
+                                name='submissions.reviews.score',
                             ),
                             path(
                                 'reviews/delete',

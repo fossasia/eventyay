@@ -186,3 +186,100 @@ document.addEventListener("eventyay:ajax-results-replaced", () => {
     initReviewSelection()
     applyColumnVisibility()
 })
+
+/*
+ * INLINE REVIEW SCORE
+ */
+const initReviewScore = () => {
+    document
+        .querySelectorAll(".review-score-select")
+        .forEach((element) => {
+            if (element.dataset.reviewScoreInitialized) {
+                return
+            }
+            element.dataset.reviewScoreInitialized = "true"
+            element.addEventListener("change", async (ev) => {
+                const select = ev.target
+                const previousValue = select.dataset.previousValue
+
+                const statusWrapper = select.closest("td")
+                const errorEl = statusWrapper.querySelector(".review-score-error")
+                const resetStatus = () => {
+                    statusWrapper.querySelectorAll("i.working, i.done, i.fail").forEach((icon) => {
+                        icon.classList.add("d-none")
+                    })
+                }
+                const setStatus = (statusName) => {
+                    const statusIcon = statusWrapper.querySelector("." + statusName)
+                    if (!statusIcon) {
+                        return
+                    }
+                    resetStatus()
+                    statusIcon.classList.remove("d-none")
+                    if (statusWrapper.resetTimeout) {
+                        clearTimeout(statusWrapper.resetTimeout)
+                    }
+                    statusWrapper.resetTimeout = setTimeout(resetStatus, 3000)
+                }
+                if (errorEl) {
+                    errorEl.textContent = ""
+                    errorEl.classList.add("d-none")
+                }
+                setStatus("working")
+                try {
+                    select.disabled = true
+                    const csrfToken = getCookie("eventyay_csrftoken")
+
+                    const response = await fetch(select.dataset.url, {
+                        method: "POST",
+                        headers: {
+                            "X-CSRFToken": csrfToken,
+                        },
+                        body: new URLSearchParams({
+                            score: select.value,
+                            category: select.dataset.category,
+                        }),
+                    })
+
+                    const data = await response.json()
+
+                    if (!response.ok || !data.ok) {
+                        throw new Error(data.error)
+                    }
+
+                    select.dataset.previousValue = select.value
+
+                    const row = select.closest("tr")
+                    if (row) {
+                        const scoreCell = row.querySelector(".review-current-score")
+                        const reviewCountCell = row.querySelector(".review-count-value")
+                        if (scoreCell) {
+                            scoreCell.textContent = data.median == null ? "-" : Number(data.median).toString()
+                        }
+
+                        if (reviewCountCell) {
+                            reviewCountCell.textContent = data.reviews ?? "-"
+                        }
+                    }
+                    setStatus("done")
+                } catch (error) {
+                    select.value = previousValue
+                    if (errorEl) {
+                        errorEl.textContent = error.message || "Could not save review score. Please try again."
+                        errorEl.classList.remove("d-none")
+                    }
+                    setStatus("fail")
+                } finally {
+                    select.disabled = false
+                }
+            })
+
+            element.dataset.previousValue = element.value
+        })
+}
+
+initReviewScore()
+
+document.addEventListener("eventyay:ajax-results-replaced", () => {
+    initReviewScore()
+})
