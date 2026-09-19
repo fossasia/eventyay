@@ -610,7 +610,7 @@ def test_review_overview_table_layout(review_client, review_user, submission):
     response = review_client.get(submission.orga_urls.reviews, follow=True)
     assert response.status_code == 200
     assert "review-table" in response.text
-    assert '<th class="reviewer">' in response.text
-    assert '<td class="reviewer nowrap">' in response.text
+    assert '<th class="nowrap">' in response.text
+    assert '<td class="nowrap">' in response.text
     assert "Yes" in response.text
 

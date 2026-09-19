@@ -18,7 +18,7 @@
     <td class="review-text">
         {{ review.text|rich_text_snippet }}
     </td>
-    <td class="reviewer nowrap">
+    <td class="nowrap">
         {% if show_reviewer_name %}
             {% include "orga/includes/user_name.html" with user=review.user lightbox=True %}
         {% elif not read_only %}

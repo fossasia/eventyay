@@ -1364,7 +1364,7 @@ table .color-square {
     margin-bottom: 0.35rem;
   }
 
-  td.reviewer {
+  td.nowrap {
     white-space: nowrap;
   }
 
