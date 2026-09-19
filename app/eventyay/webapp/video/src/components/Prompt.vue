@@ -33,17 +33,33 @@ export default {
 			if (!this.allowCancel) return
 			event.stopPropagation()
 			// Only a press that starts on the backdrop itself can close the prompt.
-			// Remember it so a drag that begins inside the dialog and ends on the
-			// backdrop does not get treated as a backdrop click.
-			this._backdropPressed = event.target === this.$el
+			// Track that pointer's id so a drag that begins inside the dialog (whose
+			// pointerdown is stopped by .prompt-wrapper) and ends on the backdrop is
+			// not mistaken for a backdrop click, and so other pointers can't reuse it.
+			if (event.target === this.$el) {
+				this._backdropPointerId = event.pointerId
+			} else {
+				this._backdropPointerId = null
+			}
 			this.$el.addEventListener('pointerup', this.onPointerup)
+			this.$el.addEventListener('pointercancel', this.onPointercancel)
 		},
 		onPointerup(event) {
 			this.$el.removeEventListener('pointerup', this.onPointerup)
-			// Close only when the press both started and ended on the backdrop.
-			if (!this._backdropPressed || event.target !== this.$el) return
-			this._backdropPressed = false
+			this.$el.removeEventListener('pointercancel', this.onPointercancel)
+			// Close only when the same pointer both started and ended on the backdrop.
+			const isBackdropClick = this._backdropPointerId === event.pointerId && event.target === this.$el
+			this._backdropPointerId = null
+			if (!isBackdropClick) return
 			this.$emit('close')
+		},
+		onPointercancel(event) {
+			// A cancelled press must not leave stale state behind.
+			if (this._backdropPointerId === event.pointerId) {
+				this._backdropPointerId = null
+			}
+			this.$el.removeEventListener('pointerup', this.onPointerup)
+			this.$el.removeEventListener('pointercancel', this.onPointercancel)
 		}
 	}
 }
