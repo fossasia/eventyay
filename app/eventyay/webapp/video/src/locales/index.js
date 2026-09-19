@@ -223,3 +223,35 @@ export function resolveLanguageOptions(configLocales) {
 	}
 	return locales
 }
+
+export function matchLanguage(candidates, availableLanguages) {
+	if (!availableLanguages || !availableLanguages.length) return null
+	const candidateList = Array.isArray(candidates) ? candidates : [candidates]
+	const normalize = code => (code ? String(code).replaceAll('_', '-').toLowerCase().trim() : '')
+
+	for (const candidate of candidateList) {
+		if (!candidate) continue
+		const normalized = normalize(candidate)
+		if (!normalized) continue
+
+
+		const exact = availableLanguages.find(l => normalize(l.code) === normalized)
+		if (exact) return exact.code
+
+
+		const base = normalized.split('-')[0]
+		const baseMatch = availableLanguages.find(l => normalize(l.code) === base)
+		if (baseMatch) return baseMatch.code
+
+
+		const variantMatch = availableLanguages.find(l => normalize(l.code).startsWith(`${base}-`))
+		if (variantMatch) return variantMatch.code
+	}
+
+
+	const fallbackEn = availableLanguages.find(l => normalize(l.code) === 'en')
+	if (fallbackEn) return fallbackEn.code
+
+	return availableLanguages[0]?.code || null
+}
+

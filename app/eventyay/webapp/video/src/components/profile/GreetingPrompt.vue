@@ -23,7 +23,7 @@ import { useVuelidate } from '@vuelidate/core'
 import { mapState } from 'vuex'
 import { required } from 'lib/validators'
 import config from 'config'
-import { resolveLanguageOptions } from 'locales'
+import { resolveLanguageOptions, matchLanguage } from 'locales'
 import Prompt from 'components/Prompt'
 import ChangeAvatar from './ChangeAvatar'
 
@@ -32,13 +32,22 @@ export default {
 	emits: ['close'],
 	setup:() => ({v$:useVuelidate()}),
 	data() {
+		const options = resolveLanguageOptions(config.locales)
+		const initialLang = matchLanguage([
+			this.$store?.state?.userLocale,
+			this.$i18n?.resolvedLanguage,
+			this.$i18n?.language,
+			config?.defaultLocale,
+			config?.locale,
+			'en'
+		], options)
 		return {
 			activeStep: null,
 			profile: null,
 			processingStep: false,
 			blockSave: false,
 			saving: false,
-			interfaceLanguage: this.$i18n.resolvedLanguage,
+			interfaceLanguage: initialLang,
 		}
 	},
 	validations() {
@@ -71,8 +80,30 @@ export default {
 			return options.length ? options : null
 		}
 	},
+	watch: {
+		languages: {
+			immediate: true,
+			handler(newLanguages) {
+				if (newLanguages && newLanguages.length) {
+					if (!this.interfaceLanguage || !newLanguages.some(l => l.code === this.interfaceLanguage)) {
+						this.interfaceLanguage = this.resolveCurrentLanguage()
+					}
+				}
+			}
+		},
+		activeStep(step) {
+			if (step === 'displayLanguage') {
+				if (!this.interfaceLanguage || !this.languages?.some(l => l.code === this.interfaceLanguage)) {
+					this.interfaceLanguage = this.resolveCurrentLanguage()
+				}
+			}
+		}
+	},
 	async created() {
 		this.activeStep = this.steps[0]
+		if (!this.interfaceLanguage || !this.languages?.some(l => l.code === this.interfaceLanguage)) {
+			this.interfaceLanguage = this.resolveCurrentLanguage()
+		}
 		// Determine default display name:
 		// 1. Use existing saved display_name if available (even if empty string)
 		// 2. Otherwise, use wikimedia_username if available
@@ -96,6 +127,18 @@ export default {
 		}
 	},
 	methods: {
+		resolveCurrentLanguage() {
+			return matchLanguage([
+				this.interfaceLanguage,
+				this.user?.profile?.locale,
+				this.$store?.state?.userLocale,
+				this.$i18n?.resolvedLanguage,
+				this.$i18n?.language,
+				config?.defaultLocale,
+				config?.locale,
+				'en'
+			], this.languages)
+		},
 		async toNextStep() {
 			this.v$.$touch()
 			if (this.v$.$invalid) return

@@ -46,7 +46,7 @@ import { mapState } from 'vuex'
 import { cloneDeep } from 'lodash'
 import { useVuelidate } from '@vuelidate/core'
 import config from 'config'
-import { resolveLanguageOptions } from 'locales'
+import { resolveLanguageOptions, matchLanguage } from 'locales'
 import Avatar from 'components/Avatar'
 import Prompt from 'components/Prompt'
 import ChangeAvatar from 'components/profile/ChangeAvatar'
@@ -56,9 +56,18 @@ export default {
 	components: { Avatar, Prompt, ChangeAvatar },
 	setup:() => ({v$: useVuelidate()}),
 	data() {
+		const options = resolveLanguageOptions(config.locales)
+		const initialLang = matchLanguage([
+			this.$store?.state?.userLocale,
+			this.$i18n?.resolvedLanguage,
+			this.$i18n?.language,
+			config?.defaultLocale,
+			config?.locale,
+			'en'
+		], options)
 		return {
 			profile: null,
-			interfaceLanguage: this.$i18n.resolvedLanguage,
+			interfaceLanguage: initialLang,
 			notificationSettings: cloneDeep(this.$store.state.notifications.settings),
 			autoplay: true,
 			showChangeAvatar: false,
@@ -89,6 +98,18 @@ export default {
 			return options.length ? options : null
 		}
 	},
+	watch: {
+		languages: {
+			immediate: true,
+			handler(newLanguages) {
+				if (newLanguages && newLanguages.length) {
+					if (!this.interfaceLanguage || !newLanguages.some(l => l.code === this.interfaceLanguage)) {
+						this.interfaceLanguage = this.resolveCurrentLanguage()
+					}
+				}
+			}
+		}
+	},
 	created() {
 		this.profile = Object.assign({}, this.user.profile)
 		this.autoplay = this.$store.getters.autoplay
@@ -97,8 +118,23 @@ export default {
 				identicon: this.user.id
 			}
 		}
+		if (!this.interfaceLanguage || !this.languages?.some(l => l.code === this.interfaceLanguage)) {
+			this.interfaceLanguage = this.resolveCurrentLanguage()
+		}
 	},
 	methods: {
+		resolveCurrentLanguage() {
+			return matchLanguage([
+				this.interfaceLanguage,
+				this.user?.profile?.locale,
+				this.$store?.state?.userLocale,
+				this.$i18n?.resolvedLanguage,
+				this.$i18n?.language,
+				config?.defaultLocale,
+				config?.locale,
+				'en'
+			], this.languages)
+		},
 		async toggleVisibility(value) {
 			await this.$store.dispatch('setProfileVisibility', value)
 		},
