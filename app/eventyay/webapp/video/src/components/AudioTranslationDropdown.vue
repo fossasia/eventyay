@@ -116,8 +116,7 @@ export default {
 			return this.languageOptions.findIndex(option => option.language === language)
 		},
 		syncSelectedLanguage() {
-			// A language can appear twice, once per stream type, so a pick that already
-			// satisfies the parent must survive rather than snap back to the first match.
+			// Nothing to do when the current pick already matches the parent.
 			if (this.internalSelectedLanguage === this.selectedLanguage) return
 			let nextIndex = this.findLanguageIndex(this.selectedLanguage)
 			if (nextIndex === -1) nextIndex = this.findLanguageIndex('Original')

@@ -44,6 +44,7 @@ import {
 } from 'lib/stage-streams';
 import { getVimeoEmbedUrl, parseVimeoUrl } from 'lib/vimeo';
 import { isRoomVisibleToAttendee } from 'lib/video-providers';
+import { withListenerToken } from '../interpretation-streams';
 
 
 
@@ -311,7 +312,7 @@ async function applyInterpretation(interpConfig) {
 
 		if (ttsWsUrl) {
 			languageIframeUrl.value = null;
-			await startTtsTranslation(ttsWsUrl, updateToken);
+			await startTtsTranslation(withListenerToken(ttsWsUrl, interpConfig?.listenerToken), updateToken);
 		} else if (whepSource) {
 			languageIframeUrl.value = null;
 			await startWhepTranslation(whepSource, updateToken);
@@ -534,7 +535,8 @@ async function startTtsTranslation(url, updateToken) {
 	} catch (error) {
 		// Keep the scheduler: its onclose handler retries with backoff, and
 		// switching tracks or leaving the room still tears it down.
-		console.error('Failed to connect to TTS interpretation source', { url, error });
+		// The query string carries the listener token, so it stays out of the log.
+		console.error('Failed to connect to TTS interpretation source', { url: url.split('?')[0], error });
 	}
 	if (updateToken !== interpretationUpdateToken) {
 		scheduler.disconnect();

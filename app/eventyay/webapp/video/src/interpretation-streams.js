@@ -33,13 +33,28 @@ export function pluginLanguageStreams(room) {
 	// same language twice would first need a distinct selection identity per stream.
 	const byLanguage = new Map()
 	for (const entry of usable) {
-		const existing = byLanguage.get(entry.language)
+		const key = languageKey(entry)
+		const existing = byLanguage.get(key)
 		if (!existing || (!isHumanStream(existing) && isHumanStream(entry))) {
-			byLanguage.set(entry.language, entry)
+			byLanguage.set(key, entry)
 		}
 	}
 
 	return ensureOriginalLanguageEntry(Array.from(byLanguage.values()))
+}
+
+// Entries for one language can differ in spelling ("German" / "german ") but share a code.
+function languageKey(entry) {
+	return String(entry.language_code || entry.language || '').trim().toLowerCase()
+}
+
+/**
+ * Add the VoxBento listener token to a caption or TTS WebSocket URL. VoxBento
+ * needs it to accept the connection when booth access is protected.
+ */
+export function withListenerToken(url, token) {
+	if (!url || !token) return url
+	return `${url}${url.includes('?') ? '&' : '?'}token=${encodeURIComponent(token)}`
 }
 
 /**

@@ -4,10 +4,10 @@
  */
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { interpretationStreamType, pluginLanguageStreams } from './interpretation-streams.js'
+import { interpretationStreamType, pluginLanguageStreams, withListenerToken } from './interpretation-streams.js'
 
 const WHEP = 'https://voxbento.example/demo-12-es/whep'
-const TTS = 'wss://voxbento.example/ws/tts/12/de/demo-12-floor'
+const TTS = 'wss://voxbento.example/ws/tts/demo-12-ai-de'
 
 function room(streams) {
 	return { interpretation_use_plugin_streams: true, interpretation_language_streams: streams }
@@ -27,7 +27,7 @@ test('classifies AI, human and YouTube entries', () => {
 
 test('offers each language once and keeps the human booth', () => {
 	const languages = pluginLanguageStreams(room([
-		{ language: 'Spanish', stream_type: 'ai', tts_ws_url: TTS.replace('/de/', '/es/') },
+		{ language: 'Spanish', stream_type: 'ai', tts_ws_url: TTS.replace('-ai-de', '-ai-es') },
 		{ language: 'Spanish', youtube_id: WHEP },
 		{ language: 'German', stream_type: 'ai', tts_ws_url: TTS },
 	]))
@@ -54,4 +54,21 @@ test('drops entries without a playable source and ignores non-plugin rooms', () 
 	]))
 	assert.deepEqual(languages.map(entry => entry.language), ['Original', 'German'])
 	assert.deepEqual(pluginLanguageStreams({ interpretation_language_streams: [{ language: 'German', tts_ws_url: TTS }] }), [])
+})
+
+test('matches duplicates by language code, not spelling', () => {
+	const languages = pluginLanguageStreams(room([
+		{ language: 'German', language_code: 'de', stream_type: 'ai', tts_ws_url: TTS },
+		{ language: 'german ', language_code: 'de', youtube_id: WHEP },
+	]))
+
+	assert.equal(languages.length, 2)
+	assert.equal(languages[1].youtube_id, WHEP)
+})
+
+test('adds the listener token to WebSocket URLs', () => {
+	assert.equal(withListenerToken(TTS, 'a.b.c'), `${TTS}?token=a.b.c`)
+	assert.equal(withListenerToken(`${TTS}?x=1`, 'a b'), `${TTS}?x=1&token=a%20b`)
+	assert.equal(withListenerToken(TTS, null), TTS)
+	assert.equal(withListenerToken(null, 'a.b.c'), null)
 })
