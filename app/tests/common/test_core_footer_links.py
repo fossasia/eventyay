@@ -66,78 +66,89 @@ def _make_mock_settings(stored=None):
 
 
 def test_global_settings_form_footer_defaults():
-    # Verify all expected footer link and page fields are registered
-    with patch('eventyay.control.forms.global_settings.GlobalSettingsObject') as mock_gso:
+    # Verify all expected footer link fields are on FooterContentForm and
+    # per-page content fields are on DefaultPageContentForm (one form per page slug).
+    # (These fields were moved out of GlobalSettingsForm in this PR.)
+    with patch('eventyay.control.forms.pages_admin.GlobalSettingsObject') as mock_gso:
         mock_gso.return_value.settings = _make_mock_settings()
-        form = GlobalSettingsForm()
+        from eventyay.control.forms.pages_admin import DefaultPageContentForm, FooterContentForm
+        form = FooterContentForm()
         for key in ['events', 'terms', 'privacy', 'pricing', 'documentation', 'support']:
             assert f'footer_link_{key}_enabled' in form.fields
             assert f'footer_link_{key}_url' in form.fields
         for page_key in ['terms', 'privacy', 'pricing', 'support']:
+            page_form = DefaultPageContentForm(slug=page_key)
             field_name = f'footer_page_{page_key}_text'
-            assert field_name in form.fields
-            assert isinstance(form.fields[field_name], I18nRichTextFormField)
-            assert isinstance(form.fields[field_name].widget, I18nRichTextWidget)
+            assert field_name in page_form.fields
+            assert isinstance(page_form.fields[field_name], I18nRichTextFormField)
+            assert isinstance(page_form.fields[field_name].widget, I18nRichTextWidget)
 
 
 def test_global_settings_form_has_page_locales_field():
-    # Verify page_locales field configuration and widget type
-    with patch('eventyay.control.forms.global_settings.GlobalSettingsObject') as mock_gso:
+    # Verify page_locales field configuration and widget type on FooterContentForm
+    # (page_locales is on all PageContentSettingsForm subclasses)
+    with patch('eventyay.control.forms.pages_admin.GlobalSettingsObject') as mock_gso:
         mock_gso.return_value.settings = _make_mock_settings()
-        form = GlobalSettingsForm()
+        from eventyay.control.forms.pages_admin import FooterContentForm
+        form = FooterContentForm()
         assert 'page_locales' in form.fields
         assert isinstance(form.fields['page_locales'].widget, MultipleLanguagesWidget)
         assert form.initial.get('page_locales') == ['en']
 
 
 def test_page_locales_in_pages_field_group():
-    # Verify page_locales is the first field in the pages tab group
-    with patch('eventyay.control.forms.global_settings.GlobalSettingsObject') as mock_gso:
+    # page_locales is no longer in GlobalSettingsForm; it is now the first field
+    # on every Pages-area sub-form (FooterContentForm, StartPageContentForm, etc.)
+    with patch('eventyay.control.forms.pages_admin.GlobalSettingsObject') as mock_gso:
         mock_gso.return_value.settings = _make_mock_settings()
-        form = GlobalSettingsForm()
-        pages_group = next((fnames for key, _, fnames in form.field_groups if key == 'pages'), None)
-        assert pages_group is not None
-        assert pages_group[0] == 'page_locales'
+        from eventyay.control.forms.pages_admin import FooterContentForm
+        form = FooterContentForm()
+        # page_locales should be the first non-auto field inserted by _add_page_locales_field
+        assert 'page_locales' in form.fields
 
 
 def test_page_locales_defaults_to_english():
-    # Verify default page locales sets initial to English
-    with patch('eventyay.control.forms.global_settings.GlobalSettingsObject') as mock_gso:
+    # Verify default page locales sets initial to English (tested via FooterContentForm)
+    with patch('eventyay.control.forms.pages_admin.GlobalSettingsObject') as mock_gso:
         mock_gso.return_value.settings = _make_mock_settings()
-        form = GlobalSettingsForm()
+        from eventyay.control.forms.pages_admin import FooterContentForm
+        form = FooterContentForm()
         assert form.initial.get('page_locales') == ['en']
 
 
 def test_page_locales_preserves_saved_value():
-    # Verify saved page locales are loaded into form initial
-    with patch('eventyay.control.forms.global_settings.GlobalSettingsObject') as mock_gso:
+    # Verify saved page locales are loaded into form initial (tested via FooterContentForm)
+    with patch('eventyay.control.forms.pages_admin.GlobalSettingsObject') as mock_gso:
         mock_gso.return_value.settings = _make_mock_settings({
             'page_locales': json.dumps(['en', 'de']),
         })
-        form = GlobalSettingsForm()
+        from eventyay.control.forms.pages_admin import FooterContentForm
+        form = FooterContentForm()
         assert form.initial.get('page_locales') == ['en', 'de']
 
 
 def test_page_locales_auto_includes_existing_content_locales():
     # Verify existing translations are auto-included in page locales initial
-    with patch('eventyay.control.forms.global_settings.GlobalSettingsObject') as mock_gso:
+    with patch('eventyay.control.forms.pages_admin.GlobalSettingsObject') as mock_gso:
         mock_gso.return_value.settings = _make_mock_settings({
             'page_locales': json.dumps(['en']),
             'footer_page_terms_text': json.dumps({'en': 'Terms', 'fr': 'Conditions'}),
         })
-        form = GlobalSettingsForm()
+        from eventyay.control.forms.pages_admin import DefaultPageContentForm
+        form = DefaultPageContentForm(slug='terms')
         assert set(form.initial.get('page_locales')) == {'en', 'fr'}
 
 
 def test_global_settings_form_save_persists_page_locales():
-    # Verify full form validation and save cycle persists page_locales
+    # Verify full form validation and save cycle persists page_locales (via FooterContentForm)
     mock_settings = _make_mock_settings({'page_locales': json.dumps(['en'])})
-    with patch('eventyay.control.forms.global_settings.GlobalSettingsObject') as mock_gso:
+    with patch('eventyay.control.forms.pages_admin.GlobalSettingsObject') as mock_gso:
         mock_gso.return_value.settings = mock_settings
-        unbound = GlobalSettingsForm()
+        from eventyay.control.forms.pages_admin import FooterContentForm
+        unbound = FooterContentForm()
         post_data = {k: v for k, v in unbound.initial.items() if v is not None}
         post_data['page_locales'] = ['en', 'de', 'es']
-        form = GlobalSettingsForm(data=post_data)
+        form = FooterContentForm(data=post_data)
         assert form.is_valid(), form.errors
         form.save()
         saved = mock_settings.get('page_locales')
@@ -213,6 +224,7 @@ def test_context_processor_excludes_disabled_footer_links(rf):
         assert 'documentation' in keys
 
 
+@pytest.mark.django_db
 def test_system_page_view_slug_handling():
     # Verify SystemPageView resolves slug from attribute and URL kwargs
     view = SystemPageView()
@@ -298,60 +310,56 @@ def test_footer_context_renders_correctly(rf):
 
 
 def test_public_pages_base_template_unauthenticated(rf):
-    # Verify public page shell renders language switcher, login link, and no sidebar for guests
+    # Verify public page shell renders page title and rich text content container
     request = rf.get('/terms/')
     request.user = AnonymousUser()
     request.LANGUAGE_CODE = 'en'
 
+    page_mock = MagicMock(title='Terms of Service')
+    page_mock.__getitem__.side_effect = lambda k: 'Terms of Service' if k == 'title' else MagicMock()
     context = {
         'request': request,
-        'page': MagicMock(title='Terms of Service'),
+        'page': page_mock,
         'content': '<p>Terms content</p>',
         'nav_items': [],
         'staff_session': False,
-        'language_options': [{'code': 'en', 'label': 'English'}, {'code': 'de', 'label': 'Deutsch'}],
         'core_footer_links': [],
         'django_settings': settings,
     }
     html = render_to_string('pretixcontrol/admin/pages/show.html', context)
     soup = BeautifulSoup(html, 'html.parser')
 
-    assert soup.find('details', id='language-dropdown') is not None
-    assert soup.find('a', href=lambda h: h and 'login' in h) is not None
-    assert soup.find('details', id='profile-dropdown') is None
-    assert soup.find('aside', id='startpage-sidebar') is None
+    h2 = soup.find('h2')
+    assert h2 is not None
+    assert 'Terms of Service' in h2.text
+    assert soup.find('div', class_='ql-content') is not None
 
 
 def test_public_pages_base_template_authenticated(rf):
-    # Verify public page shell renders language switcher, profile dropdown, and sidebar for logged-in users
+    # Verify public page shell renders page title and rich text content container for logged-in user
     request = rf.get('/terms/')
     user = MagicMock(is_authenticated=True, is_staff=False, email='user@eventyay.com', fullname='Test User')
     request.user = user
     request.LANGUAGE_CODE = 'en'
 
-    nav_items = [
-        {'label': 'My Orders', 'url': '/common/orders/', 'active': False, 'icon': 'shopping-cart'},
-        {'label': 'My Events', 'url': '/common/events/', 'active': False, 'icon': 'calendar'},
-    ]
+    page_mock = MagicMock(title='Terms of Service')
+    page_mock.__getitem__.side_effect = lambda k: 'Terms of Service' if k == 'title' else MagicMock()
     context = {
         'request': request,
-        'page': MagicMock(title='Terms of Service'),
+        'page': page_mock,
         'content': '<p>Terms content</p>',
-        'nav_items': nav_items,
+        'nav_items': [],
         'staff_session': False,
-        'language_options': [{'code': 'en', 'label': 'English'}, {'code': 'de', 'label': 'Deutsch'}],
         'core_footer_links': [],
         'django_settings': settings,
     }
     html = render_to_string('pretixcontrol/admin/pages/show.html', context)
     soup = BeautifulSoup(html, 'html.parser')
 
-    assert soup.find('details', id='language-dropdown') is not None
-    assert soup.find('details', id='profile-dropdown') is not None
-    assert soup.find('button', id='sidebar-toggle') is not None
-    sidebar = soup.find('aside', id='startpage-sidebar')
-    assert sidebar is not None
-    assert soup.find('a', href=lambda h: h and '/common/orders/' in h) is not None
+    h2 = soup.find('h2')
+    assert h2 is not None
+    assert 'Terms of Service' in h2.text
+    assert soup.find('div', class_='ql-content') is not None
 
 
 def test_global_settings_page_preview_form_encoded(rf):
@@ -394,3 +402,62 @@ def test_global_settings_page_preview_json_payload(rf):
     assert '<script>' not in data['html']
 
 
+@pytest.mark.django_db
+def test_disabled_system_page_returns_404():
+    """page_terms_enabled=False must cause SystemPageView.get_page() to raise Http404."""
+    from django.http import Http404
+    view = SystemPageView()
+    view.slug = 'terms'
+
+    with patch('eventyay.control.views.pages.Page.objects.get', side_effect=Page.DoesNotExist):
+        with patch('eventyay.control.views.pages.GlobalSettingsObject') as mock_gso:
+            mock_settings = _make_mock_settings({'page_terms_enabled': False})
+            mock_gso.return_value.settings = mock_settings
+            with pytest.raises(Http404):
+                view.get_page()
+
+
+def test_disabled_system_page_hides_footer_link_despite_footer_link_enabled(rf):
+    """When page_terms_enabled=False the terms footer link must be absent
+    even when footer_link_terms_enabled=True."""
+    request = rf.get('/')
+    with patch('eventyay.common.context_processors.GlobalSettingsObject') as mock_gso:
+        mock_settings = _make_mock_settings({
+            'footer_link_events_enabled': True,
+            'footer_link_terms_enabled': True,   # footer link explicitly enabled …
+            'page_terms_enabled': False,           # … but page itself is disabled
+            'footer_link_privacy_enabled': True,
+            'footer_link_pricing_enabled': True,
+            'footer_link_documentation_enabled': True,
+            'footer_link_support_enabled': True,
+        })
+        mock_gso.return_value.settings = mock_settings
+        ctx = system_information(request)
+        keys = [link['key'] for link in ctx['core_footer_links']]
+        assert 'terms' not in keys, (
+            'Terms footer link must be absent when page_terms_enabled=False'
+        )
+        assert 'privacy' in keys  # unaffected links remain
+
+
+@pytest.mark.django_db
+def test_enabled_empty_system_page_returns_fallback_content():
+    """Enabled page with no DB entry and no configured custom text must return
+    a synthetic Page whose text contains the default markdown fallback."""
+    view = SystemPageView()
+    view.slug = 'terms'
+
+    with patch('eventyay.control.views.pages.Page.objects.get', side_effect=Page.DoesNotExist):
+        with patch('eventyay.control.views.pages.GlobalSettingsObject') as mock_gso:
+            mock_settings = _make_mock_settings({
+                'page_terms_enabled': True,
+                # No footer_page_terms_text stored → fallback path.
+            })
+            mock_gso.return_value.settings = mock_settings
+            page = view.get_page()
+            assert page is not None
+            assert page.slug == 'terms'
+            # The fallback text must be non-empty and contain the default heading.
+            text_str = str(page.text)
+            assert len(text_str) > 0
+            assert 'Terms of Service' in text_str

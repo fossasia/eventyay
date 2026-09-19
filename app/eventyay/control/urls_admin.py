@@ -77,7 +77,7 @@ urlpatterns = [
     path('pages/banner/', pages.PagesGlobalBannerView.as_view(), name='admin.pages.banner'),
     path('pages/additional/', pages.PageList.as_view(), name='admin.pages.additional'),
     path('pages/content/<slug:slug>/', pages.PagesDefaultPageView.as_view(), name='admin.pages.default'),
-    path('pages/locale/remove/', pages.PagesLocaleRemoveView.as_view(), name='admin.pages.locale.remove'),
+
     # Legacy redirect so existing /admin/startpage/ bookmarks still work.
     path('startpage/', RedirectView.as_view(pattern_name='eventyay_admin:admin.pages', permanent=True), name='admin.startpage'),
     url(r'^pages/add$', pages.PageCreate.as_view(), name='admin.pages.add'),

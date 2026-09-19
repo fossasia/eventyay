@@ -5,7 +5,7 @@
     <form action="" method="post" class="form-horizontal pages-form" data-page-i18n-form>
         {% csrf_token %}
         {% bootstrap_form_errors form %}
-        {% include "pretixcontrol/admin/pages/_language_switcher.html" %}
+        {% bootstrap_field form.page_locales layout="control" %}
 
         <fieldset>
             <legend>{% trans "Global banner" %}</legend>
