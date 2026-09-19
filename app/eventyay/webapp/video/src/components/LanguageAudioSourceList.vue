@@ -39,7 +39,19 @@
 							option(v-for="opt in languageOptions" :key="opt.id" :value="opt.id") {{ opt.label }}
 						i.mdi.mdi-chevron-down.dropdown-arrow(aria-hidden="true")
 
-				.field-group.source-field
+				.field-group.type-field
+					label.field-label {{ $t('Interpreted by') }}
+					.custom-select-wrapper
+						i.mdi.select-icon(:class="isAi(entry) ? 'mdi-robot-outline' : 'mdi-account-voice'" aria-hidden="true")
+						select.custom-select(v-model="entry.stream_type" @change="normalizeEntry(entry)")
+							option(:value="STREAM_TYPE_HUMAN") {{ $t('Human interpreter') }}
+							option(:value="STREAM_TYPE_AI") {{ $t('AI voice (VoxBento)') }}
+						i.mdi.mdi-chevron-down.dropdown-arrow(aria-hidden="true")
+
+				.field-group.source-field(v-if="isAi(entry)")
+					label.field-label {{ $t('Audio source') }}
+					p.ai-source-hint {{ $t('VoxBento speaks the live translation of the floor audio in this language. No source is needed.') }}
+				.field-group.source-field(v-else)
 					label.field-label
 						| {{ $t('Audio / Video Source (YouTube or WHEP)') }}
 						span.required-star *
@@ -52,7 +64,7 @@
 							@input="syncLegacyField(entry)"
 						)
 
-			.entry-switch-row
+			.entry-switch-row(v-if="!isAi(entry)")
 				bunt-switch(
 					name="use_video",
 					v-model="entry.use_video",
@@ -63,7 +75,12 @@
 
 <script>
 import ISO6391 from 'iso-639-1'
-import { defaultLanguageStreamEntry, normalizeLanguageStreamEntry } from 'lib/interpretation-language-streams'
+import {
+	STREAM_TYPE_AI,
+	STREAM_TYPE_HUMAN,
+	defaultLanguageStreamEntry,
+	normalizeLanguageStreamEntry,
+} from 'lib/interpretation-language-streams'
 
 export default {
 	name: 'LanguageAudioSourceList',
@@ -80,6 +97,8 @@ export default {
 	data() {
 		return {
 			languageOptions: [],
+			STREAM_TYPE_AI,
+			STREAM_TYPE_HUMAN,
 		}
 	},
 	watch: {
@@ -111,6 +130,9 @@ export default {
 		},
 		syncLegacyField(entry) {
 			entry.youtube_id = entry.url
+		},
+		isAi(entry) {
+			return entry.stream_type === STREAM_TYPE_AI
 		}
 	},
 }
@@ -226,7 +248,7 @@ export default {
 
 		.entry-fields-grid
 			display: grid
-			grid-template-columns: 200px 1fr
+			grid-template-columns: 200px 200px 1fr
 			gap: 16px
 			@media (max-width: 640px)
 				grid-template-columns: 1fr
@@ -279,6 +301,14 @@ export default {
 				color: $clr-grey-500
 				font-size: 20px
 				pointer-events: none
+
+		.ai-source-hint
+			margin: 0
+			min-height: 40px
+			display: flex
+			align-items: center
+			font-size: 13px
+			color: $clr-secondary-text-light
 
 		.input-wrapper
 			.text-input
