@@ -269,9 +269,8 @@
                                 {% endif %}
                                 {% for nav in nav_items %}
                                     <li>
-                                        <a href="{{ nav.url }}" {% if nav.active %}class="active"{% endif %}
-                                                {% if nav.external %}target="_blank"{% endif %}
-                                                {% if nav.children %}class="has-children"{% endif %} class="nav-item-label">
+                                        <a href="{{ nav.url }}" class="nav-item-label{% if nav.active %} active{% endif %}{% if nav.children %} has-children{% endif %}"
+                                                {% if nav.external %}target="_blank"{% endif %}>
                                             {% if nav.icon %}
                                                 {% if "<svg" in nav.icon %}
                                                     {{ nav.icon|safe }}

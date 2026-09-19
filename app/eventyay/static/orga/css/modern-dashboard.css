@@ -2,8 +2,12 @@
 .modern-dashboard {
     display: flex;
     flex-direction: column;
-    gap: 24px;
-    padding-bottom: 32px;
+    gap: 16px;
+    padding-bottom: 16px;
+}
+
+.modern-dashboard #event-nav {
+    margin-bottom: 0;
 }
 
 .dashboard-header-extra {
@@ -865,6 +869,10 @@ body:has(.td-dashboard) #page-content {
 }
 
 @media (max-width: 767px) {
+  .modern-dashboard {
+    gap: 12px;
+    padding-bottom: 12px;
+  }
   .td-dashboard {
     padding: 4px 0 24px;
   }
