@@ -8,7 +8,7 @@
 					path(d="M 0 6 L 5 10 L 10 6 z")
 			.timeseparator(:class="getSliceClasses(slice)", :style="getSliceStyle(slice)")
 		.room(:style="{'grid-area': `1 / 1 / auto / auto`}")
-		.room(v-for="(room, i) of visibleRooms", :key="room.id", :style="{'grid-area': `1 / ${i + 2} / auto / auto`}")
+		.room(v-for="(room, i) of visibleRooms", :key="room.id", :style="getRoomHeaderStyle(room, i)")
 			span.room-name(:title="getLocalizedString(room.name)") {{ getLocalizedString(room.name) }}
 			.hide-room.no-print(v-if="visibleRooms.length > 1", @click="hiddenRooms = rooms.filter(r => hiddenRooms.includes(r) || r === room)")
 				i.fa.fa-eye-slash
@@ -41,7 +41,7 @@ import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import moment, { Moment } from 'moment-timezone'
 import TalkSession from './Session.vue'
 import ShiftSession from '~/teamshifts-adapter/Session.vue'
-import { resolveMode } from '~/teamshifts-adapter'
+import { resolveMode, computeShiftColumnLayout, buildShiftGridTemplateColumns, computeShiftOverlapSubcolumn, assignRoomTracks } from '~/teamshifts-adapter'
 import { getLocalizedString } from '~/utils'
 
 const mode = resolveMode()
@@ -375,6 +375,23 @@ const densityScale = computed(() => {
   return 1
 })
 
+const shiftMinColWidth = computed(() => '320px')
+
+const shiftColumnLayout = computed(() => {
+  if (!props.allowOverlap) return new Map()
+  return computeShiftColumnLayout(visibleRooms.value as any[], props.sessions as any[])
+})
+
+const shiftTrackMap = computed(() => {
+  if (!props.allowOverlap) return new Map()
+  const merged = new Map<number | string, number>()
+  for (const room of visibleRooms.value) {
+    const tracks = assignRoomTracks(room.id, props.sessions as any[])
+    for (const [id, track] of tracks) merged.set(id, track)
+  }
+  return merged
+})
+
 const gridStyle = computed(() => {
   const scale = densityScale.value
   const minimumSliceMins = props.timeDensityMinutes || 30
@@ -393,6 +410,13 @@ const gridStyle = computed(() => {
     height = Math.round(height * scale)
     return `[${slice.name}] minmax(${height}px, auto)`
   }).join(' ')
+
+  if (props.allowOverlap && visibleRooms.value.length) {
+    return {
+      'grid-template-columns': buildShiftGridTemplateColumns(visibleRooms.value, props.sessions as any[], shiftMinColWidth.value),
+      'grid-template-rows': rows,
+    }
+  }
 
   return {
     '--total-rooms': visibleRooms.value.length.toString(),
@@ -685,8 +709,13 @@ const onDocPointerMove = (e: PointerEvent) => {
 
 const getHoverSliceStyle = (): Record<string, string> | undefined => {
   if (!hoverSlice.value || !props.draggedSession) return undefined
+  let col = hoverSlice.value.roomIndex + 2
+  if (props.allowOverlap && hoverSlice.value.room) {
+    const layout = shiftColumnLayout.value.get(hoverSlice.value.room.id)
+    if (layout) col = layout.colStart
+  }
   return {
-    'grid-area': `${getSliceName(hoverSlice.value.time)} / ${hoverSlice.value.roomIndex + 2} / ${getSliceName(
+    'grid-area': `${getSliceName(hoverSlice.value.time)} / ${col} / ${getSliceName(
       hoverSlice.value.time.clone().add(hoverSlice.value.duration, 'm')
     )}`,
   }
@@ -713,28 +742,39 @@ const getOverlapGroup = (session: SessionDatum | Availability): { index: number;
 const getSessionStyle = (session: SessionDatum | Availability): Record<string, string | number> => {
   if (!session.room || !session.start) return {}
   const roomIndex = visibleRooms.value.indexOf(session.room)
-  const { total } = getOverlapGroup(session)
 
-  if (props.allowOverlap && total > 1 && 'id' in session) {
-    const overlapping = visibleSessions.value.filter(s => {
-      if (!s.room || !s.start || !s.end) return false
-      if (s.room.id !== session.room!.id) return false
-      return s.start.isBefore(session.end) && s.end.isAfter(session.start)
-    }).sort((a, b) => {
-      const diff = a.start.diff(b.start)
-      return diff !== 0 ? diff : a.id - b.id
-    })
-    const myIndex = overlapping.findIndex(s => s.id === (session as SessionDatum).id)
-    if (myIndex === 0) {
-      return {
-        'grid-row-start': getSliceName(session.start),
-        'grid-column': roomIndex > -1 ? (roomIndex + 2).toString() : '',
+  if (props.allowOverlap) {
+    const { total } = getOverlapGroup(session)
+    if (total > 1 && 'id' in session) {
+      const roomLayout = shiftColumnLayout.value.get(session.room.id)
+      if (roomLayout && roomLayout.colSpan > 1) {
+        const track = shiftTrackMap.value.get((session as any).id)
+        if (track != null) {
+          const subCol = roomLayout.colStart + track
+          return {
+            'grid-row': `${getSliceName(session.start)} / ${getSliceName(session.end)}`,
+            'grid-column': `${subCol} / ${subCol + 1}`,
+          }
+        }
       }
     }
-    const prev = overlapping[myIndex - 1]
+    const layout = shiftColumnLayout.value.get(session.room.id)
+    if (layout) {
+      if (!('id' in session)) {
+        return {
+          'grid-row': `${getSliceName(session.start)} / ${getSliceName(session.end)}`,
+          'grid-column': `${layout.colStart} / ${layout.colStart + layout.colSpan}`,
+        }
+      }
+      return {
+        'grid-row': `${getSliceName(session.start)} / ${getSliceName(session.end)}`,
+        'grid-column': layout.colStart.toString(),
+      }
+    }
+    const col = roomIndex > -1 ? roomIndex + 2 : 1
     return {
-      'grid-row-start': getSliceName(prev.end),
-      'grid-column': roomIndex > -1 ? (roomIndex + 2).toString() : '',
+      'grid-row': `${getSliceName(session.start)} / ${getSliceName(session.end)}`,
+      'grid-column': col.toString(),
     }
   }
 
@@ -744,6 +784,18 @@ const getSessionStyle = (session: SessionDatum | Availability): Record<string, s
   }
 }
 
+
+const getRoomHeaderStyle = (room: { id: number | string }, fallbackIndex: number): Record<string, string> => {
+  if (!props.allowOverlap) {
+    return { 'grid-area': `1 / ${fallbackIndex + 2} / auto / auto` }
+  }
+  const roomLayout = shiftColumnLayout.value.get(room.id)
+  if (!roomLayout) return { 'grid-area': `1 / ${fallbackIndex + 2} / auto / auto` }
+  return {
+    'grid-row': '1 / auto',
+    'grid-column': `${roomLayout.colStart} / ${roomLayout.colStart + roomLayout.colSpan}`,
+  }
+}
 
 const getSliceClasses = (slice: Timeslice): Record<string, boolean> => ({
   datebreak: slice.datebreak || false,
