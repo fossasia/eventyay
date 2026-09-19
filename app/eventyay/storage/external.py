@@ -1,5 +1,7 @@
+import logging
 import mimetypes
 import uuid
+from urllib.parse import urlsplit
 
 import requests
 from bs4 import BeautifulSoup
@@ -10,6 +12,9 @@ from django.utils.timezone import now
 
 from eventyay.base.models.storage_model import StoredFile
 from eventyay.consts import SizeKey
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_extension_from_response(response):
@@ -59,10 +64,25 @@ def store_image(response, event):  # TODO deduplicate
     return stored_file.file.url
 
 
+def _safe_url(url):
+    try:
+        host = urlsplit(url).hostname
+    except ValueError:
+        return "<unparseable url>"
+    return host or "<unparseable url>"
+
+
 def retrieve_url(url):
-    response = requests.get(url, timeout=10)  # TODO: user agent
-    if response.status_code == 200:
+    headers = {"User-Agent": f"{settings.INSTANCE_NAME}/1.0 ({settings.SITE_URL})"}
+    try:
+        response = requests.get(url, timeout=10, headers=headers)
+    except requests.RequestException as e:
+        logger.warning("Failed to retrieve URL %s: %s", _safe_url(url), type(e).__name__)
+        return None
+    if 200 <= response.status_code < 300:
         return response
+    logger.warning("Failed to retrieve URL from %s: HTTP %s", _safe_url(url), response.status_code)
+    return None
 
 
 def fetch_preview_data(url, event):
