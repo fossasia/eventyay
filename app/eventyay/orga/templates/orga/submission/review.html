@@ -196,7 +196,7 @@
                                 {% endif %}
                                 {% for field in qform %}<th>{{ field.label }}</th>{% endfor %}
                                 <th class="review-text">{% translate "Review" %}</th>
-                                <th></th>
+                                <th class="nowrap">{% if can_view_reviewer_names %}{% translate "Reviewer" %}{% endif %}</th>
                             </tr>
                         </thead>
                         <tbody>
