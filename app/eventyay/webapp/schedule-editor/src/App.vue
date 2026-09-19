@@ -560,7 +560,6 @@ const unscheduled = computed<SessionData[]>(() => {
 const deletedRoomSessions = computed<SessionData[]>(() => {
   if (!schedule.value) return []
   const isShifts = mode === 'shifts' || mode === 'public-shifts'
-  if (isShifts) return []
   return schedule.value.talks
     .filter(
       (session) =>
@@ -576,11 +575,12 @@ const deletedRoomSessions = computed<SessionData[]>(() => {
       start: moment(session.start),
       end: moment(session.end),
       duration: session.end ? moment(session.end).diff(moment(session.start), 'minutes') : session.duration,
-      speakers: resolveSessionSpeakers(session.speakers),
-      track: tracksLookup.value[lookupKey(session.track)],
+      speakers: isShifts ? [] : resolveSessionSpeakers(session.speakers),
+      track: isShifts ? undefined : tracksLookup.value[lookupKey(session.track)],
       state: session.state,
       deletedRoom: true,
       do_not_record: session.do_not_record,
+      roles: isShifts ? (session.roles ?? []) : undefined,
     }))
 })
 
