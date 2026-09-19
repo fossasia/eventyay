@@ -929,12 +929,12 @@ $(function () {
     });
 
     // Vouchers
-    $("#voucher-bulk-codes-generate").click(function () {
+    $(document).on("click", "#voucher-bulk-codes-generate", function () {
         var num = $("#voucher-bulk-codes-num").val();
         var prefix = $('#voucher-bulk-codes-prefix').val();
         if (num != "") {
             var url = $(this).attr("data-rng-url");
-            $("#id_codes").html("Generating...");
+            $("#id_codes").val(gettext("Generating..."));
             $(".form-group:has(#voucher-bulk-codes-num)").removeClass("has-error");
             $.getJSON(url + '?num=' + num + '&prefix=' + encodeURIComponent(prefix), function (data) {
                 $("#id_codes").val(data.codes.join("\n"));
