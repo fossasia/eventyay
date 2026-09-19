@@ -141,7 +141,9 @@ def validate_data(data):
 def convert(io, timezone=None):
     data = load_sheet(io)
 
-    result = {"version": dt.datetime.now().isoformat()}
+    # Use the event timezone (falling back to UTC) so "version" is a
+    # timezone-aware timestamp, consistent with the talk times below.
+    result = {"version": dt.datetime.now(ZoneInfo(timezone) if timezone else dt.timezone.utc).isoformat()}
     result["rooms"] = transform_data(
         data,
         "Rooms",
