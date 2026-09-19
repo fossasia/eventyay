@@ -19,6 +19,8 @@ export default {
 			})
 		},
 		visibleAnnouncements(state, getters, rootState) {
+			const liveFeatures = rootState.world?.live_features || window.eventyay?.liveFeatures || {}
+			if (!liveFeatures.announcements) return []
 			return getters.announcements.filter(announcement => announcement.state === 'active' && !announcement.expired && !state.dismissedAnnouncements.includes(announcement.id))
 		}
 	},

@@ -23,7 +23,7 @@
     </div>
   </nav>
 
-  <form action="" method="post" class="form-horizontal">
+  <form action="" method="post" class="form-horizontal" data-badge-layout-settings>
     {% csrf_token %}
     {% bootstrap_form_errors form %}
 
@@ -128,34 +128,5 @@
     </div>
   </form>
 
-  <script>
-    $(function () {
-      function toggleBadgeCustomizationFields() {
-        if (!$('#badge-customization-fields table').length) {
-          $('#badge-customization-fields').show();
-          return;
-        }
-        const customizationEnabled = $('#id_allow_customization').is(':checked');
-        $('#badge-customization-fields').toggle(customizationEnabled);
-        $('#id_allow_badge_editing').prop('disabled', !customizationEnabled);
-        if (!customizationEnabled) {
-          $('#id_allow_badge_editing').prop('checked', false);
-        }
-      }
-
-      $('#id_allow_customization').on('change', toggleBadgeCustomizationFields);
-      toggleBadgeCustomizationFields();
-
-      $('input[name="required_badge_fields"]').on('change', function() {
-        const val = $(this).val();
-        const $askUser = $('input[name="ask_user_fields"][value="' + val + '"]');
-        if ($(this).is(':checked')) {
-          $askUser.prop('checked', true).prop('disabled', true);
-        } else {
-          $askUser.prop('disabled', false);
-        }
-      });
-      $('input[name="required_badge_fields"]').trigger('change');
-    });
-  </script>
+  <script type="module" src="{% static 'pretixcontrol/js/ui/badge-layout-settings.js' %}"></script>
 {% endblock %}

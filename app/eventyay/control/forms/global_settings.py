@@ -26,6 +26,15 @@ PAYPAL_CONNECT_ENDPOINT_CHOICES = (
     ('sandbox', _('Sandbox')),
 )
 
+# PayPal Connect settings that the ticketing settings template renders by name.
+PAYPAL_CONNECT_TEMPLATE_FIELDS = frozenset(
+    {
+        'payment_paypal_connect_client_id',
+        'payment_paypal_connect_secret_key',
+        'payment_paypal_connect_endpoint',
+    }
+)
+
 
 def paypal_connect_endpoint_choice(value: str | None) -> str:
     """Map stored PayPal endpoint values (including legacy URLs) to live/sandbox."""
@@ -881,6 +890,15 @@ class GlobalTicketingSettingsForm(SettingsForm):
                     if key not in payment_gateway_fields:
                         payment_gateway_fields.append(key)
 
+        # The PayPal section of the template renders the fields above explicitly, so any
+        # further PayPal Connect setting registered by the plugin needs to be listed here
+        # to be shown at all.
+        self.paypal_extra_fields = [
+            key
+            for key in payment_gateway_fields
+            if key.startswith('payment_paypal_connect_') and key not in PAYPAL_CONNECT_TEMPLATE_FIELDS
+        ]
+
         self.field_groups = [
             ('payment-gateways', _('Payment Gateways'), payment_gateway_fields),
             ('cart', _('Cart'), [
@@ -1020,6 +1038,17 @@ class GlobalBusinessSettingsForm(SettingsForm):
                     ),
                 ),
                 (
+                    'ticket_fee_maximum',
+                    forms.DecimalField(
+                        label=_('Global maximum ticket fee'),
+                        required=False,
+                        decimal_places=2,
+                        max_digits=12,
+                        min_value=0,
+                        help_text=_('Global maximum fee limit per order in platform base currency. Set to 0 or leave empty for no limit.'),
+                    ),
+                ),
+                (
                     'billing_validation',
                     forms.BooleanField(
                         required=False,
@@ -1030,11 +1059,24 @@ class GlobalBusinessSettingsForm(SettingsForm):
                         ),
                     ),
                 ),
+                (
+                    'business_grace_period_days',
+                    forms.IntegerField(
+                        label=_('Business subscription grace period (days)'),
+                        required=False,
+                        min_value=0,
+                        initial=7,
+                        help_text=_('Number of days past-due subscriptions remain active before being expired.'),
+                    ),
+                ),
             ])
         )
 
         if 'billing_validation' not in self.initial or self.initial['billing_validation'] is None:
             self.initial['billing_validation'] = self.obj.settings.get('billing_validation', as_type=bool, default=True)
+        grace_days = self.obj.settings.get('business_grace_period_days', as_type=int, default=7)
+        if grace_days is not None:
+            self.initial['business_grace_period_days'] = int(grace_days)
 
         self.field_groups = [
             ('organizer_billing', _('Organizer Billing'), [
@@ -1043,9 +1085,11 @@ class GlobalBusinessSettingsForm(SettingsForm):
                 'payment_stripe_test_publishable_key',
                 'payment_stripe_test_secret_key',
                 'stripe_webhook_secret_key',
+                'business_grace_period_days',
             ]),
             ('ticket_fee', _('Ticket Fee'), [
                 'ticket_fee_percentage',
+                'ticket_fee_maximum',
             ]),
             ('billing_validation', _('Billing Validation'), [
                 'billing_validation',

@@ -492,7 +492,7 @@ class User(
         except SendMailException:
             pass  # Already logged
 
-    def send_password_reset(self, request: HttpRequest):
+    def send_password_reset(self, request: HttpRequest, *, sync_send: bool = False):
         from eventyay.base.services.mail import mail
 
         subject = _('Password recovery')
@@ -513,6 +513,7 @@ class User(
             None,
             locale=self.locale,
             user=self,
+            sync_send=sync_send,
         )
 
     @property
@@ -1156,9 +1157,6 @@ the eventyay team"""
         self.bbb_invites.clear()
         self.room_grants.all().delete()
         self.event_grants.all().delete()
-        self.rouletterequest_set.all().delete()
-        self.roulette_pairing_left.all().delete()
-        self.roulette_pairing_right.all().delete()
         self.audit_logs.filter(
             type__startswith="auth.user.profile",
             data__object=str(self.pk),

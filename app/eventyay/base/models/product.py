@@ -189,7 +189,12 @@ def filter_available(qs, channel='web', voucher=None, allow_addons=False):
         q &= Q(Q(category__isnull=True) | Q(category__is_addon=False))
 
     if voucher:
-        if voucher.product_id:
+        if voucher.pk and (voucher.limit_products.exists() or voucher.limit_variations.exists()):
+            # Use product pk subqueries (not variations__pk__in) to avoid duplicate Product rows.
+            q &= Q(pk__in=voucher.limit_products.values_list('pk', flat=True)) | Q(
+                pk__in=voucher.limit_variations.values_list('product_id', flat=True)
+            )
+        elif voucher.product_id:
             q &= Q(pk=voucher.product_id)
         elif voucher.quota_id:
             q &= Q(quotas__in=[voucher.quota_id])
@@ -1292,6 +1297,7 @@ class Question(LoggedModel):
     TYPE_COUNTRYCODE = 'CC'
     TYPE_PHONENUMBER = 'TEL'
     TYPE_DESCRIPTION = 'DES'
+    TYPE_URL = 'URL'
     SINGLE_CHOICE_TYPES = (TYPE_CHOICE, TYPE_CHOICE_DROPDOWN)
     OPTION_TYPES = SINGLE_CHOICE_TYPES + (TYPE_CHOICE_MULTIPLE,)
     TYPE_CHOICES = (
@@ -1309,6 +1315,7 @@ class Question(LoggedModel):
         (TYPE_COUNTRYCODE, _('Country code (ISO 3166-1 alpha-2)')),
         (TYPE_PHONENUMBER, _('Phone number')),
         (TYPE_DESCRIPTION, _('Text field')),
+        (TYPE_URL, _('URL')),
     )
     UNLOCALIZED_TYPES = [TYPE_DATE, TYPE_TIME, TYPE_DATETIME]
     ASK_DURING_CHECKIN_UNSUPPORTED = [TYPE_PHONENUMBER]

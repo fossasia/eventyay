@@ -91,6 +91,11 @@ const api = {
       return undefined as unknown as T
     }
 
+    const contentType = response.headers.get('Content-Type') ?? ''
+    if (!contentType.includes('application/json')) {
+      throw new Error(`HTTP error ${response.status}: server returned non-JSON response`)
+    }
+
     const json = await response.json()
 
     if (!response.ok) {

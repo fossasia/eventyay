@@ -11,23 +11,10 @@
             src="{% static 'control/js/global-settings-pages.js' %}"
             data-business-redirect-url="{% url 'eventyay_admin:admin.global.business' %}"
             data-ticketing-redirect-url="{% url 'eventyay_admin:admin.global.ticketing' %}"></script>
-    <script type="text/javascript">
-        $(function () {
-            $('#admin-test-turnstile-btn').on('click', function () {
-                var secret = $('#id_turnstile_secret_key').val();
-                var $form = $('#admin-test-turnstile-form');
-                $form.find('input[name="turnstile_secret_key"]').remove();
-                if (secret) {
-                    $('<input>').attr({
-                        type: 'hidden',
-                        name: 'turnstile_secret_key',
-                        value: secret
-                    }).appendTo($form);
-                }
-            });
-        });
-    </script>
+    <script type="text/javascript" src="{% static 'control/js/admin-test-email.js' %}"></script>
+    <script type="text/javascript" src="{% static 'control/js/admin-test-turnstile.js' %}"></script>
 {% endblock %}
+
 
 {% block inner %}
     <form action="" method="post" class="form-horizontal" enctype="multipart/form-data">
@@ -105,7 +92,7 @@
                                 <strong>{% trans "Test email connection" %}</strong>
                             </label>
                             <div class="col-md-9">
-                                <div class="input-group" style="max-width: 480px;">
+                                <div class="input-group test-email-input-group">
                                     <input type="email"
                                            name="test_email"
                                            id="admin-test-email-input"
@@ -113,13 +100,14 @@
                                            data-ays-ignore="true"
                                            placeholder="{% trans 'Recipient email address(es)' %}"
                                            form="admin-test-email-form"
-                                           multiple
-                                           required>
+                                           multiple>
                                     <span class="input-group-btn">
-                                        <button type="submit"
+                                        <button type="button"
                                                 class="btn btn-default"
                                                 id="admin-test-email-btn"
-                                                form="admin-test-email-form">
+                                                data-loading-text="{% trans 'Sending test email…' %}"
+                                                data-invalid-text="{% trans 'Enter a valid recipient email address.' %}"
+                                                data-error-text="{% trans 'Test email could not be sent. Please check the email settings and try again.' %}">
                                             <i class="fa fa-envelope-o"></i>
                                             {% trans "Send test email" %}
                                         </button>
@@ -129,11 +117,13 @@
                                     {% trans "Sends a test email to the entered recipient address or comma-separated recipient addresses to verify the email settings are working." %}
                                 </span>
                                 <div id="admin-test-email-feedback"
-                                     class="{% if test_email_feedback %}alert alert-{% if test_email_feedback.level == 'success' %}success{% else %}danger{% endif %}{% else %}hidden{% endif %}"
+                                     class="{% if test_email_feedback %}alert alert-{% if test_email_feedback.level == 'success' %}success{% else %}danger{% endif %}{% endif %}"
                                      role="status"
-                                     aria-live="polite">
+                                     aria-live="polite"
+                                     {% if not test_email_feedback %}hidden{% endif %}>
                                     {% if test_email_feedback %}{{ test_email_feedback.message }}{% endif %}
                                 </div>
+
                             </div>
                         </div>
                     {% elif group_key == "update-check" %}

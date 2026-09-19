@@ -1,12 +1,14 @@
 import datetime as dt
+from unittest.mock import patch
 
 import pytest
 from django.core import mail as djmail
 from django.utils.timezone import now
 from django_scopes import scope
 
+from eventyay.base.entitlements import EntitlementDecision
 from eventyay.base.models import MailTemplate, MailTemplateRoles, QueuedMail
-from eventyay.orga.forms.mails import MailDetailForm
+from eventyay.orga.forms.mails import MailDetailForm, WriteSessionMailForm
 
 
 @pytest.mark.django_db
@@ -1093,15 +1095,32 @@ def test_session_mail_preview_works_without_a_selection(orga_client, event, spea
             "action": "preview",
             "bcc": "",
             "reply_to": "",
-            "subject_0": "foo",
-            "text_0": "bar",
+            "subject_0": "",
+            "text_0": "",
         },
     )
     assert response.status_code == 200
     assert "Roughly 0 emails will be generated" in response.text
     assert "sample recipient data" in response.text
+    assert "Example Subject" in response.text
+    assert "example preview email" in response.text.lower()
     with scope(event=event):
         assert not QueuedMail.objects.exists()
+
+
+@pytest.mark.django_db
+def test_teams_composer_shows_test_email_and_send_email_label(orga_client, event):
+    response = orga_client.get(event.orga_urls.compose_mails_teams, follow=True)
+    assert response.status_code == 200
+    assert 'name="test_email"' in response.text or 'id="id_test_email"' in response.text
+    assert "Send test email" in response.text
+    assert "Send email" in response.text
+    assert "mail-composer" in response.text
+    assert 'class="form-with-placeholder mail-composer" data-always-immediate' in response.text
+    assert "Save draft" not in response.text
+    assert 'id="delivery-mode-later"' not in response.text
+    assert 'id="id_skip_queue"' not in response.text
+    assert response.context["form"].always_send_immediately is True
 
 
 @pytest.mark.django_db
@@ -1402,4 +1421,75 @@ def test_session_test_mail_uses_fallbacks_for_empty_subject_and_body(orga_client
     assert "example test email" in djmail.outbox[0].body
     with scope(event=event):
         assert QueuedMail.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_compose_session_mail_denied_by_entitlement(
+    orga_client, event, speaker, submission
+):
+    with patch(
+        "eventyay.orga.views.mails.check_entitlement",
+        return_value=EntitlementDecision(
+            allowed=False,
+            reason_code="tier_limit_exceeded",
+            message="Monthly email limit reached for this plan.",
+        ),
+    ) as mock_check, patch.object(WriteSessionMailForm, "save") as mock_save:
+        response = orga_client.post(
+            event.orga_urls.compose_mails_sessions,
+            follow=True,
+            data={
+                "state": "submitted",
+                "bcc": "",
+                "cc": "",
+                "reply_to": "",
+                "subject_0": "foo {name}",
+                "text_0": "bar {submission_title}",
+            },
+        )
+        assert response.status_code == 200
+        assert (
+            "Monthly email limit reached for this plan."
+            in response.context["form"].non_field_errors()
+        )
+        mock_check.assert_called_once_with(
+            event.organizer,
+            "email.bulk.monthly",
+            event=event,
+            quantity=1,
+        )
+        mock_save.assert_not_called()
+        with scope(event=event):
+            assert not QueuedMail.objects.filter(sent__isnull=True).exists()
+
+
+@pytest.mark.django_db
+def test_draft_to_outbox_denied_by_entitlement(orga_client, event, mail):
+    with scope(event=event):
+        mail.is_draft = True
+        mail.save()
+
+    with patch(
+        "eventyay.orga.views.mails.check_entitlement",
+        return_value=EntitlementDecision(
+            allowed=False,
+            reason_code="tier_limit_exceeded",
+            message="Monthly email limit reached for this plan.",
+        ),
+    ) as mock_check:
+        response = orga_client.post(mail.urls.to_outbox, follow=True)
+        assert response.status_code == 200
+        with scope(event=event):
+            mail.refresh_from_db()
+            assert mail.is_draft is True
+            assert mail.sent is None
+
+        mock_check.assert_called_once_with(
+            event.organizer,
+            "email.bulk.monthly",
+            event=event,
+            quantity=1,
+        )
+
+
 

@@ -23,4 +23,3 @@ without warning.
    uploads
    polls
    questions
-   roulette

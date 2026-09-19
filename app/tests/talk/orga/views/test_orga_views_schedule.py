@@ -445,26 +445,96 @@ def test_edit_room(orga_client, event, room):
 @pytest.mark.django_db
 def test_delete_room(orga_client, event, room):
     with scope(event=event):
-        assert event.rooms.count() == 1
+        assert event.rooms.filter(deleted=False).count() == 1
     response = orga_client.get(room.urls.delete, follow=True)
     assert response.status_code == 200
     with scope(event=event):
-        assert event.rooms.count() == 1
+        assert event.rooms.filter(deleted=False).count() == 1
     response = orga_client.post(room.urls.delete, follow=True)
     assert response.status_code == 200
     with scope(event=event):
-        assert event.rooms.count() == 0
+        room.refresh_from_db()
+        assert room.deleted
+        assert event.rooms.filter(deleted=False).count() == 0
 
 
 @pytest.mark.django_db
 def test_delete_used_room(orga_client, event, room, slot):
     with scope(event=event):
-        assert event.rooms.count() == 1
+        assert event.rooms.filter(deleted=False).count() == 1
+        wip_slot = event.wip_schedule.talks.get(submission=slot.submission)
     assert slot.room == room
     response = orga_client.get(room.urls.delete, follow=True)
     assert response.status_code == 200
+    assert b'linked schedules/sessions' in response.content
+    assert f'?room={room.pk}'.encode() in response.content
+    assert b'Unassign all sessions' in response.content
+    assert b'Open room in schedule editor' in response.content
+    assert b'Open in schedule' not in response.content
+    assert b'1 linked session' in response.content
     with scope(event=event):
-        assert event.rooms.count() == 1
+        assert event.rooms.filter(deleted=False).count() == 1
+    response = orga_client.post(
+        room.urls.delete,
+        {'action': 'unassign_sessions'},
+        follow=True,
+    )
+    assert response.status_code == 200
+    with scope(event=event):
+        wip_slot.refresh_from_db()
+        slot.refresh_from_db()
+        assert wip_slot.room is None
+        assert wip_slot.start is None
+        assert wip_slot.end is None
+        assert slot.room is None
+        room.refresh_from_db()
+        assert not room.deleted
+    assert b'Unassigned 1 session from this room.' in response.content
+    response = orga_client.post(room.urls.delete, follow=True)
+    assert response.status_code == 200
+    with scope(event=event):
+        room.refresh_from_db()
+        assert room.deleted
+        assert event.rooms.filter(deleted=False).count() == 0
+
+
+@pytest.mark.django_db
+def test_delete_room_with_released_only_linked_session(orga_client, event, room, slot):
+    """Released-schedule links must still surface on the delete confirm page."""
+    with scope(event=event):
+        event.wip_schedule.talks.filter(submission=slot.submission).update(
+            room=None,
+            start=None,
+            end=None,
+        )
+        slot.refresh_from_db()
+        assert slot.room == room
+        assert not event.wip_schedule.talks.filter(
+            room=room, submission__isnull=False
+        ).exists()
+
+    response = orga_client.get(room.urls.delete, follow=True)
+    assert response.status_code == 200
+    assert b'linked schedules/sessions' in response.content
+    assert b'Unassign all sessions' in response.content
+    assert str(slot.submission.title).encode() in response.content
+
+    response = orga_client.post(
+        room.urls.delete,
+        {'action': 'unassign_sessions'},
+        follow=True,
+    )
+    assert response.status_code == 200
+    with scope(event=event):
+        slot.refresh_from_db()
+        assert slot.room is None
+    assert b'Unassigned 1 session from this room.' in response.content
+
+    response = orga_client.post(room.urls.delete, follow=True)
+    assert response.status_code == 200
+    with scope(event=event):
+        room.refresh_from_db()
+        assert room.deleted
 
 
 @pytest.mark.django_db

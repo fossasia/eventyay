@@ -105,9 +105,9 @@ const clearFilters = (form) => {
             select.selectedIndex = 0
         }
         if (select.choices) {
-            if (select.multiple) {
-                select.choices.removeActiveItems()
-            } else {
+            select.choices.removeActiveItems()
+            if (!select.multiple) {
+                // Restores the empty option when it was kept as a real choice.
                 select.choices.setChoiceByValue("")
             }
         }
@@ -251,6 +251,12 @@ const initRecipientPreview = () => {
             document.querySelector("#recipient-list-dialog").close()
         })
     })
+
+    if (window.jQuery) {
+        window.jQuery('.mail-composer select').on('select2:open', function () {
+            window.jQuery('body > .select2-container.select2-container--open').addClass('mail-composer-dropdown')
+        })
+    }
 
     refreshCount()
 }

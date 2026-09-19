@@ -16,6 +16,17 @@ class TurnServer(models.Model):
     event_exclusive = models.ForeignKey(
         "Event", null=True, blank=True, on_delete=models.PROTECT
     )
+    organizers = models.ManyToManyField(
+        "Organizer", blank=True, related_name="turn_servers"
+    )
+    events = models.ManyToManyField(
+        "Event", blank=True, related_name="turn_servers"
+    )
+    disable_ssl = models.BooleanField(
+        default=False,
+        verbose_name="Disable SSL enforcement",
+        help_text="Allow non-TLS/STUN or bypass SSL verification.",
+    )
 
     def generate_credentials(self):
         username = get_random_string(16)
@@ -29,20 +40,32 @@ class TurnServer(models.Model):
 
     def get_ice_servers(self):
         username, credential = self.generate_credentials()
-        return [
+        raw_host = (self.hostname or "").strip()
+        if raw_host.startswith("[") and "]" in raw_host:
+            host = raw_host[: raw_host.index("]") + 1]
+        elif ":" in raw_host and raw_host.count(":") == 1:
+            host, _ = raw_host.split(":", 1)
+        elif ":" in raw_host:
+            host = f"[{raw_host}]"
+        else:
+            host = raw_host
+
+        ice_servers = [
             {
-                "urls": f"stun:{self.hostname}",
-                "username": username,
-                "credential": credential,
-            },
-            {
-                "urls": f"turns:{self.hostname}:443?transport=tcp",
-                "username": username,
-                "credential": credential,
-            },
-            {
-                "urls": f"turn:{self.hostname}:443?transport=tcp",
+                "urls": f"stun:{raw_host}",
                 "username": username,
                 "credential": credential,
             },
         ]
+        if not getattr(self, "disable_ssl", False) and (":" not in raw_host or ":443" in raw_host):
+            ice_servers.append({
+                "urls": f"turns:{host}:443?transport=tcp",
+                "username": username,
+                "credential": credential,
+            })
+        ice_servers.append({
+            "urls": f"turn:{raw_host}?transport=tcp" if ":" in raw_host else f"turn:{raw_host}:3478?transport=tcp",
+            "username": username,
+            "credential": credential,
+        })
+        return ice_servers

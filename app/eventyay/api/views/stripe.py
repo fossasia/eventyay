@@ -49,7 +49,15 @@ def stripe_webhook_view(request):
 
     if event.type == 'payment_intent.succeeded':
         invoice_id = event.data.object.get('metadata', {}).get('invoice_id')
-        update_billing_invoice_information.delay(invoice_id=invoice_id)
+        # Non-billing PaymentIntents (and Stripe dashboard test events) omit
+        # invoice_id; skip the Celery task instead of enqueueing a no-op.
+        if invoice_id:
+            update_billing_invoice_information.delay(invoice_id=invoice_id)
+        else:
+            logger.info(
+                'Ignoring payment_intent.succeeded without invoice_id metadata (event %s)',
+                getattr(event, 'id', None),
+            )
 
     elif event.type == 'charge.refunded':
         charge = event.data.object

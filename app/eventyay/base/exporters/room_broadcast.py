@@ -12,6 +12,7 @@ from eventyay.base.exporter import ListExporter
 BROADCAST_MODULE_TYPES = {
     "livestream.native",
     "livestream.youtube",
+    "livestream.vimeo",
 }
 
 YOUTUBE_BOOLEAN_OPTIONS = (

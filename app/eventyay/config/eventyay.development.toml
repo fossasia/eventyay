@@ -36,3 +36,7 @@ plugins_default = [
     'eventyay.plugins.checkinlists',
     'hubspot',
 ]
+
+# Development defaults
+npm_dev = true
+plugin_dev_mode = true

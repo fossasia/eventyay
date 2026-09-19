@@ -16,7 +16,7 @@ from django.template.loader import get_template
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
-from django.views.generic import FormView, TemplateView, View
+from django.views.generic import TemplateView, View
 from django_context_decorator import context
 from django_scopes import scope
 from i18nfield.utils import I18nJSONEncoder
@@ -50,7 +50,6 @@ from eventyay.base.models import (
     User,
 )
 from eventyay.cfp.views.event import EventPageMixin
-from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import get_base_url
 from eventyay.common.utils.language import localize_event_text
 from eventyay.common.video_embed import get_video_embed_info, parse_video_urls
@@ -60,7 +59,6 @@ from eventyay.common.views.mixins import (
     PermissionRequired,
     SocialMediaCardMixin,
 )
-from eventyay.submission.forms import FeedbackForm
 from eventyay.talk_rules.agenda import agenda_schedule_for_user, filter_agenda_slots
 from eventyay.orga.utils.colors import get_contrast_color
 
@@ -651,8 +649,16 @@ class SingleCalendarRedirectView(EventPageMixin, TalkMixin, View):
         return HttpResponseRedirect(url)
 
 
-class FeedbackView(TalkMixin, FormView):
-    form_class = FeedbackForm
+class FeedbackView(TalkMixin, TemplateView):
+    """Speakers read the feedback on their session here.
+
+    Everyone else is sent to the comment section on the session page, which
+    enforces login, bans, the ticket requirement and the review queue. This
+    view used to render its own form that saved feedback without any of those
+    checks, so it must not accept submissions.
+    """
+
+    template_name = 'agenda/feedback.html'
     permission_required = 'base.view_feedback_page_submission'
 
     def get_queryset(self):
@@ -669,23 +675,12 @@ class FeedbackView(TalkMixin, FormView):
 
     @context
     @cached_property
-    def can_give_feedback(self):
-        return self.request.user.has_perm('base.give_feedback_submission', self.talk)
-
-    @context
-    @cached_property
     def speakers(self):
         return self.talk.speakers.all()
 
     @cached_property
     def is_speaker(self):
         return self.request.user in self.speakers
-
-    @cached_property
-    def template_name(self):
-        if self.is_speaker:
-            return 'agenda/feedback.html'
-        return 'agenda/feedback_form.html'
 
     @context
     @cached_property
@@ -696,21 +691,10 @@ class FeedbackView(TalkMixin, FormView):
             'speaker'
         )
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['talk'] = self.talk
-        return kwargs
-
-    def form_valid(self, form):
-        if not self.can_give_feedback:
-            return super().form_invalid(form)
-        result = super().form_valid(form)
-        form.save()
-        messages.success(self.request, phrases.agenda.feedback_success)
-        return result
-
-    def get_success_url(self):
-        return self.submission.urls.public
+    def get(self, request, *args, **kwargs):
+        if not self.is_speaker:
+            return HttpResponseRedirect(self.submission.urls.public + '#feedback')
+        return super().get(request, *args, **kwargs)
 
 
 class TalkSocialMediaCard(SocialMediaCardMixin, TalkView):

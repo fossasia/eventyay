@@ -9,7 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.mail import EmailMessage
 from django.core.validators import validate_email
 from django.db import IntegrityError, OperationalError, ProgrammingError
-from django.http import HttpResponseBadRequest, JsonResponse
+from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, reverse
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
@@ -19,7 +19,7 @@ from python_http_client.exceptions import HTTPError
 
 from eventyay.api.models import OAuthApplication
 from eventyay.base.email import CustomSMTPBackend, SendGridEmail
-from eventyay.base.models import Event, GlobalPluginConfig, LogEntry, OrderPayment, OrderRefund
+from eventyay.base.models import Event, GlobalPluginConfig, LogEntry, Organizer, OrderPayment, OrderRefund
 from eventyay.base.plugins import get_all_plugins
 from eventyay.base.forms import SECRET_REDACTED
 from eventyay.base.services.mail import get_mail_backend
@@ -131,6 +131,15 @@ class GlobalBusinessSettingsView(AdministratorPermissionRequiredMixin, FormView)
         messages.error(self.request, _('Your changes have not been saved, see below for errors.'))
         return super().form_invalid(form)
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        try:
+            from eventyay_business.models import CountryFeeSetting
+            ctx['country_fee_settings'] = CountryFeeSetting.objects.all().order_by('country', 'currency')
+        except ImportError:
+            ctx['country_fee_settings'] = None
+        return ctx
+
     def get_success_url(self):
         return reverse('eventyay_admin:admin.global.business')
 
@@ -222,10 +231,15 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
     Tests the current system-level email configuration without saving settings.
     """
 
-    EMAIL_TAB_HASH = '#tab3'
+    EMAIL_TAB_HASH = '#tab-email'
 
-    def _respond(self, request, level, message):
-        """Redirect back to the email tab with inline feedback. Does not save settings."""
+    def _respond(self, request: HttpRequest, level: str, message: str) -> HttpResponse:
+        """Return JSON for AJAX callers; redirect with session feedback for plain form POSTs."""
+        if (
+            request.headers.get('Accept', '').startswith('application/json')
+            or request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        ):
+            return JsonResponse({'status': level, 'message': str(message)})
         request.session['admin_test_email_feedback'] = {
             'level': level,
             'message': str(message),
@@ -310,11 +324,11 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
 
                 backend = get_gmail_mail_backend(timeout=10)
                 if not backend:
-                    messages.error(
+                    return self._respond(
                         request,
+                        'error',
                         _('Gmail is selected but no account is connected. Connect Gmail in the settings first.'),
                     )
-                    return redirect(reverse('eventyay_admin:admin.global.settings'))
                 backend.test(from_addr=mail_from, to_addrs=recipients)
             elif gs.settings.email_vendor == 'smtp':
                 if not gs.settings.smtp_host or not gs.settings.smtp_port:
@@ -464,6 +478,109 @@ class LogDetailView(AdministratorPermissionRequiredMixin, View):
 class GlobalPluginManagementView(AdministratorPermissionRequiredMixin, TemplateView):
     template_name = 'pretixcontrol/global_plugins.html'
 
+    CONFIGURED_VIA_LABELS: dict[str, str] = {
+        'payment_settings': _('Payment settings'),
+        'platform': _('Platform'),
+    }
+
+    KNOWN_SYSTEM_MODULES: frozenset[str] = frozenset({
+        'eventyay.plugins.socialauth',
+        'eventyay.plugins.reports',
+        'eventyay.plugins.checkinlists',
+    })
+
+    # Report exporter and Check-in list exporter are deeply integrated
+    # system features used across many parts of the platform (PDF exports,
+    # check-in infrastructure, etc.).  They are always active behind the
+    # scenes and are not meaningful for admins to manage through this page,
+    # so they are excluded from the UI while remaining fully functional in
+    # the system.
+    HIDDEN_SYSTEM_MODULES: frozenset[str] = frozenset({
+        'eventyay.plugins.reports',
+        'eventyay.plugins.checkinlists',
+    })
+
+    REQUIRED_MODULES: frozenset[str] = frozenset({
+        'eventyay.plugins.checkinlists',
+    })
+
+    @classmethod
+    def _classify_plugin(cls, plugin) -> tuple[str, bool, str]:
+        """
+        Derive plugin classification from runtime metadata.
+
+        Returns (plugin_type, is_required, configured_via) based on
+        the plugin's EventyayPluginMeta attributes.
+        """
+        module = plugin.module
+        category = str(getattr(plugin, 'category', ''))
+
+        if category == 'PAYMENT':
+            return (
+                GlobalPluginConfig.PluginType.PAYMENT_PROVIDER,
+                False,
+                'payment_settings',
+            )
+
+        if module in cls.KNOWN_SYSTEM_MODULES or not getattr(plugin, 'visible', True):
+            return (
+                GlobalPluginConfig.PluginType.SYSTEM,
+                module in cls.REQUIRED_MODULES,
+                'platform',
+            )
+
+        return (GlobalPluginConfig.PluginType.EXTERNAL, False, '')
+
+    @staticmethod
+    def _count_events_using_plugins(modules: set[str]) -> dict[str, int]:
+        counts: dict[str, int] = {m: 0 for m in modules}
+        for event in Event.objects.exclude(plugins='').exclude(plugins__isnull=True).iterator():
+            active = set(event.plugins.split(','))
+            for m in modules & active:
+                counts[m] += 1
+        return counts
+
+    def _build_row(self, plugin, config: GlobalPluginConfig | None, usage_count: int = 0) -> dict:
+        module = plugin.module
+
+        # Runtime classification is the source of truth for type/required/configured_via.
+        # DB config may override these if a row exists with a non-default plugin_type.
+        rt_type, rt_required, rt_configured_via = self._classify_plugin(plugin)
+
+        if config and config.plugin_type != GlobalPluginConfig.PluginType.EXTERNAL:
+            plugin_type = config.plugin_type
+        else:
+            plugin_type = rt_type
+
+        is_required = (config.is_required if config else False) or rt_required
+        configured_via_raw = config.configured_via if config and config.configured_via else rt_configured_via
+
+        is_platform = plugin_type in (
+            GlobalPluginConfig.PluginType.PAYMENT_PROVIDER,
+            GlobalPluginConfig.PluginType.SYSTEM,
+        )
+
+        return {
+            'module': module,
+            'name': str(plugin.name),
+            'description': str(getattr(plugin, 'description', '')),
+            'version': getattr(plugin, 'version', ''),
+            'category': str(getattr(plugin, 'category', '')),
+            'plugin_type': plugin_type,
+            'plugin_type_label': str(
+                GlobalPluginConfig.PluginType(plugin_type).label
+            ),
+            'is_platform': is_platform,
+            'is_active': config.is_active if config else True,
+            'is_required': is_required,
+            'enable_by_default': config.enable_by_default if config else False,
+            'show_in_organizer_list': config.show_in_organizer_list if config else (not is_platform),
+            'configured_via': str(
+                self.CONFIGURED_VIA_LABELS.get(configured_via_raw, configured_via_raw)
+            ),
+            'usage_count': usage_count,
+        }
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         all_plugins = get_all_plugins(include_inactive=True)
@@ -473,35 +590,97 @@ class GlobalPluginManagementView(AdministratorPermissionRequiredMixin, TemplateV
         except (ProgrammingError, OperationalError):
             configs = {}
 
-        plugin_rows = []
         for plugin in all_plugins:
-            module = plugin.module
-            config = configs.get(module)
-            plugin_rows.append({
-                'module': module,
-                'name': str(plugin.name),
-                'description': str(getattr(plugin, 'description', '')),
-                'version': getattr(plugin, 'version', ''),
-                'category': str(getattr(plugin, 'category', '')),
-                'is_active': config.is_active if config else True,
-                'enable_by_default': config.enable_by_default if config else False,
-                'show_in_organizer_list': config.show_in_organizer_list if config else True,
-            })
+            if plugin.module not in configs:
+                rt_type, rt_required, rt_configured_via = self._classify_plugin(plugin)
+                is_platform = rt_type in (
+                    GlobalPluginConfig.PluginType.PAYMENT_PROVIDER,
+                    GlobalPluginConfig.PluginType.SYSTEM,
+                )
+                try:
+                    obj, created = GlobalPluginConfig.objects.get_or_create(
+                        module=plugin.module,
+                        defaults={
+                            'plugin_type': rt_type,
+                            'is_active': True,
+                            'is_required': rt_required,
+                            'enable_by_default': False,
+                            'show_in_organizer_list': not is_platform,
+                            'configured_via': rt_configured_via,
+                        },
+                    )
+                    if created:
+                        configs[plugin.module] = obj
+                except (ProgrammingError, OperationalError):
+                    pass
 
-        context['plugin_rows'] = plugin_rows
+        all_modules = {p.module for p in all_plugins}
+        try:
+            usage_counts = self._count_events_using_plugins(all_modules)
+        except (ProgrammingError, OperationalError):
+            usage_counts = {}
+
+        platform_rows = []
+        external_rows = []
+        for plugin in all_plugins:
+            if plugin.module in self.HIDDEN_SYSTEM_MODULES:
+                continue
+            row = self._build_row(
+                plugin,
+                configs.get(plugin.module),
+                usage_count=usage_counts.get(plugin.module, 0),
+            )
+            if row['is_platform']:
+                platform_rows.append(row)
+            else:
+                external_rows.append(row)
+
+        context['platform_plugin_rows'] = platform_rows
+        context['external_plugin_rows'] = external_rows
+        active_tab = self.request.GET.get('tab', 'platform')
+        context['active_tab'] = active_tab if active_tab in ('platform', 'external') else 'platform'
         return context
 
     def post(self, request, *args, **kwargs):
         all_plugins = get_all_plugins(include_inactive=True)
-        known_modules = {p.module for p in all_plugins}
+        plugins_by_module = {p.module: p for p in all_plugins}
         newly_disabled = set()
         platform_managed = set()
 
         try:
-            for module in known_modules:
+            configs = {c.module: c for c in GlobalPluginConfig.objects.all()}
+        except (ProgrammingError, OperationalError):
+            configs = {}
+
+        try:
+            for module, plugin in plugins_by_module.items():
+                if module in self.HIDDEN_SYSTEM_MODULES:
+                    continue
+                config = configs.get(module)
+                rt_type, rt_required, rt_configured_via = self._classify_plugin(plugin)
+
+                if config and config.plugin_type != GlobalPluginConfig.PluginType.EXTERNAL:
+                    plugin_type = config.plugin_type
+                else:
+                    plugin_type = rt_type
+
+                is_platform = plugin_type in (
+                    GlobalPluginConfig.PluginType.PAYMENT_PROVIDER,
+                    GlobalPluginConfig.PluginType.SYSTEM,
+                )
+                is_required = (config.is_required if config else False) or rt_required
+
                 is_active = request.POST.get(f'is_active_{module}') == 'on'
-                enable_by_default = request.POST.get(f'enable_by_default_{module}') == 'on'
-                show_in_organizer_list = request.POST.get(f'show_in_organizer_list_{module}') == 'on'
+
+                if is_required:
+                    is_active = True
+
+                if is_platform:
+                    enable_by_default = False
+                    show_in_organizer_list = False
+                else:
+                    enable_by_default = request.POST.get(f'enable_by_default_{module}') == 'on'
+                    show_in_organizer_list = request.POST.get(f'show_in_organizer_list_{module}') == 'on'
 
                 if not is_active:
                     enable_by_default = False
@@ -513,9 +692,15 @@ class GlobalPluginManagementView(AdministratorPermissionRequiredMixin, TemplateV
                 GlobalPluginConfig.objects.update_or_create(
                     module=module,
                     defaults={
+                        'plugin_type': plugin_type,
                         'is_active': is_active,
+                        'is_required': is_required,
                         'enable_by_default': enable_by_default,
                         'show_in_organizer_list': show_in_organizer_list,
+                        'configured_via': (
+                            config.configured_via if config and config.configured_via
+                            else rt_configured_via
+                        ),
                     },
                 )
         except (ProgrammingError, OperationalError):
@@ -528,7 +713,10 @@ class GlobalPluginManagementView(AdministratorPermissionRequiredMixin, TemplateV
             self._ensure_enabled_on_all_events(platform_managed)
 
         messages.success(request, _('Plugin settings have been saved.'))
-        return redirect(reverse('eventyay_admin:admin.global.plugins'))
+        active_tab = request.POST.get('active_tab', 'platform')
+        if active_tab not in ('platform', 'external'):
+            active_tab = 'platform'
+        return redirect(reverse('eventyay_admin:admin.global.plugins') + f'?tab={active_tab}')
 
     @staticmethod
     def _strip_disabled_from_events(disabled_modules: set[str]):
@@ -595,3 +783,110 @@ class GlobalSettingsPagePreviewView(AdministratorPermissionRequiredMixin, View):
 
         return JsonResponse({'previews': previews})
 
+
+class RevealSecretSettingView(View):
+    """
+    Step-up authentication endpoint that reveals a stored secret setting value.
+
+    Security:
+    - Requires an active session.
+    - Re-validates the user's account password inline before returning anything.
+    - Only whitelisted setting keys can be revealed; any other key yields HTTP 403.
+    - Scope parameter determines if we check global settings or organizer settings.
+    - If scope=global, requires staff access.
+    - If scope=organizer, requires 'can_change_organizer_settings' permission on the organizer.
+    """
+
+    ALLOWED_KEYS: frozenset[str] = frozenset({
+        # Global email
+        'smtp_password',
+        'send_grid_api_key',
+        'gmail_client_secret',
+        # Global security
+        'turnstile_secret_key',
+        # Global maps
+        'opencagedata_apikey',
+        'mapquest_apikey',
+        # Global telemetry
+        'telemetry_api_key',
+        # Global integrations
+        'etherpad_api_key',
+        'voxbento_client_secret',
+        'hubspot_client_secret',
+        # Global payment (ticketing & billing)
+        'payment_stripe_connect_secret_key',
+        'payment_stripe_connect_test_secret_key',
+        'payment_stripe_connect_publishable_key',
+        'payment_stripe_connect_test_publishable_key',
+        'payment_paypal_connect_secret_key',
+        'payment_stripe_secret_key',
+        'payment_stripe_test_secret_key',
+        'stripe_webhook_secret_key',
+    })
+
+    def post(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return JsonResponse({'error': 'forbidden', 'detail': 'Authentication required.'}, status=403)
+
+        key = (request.POST.get('key') or '').strip()
+        password = request.POST.get('password', '')
+        scope = request.POST.get('scope', 'global')
+
+        if not key or key not in self.ALLOWED_KEYS:
+            return JsonResponse({'error': 'forbidden', 'detail': 'Key not allowed.'}, status=403)
+
+        if not password:
+            return JsonResponse(
+                {'error': 'invalid_password', 'detail': str(_('Please enter your password.'))},
+                status=403,
+            )
+
+        if scope == 'global':
+            if not (request.user.is_staff or request.user.is_superuser):
+                return JsonResponse({'error': 'forbidden', 'detail': 'Administrator access required.'}, status=403)
+            gs = GlobalSettingsObject()
+        elif scope == 'organizer':
+            organizer_slug = request.POST.get('organizer', '')
+            if not organizer_slug:
+                return JsonResponse({'error': 'forbidden', 'detail': 'Organizer slug required.'}, status=403)
+            try:
+                organizer = Organizer.objects.get(slug=organizer_slug)
+            except Organizer.DoesNotExist:
+                return JsonResponse({'error': 'not_found', 'detail': 'Organizer not found.'}, status=404)
+            
+            if not (request.user.is_staff or request.user.is_superuser or request.user.has_organizer_permission(organizer, 'can_change_organizer_settings', request=request)):
+                return JsonResponse({'error': 'forbidden', 'detail': 'Organizer permission required.'}, status=403)
+            gs = organizer
+        else:
+            return JsonResponse({'error': 'forbidden', 'detail': 'Invalid scope.'}, status=403)
+
+        # Step-up: verify the administrator's/organizer's current account password directly.
+        if not request.user.check_password(password):
+            logger.warning(
+                'Secret reveal re-auth failed for user %s (key=%s, scope=%s)',
+                request.user.pk,
+                key,
+                scope,
+            )
+            return JsonResponse(
+                {'error': 'invalid_password', 'detail': str(_('The password you entered was invalid.'))},
+                status=403,
+            )
+
+        value = gs.settings.get(key, as_type=str, default='') or ''
+
+        if not value:
+            return JsonResponse(
+                {'error': 'not_set', 'detail': str(_('No value is stored for this setting.'))},
+                status=404,
+            )
+
+        logger.info(
+            'User %s revealed secret setting key=%s via step-up auth (scope=%s)',
+            request.user.pk,
+            key,
+            scope,
+        )
+        response = JsonResponse({'value': value})
+        response['Cache-Control'] = 'no-store'
+        return response

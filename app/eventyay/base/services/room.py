@@ -18,6 +18,7 @@ from eventyay.base.models.room import (
     RoomView,
     get_room_with_linked_sessions,
     partial_validated_update,
+    validate_room_can_be_deleted,
 )
 from eventyay.base.services.stale_cache import invalidate_next_stream_cache
 from eventyay.base.services.stale_cache import (
@@ -189,7 +190,40 @@ def validate_room_config_patch(room, body):
     )
     if "module_config" in body:
         _sanitize_jitsi_config(body["module_config"])
+        _sanitize_server_backed_interaction_modules(body["module_config"])
     return partial_validated_update(serializer, body)
+
+
+EMBEDDED_SUITE_MODULE_TYPES = {
+    "call.bigbluebutton",
+    "call.jitsi",
+    "call.zoom",
+}
+PLATFORM_NATIVE_INTERACTION_TYPES = {
+    "chat.native",
+    "question",
+    "poll",
+}
+
+
+def _sanitize_server_backed_interaction_modules(module_config):
+    """
+    Embedded suites (BigBlueButton, Jitsi, Zoom) run third-party iframes with their
+    own built-in chat/polls/questions. Strip redundant platform interaction modules for them.
+    Janus WebRTC uses native platform chat and is explicitly permitted to retain them.
+    """
+    if not isinstance(module_config, list):
+        return
+    has_embedded_suite = any(
+        isinstance(m, dict) and m.get("type") in EMBEDDED_SUITE_MODULE_TYPES
+        for m in module_config
+    )
+    if has_embedded_suite:
+        module_config[:] = [
+            m
+            for m in module_config
+            if isinstance(m, dict) and m.get("type") not in PLATFORM_NATIVE_INTERACTION_TYPES
+        ]
 
 
 def _sanitize_jitsi_config(module_config):
@@ -212,6 +246,7 @@ def uses_schedule_driven_stage(module_config):
     stage_modules = {
         'livestream.native',
         'livestream.youtube',
+        'livestream.vimeo',
     }
     for module in module_config or []:
         if module.get('type') not in stage_modules:
@@ -259,11 +294,17 @@ def save_room(event, room, update_fields, old_data, by_user):
     return new
 
 
-@database_sync_to_async
 @atomic
-def delete_room(event, room, by_user):
-    room.deleted = True
-    room.save(update_fields=['deleted'])
+def soft_delete_room(event, room, by_user=None):
+    """Soft-delete a room after ensuring it has no submission-linked sessions."""
+    with scope(event=event):
+        # Lock the room row so a concurrent schedule assignment cannot attach a
+        # submission after validation and before deleted=True is committed.
+        room = Room.objects.select_for_update().get(pk=room.pk)
+        validate_room_can_be_deleted(room)
+        room.deleted = True
+        room.save(update_fields=['deleted'])
+        event.wip_schedule.talks.filter(room=room, submission__isnull=True).delete()
     old = RoomConfigSerializer(room).data
 
     AuditLog.objects.create(
@@ -275,6 +316,12 @@ def delete_room(event, room, by_user):
             'old': old,
         },
     )
+    return room
+
+
+@database_sync_to_async
+def delete_room(event, room, by_user):
+    soft_delete_room(event, room, by_user)
 
 
 @database_sync_to_async

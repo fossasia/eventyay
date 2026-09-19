@@ -51,22 +51,26 @@ prompt.c-room-edit-prompt(:scrollable="false", @close="$emit('close')")
 					:creating="!wasConfigured"
 				)
 				sidebar-addons(
-					v-if="inferredType && inferredType.id === 'stage'",
+					v-if="inferredType && (inferredType.id === 'stage' || inferredType.id === 'channel-janus' || inferredType.id === 'channel-zoom')",
 					:config="config",
 					:modules="modules",
 					:creating="!wasConfigured"
 				)
 				.danger-zone(v-if="wasConfigured && hasPermission('room:delete')")
 					h3 {{ $t('Danger Zone') }}
-					p(v-if="mode === 'chat'") {{ $t('Deleting this channel removes it for attendees. Messages and calls in this channel will no longer be available.') }}
-					p(v-else) {{ $t('Deleting this room will remove it from the schedule, but the sessions will remain safe.') }} {{ $t('Sessions assigned to this room will no longer have a room assigned.') }}
-					bunt-button.btn-delete-room(v-if="!confirmingDelete", @click="confirmingDelete = true") {{ $t('Delete') }}
-					.delete-confirmation(v-else)
-						p {{ $t('Please type') }} #[b {{ localizedRoomName }}] {{ $t('to confirm deletion.') }}
-						bunt-input(name="deletingRoomName", :label="mode === 'chat' ? $t('Channel name') : $t('Room name')", v-model="deletingRoomName", @keypress.enter="deleteRoom")
-						.confirmation-actions
-							bunt-button.btn-cancel(@click="cancelDelete") {{ $t('Cancel') }}
-							bunt-button.btn-delete-room(icon="delete", :disabled="deletingRoomName !== localizedRoomName", @click="deleteRoom", :loading="deleting", :error-message="deleteError") {{ mode === 'chat' ? $t('Delete this channel') : $t('Delete this room') }}
+					template(v-if="config.has_linked_sessions")
+						p {{ $t('This room has linked schedules/sessions. Move or delete those sessions before deleting the room.') }}
+						bunt-button.btn-delete-room(:disabled="true") {{ $t('Delete') }}
+					template(v-else)
+						p(v-if="mode === 'chat'") {{ $t('Deleting this channel removes it for attendees. Messages and calls in this channel will no longer be available.') }}
+						p(v-else) {{ $t('Deleting this room removes it from the event. Sessions assigned to this room must be moved first if any remain linked.') }}
+						bunt-button.btn-delete-room(v-if="!confirmingDelete", @click="confirmingDelete = true") {{ $t('Delete') }}
+						.delete-confirmation(v-else)
+							p {{ $t('Please type') }} #[b {{ localizedRoomName }}] {{ $t('to confirm deletion.') }}
+							bunt-input(name="deletingRoomName", :label="mode === 'chat' ? $t('Channel name') : $t('Room name')", v-model="deletingRoomName", @keypress.enter="deleteRoom")
+							.confirmation-actions
+								bunt-button.btn-cancel(@click="cancelDelete") {{ $t('Cancel') }}
+								bunt-button.btn-delete-room(icon="delete", :disabled="deletingRoomName !== localizedRoomName", @click="deleteRoom", :loading="deleting", :error-message="deleteError") {{ mode === 'chat' ? $t('Delete this channel') : $t('Delete this room') }}
 			.edit-actions
 				bunt-button.btn-cancel(@click="$emit('close')") {{ $t('Cancel') }}
 				bunt-button.btn-save(@click="save", :loading="saving", :error-message="saveError") {{ $t('Save') }}
@@ -88,7 +92,7 @@ import ChannelBBB from 'views/admin/rooms/types-edit/channel-bbb'
 import ChannelJanus from 'views/admin/rooms/types-edit/channel-janus'
 import ChannelJitsi from 'views/admin/rooms/types-edit/channel-jitsi'
 import ChannelZoom from 'views/admin/rooms/types-edit/channel-zoom'
-import ChannelRoulette from 'views/admin/rooms/types-edit/channel-roulette'
+import ChannelLoungeMesh from 'views/admin/rooms/types-edit/channel-loungemesh'
 import PageLanding from 'views/admin/rooms/types-edit/page-landing'
 import SidebarAddons from 'views/admin/rooms/types-edit/SidebarAddons'
 import {
@@ -98,6 +102,7 @@ import {
 } from 'lib/interpretation-language-streams'
 
 export default {
+	name: 'RoomEditPrompt',
 	components: { Prompt, SidebarAddons },
 	provide () {
 		return {
@@ -140,10 +145,10 @@ export default {
 				stage: Stage,
 				'page-landing': PageLanding,
 				'channel-bbb': ChannelBBB,
-				'channel-roulette': ChannelRoulette,
 				'channel-janus': ChannelJanus,
 				'channel-jitsi': ChannelJitsi,
 				'channel-zoom': ChannelZoom,
+				'channel-loungemesh': ChannelLoungeMesh,
 			})
 		}
 	},
@@ -153,7 +158,8 @@ export default {
 			const videoTypes = getAvailableVideoProviders(
 				this.hasPermission,
 				this.isAdminMode,
-				(flag) => features.enabled(flag)
+				(flag) => features.enabled(flag),
+				this.$store.state.world?.video_providers
 			).map(provider => {
 				const type = getRoomTypeById(provider.roomTypeId)
 				if (!type) return null
@@ -280,6 +286,10 @@ export default {
 			this.deleteError = null
 		},
 		async deleteRoom () {
+			if (this.config?.has_linked_sessions) {
+				this.deleteError = this.$t('This room has linked schedules/sessions. Move or delete those sessions before deleting the room.')
+				return
+			}
 			if (this.deletingRoomName !== this.localizedRoomName) return
 			this.deleteError = null
 			this.deleting = true
@@ -299,13 +309,19 @@ export default {
 			this.saving = true
 			try {
 				const roomId = this.config.id
+				let moduleConfig = this.config.module_config || []
+				if (['channel-bbb', 'channel-jitsi'].includes(this.inferredType?.id)) {
+					moduleConfig = moduleConfig.filter(
+						m => !['chat.native', 'question', 'poll'].includes(m.type)
+					)
+				}
 				await api.call('room.config.patch', {
 					room: roomId,
 					name: this.config.name,
 					description: this.config.description,
 					picture: this.config.picture,
 					force_join: this.config.force_join,
-					module_config: this.config.module_config
+					module_config: moduleConfig
 				})
 				if (this.$refs.settings?.saveStreamSchedules) {
 					await this.$refs.settings.saveStreamSchedules(roomId)

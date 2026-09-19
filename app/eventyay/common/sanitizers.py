@@ -16,6 +16,7 @@ import nh3
 _RICH_TEXT_TAGS: frozenset[str] = frozenset({
     'p', 'br', 'strong', 'b', 'em', 'i', 'u',
     'ul', 'ol', 'li', 'a', 'blockquote',
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
 })
 
 _EMAIL_TAGS: frozenset[str] = _RICH_TEXT_TAGS | frozenset({'span', 'img'})
@@ -84,15 +85,14 @@ def _clean(
     )
 
 
-_PAGE_TAGS: frozenset[str] = _RICH_TEXT_TAGS | frozenset({
-    'img', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'
-})
+_PAGE_TAGS: frozenset[str] = _RICH_TEXT_TAGS | frozenset({'img'})
 _PAGE_ATTRIBUTES: dict[str, set[str]] = {
     'a': {'href', 'rel'},
-    'img': {'src', 'alt', 'width', 'height', 'title'}
+    'img': {'src', 'alt', 'width', 'height', 'title'},
 }
 
-_PAGE_ATTR_FILTER = _attribute_filter(_PAGE_ATTRIBUTES)
+# Allow nh3-injected ``rel`` through the attribute filter (same as rich text).
+_PAGE_ATTR_FILTER = _attribute_filter({'a': {'href', 'rel'}, 'img': _PAGE_ATTRIBUTES['img']})
 
 def sanitize_rich_text(html: str) -> str:
     """Sanitize HTML from the simple rich text editor profile."""

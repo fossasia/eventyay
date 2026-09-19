@@ -18,6 +18,7 @@ from lxml import etree
 from yarl import URL
 
 from eventyay.base.models import BBBCall, BBBServer
+from .video_server_routing import filter_servers_for_event, is_server_available_for_event
 
 
 logger = logging.getLogger(__name__)
@@ -28,11 +29,16 @@ class BBBServerUnavailable(Exception):
 
 
 def get_url(operation, params, base_url, secret):
+    clean_base = (base_url or "").strip().rstrip("/")
+    if clean_base.endswith("/api"):
+        clean_base = clean_base[:-4]
+    if not clean_base.endswith("/"):
+        clean_base += "/"
     encoded = urlencode(params)
     payload = operation + encoded + secret
     checksum = hashlib.sha256(payload.encode()).hexdigest()
     return urljoin(
-        base_url, "api/" + operation + "?" + encoded + "&checksum=" + checksum
+        clean_base, "api/" + operation + "?" + encoded + "&checksum=" + checksum
     )
 
 
@@ -88,13 +94,16 @@ def choose_server(event, room=None, prefer_server=None):
             )
         ).order_by("relevant_cost")
 
-    search_order = [
-        servers.filter(url=prefer_server).filter(
-            Q(event_exclusive=event) | Q(event_exclusive__isnull=True)
-        ),
-        servers.filter(event_exclusive=event),
-        servers.filter(event_exclusive__isnull=True),
-    ]
+    search_order = []
+    if prefer_server:
+        matching_preferred = [
+            s for s in servers.filter(url=prefer_server)
+            if is_server_available_for_event(s, event)
+        ]
+        if matching_preferred:
+            return random.choice(matching_preferred)
+
+    search_order = filter_servers_for_event(servers, event)
     for qs in search_order:
         servers = list(qs)
         if not servers:
@@ -199,7 +208,7 @@ def get_create_params_for_room(
         "muteOnStart": ("true" if config.get("bbb_mute_on_start", False) else "false"),
         "lockSettingsDisablePrivateChat": (
             "true"
-            if room.event.config.get("bbb_disable_privatechat", True)
+            if (room.event.config or {}).get("bbb_disable_privatechat", True)
             else "false"
         ),
         "lockSettingsDisableCam": (
@@ -220,34 +229,37 @@ class BBBService:
     def __init__(self, event):
         self.event = event
 
-    async def _get(self, url, timeout=30):
+    async def _get(self, url, timeout=30, disable_ssl=False):
         try:
+            ssl_opt = False if disable_ssl else None
             async with aiohttp.ClientSession() as session:
-                async with session.get(URL(url, encoded=True), timeout=timeout) as resp:
+                async with session.get(URL(url, encoded=True), timeout=timeout, ssl=ssl_opt) as resp:
                     if resp.status != 200:
                         logger.error(
                             f"Could not contact BBB. Return code: {resp.status}"
                         )
                         return False
 
-                    body = await resp.text()
+                    body = await resp.read()
 
                 root = etree.fromstring(body)
                 if root.xpath("returncode")[0].text != "SUCCESS":
-                    logger.error(f"Could not contact BBB. Response: {body}")
+                    logger.error(f"Could not contact BBB. Response: {body.decode(errors='replace')}")
                     return False
         except Exception:
             logger.exception("Could not contact BBB.")
             return False
         return root
 
-    async def _post(self, url, xmldata):
+    async def _post(self, url, xmldata, disable_ssl=False):
         try:
+            ssl_opt = False if disable_ssl else None
             async with aiohttp.ClientSession() as session:
                 async with session.post(
                     URL(url, encoded=True),
                     data=xmldata,
                     headers={"Content-Type": "application/xml"},
+                    ssl=ssl_opt,
                 ) as resp:
                     if resp.status != 200:
                         logger.error(
@@ -255,11 +267,11 @@ class BBBService:
                         )
                         return False
 
-                    body = await resp.text()
+                    body = await resp.read()
 
                 root = etree.fromstring(body)
                 if root.xpath("returncode")[0].text != "SUCCESS":
-                    logger.error(f"Could not contact BBB. Response: {body}")
+                    logger.error(f"Could not contact BBB. Response: {body.decode(errors='replace')}")
                     return False
         except Exception:
             logger.exception("Could not contact BBB.")
@@ -283,30 +295,38 @@ class BBBService:
         create_url = get_url("create", create_params, server.url, server.secret)
 
         presentation = config.get("presentation", None)
+        disable_ssl = getattr(server, "disable_ssl", False)
         if presentation and presentation.strip():
             xml = get_presentation_xml(presentation)
-            req = await self._post(create_url, xml)
+            req = await self._post(create_url, xml, disable_ssl=disable_ssl)
         else:
-            req = await self._get(create_url)
+            req = await self._get(create_url, disable_ssl=disable_ssl)
 
         if req is False:
             return
 
-        if user.profile.get("avatar", {}).get("url"):
-            avatar = {"avatarURL": user.profile.get("avatar", {}).get("url")}
-        else:
-            avatar = {}
+        avatar = {}
+        if user and getattr(user, "profile", None) and isinstance(user.profile, dict):
+            avatar_url = user.profile.get("avatar", {}).get("url")
+            if avatar_url:
+                avatar = {"avatarURL": avatar_url}
 
         scheme = (
             "http://" if settings.DEBUG else "https://"
         )  # TODO: better determinator?
         domain = self.event.domain or settings.SITE_NETLOC
-        return get_url(
-            "join",
-            {
-                "meetingID": create_params["meetingID"],
-                "fullName": escape_name(user.profile.get("display_name", "")),
-                "userID": str(user.pk),
+        user_profile = getattr(user, "profile", None) or {}
+        display_name = (
+            user_profile.get("display_name")
+            or getattr(user, "fullname", None)
+            or (user.email.split("@")[0] if getattr(user, "email", None) else None)
+            or "Attendee"
+        )
+        user_id = str(user.pk) if user else "anonymous"
+        join_params = {
+            "meetingID": create_params["meetingID"],
+            "fullName": escape_name(display_name),
+            "userID": user_id,
                 "password": (
                     create_params["moderatorPW"]
                     if moderator
@@ -319,9 +339,6 @@ class BBBService:
                     if not moderator and config.get("waiting_room", False)
                     else "false"
                 ),
-                "userdata-bbb_custom_style_url": scheme
-                + domain
-                + reverse("live:css.bbb"),
                 "userdata-bbb_show_public_chat_on_login": "false",
                 # "userdata-bbb_mirror_own_webcam": "true",  unfortunately mirrors for everyone, which breaks things
                 "userdata-bbb_skip_check_audio": "true",
@@ -337,7 +354,17 @@ class BBBService:
                 "userdata-bbb_hide_presentation_on_join": (
                     "true" if config.get("hide_presentation", False) else "false"
                 ),
-            },
+            }
+
+        is_local_domain = any(h in domain for h in ("localhost", "127.0.0.1", ".local", ".test"))
+        if not is_local_domain:
+            join_params["userdata-bbb_custom_style_url"] = (
+                scheme + domain + reverse("live:css.bbb")
+            )
+
+        return get_url(
+            "join",
+            join_params,
             server.url,
             server.secret,
         )
@@ -349,7 +376,7 @@ class BBBService:
         if not create_params:
             return
         create_url = get_url("create", create_params, server.url, server.secret)
-        if await self._get(create_url) is False:
+        if await self._get(create_url, disable_ssl=getattr(server, "disable_ssl", False)) is False:
             return
 
         if user.profile.get("avatar", {}).get("url"):
@@ -411,7 +438,14 @@ class BBBService:
             for server in servers
         ]
         responses = await asyncio.gather(
-            *(self._get(url, timeout=10) for url in recording_urls)
+            *(
+                self._get(
+                    url,
+                    timeout=10,
+                    disable_ssl=getattr(server, "disable_ssl", False),
+                )
+                for url, server in zip(recording_urls, servers)
+            )
         )
         for server, recordings_url, root in zip(servers, recording_urls, responses):
             try:
