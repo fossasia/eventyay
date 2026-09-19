@@ -1,5 +1,6 @@
 {% load i18n %}
 {% load safelink %}
+{% load privacy_consent %}
 
 {% if core_footer_links %}
 <nav class="core-footer-nav" aria-label="{% translate 'Platform links' %}">
@@ -13,4 +14,23 @@
         {% endfor %}
     </div>
 </nav>
+{% endif %}
+
+{% comment %}
+    Loaded here so the consent layer always ships with the footer that links to
+    it: a "Privacy settings" link without this include is a dead control.
+{% endcomment %}
+{% include "eventyay/privacy/consent.html" %}
+
+{% consent_provider as provider %}
+{% if provider == 'klaro' %}
+    {% cookie_policy_url as cookie_policy %}
+    <nav class="core-footer-nav" aria-label="{% translate 'Privacy' %}">
+        <div class="core-footer-links-container">
+            <a href="#" class="core-footer-link" data-privacy-settings>{% translate "Privacy settings" %}</a>
+            {% if cookie_policy %}
+                <a href="{% safelink cookie_policy %}" class="core-footer-link">{% translate "Cookie Policy" %}</a>
+            {% endif %}
+        </div>
+    </nav>
 {% endif %}

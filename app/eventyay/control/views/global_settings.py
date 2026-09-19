@@ -25,6 +25,7 @@ from eventyay.base.forms import SECRET_REDACTED
 from eventyay.base.services.mail import get_mail_backend
 from eventyay.base.services.turnstile import test_turnstile_connection
 from eventyay.base.services.update_check import check_result_table, update_check
+from eventyay.base.models.privacy import ThirdPartyService, enabled_consent_categories
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.sanitizers import sanitize_rich_text
 from eventyay.control.forms.global_settings import (
@@ -32,6 +33,7 @@ from eventyay.control.forms.global_settings import (
     GlobalSettingsForm,
     GlobalTicketingSettingsForm,
     SSOConfigForm,
+    PrivacySettingsForm,
 )
 from eventyay.control.permissions import (
     AdministratorPermissionRequiredMixin,
@@ -782,6 +784,58 @@ class GlobalSettingsPagePreviewView(AdministratorPermissionRequiredMixin, View):
                 previews['en'] = safe_html
 
         return JsonResponse({'previews': previews})
+
+
+class PrivacySettingsView(AdministratorPermissionRequiredMixin, FormView):
+    """PrivacySettingsView class implementation."""
+    template_name = 'pretixcontrol/admin/privacy_settings.html'
+    form_class = PrivacySettingsForm
+
+    def get_context_data(self, **kwargs):
+        """get_context_data method."""
+        context = super().get_context_data(**kwargs)
+        gs = GlobalSettingsObject()
+        services = ThirdPartyService.objects.all()
+
+        context['services'] = services
+        context['provider'] = gs.settings.get('privacy_consent_provider', 'disabled')
+        # Surfaced as warnings on the overview so misconfiguration is visible
+        # rather than silently shipping a banner that blocks nothing.
+        #
+        # An enabled optional service is left out of the consent config in two
+        # distinct ways, which need different fixes from the administrator:
+        # it has no category assigned yet (`category` is blank by default), or
+        # its category exists but is switched off.
+        enabled_categories = enabled_consent_categories(gs.settings)
+        unpublished = [
+            service
+            for service in services
+            if service.enabled
+            and not service.required
+            and service.category not in enabled_categories
+        ]
+        context['unclassified_services'] = [service for service in unpublished if not service.category]
+        context['category_disabled_services'] = [service for service in unpublished if service.category]
+        # Mirrors PrivacySettingsForm.clean(), which requires both pages before
+        # the built-in banner can be enabled.
+        context['missing_cookie_policy'] = not gs.settings.get('privacy_cookie_policy_url')
+        context['missing_privacy_policy'] = not gs.settings.get('privacy_policy_url')
+        return context
+
+    def form_valid(self, form):
+        """form_valid method."""
+        form.save()
+        messages.success(self.request, _('Your changes have been saved.'))
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        """form_invalid method."""
+        messages.error(self.request, _('Your changes have not been saved, see below for errors.'))
+        return super().form_invalid(form)
+
+    def get_success_url(self):
+        """get_success_url method."""
+        return reverse('eventyay_admin:admin.global.privacy')
 
 
 class RevealSecretSettingView(View):

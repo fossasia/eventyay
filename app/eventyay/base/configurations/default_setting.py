@@ -29,6 +29,7 @@ from eventyay.base.configurations.lazy_i18n_string_list_base import (
     LazyI18nStringList,
 )
 from eventyay.base.forms import I18nAutoExpandingTextarea, I18nURLFormField
+from eventyay.base.models.privacy import ConsentProvider
 from eventyay.base.models.tax import TaxRule
 from eventyay.base.reldate import (
     RelativeDateField,
@@ -3189,3 +3190,68 @@ COUNTRIES_WITH_STATE = {
     'MX': (['State', 'Federal District'], 'short'),
     'US': (['State', 'Outlying area', 'District'], 'short'),
 }
+
+
+# --- Privacy & Compliance -------------------------------------------------
+# Consent is opt-in: every optional category defaults to False, so Klaro
+# reports no consent for optional services until the visitor accepts them.
+DEFAULT_SETTINGS.update(
+    {
+        'privacy_consent_provider': {
+            'default': 'disabled',
+            'type': str,
+            'form_class': forms.ChoiceField,
+            'serializer_class': serializers.ChoiceField,
+            'form_kwargs': dict(
+                choices=ConsentProvider.choices,
+                label=_('Consent provider'),
+                help_text=_('Existing deployments stay disabled until an administrator opts in.'),
+            ),
+            'serializer_kwargs': dict(choices=ConsentProvider.choices),
+        },
+        'privacy_cmp_provider_name': {
+            'default': '',
+            'type': str,
+            'form_class': forms.CharField,
+            'serializer_class': serializers.CharField,
+            'form_kwargs': dict(required=False, label=_('External CMP provider name')),
+        },
+        'privacy_cmp_script_url': {
+            'default': '',
+            'type': str,
+            'form_class': forms.URLField,
+            'serializer_class': serializers.URLField,
+            'form_kwargs': dict(required=False, label=_('External CMP script URL')),
+        },
+        'privacy_policy_url': {
+            'default': '',
+            'type': str,
+            # Both policy URLs are rendered as links on every public page, so
+            # reject non-URL values such as ``javascript:`` at input time.
+            'form_class': forms.URLField,
+            'serializer_class': serializers.URLField,
+            'form_kwargs': dict(required=False, label=_('Privacy Policy URL')),
+        },
+        'privacy_cookie_policy_url': {
+            'default': '',
+            'type': str,
+            'form_class': forms.URLField,
+            'serializer_class': serializers.URLField,
+            'form_kwargs': dict(required=False, label=_('Cookie Policy URL')),
+        },
+    }
+)
+
+for _category, _label in (
+    ('functional', _('Functional')),
+    ('analytics', _('Analytics')),
+    ('marketing', _('Marketing')),
+    ('embed', _('Embedded content')),
+):
+    DEFAULT_SETTINGS[f'privacy_category_{_category}_enabled'] = {
+        'default': 'False',
+        'type': bool,
+        'form_class': forms.BooleanField,
+        'serializer_class': serializers.BooleanField,
+        'form_kwargs': dict(required=False, label=_label),
+    }
