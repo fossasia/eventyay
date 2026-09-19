@@ -1,6 +1,10 @@
 import { apiErrorDetail, interpretationApiUrl, interpretationAuthHeaders } from './interpretation-api.js'
 import { normalizeYoutubeVideoId, toYoutubeWatchUrl } from './validators.js'
 
+// Who interprets a language: a human interpreter (booth or stream URL) or VoxBento's AI voice.
+export const STREAM_TYPE_HUMAN = 'human'
+export const STREAM_TYPE_AI = 'ai'
+
 export async function fetchInterpretationLanguageStreams(store, roomId) {
 	const response = await fetch(interpretationApiUrl(store, roomId, 'streams/'), {
 		headers: await interpretationAuthHeaders(),
@@ -39,6 +43,10 @@ export function cloneLanguageStreamEntries(entries) {
 export function serializeLanguageStreamEntry(entry) {
 	if (!entry || typeof entry !== 'object') return entry
 	const copy = { ...entry }
+	if (copy.stream_type === STREAM_TYPE_AI) {
+		// VoxBento synthesizes AI audio from the floor translation; there is no source to store.
+		return { ...copy, url: '', youtube_id: '', use_video: false }
+	}
 	const raw = [copy.url, copy.youtube_id]
 		.map((value) => (value || '').trim())
 		.find(Boolean) || ''
@@ -60,6 +68,13 @@ export function serializeLanguageStreamEntry(entry) {
 
 export function normalizeLanguageStreamEntry(entry) {
 	if (!entry) return
+	entry.stream_type = entry.stream_type === STREAM_TYPE_AI ? STREAM_TYPE_AI : STREAM_TYPE_HUMAN
+	if (entry.stream_type === STREAM_TYPE_AI) {
+		entry.url = ''
+		entry.youtube_id = ''
+		entry.use_video = false
+		return
+	}
 	const raw = [entry.url, entry.youtube_id]
 		.map((value) => (value || '').trim())
 		.find(Boolean) || ''
@@ -79,7 +94,7 @@ export function normalizeLanguageStreamEntry(entry) {
 }
 
 export function defaultLanguageStreamEntry() {
-	return { language: '', url: '', youtube_id: '', use_video: false }
+	return { language: '', stream_type: STREAM_TYPE_HUMAN, url: '', youtube_id: '', use_video: false }
 }
 
 export async function syncInterpretationServices(store, roomId) {

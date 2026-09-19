@@ -53,7 +53,7 @@ import AudioTranslationDropdown from 'components/AudioTranslationDropdown'
 import LiveCaptions from 'components/LiveCaptions'
 import UpcomingStreamCountdown from 'components/UpcomingStreamCountdown'
 import { normalizeAudioTranslationSource } from 'lib/validators'
-import { pluginLanguageStreams, roomUsesPluginLanguageStreams } from '../../interpretation-streams'
+import { pluginLanguageStreams, roomUsesPluginLanguageStreams, withListenerToken } from '../../interpretation-streams'
 import { interpretationApiUrl, interpretationAuthHeaders } from 'lib/interpretation-api'
 import { hasOrganizerTraits } from 'lib/traitGrants'
 import { hasEmbeddedSuite, isRoomVisibleToAttendee } from 'lib/video-providers'
@@ -158,7 +158,7 @@ export default {
 			if (!this.ccEnabled) return null
 			const lang = this.pluginLanguages.find(l => l.language === this.selectedCcLanguage)
 			if (lang && lang.caption_ws_url && this.listenerToken) {
-				return `${lang.caption_ws_url}${lang.caption_ws_url.includes('?') ? '&' : '?'}token=${this.listenerToken}`
+				return withListenerToken(lang.caption_ws_url, this.listenerToken)
 			}
 			return null
 		},
@@ -224,6 +224,13 @@ export default {
 				}
 			},
 			immediate: true
+		},
+		listenerToken(token) {
+			// An AI track of this room picked before the token arrived reconnects with it.
+			const ttsWsUrl = this.activeTranslationConfig?.ttsWsUrl
+			if (token && ttsWsUrl && this.pluginLanguages.some(entry => entry.tts_ws_url === ttsWsUrl)) {
+				this.recomputeInterpretationAudio()
+			}
 		}
 	},
 	async created() {
@@ -307,8 +314,13 @@ export default {
 			if (finalConfig && finalConfig.language === 'Original') {
 				finalConfig = null;
 			}
-			if (finalConfig && !finalConfig.url && !finalConfig.youtube_id) {
+			// Human (WHEP) and AI (TTS) tracks carry no url/youtube_id, only a stream endpoint.
+			if (finalConfig && !finalConfig.url && !finalConfig.youtube_id && !finalConfig.whepUrl && !finalConfig.ttsWsUrl) {
 				finalConfig = null;
+			}
+			// VoxBento accepts the AI audio socket with the same listener token as captions.
+			if (finalConfig?.ttsWsUrl) {
+				finalConfig = { ...finalConfig, listenerToken: this.listenerToken }
 			}
 			this.$store.commit('updateInterpretationAudio', {
 				roomId: this.room?.id,
@@ -322,12 +334,17 @@ export default {
 			this.clearStaleTranslation()
 		},
 		getLanguageForTranslation(translationConfig, languages) {
-			if (!translationConfig?.url || !languages?.length) return 'Original'
-			const matchingLanguage = languages.find(entry => (
-				entry.language !== 'Original' &&
-				normalizeAudioTranslationSource(entry.url || entry.youtube_id) === translationConfig.url &&
-				!!entry.use_video === !!translationConfig.useVideo
-			))
+			if (!languages?.length) return 'Original'
+			if (!translationConfig?.url && !translationConfig?.ttsWsUrl && !translationConfig?.whepUrl) return 'Original'
+			const matchingLanguage = languages.find(entry => {
+				if (entry.language === 'Original') return false
+				if (translationConfig.ttsWsUrl) return entry.tts_ws_url === translationConfig.ttsWsUrl
+				if (translationConfig.whepUrl) return (entry.whep_url || entry.whip_url) === translationConfig.whepUrl
+				return (
+					normalizeAudioTranslationSource(entry.url || entry.youtube_id) === translationConfig.url &&
+					!!entry.use_video === !!translationConfig.useVideo
+				)
+			})
 			return matchingLanguage?.language || null
 		},
 		clearStaleTranslation() {
