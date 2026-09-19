@@ -1,19 +1,21 @@
 import statistics
 from collections import defaultdict
 from contextlib import suppress
-
 from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count, Max, OuterRef, Q, Subquery
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
+from django.views import View
 from django.views.generic import FormView, TemplateView
 from django_context_decorator import context
 
+from eventyay.base.models import Review, ReviewScore, Submission, SubmissionStates
 from eventyay.common.forms.renderers import InlineFormRenderer
 from eventyay.common.text.phrases import phrases
 from eventyay.common.views.generic import CreateOrUpdateView
@@ -27,17 +29,17 @@ from eventyay.orga.forms.review import (
     ProposalForReviewerForm,
     ReviewAssignImportForm,
     ReviewerForProposalForm,
-    ReviewExportForm,
     ReviewForm,
     TagsForm,
 )
 from eventyay.orga.forms.submission import SubmissionStateChangeForm
 from eventyay.orga.views.submission import BaseSubmissionList
-from eventyay.submission.forms import TalkQuestionsForm, SubmissionFilterForm
-from eventyay.base.models import Review, Submission, SubmissionStates
+from eventyay.submission.forms import SubmissionFilterForm, TalkQuestionsForm
 from eventyay.talk_rules.submission import (
+    can_be_reviewed,
     get_missing_reviews,
     get_reviewable_submissions,
+    has_reviewer_access,
     reviews_are_open,
 )
 
@@ -592,6 +594,60 @@ class ReviewSubmission(ReviewViewMixin, PermissionRequired, CreateOrUpdateView):
         return self.request.event.orga_urls.reviews
 
 
+class ReviewScoreUpdate(ReviewViewMixin, PermissionRequired, View):
+    permission_required = 'base.review_submission'
+
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        score_id = request.POST.get('score')
+
+        if not has_reviewer_access(request.user, self.submission) or not can_be_reviewed(request.user, self.submission):
+            return JsonResponse({'ok': False, 'error': _('You cannot review this proposal.')}, status=403)
+
+        if score_id:
+            score = get_object_or_404(
+                ReviewScore,
+                pk=score_id,
+                category__in=self.submission.score_categories,
+            )
+        else:
+            score = None
+
+        review = self.submission.reviews.filter(user=request.user).first()
+
+        if score and not review:
+            review = Review(submission=self.submission, user=request.user)
+            review.save()
+
+        if score:
+            review.scores.remove(*review.scores.filter(category=score.category))
+            review.scores.add(score)
+
+        elif review:
+            category = get_object_or_404(
+                self.submission.score_categories,
+                pk=request.POST.get('category'),
+                is_independent=False,
+            )
+            review.scores.remove(*review.scores.filter(category=category))
+
+        if review:
+            review.update_score()
+            review.save(update_score=False)
+
+        self.submission.__dict__.pop('median_score', None)
+
+        return JsonResponse(
+            {
+                'ok': True,
+                'score': review.display_score,
+                'median': self.submission.median_score,
+                'reviews': self.submission.reviews.filter(scores__isnull=False).distinct().count(),
+                'review_count': self.submission.reviews.count(),
+            }
+        )
+
+
 class ReviewSubmissionDelete(EventPermissionRequired, ReviewViewMixin, ActionConfirmMixin, TemplateView):
     template_name = 'orga/submission/review_delete.html'
     permission_required = 'base.delete_review'
@@ -696,9 +752,7 @@ class ReviewAssignment(EventPermissionRequired, FormView):
         return_path = self.request.get_full_path()
 
         admin_team_ids = set(
-            org.teams.filter(can_change_teams=True, members__isnull=False)
-            .values_list('pk', flat=True)
-            .distinct()
+            org.teams.filter(can_change_teams=True, members__isnull=False).values_list('pk', flat=True).distinct()
         )
 
         rows = []
@@ -763,5 +817,3 @@ class ReviewAssignmentImport(EventPermissionRequired, FormView):
         form.save()
         messages.success(self.request, _('The reviewers were assigned successfully.'))
         return redirect(self.request.event.orga_urls.review_assignments)
-
-
