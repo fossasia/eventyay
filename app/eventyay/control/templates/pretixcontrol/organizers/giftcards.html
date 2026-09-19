@@ -1,4 +1,5 @@
 {% extends "pretixcontrol/organizers/base.html" %}
+{% load tz %}
 {% load i18n %}
 {% load urlreplace %}
 {% load bootstrap3 %}
@@ -84,7 +85,7 @@
                         <td>{{ g.issuance|date:"SHORT_DATETIME_FORMAT" }}</td>
                         <td>
                             {% if g.expires %}
-                                {{ g.expires|date:"M d, Y, H:i" }} UTC
+                                {{ g.expires|timezone:"UTC"|date:"M d, Y, H\:i" }} UTC
                             {% else %}
                                 -
                             {% endif %}
@@ -135,8 +136,8 @@
                         {% for gca in request.organizer.gift_card_issuer_acceptance.all %}
                             <div class="list-group-item">
                                 <strong>{{ gca.issuer }}</strong>
-                                <button type="submit" name="del" value="{{ gca.issuer.slug }}" class="btn btn-xs btn-delete btn-danger pull-right">
-                                    <span class="fa fa-trash"></span>
+                                <button type="submit" name="del" value="{{ gca.issuer.slug }}" class="btn btn-xs btn-delete btn-danger pull-right" aria-label="{% trans 'Remove organizer' %}">
+                                    <span class="fa fa-trash" aria-hidden="true"></span>
                                 </button>
                             </div>
                         {% empty %}
@@ -153,7 +154,7 @@
                                     {% endfor %}
                                 </select>
                                 <button class="btn btn-primary btn-sm" type="submit">
-                                    <span class="fa fa-plus"></span> {% trans "Add Organizer" %}
+                                    <span class="fa fa-plus" aria-hidden="true"></span> {% trans "Add Organizer" %}
                                 </button>
                             </div>
                         {% endif %}
