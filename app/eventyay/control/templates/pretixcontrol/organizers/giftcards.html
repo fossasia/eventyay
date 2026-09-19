@@ -1,4 +1,5 @@
 {% extends "pretixcontrol/organizers/base.html" %}
+{% load tz %}
 {% load i18n %}
 {% load urlreplace %}
 {% load bootstrap3 %}
@@ -21,24 +22,35 @@
             </a>
         </div>
     {% else %}
-        <form class="row filter-form" action="" method="get">
-            <div class="col-md-4 col-sm-6 col-xs-12">
-                {% bootstrap_field filter_form.query layout='inline' %}
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <strong>{% trans "Filter gift cards" %}</strong>
             </div>
-            <div class="col-md-3 col-sm-6 col-xs-6">
-                {% bootstrap_field filter_form.testmode layout='inline' %}
+            <div class="panel-body">
+                <form class="row filter-form" action="" method="get">
+                    <div class="col-md-4 col-sm-6 col-xs-12">
+                        {% bootstrap_field filter_form.query layout='inline' %}
+                    </div>
+                    <div class="col-md-3 col-sm-6 col-xs-6">
+                        {% bootstrap_field filter_form.testmode layout='inline' %}
+                    </div>
+                    <div class="col-md-3 col-sm-6 col-xs-6">
+                        {% bootstrap_field filter_form.state layout='inline' %}
+                    </div>
+                    <div class="col-md-2 col-sm-6 col-xs-12">
+                        {% include "eventyay_common/filter_actions.html" %}
+                    </div>
+                </form>
             </div>
-            <div class="col-md-3 col-sm-6 col-xs-6">
-                {% bootstrap_field filter_form.state layout='inline' %}
-            </div>
-            <div class="col-md-2 col-sm-6 col-xs-12">
-                {% include "eventyay_common/filter_actions.html" %}
-            </div>
-        </form>
+        </div>
         <p>
             <a href="{% url "control:organizer.giftcard.add" organizer=request.organizer.slug %}"
                     class="btn btn-default"><i class="fa fa-plus"></i> {% trans "Manually issue a gift card" %}</a>
         </p>
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <strong>{% trans "Issued gift cards" %}</strong>
+        </div>
         <div class="table-responsive">
             <table class="table table-condensed table-hover">
                 <thead>
@@ -51,7 +63,9 @@
                         <a href="?{% url_replace request 'ordering' 'issuance' %}"><i class="fa fa-caret-up"></i></a></th>
                     <th>{% trans "Expiry date" %}
                         <a href="?{% url_replace request 'ordering' '-expires' %}"><i class="fa fa-caret-down"></i></a>
-                        <a href="?{% url_replace request 'ordering' 'expires' %}"><i class="fa fa-caret-up"></i></a></th>
+                        <a href="?{% url_replace request 'ordering' 'expires' %}"><i class="fa fa-caret-up"></i></a>
+                    </th>
+                    <th>{% trans "Status" %}</th>
                     <th class="text-right">{% trans "Current value" %}
                         <a href="?{% url_replace request 'ordering' '-value' %}"><i class="fa fa-caret-down"></i></a>
                         <a href="?{% url_replace request 'ordering' 'value' %}"><i class="fa fa-caret-up"></i></a></th>
@@ -67,12 +81,24 @@
                             {% if g.testmode %}
                                 <span class="label label-warning">{% trans "TEST MODE" %}</span>
                             {% endif %}
-                            {% if g.expired %}
-                                <span class="label label-danger">{% trans "Expired" %}</span>
-                            {% endif %}
                         </td>
                         <td>{{ g.issuance|date:"SHORT_DATETIME_FORMAT" }}</td>
-                        <td>{% if g.expires %}{{ g.expires|date:"SHORT_DATETIME_FORMAT" }}{% endif %}</td>
+                        <td>
+                            {% if g.expires %}
+                                {{ g.expires|timezone:"UTC"|date:"M d, Y, H\:i" }} UTC
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if g.expired %}
+                                <span class="label label-danger">{% trans "Expired" %}</span>
+                            {% elif g.cached_value %}
+                                <span class="label label-success">{% trans "Active" %}</span>
+                            {% else %}
+                                <span class="label label-default">{% trans "Empty" %}</span>
+                            {% endif %}
+                        </td>
                         <td class="text-right">
                             {{ g.cached_value|money:g.currency }}
                         </td>
@@ -87,46 +113,54 @@
                 </tbody>
             </table>
         </div>
+    </div>
         {% include "pretixcontrol/pagination.html" %}
     {% endif %}
     {% if not is_paginated or page_obj.number == 1 %}
         <form action="" method="post" class="form-inline">
             {% csrf_token %}
-            <fieldset>
-                <legend>{% trans "Accepted gift cards of other organizers" %}</legend>
-                <p>
-                    {% blocktrans trimmed %}
-                        If you have access to multiple organizer accounts, you can configure that ticket shops in
-                        this account will also accept gift codes issued through a different organizer account, and
-                        vice versa.
-                    {% endblocktrans %}
-                </p>
-                <ul>
-                    {% for gca in request.organizer.gift_card_issuer_acceptance.all %}
-                        <li>
-                            <strong>{{ gca.issuer }}</strong>
-                            <button type="submit" name="del" value="{{ gca.issuer.slug }}" class="btn btn-xs btn-delete btn-danger">
-                                <span class="fa fa-trash"></span>
-                            </button>
-                        </li>
-                    {% empty %}
-                        <li>
-                            <em>{% trans "You are currently not accepting gift cards from other organizers." %}</em>
-                        </li>
-                    {% endfor %}
-                    {% if other_organizers %}
-                        <li>
-                            <select name="add" class="form-control input-sm">
-                                <option></option>
-                                {% for o in other_organizers %}
-                                    <option value="{{ o.slug }}">{{ o }}</option>
-                                {% endfor %}
-                            </select>
-                            <button class="btn btn-primary btn-sm" type="submit"><span class="fa fa-plus"></span></button>
-                        </li>
-                    {% endif %}
-                </ul>
-            </fieldset>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <strong>{% trans "Accepted gift cards of other organizers" %}</strong>
+                </div>
+                <div class="panel-body">
+                    <p>
+                        {% blocktrans trimmed %}
+                            If you have access to multiple organizer accounts, you can configure that ticket shops in
+                            this account will also accept gift codes issued through a different organizer account, and
+                            vice versa.
+                        {% endblocktrans %}
+                    </p>
+
+                    <div class="list-group">
+                        {% for gca in request.organizer.gift_card_issuer_acceptance.all %}
+                            <div class="list-group-item">
+                                <strong>{{ gca.issuer }}</strong>
+                                <button type="submit" name="del" value="{{ gca.issuer.slug }}" class="btn btn-xs btn-delete btn-danger pull-right" aria-label="{% trans 'Remove organizer' %}">
+                                    <span class="fa fa-trash" aria-hidden="true"></span>
+                                </button>
+                            </div>
+                        {% empty %}
+                            <div class="list-group-item">
+                                <em>{% trans "You are currently not accepting gift cards from other organizers." %}</em>
+                            </div>
+                        {% endfor %}
+                        {% if other_organizers %}
+                            <div class="form-inline" style="margin-top: 15px;">
+                                <select name="add" class="form-control input-sm">
+                                    <option></option>
+                                    {% for o in other_organizers %}
+                                        <option value="{{ o.slug }}">{{ o }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button class="btn btn-primary btn-sm" type="submit">
+                                    <span class="fa fa-plus" aria-hidden="true"></span> {% trans "Add Organizer" %}
+                                </button>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
         </form>
     {% endif %}
 {% endblock %}
