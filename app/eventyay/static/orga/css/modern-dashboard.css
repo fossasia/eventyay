@@ -108,16 +108,6 @@
     margin-bottom: 4px;
 }
 
-.timeline-step-status {
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    margin-bottom: 4px;
-}
-
-.timeline-step.done .timeline-step-status { color: var(--color-primary); }
-.timeline-step.current .timeline-step-status { color: var(--color-primary); }
-.timeline-step.todo .timeline-step-status { color: var(--color-grey-dark); }
 
 .timeline-step-summary {
     font-size: 12px;
