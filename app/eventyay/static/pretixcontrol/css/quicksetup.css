@@ -140,17 +140,17 @@
   font-weight: 700;
 }
 
-/* Green badge when step data is completed (higher specificity than active/hover) */
+/* Blue badge when step data is completed (higher specificity than active/hover) */
 .quickstart-wizard-container .quickstart-stepper .quickstart-step-item.completed .step-badge,
 .quickstart-wizard-container .quickstart-stepper .quickstart-step-item.completed:hover .step-badge,
 .quickstart-wizard-container .quickstart-stepper .quickstart-step-item.completed.active .step-badge {
-  background: #28a745;
-  border-color: #28a745;
+  background: var(--brand-primary, #18609c);
+  border-color: var(--brand-primary, #18609c);
   color: #ffffff;
 }
 
 .quickstart-wizard-container .quickstart-stepper .quickstart-step-item.completed.active .step-badge {
-  box-shadow: 0 0 0 4px rgba(40, 167, 69, 0.25);
+  box-shadow: 0 0 0 4px rgba(33, 133, 208, 0.25);
 }
 
 .quickstart-wizard-container .quickstart-card {
