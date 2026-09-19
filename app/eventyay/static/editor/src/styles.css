@@ -114,10 +114,59 @@
   margin-bottom: 0;
 }
 
+.tiptap-prosemirror h1,
+.tiptap-prosemirror h2,
+.tiptap-prosemirror h3,
+.tiptap-prosemirror h4,
+.tiptap-prosemirror h5,
+.tiptap-prosemirror h6 {
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0.75em 0 0.35em;
+}
+
+.tiptap-prosemirror h1 {
+  font-size: 1.6em;
+}
+
+.tiptap-prosemirror h2 {
+  font-size: 1.35em;
+}
+
+.tiptap-prosemirror h3 {
+  font-size: 1.15em;
+}
+
+.tiptap-prosemirror h4 {
+  font-size: 1.05em;
+}
+
+.tiptap-prosemirror h5 {
+  font-size: 1em;
+}
+
+.tiptap-prosemirror h6 {
+  font-size: 0.95em;
+}
+
+.tiptap-prosemirror h1:first-child,
+.tiptap-prosemirror h2:first-child,
+.tiptap-prosemirror h3:first-child,
+.tiptap-prosemirror h4:first-child,
+.tiptap-prosemirror h5:first-child,
+.tiptap-prosemirror h6:first-child {
+  margin-top: 0;
+}
+
 .tiptap-prosemirror ul,
 .tiptap-prosemirror ol {
   padding-left: 1.5em;
   margin: 0 0 0.5em;
+}
+
+/* TipTap wraps list item text in <p>; keep editor lists compact. */
+.tiptap-prosemirror li > p {
+  margin: 0;
 }
 
 .tiptap-prosemirror blockquote {
@@ -176,6 +225,71 @@
   line-height: 1.4;
   cursor: default;
   user-select: none;
+}
+
+/* ── Heading dropdown menu ───────────────────────────────────────────────── */
+
+.tiptap-heading-menu {
+  position: relative;
+  display: inline-block;
+}
+
+.tiptap-heading-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 1060;
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  background: #fff;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  min-width: 180px;
+  max-height: min(320px, 50vh);
+  overflow-y: auto;
+}
+
+.tiptap-heading-item {
+  padding: 6px 14px;
+  cursor: pointer;
+  color: #212529;
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.tiptap-heading-item:hover,
+.tiptap-heading-item.is-selected {
+  background: #f0f4ff;
+  color: #1a56db;
+}
+
+.tiptap-heading-sample {
+  margin: 0;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.tiptap-heading-sample[data-level="1"] {
+  font-size: 1.45em;
+}
+
+.tiptap-heading-sample[data-level="2"] {
+  font-size: 1.25em;
+}
+
+.tiptap-heading-sample[data-level="3"] {
+  font-size: 1.1em;
+}
+
+.tiptap-heading-sample[data-level="4"] {
+  font-size: 1.05em;
+}
+
+.tiptap-heading-sample[data-level="5"],
+.tiptap-heading-sample[data-level="6"] {
+  font-size: 1em;
 }
 
 /* ── Placeholder dropdown menu ───────────────────────────────────────────── */

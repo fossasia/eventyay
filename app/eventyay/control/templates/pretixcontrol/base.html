@@ -24,6 +24,7 @@
             <link rel="stylesheet" type="text/css" href="{% static 'eventyay-common/css/language-grid.css' %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'eventyay-common/css/image-preview-dialog.css' %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'eventyay-common/css/loading_modal.css' %}" />
+            <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/secret-reveal.css' %}" />
 		{% endcompress %}
         <link rel="stylesheet" type="text/css" href="{% static 'common/css/fileInput.css' %}" />
         {% if DEBUG %}
@@ -123,7 +124,7 @@
             data-payment-weekdays-disabled="{{ js_payment_weekdays_disabled }}"
             {% if request.organizer %}data-organizer="{{ request.organizer.slug }}"{% endif %}
             {% if request.event %}data-event="{{ request.event.slug }}"{% endif %}
-            data-select2-locale="{{ select2locale }}" data-longdateformat="{{ js_long_date_format }}" class="nojs sidebar-minimized">
+            data-select2-locale="{{ select2locale }}" data-longdateformat="{{ js_long_date_format }}" data-reveal-secret-url="{% url 'eventyay_admin:admin.global.settings.reveal_secret' %}" class="nojs sidebar-minimized">
         <div id="wrapper">
             <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
                 <button type="button" class="navbar-toggle-sidebar navbar-toggle" id="sidebar-toggle" data-toggle="sidebar">
@@ -466,6 +467,47 @@
                     <button type="button" class="btn btn-primary" id="pretix-confirm-dialog-confirm"></button>
                 </div>
             </div>
+        </dialog>
+
+
+        <dialog id="secret-reveal-modal"
+                class="secret-reveal-modal"
+                aria-labelledby="secret-reveal-modal-title"
+                aria-modal="true">
+            <form method="dialog" class="secret-reveal-modal__form">
+                <div class="secret-reveal-modal__header">
+                    <span class="fa fa-lock secret-reveal-modal__icon"></span>
+                    <h4 class="secret-reveal-modal__title" id="secret-reveal-modal-title">
+                        {% trans "Confirm your password to reveal this secret" %}
+                    </h4>
+                </div>
+                <p class="secret-reveal-modal__desc">
+                    {% trans "For security, please re-enter your account password before this setting value is shown." %}
+                </p>
+                <div class="form-group">
+                    <label for="secret-reveal-password" class="control-label">{% trans "Password" %}</label>
+                    <input type="password"
+                           id="secret-reveal-password"
+                           class="form-control"
+                           autocomplete="current-password"
+                           placeholder="{% trans 'Your account password' %}">
+                </div>
+                <p id="secret-reveal-error"
+                   class="secret-reveal-modal__error"
+                   hidden
+                   role="alert"></p>
+                <div class="secret-reveal-modal__actions">
+                    <button type="button"
+                            id="secret-reveal-cancel"
+                            class="btn btn-default">{% trans "Cancel" %}</button>
+                    <button type="button"
+                            id="secret-reveal-confirm"
+                            class="btn btn-primary">
+                        <span id="secret-reveal-spinner" class="secret-reveal-modal__spinner" hidden></span>
+                        <span id="secret-reveal-btn-text">{% trans "Show secret" %}</span>
+                    </button>
+                </div>
+            </form>
         </dialog>
 	</body>
 </html>

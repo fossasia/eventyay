@@ -37,7 +37,12 @@ def calculate_attendee_recipient_count(event, qmf):
             pk__in=qmf.individual_attendees,
             canceled=False,
         ).select_related('order')
-        unique_emails = {pos.attendee_email.strip().lower() for pos in positions if pos.attendee_email}
+        unique_emails = set()
+        for pos in positions:
+            if pos.attendee_email:
+                unique_emails.add(pos.attendee_email.strip().lower())
+            elif pos.order.email:
+                unique_emails.add(pos.order.email.strip().lower())
         return len(unique_emails)
 
     orders = Order.objects.filter(event=event)
@@ -86,10 +91,12 @@ def calculate_attendee_recipient_count(event, qmf):
 
     recipients_mode = qmf.recipients or "orders"
     unique_emails = set()
-    for order in orders.prefetch_related('positions__product'):
+    for order in orders.prefetch_related('all_positions__product'):
         order_fallback_needed = False
         attendee_found = False
-        for pos in order.positions.all():
+        for pos in order.all_positions.all():
+            if pos.canceled:
+                continue
             if pos.attendee_email:
                 attendee_found = True
                 unique_emails.add(pos.attendee_email.strip().lower())

@@ -267,6 +267,16 @@ a {
 
 }
 
+/* TipTap wraps list item text in <p>; match editor compact spacing on public pages. */
+.rich-text ul li > p:last-child,
+.rich-text ol li > p:last-child,
+.markdown-content ul li > p:last-child,
+.markdown-content ol li > p:last-child,
+.tiptap-content ul li > p:last-child,
+.tiptap-content ol li > p:last-child {
+  margin-bottom: 0;
+}
+
 /* Conventions and custom elements */
 
 .color-success,

@@ -221,6 +221,26 @@ class TestGlobalTicketingSettings:
         assert 'ticket_fee_percentage' not in content
         assert 'billing_validation' not in content
 
+    def test_ticketing_page_renders_paypal_settings_added_by_plugins(self, staff_client):
+        def extra_paypal_setting(sender, **kwargs):
+            return OrderedDict(
+                [
+                    (
+                        'payment_paypal_connect_partner_payer_id',
+                        dj_forms.CharField(label='Platform payer ID', required=False),
+                    ),
+                ]
+            )
+
+        register_global_settings.connect(extra_paypal_setting, dispatch_uid='test_extra_paypal_setting')
+        try:
+            response = staff_client.get(reverse('eventyay_admin:admin.global.ticketing'))
+        finally:
+            register_global_settings.disconnect(dispatch_uid='test_extra_paypal_setting')
+
+        assert response.status_code == 200
+        assert 'payment_paypal_connect_partner_payer_id' in response.content.decode('utf-8')
+
     def test_ticketing_settings_save_behavior(self, staff_client):
         url = reverse('eventyay_admin:admin.global.ticketing')
         post_data = {

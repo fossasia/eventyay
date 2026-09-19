@@ -18,6 +18,7 @@ from eventyay.base.models.room import (
     RoomView,
     get_room_with_linked_sessions,
     partial_validated_update,
+    validate_room_can_be_deleted,
 )
 from eventyay.base.services.stale_cache import invalidate_next_stream_cache
 from eventyay.base.services.stale_cache import (
@@ -293,11 +294,17 @@ def save_room(event, room, update_fields, old_data, by_user):
     return new
 
 
-@database_sync_to_async
 @atomic
-def delete_room(event, room, by_user):
-    room.deleted = True
-    room.save(update_fields=['deleted'])
+def soft_delete_room(event, room, by_user=None):
+    """Soft-delete a room after ensuring it has no submission-linked sessions."""
+    with scope(event=event):
+        # Lock the room row so a concurrent schedule assignment cannot attach a
+        # submission after validation and before deleted=True is committed.
+        room = Room.objects.select_for_update().get(pk=room.pk)
+        validate_room_can_be_deleted(room)
+        room.deleted = True
+        room.save(update_fields=['deleted'])
+        event.wip_schedule.talks.filter(room=room, submission__isnull=True).delete()
     old = RoomConfigSerializer(room).data
 
     AuditLog.objects.create(
@@ -309,6 +316,12 @@ def delete_room(event, room, by_user):
             'old': old,
         },
     )
+    return room
+
+
+@database_sync_to_async
+def delete_room(event, room, by_user):
+    soft_delete_room(event, room, by_user)
 
 
 @database_sync_to_async
