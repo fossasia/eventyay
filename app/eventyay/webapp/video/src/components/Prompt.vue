@@ -5,7 +5,6 @@
 		slot.content
 </template>
 <script>
-// FIXME when starting mousedown inside and finishing mouseup outside, prompt closes
 import { Scrollbars } from 'buntpapier/src/directives/scrollbar'
 
 export default {
@@ -33,12 +32,17 @@ export default {
 		onPointerdown(event) {
 			if (!this.allowCancel) return
 			event.stopPropagation()
+			// Only a press that starts on the backdrop itself can close the prompt.
+			// Remember it so a drag that begins inside the dialog and ends on the
+			// backdrop does not get treated as a backdrop click.
+			this._backdropPressed = event.target === this.$el
 			this.$el.addEventListener('pointerup', this.onPointerup)
 		},
 		onPointerup(event) {
 			this.$el.removeEventListener('pointerup', this.onPointerup)
-			if (event.target !== this.$el) return
-			console.log(event)
+			// Close only when the press both started and ended on the backdrop.
+			if (!this._backdropPressed || event.target !== this.$el) return
+			this._backdropPressed = false
 			this.$emit('close')
 		}
 	}
