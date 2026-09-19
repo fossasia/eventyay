@@ -35,11 +35,23 @@ def load_sheet(io):
     }
 
 
+def _as_tzinfo(timezone):
+    """Normalize a timezone argument to a tzinfo object.
+
+    Callers pass either a timezone name (str) or an already-resolved tzinfo
+    object (e.g. ``Event.timezone`` returns a ``ZoneInfo``).
+    """
+    if timezone is None or isinstance(timezone, dt.tzinfo):
+        return timezone
+    return ZoneInfo(timezone)
+
+
 def to_iso(value, timezone=None):
     if not isinstance(value, dt.datetime):
         raise Exception("Not a valid date and time.")
-    if timezone:
-        value = make_aware(value, ZoneInfo(timezone))
+    tz = _as_tzinfo(timezone)
+    if tz:
+        value = make_aware(value, tz)
     return value.isoformat()
 
 
@@ -143,7 +155,8 @@ def convert(io, timezone=None):
 
     # Use the event timezone (falling back to UTC) so "version" is a
     # timezone-aware timestamp, consistent with the talk times below.
-    result = {"version": dt.datetime.now(ZoneInfo(timezone) if timezone else dt.timezone.utc).isoformat()}
+    tz = _as_tzinfo(timezone) or dt.timezone.utc
+    result = {"version": dt.datetime.now(tz).isoformat()}
     result["rooms"] = transform_data(
         data,
         "Rooms",
