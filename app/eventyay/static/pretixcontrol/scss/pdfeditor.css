@@ -26,7 +26,8 @@ body {
 #toolbox .text,
 #toolbox .imagecontent,
 #toolbox .object-buttons,
-#toolbox .group-align {
+#toolbox .group-align,
+#toolbox .flow-group {
     display: none;
 }
 #toolbox[data-type] .position,
@@ -37,7 +38,9 @@ body {
 #toolbox[data-type=text] .text,
 #toolbox[data-type=textarea] .text,
 #toolbox[data-type] .object-buttons,
-#toolbox[data-type=group] .group-align {
+#toolbox[data-type=group] .group-align,
+#toolbox[data-type=group] .flow-group,
+#toolbox[data-in-flow="1"] .flow-group {
     display: block;
 }
 #toolbox[data-type] .editor-hint {

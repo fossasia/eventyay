@@ -820,7 +820,205 @@ def resolve_textarea_font(font, text_content):
     return font, text_content
 
 
+FLOW_DIRECTIONS = ('down', 'up', 'left', 'right')
+FLOW_STYLE_KEYS = (
+    'fontsize',
+    'fontfamily',
+    'bold',
+    'italic',
+    'align',
+    'color',
+    'width',
+    'downward',
+    'autofit_width',
+    'height',
+)
+
+
+def _flow_float(value, default=0.0):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _flow_direction(members):
+    for member in members:
+        direction = member.get('flow_direction') or 'down'
+        if direction in FLOW_DIRECTIONS:
+            return direction
+    return 'down'
+
+
+def _flow_sort_key(obj, direction):
+    left = _flow_float(obj.get('left'))
+    bottom = _flow_float(obj.get('bottom'))
+    if direction == 'down':
+        return (-bottom, left)
+    if direction == 'up':
+        return (bottom, left)
+    if direction == 'left':
+        return (left, -bottom)
+    return (-left, -bottom)
+
+
+def _flow_adopt_slot_style(members):
+    return all(bool(member.get('flow_adopt_slot_style', True)) for member in members)
+
+
+def _copy_slot_style(drawn, slot):
+    for key in FLOW_STYLE_KEYS:
+        if key in slot:
+            drawn[key] = copy.deepcopy(slot[key])
+
+
+IMPLICIT_LEFT_TOLERANCE_MM = 8.0
+IMPLICIT_MAX_GAP_MM = 20.0
+IMPLICIT_GAP_FONT_FACTOR = 3.5
+
+
+def _textarea_extent_mm(obj):
+    height = obj.get('height')
+    if height not in (None, ''):
+        return _flow_float(height)
+    return _flow_float(obj.get('fontsize'), 10.0) * 25.4 / 72
+
+
+def _cluster_textarea_indices_by_left(indices, copies):
+    items = sorted(indices, key=lambda index: _flow_float(copies[index].get('left')))
+    clusters = []
+    current = []
+    anchor = None
+    for index in items:
+        left = _flow_float(copies[index].get('left'))
+        if anchor is None or abs(left - anchor) <= IMPLICIT_LEFT_TOLERANCE_MM:
+            if anchor is None:
+                anchor = left
+            current.append(index)
+        else:
+            clusters.append(current)
+            current = [index]
+            anchor = left
+    if current:
+        clusters.append(current)
+    return clusters
+
+
+def _split_vertical_stacks(indices, copies):
+    if not indices:
+        return []
+    ordered = sorted(indices, key=lambda index: -_flow_float(copies[index].get('bottom')))
+    stacks = []
+    current = [ordered[0]]
+    for previous, index in zip(ordered, ordered[1:]):
+        gap = _flow_float(copies[previous].get('bottom')) - _flow_float(copies[index].get('bottom'))
+        extent = max(_textarea_extent_mm(copies[previous]), _textarea_extent_mm(copies[index]))
+        limit = min(IMPLICIT_MAX_GAP_MM, max(12.0, extent * IMPLICIT_GAP_FONT_FACTOR))
+        if 0 <= gap <= limit:
+            current.append(index)
+        else:
+            stacks.append(current)
+            current = [index]
+    stacks.append(current)
+    return stacks
+
+
+def assign_implicit_flow_groups(layout):
+    """Group stacked textareas so empty/hidden fields close their gaps.
+
+    Explicit ``flow_group`` values are left unchanged. Implicit groups pack
+    position only and do not adopt another field's style.
+    """
+    copies = [copy.deepcopy(obj) for obj in layout or []]
+    candidates = [
+        index
+        for index, obj in enumerate(copies)
+        if obj.get('type') == 'textarea' and not obj.get('flow_group') and not obj.get('flow_lock')
+    ]
+    group_number = 0
+    for column in _cluster_textarea_indices_by_left(candidates, copies):
+        for stack in _split_vertical_stacks(column, copies):
+            if len(stack) < 2:
+                continue
+            group_number += 1
+            group_id = f'implicit-stack-{group_number}'
+            for index in stack:
+                copies[index]['flow_group'] = group_id
+                copies[index]['flow_direction'] = copies[index].get('flow_direction') or 'down'
+                copies[index]['flow_adopt_slot_style'] = False
+    return copies
+
+
+def drop_line_emptied_by_placeholder(original_line, resolved_line, emptied_placeholder):
+    if not emptied_placeholder or str(resolved_line).strip():
+        return False
+    return '{' in (original_line or '')
+
+
+def apply_layout_flow(layout, is_empty, implicit_groups=False):
+    """Pack flow-group members into remaining designed slots.
+
+    Unlocked empty/hidden members are skipped. Remaining visible members map onto
+    designed slots in flow order (1st visible → 1st slot). When
+    ``flow_adopt_slot_style`` is enabled, the moving field copies the destination
+    slot's typography and width. Stacked badge textareas without a group are packed
+    when ``implicit_groups`` is enabled.
+    """
+    if implicit_groups:
+        copies = assign_implicit_flow_groups(layout)
+    else:
+        copies = [copy.deepcopy(obj) for obj in layout or []]
+    groups = OrderedDict()
+    for index, obj in enumerate(copies):
+        group_id = obj.get('flow_group')
+        if group_id:
+            groups.setdefault(group_id, []).append(index)
+
+    if not groups:
+        return copies
+
+    replacements = {}
+    skip_indices = set()
+
+    for indices in groups.values():
+        members = [copies[i] for i in indices]
+        direction = _flow_direction(members)
+        adopt = _flow_adopt_slot_style(members)
+        unlocked = [member for member in members if not member.get('flow_lock')]
+        unlocked.sort(key=lambda member: _flow_sort_key(member, direction))
+        visible = [member for member in unlocked if not is_empty(member)]
+        packed = []
+        for vis, slot in zip(visible, unlocked):
+            drawn = copy.deepcopy(vis)
+            drawn['left'] = slot.get('left', drawn.get('left'))
+            drawn['bottom'] = slot.get('bottom', drawn.get('bottom'))
+            if adopt:
+                _copy_slot_style(drawn, slot)
+            packed.append(drawn)
+
+        first_unlocked_index = None
+        unlocked_ids = {id(member) for member in unlocked}
+        for index in indices:
+            if id(copies[index]) in unlocked_ids:
+                skip_indices.add(index)
+                if first_unlocked_index is None:
+                    first_unlocked_index = index
+        if first_unlocked_index is not None:
+            replacements[first_unlocked_index] = packed
+
+    result = []
+    for index, obj in enumerate(copies):
+        if index in replacements:
+            result.extend(replacements[index])
+        if index in skip_indices:
+            continue
+        result.append(obj)
+    return result
+
+
 class Renderer:
+    implicit_flow_groups = False
+
     def __init__(self, event, layout, background_file):
         self.layout = layout
         self.background_file = background_file
@@ -998,14 +1196,29 @@ class Renderer:
             return text
 
         hidden_fields = hidden_fields or set()
+        resolved_lines = []
 
-        def replace(match):
-            key = match.group(1).strip()
-            if self._canonical_layout_variable_key(key) in hidden_fields:
-                return ''
-            return self._evaluate_layout_variable(key, op, order, ev)
+        for original_line in text.splitlines():
+            emptied_placeholder = False
 
-        return LAYOUT_TEXT_PLACEHOLDER_RE.sub(replace, text)
+            def replace(match):
+                nonlocal emptied_placeholder
+                key = match.group(1).strip()
+                if self._canonical_layout_variable_key(key) in hidden_fields:
+                    emptied_placeholder = True
+                    return ''
+                value = self._evaluate_layout_variable(key, op, order, ev)
+                if value is None or not str(value).strip():
+                    emptied_placeholder = True
+                    return ''
+                return str(value)
+
+            resolved_line = LAYOUT_TEXT_PLACEHOLDER_RE.sub(replace, original_line)
+            if drop_line_emptied_by_placeholder(original_line, resolved_line, emptied_placeholder):
+                continue
+            resolved_lines.append(resolved_line)
+
+        return '\n'.join(resolved_lines)
 
     def _get_text_content(self, op: OrderPosition, order: Order, o: dict, inner=False):
         if o.get('locale', None) and not inner:
@@ -1140,7 +1353,9 @@ class Renderer:
         if not hasattr(self, '_style_cache'):
             self._style_cache = {}
 
-        text_content = self._get_text_content(op, order, o) or ''
+        text_content = self._cached_text_content(op, order, o)
+        if not str(text_content).strip():
+            return
         font, text_content = resolve_textarea_font(font, text_content)
 
         fontsize = float(o['fontsize'])
@@ -1210,6 +1425,24 @@ class Renderer:
             p.drawOn(canvas, 0, -h - ad[1])
         canvas.restoreState()
 
+    def _cached_text_content(self, op: OrderPosition, order: Order, o: dict):
+        key = '_eventyay_resolved_text_content'
+        if key not in o:
+            o[key] = self._get_text_content(op, order, o) or ''
+        return o[key]
+
+    def layout_object_is_empty(self, op: OrderPosition, order: Order, obj):
+        if obj.get('type') != 'textarea':
+            return False
+        return not str(self._cached_text_content(op, order, obj)).strip()
+
+    def layout_for_page(self, order: Order, op: OrderPosition):
+        return apply_layout_flow(
+            self.layout,
+            lambda obj: self.layout_object_is_empty(op, order, obj),
+            implicit_groups=self.implicit_flow_groups,
+        )
+
     def draw_page(self, canvas: Canvas, order: Order, op: OrderPosition, show_page=True):
         if self.bg_pdf:
             bg_page = self.bg_pdf.pages[0]
@@ -1220,7 +1453,8 @@ class Renderer:
             if bg_page.get('/Rotate') in (90, 270):
                 page_size = page_size[::-1]
             canvas.setPageSize(page_size)
-        for o in self.layout:
+
+        for o in self.layout_for_page(order, op):
             if o['type'] == 'barcodearea':
                 self._draw_barcodearea(canvas, op, o)
             elif o['type'] == 'imagearea':
