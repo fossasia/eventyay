@@ -34,6 +34,7 @@ short_url = 'http://localhost:8000'
 # Default plugins enabled for new events in development
 plugins_default = [
     'eventyay.plugins.checkinlists',
+    'eventyay.plugins.passbook',
     'hubspot',
 ]
 
