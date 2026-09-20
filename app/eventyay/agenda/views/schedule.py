@@ -382,7 +382,7 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
         return ctx
 
 
-@cache_page(60 * 60 * 24, key_prefix='schedule-messages-v4')
+@cache_page(60 * 60 * 24, key_prefix='schedule-messages-v5')
 def schedule_messages(request, **kwargs):
     """Cached for static exports; bump key_prefix when message keys or copy change."""
     strings = {
@@ -443,8 +443,6 @@ def schedule_messages(request, **kwargs):
         'show_talk_starrers_tooltip': _(
             'Make your starred sessions visible to others. You can open someone else\'s starred list only if they have enabled sharing.'
         ),
-        'export': _('Export'),
-        'exports': _('Exports'),
         'no_file_provided': _('No file provided'),
         'no_response': _('No response'),
         'other_timezones': _('Other Timezones'),

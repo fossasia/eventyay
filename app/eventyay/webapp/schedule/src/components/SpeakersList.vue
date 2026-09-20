@@ -107,6 +107,7 @@
 						path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
 			.speaker-info
 				.name {{ speaker.name || t.speaker_fallback }}
+				.speaker-role(v-if="speaker.speaker_role") {{ speaker.speaker_role }}
 				.biography(v-if="speaker.biography")
 					markdown-content(:markdown="speaker.biography")
 				.sessions-list(v-if="speaker.sessions && speaker.sessions.length")
@@ -130,6 +131,7 @@
 									path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
 							.caption.text-center
 								h4 {{ speaker.name || t.speaker_fallback }}
+								p.speaker-role-caption(v-if="speaker.speaker_role") {{ speaker.speaker_role }}
 								markdown-content.featured-speaker-preview-bio(v-if="speaker.biography", :markdown="speaker.biography")
 					.featured-speaker-details
 						speaker-social-links(:links="speaker.social_links", alignment="flex-start")
@@ -916,6 +918,12 @@ export default {
 						font-size: 18px
 						font-weight: 500
 						line-height: 1.3
+					.speaker-role-caption
+						margin: 3px 0 0
+						color: $clr-secondary-text-light
+						font-size: 13px
+						line-height: 1.3
+						padding: 0
 					.featured-speaker-preview-bio
 						margin: 4px 0 0
 						color: $clr-secondary-text-light
@@ -1073,7 +1081,12 @@ export default {
 		.name
 			font-weight: 600
 			font-size: 16px
+			margin-bottom: 2px
+		.speaker-role
+			font-size: 13px
+			color: $clr-secondary-text-light
 			margin-bottom: 4px
+			line-height: 1.3
 		.biography
 			font-size: 14px
 			color: $clr-secondary-text-light
