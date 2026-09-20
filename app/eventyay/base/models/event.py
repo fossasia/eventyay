@@ -1438,11 +1438,14 @@ class Event(
                 # Destination may already have seeded default speaker questions
                 # (import_key unique per event/target). Reuse those rows instead
                 # of inserting duplicates when cloning.
-                existing_by_import_key = {
-                    (q.target, q.import_key): q
-                    for q in TalkQuestion.objects.filter(event=self)
-                    if q.import_key
-                }
+                # Look up under destination scope: callers (e.g. API clone) may
+                # only have the source event scope active.
+                with scope(event=self):
+                    existing_by_import_key = {
+                        (q.target, q.import_key): q
+                        for q in TalkQuestion.objects.filter(event=self)
+                        if q.import_key
+                    }
                 for tq in other.talkquestions.prefetch_related('options', 'tracks', 'submission_types'):
                     tq_tracks = list(tq.tracks.all())
                     tq_submission_types = list(tq.submission_types.all())
@@ -1456,15 +1459,16 @@ class Event(
                         else None
                     )
                     if reuse:
-                        for field in TalkQuestion._meta.concrete_fields:
-                            if field.primary_key or field.name in ('event', 'dependency_question'):
-                                continue
-                            setattr(reuse, field.name, getattr(tq, field.name))
-                        reuse.dependency_question = None
-                        reuse.save()
-                        reuse.options.all().delete()
-                        reuse.tracks.clear()
-                        reuse.submission_types.clear()
+                        with scope(event=self):
+                            for field in TalkQuestion._meta.concrete_fields:
+                                if field.primary_key or field.name in ('event', 'dependency_question'):
+                                    continue
+                                setattr(reuse, field.name, getattr(tq, field.name))
+                            reuse.dependency_question = None
+                            reuse.save()
+                            reuse.options.all().delete()
+                            reuse.tracks.clear()
+                            reuse.submission_types.clear()
                         dest = reuse
                     else:
                         tq.pk = None
@@ -1479,14 +1483,15 @@ class Event(
                     if old_dep_id:
                         talk_question_deps[dest] = old_dep_id
 
-                    for o in tq_options:
-                        o.pk = None
-                        o.question = dest
-                        o.save()
-                    for tr in tq_tracks:
-                        dest.tracks.add(track_map[tr.pk])
-                    for st in tq_submission_types:
-                        dest.submission_types.add(submission_type_map[st.pk])
+                    with scope(event=self):
+                        for o in tq_options:
+                            o.pk = None
+                            o.question = dest
+                            o.save()
+                        for tr in tq_tracks:
+                            dest.tracks.add(track_map[tr.pk])
+                        for st in tq_submission_types:
+                            dest.submission_types.add(submission_type_map[st.pk])
 
                 for tq, old_dep_id in talk_question_deps.items():
                     tq.dependency_question = talk_question_map.get(old_dep_id)
