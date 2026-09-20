@@ -43,7 +43,6 @@ from eventyay.person.forms import (
     SpeakerProfileForm,
 )
 from eventyay.person.social_link_mixin import SpeakerSocialLinksMixin
-from eventyay.submission.forms import TalkQuestionsForm
 from eventyay.talk_rules.person import is_only_reviewer
 from eventyay.talk_rules.submission import limit_for_reviewers, speaker_profiles_for_user
 

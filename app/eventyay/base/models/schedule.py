@@ -29,6 +29,7 @@ from eventyay.agenda.tasks import export_schedule_html
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls
 from eventyay.common.video_embed import get_video_embed_info, parse_video_urls
+from eventyay.person.services import build_speaker_role_answers_map, get_public_speaker_role_questions
 from eventyay.schedule.notifications import render_notifications
 from eventyay.schedule.signals import schedule_release
 from eventyay.talk_rules.agenda import (
@@ -1094,14 +1095,11 @@ class Schedule(PretalxModel):
             not respect_public_visibility or self.event.cfp.is_field_public('social_links')
         )
 
-        # Prefetch public Job Title / Organization answers in bulk.
-        from eventyay.agenda.views.utils import (
-            _get_public_speaker_role_questions,
-            _build_speaker_role_answers_map,
-        )
         speaker_user_ids = [u.pk for u in speakers]
-        _job_title_q, _org_q = _get_public_speaker_role_questions(self.event)
-        _speaker_role_map = _build_speaker_role_answers_map(speaker_user_ids, _job_title_q, _org_q, self.event)
+        job_title_q, org_q = get_public_speaker_role_questions(self.event)
+        speaker_role_map = build_speaker_role_answers_map(
+            speaker_user_ids, job_title_q, org_q, self.event
+        )
 
         for user in speakers:
             # Avoid calling event_profile() here: it can hit the DB (and even create/save
@@ -1112,7 +1110,7 @@ class Schedule(PretalxModel):
                 'code': user.code,
                 'name': user.fullname or None,
                 'biography': getattr(profile, 'biography', '') if show_biography else '',
-                'speaker_role': _speaker_role_map.get(user.pk, ''),
+                'speaker_role': speaker_role_map.get(user.pk, ''),
                 'avatar': (user.get_avatar_url(event=self.event) if include_avatar else None),
                 'avatar_thumbnail_default': (
                     user.get_avatar_url(event=self.event, thumbnail='default') if include_avatar else None

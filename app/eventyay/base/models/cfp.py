@@ -4,6 +4,7 @@ from django.db import models
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
+from django_scopes import scope
 from i18nfield.fields import I18nCharField, I18nTextField
 
 from eventyay.common.text.phrases import phrases
@@ -123,7 +124,6 @@ def default_fields():
     }
 
 
-
 SPEAKER_JOB_TITLE_IMPORT_KEY = 'speaker_job_title'
 SPEAKER_ORGANIZATION_IMPORT_KEY = 'speaker_organization'
 
@@ -136,8 +136,9 @@ def create_default_speaker_questions(event):
     constraint guarantees idempotency — calling this function twice for the
     same event is safe.
     """
+    # Local import: question.py imports from eventyay.base.models, and cfp is
+    # loaded early in base.models.__init__, so a top-level import would cycle.
     from eventyay.base.models.question import TalkQuestion, TalkQuestionTarget, TalkQuestionVariant
-    from django_scopes import scope
 
     defaults = [
         (SPEAKER_JOB_TITLE_IMPORT_KEY, str(_('Job Title')), 0),
