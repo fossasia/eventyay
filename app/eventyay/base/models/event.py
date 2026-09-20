@@ -1443,13 +1443,16 @@ class Event(
                 with scope(event=self):
                     existing_by_import_key = {
                         (q.target, q.import_key): q
-                        for q in TalkQuestion.objects.filter(event=self)
+                        for q in TalkQuestion.all_objects.filter(event=self)
                         if q.import_key
                     }
-                for tq in other.talkquestions.prefetch_related('options', 'tracks', 'submission_types'):
-                    tq_tracks = list(tq.tracks.all())
-                    tq_submission_types = list(tq.submission_types.all())
-                    tq_options = list(tq.options.all())
+                with scope(event=other):
+                    source_tqs = list(TalkQuestion.all_objects.filter(event=other).prefetch_related('options', 'tracks', 'submission_types'))
+                for tq in source_tqs:
+                    with scope(event=other):
+                        tq_tracks = list(tq.tracks.all())
+                        tq_submission_types = list(tq.submission_types.all())
+                        tq_options = list(tq.options.all())
                     old_dep_id = tq.dependency_question_id
                     source_pk = tq.pk
 
@@ -1471,10 +1474,11 @@ class Event(
                             reuse.submission_types.clear()
                         dest = reuse
                     else:
-                        tq.pk = None
-                        tq.event = self
-                        tq.dependency_question = None
-                        tq.save()
+                        with scope(event=self):
+                            tq.pk = None
+                            tq.event = self
+                            tq.dependency_question = None
+                            tq.save()
                         dest = tq
 
                     talk_question_map[source_pk] = dest
@@ -1493,10 +1497,11 @@ class Event(
                         for st in tq_submission_types:
                             dest.submission_types.add(submission_type_map[st.pk])
 
-                for tq, old_dep_id in talk_question_deps.items():
-                    tq.dependency_question = talk_question_map.get(old_dep_id)
-                    if tq.dependency_question:
-                        tq.save(update_fields=['dependency_question'])
+                with scope(event=self):
+                    for tq, old_dep_id in talk_question_deps.items():
+                        tq.dependency_question = talk_question_map.get(old_dep_id)
+                        if tq.dependency_question:
+                            tq.save(update_fields=['dependency_question'])
                 
                 if hasattr(self, 'cfp') and hasattr(other, 'cfp') and getattr(other.cfp, 'default_type_id', None):
                     self.cfp.default_type = submission_type_map.get(other.cfp.default_type_id)

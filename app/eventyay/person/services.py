@@ -67,10 +67,10 @@ def build_speaker_role_answers_map(user_ids, job_title_q, org_q, event):
     for user_id in user_ids:
         user_answers = by_user.get(user_id, {})
         parts = []
-        if job_title_qid and user_answers.get(job_title_qid, '').strip():
-            parts.append(user_answers[job_title_qid].strip())
-        if org_qid and user_answers.get(org_qid, '').strip():
-            parts.append(user_answers[org_qid].strip())
+        if job_title_qid and (user_answers.get(job_title_qid) or '').strip():
+            parts.append((user_answers[job_title_qid] or '').strip())
+        if org_qid and (user_answers.get(org_qid) or '').strip():
+            parts.append((user_answers[org_qid] or '').strip())
         if parts:
             result[user_id] = ', '.join(parts)
     return result
