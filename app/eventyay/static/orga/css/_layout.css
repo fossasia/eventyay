@@ -3365,7 +3365,7 @@ a.btn-speaker-not-arrived {
 }
 
 .speaker-list-table .speaker-sessions-cell {
-  max-width: 16rem;
+  max-width: 26rem;
   min-width: 10rem;
 }
 
@@ -3375,15 +3375,26 @@ a.btn-speaker-not-arrived {
   list-style: none;
 }
 
+.speaker-session-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
 .speaker-session-list li + li {
   margin-top: 0.2rem;
 }
 
 .speaker-session-list a {
-  display: block;
+  flex: 0 1 auto;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.speaker-session-list .badge.submission-state {
+  flex: 0 0 auto;
 }
 
 .speaker-actions-cell {

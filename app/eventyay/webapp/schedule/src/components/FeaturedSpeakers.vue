@@ -17,6 +17,7 @@
 								path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
 						.caption.text-center
 							h4 {{ speaker.name || t.speaker_fallback }}
+							p.speaker-role-caption(v-if="speaker.speaker_role") {{ speaker.speaker_role }}
 							markdown-content.featured-speaker-preview-bio(v-if="speaker.biography", :markdown="speaker.biography")
 				.featured-speaker-details
 					speaker-social-links(:links="speaker.social_links", alignment="flex-start")
@@ -260,19 +261,21 @@ export default {
 				h4
 					margin: 8px 0 0
 					color: $clr-primary-text-light
-					font-size: 18px
+					font-size: 20px
 					font-weight: 500
 					line-height: 1.3
+				.speaker-role-caption
+					margin: 3px 0 0
+					color: $clr-secondary-text-light
+					font-size: 15px
+					line-height: 1.3
+					padding: 0
 				.featured-speaker-preview-bio
 					margin: 4px 0 0
 					color: $clr-secondary-text-light
-					font-size: 12px
-					line-height: 1.35
-					display: -webkit-box
-					-webkit-line-clamp: 2
-					line-clamp: 2
-					-webkit-box-orient: vertical
-					overflow: hidden
+					font-size: 14px
+					line-height: 1.4
+					display: none
 					overflow-wrap: anywhere
 					text-overflow: ellipsis
 					&.c-markdown-content
@@ -289,9 +292,6 @@ export default {
 
 	.featured-speaker-card[open] .featured-speaker-summary .thumbnail .caption .featured-speaker-preview-bio
 		display: block
-		-webkit-line-clamp: unset
-		line-clamp: unset
-		-webkit-box-orient: unset
 		overflow: visible
 		white-space: normal
 		text-overflow: clip

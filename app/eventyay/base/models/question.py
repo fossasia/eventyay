@@ -326,6 +326,13 @@ class TalkQuestion(OrderedModel, PretalxModel):
         delete = '{base}delete/'
         toggle = '{self.event.cfp.urls.questions}{self.pk}/toggle/'
 
+    def delete(self, *args, **kwargs):
+        from eventyay.base.models.cfp import is_default_speaker_question
+        if self.is_imported or is_default_speaker_question(self):
+            from django.core.exceptions import ValidationError
+            raise ValidationError(_('This question is required by the system and cannot be deleted.'))
+        return super().delete(*args, **kwargs)
+
     def __str__(self):
         return str(self.question)
 
