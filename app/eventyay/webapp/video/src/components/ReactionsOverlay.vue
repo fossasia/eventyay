@@ -21,12 +21,16 @@ export default {
 		}
 	},
 	computed: {
-		...mapState(['mediaSourcePlaceholderRect', 'reactions', 'stageStreamCollapsed']),
+		...mapState(['mediaSourcePlaceholderRect', 'reactions', 'stageStreamCollapsed', 'reactionBurst']),
 		direction() {
 			return this.stageStreamCollapsed ? 'horizontal' : 'vertical'
 		}
 	},
 	watch: {
+		reactionBurst(burst) {
+			if (!burst?.emoji) return
+			this.renderReaction(burst.emoji)
+		},
 		reactions() {
 			if (!this.reactions) return
 			// put all reactions in a queue and randomize to get rough averages toghether with the particle pool
@@ -68,12 +72,15 @@ export default {
 				}
 			}
 
-			const overlaySize = this.direction === 'vertical' ? this.mediaSourcePlaceholderRect.height : this.mediaSourcePlaceholderRect.width
+			const rect = this.mediaSourcePlaceholderRect
+			const overlaySize = this.direction === 'vertical'
+				? (rect?.height || this.$el?.clientHeight || 200)
+				: (rect?.width || this.$el?.clientWidth || 200)
 
 			const startingPosition = Math.random()
 			const targetPosition = (this.direction === 'vertical' ? 0.5 : 1) * Math.max(0.7, Math.random()) * overlaySize
 			element.style['background-image'] = nativeEmojiToStyle(emoji)['background-image']
-			element.style[this.direction === 'vertical' ? 'left' : 'top'] = `calc(${startingPosition * 100}% - 12px)`
+			element.style[this.direction === 'vertical' ? 'left' : 'top'] = `calc(${startingPosition * 100}% - 28px)`
 			const axis = this.direction === 'vertical' ? 'Y' : 'X'
 			const animation = element.animate([
 				{opacity: 1, transform: `translate${axis}(0px)`},
@@ -92,27 +99,26 @@ export default {
 </script>
 <style lang="stylus">
 .c-reactions-overlay
-	position: absolute
-	// TODO decopypaste
-	bottom: calc(var(--vh100) - 56px - var(--mediasource-placeholder-height))
-	right: calc(100vw - var(--sidebar-width) - var(--mediasource-placeholder-width))
-	width: var(--mediasource-placeholder-width)
-	height: var(--mediasource-placeholder-height)
+	position: fixed
+	top: var(--mediasource-placeholder-top, 0px)
+	left: var(--mediasource-placeholder-left, 0px)
+	width: var(--mediasource-placeholder-width, 100%)
+	height: var(--mediasource-placeholder-height, 100%)
 	pointer-events: none
 	overflow: hidden
-	z-index: 50
+	z-index: 80
 	.reaction
 		position: absolute
-		height: 28px
+		height: 56px
 		width: @height
 		display: inline-block
+		background-repeat: no-repeat
+		background-position: center
+		background-size: contain
 	&.vertical
 		.reaction
-			bottom: -32px
+			bottom: -60px
 	&.horizontal
 		.reaction
-			right: -32px
-	+below('l')
-		bottom: calc(var(--vh100) - 48px - 56px - var(--mediasource-placeholder-height))
-		right: calc(100vw - var(--mediasource-placeholder-width))
+			right: -60px
 </style>

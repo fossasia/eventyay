@@ -33,6 +33,7 @@ from eventyay.base.models import (
     TalkQuestionTarget,
     Track,
 )
+from eventyay.base.models.cfp import is_default_speaker_question
 from eventyay.cfp.flow import CfPFlow
 from eventyay.common.forms import I18nFormSet
 from eventyay.common.language import get_language_choices_native_with_ui_name
@@ -628,6 +629,12 @@ class QuestionView(OrderActionMixin, OrgaCRUDView):
         return self.get(request, *args, **kwargs)
 
     def perform_delete(self):
+        if is_default_speaker_question(self.object):
+            messages.error(
+                self.request,
+                _('This default speaker field cannot be deleted.'),
+            )
+            return
         try:
             with transaction.atomic():
                 self.object.options.all().delete()
