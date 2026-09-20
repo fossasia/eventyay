@@ -10,8 +10,8 @@ from eventyay.base.models import Team
 from eventyay.base.models.organizer import TeamAPIToken
 from eventyay.eventyay_common.api_catalog import (
     build_api_catalog,
-    event_has_tickets_component,
     event_has_talks_component,
+    event_has_tickets_component,
 )
 from eventyay.eventyay_common.navigation import get_event_navigation
 from eventyay.eventyay_common.utils import EventCreatedFor
@@ -62,7 +62,11 @@ def test_event_navigation_includes_api(rf, event, user, team):
     request.resolver_match = resolve(path)
 
     nav = get_event_navigation(request, event)
-    api_item = next(item for item in nav if str(item['label']) == 'API')
+    # API should not be a standalone top-level item
+    assert not any(str(item['label']) == 'API' for item in nav)
+    # API is under Event settings children
+    settings_item = next(item for item in nav if str(item['label']) == 'Event settings')
+    api_item = next(item for item in settings_item['children'] if str(item['label']) == 'API')
     assert api_item['url'] == _api_url(event)
     assert api_item['icon'] == 'code'
 
@@ -80,7 +84,9 @@ def test_event_navigation_includes_api_for_orders_permission(rf, event, organize
     request.resolver_match = resolve(path)
 
     nav = get_event_navigation(request, event)
-    assert any(str(item['label']) == 'API' for item in nav)
+    # API is under Event settings children
+    settings_item = next(item for item in nav if str(item['label']) == 'Event settings')
+    assert any(str(item['label']) == 'API' for item in settings_item['children'])
 
 
 @override_settings(SITE_URL='https://testserver')

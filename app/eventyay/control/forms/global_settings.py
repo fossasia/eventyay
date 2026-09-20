@@ -26,6 +26,15 @@ PAYPAL_CONNECT_ENDPOINT_CHOICES = (
     ('sandbox', _('Sandbox')),
 )
 
+# PayPal Connect settings that the ticketing settings template renders by name.
+PAYPAL_CONNECT_TEMPLATE_FIELDS = frozenset(
+    {
+        'payment_paypal_connect_client_id',
+        'payment_paypal_connect_secret_key',
+        'payment_paypal_connect_endpoint',
+    }
+)
+
 
 def paypal_connect_endpoint_choice(value: str | None) -> str:
     """Map stored PayPal endpoint values (including legacy URLs) to live/sandbox."""
@@ -880,6 +889,15 @@ class GlobalTicketingSettingsForm(SettingsForm):
                         self.fields[key] = value
                     if key not in payment_gateway_fields:
                         payment_gateway_fields.append(key)
+
+        # The PayPal section of the template renders the fields above explicitly, so any
+        # further PayPal Connect setting registered by the plugin needs to be listed here
+        # to be shown at all.
+        self.paypal_extra_fields = [
+            key
+            for key in payment_gateway_fields
+            if key.startswith('payment_paypal_connect_') and key not in PAYPAL_CONNECT_TEMPLATE_FIELDS
+        ]
 
         self.field_groups = [
             ('payment-gateways', _('Payment Gateways'), payment_gateway_fields),

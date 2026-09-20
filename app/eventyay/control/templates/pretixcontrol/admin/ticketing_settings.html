@@ -57,6 +57,11 @@
                     {% bootstrap_field form.payment_paypal_connect_client_id layout='control' %}
                     {% bootstrap_field form.payment_paypal_connect_secret_key layout='control' %}
                     {% bootstrap_field form.payment_paypal_connect_endpoint layout='control' %}
+                    {% for field_name in form.paypal_extra_fields %}
+                        {% with form|getitem:field_name as field %}
+                            {% bootstrap_field field layout='control' %}
+                        {% endwith %}
+                    {% endfor %}
                 </fieldset>
 
                 {% for group_key, group_label, field_names in form.field_groups %}

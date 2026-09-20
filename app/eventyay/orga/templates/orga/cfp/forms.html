@@ -1135,8 +1135,19 @@
                         {% for item in custom_speaker_fields %}
                             <tr dragsort-id="{{ item.question.id }}">
                                 <th>
-                                    <a href="{{ item.question.urls.edit }}">{{ item.question.question }}</a>
-                                    <span class="badge badge-info text-dark">{% translate "Custom" %}</span>
+                                    {% if item.question.import_key == 'speaker_job_title' or item.question.import_key == 'speaker_organization' %}
+                                        <div class="font-weight-bold">{{ item.question.question }}</div>
+                                        <div class="small text-muted font-weight-normal mt-1">
+                                            {% if item.question.import_key == 'speaker_job_title' %}
+                                                {% translate "The speaker's job title" %}
+                                            {% else %}
+                                                {% translate "The speaker's organization" %}
+                                            {% endif %}
+                                        </div>
+                                    {% else %}
+                                        <a href="{{ item.question.urls.edit }}">{{ item.question.question }}</a>
+                                        <span class="badge badge-info text-dark">{% translate "Custom" %}</span>
+                                    {% endif %}
                                 </th>
                                 <td class="text-center">
                                     <label class="toggle-switch" data-field-id="{{ item.field.auto_id }}"
@@ -1184,9 +1195,11 @@
                                     <a href="{{ item.question.urls.edit }}" class="btn btn-sm btn-info" title="{% translate 'Edit' %}">
                                         <i class="fa fa-edit"></i>
                                     </a>
+                                    {% if item.question.import_key != 'speaker_job_title' and item.question.import_key != 'speaker_organization' %}
                                     <a href="{{ item.question.urls.delete }}" class="btn btn-sm btn-danger" title="{% translate 'Delete' %}">
                                         <i class="fa fa-trash"></i>
                                     </a>
+                                    {% endif %}
                                 </td>
                             </tr>
                         {% endfor %}

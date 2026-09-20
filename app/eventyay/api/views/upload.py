@@ -4,7 +4,7 @@ from django.utils.timezone import now
 from oauth2_provider.contrib.rest_framework import OAuth2Authentication
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.exceptions import ValidationError
-from rest_framework.parsers import FileUploadParser
+from rest_framework.parsers import FileUploadParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -28,7 +28,7 @@ class UploadView(APIView):
         DeviceTokenAuthentication,
         TeamTokenAuthentication,
     )
-    parser_classes = [FileUploadParser]
+    parser_classes = [MultiPartParser, FileUploadParser]
     permission_classes = [AnyAuthenticatedClientPermission]
 
     def post(self, request):
@@ -54,4 +54,7 @@ class UploadView(APIView):
         )
         cf.file.save(file_obj.name, file_obj)
         cf.save()
-        return Response({'id': f'file:{cf.pk}'}, status=201)
+        return Response({
+            'id': f'file:{cf.pk}',
+            'url': cf.file.url
+        }, status=201)
