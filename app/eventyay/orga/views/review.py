@@ -125,14 +125,21 @@ class ReviewDashboard(EventPermissionRequired, BaseSubmissionList):
                 if reviews:
                     review = reviews[0]
                     submission.current_score = review.score
+                    submission.user_score_ids = {
+                        score.pk
+                        for score in review.scores.all()
+                        if not score.category.is_independent
+                    }
                     if self.independent_categories:
                         mapping = {score.category_id: score.value for score in review.scores.all()}
                         result = []
                         for category in self.independent_categories:
                             result.append(mapping.get(category.pk))
                         submission.independent_scores = result
-                elif self.independent_categories:
-                    submission.independent_scores = [None for _ in range(len(self.independent_categories))]
+                else:
+                    submission.user_score_ids = set()
+                    if self.independent_categories:
+                        submission.independent_scores = [None for _ in range(len(self.independent_categories))]
             if self.short_questions:
                 answers = {answer.question_id: answer for answer in submission.answers.all()}
                 submission.short_answers = [

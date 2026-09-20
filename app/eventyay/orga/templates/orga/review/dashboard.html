@@ -164,7 +164,7 @@
                                         {% for category in submission.score_categories %}
                                             {% if not category.is_independent %}
                                                 {% for score in category.scores.all %}
-                                                    <option value="{{ score.pk }}" data-category="{{ category.pk }}" {% if submission.user_score == score.value %}selected{% endif %}>
+                                                    <option value="{{ score.pk }}" data-category="{{ category.pk }}" {% if score.pk in submission.user_score_ids %}selected{% endif %}>
                                                         {{ score.label }} ({{ score.value|floatformat:"-2" }})
                                                     </option>
                                                 {% endfor %}
