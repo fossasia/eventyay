@@ -87,6 +87,34 @@ const activeInterpretation = computed(() => {
 	if (!props.room?.id) return null;
 	return store.state.interpretationStreamsByRoom?.[props.room.id] || store.state.youtubeTranslationsByRoom?.[props.room.id] || null;
 });
+const interpretationVolume = computed(() => store.state.interpretationVolume ?? 1.0);
+
+watch(interpretationVolume, (vol) => {
+	applyInterpretationVolume(vol);
+});
+
+function applyInterpretationVolume(vol) {
+	const parsed = Number(vol);
+	const safe = Number.isFinite(parsed) ? Math.min(Math.max(parsed, 0), 1) : 1;
+	if (whepAudioEl.value) {
+		whepAudioEl.value.volume = safe;
+	}
+	const iframe = translationIframeEl.value;
+	if (iframe?.contentWindow) {
+		try {
+			iframe.contentWindow.postMessage(
+				JSON.stringify({
+					event: 'command',
+					func: 'setVolume',
+					args: [Math.round(safe * 100)]
+				}),
+				'*'
+			);
+		} catch (error) {
+			console.warn('Failed to set translation iframe volume:', error);
+		}
+	}
+}
 const autoplay = computed(() => store.getters.autoplay);
 const mainPlayerPaused = ref(!autoplay.value);
 
@@ -319,6 +347,7 @@ async function applyInterpretation(interpConfig) {
 			whepClient = client;
 			try {
 				await client.connect();
+				applyInterpretationVolume(interpretationVolume.value);
 				if (updateToken !== interpretationUpdateToken) {
 					client.disconnect();
 					if (whepClient === client) whepClient = null;
@@ -488,13 +517,56 @@ function muteYouTubePlayer() {
 	}
 }
 
+function youtubePlaybackConfig(config = {}) {
+	return {
+		startMuted: Boolean(config.startMuted),
+		enablePrivacyEnhancedMode: Boolean(config.enablePrivacyEnhancedMode),
+		loop: Boolean(config.loop),
+		modestBranding: Boolean(config.modestBranding),
+		hideControls: Boolean(config.hideControls),
+		noRelated: Boolean(config.noRelated),
+		disableKb: Boolean(config.disableKb),
+		showInfo: Boolean(config.showInfo),
+	};
+}
+
 function getYoutubeConfig() {
 	const streamType = isScheduleDrivenStage.value ? props.room?.currentStream?.stream_type : null;
 	const currentStream = streamType === STREAM_TYPE_YOUTUBE ? props.room?.currentStream : null;
-	return {
-		...(currentStream?.config || {}),
-		...(module.value?.config || {}),
-	};
+	const moduleConfig = module.value?.config || {};
+	const streamConfig = currentStream?.config || {};
+	return youtubePlaybackConfig(
+		currentStream ? { ...moduleConfig, ...streamConfig } : moduleConfig
+	);
+}
+
+function getYoutubeEmbedUrl(videoIdOrUrl, options = {}) {
+	const ytid = normalizeYoutubeVideoId(videoIdOrUrl) || videoIdOrUrl;
+	if (!ytid) return null;
+	const params = new URLSearchParams();
+	params.set('autoplay', options.autoplay ? '1' : '0');
+	params.set('mute', options.startMuted ? '1' : '0');
+	params.set('playsinline', '1');
+	params.set('enablejsapi', '1');
+	const origin = options.origin || window.location.origin;
+	if (origin) params.set('origin', origin);
+	params.set('cc_load_policy', '0');
+	if (options.hideControls) params.set('controls', '0');
+	if (options.noRelated) params.set('rel', '0');
+	if (options.showInfo) {
+		params.set('showinfo', '0');
+		params.set('iv_load_policy', '3');
+	}
+	if (options.disableKb) params.set('disablekb', '1');
+	if (options.loop) {
+		params.set('loop', '1');
+		params.set('playlist', ytid);
+	}
+	if (options.modestBranding) params.set('modestbranding', '1');
+	const domain = options.enablePrivacyEnhancedMode
+		? 'www.youtube-nocookie.com'
+		: 'www.youtube.com';
+	return `https://${domain}/embed/${ytid}?${params}`;
 }
 
 function disconnectWhepTranslation() {
@@ -576,6 +648,17 @@ function resetMainPlayerPaused() {
 }
 
 function onTranslationIframeLoaded() {
+	const iframe = translationIframeEl.value;
+	if (iframe?.contentWindow) {
+		try {
+			iframe.contentWindow.postMessage(
+				JSON.stringify({ event: 'listening', id: 'translation', channel: 'widget' }),
+				'*'
+			);
+		} catch (error) {
+			console.warn('Failed to subscribe to translation iframe events:', error);
+		}
+	}
 	if (mainPlayerPaused.value) {
 		pauseYouTubeTranslationIframe();
 	}
@@ -591,6 +674,17 @@ function onWindowMessage(event) {
 		}
 	}
 	if (!data || typeof data !== 'object') return;
+
+	const fromTranslation = Boolean(
+		translationIframeEl.value?.contentWindow &&
+		event.source === translationIframeEl.value.contentWindow
+	);
+	if (fromTranslation) {
+		if (data.event === 'onReady' || data.event === 'initialDelivery') {
+			applyInterpretationVolume(interpretationVolume.value);
+		}
+		return;
+	}
 
 	if (!iframeEl.value?.contentWindow || event.source !== iframeEl.value.contentWindow) return;
 
@@ -762,18 +856,18 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 					mute || config.startMuted || hasAudioOnlyInterpretation()
 				);
 				const shouldAutoplay = Boolean(autoplay.value && !config.hideControls);
-				iframeUrl = getYoutubeUrl(
-					ytid,
-					shouldAutoplay,
-					shouldStartMuted,
-					config.hideControls,
-					config.noRelated,
-					config.showInfo,
-					config.disableKb,
-					config.loop,
-					config.modestBranding,
-					config.enablePrivacyEnhancedMode
-				);
+				iframeUrl = getYoutubeEmbedUrl(ytid, {
+					autoplay: shouldAutoplay,
+					startMuted: shouldStartMuted,
+					hideControls: config.hideControls,
+					noRelated: config.noRelated,
+					showInfo: config.showInfo,
+					disableKb: config.disableKb,
+					loop: config.loop,
+					modestBranding: config.modestBranding,
+					enablePrivacyEnhancedMode: config.enablePrivacyEnhancedMode,
+					origin: window.location.origin,
+				});
 				break;
 			}
 		}
@@ -797,6 +891,8 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 		const iframe = document.createElement('iframe');
 		iframe.src = iframeUrl;
 		iframe.classList.add('iframe-media-source');
+		iframe.setAttribute('frameborder', '0');
+		iframe.style.border = 'none';
 		if (hideIfBackground) {
 			iframe.classList.add('hide-if-background');
 		}
@@ -829,6 +925,9 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 		if (isYouTube) {
 			iframe.onload = () => {
 				subscribeToYouTubePlayerEvents();
+				if (getYoutubeConfig().startMuted || mute || hasAudioOnlyInterpretation()) {
+					muteYouTubePlayer();
+				}
 			};
 		} else if (isVimeo) {
 			iframe.onload = () => {
@@ -882,93 +981,22 @@ function isPlaying() {
 	return !!iframeEl.value;
 }
 
-function getYoutubeUrl(
-	ytid,
-	autoplayVal,
-	mute,
-	hideControls,
-	noRelated,
-	showinfo,
-	disableKb,
-	loop,
-	modestBranding,
-	enablePrivacyEnhancedMode
-) {
-	const params = new URLSearchParams();
-
-	// Always add autoplay and mute as they control core functionality
-	params.append('autoplay', autoplayVal ? '1' : '0');
-	params.append('mute', mute ? '1' : '0');
-
-	// Enable IFrame API for programmatic control
-	params.append('enablejsapi', '1');
-	params.append('origin', window.location.origin);
-
-	// Only add optional parameters when explicitly enabled
-	if (hideControls) {
-		params.append('controls', '0');
-	}
-
-	if (noRelated) {
-		params.append('rel', '0');
-	}
-
-	if (showinfo) {
-		params.append('showinfo', '0');
-	}
-
-	if (disableKb) {
-		params.append('disablekb', '1');
-	}
-
-	if (loop) {
-		params.append('loop', '1');
-		// Loop requires playlist parameter to work properly
-		params.append('playlist', ytid);
-	}
-
-	if (modestBranding) {
-		params.append('modestbranding', '1');
-	}
-
-	const domain = enablePrivacyEnhancedMode
-		? 'www.youtube-nocookie.com'
-		: 'www.youtube.com';
-	return `https://${domain}/embed/${ytid}?${params}`;
-}
-
 function getLanguageIframeUrl(languageUrl) {
 	if (!languageUrl) return null;
 	const config = getYoutubeConfig();
-	const origin = window.location.origin;
-	const params = new URLSearchParams();
-	params.append('autoplay', autoplay.value ? '1' : '0');
-	params.append('mute', config.startMuted ? '1' : '0');
-	params.append('enablejsapi', '1');
-	params.append('origin', origin);
-	params.append('controls', '0');
-
-	if (config.noRelated) {
-		params.append('rel', '0');
-	}
-	if (config.showInfo) {
-		params.append('showinfo', '0');
-	}
-	if (config.disableKb) {
-		params.append('disablekb', '1');
-	}
-	if (config.loop) {
-		params.append('loop', '1');
-		params.append('playlist', languageUrl);
-	}
-	if (config.modestBranding) {
-		params.append('modestbranding', '1');
-	}
-
-	const domain = config.enablePrivacyEnhancedMode
-		? 'www.youtube-nocookie.com'
-		: 'www.youtube.com';
-	return `https://${domain}/embed/${languageUrl}?${params}`;
+	const videoId = normalizeYoutubeVideoId(languageUrl) || languageUrl;
+	return getYoutubeEmbedUrl(videoId, {
+		autoplay: autoplay.value,
+		startMuted: Boolean(config.startMuted),
+		hideControls: true,
+		noRelated: config.noRelated,
+		showInfo: config.showInfo,
+		disableKb: config.disableKb,
+		loop: config.loop,
+		modestBranding: config.modestBranding,
+		enablePrivacyEnhancedMode: config.enablePrivacyEnhancedMode,
+		origin: window.location.origin,
+	});
 }
 
 // Expose instance methods (used by parents via template refs)
@@ -1021,6 +1049,8 @@ defineExpose({ isPlaying });
 		transform: translate(calc(-1 * var(--chatbar-width)), 52px)
 .c-media-source .c-livestream, .c-media-source .iframe-error, iframe.iframe-media-source
 	position: fixed
+	border: none !important
+	outline: none !important
 	&.size-tiny, &.background
 		transition: all .3s ease
 		bottom: calc(var(--vh100) - 48px - 51px)
@@ -1032,6 +1062,11 @@ defineExpose({ isPlaying });
 		left: var(--mediasource-placeholder-left, var(--sidebar-width))
 		width: var(--mediasource-placeholder-width, 100vw)
 		height: var(--mediasource-placeholder-height, var(--mobile-media-height, 40vh))
+		border-radius: 4px
+		overflow: hidden
+		+below('m')
+			left: var(--mediasource-placeholder-left, 0px)
+			border-radius: 4px
 
 .c-media-source .c-video-call-frame
 	position: fixed
