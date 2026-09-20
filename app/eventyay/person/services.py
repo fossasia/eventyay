@@ -4,7 +4,9 @@ from django.utils.crypto import get_random_string
 from django.utils.timezone import now
 from django_scopes import scope
 
+from eventyay.base.models import TalkQuestion, TalkQuestionTarget
 from eventyay.base.models.cfp import SPEAKER_JOB_TITLE_IMPORT_KEY, SPEAKER_ORGANIZATION_IMPORT_KEY
+from eventyay.base.models.question import Answer
 
 
 def create_user(email, name=None, pw_reset_days=60, event=None):
@@ -24,8 +26,6 @@ def create_user(email, name=None, pw_reset_days=60, event=None):
 
 def get_public_speaker_role_questions(event):
     """Return public Job Title and Organization questions for this event, if any."""
-    from eventyay.base.models import TalkQuestion, TalkQuestionTarget
-
     with scope(event=event):
         questions = {
             q.import_key: q
@@ -44,8 +44,6 @@ def build_speaker_role_answers_map(user_ids, job_title_q, org_q, event):
 
     Returns a dict mapping user_id -> role string (e.g. "Engineer, Acme").
     """
-    from eventyay.base.models.question import Answer
-
     if not user_ids or (not job_title_q and not org_q):
         return {}
 

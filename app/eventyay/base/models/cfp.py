@@ -126,6 +126,17 @@ def default_fields():
 
 SPEAKER_JOB_TITLE_IMPORT_KEY = 'speaker_job_title'
 SPEAKER_ORGANIZATION_IMPORT_KEY = 'speaker_organization'
+DEFAULT_SPEAKER_QUESTION_IMPORT_KEYS = frozenset(
+    {
+        SPEAKER_JOB_TITLE_IMPORT_KEY,
+        SPEAKER_ORGANIZATION_IMPORT_KEY,
+    }
+)
+
+
+def is_default_speaker_question(question):
+    """Return True if *question* is a platform-seeded speaker field."""
+    return bool(question and question.import_key in DEFAULT_SPEAKER_QUESTION_IMPORT_KEYS)
 
 
 def create_default_speaker_questions(event):

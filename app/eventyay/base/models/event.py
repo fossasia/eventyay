@@ -1435,31 +1435,59 @@ class Event(
                 
                 talk_question_map = {}
                 talk_question_deps = {}
+                # Destination may already have seeded default speaker questions
+                # (import_key unique per event/target). Reuse those rows instead
+                # of inserting duplicates when cloning.
+                existing_by_import_key = {
+                    (q.target, q.import_key): q
+                    for q in TalkQuestion.objects.filter(event=self)
+                    if q.import_key
+                }
                 for tq in other.talkquestions.prefetch_related('options', 'tracks', 'submission_types'):
                     tq_tracks = list(tq.tracks.all())
                     tq_submission_types = list(tq.submission_types.all())
                     tq_options = list(tq.options.all())
                     old_dep_id = tq.dependency_question_id
-                    
-                    talk_question_map[tq.pk] = tq
-                    tq.pk = None
-                    tq.event = self
-                    tq.dependency_question = None
-                    tq.save()
-                    tq.log_action('eventyay.object.cloned')
-                    
+                    source_pk = tq.pk
+
+                    reuse = (
+                        existing_by_import_key.get((tq.target, tq.import_key))
+                        if tq.import_key
+                        else None
+                    )
+                    if reuse:
+                        for field in TalkQuestion._meta.concrete_fields:
+                            if field.primary_key or field.name in ('event', 'dependency_question'):
+                                continue
+                            setattr(reuse, field.name, getattr(tq, field.name))
+                        reuse.dependency_question = None
+                        reuse.save()
+                        reuse.options.all().delete()
+                        reuse.tracks.clear()
+                        reuse.submission_types.clear()
+                        dest = reuse
+                    else:
+                        tq.pk = None
+                        tq.event = self
+                        tq.dependency_question = None
+                        tq.save()
+                        dest = tq
+
+                    talk_question_map[source_pk] = dest
+                    dest.log_action('eventyay.object.cloned')
+
                     if old_dep_id:
-                        talk_question_deps[tq] = old_dep_id
-                    
+                        talk_question_deps[dest] = old_dep_id
+
                     for o in tq_options:
                         o.pk = None
-                        o.question = tq
+                        o.question = dest
                         o.save()
                     for tr in tq_tracks:
-                        tq.tracks.add(track_map[tr.pk])
+                        dest.tracks.add(track_map[tr.pk])
                     for st in tq_submission_types:
-                        tq.submission_types.add(submission_type_map[st.pk])
-                        
+                        dest.submission_types.add(submission_type_map[st.pk])
+
                 for tq, old_dep_id in talk_question_deps.items():
                     tq.dependency_question = talk_question_map.get(old_dep_id)
                     if tq.dependency_question:

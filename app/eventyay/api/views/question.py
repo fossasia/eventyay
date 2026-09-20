@@ -15,6 +15,7 @@ from eventyay.api.serializers.question import (
     QuestionOrgaSerializer,
     QuestionSerializer,
 )
+from eventyay.base.models.cfp import is_default_speaker_question
 from eventyay.base.models.question import Answer, AnswerOption, TalkQuestion, TalkQuestionVariant
 from eventyay.talk_rules.submission import questions_for_user
 
@@ -67,6 +68,10 @@ class QuestionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
         return self.serializer_class
 
     def perform_destroy(self, instance):
+        if is_default_speaker_question(instance):
+            raise exceptions.ValidationError(
+                "This default speaker field cannot be deleted."
+            )
         try:
             with transaction.atomic():
                 instance.options.all().delete()
