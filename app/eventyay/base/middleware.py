@@ -335,6 +335,7 @@ class SecurityMiddleware(MiddlewareMixin):
                 'https://checkout.stripe.com',
                 'https://static.cloudflareinsights.com',
                 'https:',
+                'wss:',
                 'blob:',
                 *dev_connect_src,
             ],

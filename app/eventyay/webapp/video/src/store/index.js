@@ -20,6 +20,24 @@ import {
 	usesHttpStreamFallback,
 } from './streamPolling'
 
+const CAPTION_SIZE_MIN = 12
+const CAPTION_SIZE_MAX = 18
+const CAPTION_SIZE_DEFAULT = 13
+const CAPTION_SIZE_PRESETS = {
+	auto: 13,
+	small: 12,
+	normal: 14,
+	large: 16
+}
+
+function parseCaptionTextSize(raw) {
+	if (raw == null || raw === '') return CAPTION_SIZE_DEFAULT
+	if (CAPTION_SIZE_PRESETS[raw] != null) return CAPTION_SIZE_PRESETS[raw]
+	const n = parseInt(raw, 10)
+	if (!Number.isFinite(n)) return CAPTION_SIZE_DEFAULT
+	return Math.min(CAPTION_SIZE_MAX, Math.max(CAPTION_SIZE_MIN, n))
+}
+
 export default new Vuex.Store({
 	state: {
 		token: null,
@@ -36,6 +54,7 @@ export default new Vuex.Store({
 		permissions: null,
 		activeRoom: null,
 		reactions: null,
+		reactionBurst: null,
 		mediaSourcePlaceholderRect: null,
 		userLocale: null, // only used to force UI render
 		userTimezone: null,
@@ -55,7 +74,12 @@ export default new Vuex.Store({
 		interpretationStreamsByRoom: {},
 		youtubeTranslationsByRoom: {},
 		activeRoomSidebarTab: null,
-		roomSidebarCollapsedByRoom: {}
+		roomSidebarCollapsedByRoom: {},
+		interpretationVolume: (() => {
+			const stored = parseFloat(localStorage.getItem('venueless-interpretation-volume'))
+			return Number.isFinite(stored) ? Math.min(Math.max(stored, 0), 1) : 1.0
+		})(),
+		captionTextSize: parseCaptionTextSize(typeof localStorage !== 'undefined' ? localStorage.getItem('venueless-caption-text-size') : null)
 	},
 	getters: {
 		hasPermission(state) {
@@ -117,6 +141,9 @@ export default new Vuex.Store({
 		},
 		reportMediaSourcePlaceholderRect(state, rect) {
 			state.mediaSourcePlaceholderRect = rect
+		},
+		spawnReaction(state, emoji) {
+			state.reactionBurst = {emoji, nonce: Date.now() + Math.random()}
 		},
 		setUserLocale(state, locale) {
 			state.userLocale = locale
@@ -184,7 +211,8 @@ export default new Vuex.Store({
 		},
 		toggleRoomSidebar(state, { roomId, tab = 'chat' } = {}) {
 			if (!roomId) return
-			const isCurrentlyCollapsed = Boolean(state.roomSidebarCollapsedByRoom[roomId])
+			const val = state.roomSidebarCollapsedByRoom[roomId]
+			const isCurrentlyCollapsed = val !== undefined ? Boolean(val) : true
 			if (isCurrentlyCollapsed) {
 				state.roomSidebarCollapsedByRoom = {
 					...state.roomSidebarCollapsedByRoom,
@@ -207,6 +235,23 @@ export default new Vuex.Store({
 			state.roomSidebarCollapsedByRoom = {
 				...state.roomSidebarCollapsedByRoom,
 				[roomId]: Boolean(collapsed)
+			}
+		},
+		setInterpretationVolume(state, volume) {
+			const parsed = Number(volume)
+			state.interpretationVolume = Number.isFinite(parsed) ? Math.min(Math.max(parsed, 0), 1) : 1.0
+			try {
+				localStorage.setItem('venueless-interpretation-volume', String(state.interpretationVolume))
+			} catch (e) {
+				console.warn('Failed to save interpretation volume', e)
+			}
+		},
+		setCaptionTextSize(state, size) {
+			state.captionTextSize = parseCaptionTextSize(size)
+			try {
+				localStorage.setItem('venueless-caption-text-size', String(state.captionTextSize))
+			} catch (e) {
+				console.warn('Failed to save caption text size', e)
 			}
 		}
 	},
@@ -315,7 +360,13 @@ export default new Vuex.Store({
 			const previousStreamUrl = room.currentStream?.url || null
 			const currentStreamUrl = currentStream?.url || null
 
-			if (previousStreamId !== streamId || previousStreamUrl !== currentStreamUrl) {
+			const previousConfig = JSON.stringify(room.currentStream?.config || {})
+			const currentConfig = JSON.stringify(currentStream?.config || {})
+			if (
+				previousStreamId !== streamId ||
+				previousStreamUrl !== currentStreamUrl ||
+				previousConfig !== currentConfig
+			) {
 				commit('setRoomCurrentStream', { roomId, stream: currentStream })
 			}
 			if (state.lastKnownStreamId !== streamId) {
@@ -437,9 +488,18 @@ export default new Vuex.Store({
 			dispatch('question/changeRoom', room)
 			dispatch('poll/changeRoom', room)
 		},
-		async addReaction({state}, reaction) {
+		async addReaction({state, commit}, reaction) {
 			if (!state.activeRoom || !state.connected) return
-			await api.call('room.react', {room: state.activeRoom.id, reaction})
+			commit('spawnReaction', reaction)
+			try {
+				await api.call('room.react', {room: state.activeRoom.id, reaction})
+			} catch (error) {
+				console.error('Failed to send room reaction', {
+					reaction,
+					roomId: state.activeRoom.id,
+					error
+				})
+			}
 		},
 		async updateRoomSchedule({state}, {room, schedule_data}) {
 			return await api.call('room.schedule', {room: room.id, schedule_data})
@@ -475,8 +535,9 @@ export default new Vuex.Store({
 			}
 		},
 		'api::room.reaction'({state}, {room, reactions}) {
-			if (state.activeRoom.id !== room) return
-			state.reactions = reactions
+			if (!reactions || !state.activeRoom) return
+			if (String(state.activeRoom.id) !== String(room)) return
+			state.reactions = {...reactions}
 		},
 		'api::world.updated'({state, commit, dispatch}, {world, rooms, permissions}) {
 			state.world = world
