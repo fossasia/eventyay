@@ -36,7 +36,7 @@
     "dompurify": "^3.4.15",
     "emoji-datasource-twitter": "^16.0.0",
     "emoji-mart": "^5.6.0",
-    "emoji-regex": "^10.6.0",
+    "emoji-regex": "^11.0.0",
     "events": "^3.3.0",
     "hls.js": "^1.7.3",
     "i18next": "^26.4.2",
