@@ -137,25 +137,6 @@ header .header-row-right {
     min-width: 0;
 }
 
-.presale-sticky-tabs a.header-tab {
-    color: var(--color-header-navigation);
-    padding: 8px 10px 4px 10px;
-    border-bottom: 2px solid transparent;
-}
-
-.presale-sticky-tabs a.header-tab:hover,
-.presale-sticky-tabs a.header-tab:focus-visible {
-    color: var(--color-header-navigation-hover);
-    text-decoration: none;
-    border-bottom: 2px dotted currentColor;
-}
-
-.presale-sticky-tabs a.header-tab.active,
-.presale-sticky-tabs a.header-tab.underline {
-    color: var(--color-header-navigation);
-    border-bottom: 2px solid currentColor;
-}
-
 .presale-sticky-tabs #header-nav-bar {
     flex: 1 1 auto;
     margin: 6px 0 0;
@@ -178,8 +159,6 @@ header .header-row-right {
     flex-wrap: nowrap;
     flex-shrink: 0;
     align-items: center;
-    font-size: 1rem;
-    gap: 16px;
 }
 
 
@@ -292,19 +271,10 @@ header .header-row-right {
         overflow: visible;
     }
 
-    .presale-sticky-tabs a.header-tab {
-        white-space: nowrap;
-        flex-shrink: 0;
-        padding: 4px 6px 3px 6px;
-        font-size: 0.8rem;
-    }
-
     .presale-sticky-tabs .header-row-right {
         margin-left: 0;
         margin-right: 2px;
         flex-shrink: 0;
-        font-size: 0.8rem;
-        gap: 0;
     }
 
     .presale-sticky-tabs .header-row-right details.dropdown {
@@ -329,10 +299,6 @@ header .header-row-right {
 
     .presale-sticky-tabs .header-row-right details.dropdown summary .fa-caret-down {
         display: none;
-    }
-
-    .presale-sticky-tabs .header-row-right details.dropdown summary {
-        padding: 2px 4px;
     }
 
     .cfs-full {

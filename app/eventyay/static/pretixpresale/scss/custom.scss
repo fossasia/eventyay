@@ -96,23 +96,6 @@
     min-width: 0;
 }
 
-.presale-sticky-tabs a.header-tab {
-    padding: 8px 10px 4px 10px;
-    border-bottom: 2px solid transparent;
-}
-
-.presale-sticky-tabs a.header-tab:hover,
-.presale-sticky-tabs a.header-tab:focus-visible {
-    color: var(--color-header-navigation-hover);
-    text-decoration: none;
-    border-bottom: 2px dotted currentColor;
-}
-
-.presale-sticky-tabs a.header-tab.active,
-.presale-sticky-tabs a.header-tab.underline {
-    border-bottom: 2px solid currentColor;
-}
-
 .presale-sticky-tabs #header-nav-bar {
     flex: 1 1 auto;
     margin: 6px 0 0;
@@ -137,8 +120,6 @@
     flex-wrap: nowrap;
     flex-shrink: 0;
     align-items: center;
-    font-size: 1rem;
-    gap: 16px;
 }
 
 
@@ -258,19 +239,10 @@
         overflow: visible;
     }
 
-    .presale-sticky-tabs a.header-tab {
-        white-space: nowrap;
-        flex-shrink: 0;
-        padding: 4px 6px 3px 6px;
-        font-size: 0.8rem;
-    }
-
     .presale-sticky-tabs .header-row-right {
         margin-left: 0;
         margin-right: 2px;
         flex-shrink: 0;
-        font-size: 0.8rem;
-        gap: 0;
     }
 
     .presale-sticky-tabs .header-row-right details.dropdown {
@@ -297,11 +269,6 @@
     /* Remove the caret arrow — redundant when showing icon-only */
     .presale-sticky-tabs .header-row-right details.dropdown summary .fa-caret-down {
         display: none;
-    }
-
-    /* Tighten padding on the summary trigger button */
-    .presale-sticky-tabs .header-row-right details.dropdown summary {
-        padding: 2px 4px;
     }
 
     /* Show abbreviated "CfS" instead of "Call for Speakers" */
