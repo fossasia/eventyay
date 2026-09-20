@@ -63,7 +63,7 @@ export default {
 		}
 	},
 	watch: {
-		sortedPolls() {
+		sortedQuestions() {
 			// HACK suppress firing event on `question.list`
 			if (this.hasLoaded) {
 				this.$emit('change')
@@ -126,4 +126,5 @@ export default {
 			themed-button-primary()
 	.questions
 		flex: auto
+		min-height: 0
 </style>

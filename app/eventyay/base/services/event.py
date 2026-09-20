@@ -571,6 +571,7 @@ async def create_room(event, data, creator):
             elif module["type"] == "livestream.youtube":
                 clean_config["ytid"] = config.get("ytid", "")
                 for key in (
+                    "startMuted",
                     "enablePrivacyEnhancedMode",
                     "loop",
                     "modestBranding",

@@ -300,6 +300,7 @@ def event_css(request, organizer=None, event=None, **kwargs):
     header_text_color = request.event.settings.get('header_text_color')
     navigation_text_color = request.event.settings.get('navigation_text_color')
     menu_text_scroll_over_color = request.event.settings.get('menu_text_scroll_over_color')
+    theme_color_background = request.event.settings.get('theme_color_background')
     primary_font = request.event.settings.get('primary_font')
 
     if request.event.visible_primary_color:
@@ -317,6 +318,8 @@ def event_css(request, organizer=None, event=None, **kwargs):
         variables.append(f'--color-header-navigation: {navigation_text_color};')
     if menu_text_scroll_over_color:
         variables.append(f'--color-header-navigation-hover: {menu_text_scroll_over_color};')
+    if theme_color_background:
+        variables.append(f'--color-bg: {theme_color_background};')
 
     font_css = ''
     if primary_font and request.GET.get('target') != 'orga':

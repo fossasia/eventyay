@@ -15,11 +15,12 @@ from eventyay.control.signals import nav_event_common, nav_global, nav_organizer
 logger = logging.getLogger(__name__)
 
 
-class MenuItem(TypedDict):
+class MenuItem(TypedDict, total=False):
     label: str
     url: str
     active: bool
     icon: str
+    children: list['MenuItem']
 
 
 def get_global_navigation(request: HttpRequest) -> List[MenuItem]:
@@ -237,7 +238,7 @@ def get_meetup_event_navigation(request: HttpRequest, event: Event) -> List[Menu
     return nav
 
 
-def get_event_navigation(request: HttpRequest, event: Event) -> List[MenuItem]:
+def get_event_navigation(request: HttpRequest, event: Event) -> list[MenuItem]:
     """Generate navigation items for an event."""
     if is_meetup_event(event):
         return get_meetup_event_navigation(request, event)
@@ -245,7 +246,7 @@ def get_event_navigation(request: HttpRequest, event: Event) -> List[MenuItem]:
     url = request.resolver_match
     if not url:
         return []
-    
+
     nav = []
     has_settings_perm = request.user.has_event_permission(
         event.organizer,
@@ -253,10 +254,12 @@ def get_event_navigation(request: HttpRequest, event: Event) -> List[MenuItem]:
         'can_change_event_settings',
         request=request,
     )
+
+    settings_children = []
     if has_settings_perm:
-        nav = [
+        settings_children.append(
             {
-                'label': _('Event settings'),
+                'label': _('General'),
                 'url': reverse(
                     'eventyay_common:event.update',
                     kwargs={
@@ -264,9 +267,61 @@ def get_event_navigation(request: HttpRequest, event: Event) -> List[MenuItem]:
                         'organizer': event.organizer.slug,
                     },
                 ),
-                'active': (url.url_name == 'event.update'),
+                'active': (
+                    url.url_name in ('event.update', 'event.clone')
+                    or url.url_name.startswith('event.gmail.')
+                ),
+            }
+        )
+        settings_children.append(
+            {
+                'label': _('Plugins'),
+                'url': reverse(
+                    'eventyay_common:event.plugins',
+                    kwargs={
+                        'event': event.slug,
+                        'organizer': event.organizer.slug,
+                    },
+                ),
+                'active': (url.url_name == 'event.plugins'),
+            }
+        )
+
+    api_item = _event_api_nav_item(request, event, url)
+    if api_item:
+        settings_children.append(
+            {
+                'label': api_item['label'],
+                'url': api_item['url'],
+                'active': api_item['active'],
+                'icon': api_item.get('icon'),
+            }
+        )
+
+    if settings_children:
+        settings_url = (
+            reverse(
+                'eventyay_common:event.update',
+                kwargs={
+                    'event': event.slug,
+                    'organizer': event.organizer.slug,
+                },
+            )
+            if has_settings_perm
+            else settings_children[0]['url']
+        )
+        nav.append(
+            {
+                'label': _('Event settings'),
+                'url': settings_url,
+                'active': False,
                 'icon': 'wrench',
-            },
+                'children': settings_children,
+            }
+        )
+
+    if has_settings_perm:
+        nav.append(
             {
                 'label': _('Event status'),
                 'url': reverse(
@@ -278,24 +333,8 @@ def get_event_navigation(request: HttpRequest, event: Event) -> List[MenuItem]:
                 ),
                 'active': (url.url_name == 'event.live'),
                 'icon': 'tachometer',
-            },
-            {
-                'label': _('Plugins'),
-                'url': reverse(
-                    'eventyay_common:event.plugins',
-                    kwargs={
-                        'event': event.slug,
-                        'organizer': event.organizer.slug,
-                    },
-                ),
-                'active': (url.url_name == 'event.plugins'),
-                'icon': 'plug',
-            },
-        ]
-
-    api_item = _event_api_nav_item(request, event, url)
-    if api_item:
-        nav.append(api_item)
+            }
+        )
 
     plugin_responses = nav_event_common.send(event, request=request)
     plugin_nav_items = []
