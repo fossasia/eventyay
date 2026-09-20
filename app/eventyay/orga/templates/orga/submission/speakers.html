@@ -32,100 +32,96 @@
                     {{ speaker.user.get_display_name }}
                 </a>
             </h3>
-            {% if request.event.cfp.request_avatar and speaker.avatar_url %}
-                <div class="form-group row mb-2">
-                    <label class="col-md-2 col-form-label">{% translate "Avatar" %}</label>
-                    <div class="col-md-10 mt-1">
-                        <a href="{{ speaker.avatar_url }}" data-lightbox>
-                            <img loading="lazy" style="max-width: 100px; max-height: 100px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; padding: 2px;" src="{% if speaker.avatar %}{{ speaker.avatar|thumbnail:"default" }}{% else %}{{ speaker.avatar_url }}{% endif %}" alt="{% translate "The speaker's profile picture" %}">
-                        </a>
-                    </div>
-                </div>
-            {% endif %}
-            {% if request.event.cfp.request_avatar_source and speaker.avatar_source %}
-                <div class="form-group row mb-2">
-                    <label class="col-md-2 col-form-label">{% translate "Profile Picture Source" %}</label>
-                    <div class="col-md-10 mt-1">
-                        {{ speaker.avatar_source|truncatewords:200 }}
-                    </div>
-                </div>
-            {% endif %}
-            {% if request.event.cfp.request_avatar_license and speaker.avatar_license %}
-                <div class="form-group row mb-2">
-                    <label class="col-md-2 col-form-label">{% translate "Profile Picture License" %}</label>
-                    <div class="col-md-10 mt-1">
-                        {{ speaker.avatar_license|truncatewords:200 }}
-                    </div>
-                </div>
-            {% endif %}
             {% if request.event.cfp.request_biography and speaker.profile.biography %}
-                <div class="form-group row mb-2">
-                    <label class="col-md-2 col-form-label">{% translate "Biography" %}</label>
-                    <div class="col-md-10 mt-1 markdown-mt-0">
+                <div class="card-text mb-2">
+                    <strong>{% translate "Biography" %}:</strong>
+                    <div class="mt-1">
                         {{ speaker.profile.biography|rich_text }}
                     </div>
                 </div>
             {% endif %}
+            {% if request.event.cfp.request_avatar and speaker.avatar_url %}
+                <p class="card-text mb-2">
+                    <strong class="d-block">{% translate "Avatar" %}:</strong>
+                    <a href="{{ speaker.avatar_url }}" data-lightbox>
+                        <img loading="lazy" style="max-width: 100px; max-height: 100px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; padding: 2px;" src="{% if speaker.avatar %}{{ speaker.avatar|thumbnail:"default" }}{% else %}{{ speaker.avatar_url }}{% endif %}" alt="{% translate "The speaker's profile picture" %}">
+                    </a>
+                </p>
+            {% endif %}
+            {% if request.event.cfp.request_avatar_source and speaker.avatar_source %}
+                <p class="card-text avatar-license-text mb-2">
+                    <strong>{% translate "Profile Picture Source" %}:</strong>
+                    {{ speaker.avatar_source|truncatewords:200 }}
+                </p>
+            {% endif %}
+            {% if request.event.cfp.request_avatar_license and speaker.avatar_license %}
+                <p class="card-text avatar-license-text mb-2">
+                    <strong>{% translate "Profile Picture License" %}:</strong>
+                    {{ speaker.avatar_license|truncatewords:200 }}
+                </p>
+            {% endif %}
             {% has_event_perm "base.orga_view_speaker_emails" request.user request request.event as can_view_speaker_emails %}
             {% if speaker.email and can_view_speaker_emails %}
-                <div class="form-group row mb-2">
-                    <label class="col-md-2 col-form-label">{% translate "E-Mail" %}</label>
-                    <div class="col-md-10 mt-1">
-                        <a href="mailto:{{ speaker.email }}">{{ speaker.email }}</a>
-                    </div>
-                </div>
+                <p class="card-text mb-2">
+                    <strong>{% translate "E-Mail" %}:</strong>
+                    <a href="mailto:{{ speaker.email }}">{{ speaker.email }}</a>
+                </p>
             {% endif %}
             {% if request.event.cfp.request_availabilities %}
                 {% with speaker.profile.availabilities.all as availabilities %}
                     {% if availabilities %}
-                        <div class="form-group row mb-2">
-                            <label class="col-md-2 col-form-label">{% translate "Availabilities" %}</label>
-                            <div class="col-md-10 mt-1">
-                                {% for availability in availabilities %}
-                                    {% translate "Start time" %}: {{ availability.start }}<br>
-                                    {% translate "End time" %}: {{ availability.end }}<br>
-                                    <br>
-                                {% endfor %}
-                            </div>
-                        </div>
+                        <p class="card-text mb-2">
+                            <strong>{% translate "Availabilities" %}:</strong><br>
+                            {% for availability in availabilities %}
+                                {% translate "Start time" %}: {{ availability.start }}<br>
+                                {% translate "End time" %}: {{ availability.end }}<br>
+                                <br>
+                            {% endfor %}
+                        </p>
                     {% endif %}
                 {% endwith %}
             {% endif %}
             {% if speaker.social_links %}
-                <div class="form-group row mb-2">
-                    <label class="col-md-2 col-form-label">{% translate "Social Media" %}</label>
-                    <div class="col-md-10 mt-1">
+                <div class="card-text mb-2">
+                    <strong class="d-block">{% translate "Social Media" %}:</strong>
+                    <div class="mt-1">
                         {% include "orga/includes/speaker_social_links.html" with social_links=speaker.social_links profile=speaker.profile %}
                     </div>
                 </div>
             {% endif %}
             {% for answer in speaker.answers %}
-                <div class="form-group row mb-2">
-                    <label class="col-md-2 col-form-label">{{ answer.question.question }}</label>
-                    <div class="col-md-10 mt-1 markdown-mt-0">
-                        {% if answer.question.variant == "boolean" %}
-                            <span class="value-pill {% if answer.boolean_answer %}value-pill--positive{% else %}value-pill--negative{% endif %}">
-                                {% include "common/question_answer.html" with answer=answer %}
-                            </span>
-                        {% else %}
+                {% if answer.question.variant == "file" or answer.question.variant == "text" %}
+                    <div class="card-text mb-2">
+                        <strong class="d-block">{{ answer.question.question }}:</strong>
+                        <div class="mt-1">
                             {% include "common/question_answer.html" with answer=answer %}
-                        {% endif %}
+                        </div>
                     </div>
-                </div>
+                {% elif answer.question.variant == "boolean" %}
+                    <p class="card-text mb-2">
+                        <strong>{{ answer.question.question }}:</strong>
+                        <span class="value-pill {% if answer.boolean_answer %}value-pill--positive{% else %}value-pill--negative{% endif %}">
+                            {% include "common/question_answer.html" with answer=answer %}
+                        </span>
+                    </p>
+                {% else %}
+                    <p class="card-text mb-2">
+                        <strong>{{ answer.question.question }}:</strong>
+                        {% include "common/question_answer.html" with answer=answer %}
+                    </p>
+                {% endif %}
             {% endfor %}
             {% if speaker.other_submissions %}
-                <div class="form-group row mb-2">
-                    <label class="col-md-2 col-form-label">{% translate "Other proposals" %}</label>
-                    <div class="col-md-10 mt-1">
-                        <ul class="mt-0 mb-0">
-                            {% for other_submission in speaker.other_submissions %}
-                                <li>
-                                    <a href="{{ other_submission.orga_urls.base }}">{{ other_submission.title }}</a>
-                                    {% include "cfp/event/fragment_state.html" with state=other_submission.state as_badge=True %}
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    </div>
+                <div class="card-text mb-2">
+                    <strong>{% translate "Other proposals by this speaker:" %}</strong>
+                    <ul class="mt-1 mb-0 pl-3">
+                        {% for submission in speaker.other_submissions %}
+                            <li>
+                                <a href="{{ submission.orga_urls.base }}">{{ submission.title }}</a>
+                                {% include "cfp/event/fragment_state.html" with state=submission.state as_badge=True %}
+                            </li>
+                        {% endfor %}
+                    </ul>
                 </div>
             {% endif %}
             {% if can_edit_speakers %}
