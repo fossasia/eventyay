@@ -3238,11 +3238,15 @@ class Event(
 
     def build_initial_data(self):
         from eventyay.base.models import CfP, MailTemplateRoles, Schedule
+        from eventyay.base.models.cfp import create_default_speaker_questions
         from django_scopes import scope
 
         with scope(event=self):
             if not CfP.objects.filter(event=self).exists():
                 CfP.objects.create(event=self, default_type=self._get_default_submission_type())
+
+        # Always ensure the default speaker questions exist (idempotent).
+        create_default_speaker_questions(self)
 
         with scope(event=self):
             if not self.schedules.filter(version__isnull=True).exists():

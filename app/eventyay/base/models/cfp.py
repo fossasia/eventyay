@@ -123,6 +123,42 @@ def default_fields():
     }
 
 
+
+SPEAKER_JOB_TITLE_IMPORT_KEY = 'speaker_job_title'
+SPEAKER_ORGANIZATION_IMPORT_KEY = 'speaker_organization'
+
+
+def create_default_speaker_questions(event):
+    """Create default Job Title and Organization speaker questions for the given event.
+
+    These questions are created with ``is_public=False`` so organizers can
+    opt-in by toggling the Public flag themselves.  The ``import_key``
+    constraint guarantees idempotency — calling this function twice for the
+    same event is safe.
+    """
+    from eventyay.base.models.question import TalkQuestion, TalkQuestionTarget, TalkQuestionVariant
+    from django_scopes import scope
+
+    defaults = [
+        (SPEAKER_JOB_TITLE_IMPORT_KEY, str(_('Job Title')), 0),
+        (SPEAKER_ORGANIZATION_IMPORT_KEY, str(_('Organization')), 1),
+    ]
+    with scope(event=event):
+        for import_key, question_text, position in defaults:
+            TalkQuestion.objects.get_or_create(
+                event=event,
+                import_key=import_key,
+                target=TalkQuestionTarget.SPEAKER,
+                defaults={
+                    'question': question_text,
+                    'variant': TalkQuestionVariant.STRING,
+                    'is_public': False,
+                    'position': position,
+                    'active': True,
+                },
+            )
+
+
 def field_helper(cls):
     def is_field_requested(self, field):
         return self.fields.get(field, default_fields()[field])['visibility'] != 'do_not_ask'

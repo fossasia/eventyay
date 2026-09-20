@@ -204,6 +204,68 @@ def _sort_speaker_sessions(sessions: list[dict]) -> list[dict]:
     )
 
 
+def _get_public_speaker_role_questions(event):
+    """Return the public Job Title and Organization TalkQuestion objects for this event, if any."""
+    from eventyay.base.models import TalkQuestion, TalkQuestionTarget
+    from eventyay.base.models.cfp import SPEAKER_JOB_TITLE_IMPORT_KEY, SPEAKER_ORGANIZATION_IMPORT_KEY
+
+    try:
+        with scope(event=event):
+            questions = {
+                q.import_key: q
+                for q in TalkQuestion.objects.filter(
+                    event=event,
+                    target=TalkQuestionTarget.SPEAKER,
+                    is_public=True,
+                    import_key__in=[SPEAKER_JOB_TITLE_IMPORT_KEY, SPEAKER_ORGANIZATION_IMPORT_KEY],
+                )
+            }
+    except Exception:
+        return {}, {}
+    job_title_q = questions.get(SPEAKER_JOB_TITLE_IMPORT_KEY)
+    org_q = questions.get(SPEAKER_ORGANIZATION_IMPORT_KEY)
+    return job_title_q, org_q
+
+
+def _build_speaker_role_answers_map(user_ids, job_title_q, org_q, event):
+    """Prefetch public speaker-role answers for the given user IDs.
+
+    Returns a dict mapping user_id -> 'role string'.
+    """
+    from eventyay.base.models.question import Answer
+
+    if not user_ids or (not job_title_q and not org_q):
+        return {}
+
+    question_ids = [q.pk for q in (job_title_q, org_q) if q]
+    with scope(event=event):
+        answers = list(
+            Answer.objects.filter(
+                question_id__in=question_ids,
+                person_id__in=user_ids,
+            ).values('person_id', 'question_id', 'answer')
+        )
+
+    job_title_qid = job_title_q.pk if job_title_q else None
+    org_qid = org_q.pk if org_q else None
+
+    # Map user_id -> {question_id: answer}
+    by_user: dict[int, dict] = {}
+    for row in answers:
+        by_user.setdefault(row['person_id'], {})[row['question_id']] = row['answer']
+
+    result = {}
+    for user_id in user_ids:
+        user_answers = by_user.get(user_id, {})
+        parts = []
+        if job_title_qid and user_answers.get(job_title_qid, '').strip():
+            parts.append(user_answers[job_title_qid].strip())
+        if org_qid and user_answers.get(org_qid, '').strip():
+            parts.append(user_answers[org_qid].strip())
+        result[user_id] = ', '.join(parts)
+    return result
+
+
 def build_speaker_cards(profiles, event):
     """Build paginated speaker cards for the public speakers overview.
 
@@ -246,6 +308,11 @@ def build_speaker_cards(profiles, event):
         for speaker in talk.submission.speakers.all():
             speaker_sessions_map.setdefault(speaker.id, []).append(session)
 
+    # Prefetch public speaker-role (Job Title + Organization) answers in bulk.
+    all_user_ids = [profile.user_id for profile in profile_list]
+    job_title_q, org_q = _get_public_speaker_role_questions(event)
+    speaker_role_map = _build_speaker_role_answers_map(all_user_ids, job_title_q, org_q, event)
+
     for profile in profile_list:
         user = profile.user
         is_featured = bool(profile.is_featured) if include_featured else False
@@ -253,6 +320,7 @@ def build_speaker_cards(profiles, event):
             'code': user.code,
             'name': user.fullname or None,
             'biography': (profile.biography or '') if include_biography else '',
+            'speaker_role': speaker_role_map.get(user.id, ''),
             'is_featured': is_featured,
             'featured_position': profile.position if is_featured else None,
             'avatar': None,
@@ -332,10 +400,16 @@ def speaker_dict_from_profile(
             include_biography = biography_flag
     user = profile.user
     is_featured = bool(profile.is_featured) if include_featured_metadata else False
+
+    # Get public speaker role (Job Title + Organization) for this single speaker.
+    job_title_q, org_q = _get_public_speaker_role_questions(event)
+    speaker_role_map = _build_speaker_role_answers_map([user.pk], job_title_q, org_q, event)
+
     return {
         'code': user.code,
         'name': user.fullname or None,
         'biography': (profile.biography or '') if include_biography else '',
+        'speaker_role': speaker_role_map.get(user.pk, ''),
         'avatar': user.get_avatar_url(event=event) if include_avatar else None,
         'avatar_thumbnail_default': (
             user.get_avatar_url(event=event, thumbnail='default') if include_avatar else None

@@ -1093,6 +1093,16 @@ class Schedule(PretalxModel):
         show_social_links = getattr(self.event.cfp, 'request_social_links', False) and (
             not respect_public_visibility or self.event.cfp.is_field_public('social_links')
         )
+
+        # Prefetch public Job Title / Organization answers in bulk.
+        from eventyay.agenda.views.utils import (
+            _get_public_speaker_role_questions,
+            _build_speaker_role_answers_map,
+        )
+        speaker_user_ids = [u.pk for u in speakers]
+        _job_title_q, _org_q = _get_public_speaker_role_questions(self.event)
+        _speaker_role_map = _build_speaker_role_answers_map(speaker_user_ids, _job_title_q, _org_q, self.event)
+
         for user in speakers:
             # Avoid calling event_profile() here: it can hit the DB (and even create/save
             # a profile). For schedule JSON, missing profiles should simply result in
@@ -1102,6 +1112,7 @@ class Schedule(PretalxModel):
                 'code': user.code,
                 'name': user.fullname or None,
                 'biography': getattr(profile, 'biography', '') if show_biography else '',
+                'speaker_role': _speaker_role_map.get(user.pk, ''),
                 'avatar': (user.get_avatar_url(event=self.event) if include_avatar else None),
                 'avatar_thumbnail_default': (
                     user.get_avatar_url(event=self.event, thumbnail='default') if include_avatar else None
