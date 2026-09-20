@@ -24,6 +24,7 @@ function encodeFrame(header, samples = [1000, -1000]) {
 let audioContextsCreated = 0
 let startedSources = []
 let stoppedSources = 0
+let createdGainNodes = []
 
 class FakeAudioContext {
 	constructor() {
@@ -43,17 +44,31 @@ class FakeAudioContext {
 		}
 	}
 
+	createGain() {
+		const node = {
+			gain: { value: 1 },
+			connect(target) {
+				node.connectedTo = target
+			}
+		}
+		createdGainNodes.push(node)
+		return node
+	}
+
 	createBufferSource() {
-		return {
+		const source = {
 			buffer: null,
-			connect() {},
+			connect(target) {
+				source.connectedTo = target
+			},
 			start(when) {
-				startedSources.push({ when, buffer: this.buffer })
+				startedSources.push({ when, buffer: source.buffer, connectedTo: source.connectedTo })
 			},
 			stop() {
 				stoppedSources++
 			}
 		}
+		return source
 	}
 
 	close() {
@@ -97,6 +112,7 @@ async function withBrowserStubs(run) {
 	audioContextsCreated = 0
 	startedSources = []
 	stoppedSources = 0
+	createdGainNodes = []
 
 	try {
 		await run(sockets)
@@ -154,6 +170,25 @@ test('plays frames at 24 kHz, queued back to back without overlap', async () => 
 		assert.equal(startedSources[0].buffer.sampleRate, 24000)
 		assert.equal(startedSources[0].when, 0.25, 'first segment starts after the jitter buffer')
 		assert.equal(startedSources[1].when, 0.35, 'second segment starts when the first (0.1s) ends')
+		scheduler.disconnect()
+	})
+})
+
+test('plays through a gain node so the interpretation volume slider applies', async () => {
+	await withBrowserStubs(async (sockets) => {
+		const scheduler = await connectedScheduler(sockets)
+		scheduler.setVolume(0.4)
+
+		sockets[0].onmessage({ data: encodeFrame({ seq: 1 }, new Array(2400).fill(100)) })
+
+		assert.equal(createdGainNodes.length, 1)
+		assert.equal(createdGainNodes[0].gain.value, 0.4, 'volume set before playback is applied')
+		assert.equal(startedSources[0].connectedTo, createdGainNodes[0], 'audio is routed through the gain node')
+
+		scheduler.setVolume(0.9)
+		assert.equal(createdGainNodes[0].gain.value, 0.9, 'later changes reach the live gain node')
+		scheduler.setVolume(5)
+		assert.equal(createdGainNodes[0].gain.value, 1, 'out-of-range values are clamped')
 		scheduler.disconnect()
 	})
 })

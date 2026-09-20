@@ -23,19 +23,26 @@ export function pluginLanguageStreams(room) {
 		return []
 	}
 	const streams = room?.interpretation_language_streams
-	const usable = Array.isArray(streams)
-		? streams.filter(entry => isUsableAudioTranslationEntry(entry))
-		: []
+	if (!Array.isArray(streams)) {
+		return ensureOriginalLanguageEntry([])
+	}
+	// Keep caption-only rows (e.g. Original floor WS) even without WHEP audio.
+	const usable = streams.filter(entry => {
+		if (!entry?.language) return false
+		if (entry.caption_ws_url) return true
+		return isUsableAudioTranslationEntry(entry)
+	})
 
 	// Product rule: a language is offered once, either a human booth or the AI
-	// voice, never both. When the backend sends both, the human interpreter wins.
+	// voice, never both. When the backend sends both, the human interpreter wins,
+	// and a caption-only row never hides a stream that carries audio.
 	// The dropdown and the stored selection are keyed by language, so offering the
 	// same language twice would first need a distinct selection identity per stream.
 	const byLanguage = new Map()
 	for (const entry of usable) {
 		const key = languageKey(entry)
 		const existing = byLanguage.get(key)
-		if (!existing || (!isHumanStream(existing) && isHumanStream(entry))) {
+		if (!existing || streamRank(entry) > streamRank(existing)) {
 			byLanguage.set(key, entry)
 		}
 	}
@@ -73,6 +80,17 @@ export function interpretationStreamType(entry) {
 	return null
 }
 
-function isHumanStream(entry) {
-	return interpretationStreamType(entry) === 'human'
+// Human booth beats AI voice, and both beat a caption-only row.
+function streamRank(entry) {
+	const type = interpretationStreamType(entry)
+	if (type === 'human') return 2
+	if (type === 'ai') return 1
+	return 0
+}
+
+export function firstCaptionLanguage(languages) {
+	const list = Array.isArray(languages) ? languages : []
+	const withCaptions = list.filter(entry => entry?.caption_ws_url)
+	const nonOriginal = withCaptions.find(entry => entry.language !== ORIGINAL_LANGUAGE)
+	return (nonOriginal || withCaptions[0] || list[0])?.language || ORIGINAL_LANGUAGE
 }

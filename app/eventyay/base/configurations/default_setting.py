@@ -2093,7 +2093,7 @@ Your {event} team"""
     ),
     'theme_color_background': hex_color_field_config(
         _('Page background color'),
-        default='#f5f5f5',
+        default='#ffffff',
         widget_class='colorpickerfield no-contrast',
     ),
     'hover_button_color': hex_color_field_config(

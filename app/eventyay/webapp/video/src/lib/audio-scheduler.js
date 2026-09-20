@@ -25,6 +25,20 @@ export class AudioScheduler {
 		this.reconnectTimer = null;
 		this.nextStartTime = 0;
 		this.activeSources = new Set();
+		this.volume = 1;
+		this.gainNode = null;
+	}
+
+	/**
+	 * Interpretation volume, shared with the human booth player so both
+	 * interpretation sources follow the same slider. Range 0..1.
+	 */
+	setVolume(volume) {
+		const parsed = Number(volume);
+		this.volume = Number.isFinite(parsed) ? Math.min(Math.max(parsed, 0), 1) : 1;
+		if (this.gainNode) {
+			this.gainNode.gain.value = this.volume;
+		}
 	}
 
 	connect() {
@@ -105,6 +119,11 @@ export class AudioScheduler {
 		if (this.audioContext) return this.audioContext;
 		const AudioContextClass = window.AudioContext || window.webkitAudioContext;
 		this.audioContext = new AudioContextClass();
+		this.gainNode = this.audioContext.createGain?.() ?? null;
+		if (this.gainNode) {
+			this.gainNode.gain.value = this.volume;
+			this.gainNode.connect(this.audioContext.destination);
+		}
 		this.nextStartTime = 0;
 		if (this.isPaused) {
 			this.audioContext.suspend?.();
@@ -132,7 +151,7 @@ export class AudioScheduler {
 
 		const source = ctx.createBufferSource();
 		source.buffer = audioBuffer;
-		source.connect(ctx.destination);
+		source.connect(this.gainNode ?? ctx.destination);
 
 		// Queue each segment right after the previous one; if the queue ran dry,
 		// re-anchor slightly in the future to absorb jitter.

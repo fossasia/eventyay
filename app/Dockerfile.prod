@@ -49,7 +49,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
         --upgrade-package eventyay-teamshifts \
         --upgrade-package eventyay-interpretation \
         --upgrade-package eventyay-hubspot \
-        --upgrade-package eventyay-business; \
+        --upgrade-package eventyay-business \
+        --upgrade-package eventyay-veditor; \
     else \
       echo "=== Production build: using locked dependencies ===" && \
       uv sync --locked --no-install-project --no-editable; \
@@ -58,7 +59,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Log installed plugin versions for build traceability
 RUN echo "=== Installed plugin versions ===" && \
     uv pip freeze 2>/dev/null \
-      | grep -iE 'eventyay-paypal|eventyay-stripe|eventyay-bitpay|eventyay-socialmedia|exhibition|eventyay-teamshifts|eventyay-interpretation|eventyay-hubspot' \
+      | grep -iE 'eventyay-paypal|eventyay-stripe|eventyay-bitpay|eventyay-socialmedia|exhibition|eventyay-teamshifts|eventyay-interpretation|eventyay-hubspot|eventyay-business|eventyay-veditor' \
     || echo "(no plugins found — check build output above)"
 
 COPY Makefile Makefile

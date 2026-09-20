@@ -72,3 +72,17 @@ test('adds the listener token to WebSocket URLs', () => {
 	assert.equal(withListenerToken(TTS, null), TTS)
 	assert.equal(withListenerToken(null, 'a.b.c'), null)
 })
+
+test('keeps caption-only rows but never lets one hide a stream with audio', () => {
+	const captionsOnly = pluginLanguageStreams(room([
+		{ language: 'Spanish', language_code: 'es', caption_ws_url: 'ws://voxbento.test/ws/captions/es' },
+	]))
+	assert.deepEqual(captionsOnly.map(entry => entry.language), ['Original', 'Spanish'])
+
+	const mixed = pluginLanguageStreams(room([
+		{ language: 'German', language_code: 'de', caption_ws_url: 'ws://voxbento.test/ws/captions/de' },
+		{ language: 'German', language_code: 'de', stream_type: 'ai', tts_ws_url: TTS },
+	]))
+	assert.equal(mixed.length, 2)
+	assert.equal(mixed[1].tts_ws_url, TTS, 'the AI voice wins over the caption-only row')
+})
