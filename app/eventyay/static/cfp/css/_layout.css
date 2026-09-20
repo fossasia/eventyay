@@ -965,7 +965,8 @@ footer {
   .nav-icon-mobile {
     display: block;
   }
-  .nav-icon-mobile {
+  .nav-icon-mobile,
+  .presale-sticky-tabs .header-row-right details.dropdown > summary > .fa {
     font-size: 1.25rem;
   }
   .mobile-hide-text,
