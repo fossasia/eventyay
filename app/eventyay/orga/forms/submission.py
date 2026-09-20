@@ -365,12 +365,12 @@ class AddSpeakerForm(forms.Form):
             email_widget.choices = [(email, get_speaker_choice_label(name=name, email=email))]
         if require_name:
             self.fields['email'].required = True
-            self.fields['name'].required = True
+            self.fields['name'].required = False
             if self.is_bound and self.data.get(email_key) and not self.data.get(name_key):
-                existing_user = User.objects.filter(email__iexact=self.data[email_key]).only('fullname').first()
-                if existing_user and existing_user.fullname:
+                existing_user = User.objects.filter(email__iexact=self.data[email_key]).first()
+                if existing_user:
                     self.data = self.data.copy()
-                    self.data[name_key] = existing_user.fullname
+                    self.data[name_key] = existing_user.fullname or existing_user.get_display_name() or existing_user.email
         if not event.named_locales or len(event.named_locales) < 2:
             self.fields.pop('locale')
         else:
@@ -379,8 +379,15 @@ class AddSpeakerForm(forms.Form):
 
     def clean(self):
         data = super().clean()
-        if data.get('name') and not data.get('email'):
+        email = data.get('email')
+        if data.get('name') and not email:
             self.add_error('email', _('Please provide an email address.'))
+        if self.require_name and email and not data.get('name'):
+            existing_user = User.objects.filter(email__iexact=email).first()
+            if existing_user:
+                data['name'] = existing_user.fullname or existing_user.get_display_name() or existing_user.email
+            else:
+                self.add_error('name', _('This field is required.'))
 
         existing_biography = False
         email = data.get('email')

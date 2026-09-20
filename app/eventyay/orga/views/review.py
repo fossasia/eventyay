@@ -6,13 +6,14 @@ from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Count, Max, OuterRef, Q, Subquery
+from django.db.models import Count, Max, OuterRef, Prefetch, Q, Subquery
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, TemplateView
 from django_context_decorator import context
+from django_scopes import scope
 
 from eventyay.common.forms.renderers import InlineFormRenderer
 from eventyay.common.text.phrases import phrases
@@ -34,7 +35,7 @@ from eventyay.orga.forms.review import (
 from eventyay.orga.forms.submission import SubmissionStateChangeForm
 from eventyay.orga.views.submission import BaseSubmissionList
 from eventyay.submission.forms import TalkQuestionsForm, SubmissionFilterForm
-from eventyay.base.models import Review, Submission, SubmissionStates
+from eventyay.base.models import Answer, Review, SpeakerProfile, Submission, SubmissionStates, TalkQuestionTarget
 from eventyay.talk_rules.submission import (
     get_missing_reviews,
     get_reviewable_submissions,
@@ -460,7 +461,50 @@ class ReviewSubmission(ReviewViewMixin, PermissionRequired, CreateOrUpdateView):
 
     @context
     def profiles(self):
-        return [speaker.event_profile(self.request.event) for speaker in self.submission.speakers.all()]
+        event = self.request.event
+        with scope(event=event):
+            speakers_qs = self.submission.speakers.all().prefetch_related(
+                Prefetch(
+                    'profiles',
+                    queryset=SpeakerProfile.objects.filter(event=event).prefetch_related('availabilities', 'social_links'),
+                    to_attr='_event_profiles',
+                ),
+                Prefetch(
+                    'answers',
+                    queryset=Answer.objects.filter(
+                        question__event=event,
+                        question__is_visible_to_reviewers=True,
+                        question__target=TalkQuestionTarget.SPEAKER,
+                    )
+                    .select_related('question')
+                    .order_by('question__position'),
+                    to_attr='_reviewer_answers',
+                ),
+                Prefetch(
+                    'submissions',
+                    queryset=Submission.objects.filter(event=event),
+                    to_attr='_event_submissions',
+                ),
+            )
+            return [
+                {
+                    'user': speaker,
+                    'profile': speaker.event_profile(event),
+                    'other_submissions': [s for s in speaker._event_submissions if s.code != self.submission.code],
+                    'email': speaker.email,
+                    'avatar': speaker.avatar,
+                    'avatar_url': speaker.get_avatar_url(event=event),
+                    'avatar_source': speaker.avatar_source,
+                    'avatar_license': speaker.avatar_license,
+                    'reviewer_answers': speaker._reviewer_answers,
+                    'social_links': (
+                        speaker._event_profiles[0].social_links.all()
+                        if getattr(speaker, '_event_profiles', None)
+                        else (speaker.event_profile(event).social_links.all() if speaker.event_profile(event) else [])
+                    ),
+                }
+                for speaker in speakers_qs
+            ]
 
     @context
     @cached_property

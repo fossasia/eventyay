@@ -2,9 +2,17 @@
 {% load rich_text %}
 
 {% if answer.question.variant == "file" %}
-    <i class="fa fa-file-o"></i>
     {% if answer.answer_file %}
-        <a href="{{ answer.answer_file.url }}">{{ answer.answer_file }}</a>
+        {% if answer.is_image %}
+            <div class="question-image-preview my-1">
+                <a href="{{ answer.answer_file.url }}" target="_blank" rel="noopener noreferrer">
+                    <img loading="lazy" src="{{ answer.answer_file.url }}" alt="{{ answer.question.question }}" class="img-fluid rounded" style="max-width: 200px; max-height: 200px; object-fit: contain; border: 1px solid #ddd; padding: 2px;">
+                </a>
+            </div>
+        {% else %}
+            <i class="fa fa-file-o"></i>
+            <a href="{{ answer.answer_file.url }}" target="_blank" rel="noopener noreferrer">{{ answer.file_name|default:answer.answer_file }}</a>
+        {% endif %}
     {% else %}
         {% translate "No file provided" %}
     {% endif %}
@@ -16,8 +24,10 @@
     {% else %}
         {% translate "No response" %}
     {% endif %}
-{% elif answer %}
+{% elif answer.question.variant == "text" %}
     {{ answer.answer|rich_text }}
+{% elif answer %}
+    {{ answer.answer }}
 {% else %}
     {% translate "No response" %}
 {% endif %}

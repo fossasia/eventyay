@@ -18,6 +18,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext, gettext_lazy as _
 from django.views.generic import FormView, ListView, TemplateView, UpdateView, View
 from django_context_decorator import context
+from django_scopes import scope
 from urllib.parse import urlencode
 
 from eventyay.base.models import (
@@ -302,43 +303,49 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
     @cached_property
     def speakers(self):
         submission = self.object
-        speakers_qs = submission.speakers.all().prefetch_related(
-            Prefetch(
-                'profiles',
-                queryset=SpeakerProfile.objects.filter(event=submission.event).prefetch_related('availabilities'),
-                to_attr='_event_profiles',
-            ),
-            Prefetch(
-                'answers',
-                queryset=Answer.objects.filter(
-                    question__event=submission.event,
-                    question__is_visible_to_reviewers=True,
-                    question__target=TalkQuestionTarget.SPEAKER,
-                )
-                .select_related('question')
-                .order_by('question__position'),
-                to_attr='_reviewer_answers',
-            ),
-            Prefetch(
-                'submissions',
-                queryset=Submission.objects.filter(event=submission.event),
-                to_attr='_event_submissions',
-            ),
-        )
-        return [
-            {
-                'user': speaker,
-                'profile': speaker.event_profile(submission.event),
-                'other_submissions': [s for s in speaker._event_submissions if s.code != submission.code],
-                'email': speaker.email,
-                'avatar': speaker.avatar,
-                'avatar_url': speaker.get_avatar_url(event=submission.event),
-                'avatar_source': speaker.avatar_source,
-                'avatar_license': speaker.avatar_license,
-                'reviewer_answers': speaker._reviewer_answers,
-            }
-            for speaker in speakers_qs
-        ]
+        with scope(event=submission.event):
+            speakers_qs = submission.speakers.all().prefetch_related(
+                Prefetch(
+                    'profiles',
+                    queryset=SpeakerProfile.objects.filter(event=submission.event).prefetch_related('availabilities', 'social_links'),
+                    to_attr='_event_profiles',
+                ),
+                Prefetch(
+                    'answers',
+                    queryset=Answer.objects.filter(
+                        question__event=submission.event,
+                        question__target=TalkQuestionTarget.SPEAKER,
+                    )
+                    .select_related('question')
+                    .order_by('question__position'),
+                    to_attr='_all_speaker_answers',
+                ),
+                Prefetch(
+                    'submissions',
+                    queryset=Submission.objects.filter(event=submission.event),
+                    to_attr='_event_submissions',
+                ),
+            )
+            return [
+                {
+                    'user': speaker,
+                    'profile': speaker.event_profile(submission.event),
+                    'other_submissions': [s for s in speaker._event_submissions if s.code != submission.code],
+                    'email': speaker.email,
+                    'avatar': speaker.avatar,
+                    'avatar_url': speaker.get_avatar_url(event=submission.event),
+                    'avatar_source': speaker.avatar_source,
+                    'avatar_license': speaker.avatar_license,
+                    'answers': speaker._all_speaker_answers,
+                    'reviewer_answers': [a for a in speaker._all_speaker_answers if a.question.is_visible_to_reviewers],
+                    'social_links': (
+                        speaker._event_profiles[0].social_links.all()
+                        if getattr(speaker, '_event_profiles', None)
+                        else (speaker.event_profile(submission.event).social_links.all() if speaker.event_profile(submission.event) else [])
+                    ),
+                }
+                for speaker in speakers_qs
+            ]
 
     def form_valid(self, form):
         if email := form.cleaned_data.get('email'):
@@ -357,7 +364,6 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
         kwargs = super().get_form_kwargs()
         kwargs['event'] = self.request.event
         kwargs['require_name'] = True
-        kwargs['include_biography'] = True
         return kwargs
 
     def get_success_url(self):

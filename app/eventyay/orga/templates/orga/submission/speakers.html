@@ -69,19 +69,16 @@
                     {% endif %}
                 {% endwith %}
             {% endif %}
-            {% if speaker.reviewer_answers %}
+            {% if speaker.social_links %}
+                <p class="card-text">
+                    <strong>{% translate "Social Media" %}:</strong><br>
+                    {% include "orga/includes/speaker_social_links.html" with social_links=speaker.social_links profile=speaker.profile %}
+                </p>
+            {% endif %}
+            {% if speaker.answers %}
                 <div class="card-text">
                     <strong>{% translate "Speaker Information" %}:</strong><br>
-                    {% for answer in speaker.reviewer_answers %}
-                        <div class="mb-1">
-                            <strong>{{ answer.question.question }}:</strong>
-                            {% if answer.question.variant == "boolean" %}
-                                <span class="ml-1 value-pill {% if answer.boolean_answer %}value-pill--positive{% else %}value-pill--negative{% endif %}">{% include "common/question_answer.html" with answer=answer %}</span>
-                            {% else %}
-                                <span class="ml-1">{% include "common/question_answer.html" with answer=answer %}</span>
-                            {% endif %}
-                        </div>
-                    {% endfor %}
+                    {% include "orga/includes/speaker_answers.html" with answers=speaker.answers %}
                 </div>
             {% endif %}
             {% if speaker.other_submissions %}

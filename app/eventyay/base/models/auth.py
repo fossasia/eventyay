@@ -472,6 +472,10 @@ class User(
         else:
             return self.email
 
+    @property
+    def name(self) -> str:
+        return self.fullname or ''
+
     def send_security_notice(self, messages, email=None):
         from eventyay.base.services.mail import SendMailException, mail
 

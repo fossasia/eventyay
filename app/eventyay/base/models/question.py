@@ -453,6 +453,21 @@ class Answer(PretalxModel):
     def log_parent(self):
         return self.event
 
+    @cached_property
+    def is_image(self):
+        if not self.answer_file:
+            return False
+        import os
+        ext = os.path.splitext(self.answer_file.name)[1].lower()
+        return ext in ('.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.bmp')
+
+    @cached_property
+    def file_name(self):
+        if not self.answer_file:
+            return ''
+        import os
+        return os.path.basename(self.answer_file.name)
+
     def __str__(self):
         """Help when debugging."""
         return f'Answer(question={self.question.question}, answer={self.answer})'
