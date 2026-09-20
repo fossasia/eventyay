@@ -29,6 +29,7 @@ from eventyay.agenda.tasks import export_schedule_html
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls
 from eventyay.common.video_embed import get_video_embed_info, parse_video_urls
+from eventyay.person.services import build_speaker_role_answers_map, get_public_speaker_role_questions
 from eventyay.schedule.notifications import render_notifications
 from eventyay.schedule.signals import schedule_release
 from eventyay.talk_rules.agenda import (
@@ -1093,6 +1094,13 @@ class Schedule(PretalxModel):
         show_social_links = getattr(self.event.cfp, 'request_social_links', False) and (
             not respect_public_visibility or self.event.cfp.is_field_public('social_links')
         )
+
+        speaker_user_ids = [u.pk for u in speakers]
+        job_title_q, org_q = get_public_speaker_role_questions(self.event)
+        speaker_role_map = build_speaker_role_answers_map(
+            speaker_user_ids, job_title_q, org_q, self.event
+        )
+
         for user in speakers:
             # Avoid calling event_profile() here: it can hit the DB (and even create/save
             # a profile). For schedule JSON, missing profiles should simply result in
@@ -1102,6 +1110,7 @@ class Schedule(PretalxModel):
                 'code': user.code,
                 'name': user.fullname or None,
                 'biography': getattr(profile, 'biography', '') if show_biography else '',
+                'speaker_role': speaker_role_map.get(user.pk, ''),
                 'avatar': (user.get_avatar_url(event=self.event) if include_avatar else None),
                 'avatar_thumbnail_default': (
                     user.get_avatar_url(event=self.event, thumbnail='default') if include_avatar else None
