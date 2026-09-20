@@ -10,6 +10,8 @@
 
 {% block container_width %} main-schedule list-schedule{% endblock container_width %}
 
+{% block body_attrs %}{{ block.super }}{% if request.event.settings.theme_color_background %} style="--color-bg: {{ request.event.settings.theme_color_background }}; background-color: var(--color-bg);"{% endif %}{% endblock body_attrs %}
+
 {% block agenda_custom_header %}
 {% include "agenda/includes/pretalx_messages_script.html" %}
 {% endblock agenda_custom_header %}
@@ -19,7 +21,7 @@
 {% endblock header_right %}
 
 {% block agenda_content %}
-<div class="featured-page">
+<div class="featured-page"{% if request.event.settings.theme_color_background %} style="--color-bg: {{ request.event.settings.theme_color_background }}; background-color: var(--color-bg);"{% endif %}>
     <h3 class="talk-title featured-page-title">{% translate "Featured Sessions" %}</h3>
     {% if has_featured_submissions %}
         <p>
@@ -36,7 +38,7 @@
             {% vite_app_scripts 'schedule' 'src/main-wc.js' fallback='schedule/pretalx-schedule.js' %}
 
             {% with event_tz=request.event.settings.timezone|default:request.event.timezone %}
-            <pretalx-schedule event-url="{{ request.event.urls.base }}" version="{{ schedule_page_version|default:'' }}" locale="{{ request.LANGUAGE_CODE }}" timezone="{{ event_tz }}" format="list" is-featured-page style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}" disable-auto-scroll></pretalx-schedule>
+            <pretalx-schedule event-url="{{ request.event.urls.base }}" version="{{ schedule_page_version|default:'' }}" locale="{{ request.LANGUAGE_CODE }}" timezone="{{ event_tz }}" format="list" is-featured-page style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}{% if request.event.settings.theme_color_background %}; --color-bg: {{ request.event.settings.theme_color_background }}{% endif %}" disable-auto-scroll></pretalx-schedule>
             {% endwith %}
             <noscript class="d-block">
                 <div class="alert alert-info m-4">

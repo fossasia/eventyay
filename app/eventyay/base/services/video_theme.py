@@ -98,7 +98,7 @@ def build_video_theme_for_event(event):
     out = {**stored}
 
     primary = normalize_video_theme_hex(event.visible_primary_color, '#2185d0')
-    page_bg = event.settings.get('theme_color_background') or '#f5f5f5'
+    page_bg = event.settings.get('theme_color_background') or '#ffffff'
     bbb_bg = normalize_video_theme_hex(page_bg, '#ffffff')
     nav_bg_custom = resolve_custom_video_navigation_background(event)
     sidebar_bg = nav_bg_custom or PLATFORM_SIDEBAR_BG
