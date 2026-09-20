@@ -67,6 +67,14 @@ class QuestionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
             return QuestionOrgaSerializer
         return self.serializer_class
 
+    def perform_update(self, serializer):
+        if is_default_speaker_question(serializer.instance):
+            if "target" in serializer.validated_data and serializer.validated_data["target"] != serializer.instance.target:
+                raise exceptions.ValidationError({"target": ["This default speaker field cannot change its target."]})
+            if "variant" in serializer.validated_data and serializer.validated_data["variant"] != serializer.instance.variant:
+                raise exceptions.ValidationError({"variant": ["This default speaker field cannot change its variant."]})
+        super().perform_update(serializer)
+
     def perform_destroy(self, instance):
         if is_default_speaker_question(instance):
             raise exceptions.ValidationError(
