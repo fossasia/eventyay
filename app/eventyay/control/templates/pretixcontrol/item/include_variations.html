@@ -58,7 +58,7 @@
                         {% bootstrap_field variation_form.admission_valid_from_offset_minutes layout="control" %}
                         {% bootstrap_field variation_form.admission_valid_until_offset_minutes layout="control" %}
                     {% else %}
-                        <input type="hidden" name="{{ variation_form.admission_validity_mode.html_name }}" value="{{ variation_form.instance.admission_validity_mode|default:'inherit' }}">
+                        <input type="hidden" name="{{ variation_form.admission_validity_mode.html_name }}" value="{{ variation_form.instance.admission_validity_mode|default_if_none:'inherit' }}">
                     {% endif %}
                 </div>
             </div>
