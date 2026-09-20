@@ -124,6 +124,9 @@
 .presale-sticky-tabs .presale-tabs-more > summary.header-tab {
     cursor: pointer;
     white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--header-icon-text-gap, 0.375rem);
     color: var(--color-header-navigation);
     padding: 8px 10px 4px 10px;
     border-bottom: 2px solid transparent;
@@ -297,9 +300,10 @@
         white-space: nowrap;
         flex-shrink: 0;
         padding: 10px 12px 8px 12px;
-        font-size: 1rem;
+        font-size: 1.1rem;
         min-height: 44px;
         display: inline-flex;
+        gap: var(--header-icon-text-gap, 0.375rem);
         align-items: center;
     }
 
