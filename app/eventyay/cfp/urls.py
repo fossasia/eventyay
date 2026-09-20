@@ -72,6 +72,11 @@ urlpatterns = [
                     user.SubmissionInviteView.as_view(),
                     name="event.user.submission.invite",
                 ),
+                path(
+                    "invite/<int:pk>/resend",
+                    user.SubmissionInviteResendView.as_view(),
+                    name="event.user.submission.invite.resend",
+                ),
             ]
         ),
     ),

@@ -94,6 +94,12 @@
                     {% if invitation.mail_state == "failed" %}
                         <span class="text-danger">{% translate "Invitation email failed" %}</span>
                     {% endif %}
+                    {% if can_invite_speakers and can_edit and invitation.can_resend %}
+                        <form method="post" action="{% url 'cfp:event.user.submission.invite.resend' organizer=request.event.organizer.slug event=request.event.slug code=submission.code pk=invitation.pk %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-info">{% translate "Resend invitation" %}</button>
+                        </form>
+                    {% endif %}
                 </li>
             {% endfor %}
         </ul>

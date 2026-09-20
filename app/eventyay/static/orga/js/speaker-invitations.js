@@ -60,18 +60,29 @@ const bindSection = (section) => {
 }
 
 const replaceSection = (section, html) => {
-    section.innerHTML = html
+    const parsed = new DOMParser().parseFromString(html, "text/html")
+    section.replaceChildren(...parsed.body.childNodes)
     bindSection(section)
     document.dispatchEvent(new CustomEvent("eventyay:speakers-updated"))
 }
 
+const startSending = (button) => {
+    if (!button) return null
+    const label = [...button.childNodes]
+    button.disabled = true
+    button.replaceChildren(document.createTextNode(button.dataset.sendingText || ""))
+    return label
+}
+
+const stopSending = (button, label) => {
+    if (!button || !label || !button.isConnected) return
+    button.disabled = false
+    button.replaceChildren(...label)
+}
+
 const submitForm = async (section, form) => {
     const button = form.querySelector(SUBMIT_SELECTOR)
-    const originalLabel = button ? button.innerHTML : ""
-    if (button) {
-        button.disabled = true
-        button.textContent = button.dataset.sendingText || "Sending invitation…"
-    }
+    const originalLabel = startSending(button)
 
     try {
         const response = await fetch(window.location.href, {
@@ -98,17 +109,12 @@ const submitForm = async (section, form) => {
     } catch (error) {
         showFeedback(section, form.dataset.errorText, true)
     } finally {
-        if (button && button.isConnected) {
-            button.disabled = false
-            button.innerHTML = originalLabel
-        }
+        stopSending(button, originalLabel)
     }
 }
 
 const resendInvitation = async (section, button) => {
-    const originalLabel = button.innerHTML
-    button.disabled = true
-    button.textContent = button.dataset.sendingText || "Sending invitation…"
+    const originalLabel = startSending(button)
 
     const body = new FormData()
     body.append("csrfmiddlewaretoken", getCsrfToken())
@@ -120,17 +126,14 @@ const resendInvitation = async (section, button) => {
             body,
         })
         const data = await response.json().catch(() => ({}))
-        showFeedback(section, data.message || button.dataset.errorText, !data.success)
-        if (data.success) {
-            window.location.reload()
+        if (data.html) {
+            replaceSection(section, data.html)
         }
+        showFeedback(section, data.message || button.dataset.errorText, !data.success)
     } catch (error) {
         showFeedback(section, button.dataset.errorText, true)
     } finally {
-        if (button.isConnected) {
-            button.disabled = false
-            button.innerHTML = originalLabel
-        }
+        stopSending(button, originalLabel)
     }
 }
 

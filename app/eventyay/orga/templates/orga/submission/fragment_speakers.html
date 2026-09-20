@@ -7,6 +7,7 @@
 {% has_event_perm "base.update_submission" request.user request submission as can_edit_speakers %}
 {% has_event_perm "base.send_queuedmail" request.user request request.event as can_send_mails %}
 {% has_event_perm "base.mark_arrived_speakerprofile" request.user request request.event as can_mark_speaker %}
+{% has_event_perm "base.orga_view_speaker_emails" request.user request request.event as can_view_speaker_emails %}
 {% for speaker in speakers %}
     <div class="card mb-3 speaker-detail-card"><div class="card-body">
         <h3 class="card-title">
@@ -46,7 +47,6 @@
                 {{ speaker.avatar_license|truncatewords:200 }}
             </p>
         {% endif %}
-        {% has_event_perm "base.orga_view_speaker_emails" request.user request request.event as can_view_speaker_emails %}
         {% if speaker.email and can_view_speaker_emails %}
             <p class="card-text">
                 <strong>{% translate "E-Mail" %}:</strong>
@@ -120,12 +120,18 @@
 {% for invitation in pending_invitations %}
     <div class="card mb-3 speaker-detail-card speaker-invitation-card"><div class="card-body">
         <h3 class="card-title">
-            {{ invitation.display_name }}
+            {% if can_view_speaker_emails %}
+                {{ invitation.display_name }}
+            {% else %}
+                {{ invitation.name|default:_("Invited speaker") }}
+            {% endif %}
             <span class="badge bg-warning text-dark">{% translate "Pending" %}</span>
         </h3>
-        <p class="card-text">
-            <strong>{% translate "E-Mail" %}:</strong> {{ invitation.email }}
-        </p>
+        {% if can_view_speaker_emails %}
+            <p class="card-text">
+                <strong>{% translate "E-Mail" %}:</strong> {{ invitation.email }}
+            </p>
+        {% endif %}
         {% include "orga/submission/fragment_invitation_state.html" with invitation=invitation %}
     </div></div>
 {% endfor %}

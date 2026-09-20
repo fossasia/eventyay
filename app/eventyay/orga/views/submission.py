@@ -426,8 +426,11 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
         return self.object.orga_urls.speakers
 
 
-class SubmissionSpeakerResendInvitation(ReviewerSubmissionFilter, SubmissionViewMixin, View):
+class SubmissionSpeakerResendInvitation(SubmissionSpeakers):
     permission_required = 'base.update_submission'
+
+    def get(self, request, *args, **kwargs):
+        return redirect(self.object.orga_urls.speakers)
 
     def post(self, request, *args, **kwargs):
         invitation = get_object_or_404(
@@ -435,6 +438,13 @@ class SubmissionSpeakerResendInvitation(ReviewerSubmissionFilter, SubmissionView
             submission=self.object,
             pk=self.kwargs['pk'],
         )
+        if not invitation.can_resend:
+            message = _('This invitation cannot be resent.')
+            if is_ajax_request(request):
+                return JsonResponse({'message': str(message), 'success': False}, status=409)
+            messages.warning(request, message)
+            return redirect(self.object.orga_urls.speakers)
+
         delivered = invitation.deliver(send_immediately=True, requestor=request.user)
         if delivered:
             message = _('Invitation sent to {email}.').format(email=invitation.email)
@@ -442,7 +452,15 @@ class SubmissionSpeakerResendInvitation(ReviewerSubmissionFilter, SubmissionView
             message = _('The invitation email could not be sent. Please try again.')
 
         if is_ajax_request(request):
-            return JsonResponse({'message': str(message), 'success': bool(delivered)})
+            self.__dict__.pop('speakers', None)
+            self.__dict__.pop('pending_invitations', None)
+            return JsonResponse(
+                {
+                    'message': str(message),
+                    'success': bool(delivered),
+                    'html': self.render_speakers_section(),
+                }
+            )
 
         if delivered:
             messages.success(request, message)

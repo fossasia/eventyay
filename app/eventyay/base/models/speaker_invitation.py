@@ -1,11 +1,14 @@
 import logging
 
 from django.db import models
+from django.db.models.functions import Lower
+from django.dispatch import receiver
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
-from django_scopes import ScopedManager
+from django_scopes import ScopedManager, scopes_disabled
 
 from eventyay.common.exceptions import SendMailException
+from eventyay.mail.signals import queuedmail_post_send
 
 from .mixins import PretalxModel
 
@@ -78,10 +81,22 @@ class SpeakerInvitation(PretalxModel):
 
     class Meta:
         ordering = ('created',)
-        unique_together = (('submission', 'email'),)
+        constraints = (
+            models.UniqueConstraint(
+                'submission',
+                Lower('email'),
+                name='unique_speaker_invitation_per_submission',
+            ),
+        )
 
     def __str__(self):
         return f'SpeakerInvitation(submission={self.submission.code}, email={self.email}, status={self.status})'
+
+    def save(self, *args, **kwargs):
+        self.email = (self.email or '').strip().lower()
+        if (update_fields := kwargs.get('update_fields')) is not None:
+            kwargs['update_fields'] = set(update_fields) | {'email'}
+        return super().save(*args, **kwargs)
 
     @property
     def is_pending(self):
@@ -89,7 +104,11 @@ class SpeakerInvitation(PretalxModel):
 
     @property
     def can_resend(self):
-        return self.is_pending and self.mail_state != SpeakerInvitationMailStates.SENT
+        if not self.is_pending:
+            return False
+        if self.mail_state == SpeakerInvitationMailStates.SENT:
+            return False
+        return not (self.mail and self.mail.sent)
 
     @property
     def display_name(self):
@@ -122,6 +141,11 @@ class SpeakerInvitation(PretalxModel):
             return False
 
         self.mail = mail
+        if mail.sent:
+            self.mail_state = SpeakerInvitationMailStates.SENT
+            self.save(update_fields=['mail', 'mail_state', 'updated'])
+            return True
+
         if not send_immediately:
             self.mail_state = SpeakerInvitationMailStates.QUEUED
             self.save(update_fields=['mail', 'mail_state', 'updated'])
@@ -144,3 +168,13 @@ class SpeakerInvitation(PretalxModel):
         return True
 
     deliver.alters_data = True
+
+
+@receiver(queuedmail_post_send)
+def mark_invitation_sent(sender, mail, **kwargs):
+    if not mail.pk:
+        return
+    with scopes_disabled():
+        SpeakerInvitation.objects.filter(
+            mail=mail, mail_state=SpeakerInvitationMailStates.QUEUED
+        ).update(mail_state=SpeakerInvitationMailStates.SENT)

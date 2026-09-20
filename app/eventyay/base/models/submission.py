@@ -1103,6 +1103,17 @@ class Submission(GenerateCode, PretalxModel):
         template = self.event.get_mail_template(
             MailTemplateRoles.EXISTING_SPEAKER_INVITE if not user_created else MailTemplateRoles.NEW_SPEAKER_INVITE
         )
+        invitation, created = SpeakerInvitation.objects.get_or_create(
+            submission=self,
+            email=speaker.email.lower(),
+            defaults={'name': name or '', 'user': speaker, 'invited_by': user},
+        )
+        if not invitation.user:
+            invitation.user = speaker
+            invitation.save(update_fields=['user', 'updated'])
+        if not created and not invitation.can_resend:
+            return speaker, invitation
+
         mail = template.to_mail(
             user=speaker,
             event=self.event,
@@ -1110,14 +1121,6 @@ class Submission(GenerateCode, PretalxModel):
             context_kwargs={'user': speaker, 'submission': self, 'event': self.event},
             locale=locale or self.event.locale,
         )
-        invitation, _created = SpeakerInvitation.objects.get_or_create(
-            submission=self,
-            email=speaker.email,
-            defaults={'name': name or '', 'user': speaker, 'invited_by': user},
-        )
-        if not invitation.user:
-            invitation.user = speaker
-            invitation.save(update_fields=['user', 'updated'])
         invitation.deliver(mail=mail, send_immediately=send_immediately, requestor=user)
         return speaker, invitation
 
@@ -1164,9 +1167,18 @@ class Submission(GenerateCode, PretalxModel):
         to = to.split(',') if isinstance(to, str) else to
         invitations = []
         for address in to:
-            address = address.strip()
+            address = address.strip().lower()
             if not address:
                 continue
+            invitation, created = SpeakerInvitation.objects.get_or_create(
+                submission=self,
+                email=address,
+                defaults={'invited_by': _from},
+            )
+            if not created and not invitation.can_resend:
+                invitations.append(invitation)
+                continue
+
             mail = QueuedMail.objects.create(
                 event=self.event,
                 to=address,
@@ -1175,11 +1187,6 @@ class Submission(GenerateCode, PretalxModel):
                 locale=self.get_email_locale(),
             )
             mail.submissions.add(self)
-            invitation, _created = SpeakerInvitation.objects.get_or_create(
-                submission=self,
-                email=address,
-                defaults={'invited_by': _from},
-            )
             invitation.deliver(mail=mail, send_immediately=True, requestor=_from)
             invitations.append(invitation)
         return invitations

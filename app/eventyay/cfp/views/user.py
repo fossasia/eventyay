@@ -19,12 +19,14 @@ from django.views.generic import (
     ListView,
     TemplateView,
     UpdateView,
+    View,
 )
 from django_context_decorator import context
 
 from eventyay.base.models import (
     Resource,
     ResourceKind,
+    SpeakerInvitation,
     SpeakerInvitationMailStates,
     SpeakerInvitationStates,
     Submission,
@@ -494,6 +496,30 @@ class SubmissionInviteView(LoggedInEventPageMixin, SubmissionViewMixin, FormView
         return self.submission.urls.user_base
 
 
+class SubmissionInviteResendView(LoggedInEventPageMixin, SubmissionViewMixin, View):
+    permission_required = 'base.add_speaker_submission'
+
+    def get_permission_object(self):
+        return self.get_object()
+
+    def post(self, request, *args, **kwargs):
+        invitation = get_object_or_404(
+            SpeakerInvitation, submission=self.submission, pk=self.kwargs['pk']
+        )
+        if not invitation.can_resend:
+            messages.warning(request, _('This invitation cannot be resent.'))
+        elif invitation.deliver(send_immediately=True, requestor=request.user):
+            messages.success(
+                request,
+                _('Invitation sent to {email}.').format(email=invitation.email),
+            )
+        else:
+            messages.error(
+                request, _('The invitation email could not be sent. Please try again.')
+            )
+        return redirect(self.submission.urls.user_base)
+
+
 class SubmissionInviteAcceptView(LoggedInEventPageMixin, DetailView):
     template_name = 'cfp/event/invitation.html'
     context_object_name = 'submission'
@@ -533,10 +559,10 @@ class SubmissionInviteAcceptView(LoggedInEventPageMixin, DetailView):
         submission.log_action('eventyay.submission.speakers.add', person=self.request.user)
         submission.save()
         for invitation in submission.speaker_invitations.filter(
-            status=SpeakerInvitationStates.PENDING
+            status=SpeakerInvitationStates.PENDING,
+            email__iexact=self.request.user.email,
         ):
-            if invitation.email.lower() == self.request.user.email.lower() or not invitation.user:
-                invitation.accept(user=self.request.user)
+            invitation.accept(user=self.request.user)
         messages.success(self.request, phrases.cfp.invite_accepted)
         return redirect(
             'cfp:event.user.view', organizer=self.request.event.organizer.slug, event=self.request.event.slug
