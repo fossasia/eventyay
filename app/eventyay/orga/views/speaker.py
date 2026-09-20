@@ -43,7 +43,6 @@ from eventyay.person.forms import (
     SpeakerProfileForm,
 )
 from eventyay.person.social_link_mixin import SpeakerSocialLinksMixin
-from eventyay.submission.forms import TalkQuestionsForm
 from eventyay.talk_rules.person import is_only_reviewer
 from eventyay.talk_rules.submission import limit_for_reviewers, speaker_profiles_for_user
 
@@ -257,22 +256,6 @@ class SpeakerDetail(SpeakerSocialLinksMixin, SpeakerViewMixin, ActionFromUrl, Cr
     def mails(self):
         return self.object.mails.filter(sent__isnull=False, event=self.request.event).order_by('-sent')
 
-    @context
-    @cached_property
-    def questions_form(self):
-        speaker = self.get_object()
-        return TalkQuestionsForm(
-            self.request.POST if self.request.method == 'POST' else None,
-            files=self.request.FILES if self.request.method == 'POST' else None,
-            target='speaker',
-            speaker=speaker,
-            event=self.request.event,
-            for_reviewers=(
-                not self.request.user.has_perm('base.orga_update_submission', self.request.event)
-                and self.request.user.has_perm('base.list_review', self.request.event)
-            ),
-        )
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(self.get_social_links_context())
@@ -283,13 +266,10 @@ class SpeakerDetail(SpeakerSocialLinksMixin, SpeakerViewMixin, ActionFromUrl, Cr
         if not self.social_media_formset_is_valid():
             return self.get(self.request, *self.args, **self.kwargs)
         result = super().form_valid(form)
-        if not self.questions_form.is_valid():
-            return self.get(self.request, *self.args, **self.kwargs)
-        self.questions_form.save()
         self.save_social_media_formset(self.profile)
         if form.has_changed():
             form.instance.log_action('eventyay.user.profile.update', person=self.request.user, orga=True)
-        if form.has_changed() or self.questions_form.has_changed() or (
+        if form.has_changed() or (
             self.social_media_formset and self.social_media_formset.has_changed()
         ):
             self.request.event.cache.set('rebuild_schedule_export', True, None)
@@ -301,6 +281,10 @@ class SpeakerDetail(SpeakerSocialLinksMixin, SpeakerViewMixin, ActionFromUrl, Cr
         kwargs.update({'event': self.request.event, 'user': self.object})
         if not self.request.user.has_perm('base.orga_view_speaker_emails', self.request.event):
             kwargs['with_email'] = False
+        kwargs['for_reviewers'] = (
+            not self.request.user.has_perm('base.orga_update_submission', self.request.event)
+            and self.request.user.has_perm('base.list_review', self.request.event)
+        )
         return kwargs
 
 
