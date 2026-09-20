@@ -89,6 +89,7 @@
             <script type="module" src="{% static 'common/js/dropdown.js' %}"></script>
             <script type="module" src="{% static 'common/js/event-home-back.js' %}"></script>
             <script defer src="{% static 'common/js/nav-tabs.js' %}"></script>
+            <script type="module" src="{% static 'common/js/tabs-overflow.js' %}"></script>
             <script type="module" src="{% static 'common/js/contact-modal.js' %}"></script>
         {% endcompress %}
         {# Keep tiptapLoader outside the compress block so document.currentScript keeps data-tiptap-* attributes (see common/js/tiptapLoader.js). #}
@@ -251,9 +252,15 @@
                 <div class="presale-sticky-tabs-wrap">
                     <div class="header-wrapper presale-sticky-tabs-inner">
                         <div id="header-tabs" class="presale-sticky-tabs">
-                            <div class="presale-tabs-scroll">
+                            <div class="presale-tabs-scroll" data-tabs-overflow-source>
                                 {% block header_tabs %}{% endblock header_tabs %}
                             </div>
+                            <details class="dropdown presale-tabs-more" data-tabs-overflow-more hidden>
+                                <summary class="header-tab" aria-label="{% translate 'More tabs' %}">
+                                    {% translate "More" %} <i class="fa fa-caret-down" aria-hidden="true"></i>
+                                </summary>
+                                <div class="dropdown-content dropdown-content-s{% if rtl %}e{% else %}w{% endif %}" role="menu" data-tabs-overflow-target></div>
+                            </details>
                             <div class="header-row-right">
                                 {% block header_right %}
                                     {% include "common/fragment_header_user.html" with current_event=current_event %}
