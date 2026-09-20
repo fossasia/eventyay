@@ -870,6 +870,9 @@ class ProductVariationForm(I18nModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         change_decimal_field(self.fields['default_price'], self.event.currency)
+        for f in ADMISSION_VALIDITY_FIELD_NAMES:
+            if f in self.fields:
+                self.fields[f].required = False
 
     def clean_default_price(self):
         return clean_default_price(self.cleaned_data.get('default_price'))
