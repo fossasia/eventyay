@@ -107,11 +107,12 @@
                                     {% for submission in profile.user.list_sessions %}
                                         <li>
                                             <a href="{{ submission.orga_urls.base }}" title="{{ submission.title }}">{{ submission.title }}</a>
+                                            {% include 'cfp/event/fragment_state.html' with state=submission.state as_badge=True %}
                                         </li>
                                     {% endfor %}
                                 </ul>
                             {% else %}
-                                <span class="text-muted">—</span>
+                                <span class="text-muted">{% translate "No session" %}</span>
                             {% endif %}
                         </td>
                         <td class="speaker-actions-cell text-right">
