@@ -154,69 +154,77 @@
                     </div>
                 {% endif %}
                 {% if profiles %}
-                    {% for speaker in profiles %}
-                        <div class="form-group row">
-                            <label class="col-md-3 col-form-label">{% translate "Speaker" %}</label>
-                            <div class="col-md-9 mt-2 font-weight-bold">
-                                {% include "orga/includes/user_name.html" with user=speaker.user lightbox=True %}
-                            </div>
+                    <div class="card my-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">{% translate "Speakers" %}</h5>
                         </div>
-                        {% if request.event.cfp.request_biography and speaker.profile.biography %}
-                            <div class="form-group row">
-                                <label class="col-md-3 col-form-label">{% translate "Biography" %}</label>
-                                <div class="col-md-9 mt-2 markdown-mt-0">
-                                    {{ speaker.profile.biography|rich_text }}
+                        <div class="card-body">
+                            {% for speaker in profiles %}
+                                <div class="form-group row">
+                                    <label class="col-md-3 col-form-label">{% translate "Speaker" %}</label>
+                                    <div class="col-md-9 mt-2 font-weight-bold">
+                                        {% include "orga/includes/user_name.html" with user=speaker.user lightbox=True %}
+                                    </div>
                                 </div>
-                            </div>
-                        {% endif %}
-                        {% if request.event.cfp.request_avatar and speaker.avatar_url %}
-                            <div class="form-group row">
-                                <label class="col-md-3 col-form-label">{% translate "Avatar" %}</label>
-                                <div class="col-md-9 mt-2">
-                                    <a href="{{ speaker.avatar_url }}" target="_blank">
-                                        <img loading="lazy" style="max-width: 100px; max-height: 100px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; padding: 2px;" src="{% if speaker.avatar %}{{ speaker.avatar|thumbnail:'default' }}{% else %}{{ speaker.avatar_url }}{% endif %}" alt="{% translate "The speaker's profile picture" %}">
-                                    </a>
-                                </div>
-                            </div>
-                        {% endif %}
-                        {% if speaker.social_links %}
-                            <div class="form-group row">
-                                <label class="col-md-3 col-form-label">{% translate "Social Media" %}</label>
-                                <div class="col-md-9 mt-2">
-                                    {% include "orga/includes/speaker_social_links.html" with social_links=speaker.social_links profile=speaker.profile %}
-                                </div>
-                            </div>
-                        {% endif %}
-                        {% for answer in speaker.reviewer_answers %}
-                            <div class="form-group row">
-                                <label class="col-md-3 col-form-label">{{ answer.question.question }}</label>
-                                <div class="col-md-9 mt-2 markdown-mt-0">
-                                    {% if answer.question.variant == "boolean" %}
-                                        <span class="value-pill {% if answer.boolean_answer %}value-pill--positive{% else %}value-pill--negative{% endif %}">
-                                            {% include "common/question_answer.html" with answer=answer %}
-                                        </span>
-                                    {% else %}
-                                        {% include "common/question_answer.html" with answer=answer %}
-                                    {% endif %}
-                                </div>
-                            </div>
-                        {% endfor %}
-                        {% if speaker.other_submissions %}
-                            <div class="form-group row">
-                                <label class="col-md-3 col-form-label">{% translate "Other proposals" %}</label>
-                                <div class="col-md-9 mt-2">
-                                    <ul class="mt-0 mb-0 pl-3">
-                                        {% for other_submission in speaker.other_submissions %}
-                                            <li>
-                                                <a href="{{ other_submission.orga_urls.reviews }}">{{ other_submission.title }}</a>
-                                                {% include "cfp/event/fragment_state.html" with state=other_submission.state as_badge=True %}
-                                            </li>
-                                        {% endfor %}
-                                    </ul>
-                                </div>
-                            </div>
-                        {% endif %}
-                    {% endfor %}
+                                {% if request.event.cfp.request_biography and speaker.profile.biography %}
+                                    <div class="form-group row">
+                                        <label class="col-md-3 col-form-label">{% translate "Biography" %}</label>
+                                        <div class="col-md-9 mt-2 markdown-mt-0">
+                                            {{ speaker.profile.biography|rich_text }}
+                                        </div>
+                                    </div>
+                                {% endif %}
+                                {% if request.event.cfp.request_avatar and speaker.avatar_url %}
+                                    <div class="form-group row">
+                                        <label class="col-md-3 col-form-label">{% translate "Avatar" %}</label>
+                                        <div class="col-md-9 mt-2">
+                                            <a href="{{ speaker.avatar_url }}" target="_blank">
+                                                <img loading="lazy" style="max-width: 100px; max-height: 100px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; padding: 2px;" src="{% if speaker.avatar %}{{ speaker.avatar|thumbnail:'default' }}{% else %}{{ speaker.avatar_url }}{% endif %}" alt="{% translate "The speaker's profile picture" %}">
+                                            </a>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                                {% if speaker.social_links %}
+                                    <div class="form-group row">
+                                        <label class="col-md-3 col-form-label">{% translate "Social Media" %}</label>
+                                        <div class="col-md-9 mt-2">
+                                            {% include "orga/includes/speaker_social_links.html" with social_links=speaker.social_links profile=speaker.profile %}
+                                        </div>
+                                    </div>
+                                {% endif %}
+                                {% for answer in speaker.reviewer_answers %}
+                                    <div class="form-group row">
+                                        <label class="col-md-3 col-form-label">{{ answer.question.question }}</label>
+                                        <div class="col-md-9 mt-2 markdown-mt-0">
+                                            {% if answer.question.variant == "boolean" %}
+                                                <span class="value-pill {% if answer.boolean_answer %}value-pill--positive{% else %}value-pill--negative{% endif %}">
+                                                    {% include "common/question_answer.html" with answer=answer %}
+                                                </span>
+                                            {% else %}
+                                                {% include "common/question_answer.html" with answer=answer %}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                                {% if speaker.other_submissions %}
+                                    <div class="form-group row">
+                                        <label class="col-md-3 col-form-label">{% translate "Other proposals" %}</label>
+                                        <div class="col-md-9 mt-2">
+                                            <ul class="mt-0 mb-0 pl-3">
+                                                {% for other_submission in speaker.other_submissions %}
+                                                    <li>
+                                                        <a href="{{ other_submission.orga_urls.reviews }}">{{ other_submission.title }}</a>
+                                                        {% include "cfp/event/fragment_state.html" with state=other_submission.state as_badge=True %}
+                                                    </li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                                {% if not forloop.last %}<hr class="my-3">{% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
                 {% endif %}
             {% endif %}
 
