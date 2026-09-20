@@ -791,6 +791,11 @@ footer {
     padding-right: 12px;
   }
 
+  .url-links {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
   #main-card>main>main {
     padding:0;
   }
