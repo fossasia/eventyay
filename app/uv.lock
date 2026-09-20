@@ -1216,6 +1216,11 @@ version = "0.1.0"
 source = { git = "https://github.com/fossasia/eventyay-teamshifts.git?rev=main#845349fbda9828c46441e4679dc070031710a163" }
 
 [[package]]
+name = "eventyay-veditor"
+version = "0.1.0"
+source = { git = "https://github.com/fossasia/eventyay-veditor.git?rev=main#814e397f08ccaf8be92b1b41029673272df0ad7e" }
+
+[[package]]
 name = "eventyay-unified"
 version = "0.1.0"
 source = { editable = "." }
@@ -1306,6 +1311,7 @@ dependencies = [
     { name = "eventyay-socialmedia" },
     { name = "eventyay-stripe" },
     { name = "eventyay-teamshifts" },
+    { name = "eventyay-veditor" },
     { name = "execnet" },
     { name = "exhibition" },
     { name = "fido2" },
@@ -1547,6 +1553,7 @@ requires-dist = [
     { name = "eventyay-socialmedia", git = "https://github.com/fossasia/eventyay-socialmedia.git?rev=main" },
     { name = "eventyay-stripe", git = "https://github.com/fossasia/eventyay-stripe.git?rev=main" },
     { name = "eventyay-teamshifts", git = "https://github.com/fossasia/eventyay-teamshifts.git?rev=main" },
+    { name = "eventyay-veditor", git = "https://github.com/fossasia/eventyay-veditor.git?rev=main" },
     { name = "execnet", specifier = ">=2.1.2" },
     { name = "exhibition", git = "https://github.com/fossasia/eventyay-exhibition.git?rev=main" },
     { name = "fido2", specifier = ">=2.2.0" },
