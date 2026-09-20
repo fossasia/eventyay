@@ -871,7 +871,7 @@ class ProductVariationForm(I18nModelForm):
         super().__init__(*args, **kwargs)
         change_decimal_field(self.fields['default_price'], self.event.currency)
         for f in ADMISSION_VALIDITY_FIELD_NAMES:
-            if f in self.fields:
+            if f in self.fields and f != 'admission_validity_mode':
                 self.fields[f].required = False
 
     def clean_default_price(self):
