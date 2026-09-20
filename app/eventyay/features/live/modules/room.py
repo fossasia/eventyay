@@ -404,9 +404,17 @@ class RoomModule(BaseModule):
         if reaction not in (
             "👏",
             "❤️",
+            "🎉",
             "👍",
+            "🔥",
+            "😂",
             "🤣",
             "😮",
+            "😢",
+            "🙌",
+            "💯",
+            "🤔",
+            "👎",
         ):
             raise ConsumerException(
                 code="room.unknown_reaction", message="Unknown reaction"

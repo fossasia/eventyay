@@ -641,7 +641,8 @@ export default {
 		},
 		isChatOpen() {
 			if (!this.effectiveEventRoomId) return false
-			const isCollapsed = Boolean(this.$store.state.roomSidebarCollapsedByRoom?.[this.effectiveEventRoomId])
+			const stateVal = this.$store.state.roomSidebarCollapsedByRoom?.[this.effectiveEventRoomId]
+			const isCollapsed = stateVal !== undefined ? Boolean(stateVal) : true
 			return !isCollapsed && this.$store.state.activeRoomSidebarTab === 'chat'
 		},
 		canModerateParticipants() {
