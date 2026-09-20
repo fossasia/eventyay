@@ -264,8 +264,6 @@ class VideoSPAView(View):
                     'show_talk_starrers_tooltip': str(_(
                         'Make your starred sessions visible to others. You can open someone else\'s starred list only if they have enabled sharing.'
                     )),
-                    'export': str(_('Export')),
-                    'exports': str(_('Exports')),
                     'no_file_provided': str(_('No file provided')),
                     'no_response': str(_('No response')),
                     'other_timezones': str(_('Other Timezones')),

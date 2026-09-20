@@ -44,7 +44,7 @@ a.c-linear-schedule-session(:class="{faved, 'has-date': showDate, 'short-session
 		.tags-box(v-if="showTags && session.tags && session.tags.length")
 			.tags(v-for="tag_item of session.tags")
 				.tag-item(:style="{'background-color': tag_item.color, 'color': getContrastColor(tag_item.color)}") {{ tag_item.tag }}
-		.abstract(v-if="showAbstract", v-html="abstractText")
+		.abstract(v-if="showAbstract", v-html="abstractText", @click.stop)
 		.bottom-info
 			.track(v-if="session.track", :class="{'single-line-clamped': isGridVeryShort}", :title="gridMetaTitle(getLocalizedString(session.track.name))") {{ getLocalizedString(session.track.name) }}
 			.room(v-if="showRoom && session.room", :title="getLocalizedString(session.room.name)") {{ getLocalizedString(session.room.name) }}
@@ -67,14 +67,9 @@ a.c-linear-schedule-session(:class="{faved, 'has-date': showDate, 'short-session
 
 </template>
 <script>
-import MarkdownIt from 'markdown-it'
 import { getLocalizedString, getPrettyDuration, getSessionTime, getContrastColor, normalizePopularityCount, getSessionTypeLabel } from '../utils'
+import { renderEventyayRichText } from '../utils/eventyayRichText'
 import FavButton from './FavButton.vue'
-
-const markdownIt = MarkdownIt({
-	linkify: true,
-	breaks: true
-})
 
 export default {
 	props: {
@@ -211,11 +206,8 @@ export default {
 			return m.watch_live || m.watchLive || this.$t('Watch live')
 		},
 		abstractText () {
-			try {
-				return markdownIt.renderInline(this.session.abstract)
-			} catch (error) {
-				return this.session.abstract
-			}
+			// Abstracts are TipTap HTML; use shared sanitizer (not markdown-it renderInline).
+			return renderEventyayRichText(getLocalizedString(this.session.abstract))
 		},
 		hasFavCount () {
 			return this.showFavCount && normalizePopularityCount(this.session) > 0
@@ -653,6 +645,14 @@ expandClampedSessionText()
 			margin: 8px 0 12px 0
 			// TODO make this take up more space if available?
 			sessionTextClamp(3)
+			p, ul, ol
+				margin: 0.35em 0
+				&:first-child
+					margin-top: 0
+				&:last-child
+					margin-bottom: 0
+			ul, ol
+				padding-left: 1.25em
 		.bottom-info
 			flex: auto
 			display: flex

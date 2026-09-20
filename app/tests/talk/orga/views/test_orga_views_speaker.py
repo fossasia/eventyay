@@ -434,6 +434,34 @@ def test_speaker_list_shows_linked_sessions(orga_client, speaker, event, submiss
 
 
 @pytest.mark.django_db
+def test_speaker_list_shows_session_state_badge(orga_client, speaker, event, submission):
+    response = orga_client.get(event.orga_urls.speakers, follow=True)
+    assert response.status_code == 200
+    doc = bs4.BeautifulSoup(response.content, 'lxml')
+    item = doc.select_one('.speaker-session-list li')
+    assert item.select_one('a')['href'] == submission.orga_urls.base
+    badge = item.select_one('.badge.submission-state')
+    assert 'submission-state-submitted' in badge['class']
+    assert 'submitted' in badge.text
+
+
+@pytest.mark.django_db
+def test_speaker_list_shows_one_state_badge_per_session(orga_client, speaker, event, submission, confirmed_submission):
+    response = orga_client.get(event.orga_urls.speakers, follow=True)
+    assert response.status_code == 200
+    doc = bs4.BeautifulSoup(response.content, 'lxml')
+    items = doc.select('.speaker-session-list li')
+    assert len(items) == 2
+    states = set()
+    for item in items:
+        badges = item.select('.badge.submission-state')
+        assert len(badges) == 1
+        states.update(badges[0]['class'])
+    assert 'submission-state-submitted' in states
+    assert 'submission-state-confirmed' in states
+
+
+@pytest.mark.django_db
 def test_speaker_arrived_toggle_from_list_stays_on_list(orga_client, speaker, event, accepted_submission):
     list_url = event.orga_urls.speakers + '?sort=-is_featured'
     with scope(event=event):
