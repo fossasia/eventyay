@@ -819,8 +819,16 @@ th.review-text {
   min-width: 20em;
 }
 
-.markdown-mt-0>p:first-child {
+.markdown-mt-0>p:first-child,
+.markdown-mt-0>ul:first-child,
+.markdown-mt-0>ol:first-child {
   margin-top: 0;
+}
+
+.markdown-mt-0 ul,
+.markdown-mt-0 ol {
+  padding-left: 1.25rem;
+  margin-bottom: 0;
 }
 
 #review-form .submission-state.badge {
