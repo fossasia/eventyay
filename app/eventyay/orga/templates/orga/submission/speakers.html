@@ -11,16 +11,6 @@
 {% block submission_title %}{% translate "Speakers" %} :: {% endblock submission_title %}
 
 {% block submission_content %}
-    <style>
-        .markdown-mt-0 > ul, .markdown-mt-0 > ol {
-            margin-top: 0;
-            margin-bottom: 0;
-            padding-left: 1.25rem;
-        }
-        .markdown-mt-0 > ul:first-child, .markdown-mt-0 > ol:first-child {
-            margin-top: 0;
-        }
-    </style>
     {% has_event_perm "base.update_submission" request.user request submission as can_edit_speakers %}
     {% has_event_perm "base.send_queuedmail" request.user request request.event as can_send_mails %}
     {% has_event_perm "base.mark_arrived_speakerprofile" request.user request request.event as can_mark_speaker %}
