@@ -292,12 +292,6 @@ header .header-row-right {
         overflow: visible;
     }
 
-    .presale-sticky-tabs a.header-tab {
-        white-space: nowrap;
-        flex-shrink: 0;
-        padding: 4px 6px 3px 6px;
-        font-size: 0.8rem;
-    }
 
     .presale-sticky-tabs .header-row-right {
         margin-left: 0;
