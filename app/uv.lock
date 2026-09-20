@@ -1188,13 +1188,13 @@ dependencies = [
 
 [[package]]
 name = "eventyay-paypal"
-version = "1.2.0"
-source = { git = "https://github.com/fossasia/eventyay-paypal.git?rev=main#d430af821b979af975abba45a06fcf784f2adc2e" }
+version = "1.2.1"
+source = { git = "https://github.com/fossasia/eventyay-paypal.git?rev=main#0a73a640314502c8bda84ed4c31de2ed762af2c7" }
 
 [[package]]
 name = "eventyay-socialmedia"
 version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-socialmedia.git?rev=main#ec8e894317a467ea80e8f75064a9c472e3ad6725" }
+source = { git = "https://github.com/fossasia/eventyay-socialmedia.git?rev=main#fdb8f32b0f9a9e5516ec2789b10b908fc515a833" }
 dependencies = [
     { name = "cryptography" },
     { name = "mastodon-py" },
@@ -1213,12 +1213,7 @@ dependencies = [
 [[package]]
 name = "eventyay-teamshifts"
 version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-teamshifts.git?rev=main#845349fbda9828c46441e4679dc070031710a163" }
-
-[[package]]
-name = "eventyay-veditor"
-version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-veditor.git?rev=main#814e397f08ccaf8be92b1b41029673272df0ad7e" }
+source = { git = "https://github.com/fossasia/eventyay-teamshifts.git?rev=main#f4ad46b30b6205ea256df9b0682755db529b39ea" }
 
 [[package]]
 name = "eventyay-unified"
@@ -1699,6 +1694,11 @@ test = [
     { name = "pytest-sugar", specifier = ">=1.1.1" },
     { name = "pytest-xdist", specifier = ">=3.6.1" },
 ]
+
+[[package]]
+name = "eventyay-veditor"
+version = "0.1.0"
+source = { git = "https://github.com/fossasia/eventyay-veditor.git?rev=main#bc63487a2020ed2c59d2923b35297ee21d0eb3a1" }
 
 [[package]]
 name = "execnet"
