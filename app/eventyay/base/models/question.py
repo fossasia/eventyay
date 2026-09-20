@@ -455,18 +455,28 @@ class Answer(PretalxModel):
 
     @cached_property
     def is_image(self):
-        if not self.answer_file:
+        filename = ''
+        if self.answer_file:
+            filename = getattr(self.answer_file, 'name', '') or str(self.answer_file)
+        elif self.answer:
+            filename = str(self.answer)
+        if not filename:
             return False
         import os
-        ext = os.path.splitext(self.answer_file.name)[1].lower()
+        ext = os.path.splitext(filename.split('?')[0])[1].lower()
         return ext in ('.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.bmp')
 
     @cached_property
     def file_name(self):
-        if not self.answer_file:
+        filename = ''
+        if self.answer_file:
+            filename = getattr(self.answer_file, 'name', '') or str(self.answer_file)
+        elif self.answer:
+            filename = str(self.answer)
+        if not filename:
             return ''
         import os
-        return os.path.basename(self.answer_file.name)
+        return os.path.basename(filename.split('?')[0])
 
     def __str__(self):
         """Help when debugging."""
