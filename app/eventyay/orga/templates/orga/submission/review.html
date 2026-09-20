@@ -155,10 +155,10 @@
                 {% endif %}
                 {% if profiles %}
                     <div class="card my-4">
-                        <div class="card-header bg-light">
+                        <div class="card-header bg-light px-4 px-md-5 py-3">
                             <h5 class="mb-0">{% translate "Speakers" %}</h5>
                         </div>
-                        <div class="card-body p-4">
+                        <div class="card-body p-4 pl-md-5">
                             {% for speaker in profiles %}
                                 <h3 class="card-title mb-3">
                                     <a href="{% url 'orga:speakers.view' organizer=request.event.organizer.slug event=request.event.slug code=speaker.user.code %}">
