@@ -26,14 +26,16 @@
     {% has_event_perm "base.reviewer_list_speakerprofile" request.user request request.event as can_view_speakers %}
     {% trans "Review Proposals" as header_title %}
     {% include "common/includes/header_nav.html" with header_title=header_title %}
-    <div class="alert alert-info">
-        <div>
+    <div class="alert alert-info review-progress">
+        <div id="review-progress-content">
             {% if can_review and next_submission %}
+            <span id="missing-reviews-count">
                 {% blocktranslate trimmed count count=missing_reviews %}
                     {{ count }} proposal is waiting for your review.
                 {% plural %}
                     {{ count }} proposals are waiting for your review.
                 {% endblocktranslate %}
+            </span>
                 <a href="{{ next_submission.orga_urls.reviews }}">{% translate "Click here to get started!" %}</a>
                 <br>
                 <small><a href="{{ request.event.orga_urls.reviews }}bulk/">{% translate "Or review all proposals at once." %}</a></small>
@@ -154,18 +156,19 @@
                                     <select
                                          class="form-control review-score-select"
                                          data-url="{% url 'orga:submissions.reviews.score' organizer=request.event.organizer.slug event=request.event.slug code=submission.code %}"
-                                         data-category="{% for category in submission.score_categories %}{% if not category.is_independent %}{{ category.pk }}{% endif %}{% endfor %}"
                                          aria-label="{% translate "Your score" %}"
                                     >
                                         <option value="" {% if submission.user_score is None %}selected{% endif %}>
                                             {% translate "No score" %}
                                         </option>
                                         {% for category in submission.score_categories %}
-                                            {% for score in category.scores.all %}
-                                                <option value="{{ score.pk }}" {% if submission.user_score == score.value %}selected{% endif %}>
-                                                    {{ score.label }} ({{ score.value|floatformat:"-2" }})
-                                                </option>
-                                            {% endfor %}
+                                            {% if not category.is_independent %}
+                                                {% for score in category.scores.all %}
+                                                    <option value="{{ score.pk }}" data-category="{{ category.pk }}" {% if submission.user_score == score.value %}selected{% endif %}>
+                                                        {{ score.label }} ({{ score.value|floatformat:"-2" }})
+                                                    </option>
+                                                {% endfor %}
+                                            {% endif %}
                                         {% endfor %}
                                     </select>
                                     <i class="working fa fa-spinner fa-spin d-none"></i>
@@ -182,11 +185,13 @@
                             {% endif %}
                             <td class="text-center col-review-count numeric review-count">
                                 <span class="review-count-value">{{ submission.review_nonnull_count|default:"-" }}</span>
-                                {% if submission.review_count != submission.review_nonnull_count %}({{ submission.review_count|default:"-" }}){% endif %}
+                                {% if submission.review_count != submission.review_nonnull_count %}(<span class="review-total-count">{{ submission.review_count|default:"-" }}</span>){% endif %}
                                 {% if submission.pk in submissions_reviewed %}
-                                    <i class="fa fa-check text-success" title="{% translate "You have reviewed this proposal" %}"></i>
+                                    <i class="fa fa-check text-success review-completed" title="{% translate "You have reviewed this proposal" %}"></i>
                                 {% elif request.user in submission.speakers.all %}
                                     <i class="fa fa-check text-muted" title="{% translate "You cannot review this proposal" %}"></i>
+                                {% else %}
+                                    <i class="fa fa-check text-success review-completed d-none" title="{% translate "You have reviewed this proposal" %}"></i>
                                 {% endif %}
                                 {% if submission.is_assigned %}
                                     <i class="fa fa-star text-warning" title="{% translate "You have been assigned to this proposal" %}"></i>

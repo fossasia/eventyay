@@ -14,6 +14,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic import FormView, TemplateView
 from django_context_decorator import context
+from django_scopes import scope
 
 from eventyay.base.models import Review, ReviewScore, Submission, SubmissionStates
 from eventyay.common.forms.renderers import InlineFormRenderer
@@ -35,6 +36,7 @@ from eventyay.orga.forms.review import (
 from eventyay.orga.forms.submission import SubmissionStateChangeForm
 from eventyay.orga.views.submission import BaseSubmissionList
 from eventyay.submission.forms import SubmissionFilterForm, TalkQuestionsForm
+from eventyay.submission.permissions import can_view_reviews
 from eventyay.talk_rules.submission import (
     can_be_reviewed,
     get_missing_reviews,
@@ -605,11 +607,13 @@ class ReviewScoreUpdate(ReviewViewMixin, PermissionRequired, View):
             return JsonResponse({'ok': False, 'error': _('You cannot review this proposal.')}, status=403)
 
         if score_id:
-            score = get_object_or_404(
-                ReviewScore,
-                pk=score_id,
-                category__in=self.submission.score_categories,
-            )
+            with scope(event=request.event):
+                score = get_object_or_404(
+                    ReviewScore,
+                    pk=score_id,
+                    category__in=self.submission.score_categories,
+                    category__is_independent=False,
+                )
         else:
             score = None
 
@@ -624,26 +628,26 @@ class ReviewScoreUpdate(ReviewViewMixin, PermissionRequired, View):
             review.scores.add(score)
 
         elif review:
-            category = get_object_or_404(
-                self.submission.score_categories,
-                pk=request.POST.get('category'),
-                is_independent=False,
-            )
-            review.scores.remove(*review.scores.filter(category=category))
+            review.scores.remove(*review.scores.filter(category__is_independent=False))
 
         if review:
             review.update_score()
             review.save(update_score=False)
 
         self.submission.__dict__.pop('median_score', None)
+        self.submission.__dict__.pop('mean_score', None)
 
+        aggregate_method = request.event.review_settings['aggregate_method']
+        aggregate = self.submission.median_score if aggregate_method == 'median' else self.submission.mean_score
+        missing_reviews = get_missing_reviews(request.event, request.user).count()
         return JsonResponse(
             {
                 'ok': True,
-                'score': review.display_score,
-                'median': self.submission.median_score,
+                'score': review.display_score if review else None,
+                **({'aggregate': aggregate} if can_view_reviews(request.user, self.submission) else {}),
                 'reviews': self.submission.reviews.filter(scores__isnull=False).distinct().count(),
                 'review_count': self.submission.reviews.count(),
+                'missing_reviews': missing_reviews,
             }
         )
 

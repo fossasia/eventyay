@@ -237,7 +237,7 @@ const initReviewScore = () => {
                         },
                         body: new URLSearchParams({
                             score: select.value,
-                            category: select.dataset.category,
+                            category: select.value ? select.selectedOptions[0].dataset.category : "",
                         }),
                     })
 
@@ -250,15 +250,35 @@ const initReviewScore = () => {
                     select.dataset.previousValue = select.value
 
                     const row = select.closest("tr")
+                    const missingReviewsCount = document.querySelector("#missing-reviews-count")
+                    if (missingReviewsCount) {
+                        if (data.missing_reviews === 0) {
+                            document.querySelector("#review-progress-content").textContent = "You’ve got no proposals left to review!"
+                        } else {
+                            missingReviewsCount.textContent = ngettext(
+                                "%s proposal is waiting for your review.",
+                                "%s proposals are waiting for your review.",
+                                data.missing_reviews
+                            ).replace("%s", data.missing_reviews)
+                        }
+                    }
                     if (row) {
                         const scoreCell = row.querySelector(".review-current-score")
                         const reviewCountCell = row.querySelector(".review-count-value")
                         if (scoreCell) {
-                            scoreCell.textContent = data.median == null ? "-" : Number(data.median).toString()
+                            scoreCell.textContent = data.aggregate == null ? "-" : Number(data.aggregate).toString()
                         }
 
                         if (reviewCountCell) {
                             reviewCountCell.textContent = data.reviews ?? "-"
+                        }
+                        const reviewTotalCount = row.querySelector(".review-total-count")
+                        if (reviewTotalCount) {
+                            reviewTotalCount.textContent = data.review_count ?? "-"
+                        }
+                        const reviewCompleted = row.querySelector(".review-completed")
+                        if (reviewCompleted) {
+                            reviewCompleted.classList.toggle("d-none", !select.value)
                         }
                     }
                     setStatus("done")
