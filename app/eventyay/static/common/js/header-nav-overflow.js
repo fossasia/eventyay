@@ -16,18 +16,12 @@ const createOverflowNav = (row, bar, overflow) => {
     const restore = () => {
         if (!menu.firstElementChild) return
 
-        tabs.forEach((tab) => {
-            tab.classList.remove('dropdown-item')
-            tab.removeAttribute('role')
-            tab.removeAttribute('tabindex')
-        })
+        tabs.forEach((tab) => tab.classList.remove('dropdown-item'))
         nodes.forEach((node) => bar.appendChild(node))
     }
 
     const moveToMenu = (tab) => {
         tab.classList.add('dropdown-item')
-        tab.setAttribute('role', 'menuitem')
-        tab.setAttribute('tabindex', '-1')
         menu.appendChild(tab)
     }
 
@@ -84,6 +78,7 @@ const createOverflowNav = (row, bar, overflow) => {
             }
 
             window.addEventListener('resize', schedule)
+            window.addEventListener('hashchange', schedule)
 
             if (document.fonts) {
                 document.fonts.ready.then(schedule)
