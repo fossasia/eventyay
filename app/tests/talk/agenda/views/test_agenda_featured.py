@@ -108,3 +108,26 @@ def test_featured_never_blocks_admin_mode_direct_url(client, event, administrato
 
     response = client.get(event.urls.featured)
     assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_featured_page_applies_custom_background_color(client, event, confirmed_submission):
+    with scope(event=event):
+        event.feature_flags['show_featured'] = 'always'
+        event.settings.theme_color_background = '#bd5454'
+        event.save()
+        confirmed_submission.is_featured = True
+        confirmed_submission.save()
+
+    response = client.get(event.urls.featured)
+    assert response.status_code == 200
+    content = response.text
+    assert 'bg=%23bd5454' in content
+    assert 'style="--color-bg' not in content
+    assert '<pretalx-schedule' in content
+
+    css_response = client.get(event.urls.settings_css + '?bg=%23bd5454')
+    assert css_response.status_code == 200
+    assert '--color-bg: #bd5454;' in css_response.text
+
+

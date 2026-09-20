@@ -14,6 +14,7 @@
 			.speaker-content-area
 				.speaker-title
 					h2 {{ resolvedSpeaker.name || t.speaker_fallback }}
+					p.speaker-role(v-if="resolvedSpeaker.speaker_role") {{ resolvedSpeaker.speaker_role }}
 				speaker-social-links(:links="socialLinks", alignment="flex-start")
 		.field-section.biography-section(v-if="resolvedSpeaker.biography")
 			h2.field-heading {{ t.biography }}
@@ -121,7 +122,6 @@ export default {
 				speaker_fallback: m.speaker_fallback || this.$t('Speaker'),
 				ical: m.ical || this.$t('iCal'),
 				sessions: m.sessions || this.$t('Sessions'),
-				export: m.export || this.$t('Exports'),
 				yes: m.yes || this.$t('Yes'),
 				no: m.no || this.$t('No'),
 				biography: m.biography || this.$t('Biography'),
@@ -318,6 +318,12 @@ export default {
 		h2
 			margin: 0
 			text-align: left
+		.speaker-role
+			margin: 4px 0 0
+			color: $clr-secondary-text-light
+			font-size: 14px
+			line-height: 1.3
+			padding: 0
 	.speaker-avatar
 		flex-shrink: 0
 		width: 128px
