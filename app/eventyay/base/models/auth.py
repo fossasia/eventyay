@@ -474,6 +474,7 @@ class User(
 
     @property
     def name(self) -> str:
+        """Return the user's full name or empty string."""
         return self.fullname or ''
 
     def send_security_notice(self, messages, email=None):

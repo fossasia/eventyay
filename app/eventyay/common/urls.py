@@ -46,7 +46,11 @@ def get_url_scheme(value: str | None) -> str:
 
 
 def is_http_url(value: str | None) -> bool:
-    return get_url_scheme(value) in ('http', 'https')
+    """Return True if value is a valid http or https URL with a host."""
+    if not isinstance(value, str):
+        return False
+    parsed = urlsplit(value)
+    return parsed.scheme.lower() in ('http', 'https') and bool(parsed.netloc)
 
 
 def is_file_url(value: str | None) -> bool:

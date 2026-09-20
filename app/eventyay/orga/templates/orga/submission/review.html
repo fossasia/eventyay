@@ -117,7 +117,7 @@
                 <label class="col-md-3 col-form-label">{% translate "Duration" %}</label>
                 <div class="col-md-9 mt-2">{{ submission.get_duration }} {% translate "minutes" %}</div>
             </div>
-            {% if submission.image %}
+            {% if no_anonymisation and submission.image %}
                 <div class="form-group row">
                     <label class="col-md-3 col-form-label">{% translate "Session image" %}</label>
                     <div class="col-md-9 mt-2">

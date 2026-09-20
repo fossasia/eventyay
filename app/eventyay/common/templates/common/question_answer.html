@@ -2,16 +2,16 @@
 {% load rich_text %}
 
 {% if answer.question.variant == "file" %}
-    {% if answer.answer_file or answer.answer %}
+    {% if answer.answer_file %}
         {% if answer.is_image %}
             <div class="question-image-preview my-1">
-                <a href="{% if answer.answer_file %}{{ answer.answer_file.url }}{% else %}{{ answer.answer }}{% endif %}" target="_blank" rel="noopener noreferrer">
-                    <img loading="lazy" src="{% if answer.answer_file %}{{ answer.answer_file.url }}{% else %}{{ answer.answer }}{% endif %}" alt="{{ answer.question.question }}" class="img-fluid rounded" style="max-width: 200px; max-height: 200px; object-fit: contain; border: 1px solid #ddd; padding: 2px;">
+                <a href="{{ answer.answer_file.url }}" target="_blank" rel="noopener noreferrer">
+                    <img loading="lazy" src="{{ answer.answer_file.url }}" alt="{{ answer.question.question }}" class="img-fluid rounded" style="max-width: 200px; max-height: 200px; object-fit: contain; border: 1px solid #ddd; padding: 2px;">
                 </a>
             </div>
         {% else %}
             <i class="fa fa-file-o"></i>
-            <a href="{% if answer.answer_file %}{{ answer.answer_file.url }}{% else %}{{ answer.answer }}{% endif %}" target="_blank" rel="noopener noreferrer">{{ answer.file_name|default:answer.answer_file|default:answer.answer }}</a>
+            <a href="{{ answer.answer_file.url }}" target="_blank" rel="noopener noreferrer">{{ answer.file_name|default:answer.answer_file }}</a>
         {% endif %}
     {% else %}
         {% translate "No file provided" %}

@@ -132,11 +132,13 @@ class SpeakerProfile(PretalxModel):
 
     @property
     def speaker_answers(self):
+        """Return all answers targeting the speaker, ordered by question position."""
         from eventyay.base.models import TalkQuestionTarget
         return self.answers.filter(question__target=TalkQuestionTarget.SPEAKER).order_by('question__position')
 
     @property
     def reviewer_speaker_answers(self):
+        """Return speaker-targeted answers that are marked visible to reviewers."""
         return self.speaker_answers.filter(question__is_visible_to_reviewers=True)
 
     @cached_property

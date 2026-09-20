@@ -461,6 +461,7 @@ class ReviewSubmission(ReviewViewMixin, PermissionRequired, CreateOrUpdateView):
 
     @context
     def profiles(self):
+        """Return the speaker profiles with reviewer-visible answers and metadata."""
         event = self.request.event
         with scope(event=event):
             speakers_qs = self.submission.speakers.all().prefetch_related(

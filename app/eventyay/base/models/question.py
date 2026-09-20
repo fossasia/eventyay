@@ -1,3 +1,5 @@
+import os
+
 from django.db import models
 from django.utils.functional import cached_property
 from django.utils.timezone import now
@@ -455,27 +457,23 @@ class Answer(PretalxModel):
 
     @cached_property
     def is_image(self):
+        """Check if the answer file is an image based on its file extension."""
         filename = ''
         if self.answer_file:
             filename = getattr(self.answer_file, 'name', '') or str(self.answer_file)
-        elif self.answer:
-            filename = str(self.answer)
         if not filename:
             return False
-        import os
         ext = os.path.splitext(filename.split('?')[0])[1].lower()
         return ext in ('.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.bmp')
 
     @cached_property
     def file_name(self):
+        """Return the base file name of the answer file."""
         filename = ''
         if self.answer_file:
             filename = getattr(self.answer_file, 'name', '') or str(self.answer_file)
-        elif self.answer:
-            filename = str(self.answer)
         if not filename:
             return ''
-        import os
         return os.path.basename(filename.split('?')[0])
 
     def __str__(self):

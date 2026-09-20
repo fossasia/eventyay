@@ -302,8 +302,16 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
     @context
     @cached_property
     def speakers(self):
+        """Return the prefetched list of speakers with profile and answer metadata."""
         submission = self.object
         with scope(event=submission.event):
+            answers_qs = Answer.objects.filter(
+                question__event=submission.event,
+                question__target=TalkQuestionTarget.SPEAKER,
+            ).select_related('question').order_by('question__position')
+            if is_only_reviewer(self.request.user, submission):
+                answers_qs = answers_qs.filter(question__is_visible_to_reviewers=True)
+
             speakers_qs = submission.speakers.all().prefetch_related(
                 Prefetch(
                     'profiles',
@@ -312,12 +320,7 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
                 ),
                 Prefetch(
                     'answers',
-                    queryset=Answer.objects.filter(
-                        question__event=submission.event,
-                        question__target=TalkQuestionTarget.SPEAKER,
-                    )
-                    .select_related('question')
-                    .order_by('question__position'),
+                    queryset=answers_qs,
                     to_attr='_all_speaker_answers',
                 ),
                 Prefetch(
@@ -348,6 +351,7 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
             ]
 
     def form_valid(self, form):
+        """Process the add-speaker form and add the speaker to the proposal."""
         if email := form.cleaned_data.get('email'):
             speaker = self.object.add_speaker(
                 email=email,
@@ -361,12 +365,15 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
         return super().form_valid(form)
 
     def get_form_kwargs(self):
+        """Supply keyword arguments including event and biography flags for AddSpeakerInlineForm."""
         kwargs = super().get_form_kwargs()
         kwargs['event'] = self.request.event
         kwargs['require_name'] = True
+        kwargs['include_biography'] = True
         return kwargs
 
     def get_success_url(self):
+        """Return the URL to redirect to after successfully updating speakers."""
         return self.object.orga_urls.speakers
 
 
