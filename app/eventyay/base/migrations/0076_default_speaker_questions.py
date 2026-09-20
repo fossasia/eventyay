@@ -4,18 +4,31 @@ from django.db import migrations
 
 
 def add_default_speaker_questions(apps, schema_editor):
-    from eventyay.base.models.cfp import create_default_speaker_questions
     from django_scopes import scope
 
     Event = apps.get_model('base', 'Event')
+    TalkQuestion = apps.get_model('base', 'TalkQuestion')
+    
+    defaults = [
+        ('speaker_job_title', 'Job Title', 0),
+        ('speaker_organization', 'Organization', 1),
+    ]
+
     for event in Event.objects.all().only('id', 'slug'):
-        try:
-            from eventyay.base.models import Event as LiveEvent
-            live_event = LiveEvent.objects.get(pk=event.pk)
-            create_default_speaker_questions(live_event)
-        except Exception:
-            import traceback
-            traceback.print_exc()
+        with scope(event=event):
+            for import_key, question_text, position in defaults:
+                TalkQuestion.objects.get_or_create(
+                    event=event,
+                    import_key=import_key,
+                    target='speaker',
+                    defaults={
+                        'question': question_text,
+                        'variant': 'string',
+                        'is_public': False,
+                        'position': position,
+                        'active': True,
+                    },
+                )
 
 class Migration(migrations.Migration):
 

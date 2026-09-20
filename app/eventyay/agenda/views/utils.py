@@ -209,19 +209,16 @@ def _get_public_speaker_role_questions(event):
     from eventyay.base.models import TalkQuestion, TalkQuestionTarget
     from eventyay.base.models.cfp import SPEAKER_JOB_TITLE_IMPORT_KEY, SPEAKER_ORGANIZATION_IMPORT_KEY
 
-    try:
-        with scope(event=event):
-            questions = {
-                q.import_key: q
-                for q in TalkQuestion.objects.filter(
-                    event=event,
-                    target=TalkQuestionTarget.SPEAKER,
-                    is_public=True,
-                    import_key__in=[SPEAKER_JOB_TITLE_IMPORT_KEY, SPEAKER_ORGANIZATION_IMPORT_KEY],
-                )
-            }
-    except Exception:
-        return {}, {}
+    with scope(event=event):
+        questions = {
+            q.import_key: q
+            for q in TalkQuestion.objects.filter(
+                event=event,
+                target=TalkQuestionTarget.SPEAKER,
+                is_public=True,
+                import_key__in=[SPEAKER_JOB_TITLE_IMPORT_KEY, SPEAKER_ORGANIZATION_IMPORT_KEY],
+            )
+        }
     job_title_q = questions.get(SPEAKER_JOB_TITLE_IMPORT_KEY)
     org_q = questions.get(SPEAKER_ORGANIZATION_IMPORT_KEY)
     return job_title_q, org_q
