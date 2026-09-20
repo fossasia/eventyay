@@ -22,7 +22,14 @@ from django.views.generic import (
 )
 from django_context_decorator import context
 
-from eventyay.base.models import Resource, ResourceKind, Submission, SubmissionStates
+from eventyay.base.models import (
+    Resource,
+    ResourceKind,
+    SpeakerInvitationMailStates,
+    SpeakerInvitationStates,
+    Submission,
+    SubmissionStates,
+)
 from eventyay.cfp.forms.submissions import SubmissionInvitationForm
 from eventyay.cfp.views.event import LoggedInEventPageMixin
 from eventyay.common.exceptions import SendMailException
@@ -305,6 +312,16 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
 
     @context
     @cached_property
+    def pending_invitations(self):
+        speaker_ids = self.object.speakers.values_list('pk', flat=True)
+        return (
+            self.object.speaker_invitations.filter(status=SpeakerInvitationStates.PENDING)
+            .exclude(user_id__in=speaker_ids)
+            .select_related('user')
+        )
+
+    @context
+    @cached_property
     def formset(self):
         formset_class = inlineformset_factory(
             Submission,
@@ -453,9 +470,24 @@ class SubmissionInviteView(LoggedInEventPageMixin, SubmissionViewMixin, FormView
         return kwargs
 
     def form_valid(self, form):
-        form.save()
-        messages.success(self.request, phrases.cfp.invite_sent)
+        invitations = form.save()
         self.submission.log_action('eventyay.submission.speakers.invite', person=self.request.user)
+        failed = [
+            invitation
+            for invitation in invitations
+            if invitation.mail_state != SpeakerInvitationMailStates.SENT
+        ]
+        if failed:
+            messages.error(
+                self.request,
+                _('The invitation email could not be sent. Please try again.'),
+            )
+            return self.form_invalid(form)
+        for invitation in invitations:
+            messages.success(
+                self.request,
+                _('Invitation sent to {email}.').format(email=invitation.email),
+            )
         return super().form_valid(form)
 
     def get_success_url(self):
@@ -500,6 +532,11 @@ class SubmissionInviteAcceptView(LoggedInEventPageMixin, DetailView):
         submission.speakers.add(self.request.user)
         submission.log_action('eventyay.submission.speakers.add', person=self.request.user)
         submission.save()
+        for invitation in submission.speaker_invitations.filter(
+            status=SpeakerInvitationStates.PENDING
+        ):
+            if invitation.email.lower() == self.request.user.email.lower() or not invitation.user:
+                invitation.accept(user=self.request.user)
         messages.success(self.request, phrases.cfp.invite_accepted)
         return redirect(
             'cfp:event.user.view', organizer=self.request.event.organizer.slug, event=self.request.event.slug

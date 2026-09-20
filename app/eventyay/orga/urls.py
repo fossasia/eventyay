@@ -303,6 +303,11 @@ urlpatterns = [
                                 name='submissions.speakers.delete',
                             ),
                             path(
+                                'speakers/invitations/<int:pk>/resend',
+                                submission.SubmissionSpeakerResendInvitation.as_view(),
+                                name='submissions.speakers.resend_invitation',
+                            ),
+                            path(
                                 'etherpad/generate',
                                 submission.SubmissionEtherpadGenerate.as_view(),
                                 name='submissions.etherpad.generate',

@@ -329,6 +329,15 @@ class AddSpeakerForm(forms.Form):
         help_text=_('The language in which the speaker will receive their invitation email.'),
         widget=EnhancedSelect,
     )
+    send_immediately = forms.BooleanField(
+        label=_('Send immediately'),
+        help_text=_(
+            'Send the speaker information email right away. When unchecked, the email is placed '
+            'in the Outbox for you to review and send later.'
+        ),
+        required=False,
+        initial=True,
+    )
 
     def __init__(
         self,
@@ -338,12 +347,14 @@ class AddSpeakerForm(forms.Form):
         require_name=False,
         include_biography=False,
         draft_save=False,
+        submission=None,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.event = event
         self.require_name = require_name
         self.draft_save = draft_save
+        self.submission = submission
 
         self.biography_required = False
         if not include_biography:
@@ -381,6 +392,13 @@ class AddSpeakerForm(forms.Form):
         data = super().clean()
         if data.get('name') and not data.get('email'):
             self.add_error('email', _('Please provide an email address.'))
+
+        if self.submission and (email := data.get('email')):
+            if self.submission.has_speaker_email(email):
+                self.add_error(
+                    'email',
+                    _('This speaker has already been added or invited to the proposal.'),
+                )
 
         existing_biography = False
         email = data.get('email')

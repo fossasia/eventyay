@@ -101,6 +101,11 @@ from .seating import Seat, SeatCategoryMapping, SeatingPlan
 from .settings import GlobalSettings
 from .slot import TalkSlot
 from .stream_schedule import StreamSchedule
+from .speaker_invitation import (
+    SpeakerInvitation,
+    SpeakerInvitationMailStates,
+    SpeakerInvitationStates,
+)
 from .submission import Submission, SubmissionFavourite, SubmissionStates
 from .systemlog import SystemLog
 from .tag import Tag
@@ -213,6 +218,9 @@ __all__ = [
     'Seat',
     'SeatCategoryMapping',
     'SeatingPlan',
+    'SpeakerInvitation',
+    'SpeakerInvitationMailStates',
+    'SpeakerInvitationStates',
     'SpeakerProfile',
     'SpeakerSocialLink',
     'SubEvent',

@@ -85,6 +85,19 @@
             {{ submission.display_speaker_names }}
         </div>
     {% endif %}
+    {% if pending_invitations %}
+        <ul class="list-unstyled mt-2 pending-speaker-invitations">
+            {% for invitation in pending_invitations %}
+                <li>
+                    {{ invitation.display_name }}
+                    <span class="badge bg-warning text-dark">{% translate "Pending" %}</span>
+                    {% if invitation.mail_state == "failed" %}
+                        <span class="text-danger">{% translate "Invitation email failed" %}</span>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
         <form method="post" enctype="multipart/form-data" novalidate>
             {% include "common/forms/errors.html" %}
 

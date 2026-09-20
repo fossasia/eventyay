@@ -48,9 +48,10 @@ DEBUG_DOMAINS = [
 ]
 
 
-@app.task(bind=True, name='pretalx.common.send_mail')
-def mail_send_task(
-    self,
+RETRY_SMTP_CODES = (101, 111, 421, 422, 431, 442, 447, 452)
+
+
+def send_mail_now(
     to: list,
     subject: str,
     body: str,
@@ -62,6 +63,10 @@ def mail_send_task(
     headers: dict = None,
     attachments: list = None,
 ):
+    """Hands an email to the configured backend and waits for the result.
+
+    :raises SendMailException: when the backend could not accept the message.
+    """
     if isinstance(to, str):
         to = [to]
     to = [addr for addr in to if addr]
@@ -133,16 +138,45 @@ def mail_send_task(
 
     try:
         backend.send_messages([email])
-    except SMTPResponseException as exception:  # pragma: no cover
+    except Exception as exception:
+        logger.exception('Error sending email to %s', to)
+        raise SendMailException(f'Failed to send an email to {to}: {exception}') from exception
+
+
+@app.task(bind=True, name='pretalx.common.send_mail')
+def mail_send_task(
+    self,
+    to: list,
+    subject: str,
+    body: str,
+    html: str,
+    reply_to: list = None,
+    event: int = None,
+    cc: list = None,
+    bcc: list = None,
+    headers: dict = None,
+    attachments: list = None,
+):
+    try:
+        send_mail_now(
+            to=to,
+            subject=subject,
+            body=body,
+            html=html,
+            reply_to=reply_to,
+            event=event,
+            cc=cc,
+            bcc=bcc,
+            headers=headers,
+            attachments=attachments,
+        )
+    except SendMailException as exception:  # pragma: no cover
         # Retry on external problems: Connection issues (101, 111), timeouts (421), filled-up mailboxes (422),
         # out of memory (431), network issues (442), another timeout (447), or too many mails sent (452)
-        if exception.smtp_code in (101, 111, 421, 422, 431, 442, 447, 452):
+        cause = exception.__cause__
+        if isinstance(cause, SMTPResponseException) and cause.smtp_code in RETRY_SMTP_CODES:
             self.retry(max_retries=5, countdown=2 ** (self.request.retries * 2))
-        logger.exception('Error sending email')
-        raise SendMailException(f'Failed to send an email to {to}: {exception}')
-    except Exception as exception:  # pragma: no cover
-        logger.exception('Error sending email')
-        raise SendMailException(f'Failed to send an email to {to}: {exception}')
+        raise
 
 
 def get_reply_to_address(
