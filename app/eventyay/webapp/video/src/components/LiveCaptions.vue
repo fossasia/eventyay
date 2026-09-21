@@ -28,11 +28,12 @@ export default {
 	data() {
 		return {
 			lines: [],
+			liveId: null,
+			nextId: 1,
 			ws: null,
 			reconnectAttempts: 0,
 			maxReconnectAttempts: 5,
-			reconnectTimeout: null,
-			nextId: 1
+			reconnectTimeout: null
 		}
 	},
 	computed: {
@@ -50,6 +51,7 @@ export default {
 		wsUrl(newUrl) {
 			this.teardown()
 			this.lines = []
+			this.liveId = null
 			this.reconnectAttempts = 0
 			if (newUrl) {
 				this.connect()
@@ -124,17 +126,24 @@ export default {
 				if (data.type !== 'caption' && data.type !== 'translated_caption') {
 					return
 				}
-				// VoxBento sends {type:'caption', status:'clear'} between utterances.
+				const text = typeof data.text === 'string' ? data.text.trim() : ''
 				if (data.status === 'clear') {
-					this.lines = []
+					// Keep committed finals; Voxbento clears between utterances.
+					this.dropLiveLine()
 					return
 				}
-				const text = typeof data.text === 'string' ? data.text.trim() : ''
 				if (!text) return
-
-				this.lines.push({ id: this.nextId++, text })
+				if (data.status === 'partial') {
+					this.upsertLiveLine(text)
+				} else {
+					this.commitLine(text)
+				}
 				const maxLines = this.docked ? 24 : 2
 				if (this.lines.length > maxLines) {
+					const removed = this.lines.slice(0, this.lines.length - maxLines)
+					if (this.liveId != null && removed.some(item => item.id === this.liveId)) {
+						this.liveId = null
+					}
 					this.lines = this.lines.slice(-maxLines)
 				}
 				this.$nextTick(() => {
@@ -145,6 +154,33 @@ export default {
 			} catch (e) {
 				console.error('Failed to parse caption message', e)
 			}
+		},
+		upsertLiveLine(text) {
+			const line = this.liveLine()
+			if (line) {
+				line.text = text
+				return
+			}
+			this.liveId = this.nextId++
+			this.lines.push({ id: this.liveId, text })
+		},
+		commitLine(text) {
+			const line = this.liveLine()
+			if (line) {
+				line.text = text
+			} else {
+				this.lines.push({ id: this.nextId++, text })
+			}
+			this.liveId = null
+		},
+		dropLiveLine() {
+			if (this.liveId == null) return
+			this.lines = this.lines.filter(item => item.id !== this.liveId)
+			this.liveId = null
+		},
+		liveLine() {
+			if (this.liveId == null) return null
+			return this.lines.find(item => item.id === this.liveId) || null
 		}
 	}
 }

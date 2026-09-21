@@ -254,3 +254,15 @@ class StyleTest(TestCase):
         content = response.content.decode()
         self.assertNotIn('--font-family', content)
         self.assertIn('--color-primary-event: #123456', content)
+
+    def test_event_css_view_emits_theme_color_background(self):
+        self.event.settings.theme_color_background = '#bd5454'
+        response = self.client.get(
+            reverse('agenda:event.css', kwargs={
+                'organizer': self.orga.slug,
+                'event': self.event.slug
+            })
+        )
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn('--color-bg: #bd5454;', content)
