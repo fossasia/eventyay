@@ -61,7 +61,7 @@ jobs:
           fi
 
       - name: Build Docker image
-        uses: docker/build-push-action@5cd11c3a4ced054e52742c5fd54dca954e0edd85
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc
         with:
           context: ./app
           file: ./app/Dockerfile.prod
