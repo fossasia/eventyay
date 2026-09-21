@@ -2,9 +2,9 @@
 .c-grid-schedule(:class="[('density-' + density), { 'is-shift-mode': isShiftMode }]")
 	.sticky-header
 		.rooms-bar(ref="roomsBar")
-			.rooms-inner(:style="{'--total-rooms': rooms.length, 'min-width': scrollContentWidth ? (scrollContentWidth + 'px') : null}")
+			.rooms-inner(:style="roomsBarStyle")
 				.room
-				.room(v-for="(room, index) of rooms", :key="room.id || index")
+				.room(v-for="(room, index) of rooms", :key="room.id || index", :style="isShiftMode ? getRoomHeaderStyle(room) : {}")
 					span.room-name(:title="getLocalizedString(room.name)") {{ getLocalizedString(room.name) }}
 					span.room-description(v-if="getLocalizedString(room.description)", @mouseenter="showRoomTooltip($event, room)", @mouseleave="hideRoomTooltip") ?
 				.room(v-if="hasSessionsWithoutRoom") no location
@@ -91,7 +91,7 @@ import TalkSession from './Session'
 import ShiftSession from '../teamshifts-adapter/Session.vue'
 import GridBreak from './GridBreak'
 import { getLocalizedString } from '../utils'
-import { isShiftSchedule, computeShiftOverlapPlacement } from '../teamshifts-adapter'
+import { isShiftSchedule, computeShiftOverlapPlacement, computeShiftColumnLayout, buildShiftGridTemplateColumns } from '../teamshifts-adapter'
 
 const getSliceName = function (date) {
 	return `slice-${date.format('MM-DD-HH-mm')}`
@@ -172,6 +172,30 @@ export default {
 				out[ts[i].name] = ts[endIdx].name
 			}
 			return out
+		},
+		roomsBarStyle () {
+			if (this.isShiftMode) {
+				return {
+					'grid-template-columns': buildShiftGridTemplateColumns(this.rooms, this.sessions, this.shiftMinColWidth, this.shiftTimeColWidth),
+					'min-width': this.scrollContentWidth ? (this.scrollContentWidth + 'px') : null,
+				}
+			}
+			return {
+				'--total-rooms': this.rooms.length,
+				'min-width': this.scrollContentWidth ? (this.scrollContentWidth + 'px') : null,
+			}
+		},
+		shiftMinColWidth () {
+			return '420px'
+		},
+		shiftTimeColWidth () {
+			if (this.density === 'compact') return '60px'
+			if (this.density === 'comfortable') return '96px'
+			return '78px'
+		},
+		shiftColumnLayout () {
+			if (!this.isShiftMode) return new Map()
+			return computeShiftColumnLayout(this.rooms, this.sessions)
 		},
 		roomIndexLookup () {
 			const m = new Map()
@@ -339,6 +363,12 @@ export default {
 				height = Math.round(height * scale)
 				return `[${slice.name}] minmax(${height}px, auto)`
 			}).join(' ')
+			if (this.isShiftMode) {
+				return {
+					'grid-template-columns': buildShiftGridTemplateColumns(this.rooms, this.sessions, this.shiftMinColWidth, this.shiftTimeColWidth),
+					'grid-template-rows': rows,
+				}
+			}
 			return {
 				'--total-rooms': this.rooms.length,
 				'grid-template-rows': rows
@@ -418,6 +448,13 @@ export default {
 			// breaks and such don't have ids
 			return !!session.id
 		},
+		getRoomHeaderStyle (room) {
+			const layout = this.shiftColumnLayout.get(room?.id ?? room)
+			if (!layout) return {}
+			return {
+				'grid-column': `${layout.colStart} / ${layout.colStart + layout.colSpan}`,
+			}
+		},
 		getChunkSessions (chunkRooms) {
 			const chunkSet = new Set(chunkRooms)
 			return this.sessions.filter(s => {
@@ -457,18 +494,18 @@ export default {
 			const roomIndex = this.roomIndexLookup.has(session.room) ? this.roomIndexLookup.get(session.room) : -1
 			const data = this.scheduleData?.value ?? this.scheduleData
 			if (isShiftSchedule(data) && session.start && session.end) {
-				const placement = computeShiftOverlapPlacement(session, this.sessions)
+				const placement = computeShiftOverlapPlacement(session, this.sessions, this.shiftColumnLayout)
 				if (placement) {
-					if (placement.startName) {
-						return {
-							'grid-row-start': getSliceName(placement.startName),
-							'grid-column': roomIndex > -1 ? roomIndex + 2 : null
-						}
-					}
 					return {
-						'grid-row-start': getSliceName(session.start),
-						'grid-column': roomIndex > -1 ? roomIndex + 2 : null
+						'grid-row': placement.gridRow,
+						'grid-column': placement.gridColumn,
 					}
+				}
+				const layout = this.shiftColumnLayout.get(session.room?.id ?? session.room)
+				const col = layout ? layout.colStart : (roomIndex > -1 ? roomIndex + 2 : null)
+				return {
+					'grid-row': `${getSliceName(session.start)} / ${getSliceName(session.end)}`,
+					'grid-column': col,
 				}
 			}
 			return {
