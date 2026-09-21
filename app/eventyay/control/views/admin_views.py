@@ -20,7 +20,6 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import (
     CreateView,
-    DeleteView,
     DetailView,
     FormView,
     ListView,
@@ -64,6 +63,7 @@ from eventyay.base.settings import (
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
 from eventyay.control.tasks import clear_event_data
 from eventyay.control.video.admin_dashboard import get_video_server_config
+from eventyay.helpers.compat import CompatDeleteView
 
 
 class SuperuserBase(AdministratorPermissionRequiredMixin):
@@ -670,7 +670,7 @@ class BBBServerUpdate(AdministratorPermissionRequiredMixin, UpdateView):
         return super().form_valid(form)
 
 
-class BBBServerDelete(AdministratorPermissionRequiredMixin, DeleteView):
+class BBBServerDelete(AdministratorPermissionRequiredMixin, CompatDeleteView):
     template_name = "control/bbb_delete.html"
     queryset = BBBServer.objects.all()
     success_url = "/admin/video/bbbs/"
@@ -731,7 +731,7 @@ class JanusServerUpdate(AdministratorPermissionRequiredMixin, UpdateView):
         return super().form_valid(form)
 
 
-class JanusServerDelete(AdministratorPermissionRequiredMixin, DeleteView):
+class JanusServerDelete(AdministratorPermissionRequiredMixin, CompatDeleteView):
     template_name = "control/janus_delete.html"
     queryset = JanusServer.objects.all()
     success_url = "/admin/video/janus/"
@@ -792,7 +792,7 @@ class JitsiServerUpdate(AdministratorPermissionRequiredMixin, UpdateView):
         return super().form_valid(form)
 
 
-class JitsiServerDelete(AdministratorPermissionRequiredMixin, DeleteView):
+class JitsiServerDelete(AdministratorPermissionRequiredMixin, CompatDeleteView):
     template_name = "control/jitsi_delete.html"
     queryset = JitsiServer.objects.all()
     success_url = "/admin/video/jitsi/"
@@ -860,7 +860,7 @@ class TurnServerUpdate(AdministratorPermissionRequiredMixin, UpdateView):
         return super().form_valid(form)
 
 
-class TurnServerDelete(AdministratorPermissionRequiredMixin, DeleteView):
+class TurnServerDelete(AdministratorPermissionRequiredMixin, CompatDeleteView):
     template_name = "control/turn_delete.html"
     queryset = TurnServer.objects.all()
     success_url = "/admin/video/turns/"
@@ -923,7 +923,7 @@ class LoungeMeshServerUpdate(AdministratorPermissionRequiredMixin, UpdateView):
         return super().form_valid(form)
 
 
-class LoungeMeshServerDelete(AdministratorPermissionRequiredMixin, DeleteView):
+class LoungeMeshServerDelete(AdministratorPermissionRequiredMixin, CompatDeleteView):
     template_name = "control/loungemesh_delete.html"
     queryset = LoungeMeshServer.objects.all()
     success_url = "/admin/video/loungemesh/"

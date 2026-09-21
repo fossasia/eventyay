@@ -150,8 +150,13 @@ class OAuthApplicationDeleteView(ApplicationDelete):
         ctx['confirm_message'] = confirm_message.format(code=f'<strong>{obj}</strong>')
         return ctx
 
+    def form_valid(self, form):
+        # DeleteView.post() calls form_valid(), not delete(), since Django 4.0.
+        # Without this the app is hard-deleted, or raises ProtectedError via LogEntry.
+        return self.delete(self.request, *self.args, **self.kwargs)
+
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
         self.object.active = False
-        self.object.save()
+        self.object.save(update_fields=['active'])
         return HttpResponseRedirect(self.success_url)
