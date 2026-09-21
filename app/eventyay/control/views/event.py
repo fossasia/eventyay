@@ -1742,6 +1742,8 @@ class QuickSetupView(FormView):
                     )
                     plugins_active.append('eventyay_passbook')
                 self.request.event.settings.ticketoutput_passbook__enabled = True
+        else:
+            self.request.event.settings.ticket_download = False
 
         if form.cleaned_data.get('payment_banktransfer__enabled', None):
             if 'eventyay.plugins.banktransfer' not in plugins_active:
