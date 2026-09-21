@@ -54,7 +54,7 @@
 }
 
 body:has(.od-dashboard) #page-content {
-  background: var(--color-grey-ultralight);
+  background: #ffffff;
 }
 
 /* --------------------------------------------------------------------------
@@ -646,42 +646,7 @@ body:has(.od-dashboard) #page-content {
 }
 .od-kpi-card.od-kpi-muted:hover { border-color: var(--od-muted); }
 
-/* Subtle decorative sparklines behind KPI values (mask uses theme token colors) */
-.od-kpi-sparkline {
-  position: relative;
-  overflow: hidden;
-}
 
-.od-kpi-sparkline::after {
-  content: "";
-  position: absolute;
-  right: 8px;
-  bottom: 36px;
-  width: 72px;
-  height: 28px;
-  opacity: 0.35;
-  pointer-events: none;
-  background-color: currentColor;
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 72 28' fill='none'%3E%3Cpath d='M1 22 C10 20 14 8 22 10 C30 12 34 24 42 18 C50 12 58 4 71 6' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 72 28' fill='none'%3E%3Cpath d='M1 22 C10 20 14 8 22 10 C30 12 34 24 42 18 C50 12 58 4 71 6' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
-  -webkit-mask-size: 100% 100%;
-  mask-size: 100% 100%;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-}
-
-.od-kpi-sparkline-blue::after { color: var(--od-blue); }
-.od-kpi-sparkline-green::after { color: var(--od-green); }
-.od-kpi-sparkline-purple::after { color: var(--od-purple); }
-.od-kpi-sparkline-orange::after { color: var(--od-orange); }
-
-.od-kpi-sparkline .od-kpi-value,
-.od-kpi-sparkline .od-kpi-top,
-.od-kpi-sparkline .od-kpi-hint,
-.od-kpi-sparkline .od-kpi-link {
-  position: relative;
-  z-index: 1;
-}
 
 /* --------------------------------------------------------------------------
    Event portfolio table
