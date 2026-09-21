@@ -445,7 +445,7 @@ class SubmissionSpeakerResendInvitation(SubmissionSpeakers):
             messages.warning(request, message)
             return redirect(self.object.orga_urls.speakers)
 
-        delivered = invitation.deliver(send_immediately=True, requestor=request.user)
+        delivered = invitation.resend(requestor=request.user)
         if delivered:
             message = _('Invitation sent to {email}.').format(email=invitation.email)
         else:
@@ -466,6 +466,38 @@ class SubmissionSpeakerResendInvitation(SubmissionSpeakers):
             messages.success(request, message)
         else:
             messages.warning(request, message)
+        return redirect(self.object.orga_urls.speakers)
+
+
+class SubmissionSpeakerRevokeInvitation(SubmissionSpeakers):
+    permission_required = 'base.update_submission'
+
+    def get(self, request, *args, **kwargs):
+        return redirect(self.object.orga_urls.speakers)
+
+    def post(self, request, *args, **kwargs):
+        invitation = get_object_or_404(
+            SpeakerInvitation,
+            submission=self.object,
+            pk=self.kwargs['pk'],
+            status=SpeakerInvitationStates.PENDING,
+        )
+        email = invitation.email
+        invitation.revoke(person=request.user)
+        message = _('The invitation to {email} was revoked.').format(email=email)
+
+        if is_ajax_request(request):
+            self.__dict__.pop('speakers', None)
+            self.__dict__.pop('pending_invitations', None)
+            return JsonResponse(
+                {
+                    'message': str(message),
+                    'success': True,
+                    'html': self.render_speakers_section(),
+                }
+            )
+
+        messages.success(request, message)
         return redirect(self.object.orga_urls.speakers)
 
 

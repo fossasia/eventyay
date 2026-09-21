@@ -133,6 +133,14 @@
             </p>
         {% endif %}
         {% include "orga/submission/fragment_invitation_state.html" with invitation=invitation %}
+        {% if can_edit_speakers %}
+            <button type="button" class="btn btn-danger"
+                    data-revoke-invitation="{% url 'orga:submissions.speakers.revoke_invitation' organizer=request.event.organizer.slug event=request.event.slug code=submission.code pk=invitation.pk %}"
+                    data-confirm-text="{% translate 'Do you really want to revoke this invitation?' %}"
+                    data-error-text="{% translate 'The invitation could not be revoked. Please try again.' %}">
+                <i class="fa fa-trash"></i> {% translate "Revoke invitation" %}
+            </button>
+        {% endif %}
     </div></div>
 {% endfor %}
 

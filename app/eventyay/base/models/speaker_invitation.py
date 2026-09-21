@@ -103,12 +103,14 @@ class SpeakerInvitation(PretalxModel):
         return self.status == SpeakerInvitationStates.PENDING
 
     @property
-    def can_resend(self):
-        if not self.is_pending:
-            return False
+    def is_delivered(self):
         if self.mail_state == SpeakerInvitationMailStates.SENT:
-            return False
-        return not (self.mail and self.mail.sent)
+            return True
+        return bool(self.mail and self.mail.sent)
+
+    @property
+    def can_resend(self):
+        return self.is_pending and self.mail_id is not None
 
     @property
     def display_name(self):
@@ -168,6 +170,29 @@ class SpeakerInvitation(PretalxModel):
         return True
 
     deliver.alters_data = True
+
+    def resend(self, requestor=None):
+        mail = self.mail
+        if mail.sent:
+            submissions = list(mail.submissions.all())
+            mail = mail.copy_to_draft()
+            mail.submissions.add(*submissions)
+        return self.deliver(mail=mail, send_immediately=True, requestor=requestor)
+
+    resend.alters_data = True
+
+    def revoke(self, person=None, orga=True):
+        if self.mail and not self.mail.sent:
+            self.mail.delete()
+        self.submission.log_action(
+            'eventyay.submission.speakers.invite.revoke',
+            person=person,
+            orga=orga,
+            data={'email': self.email},
+        )
+        self.delete()
+
+    revoke.alters_data = True
 
 
 @receiver(queuedmail_post_send)

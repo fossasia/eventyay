@@ -100,6 +100,12 @@
                             <button type="submit" class="btn btn-sm btn-outline-info">{% translate "Resend invitation" %}</button>
                         </form>
                     {% endif %}
+                    {% if can_invite_speakers and can_edit %}
+                        <form method="post" action="{% url 'cfp:event.user.submission.invite.revoke' organizer=request.event.organizer.slug event=request.event.slug code=submission.code pk=invitation.pk %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fa fa-trash"></i> {% translate "Revoke invitation" %}</button>
+                        </form>
+                    {% endif %}
                 </li>
             {% endfor %}
         </ul>

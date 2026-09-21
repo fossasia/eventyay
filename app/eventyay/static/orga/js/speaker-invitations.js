@@ -2,6 +2,7 @@ const SECTION_SELECTOR = "[data-speakers-section]"
 const FORM_SELECTOR = "[data-add-speaker-form]"
 const SUBMIT_SELECTOR = "[data-add-speaker-submit]"
 const RESEND_SELECTOR = "[data-resend-invitation]"
+const REVOKE_SELECTOR = "[data-revoke-invitation]"
 
 const getCsrfToken = () => {
     const field = document.querySelector("[name=csrfmiddlewaretoken]")
@@ -56,6 +57,9 @@ const bindSection = (section) => {
     }
     section.querySelectorAll(RESEND_SELECTOR).forEach((button) => {
         button.addEventListener("click", () => resendInvitation(section, button))
+    })
+    section.querySelectorAll(REVOKE_SELECTOR).forEach((button) => {
+        button.addEventListener("click", () => revokeInvitation(section, button))
     })
 }
 
@@ -134,6 +138,31 @@ const resendInvitation = async (section, button) => {
         showFeedback(section, button.dataset.errorText, true)
     } finally {
         stopSending(button, originalLabel)
+    }
+}
+
+const revokeInvitation = async (section, button) => {
+    if (button.dataset.confirmText && !window.confirm(button.dataset.confirmText)) return
+    button.disabled = true
+
+    const body = new FormData()
+    body.append("csrfmiddlewaretoken", getCsrfToken())
+
+    try {
+        const response = await fetch(button.dataset.revokeInvitation, {
+            method: "POST",
+            headers: { "X-Requested-With": "XMLHttpRequest" },
+            body,
+        })
+        const data = await response.json().catch(() => ({}))
+        if (data.html) {
+            replaceSection(section, data.html)
+        }
+        showFeedback(section, data.message || button.dataset.errorText, !data.success)
+    } catch (error) {
+        showFeedback(section, button.dataset.errorText, true)
+    } finally {
+        if (button.isConnected) button.disabled = false
     }
 }
 

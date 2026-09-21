@@ -308,6 +308,11 @@ urlpatterns = [
                                 name='submissions.speakers.resend_invitation',
                             ),
                             path(
+                                'speakers/invitations/<int:pk>/revoke',
+                                submission.SubmissionSpeakerRevokeInvitation.as_view(),
+                                name='submissions.speakers.revoke_invitation',
+                            ),
+                            path(
                                 'etherpad/generate',
                                 submission.SubmissionEtherpadGenerate.as_view(),
                                 name='submissions.etherpad.generate',

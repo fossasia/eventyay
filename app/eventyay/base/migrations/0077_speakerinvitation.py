@@ -12,7 +12,7 @@ import eventyay.base.models.mixins
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0075_voucher_limit_products'),
+        ('base', '0076_default_speaker_questions'),
     ]
 
     operations = [

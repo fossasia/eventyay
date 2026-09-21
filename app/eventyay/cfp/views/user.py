@@ -474,22 +474,20 @@ class SubmissionInviteView(LoggedInEventPageMixin, SubmissionViewMixin, FormView
     def form_valid(self, form):
         invitations = form.save()
         self.submission.log_action('eventyay.submission.speakers.invite', person=self.request.user)
-        failed = [
-            invitation
-            for invitation in invitations
-            if invitation.mail_state != SpeakerInvitationMailStates.SENT
-        ]
-        if failed:
-            messages.error(
-                self.request,
-                _('The invitation email could not be sent. Please try again.'),
-            )
-            return self.form_invalid(form)
         for invitation in invitations:
-            messages.success(
-                self.request,
-                _('Invitation sent to {email}.').format(email=invitation.email),
-            )
+            if invitation.mail_state == SpeakerInvitationMailStates.SENT:
+                messages.success(
+                    self.request,
+                    _('Invitation sent to {email}.').format(email=invitation.email),
+                )
+            else:
+                messages.error(
+                    self.request,
+                    _(
+                        'The invitation email to {email} could not be sent. '
+                        'You can resend it from the list of pending invitations.'
+                    ).format(email=invitation.email),
+                )
         return super().form_valid(form)
 
     def get_success_url(self):
@@ -508,7 +506,7 @@ class SubmissionInviteResendView(LoggedInEventPageMixin, SubmissionViewMixin, Vi
         )
         if not invitation.can_resend:
             messages.warning(request, _('This invitation cannot be resent.'))
-        elif invitation.deliver(send_immediately=True, requestor=request.user):
+        elif invitation.resend(requestor=request.user):
             messages.success(
                 request,
                 _('Invitation sent to {email}.').format(email=invitation.email),
@@ -517,6 +515,28 @@ class SubmissionInviteResendView(LoggedInEventPageMixin, SubmissionViewMixin, Vi
             messages.error(
                 request, _('The invitation email could not be sent. Please try again.')
             )
+        return redirect(self.submission.urls.user_base)
+
+
+class SubmissionInviteRevokeView(LoggedInEventPageMixin, SubmissionViewMixin, View):
+    permission_required = 'base.add_speaker_submission'
+
+    def get_permission_object(self):
+        return self.get_object()
+
+    def post(self, request, *args, **kwargs):
+        invitation = get_object_or_404(
+            SpeakerInvitation,
+            submission=self.submission,
+            pk=self.kwargs['pk'],
+            status=SpeakerInvitationStates.PENDING,
+        )
+        email = invitation.email
+        invitation.revoke(person=request.user, orga=False)
+        messages.success(
+            request,
+            _('The invitation to {email} was revoked.').format(email=email),
+        )
         return redirect(self.submission.urls.user_base)
 
 

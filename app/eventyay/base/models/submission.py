@@ -1111,7 +1111,7 @@ class Submission(GenerateCode, PretalxModel):
         if not invitation.user:
             invitation.user = speaker
             invitation.save(update_fields=['user', 'updated'])
-        if not created and not invitation.can_resend:
+        if not created and (not invitation.is_pending or invitation.is_delivered):
             return speaker, invitation
 
         mail = template.to_mail(
@@ -1127,6 +1127,9 @@ class Submission(GenerateCode, PretalxModel):
     def remove_speaker(self, speaker, orga=True, user=None):
         if self.speakers.filter(code=speaker.code).exists():
             self.speakers.remove(speaker)
+            self.speaker_invitations.filter(
+                Q(user=speaker) | Q(email__iexact=speaker.email)
+            ).delete()
             from eventyay.agenda.views.utils import (
                 clear_featured_speakers_without_active_submissions,
                 clear_schedule_caches,
@@ -1166,8 +1169,8 @@ class Submission(GenerateCode, PretalxModel):
         )
         to = to.split(',') if isinstance(to, str) else to
         invitations = []
-        for address in to:
-            address = address.strip().lower()
+        for raw_address in to:
+            address = raw_address.strip().lower()
             if not address:
                 continue
             invitation, created = SpeakerInvitation.objects.get_or_create(
@@ -1175,7 +1178,7 @@ class Submission(GenerateCode, PretalxModel):
                 email=address,
                 defaults={'invited_by': _from},
             )
-            if not created and not invitation.can_resend:
+            if not created and (not invitation.is_pending or invitation.is_delivered):
                 invitations.append(invitation)
                 continue
 

@@ -3,6 +3,7 @@ from django.core import mail as djmail
 from django_scopes import scope
 
 from eventyay.base.models import (
+    QueuedMail,
     SpeakerInvitation,
     SpeakerInvitationMailStates,
     SpeakerInvitationStates,
@@ -213,16 +214,41 @@ class TestInvitationIdentity:
 
             assert not invitation.can_resend
 
-    def test_invitation_with_sent_mail_cannot_be_resent(self, event, submission):
+    def test_sent_invitation_is_resent_as_a_new_mail(self, event, submission, user):
+        djmail.outbox = []
         with scope(event=event):
-            _speaker, invitation = submission.add_speaker(
-                email='jane@example.net', name='Jane Doe', send_immediately=False
-            )
+            invitation = submission.send_invite(to='jane@example.net', _from=user)[0]
+            first_mail = invitation.mail
             assert invitation.can_resend
 
-            invitation.mail.send()
+            assert invitation.resend(requestor=user) is True
 
-            assert not invitation.can_resend
+            invitation.refresh_from_db()
+            first_mail.refresh_from_db()
+            assert invitation.mail != first_mail
+            assert first_mail.sent is not None
+            assert invitation.mail.sent is not None
+            assert submission in invitation.mail.submissions.all()
+            assert invitation.mail_state == SpeakerInvitationMailStates.SENT
+            assert len(djmail.outbox) == 2
+
+    def test_failed_invitation_is_resent_with_the_same_mail(
+        self, event, submission, user, monkeypatch
+    ):
+        def explode(*args, **kwargs):
+            raise SendMailException('backend is down')
+
+        monkeypatch.setattr('eventyay.common.mail.send_mail_now', explode)
+        with scope(event=event):
+            invitation = submission.send_invite(to='jane@example.net', _from=user)[0]
+            first_mail = invitation.mail
+
+        monkeypatch.undo()
+        djmail.outbox = []
+        with scope(event=event):
+            assert invitation.resend(requestor=user) is True
+            assert invitation.mail == first_mail
+            assert len(djmail.outbox) == 1
 
     def test_outbox_send_marks_invitation_sent(self, event, submission):
         with scope(event=event):
@@ -280,3 +306,95 @@ class TestInvitationAcceptance:
         assert someone_else.status == SpeakerInvitationStates.PENDING
         assert someone_else.user is None
 
+
+@pytest.mark.django_db
+class TestRevokeInvitation:
+    def test_revoke_removes_invitation(self, event, submission, user):
+        with scope(event=event):
+            invitation = submission.send_invite(to='jane@example.net', _from=user)[0]
+            sent_mail = invitation.mail
+
+            invitation.revoke(person=user)
+
+            assert not SpeakerInvitation.objects.filter(pk=invitation.pk).exists()
+            assert QueuedMail.objects.filter(pk=sent_mail.pk).exists()
+            assert not submission.has_speaker_email('jane@example.net')
+
+    def test_revoke_deletes_unsent_mail(self, event, submission):
+        with scope(event=event):
+            _speaker, invitation = submission.add_speaker(
+                email='jane@example.net', name='Jane Doe', send_immediately=False
+            )
+            queued_mail = invitation.mail
+
+            invitation.revoke()
+
+            assert not QueuedMail.objects.filter(pk=queued_mail.pk).exists()
+
+    def test_revoked_address_can_be_invited_again(self, event, submission, user):
+        djmail.outbox = []
+        with scope(event=event):
+            submission.send_invite(to='jane@example.net', _from=user)[0].revoke()
+
+            invitation = submission.send_invite(to='jane@example.net', _from=user)[0]
+
+            assert invitation.mail_state == SpeakerInvitationMailStates.SENT
+            assert len(djmail.outbox) == 2
+
+    def test_removed_speaker_can_be_added_again(self, event, submission):
+        djmail.outbox = []
+        with scope(event=event):
+            speaker, _invitation = submission.add_speaker(
+                email='jane@example.net', name='Jane Doe'
+            )
+            submission.remove_speaker(speaker)
+
+            assert not SpeakerInvitation.objects.filter(submission=submission).exists()
+            assert not submission.has_speaker_email('jane@example.net')
+
+            submission.add_speaker(email='jane@example.net', name='Jane Doe')
+            assert len(djmail.outbox) == 2
+
+
+@pytest.mark.django_db
+class TestSubmitterInviteView:
+    def test_failed_invite_redirects_to_the_proposal(
+        self, event, submission, user, rf, monkeypatch
+    ):
+        from django.contrib.messages import get_messages
+        from django.contrib.messages.storage.fallback import FallbackStorage
+
+        from eventyay.cfp.forms.submissions import SubmissionInvitationForm
+        from eventyay.cfp.views.user import SubmissionInviteView
+
+        def explode(*args, **kwargs):
+            raise SendMailException('backend is down')
+
+        monkeypatch.setattr('eventyay.common.mail.send_mail_now', explode)
+        with scope(event=event):
+            request = rf.post('/')
+            request.user = user
+            request.event = event
+            request.session = {}
+            request._messages = FallbackStorage(request)
+
+            view = SubmissionInviteView()
+            view.request = request
+            view.kwargs = {'code': submission.code}
+            form = SubmissionInvitationForm(
+                submission=submission,
+                speaker=user,
+                data={'speaker': 'jane@example.net', 'subject': 'Hi', 'text': 'Join me'},
+            )
+            assert form.is_valid()
+
+            response = view.form_valid(form)
+
+            assert response.status_code == 302
+            assert response.url == submission.urls.user_base
+            invitation = SpeakerInvitation.objects.get(submission=submission)
+            assert invitation.mail_state == SpeakerInvitationMailStates.FAILED
+            assert invitation.can_resend
+            assert any(
+                'jane@example.net' in str(message) for message in get_messages(request)
+            )
