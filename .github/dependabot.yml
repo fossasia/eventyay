@@ -34,6 +34,17 @@ updates:
       # Ignore all setuptools updates; issue is not version-specific.
       # Can be removed once Dependabot handles no-op uv updates.
       - dependency-name: "setuptools"
+      # Git plugins are not on PyPI; pins are updated by update-plugin-pins.yml.
+      - dependency-name: "exhibition"
+      - dependency-name: "eventyay-paypal"
+      - dependency-name: "eventyay-stripe"
+      - dependency-name: "eventyay-bitpay"
+      - dependency-name: "eventyay-socialmedia"
+      - dependency-name: "eventyay-teamshifts"
+      - dependency-name: "eventyay-interpretation"
+      - dependency-name: "eventyay-hubspot"
+      - dependency-name: "eventyay-business"
+      - dependency-name: "eventyay-veditor"
 
   - package-ecosystem: "npm"
     directory: "/app/eventyay/webapp/video"
