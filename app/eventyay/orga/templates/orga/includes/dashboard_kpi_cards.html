@@ -25,7 +25,7 @@
         {% endif %}
 
         {% if can_view_submission_stats %}
-        <a href="{{ request.event.orga_urls.submissions }}" class="td-kpi-card td-kpi-blue td-kpi-sparkline td-kpi-sparkline-blue" title="{% trans 'Submitted proposals' %}">
+        <a href="{{ request.event.orga_urls.submissions }}" class="td-kpi-card td-kpi-blue" title="{% trans 'Submitted proposals' %}">
             <div class="td-kpi-top">
                 <span class="td-kpi-icon" aria-hidden="true"><span class="fa fa-inbox"></span></span>
                 <span class="td-kpi-label">{% trans "Submitted proposals" %}</span>
@@ -35,7 +35,7 @@
             <div class="td-kpi-link">{% trans "View all" %} <span aria-hidden="true">></span></div>
         </a>
 
-        <a href="{{ request.event.orga_urls.submissions }}?state=accepted" class="td-kpi-card td-kpi-green td-kpi-sparkline td-kpi-sparkline-green" title="{% trans 'Accepted proposals' %}">
+        <a href="{{ request.event.orga_urls.submissions }}?state=accepted" class="td-kpi-card td-kpi-green" title="{% trans 'Accepted proposals' %}">
             <div class="td-kpi-top">
                 <span class="td-kpi-icon" aria-hidden="true"><span class="fa fa-check-circle"></span></span>
                 <span class="td-kpi-label">{% trans "Accepted proposals" %}</span>
@@ -45,7 +45,7 @@
             <div class="td-kpi-link">{% trans "View all" %} <span aria-hidden="true">></span></div>
         </a>
 
-        <a href="{{ request.event.orga_urls.submissions }}?state=confirmed" class="td-kpi-card td-kpi-green td-kpi-sparkline td-kpi-sparkline-green" title="{% trans 'Confirmed sessions' %}">
+        <a href="{{ request.event.orga_urls.submissions }}?state=confirmed" class="td-kpi-card td-kpi-green" title="{% trans 'Confirmed sessions' %}">
             <div class="td-kpi-top">
                 <span class="td-kpi-icon" aria-hidden="true"><span class="fa fa-check-circle-o"></span></span>
                 <span class="td-kpi-label">{% trans "Confirmed sessions" %}</span>
@@ -57,7 +57,7 @@
         {% endif %}
 
         {% if can_view_schedule %}
-        <a href="{{ request.event.orga_urls.schedule }}" class="td-kpi-card td-kpi-blue td-kpi-sparkline td-kpi-sparkline-blue" title="{% trans 'Scheduled sessions' %}">
+        <a href="{{ request.event.orga_urls.schedule }}" class="td-kpi-card td-kpi-blue" title="{% trans 'Scheduled sessions' %}">
             <div class="td-kpi-top">
                 <span class="td-kpi-icon" aria-hidden="true"><span class="fa fa-calendar-check-o"></span></span>
                 <span class="td-kpi-label">{% trans "Scheduled sessions" %}</span>
@@ -69,7 +69,7 @@
         {% endif %}
 
         {% if can_view_speakers %}
-        <a href="{{ request.event.orga_urls.speakers }}" class="td-kpi-card td-kpi-blue td-kpi-sparkline td-kpi-sparkline-blue" title="{% trans 'Speakers' %}">
+        <a href="{{ request.event.orga_urls.speakers }}" class="td-kpi-card td-kpi-blue" title="{% trans 'Speakers' %}">
             <div class="td-kpi-top">
                 <span class="td-kpi-icon" aria-hidden="true"><span class="fa fa-users"></span></span>
                 <span class="td-kpi-label">{% trans "Speakers" %}</span>
@@ -81,7 +81,7 @@
         {% endif %}
 
         {% if can_view_submission_stats or can_review %}
-        <a href="{{ request.event.orga_urls.reviews }}" class="td-kpi-card td-kpi-purple td-kpi-sparkline td-kpi-sparkline-blue" title="{% trans 'Pending reviews' %}">
+        <a href="{{ request.event.orga_urls.reviews }}" class="td-kpi-card td-kpi-purple" title="{% trans 'Pending reviews' %}">
             <div class="td-kpi-top">
                 <span class="td-kpi-icon" aria-hidden="true"><span class="fa fa-clock-o"></span></span>
                 <span class="td-kpi-label">{% trans "Pending reviews" %}</span>
@@ -115,7 +115,7 @@
         {% endif %}
 
         {% if can_view_mails %}
-        <a href="{{ request.event.orga_urls.sent_mails }}" class="td-kpi-card td-kpi-blue td-kpi-sparkline td-kpi-sparkline-blue" title="{% trans 'Emails sent' %}">
+        <a href="{{ request.event.orga_urls.sent_mails }}" class="td-kpi-card td-kpi-blue" title="{% trans 'Emails sent' %}">
             <div class="td-kpi-top">
                 <span class="td-kpi-icon" aria-hidden="true"><span class="fa fa-envelope"></span></span>
                 <span class="td-kpi-label">{% trans "Emails sent" %}</span>
