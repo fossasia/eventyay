@@ -23,6 +23,7 @@ Plugin package               Repository                              Branch
 ``eventyay-interpretation``  ``fossasia/eventyay-interpretation``    ``main``
 ``eventyay-hubspot``         ``fossasia/eventyay-hubspot``           ``main``
 ``eventyay-business``        ``fossasia/eventyay-business``          ``main``
+``eventyay-veditor``         ``fossasia/eventyay-veditor``           ``main``
 ===========================  ======================================  ========
 
 Build Modes

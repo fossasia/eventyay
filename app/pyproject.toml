@@ -106,6 +106,7 @@ dependencies = [
     "eventyay-interpretation @ git+https://github.com/fossasia/eventyay-interpretation.git@main",
     "eventyay-hubspot @ git+https://github.com/fossasia/eventyay-hubspot.git@main",
     "eventyay-business @ git+https://github.com/fossasia/eventyay-business.git@main",
+    "eventyay-veditor @ git+https://github.com/fossasia/eventyay-veditor.git@main",
     "execnet>=2.1.2",
     "fido2>=2.2.0",
     "fonttools>=4.63.0",
