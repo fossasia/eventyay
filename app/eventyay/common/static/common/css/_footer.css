@@ -52,3 +52,16 @@
 .i18n-lang-name {
     display: inline-block;
 }
+
+/* Event Page & Public Base Footer Spacing */
+#main-card + footer {
+    margin-top: 32px;
+    padding-bottom: 32px;
+    text-align: center;
+    line-height: 1.8;
+}
+
+#main-card + footer .core-footer-nav {
+    margin-top: 14px;
+    margin-bottom: 8px;
+}
