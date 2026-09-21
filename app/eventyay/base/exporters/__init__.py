@@ -5,3 +5,4 @@ from .json import *  # noqa
 from .mail import *  # noqa
 from .orderlist import *  # noqa
 from .waitinglist import *  # noqa
+from .vouchers import *  # noqa
