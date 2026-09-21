@@ -237,7 +237,7 @@ const initReviewScore = () => {
                         },
                         body: new URLSearchParams({
                             score: select.value,
-                            category: select.value ? select.selectedOptions[0].dataset.category : "",
+                            category: select.dataset.category,
                         }),
                     })
 

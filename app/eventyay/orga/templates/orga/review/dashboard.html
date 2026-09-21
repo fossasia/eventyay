@@ -64,7 +64,7 @@
                         {% for category in independent_categories %}<col class="col-score-avg nowrap numeric">{% endfor %}
                     {% endif %}
                     {% if can_review or submissions_reviewed %}
-                        <col class="nowrap col-score-user numeric">
+                        {% for category in dashboard_score_categories %}<col class="nowrap col-score-user numeric">{% endfor %}
                         {% if independent_categories and not can_see_all_reviews %}
                             {% for category in independent_categories %}<col class="col-score-avg nowrap numeric">{% endfor %}
                         {% endif %}
@@ -98,11 +98,9 @@
                             {% endfor %}
                         {% endif %}
                         {% if can_review or submissions_reviewed %}
-                            <th class="col-score-user numeric">
-                                {% translate "Your score" %}
-                                <a href="{% querystring sort="my_score" %}"><i class="fa fa-caret-down" title="{% translate "Sort (high-low)" %}"></i></a>
-                                <a href="{% querystring sort="-my_score" %}"><i class="fa fa-caret-up" title="{% translate "Sort (low-high)" %}"></i></a>
-                            </th>
+                            {% for category in dashboard_score_categories %}
+                                <th class="col-score-user numeric text-left">{{ category.name }}</th>
+                            {% endfor %}
                             {% if independent_categories and not can_see_all_reviews %}
                                 {% for category in independent_categories %}
                                     <th class="col-score-user numeric"> {{ category.name }}</th>
@@ -151,24 +149,22 @@
                                 {% endfor %}
                             {% endif %}
                             {% if can_review or submissions_reviewed %}
+                            {% for category, user_score_id in submission.dashboard_scores %}
                             <td class="text-center col-score-user numeric">
                                 <div class="d-inline-flex align-items-center">
                                     <select
-                                         class="form-control review-score-select"
+                                         class="form-control review-score-select w-100"
                                          data-url="{% url 'orga:submissions.reviews.score' organizer=request.event.organizer.slug event=request.event.slug code=submission.code %}"
-                                         aria-label="{% translate "Your score" %}"
+                                         aria-label="{{ category.name }}"
+                                         data-category="{{ category.pk }}"
                                     >
-                                        <option value="" {% if submission.user_score is None %}selected{% endif %}>
+                                        <option value="" {% if user_score_id is None %}selected{% endif %}>
                                             {% translate "No score" %}
                                         </option>
-                                        {% for category in submission.score_categories %}
-                                            {% if not category.is_independent %}
-                                                {% for score in category.scores.all %}
-                                                    <option value="{{ score.pk }}" data-category="{{ category.pk }}" {% if score.pk in submission.user_score_ids %}selected{% endif %}>
-                                                        {{ score.label }} ({{ score.value|floatformat:"-2" }})
-                                                    </option>
-                                                {% endfor %}
-                                            {% endif %}
+                                        {% for score in category.scores.all %}
+                                            <option value="{{ score.pk }}" {% if score.pk == user_score_id %}selected{% endif %}>
+                                                {{ score.label }} ({{ score.value|floatformat:"-2" }})
+                                            </option>
                                         {% endfor %}
                                     </select>
                                     <i class="working fa fa-spinner fa-spin d-none"></i>
@@ -177,6 +173,7 @@
                                 </div>
                                 <div class="review-score-error text-danger d-none"></div>
                             </td>
+                            {% endfor %}
                                 {% if independent_categories and not can_see_all_reviews %}
                                     {% for score in submission.independent_scores %}
                                         <td class="col-score-user numeric"> {% if score is None %}-{% else %}{{ score }}{% endif %}</td>
