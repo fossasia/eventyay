@@ -10,12 +10,13 @@ a.c-linear-schedule-session(:class="{faved, 'has-date': showDate, 'short-session
 			.schedule-pending-label
 				span.schedule-pending-text {{ schedulePendingText }}
 		template(v-else)
-			.start(:class="{'has-ampm': hasAmPm}")
+			.start(:class="{'has-ampm': startTime.ampm}")
 				.date(v-if="showDate")
 					.weekday {{ weekdayLabel }}
 					.day-month {{ dayMonthLabel }}
-				.time {{ startTime.time }}
-				.ampm(v-if="startTime.ampm") {{ startTime.ampm }}
+				.clock
+					.time {{ startTime.time }}
+					.ampm(v-if="startTime.ampm") {{ startTime.ampm }}
 				.duration {{ getPrettyDuration(session.start, session.end) }}
 		.buffer(v-if="!isSchedulePending")
 		.is-live(v-if="showLiveBadge && isLive") {{ $t('live') }}
@@ -32,10 +33,12 @@ a.c-linear-schedule-session(:class="{faved, 'has-date': showDate, 'short-session
 				:aria-label="speakersAriaLabel")
 				span.speaker(v-for="(speaker, i) of namedSpeakers", :key="speaker.code || i")
 					img(
-						v-if="speaker.avatar_thumbnail_tiny || speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url",
-						:src="speaker.avatar_thumbnail_tiny || speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url",
+						v-if="speaker.avatar_thumbnail_tiny || speaker.avatar_thumbnail_default",
+						:src="speaker.avatar_thumbnail_tiny || speaker.avatar_thumbnail_default",
 						alt="",
-						aria-hidden="true")
+						aria-hidden="true",
+						loading="lazy",
+						decoding="async")
 					span.speaker-label {{ speaker.name }}
 					span.speaker-separator(v-if="i + 1 < namedSpeakers.length", aria-hidden="true") ,
 			span.speakers-overflow-hint(
@@ -437,7 +440,7 @@ expandClampedSessionText()
 	z-index: 10
 	display: flex
 	align-items: stretch
-	min-width: 300px
+	min-width: 0
 	min-height: 96px
 	margin: 8px 0
 	margin-right: 8px
@@ -519,21 +522,30 @@ expandClampedSessionText()
 					letter-spacing: 0.3px
 					line-height: 1
 					margin-top: 2px
+			.clock
+				display: flex
+				flex-direction: column
+				align-items: center
+				max-width: 100%
 			.time
 				font-size: 14px
 				font-weight: 700
 				line-height: 1.2
+				white-space: nowrap
+				font-variant-numeric: tabular-nums
 			.ampm
 				font-weight: 400
 				font-size: 10px
 				margin-top: 1px
 				opacity: 0.85
 				text-transform: uppercase
+				white-space: nowrap
 			.duration
 				font-weight: 400
 				font-size: 11px
 				color: rgba(255, 255, 255, 0.7)
 				margin-top: 4px
+				white-space: nowrap
 		.buffer
 			flex: auto
 		.is-live
@@ -802,61 +814,10 @@ expandClampedSessionText()
 	.c-linear-schedule-session .session-icons .btn-fav-container
 		display: inline-flex
 
-@media (max-width: 600px)
+@media (max-width: 900px)
 	.c-linear-schedule-session, .break
 		min-width: 0
-		margin: 8px 0
-		margin-right: 8px
-		min-height: 80px
-		.time-box
-			width: 54px
-			padding: 8px 6px 6px 2px
-			.start
-				align-items: flex-start
-				text-align: left
-				width: 100%
-				box-sizing: border-box
-				.date
-					align-self: stretch
-					padding: 3px 4px
-					margin-bottom: 4px
-					border-radius: 5px
-					.weekday
-						font-size: 9px
-					.day-month
-						font-size: 10px
-				.time
-					font-size: 13px
-					width: 100%
-					text-align: left
-				.ampm
-					font-size: 9px
-					align-self: flex-start
-				.duration
-					font-size: 10px
-					width: 100%
-					text-align: left
-		.info
-			padding: 6px
-			padding-right: 6px
-			&.has-icons
-				padding-right: 40px
-			.title
-				font-size: 14px
-			.abstract
-				sessionTextClamp(2)
-			.bottom-info
-				font-size: 12px
-		&.has-fav-count .info.has-icons
-			padding-right: 68px
-		.fav-count
-			top: 8px
-			right: 34px
-			height: 16px
-			min-width: 18px
-			padding: 0 4px
-			font-size: 8px
-			letter-spacing: -0.03em
+		margin-right: 4px
 
 .density-compact .c-linear-schedule-session,
 .density-compact .break

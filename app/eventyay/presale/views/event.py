@@ -15,7 +15,6 @@ import jwt
 from zoneinfo import ZoneInfo
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied
 from django.db.models import (
     Count,
@@ -42,9 +41,7 @@ from django.views.generic import TemplateView
 from django_scopes import scope
 
 from eventyay.agenda.views.utils import (
-    build_landing_featured_speakers_widget_schedule,
-    build_featured_only_schedule_data_from_profiles,
-    load_public_featured_speaker_profiles,
+    get_or_build_landing_featured_widget_schedule,
     serialize_widget_schedule_data,
 )
 from eventyay.base.channels import get_all_sales_channels
@@ -88,8 +85,6 @@ from eventyay.presale.views.organizer import (
     filter_qs_by_attr,
     weeks_for_template,
 )
-from eventyay.talk_rules.agenda import public_speakers_list_available
-
 from ...eventyay_common.utils import encode_email
 from . import (
     CartMixin,
@@ -880,31 +875,15 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
         context['featured_speakers_list_public'] = False
 
         event = self.request.event
-        featured_speaker_profiles = load_public_featured_speaker_profiles(
-            self.request.user,
-            event,
-        )
-
-        if featured_speaker_profiles:
-            context['featured_speakers'] = featured_speaker_profiles
-            schedule_data = build_landing_featured_speakers_widget_schedule(
-                event,
-                self.request.user,
-                featured_speaker_profiles,
+        schedule_data = get_or_build_landing_featured_widget_schedule(event, self.request.user)
+        if schedule_data:
+            context['featured_speakers'] = schedule_data.get('speakers') or []
+            context['featured_speakers_widget_schedule'] = schedule_data
+            context['featured_speakers_list_public'] = schedule_data.get('speakers_list_public', False)
+            context['featured_speakers_widget_schedule_json'] = serialize_widget_schedule_data(
+                schedule_data,
+                event=event,
             )
-            if not schedule_data:
-                schedule_data = build_featured_only_schedule_data_from_profiles(
-                    event,
-                    featured_speaker_profiles,
-                    speakers_list_public=public_speakers_list_available(AnonymousUser(), event),
-                )
-            if schedule_data:
-                context['featured_speakers_widget_schedule'] = schedule_data
-                context['featured_speakers_list_public'] = schedule_data.get('speakers_list_public', False)
-                context['featured_speakers_widget_schedule_json'] = serialize_widget_schedule_data(
-                    schedule_data,
-                    event=event,
-                )
 
         return context
 

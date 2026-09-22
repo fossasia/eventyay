@@ -493,9 +493,15 @@ def request_prefers_json_api(request):
 
 
 def is_load_shed_exempt(path):
-    if path.startswith('/healthcheck') or '/video/assets/' in path:
+    if path.startswith(('/healthcheck', '/media/', '/static/')) or '/video/assets/' in path:
         return True
     return bool(CHECKIN_EXEMPT_RE.search(path))
+
+
+def add_media_cache_headers(request, response):
+    if response.status_code == 200 and (request.path or '').startswith('/media/'):
+        response.setdefault('Cache-Control', 'public, max-age=86400, immutable')
+    return response
 
 
 def should_skip_session_save(response, modified):
@@ -535,10 +541,8 @@ class LoadSheddingMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        if MAX_CONCURRENT_REQUESTS <= 0:
-            return self.get_response(request)
-        if is_load_shed_exempt(request.path):
-            return self.get_response(request)
+        if MAX_CONCURRENT_REQUESTS <= 0 or is_load_shed_exempt(request.path):
+            return add_media_cache_headers(request, self.get_response(request))
 
         with LoadSheddingMiddleware.lock:
             if LoadSheddingMiddleware.active_requests >= MAX_CONCURRENT_REQUESTS:
@@ -546,7 +550,7 @@ class LoadSheddingMiddleware:
             LoadSheddingMiddleware.active_requests += 1
 
         try:
-            return self.get_response(request)
+            return add_media_cache_headers(request, self.get_response(request))
         finally:
             with LoadSheddingMiddleware.lock:
                 LoadSheddingMiddleware.active_requests -= 1

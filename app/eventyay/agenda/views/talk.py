@@ -39,6 +39,8 @@ from eventyay.agenda.views.utils import (
     encode_email,
     is_email_like,
 )
+from eventyay.base.models.auth import needs_avatar_thumbnails
+from eventyay.person.tasks import enqueue_missing_avatar_thumbnails
 from eventyay.base.models import (
     Event,
     Feedback,
@@ -154,6 +156,7 @@ def talk_starrers(request, event, slug, **kwargs):
 
         base_url = str(request.event.urls.base)
         items = []
+        missing_thumb_user_ids = []
         for fav in qs.select_related('user').order_by('-id')[:limit]:
             user = fav.user
             display_name = user.get_display_name() if user else ''
@@ -161,17 +164,21 @@ def talk_starrers(request, event, slug, **kwargs):
                 user and user.show_publicly and not user.deleted and user.code and not is_email_like(display_name)
             )
             if is_public_user:
+                avatar_url = user.get_avatar_url(
+                    event=request.event,
+                    thumbnail='tiny',
+                    generate_missing=False,
+                )
                 items.append(
                     {
                         'code': user.code,
                         'name': display_name,
-                        'avatar_url': user.get_avatar_url(
-                            event=request.event,
-                            thumbnail='tiny',
-                        ),
+                        'avatar_url': avatar_url,
                         'url': f'{base_url}people/{user.code}/stars/',
                     }
                 )
+                if needs_avatar_thumbnails(user, {'avatar_thumbnail_tiny': avatar_url}):
+                    missing_thumb_user_ids.append(user.pk)
             else:
                 items.append(
                     {
@@ -181,6 +188,7 @@ def talk_starrers(request, event, slug, **kwargs):
                         'url': '',
                     }
                 )
+        enqueue_missing_avatar_thumbnails(request.event.pk, missing_thumb_user_ids)
 
     response = JsonResponse({'total': total, 'public_total': public_total, 'items': items})
     response['Access-Control-Allow-Origin'] = '*'
