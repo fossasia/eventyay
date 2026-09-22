@@ -20,6 +20,7 @@ from eventyay.base.configurations import (
 from eventyay.base.configurations.lazy_i18n_string_list_base import (
     LazyI18nStringList,
 )
+from eventyay.base.operational_logging import log_flag_evaluation
 from eventyay.base.reldate import RelativeDateWrapper
 
 
@@ -145,9 +146,11 @@ def is_video_provider_enabled_for_organizer(provider_id: str) -> bool:
         return True
     try:
         gs = GlobalSettingsObject()
-        return gs.settings.get(f'video_provider_{provider_id}_organizer', as_type=bool, default=True)
+        enabled = gs.settings.get(f'video_provider_{provider_id}_organizer', as_type=bool, default=True)
     except Exception:
         return True
+    log_flag_evaluation(provider_id, enabled)
+    return enabled
 
 
 def is_video_provider_enabled_for_attendee(provider_id: str) -> bool:
@@ -155,9 +158,11 @@ def is_video_provider_enabled_for_attendee(provider_id: str) -> bool:
         return True
     try:
         gs = GlobalSettingsObject()
-        return gs.settings.get(f'video_provider_{provider_id}_attendee', as_type=bool, default=True)
+        enabled = gs.settings.get(f'video_provider_{provider_id}_attendee', as_type=bool, default=True)
     except Exception:
         return True
+    log_flag_evaluation(provider_id, enabled)
+    return enabled
 
 
 def get_provider_for_module_type(module_type: str):

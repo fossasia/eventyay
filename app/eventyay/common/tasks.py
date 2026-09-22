@@ -8,6 +8,7 @@ from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
 from eventyay.base.models import Event, Submission, User
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.celery_app import app
 from eventyay.common.image import process_image
 from eventyay.common.signals import periodic_task
@@ -119,7 +120,8 @@ def send_scheduled_queuedmail(self, mail_pk: int):
         try:
             self.retry(exc=exc, args=[mail_pk])
         except MaxRetriesExceededError:
-            logger.error("[ScheduledMail] Max retries exceeded for QueuedMail ID %s", mail_pk)
+            log_event('mail', 'mail.send', OUTCOME_FAILURE, error_code='retries_exhausted')
+            logger.error('[ScheduledMail] Max retries exceeded for QueuedMail ID %s', mail_pk)
 
 
 @app.task(name='eventyay.common.tasks.send_periodic_signal')
