@@ -1742,6 +1742,7 @@ class QuickSetupView(FormView):
                     )
                     plugins_active.append('eventyay_passbook')
                 self.request.event.settings.ticketoutput_passbook__enabled = True
+
         else:
             self.request.event.settings.ticket_download = False
 
