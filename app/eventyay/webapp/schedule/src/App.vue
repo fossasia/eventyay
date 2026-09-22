@@ -140,6 +140,7 @@ const TalkDetail = defineAsyncComponent(() => import('~/components/TalkDetail'))
 import { findScrollParent, getLocalizedString, getSessionTime, getSessionTypeLabel, isProperSession, isPopularityFeatureEnabled, isPopularitySortAvailable, isPopularityVisibleOnSchedule, normalizePopularityCount, computeTalkExporters, areScheduleExportsDisabled, resolveScheduleApiBase, talksToScheduleSessions, buildSessionsBySpeaker, talkToSession, sortSessionsByStart, isTalkSchedulePending, getCsrfToken, loadStarredSharingPreference, updateStarredSharingPreference, fetchWidgetScheduleData } from '~/utils'
 import { changeScheduleLanguage } from './i18n.js'
 import { isShiftSchedule, resolveMode } from './teamshifts-adapter'
+import { logOperational } from './operationalLog.js'
 
 function normalizeLocaleCode (code) {
 	if (!code) return ''
@@ -1014,6 +1015,7 @@ export default {
 				credentials: this.onHomeServer ? 'same-origin' : 'omit'
 			})
 			if (!response.ok) {
+				logOperational({action: 'schedule.fetch', outcome: 'failure', backend: 'schedule_api', error_code: 'http_error', status: response.status})
 				throw new Error(`HTTP error! status: ${response.status}`)
 			}
 			return response.json()
@@ -1025,6 +1027,7 @@ export default {
 			try {
 				this.shareStarredSessions = await updateStarredSharingPreference(this.eventUrl, this.shareStarredSessions)
 			} catch {
+				logOperational({action: 'schedule.fav', outcome: 'failure', backend: 'schedule_api', error_code: 'share_pref_failed'})
 				this.shareStarredSessions = previous
 			}
 		},
@@ -1088,8 +1091,8 @@ export default {
 			try {
 				localStorage.setItem(storageKey, JSON.stringify(this.favs))
 				return true
-			} catch (error) {
-				console.error('Failed to save favourites locally:', error)
+			} catch {
+				logOperational({action: 'schedule.fav', outcome: 'failure', backend: 'local_storage', error_code: 'quota_or_denied'})
 				this.pushErrorMessage(this.translationMessages.favs_not_saved || this.$t('Could not save favourites in this browser. Please check your browser storage settings.'))
 				return false
 			}
@@ -1167,9 +1170,8 @@ export default {
 			try {
 				const apiData = await this.remoteApiRequest(`speakers/${speakerCode}/?expand=answers.question`, 'GET')
 				speakerObj.apiContent = apiData
-			} catch (e) {
-				console.error(`Failed to fetch API content for speaker ${speakerCode}:`, e)
-				// Potentially set an error flag on speakerObj if needed for UI
+			} catch {
+				logOperational({action: 'schedule.fetch', outcome: 'failure', backend: 'schedule_api', error_code: 'speaker_failed'})
 			} finally {
 				speakerObj.isLoadingApiContent = false
 			}
@@ -1260,8 +1262,8 @@ export default {
 							}
 						}
 					}
-				} catch (e) {
-					console.error('Failed to fetch session details:', e)
+				} catch {
+					logOperational({action: 'schedule.fetch', outcome: 'failure', backend: 'schedule_api', error_code: 'session_failed'})
 					if (this.modalContent && this.modalContent.contentType === 'session' && this.modalContent.contentObject.id === session.id) {
 						this.modalContent.contentObject.isLoading = false
 					}

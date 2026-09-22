@@ -47,6 +47,7 @@ from eventyay.features.importers.tasks import conftool_update_schedule
 from eventyay.features.live.channels import GROUP_USER, GROUP_EVENT
 from eventyay.features.live.decorators import command, require_event_permission
 from eventyay.features.live.modules.base import BaseModule
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 
 logger = logging.getLogger(__name__)
 
@@ -130,15 +131,17 @@ class AuthModule(BaseModule):
                     s.increment(
                         f"authentication.failed,reason=expired_token,event={self.consumer.event.pk}"
                     )
-                    await self.consumer.send_error(code="auth.expired_token")
-                    return
+                log_event('video', 'live.auth', OUTCOME_FAILURE, error_code='expired_token', event_id=getattr(self.consumer.event, 'pk', None))
+                await self.consumer.send_error(code="auth.expired_token")
+                return
             except jwt.exceptions.InvalidTokenError:
                 async with statsd() as s:
                     s.increment(
                         f"authentication.failed,reason=invalid_token,event={self.consumer.event.pk}"
                     )
-                    await self.consumer.send_error(code="auth.invalid_token")
-                    return
+                log_event('video', 'live.auth', OUTCOME_FAILURE, error_code='invalid_token', event_id=getattr(self.consumer.event, 'pk', None))
+                await self.consumer.send_error(code="auth.invalid_token")
+                return
 
             token_traits = token.get("traits") or []
             token_has_organizer = any(
@@ -164,6 +167,7 @@ class AuthModule(BaseModule):
 
         live_features = (getattr(self.consumer.event, "config", None) or {}).get("live_features", {})
         if self.consumer.user.type == User.UserType.KIOSK and not live_features.get("kiosks", False):
+            log_event('video', 'live.auth', OUTCOME_FAILURE, error_code='kiosks_disabled', event_id=getattr(self.consumer.event, 'pk', None))
             await self.consumer.send_error(code="kiosks.disabled", message="Kiosks are currently disabled.")
             return
         if settings.SENTRY_DSN:
