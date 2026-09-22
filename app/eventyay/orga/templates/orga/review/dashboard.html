@@ -61,10 +61,10 @@
                 <colgroup>
                     {% if can_see_all_reviews %}
                         <col class="col-score-avg nowrap numeric">
-                        {% for category in independent_categories %}<col class="col-score-avg nowrap numeric">{% endfor %}
+                        {% for category in independent_categories %}<col class="nowrap col-score-user col-score-category numeric">{% endfor %}
                     {% endif %}
                     {% if can_review or submissions_reviewed %}
-                        {% for category in dashboard_score_categories %}<col class="nowrap col-score-user numeric">{% endfor %}
+                        {% for category in dashboard_score_categories %}<col class="nowrap col-score-user col-score-category numeric">{% endfor %}
                         {% if independent_categories and not can_see_all_reviews %}
                             {% for category in independent_categories %}<col class="col-score-avg nowrap numeric">{% endfor %}
                         {% endif %}

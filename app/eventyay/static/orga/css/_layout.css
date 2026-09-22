@@ -1436,6 +1436,14 @@ table .color-square {
   }
 }
 
+.review-table .col-score-category {
+  min-width: 100px;
+}
+
+.review-table thead .col-score-category {
+  text-align: right;
+}
+
 #submitBar {
   display: flex;
   justify-content: flex-end;
