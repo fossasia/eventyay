@@ -102,6 +102,7 @@ def make_speaker_qr_map(speaker_base_url: str) -> dict:
 
 
 class Schedule(PretalxModel):
+    log_prefix = 'eventyay.schedule'
     """The Schedule model contains all scheduled.
 
     :class:`~pretalx.schedule.models.slot.TalkSlot` objects (visible or not)

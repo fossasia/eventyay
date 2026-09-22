@@ -82,6 +82,7 @@ from eventyay.base.models.orders import QuestionAnswer, RevokedTicketSecret
 from eventyay.base.payment import PaymentException
 from eventyay.base.pdf import get_images
 from eventyay.base.secrets import assign_ticket_secret
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.services import tickets
 from eventyay.base.services.invoices import (
     generate_cancellation,
@@ -1342,6 +1343,14 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
             except ExportError as exc:
                 raise ValidationError(str(exc))
             except Exception:
+                log_event(
+                    'tickets',
+                    'ticket.generate',
+                    OUTCOME_FAILURE,
+                    error_code='badge_failed',
+                    event_id=getattr(self.request.event, 'pk', None),
+                    position_id=getattr(pos, 'pk', None),
+                )
                 logger.exception('Badge generation failed for position %s', pos.pk)
                 raise ValidationError(_('Could not generate the badge PDF.'))
             resp = HttpResponse(pdf_content, content_type=mimetype or 'application/pdf')
@@ -1854,6 +1863,10 @@ class QuotaExceededAPIException(APIException):
     status_code = 409
     default_detail = 'Quota exceeded.'
     default_code = 'QUOTA_EXCEEDED'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        log_event('tickets', 'quota.exceeded', OUTCOME_FAILURE, error_code='quota_exceeded')
 
 
 class InvoiceViewSet(viewsets.ReadOnlyModelViewSet):

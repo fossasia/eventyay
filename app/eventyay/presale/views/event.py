@@ -49,6 +49,7 @@ from eventyay.agenda.views.utils import (
 )
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.meetup import ensure_video_credentials, get_rsvp_product_and_quota, is_meetup_event
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.models import (
     Order,
@@ -1161,6 +1162,7 @@ class JoinOnlineVideoView(EventViewMixin, View):
         event = self.request.event
         is_allowed, order_position, order = self.validate_access(request, *args, **kwargs)
         if not is_allowed:
+            log_event('video', 'live.join', OUTCOME_FAILURE, error_code='not_allowed', event_id=event.pk)
             return HttpResponse(status=403, content='user_not_allowed')
 
         if is_meetup_event(event):
@@ -1172,6 +1174,7 @@ class JoinOnlineVideoView(EventViewMixin, View):
             or not self.request.event.settings.venueless_audience
             or not self.request.event.settings.venueless_secret
         ):
+            log_event('video', 'live.join', OUTCOME_FAILURE, error_code='misconfigured', event_id=event.pk)
             logger.error('Video Online configuration is not available for this event.')
             raise PermissionDenied(_('Please go back and try again.'))
 

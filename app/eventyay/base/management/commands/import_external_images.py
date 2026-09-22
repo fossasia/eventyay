@@ -13,6 +13,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from eventyay.base.models import Event, User, Event_SettingsStore
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.common.image import validate_image
 from eventyay.helpers.image_optimize import optimize_uploaded_image
 
@@ -81,8 +82,9 @@ class Command(BaseCommand):
                     return None
 
             return content
-        except requests.exceptions.RequestException as e:
-            self.stderr.write(self.style.ERROR(f"Failed to download {url}: {e}"))
+        except requests.exceptions.RequestException:
+            log_event('core', 'connection.get', OUTCOME_FAILURE, error_code='request_error', backend='import_images')
+            self.stderr.write(self.style.ERROR('Failed to download an external image'))
             return None
 
     def handle(self, *args, **options):

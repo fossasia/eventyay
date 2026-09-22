@@ -49,6 +49,7 @@ from eventyay.base.models import (
     TalkSlot,
     User,
 )
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.cfp.views.event import EventPageMixin
 from eventyay.common.urls import get_base_url
 from eventyay.common.utils.language import localize_event_text
@@ -721,6 +722,7 @@ class OnlineVideoJoin(EventPermissionRequired, View):
         for attr, label in required_fields:
             if not getattr(event.settings, attr):
                 logger.info('%s is missing.', label)
+                log_event('video', 'live.join', OUTCOME_FAILURE, error_code='misconfigured', event_id=event.pk)
                 return HttpResponse(status=HTTPStatus.FORBIDDEN, content=VideoJoinError.MISCONFIGURED)
 
         # If the logged-in user does not have "orga.view_schedule" permission, we check
@@ -728,8 +730,10 @@ class OnlineVideoJoin(EventPermissionRequired, View):
         if not request.user.has_perm('agenda.view_schedule', event):
             res = user_has_event_ticket(request.user, event)
             if res == TicketCheckResult.NO_TICKET:
+                log_event('video', 'live.join', OUTCOME_FAILURE, error_code='not_allowed', event_id=event.pk)
                 return HttpResponse(status=HTTPStatus.FORBIDDEN, content=VideoJoinError.NOT_ALLOWED)
             if res == TicketCheckResult.MISCONFIGURED:
+                log_event('video', 'live.join', OUTCOME_FAILURE, error_code='misconfigured', event_id=event.pk)
                 return HttpResponse(status=HTTPStatus.FORBIDDEN, content=VideoJoinError.MISCONFIGURED)
 
         # Redirect user to online event
