@@ -8,6 +8,7 @@ from django.utils.translation import gettext
 from reportlab.platypus.doctemplate import LayoutError
 
 from eventyay.base.i18n import LazyLocaleException, language
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.models import (
     CachedFile,
     Device,
@@ -31,7 +32,9 @@ logger = logging.getLogger(__name__)
 
 
 class ExportError(LazyLocaleException):
-    pass
+    def __init__(self, *args):
+        super().__init__(*args)
+        log_event('tickets', 'export.error', OUTCOME_FAILURE, error_code='export_error')
 
 
 @app.task(base=ProfiledEventTask, throws=(ExportError,), bind=True)

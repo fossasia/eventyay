@@ -53,8 +53,9 @@ from eventyay.base.models.orders import (
     OrderRefund,
     QuestionAnswer,
 )
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.payment import PaymentException
-from eventyay.base.services.checkin import perform_checkin
+from eventyay.base.services.checkin import CheckInError, perform_checkin
 from eventyay.base.services.invoices import (
     generate_cancellation,
     generate_invoice,
@@ -119,14 +120,18 @@ def record_video_join_checkin(event, position, include_pending):
     )[0]
     try:
         perform_checkin(position, cl, {})
+    except CheckInError:
+        logger.exception('Error during Eventyay Video check-in')
     except Exception:
-        logger.exception(
-            'Error during Eventyay Video check-in',
-            extra={
-                'event_id': getattr(event, 'id', None),
-                'position_id': getattr(position, 'id', None),
-            },
+        log_event(
+            'tickets',
+            'checkin.error',
+            OUTCOME_FAILURE,
+            error_code='video_checkin',
+            event_id=getattr(event, 'pk', None),
+            position_id=getattr(position, 'pk', None),
         )
+        logger.exception('Error during Eventyay Video check-in')
 
 
 class OrderDetailMixin(NoSearchIndexViewMixin):

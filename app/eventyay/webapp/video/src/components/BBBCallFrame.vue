@@ -16,11 +16,13 @@
 			allowfullscreen="true",
 			allowusermedia="true",
 			@load="onIframeLoaded"
+			@error="onIframeError"
 		)
 </template>
 
 <script>
 import api from 'lib/api'
+import {logOperational} from 'lib/operationalLog'
 
 export default {
 	name: 'BBBCallFrame',
@@ -81,12 +83,14 @@ export default {
 				if (response?.url) {
 					this.joinUrl = response.url
 					this.$emit('connected')
+					logOperational({action: 'bbb.join', outcome: 'success', backend: 'bbb'})
 				} else {
 					throw new Error('No join URL returned')
 				}
 			} catch (err) {
 				this.loading = false
 				this.error = err
+				logOperational({action: 'bbb.join', outcome: 'failure', backend: 'bbb', error_code: err?.code === 'bbb.join.missing_profile' ? 'missing_profile' : 'join_failed'})
 				if (err?.code === 'bbb.join.missing_profile') {
 					this.errorMsg = this.$t('Please update your display name in your profile to join.')
 				} else {
@@ -97,6 +101,13 @@ export default {
 		},
 		onIframeLoaded() {
 			this.loading = false
+			logOperational({action: 'iframe.load', outcome: 'success', backend: 'bbb'})
+		},
+		onIframeError() {
+			this.loading = false
+			this.error = true
+			this.errorMsg = this.$t('Meeting server is currently unavailable.')
+			logOperational({action: 'iframe.error', outcome: 'failure', backend: 'bbb', error_code: 'iframe_error'})
 		},
 		cleanupMedia() {
 			if (this.$refs.iframeEl) {

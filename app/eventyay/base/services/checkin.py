@@ -35,6 +35,7 @@ from eventyay.base.models import (
     OrderPosition,
     QuestionOption,
 )
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.signals import checkin_created, order_placed, periodic_task
 from eventyay.helpers.jsonlogic import Logic
 from eventyay.helpers.jsonlogic_query import (
@@ -316,6 +317,7 @@ class CheckInError(Exception):
         self.code = code
         self.cross_gate = cross_gate
         super().__init__(msg)
+        log_event('tickets', 'checkin.error', OUTCOME_FAILURE, error_code=code)
 
 
 def resolve_checkin_api_error(error):
