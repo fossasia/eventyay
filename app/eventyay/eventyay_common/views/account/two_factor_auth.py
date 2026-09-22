@@ -373,7 +373,7 @@ class TwoFactorAuthRegenerateEmergencyView(TwoFactorAuthPageMixin, TemplateView)
         d = StaticDevice.objects.create(user=request.user, name='emergency')
         for _i in range(10):
             d.token_set.create(token=get_random_string(length=12, allowed_chars='1234567890'))
-        request.user.log_action('eventyay_common:account.2fa.regenemergency', user=request.user)
+        request.user.log_action('eventyay.user.settings.2fa.regenemergency', user=request.user)
         request.user.send_security_notice([_('Your two-factor emergency codes have been regenerated.')])
         request.user.update_session_token()
         update_session_auth_hash(request, request.user)
