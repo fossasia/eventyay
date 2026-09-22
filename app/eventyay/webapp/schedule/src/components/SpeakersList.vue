@@ -1029,7 +1029,6 @@ export default {
 			gap: 1rem
 			flex-wrap: wrap
 			padding: 10px 12px
-			border-top: 1px solid $clr-grey-300
 
 		.featured-speaker-card[open] .featured-speaker-social-row
 			display: flex
