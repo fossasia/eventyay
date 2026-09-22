@@ -873,6 +873,10 @@ class ProductVariationForm(I18nModelForm):
         for f in ADMISSION_VALIDITY_FIELD_NAMES:
             if f in self.fields and f != 'admission_validity_mode':
                 self.fields[f].required = False
+        
+        self.fields['default_price'].error_messages['invalid'] = _('Please enter a valid price.')
+        if 'original_price' in self.fields:
+            self.fields['original_price'].error_messages['invalid'] = _('Please enter a valid price.')
 
     def clean_default_price(self):
         return clean_default_price(self.cleaned_data.get('default_price'))
