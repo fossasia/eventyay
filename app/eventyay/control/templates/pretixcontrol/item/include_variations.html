@@ -51,19 +51,13 @@
                     {% bootstrap_field variation_form.default_price addon_after=request.event.currency layout="control" %}
                     {% bootstrap_field variation_form.original_price addon_after=request.event.currency layout="control" %}
                     {% bootstrap_field variation_form.description layout="control" %}
-                    {% if form.admission.value %}
+                    <div {% if not form.admission.value %}style="display: none;"{% endif %}>
                         {% bootstrap_field variation_form.admission_validity_mode layout="control" %}
                         {% bootstrap_field variation_form.admission_valid_from layout="control" %}
                         {% bootstrap_field variation_form.admission_valid_until layout="control" %}
                         {% bootstrap_field variation_form.admission_valid_from_offset_minutes layout="control" %}
                         {% bootstrap_field variation_form.admission_valid_until_offset_minutes layout="control" %}
-                    {% else %}
-                        <input type="hidden" name="{{ variation_form.admission_validity_mode.html_name }}" value="{{ variation_form.instance.admission_validity_mode|default_if_none:'inherit' }}">
-                        <input type="hidden" name="{{ variation_form.admission_valid_from.html_name }}" value="{{ variation_form.admission_valid_from.value|default_if_none:'' }}">
-                        <input type="hidden" name="{{ variation_form.admission_valid_until.html_name }}" value="{{ variation_form.admission_valid_until.value|default_if_none:'' }}">
-                        <input type="hidden" name="{{ variation_form.admission_valid_from_offset_minutes.html_name }}" value="{{ variation_form.admission_valid_from_offset_minutes.value|default_if_none:'' }}">
-                        <input type="hidden" name="{{ variation_form.admission_valid_until_offset_minutes.html_name }}" value="{{ variation_form.admission_valid_until_offset_minutes.value|default_if_none:'' }}">
-                    {% endif %}
+                    </div>
                 </div>
             </div>
         {% endfor %}
@@ -98,19 +92,13 @@
                     {% bootstrap_field formset.empty_form.default_price addon_after=request.event.currency layout="control" %}
                     {% bootstrap_field formset.empty_form.original_price addon_after=request.event.currency layout="control" %}
                     {% bootstrap_field formset.empty_form.description layout="control" %}
-                    {% if form.admission.value %}
+                    <div {% if not form.admission.value %}style="display: none;"{% endif %}>
                         {% bootstrap_field formset.empty_form.admission_validity_mode layout="control" %}
                         {% bootstrap_field formset.empty_form.admission_valid_from layout="control" %}
                         {% bootstrap_field formset.empty_form.admission_valid_until layout="control" %}
                         {% bootstrap_field formset.empty_form.admission_valid_from_offset_minutes layout="control" %}
                         {% bootstrap_field formset.empty_form.admission_valid_until_offset_minutes layout="control" %}
-                    {% else %}
-                        <input type="hidden" name="{{ formset.empty_form.admission_validity_mode.html_name }}" value="inherit">
-                        <input type="hidden" name="{{ formset.empty_form.admission_valid_from.html_name }}" value="">
-                        <input type="hidden" name="{{ formset.empty_form.admission_valid_until.html_name }}" value="">
-                        <input type="hidden" name="{{ formset.empty_form.admission_valid_from_offset_minutes.html_name }}" value="">
-                        <input type="hidden" name="{{ formset.empty_form.admission_valid_until_offset_minutes.html_name }}" value="">
-                    {% endif %}
+                    </div>
                 </div>
             </div>
         {% endescapescript %}
