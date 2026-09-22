@@ -1,4 +1,5 @@
 import pytest
+from django.urls import reverse
 from eventyay.eventyay_common.templatetags.auth_login_tags import get_login_context
 from eventyay.base.settings import GlobalSettingsObject
 
@@ -71,3 +72,11 @@ def test_get_login_context_unconfigured_providers(rf):
     # Should be filtered out by order_login_providers/get_preferred_provider
     assert result['enabled_providers'] == []
     assert result['preferred_provider'] is None
+
+
+@pytest.mark.django_db
+def test_login_page_loads_navbar_styles(client, settings):
+    settings.COMPRESS_ENABLED = False
+    response = client.get(reverse('auth.login'))
+    assert response.status_code == 200
+    assert 'common/css/_navbar.css' in response.content.decode()
