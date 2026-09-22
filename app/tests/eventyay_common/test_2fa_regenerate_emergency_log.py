@@ -1,6 +1,6 @@
 import pytest
 from django.urls import reverse
-from django_otp.plugins.otp_static.models import StaticDevice
+from django_otp.plugins.otp_static.models import StaticDevice, StaticToken
 
 from eventyay.base.models import User
 from eventyay.common.consts import KEY_LAST_FORCE_LOGIN
@@ -38,11 +38,17 @@ def test_regenerating_emergency_codes_replaces_the_tokens(client):
 
     client.post(reverse('eventyay_common:account.2fa.regenemergency'))
     device = StaticDevice.objects.get(user=user, name='emergency')
-    first = set(device.token_set.values_list('token', flat=True))
-    assert len(first) == 10
+    first_device_pk = device.pk
+    first_token_pks = set(device.token_set.values_list('pk', flat=True))
+    assert len(first_token_pks) == 10
 
     client.post(reverse('eventyay_common:account.2fa.regenemergency'))
+
+    # The view deletes the old device before creating a fresh one, so neither the
+    # device nor any of its token rows survive the second call. Asserting on the rows
+    # rather than on the generated values keeps this independent of the RNG.
     device = StaticDevice.objects.get(user=user, name='emergency')
-    second = set(device.token_set.values_list('token', flat=True))
-    assert len(second) == 10
-    assert not (first & second)
+    assert device.pk != first_device_pk
+    assert not StaticDevice.objects.filter(pk=first_device_pk).exists()
+    assert not StaticToken.objects.filter(pk__in=first_token_pks).exists()
+    assert device.token_set.count() == 10
