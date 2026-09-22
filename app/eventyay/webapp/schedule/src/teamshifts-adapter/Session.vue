@@ -79,6 +79,7 @@ div.c-linear-schedule-session.is-shift-session(
 import ShiftConfirmDialog from './ShiftConfirmDialog.vue'
 import AssigneesPopover from './AssigneesPopover.vue'
 import { getLocalizedString, getPrettyDuration, getSessionTime, getCsrfToken } from '../utils'
+import { logOperational } from '../operationalLog.js'
 import {
 	getCapacityStatus,
 	getAssignedList,
@@ -369,6 +370,7 @@ export default {
 				})
 				const data = await response.json().catch(() => ({}))
 				if (!response.ok) {
+					logOperational({action: 'schedule.save', outcome: 'failure', backend: 'teamshifts', error_code: 'http_error', status: response.status})
 					this.confirmError = data.error || this.$t('Could not update this shift.')
 					return
 				}
@@ -380,6 +382,7 @@ export default {
 				}
 				this.closeConfirm()
 			} catch {
+				logOperational({action: 'schedule.save', outcome: 'failure', backend: 'teamshifts', error_code: 'network_error'})
 				this.confirmError = this.$t('Could not update this shift.')
 			} finally {
 				this.claimBusy = false

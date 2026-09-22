@@ -2,6 +2,7 @@ import Vuex from 'vuex'
 import { persistLanguage, changeLanguage } from 'i18n'
 import { jwtDecode } from 'jwt-decode'
 import api, { initApi } from 'lib/api'
+import { logOperational } from 'lib/operationalLog'
 import { doesTraitsMatchGrants } from 'lib/traitGrants'
 import announcement from './announcement'
 import chat from './chat'
@@ -405,7 +406,7 @@ export default new Vuex.Store({
 			}
 
 			const handlePollError = (error) => {
-				console.error('Current stream poll failed', {roomId, status: error.status})
+				logOperational({action: 'stream.poll', outcome: 'failure', backend: 'live', error_code: isPermanentStreamPollError(error) ? 'permanent' : 'transient', status: typeof error?.status === 'number' ? error.status : undefined})
 				if (isPermanentStreamPollError(error)) {
 					dispatch('stopStreamPolling')
 					return

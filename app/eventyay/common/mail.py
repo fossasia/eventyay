@@ -1,13 +1,14 @@
 import logging
 from contextlib import suppress
 from email.utils import formataddr
-from smtplib import SMTPResponseException, SMTPSenderRefused
+from smtplib import SMTPRecipientsRefused, SMTPResponseException, SMTPSenderRefused
 
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives, get_connection
 from django.core.mail.backends.smtp import EmailBackend
 
 from eventyay.base.models.event import Event
+from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
 from eventyay.celery_app import app
 from eventyay.common.exceptions import SendMailException
 
@@ -133,12 +134,28 @@ def mail_send_task(
 
     try:
         backend.send_messages([email])
+        log_event('mail', 'mail.send', OUTCOME_SUCCESS, event_id=event.pk if event else None, mail_type='talk')
+    except SMTPRecipientsRefused as exception:  # pragma: no cover
+        smtp_codes = [item[0] for item in exception.recipients.values()]
+        bounce_code = smtp_codes[0] if smtp_codes else None
+        logger.exception('Error sending email')
+        if bounce_code in (554, 571):
+            log_event('mail', 'mail.complaint', OUTCOME_FAILURE, error_code='policy_rejected', smtp_code=bounce_code, event_id=event.pk if event else None)
+        else:
+            log_event('mail', 'mail.bounce', OUTCOME_FAILURE, error_code='recipient_refused', smtp_code=bounce_code, event_id=event.pk if event else None)
+        raise SendMailException(f'Failed to send an email to {to}: {exception}', already_logged=True)
     except SMTPResponseException as exception:  # pragma: no cover
         # Retry on external problems: Connection issues (101, 111), timeouts (421), filled-up mailboxes (422),
         # out of memory (431), network issues (442), another timeout (447), or too many mails sent (452)
         if exception.smtp_code in (101, 111, 421, 422, 431, 442, 447, 452):
             self.retry(max_retries=5, countdown=2 ** (self.request.retries * 2))
         logger.exception('Error sending email')
+        if exception.smtp_code in (554, 571):
+            log_event('mail', 'mail.complaint', OUTCOME_FAILURE, error_code='policy_rejected', smtp_code=exception.smtp_code, event_id=event.pk if event else None)
+            raise SendMailException(f'Failed to send an email to {to}: {exception}', already_logged=True)
+        if exception.smtp_code >= 500:
+            log_event('mail', 'mail.bounce', OUTCOME_FAILURE, error_code='recipient_refused', smtp_code=exception.smtp_code, event_id=event.pk if event else None)
+            raise SendMailException(f'Failed to send an email to {to}: {exception}', already_logged=True)
         raise SendMailException(f'Failed to send an email to {to}: {exception}')
     except Exception as exception:  # pragma: no cover
         logger.exception('Error sending email')

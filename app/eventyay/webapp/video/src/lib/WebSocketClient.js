@@ -1,6 +1,7 @@
 /* global WebSocket */
 import EventEmitter from 'events'
 import ApiError from './ApiError'
+import {logOperational} from './operationalLog'
 
 const defer = function() {
 	const deferred = {}
@@ -57,6 +58,9 @@ class WebSocketClient extends EventEmitter {
 			if (this._openRequests[id]) {
 				const timeoutedRequest = this._popPendingRequest(id)
 				timeoutedRequest.deferred.reject(new Error('call timed out'))
+				if (name !== 'event.client_log') {
+					logOperational({action: 'ws.error', outcome: 'failure', backend: 'live', error_code: 'call_timeout'})
+				}
 			}
 		}, options.timeout)
 		return promise
@@ -75,6 +79,7 @@ class WebSocketClient extends EventEmitter {
 		this._socket.addEventListener('open', () => {
 			this.emit('open')
 			this.socketState = 'open'
+			logOperational({action: 'ws.connect', outcome: 'success', backend: 'live'})
 			this._authenticate()
 			this._joinTimeout = setTimeout(() => {
 				this._handlePingTimeout()
@@ -84,6 +89,9 @@ class WebSocketClient extends EventEmitter {
 		this._socket.addEventListener('close', (event) => {
 			this.socketState = 'closed'
 			this.emit('closed', event.code)
+			if (event.code && event.code !== 1000 && event.code !== 1001) {
+				logOperational({action: 'ws.close', outcome: 'failure', backend: 'live', error_code: 'abnormal_close', status: event.code})
+			}
 			if (!this._normalClose) {
 				setTimeout(() => {
 					this.emit('reconnecting')
@@ -140,6 +148,7 @@ class WebSocketClient extends EventEmitter {
 	_handlePingTimeout() {
 		this._socket.close()
 		this.emit('closed')
+		logOperational({action: 'ws.error', outcome: 'failure', backend: 'live', error_code: 'ping_timeout'})
 	}
 
 	_processMessage(rawMessage) {
