@@ -8,6 +8,7 @@
     {% compress css %}
         <link rel="stylesheet" type="text/x-scss" href="{% static "pretixcontrol/scss/auth.scss" %}"/>
         <link rel="stylesheet" type="text/x-scss" href="{% static "pretixcontrol/scss/main.scss" %}" />
+        <link rel="stylesheet" type="text/css" href="{% static "common/css/_navbar.css" %}" />
         <link rel="stylesheet" type="text/css" href="{% static "common/css/_footer.css" %}"/>
     {% endcompress %}
     <link rel="stylesheet" type="text/css" href="{% static "common/css/password_toggle.css" %}" />
@@ -41,7 +42,7 @@
     </script>
     <script type="module" src="{% static 'common/js/password_toggle.js' %}"></script>
 </head>
-<body>
+<body class="auth-page">
     <div id="wrapper">
         <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
             <div class="navbar-header">
