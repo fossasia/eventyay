@@ -79,6 +79,7 @@ from eventyay.base.models.orders import (
     OrderRefund,
 )
 from eventyay.base.models.tax import cc_to_vat_prefix, is_eu_country
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.payment import PaymentException
 from eventyay.base.secrets import assign_ticket_secret
 from eventyay.base.services import tickets
@@ -1736,7 +1737,8 @@ class OrderCheckVATID(OrderView):
             except vat_moss_lite.errors.InvalidError:
                 messages.error(self.request, _('This VAT ID is not valid.'))
             except vat_moss_lite.errors.WebServiceUnavailableError:
-                logger.exception('VAT ID checking failed for country {}'.format(ia.country))
+                log_event('tickets', 'connection.vat', OUTCOME_FAILURE, error_code='vies_unavailable', backend='vies')
+                logger.exception('VAT ID checking failed')
                 messages.error(
                     self.request,
                     _(

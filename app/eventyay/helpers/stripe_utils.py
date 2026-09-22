@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 
 from eventyay.base.models import BillingInvoice, Organizer
 from eventyay.base.models.organizer import OrganizerBillingModel
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.settings import GlobalSettingsObject
 
 logger = logging.getLogger(__name__)
@@ -73,40 +74,46 @@ def handle_stripe_errors(operation_name: str):
             try:
                 return func(*args, **kwargs)
             except stripe.error.APIError as e:
-                logger.error('Stripe API error during %s: %s', operation_name, str(e))
+                log_event('plugins', 'connection.stripe', OUTCOME_FAILURE, error_code='api_error', backend='stripe')
+                logger.error('Stripe API error during %s: %s', operation_name, e)
                 raise ValidationError('Stripe service error.')
             except stripe.error.APIConnectionError as e:
-                logger.error('API connection error during %s: %s', operation_name, str(e))
+                log_event('plugins', 'connection.stripe', OUTCOME_FAILURE, error_code='connection_error', backend='stripe')
+                logger.error('API connection error during %s: %s', operation_name, e)
                 raise ValidationError('Network communication error.')
             except stripe.error.AuthenticationError as e:
-                logger.error('Authentication error during %s: %s', operation_name, str(e))
+                log_event('plugins', 'connection.stripe', OUTCOME_FAILURE, error_code='auth_error', backend='stripe')
+                logger.error('Authentication error during %s: %s', operation_name, e)
                 raise ValidationError(
                     'Authentication failed. Please contact the administrator to check the configuration of the Stripe API key.'
                 )
             except stripe.error.CardError as e:
-                logger.error('Card error during %s: %s', operation_name, str(e))
+                log_event('plugins', 'connection.stripe', OUTCOME_FAILURE, error_code='card_error', backend='stripe')
+                logger.error('Card error during %s: %s', operation_name, e)
                 raise ValidationError('Card error.')
             except stripe.error.RateLimitError as e:
-                logger.error('Rate limit error during %s: %s', operation_name, str(e))
+                log_event('plugins', 'connection.stripe', OUTCOME_FAILURE, error_code='rate_limit', backend='stripe')
+                logger.error('Rate limit error during %s: %s', operation_name, e)
                 raise ValidationError('Too many requests. Please try again later.')
             except stripe.error.InvalidRequestError as e:
-                logger.error('Invalid request error during %s: %s', operation_name, str(e))
+                log_event('plugins', 'connection.stripe', OUTCOME_FAILURE, error_code='invalid_request', backend='stripe')
+                logger.error('Invalid request error during %s: %s', operation_name, e)
                 raise ValidationError('Invalid request.')
             except stripe.error.SignatureVerificationError as e:
-                logger.error(
-                    'Signature verification failed during %s: %s',
-                    operation_name,
-                    str(e),
-                )
+                log_event('plugins', 'connection.stripe', OUTCOME_FAILURE, error_code='signature_error', backend='stripe')
+                logger.error('Signature verification failed during %s: %s', operation_name, e)
                 raise ValidationError('Webhook signature verification failed.')
             except stripe.error.PermissionError as e:
-                logger.error('Permission error during %s: %s', operation_name, str(e))
+                log_event('plugins', 'connection.stripe', OUTCOME_FAILURE, error_code='permission_error', backend='stripe')
+                logger.error('Permission error during %s: %s', operation_name, e)
                 raise ValidationError('Permission denied.')
             except stripe.error.IdempotencyError as e:
-                logger.error('Idempotency error during %s: %s', operation_name, str(e))
+                log_event('plugins', 'connection.stripe', OUTCOME_FAILURE, error_code='idempotency_error', backend='stripe')
+                logger.error('Idempotency error during %s: %s', operation_name, e)
                 raise ValidationError('Idempotency error.')
             except stripe.error.StripeError as e:
-                logger.error('Stripe error during %s: %s', operation_name, str(e))
+                log_event('plugins', 'connection.stripe', OUTCOME_FAILURE, error_code='stripe_error', backend='stripe')
+                logger.error('Stripe error during %s: %s', operation_name, e)
                 raise ValidationError('Payment processing error.')
 
         return wrapper

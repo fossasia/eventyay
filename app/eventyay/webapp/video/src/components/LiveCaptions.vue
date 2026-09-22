@@ -9,6 +9,8 @@
 </template>
 
 <script>
+import { logOperational } from 'lib/operationalLog'
+
 export default {
 	name: 'LiveCaptions',
 	props: {
@@ -83,8 +85,8 @@ export default {
 					this.attemptReconnect()
 				}
 			}
-			this.ws.onerror = (e) => {
-				console.error('Caption WebSocket error:', e)
+			this.ws.onerror = () => {
+				logOperational({action: 'captions.ws', outcome: 'failure', backend: 'captions', error_code: 'ws_error'})
 				this.ws?.close()
 			}
 		},

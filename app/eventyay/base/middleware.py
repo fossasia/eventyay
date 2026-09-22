@@ -1,6 +1,7 @@
 import os
 import re
 import threading
+import time
 import zoneinfo
 from collections import OrderedDict
 from urllib.parse import urlsplit
@@ -22,6 +23,7 @@ from django.utils.translation.trans_real import (
 
 from eventyay.base.i18n import get_language_without_region
 from eventyay.base.models import GlobalPluginConfig
+from eventyay.base.operational_logging import bind_request_id, log_request_outcome, log_request_start, reset_request_id, sanitize_correlation_id
 from eventyay.base.settings import global_settings_object
 from eventyay.common.urls import get_url_origin
 from eventyay.multidomain.urlreverse import (
@@ -548,3 +550,31 @@ class LoadSheddingMiddleware:
         finally:
             with LoadSheddingMiddleware.lock:
                 LoadSheddingMiddleware.active_requests -= 1
+
+
+class CorrelationIdMiddleware(MiddlewareMixin):
+    """Bind a request correlation ID and log 401/403/5xx outcomes."""
+
+    def process_request(self, request: HttpRequest):
+        request_id = sanitize_correlation_id(request.headers.get('X-Request-ID'))
+        request.request_id = request_id
+        request._operational_started = time.monotonic()
+        bind_request_id(request_id)
+        try:
+            log_request_start(request)
+        except Exception:
+            pass
+
+    def process_response(self, request: HttpRequest, response: HttpResponse):
+        try:
+            request_id = getattr(request, 'request_id', None)
+            if request_id:
+                response['X-Request-ID'] = request_id
+        except Exception:
+            pass
+        try:
+            log_request_outcome(request, response)
+        except Exception:
+            pass
+        reset_request_id()
+        return response
