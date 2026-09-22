@@ -841,6 +841,48 @@ body:has(.td-dashboard) #page-content {
     align-items: flex-start;
     flex-direction: column;
   }
+  .dashboard-timeline-container {
+    padding: 16px;
+  }
+  .dashboard-timeline {
+    flex-direction: column;
+    gap: 16px;
+  }
+  .timeline-step {
+    align-items: stretch;
+    text-align: left;
+  }
+  .timeline-step::after {
+    top: 36px;
+    left: 17px;
+    width: 2px;
+    height: calc(100% - 20px);
+  }
+  .timeline-step-content {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr);
+    column-gap: 12px;
+    align-items: center;
+    justify-items: start;
+  }
+  .timeline-step-icon {
+    margin-bottom: 0;
+  }
+  .timeline-step-label {
+    margin-bottom: 0;
+  }
+  .timeline-step-summary {
+    grid-column: 2;
+  }
+  .timeline-step-links {
+    left: 48px;
+    transform: none;
+    margin-top: 4px;
+  }
+  .timeline-step-links::before {
+    left: 16px;
+    transform: rotate(45deg);
+  }
 }
 
 /* Visual overrides requested by user */
