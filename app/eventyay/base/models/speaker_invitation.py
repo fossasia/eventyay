@@ -172,10 +172,12 @@ class SpeakerInvitation(PretalxModel):
     deliver.alters_data = True
 
     def resend(self, requestor=None):
+        from .mail import QueuedMail
+
         mail = self.mail
         if mail.sent:
             submissions = list(mail.submissions.all())
-            mail = mail.copy_to_draft()
+            mail = QueuedMail.objects.get(pk=mail.pk).copy_to_draft()
             mail.submissions.add(*submissions)
         return self.deliver(mail=mail, send_immediately=True, requestor=requestor)
 
@@ -200,6 +202,6 @@ def mark_invitation_sent(sender, mail, **kwargs):
     if not mail.pk:
         return
     with scopes_disabled():
-        SpeakerInvitation.objects.filter(
-            mail=mail, mail_state=SpeakerInvitationMailStates.QUEUED
+        SpeakerInvitation.objects.filter(mail=mail).exclude(
+            mail_state=SpeakerInvitationMailStates.SENT
         ).update(mail_state=SpeakerInvitationMailStates.SENT)

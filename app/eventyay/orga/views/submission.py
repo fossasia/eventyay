@@ -368,9 +368,12 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
         return _('The invitation email could not be sent. Please try again.')
 
     def render_speakers_section(self):
+        form_kwargs = self.get_form_kwargs()
+        form_kwargs.pop('data', None)
+        form_kwargs.pop('files', None)
         return render_to_string(
             'orga/submission/fragment_speakers.html',
-            self.get_context_data(form=self.get_form()),
+            self.get_context_data(form=self.get_form_class()(**form_kwargs)),
             request=self.request,
         )
 

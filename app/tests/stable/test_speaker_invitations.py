@@ -262,6 +262,24 @@ class TestInvitationIdentity:
 
             assert invitation.mail_state == SpeakerInvitationMailStates.SENT
 
+    def test_outbox_send_after_failure_marks_invitation_sent(
+        self, event, submission, user, monkeypatch
+    ):
+        def explode(*args, **kwargs):
+            raise SendMailException('backend is down')
+
+        monkeypatch.setattr('eventyay.common.mail.send_mail_now', explode)
+        with scope(event=event):
+            invitation = submission.send_invite(to='jane@example.net', _from=user)[0]
+            assert invitation.mail_state == SpeakerInvitationMailStates.FAILED
+
+        monkeypatch.undo()
+        with scope(event=event):
+            invitation.mail.send()
+            invitation.refresh_from_db()
+
+            assert invitation.mail_state == SpeakerInvitationMailStates.SENT
+
     def test_deliver_on_sent_mail_does_not_raise(self, event, submission):
         with scope(event=event):
             _speaker, invitation = submission.add_speaker(
@@ -398,3 +416,32 @@ class TestSubmitterInviteView:
             assert any(
                 'jane@example.net' in str(message) for message in get_messages(request)
             )
+
+
+@pytest.mark.django_db
+class TestOrganiserSpeakersFragment:
+    def test_fragment_after_adding_speaker_has_no_form_errors(
+        self, client, event, submission, user, team
+    ):
+        team.can_change_submissions = True
+        team.is_reviewer = False
+        team.save()
+        client.force_login(user)
+        with scope(event=event):
+            url = submission.orga_urls.speakers
+
+        response = client.post(
+            url,
+            {
+                'email': 'jane@example.net',
+                'name': 'Jane Doe',
+                'biography': 'Speaks about open source.',
+                'send_immediately': 'on',
+            },
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+
+        assert response.status_code == 200
+        html = response.json()['html']
+        assert 'already been added or invited' not in html
+        assert 'is-invalid' not in html
