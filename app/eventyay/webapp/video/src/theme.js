@@ -73,14 +73,20 @@ const DEFAULT_IDENTICONS = {
 	style: 'identiheart'
 }
 
-const configColors = config.theme?.colors || DEFAULT_COLORS
+function usesEventTheme() {
+	// Organizer video management keeps the platform navbar and colours.
+	// Event theme settings apply only on the public attendee video.
+	return typeof window === 'undefined' || !window.eventyay?.isOrganizerArea
+}
+
+const configColors = usesEventTheme() ? (config.theme?.colors || DEFAULT_COLORS) : DEFAULT_COLORS
 
 const themeConfig = {
 	colors: configColors,
 	logo: Object.assign({}, DEFAULT_LOGO, config.theme?.logo),
 	streamOfflineImage: config.theme?.streamOfflineImage,
 	identicons: Object.assign({}, DEFAULT_IDENTICONS, config.theme?.identicons),
-	typography: config.theme?.typography || null,
+	typography: usesEventTheme() ? (config.theme?.typography || null) : null,
 }
 
 const colors = {}
@@ -109,7 +115,7 @@ function updateThemeVariables() {
 		themeVariables['--clr-navigation-text-primary'] = merged.navigation_text
 	}
 
-	const typography = themeConfig.typography || config.theme?.typography
+	const typography = usesEventTheme() ? (themeConfig.typography || config.theme?.typography) : null
 	if (typography?.font_family) {
 		themeVariables['--font-family'] = typography.font_family
 	}
@@ -233,7 +239,20 @@ export function computeForegroundSidebarColor(newColors) {
 	injectThemeVariables()
 }
 
+function platformThemeData() {
+	return {
+		colors: DEFAULT_COLORS,
+		logo: Object.assign({}, DEFAULT_LOGO, config.theme?.logo),
+		streamOfflineImage: config.theme?.streamOfflineImage,
+		identicons: Object.assign({}, DEFAULT_IDENTICONS, config.theme?.identicons),
+		typography: null,
+	}
+}
+
 export async function getThemeConfig() {
+	if (!usesEventTheme()) {
+		return platformThemeData()
+	}
 	// Fast path: if backend provided theme in injected config, just use it and avoid network 404 spam
 	if (config.theme && (config.theme.colors || config.theme.logo || config.theme.typography)) {
 		return {
@@ -294,6 +313,13 @@ export async function getThemeConfig() {
 }
 
 export function applyThemeConfig(themeData = {}) {
+	if (!usesEventTheme()) {
+		themeData = platformThemeData()
+		themeConfig.typography = null
+		if (typeof document !== 'undefined' && document.head) {
+			document.head.querySelector('style[data-eventyay-event-font]')?.remove()
+		}
+	}
 	const mergedColors = mergeColorConfig(themeData.colors ?? themeConfig.colors)
 	if (!mergedColors.sidebar) {
 		mergedColors.sidebar = PLATFORM_SIDEBAR_BG
