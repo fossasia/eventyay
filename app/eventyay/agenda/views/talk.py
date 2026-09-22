@@ -39,6 +39,8 @@ from eventyay.agenda.views.utils import (
     encode_email,
     is_email_like,
 )
+from eventyay.base.models.auth import needs_avatar_thumbnails
+from eventyay.person.tasks import enqueue_missing_avatar_thumbnails
 from eventyay.base.models import (
     Event,
     Feedback,
@@ -49,6 +51,7 @@ from eventyay.base.models import (
     TalkSlot,
     User,
 )
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.cfp.views.event import EventPageMixin
 from eventyay.common.urls import get_base_url
 from eventyay.common.utils.language import localize_event_text
@@ -153,6 +156,7 @@ def talk_starrers(request, event, slug, **kwargs):
 
         base_url = str(request.event.urls.base)
         items = []
+        missing_thumb_user_ids = []
         for fav in qs.select_related('user').order_by('-id')[:limit]:
             user = fav.user
             display_name = user.get_display_name() if user else ''
@@ -160,17 +164,21 @@ def talk_starrers(request, event, slug, **kwargs):
                 user and user.show_publicly and not user.deleted and user.code and not is_email_like(display_name)
             )
             if is_public_user:
+                avatar_url = user.get_avatar_url(
+                    event=request.event,
+                    thumbnail='tiny',
+                    generate_missing=False,
+                )
                 items.append(
                     {
                         'code': user.code,
                         'name': display_name,
-                        'avatar_url': user.get_avatar_url(
-                            event=request.event,
-                            thumbnail='tiny',
-                        ),
+                        'avatar_url': avatar_url,
                         'url': f'{base_url}people/{user.code}/stars/',
                     }
                 )
+                if needs_avatar_thumbnails(user, {'avatar_thumbnail_tiny': avatar_url}):
+                    missing_thumb_user_ids.append(user.pk)
             else:
                 items.append(
                     {
@@ -180,6 +188,7 @@ def talk_starrers(request, event, slug, **kwargs):
                         'url': '',
                     }
                 )
+        enqueue_missing_avatar_thumbnails(request.event.pk, missing_thumb_user_ids)
 
     response = JsonResponse({'total': total, 'public_total': public_total, 'items': items})
     response['Access-Control-Allow-Origin'] = '*'
@@ -721,6 +730,7 @@ class OnlineVideoJoin(EventPermissionRequired, View):
         for attr, label in required_fields:
             if not getattr(event.settings, attr):
                 logger.info('%s is missing.', label)
+                log_event('video', 'live.join', OUTCOME_FAILURE, error_code='misconfigured', event_id=event.pk)
                 return HttpResponse(status=HTTPStatus.FORBIDDEN, content=VideoJoinError.MISCONFIGURED)
 
         # If the logged-in user does not have "orga.view_schedule" permission, we check
@@ -728,8 +738,10 @@ class OnlineVideoJoin(EventPermissionRequired, View):
         if not request.user.has_perm('agenda.view_schedule', event):
             res = user_has_event_ticket(request.user, event)
             if res == TicketCheckResult.NO_TICKET:
+                log_event('video', 'live.join', OUTCOME_FAILURE, error_code='not_allowed', event_id=event.pk)
                 return HttpResponse(status=HTTPStatus.FORBIDDEN, content=VideoJoinError.NOT_ALLOWED)
             if res == TicketCheckResult.MISCONFIGURED:
+                log_event('video', 'live.join', OUTCOME_FAILURE, error_code='misconfigured', event_id=event.pk)
                 return HttpResponse(status=HTTPStatus.FORBIDDEN, content=VideoJoinError.MISCONFIGURED)
 
         # Redirect user to online event

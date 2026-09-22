@@ -89,8 +89,8 @@
 				.speaker(v-for="speaker of resolvedTalk.speakers", :key="speaker.code")
 					a.speaker-link(:href="getSpeakerLink(speaker)", @click="onSpeakerClick($event, speaker)")
 						img.avatar-circle(
-							v-if="speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url",
-							:src="speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url",
+							v-if="speaker.avatar_thumbnail_default || speaker.avatar_thumbnail_tiny || speaker.avatar || speaker.avatar_url",
+							:src="speaker.avatar_thumbnail_default || speaker.avatar_thumbnail_tiny || speaker.avatar || speaker.avatar_url",
 							loading="lazy",
 							decoding="async"
 						)

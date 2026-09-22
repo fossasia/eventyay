@@ -8,6 +8,7 @@ from eventyay.base.services.loungemesh import (
     issue_join_url,
     loungemesh_is_available,
 )
+from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
 from eventyay.core.permissions import Permission
 from eventyay.features.live.decorators import command, room_action
 from eventyay.features.live.exceptions import ConsumerException
@@ -66,5 +67,7 @@ class LoungeMeshModule(BaseModule):
         is_moderator = await self.can_moderate_room()
         url = await self._get_join_url(is_moderator)
         if not url:
+            log_event('video', 'connection.room_url', OUTCOME_FAILURE, error_code='server_unavailable', event_id=getattr(self.consumer.event, 'pk', None), backend='loungemesh')
             raise ConsumerException("loungemesh.unavailable", "No LoungeMesh server available.")
+        log_event('video', 'connection.room_url', OUTCOME_SUCCESS, event_id=getattr(self.consumer.event, 'pk', None), backend='loungemesh')
         await self.consumer.send_success({"url": url, "moderator": is_moderator})

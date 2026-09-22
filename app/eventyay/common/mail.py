@@ -1,13 +1,14 @@
 import logging
 from contextlib import suppress
 from email.utils import formataddr
-from smtplib import SMTPResponseException, SMTPSenderRefused
+from smtplib import SMTPRecipientsRefused, SMTPResponseException, SMTPSenderRefused
 
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives, get_connection
 from django.core.mail.backends.smtp import EmailBackend
 
 from eventyay.base.models.event import Event
+from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
 from eventyay.celery_app import app
 from eventyay.common.exceptions import SendMailException
 
@@ -138,6 +139,25 @@ def send_mail_now(
 
     try:
         backend.send_messages([email])
+        log_event('mail', 'mail.send', OUTCOME_SUCCESS, event_id=event.pk if event else None, mail_type='talk')
+    except SMTPRecipientsRefused as exception:
+        smtp_codes = [item[0] for item in exception.recipients.values()]
+        bounce_code = smtp_codes[0] if smtp_codes else None
+        logger.exception('Error sending email to %s', to)
+        if bounce_code in (554, 571):
+            log_event('mail', 'mail.complaint', OUTCOME_FAILURE, error_code='policy_rejected', smtp_code=bounce_code, event_id=event.pk if event else None)
+        else:
+            log_event('mail', 'mail.bounce', OUTCOME_FAILURE, error_code='recipient_refused', smtp_code=bounce_code, event_id=event.pk if event else None)
+        raise SendMailException(f'Failed to send an email to {to}: {exception}', already_logged=True) from exception
+    except SMTPResponseException as exception:
+        logger.exception('Error sending email to %s', to)
+        if exception.smtp_code in (554, 571):
+            log_event('mail', 'mail.complaint', OUTCOME_FAILURE, error_code='policy_rejected', smtp_code=exception.smtp_code, event_id=event.pk if event else None)
+            raise SendMailException(f'Failed to send an email to {to}: {exception}', already_logged=True) from exception
+        if exception.smtp_code >= 500:
+            log_event('mail', 'mail.bounce', OUTCOME_FAILURE, error_code='recipient_refused', smtp_code=exception.smtp_code, event_id=event.pk if event else None)
+            raise SendMailException(f'Failed to send an email to {to}: {exception}', already_logged=True) from exception
+        raise SendMailException(f'Failed to send an email to {to}: {exception}') from exception
     except Exception as exception:
         logger.exception('Error sending email to %s', to)
         raise SendMailException(f'Failed to send an email to {to}: {exception}') from exception
