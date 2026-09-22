@@ -741,6 +741,8 @@ const initSelect = (element) => {
     }
     const instance = new Choices(element, choicesOptions)
     element.choices = instance
+    element.removeAttribute("hidden")
+    element.removeAttribute("tabindex")
     // placeholderValue turns the empty <option> into a normal list item; drop it so
     // the placeholder text is only shown in the closed control, not as a choice.
     if (placeholderValue) {
