@@ -44,6 +44,7 @@ from eventyay.common.text.path import path_with_hash
 from eventyay.common.urls import EventUrls
 from eventyay.helpers.urls import build_absolute_uri
 from eventyay.talk_rules.person import is_administrator
+from eventyay.base.operational_logging import emit_logged_action
 
 from ...helpers.u2f import pub_key_from_der, websafe_decode
 from .base import LoggingMixin
@@ -812,6 +813,18 @@ class User(
             data=data,
             is_orga_action=orga,
         )
+        actor = user or person or self
+        try:
+            emit_logged_action(
+                action,
+                object_id=getattr(self, 'pk', None),
+                user_id=getattr(actor, 'pk', None),
+                is_orga_action=orga,
+                model='User',
+                data=data,
+            )
+        except Exception:
+            pass
 
     def logged_actions(self):
         """Returns all log entries that were made about this user."""

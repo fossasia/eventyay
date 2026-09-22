@@ -167,6 +167,7 @@ import moment from 'moment-timezone'
 import { getLocalizedString, compareFeaturedSpeakers, isFeaturedSpeakersSortAvailable, sessionsForSpeaker } from '../utils'
 import MarkdownContent from './MarkdownContent'
 import SpeakerSocialLinks from './SpeakerSocialLinks.vue'
+import { logOperational } from '../operationalLog.js'
 
 function normalizeLocaleCode (code) {
 	if (!code || typeof code !== 'string') return null
@@ -607,7 +608,7 @@ export default {
 					: null
 			} catch (e) {
 				if (e.name !== 'AbortError') {
-					console.error('Failed to load speakers', e)
+					logOperational({action: 'schedule.fetch', outcome: 'failure', backend: 'schedule_api', error_code: 'speakers_failed'})
 					this.loadError = true
 				}
 			} finally {

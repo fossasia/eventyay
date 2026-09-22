@@ -56,6 +56,7 @@ from eventyay.control.forms.server_management import (
     EventForm,
 )
 from eventyay.base.models.log import LogEntry
+from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, emit_logged_action, log_event
 from eventyay.base.settings import (
     GlobalSettingsObject,
     SUPPORTED_VIDEO_PROVIDERS,
@@ -64,6 +65,27 @@ from eventyay.base.settings import (
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
 from eventyay.control.tasks import clear_event_data
 from eventyay.control.video.admin_dashboard import get_video_server_config
+
+
+def _admin_log_entry(**kwargs):
+    entry = LogEntry.objects.create(**kwargs)
+    obj = kwargs.get('content_object')
+    user = kwargs.get('user')
+    data = kwargs.get('data')
+    if not isinstance(data, dict):
+        data = None
+    try:
+        emit_logged_action(
+            kwargs.get('action_type'),
+            object_id=getattr(obj, 'pk', None),
+            user_id=getattr(user, 'pk', None),
+            is_orga_action=True,
+            model=type(obj).__name__ if obj is not None else None,
+            data=data,
+        )
+    except Exception:
+        pass
+    return entry
 
 
 class SuperuserBase(AdministratorPermissionRequiredMixin):
@@ -87,7 +109,7 @@ class UserUpdate(SuperuserBase, UpdateView):
     success_url = "/admin/video/users/"
 
     def form_valid(self, form):
-        LogEntry.objects.create(
+        _admin_log_entry(
             content_object=self.object,
             user=self.request.user,
             action_type="user.changed",
@@ -115,7 +137,7 @@ class ProfileView(AdministratorPermissionRequiredMixin, FormView):
     success_url = "/admin/video/auth/profile/"
 
     def form_valid(self, form):
-        LogEntry.objects.create(
+        _admin_log_entry(
             content_object=self.request.user,
             user=self.request.user,
             action_type="profile.changed",
@@ -244,7 +266,7 @@ class VideoSettings(AdministratorPermissionRequiredMixin, TemplateView):
                         changed.append(f"{p} {r_name}: {is_enabled}")
 
         if changed:
-            LogEntry.objects.create(
+            _admin_log_entry(
                 content_object=request.user,
                 user=request.user,
                 action_type="eventyay.video.settings.visibility_changed",
@@ -284,7 +306,7 @@ class VideoProviderToggleVisibility(AdministratorPermissionRequiredMixin, View):
             setting_key = f"video_provider_{provider}_{r}"
             gs.settings.set(setting_key, enabled)
 
-        LogEntry.objects.create(
+        _admin_log_entry(
             content_object=request.user,
             user=request.user,
             action_type=f"eventyay.video.{provider}.visibility_changed",
@@ -333,7 +355,7 @@ class VideoServerToggleActive(AdministratorPermissionRequiredMixin, View):
         server.active = active
         server.save(update_fields=["active"])
 
-        LogEntry.objects.create(
+        _admin_log_entry(
             content_object=server,
             user=request.user,
             action_type=f"{config.action_prefix}.active_changed",
@@ -445,7 +467,7 @@ class EventAdminToken(AdministratorPermissionRequiredMixin, DetailView):
             except Exception:
                 pass
 
-        LogEntry.objects.create(
+        _admin_log_entry(
             content_object=event,
             user=self.request.user,
             action_type="event.adminaccess",
@@ -554,7 +576,7 @@ class EventCreate(FormsetMixin, AdministratorPermissionRequiredMixin, CreateView
             except (KeyError, IndexError, TypeError, AttributeError):
                 pass
 
-        LogEntry.objects.create(
+        _admin_log_entry(
             content_object=form.instance,
             user=self.request.user,
             action_type="event.created",
@@ -594,7 +616,7 @@ class EventUpdate(FormsetMixin, AdministratorPermissionRequiredMixin, UpdateView
 
     def form_valid(self, form):
         self.formset.save()
-        LogEntry.objects.create(
+        _admin_log_entry(
             content_object=self.get_object(),
             user=self.request.user,
             action_type="event.updated",
@@ -618,7 +640,7 @@ class EventClear(AdministratorPermissionRequiredMixin, DetailView):
     success_url = "/admin/video/events/"
 
     def post(self, request, *args, **kwargs):
-        LogEntry.objects.create(
+        _admin_log_entry(
             content_object=self.get_object(),
             user=self.request.user,
             action_type="event.cleared",
@@ -641,7 +663,7 @@ class BBBServerCreate(AdministratorPermissionRequiredMixin, CreateView):
     def form_valid(self, form):
         self.object = form.save()
 
-        LogEntry.objects.create(
+        _admin_log_entry(
             content_object=form.instance,
             user=self.request.user,
             action_type="bbbserver.created",
@@ -660,7 +682,7 @@ class BBBServerUpdate(AdministratorPermissionRequiredMixin, UpdateView):
     def form_valid(self, form):
         self.object = form.save()
 
-        LogEntry.objects.create(
+        _admin_log_entry(
             content_object=form.instance,
             user=self.request.user,
             action_type="bbbserver.updated",
@@ -678,7 +700,7 @@ class BBBServerDelete(AdministratorPermissionRequiredMixin, DeleteView):
 
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
-        LogEntry.objects.create(
+        _admin_log_entry(
             content_object=self.object,
             user=self.request.user,
             action_type="bbbserver.deleted",
@@ -702,7 +724,7 @@ class JanusServerCreate(AdministratorPermissionRequiredMixin, CreateView):
     def form_valid(self, form):
         self.object = form.save()
 
-        LogEntry.objects.create(
+        _admin_log_entry(
             content_object=form.instance,
             user=self.request.user,
             action_type="janusserver.created",
@@ -721,7 +743,7 @@ class JanusServerUpdate(AdministratorPermissionRequiredMixin, UpdateView):
     def form_valid(self, form):
         self.object = form.save()
 
-        LogEntry.objects.create(
+        _admin_log_entry(
             content_object=form.instance,
             user=self.request.user,
             action_type="janusserver.updated",
@@ -739,7 +761,7 @@ class JanusServerDelete(AdministratorPermissionRequiredMixin, DeleteView):
 
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
-        LogEntry.objects.create(
+        _admin_log_entry(
             content_object=self.object,
             user=self.request.user,
             action_type="janusserver.deleted",
@@ -763,7 +785,7 @@ class JitsiServerCreate(AdministratorPermissionRequiredMixin, CreateView):
     def form_valid(self, form):
         self.object = form.save()
 
-        LogEntry.objects.create(
+        _admin_log_entry(
             content_object=form.instance,
             user=self.request.user,
             action_type="jitsiserver.created",
@@ -782,7 +804,7 @@ class JitsiServerUpdate(AdministratorPermissionRequiredMixin, UpdateView):
     def form_valid(self, form):
         self.object = form.save()
 
-        LogEntry.objects.create(
+        _admin_log_entry(
             content_object=form.instance,
             user=self.request.user,
             action_type="jitsiserver.updated",
@@ -800,7 +822,7 @@ class JitsiServerDelete(AdministratorPermissionRequiredMixin, DeleteView):
 
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
-        LogEntry.objects.create(
+        _admin_log_entry(
             content_object=self.object,
             user=self.request.user,
             action_type="jitsiserver.deleted",
@@ -831,7 +853,7 @@ class TurnServerCreate(AdministratorPermissionRequiredMixin, CreateView):
     def form_valid(self, form):
         self.object = form.save()
 
-        LogEntry.objects.create(
+        _admin_log_entry(
             content_object=form.instance,
             user=self.request.user,
             action_type="turnserver.created",
@@ -850,7 +872,7 @@ class TurnServerUpdate(AdministratorPermissionRequiredMixin, UpdateView):
     def form_valid(self, form):
         self.object = form.save()
 
-        LogEntry.objects.create(
+        _admin_log_entry(
             content_object=form.instance,
             user=self.request.user,
             action_type="turnserver.updated",
@@ -868,7 +890,7 @@ class TurnServerDelete(AdministratorPermissionRequiredMixin, DeleteView):
 
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
-        LogEntry.objects.create(
+        _admin_log_entry(
             content_object=self.object,
             user=self.request.user,
             action_type="turnserver.deleted",
@@ -895,7 +917,7 @@ class LoungeMeshServerCreate(AdministratorPermissionRequiredMixin, CreateView):
     @transaction.atomic()
     def form_valid(self, form):
         self.object = form.save()
-        LogEntry.objects.create(
+        _admin_log_entry(
             content_object=form.instance,
             user=self.request.user,
             action_type="loungemeshserver.created",
@@ -913,7 +935,7 @@ class LoungeMeshServerUpdate(AdministratorPermissionRequiredMixin, UpdateView):
 
     def form_valid(self, form):
         self.object = form.save()
-        LogEntry.objects.create(
+        _admin_log_entry(
             content_object=form.instance,
             user=self.request.user,
             action_type="loungemeshserver.updated",
@@ -931,7 +953,7 @@ class LoungeMeshServerDelete(AdministratorPermissionRequiredMixin, DeleteView):
 
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
-        LogEntry.objects.create(
+        _admin_log_entry(
             content_object=self.object,
             user=self.request.user,
             action_type="loungemeshserver.deleted",
@@ -1001,7 +1023,16 @@ class BBBMoveRoom(AdministratorPermissionRequiredMixin, FormView):
             )
             r = requests.get(u, timeout=15)
             r.raise_for_status()
+            log_event(
+                'video',
+                'recording.stop',
+                OUTCOME_SUCCESS,
+                event_id=getattr(room, 'event_id', None),
+                object_id=getattr(room, 'pk', None),
+                backend='bbb',
+            )
         except Exception:
+            log_event('video', 'connection.get', OUTCOME_FAILURE, error_code='request_error', backend='bbb')
             messages.warning(self.request, _("Kicking all attendees did not work."))
 
         c.server = server
