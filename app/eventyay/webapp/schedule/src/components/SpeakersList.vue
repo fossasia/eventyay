@@ -140,14 +140,14 @@
 						.featured-speaker-sessions
 							h4 {{ t.sessions }}
 							.featured-speaker-session(v-for="session in speaker.sessions", :key="session.slot_id || session.id")
-								small.featured-speaker-session-time(v-if="sessionRoomName(session) || formatSessionDateTime(session)") {{ formatSessionDateTime(session) }}
+								small.featured-speaker-session-time(v-if="formatSessionDateTime(session)") {{ formatSessionDateTime(session) }}
 								small.featured-speaker-session-room(v-if="sessionRoomName(session)") {{ sessionRoomName(session) }}
 								a.featured-speaker-session-link(
 									:href="getSessionLink(session)",
 									:style="getSessionStyle(session)",
 									@click="onSessionClick($event, session)"
 								)
-									span.featured-speaker-session-slot {{ formatSessionSlot(session) }}
+									span.featured-speaker-session-slot(v-if="formatSessionSlot(session)") {{ formatSessionSlot(session) }}
 									span.featured-speaker-session-title {{ getLocalizedString(session.title) }}
 	.empty(v-if="loadError")
 		| {{ t.load_error }}
