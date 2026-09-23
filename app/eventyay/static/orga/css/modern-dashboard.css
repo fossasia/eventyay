@@ -844,44 +844,26 @@ body:has(.td-dashboard) #page-content {
   .dashboard-timeline-container {
     padding: 16px;
   }
-  .dashboard-timeline {
-    flex-direction: column;
-    gap: 16px;
-  }
-  .timeline-step {
-    align-items: stretch;
-    text-align: left;
-  }
-  .timeline-step::after {
-    top: 36px;
-    left: 17px;
-    width: 2px;
-    height: calc(100% - 20px);
-  }
-  .timeline-step-content {
-    display: grid;
-    grid-template-columns: 36px minmax(0, 1fr);
-    column-gap: 12px;
-    align-items: center;
-    justify-items: start;
+  .timeline-step-label,
+  .timeline-step-summary {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
   .timeline-step-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
     margin-bottom: 0;
   }
-  .timeline-step-label {
-    margin-bottom: 0;
-  }
-  .timeline-step-summary {
-    grid-column: 2;
-  }
-  .timeline-step-links {
-    left: 48px;
-    transform: none;
-    margin-top: 4px;
-  }
-  .timeline-step-links::before {
-    left: 16px;
-    transform: rotate(45deg);
+  .timeline-step::after {
+    top: 16px;
   }
 }
 
