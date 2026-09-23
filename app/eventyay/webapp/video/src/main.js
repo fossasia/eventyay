@@ -38,6 +38,7 @@ function ensureWebsiteFontsLoaded() {
 }
 
 function ensureEventSettingsCssLoaded() {
+  if (window.eventyay?.isOrganizerArea) return
   const url = config.theme?.typography?.settings_css_url
   if (!url) return
   if (document.head.querySelector(`link[data-eventyay-settings-css="${url}"]`)) {

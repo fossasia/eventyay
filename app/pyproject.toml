@@ -49,7 +49,8 @@ dependencies = [
     "click-repl>=0.3.0",
     "constantly>=23.10.4",
     "contourpy>=1.3.2",
-    "cron-descriptor>=1.2.32",
+    #cron is pinned due to compatibility layer missing in this release.
+    "cron-descriptor==1.4.5",
     "cryptography>=50.0.0",
     "css-inline>=0.21.1",
     "csscompressor>=0.9.5",
@@ -59,7 +60,8 @@ dependencies = [
     "defusedcsv>=3.0.0",
     "defusedxml>=0.7.1",
     "dj-static>=0.0.6",
-    "django>=6.0.7,<6.1",
+    #pinned due to cron descriptor issue
+    "django>=6.0.8,<6.1",
     "django-allauth>=65.19.1",
     "django-appconf>=1.2.0",
     "django-bootstrap3>=26.2",
@@ -97,16 +99,16 @@ dependencies = [
     "elementpath>=5.1.4",
     "emoji>=2.15.0",
     "et-xmlfile>=2.0.0",
-    "eventyay-paypal @ git+https://github.com/fossasia/eventyay-paypal.git@main",
-    "eventyay-stripe @ git+https://github.com/fossasia/eventyay-stripe.git@main",
-    "eventyay-bitpay @ git+https://github.com/fossasia/eventyay-bitpay.git@main",
-    "eventyay-socialmedia @ git+https://github.com/fossasia/eventyay-socialmedia.git@main",
-    "exhibition @ git+https://github.com/fossasia/eventyay-exhibition.git@main",
-    "eventyay-teamshifts @ git+https://github.com/fossasia/eventyay-teamshifts.git@main",
-    "eventyay-interpretation @ git+https://github.com/fossasia/eventyay-interpretation.git@main",
-    "eventyay-hubspot @ git+https://github.com/fossasia/eventyay-hubspot.git@main",
-    "eventyay-business @ git+https://github.com/fossasia/eventyay-business.git@main",
-    "eventyay-veditor @ git+https://github.com/fossasia/eventyay-veditor.git@main",
+    "eventyay-paypal",
+    "eventyay-stripe",
+    "eventyay-bitpay",
+    "eventyay-socialmedia",
+    "exhibition",
+    "eventyay-teamshifts",
+    "eventyay-interpretation",
+    "eventyay-hubspot",
+    "eventyay-business",
+    "eventyay-veditor",
     "execnet>=2.1.2",
     "fido2>=2.2.0",
     "fonttools>=4.63.0",
@@ -312,6 +314,18 @@ environments = [
     "python_version == '3.12' and platform_python_implementation == 'CPython' and sys_platform == 'linux'",
     "python_version == '3.12' and platform_python_implementation == 'CPython' and sys_platform == 'darwin'",
 ]
+
+[tool.uv.sources]
+eventyay-paypal = { git = "https://github.com/fossasia/eventyay-paypal.git", branch = "main" }
+eventyay-stripe = { git = "https://github.com/fossasia/eventyay-stripe.git", branch = "main" }
+eventyay-bitpay = { git = "https://github.com/fossasia/eventyay-bitpay.git", branch = "main" }
+eventyay-socialmedia = { git = "https://github.com/fossasia/eventyay-socialmedia.git", branch = "main" }
+exhibition = { git = "https://github.com/fossasia/eventyay-exhibition.git", branch = "main" }
+eventyay-teamshifts = { git = "https://github.com/fossasia/eventyay-teamshifts.git", branch = "main" }
+eventyay-interpretation = { git = "https://github.com/fossasia/eventyay-interpretation.git", branch = "main" }
+eventyay-hubspot = { git = "https://github.com/fossasia/eventyay-hubspot.git", branch = "main" }
+eventyay-business = { git = "https://github.com/fossasia/eventyay-business.git", branch = "main" }
+eventyay-veditor = { git = "https://github.com/fossasia/eventyay-veditor.git", branch = "main" }
 
 [tool.pyrefly]
 project-includes = [

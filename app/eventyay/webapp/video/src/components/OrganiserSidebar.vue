@@ -177,13 +177,6 @@ aside.c-organiser-sidebar(
 						span.fa.mdi.mdi-cog-outline(aria-hidden="true")
 						span.sidebar-text {{ $t('Settings') }}
 
-			.buffer
-
-			.sidebar-footer-action
-				a.btn-public-view(:href="publicVideoUrl", @click="onViewPublicVideo")
-					i.fa.fa-eye(aria-hidden="true")
-					span {{ $t('View Public Video') }}
-
 		teleport(to="body")
 			transition(name="prompt")
 				create-dm-prompt(v-if="showDMCreationPrompt && (hasPermission('world:chat.direct') || isAdminMode) && liveFeatures.direct_messaging", @close="showDMCreationPrompt = false")
@@ -234,9 +227,6 @@ export default {
 		...mapGetters(['hasPermission', 'isAdminMode']),
 		commonAccountUrl() {
 			return window.eventyay?.commonAccountUrl || window.eventyay?.homeUrl || '/'
-		},
-		publicVideoUrl() {
-			return window.eventyay?.publicVideoUrl || '/'
 		},
 		liveFeatures() {
 			return Object.assign({
@@ -386,13 +376,6 @@ export default {
 				this.$emit('close')
 			}
 		},
-		onViewPublicVideo() {
-			try {
-				sessionStorage.setItem('video_auth_mode', 'organizer')
-				localStorage.removeItem('token')
-			} catch (e) {}
-			this.onNavClick()
-		},
 		hasUnreadMessages(channelId) {
 			return this.notificationCount ? this.notificationCount(channelId) > 0 : false
 		},
@@ -467,8 +450,7 @@ export default {
 			.sidebar-text,
 			.arrow-btn,
 			.notifications,
-			.nav-sub-list,
-			.sidebar-footer-action
+			.nav-sub-list
 				display: none !important
 
 		&.sidebar-collapsed:hover
@@ -490,9 +472,6 @@ export default {
 
 			.nav-sub-list
 				display: flex
-
-			.sidebar-footer-action
-				display: block
 
 	+below('m')
 		z-index: 150
@@ -790,36 +769,4 @@ export default {
 						color: #23527c
 						font-weight: 600
 
-	.buffer
-		flex: auto
-		min-height: 20px
-
-	.sidebar-footer-action
-		border-top: 1px solid #e7e7e7
-		padding: 12px 15px 35px
-		background: #f8f8f8
-
-		.btn-public-view
-			align-items: center
-			background-color: #ffffff
-			border: 1px solid #2185d0
-			border-radius: 4px
-			box-sizing: border-box
-			color: #2185d0
-			display: flex
-			font-size: 13px
-			font-weight: 600
-			justify-content: center
-			padding: 8px 12px
-			text-decoration: none
-			gap: 6px
-			transition: background-color 0.15s ease, color 0.15s ease
-
-			.fa, .mdi
-				font-size: 16px
-
-			&:hover, &:focus
-				background-color: #2185d0
-				color: #ffffff
-				text-decoration: none
 </style>
