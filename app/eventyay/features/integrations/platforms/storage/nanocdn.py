@@ -3,11 +3,12 @@ import os
 import urllib.parse
 from io import BytesIO, StringIO
 
-import requests
 from django.conf import settings
 from django.core.exceptions import SuspiciousFileOperation
 from django.core.files import File
 from django.core.files.storage import Storage
+
+from eventyay.base.services import http
 
 """
 This file contains a Django storage backend for the minimal CDN used by the eventyay SaaS service. The architecture
@@ -86,7 +87,7 @@ class NanoCDNStorage(Storage):
         return NanoCDNFile(name, self, mode)
 
     def _read(self, name):
-        resp = requests.get(urllib.parse.urljoin(self.base_url, name), stream=True)
+        resp = http.get(urllib.parse.urljoin(self.base_url, name), stream=True)
         if resp.status_code == 404:
             raise FileNotFoundError()
         resp.raise_for_status()
@@ -116,7 +117,7 @@ class NanoCDNStorage(Storage):
                 os.path.dirname(name), os.path.basename(name) + "." + sha1[:14]
             )
 
-        resp = requests.put(
+        resp = http.put(
             urllib.parse.urljoin(self.base_url, os.path.join("upload", name)),
             data=content,
             allow_redirects=False,
@@ -141,21 +142,21 @@ class NanoCDNStorage(Storage):
     def delete(self, name):
         if isinstance(name, NanoCDNFile):
             name = name.name
-        resp = requests.delete(urllib.parse.urljoin(self.base_url, name))
+        resp = http.delete(urllib.parse.urljoin(self.base_url, name))
         if resp.status_code == 404:
             return resp  # That is fine
         resp.raise_for_status()
         return resp
 
     def exists(self, name):
-        resp = requests.head(urllib.parse.urljoin(self.base_url, name))
+        resp = http.head(urllib.parse.urljoin(self.base_url, name))
         if resp.status_code == 404:
             return False
         resp.raise_for_status()
         return True
 
     def size(self, name):
-        resp = requests.head(urllib.parse.urljoin(self.base_url, name))
+        resp = http.head(urllib.parse.urljoin(self.base_url, name))
         resp.raise_for_status()
         return resp["Content-Length"]
 

@@ -1,6 +1,7 @@
 import json
 from datetime import timedelta
 from decimal import Decimal
+from unittest.mock import patch
 
 import pytest
 import responses
@@ -231,9 +232,9 @@ def test_webhook_trigger_batch_with_invalid_entries(event, order, webhook, monke
 
     # 3. No organizer (event=None, dangling reference)
     from django.contrib.contenttypes.models import ContentType
-    
+
     non_existent_order_id = (Order.objects.order_by('-pk').first().pk + 1) if Order.objects.exists() else 1
-    
+
     le_no_org = LogEntry.objects.create(
         action_type='pretix.event.order.paid',
         content_type=ContentType.objects.get_for_model(Order),
@@ -245,3 +246,28 @@ def test_webhook_trigger_batch_with_invalid_entries(event, order, webhook, monke
 
     assert len(responses.calls) == 1
     assert json.loads(force_str(responses.calls[0].request.body))['notification_id'] == le_valid.id
+
+
+@pytest.mark.django_db
+def test_webhook_delivery_uses_timeout_enforcing_helper(event, order, webhook, monkeypatch_on_commit):
+    """
+    Regression test: webhook delivery must go through ``eventyay.base.services.http``
+    (which always applies a default timeout) rather than calling ``requests`` directly.
+
+    Without this, a webhook target that accepts a connection and never responds can
+    hang a Celery worker on the shared ``notifications`` queue indefinitely, delaying
+    unrelated work such as order confirmation emails.
+    """
+    fake_response = type(
+        'FakeResponse',
+        (),
+        {'status_code': 200, 'text': 'ok'},
+    )()
+
+    with patch('eventyay.api.webhooks.http.post', return_value=fake_response) as mocked_post:
+        with transaction.atomic():
+            order.log_action('pretix.event.order.paid', {})
+
+    assert mocked_post.called, 'send_webhook must deliver via eventyay.base.services.http.post'
+    _args, kwargs = mocked_post.call_args
+    assert kwargs.get('allow_redirects') is False

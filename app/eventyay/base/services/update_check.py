@@ -13,6 +13,7 @@ from i18nfield.strings import LazyI18nString
 from eventyay import __version__
 from eventyay.base.models import Event
 from eventyay.base.plugins import get_all_plugins
+from eventyay.base.services import http
 from eventyay.base.services.mail import mail
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.signals import periodic_task
@@ -56,7 +57,7 @@ def update_check():
         'plugins': [{'name': p.module, 'version': p.version} for p in get_all_plugins()],
     }
     try:
-        r = requests.post('https://eventyay.org/.update_check/', json=check_payload)
+        r = http.post('https://eventyay.org/.update_check/', json=check_payload)
         gs.settings.set('update_check_last', now())
         if r.status_code != 200:
             gs.settings.set('update_check_result', {'error': 'http_error'})

@@ -6,6 +6,7 @@ import jwt
 import requests
 from django.conf import settings
 
+from eventyay.base.services import http
 from eventyay.celery_app import app
 
 logger = logging.getLogger(__name__)
@@ -47,7 +48,7 @@ def trigger_public_schedule(self, is_show_schedule, event_slug, organizer_slug, 
             settings.EVENTYAY_TICKET_BASE_PATH,
             f'api/v1/{organizer_slug}/{event_slug}/schedule-public/',
         )
-        response = requests.post(ticket_uri, json=payload, headers=headers)
+        response = http.post(ticket_uri, json=payload, headers=headers)
         response.raise_for_status()  # Raise exception for bad status codes
     except requests.RequestException as e:
         logger.error(

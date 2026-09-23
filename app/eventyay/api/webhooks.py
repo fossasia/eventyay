@@ -3,7 +3,6 @@ import logging
 import time
 from collections import OrderedDict
 
-import requests
 from celery.exceptions import MaxRetriesExceededError
 from django.db.models import Exists, OuterRef, Q
 from django.conf import settings
@@ -16,6 +15,7 @@ from requests import RequestException
 from eventyay.api.models import WebHook, WebHookCall, WebHookEventListener
 from eventyay.api.signals import register_webhook_events
 from eventyay.base.models import LogEntry
+from eventyay.base.services import http
 from eventyay.base.services.tasks import ProfiledTask, TransactionAwareTask
 from eventyay.celery_app import app
 from eventyay.consts import SizeKey
@@ -323,7 +323,7 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
 
         try:
             try:
-                resp = requests.post(webhook.target_url, json=payload, allow_redirects=False)
+                resp = http.post(webhook.target_url, json=payload, allow_redirects=False)
                 WebHookCall.objects.create(
                     webhook=webhook,
                     action_type=logentry.action_type,

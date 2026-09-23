@@ -50,6 +50,7 @@ from eventyay.base.models import (
     OrderPosition,
     User,
 )
+from eventyay.base.services import http
 from eventyay.base.services.invoices import invoice_pdf_task
 from eventyay.base.services.tasks import TransactionAwareTask
 from eventyay.base.services.tickets import get_tickets_for_order
@@ -350,7 +351,7 @@ class CustomEmail(EmailMultiAlternatives):
     def _add_bodies(self, msg):
         from django.core.mail.message import EmailMessage
         from django.utils.encoding import force_bytes
-        
+
         # Call EmailMessage._add_bodies to handle the plain text body
         EmailMessage._add_bodies(self, msg)
 
@@ -809,7 +810,7 @@ def convert_image_to_cid(image_src: str, cid_id: str, verify_ssl: bool = True) -
         path = urlparse(image_src).path
         guess_subtype = os.path.splitext(path)[1][1:]
 
-        response = requests.get(image_src, verify=verify_ssl)
+        response = http.get(image_src, verify=verify_ssl)
         mime_image = MIMEImage(response.content, _subtype=guess_subtype)
 
     mime_image.add_header('Content-ID', f'<{cid_id}>')

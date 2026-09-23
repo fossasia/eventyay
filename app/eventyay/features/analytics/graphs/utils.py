@@ -9,6 +9,7 @@ from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 from reportlab.platypus import Flowable
 
 from eventyay.base.models import Event
+from eventyay.base.services import http
 
 logger = logging.getLogger(__name__)
 
@@ -101,7 +102,7 @@ def get_schedule(event: Event, fail_silently=True):
         return {}
 
     try:
-        r = requests.get(url)
+        r = http.get(url)
         r.raise_for_status()
         return r.json()
     except requests.RequestException:
