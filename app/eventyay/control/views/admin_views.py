@@ -678,14 +678,15 @@ class BBBServerDelete(AdministratorPermissionRequiredMixin, CompatDeleteView):
 
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
-        LogEntry.objects.create(
-            content_object=self.object,
-            user=self.request.user,
-            action_type="bbbserver.deleted",
-            data={},
-        )
         success_url = self.get_success_url()
-        self.object.delete()
+        with transaction.atomic():
+            LogEntry.objects.create(
+                content_object=self.object,
+                user=self.request.user,
+                action_type="bbbserver.deleted",
+                data={},
+            )
+            self.object.delete()
         messages.success(self.request, _("Ok!"))
         return HttpResponseRedirect(success_url)
 
@@ -739,14 +740,15 @@ class JanusServerDelete(AdministratorPermissionRequiredMixin, CompatDeleteView):
 
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
-        LogEntry.objects.create(
-            content_object=self.object,
-            user=self.request.user,
-            action_type="janusserver.deleted",
-            data={},
-        )
         success_url = self.get_success_url()
-        self.object.delete()
+        with transaction.atomic():
+            LogEntry.objects.create(
+                content_object=self.object,
+                user=self.request.user,
+                action_type="janusserver.deleted",
+                data={},
+            )
+            self.object.delete()
         messages.success(self.request, _("Ok!"))
         return HttpResponseRedirect(success_url)
 
@@ -800,14 +802,15 @@ class JitsiServerDelete(AdministratorPermissionRequiredMixin, CompatDeleteView):
 
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
-        LogEntry.objects.create(
-            content_object=self.object,
-            user=self.request.user,
-            action_type="jitsiserver.deleted",
-            data={},
-        )
         success_url = self.get_success_url()
-        self.object.delete()
+        with transaction.atomic():
+            LogEntry.objects.create(
+                content_object=self.object,
+                user=self.request.user,
+                action_type="jitsiserver.deleted",
+                data={},
+            )
+            self.object.delete()
         messages.success(self.request, _("Ok!"))
         return HttpResponseRedirect(success_url)
 
@@ -868,14 +871,15 @@ class TurnServerDelete(AdministratorPermissionRequiredMixin, CompatDeleteView):
 
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
-        LogEntry.objects.create(
-            content_object=self.object,
-            user=self.request.user,
-            action_type="turnserver.deleted",
-            data={},
-        )
         success_url = self.get_success_url()
-        self.object.delete()
+        with transaction.atomic():
+            LogEntry.objects.create(
+                content_object=self.object,
+                user=self.request.user,
+                action_type="turnserver.deleted",
+                data={},
+            )
+            self.object.delete()
         messages.success(self.request, _("Ok!"))
         return HttpResponseRedirect(success_url)
 
@@ -931,14 +935,15 @@ class LoungeMeshServerDelete(AdministratorPermissionRequiredMixin, CompatDeleteV
 
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
-        LogEntry.objects.create(
-            content_object=self.object,
-            user=self.request.user,
-            action_type="loungemeshserver.deleted",
-            data={},
-        )
         success_url = self.get_success_url()
-        self.object.delete()
+        with transaction.atomic():
+            LogEntry.objects.create(
+                content_object=self.object,
+                user=self.request.user,
+                action_type="loungemeshserver.deleted",
+                data={},
+            )
+            self.object.delete()
         messages.success(self.request, _("Ok!"))
         return HttpResponseRedirect(success_url)
 
