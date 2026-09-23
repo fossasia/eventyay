@@ -2775,8 +2775,7 @@ h2 .user-name-display img {
     width: 100%;
   }
 
-  #page-content .speaker-detail > p > strong:first-child,
-  #page-content .speaker-detail > div > strong:first-child {
+  #page-content .speaker-detail-card .card-text > strong:first-child {
     display: block;
     font-size: 0.8125rem;
     font-weight: 600;
