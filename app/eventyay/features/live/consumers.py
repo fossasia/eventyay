@@ -12,6 +12,7 @@ from django.db import OperationalError
 from sentry_sdk import capture_exception, configure_scope
 from websockets import ConnectionClosed
 
+from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
 from eventyay.base.services.connections import (
     ping_connection,
     register_connection,
@@ -102,6 +103,7 @@ class MainConsumer(AsyncJsonWebsocketConsumer):
             self.event = await get_event(event_id)
 
         if self.event is None:
+            log_event('video', 'connection.websocket', OUTCOME_FAILURE, error_code='unknown_event', backend='live')
             await self.send_error("event.unknown_event", close=True)
             return
 
@@ -111,6 +113,8 @@ class MainConsumer(AsyncJsonWebsocketConsumer):
 
         async with statsd() as s:
             s.increment(f"connection.established,event={self.event.pk}")
+
+        log_event('video', 'connection.websocket', OUTCOME_SUCCESS, event_id=self.event.pk, backend='live')
 
         self.components = {
             "announcement": AnnouncementModule(self),
@@ -149,6 +153,8 @@ class MainConsumer(AsyncJsonWebsocketConsumer):
             )
 
         await unregister_connection()
+        if close_code not in (1000, 1001, None):
+            log_event('video', 'connection.websocket_close', OUTCOME_FAILURE, error_code='abnormal_close', status=close_code if isinstance(close_code, int) else None, event_id=getattr(self.event, 'pk', None), backend='live')
 
     # Receive message from WebSocket
     async def receive_json(self, content, **kargs):
@@ -238,6 +244,13 @@ class MainConsumer(AsyncJsonWebsocketConsumer):
             if settings.SENTRY_DSN:
                 capture_exception(e)
             logger.exception("Encountered exception, close socket.")
+            log_event(
+                'video',
+                'live.command',
+                OUTCOME_FAILURE,
+                error_code='server_fatal',
+                event_id=getattr(self.event, 'pk', None),
+            )
             self.content = []
             await self.send_error(code="server.fatal", message="Fatal Server Error")
             await asyncio.sleep(0.5)

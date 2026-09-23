@@ -109,6 +109,8 @@ def test_load_shedding_keeps_api_overload_json(monkeypatch):
         '/api/v1/organizers/wm/checkin/redeem/',
         '/api/v1/organizers/wm/events/wm/checkinlists/',
         '/api/v1/organizers/wm/events/wm/checkinlists/1/positions/',
+        '/media/avatars/loadtest-speaker-1_thumbnail_tiny.jpg',
+        '/static/eventyay/css/main.css',
     ],
 )
 def test_load_shedding_exempts_checkin_and_health(path, monkeypatch):
@@ -132,6 +134,19 @@ def test_load_shedding_does_not_exempt_unrelated_paths(path, monkeypatch):
         assert middleware(RequestFactory().get(path)).status_code == 503
 
 
+def test_media_responses_get_cache_headers(monkeypatch):
+    from django.http import HttpResponse
+    from django.test import RequestFactory
+
+    from eventyay.base.middleware import LoadSheddingMiddleware
+
+    middleware = LoadSheddingMiddleware(lambda request: HttpResponse(b'img', content_type='image/jpeg'))
+    response = middleware(RequestFactory().get('/media/avatars/speaker.jpg'))
+    assert response.status_code == 200
+    assert 'max-age=86400' in response['Cache-Control']
+    assert 'immutable' in response['Cache-Control']
+
+
 def test_heavy_celery_tasks_routed_to_longrunning():
     from django.conf import settings
 
@@ -144,6 +159,7 @@ def test_heavy_celery_tasks_routed_to_longrunning():
         'eventyay.base.services.tickets.generate',
         'eventyay.base.services.tickets.invalidate_cache',
         'pretalx.agenda.export_schedule_html',
+        'eventyay.person.ensure_avatar_thumbnails',
     ):
         assert routes[name]['queue'] == 'longrunning'
 
