@@ -95,6 +95,21 @@ class SubmitWizard(EventPageMixin, View):
                 valid_steps.append(step)
 
         # We are done, or at least the data checks out. Time to save results.
+        if request.access_code:
+            # dispatch() read the access code without a lock, so concurrent
+            # submissions can all pass the maximum_uses check. Lock the row
+            # and check again before InfoStep.done() redeems it.
+            request.access_code = request.event.submitter_access_codes.select_for_update().get(
+                pk=request.access_code.pk
+            )
+            if not request.access_code.is_valid:
+                messages.error(request, _('This access code is no longer valid.'))
+                return redirect(
+                    reverse(
+                        'cfp:event.start',
+                        kwargs={'organizer': request.event.organizer.slug, 'event': request.event.slug},
+                    )
+                )
         request.event.cfp_flow.steps_dict['user'].done(request)
         for step in valid_steps:
             if step.identifier != 'user':

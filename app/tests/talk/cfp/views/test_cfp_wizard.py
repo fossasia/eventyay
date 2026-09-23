@@ -6,13 +6,22 @@ import pytest
 from django import forms as forms
 from django.core import mail as djmail
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import connection
+from django.db.models import F
 from django.http.request import QueryDict
+from django.test.utils import CaptureQueriesContext
 from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
 
+from eventyay.cfp.views.wizard import SubmitWizard
 from eventyay.submission.forms.submission import AUTO_DRAFT_TITLE
 from eventyay.submission.forms import InfoForm
-from eventyay.base.models import Submission, SubmissionStates, SubmissionType
+from eventyay.base.models import (
+    Submission,
+    SubmissionStates,
+    SubmissionType,
+    SubmitterAccessCode,
+)
 
 
 class TestWizard:
@@ -784,3 +793,60 @@ def test_infoform_set_submission_type_2nd_event(event, other_event, submission_t
         assert len(event.submission_types.all()) == 2
         assert len(f.fields["submission_type"].queryset) == 2
         assert not isinstance(f.fields["submission_type"].widget, forms.HiddenInput)
+
+
+@pytest.mark.django_db
+def test_wizard_access_code_used_up_during_submission_is_rejected(event, client, user, access_code, monkeypatch):
+    """SubmitWizard.dispatch() checks the access code without a lock and the
+    code is only redeemed once the last step is done, so a concurrent
+    submission can use up the code in between. That submission is simulated
+    by redeeming the code right before done() runs: the request must then
+    lock and re-check the code and fail instead of redeeming it again."""
+    event.talks_published = True
+    event.save()
+    event.cfp.deadline = now() - dt.timedelta(days=1)
+    event.cfp.save()
+    with scope(event=event):
+        submission_type = SubmissionType.objects.filter(event=event).first().pk
+    assert access_code.maximum_uses == 1
+
+    original_done = SubmitWizard.done
+
+    def done_after_concurrent_redeem(self, request, *args, **kwargs):
+        SubmitterAccessCode.objects.filter(pk=access_code.pk).update(redeemed=F("redeemed") + 1)
+        return original_done(self, request, *args, **kwargs)
+
+    monkeypatch.setattr(SubmitWizard, "done", done_after_concurrent_redeem)
+
+    client.force_login(user)
+    url = event.cfp.urls.submit + f"?access_code={access_code.code}"
+    response = client.get(url, follow=True)
+    url = response.redirect_chain[-1][0]
+    response = client.post(
+        url,
+        follow=True,
+        data={
+            "title": "Submission title",
+            "content_locale": "en",
+            "description": "Description",
+            "abstract": "Abstract",
+            "notes": "Notes",
+            "slot_count": 1,
+            "submission_type": submission_type,
+        },
+    )
+    url = response.redirect_chain[-1][0]
+    with CaptureQueriesContext(connection) as queries:
+        response = client.post(url, data={"fullname": "Jane Doe", "biography": "bio", "additional_speaker": ""})
+
+    assert response.status_code == 302
+    assert response["Location"].endswith("/cfp")
+    assert any(
+        "FOR UPDATE" in query["sql"] and SubmitterAccessCode._meta.db_table in query["sql"]
+        for query in queries.captured_queries
+    )
+    with scope(event=event):
+        access_code.refresh_from_db()
+        assert access_code.redeemed == 1
+        assert event.submissions.count() == 0
+
