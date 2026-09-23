@@ -39,7 +39,11 @@ class SubmitWizard(EventPageMixin, View):
         self.event = self.request.event
         request.access_code = None
         if access_code := request.GET.get('access_code'):
-            access_code = request.event.submitter_access_codes.filter(code__iexact=access_code).first()
+            access_code = (
+                request.event.submitter_access_codes.select_for_update()
+                .filter(code__iexact=access_code)
+                .first()
+            )
             if access_code and access_code.is_valid:
                 request.access_code = access_code
         if not request.event.cfp.is_open and not request.access_code:
