@@ -801,11 +801,10 @@ async function editorSave(): Promise<void> {
         schedule.value = await fetchSchedule()
       }
       await fetchAdditionalScheduleData()
-    } catch (refreshError) {
-      console.error('Failed to refresh schedule after save', refreshError)
+    } catch {
+      // fetchSchedule already records schedule.fetch via api.http
     }
-  } catch (error) {
-    console.error('Failed to save', error)
+  } catch {
     editorSessionError.value = $t('Failed to save. Please try again.')
   } finally {
     editorSessionWaiting.value = false
@@ -877,8 +876,7 @@ async function loadMembers(roleId: number): Promise<void> {
   try {
     const response = await api.fetchMembers(roleId)
     availableMembersByRole.value[String(roleId)] = response.members ?? []
-  } catch (error) {
-    console.error('Failed to fetch members', error)
+  } catch {
     assignModalError.value = $t('Failed to load members. Please try again.')
   }
 }
@@ -904,8 +902,6 @@ async function assignMember(roleId: number): Promise<void> {
     await loadMembers(roleId)
     selectedMemberIds.value[String(roleId)] = undefined
   } catch (error) {
-    console.error('Failed to assign member', error)
-
     if (error instanceof Error && error.message) {
       try {
         const parsedError = JSON.parse(
@@ -951,8 +947,6 @@ async function unassignMember(roleId: number, userId: number): Promise<void> {
     }
     await fetchAdditionalScheduleData()
   } catch (error) {
-    console.error('Failed to unassign member', error)
-
     if (error instanceof Error) {
       try {
         const parsedError = JSON.parse(

@@ -9,11 +9,27 @@ from django.core.files import File
 from django.core.files.storage import Storage
 
 from eventyay.base.services import http
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 
 """
 This file contains a Django storage backend for the minimal CDN used by the eventyay SaaS service. The architecture
 of the CDN is described at https://behind.pretix.eu/2018/03/20/high-available-cdn/
 """
+
+
+def _raise_cdn_status(resp, action):
+    try:
+        resp.raise_for_status()
+    except requests.RequestException:
+        log_event(
+            'core',
+            'connection.%s' % action,
+            OUTCOME_FAILURE,
+            error_code='http_error',
+            status=getattr(resp, 'status_code', None),
+            backend='nanocdn',
+        )
+        raise
 
 
 class NanoCDNFile(File):
@@ -90,7 +106,7 @@ class NanoCDNStorage(Storage):
         resp = http.get(urllib.parse.urljoin(self.base_url, name), stream=True)
         if resp.status_code == 404:
             raise FileNotFoundError()
-        resp.raise_for_status()
+        _raise_cdn_status(resp, 'get')
         return resp
 
     def _save(self, name, content):
@@ -123,7 +139,7 @@ class NanoCDNStorage(Storage):
             allow_redirects=False,
         )
         if resp.status_code != 409:
-            resp.raise_for_status()
+            _raise_cdn_status(resp, 'put')
 
         loc = resp.headers["Location"]
         if loc.startswith("/"):
@@ -145,20 +161,21 @@ class NanoCDNStorage(Storage):
         resp = http.delete(urllib.parse.urljoin(self.base_url, name))
         if resp.status_code == 404:
             return resp  # That is fine
-        resp.raise_for_status()
+        _raise_cdn_status(resp, 'delete')
         return resp
 
     def exists(self, name):
         resp = http.head(urllib.parse.urljoin(self.base_url, name))
         if resp.status_code == 404:
             return False
-        resp.raise_for_status()
+        _raise_cdn_status(resp, 'head')
         return True
 
     def size(self, name):
-        resp = http.head(urllib.parse.urljoin(self.base_url, name))
-        resp.raise_for_status()
-        return resp["Content-Length"]
+def size(self, name):
+    resp = http.head(urllib.parse.urljoin(self.base_url, name))
+    _raise_cdn_status(resp, 'head')
+    return resp["Content-Length"]
 
     def url(self, name):
         return urllib.parse.urljoin(settings.MEDIA_URL, name)

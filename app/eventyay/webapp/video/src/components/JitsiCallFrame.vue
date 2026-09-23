@@ -13,6 +13,7 @@
 
 <script>
 import api from 'lib/api'
+import {logOperational} from 'lib/operationalLog'
 
 export default {
 	name: 'JitsiCallFrame',
@@ -195,6 +196,7 @@ export default {
 				this.jitsiApi.addListener('videoConferenceJoined', () => {
 					this.loading = false
 					this.conferenceJoined = true
+					logOperational({action: 'jitsi.join', outcome: 'success', backend: 'jitsi'})
 					if (!this.hasEmittedConnected) {
 						this.hasEmittedConnected = true
 						this.$emit('connected')
@@ -244,6 +246,10 @@ export default {
 			} catch (err) {
 				this.loading = false
 				this.error = err
+				const errorCode = err?.code === 'jitsi.join.missing_profile'
+					? 'missing_profile'
+					: (err?.code === 'jitsi.server_unavailable' ? 'server_unavailable' : 'join_failed')
+				logOperational({action: 'jitsi.join', outcome: 'failure', backend: 'jitsi', error_code: errorCode})
 				if (err?.code === 'jitsi.join.missing_profile') {
 					this.errorMsg = this.$t('Please update your display name in your profile to join.')
 				} else if (err?.code === 'jitsi.server_unavailable') {

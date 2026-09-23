@@ -16,6 +16,7 @@ The API key is read from global settings on the server side only and is never
 exposed to the frontend.
 """
 
+import logging
 import re
 from urllib.parse import quote, urljoin
 
@@ -24,6 +25,10 @@ from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 from django.utils.crypto import get_random_string
 from django.utils.translation import gettext_lazy as _
+
+from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
+
+logger = logging.getLogger(__name__)
 
 # Etherpad HTTP API version shipped by current Etherpad releases.
 ETHERPAD_API_VERSION = '1.2.15'
@@ -43,6 +48,10 @@ class EtherpadError(Exception):
 
 class EtherpadConfigurationError(EtherpadError):
     """Raised when the Etherpad integration is not configured correctly."""
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        log_event('talk', 'connection.create_pad', OUTCOME_FAILURE, error_code='not_configured', backend='etherpad')
 
 
 def validate_etherpad_url(value):
@@ -112,10 +121,14 @@ def _create_pad_via_api(base_url, api_key, pad_name):
         response.raise_for_status()
         payload = response.json()
     except requests.RequestException as exc:
+        log_event('talk', 'connection.create_pad', OUTCOME_FAILURE, error_code='request_error', backend='etherpad')
+        logger.exception('Could not reach Etherpad')
         raise EtherpadError(
             _('Could not reach the Etherpad instance: {error}').format(error=str(exc))
         ) from exc
     except ValueError as exc:
+        log_event('talk', 'connection.create_pad', OUTCOME_FAILURE, error_code='invalid_response', backend='etherpad')
+        logger.exception('Etherpad returned a non-JSON response')
         raise EtherpadError(
             _('The Etherpad instance returned an unexpected response.')
         ) from exc
@@ -123,10 +136,14 @@ def _create_pad_via_api(base_url, api_key, pad_name):
     code = payload.get('code')
     # code 0 = success. code 1 with "padID does already exist" is fine for us.
     if code == 0:
+        log_event('talk', 'connection.create_pad', OUTCOME_SUCCESS, status=response.status_code, backend='etherpad')
         return
     message = payload.get('message', '')
     if code == 1 and 'already exist' in message.lower():
+        log_event('talk', 'connection.create_pad', OUTCOME_SUCCESS, status=response.status_code, backend='etherpad')
         return
+    log_event('talk', 'connection.create_pad', OUTCOME_FAILURE, error_code='etherpad_rejected', backend='etherpad')
+    logger.error('Etherpad rejected pad creation')
     raise EtherpadError(
         _('Etherpad rejected the pad creation: {message}').format(message=message or _('unknown error'))
     )
