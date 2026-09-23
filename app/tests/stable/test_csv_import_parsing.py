@@ -17,9 +17,9 @@ HEADERS = [
 ]
 
 
-def build_csv(abstract, delimiter=','):
+def build_csv(abstract, delimiter=',', quoting=csv.QUOTE_ALL):
     buffer = StringIO()
-    writer = csv.writer(buffer, delimiter=delimiter, quoting=csv.QUOTE_ALL)
+    writer = csv.writer(buffer, delimiter=delimiter, quoting=quoting)
     writer.writerow(HEADERS)
     writer.writerow(
         [
@@ -35,13 +35,14 @@ def build_csv(abstract, delimiter=','):
     return BytesIO(buffer.getvalue().encode())
 
 
-def parse_single_row(abstract, delimiter=','):
-    parsed = parse_csv(build_csv(abstract, delimiter=delimiter))
+def parse_single_row(abstract, delimiter=',', quoting=csv.QUOTE_ALL):
+    parsed = parse_csv(build_csv(abstract, delimiter=delimiter, quoting=quoting))
     rows = list(parsed)
     assert len(rows) == 1
     return rows[0]
 
 
+@pytest.mark.parametrize('quoting', (csv.QUOTE_ALL, csv.QUOTE_MINIMAL, csv.QUOTE_NONNUMERIC))
 @pytest.mark.parametrize(
     'abstract',
     (
@@ -52,8 +53,8 @@ def parse_single_row(abstract, delimiter=','):
         'Ends with a quote "',
     ),
 )
-def test_columns_stay_aligned(abstract):
-    row = parse_single_row(abstract)
+def test_columns_stay_aligned(abstract, quoting):
+    row = parse_single_row(abstract, quoting=quoting)
 
     assert row['Abstract'] == abstract
     assert row['Speaker names'] == 'Deepak Koul'
@@ -62,16 +63,18 @@ def test_columns_stay_aligned(abstract):
     assert row['Room'] == 'Room 1'
 
 
-def test_semicolon_separated_file():
-    row = parse_single_row('He said "hello"; then we built an app', delimiter=';')
+@pytest.mark.parametrize('quoting', (csv.QUOTE_ALL, csv.QUOTE_MINIMAL))
+def test_semicolon_separated_file(quoting):
+    row = parse_single_row('He said "hello"; then we built an app', delimiter=';', quoting=quoting)
 
     assert row['Abstract'] == 'He said "hello"; then we built an app'
     assert row['Speaker names'] == 'Deepak Koul'
 
 
-def test_all_rows_are_returned():
+@pytest.mark.parametrize('quoting', (csv.QUOTE_ALL, csv.QUOTE_MINIMAL))
+def test_all_rows_are_returned(quoting):
     buffer = StringIO()
-    writer = csv.writer(buffer, quoting=csv.QUOTE_ALL)
+    writer = csv.writer(buffer, quoting=quoting)
     writer.writerow(HEADERS)
     for index in range(21):
         writer.writerow(
