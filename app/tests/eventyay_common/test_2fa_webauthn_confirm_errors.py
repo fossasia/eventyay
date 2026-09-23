@@ -79,3 +79,40 @@ def test_failure_after_the_device_is_saved_is_not_swallowed(client):
 
     device.refresh_from_db()
     assert device.confirmed
+
+
+@pytest.mark.django_db
+def test_credential_already_registered_is_rejected(client):
+    """The duplicate check compares against the stored (encoded) credential id.
+
+    Comparing the raw bytes never matched, so the same credential could be
+    registered twice and the "already registered" message never appeared.
+    """
+    from eventyay.helpers.u2f import websafe_encode
+
+    raw_credential_id = b'\x01\x02\x03duplicate-credential'
+
+    owner = User.objects.create_user(email='webauthn_owner@example.org', password='password123')
+    WebAuthnDevice.objects.create(
+        user=owner,
+        name='existing key',
+        confirmed=True,
+        credential_id=websafe_encode(raw_credential_id),
+    )
+
+    user = User.objects.create_user(email='webauthn_dupe@example.org', password='password123')
+    login_recently(client, user)
+    device = make_unconfirmed_device(client, user)
+
+    verification = mock.Mock(
+        credential_id=raw_credential_id,
+        credential_public_key=b'public-key',
+        sign_count=0,
+    )
+    with mock.patch('webauthn.verify_registration_response', return_value=verification):
+        response = client.post(confirm_url(device), {'token': '{}'})
+
+    assert response.status_code == 302
+    assert response['Location'] == confirm_url(device)
+    device.refresh_from_db()
+    assert not device.confirmed

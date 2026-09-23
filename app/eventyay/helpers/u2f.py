@@ -58,4 +58,4 @@ def websafe_encode(data):
     """
     if isinstance(data, str):
         data = data.encode('ascii')
-        return urlsafe_b64encode(data).replace(b'=', b'').decode('ascii')
+    return urlsafe_b64encode(data).replace(b'=', b'').decode('ascii')

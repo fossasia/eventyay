@@ -287,7 +287,7 @@ class TwoFactorAuthDeviceConfirmWebAuthnView(TwoFactorAuthPageMixin, TemplateVie
         # ceremony, or it MAY decide to accept the registration, e.g. while deleting
         # the older registration.
         credential_id_exists = WebAuthnDevice.objects.filter(
-            credential_id=registration_verification.credential_id
+            credential_id=websafe_encode(registration_verification.credential_id)
         ).first()
         if credential_id_exists:
             messages.error(request, _('This security device is already registered.'))
