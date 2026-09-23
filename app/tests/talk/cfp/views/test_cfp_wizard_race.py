@@ -1,6 +1,6 @@
-import pytest
 from unittest.mock import patch
 
+import pytest
 from django.db.models.query import QuerySet
 from django_scopes import scope
 
@@ -15,9 +15,11 @@ def test_wizard_access_code_select_for_update(client, event, access_code):
     original_sfu = QuerySet.select_for_update
 
     def mock_sfu(queryset, *args, **kwargs):
+        result = original_sfu(queryset, *args, **kwargs)
         if queryset.model == SubmitterAccessCode:
             mock_sfu.called = True
-        return original_sfu(queryset, *args, **kwargs)
+            assert result.query.select_for_update
+        return result
 
     mock_sfu.called = False
 
