@@ -915,7 +915,7 @@ class ProductVariation(AdmissionValidityBoundMixin, models.Model):
         ),
         max_length=20,
         choices=ADMISSION_VALIDITY_MODE_CHOICES,
-        blank=False,
+        blank=True,
         default=ADMISSION_VALIDITY_MODE_INHERIT,
     )
 
