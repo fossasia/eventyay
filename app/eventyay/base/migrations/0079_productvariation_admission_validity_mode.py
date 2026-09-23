@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0077_admin_message_center'),
+        ('base', '0078_revert_default_speaker_questions'),
     ]
 
     operations = [
