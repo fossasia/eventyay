@@ -60,6 +60,8 @@ def parse_csv(file, length=None):
     if dialect is None:
         return None
 
+    dialect.doublequote = True
+
     reader = csv.DictReader(io.StringIO(data), dialect=dialect)
     return reader
 
