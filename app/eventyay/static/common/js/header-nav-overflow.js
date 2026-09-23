@@ -7,6 +7,7 @@ const isActive = (element) => ACTIVE_CLASS_NAMES.some((name) => element.classLis
 
 const createOverflowNav = (row, bar, overflow) => {
     const menu = overflow.querySelector('.header-tab-overflow-menu')
+    const summary = overflow.querySelector('summary')
     const nodes = Array.from(bar.childNodes)
     const tabs = nodes.filter((node) => node.nodeType === Node.ELEMENT_NODE && node.classList.contains('header-tab'))
 
@@ -25,6 +26,11 @@ const createOverflowNav = (row, bar, overflow) => {
         menu.appendChild(tab)
     }
 
+    const hide = () => {
+        overflow.hidden = true
+        overflow.open = false
+    }
+
     const fit = () => {
         restore()
         overflow.hidden = true
@@ -35,10 +41,14 @@ const createOverflowNav = (row, bar, overflow) => {
         const required = widths.reduce((sum, width) => sum + width, 0)
 
         const available = bar.clientWidth
-        if (required <= available + WIDTH_TOLERANCE) return
+        if (required <= available + WIDTH_TOLERANCE) {
+            hide()
+            return
+        }
 
         overflow.hidden = false
-        const budget = available - overflow.getBoundingClientRect().width + WIDTH_TOLERANCE
+        const trigger = summary || overflow
+        const budget = available - trigger.getBoundingClientRect().width + WIDTH_TOLERANCE
         let used = 0
         let visible = 0
         while (visible < widths.length && used + widths[visible] <= budget) {
@@ -48,7 +58,7 @@ const createOverflowNav = (row, bar, overflow) => {
 
         const moved = candidates.slice(visible)
         if (moved.length === 0) {
-            overflow.hidden = true
+            hide()
             return
         }
 
@@ -79,6 +89,7 @@ const createOverflowNav = (row, bar, overflow) => {
 
             window.addEventListener('resize', schedule)
             window.addEventListener('hashchange', schedule)
+            window.addEventListener('pageshow', schedule)
 
             if (document.fonts) {
                 document.fonts.ready.then(schedule)
