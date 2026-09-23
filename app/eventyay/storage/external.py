@@ -9,6 +9,7 @@ from django.core.files.base import ContentFile
 from django.utils.timezone import now
 
 from eventyay.base.models.storage_model import StoredFile
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.consts import SizeKey
 
 
@@ -60,9 +61,22 @@ def store_image(response, event):  # TODO deduplicate
 
 
 def retrieve_url(url):
-    response = requests.get(url, timeout=10)  # TODO: user agent
+    try:
+        response = requests.get(url, timeout=10)  # TODO: user agent
+    except requests.RequestException:
+        log_event('video', 'connection.get', OUTCOME_FAILURE, error_code='request_error', backend='preview')
+        return
     if response.status_code == 200:
         return response
+    if response.status_code >= 500:
+        log_event(
+            'video',
+            'connection.get',
+            OUTCOME_FAILURE,
+            error_code='http_error',
+            status=response.status_code,
+            backend='preview',
+        )
 
 
 def fetch_preview_data(url, event):

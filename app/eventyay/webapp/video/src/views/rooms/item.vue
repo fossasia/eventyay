@@ -136,6 +136,7 @@ import UpcomingStreamCountdown from 'components/UpcomingStreamCountdown'
 import { isUsableAudioTranslationEntry, normalizeAudioTranslationSource } from 'lib/validators'
 import { firstCaptionLanguage, pluginLanguageStreams, roomUsesPluginLanguageStreams } from '../../interpretation-streams'
 import { interpretationApiUrl, interpretationAuthHeaders } from 'lib/interpretation-api'
+import { logOperational } from 'lib/operationalLog'
 import { hasOrganizerTraits } from 'lib/traitGrants'
 import { hasEmbeddedSuite, isRoomVisibleToAttendee } from 'lib/video-providers'
 
@@ -415,11 +416,11 @@ export default {
 						this.listenerToken = data.token;
 					}
 				} else {
-					console.error('listener-token failed:', response.status);
+					logOperational({action: 'interpretation.token', outcome: 'failure', backend: 'interpretation', error_code: 'http_error', status: response.status});
 				}
 			} catch (err) {
 				if (this.room?.id === currentRoomId) {
-					console.error('Failed to fetch listener token', err);
+					logOperational({action: 'interpretation.token', outcome: 'failure', backend: 'interpretation', error_code: 'network_error'});
 				}
 			}
 		},

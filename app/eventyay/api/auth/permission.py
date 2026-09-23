@@ -3,12 +3,15 @@ from rest_framework.permissions import SAFE_METHODS, BasePermission
 from eventyay.api.models import OAuthAccessToken
 from eventyay.base.models import Device, Event, User
 from eventyay.base.models.auth import SuperuserPermissionSet
+from eventyay.base.models.auth_token import UserApiToken
 from eventyay.base.models.organizer import TeamAPIToken
 from eventyay.helpers.security import (
     SessionInvalid,
     SessionReauthRequired,
     assert_session_valid,
 )
+
+_TOKEN_AUTH_TYPES = (Device, TeamAPIToken, UserApiToken)
 
 
 class EventPermission(BasePermission):
@@ -74,15 +77,33 @@ class EventPermission(BasePermission):
         self._set_eventpermset(request, perm_holder)
         return self._has_required_permission(required_permission, request.eventpermset)
 
+    @staticmethod
+    def _has_user_api_token_scope(request, view):
+        """Enforce /orga/me token event + endpoint scopes without affecting team/device auth."""
+        token = request.auth
+        if not isinstance(token, UserApiToken):
+            return True
+
+        event = getattr(request, 'event', None)
+        if event is not None and event not in token.events.all():
+            return False
+
+        endpoint = getattr(view, 'endpoint', None)
+        action = getattr(view, 'action', None)
+        if endpoint and action and not token.has_endpoint_permission(endpoint, action):
+            return False
+        return True
+
     def has_permission(self, request, view):
         required_permission = self._get_required_permission(request, view)
         allow_public_read = getattr(view, 'allow_public_read', False)
 
-        if not request.user.is_authenticated and not isinstance(request.auth, (Device, TeamAPIToken)):
+        if not request.user.is_authenticated and not isinstance(request.auth, _TOKEN_AUTH_TYPES):
             if request.method not in SAFE_METHODS or required_permission or not allow_public_read:
                 return False
 
-        if request.user.is_authenticated:
+        # Browser sessions need validity checks; API tokens must not depend on a session.
+        if request.user.is_authenticated and not isinstance(request.auth, UserApiToken):
             try:
                 # If this logic is updated, make sure to also update the logic in eventyay/control/middleware.py
                 assert_session_valid(request)
@@ -104,7 +125,7 @@ class EventPermission(BasePermission):
             ):
                 return False
         elif 'organizer' in kwargs:
-            if not request.user.is_authenticated and not isinstance(request.auth, (Device, TeamAPIToken)):
+            if not request.user.is_authenticated and not isinstance(request.auth, _TOKEN_AUTH_TYPES):
                 return False
             if not request.organizer or not perm_holder.has_organizer_permission(request.organizer, request=request):
                 return False
@@ -114,6 +135,9 @@ class EventPermission(BasePermission):
                 request.orgapermset = perm_holder.get_organizer_permission_set(request.organizer)
             if not self._has_required_permission(required_permission, request.orgapermset):
                 return False
+
+        if not self._has_user_api_token_scope(request, view):
+            return False
 
         if isinstance(request.auth, OAuthAccessToken):
             if not request.auth.allow_scopes(['write']) and request.method not in SAFE_METHODS:
@@ -159,10 +183,10 @@ class CloneEventPermission(EventPermission):
 
 class ProfilePermission(BasePermission):
     def has_permission(self, request, view):
-        if not request.user.is_authenticated and not isinstance(request.auth, (Device, TeamAPIToken)):
+        if not request.user.is_authenticated and not isinstance(request.auth, _TOKEN_AUTH_TYPES):
             return False
 
-        if request.user.is_authenticated:
+        if request.user.is_authenticated and not isinstance(request.auth, UserApiToken):
             try:
                 # If this logic is updated, make sure to also update the logic in eventyay/control/middleware.py
                 assert_session_valid(request)
@@ -183,10 +207,10 @@ class ProfilePermission(BasePermission):
 
 class AnyAuthenticatedClientPermission(BasePermission):
     def has_permission(self, request, view):
-        if not request.user.is_authenticated and not isinstance(request.auth, (Device, TeamAPIToken)):
+        if not request.user.is_authenticated and not isinstance(request.auth, _TOKEN_AUTH_TYPES):
             return False
 
-        if request.user.is_authenticated:
+        if request.user.is_authenticated and not isinstance(request.auth, UserApiToken):
             try:
                 # If this logic is updated, make sure to also update the logic in eventyay/control/middleware.py
                 assert_session_valid(request)
