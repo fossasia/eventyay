@@ -98,7 +98,6 @@
 							svg(viewBox="0 0 24 24")
 								path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
 						.name(:class="{'no-name': !speaker.name}") {{ speaker.name || t.speaker_name_not_provided }}
-					p.speaker-role(v-if="speaker.speaker_role") {{ speaker.speaker_role }}
 					markdown-content.biography(v-if="speaker.biography", :markdown="speaker.biography")
 		.starrers(v-if="popularityFeatureEnabled && starrers && starrers.total > 0")
 			.header
@@ -939,11 +938,6 @@ export default {
 					color: $clr-secondary-text-light
 					font-weight: 400
 					font-style: italic
-			.speaker-role
-				font-size: 13px
-				color: $clr-secondary-text-light
-				margin: 4px 0 0 0
-				line-height: 1.3
 	.downloads
 		margin: 0 16px 32px
 		display: flex
