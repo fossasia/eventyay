@@ -105,6 +105,10 @@ class ReviewDashboard(EventPermissionRequired, BaseSubmissionList):
 
         for submission in queryset:
             submission_categories = {category.pk for category in submission.score_categories}
+            submission.can_update_score = (
+                has_reviewer_access(self.request.user, submission)
+                and can_be_reviewed(self.request.user, submission)
+            )
             reviews = [review for review in submission.reviews.all() if review.user == self.request.user]
             if self.can_see_all_reviews:
                 submission.current_score = (

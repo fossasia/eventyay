@@ -148,9 +148,9 @@
                                     <td class="col-score-avg numeric"> {% if score is None %}-{% else %}{{ score }}{% endif %}</td>
                                 {% endfor %}
                             {% endif %}
-                            {% if can_review or submissions_reviewed %}
                             {% for category, user_score_id in submission.dashboard_scores %}
                             <td class="text-center col-score-user numeric">
+                                {% if submission.can_update_score %}
                                 <div class="d-inline-flex align-items-center">
                                     <select
                                          class="form-control review-score-select w-100"
@@ -172,13 +172,15 @@
                                     <i class="fail fa fa-times d-none"></i>
                                 </div>
                                 <div class="review-score-error text-danger d-none"></div>
+                                {% else %}
+                                    -
+                                {% endif %}
                             </td>
                             {% endfor %}
                                 {% if independent_categories and not can_see_all_reviews %}
                                     {% for score in submission.independent_scores %}
                                         <td class="col-score-user numeric"> {% if score is None %}-{% else %}{{ score }}{% endif %}</td>
                                     {% endfor %}
-                                {% endif %}
                             {% endif %}
                             <td class="text-center col-review-count numeric review-count">
                                 <span class="review-count-value">{{ submission.review_nonnull_count|default:"-" }}</span>

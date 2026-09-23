@@ -847,3 +847,19 @@ def test_reviewer_cannot_update_score_when_not_assigned(
     )
 
     assert response.status_code == 404
+
+@pytest.mark.django_db
+def test_reviewer_dashboard_hides_score_for_unreviewable_submission(
+    review_client, submission
+):
+    with scope(event=submission.event):
+        category = submission.event.score_categories.first()
+        score = category.scores.first()
+
+        submission.state = SubmissionStates.ACCEPTED
+        submission.save(update_fields=['state'])
+
+    response = review_client.get(submission.event.orga_urls.reviews)
+
+    assert response.status_code == 200
+    assert f'value="{score.pk}"' not in response.text
