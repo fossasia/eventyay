@@ -52,6 +52,7 @@ import mux from 'mux-embed'
 import config from 'config'
 import theme from 'theme'
 import { getStagePlaybackMode, PLAYBACK_MODE_SCHEDULE_DRIVEN, STREAM_TYPE_HLS } from 'lib/stage-streams'
+import {logOperational} from 'lib/operationalLog'
 
 const RETRY_INTERVAL = 5000
 // TODO look at capLevelToPlayerSize
@@ -320,6 +321,7 @@ export default {
 					if (data.details === Hls.ErrorDetails.BUFFER_STALLED_ERROR) {
 						this.buffering = true
 					} else if ([Hls.ErrorDetails.MANIFEST_LOAD_ERROR, Hls.ErrorDetails.LEVEL_LOAD_ERROR].includes(data.details)) {
+						logOperational({action: 'hls.error', outcome: 'failure', backend: 'hls', error_code: data.details === Hls.ErrorDetails.MANIFEST_LOAD_ERROR ? 'manifest_load' : 'level_load', status: data.response?.code})
 						if (!started) {
 							this.offline = true
 							this.scheduleRetry(player, load, RETRY_INTERVAL)
@@ -327,6 +329,7 @@ export default {
 							this.initializePlayer()
 						}
 					} else if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+						logOperational({action: 'hls.error', outcome: 'failure', backend: 'hls', error_code: 'network_error'})
 						this.buffering = true
 						this.scheduleRetry(player, () => player.startLoad(), 250)
 					}

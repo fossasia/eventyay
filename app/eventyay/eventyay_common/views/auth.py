@@ -42,6 +42,7 @@ from eventyay.base.forms.auth import (
     RegistrationForm,
 )
 from eventyay.base.models import TeamInvite, U2FDevice, User, WebAuthnDevice
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.services.mail import SendMailException
 from eventyay.helpers.cookies import set_cookie_without_samesite
 from eventyay.helpers.jwt_generate import generate_sso_token
@@ -478,6 +479,7 @@ class Login2FAView(TemplateView):
                 return redirect(request.GET.get('next'))
             return redirect(reverse('eventyay_common:dashboard'))
         else:
+            log_event('core', 'auth.login', OUTCOME_FAILURE, error_code='2fa_failed', user_id=getattr(self.user, 'pk', None))
             messages.error(request, _('Invalid code, please try again.'))
             return redirect('auth.login.2fa')
 
