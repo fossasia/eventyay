@@ -81,7 +81,7 @@
   right: 0;
 }
 
-.header-tab-overflow-menu a.header-tab {
+.presale-sticky-tabs details.dropdown .header-tab-overflow-menu a.header-tab {
   width: 100%;
   min-height: var(--header-nav-tap-size);
   white-space: normal;
