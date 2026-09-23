@@ -39,7 +39,12 @@ from webauthn.helpers.structs import PublicKeyCredentialDescriptor
 
 from eventyay.base.i18n import language
 from eventyay.base.models.cache import VersionedModel
-from eventyay.common.image import create_thumbnail, get_thumbnail
+from eventyay.common.image import (
+    create_thumbnail,
+    get_thumbnail,
+    get_thumbnail_field_name,
+    is_svg_filename,
+)
 from eventyay.common.text.path import path_with_hash
 from eventyay.common.urls import EventUrls
 from eventyay.helpers.urls import build_absolute_uri
@@ -49,6 +54,56 @@ from eventyay.base.operational_logging import emit_logged_action
 from ...helpers.u2f import pub_key_from_der, websafe_decode
 from .base import LoggingMixin
 from .mixins import FileCleanupMixin, GenerateCode
+
+
+def public_image_url(image, event=None) -> str:
+    """Absolute URL for a stored image without filesystem access.
+
+    Cache-busting uses the already-unique stored name so list views do not
+    ``stat()`` every avatar on every request.
+    """
+    if not image or not getattr(image, 'name', None):
+        return ''
+    try:
+        url = image.url
+    except ValueError:
+        return ''
+    image_url = f'{url}?v={Path(image.name).stem}'
+    if event and getattr(event, 'custom_domain', None):
+        return urljoin(event.custom_domain, image_url)
+    return urljoin(settings.SITE_URL, image_url)
+
+
+def list_avatar_urls(user, event=None, *, include=True) -> dict:
+    """Avatar URLs for public lists without generating missing thumbnails."""
+    empty = {
+        'avatar': None,
+        'avatar_thumbnail_default': None,
+        'avatar_thumbnail_tiny': None,
+    }
+    if not include or not user.has_avatar:
+        return empty
+    return {
+        'avatar': user.get_avatar_url(event=event, generate_missing=False) or None,
+        'avatar_thumbnail_default': user.get_avatar_url(
+            event=event, thumbnail='default', generate_missing=False
+        )
+        or None,
+        'avatar_thumbnail_tiny': user.get_avatar_url(
+            event=event, thumbnail='tiny', generate_missing=False
+        )
+        or None,
+    }
+
+
+def needs_avatar_thumbnails(user, avatar_payload=None) -> bool:
+    if not user.has_avatar:
+        return False
+    if avatar_payload and avatar_payload.get('avatar_thumbnail_tiny') and avatar_payload.get(
+        'avatar_thumbnail_default'
+    ):
+        return False
+    return not is_svg_filename(getattr(user.avatar, 'name', '') or '')
 
 
 if TYPE_CHECKING:
@@ -1016,30 +1071,20 @@ the eventyay team"""
 
     @cached_property
     def avatar_url(self) -> str:
-        """Returns avatar URL with cache-busting timestamp parameter.
-
-        Uses the avatar file's actual modification time for most accurate cache-busting.
-        Falls back to current time if file doesn't exist or can't be accessed.
-        """
+        """Returns avatar URL with a stable cache-busting parameter."""
         if self.avatar and self.avatar != 'False':
-            try:
-                # Get the actual file modification time for most accurate cache-busting
-                file_path = self.avatar.path
-                file_mtime = os.path.getmtime(file_path)
-                timestamp = int(file_mtime * 1000)  # milliseconds for precision
-            except (OSError, ValueError, AttributeError):
-                # Fallback to current time if file doesn't exist or can't be accessed
-                timestamp = int(time.time() * 1000)
-
-            return f"{self.avatar.url}?v={timestamp}"
+            return public_image_url(self.avatar)
         return self.external_avatar_url
 
-    def get_avatar_url(self, event=None, thumbnail=None):
+    def get_avatar_url(self, event=None, thumbnail=None, *, generate_missing=True):
         """Returns the full avatar URL with cache-busting parameter.
 
         Args:
             event: Optional event for custom domain support
             thumbnail: Optional thumbnail size ('tiny' or 'default')
+            generate_missing: When False, never create thumbnails or ``stat()``
+                files. List and schedule JSON should pass False so page loads
+                cannot enqueue ``pretalx.cleanup_file`` storms.
 
         Returns:
             URL string with cache-busting query parameter
@@ -1054,19 +1099,24 @@ the eventyay team"""
                 return urljoin(event.custom_domain, external_avatar_url)
             return urljoin(settings.SITE_URL, external_avatar_url)
 
-        # Determine which image to use
         if not thumbnail:
             image = self.avatar
+        elif str(self.avatar.name).lower().endswith('.svg'):
+            image = self.avatar
         else:
-            if str(self.avatar.name).lower().endswith('.svg'):
-                image = self.avatar
-            else:
+            thumbnail_field_name = get_thumbnail_field_name(self.avatar, thumbnail)
+            stored = getattr(self, thumbnail_field_name, None)
+            if stored and stored.name:
+                image = stored
+            elif generate_missing:
                 image = get_thumbnail(self.avatar, thumbnail)
+            else:
+                return ''
 
         if not image:
             return ''
 
-        if not thumbnail and image.name and not image.storage.exists(image.name):
+        if generate_missing and not thumbnail and image.name and not image.storage.exists(image.name):
             for size in ('default', 'tiny'):
                 fallback = get_thumbnail(self.avatar, size)
                 if fallback and fallback.name and fallback.storage.exists(fallback.name):
@@ -1075,21 +1125,7 @@ the eventyay team"""
             else:
                 return ''
 
-        # Build base URL with cache-busting
-        try:
-            # Get the actual file modification time for cache-busting
-            file_path = image.path
-            file_mtime = os.path.getmtime(file_path)
-            timestamp = int(file_mtime * 1000)
-        except (OSError, ValueError, AttributeError):
-            # Fallback to current time if file doesn't exist
-            timestamp = int(time.time() * 1000)
-
-        image_url = f"{image.url}?v={timestamp}"
-
-        if event and event.custom_domain:
-            return urljoin(event.custom_domain, image_url)
-        return urljoin(settings.SITE_URL, image_url)
+        return public_image_url(image, event)
 
     @property
     def has_profile_picture(self) -> bool:
