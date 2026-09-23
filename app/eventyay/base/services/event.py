@@ -31,6 +31,7 @@ from eventyay.base.settings import (
     is_video_provider_enabled_for_organizer,
 )
 from eventyay.core.permissions import Permission
+from eventyay.base.operational_logging import OUTCOME_SUCCESS, log_event
 
 
 class EventConfigSerializer(serializers.Serializer):
@@ -833,6 +834,14 @@ def save_event(event, update_fields, old_data, by_user):
             "new": new,
         },
     )
+    if update_fields and 'feature_flags' in update_fields:
+        log_event(
+            'video',
+            'video.feature_flag',
+            OUTCOME_SUCCESS,
+            event_id=event.pk,
+            user_id=getattr(by_user, 'pk', None),
+        )
     return new
 
 

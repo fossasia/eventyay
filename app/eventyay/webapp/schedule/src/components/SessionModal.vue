@@ -96,7 +96,6 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 								path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
 					.inner-card-content
 						span {{ speaker.name }}
-						p.speaker-role(v-if="speaker.speaker_role") {{ speaker.speaker_role }}
 						p.biography(v-if="(speaker.apiContent?.biography || speaker.biography)?.length > 0", v-html="renderRichText(speaker.apiContent?.biography || speaker.biography)")
 		template(v-if="modalContent && modalContent.contentType === 'speaker'")
 			.speaker-details
@@ -541,10 +540,6 @@ export default {
 			margin-left: 8px
 			span
 				font-weight: 600
-			.speaker-role
-				margin: 4px 0 0 0
-				font-size: 13px
-				color: #666
 			p
 				color: var(--pretalx-clr-text)
 				font-size: 14px

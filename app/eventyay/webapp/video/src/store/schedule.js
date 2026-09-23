@@ -1,5 +1,6 @@
 import moment from 'lib/timetravelMoment'
 import config from '../../config'
+import { logOperational } from 'lib/operationalLog'
 
 // Thin adapter: loads schedule data and provides enriched sessions.
 // Filtering/export/timezone are handled by the shared ScheduleView/ScheduleToolbar.
@@ -275,6 +276,7 @@ export default {
 				}
 			} catch (error) {
 				commit('setErrorLoading', error)
+				logOperational({action: 'schedule.fetch', outcome: 'failure', backend: 'schedule_api', error_code: 'load_failed'})
 			} finally {
 				commit('setScheduleLoaded', true)
 			}
@@ -298,8 +300,8 @@ export default {
 						headers,
 						credentials: 'same-origin'
 					})
-				} catch (error) {
-					console.error('Failed to save favourite: %s', error)
+				} catch {
+					logOperational({action: 'schedule.fav', outcome: 'failure', backend: 'schedule_api', error_code: 'fav_failed'})
 				}
 			}
 		},
@@ -318,8 +320,8 @@ export default {
 						headers,
 						credentials: 'same-origin'
 					})
-				} catch (error) {
-					console.error('Failed to remove favourite: %s', error)
+				} catch {
+					logOperational({action: 'schedule.fav', outcome: 'failure', backend: 'schedule_api', error_code: 'unfav_failed'})
 				}
 			}
 		},
@@ -353,8 +355,8 @@ export default {
 							localStorage.removeItem(getFavStorageKey(null))
 						}
 					}
-				} catch (error) {
-					console.error('Failed to merge favourites: %s', error)
+				} catch {
+					logOperational({action: 'schedule.fav', outcome: 'failure', backend: 'schedule_api', error_code: 'merge_failed'})
 				}
 			}
 		},
