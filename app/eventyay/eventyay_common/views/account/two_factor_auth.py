@@ -22,6 +22,7 @@ from django_otp.plugins.otp_static.models import StaticDevice
 from django_otp.plugins.otp_totp.models import TOTPDevice
 
 from webauthn.helpers import generate_challenge, generate_user_handle
+from webauthn.helpers.exceptions import WebAuthnException
 
 from eventyay.common.consts import KEY_LAST_FORCE_LOGIN
 from eventyay.base.models import User, WebAuthnDevice, U2FDevice
@@ -263,60 +264,10 @@ class TwoFactorAuthDeviceConfirmWebAuthnView(TwoFactorAuthPageMixin, TemplateVie
                 expected_rp_id=get_webauthn_rp_id(),
                 expected_origin=settings.SITE_URL,
             )
-            # Check that the credentialId is not yet registered to any other user.
-            # If registration is requested for a credential that is already registered
-            # to a different user, the Relying Party SHOULD fail this registration
-            # ceremony, or it MAY decide to accept the registration, e.g. while deleting
-            # the older registration.
-            credential_id_exists = WebAuthnDevice.objects.filter(
-                credential_id=registration_verification.credential_id
-            ).first()
-            if credential_id_exists:
-                messages.error(request, _('This security device is already registered.'))
-                return redirect(
-                    reverse('eventyay_common:account.2fa.confirm.webauthn', kwargs={'device_id': self.device.pk})
-                )
-
-            device = self.device
-
-            device.credential_id = websafe_encode(registration_verification.credential_id)
-            device.ukey = websafe_encode(ukey)
-            device.pub_key = websafe_encode(registration_verification.credential_public_key)
-            device.sign_count = registration_verification.sign_count
-            device.rp_id = get_webauthn_rp_id()
-            device.icon_url = settings.SITE_URL
-            device.confirmed = True
-            device.save()
-            request.user.log_action(
-                'eventyay.user.settings.2fa.device.added',
-                user=self.request.user,
-                data={
-                    'id': device.pk,
-                    'devicetype': 'u2f',
-                    'name': device.name,
-                },
-            )
-            notices = [_('A new two-factor authentication device has been added to your account.')]
-            activate = request.POST.get('activate', '')
-            if activate == 'on' and not request.user.require_2fa:
-                request.user.require_2fa = True
-                request.user.save()
-                request.user.log_action('eventyay.user.settings.2fa.enabled', user=request.user)
-                notices.append(_('Two-factor authentication has been enabled.'))
-            request.user.send_security_notice(notices)
-            request.user.update_session_token()
-            update_session_auth_hash(request, request.user)
-
-            note = ''
-            if not request.user.require_2fa:
-                note = ' ' + gettext(
-                    'Please note that you still need to enable two-factor authentication for your '
-                    'account using the buttons below to make a second factor required for logging '
-                    'into your account.'
-                )
-            messages.success(request, gettext('The device has been verified and can now be used.') + note)
-            return redirect(reverse('eventyay_common:account.2fa'))
-        except Exception:
+        except (WebAuthnException, KeyError, TypeError, ValueError):
+            # Only the verification above is guarded. Everything after the device is
+            # saved must stay outside, because this handler redirects back to the
+            # confirmation view, which only loads unconfirmed devices.
             log_event(
                 'core',
                 'auth.login',
@@ -329,6 +280,60 @@ class TwoFactorAuthDeviceConfirmWebAuthnView(TwoFactorAuthPageMixin, TemplateVie
             return redirect(
                 reverse('eventyay_common:account.2fa.confirm.webauthn', kwargs={'device_id': self.device.pk})
             )
+
+        # Check that the credentialId is not yet registered to any other user.
+        # If registration is requested for a credential that is already registered
+        # to a different user, the Relying Party SHOULD fail this registration
+        # ceremony, or it MAY decide to accept the registration, e.g. while deleting
+        # the older registration.
+        credential_id_exists = WebAuthnDevice.objects.filter(
+            credential_id=registration_verification.credential_id
+        ).first()
+        if credential_id_exists:
+            messages.error(request, _('This security device is already registered.'))
+            return redirect(
+                reverse('eventyay_common:account.2fa.confirm.webauthn', kwargs={'device_id': self.device.pk})
+            )
+
+        device = self.device
+
+        device.credential_id = websafe_encode(registration_verification.credential_id)
+        device.ukey = websafe_encode(ukey)
+        device.pub_key = websafe_encode(registration_verification.credential_public_key)
+        device.sign_count = registration_verification.sign_count
+        device.rp_id = get_webauthn_rp_id()
+        device.icon_url = settings.SITE_URL
+        device.confirmed = True
+        device.save()
+        request.user.log_action(
+            'eventyay.user.settings.2fa.device.added',
+            user=self.request.user,
+            data={
+                'id': device.pk,
+                'devicetype': 'u2f',
+                'name': device.name,
+            },
+        )
+        notices = [_('A new two-factor authentication device has been added to your account.')]
+        activate = request.POST.get('activate', '')
+        if activate == 'on' and not request.user.require_2fa:
+            request.user.require_2fa = True
+            request.user.save()
+            request.user.log_action('eventyay.user.settings.2fa.enabled', user=request.user)
+            notices.append(_('Two-factor authentication has been enabled.'))
+        request.user.send_security_notice(notices)
+        request.user.update_session_token()
+        update_session_auth_hash(request, request.user)
+
+        note = ''
+        if not request.user.require_2fa:
+            note = ' ' + gettext(
+                'Please note that you still need to enable two-factor authentication for your '
+                'account using the buttons below to make a second factor required for logging '
+                'into your account.'
+            )
+        messages.success(request, gettext('The device has been verified and can now be used.') + note)
+        return redirect(reverse('eventyay_common:account.2fa'))
 
 
 class TwoFactorAuthDeviceDeleteView(TwoFactorAuthPageMixin, TemplateView):
