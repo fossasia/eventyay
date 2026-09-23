@@ -14,6 +14,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views.generic import TemplateView, View
 from pydantic import ValidationError
 
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.consts import KEY_SOCIAL_KEEP_LOGGED_IN
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
@@ -43,6 +44,7 @@ class OAuthLoginView(View):
             or not login_providers[provider].get('secret')
         ):
             messages.error(request, _('This login method is not available.'))
+            log_event('core', 'auth.login', OUTCOME_FAILURE, error_code='social_provider_unavailable')
             return redirect('auth.login')
         provider_config = login_providers[provider]
         if provider_config.get('is_preferred'):

@@ -9,7 +9,10 @@
 			line(x1="12", y1="14", x2="12", y2="18")
 			line(x1="10", y1="16", x2="14", y2="16")
 		|  {{ t.add_to_calendar }}
-	.exporter-menu(v-if="isOpen", :style="menuStyle")
+	.exporter-menu(v-if="isOpen", :style="menuStyle", :aria-busy="showQrLoading ? 'true' : 'false'")
+		.exporter-loading(v-if="showQrLoading", role="status", aria-live="polite")
+			span.qr-spinner(aria-hidden="true")
+			span {{ t.loading_qrcodes }}
 		template(v-for="(option, idx) in exportOptions", :key="option.divider ? `div-${idx}` : option.id")
 			.exporter-divider(v-if="option.divider")
 			a.exporter-item(
@@ -17,12 +20,15 @@
 				:href="option.url",
 				target="_blank",
 				@mouseover="onItemHover($event, option)",
-				@mouseleave="hoveredOption = null"
+				@mouseleave="hoveredOptionId = null"
 			)
 				span.exporter-icon(v-if="option.icon")
 					svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", v-html="faIconSvg(option.icon)")
 				span.exporter-name {{ option.label }}
-	.qr-hover(v-if="hoveredOption && hoveredOption.qrcode_svg", :style="qrStyle", v-html="hoveredOption.qrcode_svg")
+	.qr-hover(v-if="hoveredQr", :class="{ 'is-loading': hoveredQr.loading }", :style="qrStyle")
+		.qr-spinner-wrap(v-if="hoveredQr.loading", role="status", :aria-label="t.loading_qrcodes")
+			span.qr-spinner(aria-hidden="true")
+		div(v-else, v-html="hoveredQr.svg")
 </template>
 
 <script>
@@ -52,7 +58,7 @@ export default {
 	data() {
 		return {
 			isOpen: false,
-			hoveredOption: null,
+			hoveredOptionId: null,
 			loadedQrcodes: false,
 			loadingQrcodes: false,
 			qrcodes: {},
@@ -61,11 +67,14 @@ export default {
 		}
 	},
 	watch: {
+		isOpen(open) {
+			if (!open) this.hoveredOptionId = null
+		},
 		qrcodesUrl() {
 			this.loadedQrcodes = false
 			this.loadingQrcodes = false
 			this.qrcodes = {}
-			this.hoveredOption = null
+			this.hoveredOptionId = null
 		}
 	},
 	computed: {
@@ -73,6 +82,7 @@ export default {
 			const m = this.translationMessages || {}
 			return {
 				add_to_calendar: m.add_to_calendar || this.$t('Add to Calendar'),
+				loading_qrcodes: m.loading_qrcodes || this.$t('Loading QR codes…'),
 			}
 		},
 		exportOptions() {
@@ -83,6 +93,22 @@ export default {
 				if (o.id && q[o.id]) return { ...o, qrcode_svg: q[o.id] }
 				return o
 			})
+		},
+		hoveredOption() {
+			if (!this.hoveredOptionId) return null
+			return (this.exportOptions || []).find((option) => option && option.id === this.hoveredOptionId) || null
+		},
+		showQrLoading() {
+			return this.loadingQrcodes && !!this.qrcodesUrl && this.exportOptions.some((option) => (
+				option && !option.divider && option.id && !option.qrcode_svg
+			))
+		},
+		hoveredQr() {
+			const option = this.hoveredOption
+			if (!option || option.divider) return null
+			if (option.qrcode_svg) return { loading: false, svg: option.qrcode_svg }
+			if (this.showQrLoading) return { loading: true, svg: '' }
+			return null
 		},
 	},
 	mounted() {
@@ -101,8 +127,6 @@ export default {
 			if (this.isOpen) {
 				this.ensureQrcodesLoaded()
 				this.$nextTick(() => this.positionMenu())
-			} else {
-				this.hoveredOption = null
 			}
 		},
 		async ensureQrcodesLoaded() {
@@ -133,10 +157,12 @@ export default {
 			}
 		},
 		onItemHover(event, option) {
-			this.hoveredOption = option
-			if (!option.qrcode_svg) return
-			const itemEl = event.currentTarget
-			const rect = itemEl.getBoundingClientRect()
+			if (!option || !option.id) return
+			// Store the id, not the option snapshot, so the preview picks up QR data when the fetch finishes.
+			this.hoveredOptionId = option.id
+			const showPreview = option.qrcode_svg || this.showQrLoading
+			if (!showPreview) return
+			const rect = event.currentTarget.getBoundingClientRect()
 			// Position QR to the left of the menu item using fixed positioning
 			// QR box is ~144px wide (128px + 16px padding)
 			const qrWidth = 148
@@ -191,6 +217,21 @@ export default {
 		z-index: 10000
 		padding: 4px 0
 		white-space: nowrap
+	.exporter-loading
+		display: flex
+		align-items: center
+		gap: 8px
+		padding: 6px 12px
+		color: #666
+		font-size: 13px
+	.qr-spinner
+		width: 14px
+		height: 14px
+		border: 2px solid #ddd
+		border-top-color: var(--pretalx-clr-primary, #3aa57c)
+		border-radius: 50%
+		animation: export-qr-spin 0.7s linear infinite
+		flex: none
 	.exporter-divider
 		height: 1px
 		background: #e0e0e0
@@ -224,8 +265,26 @@ export default {
 			width: 128px
 			height: 128px
 			display: block
+		.qr-spinner-wrap
+			width: 128px
+			height: 128px
+			display: flex
+			align-items: center
+			justify-content: center
+			.qr-spinner
+				width: 28px
+				height: 28px
 	.fade-enter-active, .fade-leave-active
 		transition: opacity 0.3s
 	.fade-enter-from, .fade-leave-to
 		opacity: 0
+
+@keyframes export-qr-spin
+	to
+		transform: rotate(360deg)
+
+@media (prefers-reduced-motion: reduce)
+	.c-export-dropdown
+		.qr-spinner
+			animation: none
 </style>

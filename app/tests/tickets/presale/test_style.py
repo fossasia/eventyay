@@ -266,3 +266,29 @@ class StyleTest(TestCase):
         self.assertEqual(response.status_code, 200)
         content = response.content.decode()
         self.assertIn('--color-bg: #bd5454;', content)
+
+    def test_event_css_view_skips_theme_color_background_for_orga(self):
+        self.event.settings.theme_color_background = '#ff0505'
+        self.event.settings.primary_color = '#123456'
+        response = self.client.get(
+            reverse('agenda:event.css', kwargs={
+                'organizer': self.orga.slug,
+                'event': self.event.slug
+            }) + '?target=orga'
+        )
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertNotIn('--color-bg', content)
+        self.assertIn('--color-primary-event: #123456', content)
+
+    def test_event_css_etag_changes_with_theme_color_background(self):
+        url = reverse('agenda:event.css', kwargs={
+            'organizer': self.orga.slug,
+            'event': self.event.slug
+        })
+        self.event.settings.theme_color_background = '#bd5454'
+        first = self.client.get(url)
+        self.event.settings.theme_color_background = '#ff0505'
+        second = self.client.get(url, HTTP_IF_NONE_MATCH=first['ETag'])
+        self.assertEqual(second.status_code, 200)
+        self.assertIn('--color-bg: #ff0505;', second.content.decode())

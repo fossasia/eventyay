@@ -14,6 +14,7 @@ import {
   getApiConfig,
   getCsrfToken,
 } from './teamshifts-adapter'
+import { logOperational } from './operationalLog'
 
 export { resolveMode as getAppMode } from './teamshifts-adapter'
 export { getClaimedShiftIds, getCsrfToken, getClaimBaseUrl } from './teamshifts-adapter'
@@ -85,7 +86,14 @@ const api = {
       credentials: 'include',
     }
 
-    const response = await fetch(url, options)
+    const action = verb === 'GET' ? 'schedule.fetch' : 'schedule.save'
+    let response: Response
+    try {
+      response = await fetch(url, options)
+    } catch {
+      logOperational({action, outcome: 'failure', backend: 'schedule_editor', error_code: 'network_error'})
+      throw new Error(`HTTP error 0: network failure`)
+    }
 
     if (response.status === 204) {
       return undefined as unknown as T
@@ -93,12 +101,14 @@ const api = {
 
     const contentType = response.headers.get('Content-Type') ?? ''
     if (!contentType.includes('application/json')) {
+      logOperational({action, outcome: 'failure', backend: 'schedule_editor', error_code: 'non_json', status: response.status})
       throw new Error(`HTTP error ${response.status}: server returned non-JSON response`)
     }
 
     const json = await response.json()
 
     if (!response.ok) {
+      logOperational({action, outcome: 'failure', backend: 'schedule_editor', error_code: 'http_error', status: response.status})
       throw new Error(`HTTP error ${response.status}: ${JSON.stringify(json)}`)
     }
 

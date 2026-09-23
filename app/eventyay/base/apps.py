@@ -6,6 +6,9 @@ class EventyayBaseConfig(AppConfig):
     label = 'base'
 
     def ready(self):
+        from .operational_logging import OUTCOME_SUCCESS, connect_operational_signals, log_event
+
+        connect_operational_signals()
         from . import exporter  # NOQA
         from . import payment  # NOQA
         from . import exporters  # NOQA
@@ -23,6 +26,8 @@ class EventyayBaseConfig(AppConfig):
             from eventyay.config.sentry import initialize
 
             initialize()
+
+        log_event('core', 'config.loaded', OUTCOME_SUCCESS)
 
 
 default_app_config = 'eventyay.base.EventyayBaseConfig'
