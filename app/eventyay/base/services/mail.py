@@ -5,6 +5,7 @@ import os
 import re
 import smtplib
 import ssl
+import time
 import warnings
 from collections.abc import Sequence
 from email.mime.image import MIMEImage
@@ -565,6 +566,7 @@ def mail_send_task(
                             'invoices': [],
                         },
                     )
+                log_event('mail', 'connection.send', OUTCOME_FAILURE, error_code='retries_exhausted', backend='gmail')
                 raise SendMailException(f'Failed to send an email to {to}.', already_logged=True) from e
             raise
         except (GmailDailyLimitError, GmailPermanentError) as e:
@@ -579,6 +581,7 @@ def mail_send_task(
                         'invoices': [],
                     },
                 )
+            log_event('mail', 'connection.send', OUTCOME_FAILURE, error_code='gmail_rejected', backend='gmail')
             raise SendMailException(f'Failed to send an email to {to}.', already_logged=True) from e
         except (smtplib.SMTPResponseException, smtplib.SMTPSenderRefused) as e:
             logger.debug('Got error %s. Retry...', e)
