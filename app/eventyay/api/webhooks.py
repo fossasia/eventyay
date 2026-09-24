@@ -3,7 +3,7 @@ import logging
 import time
 from collections import OrderedDict
 
-from celery.exceptions import MaxRetriesExceededError
+from celery.exceptions import MaxRetriesExceededError, SoftTimeLimitExceeded
 from django.db.models import Exists, OuterRef, Q
 from django.conf import settings
 from django.dispatch import receiver
@@ -296,7 +296,7 @@ def notify_webhooks(logentry_ids: list):
             send_webhook.apply_async(args=(logentry.id, notification_type.action_type, wh.pk))
 
 
-@app.task(base=ProfiledTask, bind=True, max_retries=9, acks_late=True)
+@app.task(base=ProfiledTask, bind=True, max_retries=9, acks_late=True, soft_time_limit=60, time_limit=90)
 def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
     # 9 retries with 2**(2*x) timing is roughly 72 hours
     with scopes_disabled():
@@ -339,7 +339,7 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
                     raise self.retry(
                         countdown=2 ** (self.request.retries * 2)
                     )  # max is 2 ** (8*2) = 65536 seconds = ~18 hours
-            except RequestException as e:
+            except (RequestException, SoftTimeLimitExceeded) as e:
                 WebHookCall.objects.create(
                     webhook=webhook,
                     action_type=logentry.action_type,
