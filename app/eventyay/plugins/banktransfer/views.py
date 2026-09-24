@@ -24,6 +24,7 @@ from localflavor.generic.forms import BICFormField, IBANFormField
 
 from eventyay.base.forms.widgets import DatePickerWidget
 from eventyay.base.models import Event, Order, OrderPayment, OrderRefund, Quota
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.services.mail import SendMailException
 from eventyay.base.settings import SettingsSandbox
 from eventyay.base.templatetags.money import money_filter
@@ -462,6 +463,7 @@ class ImportView(ListView):
         try:
             return self.start_processing(mt940import.parse(self.request.FILES.get('file')))
         except:
+            log_event('plugins', 'bankimport.error', OUTCOME_FAILURE, error_code='mt940_parse')
             logger.exception('Failed to import MT940 file')
             messages.error(self.request, _('We were unable to process your input.'))
             return self.redirect_back()
