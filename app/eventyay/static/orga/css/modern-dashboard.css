@@ -841,6 +841,13 @@ body:has(.td-dashboard) #page-content {
     align-items: flex-start;
     flex-direction: column;
   }
+  .td-section-heading {
+  flex-wrap: wrap;
+  }
+  .td-analytics-global-filter {
+  flex-wrap: wrap;
+  width: 100%;
+}
 }
 
 /* Visual overrides requested by user */
