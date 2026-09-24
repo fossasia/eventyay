@@ -29,7 +29,6 @@ from eventyay.agenda.tasks import export_schedule_html
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls
 from eventyay.common.video_embed import get_video_embed_info, parse_video_urls
-from eventyay.person.services import build_speaker_role_answers_map, get_public_speaker_role_questions
 from eventyay.schedule.notifications import render_notifications
 from eventyay.schedule.signals import schedule_release
 from eventyay.talk_rules.agenda import (
@@ -1094,11 +1093,6 @@ class Schedule(PretalxModel):
             not respect_public_visibility or self.event.cfp.is_field_public('social_links')
         )
 
-        speaker_user_ids = [u.pk for u in speakers]
-        job_title_q, org_q = get_public_speaker_role_questions(self.event)
-        speaker_role_map = build_speaker_role_answers_map(
-            speaker_user_ids, job_title_q, org_q, self.event
-        )
         missing_thumb_user_ids = []
 
         for user in speakers:
@@ -1110,7 +1104,6 @@ class Schedule(PretalxModel):
                 'code': user.code,
                 'name': user.fullname or None,
                 'biography': getattr(profile, 'biography', '') if show_biography else '',
-                'speaker_role': speaker_role_map.get(user.pk, ''),
                 'is_featured': bool(getattr(profile, 'is_featured', False)),
                 'featured_position': getattr(profile, 'position', None),
             }
