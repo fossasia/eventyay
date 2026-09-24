@@ -1,8 +1,11 @@
 import logging
+from datetime import timedelta
 
 from django import forms
 from django.contrib import messages
+from django.db import transaction
 from django.http import HttpResponseRedirect
+from django.utils.timezone import now
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import ListView, DetailView
@@ -157,6 +160,15 @@ class OAuthApplicationDeleteView(ApplicationDelete):
 
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
-        self.object.active = False
-        self.object.save(update_fields=['active'])
+        with transaction.atomic():
+            # Bearer validation only checks expiry and scopes, never the application's
+            # active flag, so already-issued tokens would keep working for their full
+            # lifetime after the application is disabled.
+            for refresh_token in OAuthRefreshToken.objects.filter(application=self.object, revoked__isnull=True):
+                refresh_token.revoke()
+            OAuthAccessToken.objects.filter(application=self.object, expires__gt=now()).update(
+                expires=now() - timedelta(hours=1)
+            )
+            self.object.active = False
+            self.object.save(update_fields=['active'])
         return HttpResponseRedirect(self.success_url)

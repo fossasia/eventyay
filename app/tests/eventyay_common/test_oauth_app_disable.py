@@ -1,7 +1,10 @@
+from datetime import timedelta
+
 import pytest
 from django.urls import reverse
+from django.utils.timezone import now
 
-from eventyay.api.models import OAuthApplication
+from eventyay.api.models import OAuthAccessToken, OAuthApplication, OAuthRefreshToken
 from eventyay.base.models import LogEntry, User
 
 
@@ -62,3 +65,33 @@ def test_disabled_application_is_hidden_from_the_list(client):
     response = client.get(reverse('eventyay_common:account.oauth.own-apps'))
     assert response.status_code == 200
     assert 'Demo App' not in response.content.decode('utf-8')
+
+
+@pytest.mark.django_db
+def test_disabling_an_application_revokes_its_tokens(client):
+    """Bearer validation ignores the active flag, so the tokens have to be revoked."""
+    user = User.objects.create_user(email='oauth_tokens@example.org', password='password123')
+    client.force_login(user)
+    app = make_application(user)
+    access_token = OAuthAccessToken.objects.create(
+        user=user,
+        application=app,
+        token='access-token-value',
+        expires=now() + timedelta(hours=24),
+        scope='read',
+    )
+    refresh_token = OAuthRefreshToken.objects.create(
+        user=user,
+        application=app,
+        token='refresh-token-value',
+        access_token=access_token,
+    )
+
+    response = client.post(reverse('eventyay_common:account.oauth.own-app.disable', kwargs={'pk': app.pk}))
+
+    assert response.status_code == 302
+    access_token.refresh_from_db()
+    refresh_token.refresh_from_db()
+    assert access_token.is_expired()
+    assert not access_token.is_valid(['read'])
+    assert refresh_token.revoked is not None
