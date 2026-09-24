@@ -95,3 +95,4 @@ def test_disabling_an_application_revokes_its_tokens(client):
     assert access_token.is_expired()
     assert not access_token.is_valid(['read'])
     assert refresh_token.revoked is not None
+    assert refresh_token.access_token_id is None

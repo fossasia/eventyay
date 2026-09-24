@@ -160,14 +160,17 @@ class OAuthApplicationDeleteView(ApplicationDelete):
 
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
+        revoked_at = now()
         with transaction.atomic():
             # Bearer validation only checks expiry and scopes, never the application's
             # active flag, so already-issued tokens would keep working for their full
-            # lifetime after the application is disabled.
-            for refresh_token in OAuthRefreshToken.objects.filter(application=self.object, revoked__isnull=True):
-                refresh_token.revoke()
-            OAuthAccessToken.objects.filter(application=self.object, expires__gt=now()).update(
-                expires=now() - timedelta(hours=1)
+            # lifetime after the application is disabled. Both querysets mirror what
+            # revoke() does per token, in one statement each.
+            OAuthAccessToken.objects.filter(application=self.object, expires__gt=revoked_at).update(
+                expires=revoked_at - timedelta(hours=1)
+            )
+            OAuthRefreshToken.objects.filter(application=self.object, revoked__isnull=True).update(
+                revoked=revoked_at, access_token=None
             )
             self.object.active = False
             self.object.save(update_fields=['active'])
