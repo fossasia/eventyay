@@ -76,14 +76,14 @@ wheels = [
 
 [[package]]
 name = "amqp"
-version = "5.3.1"
+version = "5.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "vine" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/79/fc/ec94a357dfc6683d8c86f8b4cfa5416a4c36b28052ec8260c77aca96a443/amqp-5.3.1.tar.gz", hash = "sha256:cddc00c725449522023bad949f70fff7b48f0b1ade74d170a6f10ab044739432", size = 129013, upload-time = "2024-11-12T19:55:44.051Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b2/a7/787f067b237d4b3bfefa8d67ead64a7d807feafe85ad516afb284fb1587f/amqp-5.4.0.tar.gz", hash = "sha256:aaa33987dcb6a7893955d3b4f537c5d4755addce1009929e63e5d18c1b51a0a7", size = 131733, upload-time = "2026-09-19T08:39:40.147Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/26/99/fc813cd978842c26c82534010ea849eee9ab3a13ea2b74e95cb9c99e747b/amqp-5.3.1-py3-none-any.whl", hash = "sha256:43b3319e1b4e7d1251833a93d672b4af1e40f3d632d479b98661a95f117880a2", size = 50944, upload-time = "2024-11-12T19:55:41.782Z" },
+    { url = "https://files.pythonhosted.org/packages/07/99/6b965aa99a32630c1c61ce57c9dcf81cec6fec354274a87f14525302b7f7/amqp-5.4.0-py3-none-any.whl", hash = "sha256:5d931d8442a403b6d4a5725a868a55edaa40734eae37d282b16be9fa710bd8ee", size = 51856, upload-time = "2026-09-19T08:39:38.404Z" },
 ]
 
 [[package]]
@@ -2609,11 +2609,11 @@ wheels = [
 
 [[package]]
 name = "publicsuffixlist"
-version = "1.0.2.20260918"
+version = "1.0.2.20260919"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/67/fb/42d343b3542d0ed25e8cae49213d1b6996bd64519aeb17beb2100cef0662/publicsuffixlist-1.0.2.20260918.tar.gz", hash = "sha256:168506ab2eed84a159d60bb838482449b458d3f6fd073b707f810c9e1cc272fb", size = 109104, upload-time = "2026-09-18T08:10:18.063Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3f/34/f35a5ed8d07c4ae8a64ddd296d8693c6b19e21ab2f6bc29d2675a11af3ed/publicsuffixlist-1.0.2.20260919.tar.gz", hash = "sha256:d9383e510e3464fde4478b9d0f97a24911b6c2bd397aa149c84a88534e98e3eb", size = 109126, upload-time = "2026-09-19T07:59:01.652Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f4/ab/f1d891496b03a477c5241a60ebd7de96efff0aaa154b435aa69c670e0ebf/publicsuffixlist-1.0.2.20260918-py2.py3-none-any.whl", hash = "sha256:d31fea53d75b68f6847f0895f6c625fb07005142531e1ad272de7bb711ba8303", size = 108864, upload-time = "2026-09-18T08:10:16.917Z" },
+    { url = "https://files.pythonhosted.org/packages/14/05/c1692032d5e1c2ab28d4c4a78b13c9a383f77ca99f85201b253ed97a6b5f/publicsuffixlist-1.0.2.20260919-py2.py3-none-any.whl", hash = "sha256:60cd2c1e09a2bd66044e562d4f977b96f21e6b151d161a02e41e001fff42fb27", size = 108848, upload-time = "2026-09-19T07:59:00.132Z" },
 ]
 
 [[package]]
