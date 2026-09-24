@@ -1,3 +1,4 @@
+from unittest import mock
 from unittest.mock import patch
 
 import pytest
@@ -57,3 +58,14 @@ def test_request_dispatches_to_requests_request():
         http.request('PATCH', 'https://example.com/hook')
 
     mocked.assert_called_once_with('PATCH', 'https://example.com/hook', timeout=http.DEFAULT_TIMEOUT)
+
+@mock.patch('eventyay.base.services.http.requests.request')
+def test_head_does_not_follow_redirects_by_default(mock_request):
+    http.head('https://example.com')
+    assert mock_request.call_args.kwargs['allow_redirects'] is False
+
+
+@mock.patch('eventyay.base.services.http.requests.request')
+def test_head_redirect_default_can_be_overridden(mock_request):
+    http.head('https://example.com', allow_redirects=True)
+    assert mock_request.call_args.kwargs['allow_redirects'] is True
