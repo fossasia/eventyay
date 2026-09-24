@@ -8,7 +8,7 @@ import responses
 from django.db import transaction
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
-
+from eventyay.base.services import http
 from eventyay.api.webhooks import notify_webhooks
 from eventyay.base.models import Event, Product as Item, Order, OrderPosition, Organizer
 
@@ -264,10 +264,12 @@ def test_webhook_delivery_uses_timeout_enforcing_helper(event, order, webhook, m
         {'status_code': 200, 'text': 'ok'},
     )()
 
-    with patch('eventyay.api.webhooks.http.post', return_value=fake_response) as mocked_post:
+    with patch('eventyay.base.services.http.requests.request', return_value=fake_response) as mocked_request:
         with transaction.atomic():
             order.log_action('pretix.event.order.paid', {})
 
-    assert mocked_post.called, 'send_webhook must deliver via eventyay.base.services.http.post'
-    _args, kwargs = mocked_post.call_args
-    assert kwargs.get('allow_redirects') is False
+    assert mocked_request.called, 'send_webhook must reach requests via eventyay.base.services.http'
+    args, kwargs = mocked_request.call_args
+    assert args[0] == 'POST'
+    assert kwargs['timeout'] == http.DEFAULT_TIMEOUT
+    assert kwargs['allow_redirects'] is False
