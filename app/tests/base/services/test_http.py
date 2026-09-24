@@ -7,21 +7,21 @@ from eventyay.base.services import http
 
 
 @pytest.mark.parametrize(
-    ('helper', 'method'),
+    ('helper', 'method', 'extra'),
     [
-        (http.get, 'GET'),
-        (http.post, 'POST'),
-        (http.put, 'PUT'),
-        (http.delete, 'DELETE'),
-        (http.head, 'HEAD'),
+        (http.get, 'GET', {}),
+        (http.post, 'POST',{}),
+        (http.put, 'PUT', {}),
+        (http.delete, 'DELETE', {}),
+        (http.head, 'HEAD', {'allow_redirects': False}),
     ],
 )
-def test_helper_applies_default_timeout(helper, method):
+def test_helper_applies_default_timeout(helper, method, extra):
     """Every verb helper must apply DEFAULT_TIMEOUT when the caller omits one."""
     with patch('eventyay.base.services.http.requests.request') as mocked:
         helper('https://example.com/hook')
 
-    mocked.assert_called_once_with(method, 'https://example.com/hook', timeout=http.DEFAULT_TIMEOUT)
+    mocked.assert_called_once_with(method, 'https://example.com/hook', timeout=http.DEFAULT_TIMEOUT, **extra)
 
 
 def test_helper_respects_explicit_timeout_override():
@@ -59,13 +59,13 @@ def test_request_dispatches_to_requests_request():
 
     mocked.assert_called_once_with('PATCH', 'https://example.com/hook', timeout=http.DEFAULT_TIMEOUT)
 
-@mock.patch('eventyay.base.services.http.requests.request')
+@patch('eventyay.base.services.http.requests.request')
 def test_head_does_not_follow_redirects_by_default(mock_request):
     http.head('https://example.com')
     assert mock_request.call_args.kwargs['allow_redirects'] is False
 
 
-@mock.patch('eventyay.base.services.http.requests.request')
+@patch('eventyay.base.services.http.requests.request')
 def test_head_redirect_default_can_be_overridden(mock_request):
     http.head('https://example.com', allow_redirects=True)
     assert mock_request.call_args.kwargs['allow_redirects'] is True
