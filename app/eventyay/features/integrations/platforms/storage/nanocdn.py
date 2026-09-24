@@ -6,6 +6,7 @@ from io import BytesIO, StringIO
 from django.conf import settings
 from django.core.exceptions import SuspiciousFileOperation
 from django.core.files import File
+import requests
 from django.core.files.storage import Storage
 
 from eventyay.base.services import http
@@ -172,10 +173,9 @@ class NanoCDNStorage(Storage):
         return True
 
     def size(self, name):
-def size(self, name):
-    resp = http.head(urllib.parse.urljoin(self.base_url, name))
-    _raise_cdn_status(resp, 'head')
-    return resp["Content-Length"]
+        resp = http.head(urllib.parse.urljoin(self.base_url, name))
+        _raise_cdn_status(resp, 'head')
+        return resp["Content-Length"]
 
     def url(self, name):
         return urllib.parse.urljoin(settings.MEDIA_URL, name)
