@@ -822,27 +822,27 @@ def convert_image_to_cid(image_src: str, cid_id: str, verify_ssl: bool = True) -
         path = urlparse(image_src).path
         guess_subtype = os.path.splitext(path)[1][1:]
 
-    try:
-         response = http.get(image_src, verify=verify_ssl, timeout=15, stream=True)
-    except requests.RequestException:
+        try:
+            response = http.get(image_src, verify=verify_ssl, timeout=15, stream=True)
+        except requests.RequestException:
             log_event('mail', 'connection.get', OUTCOME_FAILURE, error_code='request_error', backend='cid_image')
             return None
-    if response.status_code >= 500:
-        response.close()
-        log_event(
-                'mail',
-                'connection.get',
-                OUTCOME_FAILURE,
-                error_code='http_error',
-                status=response.status_code,
-                backend='cid_image',
-        )
-        return None
 
-        max_bytes = 5 * 1024 * 1024
-        deadline = time.monotonic() + 30
-        chunks, total = [], 0
         try:
+            if response.status_code >= 500:
+                log_event(
+                    'mail',
+                    'connection.get',
+                    OUTCOME_FAILURE,
+                    error_code='http_error',
+                    status=response.status_code,
+                    backend='cid_image',
+                )
+                return None
+
+            max_bytes = 5 * 1024 * 1024
+            deadline = time.monotonic() + 30
+            chunks, total = [], 0
             for chunk in response.iter_content(chunk_size=8192):
                 total += len(chunk)
                 if total > max_bytes or time.monotonic() > deadline:
@@ -863,6 +863,8 @@ def convert_image_to_cid(image_src: str, cid_id: str, verify_ssl: bool = True) -
         mime_image = MIMEImage(b''.join(chunks), _subtype=guess_subtype)
 
     mime_image.add_header('Content-ID', f'<{cid_id}>')
+
+
 
     filename = f"{cid_id}.{guess_subtype}" if guess_subtype else cid_id
     mime_image.add_header('Content-Disposition', 'inline', filename=filename)
