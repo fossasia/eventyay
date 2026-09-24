@@ -48,4 +48,5 @@ def delete(url: str, **kwargs):
 
 
 def head(url: str, **kwargs):
+    kwargs.setdefault('allow_redirects', False)
     return request('HEAD', url, **kwargs)
