@@ -48,9 +48,12 @@ def parse_csv(file, length=None):
     except ImportError:
         charset = file.charset
     data = data.decode(charset or 'utf-8')
-    # If the file was modified on a Mac, it only contains \r as line breaks
     if '\r' in data and '\n' not in data:
         data = data.replace('\r', '\n')
+
+    if not data.strip():
+        return None
+
 
     try:
         dialect = csv.Sniffer().sniff(data.split('\n')[0], delimiters=';,.#:')

@@ -201,18 +201,18 @@ class ScheduleExportForm(ExportForm):
 
     def _get_speaker_ids_value(self, obj):
         codes = []
-        for code in obj.speakers.all().values_list('code', flat=True):
-            if not code:
+        for speaker in obj.speakers.all():
+            if not speaker.code:
                 logger.warning(
                     "Speaker for submission %s is missing a code.",
                     getattr(obj, 'id', obj),
                 )
             else:
-                codes.append(code)
+                codes.append(speaker.code)
         return codes
 
     def _get_speaker_names_value(self, obj):
-        return [name for name in obj.speakers.all().values_list('fullname', flat=True) if name]
+        return [speaker.fullname for speaker in obj.speakers.all() if speaker.fullname]
 
     def _get_room_value(self, obj):
         slot = obj.slot

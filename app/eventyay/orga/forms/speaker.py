@@ -107,7 +107,12 @@ class SpeakerExportForm(ExportForm):
                     state__in=[SubmissionStates.ACCEPTED, SubmissionStates.CONFIRMED]
                 )
             ).distinct()
-        return queryset.prefetch_related('profiles', 'profiles__event').order_by('code')
+        from django.db.models import Prefetch
+        return queryset.prefetch_related(
+            'profiles', 
+            'profiles__event',
+            Prefetch('submissions', queryset=self.event.submissions.all(), to_attr='event_submissions')
+        ).order_by('code')
 
     def _get_avatar_value(self, obj):
         return obj.get_avatar_url(event=self.event)
@@ -116,10 +121,10 @@ class SpeakerExportForm(ExportForm):
         return obj._profile.biography
 
     def _get_submission_ids_value(self, obj):
-        return list(obj.submissions.filter(event=self.event).values_list('code', flat=True))
+        return [sub.code for sub in obj.event_submissions]
 
     def _get_submission_titles_value(self, obj):
-        return list(obj.submissions.filter(event=self.event).values_list('title', flat=True))
+        return [sub.title for sub in obj.event_submissions]
 
     # Called by ExportForm.get_data.
     def _prepare_object_data(self, obj):
