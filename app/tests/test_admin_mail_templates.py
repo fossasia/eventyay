@@ -39,6 +39,19 @@ def test_templates_without_content_are_not_listed():
         assert name not in names
 
 
+def test_every_template_key_is_listed_once():
+    keys = [template['key'] for template in get_platform_mail_templates()]
+    assert len(keys) == len(set(keys))
+
+
+def test_organiser_invitation_covers_new_and_registered_users():
+    templates = {template['key']: template for template in get_platform_mail_templates()}
+    _, invitation = templates['organiser-invitation']['load']()
+    _, added = templates['organiser-added-to-team']['load']()
+    assert 'You have been invited to the following event team' in invitation
+    assert 'You have been added to the following event team' in added
+
+
 def test_text_to_editor_html_keeps_paragraphs_and_placeholders():
     html = text_to_editor_html('Hello {name},\nsee <this>\n\nBye {event}')
     assert html == (
@@ -90,3 +103,14 @@ def test_template_detail_requires_admin_session(client):
     client.force_login(user)
     url = reverse('eventyay_admin:admin.messages.template_detail', kwargs={'role': 'password-reset'})
     assert client.get(url).status_code in (302, 403)
+
+
+@pytest.mark.django_db
+def test_template_detail_shows_metadata_of_listed_row(admin_client):
+    url = reverse(
+        'eventyay_admin:admin.messages.template_detail',
+        kwargs={'role': MailTemplateRoles.SUBMISSION_ACCEPT},
+    )
+    response = admin_client.get(url)
+    assert str(response.context['role_label']) == 'Proposal acceptance'
+    assert str(response.context['category']) == 'CfP'

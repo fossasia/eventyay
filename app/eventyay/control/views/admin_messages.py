@@ -1003,12 +1003,15 @@ def _security_notice_mail():
     return str(_('Account information changed')), body
 
 
-def _organiser_invitation_mail():
-    body = _render_mail_template(
-        'pretixcontrol/email/invitation.txt',
-        {'organizer': '{organizer}', 'team': '{team}', 'url': '{url}', 'is_registered_user': False},
-    )
-    return str(_('eventyay account invitation')), body
+def _organiser_invitation_mail(is_registered_user):
+    def load():
+        body = _render_mail_template(
+            'pretixcontrol/email/invitation.txt',
+            {'organizer': '{organizer}', 'team': '{team}', 'url': '{url}', 'is_registered_user': is_registered_user},
+        )
+        return str(_('eventyay account invitation')), body
+
+    return load
 
 
 def _team_invite_mail():
@@ -1029,6 +1032,12 @@ def _notification_mail():
 
 
 def get_platform_mail_templates() -> list[dict]:
+    listed_separately = {
+        MailTemplateRoles.NEW_SUBMISSION,
+        MailTemplateRoles.SUBMISSION_ACCEPT,
+        MailTemplateRoles.SUBMISSION_REJECT,
+        MailTemplateRoles.NEW_SCHEDULE,
+    }
     templates = [
         {
             'key': role_value,
@@ -1039,6 +1048,7 @@ def get_platform_mail_templates() -> list[dict]:
             'load': _talk_mail(role_value),
         }
         for role_value, role_label in MailTemplateRoles.choices
+        if role_value not in listed_separately
     ]
     templates.extend([
         {'key': 'account-registration', 'name': _('Account registration'), 'category': _('Account'),
@@ -1050,7 +1060,9 @@ def get_platform_mail_templates() -> list[dict]:
         {'key': 'account-notification', 'name': _('Account notification'), 'category': _('Account'),
          'trigger': _('Account status changed'), 'load': _security_notice_mail},
         {'key': 'organiser-invitation', 'name': _('Organiser invitation'), 'category': _('Team'),
-         'trigger': _('Team invitation sent'), 'load': _organiser_invitation_mail},
+         'trigger': _('Team invitation sent'), 'load': _organiser_invitation_mail(False)},
+        {'key': 'organiser-added-to-team', 'name': _('Organiser added to team'), 'category': _('Team'),
+         'trigger': _('Existing user added to a team'), 'load': _organiser_invitation_mail(True)},
         {'key': 'event-team-invitation', 'name': _('Event team invitation'), 'category': _('Team'),
          'trigger': _('Event team invitation sent'), 'load': _team_invite_mail},
         {'key': 'platform-fee-notification', 'name': _('Platform fee notification'), 'category': _('Billing'),
