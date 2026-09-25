@@ -50,6 +50,10 @@ class SpeakerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             self.fields.pop('avatar_url')
         if is_public_view and not self.event.cfp.public_biography:
             self.fields.pop('biography', None)
+        if not self.event.cfp.request_job_title or (is_public_view and not self.event.cfp.is_field_public('job_title')):
+            self.fields.pop('job_title', None)
+        if not self.event.cfp.request_organization or (is_public_view and not self.event.cfp.is_field_public('organization')):
+            self.fields.pop('organization', None)
         if is_public_view and not self.event.cfp.is_field_public('avatar_source'):
             self.fields.pop('avatar_source', None)
         if is_public_view and not self.event.cfp.is_field_public('avatar_license'):
@@ -87,6 +91,8 @@ class SpeakerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
                 data.pop('fullname', None)
                 data.pop('email', None)
                 data.pop('biography', None)
+                data.pop('job_title', None)
+                data.pop('organization', None)
                 data.pop('avatar_url', None)
                 data.pop('social_links', None)
             elif hide_emails:
@@ -158,6 +164,8 @@ class SpeakerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             'code',
             'fullname',
             'biography',
+            'job_title',
+            'organization',
             'submissions',
             'avatar_url',
             'avatar_source',

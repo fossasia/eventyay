@@ -47,6 +47,20 @@ class SpeakerProfile(PretalxModel):
         null=True,
         blank=True,
     )
+    job_title = models.CharField(
+        max_length=255,
+        verbose_name=_('Job title/role'),
+        help_text=_('What is your official job title?'),
+        null=True,
+        blank=True,
+    )
+    organization = models.CharField(
+        max_length=255,
+        verbose_name=_('Organization'),
+        help_text=_('What organization or company do you represent?'),
+        null=True,
+        blank=True,
+    )
     is_featured = models.BooleanField(
         default=False,
         verbose_name=_('Show this speaker in public list of featured speakers.'),
