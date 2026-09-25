@@ -140,17 +140,17 @@
   font-weight: 700;
 }
 
-/* Green badge when step data is completed (higher specificity than active/hover) */
+/* Blue badge when step data is completed (higher specificity than active/hover) */
 .quickstart-wizard-container .quickstart-stepper .quickstart-step-item.completed .step-badge,
 .quickstart-wizard-container .quickstart-stepper .quickstart-step-item.completed:hover .step-badge,
 .quickstart-wizard-container .quickstart-stepper .quickstart-step-item.completed.active .step-badge {
-  background: #28a745;
-  border-color: #28a745;
+  background: var(--brand-primary, #18609c);
+  border-color: var(--brand-primary, #18609c);
   color: #ffffff;
 }
 
 .quickstart-wizard-container .quickstart-stepper .quickstart-step-item.completed.active .step-badge {
-  box-shadow: 0 0 0 4px rgba(40, 167, 69, 0.25);
+  box-shadow: 0 0 0 4px rgba(24, 96, 156, 0.25);
 }
 
 .quickstart-wizard-container .quickstart-card {
@@ -991,4 +991,43 @@
   .quickstart-wizard-container .quickstart-action-bar .action-bar-right .btn {
     width: 100%;
   }
+}
+
+.quickstart-wizard-container .quickstart-card.payment-error {
+  border-color: #dc2626;
+}
+
+.quickstart-wizard-container .quickstart-card.payment-error.highlight-pulse {
+  animation: highlightPulseError 1.2s ease;
+  border-color: #dc2626;
+}
+
+@keyframes highlightPulseError {
+  0% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(220, 38, 38, 0.2);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
+  }
+}
+
+.quickstart-wizard-container .payment-error-message {
+  display: none;
+  color: #b91c1c;
+  font-size: 13.5px;
+  margin-bottom: 14px;
+  font-weight: 500;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  padding: 10px 14px;
+  border-radius: 6px;
+  align-items: center;
+  gap: 8px;
+}
+
+.quickstart-wizard-container .quickstart-card.payment-error .payment-error-message {
+  display: flex;
 }
