@@ -20,7 +20,7 @@
 .dashboard-timeline-container {
     background-color: var(--color-bg, #fff);
     border: 1px solid var(--color-grey-light);
-    border-radius: 12px;
+    border-radius: 4px;
     padding: 20px 24px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
@@ -136,7 +136,7 @@
     transform: translateX(-50%);
     background: var(--color-bg, #fff);
     border: 1px solid var(--color-grey-light);
-    border-radius: 6px;
+    border-radius: 3px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     padding: 8px 0;
     min-width: 160px;
@@ -204,8 +204,8 @@
   --td-text: #111827;
   --td-muted: #6b7280;
   --td-bg: #f4f6f9;
-  --td-radius: 12px;
-  --td-radius-sm: 8px;
+  --td-radius: 4px;
+  --td-radius-sm: 3px;
   --td-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
   --td-shadow-hover: 0 4px 14px rgba(16, 24, 40, 0.08);
   --td-space-1: 8px;
@@ -308,7 +308,7 @@ body:has(.td-dashboard) #page-content {
   justify-content: center;
   width: 30px;
   height: 30px;
-  border-radius: 8px;
+  border-radius: 3px;
   background: var(--td-blue-soft);
   color: var(--td-blue);
   font-size: 14px;
@@ -456,7 +456,7 @@ body:has(.td-dashboard) #page-content {
 .td-action-icon {
   width: 26px;
   height: 26px;
-  border-radius: 7px;
+  border-radius: 3px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -532,7 +532,7 @@ body:has(.td-dashboard) #page-content {
   align-self: flex-start;
   margin-top: auto;
   padding: 6px 12px;
-  border-radius: 7px;
+  border-radius: 3px;
   font-size: 13px;
   font-weight: 600;
   text-decoration: none;
@@ -599,7 +599,7 @@ body:has(.td-dashboard) #page-content {
   align-items: center;
   gap: 7px;
   padding: 7px 12px;
-  border-radius: 8px;
+  border-radius: 3px;
   border: 1px solid var(--td-border);
   background: #fff;
   color: var(--td-text);
@@ -706,7 +706,7 @@ body:has(.td-dashboard) #page-content {
 .td-kpi-icon {
   width: 26px;
   height: 26px;
-  border-radius: 7px;
+  border-radius: 3px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1000,7 +1000,7 @@ body:has(.td-dashboard) #page-content {
 }
 
 .td-action-grid .td-action-btn {
-  border-radius: 8px;
+  border-radius: 3px;
   font-weight: 700;
   padding: 8px 14px;
   font-size: 13px;
@@ -1108,7 +1108,7 @@ body:has(.td-dashboard) #page-content {
   color: var(--td-muted);
   font-size: 11px;
   font-weight: 600;
-  border-radius: 7px;
+  border-radius: 3px;
   padding: 0 10px;
   line-height: 1.2;
   cursor: pointer;
@@ -1161,7 +1161,7 @@ body:has(.td-dashboard) #page-content {
   padding: 3px;
   background: #fff;
   border: 1px solid var(--td-border);
-  border-radius: 10px;
+  border-radius: 4px;
   flex-shrink: 0;
 }
 
@@ -1177,7 +1177,7 @@ body:has(.td-dashboard) #page-content {
   font-weight: 600;
   line-height: 1;
   padding: 0 12px;
-  border-radius: 7px;
+  border-radius: 3px;
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
   display: inline-flex;
@@ -1246,7 +1246,7 @@ body:has(.td-dashboard) #page-content {
   padding: 8px;
   background: #fff;
   border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border-radius: 4px;
   box-shadow:
     0 4px 6px rgba(15, 23, 42, 0.04),
     0 16px 32px rgba(15, 23, 42, 0.12);
@@ -1313,7 +1313,7 @@ body:has(.td-dashboard) #page-content {
   flex: 0 0 auto;
   margin: 0;
   padding: 8px 10px;
-  border-radius: 8px;
+  border-radius: 3px;
   font-size: 12.5px;
   font-weight: 500;
   color: var(--td-text);
@@ -1350,7 +1350,7 @@ body:has(.td-dashboard) #page-content {
   width: 16px;
   height: 16px;
   border: 1.5px solid #cbd5e1;
-  border-radius: 5px;
+  border-radius: 3px;
   background: #fff;
   box-sizing: border-box;
   transition: background-color 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
@@ -1398,7 +1398,7 @@ body:has(.td-dashboard) #page-content {
   background-color: #fff;
   background-image: none;
   border: 1px solid #d1d5db;
-  border-radius: 8px;
+  border-radius: 3px;
   padding: 0 28px 0 10px;
   width: auto;
   min-width: 96px;
@@ -1563,7 +1563,7 @@ body:has(.td-dashboard) #page-content {
   min-height: 120px;
   margin: 12px;
   border: 1px dashed #e5e7eb;
-  border-radius: 8px;
+  border-radius: 4px;
   background:
     linear-gradient(180deg, transparent 0%, transparent 70%, #f8fafc 100%),
     repeating-linear-gradient(
