@@ -60,6 +60,11 @@ def parse_csv(file, length=None):
     if dialect is None:
         return None
 
+    # The sniffer only sees the header line. Our exporter (and Excel/LibreOffice)
+    # write unquoted headers and escape embedded quotes as "", so treat doubled
+    # quotes as escaped quotes even when the header itself contains none.
+    dialect.doublequote = True
+
     reader = csv.DictReader(io.StringIO(data), dialect=dialect)
     return reader
 
