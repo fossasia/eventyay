@@ -10,7 +10,7 @@ from django.test.utils import override_settings
 from django.urls import reverse
 from django_scopes import scope, scopes_disabled
 
-from eventyay.agenda.views.utils import LANDING_FEATURED_SPEAKERS_LIMIT, get_or_build_landing_featured_widget_schedule
+from eventyay.agenda.views.utils import get_or_build_landing_featured_widget_schedule
 from eventyay.base.models import SpeakerProfile, User
 from eventyay.base.services.stale_cache import bump_schedule_cache_version
 from eventyay.talk_rules.agenda import is_pre_agenda_featured_public, is_speaker_viewable
@@ -164,12 +164,13 @@ def test_speakers_page_lists_all_speakers_after_schedule_release(
 
 
 @pytest.mark.django_db
-def test_landing_page_caps_featured_speakers(client, event, speaker, other_speaker):
+def test_landing_page_includes_every_featured_speaker(client, event, speaker, other_speaker):
     with scope(event=event):
         event.talks_published = True
+        event.live = True
         event.feature_flags['show_featured_speakers'] = 'always'
         event.feature_flags['show_schedule'] = True
-        event.save(update_fields=['talks_published', 'feature_flags'])
+        event.save(update_fields=['talks_published', 'live', 'feature_flags'])
         for index, person in enumerate((other_speaker, speaker)):
             profile = person.event_profile(event)
             profile.is_featured = True
@@ -182,7 +183,7 @@ def test_landing_page_caps_featured_speakers(client, event, speaker, other_speak
                 password='speakerpwd1!',
                 fullname=f'Featured Extra {index:02d}',
             )
-            for index in range(LANDING_FEATURED_SPEAKERS_LIMIT)
+            for index in range(14)
         ]
     with scope(event=event):
         SpeakerProfile.objects.bulk_create(
@@ -197,13 +198,12 @@ def test_landing_page_caps_featured_speakers(client, event, speaker, other_speak
                 for index, user in enumerate(extra_users)
             ]
         )
-
     response = client.get(event.urls.base)
 
     assert response.status_code == 200
     widget_schedule = response.context['featured_speakers_widget_schedule']
-    assert len(widget_schedule['speakers']) == LANDING_FEATURED_SPEAKERS_LIMIT
-    assert widget_schedule['speakers_list_public'] is True
+    expected_codes = {speaker.code, other_speaker.code, *(user.code for user in extra_users)}
+    assert {item['code'] for item in widget_schedule['speakers']} == expected_codes
 
 
 @pytest.mark.django_db
