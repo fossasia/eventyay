@@ -4,8 +4,10 @@ import json
 from asgiref.sync import async_to_sync
 from django.core.files.base import ContentFile
 from django.utils.timezone import now
+from requests import RequestException
 
 from eventyay.celery_app import app
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.services.event import notify_schedule_change
 from eventyay.core.tasks import EventTask
 from eventyay.features.importers.conftool import (
@@ -22,7 +24,11 @@ def conftool_update_schedule(event):
     if not u or not p or not event.config.get("pretalx").get("conftool"):
         return "invalid"
 
-    d = fetch_schedule_from_conftool(u, p)
+    try:
+        d = fetch_schedule_from_conftool(u, p)
+    except (RequestException, ValueError, OSError):
+        log_event('video', 'connection.collect', OUTCOME_FAILURE, error_code='conftool_error', event_id=getattr(event, 'pk', None), backend='conftool')
+        raise
     v = d.pop("version")
     checksum = hashlib.sha256(json.dumps(d, sort_keys=True).encode()).hexdigest()
     d["version"] = v

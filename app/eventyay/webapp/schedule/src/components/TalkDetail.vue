@@ -89,8 +89,8 @@
 				.speaker(v-for="speaker of resolvedTalk.speakers", :key="speaker.code")
 					a.speaker-link(:href="getSpeakerLink(speaker)", @click="onSpeakerClick($event, speaker)")
 						img.avatar-circle(
-							v-if="speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url",
-							:src="speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url",
+							v-if="speaker.avatar_thumbnail_default || speaker.avatar_thumbnail_tiny || speaker.avatar || speaker.avatar_url",
+							:src="speaker.avatar_thumbnail_default || speaker.avatar_thumbnail_tiny || speaker.avatar || speaker.avatar_url",
 							loading="lazy",
 							decoding="async"
 						)
@@ -98,7 +98,6 @@
 							svg(viewBox="0 0 24 24")
 								path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
 						.name(:class="{'no-name': !speaker.name}") {{ speaker.name || t.speaker_name_not_provided }}
-					p.speaker-role(v-if="speaker.speaker_role") {{ speaker.speaker_role }}
 					markdown-content.biography(v-if="speaker.biography", :markdown="speaker.biography")
 		.starrers(v-if="popularityFeatureEnabled && starrers && starrers.total > 0")
 			.header
@@ -107,7 +106,7 @@
 			.avatars-line
 				template(v-for="u of starrersInlineItems", :key="u.code")
 					a.starrer(v-if="starrerUrl(u)", :href="starrerUrl(u)", @click="onStarrerClick($event, u)", :title="starrerTitle(u)")
-						img.avatar-circle(v-if="u.avatar_url", :src="u.avatar_url", :alt="starrerTitle(u)")
+						img.avatar-circle(v-if="starrerAvatar(u)", :src="starrerAvatar(u)", :alt="starrerTitle(u)", loading="lazy", decoding="async")
 						.avatar-placeholder.avatar-circle(v-else)
 							svg(viewBox="0 0 24 24")
 								path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
@@ -116,11 +115,13 @@
 							svg(viewBox="0 0 24 24")
 								path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
 				button.more-chip(v-if="starrersOverflowCount > 0", type="button", @click="toggleStarrersExpanded") +{{ starrersOverflowCount }}
-			.starrers-expanded(v-if="starrersExpanded")
-				.starrers-list
-					template(v-for="u of starrers.items", :key="u.code")
+			.starrers-expanded(v-if="starrersExpanded", :aria-busy="starrersLoading ? 'true' : 'false'")
+				.starrers-loading(v-if="starrersLoading", role="status", :aria-label="t.loading")
+					bunt-progress-circular(size="big")
+				.starrers-list(v-else)
+					template(v-for="u of starrersPageItems", :key="u.code")
 						a.starrer-row(v-if="starrerUrl(u)", :href="starrerUrl(u)", @click="onStarrerClick($event, u)")
-							img.avatar-circle(v-if="u.avatar_url", :src="u.avatar_url", :alt="starrerTitle(u)")
+							img.avatar-circle(v-if="starrerAvatar(u)", :src="starrerAvatar(u)", :alt="starrerTitle(u)", loading="lazy", decoding="async")
 							.avatar-placeholder.avatar-circle(v-else)
 								svg(viewBox="0 0 24 24")
 									path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
@@ -130,6 +131,10 @@
 								svg(viewBox="0 0 24 24")
 									path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
 							span.name {{ t.anonymous_attendee }}
+				nav.starrers-pager(v-if="starrersPageCount > 1", :aria-label="t.pagination")
+					button.page-btn.prev(v-if="starrersPage > 1", type="button", :disabled="starrersLoading", :aria-label="t.previous_page", @click="goToStarrersPage(starrersPage - 1)") {{ t.previous }}
+					span.page-status {{ starrersPageStatus }}
+					button.page-btn.next(v-if="starrersPage < starrersPageCount", type="button", :disabled="starrersLoading", :aria-label="t.next_page", @click="goToStarrersPage(starrersPage + 1)") {{ t.next }}
 	bunt-progress-circular(v-else, size="huge", :page="true")
 </template>
 
@@ -194,7 +199,10 @@ export default {
 			getIconByFileEnding,
 			parseBooleanAnswer,
 			starrers: { total: 0, public_total: 0, items: [] },
+			starrersPageItems: [],
+			starrersPage: 1,
 			starrersLoading: false,
+			starrersRequestId: 0,
 			starrersExpanded: false,
 			fetchedApiContent: null,
 			fetchedSubmission: null,
@@ -218,6 +226,12 @@ export default {
 				anonymous_attendee: m.anonymous_attendee || this.$t('Anonymous (name not shared)'),
 				view_all: m.view_all || this.$t('View all'),
 				hide_list: m.hide_list || this.$t('Hide'),
+				loading: m.loading || this.$t('Loading…'),
+				previous: m.previous || this.$t('Previous'),
+				next: m.next || this.$t('Next'),
+				previous_page: m.previous_page || this.$t('Previous page'),
+				next_page: m.next_page || this.$t('Next page'),
+				pagination: m.starrers_pagination || this.$t('Starrers pagination'),
 				session_language: m.session_language || this.$t('Language'),
 				yes: m.yes || this.$t('Yes'),
 				no: m.no || this.$t('No'),
@@ -253,6 +267,18 @@ export default {
 			if (this.starrersExpanded) return 0
 			const total = this.starrers?.total || 0
 			return Math.max(0, total - this.starrersInlineItems.length)
+		},
+		starrersPageCount() {
+			const total = this.starrers?.total || 0
+			if (!total) return 0
+			return Math.ceil(total / this.inlineStarrersLimit)
+		},
+		starrersPageStatus() {
+			const total = this.starrers?.total || 0
+			if (!total) return ''
+			const start = ((this.starrersPage - 1) * this.inlineStarrersLimit) + 1
+			const end = Math.min(this.starrersPage * this.inlineStarrersLimit, total)
+			return this.$t('Showing {{start}}–{{end}} of {{total}}', {start, end, total})
 		},
 		popularityFeatureEnabled() {
 			return !!this.scheduleData?.schedule?.feature_flags?.session_popularity_enabled
@@ -409,7 +435,9 @@ export default {
 		resolvedTalk: {
 			handler() {
 				this.starrersExpanded = false
-				this.loadStarrers({ limit: this.inlineStarrersLimit })
+				this.starrersPage = 1
+				this.starrersPageItems = []
+				this.loadStarrers({ limit: this.inlineStarrersLimit, offset: 0, destination: 'preview' })
 				if (!this.apiContent) this.fetchApiContent()
 			},
 			immediate: true
@@ -439,6 +467,10 @@ export default {
 			if (answer.embed_url) return answer.embed_url
 			return getVideoEmbedUrl(answer.answer)
 		},
+		starrerAvatar(user) {
+			if (!user) return ''
+			return user.avatar_thumbnail_tiny || user.avatar_thumbnail_default || ''
+		},
 		starrerTitle(user) {
 			if (!user || !user.url) return this.t.anonymous_attendee
 			return user.name || this.t.anonymous_attendee
@@ -450,47 +482,100 @@ export default {
 		onStarrerClick(event, user) {
 			this.onStarrerLinkClick(event, user)
 		},
-		getStarrersUrl({ limit } = {}) {
+		getStarrersUrl({ limit, offset } = {}) {
 			const code = this.resolvedTalk?.code || this.resolvedTalk?.id || this.talkId
 			if (!this.baseUrl || !code) return ''
 			try {
 				const url = new URL(`talk/${code}/starrers.json`, this.baseUrl)
 				if (typeof limit === 'number') url.searchParams.set('limit', String(limit))
+				if (typeof offset === 'number' && offset > 0) url.searchParams.set('offset', String(offset))
 				return url.href
 			} catch {
 				const base = this.baseUrl.replace(/\/$/, '')
-				if (typeof limit !== 'number') return `${base}/talk/${code}/starrers.json`
-				return `${base}/talk/${code}/starrers.json?limit=${encodeURIComponent(String(limit))}`
+				const params = new URLSearchParams()
+				if (typeof limit === 'number') params.set('limit', String(limit))
+				if (typeof offset === 'number' && offset > 0) params.set('offset', String(offset))
+				const query = params.toString()
+				if (!query) return `${base}/talk/${code}/starrers.json`
+				return `${base}/talk/${code}/starrers.json?${query}`
 			}
 		},
-		async loadStarrers({ limit } = {}) {
-			if (!this.popularityFeatureEnabled) return
-			const url = this.getStarrersUrl({ limit })
-			if (!url) return
+		previewCoversFirstPage() {
+			const items = this.starrers?.items || []
+			const total = this.starrers?.total || 0
+			if (!items.length || !total) return false
+			return items.length >= Math.min(total, this.inlineStarrersLimit)
+		},
+		applyStarrersPayload(data, { offset, destination }) {
+			const items = (Array.isArray(data.items) ? data.items : []).filter(u => u && typeof u === 'object' && u.code)
+			const payload = {
+				total: Number.isFinite(data.total) ? data.total : 0,
+				public_total: Number.isFinite(data.public_total) ? data.public_total : 0,
+				items,
+			}
+			if (destination === 'preview' || offset === 0) {
+				this.starrers = payload
+			} else {
+				this.starrers = {
+					...this.starrers,
+					total: payload.total,
+					public_total: payload.public_total,
+				}
+			}
+			const pageCount = payload.total ? Math.ceil(payload.total / this.inlineStarrersLimit) : 1
+			if (this.starrersPage > pageCount) this.starrersPage = pageCount
+			if (destination === 'page' || this.starrersPage === 1) {
+				this.starrersPageItems = items
+			}
+		},
+		/**
+		 * @returns {Promise<{ok: boolean, offset?: number}>}
+		 */
+		async loadStarrers({ limit, offset = 0, destination = 'preview' } = {}) {
+			if (!this.popularityFeatureEnabled) return { ok: false }
+			const url = this.getStarrersUrl({ limit, offset })
+			if (!url) return { ok: false }
+			const requestId = ++this.starrersRequestId
 			this.starrersLoading = true
 			try {
 				const response = await fetch(url)
-				if (!response.ok) return
+				if (requestId !== this.starrersRequestId) return { ok: false }
+				if (!response.ok) return { ok: false }
 				const data = await response.json()
-				if (!data || typeof data !== 'object') return
-				const items = Array.isArray(data.items) ? data.items : []
-				this.starrers = {
-					total: Number.isFinite(data.total) ? data.total : 0,
-					public_total: Number.isFinite(data.public_total) ? data.public_total : 0,
-					items: items.filter(u => u && typeof u === 'object' && u.code)
-				}
-			} catch {
-				// ignore
+				if (requestId !== this.starrersRequestId) return { ok: false }
+				if (!data || typeof data !== 'object' || !Array.isArray(data.items)) return { ok: false }
+				this.applyStarrersPayload(data, { offset, destination })
+				return { ok: true, offset }
+			} catch (error) {
+				console.error('Failed to load session starrers', error)
+				return { ok: false }
 			} finally {
-				this.starrersLoading = false
+				if (requestId === this.starrersRequestId) this.starrersLoading = false
 			}
+		},
+		async goToStarrersPage(page) {
+			if (this.starrersLoading) return
+			const pageCount = Math.max(this.starrersPageCount, 1)
+			const next = Math.min(Math.max(page, 1), pageCount)
+			if (next === 1 && this.previewCoversFirstPage()) {
+				this.starrersPage = 1
+				this.starrersPageItems = (this.starrers.items || []).slice(0, this.inlineStarrersLimit)
+				return
+			}
+			const offset = (next - 1) * this.inlineStarrersLimit
+			const result = await this.loadStarrers({
+				limit: this.inlineStarrersLimit,
+				offset,
+				destination: 'page',
+			})
+			if (!result?.ok || result.offset !== offset) return
+			const loadedPage = Math.floor(result.offset / this.inlineStarrersLimit) + 1
+			this.starrersPage = Math.min(loadedPage, Math.max(this.starrersPageCount, 1))
 		},
 		async toggleStarrersExpanded() {
 			this.starrersExpanded = !this.starrersExpanded
 			if (!this.starrersExpanded) return
-			if ((this.starrers?.items || []).length < (this.starrers?.total || 0)) {
-				await this.loadStarrers({ limit: 0 })
-			}
+			await this.goToStarrersPage(1)
 		},
 		getAbsoluteResourceUrl(resource) {
 			return resolveAbsoluteUrl(resource, this.baseUrl)
@@ -523,7 +608,22 @@ export default {
 			} else {
 				await this.scheduleFav(favId)
 			}
-			await this.loadStarrers({ limit: this.starrersExpanded ? 0 : this.inlineStarrersLimit })
+			const preview = await this.loadStarrers({ limit: this.inlineStarrersLimit, offset: 0, destination: 'preview' })
+			if (!preview?.ok || !this.starrersExpanded) return
+			const pageCount = Math.max(this.starrersPageCount, 1)
+			const target = Math.min(this.starrersPage, pageCount)
+			if (target <= 1) {
+				this.starrersPage = 1
+				this.starrersPageItems = (this.starrers.items || []).slice(0, this.inlineStarrersLimit)
+				return
+			}
+			const offset = (target - 1) * this.inlineStarrersLimit
+			const result = await this.loadStarrers({
+				limit: this.inlineStarrersLimit,
+				offset,
+				destination: 'page',
+			})
+			if (result?.ok && result.offset === offset) this.starrersPage = target
 		},
 		async fetchApiContent() {
 			if (this.apiContent || this.fetchedApiContent !== null || this.apiContentLoaded) return
@@ -727,6 +827,13 @@ export default {
 			border: border-separator()
 			border-radius: 4px
 			padding: 8px
+			.starrers-loading
+				display: flex
+				justify-content: center
+				align-items: center
+				min-height: 72px
+				padding: 16px 8px
+				color: var(--pretalx-clr-primary, var(--clr-primary))
 			.starrers-list
 				display: flex
 				flex-direction: column
@@ -758,6 +865,35 @@ export default {
 							color: rgba(0,0,0,0.3)
 					.name
 						font-weight: 600
+			.starrers-pager
+				display: flex
+				align-items: center
+				justify-content: center
+				gap: 12px
+				margin-top: 8px
+				.page-status
+					font-size: 13px
+					color: $clr-secondary-text-light
+					text-align: center
+				.page-btn
+					appearance: none
+					border: 1px solid var(--pretalx-clr-primary, var(--clr-primary))
+					background: $clr-white
+					color: var(--pretalx-clr-primary, var(--clr-primary))
+					border-radius: 8px
+					padding: 4px 10px
+					font-weight: 600
+					font-size: 13px
+					cursor: pointer
+					&:hover, &:focus-visible
+						background: var(--pretalx-clr-primary, var(--clr-primary))
+						color: $clr-white
+						outline: none
+					&:disabled
+						opacity: 0.45
+						cursor: default
+						background: $clr-white
+						color: var(--pretalx-clr-primary, var(--clr-primary))
 	.speakers
 		margin: 0 16px 32px
 		display: flex
@@ -802,11 +938,6 @@ export default {
 					color: $clr-secondary-text-light
 					font-weight: 400
 					font-style: italic
-			.speaker-role
-				font-size: 13px
-				color: $clr-secondary-text-light
-				margin: 4px 0 0 0
-				line-height: 1.3
 	.downloads
 		margin: 0 16px 32px
 		display: flex

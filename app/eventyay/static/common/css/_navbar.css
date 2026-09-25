@@ -57,6 +57,7 @@ nav.navbar {
   z-index: 1100;
   font-weight: 500;
   min-height: 50px;
+  border-width: 0;
 }
 
 /* ============================================
@@ -189,8 +190,7 @@ nav.navbar.navbar-inverse .navbar-brand,
   display: flex;
   align-items: center;
   height: 50px;
-  padding-top: 5px;
-  padding-bottom: 5px;
+  padding: 5px 0;
   margin-right: 16px;
   margin-top: 0;
   font-size: 20px;
@@ -230,6 +230,12 @@ nav.navbar.navbar-inverse .navbar-brand:focus,
   padding: 0;
   list-style: none;
   height: 50px;
+}
+
+/* Bootstrap's clearfix pseudo-elements become flex items and add extra gap */
+.navbar-top-links::before,
+.navbar-top-links::after {
+  content: none;
 }
 
 .navbar-top-links.navbar-right {
@@ -285,6 +291,24 @@ nav.navbar.navbar-inverse .navbar-brand:focus,
 .navbar-top-links li form button.btn-link:hover,
 .navbar-top-links li form button.btn-link:focus {
   text-decoration: none;
+}
+
+/* ============================================
+   Header dropdown triggers
+   Pixel values: Bootstrap 3 sets html { font-size: 10px } on control
+   pages, so rem-based spacing would render narrower there than on the
+   front page.
+   ============================================ */
+
+nav.navbar #profile-dropdown > summary,
+nav.navbar #language-dropdown > summary {
+  gap: 6px;
+}
+
+/* The gap already spaces the caret; reset the extra margin from _dropdown.css */
+nav.navbar #profile-dropdown > summary i.fa-caret-down,
+nav.navbar #language-dropdown > summary i.fa-caret-down {
+  margin-left: 0;
 }
 
 /* ============================================

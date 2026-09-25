@@ -8,6 +8,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import View
 
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.services.cart import CartError
 from eventyay.base.signals import validate_cart
 from eventyay.common.views.helpers import build_login_url_with_next
@@ -36,13 +37,13 @@ class CheckoutView(View):
 
         if not cart_exists(request) and 'async_id' not in request.GET:
             messages.error(request, _('Your cart is empty'))
+            log_event('tickets', 'checkout.cart_empty', OUTCOME_FAILURE, error_code='cart_empty', event_id=request.event.pk)
             return self.redirect(self.get_index_url(self.request))
 
         if not request.event.presale_is_running:
             messages.error(request, _('The presale for this event is over or has not yet started.'))
-            new_url = self.get_index_url(self.request)
-            logger.info('Redirecting to %s as presale is not running.', new_url)
-            return self.redirect(new_url)
+            log_event('tickets', 'checkout.presale_closed', OUTCOME_FAILURE, error_code='presale_closed', event_id=request.event.pk)
+            return self.redirect(self.get_index_url(self.request))
 
         if request.event.settings.require_registered_account_for_tickets and not request.user.is_authenticated:
             storage = messages.get_messages(request)
@@ -78,23 +79,21 @@ class CheckoutView(View):
                 continue
             if step.requires_valid_cart and cart_error:
                 messages.error(request, str(cart_error))
+                log_event('tickets', 'checkout.cart_invalid', OUTCOME_FAILURE, error_code='cart_invalid', event_id=request.event.pk)
                 new_url = previous_step.get_step_url(request) if previous_step else self.get_index_url(request)
-                logger.info('Redirecting to %s as cart is invalid.', new_url)
                 return self.redirect(new_url)
 
             if 'step' not in kwargs:
-                new_url = step.get_step_url(request)
-                logger.info('Redirecting to %s as no step is specified.', new_url)
-                return self.redirect(new_url)
+                logger.debug('Redirecting to first checkout step.')
+                return self.redirect(step.get_step_url(request))
             is_selected = step.identifier == kwargs.get('step', '')
             if (
                 'async_id' not in request.GET
                 and not is_selected
                 and not step.is_completed(request, warn=not is_selected)
             ):
-                new_url = step.get_step_url(request)
-                logger.info('Redirecting to %s as previous steps are not completed.', new_url)
-                return self.redirect(new_url)
+                logger.debug('Redirecting because previous checkout steps are not completed.')
+                return self.redirect(step.get_step_url(request))
             if is_selected:
                 if request.method.lower() in self.http_method_names:
                     handler = getattr(step, request.method.lower(), self.http_method_not_allowed)
@@ -107,6 +106,7 @@ class CheckoutView(View):
                 step.c_is_before = True
                 step.c_resolved_url = step.get_step_url(request)
         logger.warning('No matching step found in checkout flow.')
+        log_event('tickets', 'checkout.step_missing', OUTCOME_FAILURE, error_code='step_missing', event_id=request.event.pk)
         raise Http404()
 
     def redirect(self, url):

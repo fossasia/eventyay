@@ -26,6 +26,8 @@ from eventyay.agenda.views.utils import (
     build_speaker_cards,
     build_speaker_schedule_json,
     escape_json_for_script,
+    get_cached_speakers_list_json_payload,
+    get_or_build_speakers_list_meta,
     is_public_speakers_empty,
     is_public_speakers_list_empty,
     matching_content_locales,
@@ -34,6 +36,8 @@ from eventyay.agenda.views.utils import (
     speaker_profile_display_order,
     speaker_public_content_locale_enabled,
     speaker_public_field_flags,
+    speakers_json_page_url,
+    store_speakers_list_json_payload,
 )
 from eventyay.base.models import SpeakerProfile, TalkQuestionTarget, User
 from eventyay.common.text.path import safe_filename
@@ -76,19 +80,43 @@ class SpeakerList(EventPermissionRequired, Filterable, ListView):
     default_filters = ()
     paginate_by = 48
 
+    def get(self, request, *args, **kwargs):
+        if request.GET.get('format') == 'json':
+            cached = get_cached_speakers_list_json_payload(request)
+            if cached is not None:
+                next_page = cached.pop('next_page', None)
+                previous_page = cached.pop('previous_page', None)
+                cached['next'] = speakers_json_page_url(request, next_page)
+                cached['previous'] = speakers_json_page_url(request, previous_page)
+                return JsonResponse(cached, encoder=I18nJSONEncoder)
+        return super().get(request, *args, **kwargs)
+
     def render_to_response(self, context, **response_kwargs):
         if self.request.GET.get('format') == 'json':
             speakers = build_speaker_cards(context['object_list'], self.request.event)
             page_obj = context.get('page_obj')
-            next_url = None
-            if page_obj and page_obj.has_next():
-                query_dict = self.request.GET.copy()
-                query_dict['page'] = page_obj.next_page_number()
-                next_url = self.request.build_absolute_uri(f'{self.request.path}?{query_dict.urlencode()}')
+            paginator = page_obj.paginator if page_obj else None
+            next_page = page_obj.next_page_number() if page_obj and page_obj.has_next() else None
+            previous_page = page_obj.previous_page_number() if page_obj and page_obj.has_previous() else None
+            payload = {
+                'results': speakers,
+                'count': paginator.count if paginator else len(speakers),
+                'page': page_obj.number if page_obj else 1,
+                'num_pages': paginator.num_pages if paginator else 1,
+                'page_size': self.paginate_by,
+                'next_page': next_page,
+                'previous_page': previous_page,
+            }
+            store_speakers_list_json_payload(self.request, payload)
             return JsonResponse(
                 {
                     'results': speakers,
-                    'next': next_url,
+                    'count': payload['count'],
+                    'page': payload['page'],
+                    'num_pages': payload['num_pages'],
+                    'page_size': payload['page_size'],
+                    'next': speakers_json_page_url(self.request, next_page),
+                    'previous': speakers_json_page_url(self.request, previous_page),
                 },
                 encoder=I18nJSONEncoder,
             )
@@ -115,6 +143,9 @@ class SpeakerList(EventPermissionRequired, Filterable, ListView):
             qs = qs.order_by('-user__fullname', 'pk')
         else:
             qs = qs.order_by('-is_featured', *speaker_profile_display_order())
+        featured = (self.request.GET.get('featured') or '').lower()
+        if featured in {'1', 'true', 'yes'}:
+            qs = qs.filter(is_featured=True)
         # Searching session titles joins the speakers M2M, which can duplicate rows.
         return self.filter_queryset(qs).distinct()
 
@@ -154,36 +185,7 @@ class SpeakerList(EventPermissionRequired, Filterable, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        event = self.request.event
-        schedule = event.current_schedule
-
-        meta = {
-            'tracks': [],
-            'content_locales': [],
-            'timezone': event.timezone,
-            'feature_flags': event.schedule_client_feature_flags(),
-            'has_featured_speakers': SpeakerProfile.objects.filter(
-                event=event,
-                user__in=event.speakers,
-                is_featured=True,
-            ).exists(),
-        }
-        if schedule:
-            meta['tracks'] = [
-                {'id': str(track.pk), 'name': track.name, 'color': track.color}
-                for track in event.tracks.filter(
-                    submissions__slots__schedule=schedule,
-                    submissions__slots__is_visible=True,
-                ).distinct()
-            ]
-            if speaker_public_content_locale_enabled(event):
-                locales = schedule.talks.filter(is_visible=True).exclude(
-                    submission__content_locale__isnull=True
-                ).exclude(
-                    submission__content_locale=''
-                ).values_list('submission__content_locale', flat=True).distinct()
-                meta['content_locales'] = sorted(set(locales))
-
+        meta = get_or_build_speakers_list_meta(self.request.event)
         context['speakers_meta_json'] = escape_json_for_script(json.dumps(meta, cls=I18nJSONEncoder))
         return context
 

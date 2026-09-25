@@ -15,6 +15,7 @@ from eventyay.base.gmail.constants import (
 )
 from eventyay.base.gmail.crypto import decrypt_value, encrypt_value
 from eventyay.base.models.base import LoggedModel
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 
 
 logger = logging.getLogger(__name__)
@@ -137,8 +138,9 @@ class GmailOAuthCredential(LoggedModel):
             refresh_token = self.get_refresh_token()
             if refresh_token:
                 requests.post('https://oauth2.googleapis.com/revoke', params={'token': refresh_token}, timeout=5)
-        except Exception as exc:
-            logger.warning('Failed to revoke Google token during disconnect for %s: %s', self.sender_email, exc)
+        except Exception:
+            log_event('mail', 'connection.oauth', OUTCOME_FAILURE, error_code='revoke', backend='gmail')
+            logger.warning('Failed to revoke Google token during disconnect')
 
         self.encrypted_refresh_token = ''
         self.encrypted_access_token = ''

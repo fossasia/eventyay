@@ -33,13 +33,12 @@ ARG CACHE_BUST=0
 # Ref: https://docs.astral.sh/uv/guides/integration/docker/#non-editable-installs
 #
 # Production: use --locked to ensure reproducible builds from uv.lock.
-# Dev/staging: copy full project context and use --upgrade-package to fetch
-# the latest commit for each plugin from its configured branch.
+# Dev/staging: retarget [tool.uv.sources] to branch "dev", then --upgrade-package.
 COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     if [ "$BUILD_MODE" = "dev" ]; then \
       echo "=== Dev build: refreshing plugins (CACHE_BUST=$CACHE_BUST) ===" && \
-      sed -i 's/\.git@main/\.git@dev/g' pyproject.toml && \
+      sed -i '/^\[tool.uv.sources\]/,/^\[/{s/branch = "main"/branch = "dev"/}' pyproject.toml && \
       uv sync --no-install-project --no-editable --refresh \
         --upgrade-package eventyay-paypal \
         --upgrade-package eventyay-stripe \

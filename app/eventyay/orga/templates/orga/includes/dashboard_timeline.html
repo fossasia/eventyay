@@ -8,7 +8,7 @@
                         <span class="fa fa-{% if step.phase == 'done' %}check{% else %}{{ step.icon|default:'check' }}{% endif %}"></span>
                     </div>
                     <div class="timeline-step-label">{{ step.name }}</div>
-                    <div class="timeline-step-status">{{ step.status_text }}</div>
+                    <div class="sr-only">{{ step.status_text }}</div>
                     {% if step.summary %}
                         <div class="timeline-step-summary">{{ step.summary }}</div>
                     {% endif %}
