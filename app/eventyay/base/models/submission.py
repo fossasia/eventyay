@@ -1048,12 +1048,29 @@ class Submission(GenerateCode, PretalxModel):
                 result += f'**{field_name}**: {field_content}\n\n'
             return result
 
-    def add_speaker(self, email, name=None, locale=None, user=None, biography=None):
+    def has_speaker_email(self, email):
+        email = (email or '').strip().lower()
+        if not email:
+            return False
+        if self.speakers.filter(email__iexact=email).exists():
+            return True
+        return self.speaker_invitations.filter(email__iexact=email).exists()
+
+    def add_speaker(
+        self,
+        email,
+        name=None,
+        locale=None,
+        user=None,
+        biography=None,
+        send_immediately=True,
+    ):
         from eventyay.common.urls import build_absolute_uri
 
         from .auth import User
         from .mail import MailTemplateRoles
         from .profile import SpeakerProfile
+        from .speaker_invitation import SpeakerInvitation
         from eventyay.person.services import create_user
 
         user_created = False
@@ -1086,18 +1103,39 @@ class Submission(GenerateCode, PretalxModel):
         template = self.event.get_mail_template(
             MailTemplateRoles.EXISTING_SPEAKER_INVITE if not user_created else MailTemplateRoles.NEW_SPEAKER_INVITE
         )
-        template.to_mail(
+        invitation, created = SpeakerInvitation.objects.get_or_create(
+            submission=self,
+            email=speaker.email.lower(),
+            defaults={'name': name or '', 'user': speaker, 'invited_by': user},
+        )
+        if not invitation.user:
+            invitation.user = speaker
+            invitation.save(update_fields=['user', 'updated'])
+        if not created and (not invitation.is_pending or invitation.is_delivered):
+            return speaker, invitation
+
+        mail = template.to_mail(
             user=speaker,
             event=self.event,
             context=context,
             context_kwargs={'user': speaker, 'submission': self, 'event': self.event},
             locale=locale or self.event.locale,
         )
-        return speaker
+        invitation.deliver(mail=mail, send_immediately=send_immediately, requestor=user)
+        return speaker, invitation
 
     def remove_speaker(self, speaker, orga=True, user=None):
         if self.speakers.filter(code=speaker.code).exists():
+            from .mail import QueuedMail
+
             self.speakers.remove(speaker)
+            invitations = self.speaker_invitations.filter(
+                Q(user=speaker) | Q(email__iexact=speaker.email)
+            )
+            QueuedMail.objects.filter(
+                pk__in=invitations.values('mail'), sent__isnull=True
+            ).delete()
+            invitations.delete()
             from eventyay.agenda.views.utils import (
                 clear_featured_speakers_without_active_submissions,
                 clear_schedule_caches,
@@ -1117,7 +1155,13 @@ class Submission(GenerateCode, PretalxModel):
             )
 
     def send_invite(self, to, _from=None, subject=None, text=None):
+        """Invites one or more speakers by email and sends right away.
+
+        Returns the list of :class:`SpeakerInvitation` objects that were
+        created or refreshed, each carrying the delivery result.
+        """
         from .mail import QueuedMail
+        from .speaker_invitation import SpeakerInvitation
 
         if not _from and (not subject or not text):
             raise ValueError('Please enter a sender for this invitation.')
@@ -1130,14 +1174,31 @@ class Submission(GenerateCode, PretalxModel):
             speaker=_from.get_display_name(),
         )
         to = to.split(',') if isinstance(to, str) else to
-        for invite in to:
-            QueuedMail(
+        invitations = []
+        for raw_address in to:
+            address = raw_address.strip().lower()
+            if not address:
+                continue
+            invitation, created = SpeakerInvitation.objects.get_or_create(
+                submission=self,
+                email=address,
+                defaults={'invited_by': _from},
+            )
+            if not created and (not invitation.is_pending or invitation.is_delivered):
+                invitations.append(invitation)
+                continue
+
+            mail = QueuedMail.objects.create(
                 event=self.event,
-                to=invite,
+                to=address,
                 subject=subject,
                 text=text,
                 locale=self.get_email_locale(),
-            ).send()
+            )
+            mail.submissions.add(self)
+            invitation.deliver(mail=mail, send_immediately=True, requestor=_from)
+            invitations.append(invitation)
+        return invitations
 
     send_invite.alters_data = True
 

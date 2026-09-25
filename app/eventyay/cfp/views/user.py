@@ -19,10 +19,19 @@ from django.views.generic import (
     ListView,
     TemplateView,
     UpdateView,
+    View,
 )
 from django_context_decorator import context
 
-from eventyay.base.models import Resource, ResourceKind, Submission, SubmissionStates
+from eventyay.base.models import (
+    Resource,
+    ResourceKind,
+    SpeakerInvitation,
+    SpeakerInvitationMailStates,
+    SpeakerInvitationStates,
+    Submission,
+    SubmissionStates,
+)
 from eventyay.cfp.forms.submissions import SubmissionInvitationForm
 from eventyay.cfp.views.event import LoggedInEventPageMixin
 from eventyay.common.exceptions import SendMailException
@@ -305,6 +314,16 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
 
     @context
     @cached_property
+    def pending_invitations(self):
+        speaker_ids = self.object.speakers.values_list('pk', flat=True)
+        return (
+            self.object.speaker_invitations.filter(status=SpeakerInvitationStates.PENDING)
+            .exclude(user_id__in=speaker_ids)
+            .select_related('user')
+        )
+
+    @context
+    @cached_property
     def formset(self):
         formset_class = inlineformset_factory(
             Submission,
@@ -453,13 +472,74 @@ class SubmissionInviteView(LoggedInEventPageMixin, SubmissionViewMixin, FormView
         return kwargs
 
     def form_valid(self, form):
-        form.save()
-        messages.success(self.request, phrases.cfp.invite_sent)
+        invitations = form.save()
         self.submission.log_action('eventyay.submission.speakers.invite', person=self.request.user)
+        for invitation in invitations:
+            if invitation.mail_state == SpeakerInvitationMailStates.SENT:
+                messages.success(
+                    self.request,
+                    _('Invitation sent to {email}.').format(email=invitation.email),
+                )
+            else:
+                messages.error(
+                    self.request,
+                    _(
+                        'The invitation email to {email} could not be sent. '
+                        'You can resend it from the list of pending invitations.'
+                    ).format(email=invitation.email),
+                )
         return super().form_valid(form)
 
     def get_success_url(self):
         return self.submission.urls.user_base
+
+
+class SubmissionInviteResendView(LoggedInEventPageMixin, SubmissionViewMixin, View):
+    permission_required = 'base.add_speaker_submission'
+
+    def get_permission_object(self):
+        return self.get_object()
+
+    def post(self, request, *args, **kwargs):
+        invitation = get_object_or_404(
+            SpeakerInvitation, submission=self.submission, pk=self.kwargs['pk']
+        )
+        if not invitation.can_resend:
+            messages.warning(request, _('This invitation cannot be resent.'))
+        elif invitation.resend(requestor=request.user):
+            messages.success(
+                request,
+                _('Invitation sent to {email}.').format(email=invitation.email),
+            )
+        else:
+            messages.error(
+                request, _('The invitation email could not be sent. Please try again.')
+            )
+        return redirect(self.submission.urls.user_base)
+
+
+class SubmissionInviteRevokeView(LoggedInEventPageMixin, SubmissionViewMixin, View):
+    permission_required = 'base.add_speaker_submission'
+
+    def get_permission_object(self):
+        return self.get_object()
+
+    def post(self, request, *args, **kwargs):
+        invitation = get_object_or_404(
+            SpeakerInvitation,
+            submission=self.submission,
+            pk=self.kwargs['pk'],
+            status=SpeakerInvitationStates.PENDING,
+        )
+        email = invitation.email
+        if not invitation.revoke(person=request.user, orga=False):
+            messages.warning(request, _('This invitation cannot be revoked.'))
+            return redirect(self.submission.urls.user_base)
+        messages.success(
+            request,
+            _('The invitation to {email} was revoked.').format(email=email),
+        )
+        return redirect(self.submission.urls.user_base)
 
 
 class SubmissionInviteAcceptView(LoggedInEventPageMixin, DetailView):
@@ -500,6 +580,11 @@ class SubmissionInviteAcceptView(LoggedInEventPageMixin, DetailView):
         submission.speakers.add(self.request.user)
         submission.log_action('eventyay.submission.speakers.add', person=self.request.user)
         submission.save()
+        for invitation in submission.speaker_invitations.filter(
+            status=SpeakerInvitationStates.PENDING,
+            email__iexact=self.request.user.email,
+        ):
+            invitation.accept(user=self.request.user)
         messages.success(self.request, phrases.cfp.invite_accepted)
         return redirect(
             'cfp:event.user.view', organizer=self.request.event.organizer.slug, event=self.request.event.slug

@@ -470,12 +470,16 @@ class QueuedMail(PretalxModel):
         return get_prefixed_subject(event, self.subject)
 
     @transaction.atomic
-    def send(self, requestor=None, orga: bool = True):
+    def send(self, requestor=None, orga: bool = True, synchronous: bool = False):
         """Sends an email.
 
         :param requestor: The user issuing the command. Used for logging.
         :type requestor: :class:`~pretalx.person.models.user.User`
         :param orga: Was this email sent as by a privileged user?
+        :param synchronous: Hand the email to the mail backend right away
+            instead of queueing it, so that delivery problems surface here.
+        :raises SendMailException: when ``synchronous`` is set and the mail
+            backend rejected the message.
         """
         if self.sent:
             raise Exception(_('This mail has been sent already. It cannot be sent again.'))
@@ -499,24 +503,25 @@ class QueuedMail(PretalxModel):
             # so there is nothing left for us to do.
             return
 
-        from eventyay.common.mail import mail_send_task
+        from eventyay.common.mail import mail_send_task, send_mail_now
 
         text = self.make_text()
         body_html = self.make_html()
-        mail_send_task.apply_async(
-            kwargs={
-                'to': to,
-                'subject': self.prefixed_subject,
-                'body': text,
-                'html': body_html,
-                'reply_to': (self.reply_to or '').split(','),
-                'event': self.event.pk if has_event else None,
-                'cc': (self.cc or '').split(','),
-                'bcc': (self.bcc or '').split(','),
-                'attachments': self.attachments,
-            },
-            ignore_result=True,
-        )
+        mail_kwargs = {
+            'to': to,
+            'subject': self.prefixed_subject,
+            'body': text,
+            'html': body_html,
+            'reply_to': (self.reply_to or '').split(','),
+            'event': self.event.pk if has_event else None,
+            'cc': (self.cc or '').split(','),
+            'bcc': (self.bcc or '').split(','),
+            'attachments': self.attachments,
+        }
+        if synchronous:
+            send_mail_now(**mail_kwargs)
+        else:
+            mail_send_task.apply_async(kwargs=mail_kwargs, ignore_result=True)
         log_event('mail', 'mail.outbox', OUTCOME_SUCCESS, event_id=self.event.pk if has_event else None, object_id=self.pk, recipient_count=len(to))
         self.sent = now()
 
