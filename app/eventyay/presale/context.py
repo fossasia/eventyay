@@ -1,3 +1,4 @@
+import json
 import logging
 
 from django.conf import settings
@@ -11,6 +12,7 @@ from i18nfield.strings import LazyI18nString
 from eventyay.base.models.page import Page
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.permissions import is_event_organiser, user_has_cfp_submissions
+from eventyay.eventyay_common.models import EventTheme, OrganizerTheme
 from eventyay.helpers.i18n import (
     get_javascript_format_without_seconds,
     get_moment_locale,
@@ -134,14 +136,26 @@ def _default_context(request):
         ctx['event'] = request.event
         ctx['languages'] = [_safe_language_info(code) for code in request.event.settings.locales]
 
+        # Add theme data to context
+        try:
+            event_theme = EventTheme.objects.filter(event=request.event).first()
+            if event_theme:
+                ctx['event_theme'] = event_theme
+                if event_theme.is_active:
+                    ctx['event_theme_tokens'] = json.dumps(event_theme.get_effective_tokens())
+                    ctx['event_theme_color_mode'] = event_theme.color_mode
+                    if event_theme.custom_css:
+                        ctx['event_theme_custom_css'] = event_theme.custom_css
+        except Exception:
+            pass
+
         if request.resolver_match:
             ctx['cart_namespace'] = request.resolver_match.kwargs.get('cart_namespace', '')
     elif hasattr(request, 'organizer'):
         if not hasattr(request, 'event'):
             # Re-generate CSS if missing or checksum is cleared.
-            needs_regen = (
-                not request.organizer.settings.get('presale_css_file')
-                or not request.organizer.settings.get('presale_css_checksum')
+            needs_regen = not request.organizer.settings.get('presale_css_file') or not request.organizer.settings.get(
+                'presale_css_checksum'
             )
             if needs_regen:
                 lock_key = f'presale:regenerate_organizer_css:{request.organizer.pk}'
@@ -156,6 +170,18 @@ def _default_context(request):
                             exc_info=True,
                         )
         ctx['languages'] = [_safe_language_info(code) for code in request.organizer.settings.locales]
+
+        # Add organizer theme data to context
+        try:
+            organizer_theme = OrganizerTheme.objects.filter(organizer=request.organizer).first()
+            if organizer_theme and organizer_theme.is_active:
+                ctx['organizer_theme'] = organizer_theme
+                ctx['organizer_theme_tokens'] = json.dumps(organizer_theme.get_effective_tokens())
+                ctx['organizer_theme_color_mode'] = organizer_theme.color_mode
+        except Exception:
+            pass
+
+    if hasattr(request, 'organizer'):
         if request.organizer.settings.presale_css_file and not hasattr(request, 'event'):
             ctx['css_file'] = default_storage.url(request.organizer.settings.presale_css_file)
 
@@ -203,7 +229,13 @@ def _default_context(request):
     ctx['show_organizer_area'] = False
     ctx['user_has_cfp_submissions'] = False
     ctx['talks_published'] = False
-    if hasattr(request, 'user') and request.user and request.user.is_authenticated and hasattr(request, 'event') and request.event:
+    if (
+        hasattr(request, 'user')
+        and request.user
+        and request.user.is_authenticated
+        and hasattr(request, 'event')
+        and request.event
+    ):
         ctx['show_organizer_area'] = is_event_organiser(request.user, request, request.event)
         ctx['talks_published'] = request.event.talks_published
         if ctx['talks_published']:
