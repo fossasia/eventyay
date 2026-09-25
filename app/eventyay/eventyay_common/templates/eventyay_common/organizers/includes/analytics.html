@@ -193,7 +193,7 @@
                   </thead>
                   <tbody>
                     {% for event in top_events %}
-                      <tr data-currency="{{ event.currency }}">
+                      <tr data-currency="{{ event.currency }}"{% if event.in_overall_top %} data-od-overall{% else %} hidden{% endif %}>
                         <td>{{ event.name }}</td>
                         <td class="text-right">{{ event.total_orders }}</td>
                         <td class="text-right">{{ event.paid_orders }}</td>

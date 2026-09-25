@@ -36,7 +36,6 @@ from eventyay.common.signals import register_data_exporters, register_my_data_ex
 from eventyay.common.social_links import serialize_social_link
 from eventyay.common.text.path import safe_filename
 from eventyay.common.views.helpers import build_login_url_with_next
-from eventyay.person.services import build_speaker_role_answers_map, get_public_speaker_role_questions
 from eventyay.person.tasks import enqueue_missing_avatar_thumbnails
 from eventyay.schedule.exporters import FavedICalExporter, filter_featured_public_talk_slots
 from eventyay.talk_rules.agenda import (
@@ -49,6 +48,7 @@ from eventyay.talk_rules.agenda import (
     require_wip_schedule_access,
     speaker_may_show_pending_sessions,
 )
+from eventyay.person.services import build_public_speaker_role
 from eventyay.talk_rules.submission import (
     are_featured_exports_available,
     are_featured_speakers_visible,
@@ -65,7 +65,6 @@ JSON_SCRIPT_ESCAPES = {ord('>'): '\\u003E', ord('<'): '\\u003C', ord('&'): '\\u0
 
 CACHE_TTL = 600
 
-LANDING_FEATURED_SPEAKERS_LIMIT = 12
 EMPTY_LANDING_FEATURED_WIDGET = {'speakers': [], 'talks': [], 'tracks': [], 'rooms': []}
 SPEAKERS_LIST_JSON_QUERY_KEYS = ('page', 'q', 'sort', 'track', 'language', 'featured')
 SPEAKERS_LIST_MULTI_QUERY_KEYS = frozenset({'track', 'language'})
@@ -88,8 +87,8 @@ def public_schedule_cache_variant(event) -> str:
     )
 
 
-def landing_featured_widget_cache_key(event, *, limit: int = LANDING_FEATURED_SPEAKERS_LIMIT) -> str:
-    return f'eagenda:landing-featured:{public_schedule_cache_variant(event)}:{limit}'
+def landing_featured_widget_cache_key(event) -> str:
+    return f'eagenda:landing-featured:{public_schedule_cache_variant(event)}'
 
 
 def speakers_list_query_digest(request: HttpRequest) -> str:
@@ -322,10 +321,6 @@ def build_speaker_cards(profiles, event):
         for speaker in talk.submission.speakers.all():
             speaker_sessions_map.setdefault(speaker.id, []).append(session)
 
-    all_user_ids = [profile.user_id for profile in profile_list]
-    job_title_q, org_q = get_public_speaker_role_questions(event)
-    speaker_role_map = build_speaker_role_answers_map(all_user_ids, job_title_q, org_q, event)
-
     missing_thumb_user_ids = []
     for profile in profile_list:
         user = profile.user
@@ -334,7 +329,7 @@ def build_speaker_cards(profiles, event):
             'code': user.code,
             'name': user.fullname or None,
             'biography': (profile.biography or '') if include_biography else '',
-            'speaker_role': speaker_role_map.get(user.id, ''),
+            'speaker_role': build_public_speaker_role(profile, event),
             'is_featured': is_featured,
             'featured_position': profile.position if is_featured else None,
             'avatar': None,
@@ -410,7 +405,6 @@ def speaker_dict_from_profile(
     include_avatar=None,
     include_biography=None,
     include_featured_metadata=True,
-    speaker_role_map=None,
 ):
     """Serialize a speaker profile for schedule-shaped widget payloads."""
     if not profile or not profile.user_id:
@@ -423,15 +417,12 @@ def speaker_dict_from_profile(
             include_biography = biography_flag
     user = profile.user
     is_featured = bool(profile.is_featured) if include_featured_metadata else False
-    if speaker_role_map is None:
-        job_title_q, org_q = get_public_speaker_role_questions(event)
-        speaker_role_map = build_speaker_role_answers_map([user.pk], job_title_q, org_q, event)
 
     speaker_data = {
         'code': user.code,
         'name': user.fullname or None,
         'biography': (profile.biography or '') if include_biography else '',
-        'speaker_role': speaker_role_map.get(user.pk, ''),
+        'speaker_role': build_public_speaker_role(profile, event),
         'is_featured': is_featured,
         'featured_position': profile.position if is_featured else None,
     }
@@ -504,12 +495,8 @@ def event_has_public_featured_schedule_talks(event):
 
 def build_featured_only_schedule_data_from_profiles(event, profiles, *, speakers_list_public=False):
     speakers = []
-    user_pks = [p.user_id for p in profiles if p.user_id]
-    job_title_q, org_q = get_public_speaker_role_questions(event)
-    speaker_role_map = build_speaker_role_answers_map(user_pks, job_title_q, org_q, event)
-
     for profile in profiles:
-        speaker_data = speaker_dict_from_profile(event, profile, speaker_role_map=speaker_role_map)
+        speaker_data = speaker_dict_from_profile(event, profile)
         if speaker_data:
             speakers.append(speaker_data)
     if not speakers:
@@ -549,14 +536,10 @@ def merge_featured_speakers_into_schedule_data(event, schedule_data, featured_pr
         if isinstance(speaker, dict) and speaker.get('code')
     }
     
-    user_pks = [p.user_id for p in featured_profiles if p.user_id]
-    job_title_q, org_q = get_public_speaker_role_questions(event)
-    speaker_role_map = build_speaker_role_answers_map(user_pks, job_title_q, org_q, event)
-    
     for profile in featured_profiles:
         if not profile.user_id:
             continue
-        speaker_data = speaker_dict_from_profile(event, profile, speaker_role_map=speaker_role_map)
+        speaker_data = speaker_dict_from_profile(event, profile)
         if not speaker_data:
             continue
         code = profile.user.code
@@ -566,8 +549,6 @@ def merge_featured_speakers_into_schedule_data(event, schedule_data, featured_pr
             existing['featured_position'] = profile.position
             if speaker_data.get('biography') and not existing.get('biography'):
                 existing['biography'] = speaker_data['biography']
-            if speaker_data.get('speaker_role') and not existing.get('speaker_role'):
-                existing['speaker_role'] = speaker_data['speaker_role']
             for field in ('avatar', 'avatar_thumbnail_default', 'avatar_thumbnail_tiny'):
                 if speaker_data.get(field) and not existing.get(field):
                     existing[field] = speaker_data[field]
@@ -605,13 +586,8 @@ def filter_schedule_data_to_featured_speakers(schedule_data, featured_speaker_us
 def _ordered_featured_speakers_from_profiles(event, featured_profiles, schedule_speakers_by_code=None):
     schedule_speakers_by_code = schedule_speakers_by_code or {}
     ordered_speakers = []
-    
-    user_pks = [p.user_id for p in featured_profiles if p.user_id]
-    job_title_q, org_q = get_public_speaker_role_questions(event)
-    speaker_role_map = build_speaker_role_answers_map(user_pks, job_title_q, org_q, event)
-    
     for profile in featured_profiles:
-        speaker_data = speaker_dict_from_profile(event, profile, speaker_role_map=speaker_role_map)
+        speaker_data = speaker_dict_from_profile(event, profile)
         if not speaker_data:
             continue
         schedule_speaker = schedule_speakers_by_code.get(speaker_data['code'])
@@ -710,21 +686,16 @@ def build_landing_featured_speakers_widget_schedule(event, user, featured_profil
     return base_data
 
 
-def get_or_build_landing_featured_widget_schedule(
-    event,
-    user,
-    *,
-    limit: int = LANDING_FEATURED_SPEAKERS_LIMIT,
-):
-    """Return the landing featured-speakers widget payload, using versioned cache."""
-    cache_key = landing_featured_widget_cache_key(event, limit=limit)
+def get_or_build_landing_featured_widget_schedule(event, user):
+    """Return every public featured speaker for the landing widget, using versioned cache."""
+    cache_key = landing_featured_widget_cache_key(event)
     cached = cache.get(cache_key)
     if cached is not None:
         if not cached.get('speakers'):
             return None
         return copy.deepcopy(cached)
 
-    profiles = load_public_featured_speaker_profiles(user, event, limit=limit)
+    profiles = load_public_featured_speaker_profiles(user, event)
     if not profiles:
         cache.set(cache_key, copy.deepcopy(EMPTY_LANDING_FEATURED_WIDGET), CACHE_TTL)
         return None

@@ -3,7 +3,9 @@ from __future__ import annotations
 import logging
 
 from django import forms
+from django.db.models import Prefetch
 from django.utils.functional import cached_property
+from django_scopes import scope
 from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.models import SubmissionStates, User
@@ -27,19 +29,23 @@ class SpeakerExportForm(ExportForm):
     )
     submission_ids = forms.BooleanField(
         required=False,
+        initial=True,
         label=_('Proposal IDs'),
         help_text=phrases.orga.proposal_id_help_text,
     )
     submission_titles = forms.BooleanField(
         required=False,
+        initial=True,
         label=_('Proposal titles'),
     )
     biography = forms.BooleanField(
         required=False,
+        initial=True,
         label=_('Biography'),
     )
     avatar = forms.BooleanField(
         required=False,
+        initial=True,
         label=_('Picture'),
         help_text=_('The link to the speaker’s profile picture'),
     )
@@ -96,14 +102,19 @@ class SpeakerExportForm(ExportForm):
 
     def get_queryset(self):
         target = self.cleaned_data.get('target')
-        queryset = self.event.submitters
-        if target != 'all':
-            queryset = queryset.filter(
-                submissions__in=self.event.submissions.filter(
-                    state__in=[SubmissionStates.ACCEPTED, SubmissionStates.CONFIRMED]
-                )
-            ).distinct()
-        return queryset.prefetch_related('profiles', 'profiles__event').order_by('code')
+        with scope(event=self.event):
+            queryset = self.event.submitters
+            if target != 'all':
+                queryset = queryset.filter(
+                    submissions__in=self.event.submissions.filter(
+                        state__in=[SubmissionStates.ACCEPTED, SubmissionStates.CONFIRMED]
+                    )
+                ).distinct()
+            return queryset.prefetch_related(
+                'profiles', 
+                'profiles__event',
+                Prefetch('submissions', queryset=self.event.submissions.all(), to_attr='event_submissions')
+            ).order_by('code')
 
     def _get_avatar_value(self, obj):
         return obj.get_avatar_url(event=self.event)
@@ -112,10 +123,10 @@ class SpeakerExportForm(ExportForm):
         return obj._profile.biography
 
     def _get_submission_ids_value(self, obj):
-        return list(obj.submissions.filter(event=self.event).values_list('code', flat=True))
+        return [sub.code for sub in obj.event_submissions]
 
     def _get_submission_titles_value(self, obj):
-        return list(obj.submissions.filter(event=self.event).values_list('title', flat=True))
+        return [sub.title for sub in obj.event_submissions]
 
     # Called by ExportForm.get_data.
     def _prepare_object_data(self, obj):

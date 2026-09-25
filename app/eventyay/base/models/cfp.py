@@ -4,7 +4,6 @@ from django.db import models
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
-from django_scopes import scope
 from i18nfield.fields import I18nCharField, I18nTextField
 
 from eventyay.common.text.phrases import phrases
@@ -31,7 +30,7 @@ BUILTIN_SESSION_FIELDS = (
     'do_not_record',
 )
 BUILTIN_SPEAKER_FIELDS = (
-    'fullname', 'biography', 'avatar', 'avatar_source',
+    'fullname', 'biography', 'job_title', 'organization', 'avatar', 'avatar_source',
     'avatar_license', 'availabilities', 'additional_speaker', 'social_links',
 )
 BUILTIN_FIELD_KEYS = {
@@ -105,6 +104,18 @@ def default_fields():
             'max_length': None,
             'public': True,
         },
+        'job_title': {
+            'visibility': 'optional',
+            'min_length': None,
+            'max_length': None,
+            'public': False,
+        },
+        'organization': {
+            'visibility': 'optional',
+            'min_length': None,
+            'max_length': None,
+            'public': False,
+        },
         'avatar': {'visibility': 'optional', 'public': True},
         'avatar_source': {'visibility': 'optional', 'public': False},
         'avatar_license': {'visibility': 'optional', 'public': False},
@@ -122,53 +133,6 @@ def default_fields():
         'social_links': {'visibility': 'do_not_ask', 'public': True},
         'fullname': {'visibility': 'required', 'public': True},
     }
-
-
-SPEAKER_JOB_TITLE_IMPORT_KEY = 'speaker_job_title'
-SPEAKER_ORGANIZATION_IMPORT_KEY = 'speaker_organization'
-DEFAULT_SPEAKER_QUESTION_IMPORT_KEYS = frozenset(
-    {
-        SPEAKER_JOB_TITLE_IMPORT_KEY,
-        SPEAKER_ORGANIZATION_IMPORT_KEY,
-    }
-)
-
-
-def is_default_speaker_question(question):
-    """Return True if *question* is a platform-seeded speaker field."""
-    return bool(question and question.import_key in DEFAULT_SPEAKER_QUESTION_IMPORT_KEYS)
-
-
-def create_default_speaker_questions(event):
-    """Create default Job Title and Organization speaker questions for the given event.
-
-    These questions are created with ``is_public=False`` so organizers can
-    opt-in by toggling the Public flag themselves.  The ``import_key``
-    constraint guarantees idempotency — calling this function twice for the
-    same event is safe.
-    """
-    # Local import: question.py imports from eventyay.base.models, and cfp is
-    # loaded early in base.models.__init__, so a top-level import would cycle.
-    from eventyay.base.models.question import TalkQuestion, TalkQuestionTarget, TalkQuestionVariant
-
-    defaults = [
-        (SPEAKER_JOB_TITLE_IMPORT_KEY, str(_('Job Title')), 0),
-        (SPEAKER_ORGANIZATION_IMPORT_KEY, str(_('Organization')), 1),
-    ]
-    with scope(event=event):
-        for import_key, question_text, position in defaults:
-            TalkQuestion.objects.get_or_create(
-                event=event,
-                import_key=import_key,
-                target=TalkQuestionTarget.SPEAKER,
-                defaults={
-                    'question': question_text,
-                    'variant': TalkQuestionVariant.STRING,
-                    'is_public': False,
-                    'position': position,
-                    'active': True,
-                },
-            )
 
 
 def field_helper(cls):
