@@ -10,6 +10,7 @@ from eventyay.api.auth.api_auth import (
 from eventyay.api.serializers.rooms import RoomSerializer
 from eventyay.base.models import Channel
 from eventyay.base.models.room import Room
+from eventyay.base.operational_logging import OUTCOME_SUCCESS, log_event
 from eventyay.base.services.event import notify_event_change
 from eventyay.base.services.room import normalize_after_priority_change
 
@@ -37,6 +38,7 @@ class RoomViewSet(viewsets.ModelViewSet):
         if serializer.validated_data.get("position") is None:
             serializer.validated_data["position"] = serializer.validated_data["sorting_priority"] - 1
         serializer.save(event=event)
+        log_event('video', 'room.create', OUTCOME_SUCCESS, event_id=event.pk, object_id=serializer.instance.pk)
         for m in serializer.instance.module_config:
             if m["type"] == "chat.native":
                 Channel.objects.get_or_create(
@@ -48,6 +50,7 @@ class RoomViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         super().perform_update(serializer)
+        log_event('video', 'room.update', OUTCOME_SUCCESS, event_id=self.request.event.pk, object_id=serializer.instance.pk)
         if "sorting_priority" in self.request.data:
             normalize_after_priority_change(
                 self.request.event,
@@ -65,7 +68,10 @@ class RoomViewSet(viewsets.ModelViewSet):
         )
 
     def perform_destroy(self, instance):
+        event_id = instance.event_id
+        object_id = instance.pk
         super().perform_destroy(instance)
+        log_event('video', 'room.delete', OUTCOME_SUCCESS, event_id=event_id, object_id=object_id)
         for m in instance.module_config:
             if m["type"] == "chat.native":
                 Channel.objects.filter(room=instance, event=self.request.event).delete()

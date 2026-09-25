@@ -4,33 +4,10 @@
   <header class="common-dashboard__header">
     <h1 id="common-dashboard-title" class="common-dashboard__title">
       {% trans "Dashboard" %}
-      <button
-        type="button"
-        class="cd-info"
-        data-toggle="tooltip"
-        data-placement="right"
-        title="{% trans 'Manage your events, jump into tickets, talks and video, or create something new.' %}"
-        aria-label="{% trans 'Manage your events, jump into tickets, talks and video, or create something new.' %}"
-      >
-        <span class="fa fa-info-circle" aria-hidden="true"></span>
-      </button>
     </h1>
   </header>
 
-  <section class="common-dashboard__section" aria-labelledby="organiser-find-title">
-    <h2 id="organiser-find-title" class="common-dashboard__title">
-      {% trans "Go to event" %}
-      <button
-        type="button"
-        class="cd-info"
-        data-toggle="tooltip"
-        data-placement="right"
-        title="{% trans 'Search the events you organise or have access to.' %}"
-        aria-label="{% trans 'Search the events you organise or have access to.' %}"
-      >
-        <span class="fa fa-info-circle" aria-hidden="true"></span>
-      </button>
-    </h2>
+  <section class="common-dashboard__section" aria-label="{% trans 'Go to event' %}">
     <div class="cd-search">
       <div class="cd-search__field cd-search__field--typeahead">
         <span class="fa fa-search cd-search__icon" aria-hidden="true"></span>

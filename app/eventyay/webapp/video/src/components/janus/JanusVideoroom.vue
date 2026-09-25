@@ -410,6 +410,7 @@ import FeedbackPrompt from 'components/FeedbackPrompt'
 import {createPopper} from '@popperjs/core'
 import SoundMeter from 'lib/webrtc/soundmeter'
 import { nativeToUrl as nativeEmojiToUrl } from 'lib/emoji'
+import {logOperational} from 'lib/operationalLog'
 
 const MIN_BITRATE = 150 * 1000
 const MAX_BITRATE = 1500 * 1000
@@ -3356,11 +3357,9 @@ export default {
 		failConnection(error, retry = true) {
 			log('janus-lifecycle', 'error', {
 				action: 'failConnection',
-				error: error?.message || error,
-				name: error?.name,
 				retry,
-				retryInterval: this.retryInterval,
 			})
+			logOperational({action: 'janus.fail', outcome: 'failure', backend: 'janus', error_code: 'connection_failed'})
 			const retryInterval = this.retryInterval
 			this.cleanup({preserveConnectionFailure: true})
 			this.connectionState = 'failed'

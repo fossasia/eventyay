@@ -10,6 +10,7 @@ from django.core.cache import cache
 from django.http import HttpRequest
 from django.utils.translation import gettext_lazy as _
 
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.helpers.http import get_client_ip
 
@@ -145,6 +146,7 @@ def verify_turnstile_token(
     secret_key = cfg['secret_key']
     if not secret_key:
         logger.error('Turnstile verification failed: Turnstile secret key is not configured.')
+        log_event('core', 'captcha.verify', OUTCOME_FAILURE, error_code='missing_secret', backend='turnstile')
         return False, 'missing-secret'
 
     if not token or not token.strip():
@@ -207,6 +209,7 @@ def verify_turnstile_token(
         return True, None
     except (urllib.request.URLError, TimeoutError, json.JSONDecodeError, ValueError, OSError, AttributeError):
         logger.exception('Error during Cloudflare Turnstile token verification.')
+        log_event('core', 'captcha.verify', OUTCOME_FAILURE, error_code='network_error', backend='turnstile')
         return False, 'network-error'
 
 
@@ -297,8 +300,10 @@ def test_turnstile_connection(secret_key: str | None = None) -> tuple[bool, str]
         return False, str(_('Cloudflare Turnstile returned an error: %(error)s') % {'error': err_str})
 
     except urllib.error.HTTPError as exc:
+        log_event('core', 'captcha.verify', OUTCOME_FAILURE, error_code='http_error', status=exc.code, backend='turnstile')
         return False, str(_('Cloudflare Turnstile server returned HTTP error: %(status)s') % {'status': exc.code})
     except urllib.error.URLError as exc:
+        log_event('core', 'captcha.verify', OUTCOME_FAILURE, error_code='network_error', backend='turnstile')
         return False, str(_('Could not connect to Cloudflare Turnstile servers: %(error)s') % {'error': exc.reason})
     except (TimeoutError, OSError) as exc:
         return False, str(_('Connection to Cloudflare Turnstile servers timed out: %(error)s') % {'error': exc})
