@@ -64,7 +64,6 @@ JSON_SCRIPT_ESCAPES = {ord('>'): '\\u003E', ord('<'): '\\u003C', ord('&'): '\\u0
 
 CACHE_TTL = 600
 
-LANDING_FEATURED_SPEAKERS_LIMIT = 12
 EMPTY_LANDING_FEATURED_WIDGET = {'speakers': [], 'talks': [], 'tracks': [], 'rooms': []}
 SPEAKERS_LIST_JSON_QUERY_KEYS = ('page', 'q', 'sort', 'track', 'language', 'featured')
 SPEAKERS_LIST_MULTI_QUERY_KEYS = frozenset({'track', 'language'})
@@ -87,8 +86,8 @@ def public_schedule_cache_variant(event) -> str:
     )
 
 
-def landing_featured_widget_cache_key(event, *, limit: int = LANDING_FEATURED_SPEAKERS_LIMIT) -> str:
-    return f'eagenda:landing-featured:{public_schedule_cache_variant(event)}:{limit}'
+def landing_featured_widget_cache_key(event) -> str:
+    return f'eagenda:landing-featured:{public_schedule_cache_variant(event)}'
 
 
 def speakers_list_query_digest(request: HttpRequest) -> str:
@@ -684,21 +683,16 @@ def build_landing_featured_speakers_widget_schedule(event, user, featured_profil
     return base_data
 
 
-def get_or_build_landing_featured_widget_schedule(
-    event,
-    user,
-    *,
-    limit: int = LANDING_FEATURED_SPEAKERS_LIMIT,
-):
-    """Return the landing featured-speakers widget payload, using versioned cache."""
-    cache_key = landing_featured_widget_cache_key(event, limit=limit)
+def get_or_build_landing_featured_widget_schedule(event, user):
+    """Return every public featured speaker for the landing widget, using versioned cache."""
+    cache_key = landing_featured_widget_cache_key(event)
     cached = cache.get(cache_key)
     if cached is not None:
         if not cached.get('speakers'):
             return None
         return copy.deepcopy(cached)
 
-    profiles = load_public_featured_speaker_profiles(user, event, limit=limit)
+    profiles = load_public_featured_speaker_profiles(user, event)
     if not profiles:
         cache.set(cache_key, copy.deepcopy(EMPTY_LANDING_FEATURED_WIDGET), CACHE_TTL)
         return None

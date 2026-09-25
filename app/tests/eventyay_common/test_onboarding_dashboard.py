@@ -94,6 +94,7 @@ def test_onboarding_dashboard_renders_for_new_user(new_user_client, public_upcom
     assert 'Your upcoming events' not in content
     assert 'Complete your profile' in content
     assert 'Add your full name and profile picture to finish your profile.' in content
+    assert 'cd-info' not in content
 
 
 @pytest.mark.django_db
@@ -132,6 +133,9 @@ def test_organiser_dashboard_still_shown_for_event_managers(organizer_client, ev
     assert 'common-dashboard' in content
     assert 'cd-event-card' in content
     assert 'Quick actions' in content
+    assert 'cd-info' not in content
+    assert 'aria-label="Go to event"' in content
+    assert '<label class="sr-only" for="dashboard_query">Go to event</label>' in content
 
 
 @pytest.mark.django_db
