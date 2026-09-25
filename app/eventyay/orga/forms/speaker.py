@@ -100,19 +100,21 @@ class SpeakerExportForm(ExportForm):
 
     def get_queryset(self):
         target = self.cleaned_data.get('target')
-        queryset = self.event.submitters
-        if target != 'all':
-            queryset = queryset.filter(
-                submissions__in=self.event.submissions.filter(
-                    state__in=[SubmissionStates.ACCEPTED, SubmissionStates.CONFIRMED]
-                )
-            ).distinct()
-        from django.db.models import Prefetch
-        return queryset.prefetch_related(
-            'profiles', 
-            'profiles__event',
-            Prefetch('submissions', queryset=self.event.submissions.all(), to_attr='event_submissions')
-        ).order_by('code')
+        from django_scopes import scope
+        with scope(event=self.event):
+            queryset = self.event.submitters
+            if target != 'all':
+                queryset = queryset.filter(
+                    submissions__in=self.event.submissions.filter(
+                        state__in=[SubmissionStates.ACCEPTED, SubmissionStates.CONFIRMED]
+                    )
+                ).distinct()
+            from django.db.models import Prefetch
+            return queryset.prefetch_related(
+                'profiles', 
+                'profiles__event',
+                Prefetch('submissions', queryset=self.event.submissions.all(), to_attr='event_submissions')
+            ).order_by('code')
 
     def _get_avatar_value(self, obj):
         return obj.get_avatar_url(event=self.event)
