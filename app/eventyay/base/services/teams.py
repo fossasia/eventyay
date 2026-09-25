@@ -83,12 +83,39 @@ def check_full_admin_limit(team, email=None, user=None):
     return decision
 
 
+def get_team_invitation_url(team):
+    """
+    Determine the invitation or landing URL for an added team member.
+
+    If the team has a TeamShifts role assigned, link directly to the
+    TeamShifts organizer dashboard entry point if available.
+    Otherwise, fall back to the standard organizer team management URL.
+    """
+    from eventyay.helpers.urls import build_absolute_uri
+
+    organizer_slug = getattr(team.organizer, 'slug', team.organizer)
+    if getattr(team, 'teamshifts_role', ''):
+        try:
+            return build_absolute_uri(
+                'plugins:teamshifts:organizer_dashboard',
+                kwargs={'organizer': organizer_slug},
+            )
+        except Exception:
+            pass
+
+    return build_absolute_uri(
+        'eventyay_common:organizer.teams',
+        kwargs={'organizer': organizer_slug},
+    )
+
+
 def send_team_invitation_email(
     *,
     user,
     organizer_name,
     team_name,
-    url,
+    url=None,
+    team=None,
     locale,
     is_registered_user,
 ):
@@ -98,12 +125,16 @@ def send_team_invitation_email(
         user: The user object being invited
         organizer_name: Name of the organizer
         team_name: Name of the team
-        url: The invitation or dashboard URL
+        url: The invitation or dashboard URL (optional if team is provided)
+        team: The team object (used to derive url if url is None)
         locale: Language code for the email
         is_registered_user: Boolean indicating if user is already registered
     Returns:
         bool: True if email was sent successfully, False otherwise
     """
+    if url is None and team is not None:
+        url = get_team_invitation_url(team)
+
     try:
         mail(
             user.email,
