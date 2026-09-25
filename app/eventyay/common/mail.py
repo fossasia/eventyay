@@ -49,7 +49,8 @@ DEBUG_DOMAINS = [
 ]
 
 
-RETRY_SMTP_CODES = (101, 111, 421, 422, 431, 442, 447, 452)
+RETRY_ERRNOS = (101, 111)
+RETRY_SMTP_CODES = (421, 422, 431, 442, 447, 452)
 
 
 def send_mail_now(
@@ -194,7 +195,9 @@ def mail_send_task(
         # Retry on external problems: Connection issues (101, 111), timeouts (421), filled-up mailboxes (422),
         # out of memory (431), network issues (442), another timeout (447), or too many mails sent (452)
         cause = exception.__cause__
-        if isinstance(cause, SMTPResponseException) and cause.smtp_code in RETRY_SMTP_CODES:
+        if (isinstance(cause, SMTPResponseException) and cause.smtp_code in RETRY_SMTP_CODES) or (
+            isinstance(cause, OSError) and cause.errno in RETRY_ERRNOS
+        ):
             self.retry(max_retries=5, countdown=2 ** (self.request.retries * 2))
         raise
 

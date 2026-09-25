@@ -532,7 +532,9 @@ class SubmissionInviteRevokeView(LoggedInEventPageMixin, SubmissionViewMixin, Vi
             status=SpeakerInvitationStates.PENDING,
         )
         email = invitation.email
-        invitation.revoke(person=request.user, orga=False)
+        if not invitation.revoke(person=request.user, orga=False):
+            messages.warning(request, _('This invitation cannot be revoked.'))
+            return redirect(self.submission.urls.user_base)
         messages.success(
             request,
             _('The invitation to {email} was revoked.').format(email=email),

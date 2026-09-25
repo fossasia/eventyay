@@ -486,7 +486,12 @@ class SubmissionSpeakerRevokeInvitation(SubmissionSpeakers):
             status=SpeakerInvitationStates.PENDING,
         )
         email = invitation.email
-        invitation.revoke(person=request.user)
+        if not invitation.revoke(person=request.user):
+            message = _('This invitation cannot be revoked.')
+            if is_ajax_request(request):
+                return JsonResponse({'message': str(message), 'success': False}, status=409)
+            messages.warning(request, message)
+            return redirect(self.object.orga_urls.speakers)
         message = _('The invitation to {email} was revoked.').format(email=email)
 
         if is_ajax_request(request):

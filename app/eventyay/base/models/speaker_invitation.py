@@ -120,12 +120,24 @@ class SpeakerInvitation(PretalxModel):
 
     def accept(self, user=None):
         if self.status == SpeakerInvitationStates.ACCEPTED:
-            return
+            return False
+        accepted = now()
+        user = self.user or user
+        with scopes_disabled():
+            updated = SpeakerInvitation.objects.filter(
+                pk=self.pk, status=SpeakerInvitationStates.PENDING
+            ).update(
+                status=SpeakerInvitationStates.ACCEPTED,
+                accepted=accepted,
+                user=user,
+                updated=accepted,
+            )
+        if not updated:
+            return False
         self.status = SpeakerInvitationStates.ACCEPTED
-        self.accepted = now()
-        if user and not self.user:
-            self.user = user
-        self.save(update_fields=['status', 'accepted', 'user', 'updated'])
+        self.accepted = accepted
+        self.user = user
+        return True
 
     accept.alters_data = True
 
@@ -184,6 +196,12 @@ class SpeakerInvitation(PretalxModel):
     resend.alters_data = True
 
     def revoke(self, person=None, orga=True):
+        with scopes_disabled():
+            deleted = SpeakerInvitation.objects.filter(
+                pk=self.pk, status=SpeakerInvitationStates.PENDING
+            ).delete()[0]
+        if not deleted:
+            return False
         if self.mail and not self.mail.sent:
             self.mail.delete()
         self.submission.log_action(
@@ -192,7 +210,7 @@ class SpeakerInvitation(PretalxModel):
             orga=orga,
             data={'email': self.email},
         )
-        self.delete()
+        return True
 
     revoke.alters_data = True
 

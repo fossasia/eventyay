@@ -1126,10 +1126,16 @@ class Submission(GenerateCode, PretalxModel):
 
     def remove_speaker(self, speaker, orga=True, user=None):
         if self.speakers.filter(code=speaker.code).exists():
+            from .mail import QueuedMail
+
             self.speakers.remove(speaker)
-            self.speaker_invitations.filter(
+            invitations = self.speaker_invitations.filter(
                 Q(user=speaker) | Q(email__iexact=speaker.email)
+            )
+            QueuedMail.objects.filter(
+                pk__in=invitations.values('mail'), sent__isnull=True
             ).delete()
+            invitations.delete()
             from eventyay.agenda.views.utils import (
                 clear_featured_speakers_without_active_submissions,
                 clear_schedule_caches,
