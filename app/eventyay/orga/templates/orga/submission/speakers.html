@@ -70,31 +70,33 @@
                 {% endwith %}
             {% endif %}
             {% if speaker.reviewer_answers %}
-                <div class="card-text">
-                    <strong>{% translate "Speaker Information" %}:</strong><br>
-                    {% for answer in speaker.reviewer_answers %}
-                        <div class="mb-1">
-                            <strong>{{ answer.question.question }}:</strong>
-                            {% if answer.question.variant == "boolean" %}
-                                <span class="ml-1 value-pill {% if answer.boolean_answer %}value-pill--positive{% else %}value-pill--negative{% endif %}">{% include "common/question_answer.html" with answer=answer %}</span>
-                            {% else %}
-                                <span class="ml-1">{% include "common/question_answer.html" with answer=answer %}</span>
-                            {% endif %}
-                        </div>
-                    {% endfor %}
+                <div class="card-text mb-3">
+                    <strong>{% translate "Speaker Information" %}:</strong>
+                    <div class="mt-2">
+                        {% for answer in speaker.reviewer_answers %}
+                            <div class="mb-3">
+                                <strong>{{ answer.question.question }}:</strong>
+                                {% if answer.question.variant == "boolean" %}
+                                    <div class="value-pill mt-2 {% if answer.boolean_answer %}value-pill--positive{% else %}value-pill--negative{% endif %}">{% include "common/question_answer.html" with answer=answer %}</div>
+                                {% else %}
+                                    <div class="mt-2">{% include "common/question_answer.html" with answer=answer %}</div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
                 </div>
             {% endif %}
             {% if speaker.other_submissions %}
-                <div class="card-text">
+                <div class="card-text mb-3">
                     <strong>{% translate "Other proposals by this speaker:" %}</strong>
-                    <ul>
+                    <div class="mt-2">
                         {% for submission in speaker.other_submissions %}
-                            <li>
+                            <div class="mb-1">
                                 <a href="{{ submission.orga_urls.base }}">{{ submission.title }}</a>
                                 {% include "cfp/event/fragment_state.html" with state=submission.state as_badge=True %}
-                            </li>
+                            </div>
                         {% endfor %}
-                    </ul>
+                    </div>
                 </div>
             {% endif %}
             {% if can_edit_speakers %}
@@ -124,13 +126,13 @@
     {% endfor %}
 
     {% if can_edit_speakers %}<div class="card mb-3 speaker-add-card"><div class="card-body">
-        <form method="POST" class="form d-flex w-100 flex-column speaker-inline-form">
+        <form method="POST" class="form w-100 flex-column speaker-inline-form">
             {% csrf_token %}
-            <div class="d-flex flex-row flex-wrap">
+            <div class="row">
                 <div class="col-md-6 hide-optional">{{ form.email.as_field_group }}</div>
                 <div class="col-md-6">{{ form.name.as_field_group }}</div>
             </div>
-            <div class="d-flex flex-row flex-wrap hide-optional">
+            <div class="row hide-optional">
                 <div class="col-md-6 hide-optional">{% if form.locale %}{{ form.locale.as_field_group }}{% endif %}</div>
                 <div class="col-md-6">
                     <label class="inline-form-label add-speaker-btn-spacer" aria-hidden="true">&nbsp;</label>
