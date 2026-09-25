@@ -7,11 +7,13 @@ import dateutil.rrule
 from django.db.models import (
     Count,
     Exists,
+    F,
     OuterRef,
     Q,
     Sum,
+    Window,
 )
-from django.db.models.functions import TruncDate, TruncMonth, TruncWeek
+from django.db.models.functions import RowNumber, TruncDate, TruncMonth, TruncWeek
 from django.utils import timezone
 from django.views.generic import TemplateView
 from django_scopes import scopes_disabled
@@ -35,6 +37,7 @@ class OrganizerAnalyticsView(OrganizerPermissionRequiredMixin, TemplateView):
 
     template_name = 'eventyay_common/organizers/dashboard.html'
     permission = None
+    top_events_limit = 10
 
     @staticmethod
     def _to_date(val):
@@ -392,6 +395,9 @@ class OrganizerAnalyticsView(OrganizerPermissionRequiredMixin, TemplateView):
             )
             status_rows = list(status_qs)
 
+            # Top events per currency, so a currency filter never runs out of rows
+            # just because other currencies dominate the overall ranking.
+            ranking = (F('total_orders').desc(), F('event').asc())
             top_qs = list(
                 Order.objects.filter(event_id__in=event_ids)
                 .values('event')
@@ -399,7 +405,9 @@ class OrganizerAnalyticsView(OrganizerPermissionRequiredMixin, TemplateView):
                     total_orders=Count('pk'),
                     paid_orders=Count('pk', filter=Q(status=Order.STATUS_PAID)),
                 )
-                .order_by('-total_orders')[:10]
+                .annotate(currency_rank=Window(RowNumber(), partition_by=F('event__currency'), order_by=ranking))
+                .filter(currency_rank__lte=self.top_events_limit)
+                .order_by(*ranking)
             )
             top_event_ids = [row['event'] for row in top_qs]
             events_by_id = {
@@ -676,7 +684,11 @@ class OrganizerAnalyticsView(OrganizerPermissionRequiredMixin, TemplateView):
         ctx.update(attendance_presentation)
 
         # Client-side filters: keep full top-events list and attendance payload in the page.
-        top_events = list(data.get('top_events') or [])
+        # Rows are ranked across currencies, so the first rows are the overall top events.
+        top_events = [
+            {**event, 'in_overall_top': index < self.top_events_limit}
+            for index, event in enumerate(data.get('top_events') or [])
+        ]
         currencies = sorted({event.get('currency') for event in top_events if event.get('currency')})
         selected_currency = (self.request.GET.get('revenue_currency') or '').strip().upper()
         if selected_currency and selected_currency not in currencies:
