@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from django.core import mail as djmail
@@ -25,7 +25,7 @@ def user():
 def test_get_team_invitation_url_standard_team(organizer):
     team = Team.objects.create(organizer=organizer, name='Admin Team', teamshifts_role='')
     url = get_team_invitation_url(team)
-    assert url.endswith('/common/organizer/test-org/teams')
+    assert url.endswith(f'/common/organizer/test-org/team/{team.pk}')
 
 
 @pytest.mark.django_db
@@ -46,6 +46,13 @@ def test_get_team_invitation_url_teamshifts_lead(organizer):
 def test_get_team_invitation_url_unknown_role(organizer):
     team = Team.objects.create(organizer=organizer, name='Custom Team', teamshifts_role='unknown_role')
     url = get_team_invitation_url(team)
+    assert url.endswith(f'/common/organizer/test-org/team/{team.pk}')
+
+
+@pytest.mark.django_db
+def test_get_team_invitation_url_standard_team_no_pk(organizer):
+    mock_team = MagicMock(organizer=organizer, teamshifts_role='', pk=None)
+    url = get_team_invitation_url(mock_team)
     assert url.endswith('/common/organizer/test-org/teams')
 
 

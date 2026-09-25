@@ -104,6 +104,15 @@ def get_team_invitation_url(team):
         except NoReverseMatch:
             pass
 
+    if getattr(team, 'pk', None):
+        return build_absolute_uri(
+            'eventyay_common:organizer.team',
+            kwargs={
+                'organizer': organizer_slug,
+                'team': team.pk,
+            },
+        )
+
     return build_absolute_uri(
         'eventyay_common:organizer.teams',
         kwargs={'organizer': organizer_slug},
