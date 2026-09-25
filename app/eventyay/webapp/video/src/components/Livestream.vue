@@ -21,12 +21,15 @@
 				bunt-icon-button#btn-play(v-if="!offline", @click="toggleVideo") {{ playing ? 'pause' : 'play' }}
 				.live-indicator(v-if="!offline && isLive") {{ $t('live') }}
 				.buffer
+				.interpretation-indicator(v-if="!offline && hasActiveInterpretation", :title="$t('Main stream muted (interpretation active)')")
+					span.mdi.mdi-volume-off
+					span {{ $t('Interpretation Active') }}
 				bunt-icon-button(v-if="hasAlternativeStreams", @click="showSourceChooser = !showSourceChooser") movie
 				bunt-icon-button(v-if="!offline && textTracks.length > 0", @click="toggleCaptions") {{ textTracks.some(t => t.mode === 'showing') ? 'closed-caption' : 'closed-caption-outline' }}
 				bunt-icon-button(v-else-if="!offline && module.config.subtitle_url", @click="openExternalSubtitles") closed-caption-outline
 				bunt-icon-button(v-if="!offline", @click="showLevelChooser = !showLevelChooser") {{ levelIcon }}
-				bunt-icon-button(v-if="!offline", @click="toggleVolume") {{ muted || volume === 0 ? 'volume_off' : 'volume_high' }}
-				input.volume-slider(v-if="!offline", type="range", step="any", min="0", max="1", :aria-label="$t('Volume')", :value="volume", @input="onVolumeSlider", :style="{'--volume': volume}")
+				bunt-icon-button(v-if="!offline && !hasActiveInterpretation", @click="toggleVolume") {{ muted || volume === 0 ? 'volume_off' : 'volume_high' }}
+				input.volume-slider(v-if="!offline && !hasActiveInterpretation", type="range", step="any", min="0", max="1", :aria-label="$t('Volume')", :value="volume", @input="onVolumeSlider", :style="{'--volume': volume}")
 				bunt-icon-button(v-if="!offline", @click="toggleFullscreen") {{ fullscreen ? 'fullscreen-exit' : 'fullscreen' }}
 			.source-chooser(v-if="showSourceChooser", @click.stop="")
 				.source(@click="chooseSource(null)", :class="{chosen: !chosenAlternative}") {{ $t('Default') }}
@@ -49,6 +52,7 @@ import mux from 'mux-embed'
 import config from 'config'
 import theme from 'theme'
 import { getStagePlaybackMode, PLAYBACK_MODE_SCHEDULE_DRIVEN, STREAM_TYPE_HLS } from 'lib/stage-streams'
+import {logOperational} from 'lib/operationalLog'
 
 const RETRY_INTERVAL = 5000
 // TODO look at capLevelToPlayerSize
@@ -123,6 +127,10 @@ export default {
 	computed: {
 		...mapState(['streamingRoom']),
 		...mapGetters(['autoplay']),
+		hasActiveInterpretation() {
+			if (!this.room?.id) return false
+			return Boolean(this.$store.state.interpretationStreamsByRoom?.[this.room.id]?.url)
+		},
 		seekable() {
 			return this.isLive === false || config.seekableLiveStreams
 		},
@@ -313,6 +321,7 @@ export default {
 					if (data.details === Hls.ErrorDetails.BUFFER_STALLED_ERROR) {
 						this.buffering = true
 					} else if ([Hls.ErrorDetails.MANIFEST_LOAD_ERROR, Hls.ErrorDetails.LEVEL_LOAD_ERROR].includes(data.details)) {
+						logOperational({action: 'hls.error', outcome: 'failure', backend: 'hls', error_code: data.details === Hls.ErrorDetails.MANIFEST_LOAD_ERROR ? 'manifest_load' : 'level_load', status: data.response?.code})
 						if (!started) {
 							this.offline = true
 							this.scheduleRetry(player, load, RETRY_INTERVAL)
@@ -320,6 +329,7 @@ export default {
 							this.initializePlayer()
 						}
 					} else if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+						logOperational({action: 'hls.error', outcome: 'failure', backend: 'hls', error_code: 'network_error'})
 						this.buffering = true
 						this.scheduleRetry(player, () => player.startLoad(), 250)
 					}
@@ -679,6 +689,20 @@ export default {
 					border-radius: 50%
 					background-color: $clr-red
 					margin-right: 4px
+			.interpretation-indicator
+				display: flex
+				align-items: center
+				gap: 4px
+				padding: 4px 8px
+				border-radius: 4px
+				background-color: rgba(0, 0, 0, 0.4)
+				color: $clr-primary-text-dark
+				font-size: 12px
+				font-weight: 500
+				user-select: none
+				margin-right: 8px
+				.mdi
+					font-size: 16px
 			.buffer
 				flex: auto
 			.bunt-icon-button

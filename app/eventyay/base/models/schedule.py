@@ -40,9 +40,7 @@ from eventyay.talk_rules.agenda import (
 from eventyay.talk_rules.submission import is_wip, orga_can_change_submissions
 from eventyay.base.services.stale_cache import bump_schedule_cache_version_on_commit
 
-from .auth import (
-    User,
-)
+from .auth import User, list_avatar_urls, needs_avatar_thumbnails
 
 # We use relative imports here to avoid circular imports.
 from .availability import Availability
@@ -101,6 +99,7 @@ def make_speaker_qr_map(speaker_base_url: str) -> dict:
 
 
 class Schedule(PretalxModel):
+    log_prefix = 'eventyay.schedule'
     """The Schedule model contains all scheduled.
 
     :class:`~pretalx.schedule.models.slot.TalkSlot` objects (visible or not)
@@ -1093,6 +1092,9 @@ class Schedule(PretalxModel):
         show_social_links = getattr(self.event.cfp, 'request_social_links', False) and (
             not respect_public_visibility or self.event.cfp.is_field_public('social_links')
         )
+
+        missing_thumb_user_ids = []
+
         for user in speakers:
             # Avoid calling event_profile() here: it can hit the DB (and even create/save
             # a profile). For schedule JSON, missing profiles should simply result in
@@ -1102,16 +1104,12 @@ class Schedule(PretalxModel):
                 'code': user.code,
                 'name': user.fullname or None,
                 'biography': getattr(profile, 'biography', '') if show_biography else '',
-                'avatar': (user.get_avatar_url(event=self.event) if include_avatar else None),
-                'avatar_thumbnail_default': (
-                    user.get_avatar_url(event=self.event, thumbnail='default') if include_avatar else None
-                ),
-                'avatar_thumbnail_tiny': (
-                    user.get_avatar_url(event=self.event, thumbnail='tiny') if include_avatar else None
-                ),
                 'is_featured': bool(getattr(profile, 'is_featured', False)),
                 'featured_position': getattr(profile, 'position', None),
             }
+            speaker_data.update(list_avatar_urls(user, self.event, include=include_avatar))
+            if include_avatar and needs_avatar_thumbnails(user, speaker_data):
+                missing_thumb_user_ids.append(user.pk)
             if show_social_links and profile:
                 speaker_data['social_links'] = [serialize_social_link(link) for link in profile.social_links.all()]
             if not include_featured_speaker_metadata:
@@ -1135,6 +1133,10 @@ class Schedule(PretalxModel):
                     speaker_data['exporters']['qrcodes'] = make_speaker_qr_map(spk_full_base)
             speaker_list.append(speaker_data)
         result['speakers'] = speaker_list
+        if missing_thumb_user_ids:
+            from eventyay.person.tasks import enqueue_missing_avatar_thumbnails
+
+            enqueue_missing_avatar_thumbnails(self.event.pk, missing_thumb_user_ids)
         return result
 
     def __str__(self) -> str:

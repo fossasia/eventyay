@@ -107,6 +107,7 @@ class SpeakerProfileForm(
         kwargs['instance'] = None
         if self.user:
             kwargs['instance'] = self.user.event_profile(self.event)
+        self.for_reviewers = kwargs.pop('for_reviewers', False)
         super().__init__(*args, **kwargs, event=self.event, limit_to_rooms=True)
         self.speaker = self.user
         read_only = kwargs.get('read_only', False)
@@ -218,6 +219,7 @@ class SpeakerProfileForm(
             event=self.event,
             speaker=self.user,
             readonly=read_only,
+            for_reviewers=self.for_reviewers,
         )
 
         if _cfp and _cfp.request_social_links:

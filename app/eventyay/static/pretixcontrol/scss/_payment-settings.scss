@@ -28,16 +28,17 @@
   }
 }
 
-// Secret key visibility toggle
+// Secret key visibility toggle (reveal-on-demand)
 .secret-key-wrapper {
   position: relative;
-  display: inline-block;
+  display: block;
   width: 100%;
 
   input {
-    padding-right: 35px;
+    padding-right: 80px;
   }
 
+  // The reveal toggle button, floated inside the input via absolute positioning
   .secret-toggle {
     position: absolute;
     right: 8px;
@@ -46,16 +47,118 @@
     background: none;
     border: none;
     cursor: pointer;
-    color: #666;
-    padding: 0 5px;
+    color: #999;
+    padding: 2px 6px;
+    line-height: 1;
+    font-size: 14px;
+    z-index: 2;
 
     &:hover {
-      color: #333;
+      color: $text-color;
     }
-    
+
     &:focus {
-      outline: 2px solid #5b9dd9;
+      outline: 2px solid $brand-primary;
       outline-offset: 1px;
+      border-radius: 2px;
+    }
+
+    &--revealed {
+      color: $brand-primary;
     }
   }
+
+  // Countdown badge shown while secret is visible
+  .secret-reveal-countdown {
+    position: absolute;
+    right: 36px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+    color: #aaa;
+    pointer-events: none;
+    white-space: nowrap;
+    line-height: 1;
+  }
+}
+
+// Step-up re-auth modal — matches .pretix-confirm-dialog theme
+.secret-reveal-modal {
+  border: 1px solid #e0e0e0;
+  border-radius: $border-radius-large;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+  width: 420px;
+  max-width: 90vw;
+  background: $body-bg;
+  overflow: hidden;
+
+  &::backdrop {
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(2px);
+  }
+
+  &__form {
+    // no extra padding
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  &__icon {
+    font-size: 18px;
+    color: $brand-primary;
+    flex-shrink: 0;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: $text-color;
+    line-height: 1.2;
+  }
+
+  &__desc {
+    font-size: 14px;
+    color: #4a4a4a;
+    margin: 0 0 16px 0;
+    line-height: 1.5;
+  }
+
+  &__error {
+    font-size: 13px;
+    color: $brand-danger;
+    margin: 6px 0 0 0;
+  }
+
+  &__actions {
+    margin-top: 20px;
+    text-align: right;
+
+    .btn + .btn {
+      margin-left: 8px;
+    }
+  }
+
+  // Spinner shown while the fetch request is in progress
+  &__spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: secret-spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+}
+
+@keyframes secret-spin {
+  to { transform: rotate(360deg); }
 }

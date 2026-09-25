@@ -20,6 +20,7 @@ from eventyay.base.meetup import is_meetup_event
 from eventyay.base.models.base import CachedFile
 from eventyay.base.models.event import Event
 from eventyay.base.models.orders import OrderPosition
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.services.mail import expand_email_variable_chips, mail
 from eventyay.base.templatetags.rich_text import (
     build_email_preview_context,
@@ -258,6 +259,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
                 )
                 messages.success(self.request, _('Test email sent successfully to {email}.').format(email=test_email))
             except Exception as e:
+                log_event('mail', 'mail.send', OUTCOME_FAILURE, error_code='test_failed', event_id=getattr(self.request.event, 'pk', None))
                 logger.exception("Failed to send test email")
                 messages.error(self.request, _('Failed to send test email: {error}').format(error=str(e)))
 
@@ -403,6 +405,19 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
             )
 
         qm.populate_to_users()
+
+        if not is_draft and not qm.recipients.filter(email__isnull=False).exclude(email='').exists():
+            if not draft_id:
+                qm.delete()
+            else:
+                qm.is_draft = True
+                qm.save()
+            form.add_error(None, _('There are no valid email addresses for the selected recipients.'))
+            messages.error(
+                self.request,
+                _('There are no valid email addresses for the selected recipients.'),
+            )
+            return self.form_invalid(form)
 
         if is_draft and form.cleaned_data.get('attachment'):
             messages.info(
@@ -1260,6 +1275,7 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyTo
                 )
                 messages.success(self.request, _('Test email sent successfully to {email}.').format(email=test_email))
             except Exception as e:
+                log_event('mail', 'mail.send', OUTCOME_FAILURE, error_code='test_failed', event_id=getattr(self.request.event, 'pk', None))
                 logger.exception("Failed to send test email")
                 messages.error(self.request, _('Failed to send test email: {error}').format(error=str(e)))
 

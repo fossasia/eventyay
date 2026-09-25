@@ -1,15 +1,6 @@
 {% extends "orga/settings/base.html" %}
 
-{% load compress %}
 {% load i18n %}
-{% load static %}
-
-{% block scripts %}
-    {% compress js %}
-        <script defer src="{% static "orga/js/mailSettings.js" %}"></script>
-        <script defer src="{% static "common/js/modalDialog.js" %}"></script>
-    {% endcompress %}
-{% endblock scripts %}
 
 {% block extra_title %}{% translate "Email settings" %} :: {% endblock extra_title %}
 
@@ -18,16 +9,20 @@
     {% include "common/includes/header_nav.html" with header_title=header_title %}
 
     <div class="alert alert-info" role="alert">
-        <strong>{% translate "Email settings have moved" %}</strong> —
-        {% blocktranslate trimmed %}
-            All shared email settings — sender address, Reply-To, BCC, subject prefix, signature,
-            HTML renderer, and the email gateway (SMTP / SendGrid) — are now configured centrally
-            under <strong>Event Settings › Email</strong> and apply to both the Tickets and Talks
-            components.
-        {% endblocktranslate %}
-        <a href="{% url 'eventyay_common:event.update' organizer=request.event.organizer.slug event=request.event.slug %}#email-settings-tab" class="btn btn-sm btn-outline-info ml-2">
-            {% translate "Go to Email Settings" %}
-        </a>
+        <div>
+            <p>
+                <strong>{% translate "Email settings have moved" %}</strong> —
+                {% blocktranslate trimmed %}
+                    All shared email settings — sender address, Reply-To, BCC, subject prefix, signature,
+                    HTML renderer, and the email gateway (SMTP / SendGrid) — are now configured centrally
+                    under <strong>Event Settings › Email</strong> and apply to both the Tickets and Talks
+                    components.
+                {% endblocktranslate %}
+            </p>
+            <a href="{% url 'eventyay_common:event.update' organizer=request.event.organizer.slug event=request.event.slug %}#email-settings-tab" class="btn btn-sm btn-outline-info">
+                {% translate "Go to Email Settings" %}
+            </a>
+        </div>
     </div>
 {% endblock settings_content %}
 

@@ -526,7 +526,13 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
             individual_attendees = cleaned.get('individual_attendees')
             if not individual_attendees:
                 return Order.objects.none()
-            return Order.objects.filter(event=event, positions__in=individual_attendees).distinct()
+            # Order.positions is an instance property; queryset filters must use
+            # the real reverse relation all_positions.
+            return Order.objects.filter(
+                event=event,
+                all_positions__in=individual_attendees,
+                all_positions__canceled=False,
+            ).distinct()
 
         qs = Order.objects.filter(event=event)
         # Only apply status/product defaults once a recipient type is chosen; empty
@@ -587,7 +593,7 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
     def get_recipient_preview(self):
         if not self.cleaned_data.get('recipients'):
             return []
-        orders = self.resolve_orders().prefetch_related('positions__product')
+        orders = self.resolve_orders().prefetch_related('all_positions__product')
         recipients_mode = self.cleaned_data.get('recipients') or 'orders'
         individual_positions = (
             {pos.pk for pos in self.cleaned_data.get('individual_attendees', [])}
@@ -600,7 +606,7 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
             order_fallback_needed = False
             attendee_found = False
 
-            for pos in order.positions.all():
+            for pos in order.all_positions.all():
                 if pos.canceled:
                     continue
                 if individual_positions is not None and pos.pk not in individual_positions:
@@ -629,7 +635,7 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
             if (
                 order_fallback_needed
                 and not attendee_found
-                and recipients_mode == 'attendees'
+                and recipients_mode in ('attendees', 'individual')
                 and order.email
             ):
                 email = order.email.strip().lower()
@@ -639,7 +645,7 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
                         'name': order.email,
                         'email': order.email,
                         'submissions': [],
-                        'directly_selected': False,
+                        'directly_selected': recipients_mode == 'individual',
                     },
                 )['submissions'].append(
                     {

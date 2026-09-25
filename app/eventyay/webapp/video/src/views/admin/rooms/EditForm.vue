@@ -50,6 +50,26 @@
 
 			component.stage-settings(ref="settings", v-if="inferredType && typeComponents[inferredType.id]", :is="typeComponents[inferredType.id]", :config="config", :modules="modules", :creating="creating")
 			sidebar-addons(v-if="inferredType && (inferredType.id === 'stage' || inferredType.id === 'channel-janus' || inferredType.id === 'channel-zoom' || inferredType.id === 'channel-loungemesh')", :config="config", :modules="modules", :creating="creating")
+			.danger-zone(v-if="!creating && hasPermission('room:delete')")
+				h3 {{ $t('Danger Zone') }}
+				template(v-if="config.has_linked_sessions")
+					p {{ $t('This room has linked schedules/sessions. Move or delete those sessions before deleting the room.') }}
+					bunt-button.btn-delete-room(:disabled="true") {{ $t('Delete') }}
+				template(v-else)
+					p {{ $t('Deleting this room removes it from the event for attendees and organizers.') }}
+					bunt-button.btn-delete-room(v-if="!confirmingDelete", @click="confirmingDelete = true") {{ $t('Delete') }}
+					.delete-confirmation(v-else)
+						p {{ $t('Please type') }} #[b {{ localizedName }}] {{ $t('to confirm deletion.') }}
+						bunt-input(name="deletingRoomName", :label="$t('Room name')", v-model="deletingRoomName", @keypress.enter="deleteRoom")
+						.confirmation-actions
+							bunt-button.btn-cancel(@click="cancelDelete") {{ $t('Cancel') }}
+							bunt-button.btn-delete-room(
+								icon="delete",
+								:disabled="deletingRoomName !== localizedName",
+								@click="deleteRoom",
+								:loading="deleting",
+								:error-message="deleteError"
+							) {{ $t('Delete this room') }}
 	.ui-form-actions
 		bunt-button.btn-save(@click="save", :loading="saving", :error="!!error") {{ creating ? $t('Create') : $t('Save') }}
 		bunt-button.btn-sync(v-if="!creating && interpretationAdmin.usePluginStreams", @click="syncServices", :loading="syncing", :error="!!syncError", style="margin-left: 10px") {{ $t('Sync Services') }}
@@ -97,6 +117,7 @@ export default {
 			default: false
 		}
 	},
+	emits: ['deleted'],
 	setup:() => ({v$:useVuelidate()}),
 	data() {
 		return {
@@ -114,6 +135,10 @@ export default {
 			syncing: false,
 			error: null,
 			syncError: null,
+			confirmingDelete: false,
+			deletingRoomName: '',
+			deleting: false,
+			deleteError: null,
 			interpretationAdmin: {
 				usePluginStreams: false,
 				languageStreams: [],
@@ -294,6 +319,29 @@ export default {
 			}
 			this.syncing = false
 		},
+		cancelDelete() {
+			this.confirmingDelete = false
+			this.deletingRoomName = ''
+			this.deleteError = null
+		},
+		async deleteRoom() {
+			if (this.config?.has_linked_sessions) {
+				this.deleteError = this.$t('This room has linked schedules/sessions. Move or delete those sessions before deleting the room.')
+				return
+			}
+			if (this.deletingRoomName !== this.localizedName) return
+			this.deleteError = null
+			this.deleting = true
+			try {
+				await api.call('room.delete', { room: this.config.id })
+				this.$emit('deleted')
+			} catch (error) {
+				console.error('Failed to delete room: %o', error)
+				this.deleteError = error.message || String(error)
+			} finally {
+				this.deleting = false
+			}
+		},
 		clearOpenStreamScheduleCreateQuery() {
 			if (this.$route.query.schedule !== 'new') return
 			const query = { ...this.$route.query }
@@ -400,4 +448,32 @@ export default {
 				flex-shrink: 0
 				.bunt-switch
 					margin: 0
+
+	.danger-zone
+		margin-top: 24px
+		padding: 16px
+		border: 1px solid $clr-danger
+		border-radius: 8px
+		background-color: rgba($clr-danger, 0.05)
+		h3
+			margin: 0 0 8px
+			font-size: 16px
+			font-weight: 600
+			color: $clr-danger
+		p
+			margin: 0 0 12px
+			font-size: 13px
+			line-height: 18px
+		.delete-confirmation
+			margin-top: 12px
+			padding-top: 12px
+			border-top: 1px solid rgba($clr-danger, 0.2)
+		.confirmation-actions
+			display: flex
+			gap: 8px
+			margin-top: 12px
+		.btn-delete-room
+			button-style(color: $clr-danger)
+		.btn-cancel
+			themed-button-secondary()
 </style>

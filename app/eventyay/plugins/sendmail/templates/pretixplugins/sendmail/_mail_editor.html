@@ -17,7 +17,7 @@
 {% endblock custom_header %}
 
 {% block content %}
-    <form method="post" enctype="multipart/form-data" class="form-with-placeholder mail-composer" novalidate>
+    <form method="post" enctype="multipart/form-data" class="form-with-placeholder mail-composer mail-composer-horizontal" novalidate>
         {% csrf_token %}
         {% include "common/forms/errors.html" %}
         <div class="composer-intro mb-3">

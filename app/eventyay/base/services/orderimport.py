@@ -8,6 +8,7 @@ from django.utils.timezone import now
 from django.utils.translation import gettext as _
 
 from eventyay.base.i18n import LazyLocaleException, language
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.models import (
     CachedFile,
     Event,
@@ -35,6 +36,7 @@ class DataImportError(LazyLocaleException):
         else:
             msg = _(msg)
         super().__init__(msg)
+        log_event('tickets', 'order.import', OUTCOME_FAILURE, error_code='import_error')
 
 
 def parse_csv(file, length=None):

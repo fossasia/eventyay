@@ -11,7 +11,7 @@ from i18nfield.forms import I18nModelForm
 from eventyay.common.forms.mixins import ReadOnlyFlag
 from eventyay.common.forms.widgets import HtmlDateInput, HtmlTimeInput
 from eventyay.base.models import Availability, Room, TalkSlot
-from eventyay.base.models.room import rooms_for_talk_assignment
+from eventyay.base.models.room import rooms_for_talk_assignment, validate_talk_slot_room
 
 
 class AvailabilitiesFormMixin(forms.Form):
@@ -225,7 +225,7 @@ class QuickScheduleForm(forms.ModelForm):
         else:
             self.fields['start_date'].initial = event.date_from
 
-    def save(self):
+    def save(self, commit=True):
         talk = self.instance
         talk.start = dt.datetime.combine(
             self.cleaned_data['start_date'],
@@ -233,7 +233,22 @@ class QuickScheduleForm(forms.ModelForm):
             tzinfo=self.event.tz,
         )
         talk.end = talk.start + dt.timedelta(minutes=talk.submission.get_duration())
-        return super().save()
+        room = self.cleaned_data.get('room')
+        if not commit:
+            talk.room = room
+            return super().save(commit=False)
+
+        # Lock the room row with soft_delete_room so a concurrent delete cannot
+        # land between form validation and TalkSlot.save().
+        with transaction.atomic():
+            if room is not None:
+                room = rooms_for_talk_assignment(
+                    self.event,
+                    has_submission=True,
+                ).select_for_update().get(pk=room.pk)
+                validate_talk_slot_room(room)
+                talk.room = room
+            return super().save(commit=True)
 
     class Meta:
         model = TalkSlot

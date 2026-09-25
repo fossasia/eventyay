@@ -15,7 +15,6 @@ import jwt
 from zoneinfo import ZoneInfo
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied
 from django.db.models import (
     Count,
@@ -42,13 +41,12 @@ from django.views.generic import TemplateView
 from django_scopes import scope
 
 from eventyay.agenda.views.utils import (
-    build_landing_featured_speakers_widget_schedule,
-    build_featured_only_schedule_data_from_profiles,
-    load_public_featured_speaker_profiles,
+    get_or_build_landing_featured_widget_schedule,
     serialize_widget_schedule_data,
 )
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.meetup import ensure_video_credentials, get_rsvp_product_and_quota, is_meetup_event
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.models import (
     Order,
@@ -87,8 +85,6 @@ from eventyay.presale.views.organizer import (
     filter_qs_by_attr,
     weeks_for_template,
 )
-from eventyay.talk_rules.agenda import public_speakers_list_available
-
 from ...eventyay_common.utils import encode_email
 from . import (
     CartMixin,
@@ -506,11 +502,11 @@ def event_has_redeemable_voucher_products(event, subevent=None, channel='web'):
     if event.has_subevents:
         vouchers = list(active_vouchers.filter(
             Q(subevent__in=subevents_to_check) | Q(subevent__isnull=True)
-        ).select_related('product', 'quota'))
+        ).select_related('product', 'quota').prefetch_related('limit_products', 'limit_variations'))
     else:
         vouchers = list(active_vouchers.filter(
             Q(subevent__isnull=True)
-        ).select_related('product', 'quota'))
+        ).select_related('product', 'quota').prefetch_related('limit_products', 'limit_variations'))
 
     if not vouchers:
         event.cache.set(cache_key, False, 10)
@@ -603,15 +599,7 @@ def event_has_redeemable_voucher_products(event, subevent=None, channel='web'):
         quota_cache = {q.pk: r for q, r in qa.results.items()}
 
     def voucher_applies_to(v, p, var=None):
-        if v.quota_id:
-            if var:
-                return any(q.pk == v.quota_id for q in var.quotas.all())
-            return any(q.pk == v.quota_id for q in p.quotas.all())
-        if v.product_id and not v.variation_id:
-            return v.product_id == p.pk
-        if v.product_id:
-            return v.product_id == p.pk and var and v.variation_id == var.pk
-        return True
+        return v.applies_to(p, var)
 
     def check_item_avail(quotas, se, ignore_quota=False):
         if ignore_quota:
@@ -887,31 +875,15 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
         context['featured_speakers_list_public'] = False
 
         event = self.request.event
-        featured_speaker_profiles = load_public_featured_speaker_profiles(
-            self.request.user,
-            event,
-        )
-
-        if featured_speaker_profiles:
-            context['featured_speakers'] = featured_speaker_profiles
-            schedule_data = build_landing_featured_speakers_widget_schedule(
-                event,
-                self.request.user,
-                featured_speaker_profiles,
+        schedule_data = get_or_build_landing_featured_widget_schedule(event, self.request.user)
+        if schedule_data:
+            context['featured_speakers'] = schedule_data.get('speakers') or []
+            context['featured_speakers_widget_schedule'] = schedule_data
+            context['featured_speakers_list_public'] = schedule_data.get('speakers_list_public', False)
+            context['featured_speakers_widget_schedule_json'] = serialize_widget_schedule_data(
+                schedule_data,
+                event=event,
             )
-            if not schedule_data:
-                schedule_data = build_featured_only_schedule_data_from_profiles(
-                    event,
-                    featured_speaker_profiles,
-                    speakers_list_public=public_speakers_list_available(AnonymousUser(), event),
-                )
-            if schedule_data:
-                context['featured_speakers_widget_schedule'] = schedule_data
-                context['featured_speakers_list_public'] = schedule_data.get('speakers_list_public', False)
-                context['featured_speakers_widget_schedule_json'] = serialize_widget_schedule_data(
-                    schedule_data,
-                    event=event,
-                )
 
         return context
 
@@ -1169,6 +1141,7 @@ class JoinOnlineVideoView(EventViewMixin, View):
         event = self.request.event
         is_allowed, order_position, order = self.validate_access(request, *args, **kwargs)
         if not is_allowed:
+            log_event('video', 'live.join', OUTCOME_FAILURE, error_code='not_allowed', event_id=event.pk)
             return HttpResponse(status=403, content='user_not_allowed')
 
         if is_meetup_event(event):
@@ -1180,6 +1153,7 @@ class JoinOnlineVideoView(EventViewMixin, View):
             or not self.request.event.settings.venueless_audience
             or not self.request.event.settings.venueless_secret
         ):
+            log_event('video', 'live.join', OUTCOME_FAILURE, error_code='misconfigured', event_id=event.pk)
             logger.error('Video Online configuration is not available for this event.')
             raise PermissionDenied(_('Please go back and try again.'))
 

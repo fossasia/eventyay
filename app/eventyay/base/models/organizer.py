@@ -21,6 +21,7 @@ from django_scopes import scope, scopes_disabled
 from rules.contrib.models import RulesModelBase, RulesModelMixin
 
 from eventyay.base.models.base import LoggedModel
+from eventyay.base.operational_logging import emit_logged_action
 from eventyay.base.models.mixins import TimestampedModel
 from eventyay.base.validators import OrganizerSlugBanlistValidator
 from eventyay.common.urls import EventUrls, build_absolute_uri
@@ -184,6 +185,16 @@ class Organizer(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, me
                 }
             ),
         )
+        try:
+            emit_logged_action(
+                'eventyay.organizer.delete',
+                object_id=self.pk,
+                user_id=getattr(person, 'pk', None),
+                is_orga_action=True,
+                model='Organizer',
+            )
+        except Exception:
+            pass
         for event in self.events.all():
             with scope(event=event):
                 event.shred(person=person)

@@ -14,6 +14,7 @@
     		<link rel="stylesheet" type="text/x-scss" href="{% static 'pretixcontrol/scss/main.scss' %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'common/css/_variables.css' %}" />
             <link rel="stylesheet" type="text/x-scss" href="{% static 'lightbox/css/lightbox.scss' %}" />
+            <link rel="stylesheet" type="text/css" href="{% static 'common/css/_navbar.css' %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'common/css/_dropdown.css' %}" />
             <link rel="stylesheet" type="text/css" href="{% static "pretixcontrol/css/advanced-filter.css" %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'common/css/_event_nav.css' %}" />
@@ -269,9 +270,8 @@
                                 {% endif %}
                                 {% for nav in nav_items %}
                                     <li>
-                                        <a href="{{ nav.url }}" {% if nav.active %}class="active"{% endif %}
-                                                {% if nav.external %}target="_blank"{% endif %}
-                                                {% if nav.children %}class="has-children"{% endif %} class="nav-item-label">
+                                        <a href="{{ nav.url }}" class="nav-item-label{% if nav.active %} active{% endif %}{% if nav.children %} has-children{% endif %}"
+                                                {% if nav.external %}target="_blank"{% endif %}>
                                             {% if nav.icon %}
                                                 {% if "<svg" in nav.icon %}
                                                     {{ nav.icon|safe }}

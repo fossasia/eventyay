@@ -16,7 +16,7 @@ from django.template.loader import get_template
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
-from django.views.generic import FormView, TemplateView, View
+from django.views.generic import TemplateView, View
 from django_context_decorator import context
 from django_scopes import scope
 from i18nfield.utils import I18nJSONEncoder
@@ -39,6 +39,8 @@ from eventyay.agenda.views.utils import (
     encode_email,
     is_email_like,
 )
+from eventyay.base.models.auth import list_avatar_urls, needs_avatar_thumbnails
+from eventyay.person.tasks import enqueue_missing_avatar_thumbnails
 from eventyay.base.models import (
     Event,
     Feedback,
@@ -49,8 +51,8 @@ from eventyay.base.models import (
     TalkSlot,
     User,
 )
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.cfp.views.event import EventPageMixin
-from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import get_base_url
 from eventyay.common.utils.language import localize_event_text
 from eventyay.common.video_embed import get_video_embed_info, parse_video_urls
@@ -60,7 +62,6 @@ from eventyay.common.views.mixins import (
     PermissionRequired,
     SocialMediaCardMixin,
 )
-from eventyay.submission.forms import FeedbackForm
 from eventyay.talk_rules.agenda import agenda_schedule_for_user, filter_agenda_slots
 from eventyay.orga.utils.colors import get_contrast_color
 
@@ -140,13 +141,22 @@ def talk_starrers(request, event, slug, **kwargs):
     except (TypeError, ValueError):
         limit = 15
 
+    try:
+        offset = int(request.GET.get('offset', 0))
+    except (TypeError, ValueError):
+        offset = 0
+
     # ``limit=0`` means "return everything" (within a reasonable ceiling).
     max_limit = 1000
+    max_offset = 10000
     if limit < 0:
         limit = 15
     if limit == 0:
         limit = max_limit
     limit = min(limit, max_limit)
+    if offset < 0:
+        offset = 0
+    offset = min(offset, max_offset)
 
     with scope(event=request.event):
         qs = SubmissionFavourite.objects.filter(submission=submission)
@@ -155,35 +165,39 @@ def talk_starrers(request, event, slug, **kwargs):
 
         base_url = str(request.event.urls.base)
         items = []
-        for fav in qs.select_related('user').order_by('-id')[:limit]:
+        missing_thumb_user_ids = []
+        for fav in qs.select_related('user').order_by('-id')[offset:offset + limit]:
             user = fav.user
             display_name = user.get_display_name() if user else ''
             is_public_user = bool(
                 user and user.show_publicly and not user.deleted and user.code and not is_email_like(display_name)
             )
             if is_public_user:
+                avatars = list_avatar_urls(user, request.event)
                 items.append(
                     {
                         'code': user.code,
                         'name': display_name,
-                        'avatar_url': user.get_avatar_url(
-                            event=request.event,
-                            thumbnail='tiny',
-                        ),
+                        'avatar_thumbnail_tiny': avatars['avatar_thumbnail_tiny'] or '',
+                        'avatar_thumbnail_default': avatars['avatar_thumbnail_default'] or '',
                         'url': f'{base_url}people/{user.code}/stars/',
                     }
                 )
+                if needs_avatar_thumbnails(user, avatars):
+                    missing_thumb_user_ids.append(user.pk)
             else:
                 items.append(
                     {
                         'code': f'anon-{fav.id}',
                         'name': '',
-                        'avatar_url': '',
+                        'avatar_thumbnail_tiny': '',
+                        'avatar_thumbnail_default': '',
                         'url': '',
                     }
                 )
+        enqueue_missing_avatar_thumbnails(request.event.pk, missing_thumb_user_ids)
 
-    response = JsonResponse({'total': total, 'public_total': public_total, 'items': items})
+    response = JsonResponse({'total': total, 'public_total': public_total, 'offset': offset, 'items': items})
     response['Access-Control-Allow-Origin'] = '*'
     response['Access-Control-Allow-Headers'] = 'authorization,content-type'
     return response
@@ -651,8 +665,16 @@ class SingleCalendarRedirectView(EventPageMixin, TalkMixin, View):
         return HttpResponseRedirect(url)
 
 
-class FeedbackView(TalkMixin, FormView):
-    form_class = FeedbackForm
+class FeedbackView(TalkMixin, TemplateView):
+    """Speakers read the feedback on their session here.
+
+    Everyone else is sent to the comment section on the session page, which
+    enforces login, bans, the ticket requirement and the review queue. This
+    view used to render its own form that saved feedback without any of those
+    checks, so it must not accept submissions.
+    """
+
+    template_name = 'agenda/feedback.html'
     permission_required = 'base.view_feedback_page_submission'
 
     def get_queryset(self):
@@ -669,23 +691,12 @@ class FeedbackView(TalkMixin, FormView):
 
     @context
     @cached_property
-    def can_give_feedback(self):
-        return self.request.user.has_perm('base.give_feedback_submission', self.talk)
-
-    @context
-    @cached_property
     def speakers(self):
         return self.talk.speakers.all()
 
     @cached_property
     def is_speaker(self):
         return self.request.user in self.speakers
-
-    @cached_property
-    def template_name(self):
-        if self.is_speaker:
-            return 'agenda/feedback.html'
-        return 'agenda/feedback_form.html'
 
     @context
     @cached_property
@@ -696,21 +707,10 @@ class FeedbackView(TalkMixin, FormView):
             'speaker'
         )
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['talk'] = self.talk
-        return kwargs
-
-    def form_valid(self, form):
-        if not self.can_give_feedback:
-            return super().form_invalid(form)
-        result = super().form_valid(form)
-        form.save()
-        messages.success(self.request, phrases.agenda.feedback_success)
-        return result
-
-    def get_success_url(self):
-        return self.submission.urls.public
+    def get(self, request, *args, **kwargs):
+        if not self.is_speaker:
+            return HttpResponseRedirect(self.submission.urls.public + '#feedback')
+        return super().get(request, *args, **kwargs)
 
 
 class TalkSocialMediaCard(SocialMediaCardMixin, TalkView):
@@ -737,6 +737,7 @@ class OnlineVideoJoin(EventPermissionRequired, View):
         for attr, label in required_fields:
             if not getattr(event.settings, attr):
                 logger.info('%s is missing.', label)
+                log_event('video', 'live.join', OUTCOME_FAILURE, error_code='misconfigured', event_id=event.pk)
                 return HttpResponse(status=HTTPStatus.FORBIDDEN, content=VideoJoinError.MISCONFIGURED)
 
         # If the logged-in user does not have "orga.view_schedule" permission, we check
@@ -744,8 +745,10 @@ class OnlineVideoJoin(EventPermissionRequired, View):
         if not request.user.has_perm('agenda.view_schedule', event):
             res = user_has_event_ticket(request.user, event)
             if res == TicketCheckResult.NO_TICKET:
+                log_event('video', 'live.join', OUTCOME_FAILURE, error_code='not_allowed', event_id=event.pk)
                 return HttpResponse(status=HTTPStatus.FORBIDDEN, content=VideoJoinError.NOT_ALLOWED)
             if res == TicketCheckResult.MISCONFIGURED:
+                log_event('video', 'live.join', OUTCOME_FAILURE, error_code='misconfigured', event_id=event.pk)
                 return HttpResponse(status=HTTPStatus.FORBIDDEN, content=VideoJoinError.MISCONFIGURED)
 
         # Redirect user to online event
