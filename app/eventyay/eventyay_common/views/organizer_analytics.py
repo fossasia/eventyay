@@ -80,36 +80,38 @@ class OrganizerAnalyticsView(OrganizerPermissionRequiredMixin, TemplateView):
         ]
         permitted_event_ids = {e['id'] for e in selector_events}
 
-        if not requested_event:
-            selected_event_id: int | str = ''
-            selected_event_ids = permitted_event_ids
+        try:
+            req_id = int(requested_event)
+        except (TypeError, ValueError):
+            req_id = None
+        if req_id in permitted_event_ids:
+            selected_event_id: int | str = req_id
+            selected_event_ids = {req_id}
         else:
-            try:
-                req_id = int(requested_event)
-            except (TypeError, ValueError):
-                req_id = None
-            if req_id in permitted_event_ids:
-                selected_event_id = req_id
-                selected_event_ids = {req_id}
-            else:
-                selected_event_id = ''
-                selected_event_ids = set()
+            selected_event_id = ''
+            selected_event_ids = permitted_event_ids
 
-        series = []
-        for day in date_labels:
-            orders = 0
-            registrations = 0
-            for event_id in selected_event_ids:
-                bucket = attendance_daily_by_event.get(event_id, {}).get(day, {})
-                orders += bucket.get('orders', 0)
-                registrations += bucket.get('registrations', 0)
-            series.append({'x': day, 'orders': orders, 'registrations': registrations})
+        def project_series(event_ids):
+            series = []
+            for day in date_labels:
+                orders = 0
+                registrations = 0
+                for event_id in event_ids:
+                    bucket = attendance_daily_by_event.get(event_id, {}).get(day, {})
+                    orders += bucket.get('orders', 0)
+                    registrations += bucket.get('registrations', 0)
+                series.append({'x': day, 'orders': orders, 'registrations': registrations})
+            return series
+
+        all_events_series = project_series(permitted_event_ids)
+        series = project_series(selected_event_ids) if selected_event_id else all_events_series
 
         return {
             'attendance_events': selector_events,
             'attendance_selected_event_id': selected_event_id,
             'attendance_over_time_json': json.dumps(series),
-            'has_attendance': any(point['orders'] or point['registrations'] for point in series),
+            # Gate on all events, not the selection: the panel holds the selector itself.
+            'has_attendance': any(point['orders'] or point['registrations'] for point in all_events_series),
         }
 
     def _event_ids_for_orders(self):
