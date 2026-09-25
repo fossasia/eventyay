@@ -392,6 +392,21 @@ def test_schedule_cache_skips_speaker_profile_without_released_slot(event, user)
 
 @pytest.mark.django_db
 @override_settings(CACHES=LOCMEM_CACHE)
+def test_schedule_cache_invalidates_on_featured_speaker_without_released_slot(event, user):
+    from unittest.mock import patch
+    from django_scopes import scope
+
+    from eventyay.base.models.profile import SpeakerProfile
+
+    with patch('eventyay.base.services.stale_cache.bump_schedule_cache_version_on_commit') as bump:
+        with scope(event=event):
+            SpeakerProfile.objects.create(user=user, event=event, is_featured=True, biography='Featured bio')
+
+    bump.assert_called_with(event.pk)
+
+
+@pytest.mark.django_db
+@override_settings(CACHES=LOCMEM_CACHE)
 def test_schedule_cache_invalidates_on_speaker_profile_save(event, user):
     from unittest.mock import patch
     from django_scopes import scope

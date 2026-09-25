@@ -1,7 +1,7 @@
 /* Shared common-dashboard UI (onboarding + organised events) */
 
 .common-dashboard {
-  --cd-radius: 1.1rem;
+  --cd-radius: 0.4rem;
   --cd-border: #c8ced6;
   --cd-border-strong: #aeb6c2;
   --cd-surface: #fff;
@@ -59,39 +59,6 @@
   letter-spacing: -0.025em;
 }
 
-.cd-info {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.7rem;
-  height: 1.7rem;
-  padding: 0;
-  margin: 0;
-  border: none;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--cd-primary);
-  font-size: 1.15rem;
-  line-height: 1;
-  cursor: help;
-  vertical-align: middle;
-  transition: color var(--cd-ease), transform var(--cd-ease), background-color var(--cd-ease);
-}
-
-.common-dashboard__header .cd-info {
-  width: 1.85rem;
-  height: 1.85rem;
-  font-size: 1.25rem;
-}
-
-.cd-info:hover,
-.cd-info:focus {
-  color: color-mix(in srgb, var(--cd-primary) 75%, black);
-  background: color-mix(in srgb, var(--cd-primary) 12%, white);
-  outline: none;
-  transform: scale(1.06);
-}
-
 .common-dashboard__section {
   display: flex;
   flex-direction: column;
@@ -140,7 +107,7 @@
   width: 100%;
   padding: 2.5rem 2.6rem;
   border: 2px solid color-mix(in srgb, var(--cd-primary) 35%, var(--cd-border-strong));
-  border-radius: calc(var(--cd-radius) + 0.25rem);
+  border-radius: var(--cd-radius);
   background:
     linear-gradient(
       125deg,
@@ -170,7 +137,7 @@
 .cd-welcome__art {
   width: 6.75rem;
   height: 6.75rem;
-  border-radius: 1.25rem;
+  border-radius: 0.4rem;
   background: var(--cd-primary);
   border: 1.5px solid color-mix(in srgb, var(--cd-primary) 70%, black);
   box-shadow: 0 8px 18px rgb(33 133 208 / 0.28);
@@ -215,7 +182,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.55rem;
-  border-radius: 0.75rem;
+  border-radius: 0.3rem;
   padding: 0.9rem 1.4rem;
   font-size: 1.08rem;
   font-weight: 600;
@@ -278,7 +245,7 @@
   margin: 0;
   padding-left: 3.1rem;
   font-size: 1.08rem;
-  border-radius: 0.85rem;
+  border-radius: 0.4rem;
   border: 1.5px solid var(--cd-border);
   box-shadow: none;
   transition: border-color var(--cd-ease), box-shadow var(--cd-ease);
@@ -294,7 +261,7 @@
 .cd-search__submit {
   min-width: 8rem;
   height: 3.45rem;
-  border-radius: 0.85rem;
+  border-radius: 0.3rem;
   font-size: 1.08rem;
   font-weight: 600;
   padding-left: 1.35rem;
@@ -369,7 +336,7 @@
   grid-area: icon;
   width: 3.4rem;
   height: 3.4rem;
-  border-radius: 0.9rem;
+  border-radius: 0.3rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -654,7 +621,7 @@
   min-height: 2.75rem;
   padding: 0.55rem 0.5rem;
   border: none;
-  border-radius: 0.7rem;
+  border-radius: 0.3rem;
   color: #fff;
   font-size: 1.15rem;
   text-decoration: none;
@@ -726,7 +693,7 @@
   flex: 0 0 auto;
   width: 3.15rem;
   height: 3.15rem;
-  border-radius: 0.8rem;
+  border-radius: 0.3rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -755,7 +722,7 @@
 
 .cd-profile__cta {
   flex: 0 0 auto;
-  border-radius: 0.65rem;
+  border-radius: 0.3rem;
   font-weight: 600;
   padding: 0.75rem 1.2rem;
   font-size: 1.02rem;
@@ -779,7 +746,7 @@
   margin: 1.35rem 0 0;
   padding: 1.65rem 1.9rem;
   border: 1.5px solid var(--cd-border, #c8ced6);
-  border-radius: 1rem;
+  border-radius: 0.4rem;
   background:
     linear-gradient(
       135deg,
@@ -800,7 +767,7 @@
   flex: 0 0 auto;
   width: 3.35rem;
   height: 3.35rem;
-  border-radius: 0.9rem;
+  border-radius: 0.3rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -899,7 +866,7 @@
   .cd-welcome__art {
     width: 4.75rem;
     height: 4.75rem;
-    border-radius: 1rem;
+    border-radius: 0.4rem;
   }
 
   .cd-welcome__art img {

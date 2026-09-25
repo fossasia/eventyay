@@ -16,8 +16,9 @@ div.c-linear-schedule-session.is-shift-session(
 				.date(v-if="showDate")
 					.weekday {{ weekdayLabel }}
 					.day-month {{ dayMonthLabel }}
-				.time {{ startTime.time }}
-				.ampm(v-if="startTime.ampm") {{ startTime.ampm }}
+				.clock
+					.time {{ startTime.time }}
+					.ampm(v-if="startTime.ampm") {{ startTime.ampm }}
 				.duration {{ getPrettyDuration(session.start, session.end) }}
 		.buffer(v-if="!isSchedulePending")
 	.info
@@ -79,6 +80,7 @@ div.c-linear-schedule-session.is-shift-session(
 import ShiftConfirmDialog from './ShiftConfirmDialog.vue'
 import AssigneesPopover from './AssigneesPopover.vue'
 import { getLocalizedString, getPrettyDuration, getSessionTime, getCsrfToken } from '../utils'
+import { logOperational } from '../operationalLog.js'
 import {
 	getCapacityStatus,
 	getAssignedList,
@@ -369,6 +371,7 @@ export default {
 				})
 				const data = await response.json().catch(() => ({}))
 				if (!response.ok) {
+					logOperational({action: 'schedule.save', outcome: 'failure', backend: 'teamshifts', error_code: 'http_error', status: response.status})
 					this.confirmError = data.error || this.$t('Could not update this shift.')
 					return
 				}
@@ -380,6 +383,7 @@ export default {
 				}
 				this.closeConfirm()
 			} catch {
+				logOperational({action: 'schedule.save', outcome: 'failure', backend: 'teamshifts', error_code: 'network_error'})
 				this.confirmError = this.$t('Could not update this shift.')
 			} finally {
 				this.claimBusy = false
@@ -414,7 +418,7 @@ export default {
 	z-index: 10
 	display: flex
 	align-items: stretch
-	min-width: 300px
+	min-width: 0
 	min-height: auto
 	margin: 8px 0
 	margin-right: 8px
@@ -467,21 +471,30 @@ export default {
 					letter-spacing: 0.3px
 					line-height: 1
 					margin-top: 2px
+			.clock
+				display: flex
+				flex-direction: column
+				align-items: center
+				max-width: 100%
 			.time
 				font-size: 14px
 				font-weight: 700
 				line-height: 1.2
+				white-space: nowrap
+				font-variant-numeric: tabular-nums
 			.ampm
 				font-weight: 400
 				font-size: 10px
 				margin-top: 1px
 				opacity: 0.85
 				text-transform: uppercase
+				white-space: nowrap
 			.duration
 				font-weight: 400
 				font-size: 11px
 				color: rgba(255, 255, 255, 0.7)
 				margin-top: 4px
+				white-space: nowrap
 		.buffer
 			flex: auto
 	&.has-date
@@ -642,22 +655,9 @@ export default {
 			.title
 				color: var(--pretalx-clr-primary)
 
-@media (max-width: 600px)
+@media (max-width: 900px)
 	.c-linear-schedule-session.is-shift-session
 		min-width: 0
-		.time-box
-			width: 54px
-			padding: 8px 6px 6px 2px
-			.start
-				align-items: flex-start
-				text-align: left
-				.time, .duration
-					width: 100%
-					text-align: left
-		.info
-			padding: 6px
-			.title
-				font-size: 14px
 
 .density-compact .c-linear-schedule-session.is-shift-session
 	margin: 4px 4px

@@ -141,24 +141,40 @@ class SpeakerProfile(PretalxModel):
             return self.user.get_avatar_url(event=self.event)
 
 
-@receiver(post_save, sender=SpeakerProfile)
-@receiver(post_delete, sender=SpeakerProfile)
-def invalidate_schedule_cache_on_speaker_profile_change(sender, instance, **kwargs):
+def speaker_profile_has_released_slot(event, user_id) -> bool:
     from eventyay.base.models.slot import TalkSlot
-    from eventyay.base.services.stale_cache import bump_schedule_cache_version_on_commit
 
-    event = instance.event
-    user_id = instance.user_id
     if not event or not user_id:
-        return
+        return False
     with scope(event=event):
-        if not TalkSlot.objects.filter(
+        return TalkSlot.objects.filter(
             submission__speakers=user_id,
             schedule__event_id=event.pk,
             schedule__version__isnull=False,
-        ).exists():
-            return
-    bump_schedule_cache_version_on_commit(event.pk)
+        ).exists()
+
+
+def should_bump_schedule_cache_for_speaker_profile(instance, **kwargs) -> bool:
+    event = instance.event
+    user_id = instance.user_id
+    if not event or not user_id:
+        return False
+    if speaker_profile_has_released_slot(event, user_id) or instance.is_featured:
+        return True
+    if kwargs.get('created'):
+        return False
+    update_fields = kwargs.get('update_fields')
+    return update_fields is None or 'is_featured' in update_fields
+
+
+@receiver(post_save, sender=SpeakerProfile)
+@receiver(post_delete, sender=SpeakerProfile)
+def invalidate_schedule_cache_on_speaker_profile_change(sender, instance, **kwargs):
+    from eventyay.base.services.stale_cache import bump_schedule_cache_version_on_commit
+
+    if not should_bump_schedule_cache_for_speaker_profile(instance, **kwargs):
+        return
+    bump_schedule_cache_version_on_commit(instance.event.pk)
 
 
 class SpeakerSocialLink(models.Model):
@@ -181,3 +197,15 @@ class SpeakerSocialLink(models.Model):
 
     def __str__(self):
         return f'{self.get_network_display()}: {self.url}'
+
+
+@receiver(post_save, sender=SpeakerSocialLink)
+@receiver(post_delete, sender=SpeakerSocialLink)
+def invalidate_schedule_cache_on_speaker_social_link_change(sender, instance, **kwargs):
+    try:
+        profile = instance.profile
+    except SpeakerProfile.DoesNotExist:
+        return
+    if profile is None:
+        return
+    invalidate_schedule_cache_on_speaker_profile_change(SpeakerProfile, profile)

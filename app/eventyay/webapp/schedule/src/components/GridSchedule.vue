@@ -20,7 +20,7 @@
 			.now(v-if="nowSlice", ref="now", :class="{'on-daybreak': nowSlice.onDaybreak}", :style="{'grid-area': `${nowSlice.slice.name} / 1 / auto / auto`, '--offset': nowSlice.offset}")
 				svg(viewBox="0 0 10 10", :title="nowHoverTime")
 					path(d="M 0 0 L 10 5 L 0 10 z")
-			template(v-for="session of sessions")
+			template(v-for="session of gridSessions")
 				component(
 					:is="SessionComponent",
 					v-if="isProperSession(session)",
@@ -207,8 +207,45 @@ export default {
 			const zonedNow = this.now.clone().tz(this.timezone)
 			return this.hasAmPm ? zonedNow.format('h:mm A') : zonedNow.format('HH:mm')
 		},
+		sessionDayKeys () {
+			const tz = this.timezone
+			const days = []
+			const seen = new Set()
+			for (const session of this.sessions || []) {
+				if (!session.start) continue
+				const start = session.start.clone ? session.start.clone() : moment(session.start)
+				const day = (tz ? start.tz(tz) : start).format('YYYY-MM-DD')
+				if (seen.has(day)) continue
+				seen.add(day)
+				days.push(day)
+			}
+			days.sort()
+			return days
+		},
+		visibleSessionDays () {
+			const days = this.sessionDayKeys
+			if (!days.length || this.isShiftMode || !this.currentDay) return new Set(days)
+			const idx = days.indexOf(this.currentDay)
+			if (idx < 0) return new Set(days)
+			const windowDays = new Set()
+			for (let i = Math.max(0, idx - 1); i <= Math.min(days.length - 1, idx + 1); i++) {
+				windowDays.add(days[i])
+			}
+			return windowDays
+		},
+		gridSessions () {
+			if (this.isShiftMode || !this.currentDay) return this.sessions
+			const windowDays = this.visibleSessionDays
+			if (!windowDays.size) return this.sessions
+			const tz = this.timezone
+			return this.sessions.filter(session => {
+				if (!session.start) return false
+				const start = session.start.clone ? session.start.clone() : moment(session.start)
+				return windowDays.has((tz ? start.tz(tz) : start).format('YYYY-MM-DD'))
+			})
+		},
 		hasSessionsWithoutRoom () {
-			return this.sessions.some(s => !s.room)
+			return this.gridSessions.some(s => !s.room)
 		},
 		printRoomChunks () {
 			const chunkSize = 4
@@ -898,6 +935,10 @@ export default {
 		grid-template-columns: 96px repeat(var(--total-rooms), minmax(var(--room-col-min), 1fr)) auto
 	.rooms-inner
 		grid-template-columns: 96px repeat(var(--total-rooms), minmax(var(--room-col-min), 1fr)) auto
+
+@media (max-width: 900px)
+	.c-grid-schedule
+		--room-col-min: 260px
 
 @media (max-width: 600px)
 	.c-grid-schedule
