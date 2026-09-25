@@ -60,8 +60,7 @@ def parse_csv(file, length=None):
     except csv.Error:
         dialect = csv.excel
 
-    if dialect is None:
-        dialect = csv.excel
+
 
     # The sniffer only sees the header line. Our exporter (and Excel/LibreOffice)
     # write unquoted headers and escape embedded quotes as "", so treat doubled
