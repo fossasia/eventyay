@@ -50,6 +50,8 @@ def searchable_scrolling_checkbox_widget():
 
 
 class BadgeRenderer(Renderer):
+    implicit_flow_groups = True
+
     def __init__(self, event, layout, bgf, ask_user_fields=None, required_fields=None):
         super().__init__(event, layout, bgf)
         self.ask_user_fields = {str(value) for value in (ask_user_fields or [])}
@@ -63,7 +65,7 @@ class BadgeRenderer(Renderer):
         if hidden_fields is None:
             hidden_fields = {str(value) for value in get_badge_hidden_fields(op)}
             op._badge_hidden_fields_cache = hidden_fields
-            
+
         effective = {field for field in hidden_fields if field in self.ask_user_fields}
         effective -= self.required_fields
         return effective
@@ -71,11 +73,7 @@ class BadgeRenderer(Renderer):
     def _get_text_content(self, op: OrderPosition, order: Order, o: dict, inner=False):
         content = normalize_badge_content_key(o.get('content'))
         if content and content not in ('other', 'other_i18n') and content in self.ask_user_fields:
-            hidden_fields = getattr(op, '_badge_hidden_fields_cache', None)
-            if hidden_fields is None:
-                hidden_fields = {str(value) for value in get_badge_hidden_fields(op)}
-                op._badge_hidden_fields_cache = hidden_fields
-            if content in hidden_fields:
+            if content in self._get_layout_hidden_fields(op):
                 return ''
 
             overrides = getattr(op, '_badge_field_overrides_cache', None)

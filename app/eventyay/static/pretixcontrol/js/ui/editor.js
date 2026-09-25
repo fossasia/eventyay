@@ -174,6 +174,148 @@ var editor = {
         return value === true || value === 'true' || value === 1 || value === '1';
     },
 
+    _parse_flow_bool: function (value, defaultValue) {
+        if (value === undefined || value === null || value === '') {
+            return !!defaultValue;
+        }
+        return value === true || value === 'true' || value === 1 || value === '1';
+    },
+
+    _new_flow_group_id: function () {
+        if (window.crypto && typeof crypto.randomUUID === 'function') {
+            return crypto.randomUUID();
+        }
+        return 'flow-' + Date.now() + '-' + Math.random().toString(16).slice(2);
+    },
+
+    _flow_dump_fields: function (o) {
+        if (!o.flow_group) {
+            return {};
+        }
+        return {
+            flow_group: o.flow_group,
+            flow_lock: !!o.flow_lock,
+            flow_direction: o.flow_direction || 'down',
+            flow_adopt_slot_style: editor._parse_flow_bool(o.flow_adopt_slot_style, true)
+        };
+    },
+
+    _apply_flow_from_data: function (o, d) {
+        o.flow_group = d.flow_group || '';
+        o.flow_lock = editor._parse_flow_bool(d.flow_lock, false);
+        o.flow_direction = d.flow_direction || (o.flow_group ? 'down' : '');
+        o.flow_adopt_slot_style = editor._parse_flow_bool(d.flow_adopt_slot_style, !!o.flow_group);
+    },
+
+    _get_flow_targets: function () {
+        var objs = editor._get_active_objects();
+        if (objs.length) {
+            return objs;
+        }
+        var o = editor._get_toolbox_target_object(true);
+        if (!o || editor._is_active_selection(o)) {
+            return [];
+        }
+        return [o];
+    },
+
+    _join_flow_group: function () {
+        var objs = editor._get_active_objects();
+        if (objs.length < 2) {
+            return;
+        }
+        var existing = [];
+        objs.forEach(function (o) {
+            if (o.flow_group && existing.indexOf(o.flow_group) === -1) {
+                existing.push(o.flow_group);
+            }
+        });
+        var gid = existing.length ? existing[0] : editor._new_flow_group_id();
+        var members = objs.slice();
+        if (existing.length && editor.fabric) {
+            editor.fabric.getObjects().forEach(function (o) {
+                if (o.flow_group && existing.indexOf(o.flow_group) !== -1 && members.indexOf(o) === -1) {
+                    members.push(o);
+                }
+            });
+        }
+        var direction = $("#toolbox-flow-direction").find("button.active").attr("data-flow-direction") || 'down';
+        members.forEach(function (o) {
+            o.flow_group = gid;
+            o.flow_direction = direction;
+            o.flow_adopt_slot_style = $("#toolbox-flow-adopt").prop("checked");
+            o.flow_lock = !!o.flow_lock;
+            if (o.type === 'textarea' || o.type === 'text') {
+                o.autofit_width = true;
+                editor._apply_autofit_fontsize(o);
+            }
+        });
+        editor.dirty = true;
+        editor._create_savepoint();
+        editor._update_toolbox();
+        editor.fabric.renderAll();
+    },
+
+    _leave_flow_group: function () {
+        var objs = editor._get_flow_targets();
+        if (!objs.length) {
+            return;
+        }
+        objs.forEach(function (o) {
+            o.flow_group = '';
+            o.flow_lock = false;
+            o.flow_direction = '';
+            o.flow_adopt_slot_style = false;
+        });
+        editor.dirty = true;
+        editor._create_savepoint();
+        editor._update_toolbox();
+        editor.fabric.renderAll();
+    },
+
+    _update_flow_toolbox: function (objs) {
+        var previous = editor._toolbox_update_in_progress;
+        editor._toolbox_update_in_progress = true;
+        objs = objs || editor._get_flow_targets();
+        var inFlow = objs.some(function (o) { return !!o.flow_group; });
+        var allFlow = objs.length > 0 && objs.every(function (o) { return !!o.flow_group; });
+        $("#toolbox").attr("data-in-flow", inFlow ? "1" : "0");
+        $("#toolbox-flow-join").toggle(objs.length > 1 && !allFlow);
+        $("#toolbox-flow-leave").toggle(inFlow);
+        $("#toolbox-flow-lock").closest(".flow-lock-row").toggle(inFlow);
+        if (objs.length) {
+            var direction = objs[0].flow_direction || 'down';
+            $("#toolbox-flow-direction").find("button").removeClass("active");
+            $("#toolbox-flow-direction").find("button[data-flow-direction='" + direction + "']").addClass("active");
+            var adopt = objs.every(function (o) {
+                return !o.flow_group || editor._parse_flow_bool(o.flow_adopt_slot_style, true);
+            });
+            $("#toolbox-flow-adopt").prop("checked", adopt);
+            $("#toolbox-flow-lock").prop("checked", objs.every(function (o) { return !!o.flow_lock; }));
+        }
+        editor._toolbox_update_in_progress = previous;
+    },
+
+    _apply_flow_toolbox_to_objects: function () {
+        if (editor._toolbox_update_in_progress) {
+            return;
+        }
+        var objs = editor._get_flow_targets().filter(function (o) { return !!o.flow_group; });
+        if (!objs.length) {
+            return;
+        }
+        var direction = $("#toolbox-flow-direction").find("button.active").attr("data-flow-direction") || 'down';
+        var adopt = $("#toolbox-flow-adopt").prop("checked");
+        var lock = $("#toolbox-flow-lock").prop("checked");
+        objs.forEach(function (o) {
+            o.flow_direction = direction;
+            o.flow_adopt_slot_style = adopt;
+            o.flow_lock = lock;
+        });
+        editor.dirty = true;
+        editor._create_savepoint();
+    },
+
     _compute_autofit_pt: function (o, maxPt, widthMm) {
         if (!o.autofit_width) {
             return maxPt;
@@ -464,7 +606,7 @@ var editor = {
                 if (o.downward) {
                     bottom = editor.pdf_viewport.height - top;
                 }
-                d.push({
+                d.push($.extend({
                     type: "textarea",
                     locale: $("#pdf-info-locale").val(),
                     left: editor._px2mm(left).toFixed(2),
@@ -476,38 +618,39 @@ var editor = {
                     bold: o.fontWeight === 'bold',
                     italic: o.fontStyle === 'italic',
                     width: editor._px2mm(o.width).toFixed(2),
+                    height: editor._px2mm(o.height).toFixed(2),
                     downward: o.downward || false,
                     autofit_width: editor._parse_autofit_width(o.autofit_width),
                     content: o.content,
                     text: o.content === "other" ? (o.placeholder_text || o.text) : o.text,
                     rotation: o.angle,
                     align: o.textAlign,
-                });
+                }, editor._flow_dump_fields(o)));
             } else  if (o.type === "imagearea") {
-                d.push({
+                d.push($.extend({
                     type: "imagearea",
                     left: editor._px2mm(left).toFixed(2),
                     bottom: editor._px2mm(editor.pdf_viewport.height - o.height * o.scaleY - top).toFixed(2),
                     height: editor._px2mm(o.height * o.scaleY).toFixed(2),
                     width: editor._px2mm(o.width * o.scaleX).toFixed(2),
                     content: o.content,
-                });
+                }, editor._flow_dump_fields(o)));
             } else  if (o.type === "barcodearea") {
-                d.push({
+                d.push($.extend({
                     type: "barcodearea",
                     left: editor._px2mm(left).toFixed(2),
                     bottom: editor._px2mm(editor.pdf_viewport.height - o.height * o.scaleY - top).toFixed(2),
                     size: editor._px2mm(o.height * o.scaleY).toFixed(2),
                     content: o.content,
-                });
+                }, editor._flow_dump_fields(o)));
             } else  if (o.type === "poweredby") {
-                d.push({
+                d.push($.extend({
                     type: "poweredby",
                     left: editor._px2mm(left).toFixed(2),
                     bottom: editor._px2mm(editor.pdf_viewport.height - o.height * o.scaleY - top).toFixed(2),
                     size: editor._px2mm(o.height * o.scaleY).toFixed(2),
                     content: o.content,
-                });
+                }, editor._flow_dump_fields(o)));
             }
         }
         return d;
@@ -574,6 +717,7 @@ var editor = {
         }
         o.set('left', editor._mm2px(d.left));
         o.set('top', new_top);
+        editor._apply_flow_from_data(o, d);
         o.setCoords();
         return o;
     },
@@ -874,6 +1018,7 @@ var editor = {
         var o = editor._get_toolbox_target_object(true);
         if (!o) {
             $("#toolbox-autofit-width").prop('checked', false);
+            editor._update_flow_toolbox([]);
             return;
         }
         editor._toolbox_update_in_progress = true;
@@ -890,6 +1035,7 @@ var editor = {
             var groupBottom = editor.pdf_viewport.height - bound.height - bound.top;
             setVal("#toolbox-position-x", editor._px2mm(bound.left).toFixed(2));
             setVal("#toolbox-position-y", editor._px2mm(groupBottom).toFixed(2));
+            editor._update_flow_toolbox(editor._get_active_objects());
             editor._toolbox_update_in_progress = false;
             return;
         }
@@ -944,6 +1090,7 @@ var editor = {
                 }
             }
         }
+        editor._update_flow_toolbox([o]);
         editor._toolbox_update_in_progress = false;
     },
 
@@ -1087,6 +1234,7 @@ var editor = {
         } else {
             $("#toolbox-disabled-placeholder-warning").hide();
         }
+        editor._update_flow_toolbox(selected);
         editor._update_toolbox_values();
     },
 
@@ -1667,6 +1815,14 @@ var editor = {
         $("#toolbox-object-align").on('click', 'button[data-align]', function () {
             editor._align_selection($(this).attr('data-align'));
         });
+        $("#toolbox-flow-join").on('click', editor._join_flow_group);
+        $("#toolbox-flow-leave").on('click', editor._leave_flow_group);
+        $("#toolbox-flow-direction").on('click', 'button[data-flow-direction]', function () {
+            $("#toolbox-flow-direction").find("button").removeClass("active");
+            $(this).addClass("active");
+            editor._apply_flow_toolbox_to_objects();
+        });
+        $("#toolbox-flow-adopt, #toolbox-flow-lock").on('change', editor._apply_flow_toolbox_to_objects);
         $("#toolbox input[type=number], #toolbox textarea:not(#toolbox-content-other), #toolbox input[type=text], #toolbox input[type=radio], #toolbox-autofit-width").bind('change', editor._create_savepoint);
         $("#toolbox-autofit-width").bind('change', editor._update_values_from_toolbox);
         $("#toolbox label.btn").bind('click change', editor._update_values_from_toolbox);

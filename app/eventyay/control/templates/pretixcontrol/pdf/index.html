@@ -300,6 +300,74 @@
                             </div>
                         </div>
                     </div>
+                    <div class="row control-group flow-group">
+                        <div class="col-sm-12">
+                            <label>{% trans "Flow group" %}</label>
+                            <p class="help-block">
+                                {% blocktrans trimmed %}
+                                    Empty or hidden fields give up their slots. Remaining fields move into those slots
+                                    in the chosen direction and can take the slot's style.
+                                {% endblocktrans %}
+                            </p>
+                            <button type="button" class="btn btn-default btn-block" id="toolbox-flow-join">
+                                {% trans "Join flow group" %}
+                            </button>
+                            <button type="button" class="btn btn-default btn-block" id="toolbox-flow-leave">
+                                {% trans "Leave flow group" %}
+                            </button>
+                        </div>
+                    </div>
+                    <div class="row control-group flow-group">
+                        <div class="col-sm-12">
+                            <label>{% trans "Movement direction" %}</label><br>
+                            <div class="btn-group btn-group-justified" id="toolbox-flow-direction" role="group" aria-label="{% trans 'Movement direction' %}">
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-default active" data-flow-direction="down"
+                                            title="{% trans 'Pack from the top downward' %}">
+                                        <span class="fa fa-arrow-down" aria-hidden="true"></span>
+                                        <span class="sr-only">{% trans "Down" %}</span>
+                                    </button>
+                                </div>
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-default" data-flow-direction="up"
+                                            title="{% trans 'Pack from the bottom upward' %}">
+                                        <span class="fa fa-arrow-up" aria-hidden="true"></span>
+                                        <span class="sr-only">{% trans "Up" %}</span>
+                                    </button>
+                                </div>
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-default" data-flow-direction="left"
+                                            title="{% trans 'Pack from the left' %}">
+                                        <span class="fa fa-arrow-left" aria-hidden="true"></span>
+                                        <span class="sr-only">{% trans "Left" %}</span>
+                                    </button>
+                                </div>
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-default" data-flow-direction="right"
+                                            title="{% trans 'Pack from the right' %}">
+                                        <span class="fa fa-arrow-right" aria-hidden="true"></span>
+                                        <span class="sr-only">{% trans "Right" %}</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row control-group flow-group">
+                        <div class="col-sm-12">
+                            <div class="checkbox">
+                                <label for="toolbox-flow-adopt">
+                                    <input type="checkbox" id="toolbox-flow-adopt" checked>
+                                    {% trans "Adopt style of the slot the field moves into" %}
+                                </label>
+                            </div>
+                            <div class="checkbox flow-lock-row">
+                                <label for="toolbox-flow-lock">
+                                    <input type="checkbox" id="toolbox-flow-lock">
+                                    {% trans "Lock position (do not move this object)" %}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
                     <div class="row control-group rectsize">
                         <div class="col-sm-6">
                             <label>{% trans "Width (mm)" %}</label><br>
