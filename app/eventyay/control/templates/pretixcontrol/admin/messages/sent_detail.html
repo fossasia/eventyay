@@ -1,0 +1,86 @@
+{% extends "pretixcontrol/admin/base.html" %}
+{% load i18n static %}
+
+{% block title %}{% translate "Sent email" %} — {{ mail.subject|default:"—" }}{% endblock %}
+
+{% block custom_header %}
+  {{ block.super }}
+  <link rel='stylesheet' href='{% static "pretixcontrol/css/admin-messages.css" %}'>
+{% endblock %}
+
+{% block content %}
+  <h1>{{ mail.subject|default:"—" }}</h1>
+
+  <p>
+    <a href='{% url "eventyay_admin:admin.messages.sent" %}'>
+      <i class='fa fa-arrow-left' aria-hidden='true'></i> {% translate "Back to sent emails" %}
+    </a>
+  </p>
+
+  <div class='panel panel-default'>
+    <div class='panel-heading'>
+      <h3 class='panel-title'>{% translate "Email details" %}</h3>
+    </div>
+    <div class='panel-body'>
+      <table class='table table-condensed'>
+        <tbody>
+          <tr>
+            <th class='col-md-3'>{% translate "Subject" %}</th>
+            <td>{{ mail.subject|default:"—" }}</td>
+          </tr>
+          <tr>
+            <th>{% translate "Audience" %}</th>
+            <td>{{ mail.get_recipient_group_display }}</td>
+          </tr>
+          <tr>
+            <th>{% translate "Recipients" %}</th>
+            <td>{{ mail.get_recipient_count }}</td>
+          </tr>
+          <tr>
+            <th>{% translate "Sent by" %}</th>
+            <td>{{ mail.user.email|default:"—" }}</td>
+          </tr>
+          <tr>
+            <th>{% translate "Sent at" %}</th>
+            <td>{{ mail.sent_at|date:"SHORT_DATETIME_FORMAT"|default:"—" }}</td>
+          </tr>
+          {% if mail.reply_to %}
+            <tr>
+              <th>{% translate "Reply-To" %}</th>
+              <td>{{ mail.reply_to }}</td>
+            </tr>
+          {% endif %}
+          {% if mail.bcc %}
+            <tr>
+              <th>{% translate "BCC" %}</th>
+              <td>{{ mail.bcc }}</td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class='panel panel-default'>
+    <div class='panel-heading'>
+      <h3 class='panel-title'>{% translate "Message body" %}</h3>
+    </div>
+    <div class='panel-body mail-preview'>
+      {{ html_body|safe }}
+    </div>
+  </div>
+
+  <div class='panel panel-default'>
+    <div class='panel-heading d-flex justify-content-between align-items-center'>
+      <h3 class='panel-title'>{% translate "Recipient list" %}</h3>
+      <small class='text-muted'>{% translate "Showing first 50. Use pagination to see more." %}</small>
+    </div>
+    <div class='panel-body'
+         id='recipient-list-panel'
+         data-recipients-url='{% url "eventyay_admin:admin.messages.sent_recipients" pk=mail.pk %}'>
+      <p class='text-muted'>{% translate "Loading…" %}</p>
+    </div>
+  </div>
+
+  <script type='module' src='{% static "pretixcontrol/js/admin-messages-sent-detail.js" %}' defer></script>
+{% endblock %}

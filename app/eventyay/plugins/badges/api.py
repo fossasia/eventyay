@@ -11,6 +11,7 @@ from rest_framework.views import APIView
 from eventyay.api.serializers.i18n import I18nAwareModelSerializer
 from eventyay.api.serializers.order import CompatibleJSONField
 from eventyay.base.models import OrderPosition
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.services.tickets import generate
 
 from .apps import PDFRenderer
@@ -183,6 +184,14 @@ class BadgeDownloadView(APIView):
                 return resp
 
             except Exception:
+                log_event(
+                    'tickets',
+                    'ticket.generate',
+                    OUTCOME_FAILURE,
+                    error_code='badge_failed',
+                    event_id=getattr(op.order.event, 'pk', None),
+                    position_id=getattr(op, 'pk', None),
+                )
                 # If immediate generation fails, fall back to async generation
                 generate.apply_async(args=('orderposition', op.pk, 'badge'))
                 return Response(

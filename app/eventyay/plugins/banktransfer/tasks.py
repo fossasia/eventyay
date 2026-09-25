@@ -14,6 +14,7 @@ from django_scopes import scope, scopes_disabled
 from eventyay.base.email import get_email_context
 from eventyay.base.i18n import language
 from eventyay.base.models import Event, Order, OrderPayment, Organizer, Quota
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.payment import PaymentException
 from eventyay.base.services.locking import LockTimeoutException
 from eventyay.base.services.mail import SendMailException
@@ -304,6 +305,7 @@ def process_banktransfers(self, job: int, data: list) -> None:
                 try:
                     self.retry()
                 except MaxRetriesExceededError:
+                    log_event('plugins', 'bankimport.error', OUTCOME_FAILURE, error_code='lock_timeout_retries')
                     logger.exception('Maximum number of retries exceeded for task.')
                     job.state = BankImportJob.STATE_ERROR
                     job.save()

@@ -1,12 +1,27 @@
 import json
 import re
+from unittest.mock import patch
 from urllib.parse import urlparse
 
 import pytest
+from django.contrib.auth.models import AnonymousUser
+from django.core.cache import cache
+from django.test.utils import override_settings
 from django.urls import reverse
-from django_scopes import scope
+from django_scopes import scope, scopes_disabled
 
+from eventyay.agenda.views.utils import get_or_build_landing_featured_widget_schedule
+from eventyay.base.models import SpeakerProfile, User
+from eventyay.base.services.stale_cache import bump_schedule_cache_version
 from eventyay.talk_rules.agenda import is_pre_agenda_featured_public, is_speaker_viewable
+
+
+LOCMEM_CACHE = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'agenda-landing-speakers-cache-tests',
+    }
+}
 
 
 def _enable_public_featured_speakers(event):
@@ -146,6 +161,49 @@ def test_speakers_page_lists_all_speakers_after_schedule_release(
     assert json_response.status_code == 200
     speakers = {item['code'] for item in json_response.json()['results']}
     assert {speaker.code, other_speaker.code}.issubset(speakers)
+
+
+@pytest.mark.django_db
+def test_landing_page_includes_every_featured_speaker(client, event, speaker, other_speaker):
+    with scope(event=event):
+        event.talks_published = True
+        event.live = True
+        event.feature_flags['show_featured_speakers'] = 'always'
+        event.feature_flags['show_schedule'] = True
+        event.save(update_fields=['talks_published', 'live', 'feature_flags'])
+        for index, person in enumerate((other_speaker, speaker)):
+            profile = person.event_profile(event)
+            profile.is_featured = True
+            profile.position = index
+            profile.save(update_fields=['is_featured', 'position'])
+    with scopes_disabled():
+        extra_users = [
+            User.objects.create_user(
+                email=f'featured{index}@example.com',
+                password='speakerpwd1!',
+                fullname=f'Featured Extra {index:02d}',
+            )
+            for index in range(14)
+        ]
+    with scope(event=event):
+        SpeakerProfile.objects.bulk_create(
+            [
+                SpeakerProfile(
+                    user=user,
+                    event=event,
+                    is_featured=True,
+                    position=index + 2,
+                    biography='Extra featured speaker',
+                )
+                for index, user in enumerate(extra_users)
+            ]
+        )
+    response = client.get(event.urls.base)
+
+    assert response.status_code == 200
+    widget_schedule = response.context['featured_speakers_widget_schedule']
+    expected_codes = {speaker.code, other_speaker.code, *(user.code for user in extra_users)}
+    assert {item['code'] for item in widget_schedule['speakers']} == expected_codes
 
 
 @pytest.mark.django_db
@@ -478,3 +536,55 @@ def test_featured_speaker_profile_uses_schedule_rules_once_agenda_is_public(
     with scope(event=event):
         assert is_pre_agenda_featured_public(None, event) is False
         assert is_speaker_viewable(None, profile) is False
+
+
+@pytest.mark.django_db
+@override_settings(CACHES=LOCMEM_CACHE)
+def test_landing_page_featured_widget_is_cached(event, slot, speaker):
+    cache.clear()
+    user = AnonymousUser()
+    with scope(event=event):
+        event.talks_published = True
+        event.feature_flags['show_featured_speakers'] = 'always'
+        event.feature_flags['show_schedule'] = True
+        event.save(update_fields=['talks_published', 'feature_flags'])
+        profile = speaker.event_profile(event)
+        profile.is_featured = True
+        profile.save(update_fields=['is_featured'])
+
+        first = get_or_build_landing_featured_widget_schedule(event, user)
+        assert first is not None
+        first_codes = [item['code'] for item in first['speakers']]
+        with patch('eventyay.agenda.views.utils.build_landing_featured_speakers_widget_schedule') as build:
+            second = get_or_build_landing_featured_widget_schedule(event, user)
+        build.assert_not_called()
+        assert [item['code'] for item in second['speakers']] == first_codes
+
+
+@pytest.mark.django_db
+@override_settings(CACHES=LOCMEM_CACHE)
+def test_landing_page_featured_widget_cache_invalidates_on_profile_change(event, slot, speaker):
+    cache.clear()
+    user = AnonymousUser()
+    with scope(event=event):
+        event.talks_published = True
+        event.feature_flags['show_featured_speakers'] = 'always'
+        event.feature_flags['show_schedule'] = True
+        event.save(update_fields=['talks_published', 'feature_flags'])
+        profile = speaker.event_profile(event)
+        profile.is_featured = True
+        profile.biography = 'Original featured bio'
+        profile.save(update_fields=['is_featured', 'biography'])
+
+        first = get_or_build_landing_featured_widget_schedule(event, user)
+        first_bios = [item.get('biography') for item in first['speakers']]
+        assert 'Original featured bio' in first_bios
+
+        profile.biography = 'Updated featured bio'
+        profile.save(update_fields=['biography'])
+        bump_schedule_cache_version(event.pk)
+
+        second = get_or_build_landing_featured_widget_schedule(event, user)
+        second_bios = [item.get('biography') for item in second['speakers']]
+        assert 'Updated featured bio' in second_bios
+        assert 'Original featured bio' not in second_bios
