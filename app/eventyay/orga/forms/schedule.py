@@ -92,15 +92,18 @@ class ScheduleExportForm(ExportForm):
         super().__init__(*args, **kwargs)
         self.fields['speaker_ids'] = forms.BooleanField(
             required=False,
+            initial=True,
             label=_('Speaker IDs'),
             help_text=_('The unique ID of a speaker is used in the speaker URL and in exports'),
         )
         self.fields['speaker_names'] = forms.BooleanField(
             required=False,
+            initial=True,
             label=_('Speaker names'),
         )
         self.fields['room'] = forms.BooleanField(
             required=False,
+            initial=True,
             label=TalkSlot._meta.get_field('room').verbose_name,
             help_text=TalkSlot._meta.get_field('room').help_text,
         )

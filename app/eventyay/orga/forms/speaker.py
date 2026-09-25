@@ -27,19 +27,23 @@ class SpeakerExportForm(ExportForm):
     )
     submission_ids = forms.BooleanField(
         required=False,
+        initial=True,
         label=_('Proposal IDs'),
         help_text=phrases.orga.proposal_id_help_text,
     )
     submission_titles = forms.BooleanField(
         required=False,
+        initial=True,
         label=_('Proposal titles'),
     )
     biography = forms.BooleanField(
         required=False,
+        initial=True,
         label=_('Biography'),
     )
     avatar = forms.BooleanField(
         required=False,
+        initial=True,
         label=_('Picture'),
         help_text=_('The link to the speaker’s profile picture'),
     )

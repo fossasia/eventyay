@@ -44,6 +44,11 @@ def session_row(*, title, abstract, duration, speaker, session_type='Talk (30 mi
     }
 
 
+def test_parse_csv_accepts_single_column_files():
+    rows = parse_rows('ID\nABC12\nXYZ99\n')
+    assert [row['ID'] for row in rows] == ['ABC12', 'XYZ99']
+
+
 def test_parse_csv_keeps_escaped_quotes_with_unquoted_headers():
     content = export_style_csv(
         [
