@@ -39,7 +39,7 @@ from eventyay.agenda.views.utils import (
     encode_email,
     is_email_like,
 )
-from eventyay.base.models.auth import needs_avatar_thumbnails
+from eventyay.base.models.auth import list_avatar_urls, needs_avatar_thumbnails
 from eventyay.person.tasks import enqueue_missing_avatar_thumbnails
 from eventyay.base.models import (
     Event,
@@ -141,13 +141,22 @@ def talk_starrers(request, event, slug, **kwargs):
     except (TypeError, ValueError):
         limit = 15
 
+    try:
+        offset = int(request.GET.get('offset', 0))
+    except (TypeError, ValueError):
+        offset = 0
+
     # ``limit=0`` means "return everything" (within a reasonable ceiling).
     max_limit = 1000
+    max_offset = 10000
     if limit < 0:
         limit = 15
     if limit == 0:
         limit = max_limit
     limit = min(limit, max_limit)
+    if offset < 0:
+        offset = 0
+    offset = min(offset, max_offset)
 
     with scope(event=request.event):
         qs = SubmissionFavourite.objects.filter(submission=submission)
@@ -157,40 +166,38 @@ def talk_starrers(request, event, slug, **kwargs):
         base_url = str(request.event.urls.base)
         items = []
         missing_thumb_user_ids = []
-        for fav in qs.select_related('user').order_by('-id')[:limit]:
+        for fav in qs.select_related('user').order_by('-id')[offset:offset + limit]:
             user = fav.user
             display_name = user.get_display_name() if user else ''
             is_public_user = bool(
                 user and user.show_publicly and not user.deleted and user.code and not is_email_like(display_name)
             )
             if is_public_user:
-                avatar_url = user.get_avatar_url(
-                    event=request.event,
-                    thumbnail='tiny',
-                    generate_missing=False,
-                )
+                avatars = list_avatar_urls(user, request.event)
                 items.append(
                     {
                         'code': user.code,
                         'name': display_name,
-                        'avatar_url': avatar_url,
+                        'avatar_thumbnail_tiny': avatars['avatar_thumbnail_tiny'] or '',
+                        'avatar_thumbnail_default': avatars['avatar_thumbnail_default'] or '',
                         'url': f'{base_url}people/{user.code}/stars/',
                     }
                 )
-                if needs_avatar_thumbnails(user, {'avatar_thumbnail_tiny': avatar_url}):
+                if needs_avatar_thumbnails(user, avatars):
                     missing_thumb_user_ids.append(user.pk)
             else:
                 items.append(
                     {
                         'code': f'anon-{fav.id}',
                         'name': '',
-                        'avatar_url': '',
+                        'avatar_thumbnail_tiny': '',
+                        'avatar_thumbnail_default': '',
                         'url': '',
                     }
                 )
         enqueue_missing_avatar_thumbnails(request.event.pk, missing_thumb_user_ids)
 
-    response = JsonResponse({'total': total, 'public_total': public_total, 'items': items})
+    response = JsonResponse({'total': total, 'public_total': public_total, 'offset': offset, 'items': items})
     response['Access-Control-Allow-Origin'] = '*'
     response['Access-Control-Allow-Headers'] = 'authorization,content-type'
     return response
