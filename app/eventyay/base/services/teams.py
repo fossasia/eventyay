@@ -1,6 +1,7 @@
 import logging
 
 from django.db.models.functions import Lower
+from django.urls import NoReverseMatch
 from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.entitlements import EntitlementDecision, check_entitlement
@@ -87,20 +88,20 @@ def get_team_invitation_url(team):
     """
     Determine the invitation or landing URL for an added team member.
 
-    If the team has a TeamShifts role assigned, link directly to the
-    TeamShifts organizer dashboard entry point if available.
+    If the team has a TeamShifts role assigned ('coordinator' or 'lead'),
+    link directly to the TeamShifts organizer dashboard entry point if available.
     Otherwise, fall back to the standard organizer team management URL.
     """
     from eventyay.helpers.urls import build_absolute_uri
 
     organizer_slug = getattr(team.organizer, 'slug', team.organizer)
-    if getattr(team, 'teamshifts_role', ''):
+    if getattr(team, 'teamshifts_role', '') in ('coordinator', 'lead'):
         try:
             return build_absolute_uri(
                 'plugins:teamshifts:organizer_dashboard',
                 kwargs={'organizer': organizer_slug},
             )
-        except Exception:
+        except NoReverseMatch:
             pass
 
     return build_absolute_uri(
@@ -132,8 +133,13 @@ def send_team_invitation_email(
     Returns:
         bool: True if email was sent successfully, False otherwise
     """
-    if url is None and team is not None:
-        url = get_team_invitation_url(team)
+    if url is None:
+        if team is None:
+            return False
+        try:
+            url = get_team_invitation_url(team)
+        except Exception:
+            return False
 
     try:
         mail(
