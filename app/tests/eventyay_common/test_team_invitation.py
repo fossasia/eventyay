@@ -59,9 +59,9 @@ def test_get_team_invitation_url_standard_team_no_pk(organizer):
 @pytest.mark.django_db
 def test_get_team_invitation_url_plugin_fallback(organizer):
     team = Team.objects.create(organizer=organizer, name='Lead Team', teamshifts_role='lead')
-    with patch('eventyay.helpers.urls.build_absolute_uri', side_effect=[NoReverseMatch('Plugin not installed'), 'http://localhost/fallback/']):
+    with patch('eventyay.helpers.urls.build_absolute_uri', side_effect=[NoReverseMatch('Plugin not installed'), 'http://localhost/common/organizer/test-org/teams']):
         url = get_team_invitation_url(team)
-        assert url == 'http://localhost/fallback/'
+        assert url.endswith('/common/organizer/test-org/teams')
 
 
 @pytest.mark.django_db
@@ -117,7 +117,7 @@ def test_send_team_invitation_email_no_url_or_team(organizer, user):
 def test_send_team_invitation_email_url_resolution_failure(organizer, user):
     djmail.outbox = []
     team = Team.objects.create(organizer=organizer, name='Broken Team', teamshifts_role='coordinator')
-    with patch('eventyay.base.services.teams.get_team_invitation_url', side_effect=Exception('URL failure')):
+    with patch('eventyay.base.services.teams.get_team_invitation_url', side_effect=NoReverseMatch('URL failure')):
         success = send_team_invitation_email(
             user=user,
             organizer_name=organizer.name,
