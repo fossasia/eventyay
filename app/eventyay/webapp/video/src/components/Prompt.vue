@@ -6,6 +6,7 @@
 </template>
 <script>
 import { Scrollbars } from 'buntpapier/src/directives/scrollbar'
+import { createBackdropPressTracker } from 'lib/promptPointer'
 
 export default {
 	props: {
@@ -20,6 +21,9 @@ export default {
 		}
 	},
 	emits: ['close'],
+	created() {
+		this._backdropPress = createBackdropPressTracker()
+	},
 	mounted() {
 		this.$nextTick(() => {
 			if (!this.scrollable) return
@@ -32,26 +36,16 @@ export default {
 		onPointerdown(event) {
 			if (!this.allowCancel) return
 			event.stopPropagation()
-			// Only a press that starts on the backdrop itself can close the prompt.
-			// Track that pointer's id so a drag that begins inside the dialog and
-			// ends on the backdrop is not mistaken for a backdrop click, and so
-			// other pointers can't reuse it. The capture-phase listener below is
-			// needed because .prompt-wrapper stops inner pointerdowns in the bubble
-			// phase, before this handler could ever see them.
-			if (event.target === this.$el) {
-				this._backdropPointerId = event.pointerId
-			} else {
-				this._backdropPointerId = null
-			}
+			this._backdropPress.press(event.target === this.$el, event.pointerId)
+			// The capture listener is registered so that presses starting inside
+			// the dialog, whose bubbling .prompt-wrapper stops, still reach us.
 			this.$el.addEventListener('pointerdown', this.onPointerdownCapture, true)
 			this.$el.addEventListener('pointerup', this.onPointerup)
 			this.$el.addEventListener('pointercancel', this.onPointercancel)
 		},
 		onPointerdownCapture(event) {
-			// Invalidate the tracked press as soon as a new one starts anywhere
-			// except the backdrop, even if its bubbling is stopped further down.
 			if (event.target !== this.$el) {
-				this._backdropPointerId = null
+				this._backdropPress.press(false, event.pointerId)
 			}
 		},
 		onPointerup(event) {
@@ -59,16 +53,11 @@ export default {
 			this.$el.removeEventListener('pointerup', this.onPointerup)
 			this.$el.removeEventListener('pointercancel', this.onPointercancel)
 			// Close only when the same pointer both started and ended on the backdrop.
-			const isBackdropClick = this._backdropPointerId === event.pointerId && event.target === this.$el
-			this._backdropPointerId = null
-			if (!isBackdropClick) return
+			if (!this._backdropPress.release(event.target === this.$el, event.pointerId)) return
 			this.$emit('close')
 		},
 		onPointercancel(event) {
-			// A cancelled press must not leave stale state behind.
-			if (this._backdropPointerId === event.pointerId) {
-				this._backdropPointerId = null
-			}
+			this._backdropPress.cancel(event.pointerId)
 			this.$el.removeEventListener('pointerdown', this.onPointerdownCapture, true)
 			this.$el.removeEventListener('pointerup', this.onPointerup)
 			this.$el.removeEventListener('pointercancel', this.onPointercancel)
