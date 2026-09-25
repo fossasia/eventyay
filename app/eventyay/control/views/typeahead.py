@@ -597,14 +597,14 @@ def users_select2(request):
     if not request.user.has_active_staff_session(request.session.session_key):
         raise PermissionDenied()
 
-    term = request.GET.get('query', '')
+    term = request.GET.get('query', '').strip()
+    if len(term) < 3:
+        return JsonResponse({'results': [], 'pagination': {'more': False}})
     try:
         page = int(request.GET.get('page', '1'))
     except ValueError:
         page = 1
-    qs = User.objects.all()
-    if term:
-        qs = qs.filter(Q(email__icontains=term) | Q(fullname__icontains=term))
+    qs = User.objects.filter(Q(email__icontains=term) | Q(fullname__icontains=term)).order_by('email')
 
     total = qs.count()
     pagesize = 20

@@ -1,5 +1,6 @@
 import pytest
 from django.contrib.contenttypes.models import ContentType
+from django.urls import reverse
 from django.utils.timezone import now
 
 from eventyay.base.models import User
@@ -10,7 +11,9 @@ from eventyay.base.models.admin_mail import (
     AdminEmailStatus,
     AdminRecipientGroup,
 )
+from eventyay.base.models.auth import StaffSession
 from eventyay.base.models.log import LogEntry
+from eventyay.control.forms.admin.admin_messages import AdminComposeForm
 
 
 @pytest.fixture
@@ -454,3 +457,65 @@ def test_delete_action_creates_log_entry(draft_mail, admin_user):
         data='{}',
     )
     assert LogEntry.objects.filter(action_type='eventyay.admin.mail.deleted').exists()
+
+
+def _staff_login(client, user):
+    client.force_login(user)
+    session = client.session
+    session.save()
+    StaffSession.objects.create(user=user, session_key=session.session_key)
+
+
+@pytest.mark.django_db
+def test_users_select2_requires_three_characters(client, admin_user):
+    _staff_login(client, admin_user)
+    User.objects.create_user(email='jane@example.org', password='x', fullname='Jane Doe')
+
+    for query in ('', 'ja', '  j  '):
+        response = client.get(reverse('eventyay_admin:admin.users.select2'), {'query': query})
+        assert response.status_code == 200
+        assert response.json() == {'results': [], 'pagination': {'more': False}}
+
+
+@pytest.mark.django_db
+def test_users_select2_searches_by_name_and_email(client, admin_user):
+    _staff_login(client, admin_user)
+    jane = User.objects.create_user(email='jane@example.org', password='x', fullname='Jane Doe')
+    john = User.objects.create_user(email='jdoe@example.org', password='x', fullname='John Smith')
+
+    response = client.get(reverse('eventyay_admin:admin.users.select2'), {'query': 'jane'})
+    assert [result['id'] for result in response.json()['results']] == [jane.pk]
+
+    response = client.get(reverse('eventyay_admin:admin.users.select2'), {'query': 'smith'})
+    assert [result['id'] for result in response.json()['results']] == [john.pk]
+
+
+@pytest.mark.django_db
+def test_users_select2_limits_page_size(client, admin_user):
+    _staff_login(client, admin_user)
+    for i in range(25):
+        User.objects.create_user(email=f'bulk{i:02d}@example.org', password='x')
+
+    response = client.get(reverse('eventyay_admin:admin.users.select2'), {'query': 'bulk'})
+    data = response.json()
+    assert len(data['results']) == 20
+    assert data['pagination']['more'] is True
+
+    response = client.get(reverse('eventyay_admin:admin.users.select2'), {'query': 'bulk', 'page': 2})
+    assert len(response.json()['results']) == 5
+
+
+@pytest.mark.django_db
+def test_users_select2_rejects_non_staff(client, regular_user):
+    client.force_login(regular_user)
+    response = client.get(reverse('eventyay_admin:admin.users.select2'), {'query': 'user'})
+    assert response.status_code in (302, 403)
+
+
+@pytest.mark.django_db
+def test_compose_form_selectors_wait_for_three_characters():
+    form = AdminComposeForm()
+    for name in ('selected_users', 'selected_events', 'selected_organisers'):
+        attrs = form.fields[name].widget.attrs
+        assert attrs['data-minimum-input-length'] == 3
+        assert attrs['data-ajax--delay'] == 250
