@@ -59,39 +59,6 @@
   letter-spacing: -0.025em;
 }
 
-.cd-info {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.7rem;
-  height: 1.7rem;
-  padding: 0;
-  margin: 0;
-  border: none;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--cd-primary);
-  font-size: 1.15rem;
-  line-height: 1;
-  cursor: help;
-  vertical-align: middle;
-  transition: color var(--cd-ease), transform var(--cd-ease), background-color var(--cd-ease);
-}
-
-.common-dashboard__header .cd-info {
-  width: 1.85rem;
-  height: 1.85rem;
-  font-size: 1.25rem;
-}
-
-.cd-info:hover,
-.cd-info:focus {
-  color: color-mix(in srgb, var(--cd-primary) 75%, black);
-  background: color-mix(in srgb, var(--cd-primary) 12%, white);
-  outline: none;
-  transform: scale(1.06);
-}
-
 .common-dashboard__section {
   display: flex;
   flex-direction: column;
