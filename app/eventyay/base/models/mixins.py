@@ -1,7 +1,7 @@
 import json
 from contextlib import suppress
 
-from django.db import IntegrityError, models
+from django.db import IntegrityError, models, transaction
 from django.utils.crypto import get_random_string
 from django.utils.functional import cached_property
 from django_scopes import ScopedManager, scopes_disabled
@@ -173,27 +173,40 @@ class FileCleanupMixin:
         except Exception:
             return super().save(*args, **kwargs)
 
+        cleanup_jobs = []
         for field in self._file_fields:
             old_value = getattr(pre_save_instance, field)
-            if old_value:
-                new_value = getattr(self, field)
-                if new_value and old_value.path != new_value.path:
-                    # We don't want to delete the file immediately, as the save action
-                    # that triggered this task might still fail, so we schedule the
-                    # deletion for 10 seconds in the future, and pass the file field
-                    # to check if the file is still in use.
-                    from eventyay.common.tasks import task_cleanup_file
+            if not old_value:
+                continue
+            new_value = getattr(self, field)
+            old_name = getattr(old_value, 'name', None) or ''
+            new_name = getattr(new_value, 'name', None) if new_value else ''
+            if not old_name or old_name == new_name:
+                continue
+            try:
+                old_path = old_value.path
+            except (NotImplementedError, ValueError, OSError, AttributeError):
+                old_path = old_name
+            # Defer deletion until after the write commits. Eager Celery would
+            # otherwise see the old field value and skip cleanup.
+            cleanup_jobs.append(
+                {
+                    'model': str(self._meta.model_name.capitalize()),
+                    'pk': self.pk,
+                    'field': field,
+                    'path': old_path,
+                }
+            )
+        result = super().save(*args, **kwargs)
+        if cleanup_jobs:
+            from eventyay.common.tasks import task_cleanup_file
 
-                    task_cleanup_file.apply_async(
-                        kwargs={
-                            'model': str(self._meta.model_name.capitalize()),
-                            'pk': self.pk,
-                            'field': field,
-                            'path': old_value.path,
-                        },
-                        countdown=10,
-                    )
-        return super().save(*args, **kwargs)
+            def enqueue_cleanup(jobs=cleanup_jobs):
+                for job in jobs:
+                    task_cleanup_file.apply_async(kwargs=job, countdown=10)
+
+            transaction.on_commit(enqueue_cleanup)
+        return result
 
     def _delete_files(self):
         for field in self._file_fields:

@@ -3,7 +3,9 @@ import datetime as dt
 import pytest
 from django.utils import formats
 from django.utils.timezone import now
-from django_scopes import scope
+from django_scopes import scope, scopes_disabled
+
+from eventyay.base.models import SubmissionFavourite, User
 
 
 @pytest.mark.django_db
@@ -232,3 +234,45 @@ def test_talk_review_page(client, django_assert_num_queries, submission):
         response = client.get(submission.urls.review, follow=True)
     assert response.status_code == 200
     assert submission.title in response.text
+
+
+@pytest.mark.django_db
+def test_talk_starrers_are_paginated(client, event, slot):
+    flags = dict(event.feature_flags or {})
+    flags['session_popularity_enabled'] = True
+    event.feature_flags = flags
+    event.save(update_fields=['feature_flags'])
+    with scopes_disabled():
+        users = [
+            User.objects.create_user(
+                email=f'starrer-{index}@example.test',
+                password='testpassw0rd!',
+                fullname=f'Starrer {index}',
+                show_publicly=True,
+            )
+            for index in range(3)
+        ]
+    with scope(event=event):
+        for user in users:
+            SubmissionFavourite.objects.create(user=user, submission=slot.submission)
+
+    url = str(slot.submission.urls.public).rstrip('/') + '/starrers.json'
+    first = client.get(url, {'limit': 2, 'offset': 0})
+    second = client.get(url, {'limit': 2, 'offset': 2})
+    assert first.status_code == 200
+    assert second.status_code == 200
+    first_data = first.json()
+    second_data = second.json()
+    assert first_data['total'] == 3
+    assert first_data['offset'] == 0
+    assert len(first_data['items']) == 2
+    assert second_data['offset'] == 2
+    assert len(second_data['items']) == 1
+    first_codes = {item['code'] for item in first_data['items']}
+    second_codes = {item['code'] for item in second_data['items']}
+    assert first_codes.isdisjoint(second_codes)
+    assert client.get(url, {'offset': 'nope'}).json()['offset'] == 0
+    item = first_data['items'][0]
+    assert 'avatar' not in item
+    assert item['avatar_thumbnail_tiny'] == ''
+    assert item['avatar_thumbnail_default'] == ''
