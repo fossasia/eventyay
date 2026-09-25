@@ -22,23 +22,25 @@
           <th>{% translate "Category" %}</th>
           <th>{% translate "Trigger" %}</th>
           <th>{% translate "Recipient" %}</th>
+          <th class='text-right'>{% translate "Actions" %}</th>
         </tr>
       </thead>
       <tbody>
         {% for tpl in templates %}
           <tr>
             <td class='list-name-cell'>
-              {% if tpl.role %}
-                <strong>
-                  <a href='{% url "eventyay_admin:admin.messages.template_detail" role=tpl.role %}'>{{ tpl.name }}</a>
-                </strong>
-              {% else %}
-                <strong>{{ tpl.name }}</strong>
-              {% endif %}
+              <strong>
+                <a href='{% url "eventyay_admin:admin.messages.template_detail" role=tpl.key %}'>{{ tpl.name }}</a>
+              </strong>
             </td>
             <td class='list-meta'>{{ tpl.category }}</td>
             <td class='list-meta'>{{ tpl.trigger }}</td>
             <td class='list-meta'>{{ tpl.recipient_type }}</td>
+            <td class='text-right'>
+              <a class='btn btn-sm btn-outline-info' href='{% url "eventyay_admin:admin.messages.template_detail" role=tpl.key %}'>
+                <i class='fa fa-eye' aria-hidden='true'></i> {% translate "Preview" %}
+              </a>
+            </td>
           </tr>
         {% endfor %}
       </tbody>

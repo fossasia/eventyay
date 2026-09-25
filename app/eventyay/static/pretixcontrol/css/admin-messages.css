@@ -25,3 +25,7 @@
   max-height: 70vh;
   overflow-y: auto;
 }
+
+.template-preview .d-none {
+  display: none !important;
+}

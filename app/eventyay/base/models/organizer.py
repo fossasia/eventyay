@@ -40,6 +40,17 @@ from .auth import User
 
 logger = logging.getLogger(__name__)
 
+TEAM_INVITE_SUBJECT = _('You have been invited to an organizer team')
+TEAM_INVITE_TEXT = _(
+    """Hi!
+You have been invited to the {name} event organizer team - Please click here to accept:
+
+{invitation_link}
+
+See you there,
+The {organizer} team"""
+)
+
 
 class TeamPermissionError(PermissionDenied):
     """Raised when team access permission checks fail to preserve administrator access."""
@@ -693,20 +704,12 @@ class TeamInvite(models.Model):
         from eventyay.base.models.mail import QueuedMail
 
         invitation_link = self.invitation_url
-        invitation_text = _(
-            """Hi!
-You have been invited to the {name} event organizer team - Please click here to accept:
-
-{invitation_link}
-
-See you there,
-The {organizer} team"""
-        ).format(
+        invitation_text = str(TEAM_INVITE_TEXT).format(
             name=str(self.team.name),
             invitation_link=invitation_link,
             organizer=str(self.team.organizer.name),
         )
-        invitation_subject = _('You have been invited to an organizer team')
+        invitation_subject = TEAM_INVITE_SUBJECT
 
         mail = QueuedMail.objects.create(
             to=self.email,
