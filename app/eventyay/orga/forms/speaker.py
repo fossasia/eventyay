@@ -3,7 +3,9 @@ from __future__ import annotations
 import logging
 
 from django import forms
+from django.db.models import Prefetch
 from django.utils.functional import cached_property
+from django_scopes import scope
 from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.models import SubmissionStates, User
@@ -100,7 +102,6 @@ class SpeakerExportForm(ExportForm):
 
     def get_queryset(self):
         target = self.cleaned_data.get('target')
-        from django_scopes import scope
         with scope(event=self.event):
             queryset = self.event.submitters
             if target != 'all':
@@ -109,7 +110,6 @@ class SpeakerExportForm(ExportForm):
                         state__in=[SubmissionStates.ACCEPTED, SubmissionStates.CONFIRMED]
                     )
                 ).distinct()
-            from django.db.models import Prefetch
             return queryset.prefetch_related(
                 'profiles', 
                 'profiles__event',
