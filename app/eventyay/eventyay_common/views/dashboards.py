@@ -549,7 +549,7 @@ class EventWidgetGenerator:
         """
         if event.settings.create_for != EventCreatedFor.BOTH.value and event.settings.talk_schedule_public is None:
             return format_html(
-                '<a href="#" data-toggle="modal" data-target="#alert-modal" class="middle-component">{}</a>',
+                '<a href="#" data-toggle="modal" data-target="#alert-modal" class="component">{}</a>',
                 _('Talks'),
             )
 
@@ -558,7 +558,7 @@ class EventWidgetGenerator:
         )
         if not has_talk_access:
             return format_html(
-                '<a href="#" class="middle-component" role="button" aria-haspopup="dialog" '
+                '<a href="#" class="component" role="button" aria-haspopup="dialog" '
                 'aria-controls="{}" data-dialog-target="#{}" data-toggle="dialog">{}</a>',
                 TALK_PERMISSION_DIALOG_ID,
                 TALK_PERMISSION_DIALOG_ID,
@@ -567,7 +567,7 @@ class EventWidgetGenerator:
 
         talk_url = reverse('orga:event.dashboard', kwargs={'organizer': event.organizer.slug, 'event': event.slug})
         return format_html(
-            '<a href="{}" class="middle-component">{}</a>',
+            '<a href="{}" class="component">{}</a>',
             talk_url,
             _('Talks'),
         )

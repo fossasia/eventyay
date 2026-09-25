@@ -26,9 +26,8 @@ function setQueryParam(param, value) {
 
 function syncSelects(selector, value) {
   document.querySelectorAll(selector).forEach((select) => {
-    if (select.value !== value) {
-      select.value = value
-    }
+    const known = Array.from(select.options).some((option) => option.value === value)
+    select.value = known ? value : ''
   })
 }
 
@@ -52,7 +51,7 @@ function applyRevenueFilter(currency) {
   if (table) {
     let visible = 0
     table.querySelectorAll('tbody tr[data-currency]').forEach((row) => {
-      const show = !currency || row.dataset.currency === currency
+      const show = currency ? row.dataset.currency === currency : row.hasAttribute('data-od-overall')
       row.hidden = !show
       if (show) visible += 1
     })
