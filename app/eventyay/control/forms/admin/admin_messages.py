@@ -131,7 +131,7 @@ class AdminComposeForm(ScheduledAtValidationMixin, forms.Form):
             'data-select2-url': '',  # set in __init__
             'data-placeholder': _('Search organisers…'),
             'data-minimum-input-length': 3,
-            'data-ajax--delay': 250,
+            'data-delay': 250,
         }),
     )
 
@@ -144,7 +144,7 @@ class AdminComposeForm(ScheduledAtValidationMixin, forms.Form):
             'data-select2-url': '',  # set in __init__
             'data-placeholder': _('Search events…'),
             'data-minimum-input-length': 3,
-            'data-ajax--delay': 250,
+            'data-delay': 250,
         }),
     )
 
@@ -157,7 +157,7 @@ class AdminComposeForm(ScheduledAtValidationMixin, forms.Form):
             'data-select2-url': '',  # set in __init__
             'data-placeholder': _('Search by name or email…'),
             'data-minimum-input-length': 3,
-            'data-ajax--delay': 250,
+            'data-delay': 250,
         }),
     )
 

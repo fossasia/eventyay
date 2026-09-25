@@ -518,4 +518,4 @@ def test_compose_form_selectors_wait_for_three_characters():
     for name in ('selected_users', 'selected_events', 'selected_organisers'):
         attrs = form.fields[name].widget.attrs
         assert attrs['data-minimum-input-length'] == 3
-        assert attrs['data-ajax--delay'] == 250
+        assert attrs['data-delay'] == 250
