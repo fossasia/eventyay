@@ -190,6 +190,16 @@
   min-height: 0;
 }
 
+.mail-composer .choices__list--dropdown .choices__item--selectable.is-highlighted,
+.select2-container--bootstrap.mail-composer-dropdown .select2-results__option--highlighted[aria-selected] {
+  background-color: var(--color-primary-hover);
+  color: var(--color-white);
+}
+
+.mail-composer .choices__list--dropdown .choices__item--selectable.is-highlighted .choice-item-description {
+  color: inherit;
+}
+
 .composer-filters {
   display: grid;
   gap: 16px 24px;
