@@ -1,4 +1,8 @@
+import logging
+import os
+
 from django import forms
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db.models import Count, Exists, OuterRef, Q
 from django.utils.functional import cached_property
 from django.utils.timezone import now
@@ -23,10 +27,12 @@ from eventyay.common.forms.mixins import ConfiguredFieldOrderMixin, PublicConten
 from eventyay.common.forms.renderers import InlineFormRenderer
 from eventyay.common.forms.widgets import (
     EnhancedSelect,
+    EnhancedSelectMultiple,
     RichTextWidget,
     SearchInput,
     SelectMultipleWithCount,
 )
+from eventyay.helpers.image_optimize import optimize_uploaded_image
 from eventyay.common.text.phrases import phrases
 from eventyay.common.utils.language import localize_event_text
 from eventyay.common.views.mixins import Filterable
@@ -224,6 +230,22 @@ class InfoForm(
             if key.startswith('question_'):
                 self.save_questions(key, value)
         return result
+
+    def clean_image(self):
+        image = self.cleaned_data.get('image')
+        if image and 'image' in self.files:
+            try:
+                result = optimize_uploaded_image(image, 'image', None)
+                base_name, _ = os.path.splitext(image.name)
+                image = SimpleUploadedFile(
+                    f"{base_name}.{result.optimized_ext}",
+                    result.optimized.read(),
+                    content_type=f"image/{result.optimized_ext}"
+                )
+            except OSError:
+                logging.getLogger(__name__).exception("Failed to process submission image")
+                raise forms.ValidationError(_('Failed to process image.'))
+        return image
 
     def clean(self):
         cleaned_data = super().clean()

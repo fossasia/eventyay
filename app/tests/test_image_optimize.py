@@ -11,8 +11,8 @@ from eventyay.helpers.image_optimize import (
 )
 
 
-def _create_test_image(width: int, height: int, mode: str = 'RGB', format: str = 'JPEG') -> SimpleUploadedFile:
-    img = Image.new(mode, (width, height), color='red')
+def _create_test_image(width: int, height: int, mode: str = 'RGB', format: str = 'JPEG', color='red') -> SimpleUploadedFile:
+    img = Image.new(mode, (width, height), color=color)
     buf = BytesIO()
     img.save(buf, format=format)
     buf.seek(0)
@@ -46,17 +46,76 @@ def test_optimize_uploaded_image_resizes(setting_key):
     assert orig_img.size == (orig_w, orig_h)
 
     # Extensions
-    assert result.optimized_ext == 'jpg'
+    assert result.optimized_ext == 'webp'
     assert result.original_ext == 'jpeg'
 
 
-def test_optimize_uploaded_image_keeps_png_with_alpha():
-    upload = _create_test_image(800, 600, mode='RGBA', format='PNG')
+def test_optimize_uploaded_image_preserves_alpha_in_webp():
+    img = Image.new('RGBA', (800, 600), color=(255, 0, 0, 255))
+    # Make top left corner partially transparent and next pixel fully transparent
+    img.putpixel((0, 0), (0, 255, 0, 128))
+    img.putpixel((1, 1), (0, 0, 255, 0))
+    
+    buf = BytesIO()
+    img.save(buf, format='PNG')
+    buf.seek(0)
+    upload = SimpleUploadedFile(
+        name='test.png',
+        content=buf.read(),
+        content_type='image/png',
+    )
+    
     result = optimize_uploaded_image(upload, 'event_logo_image')
 
     opt_img = Image.open(result.optimized)
-    assert opt_img.format == 'PNG'
-    assert result.optimized_ext == 'png'
+    assert opt_img.format == 'WEBP'
+    assert result.optimized_ext == 'webp'
+    
+    opt_img_rgba = opt_img.convert('RGBA')
+    pixel_partial = opt_img_rgba.getpixel((0, 0))
+    pixel_full = opt_img_rgba.getpixel((1, 1))
+    
+    # WebP lossy encoding might slightly shift alpha values, but they should be close
+    assert 100 < pixel_partial[3] < 150
+    assert 0 <= pixel_full[3] < 10
+
+
+@pytest.mark.parametrize("mode,color_bg,color_fg,transparency_val", [
+    ('P', 0, 1, 0),
+    ('L', 0, 255, 0),
+    ('RGB', (255, 0, 0), (0, 255, 0), (255, 0, 0)),
+])
+def test_optimize_uploaded_image_preserves_metadata_transparency(mode, color_bg, color_fg, transparency_val):
+    # Create an image with metadata transparency
+    img = Image.new(mode, (800, 600), color=color_bg)
+    if mode == 'P':
+        img.putpalette([255, 0, 0, 0, 255, 0])  # index 0 is red, index 1 is green
+    img.putpixel((1, 1), color_fg)
+    
+    buf = BytesIO()
+    # Save with transparency_val as transparent
+    img.save(buf, format='PNG', transparency=transparency_val)
+    buf.seek(0)
+    
+    upload = SimpleUploadedFile(
+        name='test_palette.png',
+        content=buf.read(),
+        content_type='image/png',
+    )
+    
+    result = optimize_uploaded_image(upload, 'event_logo_image')
+    opt_img = Image.open(result.optimized)
+    
+    assert opt_img.format == 'WEBP'
+    assert result.optimized_ext == 'webp'
+    
+    opt_img_rgba = opt_img.convert('RGBA')
+    pixel_transparent = opt_img_rgba.getpixel((0, 0))
+    pixel_opaque = opt_img_rgba.getpixel((1, 1))
+    
+    # Check that transparency survived in WebP
+    assert pixel_transparent[3] == 0
+    assert pixel_opaque[3] == 255
 
 
 def test_optimize_uploaded_image_converts_bmp_to_jpg():
@@ -65,8 +124,8 @@ def test_optimize_uploaded_image_converts_bmp_to_jpg():
     result = optimize_uploaded_image(upload, 'logo_image')
 
     opt_img = Image.open(result.optimized)
-    assert opt_img.format == 'JPEG'
-    assert result.optimized_ext == 'jpg'
+    assert opt_img.format == 'WEBP'
+    assert result.optimized_ext == 'webp'
     assert result.original_ext == 'bmp'
 
 
