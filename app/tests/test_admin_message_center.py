@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 from django.contrib.contenttypes.models import ContentType
 from django.utils.timezone import now
@@ -454,3 +456,69 @@ def test_delete_action_creates_log_entry(draft_mail, admin_user):
         data='{}',
     )
     assert LogEntry.objects.filter(action_type='eventyay.admin.mail.deleted').exists()
+
+
+@pytest.fixture
+def admin_client(client, admin_user):
+    client.force_login(admin_user)
+    admin_user.staffsession_set.create(date_start=now(), session_key=client.session.session_key)
+    return client
+
+
+def _compose_data(**overrides):
+    data = {
+        'action': 'test',
+        'recipient_group': '',
+        'subject': 'Platform update',
+        'message_0': '<p>Hello {user_name}</p>',
+        'test_email': 'tester@example.com',
+        'delivery_mode': 'now',
+    }
+    data.update(overrides)
+    return data
+
+
+@pytest.mark.django_db
+def test_send_test_email_without_recipient_group(admin_client):
+    with patch('eventyay.control.views.admin_messages.mail_send_task') as task:
+        response = admin_client.post('/admin/messages/compose/', data=_compose_data())
+    assert response.status_code == 200
+    assert not response.context['form'].errors
+    task.apply_async.assert_called_once()
+    assert task.apply_async.call_args.kwargs['kwargs']['to'] == ['tester@example.com']
+    assert 'Test email sent successfully to tester@example.com.' in response.content.decode()
+    assert not AdminEmailQueue.objects.exists()
+    assert response.context['form'].fields['recipient_group'].required
+
+
+@pytest.mark.django_db
+def test_send_test_email_ignores_delivery_schedule(admin_client):
+    with patch('eventyay.control.views.admin_messages.mail_send_task') as task:
+        response = admin_client.post('/admin/messages/compose/', data=_compose_data(delivery_mode='later'))
+    assert not response.context['form'].errors
+    task.apply_async.assert_called_once()
+
+
+@pytest.mark.django_db
+def test_send_test_email_requires_test_address(admin_client):
+    with patch('eventyay.control.views.admin_messages.mail_send_task') as task:
+        response = admin_client.post('/admin/messages/compose/', data=_compose_data(test_email=''))
+    form = response.context['form']
+    assert form.errors['test_email'] == ['Please enter a test email address.']
+    assert 'recipient_group' not in form.errors
+    task.apply_async.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_send_test_email_still_requires_content(admin_client):
+    with patch('eventyay.control.views.admin_messages.mail_send_task') as task:
+        response = admin_client.post('/admin/messages/compose/', data=_compose_data(subject=''))
+    assert 'subject' in response.context['form'].errors
+    task.apply_async.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_send_still_requires_recipient_group(admin_client):
+    response = admin_client.post('/admin/messages/compose/', data=_compose_data(action='send'))
+    assert 'recipient_group' in response.context['form'].errors
+    assert not AdminEmailQueue.objects.exists()

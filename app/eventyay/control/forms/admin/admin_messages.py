@@ -338,8 +338,9 @@ class AdminComposeForm(ScheduledAtValidationMixin, forms.Form):
         help_text=_('If checked, the email will be sent immediately instead of being added to the outbox.'),
     )
 
-    def __init__(self, *args, draft_save: bool = False, **kwargs):
+    def __init__(self, *args, draft_save: bool = False, test_send: bool = False, **kwargs):
         self.draft_save = draft_save
+        self.test_send = test_send
         super().__init__(*args, **kwargs)
 
         lang_choices = [('', _('All'))]
@@ -393,8 +394,23 @@ class AdminComposeForm(ScheduledAtValidationMixin, forms.Form):
             self.fields['subject'].required = False
             self.fields['message'].required = False
 
+        if test_send:
+            # A test email only goes to the test address, so the audience and delivery settings do not apply.
+            self.fields['recipient_group'].required = False
+            self.fields['test_email'].required = True
+            self.fields['test_email'].error_messages['required'] = _('Please enter a test email address.')
+
+    def clean_scheduled_at(self):
+        if self.test_send:
+            return None
+        return super().clean_scheduled_at()
+
     def clean(self):
         cleaned = super().clean()
+        if self.test_send:
+            # Only skipped while validating, so the page shown afterwards still marks it as required.
+            self.fields['recipient_group'].required = True
+            return cleaned
         if cleaned is None:
             return cleaned
 

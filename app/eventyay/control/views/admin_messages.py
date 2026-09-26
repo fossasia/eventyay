@@ -601,6 +601,7 @@ class AdminMessageComposeView(AdministratorPermissionRequiredMixin, FormView):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['draft_save'] = self.request.POST.get('action') == 'draft'
+        kwargs['test_send'] = self.request.POST.get('action') == 'test'
         return kwargs
 
     def form_invalid(self, form):
@@ -685,11 +686,7 @@ class AdminMessageComposeView(AdministratorPermissionRequiredMixin, FormView):
         filters = _extract_filter_dict(cd)
 
         if action == 'test':
-            test_email = cd.get('test_email')
-            if not test_email:
-                form.add_error('test_email', _('Please enter a test email address.'))
-                return self.form_invalid(form)
-            return self._send_test_email(form, test_email)
+            return self._send_test_email(form, cd['test_email'])
 
         if action == 'preview':
             recipients, _skipped = resolve_admin_recipients(filters)
