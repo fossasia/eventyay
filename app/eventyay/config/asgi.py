@@ -20,6 +20,11 @@ from django.core.asgi import get_asgi_application
 
 django_asgi_app = get_asgi_application()
 
+from eventyay.config.secret_key import ensure_secret_key_is_private  # noqa: E402
+
+
+ensure_secret_key_is_private()
+
 # TODO: We shouldn't need to push down these imports after get_asgi_application.
 
 from channels.auth import AuthMiddlewareStack
