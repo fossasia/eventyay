@@ -195,16 +195,13 @@ class ScheduleToggleView(EventPermissionRequired, View):
         event.save(update_fields=['feature_flags'])
         log_event('video', 'video.feature_flag', OUTCOME_SUCCESS, event_id=event.pk, flag_name='show_schedule')
 
-    def get(self, request, *args, **kwargs):
-        return redirect(self.request.event.orga_urls.schedule)
-
     def post(self, request, *args, **kwargs):
-        is_public = not self.request.event.get_feature_flag('show_schedule')
-        self._set_schedule_public(self.request.event, is_public)
+        is_public = not request.event.get_feature_flag('show_schedule')
+        self._set_schedule_public(request.event, is_public)
         if is_public:
-            messages.success(self.request, _('The schedule is now public.'))
+            messages.success(request, _('The schedule is now public.'))
         else:
-            messages.success(self.request, _('The public schedule has been unpublished.'))
+            messages.success(request, _('The public schedule has been unpublished.'))
         # Trigger tickets to hidden/unhidden schedule menu
         try:
             from eventyay.orga.tasks import trigger_public_schedule
@@ -212,9 +209,9 @@ class ScheduleToggleView(EventPermissionRequired, View):
             trigger_public_schedule.apply_async(
                 kwargs={
                     'is_show_schedule': is_public,
-                    'event_slug': self.request.event.slug,
-                    'organiser_slug': self.request.event.organizer.slug,
-                    'user_email': self.request.user.email,
+                    'event_slug': request.event.slug,
+                    'organiser_slug': request.event.organizer.slug,
+                    'user_email': request.user.email,
                 },
                 ignore_result=True,
             )
@@ -224,7 +221,7 @@ class ScheduleToggleView(EventPermissionRequired, View):
         except Exception:
             log_event('talk', 'connection.schedule_public', OUTCOME_FAILURE, error_code='enqueue_failed', event_id=getattr(self.request.event, 'pk', None), backend='tickets_api')
             logger.exception('Unexpected error enqueueing schedule visibility sync')
-        return redirect(self.request.event.orga_urls.schedule)
+        return redirect(request.event.orga_urls.schedule)
 
 
 class ScheduleResendMailsView(EventPermissionRequired, View):
