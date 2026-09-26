@@ -13,17 +13,28 @@
     {% include 'common/fragment_nav.html' %}
 {% endblock header_tabs %}
 
+{% block page_heading %}
+    {% has_event_perm "base.update_event" request.user request request.event as can_edit_cfp %}
+    <div class="d-flex align-items-start">
+        {% if request.event.cfp.is_open or access_code.is_valid %}
+            {% translate 'Call for Speakers' as page_heading %}
+        {% else %}
+            {% translate 'Call for Speakers (Closed)' as page_heading %}
+        {% endif %}
+        {% include 'common/includes/page_heading.html' %}
+        {% if can_edit_cfp %}
+            {% orga_edit_link request.event.cfp.urls.text %}
+        {% endif %}
+    </div>
+    {% with headline=request.event.cfp.headline|event_localize %}
+        {% if headline %}<p class="page-lede">{{ headline }}</p>{% endif %}
+    {% endwith %}
+{% endblock page_heading %}
+
 {% block content %}
     {% with cfp=request.event.cfp %}
         {% can_view_featured_sessions_public request.event as can_view_featured_submissions %}
-        {% has_event_perm "base.update_event" request.user request request.event as can_edit_cfp %}
-        <div class="d-flex align-items-start">
-            <h2 class="content-header">{{ cfp.headline|event_localize|default:"" }}</h2>
-            {% if can_edit_cfp %}
-                {% orga_edit_link request.event.cfp.urls.text %}
-            {% endif %}
-        </div>
-        {{ cfp.text|event_localize|rich_text }}
+        <div class="page-rich-text">{{ cfp.text|event_localize|rich_text_without_title }}</div>
         {% if request.event.cfp.settings.show_deadline and request.event.cfp.max_deadline %}
             <p>
                 <strong>

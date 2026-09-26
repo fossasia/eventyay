@@ -106,6 +106,17 @@ def get_ui_language_options(codes=None) -> list[dict]:
     return options
 
 
+def get_locale_switcher_label(event_language: str | None, ui_language: str | None) -> str:
+    """Show one abbreviation when the event and UI languages abbreviate the same (``en``/``en-gb`` -> ``En``)."""
+    event_abbreviation = (event_language or '')[:2].title()
+    ui_abbreviation = (ui_language or '')[:2].title()
+    if not event_abbreviation:
+        return ui_abbreviation
+    if not ui_abbreviation or event_abbreviation == ui_abbreviation:
+        return event_abbreviation
+    return f'{event_abbreviation}/{ui_abbreviation}'
+
+
 @contextlib.contextmanager
 def language(language_code):
     previous_language = get_language()

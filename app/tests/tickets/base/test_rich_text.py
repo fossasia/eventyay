@@ -10,6 +10,7 @@ from eventyay.base.templatetags.rich_text import (
     markdown_compile_email,
     render_markdown_abslinks,
     rich_text_snippet,
+    rich_text_without_title,
 )
 
 
@@ -126,3 +127,44 @@ def test_linkify_abs(link):
     assert rich_text_snippet(input) == output
     assert render_markdown_abslinks(input) == f'<p>{output}</p>'
     assert markdown_compile_email(input) == f'<p>{output}</p>'
+
+
+@pytest.mark.parametrize(
+    'text,expected',
+    [
+        (
+            '# Call for Proposals\n\nSend us your talk.\n\n## Topics\n\nAnything.',
+            '<p>Send us your talk.</p>\n<h2>Topics</h2>\n<p>Anything.</p>',
+        ),
+        (
+            'Call for Proposals\n===\n\nSend us your talk.',
+            '<p>Send us your talk.</p>',
+        ),
+        (
+            'Send us your talk.\n\n## Topics\n\nAnything.',
+            '<p>Send us your talk.</p>\n<h2>Topics</h2>\n<p>Anything.</p>',
+        ),
+        (
+            '# Only heading',
+            '',
+        ),
+        (
+            '',
+            '',
+        ),
+        (
+            '## Topics\n\nAnything.',
+            '<h2>Topics</h2>\n<p>Anything.</p>',
+        ),
+        (
+            'Topics\n---\n\nAnything.',
+            '<h2>Topics</h2>\n<p>Anything.</p>',
+        ),
+        (
+            '### Details',
+            '<h3>Details</h3>',
+        ),
+    ],
+)
+def test_rich_text_without_title_drops_leading_heading(text, expected):
+    assert str(rich_text_without_title(text)) == expected

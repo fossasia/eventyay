@@ -1,4 +1,5 @@
 import pytest
+from bs4 import BeautifulSoup
 from django_scopes import scope
 
 
@@ -163,5 +164,19 @@ def test_featured_page_applies_custom_background_color(client, event, confirmed_
     css_response = client.get(event.urls.settings_css + '?bg=%23bd5454')
     assert css_response.status_code == 200
     assert '--color-bg: #bd5454;' in css_response.text
+
+
+@pytest.mark.django_db
+def test_featured_page_has_single_page_title_heading(client, event):
+    with scope(event=event):
+        event.feature_flags['show_featured'] = 'always'
+        event.save()
+
+    response = client.get(event.urls.featured, follow=True)
+    assert response.status_code == 200
+    doc = BeautifulSoup(response.content, 'lxml')
+    headings = doc.select('main h1.page-title')
+    assert len(headings) == 1
+    assert headings[0].get_text(strip=True) == 'Featured'
 
 

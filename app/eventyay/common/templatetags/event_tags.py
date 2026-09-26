@@ -11,6 +11,7 @@ from django_scopes import scopes_disabled
 
 from eventyay.base.meetup import is_meetup_event
 from eventyay.base.models import Order, OrderPosition
+from eventyay.common.language import get_locale_switcher_label
 from eventyay.common.urls import is_http_url
 from eventyay.common.permissions import is_admin_mode_active, user_has_cfp_submissions
 from eventyay.talk_rules.agenda import (
@@ -39,6 +40,11 @@ def is_meetup(context, event=None):
 @register.filter
 def get_feature_flag(event, feature_flag: str):
     return event.get_feature_flag(feature_flag)
+
+
+@register.simple_tag
+def locale_switcher_label(event_language, ui_language) -> str:
+    return get_locale_switcher_label(event_language, ui_language)
 
 
 @register.simple_tag(takes_context=True)

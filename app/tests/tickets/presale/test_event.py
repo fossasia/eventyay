@@ -4,6 +4,7 @@ from decimal import Decimal
 from json import loads
 from unittest.mock import patch
 
+from bs4 import BeautifulSoup
 from django.conf import settings
 from django.core import mail
 from django.core.exceptions import ValidationError
@@ -1742,3 +1743,41 @@ class ContactOrganizerTest(EventTestMixin, SoupTest):
         self.assertEqual(resp.status_code, 429)
         self.assertFalse(resp.json()['success'])
 
+
+class PageHeadingTest(EventTestMixin, SoupTest):
+    def test_info_page_has_single_page_title_heading(self):
+        doc = self.get_doc('/%s/%s/' % (self.orga.slug, self.event.slug))
+        headings = doc.select('main h1.page-title')
+        self.assertEqual(len(headings), 1)
+        self.assertEqual(headings[0].get_text(strip=True), 'Info')
+
+    def test_info_page_no_longer_duplicates_event_name_as_content_header(self):
+        doc = self.get_doc('/%s/%s/' % (self.orga.slug, self.event.slug))
+        self.assertEqual(len(doc.select('main h2.content-header')), 0)
+
+    def test_subevent_landing_page_does_not_duplicate_event_name_as_content_header(self):
+        self.event.has_subevents = True
+        self.event.save()
+        self.event.settings.set('event_logo_image', 'https://example.com/logo.png')
+        self.event.settings.set('logo_show_title', True)
+        doc = self.get_doc('/%s/%s/' % (self.orga.slug, self.event.slug))
+        self.assertEqual(len(doc.select('main h1.page-title')), 1)
+        self.assertEqual(len(doc.select('main h2.content-header')), 0)
+
+    def test_meetup_event_info_page_heading_is_details(self):
+        self.event.settings.set('event_type', 'meetup')
+        doc = self.get_doc('/%s/%s/' % (self.orga.slug, self.event.slug))
+        headings = doc.select('main h1.page-title')
+        self.assertEqual(len(headings), 1)
+        self.assertEqual(headings[0].get_text(strip=True), 'Details')
+
+    def test_tickets_section_has_heading_with_menu_label(self):
+        self.event.settings.set('menu_label_tickets', 'Bare Entry')
+        doc = self.get_doc('/%s/%s/' % (self.orga.slug, self.event.slug))
+        tickets_headings = [h2 for h2 in doc.select('main h2') if h2.get_text(strip=True) == 'Bare Entry']
+        self.assertEqual(len(tickets_headings), 1)
+
+    def test_login_page_has_no_page_title_heading(self):
+        resp = self.client.get('/login/')
+        doc = BeautifulSoup(resp.content, 'lxml')
+        self.assertEqual(len(doc.select('h1.page-title')), 0)

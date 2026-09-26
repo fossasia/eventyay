@@ -13,6 +13,7 @@
 {% load vite %}
 {% load presale_locale %}
 {% load event_tags %}
+{% load nav_tags %}
 {% load staff_session %}
 
 {% block custom_header %}
@@ -36,6 +37,10 @@
     {% endif %}
 {% endblock %}
 {% block testmode_alert %}{% endblock testmode_alert %}
+{% block page_heading %}
+    {% translate 'Info' as page_heading %}
+    {% include 'common/includes/page_heading.html' %}
+{% endblock page_heading %}
 {% block content %}
     {% if subevent %}
         {% if cart_namespace %}
@@ -127,11 +132,6 @@
 
     {% if request.event.has_subevents %}
         {% if not subevent %}
-            {% if event_logo_image and request.event.settings.logo_show_title %}
-                <h2 class="content-header">
-                    <a class="event-public-text-link" href="{{ event_public_presale_home }}">{{ event.name|event_localize }}</a>
-                </h2>
-            {% endif %}
             {% if frontpage_text and not cart_namespace %}
                 <div>
                     {{ frontpage_text|event_localize|rich_text }}
@@ -188,18 +188,6 @@
             {% endif %}
         {% endif %}
     {% else %}
-        {% if event_logo_image and request.event.settings.logo_show_title %}
-            <h2 class="content-header">
-                <a class="event-public-text-link" href="{{ event_public_presale_home }}">{{ event.name|event_localize }}</a>
-                <a class="event-public-text-link" href="{{ event_public_presale_home }}"><small>{{ event.get_date_range_display }}</small></a>
-            </h2>
-        {% endif %}
-        {% if not event_logo_image %}
-            <h2 class="content-header">
-                <a class="event-public-text-link" href="{{ event_public_presale_home }}">{{ event.name|event_localize }}</a>
-                <a class="event-public-text-link" href="{{ event_public_presale_home }}"><small>{{ event.get_date_range_display }}</small></a>
-            </h2>
-        {% endif %}
         {% if frontpage_text and not cart_namespace %}
             <div>
                 {{ frontpage_text|event_localize|rich_text }}
@@ -274,6 +262,8 @@
     {% if subevent or not event.has_subevents %}
         {% include "pretixpresale/event/fragment_testmode_alert.html" %}
         <div id="tickets"></div>
+        {% get_localized_menu_label request.event 'menu_label_tickets' as tickets_label %}
+        <h2 class="page-section-title">{{ tickets_label }}</h2>
         {% if not ev.presale_is_running %}
             <div class="alert alert-info">
                 {% if ev.presale_has_ended %}

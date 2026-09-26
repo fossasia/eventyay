@@ -2,6 +2,7 @@ import textwrap
 from urllib.parse import quote
 
 import pytest
+from bs4 import BeautifulSoup
 from django.urls import reverse
 from django_scopes import scope
 
@@ -479,3 +480,49 @@ def test_orga_can_export_featured_unpublished_schedule(orga_client, event):
         url = reverse('agenda:export', kwargs={'event': event.slug}) + '?featured=true'
     response = orga_client.get(url, follow=True)
     assert response.status_code == 200
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures('other_slot')
+def test_schedule_page_has_single_page_title_heading(client, event, slot):
+    with scope(event=event):
+        event.talks_published = True
+        event.feature_flags['show_schedule'] = True
+        event.save(update_fields=['talks_published', 'feature_flags'])
+    response = client.get(event.urls.schedule, follow=True, HTTP_ACCEPT='text/html')
+    assert response.status_code == 200
+    doc = BeautifulSoup(response.content, 'lxml')
+    headings = doc.select('main h1.page-title')
+    assert len(headings) == 1
+    assert headings[0].get_text(strip=True) == 'Schedule'
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures('other_slot')
+def test_schedule_nojs_page_has_single_page_title_heading(client, event, slot):
+    with scope(event=event):
+        event.talks_published = True
+        event.feature_flags['show_schedule'] = True
+        event.save(update_fields=['talks_published', 'feature_flags'])
+    response = client.get(event.urls.schedule_nojs, follow=True, HTTP_ACCEPT='text/html')
+    assert response.status_code == 200
+    doc = BeautifulSoup(response.content, 'lxml')
+    headings = doc.select('main h1.page-title')
+    assert len(headings) == 1
+    assert headings[0].get_text(strip=True) == 'Schedule'
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures('slot', 'other_slot')
+def test_speakers_page_has_single_page_title_heading(client, event, speaker):
+    with scope(event=event):
+        event.talks_published = True
+        event.feature_flags['show_schedule'] = True
+        event.save(update_fields=['talks_published', 'feature_flags'])
+    url = event.urls.speakers
+    response = client.get(url, follow=True)
+    assert response.status_code == 200
+    doc = BeautifulSoup(response.content, 'lxml')
+    headings = doc.select('main h1.page-title')
+    assert len(headings) == 1
+    assert headings[0].get_text(strip=True) == 'Speakers'

@@ -359,6 +359,14 @@ def rich_text_snippet(text: str):
 
 
 @register.filter
+def rich_text_without_title(text: str):
+    """Render rich text without a leading h1, for pages that already show their own title."""
+    rendered = str(render_markdown(text, cleaner=CLEANER))
+    match = re.match(r'\s*<h1\b[^>]*>.*?</h1>\s*', rendered, flags=re.DOTALL | re.IGNORECASE)
+    return mark_safe(rendered[match.end():] if match else rendered)
+
+
+@register.filter
 def html_to_markdown_filter(html_text: str) -> str:
     """Convert HTML to markdown format."""
     return html_text if not html_text else html_to_markdown(html_text)

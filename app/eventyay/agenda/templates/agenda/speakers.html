@@ -11,6 +11,10 @@
 
 {% block container_width %} main-schedule{% endblock container_width %}
 
+{% block page_heading %}
+{% include 'common/includes/page_heading.html' with page_heading=phrases.schedule.speakers|default:_("Speakers") %}
+{% endblock page_heading %}
+
 {% block agenda_content %}
 {% html_signal "eventyay.agenda.signals.html_above_speakers_list" sender=request.event request=request %}
 <div>

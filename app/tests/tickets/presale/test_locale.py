@@ -1,3 +1,4 @@
+from bs4 import BeautifulSoup
 from django.conf import settings
 from django.urls import reverse
 from django.test import Client, TestCase
@@ -18,6 +19,55 @@ class LocaleTest(TestCase):
         self.client.get('/locale/set?locale=de')
         response = self.client.get('/control/login')
         assert response['Content-Language'] == 'de'
+
+
+class LocaleSwitcherLabelTest(TestCase):
+    def setUp(self):
+        super().setUp()
+        self.organizer = Organizer.objects.create(name='Switcherorg', slug='switcherorg')
+
+    def _get_switcher(self, event):
+        response = self.client.get('/%s/%s/' % (event.organizer.slug, event.slug))
+        self.assertEqual(response.status_code, 200)
+        doc = BeautifulSoup(response.rendered_content, 'lxml')
+        summary = doc.select_one('#locale-dropdown-label summary')
+        self.assertIsNotNone(summary)
+        span = summary.select_one('span.hidden-xs')
+        return summary, span
+
+    def test_default_en_event_shows_single_label(self):
+        """A default en-only event with an en UI shows 'En', not 'En/En'."""
+        event = Event.objects.create(
+            organizer=self.organizer,
+            name='Default Locale Event',
+            slug='defaultlocale',
+            date_from=now(),
+            live=True,
+        )
+        summary, span = self._get_switcher(event)
+        self.assertEqual(span.get_text(strip=True), 'En')
+        self.assertEqual(summary.get('aria-label'), 'Language - En')
+
+    def test_unlinked_de_event_en_ui_shows_dual_label(self):
+        """When event and UI languages differ, the dual label stays."""
+        event = Event.objects.create(
+            organizer=self.organizer,
+            name='Unlinked Locale Event',
+            slug='unlinkedlocale',
+            date_from=now(),
+            live=True,
+            locale='de',
+            locale_array='de,en',
+        )
+        event.settings.set('locales', ['de', 'en'])
+        event.settings.set('locale', 'de')
+        enforce_cookie = get_event_enforce_ui_language_cookie_name(event.slug, self.organizer.slug)
+        self.client.cookies[enforce_cookie] = '0'
+        self.client.cookies[settings.LANGUAGE_COOKIE_NAME] = 'en'
+
+        summary, span = self._get_switcher(event)
+        self.assertEqual(span.get_text(strip=True), 'De/En')
+        self.assertEqual(summary.get('aria-label'), 'Language - De/En')
 
 
 class EventLanguageEnforceDefaultTest(TestCase):
@@ -102,7 +152,7 @@ class EventLanguageEnforceDefaultTest(TestCase):
         self.assertTrue(response.wsgi_request.event_language_enforce_ui)
         self.assertEqual(response.wsgi_request.event_language, 'gu')
         self.assertEqual(response['Content-Language'], 'da')
-        self.assertContains(response, 'class="content-header">')
+        self.assertContains(response, 'class="event-title event-public-text-link"')
         self.assertContains(response, 'Gujarati Event Name</a>')
 
     def test_explicit_enforce_off_is_respected(self):

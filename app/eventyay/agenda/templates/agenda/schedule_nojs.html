@@ -12,6 +12,10 @@
     {% endcompress %}
 {% endblock stylesheets %}
 
+{% block page_heading %}
+    {% include 'common/includes/page_heading.html' with page_heading=phrases.schedule.schedule|default:_("Schedule") %}
+{% endblock page_heading %}
+
 {% block agenda_content %}
     <div id="fahrplan" class="list">
 

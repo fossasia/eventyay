@@ -38,6 +38,11 @@
 
 {% block testmode_alert %}{% endblock testmode_alert %}
 
+{% block page_heading %}
+    {% translate 'Details' as page_heading %}
+    {% include 'common/includes/page_heading.html' %}
+{% endblock page_heading %}
+
 {% block content %}
     {% autoescape off %}
         <script type="application/ld+json">

@@ -17,6 +17,10 @@
 {% include "common/fragment_header_user.html" with current_event=request.event nav_context="agenda" %}
 {% endblock header_right %}
 
+{% block page_heading %}
+{% include 'common/includes/page_heading.html' with page_heading=phrases.schedule.schedule|default:_("Schedule") %}
+{% endblock page_heading %}
+
 {% block agenda_content %}
 {% html_signal "eventyay.agenda.signals.html_above_schedule_pages" sender=request.event request=request %}
 <div id="fahrplan" class="{% if show_talk_list %}list{% else %}grid{% endif %}">

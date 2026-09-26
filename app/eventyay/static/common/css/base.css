@@ -71,6 +71,39 @@ h2.content-header {
   }
 }
 
+/* px, not rem: presale pages load Bootstrap's 10px root font size, agenda and CfP pages do not. */
+.page-title {
+  margin-top: 0;
+  padding-top: 0;
+  margin-bottom: 15px;
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.page-section-title {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.page-lede {
+  margin-top: -5px;
+  margin-bottom: 15px;
+  font-size: 17px;
+  color: var(--color-text-lighter);
+}
+
+.page-rich-text :is(h1, h2, h3, h4, h5, h6) {
+  font-size: 24px;
+}
+
 #main-card > main > h1:first-child,
 #main-card > main > h2:first-child,
 #main-card > main > main > h1:first-child,

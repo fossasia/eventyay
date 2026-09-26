@@ -18,9 +18,15 @@
 {% include "common/fragment_header_user.html" with current_event=request.event nav_context="agenda" %}
 {% endblock header_right %}
 
+{% block page_heading %}
+<div class="featured-page-heading">
+    {% translate 'Featured' as page_heading %}
+    {% include 'common/includes/page_heading.html' %}
+</div>
+{% endblock page_heading %}
+
 {% block agenda_content %}
 <div class="featured-page">
-    <h3 class="talk-title featured-page-title">{% translate "Featured Sessions" %}</h3>
     {% if has_featured_submissions %}
         <p>
             {% blocktranslate trimmed %}

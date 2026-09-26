@@ -23,12 +23,11 @@ body.page-agenda .featured-page {
   --featured-intro-size: 0.9375rem;
   --featured-body-size: 0.9375rem;
   --featured-meta-size: 0.875rem;
-  padding: var(--page-inset-block-start) var(--page-inset-inline) var(--page-inset-block-end);
+  padding: 0 var(--page-inset-inline) var(--page-inset-block-end);
 }
 
-body.page-agenda .featured-page > .talk-title.featured-page-title {
-  margin-top: 0;
-  margin-bottom: 0.5rem;
+body.page-agenda .featured-page-heading {
+  padding: var(--page-inset-block-start) var(--page-inset-inline) 0;
 }
 
 body.page-agenda .featured-page .featured-custom-intro {
