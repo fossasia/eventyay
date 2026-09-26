@@ -121,6 +121,7 @@
 </template>
 
 <script>
+import 'webrtc-adapter'
 import JanusCall from 'components/JanusCall'
 import JanusChannelCall from 'components/JanusChannelCall'
 import JitsiCallFrame from 'components/JitsiCallFrame'
