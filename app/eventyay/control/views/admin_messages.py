@@ -957,6 +957,41 @@ class AdminMessageSentView(AdministratorPermissionRequiredMixin, PaginationMixin
 
 PLACEHOLDER_PATTERN = re.compile(r'\{(\w+)\}')
 
+TEMPLATE_PREVIEW_CONTEXT = {
+    **SAMPLE_CONTEXT,
+    'platform_url': 'https://eventyay.com',
+    'account_url': 'https://eventyay.com/common/account/',
+    'activate_url': 'https://eventyay.com/accounts/confirm-email/demo-key/',
+    'changes': '- Email address changed',
+    'code': 'ABC12',
+    'confirmation_link': 'https://eventyay.com/fossasia/summit-2026/me/submissions/ABC12/confirm',
+    'detail': 'A new order has been placed.',
+    'disable_url': 'https://eventyay.com/common/account/notifications/off/',
+    'event': 'FOSSASIA Summit 2026',
+    'event_name': 'FOSSASIA Summit 2026',
+    'event_url': 'https://eventyay.com/fossasia/summit-2026/',
+    'expire_date': 'October 15, 2026',
+    'instance': 'eventyay',
+    'invitation_link': 'https://eventyay.com/invite/demo-token/',
+    'month': 'September',
+    'name': 'Jane Doe',
+    'organizer': 'FOSSASIA',
+    'payment_info': 'Please transfer the full amount to the bank account shown on your order page.',
+    'prefix': 'SUMMIT',
+    'proposal_title': 'Building Open Source Communities',
+    'proposal_url': 'https://eventyay.com/fossasia/summit-2026/me/submissions/ABC12/',
+    'questions': '- What is your T-shirt size?',
+    'settings_url': 'https://eventyay.com/common/account/notifications/',
+    'speaker_schedule_new': 'Building Open Source Communities: Saturday, 10:00, Main Hall',
+    'speakers': 'Jane Doe',
+    'submission_title': 'Building Open Source Communities',
+    'submission_url': 'https://eventyay.com/fossasia/summit-2026/me/submissions/ABC12/',
+    'team': 'Organisers',
+    'title': 'New order placed',
+    'total_with_currency': 'EUR 49.00',
+    'url': 'https://eventyay.com/fossasia/summit-2026/order/ABC12/',
+}
+
 
 class _PlaceholderUser:
     def __str__(self):
@@ -1064,7 +1099,8 @@ def get_platform_mail_templates() -> list[dict]:
         {'key': 'organiser-added-to-team', 'name': _('Organiser added to team'), 'category': _('Team'),
          'trigger': _('Existing user added to a team'), 'load': _organiser_invitation_mail(True)},
         {'key': 'event-team-invitation', 'name': _('Event team invitation'), 'category': _('Team'),
-         'trigger': _('Event team invitation sent'), 'load': _team_invite_mail},
+         'trigger': _('Event team invitation sent'), 'load': _team_invite_mail,
+         'preview': {'name': 'Program committee'}},
         {'key': 'platform-fee-notification', 'name': _('Platform fee notification'), 'category': _('Billing'),
          'trigger': _('Fee invoiced'), 'load': _monthly_invoice_mail},
         {'key': 'ticket-order-confirmation', 'name': _('Ticket order confirmation'), 'category': _('Ticketing'),
@@ -1089,6 +1125,7 @@ def get_platform_mail_templates() -> list[dict]:
     ])
     for template in templates:
         template.setdefault('recipient_type', _('User'))
+        template.setdefault('preview', {})
     return templates
 
 
@@ -1256,9 +1293,16 @@ class AdminMessagePreviewView(StaffMemberRequiredMixin, View):
         if not isinstance(raw_html, str):
             return JsonResponse({'html': ''}, status=400)
 
+        samples = SAMPLE_CONTEXT
+        template_key = request.GET.get('template')
+        if template_key:
+            template = next((t for t in get_platform_mail_templates() if t['key'] == template_key), None)
+            if template:
+                samples = {**TEMPLATE_PREVIEW_CONTEXT, **template['preview']}
+
         safe_html = sanitize_email_html(raw_html)
         preview_html = safe_html
-        for key, value in SAMPLE_CONTEXT.items():
+        for key, value in samples.items():
             preview_html = preview_html.replace('{' + key + '}', str(value))
 
         return JsonResponse({'html': AdminEmailQueue.make_html(preview_html)})

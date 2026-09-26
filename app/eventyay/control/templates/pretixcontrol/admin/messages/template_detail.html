@@ -78,7 +78,7 @@
         <label for='id_text_0'>{% translate "Body" %}</label>
         <div class='mail-editor-tabs'
              data-email-preview-wrapper
-             data-email-preview-url='{% url "eventyay_admin:admin.messages.preview" %}'>
+             data-email-preview-url='{% url "eventyay_admin:admin.messages.preview" %}?template={{ key|urlencode }}'>
           <div class='mail-editor-mode-tabs' role='tablist' aria-label='{% translate "Message view" %}'>
             <button type='button' class='mail-editor-mode-tab active'
                     role='tab' aria-selected='true' aria-controls='mail-message-edit'
