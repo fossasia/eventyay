@@ -17,7 +17,7 @@ from django.core.files import File
 from django.core.files.storage import default_storage
 from django.db import transaction
 from django.db.models.deletion import ProtectedError
-from django.db.models import Case, F, Max, Min, Prefetch, Q, Sum, When, IntegerField
+from django.db.models import Case, F, Max, Min, Prefetch, Q, Sum, When, IntegerField, Count
 from django.db.models.functions import Coalesce, Greatest
 from django.http import HttpRequest, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect
@@ -51,6 +51,7 @@ from eventyay.base.meetup import (
     provision_meetup_event,
 )
 from eventyay.base.models import Event, EventMetaValue, GlobalPluginConfig, Organizer, Quota
+from eventyay.base.models.submission import Submission, SpeakerRole
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.services.notifications import notify_organizer_followers
 from eventyay.base.models.cfp import default_fields
@@ -182,6 +183,56 @@ class EventList(PaginationMixin, ListView):
                     100,
                     (round(q.cached_availability_paid_orders / q.size * 100) if q.size > 0 else 100),
                 )
+                
+        page_event_ids = [e.pk for e in ctx['events']]
+        
+        with scope(event=page_event_ids):
+            submission_counts = list(
+                Submission.objects.filter(event_id__in=page_event_ids)
+                .values('event_id', 'state')
+                .annotate(count=Count('id'))
+            )
+            
+            speaker_counts = list(
+                SpeakerRole.objects.filter(submission__event_id__in=page_event_ids)
+                .values('submission__event_id', 'submission__state')
+                .annotate(count=Count('user_id', distinct=True))
+            )
+            
+            speaker_totals = list(
+                SpeakerRole.objects.filter(submission__event_id__in=page_event_ids)
+                .exclude(submission__state__in=['draft', 'deleted'])
+                .values('submission__event_id')
+                .annotate(count=Count('user_id', distinct=True))
+            )
+
+        for e in ctx['events']:
+            e.session_counts = {
+                'submitted': 0, 'accepted': 0, 'confirmed': 0, 
+                'pending': 0, 'rejected': 0, 'withdrawn': 0, 'canceled': 0
+            }
+            e.speaker_counts = {
+                'total': 0, 'accepted': 0, 'confirmed': 0, 
+                'pending': 0, 'rejected': 0, 'withdrawn': 0, 'canceled': 0
+            }
+        
+        events_by_id = {e.pk: e for e in ctx['events']}
+        
+        for sc in submission_counts:
+            event = events_by_id.get(sc['event_id'])
+            if event and sc['state'] in event.session_counts:
+                event.session_counts[sc['state']] += sc['count']
+
+        for spc in speaker_counts:
+            event = events_by_id.get(spc['submission__event_id'])
+            if event and spc['submission__state'] in event.speaker_counts:
+                event.speaker_counts[spc['submission__state']] += spc['count']
+
+        for st in speaker_totals:
+            event = events_by_id.get(st['submission__event_id'])
+            if event:
+                event.speaker_counts['total'] = st['count']
+
         ctx['event_series_creation_enabled'] = is_event_series_creation_enabled(self.request)
         ctx['meetup_creation_enabled'] = is_meetup_creation_enabled(self.request)
         return ctx

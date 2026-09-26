@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.db.models import F, Max, Min, Prefetch
+from django.db.models import Count, F, Max, Min, Prefetch
 from django.db.models.functions import Coalesce, Greatest
 from django.http import JsonResponse
 from django.utils.crypto import get_random_string
@@ -7,7 +7,9 @@ from django.utils.functional import cached_property
 from django.views import View
 from django.views.generic import ListView
 
-from eventyay.base.models import Event, EventMetaValue, Organizer, Quota
+from eventyay.base.models import Event, EventMetaValue, Organizer, Quota, Submission
+from eventyay.base.models.submission import SpeakerRole
+from django_scopes import scope
 from eventyay.base.services.quotas import QuotaAvailability
 from eventyay.control.forms.filter import EventFilterForm
 from eventyay.control.permissions import OrganizerPermissionRequiredMixin
@@ -83,6 +85,54 @@ class EventList(PaginationMixin, ListView):
                     100,
                     round(q.cached_availability_paid_orders / q.size * 100) if q.size > 0 else 100,
                 )
+                
+        page_event_ids = [e.pk for e in ctx['events']]
+        
+        submission_counts = (
+            Submission.objects.filter(event_id__in=page_event_ids)
+            .values('event_id', 'state')
+            .annotate(count=Count('id'))
+        )
+        
+        speaker_counts = (
+            SpeakerRole.objects.filter(submission__event_id__in=page_event_ids)
+            .values('submission__event_id', 'submission__state')
+            .annotate(count=Count('user_id', distinct=True))
+        )
+        
+        speaker_totals = (
+            SpeakerRole.objects.filter(submission__event_id__in=page_event_ids)
+            .values('submission__event_id')
+            .annotate(count=Count('user_id', distinct=True))
+        )
+
+        for e in ctx['events']:
+            e.session_counts = {
+                'submitted': 0, 'accepted': 0, 'confirmed': 0, 
+                'pending': 0, 'rejected': 0, 'withdrawn': 0, 'canceled': 0
+            }
+            e.speaker_counts = {
+                'total': 0, 'accepted': 0, 'confirmed': 0, 
+                'pending': 0, 'rejected': 0, 'withdrawn': 0, 'canceled': 0
+            }
+        
+        events_by_id = {e.pk: e for e in ctx['events']}
+        
+        for sc in submission_counts:
+            event = events_by_id.get(sc['event_id'])
+            if event and sc['state'] in event.session_counts:
+                event.session_counts[sc['state']] += sc['count']
+
+        for spc in speaker_counts:
+            event = events_by_id.get(spc['submission__event_id'])
+            if event and spc['submission__state'] in event.speaker_counts:
+                event.speaker_counts[spc['submission__state']] += spc['count']
+
+        for st in speaker_totals:
+            event = events_by_id.get(st['submission__event_id'])
+            if event:
+                event.speaker_counts['total'] = st['count']
+
         return ctx
 
     @cached_property

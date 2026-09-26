@@ -1,11 +1,13 @@
 {% extends "eventyay_common/base.html" %}
 {% load i18n %}
+{% load eventurl %}
 {% load static %}
 {% load urlreplace %}
 {% load bootstrap3 %}
 {% block title %}{% trans "Events management" %}{% endblock %}
 
 {% block custom_header %}
+    <link rel="stylesheet" href="{% static 'eventyay-common/css/events_overview.css' %}">
     {{ block.super }}
 {% endblock %}
 
@@ -27,6 +29,21 @@
         
         {% include "eventyay_common/includes/personal_empty_state.html" with icon="calendar" title=empty_title description=empty_description primary_url=create_event_url primary_label=empty_primary_label secondary_url=create_event_url|add:'?series=1' secondary_label=series_label tertiary_url=create_event_url|add:'?meetup=1' tertiary_label=meetup_label %}
     {% else %}
+        
+        <ul class="nav nav-tabs events-overview-tabs">
+            <li role="presentation" {% if filter_form.status.value == 'live' %}class="active"{% endif %}>
+                <a href="?{% url_replace request 'status' 'live' 'tab' 'live' %}">{% trans "Live" %}</a>
+            </li>
+            <li role="presentation" {% if filter_form.status.value == 'notlive' %}class="active"{% endif %}>
+                <a href="?{% url_replace request 'status' 'notlive' 'tab' 'notlive' %}">{% trans "Draft" %}</a>
+            </li>
+            <li role="presentation" {% if filter_form.status.value == 'date_past' %}class="active"{% endif %}>
+                <a href="?{% url_replace request 'status' 'date_past' 'tab' 'date_past' %}">{% trans "Past single events" %}</a>
+            </li>
+            <li role="presentation" {% if not filter_form.status.value or filter_form.status.value == '' %}class="active"{% endif %}>
+                <a href="?{% url_replace request 'status' '' 'tab' 'all' %}">{% trans "All" %}</a>
+            </li>
+        </ul>
         <div class="advanced-filter-search" data-advanced-filter-search>
             <form class="filter-form advanced-filter-search-form" action="" method="get">
                 <div class="advanced-filter-search-bar">
@@ -39,6 +56,7 @@
                             </button>
                         </span>
                     </div>
+                    
                     <div class="advanced-filter-field advanced-filter-field--inline">
                         {% bootstrap_field filter_form.status layout='inline' %}
                     </div>
@@ -58,7 +76,7 @@
                 </div>
             </form>
         </div>
-        <div data-ajax-results-region>
+        <div data-ajax-results-region class="events-table-wrapper">
             <p>
                 <a href='{% url "eventyay_common:events.add" %}' class="btn btn-default">
                     <span class="fa fa-plus"></span>
@@ -78,73 +96,76 @@
                 {% endif %}
             </p>
             <table class="table table-condensed table-hover events-table">
+                
                 <thead>
                 <tr>
-                <th>
+                <th style="width: 7%;">{% trans "Logo" %}</th>
+                <th style="width: 14%;">
                     {% trans "Event name" %}
+                    <a href="?{% url_replace request 'ordering' '-name' %}"><i class="fa fa-caret-down"></i></a>
+                    <a href="?{% url_replace request 'ordering' 'name' %}"><i class="fa fa-caret-up"></i></a>
                 </th>
-                <th>
-                    {% trans "Short form" %}
-                </th>
-                <th>
+                <th style="width: 14%;">
                     {% trans "Organizer" %}
                     <a href="?{% url_replace request 'ordering' '-organizer' %}"><i class="fa fa-caret-down"></i></a>
                     <a href="?{% url_replace request 'ordering' 'organizer' %}"><i class="fa fa-caret-up"></i></a>
                 </th>
-                <th>
+                <th style="width: 10%;">
                     {% trans "Start date" %}
                     <a href="?{% url_replace request 'ordering' '-date_from' %}"><i class="fa fa-caret-down"></i></a>
                     <a href="?{% url_replace request 'ordering' 'date_from' %}"><i class="fa fa-caret-up"></i></a>
-                    /
+                </th>
+                <th style="width: 10%;">
                     {% trans "End date" %}
                     <a href="?{% url_replace request 'ordering' '-date_to' %}"><i class="fa fa-caret-down"></i></a>
                     <a href="?{% url_replace request 'ordering' 'date_to' %}"><i class="fa fa-caret-up"></i></a>
                 </th>
-                <th>
-                    {% trans "Paid tickets per quota" %}
+                <th style="width: 10%;">
+                    {% trans "Paid tickets / quota" %}
                     <a href="?{% url_replace request 'ordering' '-total_quota' %}"><i class="fa fa-caret-down"></i></a>
                     <a href="?{% url_replace request 'ordering' 'total_quota' %}"><i class="fa fa-caret-up"></i></a>
                 </th>
-                <th>
+                <th style="width: 12%;">{% trans "Sessions" %} <i class="fa fa-info-circle text-muted" data-toggle="tooltip" title="{% trans 'Session status counts' %}"></i></th>
+                <th style="width: 12%;">{% trans "Speakers" %} <i class="fa fa-info-circle text-muted" data-toggle="tooltip" title="{% trans 'Speaker status counts' %}"></i></th>
+
+                <th style="width: 6%;">
                     {% trans "Shop" %}
                     <a href="?{% url_replace request 'ordering' '-live' %}"><i class="fa fa-caret-down"></i></a>
                     <a href="?{% url_replace request 'ordering' 'live' %}"><i class="fa fa-caret-up"></i></a>
                 </th>
-                <th class="text-right flip">
+                <th class="text-right flip" style="width: 5%; white-space: nowrap;">
                     {% trans "Actions" %}
                 </th>
                 </tr>
                 </thead>
+
                 <tbody>
                 {% for e in events %}
                     <tr>
+                    <td data-label="{% trans 'Logo' %}">
+                        {% if e.settings.event_logo_image %}
+                            <img src="{{ e.settings.event_logo_image.url }}" alt="{{ e.name }}" class="event-logo" style="width: 60px; height: 60px; border-radius: 6px;">
+                        {% else %}
+                            <div class="event-logo" style="width: 60px; height: 60px; border-radius: 6px; font-size: 1.8rem;"><span class="fa fa-calendar"></span></div>
+                        {% endif %}
+                    </td>
                     <td class="event-name-col" data-label="{% trans 'Event name' %}">
                         <strong><a href='{% url "eventyay_common:event.index" organizer=e.organizer.slug event=e.slug %}'>{{ e.name }}</a></strong>
+                        <a href="{% eventurl e 'presale:event.index' %}" class="public-url" target="_blank" style="margin-left: 5px;" data-toggle="tooltip" title="{% trans 'Public URL' %}"><span class="fa fa-external-link" style="font-size: 0.85em;"></span></a>
                     </td>
-                    <td data-label="{% trans 'Short form' %}">{{ e.slug }}</td>
                     <td data-label="{% trans 'Organizer' %}">{{ e.organizer }}</td>
-                    <td class="event-date-col" data-label="{% trans 'Date' %}">
-                        {% if e.has_subevents %}
-                            {{ e.min_from|default_if_none:""|date:"SHORT_DATETIME_FORMAT" }}
-                        {% else %}
-                            {{ e.get_short_date_from_display }}
-                        {% endif %}
-                        {% if e.has_subevents %}
-                            <span class="label label-default">{% trans "Series" %}</span>
-                        {% endif %}
+                    
+                    <td data-label="{% trans 'Start date' %}">
+                        {{ e.date_from|date:"SHORT_DATE_FORMAT" }}
+                    </td>
+                    
+                    <td data-label="{% trans 'End date' %}">
                         {% if e.settings.show_date_to and e.date_to %}
-                            –<br>
-                            {% if e.has_subevents %}
-                                {{ e.max_fromto|default_if_none:e.max_from|default_if_none:e.max_to|default_if_none:""|date:"SHORT_DATETIME_FORMAT" }}
-                            {% else %}
-                                {{ e.get_short_date_to_display }}
-                            {% endif %}
-                        {% endif %}
-                        {% if e.settings.timezone != request.timezone %}
-                            <span class="fa fa-globe text-muted" data-toggle="tooltip" title="{{ e.timezone }}"></span>
+                            {{ e.date_to|date:"SHORT_DATE_FORMAT" }}
                         {% endif %}
                     </td>
-                    <td data-label="{% trans 'Paid tickets' %}">
+                    
+                    <td data-label="{% trans 'Tickets' %}">
                         {% for q in e.first_quotas|slice:":3" %}
                             {% include "pretixcontrol/fragment_quota_box_paid.html" with quota=q %}
                         {% endfor %}
@@ -156,6 +177,35 @@
                             </a>
                         {% endif %}
                     </td>
+                    
+                    <td data-label="{% trans 'Sessions' %}">
+                        <ul class="stats-list">
+                            <li><span>{% trans "Submitted:" %}</span> <span>{{ e.session_counts.submitted }}</span></li>
+                            <li><span>{% trans "Accepted:" %}</span> <span>{{ e.session_counts.accepted }}</span></li>
+                            <li><span>{% trans "Confirmed:" %}</span> <span>{{ e.session_counts.confirmed }}</span></li>
+                        </ul>
+                        <a href="{% url 'eventyay_common:event.index' organizer=e.organizer.slug event=e.slug %}"
+                           class="quotabox-more" data-toggle="tooltip" title="{% trans 'More session stats' %}"
+                           aria-label="{% trans 'More session stats' %}" data-placement="top">
+                            &middot;&middot;&middot;
+                        </a>
+                    </td>
+                    
+                    <td data-label="{% trans 'Speakers' %}">
+                        <ul class="stats-list">
+                            <li><span>{% trans "Total:" %}</span> <span>{{ e.speaker_counts.total }}</span></li>
+                            <li><span>{% trans "Accepted:" %}</span> <span>{{ e.speaker_counts.accepted }}</span></li>
+                            <li><span>{% trans "Confirmed:" %}</span> <span>{{ e.speaker_counts.confirmed }}</span></li>
+                        </ul>
+                        <a href="{% url 'eventyay_common:event.index' organizer=e.organizer.slug event=e.slug %}"
+                           class="quotabox-more" data-toggle="tooltip" title="{% trans 'More speaker stats' %}"
+                           aria-label="{% trans 'More speaker stats' %}" data-placement="top">
+                            &middot;&middot;&middot;
+                        </a>
+                    </td>
+                    
+
+                    
                     <td data-label="{% trans 'Shop' %}" class="events-table__cell--no-border">
                         {% if not e.live %}
                             <span class="label label-danger">{% trans "Shop disabled" %}</span>
@@ -167,17 +217,20 @@
                             <span class="label label-success">{% trans "On sale" %}</span>
                         {% endif %}
                     </td>
+                    
                     <td class="text-right flip">
-                        <a href='{% url "eventyay_common:event.create_access_to_video" organizer=e.organizer.slug event=e.slug %}'
-                           class="btn btn-sm btn-default" title="{% trans "Enable video access" %}"
-                           data-toggle="tooltip">
-                            <span class="fa fa-video-camera"></span>
-                        </a>
-                        <a href='{% url "eventyay_common:event.update" organizer=e.organizer.slug event=e.slug %}'
-                           class="btn btn-sm btn-default" title="{% trans "Edit" %}"
-                           data-toggle="tooltip">
-                            <span class="fa fa-edit"></span>
-                        </a>
+                        <div class="btn-group" style="display: flex; gap: 4px; justify-content: flex-end; white-space: nowrap;">
+                            <a href='{% url "eventyay_common:event.create_access_to_video" organizer=e.organizer.slug event=e.slug %}'
+                               class="btn btn-sm btn-default" title="{% trans "Enable video access" %}"
+                               data-toggle="tooltip">
+                                <span class="fa fa-video-camera"></span>
+                            </a>
+                            <a href='{% url "eventyay_common:event.update" organizer=e.organizer.slug event=e.slug %}'
+                               class="btn btn-sm btn-default" title="{% trans "Edit" %}"
+                               data-toggle="tooltip">
+                                <span class="fa fa-edit"></span>
+                            </a>
+                        </div>
                     </td>
                     </tr>
                 {% endfor %}

@@ -1,0 +1,119 @@
+/* 
+   Centralized CSS for Events Overview Redesign 
+   Scoped strictly to .events-table-wrapper
+*/
+
+.events-table-wrapper {
+    margin-top: 1rem;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 20px;
+    box-shadow: 0 1px 1px rgba(0,0,0,.05);
+}
+
+/* Tabs Navigation */
+.events-overview-tabs {
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid #ebebeb;
+}
+.events-overview-tabs > li > a {
+    border: none;
+    color: #555;
+    font-weight: 500;
+    padding: 10px 15px;
+    margin-right: 2px;
+}
+.events-overview-tabs > li > a:hover {
+    background-color: transparent;
+    color: #337ab7;
+    border-bottom: 2px solid #337ab7;
+}
+.events-overview-tabs > li.active > a,
+.events-overview-tabs > li.active > a:focus,
+.events-overview-tabs > li.active > a:hover {
+    border: none;
+    border-bottom: 2px solid #337ab7;
+    color: #337ab7;
+    background-color: transparent;
+}
+
+/* Event Logo */
+.events-table-wrapper .event-logo {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: #999;
+}
+
+/* Table Cells */
+.events-table-wrapper .table > tbody > tr > td {
+    vertical-align: middle;
+    padding: 8px;
+    border-top: 1px solid #ebebeb;
+}
+.events-table-wrapper .table > thead > tr > th {
+    border-bottom: 2px solid #ebebeb;
+    color: #555;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* Column specific widths for perfectly even spacing */
+.events-table-wrapper .table > thead > tr > th:nth-child(1) { width: 5%; }
+.events-table-wrapper .table > thead > tr > th:nth-child(2) { width: 15%; }
+.events-table-wrapper .table > thead > tr > th:nth-child(3) { width: 15%; }
+.events-table-wrapper .table > thead > tr > th:nth-child(4) { width: 10%; }
+.events-table-wrapper .table > thead > tr > th:nth-child(5) { width: 10%; }
+.events-table-wrapper .table > thead > tr > th:nth-child(6) { width: 12%; }
+.events-table-wrapper .table > thead > tr > th:nth-child(7) { width: 12%; }
+.events-table-wrapper .table > thead > tr > th:nth-child(8) { width: 12%; }
+.events-table-wrapper .table > thead > tr > th:nth-child(9) { width: 5%; }
+.events-table-wrapper .table > thead > tr > th:nth-child(10) { 
+    width: 4%;
+    white-space: nowrap; 
+}
+
+/* Stats Lists (Sessions & Speakers) */
+.events-table-wrapper .stats-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    line-height: 1.3;
+    font-size: 0.85em;
+}
+.events-table-wrapper .stats-list li {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2px;
+}
+.events-table-wrapper .stats-list li span:first-child {
+    color: #666;
+    margin-right: 8px;
+}
+.events-table-wrapper .stats-list li span:last-child {
+    font-weight: 600;
+}
+
+/* Public URL */
+.events-table-wrapper .public-url {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 500;
+}
+.events-table-wrapper .public-url:hover {
+    text-decoration: underline;
+}
+
+/* Responsive constraints */
+@media (max-width: 768px) {
+    .events-table-wrapper .table-responsive {
+        border: 0;
+    }
+}
