@@ -477,6 +477,13 @@ except ValueError:
 CHECKIN_EXEMPT_RE = re.compile(
     r'/checkin/redeem/?(?:$|\?)|/checkinlists(?:/\d+)?(?:/|$|\?)'
 )
+# Built video files are static. Attendee URLs are /{org}/{event}/video/assets/…
+# Organizer URLs are /video/event/{org}/{event}/assets/… and do not contain
+# the substring /video/assets/. SPA HTML routes have no file extension.
+VIDEO_STATIC_EXEMPT_RE = re.compile(
+    r'^/(?:[^/]+/[^/]+/video|video/event/[^/]+/[^/]+)/'
+    r'(?:assets/.+|[^/]+\.(?:js|css|webmanifest|png|svg|ico|woff2?|ttf|json))$'
+)
 
 
 def request_prefers_html(request):
@@ -493,7 +500,7 @@ def request_prefers_json_api(request):
 
 
 def is_load_shed_exempt(path):
-    if path.startswith(('/healthcheck', '/media/', '/static/')) or '/video/assets/' in path:
+    if path.startswith(('/healthcheck', '/media/', '/static/')) or VIDEO_STATIC_EXEMPT_RE.match(path):
         return True
     return bool(CHECKIN_EXEMPT_RE.search(path))
 

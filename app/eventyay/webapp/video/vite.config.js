@@ -36,6 +36,30 @@ function exportJanusGateway() {
   }
 }
 
+// Icon font is referenced from CSS, so the browser only discovers it after
+// that file arrives. Start it with the rest of the first load.
+function preloadVideoAppGraph() {
+  return {
+    name: 'preload-video-app-graph',
+    apply: 'build',
+    enforce: 'post',
+    generateBundle(_options, bundle) {
+      const htmlAsset = bundle['index.html']
+      if (!htmlAsset || htmlAsset.type !== 'asset') return
+      const font = Object.values(bundle).find((item) => (
+        item.type === 'asset'
+        && item.fileName.includes('materialdesignicons')
+        && item.fileName.endsWith('.woff2')
+      ))
+      if (!font) return
+      const html = htmlAsset.source.toString()
+      if (html.includes(font.fileName)) return
+      const link = `<link rel="preload" as="font" type="font/woff2" crossorigin href="./${font.fileName}">`
+      htmlAsset.source = html.replace('</head>', `${link}</head>`)
+    }
+  }
+}
+
 export default defineConfig(({ mode }) => {
   const currentYear = new Date().getFullYear()
   const env = loadEnv(mode, process.cwd(), '')
@@ -72,6 +96,7 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       exportJanusGateway(),
+      preloadVideoAppGraph(),
       createGettextPlugin('video'),
       vue(),
       ReactivityTransform(),
@@ -108,8 +133,11 @@ export default defineConfig(({ mode }) => {
         workbox: {
           skipWaiting: true,
           clientsClaim: true,
-          // Only precache static assets; exclude HTML documents
-          globPatterns: ['**/*.{js,css,ico,png,svg}'],
+          // The HTML shell is rendered by Django, so it cannot be a precached file.
+          navigateFallback: null,
+          // Hashed JS and CSS are already cached by the browser. Precaching them
+          // makes the service worker download the whole app again on first open.
+          globPatterns: ['**/*.{ico,png,svg}'],
           // Allow larger assets (default is ~2MB); needed for 2.5MB PNG
           maximumFileSizeToCacheInBytes: 3 * 1024 * 1024
         }
@@ -184,45 +212,31 @@ export default defineConfig(({ mode }) => {
       emptyOutDir: true,
       target: 'esnext',
       sourcemap: false, // Added for debugging vendor-webrtc issue
+      cssCodeSplit: false,
       chunkSizeWarningLimit: 1250,
       rollupOptions: {
+        checks: {
+          pluginTimings: false,
+        },
         input: {
           main: path.resolve(dirname, 'index.html'),
           preloader: path.resolve(dirname, 'src/preloader.js')
         },
         output: {
-          entryFileNames: (chunkInfo) => {
-            return chunkInfo.name === 'preloader'
-              ? '[name].js'
-              : 'assets/[name]-[hash].js'
+          // Every entry, including the preloader, gets a content hash. The video
+          // HTML is rendered per request and points at that name, so a deploy
+          // stops using the previous cached preloader and the chunks it imported.
+          entryFileNames: 'assets/[name]-[hash].js',
+          codeSplitting: {
+            groups: [
+              { name: 'vendor-rtc', test: /janus-gateway|webrtc-adapter/, priority: 30 },
+              { name: 'vendor-hls', test: /hls\.js/, priority: 30 },
+              { name: 'vendor-mux', test: /mux-embed|[\\/]mux\.js/, priority: 30 },
+              { name: 'vendor-emoji', test: /emoji-mart|emoji-datasource-twitter|emoji-regex|twemoji-emojis/, priority: 25 },
+              { name: 'vendor', test: /node_modules/, priority: 10 },
+              { name: 'app', tags: ['$initial'], priority: 1 },
+            ],
           },
-          // Manual chunking to keep the main app bundle small and
-          // isolate large vendor assets.
-          manualChunks(id) {
-            if (id.includes('node_modules')) {
-              // Consolidate WebRTC libs to a single chunk to avoid evaluation order races
-              if (id.includes('janus-gateway') || id.includes('webrtc-adapter')) return 'vendor-rtc'
-              if (id.includes('materialdesignicons-webfont') || id.match(/materialdesignicons/)) return 'vendor-mdi'
-              if (id.includes('moment') || id.includes('moment-timezone')) return 'vendor-moment'
-              if (id.includes('lodash') || id.includes('lodash-es')) return 'vendor-lodash'
-              if (id.includes('markdown-it')) return 'vendor-markdown'
-              if (id.includes('i18next')) return 'vendor-i18n'
-              if (id.includes('preact')) return 'vendor-preact'
-              if (id.includes('vue') || id.includes('vue-router') || id.includes('vuex') || id.includes('vue-virtual-scroller')) return 'vendor-vue'
-              // removed pretalx chunk assignment since library removed from usage
-              if (id.includes('emoji-mart') || id.includes('emoji-datasource-twitter') || id.includes('emoji-regex') || id.includes('twemoji-emojis')) return 'vendor-emoji'
-              if (id.includes('hls.js')) return 'vendor-hls'
-              if (id.includes('core-js')) return 'vendor-corejs'
-              if (id.includes('dompurify')) return 'vendor-dompurify'
-              if (id.includes('sanitize-html')) return 'vendor-sanitizehtml'
-              if (id.includes('js-md5')) return 'vendor-md5'
-              if (id.includes('uuid')) return 'vendor-uuid'
-              if (id.includes('register-service-worker')) return 'vendor-sw'
-              if (id.includes('mux-embed') || id.includes('mux.js')) return 'vendor-mux'
-              if (id.includes('web-animations-js')) return 'vendor-webanimations'
-              return 'vendor'
-            }
-          }
         }
       }
     },

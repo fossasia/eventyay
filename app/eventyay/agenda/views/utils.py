@@ -1601,7 +1601,7 @@ def get_schedule_exporters(request, public=False):
     ]
 
 
-def build_public_schedule_exporters(event, version=None):
+def build_public_schedule_exporters(event, version=None, include_qrcode=True):
     """Build serialized exporter metadata for public schedule pages.
 
     Returns a list of dicts suitable for JSON serialization, each with
@@ -1609,9 +1609,12 @@ def build_public_schedule_exporters(event, version=None):
     Used by both the agenda view and the video SPA to ensure identical
     exporter lists in both UIs.  Result is cached for 5 minutes per
     (event.pk, version, active language) to avoid firing Django signals on every request.
+
+    The video shell passes include_qrcode=False. QR drawings are about 10KB
+    each and are only needed after the schedule export menu opens.
     """
     language = get_language() or ''
-    cache_key = f'eagenda:exporters:{event.pk}:{version or ""}:{language}'
+    cache_key = f'eagenda:exporters:{event.pk}:{version or ""}:{language}:{int(bool(include_qrcode))}'
     cached = cache.get(cache_key)
     if cached is not None:
         return cached
@@ -1664,7 +1667,11 @@ def build_public_schedule_exporters(event, version=None):
                 'verbose_name': force_str(exporter.verbose_name),
                 'icon': getattr(exporter, 'icon', ''),
                 'export_url': url,
-                'qrcode_svg': str(exporter.get_qrcode()) if getattr(exporter, 'show_qrcode', False) else '',
+                'qrcode_svg': (
+                    str(exporter.get_qrcode())
+                    if include_qrcode and getattr(exporter, 'show_qrcode', False)
+                    else ''
+                ),
             }
         )
     cache.set(cache_key, result, CACHE_TTL)

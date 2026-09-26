@@ -86,6 +86,37 @@ server {
 		proxy_redirect off;
 	}
 
+	# Video SPA chunks. <base href> makes the browser request these on the event
+	# URL, but collectstatic already wrote them to static/video/. The hash shape
+	# matches HASHED_VIDEO_ASSET_NAME in eventyay.multidomain.views. The capture
+	# rejects ".." path segments. Omit "always" so a 404 is not cached for a year.
+	location ~* "^/(?:[^/]+/[^/]+/video|video/event/[^/]+/[^/]+)/assets/((?:[A-Za-z0-9_-]+/)*[A-Za-z0-9_-]+-[A-Za-z0-9_-]{8,}(?:\.[A-Za-z0-9]+)+)$" {
+		alias <PATH_TO>/data/static/video/assets/$1;
+		access_log off;
+		add_header Cache-Control "public, max-age=31536000, immutable";
+		add_header Access-Control-Allow-Origin "*" always;
+	}
+
+	# Unhashed files under assets/ (for example assets/legacy.js). Same five-minute
+	# policy as video_asset_cache_control(). This location is after the hashed
+	# one, so content-hashed filenames keep the one-year cache.
+	location ~* "^/(?:[^/]+/[^/]+/video|video/event/[^/]+/[^/]+)/assets/((?:[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*/)*[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*)$" {
+		alias <PATH_TO>/data/static/video/assets/$1;
+		access_log off;
+		add_header Cache-Control "public, max-age=300";
+		add_header Access-Control-Allow-Origin "*" always;
+	}
+
+	# Unhashed video root files (preloader, service worker, manifest, icons).
+	# Short cache so a deploy is not stuck on an immutable preloader.js.
+	# Extension-less SPA routes stay on gunicorn for the injected HTML shell.
+	location ~* "^/(?:[^/]+/[^/]+/video|video/event/[^/]+/[^/]+)/([A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*\.(?:js|css|webmanifest|png|svg|ico|woff2?|ttf|json))$" {
+		alias <PATH_TO>/data/static/video/$1;
+		access_log off;
+		add_header Cache-Control "public, max-age=300" always;
+		add_header Access-Control-Allow-Origin "*" always;
+	}
+
 	# Regular HTTP requests - route to gunicorn
 	location / {
 		add_header Referrer-Policy same-origin always;
