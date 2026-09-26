@@ -99,11 +99,11 @@
                         {% endif %}
                         {% if can_review or submissions_reviewed %}
                             {% for category in dashboard_score_categories %}
-                                <th class="col-score-user numeric text-left">{{ category.name }}</th>
+                                <th class="col-score-user col-score-category numeric text-center">{{ category.name }}</th>
                             {% endfor %}
                             {% if independent_categories and not can_see_all_reviews %}
                                 {% for category in independent_categories %}
-                                    <th class="col-score-user numeric"> {{ category.name }}</th>
+                                    <th class="col-score-user col-score-category numeric text-center"> {{ category.name }}</th>
                                 {% endfor %}
                             {% endif %}
                         {% endif %}
@@ -149,11 +149,10 @@
                                 {% endfor %}
                             {% endif %}
                             {% for category, user_score_id in submission.dashboard_scores %}
-                            <td class="text-center col-score-user numeric">
+                            <td class="text-center col-score-user col-score-category numeric">
                                 {% if submission.can_update_score %}
-                                <div class="d-inline-flex align-items-center">
                                     <select
-                                         class="form-control review-score-select w-100"
+                                         class="form-control review-score-select"
                                          data-url="{% url 'orga:submissions.reviews.score' organizer=request.event.organizer.slug event=request.event.slug code=submission.code %}"
                                          aria-label="{{ category.name }}"
                                          data-category="{{ category.pk }}"
@@ -167,13 +166,9 @@
                                             </option>
                                         {% endfor %}
                                     </select>
-                                    <i class="working fa fa-spinner fa-spin d-none"></i>
-                                    <i class="done fa fa-check d-none text-success"></i>
-                                    <i class="fail fa fa-times d-none"></i>
-                                </div>
                                 <div class="review-score-error text-danger d-none"></div>
                                 {% else %}
-                                    -
+                                <span class="text-muted">—</span>
                                 {% endif %}
                             </td>
                             {% endfor %}
