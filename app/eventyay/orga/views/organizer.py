@@ -2,16 +2,17 @@ import logging
 
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Min, Q, Value
+from django.db.models.functions import Coalesce, Lower, NullIf
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
-from django.views.generic import DetailView, ListView, TemplateView
+from django.views.generic import DetailView, ListView, TemplateView, View
 from django_context_decorator import context
-from django_scopes import scopes_disabled
+from django_scopes import scope, scopes_disabled
 
 from eventyay.common.exceptions import SendMailException
 from eventyay.common.text.phrases import phrases
@@ -19,13 +20,14 @@ from eventyay.common.views import CreateOrUpdateView
 from eventyay.common.views.generic import OrgaCRUDView
 from eventyay.common.views.mixins import (
     ActionConfirmMixin,
+    EventPermissionRequired,
     Filterable,
     PaginationMixin,
     PermissionRequired,
     Sortable,
 )
 from eventyay.event.forms import OrganizerForm
-from eventyay.base.models import Event, User
+from eventyay.base.models import Event, Order, OrderPosition, User
 from eventyay.base.models.organizer import Organizer
 from eventyay.orga.forms.submission import get_speaker_choice_label
 from eventyay.person.forms import UserSpeakerFilterForm
@@ -162,34 +164,114 @@ class OrganizerSpeakerList(
         return context
 
 
-def speaker_search(request, *args, **kwargs):
-    search = request.GET.get("search")
-    if not search or len(search) < 3:
-        return JsonResponse({"count": 0, "results": []})
+SPEAKER_AUTOCOMPLETE_MIN_LENGTH = 3
+SPEAKER_AUTOCOMPLETE_LIMIT = 8
+SPEAKER_AUTOCOMPLETE_CANDIDATE_LIMIT = SPEAKER_AUTOCOMPLETE_LIMIT * 2
 
-    with scopes_disabled():
-        events = get_speaker_access_events_for_user(
-            user=request.user, organizer=request.organizer
-        )
-        users = (
-            User.objects.filter(profiles__event__in=events)
-            .filter(Q(fullname__icontains=search) | Q(email__icontains=search))
-            .distinct()[:8]
-        )
-        users = list(users)
 
-    return JsonResponse(
-        {
-            "count": len(users),
-            "results": [
-                {
-                    "email": user.email,
-                    "name": user.fullname,
-                    "label": get_speaker_choice_label(name=user.fullname, email=user.email),
-                }
-                for user in users
-            ],
+def speaker_autocomplete_results(*, event: Event, search: str) -> list[dict[str, str]]:
+    """Return event-scoped speaker autocomplete matches.
+
+    Sources are limited to the current event: speaker profiles, proposal
+    speakers/authors/submitters, and registered attendees. Results are
+    deduplicated by email.
+    """
+    query = (search or '').strip()
+    if len(query) < SPEAKER_AUTOCOMPLETE_MIN_LENGTH:
+        return []
+
+    results: dict[str, dict[str, str]] = {}
+
+    def add_result(*, email: str | None, name: str | None) -> None:
+        if not email:
+            return
+        key = email.lower()
+        existing = results.get(key)
+        display_name = name or ''
+        if existing:
+            if display_name and not existing['name']:
+                existing['name'] = display_name
+                existing['label'] = get_speaker_choice_label(name=display_name, email=existing['email'])
+            return
+        results[key] = {
+            'email': email,
+            'name': display_name,
+            'label': get_speaker_choice_label(name=display_name or None, email=email),
         }
+
+    with scope(event=event, organizer=event.organizer):
+        name_or_email = Q(fullname__icontains=query) | Q(email__icontains=query)
+        users = (
+            User.objects.filter(
+                name_or_email,
+                Q(profiles__event=event) | Q(submissions__event=event),
+            )
+            .distinct()
+            .order_by(Lower('fullname'), Lower('email'))
+            [:SPEAKER_AUTOCOMPLETE_CANDIDATE_LIMIT]
+        )
+        for user in users:
+            add_result(email=user.email, name=user.fullname)
+
+        no_attendee_email = Q(attendee_email__isnull=True) | Q(attendee_email='')
+        attendee_match = (
+            Q(attendee_email__icontains=query)
+            | Q(attendee_name_cached__icontains=query)
+            | (Q(order__email__icontains=query) & no_attendee_email)
+        )
+        
+        effective_email = Coalesce(NullIf('attendee_email', Value('')), 'order__email')
+        
+        attendee_data = (
+            OrderPosition.objects.filter(
+                attendee_match,
+                order__event=event,
+                order__status__in=(Order.STATUS_PAID, Order.STATUS_PENDING),
+                product__admission=True,
+            )
+            .annotate(effective_email=effective_email)
+            .values('effective_email')
+            .annotate(name=Min('attendee_name_cached'))
+            .order_by('effective_email')
+            [:SPEAKER_AUTOCOMPLETE_CANDIDATE_LIMIT]
+        )
+        for data in attendee_data:
+            add_result(
+                email=data['effective_email'],
+                name=data['name'],
+            )
+
+    ordered = sorted(
+        results.values(),
+        key=lambda item: ((item['name'] or item['email']).lower(), item['email'].lower()),
     )
+    return ordered[:SPEAKER_AUTOCOMPLETE_LIMIT]
+
+
+class OrganizerSpeakerSearch(PermissionRequired, View):
+    """Deprecated organizer-wide user search. Always returns no results."""
+
+    permission_required = 'base.view_organizer'
+
+    def get_permission_object(self):
+        return self.request.organizer
+
+    def get(self, request, *args, **kwargs):
+        return JsonResponse({'count': 0, 'results': []})
+
+
+class EventSpeakerAutocomplete(EventPermissionRequired, View):
+    permission_required = 'base.orga_update_submission'
+
+    def has_permission(self):
+        request = getattr(self, 'request', None)
+        if request and hasattr(request, 'user') and hasattr(request.user, 'has_active_staff_session') and request.user.has_active_staff_session(request.session.session_key):
+            return True
+        return super(PermissionRequired, self).has_permission()
+
+    def get(self, request, *args, **kwargs):
+        search = request.GET.get('search') or request.GET.get('q') or ''
+        results = speaker_autocomplete_results(event=request.event, search=search)
+        return JsonResponse({'count': len(results), 'results': results})
 
 

@@ -56,7 +56,7 @@ urlpatterns = [
                     organizer.OrganizerDelete.as_view(),
                     name="organizer.delete",
                 ),
-                path("api/users", organizer.speaker_search, name="organizer.user_list"),
+                path("api/users", organizer.OrganizerSpeakerSearch.as_view(), name="organizer.user_list"),
                 path(
                     "speakers/",
                     organizer.OrganizerSpeakerList.as_view(),
@@ -359,6 +359,11 @@ urlpatterns = [
                             ),
                         ]
                     ),
+                ),
+                path(
+                    'speaker-autocomplete/',
+                    organizer.EventSpeakerAutocomplete.as_view(),
+                    name='event.speaker_autocomplete',
                 ),
                 path('speakers/', speaker.SpeakerList.as_view(), name='speakers.list'),
                 path(

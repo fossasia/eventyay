@@ -333,7 +333,8 @@ def test_orga_speaker_page_excludes_submission_answers(
 
     assert response.status_code == 200
     assert response.context["form"].fields["name"].required
-    assert submission.event.organizer.orga_urls.user_search in response.text
+    assert submission.event.orga_urls.speaker_autocomplete in response.text
+    assert submission.event.organizer.orga_urls.user_search not in response.text
     speaker_context = response.context["speakers"][0]
     assert speaker_context["other_submissions"] == [other_submission]
     reviewer_answers = speaker_context["reviewer_answers"]

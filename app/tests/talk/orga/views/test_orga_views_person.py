@@ -24,8 +24,8 @@ def test_user_typeahead(
     orga_results,
 ):
     orga_response = orga_client.get(
-        reverse("orga:organiser.user_list", kwargs={"organiser": event.organiser.slug}),
-        data={"search": search, "orga": True},
+        event.orga_urls.speaker_autocomplete,
+        data={"search": search},
         follow=True,
     )
     assert orga_response.status_code == 200

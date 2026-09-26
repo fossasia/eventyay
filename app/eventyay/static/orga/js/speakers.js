@@ -1,5 +1,9 @@
 const initUserSearch = () => {
-    const remoteURL = document.getElementById("vars").getAttribute("remoteUrl")
+    const varsEl = document.getElementById("vars")
+    if (!varsEl) return
+    const remoteURL = varsEl.getAttribute("remoteUrl")
+    if (!remoteURL) return
+    const noResultsText = varsEl.getAttribute("data-no-results") || ""
     let select = document.querySelector("#id_email")
     if (!select) select = document.querySelector("#id_invite-email")
     if (!select) select = document.querySelector("#id_speaker-email")
@@ -38,8 +42,8 @@ const initUserSearch = () => {
         placeholder: true,
         placeholderValue: select.getAttribute("placeholder"),
         itemSelectText: "",
-        noResultsText: "",
-        noChoicesText: "",
+        noResultsText,
+        noChoicesText: noResultsText,
         addItemText: "",
         removeItemLabelText: "×",
         removeItemIconText: "×",

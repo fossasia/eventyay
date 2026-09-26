@@ -151,5 +151,5 @@
             {% endif %}
         </fieldset></form>
 
-    <span id="vars" remoteUrl="{{ request.event.organizer.orga_urls.user_search }}"></span>
+    <span id="vars" remoteUrl="{{ request.event.orga_urls.speaker_autocomplete }}" data-no-results="{% translate 'No matching person found for this event.' %}"></span>
 {% endblock submission_content %}

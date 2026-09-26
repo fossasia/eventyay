@@ -4,7 +4,10 @@ from eventyay.common.text.phrases import phrases
 
 
 class SubmissionInvitationForm(forms.Form):
-    speaker = forms.EmailField(label=phrases.cfp.speaker_email)
+    speaker = forms.EmailField(
+        label=phrases.cfp.speaker_email,
+        widget=forms.EmailInput(attrs={'autocomplete': 'off'}),
+    )
     subject = forms.CharField(label=phrases.base.email_subject)
     text = forms.CharField(widget=forms.Textarea(), label=phrases.base.text_body)
 
