@@ -71,10 +71,12 @@ class EventConfigSerializer(serializers.Serializer):
 def get_event_by_id_or_slug(event_id):
     """Retrieve Event by primary key or slug.
 
-    Live sockets pass the event primary key. When that number is also some
-    other event's slug, the primary key wins so the socket stays on the event
-    that opened it.
+    Live sockets pass the event primary key, either as a URL string or as an
+    integer. When that number is also some other event's slug, the primary key
+    wins so the socket stays on the event that opened it.
     """
+    if isinstance(event_id, int) and not isinstance(event_id, bool):
+        event_id = str(event_id)
     if isinstance(event_id, str) and event_id.isdigit():
         by_id = Event.objects.filter(id=int(event_id)).first()
         if by_id is not None:

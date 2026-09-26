@@ -2704,6 +2704,7 @@ class OrganizerSlugTest(TestCase):
         )
         found = get_event_by_id_or_slug(str(event.pk))
         self.assertEqual(found.pk, event.pk)
+        self.assertEqual(get_event_by_id_or_slug(event.pk).pk, event.pk)
 
 
 class SubEventTest(TestCase):
