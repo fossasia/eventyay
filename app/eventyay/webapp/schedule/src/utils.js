@@ -231,6 +231,36 @@ export function isTalkSchedulePending (talk) {
 	return Boolean(talk?.schedule_pending || !talk?.start)
 }
 
+export function visiblePageItems (total, current) {
+	if (total <= 1) return []
+	if (total <= 7) return Array.from({length: total}, (_, index) => index + 1)
+	const wanted = new Set([1, total, current, current - 1, current + 1])
+	const pages = [...wanted].filter(page => page >= 1 && page <= total).sort((a, b) => a - b)
+	const items = []
+	let last = 0
+	for (const page of pages) {
+		if (last && page - last > 1) items.push('ellipsis')
+		items.push(page)
+		last = page
+	}
+	return items
+}
+
+export function pageStatusRange (page, pageSize, total) {
+	if (!total || !pageSize) return null
+	return {
+		start: ((page - 1) * pageSize) + 1,
+		end: Math.min(page * pageSize, total),
+		total,
+	}
+}
+
+const TENTATIVE_SESSION_TEXT = 'These details are tentative and may change, including speakers and other session information.'
+
+export function tentativeSessionText (messages) {
+	return messages?.schedule_pending_tentative || TENTATIVE_SESSION_TEXT
+}
+
 export function talkToSession (talk, {
 	timezone,
 	speakersLookup = {},

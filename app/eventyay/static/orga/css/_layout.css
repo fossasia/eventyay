@@ -1348,6 +1348,26 @@ table .color-square {
     text-align: left;
   }
 
+  td {
+    vertical-align: top;
+  }
+
+  td.review-text p:first-child {
+    margin-top: 0;
+  }
+
+  td.review-text p:last-child {
+    margin-bottom: 0;
+  }
+
+  td.review-text p {
+    margin-bottom: 0.35rem;
+  }
+
+  td.nowrap {
+    white-space: nowrap;
+  }
+
   tbody tr,
   thead tr {
     .unmark-radio {
@@ -3129,6 +3149,10 @@ h2 .user-name-display img {
     justify-content: space-between;
   }
 
+  #page-content .review-table td.review-text {
+    min-width: 0;
+  }
+
   #page-content table .action-column {
     gap: 0.35rem;
     flex-wrap: nowrap;
@@ -3499,6 +3523,7 @@ button.btn-speaker-not-arrived {
   margin-top: 0.1rem;
 }
 
+.orga-confirm-dialog,
 .feedback-confirm-dialog {
   border: none;
   border-radius: 8px;
@@ -3512,6 +3537,7 @@ button.btn-speaker-not-arrived {
   z-index: 9999;
 }
 
+.orga-confirm-dialog-title,
 .feedback-confirm-dialog-title {
   margin-top: 0;
   margin-bottom: 16px;
@@ -3519,6 +3545,7 @@ button.btn-speaker-not-arrived {
   font-weight: 600;
 }
 
+.orga-confirm-dialog-message,
 .feedback-confirm-dialog-message {
   margin-top: 0;
   margin-bottom: 24px;
@@ -3527,9 +3554,16 @@ button.btn-speaker-not-arrived {
   color: #555;
 }
 
+.orga-confirm-dialog::backdrop,
+.feedback-confirm-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.orga-confirm-dialog-actions,
 .feedback-confirm-dialog-actions {
   display: flex;
   justify-content: flex-end;
+  gap: 12px;
 }
 
 .feedback-confirm-dialog-btn-cancel {

@@ -66,6 +66,33 @@
       </div>
     </form>
   {% else %}
-    {% include "common/includes/action_confirm.html" with action_object_name=generic_title action_back_url=list_url %}
+    {% if has_linked_shifts %}
+      <h2>{% translate "Confirm deletion" %}</h2>
+      <hr>
+      <p><strong>{{ generic_title }}</strong></p>
+      <p class="alert alert-warning" role="alert">
+        {% blocktranslate count counter=linked_shift_count %}
+          This room is linked to a TeamShifts location that has {{ counter }} shift assigned.
+          The linked location will be marked as unavailable in TeamShifts.
+        {% plural %}
+          This room is linked to a TeamShifts location that has {{ counter }} shifts assigned.
+          The linked location will be marked as unavailable in TeamShifts.
+        {% endblocktranslate %}
+      </p>
+      <form method="post">
+        {% csrf_token %}
+        <div class="submit-group">
+          <a href="{{ list_url }}" class="btn btn-lg btn-outline-info">
+            {{ phrases.base.back_button }}
+          </a>
+          <button type="submit" class="btn btn-lg btn-danger">
+            <i class="fa fa-trash"></i>
+            {% translate "Delete anyway" %}
+          </button>
+        </div>
+      </form>
+    {% else %}
+      {% include "common/includes/action_confirm.html" with action_object_name=generic_title action_back_url=list_url %}
+    {% endif %}
   {% endif %}
 {% endblock content %}

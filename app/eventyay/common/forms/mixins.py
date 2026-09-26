@@ -81,9 +81,12 @@ class PublicContent:
                 continue
             field = self.fields.get(field_name)
             if field:
-                field.original_help_text = getattr(field, 'original_help_text', '')
+                if not getattr(field, 'original_help_text', None):
+                    field.original_help_text = field.help_text or ''
                 field.added_help_text = getattr(field, 'added_help_text', '') + str(phrases.base.public_content)
-                field.help_text = field.original_help_text + ' ' + field.added_help_text
+                field.help_text = ' '.join(
+                    str(part) for part in (field.original_help_text, field.added_help_text) if part
+                )
 
 
 class RequestRequire:

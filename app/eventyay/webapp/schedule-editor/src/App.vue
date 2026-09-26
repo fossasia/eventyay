@@ -36,8 +36,8 @@
 						.new-break-hint(v-if="newBreakTooltip", id="new-break-hint", role="tooltip") {{ newBreakTooltip }}
 					session(v-for="un in unscheduled", :key="un.id", :session="un", @startDragging="startDragging", :isDragged="draggedSession && un.id === draggedSession.id", @editSession="editorStart($event)", @deleteSession="deleteSessionDirect($event)", @assignMembers="openAssignModal($event)")
 					.deleted-room-sessions(v-if="deletedRoomSessions.length")
-						h3 {{ caps.showRoles ? $t('Deleted Room Shifts') : $t('Deleted Room Sessions') }}
-						p {{ caps.showRoles ? $t('These shifts were assigned to a room that has been deleted. Drag them into another room to restore them to the schedule.') : $t('These sessions were assigned to a room that has been deleted. Drag them into another room to restore them to the schedule.') }}
+						h3 {{ caps.showRoles ? $t('Shifts from Unavailable Rooms') : $t('Deleted Room Sessions') }}
+						p {{ caps.showRoles ? $t('These shifts were in a room that has been deleted or unscheduled. Drag them into another room to restore them to the schedule.') : $t('These sessions were assigned to a room that has been deleted. Drag them into another room to restore them to the schedule.') }}
 						session(v-for="session in deletedRoomSessions", :key="session.id", :session="session", @startDragging="startDragging", :isDragged="draggedSession && session.id === draggedSession.id")
 			#schedule-wrapper(v-scrollbar.x.y="")
 				.schedule-controls
@@ -560,13 +560,14 @@ const unscheduled = computed<SessionData[]>(() => {
 const deletedRoomSessions = computed<SessionData[]>(() => {
   if (!schedule.value) return []
   const isShifts = mode === 'shifts' || mode === 'public-shifts'
-  if (isShifts) return []
   return schedule.value.talks
     .filter(
       (session) =>
         session.code &&
         session.start &&
-        (!session.room || !roomsLookup.value[lookupKey(session.room)]),
+        (isShifts
+          ? (session.room && !roomsLookup.value[lookupKey(session.room)])
+          : (!session.room || !roomsLookup.value[lookupKey(session.room)])),
     )
     .map((session) => ({
       id: session.id,
@@ -576,11 +577,12 @@ const deletedRoomSessions = computed<SessionData[]>(() => {
       start: moment(session.start),
       end: moment(session.end),
       duration: session.end ? moment(session.end).diff(moment(session.start), 'minutes') : session.duration,
-      speakers: resolveSessionSpeakers(session.speakers),
-      track: tracksLookup.value[lookupKey(session.track)],
+      speakers: isShifts ? [] : resolveSessionSpeakers(session.speakers),
+      track: isShifts ? undefined : tracksLookup.value[lookupKey(session.track)],
       state: session.state,
       deletedRoom: true,
       do_not_record: session.do_not_record,
+      roles: isShifts ? (session.roles ?? []) : undefined,
     }))
 })
 
@@ -1020,6 +1022,13 @@ async function stopDragging(): Promise<void> {
             movedSession.end = null
             movedSession.room = undefined
           }
+          await saveTalk(movedSession)
+          await fetchAdditionalScheduleData()
+        }
+      } else if (draggedSession.value.deletedRoom) {
+        const movedSession = schedule.value?.talks.find((s) => s.id === draggedSession.value!.id)
+        if (movedSession) {
+          movedSession.room = undefined
           await saveTalk(movedSession)
           await fetchAdditionalScheduleData()
         }
