@@ -1,6 +1,6 @@
 import calendar
 from collections import defaultdict
-from datetime import date, datetime, time, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 from urllib.parse import quote, urlencode, urlparse, urlunparse
 
 import isoweek
@@ -20,8 +20,6 @@ from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.decorators.cache import cache_page
 from django.views.generic import ListView, TemplateView
-import datetime
-UTC = datetime.timezone.utc
 
 from eventyay.base.i18n import language
 from eventyay.base.models import (

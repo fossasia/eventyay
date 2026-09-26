@@ -1,10 +1,8 @@
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
-import datetime
-UTC = datetime.timezone.utc
 
 from eventyay.base.models import Event, Organizer
 
@@ -187,6 +185,45 @@ def test_attributes_in_calendar(env, client):
     assert 'MRMCD2017' in r.rendered_content
     r = client.get('/mrmcd/?attr[loc]=MA&style=calendar')
     assert 'MRMCD2017' not in r.rendered_content
+
+
+@pytest.mark.django_db
+def test_widget_calendar(env, client):
+    year = now().year + 1
+    Event.objects.create(
+        organizer=env[0],
+        name='MRMCD2017',
+        slug='2017',
+        date_from=datetime(year, 9, 1, tzinfo=UTC),
+        live=True,
+        is_public=True,
+    )
+    r = client.get(f'/mrmcd/widget/product_list?style=calendar&year={year}&month=9')
+    assert r.status_code == 200
+    data = r.json()
+    assert data['list_type'] == 'calendar'
+    names = [e['name'] for week in data['weeks'] for day in week if day for e in day['events']]
+    assert 'MRMCD2017' in names
+
+
+@pytest.mark.django_db
+def test_widget_week_calendar(env, client):
+    date_from = datetime(now().year + 1, 9, 1, tzinfo=UTC)
+    Event.objects.create(
+        organizer=env[0],
+        name='MRMCD2017',
+        slug='2017',
+        date_from=date_from,
+        live=True,
+        is_public=True,
+    )
+    iso_year, iso_week, _ = date_from.isocalendar()
+    r = client.get(f'/mrmcd/widget/product_list?style=week&year={iso_year}&week={iso_week}')
+    assert r.status_code == 200
+    data = r.json()
+    assert data['list_type'] == 'week'
+    names = [e['name'] for day in data['days'] for e in day['events']]
+    assert 'MRMCD2017' in names
 
 
 @pytest.mark.django_db

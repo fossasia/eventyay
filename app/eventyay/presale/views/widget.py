@@ -3,12 +3,11 @@ import hashlib
 import json
 import logging
 from collections import defaultdict
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from zoneinfo import ZoneInfo
 from urllib.parse import urljoin
 
 import isoweek
-import datetime
 
 from django.conf import settings
 from django.contrib.staticfiles import finders
@@ -496,7 +495,7 @@ class WidgetAPIProductList(EventListMixin, View):
             if hasattr(self.request, 'event'):
                 tz = ZoneInfo(self.request.event.settings.timezone)
             else:
-                tz = datetime.timezone.utc
+                tz = UTC
             before = datetime(self.year, self.month, 1, 0, 0, 0, tzinfo=tz) - timedelta(days=1)
             after = datetime(self.year, self.month, ndays, 0, 0, 0, tzinfo=tz) + timedelta(days=1)
 
@@ -565,7 +564,7 @@ class WidgetAPIProductList(EventListMixin, View):
             if hasattr(self.request, 'event'):
                 tz = ZoneInfo(self.request.event.settings.timezone)
             else:
-                tz = datetime.timezone.utc
+                tz = UTC
 
             week = isoweek.Week(self.year, self.week)
             data['week'] = [self.year, self.week]
