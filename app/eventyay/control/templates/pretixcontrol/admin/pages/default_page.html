@@ -7,11 +7,14 @@
         {% csrf_token %}
         {% bootstrap_form_errors form %}
         {% if has_content %}
-            {% include "pretixcontrol/admin/pages/_language_switcher.html" %}
+            {% bootstrap_field form.page_locales layout="control" %}
         {% endif %}
 
         <fieldset>
             <legend>{{ page_title }}</legend>
+            {% if has_content %}
+                {% bootstrap_field form|getitem:page_enabled_field layout="control" %}
+            {% endif %}
             {% bootstrap_field form|getitem:enabled_field layout="control" %}
             {% bootstrap_field form|getitem:url_field layout="control" %}
             {% if has_content %}

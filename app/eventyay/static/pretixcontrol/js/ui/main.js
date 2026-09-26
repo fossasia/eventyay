@@ -864,6 +864,13 @@ $(function () {
     $("[data-formset]").on("formAdded", "div", function (event) {
         form_handlers($(event.target));
     });
+    // Narrow legacy exception: form_handlers is pretixcontrol's legacy jQuery form
+    // initializer. Retained here until pretixcontrol form utilities are migrated to vanilla DOM.
+    document.addEventListener('eventyay:ajax-results-replaced', function (e) {
+        if (e.target && typeof window.$ !== 'undefined' && typeof form_handlers === 'function') {
+            form_handlers($(e.target));
+        }
+    });
     $(document).on("click", ".variations .variations-select-all", function (e) {
         $(this).parent().parent().find("input[type=checkbox]").prop("checked", true).change();
         e.stopPropagation();
