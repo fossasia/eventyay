@@ -17,7 +17,9 @@ from django.forms import (
     Widget,
 )
 from django.utils.datastructures import MultiValueDict
-from django.utils.html import escape
+from html import unescape as html_unescape
+
+from django.utils.html import escape, strip_tags
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from i18nfield.forms import I18nTextarea
@@ -131,10 +133,20 @@ class RichTextWidget(Textarea):
 
     template_name = 'common/widgets/richtext.html'
 
+    def use_required_attribute(self, initial):
+        return False
+
     def __init__(self, attrs=None):
         attrs = attrs.copy() if attrs is not None else {}
         attrs.setdefault('data-tiptap-profile', 'richtext')
         super().__init__(attrs=attrs)
+
+    def value_from_datadict(self, data, files, name):
+        value = super().value_from_datadict(data, files, name)
+        if value and isinstance(value, str):
+            if not html_unescape(strip_tags(value)).strip():
+                return ''
+        return value
 
 
 class MarkdownWidget(RichTextWidget):
@@ -154,10 +166,25 @@ class I18nRichTextWidget(I18nTextarea):
     shared editor bundle can mount one rich text editor per language.
     """
 
+    def use_required_attribute(self, initial):
+        return False
+
     def __init__(self, locales, field, attrs=None, **kwargs):
         attrs = attrs.copy() if attrs is not None else {}
         attrs.setdefault('data-tiptap-profile', 'richtext')
         super().__init__(locales=locales, field=field, attrs=attrs)
+
+    def value_from_datadict(self, data, files, name):
+        value = super().value_from_datadict(data, files, name)
+        if value:
+            if isinstance(value, list):
+                return [
+                    '' if isinstance(v, str) and not html_unescape(strip_tags(v)).strip() else v
+                    for v in value
+                ]
+            if isinstance(value, str) and not html_unescape(strip_tags(value)).strip():
+                return ''
+        return value
 
     def render(self, name: str, value, attrs=None, renderer=None) -> str:
         if self.is_localized:

@@ -1,0 +1,113 @@
+{% extends "orga/base.html" %}
+
+{% load compress %}
+{% load staff_session %}
+{% load i18n %}
+{% load rules %}
+{% load static %}
+
+{% block scripts %}
+    {% if form.biography %}
+        <script src="{% static "vendored/marked.min.js" %}" defer></script>
+        <script defer src="{% static "vendored/purify.min.js" %}"></script>
+    {% endif %}
+    <script defer src="{% static 'cfp/js/talk_dependencies.js' %}"></script>
+    {% if social_media_formset %}
+        <script defer src="{% static "js/jquery.js" %}"></script>
+        <script defer src="{% static "js/jquery.formset.js" %}"></script>
+        <script defer src="{% static "cfp/js/animateFormset.js" %}"></script>
+        <script type="module" src="{% static 'common/js/speaker_social_links.js' %}"></script>
+    {% endif %}
+    <script type="module" src="{% static 'orga/js/speaker_create.js' %}"></script>
+{% endblock scripts %}
+
+{% block extra_title %}{% translate "Add speaker" %} :: {% endblock extra_title %}
+
+{% block content %}
+    <nav id="event-nav" class="header-nav">
+        <div class="navigation">
+            <div class="navigation-title">
+                <h2 class="d-flex align-items-baseline">
+                    {% translate "Add new speaker" %}
+                </h2>
+            </div>
+            {% include "orga/event/component_link.html" %}
+        </div>
+    </nav>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% include "common/forms/errors.html" %}
+
+        {% for field in form %}
+            {% if field.name == 'avatar' %}
+                {% include "common/avatar.html" with user=form.instance.user form=form %}
+            {% elif field.name == 'get_gravatar' %}
+                {# already handled by avatar.html #}
+            {% elif field.name == 'availabilities' %}
+                {% include "common/availabilities.html" %}
+                {{ field.as_field_group }}
+            {% elif field.name == 'social_links' %}
+                {% include "common/speaker_social_links_formset.html" %}
+            {% else %}
+                {{ field.as_field_group }}
+            {% endif %}
+        {% endfor %}
+
+        {# ── Session options ── #}
+        <div class="form-group row">
+            <div class="col-md-3"></div>
+            <div class="col-md-9">
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="id_add_session" name="add_session"
+                           {% if request.POST.add_session %}checked{% endif %}>
+                    <label class="form-check-label" for="id_add_session">
+                        {% translate "Also create a new session for this speaker" %}
+                    </label>
+                </div>
+                <div class="form-check mt-1">
+                    <input type="checkbox" class="form-check-input" id="id_link_existing_session" name="link_existing_session"
+                           {% if request.POST.link_existing_session %}checked{% endif %}>
+                    <label class="form-check-label" for="id_link_existing_session">
+                        {% translate "Link an existing session instead" %}
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        {# ── New session creation form ── #}
+        <div id="session_section" class="d-none">
+            <h3>{% translate "Session Details" %}</h3>
+            {% for field in session_form %}
+                {{ field.as_field_group }}
+            {% endfor %}
+            {{ session_questions_form }}
+        </div>
+
+        {# ── Existing session selector ── #}
+        <div id="existing_session_section" class="d-none">
+            <h3>{% translate "Select Existing Session" %}</h3>
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label" for="id_existing_session_id">
+                    {% translate "Session" %}
+                </label>
+                <div class="col-md-9">
+                    <select id="id_existing_session_id" name="existing_session_id" class="form-control enhanced">
+                        <option value="">{% translate "— choose a session —" %}</option>
+                        {% for session in existing_sessions %}
+                            <option value="{{ session.pk }}"
+                                {% if request.POST.existing_session_id == session.pk|stringformat:"s" %}selected{% endif %}>
+                                {{ session.title }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <small class="form-text text-muted">
+                        {% translate "The new speaker will be added to the selected session." %}
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        {% include "orga/includes/submit_row.html" %}
+
+    </form>
+{% endblock content %}

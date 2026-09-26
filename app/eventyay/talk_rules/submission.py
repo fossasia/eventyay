@@ -482,9 +482,18 @@ def submission_comments_active(user, obj):
 
 
 def speaker_profiles_for_user(event, user, submissions=None):
-    submissions = submissions or submissions_for_user(event, user)
     from eventyay.base.models import SpeakerProfile, User
 
+    if submissions is not None:
+        return SpeakerProfile.objects.filter(event=event, user__in=User.objects.filter(submissions__in=submissions))
+
+    if not user.is_anonymous and not is_only_reviewer(user, event) and user.has_perm('base.orga_list_speakerprofile', event):
+        allowed_tracks = get_allowed_tracks(event, user)
+        if allowed_tracks is None:
+            # Organizer with no track limits sees all speakers, including standalone ones
+            return SpeakerProfile.objects.filter(event=event)
+
+    submissions = submissions_for_user(event, user)
     return SpeakerProfile.objects.filter(event=event, user__in=User.objects.filter(submissions__in=submissions))
 
 
