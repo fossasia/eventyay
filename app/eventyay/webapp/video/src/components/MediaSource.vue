@@ -8,9 +8,9 @@
 				.room-name(v-else-if="call") {{ $t('Private call') }}
 			.global-placeholder
 			bunt-icon-button(@click.prevent.stop="$emit('close')") close
-	Livestream(v-if="room && shouldUseLivestream", ref="livestream", :room="room", :module="module", :size="background ? 'tiny' : 'normal'", :key="`livestream-${room.id}`", @playback-state-changed="onMainPlayerPlaybackChanged")
-	VideoCallFrame(v-else-if="room && isVideoCall", ref="videoCallFrame", :room="room", :module="module", :background="background", :size="background ? 'tiny' : 'normal'", :key="`call-${room.id}`", @close="$emit('close')", @leave="$emit('leave', room)")
-	VideoCallFrame(v-else-if="call", ref="channelCallFrame", :call="call", :background="background", :size="background ? 'tiny' : 'normal'", :key="`call-${call.id}`", @close="$emit('close')", @leave="$emit('leave', null)")
+	Livestream(v-if="room && shouldUseLivestream", ref="livestream", :room="room", :module="module", :size="background ? 'tiny' : 'normal'", :key="`livestream-${room.id}-${playerEpoch}`", @playback-state-changed="onMainPlayerPlaybackChanged")
+	VideoCallFrame(v-else-if="room && isVideoCall", ref="videoCallFrame", :room="room", :module="module", :background="background", :size="background ? 'tiny' : 'normal'", :key="`call-${room.id}-${playerEpoch}`", @close="$emit('close')", @leave="$emit('leave', room)")
+	VideoCallFrame(v-else-if="call", ref="channelCallFrame", :call="call", :background="background", :size="background ? 'tiny' : 'normal'", :key="`call-${call.id}-${playerEpoch}`", @close="$emit('close')", @leave="$emit('leave', null)")
 	.iframe-consent-gate(v-if="consentBlockedUrl && !background")
 		iframe-blocker(:src="consentBlockedUrl", allow="camera *; autoplay *; microphone *; fullscreen *; display-capture *", allowfullscreen, @consent-given="onConsentGiven")
 	.iframe-error(v-if="!iframeEl && !consentBlockedUrl && (iframeError || iframeOffline)", :class="{background: background, 'size-tiny': background}")
@@ -21,7 +21,8 @@
 </template>
 <script setup>
 // TODO functional component?
-import { defineAsyncComponent, ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
+import { defineAsyncComponent, h, inject, provide, ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
+import { translate } from 'i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 import { isEqual } from 'lodash';
@@ -41,11 +42,40 @@ import {
 import { getVimeoEmbedUrl, parseVimeoUrl } from 'lib/vimeo';
 import { isRoomVisibleToAttendee } from 'lib/video-providers';
 
+const PLAYER_LOAD_ATTEMPTS = 3
+const retryVideoPlayerKey = Symbol('retryVideoPlayer')
+
+const PlayerLoadError = {
+	name: 'PlayerLoadError',
+	setup() {
+		const retry = inject(retryVideoPlayerKey, null)
+		return () => h('div', { class: 'player-load-error', role: 'alert' }, [
+			h('p', translate('We could not load the video player.')),
+			h('button', {
+				type: 'button',
+				onClick: () => {
+					if (typeof retry === 'function') retry()
+				},
+			}, translate('Try again')),
+		])
+	},
+}
+
 function loadPlayer(loader, label) {
-	return defineAsyncComponent(() => loader().catch((error) => {
-		console.error('Failed to load video player module', label, error)
-		throw error
-	}))
+	return defineAsyncComponent({
+		loader: () => loader().catch((error) => {
+			console.error('Failed to load video player module', label, error)
+			throw error
+		}),
+		onError(_error, retry, fail, attempts) {
+			if (attempts < PLAYER_LOAD_ATTEMPTS) {
+				retry()
+				return
+			}
+			fail()
+		},
+		errorComponent: PlayerLoadError,
+	})
 }
 
 const Livestream = loadPlayer(() => import('components/Livestream'), 'Livestream')
@@ -60,6 +90,10 @@ const props = defineProps({
 	},
 });
 const emit = defineEmits(['close', 'leave']);
+const playerEpoch = ref(0)
+provide(retryVideoPlayerKey, () => {
+	playerEpoch.value += 1
+})
 
 const store = useStore();
 const route = useRoute();
@@ -1139,6 +1173,24 @@ iframe.iframe-media-source
 	height: var(--mediasource-placeholder-height, var(--mobile-media-height, 40vh))
 	.c-iframe-blocker
 		flex: auto
+.c-media-source .player-load-error
+	display: flex
+	flex-direction: column
+	align-items: center
+	justify-content: center
+	gap: 12px
+	box-sizing: border-box
+	width: var(--mediasource-placeholder-width, 100%)
+	min-height: 120px
+	padding: 16px
+	text-align: center
+	background-color: $clr-blue-grey-200
+	color: $clr-secondary-text-light
+	p
+		margin: 0
+	button
+		font: inherit
+		cursor: pointer
 .c-media-source .iframe-error
 	display: flex
 	justify-content: center
