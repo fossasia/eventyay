@@ -141,6 +141,18 @@
     </div>
     <div class="card-body">
       <fieldset>
+        <div class='d-flex align-items-center mb-3'>
+          <div id='mail-language-tabs' role='tablist' hidden
+               data-default-locale='{{ platform_default_locale }}'></div>
+          <div class='dropdown ml-2' id='add-language-btn' hidden>
+            <button type='button' class='btn btn-default btn-sm dropdown-toggle'
+                    data-toggle='dropdown' aria-haspopup='true' aria-expanded='false'>
+              <i class='fa fa-plus' aria-hidden='true'></i> {% translate "Add language" %}
+              <span class='caret'></span>
+            </button>
+            <ul class='dropdown-menu' id='add-language-dropdown'></ul>
+          </div>
+        </div>
         {{ form.subject.as_field_group }}
         <div class="mail-editor-tabs"
              data-email-preview-wrapper
@@ -275,17 +287,15 @@
         <button type="submit" class="btn btn-outline-info" name="action" value="draft" formnovalidate>
           {% translate "Save draft" %}
         </button>
-        <button type="submit" class="btn btn-outline-info btn-save" name="action" value="preview" formnovalidate data-no-loading>
+        <button type="submit" class="btn btn-outline-info" name="action" value="preview" formnovalidate data-no-loading>
           {% translate "Preview email" %}
         </button>
-        <span class="composer-send-group">
-          <button type="submit" class="btn btn-primary" name="action" value="send" id="send-btn"
-                  data-label-outbox="{% translate 'Send to Outbox' %}"
-                  data-label-immediate="{% translate 'Send email' %}">
-            <i class="fa fa-paper-plane" aria-hidden="true"></i>
-            <span class="send-label">{% translate "Send to Outbox" %}</span>
-          </button>
-        </span>
+        <button type="submit" class="btn btn-primary" name="action" value="send" id="send-btn"
+                data-label-outbox="{% translate 'Send to Outbox' %}"
+                data-label-immediate="{% translate 'Send email' %}">
+          <i class="fa fa-paper-plane" aria-hidden="true"></i>
+          <span class="send-label">{% translate "Send to Outbox" %}</span>
+        </button>
       </span>
     </div>
   </section>
@@ -314,6 +324,7 @@
 <script defer src="{% static 'orga/js/placeholder.js' %}"></script>
 <script type="module" src="{% static 'orga/js/mail-recipients.js' %}"></script>
 <script type="module" src="{% static 'orga/js/mail-editor-tabs.js' %}"></script>
+<script type="module" src="{% static 'pretixcontrol/js/admin-mail-language-manager.js' %}"></script>
 <script type="module" src="{% static 'pretixcontrol/js/admin-messages-compose.js' %}"></script>
 <script type="module" src="{% static 'common/js/mail-preview.js' %}" defer></script>
 </div>

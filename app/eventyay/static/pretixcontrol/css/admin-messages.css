@@ -25,3 +25,42 @@
   max-height: 70vh;
   overflow-y: auto;
 }
+
+#mail-language-tabs {
+  display: inline-flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 0;
+}
+
+.mail-language-tab {
+  padding: 0.35rem 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #f8f8f8;
+  cursor: pointer;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.mail-language-tab.active {
+  background: #2185d0;
+  color: #fff;
+  border-color: #2185d0;
+}
+
+.mail-language-tab .ml-1 {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.mail-language-tab.active .ml-1 {
+  color: #fff;
+  opacity: 0.8;
+}
+
+#add-language-btn .dropdown-menu {
+  max-height: 300px;
+  overflow-y: auto;
+}

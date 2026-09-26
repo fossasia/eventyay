@@ -454,3 +454,89 @@ def test_delete_action_creates_log_entry(draft_mail, admin_user):
         data='{}',
     )
     assert LogEntry.objects.filter(action_type='eventyay.admin.mail.deleted').exists()
+
+
+@pytest.mark.django_db
+def test_i18n_subject_stored_as_dict(admin_user):
+    mail = AdminEmailQueue.objects.create(
+        user=admin_user,
+        subject={'en': 'Hello', 'de': 'Hallo'},
+        message={'en': 'English body', 'de': 'Deutscher Text'},
+        status=AdminEmailStatus.DRAFT,
+    )
+    mail.refresh_from_db()
+    from eventyay.base.i18n import LazyI18nString
+    assert isinstance(mail.subject, LazyI18nString)
+    assert str(mail.subject.localize('en')) == 'Hello'
+    assert str(mail.subject.localize('de')) == 'Hallo'
+
+
+@pytest.mark.django_db
+def test_i18n_message_localize_fallback(admin_user):
+    mail = AdminEmailQueue.objects.create(
+        user=admin_user,
+        subject={'en': 'Subject'},
+        message={'en': 'English only'},
+        status=AdminEmailStatus.DRAFT,
+    )
+    mail.refresh_from_db()
+    from eventyay.base.i18n import LazyI18nString
+    msg = LazyI18nString(mail.message)
+    assert 'English only' in str(msg.localize('fr'))
+
+
+@pytest.mark.django_db
+def test_i18n_plain_string_compat(admin_user):
+    mail = AdminEmailQueue.objects.create(
+        user=admin_user,
+        subject='Plain subject',
+        message='Plain body',
+        status=AdminEmailStatus.QUEUED,
+    )
+    mail.refresh_from_db()
+    from eventyay.base.i18n import LazyI18nString
+    assert 'Plain subject' in str(LazyI18nString(mail.subject).localize('en'))
+    assert 'Plain body' in str(LazyI18nString(mail.message).localize('de'))
+
+
+@pytest.mark.django_db
+def test_send_resolves_user_locale(admin_user):
+    from unittest.mock import patch
+    user_de = User.objects.create_user(email='de_user@example.com', password='x', locale='de')
+    user_en = User.objects.create_user(email='en_user@example.com', password='x', locale='en')
+    mail = AdminEmailQueue.objects.create(
+        user=admin_user,
+        subject={'en': 'Hello', 'de': 'Hallo'},
+        message={'en': 'English body', 'de': 'Deutscher Text'},
+        status=AdminEmailStatus.QUEUED,
+    )
+    AdminEmailQueueRecipient.objects.create(mail=mail, user=user_de, email='de_user@example.com')
+    AdminEmailQueueRecipient.objects.create(mail=mail, user=user_en, email='en_user@example.com')
+
+    dispatched = []
+    with patch('eventyay.common.mail.mail_send_task.apply_async', side_effect=lambda **kw: dispatched.append(kw)):
+        mail.send()
+
+    assert len(dispatched) == 2
+    subjects = {d['kwargs']['subject'] for d in dispatched}
+    assert 'Hello' in subjects
+    assert 'Hallo' in subjects
+    bodies = {d['kwargs']['body'] for d in dispatched}
+    assert 'English body' in bodies
+    assert 'Deutscher Text' in bodies
+
+
+@pytest.mark.django_db
+def test_duplicate_preserves_i18n(admin_user):
+    mail = AdminEmailQueue.objects.create(
+        user=admin_user,
+        subject={'en': 'Hello', 'de': 'Hallo'},
+        message={'en': 'Body EN', 'de': 'Body DE'},
+        status=AdminEmailStatus.QUEUED,
+    )
+    AdminEmailQueueFilter.objects.create(mail=mail)
+    new_mail = mail.duplicate()
+    new_mail.refresh_from_db()
+    from eventyay.base.i18n import LazyI18nString
+    assert str(LazyI18nString(new_mail.subject).localize('de')) == 'Hallo'
+    assert str(LazyI18nString(new_mail.message).localize('de')) == 'Body DE'
