@@ -507,13 +507,14 @@ class EventSettingsView(views.APIView):
 
 
 def check_token_permission(token, permission_required):
+    """Return the user the token was issued for, or None if it lacks ``permission_required``."""
     # Decode and validate the JWT token
     decoded_data = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
     # Check if user existed
-    User.objects.get(email=decoded_data['email'])
+    user = User.objects.get(email=decoded_data['email'])
     if decoded_data.get('has_perms') != permission_required:
-        return False
-    return True
+        return None
+    return user
 
 
 @csrf_exempt
@@ -527,13 +528,21 @@ def talk_schedule_public(request, *args, **kwargs):
 
     token = auth_header.split(' ')[1]
     try:
-        if not check_token_permission(token, 'base.edit_schedule'):
+        user = check_token_permission(token, 'base.edit_schedule')
+        if user is None:
             return JsonResponse(
                 {'status': 'User does not have permission to show schedule on menu'},
                 status=403,
             )
         organizer = get_object_or_404(Organizer, slug=kwargs['organizer'])
         event = get_object_or_404(Event, slug=kwargs['event'], organizer=organizer)
+        # The token only proves who the user is; it is not bound to an event.
+        # Require the same permission as the organizer-side ScheduleToggleView.
+        if not user.has_perm('base.update_event', event):
+            return JsonResponse(
+                {'status': 'User does not have permission to show schedule on menu'},
+                status=403,
+            )
         request_data = json.loads(request.body)
         is_show_schedule = bool(request_data.get('is_show_schedule'))
         flags = dict(event.feature_flags)

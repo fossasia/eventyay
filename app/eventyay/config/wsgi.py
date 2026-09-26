@@ -12,6 +12,7 @@ import sys
 
 from django.core.wsgi import get_wsgi_application
 
+
 # TODO: Modify sys.path is not a good practice. There seems to be problem with code organization.
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -19,3 +20,8 @@ os.environ.setdefault('EVY_RUNNING_ENVIRONMENT', 'production')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'eventyay.config.settings')
 
 application = get_wsgi_application()
+
+from eventyay.config.secret_key import ensure_secret_key_is_private  # noqa: E402
+
+
+ensure_secret_key_is_private()

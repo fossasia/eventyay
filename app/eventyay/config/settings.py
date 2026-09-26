@@ -259,6 +259,11 @@ conf = BaseSettings()
 # but please use with caution (it can reveal sensitive data like passwords, API keys).
 DEBUG = conf.debug
 SECRET_KEY = conf.secret_key
+# Placeholder values published in this repository (settings default and deployment/env.sample).
+# Anyone can sign JWTs and django.core.signing payloads with them, so production servers refuse
+# to start with them (see eventyay.config.secret_key). Not checked here because image builds
+# run manage.py with EVY_RUNNING_ENVIRONMENT=production and no secret.
+PUBLIC_SECRET_KEYS = frozenset({'please-give-one-in-secret-file', 'CHANGEME'})
 DATABASE_REPLICA = 'default'
 FETCH_ECB_RATES = conf.fetch_ecb_rates
 CACHE_TICKETS_MAX_AGE = timedelta(hours=conf.cache_tickets_hours)
