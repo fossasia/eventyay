@@ -489,7 +489,7 @@ _OURS_MIDDLEWARES = (
 # middleware (including load-shedding 503) still emit operational logs.
 MIDDLEWARE = (
     'eventyay.base.middleware.CorrelationIdMiddleware',
-    'django.middleware.gzip.GZipMiddleware',
+    'eventyay.common.gzip.CompressibleGZipMiddleware',
 ) + _LIBRARY_MIDDLEWARES + _OURS_MIDDLEWARES
 
 
