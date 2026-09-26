@@ -151,8 +151,8 @@ function cleanExtractedKeys(extracted) {
 
 function collectLiteralKeys(appRoot) {
 	const keys = {}
-	const quotedRe = /(?:\$t|\btranslate|\bi18next\.t|\bi18n\.t|\bt)\(\s*(['"])((?:\\.|(?!\1)[^\\])*)(\1)/g
-	const backtickRe = /(?:\$t|\btranslate|\bi18next\.t|\bi18n\.t|\bt)\(\s*`([^`$]*)`/g
+	const quotedRe = /(?:\$t|\btranslate|\bi18next\.t|\bi18n\.t|\bt)\s*\(\s*(['"])((?:\\.|(?!\1)[^\\])*)(\1)/g
+	const backtickRe = /(?:\$t|\btranslate|\bi18next\.t|\bi18n\.t|\bt)\s*\(\s*`([^`$]*)`/g
 	for (const file of walkSourceFiles(path.join(appRoot, 'src'))) {
 		const text = readFileSync(file, 'utf8')
 		quotedRe.lastIndex = 0

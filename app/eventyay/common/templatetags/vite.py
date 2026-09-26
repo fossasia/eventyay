@@ -176,6 +176,18 @@ def modulepreload_tags(fallback: str) -> list[str]:
     built = Path(settings.STATIC_ROOT) / fallback
     if not built.is_file():
         return []
+    return list(cached_modulepreload_tags(fallback, built.stat().st_mtime_ns))
+
+
+@lru_cache(maxsize=16)
+def cached_modulepreload_tags(fallback: str, modified_at: int) -> tuple[str, ...]:
+    """Return preload tags for one built bundle.
+
+    modified_at is part of the cache key so a rebuilt file is scanned again.
+    """
+    built = Path(settings.STATIC_ROOT) / fallback
+    if not built.is_file() or built.stat().st_mtime_ns != modified_at:
+        return ()
     text = built.read_text(encoding='utf-8', errors='ignore')
     base = fallback.rsplit('/', 1)[0]
     tags = []
@@ -187,4 +199,4 @@ def modulepreload_tags(fallback: str) -> list[str]:
         seen.add(name)
         href = urljoin(settings.STATIC_URL, f'{base}/{name}')
         tags.append(f'<link rel="modulepreload" crossorigin href="{href}">')
-    return tags
+    return tuple(tags)

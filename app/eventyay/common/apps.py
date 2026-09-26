@@ -2,6 +2,8 @@ from contextlib import suppress
 
 from django.apps import AppConfig
 
+from .gzip_static import install_static_gzip
+
 
 class CommonConfig(AppConfig):
     name = 'eventyay.common'
@@ -11,7 +13,6 @@ class CommonConfig(AppConfig):
         from . import log_display  # noqa
         from . import signals  # noqa
         from . import tasks  # noqa
-        from .gzip_static import install_static_gzip
         install_static_gzip()
         # from . import update_check  # noqa
 

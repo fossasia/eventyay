@@ -4,6 +4,10 @@ The handler serves files before Django middleware runs, so GZipMiddleware
 never sees them.
 """
 
+from django.contrib.staticfiles.handlers import StaticFilesHandlerMixin
+
+from eventyay.common.gzip import gzip_if_accepted
+
 _installed = False
 
 
@@ -11,9 +15,6 @@ def install_static_gzip():
     global _installed
     if _installed:
         return
-    from django.contrib.staticfiles.handlers import StaticFilesHandlerMixin
-
-    from eventyay.common.gzip import gzip_if_accepted
 
     original_serve = StaticFilesHandlerMixin.serve
 
