@@ -45,6 +45,7 @@
     "eslint-plugin-vue-pug": "^1.0.0-alpha.6",
     "globals": "^17.12.0",
     "i18next-conv": "^17.0.0",
+    "i18next-parser": "^9.4.0",
     "pug": "^3.0.4",
     "postcss-syntax": "^0.36.2",
     "stylelint": "^17.15.0",
