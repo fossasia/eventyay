@@ -1,19 +1,22 @@
 import statistics
 from collections import defaultdict
 from contextlib import suppress
-
 from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count, Max, OuterRef, Q, Subquery
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
+from django.views import View
 from django.views.generic import FormView, TemplateView
 from django_context_decorator import context
+from django_scopes import scope
 
+from eventyay.base.models import Review, ReviewScore, Submission, SubmissionStates
 from eventyay.common.forms.renderers import InlineFormRenderer
 from eventyay.common.text.phrases import phrases
 from eventyay.common.views.generic import CreateOrUpdateView
@@ -27,17 +30,18 @@ from eventyay.orga.forms.review import (
     ProposalForReviewerForm,
     ReviewAssignImportForm,
     ReviewerForProposalForm,
-    ReviewExportForm,
     ReviewForm,
     TagsForm,
 )
 from eventyay.orga.forms.submission import SubmissionStateChangeForm
 from eventyay.orga.views.submission import BaseSubmissionList
-from eventyay.submission.forms import TalkQuestionsForm, SubmissionFilterForm
-from eventyay.base.models import Review, Submission, SubmissionStates
+from eventyay.submission.forms import SubmissionFilterForm, TalkQuestionsForm
+from eventyay.submission.permissions import can_view_reviews
 from eventyay.talk_rules.submission import (
+    can_be_reviewed,
     get_missing_reviews,
     get_reviewable_submissions,
+    has_reviewer_access,
     reviews_are_open,
 )
 
@@ -93,16 +97,33 @@ class ReviewDashboard(EventPermissionRequired, BaseSubmissionList):
                 'reviews',
                 'reviews__user',
                 'reviews__scores',
+                'reviews__scores__category',
                 'tags',
                 'answers',
             )
         )
 
         for submission in queryset:
+            submission_categories = {category.pk for category in submission.score_categories}
+            submission.can_update_score = (
+                has_reviewer_access(self.request.user, submission)
+                and can_be_reviewed(self.request.user, submission)
+            )
+            reviews = [review for review in submission.reviews.all() if review.user == self.request.user]
             if self.can_see_all_reviews:
                 submission.current_score = (
                     submission.median_score if aggregate_method == 'median' else submission.mean_score
                 )
+                user_scores = {
+                    score.category_id: score.pk
+                    for review in reviews
+                    for score in review.scores.all()
+                    if not score.category.is_independent
+                }
+                submission.dashboard_scores = [
+                    (category, user_scores.get(category.pk)) for category in self.dashboard_score_categories
+                ]
+
                 if self.independent_categories:  # Assemble medians/means on the fly. Yay.
                     independent_ids = [cat.pk for cat in self.independent_categories]
                     mapping = defaultdict(list)
@@ -116,19 +137,28 @@ class ReviewDashboard(EventPermissionRequired, BaseSubmissionList):
                         result.append(mapping.get(category.pk))
                     submission.independent_scores = result
             else:
-                reviews = [review for review in submission.reviews.all() if review.user == self.request.user]
                 submission.current_score = None
                 if reviews:
                     review = reviews[0]
                     submission.current_score = review.score
+                    user_scores = {
+                        score.category_id: score.pk
+                        for score in review.scores.all()
+                        if not score.category.is_independent
+                    }
+                    submission.dashboard_scores = [
+                        (category, user_scores.get(category.pk)) for category in self.dashboard_score_categories
+                    ]
                     if self.independent_categories:
                         mapping = {score.category_id: score.value for score in review.scores.all()}
                         result = []
                         for category in self.independent_categories:
                             result.append(mapping.get(category.pk))
                         submission.independent_scores = result
-                elif self.independent_categories:
-                    submission.independent_scores = [None for _ in range(len(self.independent_categories))]
+                else:
+                    submission.dashboard_scores = [(category, None) for category in self.dashboard_score_categories]
+                    if self.independent_categories:
+                        submission.independent_scores = [None for _ in range(len(self.independent_categories))]
             if self.short_questions:
                 answers = {answer.question_id: answer for answer in submission.answers.all()}
                 submission.short_answers = [
@@ -236,6 +266,14 @@ class ReviewDashboard(EventPermissionRequired, BaseSubmissionList):
     @cached_property
     def independent_categories(self):
         return self.request.event.score_categories.all().filter(is_independent=True, active=True)
+
+    @context
+    @cached_property
+    def dashboard_score_categories(self):
+        return self.request.event.score_categories.filter(
+            active=True,
+            is_independent=False,
+        ).order_by('id')
 
     @context
     @cached_property
@@ -355,8 +393,7 @@ class BulkReview(EventPermissionRequired, TemplateView):
         for category in self.categories:
             for track in category.limit_tracks.all():
                 categories[track.pk].append(category)
-            else:
-                categories[None].append(category)
+            categories[None].append(category)
         return {
             submission.code: ReviewForm(
                 event=self.request.event,
@@ -592,6 +629,69 @@ class ReviewSubmission(ReviewViewMixin, PermissionRequired, CreateOrUpdateView):
         return self.request.event.orga_urls.reviews
 
 
+class ReviewScoreUpdate(ReviewViewMixin, PermissionRequired, View):
+    permission_required = 'base.review_submission'
+
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        score_id = request.POST.get('score')
+        category_id = request.POST.get('category')
+
+        if not has_reviewer_access(request.user, self.submission) or not can_be_reviewed(request.user, self.submission):
+            return JsonResponse({'ok': False, 'error': _('You cannot review this proposal.')}, status=403)
+
+        if score_id:
+            with scope(event=request.event):
+                score = get_object_or_404(
+                    ReviewScore,
+                    pk=score_id,
+                    category__in=self.submission.score_categories,
+                    category__is_independent=False,
+                )
+        else:
+            score = None
+            if category_id:
+                get_object_or_404(
+                    self.submission.score_categories,
+                    pk=category_id,
+                    is_independent=False,
+                )
+
+        review = self.submission.reviews.filter(user=request.user).first()
+
+        if score and not review:
+            review = Review(submission=self.submission, user=request.user)
+            review.save()
+
+        if score:
+            review.scores.remove(*review.scores.filter(category=score.category))
+            review.scores.add(score)
+
+        elif review:
+            review.scores.remove(*review.scores.filter(category_id=category_id))
+
+        if review:
+            review.update_score()
+            review.save(update_score=False)
+
+        self.submission.__dict__.pop('median_score', None)
+        self.submission.__dict__.pop('mean_score', None)
+
+        aggregate_method = request.event.review_settings['aggregate_method']
+        aggregate = self.submission.median_score if aggregate_method == 'median' else self.submission.mean_score
+        missing_reviews = get_missing_reviews(request.event, request.user).count()
+        return JsonResponse(
+            {
+                'ok': True,
+                'score': review.display_score if review else None,
+                **({'aggregate': aggregate} if can_view_reviews(request.user, self.submission) else {}),
+                'reviews': self.submission.reviews.filter(scores__isnull=False).distinct().count(),
+                'review_count': self.submission.reviews.count(),
+                'missing_reviews': missing_reviews,
+            }
+        )
+
+
 class ReviewSubmissionDelete(EventPermissionRequired, ReviewViewMixin, ActionConfirmMixin, TemplateView):
     template_name = 'orga/submission/review_delete.html'
     permission_required = 'base.delete_review'
@@ -696,9 +796,7 @@ class ReviewAssignment(EventPermissionRequired, FormView):
         return_path = self.request.get_full_path()
 
         admin_team_ids = set(
-            org.teams.filter(can_change_teams=True, members__isnull=False)
-            .values_list('pk', flat=True)
-            .distinct()
+            org.teams.filter(can_change_teams=True, members__isnull=False).values_list('pk', flat=True).distinct()
         )
 
         rows = []
@@ -763,5 +861,3 @@ class ReviewAssignmentImport(EventPermissionRequired, FormView):
         form.save()
         messages.success(self.request, _('The reviewers were assigned successfully.'))
         return redirect(self.request.event.orga_urls.review_assignments)
-
-

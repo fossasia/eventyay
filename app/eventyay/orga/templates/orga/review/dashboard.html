@@ -26,14 +26,16 @@
     {% has_event_perm "base.reviewer_list_speakerprofile" request.user request request.event as can_view_speakers %}
     {% trans "Review Proposals" as header_title %}
     {% include "common/includes/header_nav.html" with header_title=header_title %}
-    <div class="alert alert-info">
-        <div>
+    <div class="alert alert-info review-progress">
+        <div id="review-progress-content">
             {% if can_review and next_submission %}
+            <span id="missing-reviews-count">
                 {% blocktranslate trimmed count count=missing_reviews %}
                     {{ count }} proposal is waiting for your review.
                 {% plural %}
                     {{ count }} proposals are waiting for your review.
                 {% endblocktranslate %}
+            </span>
                 <a href="{{ next_submission.orga_urls.reviews }}">{% translate "Click here to get started!" %}</a>
                 <br>
                 <small><a href="{{ request.event.orga_urls.reviews }}bulk/">{% translate "Or review all proposals at once." %}</a></small>
@@ -59,10 +61,10 @@
                 <colgroup>
                     {% if can_see_all_reviews %}
                         <col class="col-score-avg nowrap numeric">
-                        {% for category in independent_categories %}<col class="col-score-avg nowrap numeric">{% endfor %}
+                        {% for category in independent_categories %}<col class="nowrap col-score-user col-score-category numeric">{% endfor %}
                     {% endif %}
                     {% if can_review or submissions_reviewed %}
-                        <col class="nowrap col-score-user numeric">
+                        {% for category in dashboard_score_categories %}<col class="nowrap col-score-user col-score-category numeric">{% endfor %}
                         {% if independent_categories and not can_see_all_reviews %}
                             {% for category in independent_categories %}<col class="col-score-avg nowrap numeric">{% endfor %}
                         {% endif %}
@@ -96,14 +98,12 @@
                             {% endfor %}
                         {% endif %}
                         {% if can_review or submissions_reviewed %}
-                            <th class="col-score-user numeric">
-                                {% translate "Your score" %}
-                                <a href="{% querystring sort="my_score" %}"><i class="fa fa-caret-down" title="{% translate "Sort (high-low)" %}"></i></a>
-                                <a href="{% querystring sort="-my_score" %}"><i class="fa fa-caret-up" title="{% translate "Sort (low-high)" %}"></i></a>
-                            </th>
+                            {% for category in dashboard_score_categories %}
+                                <th class="col-score-user col-score-category numeric text-center">{{ category.name }}</th>
+                            {% endfor %}
                             {% if independent_categories and not can_see_all_reviews %}
                                 {% for category in independent_categories %}
-                                    <th class="col-score-user numeric"> {{ category.name }}</th>
+                                    <th class="col-score-user col-score-category numeric text-center"> {{ category.name }}</th>
                                 {% endfor %}
                             {% endif %}
                         {% endif %}
@@ -141,30 +141,51 @@
                     {% for submission in submissions %}
                         <tr class="{{ submission.state }}">
                             {% if can_see_all_reviews %}
-                                <td class="text-center col-score-avg numeric">
+                                <td class="text-center col-score-avg numeric review-current-score">
                                     {% review_score submission %}
                                 </td>
                                 {% for score in submission.independent_scores %}
                                     <td class="col-score-avg numeric"> {% if score is None %}-{% else %}{{ score }}{% endif %}</td>
                                 {% endfor %}
                             {% endif %}
-                            {% if can_review or submissions_reviewed %}
-                                <td class="text-center col-score-user numeric">
-                                    {% review_score submission True %}
-                                </td>
+                            {% for category, user_score_id in submission.dashboard_scores %}
+                            <td class="text-center col-score-user col-score-category numeric">
+                                {% if submission.can_update_score %}
+                                    <select
+                                         class="form-control review-score-select"
+                                         data-url="{% url 'orga:submissions.reviews.score' organizer=request.event.organizer.slug event=request.event.slug code=submission.code %}"
+                                         aria-label="{{ category.name }}"
+                                         data-category="{{ category.pk }}"
+                                    >
+                                        <option value="" {% if user_score_id is None %}selected{% endif %}>
+                                            {% translate "No score" %}
+                                        </option>
+                                        {% for score in category.scores.all %}
+                                            <option value="{{ score.pk }}" {% if score.pk == user_score_id %}selected{% endif %}>
+                                                {{ score.label }} ({{ score.value|floatformat:"-2" }})
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                <div class="review-score-error text-danger d-none"></div>
+                                {% else %}
+                                <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
                                 {% if independent_categories and not can_see_all_reviews %}
                                     {% for score in submission.independent_scores %}
                                         <td class="col-score-user numeric"> {% if score is None %}-{% else %}{{ score }}{% endif %}</td>
                                     {% endfor %}
-                                {% endif %}
                             {% endif %}
-                            <td class="text-center col-review-count numeric">
-                                {{ submission.review_nonnull_count|default:"-" }}
-                                {% if submission.review_count != submission.review_nonnull_count %}({{ submission.review_count|default:"-" }}){% endif %}
+                            <td class="text-center col-review-count numeric review-count">
+                                <span class="review-count-value">{{ submission.review_nonnull_count|default:"-" }}</span>
+                                {% if submission.review_count != submission.review_nonnull_count %}(<span class="review-total-count">{{ submission.review_count|default:"-" }}</span>){% endif %}
                                 {% if submission.pk in submissions_reviewed %}
-                                    <i class="fa fa-check text-success" title="{% translate "You have reviewed this proposal" %}"></i>
+                                    <i class="fa fa-check text-success review-completed" title="{% translate "You have reviewed this proposal" %}"></i>
                                 {% elif request.user in submission.speakers.all %}
                                     <i class="fa fa-check text-muted" title="{% translate "You cannot review this proposal" %}"></i>
+                                {% else %}
+                                    <i class="fa fa-check text-success review-completed d-none" title="{% translate "You have reviewed this proposal" %}"></i>
                                 {% endif %}
                                 {% if submission.is_assigned %}
                                     <i class="fa fa-star text-warning" title="{% translate "You have been assigned to this proposal" %}"></i>
