@@ -114,9 +114,10 @@ class SpeakerProfile(PretalxModel):
         :class:`~pretalx.submission.models.submission.Submission` objects by
         this user on this event.
         """
-        return self.user.submissions.filter(event=self.event).exclude(
-            state__in=(SubmissionStates.DELETED, SubmissionStates.DRAFT)
-        )
+        with scope(event=self.event):
+            return self.user.submissions.filter(event=self.event).exclude(
+                state__in=(SubmissionStates.DELETED, SubmissionStates.DRAFT)
+            )
 
     @cached_property
     def talks(self):
