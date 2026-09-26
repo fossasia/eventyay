@@ -50,7 +50,7 @@ class LogEntry(models.Model):
     )
     api_token = models.ForeignKey('TeamAPIToken', null=True, blank=True, on_delete=models.PROTECT)
     device = models.ForeignKey('Device', null=True, blank=True, on_delete=models.PROTECT)
-    oauth_application = models.ForeignKey('api.OAuthApplication', null=True, blank=True, on_delete=models.PROTECT)
+    oauth_application = models.ForeignKey('api.OAuthApplication', null=True, blank=True, on_delete=models.SET_NULL)
     event = models.ForeignKey('Event', null=True, blank=True, on_delete=models.SET_NULL)
     action_type = models.CharField(max_length=255)
     data = models.TextField(default='{}')
