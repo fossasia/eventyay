@@ -168,10 +168,9 @@
         <form method="get" action="{% url 'presale:locale.set' %}" class="language-form">
             <input type="hidden" name="next" value="{{ request.get_full_path }}">
             <details id="locale-dropdown-label" class="dropdown locales" aria-haspopup="menu" role="menu">
-                <summary aria-label="{% trans 'Language' %} - {{ request.LANGUAGE_CODE|slice:':2'|title }}">
+                <summary aria-label="{% trans 'Language' %}">
                     <i class="fa fa-globe" aria-hidden="true"></i>
-                    <span class="hidden-xs" aria-hidden="true">{{ request.LANGUAGE_CODE|slice:':2'|title }}</span>
-                    <i class="fa fa-caret-down ml-1 hidden-xs" aria-hidden="true"></i>
+                    <i class="fa fa-caret-down hidden-xs" aria-hidden="true"></i>
                 </summary>
 
                 <div class="dropdown-content dropdown-content-s{% if rtl %}e{% else %}w{% endif %}" role="menu">
