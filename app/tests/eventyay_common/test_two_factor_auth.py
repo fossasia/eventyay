@@ -4,6 +4,7 @@ Covers device deletion, toggle switch status, enable/disable workflows,
 and confirmation dialog rendering.
 """
 
+import base64
 import time
 from unittest.mock import MagicMock, patch
 
@@ -13,7 +14,9 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django_otp.plugins.otp_totp.models import TOTPDevice
 
+from eventyay.base.models import User, WebAuthnDevice
 from eventyay.common.consts import KEY_LAST_FORCE_LOGIN
+from eventyay.helpers.u2f import websafe_decode, websafe_encode
 
 
 @pytest.fixture
@@ -183,3 +186,98 @@ def test_2fa_disable_view_post(recent_login_client, user):
     assert response.url == reverse('eventyay_common:account.2fa')
     user.refresh_from_db()
     assert user.require_2fa is False
+
+
+@pytest.mark.django_db
+def test_2fa_regenerate_emergency_codes_logs_displayable_action(recent_login_client, user):
+    """The account history must show a sentence, not the raw action type."""
+    response = recent_login_client.post(reverse('eventyay_common:account.2fa.regenemergency'))
+
+    assert response.status_code == 302
+    entry = user.all_logentries.order_by('-datetime', '-id').first()
+    assert entry.action_type == 'eventyay.user.settings.2fa.regenemergency'
+    # LogEntry.display() falls back to returning action_type when nothing renders it.
+    assert str(entry.display()) == 'Your two-factor emergency codes have been regenerated.'
+
+
+def _start_webauthn_registration(client, user, seed_session=True):
+    """Create an unconfirmed WebAuthn device and seed the session as the confirm page's GET does."""
+    device = WebAuthnDevice.objects.create(user=user, name='Security key', confirmed=False)
+    if seed_session:
+        session = client.session
+        session['webauthn_challenge'] = base64.b64encode(b'challenge').decode()
+        session['webauthn_register_ukey'] = base64.b64encode(b'ukey').decode()
+        session.save()
+    url = reverse('eventyay_common:account.2fa.confirm.webauthn', kwargs={'device_id': device.pk})
+    return device, url
+
+
+def _verified_registration(credential_id=b'credential-id'):
+    return MagicMock(credential_id=credential_id, credential_public_key=b'public-key', sign_count=0)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'seed_session',
+    [
+        True,  # credential rejected by the webauthn library
+        False,  # expired session, no challenge to verify against
+    ],
+)
+def test_webauthn_confirm_failed_verification_keeps_device_unconfirmed(recent_login_client, user, seed_session):
+    """Failures the narrowed handler is meant to catch still redirect back to the confirmation page."""
+    device, url = _start_webauthn_registration(recent_login_client, user, seed_session=seed_session)
+
+    response = recent_login_client.post(url, {'token': '{}'})
+
+    assert response.status_code == 302
+    assert response.url == url
+    device.refresh_from_db()
+    assert device.confirmed is False
+
+
+@pytest.mark.django_db
+def test_webauthn_confirm_does_not_swallow_errors_after_device_is_saved(recent_login_client, user):
+    """Once the device is saved, a failure must not redirect to the confirmation page.
+
+    That page only loads unconfirmed devices, so the user was told registration failed
+    and then got a 404, while the device was actually registered.
+    """
+    device, url = _start_webauthn_registration(recent_login_client, user)
+
+    with (
+        patch('webauthn.verify_registration_response', return_value=_verified_registration()),
+        patch.object(User, 'send_security_notice', side_effect=RuntimeError('mail backend down')),
+        pytest.raises(RuntimeError),
+    ):
+        recent_login_client.post(url, {'token': '{}'})
+
+    device.refresh_from_db()
+    assert device.confirmed is True
+
+
+@pytest.mark.django_db
+def test_webauthn_confirm_rejects_credential_already_registered(recent_login_client, user):
+    """A credential id stored for another device must be detected as a duplicate."""
+    other = User.objects.create_user(email='other@example.com', password='testpass123')
+    WebAuthnDevice.objects.create(
+        user=other, name='Existing key', confirmed=True, credential_id=websafe_encode(b'credential-id')
+    )
+    device, url = _start_webauthn_registration(recent_login_client, user)
+
+    with patch('webauthn.verify_registration_response', return_value=_verified_registration(b'credential-id')):
+        response = recent_login_client.post(url, {'token': '{}'})
+
+    assert response.status_code == 302
+    assert response.url == url
+    device.refresh_from_db()
+    assert device.confirmed is False
+
+
+def test_websafe_encode_round_trips_bytes():
+    """WebAuthn credential ids and keys are bytes; encoding them used to return None."""
+    raw = b'\xfb\xef\xff\x01'  # needs padding and uses the URL-safe '-' and '_' characters
+    encoded = websafe_encode(raw)
+
+    assert encoded == '--__AQ'
+    assert websafe_decode(encoded) == raw
