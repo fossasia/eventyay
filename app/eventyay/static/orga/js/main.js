@@ -216,6 +216,87 @@ const initFeedbackBulkActions = (root = document) => {
   })
 }
 
+const confirmDialogText = (msgid) => {
+  if (typeof gettext === 'function') {
+    return gettext(msgid)
+  }
+  return msgid
+}
+
+const showOrgaConfirmDialog = (message) => {
+  const dialog = document.getElementById('orga-confirm-dialog')
+  const titleEl = document.getElementById('orga-confirm-dialog-title')
+  const messageEl = document.getElementById('orga-confirm-dialog-message')
+  const confirmBtn = document.getElementById('orga-confirm-dialog-confirm')
+  const cancelBtn = document.getElementById('orga-confirm-dialog-cancel')
+  if (!dialog || typeof dialog.showModal !== 'function' || !titleEl || !messageEl || !confirmBtn || !cancelBtn) {
+    return Promise.resolve(window.confirm(message))
+  }
+
+  titleEl.textContent = confirmDialogText('Please confirm')
+  messageEl.textContent = message
+  confirmBtn.textContent = confirmDialogText('Confirm')
+  cancelBtn.textContent = confirmDialogText('Cancel')
+
+  return new Promise((resolve) => {
+    const finish = (confirmed) => {
+      confirmBtn.removeEventListener('click', onConfirm)
+      cancelBtn.removeEventListener('click', onCancel)
+      dialog.removeEventListener('cancel', onCancel)
+      dialog.removeEventListener('click', onBackdropClick)
+      if (dialog.open) {
+        dialog.close()
+      }
+      resolve(confirmed)
+    }
+    const onConfirm = () => finish(true)
+    const onCancel = () => finish(false)
+    const onBackdropClick = (event) => {
+      if (event.target === dialog) {
+        finish(false)
+      }
+    }
+    confirmBtn.addEventListener('click', onConfirm)
+    cancelBtn.addEventListener('click', onCancel)
+    dialog.addEventListener('cancel', onCancel)
+    dialog.addEventListener('click', onBackdropClick)
+    dialog.showModal()
+    confirmBtn.focus()
+  })
+}
+
+const initConfirmSubmit = (root = document) => {
+  root.querySelectorAll('button[type="submit"][data-confirm]').forEach((button) => {
+    if (button.dataset.confirmSubmitInit === 'true') {
+      return
+    }
+    button.dataset.confirmSubmitInit = 'true'
+    button.addEventListener('click', (event) => {
+      const confirmMessage = button.getAttribute('data-confirm')
+      if (!confirmMessage || button.dataset.confirmBypass === 'true') {
+        button.dataset.confirmBypass = ''
+        return
+      }
+      event.preventDefault()
+      event.stopPropagation()
+      const form = button.form
+      showOrgaConfirmDialog(confirmMessage).then((confirmed) => {
+        if (!confirmed || !form) {
+          return
+        }
+        button.dataset.confirmBypass = 'true'
+        if (typeof form.requestSubmit === 'function') {
+          form.requestSubmit(button)
+        } else {
+          form.submit()
+        }
+        button.dataset.confirmBypass = ''
+      })
+    })
+  })
+}
+
 onReady(() => {
   initFeedbackBulkActions()
+  initConfirmSubmit()
 })

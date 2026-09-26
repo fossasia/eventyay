@@ -330,6 +330,8 @@ def test_orga_cannot_reset_to_wrong_version(orga_client, event):
 def test_orga_can_release_and_reset_schedule(orga_client, event):
     with scope(event=event):
         assert Schedule.objects.count() == 1
+        event.talks_published = True
+        event.save(update_fields=['talks_published'])
     response = orga_client.post(
         event.orga_urls.release_schedule,
         follow=True,
@@ -352,6 +354,8 @@ def test_orga_can_release_and_reset_schedule(orga_client, event):
 def test_orga_cannot_reuse_schedule_name(orga_client, event):
     with scope(event=event):
         assert Schedule.objects.count() == 1
+        event.talks_published = True
+        event.save(update_fields=['talks_published'])
     response = orga_client.post(
         event.orga_urls.release_schedule,
         follow=True,
@@ -376,9 +380,21 @@ def test_orga_can_toggle_schedule_visibility(orga_client, event):
     from eventyay.base.models import Event
 
     assert event.feature_flags["show_schedule"] is True
+    orga_client.get(event.orga_urls.toggle_schedule)
+    event = Event.objects.get(pk=event.pk)
+    assert event.feature_flags["show_schedule"] is True
+
+    page = orga_client.get(event.orga_urls.schedule)
+    assert page.status_code == 200
+    assert page.text.count("Unpublish schedule") == 1
+    assert "Make schedule public" not in page.text
+    assert "Visitors will see sessions as coming soon until you publish it again." in page.text
 
     response = orga_client.post(event.orga_urls.toggle_schedule, follow=True)
     assert response.status_code == 200
+    assert response.text.count("Make schedule public") == 1
+    assert "Unpublish schedule" not in response.text
+    assert "Visitors will be able to see the released schedule." in response.text
     event = Event.objects.get(pk=event.pk)
     assert event.feature_flags["show_schedule"] is False
 
