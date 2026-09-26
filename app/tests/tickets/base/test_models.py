@@ -2403,7 +2403,7 @@ class EventTest(TestCase):
 
     @classscope(attr='organizer')
     def test_single_punctuation_slug_is_rejected(self):
-        for slug in ('', '.', '-', 'a.', '.a', 'a-', '-a'):
+        for slug in ('', '.', '-', 'a.', '.a', 'a-', '-a', 'a\n'):
             event = Event(
                 organizer=self.organizer,
                 name='Bad',
@@ -2676,7 +2676,7 @@ class OrganizerSlugTest(TestCase):
         organizer.full_clean()
 
     def test_single_punctuation_slug_is_rejected(self):
-        for slug in ('', '.', '-'):
+        for slug in ('', '.', '-', 'a\n'):
             organizer = Organizer(name='Bad', slug=slug)
             with self.assertRaises(ValidationError) as context:
                 organizer.full_clean()

@@ -525,7 +525,7 @@ class Event(
         ),
         validators=[
             RegexValidator(
-                regex=r'^[a-zA-Z0-9](?:[a-zA-Z0-9.-]*[a-zA-Z0-9])?$',
+                regex=r'^[a-zA-Z0-9](?:[a-zA-Z0-9.-]*[a-zA-Z0-9])?\Z',
                 message=_('The slug may only contain letters, numbers, dots and dashes.'),
             ),
             EventSlugBanlistValidator(),
