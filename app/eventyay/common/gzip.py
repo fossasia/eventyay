@@ -3,6 +3,39 @@ import gzip
 from django.http import HttpResponse
 
 GZIP_MIN_BYTES = 860
+SKIPPED_RESPONSE_HEADERS = {'content-length', 'content-encoding'}
+
+
+def copy_response_headers(source, target):
+    for header, value in source.items():
+        if header.lower() in SKIPPED_RESPONSE_HEADERS:
+            continue
+        target[header] = value
+    target._csp_ignore = getattr(source, '_csp_ignore', False)
+
+
+def with_accept_encoding_vary(response):
+    vary = response.get('Vary')
+    if not vary:
+        response['Vary'] = 'Accept-Encoding'
+        return
+    parts = [part.strip() for part in vary.split(',') if part.strip()]
+    if not any(part.lower() == 'accept-encoding' for part in parts):
+        parts.append('Accept-Encoding')
+        response['Vary'] = ', '.join(parts)
+
+
+def replacement_response(response, body, *, encoding=None):
+    replacement = HttpResponse(
+        body,
+        content_type=response.get('Content-Type'),
+        status=response.status_code,
+    )
+    copy_response_headers(response, replacement)
+    if encoding:
+        replacement['Content-Encoding'] = encoding
+        with_accept_encoding_vary(replacement)
+    return replacement
 
 
 def gzip_if_accepted(request, response):
@@ -28,34 +61,18 @@ def gzip_if_accepted(request, response):
     )
     if not compressible:
         return response
-    if getattr(response, 'streaming', False):
+    streaming = getattr(response, 'streaming', False)
+    if streaming:
         body = b''.join(response.streaming_content)
     else:
         body = response.content
-    cache_control = response.get('Cache-Control')
-    csp_ignore = getattr(response, '_csp_ignore', False)
     if len(body) < GZIP_MIN_BYTES:
-        # The file stream is already consumed, so send the bytes we read.
-        plain = HttpResponse(body, content_type=response.get('Content-Type'), status=response.status_code)
-        if cache_control:
-            plain['Cache-Control'] = cache_control
-        plain._csp_ignore = csp_ignore
-        return plain
+        if streaming:
+            return replacement_response(response, body)
+        return response
     compressed = gzip.compress(body, compresslevel=5)
     if len(compressed) >= len(body):
-        plain = HttpResponse(body, content_type=response.get('Content-Type'), status=response.status_code)
-        if cache_control:
-            plain['Cache-Control'] = cache_control
-        plain._csp_ignore = csp_ignore
-        return plain
-    compressed_response = HttpResponse(
-        compressed,
-        content_type=response.get('Content-Type'),
-        status=response.status_code,
-    )
-    compressed_response['Content-Encoding'] = 'gzip'
-    compressed_response['Vary'] = 'Accept-Encoding'
-    if cache_control:
-        compressed_response['Cache-Control'] = cache_control
-    compressed_response._csp_ignore = csp_ignore
-    return compressed_response
+        if streaming:
+            return replacement_response(response, body)
+        return response
+    return replacement_response(response, compressed, encoding='gzip')

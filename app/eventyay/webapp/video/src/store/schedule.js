@@ -109,6 +109,7 @@ export default {
 		schedule: null,
 		scheduleMeta: null,
 		scheduleLoaded: false,
+		exporterQrcodesRequested: false,
 		errorLoading: null,
 		now: moment(),
 		currentLanguage: localStorage.getItem('userLanguage') || 'en',
@@ -268,10 +269,17 @@ export default {
 		}
 	},
 	actions: {
-		async fetch ({ commit, dispatch }) {
+		async fetch ({ commit, dispatch, state }) {
 			try {
 				commit('setScheduleLoaded', false)
 				commit('setErrorLoading', null)
+				if (window.eventyay?.scheduleMeta) {
+					commit('setScheduleMeta', window.eventyay.scheduleMeta)
+				}
+				if (state.exporterQrcodesRequested && state.scheduleMeta) {
+					commit('setExporterQrcodesRequested', false)
+					dispatch('loadExporterQrcodes')
+				}
 				if (window.eventyay?.schedule) {
 					commit('setSchedule', window.eventyay.schedule)
 				} else if (eventHasPublishedSchedule()) {
@@ -279,9 +287,6 @@ export default {
 					if (data) {
 						commit('setSchedule', data)
 					}
-				}
-				if (window.eventyay?.scheduleMeta) {
-					commit('setScheduleMeta', window.eventyay.scheduleMeta)
 				}
 			} catch (error) {
 				commit('setErrorLoading', error)
@@ -373,6 +378,10 @@ export default {
 			commit('setCurrentLanguage', language)
 		},
 		async loadExporterQrcodes ({ state, commit }) {
+			if (!state.scheduleMeta) {
+				commit('setExporterQrcodesRequested', true)
+				return
+			}
 			const list = state.scheduleMeta?.exporters || []
 			if (!list.length || list.some((item) => item.qrcode_svg)) return
 			const url = new URL(window.location.href)
@@ -395,6 +404,9 @@ export default {
 		},
 		setScheduleMeta (state, scheduleMeta) {
 			state.scheduleMeta = scheduleMeta
+		},
+		setExporterQrcodesRequested (state, requested) {
+			state.exporterQrcodesRequested = requested
 		},
 		setScheduleLoaded (state, scheduleLoaded) {
 			state.scheduleLoaded = scheduleLoaded
