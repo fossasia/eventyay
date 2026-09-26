@@ -1,5 +1,6 @@
 import datetime as dt
 import threading
+from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 from django.db import connection
@@ -50,7 +51,6 @@ class TestWizardRace(TestWizard):
         client2 = Client()
         client2.cookies = client.cookies.copy()
 
-        results = []
         barrier = threading.Barrier(2)
 
         def complete_wizard(c):
@@ -62,17 +62,16 @@ class TestWizardRace(TestWizard):
                 if res.redirect_chain:
                     final_url = res.redirect_chain[-1][0]
                     success = "/me/submissions" in final_url
-                results.append(success)
+                return success
             finally:
                 connection.close()
 
-        t1 = threading.Thread(target=complete_wizard, args=(client,))
-        t2 = threading.Thread(target=complete_wizard, args=(client2,))
-
-        t1.start()
-        t2.start()
-        t1.join()
-        t2.join()
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            futures = [
+                executor.submit(complete_wizard, client),
+                executor.submit(complete_wizard, client2),
+            ]
+            results = [future.result() for future in futures]
 
         assert results.count(True) <= 1, "Race condition allowed both submissions to complete!"
 
