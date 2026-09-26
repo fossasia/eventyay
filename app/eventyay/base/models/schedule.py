@@ -25,6 +25,7 @@ from qrcode.image.svg import SvgPathFillImage
 from eventyay.agenda.export_resources import enriched_resource_entry
 from eventyay.agenda.signals import register_recording_provider
 from eventyay.common.social_links import serialize_social_link
+from eventyay.person.services import build_public_speaker_role
 from eventyay.agenda.tasks import export_schedule_html
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls
@@ -1094,7 +1095,6 @@ class Schedule(PretalxModel):
         )
 
         missing_thumb_user_ids = []
-
         for user in speakers:
             # Avoid calling event_profile() here: it can hit the DB (and even create/save
             # a profile). For schedule JSON, missing profiles should simply result in
@@ -1104,6 +1104,7 @@ class Schedule(PretalxModel):
                 'code': user.code,
                 'name': user.fullname or None,
                 'biography': getattr(profile, 'biography', '') if show_biography else '',
+                'speaker_role': build_public_speaker_role(profile, self.event) if profile else '',
                 'is_featured': bool(getattr(profile, 'is_featured', False)),
                 'featured_position': getattr(profile, 'position', None),
             }

@@ -1,9 +1,12 @@
 """Tests for the new-user onboarding dashboard."""
 
+import re
 from datetime import timedelta
+from pathlib import Path
 
 import pytest
 from django.contrib.auth import get_user_model
+from django.contrib.staticfiles import finders
 from django.urls import reverse
 from django.utils import timezone
 from eventyay.base.models import Event, Organizer, Team
@@ -136,6 +139,42 @@ def test_organiser_dashboard_still_shown_for_event_managers(organizer_client, ev
     assert 'cd-info' not in content
     assert 'aria-label="Go to event"' in content
     assert '<label class="sr-only" for="dashboard_query">Go to event</label>' in content
+
+
+@pytest.mark.django_db
+def test_event_card_component_buttons_share_one_style(organizer_client, event):
+    response = organizer_client.get(reverse('eventyay_common:dashboard'))
+    content = response.content.decode()
+    assert content.count('class="cd-module-btn"') == 3
+    assert 'cd-module-btn--' not in content
+
+
+def _declarations_for(css: str, *selectors: str) -> str:
+    """The declarations of every rule that names one of ``selectors``."""
+    css = re.sub(r'/\*.*?\*/', '', css, flags=re.DOTALL)
+    wanted = set(selectors)
+    blocks = []
+    for rule in re.finditer(r'([^{}]*)\{([^{}]*)\}', css):
+        if wanted & {name.strip() for name in rule.group(1).split(',')}:
+            blocks.append(rule.group(2))
+    return '\n'.join(blocks)
+
+
+@pytest.mark.django_db
+def test_quick_action_icons_never_render_untoned(organizer_client, event):
+    """The quick action icons build their class from a dynamic ``action.tone``.
+
+    A tone without a rule of its own falls back to the base class, so every
+    tone the dashboard renders must be coloured by one of the two.
+    """
+    response = organizer_client.get(reverse('eventyay_common:dashboard'))
+    rendered_tones = set(re.findall(r'cd-action-card__icon--([a-z-]+)', response.content.decode()))
+    assert rendered_tones, 'the organiser dashboard should render quick action icons'
+
+    css = Path(finders.find('eventyay-common/css/onboarding_dashboard.css')).read_text()
+    for tone in sorted(rendered_tones):
+        declarations = _declarations_for(css, '.cd-action-card__icon', f'.cd-action-card__icon--{tone}')
+        assert 'background:' in declarations, f'the {tone} icon tone renders unstyled'
 
 
 @pytest.mark.django_db

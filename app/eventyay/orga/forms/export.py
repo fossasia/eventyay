@@ -84,6 +84,7 @@ class ExportForm(forms.Form):
         for field in self.Meta.model_fields:
             self.fields[field] = forms.BooleanField(
                 required=False,
+                initial=True,
                 label=self.Meta.model._meta.get_field(field).verbose_name,
             )
 
@@ -98,6 +99,10 @@ class ExportForm(forms.Form):
         data = super().clean()
         if data.get('export_format') == 'csv' and 'data_delimiter' in self.fields and not data.get('data_delimiter'):
             data['data_delimiter'] = 'comma'
+        selected_fields = [name for name in self.export_field_names if data.get(name)]
+        selected_questions = [name for name in self.question_field_names if data.get(name)]
+        if not selected_fields and not selected_questions:
+            raise forms.ValidationError(_('Please select at least one data field to export.'))
         return data
 
     def get_object_attribute(self, obj, attribute: str):
