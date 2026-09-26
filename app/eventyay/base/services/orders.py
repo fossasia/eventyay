@@ -772,7 +772,10 @@ def _check_positions(
             if cp.is_bundled:
                 try:
                     bundle = cp.addon_to.product.bundles.get(bundled_product=cp.product, bundled_variation=cp.variation)
-                    bprice = bundle.designated_price or 0
+                    if cp.addon_to.voucher_id and cp.addon_to.voucher.all_bundles_included:
+                        bprice = Decimal('0.00')
+                    else:
+                        bprice = bundle.designated_price or 0
                 except ProductBundle.DoesNotExist:
                     bprice = cp.price
                 except ProductBundle.MultipleObjectsReturned:
@@ -1230,7 +1233,9 @@ def _perform_order(
 
     with lockfn() as now_dt:
         positions = list(
-            positions.select_related('product', 'variation', 'subevent', 'seat', 'addon_to').prefetch_related('addons')
+            positions.select_related(
+                'product', 'variation', 'subevent', 'seat', 'addon_to', 'addon_to__voucher'
+            ).prefetch_related('addons')
         )
         positions.sort(key=lambda k: position_ids.index(k.pk))
         if len(positions) == 0:
