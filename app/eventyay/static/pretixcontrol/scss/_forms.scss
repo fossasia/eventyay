@@ -105,12 +105,18 @@ div[data-formset-body], div[data-formset-form], div[data-nested-formset-form], d
 
 .nav-tabs {
   border-bottom: 0px solid #ddd;
+  margin-bottom: 0;
+  position: relative;
+  z-index: 1;
 }
 
 .tab-content {
     border: 1px solid #ddd;
     border-radius: 0px 5px 5px 5px;
     padding: 20px;
+    margin-top: -1px;
+    position: relative;
+    z-index: 0;
 }
 
 .mail-preview-group {
