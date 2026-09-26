@@ -1,3 +1,4 @@
+import re
 from datetime import timedelta
 from decimal import Decimal
 
@@ -20,7 +21,7 @@ from eventyay.base.models import (
     User,
 )
 from eventyay.plugins.banktransfer.models import BankImportJob, BankTransaction
-from eventyay.plugins.banktransfer.tasks import process_banktransfers
+from eventyay.plugins.banktransfer.tasks import event_slug_prefixes, process_banktransfers
 
 
 @pytest.fixture
@@ -410,6 +411,14 @@ def test_mark_paid_organizer_weird_slug(env, orga_job):
     )
     env[2].refresh_from_db()
     assert env[2].status == Order.STATUS_PAID
+
+
+def test_longer_slug_prefix_matches_before_shorter_sibling():
+    prefixes = event_slug_prefixes(['d', 'dummy'])
+    pattern = re.compile(
+        '(%s)[ \\-_]*([A-Z0-9]{5})' % '|'.join(p.replace('.', r'\.').replace('-', r'[\- ]*') for p in prefixes)
+    )
+    assert pattern.search('BESTELLUNGDUMMY-1234S').groups() == ('DUMMY', '1234S')
 
 
 @pytest.mark.django_db

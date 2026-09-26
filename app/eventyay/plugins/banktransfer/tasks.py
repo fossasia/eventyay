@@ -27,6 +27,11 @@ from .models import BankImportJob, BankTransaction
 logger = logging.getLogger(__name__)
 
 
+def event_slug_prefixes(slugs):
+    """Longer slugs first, so a short slug cannot consume a longer sibling."""
+    return sorted((slug.upper() for slug in slugs), key=len, reverse=True)
+
+
 def notify_incomplete_payment(o: Order):
     with language(o.locale, o.event.settings.region):
         email_template = o.event.settings.mail_text_order_expire_warning
@@ -280,7 +285,7 @@ def process_banktransfers(self, job: int, data: list) -> None:
                 if job.event:
                     prefixes = [job.event.slug.upper()]
                 else:
-                    prefixes = [e.slug.upper() for e in job.organizer.events.all()]
+                    prefixes = event_slug_prefixes(e.slug for e in job.organizer.events.all())
                 pattern = re.compile(
                     '(%s)[ \\-_]*([A-Z0-9]{%s,%s})'
                     % (

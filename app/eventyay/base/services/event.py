@@ -68,12 +68,24 @@ class EventConfigSerializer(serializers.Serializer):
         return [d.value for d in Permission]
 
 
+def get_event_by_id_or_slug(event_id):
+    """Retrieve Event by primary key or slug.
+
+    Live sockets pass the event primary key. When that number is also some
+    other event's slug, the primary key wins so the socket stays on the event
+    that opened it.
+    """
+    if isinstance(event_id, str) and event_id.isdigit():
+        by_id = Event.objects.filter(id=int(event_id)).first()
+        if by_id is not None:
+            return by_id
+        return Event.objects.filter(slug=event_id).first()
+    return Event.objects.filter(slug=event_id).first()
+
+
 @database_sync_to_async
 def _get_event(event_id):
-    """Retrieve Event by primary key or slug."""
-    if isinstance(event_id, str) and event_id.isdigit():
-        return Event.objects.filter(Q(slug=event_id) | Q(id=int(event_id))).first()
-    return Event.objects.filter(slug=event_id).first()
+    return get_event_by_id_or_slug(event_id)
 
 
 async def get_event(event_id):

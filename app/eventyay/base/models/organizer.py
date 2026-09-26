@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
-from django.core.validators import MinLengthValidator, RegexValidator
+from django.core.validators import RegexValidator
 from django.db import models, transaction
 from django.db.models import Exists, OuterRef, Q
 from django.db.models.signals import m2m_changed
@@ -126,11 +126,8 @@ class Organizer(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, me
             'once. This is being used in URLs to refer to your organizer accounts and your events.'
         ),
         validators=[
-            MinLengthValidator(
-                limit_value=2,
-            ),
             RegexValidator(
-                regex='^[a-zA-Z0-9][a-zA-Z0-9.-]*[a-zA-Z0-9]$',
+                regex=r'^[a-zA-Z0-9](?:[a-zA-Z0-9.-]*[a-zA-Z0-9])?$',
                 message=_('The slug may only contain letters, numbers, dots and dashes.'),
             ),
             OrganizerSlugBanlistValidator(),
