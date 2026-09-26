@@ -111,6 +111,8 @@ class SpeakerProfile(PretalxModel):
     def submissions(self):
         """All non-deleted.
 
+        """All non-deleted and non-draft.
+
         :class:`~pretalx.submission.models.submission.Submission` objects by
         this user on this event.
         """
