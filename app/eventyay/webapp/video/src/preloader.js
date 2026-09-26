@@ -1,4 +1,5 @@
 import 'styles/preloader.styl'
+import './main'
 
 /* global ENV_DEVELOPMENT */
 
@@ -26,8 +27,6 @@ const showBrowserBlock = function() {
 		if (typeof Array.prototype.at !== 'function') {
 			throw new Error('Array.prototype.at not supported')
 		}
-		// load app
-		import('./main')
 	} catch (e) {
 		console.error(e)
 		showBrowserBlock()

@@ -54,6 +54,15 @@ function getScheduleWidgetUrls () {
 	]
 }
 
+function eventHasPublishedSchedule () {
+	if (window.eventyay?.schedule) return true
+	const meta = window.eventyay?.scheduleMeta
+	if (!meta) return true
+	if (meta.version) return true
+	if (meta.current_schedule_url) return true
+	return Array.isArray(meta.versions) && meta.versions.length > 0
+}
+
 async function fetchVideoSchedule () {
 	for (const url of getScheduleWidgetUrls()) {
 		let response
@@ -265,7 +274,7 @@ export default {
 				commit('setErrorLoading', null)
 				if (window.eventyay?.schedule) {
 					commit('setSchedule', window.eventyay.schedule)
-				} else {
+				} else if (eventHasPublishedSchedule()) {
 					const data = await fetchVideoSchedule()
 					if (data) {
 						commit('setSchedule', data)
@@ -362,6 +371,22 @@ export default {
 		},
 		setCurrentLanguage ({ commit }, language) {
 			commit('setCurrentLanguage', language)
+		},
+		async loadExporterQrcodes ({ state, commit }) {
+			const list = state.scheduleMeta?.exporters || []
+			if (!list.length || list.some((item) => item.qrcode_svg)) return
+			const url = new URL(window.location.href)
+			url.searchParams.set('exporters', '1')
+			try {
+				const response = await fetch(url.toString(), { credentials: 'same-origin' })
+				if (!response.ok) return
+				const data = await response.json()
+				if (!Array.isArray(data.exporters)) return
+				commit('setScheduleMeta', { ...state.scheduleMeta, exporters: data.exporters })
+			} catch (error) {
+				// The schedule toolbar still has export links when the QR drawings fail to load.
+				console.error('Failed to load schedule export codes', error)
+			}
 		}
 	},
 	mutations: {

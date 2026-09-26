@@ -76,6 +76,23 @@ def generate_script_tag(path: str, attrs: dict[str, str]) -> str:
     return f'<script {all_attrs} src="{src}"></script>'
 
 
+def generate_preload_tags(asset: str, already_processed: list[str], static_files_mapping: ManifestMapping) -> list[str]:
+    """Ask the browser to fetch imported modules with the entry script."""
+    tags = []
+    manifest_entry = static_files_mapping.get(asset)
+    if manifest_entry is None:
+        return tags
+    for import_path in manifest_entry.imports:
+        imported = static_files_mapping.get(import_path)
+        if imported is None or imported.file in already_processed:
+            continue
+        already_processed.append(imported.file)
+        href = urljoin(settings.STATIC_URL, f'schedule-editor/{imported.file}')
+        tags.append(f'<link rel="modulepreload" crossorigin href="{href}" />')
+        tags += generate_preload_tags(import_path, already_processed, static_files_mapping)
+    return tags
+
+
 def generate_css_tags(asset: str, already_processed: list[str], static_files_mapping: ManifestMapping) -> list[str]:
     """Recursively builds all CSS tags used in a given asset.
 
@@ -124,6 +141,7 @@ def vite_asset(path: str) -> str:
         raise ImproperlyConfigured(msg)
 
     tags = generate_css_tags(path, [], static_files_mapping)
+    tags += generate_preload_tags(path, [], static_files_mapping)
     tags.append(generate_script_tag(manifest_entry.file, {'type': 'module', 'crossorigin': ''}))
     return mark_safe(''.join(tags))
 
@@ -140,11 +158,33 @@ def vite_app_scripts(app, entry, fallback=None):
     if not settings.VITE_DEV_MODE:
         if fallback:
             src = urljoin(settings.STATIC_URL, fallback)
+            tags = modulepreload_tags(fallback)
         else:
             src = urljoin(settings.STATIC_URL, f'{app}/{entry}')
-        return mark_safe(f'<script type="module" src="{src}"></script>')
+            tags = []
+        tags.append(f'<script type="module" src="{src}"></script>')
+        return mark_safe(''.join(tags))
     server = settings.VITE_DEV_SERVER_PORTS[app]
     return mark_safe(
         f'<script type="module" src="{server}/@vite/client"></script>'
         f'<script type="module" src="{server}/{entry}"></script>'
     )
+
+
+def modulepreload_tags(fallback: str) -> list[str]:
+    """Preload the entry's static imports so they start with the first script."""
+    built = Path(settings.STATIC_ROOT) / fallback
+    if not built.is_file():
+        return []
+    text = built.read_text(encoding='utf-8', errors='ignore')
+    base = fallback.rsplit('/', 1)[0]
+    tags = []
+    seen = set()
+    for match in re.finditer(r'from\s*"(\./[^"]+\.js)"', text):
+        name = match.group(1)[2:]
+        if name in seen:
+            continue
+        seen.add(name)
+        href = urljoin(settings.STATIC_URL, f'{base}/{name}')
+        tags.append(f'<link rel="modulepreload" crossorigin href="{href}">')
+    return tags

@@ -64,6 +64,7 @@ export default defineConfig({
 		alias: [
 			{ find: '~', replacement: path.resolve(__dirname, 'src') },
 			{ find: /^buntpapier$/, replacement: path.resolve(__dirname, 'node_modules/buntpapier/src/index.js') },
+			{ find: 'moment-timezone', replacement: path.resolve(__dirname, 'node_modules/moment-timezone/builds/moment-timezone-with-data-10-year-range.js') },
 		],
 	},
 	build: {
@@ -83,20 +84,6 @@ export default defineConfig({
 				entryFileNames: 'pretalx-schedule.js',
 				chunkFileNames: 'pretalx-schedule-[name].js',
 				assetFileNames: 'pretalx-schedule.[ext]',
-				manualChunks(id) {
-					if (id.includes('node_modules')) {
-						if (id.includes('/vue/')) return 'vendor-vue'
-						if (id.includes('moment')) return 'vendor-moment'
-						if (id.includes('markdown-it')) return 'vendor-markdown'
-						if (id.includes('dompurify')) return 'vendor-dompurify'
-						if (id.includes('i18next')) return 'vendor-i18n'
-						return 'vendor'
-					}
-					if (id.includes('/src/components/GridSchedule')) return 'chunk-grid'
-					if (id.includes('/src/components/ScheduleToolbar')) return 'chunk-toolbar'
-					if (id.includes('/src/components/SessionModal')) return 'chunk-modal'
-					return undefined
-				},
 			}
 		}
 	},
