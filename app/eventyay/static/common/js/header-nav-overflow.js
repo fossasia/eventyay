@@ -31,6 +31,10 @@ const createOverflowNav = (row, bar, overflow) => {
         overflow.open = false
     }
 
+    const reveal = () => {
+        overflow.removeAttribute('data-overflow-pending')
+    }
+
     const fit = () => {
         restore()
         overflow.hidden = true
@@ -72,6 +76,7 @@ const createOverflowNav = (row, bar, overflow) => {
             frame = null
             fit()
             lastRowWidth = row.clientWidth
+            reveal()
         })
     }
 

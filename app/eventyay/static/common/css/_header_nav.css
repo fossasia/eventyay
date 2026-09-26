@@ -56,6 +56,15 @@
   display: none;
 }
 
+.presale-sticky-tabs .presale-tabs-scroll:has(> .header-tab-overflow[data-overflow-pending]) {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.presale-sticky-tabs .presale-tabs-scroll:has(> .header-tab-overflow[data-overflow-pending])::-webkit-scrollbar {
+  display: none;
+}
+
 .presale-sticky-tabs details.header-tab-overflow > summary {
   cursor: pointer;
   list-style: none;
