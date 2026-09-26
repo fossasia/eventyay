@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.utils.crypto import get_random_string
 from django.utils.translation import gettext_lazy as _
 from django.views import View
+from django_scopes import scope
 
 from eventyay.cfp.views.event import EventPageMixin
 from eventyay.common.exceptions import SendMailException
@@ -39,11 +40,12 @@ class SubmitWizard(EventPageMixin, View):
         self.event = self.request.event
         request.access_code = None
         if access_code := request.GET.get('access_code'):
-            access_code = (
-                request.event.submitter_access_codes.select_for_update()
-                .filter(code__iexact=access_code)
-                .first()
-            )
+            with scope(event=request.event):
+                access_code = (
+                    request.event.submitter_access_codes.select_for_update()
+                    .filter(code__iexact=access_code)
+                    .first()
+                )
             if access_code and access_code.is_valid:
                 request.access_code = access_code
         if not request.event.cfp.is_open and not request.access_code:
