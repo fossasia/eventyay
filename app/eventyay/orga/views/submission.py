@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.syndication.views import Feed
 from django.db import transaction
-from django.db.models import Count as DbCount, Prefetch, Q
+from django.db.models import Count as DbCount, Q
 from django.db.models.functions import TruncDate
 from django.forms.models import BaseModelFormSet, inlineformset_factory
 from django.http import Http404, HttpResponse, JsonResponse
@@ -21,7 +21,6 @@ from django_context_decorator import context
 from urllib.parse import urlencode
 
 from eventyay.base.models import (
-    Answer,
     Feedback,
     LogEntry,
     Resource,
@@ -30,12 +29,10 @@ from eventyay.base.models import (
     SubmissionComment,
     SubmissionStates,
     Tag,
-    TalkQuestionTarget,
     User,
 )
 from eventyay.base.models.base import CachedFile
 from eventyay.base.models.mail import MailTemplateRoles
-from eventyay.base.models.profile import SpeakerProfile
 from eventyay.base.services.etherpad import (
     EtherpadConfigurationError,
     EtherpadError,
@@ -73,6 +70,11 @@ from eventyay.orga.forms.submission import (
     AnonymiseForm,
     SubmissionForm,
     SubmissionStateChangeForm,
+)
+from eventyay.orga.utils.speakers import (
+    get_submission_answers,
+    get_submission_speakers,
+    viewer_is_reviewer_only,
 )
 from eventyay.submission.forms import (
     ResourceForm,
@@ -301,44 +303,11 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
     @context
     @cached_property
     def speakers(self):
-        submission = self.object
-        speakers_qs = submission.speakers.all().prefetch_related(
-            Prefetch(
-                'profiles',
-                queryset=SpeakerProfile.objects.filter(event=submission.event).prefetch_related('availabilities'),
-                to_attr='_event_profiles',
-            ),
-            Prefetch(
-                'answers',
-                queryset=Answer.objects.filter(
-                    question__event=submission.event,
-                    question__is_visible_to_reviewers=True,
-                    question__target=TalkQuestionTarget.SPEAKER,
-                )
-                .select_related('question')
-                .order_by('question__position'),
-                to_attr='_reviewer_answers',
-            ),
-            Prefetch(
-                'submissions',
-                queryset=Submission.objects.filter(event=submission.event),
-                to_attr='_event_submissions',
-            ),
+        return get_submission_speakers(
+            self.object,
+            for_reviewers=viewer_is_reviewer_only(self.request.user, self.request.event),
+            user=self.request.user,
         )
-        return [
-            {
-                'user': speaker,
-                'profile': speaker.event_profile(submission.event),
-                'other_submissions': [s for s in speaker._event_submissions if s.code != submission.code],
-                'email': speaker.email,
-                'avatar': speaker.avatar,
-                'avatar_url': speaker.get_avatar_url(event=submission.event),
-                'avatar_source': speaker.avatar_source,
-                'avatar_license': speaker.avatar_license,
-                'reviewer_answers': speaker._reviewer_answers,
-            }
-            for speaker in speakers_qs
-        ]
 
     def form_valid(self, form):
         if email := form.cleaned_data.get('email'):
@@ -604,6 +573,17 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
 class SubmissionContentView(SubmissionContent):
     template_name = 'orga/submission/content.html'
     http_method_names = ['get', 'head', 'options']
+
+    @context
+    @cached_property
+    def submission_answers(self):
+        submission = self.get_object()
+        if not submission:
+            return []
+        return get_submission_answers(
+            submission,
+            for_reviewers=viewer_is_reviewer_only(self.request.user, self.request.event),
+        )
 
     def get_permission_required(self):
         if 'code' in self.kwargs:

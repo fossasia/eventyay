@@ -2,12 +2,7 @@
 {% load rich_text %}
 
 {% if answer.question.variant == "file" %}
-    <i class="fa fa-file-o"></i>
-    {% if answer.answer_file %}
-        <a href="{{ answer.answer_file.url }}">{{ answer.answer_file }}</a>
-    {% else %}
-        {% translate "No file provided" %}
-    {% endif %}
+    {% include "common/includes/answer_file.html" with answer=answer %}
 {% elif answer.question.variant == "boolean" %}
     {{ answer.boolean_answer|yesno }}
 {% elif answer.question.variant == "video" or answer.question.variant == "url" %}

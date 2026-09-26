@@ -1,0 +1,17 @@
+{% load i18n %}
+{% comment %}
+  Read-only presentation of a file question answer: images are rendered
+  inline, other uploads keep a plain file name link. Never expose the raw
+  upload path.
+{% endcomment %}
+{% if answer.answer_file_is_image %}
+  <a href="{{ answer.answer_file.url }}" data-lightbox class="answer-file-preview">
+    <img loading="lazy" src="{{ answer.answer_file.url }}" alt="{{ answer.question.question }}">
+  </a>
+{% elif answer.answer_file %}
+  <a href="{{ answer.answer_file.url }}" target="_blank" rel="noopener noreferrer">
+    <i class="fa fa-paperclip"></i> {{ answer.answer_file_name }}
+  </a>
+{% else %}
+  <span class="text-muted">{% translate 'No file uploaded.' %}</span>
+{% endif %}

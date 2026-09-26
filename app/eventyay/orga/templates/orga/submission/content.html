@@ -215,6 +215,15 @@
             </div>
         {% endif %}
 
+        {% if submission.etherpad_url %}
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label">{% translate "Etherpad" %}</label>
+                <div class="col-md-9">
+                    <a href="{{ submission.etherpad_url }}" target="_blank" rel="noopener noreferrer">{{ submission.etherpad_url }}</a>
+                </div>
+            </div>
+        {% endif %}
+
         {% if submission.active_resources %}
             <div class="form-group row">
                 <label class="col-md-3 col-form-label">{% translate "Resources" %}</label>
@@ -236,34 +245,11 @@
             </div>
         {% endif %}
 
-        {% if questions_form and questions_form.fields %}
+        {% if submission_answers %}
             <div class="form-group row">
                 <label class="col-md-3 col-form-label">{{ phrases.cfp.custom_fields }}</label>
-                <div class="col-md-9 custom-fields-container">
-                    {% for field in questions_form %}
-                        <div class="mb-3">
-                            <strong>{{ field.label }}</strong>
-                            <div class="mt-1">
-                                {% if field.field.answer %}
-                                    {% if field.field.question.variant == 'boolean' %}
-                                        {% if field.field.answer.boolean_answer %}
-                                            <span class="value-pill value-pill--positive"><i class="fa fa-check text-success"></i> {% translate "Yes" %}</span>
-                                        {% else %}
-                                            <span class="value-pill value-pill--negative"><i class="fa fa-times text-danger"></i> {% translate "No" %}</span>
-                                        {% endif %}
-                                    {% elif field.field.answer.answer_file %}
-                                        <a href="{{ field.field.answer.answer_file.url }}" target="_blank">
-                                            <i class="fa fa-paperclip"></i> {{ field.field.answer.answer_file.name }}
-                                        </a>
-                                    {% else %}
-                                        {{ field.field.answer.answer_string|rich_text|default:"-" }}
-                                    {% endif %}
-                                {% else %}
-                                    <em class="text-muted">{% translate "No answer provided" %}</em>
-                                {% endif %}
-                            </div>
-                        </div>
-                    {% endfor %}
+                <div class="col-md-9 custom-fields-container submission-answers">
+                    {% include "orga/includes/submission_answers.html" with answers=submission_answers %}
                 </div>
             </div>
         {% endif %}

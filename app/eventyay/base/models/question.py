@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from django.db import models
 from django.utils.functional import cached_property
 from django.utils.timezone import now
@@ -7,6 +9,7 @@ from i18nfield.fields import I18nCharField
 
 from eventyay.base.models import Choices
 from eventyay.base.models.fields import MultiStringField
+from eventyay.common.image import ALLOWED_IMAGE_EXTENSIONS
 from eventyay.common.text.path import path_with_hash
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls
@@ -464,6 +467,20 @@ class Answer(PretalxModel):
             return True
         if self.answer == 'False':
             return False
+
+    @property
+    def answer_file_name(self):
+        """The uploaded file's name, without the internal storage path."""
+        if not self.answer_file:
+            return ''
+        return Path(self.answer_file.name).name
+
+    @property
+    def answer_file_is_image(self):
+        """Whether the upload can be displayed inline with an ``<img>`` tag."""
+        if not self.answer_file:
+            return False
+        return Path(self.answer_file.name).suffix.lower() in ALLOWED_IMAGE_EXTENSIONS
 
     @property
     def answer_string(self):

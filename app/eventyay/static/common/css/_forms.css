@@ -450,6 +450,68 @@ input[type="number"]:not(.show-spinner) {
   }
 }
 
+/* File question answers: inline image preview instead of an upload path link. */
+.answer-file-preview {
+  display: inline-block;
+  vertical-align: top;
+  max-width: 180px;
+
+  img {
+    max-width: 100%;
+    max-height: 180px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 6px;
+    box-shadow: var(--shadow-light);
+  }
+}
+
+/* Custom field answers and speaker details, shared by the organiser
+   Content, Speakers and Reviews tabs. */
+.submission-answer + .submission-answer {
+  margin-top: 0.75rem;
+}
+
+.submission-answer-value {
+  margin-top: 0.25rem;
+}
+
+.speaker-social-links li + li {
+  margin-top: 0.25rem;
+}
+
+.speaker-details > .submission-answers {
+  margin-bottom: 1rem;
+}
+
+.speaker-avatar-preview {
+  width: 100px;
+  height: auto;
+}
+
+.answer-file-input {
+  .answer-file-input-preview {
+    width: fit-content;
+  }
+
+  .answer-file-input-preview img {
+    max-height: 180px;
+    width: auto;
+    object-fit: contain;
+  }
+
+  .answer-file-input-current {
+    margin-bottom: 0.25rem;
+  }
+
+  .answer-file-input-label {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: var(--color-text-muted);
+  }
+}
+
 .input-group {
   position: relative;
   display: flex;

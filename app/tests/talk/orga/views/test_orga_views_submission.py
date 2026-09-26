@@ -335,10 +335,10 @@ def test_orga_speaker_page_excludes_submission_answers(
     assert response.context["form"].fields["name"].required
     assert submission.event.organizer.orga_urls.user_search in response.text
     speaker_context = response.context["speakers"][0]
-    assert speaker_context["other_submissions"] == [other_submission]
-    reviewer_answers = speaker_context["reviewer_answers"]
-    assert speaker_answer in reviewer_answers
-    assert answer not in reviewer_answers
+    assert speaker_context.other_submissions == (other_submission,)
+    speaker_answers = speaker_context.answers
+    assert speaker_answer in speaker_answers
+    assert answer not in speaker_answers
 
 
 @pytest.mark.django_db

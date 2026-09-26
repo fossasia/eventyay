@@ -32,6 +32,11 @@ from eventyay.orga.forms.review import (
     TagsForm,
 )
 from eventyay.orga.forms.submission import SubmissionStateChangeForm
+from eventyay.orga.utils.speakers import (
+    get_submission_answers,
+    get_submission_speakers,
+    viewer_is_reviewer_only,
+)
 from eventyay.orga.views.submission import BaseSubmissionList
 from eventyay.submission.forms import TalkQuestionsForm, SubmissionFilterForm
 from eventyay.base.models import Review, Submission, SubmissionStates
@@ -459,8 +464,23 @@ class ReviewSubmission(ReviewViewMixin, PermissionRequired, CreateOrUpdateView):
         )
 
     @context
-    def profiles(self):
-        return [speaker.event_profile(self.request.event) for speaker in self.submission.speakers.all()]
+    @cached_property
+    def for_reviewers(self):
+        return viewer_is_reviewer_only(self.request.user, self.request.event)
+
+    @context
+    @cached_property
+    def speakers(self):
+        return get_submission_speakers(
+            self.submission,
+            for_reviewers=self.for_reviewers,
+            user=self.request.user,
+        )
+
+    @context
+    @cached_property
+    def submission_answers(self):
+        return get_submission_answers(self.submission, for_reviewers=self.for_reviewers)
 
     @context
     @cached_property

@@ -1,0 +1,34 @@
+{% load i18n %}
+{% comment %}
+  Upload control for file questions. The current upload is rendered as an
+  inline image when it is one, and fileInput.js swaps in a local preview of a
+  newly picked image through the .form-image-preview container.
+{% endcomment %}
+<div class="answer-file-input">
+  <div class="form-image-preview answer-file-input-preview{% if not widget.is_image %} d-none{% endif %}">
+    {% if widget.is_image %}
+      <a href="{{ widget.file_url }}" data-lightbox>
+        <img loading="lazy" src="{{ widget.file_url }}" data-initial-src="{{ widget.file_url }}" alt="{{ widget.alt_text }}">
+      </a>
+    {% else %}
+      <a data-lightbox><img loading="lazy" class="d-none" alt="{{ widget.alt_text }}"></a>
+    {% endif %}
+  </div>
+  {% if widget.is_initial %}
+    {% if not widget.is_image %}
+      <p class="answer-file-input-current">
+        <a href="{{ widget.file_url }}" target="_blank" rel="noopener noreferrer">
+          <i class="fa fa-paperclip"></i> {{ widget.file_name }}
+        </a>
+      </p>
+    {% endif %}
+    {% if not widget.required %}
+      <span class="form-image-clear">
+        <input type="checkbox" name="{{ widget.checkbox_name }}" id="{{ widget.checkbox_id }}"{% if widget.attrs.disabled %} disabled{% endif %}{% if widget.attrs.checked %} checked{% endif %}>
+        <label for="{{ widget.checkbox_id }}">{{ widget.clear_checkbox_label }}</label>
+      </span>
+    {% endif %}
+    <span class="answer-file-input-label">{% if widget.is_image %}{% translate 'Change image' %}{% else %}{% translate 'Change file' %}{% endif %}:</span>
+  {% endif %}
+  <input type="{{ widget.type }}" name="{{ widget.name }}"{% include "django/forms/widgets/attrs.html" %}>
+</div>

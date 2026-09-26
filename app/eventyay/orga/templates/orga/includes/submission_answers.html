@@ -1,0 +1,24 @@
+{% load i18n %}
+{% comment %}
+  Answers to custom fields, in the order the event configured them. Expects
+  `answers`, a list of Answer objects. Unanswered optional fields are skipped
+  so they do not clutter the view.
+{% endcomment %}
+{% for answer in answers %}
+  {% if answer.is_answered %}
+    <div class="submission-answer">
+      <strong>{{ answer.question.question }}</strong>
+      <div class="submission-answer-value">
+        {% if answer.question.variant == 'boolean' %}
+          {% if answer.boolean_answer %}
+            <span class="value-pill value-pill--positive"><i class="fa fa-check text-success"></i> {% translate 'Yes' %}</span>
+          {% else %}
+            <span class="value-pill value-pill--negative"><i class="fa fa-times text-danger"></i> {% translate 'No' %}</span>
+          {% endif %}
+        {% else %}
+          {% include "common/question_answer.html" with answer=answer %}
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+{% endfor %}

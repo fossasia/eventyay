@@ -3,10 +3,8 @@
 {% load compress %}
 {% load staff_session %}
 {% load i18n %}
-{% load rich_text %}
 {% load rules %}
 {% load static %}
-{% load thumbnail %}
 
 {% block submission_title %}{% translate "Speakers" %} :: {% endblock submission_title %}
 
@@ -14,6 +12,7 @@
     {% has_event_perm "base.update_submission" request.user request submission as can_edit_speakers %}
     {% has_event_perm "base.send_queuedmail" request.user request request.event as can_send_mails %}
     {% has_event_perm "base.mark_arrived_speakerprofile" request.user request request.event as can_mark_speaker %}
+    {% has_event_perm "base.orga_view_speaker_emails" request.user request request.event as can_view_speaker_emails %}
 
     {% for speaker in speakers %}
         <div class="card mb-3 speaker-detail-card"><div class="card-body">

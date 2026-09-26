@@ -108,16 +108,14 @@
                     </div>
                 </div>
             {% endif %}
-            {% for answer in submission.reviewer_answers %}
+            {% if submission_answers %}
                 <div class="form-group row">
-                    <label class="col-md-3 col-form-label">{{ answer.question.question }}</label>
-                    <div class="col-md-9 mt-2">
-
-                        {% include "common/question_answer.html" with answer=answer %}
-
+                    <label class="col-md-3 col-form-label">{{ phrases.cfp.custom_fields }}</label>
+                    <div class="col-md-9 mt-2 submission-answers">
+                        {% include "orga/includes/submission_answers.html" with answers=submission_answers %}
                     </div>
                 </div>
-            {% endfor %}
+            {% endif %}
             {% if no_anonymisation %}
                 {% if submission.active_resources %}
                     <div class="form-group row">
@@ -134,25 +132,19 @@
                 {% endif %}
             {% endif %}
             {% if no_anonymisation %}
-                {% for speaker in profiles %}
+                {% has_event_perm "base.orga_view_speaker_emails" request.user request request.event as can_view_speaker_emails %}
+                {% for speaker in speakers %}
                     <div class="form-group row">
                         <label class="col-md-3 col-form-label">
-                            {% translate "Biography" %}{% if profiles.count > 1 %}: {% include "orga/includes/user_name.html" with user=speaker.user lightbox=True %}{% endif %}
+                            {% if speakers|length > 1 %}
+                                {% blocktranslate with number=forloop.counter %}Speaker {{ number }}{% endblocktranslate %}
+                            {% else %}
+                                {% translate "Speaker" %}
+                            {% endif %}
                         </label>
                         <div class="col-md-9 mt-2 markdown-mt-0">
-                            {% if request.event.cfp.request_biography %}
-                                {{ speaker.biography|default:"-"|rich_text }}
-                            {% endif %}
-                            {% if speaker.submissions.count > 1 %}<br><strong>{% translate "Other proposals" %}:</strong>
-                                <ul class="mt-0 mb-0">
-                                    {% for other_submission in speaker.submissions %}{% if other_submission != submission %}
-                                        <li>
-                                            <a href="{{ other_submission.orga_urls.reviews }}">{{ other_submission.title }}</a>
-                                            {% include "cfp/event/fragment_state.html" with state=other_submission.state as_badge=True %}
-                                        </li>
-                                    {% endif %}{% endfor %}
-                                </ul>
-                            {% endif %}
+                            <strong>{% include "orga/includes/user_name.html" with user=speaker.user lightbox=True %}</strong>
+                            {% include "orga/includes/submission_speaker_details.html" with speaker=speaker %}
                         </div>
                     </div>
                 {% endfor %}
