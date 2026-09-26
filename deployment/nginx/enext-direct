@@ -87,12 +87,23 @@ server {
 	}
 
 	# Video SPA chunks. <base href> makes the browser request these on the event
-	# URL, but collectstatic already wrote them to static/video/. Hashed files
-	# live in assets/. The capture rejects ".." path segments.
+	# URL, but collectstatic already wrote them to static/video/. The hash shape
+	# matches HASHED_VIDEO_ASSET_NAME in eventyay.multidomain.views. The capture
+	# rejects ".." path segments. Omit "always" so a 404 is not cached for a year.
+	location ~* "^/(?:[^/]+/[^/]+/video|video/event/[^/]+/[^/]+)/assets/((?:[A-Za-z0-9_-]+/)*[A-Za-z0-9_-]+-[A-Za-z0-9_-]{8,}(?:\.[A-Za-z0-9]+)+)$" {
+		alias <PATH_TO>/data/static/video/assets/$1;
+		access_log off;
+		add_header Cache-Control "public, max-age=31536000, immutable";
+		add_header Access-Control-Allow-Origin "*" always;
+	}
+
+	# Unhashed files under assets/ (for example assets/legacy.js). Same five-minute
+	# policy as video_asset_cache_control(). This location is after the hashed
+	# one, so content-hashed filenames keep the one-year cache.
 	location ~* "^/(?:[^/]+/[^/]+/video|video/event/[^/]+/[^/]+)/assets/((?:[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*/)*[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*)$" {
 		alias <PATH_TO>/data/static/video/assets/$1;
 		access_log off;
-		add_header Cache-Control "public, max-age=31536000, immutable" always;
+		add_header Cache-Control "public, max-age=300";
 		add_header Access-Control-Allow-Origin "*" always;
 	}
 
