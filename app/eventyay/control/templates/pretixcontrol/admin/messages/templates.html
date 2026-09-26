@@ -1,0 +1,47 @@
+{% extends "pretixcontrol/admin/base.html" %}
+{% load i18n static %}
+
+{% block title %}{% translate "Message center — Templates" %}{% endblock %}
+
+{% block custom_header %}
+  {{ block.super }}
+  <link rel='stylesheet' href='{% static "pretixcontrol/css/tickets-mobile.css" %}'>
+  <link rel='stylesheet' href='{% static "pretixcontrol/css/orders-mobile.css" %}'>
+  <link rel='stylesheet' href='{% static "pretixcontrol/css/admin-messages.css" %}'>
+{% endblock %}
+
+{% block content %}
+  <h1>{% translate "Email templates" %}</h1>
+  <p class='text-muted'>{% translate "Read-only list of platform email templates." %}</p>
+
+  <div class='table-responsive'>
+    <table class='table mt-4 table-flip tickets-table'>
+      <thead>
+        <tr>
+          <th>{% translate "Template" %}</th>
+          <th>{% translate "Category" %}</th>
+          <th>{% translate "Trigger" %}</th>
+          <th>{% translate "Recipient" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for tpl in templates %}
+          <tr>
+            <td class='list-name-cell'>
+              {% if tpl.role %}
+                <strong>
+                  <a href='{% url "eventyay_admin:admin.messages.template_detail" role=tpl.role %}'>{{ tpl.name }}</a>
+                </strong>
+              {% else %}
+                <strong>{{ tpl.name }}</strong>
+              {% endif %}
+            </td>
+            <td class='list-meta'>{{ tpl.category }}</td>
+            <td class='list-meta'>{{ tpl.trigger }}</td>
+            <td class='list-meta'>{{ tpl.recipient_type }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

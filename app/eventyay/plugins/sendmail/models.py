@@ -14,6 +14,7 @@ from eventyay.base.models.auth import User
 from eventyay.base.models.event import Event
 from eventyay.base.models.orders import InvoiceAddress, Order, OrderPosition
 from eventyay.base.i18n import LazyI18nString
+from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
 from eventyay.base.services.mail import mail, SendMailException as MailTransportError
 from eventyay.common.exceptions import SendMailException
 
@@ -183,6 +184,12 @@ class EmailQueue(models.Model):
     def __str__(self):
         return f"EmailQueue(event={self.event.slug}, sent_at={self.sent_at})"
 
+    def save(self, *args, **kwargs):
+        created = self._state.adding
+        super().save(*args, **kwargs)
+        if created and not self.is_draft:
+            log_event('mail', 'mail.enqueue', OUTCOME_SUCCESS, event_id=getattr(self.event, 'pk', None), object_id=self.pk)
+
     @property
     def email_type_display(self):
         if self.composing_for == ComposingFor.TEAMS:
@@ -288,7 +295,7 @@ class EmailQueue(models.Model):
             return False  # Do not send drafts
 
         if self.scheduled_at and self.scheduled_at > now():
-            raise SendMailException(_('This email is scheduled for the future and cannot be sent yet.'))
+            raise SendMailException(_('This email is scheduled for the future and cannot be sent yet.'), already_logged=True)
 
         recipients = self.recipients.all()
         if not recipients.exists():
@@ -396,12 +403,13 @@ class EmailQueue(models.Model):
             recipient.sent = False
             recipient.error = str(se)
             recipient.save(update_fields=["sent", "error"])
-            logger.exception("Mail transport error while sending to %s", email)
+            logger.exception('Mail transport error while sending queued mail')
         except Exception as e:
             recipient.sent = False
             recipient.error = f"Internal error: {str(e)}"
             recipient.save(update_fields=["sent", "error"])
-            logger.exception("Unexpected error while sending to %s", email)
+            log_event('mail', 'mail.send', OUTCOME_FAILURE, error_code='queue_failed', event_id=getattr(self.event, 'pk', None))
+            logger.exception('Unexpected error while sending queued mail')
 
         return True
 
@@ -425,7 +433,7 @@ class EmailQueue(models.Model):
         orders_qs = Order.objects.filter(
             pk__in=filters.orders,
             event=self.event
-        ).prefetch_related('positions__product', 'positions__addons', 'positions__checkins')
+        ).prefetch_related('all_positions__product', 'all_positions__addons', 'all_positions__checkins')
 
         recipients = defaultdict(lambda: {
             "orders": set(),
@@ -438,7 +446,9 @@ class EmailQueue(models.Model):
             attendee_found = False
             individual_positions = set(filters.individual_attendees) if recipients_mode == "individual" else None
 
-            for pos in order.positions.all():
+            for pos in order.all_positions.all():
+                if pos.canceled:
+                    continue
                 if individual_positions is not None and pos.pk not in individual_positions:
                     continue
                 if pos.attendee_email:
@@ -455,12 +465,16 @@ class EmailQueue(models.Model):
             if (
                 order_fallback_needed and
                 not attendee_found and
-                recipients_mode == "attendees" and
+                recipients_mode in ("attendees", "individual") and
                 order.email
             ):
                 email = order.email.strip().lower()
                 recipients[email]["orders"].add(order.pk)
-                for pos in order.positions.all():
+                for pos in order.all_positions.all():
+                    if pos.canceled:
+                        continue
+                    if individual_positions is not None and pos.pk not in individual_positions:
+                        continue
                     recipients[email]["positions"].add(pos.pk)
                     recipients[email]["products"].add(pos.product_id)
 
@@ -469,7 +483,9 @@ class EmailQueue(models.Model):
             if recipients_mode in ("both", "orders") and order.email:
                 email = order.email.strip().lower()
                 recipients[email]["orders"].add(order.pk)
-                for pos in order.positions.all():
+                for pos in order.all_positions.all():
+                    if pos.canceled:
+                        continue
                     recipients[email]["positions"].add(pos.pk)
                     recipients[email]["products"].add(pos.product_id)
 

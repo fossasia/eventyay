@@ -14,6 +14,7 @@ from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.auth import SPAM_ACCOUNT_ERROR
 from eventyay.base.models import User
+from eventyay.base.operational_logging import OUTCOME_FAILURE, is_safe_identifier, log_event
 from eventyay.base.settings import GlobalSettingsObject
 
 logger = logging.getLogger(__name__)
@@ -92,6 +93,13 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         return session
 
     def on_authentication_error(self, request, provider, error=None, exception=None, extra_context=None):
+        log_event(
+            'core',
+            'auth.login',
+            OUTCOME_FAILURE,
+            error_code='social_error',
+            backend=provider if is_safe_identifier(provider) else 'social',
+        )
         logger.error('Error while authorizing with %s: %s - %s', provider, error, exception)
         raise ImmediateHttpResponse(HttpResponseRedirect(reverse('control:index')))
 

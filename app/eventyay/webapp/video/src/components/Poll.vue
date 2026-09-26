@@ -20,15 +20,25 @@
 				.unpin-poll(v-if="poll.is_pinned", @click="doAction('unpin')") {{ $t('unpin') }}
 				.archive-poll(v-if="poll.state !== 'archived'", @click="doAction('archive')") {{ $t('archive') }}
 				.unarchive-poll(v-if="poll.state === 'archived'", @click="doAction('unarchive')") {{ $t('unarchive') }}
-				.delete-poll(@click="doAction('delete')") {{ $t('delete') }}
+				.delete-poll(@click="requestDelete") {{ $t('delete') }}
+	confirm-prompt(
+		:open="showDeletePrompt",
+		:title="$t('Delete this poll?')",
+		:message="$t('This will permanently delete the poll.')",
+		:confirm-label="$t('delete')",
+		:cancel-label="$t('Cancel')",
+		@close="showDeletePrompt = false",
+		@confirm="confirmDelete"
+	)
 </template>
 <script>
 // TODO show own vote
 import { mapGetters } from 'vuex'
+import ConfirmPrompt from 'components/ConfirmPrompt'
 import MenuDropdown from 'components/MenuDropdown'
 
 export default {
-	components: { MenuDropdown },
+	components: { ConfirmPrompt, MenuDropdown },
 	props: {
 		poll: Object
 	},
@@ -40,7 +50,8 @@ export default {
 	emits: ['edit'],
 	data() {
 		return {
-			showModerationMenu: false
+			showModerationMenu: false,
+			showDeletePrompt: false
 		}
 	},
 	computed: {
@@ -63,6 +74,14 @@ export default {
 	methods: {
 		async vote() {
 			this.$store.dispatch('question/vote', this.question)
+		},
+		requestDelete() {
+			this.showModerationMenu = false
+			this.showDeletePrompt = true
+		},
+		async confirmDelete() {
+			this.showDeletePrompt = false
+			await this.doAction('delete')
 		},
 		async doAction(action) {
 			await this.$store.dispatch(`poll/${action}Poll`, this.poll)

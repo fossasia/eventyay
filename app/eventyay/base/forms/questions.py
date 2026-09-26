@@ -14,7 +14,6 @@ from babel import Locale
 from django import forms
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.gis.geoip2 import GeoIP2
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.models import QuerySet
@@ -27,7 +26,6 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 from django_countries import countries
 from django_countries.fields import Country, CountryField
-from geoip2.errors import AddressNotFoundError
 from phonenumber_field.formfields import PhoneNumberField
 from phonenumber_field.phonenumber import PhoneNumber
 from phonenumber_field.widgets import PhoneNumberPrefixWidget
@@ -52,6 +50,7 @@ from eventyay.base.models.tax import (
     cc_to_vat_prefix,
     is_eu_country,
 )
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.services.system_questions import (
     get_system_question_asked_required,
     get_system_question_base_states,
@@ -68,7 +67,6 @@ from eventyay.consts import SizeKey
 from eventyay.control.forms import ExtFileField, SplitDateTimeField
 from eventyay.helpers.countries import CachedCountries
 from eventyay.helpers.escapejson import escapejson_attr
-from eventyay.helpers.http import get_client_ip
 from eventyay.helpers.i18n import get_format_without_seconds
 from eventyay.presale.signals import question_form_fields
 
@@ -1058,7 +1056,8 @@ class BaseInvoiceAddressForm(forms.ModelForm):
             except (vat_moss_lite.errors.InvalidError, ValueError):
                 raise ValidationError(_('This VAT ID is not valid. Please re-check your input.'))
             except vat_moss_lite.errors.WebServiceUnavailableError:
-                logger.exception('VAT ID checking failed for country {}'.format(data.get('country')))
+                log_event('tickets', 'connection.vat', OUTCOME_FAILURE, error_code='vies_unavailable', backend='vies')
+                logger.exception('VAT ID checking failed')
                 self.instance.vat_id_validated = False
                 if self.request and self.vat_warning:
                     messages.warning(
@@ -1071,7 +1070,8 @@ class BaseInvoiceAddressForm(forms.ModelForm):
                         ),
                     )
             except (vat_moss_lite.errors.WebServiceError, HTTPError):
-                logger.exception('VAT ID checking failed for country {}'.format(data.get('country')))
+                log_event('tickets', 'connection.vat', OUTCOME_FAILURE, error_code='vies_error', backend='vies')
+                logger.exception('VAT ID checking failed')
                 self.instance.vat_id_validated = False
                 if self.request and self.vat_warning:
                     messages.warning(
@@ -1093,22 +1093,3 @@ class BaseInvoiceNameForm(BaseInvoiceAddressForm):
         for f in list(self.fields.keys()):
             if f != 'name_parts':
                 del self.fields[f]
-
-
-def get_country_from_request(request, event):
-    """
-    Guesses the country of the user based on the request IP address. This is used as a fallback
-    @param request: The HTTP request object containing metadata about the request, including the client's IP address.
-    @param event: The event object used as a fallback to guess the country if GeoIP2 lookup fails.
-    @return: A Country object representing the user's country.
-    """
-    if settings.HAS_GEOIP:
-        g = GeoIP2()
-        try:
-            res = g.country(get_client_ip(request))
-            country_code = res.get('country_code')
-            if country_code and len(country_code) == 2:
-                return Country(country_code)
-        except AddressNotFoundError:
-            pass
-    return guess_country(event)

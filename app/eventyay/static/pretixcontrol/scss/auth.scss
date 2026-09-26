@@ -13,6 +13,11 @@ footer {
 	font-size: 11px;
 }
 
+/* No sidebar toggle on auth pages: align the brand with the logged-out front page. */
+body.auth-page nav.navbar .navbar-header > .navbar-brand {
+	margin-left: 10px;
+}
+
 .logo {
     width: 200px;
     margin: auto;

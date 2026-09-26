@@ -6,23 +6,33 @@ import logging
 from asgiref.sync import async_to_sync
 import dateutil.parser
 from celery.exceptions import TaskError
+from django.apps import apps
 from django.conf import settings
 from django.contrib import messages
-from django.db import transaction
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db import DatabaseError, transaction
 from django.http import FileResponse, Http404, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import redirect
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import ngettext
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView, TemplateView, UpdateView, View
 from django_context_decorator import context
+from django_scopes import scope
 from i18nfield.strings import LazyI18nString
 from i18nfield.utils import I18nJSONEncoder
 
 from eventyay.agenda.management.commands.export_schedule_html import get_export_zip_path
 from eventyay.agenda.tasks import export_schedule_html
 from eventyay.base.models import Availability, Room, TalkSlot
-from eventyay.base.models.room import rooms_for_talk_assignment
+from eventyay.base.models.room import (
+    ROOM_DELETE_LINKED_SESSIONS_MESSAGE,
+    linked_submission_talks_for_room,
+    rooms_for_talk_assignment,
+    schedule_editor_room_url,
+    unassign_linked_sessions_from_room,
+)
 from eventyay.common.language import get_current_language_information
 from eventyay.common.text.path import safe_filename
 from eventyay.common.text.phrases import phrases
@@ -34,7 +44,9 @@ from eventyay.common.views.mixins import (
 )
 from eventyay.orga.forms.schedule import ScheduleReleaseForm
 from eventyay.schedule.forms import QuickScheduleForm, RoomForm
+from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
 from eventyay.base.services.event import notify_event_change
+from eventyay.base.services.room import soft_delete_room
 from eventyay.talk_rules.tracks import apply_track_limit_to_slots, filter_schedule_talk_data, get_allowed_tracks
 
 logger = logging.getLogger(__name__)
@@ -93,6 +105,7 @@ class ScheduleExportDownloadView(EventPermissionRequired, View):
             zip_path = get_export_zip_path(self.request.event)
             response = FileResponse(open(zip_path, 'rb'), as_attachment=True)
         except Exception as e:
+            log_event('talk', 'export.error', OUTCOME_FAILURE, error_code='zip_missing', event_id=getattr(self.request.event, 'pk', None))
             messages.error(
                 request,
                 _('Could not find the current export, please try to regenerate it. ({error})').format(error=str(e)),
@@ -180,11 +193,18 @@ class ScheduleToggleView(EventPermissionRequired, View):
         event.feature_flags = flags
         event.settings.talk_schedule_public = is_public
         event.save(update_fields=['feature_flags'])
+        log_event('video', 'video.feature_flag', OUTCOME_SUCCESS, event_id=event.pk, flag_name='show_schedule')
 
-    def dispatch(self, request, *args, **kwargs):
-        super().dispatch(request, *args, **kwargs)
+    def get(self, request, *args, **kwargs):
+        return redirect(self.request.event.orga_urls.schedule)
+
+    def post(self, request, *args, **kwargs):
         is_public = not self.request.event.get_feature_flag('show_schedule')
         self._set_schedule_public(self.request.event, is_public)
+        if is_public:
+            messages.success(self.request, _('The schedule is now public.'))
+        else:
+            messages.success(self.request, _('The public schedule has been unpublished.'))
         # Trigger tickets to hidden/unhidden schedule menu
         try:
             from eventyay.orga.tasks import trigger_public_schedule
@@ -198,13 +218,12 @@ class ScheduleToggleView(EventPermissionRequired, View):
                 },
                 ignore_result=True,
             )
-        except (TaskError, ConnectionError) as e:
-            logger.warning(
-                "Unexpected error when trying to trigger schedule's state to external system: %s",
-                e,
-            )
-        except Exception as e:
-            logger.error('Unexpected error in task: %s', e)
+        except (TaskError, ConnectionError):
+            log_event('talk', 'connection.schedule_public', OUTCOME_FAILURE, error_code='enqueue_failed', event_id=getattr(self.request.event, 'pk', None), backend='tickets_api')
+            logger.warning('Could not enqueue schedule visibility sync')
+        except Exception:
+            log_event('talk', 'connection.schedule_public', OUTCOME_FAILURE, error_code='enqueue_failed', event_id=getattr(self.request.event, 'pk', None), backend='tickets_api')
+            logger.exception('Unexpected error enqueueing schedule visibility sync')
         return redirect(self.request.event.orga_urls.schedule)
 
 
@@ -443,15 +462,23 @@ class TalkUpdate(PermissionRequired, View):
             else:
                 talk.end = talk.start + dt.timedelta(minutes=talk.submission.get_duration())
             room_pk = data['room'] or getattr(talk.room, 'pk', None)
-            room = rooms_for_talk_assignment(
-                request.event,
-                has_submission=bool(talk.submission_id),
-            ).get(pk=room_pk)
-            talk.room = room
-            if not talk.submission:
-                new_description = LazyI18nString(data.get('title', ''))
-                talk.description = new_description if str(new_description) else talk.description
-            talk.save(update_fields=['start', 'end', 'room', 'description', 'updated'])
+            try:
+                with transaction.atomic():
+                    # Lock the room row with soft_delete_room so a delete cannot
+                    # land between room lookup and talk.save().
+                    room = rooms_for_talk_assignment(
+                        request.event,
+                        has_submission=bool(talk.submission_id),
+                    ).select_for_update().get(pk=room_pk)
+                    talk.room = room
+                    if not talk.submission:
+                        new_description = LazyI18nString(data.get('title', ''))
+                        talk.description = (
+                            new_description if str(new_description) else talk.description
+                        )
+                    talk.save(update_fields=['start', 'end', 'room', 'description', 'updated'])
+            except Room.DoesNotExist:
+                return JsonResponse({'error': 'Room not found'})
             talk.refresh_from_db()
         else:
             talk.start = None
@@ -505,7 +532,7 @@ class RoomView(OrderActionMixin, OrgaCRUDView):
 
     def get_queryset(self):
         # Filter out soft-deleted rooms to sync with video component
-        return self.request.event.rooms.filter(deleted=False)
+        return self.request.event.rooms.filter(deleted=False).with_has_linked_sessions()
 
     def get_permission_required(self):
         permission_map = {'list': 'orga_list', 'detail': 'orga_detail'}
@@ -518,6 +545,73 @@ class RoomView(OrderActionMixin, OrgaCRUDView):
         if self.action == 'create':
             return _('New room')
         return _('Rooms')
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+
+        if self.action == 'list':
+            if apps.is_installed('teamshifts'):
+                from teamshifts.models import ShiftLocation
+                room_list = ctx.get('room_list', [])
+                room_ids = [r.pk for r in room_list]
+                try:
+                    with scope(event=self.request.event):
+                        rooms_with_shifts = set(
+                            ShiftLocation.objects.filter(
+                                linked_room_id__in=room_ids,
+                                shifts__isnull=False,
+                            ).values_list('linked_room_id', flat=True).distinct()
+                        )
+                except DatabaseError:
+                    rooms_with_shifts = set()
+                for room in room_list:
+                    room.has_linked_shifts = room.pk in rooms_with_shifts
+
+        if self.action == 'delete' and self.object:
+            linked_slots = linked_submission_talks_for_room(self.object)
+            ctx['has_linked_sessions'] = bool(linked_slots)
+            ctx['linked_sessions_message'] = ROOM_DELETE_LINKED_SESSIONS_MESSAGE
+            event_tz = self.request.event.tz
+            linked_sessions = []
+            for slot in linked_slots:
+                when = ''
+                if slot.start:
+                    start = slot.start.astimezone(event_tz)
+                    if slot.end:
+                        end = slot.end.astimezone(event_tz)
+                        if start.date() == end.date():
+                            when = f'{start:%Y-%m-%d} · {start:%H:%M}–{end:%H:%M}'
+                        else:
+                            when = f'{start:%Y-%m-%d %H:%M} – {end:%Y-%m-%d %H:%M}'
+                    else:
+                        when = f'{start:%Y-%m-%d %H:%M}'
+                linked_sessions.append(
+                    {
+                        'title': slot.submission.title,
+                        'code': slot.submission.code,
+                        'speakers': slot.submission.display_speaker_names,
+                        'when': when,
+                        'submission_url': slot.submission.orga_urls.base,
+                    }
+                )
+            ctx['linked_sessions'] = linked_sessions
+            ctx['schedule_room_url'] = schedule_editor_room_url(
+                self.request.event, self.object
+            )
+
+            ctx['has_linked_shifts'] = False
+            ctx['linked_shift_count'] = 0
+            if apps.is_installed('teamshifts'):
+                try:
+                    shift_location = self.object.shift_location
+                except (ObjectDoesNotExist, DatabaseError):
+                    shift_location = None
+                if shift_location is not None:
+                    linked_shift_count = shift_location.shifts.count()
+                    ctx['has_linked_shifts'] = linked_shift_count > 0
+                    ctx['linked_shift_count'] = linked_shift_count
+
+        return ctx
 
     def order_handler(self, request, *args, **kwargs):
         order = request.POST.get('order')
@@ -548,10 +642,26 @@ class RoomView(OrderActionMixin, OrgaCRUDView):
         return self.list(request, *args, **kwargs)
 
     def delete_handler(self, request, *args, **kwargs):
-        # Use soft delete to sync with video component
         obj = self.get_object()
-        obj.deleted = True
-        obj.save(update_fields=['deleted'])
-        request.event.wip_schedule.talks.filter(room=obj, submission__isnull=True).delete()
+        if request.POST.get('action') == 'unassign_sessions':
+            count = unassign_linked_sessions_from_room(obj)
+            async_to_sync(notify_event_change)(request.event.id)
+            messages.success(
+                request,
+                ngettext(
+                    'Unassigned %(count)d session from this room.',
+                    'Unassigned %(count)d sessions from this room.',
+                    count,
+                )
+                % {'count': count},
+            )
+            return redirect(obj.urls.delete)
+
+        # Use soft delete to sync with video component
+        try:
+            soft_delete_room(request.event, obj, by_user=request.user)
+        except ValidationError as e:
+            messages.error(request, e.messages[0] if e.messages else str(e))
+            return self.delete_view(request, *args, **kwargs)
         messages.success(request, _('The selected room has been deleted.'))
         return redirect(self.get_success_url())

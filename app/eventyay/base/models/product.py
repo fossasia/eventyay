@@ -27,6 +27,7 @@ from eventyay.base.models import fields
 from eventyay.base.models.base import LoggedModel
 from eventyay.base.models.fields import MultiStringField
 from eventyay.base.models.tax import TaxedPrice
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 
 from .event import Event, SubEvent
 
@@ -189,7 +190,12 @@ def filter_available(qs, channel='web', voucher=None, allow_addons=False):
         q &= Q(Q(category__isnull=True) | Q(category__is_addon=False))
 
     if voucher:
-        if voucher.product_id:
+        if voucher.pk and (voucher.limit_products.exists() or voucher.limit_variations.exists()):
+            # Use product pk subqueries (not variations__pk__in) to avoid duplicate Product rows.
+            q &= Q(pk__in=voucher.limit_products.values_list('pk', flat=True)) | Q(
+                pk__in=voucher.limit_variations.values_list('product_id', flat=True)
+            )
+        elif voucher.product_id:
             q &= Q(pk=voucher.product_id)
         elif voucher.quota_id:
             q &= Q(quotas__in=[voucher.quota_id])
@@ -909,7 +915,7 @@ class ProductVariation(AdmissionValidityBoundMixin, models.Model):
         ),
         max_length=20,
         choices=ADMISSION_VALIDITY_MODE_CHOICES,
-        blank=False,
+        blank=True,
         default=ADMISSION_VALIDITY_MODE_INHERIT,
     )
 
@@ -1785,7 +1791,9 @@ class Quota(LoggedModel):
         return res
 
     class QuotaExceededException(Exception):  # NOQA: N818
-        pass
+        def __init__(self, *args):
+            super().__init__(*args)
+            log_event('tickets', 'quota.exceeded', OUTCOME_FAILURE, error_code='quota_exceeded')
 
     @staticmethod
     def clean_variations(products, variations):

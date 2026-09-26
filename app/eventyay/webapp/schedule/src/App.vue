@@ -12,7 +12,7 @@
 		featured-speakers(v-if="view === 'featured-speakers'")
 		speakers-list(v-else-if="view === 'speakers'")
 		speaker-detail(v-else-if="view === 'speaker'", :speakerId="speakerCode", :onHomeServer="onHomeServer")
-	template(v-else-if="schedule && schedule.talks.length")
+	template(v-else-if="schedule && (schedule.talks.length || (isFeaturedPage && featuredRemote))")
 		schedule-toolbar(v-if="(scheduleMeta || schedule) && !publicFavsUrl",
 			:version="version || scheduleMeta?.version || ''",
 			:isCurrent="scheduleMeta?.is_current !== false",
@@ -99,8 +99,23 @@
 			@changeDay="setCurrentDay($event)",
 			@fav="fav($event)",
 			@unfav="unfav($event)")
-		.no-results(v-if="sessions && !sessions.length && searchQuery")
+		.no-results(v-if="sessions && !sessions.length && (searchQuery || (isFeaturedPage && featuredRemote))")
 			.no-results-text No sessions match your search.
+		list-pagination(
+			v-if="isFeaturedPage && featuredTotalPages > 1",
+			compact,
+			:current-page="featuredPage",
+			:total-pages="featuredTotalPages",
+			:items="featuredVisiblePages",
+			:status="featuredPageStatus",
+			:aria-label="$t('Featured sessions pagination')",
+			:previous-label="$t('Prev')",
+			:previous-aria-label="$t('Previous page')",
+			:next-label="$t('Next')",
+			:next-aria-label="$t('Next page')",
+			:loading="featuredPageLoading",
+			@change="fetchFeaturedPage"
+		)
 	bunt-progress-circular(v-else, size="huge", :page="true")
 	.error-messages(v-if="errorMessages.length")
 		.error-message(v-for="message in errorMessages", :key="message")
@@ -133,13 +148,15 @@ import GridScheduleWrapper from '~/components/GridScheduleWrapper'
 import FavButton from '~/components/FavButton'
 import Session from '~/components/Session'
 import SessionModal from '~/components/SessionModal'
+import ListPagination from '~/components/ListPagination.vue'
 const SpeakersList = defineAsyncComponent(() => import('~/components/SpeakersList'))
 const FeaturedSpeakers = defineAsyncComponent(() => import('~/components/FeaturedSpeakers'))
 const SpeakerDetail = defineAsyncComponent(() => import('~/components/SpeakerDetail'))
 const TalkDetail = defineAsyncComponent(() => import('~/components/TalkDetail'))
-import { findScrollParent, getLocalizedString, getSessionTime, getSessionTypeLabel, isProperSession, isPopularityFeatureEnabled, isPopularitySortAvailable, isPopularityVisibleOnSchedule, normalizePopularityCount, computeTalkExporters, areScheduleExportsDisabled, resolveScheduleApiBase, talksToScheduleSessions, buildSessionsBySpeaker, talkToSession, sortSessionsByStart, isTalkSchedulePending, getCsrfToken, loadStarredSharingPreference, updateStarredSharingPreference, fetchWidgetScheduleData } from '~/utils'
+import { findScrollParent, getLocalizedString, getSessionTime, getSessionTypeLabel, isProperSession, isPopularityFeatureEnabled, isPopularitySortAvailable, isPopularityVisibleOnSchedule, normalizePopularityCount, computeTalkExporters, areScheduleExportsDisabled, resolveScheduleApiBase, talksToScheduleSessions, buildSessionsBySpeaker, talkToSession, sortSessionsByStart, isTalkSchedulePending, visiblePageItems, pageStatusRange, getCsrfToken, loadStarredSharingPreference, updateStarredSharingPreference, fetchWidgetScheduleData } from '~/utils'
 import { changeScheduleLanguage } from './i18n.js'
 import { isShiftSchedule, resolveMode } from './teamshifts-adapter'
+import { logOperational } from './operationalLog.js'
 
 function normalizeLocaleCode (code) {
 	if (!code) return ''
@@ -167,7 +184,7 @@ const markdownIt = MarkdownIt({
 
 export default {
 	name: 'PretalxSchedule',
-	components: { FavButton, LinearSchedule, GridScheduleWrapper, Session, SessionModal, ScheduleToolbar, SpeakersList, FeaturedSpeakers, SpeakerDetail, TalkDetail },
+	components: { FavButton, LinearSchedule, GridScheduleWrapper, Session, SessionModal, ScheduleToolbar, SpeakersList, FeaturedSpeakers, SpeakerDetail, TalkDetail, ListPagination },
 	props: {
 		eventUrl: String,
 		locale: String,
@@ -247,9 +264,8 @@ export default {
 					event.preventDefault()
 					return
 				}
-				if (this.onHomeServer) return
+				if (this.onHomeServer || isTalkSchedulePending(session)) return
 				event.preventDefault()
-
 				this.showSessionDetails(session, event)
 			},
 			generateSessionLinkUrl: ({eventUrl, session}) => {
@@ -334,6 +350,14 @@ export default {
 			scheduleMeta: null,
 			sessionsMode: false,
 			searchQuery: '',
+			featuredPage: 1,
+			featuredTotalCount: 0,
+			featuredTotalPages: 1,
+			featuredPageSize: 48,
+			featuredPageLoading: false,
+			featuredRemote: false,
+			featuredPagingReady: false,
+			featuredSearchTimeout: null,
 			recordingFilter: 'all',
 			timeDensityMinutes: Number(localStorage.getItem('schedule-time-density-minutes') || 30),
 			sortIncludeRoom: false,
@@ -510,7 +534,7 @@ export default {
 		// sessions: baseSessions + search filter. Used for display.
 		sessions () {
 			if (!this.baseSessions) return
-			if (!this.searchQuery) return this.baseSessions
+			if (!this.searchQuery || (this.isFeaturedPage && this.featuredRemote)) return this.baseSessions
 			const q = this.searchQuery.toLowerCase()
 			return this.baseSessions.filter(s => {
 				const speakerNames = (s.speakers || []).map(sp => (sp?.name || '').toLowerCase()).join(' ')
@@ -583,6 +607,15 @@ export default {
 		properSessions () {
 			if (!this.sessions) return []
 			return this.sessions.filter(s => isProperSession(s))
+		},
+		featuredPageStatus () {
+			if (!this.isFeaturedPage || this.featuredTotalPages <= 1 || !this.featuredTotalCount) return ''
+			const range = pageStatusRange(this.featuredPage, this.featuredPageSize, this.featuredTotalCount)
+			if (!range) return ''
+			return this.$t('Showing {{start}}–{{end}} of {{total}} featured sessions', range)
+		},
+		featuredVisiblePages () {
+			return visiblePageItems(this.featuredTotalPages, this.featuredPage)
 		},
 		resolvedTalk () {
 			if (!this.talkCode || !this.sessions) return null
@@ -661,7 +694,7 @@ export default {
 				this.apiUrl = this.remoteApiUrl
 			}
 			this.loadFavs().then((favs) => {
-				this.favs = this.pruneFavs(favs, this.schedule)
+				this.favs = this.featuredRemote ? favs : this.pruneFavs(favs, this.schedule)
 			})
 		},
 		recordingFilter () {
@@ -673,6 +706,17 @@ export default {
 			} catch {
 				// ignore localStorage access errors
 			}
+		},
+		searchQuery () {
+			if (!this.featuredPagingReady || !this.isFeaturedPage || !this.featuredRemote) return
+			if (this.featuredSearchTimeout) clearTimeout(this.featuredSearchTimeout)
+			this.featuredSearchTimeout = setTimeout(() => {
+				this.fetchFeaturedPage(1)
+			}, 300)
+		},
+		sortBy () {
+			if (!this.featuredPagingReady || !this.isFeaturedPage || !this.featuredRemote) return
+			this.fetchFeaturedPage(1)
 		}
 	},
 	async created () {
@@ -715,6 +759,7 @@ export default {
 					if (!Array.isArray(this.schedule.talks)) {
 						this.schedule.talks = []
 					}
+					this.readFeaturedPageMeta(this.schedule)
 				}
 			} catch (e) { /* ignore parse error, fall through to fetch */ }
 		}
@@ -778,7 +823,8 @@ export default {
 			return
 		}
 
-		if (this.schedule.schedule_unavailable || (!this.schedule.talks.length && !this.isFeaturedPage)) {
+		const showWithoutTalks = this.isFeaturedPage || this.view === 'featured-speakers'
+		if (this.schedule.schedule_unavailable || (!this.schedule.talks.length && !showWithoutTalks)) {
 			this.scheduleUnavailable = true
 			return
 		}
@@ -791,53 +837,23 @@ export default {
 		}
 		this.now = moment.tz(this.currentTimezone)
 		setInterval(() => this.now = moment.tz(this.currentTimezone), 30000)
+		this.featuredPagingReady = this.isFeaturedPage
 		if (!this.scrollParentResizeObserver) {
 			await this.$nextTick()
 			this.onWindowResize()
 		}
-		this.schedule.tracks.forEach(t => { t.value = t.id; t.label = getLocalizedString(t.name); this.allTracks.push(t) })
-		this.schedule.rooms.forEach(r => { this.allRooms.push({ id: r.id, value: r.id, label: getLocalizedString(r.name), selected: false }) })
-		const typeSet = new Set()
-		this.schedule.talks.forEach(s => {
-			const typeLabel = getSessionTypeLabel(s.session_type)
-			if (typeLabel && !typeSet.has(typeLabel)) {
-				typeSet.add(typeLabel)
-				this.allTypes.push({ value: typeLabel, label: typeLabel, selected: false })
-			}
-		})
-		// Build language filter from event content_locales (configured by organiser),
-		// falling back to per-talk content_locale for older data.
-		const langSet = new Set()
-		const eventLocales = this.schedule.content_locales || []
-		eventLocales.forEach(code => {
-			if (code && !langSet.has(code)) {
-				langSet.add(code)
-				const displayName = (() => {
-					try { return new Intl.DisplayNames([this.locale], { type: 'language' }).of(code) } catch { return code }
-				})()
-				this.allLanguages.push({ value: code, label: displayName, selected: false })
-			}
-		})
-
-		// Also include any per-talk locales not already covered by event locales
-		this.schedule.talks.forEach(s => {
-			if (s.content_locale && !langSet.has(s.content_locale)) {
-				langSet.add(s.content_locale)
-				const displayName = (() => {
-					try { return new Intl.DisplayNames([this.locale], { type: 'language' }).of(s.content_locale) } catch { return s.content_locale }
-				})()
-				this.allLanguages.push({ value: s.content_locale, label: displayName, selected: false })
-			}
-		})
+		this.mergeFeaturedFilters(this.schedule)
 
 		// set API URL before loading favs
 		this.apiUrl = this.remoteApiUrl || (window.location.origin + '/api/v1/events/' + this.eventSlug + '/')
 		if (this.publicFavsUrl) {
 			this.favsReadOnly = true
 			this.onlyFavs = true
-			this.favs = this.pruneFavs(await this.loadPublicFavs(), this.schedule)
+			const publicFavs = await this.loadPublicFavs()
+			this.favs = this.featuredRemote ? publicFavs : this.pruneFavs(publicFavs, this.schedule)
 		} else {
-			this.favs = this.pruneFavs(await this.loadFavs(), this.schedule)
+			const savedFavs = await this.loadFavs()
+			this.favs = this.featuredRemote ? savedFavs : this.pruneFavs(savedFavs, this.schedule)
 			if (!this.loggedIn && this.favs.length) this.showAnonymousFavsInfo()
 		}
 		this.shareStarredSessions = await loadStarredSharingPreference(this.eventUrl)
@@ -874,6 +890,94 @@ export default {
 		// TODO destroy observers
 	},
 	methods: {
+		readFeaturedPageMeta (data) {
+			if (!this.isFeaturedPage || !data) return
+			this.featuredPage = data.page || 1
+			this.featuredTotalCount = typeof data.count === 'number' ? data.count : (data.talks || []).length
+			this.featuredTotalPages = data.num_pages || 1
+			this.featuredPageSize = data.page_size || this.featuredPageSize
+			if (this.featuredTotalPages > 1) this.featuredRemote = true
+		},
+		mergeFeaturedFilters (schedule) {
+			if (!schedule) return
+			const knownTracks = new Set(this.allTracks.map(track => track.id))
+			;(schedule.tracks || []).forEach(track => {
+				if (track?.id == null || knownTracks.has(track.id)) return
+				knownTracks.add(track.id)
+				this.allTracks.push({
+					...track,
+					value: track.id,
+					label: getLocalizedString(track.name),
+					selected: false,
+				})
+			})
+			const knownRooms = new Set(this.allRooms.map(room => room.id))
+			;(schedule.rooms || []).forEach(room => {
+				if (room?.id == null || knownRooms.has(room.id)) return
+				knownRooms.add(room.id)
+				this.allRooms.push({
+					id: room.id,
+					value: room.id,
+					label: getLocalizedString(room.name),
+					selected: false,
+				})
+			})
+			const knownTypes = new Set(this.allTypes.map(type => type.value))
+			const knownLanguages = new Set(this.allLanguages.map(language => language.value))
+			const addLanguage = (code) => {
+				if (!code || knownLanguages.has(code)) return
+				knownLanguages.add(code)
+				let label = code
+				try {
+					label = new Intl.DisplayNames([this.locale], { type: 'language' }).of(code) || code
+				} catch {
+					label = code
+				}
+				this.allLanguages.push({ value: code, label, selected: false })
+			}
+			;(schedule.content_locales || []).forEach(addLanguage)
+			;(schedule.talks || []).forEach(talk => {
+				const typeLabel = getSessionTypeLabel(talk.session_type)
+				if (typeLabel && !knownTypes.has(typeLabel)) {
+					knownTypes.add(typeLabel)
+					this.allTypes.push({ value: typeLabel, label: typeLabel, selected: false })
+				}
+				addLanguage(talk.content_locale)
+			})
+		},
+		async fetchFeaturedPage (page) {
+			if (!this.isFeaturedPage) return
+			this._featuredFetchController?.abort()
+			const controller = new AbortController()
+			this._featuredFetchController = controller
+			const nextPage = Math.min(Math.max(page, 1), this.featuredTotalPages || 1)
+			this.featuredPageLoading = true
+			try {
+				const base = (this.eventUrl || '').replace(/\/?$/, '/')
+				const url = new URL(`${base}featured/`, window.location.origin)
+				url.searchParams.set('format', 'json')
+				if (nextPage > 1) url.searchParams.set('page', String(nextPage))
+				if (this.searchQuery) url.searchParams.set('q', this.searchQuery)
+				if (this.sortBy && this.sortBy !== 'title') url.searchParams.set('sort', this.sortBy)
+				const response = await fetch(url.toString(), { signal: controller.signal })
+				if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
+				const data = await response.json()
+				this.schedule = {
+					...(this.schedule || {}),
+					...data,
+					talks: data.talks || [],
+				}
+				this.readFeaturedPageMeta(data)
+				this.mergeFeaturedFilters(this.schedule)
+				window.scrollTo({top: 0, behavior: 'smooth'})
+			} catch (error) {
+				if (error?.name !== 'AbortError') {
+					this.scheduleError = true
+				}
+			} finally {
+				if (this._featuredFetchController === controller) this.featuredPageLoading = false
+			}
+		},
 		getFavStorageKey (userCode = null) {
 			if (this.loggedIn && userCode) return `${this.eventSlug}_${userCode}_favs`
 			return `${this.eventSlug}_favs`
@@ -1014,6 +1118,7 @@ export default {
 				credentials: this.onHomeServer ? 'same-origin' : 'omit'
 			})
 			if (!response.ok) {
+				logOperational({action: 'schedule.fetch', outcome: 'failure', backend: 'schedule_api', error_code: 'http_error', status: response.status})
 				throw new Error(`HTTP error! status: ${response.status}`)
 			}
 			return response.json()
@@ -1025,6 +1130,7 @@ export default {
 			try {
 				this.shareStarredSessions = await updateStarredSharingPreference(this.eventUrl, this.shareStarredSessions)
 			} catch {
+				logOperational({action: 'schedule.fav', outcome: 'failure', backend: 'schedule_api', error_code: 'share_pref_failed'})
 				this.shareStarredSessions = previous
 			}
 		},
@@ -1088,8 +1194,8 @@ export default {
 			try {
 				localStorage.setItem(storageKey, JSON.stringify(this.favs))
 				return true
-			} catch (error) {
-				console.error('Failed to save favourites locally:', error)
+			} catch {
+				logOperational({action: 'schedule.fav', outcome: 'failure', backend: 'local_storage', error_code: 'quota_or_denied'})
 				this.pushErrorMessage(this.translationMessages.favs_not_saved || this.$t('Could not save favourites in this browser. Please check your browser storage settings.'))
 				return false
 			}
@@ -1167,9 +1273,8 @@ export default {
 			try {
 				const apiData = await this.remoteApiRequest(`speakers/${speakerCode}/?expand=answers.question`, 'GET')
 				speakerObj.apiContent = apiData
-			} catch (e) {
-				console.error(`Failed to fetch API content for speaker ${speakerCode}:`, e)
-				// Potentially set an error flag on speakerObj if needed for UI
+			} catch {
+				logOperational({action: 'schedule.fetch', outcome: 'failure', backend: 'schedule_api', error_code: 'speaker_failed'})
 			} finally {
 				speakerObj.isLoadingApiContent = false
 			}
@@ -1260,8 +1365,8 @@ export default {
 							}
 						}
 					}
-				} catch (e) {
-					console.error('Failed to fetch session details:', e)
+				} catch {
+					logOperational({action: 'schedule.fetch', outcome: 'failure', backend: 'schedule_api', error_code: 'session_failed'})
 					if (this.modalContent && this.modalContent.contentType === 'session' && this.modalContent.contentObject.id === session.id) {
 						this.modalContent.contentObject.isLoading = false
 					}

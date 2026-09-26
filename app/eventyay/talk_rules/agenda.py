@@ -15,6 +15,22 @@ def is_submission_visible_via_featured(user, submission):
     return bool(submission and submission.is_featured and are_featured_submissions_visible(user, submission.event))
 
 
+def submission_belongs_to_public_featured_speaker(user, submission):
+    """A featured speaker's session may be shown as coming soon before the agenda is public."""
+    if not submission:
+        return False
+    event = submission.event
+    if is_agenda_visible(user, event):
+        return False
+    if not are_featured_speakers_visible(user, event):
+        return False
+    from eventyay.base.models import SubmissionStates
+
+    if submission.state not in SubmissionStates.accepted_states:
+        return False
+    return submission.speakers.filter(profiles__event=event, profiles__is_featured=True).exists()
+
+
 def is_submission_visible_via_schedule(user, submission):
     return bool(
         submission
@@ -110,6 +126,7 @@ def is_agenda_submission_visible(user, submission):
     return (
         is_submission_visible_via_schedule(user, submission)
         or is_submission_visible_via_featured(user, submission)
+        or submission_belongs_to_public_featured_speaker(user, submission)
     )
 
 
@@ -129,34 +146,17 @@ def is_pre_agenda_featured_public(user, event):
     )
 
 
-def speaker_has_released_schedule_slots(event, user):
-    """True if the user has any talk slot on the published schedule."""
-    schedule = getattr(event, 'current_schedule', None)
-    if not schedule or not user:
-        return False
-    from django_scopes import scope
-
-    from eventyay.base.models import TalkSlot
-
-    with scope(event=event):
-        return TalkSlot.objects.filter(
-            schedule=schedule,
-            submission__isnull=False,
-            submission__speakers=user,
-        ).exists()
-
-
 @rules.predicate
 def is_featured_speaker_profile(user, profile):
+    """Public featured-speaker pages follow the featured-speaker setting only.
+
+    A speaker marked featured stays public whether or not their sessions are on a
+    released schedule. Session publication is a separate setting.
+    """
     if not profile or not profile.is_featured:
         return False
     event_obj = profile.event
-    if not are_featured_speakers_visible(user, event_obj):
-        return False
-    # Speakers on the released schedule follow normal schedule visibility instead.
-    if is_agenda_visible(user, event_obj) and speaker_has_released_schedule_slots(event_obj, profile.user):
-        return False
-    return True
+    return bool(are_featured_speakers_visible(user, event_obj))
 
 
 @rules.predicate
@@ -219,25 +219,35 @@ def _speaker_profile_by_code(event, speaker_code, *, select_related=()):
 
 
 def public_speakers_list_available(user, event):
-    """Whether the public speakers overview page and its nav links may be shown."""
+    """Whether the full public speakers overview may be shown."""
     event_obj = getattr(event, 'event', event)
     if not can_list_released_schedule_speakers(user, event_obj):
         return False
     return event_obj.speakers.exists()
 
 
+def public_speakers_nav_available(user, event):
+    """Whether the Speakers header tab may be shown.
+
+    The speakers page follows a released public schedule. Featured speakers on
+    the info page use their own setting and do not open this list.
+    """
+    return public_speakers_list_available(user, event)
+
+
 def agenda_speakers_page_reachable(user, event):
-    """Whether the speakers list view may run and show schedule-style redirects."""
+    """Whether the speakers list view may run and show schedule-style redirects.
+
+    A public released schedule opens the page. Otherwise the view may still run
+    so it can redirect, as long as the schedule is meant to be public. Featured
+    speakers do not open this page on their own.
+    """
     event_obj = getattr(event, 'event', event)
     if not event_obj or not event_obj.get_feature_flag('show_schedule'):
         return False
     if can_list_released_schedule_speakers(user, event):
         return True
-    if has_public_featured_speakers(user, event):
-        return True
-    if event_obj.current_schedule and event_obj.speakers.exists():
-        return True
-    return False
+    return bool(event_obj.current_schedule or event_obj.talks_published)
 
 
 def should_hide_public_speaker_sessions(user, event, *, wip_preview=False):
@@ -260,14 +270,9 @@ def pending_public_submission_codes_for_speaker(event, user, speaker_code):
     codes = set()
     with scope(event=event):
         submissions = (
-            event.submissions.filter(speakers__code__iexact=speaker_code)
-            .exclude(
-                state__in=(
-                    SubmissionStates.REJECTED,
-                    SubmissionStates.CANCELED,
-                    SubmissionStates.WITHDRAWN,
-                    SubmissionStates.DELETED,
-                )
+            event.submissions.filter(
+                speakers__code__iexact=speaker_code,
+                state__in=SubmissionStates.accepted_states,
             )
             .select_related('event')
         )
@@ -292,6 +297,7 @@ AGENDA_PAGES_WITHOUT_TALKS_PUBLISHED = frozenset(
         'speakers',
         'speaker',
         'talk.detail',
+        'talk.starrers',
         'widget.messages',
     }
 )
@@ -304,12 +310,15 @@ def agenda_page_allowed_without_talks_published(url_name, user, event, *, url_kw
         return False
     if url_name == 'speakers':
         return agenda_speakers_page_reachable(user, event)
-    if url_name == 'talk.detail':
+    if url_name in ('talk.detail', 'talk.starrers'):
         slug = (url_kwargs or {}).get('slug')
         if not slug:
             return False
         submission = event.submissions.filter(code__iexact=slug).first()
-        return is_submission_visible_via_featured(user, submission)
+        return bool(
+            is_submission_visible_via_featured(user, submission)
+            or submission_belongs_to_public_featured_speaker(user, submission)
+        )
     if url_name in ('speaker', 'widget.messages'):
         if url_name == 'speaker':
             code = (url_kwargs or {}).get('code')

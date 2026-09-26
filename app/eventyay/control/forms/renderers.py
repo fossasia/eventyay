@@ -67,7 +67,11 @@ class ControlFieldRenderer(FieldRenderer):
                 label,
                 label_for=self.field.id_for_label,
                 label_class=self.get_label_class(),
-                optional=not required and not isinstance(self.widget, CheckboxInput),
+                optional=(
+                    not required
+                    and not isinstance(self.widget, CheckboxInput)
+                    and not getattr(self.field.field, 'hide_optional', False)
+                ),
                 required=required_for_label,
             )
             + html

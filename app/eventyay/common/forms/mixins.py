@@ -81,9 +81,12 @@ class PublicContent:
                 continue
             field = self.fields.get(field_name)
             if field:
-                field.original_help_text = getattr(field, 'original_help_text', '')
+                if not getattr(field, 'original_help_text', None):
+                    field.original_help_text = field.help_text or ''
                 field.added_help_text = getattr(field, 'added_help_text', '') + str(phrases.base.public_content)
-                field.help_text = field.original_help_text + ' ' + field.added_help_text
+                field.help_text = ' '.join(
+                    str(part) for part in (field.original_help_text, field.added_help_text) if part
+                )
 
 
 class RequestRequire:
@@ -204,6 +207,7 @@ class QuestionFieldsMixin:
         track=None,
         submission_type=None,
         readonly=False,
+        for_reviewers=False,
     ):
         """
         Injects custom question fields into the form, filtered by track/type and pre-filled with answers.
@@ -214,8 +218,11 @@ class QuestionFieldsMixin:
             submission, speaker, review: Answer contexts.
             track, submission_type: Visibility filters.
             readonly (bool): If True, fields are disabled.
+            for_reviewers (bool): If True, only fetch questions visible to reviewers.
         """
         questions = self.get_question_queryset(target, event)
+        if for_reviewers:
+            questions = questions.filter(is_visible_to_reviewers=True)
         # Apply filters based on submission context
         if track:
             questions = questions.filter(Q(tracks__in=[track]) | Q(tracks__isnull=True))

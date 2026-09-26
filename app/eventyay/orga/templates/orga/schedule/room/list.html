@@ -48,7 +48,11 @@
                             <a href="{{ room.urls.edit }}" class="btn btn-sm btn-info">
                                 <i class="fa fa-edit"></i>
                             </a>
-                            <a href="{{ room.urls.delete }}" class="btn btn-sm btn-danger">
+                            <a href="{{ room.urls.delete }}"
+                               class="btn btn-sm btn-danger"
+                               {% if room.has_linked_sessions %}title="{% translate "This room has linked schedules/sessions. Move or delete those sessions before deleting the room." %}"
+                               {% elif room.has_linked_shifts %}title="{% translate "This room is linked to a TeamShifts location with assigned shifts." %}"
+                               {% endif %}>
                                 <i class="fa fa-trash"></i>
                             </a>
                         </td>

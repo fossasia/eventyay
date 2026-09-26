@@ -2,9 +2,19 @@
 import config from 'config'
 import ApiError from './ApiError'
 import WebSocketClient from './WebSocketClient'
+import {logOperational} from './operationalLog'
 
 let api = null
 export { api as default }
+
+function getCsrfToken() {
+	try {
+		const match = document.cookie.match(/(?:^|; )eventyay_csrftoken=([^;]+)/)
+		return match ? decodeURIComponent(match[1]) : null
+	} catch (error) {
+		return null
+	}
+}
 
 export function initApi({ store, token, clientId, inviteToken }) {
 	if (api) {
@@ -14,12 +24,8 @@ export function initApi({ store, token, clientId, inviteToken }) {
 	console.info('[API] websocket URL', config.api.socket)
 	api.connect()
 
-	api.on('closed', () => {
-		console.warn('socket closed')
-	})
-
-	api.on('error', (error) => {
-		console.error('socket', error)
+	api.on('error', () => {
+		logOperational({action: 'ws.error', outcome: 'failure', backend: 'live', error_code: 'socket_error'})
 	})
 
 	api.on('warning', (warning) => {
@@ -71,6 +77,18 @@ export function initApi({ store, token, clientId, inviteToken }) {
 		} else if (api._config.clientId) {
 			request.setRequestHeader('Authorization', `Client ${api._config.clientId}`)
 		}
+		const csrf = getCsrfToken()
+		if (csrf) {
+			request.setRequestHeader('X-CSRFToken', csrf)
+		}
+		request.addEventListener('load', () => {
+			if (request.status < 200 || request.status >= 300) {
+				logOperational({action: 'upload', outcome: 'failure', backend: 'live', error_code: 'upload_failed', status: request.status})
+			}
+		})
+		request.addEventListener('error', () => {
+			logOperational({action: 'upload', outcome: 'failure', backend: 'live', error_code: 'network_error'})
+		})
 		request.send(data)
 		return request
 	}
@@ -84,10 +102,13 @@ export function initApi({ store, token, clientId, inviteToken }) {
 			: (api._config.clientId ? `Client ${api._config.clientId}` : null)
 		const headers = { Accept: 'application/json' }
 		if (authHeader) headers.Authorization = authHeader
+		const csrf = getCsrfToken()
+		if (csrf) headers['X-CSRFToken'] = csrf
 		return fetch(url, {
 			method: 'POST',
 			body: data,
-			headers
+			headers,
+			credentials: 'same-origin',
 		}).then(async response => {
 			const ct = response.headers.get('content-type') || ''
 			if (!response.ok) {
@@ -96,6 +117,7 @@ export function initApi({ store, token, clientId, inviteToken }) {
 					const data = await response.json().catch(() => ({}))
 					error = data.error || error
 				}
+				logOperational({action: 'upload', outcome: 'failure', backend: 'live', error_code: 'upload_failed', status: response.status})
 				throw new ApiError({ error, status: response.status, message: error })
 			}
 			if (ct.includes('application/json')) {

@@ -1348,6 +1348,26 @@ table .color-square {
     text-align: left;
   }
 
+  td {
+    vertical-align: top;
+  }
+
+  td.review-text p:first-child {
+    margin-top: 0;
+  }
+
+  td.review-text p:last-child {
+    margin-bottom: 0;
+  }
+
+  td.review-text p {
+    margin-bottom: 0.35rem;
+  }
+
+  td.nowrap {
+    white-space: nowrap;
+  }
+
   tbody tr,
   thead tr {
     .unmark-radio {
@@ -2027,41 +2047,6 @@ div.mail-preview {
   /* Keep the header divider above language tabs / focus styles. */
   position: relative;
   z-index: 1;
-}
-
-#mail-language-tabs {
-  border-bottom: 1px solid var(--color-grey-lighter);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-bottom: 1rem;
-}
-
-.mail-language-tab {
-  border-bottom: 2px solid transparent;
-  border-radius: 0;
-  box-shadow: none;
-  color: inherit;
-  margin-bottom: -1px;
-  padding: 6px 12px;
-  text-decoration: none;
-}
-
-.mail-language-tab:hover,
-.mail-language-tab:focus,
-.mail-language-tab:focus-visible,
-.mail-language-tab:active {
-  background: transparent;
-  box-shadow: none;
-  color: inherit;
-  outline: none;
-  text-decoration: none;
-}
-
-.mail-language-tab.active,
-.mail-language-tab[aria-selected="true"] {
-  border-bottom-color: var(--color-primary);
-  font-weight: bold;
 }
 
 #placeholder-drawer {
@@ -3164,6 +3149,10 @@ h2 .user-name-display img {
     justify-content: space-between;
   }
 
+  #page-content .review-table td.review-text {
+    min-width: 0;
+  }
+
   #page-content table .action-column {
     gap: 0.35rem;
     flex-wrap: nowrap;
@@ -3400,7 +3389,7 @@ a.btn-speaker-not-arrived {
 }
 
 .speaker-list-table .speaker-sessions-cell {
-  max-width: 16rem;
+  max-width: 26rem;
   min-width: 10rem;
 }
 
@@ -3410,15 +3399,26 @@ a.btn-speaker-not-arrived {
   list-style: none;
 }
 
+.speaker-session-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
 .speaker-session-list li + li {
   margin-top: 0.2rem;
 }
 
 .speaker-session-list a {
-  display: block;
+  flex: 0 1 auto;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.speaker-session-list .badge.submission-state {
+  flex: 0 0 auto;
 }
 
 .speaker-actions-cell {
@@ -3523,6 +3523,7 @@ button.btn-speaker-not-arrived {
   margin-top: 0.1rem;
 }
 
+.orga-confirm-dialog,
 .feedback-confirm-dialog {
   border: none;
   border-radius: 8px;
@@ -3536,6 +3537,7 @@ button.btn-speaker-not-arrived {
   z-index: 9999;
 }
 
+.orga-confirm-dialog-title,
 .feedback-confirm-dialog-title {
   margin-top: 0;
   margin-bottom: 16px;
@@ -3543,6 +3545,7 @@ button.btn-speaker-not-arrived {
   font-weight: 600;
 }
 
+.orga-confirm-dialog-message,
 .feedback-confirm-dialog-message {
   margin-top: 0;
   margin-bottom: 24px;
@@ -3551,9 +3554,16 @@ button.btn-speaker-not-arrived {
   color: #555;
 }
 
+.orga-confirm-dialog::backdrop,
+.feedback-confirm-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.orga-confirm-dialog-actions,
 .feedback-confirm-dialog-actions {
   display: flex;
   justify-content: flex-end;
+  gap: 12px;
 }
 
 .feedback-confirm-dialog-btn-cancel {

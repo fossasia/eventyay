@@ -30,7 +30,7 @@ BUILTIN_SESSION_FIELDS = (
     'do_not_record',
 )
 BUILTIN_SPEAKER_FIELDS = (
-    'fullname', 'biography', 'avatar', 'avatar_source',
+    'fullname', 'biography', 'job_title', 'organization', 'avatar', 'avatar_source',
     'avatar_license', 'availabilities', 'additional_speaker', 'social_links',
 )
 BUILTIN_FIELD_KEYS = {
@@ -103,6 +103,18 @@ def default_fields():
             'min_length': None,
             'max_length': None,
             'public': True,
+        },
+        'job_title': {
+            'visibility': 'optional',
+            'min_length': None,
+            'max_length': None,
+            'public': False,
+        },
+        'organization': {
+            'visibility': 'optional',
+            'min_length': None,
+            'max_length': None,
+            'public': False,
         },
         'avatar': {'visibility': 'optional', 'public': True},
         'avatar_source': {'visibility': 'optional', 'public': False},

@@ -4,14 +4,13 @@ import Link from '@tiptap/extension-link'
 
 /**
  * Returns Tiptap extensions for the simple rich text profile.
- * Supports: bold, italic, underline, bullet list, ordered list,
+ * Supports: bold, italic, underline, headings (H1–H6), bullet list, ordered list,
  * link, blockquote, undo/redo.
- * Headings are excluded to keep the toolbar minimal.
  */
 export function getRichTextExtensions() {
   return [
     StarterKit.configure({
-      heading: false,
+      heading: { levels: [1, 2, 3, 4, 5, 6] },
       codeBlock: false,
       code: false,
       horizontalRule: false,

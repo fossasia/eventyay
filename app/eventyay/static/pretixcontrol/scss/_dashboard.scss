@@ -137,8 +137,7 @@
     flex-direction: row;
 
     a,
-    button.component,
-    button.middle-component {
+    button.component {
       flex-grow: 1;
       flex-basis: 50%;
       font-size: 14px;
@@ -170,11 +169,8 @@
     button.component {
       background: $brand-primary;
     }
-    a.middle-component,
-    button.middle-component {
-      background: #3A9CE3;
-      border: none;
-      cursor: pointer;
+    .component + .component {
+      border-left: 1px solid rgba(255, 255, 255, 0.35);
     }
   }
   .daterange, .times {

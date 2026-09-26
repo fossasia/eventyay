@@ -330,6 +330,8 @@ def test_orga_cannot_reset_to_wrong_version(orga_client, event):
 def test_orga_can_release_and_reset_schedule(orga_client, event):
     with scope(event=event):
         assert Schedule.objects.count() == 1
+        event.talks_published = True
+        event.save(update_fields=['talks_published'])
     response = orga_client.post(
         event.orga_urls.release_schedule,
         follow=True,
@@ -352,6 +354,8 @@ def test_orga_can_release_and_reset_schedule(orga_client, event):
 def test_orga_cannot_reuse_schedule_name(orga_client, event):
     with scope(event=event):
         assert Schedule.objects.count() == 1
+        event.talks_published = True
+        event.save(update_fields=['talks_published'])
     response = orga_client.post(
         event.orga_urls.release_schedule,
         follow=True,
@@ -376,9 +380,21 @@ def test_orga_can_toggle_schedule_visibility(orga_client, event):
     from eventyay.base.models import Event
 
     assert event.feature_flags["show_schedule"] is True
+    orga_client.get(event.orga_urls.toggle_schedule)
+    event = Event.objects.get(pk=event.pk)
+    assert event.feature_flags["show_schedule"] is True
+
+    page = orga_client.get(event.orga_urls.schedule)
+    assert page.status_code == 200
+    assert page.text.count("Unpublish schedule") == 1
+    assert "Make schedule public" not in page.text
+    assert "Visitors will see sessions as coming soon until you publish it again." in page.text
 
     response = orga_client.post(event.orga_urls.toggle_schedule, follow=True)
     assert response.status_code == 200
+    assert response.text.count("Make schedule public") == 1
+    assert "Unpublish schedule" not in response.text
+    assert "Visitors will be able to see the released schedule." in response.text
     event = Event.objects.get(pk=event.pk)
     assert event.feature_flags["show_schedule"] is False
 
@@ -445,26 +461,96 @@ def test_edit_room(orga_client, event, room):
 @pytest.mark.django_db
 def test_delete_room(orga_client, event, room):
     with scope(event=event):
-        assert event.rooms.count() == 1
+        assert event.rooms.filter(deleted=False).count() == 1
     response = orga_client.get(room.urls.delete, follow=True)
     assert response.status_code == 200
     with scope(event=event):
-        assert event.rooms.count() == 1
+        assert event.rooms.filter(deleted=False).count() == 1
     response = orga_client.post(room.urls.delete, follow=True)
     assert response.status_code == 200
     with scope(event=event):
-        assert event.rooms.count() == 0
+        room.refresh_from_db()
+        assert room.deleted
+        assert event.rooms.filter(deleted=False).count() == 0
 
 
 @pytest.mark.django_db
 def test_delete_used_room(orga_client, event, room, slot):
     with scope(event=event):
-        assert event.rooms.count() == 1
+        assert event.rooms.filter(deleted=False).count() == 1
+        wip_slot = event.wip_schedule.talks.get(submission=slot.submission)
     assert slot.room == room
     response = orga_client.get(room.urls.delete, follow=True)
     assert response.status_code == 200
+    assert b'linked schedules/sessions' in response.content
+    assert f'?room={room.pk}'.encode() in response.content
+    assert b'Unassign all sessions' in response.content
+    assert b'Open room in schedule editor' in response.content
+    assert b'Open in schedule' not in response.content
+    assert b'1 linked session' in response.content
     with scope(event=event):
-        assert event.rooms.count() == 1
+        assert event.rooms.filter(deleted=False).count() == 1
+    response = orga_client.post(
+        room.urls.delete,
+        {'action': 'unassign_sessions'},
+        follow=True,
+    )
+    assert response.status_code == 200
+    with scope(event=event):
+        wip_slot.refresh_from_db()
+        slot.refresh_from_db()
+        assert wip_slot.room is None
+        assert wip_slot.start is None
+        assert wip_slot.end is None
+        assert slot.room is None
+        room.refresh_from_db()
+        assert not room.deleted
+    assert b'Unassigned 1 session from this room.' in response.content
+    response = orga_client.post(room.urls.delete, follow=True)
+    assert response.status_code == 200
+    with scope(event=event):
+        room.refresh_from_db()
+        assert room.deleted
+        assert event.rooms.filter(deleted=False).count() == 0
+
+
+@pytest.mark.django_db
+def test_delete_room_with_released_only_linked_session(orga_client, event, room, slot):
+    """Released-schedule links must still surface on the delete confirm page."""
+    with scope(event=event):
+        event.wip_schedule.talks.filter(submission=slot.submission).update(
+            room=None,
+            start=None,
+            end=None,
+        )
+        slot.refresh_from_db()
+        assert slot.room == room
+        assert not event.wip_schedule.talks.filter(
+            room=room, submission__isnull=False
+        ).exists()
+
+    response = orga_client.get(room.urls.delete, follow=True)
+    assert response.status_code == 200
+    assert b'linked schedules/sessions' in response.content
+    assert b'Unassign all sessions' in response.content
+    assert str(slot.submission.title).encode() in response.content
+
+    response = orga_client.post(
+        room.urls.delete,
+        {'action': 'unassign_sessions'},
+        follow=True,
+    )
+    assert response.status_code == 200
+    with scope(event=event):
+        slot.refresh_from_db()
+        assert slot.room is None
+    assert b'Unassigned 1 session from this room.' in response.content
+
+    response = orga_client.post(room.urls.delete, follow=True)
+    assert response.status_code == 200
+    with scope(event=event):
+        room.refresh_from_db()
+        assert room.deleted
 
 
 @pytest.mark.django_db
@@ -590,3 +676,89 @@ def test_orga_can_export_answers_json(
             "Speaker IDs": [speaker.code],
         }
     ]
+
+
+@pytest.mark.django_db
+def test_room_delete_view_shows_linked_shift_warning(orga_client, event, room):
+    from teamshifts.models import Shift, ShiftLocation
+
+    with scope(event=event):
+        location = ShiftLocation.objects.create(
+            event=event, name=room.name, linked_room=room
+        )
+        Shift.objects.create(
+            event=event,
+            location=location,
+            start_time=now(),
+            end_time=now() + dt.timedelta(hours=1),
+        )
+    response = orga_client.get(
+        reverse(
+            "orga:schedule.rooms.delete", kwargs={"organizer": event.organizer.slug, "event": event.slug, "pk": room.pk}
+        )
+    )
+    assert response.status_code == 200
+    assert response.context["has_linked_shifts"] is True
+    assert response.context["linked_shift_count"] == 1
+
+
+@pytest.mark.django_db
+def test_room_delete_view_without_linked_shifts(orga_client, event, room):
+    response = orga_client.get(
+        reverse(
+            "orga:schedule.rooms.delete", kwargs={"organizer": event.organizer.slug, "event": event.slug, "pk": room.pk}
+        )
+    )
+    assert response.status_code == 200
+    assert response.context["has_linked_shifts"] is False
+    assert response.context["linked_shift_count"] == 0
+
+
+@pytest.mark.django_db
+def test_room_list_view_marks_rooms_with_linked_shifts(orga_client, event, room):
+    from teamshifts.models import Shift, ShiftLocation
+
+    with scope(event=event):
+        location = ShiftLocation.objects.create(
+            event=event, name=room.name, linked_room=room
+        )
+        Shift.objects.create(
+            event=event,
+            location=location,
+            start_time=now(),
+            end_time=now() + dt.timedelta(hours=1),
+        )
+    response = orga_client.get(
+        reverse("orga:schedule.rooms.list", kwargs={"organizer": event.organizer.slug, "event": event.slug})
+    )
+    assert response.status_code == 200
+    listed_room = next(
+        r for r in response.context["room_list"] if r.pk == room.pk
+    )
+    assert listed_room.has_linked_shifts is True
+
+
+@pytest.mark.django_db
+def test_room_list_view_survives_missing_linked_room_column(
+    orga_client, event, room, monkeypatch
+):
+    """The linked_room lookup must not break the Talks room list when
+    teamshifts code is deployed ahead of its own migration (the column
+    doesn't exist yet in the database)."""
+    from django.db import DatabaseError
+    from teamshifts.models import ShiftLocation
+
+    def raise_missing_column(*args, **kwargs):
+        raise DatabaseError(
+            'column "teamshifts_shiftlocation"."linked_room_id" does not exist'
+        )
+
+    monkeypatch.setattr(ShiftLocation.objects, "filter", raise_missing_column)
+    response = orga_client.get(
+        reverse("orga:schedule.rooms.list", kwargs={"organizer": event.organizer.slug, "event": event.slug})
+    )
+    assert response.status_code == 200
+    listed_room = next(
+        r for r in response.context["room_list"] if r.pk == room.pk
+    )
+    assert listed_room.has_linked_shifts is False

@@ -46,6 +46,69 @@
             <fieldset id="tab-ticket_fee">
                 <legend>{% translate "Ticket Fee" %}</legend>
                 {% bootstrap_field form.ticket_fee_percentage layout='control' %}
+                {% bootstrap_field form.ticket_fee_maximum layout='control' %}
+
+                {% if country_fee_settings is not None %}
+                <div class="panel panel-default" style="margin-top: 30px;">
+                    <div class="panel-heading">
+                        <div class="pull-right">
+                            <a href="{% url "plugins:eventyay_business:fees.add" %}" class="btn btn-primary btn-xs">
+                                <i class="fa fa-plus"></i> {% trans "Add country override" %}
+                            </a>
+                        </div>
+                        <h3 class="panel-title">{% trans "Country-Wise Fee Overrides" %}</h3>
+                    </div>
+                    <div class="panel-body">
+                        <p class="text-muted">
+                            {% trans "You can set custom service fee percentages and maximum fee limits for specific countries and currencies. When an order matches a country override, the custom rate and maximum cap will apply instead of the global default." %}
+                        </p>
+                        {% if country_fee_settings %}
+                            <div class="table-responsive">
+                                <table class="table table-hover table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>{% trans "Country" %}</th>
+                                            <th>{% trans "Currency" %}</th>
+                                            <th>{% trans "Service Fee %" %}</th>
+                                            <th>{% trans "Maximum Fee" %}</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for setting in country_fee_settings %}
+                                            <tr>
+                                                <td>
+                                                    <span class="fa fa-globe"></span>
+                                                    <strong>{{ setting.country.name }}</strong> ({{ setting.country.code }})
+                                                </td>
+                                                <td><code>{{ setting.currency }}</code></td>
+                                                <td>{{ setting.service_fee_percent }}%</td>
+                                                <td>
+                                                    {% if setting.maximum_fee > 0 %}
+                                                        {{ setting.maximum_fee }} {{ setting.currency }}
+                                                    {% else %}
+                                                        <span class="text-muted">{% trans "Unlimited" %}</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td class="text-right">
+                                                    <a href="{% url "plugins:eventyay_business:fees.edit" pk=setting.pk %}" class="btn btn-default btn-sm" aria-label="{% trans "Edit country fee override" %}">
+                                                        <i class="fa fa-edit" aria-hidden="true"></i>
+                                                    </a>
+                                                    <a href="{% url "plugins:eventyay_business:fees.delete" pk=setting.pk %}" class="btn btn-danger btn-sm" aria-label="{% trans "Delete country fee override" %}">
+                                                        <i class="fa fa-trash" aria-hidden="true"></i>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted"><em>{% trans "No country-specific fee overrides configured. Global settings apply to all countries." %}</em></p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
             </fieldset>
 
             <fieldset id="tab-billing_validation">
