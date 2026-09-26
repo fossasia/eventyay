@@ -3,6 +3,7 @@ import datetime
 import json
 import logging
 import re
+from types import SimpleNamespace
 
 from allauth.account.models import EmailAddress
 from django.conf import settings as django_settings
@@ -10,9 +11,11 @@ from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 from django.db.models import Count, Q
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.template.loader import render_to_string
+from django.utils import translation
+from django.utils.html import escape
 from django.utils.timezone import now as tz_now
 from django.utils.translation import gettext_lazy as _
 from django.views import View
@@ -28,14 +31,15 @@ from eventyay.base.models.admin_mail import (
     AdminRecipientGroup,
 )
 from eventyay.base.models.base import CachedFile
-from eventyay.base.models.mail import MailTemplate, MailTemplateRoles
+from eventyay.base.configurations.default_setting import DEFAULT_SETTINGS
+from eventyay.base.models.mail import MailTemplateRoles
 from eventyay.base.models.orders import Order, OrderPosition
 from eventyay.base.models.organizer import Team
 from eventyay.base.models.product import Product
 from eventyay.base.models.event import Event_SettingsStore
 from eventyay.base.models.submission import Submission, SubmissionStates
 from eventyay.base.models.cfp import CfP
-from eventyay.base.models.organizer import OrganizerBillingModel
+from eventyay.base.models.organizer import TEAM_INVITE_SUBJECT, TEAM_INVITE_TEXT, OrganizerBillingModel
 from eventyay.common.mail import mail_send_task
 from eventyay.common.sanitizers import sanitize_email_html
 from eventyay.control.forms.admin.admin_messages import (
@@ -45,6 +49,8 @@ from eventyay.control.forms.admin.admin_messages import (
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin, StaffMemberRequiredMixin
 from eventyay.control.tasks import send_admin_email
 from eventyay.control.views import PaginationMixin
+from eventyay.eventyay_common.tasks import MONTHLY_INVOICE_SUBJECT, MONTHLY_INVOICE_TEXT
+from eventyay.mail.default_templates import get_default_template
 
 logger = logging.getLogger(__name__)
 
@@ -949,55 +955,215 @@ class AdminMessageSentView(AdministratorPermissionRequiredMixin, PaginationMixin
         )
 
 
+PLACEHOLDER_PATTERN = re.compile(r'\{(\w+)\}')
+
+TEMPLATE_PREVIEW_CONTEXT = {
+    **SAMPLE_CONTEXT,
+    'platform_url': 'https://eventyay.com',
+    'account_url': 'https://eventyay.com/common/account/',
+    'activate_url': 'https://eventyay.com/accounts/confirm-email/demo-key/',
+    'changes': '- Email address changed',
+    'code': 'ABC12',
+    'confirmation_link': 'https://eventyay.com/fossasia/summit-2026/me/submissions/ABC12/confirm',
+    'detail': 'A new order has been placed.',
+    'disable_url': 'https://eventyay.com/common/account/notifications/off/',
+    'event': 'FOSSASIA Summit 2026',
+    'event_name': 'FOSSASIA Summit 2026',
+    'event_url': 'https://eventyay.com/fossasia/summit-2026/',
+    'expire_date': 'October 15, 2026',
+    'instance': 'eventyay',
+    'invitation_link': 'https://eventyay.com/invite/demo-token/',
+    'month': 'September',
+    'name': 'Jane Doe',
+    'organizer': 'FOSSASIA',
+    'payment_info': 'Please transfer the full amount to the bank account shown on your order page.',
+    'prefix': 'SUMMIT',
+    'proposal_title': 'Building Open Source Communities',
+    'proposal_url': 'https://eventyay.com/fossasia/summit-2026/me/submissions/ABC12/',
+    'questions': '- What is your T-shirt size?',
+    'settings_url': 'https://eventyay.com/common/account/notifications/',
+    'speaker_schedule_new': 'Building Open Source Communities: Saturday, 10:00, Main Hall',
+    'speakers': 'Jane Doe',
+    'submission_title': 'Building Open Source Communities',
+    'submission_url': 'https://eventyay.com/fossasia/summit-2026/me/submissions/ABC12/',
+    'team': 'Organisers',
+    'title': 'New order placed',
+    'total_with_currency': 'EUR 49.00',
+    'url': 'https://eventyay.com/fossasia/summit-2026/order/ABC12/',
+}
+
+
+class _PlaceholderUser:
+    def __str__(self):
+        return '{user_name}'
+
+
+def _render_mail_template(template_name: str, context: dict) -> str:
+    return render_to_string(template_name, context).strip()
+
+
+def _talk_mail(role):
+    def load():
+        subject, text = get_default_template(role)
+        return str(subject), str(text)
+
+    return load
+
+
+def _setting_mail(subject, setting_key):
+    def load():
+        return str(subject) % {'code': '{code}'}, str(DEFAULT_SETTINGS[setting_key]['default'])
+
+    return load
+
+
+def _account_confirmation_mail():
+    site = SimpleNamespace(name='{platform_name}', domain='{platform_url}')
+    subject = _render_mail_template('account/email/email_confirmation_signup_subject.txt', {'current_site': site})
+    body = _render_mail_template(
+        'account/email/email_confirmation_signup_message.txt',
+        {'user': _PlaceholderUser(), 'current_site': site, 'activate_url': '{activate_url}'},
+    )
+    return subject, body
+
+
+def _password_reset_mail():
+    return str(_('Password recovery')), _render_mail_template('eventyay/email/forgot.txt.jinja', {'url': '{url}'})
+
+
+def _security_notice_mail():
+    body = _render_mail_template(
+        'pretixcontrol/email/security_notice.txt', {'messages': '{changes}', 'url': '{url}'}
+    )
+    return str(_('Account information changed')), body
+
+
+def _organiser_invitation_mail(is_registered_user):
+    def load():
+        body = _render_mail_template(
+            'pretixcontrol/email/invitation.txt',
+            {'organizer': '{organizer}', 'team': '{team}', 'url': '{url}', 'is_registered_user': is_registered_user},
+        )
+        return str(_('eventyay account invitation')), body
+
+    return load
+
+
+def _team_invite_mail():
+    return str(TEAM_INVITE_SUBJECT), str(TEAM_INVITE_TEXT)
+
+
+def _monthly_invoice_mail():
+    return MONTHLY_INVOICE_SUBJECT, MONTHLY_INVOICE_TEXT
+
+
+def _notification_mail():
+    notification = SimpleNamespace(title='{title}', detail='{detail}', url='{url}', attributes=[], actions=[])
+    body = _render_mail_template(
+        'pretixbase/email/notification.txt',
+        {'notification': notification, 'settings_url': '{settings_url}', 'disable_url': '{disable_url}'},
+    )
+    return '[{instance}] {prefix}: {title}', body
+
+
+def get_platform_mail_templates() -> list[dict]:
+    listed_separately = {
+        MailTemplateRoles.NEW_SUBMISSION,
+        MailTemplateRoles.SUBMISSION_ACCEPT,
+        MailTemplateRoles.SUBMISSION_REJECT,
+        MailTemplateRoles.NEW_SCHEDULE,
+    }
+    templates = [
+        {
+            'key': role_value,
+            'name': str(role_label),
+            'category': _('System'),
+            'trigger': str(role_label),
+            'recipient_type': _('User'),
+            'load': _talk_mail(role_value),
+        }
+        for role_value, role_label in MailTemplateRoles.choices
+        if role_value not in listed_separately
+    ]
+    templates.extend([
+        {'key': 'account-registration', 'name': _('Account registration'), 'category': _('Account'),
+         'trigger': _('User registers'), 'load': _account_confirmation_mail},
+        {'key': 'email-confirmation', 'name': _('Email confirmation'), 'category': _('Account'),
+         'trigger': _('Email verification sent'), 'load': _account_confirmation_mail},
+        {'key': 'password-reset', 'name': _('Password reset'), 'category': _('Account'),
+         'trigger': _('Password reset requested'), 'load': _password_reset_mail},
+        {'key': 'account-notification', 'name': _('Account notification'), 'category': _('Account'),
+         'trigger': _('Account status changed'), 'load': _security_notice_mail},
+        {'key': 'organiser-invitation', 'name': _('Organiser invitation'), 'category': _('Team'),
+         'trigger': _('Team invitation sent'), 'load': _organiser_invitation_mail(False)},
+        {'key': 'organiser-added-to-team', 'name': _('Organiser added to team'), 'category': _('Team'),
+         'trigger': _('Existing user added to a team'), 'load': _organiser_invitation_mail(True)},
+        {'key': 'event-team-invitation', 'name': _('Event team invitation'), 'category': _('Team'),
+         'trigger': _('Event team invitation sent'), 'load': _team_invite_mail,
+         'preview': {'name': 'Program committee'}},
+        {'key': 'platform-fee-notification', 'name': _('Platform fee notification'), 'category': _('Billing'),
+         'trigger': _('Fee invoiced'), 'load': _monthly_invoice_mail},
+        {'key': 'ticket-order-confirmation', 'name': _('Ticket order confirmation'), 'category': _('Ticketing'),
+         'trigger': _('Order placed'),
+         'load': _setting_mail(_('Your order: %(code)s'), 'mail_text_order_placed')},
+        {'key': 'ticket-confirmation', 'name': _('Ticket confirmation'), 'category': _('Ticketing'),
+         'trigger': _('Ticket confirmed'),
+         'load': _setting_mail(_('Payment received for your order: %(code)s'), 'mail_text_order_paid')},
+        {'key': 'ticket-cancellation', 'name': _('Ticket cancellation'), 'category': _('Ticketing'),
+         'trigger': _('Order cancelled'),
+         'load': _setting_mail(_('Order canceled: %(code)s'), 'mail_text_order_canceled')},
+        {'key': MailTemplateRoles.NEW_SUBMISSION, 'name': _('CfP submission confirmation'), 'category': _('CfP'),
+         'trigger': _('Proposal submitted'), 'load': _talk_mail(MailTemplateRoles.NEW_SUBMISSION)},
+        {'key': MailTemplateRoles.SUBMISSION_ACCEPT, 'name': _('Proposal acceptance'), 'category': _('CfP'),
+         'trigger': _('Proposal accepted'), 'load': _talk_mail(MailTemplateRoles.SUBMISSION_ACCEPT)},
+        {'key': MailTemplateRoles.SUBMISSION_REJECT, 'name': _('Proposal rejection'), 'category': _('CfP'),
+         'trigger': _('Proposal rejected'), 'load': _talk_mail(MailTemplateRoles.SUBMISSION_REJECT)},
+        {'key': MailTemplateRoles.NEW_SCHEDULE, 'name': _('Speaker schedule update'), 'category': _('Schedule'),
+         'trigger': _('Schedule updated'), 'load': _talk_mail(MailTemplateRoles.NEW_SCHEDULE)},
+        {'key': 'system-notification', 'name': _('System notification'), 'category': _('System'),
+         'trigger': _('System event'), 'load': _notification_mail},
+    ])
+    for template in templates:
+        template.setdefault('recipient_type', _('User'))
+        template.setdefault('preview', {})
+    return templates
+
+
+def text_to_editor_html(text: str) -> str:
+    paragraphs = []
+    for block in re.split(r'\n\s*\n', text.strip()):
+        html = '<br>'.join(escape(line) for line in block.split('\n'))
+        html = PLACEHOLDER_PATTERN.sub(r'<span data-variable="\1">{\1}</span>', html)
+        paragraphs.append(f'<p>{html}</p>')
+    return ''.join(paragraphs)
+
+
+def get_mail_template_versions(load) -> list[dict]:
+    versions = []
+    seen = set()
+    for code, name in django_settings.LANGUAGES:
+        with translation.override(code):
+            subject, body = load()
+        if (subject, body) in seen:
+            continue
+        seen.add((subject, body))
+        versions.append({
+            'locale': code,
+            'language': str(name),
+            'subject': subject,
+            'body': body,
+            'body_html': text_to_editor_html(body),
+        })
+    return versions
+
+
 class AdminMessageTemplatesView(AdministratorPermissionRequiredMixin, TemplateView):
     template_name = 'pretixcontrol/admin/messages/templates.html'
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['templates'] = self._get_platform_templates()
+        ctx['templates'] = get_platform_mail_templates()
         return ctx
-
-    def _get_platform_templates(self) -> list[dict]:
-
-
-        templates = []
-        for role_value, role_label in MailTemplateRoles.choices:
-            templates.append({
-                'name': str(role_label),
-                'category': _('System'),
-                'trigger': str(role_label),
-                'recipient_type': _('User'),
-                'role': role_value,
-            })
-
-        system_templates = [
-            {'name': _('Account registration'), 'category': _('Account'), 'trigger': _('User registers')},
-            {'name': _('Email confirmation'), 'category': _('Account'), 'trigger': _('Email verification sent')},
-            {'name': _('Password reset'), 'category': _('Account'), 'trigger': _('Password reset requested')},
-            {'name': _('Account notification'), 'category': _('Account'), 'trigger': _('Account status changed')},
-            {'name': _('Organiser invitation'), 'category': _('Team'), 'trigger': _('Team invitation sent')},
-            {'name': _('Event team invitation'), 'category': _('Team'), 'trigger': _('Event team invitation sent')},
-            {'name': _('Billing validation'), 'category': _('Billing'), 'trigger': _('Billing validation requested')},
-            {'name': _('Platform fee notification'), 'category': _('Billing'), 'trigger': _('Fee invoiced')},
-            {'name': _('Ticket order confirmation'), 'category': _('Ticketing'), 'trigger': _('Order placed')},
-            {'name': _('Ticket confirmation'), 'category': _('Ticketing'), 'trigger': _('Ticket confirmed')},
-            {'name': _('Ticket cancellation'), 'category': _('Ticketing'), 'trigger': _('Order cancelled')},
-            {'name': _('Refund notification'), 'category': _('Ticketing'), 'trigger': _('Refund processed')},
-            {'name': _('CfP submission confirmation'), 'category': _('CfP'), 'trigger': _('Proposal submitted')},
-            {'name': _('Proposal acceptance'), 'category': _('CfP'), 'trigger': _('Proposal accepted')},
-            {'name': _('Proposal rejection'), 'category': _('CfP'), 'trigger': _('Proposal rejected')},
-            {'name': _('Speaker schedule update'), 'category': _('Schedule'), 'trigger': _('Schedule updated')},
-            {'name': _('Reviewer notification'), 'category': _('Review'), 'trigger': _('Review assigned')},
-            {'name': _('Team member notification'), 'category': _('Team'), 'trigger': _('Team membership changed')},
-            {'name': _('Video/event notification'), 'category': _('Video'), 'trigger': _('Video event updated')},
-            {'name': _('System notification'), 'category': _('System'), 'trigger': _('System event')},
-        ]
-        for t in system_templates:
-            t.setdefault('recipient_type', _('User'))
-            t.setdefault('role', '')
-        templates.extend(system_templates)
-
-        return templates
 
 
 class AdminMessageTemplateDetailView(AdministratorPermissionRequiredMixin, TemplateView):
@@ -1005,29 +1171,23 @@ class AdminMessageTemplateDetailView(AdministratorPermissionRequiredMixin, Templ
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        role = self.kwargs.get('role', '')
+        key = self.kwargs.get('role', '')
+        meta = next((t for t in get_platform_mail_templates() if t['key'] == key), None)
+        if meta is None:
+            raise Http404(_('Unknown email template.'))
 
-        with scopes_disabled():
-            template = MailTemplate.objects.filter(role=role).first()
+        versions = get_mail_template_versions(meta['load'])
+        default = versions[0]
+        placeholder_keys = sorted(set(PLACEHOLDER_PATTERN.findall(default['subject'] + default['body'])))
 
-        all_templates = AdminMessageTemplatesView(kwargs={})._get_platform_templates()
-        meta = next((t for t in all_templates if t.get('role') == role), {})
-
-        ctx['mail_template'] = template
-        ctx['role'] = role
-        ctx['role_label'] = dict(MailTemplateRoles.choices).get(role, role) or meta.get('name', role)
-        ctx['category'] = meta.get('category', _('System'))
-        ctx['trigger'] = meta.get('trigger', '—')
-        ctx['recipient_type'] = meta.get('recipient_type', _('User'))
-        ctx['last_updated'] = template.updated if template and hasattr(template, 'updated') else (
-            template.updated_at if template and hasattr(template, 'updated_at') else None
-        )
-        placeholder_keys: list[str] = []
-        if template:
-            body = str(template.text or '')
-            subject = str(template.subject or '')
-            placeholder_keys = sorted(set(re.findall(r'\{(\w+)\}', body + subject)))
+        ctx['key'] = key
+        ctx['role_label'] = meta['name']
+        ctx['category'] = meta['category']
+        ctx['trigger'] = meta['trigger']
+        ctx['recipient_type'] = meta['recipient_type']
+        ctx['versions'] = versions
         ctx['placeholder_keys'] = placeholder_keys
+        ctx['placeholders_json'] = json.dumps(placeholder_keys)
         return ctx
 
 
@@ -1133,9 +1293,16 @@ class AdminMessagePreviewView(StaffMemberRequiredMixin, View):
         if not isinstance(raw_html, str):
             return JsonResponse({'html': ''}, status=400)
 
+        samples = SAMPLE_CONTEXT
+        template_key = request.GET.get('template')
+        if template_key:
+            template = next((t for t in get_platform_mail_templates() if t['key'] == template_key), None)
+            if template:
+                samples = {**TEMPLATE_PREVIEW_CONTEXT, **template['preview']}
+
         safe_html = sanitize_email_html(raw_html)
         preview_html = safe_html
-        for key, value in SAMPLE_CONTEXT.items():
+        for key, value in samples.items():
             preview_html = preview_html.replace('{' + key + '}', str(value))
 
         return JsonResponse({'html': AdminEmailQueue.make_html(preview_html)})

@@ -5,7 +5,12 @@
 
 {% block custom_header %}
   {{ block.super }}
+  <link rel='stylesheet' href='{% static "common/css/_composer.css" %}'>
+  <link rel='stylesheet' href='{% static "pretixplugins/sendmail/tickets_email.css" %}'>
   <link rel='stylesheet' href='{% static "pretixcontrol/css/admin-messages.css" %}'>
+  <script type="module" src="{% static 'common/js/tiptapLoader.js' %}"
+          data-tiptap-js="{% static 'editor/editor.js' %}"
+          data-tiptap-css="{% static 'editor/editor.css' %}"></script>
 {% endblock %}
 
 {% block content %}
@@ -42,49 +47,73 @@
           </tr>
           <tr>
             <th>{% translate "System identifier" %}</th>
-            <td><code>{{ role|default:"—" }}</code></td>
+            <td><code>{{ key }}</code></td>
           </tr>
-          {% if last_updated %}
-            <tr>
-              <th>{% translate "Last updated" %}</th>
-              <td>{{ last_updated|date:"SHORT_DATETIME_FORMAT" }}</td>
-            </tr>
-          {% endif %}
-          {% if mail_template %}
-            <tr>
-              <th>{% translate "Subject" %}</th>
-              <td>{{ mail_template.subject }}</td>
-            </tr>
-            {% if mail_template.reply_to %}
-              <tr>
-                <th>{% translate "Reply-To" %}</th>
-                <td>{{ mail_template.reply_to }}</td>
-              </tr>
-            {% endif %}
-          {% endif %}
         </tbody>
       </table>
     </div>
   </div>
 
-  {% if mail_template %}
-    <div class='panel panel-default'>
-      <div class='panel-heading'>
-        <h3 class='panel-title'>{% translate "Body preview" %}</h3>
-      </div>
-      <div class='panel-body'>
-        {{ mail_template.text|linebreaksbr }}
-      </div>
+  <div class='panel panel-default template-preview mail-composer'>
+    <div class='panel-heading'>
+      <h3 class='panel-title'>{% translate "Body preview" %}</h3>
     </div>
-  {% else %}
-    <div class='panel panel-default'>
-      <div class='panel-body'>
-        <p class='text-muted'>
-          {% translate "This is a system template. Its content is defined in code and varies by configuration." %}
-        </p>
+    <div class='panel-body'>
+      <p class='text-muted'>
+        {% translate "This is the platform default. Placeholders are replaced with real values when the email is sent." %}
+      </p>
+      <div id='mail-language-tabs' class='mb-3' hidden></div>
+      <div class='form-group'>
+        <label for='id_subject_0'>{% translate "Subject" %}</label>
+        <div id='id_subject'>
+          {% for version in versions %}
+            <input type='text' class='form-control' id='id_subject_{{ forloop.counter0 }}'
+                   lang='{{ version.locale }}' title='{{ version.language }}'
+                   value='{{ version.subject }}' readonly>
+          {% endfor %}
+        </div>
       </div>
+      <form class='form-group' method='post' novalidate>
+        {% csrf_token %}
+        <label for='id_text_0'>{% translate "Body" %}</label>
+        <div class='mail-editor-tabs'
+             data-email-preview-wrapper
+             data-email-preview-url='{% url "eventyay_admin:admin.messages.preview" %}?template={{ key|urlencode }}'>
+          <div class='mail-editor-mode-tabs' role='tablist' aria-label='{% translate "Message view" %}'>
+            <button type='button' class='mail-editor-mode-tab active'
+                    role='tab' aria-selected='true' aria-controls='mail-message-edit'
+                    data-mail-editor-mode='edit'>
+              <i class='fa fa-pencil-square-o fa-fw' aria-hidden='true'></i>
+              {% translate "Edit" %}
+            </button>
+            <button type='button' class='mail-editor-mode-tab'
+                    role='tab' aria-selected='false' aria-controls='mail-message-preview'
+                    data-mail-editor-mode='preview'>
+              <i class='fa fa-tv fa-fw' aria-hidden='true'></i>
+              {% translate "Preview" %}
+            </button>
+          </div>
+          <div id='mail-message-edit' role='tabpanel'>
+            <div id='id_text'>
+              {% for version in versions %}
+                <div class='tiptap-wrapper' data-tiptap-wrapper='true' data-email-editor='true'>
+                  <textarea class='form-control' id='id_text_{{ forloop.counter0 }}' rows='12'
+                            lang='{{ version.locale }}' title='{{ version.language }}'
+                            data-tiptap-profile='email' data-tiptap-placeholders='{{ placeholders_json }}'
+                            data-template-preview readonly>{{ version.body_html }}</textarea>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+          <div id='mail-message-preview' class='mail-message-preview-panel' role='tabpanel' hidden>
+            <div class='mail-preview-group'>
+              <div class='mail-preview'></div>
+            </div>
+          </div>
+        </div>
+      </form>
     </div>
-  {% endif %}
+  </div>
 
   {% if placeholder_keys %}
     <div class='panel panel-default'>
@@ -98,4 +127,8 @@
       </div>
     </div>
   {% endif %}
+
+  <script type="module" src="{% static 'orga/js/mail-language-tabs.js' %}"></script>
+  <script type="module" src="{% static 'orga/js/mail-editor-tabs.js' %}"></script>
+  <script type="module" src="{% static 'pretixcontrol/js/admin-template-preview.js' %}"></script>
 {% endblock %}
