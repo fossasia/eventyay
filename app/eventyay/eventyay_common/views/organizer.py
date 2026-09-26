@@ -18,7 +18,7 @@ from eventyay.base.models import Organizer, Team
 from eventyay.base.models.auth import User
 from eventyay.base.models.organizer import TeamAPIToken, TeamInvite
 from eventyay.base.services.mail import SendMailException, mail
-from eventyay.base.services.teams import check_full_admin_limit, send_team_invitation_email
+from eventyay.base.services.teams import check_full_admin_limit, get_team_invitation_url, send_team_invitation_email
 from eventyay.control.forms.filter import OrganizerFilterForm
 from eventyay.control.permissions import (
     OrganizerCreationPermissionMixin,
@@ -577,13 +577,7 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
                 user=user,
                 organizer_name=self.request.organizer.name,
                 team_name=team.name,
-                url=build_global_uri(
-                    'eventyay_common:organizer.team',
-                    kwargs={
-                        'organizer': self.request.organizer.slug,
-                        'team': team.pk,
-                    },
-                ),
+                url=get_team_invitation_url(team),
                 locale=self.request.LANGUAGE_CODE,
                 is_registered_user=True,
             )

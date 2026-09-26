@@ -16,7 +16,7 @@ from eventyay.base.auth import get_auth_backends
 from eventyay.base.models.organizer import Team, TeamAPIToken, TeamInvite
 from eventyay.base.models.auth import User
 from eventyay.base.services.mail import SendMailException, mail
-from eventyay.base.services.teams import send_team_invitation_email
+from eventyay.base.services.teams import get_team_invitation_url, send_team_invitation_email
 from eventyay.control.views.organizer import OrganizerDetailViewMixin
 from eventyay.helpers.urls import build_absolute_uri as build_global_uri
 
@@ -245,13 +245,7 @@ class TeamMemberView(
                     user=user,
                     organizer_name=self.request.organizer.name,
                     team_name=self.object.name,
-                    url=build_global_uri(
-                        'eventyay_common:organizer.team',
-                        kwargs={
-                            'organizer': self.request.organizer.slug,
-                            'team': self.object.pk,
-                        },
-                    ),
+                    url=get_team_invitation_url(self.object),
                     locale=self.request.LANGUAGE_CODE,
                     is_registered_user=True,
                 )
