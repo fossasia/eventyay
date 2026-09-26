@@ -106,6 +106,9 @@ def test_load_shedding_keeps_api_overload_json(monkeypatch):
     [
         '/healthcheck/',
         '/dsa/k39j9g/video/assets/main.css',
+        '/video/event/demo/streams/assets/main-RYsyvGsI.js',
+        '/video/event/demo/streams/manifest.webmanifest',
+        '/demo/streams/video/registerSW.js',
         '/api/v1/organizers/wm/checkin/redeem/',
         '/api/v1/organizers/wm/events/wm/checkinlists/',
         '/api/v1/organizers/wm/events/wm/checkinlists/1/positions/',
@@ -124,6 +127,8 @@ def test_load_shedding_exempts_checkin_and_health(path, monkeypatch):
     'path',
     [
         '/schedule/',
+        '/video/event/demo/streams/',
+        '/demo/streams/video/rooms/1',
         '/api/v1/organizers/wm/events/wm/checkinlists-backup/',
     ],
 )

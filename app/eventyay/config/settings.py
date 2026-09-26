@@ -487,7 +487,10 @@ _OURS_MIDDLEWARES = (
 
 # Correlation IDs must wrap the whole stack so 401/403/5xx from later
 # middleware (including load-shedding 503) still emit operational logs.
-MIDDLEWARE = ('eventyay.base.middleware.CorrelationIdMiddleware',) + _LIBRARY_MIDDLEWARES + _OURS_MIDDLEWARES
+MIDDLEWARE = (
+    'eventyay.base.middleware.CorrelationIdMiddleware',
+    'django.middleware.gzip.GZipMiddleware',
+) + _LIBRARY_MIDDLEWARES + _OURS_MIDDLEWARES
 
 
 _CORE_TEMPLATE_LOADERS = (

@@ -9,7 +9,7 @@ from urllib.request import urlopen
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.serializers.json import DjangoJSONEncoder
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.urls.exceptions import NoReverseMatch
@@ -28,6 +28,7 @@ from eventyay.agenda.views.utils import build_public_schedule_exporters
 from eventyay.base.models import Event
 from eventyay.base.models.room import AnonymousInvite
 from eventyay.base.services.video_theme import build_video_theme_for_event
+from eventyay.common.gzip import gzip_if_accepted
 from eventyay.common.language import get_ui_language_options
 from eventyay.common.templatetags.vite import fetch_vite_html, VIDEO_DIST_DIR, VIDEO_DEV_SERVER
 from eventyay.consts import SizeKey
@@ -114,7 +115,19 @@ class VideoSPAView(View):
                     schedule = event.current_schedule
 
                 schedule_version = schedule.version if schedule else None
-                schedule_exporters = build_public_schedule_exporters(event, version=schedule_version)
+                if request.GET.get('exporters') == '1':
+                    return JsonResponse({
+                        'exporters': build_public_schedule_exporters(
+                            event,
+                            version=schedule_version,
+                            include_qrcode=True,
+                        ),
+                    })
+                schedule_exporters = build_public_schedule_exporters(
+                    event,
+                    version=schedule_version,
+                    include_qrcode=False,
+                )
 
             if self.is_organizer:
                 base_path = f'/video/event/{event.organizer.slug}/{event.slug}'
@@ -320,7 +333,7 @@ class VideoSPAView(View):
 
         resp = HttpResponse(html_content, content_type='text/html')
         resp._csp_ignore = True  # Disable CSP for SPA (relies on dynamic inline scripts)
-        return resp
+        return gzip_if_accepted(request, resp)
 
 
 class VideoAssetView(View):
@@ -355,7 +368,7 @@ class VideoAssetView(View):
                 ctype, _rest = guess_type(fp)
                 if ctype:
                     resp['Content-Type'] = ctype
-                return resp
+                return gzip_if_accepted(request, resp)
         logger.warning('Video asset not found: %s', path)
         raise Http404()
 

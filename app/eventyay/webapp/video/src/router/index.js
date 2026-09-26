@@ -92,7 +92,10 @@ const routes = [
 			{
 				path: 'schedule',
 				name: 'schedule',
-				component: () => import('@schedule/components/ScheduleView')
+				component: () => {
+					store.dispatch('schedule/loadExporterQrcodes')
+					return import('@schedule/components/ScheduleView')
+				}
 			},
 			{
 				path: 'schedule/talks/:talkId',
