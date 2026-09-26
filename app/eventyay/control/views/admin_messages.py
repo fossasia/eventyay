@@ -1096,7 +1096,7 @@ def text_to_editor_html(text: str) -> str:
     paragraphs = []
     for block in re.split(r'\n\s*\n', text.strip()):
         html = '<br>'.join(escape(line) for line in block.split('\n'))
-        html = PLACEHOLDER_PATTERN.sub(r'<span data-variable="\1"></span>', html)
+        html = PLACEHOLDER_PATTERN.sub(r'<span data-variable="\1">{\1}</span>', html)
         paragraphs.append(f'<p>{html}</p>')
     return ''.join(paragraphs)
 

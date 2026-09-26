@@ -1,3 +1,5 @@
+import json
+
 import pytest
 from django.urls import reverse
 
@@ -55,8 +57,8 @@ def test_organiser_invitation_covers_new_and_registered_users():
 def test_text_to_editor_html_keeps_paragraphs_and_placeholders():
     html = text_to_editor_html('Hello {name},\nsee <this>\n\nBye {event}')
     assert html == (
-        '<p>Hello <span data-variable="name"></span>,<br>see &lt;this&gt;</p>'
-        '<p>Bye <span data-variable="event"></span></p>'
+        '<p>Hello <span data-variable="name">{name}</span>,<br>see &lt;this&gt;</p>'
+        '<p>Bye <span data-variable="event">{event}</span></p>'
     )
 
 
@@ -114,3 +116,29 @@ def test_template_detail_shows_metadata_of_listed_row(admin_client):
     response = admin_client.get(url)
     assert str(response.context['role_label']) == 'Proposal acceptance'
     assert str(response.context['category']) == 'CfP'
+
+
+@pytest.mark.django_db
+def test_template_list_has_no_actions_column(admin_client):
+    response = admin_client.get(reverse('eventyay_admin:admin.messages.templates'))
+    assert 'Actions' not in response.content.decode()
+
+
+@pytest.mark.django_db
+def test_template_detail_offers_rendered_preview(admin_client):
+    url = reverse('eventyay_admin:admin.messages.template_detail', kwargs={'role': 'account-registration'})
+    content = admin_client.get(url).content.decode()
+    assert 'data-mail-editor-mode="preview"' in content.replace("'", '"')
+    assert reverse('eventyay_admin:admin.messages.preview') in content
+
+
+@pytest.mark.django_db
+def test_preview_endpoint_fills_placeholders_from_editor_html(admin_client):
+    response = admin_client.post(
+        reverse('eventyay_admin:admin.messages.preview'),
+        data=json.dumps({'html': text_to_editor_html('Hello from {platform_name}!')}),
+        content_type='application/json',
+    )
+    assert response.status_code == 200
+    assert 'Hello from' in response.json()['html']
+    assert 'Eventyay' in response.json()['html']
