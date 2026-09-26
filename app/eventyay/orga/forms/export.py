@@ -92,6 +92,7 @@ class ExportForm(forms.Form):
         for question in self.questions:
             self.fields[f'question_{question.pk}'] = forms.BooleanField(
                 required=False,
+                initial=True,
                 label=f'{phrases.base.quotation_open}{question.question}{phrases.base.quotation_close}',
             )
 

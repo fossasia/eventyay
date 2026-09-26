@@ -2434,10 +2434,11 @@ class Event(
         from eventyay.base.models.feedback import Feedback
         from eventyay.base.models.log import ActivityLog, LogEntry
         from eventyay.base.models.mail import QueuedMail
-        from eventyay.base.models.question import Answer, AnswerOption
+        from eventyay.base.models.question import Answer, AnswerOption, TalkQuestion
         from eventyay.base.models.resource import Resource
         from eventyay.base.models.slot import TalkSlot
         from eventyay.base.models.storage_model import StoredFile
+        from eventyay.base.models.submission import Submission
         from eventyay.base.models.systemlog import SystemLog
 
         self.cartposition_set.filter(addon_to__isnull=False).delete()
@@ -2473,8 +2474,8 @@ class Event(
         self.vouchers.all().delete()
         self.products.all().delete()
         self.subevents.all().delete()
-        self.talkquestions.all().delete()
-        self.submissions.all().delete()
+        TalkQuestion.all_objects.filter(event=self).delete()
+        Submission.all_objects.filter(event=self).delete()
         self.rooms.all().delete()
         self.tracks.all().delete()
         self.tags.all().delete()
@@ -2513,9 +2514,10 @@ class Event(
         from eventyay.base.models.mail import QueuedMail
         from eventyay.base.models.profile import SpeakerProfile
         from eventyay.base.models.feedback import Feedback
-        from eventyay.base.models.question import Answer, AnswerOption
+        from eventyay.base.models.question import Answer, AnswerOption, TalkQuestion
         from eventyay.base.models.resource import Resource
         from eventyay.base.models.slot import TalkSlot
+        from eventyay.base.models.submission import Submission
 
         answers = Answer.objects.filter(question__event=self)
         for answer in answers.only('pk', 'answer_file').iterator():
@@ -2542,8 +2544,8 @@ class Event(
         # Clear unsent (outbox) emails linked to this event
         QueuedMail.objects.filter(event=self, sent__isnull=True).delete()
 
-        self.talkquestions.all().delete()
-        self.submissions.all().delete()
+        TalkQuestion.all_objects.filter(event=self).delete()
+        Submission.all_objects.filter(event=self).delete()
         self.rooms.all().delete()
         self.tracks.all().delete()
         self.tags.all().delete()

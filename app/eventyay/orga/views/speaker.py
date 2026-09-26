@@ -36,7 +36,7 @@ from eventyay.common.views.mixins import (
     Sortable,
 )
 from eventyay.consts import SizeKey
-from eventyay.orga.forms.importers import SpeakerImportProcessForm
+from eventyay.orga.forms.importers import SpeakerImportProcessForm, csv_sample_values
 from eventyay.person.forms import (
     SpeakerFilterForm,
     SpeakerInformationForm,
@@ -427,24 +427,26 @@ class SpeakerImportProcessView(ImportProcessRedirectMixin, EventPermissionRequir
     def parsed(self):
         return parse_csv(self.file.file, settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_CSV])
 
+    def _parsed_rows(self):
+        if not hasattr(self, '_cached_parsed_rows'):
+            self._cached_parsed_rows = list(self.parsed) if self.parsed else []
+        return self._cached_parsed_rows
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs['headers'] = self.parsed.fieldnames if self.parsed else []
+        headers = list(self.parsed.fieldnames or []) if self.parsed else []
+        kwargs['headers'] = headers
         kwargs['event'] = self.request.event
         kwargs['initial'] = self.request.event.settings.speaker_import_settings
+        kwargs['sample_values'] = csv_sample_values(self._parsed_rows(), headers)
         return kwargs
 
     @context
     def preview_rows(self):
         if not self.parsed:
             return []
-        rows = []
         headers = self.parsed.fieldnames or []
-        for i, row in enumerate(self.parsed):
-            if i >= 5:
-                break
-            rows.append([row.get(h, '') for h in headers])
-        return rows
+        return [[row.get(header, '') for header in headers] for row in self._parsed_rows()[:5]]
 
     @context
     def headers(self):

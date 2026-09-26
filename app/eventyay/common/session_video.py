@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 from django.db.models import Prefetch
 from django.utils.translation import gettext, gettext_lazy as _
 from django_scopes import scope
@@ -17,6 +19,7 @@ from eventyay.base.models import (
 from eventyay.common.video_embed import get_video_embed_info, parse_video_urls
 
 SESSION_VIDEO_IMPORT_KEY = 'session_video'
+_IMPORTED_VIDEO_SPLIT_RE = re.compile(r'[,;]\s*(?=https?://)', re.IGNORECASE)
 
 
 def session_videos_enabled(event) -> bool:
@@ -174,6 +177,40 @@ def set_submission_video_urls(submission, urls: list[str] | None) -> list[str]:
             question.is_public = True
             question.save(update_fields=['is_public'])
         return cleaned
+
+
+def parse_imported_video_urls(text: str | None) -> list[str]:
+    """Parse exported session-video cells (newlines or comma-separated URLs)."""
+    urls: list[str] = []
+    seen: set[str] = set()
+    for line in parse_video_urls(text):
+        parts = _IMPORTED_VIDEO_SPLIT_RE.split(line) if line.lower().count('http') > 1 else [line]
+        for part in parts:
+            raw = part.strip()
+            if not raw or raw in seen or get_video_embed_info(raw) is None:
+                continue
+            seen.add(raw)
+            urls.append(raw)
+    return urls
+
+
+def import_submission_video_urls(submission, raw: str | None) -> list[str]:
+    """Enable the canonical session video field and store imported URLs."""
+    urls = parse_imported_video_urls(raw)
+    if not urls:
+        return get_submission_video_urls(submission)
+
+    question = ensure_session_video_question(submission.event)
+    update_fields = []
+    if not question.active:
+        question.active = True
+        update_fields.append('active')
+    if not question.is_public:
+        question.is_public = True
+        update_fields.append('is_public')
+    if update_fields:
+        question.save(update_fields=update_fields)
+    return set_submission_video_urls(submission, urls)
 
 
 def set_submission_video_url(submission, url: str | None) -> str:

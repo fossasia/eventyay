@@ -1,0 +1,97 @@
+{% load i18n %}
+
+{% for field in form.core_fields %}
+  <div class='form-group row'>
+    <label class='col-md-3 col-form-label text-md-right' for='{{ field.id_for_label }}'>
+      {{ field.label }}{% if field.field.required %} *{% endif %}
+    </label>
+    <div class='col-md-9'>
+      {{ field }}
+      {% if field.help_text %}
+        <small class='form-text text-muted'>{{ field.help_text }}</small>
+      {% endif %}
+      {% for error in field.errors %}
+        <div class='invalid-feedback d-block'>{{ error }}</div>
+      {% endfor %}
+    </div>
+  </div>
+{% endfor %}
+
+{% if form.question_fields %}
+  <h4 class='mt-4'>{% translate 'Existing custom fields' %}</h4>
+  <p>
+    {% blocktranslate trimmed %}
+      Map CSV columns to custom fields that already exist for this event.
+    {% endblocktranslate %}
+  </p>
+  {% for field in form.question_fields %}
+    <div class='form-group row'>
+      <label class='col-md-3 col-form-label text-md-right' for='{{ field.id_for_label }}'>
+        {{ field.label }}{% if field.field.required %} *{% endif %}
+      </label>
+      <div class='col-md-9'>
+        {{ field }}
+        {% if field.help_text %}
+          <small class='form-text text-muted'>{{ field.help_text }}</small>
+        {% endif %}
+        {% for error in field.errors %}
+          <div class='invalid-feedback d-block'>{{ error }}</div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endfor %}
+{% endif %}
+
+{% if form.new_question_rows %}
+  <h4 class='mt-4'>{% translate 'Create new custom fields' %}</h4>
+  <p>
+    {% blocktranslate trimmed %}
+      These CSV columns are not mapped to an existing field. Tick a column to
+      create a new custom field during import and map the column to it.
+    {% endblocktranslate %}
+  </p>
+  {% for row in form.new_question_rows %}
+    <fieldset class='mb-3'>
+      <legend class='sr-only'>{{ row.header }}</legend>
+      {{ row.header_field }}
+      <div class='form-group row'>
+        <div class='col-md-9 offset-md-3'>
+          <div class='form-check'>
+            {{ row.enabled }}
+            <label class='form-check-label' for='{{ row.enabled.id_for_label }}'>
+              {{ row.enabled.label }}
+            </label>
+          </div>
+          {% if row.enabled.help_text %}
+            <small class='form-text text-muted'>{{ row.enabled.help_text }}</small>
+          {% endif %}
+          {% for error in row.enabled.errors %}
+            <div class='invalid-feedback d-block'>{{ error }}</div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class='form-group row'>
+        <label class='col-md-3 col-form-label text-md-right' for='{{ row.label.id_for_label }}'>
+          {{ row.label.label }}
+        </label>
+        <div class='col-md-9'>
+          {{ row.label }}
+          {% for error in row.label.errors %}
+            <div class='invalid-feedback d-block'>{{ error }}</div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class='form-group row'>
+        <label class='col-md-3 col-form-label text-md-right' for='{{ row.variant.id_for_label }}'>
+          {{ row.variant.label }}
+        </label>
+        <div class='col-md-9'>
+          {{ row.variant }}
+          {% for error in row.variant.errors %}
+            <div class='invalid-feedback d-block'>{{ error }}</div>
+          {% endfor %}
+        </div>
+      </div>
+    </fieldset>
+  {% endfor %}
+{% endif %}

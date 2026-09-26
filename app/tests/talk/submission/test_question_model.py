@@ -129,6 +129,8 @@ def test_question_base_properties(submission, question):
         ("select", "answer", ""),
         ("url", "https://example.com", "https://example.com"),
         ("video", "https://youtu.be/abc", "https://youtu.be/abc"),
+        ("date", "2019-03-14", "2019-03-14"),
+        ("datetime", "2026-10-30T22:00:00-04:00", "2026-10-30T22:00:00-04:00"),
         ("country", "DE", get_country_name("DE") or "DE"),
         ("lol", "lol", None),
     ),
