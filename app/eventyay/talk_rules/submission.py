@@ -47,7 +47,7 @@ def _normalize_featured_visibility(raw, default='never'):
         return 'always' if raw else 'never'
     if isinstance(raw, str):
         normalized = raw.strip().lower()
-        if normalized in ('never', 'after_schedule', 'always'):
+        if normalized in ('never', 'until_schedule', 'after_schedule', 'always'):
             return normalized
         # Migrate legacy value saved before rename.
         if normalized == 'pre_schedule':
@@ -56,7 +56,10 @@ def _normalize_featured_visibility(raw, default='never'):
 
 
 def _show_featured_visibility_setting(event, flag_key, fallback_key=None):
-    """Normalized value for org featured visibility (never / after_schedule / always)."""
+    """Normalized value for org featured visibility.
+
+    One of ``never`` / ``until_schedule`` / ``after_schedule`` / ``always``.
+    """
     from eventyay.base.models.event import default_feature_flags
 
     defaults = default_feature_flags()
@@ -152,6 +155,10 @@ def _featured_public_visible(event, setting_fn, after_schedule_fn):
         return False
     if show == 'always':
         return True
+    if show == 'until_schedule':
+        # Teaser mode: the exact opposite of ``after_schedule``, so it stops as soon as
+        # the event has ever published a schedule version.
+        return not _event_has_published_schedule(event)
     return after_schedule_fn(event)
 
 
@@ -165,7 +172,9 @@ def are_featured_submissions_visible(user, event):
 
     For ``after_schedule``, the featured page is available once a schedule version is
     published (and talks are published), or earlier when featured submissions exist as a
-    preview before the schedule is released.
+    preview before the schedule is released. For ``until_schedule``, it is the other way
+    round: the page is a pre-schedule teaser and disappears once the first schedule
+    version has been published.
     """
     return _featured_public_visible(event, _show_featured_setting, _after_schedule_featured_sessions_visible)
 
@@ -182,6 +191,8 @@ def are_featured_speakers_visible(user, event):
     Unlike :func:`are_featured_submissions_visible`, ``Always`` does not require
     ``talks_published`` or a published schedule. ``after_schedule`` waits until a
     schedule version exists, and does not depend on whether sessions are featured.
+    For ``until_schedule``, they are hidden once the first schedule version has been
+    published.
     """
     event_obj = getattr(event, 'event', event)
     if not event_obj:

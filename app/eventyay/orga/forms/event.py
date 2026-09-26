@@ -35,6 +35,7 @@ SCHEDULE_DISPLAY_CHOICES = (
 
 SHOW_FEATURED_VISIBILITY_CHOICES = (
     ('never', _('Never')),
+    ('until_schedule', _('Until the first schedule is published')),
     ('after_schedule', _('Once the first schedule version is published')),
     ('always', _('Always')),
 )
