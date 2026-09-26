@@ -35,6 +35,7 @@ import JanusCall from 'components/JanusCall';
 import JanusChannelCall from 'components/JanusChannelCall';
 import Livestream from 'components/Livestream';
 import { WhepClient } from 'lib/webrtc/whep';
+import { AudioScheduler } from 'lib/audio-scheduler';
 import {
 	getStagePlaybackMode,
 	PLAYBACK_MODE_SCHEDULE_DRIVEN,
@@ -44,6 +45,7 @@ import {
 } from 'lib/stage-streams';
 import { getVimeoEmbedUrl, parseVimeoUrl } from 'lib/vimeo';
 import { isRoomVisibleToAttendee } from 'lib/video-providers';
+import { withListenerToken } from '../interpretation-streams';
 
 
 
@@ -78,6 +80,7 @@ let iframeInitInProgress = false;
 const whepAudioEl = ref(null);
 const translationIframeEl = ref(null);
 let whepClient = null;
+let ttsScheduler = null;
 
 // Template refs
 const livestream = ref(null);
@@ -100,6 +103,7 @@ function applyInterpretationVolume(vol) {
 	if (whepAudioEl.value) {
 		whepAudioEl.value.volume = safe;
 	}
+	ttsScheduler?.setVolume(safe);
 	const iframe = translationIframeEl.value;
 	if (iframe?.contentWindow) {
 		try {
@@ -309,8 +313,11 @@ async function applyInterpretation(interpConfig) {
 
 	const updateToken = ++interpretationUpdateToken;
 	disconnectWhepTranslation();
+	disconnectTtsTranslation();
 
 	const audioSource = interpConfig?.url || interpConfig?.youtube_id || null;
+	const ttsWsUrl = interpConfig?.ttsWsUrl || null;
+	const whepUrl = interpConfig?.whepUrl || null;
 	const requestedUseVideo = interpConfig?.useVideo || false;
 	const translationVideoId = audioSource ? normalizeYoutubeVideoId(audioSource) : null;
 	const useVideo = requestedUseVideo && !!translationVideoId;
@@ -330,37 +337,15 @@ async function applyInterpretation(interpConfig) {
 		await initializeIframe(false);
 	}
 
-	if (audioSource) {
-		let isWhep = false;
-		try {
-			new URL(audioSource);
-			if (!normalizeYoutubeVideoId(audioSource)) {
-				isWhep = true;
-			}
-		} catch (e) {
-			isWhep = false;
-		}
+	if (ttsWsUrl || whepUrl || audioSource) {
+		const whepSource = whepUrl || (isWhepSource(audioSource) ? audioSource : null);
 
-
-		if (isWhep) {
+		if (ttsWsUrl) {
 			languageIframeUrl.value = null;
-			const client = new WhepClient(audioSource, whepAudioEl.value);
-			whepClient = client;
-			try {
-				await client.connect();
-				applyInterpretationVolume(interpretationVolume.value);
-				if (updateToken !== interpretationUpdateToken) {
-					client.disconnect();
-					if (whepClient === client) whepClient = null;
-				} else if (!mainPlayerPaused.value) {
-					// Autoplay often fails for async srcObject assignments. Force play.
-					resumeTranslationAudio();
-				}
-			} catch (err) {
-				console.error('Failed to connect to WHEP interpretation source', err);
-				client.disconnect();
-				if (whepClient === client) whepClient = null;
-			}
+			await startTtsTranslation(withListenerToken(ttsWsUrl, interpConfig?.listenerToken), updateToken);
+		} else if (whepSource) {
+			languageIframeUrl.value = null;
+			await startWhepTranslation(whepSource, updateToken);
 		} else {
 			// Create hidden interpretation audio iframe for YouTube audio translation
 			languageIframeUrl.value = getLanguageIframeUrl(audioSource);
@@ -399,17 +384,21 @@ onMounted(async () => {
 onBeforeUnmount(() => {
 	isUnmounted.value = true;
 	window.removeEventListener('message', onWindowMessage);
-	if (whepClient) {
-		disconnectWhepTranslation();
-	}
+	disconnectWhepTranslation();
+	disconnectTtsTranslation();
 	iframeEl.value?.remove();
 	if (api.socketState !== 'open') return;
 	// TODO move to store?
 	if (props.room) api.call('room.leave', { room: props.room.id });
 });
 
+function hasActiveInterpretationAudio() {
+	const interpretation = activeInterpretation.value;
+	return Boolean(interpretation?.url || interpretation?.ttsWsUrl || interpretation?.whepUrl);
+}
+
 function hasAudioOnlyInterpretation() {
-	return Boolean(activeInterpretation.value?.url && !activeInterpretation.value?.useVideo);
+	return hasActiveInterpretationAudio() && !activeInterpretation.value?.useVideo;
 }
 
 function muteMainPlayer() {
@@ -576,6 +565,60 @@ function disconnectWhepTranslation() {
 	whepClient = null;
 }
 
+function disconnectTtsTranslation() {
+	if (!ttsScheduler) return;
+	ttsScheduler.disconnect();
+	ttsScheduler = null;
+}
+
+function isWhepSource(url) {
+	if (!url) return false;
+	try {
+		new URL(url);
+	} catch {
+		return false;
+	}
+	return !normalizeYoutubeVideoId(url);
+}
+
+async function startWhepTranslation(url, updateToken) {
+	const client = new WhepClient(url, whepAudioEl.value);
+	whepClient = client;
+	try {
+		await client.connect();
+		applyInterpretationVolume(interpretationVolume.value);
+		if (updateToken !== interpretationUpdateToken) {
+			client.disconnect();
+			if (whepClient === client) whepClient = null;
+		} else if (!mainPlayerPaused.value) {
+			// Autoplay often fails for async srcObject assignments. Force play.
+			resumeTranslationAudio();
+		}
+	} catch (error) {
+		console.error('Failed to connect to WHEP interpretation source', { url, error });
+		client.disconnect();
+		if (whepClient === client) whepClient = null;
+	}
+}
+
+async function startTtsTranslation(url, updateToken) {
+	const scheduler = new AudioScheduler(url);
+	scheduler.setVolume(interpretationVolume.value);
+	ttsScheduler = scheduler;
+	try {
+		await scheduler.connect();
+	} catch (error) {
+		// Keep the scheduler: its onclose handler retries with backoff, and
+		// switching tracks or leaving the room still tears it down.
+		// The query string carries the listener token, so it stays out of the log.
+		console.error('Failed to connect to TTS interpretation source', { url: url.split('?')[0], error });
+	}
+	if (updateToken !== interpretationUpdateToken) {
+		scheduler.disconnect();
+		if (ttsScheduler === scheduler) ttsScheduler = null;
+	}
+}
+
 function unmuteYouTubePlayer() {
 	if (!iframeEl.value || !iframeEl.value.contentWindow) return;
 	try {
@@ -596,6 +639,7 @@ function pauseTranslationAudio() {
 	if (whepAudioEl.value && !whepAudioEl.value.paused) {
 		whepAudioEl.value.pause();
 	}
+	ttsScheduler?.pause();
 	pauseYouTubeTranslationIframe();
 }
 
@@ -605,6 +649,7 @@ function resumeTranslationAudio() {
 			console.warn('Failed to resume WHEP interpretation audio:', e)
 		);
 	}
+	ttsScheduler?.resume();
 	resumeYouTubeTranslationIframe();
 }
 
@@ -636,7 +681,7 @@ function resumeYouTubeTranslationIframe() {
 
 function onMainPlayerPlaybackChanged(isPlaying) {
 	mainPlayerPaused.value = !isPlaying;
-	if (!activeInterpretation.value?.url) return;
+	if (!hasActiveInterpretationAudio()) return;
 	if (isPlaying) {
 		resumeTranslationAudio();
 	} else {
@@ -967,6 +1012,7 @@ function destroyIframe() {
 	iframeEl.value = null;
 	languageIframeUrl.value = null;
 	disconnectWhepTranslation();
+	disconnectTtsTranslation();
 	consentBlockedUrl.value = null;
 }
 
