@@ -140,18 +140,9 @@ class OAuthApplicationDeleteView(ApplicationDelete):
     template_name = 'eventyay_common/account/oauth-app-delete.html'
     success_url = reverse_lazy('eventyay_common:account.oauth.own-apps')
 
-    def get_queryset(self):
-        return super().get_queryset().filter(active=True)
-
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         obj = self.get_object()
-        confirm_message = _('Are you sure you want to disable the application {code} permanently?')
+        confirm_message = _('Are you sure you want to delete the application {code} permanently?')
         ctx['confirm_message'] = confirm_message.format(code=f'<strong>{obj}</strong>')
         return ctx
-
-    def delete(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        self.object.active = False
-        self.object.save()
-        return HttpResponseRedirect(self.success_url)

@@ -20,7 +20,6 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import (
     CreateView,
-    DeleteView,
     DetailView,
     FormView,
     ListView,
@@ -62,6 +61,7 @@ from eventyay.base.settings import (
     SUPPORTED_VIDEO_PROVIDERS,
     get_video_provider_visibility,
 )
+from eventyay.helpers.compat import CompatDeleteView
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
 from eventyay.control.tasks import clear_event_data
 from eventyay.control.video.admin_dashboard import get_video_server_config
@@ -692,7 +692,7 @@ class BBBServerUpdate(AdministratorPermissionRequiredMixin, UpdateView):
         return super().form_valid(form)
 
 
-class BBBServerDelete(AdministratorPermissionRequiredMixin, DeleteView):
+class BBBServerDelete(AdministratorPermissionRequiredMixin, CompatDeleteView):
     template_name = "control/bbb_delete.html"
     queryset = BBBServer.objects.all()
     success_url = "/admin/video/bbbs/"
@@ -700,14 +700,15 @@ class BBBServerDelete(AdministratorPermissionRequiredMixin, DeleteView):
 
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
-        _admin_log_entry(
-            content_object=self.object,
-            user=self.request.user,
-            action_type="bbbserver.deleted",
-            data={},
-        )
         success_url = self.get_success_url()
-        self.object.delete()
+        with transaction.atomic():
+            _admin_log_entry(
+                content_object=self.object,
+                user=self.request.user,
+                action_type="bbbserver.deleted",
+                data={},
+            )
+            self.object.delete()
         messages.success(self.request, _("Ok!"))
         return HttpResponseRedirect(success_url)
 
@@ -753,7 +754,7 @@ class JanusServerUpdate(AdministratorPermissionRequiredMixin, UpdateView):
         return super().form_valid(form)
 
 
-class JanusServerDelete(AdministratorPermissionRequiredMixin, DeleteView):
+class JanusServerDelete(AdministratorPermissionRequiredMixin, CompatDeleteView):
     template_name = "control/janus_delete.html"
     queryset = JanusServer.objects.all()
     success_url = "/admin/video/janus/"
@@ -761,14 +762,15 @@ class JanusServerDelete(AdministratorPermissionRequiredMixin, DeleteView):
 
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
-        _admin_log_entry(
-            content_object=self.object,
-            user=self.request.user,
-            action_type="janusserver.deleted",
-            data={},
-        )
         success_url = self.get_success_url()
-        self.object.delete()
+        with transaction.atomic():
+            _admin_log_entry(
+                content_object=self.object,
+                user=self.request.user,
+                action_type="janusserver.deleted",
+                data={},
+            )
+            self.object.delete()
         messages.success(self.request, _("Ok!"))
         return HttpResponseRedirect(success_url)
 
@@ -814,7 +816,7 @@ class JitsiServerUpdate(AdministratorPermissionRequiredMixin, UpdateView):
         return super().form_valid(form)
 
 
-class JitsiServerDelete(AdministratorPermissionRequiredMixin, DeleteView):
+class JitsiServerDelete(AdministratorPermissionRequiredMixin, CompatDeleteView):
     template_name = "control/jitsi_delete.html"
     queryset = JitsiServer.objects.all()
     success_url = "/admin/video/jitsi/"
@@ -822,14 +824,15 @@ class JitsiServerDelete(AdministratorPermissionRequiredMixin, DeleteView):
 
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
-        _admin_log_entry(
-            content_object=self.object,
-            user=self.request.user,
-            action_type="jitsiserver.deleted",
-            data={},
-        )
         success_url = self.get_success_url()
-        self.object.delete()
+        with transaction.atomic():
+            _admin_log_entry(
+                content_object=self.object,
+                user=self.request.user,
+                action_type="jitsiserver.deleted",
+                data={},
+            )
+            self.object.delete()
         messages.success(self.request, _("Ok!"))
         return HttpResponseRedirect(success_url)
 
@@ -882,7 +885,7 @@ class TurnServerUpdate(AdministratorPermissionRequiredMixin, UpdateView):
         return super().form_valid(form)
 
 
-class TurnServerDelete(AdministratorPermissionRequiredMixin, DeleteView):
+class TurnServerDelete(AdministratorPermissionRequiredMixin, CompatDeleteView):
     template_name = "control/turn_delete.html"
     queryset = TurnServer.objects.all()
     success_url = "/admin/video/turns/"
@@ -890,14 +893,15 @@ class TurnServerDelete(AdministratorPermissionRequiredMixin, DeleteView):
 
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
-        _admin_log_entry(
-            content_object=self.object,
-            user=self.request.user,
-            action_type="turnserver.deleted",
-            data={},
-        )
         success_url = self.get_success_url()
-        self.object.delete()
+        with transaction.atomic():
+            _admin_log_entry(
+                content_object=self.object,
+                user=self.request.user,
+                action_type="turnserver.deleted",
+                data={},
+            )
+            self.object.delete()
         messages.success(self.request, _("Ok!"))
         return HttpResponseRedirect(success_url)
 
@@ -945,7 +949,7 @@ class LoungeMeshServerUpdate(AdministratorPermissionRequiredMixin, UpdateView):
         return super().form_valid(form)
 
 
-class LoungeMeshServerDelete(AdministratorPermissionRequiredMixin, DeleteView):
+class LoungeMeshServerDelete(AdministratorPermissionRequiredMixin, CompatDeleteView):
     template_name = "control/loungemesh_delete.html"
     queryset = LoungeMeshServer.objects.all()
     success_url = "/admin/video/loungemesh/"
@@ -953,14 +957,15 @@ class LoungeMeshServerDelete(AdministratorPermissionRequiredMixin, DeleteView):
 
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
-        _admin_log_entry(
-            content_object=self.object,
-            user=self.request.user,
-            action_type="loungemeshserver.deleted",
-            data={},
-        )
         success_url = self.get_success_url()
-        self.object.delete()
+        with transaction.atomic():
+            _admin_log_entry(
+                content_object=self.object,
+                user=self.request.user,
+                action_type="loungemeshserver.deleted",
+                data={},
+            )
+            self.object.delete()
         messages.success(self.request, _("Ok!"))
         return HttpResponseRedirect(success_url)
 
