@@ -9,7 +9,7 @@
 
 {% block stylesheets %}
     {% compress css %}
-        <link rel="stylesheet" href="{% static "orga/css/modern-dashboard.css" %}">
+        <link rel="stylesheet" href="{% static 'eventyay-common/css/common_dashboard.css' %}">
     {% endcompress %}
     {% if can_view_submission_stats %}
         <link rel="stylesheet" type="text/css" href="{% static "vendored/apexcharts/apexcharts.css" %}" />

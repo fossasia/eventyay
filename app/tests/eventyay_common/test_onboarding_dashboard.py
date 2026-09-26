@@ -171,7 +171,7 @@ def test_quick_action_icons_never_render_untoned(organizer_client, event):
     rendered_tones = set(re.findall(r'cd-action-card__icon--([a-z-]+)', response.content.decode()))
     assert rendered_tones, 'the organiser dashboard should render quick action icons'
 
-    css = Path(finders.find('eventyay-common/css/onboarding_dashboard.css')).read_text()
+    css = Path(finders.find('eventyay-common/css/common_dashboard.css')).read_text()
     for tone in sorted(rendered_tones):
         declarations = _declarations_for(css, '.cd-action-card__icon', f'.cd-action-card__icon--{tone}')
         assert 'background:' in declarations, f'the {tone} icon tone renders unstyled'

@@ -99,6 +99,7 @@ const initNavSearch = () => {
             searchInput.classList.add("no-focus")
             if (selected) { selected.classList.remove("active") }
             next.classList.add("active")
+            next.scrollIntoView({ block: 'nearest' })
             ev.preventDefault()
             ev.stopPropagation()
         } else if (ev.key === "ArrowUp") {
@@ -108,6 +109,7 @@ const initNavSearch = () => {
             searchInput.classList.add("no-focus")
             if (selected) { selected.classList.remove("active") }
             prev.classList.add("active")
+            prev.scrollIntoView({ block: 'nearest' })
             ev.preventDefault()
             ev.stopPropagation()
         } else if (ev.key === "Enter") {

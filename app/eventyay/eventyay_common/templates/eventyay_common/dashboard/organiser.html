@@ -33,12 +33,11 @@
             <div class="cd-action-card__icon cd-action-card__icon--{{ action.tone }}" aria-hidden="true">
               <span class="fa fa-{{ action.icon }}"></span>
             </div>
-            <h3>{{ action.title }}</h3>
-            <p>{{ action.description }}</p>
             <a class="cd-action-card__link" href="{{ action.url }}">
               {{ action.title }}
               <span aria-hidden="true">></span>
             </a>
+            <p>{{ action.description }}</p>
           </article>
         {% endfor %}
       </div>
