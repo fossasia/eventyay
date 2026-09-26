@@ -215,6 +215,9 @@ export default defineConfig(({ mode }) => {
       cssCodeSplit: false,
       chunkSizeWarningLimit: 1250,
       rollupOptions: {
+        checks: {
+          pluginTimings: false,
+        },
         input: {
           main: path.resolve(dirname, 'index.html'),
           preloader: path.resolve(dirname, 'src/preloader.js')
