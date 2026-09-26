@@ -641,10 +641,10 @@ var form_handlers = function (el) {
             width: '100%',
             language: $("body").attr("data-select2-locale"),
             placeholder: $(this).attr("data-placeholder"),
-            minimumInputLength: parseInt($s.attr("data-minimum-input-length"), 10) || 0,
+            minimumInputLength: parseInt(this.getAttribute("data-minimum-input-length"), 10) || 0,
             ajax: {
                 url: $(this).attr('data-select2-url'),
-                delay: parseInt($s.attr("data-delay"), 10) || 0,
+                delay: parseInt(this.getAttribute("data-delay"), 10) || 0,
                 data: function (params) {
                     return {
                         query: params.term,
