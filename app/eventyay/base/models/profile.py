@@ -19,6 +19,7 @@ from eventyay.talk_rules.person import (
     is_reviewer,
 )
 from eventyay.talk_rules.submission import orga_can_change_submissions
+from eventyay.base.models.submission import SubmissionStates
 
 from .mixins import PretalxModel
 
@@ -113,7 +114,9 @@ class SpeakerProfile(PretalxModel):
         :class:`~pretalx.submission.models.submission.Submission` objects by
         this user on this event.
         """
-        return self.user.submissions.filter(event=self.event)
+        return self.user.submissions.filter(event=self.event).exclude(
+            state__in=(SubmissionStates.DELETED, SubmissionStates.DRAFT)
+        )
 
     @cached_property
     def talks(self):
