@@ -5,8 +5,8 @@
 		slot.content
 </template>
 <script>
-// FIXME when starting mousedown inside and finishing mouseup outside, prompt closes
 import { Scrollbars } from 'buntpapier/src/directives/scrollbar'
+import { createBackdropPressTracker } from 'lib/promptPointer'
 
 export default {
 	props: {
@@ -21,6 +21,13 @@ export default {
 		}
 	},
 	emits: ['close'],
+	created() {
+		this._backdropPress = createBackdropPressTracker()
+	},
+	beforeUnmount() {
+		this.detachPointerListeners()
+		this._backdropPress.clear()
+	},
 	mounted() {
 		this.$nextTick(() => {
 			if (!this.scrollable) return
@@ -30,16 +37,46 @@ export default {
 		})
 	},
 	methods: {
+		attachPointerListeners() {
+			if (this._hasPointerListeners) return
+			this._hasPointerListeners = true
+			this.$el.addEventListener('pointerdown', this.onPointerdownCapture, true)
+			this.$el.addEventListener('pointerup', this.onPointerup)
+			this.$el.addEventListener('pointercancel', this.onPointercancel)
+		},
+		detachPointerListeners() {
+			if (!this._hasPointerListeners) return
+			this._hasPointerListeners = false
+			if (this.$el) {
+				this.$el.removeEventListener('pointerdown', this.onPointerdownCapture, true)
+				this.$el.removeEventListener('pointerup', this.onPointerup)
+				this.$el.removeEventListener('pointercancel', this.onPointercancel)
+			}
+		},
 		onPointerdown(event) {
 			if (!this.allowCancel) return
 			event.stopPropagation()
-			this.$el.addEventListener('pointerup', this.onPointerup)
+			this._backdropPress.press(event.target === this.$el, event.pointerId)
+			this.attachPointerListeners()
+		},
+		onPointerdownCapture(event) {
+			if (event.target !== this.$el) {
+				this._backdropPress.press(false, event.pointerId)
+			}
 		},
 		onPointerup(event) {
-			this.$el.removeEventListener('pointerup', this.onPointerup)
-			if (event.target !== this.$el) return
-			console.log(event)
+			const isBackdropClick = this._backdropPress.release(event.target === this.$el, event.pointerId)
+			if (this._backdropPress.activeCount === 0) {
+				this.detachPointerListeners()
+			}
+			if (!isBackdropClick) return
 			this.$emit('close')
+		},
+		onPointercancel(event) {
+			this._backdropPress.cancel(event.pointerId)
+			if (this._backdropPress.activeCount === 0) {
+				this.detachPointerListeners()
+			}
 		}
 	}
 }
