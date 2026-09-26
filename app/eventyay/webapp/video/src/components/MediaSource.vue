@@ -21,7 +21,7 @@
 </template>
 <script setup>
 // TODO functional component?
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
+import { defineAsyncComponent, ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 import { isEqual } from 'lodash';
@@ -30,10 +30,6 @@ import {logOperational} from 'lib/operationalLog';
 import { normalizeYoutubeVideoId } from 'lib/validators';
 import { isDomainBlocked, getUrlDomain } from 'lib/iframeConsent';
 import IframeBlocker from 'components/IframeBlocker';
-import VideoCallFrame from 'components/VideoCallFrame';
-import JanusCall from 'components/JanusCall';
-import JanusChannelCall from 'components/JanusChannelCall';
-import Livestream from 'components/Livestream';
 import { WhepClient } from 'lib/webrtc/whep';
 import {
 	getStagePlaybackMode,
@@ -45,12 +41,16 @@ import {
 import { getVimeoEmbedUrl, parseVimeoUrl } from 'lib/vimeo';
 import { isRoomVisibleToAttendee } from 'lib/video-providers';
 
+function loadPlayer(loader, label) {
+	return defineAsyncComponent(() => loader().catch((error) => {
+		console.error('Failed to load video player module', label, error)
+		throw error
+	}))
+}
 
+const Livestream = loadPlayer(() => import('components/Livestream'), 'Livestream')
+const VideoCallFrame = loadPlayer(() => import('components/VideoCallFrame'), 'VideoCallFrame')
 
-// Props & Emits
-defineOptions({
-	components: { Livestream, VideoCallFrame, JanusCall, JanusChannelCall, IframeBlocker },
-});
 const props = defineProps({
 	room: Object,
 	call: Object,
