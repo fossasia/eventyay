@@ -109,6 +109,7 @@
 						path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
 			.speaker-info
 				.name {{ speaker.name || t.speaker_fallback }}
+				p.speaker-role(v-if="speaker.speaker_role") {{ speaker.speaker_role }}
 				.biography(v-if="speaker.biography")
 					markdown-content(:markdown="speaker.biography")
 				.sessions-list(v-if="speaker.sessions && speaker.sessions.length")
@@ -133,26 +134,24 @@
 									path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
 							.caption.text-center
 								h4 {{ speaker.name || t.speaker_fallback }}
+								p.speaker-role-caption(v-if="speaker.speaker_role") {{ speaker.speaker_role }}
 								markdown-content.featured-speaker-preview-bio(v-if="speaker.biography", :markdown="speaker.biography")
-					.featured-speaker-details
-						speaker-social-links(:links="speaker.social_links", alignment="flex-start")
-						template(v-if="speaker.sessions && speaker.sessions.length")
-							hr.featured-speaker-divider(v-if="speaker.social_links && speaker.social_links.length")
-							hr.featured-speaker-divider(v-else)
-							.featured-speaker-sessions
-								h4 {{ t.sessions }}
-								.featured-speaker-session(v-for="session in speaker.sessions", :key="session.slot_id || session.id")
-									small.featured-speaker-session-time {{ formatSessionDateTime(session) }}
-									small.featured-speaker-session-room(v-if="sessionRoomName(session)") {{ sessionRoomName(session) }}
-									a.featured-speaker-session-link(
-										:href="getSessionLink(session)",
-										:style="getSessionStyle(session)",
-										@click="onSessionClick($event, session)"
-									)
-										span.featured-speaker-session-slot {{ formatSessionSlot(session) }}
-										span.featured-speaker-session-title {{ getLocalizedString(session.title) }}
-						.featured-speaker-profile-link
-							a(:href="getSpeakerLink(speaker)", @click="onSpeakerClick($event, speaker)") {{ t.view_profile }}
+						.featured-speaker-social-row
+							speaker-social-links(:links="speaker.social_links", alignment="flex-start")
+							a.featured-speaker-profile-link(:href="getSpeakerLink(speaker)", @click="onSpeakerClick($event, speaker)") {{ t.view_profile }}
+					.featured-speaker-details(v-if="speaker.sessions && speaker.sessions.length")
+						.featured-speaker-sessions
+							h4 {{ t.sessions }}
+							.featured-speaker-session(v-for="session in speaker.sessions", :key="session.slot_id || session.id")
+								small.featured-speaker-session-time(v-if="formatSessionDateTime(session)") {{ formatSessionDateTime(session) }}
+								small.featured-speaker-session-room(v-if="sessionRoomName(session)") {{ sessionRoomName(session) }}
+								a.featured-speaker-session-link(
+									:href="getSessionLink(session)",
+									:style="getSessionStyle(session)",
+									@click="onSessionClick($event, session)"
+								)
+									span.featured-speaker-session-slot(v-if="formatSessionSlot(session)") {{ formatSessionSlot(session) }}
+									span.featured-speaker-session-title {{ getLocalizedString(session.title) }}
 	.empty(v-if="loadError")
 		| {{ t.load_error }}
 	.empty(v-else-if="!isLoadingMore && !filteredSpeakers.length")
@@ -1041,6 +1040,11 @@ export default {
 						font-size: 20px
 						font-weight: 500
 						line-height: 1.3
+					.speaker-role-caption
+						margin: 3px 0 0
+						color: $clr-secondary-text-light
+						font-size: 14px
+						line-height: 1.3
 					.featured-speaker-preview-bio
 						margin: 4px 0 0
 						color: $clr-secondary-text-light
@@ -1143,14 +1147,24 @@ export default {
 			font-weight: 600
 			line-height: 1.3
 
+		.featured-speaker-social-row
+			display: none
+			align-items: center
+			gap: 1rem
+			flex-wrap: wrap
+			padding: 10px 12px
+
+		.featured-speaker-card[open] .featured-speaker-social-row
+			display: flex
+
 		.featured-speaker-profile-link
-			margin-top: 12px
-			text-align: right
-			a
-				color: var(--pretalx-clr-primary, var(--clr-primary))
-				text-decoration: none
-				&:hover
-					text-decoration: underline
+			margin-left: auto
+			color: var(--pretalx-clr-primary, var(--clr-primary))
+			text-decoration: none
+			white-space: nowrap
+			font-size: 14px
+			&:hover
+				text-decoration: underline
 	.speaker-card
 		display: flex
 		align-items: flex-start
@@ -1192,6 +1206,11 @@ export default {
 			font-weight: 600
 			font-size: 16px
 			margin-bottom: 2px
+		.speaker-role
+			font-size: 13px
+			color: $clr-secondary-text-light
+			line-height: 1.3
+			margin-bottom: 4px
 		.biography
 			font-size: 14px
 			color: $clr-secondary-text-light
