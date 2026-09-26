@@ -72,25 +72,102 @@ def test_check_entitlement_denied_decision(dummy_organizer):
         entitlement_check.disconnect(deny_receiver)
 
 
+def _isolate(signal):
+    """Run with only the receivers the test connects, not ones from installed plugins."""
+    saved = signal.receivers
+    signal.receivers = []
+    signal.sender_receivers_cache.clear()
+    try:
+        yield
+    finally:
+        signal.receivers = saved
+        signal.sender_receivers_cache.clear()
+
+
+@pytest.fixture
+def usage_signal_receivers():
+    yield from _isolate(entitlement_usage_recorded)
+
+
+@pytest.fixture
+def registry_signal_receivers():
+    yield from _isolate(register_entitlements)
+
+
 @pytest.mark.django_db
-def test_record_usage(dummy_organizer):
+def test_record_usage(dummy_organizer, usage_signal_receivers):
     """Test that record_usage dispatches the correct signal."""
     received = []
 
-    def usage_receiver(sender, capability, amount, **kwargs):
-        received.append((sender, capability, amount))
+    def usage_receiver(sender, **kwargs):
+        received.append((sender, kwargs))
 
     entitlement_usage_recorded.connect(usage_receiver)
     try:
-        record_usage(dummy_organizer, "test_cap", amount=5)
+        record_usage(
+            dummy_organizer,
+            'test_cap',
+            quantity=5,
+            unit='emails',
+            source_type='bulk_email',
+            source_id='42',
+            idempotency_key='bulk_mail_42',
+        )
         assert len(received) == 1
-        assert received[0] == (dummy_organizer, "test_cap", 5)
+        sender, kwargs = received[0]
+        assert sender is dummy_organizer
+        assert kwargs['capability'] == 'test_cap'
+        assert kwargs['quantity'] == 5
+        assert kwargs['unit'] == 'emails'
+        assert kwargs['source_type'] == 'bulk_email'
+        assert kwargs['source_id'] == '42'
+        assert kwargs['idempotency_key'] == 'bulk_mail_42'
+        assert kwargs['event'] is None
+        assert kwargs['metadata'] is None
     finally:
         entitlement_usage_recorded.disconnect(usage_receiver)
 
 
 @pytest.mark.django_db
-def test_get_capability_registry():
+def test_record_usage_matches_strict_receiver(dummy_organizer, usage_signal_receivers):
+    """
+    Receivers such as the eventyay-business plugin take the usage fields as
+    required arguments, so record_usage has to send every one of them.
+    """
+    received = []
+
+    def strict_receiver(
+        sender, capability, quantity, unit, source_type, source_id, idempotency_key, event=None, metadata=None, **kwargs
+    ):
+        received.append((capability, quantity, idempotency_key))
+
+    entitlement_usage_recorded.connect(strict_receiver)
+    try:
+        record_usage(
+            dummy_organizer,
+            'registration.free_allowance_per_event',
+            quantity=2,
+            unit='registrations',
+            source_type='order',
+            source_id='ABC12',
+            idempotency_key='order_ABC12_free_registrations',
+        )
+        assert received == [('registration.free_allowance_per_event', 2, 'order_ABC12_free_registrations')]
+    finally:
+        entitlement_usage_recorded.disconnect(strict_receiver)
+
+
+@pytest.mark.django_db
+def test_record_usage_requires_quantity_by_keyword(dummy_organizer, usage_signal_receivers):
+    fields = dict(unit='emails', source_type='bulk_email', source_id='42', idempotency_key='bulk_mail_42')
+    with pytest.raises(TypeError):
+        record_usage(dummy_organizer, 'test_cap', **fields)
+    with pytest.raises(TypeError):
+        record_usage(dummy_organizer, 'test_cap', 5, **fields)
+
+
+@pytest.mark.django_db
+def test_get_capability_registry(registry_signal_receivers):
     """Test that get_capability_registry merges dictionaries correctly."""
     
     def reg_receiver_1(sender, **kwargs):
