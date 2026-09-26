@@ -194,6 +194,8 @@ class OrderPositionDetailMixin(NoSearchIndexViewMixin):
         return self.position.order if self.position else None
 
 class OrderProtectedActionMixin:
+    allow_guest_access = True
+
     def dispatch(self, request, *args, **kwargs):
         self.request = request
         order = getattr(self, 'order', None)
@@ -203,6 +205,9 @@ class OrderProtectedActionMixin:
             order = position.order
 
         if not request.user.is_authenticated:
+            # Guest orders have no account to log in with, so the secret in the URL is their credential.
+            if order and self.allow_guest_access and not request.event.settings.require_registered_account_for_tickets:
+                return super().dispatch(request, *args, **kwargs)
             return redirect(build_login_url_with_next(request.get_full_path()))
 
         if order:
@@ -226,6 +231,8 @@ class OrderPositionJoin(OrderProtectedActionMixin, EventViewMixin, OrderPosition
 
     This used to live in the old ticket-video plugin; video is now integrated.
     """
+
+    allow_guest_access = False
 
     def post(self, request, *args, **kwargs):
         if not self.position:

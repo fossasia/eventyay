@@ -13,8 +13,10 @@ from functools import partial
 from io import BytesIO
 
 from arabic_reshaper import ArabicReshaper
+from babel.numbers import get_currency_symbol
 from bidi.algorithm import get_display
 from django.conf import settings
+from django.utils import translation
 from django.contrib.staticfiles import finders
 from django.dispatch import receiver
 from django.utils.formats import date_format
@@ -1141,6 +1143,27 @@ class Renderer:
             self._style_cache = {}
 
         text_content = self._get_text_content(op, order, o) or ''
+
+        # Currency symbol fallback
+        ev = self._get_ev(op, order)
+        if ev and hasattr(ev, 'currency'):
+            with language(o.get('locale') or translation.get_language(), self.event.settings.region):
+                target_locale = translation.get_language()
+                target_locale = target_locale[:2] if target_locale else 'en'
+                sym = get_currency_symbol(ev.currency, locale=target_locale)
+            
+            if sym and sym != ev.currency and sym in text_content and not font_supports_text(font, sym):
+                text_content = re.sub(
+                    r'(?<=\d)(\s*)' + re.escape(sym) + r'(?![a-zA-Z])',
+                    lambda m: (m.group(1) if m.group(1) else '\u00A0') + ev.currency,
+                    text_content
+                )
+                text_content = re.sub(
+                    r'(?<![a-zA-Z])' + re.escape(sym) + r'(\s*)(?=\d)',
+                    lambda m: ev.currency + (m.group(1) if m.group(1) else '\u00A0'),
+                    text_content
+                )
+
         font, text_content = resolve_textarea_font(font, text_content)
 
         fontsize = float(o['fontsize'])
@@ -1191,7 +1214,6 @@ class Renderer:
         text = korean_pattern.sub(r'<font name="NotoSansKR">\1</font>', text)
         text = thai_pattern.sub(r'<font name="NotoSansThai">\1</font>', text)
         text = hebrew_pattern.sub(r'<font name="NotoSansHebrew">\1</font>', text)
-
 
         p = Paragraph(text, style=style)
         w, h = p.wrapOn(canvas, float(o['width']) * mm, 1000 * mm)

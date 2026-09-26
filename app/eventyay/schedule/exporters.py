@@ -116,11 +116,14 @@ class ScheduleData(BaseExporter):
             )
         }
 
+        # date_from is a datetime, so compare calendar dates. Otherwise every
+        # talk before 03:00 fails the first-day check and drops off the grid.
+        event_start_date = event.datetime_from.date()
         for talk in talks:
             if not talk.start or not talk.room or talk.room.deleted or (not talk.submission and not self.with_breaks):
                 continue
             talk_date = talk.local_start.date()
-            if talk.local_start.hour < 3 and talk_date != event.date_from:
+            if talk.local_start.hour < 3 and talk_date != event_start_date:
                 talk_date -= dt.timedelta(days=1)
             day_data = data.get(talk_date)
             if not day_data:

@@ -13,6 +13,8 @@ from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import ObjectDoesNotExist
 from django.core import signing
 from django.core.cache import cache
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+from django.db.models import Count, Q
 from django.http import HttpRequest, HttpResponse, HttpResponseNotModified, HttpResponseRedirect
 from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
@@ -44,6 +46,7 @@ from eventyay.talk_rules.agenda import (
     has_public_featured_speakers,
     is_submission_visible_via_featured,
     pending_public_submission_codes_for_speaker,
+    submission_belongs_to_public_featured_speaker,
     public_speakers_list_available,
     require_wip_schedule_access,
     speaker_may_show_pending_sessions,
@@ -64,6 +67,8 @@ from eventyay.talk_rules.submission import (
 JSON_SCRIPT_ESCAPES = {ord('>'): '\\u003E', ord('<'): '\\u003C', ord('&'): '\\u0026'}
 
 CACHE_TTL = 600
+FEATURED_SESSIONS_PAGE_SIZE = 48
+FEATURED_SESSIONS_SORTS = ('title', 'title_desc', 'popularity')
 
 EMPTY_LANDING_FEATURED_WIDGET = {'speakers': [], 'talks': [], 'tracks': [], 'rooms': []}
 SPEAKERS_LIST_JSON_QUERY_KEYS = ('page', 'q', 'sort', 'track', 'language', 'featured')
@@ -91,10 +96,20 @@ def landing_featured_widget_cache_key(event) -> str:
     return f'eagenda:landing-featured:{public_schedule_cache_variant(event)}'
 
 
-def speakers_list_query_digest(request: HttpRequest) -> str:
+def _query_digest(parts) -> str:
+    raw = json.dumps(parts, separators=(',', ':')) if parts else 'default'
+    return hashlib.md5(raw.encode(), usedforsecurity=False).hexdigest()
+
+
+def request_query_digest(request: HttpRequest, keys, multi_keys=frozenset()) -> str:
+    """Stable cache fragment for a fixed set of GET keys.
+
+    Scalar keys keep the last value. Multi-value keys are sorted so order does not matter.
+    Page 1 is omitted so it shares a key with a request that has no page parameter.
+    """
     parts = []
-    for key in SPEAKERS_LIST_JSON_QUERY_KEYS:
-        if key in SPEAKERS_LIST_MULTI_QUERY_KEYS:
+    for key in keys:
+        if key in multi_keys:
             values = sorted(str(value) for value in request.GET.getlist(key) if value)
         else:
             value = request.GET.get(key)
@@ -103,12 +118,15 @@ def speakers_list_query_digest(request: HttpRequest) -> str:
             values = [value for value in values if value != '1']
         if values:
             parts.append((key, values))
-    raw = json.dumps(parts, separators=(',', ':')) if parts else 'default'
-    return hashlib.md5(raw.encode(), usedforsecurity=False).hexdigest()
+    return _query_digest(parts)
+
+
+def speakers_list_query_digest(request: HttpRequest) -> str:
+    return request_query_digest(request, SPEAKERS_LIST_JSON_QUERY_KEYS, SPEAKERS_LIST_MULTI_QUERY_KEYS)
 
 
 def speakers_list_json_cache_key(request: HttpRequest) -> str:
-    return f'eagenda:speakers:{public_schedule_cache_variant(request.event)}:{speakers_list_query_digest(request)}'
+    return f'eagenda:speakers:v2:{public_schedule_cache_variant(request.event)}:{speakers_list_query_digest(request)}'
 
 
 def speakers_list_meta_cache_key(event) -> str:
@@ -127,15 +145,23 @@ def speakers_json_next_url(request: HttpRequest, next_page: int | None) -> str |
     return speakers_json_page_url(request, next_page)
 
 
-def get_cached_speakers_list_json_payload(request: HttpRequest) -> dict | None:
-    cached = cache.get(speakers_list_json_cache_key(request))
+def get_cached_payload(cache_key: str) -> dict | None:
+    cached = cache.get(cache_key)
     if cached is None:
         return None
     return copy.deepcopy(cached)
 
 
+def store_cached_payload(cache_key: str, payload: dict) -> None:
+    cache.set(cache_key, copy.deepcopy(payload), CACHE_TTL)
+
+
+def get_cached_speakers_list_json_payload(request: HttpRequest) -> dict | None:
+    return get_cached_payload(speakers_list_json_cache_key(request))
+
+
 def store_speakers_list_json_payload(request: HttpRequest, payload: dict) -> None:
-    cache.set(speakers_list_json_cache_key(request), copy.deepcopy(payload), CACHE_TTL)
+    store_cached_payload(speakers_list_json_cache_key(request), payload)
 
 
 def build_google_calendar_url(title, dates, location, details) -> str:
@@ -889,49 +915,152 @@ def build_schedule_json(request: HttpRequest, schedule=None) -> str:
     return result
 
 
-def build_featured_schedule_json(request: HttpRequest) -> str:
-    """Build schedule JSON for the featured page, including unscheduled featured sessions."""
+def _featured_sessions_sort(request):
+    sort = (request.GET.get('sort') or 'title').strip()
+    if sort not in FEATURED_SESSIONS_SORTS:
+        return 'title'
+    return sort
+
+
+def _featured_submission_queryset(event, *, sort, query):
+    """Featured submissions in list order, without loading every row."""
+    submissions = featured_submissions_for_event(event)
+    if query:
+        submissions = submissions.filter(Q(title__icontains=query) | Q(abstract__icontains=query))
+    if sort == 'popularity':
+        return submissions.annotate(_fav_count=Count('favourites')).order_by('-_fav_count', 'title', 'code')
+    if sort == 'title_desc':
+        return submissions.order_by('-title', 'code')
+    return submissions.order_by('title', 'code')
+
+
+def _featured_sessions_page(event, *, sort, query, page):
+    codes = _featured_submission_queryset(event, sort=sort, query=query).values_list('code', flat=True)
+    paginator = Paginator(codes, FEATURED_SESSIONS_PAGE_SIZE)
+    if paginator.count == 0:
+        return [], 0, 1, 1
+    try:
+        page_obj = paginator.page(page)
+    except (EmptyPage, PageNotAnInteger):
+        page_obj = paginator.page(paginator.num_pages)
+    return list(page_obj.object_list), paginator.count, page_obj.number, paginator.num_pages
+
+
+def _limit_featured_page_collections(data):
+    """Keep only rooms, tracks, and speakers used by this page of talks."""
+    talks = data.get('talks') or []
+    room_ids = {talk.get('room') for talk in talks if talk.get('room') is not None}
+    track_ids = {talk.get('track') for talk in talks if talk.get('track') is not None}
+    speaker_codes = {code for talk in talks for code in (talk.get('speakers') or []) if code}
+    data['rooms'] = [room for room in data.get('rooms') or [] if room.get('id') in room_ids]
+    data['tracks'] = [track for track in data.get('tracks') or [] if track.get('id') in track_ids]
+    data['speakers'] = [
+        speaker for speaker in data.get('speakers') or [] if speaker.get('code') in speaker_codes
+    ]
+    return data
+
+
+def _featured_sessions_cache_key(event, *, page, sort, query, public_times):
+    parts = []
+    if page != 1:
+        parts.append(('page', [str(page)]))
+    if query:
+        parts.append(('q', [query]))
+    parts.append(('sort', [sort]))
+    return (
+        f'eagenda:featured-sessions:{public_schedule_cache_variant(event)}:'
+        f'pub={int(bool(public_times))}:{_query_digest(parts)}'
+    )
+
+
+def build_featured_schedule_payload(request: HttpRequest) -> dict:
+    """One page of featured sessions, plus the counts the list pager needs."""
     event = request.event
-    featured_qs = featured_submissions_for_event(event)
-    if not featured_qs.exists():
-        return '{}'
+    sort = _featured_sessions_sort(request)
+    query = (request.GET.get('q') or '').strip()[:200]
+    try:
+        requested_page = int(request.GET.get('page') or 1)
+    except (TypeError, ValueError):
+        requested_page = 1
 
-    featured = are_featured_submissions_visible(request.user, event)
-    featured_by_code = {sub.code: sub for sub in featured_qs}
     published = event.current_schedule
+    public_times = can_view_public_schedule_sessions(request.user, event, published)
+    page_codes, total, page, num_pages = _featured_sessions_page(
+        event,
+        sort=sort,
+        query=query,
+        page=requested_page,
+    )
+    cache_key = _featured_sessions_cache_key(
+        event,
+        page=page,
+        sort=sort,
+        query=query,
+        public_times=public_times,
+    )
+    cached = get_cached_payload(cache_key)
+    if cached is not None:
+        return cached
+    featured = are_featured_submissions_visible(request.user, event)
+    featured_by_code = {}
+    if page_codes:
+        featured_by_code = {
+            submission.code: submission
+            for submission in featured_submissions_for_event(event).filter(code__in=page_codes)
+        }
 
-    if published:
-        scheduled_codes = set(
-            featured_schedule_talk_slots(published).values_list('submission__code', flat=True)
+    if not total:
+        data = _empty_featured_schedule_data(event)
+        data['talks'] = []
+        data['rooms'] = []
+    elif published:
+        data = published.build_data(
+            all_talks=False,
+            enrich=False,
+            submission_codes=set(page_codes),
+            include_featured_speaker_metadata=featured,
         )
-        if scheduled_codes:
-            data = published.build_data(
-                all_talks=False,
-                enrich=False,
-                submission_codes=scheduled_codes,
-                include_featured_speaker_metadata=featured,
-            )
-        else:
-            data = _empty_featured_schedule_data(event)
+        if not public_times:
+            _withhold_unpublished_schedule_details(data)
     else:
         wip = event.wip_schedule
-        if wip and featured_by_code:
+        if wip and page_codes:
             data = wip.build_data(
                 all_talks=True,
                 enrich=False,
-                submission_codes=set(featured_by_code.keys()),
+                submission_codes=set(page_codes),
                 include_featured_speaker_metadata=featured,
                 respect_public_visibility=False,
             )
-            for talk in data['talks']:
-                _mark_talk_schedule_pending(talk)
+            _withhold_unpublished_schedule_details(data)
         else:
             data = _empty_featured_schedule_data(event)
 
     _append_missing_featured_submissions(data, featured_by_code, event)
+    order = {code: index for index, code in enumerate(page_codes)}
+    data['talks'] = sorted(
+        data.get('talks') or [],
+        key=lambda talk: order.get(talk.get('code'), len(order)),
+    )
     _ensure_schedule_speakers(data, event, featured)
+    if public_times:
+        _limit_featured_page_collections(data)
+    else:
+        data['rooms'] = []
     data['exports_disabled'] = not are_featured_exports_available(event)
-    return escape_json_for_script(json.dumps(data, cls=I18nJSONEncoder))
+    data['count'] = total
+    data['page'] = page
+    data['num_pages'] = num_pages
+    data['page_size'] = FEATURED_SESSIONS_PAGE_SIZE
+    store_cached_payload(cache_key, data)
+    return data
+
+
+def build_featured_schedule_json(request: HttpRequest) -> str:
+    """Build schedule JSON for the featured page, including unscheduled featured sessions."""
+    if not featured_submissions_for_event(request.event).exists():
+        return '{}'
+    return escape_json_for_script(json.dumps(build_featured_schedule_payload(request), cls=I18nJSONEncoder))
 
 
 def _pending_submission_codes_for_speakers(event, user, speaker_user_codes):
@@ -953,8 +1082,7 @@ def _load_pending_speaker_talks(event, user, schedule, speaker_user_codes, *, fe
             respect_public_visibility=False,
         )
     filtered = filter_schedule_data_to_featured_speakers(schedule_data, speaker_user_codes)
-    for talk in filtered.get('talks', []):
-        _mark_talk_schedule_pending(talk)
+    _withhold_unpublished_schedule_details(filtered)
     return filtered
 
 
@@ -1040,8 +1168,18 @@ def _mark_talk_schedule_pending(talk_data):
     talk_data['start'] = None
     talk_data['end'] = None
     talk_data['room'] = None
+    talk_data['stream_url'] = None
+    talk_data['stream_type'] = None
     talk_data['schedule_pending'] = True
     return talk_data
+
+
+def _withhold_unpublished_schedule_details(data):
+    """Remove room and stream metadata from a coming-soon featured payload."""
+    for talk in data.get('talks', []):
+        _mark_talk_schedule_pending(talk)
+    data['rooms'] = []
+    return data
 
 
 def _ensure_schedule_speakers(data, event, include_featured_speaker_metadata):
@@ -1098,19 +1236,21 @@ def _schedule_json_includes_talk(schedule_json: str, submission_code: str) -> bo
 
 def build_pre_agenda_featured_talk_schedule_json(event, user, submission_code):
     """Build talk detail JSON for featured sessions before a schedule is released."""
-    from eventyay.talk_rules.agenda import is_submission_visible_via_featured
-
     submission = (
         event.submissions.filter(code__iexact=submission_code)
         .select_related('submission_type')
         .prefetch_related('speakers')
         .first()
     )
-    if not submission or not is_submission_visible_via_featured(user, submission):
+    if not submission or not (
+        is_submission_visible_via_featured(user, submission)
+        or submission_belongs_to_public_featured_speaker(user, submission)
+    ):
         return '{}'
 
     featured = include_public_featured_speaker_metadata(user, event)
     data = _empty_featured_schedule_data(event)
+    data['rooms'] = []
     data['talks'] = [_pending_featured_talk_data(submission, event)]
     _ensure_schedule_speakers(data, event, featured)
     return serialize_widget_schedule_data(data, event=event)
@@ -1128,7 +1268,7 @@ def build_talk_schedule_json(request: HttpRequest, submission_code: str) -> str:
     schedule = event.current_schedule
     featured = include_public_featured_speaker_metadata(user, event)
 
-    if not schedule:
+    if not can_view_public_schedule_sessions(user, event, schedule):
         return build_pre_agenda_featured_talk_schedule_json(event, user, submission_code)
 
     if schedule.version:
@@ -1180,6 +1320,10 @@ def build_speaker_schedule_json_for_schedule(event, schedule, speaker_code, feat
             if speaker_data:
                 data.setdefault('speakers', []).append(speaker_data)
 
+    # A confirmed session can appear on the speaker card before it has a public
+    # slot. Keep that session on the profile as well.
+    _append_missing_pending_submissions(data, event, AnonymousUser(), {speaker_code})
+
     if not talk_codes:
         data['exports_disabled'] = True
 
@@ -1200,7 +1344,7 @@ def build_speaker_schedule_json(request: HttpRequest, speaker_code: str) -> str:
     schedule = event.current_schedule
     if schedule and can_view_public_schedule_sessions(request.user, event, schedule):
         if schedule.version:
-            cache_key = f'eagenda:speaker:{schedule.pk}:{speaker_code}:{int(featured)}'
+            cache_key = f'eagenda:speaker:v2:{schedule.pk}:{speaker_code}:{int(featured)}'
             cached = cache.get(cache_key)
             if cached is not None:
                 return cached

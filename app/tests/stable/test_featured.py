@@ -5,7 +5,7 @@ import pytest
 import datetime as dt
 from django.contrib.auth.models import AnonymousUser
 from django_scopes import scope
-from eventyay.base.models import Submission, Room, TalkSlot, SubmissionType
+from eventyay.base.models import StreamSchedule, Submission, Room, TalkSlot, SubmissionType
 from eventyay.common.templatetags.event_tags import show_schedule_nav_tab
 
 @pytest.mark.django_db
@@ -169,7 +169,7 @@ class TestFeaturedSessions:
         assert response.status_code == 200
         content = response.content.decode()
         assert "Featured Session Title" in content
-        assert 'schedule_pending' in content or 'Coming soon' in content
+        assert 'schedule_pending' in content or 'To be announced' in content
         assert '<article id="featured-talks">' not in content
         meta = json.loads(response.context['schedule_meta_json'])
         assert meta['exporters'] == []
@@ -305,4 +305,63 @@ def test_featured_talk_detail_shows_pending_data_when_slot_not_public(client, ev
     schedule_data = json.loads(response.context['schedule_json'])
     assert schedule_data['talks'][0]['code'] == sub_featured.code
     assert schedule_data['talks'][0]['schedule_pending'] is True
+
+
+@pytest.mark.django_db
+def test_featured_sessions_coming_soon_when_schedule_unpublished(client, event, user):
+    """Featured sessions stay visible, and show coming soon, when the schedule is unpublished."""
+    with scope(event=event):
+        sub_type = SubmissionType.objects.create(event=event, name='Talk')
+        submission = Submission.objects.create(
+            title='Independent Featured Session',
+            event=event,
+            submission_type=sub_type,
+            abstract='Featured without a featured speaker',
+            content_locale='en',
+            is_featured=True,
+        )
+        submission.speakers.add(user)
+        submission.accept()
+        submission.confirm()
+        profile = user.event_profile(event)
+        profile.is_featured = False
+        profile.save(update_fields=['is_featured'])
+        room = Room.objects.create(event=event, name='Room A')
+        TalkSlot.objects.update_or_create(
+            submission=submission,
+            schedule=event.wip_schedule,
+            defaults={
+                'is_visible': True,
+                'start': event.date_from + dt.timedelta(hours=10),
+                'end': event.date_from + dt.timedelta(hours=11),
+                'room': room,
+            },
+        )
+        event.feature_flags['show_featured'] = 'always'
+        event.feature_flags['show_featured_speakers'] = 'never'
+        event.feature_flags['show_schedule'] = True
+        event.talks_published = True
+        event.save(update_fields=['feature_flags', 'talks_published'])
+        event.release_schedule('v1')
+        StreamSchedule.objects.create(
+            room=room,
+            url='https://example.com/unpublished-stream',
+            start_time=event.date_from,
+            end_time=event.date_from + dt.timedelta(hours=12),
+            stream_type='hls',
+        )
+        event.feature_flags['show_schedule'] = False
+        event.save(update_fields=['feature_flags'])
+
+    response = client.get(event.urls.featured)
+    assert response.status_code == 200
+    schedule_data = json.loads(response.context['schedule_data_json'])
+    talk = schedule_data['talks'][0]
+    assert talk['code'] == submission.code
+    assert talk['schedule_pending'] is True
+    assert talk['start'] is None
+    assert talk['room'] is None
+    assert talk['stream_url'] is None
+    assert talk['stream_type'] is None
+    assert schedule_data['rooms'] == []
 
