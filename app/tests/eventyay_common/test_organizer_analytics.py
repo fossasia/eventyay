@@ -15,6 +15,7 @@ from eventyay.base.models import (
     Order,
     OrderPayment,
     OrderPosition,
+    Organizer,
     OrganizerFollower,
     Product,
     QueuedMail,
@@ -279,6 +280,26 @@ def _attendance_totals(ctx):
     return sum(point['orders'] for point in series)
 
 
+def create_event_with_orders(organizer: Organizer, slug: str, currency: str, order_count: int) -> Event:
+    event = Event.objects.create(
+        organizer=organizer,
+        name=slug.upper(),
+        slug=slug,
+        currency=currency,
+        date_from=timezone.now(),
+    )
+    for index in range(order_count):
+        Order.objects.create(
+            event=event,
+            code=f'{slug.upper()}{index:02d}',
+            status=Order.STATUS_PAID,
+            datetime=timezone.now(),
+            total=10,
+            locale='en',
+        )
+    return event
+
+
 @pytest.mark.django_db
 @override_settings(EVENTYAY_OBLIGATORY_2FA=False, SITE_URL='https://testserver')
 def test_attendance_selector_survives_empty_event_selection(organizer_client, organizer, event):
@@ -357,3 +378,45 @@ def test_attendance_inaccessible_event_falls_back_to_all_events(organizer, user,
         assert ctx['attendance_selected_event_id'] == ''
         assert _attendance_totals(ctx) == 1
         assert 'Denied Event' not in response.content.decode()
+
+
+@pytest.mark.django_db
+@override_settings(EVENTYAY_OBLIGATORY_2FA=False, SITE_URL='https://testserver')
+def test_top_events_include_currency_outside_overall_top_ten(organizer_client, organizer):
+    with scopes_disabled():
+        usd_events = [create_event_with_orders(organizer, f'usd{index:02d}', 'USD', 3) for index in range(12)]
+        inr_event = create_event_with_orders(organizer, 'inrevent', 'INR', 1)
+
+    url = reverse('eventyay_common:organizer.dashboard', kwargs={'organizer': organizer.slug})
+    response = organizer_client.get(f'{url}?refresh=1')
+    assert response.status_code == 200
+    ctx = response.context
+    top_events = ctx['top_events']
+
+    overall = [event for event in top_events if event['in_overall_top']]
+    assert [event['slug'] for event in overall] == [event.slug for event in usd_events[:10]]
+    assert [event['slug'] for event in top_events if event['currency'] == 'INR'] == [inr_event.slug]
+    assert len([event for event in top_events if event['currency'] == 'USD']) == 10
+    assert ctx['top_event_currencies'] == ['INR', 'USD']
+
+    content = response.content.decode()
+    assert 'id="top-events-currency"' in content
+    assert '<tr data-currency="INR" hidden>' in content
+    assert content.count('<tr data-currency="USD" data-od-overall>') == 10
+
+
+@pytest.mark.django_db
+@override_settings(EVENTYAY_OBLIGATORY_2FA=False, SITE_URL='https://testserver')
+def test_top_events_limit_each_currency_to_ten(organizer_client, organizer):
+    with scopes_disabled():
+        for index in range(11):
+            create_event_with_orders(organizer, f'usd{index:02d}', 'USD', 2)
+            create_event_with_orders(organizer, f'eur{index:02d}', 'EUR', 1)
+
+    url = reverse('eventyay_common:organizer.dashboard', kwargs={'organizer': organizer.slug})
+    top_events = organizer_client.get(f'{url}?refresh=1').context['top_events']
+
+    assert len([event for event in top_events if event['currency'] == 'USD']) == 10
+    assert len([event for event in top_events if event['currency'] == 'EUR']) == 10
+    assert len([event for event in top_events if event['in_overall_top']]) == 10
+    assert all(event['currency'] == 'USD' for event in top_events if event['in_overall_top'])

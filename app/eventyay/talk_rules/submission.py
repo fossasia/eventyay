@@ -119,10 +119,13 @@ def are_featured_exports_available(event):
     )
 
 
-def event_has_featured_speakers(event):
-    from eventyay.base.models import SpeakerProfile
+def _after_schedule_featured_speakers_visible(event):
+    """Featured speakers with ``after_schedule`` wait for a released schedule version.
 
-    return SpeakerProfile.objects.filter(event=event, is_featured=True).exists()
+    Unpublishing the public timetable does not hide them again. ``Always`` is the
+    setting that shows featured speakers before any version exists.
+    """
+    return _event_has_published_schedule(event)
 
 
 def schedule_widget_featured_cache_key_part(event):
@@ -176,14 +179,18 @@ def can_use_featured_exports(user, event):
 def are_featured_speakers_visible(user, event):
     """Whether public pages may show speakers marked as featured.
 
-    Unlike :func:`are_featured_submissions_visible`, this does not require ``talks_published``
-    or a published schedule. For ``after_schedule``, featured speakers appear once organisers
-    mark at least one speaker as featured.
+    Unlike :func:`are_featured_submissions_visible`, ``Always`` does not require
+    ``talks_published`` or a published schedule. ``after_schedule`` waits until a
+    schedule version exists, and does not depend on whether sessions are featured.
     """
     event_obj = getattr(event, 'event', event)
     if not event_obj:
         return False
-    return _featured_public_visible(event_obj, _show_featured_speakers_setting, event_has_featured_speakers)
+    return _featured_public_visible(
+        event_obj,
+        _show_featured_speakers_setting,
+        _after_schedule_featured_speakers_visible,
+    )
 
 
 def include_public_featured_speaker_metadata(user, event):

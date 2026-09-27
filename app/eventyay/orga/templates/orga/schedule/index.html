@@ -45,21 +45,18 @@
                     <a class="dropdown-item" href="{{ active_schedule.urls.public }}" target="_blank" rel="noopener" role="menuitem" tabindex="-1">
                         <i class="fa fa-link"></i> {% translate "View in frontend" %}
                     </a>
-                    {% if request.event|get_feature_flag:"show_schedule" %}
-                        <form method="post" action="{{ request.event.orga_urls.toggle_schedule }}" class="d-inline">
-                            {% csrf_token %}
-                            <button type="submit" class="dropdown-item" role="menuitem" tabindex="-1">
-                                <i class="fa fa-eye"></i> {% translate "Hide schedule" %}
+                    <form method="post" action="{{ request.event.orga_urls.toggle_schedule }}" class="d-inline">
+                        {% csrf_token %}
+                        {% if request.event|get_feature_flag:"show_schedule" %}
+                            <button type="submit" class="dropdown-item" role="menuitem" tabindex="-1" data-confirm="{% translate 'Unpublish the public schedule? Visitors will see sessions as coming soon until you publish it again.' %}">
+                                <i class="fa fa-eye-slash"></i> {% translate "Unpublish schedule" %}
                             </button>
-                        </form>
-                    {% else %}
-                        <form method="post" action="{{ request.event.orga_urls.toggle_schedule }}" class="d-inline">
-                            {% csrf_token %}
-                            <button type="submit" class="dropdown-item" role="menuitem" tabindex="-1">
+                        {% else %}
+                            <button type="submit" class="dropdown-item" role="menuitem" tabindex="-1" data-confirm="{% translate 'Make the schedule public? Visitors will be able to see the released schedule.' %}">
                                 <i class="fa fa-eye"></i> {% translate "Make schedule public" %}
                             </button>
-                        </form>
-                    {% endif %}
+                        {% endif %}
+                    </form>
                     <a href="{{ request.event.orga_urls.submission_cards }}" class="dropdown-item" role="menuitem" tabindex="-1">
                         <i class="fa fa-print"></i> {% translate "Print cards" %}
                     </a>

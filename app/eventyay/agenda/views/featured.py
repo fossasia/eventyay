@@ -1,13 +1,16 @@
 from django.contrib.auth.models import AnonymousUser
-from django.http import HttpResponsePermanentRedirect
+from django.core.exceptions import PermissionDenied
+from django.http import HttpResponsePermanentRedirect, JsonResponse
 from django.utils.functional import cached_property
 from django.views.generic import TemplateView
 from django_context_decorator import context
+from i18nfield.utils import I18nJSONEncoder
 
 from eventyay.agenda.views.schedule import ScheduleMixin
 from eventyay.agenda.views.utils import (
     build_featured_schedule_json,
     build_featured_schedule_meta_json,
+    build_featured_schedule_payload,
 )
 from eventyay.common.views.mixins import EventPermissionRequired
 from eventyay.talk_rules.submission import are_featured_submissions_visible, event_has_featured_submissions
@@ -28,6 +31,13 @@ class FeaturedView(EventPermissionRequired, ScheduleMixin, TemplateView):
         if user is None:
             return False
         return are_featured_submissions_visible(user, request.event)
+
+    def get(self, request, *args, **kwargs):
+        if request.GET.get('format') == 'json':
+            if not self.has_permission():
+                raise PermissionDenied
+            return JsonResponse(build_featured_schedule_payload(request), encoder=I18nJSONEncoder)
+        return super().get(request, *args, **kwargs)
 
     @context
     def schedule_data_json(self):

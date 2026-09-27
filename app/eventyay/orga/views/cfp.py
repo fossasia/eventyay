@@ -254,6 +254,8 @@ class CfPForms(EventPermissionRequired, TemplateView):
         speaker_counts = SpeakerProfile.objects.filter(event=event).aggregate(
             name=Count('id', filter=~Q(user__fullname='') & Q(user__fullname__isnull=False)),
             biography=Count('id', filter=~Q(biography='') & Q(biography__isnull=False)),
+            job_title=Count('id', filter=~Q(job_title='') & Q(job_title__isnull=False)),
+            organization=Count('id', filter=~Q(organization='') & Q(organization__isnull=False)),
             avatar=Count('id', filter=~Q(user__avatar='') & Q(user__avatar__isnull=False)),
             avatar_source=Count('id', filter=~Q(user__avatar_source='') & Q(user__avatar_source__isnull=False)),
             avatar_license=Count('id', filter=~Q(user__avatar_license='') & Q(user__avatar_license__isnull=False)),
@@ -289,6 +291,8 @@ class CfPForms(EventPermissionRequired, TemplateView):
             'slides': str(_('Slides')),
             'duration': str(_('Duration')),
             'biography': str(_('Biography')),
+            'job_title': str(_('What is your official job title?')),
+            'organization': str(_('What organization or company do you represent?')),
             'availabilities': str(_('Availability')),
             'additional_speaker': str(_('Additional Speaker')),
             'fullname': str(_('Full name')),

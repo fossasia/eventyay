@@ -20,6 +20,7 @@ def test_agenda_permission_is_agenda_visible(
 ):
     with scope(event=event):
         event.is_public = is_public
+        event.talks_published = is_public
         event.feature_flags["show_schedule"] = show_schedule
         event.save()
         if has_schedule:
@@ -42,5 +43,7 @@ def test_agenda_permission_is_speaker_viewable(
         assert slot.schedule == event.current_schedule
         slot.is_visible = agenda_visible
         slot.save()
+        event.talks_published = agenda_visible
+        event.save(update_fields=['talks_published'])
     with scope(event=event):
         assert is_speaker_viewable(None, speaker.profiles.first()) is result
