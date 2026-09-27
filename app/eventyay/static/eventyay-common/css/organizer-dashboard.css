@@ -27,8 +27,8 @@
   --od-shadow: var(--shadow-lighter);
   --od-shadow-hover: var(--shadow-light);
   --od-section-shadow: var(--shadow-light);
-  --od-radius: 12px;
-  --od-radius-sm: 8px;
+  --od-radius: 4px;
+  --od-radius-sm: 3px;
   --od-space-3: 16px;
   --od-space-4: 20px;
   --od-btn-height: 36px;
@@ -200,7 +200,7 @@ body:has(.od-dashboard) #page-content {
   justify-content: center;
   width: 34px;
   height: 34px;
-  border-radius: 10px;
+  border-radius: 3px;
   background: var(--od-blue-soft);
   color: var(--od-blue);
   font-size: 15px;
@@ -306,7 +306,7 @@ body:has(.od-dashboard) #page-content {
 .od-start-icon {
   width: 40px;
   height: 40px;
-  border-radius: 10px;
+  border-radius: 3px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -413,7 +413,7 @@ body:has(.od-dashboard) #page-content {
 .od-action-icon {
   width: 26px;
   height: 26px;
-  border-radius: 7px;
+  border-radius: 3px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -485,7 +485,7 @@ body:has(.od-dashboard) #page-content {
   align-self: flex-start;
   margin-top: auto;
   padding: 6px 12px;
-  border-radius: 7px;
+  border-radius: 3px;
   font-size: 13px;
   font-weight: 600;
   text-decoration: none;
@@ -560,7 +560,7 @@ body:has(.od-dashboard) #page-content {
 .od-kpi-icon {
   width: 26px;
   height: 26px;
-  border-radius: 7px;
+  border-radius: 3px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -868,7 +868,7 @@ h4.od-subchart {
   min-height: 32px;
   padding: 5px 32px 5px 12px;
   border: 1px solid var(--od-border);
-  border-radius: 8px;
+  border-radius: 3px;
   background-color: var(--od-surface);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%236c757d' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
@@ -951,7 +951,7 @@ h4.od-subchart {
 .od-tool-head .fa {
   width: 28px;
   height: 28px;
-  border-radius: 8px;
+  border-radius: 3px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1015,7 +1015,7 @@ h4.od-subchart {
 .od-activity-icon {
   width: 32px;
   height: 32px;
-  border-radius: 8px;
+  border-radius: 3px;
   display: inline-flex;
   align-items: center;
   justify-content: center;

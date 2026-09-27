@@ -137,6 +137,8 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
             'abstract',
             'description',
             'biography',
+            'job_title',
+            'organization',
             'avatar_source',
             'avatar_license',
         ]
@@ -145,6 +147,8 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
             'description',
             'notes',
             'biography',
+            'job_title',
+            'organization',
             'avatar',
             'avatar_source',
             'avatar_license',
@@ -172,6 +176,8 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
             'slides',
             'fullname',
             'biography',
+            'job_title',
+            'organization',
             'avatar',
             'social_links',
         ]
@@ -445,8 +451,6 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
         if instance and instance.pk and instance.answers.count() and not instance.is_public:
             self.fields['is_public'].disabled = True
 
-        from eventyay.base.models.cfp import is_default_speaker_question
-
         # Session video is a single auto-managed field; organisers cannot create more.
         is_existing_session_video = bool(
             instance
@@ -454,7 +458,7 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
             and instance.variant == TalkQuestionVariant.VIDEO
             and instance.target == TalkQuestionTarget.SUBMISSION
         )
-        if is_existing_session_video or (instance and instance.pk and is_default_speaker_question(instance)):
+        if is_existing_session_video:
             self.fields['variant'].disabled = True
             if 'target' in self.fields:
                 self.fields['target'].disabled = True

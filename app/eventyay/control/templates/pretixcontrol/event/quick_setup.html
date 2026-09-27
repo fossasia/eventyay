@@ -30,27 +30,27 @@
         <div class="quickstart-stepper">
             <a href="#step-currency" class="quickstart-step-item active" data-step="1">
                 <span class="step-badge">1</span>
-                <span class="step-label">{% trans "Currency" %}<span class="step-badge-tag required">{% trans "Required" %}</span></span>
+                <span class="step-label">{% trans "Currency" %}</span>
             </a>
             <a href="#step-tickets" class="quickstart-step-item" data-step="2">
                 <span class="step-badge">2</span>
-                <span class="step-label">{% trans "Ticket types" %}<span class="step-badge-tag required">{% trans "Required" %}</span></span>
+                <span class="step-label">{% trans "Ticket types" %}</span>
             </a>
             <a href="#step-checkout" class="quickstart-step-item" data-step="3">
                 <span class="step-badge">3</span>
-                <span class="step-label">{% trans "Checkout" %}<span class="step-badge-tag optional">{% trans "Optional" %}</span></span>
+                <span class="step-label">{% trans "Checkout" %}</span>
             </a>
             <a href="#step-features" class="quickstart-step-item" data-step="4">
                 <span class="step-badge">4</span>
-                <span class="step-label">{% trans "Features" %}<span class="step-badge-tag optional">{% trans "Optional" %}</span></span>
+                <span class="step-label">{% trans "Features" %}</span>
             </a>
             <a href="#step-payment" class="quickstart-step-item" data-step="5">
                 <span class="step-badge">5</span>
-                <span class="step-label">{% trans "Payment" %}<span class="step-badge-tag conditional" id="step-tag-payment">{% trans "Conditional" %}</span></span>
+                <span class="step-label">{% trans "Payment" %}</span>
             </a>
             <a href="#step-review" class="quickstart-step-item" data-step="6">
                 <span class="step-badge">6</span>
-                <span class="step-label">{% trans "Review" %}<span class="step-badge-tag optional">{% trans "Summary" %}</span></span>
+                <span class="step-label">{% trans "Review" %}</span>
             </a>
         </div>
 
@@ -59,7 +59,6 @@
             <div class="quickstart-card-header">
                 <span class="card-step-num">1</span>
                 <h3 class="card-title">{% trans "Currency" %}</h3>
-                <span class="card-step-tag tag-required">{% trans "Required" %}</span>
             </div>
             <div class="quickstart-card-desc">
                 {% trans "Choose the currency used for ticket prices, orders, invoices, and payments." %}
@@ -83,7 +82,6 @@
             <div class="quickstart-card-header">
                 <span class="card-step-num">2</span>
                 <h3 class="card-title">{% trans "Ticket types" %}</h3>
-                <span class="card-step-tag tag-required">{% trans "Required" %}</span>
             </div>
             <div class="quickstart-card-desc">
                 {% trans "Add the ticket types you want to sell for this event." %}
@@ -211,7 +209,6 @@
             <div class="quickstart-card-header">
                 <span class="card-step-num">3</span>
                 <h3 class="card-title">{% trans "Checkout access" %}</h3>
-                <span class="card-step-tag tag-optional">{% trans "Optional" %}</span>
             </div>
             <div class="quickstart-card-desc">
                 {% trans "Choose who can complete an order." %}
@@ -234,7 +231,6 @@
             <div class="quickstart-card-header">
                 <span class="card-step-num">4</span>
                 <h3 class="card-title">{% trans "Ticket features" %}</h3>
-                <span class="card-step-tag tag-optional">{% trans "Optional" %}</span>
             </div>
             <div class="quickstart-card-desc">
                 {% trans "Enable features to improve the experience for your attendees." %}
@@ -292,7 +288,6 @@
             <div class="quickstart-card-header">
                 <span class="card-step-num">5</span>
                 <h3 class="card-title">{% trans "Payment" %}</h3>
-                <span class="card-step-tag tag-conditional" id="card-payment-tag">{% trans "Required for paid tickets" %}</span>
             </div>
             <div class="quickstart-card-desc">
                 {% trans "Select how you want to receive payments for paid tickets." %}
@@ -306,6 +301,10 @@
 
                 <!-- Paid tickets state -->
                 <div id="payment-methods-selection">
+                    <div class="payment-error-message" id="payment-error-msg" role="alert">
+                        <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
+                        {% trans "You have a ticket with price greater than 0, so you need to choose a payment method." %}
+                    </div>
                     <div class="payment-methods-grid">
                         {% if form.payment_banktransfer__enabled %}
                             <div class="payment-tile {% if form.payment_banktransfer__enabled.value %}selected{% endif %}" data-target="#id_payment_banktransfer__enabled">
@@ -383,7 +382,6 @@
             <div class="quickstart-card-header">
                 <span class="card-step-num">6</span>
                 <h3 class="card-title">{% trans "Review summary" %}</h3>
-                <span class="card-step-tag tag-optional">{% trans "Summary" %}</span>
             </div>
             <div class="quickstart-card-desc">
                 {% trans "Review your basic ticket setup before saving." %}
@@ -439,7 +437,6 @@
                         <span class="review-label"><i class="fa fa-ticket"></i> {% trans "Ticket types" %}</span>
                         <div class="review-item-right">
                             <span class="review-value" id="review-ticket-types">0</span>
-                            <span id="review-ticket-types-missing" class="review-badge-missing">{% trans "Required" %}</span>
                         </div>
                     </li>
                     <li class="review-item">
@@ -470,7 +467,6 @@
                         <span class="review-label"><i class="fa fa-credit-card"></i> {% trans "Payment methods" %}</span>
                         <div class="review-item-right">
                             <span class="review-value" id="review-payment-methods">{% trans "None selected" %}</span>
-                            <span id="review-payment-missing" class="review-badge-missing">{% trans "Required" %}</span>
                         </div>
                     </li>
                 </ul>

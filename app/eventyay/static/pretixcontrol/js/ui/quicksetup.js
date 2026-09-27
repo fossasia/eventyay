@@ -57,12 +57,8 @@ $(function () {
         if ($("#id_payment_paypal__enabled").is(":checked")) selected_methods_count++;
 
         if (paid_tickets === 0) {
-            $("#step-tag-payment").text(gettext("Optional")).removeClass("required").addClass("optional");
-            $("#card-payment-tag").text(gettext("Not required (Free tickets)")).removeClass("tag-required").addClass("tag-optional");
             set_step_completed(5, named_tickets > 0 || selected_methods_count > 0);
         } else {
-            $("#step-tag-payment").text(gettext("Required")).removeClass("optional").addClass("required");
-            $("#card-payment-tag").text(gettext("Required for paid tickets")).removeClass("tag-optional").addClass("tag-required");
             set_step_completed(5, selected_methods_count > 0);
         }
 
@@ -201,9 +197,6 @@ $(function () {
                 text: gettext("At least one ticket type is required to sell tickets."),
                 target: "#step-tickets"
             });
-            $("#review-ticket-types-missing").show();
-        } else {
-            $("#review-ticket-types-missing").hide();
         }
 
         if (paid_tickets > 0 && selected_methods.length === 0) {
@@ -211,9 +204,6 @@ $(function () {
                 text: gettext("At least one payment method is required for paid tickets."),
                 target: "#step-payment"
             });
-            $("#review-payment-missing").show();
-        } else {
-            $("#review-payment-missing").hide();
         }
 
         if (!currency) {

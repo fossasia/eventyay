@@ -1,0 +1,261 @@
+/* =========================================================
+   Payment Providers — centralized component styles
+   ========================================================= */
+
+/* ── Grid ─────────────────────────────────────────── */
+.payment-providers-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-top: 16px;
+    margin-bottom: 24px;
+}
+
+/* ── Card shell ───────────────────────────────────── */
+.payment-provider-card {
+    border: 1px solid #dde3ec;
+    border-radius: 8px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    overflow: visible;   /* allow panel to overflow card */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    transition: box-shadow 0.15s ease;
+}
+
+.payment-provider-card:hover {
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* ── Body area ────────────────────────────────────── */
+.provider-body {
+    display: flex;
+    align-items: flex-start;
+    padding: 18px 20px 18px;
+    gap: 16px;
+    flex: 1;
+}
+
+/* ── Logo circle ──────────────────────────────────── */
+.provider-logo {
+    width: 52px;
+    height: 52px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.provider-logo i        { font-size: 26px; }
+.provider-logo i.icon-lg { font-size: 32px; }
+
+/* Per-provider colours */
+.bg-banktransfer { background-color: #e0f2fe; color: #0284c7; }
+.bg-bitpay        { background-color: #fef3c7; color: #b45309; }
+.bg-giftcard      { background-color: #f3e8ff; color: #7c3aed; }
+.bg-manual        { background-color: #ffedd5; color: #c2410c; }
+.bg-paypal        { background-color: #dbeafe; color: #1d4ed8; }
+.bg-stripe        { background-color: #ede9fe; color: #5b21b6; }
+.bg-default       { background-color: #f1f5f9; color: #475569; }
+
+/* ── Content column ───────────────────────────────── */
+.provider-content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* ── Row 1: [name + ?]  ··  [badge | settings] ───── */
+.provider-row-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: nowrap;
+}
+
+.provider-name-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    flex-shrink: 1;
+    position: relative;   /* anchor for the help panel */
+}
+
+.provider-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── ? button (details/summary) ───────────────────── */
+.provider-help-details {
+    position: relative;
+    display: inline-block;
+    flex-shrink: 0;
+    outline: none;
+}
+
+.provider-help-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    color: #64748b;
+    background: transparent;
+    border: 1.5px solid #94a3b8;
+    border-radius: 50%;
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.provider-help-btn:hover {
+    color: #fff;
+    background: #3b82f6;
+    border-color: #3b82f6;
+    outline: none;
+}
+
+.provider-help-details:focus-within .provider-help-btn,
+.provider-help-details:hover .provider-help-btn {
+    color: #fff;
+    background: #2563eb;
+    border-color: #2563eb;
+}
+
+.provider-help-details:focus-within .provider-help-panel,
+.provider-help-details:hover .provider-help-panel {
+    display: block;
+}
+
+/* ── Help panel (the popup) ───────────────────────── */
+.provider-help-panel {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    z-index: 200;
+    width: 260px;
+    background: #fff;
+    border: 1px solid #dde3ec;
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    padding: 14px 16px;
+}
+
+/* Small arrow pointing upward */
+.provider-help-panel-arrow {
+    position: absolute;
+    top: -6px;
+    left: 10px;
+    width: 10px;
+    height: 10px;
+    background: #fff;
+    border-left: 1px solid #dde3ec;
+    border-top: 1px solid #dde3ec;
+    transform: rotate(45deg);
+}
+
+.provider-help-desc {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0 0 8px 0;
+    line-height: 1.4;
+}
+
+.provider-help-hint {
+    font-size: 12px;
+    color: #64748b;
+    margin: 0;
+    line-height: 1.55;
+}
+
+/* ── Badge + settings (right side) ───────────────── */
+.provider-row-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.provider-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.badge-enabled  { background-color: #dcfce7; color: #15803d; }
+.badge-disabled { background-color: #fee2e2; color: #b91c1c; }
+.badge-connected { background-color: #2185d0; color: #ffffff; border: 1px solid #1a6da8; }
+.badge-not-connected { background-color: #f1f5f9; color: #475569; }
+
+.provider-settings-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #374151;
+    background: #fff;
+    border: 1px solid #d1d5db;
+    border-radius: 5px;
+    text-decoration: none;
+    white-space: nowrap;
+    line-height: 1.4;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.provider-settings-btn:hover,
+.provider-settings-btn:focus {
+    background: #f9fafb;
+    border-color: #9ca3af;
+    color: #111827;
+    text-decoration: none;
+}
+
+
+/* ── Best-for row ─────────────────────────────────── */
+.provider-best-for {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.provider-best-for strong {
+    color: #374151;
+    font-weight: 600;
+}
+
+/* ── Empty state ──────────────────────────────────── */
+.payment-providers-empty {
+    grid-column: 1 / -1;
+    padding: 24px;
+    text-align: center;
+    color: #6b7280;
+}
+
+/* ── Responsive ───────────────────────────────────── */
+@media (max-width: 900px) {
+    .payment-providers-grid {
+        grid-template-columns: 1fr;
+    }
+}

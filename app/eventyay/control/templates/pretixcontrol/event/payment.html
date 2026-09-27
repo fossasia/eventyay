@@ -5,6 +5,8 @@
 {% block custom_header %}
     {{ block.super }}
     <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/tickets-mobile.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/payment-providers.css' %}" />
+    <script type="text/javascript" src="{% static 'pretixcontrol/js/payment-providers.js' %}"></script>
 {% endblock %}
 {% block inside %}
     {% trans "Payment settings" as header_title %}
@@ -14,62 +16,157 @@
         <div class="tabbed-form">
             <fieldset>
                 <legend>{% trans "Payment providers" %}</legend>
-                <div class="table-responsive">
-                    <table class="table table-payment-providers table-flip tickets-table payment-providers-table">
-                        <thead>
-                        <tr>
-                            <th>{% trans "Provider" %}</th>
-                            <th>{% trans "Status" %}</th>
-                            <th class="iconcol"></th>
-                            <th></th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {% for provider in providers %}
-                            <tr>
-                                <td class="list-name-cell">
-                                    <strong>{{ provider.verbose_name }}</strong>
-                                </td>
-                                <td class="list-meta">
-                                    {% if provider.show_enabled %}
-                                        <span class="text-success">
-                                        <span class="fa fa-check"></span>
-                                        {% trans "Enabled" %}
-                                    </span>
-                                    {% else %}
-                                        <span class="text-danger">
-                                        <span class="fa fa-times"></span>
-                                        {% trans "Disabled" %}
-                                    </span>
-                                    {% endif %}
-                                </td>
-                                <td class="list-indicators">
-                                    {% for channel in provider.sales_channels %}
-                                        <span class="fa fa-{{ channel.icon }} text-muted"
-                                              data-toggle="tooltip" title="{% trans channel.verbose_name %}"></span>
-                                    {% endfor %}
-                                </td>
-                                <td class="text-right flip list-actions">
-                                    <a href="{% url 'control:event.settings.payment.provider' event=request.event.slug organizer=request.organizer.slug provider=provider.identifier %}"
-                                            class="btn btn-default">
-                                        <span class="fa fa-cog"></span>
-                                        {% trans "Settings" %}
-                                    </a>
-                                </td>
-                            </tr>
-                        {% empty %}
-                            <tr>
-                                <td colspan="4" class="orders-section-empty">
-                                    {% url "eventyay_common:event.plugins" event=request.event.slug organizer=request.organizer.slug as plugin_settings_url %}
-                                    {% blocktrans trimmed with plugin_settings_href='href="'|add:plugin_settings_url|add:'"'|safe %}
-                                        There are no payment providers available. Please go to the
-                                        <a {{ plugin_settings_href }}>plugin settings</a> and activate one or more payment plugins.
-                                    {% endblocktrans %}
-                                </td>
-                            </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
+                <div class="payment-providers-grid">
+                    {% for provider in providers %}
+                        <div class="payment-provider-card">
+
+                            {# ── Body: logo + content ── #}
+                            <div class="provider-body">
+
+                                {# Logo icon #}
+                                {% if provider.identifier == 'banktransfer' %}
+                                    <div class="provider-logo bg-banktransfer">
+                                        <i class="fa fa-university"></i>
+                                    </div>
+                                {% elif provider.identifier == 'paypal' %}
+                                    <div class="provider-logo bg-paypal">
+                                        <i class="fa fa-paypal"></i>
+                                    </div>
+                                {% elif 'stripe' in provider.identifier %}
+                                    <div class="provider-logo bg-stripe">
+                                        <i class="fa fa-cc-stripe icon-lg"></i>
+                                    </div>
+                                {% elif provider.identifier == 'bitpay' %}
+                                    <div class="provider-logo bg-bitpay">
+                                        <i class="fa fa-bitcoin"></i>
+                                    </div>
+                                {% elif provider.identifier == 'giftcard' %}
+                                    <div class="provider-logo bg-giftcard">
+                                        <i class="fa fa-gift"></i>
+                                    </div>
+                                {% elif provider.identifier == 'manual' %}
+                                    <div class="provider-logo bg-manual">
+                                        <i class="fa fa-handshake-o"></i>
+                                    </div>
+                                {% else %}
+                                    <div class="provider-logo bg-default">
+                                        <i class="fa fa-credit-card"></i>
+                                    </div>
+                                {% endif %}
+
+                                <div class="provider-content">
+
+                                    {# Row 1 — name + ? | badge + settings, all on one line #}
+                                    <div class="provider-row-title">
+                                        <div class="provider-name-group">
+                                            <span class="provider-name">{{ provider.verbose_name }}</span>
+
+                                            {# ? button — CSS-only details/summary disclosure #}
+                                            <div class="provider-help-details" tabindex="0">
+                                                <span class="provider-help-btn" title="{% trans 'Learn more' %}">?</span>
+                                                <div class="provider-help-panel">
+                                                    <div class="provider-help-panel-arrow"></div>
+                                                    <p class="provider-help-desc">
+                                                        {% if provider.identifier == 'banktransfer' %}
+                                                            {% trans "Allow attendees to pay directly to your bank account." %}
+                                                        {% elif provider.identifier == 'paypal' %}
+                                                            {% trans "Allow attendees to pay using their PayPal account." %}
+                                                        {% elif 'stripe' in provider.identifier %}
+                                                            {% trans "Accept online card payments and supported digital payments." %}
+                                                        {% elif provider.identifier == 'bitpay' %}
+                                                            {% trans "Accept cryptocurrency payments through BitPay." %}
+                                                        {% elif provider.identifier == 'giftcard' %}
+                                                            {% trans "Allow attendees to redeem gift cards for ticket purchases." %}
+                                                        {% elif provider.identifier == 'manual' %}
+                                                            {% trans "Allow organizers to record or confirm payments manually." %}
+                                                        {% else %}
+                                                            {% trans "Configure settings and options for this payment provider." %}
+                                                        {% endif %}
+                                                    </p>
+                                                    <p class="provider-help-hint">
+                                                        {% if provider.identifier == 'banktransfer' %}
+                                                            {% trans "Attendees will receive bank details after placing the order. You may need to confirm the payment manually." %}
+                                                        {% elif provider.identifier == 'paypal' %}
+                                                            {% trans "Attendees will be redirected to PayPal to complete their payment securely." %}
+                                                        {% elif 'stripe' in provider.identifier %}
+                                                            {% trans "Payments are securely processed by Stripe. Attendees can pay using cards and other supported payment methods." %}
+                                                        {% elif provider.identifier == 'bitpay' %}
+                                                            {% trans "Attendees can pay using supported cryptocurrencies via BitPay." %}
+                                                        {% elif provider.identifier == 'giftcard' %}
+                                                            {% trans "Attendees can enter a gift card code during checkout to use the balance toward their purchase." %}
+                                                        {% elif provider.identifier == 'manual' %}
+                                                            {% trans "Payment is not processed automatically. You need to confirm the payment manually." %}
+                                                        {% else %}
+                                                            {% trans "Follow the provider instructions during checkout." %}
+                                                        {% endif %}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            
+                                        </div>
+                                        <div class="provider-row-right">
+                                            {% if 'stripe' in provider.identifier %}
+                                                {% if provider.settings.secret_key or provider.settings.stripe_account %}
+                                                    <span class="provider-badge badge-connected"><i class="fa fa-link"></i> {% trans "Connected" %}</span>
+                                                {% else %}
+                                                    <span class="provider-badge badge-not-connected" title="{% trans 'Please configure your Stripe account settings' %}"><i class="fa fa-chain-broken"></i> {% trans "Not connected" %}</span>
+                                                {% endif %}
+                                            {% elif provider.identifier == 'paypal' %}
+                                                {% if provider.settings.client_id or provider.settings.secret %}
+                                                    <span class="provider-badge badge-connected"><i class="fa fa-link"></i> {% trans "Connected" %}</span>
+                                                {% else %}
+                                                    <span class="provider-badge badge-not-connected" title="{% trans 'Please configure your PayPal account settings' %}"><i class="fa fa-chain-broken"></i> {% trans "Not connected" %}</span>
+                                                {% endif %}
+                                            {% endif %}
+                                            {% if provider.show_enabled %}
+                                                <span class="provider-badge badge-enabled">
+                                                    <i class="fa fa-check"></i> {% trans "Enabled" %}
+                                                </span>
+                                            {% else %}
+                                                <span class="provider-badge badge-disabled">
+                                                    <i class="fa fa-times"></i> {% trans "Disabled" %}
+                                                </span>
+                                            {% endif %}
+                                            <a href="{% url 'control:event.settings.payment.provider' event=request.event.slug organizer=request.organizer.slug provider=provider.identifier %}"
+                                               class="provider-settings-btn" title="{% trans 'Settings' %}">
+                                                <i class="fa fa-cog"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                    {# Best-for tag — compact, always visible #}
+                                    <div class="provider-best-for">
+                                        <strong>{% trans "Best for:" %}</strong>
+                                        {% if provider.identifier == 'banktransfer' %}
+                                            {% trans "Offline payments and manual workflows." %}
+                                        {% elif provider.identifier == 'paypal' %}
+                                            {% trans "Attendees who prefer PayPal." %}
+                                        {% elif 'stripe' in provider.identifier %}
+                                            {% trans "Fast, automatic online payments." %}
+                                        {% elif provider.identifier == 'bitpay' %}
+                                            {% trans "Events that want to support cryptocurrency payments." %}
+                                        {% elif provider.identifier == 'giftcard' %}
+                                            {% trans "Events offering gift cards or vouchers." %}
+                                        {% elif provider.identifier == 'manual' %}
+                                            {% trans "Cash, cheque, or other offline payment arrangements." %}
+                                        {% else %}
+                                            {% trans "General payment processing." %}
+                                        {% endif %}
+                                    </div>
+
+                                </div>{# /provider-content #}
+                            </div>{# /provider-body #}
+
+                        </div>{# /payment-provider-card #}
+                    {% empty %}
+                        <div class="payment-providers-empty">
+                            {% url "eventyay_common:event.plugins" event=request.event.slug organizer=request.organizer.slug as plugin_settings_url %}
+                            {% blocktrans trimmed with plugin_settings_href='href="'|add:plugin_settings_url|add:'"'|safe %}
+                                There are no payment providers available. Please go to the
+                                <a {{ plugin_settings_href }}>plugin settings</a> and activate one or more payment plugins.
+                            {% endblocktrans %}
+                        </div>
+                    {% endfor %}
                 </div>
             </fieldset>
             <fieldset>

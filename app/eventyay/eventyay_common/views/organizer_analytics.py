@@ -7,11 +7,13 @@ import dateutil.rrule
 from django.db.models import (
     Count,
     Exists,
+    F,
     OuterRef,
     Q,
     Sum,
+    Window,
 )
-from django.db.models.functions import TruncDate, TruncMonth, TruncWeek
+from django.db.models.functions import RowNumber, TruncDate, TruncMonth, TruncWeek
 from django.utils import timezone
 from django.views.generic import TemplateView
 from django_scopes import scopes_disabled
@@ -35,6 +37,7 @@ class OrganizerAnalyticsView(OrganizerPermissionRequiredMixin, TemplateView):
 
     template_name = 'eventyay_common/organizers/dashboard.html'
     permission = None
+    top_events_limit = 10
 
     @staticmethod
     def _to_date(val):
@@ -80,36 +83,38 @@ class OrganizerAnalyticsView(OrganizerPermissionRequiredMixin, TemplateView):
         ]
         permitted_event_ids = {e['id'] for e in selector_events}
 
-        if not requested_event:
-            selected_event_id: int | str = ''
-            selected_event_ids = permitted_event_ids
+        try:
+            req_id = int(requested_event)
+        except (TypeError, ValueError):
+            req_id = None
+        if req_id in permitted_event_ids:
+            selected_event_id: int | str = req_id
+            selected_event_ids = {req_id}
         else:
-            try:
-                req_id = int(requested_event)
-            except (TypeError, ValueError):
-                req_id = None
-            if req_id in permitted_event_ids:
-                selected_event_id = req_id
-                selected_event_ids = {req_id}
-            else:
-                selected_event_id = ''
-                selected_event_ids = set()
+            selected_event_id = ''
+            selected_event_ids = permitted_event_ids
 
-        series = []
-        for day in date_labels:
-            orders = 0
-            registrations = 0
-            for event_id in selected_event_ids:
-                bucket = attendance_daily_by_event.get(event_id, {}).get(day, {})
-                orders += bucket.get('orders', 0)
-                registrations += bucket.get('registrations', 0)
-            series.append({'x': day, 'orders': orders, 'registrations': registrations})
+        def project_series(event_ids):
+            series = []
+            for day in date_labels:
+                orders = 0
+                registrations = 0
+                for event_id in event_ids:
+                    bucket = attendance_daily_by_event.get(event_id, {}).get(day, {})
+                    orders += bucket.get('orders', 0)
+                    registrations += bucket.get('registrations', 0)
+                series.append({'x': day, 'orders': orders, 'registrations': registrations})
+            return series
+
+        all_events_series = project_series(permitted_event_ids)
+        series = project_series(selected_event_ids) if selected_event_id else all_events_series
 
         return {
             'attendance_events': selector_events,
             'attendance_selected_event_id': selected_event_id,
             'attendance_over_time_json': json.dumps(series),
-            'has_attendance': any(point['orders'] or point['registrations'] for point in series),
+            # Gate on all events, not the selection: the panel holds the selector itself.
+            'has_attendance': any(point['orders'] or point['registrations'] for point in all_events_series),
         }
 
     def _event_ids_for_orders(self):
@@ -390,6 +395,9 @@ class OrganizerAnalyticsView(OrganizerPermissionRequiredMixin, TemplateView):
             )
             status_rows = list(status_qs)
 
+            # Top events per currency, so a currency filter never runs out of rows
+            # just because other currencies dominate the overall ranking.
+            ranking = (F('total_orders').desc(), F('event').asc())
             top_qs = list(
                 Order.objects.filter(event_id__in=event_ids)
                 .values('event')
@@ -397,7 +405,9 @@ class OrganizerAnalyticsView(OrganizerPermissionRequiredMixin, TemplateView):
                     total_orders=Count('pk'),
                     paid_orders=Count('pk', filter=Q(status=Order.STATUS_PAID)),
                 )
-                .order_by('-total_orders')[:10]
+                .annotate(currency_rank=Window(RowNumber(), partition_by=F('event__currency'), order_by=ranking))
+                .filter(currency_rank__lte=self.top_events_limit)
+                .order_by(*ranking)
             )
             top_event_ids = [row['event'] for row in top_qs]
             events_by_id = {
@@ -674,7 +684,11 @@ class OrganizerAnalyticsView(OrganizerPermissionRequiredMixin, TemplateView):
         ctx.update(attendance_presentation)
 
         # Client-side filters: keep full top-events list and attendance payload in the page.
-        top_events = list(data.get('top_events') or [])
+        # Rows are ranked across currencies, so the first rows are the overall top events.
+        top_events = [
+            {**event, 'in_overall_top': index < self.top_events_limit}
+            for index, event in enumerate(data.get('top_events') or [])
+        ]
         currencies = sorted({event.get('currency') for event in top_events if event.get('currency')})
         selected_currency = (self.request.GET.get('revenue_currency') or '').strip().upper()
         if selected_currency and selected_currency not in currencies:
