@@ -322,14 +322,10 @@ header .header-row-right {
         opacity: 0.85;
     }
 
-    /* Mobile: hero overlay width (+ padding where set in main bundle) */
+    /* Mobile: hero overlay width */
     .event-hero-overlay {
         display: flex;
         width: 100%;
-    }
-
-    /* Presale event index: full-bleed hero overlay */
-    #main-container.page-presale-event-index .event-hero-overlay {
         padding-left: 0;
         padding-right: 0;
     }

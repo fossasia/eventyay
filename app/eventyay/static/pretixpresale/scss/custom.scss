@@ -82,7 +82,7 @@
     z-index: 400;
     background: var(--color-bg);
     border-radius: var(--size-border-radius) var(--size-border-radius) 0 0;
-    padding: 0 0 2px;
+    padding: 0 0 6px;
     flex-shrink: 0;
     /* DO NOT set overflow here - it would clip dropdown menus */
 }
@@ -295,16 +295,10 @@
         opacity: 0.85;
     }
 
-    /* Mobile: hero overlay width + horizontal padding */
+    /* Mobile: hero overlay width */
     .event-hero-overlay {
         display: flex;
         width: 100%;
-        padding-left: 12px;
-        padding-right: 12px;
-    }
-
-    /* Presale event index: full-bleed hero overlay */
-    #main-container.page-presale-event-index .event-hero-overlay {
         padding-left: 0;
         padding-right: 0;
     }
