@@ -65,6 +65,10 @@
   display: none;
 }
 
+.presale-sticky-tabs .presale-tabs-scroll.has-overflow-menu:has(> .header-tab-overflow[data-overflow-pending]) > * {
+  visibility: hidden;
+}
+
 .presale-sticky-tabs details.header-tab-overflow > summary {
   cursor: pointer;
   list-style: none;

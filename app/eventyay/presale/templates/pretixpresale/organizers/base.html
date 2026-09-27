@@ -67,9 +67,9 @@
 {% block event_logo %}
     {% if organizer_logo %}
         {% if organizer_logo|lower|slice:"-4:" == ".gif" or organizer_logo|lower|slice:"-4:" == ".svg" %}
-            <img loading="lazy" src="{{ organizer_logo_url }}" id="event-logo" alt="{{ organizer.name }}" class="organizer-logo">
+            <img src="{{ organizer_logo_url }}" id="event-logo" alt="{{ organizer.name }}" class="organizer-logo">
         {% else %}
-            <img loading="lazy" src="{{ organizer_logo|thumb:'1000x1000' }}" id="event-logo" alt="{{ organizer.name }}" class="organizer-logo">
+            <img src="{{ organizer_logo|thumb:'1000x1000' }}" id="event-logo" alt="{{ organizer.name }}" class="organizer-logo">
         {% endif %}
     {% endif %}
 {% endblock %}

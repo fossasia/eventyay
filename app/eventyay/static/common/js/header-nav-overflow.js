@@ -1,9 +1,12 @@
-const ACTIVE_CLASS_NAMES = ['active', 'underline']
-const WIDTH_TOLERANCE = 1
+const HEADER_TAB_ACTIVE_CLASSES = ['active', 'underline']
+const HEADER_TAB_WIDTH_TOLERANCE = 1
+const HEADER_TAB_FONT_WAIT_MS = 500
 
-const isVisible = (element) => element.getClientRects().length > 0
+const isHeaderTabVisible = (element) => element.getClientRects().length > 0
 
-const isActive = (element) => ACTIVE_CLASS_NAMES.some((name) => element.classList.contains(name))
+const isHeaderTabActive = (element) => HEADER_TAB_ACTIVE_CLASSES.some((name) => element.classList.contains(name))
+
+const headerTabFonts = (elements) => [...new Set(elements.map((element) => window.getComputedStyle(element).font))]
 
 const createOverflowNav = (row, bar, overflow) => {
     const menu = overflow.querySelector('.header-tab-overflow-menu')
@@ -40,19 +43,19 @@ const createOverflowNav = (row, bar, overflow) => {
         overflow.hidden = true
         overflow.classList.remove('active')
 
-        const candidates = tabs.filter(isVisible)
+        const candidates = tabs.filter(isHeaderTabVisible)
         const widths = candidates.map((tab) => tab.getBoundingClientRect().width)
         const required = widths.reduce((sum, width) => sum + width, 0)
 
         const available = bar.clientWidth
-        if (required <= available + WIDTH_TOLERANCE) {
+        if (required <= available + HEADER_TAB_WIDTH_TOLERANCE) {
             hide()
             return
         }
 
         overflow.hidden = false
         const trigger = summary || overflow
-        const budget = available - trigger.getBoundingClientRect().width + WIDTH_TOLERANCE
+        const budget = available - trigger.getBoundingClientRect().width + HEADER_TAB_WIDTH_TOLERANCE
         let used = 0
         let visible = 0
         while (visible < widths.length && used + widths[visible] <= budget) {
@@ -67,7 +70,7 @@ const createOverflowNav = (row, bar, overflow) => {
         }
 
         moved.forEach(moveToMenu)
-        overflow.classList.toggle('active', moved.some(isActive))
+        overflow.classList.toggle('active', moved.some(isHeaderTabActive))
     }
 
     const schedule = () => {
@@ -80,25 +83,55 @@ const createOverflowNav = (row, bar, overflow) => {
         })
     }
 
+    const watch = () => {
+        if (typeof ResizeObserver === 'function') {
+            const observer = new ResizeObserver(() => {
+                if (row.clientWidth === lastRowWidth) return
+                schedule()
+            })
+            observer.observe(row)
+        }
+
+        window.addEventListener('resize', schedule)
+        window.addEventListener('hashchange', schedule)
+        window.addEventListener('pageshow', schedule)
+
+        if (document.fonts) {
+            document.fonts.ready.then(schedule)
+        }
+    }
+
+    let started = false
+    const firstFit = () => {
+        if (started) return
+        started = true
+        fit()
+        lastRowWidth = row.clientWidth
+        reveal()
+        watch()
+    }
+
     return {
         start: () => {
-            schedule()
-
-            if (typeof ResizeObserver === 'function') {
-                const observer = new ResizeObserver(() => {
-                    if (row.clientWidth === lastRowWidth) return
-                    schedule()
-                })
-                observer.observe(row)
+            if (!document.fonts || typeof document.fonts.check !== 'function') {
+                firstFit()
+                return
             }
 
-            window.addEventListener('resize', schedule)
-            window.addEventListener('hashchange', schedule)
-            window.addEventListener('pageshow', schedule)
-
-            if (document.fonts) {
-                document.fonts.ready.then(schedule)
+            const icons = tabs.map((tab) => tab.querySelector('i')).filter(Boolean)
+            const fonts = headerTabFonts([...tabs, ...icons])
+            const fontsReady = () => fonts.every((font) => document.fonts.check(font))
+            if (fontsReady()) {
+                firstFit()
+                return
             }
+
+            const fitWhenReady = () => {
+                if (fontsReady()) firstFit()
+            }
+            document.fonts.addEventListener('loadingdone', fitWhenReady)
+            fonts.forEach((font) => document.fonts.load(font).then(fitWhenReady, fitWhenReady))
+            window.setTimeout(firstFit, HEADER_TAB_FONT_WAIT_MS)
         },
     }
 }
@@ -114,8 +147,8 @@ const initHeaderNavOverflow = () => {
     })
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initHeaderNavOverflow)
-} else {
+if (document.querySelector('.presale-sticky-tabs .header-tab-overflow')) {
     initHeaderNavOverflow()
+} else if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initHeaderNavOverflow)
 }
