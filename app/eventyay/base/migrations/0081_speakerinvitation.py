@@ -12,7 +12,7 @@ import eventyay.base.models.mixins
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0079_productvariation_admission_validity_mode'),
+        ('base', '0080_speakerprofile_job_title_speakerprofile_organization'),
     ]
 
     operations = [
