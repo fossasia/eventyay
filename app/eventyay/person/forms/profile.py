@@ -466,6 +466,18 @@ class SpeakerFilterForm(forms.Form):
         required=False,
         widget=EnhancedSelect,
     )
+    readiness = forms.ChoiceField(
+        required=False,
+        label=_('Readiness'),
+        choices=(
+            ('', _('All states')),
+            ('missing_biography', _('Missing biography')),
+            ('missing_profile_image', _('Missing profile image')),
+            ('missing_affiliation', _('Missing affiliation')),
+            ('without_session', _('Without session')),
+        ),
+        widget=EnhancedSelect,
+    )
     question = SafeModelChoiceField(queryset=TalkQuestion.objects.none(), required=False, widget=forms.HiddenInput())
 
     def __init__(self, *args, event=None, filter_arrival=False, **kwargs):
@@ -487,6 +499,19 @@ class SpeakerFilterForm(forms.Form):
             )
         if has_arrived := data.get('arrived'):
             queryset = queryset.filter(has_arrived=(has_arrived == 'true'))
+        
+        if readiness := data.get('readiness'):
+            if readiness == 'missing_biography':
+                queryset = queryset.filter(Q(biography__isnull=True) | Q(biography=''))
+            elif readiness == 'missing_profile_image':
+                queryset = queryset.filter(Q(user__avatar__isnull=True) | Q(user__avatar=''))
+            elif readiness == 'missing_affiliation':
+                queryset = queryset.filter(Q(organization__isnull=True) | Q(organization=''))
+            elif readiness == 'without_session':
+                queryset = queryset.exclude(
+                    user__submissions__in=self.event.submissions.filter(state__in=SubmissionStates.accepted_states)
+                )
+
         return queryset
 
 

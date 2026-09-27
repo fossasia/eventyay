@@ -20,44 +20,44 @@
             <div class="td-kpi-link">{% trans "View sessions" %} <span aria-hidden="true">></span></div>
         </a>
 
-        <a href="{{ request.event.orga_urls.schedule }}" class="td-kpi-card td-kpi-green" title="{% trans 'Scheduled sessions' %}">
+        <a href="{{ request.event.orga_urls.submissions }}?readiness=scheduled" class="td-kpi-card td-kpi-green" title="{% trans 'Scheduled sessions' %}">
             <div class="td-kpi-top">
                 <span class="td-kpi-icon" aria-hidden="true"><span class="fa fa-calendar-check-o"></span></span>
                 <span class="td-kpi-label">{% trans "Scheduled sessions" %}</span>
             </div>
             <div class="td-kpi-value">{{ session_readiness.scheduled }}</div>
             <div class="td-kpi-hint td-kpi-hint-spacer" aria-hidden="true"></div>
-            <div class="td-kpi-link">{% trans "View schedule" %} <span aria-hidden="true">></span></div>
+            <div class="td-kpi-link">{% trans "View sessions" %} <span aria-hidden="true">></span></div>
         </a>
 
-        <a href="{{ request.event.orga_urls.schedule }}" class="td-kpi-card {% if session_readiness.unscheduled > 0 %}td-kpi-red{% else %}td-kpi-blue{% endif %}" title="{% trans 'Unscheduled sessions' %}">
+        <a href="{{ request.event.orga_urls.submissions }}?readiness=unscheduled" class="td-kpi-card {% if session_readiness.unscheduled > 0 %}td-kpi-red{% else %}td-kpi-blue{% endif %}" title="{% trans 'Unscheduled sessions' %}">
             <div class="td-kpi-top">
                 <span class="td-kpi-icon" aria-hidden="true"><span class="fa fa-calendar-times-o"></span></span>
                 <span class="td-kpi-label">{% trans "Unscheduled sessions" %}</span>
             </div>
             <div class="td-kpi-value">{{ session_readiness.unscheduled }}</div>
             <div class="td-kpi-hint td-kpi-hint-spacer" aria-hidden="true"></div>
-            <div class="td-kpi-link">{% trans "View schedule" %} <span aria-hidden="true">></span></div>
+            <div class="td-kpi-link">{% trans "View sessions" %} <span aria-hidden="true">></span></div>
         </a>
 
-        <a href="{{ request.event.orga_urls.schedule }}" class="td-kpi-card {% if session_readiness.missing_room_time > 0 %}td-kpi-orange{% else %}td-kpi-blue{% endif %}" title="{% trans 'Sessions missing room/time' %}">
+        <a href="{{ request.event.orga_urls.submissions }}?readiness=missing_room_time" class="td-kpi-card {% if session_readiness.missing_room_time > 0 %}td-kpi-orange{% else %}td-kpi-blue{% endif %}" title="{% trans 'Sessions missing room/time' %}">
             <div class="td-kpi-top">
                 <span class="td-kpi-icon" aria-hidden="true"><span class="fa fa-clock-o"></span></span>
                 <span class="td-kpi-label">{% trans "Sessions missing room/time" %}</span>
             </div>
             <div class="td-kpi-value">{{ session_readiness.missing_room_time }}</div>
             <div class="td-kpi-hint td-kpi-hint-spacer" aria-hidden="true"></div>
-            <div class="td-kpi-link">{% trans "View schedule" %} <span aria-hidden="true">></span></div>
+            <div class="td-kpi-link">{% trans "View sessions" %} <span aria-hidden="true">></span></div>
         </a>
 
-        <a href="{{ request.event.orga_urls.schedule }}" class="td-kpi-card {% if session_readiness.with_conflicts > 0 %}td-kpi-red{% else %}td-kpi-blue{% endif %}" title="{% trans 'Sessions with conflicts' %}">
+        <a href="{{ request.event.orga_urls.submissions }}?readiness=with_conflicts" class="td-kpi-card {% if session_readiness.with_conflicts > 0 %}td-kpi-red{% else %}td-kpi-blue{% endif %}" title="{% trans 'Sessions with conflicts' %}">
             <div class="td-kpi-top">
                 <span class="td-kpi-icon" aria-hidden="true"><span class="fa fa-exclamation-triangle"></span></span>
                 <span class="td-kpi-label">{% trans "Sessions with conflicts" %}</span>
             </div>
             <div class="td-kpi-value">{{ session_readiness.with_conflicts }}</div>
             <div class="td-kpi-hint td-kpi-hint-spacer" aria-hidden="true"></div>
-            <div class="td-kpi-link">{% trans "View schedule" %} <span aria-hidden="true">></span></div>
+            <div class="td-kpi-link">{% trans "View sessions" %} <span aria-hidden="true">></span></div>
         </a>
 
         <a href="{{ request.event.orga_urls.submissions }}?state=canceled" class="td-kpi-card td-kpi-muted" title="{% trans 'Canceled sessions' %}">
@@ -91,7 +91,7 @@
             <div class="td-kpi-link">{% trans "View speakers" %} <span aria-hidden="true">></span></div>
         </a>
         
-        <a href="{{ request.event.orga_urls.speakers }}" class="td-kpi-card td-kpi-green" title="{% trans 'Confirmed speakers' %}">
+        <a href="{{ request.event.orga_urls.speakers }}?role=true" class="td-kpi-card td-kpi-green" title="{% trans 'Confirmed speakers' %}">
             <div class="td-kpi-top">
                 <span class="td-kpi-icon" aria-hidden="true"><span class="fa fa-user-circle"></span></span>
                 <span class="td-kpi-label">{% trans "Confirmed speakers" %}</span>
@@ -101,7 +101,7 @@
             <div class="td-kpi-link">{% trans "View speakers" %} <span aria-hidden="true">></span></div>
         </a>
 
-        <a href="{{ request.event.orga_urls.speakers }}" class="td-kpi-card {% if speaker_readiness.missing_biography > 0 %}td-kpi-orange{% else %}td-kpi-blue{% endif %}" title="{% trans 'Missing biography' %}">
+        <a href="{{ request.event.orga_urls.speakers }}?readiness=missing_biography" class="td-kpi-card {% if speaker_readiness.missing_biography > 0 %}td-kpi-orange{% else %}td-kpi-blue{% endif %}" title="{% trans 'Missing biography' %}">
             <div class="td-kpi-top">
                 <span class="td-kpi-icon" aria-hidden="true"><span class="fa fa-file-text-o"></span></span>
                 <span class="td-kpi-label">{% trans "Missing biography" %}</span>
@@ -111,7 +111,7 @@
             <div class="td-kpi-link">{% trans "View speakers" %} <span aria-hidden="true">></span></div>
         </a>
 
-        <a href="{{ request.event.orga_urls.speakers }}" class="td-kpi-card {% if speaker_readiness.missing_profile_image > 0 %}td-kpi-orange{% else %}td-kpi-blue{% endif %}" title="{% trans 'Missing profile image' %}">
+        <a href="{{ request.event.orga_urls.speakers }}?readiness=missing_profile_image" class="td-kpi-card {% if speaker_readiness.missing_profile_image > 0 %}td-kpi-orange{% else %}td-kpi-blue{% endif %}" title="{% trans 'Missing profile image' %}">
             <div class="td-kpi-top">
                 <span class="td-kpi-icon" aria-hidden="true"><span class="fa fa-picture-o"></span></span>
                 <span class="td-kpi-label">{% trans "Missing profile image" %}</span>
@@ -121,7 +121,7 @@
             <div class="td-kpi-link">{% trans "View speakers" %} <span aria-hidden="true">></span></div>
         </a>
 
-        <a href="{{ request.event.orga_urls.speakers }}" class="td-kpi-card {% if speaker_readiness.missing_affiliation > 0 %}td-kpi-orange{% else %}td-kpi-blue{% endif %}" title="{% trans 'Missing affiliation' %}">
+        <a href="{{ request.event.orga_urls.speakers }}?readiness=missing_affiliation" class="td-kpi-card {% if speaker_readiness.missing_affiliation > 0 %}td-kpi-orange{% else %}td-kpi-blue{% endif %}" title="{% trans 'Missing affiliation' %}">
             <div class="td-kpi-top">
                 <span class="td-kpi-icon" aria-hidden="true"><span class="fa fa-building-o"></span></span>
                 <span class="td-kpi-label">{% trans "Missing affiliation" %}</span>
@@ -131,7 +131,7 @@
             <div class="td-kpi-link">{% trans "View speakers" %} <span aria-hidden="true">></span></div>
         </a>
 
-        <a href="{{ request.event.orga_urls.speakers }}" class="td-kpi-card {% if speaker_readiness.without_session > 0 %}td-kpi-orange{% else %}td-kpi-blue{% endif %}" title="{% trans 'Speakers without session' %}">
+        <a href="{{ request.event.orga_urls.speakers }}?readiness=without_session" class="td-kpi-card {% if speaker_readiness.without_session > 0 %}td-kpi-orange{% else %}td-kpi-blue{% endif %}" title="{% trans 'Speakers without session' %}">
             <div class="td-kpi-top">
                 <span class="td-kpi-icon" aria-hidden="true"><span class="fa fa-user-times"></span></span>
                 <span class="td-kpi-label">{% trans "Speakers without session" %}</span>
