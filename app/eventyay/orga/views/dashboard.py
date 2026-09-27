@@ -466,5 +466,36 @@ class EventDashboardView(EventPermissionRequired, SubmissionStatsMixin, Template
                 'current_schedule_version': current_schedule_version,
                 'active_reviewers': active_reviewers_count,
             }
+
+            # Readiness metrics
+            wip_schedule = getattr(event, 'wip_schedule', None)
+            
+            session_readiness = {
+                'confirmed': confirmed_sessions_count,
+                'canceled': event.submissions.filter(state=SubmissionStates.CANCELED).count(),
+                'scheduled': 0,
+                'unscheduled': 0,
+                'missing_room_time': 0,
+                'with_conflicts': 0,
+            }
+            if wip_schedule:
+                confirmed_talks = wip_schedule.talks.filter(submission__state=SubmissionStates.CONFIRMED, is_visible=True)
+                session_readiness['scheduled'] = confirmed_talks.filter(start__isnull=False, room__isnull=False).count()
+                session_readiness['unscheduled'] = confirmed_talks.filter(start__isnull=True, room__isnull=True).count()
+                session_readiness['missing_room_time'] = confirmed_talks.filter(Q(start__isnull=True) | Q(room__isnull=True)).exclude(start__isnull=True, room__isnull=True).count()
+                session_readiness['with_conflicts'] = len([k for k, v in wip_schedule.get_all_talk_warnings().items() if v])
+            
+            speaker_profiles = SpeakerProfile.objects.filter(event=event, user__in=event.submitters)
+            speaker_readiness = {
+                'total_speakers': event.submitters.count(),
+                'confirmed_speakers': event.submitters.filter(submissions__state=SubmissionStates.CONFIRMED, submissions__event=event).distinct().count(),
+                'missing_biography': speaker_profiles.filter(Q(biography__isnull=True) | Q(biography='')).count(),
+                'missing_profile_image': speaker_profiles.filter(Q(user__avatar__isnull=True) | Q(user__avatar='')).count(),
+                'missing_affiliation': speaker_profiles.filter(Q(organization__isnull=True) | Q(organization='')).count(),
+                'without_session': event.submitters.exclude(submissions__state__in=[SubmissionStates.ACCEPTED, SubmissionStates.CONFIRMED], submissions__event=event).distinct().count(),
+            }
+            
+            result['session_readiness'] = session_readiness
+            result['speaker_readiness'] = speaker_readiness
         
         return result

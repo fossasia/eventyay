@@ -101,13 +101,13 @@
 
         {% include "orga/includes/dashboard_action_cards.html" %}
 
-        
-
         {% include "orga/includes/dashboard_kpi_cards.html" %}
 
         {% if can_view_submission_stats %}
             {% include "orga/submission/includes/statistics.html" %}
         {% endif %}
+
+        {% include "orga/includes/dashboard_readiness_cards.html" %}
     </div>
 
     <div class="td-dashboard pt-0">
