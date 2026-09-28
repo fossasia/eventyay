@@ -6,7 +6,7 @@ from django.views.generic import TemplateView, View
 from django_context_decorator import context
 from django_scopes import scope
 
-from eventyay.agenda.views.utils import build_enriched_schedule_json, is_email_like
+from eventyay.agenda.views.utils import build_public_starred_schedule_json, is_email_like
 from eventyay.base.models import SubmissionFavourite, User
 from eventyay.talk_rules.agenda import can_view_schedule
 
@@ -33,7 +33,10 @@ class PublicStarredScheduleView(TemplateView):
 
     @context
     def schedule_json(self) -> str:
-        return build_enriched_schedule_json(self.request)
+        return build_public_starred_schedule_json(
+            self.request,
+            starred_submission_codes(self.request, self.public_user),
+        )
 
     @cached_property
     def public_user(self) -> User:
@@ -51,7 +54,7 @@ class PublicStarredScheduleView(TemplateView):
         return user
 
     def dispatch(self, request, *args, **kwargs):
-        if not request.event.current_schedule or not can_view_schedule(request.user, request.event):
+        if not request.event.current_schedule:
             raise Http404()
         return super().dispatch(request, *args, **kwargs)
 
@@ -72,6 +75,8 @@ class PublicStarredScheduleView(TemplateView):
 
     @context
     def page_title(self) -> str:
+        if not can_view_schedule(self.request.user, self.request.event):
+            return _('Starred sessions')
         display_name = self.public_user.get_display_name()
         if is_email_like(display_name):
             display_name = _('Anonymous (name not shared)')
@@ -96,10 +101,12 @@ class PublicStarredScheduleDataView(View):
 
     def get(self, request, event, code, **kwargs):
         schedule = request.event.current_schedule
-        if not schedule or not can_view_schedule(request.user, request.event):
+        if not schedule:
             raise Http404()
 
         favs = starred_submission_codes(request, self.public_user)
+        if not can_view_schedule(request.user, request.event):
+            return JsonResponse({'name': None, 'favs': favs, 'show_starred_by': False})
 
         user = self.public_user
         display_name = user.get_display_name() or user.code

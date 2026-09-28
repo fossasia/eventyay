@@ -67,16 +67,33 @@ def test_public_stars_hide_unpublished_schedule_metadata(client, event, slot, ot
 
     cache.clear()
     response = client.get(_stars_url(event), HTTP_ACCEPT='text/html')
-    assert response.status_code == 404
+    assert response.status_code == 200
+    payload = json.loads(response.context['schedule_json'])
+    assert [item['code'] for item in payload['talks']] == [slot.submission.code]
+    talk = payload['talks'][0]
+    assert talk['title'] == slot.submission.title
+    assert talk['start'] is None
+    assert talk['end'] is None
+    assert talk['room'] is None
+    assert talk['track'] is None
+    assert payload['rooms'] == []
+    assert payload['tracks'] == []
+    assert slot.submission.title in response.text
     assert 'Star User' not in response.text
     assert 'Starred by' not in response.text
-    assert slot.submission.title not in response.text
     assert 'Testroom' not in response.text
     assert 'Test Track' not in response.text
     assert other_slot.submission.title not in response.text
 
     favs = client.get(_stars_url(event).rstrip('/') + '.json')
-    assert favs.status_code == 404
+    assert favs.status_code == 200
+    body = favs.json()
+    assert body['favs'] == [slot.submission.code]
+    assert body['name'] is None
+    assert body['show_starred_by'] is False
+    assert 'room' not in body
+    assert 'start' not in body
+    assert 'track' not in body
 
 
 @pytest.mark.django_db
