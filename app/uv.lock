@@ -1699,7 +1699,7 @@ test = [
 [[package]]
 name = "eventyay-veditor"
 version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-veditor.git?branch=main#bc63487a2020ed2c59d2923b35297ee21d0eb3a1" }
+source = { git = "https://github.com/fossasia/eventyay-veditor.git?branch=main#f73ef53263424387674742abeb13c75f9f4ecb17" }
 
 [[package]]
 name = "execnet"
