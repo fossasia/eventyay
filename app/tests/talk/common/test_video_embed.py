@@ -81,6 +81,11 @@ def test_youtube_embed_preserves_timestamp_and_disables_autoplay(url, video_id, 
         ('https://player.vimeo.com/video/123456789#t=10s', '123456789', None, 't=10s'),
         ('https://vimeo.com/123456789/abcdef0123#t=1m30s', '123456789', 'abcdef0123', 't=1m30s'),
         ('https://player.vimeo.com/video/123456789?h=abcdef0123#t=10s', '123456789', 'abcdef0123', 't=10s'),
+        ('https://vimeo.com/showcase/123456/video/789012', '789012', None, None),
+        ('https://vimeo.com/showcase/123456/video/789012/abcdef0123', '789012', 'abcdef0123', None),
+        ('https://vimeo.com/channels/123456/789012', '789012', None, None),
+        ('https://vimeo.com/showcase/123456/video/789012#t=1m30s', '789012', None, 't=1m30s'),
+        ('https://vimeo.com/showcase/123456/video/789012/abcdef0123#t=1m30s', '789012', 'abcdef0123', 't=1m30s'),
     ),
 )
 def test_vimeo_embed_preserves_timestamp_and_disables_autoplay(url, video_id, privacy_hash, time_hash):

@@ -132,11 +132,14 @@ def _vimeo_privacy_hash(parsed) -> str | None:
         if len(parts) >= 3 and parts[0] == 'video' and not parts[2].isdigit():
             return parts[2].strip() or None
         return None
+    last_num_idx = None
     for idx, part in enumerate(parts):
         if part.isdigit():
-            if len(parts) > idx + 1 and not parts[idx + 1].isdigit():
-                return parts[idx + 1].strip() or None
-            return None
+            last_num_idx = idx
+    if last_num_idx is not None:
+        if len(parts) > last_num_idx + 1 and not parts[last_num_idx + 1].isdigit():
+            return parts[last_num_idx + 1].strip() or None
+        return None
     return None
 
 

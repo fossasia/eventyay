@@ -51,6 +51,11 @@ test('vimeo embeds preserve timestamps and disable autoplay', () => {
 	assertVimeoEmbed(getVideoEmbedUrl('https://player.vimeo.com/video/123456789#t=10s'), '123456789', 't=10s')
 	assertVimeoEmbed(getVideoEmbedUrl('https://vimeo.com/123456789/abcdef0123#t=1m30s'), '123456789', 't=1m30s', 'abcdef0123')
 	assertVimeoEmbed(getVideoEmbedUrl('https://player.vimeo.com/video/123456789?h=abcdef0123#t=10s'), '123456789', 't=10s', 'abcdef0123')
+	assertVimeoEmbed(getVideoEmbedUrl('https://vimeo.com/showcase/123456/video/789012'), '789012')
+	assertVimeoEmbed(getVideoEmbedUrl('https://vimeo.com/showcase/123456/video/789012/abcdef0123'), '789012', null, 'abcdef0123')
+	assertVimeoEmbed(getVideoEmbedUrl('https://vimeo.com/channels/123456/789012'), '789012')
+	assertVimeoEmbed(getVideoEmbedUrl('https://vimeo.com/showcase/123456/video/789012#t=1m30s'), '789012', 't=1m30s')
+	assertVimeoEmbed(getVideoEmbedUrl('https://vimeo.com/showcase/123456/video/789012/abcdef0123#t=1m30s'), '789012', 't=1m30s', 'abcdef0123')
 })
 
 test('non-video urls are not embedded', () => {

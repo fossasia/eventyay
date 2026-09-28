@@ -63,9 +63,14 @@ function vimeoPrivacyHash (parsed) {
 		return null
 	}
 
-	const idIndex = parts.findIndex((part) => /^\d+$/.test(part))
-	if (idIndex !== -1 && parts.length > idIndex + 1 && !/^\d+$/.test(parts[idIndex + 1])) {
-		return parts[idIndex + 1].trim() || null
+	let lastNumIdx = -1
+	for (let i = 0; i < parts.length; i++) {
+		if (/^\d+$/.test(parts[i])) {
+			lastNumIdx = i
+		}
+	}
+	if (lastNumIdx !== -1 && parts.length > lastNumIdx + 1 && !/^\d+$/.test(parts[lastNumIdx + 1])) {
+		return parts[lastNumIdx + 1].trim() || null
 	}
 	return null
 }
