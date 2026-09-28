@@ -40,7 +40,7 @@ from eventyay.base.models import (
     Voucher,
     WaitingListEntry,
 )
-from eventyay.base.models.event import SubEvent
+from eventyay.base.models.event import EventExtraLink, SubEvent
 from eventyay.base.models.product import (
     ProductBundle as ItemBundle,
     SubEventProduct as SubEventItem,
@@ -2535,6 +2535,59 @@ class EventTest(TestCase):
                 },
             ]
         }
+
+    def test_copy_without_active_scope(self):
+        """copy_data_from works with no active django_scopes (e.g. /common/events/add)."""
+        event1 = Event.objects.create(
+            organizer=self.organizer,
+            name='Source',
+            slug='copy-src-scope',
+            date_from=datetime.datetime(2013, 12, 26, 9, 0, 0, tzinfo=datetime.timezone.utc),
+            is_public=True,
+        )
+        with scope(organizer=self.organizer):
+            tr = event1.tax_rules.create(rate=Decimal('19.00'))
+            i1 = event1.products.create(
+                name='Ticket',
+                default_price=Decimal('10.00'),
+                tax_rule=tr,
+            )
+            v1 = i1.variations.create(value='VIP')
+            q1 = event1.quotas.create(name='Quota', size=10)
+            q1.products.add(i1)
+            q1.variations.add(v1)
+            que1 = event1.questions.create(question='Name', type='S')
+            que1.products.add(i1)
+
+        with scope(event=event1):
+            EventExtraLink.objects.create(
+                event=event1,
+                label='Footer link',
+                url='https://example.com/footer',
+                role='footer',
+            )
+
+        event2 = Event.objects.create(
+            organizer=self.organizer,
+            name='Destination',
+            slug='copy-dst-scope',
+            date_from=datetime.datetime(2013, 12, 27, 9, 0, 0, tzinfo=datetime.timezone.utc),
+        )
+        event2.copy_data_from(event1)
+
+        with scopes_disabled():
+            i1new = event2.products.get()
+            assert i1new.variations.count() == 1
+            assert event2.questions.get().products.filter(pk=i1new.pk).exists()
+            q1new = event2.quotas.get()
+            assert q1new.products.filter(pk=i1new.pk).exists()
+            assert q1new.variations.filter(pk=i1new.variations.get().pk).exists()
+            assert EventExtraLink.objects.filter(event_id=event2.pk).count() == 1
+
+        tr.refresh_from_db()
+        i1.refresh_from_db()
+        assert tr.event == event1
+        assert i1.event == event1
 
     @classscope(attr='organizer')
     def test_presale_has_ended(self):
