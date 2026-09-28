@@ -9,3 +9,28 @@ const onReady = (fn) => {
         fn()
     }
 }
+
+onReady(() => {
+    document.querySelectorAll("[data-embed-formats]").forEach((root) => {
+        const choices = root.querySelectorAll("[data-embed-choice]")
+        const panels = root.querySelectorAll("[data-embed-panel]")
+
+        function show(format) {
+            panels.forEach((panel) => {
+                panel.hidden = panel.dataset.embedPanel !== format
+            })
+            choices.forEach((choice) => {
+                const selected = choice.dataset.embedChoice === format
+                choice.classList.toggle("active", selected)
+                choice.setAttribute("aria-pressed", selected ? "true" : "false")
+            })
+        }
+
+        choices.forEach((choice) => {
+            choice.addEventListener("click", () => {
+                show(choice.dataset.embedChoice)
+            })
+        })
+        show("html")
+    })
+})
