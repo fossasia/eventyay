@@ -8,6 +8,10 @@
 			.error-message {{ $t('An error occurred while loading the schedule. Please try again later.') }}
 	template(v-else-if="isTalkView && schedule && resolvedTalk")
 		talk-detail(:talk="resolvedTalk", :baseUrl="eventUrl")
+	template(v-else-if="isTalkView && schedule")
+		.schedule-unavailable(v-if="currentTimezone")
+			.info-message {{ talkUnavailableMessage }}
+		bunt-progress-circular(v-else, size="huge", :page="true")
 	template(v-else-if="isSpeakerView && schedule")
 		featured-speakers(v-if="view === 'featured-speakers'")
 		speakers-list(v-else-if="view === 'speakers'")
@@ -269,7 +273,7 @@ export default {
 				this.showSessionDetails(session, event)
 			},
 			generateSessionLinkUrl: ({eventUrl, session}) => {
-				if (this.isShiftMode) return undefined
+				if (this.isShiftMode || isTalkSchedulePending(session)) return undefined
 				if (!this.onHomeServer) return `#session/${session.id}/`
 				return `${eventUrl}${wipLinkPrefix()}talk/${session.id}/`
 			},
@@ -618,8 +622,14 @@ export default {
 			return visiblePageItems(this.featuredTotalPages, this.featuredPage)
 		},
 		resolvedTalk () {
-			if (!this.talkCode || !this.sessions) return null
-			return this.sessionsLookup[this.talkCode] || null
+			if (!this.talkCode) return null
+			return this.sessionsLookup[this.talkCode]
+				|| this.inlineScheduleSessions.find(session => session.id === this.talkCode || session.code === this.talkCode)
+				|| null
+		},
+		talkUnavailableMessage () {
+			const m = this.translationMessages || {}
+			return m.schedule_pending_secondary || this.$t('This session is not available yet.')
 		},
 		eventSlug () {
 			let url = ''

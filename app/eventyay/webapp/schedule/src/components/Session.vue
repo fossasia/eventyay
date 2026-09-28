@@ -1,5 +1,5 @@
 <template lang="pug">
-a.c-linear-schedule-session(:class="{faved, 'has-date': showDate, 'short-session': isShortSession, 'grid-very-short': isGridVeryShort, 'schedule-pending-session': isSchedulePending, 'has-fav-count': hasFavCount}", :style="style", :href="sessionHref", @click="onSessionClick", :target="sessionHref ? linkTarget : null")
+component.c-linear-schedule-session(:is="sessionHref ? 'a' : 'div'", :class="{faved, 'has-date': showDate, 'short-session': isShortSession, 'grid-very-short': isGridVeryShort, 'schedule-pending-session': isSchedulePending, 'has-fav-count': hasFavCount}", :style="style", :href="sessionHref || null", @click="onSessionClick", :target="sessionHref ? linkTarget : null")
 	.time-box
 		.start.schedule-pending(v-if="isSchedulePending")
 			svg.schedule-pending-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", stroke-linecap="round", stroke-linejoin="round", aria-hidden="true")
@@ -168,6 +168,7 @@ export default {
 			return this.generateSessionLinkUrl({eventUrl: this.eventUrl, session: this.session})
 		},
 		sessionHref () {
+			if (this.isSchedulePending) return undefined
 			return this.link
 		},
 		style () {
@@ -318,6 +319,10 @@ export default {
 	},
 	methods: {
 		onSessionClick (event) {
+			if (this.isSchedulePending) {
+				event.preventDefault()
+				return
+			}
 			this.onSessionLinkClick(event, this.session)
 		},
 		gridMetaTitle (text) {
@@ -583,8 +588,7 @@ expandClampedSessionText()
 		line-height: 1.35
 		color: $clr-secondary-text-light
 	&.schedule-pending-session
-		&[href]
-			cursor: pointer
+		cursor: default
 		.time-box
 			justify-content: center
 	&.has-date

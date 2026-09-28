@@ -146,9 +146,10 @@
 								.featured-speaker-session(v-for="session in speaker.sessions", :key="session.slot_id || session.id")
 									small.featured-speaker-session-time(v-if="!sessionIsPending(session)") {{ formatSessionDateTime(session) }}
 									small.featured-speaker-session-room(v-if="sessionRoomName(session) && !sessionIsPending(session)") {{ sessionRoomName(session) }}
-									a.featured-speaker-session-link(
+									component.featured-speaker-session-link(
+										:is="sessionIsPending(session) ? 'div' : 'a'",
 										:class="{'featured-speaker-session-pending': sessionIsPending(session)}",
-										:href="getSessionLink(session)",
+										:href="sessionIsPending(session) ? null : getSessionLink(session)",
 										:style="getSessionStyle(session)",
 										@click="onSessionClick($event, session)"
 									)
@@ -694,6 +695,10 @@ export default {
 			return code ? `${base}talk/${code}/` : undefined
 		},
 		onSessionClick(event, session) {
+			if (this.sessionIsPending(session)) {
+				event.preventDefault()
+				return
+			}
 			this.onSessionLinkClick(event, session)
 		},
 		async fetchSpeakers({page} = {}) {
@@ -1199,7 +1204,9 @@ export default {
 			line-height: 1.35
 			color: $clr-secondary-text-light
 		.featured-speaker-session-pending
-			cursor: pointer
+			cursor: default
+			&:hover
+				opacity: 1
 
 		.featured-speaker-session-slot
 			display: block
