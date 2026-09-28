@@ -482,6 +482,8 @@ class SpeakerFilterForm(forms.Form):
     question = SafeModelChoiceField(queryset=TalkQuestion.objects.none(), required=False, widget=forms.HiddenInput())
 
     def __init__(self, *args, event=None, filter_arrival=False, **kwargs):
+        from django.db.models.functions import Trim
+        self.Trim = Trim
         super().__init__(*args, **kwargs)
         self.event = event
         self.fields['question'].queryset = event.talkquestions.all()
@@ -502,14 +504,18 @@ class SpeakerFilterForm(forms.Form):
             queryset = queryset.filter(has_arrived=(has_arrived == 'true'))
         
         if readiness := data.get('readiness'):
+            queryset = queryset.annotate(
+                bio_trim=self.Trim('biography'),
+                org_trim=self.Trim('organization')
+            )
             if readiness == 'confirmed':
                 queryset = queryset.filter(user__submissions__state=SubmissionStates.CONFIRMED, user__submissions__event=self.event)
             elif readiness == 'missing_biography':
-                queryset = queryset.filter(Q(biography__isnull=True) | Q(biography=''))
+                queryset = queryset.filter(Q(bio_trim__isnull=True) | Q(bio_trim='') | Q(bio_trim='<p><br></p>') | Q(bio_trim='<p></p>'))
             elif readiness == 'missing_profile_image':
                 queryset = queryset.filter(Q(user__avatar__isnull=True) | Q(user__avatar=''))
             elif readiness == 'missing_affiliation':
-                queryset = queryset.filter(Q(organization__isnull=True) | Q(organization=''))
+                queryset = queryset.filter(Q(org_trim__isnull=True) | Q(org_trim='') | Q(org_trim='<p><br></p>') | Q(org_trim='<p></p>'))
             elif readiness == 'without_session':
                 queryset = queryset.exclude(
                     user__submissions__in=self.event.submissions.filter(state__in=SubmissionStates.accepted_states)

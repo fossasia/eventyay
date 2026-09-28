@@ -480,7 +480,6 @@ class SubmissionFilterForm(forms.Form):
             ('', _('All states')),
             ('scheduled', _('Scheduled')),
             ('unscheduled', _('Unscheduled')),
-            ('missing_room_time', _('Missing room or time')),
             ('with_conflicts', _('With conflicts')),
         ),
         widget=EnhancedSelect,
@@ -709,13 +708,6 @@ class SubmissionFilterForm(forms.Form):
                 has_unscheduled=Exists(unscheduled_slots)
             ).filter(Q(has_unscheduled=True) | Q(has_visible=False))
 
-        if readiness == 'missing_room_time':
-            missing_slots = TalkSlot.objects.filter(
-                submission_id=OuterRef('pk'),
-                schedule=wip_schedule,
-                is_visible=True,
-            ).filter(Q(room__isnull=True) | Q(start__isnull=True)).exclude(room__isnull=True, start__isnull=True)
-            return qs.filter(state=SubmissionStates.CONFIRMED).annotate(has_missing=Exists(missing_slots)).filter(has_missing=True)
 
         if readiness == 'with_conflicts':
             warnings = wip_schedule.get_all_talk_warnings()

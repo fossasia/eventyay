@@ -44,6 +44,7 @@ from eventyay.base.models.organizer import Organizer
 from eventyay.base.settings import is_event_series_creation_enabled, is_meetup_creation_enabled
 from eventyay.common.text.phrases import phrases
 from eventyay.common.permissions import is_admin_mode_active
+from django.db.models.functions import Trim
 from eventyay.common.views.mixins import EventPermissionRequired, PermissionRequired
 from eventyay.event.stages import get_stages
 from eventyay.orga.views.submission import SubmissionStatsMixin
@@ -475,7 +476,6 @@ class EventDashboardView(EventPermissionRequired, SubmissionStatsMixin, Template
                 'canceled': event.submissions.filter(state=SubmissionStates.CANCELED).count(),
                 'scheduled': 0,
                 'unscheduled': 0,
-                'missing_room_time': 0,
                 'with_conflicts': 0,
             }
             if wip_schedule:
@@ -488,18 +488,27 @@ class EventDashboardView(EventPermissionRequired, SubmissionStatsMixin, Template
                 session_readiness['unscheduled'] = confirmed_submissions.filter(
                     Q(id__in=unscheduled_submission_ids) | ~Q(id__in=visible_submission_ids)
                 ).count()
-                session_readiness['missing_room_time'] = confirmed_talks.filter(Q(start__isnull=True) | Q(room__isnull=True)).exclude(start__isnull=True, room__isnull=True).count()
-                session_readiness['with_conflicts'] = len([k for k, v in wip_schedule.get_all_talk_warnings().items() if v])
+                session_readiness['with_conflicts'] = len([
+                    k for k, v in wip_schedule.get_all_talk_warnings().items() 
+                    if v and k.submission.state == SubmissionStates.CONFIRMED and k.is_visible
+                ])
             
             if can_list_speaker:
-                speaker_profiles = speaker_profiles_for_user(event, self.request.user)
+                speaker_profiles = speaker_profiles_for_user(event, self.request.user).annotate(
+                    bio_trim=Trim('biography'),
+                    org_trim=Trim('organization')
+                )
                 speaker_readiness = {
                     'total_speakers': speaker_profiles.count(),
                     'confirmed_speakers': speaker_profiles.filter(user__submissions__state=SubmissionStates.CONFIRMED, user__submissions__event=event).distinct().count(),
-                    'missing_biography': speaker_profiles.filter(Q(biography__isnull=True) | Q(biography='')).count(),
+                    'missing_biography': speaker_profiles.filter(Q(bio_trim__isnull=True) | Q(bio_trim='') | Q(bio_trim='<p><br></p>') | Q(bio_trim='<p></p>')).count(),
                     'missing_profile_image': speaker_profiles.filter(Q(user__avatar__isnull=True) | Q(user__avatar='')).count(),
-                    'missing_affiliation': speaker_profiles.filter(Q(organization__isnull=True) | Q(organization='')).count(),
-                    'without_session': speaker_profiles.exclude(user__submissions__state__in=[SubmissionStates.ACCEPTED, SubmissionStates.CONFIRMED], user__submissions__event=event).distinct().count(),
+                    'missing_affiliation': speaker_profiles.filter(Q(org_trim__isnull=True) | Q(org_trim='') | Q(org_trim='<p><br></p>') | Q(org_trim='<p></p>')).count(),
+                    'without_session': speaker_profiles.exclude(
+                        user__submissions__in=event.submissions.filter(
+                            state__in=[SubmissionStates.ACCEPTED, SubmissionStates.CONFIRMED]
+                        )
+                    ).distinct().count(),
                 }
                 result['speaker_readiness'] = speaker_readiness
             

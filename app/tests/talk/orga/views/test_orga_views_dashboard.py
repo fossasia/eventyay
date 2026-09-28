@@ -186,3 +186,27 @@ def test_event_dashboard_includes_schedule_releases(event, orga_client, orga_use
     assert response.status_code == 200
     assert 'Schedule' in response.text
     assert '<div></div>' not in response.text
+
+
+@pytest.mark.django_db
+def test_dashboard_without_session_event_boundary(event, other_event, orga_client, speaker):
+    from eventyay.base.models.submission import Submission, SubmissionStates
+    from django_scopes import scope
+    from eventyay.base.models.profile import SpeakerProfile
+
+    with scope(event=event):
+        SpeakerProfile.objects.create(event=event, user=speaker)
+        sub1 = Submission.objects.create(event=event, state=SubmissionStates.REJECTED, title='talk 1')
+        sub1.speakers.add(speaker)
+
+    with scope(event=other_event):
+        SpeakerProfile.objects.create(event=other_event, user=speaker)
+        sub2 = Submission.objects.create(event=other_event, state=SubmissionStates.ACCEPTED, title='talk 2')
+        sub2.speakers.add(speaker)
+
+    response = orga_client.get(event.orga_urls.base)
+    assert response.status_code == 200
+    speaker_readiness = response.context_data.get('speaker_readiness')
+    if speaker_readiness is not None:
+        assert speaker_readiness.get('without_session') == 1
+

@@ -40,15 +40,6 @@
             <div class="td-kpi-link">{% trans "View sessions" %} <span aria-hidden="true">></span></div>
         </a>
 
-        <a href="{{ request.event.orga_urls.submissions }}?readiness=missing_room_time" class="td-kpi-card {% if session_readiness.missing_room_time > 0 %}td-kpi-orange{% else %}td-kpi-blue{% endif %}" title="{% trans 'Sessions missing room/time' %}">
-            <div class="td-kpi-top">
-                <span class="td-kpi-icon" aria-hidden="true"><span class="fa fa-clock-o"></span></span>
-                <span class="td-kpi-label">{% trans "Sessions missing room/time" %}</span>
-            </div>
-            <div class="td-kpi-value">{{ session_readiness.missing_room_time }}</div>
-            <div class="td-kpi-hint td-kpi-hint-spacer" aria-hidden="true"></div>
-            <div class="td-kpi-link">{% trans "View sessions" %} <span aria-hidden="true">></span></div>
-        </a>
 
         <a href="{{ request.event.orga_urls.submissions }}?readiness=with_conflicts" class="td-kpi-card {% if session_readiness.with_conflicts > 0 %}td-kpi-red{% else %}td-kpi-blue{% endif %}" title="{% trans 'Sessions with conflicts' %}">
             <div class="td-kpi-top">
