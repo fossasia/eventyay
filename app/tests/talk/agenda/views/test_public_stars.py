@@ -51,6 +51,7 @@ def test_public_stars_include_schedule_metadata_when_schedule_is_public(client, 
     assert talk.get('schedule_pending') is not True
     assert payload['rooms']
     assert payload['tracks']
+    assert 'Star User' in response.text
     assert 'Testroom' in response.text
     assert 'Test Track' in response.text
 
@@ -66,25 +67,16 @@ def test_public_stars_hide_unpublished_schedule_metadata(client, event, slot, ot
 
     cache.clear()
     response = client.get(_stars_url(event), HTTP_ACCEPT='text/html')
-    assert response.status_code == 200
-    payload = json.loads(response.context['schedule_json'])
-    assert [item['code'] for item in payload['talks']] == [slot.submission.code]
-    talk = payload['talks'][0]
-    assert talk['title'] == slot.submission.title
-    assert talk['start'] is None
-    assert talk['end'] is None
-    assert talk['room'] is None
-    assert talk['track'] is None
-    assert talk['schedule_pending'] is True
-    assert payload['rooms'] == []
-    assert payload['tracks'] == []
+    assert response.status_code == 404
+    assert 'Star User' not in response.text
+    assert 'Starred by' not in response.text
+    assert slot.submission.title not in response.text
     assert 'Testroom' not in response.text
     assert 'Test Track' not in response.text
     assert other_slot.submission.title not in response.text
 
     favs = client.get(_stars_url(event).rstrip('/') + '.json')
-    assert favs.status_code == 200
-    assert favs.json()['favs'] == [slot.submission.code]
+    assert favs.status_code == 404
 
 
 @pytest.mark.django_db
@@ -105,4 +97,5 @@ def test_organizer_still_sees_unpublished_schedule_on_public_stars(orga_client, 
     assert talk['room'] == slot.room_id
     assert talk['track'] == track.pk
     assert payload['rooms']
+    assert 'Star User' in response.text
     assert 'Testroom' in response.text

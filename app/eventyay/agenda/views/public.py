@@ -6,8 +6,9 @@ from django.views.generic import TemplateView, View
 from django_context_decorator import context
 from django_scopes import scope
 
-from eventyay.agenda.views.utils import build_public_starred_schedule_json, is_email_like
+from eventyay.agenda.views.utils import build_enriched_schedule_json, is_email_like
 from eventyay.base.models import SubmissionFavourite, User
+from eventyay.talk_rules.agenda import can_view_schedule
 
 
 def starred_submission_codes(request, user) -> list[str]:
@@ -32,10 +33,7 @@ class PublicStarredScheduleView(TemplateView):
 
     @context
     def schedule_json(self) -> str:
-        return build_public_starred_schedule_json(
-            self.request,
-            starred_submission_codes(self.request, self.public_user),
-        )
+        return build_enriched_schedule_json(self.request)
 
     @cached_property
     def public_user(self) -> User:
@@ -53,7 +51,7 @@ class PublicStarredScheduleView(TemplateView):
         return user
 
     def dispatch(self, request, *args, **kwargs):
-        if not request.event.current_schedule:
+        if not request.event.current_schedule or not can_view_schedule(request.user, request.event):
             raise Http404()
         return super().dispatch(request, *args, **kwargs)
 
@@ -98,7 +96,7 @@ class PublicStarredScheduleDataView(View):
 
     def get(self, request, event, code, **kwargs):
         schedule = request.event.current_schedule
-        if not schedule:
+        if not schedule or not can_view_schedule(request.user, request.event):
             raise Http404()
 
         favs = starred_submission_codes(request, self.public_user)
