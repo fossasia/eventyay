@@ -6,8 +6,25 @@ from django.views.generic import TemplateView, View
 from django_context_decorator import context
 from django_scopes import scope
 
-from eventyay.agenda.views.utils import build_enriched_schedule_json, is_email_like
+from eventyay.agenda.views.utils import build_public_starred_schedule_json, is_email_like
 from eventyay.base.models import SubmissionFavourite, User
+
+
+def starred_submission_codes(request, user) -> list[str]:
+    schedule = request.event.current_schedule
+    if not schedule:
+        return []
+    visible_submission_ids = schedule.talks.filter(is_visible=True).values_list('submission_id', flat=True)
+    with scope(event=request.event):
+        return list(
+            SubmissionFavourite.objects.filter(
+                user=user,
+                submission__event=request.event,
+                submission_id__in=visible_submission_ids,
+            )
+            .values_list('submission__code', flat=True)
+            .order_by('submission__code')
+        )
 
 
 class PublicStarredScheduleView(TemplateView):
@@ -15,7 +32,10 @@ class PublicStarredScheduleView(TemplateView):
 
     @context
     def schedule_json(self) -> str:
-        return build_enriched_schedule_json(self.request)
+        return build_public_starred_schedule_json(
+            self.request,
+            starred_submission_codes(self.request, self.public_user),
+        )
 
     @cached_property
     def public_user(self) -> User:
@@ -81,18 +101,7 @@ class PublicStarredScheduleDataView(View):
         if not schedule:
             raise Http404()
 
-        # Only include talks that are visible in the published schedule.
-        visible_submission_ids = schedule.talks.filter(is_visible=True).values_list('submission_id', flat=True)
-        with scope(event=request.event):
-            favs = list(
-                SubmissionFavourite.objects.filter(
-                    user=self.public_user,
-                    submission__event=request.event,
-                    submission_id__in=visible_submission_ids,
-                )
-                .values_list('submission__code', flat=True)
-                .order_by('submission__code')
-            )
+        favs = starred_submission_codes(request, self.public_user)
 
         user = self.public_user
         display_name = user.get_display_name() or user.code
