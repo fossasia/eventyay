@@ -1998,7 +1998,7 @@ body:has(.td-dashboard) #page-content {
 }
 .common-dashboard .cd-search .cd-search__input.form-control::placeholder,
 .common-dashboard .cd-search .form-control::placeholder {
-  font-size: 1.4rem;
+  font-size: 1.08rem;
 }
 .cd-search__submit {
   min-width: 8rem;
@@ -2167,11 +2167,13 @@ body:has(.td-dashboard) #page-content {
   transform: scale(1.06)
 }
 .cd-action-card__icon,
-.cd-action-card__icon--primary {
+.cd-action-card__icon--primary,
+.cd-action-card__icon--attend {
   color: var(--cd-primary);
   background: color-mix(in srgb,var(--cd-primary) 14%,#fff)
 }
-.cd-action-card__icon--success {
+.cd-action-card__icon--success,
+.cd-action-card__icon--talk {
   color: var(--cd-positive);
   background: color-mix(in srgb,var(--cd-positive) 16%,#fff)
 }
@@ -2418,6 +2420,49 @@ body:has(.td-dashboard) #page-content {
   transform: translateY(-1px);
   color: #fff;
   text-decoration: none
+}
+.common-dashboard a.cd-module-btn--tickets {
+  background: var(--cd-primary);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--cd-primary) 28%, transparent);
+}
+.common-dashboard a.cd-module-btn--talks {
+  background: var(--cd-warning);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--cd-warning) 28%, transparent);
+}
+.common-dashboard a.cd-module-btn--video {
+  background: var(--cd-positive);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--cd-positive) 28%, transparent);
+}
+
+.cd-info {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--cd-primary);
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: help;
+  vertical-align: middle;
+  transition: color var(--cd-ease), transform var(--cd-ease), background-color var(--cd-ease);
+}
+.common-dashboard__header .cd-info {
+  width: 1.85rem;
+  height: 1.85rem;
+  font-size: 1.25rem;
+}
+.cd-info:hover,
+.cd-info:focus {
+  color: color-mix(in srgb, var(--cd-primary) 75%, #000);
+  background: color-mix(in srgb, var(--cd-primary) 12%, #fff);
+  outline: none;
+  transform: scale(1.06);
 }
 .cd-empty {
   display: flex;

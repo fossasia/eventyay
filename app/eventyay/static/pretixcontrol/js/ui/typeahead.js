@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const el = target.matches('.sidebar .dropdown, ul.navbar-nav .dropdown, .navbar-events-collapse') ? target : target.closest('.sidebar .dropdown, ul.navbar-nav .dropdown, .navbar-events-collapse');
             const parent = el.parentElement;
             if (parent) {
-                const input = parent.querySelector("input");
+                const input = parent.querySelector("input[data-typeahead-query], .dropdown-menu input");
                 if (input) {
                     input.value = "";
                     input.dispatchEvent(new Event('change', { bubbles: true }));
@@ -119,31 +119,21 @@ document.addEventListener('DOMContentLoaded', () => {
                             const iconSpan = document.createElement("span");
                             iconSpan.className = "fa fa-users fa-fw";
                             
-                            const textDiv = document.createElement("div");
-                            textDiv.textContent = res.name;
-                            
                             nameSpan.appendChild(iconSpan);
-                            nameSpan.appendChild(document.createTextNode(" "));
-                            // In jQuery it did append($("<div>").text(res.name).html()) which means it appended text directly
-                            nameSpan.appendChild(textDiv);
+                            nameSpan.appendChild(document.createTextNode(" " + res.name));
                             
                             outerDiv.appendChild(nameSpan);
                         } else if (res.type === "order" || res.type === "voucher") {
                             const titleSpan = document.createElement("span");
                             titleSpan.className = "event-name-full";
-                            const titleDiv = document.createElement("div");
-                            titleDiv.textContent = res.title;
-                            titleSpan.appendChild(titleDiv);
+                            titleSpan.appendChild(document.createTextNode(res.title));
                             
                             const orgSpan = document.createElement("span");
                             orgSpan.className = "event-organizer";
                             const iconSpan = document.createElement("span");
                             iconSpan.className = "fa fa-calendar fa-fw";
-                            const evDiv = document.createElement("div");
-                            evDiv.textContent = res.event;
                             orgSpan.appendChild(iconSpan);
-                            orgSpan.appendChild(document.createTextNode(" "));
-                            orgSpan.appendChild(evDiv);
+                            orgSpan.appendChild(document.createTextNode(" " + res.event));
                             
                             outerDiv.appendChild(titleSpan);
                             outerDiv.appendChild(orgSpan);
@@ -152,11 +142,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             nameSpan.className = "event-name-full";
                             const iconSpan = document.createElement("span");
                             iconSpan.className = "fa fa-user fa-fw";
-                            const textDiv = document.createElement("div");
-                            textDiv.textContent = res.name;
                             nameSpan.appendChild(iconSpan);
-                            nameSpan.appendChild(document.createTextNode(" "));
-                            nameSpan.appendChild(textDiv);
+                            nameSpan.appendChild(document.createTextNode(" " + res.name));
                             
                             outerDiv.appendChild(nameSpan);
                         } else {
@@ -181,20 +168,15 @@ document.addEventListener('DOMContentLoaded', () => {
                             
                             const nameSpan = document.createElement("span");
                             nameSpan.className = "event-name-full";
-                            const innerNameDiv = document.createElement("div");
-                            innerNameDiv.textContent = res.name;
-                            nameSpan.appendChild(innerNameDiv);
+                            nameSpan.appendChild(document.createTextNode(res.name));
                             textDiv.appendChild(nameSpan);
                             
                             const orgSpan = document.createElement("span");
                             orgSpan.className = "event-organizer search-detail";
                             const usersIcon = document.createElement("span");
                             usersIcon.className = "fa fa-users fa-fw";
-                            const innerOrgDiv = document.createElement("div");
-                            innerOrgDiv.textContent = res.organizer;
                             orgSpan.appendChild(usersIcon);
-                            orgSpan.appendChild(document.createTextNode(" "));
-                            orgSpan.appendChild(innerOrgDiv);
+                            orgSpan.appendChild(document.createTextNode(" " + res.organizer));
                             textDiv.appendChild(orgSpan);
                             
                             const dateSpan = document.createElement("span");
@@ -214,7 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 }
                 
-                if (document.activeElement === queryEl && container.children.length > 0) {
+                if (document.activeElement === queryEl && container.querySelectorAll("li:not(.query-holder)").length > 0) {
                     container.classList.add('focused');
                 } else {
                     container.classList.remove('focused');
