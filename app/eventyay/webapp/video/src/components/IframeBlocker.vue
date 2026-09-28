@@ -1,6 +1,6 @@
 <template lang="pug">
 .c-iframe-blocker
-	iframe(v-if="showIframe", :src="src", v-bind="$attrs")
+	iframe(v-if="showIframe", :src="src", v-bind="$attrs", @error="onIframeError")
 	.consent-blocker(v-else)
 		.warning {{ $t('This content is hosted by a third party on') }}
 		.domain {{ domain }}
@@ -12,6 +12,7 @@
 import store from 'store'
 import { getUrlDomain, getBlockerConfig, isDomainBlocked } from 'lib/iframeConsent'
 import { normalizeIframeConsentDomain } from 'lib/iframeConsentDomain'
+import {logOperational} from 'lib/operationalLog'
 export default {
 	inheritAttrs: false,
 	props: {
@@ -53,6 +54,9 @@ export default {
 			// consent (handled by the Vuex watcher) or show-once consent (needs an
 			// explicit initializeIframe call).
 			this.$emit('consent-given', this.remember)
+		},
+		onIframeError() {
+			logOperational({action: 'iframe.error', outcome: 'failure', backend: 'iframe', error_code: 'iframe_error'})
 		}
 	}
 }

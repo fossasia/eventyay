@@ -38,6 +38,7 @@ from eventyay.base.i18n import (
     get_language_without_region,
     language,
 )
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.meetup import is_meetup_event
 from eventyay.base.models import (
     CartPosition,
@@ -601,6 +602,7 @@ class OrderError(LazyLocaleException):
         else:
             msg = _(msg)
         super().__init__(msg)
+        log_event('tickets', 'order.error', OUTCOME_FAILURE, error_code='order_error')
 
 
 def _check_date(event: Event, now_dt: datetime):

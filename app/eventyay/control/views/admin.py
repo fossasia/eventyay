@@ -981,6 +981,7 @@ class TaskList(AdministratorPermissionRequiredMixin, PaginationMixin, ListView):
         options = Options()
         options.locale_code = settings.LANGUAGE_CODE
         options.verbose = True
+        options.use_24hour_time_format = False
         schedule = task.crontab
         if schedule:
             cron_expression = (

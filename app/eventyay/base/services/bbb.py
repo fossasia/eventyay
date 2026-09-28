@@ -2,6 +2,7 @@ import asyncio
 import hashlib
 import logging
 import random
+import time
 from datetime import datetime
 from urllib.parse import urlencode, urljoin, urlparse
 
@@ -18,6 +19,7 @@ from lxml import etree
 from yarl import URL
 
 from eventyay.base.models import BBBCall, BBBServer
+from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
 from .video_server_routing import filter_servers_for_event, is_server_available_for_event
 
 
@@ -25,7 +27,9 @@ logger = logging.getLogger(__name__)
 
 
 class BBBServerUnavailable(Exception):
-    pass
+    def __init__(self, *args):
+        super().__init__(*args)
+        log_event('video', 'connection.choose_server', OUTCOME_FAILURE, error_code='server_unavailable', backend='bbb')
 
 
 def get_url(operation, params, base_url, secret):
@@ -192,6 +196,15 @@ def get_create_params_for_room(
             voice_bridge=voice_bridge,
             guest_policy=guest_policy,
         )
+        if record:
+            log_event(
+                'video',
+                'recording.start',
+                OUTCOME_SUCCESS,
+                event_id=getattr(room, 'event_id', None),
+                object_id=getattr(room, 'pk', None),
+                backend='bbb',
+            )
 
     m = [m for m in room.module_config if m["type"] == "call.bigbluebutton"][0]
     config = m["config"]
@@ -229,29 +242,56 @@ class BBBService:
     def __init__(self, event):
         self.event = event
 
+    def _log_bbb_result(self, operation, outcome, *, status=None, duration_ms=None, error_code=None):
+        log_event('video', 'connection.%s' % operation, outcome, error_code=error_code, status=status, duration_ms=duration_ms, event_id=getattr(self.event, 'pk', None), backend='bbb')
+
     async def _get(self, url, timeout=30, disable_ssl=False):
+        started = time.monotonic()
+        duration_ms = 0
         try:
             ssl_opt = False if disable_ssl else None
             async with aiohttp.ClientSession() as session:
                 async with session.get(URL(url, encoded=True), timeout=timeout, ssl=ssl_opt) as resp:
+                    duration_ms = int((time.monotonic() - started) * 1000)
                     if resp.status != 200:
-                        logger.error(
-                            f"Could not contact BBB. Return code: {resp.status}"
+                        self._log_bbb_result(
+                            'get',
+                            OUTCOME_FAILURE,
+                            status=resp.status,
+                            duration_ms=duration_ms,
+                            error_code='http_error',
                         )
+                        logger.error('Could not contact BBB. Return code: %s', resp.status)
                         return False
 
                     body = await resp.read()
 
                 root = etree.fromstring(body)
                 if root.xpath("returncode")[0].text != "SUCCESS":
-                    logger.error(f"Could not contact BBB. Response: {body.decode(errors='replace')}")
+                    self._log_bbb_result(
+                        'get',
+                        OUTCOME_FAILURE,
+                        status=200,
+                        duration_ms=duration_ms,
+                        error_code='bbb_error',
+                    )
+                    logger.error('Could not contact BBB. API returncode was not SUCCESS.')
                     return False
         except Exception:
+            self._log_bbb_result(
+                'get',
+                OUTCOME_FAILURE,
+                duration_ms=int((time.monotonic() - started) * 1000),
+                error_code='request_error',
+            )
             logger.exception("Could not contact BBB.")
             return False
+        self._log_bbb_result('get', OUTCOME_SUCCESS, status=200, duration_ms=duration_ms)
         return root
 
     async def _post(self, url, xmldata, disable_ssl=False):
+        started = time.monotonic()
+        duration_ms = 0
         try:
             ssl_opt = False if disable_ssl else None
             async with aiohttp.ClientSession() as session:
@@ -261,21 +301,41 @@ class BBBService:
                     headers={"Content-Type": "application/xml"},
                     ssl=ssl_opt,
                 ) as resp:
+                    duration_ms = int((time.monotonic() - started) * 1000)
                     if resp.status != 200:
-                        logger.error(
-                            f"Could not contact BBB. Return code: {resp.status}"
+                        self._log_bbb_result(
+                            'post',
+                            OUTCOME_FAILURE,
+                            status=resp.status,
+                            duration_ms=duration_ms,
+                            error_code='http_error',
                         )
+                        logger.error('Could not contact BBB. Return code: %s', resp.status)
                         return False
 
                     body = await resp.read()
 
                 root = etree.fromstring(body)
                 if root.xpath("returncode")[0].text != "SUCCESS":
-                    logger.error(f"Could not contact BBB. Response: {body.decode(errors='replace')}")
+                    self._log_bbb_result(
+                        'post',
+                        OUTCOME_FAILURE,
+                        status=200,
+                        duration_ms=duration_ms,
+                        error_code='bbb_error',
+                    )
+                    logger.error('Could not contact BBB. API returncode was not SUCCESS.')
                     return False
         except Exception:
+            self._log_bbb_result(
+                'post',
+                OUTCOME_FAILURE,
+                duration_ms=int((time.monotonic() - started) * 1000),
+                error_code='request_error',
+            )
             logger.exception("Could not contact BBB.")
             return False
+        self._log_bbb_result('post', OUTCOME_SUCCESS, status=200, duration_ms=duration_ms)
         return root
 
     async def get_join_url_for_room(self, room, user, moderator=False):
@@ -456,10 +516,7 @@ class BBBService:
                 tz = ZoneInfo(self.event.timezone)
                 recordings_nodes = root.xpath("recordings")
                 if not recordings_nodes:
-                    logger.error(
-                        "BBB recordings response from server %s has no recordings container",
-                        server,
-                    )
+                    logger.error("BBB recordings response from server %s has no recordings container", server)
                     continue
                 for rec in recordings_nodes[0].xpath("recording"):
                     url_presentation = url_screenshare = url_video = url_notes = None
@@ -518,5 +575,22 @@ class BBBService:
                 recordings.extend(server_recordings)
                 successful_request = True
             except Exception:
-                logger.exception("Could not fetch recordings from server %s", server)
+                log_event(
+                    'video',
+                    'connection.get',
+                    OUTCOME_FAILURE,
+                    error_code='parse_error',
+                    backend='bbb',
+                    event_id=getattr(self.event, 'pk', None),
+                )
+                logger.exception('Could not fetch recordings from BBB server')
+        if successful_request:
+            log_event(
+                'video',
+                'recording.fetch',
+                OUTCOME_SUCCESS,
+                event_id=getattr(self.event, 'pk', None),
+                object_id=getattr(room, 'pk', None),
+                backend='bbb',
+            )
         return recordings if successful_request else None

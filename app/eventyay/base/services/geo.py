@@ -6,6 +6,7 @@ import requests
 from django.conf import settings as django_settings
 from django.core.cache import cache
 
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.utils.language import localize_event_text
 
@@ -182,7 +183,12 @@ def geocode_address(query: str) -> list[dict]:
         return []
 
     gs = GlobalSettingsObject()
-    results = _sanitize_geocode_results(_geocode_with_configured_providers(cleaned_query, gs))
+    try:
+        results = _sanitize_geocode_results(_geocode_with_configured_providers(cleaned_query, gs))
+    except requests.RequestException:
+        log_event('tickets', 'connection.geocode', OUTCOME_FAILURE, error_code='request_error', backend='geocode')
+        logger.exception('Geocoding request failed')
+        raise
 
     if results:
         cache.set(cache_key, results, timeout=3600 * 6)
@@ -239,7 +245,7 @@ def resolve_venue_map_coordinates(venue, *, allow_remote_geocoding: bool = True)
         try:
             results = geocode_address(address)
         except requests.RequestException:
-            logger.exception('Geocoding failed for venue address %r', address)
+            logger.exception('Geocoding request failed')
             return None
     else:
         results = geocode_address_from_cache(address)

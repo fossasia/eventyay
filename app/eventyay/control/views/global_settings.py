@@ -20,6 +20,7 @@ from python_http_client.exceptions import HTTPError
 from eventyay.api.models import OAuthApplication
 from eventyay.base.email import CustomSMTPBackend, SendGridEmail
 from eventyay.base.models import Event, GlobalPluginConfig, LogEntry, Organizer, OrderPayment, OrderRefund
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.plugins import get_all_plugins
 from eventyay.base.forms import SECRET_REDACTED
 from eventyay.base.services.mail import get_mail_backend
@@ -179,6 +180,7 @@ class SSOView(AdministratorPermissionRequiredMixin, FormView):
             result = self.create_oauth_application(url)
         except (IntegrityError, ValidationError, ObjectDoesNotExist) as e:
             error_type = type(e).__name__
+            log_event('core', 'oauth.application', OUTCOME_FAILURE, error_code='create_failed')
             logger.error('Error while creating OAuth2 application: %s - %s', error_type, e)
             return self.render_to_response({'error_message': f'{error_type}: {e}'})
 
@@ -382,14 +384,16 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
                 ),
             )
         except HTTPError as e:
-            logger.exception('Admin SendGrid test failed (from=%s)', mail_from)
+            log_event('mail', 'mail.send', OUTCOME_FAILURE, error_code='test_failed', backend='sendgrid')
+            logger.exception('Admin SendGrid test failed')
             return self._respond(
                 request,
                 'error',
                 _('SendGrid test email failed to connect or send. HTTP Error: %(err)s') % {'err': e},
             )
         except ImportError as e:
-            logger.exception('Admin Gmail test failed because dependencies are missing (from=%s)', mail_from)
+            log_event('mail', 'mail.send', OUTCOME_FAILURE, error_code='gmail_missing_deps', backend='gmail')
+            logger.exception('Admin Gmail test failed because dependencies are missing')
             return self._respond(request, 'error', str(e))
         except Exception as e:
             from eventyay.base.gmail.errors import (
@@ -412,7 +416,8 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
                     _('Gmail test email could not be sent: %(err)s') % {'err': e},
                 )
             elif isinstance(e, (smtplib.SMTPException, OSError)):
-                logger.exception('Admin SMTP test failed (from=%s)', mail_from)
+                log_event('mail', 'mail.send', OUTCOME_FAILURE, error_code='test_failed', backend='smtp')
+                logger.exception('Admin SMTP test failed')
                 return self._respond(
                     request,
                     'error',

@@ -25,6 +25,7 @@ from webauthn.helpers import generate_challenge, generate_user_handle
 
 from eventyay.common.consts import KEY_LAST_FORCE_LOGIN
 from eventyay.base.models import User, WebAuthnDevice, U2FDevice
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.forms.user import User2FADeviceAddForm
 from eventyay.helpers.u2f import websafe_encode
 from .common import AccountMenuMixIn
@@ -315,9 +316,15 @@ class TwoFactorAuthDeviceConfirmWebAuthnView(TwoFactorAuthPageMixin, TemplateVie
                 )
             messages.success(request, gettext('The device has been verified and can now be used.') + note)
             return redirect(reverse('eventyay_common:account.2fa'))
-        except Exception as e:
-            msg = f'WebAuthn registration failed: {e}'
-            logger.exception(msg, exc_info=True)
+        except Exception:
+            log_event(
+                'core',
+                'auth.login',
+                OUTCOME_FAILURE,
+                error_code='webauthn_register_failed',
+                user_id=getattr(request.user, 'pk', None),
+            )
+            logger.exception('WebAuthn registration failed')
             messages.error(request, _('The registration could not be completed. Please try again.'))
             return redirect(
                 reverse('eventyay_common:account.2fa.confirm.webauthn', kwargs={'device_id': self.device.pk})

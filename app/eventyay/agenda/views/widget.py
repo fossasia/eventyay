@@ -43,6 +43,7 @@ def color_etag(request, organizer=None, event=None, **kwargs):
     header_text_color = request.event.settings.get('header_text_color')
     navigation_text_color = request.event.settings.get('navigation_text_color')
     menu_text_scroll_over_color = request.event.settings.get('menu_text_scroll_over_color')
+    theme_color_background = request.event.settings.get('theme_color_background')
     primary_font = request.event.settings.get('primary_font')
     parts = [
         request.event.visible_primary_color or '',
@@ -50,6 +51,7 @@ def color_etag(request, organizer=None, event=None, **kwargs):
         header_text_color or '',
         navigation_text_color or '',
         menu_text_scroll_over_color or '',
+        theme_color_background or '',
         primary_font or '',
     ]
     return '|'.join(parts) if any(parts) else 'none'
@@ -260,6 +262,56 @@ def widget_script(request, organizer=None, event=None, **kwargs):
 
     loader = (
         "(function(){"
+        "function isLayoutStyle(name){"
+        "return name==='width'||name==='min-width'||name==='max-width'||name==='height'||name==='min-height'||name==='max-height'||name==='margin'||name==='margin-top'||name==='margin-right'||name==='margin-bottom'||name==='margin-left'||name==='display'||name==='float'||name==='clear'||name==='position'||name==='top'||name==='right'||name==='bottom'||name==='left'||name==='z-index'||name==='flex'||name==='flex-grow'||name==='flex-shrink'||name==='flex-basis'||name==='align-self'||name==='justify-self'||name==='grid-column'||name==='grid-row'||name==='vertical-align'||name==='box-sizing'||name==='overflow';"
+        "}"
+        "function keepScheduleStyle(element, host){"
+        "var style=element.style;"
+        "var drop=[];"
+        "for(var i=0;i<style.length;i++){"
+        "var name=style.item(i);"
+        "if(name.indexOf('--')===0){continue;}"
+        "if(isLayoutStyle(name)){host.style.setProperty(name, style.getPropertyValue(name), style.getPropertyPriority(name));}"
+        "drop.push(name);"
+        "}"
+        "for(var j=0;j<drop.length;j++){style.removeProperty(drop[j]);}"
+        "}"
+        "function isolateScheduleElement(element){"
+        "if(!element||!element.parentNode||String(element.tagName)!=='PRETALX-SCHEDULE'){return;}"
+        "var rootNode=element.getRootNode?element.getRootNode():document;"
+        "if(rootNode&&rootNode.host){return;}"
+        "if(typeof document.createElement('eventyay-widget-host').attachShadow!=='function'){return;}"
+        "var host=document.createElement('eventyay-widget-host');"
+        "var shadow=host.attachShadow({mode:'open'});"
+        "var reset=document.createElement('style');"
+        "reset.textContent=':host{display:block}pretalx-schedule{display:block;color:#0d0f10;background:#fff}';"
+        "shadow.appendChild(reset);"
+        "keepScheduleStyle(element, host);"
+        "element.parentNode.insertBefore(host,element);"
+        "shadow.appendChild(element);"
+        "}"
+        "function isolateSchedules(root){"
+        "if(!root||!root.querySelectorAll){return;}"
+        "var nodes=root.querySelectorAll('pretalx-schedule');"
+        "for(var i=0;i<nodes.length;i++){isolateScheduleElement(nodes[i]);}"
+        "}"
+        "try{"
+        "isolateSchedules(document);"
+        "var observer=new MutationObserver(function(records){"
+        "try{"
+        "for(var i=0;i<records.length;i++){"
+        "var added=records[i].addedNodes;"
+        "for(var j=0;j<added.length;j++){"
+        "var node=added[j];"
+        "if(!node||node.nodeType!==1){continue;}"
+        "if(node.tagName==='PRETALX-SCHEDULE'){isolateScheduleElement(node);}"
+        "else{isolateSchedules(node);}"
+        "}"
+        "}"
+        "}catch(err){/* Keep watching later schedule elements. */}"
+        "});"
+        "observer.observe(document.documentElement,{childList:true,subtree:true});"
+        "}catch(e){/* The schedule bundle below still loads. */}"
         f"var staticPath={module_src!r};"
         "var base=(document.currentScript&&document.currentScript.src)?document.currentScript.src:window.location.href;"
         "var u=(function(){try{return new URL(staticPath, base).href;}catch(e){return staticPath;}})();"
@@ -318,7 +370,7 @@ def event_css(request, organizer=None, event=None, **kwargs):
         variables.append(f'--color-header-navigation: {navigation_text_color};')
     if menu_text_scroll_over_color:
         variables.append(f'--color-header-navigation-hover: {menu_text_scroll_over_color};')
-    if theme_color_background:
+    if theme_color_background and request.GET.get('target') != 'orga':
         variables.append(f'--color-bg: {theme_color_background};')
 
     font_css = ''

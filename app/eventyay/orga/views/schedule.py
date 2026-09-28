@@ -6,10 +6,11 @@ import logging
 from asgiref.sync import async_to_sync
 import dateutil.parser
 from celery.exceptions import TaskError
+from django.apps import apps
 from django.conf import settings
 from django.contrib import messages
-from django.core.exceptions import ValidationError
-from django.db import transaction
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db import DatabaseError, transaction
 from django.http import FileResponse, Http404, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import redirect
 from django.utils.timezone import now
@@ -18,6 +19,7 @@ from django.utils.translation import ngettext
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView, TemplateView, UpdateView, View
 from django_context_decorator import context
+from django_scopes import scope
 from i18nfield.strings import LazyI18nString
 from i18nfield.utils import I18nJSONEncoder
 
@@ -42,6 +44,7 @@ from eventyay.common.views.mixins import (
 )
 from eventyay.orga.forms.schedule import ScheduleReleaseForm
 from eventyay.schedule.forms import QuickScheduleForm, RoomForm
+from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
 from eventyay.base.services.event import notify_event_change
 from eventyay.base.services.room import soft_delete_room
 from eventyay.talk_rules.tracks import apply_track_limit_to_slots, filter_schedule_talk_data, get_allowed_tracks
@@ -102,6 +105,7 @@ class ScheduleExportDownloadView(EventPermissionRequired, View):
             zip_path = get_export_zip_path(self.request.event)
             response = FileResponse(open(zip_path, 'rb'), as_attachment=True)
         except Exception as e:
+            log_event('talk', 'export.error', OUTCOME_FAILURE, error_code='zip_missing', event_id=getattr(self.request.event, 'pk', None))
             messages.error(
                 request,
                 _('Could not find the current export, please try to regenerate it. ({error})').format(error=str(e)),
@@ -189,11 +193,15 @@ class ScheduleToggleView(EventPermissionRequired, View):
         event.feature_flags = flags
         event.settings.talk_schedule_public = is_public
         event.save(update_fields=['feature_flags'])
+        log_event('video', 'video.feature_flag', OUTCOME_SUCCESS, event_id=event.pk, flag_name='show_schedule')
 
-    def dispatch(self, request, *args, **kwargs):
-        super().dispatch(request, *args, **kwargs)
-        is_public = not self.request.event.get_feature_flag('show_schedule')
-        self._set_schedule_public(self.request.event, is_public)
+    def post(self, request, *args, **kwargs):
+        is_public = not request.event.get_feature_flag('show_schedule')
+        self._set_schedule_public(request.event, is_public)
+        if is_public:
+            messages.success(request, _('The schedule is now public.'))
+        else:
+            messages.success(request, _('The public schedule has been unpublished.'))
         # Trigger tickets to hidden/unhidden schedule menu
         try:
             from eventyay.orga.tasks import trigger_public_schedule
@@ -201,20 +209,19 @@ class ScheduleToggleView(EventPermissionRequired, View):
             trigger_public_schedule.apply_async(
                 kwargs={
                     'is_show_schedule': is_public,
-                    'event_slug': self.request.event.slug,
-                    'organiser_slug': self.request.event.organizer.slug,
-                    'user_email': self.request.user.email,
+                    'event_slug': request.event.slug,
+                    'organiser_slug': request.event.organizer.slug,
+                    'user_email': request.user.email,
                 },
                 ignore_result=True,
             )
-        except (TaskError, ConnectionError) as e:
-            logger.warning(
-                "Unexpected error when trying to trigger schedule's state to external system: %s",
-                e,
-            )
-        except Exception as e:
-            logger.error('Unexpected error in task: %s', e)
-        return redirect(self.request.event.orga_urls.schedule)
+        except (TaskError, ConnectionError):
+            log_event('talk', 'connection.schedule_public', OUTCOME_FAILURE, error_code='enqueue_failed', event_id=getattr(self.request.event, 'pk', None), backend='tickets_api')
+            logger.warning('Could not enqueue schedule visibility sync')
+        except Exception:
+            log_event('talk', 'connection.schedule_public', OUTCOME_FAILURE, error_code='enqueue_failed', event_id=getattr(self.request.event, 'pk', None), backend='tickets_api')
+            logger.exception('Unexpected error enqueueing schedule visibility sync')
+        return redirect(request.event.orga_urls.schedule)
 
 
 class ScheduleResendMailsView(EventPermissionRequired, View):
@@ -538,6 +545,25 @@ class RoomView(OrderActionMixin, OrgaCRUDView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+
+        if self.action == 'list':
+            if apps.is_installed('teamshifts'):
+                from teamshifts.models import ShiftLocation
+                room_list = ctx.get('room_list', [])
+                room_ids = [r.pk for r in room_list]
+                try:
+                    with scope(event=self.request.event):
+                        rooms_with_shifts = set(
+                            ShiftLocation.objects.filter(
+                                linked_room_id__in=room_ids,
+                                shifts__isnull=False,
+                            ).values_list('linked_room_id', flat=True).distinct()
+                        )
+                except DatabaseError:
+                    rooms_with_shifts = set()
+                for room in room_list:
+                    room.has_linked_shifts = room.pk in rooms_with_shifts
+
         if self.action == 'delete' and self.object:
             linked_slots = linked_submission_talks_for_room(self.object)
             ctx['has_linked_sessions'] = bool(linked_slots)
@@ -569,6 +595,19 @@ class RoomView(OrderActionMixin, OrgaCRUDView):
             ctx['schedule_room_url'] = schedule_editor_room_url(
                 self.request.event, self.object
             )
+
+            ctx['has_linked_shifts'] = False
+            ctx['linked_shift_count'] = 0
+            if apps.is_installed('teamshifts'):
+                try:
+                    shift_location = self.object.shift_location
+                except (ObjectDoesNotExist, DatabaseError):
+                    shift_location = None
+                if shift_location is not None:
+                    linked_shift_count = shift_location.shifts.count()
+                    ctx['has_linked_shifts'] = linked_shift_count > 0
+                    ctx['linked_shift_count'] = linked_shift_count
+
         return ctx
 
     def order_handler(self, request, *args, **kwargs):

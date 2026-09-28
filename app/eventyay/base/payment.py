@@ -40,6 +40,7 @@ from eventyay.base.models import (
     OrderRefund,
     Quota,
 )
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.reldate import RelativeDateField, RelativeDateWrapper
 from eventyay.base.services.cart import get_fees
 from eventyay.base.settings import SettingsSandbox
@@ -908,7 +909,10 @@ class BasePaymentProvider:
 
 
 class PaymentException(Exception):  # NOQA: N818
-    pass
+    def __init__(self, *args):
+        super().__init__(*args)
+        # Never log exception text: providers may include card or API details.
+        log_event('tickets', 'payment.exception', OUTCOME_FAILURE, error_code='payment_exception')
 
 
 class FreeOrderProvider(BasePaymentProvider):

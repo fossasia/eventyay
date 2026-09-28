@@ -145,13 +145,6 @@ aside.c-rooms-sidebar(
 								span.mdi.mdi-plus(aria-hidden="true")
 								span {{ $t('New Message') }}
 
-			.buffer
-
-			.sidebar-footer-action(v-if="hasOrganiserPermissions")
-				a.btn-manage-video(:href="manageVideoUrl", @click="onManageClick")
-					i.fa.fa-cog(aria-hidden="true")
-					span {{ $t('Manage') }}
-
 		teleport(to="body")
 			transition(name="prompt")
 				channel-browser(v-if="showChannelBrowser && liveFeatures.chat_rooms", @close="showChannelBrowser = false")
@@ -166,7 +159,6 @@ import { getRoomOccupancyCount, usesParticipantOccupancy } from 'lib/room-occupa
 import Avatar from 'components/Avatar'
 import ChannelBrowser from 'components/ChannelBrowser'
 import CreateDmPrompt from 'components/CreateDmPrompt'
-import { hasOrganizerTraits } from 'lib/traitGrants'
 import { isRoomVisibleToAttendee } from 'lib/video-providers'
 
 export default {
@@ -201,7 +193,7 @@ export default {
 	computed: {
 		...mapState(['world', 'rooms', 'activeRoom', 'call']),
 		...mapState('chat', ['joinedChannels']),
-		...mapGetters(['hasPermission', 'isAdminMode']),
+		...mapGetters(['hasPermission']),
 		...mapGetters('chat', ['notificationCount']),
 		...mapGetters('schedule', ['currentSessionPerRoom']),
 		eventDateSubtitle() {
@@ -247,30 +239,6 @@ export default {
 		hasChatChannels() {
 			if (!this.liveFeatures.chat_rooms) return false
 			return (this.roomsByType.textChat?.length > 0 || this.worldHasTextChannels)
-		},
-		manageVideoUrl() {
-			if (window.eventyay?.videoUrl) return window.eventyay.videoUrl
-			return this.$router.resolve({ name: 'organizer' }).href
-		},
-		hasOrganiserPermissions() {
-			const isJwtLogin = sessionStorage.getItem('video_auth_mode') === 'jwt' || Boolean(this.$store.state.token)
-			if (isJwtLogin) return false
-
-			return Boolean(
-				window.eventyay?.hasOrganiserPermissions ||
-				window.eventyay?.hasStaffSession ||
-				window.eventyay?.isStaff ||
-				window.eventyay?.isOrganizerArea ||
-				this.isAdminMode ||
-				hasOrganizerTraits(this.$store.state.user?.traits) ||
-				(Array.isArray(this.$store.state.user?.traits) && this.$store.state.user.traits.includes('admin')) ||
-				this.hasPermission('world:update') ||
-				this.hasPermission('world:users.list') ||
-				this.hasPermission('world:announce') ||
-				this.hasPermission('world:rooms.create.stage') ||
-				this.hasPermission('world:rooms.create.bbb') ||
-				this.hasPermission('world:kiosks.manage')
-			)
 		},
 		style() {
 			if (this.$mq?.above?.m) return null
@@ -367,13 +335,6 @@ export default {
 				this.$emit('close')
 			}
 		},
-		onManageClick() {
-			try {
-				sessionStorage.setItem('video_auth_mode', 'organizer')
-				localStorage.removeItem('token')
-			} catch (e) {}
-			this.onNavClick()
-		},
 		hasUnreadMessages(channelId) {
 			return this.notificationCount ? this.notificationCount(channelId) > 0 : false
 		},
@@ -448,8 +409,7 @@ export default {
 			.sidebar-text,
 			.arrow-btn,
 			.notifications,
-			.nav-sub-list,
-			.sidebar-footer-action
+			.nav-sub-list
 				display: none !important
 
 		&.sidebar-collapsed:hover
@@ -471,9 +431,6 @@ export default {
 
 			.nav-sub-list
 				display: flex
-
-			.sidebar-footer-action
-				display: block
 
 	+below('m')
 		z-index: 150
@@ -790,36 +747,4 @@ export default {
 						line-height: 1.4
 						flex-shrink: 0
 
-	.buffer
-		flex: auto
-		min-height: 20px
-
-	.sidebar-footer-action
-		border-top: 1px solid #e7e7e7
-		padding: 12px 15px 35px
-		background: #f8f8f8
-
-		.btn-manage-video
-			align-items: center
-			background-color: #ffffff
-			border: 1px solid #337ab7
-			border-radius: 4px
-			box-sizing: border-box
-			color: #337ab7
-			display: flex
-			font-size: 13.5px
-			font-weight: 600
-			justify-content: center
-			padding: 8px 12px
-			text-decoration: none
-			gap: 6px
-			transition: background-color 0.15s ease, color 0.15s ease
-
-			.fa, .mdi
-				font-size: 15px
-
-			&:hover, &:focus
-				background-color: #337ab7
-				color: #ffffff
-				text-decoration: none
 </style>

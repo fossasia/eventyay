@@ -3,6 +3,32 @@
  * ES Module controlling embedded Zoom client, SDK lifecycle, topbar actions, and toast messaging.
  */
 
+function logOperational({action, outcome, error_code, backend}) {
+    const parts = [
+        `datetime=${new Date().toISOString()}`,
+        'component=video',
+        `action=${action}`,
+        `outcome=${outcome}`,
+    ];
+    if (backend) parts.push(`backend=${backend}`);
+    if (error_code) parts.push(`error_code=${error_code}`);
+    const line = parts.join(' ');
+    if (outcome === 'failure') {
+        console.warn('[eventyay]', line);
+        if (window.parent && window.parent !== window && action === 'zoom.sdk') {
+            window.parent.postMessage({
+                event: 'eventyay:operational',
+                action: 'zoom.sdk',
+                outcome: 'failure',
+                backend: 'zoom',
+                error_code: error_code,
+            }, '*');
+        }
+    } else {
+        console.info('[eventyay]', line);
+    }
+}
+
 let toastTimeoutId = null;
 
 export function showToast() {
@@ -85,7 +111,7 @@ export function leaveMeeting() {
 
 export function initZoomSdk(config) {
     if (typeof ZoomMtg === 'undefined') {
-        console.warn('ZoomMtg SDK failed to load from CDN. Showing embedded fallback.');
+        logOperational({action: 'zoom.sdk', outcome: 'failure', backend: 'zoom', error_code: 'sdk_missing'});
         showFallbackEmbed(config.zoomWebUrl);
         return;
     }
@@ -120,19 +146,19 @@ export function initZoomSdk(config) {
                     userName: config.userName,
                     userEmail: config.userEmail,
                     passWord: config.password,
-                    error: function (err) {
-                        console.error('ZoomMtg.join error:', err);
+                    error: function () {
+                        logOperational({action: 'zoom.sdk', outcome: 'failure', backend: 'zoom', error_code: 'join_failed'});
                         showFallbackEmbed(config.zoomWebUrl);
                     }
                 });
             },
-            error: function (err) {
-                console.error('ZoomMtg.init error:', err);
+            error: function () {
+                logOperational({action: 'zoom.sdk', outcome: 'failure', backend: 'zoom', error_code: 'init_failed'});
                 showFallbackEmbed(config.zoomWebUrl);
             }
         });
     } catch (e) {
-        console.error('Exception during Zoom SDK initialization:', e);
+        logOperational({action: 'zoom.sdk', outcome: 'failure', backend: 'zoom', error_code: 'sdk_exception'});
         showFallbackEmbed(config.zoomWebUrl);
     }
 }

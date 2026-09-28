@@ -9,6 +9,7 @@ from eventyay.base.services.jitsi import (
     choose_server_for_room,
     normalize_server_url,
 )
+from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
 from eventyay.core.permissions import Permission
 from eventyay.features.live.decorators import command, room_action
 from eventyay.features.live.exceptions import ConsumerException
@@ -255,6 +256,7 @@ class JitsiModule(BaseModule):
             if server_model is None:
                 raise JitsiServerUnavailable
         except JitsiServerUnavailable:
+            log_event('video', 'connection.room_config', OUTCOME_FAILURE, error_code='server_unavailable', event_id=getattr(self.consumer.event, 'pk', None), backend='jitsi')
             raise ConsumerException("jitsi.server_unavailable")
 
         server = normalize_server_url(server_model.url)
@@ -265,15 +267,7 @@ class JitsiModule(BaseModule):
             raise ConsumerException("jitsi.missing_domain")
 
         is_moderator = await self.can_moderate_room()
-        logger.info(
-            "Jitsi room_config user=%s room=%s jitsi_room=%s moderator=%s domain=%s server=%s",
-            self.consumer.user.pk,
-            self.room.id,
-            room_name,
-            is_moderator,
-            domain,
-            server_model.pk,
-        )
+        logger.info("Jitsi room_config user=%s room=%s jitsi_room=%s moderator=%s domain=%s server=%s", self.consumer.user.pk, self.room.id, room_name, is_moderator, domain, server_model.pk)
 
         has_jwt = bool(server_model.app_id and server_model.app_secret)
         jwt_token = None
@@ -315,6 +309,7 @@ class JitsiModule(BaseModule):
             "jwt": jwt_token,
         }
 
+        log_event('video', 'connection.room_config', OUTCOME_SUCCESS, event_id=getattr(self.consumer.event, 'pk', None), backend='jitsi')
         await self.consumer.send_success(result)
 
     def _build_jwt(

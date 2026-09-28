@@ -27,8 +27,11 @@ updates:
           - "pygments-markdown-lexer"
           - "sphinx*"
     ignore:
+      # django-celery-beat 2.9.0 requires Django<6.1 and cron-descriptor<2.
       - dependency-name: "django"
-        versions: [">=6.0.0"]
+        versions: [">=6.1.0"]
+      - dependency-name: "cron-descriptor"
+        versions: [">=1.4.5"]
       - dependency-name: "stripe"
         versions: [">=11.4.0"]
       # Ignore all setuptools updates; issue is not version-specific.

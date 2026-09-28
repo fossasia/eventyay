@@ -27,6 +27,7 @@ INSTANCE_IDENTIFIER = None
 
 
 class TalkSlot(PretalxModel):
+    log_prefix = 'eventyay.schedule'
     """The TalkSlot object is the scheduled version of a.
 
     :class:`~pretalx.submission.models.submission.Submission`.

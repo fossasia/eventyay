@@ -19,6 +19,7 @@ from eventyay.base.gmail.oauth import (
     fetch_sender_email,
     load_oauth_state,
 )
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin, EventPermissionRequiredMixin
 
 
@@ -33,6 +34,7 @@ class GmailOAuthConnectView(AdministratorPermissionRequiredMixin, View):
         try:
             authorization_url = build_authorization_url(redirect_uri=redirect_uri, state=state)
         except ValueError as exc:
+            log_event('mail', 'connection.oauth', OUTCOME_FAILURE, error_code='not_configured', backend='gmail')
             messages.error(request, str(exc))
             return redirect(next_url)
         return redirect(authorization_url)
@@ -42,6 +44,7 @@ class GmailOAuthCallbackView(AdministratorPermissionRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         error = request.GET.get('error')
         if error:
+            log_event('mail', 'connection.oauth', OUTCOME_FAILURE, error_code='oauth_denied', backend='gmail')
             messages.error(
                 request,
                 _('Google authorization was denied or failed: %(error)s') % {'error': error},
@@ -51,12 +54,14 @@ class GmailOAuthCallbackView(AdministratorPermissionRequiredMixin, View):
         code = request.GET.get('code')
         state = request.GET.get('state')
         if not code or not state:
+            log_event('mail', 'connection.oauth', OUTCOME_FAILURE, error_code='missing_code', backend='gmail')
             messages.error(request, _('Missing authorization response from Google.'))
             return redirect(reverse('eventyay_admin:admin.global.settings'))
 
         try:
             payload = load_oauth_state(state)
         except (BadSignature, SignatureExpired):
+            log_event('mail', 'connection.oauth', OUTCOME_FAILURE, error_code='invalid_state', backend='gmail')
             messages.error(request, _('The Google authorization session expired. Please try again.'))
             return redirect(reverse('eventyay_admin:admin.global.settings'))
 
@@ -69,6 +74,7 @@ class GmailOAuthCallbackView(AdministratorPermissionRequiredMixin, View):
             token_data = exchange_authorization_code(code=code, redirect_uri=redirect_uri)
             sender_email = fetch_sender_email(token_data['access_token'])
         except (RequestException, ValueError, KeyError) as exc:
+            log_event('mail', 'connection.oauth', OUTCOME_FAILURE, error_code='token_exchange', backend='gmail')
             logger.exception('Gmail OAuth callback failed')
             messages.error(
                 request,
@@ -135,6 +141,7 @@ class EventGmailOAuthConnectView(EventPermissionRequiredMixin, View):
         try:
             authorization_url = build_authorization_url(redirect_uri=redirect_uri, state=state)
         except ValueError as exc:
+            log_event('mail', 'connection.oauth', OUTCOME_FAILURE, error_code='not_configured', backend='gmail')
             messages.error(request, str(exc))
             return redirect(next_url)
         return redirect(authorization_url)
@@ -151,6 +158,7 @@ class EventGmailOAuthCallbackView(EventPermissionRequiredMixin, View):
         )
         error = request.GET.get('error')
         if error:
+            log_event('mail', 'connection.oauth', OUTCOME_FAILURE, error_code='oauth_denied', backend='gmail')
             messages.error(
                 request,
                 _('Google authorization was denied or failed: %(error)s') % {'error': error},
@@ -160,12 +168,14 @@ class EventGmailOAuthCallbackView(EventPermissionRequiredMixin, View):
         code = request.GET.get('code')
         state = request.GET.get('state')
         if not code or not state:
+            log_event('mail', 'connection.oauth', OUTCOME_FAILURE, error_code='missing_code', backend='gmail')
             messages.error(request, _('Missing authorization response from Google.'))
             return redirect(next_url)
 
         try:
             payload = load_oauth_state(state)
         except (BadSignature, SignatureExpired):
+            log_event('mail', 'connection.oauth', OUTCOME_FAILURE, error_code='invalid_state', backend='gmail')
             messages.error(request, _('The Google authorization session expired. Please try again.'))
             return redirect(next_url)
 
@@ -183,6 +193,7 @@ class EventGmailOAuthCallbackView(EventPermissionRequiredMixin, View):
             token_data = exchange_authorization_code(code=code, redirect_uri=redirect_uri)
             sender_email = fetch_sender_email(token_data['access_token'])
         except (RequestException, ValueError, KeyError) as exc:
+            log_event('mail', 'connection.oauth', OUTCOME_FAILURE, error_code='token_exchange', backend='gmail')
             logger.exception('Event Gmail OAuth callback failed for event %s', event.slug)
             messages.error(
                 request,

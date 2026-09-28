@@ -24,7 +24,6 @@ from django.core.files.storage import default_storage
 from django.core.mail import get_connection
 from django.core.validators import (
     MaxValueValidator,
-    MinLengthValidator,
     MinValueValidator,
     RegexValidator,
 )
@@ -525,11 +524,8 @@ class Event(
             'This will be used in URLs, order codes, invoice numbers, and bank transfer references.'
         ),
         validators=[
-            MinLengthValidator(
-                limit_value=2,
-            ),
             RegexValidator(
-                regex='^[a-zA-Z0-9][a-zA-Z0-9.-]*[a-zA-Z0-9]$',
+                regex=r'^[a-zA-Z0-9](?:[a-zA-Z0-9.-]*[a-zA-Z0-9])?\Z',
                 message=_('The slug may only contain letters, numbers, dots and dashes.'),
             ),
             EventSlugBanlistValidator(),
@@ -3276,14 +3272,11 @@ class Event(
 
     def build_initial_data(self):
         from eventyay.base.models import CfP, MailTemplateRoles, Schedule
-        from eventyay.base.models.cfp import create_default_speaker_questions
         from django_scopes import scope
 
         with scope(event=self):
             if not CfP.objects.filter(event=self).exists():
                 CfP.objects.create(event=self, default_type=self._get_default_submission_type())
-
-            create_default_speaker_questions(self)
 
             if not self.schedules.filter(version__isnull=True).exists():
                 Schedule.objects.create(event=self)

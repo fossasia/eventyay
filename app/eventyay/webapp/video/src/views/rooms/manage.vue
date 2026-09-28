@@ -34,7 +34,7 @@
 						template(#button="{toggle}")
 							bunt-icon-button(@click="toggle") dots-vertical
 						template(#menu)
-							.archive-all(@click="$store.dispatch('question/archiveAll')") {{ $t('Archive All') }}
+							.archive-all(@click="requestArchiveAll") {{ $t('Archive All') }}
 			questions(:module="modules['question']")
 		panel.chat(v-if="!isServerStreamRoom && !isEmbeddedSuiteRoom && modules['chat.native']")
 			.header.chat-manage-header
@@ -190,6 +190,15 @@
 					:show-launch="true",
 					:compact="true"
 				)
+	confirm-prompt(
+		:open="showArchiveAllPrompt",
+		:title="$t('Archive all questions?')",
+		:message="$t('Every question in this room will be archived.')",
+		:confirm-label="$t('Archive All')",
+		:cancel-label="$t('Cancel')",
+		@close="showArchiveAllPrompt = false",
+		@confirm="confirmArchiveAll"
+	)
 	transition(name="prompt")
 		// TODO less hacks
 		prompt.create-poll-prompt(v-if="editedPoll", @close="editedPoll = null")
@@ -217,6 +226,7 @@ import DashboardLayout from 'components/dashboard-layout'
 import Panel from 'components/dashboard-layout/Panel'
 import Chat from 'components/Chat'
 import MediaSourcePlaceholder from 'components/MediaSourcePlaceholder'
+import ConfirmPrompt from 'components/ConfirmPrompt'
 import MenuDropdown from 'components/MenuDropdown'
 import Polls from 'components/Polls'
 import Prompt from 'components/Prompt'
@@ -227,7 +237,7 @@ import { getRoomOccupancyCount } from 'lib/room-occupancy'
 
 export default {
 	name: 'RoomManager',
-	components: { Chat, CopyableText, DashboardLayout, MediaSourcePlaceholder, MenuDropdown, Panel, Polls, Prompt, Questions, SchedulePanel },
+	components: { Chat, ConfirmPrompt, CopyableText, DashboardLayout, MediaSourcePlaceholder, MenuDropdown, Panel, Polls, Prompt, Questions, SchedulePanel },
 	props: {
 		room: Object,
 		modules: Object
@@ -239,6 +249,7 @@ export default {
 		return {
 			showingPresentationUrlFor: null,
 			showingQuestionsMenu: false,
+			showArchiveAllPrompt: false,
 			editedPoll: null,
 			moderationEnabled: true,
 			moderationDelay: 10,
@@ -649,6 +660,14 @@ export default {
 					]
 				})
 			}
+		},
+		requestArchiveAll() {
+			this.showingQuestionsMenu = false
+			this.showArchiveAllPrompt = true
+		},
+		confirmArchiveAll() {
+			this.showArchiveAllPrompt = false
+			this.$store.dispatch('question/archiveAll')
 		},
 		showCreatePollPrompt() {
 			this.editedPoll = {

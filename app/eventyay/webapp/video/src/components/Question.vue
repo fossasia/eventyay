@@ -16,14 +16,24 @@
 			.unpin-question(v-if="question.state === 'visible' && question.is_pinned", @click="doAction('unpin')") {{ $t('unpin') }}
 			.archive-question(v-if="question.state !== 'archived'", @click="doAction('archive')") {{ $t('archive') }}
 			.unarchive-question(v-if="question.state === 'archived'", @click="doAction('unarchive')") {{ $t('unarchive') }}
-			.delete-question(@click="doAction('delete')") {{ $t('delete') }}
+			.delete-question(@click="requestDelete") {{ $t('delete') }}
+	confirm-prompt(
+		:open="showDeletePrompt",
+		:title="$t('Delete this question?')",
+		:message="$t('This will permanently delete the question.')",
+		:confirm-label="$t('delete')",
+		:cancel-label="$t('Cancel')",
+		@close="showDeletePrompt = false",
+		@confirm="confirmDelete"
+	)
 </template>
 <script>
 import { mapGetters } from 'vuex'
+import ConfirmPrompt from 'components/ConfirmPrompt'
 import MenuDropdown from 'components/MenuDropdown'
 
 export default {
-	components: { MenuDropdown },
+	components: { ConfirmPrompt, MenuDropdown },
 	props: {
 		question: Object
 	},
@@ -34,7 +44,8 @@ export default {
 	},
 	data() {
 		return {
-			showModerationMenu: false
+			showModerationMenu: false,
+			showDeletePrompt: false
 		}
 	},
 	computed: {
@@ -48,6 +59,14 @@ export default {
 	methods: {
 		async vote() {
 			this.$store.dispatch('question/vote', this.question)
+		},
+		requestDelete() {
+			this.showModerationMenu = false
+			this.showDeletePrompt = true
+		},
+		async confirmDelete() {
+			this.showDeletePrompt = false
+			await this.doAction('delete')
 		},
 		async doAction(action) {
 			await this.$store.dispatch(`question/${action}Question`, this.question)

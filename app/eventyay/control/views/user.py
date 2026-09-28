@@ -26,6 +26,7 @@ from eventyay.base.models import (
     WebAuthnDevice,
 )
 from eventyay.base.models.auth import StaffSession
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.control.forms.organizer_forms.user_orders_form import (
     UserOrderFilterForm,
 )
@@ -117,6 +118,7 @@ class ReauthView(TemplateView):
                 return redirect(next_url)
             return redirect(reverse('control:index'))
         else:
+            log_event('core', 'auth.login', OUTCOME_FAILURE, error_code='2fa_failed', user_id=getattr(request.user, 'pk', None))
             messages.error(request, _('The password you entered was invalid, please try again.'))
             return self.get(request, *args, **kwargs)
 

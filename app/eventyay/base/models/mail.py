@@ -13,6 +13,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.translation import override, pgettext_lazy
 from i18nfield.fields import I18nCharField, I18nTextField
 
+from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
 from eventyay.common.exceptions import SendMailException
 from eventyay.common.mail import get_reply_to_address
 from eventyay.common.urls import EventUrls
@@ -207,7 +208,8 @@ class MailTemplate(PretalxModel):
             if not addresses:
                 if skip_queue:
                     raise SendMailException(
-                        'Cannot create mail without at least one valid recipient email address.'
+                        'Cannot create mail without at least one valid recipient email address.',
+                        already_logged=True,
                     )
                 address = None
             else:
@@ -224,17 +226,14 @@ class MailTemplate(PretalxModel):
             used = get_used_placeholders(self.subject) | get_used_placeholders(self.text)
             missing = used - set(context.keys())
             if missing and _should_warn_missing_placeholders(self.pk, frozenset(missing)):
-                logger.warning(
-                    'Mail template "%s" (pk=%s, role=%s) for event "%s" uses '
-                    'placeholders not available in this context: %s',
-                    self.subject, self.pk, self.role, event.slug,
-                    ', '.join(sorted(missing)),
-                )
+                log_event('mail', 'mail.template.render', OUTCOME_FAILURE, error_code='missing_placeholders', event_id=event.pk if event else None, object_id=self.pk)
+                logger.warning('Mail template (pk=%s, role=%s) uses placeholders not available in this context', self.pk, self.role)
             try:
                 subject = str(self.subject).format_map(defaultdict(str, context))
                 text = str(self.text).format_map(defaultdict(str, context))
-            except (KeyError, IndexError, ValueError) as e:
-                raise SendMailException(f'Experienced error when rendering email text: {e}') from e
+            except (KeyError, IndexError, ValueError):
+                log_event('mail', 'mail.template.render', OUTCOME_FAILURE, error_code='render_error', event_id=event.pk if event else None, object_id=self.pk)
+                raise SendMailException('Experienced error when rendering email text.', already_logged=True)
 
             if len(subject) > 200:
                 subject = subject[:198] + '…'
@@ -261,6 +260,7 @@ class MailTemplate(PretalxModel):
             )
             if commit:
                 mail.save()
+                log_event('mail', 'mail.enqueue', OUTCOME_SUCCESS, event_id=event.pk if event else None, object_id=mail.pk, mail_type=self.role)
                 submissions = set(submissions or [])
                 if submission := context_kwargs.get('submission'):
                     submissions.add(submission)
@@ -481,7 +481,7 @@ class QueuedMail(PretalxModel):
             raise Exception(_('This mail has been sent already. It cannot be sent again.'))
 
         if self.scheduled_at and self.scheduled_at > now():
-            raise SendMailException(_('This mail is scheduled for the future and cannot be sent yet.'))
+            raise SendMailException(_('This mail is scheduled for the future and cannot be sent yet.'), already_logged=True)
 
         has_event = getattr(self, 'event', None)
 
@@ -517,6 +517,7 @@ class QueuedMail(PretalxModel):
             },
             ignore_result=True,
         )
+        log_event('mail', 'mail.outbox', OUTCOME_SUCCESS, event_id=self.event.pk if has_event else None, object_id=self.pk, recipient_count=len(to))
         self.sent = now()
 
         if self.pk:
@@ -524,7 +525,7 @@ class QueuedMail(PretalxModel):
                 'eventyay.mail.sent',
                 person=requestor,
                 orga=orga,
-                data={'to_users': [(user.pk, user.email) for user in self.to_users.all()]},
+                data={'to_user_ids': [user.pk for user in self.to_users.all()]},
             )
             self.save()
             queuedmail_post_send.send(

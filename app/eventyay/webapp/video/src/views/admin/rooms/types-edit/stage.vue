@@ -165,6 +165,7 @@
 import { defineComponent, reactive } from 'vue'
 import moment from 'moment-timezone'
 import api from 'lib/api'
+import { logOperational } from 'lib/operationalLog'
 import Prompt from 'components/Prompt'
 import LanguageAudioSourceList from 'components/LanguageAudioSourceList'
 import mixin from './mixin'
@@ -419,11 +420,21 @@ export default defineComponent({
 			const headers = { Accept: 'application/json' }
 			if (authHeader) headers.Authorization = authHeader
 
-			const response = await fetch(url, { headers, credentials: 'include' })
-			if (response.status === 404) return []
-			if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-			const data = await response.json()
-			return Array.isArray(data) ? data : data.results || []
+			try {
+				const response = await fetch(url, { headers, credentials: 'include' })
+				if (response.status === 404) return []
+				if (!response.ok) {
+					logOperational({action: 'stream.schedule', outcome: 'failure', backend: 'stream_schedule', error_code: 'http_error', status: response.status})
+					throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+				}
+				const data = await response.json()
+				return Array.isArray(data) ? data : data.results || []
+			} catch (err) {
+				if (!err?.message?.startsWith('HTTP ')) {
+					logOperational({action: 'stream.schedule', outcome: 'failure', backend: 'stream_schedule', error_code: 'fetch_failed'})
+				}
+				throw err
+			}
 		},
 		addScheduledStream() {
 			const tz = this.eventTimezone || 'UTC'
@@ -648,6 +659,7 @@ export default defineComponent({
 						credentials: 'include',
 					})
 					if (!res.ok && res.status !== 404) {
+						logOperational({action: 'stream.schedule', outcome: 'failure', backend: 'stream_schedule', error_code: 'delete_failed', status: res.status})
 						const text = await res.text().catch(() => '')
 						console.warn('Failed to delete stream schedule:', scheduleId, text)
 						remainingDeletions.push(scheduleId)
@@ -695,6 +707,7 @@ export default defineComponent({
 							credentials: 'include',
 						})
 						if (!res.ok) {
+							logOperational({action: 'stream.schedule', outcome: 'failure', backend: 'stream_schedule', error_code: 'save_failed', status: res.status})
 							const text = await res.text()
 							throw new Error(`Failed to update stream schedule ${i + 1}: ${text}`)
 						}
@@ -706,6 +719,7 @@ export default defineComponent({
 							credentials: 'include',
 						})
 						if (!res.ok) {
+							logOperational({action: 'stream.schedule', outcome: 'failure', backend: 'stream_schedule', error_code: 'save_failed', status: res.status})
 							const text = await res.text()
 							throw new Error(`Failed to create stream schedule ${i + 1}: ${text}`)
 						}

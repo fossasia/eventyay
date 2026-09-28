@@ -3,6 +3,7 @@ Tests for health and status endpoints.
 """
 import pytest
 
+from django.db import DatabaseError
 from django.urls import reverse
 
 
@@ -31,28 +32,21 @@ class TestHealthcheck:
         assert response.status_code == 200
 
     def test_healthcheck_db_unavailable(self, client, mocker):
-        """Healthcheck should fail if DB is unavailable.
-
-        Note: The current healthcheck implementation does not catch exceptions.
-        In Django tests, unhandled exceptions are re-raised by the test client.
-        """
-        # Patch the User.objects.exists() call to raise an exception
+        """Healthcheck returns 503 when the database probe fails."""
         mocker.patch(
             'eventyay.base.models.User.objects.exists',
-            side_effect=Exception("Database connection failed")
+            side_effect=DatabaseError('Database connection failed'),
         )
-        with pytest.raises(Exception):
-            client.get(reverse('healthcheck'))
+        response = client.get(reverse('healthcheck'))
+        assert response.status_code == 503
+        assert response.content == b'Database not available.'
 
     def test_healthcheck_cache_unavailable(self, client, mocker):
-        """Healthcheck should fail if cache is unavailable.
-
-        Note: The current healthcheck implementation does not catch exceptions.
-        """
-        # Patch cache.set to fail
+        """Healthcheck returns 503 when the cache probe fails."""
         mocker.patch(
             'django.core.cache.cache.set',
-            side_effect=Exception("Cache unavailable")
+            side_effect=Exception('Cache unavailable'),
         )
-        with pytest.raises(Exception):
-            client.get(reverse('healthcheck'))
+        response = client.get(reverse('healthcheck'))
+        assert response.status_code == 503
+        assert response.content == b'Cache not available.'

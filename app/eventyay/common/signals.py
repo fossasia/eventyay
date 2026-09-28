@@ -14,6 +14,7 @@ from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
 from eventyay.base.models import Event
+from eventyay.base.operational_logging import OUTCOME_SUCCESS, log_event
 from eventyay.base.signals import resolve_app_for_module, check_plugin_active
 
 logger = logging.getLogger(__name__)
@@ -303,6 +304,7 @@ def process_scheduled_emails(sender, **kwargs):
                 break
             try:
                 sent = mail.send()
+                log_event('mail', 'mail.outbox', OUTCOME_SUCCESS, event_id=getattr(mail.event, 'pk', None), object_id=mail.pk)
                 if sent:
                     logger.info("[ScheduledMail] EmailQueue ID %s processed.", mail.pk)
                 else:

@@ -54,6 +54,7 @@ import { useVuelidate } from '@vuelidate/core';
 import { helpers } from '@vuelidate/validators';
 import { required, url, normalizeYoutubeVideoId, toYoutubeWatchUrl } from 'lib/validators';
 import api from 'lib/api';
+import { logOperational } from 'lib/operationalLog';
 import Prompt from 'components/Prompt';
 import LanguageAudioSourceList from 'components/LanguageAudioSourceList';
 import moment from 'lib/timetravelMoment';
@@ -293,6 +294,7 @@ export default {
 				// Handle both array and paginated response
 				this.streamSchedules = Array.isArray(data) ? data : data.results || [];
 			} catch (error) {
+				logOperational({action: 'stream.schedule', outcome: 'failure', backend: 'stream_schedule', error_code: 'fetch_failed'});
 				this.error = error.message || this.$t('Failed to load stream schedules');
 				this.streamSchedules = [];
 			} finally {
@@ -470,6 +472,7 @@ export default {
 			} catch (error) {
 				this.saving = false;
 				this.saveError = error.message || this.$t('Failed to save stream schedule');
+				logOperational({action: 'stream.schedule', outcome: 'failure', backend: 'stream_schedule', error_code: 'save_failed'});
 			}
 		},
 		async deleteSchedule(schedule) {
@@ -499,6 +502,7 @@ export default {
 				await this.fetchStreamSchedules();
 			} catch (error) {
 				this.error = error.message || this.$t('Failed to delete stream schedule');
+				logOperational({action: 'stream.schedule', outcome: 'failure', backend: 'stream_schedule', error_code: 'delete_failed'});
 			}
 		},
 		formatDateTime(datetime) {

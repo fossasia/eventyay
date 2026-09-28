@@ -3,6 +3,7 @@ import re
 from django.core import signing
 from django.urls import reverse
 
+from eventyay.base.operational_logging import OUTCOME_SUCCESS, log_event
 from eventyay.core.permissions import Permission
 from eventyay.features.live.decorators import command, room_action
 from eventyay.features.live.exceptions import ConsumerException
@@ -82,3 +83,4 @@ class ZoomModule(BaseModule):
         else:
             url = f"{meeting_path}?data={data}"
         await self.consumer.send_success({"url": url})
+        log_event('video', 'connection.room_url', OUTCOME_SUCCESS, event_id=getattr(self.consumer.event, 'pk', None), backend='zoom')

@@ -1,0 +1,20 @@
+{% load i18n %}
+{% if output %}
+  <fieldset class='mt-4'>
+    <legend id='preview'>{% translate "Email preview" %}</legend>
+    {% if recipient_count %}
+      <div class='alert alert-info'>
+        {% blocktranslate with count=recipient_count %}
+          Roughly {{ count }} emails will be generated.
+        {% endblocktranslate %}
+      </div>
+    {% endif %}
+    <div class='tab-pane mail-preview-group'>
+      <div class='mail-preview'>
+        <strong>{% translate "Subject:" %} {{ output.subject }}</strong>
+        <br><br>
+        {{ output.html|safe }}
+      </div>
+    </div>
+  </fieldset>
+{% endif %}

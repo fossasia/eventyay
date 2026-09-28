@@ -19,6 +19,7 @@ from django_scopes import scope
 from eventyay.base.meetup import get_rsvp_product_and_quota, is_meetup_event
 from eventyay.base.models import Quota
 from eventyay.base.models.orders import Order, OrderPayment, OrderPosition
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.templatetags.money import money_filter
 from eventyay.multidomain.urlreverse import eventreverse
 from eventyay.presale.views import EventViewMixin
@@ -250,12 +251,14 @@ class MeetupRsvpView(EventViewMixin, View):
                 try:
                     payment.confirm(send_mail=True, lock=False)
                     order.refresh_from_db()
-                except Exception as confirm_exc:
-                    logger.exception(f'Error confirming payment for order {order.code} after intent {intent.id}: {confirm_exc}')
+                except Exception:
+                    log_event('plugins', 'connection.stripe', OUTCOME_FAILURE, error_code='confirm_failed', event_id=request.event.pk, order_code=order.code, backend='stripe')
+                    logger.exception('Error confirming meetup payment')
                     try:
                         stripe.Refund.create(payment_intent=intent.id, api_key=secret_key)
-                    except Exception as refund_exc:
-                        logger.exception(f'Failed to auto-refund intent {intent.id} for order {order.code}: {refund_exc}')
+                    except Exception:
+                        log_event('plugins', 'connection.stripe', OUTCOME_FAILURE, error_code='refund_failed', event_id=request.event.pk, order_code=order.code, backend='stripe')
+                        logger.exception('Failed to auto-refund meetup payment')
                     order.status = Order.STATUS_CANCELED
                     order.save(update_fields=['status'])
                     payment.state = OrderPayment.PAYMENT_STATE_FAILED
@@ -263,6 +266,7 @@ class MeetupRsvpView(EventViewMixin, View):
                     messages.error(request, _('Payment could not be completed. Any charge has been automatically refunded.'))
                     return self._redirect_to_index(request)
         except stripe.error.CardError as e:
+            log_event('plugins', 'connection.stripe', OUTCOME_FAILURE, error_code='card_error', event_id=request.event.pk, order_code=order.code, backend='stripe')
             with scope(organizer=request.event.organizer):
                 order.status = Order.STATUS_CANCELED
                 order.save(update_fields=['status'])
@@ -271,7 +275,8 @@ class MeetupRsvpView(EventViewMixin, View):
             messages.error(request, _('Payment failed: ') + str(e.user_message or e))
             return self._redirect_to_index(request)
         except stripe.error.StripeError as e:
-            logger.warning(f'Stripe error during meetup RSVP for order {order.code}: {e}')
+            log_event('plugins', 'connection.stripe', OUTCOME_FAILURE, error_code='stripe_error', event_id=request.event.pk, order_code=order.code, backend='stripe')
+            logger.warning('Stripe error during meetup RSVP for order %s', order.code)
             with scope(organizer=request.event.organizer):
                 order.status = Order.STATUS_CANCELED
                 order.save(update_fields=['status'])
@@ -279,8 +284,9 @@ class MeetupRsvpView(EventViewMixin, View):
                 payment.save(update_fields=['state'])
             messages.error(request, _('Payment processing error: ') + str(e.user_message or e))
             return self._redirect_to_index(request)
-        except Exception as e:
-            logger.exception(f'Unexpected error during meetup RSVP for order {order.code}: {e}')
+        except Exception:
+            log_event('plugins', 'connection.stripe', OUTCOME_FAILURE, error_code='rsvp_failed', event_id=request.event.pk, order_code=order.code, backend='stripe')
+            logger.exception('Unexpected error during meetup RSVP')
             with scope(organizer=request.event.organizer):
                 order.status = Order.STATUS_CANCELED
                 order.save(update_fields=['status'])
