@@ -6,7 +6,7 @@
 	template(v-else-if="scheduleError")
 		.schedule-error
 			.error-message {{ $t('An error occurred while loading the schedule. Please try again later.') }}
-	template(v-else-if="isTalkView && schedule && resolvedTalk")
+	template(v-else-if="isTalkView && schedule && resolvedTalk && !isResolvedTalkPending")
 		talk-detail(:talk="resolvedTalk", :baseUrl="eventUrl")
 	template(v-else-if="isTalkView && schedule")
 		.schedule-unavailable(v-if="currentTimezone")
@@ -626,6 +626,9 @@ export default {
 			return this.sessionsLookup[this.talkCode]
 				|| this.inlineScheduleSessions.find(session => session.id === this.talkCode || session.code === this.talkCode)
 				|| null
+		},
+		isResolvedTalkPending () {
+			return Boolean(this.resolvedTalk) && isTalkSchedulePending(this.resolvedTalk)
 		},
 		talkUnavailableMessage () {
 			const m = this.translationMessages || {}
