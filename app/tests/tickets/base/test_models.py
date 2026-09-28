@@ -16,6 +16,7 @@ from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
 
 from eventyay.base.i18n import language
+from eventyay.base.services.event import get_event_by_id_or_slug
 from eventyay.base.models import (
     CachedFile,
     CartPosition,
@@ -2368,6 +2369,65 @@ class EventTest(TestCase):
         self.assertIn('slug', str(context.exception))
 
     @classscope(attr='organizer')
+    def test_single_character_slug_is_valid_and_unique_per_organizer(self):
+        event = Event(
+            organizer=self.organizer,
+            name='Three',
+            slug='3',
+            date_from=datetime.datetime(2013, 12, 26, tzinfo=datetime.timezone.utc),
+            date_to=datetime.datetime(2013, 12, 27, tzinfo=datetime.timezone.utc),
+        )
+        event.full_clean()
+        event.save()
+
+        other = Organizer.objects.create(name='Other', slug='o')
+        same_slug = Event(
+            organizer=other,
+            name='Three again',
+            slug='3',
+            date_from=datetime.datetime(2013, 12, 26, tzinfo=datetime.timezone.utc),
+            date_to=datetime.datetime(2013, 12, 27, tzinfo=datetime.timezone.utc),
+        )
+        same_slug.full_clean()
+        same_slug.save()
+
+        duplicate = Event(
+            organizer=self.organizer,
+            name='Three duplicate',
+            slug='3',
+            date_from=datetime.datetime(2013, 12, 26, tzinfo=datetime.timezone.utc),
+            date_to=datetime.datetime(2013, 12, 27, tzinfo=datetime.timezone.utc),
+        )
+        with self.assertRaises(ValidationError):
+            duplicate.full_clean()
+
+    @classscope(attr='organizer')
+    def test_single_punctuation_slug_is_rejected(self):
+        for slug in ('', '.', '-', 'a.', '.a', 'a-', '-a', 'a\n'):
+            event = Event(
+                organizer=self.organizer,
+                name='Bad',
+                slug=slug,
+                date_from=datetime.datetime(2013, 12, 26, tzinfo=datetime.timezone.utc),
+                date_to=datetime.datetime(2013, 12, 27, tzinfo=datetime.timezone.utc),
+            )
+            with self.assertRaises(ValidationError) as context:
+                event.full_clean()
+            self.assertIn('slug', str(context.exception))
+
+    @classscope(attr='organizer')
+    def test_existing_multi_character_slug_patterns_stay_valid(self):
+        for slug in ('ab', 'a1', 'a.b', 'a-b', 'a.b-c'):
+            event = Event(
+                organizer=self.organizer,
+                name='Ok',
+                slug=slug,
+                date_from=datetime.datetime(2013, 12, 26, tzinfo=datetime.timezone.utc),
+                date_to=datetime.datetime(2013, 12, 27, tzinfo=datetime.timezone.utc),
+            )
+            event.full_clean()
+
+    @classscope(attr='organizer')
     def test_copy(self):
         event1 = Event.objects.create(
             organizer=self.organizer,
@@ -2608,6 +2668,43 @@ class EventTest(TestCase):
         item.hide_without_voucher = True
         item.save()
         assert Event.annotated(Event.objects).first().active_quotas == []
+
+
+class OrganizerSlugTest(TestCase):
+    def test_single_character_slug_is_valid(self):
+        organizer = Organizer(name='Three', slug='3')
+        organizer.full_clean()
+
+    def test_single_punctuation_slug_is_rejected(self):
+        for slug in ('', '.', '-', 'a\n'):
+            organizer = Organizer(name='Bad', slug=slug)
+            with self.assertRaises(ValidationError) as context:
+                organizer.full_clean()
+            self.assertIn('slug', context.exception.message_dict)
+
+    def test_organizer_slug_stays_globally_unique(self):
+        Organizer.objects.create(name='One', slug='a')
+        with self.assertRaises(ValidationError):
+            Organizer(name='Two', slug='a').full_clean()
+
+    def test_numeric_slug_does_not_replace_event_primary_key(self):
+        organizer = Organizer.objects.create(name='First', slug='first')
+        event = Event.objects.create(
+            organizer=organizer,
+            name='Existing',
+            slug='existing',
+            date_from=datetime.datetime(2013, 12, 26, tzinfo=datetime.timezone.utc),
+        )
+        other = Organizer.objects.create(name='Other', slug='other')
+        Event.objects.create(
+            organizer=other,
+            name='Digit',
+            slug=str(event.pk),
+            date_from=datetime.datetime(2013, 12, 26, tzinfo=datetime.timezone.utc),
+        )
+        found = get_event_by_id_or_slug(str(event.pk))
+        self.assertEqual(found.pk, event.pk)
+        self.assertEqual(get_event_by_id_or_slug(event.pk).pk, event.pk)
 
 
 class SubEventTest(TestCase):
