@@ -410,7 +410,7 @@ urlpatterns = [
                     name='event.order.download.ticket',
                 ),
                 url(
-                    r'^orders/(?P<code>[0-9A-Z]+)/answer/(?P<answer>[^/]+)/$',
+                    r'^orders/(?P<code>[0-9A-Z]+)/answer/(?P<answer>[0-9]+)/$',
                     orders.AnswerDownload.as_view(),
                     name='event.order.download.answer',
                 ),
