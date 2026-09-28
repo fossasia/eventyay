@@ -56,7 +56,7 @@ class OrderAuthorizationTest(TestCase):
             default_price=23,
             admission=True,
         )
-        self.quota.items.add(self.ticket)
+        self.quota.products.add(self.ticket)
 
         # Create two users
         self.user_a = User.objects.create_user(
@@ -80,7 +80,7 @@ class OrderAuthorizationTest(TestCase):
         )
         OrderPosition.objects.create(
             order=self.order_a,
-            item=self.ticket,
+            product=self.ticket,
             price=Decimal('23'),
             attendee_name_parts={'full_name': 'User A'},
         )
@@ -97,7 +97,7 @@ class OrderAuthorizationTest(TestCase):
         )
         OrderPosition.objects.create(
             order=self.order_b,
-            item=self.ticket,
+            product=self.ticket,
             price=Decimal('23'),
             attendee_name_parts={'full_name': 'User B'},
         )
@@ -105,7 +105,7 @@ class OrderAuthorizationTest(TestCase):
     def test_unauthenticated_user_cannot_modify_order(self):
         """Unauthenticated user should be redirected to login when trying to modify order."""
         response = self.client.get(
-            f'/events/{self.event.organizer.slug}/{self.event.slug}/order/{self.order_a.code}/{self.order_a.secret}/modify/',
+            f'/{self.event.organizer.slug}/{self.event.slug}/order/{self.order_a.code}/{self.order_a.secret}/modify',
             follow=False
         )
         # Should redirect to login page
@@ -114,7 +114,7 @@ class OrderAuthorizationTest(TestCase):
     def test_unauthenticated_user_cannot_cancel_order(self):
         """Unauthenticated user should be redirected to login when trying to cancel order."""
         response = self.client.get(
-            f'/events/{self.event.organizer.slug}/{self.event.slug}/order/{self.order_a.code}/{self.order_a.secret}/cancel/',
+            f'/{self.event.organizer.slug}/{self.event.slug}/order/{self.order_a.code}/{self.order_a.secret}/cancel',
             follow=False
         )
         # Should redirect to login page
@@ -123,7 +123,7 @@ class OrderAuthorizationTest(TestCase):
     def test_unauthenticated_user_cannot_change_order(self):
         """Unauthenticated user should be redirected to login when trying to change order."""
         response = self.client.get(
-            f'/events/{self.event.organizer.slug}/{self.event.slug}/order/{self.order_a.code}/{self.order_a.secret}/change/',
+            f'/{self.event.organizer.slug}/{self.event.slug}/order/{self.order_a.code}/{self.order_a.secret}/change',
             follow=False
         )
         # Should redirect to login page
@@ -133,17 +133,17 @@ class OrderAuthorizationTest(TestCase):
         """User B cannot modify User A's order."""
         self.client.login(email='user_b@example.com', password='testpass123')
         response = self.client.get(
-            f'/events/{self.event.organizer.slug}/{self.event.slug}/order/{self.order_a.code}/{self.order_a.secret}/modify/',
-            follow=False
+            f'/{self.event.organizer.slug}/{self.event.slug}/order/{self.order_a.code}/{self.order_a.secret}/modify',
+            follow=True
         )
-        # Should return 403 Forbidden
+        # Nothing to modify redirects to the order page, which returns 403 Forbidden
         self.assertEqual(response.status_code, 403)
 
     def test_different_user_cannot_cancel_order(self):
         """User B cannot cancel User A's order."""
         self.client.login(email='user_b@example.com', password='testpass123')
         response = self.client.get(
-            f'/events/{self.event.organizer.slug}/{self.event.slug}/order/{self.order_a.code}/{self.order_a.secret}/cancel/',
+            f'/{self.event.organizer.slug}/{self.event.slug}/order/{self.order_a.code}/{self.order_a.secret}/cancel',
             follow=False
         )
         # Should return 403 Forbidden
@@ -153,16 +153,16 @@ class OrderAuthorizationTest(TestCase):
         """User B cannot change User A's order."""
         self.client.login(email='user_b@example.com', password='testpass123')
         response = self.client.get(
-            f'/events/{self.event.organizer.slug}/{self.event.slug}/order/{self.order_a.code}/{self.order_a.secret}/change/',
-            follow=False
+            f'/{self.event.organizer.slug}/{self.event.slug}/order/{self.order_a.code}/{self.order_a.secret}/change',
+            follow=True
         )
-        # Should return 403 Forbidden
+        # Nothing to change redirects to the order page, which returns 403 Forbidden
         self.assertEqual(response.status_code, 403)
 
     def test_unauthenticated_user_cannot_generate_invoice(self):
         """Unauthenticated user cannot generate invoice."""
         response = self.client.post(
-            f'/events/{self.event.organizer.slug}/{self.event.slug}/order/{self.order_a.code}/{self.order_a.secret}/invoice',
+            f'/{self.event.organizer.slug}/{self.event.slug}/order/{self.order_a.code}/{self.order_a.secret}/invoice',
             follow=False
         )
         # Should redirect to login page
@@ -172,7 +172,7 @@ class OrderAuthorizationTest(TestCase):
         """User B cannot generate invoice for User A's order."""
         self.client.login(email='user_b@example.com', password='testpass123')
         response = self.client.post(
-            f'/events/{self.event.organizer.slug}/{self.event.slug}/order/{self.order_a.code}/{self.order_a.secret}/invoice',
+            f'/{self.event.organizer.slug}/{self.event.slug}/order/{self.order_a.code}/{self.order_a.secret}/invoice',
             follow=False
         )
         # Should return 403 Forbidden
@@ -182,7 +182,7 @@ class OrderAuthorizationTest(TestCase):
         """Order owner should be able to view order details."""
         self.client.login(email='user_a@example.com', password='testpass123')
         response = self.client.get(
-            f'/events/{self.event.organizer.slug}/{self.event.slug}/order/{self.order_a.code}/{self.order_a.secret}/'
+            f'/{self.event.organizer.slug}/{self.event.slug}/order/{self.order_a.code}/{self.order_a.secret}/'
         )
         # Should be allowed to view
         self.assertIn(response.status_code, [200])
@@ -190,7 +190,7 @@ class OrderAuthorizationTest(TestCase):
     def test_unauthenticated_cannot_view_order_details(self):
         """Unauthenticated users should be redirected to login when viewing order details."""
         response = self.client.get(
-            f'/events/{self.event.organizer.slug}/{self.event.slug}/order/{self.order_a.code}/{self.order_a.secret}/',
+            f'/{self.event.organizer.slug}/{self.event.slug}/order/{self.order_a.code}/{self.order_a.secret}/',
             follow=False
         )
         # Should redirect to login page
@@ -200,8 +200,55 @@ class OrderAuthorizationTest(TestCase):
         """User B cannot view User A's order details."""
         self.client.login(email='user_b@example.com', password='testpass123')
         response = self.client.get(
-            f'/events/{self.event.organizer.slug}/{self.event.slug}/order/{self.order_a.code}/{self.order_a.secret}/',
+            f'/{self.event.organizer.slug}/{self.event.slug}/order/{self.order_a.code}/{self.order_a.secret}/',
             follow=False
         )
         # Should return 403 Forbidden
         self.assertEqual(response.status_code, 403)
+
+    def test_guest_can_view_order_details_when_guest_orders_allowed(self):
+        """Without an account, the secret order URL is the only way in when guest orders are allowed."""
+        self.event.settings.set('require_registered_account_for_tickets', False)
+        response = self.client.get(
+            f'/{self.event.organizer.slug}/{self.event.slug}/order/{self.order_a.code}/{self.order_a.secret}/'
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_guest_can_view_confirmation_after_checkout_when_guest_orders_allowed(self):
+        """The page checkout redirects to after placing an order is reachable without an account."""
+        self.event.settings.set('require_registered_account_for_tickets', False)
+        response = self.client.get(
+            f'/{self.event.organizer.slug}/{self.event.slug}/order/{self.order_a.code}/{self.order_a.secret}/?thanks=1'
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_guest_with_wrong_secret_cannot_view_order_when_guest_orders_allowed(self):
+        """Allowing guest orders does not open orders to visitors without the secret."""
+        self.event.settings.set('require_registered_account_for_tickets', False)
+        response = self.client.get(
+            f'/{self.event.organizer.slug}/{self.event.slug}/order/{self.order_a.code}/wrongsecret/',
+            follow=False,
+        )
+        self.assertNotEqual(response.status_code, 200)
+
+    def test_different_user_cannot_view_order_details_when_guest_orders_allowed(self):
+        """A logged-in user who does not own the order is still denied when guest orders are allowed."""
+        self.event.settings.set('require_registered_account_for_tickets', False)
+        self.client.login(email='user_b@example.com', password='testpass123')
+        response = self.client.get(
+            f'/{self.event.organizer.slug}/{self.event.slug}/order/{self.order_a.code}/{self.order_a.secret}/',
+            follow=False,
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_guest_cannot_join_video_when_guest_orders_allowed(self):
+        """Joining the online event still requires the authenticated order owner."""
+        self.event.settings.set('require_registered_account_for_tickets', False)
+        with scopes_disabled():
+            position = self.order_a.positions.first()
+        response = self.client.post(
+            f'/{self.event.organizer.slug}/{self.event.slug}/ticket/{self.order_a.code}/{position.positionid}/{position.web_secret}/False/venueless/',
+            follow=False,
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/login/', response['Location'])
