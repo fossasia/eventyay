@@ -232,7 +232,6 @@ def _module_action(
     *,
     label: str,
     icon: str,
-    tone: str,
     url: str | None = None,
     dialog_id: str | None = None,
     modal_target: str | None = None,
@@ -240,7 +239,6 @@ def _module_action(
     return {
         'label': label,
         'icon': icon,
-        'tone': tone,
         'url': url or '#',
         'dialog_id': dialog_id,
         'modal_target': modal_target,
@@ -252,7 +250,6 @@ def _ticket_module_action(event: Event, request: HttpRequest) -> dict[str, Any]:
         return _module_action(
             label=str(_('Tickets')),
             icon='ticket',
-            tone='tickets',
             url=reverse(
                 'control:event.index',
                 kwargs={'event': event.slug, 'organizer': event.organizer.slug},
@@ -261,7 +258,6 @@ def _ticket_module_action(event: Event, request: HttpRequest) -> dict[str, Any]:
     return _module_action(
         label=str(_('Tickets')),
         icon='ticket',
-        tone='tickets',
         dialog_id=TICKET_PERMISSION_DIALOG_ID,
     )
 
@@ -271,20 +267,17 @@ def _talk_module_action(event: Event, request: HttpRequest) -> dict[str, Any]:
         return _module_action(
             label=str(_('Talks')),
             icon='microphone',
-            tone='talks',
             modal_target='#alert-modal',
         )
     if not user_has_talk_dashboard_access(request.user, event.organizer, event, request=request):
         return _module_action(
             label=str(_('Talks')),
             icon='microphone',
-            tone='talks',
             dialog_id=TALK_PERMISSION_DIALOG_ID,
         )
     return _module_action(
         label=str(_('Talks')),
         icon='microphone',
-        tone='talks',
         url=reverse('orga:event.dashboard', kwargs={'organizer': event.organizer.slug, 'event': event.slug}),
     )
 
@@ -294,7 +287,6 @@ def _video_module_action(event: Event, request: HttpRequest) -> dict[str, Any]:
         return _module_action(
             label=str(_('Video')),
             icon='video-camera',
-            tone='video',
             url=reverse(
                 'eventyay_common:event.create_access_to_video',
                 kwargs={'event': event.slug, 'organizer': event.organizer.slug},
@@ -303,7 +295,6 @@ def _video_module_action(event: Event, request: HttpRequest) -> dict[str, Any]:
     return _module_action(
         label=str(_('Video')),
         icon='video-camera',
-        tone='video',
         dialog_id=VIDEO_PERMISSION_DIALOG_ID,
     )
 

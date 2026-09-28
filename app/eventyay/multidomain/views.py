@@ -274,6 +274,7 @@ class VideoSPAView(View):
                     'search': str(_('Search')),
                     'featured_speakers': str(_('Featured Speakers')),
                     'view_profile': str(_('View speaker profile')),
+                    'view_all_speakers': str(_('View all speakers')),
                     'no_starred_sessions': str(_('No starred sessions.')),
                     'no_schedule_available': str(_('No schedule has been published yet. Please check back later.')),
                 },

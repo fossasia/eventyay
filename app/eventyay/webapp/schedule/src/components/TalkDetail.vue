@@ -83,6 +83,7 @@
 					path(d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4")
 					polyline(points="7 10 12 15 17 10")
 					line(x1="12" y1="15" x2="12" y2="3")
+		p.schedule-pending-note(v-if="isSchedulePending") {{ tentativeSessionText }}
 		.speakers(v-if="resolvedTalk.speakers && resolvedTalk.speakers.length > 0")
 			.header {{ t.speakers }} ({{ resolvedTalk.speakers.length }})
 			.speakers-list
@@ -98,6 +99,7 @@
 							svg(viewBox="0 0 24 24")
 								path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
 						.name(:class="{'no-name': !speaker.name}") {{ speaker.name || t.speaker_name_not_provided }}
+					p.speaker-role(v-if="speaker.speaker_role") {{ speaker.speaker_role }}
 					markdown-content.biography(v-if="speaker.biography", :markdown="speaker.biography")
 		.starrers(v-if="popularityFeatureEnabled && starrers && starrers.total > 0")
 			.header
@@ -131,23 +133,34 @@
 								svg(viewBox="0 0 24 24")
 									path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
 							span.name {{ t.anonymous_attendee }}
-				nav.starrers-pager(v-if="starrersPageCount > 1", :aria-label="t.pagination")
-					button.page-btn.prev(v-if="starrersPage > 1", type="button", :disabled="starrersLoading", :aria-label="t.previous_page", @click="goToStarrersPage(starrersPage - 1)") {{ t.previous }}
-					span.page-status {{ starrersPageStatus }}
-					button.page-btn.next(v-if="starrersPage < starrersPageCount", type="button", :disabled="starrersLoading", :aria-label="t.next_page", @click="goToStarrersPage(starrersPage + 1)") {{ t.next }}
+				list-pagination(
+					v-if="starrersPageCount > 1",
+					variant="directional",
+					:current-page="starrersPage",
+					:total-pages="starrersPageCount",
+					:status="starrersPageStatus",
+					:aria-label="t.pagination",
+					:previous-label="t.previous",
+					:previous-aria-label="t.previous_page",
+					:next-label="t.next",
+					:next-aria-label="t.next_page",
+					:loading="starrersLoading",
+					@change="goToStarrersPage"
+				)
 	bunt-progress-circular(v-else, size="huge", :page="true")
 </template>
 
 <script>
 import moment from 'moment-timezone'
-import { getLocalizedString, getIconByFileEnding, computeTalkExporters, buildExportMenuItems, parseBooleanAnswer, resolveAbsoluteUrl, buildQrcodesUrl, getVideoEmbedUrl } from '../utils'
+import { getLocalizedString, getIconByFileEnding, computeTalkExporters, buildExportMenuItems, parseBooleanAnswer, resolveAbsoluteUrl, buildQrcodesUrl, getVideoEmbedUrl, isTalkSchedulePending, tentativeSessionText as pendingSessionNote, pageStatusRange } from '../utils'
+import ListPagination from './ListPagination.vue'
 import MarkdownContent from './MarkdownContent.vue'
 import DetailBackNav from './DetailBackNav.vue'
 import DetailTopActions from './DetailTopActions.vue'
 
 export default {
 	name: 'TalkDetail',
-	components: { MarkdownContent, DetailBackNav, DetailTopActions },
+	components: { MarkdownContent, DetailBackNav, DetailTopActions, ListPagination },
 	inject: {
 		scheduleData: { default: null },
 		scheduleFav: {
@@ -274,11 +287,9 @@ export default {
 			return Math.ceil(total / this.inlineStarrersLimit)
 		},
 		starrersPageStatus() {
-			const total = this.starrers?.total || 0
-			if (!total) return ''
-			const start = ((this.starrersPage - 1) * this.inlineStarrersLimit) + 1
-			const end = Math.min(this.starrersPage * this.inlineStarrersLimit, total)
-			return this.$t('Showing {{start}}–{{end}} of {{total}}', {start, end, total})
+			const range = pageStatusRange(this.starrersPage, this.inlineStarrersLimit, this.starrers?.total || 0)
+			if (!range) return ''
+			return this.$t('Showing {{start}}–{{end}} of {{total}}', range)
 		},
 		popularityFeatureEnabled() {
 			return !!this.scheduleData?.schedule?.feature_flags?.session_popularity_enabled
@@ -317,11 +328,14 @@ export default {
 			return moment(this.resolvedTalk.start).format('L LT') + ' - ' + moment(this.resolvedTalk.end).format('LT')
 		},
 		isSchedulePending () {
-			return Boolean(this.resolvedTalk?.schedule_pending || !this.resolvedTalk?.start)
+			return isTalkSchedulePending(this.resolvedTalk)
 		},
 		schedulePendingText () {
 			const m = this.translationMessages || {}
-			return m.schedule_pending_secondary || this.$t('Coming soon')
+			return m.schedule_pending_secondary || this.$t('To be announced')
+		},
+		tentativeSessionText () {
+			return pendingSessionNote(this.translationMessages)
 		},
 		sessionTimeLabel () {
 			if (this.isSchedulePending) return this.schedulePendingText
@@ -762,6 +776,12 @@ export default {
 					opacity: 0.9
 				svg
 					flex-shrink: 0
+	.schedule-pending-note
+		margin: 0 16px 16px
+		font-size: 13px
+		font-weight: 400
+		line-height: 1.4
+		color: $clr-secondary-text-light
 	.starrers
 		margin: 0 16px 32px
 		display: flex
@@ -865,35 +885,6 @@ export default {
 							color: rgba(0,0,0,0.3)
 					.name
 						font-weight: 600
-			.starrers-pager
-				display: flex
-				align-items: center
-				justify-content: center
-				gap: 12px
-				margin-top: 8px
-				.page-status
-					font-size: 13px
-					color: $clr-secondary-text-light
-					text-align: center
-				.page-btn
-					appearance: none
-					border: 1px solid var(--pretalx-clr-primary, var(--clr-primary))
-					background: $clr-white
-					color: var(--pretalx-clr-primary, var(--clr-primary))
-					border-radius: 8px
-					padding: 4px 10px
-					font-weight: 600
-					font-size: 13px
-					cursor: pointer
-					&:hover, &:focus-visible
-						background: var(--pretalx-clr-primary, var(--clr-primary))
-						color: $clr-white
-						outline: none
-					&:disabled
-						opacity: 0.45
-						cursor: default
-						background: $clr-white
-						color: var(--pretalx-clr-primary, var(--clr-primary))
 	.speakers
 		margin: 0 16px 32px
 		display: flex
@@ -938,6 +929,10 @@ export default {
 					color: $clr-secondary-text-light
 					font-weight: 400
 					font-style: italic
+			.speaker-role
+				font-size: 13px
+				color: $clr-secondary-text-light
+				margin: 4px 0 0
 	.downloads
 		margin: 0 16px 32px
 		display: flex

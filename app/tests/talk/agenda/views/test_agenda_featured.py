@@ -111,6 +111,40 @@ def test_featured_never_blocks_admin_mode_direct_url(client, event, administrato
 
 
 @pytest.mark.django_db
+def test_featured_sessions_page_is_paginated(
+    client, event, confirmed_submission, other_confirmed_submission, monkeypatch
+):
+    monkeypatch.setattr('eventyay.agenda.views.utils.FEATURED_SESSIONS_PAGE_SIZE', 1)
+    with scope(event=event):
+        event.feature_flags['show_featured'] = 'always'
+        event.save()
+        confirmed_submission.is_featured = True
+        confirmed_submission.save()
+        other_confirmed_submission.is_featured = True
+        other_confirmed_submission.save()
+
+    first = client.get(f'{event.urls.featured}?format=json')
+    assert first.status_code == 200
+    payload = first.json()
+    assert payload['count'] == 2
+    assert payload['num_pages'] == 2
+    assert payload['page_size'] == 1
+    assert len(payload['talks']) == 1
+
+    second = client.get(f'{event.urls.featured}?format=json&page=2')
+    assert second.status_code == 200
+    second_payload = second.json()
+    assert second_payload['page'] == 2
+    assert len(second_payload['talks']) == 1
+    assert second_payload['talks'][0]['code'] != payload['talks'][0]['code']
+
+    page = client.get(event.urls.featured)
+    html = page.content.decode()
+    assert payload['talks'][0]['code'] in html
+    assert second_payload['talks'][0]['code'] not in html
+
+
+@pytest.mark.django_db
 def test_featured_page_applies_custom_background_color(client, event, confirmed_submission):
     with scope(event=event):
         event.feature_flags['show_featured'] = 'always'

@@ -590,3 +590,26 @@ def test_orga_can_export_reviews(review, orga_client):
     )
     assert response.status_code == 200
     assert review.text in response.text
+
+
+@pytest.mark.django_db
+def test_review_overview_table_layout(review_client, review_user, submission):
+    with scope(event=submission.event):
+        category = submission.event.score_categories.first()
+        score = category.scores.filter(value=1).first()
+        submission.assigned_reviewers.add(review_user)
+    response = review_client.post(
+        submission.orga_urls.reviews,
+        follow=True,
+        data={
+            f"score_{category.id}": score.id,
+            "text": "Yes",
+        },
+    )
+    assert response.status_code == 200
+    response = review_client.get(submission.orga_urls.reviews, follow=True)
+    assert response.status_code == 200
+    assert "review-table" in response.text
+    assert '<td class="nowrap">' in response.text
+    assert "Yes" in response.text
+
