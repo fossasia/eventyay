@@ -2,15 +2,22 @@ const formSelector = '[data-voucher-bulk-form]';
 const tagSelector = '[name="tag"]';
 const tagPrefixSelector = '[name="use_tag_as_prefix"]';
 let hasScrolledToError = false;
+let currentRequestId = 0;
 
-function syncPrefix(form) {
+function syncPrefix(form, preserveExisting = false) {
     if (!form) {
         return;
     }
     const tagInput = form.querySelector(tagSelector);
     const tagPrefixInput = form.querySelector(tagPrefixSelector);
     const prefixInput = form.querySelector('#voucher-bulk-codes-prefix');
-    if (!tagInput || !tagPrefixInput || !prefixInput || !tagPrefixInput.checked) {
+    if (
+        !tagInput ||
+        !tagPrefixInput ||
+        !prefixInput ||
+        !tagPrefixInput.checked ||
+        (preserveExisting && prefixInput.value.trim() !== '')
+    ) {
         return;
     }
 
@@ -35,7 +42,7 @@ document.addEventListener(
     'change',
     (event) => {
         if (event.target.matches(`${formSelector} ${tagPrefixSelector}`)) {
-            syncPrefix(formFor(event.target));
+            syncPrefix(formFor(event.target), false);
         }
     },
     true
@@ -45,7 +52,7 @@ document.addEventListener(
     'input',
     (event) => {
         if (event.target.matches(`${formSelector} ${tagSelector}`)) {
-            syncPrefix(formFor(event.target));
+            syncPrefix(formFor(event.target), false);
         }
     },
     true
@@ -77,11 +84,13 @@ document.addEventListener('click', async (event) => {
     const num = numInput ? numInput.value.trim() : '';
     const prefix = prefixInput ? prefixInput.value.trim() : '';
 
-    if (num !== '') {
+    if (Number.isInteger(Number(num)) && Number(num) > 0) {
         const url = btn.getAttribute('data-rng-url');
-        if (codesInput) {
-            codesInput.value = window.gettext ? window.gettext('Generating...') : 'Generating...';
-        }
+        const requestId = ++currentRequestId;
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = window.gettext ? window.gettext('Generating...') : 'Generating...';
+
         if (formGroup) {
             formGroup.classList.remove('has-error');
         }
@@ -92,12 +101,23 @@ document.addEventListener('click', async (event) => {
                 throw new Error(`RNG request failed with status: ${response.status}`);
             }
             const data = await response.json();
+            if (requestId !== currentRequestId) {
+                return;
+            }
             if (codesInput && Array.isArray(data.codes)) {
                 codesInput.value = data.codes.join('\n');
             }
         } catch (err) {
+            if (requestId !== currentRequestId) {
+                return;
+            }
             console.error('Error generating voucher codes:', err);
             alert(window.gettext ? window.gettext('Error while generating keys.') : 'Error while generating keys.');
+        } finally {
+            if (requestId === currentRequestId) {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
         }
     } else {
         if (formGroup) {
@@ -115,7 +135,7 @@ document.addEventListener('click', async (event) => {
 });
 
 const observer = new MutationObserver(() => {
-    document.querySelectorAll(formSelector).forEach(syncPrefix);
+    document.querySelectorAll(formSelector).forEach((form) => syncPrefix(form, true));
     if (!hasScrolledToError) {
         scrollToError();
     }
@@ -130,9 +150,9 @@ if (document.body) {
 }
 
 window.addEventListener('pageshow', () => {
-    document.querySelectorAll(formSelector).forEach(syncPrefix);
+    document.querySelectorAll(formSelector).forEach((form) => syncPrefix(form, true));
     scrollToError();
 });
 
-document.querySelectorAll(formSelector).forEach(syncPrefix);
+document.querySelectorAll(formSelector).forEach((form) => syncPrefix(form, true));
 scrollToError();
