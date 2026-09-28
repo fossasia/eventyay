@@ -23,5 +23,7 @@ echo "============== running compress ====================="
 python manage.py compress
 echo "============== running migrate ======================"
 python manage.py migrate
+echo "============== updating widget scripts ============="
+python manage.py updatestyles
 echo "============== starting application ================="
 exec "$@"
