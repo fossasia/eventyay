@@ -35,7 +35,7 @@ frame_wrapped_urls = [
         name='event.cart.clear',
     ),
     path(
-        'cart/answer/<answer>/',
+        'cart/answer/<int:answer>/',
         eventyay.presale.views.cart.AnswerDownload.as_view(),
         name='event.cart.download.answer',
     ),
@@ -188,7 +188,7 @@ event_patterns = [
         name='event.order.pay.change',
     ),
     re_path(
-        r'^order/(?P<order>[^/]+)/(?P<secret>[A-Za-z0-9]+)/answer/(?P<answer>[^/]+)/$',
+        r'^order/(?P<order>[^/]+)/(?P<secret>[A-Za-z0-9]+)/answer/(?P<answer>[0-9]+)/$',
         eventyay.presale.views.order.AnswerDownload.as_view(),
         name='event.order.download.answer',
     ),
