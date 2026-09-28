@@ -24,7 +24,6 @@ from django.core.files.storage import default_storage
 from django.core.mail import get_connection
 from django.core.validators import (
     MaxValueValidator,
-    MinLengthValidator,
     MinValueValidator,
     RegexValidator,
 )
@@ -525,11 +524,8 @@ class Event(
             'This will be used in URLs, order codes, invoice numbers, and bank transfer references.'
         ),
         validators=[
-            MinLengthValidator(
-                limit_value=2,
-            ),
             RegexValidator(
-                regex='^[a-zA-Z0-9][a-zA-Z0-9.-]*[a-zA-Z0-9]$',
+                regex=r'^[a-zA-Z0-9](?:[a-zA-Z0-9.-]*[a-zA-Z0-9])?\Z',
                 message=_('The slug may only contain letters, numbers, dots and dashes.'),
             ),
             EventSlugBanlistValidator(),

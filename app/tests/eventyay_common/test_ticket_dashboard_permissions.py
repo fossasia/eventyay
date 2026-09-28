@@ -347,7 +347,7 @@ def test_generate_talk_button_shows_permission_dialog_for_ticket_only(user, orga
     request.session = MagicMock()
     # team fixture gives user ticket access but no talk access
     html = EventWidgetGenerator.generate_talk_button(event, request)
-    assert '<a href="#" class="middle-component"' in html
+    assert '<a href="#" class="component"' in html
     assert 'role="button"' in html
     assert f'data-dialog-target="#{TALK_PERMISSION_DIALOG_ID}"' in html
     assert f'aria-controls="{TALK_PERMISSION_DIALOG_ID}"' in html

@@ -55,7 +55,7 @@ def env0():
 @pytest.mark.django_db
 def test_generate_pdf(env0):
     event, order = env0
-    with scope(organizer=event.organizer):
+    with scope(organizer=event.organizer, event=event):
         event.settings.set('ticketoutput_pdf_code_x', 30)
         event.settings.set('ticketoutput_pdf_code_y', 50)
         event.settings.set('ticketoutput_pdf_code_s', 2)
@@ -64,3 +64,61 @@ def test_generate_pdf(env0):
         assert ftype == 'application/pdf'
         pdf = PdfReader(BytesIO(buf))
         assert len(pdf.pages) == 1
+
+
+@pytest.mark.django_db
+def test_generate_pdf_currency_symbol_fallback(env0, monkeypatch):
+    event, order = env0
+    event.currency = 'INR'
+    event.save()
+    with scope(organizer=event.organizer, event=event):
+        event.settings.set('ticketoutput_pdf_code_x', 30)
+        event.settings.set('ticketoutput_pdf_code_y', 50)
+        event.settings.set('ticketoutput_pdf_code_s', 2)
+        
+        o = PdfTicketOutput(event)
+        # Force a font that lacks the currency symbol
+        o.override_layout = [
+            {
+                'type': 'textarea',
+                'left': '10.00',
+                'bottom': '10.00',
+                'fontsize': '16.0',
+                'color': [0, 0, 0, 1],
+                'fontfamily': 'Open Sans',
+                'bold': False,
+                'italic': False,
+                'width': '100.00',
+                'content': 'price',
+                'text': '',
+                'align': 'left',
+            }
+        ]
+        
+        # Test 1: Font does NOT support symbol (fallback applies)
+        monkeypatch.setattr('eventyay.base.pdf.font_supports_text', lambda f, t: False)
+        fname, ftype, buf = o.generate(order.positions.first())
+        assert ftype == 'application/pdf'
+        pdf = PdfReader(BytesIO(buf))
+        assert len(pdf.pages) == 1
+        
+        text = ''
+        for page in pdf.pages:
+            text += page.extract_text()
+            
+        # Verify the fallback regex substitutes the ISO code
+        assert 'INR' in text
+        # Ensure the symbol does not appear in the PDF bytes when ISO code is used
+        assert b'\xe2\x82\xb9' not in buf
+
+        # Test 2: Font DOES support symbol (fallback is NOT applied)
+        monkeypatch.setattr('eventyay.base.pdf.font_supports_text', lambda f, t: True)
+        fname2, ftype2, buf2 = o.generate(order.positions.first())
+        assert ftype2 == 'application/pdf'
+        pdf2 = PdfReader(BytesIO(buf2))
+        
+        text2 = ''
+        for page in pdf2.pages:
+            text2 += page.extract_text()
+            
+        assert 'INR' not in text2

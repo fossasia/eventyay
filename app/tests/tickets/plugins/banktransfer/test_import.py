@@ -20,7 +20,7 @@ from eventyay.base.models import (
     User,
 )
 from eventyay.plugins.banktransfer.models import BankImportJob, BankTransaction
-from eventyay.plugins.banktransfer.tasks import process_banktransfers
+from eventyay.plugins.banktransfer.tasks import find_order_code_matches, process_banktransfers
 
 
 @pytest.fixture
@@ -69,8 +69,8 @@ def env():
     )
     quota = Quota.objects.create(name='Test', size=2, event=event)
     item1 = Item.objects.create(event=event, name='Ticket', default_price=23)
-    quota.items.add(item1)
-    OrderPosition.objects.create(order=o1, item=item1, variation=None, price=23)
+    quota.products.add(item1)
+    OrderPosition.objects.create(order=o1, product=item1, variation=None, price=23)
     return event, user, o1, o2
 
 
@@ -410,6 +410,32 @@ def test_mark_paid_organizer_weird_slug(env, orga_job):
     )
     env[2].refresh_from_db()
     assert env[2].status == Order.STATUS_PAID
+
+
+@pytest.mark.django_db
+def test_short_slug_does_not_hide_later_order_reference(env, orga_job):
+    Event.objects.create(
+        organizer=env[0].organizer,
+        name='Short',
+        slug='d',
+        date_from=now(),
+        plugins='eventyay.plugins.banktransfer',
+    )
+    process_banktransfers(
+        orga_job,
+        [
+            {
+                'payer': 'Karla Kundin',
+                'reference': 'Payment for order DUMMY-1234S',
+                'date': '2016-01-26',
+                'amount': '23.00',
+            }
+        ],
+    )
+    env[2].refresh_from_db()
+    assert env[2].status == Order.STATUS_PAID
+    matches = find_order_code_matches('Payment for order DUMMY-1234S', ['DUMMY', 'D'], 5, 5)
+    assert ('DUMMY', '1234S') in matches
 
 
 @pytest.mark.django_db

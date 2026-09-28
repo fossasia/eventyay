@@ -17,3 +17,23 @@ def create_user(email, name=None, pw_reset_days=60, event=None):
     if event:
         SpeakerProfile.objects.get_or_create(user=user, event=event)
     return user
+
+
+def build_public_speaker_role(profile, event):
+    """Return public job title and organization joined for speaker cards."""
+    if not profile or not event or not hasattr(event, 'cfp'):
+        return ''
+
+    cfp = event.cfp
+    parts = []
+    if cfp.request_job_title and cfp.is_field_public('job_title'):
+        job_title = (profile.job_title or '').strip()
+        if job_title:
+            parts.append(job_title)
+
+    if cfp.request_organization and cfp.is_field_public('organization'):
+        organization = (profile.organization or '').strip()
+        if organization:
+            parts.append(organization)
+
+    return ', '.join(parts)

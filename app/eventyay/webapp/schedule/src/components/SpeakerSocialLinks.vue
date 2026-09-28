@@ -50,13 +50,11 @@ export default {
 	width: 32px
 	height: 32px
 	border-radius: 6px
-	background: rgba(0, 0, 0, 0.06)
 	color: inherit
 	text-decoration: none
 	font-size: 16px
-	transition: background-color 0.15s ease, transform 0.15s ease
+	transition: transform 0.15s ease
 	&:hover, &:focus-visible
-		background: rgba(0, 0, 0, 0.12)
 		transform: translateY(-2px)
 	&:active
 		transform: translateY(0)
