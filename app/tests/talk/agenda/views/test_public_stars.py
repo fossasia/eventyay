@@ -31,7 +31,7 @@ def _unpublish_schedule(event):
 
 
 @pytest.mark.django_db
-def test_public_stars_include_schedule_metadata_when_schedule_is_public(client, event, slot, track, user):
+def test_public_stars_include_schedule_metadata_when_schedule_is_public(client, event, slot, other_slot, track, user):
     with scope(event=event):
         slot.submission.track = track
         slot.submission.save(update_fields=['track'])
@@ -43,6 +43,9 @@ def test_public_stars_include_schedule_metadata_when_schedule_is_public(client, 
     response = client.get(_stars_url(event), HTTP_ACCEPT='text/html')
     assert response.status_code == 200
     payload = json.loads(response.context['schedule_json'])
+    codes = {item['code'] for item in payload['talks']}
+    assert slot.submission.code in codes
+    assert other_slot.submission.code in codes
     talk = next(item for item in payload['talks'] if item['code'] == slot.submission.code)
     assert talk['start']
     assert talk['end']
@@ -54,6 +57,13 @@ def test_public_stars_include_schedule_metadata_when_schedule_is_public(client, 
     assert 'Star User' in response.text
     assert 'Testroom' in response.text
     assert 'Test Track' in response.text
+
+    favs = client.get(_stars_url(event).rstrip('/') + '.json')
+    assert favs.status_code == 200
+    body = favs.json()
+    assert body['name'] == 'Star User'
+    assert body['favs'] == [slot.submission.code]
+    assert 'show_starred_by' not in body
 
 
 @pytest.mark.django_db
@@ -116,3 +126,37 @@ def test_organizer_still_sees_unpublished_schedule_on_public_stars(orga_client, 
     assert payload['rooms']
     assert 'Star User' in response.text
     assert 'Testroom' in response.text
+
+    favs = orga_client.get(_stars_url(event).rstrip('/') + '.json')
+    assert favs.status_code == 200
+    body = favs.json()
+    assert body['name'] == 'Star User'
+    assert body['favs'] == [slot.submission.code]
+    assert 'show_starred_by' not in body
+
+
+@pytest.mark.django_db
+def test_public_stars_without_a_schedule_stay_not_found(client, event, user):
+    with scope(event=event):
+        _publish_user(user)
+        _publish_talk_pages(event)
+
+    response = client.get(_stars_url(event), HTTP_ACCEPT='text/html')
+    assert response.status_code == 404
+    favs = client.get(_stars_url(event).rstrip('/') + '.json')
+    assert favs.status_code == 404
+
+
+@pytest.mark.django_db
+def test_public_stars_hide_profiles_that_are_not_public(client, event, slot, user):
+    with scope(event=event):
+        user.code = 'STARUSER'
+        user.show_publicly = False
+        user.save(update_fields=['code', 'show_publicly'])
+        _publish_talk_pages(event)
+        SubmissionFavourite.objects.create(user=user, submission=slot.submission)
+
+    response = client.get(_stars_url(event), HTTP_ACCEPT='text/html')
+    assert response.status_code == 404
+    favs = client.get(_stars_url(event).rstrip('/') + '.json')
+    assert favs.status_code == 404
