@@ -711,7 +711,14 @@ class SubmissionFilterForm(forms.Form):
 
         if readiness == 'with_conflicts':
             warnings = wip_schedule.get_all_talk_warnings()
-            talks_with_conflicts = [talk.submission_id for talk, warns in warnings.items() if warns and talk.submission_id]
+            talks_with_conflicts = [
+                talk.submission_id
+                for talk, warns in warnings.items()
+                if warns
+                and talk.submission_id
+                and talk.submission.state == SubmissionStates.CONFIRMED
+                and talk.is_visible
+            ]
             return qs.filter(id__in=talks_with_conflicts)
 
         return qs

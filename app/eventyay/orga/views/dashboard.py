@@ -475,7 +475,7 @@ class EventDashboardView(EventPermissionRequired, SubmissionStatsMixin, Template
                 'confirmed': confirmed_sessions_count,
                 'canceled': event.submissions.filter(state=SubmissionStates.CANCELED).count(),
                 'scheduled': 0,
-                'unscheduled': 0,
+                'unscheduled': confirmed_sessions_count if not wip_schedule else 0,
                 'with_conflicts': 0,
             }
             if wip_schedule:
@@ -484,26 +484,35 @@ class EventDashboardView(EventPermissionRequired, SubmissionStatsMixin, Template
                 visible_submission_ids = confirmed_talks.values('submission_id')
                 unscheduled_submission_ids = confirmed_talks.filter(start__isnull=True, room__isnull=True).values('submission_id')
                 
-                session_readiness['scheduled'] = confirmed_talks.filter(start__isnull=False, room__isnull=False).count()
+                session_readiness['scheduled'] = confirmed_talks.filter(start__isnull=False, room__isnull=False).values('submission_id').distinct().count()
                 session_readiness['unscheduled'] = confirmed_submissions.filter(
                     Q(id__in=unscheduled_submission_ids) | ~Q(id__in=visible_submission_ids)
                 ).count()
-                session_readiness['with_conflicts'] = len([
-                    k for k, v in wip_schedule.get_all_talk_warnings().items() 
+                session_readiness['with_conflicts'] = len({
+                    k.submission_id for k, v in wip_schedule.get_all_talk_warnings().items() 
                     if v and k.submission.state == SubmissionStates.CONFIRMED and k.is_visible
-                ])
+                })
             
             if can_list_speaker:
-                speaker_profiles = speaker_profiles_for_user(event, self.request.user).annotate(
-                    bio_trim=Trim('biography'),
-                    org_trim=Trim('organization')
-                )
+                import html
+                from django.utils.html import strip_tags
+
+                def is_empty(text):
+                    if not text:
+                        return True
+                    return not html.unescape(strip_tags(text)).strip()
+
+                speaker_profiles = speaker_profiles_for_user(event, self.request.user)
+                
+                missing_bio_count = sum(1 for bio in speaker_profiles.values_list('biography', flat=True) if is_empty(bio))
+                missing_org_count = sum(1 for org in speaker_profiles.values_list('organization', flat=True) if is_empty(org))
+
                 speaker_readiness = {
                     'total_speakers': speaker_profiles.count(),
                     'confirmed_speakers': speaker_profiles.filter(user__submissions__state=SubmissionStates.CONFIRMED, user__submissions__event=event).distinct().count(),
-                    'missing_biography': speaker_profiles.filter(Q(bio_trim__isnull=True) | Q(bio_trim='') | Q(bio_trim='<p><br></p>') | Q(bio_trim='<p></p>')).count(),
+                    'missing_biography': missing_bio_count,
                     'missing_profile_image': speaker_profiles.filter(Q(user__avatar__isnull=True) | Q(user__avatar='')).count(),
-                    'missing_affiliation': speaker_profiles.filter(Q(org_trim__isnull=True) | Q(org_trim='') | Q(org_trim='<p><br></p>') | Q(org_trim='<p></p>')).count(),
+                    'missing_affiliation': missing_org_count,
                     'without_session': speaker_profiles.exclude(
                         user__submissions__in=event.submissions.filter(
                             state__in=[SubmissionStates.ACCEPTED, SubmissionStates.CONFIRMED]
