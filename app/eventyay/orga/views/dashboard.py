@@ -485,7 +485,6 @@ class EventDashboardView(EventPermissionRequired, SubmissionStatsMixin, Template
                 session_readiness['missing_room_time'] = confirmed_talks.filter(Q(start__isnull=True) | Q(room__isnull=True)).exclude(start__isnull=True, room__isnull=True).count()
                 session_readiness['with_conflicts'] = len([k for k, v in wip_schedule.get_all_talk_warnings().items() if v])
             
-            speaker_readiness = None
             if can_list_speaker:
                 speaker_profiles = SpeakerProfile.objects.filter(event=event, user__in=event.submitters)
                 speaker_readiness = {
@@ -496,8 +495,8 @@ class EventDashboardView(EventPermissionRequired, SubmissionStatsMixin, Template
                     'missing_affiliation': speaker_profiles.filter(Q(organization__isnull=True) | Q(organization='')).count(),
                     'without_session': event.submitters.exclude(submissions__state__in=[SubmissionStates.ACCEPTED, SubmissionStates.CONFIRMED], submissions__event=event).distinct().count(),
                 }
+                result['speaker_readiness'] = speaker_readiness
             
             result['session_readiness'] = session_readiness
-            result['speaker_readiness'] = speaker_readiness
         
         return result
