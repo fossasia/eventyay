@@ -92,7 +92,7 @@
             <div class="td-kpi-link">{% trans "View speakers" %} <span aria-hidden="true">></span></div>
         </a>
         
-        <a href="{{ request.event.orga_urls.speakers }}?role=true" class="td-kpi-card td-kpi-green" title="{% trans 'Confirmed speakers' %}">
+        <a href="{{ request.event.orga_urls.speakers }}?readiness=confirmed" class="td-kpi-card td-kpi-green" title="{% trans 'Confirmed speakers' %}">
             <div class="td-kpi-top">
                 <span class="td-kpi-icon" aria-hidden="true"><span class="fa fa-user-circle"></span></span>
                 <span class="td-kpi-label">{% trans "Confirmed speakers" %}</span>

@@ -471,6 +471,7 @@ class SpeakerFilterForm(forms.Form):
         label=_('Readiness'),
         choices=(
             ('', _('All states')),
+            ('confirmed', _('Confirmed speakers')),
             ('missing_biography', _('Missing biography')),
             ('missing_profile_image', _('Missing profile image')),
             ('missing_affiliation', _('Missing affiliation')),
@@ -501,7 +502,9 @@ class SpeakerFilterForm(forms.Form):
             queryset = queryset.filter(has_arrived=(has_arrived == 'true'))
         
         if readiness := data.get('readiness'):
-            if readiness == 'missing_biography':
+            if readiness == 'confirmed':
+                queryset = queryset.filter(user__submissions__state=SubmissionStates.CONFIRMED, user__submissions__event=self.event)
+            elif readiness == 'missing_biography':
                 queryset = queryset.filter(Q(biography__isnull=True) | Q(biography=''))
             elif readiness == 'missing_profile_image':
                 queryset = queryset.filter(Q(user__avatar__isnull=True) | Q(user__avatar=''))

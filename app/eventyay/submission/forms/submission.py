@@ -692,6 +692,11 @@ class SubmissionFilterForm(forms.Form):
             return qs.filter(state=SubmissionStates.CONFIRMED).annotate(is_scheduled=Exists(assigned_slots)).filter(is_scheduled=True)
 
         if readiness == 'unscheduled':
+            visible_slots = TalkSlot.objects.filter(
+                submission_id=OuterRef('pk'),
+                schedule=wip_schedule,
+                is_visible=True,
+            )
             unscheduled_slots = TalkSlot.objects.filter(
                 submission_id=OuterRef('pk'),
                 schedule=wip_schedule,
@@ -699,7 +704,10 @@ class SubmissionFilterForm(forms.Form):
                 start__isnull=True,
                 is_visible=True,
             )
-            return qs.filter(state=SubmissionStates.CONFIRMED).annotate(is_unscheduled=Exists(unscheduled_slots)).filter(is_unscheduled=True)
+            return qs.filter(state=SubmissionStates.CONFIRMED).annotate(
+                has_visible=Exists(visible_slots),
+                has_unscheduled=Exists(unscheduled_slots)
+            ).filter(Q(has_unscheduled=True) | Q(has_visible=False))
 
         if readiness == 'missing_room_time':
             missing_slots = TalkSlot.objects.filter(

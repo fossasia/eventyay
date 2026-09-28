@@ -47,7 +47,7 @@ from eventyay.common.permissions import is_admin_mode_active
 from eventyay.common.views.mixins import EventPermissionRequired, PermissionRequired
 from eventyay.event.stages import get_stages
 from eventyay.orga.views.submission import SubmissionStatsMixin
-from eventyay.talk_rules.submission import get_missing_reviews
+from eventyay.talk_rules.submission import get_missing_reviews, speaker_profiles_for_user
 
 
 def start_redirect_view(request):
@@ -480,20 +480,26 @@ class EventDashboardView(EventPermissionRequired, SubmissionStatsMixin, Template
             }
             if wip_schedule:
                 confirmed_talks = wip_schedule.talks.filter(submission__state=SubmissionStates.CONFIRMED, is_visible=True)
+                confirmed_submissions = event.submissions.filter(state=SubmissionStates.CONFIRMED)
+                visible_submission_ids = confirmed_talks.values('submission_id')
+                unscheduled_submission_ids = confirmed_talks.filter(start__isnull=True, room__isnull=True).values('submission_id')
+                
                 session_readiness['scheduled'] = confirmed_talks.filter(start__isnull=False, room__isnull=False).count()
-                session_readiness['unscheduled'] = confirmed_talks.filter(start__isnull=True, room__isnull=True).count()
+                session_readiness['unscheduled'] = confirmed_submissions.filter(
+                    Q(id__in=unscheduled_submission_ids) | ~Q(id__in=visible_submission_ids)
+                ).count()
                 session_readiness['missing_room_time'] = confirmed_talks.filter(Q(start__isnull=True) | Q(room__isnull=True)).exclude(start__isnull=True, room__isnull=True).count()
                 session_readiness['with_conflicts'] = len([k for k, v in wip_schedule.get_all_talk_warnings().items() if v])
             
             if can_list_speaker:
-                speaker_profiles = SpeakerProfile.objects.filter(event=event, user__in=event.submitters)
+                speaker_profiles = speaker_profiles_for_user(event, self.request.user)
                 speaker_readiness = {
-                    'total_speakers': event.submitters.count(),
-                    'confirmed_speakers': event.submitters.filter(submissions__state=SubmissionStates.CONFIRMED, submissions__event=event).distinct().count(),
+                    'total_speakers': speaker_profiles.count(),
+                    'confirmed_speakers': speaker_profiles.filter(user__submissions__state=SubmissionStates.CONFIRMED, user__submissions__event=event).distinct().count(),
                     'missing_biography': speaker_profiles.filter(Q(biography__isnull=True) | Q(biography='')).count(),
                     'missing_profile_image': speaker_profiles.filter(Q(user__avatar__isnull=True) | Q(user__avatar='')).count(),
                     'missing_affiliation': speaker_profiles.filter(Q(organization__isnull=True) | Q(organization='')).count(),
-                    'without_session': event.submitters.exclude(submissions__state__in=[SubmissionStates.ACCEPTED, SubmissionStates.CONFIRMED], submissions__event=event).distinct().count(),
+                    'without_session': speaker_profiles.exclude(user__submissions__state__in=[SubmissionStates.ACCEPTED, SubmissionStates.CONFIRMED], user__submissions__event=event).distinct().count(),
                 }
                 result['speaker_readiness'] = speaker_readiness
             
