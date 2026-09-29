@@ -1,7 +1,7 @@
 {% extends 'eventyay_common/base.html' %}
 {% load i18n %}
 {% load bootstrap3 %}
-{% block title %}{{ _('Disable application') }}{% endblock title %}
+{% block title %}{{ _('Delete application') }}{% endblock title %}
 
 {% block nav_top_header %}
     <a href="{% url 'eventyay_common:account' %}" class='dropdown-toggle'>
@@ -16,7 +16,7 @@
 {% endblock nav_top_header %}
 
 {% block content %}
-    <h1>{{ _('Disable application') }}</h1>
+    <h1>{{ _('Delete application') }}</h1>
         <form action='' method='post' class='form-horizontal'>
             {% csrf_token %}
             <p>{{ confirm_message|safe }}</p>
@@ -25,7 +25,7 @@
                     {{ _('Cancel') }}
                 </a>
                 <button type='submit' class='btn btn-delete btn-danger btn-save'>
-                    {{ _('Disable') }}
+                    {{ _('Delete') }}
                 </button>
             </div>
         </form>
