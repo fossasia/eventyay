@@ -6,12 +6,8 @@
 	template(v-else-if="scheduleError")
 		.schedule-error
 			.error-message {{ $t('An error occurred while loading the schedule. Please try again later.') }}
-	template(v-else-if="isTalkView && schedule && resolvedTalk")
-		talk-detail(:talk="resolvedTalk", :baseUrl="eventUrl")
 	template(v-else-if="isTalkView && schedule")
-		.schedule-unavailable(v-if="currentTimezone")
-			.info-message {{ talkUnavailableMessage }}
-		bunt-progress-circular(v-else, size="huge", :page="true")
+		talk-detail(:talk="resolvedTalk", :talkId="talkCode", :baseUrl="eventUrl")
 	template(v-else-if="isSpeakerView && schedule")
 		featured-speakers(v-if="view === 'featured-speakers'")
 		speakers-list(v-else-if="view === 'speakers'")
