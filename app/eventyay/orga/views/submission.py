@@ -588,6 +588,7 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
                     if not formset_result:
                         raise RollbackTransaction()
         except RollbackTransaction:
+            messages.error(self.request, phrases.base.error_saving_changes)
             return self.form_invalid(form)
 
         if not created:
