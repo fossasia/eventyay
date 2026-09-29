@@ -549,7 +549,7 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
         self._questions_form.submission = form.instance
         if not self._questions_form.is_valid():
             messages.error(self.request, phrases.base.error_saving_changes)
-            return self.get(self.request, *self.args, **self.kwargs)
+            return self.form_invalid(form)
         if created and not self.new_speaker_form.is_valid():
             messages.error(self.request, phrases.base.error_saving_changes)
             return self.form_invalid(form)
@@ -559,7 +559,7 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
         form.save()
         self._questions_form.save()
         if not self._save_session_video_urls(form.instance):
-            return self.get(self.request, *self.args, **self.kwargs)
+            return self.form_invalid(form)
 
         if created:
             if email := self.new_speaker_form.cleaned_data['email']:
@@ -573,7 +573,7 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
         else:
             formset_result = self.save_formset(form.instance)
             if not formset_result:
-                return self.get(self.request, *self.args, **self.kwargs)
+                return self.form_invalid(form)
             messages.success(self.request, _('The proposal has been updated!'))
         if form.has_changed():
             action = 'eventyay.submission.' + ('create' if created else 'update')
