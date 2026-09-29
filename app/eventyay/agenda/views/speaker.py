@@ -5,6 +5,7 @@ from urllib.parse import unquote, urljoin, urlparse
 
 import vobject
 from django.conf import settings
+from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import SuspiciousFileOperation
 from django.core.files.storage import Storage
 from django.db.models import Q
@@ -22,6 +23,7 @@ from i18nfield.utils import I18nJSONEncoder
 from eventyay.agenda.export_resources import public_resource_attachments, public_resource_links
 from eventyay.agenda.views.utils import (
     WipAgendaPreviewPageMixin,
+    build_enriched_schedule_json,
     build_google_calendar_url,
     build_speaker_cards,
     build_speaker_schedule_json,
@@ -52,6 +54,7 @@ from eventyay.common.views.mixins import (
 from eventyay.talk_rules.agenda import (
     agenda_speaker_talks,
     can_list_released_schedule_speakers,
+    is_speaker_viewable,
     should_hide_public_speaker_sessions,
 )
 
@@ -200,7 +203,16 @@ class SpeakerView(PermissionRequired, TemplateView):
     def schedule_json(self):
         return build_speaker_schedule_json(self.request, self.kwargs['code'])
 
+    @context
+    def hide_visibility_warning(self):
+        profile = self.profile
+        if not profile:
+            return False
+        return bool(is_speaker_viewable(AnonymousUser(), profile))
+
     def dispatch(self, request, *args, **kwargs):
+        if not self.profile:
+            raise Http404()
         if not self.wip_preview and is_public_speakers_empty(request):
             return redirect_to_presale_with_warning(request, _('No published speakers.'))
         return super().dispatch(request, *args, **kwargs)
@@ -251,6 +263,9 @@ class SpeakerView(PermissionRequired, TemplateView):
             question__target=TalkQuestionTarget.SPEAKER,
         ).select_related('question')
 
+    def handle_no_permission(self):
+        raise Http404()
+
 
 class WipSpeakerView(WipAgendaPreviewPageMixin, SpeakerView):
     pass
@@ -258,6 +273,13 @@ class WipSpeakerView(WipAgendaPreviewPageMixin, SpeakerView):
 
 class WipSpeakerList(WipAgendaPreviewPageMixin, TemplateView):
     template_name = 'agenda/speakers.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # The public speakers API follows the released schedule. The preview
+        # embeds the WIP schedule so organisers still see unpublished sessions.
+        context['schedule_json'] = build_enriched_schedule_json(self.request, wip_preview=True)
+        return context
 
 
 class SpeakerRedirect(DetailView):
@@ -276,11 +298,16 @@ class SpeakerTalksIcalView(PermissionRequired, DetailView):
     permission_required = 'base.view_speakerprofile'
     slug_field = 'code'
 
+    def handle_no_permission(self):
+        raise Http404()
+
     def get_object(self, queryset=None):
         return SpeakerProfile.objects.filter(event=self.request.event, user__code__iexact=self.kwargs['code']).first()
 
     def get(self, request, event, *args, **kwargs):
         speaker = self.get_object()
+        if not speaker:
+            raise Http404()
         slots = agenda_speaker_talks(
             request.event,
             request.user,
