@@ -33,7 +33,7 @@
     <h2>{% translate "Widget generation" %}</h2>
     <p>
         {% blocktranslate trimmed %}
-            The eventyay schedule widget is a way to embed your schedule into your event website. This way, your attendees can see your schedule without leaving your website, and you can style the schedule to fit right in with your website.
+            The eventyay schedule widget embeds your schedule on your event website, so attendees can see it without leaving the site.
         {% endblocktranslate %}
     </p>
 
@@ -51,17 +51,27 @@
             </span>
         </div>
     </div>
-    <div id="generated-widget" class="d-none">
+    <div id="generated-widget" class="d-none" data-embed-formats>
         <p>
             {% blocktranslate trimmed %}
-                To embed the widget into your website, copy the following code to the <code>&lt;head></code> section of your website:
+                The schedule keeps its own styles. The website theme and ordinary script lookups do not restyle or rewrite it.
+            {% endblocktranslate %}
+        </p>
+        <div class="btn-group" role="group" aria-label="{% translate 'Embed format' %}">
+            <button type="button" class="btn btn-default active" data-embed-choice="html" aria-pressed="true">{% translate "HTML" %}</button>
+            <button type="button" class="btn btn-default" data-embed-choice="markdown" aria-pressed="false">{% translate "Markdown" %}</button>
+        </div>
+        <div data-embed-panel="html">
+        <p>
+            {% blocktranslate trimmed %}
+                Copy this into the <code>&lt;head&gt;</code> of your website:
             {% endblocktranslate %}
         </p>
         <pre id="widget-head">
 &lt;script type="text/javascript" src="{{ request.event.urls.schedule_widget_script.full }}">&lt;/script></pre>
         <p>
             {% blocktranslate trimmed %}
-                Then, copy the following code to the place of your website where you want the widget to show up:
+                Then copy this where the schedule should appear:
             {% endblocktranslate %}
         </p>
         <pre id="widget-body">
@@ -74,6 +84,36 @@
         &lt;/div>
     &lt;/div>
 &lt;/noscript></pre>
+        </div>
+        <div data-embed-panel="markdown">
+        <p>
+            {% blocktranslate trimmed %}
+                Hugo and other Markdown sites must allow raw HTML. For Hugo, add this to <code>hugo.toml</code>:
+            {% endblocktranslate %}
+        </p>
+        <pre>[markup]
+  [markup.goldmark.renderer]
+    unsafe = true</pre>
+        <p>
+            {% blocktranslate trimmed %}
+                Then paste this into the Markdown page:
+            {% endblocktranslate %}
+        </p>
+        <pre id="widget-body-markdown">
+&lt;script type="text/javascript" src="{{ request.event.urls.schedule_widget_script.full }}">&lt;/script&gt;
+
+&lt;div class="not-prose"&gt;
+&lt;pretalx-schedule event-url="{{ request.event.urls.base.full }}" locale="LOCALE" format="FORMAT" style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}"FILTER_DAYS>&lt;/pretalx-schedule&gt;
+&lt;noscript&gt;
+   &lt;div class="pretalx-widget"&gt;
+        &lt;div class="pretalx-widget-info-message"&gt;
+            JavaScript is disabled in your browser. To access our schedule without JavaScript,
+            please &lt;a target="_blank" href="{{ request.event.urls.schedule.full }}"&gt;click here&lt;/a&gt;.
+        &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/noscript&gt;
+&lt;/div&gt;</pre>
+        </div>
         <p>
             <span class="text-success">
                 <i class="fa fa-info-circle"></i>

@@ -2,6 +2,7 @@ import copy
 import json
 
 from django.dispatch import receiver
+from django_scopes import scope
 from django.urls import reverse
 from django.utils.html import escape
 from django.utils.translation import gettext_lazy as _
@@ -74,13 +75,16 @@ def copy_product(sender, source, target, **kwargs):
 
 @receiver(signal=event_copy_data, dispatch_uid='eventyay_ticketoutputpdf_copy_data')
 def pdf_event_copy_data_receiver(sender, other, product_map, question_map, **kwargs):
-    if sender.ticket_layouts.exists():  # idempotency
-        return
+    with scope(event=sender):
+        if sender.ticket_layouts.exists():  # idempotency
+            return
     clone_options = kwargs.get('clone_options') or {}
     if not clone_options.get('clone_ticketing_data', True):
         return
     layout_map = {}
-    for bl in other.ticket_layouts.all():
+    with scope(event=other):
+        source_layouts = list(other.ticket_layouts.all())
+    for bl in source_layouts:
         oldid = bl.pk
         bl = copy.copy(bl)
         bl.pk = None
@@ -95,14 +99,17 @@ def pdf_event_copy_data_receiver(sender, other, product_map, question_map, **kwa
                         o['content'] = 'question_{}'.format(newq.pk)
         bl.layout = json.dumps(layout)
 
-        bl.save()
+        with scope(event=sender):
+            bl.save()
 
-        if bl.background and bl.background.name:
-            bl.background.save('background.pdf', bl.background)
+            if bl.background and bl.background.name:
+                bl.background.save('background.pdf', bl.background)
 
         layout_map[oldid] = bl
 
-    for bi in TicketLayoutProduct.objects.filter(product__event=other):
+    with scope(organizer=sender.organizer):
+        layout_products = list(TicketLayoutProduct.objects.filter(product__event=other))
+    for bi in layout_products:
         TicketLayoutProduct.objects.create(
             product=product_map.get(bi.product_id),
             layout=layout_map.get(bi.layout_id),
