@@ -6,7 +6,7 @@
 	template(v-else-if="scheduleError")
 		.schedule-error
 			.error-message {{ $t('An error occurred while loading the schedule. Please try again later.') }}
-	template(v-else-if="isTalkView && schedule && resolvedTalk && !isResolvedTalkPending")
+	template(v-else-if="isTalkView && schedule && resolvedTalk")
 		talk-detail(:talk="resolvedTalk", :baseUrl="eventUrl")
 	template(v-else-if="isTalkView && schedule")
 		.schedule-unavailable(v-if="currentTimezone")
@@ -273,7 +273,7 @@ export default {
 				this.showSessionDetails(session, event)
 			},
 			generateSessionLinkUrl: ({eventUrl, session}) => {
-				if (this.isShiftMode || isTalkSchedulePending(session)) return undefined
+				if (this.isShiftMode) return undefined
 				if (!this.onHomeServer) return `#session/${session.id}/`
 				return `${eventUrl}${wipLinkPrefix()}talk/${session.id}/`
 			},
@@ -627,12 +627,9 @@ export default {
 				|| this.inlineScheduleSessions.find(session => session.id === this.talkCode || session.code === this.talkCode)
 				|| null
 		},
-		isResolvedTalkPending () {
-			return Boolean(this.resolvedTalk) && isTalkSchedulePending(this.resolvedTalk)
-		},
 		talkUnavailableMessage () {
 			const m = this.translationMessages || {}
-			return m.schedule_pending_secondary || this.$t('This session is not available yet.')
+			return m.schedule_pending_secondary || this.$t('To be announced')
 		},
 		eventSlug () {
 			let url = ''
