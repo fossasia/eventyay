@@ -21,10 +21,12 @@
 				:isDragged="draggedSession && (session.id === draggedSession.id)",
 				:style="getSessionStyle(session)",
 				:showRoom="false",
+				v-bind="talkSessionBindings",
 				@startDragging="startDragging($event)",
 				@editSession="emit('editSession', $event)",
 				@deleteSession="emit('deleteSession', $event)",
 				@assignMembers="emit('assignMembers', $event)",
+				v-on="talkSessionListeners",
 			)
 		.availability(v-for="availability of visibleAvailabilities", :key="`${availability.room.id}-${availability.start.valueOf()}-${availability.end.valueOf()}`", :style="getSessionStyle(availability)", :class="availability.active ? ['active'] : []")
 	#hidden-rooms.no-print(v-if="hiddenRooms.length")
@@ -134,10 +136,16 @@ const emit = defineEmits([
   'editSession',
   'deleteSession',
   'assignMembers',
+  'unscheduleSession',
   'createSession',
   'rescheduleSession',
   'changeDay'
 ])
+
+const talkSessionBindings = mode === 'talks' ? { allowUnschedule: true } : {}
+const talkSessionListeners = mode === 'talks'
+  ? { unscheduleSession: (session: SessionDatum) => emit('unscheduleSession', session) }
+  : {}
 
 const rootEl = ref<HTMLElement | null>(null)
 const grid = ref<HTMLElement | null>(null)

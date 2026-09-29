@@ -194,7 +194,7 @@ export default {
 		},
 		schedulePendingText () {
 			const m = this.translationMessages || {}
-			return m.schedule_pending_secondary || this.$t('Coming soon')
+			return m.schedule_pending_secondary || this.$t('To be announced')
 		},
 		startTime () {
 			if (this.isSchedulePending) {
