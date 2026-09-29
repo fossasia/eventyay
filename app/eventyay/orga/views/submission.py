@@ -467,6 +467,8 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
     @context
     @cached_property
     def session_video_urls_text(self):
+        if self.request.method == 'POST' and 'session_video_urls' in self.request.POST:
+            return self.request.POST['session_video_urls']
         return '\n'.join(self.session_video_urls)
 
     def _save_session_video_urls(self, submission):
@@ -559,6 +561,7 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
         form.save()
         self._questions_form.save()
         if not self._save_session_video_urls(form.instance):
+            transaction.set_rollback(True)
             return self.form_invalid(form)
 
         if created:
@@ -573,6 +576,7 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
         else:
             formset_result = self.save_formset(form.instance)
             if not formset_result:
+                transaction.set_rollback(True)
                 return self.form_invalid(form)
             messages.success(self.request, _('The proposal has been updated!'))
         if form.has_changed():
