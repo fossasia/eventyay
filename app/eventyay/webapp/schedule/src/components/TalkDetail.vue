@@ -744,7 +744,6 @@ export default {
 			&.abstract-section
 				.field-content
 					font-size: 16px
-					font-weight: 600
 		.answer-link
 			color: var(--pretalx-clr-primary, var(--clr-primary))
 			text-decoration: none
