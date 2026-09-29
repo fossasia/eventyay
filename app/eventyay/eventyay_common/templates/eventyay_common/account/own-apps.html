@@ -33,7 +33,7 @@
                         <td class='text-right flip'>
                             <a href="{% url 'eventyay_common:account.oauth.own-app' pk=application.pk %}" class='btn btn-default btn-sm'><i class='fa fa-edit'></i></a>
                             <a href="{% url 'eventyay_common:account.oauth.own-app.roll' pk=application.pk %}" class='btn btn-default btn-sm'><i class='fa fa-repeat'></i></a>
-                            <a href="{% url 'eventyay_common:account.oauth.own-app.disable' pk=application.pk %}" class='btn btn-delete btn-danger btn-sm'><i class='fa fa-trash'></i></a>
+                            <a href="{% url 'eventyay_common:account.oauth.own-app.delete' pk=application.pk %}" class='btn btn-delete btn-danger btn-sm'><i class='fa fa-trash'></i></a>
                         </td>
                     </tr>
                 {% endfor %}
