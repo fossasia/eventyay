@@ -2,12 +2,14 @@
 
 /**
  * Responsive "More" overflow menu for public event header navigation.
- * Moves tabs that do not fit into a More dropdown on all viewport sizes.
+ * Trailing tabs move into More. Visible tabs stay stable across pages —
+ * the active page inside More marks the More trigger, not the main bar.
  */
 
 const OVERFLOW_INIT_FLAG = 'eventyayNavOverflowInit';
 const MEASURING_CLASS = 'nav-overflow-measuring';
 const READY_CLASS = 'nav-overflow-ready';
+const WIDTH_TOLERANCE = 1;
 
 const initNavOverflow = () => {
   if (document.documentElement.dataset[OVERFLOW_INIT_FLAG] === '1') {
@@ -62,10 +64,51 @@ const initNavOverflow = () => {
   };
 
   const updateActiveState = () => {
-    const hasActiveChild = overflowItems.querySelector(
+    const activeChild = overflowItems.querySelector(
       '.header-tab.active, .header-tab.underline'
     );
-    overflowTrigger.classList.toggle('active', Boolean(hasActiveChild));
+    const inMore = Boolean(activeChild);
+    overflowTrigger.classList.toggle('active', inMore);
+    overflowMenu.classList.toggle('active', inMore);
+  };
+
+  const positionDropdown = () => {
+    const panel = overflowItems;
+
+    if (!overflowMenu.open) {
+      panel.style.top = '';
+      panel.style.left = '';
+      panel.style.width = '';
+      return;
+    }
+
+    void panel.offsetWidth;
+
+    const triggerRect = overflowTrigger.getBoundingClientRect();
+    const width = Math.min(
+      Math.max(panel.scrollWidth, 220),
+      window.innerWidth - 16
+    );
+    let left = triggerRect.left;
+    if (left + width > window.innerWidth - 8) {
+      left = Math.max(8, window.innerWidth - width - 8);
+    }
+    if (left < 8) {
+      left = 8;
+    }
+
+    let top = triggerRect.bottom + 4;
+    const maxHeight = Math.min(window.innerHeight * 0.7, 420);
+    if (top + Math.min(panel.scrollHeight, maxHeight) > window.innerHeight - 8) {
+      const above = triggerRect.top - 4 - Math.min(panel.scrollHeight, maxHeight);
+      if (above > 8) {
+        top = above;
+      }
+    }
+
+    panel.style.top = `${Math.round(top)}px`;
+    panel.style.left = `${Math.round(left)}px`;
+    panel.style.width = `${Math.round(width)}px`;
   };
 
   const measureWidths = () => {
@@ -94,9 +137,12 @@ const initNavOverflow = () => {
     restoreTabs();
     if (cutoffIndex < 0 || cutoffIndex >= allTabs.length) {
       overflowMenu.hidden = true;
+      overflowMenu.open = false;
       overflowTrigger.classList.remove('active');
+      overflowMenu.classList.remove('active');
       return;
     }
+
     for (let i = cutoffIndex; i < allTabs.length; i += 1) {
       overflowItems.appendChild(allTabs[i]);
     }
@@ -107,7 +153,6 @@ const initNavOverflow = () => {
   const reflow = () => {
     rafId = null;
 
-    // Opening the More menu can trigger ResizeObserver; never rebuild while open.
     if (overflowMenu.open) {
       needsReflowAfterClose = true;
       return;
@@ -128,10 +173,10 @@ const initNavOverflow = () => {
     lastWidth = measured.containerWidth;
 
     let cutoffIndex = -1;
-    if (measured.totalTabsWidth > measured.containerWidth) {
+    if (measured.totalTabsWidth > measured.containerWidth + WIDTH_TOLERANCE) {
       const availableForTabs = Math.max(
         0,
-        measured.containerWidth - measured.moreWidth
+        measured.containerWidth - measured.moreWidth + WIDTH_TOLERANCE
       );
       let cumulativeWidth = 0;
       cutoffIndex = allTabs.length;
@@ -158,11 +203,26 @@ const initNavOverflow = () => {
   };
 
   overflowMenu.addEventListener('toggle', () => {
-    if (!overflowMenu.open && needsReflowAfterClose) {
+    if (overflowMenu.open) {
+      requestAnimationFrame(() => {
+        positionDropdown();
+        requestAnimationFrame(positionDropdown);
+      });
+    } else if (needsReflowAfterClose) {
       lastWidth = null;
       scheduleReflow();
     }
   });
+
+  window.addEventListener(
+    'scroll',
+    () => {
+      if (overflowMenu.open) {
+        positionDropdown();
+      }
+    },
+    true
+  );
 
   reflow();
 
@@ -172,6 +232,11 @@ const initNavOverflow = () => {
   } else {
     window.addEventListener('resize', scheduleReflow);
   }
+
+  window.addEventListener('hashchange', () => {
+    lastWidth = null;
+    scheduleReflow();
+  });
 };
 
 if (document.readyState === 'loading') {

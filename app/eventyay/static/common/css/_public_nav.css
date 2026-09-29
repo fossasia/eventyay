@@ -39,9 +39,11 @@
   overflow: visible;
 }
 
-/* Hide tabs until overflow layout is ready to avoid flash of all items */
-.presale-tabs-scroll:not(.nav-overflow-ready),
-.presale-tabs-scroll.nav-overflow-measuring {
+/* Hide only tab children until fitted — never the open fixed panel */
+.presale-tabs-scroll:not(.nav-overflow-ready) > .header-tab,
+.presale-tabs-scroll:not(.nav-overflow-ready) > .nav-overflow-menu,
+.presale-tabs-scroll.nav-overflow-measuring > .header-tab,
+.presale-tabs-scroll.nav-overflow-measuring > .nav-overflow-menu {
   visibility: hidden;
 }
 
@@ -91,10 +93,12 @@
 .presale-sticky-tabs .presale-tabs-scroll > .header-tab.active,
 .presale-sticky-tabs .presale-tabs-scroll > .header-tab.underline,
 .presale-sticky-tabs .nav-overflow-trigger.active,
+.presale-sticky-tabs .nav-overflow-menu.active > .nav-overflow-trigger,
 .presale-sticky-tabs .nav-overflow-menu[open] > .nav-overflow-trigger,
 #header-tabs .presale-tabs-scroll > .header-tab.active,
 #header-tabs .presale-tabs-scroll > .header-tab.underline,
 #header-tabs .nav-overflow-trigger.active,
+#header-tabs .nav-overflow-menu.active > .nav-overflow-trigger,
 #header-tabs .nav-overflow-menu[open] > .nav-overflow-trigger {
   color: var(--color-header-navigation);
   font-weight: 600;
@@ -176,8 +180,7 @@
 .nav-overflow-menu {
   position: relative;
   flex-shrink: 0;
-  display: inline-flex;
-  align-items: stretch;
+  display: block;
   align-self: stretch;
   overflow: visible;
   z-index: 1300;
@@ -190,6 +193,7 @@
 .nav-overflow-menu > .nav-overflow-trigger {
   list-style: none;
   cursor: pointer;
+  height: 100%;
 }
 
 .nav-overflow-menu > .nav-overflow-trigger::-webkit-details-marker {
@@ -201,28 +205,40 @@
   opacity: 0.85;
 }
 
+/* Panel is positioned fixed by JS so it cannot be clipped by sticky/overflow ancestors */
 .nav-overflow-items {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: auto;
   display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
   min-width: 220px;
+  max-width: calc(100vw - 16px);
+  max-height: min(70vh, 420px);
+  overflow-x: hidden;
+  overflow-y: auto;
   padding: 6px 0;
-  z-index: 1400;
+  margin: 0;
+  z-index: 10050;
   border: 1px solid var(--color-grey-light);
   border-radius: var(--size-border-radius);
-  background: var(--color-bg);
-  box-shadow: 0 8px 24px color-mix(in srgb, var(--color-grey-dark) 12%, transparent);
+  background: var(--color-bg, #fff);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--color-grey-dark) 18%, transparent);
 }
 
 .nav-overflow-menu[open] > .nav-overflow-items {
   display: block;
 }
 
+.nav-overflow-items::before,
+.nav-overflow-items::after {
+  content: none;
+  display: none;
+}
+
 .presale-sticky-tabs-wrap,
 .presale-sticky-tabs-inner,
 .presale-sticky-tabs,
+#header-tabs.presale-sticky-tabs,
 .presale-tabs-scroll {
   overflow: visible;
 }
@@ -387,13 +403,14 @@
   }
 
   .nav-overflow-items {
-    min-width: 220px;
-    max-width: calc(100vw - 24px);
+    min-width: min(260px, calc(100vw - 16px));
+    max-width: calc(100vw - 16px);
   }
 
   #header-tabs .nav-overflow-items .header-tab,
   .presale-sticky-tabs .nav-overflow-items .header-tab {
     font-size: 1rem;
     padding: 11px 16px;
+    min-height: 44px;
   }
 }
