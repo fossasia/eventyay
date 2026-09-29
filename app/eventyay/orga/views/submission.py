@@ -471,6 +471,11 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
             return self.request.POST['session_video_urls']
         return '\n'.join(self.session_video_urls)
 
+    @context
+    @property
+    def session_video_urls_error(self):
+        return getattr(self, '_session_video_urls_error', None)
+
     def _save_session_video_urls(self, submission):
         if not event_session_videos_enabled(self.request.event):
             return True
@@ -481,7 +486,7 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
         try:
             set_submission_video_urls(submission, urls)
         except ValueError as exc:
-            messages.error(self.request, str(exc))
+            self._session_video_urls_error = str(exc)
             return False
         return True
 
@@ -558,26 +563,34 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
 
         self.object = form.instance
         form.instance.event = self.request.event
-        form.save()
-        self._questions_form.save()
-        if not self._save_session_video_urls(form.instance):
-            transaction.set_rollback(True)
+
+        class RollbackTransaction(Exception):
+            pass
+
+        try:
+            with transaction.atomic():
+                form.save()
+                self._questions_form.save()
+                if not self._save_session_video_urls(form.instance):
+                    raise RollbackTransaction()
+
+                if created:
+                    if email := self.new_speaker_form.cleaned_data['email']:
+                        form.instance.add_speaker(
+                            email=email,
+                            name=self.new_speaker_form.cleaned_data['name'],
+                            locale=self.new_speaker_form.cleaned_data.get('locale'),
+                            user=self.request.user,
+                            biography=self.new_speaker_form.cleaned_data.get('biography'),
+                        )
+                else:
+                    formset_result = self.save_formset(form.instance)
+                    if not formset_result:
+                        raise RollbackTransaction()
+        except RollbackTransaction:
             return self.form_invalid(form)
 
-        if created:
-            if email := self.new_speaker_form.cleaned_data['email']:
-                form.instance.add_speaker(
-                    email=email,
-                    name=self.new_speaker_form.cleaned_data['name'],
-                    locale=self.new_speaker_form.cleaned_data.get('locale'),
-                    user=self.request.user,
-                    biography=self.new_speaker_form.cleaned_data.get('biography'),
-                )
-        else:
-            formset_result = self.save_formset(form.instance)
-            if not formset_result:
-                transaction.set_rollback(True)
-                return self.form_invalid(form)
+        if not created:
             messages.success(self.request, _('The proposal has been updated!'))
         if form.has_changed():
             action = 'eventyay.submission.' + ('create' if created else 'update')
