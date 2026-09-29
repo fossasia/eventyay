@@ -26,16 +26,29 @@ from eventyay.common.utils.language import (
     validate_language,
 )
 from eventyay.common.views.helpers import build_login_url_with_next
-from eventyay.talk_rules.agenda import agenda_page_allowed_without_talks_published
+from eventyay.talk_rules.agenda import agenda_page_allowed_without_talks_published, can_view_wip_schedule
 
 
 logger = logging.getLogger(__name__)
+
+
+def _request_is_wip_preview(url, request):
+    if (url.kwargs or {}).get('version') == 'wip':
+        return True
+    if 'wip' in (url.url_name or ''):
+        return True
+    preview = request.GET.get('v') or request.GET.get('version')
+    return preview == 'wip'
 
 
 def _agenda_featured_allowed_without_talks_published(url, request, event):
     """Let featured/speaker pages load when org settings allow it, even if talks are not published yet."""
     if 'agenda' not in url.namespaces:
         return False
+
+    user = getattr(request, 'user', None)
+    if user is not None and _request_is_wip_preview(url, request) and can_view_wip_schedule(user, event):
+        return True
 
     is_featured_export = (
         (url.url_name in ('export', 'export-tokenized') or url.url_name.startswith('export.'))
@@ -45,7 +58,6 @@ def _agenda_featured_allowed_without_talks_published(url, request, event):
         from eventyay.talk_rules.submission import can_use_featured_exports
         return can_use_featured_exports(request.user, event)
 
-    user = getattr(request, 'user', None)
     if user is None:
         return False
 

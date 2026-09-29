@@ -429,6 +429,7 @@ def test_orga_can_view_wip_speakers_list(orga_client, event):
     response = orga_client.get(url)
     assert response.status_code == 200
     assert 'version="wip"' in response.text
+    assert 'pretalx-schedule-data' in response.text
 
 
 @pytest.mark.django_db
