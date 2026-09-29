@@ -1440,6 +1440,14 @@ table .color-square {
   min-width: 100px;
 }
 
+.review-table .review-score-select {
+  height: auto;
+  min-height: 0;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
 .review-table thead .col-score-category {
   text-align: right;
 }
