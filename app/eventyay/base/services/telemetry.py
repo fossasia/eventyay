@@ -25,6 +25,7 @@ from django_scopes import scopes_disabled
 from eventyay import __version__
 from eventyay.base.models import Event, Order, OrderPosition, Organizer
 from eventyay.base.models.submission import Submission
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.plugins import get_all_plugins
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.signals import periodic_task
@@ -429,18 +430,22 @@ def send_telemetry(self):
                     return {'status': 'success'}
                 else:
                     # Server returned error in JSON body (auth failed, rate limited, etc)
+                    log_event('core', 'connection.telemetry', OUTCOME_FAILURE, error_code='rejected', backend='telemetry')
                     error_type = response_data.get('error', 'unknown')
                     return {'status': 'error', 'error_type': error_type}
             except ValueError:
                 # Non-JSON response - treat as error
                 logger.warning('Telemetry response is not valid JSON')
+                log_event('core', 'connection.telemetry', OUTCOME_FAILURE, error_code='invalid_json', backend='telemetry')
                 return {'status': 'error', 'error_type': 'invalid_json'}
         else:
             # Non-200 status code - don't update timestamp, allow retry
+            log_event('core', 'connection.telemetry', OUTCOME_FAILURE, error_code='http_error', status=response.status_code, backend='telemetry')
             return {'status': 'error', 'code': response.status_code}
             
     except requests.RequestException as e:
         # Network errors, timeouts, etc. - don't update timestamp, allow retry
+        log_event('core', 'connection.telemetry', OUTCOME_FAILURE, error_code='request_error', backend='telemetry')
         logger.warning("Telemetry request failed: %s", e)
         return {'status': 'error', 'error_type': type(e).__name__}
     except (TypeError, ValueError) as e:

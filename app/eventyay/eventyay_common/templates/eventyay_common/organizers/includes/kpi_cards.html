@@ -11,7 +11,7 @@
     {% for card in kpi_cards %}
       {% if card.revenue_options %}
         <article
-          class="od-kpi-card od-kpi-{{ card.tone }} od-kpi-sparkline od-kpi-sparkline-{{ card.tone }}"
+          class="od-kpi-card od-kpi-{{ card.tone }}"
           title="{{ card.label }}"
           data-od-revenue-card
         >
@@ -50,7 +50,7 @@
         </article>
       {% else %}
         <a href="{{ card.url }}"
-           class="od-kpi-card od-kpi-{{ card.tone }}{% if card.tone == 'blue' or card.tone == 'green' or card.tone == 'purple' or card.tone == 'orange' %} od-kpi-sparkline od-kpi-sparkline-{{ card.tone }}{% endif %}"
+           class="od-kpi-card od-kpi-{{ card.tone }}"
            title="{{ card.label }}">
           <div class="od-kpi-top">
             <span class="od-kpi-icon" aria-hidden="true"><span class="fa fa-{{ card.icon }}"></span></span>

@@ -20,6 +20,7 @@ from django.utils.translation import gettext as _
 from django_scopes import scope
 
 from eventyay.base.i18n import language
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.models import (
     Answer,
     CachedFile,
@@ -616,6 +617,7 @@ def import_speakers(self, event: Event, fileid: str, settings: dict, locale: str
     try:
         cf = CachedFile.objects.get(id=fileid)
     except CachedFile.DoesNotExist:
+        log_event('talk', 'import.error', OUTCOME_FAILURE, error_code='file_missing', event_id=getattr(event, 'pk', None))
         raise ImportExecutionError(
             _('The uploaded speaker file could not be found. Please upload it again and restart the import.')
         )
@@ -751,7 +753,8 @@ def _set_external_avatar_url(user: User, avatar_url: str) -> list[str]:
         if not content:
             raise ValueError('Empty response body')
     except (requests.exceptions.RequestException, ValueError):
-        logger.warning('Could not download avatar for user %s from %s', user.pk, avatar_url)
+        log_event('talk', 'connection.get', OUTCOME_FAILURE, error_code='avatar_download', backend='talkimport')
+        logger.warning('Could not download avatar for user %s', user.pk)
         # Fall back: store the external URL in profile so it can still be displayed
         profile = dict(user.profile or {})
         avatar = profile.get('avatar')
@@ -1023,6 +1026,7 @@ def import_submissions(self, event: Event, fileid: str, settings: dict, locale: 
     try:
         cf = CachedFile.objects.get(id=fileid)
     except CachedFile.DoesNotExist:
+        log_event('talk', 'import.error', OUTCOME_FAILURE, error_code='file_missing', event_id=getattr(event, 'pk', None))
         raise ImportExecutionError(
             _('The uploaded session file could not be found. Please upload it again and restart the import.')
         )

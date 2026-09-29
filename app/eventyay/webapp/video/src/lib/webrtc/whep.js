@@ -1,4 +1,5 @@
 import { rewritePrivateIPsInSdp } from './sdpUtils.js';
+import { logOperational } from '../operationalLog.js';
 
 let nativeRTCPeerConnection = null;
 
@@ -109,7 +110,7 @@ export class WhepClient {
 			})
 		} catch (error) {
 			if (error.name === 'AbortError') return;
-			console.error('WHEP connection failed:', error)
+			logOperational({action: 'whep.connect', outcome: 'failure', backend: 'whep', error_code: 'connect_failed'})
 			throw error
 		}
 	}

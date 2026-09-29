@@ -10,6 +10,7 @@ from django.http import JsonResponse
 from django.utils.translation import gettext as _
 from django.views import View
 
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.services.turnstile import (
     TURNSTILE_ERROR_MESSAGE,
     TURNSTILE_FAILED_MESSAGE,
@@ -170,6 +171,13 @@ class ContactOrganizerView(EventViewMixin, View):
                 email.bcc = [sender_email]
             backend.send_messages([email])
         except (smtplib.SMTPException, BadHeaderError, ConnectionError, OSError) as e:
+            log_event(
+                'mail',
+                'mail.send',
+                OUTCOME_FAILURE,
+                error_code='contact_failed',
+                event_id=getattr(getattr(self.request, 'event', None), 'pk', None),
+            )
             logger.exception('Failed to send contact organizer email')
             error_msg = _('Failed to send message. Please try again later.')
             if isinstance(e, BadHeaderError):

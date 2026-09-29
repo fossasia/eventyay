@@ -19,6 +19,7 @@ from eventyay.base.services.janus import (
     videoroom_kick,
     videoroom_moderate,
 )
+from eventyay.base.operational_logging import OUTCOME_SUCCESS, log_event
 from eventyay.base.services.user import get_public_user
 from eventyay.core.permissions import Permission
 from eventyay.core.utils.redis import aredis
@@ -245,6 +246,7 @@ class JanusCallModule(BaseModule):
             "disable_cam": bool(self.module_config.get("disable_cam")) and not is_mod,
             "disable_chat": bool(self.module_config.get("disable_chat")) and not is_mod,
         }
+        log_event('video', 'connection.room_url', OUTCOME_SUCCESS, event_id=getattr(self.consumer.event, 'pk', None), backend='janus')
         await self.consumer.send_success(room_data)
 
     @command("waiting_room.list")

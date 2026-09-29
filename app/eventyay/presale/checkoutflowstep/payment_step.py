@@ -7,6 +7,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 
+from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
 from eventyay.base.services.cart import get_fees
 from eventyay.presale.views import CartMixin, get_cart, get_cart_total
 
@@ -80,13 +81,16 @@ class PaymentStep(CartMixin, TemplateFlowStep):
                 response = provider.checkout_prepare(request, self.get_cart())
 
                 if isinstance(response, str):
+                    log_event('tickets', 'payment.handoff', OUTCOME_SUCCESS, event_id=request.event.pk, payment_provider=provider.identifier)
                     return redirect(response)
                 elif response is True:
+                    log_event('tickets', 'payment.prepare', OUTCOME_SUCCESS, event_id=request.event.pk, payment_provider=provider.identifier)
                     return redirect(self.get_next_url(request))
-                else:
-                    return self.render()
+                log_event('tickets', 'payment.prepare', OUTCOME_FAILURE, error_code='prepare_rejected', event_id=request.event.pk, payment_provider=provider.identifier)
+                return self.render()
 
         messages.error(self.request, _('Please select a payment method.'))
+        log_event('tickets', 'payment.prepare', OUTCOME_FAILURE, error_code='payment_method_required', event_id=request.event.pk)
         return self.render()
 
     def get_context_data(self, **kwargs):

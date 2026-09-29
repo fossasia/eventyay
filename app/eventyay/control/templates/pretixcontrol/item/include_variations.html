@@ -21,7 +21,7 @@
                     <h4 class="panel-title">
                         <div class="row">
                             <div class="col-md-9">
-                                {% bootstrap_field variation_form.value layout='inline' form_group_class="" %}
+                                {% bootstrap_field variation_form.value layout='vertical' show_label=False %}
                             </div>
                             <div class="col-md-3 text-right flip">
                                 <button type="button" class="btn btn-default" data-formset-move-up-button>
@@ -51,13 +51,13 @@
                     {% bootstrap_field variation_form.default_price addon_after=request.event.currency layout="control" %}
                     {% bootstrap_field variation_form.original_price addon_after=request.event.currency layout="control" %}
                     {% bootstrap_field variation_form.description layout="control" %}
-                    {% if form.admission.value %}
+                    <div {% if not form.admission.value %}style="display: none;"{% endif %}>
                         {% bootstrap_field variation_form.admission_validity_mode layout="control" %}
                         {% bootstrap_field variation_form.admission_valid_from layout="control" %}
                         {% bootstrap_field variation_form.admission_valid_until layout="control" %}
                         {% bootstrap_field variation_form.admission_valid_from_offset_minutes layout="control" %}
                         {% bootstrap_field variation_form.admission_valid_until_offset_minutes layout="control" %}
-                    {% endif %}
+                    </div>
                 </div>
             </div>
         {% endfor %}
@@ -74,7 +74,7 @@
                     <h4 class="panel-title">
                         <div class="row">
                             <div class="col-md-9">
-                                {% bootstrap_field formset.empty_form.value layout='inline' form_group_class="" %}
+                                {% bootstrap_field formset.empty_form.value layout='vertical' show_label=False %}
                             </div>
                             <div class="col-md-3 text-right flip">
                                 <button type="button" class="btn btn-default" data-formset-move-up-button>
@@ -92,13 +92,13 @@
                     {% bootstrap_field formset.empty_form.default_price addon_after=request.event.currency layout="control" %}
                     {% bootstrap_field formset.empty_form.original_price addon_after=request.event.currency layout="control" %}
                     {% bootstrap_field formset.empty_form.description layout="control" %}
-                    {% if form.admission.value %}
+                    <div {% if not form.admission.value %}style="display: none;"{% endif %}>
                         {% bootstrap_field formset.empty_form.admission_validity_mode layout="control" %}
                         {% bootstrap_field formset.empty_form.admission_valid_from layout="control" %}
                         {% bootstrap_field formset.empty_form.admission_valid_until layout="control" %}
                         {% bootstrap_field formset.empty_form.admission_valid_from_offset_minutes layout="control" %}
                         {% bootstrap_field formset.empty_form.admission_valid_until_offset_minutes layout="control" %}
-                    {% endif %}
+                    </div>
                 </div>
             </div>
         {% endescapescript %}

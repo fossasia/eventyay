@@ -20,6 +20,7 @@
 			h2.field-heading {{ t.biography }}
 			.field-content
 				markdown-content(:markdown="resolvedSpeaker.biography")
+
 		.field-section(v-for="answer in longAnswers", :key="answer.id")
 			h2.field-heading {{ getLocalizedString(answer.question.question) || String(answer.question.question) }}
 			.field-content
@@ -194,6 +195,7 @@ export default {
 		effectiveSpeakerApiContent() {
 			return this.resolvedSpeaker?.apiContent || this.fetchedApiContent
 		},
+
 		speakerDetailReady() {
 			return this.resolvedSpeaker && (this.effectiveSpeakerApiContent || this.apiContentLoaded || !this.computedApiBaseUrl)
 		},
@@ -252,6 +254,7 @@ export default {
 		}
 	},
 	methods: {
+
 		onFav(id) {
 			if (this.scheduleFav) this.scheduleFav(id)
 			this.$emit('fav', id)
@@ -323,7 +326,6 @@ export default {
 			color: $clr-secondary-text-light
 			font-size: 14px
 			line-height: 1.3
-			padding: 0
 	.speaker-avatar
 		flex-shrink: 0
 		width: 128px

@@ -11,6 +11,14 @@
 		a.navbar-brand(:href="platformHomeUrl", :class="{anonymous: isAnonymous}")
 			img(src="/eventyay-logo.svg", alt="eventyay")
 			span.brand-text eventyay
+		a.nav-view-event(
+			v-if="showPublicVideoLink",
+			:href="publicVideoUrl",
+			:title="publicVideoLabel",
+			@click="onViewPublicVideo"
+		)
+			i.fa.fa-eye(aria-hidden="true")
+			span {{ publicVideoLabel }}
 	.nav-actions
 		.admin-session-actions(v-if="showAdminModeStart || showAdminModeEnd")
 			button.admin-mode-btn(
@@ -183,6 +191,8 @@ const isOrganizerNavVisible = computed(() => {
 	return isAdminRoute.value || Boolean(window.eventyay?.isOrganizerArea)
 })
 
+const showPublicVideoLink = computed(() => Boolean(window.eventyay?.isOrganizerArea))
+const publicVideoUrl = computed(() => window.eventyay?.publicVideoUrl || '/')
 const platformHomeUrl = computed(() => window.eventyay?.platformHomeUrl || '/')
 const homeUrl = computed(() => window.eventyay?.homeUrl || null)
 const ticketUrl = computed(() => window.eventyay?.ticketUrl || null)
@@ -256,6 +266,10 @@ const toggleNavigationLabel = computed(() => {
 	userLocale.value
 	return i18n.t('Toggle navigation')
 })
+const publicVideoLabel = computed(() => {
+	userLocale.value
+	return i18n.t('View Public Video')
+})
 const iconClasses = ICON_CLASSES
 const userMenuEl = ref(null)
 const languageMenuEl = ref(null)
@@ -308,6 +322,15 @@ function getNextUrl() {
 		return window.location.pathname + window.location.search + window.location.hash
 	}
 	return videoAccessRefreshPath() || (window.location.pathname + window.location.search + window.location.hash)
+}
+
+function onViewPublicVideo() {
+	try {
+		sessionStorage.setItem('video_auth_mode', 'organizer')
+		localStorage.removeItem('token')
+	} catch (error) {
+		console.error('Failed to prepare public video view', error)
+	}
 }
 
 function startAdminSession() {

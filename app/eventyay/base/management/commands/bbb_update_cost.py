@@ -6,6 +6,7 @@ from django.core.management.base import BaseCommand
 from lxml import etree
 
 from eventyay.base.models import BBBServer
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.services.bbb import get_url
 
 
@@ -43,7 +44,8 @@ class Command(BaseCommand):
             server.save(update_fields=["cost"])
 
         except Exception:
-            logger.exception(f"Could not query BBB server {server.id} / {server.url}")
+            log_event('video', 'connection.get', OUTCOME_FAILURE, error_code='request_error', object_id=server.pk, backend='bbb')
+            logger.exception('Could not query BBB server %s', server.id)
 
     def handle(self, *args, **options):
         p = pool.ThreadPool(processes=cpu_count())

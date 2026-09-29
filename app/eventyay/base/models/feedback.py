@@ -9,6 +9,7 @@ from .mixins import PretalxModel
 
 
 class Feedback(PretalxModel):
+    log_prefix = 'eventyay.submission'
     """Attendee feedback for a session, aimed at one or all of its speakers.
 
     :param speaker: If unset, the feedback is directed to all speakers of the session.

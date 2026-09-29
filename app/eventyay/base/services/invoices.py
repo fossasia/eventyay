@@ -30,6 +30,7 @@ from eventyay.base.models import (
     OrderFee,
 )
 from eventyay.base.models.tax import EU_CURRENCIES
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.services.tasks import TransactionAwareTask
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.signals import invoice_line_text, periodic_task
@@ -443,4 +444,5 @@ def fetch_ecb_rates(sender, **kwargs):
         gs.settings.ecb_rates_date = date
         gs.settings.ecb_rates_dict = json.dumps(rates, cls=DjangoJSONEncoder)
     except urllib.error.URLError:
+        log_event('core', 'connection.ecb', OUTCOME_FAILURE, error_code='request_error', backend='ecb')
         logger.exception('Could not retrieve rates from ECB')

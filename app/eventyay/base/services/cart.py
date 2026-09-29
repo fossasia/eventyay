@@ -43,6 +43,7 @@ from eventyay.base.services.tasks import ProfiledEventTask
 from eventyay.base.settings import PERSON_NAME_SCHEMES, GlobalSettingsObject
 from eventyay.base.signals import validate_cart_addons
 from eventyay.base.templatetags.rich_text import rich_text
+from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
 from eventyay.celery_app import app
 from eventyay.presale.signals import (
     checkout_confirm_messages,
@@ -60,6 +61,7 @@ class CartError(Exception):
         else:
             msg = _(msg)
         super().__init__(msg)
+        log_event('tickets', 'cart.error', OUTCOME_FAILURE, error_code='cart_error')
 
 
 error_messages = {
@@ -1613,6 +1615,7 @@ def apply_voucher(
                 cm = CartManager(event=event, cart_id=cart_id, sales_channel=sales_channel)
                 cm.apply_voucher(voucher)
                 cm.commit()
+                log_event('tickets', 'voucher.apply', OUTCOME_SUCCESS, event_id=event.pk)
             except LockTimeoutException:
                 self.retry()
         except (MaxRetriesExceededError, LockTimeoutException):

@@ -17,6 +17,7 @@ from django.utils.timezone import now
 from requests import RequestException
 from sentry_sdk import add_breadcrumb, configure_scope
 
+from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
 from eventyay.base.models.room import AnonymousInvite, RoomConfigSerializer
 from eventyay.base.services.event import (
     create_room,
@@ -378,6 +379,14 @@ class RoomModule(BaseModule):
                     is_changed = True
             if is_changed:
                 await redis.expire(f"room:approxcount:known:{room.pk}", 900)
+                log_event(
+                    'video',
+                    'room.occupancy',
+                    OUTCOME_SUCCESS,
+                    event_id=getattr(self.consumer.event, 'pk', None),
+                    object_id=room.pk,
+                    occupancy=actual_view_count,
+                )
                 await self.consumer.channel_layer.group_send(
                     GROUP_EVENT.format(id=self.consumer.event.pk),
                     {
@@ -516,6 +525,7 @@ class RoomModule(BaseModule):
         try:
             room = await create_room(self.consumer.event, body, self.consumer.user)
         except ValidationError as e:
+            log_event('video', 'room.create', OUTCOME_FAILURE, error_code=getattr(e, 'code', None) or 'invalid', event_id=getattr(self.consumer.event, 'pk', None))
             await self.consumer.send_error(
                 code=f"room.invalid.{e.code}", message=str(e)
             )
@@ -663,6 +673,7 @@ class RoomModule(BaseModule):
                 self.consumer.user
             ):
                 await self.consumer.send_error(code="config.denied")
+                log_event('video', 'room.config', OUTCOME_FAILURE, error_code='denied', event_id=getattr(self.consumer.event, 'pk', None))
                 return
             if not await user_has_all_server_backed_room_create_permissions(
                 self.consumer.event,
@@ -670,6 +681,7 @@ class RoomModule(BaseModule):
                 newly_added_server_modules,
             ):
                 await self.consumer.send_error(code="config.denied")
+                log_event('video', 'room.config', OUTCOME_FAILURE, error_code='denied', event_id=getattr(self.consumer.event, 'pk', None))
                 return
 
         if "module_config" in body:
@@ -684,6 +696,7 @@ class RoomModule(BaseModule):
                         code="config.denied",
                         message=f"Video provider '{provider}' is disabled for room creation.",
                     )
+                    log_event('video', 'room.config', OUTCOME_FAILURE, error_code='denied', event_id=getattr(self.consumer.event, 'pk', None))
                     return
 
         old = await database_sync_to_async(serialize_room_config)(self.room)
@@ -704,6 +717,13 @@ class RoomModule(BaseModule):
                 except ConsumerException:
                     raise
                 except Exception:
+                    log_event(
+                        'video',
+                        'connection.webhook',
+                        OUTCOME_FAILURE,
+                        error_code='verification_error',
+                        event_id=getattr(self.consumer.event, 'pk', None),
+                    )
                     logger.exception("Webhook challenge verification failed")
                     await self.consumer.send_error(
                         code="webhook.verification_failed"
@@ -742,6 +762,7 @@ class RoomModule(BaseModule):
             await self.consumer.send_success(new)
             await notify_event_change(self.consumer.event.id)
         else:
+            log_event('video', 'room.config', OUTCOME_FAILURE, error_code='invalid', event_id=getattr(self.consumer.event, 'pk', None))
             await self.consumer.send_error(code="config.invalid")
 
     @command("config.reorder")
@@ -758,6 +779,7 @@ class RoomModule(BaseModule):
         try:
             await delete_room(self.consumer.event, self.room, by_user=self.consumer.user)
         except ValidationError as e:
+            log_event('video', 'room.delete', OUTCOME_FAILURE, error_code='linked_sessions', event_id=getattr(self.consumer.event, 'pk', None), object_id=getattr(self.room, 'pk', None))
             message = e.messages[0] if getattr(e, 'messages', None) else str(e)
             await self.consumer.send_error(code='room.delete.linked_sessions', message=message)
             return

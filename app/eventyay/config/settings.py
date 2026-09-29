@@ -485,7 +485,9 @@ _OURS_MIDDLEWARES = (
     'eventyay.api.middleware.ApiScopeMiddleware',
 )
 
-MIDDLEWARE = _LIBRARY_MIDDLEWARES + _OURS_MIDDLEWARES
+# Correlation IDs must wrap the whole stack so 401/403/5xx from later
+# middleware (including load-shedding 503) still emit operational logs.
+MIDDLEWARE = ('eventyay.base.middleware.CorrelationIdMiddleware',) + _LIBRARY_MIDDLEWARES + _OURS_MIDDLEWARES
 
 
 _CORE_TEMPLATE_LOADERS = (
@@ -1153,6 +1155,7 @@ CELERY_TASK_ROUTES = {
     'eventyay.base.services.tickets.invalidate_cache': {'queue': 'longrunning'},
     # Registered name in eventyay.agenda.tasks (legacy pretalx namespace).
     'pretalx.agenda.export_schedule_html': {'queue': 'longrunning'},
+    'eventyay.person.ensure_avatar_thumbnails': {'queue': 'longrunning'},
 }
 
 # The folder where static files are collected to. It is shared with Nginx.
@@ -1254,15 +1257,21 @@ _LOGGING_HANDLERS = {
         'level': 'DEBUG',
         'class': 'logging.StreamHandler',
         'formatter': 'verbose',
+        'filters': ['operational_context'],
     },
     'rich': {
         'level': 'DEBUG',
         'class': 'rich.logging.RichHandler' if os.getenv('TERM') else 'logging.StreamHandler',
         'formatter': 'tiny' if os.getenv('TERM') else 'verbose',
+        'filters': ['operational_context'],
     },
 }
 _LOGGING_FORMATTERS = {
-    'verbose': {'format': '%(levelname)s %(asctime)s %(module)s: %(message)s'},
+    'verbose': {
+        '()': 'eventyay.base.operational_logging.StructuredLogFormatter',
+        'format': '%(levelname)s %(asctime)s %(name)s: %(message)s',
+        'datefmt': '%Y-%m-%dT%H:%M:%SZ',
+    },
     'tiny': {
         'format': '%(message)s',
         'datefmt': '[%X]',
@@ -1280,6 +1289,7 @@ LOGGING = {
     'formatters': _LOGGING_FORMATTERS,
     'filters': {
         'one_line_warning': {'()': 'eventyay.helpers.security.OneLineWarningFilter'},
+        'operational_context': {'()': 'eventyay.base.operational_logging.OperationalLogFilter'},
     },
     'handlers': _LOGGING_HANDLERS,
     'loggers': {
@@ -1405,7 +1415,8 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'eventyay.api.auth.device.DeviceTokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
-        'eventyay.api.auth.token.TeamTokenAuthentication',
+        # UserApiToken (/orga/me) and TeamAPIToken share the "Token" keyword.
+        'eventyay.common.auth.UserOrTeamTokenAuthentication',
         'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
     ),
     'DEFAULT_RENDERER_CLASSES': ('rest_framework.renderers.JSONRenderer',),

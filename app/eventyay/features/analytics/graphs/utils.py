@@ -9,6 +9,7 @@ from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 from reportlab.platypus import Flowable
 
 from eventyay.base.models import Event
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 
 logger = logging.getLogger(__name__)
 
@@ -105,7 +106,8 @@ def get_schedule(event: Event, fail_silently=True):
         r.raise_for_status()
         return r.json()
     except requests.RequestException:
-        logger.exception(f"Could not load schedule for event {event.pk} from {url}")
+        log_event('talk', 'connection.schedule', OUTCOME_FAILURE, error_code='request_error', event_id=getattr(event, 'pk', None), backend='schedule_widget')
+        logger.exception('Could not load schedule for event %s', event.pk)
         if fail_silently:
             return {}
         else:

@@ -1,4 +1,5 @@
 import type { Mode, Capabilities, ApiConfig, SessionKind } from './types'
+import type { Moment } from 'moment-timezone'
 
 export type { Mode, Capabilities, ApiConfig, SessionKind }
 
@@ -148,4 +149,123 @@ export function resolveSessionKind(mode: Mode, session: { code?: string | null }
   if (mode === 'shifts' || mode === 'public-shifts') return 'shift'
   if (session.code == null) return 'break'
   return 'talk'
+}
+
+interface Session {
+  id: number | string
+  room?: { id: number | string } | null
+  start?: Moment | null
+  end?: Moment | null
+}
+
+interface RoomLayout {
+  colStart: number
+  colSpan: number
+}
+
+function shiftSliceName(date: Moment): string {
+  return `slice-${date.format('MM-DD-HH-mm')}`
+}
+
+function stableIdCompare(a: number | string, b: number | string): number {
+  const sa = String(a)
+  const sb = String(b)
+  return sa < sb ? -1 : sa > sb ? 1 : 0
+}
+
+export function computeRoomMaxOverlap(roomId: number | string, sessions: Session[]): number {
+  const events: { time: Moment; delta: number }[] = []
+  for (const s of sessions) {
+    if (s.room?.id !== roomId || !s.start || !s.end) continue
+    events.push({ time: s.start, delta: 1 })
+    events.push({ time: s.end, delta: -1 })
+  }
+  events.sort((a, b) => {
+    const diff = a.time.diff(b.time)
+    return diff !== 0 ? diff : a.delta - b.delta
+  })
+  let active = 0
+  let max = 1
+  for (const e of events) {
+    active += e.delta
+    if (active > max) max = active
+  }
+  return max
+}
+
+export function assignRoomTracks(roomId: number | string, sessions: Session[]): Map<number | string, number> {
+  const roomSessions = sessions
+    .filter(s => s.room?.id === roomId && s.start && s.end)
+    .sort((a, b) => {
+      const diff = a.start!.diff(b.start!)
+      return diff !== 0 ? diff : stableIdCompare(a.id, b.id)
+    })
+  const trackEnds: Moment[] = []
+  const trackMap = new Map<number | string, number>()
+  for (const s of roomSessions) {
+    let assigned = -1
+    for (let t = 0; t < trackEnds.length; t++) {
+      if (!s.start!.isBefore(trackEnds[t])) {
+        assigned = t
+        break
+      }
+    }
+    if (assigned === -1) {
+      assigned = trackEnds.length
+      trackEnds.push(s.end!)
+    } else {
+      trackEnds[assigned] = s.end!
+    }
+    trackMap.set(s.id, assigned)
+  }
+  return trackMap
+}
+
+export function computeShiftColumnLayout(
+  rooms: { id: number | string }[],
+  sessions: Session[]
+): Map<number | string, RoomLayout> {
+  const layout = new Map<number | string, RoomLayout>()
+  let col = 2
+  for (const room of rooms) {
+    const span = computeRoomMaxOverlap(room.id, sessions)
+    layout.set(room.id, { colStart: col, colSpan: span })
+    col += span
+  }
+  return layout
+}
+
+export function buildShiftGridTemplateColumns(
+  rooms: { id: number | string }[],
+  sessions: Session[],
+  minColWidth = '320px',
+  timeColWidth = '78px'
+): string {
+  const roomCols = rooms
+    .map(room => {
+      const span = computeRoomMaxOverlap(room.id, sessions)
+      return Array(span).fill(`minmax(${minColWidth}, 1fr)`).join(' ')
+    })
+    .join(' ')
+  return `${timeColWidth} ${roomCols} auto`
+}
+
+export function computeShiftOverlapSubcolumn(
+  session: Session,
+  allSessions: Session[],
+  columnLayout: Map<number | string, RoomLayout>
+): { gridRow: string; gridColumn: string } | null {
+  if (!session.start || !session.end || !session.room) return null
+  const roomLayout = columnLayout.get(session.room.id)
+  if (!roomLayout || roomLayout.colSpan <= 1) return null
+
+  const trackMap = assignRoomTracks(session.room.id, allSessions)
+  const track = trackMap.get(session.id)
+  if (track == null) return null
+
+  const subCol = roomLayout.colStart + track
+  return {
+    gridRow: `${shiftSliceName(session.start)} / ${shiftSliceName(session.end)}`,
+    gridColumn: `${subCol} / ${subCol + 1}`,
+  }
 }

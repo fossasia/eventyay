@@ -9,6 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from eventyay.base.models import Order, OrderPayment, OrderRefund
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.services.orders import mark_order_refunded
 from eventyay.eventyay_common.tasks import update_billing_invoice_information
 from eventyay.helpers.stripe_utils import get_stripe_webhook_secret_key
@@ -28,12 +29,14 @@ def stripe_webhook_view(request):
     sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
 
     if not sig_header:
+        log_event('plugins', 'webhook.inbound', OUTCOME_FAILURE, error_code='missing_signature', backend='stripe')
         logger.error('Missing Stripe signature header')
         return HttpResponse('Missing signature', status=400)
 
     try:
         webhook_secret_key = get_stripe_webhook_secret_key()
     except ValidationError:
+        log_event('plugins', 'webhook.inbound', OUTCOME_FAILURE, error_code='secret_unconfigured', backend='stripe')
         logger.exception('Stripe webhook secret is not configured')
         # 503: temporary misconfiguration — ask Stripe to retry after ops fixes secrets.
         return HttpResponse('Webhook secret not configured', status=503)
@@ -41,9 +44,11 @@ def stripe_webhook_view(request):
     try:
         event = stripe.Webhook.construct_event(payload, sig_header, webhook_secret_key)
     except ValueError as e:
+        log_event('plugins', 'webhook.inbound', OUTCOME_FAILURE, error_code='invalid_payload', backend='stripe')
         logger.error('Error parsing payload: %s', e)
         return HttpResponse('Invalid payload', status=400)
     except stripe.error.SignatureVerificationError as e:
+        log_event('plugins', 'webhook.inbound', OUTCOME_FAILURE, error_code='invalid_signature', backend='stripe')
         logger.error('Error verifying webhook signature: %s', e)
         return HttpResponse('Invalid signature', status=400)
 
@@ -54,10 +59,7 @@ def stripe_webhook_view(request):
         if invoice_id:
             update_billing_invoice_information.delay(invoice_id=invoice_id)
         else:
-            logger.info(
-                'Ignoring payment_intent.succeeded without invoice_id metadata (event %s)',
-                getattr(event, 'id', None),
-            )
+            logger.info('Ignoring payment_intent.succeeded without invoice_id metadata (event %s)', getattr(event, 'id', None))
 
     elif event.type == 'charge.refunded':
         charge = event.data.object

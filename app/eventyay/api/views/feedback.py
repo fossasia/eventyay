@@ -114,3 +114,4 @@ class FeedbackViewSet(
             is_public=is_public,
             status=status,
         )
+        serializer.instance.log_action('.create', person=user)

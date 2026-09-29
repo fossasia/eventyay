@@ -15,6 +15,7 @@ from eventyay.base.models import (
     Order,
     OrderPosition,
 )
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.services.tasks import EventTask, ProfiledTask
 from eventyay.base.settings import PERSON_NAME_SCHEMES
 from eventyay.base.signals import allow_ticket_download, register_ticket_outputs
@@ -187,6 +188,7 @@ def get_tickets_for_order(order, base_position=None):
                     )
                 )
             except:
+                log_event('tickets', 'ticket.generate', OUTCOME_FAILURE, error_code='generate_failed', event_id=getattr(order.event, 'pk', None), order_code=getattr(order, 'code', None))
                 logger.exception('Failed to generate ticket.')
         else:
             for pos in positions:
@@ -219,6 +221,7 @@ def get_tickets_for_order(order, base_position=None):
                         fname = f'{order.event.slug.upper()}-{order.code}-{pos.positionid}-{ct.provider}{ct.extension}'
                     tickets.append((fname, ct))
                 except:
+                    log_event('tickets', 'ticket.generate', OUTCOME_FAILURE, error_code='generate_failed', event_id=getattr(order.event, 'pk', None), order_code=getattr(order, 'code', None))
                     logger.exception('Failed to generate ticket.')
 
     return tickets

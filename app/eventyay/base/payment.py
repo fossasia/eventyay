@@ -40,6 +40,7 @@ from eventyay.base.models import (
     OrderRefund,
     Quota,
 )
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.reldate import RelativeDateField, RelativeDateWrapper
 from eventyay.base.services.cart import get_fees
 from eventyay.base.settings import SettingsSandbox
@@ -908,7 +909,10 @@ class BasePaymentProvider:
 
 
 class PaymentException(Exception):  # NOQA: N818
-    pass
+    def __init__(self, *args):
+        super().__init__(*args)
+        # Never log exception text: providers may include card or API details.
+        log_event('tickets', 'payment.exception', OUTCOME_FAILURE, error_code='payment_exception')
 
 
 class FreeOrderProvider(BasePaymentProvider):
@@ -1207,8 +1211,6 @@ class GiftCardPayment(BasePaymentProvider):
         return get_template('pretixcontrol/giftcards/checkout_confirm.html').render({})
 
     def refund_control_render(self, request, refund) -> str:
-        from .models import GiftCard
-
         if 'gift_card' in refund.info_data:
             gc = GiftCard.objects.get(pk=refund.info_data.get('gift_card'))
             template = get_template('pretixcontrol/giftcards/payment.html')
@@ -1221,8 +1223,6 @@ class GiftCardPayment(BasePaymentProvider):
             return template.render(ctx)
 
     def payment_control_render(self, request, payment) -> str:
-        from .models import GiftCard
-
         if 'gift_card' in payment.info_data:
             gc = GiftCard.objects.get(pk=payment.info_data.get('gift_card'))
             template = get_template('pretixcontrol/giftcards/payment.html')
@@ -1235,8 +1235,6 @@ class GiftCardPayment(BasePaymentProvider):
             return template.render(ctx)
 
     def api_payment_details(self, payment: OrderPayment):
-        from .models import GiftCard
-
         try:
             gc = GiftCard.objects.get(pk=payment.info_data.get('gift_card'))
         except GiftCard.DoesNotExist:
@@ -1302,7 +1300,11 @@ class GiftCardPayment(BasePaymentProvider):
                 cart['raw'],
             )
             total += sum([f.value for f in fees])
-            remainder = total
+            
+            used_gcs = self.event.organizer.accepted_gift_cards.filter(pk__in=cs['gift_cards'])
+            gc_total = sum(g.value for g in used_gcs)
+            remainder = total - gc_total
+            
             if remainder > Decimal('0.00'):
                 del cs['payment']
                 messages.success(
@@ -1427,8 +1429,6 @@ class GiftCardPayment(BasePaymentProvider):
 
     @transaction.atomic()
     def execute_refund(self, refund: OrderRefund):
-        from .models import GiftCard
-
         gc = GiftCard.objects.get(pk=refund.info_data.get('gift_card') or refund.payment.info_data.get('gift_card'))
         trans = gc.transactions.create(value=refund.amount, order=refund.order, refund=refund)
         refund.info_data = {

@@ -3,11 +3,11 @@ import hmac
 import json
 import logging
 import time
-from urllib.parse import urlparse
 
 import requests
 from requests import RequestException
 
+from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
 from eventyay.celery_app import app
 
 logger = logging.getLogger(__name__)
@@ -34,7 +34,6 @@ def send_chat_webhook(self, payload, webhook_url, hmac_secret):
         "X-Eventyay-Signature": f"sha256={signature}",
     }
 
-    _log_url = urlparse(webhook_url)._replace(query="", fragment="").geturl()
     t = time.time()
     try:
         resp = requests.post(
@@ -44,24 +43,12 @@ def send_chat_webhook(self, payload, webhook_url, hmac_secret):
             timeout=WEBHOOK_TIMEOUT,
             allow_redirects=False,
         )
-        elapsed = time.time() - t
+        elapsed_ms = int((time.time() - t) * 1000)
         if 200 <= resp.status_code <= 299:
-            logger.info(
-                "Chat webhook delivered to %s in %.2fs (HTTP %d)",
-                _log_url,
-                elapsed,
-                resp.status_code,
-            )
+            log_event('video', 'connection.post', OUTCOME_SUCCESS, status=resp.status_code, duration_ms=elapsed_ms, backend='chat_webhook')
         else:
-            logger.warning(
-                "Chat webhook to %s returned HTTP %d in %.2fs",
-                _log_url,
-                resp.status_code,
-                elapsed,
-            )
+            log_event('video', 'connection.post', OUTCOME_FAILURE, error_code='http_error', status=resp.status_code, duration_ms=elapsed_ms, backend='chat_webhook')
+            logger.warning('Chat webhook returned HTTP %s', resp.status_code)
     except RequestException:
-        logger.exception(
-            "Chat webhook to %s failed after %.2fs",
-            _log_url,
-            time.time() - t,
-        )
+        log_event('video', 'connection.post', OUTCOME_FAILURE, error_code='request_error', duration_ms=int((time.time() - t) * 1000), backend='chat_webhook')
+        logger.exception("Chat webhook delivery failed")

@@ -10,6 +10,7 @@ from django.urls import reverse
 from django.utils.crypto import get_random_string
 from django.utils.functional import cached_property
 
+from eventyay.base.operational_logging import emit_logged_action
 from eventyay.helpers.json import CustomJSONEncoder
 
 
@@ -109,6 +110,21 @@ class LoggingMixin:
             logentry.data = json.dumps(data, cls=CustomJSONEncoder, sort_keys=True)
         elif data:
             raise TypeError('You should only supply dictionaries as log data.')
+        try:
+            emit_logged_action(
+                action,
+                event_id=getattr(event, 'pk', None),
+                object_id=getattr(self, 'pk', None),
+                user_id=getattr(user, 'pk', None) if user else None,
+                is_orga_action=orga,
+                model=type(self).__name__,
+                order_id=self.pk if type(self).__name__ == 'Order' else None,
+                order_code=getattr(self, 'code', None) if type(self).__name__ == 'Order' else None,
+                voucher_id=self.pk if type(self).__name__ == 'Voucher' else None,
+                data=data,
+            )
+        except Exception:
+            pass
         if save:
             logentry.save()
 

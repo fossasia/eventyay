@@ -96,7 +96,6 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 								path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
 					.inner-card-content
 						span {{ speaker.name }}
-						p.speaker-role(v-if="speaker.speaker_role") {{ speaker.speaker_role }}
 						p.biography(v-if="(speaker.apiContent?.biography || speaker.biography)?.length > 0", v-html="renderRichText(speaker.apiContent?.biography || speaker.biography)")
 		template(v-if="modalContent && modalContent.contentType === 'speaker'")
 			.speaker-details
@@ -108,6 +107,7 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 								path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
 					.speaker-title
 						h3 {{ modalContent.contentObject.name }}
+						p.speaker-role(v-if="modalContent.contentObject.speaker_role") {{ modalContent.contentObject.speaker_role }}
 						export-dropdown.speaker-export(v-if="speakerExportOptions.length && !exportsDisabled", :options="speakerExportOptions", :qrcodesUrl="speakerQrcodesUrl")
 				.speaker-content.card-content
 					.biography(v-if="(modalContent.contentObject.apiContent?.biography || modalContent.contentObject.biography)?.length > 0", v-html="renderRichText(modalContent.contentObject.apiContent?.biography || modalContent.contentObject.biography)")
@@ -544,7 +544,7 @@ export default {
 			.speaker-role
 				margin: 4px 0 0 0
 				font-size: 13px
-				color: #666
+				color: $clr-secondary-text-light
 			p
 				color: var(--pretalx-clr-text)
 				font-size: 14px
@@ -610,6 +610,10 @@ export default {
 			display: flex
 			flex-direction: column
 			gap: 8px
+			.speaker-role
+				margin: 0
+				font-size: 14px
+				color: $clr-secondary-text-light
 		.speaker-export
 			align-self: flex-start
 		.speaker-content

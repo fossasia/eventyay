@@ -45,11 +45,15 @@ def warm_schedule_caches(*, schedule_pk: int):
     # Local imports required to break circular dependency:
     # base.models.schedule imports export_schedule_html from this module,
     # so module-level imports of Schedule or agenda.views.utils create a cycle.
+    from django.contrib.auth.models import AnonymousUser
+
     from eventyay.agenda.views.utils import (
         CACHE_TTL,
         _serialize_schedule_build_data,
         build_public_schedule_exporters,
         build_schedule_meta_json,
+        get_or_build_landing_featured_widget_schedule,
+        get_or_build_speakers_list_meta,
         warm_scoped_schedule_caches,
     )
     from eventyay.base.models import Schedule
@@ -108,6 +112,16 @@ def warm_schedule_caches(*, schedule_pk: int):
             except Exception:
                 LOGGER.exception(
                     'Failed to warm meta cache for schedule %s (language=%s)',
+                    schedule.pk,
+                    lang_code,
+                )
+            try:
+                activate(lang_code)
+                get_or_build_landing_featured_widget_schedule(schedule.event, AnonymousUser())
+                get_or_build_speakers_list_meta(schedule.event)
+            except Exception:
+                LOGGER.exception(
+                    'Failed to warm landing/speakers caches for schedule %s (language=%s)',
                     schedule.pk,
                     lang_code,
                 )

@@ -137,38 +137,101 @@ export function withdrawUrl (eventUrl, session) {
 	return `${base}teamshifts/shifts/${getShiftId(session)}/withdraw/`
 }
 
-/**
- * Compute overlap-aware grid row placement for a shift session.
- *
- * When multiple shifts occupy the same room and overlap in time, they are
- * stacked sequentially (each starting where the previous one ends) rather
- * than rendered on top of each other. This logic only applies to shift
- * schedules — talk schedules never have overlapping sessions in the same room.
- *
- * @param {Object} session - The session to position
- * @param {Array} allSessions - All sessions in the grid
- * @returns {{ startName: string, endName: string|null }|null}
- *   Returns adjusted start/end slice names if stacking is needed, null otherwise.
- */
-export function computeShiftOverlapPlacement (session, allSessions) {
-	if (!session.start || !session.end) return null
+function roomId (room) {
+	return room?.id ?? room
+}
 
-	const overlapping = allSessions.filter(s => {
-		if (s.id === session.id) return true
-		if (!s.room || !s.start || !s.end) return false
-		if (s.room !== session.room) return false
-		return s.start.isBefore(session.end) && s.end.isAfter(session.start)
-	}).sort((a, b) => {
-		const diff = a.start.diff(b.start)
-		return diff !== 0 ? diff : a.id - b.id
-	})
-
-	if (overlapping.length <= 1) return null
-
-	const myIndex = overlapping.findIndex(s => s.id === session.id)
-	if (myIndex === 0) {
-		return { startName: null, endName: null }
+export function computeRoomMaxOverlap (room, allSessions) {
+	const rid = roomId(room)
+	const events = []
+	for (const s of allSessions) {
+		if (roomId(s.room) !== rid || !s.start || !s.end) continue
+		events.push({ time: s.start, delta: 1 })
+		events.push({ time: s.end, delta: -1 })
 	}
-	const prev = overlapping[myIndex - 1]
-	return { startName: prev.end, endName: null }
+	events.sort((a, b) => {
+		const diff = a.time.diff(b.time)
+		return diff !== 0 ? diff : a.delta - b.delta
+	})
+	let active = 0
+	let max = 1
+	for (const e of events) {
+		active += e.delta
+		if (active > max) max = active
+	}
+	return max
+}
+
+function assignRoomTracks (room, allSessions) {
+	const rid = roomId(room)
+	const roomSessions = allSessions
+		.filter(s => roomId(s.room) === rid && s.start && s.end)
+		.sort((a, b) => {
+			const diff = a.start.diff(b.start)
+			if (diff !== 0) return diff
+			return String(a.id) < String(b.id) ? -1 : String(a.id) > String(b.id) ? 1 : 0
+		})
+	const trackEnds = []
+	const trackMap = new Map()
+	for (const s of roomSessions) {
+		let assigned = -1
+		for (let t = 0; t < trackEnds.length; t++) {
+			if (!s.start.isBefore(trackEnds[t])) {
+				assigned = t
+				break
+			}
+		}
+		if (assigned === -1) {
+			assigned = trackEnds.length
+			trackEnds.push(s.end)
+		} else {
+			trackEnds[assigned] = s.end
+		}
+		trackMap.set(s.id, assigned)
+	}
+	return trackMap
+}
+
+export function computeShiftColumnLayout (rooms, sessions) {
+	const layout = new Map()
+	let col = 2
+	for (const room of rooms) {
+		const rid = roomId(room)
+		const span = computeRoomMaxOverlap(room, sessions)
+		layout.set(rid, { colStart: col, colSpan: span })
+		col += span
+	}
+	return layout
+}
+
+export function buildShiftGridTemplateColumns (rooms, sessions, minColWidth, timeColWidth) {
+	const w = minColWidth || '320px'
+	const t = timeColWidth || '78px'
+	const roomCols = rooms.map(room => {
+		const span = computeRoomMaxOverlap(room, sessions)
+		return Array(span).fill(`minmax(${w}, 1fr)`).join(' ')
+	}).join(' ')
+	return `${t} ${roomCols} auto`
+}
+
+export function computeShiftOverlapPlacement (session, allSessions, columnLayout) {
+	if (!session.start || !session.end || !session.room) return null
+
+	const rid = roomId(session.room)
+	const roomLayout = columnLayout ? columnLayout.get(rid) : null
+	if (!roomLayout || roomLayout.colSpan <= 1) return null
+
+	const trackMap = assignRoomTracks(session.room, allSessions)
+	const track = trackMap.get(session.id)
+	if (track == null) return null
+
+	const subCol = roomLayout.colStart + track
+	return {
+		gridRow: `${getSliceName(session.start)} / ${getSliceName(session.end)}`,
+		gridColumn: `${subCol} / ${subCol + 1}`,
+	}
+}
+
+function getSliceName (date) {
+	return `slice-${date.format('MM-DD-HH-mm')}`
 }

@@ -1,13 +1,17 @@
 import json
 import logging
 
+from celery.exceptions import MaxRetriesExceededError
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 from django.db.models import ProtectedError
+from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
 from eventyay.base.models import Event, Organizer, User
+from eventyay.base.models.admin_mail import AdminEmailQueue, AdminEmailStatus
 from eventyay.base.models.log import LogEntry
+from eventyay.base.operational_logging import emit_logged_action
 from eventyay.celery_app import app
 from eventyay.core.tasks import EventTask
 
@@ -69,6 +73,16 @@ def delete_organizer_data(organizer_id: int, user_id: int | None = None) -> None
                 sort_keys=True,
             ),
         )
+        try:
+            emit_logged_action(
+                'eventyay.organizer.deleted',
+                object_id=organizer_id,
+                user_id=getattr(user, 'pk', None),
+                is_orga_action=True,
+                model='Organizer',
+            )
+        except Exception:
+            pass
     except ProtectedError as exc:
         protected_labels = ', '.join(sorted({obj._meta.label for obj in exc.protected_objects})) or 'unknown'
         organizer = Organizer.objects.filter(pk=organizer_id).first()
@@ -87,3 +101,51 @@ def delete_organizer_data(organizer_id: int, user_id: int | None = None) -> None
             protected_labels,
         )
         raise
+
+
+@app.task(bind=True, name='eventyay.control.send_admin_email', max_retries=3, default_retry_delay=60, acks_late=True)
+@scopes_disabled()
+def send_admin_email(self, admin_email_id: int) -> None:
+    with transaction.atomic():
+        mail = (
+            AdminEmailQueue.objects
+            .select_for_update(skip_locked=True)
+            .filter(pk=admin_email_id)
+            .exclude(status__in=[AdminEmailStatus.SENT, AdminEmailStatus.DRAFT, AdminEmailStatus.CANCELLED])
+            .first()
+        )
+
+        if mail is None:
+            logger.info(
+                '[AdminMail] AdminEmailQueue ID %s: not found, already sent, or locked. Skipping.',
+                admin_email_id,
+            )
+            return
+
+        if mail.scheduled_at and mail.scheduled_at > now():
+            logger.info(
+                '[AdminMail] AdminEmailQueue ID %s: scheduled for %s, re-queuing with eta.',
+                admin_email_id,
+                mail.scheduled_at,
+            )
+            send_admin_email.apply_async(args=[admin_email_id], eta=mail.scheduled_at)
+            return
+
+    try:
+        result = mail.send()
+
+        if not result:
+            logger.warning('[AdminMail] AdminEmailQueue ID %s: send returned False.', admin_email_id)
+        else:
+            logger.info('[AdminMail] AdminEmailQueue ID %s: all emails sent successfully.', admin_email_id)
+
+    except Exception as exc:
+        logger.exception('[AdminMail] Unexpected error for AdminEmailQueue ID %s', admin_email_id)
+        try:
+            self.retry(exc=exc, args=[admin_email_id])
+        except MaxRetriesExceededError:
+            logger.error(
+                '[AdminMail] Max retries exceeded for AdminEmailQueue ID %s. '
+                'Email remains in current status for admin review.',
+                admin_email_id,
+            )
