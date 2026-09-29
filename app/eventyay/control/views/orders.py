@@ -6,6 +6,7 @@ import re
 from datetime import datetime, time, timedelta
 from decimal import Decimal, DecimalException
 from urllib.parse import quote, urlencode
+from zoneinfo import ZoneInfo
 
 import vat_moss_lite.errors
 import vat_moss_lite.id
@@ -1564,7 +1565,7 @@ class OrderTransition(OrderView):
                         self.mark_paid_form.cleaned_data['payment_date'],
                         time(hour=0, minute=0, second=0),
                     ),
-                    self.order.event.timezone,
+                    ZoneInfo(self.order.event.timezone),
                 )
 
             try:

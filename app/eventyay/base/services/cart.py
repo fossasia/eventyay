@@ -2,6 +2,7 @@ from collections import Counter, defaultdict, namedtuple
 from datetime import datetime, time, timedelta
 from decimal import Decimal
 from typing import List, Optional
+from zoneinfo import ZoneInfo
 
 from celery.exceptions import MaxRetriesExceededError
 from django.core.exceptions import ValidationError
@@ -250,7 +251,7 @@ class CartManager:
                         tlv.datetime(self.event).date(),
                         time(hour=23, minute=59, second=59),
                     ),
-                    self.event.timezone,
+                    ZoneInfo(self.event.timezone),
                 )
                 if term_last < self.now_dt:
                     raise CartError(error_messages['payment_ended'])
@@ -281,7 +282,7 @@ class CartManager:
                             tlv.datetime(cp.subevent).date(),
                             time(hour=23, minute=59, second=59),
                         ),
-                        self.event.timezone,
+                        ZoneInfo(self.event.timezone),
                     )
                     if term_last < self.now_dt:
                         err = error_messages['some_subevent_ended']
@@ -418,7 +419,7 @@ class CartManager:
                             tlv.datetime(op.subevent).date(),
                             time(hour=23, minute=59, second=59),
                         ),
-                        self.event.timezone,
+                        ZoneInfo(self.event.timezone),
                     )
                     if term_last < self.now_dt:
                         raise CartError(error_messages['payment_ended'])

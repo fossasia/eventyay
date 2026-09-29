@@ -3,6 +3,7 @@ import logging
 from collections import Counter, namedtuple
 from datetime import datetime, time, timedelta
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 
 from celery.exceptions import MaxRetriesExceededError
 from django.conf import settings
@@ -616,7 +617,7 @@ def _check_date(event: Event, now_dt: datetime):
         if tlv:
             term_last = make_aware(
                 datetime.combine(tlv.datetime(event).date(), time(hour=23, minute=59, second=59)),
-                event.timezone,
+                ZoneInfo(event.timezone),
             )
             if term_last < now_dt:
                 raise OrderError(error_messages['ended'])
@@ -704,7 +705,7 @@ def _check_positions(
                         tlv.datetime(cp.subevent).date(),
                         time(hour=23, minute=59, second=59),
                     ),
-                    event.timezone,
+                    ZoneInfo(event.timezone),
                 )
                 if term_last < now_dt:
                     err = err or error_messages['some_subevent_ended']
