@@ -8,6 +8,50 @@ const isHeaderTabActive = (element) => HEADER_TAB_ACTIVE_CLASSES.some((name) => 
 
 const headerTabFonts = (elements) => [...new Set(elements.map((element) => window.getComputedStyle(element).font))]
 
+const chooseVisibleIndexes = (widths, budget, activeIdx) => {
+    let used = 0
+    let visible = 0
+    while (visible < widths.length && used + widths[visible] <= budget) {
+        used += widths[visible]
+        visible += 1
+    }
+
+    if (activeIdx < 0 || activeIdx < visible) {
+        return Array.from({length: visible}, (_, i) => i)
+    }
+
+    let room = used
+    let keepLeft = visible
+    while (keepLeft > 0 && room + widths[activeIdx] > budget) {
+        keepLeft -= 1
+        room -= widths[keepLeft]
+    }
+
+    if (room + widths[activeIdx] > budget) {
+        if (widths[activeIdx] <= budget) {
+            return [activeIdx]
+        }
+        return Array.from({length: visible}, (_, i) => i)
+    }
+
+    const indexes = Array.from({length: keepLeft}, (_, i) => i)
+    indexes.push(activeIdx)
+    return indexes
+}
+
+const measureHeaderTabWidths = (candidates) => {
+    const removed = candidates.map((tab) => {
+        const active = HEADER_TAB_ACTIVE_CLASSES.filter((name) => tab.classList.contains(name))
+        active.forEach((name) => tab.classList.remove(name))
+        return active
+    })
+    const widths = candidates.map((tab) => tab.getBoundingClientRect().width)
+    candidates.forEach((tab, i) => {
+        removed[i].forEach((name) => tab.classList.add(name))
+    })
+    return widths
+}
+
 const createOverflowNav = (row, bar, overflow) => {
     const menu = overflow.querySelector('.header-tab-overflow-menu')
     const summary = overflow.querySelector('summary')
@@ -44,7 +88,7 @@ const createOverflowNav = (row, bar, overflow) => {
         overflow.classList.remove('active')
 
         const candidates = tabs.filter(isHeaderTabVisible)
-        const widths = candidates.map((tab) => tab.getBoundingClientRect().width)
+        const widths = measureHeaderTabWidths(candidates)
         const required = widths.reduce((sum, width) => sum + width, 0)
 
         const available = bar.clientWidth
@@ -56,14 +100,15 @@ const createOverflowNav = (row, bar, overflow) => {
         overflow.hidden = false
         const trigger = summary || overflow
         const budget = available - trigger.getBoundingClientRect().width + HEADER_TAB_WIDTH_TOLERANCE
-        let used = 0
-        let visible = 0
-        while (visible < widths.length && used + widths[visible] <= budget) {
-            used += widths[visible]
-            visible += 1
+        const activeIdx = candidates.findIndex(isHeaderTabActive)
+        const keepIndexes = new Set(chooseVisibleIndexes(widths, budget, activeIdx))
+
+        if (keepIndexes.size >= candidates.length) {
+            hide()
+            return
         }
 
-        const moved = candidates.slice(visible)
+        const moved = candidates.filter((_, index) => !keepIndexes.has(index))
         if (moved.length === 0) {
             hide()
             return
