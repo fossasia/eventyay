@@ -37,13 +37,13 @@
                     <i class="fa fa-calendar"></i> {{ schedule_label }}
                 </a>
             {% endif %}
-            {% show_public_speakers_list current_event as show_speakers_list %}
-            {% if show_speakers_list %}
-                {% agenda_speakers_nav_url request current_event as speakers_url %}
-                    <a href="{{ speakers_url }}" class="header-tab {% if '/speakers/' in path %}active{% endif %}">
-                        <i class="fa fa-group"></i> {{ speakers_label }}
-                    </a>
-            {% endif %}
+    {% endif %}
+    {% show_public_speakers_list current_event as show_speakers_list %}
+    {% if show_speakers_list %}
+        {% agenda_speakers_nav_url request current_event as speakers_url %}
+        <a href="{{ speakers_url }}" class="header-tab {% if '/speakers/' in path %}active{% endif %}">
+            <i class="fa fa-group"></i> {{ speakers_label }}
+        </a>
     {% endif %}
 
     {% if show_talks_tab %}

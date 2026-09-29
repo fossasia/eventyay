@@ -86,7 +86,8 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
                 .annotate(
                     submission_count=Count(
                         'user__submissions',
-                        filter=Q(user__submissions__event=self.request.event),
+                        filter=Q(user__submissions__event=self.request.event)
+                        & ~Q(user__submissions__state__in=(SubmissionStates.DELETED, SubmissionStates.DRAFT)),
                         distinct=True,
                     ),
                     accepted_submission_count=Count(
