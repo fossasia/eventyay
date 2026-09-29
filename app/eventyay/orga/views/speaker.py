@@ -240,7 +240,7 @@ class SpeakerCreate(SpeakerSocialLinksMixin, EventPermissionRequired, ActionFrom
     form_class = SpeakerProfileForm
     model = SpeakerProfile
     permission_required = 'base.orga_list_speakerprofile'
-    write_permission_required = 'base.create_speakerprofile'
+    write_permission_required = 'base.update_speakerprofile'
 
     def get_object(self):
         return None
