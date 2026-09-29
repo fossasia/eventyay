@@ -98,7 +98,7 @@
 						.avatar-placeholder.avatar-circle(v-else)
 							svg(viewBox="0 0 24 24")
 								path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
-						.name(:class="{'no-name': !speaker.name}") {{ speaker.name || t.speaker_name_not_provided }}
+						.name(:class="{'no-name': !(speaker.name || speaker.fullname)}") {{ speaker.name || speaker.fullname || t.speaker_name_not_provided }}
 					p.speaker-role(v-if="speaker.speaker_role") {{ speaker.speaker_role }}
 					markdown-content.biography(v-if="speaker.biography", :markdown="speaker.biography")
 		.starrers(v-if="popularityFeatureEnabled && starrers && starrers.total > 0")
@@ -147,6 +147,8 @@
 					:loading="starrersLoading",
 					@change="goToStarrersPage"
 				)
+	.schedule-unavailable(v-else-if="apiContentLoaded && !resolvedTalk")
+		.info-message {{ schedulePendingText }}
 	bunt-progress-circular(v-else, size="huge", :page="true")
 </template>
 
@@ -303,7 +305,6 @@ export default {
 				for (let i = 0; i < sessions.length; i++) {
 					if (sessions[i].code === this.talkId || sessions[i].id === this.talkId) return sessions[i]
 				}
-				return null
 			}
 			if (this.fetchedSubmission) return this.fetchedSubmission
 			return null
@@ -651,12 +652,12 @@ export default {
 				return
 			}
 			try {
-				const url = `${this.computedApiBaseUrl}submissions/${id}/?expand=answers.question,resources`
+				const url = `${this.computedApiBaseUrl}submissions/${id}/?expand=answers.question,resources,speakers`
 				const response = await fetch(url)
 				if (!response.ok) return
 				const data = await response.json()
 				this.fetchedApiContent = data
-				if (!this.talk && !this.scheduleData) this.fetchedSubmission = data
+				if (!this.talk) this.fetchedSubmission = data
 			} catch {
 				// silently ignore network / auth errors
 			} finally {

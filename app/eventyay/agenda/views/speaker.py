@@ -211,6 +211,8 @@ class SpeakerView(PermissionRequired, TemplateView):
         return bool(is_speaker_viewable(AnonymousUser(), profile))
 
     def dispatch(self, request, *args, **kwargs):
+        if not self.profile:
+            raise Http404()
         if not self.wip_preview and is_public_speakers_empty(request):
             return redirect_to_presale_with_warning(request, _('No published speakers.'))
         return super().dispatch(request, *args, **kwargs)
@@ -261,6 +263,9 @@ class SpeakerView(PermissionRequired, TemplateView):
             question__target=TalkQuestionTarget.SPEAKER,
         ).select_related('question')
 
+    def handle_no_permission(self):
+        raise Http404()
+
 
 class WipSpeakerView(WipAgendaPreviewPageMixin, SpeakerView):
     pass
@@ -293,11 +298,16 @@ class SpeakerTalksIcalView(PermissionRequired, DetailView):
     permission_required = 'base.view_speakerprofile'
     slug_field = 'code'
 
+    def handle_no_permission(self):
+        raise Http404()
+
     def get_object(self, queryset=None):
         return SpeakerProfile.objects.filter(event=self.request.event, user__code__iexact=self.kwargs['code']).first()
 
     def get(self, request, event, *args, **kwargs):
         speaker = self.get_object()
+        if not speaker:
+            raise Http404()
         slots = agenda_speaker_talks(
             request.event,
             request.user,
