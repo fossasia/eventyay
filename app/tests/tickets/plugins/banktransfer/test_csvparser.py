@@ -360,3 +360,31 @@ class CsvImportTest(TestCase):
         ]
         filename = 'csvimport_data_de_postbank.csv'
         self._test_from_sample_file(filename, expected, hint, expected_parsed)
+
+    def test_escaped_quotes_in_field(self):
+        expected = [
+            ['Payer', 'Amount', 'Reference'],
+            ['Muller; "GmbH";Sohn', '10,00', 'Ticket 2026ABC'],
+            ['Alice', '20,00', 'Ticket 2026DEF'],
+        ]
+        hint = {
+            'payer': [0],
+            'reference': [2],
+            'date': None,
+            'amount': 1,
+            'cols': 3,
+        }
+        expected_parsed = [
+            {
+                'payer': 'Muller; "GmbH";Sohn',
+                'reference': 'Ticket 2026ABC',
+                'amount': '10,00',
+            },
+            {
+                'payer': 'Alice',
+                'reference': 'Ticket 2026DEF',
+                'amount': '20,00',
+            },
+        ]
+        filename = 'csvimport_data_escaped_quotes.csv'
+        self._test_from_sample_file(filename, expected, hint, expected_parsed)
