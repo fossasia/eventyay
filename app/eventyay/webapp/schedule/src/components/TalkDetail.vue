@@ -734,7 +734,7 @@ export default {
 				font-weight: 700
 				color: $clr-secondary-text-light
 			.field-content
-				padding: 8px 12px
+				padding: 8px 0
 				p
 					margin: 0.25em 0
 					&:first-child
