@@ -270,7 +270,7 @@ class SpeakerProfileForm(
                 avatar = SimpleUploadedFile(
                     f"{base_name}.{result.optimized_ext}",
                     result.optimized.read(),
-                    content_type=f"image/{result.optimized_ext}"
+                    content_type='image/svg+xml' if result.optimized_ext == 'svg' else f"image/{result.optimized_ext}",
                 )
             except OSError:
                 logging.getLogger(__name__).exception("Failed to process avatar")

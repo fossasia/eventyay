@@ -129,6 +129,15 @@ def test_optimize_uploaded_image_converts_bmp_to_jpg():
     assert result.original_ext == 'bmp'
 
 
+def test_optimize_uploaded_image_caps_height_for_webp():
+    upload = _create_test_image(1, 16384)
+
+    result = optimize_uploaded_image(upload, 'logo_image')
+
+    assert Image.open(result.optimized).size == (1, 16383)
+    assert result.optimized_ext == 'webp'
+
+
 def test_optimize_uploaded_image_invalid_key():
     upload = _create_test_image(100, 100)
     with pytest.raises(ValueError, match='Unknown image setting key'):

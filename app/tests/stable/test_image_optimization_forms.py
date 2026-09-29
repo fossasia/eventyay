@@ -15,6 +15,14 @@ def _create_test_image(color="red", format="PNG", width=100, height=100):
     buf.seek(0)
     return SimpleUploadedFile(f"test.{format.lower()}", buf.read(), content_type=f"image/{format.lower()}")
 
+
+def _create_test_svg():
+    return SimpleUploadedFile(
+        'test.svg',
+        b'<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>',
+        content_type='image/svg+xml',
+    )
+
 @pytest.mark.django_db
 def test_info_form_clean_image_with_new_upload(event, settings):
     settings.IMAGE_DEFAULT_MAX_WIDTH = 1000
@@ -37,6 +45,20 @@ def test_info_form_clean_image_with_new_upload(event, settings):
         assert cleaned_image is not None
         assert cleaned_image.name.endswith('.webp')
         assert cleaned_image.content_type == 'image/webp'
+
+
+@pytest.mark.django_db
+def test_info_form_clean_image_with_svg_upload(event):
+    with scope(event=event):
+        form = InfoForm(
+            event=event,
+            data={'title': 'Test submission', 'abstract': 'Test abstract', 'content_locale': 'en'},
+            files=MultiValueDict({'image': [_create_test_svg()]}),
+        )
+
+        form.is_valid()
+
+        assert form.cleaned_data['image'].content_type == 'image/svg+xml'
 
 @pytest.mark.django_db
 def test_info_form_clean_image_without_new_upload(event):
@@ -84,6 +106,23 @@ def test_speaker_profile_form_clean_avatar_with_new_upload(user, event, settings
         assert cleaned_avatar is not None
         assert cleaned_avatar.name.endswith('.webp')
         assert cleaned_avatar.content_type == 'image/webp'
+
+
+@pytest.mark.django_db
+def test_speaker_profile_form_clean_avatar_with_svg_upload(user, event):
+    with scope(event=event):
+        profile, _ = SpeakerProfile.objects.get_or_create(user=user, event=event)
+        form = SpeakerProfileForm(
+            user=user,
+            event=event,
+            instance=profile,
+            data={'name': 'Test User', 'email': user.email},
+            files=MultiValueDict({'avatar': [_create_test_svg()]}),
+        )
+
+        form.is_valid()
+
+        assert form.cleaned_data['avatar'].content_type == 'image/svg+xml'
 
 @pytest.mark.django_db
 def test_speaker_profile_form_clean_avatar_without_new_upload(user, event):
