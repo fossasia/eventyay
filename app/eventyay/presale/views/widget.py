@@ -742,11 +742,11 @@ class WidgetAPIProductList(EventListMixin, View):
             elif request.event.settings.presale_start_show_date:
                 data['error'] = gettext('The presale for this event will start on %(date)s at %(time)s.') % {
                     'date': date_format(
-                        ev.effective_presale_start.astimezone(request.event.timezone),
+                        ev.effective_presale_start.astimezone(ZoneInfo(request.event.settings.timezone)),
                         'SHORT_DATE_FORMAT',
                     ),
                     'time': date_format(
-                        ev.effective_presale_start.astimezone(request.event.timezone),
+                        ev.effective_presale_start.astimezone(ZoneInfo(request.event.settings.timezone)),
                         'TIME_FORMAT',
                     ),
                 }

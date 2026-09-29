@@ -135,6 +135,7 @@ def schedule_widget_featured_cache_key_part(event):
         f'sess={_show_featured_setting(event)}|'
         f'spk={_show_featured_speakers_setting(event)}|'
         f'rel={int(_event_has_published_schedule(event))}|'
+        f'pub={int(bool(event.get_feature_flag("show_schedule")))}|'
         f'pop={int(popularity_enabled)}|'
         f'popshow={int(event.session_popularity_show_on_schedule())}'
     )

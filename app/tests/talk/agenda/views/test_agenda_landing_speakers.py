@@ -472,10 +472,12 @@ def test_featured_speaker_page_stays_public_and_sessions_are_coming_soon(
 
 
 @pytest.mark.django_db
+@override_settings(CACHES=LOCMEM_CACHE)
 def test_featured_speakers_show_coming_soon_when_schedule_is_unpublished(
     client, event, slot, speaker
 ):
     """Unpublishing the schedule keeps featured speakers and marks sessions coming soon."""
+    cache.clear()
     with scope(event=event):
         event.live = True
         event.talks_published = True
@@ -489,6 +491,15 @@ def test_featured_speakers_show_coming_soon_when_schedule_is_unpublished(
         slot.submission.is_featured = False
         slot.submission.save(update_fields=['is_featured'])
         event.release_schedule('v1')
+
+    published = client.get(event.urls.base)
+    assert published.status_code == 200
+    published_talk = published.context['featured_speakers_widget_schedule']['talks'][0]
+    assert published_talk['start']
+    assert published_talk['end']
+    assert published_talk['room'] == slot.room_id
+
+    with scope(event=event):
         event.feature_flags['show_schedule'] = False
         event.save(update_fields=['feature_flags'])
 
@@ -497,9 +508,28 @@ def test_featured_speakers_show_coming_soon_when_schedule_is_unpublished(
     widget_schedule = landing.context['featured_speakers_widget_schedule']
     assert {s['code'] for s in widget_schedule['speakers']} == {speaker.code}
     assert len(widget_schedule['talks']) == 1
-    assert widget_schedule['talks'][0]['code'] == slot.submission.code
-    assert widget_schedule['talks'][0]['schedule_pending'] is True
-    assert widget_schedule['talks'][0]['start'] is None
+    talk = widget_schedule['talks'][0]
+    assert talk['code'] == slot.submission.code
+    assert talk['schedule_pending'] is True
+    assert talk['start'] is None
+    assert talk['end'] is None
+    assert talk['room'] is None
+    assert widget_schedule['rooms'] == []
+
+    speaker_page = client.get(
+        reverse(
+            'agenda:speaker',
+            kwargs={'code': speaker.code, 'event': event.slug, 'organizer': event.organizer.slug},
+        ),
+        follow=True,
+    )
+    assert speaker_page.status_code == 200
+    speaker_talk = json.loads(speaker_page.context['schedule_json'])['talks'][0]
+    assert speaker_talk['schedule_pending'] is True
+    assert speaker_talk['start'] is None
+    assert speaker_talk['end'] is None
+    assert speaker_talk['room'] is None
+
     messages = client.get(
         reverse(
             'agenda:widget.messages',
