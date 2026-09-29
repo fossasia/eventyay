@@ -259,7 +259,7 @@ export default {
 			openDropdown: null,
 			activeViewMode: this.viewMode,
 			mobileFiltersOpen: false,
-			speakersGridWidth: typeof window === 'undefined' ? 360 : window.innerWidth,
+			speakersGridWidth: 0,
 			featuredCardWidth: 360,
 			mobileMoreOpen: false,
 			selectedLanguages: [],
@@ -323,6 +323,9 @@ export default {
 		selectedTracks() {
 			if (!this.filtersReady || this.usesLocalSpeakers) return
 			this.updateUrlAndFetch({page: 1})
+		},
+		filteredSpeakers() {
+			if (this.activeViewMode === 'details') this.observeFeaturedSpeakersGrid()
 		}
 	},
 	beforeUnmount() {
@@ -816,6 +819,9 @@ export default {
 	display: flex
 	flex-direction: column
 	min-height: 0
+	min-width: 0
+	width: 100%
+	max-width: 100%
 	position: relative
 	&.is-embedded
 		overflow: visible !important
@@ -1029,6 +1035,10 @@ export default {
 		flex-direction: column
 		padding: 16px
 		gap: 12px
+		min-width: 0
+		width: 100%
+		max-width: 100%
+		box-sizing: border-box
 
 		.featured-speakers-grid
 			display: flex
@@ -1036,6 +1046,9 @@ export default {
 			align-items: flex-start
 			gap: 18px
 			width: 100%
+			min-width: 0
+			max-width: 100%
+			box-sizing: border-box
 
 		.featured-speaker-stack
 			display: flex

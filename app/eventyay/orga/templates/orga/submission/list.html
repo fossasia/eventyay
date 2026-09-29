@@ -10,10 +10,12 @@
 {% block scripts %}
     {% compress js %}
         <script defer src="{% static 'orga/js/submission_filter.js' %}"></script>
-        {% if session_videos_enabled %}
-        <script defer src="{% static 'orga/js/submission_video.js' %}"></script>
-        {% endif %}
     {% endcompress %}
+    {% if session_videos_enabled %}
+        {% compress js %}
+            <script defer src="{% static 'orga/js/submission_video.js' %}"></script>
+        {% endcompress %}
+    {% endif %}
 {% endblock scripts %}
 
 {% block stylesheets %}

@@ -43,6 +43,7 @@ from eventyay.schedule.exporters import FavedICalExporter, filter_featured_publi
 from eventyay.talk_rules.agenda import (
     can_list_released_schedule_speakers,
     can_view_public_schedule_sessions,
+    can_view_schedule,
     has_public_featured_speakers,
     is_submission_visible_via_featured,
     pending_public_submission_codes_for_speaker,
@@ -881,6 +882,46 @@ def build_enriched_schedule_json(request: HttpRequest, *, wip_preview: bool = Fa
     if schedule.version:
         cache.set(cache_key, result, CACHE_TTL)
     return result
+
+
+def build_public_starred_schedule_json(request: HttpRequest, starred_codes: Iterable[str]) -> str:
+    """Schedule JSON for a public starred-sessions page.
+
+    Visitors who can open the schedule receive slot times, rooms, and tracks.
+    Everyone else receives only the starred talks, without unpublished schedule metadata.
+    """
+    payload = build_enriched_schedule_json(request)
+    if can_view_schedule(request.user, request.event):
+        return payload
+    try:
+        data = json.loads(payload)
+    except json.JSONDecodeError:
+        return '{}'
+    if not isinstance(data, dict):
+        return '{}'
+
+    allowed = {code for code in starred_codes if code}
+    talks = []
+    for talk in data.get('talks') or []:
+        if not isinstance(talk, dict):
+            continue
+        code = talk.get('code')
+        if code not in allowed:
+            continue
+        _mark_talk_schedule_pending(talk)
+        talk['track'] = None
+        talk.pop('exporters', None)
+        talks.append(talk)
+    speaker_codes = {code for talk in talks for code in (talk.get('speakers') or []) if code}
+    data['talks'] = talks
+    data['speakers'] = [
+        speaker
+        for speaker in data.get('speakers') or []
+        if isinstance(speaker, dict) and speaker.get('code') in speaker_codes
+    ]
+    data['rooms'] = []
+    data['tracks'] = []
+    return serialize_widget_schedule_data(data, event=request.event)
 
 
 def build_schedule_json(request: HttpRequest, schedule=None) -> str:

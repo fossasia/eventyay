@@ -714,7 +714,7 @@ class AnswerDownload(EventViewMixin, View):
             id=answid,
         )
         if not answer.file:
-            return Http404()
+            raise Http404()
 
         ftype, _ = mimetypes.guess_type(answer.file.name)
         resp = FileResponse(answer.file, content_type=ftype or 'application/binary')
