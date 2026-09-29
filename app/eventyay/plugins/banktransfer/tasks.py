@@ -27,6 +27,26 @@ from .models import BankImportJob, BankTransaction
 logger = logging.getLogger(__name__)
 
 
+def event_slug_prefixes(slugs):
+    """Longer slugs first, so a short slug cannot consume a longer sibling."""
+    return sorted((slug.upper() for slug in slugs), key=len, reverse=True)
+
+
+def find_order_code_matches(reference, prefixes, min_length, max_length):
+    """Return every event-slug and order-code pair in a payment reference.
+
+    A zero-width search keeps a one-character slug from consuming the letters
+    of a later order code. Pairs that are not a real order are discarded by the
+    caller.
+    """
+    if not prefixes or min_length > max_length:
+        return []
+    normalized = reference.replace(' ', '').replace('\n', '').upper()
+    slug_alt = '|'.join(prefix.replace('.', r'\.').replace('-', r'[\- ]*') for prefix in prefixes)
+    pattern = re.compile(r'(?=(%s)[ \-_]*([A-Z0-9]{%s,%s}))' % (slug_alt, min_length, max_length))
+    return pattern.findall(normalized)
+
+
 def notify_incomplete_payment(o: Order):
     with language(o.locale, o.event.settings.region):
         email_template = o.event.settings.mail_text_order_expire_warning
@@ -280,18 +300,12 @@ def process_banktransfers(self, job: int, data: list) -> None:
                 if job.event:
                     prefixes = [job.event.slug.upper()]
                 else:
-                    prefixes = [e.slug.upper() for e in job.organizer.events.all()]
-                pattern = re.compile(
-                    '(%s)[ \\-_]*([A-Z0-9]{%s,%s})'
-                    % (
-                        '|'.join(p.replace('.', r'\.').replace('-', r'[\- ]*') for p in prefixes),
-                        code_len_agg['min'] or 0,
-                        code_len_agg['max'] or 5,
-                    )
-                )
+                    prefixes = event_slug_prefixes(e.slug for e in job.organizer.events.all())
+                min_length = code_len_agg['min'] or 0
+                max_length = code_len_agg['max'] or 5
 
                 for trans in transactions:
-                    matches = pattern.findall(trans.reference.replace(' ', '').replace('\n', '').upper())
+                    matches = find_order_code_matches(trans.reference, prefixes, min_length, max_length)
 
                     if matches:
                         if job.event:

@@ -1314,12 +1314,12 @@ class EventActions(EventPermissionRequiredMixin, ListView):
 class EventActionDiscard(EventPermissionRequiredMixin, View):
     permission = 'can_change_orders'
 
-    def get(self, request, **kwargs):
+    def post(self, request, **kwargs):
         action = get_object_or_404(RequiredAction, event=request.event, pk=kwargs.get('id'))
         action.done = True
         action.user = request.user
         action.save()
-        messages.success(self.request, _('The issue has been marked as resolved!'))
+        messages.success(request, _('The issue has been marked as resolved!'))
         return redirect(self.get_success_url())
 
     def get_success_url(self) -> str:
@@ -1553,7 +1553,7 @@ class WidgetSettings(EventSettingsViewMixin, EventPermissionRequiredMixin, FormV
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['urlprefix'] = settings.SITE_URL
+        ctx['urlprefix'] = settings.SITE_URL.rstrip('/')
         domain = get_event_domain(self.request.event, fallback=True)
         if domain:
             siteurlsplit = urlsplit(settings.SITE_URL)
@@ -1742,6 +1742,9 @@ class QuickSetupView(FormView):
                     )
                     plugins_active.append('eventyay_passbook')
                 self.request.event.settings.ticketoutput_passbook__enabled = True
+
+        else:
+            self.request.event.settings.ticket_download = False
 
         if form.cleaned_data.get('payment_banktransfer__enabled', None):
             if 'eventyay.plugins.banktransfer' not in plugins_active:

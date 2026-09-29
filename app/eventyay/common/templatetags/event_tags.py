@@ -16,7 +16,7 @@ from eventyay.common.permissions import is_admin_mode_active, user_has_cfp_submi
 from eventyay.talk_rules.agenda import (
     is_agenda_visible,
     is_wip_agenda_url,
-    public_speakers_list_available,
+    public_speakers_nav_available,
 )
 from eventyay.talk_rules.submission import (
     are_featured_submissions_visible,
@@ -220,7 +220,7 @@ def show_public_speakers_list(context, event=None):
     event = event or getattr(request, 'event', None)
     if not request or not event:
         return False
-    return public_speakers_list_available(AnonymousUser(), event)
+    return public_speakers_nav_available(AnonymousUser(), event)
 
 
 @register.simple_tag(takes_context=True)
