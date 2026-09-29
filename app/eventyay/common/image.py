@@ -437,17 +437,14 @@ def create_thumbnail(image, size):
     thumbnail_field = getattr(image.instance, thumbnail_field_name)
 
     has_alpha = _has_alpha(img)
-    
+    extension = '.webp'
+    save_format = 'WEBP'
+    save_kwargs = {'quality': 80}
+
     if has_alpha:
-        extension = '.webp'
-        save_format = 'WEBP'
-        save_kwargs = {'quality': 80}
         if img.mode != 'RGBA':
             img = img.convert('RGBA')
     else:
-        extension = '.webp'
-        save_format = 'WEBP'
-        save_kwargs = {'quality': 80}
         if img.mode != 'RGB':
             img = img.convert('RGB')
 
@@ -515,7 +512,10 @@ def get_thumbnail(image, size):
 
     thumbnail_field = getattr(image.instance, thumbnail_field_name)
     if thumbnail_field and thumbnail_field.name:
-        if not thumbnail_matches_avatar(image.name, thumbnail_field.name, size):
+        if (
+            Path(thumbnail_field.name).suffix.lower() != '.webp'
+            or not thumbnail_matches_avatar(image.name, thumbnail_field.name, size)
+        ):
             thumbnail_field.delete(save=False)
             setattr(image.instance, thumbnail_field_name, None)
             thumbnail_field = None
