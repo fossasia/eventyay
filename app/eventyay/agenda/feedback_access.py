@@ -1,6 +1,7 @@
 import datetime as dt
 from enum import StrEnum
 
+from django.db.models import Q
 from django.utils.timezone import now
 from django_scopes import scope
 
@@ -23,12 +24,14 @@ def user_has_event_ticket(user: User, event: Event) -> TicketCheckResult:
     if event.settings.venueless_allow_pending:
         allowed_statuses.append(Order.STATUS_PENDING)
 
+    email_filter = Q(order__email__iexact=user.email) | Q(attendee_email__iexact=user.email)
+
     with scope(organizer=event.organizer):
         with scope(event=event):
             if event.settings.venueless_all_products:
                 has_ticket = OrderPosition.objects.filter(
+                    email_filter,
                     order__event=event,
-                    order__email__iexact=user.email,
                     order__status__in=allowed_statuses,
                     product__admission=True,
                     canceled=False,
@@ -39,8 +42,8 @@ def user_has_event_ticket(user: User, event: Event) -> TicketCheckResult:
                 if not allowed_products:
                     return TicketCheckResult.NO_TICKET
                 has_ticket = OrderPosition.objects.filter(
+                    email_filter,
                     order__event=event,
-                    order__email__iexact=user.email,
                     order__status__in=allowed_statuses,
                     product_id__in=allowed_products,
                     canceled=False,

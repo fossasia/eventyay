@@ -1,8 +1,9 @@
 import datetime as dt
+from decimal import Decimal
 
 import pytest
 from django.utils.timezone import now
-from django_scopes import scope
+from django_scopes import scope, scopes_disabled
 
 from eventyay.agenda.feedback_access import (
     TicketCheckResult,
@@ -10,6 +11,7 @@ from eventyay.agenda.feedback_access import (
     user_can_give_feedback,
     user_has_event_ticket,
 )
+from eventyay.base.models import Order, OrderPosition, User
 
 
 @pytest.mark.django_db
@@ -121,3 +123,96 @@ def test_talk_page_hides_comment_form_for_non_attendee(django_assert_num_queries
     assert response.status_code == 200
     assert 'Add a comment...' not in response.text
     assert 'Only attendees with a valid ticket' in response.text
+
+
+@pytest.mark.django_db
+def test_user_has_event_ticket_attendee_email(event):
+    """Verify attendee can access tickets purchased by another user (issue #6005) and purchaser access is preserved."""
+    with scopes_disabled():
+        alice = User.objects.create_user(email='alice@example.com', password='testpassw0rd!')
+        bob = User.objects.create_user(email='bob@example.com', password='testpassw0rd!')
+        product = event.products.create(name='Admission Ticket', default_price=Decimal('10.00'), admission=True)
+        order = Order.objects.create(
+            code='TKT01',
+            event=event,
+            email='alice@example.com',
+            status=Order.STATUS_PAID,
+            datetime=now(),
+            expires=now() + dt.timedelta(days=1),
+            total=Decimal('10.00'),
+        )
+        OrderPosition.objects.create(
+            order=order,
+            product=product,
+            price=Decimal('10.00'),
+            attendee_email='bob@example.com',
+        )
+
+    # Attendee (bob) receives HAS_TICKET
+    assert user_has_event_ticket(bob, event) == TicketCheckResult.HAS_TICKET
+
+    # Purchaser (alice) also receives HAS_TICKET
+    assert user_has_event_ticket(alice, event) == TicketCheckResult.HAS_TICKET
+
+
+@pytest.mark.django_db
+def test_user_has_event_ticket_attendee_email_case_insensitive(event):
+    """Verify attendee email matching is case-insensitive."""
+    with scopes_disabled():
+        bob = User.objects.create_user(email='Bob@Example.COM', password='testpassw0rd!')
+        product = event.products.create(name='Admission Ticket', default_price=Decimal('10.00'), admission=True)
+        order = Order.objects.create(
+            code='TKT02',
+            event=event,
+            email='alice@example.com',
+            status=Order.STATUS_PAID,
+            datetime=now(),
+            expires=now() + dt.timedelta(days=1),
+            total=Decimal('10.00'),
+        )
+        OrderPosition.objects.create(
+            order=order,
+            product=product,
+            price=Decimal('10.00'),
+            attendee_email='bob@example.com',
+        )
+
+    assert user_has_event_ticket(bob, event) == TicketCheckResult.HAS_TICKET
+
+
+@pytest.mark.django_db
+def test_user_has_event_ticket_attendee_email_restricted_products(event):
+    """Verify attendee ticket access when venueless_all_products is False."""
+    with scopes_disabled():
+        bob = User.objects.create_user(email='bob@example.com', password='testpassw0rd!')
+        product = event.products.create(name='Admission Ticket', default_price=Decimal('10.00'), admission=True)
+        other_product = event.products.create(
+            name='Other Ticket',
+            default_price=Decimal('10.00'),
+            admission=True,
+        )
+        order = Order.objects.create(
+            code='TKT03',
+            event=event,
+            email='alice@example.com',
+            status=Order.STATUS_PAID,
+            datetime=now(),
+            expires=now() + dt.timedelta(days=1),
+            total=Decimal('10.00'),
+        )
+        OrderPosition.objects.create(
+            order=order,
+            product=product,
+            price=Decimal('10.00'),
+            attendee_email='bob@example.com',
+        )
+
+    with scope(event=event):
+        event.settings.set('venueless_all_products', False)
+        event.settings.set('venueless_products', [product.id])
+    assert user_has_event_ticket(bob, event) == TicketCheckResult.HAS_TICKET
+
+    with scope(event=event):
+        event.settings.set('venueless_products', [other_product.id])
+    assert user_has_event_ticket(bob, event) == TicketCheckResult.NO_TICKET
+
