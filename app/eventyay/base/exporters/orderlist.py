@@ -898,15 +898,11 @@ class OrderListExporter(MultiSheetListExporter):
                     if op.subevent:
                         row.append(op.subevent.name)
                         row.append(
-                            op.subevent.date_from.astimezone(self.event_object_cache[order.event_id].timezone).strftime(
-                                '%Y-%m-%d %H:%M:%S %Z'
-                            )
+                            op.subevent.date_from.astimezone(tz).strftime('%Y-%m-%d %H:%M:%S %Z')
                         )
                         if op.subevent.date_to:
                             row.append(
-                                op.subevent.date_to.astimezone(
-                                    self.event_object_cache[order.event_id].timezone
-                                ).strftime('%Y-%m-%d %H:%M:%S %Z')
+                                op.subevent.date_to.astimezone(tz).strftime('%Y-%m-%d %H:%M:%S %Z')
                             )
                         else:
                             row.append('')
