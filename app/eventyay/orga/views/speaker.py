@@ -208,12 +208,15 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
 
 class SpeakerViewMixin(PermissionRequired):
     def get_object(self):
-        return get_object_or_404(
-            User.objects.filter(profiles__in=speaker_profiles_for_user(self.request.event, self.request.user))
-            .order_by('id')
-            .distinct(),
-            code=self.kwargs['code'],
-        )
+        from django_scopes import scope
+
+        with scope(event=self.request.event):
+            return get_object_or_404(
+                User.objects.filter(profiles__in=speaker_profiles_for_user(self.request.event, self.request.user))
+                .order_by('id')
+                .distinct(),
+                code=self.kwargs['code'],
+            )
 
     @cached_property
     def object(self):

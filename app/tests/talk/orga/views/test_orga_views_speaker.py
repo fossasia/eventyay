@@ -780,3 +780,22 @@ def test_orga_cannot_create_speaker_with_empty_biography(orga_client, event):
     assert response.status_code == 200
     assert "This field is required." in response.text
 
+
+@pytest.mark.django_db
+def test_speaker_view_mixin_get_object_establishes_scope(rf, event, speaker, orga_user):
+    from eventyay.orga.views.speaker import SpeakerViewMixin
+    from django_scopes import scopes_disabled
+    
+    with scopes_disabled():
+        # Ensure we are not in an active scope
+        request = rf.get('/')
+        request.event = event
+        request.user = orga_user
+        
+        mixin = SpeakerViewMixin()
+        mixin.request = request
+        mixin.kwargs = {'code': speaker.code}
+        
+        # This should not raise a ScopeError
+        obj = mixin.get_object()
+        assert obj == speaker
