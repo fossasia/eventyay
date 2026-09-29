@@ -23,6 +23,9 @@
 
       if (existingSessionSection) {
         existingSessionSection.classList.toggle('d-none', !linkChecked);
+        existingSessionSection.querySelectorAll('input, select, textarea').forEach(function (el) {
+          el.disabled = !linkChecked;
+        });
       }
     }
 

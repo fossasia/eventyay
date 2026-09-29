@@ -312,6 +312,10 @@ class SpeakerCreate(SpeakerSocialLinksMixin, EventPermissionRequired, ActionFrom
             add_session = self.request.POST.get('add_session') == 'on'
             link_existing_session = self.request.POST.get('link_existing_session') == 'on'
 
+            if add_session and link_existing_session:
+                form.add_error(None, forms.ValidationError(_('You cannot both create a new session and link an existing session.')))
+                return self.form_invalid(form)
+
             if add_session:
                 if not self.session_form.is_valid() or not self.session_questions_form.is_valid():
                     messages.error(self.request, phrases.base.error_saving_changes)
@@ -345,23 +349,25 @@ class SpeakerCreate(SpeakerSocialLinksMixin, EventPermissionRequired, ActionFrom
 
             is_preexisting = getattr(form, '_user_was_preexisting', False)
 
-            # For pre-existing accounts, ensure the invitation token is fresh
-            # so the recovery URL we build is actually usable.
-            if is_preexisting and user.email:
-                user.pw_reset_token = get_random_string(32)
-                user.pw_reset_time = now() + dt.timedelta(days=60)
-                user.save(update_fields=['pw_reset_token', 'pw_reset_time'])
-
+            # Do not overwrite pw_reset_token for pre-existing accounts
             self.save_social_media_formset(profile=self.object)
 
             if not form.cleaned_data.get('no_email') and user.email:
-                context = {
-                    'user': user,
-                    'event': self.request.event,
-                    'invitation_link': build_absolute_uri(
+                if is_preexisting:
+                    invitation_link = build_absolute_uri(
+                        'cfp:event.login',
+                        kwargs={'organizer': self.request.event.organizer.slug, 'event': self.request.event.slug},
+                    )
+                else:
+                    invitation_link = build_absolute_uri(
                         'cfp:event.new_recover',
                         kwargs={'organizer': self.request.event.organizer.slug, 'event': self.request.event.slug, 'token': user.pw_reset_token},
                     )
+
+                context = {
+                    'user': user,
+                    'event': self.request.event,
+                    'invitation_link': invitation_link,
                 }
                 template = self.request.event.get_mail_template(MailTemplateRoles.NEW_SPEAKER_INVITE)
                 template.to_mail(
@@ -370,7 +376,7 @@ class SpeakerCreate(SpeakerSocialLinksMixin, EventPermissionRequired, ActionFrom
                     context=context,
                     context_kwargs={'user': user, 'event': self.request.event},
                     locale=self.request.event.locale,
-                    commit=not is_preexisting,
+                    commit=True,
                     skip_queue=is_preexisting,
                 )
 

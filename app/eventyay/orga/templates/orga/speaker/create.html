@@ -13,9 +13,6 @@
     {% endif %}
     <script defer src="{% static 'cfp/js/talk_dependencies.js' %}"></script>
     {% if social_media_formset %}
-        <script defer src="{% static "js/jquery.js" %}"></script>
-        <script defer src="{% static "js/jquery.formset.js" %}"></script>
-        <script defer src="{% static "cfp/js/animateFormset.js" %}"></script>
         <script type="module" src="{% static 'common/js/speaker_social_links.js' %}"></script>
     {% endif %}
     <script type="module" src="{% static 'orga/js/speaker_create.js' %}"></script>

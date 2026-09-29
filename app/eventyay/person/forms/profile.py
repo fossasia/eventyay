@@ -270,8 +270,16 @@ class SpeakerProfileForm(
         if self.user:
             qs = qs.exclude(pk=self.user.pk)
         existing_user = qs.filter(email__iexact=email).first()
-        if existing_user and existing_user.profiles.filter(event=self.event).exists():
-            raise ValidationError(get_email_address_error())
+        if existing_user:
+            is_associated = (
+                existing_user.profiles.filter(event=self.event).exists()
+                or existing_user.submissions.filter(event=self.event).exists()
+                or existing_user.teams.filter(organizer=self.event.organizer).exists()
+            )
+            if not is_associated:
+                raise ValidationError(_("A user with this email address exists but is not associated with this event. For privacy reasons, you cannot directly add them. Please ask them to submit a proposal or register first."))
+            if existing_user.profiles.filter(event=self.event).exists():
+                raise ValidationError(get_email_address_error())
         return email
 
     def clean_avatar_source(self):

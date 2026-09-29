@@ -40,20 +40,61 @@ export function initSpeakerSocialLinksFormset(root = document) {
     if (!formset) return
 
     const prefixes = parsePrefixes(formset)
+    const prefix = formset.dataset.formsetPrefix
+    const totalForms = formset.querySelector(`input[name="${prefix}-TOTAL_FORMS"]`)
+    const maxForms = formset.querySelector(`input[name="${prefix}-MAX_NUM_FORMS"]`)
+    const formsetBody = formset.querySelector('[data-formset-body]')
+    const emptyFormTemplate = formset.querySelector('[data-formset-empty-form]')
+    const addButton = formset.querySelector('[data-formset-add]')
 
-    const bindRows = () => {
-        formset.querySelectorAll('[data-social-link-row]').forEach((row) => {
-            initSocialLinkRow(row, prefixes)
+    if (!totalForms || !formsetBody || !emptyFormTemplate || !addButton) return
+
+    const bindRow = (row) => {
+        initSocialLinkRow(row, prefixes)
+        const deleteButton = row.querySelector('[data-formset-delete-button]')
+        if (deleteButton) {
+            deleteButton.addEventListener('click', () => {
+                row.remove()
+                updateFormIndexes()
+            })
+        }
+    }
+
+    const updateFormIndexes = () => {
+        const rows = formsetBody.querySelectorAll('[data-social-link-row]')
+        rows.forEach((row, index) => {
+            row.innerHTML = row.innerHTML.replace(new RegExp(`${prefix}-\\d+-`, 'g'), `${prefix}-${index}-`)
+            row.innerHTML = row.innerHTML.replace(new RegExp(`${prefix}_\\d+_`, 'g'), `${prefix}_${index}_`)
         })
+        totalForms.value = rows.length
+        
+        if (maxForms && maxForms.value) {
+            addButton.disabled = rows.length >= parseInt(maxForms.value, 10)
+        }
     }
 
-    bindRows()
+    addButton.addEventListener('click', () => {
+        if (maxForms && maxForms.value && parseInt(totalForms.value, 10) >= parseInt(maxForms.value, 10)) {
+            return
+        }
+        
+        const templateHtml = emptyFormTemplate.innerHTML
+        const newRowIndex = totalForms.value
+        const newHtml = templateHtml
+            .replace(new RegExp(`${prefix}-__prefix__-`, 'g'), `${prefix}-${newRowIndex}-`)
+            .replace(new RegExp(`${prefix}___prefix___`, 'g'), `${prefix}_${newRowIndex}_`)
 
-    const body = formset.querySelector('[data-formset-body]')
-    if (body) {
-        const observer = new MutationObserver(bindRows)
-        observer.observe(body, { childList: true })
-    }
+        const tempDiv = document.createElement('div')
+        tempDiv.innerHTML = newHtml
+        const newRow = tempDiv.firstElementChild
+        
+        formsetBody.appendChild(newRow)
+        bindRow(newRow)
+        updateFormIndexes()
+    })
+
+    formsetBody.querySelectorAll('[data-social-link-row]').forEach(bindRow)
+    updateFormIndexes()
 }
 
 initSpeakerSocialLinksFormset()

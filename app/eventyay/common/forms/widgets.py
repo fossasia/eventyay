@@ -182,6 +182,11 @@ class I18nRichTextWidget(I18nTextarea):
                     '' if isinstance(v, str) and not html_unescape(strip_tags(v)).strip() else v
                     for v in value
                 ]
+            if isinstance(value, dict):
+                return {
+                    k: ('' if isinstance(v, str) and not html_unescape(strip_tags(v)).strip() else v)
+                    for k, v in value.items()
+                }
             if isinstance(value, str) and not html_unescape(strip_tags(value)).strip():
                 return ''
         return value
