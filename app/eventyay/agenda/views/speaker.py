@@ -263,6 +263,9 @@ class SpeakerView(PermissionRequired, TemplateView):
             question__target=TalkQuestionTarget.SPEAKER,
         ).select_related('question')
 
+    def handle_no_permission(self):
+        raise Http404()
+
 
 class WipSpeakerView(WipAgendaPreviewPageMixin, SpeakerView):
     pass
@@ -294,6 +297,9 @@ class SpeakerTalksIcalView(PermissionRequired, DetailView):
     context_object_name = 'profile'
     permission_required = 'base.view_speakerprofile'
     slug_field = 'code'
+
+    def handle_no_permission(self):
+        raise Http404()
 
     def get_object(self, queryset=None):
         return SpeakerProfile.objects.filter(event=self.request.event, user__code__iexact=self.kwargs['code']).first()
