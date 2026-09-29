@@ -62,9 +62,17 @@ export function initSpeakerSocialLinksFormset(root = document) {
 
     const updateFormIndexes = () => {
         const rows = formsetBody.querySelectorAll('[data-social-link-row]')
+        const nameRegex = new RegExp(`(${prefix}-)\\d+(-)`)
+        const idRegex = new RegExp(`(${prefix}-)\\d+(-)`)
+        
         rows.forEach((row, index) => {
-            row.innerHTML = row.innerHTML.replace(new RegExp(`${prefix}-\\d+-`, 'g'), `${prefix}-${index}-`)
-            row.innerHTML = row.innerHTML.replace(new RegExp(`${prefix}_\\d+_`, 'g'), `${prefix}_${index}_`)
+            row.querySelectorAll('input, select, textarea').forEach(input => {
+                if (input.name) input.name = input.name.replace(nameRegex, `$1${index}$2`)
+                if (input.id) input.id = input.id.replace(idRegex, `$1${index}$2`)
+            })
+            row.querySelectorAll('label').forEach(label => {
+                if (label.htmlFor) label.htmlFor = label.htmlFor.replace(idRegex, `$1${index}$2`)
+            })
         })
         totalForms.value = rows.length
         
@@ -80,9 +88,7 @@ export function initSpeakerSocialLinksFormset(root = document) {
         
         const templateHtml = emptyFormTemplate.innerHTML
         const newRowIndex = totalForms.value
-        const newHtml = templateHtml
-            .replace(new RegExp(`${prefix}-__prefix__-`, 'g'), `${prefix}-${newRowIndex}-`)
-            .replace(new RegExp(`${prefix}___prefix___`, 'g'), `${prefix}_${newRowIndex}_`)
+        const newHtml = templateHtml.replace(/__prefix__/g, newRowIndex)
 
         const tempDiv = document.createElement('div')
         tempDiv.innerHTML = newHtml
