@@ -1,16 +1,18 @@
 import path from 'path'
 import vue from '@vitejs/plugin-vue'
 import {createGettextPlugin} from '../i18n/vite-plugin.js'
+import {stableChunkBase} from '../stable-chunk-name.js'
 import BuntpapierStylus from 'buntpapier/stylus.js'
 
+const dirname = import.meta.dirname
 const stylusOptions = {
 	paths: [
 		// stylus does not allow for dynamic resolves, so we just list all paths here and hope it won't explode
-		path.resolve(__dirname, './src/styles'),
+		path.resolve(dirname, './src/styles'),
 		'node_modules'
 	],
 	use: [BuntpapierStylus({implicit: false})],
-	imports: ['buntpapier/buntpapier/index.styl', `${path.resolve(__dirname, './src/styles/variables.styl')}`]
+	imports: ['buntpapier/buntpapier/index.styl', `${path.resolve(dirname, './src/styles/variables.styl')}`]
 }
 
 export default {
@@ -35,10 +37,10 @@ export default {
 		mainFields: ['browser', 'module', 'jsnext:main', 'jsnext'],
 		extensions: ['.js', '.json', '.vue', '.ts', '.tsx'],
 		alias: [
-			{ find: '~', replacement: path.resolve(__dirname, './src') },
-			{ find: '@', replacement: path.resolve(__dirname, './src') },
+			{ find: '~', replacement: path.resolve(dirname, './src') },
+			{ find: '@', replacement: path.resolve(dirname, './src') },
 			{ find: 'moment-timezone', replacement: 'moment-timezone/builds/moment-timezone-with-data-10-year-range.js' },
-			{ find: /^buntpapier$/, replacement: path.resolve(__dirname, 'node_modules/buntpapier/src/index.js') },
+			{ find: /^buntpapier$/, replacement: path.resolve(dirname, 'node_modules/buntpapier/src/index.js') },
 		],
 	},
 	build: {
@@ -50,6 +52,9 @@ export default {
 		rollupOptions: {
 			input: 'src/main.ts',
 			output: {
+				entryFileNames: '[name].js',
+				chunkFileNames: (chunkInfo) => `${stableChunkBase(chunkInfo)}.js`,
+				assetFileNames: '[name][extname]',
 				manualChunks(id) {
 					if (id.includes('node_modules/vue/') || id.endsWith('/vue')) {
 						return 'vue'
@@ -76,9 +81,9 @@ export default {
 	  port: '8080',
 	  fs: {
 		allow: [
-			path.resolve(__dirname),
-			path.resolve(__dirname, '../../locale'),
-			path.resolve(__dirname, '../i18n'),
+			path.resolve(dirname),
+			path.resolve(dirname, '../../locale'),
+			path.resolve(dirname, '../i18n'),
 		]
 	  }
 	}

@@ -107,8 +107,10 @@ def ensure_avatar_thumbnails(user_ids):
         for size in ('tiny', 'default'):
             field_name = get_thumbnail_field_name(user.avatar, size)
             stored = getattr(user, field_name, None)
-            if stored and stored.name:
+            if stored and stored.name and stored.name.lower().endswith('.webp'):
                 continue
+            if stored and stored.name:
+                stored.delete(save=False)
             try:
                 thumbnail = create_thumbnail(user.avatar, size)
             except (OSError, ValueError, UnidentifiedImageError) as exc:
