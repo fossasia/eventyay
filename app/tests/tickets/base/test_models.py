@@ -3209,6 +3209,9 @@ class SeatingTestCase(TestCase):
         assert self.seat_a1.is_available()
 
 
+DATETIME_ANSWER = datetime.datetime(2018, 1, 16, 15, 20, 0, tzinfo=ZoneInfo('Europe/Berlin'))
+
+
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     'qtype,answer,expected',
@@ -3256,6 +3259,7 @@ class SeatingTestCase(TestCase):
             '2018-01-16T15:20:00',
             datetime.datetime(2018, 1, 16, 15, 20, 0, tzinfo=ZoneInfo('Europe/Berlin')),
         ),
+        (Question.TYPE_DATETIME, DATETIME_ANSWER, lambda value: value is DATETIME_ANSWER),
         (Question.TYPE_DATETIME, '2018-01-16T15:AB:CD', ValidationError),
         (Question.TYPE_DATETIME, '2018-01-16T13:20:00+01:00', ValidationError),
         (Question.TYPE_DATETIME, '2018-01-16T16:20:00+01:00', ValidationError),

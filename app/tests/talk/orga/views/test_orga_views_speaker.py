@@ -643,3 +643,159 @@ def test_orga_can_export_answers_json(
             "Proposal IDs": [submission.code],
         }
     ]
+
+@pytest.mark.django_db
+def test_orga_can_create_speaker_with_email(orga_client, event):
+    response = orga_client.post(
+        event.orga_urls.new_speaker,
+        data={
+            "fullname": "New Speaker",
+            "email": "new.speaker@example.org",
+            "biography": "New biography text",
+        },
+        follow=True,
+    )
+    assert response.status_code == 200
+    with scope(event=event):
+        assert event.submitters.filter(email="new.speaker@example.org").exists()
+
+@pytest.mark.django_db
+def test_orga_can_create_speaker_without_email(orga_client, event):
+    response = orga_client.post(
+        event.orga_urls.new_speaker,
+        data={
+            "fullname": "No Email Speaker",
+            "no_email": "on",
+            "biography": "New biography text",
+        },
+        follow=True,
+    )
+    assert response.status_code == 200
+    with scope(event=event):
+        assert event.submitters.filter(fullname="No Email Speaker").exists()
+
+@pytest.mark.django_db
+def test_orga_can_create_speaker_with_new_session(orga_client, event):
+    with scope(event=event):
+        track = event.tracks.first()
+        submission_type = event.submission_types.first()
+    response = orga_client.post(
+        event.orga_urls.new_speaker,
+        data={
+            "fullname": "Session Speaker",
+            "email": "session.speaker@example.org",
+            "biography": "New biography text",
+            "add_session": "on",
+            "session-title": "New Session Title",
+            "session-abstract": "Session abstract",
+            "session-track": track.pk,
+            "session-submission_type": submission_type.pk,
+        },
+        follow=True,
+    )
+    assert response.status_code == 200
+    with scope(event=event):
+        speaker = event.submitters.filter(email="session.speaker@example.org").first()
+        assert speaker is not None
+        assert event.submissions.filter(title="New Session Title", speakers__in=[speaker]).exists()
+
+@pytest.mark.django_db
+def test_orga_can_create_speaker_and_link_existing_session(orga_client, event, submission):
+    response = orga_client.post(
+        event.orga_urls.new_speaker,
+        data={
+            "fullname": "Linked Speaker",
+            "email": "linked.speaker@example.org",
+            "biography": "New biography text",
+            "link_existing_session": "on",
+            "existing_session_id": submission.pk,
+        },
+        follow=True,
+    )
+    assert response.status_code == 200
+    with scope(event=event):
+        speaker = event.submitters.filter(email="linked.speaker@example.org").first()
+        assert speaker is not None
+        submission.refresh_from_db()
+        assert speaker in submission.speakers.all()
+
+@pytest.mark.django_db
+def test_orga_cannot_add_and_link_session_simultaneously(orga_client, event, submission):
+    response = orga_client.post(
+        event.orga_urls.new_speaker,
+        data={
+            "fullname": "Conflict Speaker",
+            "email": "conflict@example.org",
+            "biography": "New biography text",
+            "add_session": "on",
+            "link_existing_session": "on",
+        },
+    )
+    assert response.status_code == 200
+    assert "You cannot both create a new session and link an existing session." in response.text
+
+@pytest.mark.django_db
+def test_orga_cannot_create_speaker_with_unassociated_global_user_email(orga_client, event, other_speaker):
+    # other_speaker is from a different event
+    response = orga_client.post(
+        event.orga_urls.new_speaker,
+        data={
+            "fullname": "Global Speaker",
+            "email": other_speaker.email,
+            "biography": "New biography text",
+        },
+    )
+    assert response.status_code == 200
+    assert "not associated with this event" in response.text
+
+@pytest.mark.django_db
+def test_orga_can_create_speaker_with_associated_user_email(orga_client, event, other_speaker):
+    # Make other_speaker associated with this event (e.g., as an organizer or submitter)
+    with scope(event=event):
+        event.organizer.teams.first().members.add(other_speaker)
+        
+    response = orga_client.post(
+        event.orga_urls.new_speaker,
+        data={
+            "fullname": "Associated Speaker",
+            "email": other_speaker.email,
+            "biography": "New biography text",
+        },
+        follow=True,
+    )
+    assert response.status_code == 200
+    with scope(event=event):
+        assert event.submitters.filter(email=other_speaker.email).exists()
+
+@pytest.mark.django_db
+def test_orga_cannot_create_speaker_with_empty_biography(orga_client, event):
+    response = orga_client.post(
+        event.orga_urls.new_speaker,
+        data={
+            "fullname": "Empty Bio Speaker",
+            "email": "empty@example.org",
+            "biography": "",
+        },
+    )
+    assert response.status_code == 200
+    assert "This field is required." in response.text
+
+
+@pytest.mark.django_db
+def test_speaker_view_mixin_get_object_establishes_scope(rf, event, speaker, orga_user):
+    from eventyay.orga.views.speaker import SpeakerViewMixin
+    from django_scopes import scopes_disabled
+    
+    with scopes_disabled():
+        # Ensure we are not in an active scope
+        request = rf.get('/')
+        request.event = event
+        request.user = orga_user
+        
+        mixin = SpeakerViewMixin()
+        mixin.request = request
+        mixin.kwargs = {'code': speaker.code}
+        
+        # This should not raise a ScopeError
+        obj = mixin.get_object()
+        assert obj == speaker
