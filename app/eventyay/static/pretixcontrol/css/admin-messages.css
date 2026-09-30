@@ -27,7 +27,7 @@
 }
 
 .template-preview .d-none {
-  display: none !important;
+  display: none;
 }
 
 .template-preview .mail-editor-tabs {
