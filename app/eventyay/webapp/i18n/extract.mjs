@@ -1,21 +1,25 @@
+import {spawnSync} from 'node:child_process'
 import {createRequire} from 'node:module'
 import {
 	existsSync,
 	mkdirSync,
+	mkdtempSync,
 	readdirSync,
 	readFileSync,
 	rmSync,
 	writeFileSync,
 } from 'node:fs'
+import {tmpdir} from 'node:os'
 import path from 'node:path'
 import {pathToFileURL} from 'node:url'
 
 function parseArgs(argv) {
-	const args = {allLocales: false}
+	const args = {allLocales: false, input: 'src/**/*.{vue,js,ts}'}
 	for (let i = 0; i < argv.length; i += 1) {
 		const item = argv[i]
 		if (item === '--domain') args.domain = argv[++i]
 		else if (item === '--app') args.app = argv[++i]
+		else if (item === '--input') args.input = argv[++i]
 		else if (item === '--all-locales') args.allLocales = true
 		else if (item === 'extract') args.command = 'extract'
 	}
@@ -24,7 +28,7 @@ function parseArgs(argv) {
 
 const args = parseArgs(process.argv.slice(2))
 if (args.command !== 'extract' || !args.domain) {
-	console.error('Usage: node extract.mjs extract --domain <name> [--app <dir>] [--all-locales]')
+	console.error('Usage: node extract.mjs extract --domain <name> [--app <dir>] [--input <glob>] [--all-locales]')
 	process.exit(1)
 }
 
@@ -172,9 +176,51 @@ function collectLiteralKeys(appRoot) {
 	return keys
 }
 
+function extractKeysToTempJson() {
+	const tempDir = mkdtempSync(path.join(tmpdir(), `${domain}-i18n-`))
+	const configPath = path.join(tempDir, 'i18next-parser.config.cjs')
+	writeFileSync(
+		configPath,
+		`module.exports = {
+	locales: ['en'],
+	keySeparator: false,
+	namespaceSeparator: false,
+	input: ${JSON.stringify([args.input])},
+	output: ${JSON.stringify(path.join(tempDir, '$LOCALE.json'))},
+	sort: true,
+	createOldCatalogs: false,
+	failOnWarnings: false,
+	pluralSeparator: false,
+	lexers: {
+		js: [{ lexer: 'JavascriptLexer', functions: ['t', '$t', 'i18next.t', 'i18n.t', 'translate'] }],
+		ts: [{ lexer: 'JavascriptLexer', functions: ['t', '$t', 'i18next.t', 'i18n.t', 'translate'] }],
+		vue: [{ lexer: 'JavascriptLexer', functions: ['t', '$t', 'i18next.t', 'i18n.t', 'translate'] }],
+	},
+	defaultValue: function (locale, namespace, key) { return key },
+	resetDefaultValueLocale: 'en',
+}
+`
+	)
+	const result = spawnSync('npx', ['--yes', 'i18next-parser@9.4.0', args.input, '-c', configPath], {
+		cwd: appRoot,
+		encoding: 'utf8',
+		shell: false,
+	})
+	if (result.status !== 0) {
+		rmSync(tempDir, {recursive: true, force: true})
+		throw new Error(result.stderr || result.stdout || 'i18next-parser failed')
+	}
+	const extracted = JSON.parse(readFileSync(path.join(tempDir, 'en.json'), 'utf8'))
+	rmSync(tempDir, {recursive: true, force: true})
+	return extracted
+}
+
 async function extractAndMerge() {
 	await absorbUkIntoUa()
-	const extracted = cleanExtractedKeys(collectLiteralKeys(appRoot))
+	const extracted = cleanExtractedKeys({
+		...extractKeysToTempJson(),
+		...collectLiteralKeys(appRoot),
+	})
 	const keys = Object.keys(extracted).sort()
 	const localeDirs = discoverLocaleDirs().filter((item) => item !== 'uk' && !isSourceLocale(item))
 	const langs = new Set()

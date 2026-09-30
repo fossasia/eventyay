@@ -11,22 +11,41 @@ const GROUP_NAMES = new Set([
 	'zod',
 ])
 
-export function stableChunkBase(chunkInfo) {
-	if (GROUP_NAMES.has(chunkInfo.name)) return chunkInfo.name
-	const source = chunkInfo.facadeModuleId || chunkInfo.moduleIds?.[0] || chunkInfo.name
-	const clean = String(source).split('?')[0]
-	const markers = ['/webapp/video/', '/webapp/schedule-editor/', '/webapp/schedule/', '/node_modules/']
-	let rel = clean
-	for (const marker of markers) {
+const SOURCE_MARKERS = [
+	'/eventyay/webapp/video/',
+	'/eventyay/webapp/schedule-editor/',
+	'/eventyay/webapp/schedule/',
+	'/eventyay/locale/',
+	'/node_modules/',
+]
+
+function sourceBase(moduleId) {
+	const clean = String(moduleId || '').split('?')[0]
+	let rel = ''
+	for (const marker of SOURCE_MARKERS) {
 		const at = clean.lastIndexOf(marker)
 		if (at !== -1) {
 			rel = clean.slice(at + marker.length)
 			break
 		}
 	}
-	const base = rel
-		.replace(/\.[^.]+$/, '')
+	if (!rel) return ''
+	const ext = (rel.match(/\.([A-Za-z0-9]+)$/) || [null, ''])[1]
+	const withoutExt = rel.replace(/\.[^.]+$/, '')
+	return `${withoutExt}${ext ? `-${ext}` : ''}`
 		.replace(/[^A-Za-z0-9/_-]/g, '_')
 		.replaceAll('/', '-')
-	return base || chunkInfo.name
+}
+
+export function stableChunkBase(chunkInfo) {
+	// Shared groups have a fixed name. A source file uses its path so two
+	// files with the same basename do not overwrite each other.
+	if (!chunkInfo.facadeModuleId && GROUP_NAMES.has(chunkInfo.name)) {
+		return chunkInfo.name
+	}
+	const source = chunkInfo.facadeModuleId || chunkInfo.moduleIds?.[0] || ''
+	const base = sourceBase(source)
+	if (!base) return chunkInfo.name
+	if (GROUP_NAMES.has(base)) return `mod-${base}`
+	return base
 }

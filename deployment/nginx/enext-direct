@@ -99,10 +99,11 @@ server {
 
 	# Root video files (preloader, service worker, manifest, icons).
 	# Extension-less SPA routes stay on gunicorn for the injected HTML shell.
+	# Omit "always" so a missing file is not cached for the hour.
 	location ~* "^/(?:[^/]+/[^/]+/video|video/event/[^/]+/[^/]+)/([A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*\.(?:js|css|webmanifest|png|svg|ico|woff2?|ttf|json))$" {
 		alias <PATH_TO>/data/static/video/$1;
 		access_log off;
-		add_header Cache-Control "public, max-age=3600" always;
+		add_header Cache-Control "public, max-age=3600";
 		add_header Access-Control-Allow-Origin "*" always;
 	}
 
