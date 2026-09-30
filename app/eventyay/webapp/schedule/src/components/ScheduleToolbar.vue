@@ -244,12 +244,11 @@
 									@click="selectTimezone(option.id); tzOpen = false"
 								)
 									span {{ option.label }}
-				.exporter-area(v-if="resolvedExporters.length || exportsDisabled")
+				.exporter-area(v-if="resolvedExporters.length && !exportsDisabled")
 					.exporter-dropdown(ref="exportDropdown")
 						button.toolbar-btn.icon-only.tooltip-align-right(
-							:class="{disabled: exportsDisabled}",
-							@click="!exportsDisabled && (exportOpen = !exportOpen)",
-							:aria-label="exportsDisabled ? publicOnlyFeatureHint : t.add_to_calendar",
+							@click="exportOpen = !exportOpen",
+							:aria-label="t.add_to_calendar",
 							:aria-expanded="exportOpen ? 'true' : 'false'",
 							aria-haspopup="menu")
 							svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", stroke-linecap="round", stroke-linejoin="round")
@@ -451,9 +450,8 @@ export default {
 				version_warning_editable: m.version_warning_editable || this.$t('You are currently viewing the editable schedule version, which is unreleased and may change at any time.'),
 				version_warning_wip: m.version_warning_wip || this.$t('You are currently viewing the unreleased schedule preview. It may change at any time and is not visible to the public.'),
 				version_warning_old: m.version_warning_old || this.$t('You are currently viewing an older schedule version.'),
-				add_to_calendar: m.add_to_calendar || this.$t('Add to calendar'),
+				add_to_calendar: m.add_to_calendar || this.$t('Add to Calendar'),
 				public_schedule_only: m.public_schedule_only || this.$t('Only available on the public schedule once a schedule is released and public.'),
-				export: m.export || this.$t('Export'),
 				current: m.current || this.$t('current'),
         now: m.now || this.$t('Now'),
 				list_view: m.list_view || this.$t('List View'),

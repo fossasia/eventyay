@@ -5,6 +5,7 @@ from django.db import transaction
 from django.utils.timezone import now
 
 from eventyay.base.models import Event
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.services.tasks import ProfiledEventTask
 from eventyay.celery_app import app
 
@@ -69,4 +70,5 @@ def send_queued_mail(self, event_id: int, queued_mail_id: int):
         try:
             self.retry(exc=exc, args=[original_event_id, queued_mail_id])
         except MaxRetriesExceededError:
-            logger.error("[SendMail] Max retries exceeded for EmailQueue ID %s", queued_mail_id)
+            log_event('mail', 'mail.send', OUTCOME_FAILURE, error_code='retries_exhausted', event_id=original_event_id)
+            logger.error('[SendMail] Max retries exceeded for EmailQueue ID %s', queued_mail_id)

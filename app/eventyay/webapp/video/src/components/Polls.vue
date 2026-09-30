@@ -71,4 +71,6 @@ export default {
 	.polls
 		display: flex
 		flex-direction: column
+		flex: auto
+		min-height: 0
 </style>

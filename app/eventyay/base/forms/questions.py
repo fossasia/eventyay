@@ -50,6 +50,7 @@ from eventyay.base.models.tax import (
     cc_to_vat_prefix,
     is_eu_country,
 )
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.services.system_questions import (
     get_system_question_asked_required,
     get_system_question_base_states,
@@ -1055,7 +1056,8 @@ class BaseInvoiceAddressForm(forms.ModelForm):
             except (vat_moss_lite.errors.InvalidError, ValueError):
                 raise ValidationError(_('This VAT ID is not valid. Please re-check your input.'))
             except vat_moss_lite.errors.WebServiceUnavailableError:
-                logger.exception('VAT ID checking failed for country {}'.format(data.get('country')))
+                log_event('tickets', 'connection.vat', OUTCOME_FAILURE, error_code='vies_unavailable', backend='vies')
+                logger.exception('VAT ID checking failed')
                 self.instance.vat_id_validated = False
                 if self.request and self.vat_warning:
                     messages.warning(
@@ -1068,7 +1070,8 @@ class BaseInvoiceAddressForm(forms.ModelForm):
                         ),
                     )
             except (vat_moss_lite.errors.WebServiceError, HTTPError):
-                logger.exception('VAT ID checking failed for country {}'.format(data.get('country')))
+                log_event('tickets', 'connection.vat', OUTCOME_FAILURE, error_code='vies_error', backend='vies')
+                logger.exception('VAT ID checking failed')
                 self.instance.vat_id_validated = False
                 if self.request and self.vat_warning:
                     messages.warning(

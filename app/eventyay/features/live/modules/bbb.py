@@ -1,4 +1,5 @@
 from eventyay.base.services.bbb import BBBServerUnavailable, BBBService
+from eventyay.base.operational_logging import OUTCOME_SUCCESS, log_event
 from eventyay.core.permissions import Permission
 from eventyay.features.live.decorators import command, room_action
 from eventyay.features.live.exceptions import ConsumerException
@@ -64,6 +65,7 @@ class BBBModule(BaseModule):
 
         if not url:
             raise ConsumerException("bbb.failed")
+        log_event('video', 'connection.room_url', OUTCOME_SUCCESS, event_id=getattr(self.consumer.event, 'pk', None), backend='bbb')
         await self.consumer.send_success({"url": url})
 
     @command("call_url")
@@ -80,6 +82,7 @@ class BBBModule(BaseModule):
 
         if not url:
             raise ConsumerException("bbb.failed")
+        log_event('video', 'connection.call_url', OUTCOME_SUCCESS, event_id=getattr(self.consumer.event, 'pk', None), backend='bbb')
         await self.consumer.send_success({"url": url})
 
     @command("recordings")

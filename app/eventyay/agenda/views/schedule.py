@@ -382,7 +382,7 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
         return ctx
 
 
-@cache_page(60 * 60 * 24, key_prefix='schedule-messages-v4')
+@cache_page(60 * 60 * 24, key_prefix='schedule-messages-v8')
 def schedule_messages(request, **kwargs):
     """Cached for static exports; bump key_prefix when message keys or copy change."""
     strings = {
@@ -443,8 +443,6 @@ def schedule_messages(request, **kwargs):
         'show_talk_starrers_tooltip': _(
             'Make your starred sessions visible to others. You can open someone else\'s starred list only if they have enabled sharing.'
         ),
-        'export': _('Export'),
-        'exports': _('Exports'),
         'no_file_provided': _('No file provided'),
         'no_response': _('No response'),
         'other_timezones': _('Other Timezones'),
@@ -455,11 +453,15 @@ def schedule_messages(request, **kwargs):
         'search': _('Search'),
         'featured_speakers': _('Featured Speakers'),
         'view_profile': _('View speaker profile'),
+        'view_all_speakers': _('View all speakers'),
         'no_starred_sessions': _('No starred sessions.'),
         'schedule_do_not_record': _('This session will not be recorded.'),
         'schedule_room_has_interpretation': _('This room has live interpretation.'),
         'back': _('Back'),
-        'schedule_pending_secondary': _('Coming soon'),
+        'schedule_pending_secondary': _('To be announced'),
+        'schedule_pending_tentative': _(
+            'These details are tentative and may change, including speakers and other session information.'
+        ),
         'schedule_speakers_overflow_hint': _('+%(count)s more'),
         'schedule_speakers_overflow_label': _('+%(count)s more speakers'),
         'no_schedule_available': _('No schedule has been published yet. Please check back later.'),

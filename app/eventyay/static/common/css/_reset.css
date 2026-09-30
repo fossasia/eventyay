@@ -15,7 +15,7 @@
 body {
   margin: 0;
   color: var(--color-text);
-  background-color: white;
+  background-color: var(--color-bg, white);
 
   font-size: 1rem;
   font-weight: normal;

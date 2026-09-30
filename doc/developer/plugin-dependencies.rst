@@ -9,7 +9,7 @@ Plugins
 -------
 
 The following plugins are declared as Git dependencies in
-``app/pyproject.toml``:
+``app/pyproject.toml`` under ``[tool.uv.sources]``:
 
 ===========================  ======================================  ========
 Plugin package               Repository                              Branch
@@ -23,6 +23,7 @@ Plugin package               Repository                              Branch
 ``eventyay-interpretation``  ``fossasia/eventyay-interpretation``    ``main``
 ``eventyay-hubspot``         ``fossasia/eventyay-hubspot``           ``main``
 ``eventyay-business``        ``fossasia/eventyay-business``          ``main``
+``eventyay-veditor``         ``fossasia/eventyay-veditor``           ``main``
 ===========================  ======================================  ========
 
 Build Modes
@@ -35,7 +36,7 @@ Used when building Docker images for the ``dev`` branch and staging
 deployments.
 
 - Plugins are resolved to the **latest commit** on their configured
-  branch.
+  branch. ``BUILD_MODE=dev`` retargets ``[tool.uv.sources]`` to ``dev``.
 - ``uv sync --upgrade-package <plugin>`` is run for each plugin,
   bypassing the lockfile pins.
 - A ``CACHE_BUST`` build argument is set to a unique value (e.g. a

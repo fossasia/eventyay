@@ -19,6 +19,7 @@ from PIL import Image
 from rest_framework.authentication import get_authorization_header
 
 from eventyay.base.models import Event
+from eventyay.base.operational_logging import OUTCOME_FAILURE, is_safe_identifier, log_event
 from eventyay.common.image import (
     IMAGE_EXTENSIONS,
     REWRITABLE_ORIGINAL_EXTENSIONS,
@@ -114,6 +115,17 @@ def unmodified_image(data, image):
     return Image.MIME.get(image.format), data, data.size
 
 
+def upload_rejected(event, error, status=400):
+    log_event(
+        'video',
+        'upload',
+        OUTCOME_FAILURE,
+        error_code=error if is_safe_identifier(error) else 'upload_error',
+        event_id=getattr(event, 'pk', None),
+    )
+    return JsonResponse({"error": error}, status=status)
+
+
 class UploadView(UploadMixin, View):
     permissions = {
         Permission.EVENT_VIEW,
@@ -131,12 +143,14 @@ class UploadView(UploadMixin, View):
         ".mp4",
         ".webm",
         ".mp3",
+        ".webp",
     )
     pillow_formats = (
         ".png",
         ".jpg",
         ".jpeg",
         ".gif",
+        ".webp",
     )
     max_size = settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_OTHER]
 
@@ -145,12 +159,12 @@ class UploadView(UploadMixin, View):
             return  # triggers error already
 
         if "file" not in request.FILES:
-            return JsonResponse({"error": "file.missing"}, status=400)
+            return upload_rejected(self.event, "file.missing")
 
         if not any(
             request.FILES["file"].name.lower().endswith(e) for e in self.ext_whitelist
         ):
-            return JsonResponse({"error": "file.type"}, status=400)
+            return upload_rejected(self.event, "file.type")
 
         if any(
             request.FILES["file"].name.lower().endswith(e) for e in self.pillow_formats
@@ -158,14 +172,14 @@ class UploadView(UploadMixin, View):
             try:
                 content_type, file, size = self.validate_image(request.FILES["file"])
             except ValidationError:
-                return JsonResponse({"error": "file.picture.invalid"}, status=400)
+                return upload_rejected(self.event, "file.picture.invalid")
         else:
             file = request.FILES["file"]
             content_type = request.FILES["file"].content_type
             size = request.FILES["file"].size
 
         if size > self.max_size:
-            return JsonResponse({"error": "file.size"}, status=400)
+            return upload_rejected(self.event, "file.size")
 
         sf = StoredFile.objects.create(
             event=self.event,
@@ -216,11 +230,16 @@ class UploadView(UploadMixin, View):
             settings.IMAGE_DEFAULT_MAX_WIDTH,
             settings.IMAGE_DEFAULT_MAX_HEIGHT,
         )
+        # WebP maximum dimension is 16383 pixels. Clamp output dimensions to prevent encoding failures.
+        max_dimensions = (
+            min(max_dimensions[0], 16383),
+            min(max_dimensions[1], 16383),
+        )
         optimized, optimized_ext = encode_optimized(
             image,
             original_ext,
             max_dimensions=max_dimensions,
-            keep_format=True,
+            keep_format=False,
         )
         # Recompressing a lossless image can make it bigger, but an image that had to be
         # scaled down is always stored recompressed, and so is JPEG, whose EXIF metadata
@@ -257,21 +276,23 @@ class ScheduleImportView(UploadMixin, View):
             return  # triggers error already
 
         if "file" not in request.FILES:
-            return JsonResponse({"error": "file.missing"}, status=400)
+            return upload_rejected(self.event, "file.missing")
 
         if request.FILES["file"].size > self.max_size:
-            return JsonResponse({"error": "file.size"}, status=400)
+            return upload_rejected(self.event, "file.size")
 
         if not any(
             request.FILES["file"].name.lower().endswith(e) for e in self.ext_whitelist
         ):
-            return JsonResponse({"error": "file.type"}, status=400)
+            return upload_rejected(self.event, "file.type")
 
         try:
             jsondata = convert(request.FILES["file"], timezone=self.event.timezone)
         except ValidationError as e:
+            log_event('video', 'upload', OUTCOME_FAILURE, error_code='schedule_invalid', event_id=getattr(self.event, 'pk', None))
             return JsonResponse({"error": ", ".join(e)}, status=400)
         except ValueError as e:
+            log_event('video', 'upload', OUTCOME_FAILURE, error_code='schedule_invalid', event_id=getattr(self.event, 'pk', None))
             return JsonResponse({"error": str(e)}, status=400)
 
         sf = StoredFile.objects.create(

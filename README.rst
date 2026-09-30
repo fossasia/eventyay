@@ -455,6 +455,7 @@ Available plugin extensions include:
 - `eventyay-hubspot <https://github.com/fossasia/eventyay-hubspot>`_: HubSpot integration
 - `eventyay-loungemesh <https://github.com/fossasia/eventyay-loungemesh>`_: Loungemesh integration
 - `eventyay-socialmedia <https://github.com/fossasia/eventyay-socialmedia>`_: Social media sharing and publishing integration
+- `eventyay-veditor <https://github.com/fossasia/eventyay-veditor>`_: Video review, transcode, and studio editing integration
 - `eventyay-teamshifts <https://github.com/fossasia/eventyay-teamshifts>`_: Team shifts and volunteer shift management plugin
 
 Available payment plugins are:

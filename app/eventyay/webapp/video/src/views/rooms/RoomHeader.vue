@@ -202,6 +202,16 @@ export default {
 				ellipsis()
 			+below('m')
 				padding: 0 4px 0 0
+				.room-name
+					font-size: 16px
+					line-height: 40px
+					.emoji
+						width: 22px
+						height: @width
+						&.needs-space
+							margin-right: 4px
+				.room-session
+					font-size: 13px
 		.actions
 			flex: none
 			display: flex
@@ -209,4 +219,18 @@ export default {
 			gap: 8px
 			.bunt-icon-button
 				icon-button-style(style: clear)
+		+below('m')
+			padding: 0 8px 0 2px
+			height: 44px
+			min-height: 44px
+			gap: 2px
+			> .bunt-icon-button:first-child
+				margin-right: 0
+			.btn-back
+				width: 32px !important
+				height: 32px !important
+				min-width: 32px !important
+				padding: 0 !important
+				.mdi
+					font-size: 20px
 </style>

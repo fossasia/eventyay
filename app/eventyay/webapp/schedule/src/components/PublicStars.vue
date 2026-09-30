@@ -1,7 +1,7 @@
 <template lang="pug">
 .c-public-stars
 	.stars-wrapper(v-if="!loading")
-		.stars-header
+		.stars-header(v-if="showStarredBy")
 			h2 {{ heading }}
 		.stars-sessions(v-if="filteredSessions.length")
 			session(
@@ -49,6 +49,7 @@ export default {
 			loading: true,
 			starredCodes: [],
 			userName: null,
+			showStarredBy: true,
 		}
 	},
 	async mounted() {
@@ -67,6 +68,7 @@ export default {
 				} else if (data && Array.isArray(data.favs)) {
 					this.starredCodes = data.favs
 					this.userName = data.name || null
+					if (data.show_starred_by === false) this.showStarredBy = false
 				}
 			}
 		} catch {

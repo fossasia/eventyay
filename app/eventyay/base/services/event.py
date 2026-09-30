@@ -31,6 +31,7 @@ from eventyay.base.settings import (
     is_video_provider_enabled_for_organizer,
 )
 from eventyay.core.permissions import Permission
+from eventyay.base.operational_logging import OUTCOME_SUCCESS, log_event
 
 
 class EventConfigSerializer(serializers.Serializer):
@@ -67,12 +68,26 @@ class EventConfigSerializer(serializers.Serializer):
         return [d.value for d in Permission]
 
 
+def get_event_by_id_or_slug(event_id):
+    """Retrieve Event by primary key or slug.
+
+    Live sockets pass the event primary key, either as a URL string or as an
+    integer. When that number is also some other event's slug, the primary key
+    wins so the socket stays on the event that opened it.
+    """
+    if isinstance(event_id, int) and not isinstance(event_id, bool):
+        event_id = str(event_id)
+    if isinstance(event_id, str) and event_id.isdigit():
+        by_id = Event.objects.filter(id=int(event_id)).first()
+        if by_id is not None:
+            return by_id
+        return Event.objects.filter(slug=event_id).first()
+    return Event.objects.filter(slug=event_id).first()
+
+
 @database_sync_to_async
 def _get_event(event_id):
-    """Retrieve Event by primary key or slug."""
-    if isinstance(event_id, str) and event_id.isdigit():
-        return Event.objects.filter(Q(slug=event_id) | Q(id=int(event_id))).first()
-    return Event.objects.filter(slug=event_id).first()
+    return get_event_by_id_or_slug(event_id)
 
 
 async def get_event(event_id):
@@ -571,6 +586,7 @@ async def create_room(event, data, creator):
             elif module["type"] == "livestream.youtube":
                 clean_config["ytid"] = config.get("ytid", "")
                 for key in (
+                    "startMuted",
                     "enablePrivacyEnhancedMode",
                     "loop",
                     "modestBranding",
@@ -832,6 +848,14 @@ def save_event(event, update_fields, old_data, by_user):
             "new": new,
         },
     )
+    if update_fields and 'feature_flags' in update_fields:
+        log_event(
+            'video',
+            'video.feature_flag',
+            OUTCOME_SUCCESS,
+            event_id=event.pk,
+            user_id=getattr(by_user, 'pk', None),
+        )
     return new
 
 

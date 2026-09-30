@@ -73,15 +73,19 @@ export default {
 				font-size: 14px
 				font-weight: 700
 				line-height: 1.2
+				white-space: nowrap
+				font-variant-numeric: tabular-nums
 			.ampm
 				font-size: 10px
 				margin-top: 1px
 				opacity: 0.85
 				text-transform: uppercase
+				white-space: nowrap
 		.duration
 			font-size: 11px
 			margin-top: 4px
 			color: $clr-secondary-text-dark
+			white-space: nowrap
 		.buffer
 			flex: auto
 	.info

@@ -20,6 +20,7 @@ prompt.c-recordings-prompt(@close="$emit('close')")
 import api from 'lib/api'
 import Prompt from 'components/Prompt'
 import moment from 'moment'
+import { logOperational } from 'lib/operationalLog'
 
 export default {
 	components: { Prompt },
@@ -43,6 +44,7 @@ export default {
 		} catch (error) {
 			this.error = error
 			this.recordings = []
+			logOperational({action: 'bbb.recordings', outcome: 'failure', backend: 'bbb', error_code: error?.code || 'fetch_failed'})
 			console.error(error)
 		} finally {
 			this.loading = false

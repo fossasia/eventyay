@@ -12,6 +12,7 @@ from django.db.models.functions import Upper
 from django_scopes import scopes_disabled
 
 from eventyay.base.models.auth import User
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.eventyay_common.utils import encode_email
 from eventyay.eventyay_common.video.permissions import (
     collect_user_video_traits,
@@ -221,6 +222,7 @@ def sync_video_traits_for_platform_users(
             try:
                 force_reload_video_user(video_user.id)
             except (OSError, RuntimeError, ConnectionError):
+                log_event('video', 'user.reload', OUTCOME_FAILURE, error_code='connection_error', object_id=video_user.id)
                 logger.exception('Failed to force-reload video user %s', video_user.id)
 
 

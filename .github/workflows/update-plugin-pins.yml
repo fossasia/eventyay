@@ -29,6 +29,7 @@ env:
     eventyay-interpretation
     eventyay-hubspot
     eventyay-business
+    eventyay-veditor
 
 permissions:
   contents: write

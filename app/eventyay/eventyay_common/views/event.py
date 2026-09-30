@@ -51,6 +51,7 @@ from eventyay.base.meetup import (
     provision_meetup_event,
 )
 from eventyay.base.models import Event, EventMetaValue, GlobalPluginConfig, Organizer, Quota
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.services.notifications import notify_organizer_followers
 from eventyay.base.models.cfp import default_fields
 from eventyay.consts import DEFAULT_PLUGINS
@@ -763,7 +764,8 @@ class EventUpdate(
                 _('Email test failed because a field (password, username, or recipient) contains a non-ASCII character.'),
             )
         except HTTPError as e:
-            logger.exception('Central SendGrid test failed (event=%s)', event.slug)
+            log_event('mail', 'mail.send', OUTCOME_FAILURE, error_code='test_failed', event_id=event.pk, backend='sendgrid')
+            logger.exception('Central SendGrid test failed for event %s', event.pk)
             messages.error(
                 self.request,
                 _('SendGrid test failed with HTTP error %(code)s. Check your API key and try again.')
@@ -780,7 +782,8 @@ class EventUpdate(
                 _('Gmail test email could not be sent: %(err)s') % {'err': e},
             )
         except (smtplib.SMTPException, OSError):
-            logger.exception('Central SMTP test failed (event=%s)', event.slug)
+            log_event('mail', 'mail.send', OUTCOME_FAILURE, error_code='test_failed', event_id=event.pk, backend='smtp')
+            logger.exception('Central SMTP test failed for event %s', event.pk)
             messages.warning(
                 self.request,
                 _('Test email could not be delivered. Check the SMTP host, port, and credentials and try again.'),

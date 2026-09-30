@@ -11,6 +11,7 @@ from django.utils.functional import cached_property
 from django.views.generic import TemplateView
 
 from eventyay.base.models import Event
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 
 
 def generate_signature(data_or_key, api_secret=None, meeting_number=None, role=0):
@@ -39,6 +40,7 @@ def generate_signature(data_or_key, api_secret=None, meeting_number=None, role=0
     try:
         return jwt.encode(payload, str(api_secret), algorithm="HS256")
     except Exception:
+        log_event('video', 'connection.token', OUTCOME_FAILURE, error_code='jwt_encode', backend='zoom')
         return ""
 
 

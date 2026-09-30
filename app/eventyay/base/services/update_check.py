@@ -14,6 +14,7 @@ from eventyay import __version__
 from eventyay.base.models import Event
 from eventyay.base.plugins import get_all_plugins
 from eventyay.base.services.mail import mail
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.signals import periodic_task
 from eventyay.celery_app import app
@@ -59,6 +60,7 @@ def update_check():
         r = requests.post('https://eventyay.org/.update_check/', json=check_payload)
         gs.settings.set('update_check_last', now())
         if r.status_code != 200:
+            log_event('core', 'connection.update_check', OUTCOME_FAILURE, error_code='http_error', status=r.status_code, backend='update_check')
             gs.settings.set('update_check_result', {'error': 'http_error'})
         else:
             rdata = r.json()
@@ -68,6 +70,7 @@ def update_check():
                 send_update_notification_email()
             gs.settings.set('update_check_result', rdata)
     except requests.RequestException:
+        log_event('core', 'connection.update_check', OUTCOME_FAILURE, error_code='request_error', backend='update_check')
         gs.settings.set('update_check_last', now())
         gs.settings.set('update_check_result', {'error': 'unavailable'})
 

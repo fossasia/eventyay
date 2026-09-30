@@ -19,8 +19,21 @@ export function pluginLanguageStreams(room) {
 		return []
 	}
 	const streams = room?.interpretation_language_streams
-	const usable = Array.isArray(streams)
-		? streams.filter(entry => isUsableAudioTranslationEntry(entry))
-		: []
+	if (!Array.isArray(streams)) {
+		return ensureOriginalLanguageEntry([])
+	}
+	// Keep caption-only rows (e.g. Original floor WS) even without WHEP audio.
+	const usable = streams.filter(entry => {
+		if (!entry?.language) return false
+		if (entry.caption_ws_url) return true
+		return isUsableAudioTranslationEntry(entry)
+	})
 	return ensureOriginalLanguageEntry(usable)
+}
+
+export function firstCaptionLanguage(languages) {
+	const list = Array.isArray(languages) ? languages : []
+	const withCaptions = list.filter(entry => entry?.caption_ws_url)
+	const nonOriginal = withCaptions.find(entry => entry.language !== ORIGINAL_LANGUAGE)
+	return (nonOriginal || withCaptions[0] || list[0])?.language || ORIGINAL_LANGUAGE
 }

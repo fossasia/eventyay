@@ -54,7 +54,7 @@ async def test_reactions_invalid(world, stream_room):
         await c1.receive_json_from()  # world.user_count_change
 
         await c1.send_json_to(
-            ["room.react", 123, {"room": str(stream_room.pk), "reaction": "👎"}]
+            ["room.react", 123, {"room": str(stream_room.pk), "reaction": "💩"}]
         )
         response = await c1.receive_json_from()
         assert response[0] == "error"

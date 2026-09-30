@@ -20,6 +20,7 @@ from eventyay.base.gmail.errors import (
     GmailTemporaryError,
 )
 from eventyay.base.gmail.models import GmailOAuthCredential
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.settings import GlobalSettingsObject
 
 
@@ -79,7 +80,11 @@ def exchange_authorization_code(*, code: str, redirect_uri: str) -> dict:
         },
         timeout=30,
     )
-    response.raise_for_status()
+    try:
+        response.raise_for_status()
+    except requests.RequestException:
+        log_event('mail', 'connection.oauth', OUTCOME_FAILURE, error_code='request_error', backend='gmail')
+        raise
     data = response.json()
     if GMAIL_SEND_SCOPE not in data.get('scope', ''):
         raise ValueError(_('The required Gmail send permission was not granted.'))
@@ -92,7 +97,11 @@ def fetch_sender_email(access_token: str) -> str:
         headers={'Authorization': f'Bearer {access_token}'},
         timeout=30,
     )
-    response.raise_for_status()
+    try:
+        response.raise_for_status()
+    except requests.RequestException:
+        log_event('mail', 'connection.oauth', OUTCOME_FAILURE, error_code='request_error', backend='gmail')
+        raise
     payload = response.json()
     email = payload.get('email')
     if not email:

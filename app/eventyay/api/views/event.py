@@ -46,6 +46,7 @@ from eventyay.api.utils import get_protocol
 from eventyay.api.views import ConditionalListView
 from eventyay.base.models import Device, Organizer, SubEvent, TaxRule, TeamAPIToken, User
 from eventyay.base.models.event import Event
+from eventyay.base.operational_logging import OUTCOME_SUCCESS, log_event
 from eventyay.base.payment import ManualPayment
 from eventyay.base.services.event import notify_event_change
 from eventyay.base.settings import SETTINGS_AFFECTING_CSS
@@ -540,6 +541,7 @@ def talk_schedule_public(request, *args, **kwargs):
         event.feature_flags = flags
         event.settings.talk_schedule_public = is_show_schedule
         event.save(update_fields=['feature_flags'])
+        log_event('video', 'video.feature_flag', OUTCOME_SUCCESS, event_id=event.pk, flag_name='show_schedule')
         return JsonResponse({'status': 'success'}, status=200)
     except jwt.ExpiredSignatureError:
         logger.error('Token has expired')

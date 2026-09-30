@@ -7,6 +7,7 @@ import requests
 from django.conf import settings
 
 from eventyay.celery_app import app
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 
 logger = logging.getLogger(__name__)
 
@@ -50,15 +51,11 @@ def trigger_public_schedule(self, is_show_schedule, event_slug, organizer_slug, 
         response = requests.post(ticket_uri, json=payload, headers=headers)
         response.raise_for_status()  # Raise exception for bad status codes
     except requests.RequestException as e:
-        logger.error(
-            'Error occurred when triggering hide/unhide schedule for tickets component.'
-            'Event: %s, Organizer: %s. Error: %s',
-            event_slug,
-            organizer_slug,
-            e,
-        )
+        log_event('talk', 'connection.schedule_public', OUTCOME_FAILURE, error_code='request_error', backend='tickets_api')
+        logger.error('Error occurred when triggering hide/unhide schedule for tickets component. Event: %s, Organizer: %s. Error: %s', event_slug, organizer_slug, e)
         # Retry the task if an exception occurs (with exponential backoff by default)
         try:
             self.retry(exc=e)
         except self.MaxRetriesExceededError:
+            log_event('talk', 'connection.schedule_public', OUTCOME_FAILURE, error_code='retries_exhausted', backend='tickets_api')
             logger.error('Max retries exceeded for sending organizer webhook.')

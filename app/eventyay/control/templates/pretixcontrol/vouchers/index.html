@@ -119,6 +119,11 @@
                         <a href="?{% url_replace request "download" "yes" %}"
                                 class="btn btn-default"><i class="fa fa-download"></i>
                             {% trans "Download list" %}</a>
+                        {% if "can_view_orders" in request.eventpermset %}
+                            <a href="{% url 'control:event.orders.import_export' organizer=request.event.organizer.slug event=request.event.slug %}?identifier=voucherattendees"
+                                    class="btn btn-default"><i class="fa fa-users"></i>
+                                {% trans "Export attendees" %}</a>
+                        {% endif %}
                     </p>
                     <form action="{% url "control:event.vouchers.bulkaction"  organizer=request.event.organizer.slug event=request.event.slug %}" method="post">
                         {% csrf_token %}

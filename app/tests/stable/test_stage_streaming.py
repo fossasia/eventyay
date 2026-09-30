@@ -69,6 +69,55 @@ def test_create_schedule_driven_stage_without_base_stream(monkeypatch):
     assert livestream["config"] == {"playback_mode": "schedule_driven"}
 
 
+def test_create_always_on_youtube_stage_stores_playback_flags(monkeypatch):
+    created = _patch_room_creation(monkeypatch)
+    event = SimpleNamespace(id="event-id", has_permission_async=_allow_permission)
+
+    async_to_sync(event_service.create_room)(
+        event,
+        {
+            "name": "YouTube Stage",
+            "description": "a description",
+            "modules": [
+                {
+                    "type": "livestream.youtube",
+                    "config": {
+                        "playback_mode": "always_on",
+                        "ytid": "dQw4w9WgXcQ",
+                        "startMuted": True,
+                        "enablePrivacyEnhancedMode": True,
+                        "loop": True,
+                        "modestBranding": True,
+                        "hideControls": True,
+                        "noRelated": True,
+                        "disableKb": True,
+                        "showInfo": True,
+                    },
+                },
+            ],
+        },
+        object(),
+    )
+
+    livestream = next(
+        m
+        for m in created["data"]["module_config"]
+        if m["type"] == "livestream.youtube"
+    )
+    assert livestream["config"] == {
+        "playback_mode": "always_on",
+        "ytid": "dQw4w9WgXcQ",
+        "startMuted": True,
+        "enablePrivacyEnhancedMode": True,
+        "loop": True,
+        "modestBranding": True,
+        "hideControls": True,
+        "noRelated": True,
+        "disableKb": True,
+        "showInfo": True,
+    }
+
+
 def test_create_always_on_hls_stage_stores_base_stream(monkeypatch):
     created = _patch_room_creation(monkeypatch)
     event = SimpleNamespace(id="event-id", has_permission_async=_allow_permission)

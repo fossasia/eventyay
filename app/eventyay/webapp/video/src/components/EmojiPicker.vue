@@ -61,11 +61,16 @@ export default {
 				this.hideTooltip()
 				return
 			}
-			const label = button.getAttribute('aria-label')
+			let label = button.getAttribute('aria-label')
 			if (!label) {
 				this.hideTooltip()
 				return
 			}
+			
+			label = label.split(',')[0].replace(/_/g, ' ')
+			if (label === '+1') label = 'thumbs up'
+			else if (label === '-1') label = 'thumbs down'
+			
 			const rect = button.getBoundingClientRect()
 			this.tooltip = {
 				text: label,

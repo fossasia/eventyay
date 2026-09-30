@@ -3,7 +3,7 @@ from urllib.parse import urljoin
 
 from django.conf import settings
 from django.db.models import Q
-from django.urls import Resolver404, get_script_prefix, resolve
+from django.urls import Resolver404, get_script_prefix, resolve, reverse
 from django.utils.translation import get_language
 from django_scopes import scope
 
@@ -16,6 +16,7 @@ from eventyay.control.navigation import (
     get_event_navigation,
     get_global_navigation,
 )
+from eventyay.eventyay_common.navigation import get_organizer_navigation
 
 from ..eventyay_common.utils import EventCreatedFor
 from ..helpers.i18n import (
@@ -63,7 +64,6 @@ def _default_context(request):
     if hasattr(request, 'event') and request.user.is_authenticated:
         for receiver, response in html_head.send(request.event, request=request):
             _html_head.append(response)
-        from django.urls import reverse
         is_meetup = is_meetup_event(request.event)
         ctx['is_meetup'] = is_meetup
         ctx['is_meetup_event'] = is_meetup
@@ -125,6 +125,8 @@ def _default_context(request):
         if request.GET.get('subevent', ''):
             # Do not use .get() for lazy evaluation
             ctx['selected_subevents'] = request.event.subevents.filter(pk=request.GET.get('subevent'))
+    elif getattr(request, 'organizer', None) and 'organizer' in url.kwargs and request.user.is_authenticated:
+        ctx['nav_items'] = get_organizer_navigation(request)
     elif request.user.is_authenticated:
         ctx['nav_items'] = get_global_navigation(request)
 

@@ -16,6 +16,7 @@ from eventyay.base.services.loungemesh import (
     verify_loungemesh_token,
     verify_server_api_secret,
 )
+from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
 from eventyay.base.settings import is_video_provider_enabled_for_attendee
 
 logger = logging.getLogger(__name__)
@@ -36,6 +37,18 @@ def extract_api_secret(request, body: dict) -> str | None:
     if isinstance(body, dict) and "api_secret" in body:
         return str(body.get("api_secret", "")).strip()
     return None
+
+
+def log_loungemesh_callback(outcome, error_code, event=None, room=None):
+    log_event(
+        'video',
+        'media.callback',
+        outcome,
+        error_code=error_code,
+        backend='loungemesh',
+        event_id=getattr(event, 'pk', None),
+        object_id=getattr(room, 'pk', None),
+    )
 
 
 def extract_room_features(room) -> dict:
@@ -72,10 +85,18 @@ class LoungeMeshTokenExchangeView(View):
 
         token_obj = verify_loungemesh_token(token_str)
         if not token_obj:
+            log_loungemesh_callback(OUTCOME_FAILURE, 'invalid_token')
             return JsonResponse({"error": "invalid_or_expired_token"}, status=403)
 
         event = token_obj.event
-        if not is_video_provider_enabled_for_attendee("loungemesh") or not loungemesh_is_available(event):
+        if not is_video_provider_enabled_for_attendee("loungemesh"):
+            log_loungemesh_callback(OUTCOME_FAILURE, 'feature_disabled', event=event)
+            return JsonResponse(
+                {"error": "feature_disabled", "message": "LoungeMesh is currently disabled by administrator."},
+                status=403,
+            )
+        if not loungemesh_is_available(event):
+            log_loungemesh_callback(OUTCOME_FAILURE, 'server_unavailable', event=event)
             return JsonResponse(
                 {"error": "feature_disabled", "message": "LoungeMesh is currently disabled by administrator."},
                 status=403,
@@ -86,6 +107,7 @@ class LoungeMeshTokenExchangeView(View):
         if server and server.api_secret:
             if not verify_server_api_secret(server, secret_candidate):
                 logger.warning("LoungeMesh token exchange unauthorized: missing or invalid API secret.")
+                log_loungemesh_callback(OUTCOME_FAILURE, 'unauthorized', event=event)
                 return JsonResponse(
                     {"error": "unauthorized", "message": "Invalid or missing LoungeMesh API secret."},
                     status=401,
@@ -120,6 +142,7 @@ class LoungeMeshTokenExchangeView(View):
                 avatar=avatar,
             )
 
+        log_loungemesh_callback(OUTCOME_SUCCESS, 'token_exchange', event=event, room=room)
         return JsonResponse(
             {
                 "status": "granted",
@@ -152,10 +175,18 @@ class LoungeMeshTokenRefreshView(View):
 
         token_obj = verify_loungemesh_token(token_str)
         if not token_obj:
+            log_loungemesh_callback(OUTCOME_FAILURE, 'invalid_token')
             return JsonResponse({"error": "invalid_or_expired_token"}, status=403)
 
         event = token_obj.event
-        if not is_video_provider_enabled_for_attendee("loungemesh") or not loungemesh_is_available(event):
+        if not is_video_provider_enabled_for_attendee("loungemesh"):
+            log_loungemesh_callback(OUTCOME_FAILURE, 'feature_disabled', event=event)
+            return JsonResponse(
+                {"error": "feature_disabled", "message": "LoungeMesh is currently disabled by administrator."},
+                status=403,
+            )
+        if not loungemesh_is_available(event):
+            log_loungemesh_callback(OUTCOME_FAILURE, 'server_unavailable', event=event)
             return JsonResponse(
                 {"error": "feature_disabled", "message": "LoungeMesh is currently disabled by administrator."},
                 status=403,
@@ -166,6 +197,7 @@ class LoungeMeshTokenRefreshView(View):
         if server and server.api_secret:
             if not verify_server_api_secret(server, secret_candidate):
                 logger.warning("LoungeMesh token refresh unauthorized: missing or invalid API secret.")
+                log_loungemesh_callback(OUTCOME_FAILURE, 'unauthorized', event=event)
                 return JsonResponse(
                     {"error": "unauthorized", "message": "Invalid or missing LoungeMesh API secret."},
                     status=401,
@@ -203,6 +235,7 @@ class LoungeMeshTokenRefreshView(View):
                 avatar=avatar,
             )
 
+        log_loungemesh_callback(OUTCOME_SUCCESS, 'token_refresh', event=event, room=room)
         return JsonResponse(
             {
                 "status": "refreshed",

@@ -1,4 +1,5 @@
 import { apiErrorDetail, interpretationApiUrl, interpretationAuthHeaders } from './interpretation-api.js'
+import { logOperational } from './operationalLog.js'
 import { normalizeYoutubeVideoId, toYoutubeWatchUrl } from './validators.js'
 
 export async function fetchInterpretationLanguageStreams(store, roomId) {
@@ -8,6 +9,7 @@ export async function fetchInterpretationLanguageStreams(store, roomId) {
 	})
 	const data = await response.json().catch(() => ({}))
 	if (!response.ok) {
+		logOperational({action: 'interpretation.config', outcome: 'failure', backend: 'interpretation', error_code: 'http_error', status: response.status})
 		throw new Error(apiErrorDetail(data) || 'Could not load interpretation language streams')
 	}
 	return data
@@ -24,6 +26,7 @@ export async function saveInterpretationLanguageStreams(store, roomId, languageS
 	})
 	const data = await response.json().catch(() => ({}))
 	if (!response.ok) {
+		logOperational({action: 'interpretation.config', outcome: 'failure', backend: 'interpretation', error_code: 'save_failed', status: response.status})
 		throw new Error(apiErrorDetail(data) || 'Could not save interpretation language streams')
 	}
 	return data
@@ -90,6 +93,7 @@ export async function syncInterpretationServices(store, roomId) {
 	})
 	const data = await response.json().catch(() => ({}))
 	if (!response.ok) {
+		logOperational({action: 'interpretation.config', outcome: 'failure', backend: 'interpretation', error_code: 'sync_failed', status: response.status})
 		throw new Error(apiErrorDetail(data) || 'Could not sync interpretation services')
 	}
 	return data

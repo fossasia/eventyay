@@ -1,4 +1,6 @@
 <template lang="pug">
+.chat-day-separator(v-if="showDayDivider", role="separator")
+	span {{ dayLabel }}
 .c-chat-message(:class="[mode, {selected, readonly, 'system-message': isSystemMessage, 'merge-with-previous-message': mergeWithPreviousMessage, 'merge-with-next-message': mergeWithNextMessage, 'sender-deleted': sender.deleted}]")
 	.avatar-column(v-if="message.event_type !== 'channel.poll'")
 		avatar(v-if="!mergeWithPreviousMessage", :user="sender", :size="avatarSize", @click="$emit('showUserCard', $event, sender, 'right-start')", ref="avatar")
@@ -81,8 +83,8 @@ import MenuDropdown from 'components/MenuDropdown'
 import Prompt from 'components/Prompt'
 import Poll from 'components/Poll'
 
-const DATETIME_FORMAT = 'MMM D, h:mm A'
 const TIME_FORMAT = 'h:mm A'
+const DAY_FORMAT = 'dddd, MMMM D, YYYY'
 
 export default {
 	name: 'ChatMessage',
@@ -126,16 +128,26 @@ export default {
 		sender() {
 			return this.usersLookup[this.message.sender] || {id: this.message.sender, badges: {}}
 		},
+		isOwnMessage() {
+			return this.message.sender === this.user.id
+		},
 		senderDisplayName() {
+			if (this.isOwnMessage) return this.$t('You')
 			return getUserName(this.sender)
 		},
-		timestamp() {
+		showDayDivider() {
+			if (this.readonly) return false
+			if (!this.previousMessage) return true
+			return !moment(this.message.timestamp).isSame(this.previousMessage.timestamp, 'day')
+		},
+		dayLabel() {
 			const timestamp = moment(this.message.timestamp)
-			if (this.previousMessage && timestamp.isSame(this.previousMessage.timestamp, 'day')) {
-				return timestamp.format(TIME_FORMAT)
-			} else {
-				return timestamp.format(DATETIME_FORMAT)
-			}
+			if (timestamp.isSame(moment(), 'day')) return this.$t('Today')
+			if (timestamp.isSame(moment().subtract(1, 'day'), 'day')) return this.$t('Yesterday')
+			return timestamp.format(DAY_FORMAT)
+		},
+		timestamp() {
+			return moment(this.message.timestamp).format(TIME_FORMAT)
 		},
 		shortTimestamp() {
 			// The timestamp below avatars can only accommodate exactly this length
@@ -143,10 +155,10 @@ export default {
 			return moment(this.message.timestamp).format(TIME_FORMAT).split(' ')[0]
 		},
 		mergeWithPreviousMessage() {
-			return this.previousMessage && !this.isSystemMessage && this.previousMessage.event_type === 'channel.message' && this.previousMessage.sender === this.message.sender && moment(this.message.timestamp).diff(this.previousMessage.timestamp, 'minutes') < 15
+			return this.previousMessage && !this.isSystemMessage && this.previousMessage.event_type === 'channel.message' && this.previousMessage.sender === this.message.sender && moment(this.message.timestamp).isSame(this.previousMessage.timestamp, 'day') && moment(this.message.timestamp).diff(this.previousMessage.timestamp, 'minutes') < 15
 		},
 		mergeWithNextMessage() {
-			return this.nextMessage && !this.isSystemMessage && this.nextMessage.event_type === 'channel.message' && this.nextMessage.sender === this.message.sender && moment(this.nextMessage.timestamp).diff(this.message.timestamp, 'minutes') < 15
+			return this.nextMessage && !this.isSystemMessage && this.nextMessage.event_type === 'channel.message' && this.nextMessage.sender === this.message.sender && moment(this.nextMessage.timestamp).isSame(this.message.timestamp, 'day') && moment(this.nextMessage.timestamp).diff(this.message.timestamp, 'minutes') < 15
 		},
 		poll() {
 			return this.polls?.find(p => p.id === this.message.content?.poll_id)
@@ -170,7 +182,10 @@ export default {
 	methods: {
 		getUserName,
 		reactionTooltipText(emoji, users) {
-			const names = users.map(userId => this.usersLookup[userId]?.profile?.display_name || '???').join(', ')
+			const names = users.map(userId => {
+				if (userId === this.user.id) return this.$t('You')
+				return this.usersLookup[userId]?.profile?.display_name || '???'
+			}).join(', ')
 			const shortName = getEmojiDataFromNative(emoji).short_names[0]
 			return `${names} ${this.$t('reacted with')} ${shortName}`
 		},
@@ -203,6 +218,26 @@ export default {
 }
 </script>
 <style lang="stylus">
+.chat-day-separator
+	display: flex
+	align-items: center
+	gap: 10px
+	padding: 14px 16px 8px
+	box-sizing: border-box
+	flex: none
+	width: 100%
+	span
+		flex: none
+		font-size: 12px
+		font-weight: 600
+		color: $clr-secondary-text-light
+		white-space: nowrap
+	&::before,
+	&::after
+		content: ''
+		flex: 1
+		height: 1px
+		background-color: $clr-grey-200
 .c-chat-message
 	flex: none
 	display: flex
@@ -231,13 +266,16 @@ export default {
 		flex: auto
 		min-width: 0
 		margin-left: 8px
-		padding-top: 6px // ???
+		padding-top: 2px
 		overflow-wrap: break-word
 		.message-header
 			display: flex
 			align-items: baseline
+			gap: 8px
+			line-height: 1.3
 		.content
 			white-space: pre-wrap
+			line-height: 1.4
 			.files
 				margin-top: 8px
 			.chat-image
@@ -294,28 +332,33 @@ export default {
 	.reactions
 		display: flex
 		flex-wrap: wrap
+		gap: 6px
+		margin-top: 6px
 		.reaction, .btn-emoji-picker
 			display: flex
 			align-items: center
-			border: 1px solid rgba(25,25,25,.04)
-			background-color: rgba(29,29,29,.04)
+			border: 1px solid rgba(140, 140, 140, 0.15)
+			background-color: rgba(140, 140, 140, 0.08)
 			border-radius: 16px
-			padding: 4px
+			padding: 3px 8px
 			margin-right: 4px
 			cursor: pointer
+			transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1)
 			&:hover
 				border: border-separator()
 				background-color: $clr-white
+				transform: scale(1.06)
 			&.reacted-by-me
 				border: 1px solid var(--clr-primary)
 				background-color: var(--clr-primary-alpha-18)
+				box-shadow: 0 0 8px rgba(99, 102, 241, 0.25)
 			.emoji
 				height: 16px
 				width: @height
 				line-height: @height
 			.count
 				font-size: 12px
-				margin: 0 4px 0 8px
+				margin: 0 4px 0 6px
 		.btn-emoji-picker
 			height: 18px
 			width: @height
@@ -335,7 +378,7 @@ export default {
 		cursor: pointer
 	.display-name
 		font-weight: 600
-		margin-right: 4px
+		margin-right: 0
 		&:hover
 			text-decoration: underline
 			cursor: pointer
@@ -401,13 +444,19 @@ export default {
 			.message-header
 				padding-bottom: 4px
 	&.compact
-		min-height: 36px
-		.message-header
-			display: inline-flex
-			.timestamp
-				margin-right: 4px
-		.content
-			display: inline
+		min-height: 40px
+		padding: 8px 12px 8px 8px
+		.content-wrapper
+			display: flex
+			flex-direction: column
+			padding-top: 1px
+			.message-header
+				display: flex
+				padding-bottom: 2px
+				.timestamp
+					margin-right: 0
+			.content
+				display: block
 		.actions
 			right: 4px
 			top: 2px

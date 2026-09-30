@@ -1,9 +1,13 @@
 <template lang="pug">
-bunt-input-outline-container.c-chat-input
-	.editor(ref="editorRef")
-	emoji-picker-button(@selected="addEmoji")
-	upload-button#btn-file(accept="image/png, image/jpg, image/gif, application/pdf, .png, .jpg, .gif, .jpeg, .pdf", icon="paperclip", multiple=true, :tooltip="$t('Attach a file')", @change="attachFiles")
-	bunt-icon-button#btn-send(:tooltip="$t('Send')", tooltip-placement="top-end", @click="send") send
+.c-chat-input(:class="{focused: composerFocused, 'has-files': files.length > 0 || uploading}")
+	.composer
+		emoji-picker-button(@selected="addEmoji")
+		.editor(ref="editorRef")
+		.composer-actions
+			upload-button#btn-file(accept="image/png, image/jpg, image/gif, application/pdf, .png, .jpg, .gif, .jpeg, .pdf", icon="paperclip", multiple=true, :tooltip="$t('Attach a file')", @change="attachFiles")
+			bunt-icon-button#btn-send(:tooltip="$t('Send')", tooltip-placement="top-end", @click="send")
+				svg(viewBox="0 0 24 24")
+					path(fill="currentColor", d="M2,21L23,12L2,3V10L17,12L2,14V21Z")
 	.files-preview(v-if="files.length > 0 || uploading")
 		template(v-for="file in files")
 			.chat-file(v-if="file === null")
@@ -137,6 +141,7 @@ export default {
 			autocompleteSearchSequence: 0,
 			autocompleteSearchTimeout: null,
 			autocompleteUpdateTimeout: null,
+			composerFocused: false,
 		}
 	},
 	computed: {
@@ -232,6 +237,12 @@ export default {
 			},
 			onSelectionUpdate: () => {
 				this.updateAutocomplete()
+			},
+			onFocus: () => {
+				this.composerFocused = true
+			},
+			onBlur: () => {
+				this.composerFocused = false
 			},
 		}))
 
@@ -473,44 +484,65 @@ export default {
 .c-chat-input
 	position: relative
 	display: flex
-	width: calc(100% - 27px) // width of emoji picker for sidebar mode
-	min-height: 36px
+	flex-direction: column
+	width: 100%
 	box-sizing: border-box
-	&.bunt-input-outline-container
-		padding: 8px 60px 6px 36px
+	gap: 8px
 
-	// ── ProseMirror chat editor ──────────────────────────────────────────
+	.composer
+		display: flex
+		align-items: flex-end
+		gap: 2px
+		width: 100%
+		min-height: 44px
+		padding: 6px 6px 6px 4px
+		box-sizing: border-box
+		border: 1px solid var(--clr-grey-200, #e2e8f0)
+		border-radius: 22px
+		background: var(--clr-grey-50, #f8f9fa)
+		transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease
+
+	&.focused .composer
+		background: var(--clr-surface, #ffffff)
+		border-color: var(--clr-primary, #2185d0)
+		box-shadow: 0 0 0 3px var(--clr-primary-alpha-18, rgba(33, 133, 208, 0.12))
+
 	.editor
-		line-height: 22px // collapse wrapper to content height
+		flex: 1
+		min-width: 0
+		max-height: 120px
+		overflow-y: auto
+		padding: 6px 8px
+		line-height: 22px
+		align-self: center
 
 	.chat-prosemirror
-		font-size: 16px
-		line-height: 22px
-		min-height: 22px
+		font-size: 14px
+		line-height: 20px
+		min-height: 20px
 		margin: 0
 		padding: 0
 		outline: none
 		overflow-wrap: break-word
 		white-space: pre-wrap
 		p
-			font-size: 16px
-			line-height: 22px
+			font-size: 14px
+			line-height: 20px
 			overflow-wrap: break-word
 			margin: 0
 			padding: 0
-		// Placeholder
 		&.ProseMirror-focused p.is-editor-empty:first-child::before,
 		p.is-editor-empty:first-child::before
 			content: attr(data-placeholder)
 			float: left
-			color: var(--clr-text-secondary)
+			color: var(--clr-text-secondary, #64748b)
 			pointer-events: none
 			height: 0
 		.emoji
 			margin: 0 2px
-			line-height: 22px
-			width: 20px
-			height: 20px
+			line-height: 20px
+			width: 18px
+			height: 18px
 			vertical-align: middle
 			display: inline-block
 		.mention span
@@ -519,79 +551,110 @@ export default {
 			color: var(--clr-input-primary-fg)
 			font-weight: 500
 			border-radius: 4px
-			padding: 0 2px
-			margin: 0 2px
+			padding: 0 4px
+			margin: 0 1px
 
-	.bunt-input
-		input-style(size: compact)
-		padding: 0
-		input
-			padding-left: 32px
+	.c-emoji-picker-button
+		flex: none
+		align-self: flex-end
+		.btn-emoji-picker
+			height: 32px
+			width: 32px
+			padding: 6px
+			border-radius: 50%
+			svg path
+				fill: var(--clr-text-secondary, #64748b)
+			&:hover
+				background: var(--clr-grey-100, #f1f5f9)
+				svg path
+					fill: var(--clr-primary, #2185d0)
 
-	.c-emoji-picker-button .btn-emoji-picker
-		position: absolute
-		left: 4px
-		top: 4px
-		height: 28px
-		width: @height
-		padding: 4px
-		svg
-			path
-				fill: $clr-secondary-text-light
-
-	#btn-send, #btn-file .bunt-icon-button
-		icon-button-style(color: $clr-secondary-text-light)
-		height: 28px
-		width: 28px
-		.bunt-icon
-			font-size: 18px
-			height: 24px
-			line-height: @height
-
-	#btn-send
-		position: absolute
-		right: 4px
-		top: 4px
+	.composer-actions
+		display: flex
+		align-items: center
+		gap: 2px
+		flex: none
+		align-self: flex-end
 
 	#btn-file
-		position: absolute
-		right: 32px
-		top: 4px
+		display: flex
+		align-items: center
+		justify-content: center
+		width: 32px
+		height: 32px
+		.bunt-icon-button
+			icon-button-style(color: var(--clr-text-secondary, #64748b))
+			height: 32px
+			width: 32px
+			border-radius: 50%
+			.bunt-icon
+				font-size: 18px
+			&:hover
+				background: var(--clr-grey-100, #f1f5f9)
+				color: var(--clr-primary, #2185d0)
+
+	#btn-send
+		icon-button-style(color: #ffffff, style: 'clear')
+		height: 32px
+		width: 32px
+		border-radius: 50%
+		background-color: var(--clr-primary, #2185d0)
+		transition: background-color 0.15s ease, filter 0.15s ease, transform 0.15s ease
+		.bunt-icon
+			font-size: 18px
+			height: 18px
+			line-height: 18px
+			color: #ffffff
+		svg
+			fill: #ffffff
+			height: 18px
+			width: 18px
+		&:hover:not(.disabled)
+			background-color: var(--clr-primary, #2185d0)
+			filter: brightness(1.1)
+			transform: scale(1.06)
 
 	#btn-remove-attachment
 		position: absolute
-		right: -14px
-		top: -14px
-		icon-button-style(color: $clr-secondary-text-light)
-		height: 28px
-		width: 28px
-		background: white
+		right: -8px
+		top: -8px
+		icon-button-style(color: var(--clr-text-secondary, #64748b))
+		height: 22px
+		width: 22px
+		background: var(--clr-surface, #ffffff)
+		border: 1px solid var(--clr-grey-200, #e2e8f0)
+		.bunt-icon
+			font-size: 14px
 
 	.files-preview
 		display: flex
 		flex-wrap: wrap
-		padding-top: 16px
+		gap: 8px
+		padding: 0 8px 2px
 		.chat-image, .chat-file
 			position: relative
-			height: 60px
-			border-radius: 2px
-			border: border-separator()
-			margin: 0 12px 12px 0
+			height: 56px
+			border-radius: 10px
+			border: 1px solid var(--clr-grey-200, #e2e8f0)
+			overflow: hidden
 		.chat-image
-			width: 60px
+			width: 56px
 			img
 				object-fit: cover
 				width: 100%
 				height: 100%
 		.chat-file
-			min-width: 60px
-			max-width: 100px
+			min-width: 56px
+			max-width: 120px
 			text-align: center
+			background: var(--clr-grey-50, #f8f9fa)
 			.upload-error
 				color: $clr-danger
 			.chat-file-content
 				ellipsis()
-				line-height: 60px
+				line-height: 56px
+				padding: 0 8px
+				font-size: 12px
 
 	.autocomplete-dropdown
 		card()
@@ -632,3 +695,4 @@ export default {
 			&:disabled
 				cursor: default
 </style>
+

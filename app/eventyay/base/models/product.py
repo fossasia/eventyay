@@ -5,7 +5,6 @@ from datetime import date, datetime, time, timedelta
 from decimal import Decimal, DecimalException
 
 import dateutil.parser
-import datetime
 from zoneinfo import ZoneInfo
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -27,6 +26,7 @@ from eventyay.base.models import fields
 from eventyay.base.models.base import LoggedModel
 from eventyay.base.models.fields import MultiStringField
 from eventyay.base.models.tax import TaxedPrice
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 
 from .event import Event, SubEvent
 
@@ -914,7 +914,7 @@ class ProductVariation(AdmissionValidityBoundMixin, models.Model):
         ),
         max_length=20,
         choices=ADMISSION_VALIDITY_MODE_CHOICES,
-        blank=False,
+        blank=True,
         default=ADMISSION_VALIDITY_MODE_INHERIT,
     )
 
@@ -1790,7 +1790,9 @@ class Quota(LoggedModel):
         return res
 
     class QuotaExceededException(Exception):  # NOQA: N818
-        pass
+        def __init__(self, *args):
+            super().__init__(*args)
+            log_event('tickets', 'quota.exceeded', OUTCOME_FAILURE, error_code='quota_exceeded')
 
     @staticmethod
     def clean_variations(products, variations):

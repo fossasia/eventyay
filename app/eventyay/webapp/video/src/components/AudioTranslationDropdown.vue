@@ -1,7 +1,6 @@
 <template lang="pug">
 .c-audio-translation(:class="{open: menuOpen}")
-	.ui-background-blocker(v-if="menuOpen", @click="closeMenu")
-	.field-shell
+	.field-shell(ref="shell")
 		span.floating-label {{ resolvedLabel }}
 		button.language-toggle(
 			ref="toggle",
@@ -15,22 +14,24 @@
 		)
 			span.value {{ internalSelectedLanguage }}
 			i.mdi.mdi-menu-down(aria-hidden="true")
-	ul.language-menu(
-		v-if="menuOpen",
-		ref="menu",
-		:id="menuId",
-		role="listbox",
-		:aria-label="resolvedLabel"
-	)
-		li(
-			v-for="(language, index) of languageOptions",
-			:key="language",
-			role="option",
-			:aria-selected="language === internalSelectedLanguage ? 'true' : 'false'",
-			:class="{active: language === internalSelectedLanguage, highlight: index === highlightedIndex}",
-			@click="selectLanguage(language)",
-			@mouseenter="highlightedIndex = index"
-		) {{ language }}
+	teleport(to="body")
+		template(v-if="menuOpen")
+			.audio-translation-blocker(aria-hidden="true", @click="closeMenu")
+			ul.language-menu(
+				ref="menu",
+				:id="menuId",
+				role="listbox",
+				:aria-label="resolvedLabel"
+			)
+				li(
+					v-for="(language, index) of languageOptions",
+					:key="language",
+					role="option",
+					:aria-selected="language === internalSelectedLanguage ? 'true' : 'false'",
+					:class="{active: language === internalSelectedLanguage, highlight: index === highlightedIndex}",
+					@click="selectLanguage(language)",
+					@mouseenter="highlightedIndex = index"
+				) {{ language }}
 </template>
 <script>
 import { createPopper } from '@popperjs/core'
@@ -121,15 +122,31 @@ export default {
 			this.highlightedIndex = Math.max(this.languageOptions.indexOf(this.internalSelectedLanguage), 0)
 			this.menuOpen = true
 			await this.$nextTick()
-			if (!this.$refs.toggle || !this.$refs.menu) {
+			if (!this.$refs.shell || !this.$refs.menu) {
 				this.menuOpen = false
 				return
 			}
 			try {
-				this.popper = createPopper(this.$refs.toggle, this.$refs.menu, {
-					placement: 'bottom-end',
+				this.popper = createPopper(this.$refs.shell, this.$refs.menu, {
+					placement: 'top-start',
 					strategy: 'fixed',
-					modifiers: [{ name: 'offset', options: { offset: [0, 4] } }]
+					modifiers: [
+						{ name: 'offset', options: { offset: [0, 4] } },
+						{ name: 'flip', options: { fallbackPlacements: ['bottom-start'] } },
+						{ name: 'preventOverflow', options: { padding: 8 } },
+						{
+							name: 'sameWidth',
+							enabled: true,
+							phase: 'beforeWrite',
+							requires: ['computeStyles'],
+							fn: ({ state }) => {
+								state.styles.popper.width = `${state.rects.reference.width}px`
+							},
+							effect: ({ state }) => {
+								state.elements.popper.style.width = `${state.elements.reference.offsetWidth}px`
+							}
+						}
+					]
 				})
 			} catch (error) {
 				console.error('Failed to position interpretation language menu', error)
@@ -186,79 +203,99 @@ export default {
 	flex: none
 	z-index: 1
 	&.open
-		z-index: 1200
-	.ui-background-blocker
-		position: fixed
-		inset: 0
-		z-index: 1199
+		z-index: 1300
 	.field-shell
 		position: relative
 		display: inline-flex
 		align-items: center
-		height: 32px
-		padding: 0 2px 0 8px
-		min-width: 120px
-		border: 1px solid $clr-grey-400
-		border-radius: 4px
-		background: $clr-white
+		height: 26px
+		padding: 0 6px
+		min-width: 96px
+		border: 1px solid var(--clr-grey-300, #cbd5e1)
+		border-radius: 5px
+		background: var(--clr-surface, #ffffff)
+		color: var(--clr-text-primary, #1e293b)
 		box-sizing: border-box
+		transition: border-color 0.15s ease, box-shadow 0.15s ease
+		&:hover
+			border-color: var(--clr-primary, #2185d0)
+			box-shadow: 0 0 0 2px var(--clr-primary-alpha-18, rgba(33, 133, 208, 0.12))
 	.floating-label
-		position: absolute
-		top: 0
-		left: 6px
-		transform: translateY(-50%)
-		padding: 0 3px
-		background: $clr-white
-		color: $clr-secondary-text-light
-		font-size: 11px
-		line-height: 1
-		pointer-events: none
-		white-space: nowrap
+		display: none
 	.language-toggle
 		display: inline-flex
 		align-items: center
-		gap: 0
+		gap: 4px
 		margin: 0
 		padding: 0
 		border: 0
 		background: transparent
-		color: inherit
+		color: var(--clr-text-primary, #1e293b)
 		font: inherit
-		font-size: 14px
-		line-height: 20px
+		font-size: 11px
+		font-weight: 500
+		line-height: 16px
 		cursor: pointer
+		width: 100%
+		justify-content: space-between
 		.value
 			white-space: nowrap
+			color: var(--clr-text-primary, #1e293b)
 		.mdi-menu-down
-			font-size: 18px
-			line-height: 18px
-			color: $clr-secondary-text-light
-	.language-menu
-		card()
-		position: absolute
-		z-index: 1200
-		display: inline-flex
-		flex-direction: column
-		align-items: stretch
-		width: max-content
-		min-width: 0
-		max-height: 240px
-		margin: 0
-		padding: 4px 0
-		list-style: none
-		overflow-y: auto
+			font-size: 16px
+			line-height: 16px
+			color: var(--clr-text-secondary, #64748b)
+
+ul.language-menu
+	position: fixed
+	z-index: 1300
+	display: flex
+	flex-direction: column
+	align-items: stretch
+	box-sizing: border-box
+	margin: 0
+	padding: 3px
+	list-style: none
+	overflow-x: hidden
+	overflow-y: auto
+	max-height: 200px
+	background: var(--clr-surface, #ffffff)
+	border: 1px solid var(--clr-grey-300, #cbd5e1)
+	border-radius: 5px
+	box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12)
+	font-family: inherit
+	font-size: 11px
+	font-weight: 500
+	line-height: 16px
+	color: var(--clr-text-primary, #1e293b)
+	li
+		display: block
 		box-sizing: border-box
-		li
-			box-sizing: border-box
-			height: 32px
-			padding: 0 12px
-			font-size: 14px
-			line-height: 32px
-			white-space: nowrap
-			cursor: pointer
-			&:hover,
-			&.highlight
-				background-color: var(--clr-input-primary-bg, $clr-grey-50)
-			&.active
-				font-weight: 600
+		margin: 0
+		height: 26px
+		padding: 0 6px
+		list-style: none
+		font-size: 11px
+		font-weight: 500
+		line-height: 26px
+		color: var(--clr-text-primary, #1e293b)
+		background: transparent
+		white-space: nowrap
+		overflow: hidden
+		text-overflow: ellipsis
+		cursor: pointer
+		border-radius: 4px
+		&:hover,
+		&.highlight
+			background-color: var(--clr-grey-100, #f1f5f9)
+			color: var(--clr-primary, #2185d0)
+		&.active
+			font-weight: 600
+			color: var(--clr-primary, #2185d0)
+			background-color: var(--clr-primary-alpha-18, rgba(33, 133, 208, 0.12))
+
+.audio-translation-blocker
+	position: fixed
+	inset: 0
+	z-index: 1298
 </style>

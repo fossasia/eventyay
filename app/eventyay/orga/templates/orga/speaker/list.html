@@ -30,7 +30,15 @@
                 submitters
             {% endblocktranslate %}
         </h2>
-        {% include "orga/event/component_link.html" %}
+        <div class="d-flex align-items-center">
+            {% has_event_perm "base.update_speakerprofile" request.user request request.event as can_create_speaker %}
+            {% if can_create_speaker %}
+                <a href="{{ request.event.orga_urls.new_speaker }}" class="btn btn-info mr-2">
+                    <i class="fa fa-plus"></i> {% translate "Add speaker" %}
+                </a>
+            {% endif %}
+            {% include "orga/event/component_link.html" %}
+        </div>
     </div>
 
     {% include "common/includes/search_form.html" %}
@@ -107,11 +115,12 @@
                                     {% for submission in profile.user.list_sessions %}
                                         <li>
                                             <a href="{{ submission.orga_urls.base }}" title="{{ submission.title }}">{{ submission.title }}</a>
+                                            {% include 'cfp/event/fragment_state.html' with state=submission.state as_badge=True %}
                                         </li>
                                     {% endfor %}
                                 </ul>
                             {% else %}
-                                <span class="text-muted">—</span>
+                                <span class="text-muted">{% translate "No session" %}</span>
                             {% endif %}
                         </td>
                         <td class="speaker-actions-cell text-right">

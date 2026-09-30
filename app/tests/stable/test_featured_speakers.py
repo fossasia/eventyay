@@ -73,8 +73,8 @@ def test_featured_speaker_without_talks_still_viewable_after_schedule_release(cl
 
 
 @pytest.mark.django_db
-def test_featured_speakers_list_blocked_before_public_schedule_release(client, event):
-    """Featured speakers stay on the info page, but the full list stays hidden until release."""
+def test_featured_speakers_list_hidden_until_public_schedule_release(client, event):
+    """The speakers page waits for a public schedule. Featured speakers stay on the info page."""
     with scope(event=event):
         user = User.objects.create_user(
             email='featured-pre-release@example.com',
@@ -87,6 +87,12 @@ def test_featured_speakers_list_blocked_before_public_schedule_release(client, e
             biography='Featured biography.',
             is_featured=True,
         )
+        regular = User.objects.create_user(
+            email='regular-pre-release@example.com',
+            password='testpass123',
+            fullname='Regular Hidden Speaker',
+        )
+        SpeakerProfile.objects.create(event=event, user=regular, biography='Hidden biography.')
         event.feature_flags['show_featured_speakers'] = 'always'
         event.feature_flags['show_schedule'] = True
         event.talks_published = False
@@ -112,7 +118,57 @@ def test_featured_speakers_list_blocked_before_public_schedule_release(client, e
     )
     assert client.get(speaker_url, follow=True).status_code == 200
 
-    _assert_speakers_list_redirects(client, event, expected_message='No published schedule.')
+    speakers_list_url = reverse(
+        'agenda:speakers',
+        kwargs={
+            'event': event.slug,
+            'organizer': event.organizer.slug,
+        },
+    )
+    speakers_page = client.get(speakers_list_url, follow=True)
+    assert speakers_page.status_code == 200
+    assert speakers_page.request['PATH_INFO'].rstrip('/') == _event_base_path(event)
+    landing_body = landing.content.decode()
+    assert user.fullname in landing_body
+    assert 'Regular Hidden Speaker' not in landing_body
+    assert 'fa-group' not in landing_body
+
+
+@pytest.mark.django_db
+def test_featured_speakers_json_without_released_schedule(client, event):
+    """The speakers API stays closed until a schedule version is released."""
+    with scope(event=event):
+        user = User.objects.create_user(
+            email='featured-no-schedule@example.com',
+            password='testpass123',
+            fullname='No Schedule Featured Speaker',
+        )
+        SpeakerProfile.objects.create(
+            event=event,
+            user=user,
+            biography='Featured biography.',
+            is_featured=True,
+        )
+        regular = User.objects.create_user(
+            email='regular-no-schedule@example.com',
+            password='testpass123',
+            fullname='No Schedule Hidden Speaker',
+        )
+        SpeakerProfile.objects.create(event=event, user=regular, biography='Hidden biography.')
+        event.feature_flags['show_featured_speakers'] = 'always'
+        event.talks_published = False
+        event.save(update_fields=['feature_flags', 'talks_published'])
+        assert event.current_schedule is None
+
+    speakers_list_url = reverse(
+        'agenda:speakers',
+        kwargs={
+            'event': event.slug,
+            'organizer': event.organizer.slug,
+        },
+    )
+    response = client.get(speakers_list_url, {'format': 'json'})
+    assert response.status_code == 404
 
 
 @pytest.mark.django_db

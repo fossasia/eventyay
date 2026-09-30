@@ -87,6 +87,7 @@
 import api from 'lib/api'
 import JanusVideoroom from 'components/janus/JanusVideoroom'
 import JanusPrejoin from 'components/janus/JanusPrejoin'
+import {logOperational} from 'lib/operationalLog'
 
 export default {
 	name: 'JanusCall',
@@ -201,7 +202,7 @@ export default {
 					this.error = error
 					this.loading = false
 					this.$emit('error', error)
-					console.error('Error fetching Janus room URL:', error)
+					logOperational({action: 'janus.connect', outcome: 'failure', backend: 'janus', error_code: 'room_url_failed'})
 				})
 				.finally(() => {
 					this.roomUrlPromise = null

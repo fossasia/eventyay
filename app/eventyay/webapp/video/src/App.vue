@@ -237,13 +237,19 @@ export default {
 		// safari cleverly includes the address bar cleverly in 100vh
 		mediaConstraintsStyle() {
 			const hasStageTools = this.room?.modules.some(module => stageToolModules.includes(module.type))
+			const stateVal = this.$store.state.roomSidebarCollapsedByRoom?.[this.room?.id]
+			const isSidebarCollapsed = stateVal !== undefined ? Boolean(stateVal) : true
 			const hasChatbar = (
 				(this.room?.modules.length > 1 && this.room?.modules.some(module => chatbarModules.includes(module.type))) ||
 				(this.call && this.call.channel === this.$route.params.channelId)
 			)
+			const isMobileLayout = this.$mq?.below?.m
+			const chatbarWidth = !hasChatbar || isMobileLayout
+				? '0px'
+				: (isSidebarCollapsed ? '44px' : '285px')
 			const style = {
-				'--chatbar-width': hasChatbar ? '380px' : '0px',
-				'--mobile-media-height': this.stageStreamCollapsed ? '56px' : hasChatbar ? 'min(56.25vw, 40vh)' : (hasStageTools ? 'calc(var(--vh100) - 48px - 2 * 56px)' : 'calc(var(--vh100) - 48px - 56px)'),
+				'--chatbar-width': chatbarWidth,
+				'--mobile-media-height': this.stageStreamCollapsed ? '56px' : 'min(56.25vw, 50vh)',
 				'--has-stagetools': hasStageTools ? '1' : '0'
 			}
 			if (this.mediaSourcePlaceholderRect) {
