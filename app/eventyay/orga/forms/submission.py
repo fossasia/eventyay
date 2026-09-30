@@ -120,6 +120,10 @@ class SubmissionForm(ReadOnlyFlag, RequestRequire, forms.ModelForm):
             self.fields.pop('track', None)
         elif 'track' in self.fields:
             self.fields['track'].queryset = event.tracks.all()
+            _cfp = getattr(self.event, 'cfp', None) if hasattr(self.event, 'cfp') else None
+            track_visibility = (_cfp.fields.get('track', default_fields()['track']).get('visibility') if _cfp else 'do_not_ask')
+            if track_visibility == 'required':
+                self.fields['track'].required = True
         if 'content_locale' in self.fields:
             _cfp = getattr(self.event, 'cfp', None) if hasattr(self.event, 'cfp') else None
             saved_visibility = (_cfp.fields.get('content_locale', default_fields()['content_locale']).get('visibility') if _cfp else 'do_not_ask')
