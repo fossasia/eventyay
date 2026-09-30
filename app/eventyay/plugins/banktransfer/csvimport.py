@@ -76,10 +76,7 @@ def get_rows_from_file(file):
     if dialect is None:
         raise last_e or csv.Error('No dialect detected')
 
-    # The sniffer only sees the first non-empty line, which for bank exports is
-    # usually an unquoted header, so it comes back with doublequote=False. Force
-    # doubled quotes to be treated as escaped quotes, as a payer name or payment
-    # reference may itself contain quoted text.
+    # Sniffing an unquoted header yields doublequote=False; keep escaped quotes intact.
     dialect.doublequote = True
 
     reader = csv.reader(io.StringIO(data), dialect)

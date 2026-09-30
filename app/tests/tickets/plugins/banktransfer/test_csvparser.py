@@ -1,9 +1,11 @@
 import os.path
+from io import BytesIO
 
 from django.test import TestCase
 
 # Do NOT use relative imports here
 from eventyay.plugins.banktransfer import csvimport
+
 
 # These tests need data files. Don't worry, they are fully anonymized,
 # all IBANs are random/fake.
@@ -362,11 +364,14 @@ class CsvImportTest(TestCase):
         self._test_from_sample_file(filename, expected, hint, expected_parsed)
 
     def test_escaped_quotes_in_field(self):
+        content = 'Payer;Amount;Reference\n"Muller; ""GmbH"";Sohn";10,00;Ticket 2026ABC\nAlice;20,00;Ticket 2026DEF\n'
+        data = csvimport.get_rows_from_file(BytesIO(content.encode('utf-8')))
         expected = [
             ['Payer', 'Amount', 'Reference'],
             ['Muller; "GmbH";Sohn', '10,00', 'Ticket 2026ABC'],
             ['Alice', '20,00', 'Ticket 2026DEF'],
         ]
+        self.assertEqual(data, expected)
         hint = {
             'payer': [0],
             'reference': [2],
@@ -386,5 +391,5 @@ class CsvImportTest(TestCase):
                 'amount': '20,00',
             },
         ]
-        filename = 'csvimport_data_escaped_quotes.csv'
-        self._test_from_sample_file(filename, expected, hint, expected_parsed)
+        parsed, good = csvimport.parse(data, hint)
+        self.assertEqual(parsed, expected_parsed)
