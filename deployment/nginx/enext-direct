@@ -86,6 +86,27 @@ server {
 		proxy_redirect off;
 	}
 
+	# Video SPA files. <base href> makes the browser request these on the event
+	# URL, but collectstatic already wrote them to static/video/. Names stay
+	# stable across deploys. Omit "always" so a missing file is not cached.
+	# The capture rejects ".." path segments.
+	location ~* "^/(?:[^/]+/[^/]+/video|video/event/[^/]+/[^/]+)/assets/((?:[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*/)*[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*)$" {
+		alias <PATH_TO>/data/static/video/assets/$1;
+		access_log off;
+		add_header Cache-Control "public, max-age=3600";
+		add_header Access-Control-Allow-Origin "*" always;
+	}
+
+	# Root video files (preloader, service worker, manifest, icons).
+	# Extension-less SPA routes stay on gunicorn for the injected HTML shell.
+	# Omit "always" so a missing file is not cached for the hour.
+	location ~* "^/(?:[^/]+/[^/]+/video|video/event/[^/]+/[^/]+)/([A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*\.(?:js|css|webmanifest|png|svg|ico|woff2?|ttf|json))$" {
+		alias <PATH_TO>/data/static/video/$1;
+		access_log off;
+		add_header Cache-Control "public, max-age=3600";
+		add_header Access-Control-Allow-Origin "*" always;
+	}
+
 	# Regular HTTP requests - route to gunicorn
 	location / {
 		add_header Referrer-Policy same-origin always;
@@ -124,13 +145,6 @@ server {
 		proxy_set_header X-Forwarded-Proto $scheme;
 		proxy_redirect off;
   	}
-
-	location ~* "^/static/.+\.[0-9a-f]{8,}\.(js|woff2?|ttf|eot|png|svg|ico)$" {
-		root <PATH_TO>/data;
-		access_log off;
-		add_header Cache-Control "public, max-age=31536000, immutable" always;
-		add_header Access-Control-Allow-Origin "*" always;
-	}
 
 	location /static/ {
 		alias <PATH_TO>/data/static/;
