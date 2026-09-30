@@ -735,7 +735,7 @@ export default {
 				font-weight: 700
 				color: $clr-secondary-text-light
 			.field-content
-				padding: 8px 12px
+				padding: 8px 0
 				p
 					margin: 0.25em 0
 					&:first-child
@@ -745,7 +745,6 @@ export default {
 			&.abstract-section
 				.field-content
 					font-size: 16px
-					font-weight: 600
 		.answer-link
 			color: var(--pretalx-clr-primary, var(--clr-primary))
 			text-decoration: none

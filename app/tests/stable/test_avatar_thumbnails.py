@@ -36,11 +36,16 @@ def test_get_avatar_url_skips_original_when_thumbnail_missing():
     assert user.get_avatar_url(thumbnail='tiny', generate_missing=False) == ''
 
 
-def test_get_avatar_url_uses_stored_tiny_thumbnail():
-    user = _user_with_avatar(tiny_name='avatars/ab/speaker_thumbnail_tiny.jpg')
-    user.avatar_thumbnail_tiny.url = '/media/avatars/ab/speaker_thumbnail_tiny.jpg'
+def test_get_avatar_url_uses_stored_webp_tiny_thumbnail():
+    user = _user_with_avatar(tiny_name='avatars/ab/speaker_thumbnail_tiny.webp')
+    user.avatar_thumbnail_tiny.url = '/media/avatars/ab/speaker_thumbnail_tiny.webp'
     url = user.get_avatar_url(thumbnail='tiny', generate_missing=False)
-    assert 'speaker_thumbnail_tiny.jpg' in url
+    assert 'speaker_thumbnail_tiny.webp' in url
+
+
+def test_get_avatar_url_skips_legacy_thumbnail():
+    user = _user_with_avatar(tiny_name='avatars/ab/speaker_thumbnail_tiny.jpg')
+    assert user.get_avatar_url(thumbnail='tiny', generate_missing=False) == ''
 
 
 def test_list_avatar_urls_skips_generation_and_marks_missing_thumbs():
@@ -97,10 +102,12 @@ def test_enqueue_missing_avatar_thumbnails_skips_empty():
 
 
 def test_ensure_avatar_thumbnails_creates_missing_sizes():
+    legacy_thumbnail = MagicMock()
+    legacy_thumbnail.name = 'avatars/ab/speaker_thumbnail_default.jpg'
     user = SimpleNamespace(
         avatar=SimpleNamespace(name='avatars/ab/speaker.jpg', field=SimpleNamespace(name='avatar')),
         avatar_thumbnail_tiny=SimpleNamespace(name=''),
-        avatar_thumbnail=SimpleNamespace(name='avatars/ab/speaker_thumbnail_default.jpg'),
+        avatar_thumbnail=legacy_thumbnail,
     )
 
     with (
@@ -111,5 +118,9 @@ def test_ensure_avatar_thumbnails_creates_missing_sizes():
     ):
         profiles.return_value.values_list.return_value.distinct.return_value = [9]
         ensure_avatar_thumbnails([1, 1])
-        create.assert_called_once_with(user.avatar, 'tiny')
+        assert create.call_args_list == [
+            ((user.avatar, 'tiny'),),
+            ((user.avatar, 'default'),),
+        ]
+        legacy_thumbnail.delete.assert_called_once_with(save=False)
         bump.assert_called_once_with(9)
