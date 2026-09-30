@@ -1339,7 +1339,6 @@ dependencies = [
     { name = "more-itertools" },
     { name = "msgspec" },
     { name = "mt-940" },
-    { name = "multidict" },
     { name = "nh3" },
     { name = "oauthlib" },
     { name = "openpyxl" },
@@ -1422,7 +1421,6 @@ dependencies = [
 
 [package.optional-dependencies]
 docs = [
-    { name = "docutils" },
     { name = "pyenchant" },
     { name = "pygments-markdown-lexer" },
     { name = "sphinx" },
@@ -1535,7 +1533,6 @@ requires-dist = [
     { name = "django-statici18n", specifier = ">=2.5.0" },
     { name = "django-timezone-field", specifier = ">=7.2.2" },
     { name = "djangorestframework", specifier = ">=3.15.2" },
-    { name = "docutils", marker = "extra == 'docs'", specifier = ">=0.22.4" },
     { name = "drf-flex-fields", specifier = ">=1.0.0" },
     { name = "drf-spectacular", specifier = ">=0.30.0" },
     { name = "elementpath", specifier = ">=5.1.4" },
@@ -1581,7 +1578,6 @@ requires-dist = [
     { name = "more-itertools", specifier = ">=11.1.0" },
     { name = "msgspec", specifier = ">=0.21.1" },
     { name = "mt-940", specifier = ">=5.0.0" },
-    { name = "multidict", specifier = ">=6.7.0" },
     { name = "nh3", specifier = ">=0.3.6" },
     { name = "oauthlib", specifier = ">=3.2.2" },
     { name = "openpyxl", specifier = ">=3.1.5" },
