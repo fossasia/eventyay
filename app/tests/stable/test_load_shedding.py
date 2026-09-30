@@ -129,6 +129,7 @@ def test_load_shedding_exempts_checkin_and_health(path, monkeypatch):
         '/schedule/',
         '/video/event/demo/streams/',
         '/demo/streams/video/rooms/1',
+        '/demo/streams/video/assets/../../etc/passwd',
         '/api/v1/organizers/wm/events/wm/checkinlists-backup/',
     ],
 )

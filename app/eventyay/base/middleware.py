@@ -482,7 +482,9 @@ CHECKIN_EXEMPT_RE = re.compile(
 # the substring /video/assets/. SPA HTML routes have no file extension.
 VIDEO_STATIC_EXEMPT_RE = re.compile(
     r'^/(?:[^/]+/[^/]+/video|video/event/[^/]+/[^/]+)/'
-    r'(?:assets/.+|[^/]+\.(?:js|css|webmanifest|png|svg|ico|woff2?|ttf|json))$'
+    r'(?:assets/(?:[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*/)*'
+    r'[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*'
+    r'|[^/]+\.(?:js|css|webmanifest|png|svg|ico|woff2?|ttf|json))$'
 )
 
 

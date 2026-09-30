@@ -57,7 +57,9 @@ function getScheduleWidgetUrls () {
 function eventHasPublishedSchedule () {
 	if (window.eventyay?.schedule) return true
 	const meta = window.eventyay?.scheduleMeta
-	if (!meta) return true
+	// The video shell always injects scheduleMeta. A missing object means
+	// there is no published schedule to fetch.
+	if (!meta) return false
 	if (meta.version) return true
 	if (meta.current_schedule_url) return true
 	return Array.isArray(meta.versions) && meta.versions.length > 0

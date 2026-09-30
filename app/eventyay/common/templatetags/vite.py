@@ -76,7 +76,7 @@ def generate_script_tag(path: str, attrs: dict[str, str]) -> str:
     return f'<script {all_attrs} src="{src}"></script>'
 
 
-def generate_preload_tags(asset: str, already_processed: list[str], static_files_mapping: ManifestMapping) -> list[str]:
+def generate_schedule_editor_preload_tags(asset: str, already_processed: list[str], static_files_mapping: ManifestMapping) -> list[str]:
     """Ask the browser to fetch imported modules with the entry script."""
     tags = []
     manifest_entry = static_files_mapping.get(asset)
@@ -89,7 +89,7 @@ def generate_preload_tags(asset: str, already_processed: list[str], static_files
         already_processed.append(imported.file)
         href = urljoin(settings.STATIC_URL, f'schedule-editor/{imported.file}')
         tags.append(f'<link rel="modulepreload" crossorigin href="{href}" />')
-        tags += generate_preload_tags(import_path, already_processed, static_files_mapping)
+        tags += generate_schedule_editor_preload_tags(import_path, already_processed, static_files_mapping)
     return tags
 
 
@@ -141,7 +141,7 @@ def vite_asset(path: str) -> str:
         raise ImproperlyConfigured(msg)
 
     tags = generate_css_tags(path, [], static_files_mapping)
-    tags += generate_preload_tags(path, [], static_files_mapping)
+    tags += generate_schedule_editor_preload_tags(path, [], static_files_mapping)
     tags.append(generate_script_tag(manifest_entry.file, {'type': 'module', 'crossorigin': ''}))
     return mark_safe(''.join(tags))
 
