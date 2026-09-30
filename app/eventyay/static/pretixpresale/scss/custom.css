@@ -40,6 +40,7 @@ header .header-wrapper {
 header .header-row-right {
     color: var(--color-header-navigation);
     margin-left: auto;
+    margin-right: 8px;
     display: flex;
     flex-wrap: nowrap;
     flex-shrink: 0;
