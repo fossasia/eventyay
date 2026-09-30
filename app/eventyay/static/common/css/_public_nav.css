@@ -1,6 +1,3 @@
-/* Public event header tabs (Info / Tickets / … / More).
- * Loaded by base_public and pretixpresale; keep hover/active styles here. */
-
 .presale-sticky-tabs-wrap {
   position: sticky;
   top: 0;
@@ -37,17 +34,19 @@
   flex: 1 1 auto;
   min-width: 0;
   overflow: visible;
+  transition: opacity 0.1s ease;
 }
 
-/* Hide only tab children until fitted — never the open fixed panel */
-.presale-tabs-scroll:not(.nav-overflow-ready) > .header-tab,
-.presale-tabs-scroll:not(.nav-overflow-ready) > .nav-overflow-menu,
+.presale-tabs-scroll:not(.nav-overflow-ready) {
+  opacity: 0;
+}
+
 .presale-tabs-scroll.nav-overflow-measuring > .header-tab,
 .presale-tabs-scroll.nav-overflow-measuring > .nav-overflow-menu {
   visibility: hidden;
 }
 
-/* Shared tab + More trigger look */
+
 .presale-sticky-tabs .presale-tabs-scroll > .header-tab,
 .presale-sticky-tabs .nav-overflow-trigger,
 #header-tabs .presale-tabs-scroll > .header-tab,
@@ -119,7 +118,7 @@
   border-bottom-color: var(--color-primary);
 }
 
-/* Right-side language / user controls */
+
 .presale-sticky-tabs .header-row-right {
   color: var(--color-header-navigation);
   margin-left: auto;
@@ -176,7 +175,7 @@
   text-decoration: none;
 }
 
-/* More overflow menu */
+
 .nav-overflow-menu {
   position: relative;
   flex-shrink: 0;
@@ -205,7 +204,7 @@
   opacity: 0.85;
 }
 
-/* Panel is positioned fixed by JS so it cannot be clipped by sticky/overflow ancestors */
+
 .nav-overflow-items {
   display: none;
   position: fixed;
@@ -356,7 +355,7 @@
 
   .presale-sticky-tabs .header-row-right {
     margin-left: 0;
-    margin-right: 2px;
+    margin-right: 8px;
     flex-shrink: 0;
     font-size: 1rem;
     gap: 4px;
