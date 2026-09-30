@@ -31,22 +31,40 @@ def test_get_team_invitation_url_standard_team(organizer):
 @pytest.mark.django_db
 def test_get_team_invitation_url_teamshifts_coordinator(organizer):
     team = Team.objects.create(organizer=organizer, name='Coordinator Team', teamshifts_role='coordinator')
-    url = get_team_invitation_url(team)
-    assert url.endswith('/teamshifts/organizer/test-org/')
+    with patch('eventyay.base.services.teams.build_absolute_uri') as mock_build_uri:
+        mock_build_uri.return_value = 'http://example.com/teamshifts/organizer/test-org/'
+        url = get_team_invitation_url(team)
+        mock_build_uri.assert_called_with(
+            'plugins:teamshifts:organizer_dashboard',
+            kwargs={'organizer': organizer.slug},
+        )
+        assert url.endswith('/teamshifts/organizer/test-org/')
 
 
 @pytest.mark.django_db
 def test_get_team_invitation_url_teamshifts_lead(organizer):
     team = Team.objects.create(organizer=organizer, name='Lead Team', teamshifts_role='lead')
-    url = get_team_invitation_url(team)
-    assert url.endswith('/teamshifts/organizer/test-org/')
+    with patch('eventyay.base.services.teams.build_absolute_uri') as mock_build_uri:
+        mock_build_uri.return_value = 'http://example.com/teamshifts/organizer/test-org/'
+        url = get_team_invitation_url(team)
+        mock_build_uri.assert_called_with(
+            'plugins:teamshifts:organizer_dashboard',
+            kwargs={'organizer': organizer.slug},
+        )
+        assert url.endswith('/teamshifts/organizer/test-org/')
 
 
 @pytest.mark.django_db
-def test_get_team_invitation_url_unknown_role(organizer):
-    team = Team.objects.create(organizer=organizer, name='Custom Team', teamshifts_role='unknown_role')
-    url = get_team_invitation_url(team)
-    assert url.endswith(f'/common/organizer/test-org/team/{team.pk}')
+def test_get_team_invitation_url_any_teamshifts_role(organizer):
+    team = Team.objects.create(organizer=organizer, name='Custom Team', teamshifts_role='custom_role')
+    with patch('eventyay.base.services.teams.build_absolute_uri') as mock_build_uri:
+        mock_build_uri.return_value = 'http://example.com/teamshifts/organizer/test-org/'
+        url = get_team_invitation_url(team)
+        mock_build_uri.assert_called_with(
+            'plugins:teamshifts:organizer_dashboard',
+            kwargs={'organizer': organizer.slug},
+        )
+        assert url.endswith('/teamshifts/organizer/test-org/')
 
 
 @pytest.mark.django_db
@@ -59,72 +77,47 @@ def test_get_team_invitation_url_standard_team_no_pk(organizer):
 @pytest.mark.django_db
 def test_get_team_invitation_url_plugin_fallback(organizer):
     team = Team.objects.create(organizer=organizer, name='Lead Team', teamshifts_role='lead')
-    with patch('eventyay.helpers.urls.build_absolute_uri', side_effect=[NoReverseMatch('Plugin not installed'), 'http://localhost/common/organizer/test-org/teams']):
+    with patch(
+        'eventyay.base.services.teams.build_absolute_uri',
+        side_effect=[NoReverseMatch('Plugin not installed'), 'http://localhost/common/organizer/test-org/teams'],
+    ):
         url = get_team_invitation_url(team)
         assert url.endswith('/common/organizer/test-org/teams')
 
 
 @pytest.mark.django_db
-def test_send_team_invitation_email_explicit_url(organizer, user):
+def test_send_team_invitation_email(organizer, user):
     djmail.outbox = []
-    success = send_team_invitation_email(
-        user=user,
-        organizer_name=organizer.name,
-        team_name='Test Team',
-        url='http://localhost:8000/custom/invitation/url',
-        locale='en',
-        is_registered_user=True,
-    )
-    assert success is True
-    assert len(djmail.outbox) == 1
-    assert 'http://localhost:8000/custom/invitation/url' in djmail.outbox[0].body
-
-
-@pytest.mark.django_db
-def test_send_team_invitation_email_with_teamshifts_team(organizer, user):
-    djmail.outbox = []
-    team = Team.objects.create(organizer=organizer, name='Shifts Team', teamshifts_role='coordinator')
+    team = Team.objects.create(organizer=organizer, name='Test Team', teamshifts_role='')
+    url = get_team_invitation_url(team)
     success = send_team_invitation_email(
         user=user,
         organizer_name=organizer.name,
         team_name=team.name,
-        team=team,
+        url=url,
         locale='en',
         is_registered_user=True,
     )
     assert success is True
     assert len(djmail.outbox) == 1
-    assert '/teamshifts/organizer/test-org/' in djmail.outbox[0].body
+    assert url in djmail.outbox[0].body
 
 
 @pytest.mark.django_db
-def test_send_team_invitation_email_no_url_or_team(organizer, user):
+def test_send_team_invitation_email_teamshifts_team(organizer, user):
     djmail.outbox = []
-    success = send_team_invitation_email(
-        user=user,
-        organizer_name=organizer.name,
-        team_name='No Url Team',
-        url=None,
-        team=None,
-        locale='en',
-        is_registered_user=True,
-    )
-    assert success is False
-    assert len(djmail.outbox) == 0
-
-
-@pytest.mark.django_db
-def test_send_team_invitation_email_url_resolution_failure(organizer, user):
-    djmail.outbox = []
-    team = Team.objects.create(organizer=organizer, name='Broken Team', teamshifts_role='coordinator')
-    with patch('eventyay.base.services.teams.get_team_invitation_url', side_effect=NoReverseMatch('URL failure')):
+    team = Team.objects.create(organizer=organizer, name='Shifts Team', teamshifts_role='coordinator')
+    with patch('eventyay.base.services.teams.build_absolute_uri') as mock_build_uri:
+        mock_build_uri.return_value = 'http://example.com/teamshifts/organizer/test-org/'
+        url = get_team_invitation_url(team)
         success = send_team_invitation_email(
             user=user,
             organizer_name=organizer.name,
             team_name=team.name,
-            team=team,
+            url=url,
             locale='en',
             is_registered_user=True,
         )
-    assert success is False
-    assert len(djmail.outbox) == 0
+    assert success is True
+    assert len(djmail.outbox) == 1
+    assert '/teamshifts/organizer/test-org/' in djmail.outbox[0].body
