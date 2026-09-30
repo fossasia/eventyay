@@ -134,10 +134,12 @@ export default defineConfig(({ mode }) => {
         workbox: {
           skipWaiting: true,
           clientsClaim: true,
+          // Keep the Workbox runtime inside sw.js. A separate workbox-<hash>.js
+          // is deleted on deploy, and an already-registered worker cannot update.
+          inlineWorkboxRuntime: true,
           // The HTML shell is rendered by Django, so it cannot be a precached file.
           navigateFallback: null,
-          // Hashed JS and CSS are already cached by the browser. Precaching them
-          // makes the service worker download the whole app again on first open.
+          // Precaching the app scripts makes the worker download them again on first open.
           globPatterns: ['**/*.{ico,png,svg}'],
           // Allow larger assets (default is ~2MB); needed for 2.5MB PNG
           maximumFileSizeToCacheInBytes: 3 * 1024 * 1024
