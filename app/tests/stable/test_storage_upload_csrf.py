@@ -94,7 +94,7 @@ def test_session_upload_resizes_to_requested_dimensions(
     assert response.status_code == 201
     assert "url" in response.json()
     stored_file = StoredFile.objects.get()
-    assert stored_file.type == "image/png"
+    assert stored_file.type == "image/webp"
     assert stored_file.file.size < upload.size
     with Image.open(stored_file.file) as stored_image:
         assert max(stored_image.size) <= 96
@@ -114,8 +114,8 @@ def test_session_upload_strips_jpeg_metadata(event, session_client, granted_uplo
 
     assert response.status_code == 201
     stored_file = StoredFile.objects.get()
-    assert stored_file.type == "image/jpeg"
-    assert stored_file.filename == "photo.jpg"
+    assert stored_file.type == "image/webp"
+    assert stored_file.filename == "photo.webp"
     with Image.open(stored_file.file) as stored_image:
         assert not dict(stored_image.getexif())
 

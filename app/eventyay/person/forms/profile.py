@@ -1,6 +1,9 @@
 import datetime as dt
 from functools import partial
+import logging
+import os
 
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django import forms
 from django.forms import Textarea
 from django.conf import settings
@@ -26,6 +29,7 @@ from eventyay.common.forms.fields import (
     NewPasswordField,
     SizeFileField,
 )
+from eventyay.helpers.image_optimize import optimize_uploaded_image
 from eventyay.common.forms.mixins import (
     ConfiguredFieldOrderMixin,
     I18nHelpText,
@@ -281,6 +285,22 @@ class SpeakerProfileForm(
             if existing_user.profiles.filter(event=self.event).exists():
                 raise ValidationError(get_email_address_error())
         return email
+
+    def clean_avatar(self):
+        avatar = self.cleaned_data.get('avatar')
+        if avatar and 'avatar' in self.files:
+            try:
+                result = optimize_uploaded_image(avatar, 'avatar', None)
+                base_name, _ = os.path.splitext(avatar.name)
+                avatar = SimpleUploadedFile(
+                    f"{base_name}.{result.optimized_ext}",
+                    result.optimized.read(),
+                    content_type='image/svg+xml' if result.optimized_ext == 'svg' else f"image/{result.optimized_ext}",
+                )
+            except OSError:
+                logging.getLogger(__name__).exception("Failed to process avatar")
+                raise forms.ValidationError(_('Failed to process image.'))
+        return avatar
 
     def clean_avatar_source(self):
         return validate_avatar_license_text(self.cleaned_data.get('avatar_source'))
