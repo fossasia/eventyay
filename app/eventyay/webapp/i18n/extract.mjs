@@ -201,7 +201,7 @@ function extractKeysToTempJson() {
 }
 `
 	)
-	const result = spawnSync('npx', ['i18next-parser', args.input, '-c', configPath], {
+	const result = spawnSync('npx', ['--yes', 'i18next-parser@9.4.0', args.input, '-c', configPath], {
 		cwd: appRoot,
 		encoding: 'utf8',
 		shell: false,

@@ -1412,7 +1412,7 @@ onUnmounted(() => {
 			pointer-events: none
 			margin: 0 12px 8px 8px
 		.unschedule-hint
-			margin: 8px 8px 0
+			margin: 8px 8px 12px 8px
 			padding: 8px 10px
 			border-radius: 4px
 			background-color: #fff4e5
