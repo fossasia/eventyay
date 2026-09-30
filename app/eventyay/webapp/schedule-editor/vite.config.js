@@ -1,6 +1,7 @@
 import path from 'path'
 import vue from '@vitejs/plugin-vue'
 import {createGettextPlugin} from '../i18n/vite-plugin.js'
+import {stableChunkBase} from '../stable-chunk-name.js'
 import BuntpapierStylus from 'buntpapier/stylus.js'
 
 const dirname = import.meta.dirname
@@ -51,6 +52,9 @@ export default {
 		rollupOptions: {
 			input: 'src/main.ts',
 			output: {
+				entryFileNames: '[name].js',
+				chunkFileNames: (chunkInfo) => `${stableChunkBase(chunkInfo)}.js`,
+				assetFileNames: '[name][extname]',
 				manualChunks(id) {
 					if (id.includes('node_modules/vue/') || id.endsWith('/vue')) {
 						return 'vue'

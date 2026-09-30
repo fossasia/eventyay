@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-import re
 from mimetypes import guess_type
 from urllib.parse import quote
 from urllib.request import urlopen
@@ -36,18 +35,12 @@ from eventyay.eventyay_common.video.traits_sync import check_has_active_staff_se
 
 logger = logging.getLogger(__name__)
 
-HASHED_VIDEO_ASSET_NAME = re.compile(r'-[A-Za-z0-9_-]{8,}(?:\.[A-Za-z0-9]+)+$')
-IMMUTABLE_VIDEO_ASSET_CACHE = 'public, max-age=31536000, immutable'
-SHORT_VIDEO_ASSET_CACHE = 'public, max-age=300'
+VIDEO_ASSET_CACHE = 'public, max-age=3600'
 
 
 def video_asset_cache_control(relative_path: str) -> str:
-    """Long-cache Vite content hashes. Unhashed root files stay short-lived."""
-    normalized = relative_path.replace('\\', '/').lstrip('/')
-    filename = normalized.rsplit('/', 1)[-1]
-    if normalized.startswith('assets/') and HASHED_VIDEO_ASSET_NAME.search(filename):
-        return IMMUTABLE_VIDEO_ASSET_CACHE
-    return SHORT_VIDEO_ASSET_CACHE
+    """Cache every video file for one hour. The path selects the file, not the lifetime."""
+    return VIDEO_ASSET_CACHE
 
 
 def safe_reverse(name: str, **kw) -> str:

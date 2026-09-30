@@ -6,6 +6,7 @@ import visualizer from 'rollup-plugin-visualizer'
 import path from 'node:path'
 import eslint from 'vite-plugin-eslint'
 import {createGettextPlugin} from '../i18n/vite-plugin.js'
+import {stableChunkBase} from '../stable-chunk-name.js'
 
 const dirname = import.meta.dirname
 const stylusOptions = {
@@ -223,10 +224,11 @@ export default defineConfig(({ mode }) => {
           preloader: path.resolve(dirname, 'src/preloader.js')
         },
         output: {
-          // Every entry, including the preloader, gets a content hash. The video
-          // HTML is rendered per request and points at that name, so a deploy
-          // stops using the previous cached preloader and the chunks it imported.
-          entryFileNames: 'assets/[name]-[hash].js',
+          // Stable names so an open tab can still load a screen after deploy.
+          // The file at that name is replaced in place; it is not deleted.
+          entryFileNames: 'assets/[name].js',
+          chunkFileNames: (chunkInfo) => `assets/${stableChunkBase(chunkInfo)}.js`,
+          assetFileNames: 'assets/[name][extname]',
           codeSplitting: {
             groups: [
               { name: 'vendor-rtc', test: /janus-gateway|webrtc-adapter/, priority: 30 },

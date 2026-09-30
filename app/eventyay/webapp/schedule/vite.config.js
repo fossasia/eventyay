@@ -4,6 +4,7 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import BuntpapierStylus from 'buntpapier/stylus.js'
 import {createGettextPlugin} from '../i18n/vite-plugin.js'
+import {stableChunkBase} from '../stable-chunk-name.js'
 
 const dirname = import.meta.dirname
 const stylusOptions = {
@@ -83,7 +84,7 @@ export default defineConfig({
 		rollupOptions: {
 			output: {
 				entryFileNames: 'pretalx-schedule.js',
-				chunkFileNames: 'pretalx-schedule-[name].js',
+				chunkFileNames: (chunkInfo) => `pretalx-schedule-${stableChunkBase(chunkInfo)}.js`,
 				assetFileNames: 'pretalx-schedule.[ext]',
 			}
 		}
