@@ -7,13 +7,13 @@ import {createGettextPlugin} from '../i18n/vite-plugin.js'
 
 const stylusOptions = {
 	paths: [
-		path.resolve(__dirname, './src/styles'),
+		path.resolve(import.meta.dirname, './src/styles'),
 		'node_modules'
 	],
 	use: [BuntpapierStylus({implicit: false})],
 	imports: [
 		'buntpapier/buntpapier/index.styl',
-		path.resolve(__dirname, 'src/styles/variables.styl')
+		path.resolve(import.meta.dirname, 'src/styles/variables.styl')
 	]
 }
 
@@ -27,9 +27,9 @@ export default defineConfig({
 		port: 8082,
 		fs: {
 			allow: [
-				path.resolve(__dirname),
-				path.resolve(__dirname, '../../locale'),
-				path.resolve(__dirname, '../i18n'),
+				path.resolve(import.meta.dirname),
+				path.resolve(import.meta.dirname, '../../locale'),
+				path.resolve(import.meta.dirname, '../i18n'),
 			]
 		},
 	},
@@ -62,8 +62,8 @@ export default defineConfig({
 		dedupe: ['vue'],
 		extensions: ['.js', '.json', '.vue'],
 		alias: [
-			{ find: '~', replacement: path.resolve(__dirname, 'src') },
-			{ find: /^buntpapier$/, replacement: path.resolve(__dirname, 'node_modules/buntpapier/src/index.js') },
+			{ find: '~', replacement: path.resolve(import.meta.dirname, 'src') },
+			{ find: /^buntpapier$/, replacement: path.resolve(import.meta.dirname, 'node_modules/buntpapier/src/index.js') },
 		],
 	},
 	build: {
@@ -72,7 +72,7 @@ export default defineConfig({
 		cssCodeSplit: false,
 		sourcemap: false,
 		lib: {
-			entry: path.resolve(__dirname, 'src/main-wc.js'),
+			entry: path.resolve(import.meta.dirname, 'src/main-wc.js'),
 			name: 'PretalxSchedule',
 			fileName: 'pretalx-schedule',
 			formats: ['es']
