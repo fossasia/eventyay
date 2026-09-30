@@ -63,8 +63,8 @@
 					@deleteSession="caps.canDelete ? deleteSessionDirect($event) : null",
 					@assignMembers="caps.canAssignMembers ? openAssignModal($event) : null",
 					@unscheduleSession="caps.canDrag ? unscheduleSession($event) : null")
-			#session-editor-wrapper(v-if="editorSession && caps.canEdit", @click="editorSession = null")
-				form#session-editor(@click.stop="", @submit.prevent="editorSave")
+			#session-editor-wrapper(v-if="editorSession && caps.canEdit", @click="editorCancel")
+				form#session-editor(@click.stop="", @submit.prevent="editorSave", @keydown.enter.prevent="editorSave")
 					h3.session-editor-title(v-if="editorSession.code")
 						a(v-if="caps.showSubmissionLinks && organizerSlug && eventSlug", :href="`${api.getOrgaEventBase()}/submissions/${editorSession.code}/`") {{ getLocalizedString(editorSession.title) }}
 						span(v-else) {{ getLocalizedString(editorSession.title) }}
@@ -125,6 +125,7 @@
 					.button-row
 						input(type="submit")
 						bunt-button#btn-delete(v-if="caps.canEditRoles ? editorSession.id : !editorSession.code", @click="editorDelete", :loading="editorSessionWaiting") {{ $t('Delete') }}
+						bunt-button#btn-cancel(type="button", @click="editorCancel") {{ $t('Cancel') }}
 						bunt-button#btn-save(@click="editorSave", :loading="editorSessionWaiting") {{ $t('Save') }}
 			
 			#assign-modal-wrapper(v-if="assigningSession && caps.canAssignMembers", @click="closeAssignModal")
@@ -815,6 +816,11 @@ async function editorSave(): Promise<void> {
   } finally {
     editorSessionWaiting.value = false
   }
+}
+
+function editorCancel(): void {
+  editorSession.value = null
+  editorSessionError.value = ''
 }
 
 async function editorDelete(): Promise<void> {
@@ -1658,6 +1664,10 @@ onUnmounted(() => {
 			#btn-delete
 				button-style(color: $clr-danger, text-color: $clr-white)
 				font-weight: bold
+			#btn-cancel
+				font-weight: bold
+				margin-left: 8px
+				button-style(color: #6c757d)
 			#btn-save
 				margin-left: auto
 				font-weight: bold
