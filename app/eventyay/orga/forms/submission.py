@@ -310,6 +310,16 @@ def get_speaker_choice_label(*, name: str | None, email: str) -> str:
 
 
 class AddSpeakerForm(forms.Form):
+    speaker_action = forms.ChoiceField(
+        label=_('Speaker'),
+        choices=[
+            ('none', _('Do not add a speaker')),
+            ('add', _('Add a speaker')),
+        ],
+        initial='none',
+        widget=forms.RadioSelect,
+        required=False,
+    )
     email = forms.EmailField(
         label=phrases.cfp.speaker_email,
         help_text=_('The email address of the speaker holding the session. They will be invited to create an account.'),
@@ -320,6 +330,7 @@ class AddSpeakerForm(forms.Form):
         label=_('Speaker name'),
         help_text=_('The name of the speaker that should be displayed publicly.'),
         required=False,
+        widget=forms.TextInput(),
     )
     biography = forms.CharField(
         label=_('Biography'),
@@ -361,20 +372,25 @@ class AddSpeakerForm(forms.Form):
                 # Keep optional unless a speaker is actually added; validate in clean().
                 self.biography_required = visibility == 'required'
                 self.fields['biography'].required = False
+                if self.biography_required:
+                    self.fields['biography'].widget.attrs['data-required'] = 'true'
+                
+        # If require_name is true, it means we are in the "Add Speaker" dedicated view,
+        # so there's no "none" option.
+        if require_name:
+            self.fields['speaker_action'].choices = [
+                ('add', _('Add a speaker')),
+            ]
+            self.fields['speaker_action'].initial = 'add'
+            
         email_key = self.add_prefix('email')
         name_key = self.add_prefix('name')
         email_widget = self.fields['email'].widget
         if isinstance(email_widget, forms.Select) and self.is_bound and (email := self.data.get(email_key)):
             name = self.data.get(name_key)
             email_widget.choices = [(email, get_speaker_choice_label(name=name, email=email))]
-        if require_name:
-            self.fields['email'].required = True
-            self.fields['name'].required = True
-            if self.is_bound and self.data.get(email_key) and not self.data.get(name_key):
-                existing_user = User.objects.filter(email__iexact=self.data[email_key]).only('fullname').first()
-                if existing_user and existing_user.fullname:
-                    self.data = self.data.copy()
-                    self.data[name_key] = existing_user.fullname
+            
+        # We don't set required=True here anymore, because validation is handled dynamically in JS and clean().
         if not event.named_locales or len(event.named_locales) < 2:
             self.fields.pop('locale')
         else:
@@ -383,25 +399,39 @@ class AddSpeakerForm(forms.Form):
 
     def clean(self):
         data = super().clean()
-        if data.get('name') and not data.get('email'):
-            self.add_error('email', _('Please provide an email address.'))
+
+        default_action = 'add' if getattr(self, 'require_name', False) else 'none'
+        action = data.get('speaker_action') or default_action
+        
+        # If no speaker is to be added, clear the other fields so they are ignored.
+        if action == 'none':
+            data['email'] = ''
+            data['name'] = ''
+            data['biography'] = ''
+            return data
 
         existing_biography = False
         email = data.get('email')
+        
         if email:
             existing_user = User.objects.filter(email__iexact=email).first()
             if existing_user:
                 existing_profile = existing_user.profiles.filter(event=self.event).first()
                 existing_biography = bool(existing_profile and existing_profile.biography)
 
-        if (
-            not self.draft_save
-            and email
-            and getattr(self, 'biography_required', False)
-            and not existing_biography
-            and not data.get('biography')
-        ):
-            self.add_error('biography', _('This field is required.'))
+        if action == 'add':
+            speaker_added = email or data.get('name') or data.get('biography')
+            if not speaker_added:
+                self.add_error('name', _('Please provide at least a name, email, or biography.'))
+                
+            if (
+                not self.draft_save
+                and speaker_added
+                and getattr(self, 'biography_required', False)
+                and not existing_biography
+                and not data.get('biography')
+            ):
+                self.add_error('biography', _('This field is required.'))
         return data
 class AddSpeakerInlineForm(AddSpeakerForm):
     default_renderer = InlineFormLabelRenderer

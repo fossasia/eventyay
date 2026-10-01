@@ -1059,6 +1059,8 @@ class Submission(GenerateCode, PretalxModel):
         user_created = False
         context = {}
         try:
+            if not email:
+                raise User.DoesNotExist
             speaker = User.objects.get(email__iexact=email)
             if not speaker.profiles.filter(event=self.event).exists():
                 SpeakerProfile.objects.create(user=speaker, event=self.event)
@@ -1069,10 +1071,11 @@ class Submission(GenerateCode, PretalxModel):
         except User.DoesNotExist:
             speaker = create_user(email=email, name=name, event=self.event)
             user_created = True
-            context['invitation_link'] = build_absolute_uri(
-                'cfp:event.new_recover',
-                kwargs={'organizer': self.event.organizer.slug, 'event': self.event.slug, 'token': speaker.pw_reset_token},
-            )
+            if email:
+                context['invitation_link'] = build_absolute_uri(
+                    'cfp:event.new_recover',
+                    kwargs={'organizer': self.event.organizer.slug, 'event': self.event.slug, 'token': speaker.pw_reset_token},
+                )
 
         if biography:
             profile = SpeakerProfile.objects.get(user=speaker, event=self.event)
@@ -1082,17 +1085,19 @@ class Submission(GenerateCode, PretalxModel):
 
         self.speakers.add(speaker)
         self.log_action('eventyay.submission.speakers.add', person=user, orga=True)
-        context['user'] = speaker
-        template = self.event.get_mail_template(
-            MailTemplateRoles.EXISTING_SPEAKER_INVITE if not user_created else MailTemplateRoles.NEW_SPEAKER_INVITE
-        )
-        template.to_mail(
-            user=speaker,
-            event=self.event,
-            context=context,
-            context_kwargs={'user': speaker, 'submission': self, 'event': self.event},
-            locale=locale or self.event.locale,
-        )
+        
+        if email:
+            context['user'] = speaker
+            template = self.event.get_mail_template(
+                MailTemplateRoles.EXISTING_SPEAKER_INVITE if not user_created else MailTemplateRoles.NEW_SPEAKER_INVITE
+            )
+            template.to_mail(
+                user=speaker,
+                event=self.event,
+                context=context,
+                context_kwargs={'user': speaker, 'submission': self, 'event': self.event},
+                locale=locale or self.event.locale,
+            )
         return speaker
 
     def remove_speaker(self, speaker, orga=True, user=None):

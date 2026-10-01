@@ -7,9 +7,10 @@ from django.utils.timezone import now
 def create_user(email, name=None, pw_reset_days=60, event=None):
     from eventyay.base.models import SpeakerProfile, User
 
+    email_clean = email.lower().strip() if email else None
     user = User.objects.create_user(
         password=get_random_string(32),
-        email=email.lower().strip(),
+        email=email_clean,
         fullname=(name or '').strip(),
         pw_reset_token=get_random_string(32),
         pw_reset_time=now() + dt.timedelta(days=pw_reset_days),

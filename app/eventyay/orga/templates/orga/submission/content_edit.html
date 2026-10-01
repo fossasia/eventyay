@@ -154,5 +154,5 @@
             {% endif %}
         </fieldset></form>
 
-    <span id="vars" remoteUrl="{{ request.event.organizer.orga_urls.user_search }}"></span>
+    <span id="vars" remoteUrl="{{ request.event.organizer.orga_urls.user_search }}?event={{ request.event.pk }}"></span>
 {% endblock submission_content %}

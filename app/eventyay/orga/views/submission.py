@@ -340,12 +340,15 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
         ]
 
     def form_valid(self, form):
-        if email := form.cleaned_data.get('email'):
+        email = form.cleaned_data.get('email')
+        name = form.cleaned_data.get('name')
+        biography = form.cleaned_data.get('biography')
+        if email or name or biography:
             speaker = self.object.add_speaker(
                 email=email,
-                name=form.cleaned_data.get('name'),
+                name=name,
                 locale=form.cleaned_data.get('locale'),
-                biography=form.cleaned_data.get('biography'),
+                biography=biography,
                 user=self.request.user,
             )
             messages.success(self.request, _('The speaker has been added to the proposal.'))
@@ -575,13 +578,16 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
                     raise RollbackTransaction()
 
                 if created:
-                    if email := self.new_speaker_form.cleaned_data['email']:
+                    email = self.new_speaker_form.cleaned_data.get('email')
+                    name = self.new_speaker_form.cleaned_data.get('name')
+                    biography = self.new_speaker_form.cleaned_data.get('biography')
+                    if email or name or biography:
                         form.instance.add_speaker(
                             email=email,
-                            name=self.new_speaker_form.cleaned_data['name'],
+                            name=name,
                             locale=self.new_speaker_form.cleaned_data.get('locale'),
                             user=self.request.user,
-                            biography=self.new_speaker_form.cleaned_data.get('biography'),
+                            biography=biography,
                         )
                 else:
                     formset_result = self.save_formset(form.instance)

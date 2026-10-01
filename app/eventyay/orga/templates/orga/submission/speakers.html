@@ -139,7 +139,7 @@
         </form>
     </div></div>{% endif %}
 
-    <span id="vars" remoteUrl="{{ request.event.organizer.orga_urls.user_search }}"></span>
+    <span id="vars" remoteUrl="{{ request.event.organizer.orga_urls.user_search }}?event={{ request.event.pk }}"></span>
     {% compress js %}
         <script defer src="{% static "orga/js/speakers.js" %}"></script>
     {% endcompress %}
