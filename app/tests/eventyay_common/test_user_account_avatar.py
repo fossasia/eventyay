@@ -187,3 +187,27 @@ def test_user_account_clear_profile_picture_with_existing_no_conflict(client):
     assert 'Cannot upload a new profile picture' not in response.content.decode('utf-8')
     user.refresh_from_db()
     assert bool(user.profile_picture) is False
+
+
+@pytest.mark.django_db
+def test_user_account_profile_picture_that_cannot_be_processed(client):
+    user = User.objects.create_user(email='profile_pic_broken@example.com', password='password123')
+    client.force_login(user)
+
+    file = io.BytesIO()
+    Image.effect_noise((400, 400), 64).convert('RGB').save(file, 'JPEG')
+    truncated = SimpleUploadedFile('broken.jpg', file.getvalue()[:4000], content_type='image/jpeg')
+
+    response = client.post(
+        reverse('eventyay_common:account.general'),
+        {
+            'fullname': 'Profile Picture User',
+            'locale': 'en',
+            'timezone': 'UTC',
+            'profile_picture': truncated,
+        },
+    )
+    assert response.status_code == 200
+    assert 'Failed to process image.' in response.content.decode('utf-8')
+    user.refresh_from_db()
+    assert bool(user.profile_picture) is False

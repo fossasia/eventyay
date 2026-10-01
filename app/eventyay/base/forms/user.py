@@ -150,7 +150,7 @@ class UserSettingsForm(forms.ModelForm):
 
             try:
                 result = optimize_uploaded_image(pic, 'profile_picture', crop_box)
-                base_name, _ = os.path.splitext(pic.name)
+                base_name = os.path.splitext(pic.name)[0]
                 pic = SimpleUploadedFile(
                     f"{base_name}.{result.optimized_ext}",
                     result.optimized.read(),
