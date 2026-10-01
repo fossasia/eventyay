@@ -295,7 +295,7 @@ def test_orga_can_add_speakers(orga_client, submission, other_orga_user, user):
     assert submission.speakers.count() == 1
 
     if user == "EMAIL":
-        data = {"email": other_orga_user.email}
+        data = {"email": other_orga_user.email, "name": "Existing Speaker"}
     else:
         data = {"email": "some_unused@mail.org", "name": "New Speaker"}
 

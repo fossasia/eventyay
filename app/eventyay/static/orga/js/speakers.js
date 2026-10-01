@@ -45,6 +45,10 @@ const initUserSearch = () => {
         removeItemIconText: "×",
         maxItemText: "",
     })
+    select.form?.addEventListener("speaker-added", () => {
+        choices.removeActiveItems()
+        choices.clearInput()
+    })
     select.addEventListener("search", (ev) => {
         fetchUsers(ev.detail.value)
             .then((users) => {

@@ -1,5 +1,6 @@
 import json
 from collections import Counter
+from urllib.parse import urlencode
 
 from dateutil import rrule
 from django.conf import settings
@@ -7,19 +8,23 @@ from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.syndication.views import Feed
 from django.db import transaction
-from django.db.models import Count as DbCount, Prefetch, Q
+from django.db.models import Count as DbCount
+from django.db.models import Prefetch, Q
 from django.db.models.functions import TruncDate
 from django.forms.models import BaseModelFormSet, inlineformset_factory
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
+from django.template.loader import render_to_string
 from django.utils import feedgenerator
 from django.utils.functional import cached_property
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.utils.translation import gettext, gettext_lazy as _
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, ListView, TemplateView, UpdateView, View
 from django_context_decorator import context
-from urllib.parse import urlencode
+from django_scopes import scope
 
+from eventyay.agenda.views.utils import clear_schedule_caches
 from eventyay.base.models import (
     Answer,
     Feedback,
@@ -49,12 +54,14 @@ from eventyay.common.forms.fields import SizeFileInput
 from eventyay.common.session_video import (
     get_submission_video_url,
     prefetch_submission_video_urls,
-    session_videos_enabled as event_session_videos_enabled,
     set_submission_video_urls,
     video_urls_from_prefetched_submission,
 )
-from eventyay.common.video_embed import parse_video_urls
+from eventyay.common.session_video import (
+    session_videos_enabled as event_session_videos_enabled,
+)
 from eventyay.common.text.phrases import phrases
+from eventyay.common.video_embed import parse_video_urls
 from eventyay.common.views.generic import CreateOrUpdateView, OrgaCRUDView
 from eventyay.common.views.mixins import (
     ActionConfirmMixin,
@@ -297,6 +304,12 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
     permission_required = 'base.orga_list_speakerprofile'
     form_class = AddSpeakerInlineForm
 
+    def get_permission_required(self):
+        permissions = super().get_permission_required()
+        if self.request.method == 'POST':
+            return (*permissions, 'base.update_submission')
+        return permissions
+
     @context
     @cached_property
     def speakers(self):
@@ -339,18 +352,45 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
             for speaker in speakers_qs
         ]
 
+    @transaction.atomic
     def form_valid(self, form):
-        if email := form.cleaned_data.get('email'):
+        with scope(event=self.request.event):
             speaker = self.object.add_speaker(
-                email=email,
+                email=form.cleaned_data['email'],
                 name=form.cleaned_data.get('name'),
                 locale=form.cleaned_data.get('locale'),
                 biography=form.cleaned_data.get('biography'),
                 user=self.request.user,
             )
-            messages.success(self.request, _('The speaker has been added to the proposal.'))
-            return redirect(speaker.event_profile(self.request.event).orga_urls.base)
-        return super().form_valid(form)
+            clear_schedule_caches(self.request.event, submission=self.object, speaker=speaker)
+            self.request.event.cache.set('rebuild_schedule_export', True, None)
+            message = _('The speaker has been added to the proposal.')
+            if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                self.object.refresh_from_db()
+                context = self.get_context_data(form=form)
+                return JsonResponse(
+                    {
+                        'speakers': render_to_string('orga/submission/speaker_list.html', context, request=self.request),
+                        'speaker_names': render_to_string(
+                            'orga/includes/submission_speaker_names.html',
+                            {**context, 'lightbox': True},
+                            request=self.request,
+                        ),
+                        'speaker_code': speaker.code,
+                        'message': str(message),
+                    }
+                )
+            messages.success(self.request, message)
+            return redirect(self.get_success_url())
+
+    def form_invalid(self, form):
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            errors = [
+                {'label': str(form.fields[name].label) if name in form.fields else '', 'messages': list(field_errors)}
+                for name, field_errors in form.errors.items()
+            ]
+            return JsonResponse({'errors': errors}, status=400)
+        return super().form_invalid(form)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

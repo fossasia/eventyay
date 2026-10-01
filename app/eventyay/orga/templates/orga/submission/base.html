@@ -31,9 +31,11 @@
                     <h2>
                         <span>
                             {{ quotation_open }}{% if can_view_speakers %}{{ submission.title }}{% else %}{{ submission.anonymised.title|default:submission.title }}{% endif %}{{ quotation_close }}
-                            {% if submission.speakers.exists and can_view_speakers %}
-                                – {% include "orga/includes/submission_speaker_names.html" with lightbox=True %}
-                            {% endif %}
+                            <span id="submission-speaker-names">
+                                {% if submission.speakers.exists and can_view_speakers %}
+                                    – {% include "orga/includes/submission_speaker_names.html" with lightbox=True %}
+                                {% endif %}
+                            </span>
                             {% if can_edit_submission %}
                                 {% include "orga/submission/state_dropdown.html" with submission=submission %}
                                 {% if submission.pending_state and can_edit_submission %}
