@@ -1,6 +1,7 @@
 import datetime
 from decimal import Decimal
 
+from django.test import override_settings
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 from i18nfield.strings import LazyI18nString
@@ -955,3 +956,38 @@ class ItemsTest(ItemFormTest):
 
         frontpage_text = self.event1.settings.get('frontpage_text', as_type=LazyI18nString)
         assert frontpage_text.data.get('en') == 'Presale intro text'
+
+
+class ProductDeleteTest(ItemFormTest):
+    @override_settings(DEBUG=True)
+    def test_delete_page_names_product(self):
+        url = f'/control/event/{self.orga1.slug}/{self.event1.slug}/products/{self.item1.id}/delete'
+        doc = self.get_doc(url)
+        assert doc.select_one('form p strong').text == 'Standard'
+        assert doc.select_one('button.btn-delete').text.strip() == 'Delete'
+
+    @override_settings(DEBUG=True)
+    def test_delete_page_offers_deactivation_for_ordered_product(self):
+        with scopes_disabled():
+            o = Order.objects.create(
+                code='FOO',
+                event=self.event1,
+                email='dummy@dummy.test',
+                status=Order.STATUS_PENDING,
+                datetime=now(),
+                expires=now() + datetime.timedelta(days=10),
+                total=14,
+                locale='en',
+            )
+            OrderPosition.objects.create(order=o, product=self.item1, variation=None, price=Decimal('14'))
+        url = f'/control/event/{self.orga1.slug}/{self.event1.slug}/products/{self.item1.id}/delete'
+
+        doc = self.get_doc(url)
+        assert doc.select_one('form p strong').text == 'Standard'
+        assert doc.select_one('button.btn-delete').text.strip() == 'Deactivate'
+
+        self.item1.active = False
+        self.item1.save()
+        doc = self.get_doc(url)
+        assert doc.select_one('p strong').text == 'Standard'
+        assert doc.select_one('button.btn-delete') is None
