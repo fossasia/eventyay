@@ -482,6 +482,7 @@ export default {
 			const minText = this.t.minutes || this.$t('min')
 			return [
 				{ value: 5, label: `5 ${minText}` },
+				{ value: 10, label: `10 ${minText}` },
 				{ value: 15, label: `15 ${minText}` },
 				{ value: 30, label: `30 ${minText}` },
 				{ value: 60, label: `60 ${minText}` },
