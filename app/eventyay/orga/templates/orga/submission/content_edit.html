@@ -87,7 +87,7 @@
             {% if form.image %}{{ form.image.as_field_group }}{% endif %}
             {% if form.slides %}{{ form.slides.as_field_group }}{% endif %}
             {% if action != "create" and can_edit and session_videos_enabled %}
-                <div class="form-group row">
+                <div class="form-group row {% if session_video_urls_error %}has-error{% endif %}">
                     <label class="col-md-3 col-form-label" for="session_video_urls">
                         <span>{% translate "Session videos" %}</span>
                         <span class="optional">{% translate "Optional" %}</span>
@@ -102,6 +102,9 @@
                             placeholder="{% translate "One YouTube or Vimeo URL per line" %}"
                         >{{ session_video_urls_text }}</textarea>
                         <small class="form-text text-muted">{% translate "YouTube or Vimeo URLs, one per line." %}</small>
+                        {% if session_video_urls_error %}
+                            <div class="help-block">{{ session_video_urls_error }}</div>
+                        {% endif %}
                     </div>
                 </div>
             {% endif %}

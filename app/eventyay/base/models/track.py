@@ -39,7 +39,7 @@ class Track(OrderedModel, PretalxModel):
         max_length=7,
         verbose_name=_('Color'),
         validators=[
-            RegexValidator('#([0-9A-Fa-f]{3}){1,2}'),
+            RegexValidator('^#([0-9A-Fa-f]{3}){1,2}$'),
         ],
     )
     position = models.PositiveIntegerField(
