@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from django.test import override_settings
 from django.utils.timezone import now
-from django_scopes import scopes_disabled
+from django_scopes import scope, scopes_disabled
 from i18nfield.strings import LazyI18nString
 
 from eventyay.base.models import (
@@ -968,7 +968,7 @@ class ProductDeleteTest(ItemFormTest):
 
     @override_settings(DEBUG=True)
     def test_delete_page_offers_deactivation_for_ordered_product(self):
-        with scopes_disabled():
+        with scope(organizer=self.orga1, event=self.event1):
             o = Order.objects.create(
                 code='FOO',
                 event=self.event1,
