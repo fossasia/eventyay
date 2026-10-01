@@ -176,10 +176,12 @@ header .header-row-right {
         opacity: 0.85;
     }
 
-    /* Mobile: hero overlay width (+ padding where set in main bundle) */
+    /* Mobile: hero overlay width + horizontal padding (matches Join Video / content inset) */
     .event-hero-overlay {
         display: flex;
         width: 100%;
+        padding-left: 12px;
+        padding-right: 12px;
     }
 
     /* Presale event index: full-bleed hero overlay */
