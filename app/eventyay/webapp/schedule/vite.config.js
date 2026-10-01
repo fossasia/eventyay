@@ -4,16 +4,18 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import BuntpapierStylus from 'buntpapier/stylus.js'
 import {createGettextPlugin} from '../i18n/vite-plugin.js'
+import {stableChunkBase} from '../stable-chunk-name.js'
 
+const dirname = import.meta.dirname
 const stylusOptions = {
 	paths: [
-		path.resolve(import.meta.dirname, './src/styles'),
+		path.resolve(dirname, './src/styles'),
 		'node_modules'
 	],
 	use: [BuntpapierStylus({implicit: false})],
 	imports: [
 		'buntpapier/buntpapier/index.styl',
-		path.resolve(import.meta.dirname, 'src/styles/variables.styl')
+		path.resolve(dirname, 'src/styles/variables.styl')
 	]
 }
 
@@ -27,9 +29,9 @@ export default defineConfig({
 		port: 8082,
 		fs: {
 			allow: [
-				path.resolve(import.meta.dirname),
-				path.resolve(import.meta.dirname, '../../locale'),
-				path.resolve(import.meta.dirname, '../i18n'),
+				path.resolve(dirname),
+				path.resolve(dirname, '../../locale'),
+				path.resolve(dirname, '../i18n'),
 			]
 		},
 	},
@@ -62,8 +64,9 @@ export default defineConfig({
 		dedupe: ['vue'],
 		extensions: ['.js', '.json', '.vue'],
 		alias: [
-			{ find: '~', replacement: path.resolve(import.meta.dirname, 'src') },
-			{ find: /^buntpapier$/, replacement: path.resolve(import.meta.dirname, 'node_modules/buntpapier/src/index.js') },
+			{ find: '~', replacement: path.resolve(dirname, 'src') },
+			{ find: /^buntpapier$/, replacement: path.resolve(dirname, 'node_modules/buntpapier/src/index.js') },
+			{ find: 'moment-timezone', replacement: path.resolve(dirname, 'node_modules/moment-timezone/builds/moment-timezone-with-data-10-year-range.js') },
 		],
 	},
 	build: {
@@ -72,7 +75,7 @@ export default defineConfig({
 		cssCodeSplit: false,
 		sourcemap: false,
 		lib: {
-			entry: path.resolve(import.meta.dirname, 'src/main-wc.js'),
+			entry: path.resolve(dirname, 'src/main-wc.js'),
 			name: 'PretalxSchedule',
 			fileName: 'pretalx-schedule',
 			formats: ['es']
@@ -81,22 +84,8 @@ export default defineConfig({
 		rollupOptions: {
 			output: {
 				entryFileNames: 'pretalx-schedule.js',
-				chunkFileNames: 'pretalx-schedule-[name].js',
+				chunkFileNames: (chunkInfo) => `pretalx-schedule-${stableChunkBase(chunkInfo)}.js`,
 				assetFileNames: 'pretalx-schedule.[ext]',
-				manualChunks(id) {
-					if (id.includes('node_modules')) {
-						if (id.includes('/vue/')) return 'vendor-vue'
-						if (id.includes('moment')) return 'vendor-moment'
-						if (id.includes('markdown-it')) return 'vendor-markdown'
-						if (id.includes('dompurify')) return 'vendor-dompurify'
-						if (id.includes('i18next')) return 'vendor-i18n'
-						return 'vendor'
-					}
-					if (id.includes('/src/components/GridSchedule')) return 'chunk-grid'
-					if (id.includes('/src/components/ScheduleToolbar')) return 'chunk-toolbar'
-					if (id.includes('/src/components/SessionModal')) return 'chunk-modal'
-					return undefined
-				},
 			}
 		}
 	},

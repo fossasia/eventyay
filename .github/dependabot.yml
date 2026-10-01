@@ -22,7 +22,6 @@ updates:
       # the shared open-pull-requests-limit against the main dependency set.
       documentation:
         patterns:
-          - "docutils"
           - "pyenchant"
           - "pygments-markdown-lexer"
           - "sphinx*"
@@ -37,6 +36,7 @@ updates:
       # Ignore all setuptools updates; issue is not version-specific.
       # Can be removed once Dependabot handles no-op uv updates.
       - dependency-name: "setuptools"
+      - dependency-name: "setuptools-rust"
       # Git plugins are not on PyPI; pins are updated by update-plugin-pins.yml.
       - dependency-name: "exhibition"
       - dependency-name: "eventyay-paypal"
