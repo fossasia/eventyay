@@ -617,6 +617,8 @@ class OrderDownload(AsyncAction, OrderView):
             return None
 
     def get(self, request, *args, **kwargs):
+        if not self.output or not self.output.is_enabled:
+            return self.error(_('You requested an invalid ticket output type.'))
         if 'async_id' in request.GET and settings.HAS_CELERY:
             return self.get_result(request)
         ct = self.get_last_ct()

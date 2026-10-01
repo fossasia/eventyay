@@ -183,3 +183,30 @@ def test_output_is_hidden_without_credentials(signing_credentials):
 
     assert output.is_enabled is False
     assert output.preview_allowed is False
+
+
+def test_subevent_zero_coordinates_are_preserved(signing_credentials, monkeypatch):
+    output, event = output_for(signing_credentials)
+    subevent = SimpleNamespace(
+        name='Greenwich Conference',
+        date_from=event.date_from,
+        date_to=event.date_to,
+        geo_lat=0,
+        geo_lon=0,
+    )
+    position = SimpleNamespace(
+        order=SimpleNamespace(event=event, code='ZERO1'),
+        subevent=subevent,
+        product=SimpleNamespace(name='Standard'),
+        variation=None,
+        seat=None,
+        attendee_name='',
+        secret='ticket-secret',
+        positionid=1,
+    )
+    monkeypatch.setattr(
+        'eventyay.plugins.passbook.ticketoutput.build_absolute_uri',
+        lambda *args, **kwargs: 'https://example.com/conference/',
+    )
+
+    assert output.pass_data(position)['locations'] == [{'latitude': 0.0, 'longitude': 0.0}]

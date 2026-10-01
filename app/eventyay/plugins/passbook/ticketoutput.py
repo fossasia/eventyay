@@ -321,8 +321,8 @@ class PassbookTicketOutput(BaseTicketOutput):
         ):
             payload[key] = rgb_color(self.settings.get(setting) or fallback)
 
-        latitude = event.geo_lat or order.event.geo_lat
-        longitude = event.geo_lon or order.event.geo_lon
+        latitude = event.geo_lat if event.geo_lat is not None else order.event.geo_lat
+        longitude = event.geo_lon if event.geo_lon is not None else order.event.geo_lon
         if latitude is not None and longitude is not None:
             payload['locations'] = [{'latitude': float(latitude), 'longitude': float(longitude)}]
         if event.date_to:
