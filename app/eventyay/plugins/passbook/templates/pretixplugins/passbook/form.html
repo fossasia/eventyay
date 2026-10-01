@@ -1,0 +1,10 @@
+{% load i18n %}
+{% if provider_configured %}
+  <div class="alert alert-success" role="status">
+    {% trans "Apple Wallet signing is configured." %}
+  </div>
+{% else %}
+  <div class="alert alert-warning" role="alert">
+    {% trans "Complete and save all signing fields before Apple Wallet tickets become available." %}
+  </div>
+{% endif %}

@@ -507,6 +507,8 @@ class OrderDetail(OrderView):
         responses = register_ticket_outputs.send(self.request.event)
         for receiver, response in responses:
             provider = response(self.request.event)
+            if not provider.is_enabled:
+                continue
             buttons.append(
                 {
                     'text': provider.download_button_text or 'Ticket',
@@ -623,7 +625,7 @@ class OrderDownload(AsyncAction, OrderView):
         return self.http_method_not_allowed(request)
 
     def post(self, request, *args, **kwargs):
-        if not self.output:
+        if not self.output or not self.output.is_enabled:
             return self.error(_('You requested an invalid ticket output type.'))
         if not self.order_position:
             raise Http404(_('Unknown order code or not authorized to access this order.'))

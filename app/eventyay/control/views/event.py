@@ -38,6 +38,7 @@ from i18nfield.utils import I18nJSONEncoder
 
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
+from eventyay.base.forms import SecretKeySettingsField
 from eventyay.base.meetup import is_meetup_event
 from eventyay.common.sanitizers import sanitize_email_html
 from eventyay.timezones import localize_datetime
@@ -1082,7 +1083,9 @@ class TicketSettings(EventSettingsViewMixin, EventPermissionRequiredMixin, FormV
                         user=self.request.user,
                         data={
                             k: (
-                                provider.form.cleaned_data.get(k).name
+                                '*****'
+                                if isinstance(provider.form.fields.get(k), SecretKeySettingsField)
+                                else provider.form.cleaned_data.get(k).name
                                 if isinstance(provider.form.cleaned_data.get(k), File)
                                 else provider.form.cleaned_data.get(k)
                             )
@@ -1123,6 +1126,7 @@ class TicketSettings(EventSettingsViewMixin, EventPermissionRequiredMixin, FormV
             provider.form = ProviderForm(
                 obj=self.request.event,
                 settingspref=f'ticketoutput_{provider.identifier}_',
+                provider=provider,
                 data=(self.request.POST if self.request.method == 'POST' else None),
                 files=(self.request.FILES if self.request.method == 'POST' else None),
             )
@@ -1729,19 +1733,7 @@ class QuickSetupView(FormView):
             self.request.event.settings.ticket_download = True
             self.request.event.settings.ticketoutput_pdf__enabled = True
 
-            try:
-                import pretix_passbook  # noqa
-            except ImportError:
-                pass
-            else:
-                if 'eventyay_passbook' not in plugins_active:
-                    self.request.event.log_action(
-                        'eventyay.event.plugins.enabled',
-                        user=self.request.user,
-                        data={'plugin': 'eventyay_passbook'},
-                    )
-                    plugins_active.append('eventyay_passbook')
-                self.request.event.settings.ticketoutput_passbook__enabled = True
+            self.request.event.settings.ticketoutput_passbook__enabled = True
 
         else:
             self.request.event.settings.ticket_download = False

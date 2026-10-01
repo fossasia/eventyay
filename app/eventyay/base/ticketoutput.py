@@ -164,6 +164,9 @@ class BaseTicketOutput:
         """
         pass
 
+    def settings_form_clean(self, cleaned_data: dict) -> dict:
+        return cleaned_data
+
     @property
     def download_button_text(self) -> str:
         """

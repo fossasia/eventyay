@@ -465,7 +465,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         responses = register_ticket_outputs.send(self.request.event)
         for receiver, response in responses:
             prov = response(self.request.event)
-            if prov.identifier == identifier:
+            if prov.identifier == identifier and prov.is_enabled:
                 return prov
         raise NotFound('Unknown output provider.')
 
@@ -1147,7 +1147,7 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
         responses = register_ticket_outputs.send(self.request.event)
         for receiver, response in responses:
             prov = response(self.request.event)
-            if prov.identifier == identifier:
+            if prov.identifier == identifier and prov.is_enabled:
                 return prov
         raise NotFound('Unknown output provider.')
 
