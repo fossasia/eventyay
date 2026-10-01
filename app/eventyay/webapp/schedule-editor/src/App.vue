@@ -764,6 +764,7 @@ function editorStart(session: SessionData | Talk): void {
 }
 
 function editorSubmit(event: KeyboardEvent): void {
+  if (event.isComposing || event.keyCode === 229) return
   const target = event.target
   if (
     !(target instanceof HTMLInputElement) &&
