@@ -273,7 +273,13 @@ header {
   min-width: 0;
   max-width: 100%;
   width: 100%;
-  padding-left: 1.75rem;
+  /* Same inset as #main-card > main, so the hero lines up with the page content */
+  padding-left: var(--size-spacer);
+}
+
+/* Without a logo, the empty logo slot would still push the title right by the gap */
+.event-brand:not(.event-brand--has-logo) {
+  column-gap: 0;
 }
 
 .event-brand:not(.event-brand--logo-large) .event-logo {
@@ -397,7 +403,7 @@ header {
 header > .event-home-back {
   align-self: flex-start;
   margin: 0 0 6px;
-  padding-left: 28px;
+  padding-left: var(--size-spacer);
   box-sizing: border-box;
   display: inline-block;
   text-decoration: none;
