@@ -2,6 +2,7 @@ import copy
 import json
 
 from django.dispatch import receiver
+from django_scopes import scope
 from django.template.loader import get_template
 from django.urls import resolve, reverse
 from django.utils.html import escape
@@ -100,7 +101,9 @@ def event_copy_data_receiver(sender, other, question_map, product_map, voucher_m
     if not clone_options.get('clone_ticketing_data', True):
         return
     layout_map = {}
-    for bl in other.badge_layouts.all():
+    with scope(event=other):
+        source_layouts = list(other.badge_layouts.all())
+    for bl in source_layouts:
         oldid = bl.pk
         bl = copy.copy(bl)
         bl.pk = None
@@ -122,7 +125,7 @@ def event_copy_data_receiver(sender, other, question_map, product_map, voucher_m
             else:
                 ask_user_fields.append(field)
         bl.ask_user_fields_data = ask_user_fields
-        
+
         required_badge_fields = []
         for field in bl.required_badge_fields_data:
             if field.startswith('question_'):
@@ -132,19 +135,24 @@ def event_copy_data_receiver(sender, other, question_map, product_map, voucher_m
             else:
                 required_badge_fields.append(field)
         bl.required_badge_fields_data = required_badge_fields
-        
-        bl.save()
 
-        if bl.background and bl.background.name:
-            bl.background.save('background.pdf', bl.background)
+        with scope(event=sender):
+            bl.save()
+
+            if bl.background and bl.background.name:
+                bl.background.save('background.pdf', bl.background)
 
         layout_map[oldid] = bl
 
-    for bi in BadgeProduct.objects.filter(product__event=other):
+    with scope(organizer=sender.organizer):
+        badge_products = list(BadgeProduct.objects.filter(product__event=other))
+    for bi in badge_products:
         BadgeProduct.objects.create(product=product_map.get(bi.product_id), layout=layout_map.get(bi.layout_id))
 
     if voucher_map:
-        for bv in BadgeVoucher.objects.filter(voucher__event=other):
+        with scope(organizer=sender.organizer):
+            badge_vouchers = list(BadgeVoucher.objects.filter(voucher__event=other))
+        for bv in badge_vouchers:
             mapped_voucher = voucher_map.get(bv.voucher_id)
             if mapped_voucher:
                 BadgeVoucher.objects.create(voucher=mapped_voucher, layout=layout_map.get(bv.layout_id))

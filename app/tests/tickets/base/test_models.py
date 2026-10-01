@@ -16,6 +16,7 @@ from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
 
 from eventyay.base.i18n import language
+from eventyay.base.services.event import get_event_by_id_or_slug
 from eventyay.base.models import (
     CachedFile,
     CartPosition,
@@ -39,7 +40,7 @@ from eventyay.base.models import (
     Voucher,
     WaitingListEntry,
 )
-from eventyay.base.models.event import SubEvent
+from eventyay.base.models.event import EventExtraLink, SubEvent
 from eventyay.base.models.product import (
     ProductBundle as ItemBundle,
     SubEventProduct as SubEventItem,
@@ -2368,6 +2369,65 @@ class EventTest(TestCase):
         self.assertIn('slug', str(context.exception))
 
     @classscope(attr='organizer')
+    def test_single_character_slug_is_valid_and_unique_per_organizer(self):
+        event = Event(
+            organizer=self.organizer,
+            name='Three',
+            slug='3',
+            date_from=datetime.datetime(2013, 12, 26, tzinfo=datetime.timezone.utc),
+            date_to=datetime.datetime(2013, 12, 27, tzinfo=datetime.timezone.utc),
+        )
+        event.full_clean()
+        event.save()
+
+        other = Organizer.objects.create(name='Other', slug='o')
+        same_slug = Event(
+            organizer=other,
+            name='Three again',
+            slug='3',
+            date_from=datetime.datetime(2013, 12, 26, tzinfo=datetime.timezone.utc),
+            date_to=datetime.datetime(2013, 12, 27, tzinfo=datetime.timezone.utc),
+        )
+        same_slug.full_clean()
+        same_slug.save()
+
+        duplicate = Event(
+            organizer=self.organizer,
+            name='Three duplicate',
+            slug='3',
+            date_from=datetime.datetime(2013, 12, 26, tzinfo=datetime.timezone.utc),
+            date_to=datetime.datetime(2013, 12, 27, tzinfo=datetime.timezone.utc),
+        )
+        with self.assertRaises(ValidationError):
+            duplicate.full_clean()
+
+    @classscope(attr='organizer')
+    def test_single_punctuation_slug_is_rejected(self):
+        for slug in ('', '.', '-', 'a.', '.a', 'a-', '-a', 'a\n'):
+            event = Event(
+                organizer=self.organizer,
+                name='Bad',
+                slug=slug,
+                date_from=datetime.datetime(2013, 12, 26, tzinfo=datetime.timezone.utc),
+                date_to=datetime.datetime(2013, 12, 27, tzinfo=datetime.timezone.utc),
+            )
+            with self.assertRaises(ValidationError) as context:
+                event.full_clean()
+            self.assertIn('slug', str(context.exception))
+
+    @classscope(attr='organizer')
+    def test_existing_multi_character_slug_patterns_stay_valid(self):
+        for slug in ('ab', 'a1', 'a.b', 'a-b', 'a.b-c'):
+            event = Event(
+                organizer=self.organizer,
+                name='Ok',
+                slug=slug,
+                date_from=datetime.datetime(2013, 12, 26, tzinfo=datetime.timezone.utc),
+                date_to=datetime.datetime(2013, 12, 27, tzinfo=datetime.timezone.utc),
+            )
+            event.full_clean()
+
+    @classscope(attr='organizer')
     def test_copy(self):
         event1 = Event.objects.create(
             organizer=self.organizer,
@@ -2475,6 +2535,59 @@ class EventTest(TestCase):
                 },
             ]
         }
+
+    def test_copy_without_active_scope(self):
+        """copy_data_from works with no active django_scopes (e.g. /common/events/add)."""
+        event1 = Event.objects.create(
+            organizer=self.organizer,
+            name='Source',
+            slug='copy-src-scope',
+            date_from=datetime.datetime(2013, 12, 26, 9, 0, 0, tzinfo=datetime.timezone.utc),
+            is_public=True,
+        )
+        with scope(organizer=self.organizer):
+            tr = event1.tax_rules.create(rate=Decimal('19.00'))
+            i1 = event1.products.create(
+                name='Ticket',
+                default_price=Decimal('10.00'),
+                tax_rule=tr,
+            )
+            v1 = i1.variations.create(value='VIP')
+            q1 = event1.quotas.create(name='Quota', size=10)
+            q1.products.add(i1)
+            q1.variations.add(v1)
+            que1 = event1.questions.create(question='Name', type='S')
+            que1.products.add(i1)
+
+        with scope(event=event1):
+            EventExtraLink.objects.create(
+                event=event1,
+                label='Footer link',
+                url='https://example.com/footer',
+                role='footer',
+            )
+
+        event2 = Event.objects.create(
+            organizer=self.organizer,
+            name='Destination',
+            slug='copy-dst-scope',
+            date_from=datetime.datetime(2013, 12, 27, 9, 0, 0, tzinfo=datetime.timezone.utc),
+        )
+        event2.copy_data_from(event1)
+
+        with scopes_disabled():
+            i1new = event2.products.get()
+            assert i1new.variations.count() == 1
+            assert event2.questions.get().products.filter(pk=i1new.pk).exists()
+            q1new = event2.quotas.get()
+            assert q1new.products.filter(pk=i1new.pk).exists()
+            assert q1new.variations.filter(pk=i1new.variations.get().pk).exists()
+            assert EventExtraLink.objects.filter(event_id=event2.pk).count() == 1
+
+        tr.refresh_from_db()
+        i1.refresh_from_db()
+        assert tr.event == event1
+        assert i1.event == event1
 
     @classscope(attr='organizer')
     def test_presale_has_ended(self):
@@ -2608,6 +2721,43 @@ class EventTest(TestCase):
         item.hide_without_voucher = True
         item.save()
         assert Event.annotated(Event.objects).first().active_quotas == []
+
+
+class OrganizerSlugTest(TestCase):
+    def test_single_character_slug_is_valid(self):
+        organizer = Organizer(name='Three', slug='3')
+        organizer.full_clean()
+
+    def test_single_punctuation_slug_is_rejected(self):
+        for slug in ('', '.', '-', 'a\n'):
+            organizer = Organizer(name='Bad', slug=slug)
+            with self.assertRaises(ValidationError) as context:
+                organizer.full_clean()
+            self.assertIn('slug', context.exception.message_dict)
+
+    def test_organizer_slug_stays_globally_unique(self):
+        Organizer.objects.create(name='One', slug='a')
+        with self.assertRaises(ValidationError):
+            Organizer(name='Two', slug='a').full_clean()
+
+    def test_numeric_slug_does_not_replace_event_primary_key(self):
+        organizer = Organizer.objects.create(name='First', slug='first')
+        event = Event.objects.create(
+            organizer=organizer,
+            name='Existing',
+            slug='existing',
+            date_from=datetime.datetime(2013, 12, 26, tzinfo=datetime.timezone.utc),
+        )
+        other = Organizer.objects.create(name='Other', slug='other')
+        Event.objects.create(
+            organizer=other,
+            name='Digit',
+            slug=str(event.pk),
+            date_from=datetime.datetime(2013, 12, 26, tzinfo=datetime.timezone.utc),
+        )
+        found = get_event_by_id_or_slug(str(event.pk))
+        self.assertEqual(found.pk, event.pk)
+        self.assertEqual(get_event_by_id_or_slug(event.pk).pk, event.pk)
 
 
 class SubEventTest(TestCase):
@@ -3059,6 +3209,9 @@ class SeatingTestCase(TestCase):
         assert self.seat_a1.is_available()
 
 
+DATETIME_ANSWER = datetime.datetime(2018, 1, 16, 15, 20, 0, tzinfo=ZoneInfo('Europe/Berlin'))
+
+
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     'qtype,answer,expected',
@@ -3106,6 +3259,7 @@ class SeatingTestCase(TestCase):
             '2018-01-16T15:20:00',
             datetime.datetime(2018, 1, 16, 15, 20, 0, tzinfo=ZoneInfo('Europe/Berlin')),
         ),
+        (Question.TYPE_DATETIME, DATETIME_ANSWER, lambda value: value is DATETIME_ANSWER),
         (Question.TYPE_DATETIME, '2018-01-16T15:AB:CD', ValidationError),
         (Question.TYPE_DATETIME, '2018-01-16T13:20:00+01:00', ValidationError),
         (Question.TYPE_DATETIME, '2018-01-16T16:20:00+01:00', ValidationError),

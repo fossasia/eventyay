@@ -24,6 +24,8 @@
 		.warning-icon.text-danger
 			span(v-if="warnings.length > 1") {{ warnings.length }}
 			i.fa.fa-exclamation-triangle
+	button.unschedule-btn.no-print(v-if="showUnschedule", type="button", @pointerdown.stop, @pointerup.stop, @click.stop="onUnschedule", :aria-label="$t('Remove from schedule')", :title="$t('Remove from schedule')")
+		i.fa.fa-times(aria-hidden="true")
 </template>
 
 <script lang="ts" setup>
@@ -74,16 +76,19 @@ const props = defineProps<{
   isDragged?: boolean
   isDragClone?: boolean
   overrideStart?: Moment | null
+  allowUnschedule?: boolean
 }>()
 
 const emit = defineEmits<{
   (e: 'startDragging', payload: { session: Session; event: PointerEvent }): void
   (e: 'editSession', payload: Session): void
   (e: 'deleteSession', payload: Session): void
+  (e: 'unscheduleSession', payload: Session): void
 }>()
 
 const mode = resolveMode()
 const isBreak = computed(() => resolveSessionKind(mode, props.session) === 'break')
+const showUnschedule = computed(() => Boolean(props.allowUnschedule && !isBreak.value && !props.isDragClone && props.session.code))
 
 const hasSpeakersWithNames = computed(() => {
   return props.session.speakers && props.session.speakers.some(speaker => speaker.name)
@@ -178,6 +183,10 @@ function onPointerDown(event: PointerEvent): void {
     try { el.releasePointerCapture(event.pointerId) } catch (_) {}
   }
   emit('startDragging', { session: props.session, event })
+}
+
+function onUnschedule(): void {
+  emit('unscheduleSession', props.session)
 }
 </script>
 
@@ -338,6 +347,36 @@ sessionTextExpand()
 		font-size: 16px
 		.warning-icon span
 			padding-right: 4px
+	&:has(.unschedule-btn)
+		.info
+			padding-right: 26px
+		.warning
+			right: 28px
+	.unschedule-btn
+		position: absolute
+		top: 4px
+		right: 4px
+		z-index: 2
+		display: flex
+		align-items: center
+		justify-content: center
+		width: 22px
+		height: 22px
+		padding: 0
+		border: none
+		border-radius: 4px
+		background-color: $clr-white
+		color: $clr-secondary-text-light
+		cursor: pointer
+		.fa
+			font-size: 14px
+			pointer-events: none
+		&:hover, &:focus-visible
+			color: #b23e65
+			background-color: $clr-grey-100
+		&:focus-visible
+			outline: 2px solid var(--color-primary)
+			outline-offset: 1px
 
 	@media (hover: hover) and (pointer: fine)
 		&:hover:not(.dragging, .clone)
@@ -345,6 +384,8 @@ sessionTextExpand()
 				sessionTextExpand()
 
 @media print
+	.c-linear-schedule-session .unschedule-btn
+		display: none !important
 	.c-linear-schedule-session.isbreak
 		border: 2px solid $clr-grey-300 !important
 	.c-linear-schedule-session.istalk .time-box

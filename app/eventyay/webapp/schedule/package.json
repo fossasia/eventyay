@@ -35,7 +35,6 @@
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.7",
     "i18next-conv": "^17.0.0",
-    "i18next-parser": "^9.4.0",
     "pug": "^3.0.4",
     "stylus": "^0.64.0",
     "vite": "^8.2.0"
@@ -49,5 +48,13 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/pretalx/schedule.git"
+  },
+  "overrides": {
+    "brace-expansion@2": "^2.1.7",
+    "minimatch@9": "^9.0.9",
+    "minimatch@10": "^10.2.6",
+    "stylus": {
+      "glob": "13.0.6"
+    }
   }
 }

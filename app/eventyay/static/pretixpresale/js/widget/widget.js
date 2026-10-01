@@ -1573,9 +1573,72 @@ var shared_root_computed = {
     }
 };
 
+function widgetStylesheetUrl(targetUrl) {
+    if (!targetUrl) {
+        return '';
+    }
+    if (targetUrl.charAt(targetUrl.length - 1) !== '/') {
+        targetUrl += '/';
+    }
+    return targetUrl + 'widget/v1.css';
+}
+
+// Other scripts on the host page select pretix-widget / .pretix-widget and can
+// mount or rewrite the shop. The shop DOM lives in a shadow root so those
+// lookups do not see it. Checkout is portaled to document.body, same as before.
+function isolateWidgetElement(element, targetUrl) {
+    if (!element || !element.parentNode || typeof element.attachShadow !== 'function') {
+        return element;
+    }
+    var rootNode = typeof element.getRootNode === 'function' ? element.getRootNode() : document;
+    if (rootNode && rootNode.host) {
+        return element;
+    }
+    var host = document.createElement('eventyay-widget-host');
+    var shadow = host.attachShadow({mode: 'open'});
+    var href = widgetStylesheetUrl(targetUrl);
+    if (href) {
+        var link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.type = 'text/css';
+        link.href = href;
+        shadow.appendChild(link);
+    }
+    var reset = document.createElement('style');
+    reset.textContent = ':host{display:block}.pretix-widget,.pretix-widget-wrapper{color:#222;color-scheme:light}';
+    shadow.appendChild(reset);
+    element.parentNode.insertBefore(host, element);
+    shadow.appendChild(element);
+    return element;
+}
+
+function widgetMountParent(app) {
+    var el = app && app.$el;
+    var rootNode = el && typeof el.getRootNode === 'function' ? el.getRootNode() : null;
+    if (!(rootNode && rootNode.host)) {
+        return document.body;
+    }
+    var portal = document.createElement('eventyay-widget-host');
+    document.body.appendChild(portal);
+    var shadow = portal.attachShadow({mode: 'open'});
+    var link = rootNode.querySelector('link[rel="stylesheet"]');
+    if (link) {
+        var clone = document.createElement('link');
+        clone.rel = 'stylesheet';
+        clone.type = 'text/css';
+        clone.href = link.href;
+        shadow.appendChild(clone);
+    }
+    var reset = rootNode.querySelector('style');
+    if (reset) {
+        shadow.appendChild(reset.cloneNode(true));
+    }
+    return shadow;
+}
+
 var create_overlay = function (app) {
     var elem = document.createElement('pretix-overlay');
-    document.body.appendChild(elem);
+    widgetMountParent(app).appendChild(elem);
 
     var framechild = new Vue({
         el: elem,
@@ -1640,6 +1703,8 @@ var create_widget = function (element) {
         }
         element.appendChild(document.createElement("eventyay-widget"));
     }
+
+    element = isolateWidgetElement(element, target_url);
 
     var app = new Vue({
         el: element,
@@ -1723,6 +1788,8 @@ var create_button = function (element) {
         element.appendChild(btnWrapper);
     }
 
+    element = isolateWidgetElement(element, target_url);
+
     var itemsplit = raw_items.split(",");
     var items = [];
     for (var i = 0; i < itemsplit.length; i++) {
@@ -1800,6 +1867,7 @@ window.EventyayWidget.open = function (target_url, voucher, subevent, items, wid
     }
     var root = document.createElement("div");
     document.body.appendChild(root);
+    root = isolateWidgetElement(root, target_url);
     root.classList.add("pretix-widget-hidden");
     var openBtn = document.createElement("eventyay-button");
     openBtn.setAttribute("ref", "btn");

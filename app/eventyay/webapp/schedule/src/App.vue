@@ -6,8 +6,8 @@
 	template(v-else-if="scheduleError")
 		.schedule-error
 			.error-message {{ $t('An error occurred while loading the schedule. Please try again later.') }}
-	template(v-else-if="isTalkView && schedule && resolvedTalk")
-		talk-detail(:talk="resolvedTalk", :baseUrl="eventUrl")
+	template(v-else-if="isTalkView && schedule")
+		talk-detail(:talk="resolvedTalk", :talkId="talkCode", :baseUrl="eventUrl")
 	template(v-else-if="isSpeakerView && schedule")
 		featured-speakers(v-if="view === 'featured-speakers'")
 		speakers-list(v-else-if="view === 'speakers'")
@@ -618,8 +618,14 @@ export default {
 			return visiblePageItems(this.featuredTotalPages, this.featuredPage)
 		},
 		resolvedTalk () {
-			if (!this.talkCode || !this.sessions) return null
-			return this.sessionsLookup[this.talkCode] || null
+			if (!this.talkCode) return null
+			return this.sessionsLookup[this.talkCode]
+				|| this.inlineScheduleSessions.find(session => session.id === this.talkCode || session.code === this.talkCode)
+				|| null
+		},
+		talkUnavailableMessage () {
+			const m = this.translationMessages || {}
+			return m.schedule_pending_secondary || this.$t('To be announced')
 		},
 		eventSlug () {
 			let url = ''
