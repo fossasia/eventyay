@@ -881,6 +881,11 @@ class SubmissionList(EventPermissionRequired, BaseSubmissionList):
                 urls = []
             submission.session_video_urls = urls
             submission.session_video_urls_json = json.dumps(urls)
+        if self.request.event.get_feature_flag('use_tracks'):
+            ctx['track_colors'] = {
+                track.pk: track.color
+                for track in self.request.event.tracks.all()
+            }
         return ctx
 
 
