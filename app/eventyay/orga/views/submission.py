@@ -645,6 +645,22 @@ class SubmissionContentView(SubmissionContent):
             )
         return tags
 
+    @context
+    @cached_property
+    def scheduled_slot(self):
+        submission = self.get_object()
+        if not submission or not submission.pk:
+            return None
+        return (
+            submission.slots.filter(
+                schedule__version__isnull=True,
+                start__isnull=False,
+            )
+            .select_related('room')
+            .order_by('start')
+            .first()
+        )
+
 
 class BaseSubmissionList(Sortable, ReviewerSubmissionFilter, PaginationMixin, ListView):
     model = Submission
