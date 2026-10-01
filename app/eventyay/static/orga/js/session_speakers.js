@@ -49,9 +49,10 @@ if (form) {
                 return
             }
             const data = await response.json()
-            document.getElementById('session-speaker-list').innerHTML = data.speakers
+            document.getElementById('session-speaker-list').replaceChildren(
+                DOMPurify.sanitize(data.speakers, { RETURN_DOM_FRAGMENT: true }))
             const names = document.getElementById('submission-speaker-names')
-            names.innerHTML = data.speaker_names
+            names.replaceChildren(DOMPurify.sanitize(data.speaker_names, { RETURN_DOM_FRAGMENT: true }))
             names.prepend(document.createTextNode(' – '))
             const locale = form.elements.namedItem('locale')
             const invitationLocale = locale?.value

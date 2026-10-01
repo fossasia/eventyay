@@ -368,11 +368,18 @@ def test_orga_can_readd_speaker(orga_client, submission):
 
 
 @pytest.mark.django_db
-def test_orga_can_remove_speaker(orga_client, submission):
+@pytest.mark.parametrize('use_query', [False, True])
+def test_orga_can_remove_speaker(orga_client, submission, use_query):
     assert submission.speakers.count() == 1
+    speaker_pk = submission.speakers.first().pk
+    url = submission.orga_urls.delete_speaker
+    data = {"id": speaker_pk}
+    if use_query:
+        url = f'{url}?id={speaker_pk}'
+        data = {}
     response = orga_client.post(
-        submission.orga_urls.delete_speaker,
-        data={"id": submission.speakers.first().pk},
+        url,
+        data=data,
         follow=True,
     )
     submission.refresh_from_db()
