@@ -79,6 +79,7 @@ const initNavOverflow = () => {
       panel.style.top = '';
       panel.style.left = '';
       panel.style.width = '';
+      panel.classList.remove('nav-overflow-positioned');
       return;
     }
 
@@ -109,6 +110,7 @@ const initNavOverflow = () => {
     panel.style.top = `${Math.round(top)}px`;
     panel.style.left = `${Math.round(left)}px`;
     panel.style.width = `${Math.round(width)}px`;
+    panel.classList.add('nav-overflow-positioned');
   };
 
   const measureWidths = () => {

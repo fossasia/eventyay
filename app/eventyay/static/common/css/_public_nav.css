@@ -34,11 +34,6 @@
   flex: 1 1 auto;
   min-width: 0;
   overflow: visible;
-  transition: opacity 0.1s ease;
-}
-
-.presale-tabs-scroll:not(.nav-overflow-ready) {
-  opacity: 0;
 }
 
 .presale-tabs-scroll.nav-overflow-measuring > .header-tab,
@@ -208,8 +203,8 @@
 .nav-overflow-items {
   display: none;
   position: fixed;
-  top: 0;
-  left: 0;
+  top: -9999px;
+  left: -9999px;
   min-width: 220px;
   max-width: calc(100vw - 16px);
   max-height: min(70vh, 420px);
@@ -226,6 +221,11 @@
 
 .nav-overflow-menu[open] > .nav-overflow-items {
   display: block;
+}
+
+.nav-overflow-items.nav-overflow-positioned {
+  top: 0;
+  left: 0;
 }
 
 .nav-overflow-items::before,
