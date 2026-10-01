@@ -649,7 +649,7 @@ class SubmissionContentView(SubmissionContent):
     @cached_property
     def scheduled_slot(self):
         submission = self.get_object()
-        if not submission or not submission.pk:
+        if not isinstance(submission, Submission) or not submission.pk:
             return None
         return (
             submission.slots.filter(
