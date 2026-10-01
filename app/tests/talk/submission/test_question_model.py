@@ -1,10 +1,13 @@
 import pytest
 from django_countries.fields import Country
 from django_scopes import scope
-from eventyay.submission.forms import TalkQuestionsForm
-from eventyay.base.models import Answer, TalkQuestion as Question, TalkQuestionVariant as QuestionVariant
 
+from eventyay.base.models import Answer
+from eventyay.base.models import TalkQuestion as Question
+from eventyay.base.models import TalkQuestionVariant as QuestionVariant
+from eventyay.base.models.question import TalkQuestionRequired as QuestionRequired
 from eventyay.helpers.countries import get_country_name
+from eventyay.submission.forms import TalkQuestionsForm
 
 
 @pytest.mark.parametrize("target", ("submission", "speaker", "reviewer"))
@@ -51,6 +54,12 @@ def test_question_required_property_required_after_option_after_deadline(
     question_required_after_option_after_deadline,
 ):
     assert question_required_after_option_after_deadline.required is True
+
+
+def test_question_required_property_required_after_option_without_deadline():
+    question = Question(question_required=QuestionRequired.AFTER_DEADLINE)
+
+    assert question.required is False
 
 
 @pytest.mark.django_db

@@ -6,15 +6,17 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils.timezone import now
 from django_scopes import scope
 
-from eventyay.base.models.log import ActivityLog
 from eventyay.base.models import Submission, SubmissionStates
-from eventyay.base.models.question import TalkQuestionRequired as QuestionRequired, TalkQuestionVariant as QuestionVariant
+from eventyay.base.models.log import ActivityLog
+from eventyay.base.models.question import TalkQuestionRequired as QuestionRequired
+from eventyay.base.models.question import TalkQuestionVariant as QuestionVariant
 from eventyay.common.session_video import (
     SESSION_VIDEO_IMPORT_KEY,
     ensure_session_video_question,
     get_session_video_question,
     get_submission_video_url,
 )
+
 
 @pytest.mark.django_db
 def test_orga_can_see_submissions(orga_client, event, submission):
@@ -527,6 +529,49 @@ def test_orga_can_edit_submission(orga_client, event, accepted_submission):
         assert event.submissions.count() == 1
         assert accepted_submission.slot_count == 2
         assert accepted_submission.slots.count() == 2
+
+
+@pytest.mark.parametrize("destination_track_fixture", ("other_track", None))
+@pytest.mark.django_db
+def test_orga_can_change_or_remove_submission_track_with_deadline_question(
+    orga_client,
+    event,
+    submission,
+    track,
+    question,
+    request,
+    destination_track_fixture,
+):
+    destination_track = request.getfixturevalue(destination_track_fixture) if destination_track_fixture else None
+    original_title = submission.title
+    original_abstract = submission.abstract
+    with scope(event=event):
+        submission.track = track
+        submission.save(update_fields=["track"])
+        question.question_required = QuestionRequired.AFTER_DEADLINE
+        question.save(update_fields=["question_required"])
+        question.tracks.add(track)
+
+    response = orga_client.post(
+        submission.orga_urls.base,
+        data={
+            "abstract": original_abstract,
+            "content_locale": submission.content_locale,
+            "title": original_title,
+            "submission_type": submission.submission_type.pk,
+            "track": destination_track.pk if destination_track else "",
+            "resource-TOTAL_FORMS": 0,
+            "resource-INITIAL_FORMS": 0,
+        },
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    with scope(event=event):
+        submission.refresh_from_db()
+        assert submission.track == destination_track
+        assert submission.title == original_title
+        assert submission.abstract == original_abstract
 
 
 @pytest.mark.django_db
@@ -1224,4 +1269,3 @@ def test_submission_list_hides_track_name_for_anonymised(orga_client, submission
     # We check that it is absent from the visible cell content by verifying
     # the span has no inner text with the track name.
     assert f">{track.name}<" not in content
-
