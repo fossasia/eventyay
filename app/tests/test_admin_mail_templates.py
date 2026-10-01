@@ -175,10 +175,30 @@ def test_template_preview_uses_template_specific_demo_data(admin_client):
 
 
 @pytest.mark.django_db
+def test_template_preview_highlights_demo_values(admin_client):
+    html = _preview(admin_client, 'Welcome to {event_name}', 'password-reset')
+    assert '<span class="placeholder"' in html
+    assert '>FOSSASIA Summit 2026</span>' in html
+
+
+@pytest.mark.django_db
+def test_template_preview_keeps_links_working(admin_client):
+    response = admin_client.post(
+        reverse('eventyay_admin:admin.messages.preview') + '?template=password-reset',
+        data=json.dumps({'html': '<p><a href="{event_url}">Open</a> {event_url}</p>'}),
+        content_type='application/json',
+    )
+    html = response.json()['html']
+    assert 'href="https://eventyay.com/fossasia/summit-2026/"' in html
+    assert '>https://eventyay.com/fossasia/summit-2026/</span>' in html
+
+
+@pytest.mark.django_db
 def test_compose_preview_keeps_unknown_placeholders(admin_client):
     html = _preview(admin_client, 'Hello {user_name} from {event_name}')
     assert 'Jane Doe' in html
     assert '{event_name}' in html
+    assert 'class="placeholder"' not in html
 
 
 @pytest.mark.django_db

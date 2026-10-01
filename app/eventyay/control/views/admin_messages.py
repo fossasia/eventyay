@@ -956,6 +956,26 @@ class AdminMessageSentView(AdministratorPermissionRequiredMixin, PaginationMixin
 
 
 PLACEHOLDER_PATTERN = re.compile(r'\{(\w+)\}')
+HTML_TAG_PATTERN = re.compile(r'(<[^>]*>)')
+
+
+def fill_preview_placeholders(html: str, samples: dict, *, in_tags: bool) -> str:
+    title = escape(_('This value will be replaced based on dynamic parameters.'))
+    parts = HTML_TAG_PATTERN.split(html)
+    for index, part in enumerate(parts):
+        is_tag = index % 2 == 1
+        if is_tag != in_tags:
+            continue
+        for key, value in samples.items():
+            token = '{' + key + '}'
+            if token not in part:
+                continue
+            filled = escape(str(value))
+            if not is_tag:
+                filled = f'<span class="placeholder" title="{title}">{filled}</span>'
+            part = part.replace(token, filled)
+        parts[index] = part
+    return ''.join(parts)
 
 TEMPLATE_PREVIEW_CONTEXT = {
     **SAMPLE_CONTEXT,
@@ -1293,14 +1313,18 @@ class AdminMessagePreviewView(StaffMemberRequiredMixin, View):
         if not isinstance(raw_html, str):
             return JsonResponse({'html': ''}, status=400)
 
-        samples = SAMPLE_CONTEXT
+        safe_html = sanitize_email_html(raw_html)
         template_key = request.GET.get('template')
+        template = None
         if template_key:
             template = next((t for t in get_platform_mail_templates() if t['key'] == template_key), None)
-            if template:
-                samples = {**TEMPLATE_PREVIEW_CONTEXT, **template['preview']}
+        if template:
+            samples = {**TEMPLATE_PREVIEW_CONTEXT, **template['preview']}
+            preview_html = fill_preview_placeholders(safe_html, samples, in_tags=True)
+            html = AdminEmailQueue.make_html(preview_html)
+            return JsonResponse({'html': fill_preview_placeholders(html, samples, in_tags=False)})
 
-        safe_html = sanitize_email_html(raw_html)
+        samples = SAMPLE_CONTEXT
         preview_html = safe_html
         for key, value in samples.items():
             preview_html = preview_html.replace('{' + key + '}', str(value))
