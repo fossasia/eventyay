@@ -36,6 +36,14 @@
   overflow: visible;
 }
 
+.presale-tabs-scroll:not(.nav-overflow-ready) {
+  visibility: hidden;
+}
+
+.presale-tabs-scroll.nav-overflow-ready {
+  visibility: visible;
+}
+
 .presale-tabs-scroll.nav-overflow-measuring > .header-tab,
 .presale-tabs-scroll.nav-overflow-measuring > .nav-overflow-menu {
   visibility: hidden;
