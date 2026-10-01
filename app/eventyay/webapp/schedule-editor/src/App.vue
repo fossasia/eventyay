@@ -64,7 +64,7 @@
 					@assignMembers="caps.canAssignMembers ? openAssignModal($event) : null",
 					@unscheduleSession="caps.canDrag ? unscheduleSession($event) : null")
 			#session-editor-wrapper(v-if="editorSession && caps.canEdit", @click="editorCancel")
-				form#session-editor(@click.stop="", @submit.prevent="editorSave", @keydown.enter.prevent="editorSave")
+				form#session-editor(@click.stop="", @submit.prevent="editorSave", @keydown.enter="editorSubmit")
 					h3.session-editor-title(v-if="editorSession.code")
 						a(v-if="caps.showSubmissionLinks && organizerSlug && eventSlug", :href="`${api.getOrgaEventBase()}/submissions/${editorSession.code}/`") {{ getLocalizedString(editorSession.title) }}
 						span(v-else) {{ getLocalizedString(editorSession.title) }}
@@ -750,6 +750,9 @@ async function createSession(e: CreateSessionEvent): Promise<void> {
 function editorStart(session: SessionData | Talk): void {
   editorSessionError.value = ''
   const newEditorSession = { ...session } as SessionData
+  if (newEditorSession.title && typeof newEditorSession.title === 'object') {
+    newEditorSession.title = { ...newEditorSession.title }
+  }
   if (caps.canEditRoles) {
     if (!newEditorSession.roles || newEditorSession.roles.length === 0) {
       newEditorSession.roles = [{ id: undefined, capacity: 1 }]
@@ -758,6 +761,18 @@ function editorStart(session: SessionData | Talk): void {
     }
   }
   editorSession.value = newEditorSession
+}
+
+function editorSubmit(event: KeyboardEvent): void {
+  const target = event.target
+  if (
+    !(target instanceof HTMLInputElement) &&
+    !(target instanceof HTMLSelectElement) &&
+    !(target instanceof HTMLTextAreaElement)
+  ) return
+  event.preventDefault()
+  const form = event.currentTarget
+  if (form instanceof HTMLFormElement) form.requestSubmit()
 }
 
 async function editorSave(): Promise<void> {
