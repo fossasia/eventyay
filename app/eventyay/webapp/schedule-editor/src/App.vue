@@ -772,9 +772,13 @@ function editorSubmit(event: KeyboardEvent): void {
     !(target instanceof HTMLSelectElement) &&
     !(target instanceof HTMLTextAreaElement)
   ) return
+  const form = target.form ?? target.closest('form')
+  if (form && !form.checkValidity()) {
+    form.reportValidity()
+    return
+  }
   event.preventDefault()
-  const form = event.currentTarget
-  if (form instanceof HTMLFormElement) form.requestSubmit()
+  void editorSave()
 }
 
 async function editorSave(): Promise<void> {
