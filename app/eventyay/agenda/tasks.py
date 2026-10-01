@@ -6,7 +6,8 @@ from django.utils.translation import activate
 from django_scopes import scope, scopes_disabled
 
 from eventyay.base.models import Event
-from eventyay.celery import app
+from eventyay.celery_app import app
+
 
 LOGGER = logging.getLogger(__name__)
 
