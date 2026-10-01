@@ -50,59 +50,9 @@
             {% endif %}
         {% endfor %}
 
-        {# ── Session options ── #}
-        <div class="form-group row">
-            <div class="col-md-3"></div>
-            <div class="col-md-9">
-                <div class="form-check">
-                    <input type="checkbox" class="form-check-input" id="id_add_session" name="add_session"
-                           {% if request.POST.add_session %}checked{% endif %}>
-                    <label class="form-check-label" for="id_add_session">
-                        {% translate "Also create a new session for this speaker" %}
-                    </label>
-                </div>
-                <div class="form-check mt-1">
-                    <input type="checkbox" class="form-check-input" id="id_link_existing_session" name="link_existing_session"
-                           {% if request.POST.link_existing_session %}checked{% endif %}>
-                    <label class="form-check-label" for="id_link_existing_session">
-                        {% translate "Link an existing session instead" %}
-                    </label>
-                </div>
-            </div>
-        </div>
-
-        {# ── New session creation form ── #}
-        <div id="session_section" class="d-none">
-            <h3>{% translate "Session Details" %}</h3>
-            {% for field in session_form %}
-                {{ field.as_field_group }}
-            {% endfor %}
-            {{ session_questions_form }}
-        </div>
-
-        {# ── Existing session selector ── #}
-        <div id="existing_session_section" class="d-none">
-            <h3>{% translate "Select Existing Session" %}</h3>
-            <div class="form-group row">
-                <label class="col-md-3 col-form-label" for="id_existing_session_id">
-                    {% translate "Session" %}
-                </label>
-                <div class="col-md-9">
-                    <select id="id_existing_session_id" name="existing_session_id" class="form-control enhanced">
-                        <option value="">{% translate "— choose a session —" %}</option>
-                        {% for session in existing_sessions %}
-                            <option value="{{ session.pk }}"
-                                {% if request.POST.existing_session_id == session.pk|stringformat:"s" %}selected{% endif %}>
-                                {{ session.title }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                    <small class="form-text text-muted">
-                        {% translate "The new speaker will be added to the selected session." %}
-                    </small>
-                </div>
-            </div>
-        </div>
+        {% if can_link_sessions %}
+            {% include "orga/speaker/fragment_session_options.html" %}
+        {% endif %}
 
         {% include "orga/includes/submit_row.html" %}
 

@@ -422,6 +422,12 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
                 draft_save=self.request.POST.get('state') == SubmissionStates.DRAFT,
             )
 
+    @context
+    @cached_property
+    def add_speaker_form(self):
+        if self.get_object():
+            return AddSpeakerInlineForm(event=self.request.event, require_name=True, include_biography=True)
+
     @cached_property
     def _questions_form(self):
         submission = self.get_object()
