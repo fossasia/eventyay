@@ -538,7 +538,6 @@ footer {
   .header-join-video-floating-mobile {
     position: static;
     margin-top: 14px;
-    padding-right: 12px;
     align-self: flex-end;
   }
 
