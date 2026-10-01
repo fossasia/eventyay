@@ -53,6 +53,19 @@
                 <fieldset>
                     <legend id="proposal">{% translate "Proposal" %}</legend>
             {% endif %}
+            {% if action != 'create' and can_manage_speakers %}
+                </fieldset>
+                <fieldset>
+                    <legend>{% translate 'Speakers' %}</legend>
+                    <input type='hidden' name='speakers-present' value='1'>
+                    {{ session_speakers_form }}
+                    {% if can_invite_speakers %}
+                        <h3>{% translate 'Add/invite a new speaker' %}</h3>
+                        {{ new_speaker_form }}
+                    {% endif %}
+                </fieldset>
+                <fieldset>
+            {% endif %}
             {% if form.room %}
                 <div id="show-if-state" {% if action == "create" %}class="d-none"{% endif %}>
                     {{ form.room.as_field_group }}

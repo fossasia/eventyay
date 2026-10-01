@@ -1,5 +1,6 @@
 import json
 from collections import Counter
+from urllib.parse import urlencode
 
 from dateutil import rrule
 from django.conf import settings
@@ -7,7 +8,8 @@ from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.syndication.views import Feed
 from django.db import transaction
-from django.db.models import Count as DbCount, Prefetch, Q
+from django.db.models import Count as DbCount
+from django.db.models import Prefetch, Q
 from django.db.models.functions import TruncDate
 from django.forms.models import BaseModelFormSet, inlineformset_factory
 from django.http import Http404, HttpResponse, JsonResponse
@@ -15,11 +17,13 @@ from django.shortcuts import get_object_or_404, redirect
 from django.utils import feedgenerator
 from django.utils.functional import cached_property
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.utils.translation import gettext, gettext_lazy as _
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, ListView, TemplateView, UpdateView, View
 from django_context_decorator import context
-from urllib.parse import urlencode
+from django_scopes import scope
 
+from eventyay.agenda.views.utils import clear_schedule_caches
 from eventyay.base.models import (
     Answer,
     Feedback,
@@ -49,12 +53,14 @@ from eventyay.common.forms.fields import SizeFileInput
 from eventyay.common.session_video import (
     get_submission_video_url,
     prefetch_submission_video_urls,
-    session_videos_enabled as event_session_videos_enabled,
     set_submission_video_urls,
     video_urls_from_prefetched_submission,
 )
-from eventyay.common.video_embed import parse_video_urls
+from eventyay.common.session_video import (
+    session_videos_enabled as event_session_videos_enabled,
+)
 from eventyay.common.text.phrases import phrases
+from eventyay.common.video_embed import parse_video_urls
 from eventyay.common.views.generic import CreateOrUpdateView, OrgaCRUDView
 from eventyay.common.views.mixins import (
     ActionConfirmMixin,
@@ -67,6 +73,7 @@ from eventyay.common.views.mixins import (
 )
 from eventyay.consts import SizeKey
 from eventyay.orga.forms.importers import SessionImportProcessForm
+from eventyay.orga.forms.relationships import SessionSpeakersForm
 from eventyay.orga.forms.submission import (
     AddSpeakerForm,
     AddSpeakerInlineForm,
@@ -413,7 +420,7 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
     @context
     @cached_property
     def new_speaker_form(self):
-        if not self.get_object():
+        if not self.get_object() or self.can_invite_speakers:
             return AddSpeakerForm(
                 data=self.request.POST if self.request.method == 'POST' else None,
                 event=self.request.event,
@@ -421,6 +428,56 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
                 include_biography=True,
                 draft_save=self.request.POST.get('state') == SubmissionStates.DRAFT,
             )
+
+    @context
+    @cached_property
+    def can_manage_speakers(self):
+        return bool(
+            self.object
+            and self.request.user.has_perm('base.orga_update_submission', self.object)
+            and self.request.user.has_perm('base.orga_list_speakerprofile', self.object)
+        )
+
+    @context
+    @cached_property
+    def can_invite_speakers(self):
+        return self.can_manage_speakers and self.request.user.has_perm(
+            'base.orga_view_speaker_emails', self.request.event
+        )
+
+    @context
+    @cached_property
+    def session_speakers_form(self):
+        if self.can_manage_speakers:
+            submitted = self.request.method == 'POST' and 'speakers-present' in self.request.POST
+            return SessionSpeakersForm(
+                data=self.request.POST if submitted else None,
+                event=self.request.event,
+                submission=self.object,
+            )
+
+    def save_session_speakers(self, submission):
+        selected = list(self.session_speakers_form.cleaned_data['speakers'])
+        current = list(submission.speakers.all())
+        selected_ids = {speaker.pk for speaker in selected}
+        current_ids = {speaker.pk for speaker in current}
+        for speaker in current:
+            if speaker.pk not in selected_ids:
+                submission.remove_speaker(speaker, user=self.request.user)
+        for speaker in selected:
+            if speaker.pk not in current_ids:
+                submission.speakers.add(speaker)
+                submission.log_action('eventyay.submission.speakers.add', person=self.request.user, orga=True)
+        if self.new_speaker_form and (email := self.new_speaker_form.cleaned_data.get('email')):
+            submission.add_speaker(
+                email=email,
+                name=self.new_speaker_form.cleaned_data.get('name'),
+                locale=self.new_speaker_form.cleaned_data.get('locale'),
+                biography=self.new_speaker_form.cleaned_data.get('biography'),
+                user=self.request.user,
+            )
+        clear_schedule_caches(self.request.event, submission=submission)
+        self.request.event.cache.set('rebuild_schedule_export', True, None)
 
     @cached_property
     def _questions_form(self):
@@ -561,6 +618,15 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
             messages.error(self.request, phrases.base.error_saving_changes)
             return self.form_invalid(form)
 
+        manage_speakers = not created and self.can_manage_speakers and 'speakers-present' in self.request.POST
+        if manage_speakers:
+            with scope(event=self.request.event):
+                speakers_valid = self.session_speakers_form.is_valid()
+                invite_valid = not self.new_speaker_form or self.new_speaker_form.is_valid()
+            if not speakers_valid or not invite_valid:
+                messages.error(self.request, phrases.base.error_saving_changes)
+                return self.form_invalid(form)
+
         self.object = form.instance
         form.instance.event = self.request.event
 
@@ -587,6 +653,9 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
                     formset_result = self.save_formset(form.instance)
                     if not formset_result:
                         raise RollbackTransaction()
+                    if manage_speakers:
+                        with scope(event=self.request.event):
+                            self.save_session_speakers(form.instance)
         except RollbackTransaction:
             messages.error(self.request, phrases.base.error_saving_changes)
             return self.form_invalid(form)

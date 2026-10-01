@@ -1,0 +1,55 @@
+{% load i18n %}
+{% if session_assignment_form.can_create or session_assignment_form.can_link %}
+  <h3>{% translate "Sessions" %}</h3>
+  {{ session_assignment_form.non_field_errors }}
+  <div class="form-group row">
+    <div class="col-md-3"></div>
+    <div class="col-md-9">
+      {% if session_assignment_form.can_create %}
+      <div class="form-check">
+        <input type="checkbox" class="form-check-input" id="id_add_session" name="add_session"
+           {% if request.POST.add_session %}checked{% endif %}>
+        <label class="form-check-label" for="id_add_session">
+          {% translate "Create a new session for this speaker" %}
+        </label>
+      </div>
+      {% endif %}
+      {% if session_assignment_form.can_link %}
+      <div class="form-check mt-1">
+        <input type="checkbox" class="form-check-input" id="id_link_existing_session" name="link_existing_session"
+           {% if request.POST.link_existing_session %}checked{% endif %}>
+        <label class="form-check-label" for="id_link_existing_session">
+          {% translate "Link an existing session instead" %}
+        </label>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {# ── New session creation form ── #}
+  <div id="session_section" class="d-none">
+    <h3>{% translate "Session Details" %}</h3>
+    {% for field in session_form %}
+      {{ field.as_field_group }}
+    {% endfor %}
+    {{ session_questions_form }}
+  </div>
+
+  {# ── Existing session selector ── #}
+  <div id="existing_session_section" class="d-none">
+    <h3>{% translate "Select Existing Session" %}</h3>
+    <div class="form-group row">
+      <label class="col-md-3 col-form-label" for="id_existing_session_id">
+        {% translate "Session" %}
+      </label>
+      <div class="col-md-9">
+        {{ session_assignment_form.existing_session_id }}
+        {{ session_assignment_form.existing_session_id.errors }}
+        <small class="form-text text-muted">
+          {% translate "The speaker will be added to the selected session." %}
+        </small>
+      </div>
+    </div>
+  </div>
+
+{% endif %}
