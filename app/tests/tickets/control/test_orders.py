@@ -8,7 +8,7 @@ from django.core import mail
 from django.test import override_settings
 from django.utils.timezone import now
 from django_countries.fields import Country
-from django_scopes import scopes_disabled
+from django_scopes import scope, scopes_disabled
 
 from eventyay.base.models import (
     Event,
@@ -215,7 +215,7 @@ def test_order_list(client, env):
 @pytest.mark.django_db
 @override_settings(DEBUG=True)
 def test_order_overview_links_filter_order_list_by_product(client, env):
-    with scopes_disabled():
+    with scope(organizer=env[0].organizer, event=env[0]):
         workshop = Item.objects.create(
             event=env[0],
             name='Workshop',
