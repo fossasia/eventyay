@@ -896,3 +896,43 @@ input.password_strength {
 .teamshifts-roles-selector {
   margin-top: 15px;
 }
+
+/* Fix for Select2 multiple selection chip alignment */
+.select2-container--bootstrap .select2-selection--multiple {
+  padding: 2px 4px !important;
+}
+.select2-container--bootstrap .select2-selection--multiple .select2-selection__rendered {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+}
+.select2-container--bootstrap .select2-selection--multiple .select2-selection__choice {
+  float: none !important;
+  margin: 2px 4px 2px 0 !important;
+  display: flex;
+  align-items: center;
+}
+.select2-container--bootstrap .select2-selection--multiple .select2-selection__choice__remove {
+  float: none !important;
+  margin-right: 4px !important;
+  margin-left: 0 !important;
+}
+.select2-container--bootstrap .select2-selection--multiple .select2-search--inline {
+  float: none !important;
+  margin: 0 !important;
+  flex: 1 1 auto;
+}
+.select2-container--bootstrap .select2-selection--multiple .select2-search--inline .select2-search__field {
+  margin: 0 !important;
+  height: auto !important;
+  line-height: normal !important;
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
+}
+.select2-container--bootstrap .select2-selection--multiple .select2-selection__clear {
+  float: none !important;
+  margin: 0 4px 0 0 !important;
+  order: -1; /* Place clear button before chips if it appears inline */
+}
