@@ -1210,13 +1210,13 @@ class QuotaListExporter(ListExporter):
                 if quota.subevent:
                     row.append(quota.subevent.name)
                     row.append(
-                        quota.subevent.date_from.astimezone(ZoneInfo(self.event.timezone)).strftime(
+                        quota.subevent.date_from.astimezone(ZoneInfo(self.event.settings.timezone)).strftime(
                             '%Y-%m-%d %H:%M:%S %Z'
                         )
                     )
                     if quota.subevent.date_to:
                         row.append(
-                            quota.subevent.date_to.astimezone(ZoneInfo(self.event.timezone)).strftime(
+                            quota.subevent.date_to.astimezone(ZoneInfo(self.event.settings.timezone)).strftime(
                                 '%Y-%m-%d %H:%M:%S %Z'
                             )
                         )
