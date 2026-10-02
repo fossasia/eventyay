@@ -5,7 +5,6 @@ from datetime import date, datetime, time, timedelta
 from decimal import Decimal, DecimalException
 
 import dateutil.parser
-import datetime
 from zoneinfo import ZoneInfo
 from django.conf import settings
 from django.core.exceptions import ValidationError

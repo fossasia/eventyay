@@ -84,6 +84,17 @@ DELIVERY_MODE_CHOICES = [
 
 class AdminComposeForm(ScheduledAtValidationMixin, forms.Form):
     default_renderer = TabularFormRenderer
+
+    # Fields that choose the recipients. A test email ignores them.
+    AUDIENCE_FIELDS = (
+        'recipient_group', 'account_status', 'user_role', 'language',
+        'selected_organisers', 'selected_events', 'selected_users',
+        'event_status', 'event_date_from', 'event_date_to',
+        'organiser_status', 'billing_status', 'ticketing_status', 'cfp_status', 'setup_status',
+        'created_after', 'created_before', 'last_active_after', 'last_active_before',
+        'exclude_admins', 'exclude_inactive', 'exclude_unconfirmed_email',
+    )
+
     recipient_group = forms.ChoiceField(
         label=_('Recipient group'),
         choices=[('', _('Select recipient group'))] + list(AdminRecipientGroup.choices),
@@ -344,8 +355,9 @@ class AdminComposeForm(ScheduledAtValidationMixin, forms.Form):
         help_text=_('If checked, the email will be sent immediately instead of being added to the outbox.'),
     )
 
-    def __init__(self, *args, draft_save: bool = False, **kwargs):
+    def __init__(self, *args, draft_save: bool = False, test_send: bool = False, **kwargs):
         self.draft_save = draft_save
+        self.test_send = test_send
         super().__init__(*args, **kwargs)
 
         lang_choices = [('', _('All'))]
@@ -399,8 +411,35 @@ class AdminComposeForm(ScheduledAtValidationMixin, forms.Form):
             self.fields['subject'].required = False
             self.fields['message'].required = False
 
+        if test_send:
+            # A test email only goes to the test address, so the audience, content and delivery settings
+            # are optional.
+            self._skip_test_send_validation(True)
+            self.fields['test_email'].required = True
+            self.fields['test_email'].error_messages['required'] = _('Please enter a test email address.')
+
+    def _skip_test_send_validation(self, skip: bool):
+        # Disabled fields ignore the submitted value, so a malformed date, a stale event ID or a
+        # half-filled schedule cannot fail validation.
+        for name in (*self.AUDIENCE_FIELDS, 'scheduled_at'):
+            self.fields[name].disabled = skip
+        self.fields['recipient_group'].required = not skip
+        self.fields['subject'].required = not skip
+        # The i18n message field checks ``one_required`` instead of ``required``.
+        self.fields['message'].one_required = not skip
+
+    def clean_scheduled_at(self):
+        if self.test_send:
+            return None
+        return super().clean_scheduled_at()
+
     def clean(self):
         cleaned = super().clean()
+        if self.test_send:
+            # Only skipped while validating, so the page shown afterwards still marks these as required
+            # and keeps the audience and schedule the admin entered.
+            self._skip_test_send_validation(False)
+            return cleaned
         if cleaned is None:
             return cleaned
 

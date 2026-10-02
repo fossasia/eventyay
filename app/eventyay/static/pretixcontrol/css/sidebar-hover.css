@@ -1,0 +1,152 @@
+@keyframes sidebar-hold-width {
+  from,
+  to {
+    min-width: 250px;
+  }
+}
+
+/* Base styles and :focus-within */
+@media (min-width: 768px) and (prefers-reduced-motion: no-preference) {
+  body.sidebar-minimized .sidebar {
+    transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-x: hidden;
+  }
+  body.sidebar-minimized .sidebar:focus-within .sidebar-nav {
+    animation: sidebar-hold-width 0.2s;
+  }
+}
+
+body.sidebar-minimized .sidebar:focus-within {
+  width: 250px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+body.sidebar-minimized .sidebar:focus-within .nav > li > a .sidebar-text {
+  display: inline-block;
+}
+
+body.sidebar-minimized .sidebar:focus-within .nav > li > a.arrow {
+  display: inline-block;
+}
+
+body.sidebar-minimized .sidebar:focus-within .sidebar-nav .nav-second-level {
+  display: none;
+}
+
+body.sidebar-minimized .sidebar:focus-within .sidebar-nav .nav-second-level.in,
+body.sidebar-minimized .sidebar:focus-within .sidebar-nav .nav-second-level.collapsing {
+  display: block;
+}
+
+body.sidebar-minimized .sidebar:focus-within .context-selector .dropdown-toggle {
+  padding: 8px 0 8px 4px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  height: 56px;
+}
+
+body.sidebar-minimized .sidebar:focus-within .context-selector .dropdown-toggle span.caret {
+  display: inline-block;
+}
+
+body.sidebar-minimized .sidebar:focus-within .context-selector .context-indicator {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  overflow: hidden;
+  margin-left: 2px;
+}
+
+body.sidebar-minimized .sidebar:focus-within .context-selector .context-indicator span {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  line-height: 17px;
+}
+
+body.sidebar-minimized .sidebar:focus-within .context-selector .context-indicator span.context-name {
+  font-weight: 600;
+  font-size: 15px;
+  padding-bottom: 2px;
+  margin-bottom: 2px;
+}
+
+body.sidebar-minimized .sidebar:focus-within .context-selector .context-indicator span.context-meta {
+  font-size: 11px;
+  color: #a0aabf;
+  font-weight: normal;
+}
+
+/* :hover styles gated behind @media (hover: hover) */
+@media (hover: hover) {
+  @media (min-width: 768px) and (prefers-reduced-motion: no-preference) {
+    body.sidebar-minimized .sidebar:hover .sidebar-nav {
+      animation: sidebar-hold-width 0.2s;
+    }
+  }
+
+  body.sidebar-minimized .sidebar:hover {
+    width: 250px;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  body.sidebar-minimized .sidebar:hover .nav > li > a .sidebar-text {
+    display: inline-block;
+  }
+
+  body.sidebar-minimized .sidebar:hover .nav > li > a.arrow {
+    display: inline-block;
+  }
+
+  body.sidebar-minimized .sidebar:hover .sidebar-nav .nav-second-level {
+    display: none;
+  }
+
+  body.sidebar-minimized .sidebar:hover .sidebar-nav .nav-second-level.in,
+  body.sidebar-minimized .sidebar:hover .sidebar-nav .nav-second-level.collapsing {
+    display: block;
+  }
+
+  body.sidebar-minimized .sidebar:hover .context-selector .dropdown-toggle {
+    padding: 8px 0 8px 4px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    height: 56px;
+  }
+
+  body.sidebar-minimized .sidebar:hover .context-selector .dropdown-toggle span.caret {
+    display: inline-block;
+  }
+
+  body.sidebar-minimized .sidebar:hover .context-selector .context-indicator {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    overflow: hidden;
+    margin-left: 2px;
+  }
+
+  body.sidebar-minimized .sidebar:hover .context-selector .context-indicator span {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    line-height: 17px;
+  }
+
+  body.sidebar-minimized .sidebar:hover .context-selector .context-indicator span.context-name {
+    font-weight: 600;
+    font-size: 15px;
+    padding-bottom: 2px;
+    margin-bottom: 2px;
+  }
+
+  body.sidebar-minimized .sidebar:hover .context-selector .context-indicator span.context-meta {
+    font-size: 11px;
+    color: #a0aabf;
+    font-weight: normal;
+  }
+}
