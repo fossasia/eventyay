@@ -467,14 +467,23 @@ def _staff_login(client, user):
 
 
 @pytest.mark.django_db
-def test_users_select2_requires_three_characters(client, admin_user):
+def test_users_select2_requires_non_empty(client, admin_user):
     _staff_login(client, admin_user)
+    User.objects.create_user(email='ja@example.org', password='x', fullname='Ja')
     User.objects.create_user(email='jane@example.org', password='x', fullname='Jane Doe')
 
-    for query in ('', 'ja', '  j  '):
+    for query in ('', '   '):
         response = client.get(reverse('eventyay_admin:admin.users.select2'), {'query': query})
         assert response.status_code == 200
         assert response.json() == {'results': [], 'pagination': {'more': False}}
+
+    # Test exact match for length < 3
+    response = client.get(reverse('eventyay_admin:admin.users.select2'), {'query': 'ja'})
+    assert len(response.json()['results']) == 1
+
+    # Test partial match when length >= 3
+    response = client.get(reverse('eventyay_admin:admin.users.select2'), {'query': 'jan'})
+    assert len(response.json()['results']) == 1
 
 
 @pytest.mark.django_db
@@ -513,9 +522,9 @@ def test_users_select2_rejects_non_staff(client, regular_user):
 
 
 @pytest.mark.django_db
-def test_compose_form_selectors_wait_for_three_characters():
+def test_compose_form_selectors_wait_for_one_character():
     form = AdminComposeForm()
     for name in ('selected_users', 'selected_events', 'selected_organisers'):
         attrs = form.fields[name].widget.attrs
-        assert attrs['data-minimum-input-length'] == 3
+        assert attrs['data-minimum-input-length'] == 1
         assert attrs['data-delay'] == 250

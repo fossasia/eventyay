@@ -487,7 +487,7 @@ $s2bs-form-control-transition: border-color ease-in-out .15s, box-shadow ease-in
       border-radius: $s2bs-selection-choice-border-radius;
       cursor: default;
       float: left;
-      margin: ($s2bs-padding-base-vertical - 1) 0 0 $s2bs-padding-base-horizontal/2;
+      margin: ($s2bs-padding-base-vertical - 1) 0 ($s2bs-padding-base-vertical - 1) $s2bs-padding-base-horizontal/2;
       padding: 0 $s2bs-padding-base-vertical;
     }
 
@@ -565,7 +565,7 @@ $s2bs-form-control-transition: border-color ease-in-out .15s, box-shadow ease-in
     .select2-selection__choice {
       font-size: $s2bs-font-size-small;
       line-height: $s2bs-line-height-small;
-      margin: ($s2bs-padding-small-vertical - 1) 0 0 $s2bs-padding-small-horizontal/2;
+      margin: ($s2bs-padding-small-vertical - 1) 0 ($s2bs-padding-small-vertical - 1) $s2bs-padding-small-horizontal/2;
       padding: 0 $s2bs-padding-small-vertical;
     }
 
@@ -613,7 +613,7 @@ $s2bs-form-control-transition: border-color ease-in-out .15s, box-shadow ease-in
       font-size: $s2bs-font-size-large;
       line-height: $s2bs-line-height-large;
       border-radius: $s2bs-selection-choice-border-radius;
-      margin: ($s2bs-padding-large-vertical - 1) 0 0 $s2bs-padding-large-horizontal/2;
+      margin: ($s2bs-padding-large-vertical - 1) 0 ($s2bs-padding-large-vertical - 1) $s2bs-padding-large-horizontal/2;
       padding: 0 $s2bs-padding-large-vertical;
     }
 

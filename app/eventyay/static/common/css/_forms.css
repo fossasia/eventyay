@@ -116,7 +116,7 @@ legend {
 
 /* input level styles */
 
-input:not([type="checkbox"]):not([type="radio"]),
+input:not([type="checkbox"]):not([type="radio"]):not(.select2-search__field):not(.choices__input),
 select,
 textarea {
   display: block;
