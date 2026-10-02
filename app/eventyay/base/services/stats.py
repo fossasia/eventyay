@@ -323,9 +323,10 @@ def order_overview(
         if any_payment:
             products_by_category.append(payment_cat)
 
-    total = {'num': {'total': tuplesum(c.num['total'] for c, i in products_by_category)}}
+    # An event without products has no categories to sum, and tuplesum() returns () for that.
+    total = {'num': {'total': tuplesum(c.num['total'] for c, i in products_by_category) or (0, 0, 0)}}
     for l in states.keys():
-        total['num'][l] = tuplesum(c.num[l] for c, i in products_by_category)
+        total['num'][l] = tuplesum(c.num[l] for c, i in products_by_category) or (0, 0, 0)
 
     return products_by_category, total
 
