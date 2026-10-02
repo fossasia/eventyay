@@ -248,6 +248,22 @@ def test_system_page_view_custom_content():
             assert str(page.text) == '# Custom Privacy Content'
 
 
+def test_system_page_view_default_fallback_content():
+    # Verify SystemPageView fallback content does not duplicate the page title
+    view = SystemPageView()
+    view.slug = 'terms'
+
+    with patch('eventyay.control.views.pages.Page.objects.get', side_effect=Page.DoesNotExist):
+        with patch('eventyay.control.views.pages.GlobalSettingsObject') as mock_gso:
+            mock_settings = _make_mock_settings()
+            mock_gso.return_value.settings = mock_settings
+            page = view.get_page()
+            assert page.title == 'Terms of Service'
+            assert 'Content for this page has not been configured yet.' in str(page.text)
+            assert 'Terms of Service' not in str(page.text)
+            assert '<h1' not in str(page.text)
+
+
 def test_core_footer_template_structure():
     # Verify core footer template renders links and handles external targets
     sample_links = [

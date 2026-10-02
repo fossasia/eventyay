@@ -21,9 +21,7 @@
 								span.time-density-display {{ timeDensityMinutes }} {{ $t('min') }}
 								i.fa.fa-chevron-down(aria-hidden="true")
 								.time-density-menu.vue-dropdown(v-if="showTimeDensityMenu")
-									.density-option(v-for="mins in [5, 15, 30, 60]", @click.stop="timeDensityMinutes = mins; onTimeDensityChange(); showTimeDensityMenu = false", :class="{active: timeDensityMinutes === mins}")
-							session.new-break.small-break(v-if="caps.canCreateBreak", :session="{title: '+ ' + translations.newBreak}", :isDragged="false", tabindex="0", @startDragging="startNewBreak", @click.stop="showNewBreakHint", @focus="showNewBreakHint", @blur="removeNewBreakHint", @keydown="onNewBreakKeydown", @pointerleave="removeNewBreakHint", :aria-describedby="newBreakTooltip ? 'new-break-hint' : undefined")
-							.new-break-hint(v-if="newBreakTooltip", id="new-break-hint", role="tooltip") {{ newBreakTooltip }}
+									.density-option(v-for="mins in [5, 10, 15, 30, 60]", @click.stop="timeDensityMinutes = mins; onTimeDensityChange(); showTimeDensityMenu = false", :class="{active: timeDensityMinutes === mins}") {{ mins }} {{ $t('min') }}
 						.title
 							bunt-input#filter-input(v-model="unassignedFilterString", :placeholder="translations.filterSessions", icon="search", name="filter-input")
 							#unassigned-sort(@click="showUnassignedSortMenu = !showUnassignedSortMenu", :class="{'active': showUnassignedSortMenu}")
@@ -1397,8 +1395,6 @@ onUnmounted(() => {
 			&:focus-visible
 				outline: 2px solid var(--color-primary, #3b82f6)
 				outline-offset: 2px
-		.new-break.c-linear-schedule-session.small-break
-			display: none
 		.new-break.c-linear-schedule-session.desktop-break
 			display: flex
 		.new-break-hint
@@ -1552,56 +1548,6 @@ onUnmounted(() => {
 						padding: 4px 8px
 						.density-btn-text
 							display: none
-					.small-break.c-linear-schedule-session
-						display: inline-flex
-						align-items: center
-						justify-content: center
-						margin-left: auto
-						margin-top: 0
-						margin-bottom: 0
-						margin-right: 0
-						height: 30px
-						min-height: 30px
-						max-height: 30px
-						padding: 0 12px
-						background: #f1f5f9
-						border: 1px solid #94a3b8
-						border-radius: 6px
-						color: #0f172a
-						font-weight: 600
-						font-size: 13px
-						cursor: grab
-						user-select: none
-						box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05)
-						transition: all 0.15s ease
-						box-sizing: border-box
-						flex-shrink: 0
-						min-width: 0
-						width: auto
-						&:hover, &:active
-							background: #e2e8f0
-							border-color: var(--color-primary, #2185d0)
-							color: var(--color-primary, #2185d0)
-						.time-box
-							display: none
-						.info
-							display: flex
-							align-items: center
-							padding: 0
-							margin: 0
-							.title-row
-								display: flex
-								align-items: center
-								.title
-									font-size: 13px
-									font-weight: 600
-									color: inherit
-									white-space: nowrap
-									overflow: hidden
-									text-overflow: ellipsis
-									max-width: 120px
-			.desktop-break.c-linear-schedule-session
-				display: none
 		#schedule-wrapper
 			width: 100%
 			margin-right: 0
