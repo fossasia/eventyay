@@ -49,14 +49,19 @@ from eventyay.helpers.i18n import is_rtl
 
 logger = logging.getLogger(__name__)
 
+TEST_EMAIL_SUBJECT = _('Eventyay test email')
+TEST_EMAIL_BODY = _(
+    'This is a test email sent from Eventyay. If you received this email, your email settings are correct.'
+)
+
 
 def _get_test_email_data(from_addr, to_addrs=None, reply_to=None):
     to_addrs = to_addrs or [from_addr]
     if isinstance(to_addrs, str):
         to_addrs = [to_addrs]
 
-    subject = _('Eventyay test email')
-    body = _('This is a test email sent from Eventyay. If you received this email, your email settings are correct.')
+    subject = TEST_EMAIL_SUBJECT
+    body = TEST_EMAIL_BODY
 
     headers = {}
     if reply_to:
