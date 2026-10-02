@@ -115,11 +115,15 @@ def serialize_voucher(v):
 
 
 def event_list(request):
-    query = request.GET.get('query', '').strip()
+    raw_query = request.GET.get('query', '')
+    query = raw_query.strip()
     try:
         page = int(request.GET.get('page', '1'))
     except ValueError:
         page = 1
+        
+    if raw_query and not query:
+        return JsonResponse({'results': [], 'pagination': {'more': False}})
 
     if 'can_copy' in request.GET:
         qs = EventWizardCopyForm.copy_from_queryset(request.user, request.session)

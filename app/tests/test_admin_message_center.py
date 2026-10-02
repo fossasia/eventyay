@@ -682,7 +682,7 @@ def test_event_list_typeahead_whitespace_trimmed(client, admin_user):
         organizer=organizer, name='Test Event', slug='test-event',
         date_from=now()
     )
-    client.force_login(admin_user)
+    _staff_login(client, admin_user)
     
     response = client.get(reverse('control:events.typeahead'), {'query': '  Test Event  '})
     assert response.status_code == 200
@@ -705,7 +705,7 @@ def test_event_list_typeahead_short_query_exact_match(client, admin_user):
         organizer=organizer, name='AB Event', slug='ab-event',
         date_from=now()
     )
-    client.force_login(admin_user)
+    _staff_login(client, admin_user)
     
     # 1 character, exact match event name (matches 'A', but not 'AA' or 'AB Event')
     response = client.get(reverse('control:events.typeahead'), {'query': 'A'})
@@ -728,7 +728,7 @@ def test_event_list_typeahead_long_query_substring_match(client, admin_user):
         organizer=organizer, name='Banana', slug='banana-event',
         date_from=now()
     )
-    client.force_login(admin_user)
+    _staff_login(client, admin_user)
     
     # >=3 characters, substring match
     response = client.get(reverse('control:events.typeahead'), {'query': 'nan'})
