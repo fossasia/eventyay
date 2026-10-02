@@ -4,6 +4,7 @@ from django_scopes import scopes_disabled
 from rest_framework.test import APIClient
 
 from eventyay.base.models import Team
+from eventyay.helpers.urls import build_absolute_uri
 
 
 @pytest.fixture
@@ -35,4 +36,5 @@ def test_invite_new_user_sends_invitation_link(token_client, organizer, team, dj
     assert invite.email == 'newperson@example.org'
     assert len(djmail.outbox) == 1
     assert djmail.outbox[0].to == ['newperson@example.org']
-    assert f'/invite/{invite.token}' in djmail.outbox[0].body
+    invite_url = build_absolute_uri('eventyay_common:auth.invite', kwargs={'token': invite.token})
+    assert invite_url in djmail.outbox[0].body
