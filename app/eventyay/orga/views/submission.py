@@ -370,12 +370,7 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
                 context = self.get_context_data(form=form)
                 return JsonResponse(
                     {
-                        'speakers': render_to_string('orga/submission/speaker_list.html', context, request=self.request),
-                        'speaker_names': render_to_string(
-                            'orga/includes/submission_speaker_names.html',
-                            {**context, 'lightbox': True},
-                            request=self.request,
-                        ),
+                        'html': render_to_string(self.template_name, context, request=self.request),
                         'speaker_code': speaker.code,
                         'message': str(message),
                     }

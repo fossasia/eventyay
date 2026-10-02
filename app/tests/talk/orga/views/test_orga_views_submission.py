@@ -3,11 +3,13 @@ import json
 
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import Client
 from django.utils.timezone import now
 from django_scopes import scope
 
 from eventyay.base.models.log import ActivityLog
-from eventyay.base.models import Submission, SubmissionStates
+from eventyay.base.models import Submission, SubmissionStates, User
+from eventyay.base.models.mail import MailTemplateRoles
 from eventyay.base.models.question import TalkQuestionRequired as QuestionRequired, TalkQuestionVariant as QuestionVariant
 from eventyay.common.session_video import (
     SESSION_VIDEO_IMPORT_KEY,
@@ -1232,3 +1234,121 @@ def test_submission_list_hides_track_name_for_anonymised(orga_client, submission
     # the span has no inner text with the track name.
     assert f">{track.name}<" not in content
 
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('ajax', [False, True])
+@pytest.mark.parametrize('existing', [False, True])
+def test_add_speaker_stays_on_session_and_invites(orga_client, event, submission, other_speaker, ajax, existing):
+    email = other_speaker.email if existing else 'inline-speaker@example.test'
+    name = other_speaker.fullname if existing else 'Inline Speaker'
+    headers = {'HTTP_X_REQUESTED_WITH': 'XMLHttpRequest'} if ajax else {}
+    with scope(event=event):
+        original_speakers = set(submission.speakers.values_list('pk', flat=True))
+        response = orga_client.post(
+            submission.orga_urls.speakers,
+            {'email': email, 'name': name, 'biography': 'Speaker biography'},
+            **headers,
+        )
+        speaker = User.objects.get(email=email)
+        assert set(submission.speakers.values_list('pk', flat=True)) == original_speakers | {speaker.pk}
+        role = MailTemplateRoles.EXISTING_SPEAKER_INVITE if existing else MailTemplateRoles.NEW_SPEAKER_INVITE
+        assert speaker.mails.filter(event=event, template=event.get_mail_template(role)).exists()
+        if ajax:
+            assert response.status_code == 200
+            assert 'Location' not in response
+            data = response.json()
+            assert data['speaker_code'] == speaker.code
+            assert f'id="session-speaker-{speaker.code}"' in data['html']
+            assert name in data['html']
+            assert 'id="session-speaker-list"' in data['html']
+            assert 'id="submission-speaker-names"' in data['html']
+            assert data['message']
+        else:
+            assert response.status_code == 302
+            assert response.url == submission.orga_urls.speakers
+            page = orga_client.get(response.url)
+            assert f'id="session-speaker-{speaker.code}"' in page.text
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'data',
+    [
+        {'email': 'invalid-email', 'name': 'Speaker'},
+        {'email': 'missing-name@example.test'},
+    ],
+)
+def test_invalid_inline_speaker_returns_errors_without_changes(orga_client, event, submission, data):
+    with scope(event=event):
+        original_speakers = set(submission.speakers.values_list('pk', flat=True))
+        mail_count = event.queued_mails.count()
+        response = orga_client.post(
+            submission.orga_urls.speakers,
+            data,
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+        assert response.status_code == 400
+        assert response.json()['errors']
+        assert set(submission.speakers.values_list('pk', flat=True)) == original_speakers
+        assert event.queued_mails.count() == mail_count
+
+
+@pytest.mark.django_db
+def test_inline_speaker_preserves_required_biography_validation(orga_client, event, submission):
+    with scope(event=event):
+        event.cfp.fields['biography']['visibility'] = 'required'
+        event.cfp.save()
+        response = orga_client.post(
+            submission.orga_urls.speakers,
+            {'email': 'needs-bio@example.test', 'name': 'Needs biography'},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+        assert response.status_code == 400
+        assert any(error['label'] == 'Biography' for error in response.json()['errors'])
+        assert not User.objects.filter(email='needs-bio@example.test').exists()
+
+
+@pytest.mark.django_db
+def test_reviewer_cannot_post_inline_speaker(review_client, event, submission):
+    with scope(event=event):
+        count = submission.speakers.count()
+        response = review_client.post(
+            submission.orga_urls.speakers,
+            {'email': 'unauthorized@example.test', 'name': 'Unauthorized'},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+        assert response.status_code == 404
+        assert submission.speakers.count() == count
+        assert not User.objects.filter(email='unauthorized@example.test').exists()
+
+
+@pytest.mark.django_db
+def test_inline_speaker_rejects_another_events_session(orga_client, event, other_event, submission):
+    with scope(event=other_event):
+        foreign = Submission.objects.create(
+            event=other_event,
+            title='Foreign session',
+            submission_type=other_event.cfp.default_type,
+        )
+    with scope(event=event):
+        response = orga_client.post(
+            str(submission.orga_urls.speakers).replace(submission.code, foreign.code),
+            {'email': 'foreign-session@example.test', 'name': 'Foreign'},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+        assert response.status_code == 404
+        assert not User.objects.filter(email='foreign-session@example.test').exists()
+
+
+@pytest.mark.django_db
+def test_inline_speaker_requires_csrf(orga_user, event, submission):
+    client = Client(enforce_csrf_checks=True)
+    client.force_login(orga_user)
+    with scope(event=event):
+        response = client.post(
+            submission.orga_urls.speakers,
+            {'email': 'csrf@example.test', 'name': 'CSRF'},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+        assert response.status_code == 403
+        assert not User.objects.filter(email='csrf@example.test').exists()
