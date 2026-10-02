@@ -11,10 +11,10 @@ from django.core.validators import validate_email
 from django.db import IntegrityError, OperationalError, ProgrammingError
 from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, reverse
-from django.urls import reverse_lazy
+from django.urls import NoReverseMatch, reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from django.views import View
-from django.views.generic import DeleteView, FormView, TemplateView
+from django.views.generic import DeleteView, FormView, RedirectView, TemplateView
 from python_http_client.exceptions import HTTPError
 
 from eventyay.api.models import OAuthApplication
@@ -29,7 +29,6 @@ from eventyay.base.services.update_check import check_result_table, update_check
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.sanitizers import sanitize_rich_text
 from eventyay.control.forms.global_settings import (
-    GlobalBusinessSettingsForm,
     GlobalSettingsForm,
     GlobalTicketingSettingsForm,
     SSOConfigForm,
@@ -43,6 +42,13 @@ from eventyay.control.permissions import (
 logger = logging.getLogger(__name__)
 
 
+def business_settings_url():
+    try:
+        return reverse('plugins:eventyay_business:settings')
+    except NoReverseMatch:
+        return reverse('eventyay_admin:admin.vouchers')
+
+
 class GlobalSettingsView(AdministratorPermissionRequiredMixin, FormView):
     template_name = 'pretixcontrol/global_settings.html'
     form_class = GlobalSettingsForm
@@ -52,8 +58,8 @@ class GlobalSettingsView(AdministratorPermissionRequiredMixin, FormView):
         if tab in ('vouchers', 'event_vouchers'):
             return redirect(reverse('eventyay_admin:admin.vouchers'))
         if tab in ('organizer_billing', 'ticket_fee', 'billing_validation', 'business'):
-            target_hash = f'#tab-{tab}' if tab in ('organizer_billing', 'ticket_fee', 'billing_validation') else ''
-            return redirect(reverse('eventyay_admin:admin.global.business') + target_hash)
+            target_hash = f'#tab-{tab}' if tab in ('organizer_billing', 'billing_validation') else ''
+            return redirect(business_settings_url() + target_hash)
         if tab in ('payment_gateways', 'payment-gateways', 'payment', 'gateways'):
             return redirect(reverse('eventyay_admin:admin.global.ticketing') + '#tab-payment-gateways')
         if tab in ('cart',):
@@ -84,6 +90,7 @@ class GlobalSettingsView(AdministratorPermissionRequiredMixin, FormView):
         context['gmail_disconnect_url'] = reverse('eventyay_admin:admin.global.gmail.disconnect')
         context['test_email_feedback'] = self.request.session.pop('admin_test_email_feedback', None)
         context['test_turnstile_feedback'] = self.request.session.pop('admin_test_turnstile_feedback', None)
+        context['business_settings_url'] = business_settings_url()
         context['gs'] = GlobalSettingsObject()
         context['gs'].settings.set('update_check_ack', True)
         context['tbl'] = check_result_table()
@@ -119,30 +126,9 @@ class GlobalTicketingSettingsView(AdministratorPermissionRequiredMixin, FormView
         return reverse('eventyay_admin:admin.global.ticketing')
 
 
-class GlobalBusinessSettingsView(AdministratorPermissionRequiredMixin, FormView):
-    template_name = 'pretixcontrol/admin/business_settings.html'
-    form_class = GlobalBusinessSettingsForm
-
-    def form_valid(self, form):
-        form.save()
-        messages.success(self.request, _('Your changes have been saved.'))
-        return super().form_valid(form)
-
-    def form_invalid(self, form):
-        messages.error(self.request, _('Your changes have not been saved, see below for errors.'))
-        return super().form_invalid(form)
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        try:
-            from eventyay_business.models import CountryFeeSetting
-            ctx['country_fee_settings'] = CountryFeeSetting.objects.all().order_by('country', 'currency')
-        except ImportError:
-            ctx['country_fee_settings'] = None
-        return ctx
-
-    def get_success_url(self):
-        return reverse('eventyay_admin:admin.global.business')
+class LegacyBusinessSettingsRedirectView(AdministratorPermissionRequiredMixin, RedirectView):
+    def get_redirect_url(self, *args, **kwargs):
+        return business_settings_url()
 
 
 class MetaDataSettingsView(AdministratorPermissionRequiredMixin, View):
@@ -829,6 +815,15 @@ class RevealSecretSettingView(View):
         'stripe_webhook_secret_key',
     })
 
+    GLOBAL_ONLY_KEYS: frozenset[str] = frozenset({
+        'payment_stripe_connect_secret_key',
+        'payment_stripe_connect_test_secret_key',
+        'payment_paypal_connect_secret_key',
+        'payment_stripe_secret_key',
+        'payment_stripe_test_secret_key',
+        'stripe_webhook_secret_key',
+    })
+
     def post(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             return JsonResponse({'error': 'forbidden', 'detail': 'Authentication required.'}, status=403)
@@ -851,6 +846,8 @@ class RevealSecretSettingView(View):
                 return JsonResponse({'error': 'forbidden', 'detail': 'Administrator access required.'}, status=403)
             gs = GlobalSettingsObject()
         elif scope == 'organizer':
+            if key in self.GLOBAL_ONLY_KEYS:
+                return JsonResponse({'error': 'forbidden', 'detail': 'Key not allowed for organizer scope.'}, status=403)
             organizer_slug = request.POST.get('organizer', '')
             if not organizer_slug:
                 return JsonResponse({'error': 'forbidden', 'detail': 'Organizer slug required.'}, status=403)

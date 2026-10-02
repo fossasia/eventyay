@@ -1,7 +1,7 @@
 import pytest
 from django.urls import reverse
 
-from eventyay.base.models import User
+from eventyay.base.models import Organizer, Team, User
 from eventyay.base.settings import GlobalSettingsObject
 
 
@@ -122,3 +122,35 @@ def test_reveal_secret_requires_staff(normal_client, admin_password, reveal_url)
         },
     )
     assert response.status_code in (302, 403)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('key', [
+    'payment_stripe_connect_secret_key',
+    'payment_stripe_connect_test_secret_key',
+    'payment_paypal_connect_secret_key',
+    'payment_stripe_secret_key',
+    'payment_stripe_test_secret_key',
+    'stripe_webhook_secret_key',
+])
+def test_organizer_scope_cannot_reveal_global_billing_secret(normal_client, normal_user, reveal_url, key):
+    organizer = Organizer.objects.create(name='Organizer', slug='organizer')
+    team = Team.objects.create(organizer=organizer, can_change_organizer_settings=True, all_events=True)
+    team.members.add(normal_user)
+    assert normal_user.has_organizer_permission(organizer, 'can_change_organizer_settings')
+
+    gs = GlobalSettingsObject()
+    gs.settings.set(key, 'platform_secret')
+    assert organizer.settings.get(key) == 'platform_secret'
+
+    response = normal_client.post(
+        reveal_url,
+        data={
+            'key': key,
+            'password': 'userpass123!',
+            'scope': 'organizer',
+            'organizer': organizer.slug,
+        },
+    )
+    assert response.status_code == 403
+    assert response.json()['error'] == 'forbidden'
