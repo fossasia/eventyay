@@ -13,7 +13,8 @@ body.page-agenda {
 @media (max-width: 768px) {
   body.page-agenda {
     --page-inset-block-start: 0.5rem;
-    --page-inset-inline: 0.75rem;
+    /* Match Join Video / public content inset (12px) — do not halve below */
+    --page-inset-inline: 12px;
     --page-inset-block-end: 0.875rem;
   }
 }
@@ -193,8 +194,8 @@ body.page-agenda .featured-page #featured-talks .talk-title small {
       width: 100%;
     }
     main:not(:has(.featured-page)) {
-      padding: calc(var(--page-inset-block-start) / 2) calc(var(--page-inset-inline) / 2)
-        calc(var(--page-inset-block-end) / 2);
+      padding: var(--page-inset-block-start) var(--page-inset-inline)
+        var(--page-inset-block-end);
     }
     main:has(.featured-page) {
       padding: 0;
@@ -214,12 +215,18 @@ body.page-agenda .featured-page #featured-talks .talk-title small {
     padding-right: 0;
     padding-bottom: 0;
     #main-card main:not(:has(.featured-page)) {
-      padding: calc(var(--page-inset-block-start) / 2) calc(var(--page-inset-inline) / 2)
-        calc(var(--page-inset-block-end) / 2);
+      padding: var(--page-inset-block-start) var(--page-inset-inline)
+        var(--page-inset-block-end);
     }
     #main-card main:has(.featured-page) {
       padding: 0;
     }
+  }
+
+  /* Speakers / talk pages share page-agenda but are not .main-schedule */
+  body.page-agenda #main-card > main:not(:has(.featured-page)) {
+    padding-left: var(--page-inset-inline);
+    padding-right: var(--page-inset-inline);
   }
 }
 
