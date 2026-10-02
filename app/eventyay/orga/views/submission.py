@@ -55,7 +55,7 @@ from eventyay.common.session_video import (
 )
 from eventyay.common.video_embed import parse_video_urls
 from eventyay.common.text.phrases import phrases
-from eventyay.common.views.generic import CreateOrUpdateView, OrgaCRUDView
+from eventyay.common.views.generic import CreateOrUpdateView, OrgaCRUDView, get_next_url
 from eventyay.common.views.mixins import (
     ActionConfirmMixin,
     ActionFromUrl,
@@ -254,7 +254,7 @@ class SubmissionSpeakersDelete(SubmissionViewMixin, View):
             messages.success(request, _('The speaker has been removed from the proposal.'))
         else:
             messages.warning(request, _('The speaker was not part of this proposal.'))
-        return redirect(submission.orga_urls.speakers)
+        return redirect(get_next_url(request) or submission.orga_urls.speakers)
 
 
 class SubmissionEtherpadGenerate(SubmissionViewMixin, View):
@@ -349,7 +349,7 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
                 user=self.request.user,
             )
             messages.success(self.request, _('The speaker has been added to the proposal.'))
-            return redirect(speaker.event_profile(self.request.event).orga_urls.base)
+            return redirect(get_next_url(self.request) or speaker.event_profile(self.request.event).orga_urls.base)
         return super().form_valid(form)
 
     def get_form_kwargs(self):
@@ -425,7 +425,7 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
     @context
     @cached_property
     def add_speaker_form(self):
-        if self.get_object():
+        if self.object and self.action == 'edit':
             return AddSpeakerInlineForm(event=self.request.event, require_name=True, include_biography=True)
 
     @cached_property

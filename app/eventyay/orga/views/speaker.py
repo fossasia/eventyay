@@ -29,6 +29,7 @@ from eventyay.base.services.talkimport import import_speakers
 from eventyay.base.views.tasks import AsyncAction
 from eventyay.common.exceptions import SendMailException
 from eventyay.common.image import gravatar_csp
+from eventyay.common.permissions import is_admin_mode_active
 from eventyay.common.urls import build_absolute_uri
 from eventyay.common.text.phrases import phrases
 from eventyay.common.views.generic import CreateOrUpdateView, OrgaCRUDView
@@ -55,6 +56,7 @@ from eventyay.person.social_link_mixin import SpeakerSocialLinksMixin
 from eventyay.submission.forms import TalkQuestionsForm
 from eventyay.talk_rules.person import is_only_reviewer
 from eventyay.talk_rules.submission import limit_for_reviewers, speaker_profiles_for_user
+from eventyay.talk_rules.tracks import apply_track_limit
 
 
 class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin, ListView):
@@ -244,7 +246,9 @@ class SpeakerSessionMixin:
     @context
     @cached_property
     def can_link_sessions(self):
-        return self.request.user.has_perm('base.orga_update_submission', self.request.event)
+        return is_admin_mode_active(self.request) or self.request.user.has_perm(
+            'base.orga_update_submission', self.request.event
+        )
 
     @context
     @cached_property
@@ -253,6 +257,7 @@ class SpeakerSessionMixin:
         speaker = self.get_session_speaker()
         if speaker:
             sessions = sessions.exclude(speakers=speaker)
+        sessions = apply_track_limit(sessions, self.request.event, self.request.user)
         return sessions.only('pk', 'title', 'code').order_by('title')
 
     @context
@@ -315,12 +320,15 @@ class SpeakerSessionMixin:
             session = self.session_form.save()
             self.session_questions_form.submission = session
             self.session_questions_form.save()
+        else:
+            session = existing_session
+        if session:
+            from eventyay.agenda.views.utils import clear_schedule_caches
+
             session.speakers.add(user)
-            return session
-        if existing_session:
-            existing_session.speakers.add(user)
-            return existing_session
-        return None
+            session.log_action('eventyay.submission.speakers.add', person=self.request.user, orga=True)
+            clear_schedule_caches(self.request.event, speaker=user)
+        return session
 
 
 @method_decorator(gravatar_csp(), name='dispatch')

@@ -46,6 +46,24 @@ def test_existing_speaker_can_be_linked_to_existing_session(orga_client, event, 
     assert response.status_code == 200
     with scope(event=event):
         assert other_submission.speakers.filter(pk=speaker.pk).exists()
+        assert other_submission.logged_actions().filter(action_type="eventyay.submission.speakers.add").exists()
+
+
+@pytest.mark.django_db
+def test_existing_sessions_respect_team_track_limits(
+    orga_client, orga_user, event, submission, other_submission, track, other_track
+):
+    with scope(event=event):
+        submission.track = track
+        submission.save()
+        other_submission.track = other_track
+        other_submission.save()
+        orga_user.teams.first().limit_tracks.add(track)
+    response = orga_client.get(event.orga_urls.new_speaker)
+    options = bs4.BeautifulSoup(response.text, "html.parser").select("#id_existing_session_id option")
+    values = {option["value"] for option in options}
+    assert str(submission.pk) in values
+    assert str(other_submission.pk) not in values
 
 
 @pytest.mark.django_db
@@ -105,7 +123,7 @@ def test_session_edit_page_lists_speakers_with_add_and_remove(orga_client, event
     section = page.select_one("[data-session-speakers]")
     assert section is not None
     assert speaker.get_display_name() in section.text
-    actions = {form["action"] for form in section.select("form")}
+    actions = {form["action"].split("?")[0] for form in section.select("form")}
     assert submission.orga_urls.speakers in actions
     assert submission.orga_urls.delete_speaker in actions
     assert section.select_one("[name=email]") is not None
@@ -142,3 +160,27 @@ def test_session_page_removes_speaker(orga_client, event, speaker, submission):
     assert response.status_code == 302
     with scope(event=event):
         assert not submission.speakers.filter(pk=speaker.pk).exists()
+
+
+@pytest.mark.django_db
+def test_session_page_speaker_changes_return_to_next_url(orga_client, event, speaker, submission, other_submission):
+    next_url = other_submission.orga_urls.edit
+    response = orga_client.post(
+        f"{other_submission.orga_urls.speakers}?next={next_url}",
+        data={"email": speaker.email, "name": speaker.fullname},
+    )
+    assert response.status_code == 302
+    assert response.url == next_url
+    response = orga_client.post(f"{submission.orga_urls.delete_speaker}?next={next_url}", data={"id": speaker.pk})
+    assert response.status_code == 302
+    assert response.url == next_url
+
+
+@pytest.mark.django_db
+def test_session_page_ignores_external_next_url(orga_client, event, speaker, submission):
+    response = orga_client.post(
+        f"{submission.orga_urls.delete_speaker}?next=https://example.com/",
+        data={"id": speaker.pk},
+    )
+    assert response.status_code == 302
+    assert response.url == submission.orga_urls.speakers

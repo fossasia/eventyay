@@ -19,7 +19,6 @@
         <script defer src="{% static 'cfp/js/talk_dependencies.js' %}"></script>
         <script defer src="{% static "orga/js/etherpad.js" %}"></script>
     {% endcompress %}
-    <script type="module" src="{% static 'orga/js/session_speakers.js' %}"></script>
 {% endblock scripts %}
 
 {% block submission_content %}
@@ -155,9 +154,10 @@
             {% endif %}
         </fieldset></form>
 
-    {% if action != "create" and add_speaker_form %}
+    {% if add_speaker_form %}
         {% has_event_perm "base.update_submission" request.user request submission as can_edit_speakers %}
-        {% if can_edit_speakers %}
+        {% has_event_perm "base.orga_list_speakerprofile" request.user request submission as can_list_speakers %}
+        {% if can_edit_speakers and can_list_speakers %}
             {% include "orga/submission/fragment_session_speakers.html" %}
         {% endif %}
     {% endif %}
