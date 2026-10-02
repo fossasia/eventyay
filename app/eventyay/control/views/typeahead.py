@@ -115,7 +115,7 @@ def serialize_voucher(v):
 
 
 def event_list(request):
-    query = request.GET.get('query', '')
+    query = request.GET.get('query', '').strip()
     try:
         page = int(request.GET.get('page', '1'))
     except ValueError:
