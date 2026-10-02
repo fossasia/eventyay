@@ -261,13 +261,15 @@ class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
                 if request.event.settings.invoice_address_required and (
                     not self.invoice_address or not self.invoice_address.street
                 ):
-                    messages.warning(request, _('Please enter your invoicing address.'))
+                    if warn:
+                        messages.warning(request, _('Please enter your invoicing address.'))
                     return False
 
             if request.event.settings.invoice_name_required and (
                 not self.invoice_address or not self.invoice_address.name
             ):
-                messages.warning(request, _('Please enter your name.'))
+                if warn:
+                    messages.warning(request, _('Please enter your name.'))
                 return False
 
         base_states = get_system_question_base_states(self.request.event)
@@ -294,41 +296,41 @@ class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
                         )
                     return False
 
-            attendee_name_required = get_system_question_asked_required(
+            _asked, attendee_name_required = get_system_question_asked_required(
                 self.request.event,
                 'attendee_name_parts',
                 cp.product,
                 base_states=base_states,
                 product_overrides=product_overrides,
-            )[1]
-            attendee_email_required = get_system_question_asked_required(
+            )
+            _asked, attendee_email_required = get_system_question_asked_required(
                 self.request.event,
                 'attendee_email',
                 cp.product,
                 base_states=base_states,
                 product_overrides=product_overrides,
-            )[1]
-            attendee_company_required = get_system_question_asked_required(
+            )
+            _asked, attendee_company_required = get_system_question_asked_required(
                 self.request.event,
                 'company',
                 cp.product,
                 base_states=base_states,
                 product_overrides=product_overrides,
-            )[1]
-            attendee_job_title_required = get_system_question_asked_required(
+            )
+            _asked, attendee_job_title_required = get_system_question_asked_required(
                 self.request.event,
                 'job_title',
                 cp.product,
                 base_states=base_states,
                 product_overrides=product_overrides,
-            )[1]
-            attendee_address_required = get_system_question_asked_required(
+            )
+            _asked, attendee_address_required = get_system_question_asked_required(
                 self.request.event,
                 'street',
                 cp.product,
                 base_states=base_states,
                 product_overrides=product_overrides,
-            )[1]
+            )
 
             if (
                 cp.product.admission

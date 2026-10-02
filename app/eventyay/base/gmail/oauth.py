@@ -53,7 +53,7 @@ def load_oauth_state(state: str) -> dict:
 
 
 def build_authorization_url(*, redirect_uri: str, state: str) -> str:
-    client_id, _ = get_gmail_client_config()
+    client_id, __ = get_gmail_client_config()
     params = {
         'client_id': client_id,
         'redirect_uri': redirect_uri,
@@ -110,7 +110,7 @@ def fetch_sender_email(access_token: str) -> str:
 
 
 def build_google_credentials(credential: GmailOAuthCredential):
-    Request, Credentials, _, _ = require_google_api_dependencies()
+    Request, Credentials, __, __ = require_google_api_dependencies()
     client_id, client_secret = get_gmail_client_config()
     creds = Credentials(
         token=credential.get_access_token() or None,
@@ -128,13 +128,13 @@ def build_google_credentials(credential: GmailOAuthCredential):
 
 
 def build_gmail_service(credential: GmailOAuthCredential):
-    _, _, build, _ = require_google_api_dependencies()
+    __, __, build, __ = require_google_api_dependencies()
     creds = build_google_credentials(credential)
     return build('gmail', 'v1', credentials=creds, cache_discovery=False)
 
 
 def classify_http_error(error):
-    _, _, _, HttpError = require_google_api_dependencies()
+    __, __, __, HttpError = require_google_api_dependencies()
     if not isinstance(error, HttpError):
         raise error
 
