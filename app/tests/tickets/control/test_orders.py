@@ -2,14 +2,16 @@ import datetime
 from datetime import timedelta
 from decimal import Decimal
 from unittest import mock
+from zoneinfo import ZoneInfo
 
 import pytest
 from bs4 import BeautifulSoup
 from django.core import mail
 from django.test import override_settings
+from django.urls import reverse
 from django.utils.timezone import now
 from django_countries.fields import Country
-from django_scopes import scopes_disabled
+from django_scopes import scope, scopes_disabled
 
 from eventyay.base.models import (
     Event,
@@ -563,22 +565,35 @@ def test_order_transition_to_expired_success(client, env):
 
 
 @pytest.mark.django_db
-def test_order_transition_to_paid_in_time_success(client, env):
+@pytest.mark.parametrize('timezone', ['America/Los_Angeles', 'Asia/Tokyo'])
+@override_settings(DEBUG=True, SITE_NETLOC='example.com', ALLOWED_HOSTS=['example.com'])
+def test_order_transition_to_paid_in_time_success(client, env, timezone):
+    env[0].settings.timezone = timezone
+    assert env[0].timezone == 'UTC'
+    payment_date = (now() - timedelta(days=1)).date()
     with scopes_disabled():
         q = Quota.objects.create(event=env[0], size=0)
-    q.items.add(env[3])
-    client.login(email='dummy@dummy.dummy', password='dummy')
-    client.post(
-        '/control/event/dummy/dummy/orders/FOO/transition',
+    q.products.add(env[3])
+    client.force_login(env[1])
+    response = client.post(
+        reverse('control:event.order.transition', kwargs={
+            'organizer': env[0].organizer.slug, 'event': env[0].slug, 'code': env[2].code,
+        }),
         {
             'amount': str(env[2].pending_sum),
-            'payment_date': now().date().isoformat(),
+            'payment_date': payment_date.isoformat(),
             'status': 'p',
         },
+        HTTP_HOST='example.com',
     )
     with scopes_disabled():
         o = Order.objects.get(id=env[2].id)
+    assert response.status_code == 302
     assert o.status == Order.STATUS_PAID
+    with scope(event=env[0], organizer=env[0].organizer):
+        assert o.payments.get(state=OrderPayment.PAYMENT_STATE_CONFIRMED).payment_date == datetime.datetime.combine(
+            payment_date, datetime.time(), tzinfo=ZoneInfo(timezone)
+        )
 
 
 @pytest.mark.django_db

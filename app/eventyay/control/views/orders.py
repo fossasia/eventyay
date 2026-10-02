@@ -1565,7 +1565,7 @@ class OrderTransition(OrderView):
                         self.mark_paid_form.cleaned_data['payment_date'],
                         time(hour=0, minute=0, second=0),
                     ),
-                    ZoneInfo(self.order.event.timezone),
+                    ZoneInfo(self.order.event.settings.timezone),
                 )
 
             try:

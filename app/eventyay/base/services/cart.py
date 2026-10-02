@@ -251,7 +251,7 @@ class CartManager:
                         tlv.datetime(self.event).date(),
                         time(hour=23, minute=59, second=59),
                     ),
-                    ZoneInfo(self.event.timezone),
+                    ZoneInfo(self.event.settings.timezone),
                 )
                 if term_last < self.now_dt:
                     raise CartError(error_messages['payment_ended'])
@@ -282,7 +282,7 @@ class CartManager:
                             tlv.datetime(cp.subevent).date(),
                             time(hour=23, minute=59, second=59),
                         ),
-                        ZoneInfo(self.event.timezone),
+                        ZoneInfo(self.event.settings.timezone),
                     )
                     if term_last < self.now_dt:
                         err = error_messages['some_subevent_ended']
@@ -419,7 +419,7 @@ class CartManager:
                             tlv.datetime(op.subevent).date(),
                             time(hour=23, minute=59, second=59),
                         ),
-                        ZoneInfo(self.event.timezone),
+                        ZoneInfo(self.event.settings.timezone),
                     )
                     if term_last < self.now_dt:
                         raise CartError(error_messages['payment_ended'])

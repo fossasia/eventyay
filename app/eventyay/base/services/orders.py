@@ -617,7 +617,7 @@ def _check_date(event: Event, now_dt: datetime):
         if tlv:
             term_last = make_aware(
                 datetime.combine(tlv.datetime(event).date(), time(hour=23, minute=59, second=59)),
-                ZoneInfo(event.timezone),
+                ZoneInfo(event.settings.timezone),
             )
             if term_last < now_dt:
                 raise OrderError(error_messages['ended'])
@@ -705,7 +705,7 @@ def _check_positions(
                         tlv.datetime(cp.subevent).date(),
                         time(hour=23, minute=59, second=59),
                     ),
-                    ZoneInfo(event.timezone),
+                    ZoneInfo(event.settings.timezone),
                 )
                 if term_last < now_dt:
                     err = err or error_messages['some_subevent_ended']
