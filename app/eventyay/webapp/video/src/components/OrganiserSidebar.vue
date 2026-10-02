@@ -357,6 +357,7 @@ export default {
 			return `${count} ${count === 1 ? this.$t('active viewer') : this.$t('active viewers')}`
 		},
 		async fetchKiosks() {
+			if (!this.liveFeatures.kiosks) return
 			if (!this.hasPermission('world:kiosks.manage') && !this.isAdminMode) return
 			try {
 				const res = await api.call('user.list', {type: 'kiosk'})
