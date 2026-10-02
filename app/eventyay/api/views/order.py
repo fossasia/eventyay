@@ -465,7 +465,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         responses = register_ticket_outputs.send(self.request.event)
         for receiver, response in responses:
             prov = response(self.request.event)
-            if prov.identifier == identifier and prov.is_enabled:
+            if prov.identifier == identifier and prov.is_available:
                 return prov
         raise NotFound('Unknown output provider.')
 
@@ -487,6 +487,8 @@ class OrderViewSet(viewsets.ModelViewSet):
     @action(detail=True, url_name='download', url_path='download/(?P<output>[^/]+)')
     def download(self, request, output, **kwargs):
         provider = self._get_output_provider(output)
+        if not provider.multi_download_enabled:
+            raise NotFound('Unknown output provider.')
         order = self.get_object()
 
         if order.status != Order.STATUS_PAID:
@@ -1147,7 +1149,7 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
         responses = register_ticket_outputs.send(self.request.event)
         for receiver, response in responses:
             prov = response(self.request.event)
-            if prov.identifier == identifier and prov.is_enabled:
+            if prov.identifier == identifier and prov.is_available:
                 return prov
         raise NotFound('Unknown output provider.')
 

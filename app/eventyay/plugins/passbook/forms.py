@@ -1,12 +1,14 @@
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
 from django import forms
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile, UploadedFile
 from django.utils.translation import gettext_lazy as _
-from PIL import Image, UnidentifiedImageError
 
 from eventyay.base.forms import SECRET_REDACTED, SecretKeySettingsField
+from eventyay.common.forms.fields import ImageField
+from eventyay.consts import SizeKey
 from eventyay.control.forms import ClearableBasenameFileInput
 
 
@@ -36,25 +38,13 @@ class CertificateFileField(forms.FileField):
         )
 
 
-class PNGImageField(forms.FileField):
+class PNGImageField(ImageField):
     widget = ClearableBasenameFileInput
+    extensions = {'.png': ['image/png', '.png']}
 
-    def clean(self, value, *args, **kwargs):
-        value = super().clean(value, *args, **kwargs)
-        if not isinstance(value, UploadedFile):
-            return value
-
-        value.seek(0)
-        try:
-            with Image.open(value) as image:
-                if image.format != 'PNG':
-                    raise ValidationError(_('Upload a PNG image.'))
-                image.verify()
-        except (UnidentifiedImageError, OSError) as exc:
-            raise ValidationError(_('Upload a valid PNG image.')) from exc
-        finally:
-            value.seek(0)
-        return value
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('max_size', settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE])
+        super().__init__(*args, **kwargs)
 
 
 class PrivateKeyWidget(forms.Textarea):

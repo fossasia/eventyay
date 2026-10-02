@@ -266,7 +266,7 @@ class OrderDownloadsField(serializers.Field):
         responses = register_ticket_outputs.send(instance.event)
         for receiver, response in responses:
             provider = response(instance.event)
-            if provider.is_enabled:
+            if provider.is_enabled and provider.multi_download_enabled:
                 res.append(
                     {
                         'output': provider.identifier,

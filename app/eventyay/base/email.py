@@ -589,7 +589,7 @@ def get_combined_ticket_output_identifier(event: Event) -> str:
     enabled_ids = []
     for _receiver, response in register_ticket_outputs.send(event):
         provider = response(event)
-        if not getattr(provider, 'is_enabled', False):
+        if not getattr(provider, 'is_enabled', False) or not provider.multi_download_enabled:
             continue
         if provider.identifier == 'pdf':
             return 'pdf'

@@ -870,7 +870,6 @@ class Event(
         self.settings.invoice_renderer = 'modern1'
         self.settings.invoice_include_expire_date = True
         self.settings.ticketoutput_pdf__enabled = True
-        self.settings.ticketoutput_passbook__enabled = True
         self.settings.event_list_type = 'calendar'
         self.settings.invoice_email_attachment = True
         self.settings.name_scheme = 'given_family'

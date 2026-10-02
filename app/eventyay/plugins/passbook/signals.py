@@ -6,6 +6,9 @@ from eventyay.base.signals import register_ticket_outputs
 from eventyay.plugins.passbook.ticketoutput import PassbookTicketOutput
 
 
+settings_hierarkey.add_default('ticketoutput_passbook__enabled', False, bool)
+
+
 @receiver(register_ticket_outputs, dispatch_uid='output_passbook')
 def register_ticket_output(sender, **kwargs):
     return PassbookTicketOutput

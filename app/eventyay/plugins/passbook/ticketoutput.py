@@ -147,10 +147,10 @@ class PassbookTicketOutput(BaseTicketOutput):
     @cached_property
     def signing_material(self) -> SigningMaterial:
         material = load_signing_material(
-            self.event.settings.get('ticketoutput_passbook_certificate', as_type=File),
+            self.event.settings.get('ticketoutput_passbook_certificate', as_type=File, binary_file=True),
             self.settings.get('private_key'),
             self.settings.get('private_key_password'),
-            self.event.settings.get('ticketoutput_passbook_wwdr_certificate', as_type=File),
+            self.event.settings.get('ticketoutput_passbook_wwdr_certificate', as_type=File, binary_file=True),
         )
         validate_certificate_identity(
             material,
@@ -161,21 +161,33 @@ class PassbookTicketOutput(BaseTicketOutput):
 
     @property
     def is_configured(self) -> bool:
-        if not self.settings.get('team_identifier') or not self.settings.get('pass_type_identifier'):
+        return all(
+            (
+                self.settings.get('team_identifier'),
+                self.settings.get('pass_type_identifier'),
+                self.event.settings.get('ticketoutput_passbook_certificate', as_type=str),
+                self.settings.get('private_key'),
+                self.event.settings.get('ticketoutput_passbook_wwdr_certificate', as_type=str),
+            )
+        )
+
+    @property
+    def is_available(self) -> bool:
+        return self.is_configured
+
+    @property
+    def is_enabled(self) -> bool:
+        return super().is_enabled and self.is_available
+
+    @property
+    def preview_allowed(self) -> bool:
+        if not self.is_available:
             return False
         try:
             self.signing_material
         except (ValidationError, OSError):
             return False
         return True
-
-    @property
-    def is_enabled(self) -> bool:
-        return super().is_enabled and self.is_configured
-
-    @property
-    def preview_allowed(self) -> bool:
-        return self.is_configured
 
     @property
     def settings_form_fields(self) -> dict:
@@ -274,7 +286,16 @@ class PassbookTicketOutput(BaseTicketOutput):
 
         event_ticket = {
             'primaryFields': [{'key': 'event', 'label': gettext('Event'), 'value': f'{event.name}'}],
-            'secondaryFields': [{'key': 'ticket', 'label': gettext('Ticket'), 'value': product_name}],
+            'secondaryFields': [
+                {'key': 'ticket', 'label': gettext('Ticket'), 'value': product_name},
+                {
+                    'key': 'starts',
+                    'label': gettext('Starts'),
+                    'value': event.date_from.isoformat(),
+                    'dateStyle': 'PKDateStyleMedium',
+                    'timeStyle': 'PKDateStyleShort',
+                },
+            ],
             'auxiliaryFields': [],
             'backFields': [
                 {'key': 'order', 'label': gettext('Order'), 'value': order.code},
@@ -286,6 +307,10 @@ class PassbookTicketOutput(BaseTicketOutput):
                 },
             ],
         }
+        if event.location:
+            event_ticket['auxiliaryFields'].append(
+                {'key': 'location', 'label': gettext('Location'), 'value': f'{event.location}'}
+            )
         if position.seat:
             event_ticket['auxiliaryFields'].append(
                 {'key': 'seat', 'label': gettext('Seat'), 'value': f'{position.seat}'}
@@ -336,8 +361,8 @@ class PassbookTicketOutput(BaseTicketOutput):
     def pass_files(self, position: OrderPosition) -> dict[str, bytes]:
         payload = json.dumps(self.pass_data(position), ensure_ascii=False, separators=(',', ':')).encode()
         files = {'pass.json': payload}
-        icon = self.event.settings.get('ticketoutput_passbook_icon', as_type=File)
-        logo = self.event.settings.get('ticketoutput_passbook_logo', as_type=File)
+        icon = self.event.settings.get('ticketoutput_passbook_icon', as_type=File, binary_file=True)
+        logo = self.event.settings.get('ticketoutput_passbook_logo', as_type=File, binary_file=True)
         if icon:
             icon_content = read_file(icon)
         else:

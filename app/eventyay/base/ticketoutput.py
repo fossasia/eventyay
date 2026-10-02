@@ -33,6 +33,10 @@ class BaseTicketOutput:
         return self.settings.get('_enabled', as_type=bool)
 
     @property
+    def is_available(self) -> bool:
+        return True
+
+    @property
     def multi_download_enabled(self) -> bool:
         """
         Returns whether or not the ``generate_order`` method may be called. Returns

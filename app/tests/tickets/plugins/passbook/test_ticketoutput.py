@@ -15,7 +15,7 @@ from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import SimpleUploadedFile
 
-from eventyay.plugins.passbook.forms import CertificateFileField
+from eventyay.plugins.passbook.forms import CertificateFileField, PNGImageField
 from eventyay.plugins.passbook.ticketoutput import PassbookTicketOutput, load_signing_material
 
 
@@ -100,6 +100,7 @@ def output_for(signing_credentials):
         name='Conference',
         date_from=datetime(2026, 11, 1, 9, tzinfo=UTC),
         date_to=datetime(2026, 11, 1, 18, tzinfo=UTC),
+        location='Berlin Conference Center',
         geo_lat=52.52,
         geo_lon=13.405,
     )
@@ -136,6 +137,11 @@ def test_certificate_field_rejects_invalid_data():
         CertificateFileField().clean(SimpleUploadedFile('certificate.pem', b'not-a-certificate'))
 
 
+def test_png_field_rejects_corrupt_image():
+    with pytest.raises(ValidationError, match='valid image'):
+        PNGImageField().clean(SimpleUploadedFile('icon.png', b'not-an-image'))
+
+
 def test_generate_signed_pkpass(signing_credentials, monkeypatch):
     output, event = output_for(signing_credentials)
     order = SimpleNamespace(event=event, code='ABC12')
@@ -170,6 +176,8 @@ def test_generate_signed_pkpass(signing_credentials, monkeypatch):
         pass_data = json.loads(archive.read('pass.json'))
         assert pass_data['barcodes'][0]['message'] == 'ticket-secret'
         assert pass_data['eventTicket']['primaryFields'][0]['value'] == 'Conference'
+        assert pass_data['eventTicket']['secondaryFields'][1]['value'] == '2026-11-01T09:00:00+00:00'
+        assert pass_data['eventTicket']['auxiliaryFields'][0]['value'] == 'Berlin Conference Center'
         manifest = json.loads(archive.read('manifest.json'))
         assert manifest['pass.json'] == hashlib.sha1(archive.read('pass.json')).hexdigest()
         certificates = pkcs7.load_der_pkcs7_certificates(archive.read('signature'))
@@ -191,6 +199,7 @@ def test_subevent_zero_coordinates_are_preserved(signing_credentials, monkeypatc
         name='Greenwich Conference',
         date_from=event.date_from,
         date_to=event.date_to,
+        location='Greenwich',
         geo_lat=0,
         geo_lon=0,
     )
@@ -218,6 +227,7 @@ def test_subevent_coordinates_do_not_mix_with_parent(signing_credentials, monkey
         name='Partial Location',
         date_from=event.date_from,
         date_to=event.date_to,
+        location='Parent venue',
         geo_lat=0,
         geo_lon=None,
     )

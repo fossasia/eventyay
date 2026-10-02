@@ -346,10 +346,12 @@ def test_get_combined_ticket_output_identifier_prefers_pdf():
     class PdfProvider:
         identifier = 'pdf'
         is_enabled = True
+        multi_download_enabled = True
 
     class OtherProvider:
         identifier = 'applepass'
         is_enabled = True
+        multi_download_enabled = True
 
     with patch('eventyay.base.signals.register_ticket_outputs.send') as send:
         send.return_value = [
@@ -365,10 +367,12 @@ def test_get_combined_ticket_output_identifier_falls_back_to_first_enabled():
     class OtherProvider:
         identifier = 'applepass'
         is_enabled = True
+        multi_download_enabled = True
 
     class DisabledPdf:
         identifier = 'pdf'
         is_enabled = False
+        multi_download_enabled = True
 
     with patch('eventyay.base.signals.register_ticket_outputs.send') as send:
         send.return_value = [
@@ -376,6 +380,27 @@ def test_get_combined_ticket_output_identifier_falls_back_to_first_enabled():
             (None, lambda e: OtherProvider()),
         ]
         assert get_combined_ticket_output_identifier(event) == 'applepass'
+
+
+def test_get_combined_ticket_output_identifier_skips_single_ticket_outputs():
+    event = MagicMock()
+
+    class PassbookProvider:
+        identifier = 'passbook'
+        is_enabled = True
+        multi_download_enabled = False
+
+    class PdfProvider:
+        identifier = 'pdf'
+        is_enabled = True
+        multi_download_enabled = True
+
+    with patch('eventyay.base.signals.register_ticket_outputs.send') as send:
+        send.return_value = [
+            (None, lambda e: PassbookProvider()),
+            (None, lambda e: PdfProvider()),
+        ]
+        assert get_combined_ticket_output_identifier(event) == 'pdf'
 
 
 def test_build_email_preview_context_keeps_html_samples():

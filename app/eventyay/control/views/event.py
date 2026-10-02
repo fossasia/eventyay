@@ -1002,7 +1002,7 @@ class TicketSettingsPreview(EventPermissionRequiredMixin, View):
                 return provider
 
     def get(self, request, *args, **kwargs):
-        if not self.output:
+        if not self.output or not self.output.preview_allowed:
             messages.error(request, _('You requested an invalid ticket output type.'))
             return redirect(self.get_error_url())
 
@@ -1732,8 +1732,6 @@ class QuickSetupView(FormView):
         if form.cleaned_data['ticket_download']:
             self.request.event.settings.ticket_download = True
             self.request.event.settings.ticketoutput_pdf__enabled = True
-
-            self.request.event.settings.ticketoutput_passbook__enabled = True
 
         else:
             self.request.event.settings.ticket_download = False
