@@ -602,6 +602,9 @@ def productvarquota_select2(request, **kwargs):
 
 def organizer_select2(request):
     term = request.GET.get('query', '').strip()
+    if not term:
+        return JsonResponse({'results': [], 'pagination': {'more': False}})
+
     try:
         page = int(request.GET.get('page', '1'))
     except ValueError:
