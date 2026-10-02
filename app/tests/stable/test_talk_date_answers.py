@@ -37,6 +37,8 @@ def submission(event, speaker):
         # Stored in UTC, shown in the event's timezone
         (TalkQuestionVariant.DATETIME, '2026-10-15 08:30:00+00:00', '2026-10-15 10:30'),
         (TalkQuestionVariant.DATE, 'not a date', 'not a date'),
+        # Out of range once moved to the event's timezone
+        (TalkQuestionVariant.DATETIME, '9999-12-31 23:30:00+00:00', '9999-12-31 23:30:00+00:00'),
         (TalkQuestionVariant.DATE, '', ''),
         (TalkQuestionVariant.DATETIME, '', ''),
     ),

@@ -488,13 +488,13 @@ class Answer(PretalxModel):
                 return ''
             try:
                 value = dateutil.parser.parse(self.answer)
+                if self.question.variant == TalkQuestionVariant.DATE:
+                    return date_format(value, 'SHORT_DATE_FORMAT')
+                if value.tzinfo:
+                    value = value.astimezone(self.event.tz)
+                return date_format(value, 'SHORT_DATETIME_FORMAT')
             except (ValueError, OverflowError):
                 return self.answer
-            if self.question.variant == TalkQuestionVariant.DATE:
-                return date_format(value, 'SHORT_DATE_FORMAT')
-            if value.tzinfo:
-                value = value.astimezone(self.event.tz)
-            return date_format(value, 'SHORT_DATETIME_FORMAT')
 
     @property
     def is_answered(self):
