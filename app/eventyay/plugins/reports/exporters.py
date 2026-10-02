@@ -29,6 +29,7 @@ from eventyay.base.forms.widgets import DatePickerWidget
 from eventyay.base.models import Order, OrderPosition
 from eventyay.base.models.event import SubEvent
 from eventyay.base.models.orders import OrderFee, OrderPayment
+from eventyay.base.services.export import ExportError
 from eventyay.base.services.stats import order_overview
 from eventyay.helpers.timezone import get_browser_timezone
 from eventyay.control.forms.filter import OverviewFilterForm
@@ -362,6 +363,8 @@ class OverviewReport(Report):
             date_until=form_data.get('date_until'),
             fees=True,
         )
+        if not items_by_category:
+            raise ExportError(_('No data to export.'))
         places = settings.CURRENCY_PLACES.get(self.event.currency, 2)
         states = (
             ('canceled', Order.STATUS_CANCELED),

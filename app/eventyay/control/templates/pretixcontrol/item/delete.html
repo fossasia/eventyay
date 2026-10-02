@@ -4,8 +4,8 @@
 {% block title %}{% trans "Delete product" %}{% endblock %}
 {% block inside %}
 	<h1>{% trans "Delete product" %}</h1>
-	{% if not possible and not item.active %}
-		<p>{% blocktrans %}You cannot delete the product <strong>{{ item }}</strong> because it already has been ordered.{% endblocktrans %}</p>
+	{% if not possible and not product.active %}
+		<p>{% blocktrans %}You cannot delete the product <strong>{{ product }}</strong> because it already has been ordered.{% endblocktrans %}</p>
         <div class="form-group submit-group">
             <a href="{% url "control:event.products" organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-default btn-cancel">
                 {% trans "Cancel" %}
@@ -16,7 +16,7 @@
 		<form action="" method="post" class="form-horizontal">
 			{% csrf_token %}
             {% if possible %}
-    			<p>{% blocktrans %}Are you sure you want to delete the product <strong>{{ item }}</strong>?{% endblocktrans %}</p>
+    			<p>{% blocktrans %}Are you sure you want to delete the product <strong>{{ product }}</strong>?{% endblocktrans %}</p>
                 {% if vouchers %}
                     <div class="alert alert-warning">
                         {% blocktrans trimmed count count=vouchers %}
