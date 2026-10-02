@@ -4,7 +4,7 @@ from email.utils import formataddr
 from smtplib import SMTPRecipientsRefused, SMTPResponseException, SMTPSenderRefused
 
 from django.conf import settings
-from django.core.mail import EmailMultiAlternatives, get_connection
+from django.core.mail import EmailMultiAlternatives
 from django.core.mail.backends.smtp import EmailBackend
 
 from eventyay.base.models.event import Event
@@ -108,8 +108,13 @@ def send_mail_now(
         sender = formataddr((str(event.name), sender or settings.DEFAULT_FROM_EMAIL))
 
     else:
-        sender = formataddr(('eventyay', settings.DEFAULT_FROM_EMAIL))
-        backend = get_connection(fail_silently=False)
+        # Mail without an event (e.g. admin messages) uses the mail server and sender address from the
+        # admin global settings, like the other platform emails do.
+        from eventyay.base.services.mail import get_mail_backend
+        from eventyay.base.settings import GlobalSettingsObject
+
+        sender = formataddr(('eventyay', GlobalSettingsObject().settings.mail_from or settings.DEFAULT_FROM_EMAIL))
+        backend = get_mail_backend()
 
     email = EmailMultiAlternatives(
         subject,
