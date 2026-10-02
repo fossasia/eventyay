@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.utils.timezone import now
 
 from eventyay.base.email import TEST_EMAIL_BODY
-from eventyay.base.models import User
+from eventyay.base.models import Event, Organizer, User
 from eventyay.base.models.admin_mail import (
     AdminEmailQueue,
     AdminEmailQueueFilter,
@@ -674,3 +674,65 @@ def test_send_still_validates_audience_filters(admin_client):
     response = admin_client.post('/admin/messages/compose/', data=data)
     assert 'event_date_from' in response.context['form'].errors
     assert not AdminEmailQueue.objects.exists()
+
+@pytest.mark.django_db
+def test_event_list_typeahead_whitespace_trimmed(client, admin_user):
+    organizer = Organizer.objects.create(name='Test Org', slug='test-org')
+    event = Event.objects.create(
+        organizer=organizer, name='Test Event', slug='test-event',
+        date_from=now()
+    )
+    client.force_login(admin_user)
+    
+    response = client.get(reverse('control:events.typeahead'), {'query': '  Test Event  '})
+    assert response.status_code == 200
+    results = response.json()['results']
+    assert len(results) == 1
+    assert results[0]['id'] == event.pk
+
+@pytest.mark.django_db
+def test_event_list_typeahead_short_query_exact_match(client, admin_user):
+    organizer = Organizer.objects.create(name='AB', slug='ab-org')
+    event1 = Event.objects.create(
+        organizer=organizer, name='A', slug='a-event',
+        date_from=now()
+    )
+    event2 = Event.objects.create(
+        organizer=organizer, name='AA', slug='aa-event',
+        date_from=now()
+    )
+    event3 = Event.objects.create(
+        organizer=organizer, name='AB Event', slug='ab-event',
+        date_from=now()
+    )
+    client.force_login(admin_user)
+    
+    # 1 character, exact match event name (matches 'A', but not 'AA' or 'AB Event')
+    response = client.get(reverse('control:events.typeahead'), {'query': 'A'})
+    assert response.status_code == 200
+    results = response.json()['results']
+    assert len(results) == 1
+    assert results[0]['id'] == event1.pk
+
+    # 2 characters, exact match organizer name
+    response = client.get(reverse('control:events.typeahead'), {'query': 'AB'})
+    assert response.status_code == 200
+    results = response.json()['results']
+    # All 3 events belong to organizer 'AB', so all 3 will match exact organizer name
+    assert len(results) == 3
+
+@pytest.mark.django_db
+def test_event_list_typeahead_long_query_substring_match(client, admin_user):
+    organizer = Organizer.objects.create(name='Test Org', slug='test-org')
+    event = Event.objects.create(
+        organizer=organizer, name='Banana', slug='banana-event',
+        date_from=now()
+    )
+    client.force_login(admin_user)
+    
+    # >=3 characters, substring match
+    response = client.get(reverse('control:events.typeahead'), {'query': 'nan'})
+    assert response.status_code == 200
+    results = response.json()['results']
+    assert len(results) == 1
+    assert results[0]['id'] == event.pk
