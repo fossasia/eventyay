@@ -3,6 +3,7 @@ from cryptography.hazmat.primitives import serialization
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.files import File
 from django.core.files.uploadedfile import SimpleUploadedFile, UploadedFile
 from django.utils.translation import gettext_lazy as _
 
@@ -14,6 +15,7 @@ from eventyay.control.forms import ClearableBasenameFileInput
 
 class CertificateFileField(forms.FileField):
     widget = ClearableBasenameFileInput
+    _as_type = File
 
     def clean(self, value, *args, **kwargs):
         value = super().clean(value, *args, **kwargs)
@@ -41,6 +43,7 @@ class CertificateFileField(forms.FileField):
 class PNGImageField(ImageField):
     widget = ClearableBasenameFileInput
     extensions = {'.png': ['image/png', '.png']}
+    _as_type = File
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('max_size', settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE])

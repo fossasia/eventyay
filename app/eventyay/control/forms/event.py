@@ -4,6 +4,7 @@ from urllib.parse import urlencode
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.files import File
 from django.core.files.uploadedfile import UploadedFile
 from django.core.validators import validate_email
 from django.db.models import Q
@@ -1128,7 +1129,12 @@ class ProviderForm(SettingsForm):
                 v.set_event(self.obj)
 
             if hasattr(v, '_as_type'):
-                self.initial[k] = self.obj.settings.get(k, as_type=v._as_type, default=v.initial)
+                self.initial[k] = self.obj.settings.get(
+                    k,
+                    as_type=v._as_type,
+                    default=v.initial,
+                    binary_file=v._as_type is File,
+                )
 
     def clean(self):
         cleaned_data = super().clean()
