@@ -403,6 +403,21 @@ def test_get_combined_ticket_output_identifier_skips_single_ticket_outputs():
         assert get_combined_ticket_output_identifier(event) == 'pdf'
 
 
+def test_combined_ticket_button_is_empty_for_single_ticket_outputs():
+    event = MagicMock()
+    order = SimpleNamespace(code='ABC12', secret='secret')
+
+    class PassbookProvider:
+        identifier = 'passbook'
+        is_enabled = True
+        multi_download_enabled = False
+
+    with patch('eventyay.base.signals.register_ticket_outputs.send') as send:
+        send.return_value = [(None, lambda e: PassbookProvider())]
+        assert get_combined_ticket_output_identifier(event) is None
+        assert render_download_tickets_pdf_button(event, order) == ''
+
+
 def test_build_email_preview_context_keeps_html_samples():
     event = MagicMock()
     qr_sample = render_qr_code_img('secret', alt='Ticket QR code')

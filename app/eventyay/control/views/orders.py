@@ -617,7 +617,11 @@ class OrderDownload(AsyncAction, OrderView):
             return None
 
     def get(self, request, *args, **kwargs):
-        if not self.output or not self.output.is_available:
+        if (
+            not self.output
+            or not self.output.is_available
+            or ('position' not in self.kwargs and not self.output.multi_download_enabled)
+        ):
             return self.error(_('You requested an invalid ticket output type.'))
         if 'async_id' in request.GET and settings.HAS_CELERY:
             return self.get_result(request)
@@ -627,7 +631,11 @@ class OrderDownload(AsyncAction, OrderView):
         return self.http_method_not_allowed(request)
 
     def post(self, request, *args, **kwargs):
-        if not self.output or not self.output.is_available:
+        if (
+            not self.output
+            or not self.output.is_available
+            or ('position' not in self.kwargs and not self.output.multi_download_enabled)
+        ):
             return self.error(_('You requested an invalid ticket output type.'))
         if not self.order_position:
             raise Http404(_('Unknown order code or not authorized to access this order.'))

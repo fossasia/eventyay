@@ -3,6 +3,7 @@ import json
 from collections import OrderedDict
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from functools import lru_cache
 from io import BytesIO
 from zipfile import ZIP_DEFLATED, ZipFile
 
@@ -57,6 +58,20 @@ def load_certificate(value) -> x509.Certificate:
         return x509.load_pem_x509_certificate(content)
     except ValueError:
         return x509.load_der_x509_certificate(content)
+
+
+@lru_cache(maxsize=256)
+def stored_certificate_validity(value: str) -> tuple[datetime, datetime]:
+    storage_name = value[7:] if value.startswith('file://') else value
+    certificate = load_certificate(storage_name)
+    return certificate.not_valid_before_utc, certificate.not_valid_after_utc
+
+
+def certificate_validity(value) -> tuple[datetime, datetime]:
+    if isinstance(value, str):
+        return stored_certificate_validity(value)
+    certificate = load_certificate(value)
+    return certificate.not_valid_before_utc, certificate.not_valid_after_utc
 
 
 def load_signing_material(certificate, private_key: str, password: str, wwdr_certificate) -> SigningMaterial:
@@ -173,7 +188,20 @@ class PassbookTicketOutput(BaseTicketOutput):
 
     @property
     def is_available(self) -> bool:
-        return self.is_configured
+        if not self.is_configured:
+            return False
+        now = datetime.now(UTC)
+        try:
+            certificate_values = (
+                self.event.settings.get('ticketoutput_passbook_certificate', as_type=str),
+                self.event.settings.get('ticketoutput_passbook_wwdr_certificate', as_type=str),
+            )
+            return all(
+                valid_from <= now <= valid_until
+                for valid_from, valid_until in map(certificate_validity, certificate_values)
+            )
+        except (OSError, UnsupportedAlgorithm, ValueError):
+            return False
 
     @property
     def is_enabled(self) -> bool:

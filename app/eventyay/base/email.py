@@ -582,7 +582,7 @@ def render_order_qr_html(order) -> str:
     return '<br>'.join(parts)
 
 
-def get_combined_ticket_output_identifier(event: Event) -> str:
+def get_combined_ticket_output_identifier(event: Event) -> str | None:
     """Return an enabled combined ticket-output identifier for download links."""
     from eventyay.base.signals import register_ticket_outputs
 
@@ -594,7 +594,7 @@ def get_combined_ticket_output_identifier(event: Event) -> str:
         if provider.identifier == 'pdf':
             return 'pdf'
         enabled_ids.append(provider.identifier)
-    return enabled_ids[0] if enabled_ids else 'pdf'
+    return enabled_ids[0] if enabled_ids else None
 
 
 def download_tickets_button_label(output: str) -> str:
@@ -607,6 +607,8 @@ def render_download_tickets_pdf_button(event: Event, order) -> str:
     from eventyay.multidomain.urlreverse import build_absolute_uri
 
     output = get_combined_ticket_output_identifier(event)
+    if not output:
+        return ''
     url = build_absolute_uri(
         event,
         'presale:event.order.download.combined',

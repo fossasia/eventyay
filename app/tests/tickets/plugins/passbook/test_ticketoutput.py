@@ -142,6 +142,29 @@ def test_png_field_rejects_corrupt_image():
         PNGImageField().clean(SimpleUploadedFile('icon.png', b'not-an-image'))
 
 
+def test_expired_certificate_makes_output_unavailable(signing_credentials):
+    output, event = output_for(signing_credentials)
+    key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    now = datetime.now(UTC)
+    subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, 'Expired')])
+    expired = (
+        x509.CertificateBuilder()
+        .subject_name(subject)
+        .issuer_name(subject)
+        .public_key(key.public_key())
+        .serial_number(x509.random_serial_number())
+        .not_valid_before(now - timedelta(days=30))
+        .not_valid_after(now - timedelta(days=1))
+        .sign(key, hashes.SHA256())
+    )
+    event.settings.values['ticketoutput_passbook_certificate'] = ContentFile(
+        expired.public_bytes(serialization.Encoding.PEM),
+        name='expired.pem',
+    )
+
+    assert output.is_available is False
+
+
 def test_generate_signed_pkpass(signing_credentials, monkeypatch):
     output, event = output_for(signing_credentials)
     order = SimpleNamespace(event=event, code='ABC12')
