@@ -65,12 +65,10 @@ def test_invalid_inline_speaker_returns_errors_without_changes(orga_client, even
         assert event.queued_mails.count() == mail_count
 
 
-def test_inline_speaker_renders_required_biography(orga_client, event, submission):
+def test_inline_speaker_preserves_required_biography_validation(orga_client, event, submission):
     with scope(event=event):
         event.cfp.fields['biography']['visibility'] = 'required'
         event.cfp.save()
-        page = orga_client.get(submission.orga_urls.speakers)
-        assert 'name="biography"' in page.text
         response = orga_client.post(
             submission.orga_urls.speakers,
             {'email': 'needs-bio@example.test', 'name': 'Needs biography'},

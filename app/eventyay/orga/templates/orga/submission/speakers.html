@@ -31,7 +31,6 @@
                 <div class="col-md-6 hide-optional">{{ form.email.as_field_group }}</div>
                 <div class="col-md-6">{{ form.name.as_field_group }}</div>
             </div>
-            {% if form.biography %}{{ form.biography.as_field_group }}{% endif %}
             <div class="d-flex flex-row flex-wrap hide-optional">
                 <div class="col-md-6 hide-optional">{% if form.locale %}{{ form.locale.as_field_group }}{% endif %}</div>
                 <div class="col-md-6">

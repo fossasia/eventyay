@@ -60,9 +60,6 @@ if (form) {
             if (locale) locale.value = invitationLocale
             form.querySelectorAll('.invalid-feedback, .errorlist').forEach((element) => element.remove())
             form.dispatchEvent(new Event('speaker-added'))
-            for (const textarea of form.querySelectorAll('textarea[data-tiptap-profile]')) {
-                textarea.__eventyayTiptapEditor?.commands.clearContent()
-            }
             status.textContent = data.message
             document.getElementById(`session-speaker-${data.speaker_code}`)?.focus()
         } catch (error) {
