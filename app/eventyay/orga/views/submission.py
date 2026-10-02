@@ -304,6 +304,16 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
     permission_required = 'base.orga_list_speakerprofile'
     form_class = AddSpeakerInlineForm
 
+    def has_permission(self):
+        """Do not allow event-access sessions to bypass speaker write permissions."""
+        if self.request.method == 'POST':
+            if self.request.user.has_active_staff_session(self.request.session.session_key):
+                return True
+            return self.request.user.has_perms(
+                self.get_permission_required(), self.get_permission_object()
+            )
+        return super().has_permission()
+
     def get_permission_required(self):
         permissions = super().get_permission_required()
         if self.request.method == 'POST':

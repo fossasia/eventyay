@@ -9,6 +9,7 @@ from django_scopes import scope
 
 from eventyay.base.models.log import ActivityLog
 from eventyay.base.models import Submission, SubmissionStates, User
+from eventyay.base.models.auth import StaffSession
 from eventyay.base.models.mail import MailTemplateRoles
 from eventyay.base.models.question import TalkQuestionRequired as QuestionRequired, TalkQuestionVariant as QuestionVariant
 from eventyay.common.session_video import (
@@ -1320,6 +1321,56 @@ def test_reviewer_cannot_post_inline_speaker(review_client, event, submission):
         assert response.status_code == 404
         assert submission.speakers.count() == count
         assert not User.objects.filter(email='unauthorized@example.test').exists()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('ajax', [False, True])
+def test_inline_speaker_rejects_event_access_fallback(review_client, review_user, event, submission, ajax):
+    """Event access permits viewing but must not authorize speaker creation."""
+    parent_session = type(review_client.session)()
+    parent_session['event_access'] = True
+    parent_session.create()
+    session = review_client.session
+    session[f'eventyay_event_access_{event.pk}'] = parent_session.session_key
+    session.save()
+
+    with scope(event=event):
+        assert not review_user.has_perm('base.update_submission', submission)
+        assert review_client.get(submission.orga_urls.speakers).status_code == 200
+        speaker_count = submission.speakers.count()
+        mail_count = event.queued_mails.count()
+        response = review_client.post(
+            submission.orga_urls.speakers,
+            {'email': 'event-access@example.test', 'name': 'Unauthorized'},
+            **({'HTTP_X_REQUESTED_WITH': 'XMLHttpRequest'} if ajax else {}),
+        )
+        assert response.status_code == 404
+        assert submission.speakers.count() == speaker_count
+        assert event.queued_mails.count() == mail_count
+        assert not User.objects.filter(email='event-access@example.test').exists()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('active', [False, True])
+def test_inline_speaker_requires_active_staff_session(review_client, review_user, event, submission, active):
+    """Only an active staff session may override missing write permissions."""
+    review_user.is_staff = True
+    review_user.save(update_fields=['is_staff'])
+    StaffSession.objects.create(
+        user=review_user,
+        session_key=review_client.session.session_key,
+        date_end=None if active else now(),
+    )
+    with scope(event=event):
+        speaker_count = submission.speakers.count()
+        response = review_client.post(
+            submission.orga_urls.speakers,
+            {'email': 'staff-session@example.test', 'name': 'Staff Session Speaker'},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+        assert response.status_code == (200 if active else 404)
+        assert submission.speakers.count() == speaker_count + int(active)
+        assert User.objects.filter(email='staff-session@example.test').exists() == active
 
 
 @pytest.mark.django_db
