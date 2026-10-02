@@ -15,13 +15,14 @@ from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.template.loader import render_to_string
 from django.utils import translation
-from django.utils.html import escape
+from django.utils.html import escape, strip_tags
 from django.utils.timezone import now as tz_now
 from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic import FormView, ListView, TemplateView
 from django_scopes import scopes_disabled
 
+from eventyay.base.email import TEST_EMAIL_BODY, TEST_EMAIL_SUBJECT
 from eventyay.base.models import Event, LogEntry, Organizer, User
 from eventyay.base.models.admin_mail import (
     AdminEmailQueue,
@@ -607,6 +608,7 @@ class AdminMessageComposeView(AdministratorPermissionRequiredMixin, FormView):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['draft_save'] = self.request.POST.get('action') == 'draft'
+        kwargs['test_send'] = self.request.POST.get('action') == 'test'
         return kwargs
 
     def form_invalid(self, form):
@@ -691,11 +693,7 @@ class AdminMessageComposeView(AdministratorPermissionRequiredMixin, FormView):
         filters = _extract_filter_dict(cd)
 
         if action == 'test':
-            test_email = cd.get('test_email')
-            if not test_email:
-                form.add_error('test_email', _('Please enter a test email address.'))
-                return self.form_invalid(form)
-            return self._send_test_email(form, test_email)
+            return self._send_test_email(form, cd['test_email'])
 
         if action == 'preview':
             recipients, _skipped = resolve_admin_recipients(filters)
@@ -852,8 +850,12 @@ class AdminMessageComposeView(AdministratorPermissionRequiredMixin, FormView):
     def _send_test_email(self, form, test_email: str):
 
         cd = form.cleaned_data
-        subject = cd.get('subject', _('(No subject)'))
+        # An empty subject or message falls back to the text of the email settings test email, so the
+        # test email is never blank. The editor submits "<p></p>" when emptied, so look for visible content.
+        subject = cd.get('subject') or str(TEST_EMAIL_SUBJECT)
         body = _get_message_text(cd)
+        if not strip_tags(body).strip() and '<img' not in body:
+            body = str(TEST_EMAIL_BODY)
 
         sample = dict(SAMPLE_CONTEXT)
         sample['email'] = test_email
@@ -862,19 +864,15 @@ class AdminMessageComposeView(AdministratorPermissionRequiredMixin, FormView):
             body = body.replace('{' + key + '}', value)
 
         try:
-            mail_send_task.apply_async(
-                kwargs={
-                    'to': [test_email],
-                    'subject': f'[TEST] {subject}',
-                    'body': body,
-                    'html': AdminEmailQueue.make_html(body),
-                    'reply_to': [cd.get('reply_to')] if cd.get('reply_to') else [],
-                    'event': None,
-                    'cc': [],
-                    'bcc': [],
-                    'attachments': None,
-                },
-                ignore_result=True,
+            # Sent right away instead of queued, so the message below tells the admin whether the mail
+            # server accepted it.
+            mail_send_task(
+                to=[test_email],
+                subject=f'[TEST] {subject}',
+                body=body,
+                html=AdminEmailQueue.make_html(body),
+                reply_to=[cd.get('reply_to')] if cd.get('reply_to') else [],
+                event=None,
             )
             messages.success(
                 self.request,

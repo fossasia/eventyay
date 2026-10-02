@@ -136,7 +136,6 @@ dependencies = [
     "more-itertools>=11.1.0",
     "msgspec>=0.21.1",
     "mt-940>=5.0.0",
-    "multidict>=6.7.0",
     "nh3>=0.3.6",
     "oauthlib>=3.2.2",
     "openpyxl>=3.1.5",
@@ -232,7 +231,6 @@ build-backend = "setuptools.build_meta"
 # Kept as optional-dependencies (not a dependency-group) so Dependabot's uv
 # ecosystem reliably tracks documentation library updates.
 docs = [
-    "docutils>=0.22.4",
     "pyenchant>=3.3.0",
     "pygments-markdown-lexer>=0.1.0.dev39",
     "sphinx>=9.1.0",

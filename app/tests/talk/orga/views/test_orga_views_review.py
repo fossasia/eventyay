@@ -1,9 +1,8 @@
 import json
 import tempfile
-
 import pytest
 from django_scopes import scope
-
+from eventyay.base.models import Review, ReviewScore, ReviewScoreCategory, SubmissionStates, User
 from eventyay.base.models.question import TalkQuestionRequired as QuestionRequired
 
 
@@ -613,3 +612,254 @@ def test_review_overview_table_layout(review_client, review_user, submission):
     assert '<td class="nowrap">' in response.text
     assert "Yes" in response.text
 
+@pytest.mark.django_db
+def test_reviewer_can_update_score(review_client, review_user, submission):
+    with scope(event=submission.event):
+        category = submission.event.score_categories.first()
+        score = category.scores.filter(value=1).first()
+
+    url = f"{submission.orga_urls.reviews}score"
+
+    response = review_client.post(
+        url,
+        data={
+            "score": score.pk,
+            "category": category.pk,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["ok"] is True
+
+    with scope(event=submission.event):
+        review = submission.reviews.get(user=review_user)
+        assert review.scores.filter(pk=score.pk).exists()
+
+
+@pytest.mark.django_db
+def test_reviewer_can_clear_score(review_client, review_user, submission):
+    with scope(event=submission.event):
+        category = submission.event.score_categories.first()
+        score = category.scores.filter(value=1).first()
+
+    url = f"{submission.orga_urls.reviews}score"
+
+    # First give the reviewer a score.
+    response = review_client.post(
+        url,
+        data={
+            "score": score.pk,
+            "category": category.pk,
+        },
+    )
+    assert response.status_code == 200
+
+    # Then select "No score".
+    response = review_client.post(
+        url,
+        data={
+            "score": "",
+            "category": category.pk,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["ok"] is True
+
+    with scope(event=submission.event):
+        review = submission.reviews.get(user=review_user)
+        assert not review.scores.filter(category=category).exists()
+
+@pytest.mark.django_db
+def test_reviewer_can_update_score_for_category(
+    review_client, review_user, submission
+):
+    with scope(event=submission.event):
+        category_one = submission.event.score_categories.first()
+        score_one = category_one.scores.filter(value=1).first()
+
+        category_two = ReviewScoreCategory.objects.create(
+            event=submission.event,
+            name="Second category",
+            weight=1,
+        )
+        score_two = ReviewScore.objects.create(
+            category=category_two,
+            value=2,
+            label="Good",
+        )
+
+        review = Review.objects.create(
+            submission=submission,
+            user=review_user,
+        )
+        review.scores.add(score_two)
+        review.update_score()
+        review.save(update_score=False)
+
+    url = f"{submission.orga_urls.reviews}score"
+
+    response = review_client.post(
+        url,
+        data={
+            "score": score_one.pk,
+            "category": category_one.pk,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["ok"] is True
+
+    with scope(event=submission.event):
+        review.refresh_from_db()
+        assert review.scores.filter(
+            category=category_one, pk=score_one.pk
+        ).exists()
+        assert review.scores.filter(
+            category=category_two, pk=score_two.pk
+        ).exists()
+
+
+@pytest.mark.django_db
+def test_reviewer_score_update_returns_median(
+    review_client,
+    review_user,
+    other_review_user,
+    submission,
+):
+    with scope(event=submission.event):
+        category_one = ReviewScoreCategory.objects.create(
+            event=submission.event,
+            name="First category",
+            weight=1,
+        )
+        category_one_scores = [
+            ReviewScore.objects.create(
+                category=category_one,
+                value=value,
+                label=f"Score {value}",
+            )
+            for value in (1, 3, 5)
+        ]
+
+        category_two = ReviewScoreCategory.objects.create(
+            event=submission.event,
+            name="Second category",
+            weight=1,
+        )
+        category_two_score = ReviewScore.objects.create(
+            category=category_two,
+            value=1,
+            label="Score 1",
+        )
+
+        third_user = User.objects.create_user(
+            email="thirdreviewer@example.org",
+            password="reviewpassw0rd",
+        )
+        team = submission.event.organizer.teams.filter(
+            can_change_organizer_settings=False,
+            is_reviewer=True,
+        ).first()
+        team.members.add(third_user)
+
+        reviews = [
+            Review.objects.create(
+                submission=submission,
+                user=user,
+            )
+            for user in (review_user, other_review_user, third_user)
+        ]
+
+        for review, score in zip(reviews, category_one_scores):
+            review.scores.add(score)
+            review.scores.add(category_two_score)
+            review.update_score()
+            review.save(update_score=False)
+
+    url = f"{submission.orga_urls.reviews}score"
+
+    response = review_client.post(
+        url,
+        data={
+            "score": category_one_scores[2].pk,
+            "category": category_one.pk,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["ok"] is True
+    assert response.json()["aggregate"] == "6.00"
+
+    with scope(event=submission.event):
+        reviews = list(submission.reviews.order_by("user_id"))
+
+        assert all(
+            review.scores.filter(category=category_two).count() == 1
+            for review in reviews
+        )
+
+@pytest.mark.django_db
+def test_reviewer_cannot_update_score_when_not_allowed_to_review(
+    review_client,
+    submission,
+):
+    with scope(event=submission.event):
+        submission.state = SubmissionStates.ACCEPTED
+        submission.save(update_fields=['state'])
+
+        category = submission.event.score_categories.first()
+        score = category.scores.first()
+
+    url = f"{submission.orga_urls.reviews}score"
+
+    response = review_client.post(
+        url,
+        data={
+            'score': score.pk,
+            'category': category.pk,
+        },
+    )
+
+    assert response.status_code == 404
+
+@pytest.mark.django_db
+def test_reviewer_cannot_update_score_when_not_assigned(
+    review_client,
+    submission,
+):
+    with scope(event=submission.event):
+        submission.assigned_reviewers.clear()
+        submission.event.active_review_phase.proposal_visibility = 'assigned'
+        submission.event.active_review_phase.save(update_fields=['proposal_visibility'])
+
+        category = submission.event.score_categories.first()
+        score = category.scores.first()
+
+    url = f"{submission.orga_urls.reviews}score"
+
+    response = review_client.post(
+        url,
+        data={
+            'score': score.pk,
+            'category': category.pk,
+        },
+    )
+
+    assert response.status_code == 404
+
+@pytest.mark.django_db
+def test_reviewer_dashboard_hides_score_for_unreviewable_submission(
+    review_client, submission
+):
+    with scope(event=submission.event):
+        category = submission.event.score_categories.first()
+        score = category.scores.first()
+
+        submission.state = SubmissionStates.ACCEPTED
+        submission.save(update_fields=['state'])
+
+    response = review_client.get(submission.event.orga_urls.reviews)
+
+    assert response.status_code == 200
+    assert f'value="{score.pk}"' not in response.text

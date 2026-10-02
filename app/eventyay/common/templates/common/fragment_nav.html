@@ -70,16 +70,12 @@
         </a>
     {% endfor %}
 
-    {% if show_online_video_link|default:False %}
-        {% get_localized_menu_label current_event 'menu_label_join_video' as label %}
-        {% if nav_context == "presale" %}
-            <a id="join-event-link" href="{% eventurl current_event 'presale:event.onlinevideo.join' %}" class="header-tab join-video-link {% if '/onlinevideo' in path %}active{% endif %}">
-                <i class="fa fa-video-camera"></i> <span class="mobile-hide-text">{{ label }}</span>
-            </a>
-        {% else %}
-            <a id="join-event-link" href="{% url 'agenda:event.onlinevideo.join' organizer=current_event.organizer.slug event=current_event.slug %}" class="header-tab join-video-link {% if '/onlinevideo' in path %}active{% endif %}">
-                <i class="fa fa-video-camera"></i> <span class="mobile-hide-text">{{ label }}</span>
-            </a>
-        {% endif %}
-    {% endif %}
+    <details class="dropdown nav-overflow-menu" hidden>
+        <summary class="header-tab nav-overflow-trigger" aria-haspopup="menu">
+            <span>{% translate "More" %}</span>
+            <i class="fa fa-caret-down" aria-hidden="true"></i>
+        </summary>
+        <div class="nav-overflow-items" role="menu">
+        </div>
+    </details>
 {% endwith %}
