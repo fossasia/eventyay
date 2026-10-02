@@ -10,11 +10,13 @@
       </div>
     {% endif %}
     <div class='tab-pane mail-preview-group'>
-      <div class='mail-preview'>
-        <strong>{% translate "Subject:" %} {{ output.subject }}</strong>
-        <br><br>
-        {{ output.html|safe }}
-      </div>
+      {% for locale, content in output.items %}
+        <div lang='{{ locale }}' class='mail-preview'>
+          <strong>{% translate "Subject:" %} {{ content.subject }}</strong>
+          <br><br>
+          {{ content.html|safe }}
+        </div>
+      {% endfor %}
     </div>
   </fieldset>
 {% endif %}
