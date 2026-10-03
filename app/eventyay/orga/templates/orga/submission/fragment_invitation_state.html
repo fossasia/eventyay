@@ -1,0 +1,22 @@
+{% load i18n %}
+
+<p class="card-text speaker-invitation-state">
+    {% if invitation.mail_state == "sent" %}
+        <span class="text-success"><i class="fa fa-check"></i> {% translate "Invitation email sent" %}</span>
+    {% elif invitation.mail_state == "queued" %}
+        <span class="text-muted"><i class="fa fa-inbox"></i> {% translate "Invitation email added to Outbox" %}</span>
+    {% elif invitation.mail_state == "failed" %}
+        <span class="text-danger"><i class="fa fa-exclamation-triangle"></i> {% translate "Invitation email failed" %}</span>
+    {% else %}
+        <span class="text-muted"><i class="fa fa-clock-o"></i> {% translate "Invitation email not sent yet" %}</span>
+    {% endif %}
+    {% if can_edit_speakers and invitation.can_resend %}
+        <button type="button"
+                class="btn btn-sm btn-outline-info ml-2"
+                data-resend-invitation="{% url 'orga:submissions.speakers.resend_invitation' organizer=request.event.organizer.slug event=request.event.slug code=submission.code pk=invitation.pk %}"
+                data-sending-text="{% translate 'Sending invitation…' %}"
+                data-error-text="{% translate 'The invitation email could not be sent. Please try again.' %}">
+            {% translate "Resend invitation" %}
+        </button>
+    {% endif %}
+</p>
