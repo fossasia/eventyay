@@ -8,11 +8,8 @@
     <img loading="lazy" src="{% static "common/img/error_403.svg" %}" class="img" alt="{% trans 'Admin mode required' %}">
 {% endblock error_image %}
 
-{% block error_message %}
-    {% trans "Admin mode required" %}
-{% endblock error_message %}
-
-{% block error_details %}
+{% block content %}
+    <h2>{% trans "Admin mode required" %}</h2>
     <h5>
         <p class="ml-auto mr-auto text-center mt-3">
             {% if request.event %}
@@ -32,7 +29,7 @@
     </h5>
     
     <div class="mt-4 mb-4 text-center">
-        <p class="text-muted small">
+        <p class="small" style="opacity: 0.8;">
             <i class="fa fa-info-circle"></i> {% trans "Everything you do in Admin mode is logged." %}
         </p>
     </div>
@@ -48,6 +45,4 @@
             {% trans "Go back" %}
         </a>
     </div>
-{% endblock error_details %}
-
-{% block error_code %}403{% endblock error_code %}
+{% endblock content %}
