@@ -252,7 +252,7 @@ class VideoSPAView(View):
                     'sort_by_popularity': str(_('Most popular')),
                     'fullscreen': str(_('Fullscreen')),
                     'exit_fullscreen': str(_('Exit Fullscreen')),
-                    'latest': str(_('Latest')),
+                    'schedule_versions': str(_('Schedule versions')),
                     'version_warning_editable': str(_(
                         'You are currently viewing the editable schedule version.'
                         ' It may not match the released version.'

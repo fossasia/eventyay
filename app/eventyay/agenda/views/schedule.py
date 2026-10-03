@@ -382,7 +382,7 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
         return ctx
 
 
-@cache_page(60 * 60 * 24, key_prefix='schedule-messages-v8')
+@cache_page(60 * 60 * 24, key_prefix='schedule-messages-v9')
 def schedule_messages(request, **kwargs):
     """Cached for static exports; bump key_prefix when message keys or copy change."""
     strings = {
@@ -405,7 +405,7 @@ def schedule_messages(request, **kwargs):
         'sort_by_popularity': _('Most popular'),
         'fullscreen': _('Fullscreen'),
         'exit_fullscreen': _('Exit Fullscreen'),
-        'latest': _('Latest'),
+        'schedule_versions': _('Schedule versions'),
         'version_warning_editable': _(
             'You are currently viewing the editable schedule version. It may not match the released version.'
         ),
