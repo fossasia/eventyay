@@ -22,6 +22,7 @@ class SpeakerQuestionData(CSVExporterMixin, BaseExporter):
         return f'{self.event.slug}-speaker-questions.csv'
 
     def get_data(self, **kwargs):
+        """Export active speaker answers ordered by the current full-name field."""
         field_names = ['code', 'name', 'email', 'question', 'answer']
         data = []
         qs = (

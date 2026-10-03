@@ -1588,13 +1588,13 @@ def is_public_speakers_empty(request):
 
 
 def is_visible(exporter: BaseExporter, request: HttpRequest, public: bool = False) -> bool:
+    """Keep private exporters restricted even when featured public access is allowed."""
     if not public:
         return request.user.is_authenticated
 
     if not request.user.has_perm('base.list_schedule', request.event):
-        if request.GET.get('featured') != 'true':
+        if request.GET.get('featured') != 'true' or not can_use_featured_exports(request.user, request.event):
             return False
-        return can_use_featured_exports(request.user, request.event)
 
     if isinstance(exporter, FavedICalExporter):
         return exporter.is_public(request=request)

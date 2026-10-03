@@ -2,6 +2,7 @@ import csv
 from io import StringIO
 
 import pytest
+from django.urls import reverse
 from django.utils import translation
 from django_scopes import scope
 
@@ -84,6 +85,7 @@ def test_answered_date_question_is_not_reminded(submission, speaker, variant, ta
     ),
 )
 def test_speaker_question_csv_export(event, speaker, variant, value):
+    """Preserve CSV columns and answer values while sorting speakers by full name."""
     other_speaker = User.objects.create_user(
         email='other-speaker@example.com', fullname='Alice Speaker'
     )
@@ -114,8 +116,54 @@ def test_speaker_question_csv_export(event, speaker, variant, value):
 
 @pytest.mark.django_db
 def test_empty_speaker_question_csv_export(event):
+    """Export the existing CSV header even when no speaker answers are saved."""
     with scope(event=event):
         _, _, content = SpeakerQuestionData(event).render()
     reader = csv.DictReader(StringIO(content))
     assert reader.fieldnames == ['code', 'name', 'email', 'question', 'answer']
     assert list(reader) == []
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('visitor', ('anonymous', 'attendee', 'organizer'))
+def test_featured_exports_keep_speaker_answers_private(client, organizer_client, event, user, team, visitor):
+    """Featured public exports must not disclose organiser-only speaker answers."""
+    with scope(event=event):
+        event.feature_flags['show_featured'] = 'always'
+        event.feature_flags['show_schedule'] = True
+        event.feature_flags['export_html_on_release'] = False
+        event.talks_published = True
+        event.private_testmode = True
+        event.settings.private_testmode_talks = True
+        event.save(update_fields=['feature_flags', 'talks_published', 'private_testmode'])
+        event.release_schedule('v1')
+        question = TalkQuestion.objects.create(
+            event=event, target='speaker', variant='string', question='Private answer'
+        )
+        Answer.objects.create(question=question, person=user, answer='Confidential response')
+
+    if visitor == 'organizer':
+        team.can_change_submissions = True
+        team.save(update_fields=['can_change_submissions'])
+        test_client = organizer_client
+    else:
+        test_client = client
+        test_client.logout()
+        if visitor == 'attendee':
+            team.members.remove(user)
+            test_client.force_login(user)
+
+    export_kwargs = {'organizer': event.organizer.slug, 'event': event.slug}
+    private_url = reverse('agenda:export', kwargs={**export_kwargs, 'name': 'speaker-questions.csv'})
+    response = test_client.get(private_url, {'featured': 'true'})
+    if visitor == 'organizer':
+        assert response.status_code == 200
+        assert user.email in response.text
+        assert 'Confidential response' in response.text
+    else:
+        assert response.status_code == 404
+        assert user.email not in response.text
+        assert 'Confidential response' not in response.text
+
+    public_url = reverse('agenda:export', kwargs={**export_kwargs, 'name': 'schedule.json'})
+    assert test_client.get(public_url, {'featured': 'true'}).status_code == 200
