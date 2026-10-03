@@ -428,9 +428,14 @@ class Answer(PretalxModel):
 
     @cached_property
     def speaker_profile(self):
-        if self.person_id:
-            return self.person.profiles.filter(event=self.question.event).first()
-        return None
+        if not self.person_id:
+            return None
+        from django_scopes import scope
+        with scope(event=self.question.event):
+            for profile in self.person.profiles.all():
+                if profile.event_id == self.question.event_id:
+                    return profile
+            return None
 
     class Meta:
         rules_permissions = {

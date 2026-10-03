@@ -212,6 +212,15 @@ class AnswerViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
             .select_related("question", "question__event")
             .order_by("pk")
         )
+        if self.check_expanded_fields("person"):
+            from django.db.models import Prefetch
+            from eventyay.base.models import SpeakerProfile
+            queryset = queryset.select_related("person").prefetch_related(
+                Prefetch(
+                    "person__profiles",
+                    queryset=SpeakerProfile.objects.filter(event=self.event)
+                )
+            )
         question_fields = self.check_expanded_fields(
             "question.tracks", "question.submissions"
         )
