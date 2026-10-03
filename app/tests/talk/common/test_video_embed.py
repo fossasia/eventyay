@@ -81,6 +81,31 @@ def test_vimeo_embed_preserves_timestamp_and_disables_autoplay(url, video_id, ti
 
 
 @pytest.mark.parametrize(
+    'url,expected_path',
+    (
+        (
+            'https://commons.wikimedia.org/wiki/File:Example.webm',
+            '/wiki/File:Example.webm',
+        ),
+        (
+            'https://www.commons.wikimedia.org/wiki/File:Example%20video.ogv',
+            '/wiki/File:Example%20video.ogv',
+        ),
+        (
+            'http://commons.wikimedia.org/wiki/file:Example.MPEG?uselang=en',
+            '/wiki/file:Example.MPEG',
+        ),
+    ),
+)
+def test_wikimedia_commons_video_embed(url, expected_path):
+    info = get_video_embed_info(url)
+    assert info is not None
+    assert info['provider'] == 'wikimedia_commons'
+    assert info['embed_url'] == f'https://commons.wikimedia.org{expected_path}?embedplayer=yes'
+    assert info['csp_origins'] == ['https://commons.wikimedia.org']
+
+
+@pytest.mark.parametrize(
     'url',
     (
         '',
@@ -91,6 +116,9 @@ def test_vimeo_embed_preserves_timestamp_and_disables_autoplay(url, video_id, ti
         'https://example.com/watch?v=nope',
         'https://www.youtube.com/watch?v=',
         'https://vimeo.com/not-a-number',
+        'https://commons.wikimedia.org/wiki/File:Example.jpg',
+        'https://commons.wikimedia.org/wiki/Commons:Video',
+        'https://upload.wikimedia.org/wikipedia/commons/example.webm',
     ),
 )
 def test_get_video_embed_info_rejects_invalid(url):
@@ -127,7 +155,8 @@ def test_schedule_public_video_answer_includes_timestamped_embed_url(event, slot
             submission=slot.submission,
             answer=(
                 'https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=1m30s\n'
-                'https://vimeo.com/123456789#t=1m30s'
+                'https://vimeo.com/123456789#t=1m30s\n'
+                'https://commons.wikimedia.org/wiki/File:Example.webm'
             ),
         )
         # Regular URL fields must never produce embed_url, even for YouTube links
@@ -149,9 +178,10 @@ def test_schedule_public_video_answer_includes_timestamped_embed_url(event, slot
         video_answers = [a for a in talk['answers'] if a.get('variant') == 'video']
         url_answers = [a for a in talk['answers'] if a.get('variant') == 'url']
 
-        assert len(video_answers) == 2
+        assert len(video_answers) == 3
         _assert_youtube_embed(video_answers[0]['embed_url'], 'dQw4w9WgXcQ', start=90)
         _assert_vimeo_embed(video_answers[1]['embed_url'], '123456789', time_hash='t=1m30s')
+        assert video_answers[2]['embed_url'] == ('https://commons.wikimedia.org/wiki/File:Example.webm?embedplayer=yes')
         assert len(url_answers) == 1
         assert 'embed_url' not in url_answers[0]
 
@@ -189,8 +219,15 @@ def test_security_middleware_applies_csp_update(mock_global_settings):
     request.organizer = None
     request.event = None
     response = HttpResponse('ok')
-    response._csp_update = {'frame-src': ['https://www.youtube-nocookie.com', 'https://player.vimeo.com']}
+    response._csp_update = {
+        'frame-src': [
+            'https://www.youtube-nocookie.com',
+            'https://player.vimeo.com',
+            'https://commons.wikimedia.org',
+        ]
+    }
     result = middleware.process_response(request, response)
     frame_src = _parse_csp(result['Content-Security-Policy'])['frame-src']
     assert 'https://www.youtube-nocookie.com' in frame_src
     assert 'https://player.vimeo.com' in frame_src
+    assert 'https://commons.wikimedia.org' in frame_src

@@ -43,8 +43,21 @@ test('vimeo embeds preserve timestamps and disable autoplay', () => {
 	assertVimeoEmbed(getVideoEmbedUrl('https://player.vimeo.com/video/123456789#t=10s'), '123456789', 't=10s')
 })
 
+test('wikimedia commons video pages use the iframe player', () => {
+	assert.equal(
+		getVideoEmbedUrl('https://commons.wikimedia.org/wiki/File:Example.webm'),
+		'https://commons.wikimedia.org/wiki/File:Example.webm?embedplayer=yes',
+	)
+	assert.equal(
+		getVideoEmbedUrl('https://www.commons.wikimedia.org/wiki/File:Example%20video.ogv'),
+		'https://commons.wikimedia.org/wiki/File:Example%20video.ogv?embedplayer=yes',
+	)
+})
+
 test('non-video urls are not embedded', () => {
 	assert.equal(getVideoEmbedUrl('https://example.com/watch?v=abc'), '')
 	assert.equal(getVideoEmbedUrl('https://www.youtube.com/watch?v='), '')
 	assert.equal(getVideoEmbedUrl('not-a-url'), '')
+	assert.equal(getVideoEmbedUrl('https://commons.wikimedia.org/wiki/File:Example.jpg'), '')
+	assert.equal(getVideoEmbedUrl('https://upload.wikimedia.org/wikipedia/commons/example.webm'), '')
 })

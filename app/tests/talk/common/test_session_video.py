@@ -142,6 +142,15 @@ def test_set_submission_video_url_rejects_invalid(event, submission):
         assert get_submission_video_url(submission) == ''
 
 
+@pytest.mark.django_db
+def test_set_submission_video_url_accepts_wikimedia_commons(event, submission):
+    url = 'https://commons.wikimedia.org/wiki/File:Example.webm'
+    with scope(event=event):
+        ensure_session_video_question(event)
+        assert set_submission_video_url(submission, url) == url
+        assert get_submission_video_url(submission) == url
+
+
 def test_parse_video_urls_splits_lines_and_dedupes():
     assert parse_video_urls('') == []
     assert parse_video_urls('https://youtu.be/aaa\nhttps://vimeo.com/1') == [

@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import re
-from urllib.parse import parse_qs, urlencode, urlparse
+from urllib.parse import parse_qs, unquote, urlencode, urlparse
+
 
 _YOUTUBE_HOSTS = frozenset(
     {
@@ -17,6 +18,8 @@ _YOUTUBE_HOSTS = frozenset(
     }
 )
 _VIMEO_HOSTS = frozenset({'vimeo.com', 'www.vimeo.com', 'player.vimeo.com'})
+_WIKIMEDIA_COMMONS_HOSTS = frozenset({'commons.wikimedia.org', 'www.commons.wikimedia.org'})
+_WIKIMEDIA_VIDEO_EXTENSIONS = frozenset({'.mpeg', '.mpg', '.ogv', '.webm'})
 _TIME_COMPONENT_RE = re.compile(r'^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$')
 
 
@@ -128,6 +131,20 @@ def _vimeo_embed_url(video_id: str, parsed) -> str:
     return embed_url
 
 
+def _wikimedia_commons_embed_url(parsed) -> str | None:
+    host = (parsed.hostname or '').lower()
+    if host not in _WIKIMEDIA_COMMONS_HOSTS:
+        return None
+    path = unquote(parsed.path or '')
+    prefix = '/wiki/File:'
+    if not path.casefold().startswith(prefix.casefold()):
+        return None
+    filename = path[len(prefix) :]
+    if not filename or not any(filename.casefold().endswith(extension) for extension in _WIKIMEDIA_VIDEO_EXTENSIONS):
+        return None
+    return f'https://commons.wikimedia.org{parsed.path}?embedplayer=yes'
+
+
 def parse_video_urls(text: str | None) -> list[str]:
     """Split a video-link answer into individual URLs (one per non-empty line).
 
@@ -150,9 +167,9 @@ def parse_video_urls(text: str | None) -> list[str]:
 def get_video_embed_info(url: str | None) -> dict[str, object] | None:
     """Return embed URL and CSP frame-src origins for a video-link field answer.
 
-    Only YouTube and Vimeo URLs are converted to embeds. Timestamps are preserved
-    and autoplay is always disabled. Regular URL custom fields are never passed
-    here; arbitrary HTTPS pages are not treated as embeddable players.
+    YouTube, Vimeo, and Wikimedia Commons video pages are converted to embeds.
+    Regular URL custom fields are never passed here; arbitrary HTTPS pages are
+    not treated as embeddable players.
     """
     if not url or not isinstance(url, str):
         return None
@@ -178,6 +195,14 @@ def get_video_embed_info(url: str | None) -> dict[str, object] | None:
             'embed_url': _vimeo_embed_url(vimeo_id, parsed),
             'csp_origins': ['https://player.vimeo.com'],
             'provider': 'vimeo',
+        }
+
+    wikimedia_embed_url = _wikimedia_commons_embed_url(parsed)
+    if wikimedia_embed_url:
+        return {
+            'embed_url': wikimedia_embed_url,
+            'csp_origins': ['https://commons.wikimedia.org'],
+            'provider': 'wikimedia_commons',
         }
 
     return None

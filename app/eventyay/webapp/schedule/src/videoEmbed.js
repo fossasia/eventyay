@@ -1,8 +1,3 @@
-/**
- * Convert a video-link custom field answer into an iframe embed URL.
- * Only YouTube/Vimeo are embedded; timestamps are preserved; autoplay is off.
- */
-
 function parseTimeToSeconds (value) {
 	if (value == null) return null
 	const raw = String(value).trim()
@@ -92,6 +87,17 @@ export function getVideoEmbedUrl (url) {
 			id = [...parts].reverse().find((part) => /^\d+$/.test(part)) || null
 		}
 		return id ? vimeoEmbedUrl(id, parsed) : ''
+	}
+	if (host === 'commons.wikimedia.org' && parts[0]?.toLowerCase() === 'wiki') {
+		let filename
+		try {
+			filename = decodeURIComponent(parts.slice(1).join('/'))
+		} catch {
+			return ''
+		}
+		if (!filename.toLowerCase().startsWith('file:')) return ''
+		if (!/\.(webm|ogv|mpg|mpeg)$/i.test(filename)) return ''
+		return `https://commons.wikimedia.org${parsed.pathname}?embedplayer=yes`
 	}
 	return ''
 }
