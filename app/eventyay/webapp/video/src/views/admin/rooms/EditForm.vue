@@ -245,12 +245,13 @@ export default {
 			this.saving = true
 			try {
 				let roomId = this.config.id
-				if (this.creating) {
+				if (this.creating && !this.config.id) {
 					({ room: roomId } = await this.$store.dispatch('createRoom', {
 						name: this.config.name,
 						description: this.config.description,
 						modules: []
 					}))
+					this.config.id = roomId
 				}
 				let moduleConfig = this.config.module_config || []
 				if (['channel-bbb', 'channel-jitsi'].includes(this.inferredType?.id)) {
@@ -275,6 +276,10 @@ export default {
 					} catch (e) {
 						console.warn('Failed to store streamScheduleDraft in sessionStorage:', e)
 					}
+				}
+
+				if (this.$refs.settings?.saveInterpretationConfig) {
+					await this.$refs.settings.saveInterpretationConfig(roomId)
 				}
 
 				if (this.$refs.settings?.saveStreamSchedules) {
