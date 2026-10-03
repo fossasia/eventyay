@@ -218,7 +218,7 @@ class AnswerViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
             queryset = queryset.select_related("person").prefetch_related(
                 Prefetch(
                     "person__profiles",
-                    queryset=SpeakerProfile.objects.filter(event=self.event)
+                    queryset=SpeakerProfile.objects.filter(event=self.event).select_related("user")
                 )
             )
         question_fields = self.check_expanded_fields(
