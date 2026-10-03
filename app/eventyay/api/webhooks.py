@@ -3,8 +3,7 @@ import logging
 import time
 from collections import OrderedDict
 
-import requests
-from celery.exceptions import MaxRetriesExceededError
+from celery.exceptions import MaxRetriesExceededError, SoftTimeLimitExceeded
 from django.db.models import Exists, OuterRef, Q
 from django.conf import settings
 from django.dispatch import receiver
@@ -16,6 +15,8 @@ from requests import RequestException
 from eventyay.api.models import WebHook, WebHookCall, WebHookEventListener
 from eventyay.api.signals import register_webhook_events
 from eventyay.base.models import LogEntry
+from eventyay.base.services import http
+
 from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
 from eventyay.base.services.tasks import ProfiledTask, TransactionAwareTask
 from eventyay.celery_app import app
@@ -295,7 +296,7 @@ def notify_webhooks(logentry_ids: list):
             send_webhook.apply_async(args=(logentry.id, notification_type.action_type, wh.pk))
 
 
-@app.task(base=ProfiledTask, bind=True, max_retries=9, acks_late=True)
+@app.task(base=ProfiledTask, bind=True, max_retries=9, acks_late=True, soft_time_limit=60, time_limit=90)
 def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
     # 9 retries with 2**(2*x) timing is roughly 72 hours
     with scopes_disabled():
@@ -316,7 +317,7 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
 
         try:
             try:
-                resp = requests.post(webhook.target_url, json=payload, allow_redirects=False)
+                resp = http.post(webhook.target_url, json=payload, allow_redirects=False)
                 WebHookCall.objects.create(
                     webhook=webhook,
                     action_type=logentry.action_type,
@@ -338,7 +339,7 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
                     raise self.retry(
                         countdown=2 ** (self.request.retries * 2)
                     )  # max is 2 ** (8*2) = 65536 seconds = ~18 hours
-            except RequestException as e:
+            except (RequestException, SoftTimeLimitExceeded) as e:
                 WebHookCall.objects.create(
                     webhook=webhook,
                     action_type=logentry.action_type,

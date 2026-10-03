@@ -20,6 +20,7 @@ from django_scopes import scopes_disabled
 
 from eventyay.base.decimal import round_decimal
 from eventyay.base.models.vouchers import InvoiceVoucher
+from eventyay.base.services import http
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.helpers.stripe_utils import (
     confirm_payment_intent,
@@ -58,7 +59,7 @@ def send_team_webhook(self, user_id, team):
         # Send the POST request with the payload and the headers
         from django.urls import reverse
         webhook_url = reverse('eventyay_common:webhook.team')
-        response = requests.post(
+        response = http.post(
             webhook_url,
             json=payload,
             headers=headers,

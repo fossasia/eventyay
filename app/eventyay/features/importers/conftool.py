@@ -4,9 +4,10 @@ import time
 from zoneinfo import ZoneInfo
 
 import dateutil.parser
-import requests
 from django.utils.timezone import make_aware
 from lxml import etree
+
+from eventyay.base.services import http
 
 
 def escape_markdown(text):
@@ -17,7 +18,7 @@ def escape_markdown(text):
 def fetch_schedule_from_conftool(url, password):
     nonce = int(time.time())
     passhash = hashlib.sha256((str(nonce) + password).encode()).hexdigest()
-    r = requests.get(
+    r = http.get(
         f"{url}?nonce={nonce}&passhash={passhash}&page=adminExport&export_select=sessions&form_include_deleted=0"
         f"&form_export_format=xml&cmd_create_export=true&form_export_sessions_options[]=presentations"
         f"&form_export_sessions_options[]=presentations_abstracts&form_export_sessions_options[]=presentations_subpapers"
