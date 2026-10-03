@@ -1,7 +1,12 @@
 from django.db import transaction
+from drf_spectacular.utils import extend_schema_field
 from rest_flex_fields.serializers import FlexFieldsSerializerMixin
 from rest_framework import exceptions
-from rest_framework.serializers import PrimaryKeyRelatedField, SlugRelatedField
+from rest_framework.serializers import (
+    PrimaryKeyRelatedField,
+    SerializerMethodField,
+    SlugRelatedField,
+)
 
 from eventyay.api.mixins import PretalxSerializer
 from eventyay.api.serializers.fields import UploadedFileField
@@ -174,13 +179,31 @@ class AnswerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
         read_only=True,
         required=False,
     )
-    person = SlugRelatedField(
-        slug_field="code",
-        read_only=True,
-        required=False,
-    )
+    person = SerializerMethodField()
     review = PrimaryKeyRelatedField(read_only=True, required=False)
     answer_file = UploadedFileField(required=False)
+
+    # The user code, or the speaker profile with ?expand=person
+    @extend_schema_field(
+        {
+            "oneOf": [{"type": "string"}, {"$ref": "#/components/schemas/Speaker"}],
+            "nullable": True,
+        }
+    )
+    def get_person(self, obj):
+        if not obj.person_id:
+            return None
+        # Answer.person is a User, but the speaker serializer works on the
+        # event's SpeakerProfile, so look that up instead of passing the user.
+        # AnswerViewSet prefetches the profiles into _event_profiles.
+        if "person" in self.extra_flex_field_config["expand"][0]:
+            profiles = getattr(obj.person, "_event_profiles", None)
+            if profiles is None:
+                profiles = obj.person.profiles.filter(event=obj.question.event)
+            profile = next(iter(profiles), None)
+            if profile and (serializer := self.get_extra_flex_field("person", profile)):
+                return serializer.data
+        return obj.person.code
 
     def validate(self, data):
         question = self.get_with_fallback(data, "question")
@@ -287,14 +310,16 @@ class AnswerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
                 "eventyay.api.serializers.question.AnswerOptionSerializer",
                 {"many": True, "read_only": True, "omit": ("question",)},
             ),
-            "person": (
-                "eventyay.api.serializers.speaker.SpeakerSerializer",
-                {"read_only": True, "omit": ("answers",)},
-            ),
             # submissions and reviews are currently not expandable due to permissions
             # concerns: We’d have to make sure that users with access to e.g. some
             # submission answers and some review answers would only see the ones from
             # their assigned tracks or submissions.
+        }
+        extra_expandable_fields = {
+            "person": (
+                "eventyay.api.serializers.speaker.SpeakerSerializer",
+                {"read_only": True, "omit": ("answers",)},
+            ),
         }
 
 
