@@ -115,35 +115,75 @@ def serialize_voucher(v):
 
 
 def event_list(request):
-    query = request.GET.get('query', '')
+    raw_query = request.GET.get('query', '')
+    query = raw_query.strip()
     try:
         page = int(request.GET.get('page', '1'))
     except ValueError:
         page = 1
+        
+    if raw_query and not query:
+        return JsonResponse({'results': [], 'pagination': {'more': False}})
 
     if 'can_copy' in request.GET:
         qs = EventWizardCopyForm.copy_from_queryset(request.user, request.session)
     else:
         qs = request.user.get_events_with_any_permission(request)
 
-    qs = (
-        qs.filter(
-            Q(name__icontains=i18ncomp(query))
-            | Q(slug__icontains=query)
-            | Q(organizer__name__icontains=i18ncomp(query))
-            | Q(organizer__slug__icontains=query)
+    if query:
+        exact = request.GET.get('exact') == '1'
+        if exact and len(query) < 3:
+            exact_query = f'"{query}"'
+            qs = (
+                qs.filter(
+                    Q(name__icontains=exact_query)
+                    | Q(slug__iexact=query)
+                    | Q(organizer__name__icontains=exact_query)
+                    | Q(organizer__slug__iexact=query)
+                )
+                .annotate(
+                    min_from=Min('subevents__date_from'),
+                    max_from=Max('subevents__date_from'),
+                    max_to=Max('subevents__date_to'),
+                    max_fromto=Greatest(Max('subevents__date_to'), Max('subevents__date_from')),
+                )
+                .annotate(
+                    order_from=Coalesce('min_from', 'date_from'),
+                )
+                .order_by('-order_from')
+            )
+        else:
+            qs = (
+                qs.filter(
+                    Q(name__icontains=i18ncomp(query))
+                    | Q(slug__icontains=query)
+                    | Q(organizer__name__icontains=i18ncomp(query))
+                    | Q(organizer__slug__icontains=query)
+                )
+                .annotate(
+                    min_from=Min('subevents__date_from'),
+                    max_from=Max('subevents__date_from'),
+                    max_to=Max('subevents__date_to'),
+                    max_fromto=Greatest(Max('subevents__date_to'), Max('subevents__date_from')),
+                )
+                .annotate(
+                    order_from=Coalesce('min_from', 'date_from'),
+                )
+                .order_by('-order_from')
+            )
+    else:
+        qs = (
+            qs.annotate(
+                min_from=Min('subevents__date_from'),
+                max_from=Max('subevents__date_from'),
+                max_to=Max('subevents__date_to'),
+                max_fromto=Greatest(Max('subevents__date_to'), Max('subevents__date_from')),
+            )
+            .annotate(
+                order_from=Coalesce('min_from', 'date_from'),
+            )
+            .order_by('-order_from')
         )
-        .annotate(
-            min_from=Min('subevents__date_from'),
-            max_from=Max('subevents__date_from'),
-            max_to=Max('subevents__date_to'),
-            max_fromto=Greatest(Max('subevents__date_to'), Max('subevents__date_from')),
-        )
-        .annotate(
-            order_from=Coalesce('min_from', 'date_from'),
-        )
-        .order_by('-order_from')
-    )
 
     total = qs.count()
     pagesize = 20
@@ -567,14 +607,22 @@ def productvarquota_select2(request, **kwargs):
 
 
 def organizer_select2(request):
-    term = request.GET.get('query', '')
+    term = request.GET.get('query', '').strip()
+    if not term:
+        return JsonResponse({'results': [], 'pagination': {'more': False}})
+
     try:
         page = int(request.GET.get('page', '1'))
     except ValueError:
         page = 1
     qs = Organizer.objects.all()
     if term:
-        qs = qs.filter(Q(name__icontains=term) | Q(slug__icontains=term))
+        exact = request.GET.get('exact') == '1'
+        if exact and len(term) < 3:
+            exact_query = f'"{term}"'
+            qs = qs.filter(Q(name__icontains=exact_query) | Q(slug__iexact=term))
+        else:
+            qs = qs.filter(Q(name__icontains=term) | Q(slug__icontains=term))
     if not request.user.has_active_staff_session(request.session.session_key):
         if 'can_create' in request.GET:
             qs = qs.filter(pk__in=request.user.teams.filter(can_create_events=True).values_list('organizer', flat=True))
@@ -598,13 +646,21 @@ def users_select2(request):
         raise PermissionDenied()
 
     term = request.GET.get('query', '').strip()
-    if len(term) < 3:
+    if not term:
         return JsonResponse({'results': [], 'pagination': {'more': False}})
     try:
         page = int(request.GET.get('page', '1'))
     except ValueError:
         page = 1
-    qs = User.objects.filter(Q(email__icontains=term) | Q(fullname__icontains=term)).order_by('email')
+
+    exact = request.GET.get('exact') == '1'
+    if not exact and len(term) < 3:
+        return JsonResponse({'results': [], 'pagination': {'more': False}})
+
+    if exact and len(term) < 3:
+        qs = User.objects.filter(Q(email__iexact=term) | Q(fullname__iexact=term)).order_by('email')
+    else:
+        qs = User.objects.filter(Q(email__icontains=term) | Q(fullname__icontains=term)).order_by('email')
 
     total = qs.count()
     pagesize = 20
