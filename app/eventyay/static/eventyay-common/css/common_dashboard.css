@@ -238,9 +238,9 @@ body:has(.td-dashboard) #page-content {
 .td-section-title {
   margin: 0 0 var(--td-space-3);
   font-family: var(--td-font-display);
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: -.02em;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -.3px;
   color: #0f172a;
   display: flex;
   align-items: center;
@@ -278,8 +278,8 @@ body:has(.td-dashboard) #page-content {
 .td-card-title {
   margin: 0;
   font-family: var(--td-font-display);
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 17px;
+  font-weight: 800;
   color: var(--td-text);
   display: flex;
   align-items: center;
@@ -341,9 +341,9 @@ body:has(.td-dashboard) #page-content {
 .td-action-card {
   background: #fff;
   border: var(--td-card-border,1px solid var(--td-border));
-  border-radius: var(--td-card-radius,var(--td-radius));
-  box-shadow: var(--td-card-shadow,var(--td-shadow));
-  padding: 14px;
+  border-radius: var(--td-radius);
+  box-shadow: var(--td-shadow);
+  padding: 18px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -352,27 +352,27 @@ body:has(.td-dashboard) #page-content {
   height: 100%;
   min-height: var(--td-action-min-height,148px);
   box-sizing: border-box;
-  transition: box-shadow .15s ease,transform .15s ease,border-color .15s ease
+  transition: transform .2s ease,box-shadow .2s ease,border-color .15s ease
 }
 .td-action-card:hover {
   box-shadow: var(--td-shadow-hover);
-  transform: translateY(-1px)
+  transform: translateY(-4px)
 }
 .td-action-card.td-action-danger {
-  border-color: #fecaca;
-  background: linear-gradient(180deg,#fff5f5 0,#fff 48%)
+  border: 1px solid var(--td-red);
+  background: linear-gradient(135deg,var(--td-red-soft) 0,#fff 100%)
 }
 .td-action-card.td-action-warning {
-  border-color: #fed7aa;
-  background: linear-gradient(180deg,#fff7ed 0,#fff 48%)
+  border: 1px solid var(--td-orange);
+  background: linear-gradient(135deg,var(--td-orange-soft) 0,#fff 100%)
 }
 .td-action-card.td-action-caution {
-  border-color: #fde68a;
-  background: linear-gradient(180deg,#fffbeb 0,#fff 48%)
+  border: 1px solid var(--td-yellow);
+  background: linear-gradient(135deg,var(--td-yellow-soft) 0,#fff 100%)
 }
 .td-action-card.td-action-info {
-  border-color: #bfdbfe;
-  background: linear-gradient(180deg,#eff6ff 0,#fff 48%)
+  border: 1px solid var(--td-blue);
+  background: linear-gradient(135deg,var(--td-blue-soft) 0,#fff 100%)
 }
 .td-action-header {
   display: flex;
@@ -411,8 +411,8 @@ body:has(.td-dashboard) #page-content {
 }
 .td-action-title {
   font-family: var(--td-font-display);
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 17px;
+  font-weight: 800;
   color: var(--td-text);
   line-height: 1.3;
   min-width: 0
@@ -420,12 +420,12 @@ body:has(.td-dashboard) #page-content {
 .td-action-count {
   font-family: var(--td-font-display);
   font-size: 36px;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: -.03em;
-  line-height: 1;
+  line-height: 1.1;
   font-variant-numeric: tabular-nums;
   color: var(--td-text);
-  margin: 2px 0 0
+  margin: 6px 0 0
 }
 .td-action-danger .td-action-count {
   color: var(--td-red)
@@ -442,8 +442,9 @@ body:has(.td-dashboard) #page-content {
 .td-action-desc {
   margin: 0;
   font-family: var(--td-font-body);
-  font-size: 13.5px;
-  line-height: 1.45;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
   color: var(--td-muted);
   flex: 1 1 auto;
   min-height: 0;
@@ -545,8 +546,8 @@ body:has(.td-dashboard) #page-content {
 .td-status-card {
   background: linear-gradient(180deg,#f8fafc 0,#fff 48%);
   border: var(--td-card-border,1px solid var(--td-border));
-  border-radius: var(--td-card-radius,var(--td-radius));
-  box-shadow: var(--td-card-shadow,var(--td-shadow));
+  border-radius: var(--td-radius);
+  box-shadow: var(--td-shadow);
   padding: 14px;
   text-decoration: none;
   color: inherit;
@@ -556,15 +557,21 @@ body:has(.td-dashboard) #page-content {
   min-width: 0;
   min-height: var(--td-kpi-min-height,148px);
   height: 100%;
-  transition: box-shadow .15s ease,transform .15s ease,border-color .15s ease
+  transition: transform .2s ease,box-shadow .2s ease,border-color .2s ease
 }
 .td-kpi-card.td-kpi-purple {
-  border-color: #ddd6fe;
-  background: linear-gradient(180deg,#f5f3ff 0,#fff 48%)
+  border: 1px solid var(--td-purple);
+  background: linear-gradient(135deg,var(--td-purple-soft) 0,#fff 100%)
+}
+.td-kpi-card.td-kpi-purple:hover {
+  border-color: var(--td-purple)
 }
 .td-kpi-card.td-kpi-muted {
-  border-color: #e5e7eb;
-  background: linear-gradient(180deg,#f9fafb 0,#fff 48%)
+  border: 1px solid var(--td-border);
+  background: linear-gradient(135deg,var(--td-bg) 0,#fff 100%)
+}
+.td-kpi-card.td-kpi-muted:hover {
+  border-color: var(--td-muted)
 }
 .td-status-card.td-status-card-live {
   background: linear-gradient(135deg,var(--td-green-soft) 0,#fff 100%);
@@ -581,7 +588,7 @@ body:has(.td-dashboard) #page-content {
 .td-status-card:focus,
 .td-status-card:hover {
   box-shadow: var(--td-shadow-hover);
-  transform: translateY(-1px);
+  transform: translateY(-3px);
   text-decoration: none;
   color: inherit
 }
@@ -636,16 +643,17 @@ body:has(.td-dashboard) #page-content {
 }
 .td-kpi-label {
   font-family: var(--td-font-display);
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 17px;
+  font-weight: 800;
   color: var(--td-text);
   line-height: 1.3;
   min-width: 0
 }
 .td-kpi-value {
   font-family: var(--td-font-display);
-  font-size: 30px;
-  font-weight: 700;
+  font-size: 34px;
+  font-weight: 800;
+  margin-top: 6px;
   letter-spacing: -.03em;
   line-height: 1;
   color: var(--td-text);
@@ -653,7 +661,8 @@ body:has(.td-dashboard) #page-content {
 }
 .td-kpi-hint {
   font-family: var(--td-font-body);
-  font-size: 13.5px;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--td-muted);
   min-height: 16px;
   line-height: 1.3
@@ -765,119 +774,6 @@ body:has(.td-dashboard) #page-content {
     top: 16px
   }
 }
-.td-section-title {
-  font-size: 24px;
-  font-weight: 800;
-  letter-spacing: -.3px
-}
-.td-card-title {
-  font-size: 17px;
-  font-weight: 800
-}
-.td-action-title {
-  font-size: 16px;
-  font-weight: 800
-}
-.td-action-caution .td-action-count,
-.td-action-danger .td-action-count,
-.td-action-grid .td-action-count,
-.td-action-info .td-action-count,
-.td-action-warning .td-action-count {
-  font-size: 36px;
-  font-weight: 800;
-  line-height: 1.1;
-  margin-top: 6px
-}
-.td-action-desc {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--td-muted);
-  line-height: 1.4
-}
-.td-kpi-label {
-  font-size: 15px;
-  font-weight: 800
-}
-.td-kpi-value {
-  font-size: 34px;
-  font-weight: 800;
-  margin-top: 6px
-}
-.td-kpi-hint {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--td-muted)
-}
-.td-action-card {
-  border-radius: var(--td-radius);
-  box-shadow: var(--td-shadow);
-  transition: transform .2s ease,box-shadow .2s ease;
-  padding: 18px
-}
-.td-action-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--td-shadow-hover)
-}
-.td-action-card.td-action-danger {
-  background: linear-gradient(135deg,var(--td-red-soft) 0,#fff 100%);
-  border: 1px solid var(--td-red)
-}
-.td-action-card.td-action-warning {
-  background: linear-gradient(135deg,var(--td-orange-soft) 0,#fff 100%);
-  border: 1px solid var(--td-orange)
-}
-.td-action-card.td-action-caution {
-  background: linear-gradient(135deg,var(--td-yellow-soft) 0,#fff 100%);
-  border: 1px solid var(--td-yellow)
-}
-.td-action-card.td-action-info {
-  background: linear-gradient(135deg,var(--td-blue-soft) 0,#fff 100%);
-  border: 1px solid var(--td-blue)
-}
-.td-kpi-card {
-  border-radius: var(--td-radius);
-  box-shadow: var(--td-shadow);
-  transition: transform .2s ease,box-shadow .2s ease,border-color .2s ease
-}
-.td-kpi-card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--td-shadow-hover)
-}
-.td-kpi-card.td-kpi-blue {
-  background: linear-gradient(135deg,var(--td-blue-soft) 0,#fff 100%);
-  border: 1px solid var(--td-blue-mid)
-}
-.td-kpi-card.td-kpi-blue:hover {
-  border-color: var(--td-blue)
-}
-.td-kpi-card.td-kpi-green {
-  background: linear-gradient(135deg,var(--td-green-soft) 0,#fff 100%);
-  border: 1px solid var(--td-green)
-}
-.td-kpi-card.td-kpi-green:hover {
-  border-color: var(--td-green)
-}
-.td-kpi-card.td-kpi-red {
-  background: linear-gradient(135deg,var(--td-red-soft) 0,#fff 100%);
-  border: 1px solid var(--td-red)
-}
-.td-kpi-card.td-kpi-red:hover {
-  border-color: var(--td-red)
-}
-.td-kpi-card.td-kpi-purple {
-  background: linear-gradient(135deg,var(--td-purple-soft) 0,#fff 100%);
-  border: 1px solid var(--td-purple)
-}
-.td-kpi-card.td-kpi-purple:hover {
-  border-color: var(--td-purple)
-}
-.td-kpi-card.td-kpi-muted {
-  background: linear-gradient(135deg,var(--td-bg) 0,#fff 100%);
-  border: 1px solid var(--td-border)
-}
-.td-kpi-card.td-kpi-muted:hover {
-  border-color: var(--td-muted)
-}
 .td-kpi-grid .td-kpi-link {
   font-weight: 700;
   font-size: 13px
@@ -902,8 +798,8 @@ body:has(.td-dashboard) #page-content {
 .td-analytics-group-title {
   margin: 0 0 12px;
   font-family: var(--td-font-display);
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 17px;
+  font-weight: 800;
   color: var(--td-text);
   letter-spacing: -.01em
 }
@@ -1385,14 +1281,16 @@ body:has(.td-dashboard) #page-content {
   height: 30px;
   flex-shrink: 0
 }
-.td-analytics-bottom-row,
-.td-analytics-top-row {
+.td-analytics-bottom-row {
   display: grid;
   grid-template-columns: repeat(3,minmax(0,1fr));
   gap: var(--td-card-gap,12px);
   align-items: stretch
 }
 .td-analytics-top-row {
+  display: grid;
+  gap: var(--td-card-gap,12px);
+  align-items: stretch;
   margin-bottom: 12px;
   grid-template-columns: minmax(0,1.45fr) minmax(0,1fr)
 }
@@ -1478,8 +1376,8 @@ body:has(.td-dashboard) #page-content {
 }
 .td-ts-value {
   font-family: var(--td-font-display);
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 17px;
+  font-weight: 800;
   color: var(--td-text);
   line-height: 1.2
 }
@@ -1561,14 +1459,17 @@ body:has(.td-dashboard) #page-content {
 .td-dot-info,
 .td-dot-neutral,
 .td-dot-success,
-.td-dot-warning,
-.td-st-dot span {
+.td-dot-warning {
   display: inline-block;
   width: 9px;
   height: 9px;
   border-radius: 50%
 }
 .td-st-dot span {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
   background: var(--td-dot-color,var(--td-muted))
 }
 .td-dot-success {
@@ -1595,13 +1496,15 @@ body:has(.td-dashboard) #page-content {
   color: var(--td-blue);
   text-decoration: underline
 }
-.td-st-count,
-.td-st-pct {
+.td-st-count {
   text-align: right;
   font-weight: 600;
   font-variant-numeric: tabular-nums
 }
 .td-st-pct {
+  text-align: right;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
   color: var(--td-muted)
 }
 .td-stats-table tfoot tr {
@@ -2909,8 +2812,7 @@ body:has(.od-dashboard) #page-content {
 .od-card-grid--4 {
   grid-template-columns: repeat(4,minmax(0,1fr))
 }
-.od-start-card,
-.od-tool-card {
+.od-start-card {
   background: var(--od-surface);
   border: 1px solid var(--od-border);
   border-radius: var(--od-radius);
@@ -3028,7 +2930,7 @@ body:has(.od-dashboard) #page-content {
   height: 100%;
   min-height: 168px;
   box-sizing: border-box;
-  transition: box-shadow .15s ease,transform .15s ease,border-color .15s ease
+  transition: transform .2s ease,box-shadow .2s ease,border-color .2s ease
 }
 .od-action-card:focus-within,
 .od-action-card:hover {
@@ -3080,8 +2982,8 @@ body:has(.od-dashboard) #page-content {
 }
 .od-action-title {
   font-family: var(--od-font-display);
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 17px;
+  font-weight: 800;
   color: var(--od-text);
   line-height: 1.3;
   min-width: 0
@@ -3219,8 +3121,8 @@ body:has(.od-dashboard) #page-content {
 }
 .od-kpi-label {
   font-family: var(--od-font-display);
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 17px;
+  font-weight: 800;
   color: var(--od-text);
   line-height: 1.3;
   min-width: 0
@@ -3303,8 +3205,7 @@ body:has(.od-dashboard) #page-content {
   margin: 0;
   border-collapse: collapse
 }
-.od-table td,
-.od-table th {
+.od-table td {
   padding: 12px 14px;
   text-align: left;
   border-bottom: 1px solid var(--od-border);
@@ -3312,6 +3213,10 @@ body:has(.od-dashboard) #page-content {
   vertical-align: middle
 }
 .od-table th {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--od-border);
+  vertical-align: middle;
   background: var(--od-heading-bg);
   font-weight: 700;
   color: var(--od-muted);
@@ -3541,7 +3446,10 @@ h4.od-subchart {
   flex-direction: column;
   gap: 10px;
   min-height: 150px;
-  background: linear-gradient(160deg,var(--od-heading-bg) 0,var(--od-surface) 55%)
+  background: linear-gradient(160deg,var(--od-heading-bg) 0,var(--od-surface) 55%);
+  border: 1px solid var(--od-border);
+  border-radius: var(--od-radius);
+  box-shadow: var(--od-shadow)
 }
 .od-tool-head {
   display: flex;
