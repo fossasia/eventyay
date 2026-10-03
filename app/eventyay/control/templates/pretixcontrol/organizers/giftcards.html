@@ -1,132 +1,364 @@
 {% extends "pretixcontrol/organizers/base.html" %}
 {% load i18n %}
+{% load static %}
 {% load urlreplace %}
 {% load bootstrap3 %}
 {% load money %}
+{% load tz %}
+
+{% block custom_header %}
+    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/giftcards.css' %}" />
+    <script type="module" src="{% static 'pretixcontrol/js/giftcards.js' %}"></script>
+{% endblock %}
+
 {% block inner %}
-    <h1>
-        {% trans "Issued gift cards" %}
-    </h1>
-    {% if giftcards|length == 0 and not filter_form.filtered %}
-        <div class="empty-collection">
-            <p>
+<div class="gc-container">
+    <div class="gc-header">
+        <div class="gc-header-content">
+            <div class="gc-breadcrumb">
+                <span>{{ request.organizer.name }}</span>
+                <span class="gc-breadcrumb-sep">&gt;</span>
+                <span>{% trans "Gift Cards" %}</span>
+            </div>
+            <div class="gc-title-wrap">
+                <h1 class="gc-title">{% trans "Issued gift cards" %}</h1>
+                <span class="gc-title-badge">
+                    {% blocktrans trimmed with total=total_cards_count %}
+                        {{ total }} cards total
+                    {% endblocktrans %}
+                </span>
+            </div>
+            <p class="gc-subtitle">
                 {% blocktrans trimmed %}
-                    You haven't issued any gift cards yet. You can either set up a product in an event shop to sell gift cards,
-                    or you can manually issue gift cards.
+                    Create, manage, and track gift card codes issued for your event ticket shops, or configure cross-organizer gift card acceptance.
                 {% endblocktrans %}
             </p>
-
-            <a href="{% url "control:organizer.giftcard.add" organizer=request.organizer.slug %}"
-                    class="btn btn-default btn-lg"><i class="fa fa-plus"></i> {% trans "Manually issue a gift card" %}
+        </div>
+        <div class="gc-header-actions">
+            <a href="{% url 'control:organizer.giftcard.add' organizer=request.organizer.slug %}" class="gc-btn-primary">
+                <i class="fa fa-plus" aria-hidden="true"></i>
+                {% trans "Manually issue a gift card" %}
             </a>
         </div>
-    {% else %}
-        <form class="row filter-form" action="" method="get">
-            <div class="col-md-4 col-sm-6 col-xs-12">
-                {% bootstrap_field filter_form.query layout='inline' %}
+    </div>
+
+    <div class="gc-stats-grid">
+        <div class="gc-stat-card">
+            <div class="gc-stat-icon gc-stat-icon-blue">
+                <i class="fa fa-gift" aria-hidden="true"></i>
             </div>
-            <div class="col-md-3 col-sm-6 col-xs-6">
-                {% bootstrap_field filter_form.testmode layout='inline' %}
+            <div class="gc-stat-info">
+                <div class="gc-stat-value">{{ total_cards_count|default:"0" }}</div>
+                <div class="gc-stat-label">
+                    {% trans "Total gift cards" %}
+                    <i class="fa fa-info-circle gc-info-icon" title="{% trans 'All cards issued by this organizer' %}" aria-hidden="true"></i>
+                </div>
             </div>
-            <div class="col-md-3 col-sm-6 col-xs-6">
-                {% bootstrap_field filter_form.state layout='inline' %}
-            </div>
-            <div class="col-md-2 col-sm-6 col-xs-12">
-                {% include "eventyay_common/filter_actions.html" %}
-            </div>
-        </form>
-        <p>
-            <a href="{% url "control:organizer.giftcard.add" organizer=request.organizer.slug %}"
-                    class="btn btn-default"><i class="fa fa-plus"></i> {% trans "Manually issue a gift card" %}</a>
-        </p>
-        <div class="table-responsive">
-            <table class="table table-condensed table-hover">
-                <thead>
-                <tr>
-                    <th>{% trans "Gift card code" %}
-                        <a href="?{% url_replace request 'ordering' '-code' %}"><i class="fa fa-caret-down"></i></a>
-                        <a href="?{% url_replace request 'ordering' 'code' %}"><i class="fa fa-caret-up"></i></a></th>
-                    <th>{% trans "Creation date" %}
-                        <a href="?{% url_replace request 'ordering' '-issuance' %}"><i class="fa fa-caret-down"></i></a>
-                        <a href="?{% url_replace request 'ordering' 'issuance' %}"><i class="fa fa-caret-up"></i></a></th>
-                    <th>{% trans "Expiry date" %}
-                        <a href="?{% url_replace request 'ordering' '-expires' %}"><i class="fa fa-caret-down"></i></a>
-                        <a href="?{% url_replace request 'ordering' 'expires' %}"><i class="fa fa-caret-up"></i></a></th>
-                    <th class="text-right">{% trans "Current value" %}
-                        <a href="?{% url_replace request 'ordering' '-value' %}"><i class="fa fa-caret-down"></i></a>
-                        <a href="?{% url_replace request 'ordering' 'value' %}"><i class="fa fa-caret-up"></i></a></th>
-                    <th></th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for g in giftcards %}
-                    <tr>
-                        <td>
-                            <a href="{% url "control:organizer.giftcard" organizer=request.organizer.slug giftcard=g.id %}">
-                                <strong>{{ g.secret }}</strong></a>
-                            {% if g.testmode %}
-                                <span class="label label-warning">{% trans "TEST MODE" %}</span>
-                            {% endif %}
-                            {% if g.expired %}
-                                <span class="label label-danger">{% trans "Expired" %}</span>
-                            {% endif %}
-                        </td>
-                        <td>{{ g.issuance|date:"SHORT_DATETIME_FORMAT" }}</td>
-                        <td>{% if g.expires %}{{ g.expires|date:"SHORT_DATETIME_FORMAT" }}{% endif %}</td>
-                        <td class="text-right">
-                            {{ g.cached_value|money:g.currency }}
-                        </td>
-                        <td class="text-right">
-                            <a href="{% url "control:organizer.giftcard" organizer=request.organizer.slug giftcard=g.id %}"
-                                    class="btn btn-default btn-sm" data-toggle="tooltip" title="{% trans "Details" %}">
-                                <i class="fa fa-eye"></i>
-                            </a>
-                        </td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
         </div>
-        {% include "pretixcontrol/pagination.html" %}
-    {% endif %}
-    {% if not is_paginated or page_obj.number == 1 %}
-        <form action="" method="post" class="form-inline">
-            {% csrf_token %}
-            <fieldset>
-                <legend>{% trans "Accepted gift cards of other organizers" %}</legend>
-                <p>
-                    {% blocktrans trimmed %}
-                        If you have access to multiple organizer accounts, you can configure that ticket shops in
-                        this account will also accept gift codes issued through a different organizer account, and
-                        vice versa.
-                    {% endblocktrans %}
-                </p>
-                <ul>
-                    {% for gca in request.organizer.gift_card_issuer_acceptance.all %}
-                        <li>
-                            <strong>{{ gca.issuer }}</strong>
-                            <button type="submit" name="del" value="{{ gca.issuer.slug }}" class="btn btn-xs btn-delete btn-danger">
-                                <span class="fa fa-trash"></span>
-                            </button>
-                        </li>
-                    {% empty %}
-                        <li>
-                            <em>{% trans "You are currently not accepting gift cards from other organizers." %}</em>
-                        </li>
-                    {% endfor %}
-                    {% if other_organizers %}
-                        <li>
-                            <select name="add" class="form-control input-sm">
-                                <option></option>
-                                {% for o in other_organizers %}
-                                    <option value="{{ o.slug }}">{{ o }}</option>
-                                {% endfor %}
-                            </select>
-                            <button class="btn btn-primary btn-sm" type="submit"><span class="fa fa-plus"></span></button>
-                        </li>
+        <div class="gc-stat-card">
+            <div class="gc-stat-icon gc-stat-icon-green">
+                <i class="fa fa-check-circle" aria-hidden="true"></i>
+            </div>
+            <div class="gc-stat-info">
+                <div class="gc-stat-value">{{ active_cards_count|default:"0" }}</div>
+                <div class="gc-stat-label">{% trans "Active gift cards" %}</div>
+            </div>
+        </div>
+        <div class="gc-stat-card">
+            <div class="gc-stat-icon gc-stat-icon-yellow">
+                <i class="fa fa-clock-o" aria-hidden="true"></i>
+            </div>
+            <div class="gc-stat-info">
+                <div class="gc-stat-value">{{ expired_cards_count|default:"0" }}</div>
+                <div class="gc-stat-label">{% trans "Expired gift cards" %}</div>
+            </div>
+        </div>
+        <div class="gc-stat-card">
+            <div class="gc-stat-icon gc-stat-icon-purple">
+                <i class="fa fa-credit-card" aria-hidden="true"></i>
+            </div>
+            <div class="gc-stat-info">
+                <div class="gc-stat-value">
+                    {% if total_values %}
+                        {% for tv in total_values %}
+                            <span>{{ tv.value|money:tv.currency }}</span>{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        {{ 0|money:default_currency }}
                     {% endif %}
-                </ul>
-            </fieldset>
+                </div>
+                <div class="gc-stat-label">{% trans "Total current value" %}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="gc-card gc-filter-card">
+        <form class="gc-filter-form" action="" method="get" aria-label="{% trans 'Filter gift cards' %}">
+            <div class="gc-filter-input-wrap">
+                <i class="fa fa-search gc-filter-search-icon" aria-hidden="true"></i>
+                {{ filter_form.query }}
+            </div>
+            <div class="gc-filter-select-wrap">
+                {{ filter_form.state }}
+            </div>
+            <div class="gc-filter-select-wrap">
+                {{ filter_form.testmode }}
+            </div>
+            {% if filter_form.currency %}
+                <div class="gc-filter-select-wrap">
+                    {{ filter_form.currency }}
+                </div>
+            {% endif %}
+            <div class="gc-filter-buttons">
+                <button type="submit" class="gc-btn-filter">
+                    <i class="fa fa-filter" aria-hidden="true"></i>
+                    {% trans "Filter" %}
+                </button>
+                <a href="{% url 'control:organizer.giftcards' organizer=request.organizer.slug %}" class="gc-btn-reset">
+                    {% trans "Reset" %}
+                </a>
+            </div>
         </form>
+    </div>
+
+    <div class="gc-card gc-table-card">
+        {% if giftcards|length == 0 %}
+            <div class="gc-empty-box">
+                <div class="gc-empty-icon">
+                    <i class="fa fa-gift" aria-hidden="true"></i>
+                </div>
+                <p class="gc-empty-text">
+                    {% if filter_form.filtered %}
+                        {% trans "No gift cards match your filter criteria." %}
+                    {% else %}
+                        {% blocktrans trimmed %}
+                            You haven't issued any gift cards yet. You can either set up a product in an event shop to sell gift cards,
+                            or you can manually issue gift cards.
+                        {% endblocktrans %}
+                    {% endif %}
+                </p>
+                {% if not filter_form.filtered %}
+                    <a href="{% url 'control:organizer.giftcard.add' organizer=request.organizer.slug %}" class="gc-btn-primary">
+                        <i class="fa fa-plus" aria-hidden="true"></i>
+                        {% trans "Manually issue a gift card" %}
+                    </a>
+                {% endif %}
+            </div>
+        {% else %}
+            <div class="gc-table-responsive">
+                <table class="gc-table">
+                    <thead>
+                        <tr>
+                            <th class="gc-th-checkbox">
+                                <input type="checkbox" class="gc-checkbox gc-select-all" aria-label="{% trans 'Select all gift cards' %}">
+                            </th>
+                            <th>
+                                {% trans "Gift card code" %}
+                                <span class="gc-sort-arrows">
+                                    <a href="?{% url_replace request 'ordering' '-secret' %}" aria-label="{% trans 'Sort descending' %}"><i class="fa fa-caret-down"></i></a>
+                                    <a href="?{% url_replace request 'ordering' 'secret' %}" aria-label="{% trans 'Sort ascending' %}"><i class="fa fa-caret-up"></i></a>
+                                </span>
+                            </th>
+                            <th>{% trans "Status" %}</th>
+                            <th>
+                                {% trans "Creation date" %}
+                                <span class="gc-sort-arrows">
+                                    <a href="?{% url_replace request 'ordering' '-issuance' %}" aria-label="{% trans 'Sort descending' %}"><i class="fa fa-caret-down"></i></a>
+                                    <a href="?{% url_replace request 'ordering' 'issuance' %}" aria-label="{% trans 'Sort ascending' %}"><i class="fa fa-caret-up"></i></a>
+                                </span>
+                            </th>
+                            <th>
+                                {% trans "Expiry date" %}
+                                <span class="gc-sort-arrows">
+                                    <a href="?{% url_replace request 'ordering' '-expires' %}" aria-label="{% trans 'Sort descending' %}"><i class="fa fa-caret-down"></i></a>
+                                    <a href="?{% url_replace request 'ordering' 'expires' %}" aria-label="{% trans 'Sort ascending' %}"><i class="fa fa-caret-up"></i></a>
+                                </span>
+                            </th>
+                            <th>
+                                {% trans "Current value" %}
+                                <span class="gc-sort-arrows">
+                                    <a href="?{% url_replace request 'ordering' '-value' %}" aria-label="{% trans 'Sort descending' %}"><i class="fa fa-caret-down"></i></a>
+                                    <a href="?{% url_replace request 'ordering' 'value' %}" aria-label="{% trans 'Sort ascending' %}"><i class="fa fa-caret-up"></i></a>
+                                </span>
+                            </th>
+                            <th class="text-right">{% trans "Actions" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for g in giftcards %}
+                            <tr>
+                                <td class="gc-td-checkbox">
+                                    <input type="checkbox" class="gc-checkbox gc-row-checkbox" name="selected_card" value="{{ g.id }}" aria-label="{% trans 'Select gift card' %}">
+                                </td>
+                                <td>
+                                    <div class="gc-code-cell">
+                                        <div class="gc-code-line">
+                                            <a href="{% url 'control:organizer.giftcard' organizer=request.organizer.slug giftcard=g.id %}" class="gc-code-link" title="{% trans 'View details' %}">
+                                                <code class="gc-code">{{ g.secret }}</code>
+                                            </a>
+                                            <button type="button" class="btn-clipboard gc-copy-btn" data-clipboard-text="{{ g.secret }}" title="{% trans 'Copy to clipboard' %}">
+                                                <i class="fa fa-clone" aria-hidden="true"></i>
+                                            </button>
+                                        </div>
+                                        {% if g.testmode %}
+                                            <span class="gc-badge gc-badge-test">{% trans "TEST" %}</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if g.expired %}
+                                        <span class="gc-badge gc-badge-expired">{% trans "Expired" %}</span>
+                                    {% elif g.cached_value == 0 %}
+                                        <span class="gc-badge gc-badge-redeemed">{% blocktrans trimmed with amount=0|money:g.currency %}{{ amount }} Remaining{% endblocktrans %}</span>
+                                    {% else %}
+                                        <span class="gc-badge gc-badge-active"><span class="gc-badge-dot"></span> {% trans "Active" %}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="gc-date-cell">
+                                    {{ g.issuance|utc|date:"M d, Y, H:i" }} UTC
+                                </td>
+                                <td class="gc-date-cell">
+                                    {% if g.expires %}
+                                        {{ g.expires|utc|date:"M d, Y, H:i" }} UTC
+                                    {% else %}
+                                        <span class="gc-dash" aria-label="{% trans 'No expiry' %}">—</span>
+                                    {% endif %}
+                                </td>
+                                <td class="gc-value-cell">
+                                    <strong>{{ g.cached_value|money:g.currency }}</strong>
+                                </td>
+                                <td class="text-right">
+                                    <a href="{% url 'control:organizer.giftcard' organizer=request.organizer.slug giftcard=g.id %}"
+                                       class="gc-action-icon-btn" data-toggle="tooltip" title="{% trans 'View details' %}" aria-label="{% trans 'View details' %}">
+                                        <i class="fa fa-eye" aria-hidden="true"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="gc-table-footer">
+                <div class="gc-footer-left">
+                    <span class="gc-elements-badge">
+                        {% if is_paginated %}
+                            {% blocktrans trimmed with total=page_obj.paginator.count %}
+                                {{ total }} elements
+                            {% endblocktrans %}
+                        {% else %}
+                            {% blocktrans trimmed with total=giftcards|length %}
+                                {{ total }} elements
+                            {% endblocktrans %}
+                        {% endif %}
+                    </span>
+                    <span class="gc-showing-text">
+                        {% if is_paginated %}
+                            {% blocktrans trimmed with current=giftcards|length total=page_obj.paginator.count %}
+                                Showing {{ current }} of {{ total }} gift cards
+                            {% endblocktrans %}
+                        {% else %}
+                            {% blocktrans trimmed with total=giftcards|length %}
+                                Showing {{ total }} of {{ total }} gift cards
+                            {% endblocktrans %}
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="gc-pagination">
+                    {% if is_paginated and page_obj.has_previous %}
+                        <a href="?{% url_replace request 'page' page_obj.previous_page_number %}" class="gc-page-btn" aria-label="{% trans 'Previous page' %}">&lsaquo;</a>
+                    {% else %}
+                        <span class="gc-page-btn gc-page-btn-disabled" aria-hidden="true">&lsaquo;</span>
+                    {% endif %}
+
+                    {% if is_paginated %}
+                        {% for p in paginator.get_elided_page_range %}
+                            {% if p == page_obj.number %}
+                                <span class="gc-page-btn gc-page-btn-active">{{ p }}</span>
+                            {% elif p == paginator.ELLIPSIS or p == '…' %}
+                                <span class="gc-page-btn gc-page-btn-disabled" aria-hidden="true">&hellip;</span>
+                            {% else %}
+                                <a href="?{% url_replace request 'page' p %}" class="gc-page-btn">{{ p }}</a>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <span class="gc-page-btn gc-page-btn-active">1</span>
+                    {% endif %}
+
+                    {% if is_paginated and page_obj.has_next %}
+                        <a href="?{% url_replace request 'page' page_obj.next_page_number %}" class="gc-page-btn" aria-label="{% trans 'Next page' %}">&rsaquo;</a>
+                    {% else %}
+                        <span class="gc-page-btn gc-page-btn-disabled" aria-hidden="true">&rsaquo;</span>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    {% if not is_paginated or page_obj.number == 1 %}
+        <section class="gc-card gc-accepted-card" aria-labelledby="gc-accepted-heading">
+            <div class="gc-accepted-header">
+                <div class="gc-accepted-icon">
+                    <i class="fa fa-users" aria-hidden="true"></i>
+                </div>
+                <div>
+                    <h2 id="gc-accepted-heading" class="gc-accepted-title">{% trans "Accepted gift cards of other organizers" %}</h2>
+                    <p class="gc-accepted-desc">
+                        {% blocktrans trimmed %}
+                            If you have access to multiple organizer accounts, you can configure that ticket shops in
+                            this account will also accept gift codes issued through a different organizer account, and
+                            vice versa.
+                        {% endblocktrans %}
+                    </p>
+                </div>
+            </div>
+
+            <div class="gc-accepted-body">
+                <form action="" method="post">
+                    {% csrf_token %}
+                    {% if not request.organizer.gift_card_issuer_acceptance.all %}
+                        <div class="gc-info-banner">
+                            <i class="fa fa-info-circle gc-banner-icon" aria-hidden="true"></i>
+                            <span>{% trans "You are currently not accepting gift cards from other organizers." %}</span>
+                        </div>
+                    {% else %}
+                        <div class="gc-accepted-list">
+                            {% for gca in request.organizer.gift_card_issuer_acceptance.all %}
+                                <div class="gc-accepted-row">
+                                    <span class="gc-accepted-name">
+                                        <i class="fa fa-building-o" aria-hidden="true"></i>
+                                        <strong>{{ gca.issuer }}</strong>
+                                    </span>
+                                    <button type="submit" name="del" value="{{ gca.issuer.slug }}" class="gc-btn-danger-sm" title="{% trans 'Remove' %}">
+                                        <i class="fa fa-trash" aria-hidden="true"></i>
+                                        <span>{% trans "Remove" %}</span>
+                                    </button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    {% if other_organizers %}
+                        <div class="gc-add-section">
+                            <label for="gc-add-select" class="gc-add-label">
+                                {% trans "Allow gift cards from organizer" %}
+                            </label>
+                            <div class="gc-add-controls">
+                                <select name="add" id="gc-add-select" class="form-control gc-add-select">
+                                    <option value="">{% trans "Select an organizer" %}</option>
+                                    {% for o in other_organizers %}
+                                        <option value="{{ o.slug }}">{{ o }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button class="gc-btn-primary" type="submit">
+                                    <i class="fa fa-plus" aria-hidden="true"></i>
+                                    {% trans "Add" %}
+                                </button>
+                            </div>
+                        </div>
+                    {% endif %}
+                </form>
+            </div>
+        </section>
     {% endif %}
+</div>
 {% endblock %}

@@ -1,0 +1,911 @@
+/* giftcards.css — Gift Cards page modern card-based styles */
+
+.gc-container {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0 0 20px;
+  color: #000000;
+}
+
+/* --------------------------------------------------------------------------
+   Header Box & Action Controls
+   -------------------------------------------------------------------------- */
+.gc-header {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  padding: 14px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.gc-header-content {
+  flex: 1 1 300px;
+}
+
+.gc-breadcrumb {
+  font-size: 12px;
+  color: #000000;
+  font-weight: 500;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gc-breadcrumb-sep {
+  color: #000000;
+  font-size: 11px;
+}
+
+.gc-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.gc-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #000000;
+  margin: 0;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.gc-title-badge {
+  display: inline-flex;
+  align-items: center;
+  background-color: #f3f4f6;
+  color: #000000;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  border: 1px solid #e5e7eb;
+}
+
+.gc-subtitle {
+  font-size: 13px;
+  color: #000000;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.gc-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.gc-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: #0070e0;
+  color: #ffffff;
+  padding: 7px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid #0070e0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.gc-btn-primary:hover,
+.gc-btn-primary:focus {
+  background-color: #005bb8;
+  border-color: #005bb8;
+  color: #ffffff;
+  text-decoration: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* --------------------------------------------------------------------------
+   KPI Metric Cards
+   -------------------------------------------------------------------------- */
+.gc-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.gc-stat-card {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.gc-stat-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.06);
+}
+
+.gc-stat-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.gc-stat-icon-blue {
+  background-color: #eff6ff;
+  color: #0070e0;
+}
+
+.gc-stat-icon-green {
+  background-color: #ecfdf5;
+  color: #059669;
+}
+
+.gc-stat-icon-yellow {
+  background-color: #fffbeb;
+  color: #d97706;
+}
+
+.gc-stat-icon-purple {
+  background-color: #faf5ff;
+  color: #7c3aed;
+}
+
+.gc-stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.gc-stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #000000;
+  line-height: 1.2;
+}
+
+.gc-stat-label {
+  font-size: 12px;
+  color: #000000;
+  font-weight: 500;
+  margin-top: 1px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.gc-info-icon {
+  color: #000000;
+  font-size: 11px;
+  cursor: help;
+}
+
+/* --------------------------------------------------------------------------
+   Card Containers
+   -------------------------------------------------------------------------- */
+.gc-card {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  margin-bottom: 16px;
+}
+
+/* --------------------------------------------------------------------------
+   Unified Filter Bar
+   -------------------------------------------------------------------------- */
+.gc-filter-card {
+  padding: 10px 14px;
+}
+
+.gc-filter-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.gc-filter-input-wrap {
+  position: relative;
+  flex: 1 1 240px;
+  min-width: 200px;
+}
+
+.gc-filter-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #000000;
+  font-size: 13px;
+  pointer-events: none;
+}
+
+.gc-filter-input {
+  padding-left: 34px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  height: 34px;
+  font-size: 13px;
+  width: 100%;
+  box-sizing: border-box;
+  background-color: #ffffff;
+  color: #000000;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.gc-filter-input::placeholder {
+  color: #000000;
+  opacity: 1;
+}
+
+.gc-filter-input:focus {
+  border-color: #0070e0;
+  box-shadow: 0 0 0 3px rgba(0, 112, 224, 0.15);
+  outline: none;
+}
+
+.gc-filter-select-wrap {
+  flex: 0 1 180px;
+  min-width: 150px;
+}
+
+.gc-filter-select,
+select.gc-filter-select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  height: 34px;
+  font-size: 13px;
+  width: 100%;
+  color: #000000;
+  background-color: #ffffff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23000000' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 12px 12px;
+  padding: 0 34px 0 12px;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.gc-filter-select::-ms-expand {
+  display: none;
+}
+
+.gc-filter-select option {
+  color: #000000;
+}
+
+.gc-filter-select:focus {
+  border-color: #0070e0;
+  box-shadow: 0 0 0 3px rgba(0, 112, 224, 0.15);
+  outline: none;
+}
+
+.gc-filter-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gc-btn-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #0070e0;
+  color: #ffffff;
+  border: 1px solid #0070e0;
+  padding: 0 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  height: 34px;
+  transition: background-color 0.15s ease;
+}
+
+.gc-btn-filter:hover {
+  background-color: #005bb8;
+  border-color: #005bb8;
+}
+
+.gc-btn-reset {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  color: #0070e0;
+  border: 1px solid #0070e0;
+  padding: 0 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  height: 34px;
+  box-sizing: border-box;
+  transition: background-color 0.15s ease;
+}
+
+.gc-btn-reset:hover {
+  background-color: #eff6ff;
+  color: #005bb8;
+  text-decoration: none;
+}
+
+/* --------------------------------------------------------------------------
+   Issued Gift Cards Table
+   -------------------------------------------------------------------------- */
+.gc-table-card {
+  overflow: hidden;
+}
+
+.gc-table-responsive {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.gc-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.gc-table th {
+  background-color: #f9fafb;
+  color: #000000;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 8px 12px;
+  border-bottom: 1px solid #e5e7eb;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.gc-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #f3f4f6;
+  vertical-align: middle;
+  font-size: 13px;
+  color: #000000;
+}
+
+.gc-th-checkbox,
+.gc-td-checkbox {
+  width: 36px;
+  padding: 8px 6px 8px 14px;
+  vertical-align: middle;
+}
+
+.gc-checkbox {
+  width: 15px;
+  height: 15px;
+  border-radius: 4px;
+  border: 1px solid #d1d5db;
+  cursor: pointer;
+  accent-color: #0070e0;
+  margin: 0;
+  vertical-align: middle;
+  display: block;
+}
+
+.gc-table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+.gc-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.gc-sort-arrows {
+  display: inline-flex;
+  gap: 3px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.gc-sort-arrows a {
+  color: #000000;
+  font-size: 11px;
+  text-decoration: none;
+}
+
+.gc-sort-arrows a:hover {
+  color: #0070e0;
+}
+
+/* Code Chip & Copy */
+.gc-code-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.gc-code-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.gc-code-link {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.gc-code {
+  font-family: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: #0070e0;
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 4px;
+  padding: 2px 6px;
+  letter-spacing: 0.04em;
+  transition: all 0.15s ease;
+}
+
+.gc-code-link:hover .gc-code {
+  background-color: #dbeafe;
+  color: #005bb8;
+  border-color: #93c5fd;
+}
+
+.gc-copy-btn {
+  background: none;
+  border: none;
+  padding: 2px 4px;
+  color: #000000;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.gc-copy-btn:hover {
+  color: #0070e0;
+  background-color: #eff6ff;
+}
+
+/* Status Badges */
+.gc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.gc-badge-active {
+  background-color: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.gc-badge-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: #059669;
+}
+
+.gc-badge-expired {
+  background-color: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.gc-badge-redeemed {
+  background-color: #f3f4f6;
+  color: #000000;
+  border: 1px solid #e5e7eb;
+}
+
+.gc-badge-test {
+  background-color: #fffbeb;
+  color: #92400e;
+  border: 1px solid #fde68a;
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  margin-top: 0;
+}
+
+/* Dates, Values & Actions */
+.gc-date-cell {
+  color: #000000;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.gc-dash {
+  color: #000000;
+  font-size: 14px;
+}
+
+.gc-value-cell {
+  font-size: 13px;
+  font-weight: 600;
+  color: #000000;
+  white-space: nowrap;
+}
+
+.gc-action-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+  background-color: #ffffff;
+  color: #000000;
+  font-size: 12px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.gc-action-icon-btn:hover,
+.gc-action-icon-btn:focus {
+  background-color: #eff6ff;
+  border-color: #bfdbfe;
+  color: #0070e0;
+  text-decoration: none;
+}
+
+/* Footer & Pagination */
+.gc-table-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  border-top: 1px solid #e5e7eb;
+  background-color: #ffffff;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.gc-footer-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gc-elements-badge {
+  display: inline-flex;
+  align-items: center;
+  background-color: #f3f4f6;
+  color: #000000;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  border: 1px solid #e5e7eb;
+}
+
+.gc-showing-text {
+  font-size: 12px;
+  color: #000000;
+}
+
+.gc-pagination {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.gc-page-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  border-radius: 4px;
+  border: 1px solid #d1d5db;
+  background-color: #ffffff;
+  color: #000000;
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.gc-page-btn:hover:not(.gc-page-btn-disabled):not(.gc-page-btn-active) {
+  background-color: #f9fafb;
+  border-color: #9ca3af;
+  color: #000000;
+  text-decoration: none;
+}
+
+.gc-page-btn-active {
+  background-color: #0070e0;
+  border-color: #0070e0;
+  color: #ffffff;
+  font-weight: 600;
+  cursor: default;
+}
+
+.gc-page-btn-disabled {
+  color: #000000;
+  opacity: 0.35;
+  border-color: #e5e7eb;
+  background-color: #ffffff;
+  cursor: not-allowed;
+}
+
+/* Empty State */
+.gc-empty-box {
+  padding: 28px 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.gc-empty-icon {
+  font-size: 32px;
+  color: #000000;
+}
+
+.gc-empty-text {
+  font-size: 14px;
+  color: #000000;
+  max-width: 480px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* --------------------------------------------------------------------------
+   Accepted Gift Cards of Other Organizers Section
+   -------------------------------------------------------------------------- */
+.gc-accepted-card {
+  padding: 16px 18px;
+}
+
+.gc-accepted-header {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.gc-accepted-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  background-color: #eff6ff;
+  color: #0070e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.gc-accepted-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #000000;
+  margin: 0 0 4px 0;
+  letter-spacing: -0.01em;
+}
+
+.gc-accepted-desc {
+  font-size: 13px;
+  color: #000000;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.gc-info-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #000000;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+
+.gc-banner-icon {
+  font-size: 15px;
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
+.gc-accepted-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.gc-accepted-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+}
+
+.gc-accepted-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #000000;
+}
+
+.gc-btn-danger-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.gc-btn-danger-sm:hover {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.gc-add-section {
+  margin-top: 12px;
+}
+
+.gc-add-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #000000;
+  margin-bottom: 6px;
+}
+
+.gc-add-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 550px;
+  flex-wrap: wrap;
+}
+
+.gc-add-select,
+select.gc-add-select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  flex: 1 1 280px;
+  height: 34px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  font-size: 13px;
+  color: #000000;
+  background-color: #ffffff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23000000' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 12px 12px;
+  padding: 0 34px 0 12px;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.gc-add-select::-ms-expand {
+  display: none;
+}
+
+.gc-add-select option {
+  color: #000000;
+}
+
+.gc-add-select:focus {
+  border-color: #0070e0;
+  box-shadow: 0 0 0 3px rgba(0, 112, 224, 0.15);
+  outline: none;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive Design
+   -------------------------------------------------------------------------- */
+@media (max-width: 992px) {
+  .gc-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .gc-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .gc-header {
+    flex-direction: column;
+  }
+
+  .gc-header-content {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+
+  .gc-filter-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .gc-filter-input-wrap,
+  .gc-filter-select-wrap {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .gc-filter-buttons {
+    width: 100%;
+  }
+
+  .gc-btn-filter,
+  .gc-btn-reset {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .gc-add-controls {
+    flex-direction: column;
+    align-items: stretch;
+    max-width: 100%;
+  }
+
+  .gc-add-select {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+}
