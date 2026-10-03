@@ -1536,7 +1536,8 @@ export default {
 	.pretalx-schedule
 		height: auto !important
 		overflow: visible !important
-		&:fullscreen
+		&:fullscreen,
+		body.is-printing-fullscreen &
 			padding: 0
 		.days
 			position: static !important
