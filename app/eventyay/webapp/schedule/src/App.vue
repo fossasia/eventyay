@@ -818,8 +818,7 @@ export default {
 				this.scheduleUnavailable = true
 				return
 			}
-			this.currentTimezone = localStorage.getItem(`${this.eventSlug}_timezone`)
-			this.currentTimezone = [this.schedule.timezone, this.userTimezone].includes(this.currentTimezone) ? this.currentTimezone : this.schedule.timezone
+			this.currentTimezone = this.getSavedTimezone()
 			this.now = moment.tz(this.currentTimezone)
 			setInterval(() => this.now = moment.tz(this.currentTimezone), 30000)
 			this.apiUrl = this.remoteApiUrl || (window.location.origin + '/api/v1/events/' + this.eventSlug + '/')
@@ -842,8 +841,7 @@ export default {
 			this.scheduleUnavailable = true
 			return
 		}
-		this.currentTimezone = localStorage.getItem(`${this.eventSlug}_timezone`)
-		this.currentTimezone = [this.schedule.timezone, this.userTimezone].includes(this.currentTimezone) ? this.currentTimezone : this.schedule.timezone
+		this.currentTimezone = this.getSavedTimezone()
 		if (this.days?.length) {
 			const todayStr = this.now.clone().tz(this.currentTimezone).format('YYYY-MM-DD')
 			const todayDay = this.days.find(d => d.clone().tz(this.currentTimezone).format('YYYY-MM-DD') === todayStr)
@@ -1097,6 +1095,11 @@ export default {
 		},
 		onWindowResize () {
 			this.scrollParentWidth = document.body.offsetWidth
+		},
+		getSavedTimezone () {
+			// Any timezone from the picker can be saved, not only the event or browser timezone
+			const saved = localStorage.getItem(`${this.eventSlug}_timezone`)
+			return saved && moment.tz.zone(saved) ? saved : this.schedule.timezone
 		},
 		saveTimezone () {
 			localStorage.setItem(`${this.eventSlug}_timezone`, this.currentTimezone)
