@@ -263,6 +263,10 @@ class PermissionRequired(PermissionRequiredMixin):
             raise ImproperlyConfigured('PermissionRequiredMixin requires a request.')
         logger.debug('User %s has no permission to access %s', request.user, request.path)
         
+        if request.user.is_authenticated and getattr(request.user, 'is_staff', False) and not request.user.has_active_staff_session(request.session.session_key):
+            from django.shortcuts import render
+            return render(request, 'admin_mode_required.html', status=403)
+        
         is_cfp_or_agenda = False
         if hasattr(request, 'event') and getattr(request, 'resolver_match', None):
             namespaces = request.resolver_match.namespaces

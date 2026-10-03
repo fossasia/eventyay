@@ -1,0 +1,19 @@
+{% extends "pretixcontrol/admin/base.html" %}
+{% load i18n %}
+{% load static %}
+{% block title %}{% trans "Admin mode required" %}{% endblock %}
+{% block content %}
+    <h1>{% trans "Admin mode required" %}</h1>
+    <p>
+        {% trans "You do not have access to this event or organizer team." %}<br>
+        {% trans "However, as a platform admin, you can access this page by enabling Admin mode." %}
+    </p>
+    <form action="{% url 'control:user.sudo' %}?next={{ request.path|add:'?'|add:request.GET.urlencode|urlencode }}" method="post" class="form-horizontal">
+        {% csrf_token %}
+        <div class="form-group submit-group">
+            <button type="submit" class="btn btn-primary btn-save">
+                {% trans "Start session" %}
+            </button>
+        </div>
+    </form>
+{% endblock %}

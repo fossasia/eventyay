@@ -161,10 +161,17 @@ class PermissionMiddleware:
             if not event:
                 raise Http404(_('The selected event was not found or you have no permission to administrate it.'))
 
+            has_permission = True
             if request.path.startswith(get_script_prefix() + 'control'):
                 if not user_has_ticket_dashboard_access(request.user, event.organizer, event, request=request):
-                    raise Http404(_('The selected event was not found or you have no permission to administrate it.'))
+                    has_permission = False
             elif not request.user.has_event_permission(event.organizer, event, request=request):
+                has_permission = False
+
+            if not has_permission:
+                if request.user.is_staff and not request.user.has_active_staff_session(request.session.session_key):
+                    from django.shortcuts import render
+                    return render(request, 'admin_mode_required.html', status=403)
                 raise Http404(_('The selected event was not found or you have no permission to administrate it.'))
             logger.info(
                 'Found organizer %s from event %s. Attaching to request.',
@@ -187,6 +194,9 @@ class PermissionMiddleware:
                 )
             request.organizer = organizer
             if not organizer or not request.user.has_organizer_permission(organizer, request=request):
+                if organizer and request.user.is_staff and not request.user.has_active_staff_session(request.session.session_key):
+                    from django.shortcuts import render
+                    return render(request, 'admin_mode_required.html', status=403)
                 raise Http404(_('The selected organizer was not found or you have no permission to administrate it.'))
             if request.user.has_active_staff_session(request.session.session_key):
                 request.orgapermset = SuperuserPermissionSet()
