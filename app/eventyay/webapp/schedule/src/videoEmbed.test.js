@@ -43,8 +43,37 @@ test('vimeo embeds preserve timestamps and disable autoplay', () => {
 	assertVimeoEmbed(getVideoEmbedUrl('https://player.vimeo.com/video/123456789#t=10s'), '123456789', 't=10s')
 })
 
+function assertCommonsEmbed (embedUrl, fileName) {
+	const parsed = new URL(embedUrl)
+	assert.equal(parsed.origin, 'https://commons.wikimedia.org')
+	assert.equal(parsed.pathname, `/wiki/File:${fileName}`)
+	assert.equal(parsed.searchParams.get('embedplayer'), 'yes')
+	assert.equal(parsed.hash, '')
+}
+
+test('wikimedia commons file pages become embed players', () => {
+	assertCommonsEmbed(
+		getVideoEmbedUrl('https://commons.wikimedia.org/wiki/File:Big_Buck_Bunny_medium.ogv'),
+		'Big_Buck_Bunny_medium.ogv',
+	)
+	assertCommonsEmbed(
+		getVideoEmbedUrl('https://commons.wikimedia.org/wiki/File:Big_Buck_Bunny_medium.ogv?embedplayer=yes'),
+		'Big_Buck_Bunny_medium.ogv',
+	)
+	assertCommonsEmbed(
+		getVideoEmbedUrl('https://commons.wikimedia.org/w/index.php?title=File:Big_Buck_Bunny_medium.ogv'),
+		'Big_Buck_Bunny_medium.ogv',
+	)
+	assertCommonsEmbed(
+		getVideoEmbedUrl('https://commons.wikimedia.org/wiki/File:My%20Video.webm'),
+		'My_Video.webm',
+	)
+})
+
 test('non-video urls are not embedded', () => {
 	assert.equal(getVideoEmbedUrl('https://example.com/watch?v=abc'), '')
 	assert.equal(getVideoEmbedUrl('https://www.youtube.com/watch?v='), '')
 	assert.equal(getVideoEmbedUrl('not-a-url'), '')
+	assert.equal(getVideoEmbedUrl('https://commons.wikimedia.org/wiki/File:Example.jpg'), '')
+	assert.equal(getVideoEmbedUrl('https://upload.wikimedia.org/wikipedia/commons/8/8f/Big_Buck_Bunny_medium.ogv'), '')
 })
