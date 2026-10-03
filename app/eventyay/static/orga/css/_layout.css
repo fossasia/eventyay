@@ -1116,6 +1116,27 @@ table .color-square {
   margin-top: 3px;
 }
 
+.track-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  white-space: nowrap;
+}
+
+.track-badge::before {
+  content: "";
+  display: inline-block;
+  width: 0.65em;
+  height: 0.65em;
+  border-radius: 50%;
+  background-color: var(--color-border);
+  flex-shrink: 0;
+}
+
+.track-badge--anon {
+  opacity: 0.6;
+}
+
 .phase-option-row .row,
 .score-row .row {
   margin-bottom: 8px;
@@ -1480,6 +1501,22 @@ table .color-square {
       border-top: none;
     }
   }
+}
+
+.review-table .col-score-category {
+  min-width: 100px;
+}
+
+.review-table .review-score-select {
+  height: auto;
+  min-height: 0;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.review-table thead .col-score-category {
+  text-align: right;
 }
 
 #submitBar {
@@ -3160,36 +3197,6 @@ h2 .user-name-display img {
     padding: 0.75rem;
   }
 
-  #page-content .table-flip tbody tr:has(td:first-child .color-square),
-  #page-content .table-flip tbody tr:has(td:first-child .fa-user-secret) {
-    position: relative;
-  }
-
-  #page-content .table-flip tbody tr:has(td:first-child .color-square) td:first-child,
-  #page-content .table-flip tbody tr:has(td:first-child .fa-user-secret) td:first-child {
-    position: absolute;
-    top: 0.65rem;
-    right: 0.75rem;
-    width: auto;
-    display: block;
-    padding: 0;
-    border-bottom: none;
-  }
-
-  #page-content .table-flip tbody tr:has(td:first-child .color-square) td:first-child::before,
-  #page-content .table-flip tbody tr:has(td:first-child .fa-user-secret) td:first-child::before {
-    content: none;
-  }
-
-  #page-content .table-flip tbody tr:has(td:first-child .color-square) td:nth-child(2),
-  #page-content .table-flip tbody tr:has(td:first-child .fa-user-secret) td:nth-child(2) {
-    padding-right: 2.5rem;
-  }
-  
-  #page-content .table-flip tbody tr:has(td:first-child .color-square) td:first-child:has(a),
-  #page-content .table-flip tbody tr:has(td:first-child .fa-user-secret) td:first-child:has(a) {
-    padding-right: 2.5rem;
-  }
 
   #page-content .table-flip tbody td.numeric {
     justify-content: space-between;

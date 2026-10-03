@@ -36,6 +36,8 @@ class SubmissionSpeaker:
     answers: tuple[Answer, ...]
     social_links: tuple[object, ...]
     other_submissions: tuple[Submission, ...]
+    # The speaker's invitation to this proposal, filled in by the Speakers tab only.
+    invitation: object = None
 
 
 def _with_viewer_url(other: Submission, *, for_reviewers: bool) -> Submission:

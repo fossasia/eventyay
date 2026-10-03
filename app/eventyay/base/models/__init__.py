@@ -69,6 +69,7 @@ from .organizer import (
 )
 from .organizer_follower import OrganizerFollower
 from .poll import Poll, PollOption, PollVote
+from .privacy import ConsentCategory, ConsentProvider, ThirdPartyService
 from .product import (
     Product,
     ProductAddOn,
@@ -102,6 +103,11 @@ from .seating import Seat, SeatCategoryMapping, SeatingPlan
 from .settings import GlobalSettings
 from .slot import TalkSlot
 from .stream_schedule import StreamSchedule
+from .speaker_invitation import (
+    SpeakerInvitation,
+    SpeakerInvitationMailStates,
+    SpeakerInvitationStates,
+)
 from .submission import Submission, SubmissionFavourite, SubmissionStates
 from .systemlog import SystemLog
 from .tag import Tag
@@ -117,6 +123,9 @@ __all__ = [
     'AbstractPosition',
     'ActivityLog',
     'Announcement',
+    'ConsentCategory',
+    'ConsentProvider',
+    'ThirdPartyService',
     'Answer',
     'AnswerOption',
     'AuditLog',
@@ -214,6 +223,9 @@ __all__ = [
     'Seat',
     'SeatCategoryMapping',
     'SeatingPlan',
+    'SpeakerInvitation',
+    'SpeakerInvitationMailStates',
+    'SpeakerInvitationStates',
     'SpeakerProfile',
     'SpeakerSocialLink',
     'SubEvent',
