@@ -183,6 +183,7 @@ def serialize_event_for_response(request):
 class EventPublishTalksView(APIView):
     permission_classes = (EventPermission,)
     permission = 'can_change_event_settings'
+    endpoint = 'events'
 
     @extend_schema(summary='Publish Talks')
     def post(self, request, organizer, event):
@@ -217,6 +218,7 @@ class EventPublishTalksView(APIView):
 class EventPublishTicketsView(APIView):
     permission_classes = (EventPermission,)
     permission = 'can_change_event_settings'
+    endpoint = 'events'
 
     @extend_schema(summary='Publish Tickets')
     def post(self, request, organizer, event):
@@ -267,6 +269,7 @@ class EventPublishTicketsView(APIView):
 class EventEnableManualPaymentView(APIView):
     permission_classes = (EventPermission,)
     permission = 'can_change_event_settings'
+    endpoint = 'events'
 
     @extend_schema(summary='Enable Manual Payment')
     def post(self, request, organizer, event):
@@ -459,6 +462,7 @@ class TaxRuleViewSet(ConditionalListView, viewsets.ModelViewSet):
 class EventSettingsView(views.APIView):
     permission = 'can_change_event_settings'
     permission_classes = (EventPermission,)
+    endpoint = 'events'
 
     def get(self, request, *args, **kwargs):
         s = EventSettingsSerializer(

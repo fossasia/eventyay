@@ -11,8 +11,3 @@ export default {
 	components: { SpeakersList },
 }
 </script>
-
-<style lang="stylus">
-.c-featured-speakers
-	min-height: 0
-</style>

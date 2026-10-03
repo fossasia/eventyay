@@ -1106,7 +1106,7 @@ the eventyay team"""
         else:
             thumbnail_field_name = get_thumbnail_field_name(self.avatar, thumbnail)
             stored = getattr(self, thumbnail_field_name, None)
-            if stored and stored.name:
+            if stored and stored.name and Path(stored.name).suffix.lower() == '.webp':
                 image = stored
             elif generate_missing:
                 image = get_thumbnail(self.avatar, thumbnail)

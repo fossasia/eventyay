@@ -370,10 +370,9 @@ def test_orga_can_readd_speaker(orga_client, submission):
 @pytest.mark.django_db
 def test_orga_can_remove_speaker(orga_client, submission):
     assert submission.speakers.count() == 1
-    response = orga_client.get(
-        submission.orga_urls.delete_speaker
-        + "?id="
-        + str(submission.speakers.first().pk),
+    response = orga_client.post(
+        submission.orga_urls.delete_speaker,
+        data={"id": submission.speakers.first().pk},
         follow=True,
     )
     submission.refresh_from_db()
@@ -384,14 +383,26 @@ def test_orga_can_remove_speaker(orga_client, submission):
 @pytest.mark.django_db
 def test_orga_can_remove_wrong_speaker(orga_client, submission, other_speaker):
     assert submission.speakers.count() == 1
-    response = orga_client.get(
-        submission.orga_urls.delete_speaker + "?id=" + str(other_speaker.pk),
+    response = orga_client.post(
+        submission.orga_urls.delete_speaker,
+        data={"id": other_speaker.pk},
         follow=True,
     )
     submission.refresh_from_db()
     assert response.status_code == 200
     assert submission.speakers.count() == 1
     assert "not part of this proposal" in response.text
+
+
+@pytest.mark.django_db
+def test_orga_remove_speaker_rejects_get(orga_client, submission):
+    speaker_pk = submission.speakers.first().pk
+    response = orga_client.get(
+        submission.orga_urls.delete_speaker + "?id=" + str(speaker_pk)
+    )
+    submission.refresh_from_db()
+    assert response.status_code == 405
+    assert submission.speakers.count() == 1
 
 
 @pytest.mark.django_db
@@ -1175,3 +1186,42 @@ def test_orga_cannot_post_empty_submission_comment(orga_client, submission):
     with scope(event=submission.event):
         submission.refresh_from_db()
         assert submission.comments.count() == 0
+
+
+@pytest.mark.django_db
+def test_submission_list_shows_track_name(orga_client, submission, track):
+    """The Track column displays the track name for non-anonymised submissions."""
+    with scope(event=submission.event):
+        submission.track = track
+        submission.save()
+
+    response = orga_client.get(submission.event.orga_urls.submissions, follow=True)
+    assert response.status_code == 200
+    assert track.name in response.text
+
+
+@pytest.mark.django_db
+def test_submission_list_hides_track_name_for_anonymised(orga_client, submission, track):
+    """The Track column must NOT expose the real track name for anonymised submissions.
+
+    Only the muted dot badge should be rendered (the name is in a tooltip,
+    not as visible column text), matching the privacy requirement from issue #6044.
+    """
+    with scope(event=submission.event):
+        submission.track = track
+        submission.anonymised_data = '{"_anonymised": true, "title": "", "abstract": "", "description": "", "notes": ""}'
+        submission.save()
+    assert submission.is_anonymised
+
+    response = orga_client.get(submission.event.orga_urls.submissions, follow=True)
+    assert response.status_code == 200
+    content = response.text
+    # The muted badge (dot-only) should be present, keyed by track PK
+    assert f'data-track-id="{track.pk}"' in content
+    assert "track-badge--anon" in content
+    # The track name must NOT appear as visible column text
+    # (it may appear in the title attribute of the span, but not as inner text)
+    # We check that it is absent from the visible cell content by verifying
+    # the span has no inner text with the track name.
+    assert f">{track.name}<" not in content
+

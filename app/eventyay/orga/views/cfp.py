@@ -254,6 +254,8 @@ class CfPForms(EventPermissionRequired, TemplateView):
         speaker_counts = SpeakerProfile.objects.filter(event=event).aggregate(
             name=Count('id', filter=~Q(user__fullname='') & Q(user__fullname__isnull=False)),
             biography=Count('id', filter=~Q(biography='') & Q(biography__isnull=False)),
+            job_title=Count('id', filter=~Q(job_title='') & Q(job_title__isnull=False)),
+            organization=Count('id', filter=~Q(organization='') & Q(organization__isnull=False)),
             avatar=Count('id', filter=~Q(user__avatar='') & Q(user__avatar__isnull=False)),
             avatar_source=Count('id', filter=~Q(user__avatar_source='') & Q(user__avatar_source__isnull=False)),
             avatar_license=Count('id', filter=~Q(user__avatar_license='') & Q(user__avatar_license__isnull=False)),
@@ -289,6 +291,8 @@ class CfPForms(EventPermissionRequired, TemplateView):
             'slides': str(_('Slides')),
             'duration': str(_('Duration')),
             'biography': str(_('Biography')),
+            'job_title': str(_('What is your official job title?')),
+            'organization': str(_('What organization or company do you represent?')),
             'availabilities': str(_('Availability')),
             'additional_speaker': str(_('Additional Speaker')),
             'fullname': str(_('Full name')),
@@ -644,31 +648,20 @@ class QuestionView(OrderActionMixin, OrgaCRUDView):
 
 @method_decorator(ensure_csrf_cookie, name='dispatch')
 class CfPQuestionToggle(PermissionRequired, View):
-    """Toggle question field states via AJAX POST or legacy GET."""
+    """Toggle question field states via POST (JSON AJAX or form)."""
 
     permission_required = 'base.update_talkquestion'
 
     def get_object(self) -> TalkQuestion:
         return get_object_or_404(TalkQuestion.all_objects, event=self.request.event, pk=self.kwargs.get('pk'))
 
-    def dispatch(self, request, *args, **kwargs):
-        # Check permissions first
-        if not self.has_permission():
-            return self.handle_no_permission()
-
+    def post(self, request, *args, **kwargs):
         question = self.get_object()
-
-        # Legacy GET: toggle active
-        if request.method == http.HTTPMethod.GET:
-            question.active = not question.active
-            question.save(update_fields=['active'])
-            return redirect(question.urls.base)
-
-        # AJAX POST: toggle specific field
-        if request.method == http.HTTPMethod.POST:
+        if 'application/json' in (request.content_type or ''):
             return self._handle_post(request, question)
-
-        return JsonResponse({'error': 'Method not allowed'}, status=405)
+        question.active = not question.active
+        question.save(update_fields=['active'])
+        return redirect(question.urls.base)
 
     @transaction.atomic
     def _handle_post(self, request, question):
@@ -842,10 +835,9 @@ class SubmissionTypeDefault(PermissionRequired, View):
     def get_object(self):
         return get_object_or_404(self.request.event.submission_types, pk=self.kwargs.get('pk'))
 
-    def dispatch(self, request, *args, **kwargs):
-        super().dispatch(request, *args, **kwargs)
+    def post(self, request, *args, **kwargs):
         submission_type = self.get_object()
-        cfp = self.request.event.cfp
+        cfp = request.event.cfp
 
         if cfp.default_type == submission_type:
             # Already default - remove it
@@ -856,10 +848,10 @@ class SubmissionTypeDefault(PermissionRequired, View):
             # Set as new default
             cfp.default_type = submission_type
             cfp.save(update_fields=['default_type'])
-            submission_type.log_action('eventyay.submission_type.make_default', person=self.request.user, orga=True)
+            submission_type.log_action('eventyay.submission_type.make_default', person=request.user, orga=True)
             messages.success(request, _('The Session Type has been made default.'))
 
-        return redirect(self.request.event.cfp.urls.types)
+        return redirect(request.event.cfp.urls.types)
 
 
 class TrackView(OrderActionMixin, OrgaCRUDView):

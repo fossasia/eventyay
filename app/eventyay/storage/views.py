@@ -143,12 +143,14 @@ class UploadView(UploadMixin, View):
         ".mp4",
         ".webm",
         ".mp3",
+        ".webp",
     )
     pillow_formats = (
         ".png",
         ".jpg",
         ".jpeg",
         ".gif",
+        ".webp",
     )
     max_size = settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_OTHER]
 
@@ -228,11 +230,16 @@ class UploadView(UploadMixin, View):
             settings.IMAGE_DEFAULT_MAX_WIDTH,
             settings.IMAGE_DEFAULT_MAX_HEIGHT,
         )
+        # WebP maximum dimension is 16383 pixels. Clamp output dimensions to prevent encoding failures.
+        max_dimensions = (
+            min(max_dimensions[0], 16383),
+            min(max_dimensions[1], 16383),
+        )
         optimized, optimized_ext = encode_optimized(
             image,
             original_ext,
             max_dimensions=max_dimensions,
-            keep_format=True,
+            keep_format=False,
         )
         # Recompressing a lossless image can make it bigger, but an image that had to be
         # scaled down is always stored recompressed, and so is JPEG, whose EXIF metadata

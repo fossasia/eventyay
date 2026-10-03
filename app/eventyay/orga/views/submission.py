@@ -245,13 +245,12 @@ class SubmissionStateChange(SubmissionViewMixin, FormView):
 class SubmissionSpeakersDelete(SubmissionViewMixin, View):
     permission_required = 'base.update_submission'
 
-    def dispatch(self, request, *args, **kwargs):
-        super().dispatch(request, *args, **kwargs)
+    def post(self, request, *args, **kwargs):
         submission = self.object
-        speaker = get_object_or_404(User, pk=request.GET.get('id'))
+        speaker = get_object_or_404(User, pk=request.POST.get('id') or request.GET.get('id'))
 
         if submission in speaker.submissions.all():
-            submission.remove_speaker(speaker, user=self.request.user)
+            submission.remove_speaker(speaker, user=request.user)
             messages.success(request, _('The speaker has been removed from the proposal.'))
         else:
             messages.warning(request, _('The speaker was not part of this proposal.'))
@@ -468,7 +467,14 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
     @context
     @cached_property
     def session_video_urls_text(self):
+        if self.request.method == 'POST' and 'session_video_urls' in self.request.POST:
+            return self.request.POST['session_video_urls']
         return '\n'.join(self.session_video_urls)
+
+    @context
+    @property
+    def session_video_urls_error(self):
+        return getattr(self, '_session_video_urls_error', None)
 
     def _save_session_video_urls(self, submission):
         if not event_session_videos_enabled(self.request.event):
@@ -480,7 +486,7 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
         try:
             set_submission_video_urls(submission, urls)
         except ValueError as exc:
-            messages.error(self.request, str(exc))
+            self._session_video_urls_error = str(exc)
             return False
         return True
 
@@ -550,31 +556,42 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
         self._questions_form.submission = form.instance
         if not self._questions_form.is_valid():
             messages.error(self.request, phrases.base.error_saving_changes)
-            return self.get(self.request, *self.args, **self.kwargs)
+            return self.form_invalid(form)
         if created and not self.new_speaker_form.is_valid():
             messages.error(self.request, phrases.base.error_saving_changes)
             return self.form_invalid(form)
 
         self.object = form.instance
         form.instance.event = self.request.event
-        form.save()
-        self._questions_form.save()
-        if not self._save_session_video_urls(form.instance):
-            return self.get(self.request, *self.args, **self.kwargs)
 
-        if created:
-            if email := self.new_speaker_form.cleaned_data['email']:
-                form.instance.add_speaker(
-                    email=email,
-                    name=self.new_speaker_form.cleaned_data['name'],
-                    locale=self.new_speaker_form.cleaned_data.get('locale'),
-                    user=self.request.user,
-                    biography=self.new_speaker_form.cleaned_data.get('biography'),
-                )
-        else:
-            formset_result = self.save_formset(form.instance)
-            if not formset_result:
-                return self.get(self.request, *self.args, **self.kwargs)
+        class RollbackTransaction(Exception):
+            pass
+
+        try:
+            with transaction.atomic():
+                form.save()
+                self._questions_form.save()
+                if not self._save_session_video_urls(form.instance):
+                    raise RollbackTransaction()
+
+                if created:
+                    if email := self.new_speaker_form.cleaned_data['email']:
+                        form.instance.add_speaker(
+                            email=email,
+                            name=self.new_speaker_form.cleaned_data['name'],
+                            locale=self.new_speaker_form.cleaned_data.get('locale'),
+                            user=self.request.user,
+                            biography=self.new_speaker_form.cleaned_data.get('biography'),
+                        )
+                else:
+                    formset_result = self.save_formset(form.instance)
+                    if not formset_result:
+                        raise RollbackTransaction()
+        except RollbackTransaction:
+            messages.error(self.request, phrases.base.error_saving_changes)
+            return self.form_invalid(form)
+
+        if not created:
             messages.success(self.request, _('The proposal has been updated!'))
         if form.has_changed():
             action = 'eventyay.submission.' + ('create' if created else 'update')
@@ -719,6 +736,11 @@ class SubmissionList(EventPermissionRequired, BaseSubmissionList):
                 urls = []
             submission.session_video_urls = urls
             submission.session_video_urls_json = json.dumps(urls)
+        if self.request.event.get_feature_flag('use_tracks'):
+            ctx['track_colors'] = {
+                track.pk: track.color
+                for track in self.request.event.tracks.all()
+            }
         return ctx
 
 

@@ -854,7 +854,8 @@ input.password_strength {
 
 
 .form-check-inline {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   margin-right: 1rem;
 }
 

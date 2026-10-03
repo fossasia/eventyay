@@ -75,6 +75,10 @@ def get_rows_from_file(file):
             break
     if dialect is None:
         raise last_e or csv.Error('No dialect detected')
+
+    # Sniffing an unquoted header yields doublequote=False; keep escaped quotes intact.
+    dialect.doublequote = True
+
     reader = csv.reader(io.StringIO(data), dialect)
     rows = []
     for row in reader:
