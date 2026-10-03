@@ -63,7 +63,8 @@ export function getVideoEmbedUrl (url) {
 	}
 	if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return ''
 
-	const host = parsed.hostname.replace(/^www\./, '').toLowerCase()
+	const hostname = parsed.hostname.toLowerCase()
+	const host = hostname.replace(/^www\./, '')
 	const parts = parsed.pathname.split('/').filter(Boolean)
 
 	if (host === 'youtu.be') {
@@ -88,7 +89,7 @@ export function getVideoEmbedUrl (url) {
 		}
 		return id ? vimeoEmbedUrl(id, parsed) : ''
 	}
-	if (host === 'commons.wikimedia.org' && parts[0]?.toLowerCase() === 'wiki') {
+	if ((hostname === 'commons.wikimedia.org' || hostname === 'www.commons.wikimedia.org') && parts[0]?.toLowerCase() === 'wiki') {
 		let filename
 		try {
 			filename = decodeURIComponent(parts.slice(1).join('/'))
