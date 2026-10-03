@@ -261,6 +261,10 @@ export default {
 			const localizedRoom = getLocalizedString(session?.room?.name)
 			return (localizedRoom || '').toString().toLowerCase()
 		},
+		trackSortKey (session) {
+			const localizedTrack = getLocalizedString(session?.track?.name)
+			return (localizedTrack || '').toString().toLowerCase()
+		},
 		sessionComparator (a, b) {
 			if (!a?.id && b?.id) return 1
 			if (a?.id && !b?.id) return -1
@@ -287,6 +291,10 @@ export default {
 				}
 				const dateCmp = a.start.diff(b.start)
 				if (dateCmp !== 0) return dateCmp
+				const roomCmp = this.roomSortKey(a).localeCompare(this.roomSortKey(b))
+				if (roomCmp !== 0) return roomCmp
+				const trackCmp = this.trackSortKey(a).localeCompare(this.trackSortKey(b))
+				if (trackCmp !== 0) return trackCmp
 			}
 
 			const direction = this.sortBy === 'title_desc' ? -1 : 1
