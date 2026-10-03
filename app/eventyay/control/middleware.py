@@ -9,7 +9,7 @@ from django.http import (
     HttpResponse,
     HttpResponseRedirect,
 )
-from django.shortcuts import get_object_or_404, redirect, resolve_url
+from django.shortcuts import get_object_or_404, redirect, render, resolve_url
 from django.template.response import TemplateResponse
 from django.urls import get_script_prefix, resolve, reverse
 from django.utils.encoding import force_str
@@ -170,7 +170,6 @@ class PermissionMiddleware:
 
             if not has_permission:
                 if request.user.is_staff and not request.user.has_active_staff_session(request.session.session_key):
-                    from django.shortcuts import render
                     return render(request, 'admin_mode_required.html', status=403)
                 raise Http404(_('The selected event was not found or you have no permission to administrate it.'))
             logger.info(
@@ -195,7 +194,6 @@ class PermissionMiddleware:
             request.organizer = organizer
             if not organizer or not request.user.has_organizer_permission(organizer, request=request):
                 if organizer and request.user.is_staff and not request.user.has_active_staff_session(request.session.session_key):
-                    from django.shortcuts import render
                     return render(request, 'admin_mode_required.html', status=403)
                 raise Http404(_('The selected organizer was not found or you have no permission to administrate it.'))
             if request.user.has_active_staff_session(request.session.session_key):
