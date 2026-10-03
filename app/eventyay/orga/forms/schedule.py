@@ -8,6 +8,12 @@ from i18nfield.forms import I18nModelForm
 from eventyay.common.forms.mixins import I18nHelpText
 from eventyay.common.forms.renderers import InlineFormRenderer
 from eventyay.common.forms.widgets import EnhancedSelectMultiple
+from eventyay.common.session_video import (
+    exclude_session_video_from_cfp_questions,
+    get_submission_video_answer,
+    prefetch_submission_video_urls,
+    session_videos_enabled,
+)
 from eventyay.common.text.phrases import phrases
 from eventyay.base.models import MailTemplateRoles
 from eventyay.orga.forms.export import ExportForm
@@ -152,11 +158,20 @@ class ScheduleExportForm(ExportForm):
             label=_('Resources'),
             help_text=_('Resources provided by the speaker, either as links or as uploaded files'),
         )
+        self.fields['session_videos'] = forms.BooleanField(
+            required=False,
+            initial=True,
+            label=_('Session videos'),
+            help_text=_('YouTube or Vimeo links stored on the session'),
+        )
 
     @cached_property
     def questions(self):
-        return self.event.talkquestions.filter(
-            target='submission',
+        return exclude_session_video_from_cfp_questions(
+            self.event.talkquestions.filter(
+                target='submission',
+                active=True,
+            )
         ).prefetch_related('answers', 'answers__submission', 'options', 'answers__options')
 
     @cached_property
@@ -178,6 +193,7 @@ class ScheduleExportForm(ExportForm):
             'median_score',
             'mean_score',
             'resources',
+            'session_videos',
         ]
 
     def get_queryset(self):
@@ -188,13 +204,15 @@ class ScheduleExportForm(ExportForm):
         queryset = queryset.prefetch_related(
             Prefetch('slots', queryset=TalkSlot.objects.select_related('room', 'schedule'))
         )
-        
-        return (
+        queryset = (
             queryset.prefetch_related('tags', 'speakers')
             .select_related('submission_type', 'track', 'event')
             .prefetch_related('resources')
             .order_by('code')
         )
+        if self.cleaned_data.get('session_videos'):
+            queryset = prefetch_submission_video_urls(queryset, self.event)
+        return queryset
 
     def get_answer(self, question, obj):
         return question.answers.filter(submission=obj).first()
@@ -273,3 +291,13 @@ class ScheduleExportForm(ExportForm):
 
     def _get_resources_value(self, obj):
         return [resource.url for resource in obj.active_resources if resource.url]
+
+    def _get_session_videos_value(self, obj):
+        if not session_videos_enabled(obj.event):
+            return ''
+        answers = getattr(obj, '_session_video_answers', None)
+        if answers is not None:
+            answer = answers[0] if answers else None
+        else:
+            answer = get_submission_video_answer(obj)
+        return (answer.answer or '').strip() if answer else ''
