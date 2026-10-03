@@ -770,6 +770,7 @@ def test_orga_can_set_multiple_submission_videos_from_list(orga_client, event, s
     urls = [
         "https://youtu.be/dQw4w9WgXcQ?t=90",
         "https://vimeo.com/123456789#t=1m30s",
+        "https://commons.wikimedia.org/wiki/File:Big_Buck_Bunny_medium.ogv",
     ]
     response = orga_client.post(
         submission.orga_urls.video_link,
