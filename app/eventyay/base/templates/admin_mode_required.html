@@ -1,19 +1,24 @@
-{% extends "pretixcontrol/admin/base.html" %}
+{% extends "error.html" %}
 {% load i18n %}
 {% load static %}
 {% block title %}{% trans "Admin mode required" %}{% endblock %}
 {% block content %}
-    <h1>{% trans "Admin mode required" %}</h1>
-    <p>
-        {% trans "You do not have access to this event or organizer team." %}<br>
-        {% trans "However, as a platform admin, you can access this page by enabling Admin mode." %}
-    </p>
-    <form action="{% url 'control:user.sudo' %}?next={{ request.path|add:'?'|add:request.GET.urlencode|urlencode }}" method="post" class="form-horizontal">
-        {% csrf_token %}
-        <div class="form-group submit-group">
-            <button type="submit" class="btn btn-primary btn-save">
-                {% trans "Start session" %}
-            </button>
-        </div>
-    </form>
+    <i class="fa fa-lock fa-fw big-icon"></i>
+    <div class="error-details">
+        <h1>{% trans "Admin mode required" %}</h1>
+        <p>{% trans "If you are not an organiser for this event, please take a step back." %}</p>
+        <p>{% trans "If you are a super admin, please sign in with super admin." %}</p>
+        <form action="{% url 'control:user.sudo' %}?next={{ request.path|add:'?'|add:request.GET.urlencode|urlencode }}" method="post">
+            <p>
+                {% csrf_token %}
+                <button type="submit" class="btn btn-default" id="button-sudo">
+                    <i class="fa fa-id-card"></i> {% trans "Sign in with super admin" %}
+                </button>
+            </p>
+        </form>
+        <p class="links">
+            <a id='goback' href='#'>{% trans "Take a step back" %}</a>
+        </p>
+        <img src="{% static "pretixbase/img/eventyay-logo.svg" %}" class="logo"/>
+    </div>
 {% endblock %}
