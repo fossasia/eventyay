@@ -99,8 +99,8 @@
 			@changeDay="setCurrentDay($event)",
 			@fav="fav($event)",
 			@unfav="unfav($event)")
-		.no-results(v-if="sessions && !sessions.length && (searchQuery || (isFeaturedPage && featuredRemote))")
-			.no-results-text No sessions match your search.
+		.no-results(v-if="sessions && !sessions.length", role="status")
+			.no-results-text {{ $t('No sessions match the current filters.') }}
 		list-pagination(
 			v-if="isFeaturedPage && featuredTotalPages > 1",
 			compact,
