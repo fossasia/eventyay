@@ -113,3 +113,4 @@ const initUserSearch = () => {
         })
 }
 initUserSearch()
+document.addEventListener("eventyay:speakers-updated", initUserSearch)
