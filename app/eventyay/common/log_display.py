@@ -186,6 +186,7 @@ LOG_NAMES = {
     'eventyay.submission.review.create': _('A review was added.'),
     'eventyay.submission.speakers.add': _('A speaker was added to the proposal.'),
     'eventyay.submission.speakers.invite': _('A speaker was invited to the proposal.'),
+    'eventyay.submission.speakers.invite.revoke': _('A speaker invitation was revoked.'),
     'eventyay.submission.speakers.remove': _('A speaker was removed from the proposal.'),
     'eventyay.submission.unconfirm': _('The proposal was unconfirmed.'),
     'eventyay.submission.update': _('The proposal was modified.'),
