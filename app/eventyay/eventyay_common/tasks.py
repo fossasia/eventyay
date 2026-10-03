@@ -37,6 +37,15 @@ from .schemas.billing import CollectBillingResponse
 
 logger = logging.getLogger(__name__)
 
+MONTHLY_INVOICE_SUBJECT = '{month} invoice for {event}'
+MONTHLY_INVOICE_TEXT = (
+    'Dear {name},\n\n'
+    'Thank you for using our services! '
+    'Please find attached for a summary of your invoice for {month}.\n\n'
+    'Best regards,\n'
+    'EventYay Team'
+)
+
 
 @shared_task(bind=True, max_retries=5, default_retry_delay=60)  # Retries up to 5 times with a 60-second delay
 def send_team_webhook(self, user_id, team):
@@ -458,13 +467,10 @@ def billing_invoice_notification(self):
             continue
         month_name = invoice.monthly_bill.strftime('%B')
         # Send email to organizer with invoice pdf
-        mail_subject = f'{month_name} invoice for {invoice.event.name}'
-        mail_content = (
-            f'Dear {organizer_billing.primary_contact_name},\n\n'
-            f'Thank you for using our services! '
-            f'Please find attached for a summary of your invoice for {month_name}.\n\n'
-            f'Best regards,\n'
-            f'EventYay Team'
+        mail_subject = MONTHLY_INVOICE_SUBJECT.format(month=month_name, event=invoice.event.name)
+        mail_content = MONTHLY_INVOICE_TEXT.format(
+            name=organizer_billing.primary_contact_name,
+            month=month_name,
         )
 
         billing_invoice_send_email(mail_subject, mail_content, invoice, organizer_billing)
