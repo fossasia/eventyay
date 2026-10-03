@@ -4,6 +4,7 @@ from contextlib import suppress
 from urllib.parse import urlencode
 
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Count, Max, OuterRef, Q, Subquery
 from django.http import JsonResponse
@@ -593,7 +594,9 @@ class ReviewSubmission(ReviewViewMixin, PermissionRequired, CreateOrUpdateView):
         if self.tags_form and not self.tags_form.is_valid():
             messages.error(self.request, phrases.base.error_saving_changes)
             return super().form_invalid(form)
-        action = '.create' if not form.instance else '.update'
+        was_abstention = self.object and self.object.is_abstention
+        action = 'eventyay.review.completed' if (not self.object or was_abstention) else 'eventyay.review.updated'
+        form.instance.is_abstention = False
         form.save()
         form.instance.log_action(action, person=self.request.user, orga=True)
         self.qform.review = form.instance
@@ -603,9 +606,24 @@ class ReviewSubmission(ReviewViewMixin, PermissionRequired, CreateOrUpdateView):
         return super().form_valid(form)
 
     def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
         action = self.request.POST.get('review_submit') or 'save'
         if action == 'abstain':
-            Review.objects.get_or_create(user=self.request.user, submission=self.submission)
+            if self.object:
+                if not self.request.user.has_perm('base.update_review', self.object):
+                    raise PermissionDenied()
+            else:
+                if not self.request.user.has_perm('base.review_submission', self.submission):
+                    raise PermissionDenied()
+
+            review, created = Review.objects.update_or_create(
+                user=self.request.user,
+                submission=self.submission,
+                defaults={'is_abstention': True, 'score': None, 'text': None}
+            )
+            if not created:
+                review.scores.clear()
+                review.save()
             return redirect(self.get_success_url())
         if action == 'skip_for_now':
             key = f'{self.request.event.slug}_ignored_reviews'

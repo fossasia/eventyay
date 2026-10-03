@@ -50,8 +50,16 @@ The following values for ``action_types`` are valid with eventyay core:
     * ``eventyay.subevent.added``
     * ``eventyay.subevent.changed``
     * ``eventyay.subevent.deleted``
+    * ``eventyay.submission.accepted``
+    * ``eventyay.submission.rejected``
+    * ``eventyay.review.completed``
+    * ``eventyay.schedule.released``
 
 Installed plugins might register more valid values.
+
+Submission webhooks include the proposal ``submission`` code, and schedule-release webhooks include the released
+schedule ``schedule`` version. Review webhooks include the reviewed proposal's ``submission`` code, but never include
+the review content, scores, or reviewer information.
 
 
 Endpoints

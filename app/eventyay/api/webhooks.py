@@ -5,8 +5,9 @@ from collections import OrderedDict
 
 import requests
 from celery.exceptions import MaxRetriesExceededError
-from django.db.models import Exists, OuterRef, Q
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Exists, OuterRef, Q
 from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
@@ -20,6 +21,7 @@ from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, 
 from eventyay.base.services.tasks import ProfiledTask, TransactionAwareTask
 from eventyay.celery_app import app
 from eventyay.consts import SizeKey
+
 
 logger = logging.getLogger(__name__)
 _ALL_EVENTS = None
@@ -137,6 +139,107 @@ class ParametrizedEventWebhookEvent(WebhookEvent):
         }
 
 
+class ParametrizedSubmissionWebhookEvent(WebhookEvent):
+    def __init__(self, action_type, verbose_name):
+        self._action_type = action_type
+        self._verbose_name = verbose_name
+        super().__init__()
+
+    @property
+    def action_type(self):
+        return self._action_type
+
+    @property
+    def verbose_name(self):
+        return self._verbose_name
+
+    def build_payload(self, logentry: LogEntry):
+        if not logentry.event:
+            return None
+        with scope(event=logentry.event):
+            submission = logentry.content_object
+            if not submission:
+                return None
+
+            return {
+                'notification_id': logentry.pk,
+                'organizer': logentry.event.organizer.slug,
+                'event': logentry.event.slug,
+                'submission': submission.code,
+                'action': logentry.action_type,
+            }
+
+
+class ParametrizedReviewWebhookEvent(WebhookEvent):
+    def __init__(self, action_type, verbose_name):
+        self._action_type = action_type
+        self._verbose_name = verbose_name
+        super().__init__()
+
+    @property
+    def action_type(self):
+        return self._action_type
+
+    @property
+    def verbose_name(self):
+        return self._verbose_name
+
+    def build_payload(self, logentry: LogEntry):
+        if not logentry.event:
+            return None
+        with scope(event=logentry.event):
+            review = logentry.content_object
+            if not review:
+                return None
+
+            try:
+                submission = getattr(review, 'submission', None)
+                if not submission:
+                    return None
+                submission_code = submission.code
+            except (ObjectDoesNotExist, AttributeError):
+                return None
+
+            return {
+                'notification_id': logentry.pk,
+                'organizer': logentry.event.organizer.slug,
+                'event': logentry.event.slug,
+                'submission': submission_code,
+                'action': logentry.action_type,
+            }
+
+
+class ParametrizedScheduleWebhookEvent(WebhookEvent):
+    def __init__(self, action_type, verbose_name):
+        self._action_type = action_type
+        self._verbose_name = verbose_name
+        super().__init__()
+
+    @property
+    def action_type(self):
+        return self._action_type
+
+    @property
+    def verbose_name(self):
+        return self._verbose_name
+
+    def build_payload(self, logentry: LogEntry):
+        if not logentry.event:
+            return None
+        with scope(event=logentry.event):
+            schedule = logentry.content_object
+            if not schedule:
+                return None
+
+            return {
+                'notification_id': logentry.pk,
+                'organizer': logentry.event.organizer.slug,
+                'event': logentry.event.slug,
+                'schedule': schedule.version,
+                'action': logentry.action_type,
+            }
+
+
 class ParametrizedSubEventWebhookEvent(WebhookEvent):
     def __init__(self, action_type, verbose_name):
         self._action_type = action_type
@@ -245,6 +348,22 @@ def register_default_webhook_events(sender, **kwargs):
             'pretix.event.deleted',
             _('Event details changed'),
         ),
+        ParametrizedSubmissionWebhookEvent(
+            'eventyay.submission.accepted',
+            _('Proposal accepted'),
+        ),
+        ParametrizedSubmissionWebhookEvent(
+            'eventyay.submission.rejected',
+            _('Proposal rejected'),
+        ),
+        ParametrizedReviewWebhookEvent(
+            'eventyay.review.completed',
+            _('Review submitted'),
+        ),
+        ParametrizedScheduleWebhookEvent(
+            'eventyay.schedule.released',
+            _('Schedule released'),
+        ),
         ParametrizedSubEventWebhookEvent(
             'eventyay.subevent.added',
             pgettext_lazy('subevent', 'Event series date added'),
@@ -274,7 +393,11 @@ def notify_webhooks(logentry_ids: list):
         notification_type = logentry.webhook_type
 
         if not notification_type:
-            logger.debug('Skipping webhook notification for log entry %d: no matching webhook event type for %s', logentry.id, logentry.action_type)
+            logger.debug(
+                'Skipping webhook notification for log entry %d: no matching webhook event type for %s',
+                logentry.id,
+                logentry.action_type,
+            )
             continue  # Ignore, no webhooks for this event type
 
         if _org != logentry.organizer or _at != logentry.action_type or webhooks is None:
@@ -329,7 +452,16 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
                     success=200 <= resp.status_code <= 299,
                 )
                 success = 200 <= resp.status_code <= 299
-                log_event('plugins', 'webhook.outbound', OUTCOME_SUCCESS if success else OUTCOME_FAILURE, error_code=None if success else 'http_error', webhook_id=webhook.pk, status=resp.status_code, duration_ms=int((time.time() - t) * 1000), retry_count=self.request.retries)
+                log_event(
+                    'plugins',
+                    'webhook.outbound',
+                    OUTCOME_SUCCESS if success else OUTCOME_FAILURE,
+                    error_code=None if success else 'http_error',
+                    webhook_id=webhook.pk,
+                    status=resp.status_code,
+                    duration_ms=int((time.time() - t) * 1000),
+                    retry_count=self.request.retries,
+                )
                 if resp.status_code == 410:
                     webhook.enabled = False
                     webhook.save()
@@ -349,11 +481,26 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
                     payload=json.dumps(payload),
                     response_body=str(e)[: settings.MAX_SIZE_CONFIG[SizeKey.RESPONSE_SIZE_WEBHOOK]],
                 )
-                log_event('plugins', 'webhook.outbound', OUTCOME_FAILURE, error_code='request_error', webhook_id=webhook.pk, duration_ms=int((time.time() - t) * 1000), retry_count=self.request.retries)
+                log_event(
+                    'plugins',
+                    'webhook.outbound',
+                    OUTCOME_FAILURE,
+                    error_code='request_error',
+                    webhook_id=webhook.pk,
+                    duration_ms=int((time.time() - t) * 1000),
+                    retry_count=self.request.retries,
+                )
                 logger.exception('Outbound webhook %s request failed', webhook.pk)
                 raise self.retry(
                     countdown=2 ** (self.request.retries * 2)
                 )  # max is 2 ** (8*2) = 65536 seconds = ~18 hours
         except MaxRetriesExceededError:
-            log_event('plugins', 'webhook.outbound', OUTCOME_FAILURE, error_code='retries_exhausted', webhook_id=webhook.pk, retry_count=self.request.retries)
+            log_event(
+                'plugins',
+                'webhook.outbound',
+                OUTCOME_FAILURE,
+                error_code='retries_exhausted',
+                webhook_id=webhook.pk,
+                retry_count=self.request.retries,
+            )
             logger.error('Outbound webhook %s exhausted retries', webhook.pk)

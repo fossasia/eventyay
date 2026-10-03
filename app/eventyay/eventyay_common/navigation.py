@@ -404,14 +404,15 @@ def get_organizer_navigation(request: HttpRequest) -> List[MenuItem]:
                     #     }),
                     #     'active': url.url_name.startswith('organizer.propert'),
                     # },
-                    # {
-                    #     'label': _('Webhooks'),
-                    #     'url': reverse('control:organizer.webhooks', kwargs={
-                    #         'organizer': request.organizer.slug
-                    #     }),
-                    #     'active': 'organizer.webhook' in url.url_name,
-                    #     'icon': 'bolt',
-                    # },
+                    {
+                        'label': _('Webhooks'),
+                        'url': reverse(
+                            'control:organizer.webhooks',
+                            kwargs={'organizer': request.organizer.slug},
+                        ),
+                        'active': 'organizer.webhook' in url.url_name,
+                        'icon': 'bolt',
+                    },
                     {
                         'label': _('Billing settings'),
                         'url': reverse(

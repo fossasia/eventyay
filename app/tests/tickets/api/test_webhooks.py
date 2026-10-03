@@ -10,8 +10,8 @@ from eventyay.api.models import WebHook
 def webhook(organizer, event):
     wh = organizer.webhooks.create(enabled=True, target_url='https://google.com', all_events=False)
     wh.limit_events.add(event)
-    wh.listeners.create(action_type='pretix.event.order.placed')
-    wh.listeners.create(action_type='pretix.event.order.paid')
+    wh.listeners.create(action_type='eventyay.event.order.placed')
+    wh.listeners.create(action_type='eventyay.event.order.paid')
     return wh
 
 
@@ -21,7 +21,7 @@ TEST_WEBHOOK_RES = {
     'target_url': 'https://google.com',
     'all_events': False,
     'limit_events': ['dummy'],
-    'action_types': ['pretix.event.order.paid', 'pretix.event.order.placed'],
+    'action_types': ['eventyay.event.order.paid', 'eventyay.event.order.placed'],
 }
 
 
@@ -30,7 +30,7 @@ def test_hook_list(token_client, organizer, event, webhook):
     res = dict(TEST_WEBHOOK_RES)
     res['id'] = webhook.pk
 
-    resp = token_client.get('/api/v1/organizers/{}/webhooks/'.format(organizer.slug))
+    resp = token_client.get(f'/api/v1/organizers/{organizer.slug}/webhooks/')
     assert resp.status_code == 200
     assert [res] == resp.data['results']
 
@@ -39,7 +39,7 @@ def test_hook_list(token_client, organizer, event, webhook):
 def test_hook_detail(token_client, organizer, event, webhook):
     res = dict(TEST_WEBHOOK_RES)
     res['id'] = webhook.pk
-    resp = token_client.get('/api/v1/organizers/{}/webhooks/{}/'.format(organizer.slug, webhook.pk))
+    resp = token_client.get(f'/api/v1/organizers/{organizer.slug}/webhooks/{webhook.pk}/')
     assert resp.status_code == 200
     assert res == resp.data
 
@@ -49,14 +49,14 @@ TEST_WEBHOOK_CREATE_PAYLOAD = {
     'target_url': 'https://google.com',
     'all_events': False,
     'limit_events': ['dummy'],
-    'action_types': ['pretix.event.order.placed', 'pretix.event.order.paid'],
+    'action_types': ['eventyay.event.order.placed', 'eventyay.event.order.paid'],
 }
 
 
 @pytest.mark.django_db
 def test_hook_create(token_client, organizer, event):
     resp = token_client.post(
-        '/api/v1/organizers/{}/webhooks/'.format(organizer.slug),
+        f'/api/v1/organizers/{organizer.slug}/webhooks/',
         TEST_WEBHOOK_CREATE_PAYLOAD,
         format='json',
     )
@@ -66,8 +66,8 @@ def test_hook_create(token_client, organizer, event):
         assert cl.target_url == 'https://google.com'
         assert cl.limit_events.count() == 1
         assert set(cl.listeners.values_list('action_type', flat=True)) == {
-            'pretix.event.order.placed',
-            'pretix.event.order.paid',
+            'eventyay.event.order.placed',
+            'eventyay.event.order.paid',
         }
         assert not cl.all_events
 
@@ -76,7 +76,7 @@ def test_hook_create(token_client, organizer, event):
 def test_hook_create_either_all_or_limit(token_client, organizer, event):
     res = copy.copy(TEST_WEBHOOK_CREATE_PAYLOAD)
     res['all_events'] = True
-    resp = token_client.post('/api/v1/organizers/{}/webhooks/'.format(organizer.slug), res, format='json')
+    resp = token_client.post(f'/api/v1/organizers/{organizer.slug}/webhooks/', res, format='json')
     assert resp.status_code == 400
     assert resp.data == {'non_field_errors': ['You can set either limit_events or all_events.']}
 
@@ -85,7 +85,7 @@ def test_hook_create_either_all_or_limit(token_client, organizer, event):
 def test_hook_create_invalid_url(token_client, organizer, event):
     res = copy.copy(TEST_WEBHOOK_CREATE_PAYLOAD)
     res['target_url'] = 'foo.bar'
-    resp = token_client.post('/api/v1/organizers/{}/webhooks/'.format(organizer.slug), res, format='json')
+    resp = token_client.post(f'/api/v1/organizers/{organizer.slug}/webhooks/', res, format='json')
     assert resp.status_code == 400
     assert resp.data == {'target_url': ['Enter a valid URL.']}
 
@@ -94,7 +94,7 @@ def test_hook_create_invalid_url(token_client, organizer, event):
 def test_hook_create_invalid_event(token_client, organizer, event):
     res = copy.copy(TEST_WEBHOOK_CREATE_PAYLOAD)
     res['limit_events'] = ['foo']
-    resp = token_client.post('/api/v1/organizers/{}/webhooks/'.format(organizer.slug), res, format='json')
+    resp = token_client.post(f'/api/v1/organizers/{organizer.slug}/webhooks/', res, format='json')
     assert resp.status_code == 400
     assert resp.data == {'limit_events': ['Object with slug=foo does not exist.']}
 
@@ -103,15 +103,37 @@ def test_hook_create_invalid_event(token_client, organizer, event):
 def test_hook_create_invalid_action_types(token_client, organizer, event):
     res = copy.copy(TEST_WEBHOOK_CREATE_PAYLOAD)
     res['action_types'] = ['foo']
-    resp = token_client.post('/api/v1/organizers/{}/webhooks/'.format(organizer.slug), res, format='json')
+    resp = token_client.post(f'/api/v1/organizers/{organizer.slug}/webhooks/', res, format='json')
     assert resp.status_code == 400
     assert resp.data == {'action_types': ['Invalid action type "foo".']}
 
 
 @pytest.mark.django_db
+def test_hook_create_cfp_action_types(token_client, organizer, event):
+    payload = copy.copy(TEST_WEBHOOK_CREATE_PAYLOAD)
+    payload['action_types'] = [
+        'eventyay.submission.accepted',
+        'eventyay.submission.rejected',
+        'eventyay.review.completed',
+        'eventyay.schedule.released',
+    ]
+
+    response = token_client.post(
+        f'/api/v1/organizers/{organizer.slug}/webhooks/',
+        payload,
+        format='json',
+    )
+
+    assert response.status_code == 201
+    with scopes_disabled():
+        webhook = WebHook.objects.get(pk=response.data['id'])
+        assert set(webhook.listeners.values_list('action_type', flat=True)) == set(payload['action_types'])
+
+
+@pytest.mark.django_db
 def test_hook_patch_url(token_client, organizer, event, webhook):
     resp = token_client.patch(
-        '/api/v1/organizers/{}/webhooks/{}/'.format(organizer.slug, webhook.pk),
+        f'/api/v1/organizers/{organizer.slug}/webhooks/{webhook.pk}/',
         {'target_url': 'https://eventyay.com'},
         format='json',
     )
@@ -121,8 +143,8 @@ def test_hook_patch_url(token_client, organizer, event, webhook):
     with scopes_disabled():
         assert webhook.limit_events.count() == 1
         assert set(webhook.listeners.values_list('action_type', flat=True)) == {
-            'pretix.event.order.placed',
-            'pretix.event.order.paid',
+            'eventyay.event.order.placed',
+            'eventyay.event.order.paid',
         }
     assert webhook.enabled
 
@@ -130,8 +152,8 @@ def test_hook_patch_url(token_client, organizer, event, webhook):
 @pytest.mark.django_db
 def test_hook_patch_types(token_client, organizer, event, webhook):
     resp = token_client.patch(
-        '/api/v1/organizers/{}/webhooks/{}/'.format(organizer.slug, webhook.pk),
-        {'action_types': ['pretix.event.order.placed', 'pretix.event.order.canceled']},
+        f'/api/v1/organizers/{organizer.slug}/webhooks/{webhook.pk}/',
+        {'action_types': ['eventyay.event.order.placed', 'eventyay.event.order.canceled']},
         format='json',
     )
     assert resp.status_code == 200
@@ -139,8 +161,8 @@ def test_hook_patch_types(token_client, organizer, event, webhook):
     with scopes_disabled():
         assert webhook.limit_events.count() == 1
         assert set(webhook.listeners.values_list('action_type', flat=True)) == {
-            'pretix.event.order.placed',
-            'pretix.event.order.canceled',
+            'eventyay.event.order.placed',
+            'eventyay.event.order.canceled',
         }
     assert webhook.enabled
 
@@ -148,7 +170,7 @@ def test_hook_patch_types(token_client, organizer, event, webhook):
 @pytest.mark.django_db
 def test_hook_delete(token_client, organizer, event, webhook):
     resp = token_client.delete(
-        '/api/v1/organizers/{}/webhooks/{}/'.format(organizer.slug, webhook.pk),
+        f'/api/v1/organizers/{organizer.slug}/webhooks/{webhook.pk}/',
     )
     assert resp.status_code == 204
     webhook.refresh_from_db()

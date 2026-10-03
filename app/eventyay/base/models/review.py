@@ -128,6 +128,7 @@ class Review(PretalxModel):
     text = models.TextField(verbose_name=_('What do you think?'), null=True, blank=True)
     score = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_('Score'), null=True, blank=True)
     scores = models.ManyToManyField(to=ReviewScore, related_name='reviews')
+    is_abstention = models.BooleanField(default=False)
 
     objects = ScopedManager(event='submission__event', _manager_class=ReviewManager)
     all_objects = ScopedManager(event='submission__event', _manager_class=AllReviewManager)

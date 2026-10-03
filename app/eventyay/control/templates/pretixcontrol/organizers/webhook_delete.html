@@ -1,0 +1,19 @@
+{% extends "pretixcontrol/organizers/base.html" %}
+{% load i18n %}
+{% load bootstrap3 %}
+{% block inner %}
+  <h1>{% trans "Delete webhook:" %} {{ webhook.target_url }}</h1>
+  <form action="" method="post" class="form-horizontal">
+    {% csrf_token %}
+    <p>{% blocktrans %}Are you sure you want to delete this webhook?{% endblocktrans %}
+    </p>
+    <div class="form-group submit-group">
+      <a href="{% url "control:organizer.webhooks" organizer=request.organizer.slug %}" class="btn btn-default btn-cancel">
+        {% trans "Cancel" %}
+      </a>
+      <button type="submit" class="btn btn-delete btn-danger btn-save">
+        {% trans "Delete" %}
+      </button>
+    </div>
+  </form>
+{% endblock %}

@@ -149,6 +149,11 @@ urlpatterns = [
         name='organizer.webhook.logs',
     ),
     url(
+        r'^organizer/(?P<organizer>[^/]+)/webhook/(?P<webhook>[^/]+)/delete$',
+        organizer_views.web_hook_view.WebHookDeleteView.as_view(),
+        name='organizer.webhook.delete',
+    ),
+    url(
         r'^organizer/(?P<organizer>[^/]+)/slugrng',
         main.SlugRNG.as_view(),
         name='events.add.slugrng',

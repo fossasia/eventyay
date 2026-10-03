@@ -1,9 +1,11 @@
 from django.contrib import messages
+from django.db import transaction
+from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
-from django.views.generic import CreateView, ListView, UpdateView
+from django.views.generic import CreateView, ListView, UpdateView, DeleteView
 
 from eventyay.api.models import WebHook
 from eventyay.control.forms.organizer_forms import WebHookForm
@@ -139,3 +141,37 @@ class WebHookLogsView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin
 
     def get_queryset(self):
         return self.webhook.calls.order_by('-datetime')
+
+
+
+class WebHookDeleteView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin, DeleteView):
+    model = WebHook
+    template_name = 'pretixcontrol/organizers/webhook_delete.html'
+    permission = 'can_change_organizer_settings'
+    context_object_name = 'webhook'
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(WebHook, organizer=self.request.organizer, pk=self.kwargs.get('webhook'))
+
+    def get_success_url(self):
+        return reverse(
+            'control:organizer.webhooks',
+            kwargs={
+                'organizer': self.request.organizer.slug,
+            },
+        )
+
+    @transaction.atomic
+    def form_valid(self, form):
+        success_url = self.get_success_url()
+        self.request.organizer.log_action(
+            'eventyay.webhook.deleted',
+            user=self.request.user,
+            data={
+                'id': self.object.pk,
+                'target_url': self.object.target_url,
+            },
+        )
+        self.object.delete()
+        messages.success(self.request, _('The selected webhook has been deleted.'))
+        return HttpResponseRedirect(success_url)

@@ -1041,7 +1041,7 @@ def test_orga_can_accept_submission(client, orga_user_write_token, submission):
         assert submission.state == SubmissionStates.ACCEPTED
         assert (
             submission.logged_actions()
-            .filter(action_type="eventyay.submission.accept")
+            .filter(action_type="eventyay.submission.accepted")
             .exists()
         )
 
@@ -1063,7 +1063,7 @@ def test_orga_cannot_accept_submission_readonly_token(
         assert submission.state == SubmissionStates.SUBMITTED
         assert (
             not submission.logged_actions()
-            .filter(action_type="eventyay.submission.accept")
+            .filter(action_type="eventyay.submission.accepted")
             .exists()
         )
 
@@ -1084,7 +1084,7 @@ def test_orga_can_reject_submission(client, orga_user_write_token, submission):
         assert submission.state == SubmissionStates.REJECTED
         assert (
             submission.logged_actions()
-            .filter(action_type="eventyay.submission.reject")
+            .filter(action_type="eventyay.submission.rejected")
             .exists()
         )
 
@@ -1106,7 +1106,7 @@ def test_orga_cannot_reject_submission_readonly_token(
         assert submission.state == SubmissionStates.SUBMITTED
         assert (
             not submission.logged_actions()
-            .filter(action_type="eventyay.submission.reject")
+            .filter(action_type="eventyay.submission.rejected")
             .exists()
         )
 

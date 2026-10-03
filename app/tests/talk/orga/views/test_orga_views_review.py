@@ -863,3 +863,115 @@ def test_reviewer_dashboard_hides_score_for_unreviewable_submission(
 
     assert response.status_code == 200
     assert f'value="{score.pk}"' not in response.text
+
+@pytest.mark.django_db
+def test_reviewer_abstain_then_submit_logs_completed(review_client, review_user, submission):
+    from django_scopes import scope
+    # First abstain
+    response = review_client.post(
+        submission.orga_urls.reviews,
+        follow=True,
+        data={
+            "review_submit": "abstain",
+        },
+    )
+    assert response.status_code == 200
+    with scope(event=submission.event):
+        review = submission.reviews.first()
+        assert review is not None
+        assert review.is_abstention is True
+
+    # Then submit a real review
+    with scope(event=submission.event):
+        category = submission.event.score_categories.first()
+        score_obj = category.scores.filter(value=1).first()
+
+    response = review_client.post(
+        submission.orga_urls.reviews,
+        follow=True,
+        data={
+            "review_submit": "save",
+            f"score_{category.id}": score_obj.id,
+            "text": "LGTM",
+        },
+    )
+    assert response.status_code == 200
+
+    with scope(event=submission.event):
+        review.refresh_from_db()
+        assert review.is_abstention is False
+        assert review.score == 1
+        # Check that it logged eventyay.review.completed
+        assert review.logged_actions().filter(action_type='eventyay.review.completed').exists()
+
+@pytest.mark.django_db
+def test_reviewer_scored_review_then_abstain(review_client, review_user, submission):
+    from django_scopes import scope
+    with scope(event=submission.event):
+        category = submission.event.score_categories.first()
+        score = category.scores.filter(value=1).first()
+
+    # First submit a scored review
+    response = review_client.post(
+        submission.orga_urls.reviews,
+        follow=True,
+        data={
+            f"score_{category.id}": score.id,
+            "text": "This is good",
+        },
+    )
+    assert response.status_code == 200
+
+    with scope(event=submission.event):
+        assert submission.reviews.count() == 1
+        review = submission.reviews.first()
+        assert review.score == 1
+        assert review.is_abstention is False
+        assert submission.mean_score == 1
+
+    # Now change to abstain
+    response = review_client.post(
+        submission.orga_urls.reviews,
+        follow=True,
+        data={
+            "review_submit": "abstain",
+        },
+    )
+    assert response.status_code == 200
+
+    with scope(event=submission.event):
+        assert submission.reviews.count() == 1
+        review = submission.reviews.first()
+        assert review.is_abstention is True
+        assert review.score is None
+        assert review.text is None
+        assert review.scores.count() == 0
+        from eventyay.base.models import Submission
+        submission = Submission.objects.get(pk=submission.pk)
+        assert submission.mean_score is None
+
+
+@pytest.mark.django_db
+def test_reviewer_cannot_abstain_without_update_review_permission(review_client, review_user, submission, monkeypatch):
+    from django_scopes import scope
+    with scope(event=submission.event):
+        review = submission.reviews.create(user=review_user, score=1, is_abstention=False)
+
+    from django.contrib.auth.models import AnonymousUser
+    original_has_perm = type(review_user).has_perm
+
+    def mock_has_perm(self, perm, obj=None):
+        if perm == 'base.update_review':
+            return False
+        return original_has_perm(self, perm, obj)
+
+    monkeypatch.setattr(type(review_user), 'has_perm', mock_has_perm)
+
+    response = review_client.post(
+        submission.orga_urls.reviews,
+        data={
+            "review_submit": "abstain",
+        },
+    )
+    assert response.status_code == 403
+

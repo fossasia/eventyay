@@ -70,6 +70,10 @@
                                     class="btn btn-default btn-sm" data-toggle="tooltip" title="{% trans "Logs" %}">
                                 <i class="fa fa-list"></i>
                             </a>
+                            <a href="{% url "control:organizer.webhook.delete" organizer=request.organizer.slug webhook=w.id %}"
+                                    class="btn btn-danger btn-sm" data-toggle="tooltip" title="{% trans "Delete" %}">
+                                <i class="fa fa-trash"></i>
+                            </a>
                         </td>
                     </tr>
                 {% endfor %}

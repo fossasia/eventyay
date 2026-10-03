@@ -497,6 +497,7 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
         'eventyay.giftcards.acceptance.removed': _('Gift card acceptance for another organizer has been removed.'),
         'eventyay.webhook.created': _('The webhook has been created.'),
         'eventyay.webhook.changed': _('The webhook has been changed.'),
+        'eventyay.webhook.deleted': _('The webhook has been deleted.'),
         'eventyay.event.comment': _("The event's internal comment has been updated."),
         'eventyay.orga.internal_note': _("The talks organizer internal note has been updated."),
         'eventyay.event.canceled': _('The event has been canceled.'),

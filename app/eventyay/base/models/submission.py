@@ -702,7 +702,7 @@ class Submission(GenerateCode, PretalxModel):
         previous = self.state
         self._set_state(SubmissionStates.ACCEPTED, force, person=person)
         self.log_action(
-            'eventyay.submission.accept',
+            'eventyay.submission.accepted',
             person=person,
             orga=True,
             data={'previous': previous, 'from_pending': from_pending},
@@ -727,7 +727,7 @@ class Submission(GenerateCode, PretalxModel):
         previous = self.state
         self._set_state(SubmissionStates.REJECTED, force, person=person)
         self.log_action(
-            'eventyay.submission.reject',
+            'eventyay.submission.rejected',
             person=person,
             orga=True,
             data={'previous': previous, 'from_pending': from_pending},
