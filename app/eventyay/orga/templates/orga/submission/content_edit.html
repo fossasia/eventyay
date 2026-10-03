@@ -154,5 +154,13 @@
             {% endif %}
         </fieldset></form>
 
+    {% if add_speaker_form %}
+        {% has_event_perm "base.update_submission" request.user request submission as can_edit_speakers %}
+        {% has_event_perm "base.orga_list_speakerprofile" request.user request submission as can_list_speakers %}
+        {% if can_edit_speakers and can_list_speakers %}
+            {% include "orga/submission/fragment_session_speakers.html" %}
+        {% endif %}
+    {% endif %}
+
     <span id="vars" remoteUrl="{{ request.event.organizer.orga_urls.user_search }}"></span>
 {% endblock submission_content %}

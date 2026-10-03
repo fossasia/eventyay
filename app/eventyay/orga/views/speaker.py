@@ -29,6 +29,7 @@ from eventyay.base.services.talkimport import import_speakers
 from eventyay.base.views.tasks import AsyncAction
 from eventyay.common.exceptions import SendMailException
 from eventyay.common.image import gravatar_csp
+from eventyay.common.permissions import is_admin_mode_active
 from eventyay.common.urls import build_absolute_uri
 from eventyay.common.text.phrases import phrases
 from eventyay.common.views.generic import CreateOrUpdateView, OrgaCRUDView
@@ -55,6 +56,7 @@ from eventyay.person.social_link_mixin import SpeakerSocialLinksMixin
 from eventyay.submission.forms import TalkQuestionsForm
 from eventyay.talk_rules.person import is_only_reviewer
 from eventyay.talk_rules.submission import limit_for_reviewers, speaker_profiles_for_user
+from eventyay.talk_rules.tracks import apply_track_limit
 
 
 class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin, ListView):
@@ -237,8 +239,102 @@ class SpeakerViewMixin(PermissionRequired):
         return self.get_permission_object()
 
 
+class SpeakerSessionMixin:
+    def get_session_speaker(self):
+        return None
+
+    @context
+    @cached_property
+    def can_link_sessions(self):
+        return is_admin_mode_active(self.request) or self.request.user.has_perm(
+            'base.orga_update_submission', self.request.event
+        )
+
+    @context
+    @cached_property
+    def existing_sessions(self):
+        sessions = self.request.event.submissions.exclude(state__in=(SubmissionStates.DELETED, SubmissionStates.DRAFT))
+        speaker = self.get_session_speaker()
+        if speaker:
+            sessions = sessions.exclude(speakers=speaker)
+        sessions = apply_track_limit(sessions, self.request.event, self.request.user)
+        return sessions.only('pk', 'title', 'code').order_by('title')
+
+    @context
+    @cached_property
+    def session_form(self):
+        return SubmissionForm(
+            data=self.request.POST if self.request.method == 'POST' else None,
+            files=self.request.FILES if self.request.method == 'POST' else None,
+            event=self.request.event,
+            prefix='session',
+        )
+
+    @context
+    @cached_property
+    def session_questions_form(self):
+        return TalkQuestionsForm(
+            data=self.request.POST if self.request.method == 'POST' else None,
+            files=self.request.FILES if self.request.method == 'POST' else None,
+            target='submission',
+            event=self.request.event,
+            prefix='session_questions',
+            skip_limited_questions=True,
+        )
+
+    def clean_session_options(self, form):
+        add_session = self.request.POST.get('add_session') == 'on'
+        link_existing_session = self.request.POST.get('link_existing_session') == 'on'
+
+        if (add_session or link_existing_session) and not self.can_link_sessions:
+            form.add_error(None, forms.ValidationError(_('You do not have permission to change sessions.')))
+            return None
+
+        if add_session and link_existing_session:
+            form.add_error(
+                None, forms.ValidationError(_('You cannot both create a new session and link an existing session.'))
+            )
+            return None
+
+        if add_session and (not self.session_form.is_valid() or not self.session_questions_form.is_valid()):
+            messages.error(self.request, phrases.base.error_saving_changes)
+            return None
+
+        existing_session = None
+        if link_existing_session:
+            session_pk = self.request.POST.get('existing_session_id')
+            if not session_pk:
+                form.add_error(None, forms.ValidationError(_('Please select an existing session to link.')))
+                return None
+            try:
+                existing_session = self.existing_sessions.get(pk=session_pk)
+            except (Submission.DoesNotExist, ValueError):
+                form.add_error(None, forms.ValidationError(_('The selected session does not exist.')))
+                return None
+
+        return add_session, existing_session
+
+    def save_session_options(self, user, add_session, existing_session):
+        if add_session:
+            self.session_form.instance.event = self.request.event
+            session = self.session_form.save()
+            self.session_questions_form.submission = session
+            self.session_questions_form.save()
+        else:
+            session = existing_session
+        if session:
+            from eventyay.agenda.views.utils import clear_schedule_caches
+
+            session.speakers.add(user)
+            session.log_action('eventyay.submission.speakers.add', person=self.request.user, orga=True)
+            clear_schedule_caches(self.request.event, speaker=user)
+        return session
+
+
 @method_decorator(gravatar_csp(), name='dispatch')
-class SpeakerCreate(SpeakerSocialLinksMixin, EventPermissionRequired, ActionFromUrl, CreateOrUpdateView):
+class SpeakerCreate(
+    SpeakerSessionMixin, SpeakerSocialLinksMixin, EventPermissionRequired, ActionFromUrl, CreateOrUpdateView
+):
     template_name = 'orga/speaker/create.html'
     form_class = SpeakerProfileForm
     model = SpeakerProfile
@@ -273,73 +369,16 @@ class SpeakerCreate(SpeakerSocialLinksMixin, EventPermissionRequired, ActionFrom
         context.update(self.get_social_links_context())
         return context
 
-    @context
-    @cached_property
-    def existing_sessions(self):
-        """Queryset of event sessions available for linking (efficient – only loads pk/title/code)."""
-        return (
-            self.request.event.submissions
-            .exclude(state__in=(SubmissionStates.DELETED, SubmissionStates.DRAFT))
-            .only('pk', 'title', 'code')
-            .order_by('title')
-        )
-
-    @context
-    @cached_property
-    def session_form(self):
-        return SubmissionForm(
-            data=self.request.POST if self.request.method == 'POST' else None,
-            files=self.request.FILES if self.request.method == 'POST' else None,
-            event=self.request.event,
-            prefix='session',
-        )
-
-    @context
-    @cached_property
-    def session_questions_form(self):
-        return TalkQuestionsForm(
-            data=self.request.POST if self.request.method == 'POST' else None,
-            files=self.request.FILES if self.request.method == 'POST' else None,
-            target='submission',
-            event=self.request.event,
-            prefix='session_questions',
-            skip_limited_questions=True,
-        )
-
     @transaction.atomic
     def form_valid(self, form):
         with scope(event=self.request.event):
             if not self.social_media_formset_is_valid():
                 return self.form_invalid(form)
 
-            add_session = self.request.POST.get('add_session') == 'on'
-            link_existing_session = self.request.POST.get('link_existing_session') == 'on'
-
-            if add_session and link_existing_session:
-                form.add_error(None, forms.ValidationError(_('You cannot both create a new session and link an existing session.')))
+            session_options = self.clean_session_options(form)
+            if session_options is None:
                 return self.form_invalid(form)
-
-            if add_session:
-                if not self.session_form.is_valid() or not self.session_questions_form.is_valid():
-                    messages.error(self.request, phrases.base.error_saving_changes)
-                    return self.form_invalid(form)
-
-            existing_session = None
-            if link_existing_session:
-                session_pk = self.request.POST.get('existing_session_id')
-                if session_pk:
-                    try:
-                        existing_session = (
-                            self.request.event.submissions
-                            .exclude(state__in=(SubmissionStates.DELETED, SubmissionStates.DRAFT))
-                            .get(pk=session_pk)
-                        )
-                    except (Submission.DoesNotExist, ValueError):
-                        form.add_error(None, forms.ValidationError(_('The selected session does not exist.')))
-                        return self.form_invalid(form)
-                else:
-                    form.add_error(None, forms.ValidationError(_('Please select an existing session to link.')))
-                    return self.form_invalid(form)
+            add_session, existing_session = session_options
 
             try:
                 with transaction.atomic():
@@ -383,15 +422,10 @@ class SpeakerCreate(SpeakerSocialLinksMixin, EventPermissionRequired, ActionFrom
                     skip_queue=is_preexisting,
                 )
 
+            self.save_session_options(user, add_session, existing_session)
             if add_session:
-                self.session_form.instance.event = self.request.event
-                session = self.session_form.save()
-                self.session_questions_form.submission = session
-                self.session_questions_form.save()
-                session.speakers.add(user)
                 messages.success(self.request, _('Speaker and session created successfully.'))
             elif existing_session:
-                existing_session.speakers.add(user)
                 messages.success(self.request, _('Speaker added and linked to existing session successfully.'))
             else:
                 messages.success(self.request, _('Speaker created successfully.'))
@@ -400,7 +434,7 @@ class SpeakerCreate(SpeakerSocialLinksMixin, EventPermissionRequired, ActionFrom
 
 
 @method_decorator(gravatar_csp(), name='dispatch')
-class SpeakerDetail(SpeakerSocialLinksMixin, SpeakerViewMixin, ActionFromUrl, CreateOrUpdateView):
+class SpeakerDetail(SpeakerSessionMixin, SpeakerSocialLinksMixin, SpeakerViewMixin, ActionFromUrl, CreateOrUpdateView):
     template_name = 'orga/speaker/form.html'
     form_class = SpeakerProfileForm
     model = User
@@ -412,6 +446,9 @@ class SpeakerDetail(SpeakerSocialLinksMixin, SpeakerViewMixin, ActionFromUrl, Cr
 
     def get_social_links_profile(self):
         return self.profile
+
+    def get_session_speaker(self):
+        return self.profile.user
 
     @context
     @cached_property
@@ -441,15 +478,27 @@ class SpeakerDetail(SpeakerSocialLinksMixin, SpeakerViewMixin, ActionFromUrl, Cr
     def form_valid(self, form):
         if not self.social_media_formset_is_valid():
             return self.get(self.request, *self.args, **self.kwargs)
-        result = super().form_valid(form)
-        self.save_social_media_formset(self.profile)
-        if form.has_changed():
-            form.instance.log_action('eventyay.user.profile.update', person=self.request.user, orga=True)
-        if form.has_changed() or (
-            self.social_media_formset and self.social_media_formset.has_changed()
-        ):
-            self.request.event.cache.set('rebuild_schedule_export', True, None)
-        messages.success(self.request, phrases.base.saved)
+        with scope(event=self.request.event):
+            session_options = self.clean_session_options(form)
+            if session_options is None:
+                return self.form_invalid(form)
+            add_session, existing_session = session_options
+            speaker = self.profile.user
+            result = super().form_valid(form)
+            self.save_social_media_formset(self.profile)
+            if form.has_changed():
+                form.instance.log_action('eventyay.user.profile.update', person=self.request.user, orga=True)
+            if form.has_changed() or (
+                self.social_media_formset and self.social_media_formset.has_changed()
+            ):
+                self.request.event.cache.set('rebuild_schedule_export', True, None)
+            session = self.save_session_options(speaker, add_session, existing_session)
+        if add_session:
+            messages.success(self.request, _('The new session has been created for this speaker.'))
+        elif session:
+            messages.success(self.request, _('The speaker has been added to the selected session.'))
+        else:
+            messages.success(self.request, phrases.base.saved)
         return result
 
     def get_form_kwargs(self):
