@@ -24,13 +24,17 @@ def _assert_youtube_embed(embed_url, video_id, *, start=None):
         assert query.get('start') == [str(start)]
 
 
-def _assert_vimeo_embed(embed_url, video_id, *, time_hash=None):
+def _assert_vimeo_embed(embed_url, video_id, *, privacy_hash=None, time_hash=None):
     parsed = urlparse(embed_url)
     assert parsed.scheme == 'https'
     assert parsed.netloc == 'player.vimeo.com'
     assert parsed.path == f'/video/{video_id}'
     query = parse_qs(parsed.query)
     assert query.get('autoplay') == ['0']
+    if privacy_hash is None:
+        assert 'h' not in query
+    else:
+        assert query.get('h') == [privacy_hash]
     if time_hash is None:
         assert parsed.fragment == ''
     else:
@@ -62,21 +66,33 @@ def test_youtube_embed_preserves_timestamp_and_disables_autoplay(url, video_id, 
 
 
 @pytest.mark.parametrize(
-    'url,video_id,time_hash',
+    'url,video_id,privacy_hash,time_hash',
     (
-        ('https://vimeo.com/123456789', '123456789', None),
-        ('https://player.vimeo.com/video/123456789', '123456789', None),
-        ('https://vimeo.com/123456789#t=1m30s', '123456789', 't=1m30s'),
-        ('https://vimeo.com/123456789#t=90s', '123456789', 't=90s'),
-        ('https://vimeo.com/123456789?t=75', '123456789', 't=75s'),
-        ('https://player.vimeo.com/video/123456789#t=10s', '123456789', 't=10s'),
+        ('https://vimeo.com/123456789', '123456789', None, None),
+        ('https://player.vimeo.com/video/123456789', '123456789', None, None),
+        ('https://vimeo.com/123456789/abcdef0123', '123456789', 'abcdef0123', None),
+        ('https://player.vimeo.com/video/123456789?h=abcdef0123', '123456789', 'abcdef0123', None),
+        ('https://player.vimeo.com/video/123456789/abcdef0123', '123456789', 'abcdef0123', None),
+        ('https://vimeo.com/123456789?h=', '123456789', None, None),
+        ('https://player.vimeo.com/video/123456789?h=', '123456789', None, None),
+        ('https://vimeo.com/123456789#t=1m30s', '123456789', None, 't=1m30s'),
+        ('https://vimeo.com/123456789#t=90s', '123456789', None, 't=90s'),
+        ('https://vimeo.com/123456789?t=75', '123456789', None, 't=75s'),
+        ('https://player.vimeo.com/video/123456789#t=10s', '123456789', None, 't=10s'),
+        ('https://vimeo.com/123456789/abcdef0123#t=1m30s', '123456789', 'abcdef0123', 't=1m30s'),
+        ('https://player.vimeo.com/video/123456789?h=abcdef0123#t=10s', '123456789', 'abcdef0123', 't=10s'),
+        ('https://vimeo.com/showcase/123456/video/789012', '789012', None, None),
+        ('https://vimeo.com/showcase/123456/video/789012/abcdef0123', '789012', 'abcdef0123', None),
+        ('https://vimeo.com/channels/123456/789012', '789012', None, None),
+        ('https://vimeo.com/showcase/123456/video/789012#t=1m30s', '789012', None, 't=1m30s'),
+        ('https://vimeo.com/showcase/123456/video/789012/abcdef0123#t=1m30s', '789012', 'abcdef0123', 't=1m30s'),
     ),
 )
-def test_vimeo_embed_preserves_timestamp_and_disables_autoplay(url, video_id, time_hash):
+def test_vimeo_embed_preserves_timestamp_and_disables_autoplay(url, video_id, privacy_hash, time_hash):
     info = get_video_embed_info(url)
     assert info is not None
     assert info['provider'] == 'vimeo'
-    _assert_vimeo_embed(info['embed_url'], video_id, time_hash=time_hash)
+    _assert_vimeo_embed(info['embed_url'], video_id, privacy_hash=privacy_hash, time_hash=time_hash)
     assert info['csp_origins'] == ['https://player.vimeo.com']
 
 

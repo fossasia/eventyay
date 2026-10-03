@@ -49,8 +49,37 @@ function youtubeEmbedUrl (videoId, parsed) {
 	return `https://www.youtube-nocookie.com/embed/${videoId}?${params.toString()}`
 }
 
+function vimeoPrivacyHash (parsed) {
+	const queryH = parsed.searchParams.get('h')
+	if (queryH && queryH.trim()) return queryH.trim()
+
+	const host = parsed.hostname.replace(/^www\./, '').toLowerCase()
+	const parts = parsed.pathname.split('/').filter(Boolean)
+
+	if (host === 'player.vimeo.com') {
+		if (parts[0] === 'video' && parts.length >= 3 && !/^\d+$/.test(parts[2])) {
+			return parts[2].trim() || null
+		}
+		return null
+	}
+
+	let lastNumIdx = -1
+	for (let i = 0; i < parts.length; i++) {
+		if (/^\d+$/.test(parts[i])) {
+			lastNumIdx = i
+		}
+	}
+	if (lastNumIdx !== -1 && parts.length > lastNumIdx + 1 && !/^\d+$/.test(parts[lastNumIdx + 1])) {
+		return parts[lastNumIdx + 1].trim() || null
+	}
+	return null
+}
+
 function vimeoEmbedUrl (videoId, parsed) {
-	let embedUrl = `https://player.vimeo.com/video/${videoId}?autoplay=0`
+	const params = new URLSearchParams({ autoplay: '0' })
+	const privacyHash = vimeoPrivacyHash(parsed)
+	if (privacyHash) params.set('h', privacyHash)
+	let embedUrl = `https://player.vimeo.com/video/${videoId}?${params.toString()}`
 	const timeHash = vimeoTimeHash(parsed)
 	if (timeHash) embedUrl += `#${timeHash}`
 	return embedUrl

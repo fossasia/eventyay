@@ -119,9 +119,37 @@ def _youtube_embed_url(video_id: str, parsed) -> str:
     return f'https://www.youtube-nocookie.com/embed/{video_id}?{urlencode(params)}'
 
 
+def _vimeo_privacy_hash(parsed) -> str | None:
+    query = parse_qs(parsed.query)
+    query_h = (query.get('h') or [None])[0]
+    if query_h and query_h.strip():
+        return query_h.strip()
+    host = (parsed.hostname or '').lower()
+    if host not in _VIMEO_HOSTS:
+        return None
+    parts = [part for part in (parsed.path or '').split('/') if part]
+    if host == 'player.vimeo.com':
+        if len(parts) >= 3 and parts[0] == 'video' and not parts[2].isdigit():
+            return parts[2].strip() or None
+        return None
+    last_num_idx = None
+    for idx, part in enumerate(parts):
+        if part.isdigit():
+            last_num_idx = idx
+    if last_num_idx is not None:
+        if len(parts) > last_num_idx + 1 and not parts[last_num_idx + 1].isdigit():
+            return parts[last_num_idx + 1].strip() or None
+        return None
+    return None
+
+
 def _vimeo_embed_url(video_id: str, parsed) -> str:
     # autoplay=0 keeps the player paused on load; timestamps use the #t= fragment.
-    embed_url = f'https://player.vimeo.com/video/{video_id}?{urlencode({"autoplay": "0"})}'
+    params = {'autoplay': '0'}
+    privacy_hash = _vimeo_privacy_hash(parsed)
+    if privacy_hash:
+        params['h'] = privacy_hash
+    embed_url = f'https://player.vimeo.com/video/{video_id}?{urlencode(params)}'
     time_hash = _vimeo_time_hash(parsed)
     if time_hash:
         embed_url = f'{embed_url}#{time_hash}'
