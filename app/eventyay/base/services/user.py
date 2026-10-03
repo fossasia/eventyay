@@ -370,6 +370,46 @@ def apply_video_jwt_contact_to_profile(user, event_id, token_id):
     user.save(update_fields=["profile"])
 
 
+def sync_video_profile_picture(user, platform_user=None):
+    profile = dict(user.profile or {})
+    if platform_user is None:
+        contact_email = video_contact_email_from_profile(profile)
+        if not contact_email:
+            return user
+        with scopes_disabled():
+            platform_user = (
+                User.objects.filter(event__isnull=True, email__iexact=contact_email)
+                .order_by('id')
+                .first()
+            )
+
+    avatar_url = (
+        platform_user.get_profile_picture_url(thumbnail='default')
+        if platform_user
+        else ''
+    )
+    avatar = {'url': avatar_url} if avatar_url else None
+    if profile.get('avatar') == avatar:
+        return user
+    if avatar:
+        profile['avatar'] = avatar
+    else:
+        profile.pop('avatar', None)
+    user.profile = profile
+    user.save(update_fields=['profile'])
+    return user
+
+
+def merge_video_profile(current_profile, incoming_profile):
+    profile = dict(incoming_profile or {})
+    avatar = (current_profile or {}).get('avatar')
+    if avatar:
+        profile['avatar'] = avatar
+    else:
+        profile.pop('avatar', None)
+    return profile
+
+
 def _latest_paid_ticket_row_for_email(event_id, email):
     """Return the latest paid ticket row for an order email on this event."""
     normalized = (email or "").strip()
@@ -757,6 +797,7 @@ def get_user(
                     'contact_email': with_platform_user.email,
                 },
             )
+            sync_video_profile_picture(user, platform_user=with_platform_user)
             return user
     elif with_token:
         from eventyay.eventyay_common.video.traits_sync import apply_live_team_video_traits
@@ -807,6 +848,7 @@ def get_user(
                 user = get_user_by_id(event.id, user.id)
             if token_id:
                 apply_video_jwt_contact_to_profile(user, event.id, token_id)
+            sync_video_profile_picture(user, platform_user=with_platform_user)
         return user
 
     traits = token_traits if with_token else None
@@ -831,6 +873,7 @@ def get_user(
             traits=traits,
             pretalx_id=with_token.get("pretalx_id") if with_token else None,
         )
+        sync_video_profile_picture(user, platform_user=with_platform_user)
     else:
         user = create_user(
             event_id=event.id,
@@ -906,7 +949,12 @@ def update_user(
 
     if data is not None:
         save_fields = []
-        if "profile" in data and data["profile"] != user.profile:
+        incoming_profile = (
+            merge_video_profile(user.profile, data['profile'])
+            if 'profile' in data
+            else None
+        )
+        if incoming_profile is not None and incoming_profile != user.profile:
             AuditLog.objects.create(
                 event_id=event_id,
                 user=user,
@@ -914,13 +962,13 @@ def update_user(
                 data={
                     "object": str(user.pk),
                     "old": user.profile,
-                    "new": data["profile"],
+                    "new": incoming_profile,
                     "is_admin": is_admin,
                 },
             )
 
             # TODO: Anything we want to validate here?
-            user.profile = data.get("profile")
+            user.profile = incoming_profile
             save_fields.append("profile")
 
         if is_admin and "pretalx_id" in data and data["pretalx_id"] != user.pretalx_id:

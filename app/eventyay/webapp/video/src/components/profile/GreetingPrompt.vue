@@ -3,20 +3,16 @@ prompt.c-profile-greeting-prompt(:allowCancel="false")
 	.content
 		.step-display-name(v-if="activeStep === 'displayName'")
 			h1 {{ $t('Hi there!') }}
-			p {{ $t('Before you join others in this event, please set up your profile. We will show your name to other attendees if you interact with them, e.g. in a chat. You do not need to use your real name. After this, you can optionally choose a picture.') }}
+			p {{ $t('Before you join others in this event, please set up your profile. We will show your name to other attendees if you interact with them, e.g. in a chat. You do not need to use your real name.') }}
 			bunt-input.display-name(name="displayName", :label="`${$t('Display name')} *`", v-model.trim="profile.display_name", :validation="v$.profile.display_name")
-		.step-avatar(v-else-if="activeStep === 'avatar'")
-			h1 {{ $t('Choose your look') }}
-			p {{ $t('Pick an identicon or upload a picture.') }}
-			change-avatar(ref="step", v-model="profile.avatar", :profile="profile", @blockSave="blockSave = $event")
 		.step-display-language(v-else-if="activeStep === 'displayLanguage'")
 			h2 {{ $t('Interface Language') }}
 			p {{ $t('Please select your language. You can change it later in your profile.') }}
 			bunt-select#select-interface-language(name="interface-language", v-model="interfaceLanguage", :options="languages", option-value="code", option-label="nativeLabel")
 		.actions
 			bunt-button#btn-back(v-if="previousStep", @click="activeStep = previousStep") {{ $t('back') }}
-			bunt-button#btn-continue(v-if="nextStep", :class="{invalid: v$.$invalid && v$.$dirty}", :disabled="blockSave || v$.$invalid && v$.$dirty", :loading="processingStep", :key="activeStep", @click="toNextStep") {{ $t('continue') }}
-			bunt-button#btn-finish(v-else, :class="{invalid: v$.$invalid && v$.$dirty}", :loading="saving", :disabled="blockSave || v$.$invalid && v$.$dirty", @click="update") {{ $t('finish') }}
+			bunt-button#btn-continue(v-if="nextStep", :class="{invalid: v$.$invalid && v$.$dirty}", :disabled="v$.$invalid && v$.$dirty", :key="activeStep", @click="toNextStep") {{ $t('continue') }}
+			bunt-button#btn-finish(v-else, :class="{invalid: v$.$invalid && v$.$dirty}", :loading="saving", :disabled="v$.$invalid && v$.$dirty", @click="update") {{ $t('finish') }}
 </template>
 <script>
 import { useVuelidate } from '@vuelidate/core'
@@ -25,18 +21,15 @@ import { required } from 'lib/validators'
 import config from 'config'
 import { resolveLanguageOptions } from 'locales'
 import Prompt from 'components/Prompt'
-import ChangeAvatar from './ChangeAvatar'
 
 export default {
-	components: { Prompt, ChangeAvatar },
+	components: { Prompt },
 	emits: ['close'],
 	setup:() => ({v$:useVuelidate()}),
 	data() {
 		return {
 			activeStep: null,
 			profile: null,
-			processingStep: false,
-			blockSave: false,
 			saving: false,
 			interfaceLanguage: this.$i18n.resolvedLanguage,
 		}
@@ -56,8 +49,7 @@ export default {
 		steps() {
 			return [
 				'displayName',
-				'displayLanguage',
-				'avatar'
+				'displayLanguage'
 			]
 		},
 		previousStep() {
@@ -87,9 +79,6 @@ export default {
 		// Build profile object, preserving computed display_name
 		this.profile = {
 			greeted: true,
-			avatar: this.user.profile?.avatar || {
-				identicon: this.user.id
-			},
 			fields: this.user.profile?.fields || {},
 			...this.user.profile,
 			display_name: defaultDisplayName
@@ -99,11 +88,6 @@ export default {
 		async toNextStep() {
 			this.v$.$touch()
 			if (this.v$.$invalid) return
-			if (this.$refs.step?.update) {
-				this.processingStep = true
-				await this.$refs.step.update()
-				this.processingStep = false
-			}
 			this.activeStep = this.nextStep
 		},
 		async update() {
@@ -113,9 +97,6 @@ export default {
 				return
 			}
 			this.saving = true
-			if (this.$refs.step?.update) {
-				await this.$refs.step.update()
-			}
 			this.profile.greeted = true // override even if explicitly set to false by server
 			await this.$store.dispatch('updateUser', {profile: this.profile})
 			await this.$store.dispatch('updateUserLocale', this.interfaceLanguage)
@@ -142,7 +123,7 @@ export default {
 			margin: 0 0 8px 0
 			width: 360px
 			white-space: pre-wrap
-		.step-display-name, .step-avatar, .step-display-language
+		.step-display-name, .step-display-language
 			display: flex
 			flex-direction: column
 			align-items: center

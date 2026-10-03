@@ -17,7 +17,6 @@
 		scrollbars.user-info(y)
 			.avatar-wrapper
 				avatar(:user="user", :size="128")
-				bunt-button#btn-change-avatar(@click="showChangeAvatar = true", v-if="edit") {{ $t('change avatar') }}
 			bunt-input.display-name(name="displayName", :label="$t('Display name')", v-model.trim="user.profile.display_name", :validation="v$.user.profile.display_name", :disabled="!edit")
 			bunt-input(name="id", :label="$t('ID')", :modelValue="user.id", :disabled="true")
 			bunt-input(name="token_id", :label="$t('Login UID (JWT uid)')", :modelValue="user.token_id || '–'", :disabled="true")
@@ -29,26 +28,17 @@
 	bunt-progress-circular(v-else, size="huge")
 	transition(name="prompt")
 		user-action-prompt(v-if="userAction", :action="userAction", :user="user", :closeDelay="0", @close="completedUserAction")
-	transition(name="prompt")
-		prompt.change-avatar-prompt(v-if="showChangeAvatar", @close="showChangeAvatar = false")
-			.content
-				change-avatar(ref="avatar", v-model="user.profile.avatar", :profile="user.profile", @blockSave="blockSave = $event")
-				.actions
-					bunt-button#btn-cancel(@click="showChangeAvatar = false") {{ $t('cancel') }}
-					bunt-button#btn-upload(:loading="savingAvatar", :disabled="blockSave", @click="uploadAvatar") {{ $t('save') }}
 </template>
 <script>
 import { useVuelidate } from '@vuelidate/core'
 import { mapState, mapGetters } from 'vuex'
 import api from 'lib/api'
 import Avatar from 'components/Avatar'
-import Prompt from 'components/Prompt'
-import ChangeAvatar from 'components/profile/ChangeAvatar'
 import UserActionPrompt from 'components/UserActionPrompt'
 import { required } from 'lib/validators'
 
 export default {
-	components: { Avatar, Prompt, UserActionPrompt, ChangeAvatar },
+	components: { Avatar, UserActionPrompt },
 	props: {
 		userId: String
 	},
@@ -57,9 +47,6 @@ export default {
 		return {
 			user: null,
 			userAction: null,
-			showChangeAvatar: false,
-			savingAvatar: false,
-			blockSave: false,
 			saving: false,
 			edit: false
 		}
@@ -105,14 +92,6 @@ export default {
 		async completedUserAction() {
 			this.userAction = null
 			this.user = await api.call('user.fetch', {id: this.userId})
-		},
-		async uploadAvatar() {
-			this.savingAvatar = true
-			await this.$refs.avatar.update()
-			await this.$store.dispatch('adminUpdateUser', {profile: Object.assign({}, this.user.profile, {avatar: this.user.profile.avatar}), id: this.user.id})
-			this.showChangeAvatar = false
-			this.savingAvatar = false
-			this.edit = false
 		},
 		async save() {
 			this.v$.$touch()
@@ -162,26 +141,5 @@ export default {
 		.avatar-wrapper
 			display: flex
 			align-items: center
-			#btn-change-avatar
-				themed-button-secondary()
-				margin-left: 16px
-
-	.change-avatar-prompt
-		.content
-			display: flex
-			flex-direction: column
-			padding: 48px 32px 32px
-			min-height: 0
-		.actions
-			margin-top: 32px
-			align-self: stretch
-			display: flex
-			justify-content: flex-end
-			flex-shrink: 0
-		#btn-cancel
-			themed-button-secondary()
-			margin-right: 8px
-		#btn-upload
-			themed-button-primary()
 
 </style>

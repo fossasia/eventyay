@@ -22,8 +22,10 @@ def test_user_account_settings_view_get(client):
 
     response = client.get(reverse('eventyay_common:account.general'))
     assert response.status_code == 200
-    assert 'Profile picture' in response.content.decode('utf-8')
-    assert 'name="profile_picture"' in response.content.decode('utf-8')
+    content = response.content.decode('utf-8')
+    assert 'Profile picture' in content
+    assert 'name="profile_picture"' in content
+    assert 'profile-dropdown-avatar-fallback' in content
 
 
 @pytest.mark.django_db
@@ -49,6 +51,7 @@ def test_user_account_profile_picture_upload(client):
     assert bool(user.profile_picture) is True
     assert user.get_profile_picture_url() != ''
     assert 'profile_pictures/' in user.profile_picture.name
+    assert 'profile-dropdown-avatar' in response.content.decode('utf-8')
 
 
 @pytest.mark.django_db

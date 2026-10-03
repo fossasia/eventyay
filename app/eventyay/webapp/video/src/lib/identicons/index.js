@@ -34,7 +34,7 @@ function createSeededRandom(seed) {
 }
 
 export function renderSvg(user, style) {
-	const seed = hashSource(user.profile?.avatar?.identicon ?? user.profile?.identicon ?? user.id)
+	const seed = hashSource(user.id)
 	const random = createSeededRandom(seed)
 	const renderer = renderers[style] || identiheart
 	const config = {

@@ -93,6 +93,7 @@ def test_get_user_with_platform_user(monkeypatch):
     monkeypatch.setattr('eventyay.base.services.user.get_user_by_id', lambda event_id, user_id: fake_video_user)
     monkeypatch.setattr('eventyay.base.services.user.update_user', lambda event_id, id, **kwargs: fake_video_user)
     monkeypatch.setattr('eventyay.base.services.user.apply_video_jwt_contact_to_profile', lambda user, event_id, token_id: None)
+    monkeypatch.setattr('eventyay.base.services.user.sync_video_profile_picture', lambda user, platform_user=None: user)
 
     user = get_user(fake_event, with_platform_user=fake_platform_user)
     assert user == fake_video_user
@@ -598,8 +599,6 @@ def test_live_features_existing_saved_settings_preserved():
     assert data_empty['live_features']['kiosks'] is False
     assert data_empty['live_features']['direct_messaging'] is False
     assert data_empty['live_features']['announcements'] is False
-
-
 
 
 

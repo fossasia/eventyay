@@ -773,6 +773,30 @@ details.dropdown .dropdown-content-se::after {
   margin-left: 6px;
 }
 
+.profile-dropdown-avatar,
+.profile-dropdown-avatar-fallback {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  border-radius: 50%;
+}
+
+.profile-dropdown-avatar {
+  object-fit: cover;
+}
+
+.profile-dropdown-avatar-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
 .navbar-top-links #profile-dropdown > summary:hover,
 .navbar-top-links #profile-dropdown > summary:focus,
 .navbar-inverse #profile-dropdown > summary:hover,
@@ -909,4 +933,3 @@ nav.navbar details.dropdown .dropdown-content button.dropdown-item:hover i {
   display: block;
   animation: dropdown-reveal 120ms ease-out;
 }
-

@@ -7,7 +7,6 @@
 		.inputs
 			.avatar-wrapper
 				avatar(:user="{profile}", :size="128")
-				bunt-button#btn-change-avatar(@click="showChangeAvatar = true") {{ $t('change avatar') }}
 			bunt-input.display-name(name="displayName", :label="`${$t('Display name')} *`", v-model.trim="profile.display_name", :validation="v$.profile.display_name")
 			template(v-if="languages")
 				h2 {{ $t('Interface Language') }}
@@ -32,13 +31,6 @@
 			bunt-switch(name="autoplay", v-model="autoplay", :label="$t('Autoplay streams')")
 	.ui-form-actions
 		bunt-button#btn-save(:disabled="v$.$invalid && v$.$dirty", :loading="saving", @click="save") {{ $t('save') }}
-	transition(name="prompt")
-		prompt.change-avatar-prompt(v-if="showChangeAvatar", @close="showChangeAvatar = false")
-			.content
-				change-avatar(ref="avatar", v-model="profile.avatar", :profile="profile", @blockSave="blockSave = $event")
-				.actions
-					bunt-button#btn-cancel(@click="showChangeAvatar = false") {{ $t('cancel') }}
-					bunt-button#btn-upload(:loading="savingAvatar", :disabled="blockSave", @click="uploadAvatar") {{ $t('save') }}
 </template>
 <script>
 // TODO communicate language change to other tabs?
@@ -48,12 +40,10 @@ import { useVuelidate } from '@vuelidate/core'
 import config from 'config'
 import { resolveLanguageOptions } from 'locales'
 import Avatar from 'components/Avatar'
-import Prompt from 'components/Prompt'
-import ChangeAvatar from 'components/profile/ChangeAvatar'
 import { required } from 'lib/validators'
 
 export default {
-	components: { Avatar, Prompt, ChangeAvatar },
+	components: { Avatar },
 	setup:() => ({v$: useVuelidate()}),
 	data() {
 		return {
@@ -61,9 +51,6 @@ export default {
 			interfaceLanguage: this.$i18n.resolvedLanguage,
 			notificationSettings: cloneDeep(this.$store.state.notifications.settings),
 			autoplay: true,
-			showChangeAvatar: false,
-			savingAvatar: false,
-			blockSave: false,
 			saving: false
 		}
 	},
@@ -92,22 +79,10 @@ export default {
 	created() {
 		this.profile = Object.assign({}, this.user.profile)
 		this.autoplay = this.$store.getters.autoplay
-		if (!this.profile.avatar || (!this.profile.avatar.url && !this.profile.avatar.identicon)) {
-			this.profile.avatar = {
-				identicon: this.user.id
-			}
-		}
 	},
 	methods: {
 		async toggleVisibility(value) {
 			await this.$store.dispatch('setProfileVisibility', value)
-		},
-		async uploadAvatar() {
-			this.savingAvatar = true
-			await this.$refs.avatar.update()
-			await this.$store.dispatch('updateUser', {profile: Object.assign({}, this.user.profile, {avatar: this.profile.avatar})})
-			this.showChangeAvatar = false
-			this.savingAvatar = false
 		},
 		async save() {
 			this.v$.$touch()
@@ -154,9 +129,6 @@ export default {
 	.avatar-wrapper
 		display: flex
 		align-items: center
-		#btn-change-avatar
-			themed-button-secondary()
-			margin-left: 16px
 	.scroll-content .inputs
 		width: 420px
 		display: flex
@@ -178,24 +150,6 @@ export default {
 		margin-top: 4px
 	#btn-save
 		themed-button-primary()
-
-	.change-avatar-prompt
-		.content
-			display: flex
-			flex-direction: column
-			padding: 48px 32px 32px
-			min-height: 0
-		.actions
-			margin-top: 32px
-			align-self: stretch
-			display: flex
-			justify-content: flex-end
-			flex-shrink: 0
-		#btn-cancel
-			themed-button-secondary()
-			margin-right: 8px
-		#btn-upload
-			themed-button-primary()
 	+below('s')
 		.inputs
 			width: auto

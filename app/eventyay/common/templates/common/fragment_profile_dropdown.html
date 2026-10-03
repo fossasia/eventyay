@@ -4,9 +4,13 @@
 
 <li class="nav-item">
     <details class="dropdown fix-height" id="profile-dropdown">
-        {% with user_label=request.user|short_user_label %}
+        {% with user_label=request.user|short_user_label profile_picture_url=request.user.get_profile_picture_url %}
             <summary class="header-nav" aria-label="{% translate 'User menu' %} - {{ user_label }}">
-                <i class="fa fa-user" aria-hidden="true"></i>
+                {% if profile_picture_url %}
+                    <img class="profile-dropdown-avatar" src="{{ profile_picture_url }}" alt="" loading="lazy">
+                {% else %}
+                    <span class="profile-dropdown-avatar-fallback" aria-hidden="true">{{ user_label|first|upper }}</span>
+                {% endif %}
                 <span class="hidden-xs" aria-hidden="true">{{ user_label }}</span>
                 <i class="fa fa-caret-down hidden-xs" aria-hidden="true"></i>
             </summary>
