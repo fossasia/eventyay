@@ -165,6 +165,9 @@ msgstr ""
 msgid "No schedule has been published yet. Please check back later."
 msgstr ""
 
+msgid "No sessions match the current filters."
+msgstr "Cap sessió coincideix amb els filtres actuals."
+
 msgid "No speakers found."
 msgstr ""
 
