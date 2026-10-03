@@ -99,7 +99,7 @@
 			@changeDay="setCurrentDay($event)",
 			@fav="fav($event)",
 			@unfav="unfav($event)")
-		.no-results(v-if="sessions && !sessions.length", role="status")
+		.no-results(v-if="sessions && !sessions.length && !publicFavsLoading", role="status")
 			.no-results-text {{ $t('No sessions match the current filters.') }}
 		list-pagination(
 			v-if="isFeaturedPage && featuredTotalPages > 1",
@@ -336,6 +336,7 @@ export default {
 			allTypes: [],
 			allLanguages: [],
 			onlyFavs: false,
+			publicFavsLoading: !!this.publicFavsUrl,
 			shareStarredSessions: false,
 			scheduleError: false,
 			scheduleUnavailable: false,
@@ -827,6 +828,7 @@ export default {
 				this.favsReadOnly = true
 				this.onlyFavs = true
 				this.favs = this.pruneFavs(await this.loadPublicFavs(), this.schedule)
+				this.publicFavsLoading = false
 			} else {
 				this.favs = this.pruneFavs(await this.loadFavs(), this.schedule)
 				if (!this.loggedIn && this.favs.length) this.showAnonymousFavsInfo()
@@ -865,6 +867,7 @@ export default {
 			this.onlyFavs = true
 			const publicFavs = await this.loadPublicFavs()
 			this.favs = this.featuredRemote ? publicFavs : this.pruneFavs(publicFavs, this.schedule)
+			this.publicFavsLoading = false
 		} else {
 			const savedFavs = await this.loadFavs()
 			this.favs = this.featuredRemote ? savedFavs : this.pruneFavs(savedFavs, this.schedule)

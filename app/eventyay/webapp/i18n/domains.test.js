@@ -43,6 +43,11 @@ test('schedule empty-result message is cataloged and loads translated', async ()
 	}
 })
 
+/**
+ * Read source msgids with empty values, which the runtime uses as English fallback text.
+ * @param {string} domain Gettext domain name.
+ * @returns {Record<string, string>} Source catalog without locale translations.
+ */
 function readSourceCatalog(domain) {
 	return parsePo(readFileSync(path.join(localeRoot, `${domain}.pot`), 'utf8'))
 }

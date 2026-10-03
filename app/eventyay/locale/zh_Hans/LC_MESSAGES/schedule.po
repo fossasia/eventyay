@@ -166,7 +166,7 @@ msgid "No schedule has been published yet. Please check back later."
 msgstr ""
 
 msgid "No sessions match the current filters."
-msgstr "没有符合当前筛选条件的会话。"
+msgstr "没有符合当前筛选条件的场次。"
 
 msgid "No speakers found."
 msgstr ""
