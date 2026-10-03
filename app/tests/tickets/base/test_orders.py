@@ -29,6 +29,7 @@ from eventyay.base.services.invoices import generate_invoice
 from eventyay.base.services.orders import (
     OrderChangeManager,
     OrderError,
+    _check_date,
     _create_order,
     approve_order,
     cancel_order,
@@ -539,6 +540,16 @@ class PaymentReminderTests(TestCase):
         assert len(djmail.outbox) == 0
 
     @classscope(attr='o')
+    @pytest.mark.django_db
+    def test_order_payment_term_check_accepts_event_timezone_name(self):
+        self.event.timezone = 'Europe/Berlin'
+        self.event.save()
+        self.event.settings.set('payment_term_last', (now() - timedelta(days=1)).date().isoformat())
+
+        with pytest.raises(OrderError):
+            _check_date(self.event, now())
+
+
     def test_sent_once(self):
         self.event.settings.mail_days_order_expire_warning = 12
         send_expiry_warnings(sender=self.event)
