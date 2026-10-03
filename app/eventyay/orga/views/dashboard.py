@@ -44,10 +44,11 @@ from eventyay.base.models.organizer import Organizer
 from eventyay.base.settings import is_event_series_creation_enabled, is_meetup_creation_enabled
 from eventyay.common.text.phrases import phrases
 from eventyay.common.permissions import is_admin_mode_active
+from django.db.models.functions import Trim
 from eventyay.common.views.mixins import EventPermissionRequired, PermissionRequired
 from eventyay.event.stages import get_stages
 from eventyay.orga.views.submission import SubmissionStatsMixin
-from eventyay.talk_rules.submission import get_missing_reviews
+from eventyay.talk_rules.submission import get_missing_reviews, speaker_profiles_for_user
 
 
 def start_redirect_view(request):
@@ -466,5 +467,60 @@ class EventDashboardView(EventPermissionRequired, SubmissionStatsMixin, Template
                 'current_schedule_version': current_schedule_version,
                 'active_reviewers': active_reviewers_count,
             }
+
+            # Readiness metrics
+            wip_schedule = getattr(event, 'wip_schedule', None)
+            
+            session_readiness = {
+                'confirmed': confirmed_sessions_count,
+                'canceled': event.submissions.filter(state=SubmissionStates.CANCELED).count(),
+                'scheduled': 0,
+                'unscheduled': confirmed_sessions_count if not wip_schedule else 0,
+                'with_conflicts': 0,
+            }
+            if wip_schedule:
+                confirmed_talks = wip_schedule.talks.filter(submission__state=SubmissionStates.CONFIRMED, is_visible=True)
+                confirmed_submissions = event.submissions.filter(state=SubmissionStates.CONFIRMED)
+                visible_submission_ids = confirmed_talks.values('submission_id')
+                unscheduled_submission_ids = confirmed_talks.filter(start__isnull=True, room__isnull=True).values('submission_id')
+                
+                session_readiness['scheduled'] = confirmed_talks.filter(start__isnull=False, room__isnull=False).values('submission_id').distinct().count()
+                session_readiness['unscheduled'] = confirmed_submissions.filter(
+                    Q(id__in=unscheduled_submission_ids) | ~Q(id__in=visible_submission_ids)
+                ).count()
+                session_readiness['with_conflicts'] = len({
+                    k.submission_id for k, v in wip_schedule.get_all_talk_warnings().items() 
+                    if v and k.submission.state == SubmissionStates.CONFIRMED and k.is_visible
+                })
+            
+            if can_list_speaker:
+                import html
+                from django.utils.html import strip_tags
+
+                def is_empty(text):
+                    if not text:
+                        return True
+                    return not html.unescape(strip_tags(text)).strip()
+
+                speaker_profiles = speaker_profiles_for_user(event, self.request.user)
+                
+                missing_bio_count = sum(1 for bio in speaker_profiles.values_list('biography', flat=True) if is_empty(bio))
+                missing_org_count = sum(1 for org in speaker_profiles.values_list('organization', flat=True) if is_empty(org))
+
+                speaker_readiness = {
+                    'total_speakers': speaker_profiles.count(),
+                    'confirmed_speakers': speaker_profiles.filter(user__submissions__state=SubmissionStates.CONFIRMED, user__submissions__event=event).distinct().count(),
+                    'missing_biography': missing_bio_count,
+                    'missing_profile_image': speaker_profiles.filter(Q(user__avatar__isnull=True) | Q(user__avatar='')).count(),
+                    'missing_affiliation': missing_org_count,
+                    'without_session': speaker_profiles.exclude(
+                        user__submissions__in=event.submissions.filter(
+                            state__in=[SubmissionStates.ACCEPTED, SubmissionStates.CONFIRMED]
+                        )
+                    ).distinct().count(),
+                }
+                result['speaker_readiness'] = speaker_readiness
+            
+            result['session_readiness'] = session_readiness
         
         return result
