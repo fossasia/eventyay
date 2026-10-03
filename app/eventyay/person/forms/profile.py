@@ -10,6 +10,7 @@ from django.conf import settings
 from django.contrib.auth.hashers import check_password
 from django.core.exceptions import ValidationError
 from django.db.models import Count, Q
+from django.db.models.functions import Trim
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.crypto import get_random_string
@@ -551,6 +552,19 @@ class SpeakerFilterForm(forms.Form):
         required=False,
         widget=EnhancedSelect,
     )
+    readiness = forms.ChoiceField(
+        required=False,
+        label=_('Readiness'),
+        choices=(
+            ('', _('All states')),
+            ('confirmed', _('Confirmed speakers')),
+            ('missing_biography', _('Missing biography')),
+            ('missing_profile_image', _('Missing profile image')),
+            ('missing_affiliation', _('Missing affiliation')),
+            ('without_session', _('Without session')),
+        ),
+        widget=EnhancedSelect,
+    )
     question = SafeModelChoiceField(queryset=TalkQuestion.objects.none(), required=False, widget=forms.HiddenInput())
 
     def __init__(self, *args, event=None, filter_arrival=False, **kwargs):
@@ -572,6 +586,35 @@ class SpeakerFilterForm(forms.Form):
             )
         if has_arrived := data.get('arrived'):
             queryset = queryset.filter(has_arrived=(has_arrived == 'true'))
+        
+        if readiness := data.get('readiness'):
+            if readiness == 'confirmed':
+                queryset = queryset.filter(user__submissions__state=SubmissionStates.CONFIRMED, user__submissions__event=self.event)
+            elif readiness == 'missing_biography':
+                import html
+                from django.utils.html import strip_tags
+                def is_empty(text):
+                    if not text:
+                        return True
+                    return not html.unescape(strip_tags(text)).strip()
+                empty_ids = [p.id for p in queryset if is_empty(p.biography)]
+                queryset = queryset.filter(id__in=empty_ids)
+            elif readiness == 'missing_profile_image':
+                queryset = queryset.filter(Q(user__avatar__isnull=True) | Q(user__avatar=''))
+            elif readiness == 'missing_affiliation':
+                import html
+                from django.utils.html import strip_tags
+                def is_empty(text):
+                    if not text:
+                        return True
+                    return not html.unescape(strip_tags(text)).strip()
+                empty_ids = [p.id for p in queryset if is_empty(p.organization)]
+                queryset = queryset.filter(id__in=empty_ids)
+            elif readiness == 'without_session':
+                queryset = queryset.exclude(
+                    user__submissions__in=self.event.submissions.filter(state__in=SubmissionStates.accepted_states)
+                )
+
         return queryset
 
 

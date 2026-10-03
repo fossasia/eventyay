@@ -5,6 +5,9 @@ from django.urls import reverse
 from django.utils.timezone import now
 from django_scopes import scope
 
+from eventyay.base.models.profile import SpeakerProfile
+from eventyay.base.models.submission import Submission, SubmissionStates
+
 
 
 @pytest.mark.parametrize("test_user", ("orga", "speaker", "None"))
@@ -186,3 +189,26 @@ def test_event_dashboard_includes_schedule_releases(event, orga_client, orga_use
     assert response.status_code == 200
     assert 'Schedule' in response.text
     assert '<div></div>' not in response.text
+
+
+@pytest.mark.django_db
+def test_dashboard_without_session_event_boundary(event, other_event, orga_client, speaker):
+    from eventyay.base.models.submission import SubmissionType
+
+    with scope(event=event):
+        SpeakerProfile.objects.create(event=event, user=speaker)
+        st1 = SubmissionType.objects.create(event=event, name='Type 1')
+        sub1 = Submission.objects.create(event=event, submission_type=st1, state=SubmissionStates.REJECTED, title='talk 1')
+        sub1.speakers.add(speaker)
+
+    with scope(event=other_event):
+        SpeakerProfile.objects.create(event=other_event, user=speaker)
+        st2 = SubmissionType.objects.create(event=other_event, name='Type 2')
+        sub2 = Submission.objects.create(event=other_event, submission_type=st2, state=SubmissionStates.ACCEPTED, title='talk 2')
+        sub2.speakers.add(speaker)
+
+    response = orga_client.get(event.orga_urls.base)
+    assert response.status_code == 200
+    speaker_readiness = response.context_data['speaker_readiness']
+    assert speaker_readiness['without_session'] == 1
+
