@@ -165,6 +165,9 @@ msgstr ""
 msgid "No schedule has been published yet. Please check back later."
 msgstr ""
 
+msgid "No sessions match the current filters."
+msgstr "मौजूदा फ़िल्टर से कोई सत्र मेल नहीं खाता।"
+
 msgid "No speakers found."
 msgstr ""
 

@@ -4,17 +4,44 @@
  */
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {existsSync, readFileSync} from 'node:fs'
+import {existsSync, readdirSync, readFileSync} from 'node:fs'
 import {fileURLToPath} from 'node:url'
 import path from 'node:path'
 import {importFromApp} from './app-deps.js'
 import {mergeCatalogWithEnglish} from './catalog.js'
 import {createGettextRuntime} from './runtime.js'
 import {parsePo} from './po.js'
+import {createGettextPlugin} from './vite-plugin.js'
 
 const {default: i18next} = await importFromApp('i18next')
 
 const localeRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../locale')
+
+test('schedule empty-result message is cataloged and loads translated', async () => {
+	const msgid = 'No sessions match the current filters.'
+	assert.equal(readSourceCatalog('schedule')[msgid], '')
+	const localeLoaders = {}
+	const translations = {}
+	const plugin = createGettextPlugin('schedule')
+	for (const locale of readdirSync(localeRoot)) {
+		const file = path.join(localeRoot, locale, 'LC_MESSAGES', 'schedule.po')
+		if (!existsSync(file)) continue
+		const result = plugin.transform(readFileSync(file, 'utf8'), file)
+		const catalog = JSON.parse(result.code.slice('export default '.length))
+		assert.ok(catalog[msgid], `${locale} is missing the empty-result translation`)
+		assert.notEqual(catalog[msgid], msgid)
+		translations[locale] = catalog[msgid]
+		localeLoaders[file] = async () => ({default: catalog})
+	}
+	assert.ok(Object.keys(translations).length)
+	const runtime = createGettextRuntime({domain: 'schedule', i18next: i18next.createInstance(), localeLoaders})
+	await runtime.init({lng: 'en'})
+	assert.equal(runtime.translate(msgid), msgid)
+	for (const locale of ['de', 'fr', 'hi', 'ar', 'ja']) {
+		await runtime.changeLanguage(locale)
+		assert.equal(runtime.translate(msgid), translations[locale], locale)
+	}
+})
 
 function readSourceCatalog(domain) {
 	return parsePo(readFileSync(path.join(localeRoot, `${domain}.pot`), 'utf8'))
