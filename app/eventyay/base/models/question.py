@@ -6,6 +6,7 @@ from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_scopes import ScopedManager
 from i18nfield.fields import I18nCharField
+from django_scopes import scope
 
 from eventyay.base.models import Choices
 from eventyay.base.models.fields import MultiStringField
@@ -430,7 +431,7 @@ class Answer(PretalxModel):
     def speaker_profile(self):
         if not self.person_id:
             return None
-        from django_scopes import scope
+            
         with scope(event=self.question.event):
             for profile in self.person.profiles.all():
                 if profile.event_id == self.question.event_id:
