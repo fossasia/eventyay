@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0080_speakerprofile_job_title_speakerprofile_organization'),
+        ('base', '0081_privacy_consent'),
     ]
 
     operations = [
