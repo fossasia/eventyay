@@ -14,7 +14,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView, View
 from django_context_decorator import context
 
-from eventyay.base.models import User
+from eventyay.base.models import SpeakerInvitationStates, User
 from eventyay.cfp.forms.auth import RecoverForm
 from eventyay.cfp.views.event import EventPageMixin
 from eventyay.common.text.phrases import phrases
@@ -92,6 +92,10 @@ class RecoverView(FormView):
 
     def form_valid(self, form):
         self.user.change_password(form.cleaned_data['password'])
+        for invitation in self.user.speaker_invitations.filter(
+            status=SpeakerInvitationStates.PENDING
+        ):
+            invitation.accept(user=self.user)
         messages.success(self.request, phrases.cfp.auth_reset_success)
         return redirect(build_login_url_with_next(self.request.event.urls.user_submissions))
 

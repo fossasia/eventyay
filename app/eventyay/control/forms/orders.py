@@ -1,5 +1,6 @@
 from datetime import date, datetime, time
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 
 from django import forms
 from django.conf import settings
@@ -73,7 +74,7 @@ class ExtendForm(I18nModelForm):
             if isinstance(data['expires'], date):
                 data['expires'] = make_aware(
                     datetime.combine(data['expires'], time(hour=23, minute=59, second=59)),
-                    self.instance.event.timezone,
+                    ZoneInfo(self.instance.event.settings.timezone),
                 )
             else:
                 data['expires'] = data['expires'].replace(hour=23, minute=59, second=59)
