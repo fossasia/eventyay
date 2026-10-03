@@ -1,4 +1,6 @@
+import dateutil.parser
 from django.db import models
+from django.utils.formats import date_format
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
@@ -481,6 +483,18 @@ class Answer(PretalxModel):
             return ', '.join(str(option.answer) for option in self.options.all())
         if self.question.variant == TalkQuestionVariant.COUNTRY:
             return get_country_name(self.answer) or self.answer or ''
+        if self.question.variant in (TalkQuestionVariant.DATE, TalkQuestionVariant.DATETIME):
+            if not self.answer:
+                return ''
+            try:
+                value = dateutil.parser.parse(self.answer)
+                if self.question.variant == TalkQuestionVariant.DATE:
+                    return date_format(value, 'SHORT_DATE_FORMAT')
+                if value.tzinfo:
+                    value = value.astimezone(self.event.tz)
+                return date_format(value, 'SHORT_DATETIME_FORMAT')
+            except (ValueError, OverflowError):
+                return self.answer
 
     @property
     def is_answered(self):
