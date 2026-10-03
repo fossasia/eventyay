@@ -67,14 +67,13 @@ class GmailAPIEmail:
         raw_message = email.message().as_bytes()
         encoded_message = base64.urlsafe_b64encode(raw_message).decode()
 
+        __, __, __, HttpError = require_google_api_dependencies()
         try:
-            _, _, _, HttpError = require_google_api_dependencies()
             service = build_gmail_service(self.credential)
             service.users().messages().send(userId='me', body={'raw': encoded_message}).execute()
             self.credential.record_send(recipient_count)
             return 1
         except Exception as exc:
-            _, _, _, HttpError = require_google_api_dependencies()
             if isinstance(exc, HttpError) and exc.resp.status == 401:
                 logger.warning("Got 401 from Gmail API, attempting to refresh token before permanent failure.")
                 from eventyay.base.gmail.oauth import build_google_credentials

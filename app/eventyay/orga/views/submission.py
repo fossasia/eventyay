@@ -1616,7 +1616,8 @@ class SubmissionImportProcessView(ImportProcessRedirectMixin, EventPermissionReq
         if 'async_id' in request.GET and settings.HAS_CELERY:
             return super().dispatch(request, *args, **kwargs)
         try:
-            _ = self.file
+            # Load the file here so a missing or expired upload redirects instead of raising 404.
+            self.file
         except Http404:
             messages.error(request, _('The uploaded CSV file is missing or expired. Please upload it again.'))
             return redirect(self.import_settings_url)

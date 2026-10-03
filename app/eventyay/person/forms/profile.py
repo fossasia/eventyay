@@ -267,7 +267,7 @@ class SpeakerProfileForm(
         if avatar and 'avatar' in self.files:
             try:
                 result = optimize_uploaded_image(avatar, 'avatar', None)
-                base_name, _ = os.path.splitext(avatar.name)
+                base_name = os.path.splitext(avatar.name)[0]
                 avatar = SimpleUploadedFile(
                     f"{base_name}.{result.optimized_ext}",
                     result.optimized.read(),
