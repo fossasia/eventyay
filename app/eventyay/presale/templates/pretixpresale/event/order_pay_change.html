@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load eventurl %}
 {% load money %}
-{% block title %}{% trans "Change payment method" %}{% endblock %}
+{% block title %}{% trans "Change payment method" %} ::{% endblock %}
 {% block content %}
     <h2>
         {% blocktrans trimmed with code=order.code %}

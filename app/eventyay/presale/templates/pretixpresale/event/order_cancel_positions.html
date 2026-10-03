@@ -3,7 +3,7 @@
 {% load eventurl %}
 {% load money %}
 {% load presale_locale %}
-{% block title %}{% trans 'Cancel selected tickets' %}{% endblock %}
+{% block title %}{% trans 'Cancel selected tickets' %} ::{% endblock %}
 {% block content %}
     <h2>
         {% blocktrans trimmed with code=order.code %}
