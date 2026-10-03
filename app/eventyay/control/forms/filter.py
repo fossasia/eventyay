@@ -1235,6 +1235,7 @@ class GiftCardFilterForm(FilterForm):
 
 class EventFilterForm(FilterForm):
     orders = {
+        'name': 'name',
         'slug': 'slug',
         'organizer': 'organizer__name',
         'date_from': 'order_from',

@@ -1,0 +1,201 @@
+/* 
+   Centralized CSS for Events Overview Redesign 
+   Scoped strictly to .events-table-wrapper
+*/
+
+.events-table-wrapper {
+    margin-top: 1rem;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 20px;
+    box-shadow: 0 1px 1px rgba(0,0,0,.05);
+    overflow-x: auto;
+}
+
+/* Tabs Navigation */
+.events-overview-tabs {
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid #ebebeb;
+}
+.events-overview-tabs > li > a {
+    border: none;
+    color: #555;
+    font-weight: 500;
+    padding: 10px 15px;
+    margin-right: 2px;
+}
+.events-overview-tabs > li > a:hover {
+    background-color: transparent;
+    color: #337ab7;
+    border-bottom: 2px solid #337ab7;
+}
+.events-overview-tabs > li.active > a,
+.events-overview-tabs > li.active > a:focus,
+.events-overview-tabs > li.active > a:hover {
+    border: none;
+    border-bottom: 2px solid #337ab7;
+    color: #337ab7;
+    background-color: transparent;
+}
+
+/* Event Logo */
+.events-table-wrapper .event-name-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.events-table-wrapper .event-logo {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    object-fit: cover;
+    border-radius: 50%;
+    background-color: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #666;
+}
+
+.events-table-wrapper .event-name-text {
+    min-width: 0; /* Ensures flex item can shrink */
+    word-break: break-all;
+    overflow-wrap: break-word;
+}
+
+/* Table Cells */
+.events-table-wrapper .table > tbody > tr > td {
+    vertical-align: middle;
+    padding: 5px 8px;
+    border-top: 1px solid #ebebeb;
+}
+.events-table-wrapper .table > thead > tr > th {
+    border-bottom: 2px solid #ebebeb;
+    color: #555;
+    font-weight: 600;
+}
+
+/* Column specific widths for perfectly even spacing */
+.events-table-wrapper .table > thead > tr > th:nth-child(1) { width: 5%; }
+.events-table-wrapper .table > thead > tr > th:nth-child(2) { width: 15%; }
+.events-table-wrapper .table > thead > tr > th:nth-child(3) { width: 15%; }
+.events-table-wrapper .table > thead > tr > th:nth-child(4) { width: 10%; }
+.events-table-wrapper .table > thead > tr > th:nth-child(5) { width: 10%; }
+.events-table-wrapper .table > thead > tr > th:nth-child(6) { width: 12%; }
+.events-table-wrapper .table > thead > tr > th:nth-child(7) { width: 12%; }
+.events-table-wrapper .table > thead > tr > th:nth-child(8) { width: 12%; }
+.events-table-wrapper .table > thead > tr > th:nth-child(9) { 
+    width: 4%;
+    white-space: nowrap; 
+}
+
+/* Stats Lists (Sessions & Speakers) */
+.events-table-wrapper .stats-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    line-height: 1.15;
+    font-size: 0.8em;
+}
+.events-table-wrapper .stats-list li {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1px;
+}
+.events-table-wrapper .stats-list li span:first-child {
+    color: #666;
+    margin-right: 8px;
+}
+.events-table-wrapper .stats-list li span:last-child {
+    font-weight: 600;
+}
+
+/* Stats Dropdown */
+.events-table-wrapper .stats-dropdown-toggle {
+    display: block;
+    text-align: left;
+    cursor: pointer;
+    color: inherit;
+    padding-top: 2px;
+    font-size: 0.9em;
+}
+
+
+/* Public URL */
+.events-table-wrapper .public-url-icon {
+    font-size: 0.85em;
+}
+
+.events-table-wrapper .public-url {
+    margin-left: 5px;
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 500;
+}
+.events-table-wrapper .public-url:hover {
+    text-decoration: underline;
+}
+
+/* Responsive constraints */
+@media (max-width: 991px) {
+    .events-table-wrapper {
+        padding: 10px;
+        border: none;
+        background: transparent;
+        box-shadow: none;
+    }
+    .events-table-wrapper .table-responsive {
+        border: 0;
+    }
+    
+    /* Fix flip actions overlapping with logo */
+    .events-table-wrapper table.events-table > tbody > tr > td.flip {
+        position: relative;
+        top: auto;
+        right: auto;
+        justify-content: flex-end;
+        padding-top: 15px;
+        border-top: 1px solid #eee;
+    }
+    .events-table-wrapper table.events-table > tbody > tr > td.flip::before {
+        display: block;
+    }
+    
+    /* Enable wrapping for td contents with multiple elements (e.g., stats list + ellipsis) */
+    .events-table-wrapper table.events-table > tbody > tr > td {
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+    
+    /* Format the stats list on mobile to align right */
+    .events-table-wrapper .stats-list {
+        width: 100%;
+    }
+    .events-table-wrapper .stats-list li {
+        justify-content: flex-end;
+    }
+    .events-table-wrapper .stats-list li span:first-child {
+        margin-right: 15px;
+    }
+    .events-table-wrapper .quotabox-more {
+        display: block;
+        width: 100%;
+        text-align: right;
+    }
+}
+
+/* Action Buttons */
+.events-table-wrapper .action-btn-group {
+    display: flex;
+    gap: 4px;
+    justify-content: flex-end;
+    white-space: nowrap;
+}
+
+/* Quotas */
+.events-table-wrapper .no-quota-msg {
+    font-size: 0.85em;
+}
