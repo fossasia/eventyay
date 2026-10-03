@@ -1,9 +1,14 @@
 import pytest
+from django.contrib.auth.models import AnonymousUser
 from django_scopes import scope
+
+from eventyay.base.models import Event
+from eventyay.common.templatetags.event_tags import can_view_featured_sessions_public
+from eventyay.talk_rules.submission import are_featured_submissions_visible
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("featured", ("always", "never", "after_schedule"))
+@pytest.mark.parametrize("featured", ("always", "never", "until_schedule", "after_schedule"))
 def test_featured_invisible_because_setting(
     client, django_assert_max_num_queries, event, featured, confirmed_submission
 ):
@@ -39,7 +44,7 @@ def test_featured_invisible_when_setting_unset(
     assert response.status_code == 404
 
 
-@pytest.mark.parametrize("featured", ("always", "never", "after_schedule"))
+@pytest.mark.parametrize("featured", ("always", "never", "until_schedule", "after_schedule"))
 @pytest.mark.django_db
 def test_featured_invisible_because_schedule(
     client, django_assert_max_num_queries, event, featured
@@ -165,3 +170,86 @@ def test_featured_page_applies_custom_background_color(client, event, confirmed_
     assert '--color-bg: #bd5454;' in css_response.text
 
 
+VISIBILITY_MODES = (
+    # show_featured value, visible before the first schedule publication, visible after it
+    ("never", False, False),
+    ("until_schedule", True, False),
+    ("after_schedule", True, True),
+    ("always", True, True),
+)
+
+
+def _prepare_featured_event(event, submission, featured):
+    with scope(event=event):
+        event.feature_flags["show_featured"] = featured
+        # ``after_schedule`` additionally requires published talk pages once a schedule exists.
+        event.talks_published = True
+        event.save()
+        submission.is_featured = True
+        submission.save()
+
+
+def _reloaded(event):
+    return Event.objects.get(pk=event.pk)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("featured,before_release,after_release", VISIBILITY_MODES)
+def test_featured_visibility_modes(event, confirmed_submission, featured, before_release, after_release):
+    """All four visibility modes, before and after the first schedule publication."""
+    _prepare_featured_event(event, confirmed_submission, featured)
+    user = AnonymousUser()
+
+    with scope(event=event):
+        assert are_featured_submissions_visible(user, _reloaded(event)) is before_release
+        event.release_schedule("1.0")
+        assert are_featured_submissions_visible(user, _reloaded(event)) is after_release
+
+    # Changing visibility must never drop the featured flag itself.
+    confirmed_submission.refresh_from_db()
+    assert confirmed_submission.is_featured is True
+
+
+NAV_TAB_VISIBILITY_MODES = (
+    # Same four modes, but the nav tab additionally requires featured content to be publicly
+    # visible. The featured submission here is not scheduled, so once a schedule is published
+    # only "always" (which short-circuits the content check) still shows the tab.
+    ("never", False, False),
+    ("until_schedule", True, False),
+    ("after_schedule", True, False),
+    ("always", True, True),
+)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("featured,before_release,after_release", NAV_TAB_VISIBILITY_MODES)
+def test_featured_nav_tab_visibility_modes(event, confirmed_submission, rf, featured, before_release, after_release):
+    """The public nav tab follows the same four modes as the featured page itself."""
+    _prepare_featured_event(event, confirmed_submission, featured)
+
+    def nav_tab_visible():
+        fresh = _reloaded(event)
+        request = rf.get("/")
+        request.event = fresh
+        request.user = AnonymousUser()
+        return can_view_featured_sessions_public({"request": request}, event=fresh)
+
+    with scope(event=event):
+        assert nav_tab_visible() is before_release
+        event.release_schedule("1.0")
+        assert nav_tab_visible() is after_release
+
+
+@pytest.mark.django_db
+def test_featured_until_schedule_reappears_when_switched_to_always(event, confirmed_submission):
+    """Switching away from the teaser mode brings the same featured sessions back."""
+    _prepare_featured_event(event, confirmed_submission, "until_schedule")
+    user = AnonymousUser()
+
+    with scope(event=event):
+        event.release_schedule("1.0")
+        assert are_featured_submissions_visible(user, _reloaded(event)) is False
+
+        event.feature_flags["show_featured"] = "always"
+        event.save()
+        assert are_featured_submissions_visible(user, _reloaded(event)) is True

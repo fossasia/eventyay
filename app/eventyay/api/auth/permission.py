@@ -90,6 +90,11 @@ class EventPermission(BasePermission):
 
         endpoint = getattr(view, 'endpoint', None)
         action = getattr(view, 'action', None)
+        if action is None and request.method not in SAFE_METHODS:
+            # Plain APIViews have no ViewSet action, so the check below never ran for them and
+            # a read-only token could write through them. Treat such writes as "actions" on the
+            # view's endpoint, and refuse them when the view declares no endpoint to scope to.
+            return bool(endpoint) and token.has_endpoint_permission(endpoint, 'actions')
         if endpoint and action and not token.has_endpoint_permission(endpoint, action):
             return False
         return True

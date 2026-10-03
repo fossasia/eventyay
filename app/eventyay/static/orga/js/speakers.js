@@ -57,14 +57,29 @@ const initUserSearch = () => {
             })
             .catch((error) => console.error("Could not load speaker autocomplete results", error))
     })
+    let nameInput = document.querySelector("#id_name")
+    if (!nameInput) nameInput = document.querySelector("#id_speaker")
+    if (!nameInput) nameInput = document.querySelector("#id_speaker-name")
+    // The name we filled in from the selected user. Anything the organizer
+    // types themselves is left alone.
+    let autoFilledName = null
+    const nameIsAutoFilled = () => nameInput && autoFilledName !== null && nameInput.value === autoFilledName
+    if (nameInput) {
+        nameInput.addEventListener("input", () => {
+            autoFilledName = null
+        })
+    }
     select.addEventListener("addItem", (ev) => {
-        if (ev.detail.customProperties && ev.detail.customProperties.name) {
-            let nameInput = document.querySelector("#id_name")
-            if (!nameInput) nameInput = document.querySelector("#id_speaker")
-            if (!nameInput) nameInput = document.querySelector("#id_speaker-name")
-            if (!nameInput || nameInput.value.length) return
-            nameInput.value = ev.detail.customProperties.name
-        }
+        if (!nameInput) return
+        if (nameInput.value.length && !nameIsAutoFilled()) return
+        const name = ev.detail.customProperties?.name || ""
+        nameInput.value = name
+        autoFilledName = name || null
+    })
+    select.addEventListener("removeItem", () => {
+        if (!nameIsAutoFilled()) return
+        nameInput.value = ""
+        autoFilledName = null
     })
     select.parentElement.parentElement
         .querySelector("input")

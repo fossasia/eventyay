@@ -34,9 +34,9 @@
     "@eslint/js": "^10.0.1",
     "@types/lodash": "^4.17.24",
     "@types/markdown-it": "^14.2.0",
-    "@types/node": "^26.6.2",
-    "@typescript-eslint/eslint-plugin": "^8.70.1",
-    "@typescript-eslint/parser": "^8.70.0",
+    "@types/node": "^26.6.3",
+    "@typescript-eslint/eslint-plugin": "^8.71.0",
+    "@typescript-eslint/parser": "^8.71.0",
     "@vitejs/plugin-vue": "^6.0.9",
     "@vue/eslint-config-typescript": "^14.9.0",
     "@vue/tsconfig": "^0.9.1",
@@ -45,7 +45,6 @@
     "eslint-plugin-vue-pug": "^1.0.0-alpha.6",
     "globals": "^17.12.0",
     "i18next-conv": "^17.0.0",
-    "i18next-parser": "^9.4.0",
     "pug": "^3.0.4",
     "postcss-syntax": "^0.36.2",
     "stylelint": "^17.15.0",
@@ -69,8 +68,19 @@
     "url": "git+https://github.com/pretalx/schedule-editor.git"
   },
   "overrides": {
+    "brace-expansion@2": "^2.1.7",
+    "fast-uri": "^3.1.6",
+    "js-yaml": "^4.3.2",
+    "minimatch@10": "^10.2.6",
     "stylelint-stylus": {
       "stylelint": "$stylelint"
+    },
+    "stylus@0.57.0": {
+      ".": "0.64.0",
+      "glob": "13.0.6"
+    },
+    "stylus": {
+      "glob": "13.0.6"
     }
   }
 }

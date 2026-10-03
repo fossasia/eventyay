@@ -1,3 +1,10 @@
+/* Status messages such as "Test email sent" appear above the composer; keep them clear of the page
+   header above and the first card below. */
+#page-wrapper > .container-fluid > .alert {
+  margin-top: 24px;
+  margin-bottom: 24px;
+}
+
 .delivery-test-controls {
   display: flex;
   gap: 0.5rem;
