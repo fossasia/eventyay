@@ -573,6 +573,27 @@ body:has(.td-dashboard) #page-content {
 .td-kpi-card.td-kpi-muted:hover {
   border-color: var(--td-muted)
 }
+.td-kpi-card.td-kpi-blue {
+  border: 1px solid var(--td-blue-mid);
+  background: linear-gradient(135deg,var(--td-blue-soft) 0,#fff 100%)
+}
+.td-kpi-card.td-kpi-blue:hover {
+  border-color: var(--td-blue)
+}
+.td-kpi-card.td-kpi-green {
+  border: 1px solid var(--td-green);
+  background: linear-gradient(135deg,var(--td-green-soft) 0,#fff 100%)
+}
+.td-kpi-card.td-kpi-green:hover {
+  border-color: var(--td-green)
+}
+.td-kpi-card.td-kpi-red {
+  border: 1px solid var(--td-red);
+  background: linear-gradient(135deg,var(--td-red-soft) 0,#fff 100%)
+}
+.td-kpi-card.td-kpi-red:hover {
+  border-color: var(--td-red)
+}
 .td-status-card.td-status-card-live {
   background: linear-gradient(135deg,var(--td-green-soft) 0,#fff 100%);
   border: 1px solid var(--td-green);
