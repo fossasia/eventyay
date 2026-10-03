@@ -456,13 +456,15 @@ class EventOrderFilterForm(OrderFilterForm):
 
         product = fdata.get('product')
         if product:
+            # Fully canceled orders only have canceled positions
+            position_filter = {} if fdata.get('status') == Order.STATUS_CANCELED else {'all_positions__canceled': False}
             if '-' in product:
                 var = product.split('-')[1]
-                qs = qs.filter(all_positions__variation_id=var, all_positions__canceled=False).distinct()
+                qs = qs.filter(all_positions__variation_id=var, **position_filter).distinct()
             else:
                 qs = qs.filter(
                     all_positions__product_id=fdata.get('product'),
-                    all_positions__canceled=False,
+                    **position_filter,
                 ).distinct()
 
         if fdata.get('subevent'):
