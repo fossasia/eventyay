@@ -15,22 +15,37 @@
 {% block error_details %}
     <h5>
         <p class="ml-auto mr-auto text-center mt-3">
-            {% trans "If you are not an organiser for this event, please take a step back." %}
-        </p>
-        <p class="ml-auto mr-auto text-center">
-            {% trans "If you are a super admin, please sign in with super admin." %}
+            {% if request.event %}
+                {% blocktrans trimmed with event_name=request.event.name %}
+                    You're not on a team for <strong>{{ event_name }}</strong>. As a platform admin, you can still open it by switching on Admin mode.
+                {% endblocktrans %}
+            {% elif request.organizer %}
+                {% blocktrans trimmed with organizer_name=request.organizer.name %}
+                    You're not on a team for the organizer <strong>{{ organizer_name }}</strong>. As a platform admin, you can still open it by switching on Admin mode.
+                {% endblocktrans %}
+            {% else %}
+                {% trans "If you are not an organiser for this event, please take a step back." %}
+                <br>
+                {% trans "If you are a super admin, please sign in with super admin." %}
+            {% endif %}
         </p>
     </h5>
     
-    <div class="mt-4 text-center" style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+    <div class="mt-4 mb-4 text-center">
+        <p class="text-muted small">
+            <i class="fa fa-info-circle"></i> {% trans "Everything you do in Admin mode is logged." %}
+        </p>
+    </div>
+
+    <div class="text-center" style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
         <form action="{% url 'control:user.sudo' %}?next={{ request.path|add:'?'|add:request.GET.urlencode|urlencode }}" method="post" style="margin: 0;">
             {% csrf_token %}
             <button type="submit" class="btn btn-white btn-lg shadow-sm">
-                <i class="fa fa-id-card mr-2"></i> {% trans "Sign in with super admin" %}
+                {% trans "Switch on Admin mode" %}
             </button>
         </form>
         <a href="javascript:history.back()" class="btn btn-outline-white btn-lg">
-            <i class="fa fa-arrow-left mr-2"></i>{% trans "Take a step back" %}
+            {% trans "Go back" %}
         </a>
     </div>
 {% endblock error_details %}
