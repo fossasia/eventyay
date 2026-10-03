@@ -53,13 +53,6 @@
                 <fieldset>
                     <legend id="proposal">{% translate "Proposal" %}</legend>
             {% endif %}
-            {% if form.room %}
-                <div id="show-if-state" {% if action == "create" %}class="d-none"{% endif %}>
-                    {{ form.room.as_field_group }}
-                    {{ form.start.as_field_group }}
-                    {{ form.end.as_field_group }}
-                </div>
-            {% endif %}
             {% if form.instance.median_score != None and can_view_all_reviews %}
                 <div class="form-group row">
                     <label class="col-md-3 col-form-label">
