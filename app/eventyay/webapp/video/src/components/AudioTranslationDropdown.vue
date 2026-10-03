@@ -24,18 +24,21 @@
 				:aria-label="resolvedLabel"
 			)
 				li(
-					v-for="(language, index) of languageOptions",
-					:key="language",
+					v-for="(option, index) of languageOptions",
+					:key="option.key",
 					role="option",
-					:aria-selected="language === internalSelectedLanguage ? 'true' : 'false'",
-					:class="{active: language === internalSelectedLanguage, highlight: index === highlightedIndex}",
-					@click="selectLanguage(language)",
+					:aria-selected="index === selectedIndex ? 'true' : 'false'",
+					:class="{active: index === selectedIndex, highlight: index === highlightedIndex}",
+					@click="selectLanguage(index)",
 					@mouseenter="highlightedIndex = index"
-				) {{ language }}
+				)
+					span.language-name {{ option.language }}
+					span.stream-type(v-if="option.streamType") {{ option.streamType }}
 </template>
 <script>
 import { createPopper } from '@popperjs/core'
 import { normalizeAudioTranslationSource } from 'lib/validators'
+import { interpretationStreamType } from '../interpretation-streams'
 
 let dropdownId = 0
 
@@ -58,7 +61,7 @@ export default {
 	},
 	data() {
 		return {
-			internalSelectedLanguage: null,
+			selectedIndex: -1,
 			languageOptions: [],
 			isSyncingSelection: false,
 			menuOpen: false,
@@ -71,12 +74,19 @@ export default {
 		resolvedLabel() {
 			return this.label || this.$t('Interpretation')
 		},
+		internalSelectedLanguage() {
+			return this.languageOptions[this.selectedIndex]?.language ?? null
+		},
 	},
 	watch: {
 		languages: {
 			immediate: true,
 			handler(newLanguages) {
-				this.languageOptions = newLanguages.map(entry => entry.language)
+				this.languageOptions = newLanguages.map((entry, index) => ({
+					key: `${index}:${entry.language}:${entry.tts_ws_url || entry.whep_url || entry.whip_url || entry.url || entry.youtube_id || ''}`,
+					language: entry.language,
+					streamType: this.resolveStreamTypeLabel(entry)
+				}))
 				this.syncSelectedLanguage()
 			}
 		},
@@ -86,9 +96,9 @@ export default {
 				this.syncSelectedLanguage()
 			}
 		},
-		internalSelectedLanguage(newLanguage) {
+		selectedIndex(index) {
 			if (this.isSyncingSelection) return
-			if (newLanguage) {
+			if (index >= 0) {
 				this.sendLanguageChange()
 			}
 		}
@@ -97,29 +107,46 @@ export default {
 		this.destroyPopper()
 	},
 	methods: {
+		resolveStreamTypeLabel(entry) {
+			const streamType = interpretationStreamType(entry)
+			if (streamType === 'ai') return this.$t('AI')
+			if (streamType === 'human') return this.$t('Human')
+			return null
+		},
+		findLanguageIndex(language) {
+			return this.languageOptions.findIndex(option => option.language === language)
+		},
 		syncSelectedLanguage() {
-			const fallback = this.languageOptions.includes('Original') ? 'Original' : null
-			const nextLanguage = this.languageOptions.includes(this.selectedLanguage) ? this.selectedLanguage : fallback
-			if (this.internalSelectedLanguage === nextLanguage) return
+			// Nothing to do when the current pick already matches the parent.
+			if (this.internalSelectedLanguage === this.selectedLanguage) return
+			let nextIndex = this.findLanguageIndex(this.selectedLanguage)
+			if (nextIndex === -1) nextIndex = this.findLanguageIndex('Original')
+			if (this.selectedIndex === nextIndex) return
 			this.isSyncingSelection = true
-			this.internalSelectedLanguage = nextLanguage
+			this.selectedIndex = nextIndex
 			this.$nextTick(() => {
 				this.isSyncingSelection = false
 			})
 		},
 		sendLanguageChange() {
-			const selected = this.languages.find(item => item.language === this.internalSelectedLanguage)
+			const selected = this.languages[this.selectedIndex]
 			const audioSource = normalizeAudioTranslationSource(selected?.url || selected?.youtube_id)
 			const useVideo = selected?.use_video || false
 
-			this.$emit('languageChanged', { ...(selected || {}), url: audioSource, useVideo })
+			this.$emit('languageChanged', {
+				...(selected || {}),
+				url: audioSource,
+				useVideo,
+				whepUrl: selected?.whep_url || selected?.whip_url || null,
+				ttsWsUrl: selected?.tts_ws_url || null
+			})
 		},
 		async toggleMenu() {
 			if (this.menuOpen) {
 				this.closeMenu()
 				return
 			}
-			this.highlightedIndex = Math.max(this.languageOptions.indexOf(this.internalSelectedLanguage), 0)
+			this.highlightedIndex = Math.max(this.selectedIndex, 0)
 			this.menuOpen = true
 			await this.$nextTick()
 			if (!this.$refs.shell || !this.$refs.menu) {
@@ -160,8 +187,9 @@ export default {
 			this.popper?.destroy()
 			this.popper = null
 		},
-		selectLanguage(language) {
-			this.internalSelectedLanguage = language
+		selectLanguage(index) {
+			if (index < 0 || index >= this.languageOptions.length) return
+			this.selectedIndex = index
 			this.closeMenu()
 		},
 		onToggleKeydown(event) {
@@ -176,8 +204,7 @@ export default {
 					this.toggleMenu()
 					return
 				}
-				const language = this.languageOptions[this.highlightedIndex]
-				if (language) this.selectLanguage(language)
+				this.selectLanguage(this.highlightedIndex)
 				return
 			}
 			if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
@@ -269,7 +296,9 @@ ul.language-menu
 	line-height: 16px
 	color: var(--clr-text-primary, #1e293b)
 	li
-		display: block
+		display: flex
+		align-items: center
+		gap: 6px
 		box-sizing: border-box
 		margin: 0
 		height: 26px
@@ -293,6 +322,19 @@ ul.language-menu
 			font-weight: 600
 			color: var(--clr-primary, #2185d0)
 			background-color: var(--clr-primary-alpha-18, rgba(33, 133, 208, 0.12))
+		.language-name
+			overflow: hidden
+			text-overflow: ellipsis
+		.stream-type
+			flex: none
+			margin-left: auto
+			padding: 0 5px
+			border-radius: 9px
+			background: var(--clr-grey-100, #f1f5f9)
+			color: var(--clr-text-secondary, #64748b)
+			font-size: 10px
+			font-weight: 400
+			line-height: 16px
 
 .audio-translation-blocker
 	position: fixed
