@@ -2,6 +2,7 @@ import datetime as dt
 import json
 import logging
 import re
+from collections.abc import Mapping
 from pathlib import Path
 from typing import TypedDict
 from urllib.parse import urlparse
@@ -20,18 +21,23 @@ from django.utils.translation import gettext as _
 from django_scopes import scope
 
 from eventyay.base.i18n import language
+from eventyay.base.import_utils import normalize_header_value
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.models import (
     Answer,
+    AnswerOption,
     CachedFile,
     Event,
     Room,
     SpeakerProfile,
+    SpeakerSocialLink,
     Submission,
     Tag,
     Track,
     User,
 )
+from eventyay.helpers.countries import CachedCountries
+from eventyay.common.social_links import parse_social_links_from_csv
 from eventyay.base.models.question import (
     TalkQuestion,
     TalkQuestionRequired,
@@ -46,13 +52,11 @@ from eventyay.base.services.tasks import ProfiledEventTask
 from eventyay.celery_app import app
 from eventyay.consts import SizeKey
 
-
 class AmbiguousTimeError(ValueError):
     pass
 
 class NonExistentTimeError(ValueError):
     pass
-
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +87,9 @@ NORMALIZED_SPEAKER_SETTINGS = {
         'last_name',
         'email',
         'biography',
+        'job_title',
+        'organization',
+        'social_links',
         'identifier',
         'locale',
         'linked_submissions',
@@ -156,10 +163,8 @@ LEGACY_IMPORT_QUESTION_DEFINITIONS = {
     },
 }
 
-
 class ImportExecutionError(Exception):
     pass
-
 
 class ImportResult(TypedDict):
     created: int
@@ -167,20 +172,23 @@ class ImportResult(TypedDict):
     skipped: int
     errors: list[str]
 
+def _sanitize_import_text(value) -> str:
+    text = str(value or '').strip()
+    if text.startswith("'") and len(text) > 1 and text[1] in ('=', '+', '-', '@'):
+        text = text[1:].strip()
+    return text
 
 def _resolve_csv(mapping_value, record):
     if not mapping_value:
         return ''
     if mapping_value.startswith('csv:'):
-        return (record.get(mapping_value[4:]) or '').strip()
+        return _sanitize_import_text(record.get(mapping_value[4:]))
     if mapping_value.startswith('static:'):
         return mapping_value[7:]
     return ''
 
-
 def _truthy(value):
     return value.lower() in ('yes', 'true', '1', 'ja', 'oui', 'y')
-
 
 def _normalize_import_value(value, *, key=None):
     if value is None:
@@ -195,14 +203,11 @@ def _normalize_import_value(value, *, key=None):
         return value.isoformat()
     return str(value).strip()
 
-
 def _normalize_import_record(record, settings):
     return {key: _normalize_import_value(record.get(key), key=key) for key in settings}
 
-
 def _normalize_extra_key(key) -> str:
     return re.sub(r'[^a-z0-9]+', '_', str(key or '').strip().lower()).strip('_')
-
 
 def _humanize_import_key(key: str) -> str:
     label_overrides = {
@@ -216,7 +221,6 @@ def _humanize_import_key(key: str) -> str:
         return label_overrides[key]
     return key.replace('_', ' ').strip().capitalize()
 
-
 def _normalize_import_extras(extras) -> dict:
     if not isinstance(extras, dict):
         return {}
@@ -228,7 +232,6 @@ def _normalize_import_extras(extras) -> dict:
             continue
         normalized[normalized_key] = value
     return normalized
-
 
 def _infer_question_variant(key: str, value) -> str:
     key = key.lower()
@@ -244,7 +247,6 @@ def _infer_question_variant(key: str, value) -> str:
         return TalkQuestionVariant.TEXT
     return TalkQuestionVariant.STRING
 
-
 def _build_import_question_definition(target: str, key: str, value) -> dict:
     registry = LEGACY_IMPORT_QUESTION_DEFINITIONS.get(target, {})
     definition = registry.get(key, {})
@@ -258,10 +260,8 @@ def _build_import_question_definition(target: str, key: str, value) -> dict:
         ),
     }
 
-
 def _build_import_question_key(target: str, key: str) -> str:
     return f'{LEGACY_IMPORT_KEY_PREFIX}:{target}:{key}'
-
 
 def _next_import_question_position(event: Event, target: str, caches: dict) -> int:
     positions = caches.setdefault('import_question_positions', {})
@@ -274,7 +274,6 @@ def _next_import_question_position(event: Event, target: str, caches: dict) -> i
         )
     positions[target] += 1
     return positions[target]
-
 
 def _upsert_import_question(event: Event, target: str, key: str, value, caches: dict) -> TalkQuestion:
     cache_key = (target, key)
@@ -325,6 +324,241 @@ def _upsert_import_question(event: Event, target: str, key: str, value, caches: 
     question_cache[cache_key] = question
     return question
 
+_CHOICE_QUESTION_VARIANTS = frozenset(
+    (TalkQuestionVariant.CHOICES, TalkQuestionVariant.MULTIPLE, TalkQuestionVariant.SELECT)
+)
+
+def _parse_question_mappings(settings: dict) -> list[tuple[int, str]]:
+    question_mappings = []
+    for key, value in settings.items():
+        if key.startswith('question_') and value:
+            try:
+                question_id = int(key.split('_', 1)[1])
+            except (ValueError, IndexError):
+                continue
+            question_mappings.append((question_id, value))
+    return question_mappings
+
+def _build_question_cache(event: Event, question_ids: set[int], *, target: str) -> dict:
+    question_cache = {}
+    if not question_ids:
+        return question_cache
+    questions = TalkQuestion.objects.filter(
+        event=event,
+        pk__in=question_ids,
+        target=target,
+        active=True,
+    ).prefetch_related('options')
+    for question in questions:
+        option_lookup = None
+        if question.variant in _CHOICE_QUESTION_VARIANTS:
+            option_lookup = {str(option.answer).strip().casefold(): option for option in question.options.all()}
+        question_cache[question.pk] = (question, option_lookup)
+    return question_cache
+
+def _load_mapped_questions(event: Event, settings: dict, *, target: str) -> tuple[list[tuple[int, str]], dict]:
+    question_mappings = _parse_question_mappings(settings)
+    question_ids = {question_id for question_id, _ in question_mappings}
+    question_cache = _build_question_cache(event, question_ids, target=target)
+    question_mappings = [
+        (question_id, value) for question_id, value in question_mappings if question_id in question_cache
+    ]
+    return question_mappings, question_cache
+
+def _parse_new_question_specs(settings: dict) -> list[dict]:
+    raw_specs = settings.get('new_questions') or []
+    if isinstance(raw_specs, str):
+        try:
+            raw_specs = json.loads(raw_specs)
+        except ValueError:
+            return []
+    if not isinstance(raw_specs, list):
+        return []
+    specs = []
+    allowed_variants = {
+        TalkQuestionVariant.STRING,
+        TalkQuestionVariant.TEXT,
+        TalkQuestionVariant.NUMBER,
+        TalkQuestionVariant.BOOLEAN,
+        TalkQuestionVariant.URL,
+        TalkQuestionVariant.VIDEO,
+        TalkQuestionVariant.DATE,
+        TalkQuestionVariant.DATETIME,
+        TalkQuestionVariant.COUNTRY,
+        TalkQuestionVariant.PHONE_NUMBER,
+        TalkQuestionVariant.CHOICES,
+        TalkQuestionVariant.MULTIPLE,
+        TalkQuestionVariant.SELECT,
+    }
+    for item in raw_specs:
+        if not isinstance(item, dict):
+            continue
+        header = str(item.get('header') or '').strip()
+        label = str(item.get('label') or header).strip()
+        mapping = str(item.get('mapping') or '').strip()
+        variant = str(item.get('variant') or TalkQuestionVariant.STRING).strip()
+        if not header or not label:
+            continue
+        if variant not in allowed_variants:
+            variant = TalkQuestionVariant.STRING
+        if not mapping:
+            mapping = f'csv:{header}'
+        if not mapping.startswith('csv:'):
+            continue
+        specs.append(
+            {
+                'header': header,
+                'label': label[:800],
+                'variant': variant,
+                'mapping': mapping,
+            }
+        )
+    return specs
+
+def _question_label_keys(question: TalkQuestion) -> set[str]:
+    text = question.question
+    labels = [str(text)]
+    data = getattr(text, 'data', None)
+    if isinstance(data, Mapping):
+        labels.extend(str(value) for value in data.values() if value)
+    return {normalize_header_value(label) for label in labels if label}
+
+def _find_question_by_label(event: Event, target: str, label: str) -> TalkQuestion | None:
+    needle = normalize_header_value(label)
+    if not needle:
+        return None
+    matches = []
+    for question in TalkQuestion.objects.filter(event=event, target=target, active=True):
+        if needle in _question_label_keys(question):
+            matches.append(question)
+    if len(matches) == 1:
+        return matches[0]
+    if len(matches) > 1:
+        raise ImportExecutionError(
+            _('Ambiguous question mapping for "{label}": multiple active questions match this name. Please use explicit mapping instead.').format(
+                label=label
+            )
+        )
+    return None
+
+def _get_or_create_csv_question(event: Event, target: str, spec: dict, caches: dict) -> TalkQuestion:
+    existing = _find_question_by_label(event, target, spec['label'])
+    if existing:
+        update_fields = []
+        if existing.import_key and spec.get('variant') and existing.variant != spec['variant']:
+            existing.variant = spec['variant']
+            update_fields.append('variant')
+        if not existing.active:
+            existing.active = True
+            update_fields.append('active')
+        if update_fields:
+            existing.save(update_fields=update_fields)
+        return existing
+    key = _normalize_extra_key(spec['label']) or 'custom_field'
+    cache_key = (target, key)
+    created_cache = caches.setdefault('import_questions', {})
+    if cache_key in created_cache:
+        return created_cache[cache_key]
+    import_key = _build_import_question_key(target, key)
+    question = TalkQuestion.all_objects.filter(event=event, target=target, import_key=import_key).first()
+    if question is None:
+        question = TalkQuestion.objects.create(
+            event=event,
+            target=target,
+            import_key=import_key,
+            is_imported=False,
+            active=True,
+            question_required=TalkQuestionRequired.OPTIONAL,
+            variant=spec['variant'],
+            question=spec['label'],
+            is_public=False,
+            contains_personal_data=False,
+            is_visible_to_reviewers=True,
+            position=_next_import_question_position(event, target, caches),
+        )
+    elif not question.active:
+        question.active = True
+        question.save(update_fields=['active'])
+    created_cache[cache_key] = question
+    return question
+
+def _apply_new_question_mappings(
+    event: Event,
+    settings: dict,
+    question_mappings: list[tuple[int, str]],
+    question_cache: dict,
+    *,
+    target: str,
+    caches: dict,
+) -> tuple[list[tuple[int, str]], dict]:
+    mapped_ids = {question_id for question_id, _mapping in question_mappings}
+    for spec in _parse_new_question_specs(settings):
+        question = _get_or_create_csv_question(event, target, spec, caches)
+        if question.pk in mapped_ids:
+            continue
+        question_mappings.append((question.pk, spec['mapping']))
+        option_lookup = None
+        if question.variant in _CHOICE_QUESTION_VARIANTS:
+            option_lookup = {str(option.answer).strip().casefold(): option for option in question.options.all()}
+        question_cache[question.pk] = (question, option_lookup)
+        mapped_ids.add(question.pk)
+    return question_mappings, question_cache
+
+def _option_lookup_for_question(question: TalkQuestion, option_lookup: dict | None) -> dict:
+    if option_lookup is not None:
+        return option_lookup
+    return {str(option.answer).strip().casefold(): option for option in question.options.all()}
+
+def _discard_created_choice_options(created_options: list[tuple[dict, str]]) -> None:
+    for lookup, key in created_options:
+        lookup.pop(key, None)
+
+
+def _matched_choice_options(
+    answer_text: str,
+    question: TalkQuestion,
+    option_lookup: dict | None,
+    *,
+    created_options: list[tuple[dict, str]] | None = None,
+) -> list:
+    lookup = _option_lookup_for_question(question, option_lookup)
+    if question.variant == TalkQuestionVariant.MULTIPLE:
+        values = [opt.strip() for opt in answer_text.split(',') if opt.strip()]
+    else:
+        values = [answer_text.strip()] if answer_text.strip() else []
+
+    matched = []
+    for value in values:
+        option_key = value.casefold()
+        option = lookup.get(option_key)
+        if option is None:
+            if not question.import_key:
+                raise ImportExecutionError(
+                    _('Invalid answer "{value}" for question "{question}".').format(
+                        value=value,
+                        question=question.question,
+                    )
+                )
+            option = AnswerOption.objects.create(question=question, answer=value)
+            lookup[option_key] = option
+            if created_options is not None:
+                created_options.append((lookup, option_key))
+        matched.append(option)
+    return matched
+
+def _resolve_country_code(value: str) -> str:
+    raw = _sanitize_import_text(value)
+    if not raw:
+        return ''
+    countries = CachedCountries().countries
+    code = raw.upper()
+    if len(code) == 2 and code in countries:
+        return code
+    needle = raw.casefold()
+    for iso, name in countries.items():
+        if str(name).casefold() == needle:
+            return iso
+    return code
 
 def _serialize_answer_value(value, variant: str) -> str:
     if variant == TalkQuestionVariant.BOOLEAN:
@@ -337,11 +571,10 @@ def _serialize_answer_value(value, variant: str) -> str:
     if isinstance(value, (list, tuple)):
         return ', '.join(str(item).strip() for item in value if str(item).strip())
 
-    answer_value = str(value).strip()
+    answer_value = _sanitize_import_text(value)
     if variant == TalkQuestionVariant.COUNTRY:
-        return answer_value.upper()
+        return _resolve_country_code(answer_value)
     return answer_value
-
 
 def _split_slide_links(value: str) -> list[str]:
     if not value:
@@ -354,7 +587,6 @@ def _split_slide_links(value: str) -> list[str]:
                 slide_links.append(cleaned)
     return slide_links
 
-
 def _dedupe_preserving_order(values: list[str]) -> list[str]:
     seen = set()
     result = []
@@ -365,10 +597,8 @@ def _dedupe_preserving_order(values: list[str]) -> list[str]:
         result.append(value)
     return result
 
-
 def _is_pdf_link(value: str) -> bool:
     return Path(urlparse(value).path).suffix.lower() == '.pdf'
-
 
 def import_speaker_records(event: Event, records, acting_user) -> ImportResult:
     created = 0
@@ -404,7 +634,6 @@ def import_speaker_records(event: Event, records, acting_user) -> ImportResult:
                 )
 
     return {'created': created, 'updated': updated, 'skipped': skipped, 'errors': errors}
-
 
 def import_submission_records(event: Event, records, acting_user) -> ImportResult:
     submission_types = list(SubmissionType.objects.filter(event=event))
@@ -459,7 +688,6 @@ def import_submission_records(event: Event, records, acting_user) -> ImportResul
 
     return {'created': created, 'updated': updated, 'skipped': skipped, 'errors': errors}
 
-
 def _normalize_speaker_identifier(identifier: str) -> str:
     normalized = identifier.strip()
     if not normalized:
@@ -467,7 +695,6 @@ def _normalize_speaker_identifier(identifier: str) -> str:
     if len(normalized) > USER_CODE_MAX_LENGTH:
         return ''
     return normalized
-
 
 def _find_submission_by_ref(event, ref):
     ref = ref.strip()
@@ -484,7 +711,6 @@ def _find_submission_by_ref(event, ref):
     except (ValueError, TypeError):
         pass
     return qs.filter(title__iexact=ref).first()
-
 
 def _find_user_for_speaker(event, ref):
     ref = ref.strip()
@@ -504,7 +730,6 @@ def _find_user_for_speaker(event, ref):
         return profile.user
     return None
 
-
 def _normalize_email_address(value: str) -> str:
     normalized = value.strip().lower()
     if not normalized:
@@ -514,7 +739,6 @@ def _normalize_email_address(value: str) -> str:
     except ValidationError:
         return ''
     return normalized
-
 
 def _split_csv_values(raw_value: str) -> list[str]:
     if not raw_value:
@@ -526,7 +750,6 @@ def _split_csv_values(raw_value: str) -> list[str]:
             values.append(stripped)
     return values
 
-
 def _zip_speaker_refs_and_names(linked_speakers: str, speakers_val: str) -> list[tuple[str, str]]:
     refs = _split_csv_values(linked_speakers)
     names = _split_csv_values(speakers_val)
@@ -537,7 +760,6 @@ def _zip_speaker_refs_and_names(linked_speakers: str, speakers_val: str) -> list
     pairs.extend(('', name) for name in names)
     return pairs
 
-
 def _speaker_cache_key(speaker_ref: str, speaker_name: str) -> str:
     normalized_ref = speaker_ref.strip().lower()
     if normalized_ref:
@@ -546,7 +768,6 @@ def _speaker_cache_key(speaker_ref: str, speaker_name: str) -> str:
     if normalized_name:
         return f'name:{normalized_name}'
     return ''
-
 
 def _upsert_session_speaker(event, speaker_ref: str, speaker_name: str):
     normalized_ref = speaker_ref.strip()
@@ -611,7 +832,6 @@ def _upsert_session_speaker(event, speaker_ref: str, speaker_name: str):
     SpeakerProfile.objects.get_or_create(user=user, event=event)
     return user
 
-
 @app.task(base=ProfiledEventTask, bind=True, throws=(ImportExecutionError,))
 def import_speakers(self, event: Event, fileid: str, settings: dict, locale: str, user_id) -> ImportResult:
     try:
@@ -632,6 +852,26 @@ def import_speakers(self, event: Event, fileid: str, settings: dict, locale: str
                 
                 total = len(parsed)
 
+                question_mappings, question_cache = _load_mapped_questions(
+                    event, settings, target=TalkQuestionTarget.SPEAKER
+                )
+                caches = {
+                    'question_mappings': question_mappings,
+                    'question_cache': question_cache,
+                    'import_questions': {},
+                    'import_question_positions': {},
+                }
+                question_mappings, question_cache = _apply_new_question_mappings(
+                    event,
+                    settings,
+                    question_mappings,
+                    question_cache,
+                    target=TalkQuestionTarget.SPEAKER,
+                    caches=caches,
+                )
+                caches['question_mappings'] = question_mappings
+                caches['question_cache'] = question_cache
+
                 created = 0
                 updated = 0
                 skipped = 0
@@ -641,7 +881,7 @@ def import_speakers(self, event: Event, fileid: str, settings: dict, locale: str
                     if total > 0 and (row_num - 2) % max(1, total // 10) == 0:
                         self.update_state(state='PROGRESS', meta={'value': round((row_num - 2) / total * 100)})
                     try:
-                        was_created = _import_speaker_row(event, settings, record, acting_user)
+                        was_created = _import_speaker_row(event, settings, record, acting_user, caches=caches)
                         if was_created:
                             created += 1
                         else:
@@ -666,7 +906,6 @@ def import_speakers(self, event: Event, fileid: str, settings: dict, locale: str
     finally:
         cf.delete()
     return {'created': created, 'updated': updated, 'skipped': skipped, 'errors': errors}
-
 
 def _apply_user_optional_fields(user, *, locale_val, avatar_url, avatar_source, avatar_license, identifier):
     """Apply optional field updates to a User instance and return changed field names."""
@@ -695,7 +934,6 @@ def _apply_user_optional_fields(user, *, locale_val, avatar_url, avatar_source, 
             update_fields.append('code')
     return update_fields
 
-
 def _normalize_avatar_url(value: str) -> str:
     avatar_url = (value or '').strip()
     if avatar_url.startswith('//'):
@@ -704,7 +942,6 @@ def _normalize_avatar_url(value: str) -> str:
     if parsed.scheme in {'http', 'https'} and parsed.netloc:
         return avatar_url
     return ''
-
 
 def _set_external_avatar_url(user: User, avatar_url: str) -> list[str]:
     avatar_url = _normalize_avatar_url(avatar_url)
@@ -772,8 +1009,6 @@ def _set_external_avatar_url(user: User, avatar_url: str) -> list[str]:
     user.avatar.save(filename, ContentFile(content), save=False)
     return ['avatar']
 
-
-
 def _parse_featured_position(value: str) -> int | None:
     if not value:
         return None
@@ -783,8 +1018,27 @@ def _parse_featured_position(value: str) -> int | None:
         return None
     return position if position >= 0 else None
 
+def _sync_speaker_social_links(profile: SpeakerProfile, raw_value: str):
+    pairs = parse_social_links_from_csv(raw_value)
+    if not pairs:
+        return
+    existing = {(link.network, link.url) for link in profile.social_links.all()}
+    for network, url in pairs:
+        if (network, url) in existing:
+            continue
+        SpeakerSocialLink.objects.create(profile=profile, network=network, url=url)
+        existing.add((network, url))
 
-def _sync_import_answers(*, event: Event, target: str, extras, caches: dict, submission=None, person=None):
+def _sync_import_answers(
+    *,
+    event: Event,
+    target: str,
+    extras,
+    caches: dict,
+    submission=None,
+    person=None,
+    created_options: list[tuple[dict, str]] | None = None,
+):
     if extras is None:
         return
 
@@ -800,6 +1054,7 @@ def _sync_import_answers(*, event: Event, target: str, extras, caches: dict, sub
             submission=submission,
             person=person,
             event=event,
+            created_options=created_options,
         )
 
     if target == TalkQuestionTarget.SPEAKER and person is not None:
@@ -822,12 +1077,10 @@ def _sync_import_answers(*, event: Event, target: str, extras, caches: dict, sub
     for answer in stale_answers:
         answer.remove(force=True)
 
-
 def _normalize_room_metadata(metadata) -> dict:
     if not isinstance(metadata, dict):
         return {}
     return {key: value for key, value in metadata.items() if value not in (None, '', [], {})}
-
 
 def _build_room_description(metadata: dict) -> str:
     parts = []
@@ -839,7 +1092,6 @@ def _build_room_description(metadata: dict) -> str:
     if floor:
         parts.append(_('Floor: {floor}').format(floor=floor))
     return '\n'.join(parts)
-
 
 def _apply_room_metadata(room: Room, room_metadata: dict):
     metadata = _normalize_room_metadata(room_metadata)
@@ -871,7 +1123,6 @@ def _apply_room_metadata(room: Room, room_metadata: dict):
     if update_fields:
         room.save(update_fields=update_fields)
 
-
 def _append_internal_note(existing: str, line: str) -> str:
     existing_text = (existing or '').strip()
     if line in existing_text.splitlines():
@@ -880,13 +1131,15 @@ def _append_internal_note(existing: str, line: str) -> str:
         return line
     return f'{existing_text}\n{line}'
 
-
 def _import_speaker_row(event, settings, record, acting_user, caches=None):
     full_name = _resolve_csv(settings.get('full_name'), record)
     first_name = _resolve_csv(settings.get('first_name'), record)
     last_name = _resolve_csv(settings.get('last_name'), record)
     email = _resolve_csv(settings.get('email'), record)
     biography = _resolve_csv(settings.get('biography'), record)
+    job_title = _resolve_csv(settings.get('job_title'), record)
+    organization = _resolve_csv(settings.get('organization'), record)
+    social_links_val = _resolve_csv(settings.get('social_links'), record)
     identifier = _resolve_csv(settings.get('identifier'), record)
     locale_val = _resolve_csv(settings.get('locale'), record)
     linked_submissions = _resolve_csv(settings.get('linked_submissions'), record)
@@ -948,78 +1201,108 @@ def _import_speaker_row(event, settings, record, acting_user, caches=None):
         if len(profiles) == 1:
             user = profiles[0].user
 
-    with transaction.atomic():
-        if user:
-            user.fullname = name
-            extra = _apply_user_optional_fields(user, **optional_kwargs)
-            update_fields = ['fullname', *extra]
-            if (
-                normalized_email
-                and not user.email
-                and not User.objects.filter(email__iexact=normalized_email).exclude(pk=user.pk).exists()
-            ):
-                user.email = normalized_email
-                update_fields.append('email')
-            user.save(update_fields=update_fields)
-            if 'avatar' in update_fields:
-                user.process_image('avatar', generate_thumbnail=True)
-        else:
-            user = User.objects.create_user(
-                password=get_random_string(32),
-                email=normalized_email,
-                fullname=name,
-                code=normalized_identifier or None,
-                pw_reset_token=get_random_string(32),
-                pw_reset_time=now() + dt.timedelta(days=60),
+    created_choice_options: list[tuple[dict, str]] = []
+    finalized = False
+    try:
+        with transaction.atomic():
+            if user:
+                user.fullname = name
+                extra = _apply_user_optional_fields(user, **optional_kwargs)
+                update_fields = ['fullname', *extra]
+                if (
+                    normalized_email
+                    and not user.email
+                    and not User.objects.filter(email__iexact=normalized_email).exclude(pk=user.pk).exists()
+                ):
+                    user.email = normalized_email
+                    update_fields.append('email')
+                user.save(update_fields=update_fields)
+                if 'avatar' in update_fields:
+                    user.process_image('avatar', generate_thumbnail=True)
+            else:
+                user = User.objects.create_user(
+                    password=get_random_string(32),
+                    email=normalized_email,
+                    fullname=name,
+                    code=normalized_identifier or None,
+                    pw_reset_token=get_random_string(32),
+                    pw_reset_time=now() + dt.timedelta(days=60),
+                )
+                extra = _apply_user_optional_fields(user, **optional_kwargs)
+                if extra:
+                    user.save(update_fields=extra)
+                if 'avatar' in extra:
+                    user.process_image('avatar', generate_thumbnail=True)
+
+            profile, profile_created = SpeakerProfile.objects.get_or_create(
+                user=user,
+                event=event,
             )
-            extra = _apply_user_optional_fields(user, **optional_kwargs)
-            if extra:
-                user.save(update_fields=extra)
-            if 'avatar' in extra:
-                user.process_image('avatar', generate_thumbnail=True)
+            profile_update_fields = []
+            if biography:
+                profile.biography = biography
+                profile_update_fields.append('biography')
+            if job_title:
+                profile.job_title = job_title[:255]
+                profile_update_fields.append('job_title')
+            if organization:
+                profile.organization = organization[:255]
+                profile_update_fields.append('organization')
+            if is_featured:
+                profile.is_featured = _truthy(is_featured)
+                profile_update_fields.append('is_featured')
+            if featured_position:
+                position = _parse_featured_position(featured_position)
+                if position is not None:
+                    profile.position = position
+                    profile_update_fields.append('position')
+            if profile_update_fields:
+                profile.save(update_fields=profile_update_fields)
+            if social_links_val:
+                _sync_speaker_social_links(profile, social_links_val)
 
-        profile, profile_created = SpeakerProfile.objects.get_or_create(
-            user=user,
-            event=event,
-        )
-        profile_update_fields = []
-        if biography:
-            profile.biography = biography
-            profile_update_fields.append('biography')
-        if is_featured:
-            profile.is_featured = _truthy(is_featured)
-            profile_update_fields.append('is_featured')
-        if featured_position:
-            position = _parse_featured_position(featured_position)
-            if position is not None:
-                profile.position = position
-                profile_update_fields.append('position')
-        if profile_update_fields:
-            profile.save(update_fields=profile_update_fields)
+            # Link to submissions
+            if linked_submissions:
+                for ref in linked_submissions.split(','):
+                    sub = _find_submission_by_ref(event, ref)
+                    if sub:
+                        SpeakerRole.objects.get_or_create(submission=sub, user=user)
 
-        # Link to submissions
-        if linked_submissions:
-            for ref in linked_submissions.split(','):
-                sub = _find_submission_by_ref(event, ref)
-                if sub:
-                    SpeakerRole.objects.get_or_create(submission=sub, user=user)
+            # Question answers
+            question_mappings = caches.get('question_mappings') if caches else []
+            question_cache = caches.get('question_cache') if caches else None
+            for question_id, mapping_value in question_mappings:
+                answer_text = _resolve_csv(mapping_value, record)
+                if answer_text:
+                    _set_question_answer(
+                        question_id,
+                        answer_text,
+                        question_cache=question_cache,
+                        person=user,
+                        event=event,
+                        created_options=created_choice_options,
+                    )
 
-        _sync_import_answers(
-            event=event,
-            target=TalkQuestionTarget.SPEAKER,
-            extras=speaker_extras,
-            caches=caches or {},
-            person=user,
-        )
+            _sync_import_answers(
+                event=event,
+                target=TalkQuestionTarget.SPEAKER,
+                extras=speaker_extras,
+                caches=caches or {},
+                person=user,
+                created_options=created_choice_options,
+            )
 
-        event.log_action(
-            'eventyay.speaker.imported',
-            data={'email': email, 'name': name},
-            user=acting_user,
-        )
+            event.log_action(
+                'eventyay.speaker.imported',
+                data={'email': email, 'name': name},
+                user=acting_user,
+            )
+        finalized = True
+    finally:
+        if not finalized:
+            _discard_created_choice_options(created_choice_options)
 
     return profile_created
-
 
 @app.task(base=ProfiledEventTask, bind=True, throws=(ImportExecutionError,))
 def import_submissions(self, event: Event, fileid: str, settings: dict, locale: str, user_id) -> ImportResult:
@@ -1117,7 +1400,6 @@ def import_submissions(self, event: Event, fileid: str, settings: dict, locale: 
         cf.delete()
     return {'created': created, 'updated': updated, 'skipped': skipped, 'errors': errors}
 
-
 def _apply_submission_fields(
     sub,
     *,
@@ -1153,7 +1435,6 @@ def _apply_submission_fields(
         sub.notes = notes
     if internal_notes:
         sub.internal_notes = internal_notes
-
 
 def _import_submission_row(event, settings, record, acting_user, speaker_cache=None, caches=None):
     title = _resolve_csv(settings.get('title'), record)
@@ -1269,6 +1550,8 @@ def _import_submission_row(event, settings, record, acting_user, speaker_cache=N
         logger.exception('Failed to save imported session "%s" for event %s', title, event.slug)
         raise ImportExecutionError(_('A database error occurred while saving this session.')) from exc
 
+    created_choice_options: list[tuple[dict, str]] = []
+    finalized = False
     # Wrap all post-save writes atomically so a failure in tags/speakers/questions rolls back
     # those side effects without affecting the already-committed submission row.
     # If the atomic block fails for a newly created submission, delete it so the DB stays
@@ -1344,6 +1627,7 @@ def _import_submission_row(event, settings, record, acting_user, speaker_cache=N
                         question_cache=question_cache,
                         submission=submission,
                         event=event,
+                        created_options=created_choice_options,
                     )
 
             _sync_import_answers(
@@ -1352,6 +1636,7 @@ def _import_submission_row(event, settings, record, acting_user, speaker_cache=N
                 extras=submission_extras,
                 caches=caches or {},
                 submission=submission,
+                created_options=created_choice_options,
             )
 
             if scheduled_public and submission.state == SubmissionStates.ACCEPTED and slot and slot.start:
@@ -1362,6 +1647,14 @@ def _import_submission_row(event, settings, record, acting_user, speaker_cache=N
                 data={'title': title, 'code': submission.code},
                 user=acting_user,
             )
+        finalized = True
+    except ImportExecutionError:
+        if was_created and submission.pk:
+            try:
+                submission.delete()
+            except (IntegrityError, OperationalError):
+                logger.exception('Failed to clean up submission after import error: %s', submission.pk)
+        raise
     except (IntegrityError, DataError) as exc:
         if was_created and submission.pk:
             try:
@@ -1370,9 +1663,11 @@ def _import_submission_row(event, settings, record, acting_user, speaker_cache=N
                 logger.exception('Failed to clean up submission after import error: %s', submission.pk)
         logger.exception('Failed to finalize imported session "%s" for event %s', title, event.slug)
         raise ImportExecutionError(_('A database error occurred while finalizing this session.')) from exc
+    finally:
+        if not finalized:
+            _discard_created_choice_options(created_choice_options)
 
     return was_created
-
 
 def _resolve_submission_type(sub_type_val: str, caches: dict) -> 'SubmissionType | None':
     """Find a SubmissionType by name (case-insensitive contains) or pk using pre-fetched list."""
@@ -1395,7 +1690,6 @@ def _resolve_submission_type(sub_type_val: str, caches: dict) -> 'SubmissionType
         pass
     return None
 
-
 def _resolve_track(track_val: str, caches: dict) -> 'Track | None':
     """Find a Track by name (case-insensitive contains) or pk using pre-fetched list."""
     normalized_value = track_val.strip()
@@ -1416,7 +1710,6 @@ def _resolve_track(track_val: str, caches: dict) -> 'Track | None':
     except (ValueError, TypeError):
         pass
     return None
-
 
 def _resolve_or_create_track(
     track_val: str,
@@ -1444,7 +1737,6 @@ def _resolve_or_create_track(
         caches['tracks'].append(track)
     return track
 
-
 def _resolve_room(room_val: str, caches: dict) -> 'Room | None':
     """Find a Room by name (case-insensitive contains) or pk using pre-fetched list."""
     normalized_value = room_val.strip()
@@ -1465,7 +1757,6 @@ def _resolve_room(room_val: str, caches: dict) -> 'Room | None':
         if val_lower in str(r.name).lower():
             return r
     return None
-
 
 def _resolve_or_create_room(
     room_val: str,
@@ -1495,7 +1786,6 @@ def _resolve_or_create_room(
         caches['rooms'].append(room)
     return room
 
-
 def _parse_schedule_datetime(value: str, event: Event) -> dt.datetime | None:
     if not value:
         return None
@@ -1510,7 +1800,6 @@ def _parse_schedule_datetime(value: str, event: Event) -> dt.datetime | None:
         logger.warning('Skipping invalid schedule datetime "%s" for event %s', value, event.slug)
         return None
 
-
 def _set_question_answer(
     question_id,
     answer_value,
@@ -1519,6 +1808,7 @@ def _set_question_answer(
     submission=None,
     person=None,
     event=None,
+    created_options: list[tuple[dict, str]] | None = None,
 ):
     question = None
     option_lookup = None
@@ -1537,38 +1827,37 @@ def _set_question_answer(
     answer_text = _serialize_answer_value(answer_value, question.variant)
     if not answer_text and question.variant != TalkQuestionVariant.BOOLEAN:
         return
-
     lookup = {'question': question}
     defaults = {'answer': answer_text}
     if question.target == TalkQuestionTarget.SPEAKER:
+        if person is None:
+            return
         lookup['person'] = person
         defaults['person'] = person
         defaults['submission'] = None
-    else:
+    elif question.target == TalkQuestionTarget.SUBMISSION:
+        if submission is None:
+            return
         lookup['submission'] = submission
         defaults['submission'] = submission
         defaults['person'] = None
+    else:
+        return
+
+    matched_options = None
+    if question.variant in _CHOICE_QUESTION_VARIANTS:
+        matched_options = _matched_choice_options(
+            answer_text,
+            question,
+            option_lookup,
+            created_options=created_options,
+        )
+        if not matched_options:
+            return
 
     answer, _ = Answer.objects.update_or_create(
         **lookup,
         defaults=defaults,
     )
-
-    if question.variant in (TalkQuestionVariant.CHOICES, TalkQuestionVariant.MULTIPLE, TalkQuestionVariant.SELECT):
-        answer.options.clear()
-        if option_lookup is None:
-            option_lookup = {
-                str(option.answer).strip().casefold(): option for option in question.options.all()
-            }
-
-        if question.variant == TalkQuestionVariant.MULTIPLE:
-            options_to_check = [opt.strip() for opt in answer_text.split(',')]
-        else:
-            options_to_check = [answer_text.strip()]
-
-        for stripped_option in options_to_check:
-            if not stripped_option:
-                continue
-            option = option_lookup.get(stripped_option.casefold())
-            if option:
-                answer.options.add(option)
+    if matched_options is not None:
+        answer.options.set(matched_options)
