@@ -154,6 +154,7 @@ class SubmissionImportSerializer(serializers.Serializer):
 class SubmissionImportView(APIView):
     permission_classes = (EventPermission,)
     permission = 'can_change_submissions'
+    endpoint = 'submissions'
 
     @extend_schema(summary='Import Submissions', request=SubmissionImportSerializer)
     def post(self, request, organizer, event):
