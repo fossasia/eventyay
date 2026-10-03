@@ -1,11 +1,15 @@
 from functools import partial
+import logging
+import os
 
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django import forms
 from django.forms import Textarea
 from django.conf import settings
 from django.contrib.auth.hashers import check_password
 from django.core.exceptions import ValidationError
 from django.db.models import Count, Q
+from django.db.models.functions import Trim
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django_scopes.forms import SafeModelChoiceField, SafeModelMultipleChoiceField
@@ -23,6 +27,7 @@ from eventyay.common.forms.fields import (
     NewPasswordField,
     SizeFileField,
 )
+from eventyay.helpers.image_optimize import optimize_uploaded_image
 from eventyay.common.forms.mixins import (
     ConfiguredFieldOrderMixin,
     I18nHelpText,
@@ -257,6 +262,22 @@ class SpeakerProfileForm(
             raise ValidationError(get_email_address_error())
         return email
 
+    def clean_avatar(self):
+        avatar = self.cleaned_data.get('avatar')
+        if avatar and 'avatar' in self.files:
+            try:
+                result = optimize_uploaded_image(avatar, 'avatar', None)
+                base_name, _ = os.path.splitext(avatar.name)
+                avatar = SimpleUploadedFile(
+                    f"{base_name}.{result.optimized_ext}",
+                    result.optimized.read(),
+                    content_type='image/svg+xml' if result.optimized_ext == 'svg' else f"image/{result.optimized_ext}",
+                )
+            except OSError:
+                logging.getLogger(__name__).exception("Failed to process avatar")
+                raise forms.ValidationError(_('Failed to process image.'))
+        return avatar
+
     def clean_avatar_source(self):
         return validate_avatar_license_text(self.cleaned_data.get('avatar_source'))
 
@@ -466,6 +487,19 @@ class SpeakerFilterForm(forms.Form):
         required=False,
         widget=EnhancedSelect,
     )
+    readiness = forms.ChoiceField(
+        required=False,
+        label=_('Readiness'),
+        choices=(
+            ('', _('All states')),
+            ('confirmed', _('Confirmed speakers')),
+            ('missing_biography', _('Missing biography')),
+            ('missing_profile_image', _('Missing profile image')),
+            ('missing_affiliation', _('Missing affiliation')),
+            ('without_session', _('Without session')),
+        ),
+        widget=EnhancedSelect,
+    )
     question = SafeModelChoiceField(queryset=TalkQuestion.objects.none(), required=False, widget=forms.HiddenInput())
 
     def __init__(self, *args, event=None, filter_arrival=False, **kwargs):
@@ -487,6 +521,35 @@ class SpeakerFilterForm(forms.Form):
             )
         if has_arrived := data.get('arrived'):
             queryset = queryset.filter(has_arrived=(has_arrived == 'true'))
+        
+        if readiness := data.get('readiness'):
+            if readiness == 'confirmed':
+                queryset = queryset.filter(user__submissions__state=SubmissionStates.CONFIRMED, user__submissions__event=self.event)
+            elif readiness == 'missing_biography':
+                import html
+                from django.utils.html import strip_tags
+                def is_empty(text):
+                    if not text:
+                        return True
+                    return not html.unescape(strip_tags(text)).strip()
+                empty_ids = [p.id for p in queryset if is_empty(p.biography)]
+                queryset = queryset.filter(id__in=empty_ids)
+            elif readiness == 'missing_profile_image':
+                queryset = queryset.filter(Q(user__avatar__isnull=True) | Q(user__avatar=''))
+            elif readiness == 'missing_affiliation':
+                import html
+                from django.utils.html import strip_tags
+                def is_empty(text):
+                    if not text:
+                        return True
+                    return not html.unescape(strip_tags(text)).strip()
+                empty_ids = [p.id for p in queryset if is_empty(p.organization)]
+                queryset = queryset.filter(id__in=empty_ids)
+            elif readiness == 'without_session':
+                queryset = queryset.exclude(
+                    user__submissions__in=self.event.submissions.filter(state__in=SubmissionStates.accepted_states)
+                )
+
         return queryset
 
 

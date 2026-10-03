@@ -11,7 +11,7 @@ import {
 } from 'node:fs'
 import {tmpdir} from 'node:os'
 import path from 'node:path'
-import {fileURLToPath, pathToFileURL} from 'node:url'
+import {pathToFileURL} from 'node:url'
 
 function parseArgs(argv) {
 	const args = {allLocales: false, input: 'src/**/*.{vue,js,ts}'}
@@ -155,8 +155,8 @@ function cleanExtractedKeys(extracted) {
 
 function collectLiteralKeys(appRoot) {
 	const keys = {}
-	const quotedRe = /(?:\$t|translate|i18next\.t|i18n\.t)\(\s*(['"])((?:\\.|(?!\1)[^\\])*)(\1)/g
-	const backtickRe = /(?:\$t|translate|i18next\.t|i18n\.t)\(\s*`([^`$]*)`/g
+	const quotedRe = /(?:\$t|\btranslate|\bi18next\.t|\bi18n\.t|\bt)\s*\(\s*(['"])((?:\\.|(?!\1)[^\\])*)(\1)/g
+	const backtickRe = /(?:\$t|\btranslate|\bi18next\.t|\bi18n\.t|\bt)\s*\(\s*`([^`$]*)`/g
 	for (const file of walkSourceFiles(path.join(appRoot, 'src'))) {
 		const text = readFileSync(file, 'utf8')
 		quotedRe.lastIndex = 0
@@ -201,7 +201,7 @@ function extractKeysToTempJson() {
 }
 `
 	)
-	const result = spawnSync('npx', ['i18next-parser', args.input, '-c', configPath], {
+	const result = spawnSync('npx', ['--yes', 'i18next-parser@9.4.0', args.input, '-c', configPath], {
 		cwd: appRoot,
 		encoding: 'utf8',
 		shell: false,
