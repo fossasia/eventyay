@@ -3,7 +3,6 @@ from drf_spectacular.utils import extend_schema_field
 from rest_flex_fields.serializers import FlexFieldsSerializerMixin
 from rest_framework import exceptions
 from rest_framework.serializers import (
-    CharField,
     PrimaryKeyRelatedField,
     SerializerMethodField,
     SlugRelatedField,
@@ -184,7 +183,13 @@ class AnswerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
     review = PrimaryKeyRelatedField(read_only=True, required=False)
     answer_file = UploadedFileField(required=False)
 
-    @extend_schema_field(CharField(allow_null=True))
+    # The user code, or the speaker profile with ?expand=person
+    @extend_schema_field(
+        {
+            "oneOf": [{"type": "string"}, {"$ref": "#/components/schemas/Speaker"}],
+            "nullable": True,
+        }
+    )
     def get_person(self, obj):
         if not obj.person_id:
             return None

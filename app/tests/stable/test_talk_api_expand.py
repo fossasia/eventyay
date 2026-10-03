@@ -80,6 +80,28 @@ def test_answers_expand_person(organizer_client, talk_team, event, submission, s
 
 
 @pytest.mark.django_db
+def test_answers_expand_person_without_profile(organizer_client, talk_team, event):
+    person = User.objects.create_user(email='noprofile@example.com', password='x', fullname='No Profile')
+    with scope(event=event):
+        question = TalkQuestion.objects.create(
+            question='Shirt size?',
+            variant=TalkQuestionVariant.STRING,
+            target=TalkQuestionTarget.SPEAKER,
+            event=event,
+        )
+        Answer.objects.create(question=question, person=person, answer='S')
+
+    resp = organizer_client.get(
+        f'/api/v1/organizers/{event.organizer.slug}/events/{event.slug}/answers/?expand=person'
+    )
+
+    assert resp.status_code == 200
+    assert resp.json()['results'][0]['person'] == person.code
+    with scope(event=event):
+        assert not SpeakerProfile.objects.filter(user=person, event=event).exists()
+
+
+@pytest.mark.django_db
 def test_answers_expand_person_query_count(organizer_client, talk_team, event, submission, speaker):
     url = f'/api/v1/organizers/{event.organizer.slug}/events/{event.slug}/answers/?expand=person'
     with scope(event=event):
