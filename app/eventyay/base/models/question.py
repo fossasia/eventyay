@@ -426,6 +426,12 @@ class Answer(PretalxModel):
 
     objects = ScopedManager(event='question__event')
 
+    @cached_property
+    def speaker_profile(self):
+        if self.person_id:
+            return self.person.profiles.filter(event=self.question.event).first()
+        return None
+
     class Meta:
         rules_permissions = {
             # Getting the answer API right is even trickier than getting the
