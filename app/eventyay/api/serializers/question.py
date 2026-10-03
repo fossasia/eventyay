@@ -189,8 +189,12 @@ class AnswerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             return None
         # Answer.person is a User, but the speaker serializer works on the
         # event's SpeakerProfile, so look that up instead of passing the user.
+        # AnswerViewSet prefetches the profiles into _event_profiles.
         if "person" in self.extra_flex_field_config["expand"][0]:
-            profile = obj.person.profiles.filter(event=obj.question.event).first()
+            profiles = getattr(obj.person, "_event_profiles", None)
+            if profiles is None:
+                profiles = obj.person.profiles.filter(event=obj.question.event)
+            profile = next(iter(profiles), None)
             if profile and (serializer := self.get_extra_flex_field("person", profile)):
                 return serializer.data
         return obj.person.code
