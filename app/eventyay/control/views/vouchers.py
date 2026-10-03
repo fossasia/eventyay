@@ -531,12 +531,17 @@ class VoucherBulkCreate(EventPermissionRequiredMixin, AsyncFormView):
 
 class VoucherRNG(EventPermissionRequiredMixin, View):
     permission = 'can_change_vouchers'
+    MAX_CODES = 100_000
 
     def get(self, request, *args, **kwargs):
         codes = set()
         try:
             num = int(request.GET.get('num', '5'))
         except ValueError:  # NOQA
+            return HttpResponseBadRequest()
+        if num > self.MAX_CODES:
+            # The codes are generated inside the request, so time and memory
+            # grow with ``num``. Same limit as pretix.
             return HttpResponseBadRequest()
 
         prefix = request.GET.get('prefix')
