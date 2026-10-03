@@ -80,6 +80,48 @@ def test_vimeo_embed_preserves_timestamp_and_disables_autoplay(url, video_id, ti
     assert info['csp_origins'] == ['https://player.vimeo.com']
 
 
+def _assert_commons_embed(embed_url, file_name):
+    parsed = urlparse(embed_url)
+    assert parsed.scheme == 'https'
+    assert parsed.netloc == 'commons.wikimedia.org'
+    assert parsed.path == f'/wiki/File:{file_name}'
+    assert parse_qs(parsed.query).get('embedplayer') == ['yes']
+    assert parsed.fragment == ''
+
+
+@pytest.mark.parametrize(
+    'url,file_name',
+    (
+        (
+            'https://commons.wikimedia.org/wiki/File:Big_Buck_Bunny_medium.ogv',
+            'Big_Buck_Bunny_medium.ogv',
+        ),
+        (
+            'https://commons.wikimedia.org/wiki/File:Big_Buck_Bunny_medium.ogv?embedplayer=yes',
+            'Big_Buck_Bunny_medium.ogv',
+        ),
+        (
+            'http://commons.m.wikimedia.org/wiki/File:Caminandes_3_-_Llamigos_-_Blender_Foundation.webm',
+            'Caminandes_3_-_Llamigos_-_Blender_Foundation.webm',
+        ),
+        (
+            'https://commons.wikimedia.org/w/index.php?title=File:Big_Buck_Bunny_medium.ogv',
+            'Big_Buck_Bunny_medium.ogv',
+        ),
+        (
+            'https://commons.wikimedia.org/wiki/File:My%20Video.webm',
+            'My_Video.webm',
+        ),
+    ),
+)
+def test_wikimedia_commons_file_page_becomes_embed_player(url, file_name):
+    info = get_video_embed_info(url)
+    assert info is not None
+    assert info['provider'] == 'wikimedia_commons'
+    _assert_commons_embed(info['embed_url'], file_name)
+    assert info['csp_origins'] == ['https://commons.wikimedia.org']
+
+
 @pytest.mark.parametrize(
     'url',
     (
@@ -91,6 +133,9 @@ def test_vimeo_embed_preserves_timestamp_and_disables_autoplay(url, video_id, ti
         'https://example.com/watch?v=nope',
         'https://www.youtube.com/watch?v=',
         'https://vimeo.com/not-a-number',
+        'https://commons.wikimedia.org/wiki/File:Example.jpg',
+        'https://commons.wikimedia.org/wiki/Commons:Reusing_content_outside_Wikimedia',
+        'https://upload.wikimedia.org/wikipedia/commons/8/8f/Big_Buck_Bunny_medium.ogv',
     ),
 )
 def test_get_video_embed_info_rejects_invalid(url):
@@ -127,7 +172,8 @@ def test_schedule_public_video_answer_includes_timestamped_embed_url(event, slot
             submission=slot.submission,
             answer=(
                 'https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=1m30s\n'
-                'https://vimeo.com/123456789#t=1m30s'
+                'https://vimeo.com/123456789#t=1m30s\n'
+                'https://commons.wikimedia.org/wiki/File:Big_Buck_Bunny_medium.ogv'
             ),
         )
         # Regular URL fields must never produce embed_url, even for YouTube links
@@ -149,9 +195,10 @@ def test_schedule_public_video_answer_includes_timestamped_embed_url(event, slot
         video_answers = [a for a in talk['answers'] if a.get('variant') == 'video']
         url_answers = [a for a in talk['answers'] if a.get('variant') == 'url']
 
-        assert len(video_answers) == 2
+        assert len(video_answers) == 3
         _assert_youtube_embed(video_answers[0]['embed_url'], 'dQw4w9WgXcQ', start=90)
         _assert_vimeo_embed(video_answers[1]['embed_url'], '123456789', time_hash='t=1m30s')
+        _assert_commons_embed(video_answers[2]['embed_url'], 'Big_Buck_Bunny_medium.ogv')
         assert len(url_answers) == 1
         assert 'embed_url' not in url_answers[0]
 
