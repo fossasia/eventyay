@@ -2859,9 +2859,16 @@ class Event(
         The header image is stored under ``logo_image`` for historical reasons; ``header_image`` is
         the legacy model field.
         """
+        from eventyay.base.header_presets import extract_preset_id, is_preset_value, resolve_preset_to_url
+
         # Prefer settings key first (historical name), then legacy model field
         for key in ('logo_image', 'header_image'):
             raw = self.settings.get(key, as_type=str, default=None)
+            if is_preset_value(raw):
+                preset_id = extract_preset_id(raw)
+                if resolve_preset_to_url(preset_id):
+                    return raw
+                continue
             path = _resolve_media_path(raw)
             if path:
                 return path
@@ -2905,12 +2912,18 @@ class Event(
         This method itself is a ``@cached_property``, so it is only invoked once per ``Event``
         instance per request — no thundering-herd risk within a single request.
         """
+        from eventyay.base.header_presets import extract_preset_id, resolve_preset_to_url
+
         path = self._visible_preview_image_path or self._visible_header_image_path or self._visible_logo_path
         if not path:
             return None
 
         if is_http_url(str(path)):
             return path
+
+        preset_id = extract_preset_id(str(path))
+        if preset_id:
+            return resolve_preset_to_url(preset_id)
 
         try:
             return get_thumbnail(path, '800x450^').thumb.url
@@ -2926,12 +2939,22 @@ class Event(
         """
         Return a smaller 400×225 resolved URL of the preview image for responsive srcset delivery.
         """
+        from eventyay.base.header_presets import (
+            extract_preset_id,
+            resolve_preset_thumbnail_url,
+            resolve_preset_to_url,
+        )
+
         path = self._visible_preview_image_path or self._visible_header_image_path or self._visible_logo_path
         if not path:
             return None
 
         if is_http_url(str(path)):
             return path
+
+        preset_id = extract_preset_id(str(path))
+        if preset_id:
+            return resolve_preset_thumbnail_url(preset_id) or resolve_preset_to_url(preset_id)
 
         try:
             return get_thumbnail(path, '400x225^').thumb.url
@@ -2965,21 +2988,46 @@ class Event(
     @cached_property
     def visible_header_image_url(self):
         from django.core.files.storage import default_storage
+        from eventyay.base.header_presets import extract_preset_id, resolve_preset_to_url
 
         if not self._visible_header_image_path:
             return None
-        with suppress(Exception):
+        preset_id = extract_preset_id(str(self._visible_header_image_path))
+        if preset_id:
+            return resolve_preset_to_url(preset_id)
+        with suppress(ValueError, AttributeError, OSError):
             if is_http_url(str(self._visible_header_image_path)):
                 return self._visible_header_image_path
             return default_storage.url(self._visible_header_image_path)
+        return None
 
     @cached_property
     def visible_header_image_file(self):
         from django.core.files.storage import default_storage
+        from eventyay.base.header_presets import (
+            extract_preset_id,
+            get_preset_by_id,
+            is_preset_value,
+        )
 
         if not self._visible_header_image_path:
             return None
-        with suppress(Exception):
+        with suppress(ValueError, AttributeError, OSError):
+            if is_preset_value(str(self._visible_header_image_path)):
+                preset_id = extract_preset_id(str(self._visible_header_image_path))
+                preset = get_preset_by_id().get(preset_id)
+                if not preset:
+                    from eventyay.base.models.event_header_preset import EventHeaderPreset
+                    if preset_id.isdigit():
+                        preset = EventHeaderPreset.objects.filter(pk=int(preset_id)).first()
+                    else:
+                        slug_name = preset_id.replace('-', ' ')
+                        preset = EventHeaderPreset.objects.filter(
+                            Q(name__icontains=slug_name) | Q(image__icontains=preset_id)
+                        ).first()
+                if preset and preset.image:
+                    return default_storage.open(preset.image.name)
+                return None
             if is_http_url(str(self._visible_header_image_path)):
                 return None
             return default_storage.open(self._visible_header_image_path)

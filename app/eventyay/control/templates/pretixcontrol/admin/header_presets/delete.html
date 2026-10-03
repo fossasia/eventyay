@@ -1,0 +1,25 @@
+{% extends "pretixcontrol/admin/base.html" %}
+{% load i18n %}
+{% load bootstrap3 %}
+
+{% block title %}{% trans "Delete Header Preset" %}{% endblock %}
+
+{% block content %}
+    <h1>{% trans "Delete Header Preset" %}</h1>
+    <form action="" method="post" class="form-horizontal">
+        {% csrf_token %}
+        <p>
+            {% blocktrans trimmed with name=object.name %}
+                Are you sure you want to delete the header preset <strong>{{ name }}</strong>?
+            {% endblocktrans %}
+        </p>
+        <div class="form-group submit-group">
+            <a href="{% url 'eventyay_admin:admin.header_presets' %}" class="btn btn-default btn-cancel">
+                {% trans "Cancel" %}
+            </a>
+            <button type="submit" class="btn btn-danger btn-save">
+                {% trans "Delete" %}
+            </button>
+        </div>
+    </form>
+{% endblock %}
