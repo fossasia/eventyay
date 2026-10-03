@@ -131,12 +131,14 @@ def event_list(request):
         qs = request.user.get_events_with_any_permission(request)
 
     if query:
-        if len(query) < 3:
+        exact = request.GET.get('exact') == '1'
+        if exact and len(query) < 3:
+            exact_query = f'"{query}"'
             qs = (
                 qs.filter(
-                    Q(name__iexact=i18ncomp(query))
+                    Q(name__icontains=exact_query)
                     | Q(slug__iexact=query)
-                    | Q(organizer__name__iexact=i18ncomp(query))
+                    | Q(organizer__name__icontains=exact_query)
                     | Q(organizer__slug__iexact=query)
                 )
                 .annotate(
@@ -615,8 +617,10 @@ def organizer_select2(request):
         page = 1
     qs = Organizer.objects.all()
     if term:
-        if len(term) < 3:
-            qs = qs.filter(Q(name__iexact=term) | Q(slug__iexact=term))
+        exact = request.GET.get('exact') == '1'
+        if exact and len(term) < 3:
+            exact_query = f'"{term}"'
+            qs = qs.filter(Q(name__icontains=exact_query) | Q(slug__iexact=term))
         else:
             qs = qs.filter(Q(name__icontains=term) | Q(slug__icontains=term))
     if not request.user.has_active_staff_session(request.session.session_key):
@@ -649,7 +653,11 @@ def users_select2(request):
     except ValueError:
         page = 1
 
-    if len(term) < 3:
+    exact = request.GET.get('exact') == '1'
+    if not exact and len(term) < 3:
+        return JsonResponse({'results': [], 'pagination': {'more': False}})
+
+    if exact and len(term) < 3:
         qs = User.objects.filter(Q(email__iexact=term) | Q(fullname__iexact=term)).order_by('email')
     else:
         qs = User.objects.filter(Q(email__icontains=term) | Q(fullname__icontains=term)).order_by('email')

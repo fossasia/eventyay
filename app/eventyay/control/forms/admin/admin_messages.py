@@ -364,9 +364,9 @@ class AdminComposeForm(ScheduledAtValidationMixin, forms.Form):
         lang_choices.extend(settings.LANGUAGES)
         self.fields['language'].choices = lang_choices
 
-        self.fields['selected_users'].widget.attrs['data-select2-url'] = reverse('eventyay_admin:admin.users.select2')
-        self.fields['selected_events'].widget.attrs['data-select2-url'] = reverse('control:events.typeahead')
-        self.fields['selected_organisers'].widget.attrs['data-select2-url'] = reverse('control:organizers.select2')
+        self.fields['selected_users'].widget.attrs['data-select2-url'] = reverse('eventyay_admin:admin.users.select2') + '?exact=1'
+        self.fields['selected_events'].widget.attrs['data-select2-url'] = reverse('control:events.typeahead') + '?exact=1'
+        self.fields['selected_organisers'].widget.attrs['data-select2-url'] = reverse('control:organizers.select2') + '?exact=1'
 
         initial = kwargs.get('initial', {})
         data = args[0] if args else kwargs.get('data')
