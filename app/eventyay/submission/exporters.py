@@ -32,13 +32,13 @@ class SpeakerQuestionData(CSVExporterMixin, BaseExporter):
                 person__isnull=False,
             )
             .select_related('question', 'person')
-            .order_by('person__name')
+            .order_by('person__fullname')
         )
         for answer in qs:
             data.append(
                 {
                     'code': answer.person.code,
-                    'name': answer.person.name,
+                    'name': answer.person.fullname,
                     'email': answer.person.email,
                     'question': answer.question.question,
                     'answer': answer.answer_string,
