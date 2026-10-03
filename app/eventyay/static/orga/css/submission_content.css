@@ -17,6 +17,16 @@
     display: block;
 }
 
+/* Rich text values (abstract, description, notes) arrive wrapped in
+   paragraphs; keep the first line level with its label. */
+.submission-content-view .form-group .col-md-9 > p:first-child {
+    margin-top: 0;
+}
+
+.submission-content-view .form-group .col-md-9 > p:last-child {
+    margin-bottom: 0;
+}
+
 .submission-content-view .form-group .col-md-9.session-video-urls ul {
     margin-bottom: 0;
 }
