@@ -1,6 +1,7 @@
+from django import forms
 from django.conf import settings
 from django.contrib import messages
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q
 from django.db.models.expressions import OrderBy
 from django.http import Http404, HttpResponse
@@ -17,6 +18,7 @@ from django_scopes import scope
 from eventyay.base.models import Answer, SpeakerProfile, User
 from eventyay.base.models.base import CachedFile
 from eventyay.base.models.information import SpeakerInformation
+from eventyay.base.models.mail import MailTemplateRoles
 from eventyay.base.models.submission import Submission, SubmissionStates
 from eventyay.base.services.orderimport import parse_csv
 from eventyay.base.services.talkimport import import_speakers
@@ -24,6 +26,7 @@ from eventyay.base.views.tasks import AsyncAction
 from eventyay.common.exceptions import SendMailException
 from eventyay.common.image import gravatar_csp
 from eventyay.common.text.phrases import phrases
+from eventyay.common.urls import build_absolute_uri
 from eventyay.common.views.generic import CreateOrUpdateView, OrgaCRUDView
 from eventyay.common.views.mixins import (
     ActionConfirmMixin,
@@ -37,12 +40,15 @@ from eventyay.common.views.mixins import (
 )
 from eventyay.consts import SizeKey
 from eventyay.orga.forms.importers import SpeakerImportProcessForm
+from eventyay.orga.forms.submission import SubmissionForm
 from eventyay.person.forms import (
     SpeakerFilterForm,
     SpeakerInformationForm,
     SpeakerProfileForm,
 )
+from eventyay.person.forms.profile import get_email_address_error
 from eventyay.person.social_link_mixin import SpeakerSocialLinksMixin
+from eventyay.submission.forms import TalkQuestionsForm
 from eventyay.talk_rules.person import is_only_reviewer
 from eventyay.talk_rules.submission import limit_for_reviewers, speaker_profiles_for_user
 
@@ -198,12 +204,13 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
 
 class SpeakerViewMixin(PermissionRequired):
     def get_object(self):
-        return get_object_or_404(
-            User.objects.filter(profiles__in=speaker_profiles_for_user(self.request.event, self.request.user))
-            .order_by('id')
-            .distinct(),
-            code=self.kwargs['code'],
-        )
+        with scope(event=self.request.event):
+            return get_object_or_404(
+                User.objects.filter(profiles__in=speaker_profiles_for_user(self.request.event, self.request.user))
+                .order_by('id')
+                .distinct(),
+                code=self.kwargs['code'],
+            )
 
     @cached_property
     def object(self):
@@ -222,6 +229,184 @@ class SpeakerViewMixin(PermissionRequired):
     @cached_property
     def permission_object(self):
         return self.get_permission_object()
+
+
+@method_decorator(gravatar_csp(), name='dispatch')
+class SpeakerCreate(SpeakerSocialLinksMixin, EventPermissionRequired, ActionFromUrl, CreateOrUpdateView):
+    template_name = 'orga/speaker/create.html'
+    form_class = SpeakerProfileForm
+    model = SpeakerProfile
+    permission_required = 'base.orga_list_speakerprofile'
+    write_permission_required = 'base.update_speakerprofile'
+
+    def get_object(self):
+        return None
+
+    def get_permission_object(self):
+        return self.request.event
+
+    def get_success_url(self) -> str:
+        return self.request.event.orga_urls.speakers
+
+    def get_social_links_profile(self):
+        return None
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {
+                'event': self.request.event,
+                'user': self.object,
+                'allow_no_email': True,
+                'ignore_first_time_exclude': True,
+            }
+        )
+        if not self.request.user.has_perm('base.orga_view_speaker_emails', self.request.event):
+            kwargs['with_email'] = False
+            kwargs.setdefault('initial', {})
+            kwargs['initial']['no_email'] = True
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.get_social_links_context())
+        return context
+
+    @context
+    @cached_property
+    def existing_sessions(self):
+        return (
+            self.request.event.submissions.exclude(state__in=(SubmissionStates.DELETED, SubmissionStates.DRAFT))
+            .only('pk', 'title', 'code')
+            .order_by('title')
+        )
+
+    @context
+    @cached_property
+    def session_form(self):
+        return SubmissionForm(
+            data=self.request.POST if self.request.method == 'POST' else None,
+            files=self.request.FILES if self.request.method == 'POST' else None,
+            event=self.request.event,
+            prefix='session',
+        )
+
+    @context
+    @cached_property
+    def session_questions_form(self):
+        return TalkQuestionsForm(
+            data=self.request.POST if self.request.method == 'POST' else None,
+            files=self.request.FILES if self.request.method == 'POST' else None,
+            target='submission',
+            event=self.request.event,
+            prefix='session_questions',
+            skip_limited_questions=True,
+        )
+
+    @transaction.atomic
+    def form_valid(self, form):
+        with scope(event=self.request.event):
+            if not self.social_media_formset_is_valid():
+                return self.form_invalid(form)
+
+            add_session = self.request.POST.get('add_session') == 'on'
+            link_existing_session = self.request.POST.get('link_existing_session') == 'on'
+
+            if add_session and link_existing_session:
+                form.add_error(
+                    None,
+                    forms.ValidationError(
+                        _('You cannot both create a new session and link an existing session.')
+                    ),
+                )
+                return self.form_invalid(form)
+
+            if add_session and (not self.session_form.is_valid() or not self.session_questions_form.is_valid()):
+                messages.error(self.request, phrases.base.error_saving_changes)
+                return self.form_invalid(form)
+
+            existing_session = None
+            if link_existing_session:
+                session_pk = self.request.POST.get('existing_session_id')
+                if not session_pk:
+                    form.add_error(None, forms.ValidationError(_('Please select an existing session to link.')))
+                    return self.form_invalid(form)
+                try:
+                    existing_session = (
+                        self.request.event.submissions.exclude(
+                            state__in=(SubmissionStates.DELETED, SubmissionStates.DRAFT)
+                        ).get(pk=session_pk)
+                    )
+                except (Submission.DoesNotExist, ValueError, TypeError):
+                    form.add_error(None, forms.ValidationError(_('The selected session does not exist.')))
+                    return self.form_invalid(form)
+
+            try:
+                self.object = form.save()
+            except IntegrityError:
+                form.add_error('email', forms.ValidationError(get_email_address_error()))
+                return self.form_invalid(form)
+
+            user = self.object.user
+            is_preexisting = getattr(form, '_user_was_preexisting', False)
+            self.save_social_media_formset(profile=self.object)
+
+            session = None
+            if add_session:
+                self.session_form.instance.event = self.request.event
+                session = self.session_form.save()
+                self.session_questions_form.submission = session
+                self.session_questions_form.save()
+                session.speakers.add(user)
+                messages.success(self.request, _('Speaker and session created successfully.'))
+            elif existing_session:
+                existing_session.speakers.add(user)
+                session = existing_session
+                messages.success(
+                    self.request, _('Speaker added and linked to existing session successfully.')
+                )
+            else:
+                messages.success(self.request, _('Speaker created successfully.'))
+
+            if not form.cleaned_data.get('no_email') and user.email:
+                if is_preexisting:
+                    invitation_link = build_absolute_uri(
+                        'cfp:event.login',
+                        kwargs={
+                            'organizer': self.request.event.organizer.slug,
+                            'event': self.request.event.slug,
+                        },
+                    )
+                else:
+                    invitation_link = build_absolute_uri(
+                        'cfp:event.new_recover',
+                        kwargs={
+                            'organizer': self.request.event.organizer.slug,
+                            'event': self.request.event.slug,
+                            'token': user.pw_reset_token,
+                        },
+                    )
+                context_kwargs = {'user': user, 'event': self.request.event}
+                mail_context = {
+                    'user': user,
+                    'event': self.request.event,
+                    'invitation_link': invitation_link,
+                }
+                if session is not None:
+                    context_kwargs['submission'] = session
+                    mail_context['submission'] = session
+                template = self.request.event.get_mail_template(MailTemplateRoles.NEW_SPEAKER_INVITE)
+                template.to_mail(
+                    user=user,
+                    event=self.request.event,
+                    context=mail_context,
+                    context_kwargs=context_kwargs,
+                    locale=self.request.event.locale,
+                    commit=True,
+                    skip_queue=is_preexisting,
+                )
+
+            return redirect(self.get_success_url())
 
 
 @method_decorator(gravatar_csp(), name='dispatch')
