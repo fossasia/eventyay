@@ -3299,6 +3299,14 @@ def test_giftcard_issued_with_discount_voucher(event):
                 f"Gift card balance after cancellation should be 0.00 but was {gc1.value}"
             )
 
+            # Reactivation must restore the full face value back to $50
+            from eventyay.base.services.orders import reactivate_order
+            reactivate_order(order.pk)
+            gc1.refresh_from_db()
+            assert gc1.value == Decimal('50.00'), (
+                f"Gift card balance after reactivation should be 50.00 but was {gc1.value}"
+            )
+
 
 @pytest.mark.django_db
 def test_giftcard_without_voucher_unchanged(event):
@@ -3342,6 +3350,94 @@ def test_giftcard_without_voucher_unchanged(event):
             # Without a voucher, price_before_voucher is None — must fall back to price
             assert op.price_before_voucher is None
             assert gc1.value == Decimal('23.00')
+
+
+@pytest.mark.django_db
+def test_giftcard_historical_issuance_canceled_reactivated(event):
+    """
+    CodeRabbit regression test: an older gift card that was issued using the
+    buggy price fallback ($25) instead of the true face value ($50) must
+    cancel down exactly $25 and reactivate to exactly $25.
+    """
+    ticket = Item.objects.create(
+        event=event,
+        name='Gift Card Product',
+        issue_giftcard=True,
+        default_price=Decimal('50.00'),
+        admission=True,
+    )
+    order = Order.objects.create(
+        code='FOO',
+        event=event,
+        email='dummy@dummy.test',
+        status=Order.STATUS_PAID,
+        locale='en',
+        datetime=now(),
+        expires=now() + timedelta(days=1),
+        total=Decimal('25.00'),
+    )
+    op = OrderPosition.objects.create(
+        order=order,
+        item=ticket,
+        price=Decimal('25.00'),
+        price_before_voucher=Decimal('50.00'), # Face value is 50
+    )
+    gc = event.organizer.issued_gift_cards.create(currency=event.currency, issued_in=op)
+    # Simulate historical buggy issuance (issued for $25 instead of $50)
+    gc.transactions.create(value=Decimal('25.00'), order=order)
+
+    # Cancellation must only reverse exactly $25
+    cancel_order(order.pk)
+    gc.refresh_from_db()
+    assert gc.value == Decimal('0.00')
+
+    # Reactivation must only restore exactly $25
+    from eventyay.base.services.orders import reactivate_order
+    reactivate_order(order.pk)
+    gc.refresh_from_db()
+    assert gc.value == Decimal('25.00')
+
+
+@pytest.mark.django_db
+def test_giftcard_redeemed_cannot_be_canceled(event):
+    """
+    Ensure that a gift card that has already been partially or fully redeemed
+    will block the order cancellation.
+    """
+    from eventyay.base.services.orders import OrderError
+    ticket = Item.objects.create(
+        event=event,
+        name='Gift Card Product',
+        issue_giftcard=True,
+        default_price=Decimal('50.00'),
+        admission=True,
+    )
+    order = Order.objects.create(
+        code='FOO2',
+        event=event,
+        email='dummy2@dummy.test',
+        status=Order.STATUS_PAID,
+        locale='en',
+        datetime=now(),
+        expires=now() + timedelta(days=1),
+        total=Decimal('50.00'),
+    )
+    op = OrderPosition.objects.create(
+        order=order,
+        item=ticket,
+        price=Decimal('50.00'),
+    )
+    gc = event.organizer.issued_gift_cards.create(currency=event.currency, issued_in=op)
+    # Issue $50
+    gc.transactions.create(value=Decimal('50.00'), order=order)
+
+    # Simulate a redemption (on a completely different order)
+    gc.transactions.create(value=Decimal('-10.00'))
+
+    gc.refresh_from_db()
+
+    with pytest.raises(OrderError):
+        cancel_order(order.pk)
 
 
 class OrderReactivateTest(TestCase):

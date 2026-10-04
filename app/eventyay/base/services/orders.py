@@ -196,7 +196,9 @@ def reactivate_order(order: Order, force: bool = False, user: User = None, auth=
 
                     for gc in position.issued_gift_cards.all():
                         gc = GiftCard.objects.select_for_update().get(pk=gc.pk)
-                        gc.transactions.create(value=position.giftcard_face_value, order=order)
+                        historical_tx = gc.transactions.filter(order=order, value__gt=0).order_by('datetime').first()
+                        issued_val = historical_tx.value if historical_tx else position.giftcard_face_value
+                        gc.transactions.create(value=issued_val, order=order)
                         break
         else:
             raise OrderError(is_available)
@@ -469,15 +471,17 @@ def _cancel_order(
         for position in order.positions.all():
             for gc in position.issued_gift_cards.all():
                 gc = GiftCard.objects.select_for_update().get(pk=gc.pk)
-                if gc.value < position.giftcard_face_value:
-                    raise OrderError(
-                        _(
-                            'This order can not be canceled since the gift card {card} purchased in '
-                            'this order has already been redeemed.'
-                        ).format(card=gc.secret)
-                    )
-                else:
-                    gc.transactions.create(value=-position.giftcard_face_value, order=order)
+                current_issued = gc.transactions.filter(order=order).aggregate(total=Sum('value'))['total'] or Decimal('0.00')
+                if current_issued > Decimal('0.00'):
+                    if gc.value < current_issued:
+                        raise OrderError(
+                            _(
+                                'This order can not be canceled since the gift card {card} purchased in '
+                                'this order has already been redeemed.'
+                            ).format(card=gc.secret)
+                        )
+                    else:
+                        gc.transactions.create(value=-current_issued, order=order)
 
         if cancellation_fee:
             with order.event.lock():
@@ -2179,15 +2183,17 @@ class OrderChangeManager:
             elif isinstance(op, self.CancelOperation):
                 for gc in op.position.issued_gift_cards.all():
                     gc = GiftCard.objects.select_for_update().get(pk=gc.pk)
-                    if gc.value < op.position.giftcard_face_value:
-                        raise OrderError(
-                            _(
-                                'A position can not be canceled since the gift card {card} purchased in this order has '
-                                'already been redeemed.'
-                            ).format(card=gc.secret)
-                        )
-                    else:
-                        gc.transactions.create(value=-op.position.giftcard_face_value, order=self.order)
+                    current_issued = gc.transactions.filter(order=self.order).aggregate(total=Sum('value'))['total'] or Decimal('0.00')
+                    if current_issued > Decimal('0.00'):
+                        if gc.value < current_issued:
+                            raise OrderError(
+                                _(
+                                    'A position can not be canceled since the gift card {card} purchased in this order has '
+                                    'already been redeemed.'
+                                ).format(card=gc.secret)
+                            )
+                        else:
+                            gc.transactions.create(value=-current_issued, order=self.order)
 
                 for opa in op.position.addons.filter(canceled=False):
                     self.order.log_action(
