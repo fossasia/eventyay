@@ -59,7 +59,7 @@ const getSubmissionVideoDialog = () => {
         const row = document.createElement('div')
         row.className = 'submission-video-url-row'
         const inputId = `submission-video-url-input-${rowIndex}`
-        const urlLabel = dialog.dataset.urlLabel || 'YouTube or Vimeo URL'
+        const urlLabel = dialog.dataset.urlLabel || 'YouTube, Vimeo, or Wikimedia Commons URL'
         const removeLabel = dialog.dataset.removeLabel || 'Remove'
         row.innerHTML = `
             <div class="form-group form-group-inline">

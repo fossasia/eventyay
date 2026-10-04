@@ -1,3 +1,5 @@
+import datetime as dt
+
 import pytest
 from django_scopes import scope
 
@@ -184,3 +186,60 @@ def test_build_data_include_featured_speaker_metadata_false(event, slot):
         spk_m = next(s for s in data_masked["speakers"] if s["code"] == speaker_user.code)
         assert spk_m["is_featured"] is False
         assert spk_m["featured_position"] is None
+
+
+@pytest.mark.django_db
+def test_build_data_compact_omits_text_and_keeps_card_fields(event, slot):
+    """Compact grid payloads keep card fields and drop the heavy ones."""
+    with scope(event=event):
+        data = slot.schedule.build_data(compact=True)
+        talk = next(item for item in data["talks"] if item.get("code") == slot.submission.code)
+        assert data["compact"] is True
+        assert data["date"]
+        assert data["days"]
+        assert slot.submission.code in {item.get("code") for item in data["talks"]}
+        for key in ("title", "start", "end", "room", "speakers", "content_locale"):
+            assert key in talk
+        for key in ("abstract", "description", "exporters", "resources", "answers", "recording_iframe"):
+            assert key not in talk
+        speaker = next(item for item in data["speakers"] if item["code"] == talk["speakers"][0])
+        assert speaker["name"]
+        assert "biography" not in speaker
+        assert "avatar" not in speaker
+        assert "exporters" not in speaker
+        blob = str(data)
+        assert "qrcodes" not in blob
+
+
+@pytest.mark.django_db
+def test_build_data_compact_include_text_adds_abstract(event, slot):
+    with scope(event=event):
+        data = slot.schedule.build_data(compact=True, include_text=True)
+        talk = next(item for item in data["talks"] if item.get("code") == slot.submission.code)
+        assert talk["abstract"] == slot.submission.abstract
+        assert "exporters" not in talk
+
+
+@pytest.mark.django_db
+def test_build_data_compact_filters_to_one_day(event, slot, other_slot):
+    with scope(event=event):
+        other_slot.start = slot.start + dt.timedelta(days=1)
+        other_slot.end = other_slot.start + dt.timedelta(minutes=30)
+        other_slot.save(update_fields=["start", "end"])
+        day = slot.start.astimezone(event.tz).date()
+        data = slot.schedule.build_data(compact=True, on_date=day)
+        codes = {item.get("code") for item in data["talks"]}
+        assert slot.submission.code in codes
+        assert other_slot.submission.code not in codes
+        assert len(data["days"]) == 2
+
+
+@pytest.mark.django_db
+def test_build_data_compact_index_has_no_talks(event, slot):
+    with scope(event=event):
+        data = slot.schedule.build_data(compact=True, index_only=True)
+        assert data["talks"] == []
+        assert data["speakers"] == []
+        assert data["days"]
+        assert data["rooms"]
+        assert data["compact"] is True

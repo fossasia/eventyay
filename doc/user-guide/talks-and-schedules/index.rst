@@ -10,6 +10,7 @@ separately.
    :maxdepth: 2
 
    sessions
+   session-videos
    session-feedback
    ../../talk/user/event/widget
    ../../talk/user/event/etherpad

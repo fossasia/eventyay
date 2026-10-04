@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from urllib.parse import parse_qs, urlencode, urlparse
+from urllib.parse import parse_qs, quote, unquote, urlencode, urlparse
 
 _YOUTUBE_HOSTS = frozenset(
     {
@@ -17,6 +17,14 @@ _YOUTUBE_HOSTS = frozenset(
     }
 )
 _VIMEO_HOSTS = frozenset({'vimeo.com', 'www.vimeo.com', 'player.vimeo.com'})
+_COMMONS_HOSTS = frozenset(
+    {
+        'commons.wikimedia.org',
+        'www.commons.wikimedia.org',
+        'commons.m.wikimedia.org',
+    }
+)
+_COMMONS_VIDEO_EXTENSIONS = frozenset({'webm', 'ogv', 'ogg', 'mp4', 'm4v', 'mpeg', 'mpg'})
 _TIME_COMPONENT_RE = re.compile(r'^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$')
 
 
@@ -119,6 +127,43 @@ def _youtube_embed_url(video_id: str, parsed) -> str:
     return f'https://www.youtube-nocookie.com/embed/{video_id}?{urlencode(params)}'
 
 
+def _commons_file_name(parsed) -> str | None:
+    """Return a Commons video filename from a file-page URL, or None."""
+    host = (parsed.hostname or '').lower()
+    if host not in _COMMONS_HOSTS:
+        return None
+    parts = [part for part in (parsed.path or '').split('/') if part]
+    raw_name = None
+    if len(parts) == 2 and parts[0] == 'wiki':
+        page = unquote(parts[1])
+        if page.lower().startswith('file:'):
+            raw_name = page[5:]
+    elif len(parts) == 2 and parts[0] == 'w' and parts[1] == 'index.php':
+        title = (parse_qs(parsed.query).get('title') or [None])[0]
+        if title:
+            title = unquote(title)
+            if title.lower().startswith('file:'):
+                raw_name = title[5:]
+    if not raw_name:
+        return None
+    raw_name = raw_name.strip().replace(' ', '_')
+    if not raw_name or len(raw_name) > 240:
+        return None
+    if any(char in raw_name for char in '/\\\x00?#&'):
+        return None
+    if raw_name.startswith('.') or '..' in raw_name:
+        return None
+    extension = raw_name.rsplit('.', 1)[-1].lower() if '.' in raw_name else ''
+    if extension not in _COMMONS_VIDEO_EXTENSIONS:
+        return None
+    return raw_name
+
+
+def _commons_embed_url(file_name: str) -> str:
+    encoded = quote(file_name, safe='')
+    return f'https://commons.wikimedia.org/wiki/File:{encoded}?embedplayer=yes'
+
+
 def _vimeo_embed_url(video_id: str, parsed) -> str:
     # autoplay=0 keeps the player paused on load; timestamps use the #t= fragment.
     embed_url = f'https://player.vimeo.com/video/{video_id}?{urlencode({"autoplay": "0"})}'
@@ -150,9 +195,9 @@ def parse_video_urls(text: str | None) -> list[str]:
 def get_video_embed_info(url: str | None) -> dict[str, object] | None:
     """Return embed URL and CSP frame-src origins for a video-link field answer.
 
-    Only YouTube and Vimeo URLs are converted to embeds. Timestamps are preserved
-    and autoplay is always disabled. Regular URL custom fields are never passed
-    here; arbitrary HTTPS pages are not treated as embeddable players.
+    YouTube, Vimeo, and Wikimedia Commons file pages are converted to embeds.
+    Timestamps are preserved and autoplay is always disabled. Regular URL custom
+    fields are never passed here; arbitrary HTTPS pages are not embeddable players.
     """
     if not url or not isinstance(url, str):
         return None
@@ -178,6 +223,14 @@ def get_video_embed_info(url: str | None) -> dict[str, object] | None:
             'embed_url': _vimeo_embed_url(vimeo_id, parsed),
             'csp_origins': ['https://player.vimeo.com'],
             'provider': 'vimeo',
+        }
+
+    commons_file = _commons_file_name(parsed)
+    if commons_file:
+        return {
+            'embed_url': _commons_embed_url(commons_file),
+            'csp_origins': ['https://commons.wikimedia.org'],
+            'provider': 'wikimedia_commons',
         }
 
     return None

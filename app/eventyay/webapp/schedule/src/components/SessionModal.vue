@@ -17,9 +17,9 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 					export-dropdown.session-export-area(v-if="talkExportOptions.length && !exportsDisabled", :options="talkExportOptions", :qrcodesUrl="talkQrcodesUrl")
 				.text-content
 					.recording-embed(v-if="modalContent.contentObject.recording_iframe", v-html="modalContent.contentObject.recording_iframe")
-					.field-section(v-if="modalContent.contentObject.abstract")
+					.field-section(v-if="resolvedAbstract")
 						h4.field-heading {{ $t('Abstract') }}
-						.field-content(v-html="renderRichText(modalContent.contentObject.abstract)")
+						.field-content(v-html="renderRichText(resolvedAbstract)")
 					.field-section(v-if="modalContent.contentObject.apiContent?.description?.length > 0 || modalContent.contentObject.description?.length > 0")
 						h4.field-heading {{ $t('Description') }}
 						.field-content(v-html="renderRichText(modalContent.contentObject.apiContent?.description || modalContent.contentObject.description)")
@@ -90,7 +90,7 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 			.speakers(v-if="modalContent.contentObject.speakers")
 				a.speaker.inner-card(v-for="speaker in modalContent.contentObject.speakers", @click="handleSpeakerClick(speaker, $event)", :href="`#speakers/${speaker.code}`", :key="speaker.code")
 					.img-wrapper
-						img(v-if="speaker.avatar", :src="speaker.avatar", :alt="speaker.name")
+						img(v-if="speakerAvatar(speaker)", :src="speakerAvatar(speaker)", :alt="speaker.name")
 						.avatar-placeholder(v-else)
 							svg(viewBox="0 0 24 24")
 								path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
@@ -101,7 +101,7 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 			.speaker-details
 				.speaker-header
 					.speaker-avatar
-						img(v-if="modalContent.contentObject.avatar", :src="modalContent.contentObject.avatar", :alt="modalContent.contentObject.name")
+						img(v-if="speakerAvatar(modalContent.contentObject)", :src="speakerAvatar(modalContent.contentObject)", :alt="modalContent.contentObject.name")
 						.avatar-placeholder(v-else)
 							svg(viewBox="0 0 24 24")
 								path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
@@ -192,6 +192,11 @@ export default {
 		}
 	},
 	computed: {
+		resolvedAbstract () {
+			const obj = this.modalContent?.contentObject
+			if (!obj || this.modalContent?.contentType !== 'session') return ''
+			return obj.abstract || obj.apiContent?.abstract || ''
+		},
 		displayResources() {
 			const obj = this.modalContent?.contentObject
 			if (!obj) return []
@@ -298,6 +303,14 @@ export default {
 		}
 	},
 	methods: {
+		speakerAvatar (speaker) {
+			if (!speaker) return ''
+			return speaker.avatar
+				|| speaker.apiContent?.avatar_url
+				|| speaker.avatar_thumbnail_default
+				|| speaker.avatar_thumbnail_tiny
+				|| ''
+		},
 		expandVideoAnswers (answers) {
 			const result = []
 			for (const answer of answers || []) {

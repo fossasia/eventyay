@@ -5,7 +5,8 @@ from django_scopes import scope
 
 from eventyay.api.serializers.question import AnswerOptionSerializer, QuestionSerializer
 from eventyay.api.versions import LEGACY
-from eventyay.base.models import AnswerOption, TalkQuestionVariant as QuestionVariant
+from eventyay.base.models import AnswerOption, TalkQuestion as Question
+from eventyay.base.models import TalkQuestionVariant as QuestionVariant
 
 
 @pytest.mark.django_db
@@ -82,6 +83,46 @@ def test_organiser_can_see_question(client, orga_user_token, question):
     assert response.status_code == 200
     assert len(content["results"]) == 1
     assert content["results"][0]["id"] == question.id
+
+
+@pytest.mark.django_db
+def test_question_list_filters_by_variant(client, orga_user_token, question):
+    with scope(event=question.event):
+        video = Question.objects.create(
+            event=question.event,
+            question="Session video",
+            variant=QuestionVariant.VIDEO,
+            target=question.target,
+            question_required=question.question_required,
+        )
+    headers = {"Authorization": f"Token {orga_user_token.token}"}
+    unfiltered = client.get(question.event.api_urls.questions, follow=True, headers=headers)
+    assert unfiltered.status_code == 200
+    assert {row["id"] for row in unfiltered.json()["results"]} == {question.id, video.id}
+
+    filtered = client.get(
+        question.event.api_urls.questions + "?variant=video",
+        follow=True,
+        headers=headers,
+    )
+    assert filtered.status_code == 200
+    assert [row["id"] for row in filtered.json()["results"]] == [video.id]
+
+    other_variant = client.get(
+        question.event.api_urls.questions + "?variant=text",
+        follow=True,
+        headers=headers,
+    )
+    assert other_variant.status_code == 200
+    assert other_variant.json()["results"] == []
+
+    unrelated = client.get(
+        question.event.api_urls.questions + "?q=video",
+        follow=True,
+        headers=headers,
+    )
+    assert unrelated.status_code == 200
+    assert {row["id"] for row in unrelated.json()["results"]} == {question.id, video.id}
 
 
 @pytest.mark.django_db

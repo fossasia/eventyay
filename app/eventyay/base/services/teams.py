@@ -1,6 +1,7 @@
 import logging
 
 from django.db.models.functions import Lower
+from django.urls import NoReverseMatch
 from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.entitlements import EntitlementDecision, check_entitlement
@@ -8,6 +9,7 @@ from eventyay.base.models import Organizer
 from eventyay.base.models.auth import User
 from eventyay.base.models.organizer import TeamInvite
 from eventyay.base.services.mail import SendMailException, mail
+from eventyay.helpers.urls import build_absolute_uri
 
 
 logger = logging.getLogger(__name__)
@@ -83,6 +85,41 @@ def check_full_admin_limit(team, email=None, user=None):
     return decision
 
 
+def get_team_invitation_url(team):
+    """
+    Determine the invitation or landing URL for an added team member.
+
+    If the team has a TeamShifts role assigned,
+    link directly to the TeamShifts organizer dashboard entry point if available.
+    Otherwise, fall back to the standard organizer team management URL.
+    """
+    if team.teamshifts_role:
+        try:
+            return build_absolute_uri(
+                'plugins:teamshifts:organizer_dashboard',
+                kwargs={'organizer': team.organizer.slug},
+            )
+        except NoReverseMatch:
+            return build_absolute_uri(
+                'eventyay_common:organizer.teams',
+                kwargs={'organizer': team.organizer.slug},
+            )
+
+    if getattr(team, 'pk', None):
+        return build_absolute_uri(
+            'eventyay_common:organizer.team',
+            kwargs={
+                'organizer': team.organizer.slug,
+                'team': team.pk,
+            },
+        )
+
+    return build_absolute_uri(
+        'eventyay_common:organizer.teams',
+        kwargs={'organizer': team.organizer.slug},
+    )
+
+
 def send_team_invitation_email(
     *,
     user,
@@ -104,6 +141,7 @@ def send_team_invitation_email(
     Returns:
         bool: True if email was sent successfully, False otherwise
     """
+
     try:
         mail(
             user.email,

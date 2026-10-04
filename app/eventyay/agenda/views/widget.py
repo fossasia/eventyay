@@ -1,5 +1,6 @@
 import hashlib
 import os
+from datetime import date
 from urllib.parse import unquote
 
 from csp.decorators import csp_exempt
@@ -98,6 +99,46 @@ def version_prefix(request, organizer=None, event=None, version=None, **kwargs):
     return f'nov-{featured_part}'
 
 
+def parse_schedule_day(value):
+    """Return ``(date, error)``. An empty value is not an error."""
+    raw = (value or '').strip()
+    if not raw:
+        return None, False
+    try:
+        return date.fromisoformat(raw), False
+    except ValueError:
+        return None, True
+
+
+def schedule_talk_detail(schedule, talk_code, *, preview, include_featured_speaker_metadata):
+    """Full public fields for one session. QR codes are a separate request."""
+    data = schedule.build_data(
+        all_talks=not schedule.version,
+        enrich=True,
+        submission_codes={talk_code},
+        include_featured_speaker_metadata=include_featured_speaker_metadata,
+        include_qrcodes=False,
+        respect_public_visibility=not preview,
+    )
+    talk = next((item for item in data.get('talks') or [] if item.get('code') == talk_code), None)
+    if talk is None:
+        return None
+    speaker_codes = set(talk.get('speakers') or [])
+    return {
+        'code': talk.get('code'),
+        'abstract': talk.get('abstract') or '',
+        'description': talk.get('description') or '',
+        'recording_iframe': talk.get('recording_iframe') or '',
+        'resources': talk.get('resources') or [],
+        'answers': talk.get('answers') or [],
+        'speakers': [
+            speaker
+            for speaker in data.get('speakers') or []
+            if speaker.get('code') in speaker_codes
+        ],
+    }
+
+
 def qrcodes_prefix(request, organizer=None, event=None, version=None, kind=None, code=None, **kwargs):
     return f'{version_prefix(request, organizer=organizer, event=event, version=version)}-qrcodes-{kind}-{code}'
 
@@ -160,12 +201,38 @@ def widget_data(request, organizer=None, event=None, version=None, **kwargs):
     enrich = request.GET.get('enrich') in {'1', 'true', 'True'}
     include_qrcodes = request.GET.get('qrcodes') in {'1', 'true', 'True'}
     preview = wip_preview_build_data(request.user, event, schedule)
+    talk_code = (request.GET.get('talk') or '').strip()
+    if talk_code:
+        detail = schedule_talk_detail(
+            schedule,
+            talk_code,
+            preview=preview,
+            include_featured_speaker_metadata=are_featured_speakers_visible(AnonymousUser(), event),
+        )
+        if detail is None:
+            raise Http404()
+        response = JsonResponse(detail, encoder=I18nJSONEncoder)
+        response['Access-Control-Allow-Headers'] = 'authorization,content-type'
+        response['Access-Control-Allow-Origin'] = '*'
+        return response
+
+    compact = request.GET.get('compact') in {'1', 'true', 'True'}
+    on_date, date_error = parse_schedule_day(request.GET.get('date'))
+    if date_error:
+        response = JsonResponse({'detail': 'Invalid date.'}, status=400)
+        response['Access-Control-Allow-Origin'] = '*'
+        return response
     result = schedule.build_data(
         all_talks=not schedule.version,
         enrich=enrich,
         include_featured_speaker_metadata=are_featured_speakers_visible(AnonymousUser(), event),
-        include_qrcodes=include_qrcodes,
+        include_qrcodes=include_qrcodes and not compact,
         respect_public_visibility=not preview,
+        compact=compact,
+        on_date=on_date if compact else None,
+        view_timezone=(request.GET.get('tz') or '').strip() or None,
+        include_text=request.GET.get('text') in {'1', 'true', 'True'},
+        index_only=request.GET.get('index') in {'1', 'true', 'True'},
     )
     response = JsonResponse(result, encoder=I18nJSONEncoder)
     response['Access-Control-Allow-Headers'] = 'authorization,content-type'
