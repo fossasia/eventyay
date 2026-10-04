@@ -526,15 +526,25 @@ details.dropdown .dropdown-content-se::after {
   max-width: 92vw;
 }
 
+/* Only the language lists scroll; the panel shrinks them to fit instead of scrolling itself. */
+#locale-dropdown.language-selector {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 #locale-dropdown .language-columns {
   width: 100%;
+  min-height: 0;
   max-height: 350px;
   display: grid;
   grid-template-columns: repeat(2, minmax(220px, 1fr));
+  grid-template-rows: minmax(0, 1fr);
   border-top: 1px solid var(--color-border, #ced4da);
 }
 
 #locale-dropdown .language-enforce-bar {
+  flex-shrink: 0;
   width: 100%;
   display: flex;
   flex-wrap: nowrap;
@@ -677,6 +687,7 @@ details.dropdown .dropdown-content-se::after {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 #locale-dropdown .language-column .dropdown-item {

@@ -1,11 +1,10 @@
-import importlib
-
 import pytest
-from django.apps import apps
 from django_scopes import scope, scopes_disabled
 
-from eventyay.base.models import Answer, Event, TalkQuestion, TalkQuestionTarget, TalkQuestionVariant
+from eventyay.base.models import Event, TalkQuestion, TalkQuestionTarget, TalkQuestionVariant
+from eventyay.base.models.cfp import default_fields
 from eventyay.person.forms.profile import SpeakerProfileForm
+from eventyay.person.services import build_public_speaker_role
 
 
 @pytest.mark.django_db
@@ -39,12 +38,64 @@ def test_speaker_profile_form_no_duplicate_fields_and_reviewer_visibility(event,
 
 
 @pytest.mark.django_db
-def test_new_events_do_not_seed_job_title_or_organization(event):
+def test_new_events_have_default_speaker_role_fields(event):
     with scope(event=event):
-        assert not TalkQuestion.all_objects.filter(
-            event=event,
-            import_key__in=['speaker_job_title', 'speaker_organization'],
-        ).exists()
+        defaults = default_fields()
+        assert event.cfp.fields['job_title'] == defaults['job_title']
+        assert event.cfp.fields['organization'] == defaults['organization']
+
+
+@pytest.mark.django_db
+def test_speaker_profile_form_includes_default_role_fields(event, speaker):
+    with scope(event=event):
+        form = SpeakerProfileForm(event=event, user=speaker)
+        assert 'job_title' in form.fields
+        assert 'organization' in form.fields
+
+
+@pytest.mark.django_db
+def test_build_public_speaker_role_formats_values(event, speaker):
+    with scope(event=event):
+        profile = speaker.event_profile(event)
+        profile.job_title = 'Founder'
+        profile.organization = 'FOSSASIA'
+        profile.save(update_fields=['job_title', 'organization'])
+
+        event.cfp.fields['job_title']['public'] = True
+        event.cfp.fields['organization']['public'] = True
+        event.cfp.save(update_fields=['fields'])
+
+        assert build_public_speaker_role(profile, event) == 'Founder, FOSSASIA'
+
+
+@pytest.mark.django_db
+def test_build_public_speaker_role_single_value_without_separator(event, speaker):
+    with scope(event=event):
+        profile = speaker.event_profile(event)
+        profile.job_title = 'Founder'
+        profile.organization = ''
+        profile.save(update_fields=['job_title', 'organization'])
+
+        event.cfp.fields['job_title']['public'] = True
+        event.cfp.fields['organization']['public'] = True
+        event.cfp.save(update_fields=['fields'])
+
+        assert build_public_speaker_role(profile, event) == 'Founder'
+
+
+@pytest.mark.django_db
+def test_build_public_speaker_role_respects_public_toggle(event, speaker):
+    with scope(event=event):
+        profile = speaker.event_profile(event)
+        profile.job_title = 'Founder'
+        profile.organization = 'FOSSASIA'
+        profile.save(update_fields=['job_title', 'organization'])
+
+        event.cfp.fields['job_title']['public'] = False
+        event.cfp.fields['organization']['public'] = True
+        event.cfp.save(update_fields=['fields'])
+
+        assert build_public_speaker_role(profile, event) == 'FOSSASIA'
 
 
 @pytest.mark.django_db
@@ -82,43 +133,6 @@ def test_event_clone_reuses_matching_import_key(event):
     with scope(event=dest_event):
         q_dest.refresh_from_db()
         assert q_dest.active is False
-        assert str(q_dest.question) == 'Shared field'
+        assert q_dest.question == 'Shared field'
         assert TalkQuestion.all_objects.filter(event=dest_event, import_key='shared_import_key').count() == 1
 
-
-@pytest.mark.django_db
-def test_revert_migration_removes_seeded_questions_and_their_answers(event, speaker):
-    with scope(event=event):
-        job_title = TalkQuestion.all_objects.create(
-            event=event,
-            question='Job Title',
-            variant=TalkQuestionVariant.STRING,
-            target=TalkQuestionTarget.SPEAKER,
-            import_key='speaker_job_title',
-            active=False,
-        )
-        organization = TalkQuestion.objects.create(
-            event=event,
-            question='Organization',
-            variant=TalkQuestionVariant.STRING,
-            target=TalkQuestionTarget.SPEAKER,
-            import_key='speaker_organization',
-        )
-        Answer.objects.create(question=organization, person=speaker, answer='Acme')
-        custom = TalkQuestion.objects.create(
-            event=event,
-            question='Custom question',
-            variant=TalkQuestionVariant.STRING,
-            target=TalkQuestionTarget.SPEAKER,
-            import_key='custom_field',
-        )
-        Answer.objects.create(question=custom, person=speaker, answer='Keep me')
-
-    migration = importlib.import_module('eventyay.base.migrations.0078_revert_default_speaker_questions')
-    migration.remove_default_speaker_questions(apps, None)
-
-    with scope(event=event):
-        assert not TalkQuestion.all_objects.filter(pk__in=[job_title.pk, organization.pk]).exists()
-        assert not Answer.objects.filter(answer='Acme').exists()
-        assert TalkQuestion.all_objects.filter(pk=custom.pk).exists()
-        assert Answer.objects.get(question=custom).answer == 'Keep me'

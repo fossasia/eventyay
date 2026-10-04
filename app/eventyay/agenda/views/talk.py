@@ -9,6 +9,7 @@ import jwt
 import vobject
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth.models import AnonymousUser
 from django.db.models import F, Q
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404
@@ -62,7 +63,11 @@ from eventyay.common.views.mixins import (
     PermissionRequired,
     SocialMediaCardMixin,
 )
-from eventyay.talk_rules.agenda import agenda_schedule_for_user, filter_agenda_slots
+from eventyay.talk_rules.agenda import (
+    agenda_schedule_for_user,
+    filter_agenda_slots,
+    is_agenda_submission_visible,
+)
 from eventyay.orga.utils.colors import get_contrast_color
 
 
@@ -100,6 +105,10 @@ class TalkMixin(PermissionRequired):
 
     def get_permission_object(self):
         return self.submission
+
+    @context
+    def hide_visibility_warning(self):
+        return bool(is_agenda_submission_visible(AnonymousUser(), self.submission))
 
     def agenda_schedule(self):
         return agenda_schedule_for_user(

@@ -92,15 +92,18 @@ class ScheduleExportForm(ExportForm):
         super().__init__(*args, **kwargs)
         self.fields['speaker_ids'] = forms.BooleanField(
             required=False,
+            initial=True,
             label=_('Speaker IDs'),
             help_text=_('The unique ID of a speaker is used in the speaker URL and in exports'),
         )
         self.fields['speaker_names'] = forms.BooleanField(
             required=False,
+            initial=True,
             label=_('Speaker names'),
         )
         self.fields['room'] = forms.BooleanField(
             required=False,
+            initial=True,
             label=TalkSlot._meta.get_field('room').verbose_name,
             help_text=TalkSlot._meta.get_field('room').help_text,
         )
@@ -198,18 +201,18 @@ class ScheduleExportForm(ExportForm):
 
     def _get_speaker_ids_value(self, obj):
         codes = []
-        for code in obj.speakers.all().values_list('code', flat=True):
-            if not code:
+        for speaker in obj.speakers.all():
+            if not speaker.code:
                 logger.warning(
                     "Speaker for submission %s is missing a code.",
                     getattr(obj, 'id', obj),
                 )
             else:
-                codes.append(code)
+                codes.append(speaker.code)
         return codes
 
     def _get_speaker_names_value(self, obj):
-        return [name for name in obj.speakers.all().values_list('fullname', flat=True) if name]
+        return [speaker.fullname for speaker in obj.speakers.all() if speaker.fullname]
 
     def _get_room_value(self, obj):
         slot = obj.slot

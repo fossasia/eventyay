@@ -207,9 +207,12 @@
                 {% blocktranslate with link=link trimmed %}
                     You’re using eventyay as a superuser. This is not recommended.
                 {% endblocktranslate %}
-                <a href="{% url "orga:user.subuser" %}?next={{ request.path|urlencode }}">
-                    {% translate "Please click here to switch to an administrator account." %}
-                </a>
+                <form method="post" action="{% url 'orga:user.subuser' %}?next={{ request.path|urlencode }}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-link p-0 align-baseline">
+                        {% translate "Please click here to switch to an administrator account." %}
+                    </button>
+                </form>
             </div>
         {% endif %}
         <div id="page-wrapper">
@@ -544,6 +547,14 @@
             </div>
         </div>
         {% include "common/includes/modals.html" %}
+        <dialog id="orga-confirm-dialog" class="orga-confirm-dialog" aria-labelledby="orga-confirm-dialog-title" aria-describedby="orga-confirm-dialog-message">
+            <h4 id="orga-confirm-dialog-title" class="orga-confirm-dialog-title"></h4>
+            <p id="orga-confirm-dialog-message" class="orga-confirm-dialog-message"></p>
+            <div class="orga-confirm-dialog-actions">
+                <button type="button" class="btn btn-default" id="orga-confirm-dialog-cancel"></button>
+                <button type="button" class="btn btn-primary" id="orga-confirm-dialog-confirm"></button>
+            </div>
+        </dialog>
         <div id="loadingmodal">
             <div class="modal-card">
                 <div class="modal-card-icon">

@@ -48,17 +48,26 @@ def parse_csv(file, length=None):
     except ImportError:
         charset = file.charset
     data = data.decode(charset or 'utf-8')
-    # If the file was modified on a Mac, it only contains \r as line breaks
     if '\r' in data and '\n' not in data:
         data = data.replace('\r', '\n')
+
+    if not data.strip():
+        return None
+
 
     try:
         dialect = csv.Sniffer().sniff(data.split('\n')[0], delimiters=';,.#:')
     except csv.Error:
-        return None
+        dialect = csv.excel
 
-    if dialect is None:
-        return None
+
+
+    # The sniffer only sees the header line. Our exporter (and Excel/LibreOffice)
+    # write unquoted headers and escape embedded quotes as "", so treat doubled
+    # quotes as escaped quotes even when the header itself contains none.
+    # Fall back to the excel dialect when the file has a single column and no
+    # delimiter to sniff.
+    dialect.doublequote = True
 
     reader = csv.DictReader(io.StringIO(data), dialect=dialect)
     return reader

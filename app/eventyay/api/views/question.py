@@ -47,6 +47,7 @@ OPTIONS_HELP = (
 class QuestionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     queryset = TalkQuestion.objects.none()
     serializer_class = QuestionSerializer
+    filter_backends = (filters.DjangoFilterBackend,)
     filterset_fields = ("is_public", "is_visible_to_reviewers", "target", "variant")
     search_fields = ("question",)
     endpoint = "questions"
@@ -192,6 +193,7 @@ class AnswerFilterSet(filters.FilterSet):
 class AnswerViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     queryset = Answer.objects.none()
     serializer_class = AnswerSerializer
+    filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = AnswerFilterSet
     search_fields = ("answer",)
     endpoint = "answers"

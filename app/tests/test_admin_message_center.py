@@ -1,7 +1,12 @@
+from unittest.mock import patch
+
 import pytest
 from django.contrib.contenttypes.models import ContentType
+from django.core import mail as djmail
+from django.urls import reverse
 from django.utils.timezone import now
 
+from eventyay.base.email import TEST_EMAIL_BODY
 from eventyay.base.models import User
 from eventyay.base.models.admin_mail import (
     AdminEmailQueue,
@@ -10,7 +15,12 @@ from eventyay.base.models.admin_mail import (
     AdminEmailStatus,
     AdminRecipientGroup,
 )
+from eventyay.base.models.auth import StaffSession
 from eventyay.base.models.log import LogEntry
+from eventyay.base.services.mail import get_mail_backend
+from eventyay.base.settings import GlobalSettingsObject
+from eventyay.common.exceptions import SendMailException
+from eventyay.control.forms.admin.admin_messages import AdminComposeForm
 
 
 @pytest.fixture
@@ -454,3 +464,204 @@ def test_delete_action_creates_log_entry(draft_mail, admin_user):
         data='{}',
     )
     assert LogEntry.objects.filter(action_type='eventyay.admin.mail.deleted').exists()
+
+
+def _staff_login(client, user):
+    client.force_login(user)
+    session = client.session
+    session.save()
+    StaffSession.objects.create(user=user, session_key=session.session_key)
+
+
+@pytest.mark.django_db
+def test_users_select2_requires_three_characters(client, admin_user):
+    _staff_login(client, admin_user)
+    User.objects.create_user(email='jane@example.org', password='x', fullname='Jane Doe')
+
+    for query in ('', 'ja', '  j  '):
+        response = client.get(reverse('eventyay_admin:admin.users.select2'), {'query': query})
+        assert response.status_code == 200
+        assert response.json() == {'results': [], 'pagination': {'more': False}}
+
+
+@pytest.mark.django_db
+def test_users_select2_searches_by_name_and_email(client, admin_user):
+    _staff_login(client, admin_user)
+    jane = User.objects.create_user(email='jane@example.org', password='x', fullname='Jane Doe')
+    john = User.objects.create_user(email='jdoe@example.org', password='x', fullname='John Smith')
+
+    response = client.get(reverse('eventyay_admin:admin.users.select2'), {'query': 'jane'})
+    assert [result['id'] for result in response.json()['results']] == [jane.pk]
+
+    response = client.get(reverse('eventyay_admin:admin.users.select2'), {'query': 'smith'})
+    assert [result['id'] for result in response.json()['results']] == [john.pk]
+
+
+@pytest.mark.django_db
+def test_users_select2_limits_page_size(client, admin_user):
+    _staff_login(client, admin_user)
+    for i in range(25):
+        User.objects.create_user(email=f'bulk{i:02d}@example.org', password='x')
+
+    response = client.get(reverse('eventyay_admin:admin.users.select2'), {'query': 'bulk'})
+    data = response.json()
+    assert len(data['results']) == 20
+    assert data['pagination']['more'] is True
+
+    response = client.get(reverse('eventyay_admin:admin.users.select2'), {'query': 'bulk', 'page': 2})
+    assert len(response.json()['results']) == 5
+
+
+@pytest.mark.django_db
+def test_users_select2_rejects_non_staff(client, regular_user):
+    client.force_login(regular_user)
+    response = client.get(reverse('eventyay_admin:admin.users.select2'), {'query': 'user'})
+    assert response.status_code in (302, 403)
+
+
+@pytest.mark.django_db
+def test_compose_form_selectors_wait_for_three_characters():
+    form = AdminComposeForm()
+    for name in ('selected_users', 'selected_events', 'selected_organisers'):
+        attrs = form.fields[name].widget.attrs
+        assert attrs['data-minimum-input-length'] == 3
+        assert attrs['data-delay'] == 250
+
+
+@pytest.fixture
+def admin_client(client, admin_user):
+    _staff_login(client, admin_user)
+    return client
+
+
+def _compose_data(**overrides):
+    data = {
+        'action': 'test',
+        'recipient_group': '',
+        'subject': 'Platform update',
+        'message_0': '<p>Hello {user_name}</p>',
+        'test_email': 'tester@example.com',
+        'delivery_mode': 'now',
+    }
+    data.update(overrides)
+    return data
+
+
+@pytest.mark.django_db
+def test_send_test_email_without_recipient_group(admin_client):
+    with patch('eventyay.control.views.admin_messages.mail_send_task') as task:
+        response = admin_client.post('/admin/messages/compose/', data=_compose_data())
+    assert response.status_code == 200
+    assert not response.context['form'].errors
+    task.assert_called_once()
+    assert task.call_args.kwargs['to'] == ['tester@example.com']
+    assert 'Test email sent successfully to tester@example.com.' in response.content.decode()
+    assert not AdminEmailQueue.objects.exists()
+    assert response.context['form'].fields['recipient_group'].required
+
+
+@pytest.mark.django_db
+def test_send_test_email_ignores_delivery_schedule(admin_client):
+    with patch('eventyay.control.views.admin_messages.mail_send_task') as task:
+        response = admin_client.post('/admin/messages/compose/', data=_compose_data(delivery_mode='later'))
+    assert not response.context['form'].errors
+    task.assert_called_once()
+
+
+@pytest.mark.django_db
+def test_send_test_email_ignores_incomplete_schedule(admin_client):
+    data = _compose_data(delivery_mode='later', scheduled_at_0='2099-01-01', scheduled_at_1='')
+    with patch('eventyay.control.views.admin_messages.mail_send_task') as task:
+        response = admin_client.post('/admin/messages/compose/', data=data)
+    form = response.context['form']
+    assert not form.errors
+    task.assert_called_once()
+    assert not form.fields['scheduled_at'].disabled
+    assert form['scheduled_at'].value() == ['2099-01-01', '']
+
+
+@pytest.mark.django_db
+def test_send_test_email_ignores_invalid_audience_filters(admin_client):
+    data = _compose_data(event_date_from='not-a-date', selected_events='999999')
+    with patch('eventyay.control.views.admin_messages.mail_send_task') as task:
+        response = admin_client.post('/admin/messages/compose/', data=data)
+    form = response.context['form']
+    assert not form.errors
+    task.assert_called_once()
+    assert not form.fields['event_date_from'].disabled
+    assert form['event_date_from'].value() == 'not-a-date'
+
+
+@pytest.mark.django_db
+def test_send_test_email_requires_test_address(admin_client):
+    with patch('eventyay.control.views.admin_messages.mail_send_task') as task:
+        response = admin_client.post('/admin/messages/compose/', data=_compose_data(test_email=''))
+    form = response.context['form']
+    assert form.errors['test_email'] == ['Please enter a test email address.']
+    assert 'recipient_group' not in form.errors
+    task.assert_not_called()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('message', ['', '<p></p>'])
+def test_send_test_email_without_content(admin_client, message):
+    with patch('eventyay.control.views.admin_messages.mail_send_task') as task:
+        response = admin_client.post('/admin/messages/compose/', data=_compose_data(subject='', message_0=message))
+    form = response.context['form']
+    assert not form.errors
+    task.assert_called_once()
+    assert task.call_args.kwargs['subject'] == '[TEST] Eventyay test email'
+    assert task.call_args.kwargs['body'] == str(TEST_EMAIL_BODY)
+    assert str(TEST_EMAIL_BODY) in task.call_args.kwargs['html']
+    assert form.fields['subject'].required
+    assert form.fields['message'].one_required
+
+
+@pytest.mark.django_db
+def test_send_test_email_is_delivered_right_away(admin_client):
+    response = admin_client.post('/admin/messages/compose/', data=_compose_data())
+    assert 'Test email sent successfully to tester@example.com.' in response.content.decode()
+    assert len(djmail.outbox) == 1
+    assert djmail.outbox[0].to == ['tester@example.com']
+    assert djmail.outbox[0].subject == '[TEST] Platform update'
+
+
+@pytest.mark.django_db
+def test_send_test_email_uses_platform_mail_settings(admin_client):
+    GlobalSettingsObject().settings.set('mail_from', 'platform@eventyay.test')
+    with patch('eventyay.base.services.mail.get_mail_backend', wraps=get_mail_backend) as backend:
+        admin_client.post('/admin/messages/compose/', data=_compose_data())
+    backend.assert_called_once()
+    assert djmail.outbox[0].from_email == 'eventyay <platform@eventyay.test>'
+
+
+@pytest.mark.django_db
+def test_send_test_email_reports_mail_server_errors(admin_client):
+    with patch(
+        'eventyay.control.views.admin_messages.mail_send_task',
+        side_effect=SendMailException('Recipient refused'),
+    ):
+        response = admin_client.post('/admin/messages/compose/', data=_compose_data())
+    content = response.content.decode()
+    assert 'Failed to send test email. Please check your mail configuration.' in content
+    assert 'Test email sent successfully' not in content
+
+
+@pytest.mark.django_db
+def test_send_still_requires_recipient_group_and_content(admin_client):
+    response = admin_client.post(
+        '/admin/messages/compose/', data=_compose_data(action='send', subject='', message_0='')
+    )
+    form = response.context['form']
+    assert 'recipient_group' in form.errors
+    assert 'subject' in form.errors
+    assert 'message' in form.errors
+    assert not AdminEmailQueue.objects.exists()
+
+
+@pytest.mark.django_db
+def test_send_still_validates_audience_filters(admin_client):
+    data = _compose_data(action='send', recipient_group=AdminRecipientGroup.ALL_USERS, event_date_from='not-a-date')
+    response = admin_client.post('/admin/messages/compose/', data=data)
+    assert 'event_date_from' in response.context['form'].errors
+    assert not AdminEmailQueue.objects.exists()
