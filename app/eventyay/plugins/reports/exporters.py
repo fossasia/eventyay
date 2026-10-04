@@ -5,7 +5,6 @@ from collections import OrderedDict, defaultdict
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 
-import datetime
 from zoneinfo import ZoneInfo
 from dateutil.parser import parse
 from django import forms
@@ -889,7 +888,7 @@ class OrderTaxListReport(MultiSheetListExporter):
             ]
 
     def iterate_orders(self, form_data):
-        tz = self.event.timezone
+        tz = ZoneInfo(self.event.settings.timezone)
 
         tax_rates = set(
             a
