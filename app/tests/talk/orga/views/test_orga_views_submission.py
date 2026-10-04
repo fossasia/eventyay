@@ -1016,6 +1016,23 @@ def test_orga_can_see_all_feedback(orga_client, event, feedback):
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize(
+    "tab,expected_colspan",
+    [
+        ("pending", 7),
+        ("published", 6),
+        ("hidden", 6),
+        ("anonymous", 6),
+    ],
+)
+def test_orga_feedback_empty_state_colspan(orga_client, event, tab, expected_colspan):
+    url = f"{event.orga_urls.feedback}?tab={tab}"
+    response = orga_client.get(url, follow=True)
+    assert response.status_code == 200
+    assert f'<td colspan="{expected_colspan}" class="text-center text-muted">' in response.text
+
+
+@pytest.mark.django_db
 def test_orga_can_see_anonymisation_interface(orga_client, submission):
     response = orga_client.get(submission.orga_urls.anonymise, follow=True)
     assert response.status_code == 200

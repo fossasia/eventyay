@@ -1,0 +1,115 @@
+name: Issue verification
+
+# Labels new issues verified or not verified.
+# Active members of fossasia/eventyay-core and fossasia/eventyay-devs are verified.
+on:
+  issues:
+    types: [opened, transferred]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: Issue number to label
+        required: true
+        type: number
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    if: github.repository_owner == 'fossasia'
+    concurrency:
+      group: issue-verification-${{ github.event.issue.number || inputs.issue_number }}
+      cancel-in-progress: false
+    permissions:
+      issues: write
+    env:
+      # Issue and label changes use the repository token. Team membership is an
+      # organization permission, which GITHUB_TOKEN cannot be granted.
+      # EVENTYAY_TOKEN is the existing GitHub token used by the Docker workflows.
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TEAM_READ_TOKEN: ${{ secrets.EVENTYAY_TOKEN }}
+      ISSUE_NUMBER: ${{ github.event.issue.number || inputs.issue_number }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Label issue verified or not verified
+        run: |
+          set -euo pipefail
+
+          if [ -z "${TEAM_READ_TOKEN}" ]; then
+            echo "EVENTYAY_TOKEN is not set. Team membership checks need that token to have Members: read on the fossasia organization."
+            exit 1
+          fi
+
+          issue="$(gh api "repos/${REPO}/issues/${ISSUE_NUMBER}")"
+          if [ "$(jq -r '.pull_request != null' <<<"$issue")" = "true" ]; then
+            echo "#${ISSUE_NUMBER} is a pull request; skipping."
+            exit 0
+          fi
+
+          author="$(jq -r '.user.login // empty' <<<"$issue")"
+          if [ -z "$author" ]; then
+            echo "Could not determine the author of issue #${ISSUE_NUMBER}."
+            exit 1
+          fi
+
+          verified=0
+          for team in eventyay-core eventyay-devs; do
+            if ! GH_TOKEN="$TEAM_READ_TOKEN" gh api "orgs/fossasia/teams/${team}" >/dev/null; then
+              echo "Cannot read fossasia/${team}. EVENTYAY_TOKEN needs Members: read on the fossasia organization."
+              exit 1
+            fi
+
+            err="$(mktemp)"
+            set +e
+            body="$(GH_TOKEN="$TEAM_READ_TOKEN" gh api "orgs/fossasia/teams/${team}/memberships/${author}" 2>"$err")"
+            status=$?
+            set -e
+            if [ "$status" -eq 0 ]; then
+              if [ "$(jq -r '.state' <<<"$body")" = "active" ]; then
+                verified=1
+                rm -f "$err"
+                break
+              fi
+            elif ! grep -q 'HTTP 404' "$err"; then
+              cat "$err" >&2
+              rm -f "$err"
+              exit 1
+            fi
+            rm -f "$err"
+          done
+
+          if [ "$verified" -eq 1 ]; then
+            label="verified"
+            color="0E8A16"
+            description="Opened by a member of eventyay-core or eventyay-devs"
+            other="not verified"
+          else
+            label="not verified"
+            color="FBCA04"
+            description="Opened by someone outside the eventyay maintainer teams"
+            other="verified"
+          fi
+
+          label_err="$(mktemp)"
+          set +e
+          gh api "repos/${REPO}/labels/$(jq -rn --arg n "$label" '$n|@uri')" >/dev/null 2>"$label_err"
+          label_code=$?
+          set -e
+          if [ "$label_code" -ne 0 ]; then
+            if grep -q 'HTTP 404' "$label_err"; then
+              gh label create "$label" --repo "$REPO" --color "$color" --description "$description"
+            else
+              cat "$label_err" >&2
+              rm -f "$label_err"
+              exit 1
+            fi
+          fi
+          rm -f "$label_err"
+
+          gh issue edit "$ISSUE_NUMBER" --repo "$REPO" --add-label "$label"
+
+          current="$(gh issue view "$ISSUE_NUMBER" --repo "$REPO" --json labels --jq '.labels[].name')"
+          if grep -Fxq "$other" <<<"$current"; then
+            gh issue edit "$ISSUE_NUMBER" --repo "$REPO" --remove-label "$other"
+          fi
+
+          echo "Issue #${ISSUE_NUMBER} by ${author}: ${label}"
