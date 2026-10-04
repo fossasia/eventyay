@@ -50,6 +50,35 @@ def test_organizer_can_see_answer(orga_user_token, client, answer):
 
 
 @pytest.mark.django_db
+def test_answer_list_filters_by_submission(orga_user_token, client, answer, other_submission):
+    with scope(event=answer.event):
+        other = Answer.objects.create(
+            answer="other",
+            submission=other_submission,
+            question=answer.question,
+        )
+    headers = {"Authorization": f"Token {orga_user_token.token}"}
+    url = answer.event.api_urls.answers
+    unfiltered = client.get(url, follow=True, headers=headers)
+    assert unfiltered.status_code == 200
+    assert {row["id"] for row in unfiltered.json()["results"]} == {answer.id, other.id}
+
+    filtered = client.get(
+        url + f"?submission={answer.submission.code}",
+        follow=True,
+        headers=headers,
+    )
+    assert filtered.status_code == 200
+    results = filtered.json()["results"]
+    assert [row["id"] for row in results] == [answer.id]
+    assert results[0]["submission"] == answer.submission.code
+
+    unrelated = client.get(url + "?q=other", follow=True, headers=headers)
+    assert unrelated.status_code == 200
+    assert {row["id"] for row in unrelated.json()["results"]} == {answer.id, other.id}
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize("is_visible", (True, False))
 def test_answers_not_visible_by_default_to_reviewers(
     client, review_user_token, answer, is_visible
