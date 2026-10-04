@@ -35,6 +35,31 @@ function parsePrefixes(formset) {
     }
 }
 
+function replacePrefixPlaceholder(value, index) {
+    return typeof value === 'string' ? value.replaceAll('__prefix__', String(index)) : value
+}
+
+/**
+ * Clone a Django formset empty-form <template> and rewrite __prefix__ via DOM
+ * attributes (no innerHTML) so static analyzers do not flag XSS sinks.
+ */
+function cloneEmptyFormRow(emptyFormTemplate, index) {
+    if (!(emptyFormTemplate instanceof HTMLTemplateElement)) {
+        console.error('Social links empty form must be a <template> element')
+        return null
+    }
+    const fragment = emptyFormTemplate.content.cloneNode(true)
+    const newRow = fragment.firstElementChild
+    if (!newRow) return null
+
+    newRow.querySelectorAll('input, select, textarea, label, button').forEach((el) => {
+        if (el.name) el.name = replacePrefixPlaceholder(el.name, index)
+        if (el.id) el.id = replacePrefixPlaceholder(el.id, index)
+        if (el.htmlFor) el.htmlFor = replacePrefixPlaceholder(el.htmlFor, index)
+    })
+    return newRow
+}
+
 export function initSpeakerSocialLinksFormset(root = document) {
     const formset = root.getElementById?.('social-links-formset') || root.querySelector?.('#social-links-formset')
     if (!formset) return
@@ -86,11 +111,7 @@ export function initSpeakerSocialLinksFormset(root = document) {
             return
         }
 
-        const templateHtml = emptyFormTemplate.innerHTML
-        const newHtml = templateHtml.replace(/__prefix__/g, totalForms.value)
-        const tempDiv = document.createElement('div')
-        tempDiv.innerHTML = newHtml
-        const newRow = tempDiv.firstElementChild
+        const newRow = cloneEmptyFormRow(emptyFormTemplate, totalForms.value)
         if (!newRow) return
 
         formsetBody.appendChild(newRow)
