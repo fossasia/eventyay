@@ -1,6 +1,8 @@
 from django.db import transaction
+from django.db.models import Prefetch
 from django.db.models.deletion import ProtectedError
 from django_filters import rest_framework as filters
+from django_scopes import scope
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import exceptions, viewsets
 from rest_framework.permissions import SAFE_METHODS
@@ -15,6 +17,7 @@ from eventyay.api.serializers.question import (
     QuestionOrgaSerializer,
     QuestionSerializer,
 )
+from eventyay.base.models import SpeakerProfile
 from eventyay.base.models.question import Answer, AnswerOption, TalkQuestion, TalkQuestionVariant
 from eventyay.talk_rules.submission import questions_for_user
 
@@ -215,12 +218,13 @@ class AnswerViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
             .order_by("pk")
         )
         if self.check_expanded_fields("person"):
-            from django.db.models import Prefetch
-            from eventyay.base.models import SpeakerProfile
+            with scope(event=self.event):
+                profile_qs = SpeakerProfile.objects.filter(event=self.event).select_related("user")
+                
             queryset = queryset.select_related("person").prefetch_related(
                 Prefetch(
                     "person__profiles",
-                    queryset=SpeakerProfile.objects.filter(event=self.event).select_related("user")
+                    queryset=profile_qs
                 )
             )
         question_fields = self.check_expanded_fields(
