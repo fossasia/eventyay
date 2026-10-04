@@ -833,7 +833,10 @@ entitlement_usage_recorded = django.dispatch.Signal()
 """
 Sent to record usage of a specific capability.
 Sender is an ``Organizer`` instance.
-Kwargs: ``capability`` (str), ``amount`` (int)
+Kwargs: ``capability`` (str), ``quantity`` (number), ``unit`` (str),
+``source_type`` (str), ``source_id`` (str), ``idempotency_key`` (str),
+``event`` (Event or None), ``metadata`` (dict or None).
+Receivers must accept **kwargs.
 """
 
 register_entitlements = django.dispatch.Signal()
