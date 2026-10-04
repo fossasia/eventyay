@@ -223,13 +223,30 @@ class AuditLogMiddleware:
             
             post_data = None
             if request.method == 'POST':
-                data = request.POST.copy()
-                for key in data.keys():
-                    if 'password' in key.lower() or key == 'csrfmiddlewaretoken':
-                        data[key] = '***'
-                if data:
+                data_dict = None
+                if request.POST:
+                    data_dict = dict(request.POST.lists())
+                elif request.content_type == 'application/json' and request.body:
                     try:
-                        post_data = json.dumps(dict(data.lists()))
+                        data_dict = json.loads(request.body)
+                    except (ValueError, TypeError):
+                        pass
+
+                if data_dict and isinstance(data_dict, dict):
+                    def mask_data(d):
+                        if isinstance(d, dict):
+                            for k, v in list(d.items()):
+                                if isinstance(k, str) and any(marker in k.lower() for marker in ('password', 'token', 'key', 'secret')):
+                                    d[k] = '***'
+                                else:
+                                    mask_data(v)
+                        elif isinstance(d, list):
+                            for item in d:
+                                mask_data(item)
+
+                    mask_data(data_dict)
+                    try:
+                        post_data = json.dumps(data_dict)
                     except (TypeError, ValueError) as e:
                         post_data = f"Serialization failed: {str(e)}"
             
