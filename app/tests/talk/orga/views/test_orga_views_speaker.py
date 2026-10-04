@@ -7,6 +7,7 @@ from django_scopes import scope, scopes_disabled
 from eventyay.base.models import SpeakerProfile, User
 from eventyay.base.models.mail import QueuedMail
 from eventyay.base.models.question import TalkQuestionRequired as QuestionRequired
+from eventyay.orga.views.speaker import SpeakerViewMixin
 from eventyay.person.forms import SpeakerProfileForm
 from eventyay.person.forms.profile import AVATAR_LICENSE_TEXT_VALIDATION_ERROR
 
@@ -953,9 +954,6 @@ def test_standalone_speaker_appears_on_speakers_list(orga_client, event):
 
 @pytest.mark.django_db
 def test_speaker_view_mixin_get_object_establishes_scope(rf, event, speaker, orga_user):
-    from eventyay.orga.views.speaker import SpeakerViewMixin
-    from django_scopes import scopes_disabled
-
     with scopes_disabled():
         request = rf.get("/")
         request.event = event

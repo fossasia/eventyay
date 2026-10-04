@@ -50,7 +50,11 @@ from eventyay.person.forms.profile import get_email_address_error
 from eventyay.person.social_link_mixin import SpeakerSocialLinksMixin
 from eventyay.submission.forms import TalkQuestionsForm
 from eventyay.talk_rules.person import is_only_reviewer
-from eventyay.talk_rules.submission import limit_for_reviewers, speaker_profiles_for_user
+from eventyay.talk_rules.submission import (
+    limit_for_reviewers,
+    speaker_profiles_for_user,
+    submissions_for_user,
+)
 
 
 class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin, ListView):
@@ -272,14 +276,19 @@ class SpeakerCreate(SpeakerSocialLinksMixin, EventPermissionRequired, ActionFrom
         context.update(self.get_social_links_context())
         return context
 
-    @context
-    @cached_property
-    def existing_sessions(self):
+    def _linkable_sessions(self):
+        """Sessions the current organizer may see/link, including track limits."""
         return (
-            self.request.event.submissions.exclude(state__in=(SubmissionStates.DELETED, SubmissionStates.DRAFT))
+            submissions_for_user(self.request.event, self.request.user)
+            .exclude(state__in=(SubmissionStates.DELETED, SubmissionStates.DRAFT))
             .only('pk', 'title', 'code')
             .order_by('title')
         )
+
+    @context
+    @cached_property
+    def existing_sessions(self):
+        return self._linkable_sessions()
 
     @context
     @cached_property
@@ -332,17 +341,16 @@ class SpeakerCreate(SpeakerSocialLinksMixin, EventPermissionRequired, ActionFrom
                     form.add_error(None, forms.ValidationError(_('Please select an existing session to link.')))
                     return self.form_invalid(form)
                 try:
-                    existing_session = (
-                        self.request.event.submissions.exclude(
-                            state__in=(SubmissionStates.DELETED, SubmissionStates.DRAFT)
-                        ).get(pk=session_pk)
-                    )
+                    existing_session = self._linkable_sessions().get(pk=session_pk)
                 except (Submission.DoesNotExist, ValueError, TypeError):
                     form.add_error(None, forms.ValidationError(_('The selected session does not exist.')))
                     return self.form_invalid(form)
 
             try:
-                self.object = form.save()
+                # Nested atomic creates a savepoint so IntegrityError does not abort
+                # the outer transaction before form_invalid re-queries for the response.
+                with transaction.atomic():
+                    self.object = form.save()
             except IntegrityError:
                 form.add_error('email', forms.ValidationError(get_email_address_error()))
                 return self.form_invalid(form)

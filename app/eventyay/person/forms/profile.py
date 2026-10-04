@@ -283,11 +283,17 @@ class SpeakerProfileForm(
         ]
 
     def clean_email(self):
-        if (self.allow_no_email and self.cleaned_data.get('no_email')) or not self.with_email:
+        # email is declared before no_email, so clean_email runs before no_email
+        # lands in cleaned_data. Read the submitted checkbox from data instead.
+        if self.allow_no_email:
+            no_email = self.data.get(self.add_prefix('no_email')) if self.is_bound else None
+            if no_email or self.cleaned_data.get('no_email'):
+                return None
+        if not self.with_email:
             return None
         email = self.cleaned_data.get('email')
         if not email:
-            return email
+            return None
         qs = User.objects.all()
         if self.user:
             qs = qs.exclude(pk=self.user.pk)
