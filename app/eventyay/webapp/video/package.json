@@ -56,7 +56,7 @@
     "random-js": "^2.1.0",
     "register-service-worker": "^1.7.2",
     "roboto-fontface": "^0.10.0",
-    "sanitize-html": "^2.17.7",
+    "sanitize-html": "^2.18.0",
     "uuid": "^14.0.2",
     "vue": "^3.5.43",
     "vue-advanced-cropper": "^2.8.9",
