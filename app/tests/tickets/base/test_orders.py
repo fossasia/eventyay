@@ -3359,29 +3359,30 @@ def test_giftcard_historical_issuance_canceled_reactivated(event):
     buggy price fallback ($25) instead of the true face value ($50) must
     cancel down exactly $25 and reactivate to exactly $25.
     """
-    ticket = Item.objects.create(
-        event=event,
-        name='Gift Card Product',
-        issue_giftcard=True,
-        default_price=Decimal('50.00'),
-        admission=True,
-    )
-    order = Order.objects.create(
-        code='FOO',
-        event=event,
-        email='dummy@dummy.test',
-        status=Order.STATUS_PAID,
-        locale='en',
-        datetime=now(),
-        expires=now() + timedelta(days=1),
-        total=Decimal('25.00'),
-    )
-    op = OrderPosition.objects.create(
-        order=order,
-        item=ticket,
-        price=Decimal('25.00'),
-        price_before_voucher=Decimal('50.00'), # Face value is 50
-    )
+    with scope(event=event):
+        ticket = Item.objects.create(
+            event=event,
+            name='Gift Card Product',
+            issue_giftcard=True,
+            default_price=Decimal('50.00'),
+            admission=True,
+        )
+        order = Order.objects.create(
+            code='FOO',
+            event=event,
+            email='dummy@dummy.test',
+            status=Order.STATUS_PAID,
+            locale='en',
+            datetime=now(),
+            expires=now() + timedelta(days=1),
+            total=Decimal('25.00'),
+        )
+        op = OrderPosition.objects.create(
+            order=order,
+            item=ticket,
+            price=Decimal('25.00'),
+            price_before_voucher=Decimal('50.00'),  # Face value is 50
+        )
     gc = event.organizer.issued_gift_cards.create(currency=event.currency, issued_in=op)
     # Simulate historical buggy issuance (issued for $25 instead of $50)
     gc.transactions.create(value=Decimal('25.00'), order=order)
@@ -3405,28 +3406,29 @@ def test_giftcard_redeemed_cannot_be_canceled(event):
     will block the order cancellation.
     """
     from eventyay.base.services.orders import OrderError
-    ticket = Item.objects.create(
-        event=event,
-        name='Gift Card Product',
-        issue_giftcard=True,
-        default_price=Decimal('50.00'),
-        admission=True,
-    )
-    order = Order.objects.create(
-        code='FOO2',
-        event=event,
-        email='dummy2@dummy.test',
-        status=Order.STATUS_PAID,
-        locale='en',
-        datetime=now(),
-        expires=now() + timedelta(days=1),
-        total=Decimal('50.00'),
-    )
-    op = OrderPosition.objects.create(
-        order=order,
-        item=ticket,
-        price=Decimal('50.00'),
-    )
+    with scope(event=event):
+        ticket = Item.objects.create(
+            event=event,
+            name='Gift Card Product',
+            issue_giftcard=True,
+            default_price=Decimal('50.00'),
+            admission=True,
+        )
+        order = Order.objects.create(
+            code='FOO2',
+            event=event,
+            email='dummy2@dummy.test',
+            status=Order.STATUS_PAID,
+            locale='en',
+            datetime=now(),
+            expires=now() + timedelta(days=1),
+            total=Decimal('50.00'),
+        )
+        op = OrderPosition.objects.create(
+            order=order,
+            item=ticket,
+            price=Decimal('50.00'),
+        )
     gc = event.organizer.issued_gift_cards.create(currency=event.currency, issued_in=op)
     # Issue $50
     gc.transactions.create(value=Decimal('50.00'), order=order)
