@@ -1,3 +1,4 @@
+import json
 import logging
 from urllib.parse import quote, urljoin
 
@@ -213,23 +214,26 @@ class AuditLogMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+        """
+        Intercepts requests to control/admin areas and records audit logs
+        for active staff sessions. Captures request paths and masked POST payloads.
+        """
         if (request.path.startswith(get_script_prefix() + 'control') or
             request.path.startswith(get_script_prefix() + 'admin')) and request.user.is_authenticated:
             
             post_data = None
             if request.method == 'POST':
                 data = request.POST.copy()
-                for key in ['password', 'password_repeat', 'csrfmiddlewaretoken']:
-                    if key in data:
+                for key in data.keys():
+                    if 'password' in key.lower() or key == 'csrfmiddlewaretoken':
                         data[key] = '***'
                 if data:
-                    import json
                     try:
-                        post_data = json.dumps(data.dict())
-                    except Exception:
-                        pass
+                        post_data = json.dumps(dict(data.lists()))
+                    except (TypeError, ValueError) as e:
+                        post_data = f"Serialization failed: {str(e)}"
             
-            url = request.get_full_path()[:255]
+            url = request.path[:255]
 
             if getattr(request.user, 'is_hijacked', False):
                 hijack_history = request.session.get('hijack_history', False)
