@@ -1561,6 +1561,10 @@ class AbstractPosition(models.Model):
         return self.price - self.tax_value
 
     @property
+    def giftcard_face_value(self):
+        return self.price_before_voucher if self.price_before_voucher is not None else self.price
+
+    @property
     def quotas(self):
         return (
             self.product.quotas.filter(subevent=self.subevent)

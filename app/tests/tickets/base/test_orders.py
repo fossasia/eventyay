@@ -1,6 +1,7 @@
 import json
 from datetime import datetime, timedelta
 from decimal import Decimal
+from unittest import mock
 
 import pytest
 from zoneinfo import ZoneInfo
@@ -3231,6 +3232,116 @@ def test_issue_when_paid_and_changed(event):
     op2 = order.positions.last()
     gc2 = op2.issued_gift_cards.get()
     assert gc2.value == op2.price
+
+
+@pytest.mark.django_db
+def test_giftcard_issued_with_discount_voucher(event):
+    """
+    Regression test: a gift card purchased with a discount voucher must be
+    issued with its original face value, not the discounted checkout price.
+    """
+    ticket = Item.objects.create(
+        event=event,
+        name='Gift Card Product',
+        issue_giftcard=True,
+        default_price=Decimal('50.00'),
+        admission=True,
+    )
+    voucher = event.vouchers.create(
+        code='50PERCENTOFF',
+        value=Decimal('50.00'),
+        price_mode='percent',
+    )
+    cp1 = CartPosition.objects.create(
+        product=ticket,
+        price=Decimal('25.00'),           # discounted checkout price
+        price_before_voucher=Decimal('50.00'),  # original face value
+        voucher=voucher,
+        expires=now() + timedelta(days=1),
+        event=event,
+        cart_id='123',
+    )
+    q = event.quotas.create(size=None, name='foo')
+    q.products.add(ticket)
+
+    with mock.patch('eventyay.base.services.orders.send_mail_task'):
+        with mock.patch('eventyay.base.services.orders.generate_invoice'):
+            order = _create_order(
+                event,
+                email='dummy@example.org',
+                positions=[cp1],
+                now_dt=now(),
+                payment_provider=BankTransfer(event),
+                locale='de',
+                gift_cards=[],
+            )[0]
+
+            op = order.positions.first()
+            assert not op.issued_gift_cards.exists()
+
+            # Confirm payment — this triggers signal_listener_issue_giftcards
+            order.payments.first().confirm()
+            gc1 = op.issued_gift_cards.get()
+
+            # The gift card must carry the face value ($50), NOT the discounted price ($25)
+            assert gc1.transactions.first().value == Decimal('50.00'), (
+                f"Gift card transaction should be 50.00 (face value) but was "
+                f"{gc1.transactions.first().value} (discounted price was 25.00)"
+            )
+            assert gc1.value == Decimal('50.00'), (
+                f"Gift card balance should be 50.00 (face value) but was {gc1.value}"
+            )
+
+            # Cancellation must reverse the full face value back to $0
+            cancel_order(order.pk)
+            gc1.refresh_from_db()
+            assert gc1.value == Decimal('0.00'), (
+                f"Gift card balance after cancellation should be 0.00 but was {gc1.value}"
+            )
+
+
+@pytest.mark.django_db
+def test_giftcard_without_voucher_unchanged(event):
+    """
+    Regression safeguard: a gift card purchased WITHOUT a voucher must still
+    receive the correct balance equal to the position price.
+    """
+    ticket = Item.objects.create(
+        event=event,
+        name='Gift Card Product',
+        issue_giftcard=True,
+        default_price=Decimal('23.00'),
+        admission=True,
+    )
+    cp1 = CartPosition.objects.create(
+        product=ticket,
+        price=Decimal('23.00'),
+        expires=now() + timedelta(days=1),
+        event=event,
+        cart_id='456',
+    )
+    q = event.quotas.create(size=None, name='foo')
+    q.products.add(ticket)
+
+    with mock.patch('eventyay.base.services.orders.send_mail_task'):
+        with mock.patch('eventyay.base.services.orders.generate_invoice'):
+            order = _create_order(
+                event,
+                email='dummy@example.org',
+                positions=[cp1],
+                now_dt=now(),
+                payment_provider=BankTransfer(event),
+                locale='de',
+                gift_cards=[],
+            )[0]
+
+            op = order.positions.first()
+            order.payments.first().confirm()
+            gc1 = op.issued_gift_cards.get()
+
+            # Without a voucher, price_before_voucher is None — must fall back to price
+            assert op.price_before_voucher is None
+            assert gc1.value == Decimal('23.00')
 
 
 class OrderReactivateTest(TestCase):

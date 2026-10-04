@@ -196,7 +196,7 @@ def reactivate_order(order: Order, force: bool = False, user: User = None, auth=
 
                     for gc in position.issued_gift_cards.all():
                         gc = GiftCard.objects.select_for_update().get(pk=gc.pk)
-                        gc.transactions.create(value=position.price, order=order)
+                        gc.transactions.create(value=position.giftcard_face_value, order=order)
                         break
         else:
             raise OrderError(is_available)
@@ -469,7 +469,7 @@ def _cancel_order(
         for position in order.positions.all():
             for gc in position.issued_gift_cards.all():
                 gc = GiftCard.objects.select_for_update().get(pk=gc.pk)
-                if gc.value < position.price:
+                if gc.value < position.giftcard_face_value:
                     raise OrderError(
                         _(
                             'This order can not be canceled since the gift card {card} purchased in '
@@ -477,7 +477,7 @@ def _cancel_order(
                         ).format(card=gc.secret)
                     )
                 else:
-                    gc.transactions.create(value=-position.price, order=order)
+                    gc.transactions.create(value=-position.giftcard_face_value, order=order)
 
         if cancellation_fee:
             with order.event.lock():
@@ -2179,7 +2179,7 @@ class OrderChangeManager:
             elif isinstance(op, self.CancelOperation):
                 for gc in op.position.issued_gift_cards.all():
                     gc = GiftCard.objects.select_for_update().get(pk=gc.pk)
-                    if gc.value < op.position.price:
+                    if gc.value < op.position.giftcard_face_value:
                         raise OrderError(
                             _(
                                 'A position can not be canceled since the gift card {card} purchased in this order has '
@@ -2187,7 +2187,7 @@ class OrderChangeManager:
                             ).format(card=gc.secret)
                         )
                     else:
-                        gc.transactions.create(value=-op.position.price, order=self.order)
+                        gc.transactions.create(value=-op.position.giftcard_face_value, order=self.order)
 
                 for opa in op.position.addons.filter(canceled=False):
                     self.order.log_action(
@@ -3111,14 +3111,14 @@ def signal_listener_issue_giftcards(sender: Event, order: Order, **kwargs):
             issued = Decimal('0.00')
             for gc in p.issued_gift_cards.all():
                 issued += gc.transactions.first().value
-            if p.price - issued > 0:
+            if p.giftcard_face_value - issued > 0:
                 gc = sender.organizer.issued_gift_cards.create(
                     currency=sender.currency,
                     issued_in=p,
                     testmode=order.testmode,
                     expires=sender.organizer.default_gift_card_expiry,
                 )
-                gc.transactions.create(value=p.price - issued, order=order)
+                gc.transactions.create(value=p.giftcard_face_value - issued, order=order)
                 any_giftcards = True
                 p.secret = gc.secret
                 p.save(update_fields=['secret'])
