@@ -17,6 +17,18 @@
       <div class="submission-detail-value">{{ speaker.profile.biography|rich_text }}</div>
     </div>
   {% endif %}
+  {% if request.event.cfp.request_job_title and speaker.profile and speaker.profile.job_title %}
+    <div class="submission-detail">
+      <strong class="submission-detail-label">{% translate 'Job title/role' %}</strong>
+      <div class="submission-detail-value">{{ speaker.profile.job_title }}</div>
+    </div>
+  {% endif %}
+  {% if request.event.cfp.request_organization and speaker.profile and speaker.profile.organization %}
+    <div class="submission-detail">
+      <strong class="submission-detail-label">{% translate 'Organization' %}</strong>
+      <div class="submission-detail-value">{{ speaker.profile.organization }}</div>
+    </div>
+  {% endif %}
   {% if request.event.cfp.request_avatar and speaker.avatar_url %}
     <div class="submission-detail">
       <strong class="submission-detail-label">{% translate 'Avatar' %}</strong>

@@ -71,6 +71,7 @@ def get_submission_speakers(submission: Submission, *, for_reviewers: bool, user
                 question__target=TalkQuestionTarget.SPEAKER,
             )
             .select_related('question')
+            .prefetch_related('options')
             .order_by('question__position')
         )
         other_submissions = Submission.objects.filter(event=event)
@@ -122,7 +123,8 @@ def get_submission_answers(submission: Submission, *, for_reviewers: bool) -> li
 
     The question set mirrors the one the CfP form built for this proposal, so
     the Content tab shows exactly the fields the speaker was asked, including
-    the ones limited to the proposal's track or session type.
+    the ones limited to the proposal's track or session type. Empty answers are
+    left out, so the Custom fields section only shows when something was answered.
     """
     event = submission.event
     with scope(event=event):
@@ -140,8 +142,10 @@ def get_submission_answers(submission: Submission, *, for_reviewers: bool) -> li
             )
         if for_reviewers:
             questions = questions.filter(is_visible_to_reviewers=True)
-        return list(
+        answers = (
             Answer.objects.filter(submission=submission, question__in=questions)
             .select_related('question')
+            .prefetch_related('options')
             .order_by('question__position')
         )
+        return [answer for answer in answers if answer.is_answered]

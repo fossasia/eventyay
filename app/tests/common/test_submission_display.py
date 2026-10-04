@@ -1,3 +1,5 @@
+from types import SimpleNamespace
+
 import pytest
 from django.template.loader import render_to_string
 from django.utils.timezone import now
@@ -232,6 +234,71 @@ def test_answer_list_skips_unanswered_fields(event, submission):
     assert 'Target audience' in html
     assert 'Platform teams' in html
     assert 'Special requirements' not in html
+
+
+@pytest.mark.django_db
+def test_proposal_answers_leave_out_empty_answers(event, submission):
+    with scopes_disabled():
+        answered = make_question(event, TalkQuestionTarget.SUBMISSION, 'Target audience')
+        empty_choice = make_question(
+            event, TalkQuestionTarget.SUBMISSION, 'Topics', position=1, variant=TalkQuestionVariant.MULTIPLE
+        )
+        empty_choice.options.create(answer='Infrastructure')
+        Answer.objects.create(question=answered, submission=submission, answer='Platform teams')
+        # A multiple choice field submitted without a selection is stored as an empty answer.
+        Answer.objects.create(question=empty_choice, submission=submission, answer='')
+
+    with scope(event=event):
+        answers = get_submission_answers(submission, for_reviewers=False)
+
+    assert [answer.question.question for answer in answers] == ['Target audience']
+
+
+@pytest.mark.django_db
+def test_choice_answers_render_the_chosen_options(event, submission, django_assert_num_queries):
+    with scopes_disabled():
+        question = make_question(event, TalkQuestionTarget.SUBMISSION, 'Topics', variant=TalkQuestionVariant.MULTIPLE)
+        infra = question.options.create(answer='Infrastructure')
+        security = question.options.create(answer='Security', position=1)
+        answer = Answer.objects.create(question=question, submission=submission, answer='Infrastructure, Security')
+        answer.options.add(infra, security)
+
+    with scope(event=event):
+        answers = get_submission_answers(submission, for_reviewers=False)
+        # The options are prefetched, so rendering does not query them per answer.
+        with django_assert_num_queries(0):
+            html = render_to_string('orga/includes/submission_answers.html', {'answers': answers})
+
+    assert 'Topics' in html
+    assert 'Infrastructure, Security' in html
+
+
+@pytest.mark.django_db
+def test_speaker_details_show_job_title_and_organization(event, speaker, submission, orga_user):
+    with scopes_disabled():
+        profile = speaker.event_profile(event)
+        profile.job_title = 'Site reliability engineer'
+        profile.organization = 'Open Infra Collective'
+        profile.save()
+
+    with scope(event=event):
+        speakers = get_submission_speakers(submission, for_reviewers=False, user=orga_user)
+        context = {'speaker': speakers[0], 'request': SimpleNamespace(event=event), 'can_view_speaker_emails': False}
+        html = render_to_string('orga/includes/submission_speaker_details.html', context)
+
+    assert 'Site reliability engineer' in html
+    assert 'Open Infra Collective' in html
+
+    with scopes_disabled():
+        event.cfp.fields['job_title'] = {'visibility': 'do_not_ask'}
+        event.cfp.fields['organization'] = {'visibility': 'do_not_ask'}
+        event.cfp.save()
+
+    with scope(event=event):
+        html = render_to_string('orga/includes/submission_speaker_details.html', context)
+
+    assert 'Site reliability engineer' not in html
+    assert 'Open Infra Collective' not in html
 
 
 @pytest.mark.django_db
