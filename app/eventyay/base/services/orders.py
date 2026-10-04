@@ -199,7 +199,6 @@ def reactivate_order(order: Order, force: bool = False, user: User = None, auth=
                         historical_tx = gc.transactions.filter(order=order, value__gt=0).order_by('datetime').first()
                         issued_val = historical_tx.value if historical_tx else position.giftcard_face_value
                         gc.transactions.create(value=issued_val, order=order)
-                        break
         else:
             raise OrderError(is_available)
 

@@ -3294,14 +3294,14 @@ def test_giftcard_issued_with_discount_voucher(event):
 
             # Cancellation must reverse the full face value back to $0
             cancel_order(order.pk)
+            order.refresh_from_db()
             gc1.refresh_from_db()
             assert gc1.value == Decimal('0.00'), (
                 f"Gift card balance after cancellation should be 0.00 but was {gc1.value}"
             )
 
             # Reactivation must restore the full face value back to $50
-            from eventyay.base.services.orders import reactivate_order
-            reactivate_order(order.pk)
+            reactivate_order(order)
             gc1.refresh_from_db()
             assert gc1.value == Decimal('50.00'), (
                 f"Gift card balance after reactivation should be 50.00 but was {gc1.value}"
@@ -3389,12 +3389,12 @@ def test_giftcard_historical_issuance_canceled_reactivated(event):
 
     # Cancellation must only reverse exactly $25
     cancel_order(order.pk)
+    order.refresh_from_db()
     gc.refresh_from_db()
     assert gc.value == Decimal('0.00')
 
     # Reactivation must only restore exactly $25
-    from eventyay.base.services.orders import reactivate_order
-    reactivate_order(order.pk)
+    reactivate_order(order)
     gc.refresh_from_db()
     assert gc.value == Decimal('25.00')
 
