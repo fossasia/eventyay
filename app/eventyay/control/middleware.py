@@ -215,20 +215,37 @@ class AuditLogMiddleware:
     def __call__(self, request):
         if (request.path.startswith(get_script_prefix() + 'control') or
             request.path.startswith(get_script_prefix() + 'admin')) and request.user.is_authenticated:
+            
+            post_data = None
+            if request.method == 'POST':
+                data = request.POST.copy()
+                for key in ['password', 'password_repeat', 'csrfmiddlewaretoken']:
+                    if key in data:
+                        data[key] = '***'
+                if data:
+                    import json
+                    try:
+                        post_data = json.dumps(data.dict())
+                    except Exception:
+                        pass
+            
+            url = request.get_full_path()[:255]
+
             if getattr(request.user, 'is_hijacked', False):
                 hijack_history = request.session.get('hijack_history', False)
                 hijacker = get_object_or_404(User, pk=hijack_history[0])
                 ss = hijacker.get_active_staff_session(request.session.get('hijacker_session'))
                 if ss:
                     ss.logs.create(
-                        url=request.path,
+                        url=url,
                         method=request.method,
                         impersonating=request.user,
+                        post_data=post_data,
                     )
             else:
                 ss = request.user.get_active_staff_session(request.session.session_key)
                 if ss:
-                    ss.logs.create(url=request.path, method=request.method)
+                    ss.logs.create(url=url, method=request.method, post_data=post_data)
 
         response = self.get_response(request)
         return response
