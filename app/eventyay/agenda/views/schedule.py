@@ -349,13 +349,18 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
 
     @context
     def schedule_data_json(self):
-        """Inline non-enriched schedule JSON for all schedule pages.
+        """Inline compact schedule JSON for the interactive schedule.
 
-        Vue reads this directly and skips the widget endpoint fetch entirely,
-        removing a full round-trip from every page load.  Released schedules are
-        cached for 5 minutes; WIP is never cached (and uses all_talks=True).
+        One day's session cards are embedded so the grid can render without a
+        second request. Abstracts and descriptions are included only when the
+        page renders them (list view). Other days are fetched on demand.
         """
-        return build_schedule_json(self.request, self.schedule)
+        return build_schedule_json(
+            self.request,
+            self.schedule,
+            compact=True,
+            include_text=self.show_talk_list(),
+        )
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -507,6 +512,10 @@ def talk_sort_key(talk):
 
 class ScheduleNoJsView(ScheduleView):
     template_name = 'agenda/schedule_nojs.html'
+
+    def schedule_data_json(self):
+        # The fallback page renders sessions from the database, including abstracts.
+        return ''
 
     def get_schedule_data(self):
         schedule = self.get_object()
