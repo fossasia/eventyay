@@ -489,11 +489,12 @@ class SubmissionFilterForm(forms.Form):
         required=False,
         label=_('Room status'),
         choices=(
-            ('', _('All room statuses')),
-            ('published', _('Room published')),
-            ('not_published', _('Room not published')),
-            ('not_assigned', _('Room not assigned')),
+            ('', _('Room status')),
+            ('published', _('Published')),
+            ('not_published', _('Not published')),
+            ('not_assigned', _('Not assigned')),
         ),
+        widget=EnhancedSelect,
     )
     readiness = forms.ChoiceField(
         required=False,
