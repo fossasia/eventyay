@@ -9,6 +9,7 @@ from django.http import (
     HttpRequest,
     HttpResponse,
     HttpResponseRedirect,
+    RawPostDataException,
 )
 from django.shortcuts import get_object_or_404, redirect, render, resolve_url
 from django.template.response import TemplateResponse
@@ -226,13 +227,14 @@ class AuditLogMiddleware:
                 data_dict = None
                 if request.POST:
                     data_dict = dict(request.POST.lists())
-                elif request.content_type == 'application/json' and request.body:
+                elif request.content_type == 'application/json':
                     try:
-                        data_dict = json.loads(request.body)
-                    except (ValueError, TypeError):
+                        if request.body:
+                            data_dict = json.loads(request.body)
+                    except (ValueError, TypeError, RawPostDataException):
                         pass
 
-                if data_dict and isinstance(data_dict, dict):
+                if data_dict and isinstance(data_dict, (dict, list)):
                     def mask_data(d):
                         if isinstance(d, dict):
                             for k, v in list(d.items()):
@@ -247,22 +249,27 @@ class AuditLogMiddleware:
                     mask_data(data_dict)
                     try:
                         post_data = json.dumps(data_dict)
+                        if post_data and len(post_data) > 10000:
+                            post_data = post_data[:10000] + '... [truncated]'
                     except (TypeError, ValueError) as e:
                         post_data = f"Serialization failed: {str(e)}"
             
-            url = request.path[:255]
+            url = request.get_full_path()[:255]
 
-            if getattr(request.user, 'is_hijacked', False):
-                hijack_history = request.session.get('hijack_history', False)
-                hijacker = get_object_or_404(User, pk=hijack_history[0])
-                ss = hijacker.get_active_staff_session(request.session.get('hijacker_session'))
-                if ss:
-                    ss.logs.create(
-                        url=url,
-                        method=request.method,
-                        impersonating=request.user,
-                        post_data=post_data,
-                    )
+            is_hijacked = getattr(request.user, 'is_hijacked', False) or bool(request.session.get('hijack_history'))
+            if is_hijacked:
+                hijack_history = request.session.get('hijack_history') or []
+                if hijack_history:
+                    hijacker = User.objects.filter(pk=hijack_history[0]).first()
+                    if hijacker:
+                        ss = hijacker.get_active_staff_session(request.session.get('hijacker_session'))
+                        if ss:
+                            ss.logs.create(
+                                url=url,
+                                method=request.method,
+                                impersonating=request.user,
+                                post_data=post_data,
+                            )
             else:
                 ss = request.user.get_active_staff_session(request.session.session_key)
                 if ss:

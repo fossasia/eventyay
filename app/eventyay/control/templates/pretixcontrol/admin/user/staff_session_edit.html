@@ -40,7 +40,14 @@
         <td>{{ log.method }}</td>
         <td class="break-all">{{ log.url }}</td>
         <td>{{ log.impersonating|default:"" }}</td>
-        <td class="break-all">{{ log.post_data|default:"" }}</td>
+        <td class="break-all">
+            {% if log.post_data %}
+            <details>
+                <summary>{% trans "View payload" %}</summary>
+                {{ log.post_data }}
+            </details>
+            {% endif %}
+        </td>
         </tr>
     {% endfor %}
     </tbody>
