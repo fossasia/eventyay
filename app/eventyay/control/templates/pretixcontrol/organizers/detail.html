@@ -2,6 +2,7 @@
 {% load i18n %}
 {% load bootstrap3 %}
 {% load static %}
+{% load event_tags %}
 
 {% block custom_header %}
     {{ block.super }}
@@ -151,7 +152,8 @@
                                 data-toggle="tooltip">
                             <span class="fa fa-eye"></span>
                         </a>
-                        {% if "can_create_events" in request.orgapermset %}
+                        {% has_event_permission e "can_change_event_settings" as can_clone %}
+                        {% if "can_create_events" in request.orgapermset and can_clone %}
                             <a href="{% url "eventyay_common:event.clone" organizer=e.organizer.slug event=e.slug %}" class="btn btn-sm btn-default"
                                     title="{% trans "Clone event" %}" data-toggle="tooltip">
                                 <span class="fa fa-copy"></span>
