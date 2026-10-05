@@ -640,8 +640,9 @@ class InfoStep(GenericFlowStep, FormFlowStep):
         if access_code:
             submission.access_code = access_code
             submission.save()
-            access_code.redeemed += 1
-            access_code.save()
+            if not draft:
+                access_code.redeemed += 1
+                access_code.save()
 
         request.submission = submission
 
