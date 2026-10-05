@@ -759,28 +759,44 @@ function editorStart(session: SessionData | Talk): void {
     }
   }
   editorSession.value = newEditorSession
+  void nextTick(() => {
+    const form = document.getElementById('session-editor') as HTMLFormElement | null
+    if (form) {
+      const input = form.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(
+        'input:not([type="submit"]):not([type="hidden"]), select, textarea'
+      )
+      if (input) {
+        input.focus()
+        if (input instanceof HTMLInputElement && input.type === 'text') {
+          input.select?.()
+        }
+      }
+    }
+  })
 }
 
 function editorSubmit(event: KeyboardEvent): void {
   if (event.isComposing || event.keyCode === 229) return
-  if (event.isComposing || event.keyCode === 229) return
-  const target = event.target
+
+  const target = event.target as HTMLElement | null
   if (
-    !(target instanceof HTMLInputElement) &&
-    !(target instanceof HTMLSelectElement) &&
-    !(target instanceof HTMLTextAreaElement)
+    target instanceof HTMLButtonElement ||
+    target?.closest('button') ||
+    target instanceof HTMLTextAreaElement
   ) return
-  const form = target.form ?? target.closest('form')
+
+  const form = target?.closest('form') ?? (document.getElementById('session-editor') as HTMLFormElement | null)
   if (form && !form.checkValidity()) {
     form.reportValidity()
     return
   }
   event.preventDefault()
+  event.stopPropagation()
   void editorSave()
 }
 
 async function editorSave(): Promise<void> {
-  if (!editorSession.value) return
+  if (!editorSession.value || editorSessionWaiting.value) return
 
   editorSessionWaiting.value = true
   if (editorSession.value.start) {
@@ -1192,11 +1208,23 @@ const preventScrollOnDrag = (e: TouchEvent) => {
   }
 }
 
+function onWindowKeydown(event: KeyboardEvent): void {
+  if (!editorSession.value) return
+  if (event.key === 'Escape') {
+    editorCancel()
+    return
+  }
+  if (event.key === 'Enter') {
+    editorSubmit(event)
+  }
+}
+
 onMounted(() => {
   document.addEventListener('touchmove', preventScrollOnDrag, { passive: false })
   window.addEventListener('click', onWindowClick)
   window.addEventListener('resize', onWindowResize)
   window.addEventListener('storage', onStorageChange)
+  window.addEventListener('keydown', onWindowKeydown)
   onWindowResize()
 })
 
@@ -1206,6 +1234,7 @@ onUnmounted(() => {
   window.removeEventListener('click', onWindowClick)
   window.removeEventListener('resize', onWindowResize)
   window.removeEventListener('storage', onStorageChange)
+  window.removeEventListener('keydown', onWindowKeydown)
 })
 </script>
 
