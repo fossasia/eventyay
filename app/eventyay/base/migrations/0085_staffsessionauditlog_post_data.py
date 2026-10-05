@@ -4,7 +4,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0083_admin_mail_i18n_fields'),
+        ('base', '0084_voucher_all_addons_bundles_included'),
     ]
 
     operations = [
