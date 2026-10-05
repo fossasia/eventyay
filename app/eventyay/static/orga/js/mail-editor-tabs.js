@@ -65,6 +65,14 @@ const loadPreview = async (wrapper, previewPanel, locale) => {
                 locale: locale || undefined,
             }),
         })
+        if (response.status === 400) {
+            const data = await response.json()
+            if (typeof data.error === "string") {
+                console.error("Email preview validation failed:", data.error)
+                previewBlock.textContent = data.error
+                return
+            }
+        }
         if (!response.ok) {
             throw new Error(`Preview request failed: ${response.status}`)
         }

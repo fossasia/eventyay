@@ -1146,6 +1146,17 @@ export default {
 			color: #666
 		.filter-dropdown-area
 			position: relative
+			> .toolbar-btn:not(.icon-only)
+				border: 1px solid #ddd
+				border-radius: 6px
+				padding: 0 10px
+				height: 32px
+				justify-content: center
+				gap: 6px
+				background: #fff
+				&:hover
+					border-color: #bbb
+					background: #f8f8f8
 		.filter-dropdown-menu
 			position: absolute
 			left: 0
@@ -1805,18 +1816,25 @@ export default {
 			grid-template-columns: auto minmax(0, 1fr) auto
 			align-items: center
 			gap: 8px
+			padding: 0
 		.toolbar-left
 			flex: none
 			min-width: 0
+			grid-column: 1
+			align-self: center
 		.toolbar-center
 			flex: none
 			justify-content: center
 			min-width: 0
 			max-width: 100%
+			grid-column: 2
+			align-self: center
 		.toolbar-right
 			flex: none
 			min-width: 0
+			grid-column: 3
 			justify-self: end
+			align-self: center
 
 @media (max-width: 1024px)
 	.c-schedule-toolbar
@@ -1827,7 +1845,7 @@ export default {
 			align-items: center
 			height: auto
 			min-height: 40px
-			padding: 6px 8px
+			padding: 6px 0
 			gap: 6px
 			.toolbar-left
 				grid-area: left
@@ -2057,7 +2075,7 @@ export default {
 		.toolbar-btn.icon-only[aria-label]::after
 			display: none
 		.toolbar-row
-			padding: 6px
+			padding: 6px 0
 			.toolbar-center
 				.day-btn
 					font-size: 13px
