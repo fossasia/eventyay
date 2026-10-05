@@ -874,14 +874,14 @@ wheels = [
 
 [[package]]
 name = "django-hijack"
-version = "3.7.8"
+version = "3.7.9"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8c/b3/4b87f0bb4d0ca9128cd7fae37d434a0a4c7855c20759e33f2fa58a9d8a74/django_hijack-3.7.8.tar.gz", hash = "sha256:f28afb2be24430e348b8887c2f04337b1b77b66a44e4a6cd3a40902926d9e5fb", size = 14476, upload-time = "2026-04-19T18:07:15.284Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/81/8c/7093814ce82d29034d339bdf660f6bc0276ccf8c2a31be26fcb0e378caf7/django_hijack-3.7.9.tar.gz", hash = "sha256:b43fb47b2501e230a7343aaae94e1748ee628a16161916e1edc83a52b3924347", size = 14559, upload-time = "2026-10-01T22:00:39.353Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/de/d3/c55448947bf88198add5bc5843915135e855e02c0bebf89c1b3419e582ec/django_hijack-3.7.8-py3-none-any.whl", hash = "sha256:8967e4f4e528e0cc06b4f0829fbc1a55a493cc3ce8c0d088d51d9a40404a32de", size = 31444, upload-time = "2026-04-19T18:07:13.859Z" },
+    { url = "https://files.pythonhosted.org/packages/66/5a/c44e0453ff391f0052aeef49cb245b09e8df75eeede4cf20092d52abff29/django_hijack-3.7.9-py3-none-any.whl", hash = "sha256:76e451842684ad79ea27e79a1dea60518c845d239656c90735c2c5c6eb2f78a3", size = 31480, upload-time = "2026-10-01T22:00:38.097Z" },
 ]
 
 [[package]]
