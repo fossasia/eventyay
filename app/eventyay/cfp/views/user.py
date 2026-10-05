@@ -427,8 +427,15 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
         access_code.save(update_fields=['redeemed'])
         return True
 
+    def is_dedraft_action(self):
+        return self.object.state == SubmissionStates.DRAFT and self.request.POST.get('action', 'submit') == 'dedraft'
+
     @transaction.atomic
     def form_valid(self, form):
+        if self.is_dedraft_action():
+            state = Submission.all_objects.select_for_update().values_list('state', flat=True).get(pk=self.object.pk)
+            if state != SubmissionStates.DRAFT:
+                return redirect(self.request.event.urls.user_submissions)
         if self.can_edit:
             # Validate formset before saving form to prevent partial persistence
             result = self.save_formset(form.instance)
@@ -443,11 +450,7 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
                     form.instance.update_review_scores()
                 form.instance.log_action('eventyay.submission.update', person=self.request.user)
                 self.request.event.cache.set('rebuild_schedule_export', True, None)
-            if (
-                form.instance.state == SubmissionStates.DRAFT
-                and self.request.method == 'POST'
-                and self.request.POST.get('action', 'submit') == 'dedraft'
-            ):
+            if self.is_dedraft_action():
                 if not self.redeem_access_code(form.instance):
                     transaction.set_rollback(True)
                     messages.error(self.request, phrases.cfp.submission_uneditable)
