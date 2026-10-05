@@ -472,9 +472,13 @@ class SpeakerDetail(SpeakerSocialLinksMixin, SpeakerViewMixin, ActionFromUrl, Cr
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update({'event': self.request.event, 'user': self.object})
+        kwargs.update({'event': self.request.event, 'user': self.object, 'allow_no_email': True})
         if not self.request.user.has_perm('base.orga_view_speaker_emails', self.request.event):
             kwargs['with_email'] = False
+        else:
+            if not self.object.email:
+                kwargs.setdefault('initial', {})
+                kwargs['initial']['no_email'] = True
         kwargs['for_reviewers'] = (
             not self.request.user.has_perm('base.orga_update_submission', self.request.event)
             and self.request.user.has_perm('base.list_review', self.request.event)
