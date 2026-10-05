@@ -7,7 +7,9 @@ from django.db import models
 from django.urls import reverse
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
+from i18nfield.fields import I18nCharField, I18nTextField
 
+from eventyay.base.i18n import LazyI18nString
 from eventyay.base.models.auth import User
 from eventyay.base.models.base import CachedFile
 
@@ -58,8 +60,8 @@ class AdminEmailQueue(models.Model):
         verbose_name=_('Recipient group'),
     )
 
-    subject = models.CharField(max_length=500, blank=True, default='', verbose_name=_('Subject'))
-    message = models.TextField(blank=True, default='', verbose_name=_('Message'))
+    subject = I18nCharField(max_length=500, verbose_name=_('Subject'))
+    message = I18nTextField(verbose_name=_('Message'))
 
     reply_to = models.CharField(max_length=254, blank=True, default='', verbose_name=_('Reply-To'))
     bcc = models.TextField(blank=True, default='', verbose_name=_('BCC'))
@@ -212,10 +214,15 @@ class AdminEmailQueue(models.Model):
         sent_ids: list[int] = []
         failed_recipients: list[AdminEmailQueueRecipient] = []
 
+        subject_i18n = LazyI18nString(self.subject)
+        message_i18n = LazyI18nString(self.message)
+        default_locale = django_settings.LANGUAGE_CODE
+
         for recipient in valid_recipients:
             context = self._build_context(recipient)
-            subject = self.subject
-            body = self.message
+            user_locale = recipient.user.locale if recipient.user and recipient.user.locale else default_locale
+            subject = subject_i18n.localize(user_locale)
+            body = message_i18n.localize(user_locale)
 
             for key, value in context.items():
                 subject = subject.replace('{' + key + '}', str(value))
@@ -254,8 +261,8 @@ class AdminEmailQueue(models.Model):
                 'support_email': str(getattr(django_settings, 'SUPPORT_EMAIL', '')),
                 'support_url': str(getattr(django_settings, 'SUPPORT_URL', '')),
             }
-            bcc_subject = self.subject
-            bcc_body = self.message
+            bcc_subject = subject_i18n.localize(default_locale)
+            bcc_body = message_i18n.localize(default_locale)
             for key, value in platform_context.items():
                 bcc_subject = bcc_subject.replace('{' + key + '}', str(value))
                 bcc_body = bcc_body.replace('{' + key + '}', str(value))

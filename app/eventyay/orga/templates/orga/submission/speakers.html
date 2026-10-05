@@ -18,7 +18,7 @@
         {% include "orga/submission/fragment_speakers.html" %}
     </div>
 
-    <span id="vars" remoteUrl="{{ request.event.organizer.orga_urls.user_search }}"></span>
+    <span id="vars" remoteUrl="{{ request.event.orga_urls.speaker_autocomplete }}" data-no-results="{% translate 'No matching person found for this event.' %}"></span>
     {% compress js %}
         <script defer src="{% static "orga/js/speakers.js" %}"></script>
     {% endcompress %}
