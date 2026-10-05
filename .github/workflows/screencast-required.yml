@@ -84,14 +84,15 @@ jobs:
 
             // Does a comment/description contain a video?
             // - Any file uploaded to GitHub (user-attachments/assets URL) counts, whether it is shown
-            //   as a bare URL, a <video> tag or a [name.webm](...) link, EXCEPT when it is embedded
-            //   as an image (![alt](url) or <img src="url">).
+            //   as a bare URL, inside a <video src> tag or as a [name.webm](...) link, EXCEPT when it is
+            //   embedded as an image (![alt](url) or <img src="url">).
             // - Links to .mp4/.mov/.webm/.mkv files and YouTube/Loom/Vimeo links also count.
+            // - An empty <video> tag without a real source does NOT count.
             const ASSET_RE = /https:\/\/github\.com\/user-attachments\/assets\/[\w-]+/gi;
             const LINK_RE = /https:\/\/[^\s)"'<>]+\.(mp4|mov|webm|mkv)\b|https:\/\/(www\.)?(youtube\.com|youtu\.be|loom\.com|vimeo\.com)\/\S+/i;
             const hasVideoText = body => {
               body = body ?? '';
-              if (/<video\b/i.test(body) || LINK_RE.test(body)) return true;
+              if (LINK_RE.test(body)) return true;
               for (const m of body.matchAll(ASSET_RE)) {
                 const before = body.slice(Math.max(0, m.index - 500), m.index);
                 if (/!\[[^\]]*\]\(\s*$/.test(before)) continue; // markdown image
