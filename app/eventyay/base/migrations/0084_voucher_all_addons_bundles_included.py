@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0082_speakerinvitation'),
+        ('base', '0083_admin_mail_i18n_fields'),
     ]
 
     operations = [
