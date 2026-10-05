@@ -9,6 +9,7 @@ from django_scopes import scope
 
 from eventyay.base.entitlements import EntitlementDecision
 from eventyay.base.models import MailTemplate, MailTemplateRoles, QueuedMail
+from eventyay.common.exceptions import SendMailException
 from eventyay.orga.forms.mails import MailDetailForm, WriteSessionMailForm
 
 
@@ -1490,6 +1491,143 @@ def test_draft_to_outbox_denied_by_entitlement(orga_client, event, mail):
             event=event,
             quantity=1,
         )
+
+
+@pytest.mark.django_db
+def test_orga_can_edit_draft_mail_redirects_to_drafts(orga_client, event, mail):
+    with scope(event=event):
+        mail.is_draft = True
+        mail.save()
+
+    response = orga_client.post(
+        mail.urls.base,
+        follow=False,
+        data={
+            "to": "draftuser@gmail.com",
+            "bcc": mail.bcc or "",
+            "cc": mail.cc or "",
+            "reply_to": mail.reply_to or "",
+            "subject": "Updated Draft Subject",
+            "text": "Updated draft content",
+        },
+    )
+    assert response.status_code == 302
+    assert response.url == event.orga_urls.drafts
+
+    with scope(event=event):
+        mail.refresh_from_db()
+        assert mail.is_draft is True
+        assert mail.subject == "Updated Draft Subject"
+        assert mail.to == "draftuser@gmail.com"
+
+
+@pytest.mark.django_db
+def test_orga_can_discard_draft_mail_redirects_to_drafts(orga_client, event, mail):
+    with scope(event=event):
+        mail.is_draft = True
+        mail.save()
+
+    # Verify cancel/back button on confirmation page points to drafts
+    response = orga_client.get(mail.urls.delete)
+    assert response.status_code == 200
+    assert response.context["action_back_url"] == event.orga_urls.drafts
+
+    # Verify POST deletion redirects to drafts
+    response = orga_client.post(mail.urls.delete, follow=False)
+    assert response.status_code == 302
+    assert response.url == event.orga_urls.drafts
+
+    with scope(event=event):
+        assert not QueuedMail.objects.filter(pk=mail.pk).exists()
+
+
+@pytest.mark.django_db
+def test_orga_can_edit_and_send_draft_mail_redirects_to_outbox(orga_client, event, mail):
+    with scope(event=event):
+        mail.is_draft = True
+        mail.save()
+
+    response = orga_client.post(
+        mail.urls.base,
+        follow=False,
+        data={
+            "to": "draftrecipient@gmail.com",
+            "bcc": mail.bcc or "",
+            "cc": mail.cc or "",
+            "reply_to": mail.reply_to or "",
+            "subject": "Sent Draft Subject",
+            "text": "Sent draft content",
+            "form": "send",
+        },
+    )
+    assert response.status_code == 302
+    assert response.url == event.orga_urls.outbox
+
+    with scope(event=event):
+        mail.refresh_from_db()
+        assert mail.is_draft is False
+        assert mail.sent is not None
+        assert mail.subject == "Sent Draft Subject"
+
+
+@pytest.mark.django_db
+def test_orga_can_discard_all_drafts_by_template(orga_client, event, mail_template):
+    with scope(event=event):
+        mail1 = mail_template.to_mail("user1@example.com", event=event)
+        mail1.is_draft = True
+        mail1.save()
+        mail2 = mail_template.to_mail("user2@example.com", event=event)
+        mail2.is_draft = True
+        mail2.save()
+
+    # GET bulk confirmation page
+    response = orga_client.get(f"{mail1.urls.delete}?all")
+    assert response.status_code == 200
+    assert response.context["action_back_url"] == event.orga_urls.drafts
+
+    # POST bulk deletion
+    response = orga_client.post(f"{mail1.urls.delete}?all", follow=False)
+    assert response.status_code == 302
+    assert response.url == event.orga_urls.drafts
+
+    with scope(event=event):
+        assert not QueuedMail.objects.filter(pk__in=[mail1.pk, mail2.pk]).exists()
+
+
+@pytest.mark.django_db
+def test_orga_edit_and_send_draft_failure_remains_draft_and_redirects_to_drafts(orga_client, event, mail, monkeypatch):
+    with scope(event=event):
+        mail.is_draft = True
+        mail.save()
+
+    def mock_send(self, *args, **kwargs):
+        raise SendMailException("SMTP server connection failed")
+
+    monkeypatch.setattr(QueuedMail, "send", mock_send)
+
+    response = orga_client.post(
+        mail.urls.base,
+        follow=False,
+        data={
+            "to": "draftfail@gmail.com",
+            "bcc": mail.bcc or "",
+            "cc": mail.cc or "",
+            "reply_to": mail.reply_to or "",
+            "subject": "Draft Failing Send Subject",
+            "text": "Draft failing content",
+            "form": "send",
+        },
+    )
+    assert response.status_code == 302
+    assert response.url == event.orga_urls.drafts
+
+    with scope(event=event):
+        mail.refresh_from_db()
+        assert mail.is_draft is True
+        assert mail.sent is None
+
+
+
 
 
 

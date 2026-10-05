@@ -283,11 +283,17 @@ class MailDelete(PermissionRequired, ActionConfirmMixin, TemplateView):
             return self.request.event.queued_mails.filter(sent__isnull=True, template=mail.first().template)
         return mail
 
+    @property
+    def is_draft(self) -> bool:
+        return any(mail.is_draft for mail in self.queryset)
+
     def action_text(self):
         return self.question()
 
     @property
     def action_back_url(self):
+        if self.is_draft:
+            return self.request.event.orga_urls.drafts
         return self.request.event.orga_urls.outbox
 
     @context
@@ -311,6 +317,7 @@ class MailDelete(PermissionRequired, ActionConfirmMixin, TemplateView):
                 _('This mail either does not exist or cannot be discarded because it was sent already.'),
             )
             return redirect(self.request.event.orga_urls.outbox)
+        is_draft = self.is_draft
         for mail in mails:
             mail.log_action('eventyay.mail.delete', person=self.request.user, orga=True)
             mail.delete()
@@ -326,6 +333,8 @@ class MailDelete(PermissionRequired, ActionConfirmMixin, TemplateView):
             ).format(count=mail_count),
         )
 
+        if is_draft:
+            return redirect(request.event.orga_urls.drafts)
         return redirect(request.event.orga_urls.outbox)
 
 
@@ -367,6 +376,8 @@ class MailDetail(PermissionRequired, ActionFromUrl, CreateOrUpdateView):
         return self.request.event.queued_mails.filter(pk=self.kwargs.get('pk')).first()
 
     def get_success_url(self):
+        if self.object and self.object.is_draft:
+            return self.object.event.orga_urls.drafts
         return self.object.event.orga_urls.outbox
 
     def form_valid(self, form):
@@ -384,9 +395,14 @@ class MailDetail(PermissionRequired, ActionFromUrl, CreateOrUpdateView):
                 return redirect(self.get_success_url())
             try:
                 form.instance.send(requestor=self.request.user)
+                if form.instance.is_draft:
+                    form.instance.is_draft = False
+                    form.instance.save(update_fields=['is_draft'])
                 messages.success(self.request, _('The email has been sent.'))
+                return redirect(self.request.event.orga_urls.outbox)
             except SendMailException as e:
                 messages.error(self.request, str(e))
+                return redirect(self.get_success_url())
         else:  # action == 'save'
             messages.success(
                 self.request,
