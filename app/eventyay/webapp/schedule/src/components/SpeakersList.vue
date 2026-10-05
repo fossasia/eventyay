@@ -407,10 +407,13 @@ export default {
 		},
 		featuredColumns() {
 			const speakers = this.filteredSpeakers
-			const card = this.featuredCardWidth
-			const gap = 18
-			const available = this.speakersGridWidth || card
-			const count = Math.max(1, Math.floor((available + gap) / (card + gap)))
+			const available = this.speakersGridWidth || (window.innerWidth >= 768 ? Math.min(window.innerWidth - 32, 1140) : 400)
+			
+			let count = 1
+			if (available >= 960) count = 4
+			else if (available >= 720) count = 3
+			else if (available >= 480) count = 2
+
 			const columnCount = Math.min(count, Math.max(speakers.length, 1))
 			const columns = Array.from({length: columnCount}, () => [])
 			speakers.forEach((speaker, index) => {
@@ -1028,12 +1031,12 @@ export default {
 	.speakers-grid
 		display: flex
 		flex-direction: column
-		padding: 10px
+		padding: 10px 0
 		gap: 12px
 	.speakers-details
 		display: flex
 		flex-direction: column
-		padding: 16px
+		padding: 16px 0
 		gap: 12px
 		min-width: 0
 		width: 100%
@@ -1054,12 +1057,9 @@ export default {
 			display: flex
 			flex-direction: column
 			gap: 18px
-			width: 400px
-			max-width: 100%
-			flex: 0 0 400px
-			@media (min-width: 768px)
-				width: 360px
-				flex-basis: 360px
+			flex: 1 1 0
+			min-width: 0
+			max-width: 400px
 
 		.featured-speaker-column
 			width: 100%
