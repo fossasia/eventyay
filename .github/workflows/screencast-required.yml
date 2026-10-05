@@ -33,8 +33,7 @@ on:
         default: true
 
 permissions:
-  pull-requests: write
-  issues: write
+  pull-requests: write # enough to comment on, label and close PRs
 
 env:
   LABEL: needs-screencast # LABEL (1/2)
