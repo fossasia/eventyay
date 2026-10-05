@@ -184,12 +184,6 @@ header .header-row-right {
         padding-right: 12px;
     }
 
-    /* Presale event index: full-bleed hero overlay */
-    #main-container.page-presale-event-index .event-hero-overlay {
-        padding-left: 0;
-        padding-right: 0;
-    }
-
     #main-card {
         margin-left: 0;
         margin-right: 0;
