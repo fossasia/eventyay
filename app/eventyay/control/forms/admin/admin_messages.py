@@ -3,6 +3,7 @@ from django.conf import settings
 from django.core.validators import validate_email
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
+from i18nfield.forms import I18nFormField, I18nTextInput
 
 from eventyay.base.forms.widgets import SplitDateTimePickerWidget
 from eventyay.base.models import Event, Organizer, User
@@ -297,22 +298,9 @@ class AdminComposeForm(ScheduledAtValidationMixin, forms.Form):
         widget=forms.TextInput(attrs={'placeholder': 'bcc1@domain.com, bcc2@domain.com'}),
     )
 
-    subject = forms.CharField(
-        label=_('Subject'),
-        max_length=500,
-        widget=forms.TextInput(attrs={'placeholder': _('Email subject')}),
-    )
-
-    message = I18nEmailBodyFormField(
-        label=_('Message'),
-        placeholders=[
-            'user_name', 'first_name', 'last_name', 'email', 'account_url',
-            'organiser_name', 'organiser_url',
-            'event_name', 'event_url', 'event_start_date', 'event_end_date',
-            'platform_name', 'platform_url', 'support_email', 'support_url',
-        ],
-        locales=['en'],
-    )
+    # subject and message are created in __init__ with platform locales
+    subject = None
+    message = None
     attachment = CachedFileField(
         label=_('Attachment'),
         required=False,
@@ -360,14 +348,41 @@ class AdminComposeForm(ScheduledAtValidationMixin, forms.Form):
         self.test_send = test_send
         super().__init__(*args, **kwargs)
 
+        for field_name in ('subject', 'message'):
+            value = self.initial.get(field_name)
+            if value is not None:
+                if hasattr(value, 'data'):
+                    value = value.data
+                if isinstance(value, str) and value:
+                    self.initial[field_name] = {settings.LANGUAGE_CODE: value}
+
         lang_choices = [('', _('All'))]
         lang_choices.extend(settings.LANGUAGES)
         self.fields['language'].choices = lang_choices
 
+        platform_locales = [code for code, _name in settings.LANGUAGES]
+        self.fields['subject'] = I18nFormField(
+            label=_('Subject'),
+            widget=I18nTextInput,
+            max_length=500,
+            required=not draft_save,
+            locales=platform_locales,
+        )
+        self.fields['message'] = I18nEmailBodyFormField(
+            label=_('Message'),
+            placeholders=[
+                'user_name', 'first_name', 'last_name', 'email', 'account_url',
+                'organiser_name', 'organiser_url',
+                'event_name', 'event_url', 'event_start_date', 'event_end_date',
+                'platform_name', 'platform_url', 'support_email', 'support_url',
+            ],
+            required=not draft_save,
+            locales=platform_locales,
+        )
+
         self.fields['selected_users'].widget.attrs['data-select2-url'] = reverse('eventyay_admin:admin.users.select2') + '?exact=1'
         self.fields['selected_events'].widget.attrs['data-select2-url'] = reverse('control:events.typeahead') + '?exact=1'
         self.fields['selected_organisers'].widget.attrs['data-select2-url'] = reverse('control:organizers.select2') + '?exact=1'
-
         initial = kwargs.get('initial', {})
         data = args[0] if args else kwargs.get('data')
 
@@ -424,8 +439,8 @@ class AdminComposeForm(ScheduledAtValidationMixin, forms.Form):
         for name in (*self.AUDIENCE_FIELDS, 'scheduled_at'):
             self.fields[name].disabled = skip
         self.fields['recipient_group'].required = not skip
-        self.fields['subject'].required = not skip
-        # The i18n message field checks ``one_required`` instead of ``required``.
+        # The i18n subject/message fields check ``one_required`` instead of ``required``.
+        self.fields['subject'].one_required = not skip
         self.fields['message'].one_required = not skip
 
     def clean_scheduled_at(self):
@@ -442,6 +457,17 @@ class AdminComposeForm(ScheduledAtValidationMixin, forms.Form):
             return cleaned
         if cleaned is None:
             return cleaned
+
+        if not self.draft_save:
+            default_locale = settings.LANGUAGE_CODE
+            for field_name in ('subject', 'message'):
+                value = cleaned.get(field_name)
+                if value and hasattr(value, 'data') and isinstance(value.data, dict):
+                    if not value.data.get(default_locale):
+                        self.add_error(
+                            field_name,
+                            _('A %(locale)s translation is required.') % {'locale': default_locale},
+                        )
 
         send_immediately = cleaned.get('send_immediately', False)
         scheduled_at = cleaned.get('scheduled_at')

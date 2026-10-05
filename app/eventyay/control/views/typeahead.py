@@ -75,6 +75,7 @@ def serialize_event(e):
         'name': str(e.name),
         'text': str(e.name),
         'date_range': dr,
+        'icon': e.visible_logo_url,
         'url': reverse(
             'eventyay_common:event.index',
             kwargs={'event': e.slug, 'organizer': e.organizer.slug},

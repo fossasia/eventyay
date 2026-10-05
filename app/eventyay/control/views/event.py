@@ -872,9 +872,20 @@ class MailSettingsPreview(EventPermissionRequiredMixin, View):
                 idx = matched.group('idx')
                 if idx in self.supported_locale:
                     with language(self.supported_locale[idx], self.request.event.settings.region):
-                        msgs[self.supported_locale[idx]] = markdown_compile_email(
-                            v.format_map(self.placeholders(preview_product))
-                        )
+                        try:
+                            formatted = v.format_map(self.placeholders(preview_product))
+                        except ValueError:
+                            return JsonResponse(
+                                {
+                                    'error': _(
+                                        'Invalid email template! '
+                                        'Please check that you don’t have stray { or } somewhere, '
+                                        'and that there are no spaces inside the {} blocks.'
+                                    )
+                                },
+                                status=400,
+                            )
+                        msgs[self.supported_locale[idx]] = markdown_compile_email(formatted)
 
         return JsonResponse({'product': preview_product, 'msgs': msgs})
 

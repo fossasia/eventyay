@@ -16,10 +16,11 @@
 		.grid(:style="gridStyle")
 			template(v-for="slice of visibleTimeslices")
 				.timeslice(:ref="slice.name", :class="getSliceClasses(slice)", :data-slice-day="slice.date.clone().tz(timezone).format('YYYY-MM-DD')", :style="getSliceStyle(slice)") {{ getSliceLabel(slice) }}
-				.timeline(:class="getSliceClasses(slice)", :style="getSliceStyle(slice)")
-			.now(v-if="nowSlice", ref="now", :class="{'on-daybreak': nowSlice.onDaybreak}", :style="{'grid-area': `${nowSlice.slice.name} / 1 / auto / auto`, '--offset': nowSlice.offset}")
-				svg(viewBox="0 0 10 10", :title="nowHoverTime")
-					path(d="M 0 0 L 10 5 L 0 10 z")
+				.timeline(:class="getSliceClasses(slice)", :style="getTimelineStyle(slice)")
+			.now(v-if="nowSlice", ref="now", :style="nowLineStyle")
+				.now-arrow
+					svg(viewBox="0 0 10 10", :title="nowHoverTime")
+						path(d="M 0 0 L 10 5 L 0 10 z")
 			template(v-for="session of gridSessions")
 				component(
 					:is="SessionComponent",
@@ -55,7 +56,7 @@
 				.print-grid(:style="getPrintChunkGridStyle(chunk)")
 					template(v-for="slice of visibleTimeslices")
 						.timeslice(:class="getSliceClasses(slice)", :style="getSliceStyle(slice)") {{ getSliceLabel(slice) }}
-						.timeline(:class="getSliceClasses(slice)", :style="getSliceStyle(slice)")
+						.timeline(:class="getSliceClasses(slice)", :style="getTimelineStyle(slice)")
 					template(v-for="session of getChunkSessions(chunk)")
 						component(
 							:is="SessionComponent",
@@ -90,11 +91,27 @@ import moment from 'moment-timezone'
 import TalkSession from './Session'
 import ShiftSession from '../teamshifts-adapter/Session.vue'
 import GridBreak from './GridBreak'
-import { getLocalizedString } from '../utils'
+import { getLocalizedString, daysOccupiedBySession } from '../utils'
 import { isShiftSchedule, computeShiftOverlapPlacement, computeShiftColumnLayout, buildShiftGridTemplateColumns } from '../teamshifts-adapter'
 
 const getSliceName = function (date) {
 	return `slice-${date.format('MM-DD-HH-mm')}`
+}
+
+const sliceDayKey = function (date, timezone) {
+	const zoned = timezone ? date.clone().tz(timezone) : date.clone()
+	return zoned.format('YYYY-MM-DD')
+}
+
+const keepScheduleSlice = function (slice, occupiedDays, timezone) {
+	if (!slice || !occupiedDays?.size) return true
+	if (occupiedDays.has(sliceDayKey(slice.date, timezone))) return true
+	return Boolean(slice.hasEnd)
+}
+
+const scheduleDayShowsCurrentTime = function (now, occupiedDays, timezone) {
+	if (!now || !occupiedDays?.size) return true
+	return occupiedDays.has(sliceDayKey(now, timezone))
 }
 
 export default {
@@ -158,21 +175,6 @@ export default {
 		favSet () {
 			return new Set(this.favs || [])
 		},
-		/** Precompute datebreak row span targets; avoids O(n) findIndex per datebreak slice in getSliceStyle. */
-		datebreakGridEndRowByName () {
-			const ts = this.timeslices
-			if (!ts.length) return {}
-			const out = Object.create(null)
-			let j = 0
-			for (let i = 0; i < ts.length; i++) {
-				if (!ts[i].datebreak) continue
-				const d0 = ts[i].date.clone().startOf('day').valueOf()
-				while (j < ts.length && ts[j].date.clone().startOf('day').valueOf() <= d0) j++
-				const endIdx = j < ts.length ? j : ts.length - 1
-				out[ts[i].name] = ts[endIdx].name
-			}
-			return out
-		},
 		roomsBarStyle () {
 			if (this.isShiftMode) {
 				return {
@@ -206,6 +208,21 @@ export default {
 			if (!this.now || !this.timezone) return ''
 			const zonedNow = this.now.clone().tz(this.timezone)
 			return this.hasAmPm ? zonedNow.format('h:mm A') : zonedNow.format('HH:mm')
+		},
+		nowLineStyle () {
+			if (!this.nowSlice) return null
+			return {
+				'grid-row': this.nowSlice.slice.name,
+				'grid-column': '1 / -1',
+				'--offset': this.nowSlice.offset,
+			}
+		},
+		occupiedDayKeys () {
+			const days = new Set()
+			for (const session of this.sessions || []) {
+				for (const day of daysOccupiedBySession(session, this.timezone)) days.add(day)
+			}
+			return days
 		},
 		sessionDayKeys () {
 			const tz = this.timezone
@@ -370,13 +387,13 @@ export default {
 			})
 			// remove gap at the end of the schedule
 			if (compactedSlices[compactedSlices.length - 1]?.gap) compactedSlices.pop()
-			for (let i = 0; i < compactedSlices.length; i++) {
-				const next = compactedSlices[i + 1]
-				if (next?.datebreak || !next) {
-					compactedSlices[i].dayEnd = true
-				}
+			const occupiedDays = this.occupiedDayKeys
+			const visibleSlices = compactedSlices.filter(slice => keepScheduleSlice(slice, occupiedDays, this.timezone))
+			for (let i = 0; i < visibleSlices.length; i++) {
+				const next = visibleSlices[i + 1]
+				visibleSlices[i].dayEnd = Boolean(next?.datebreak || !next)
 			}
-			return compactedSlices
+			return visibleSlices
 		},
 		visibleTimeslices () {
 			const minimumSliceMins = this.timeDensityMinutes || 30
@@ -412,6 +429,7 @@ export default {
 			}
 		},
 		nowSlice () {
+			if (!this.now || !scheduleDayShowsCurrentTime(this.now, this.occupiedDayKeys, this.timezone)) return null
 			const minimumSliceMins = this.timeDensityMinutes || 30
 			let slice
 			let sliceIdx = -1
@@ -445,6 +463,9 @@ export default {
 		}
 	},
 	watch: {
+		timeslices () {
+			this.$nextTick(() => this.observeDayBreaks())
+		},
 		currentDay (day) {
 			// Only scroll when triggered by toolbar click, not by scroll-based observer
 			if (this._scrollDayUpdate) {
@@ -462,10 +483,7 @@ export default {
 			root: this.scrollParent,
 			rootMargin: '-45% 0px'
 		})
-		for (const [ref, el] of Object.entries(this.$refs)) {
-			if (!ref.startsWith('slice') || !ref.endsWith('00-00')) continue
-			this.observer.observe(el[0])
-		}
+		this.observeDayBreaks()
 		await this.$nextTick()
 		this.initScrollSync()
 		if (!this.$refs.now) return
@@ -595,14 +613,14 @@ export default {
 			}
 		},
 		getSliceStyle (slice) {
+			return {'grid-area': `${slice.name} / 1 / auto / auto`}
+		},
+		getTimelineStyle (slice) {
 			if (slice.datebreak) {
-				const endName = this.datebreakGridEndRowByName[slice.name]
-				if (endName) {
-					return {'grid-area': `${slice.name} / 1 / ${endName} / auto`}
+				return {
+					'grid-row': slice.name,
+					'grid-column': '1 / -1',
 				}
-				let index = this.timeslices.findIndex(s => s.date.clone().startOf('day').isAfter(slice.date.clone().startOf('day')))
-				if (index < 0) index = this.timeslices.length - 1
-				return {'grid-area': `${slice.name} / 1 / ${this.timeslices[index].name} / auto`}
 			}
 			return {'grid-area': `${slice.name} / 1 / auto / auto`}
 		},
@@ -710,6 +728,15 @@ export default {
 			}
 			document.addEventListener('mousemove', onMouseMove)
 			document.addEventListener('mouseup', onMouseUp)
+		},
+		observeDayBreaks () {
+			if (!this.observer) return
+			this.observer.disconnect()
+			for (const [ref, el] of Object.entries(this.$refs)) {
+				if (!ref.startsWith('slice') || !ref.endsWith('00-00')) continue
+				const node = Array.isArray(el) ? el[0] : el
+				if (node) this.observer.observe(node)
+			}
 		},
 		onIntersect (entries) {
 			const intersecting = entries.filter(entry => entry.isIntersecting)
@@ -844,8 +871,8 @@ export default {
 		z-index: 20
 		&.datebreak
 			font-weight: 700
-			border-top: 3px solid $clr-dividers-light
-			border-bottom: 3px solid $clr-dividers-light
+			border-top: none
+			border-bottom: none
 			white-space: pre
 			padding-top: 2px
 			font-size: 12px
@@ -873,14 +900,15 @@ export default {
 		position: absolute
 		width: 100%
 		&.datebreak
-			height: 3px
-		&.day-end
-			height: 3px
+			height: 2px
 			background-color: $clr-grey-500
+			z-index: 21
+			top: 0
+			left: 0
 	.now
-		z-index: 20
-		position: sticky
-		left: 2px
+		z-index: 22
+		position: relative
+		pointer-events: none
 		&::before
 			content: ''
 			display: block
@@ -888,15 +916,19 @@ export default {
 			background-color: $clr-red
 			position: absolute
 			top: calc(var(--offset) * 100%)
+			left: 0
 			width: 100%
-		&.on-daybreak::before
-			background: repeating-linear-gradient(to right, transparent, transparent 5px, $clr-red 5px, $clr-red 10px)
-		svg
-			position: absolute
-			top: calc(var(--offset) * 100% - 11px)
-			height: 24px
-			width: 24px
-			fill: $clr-red
+		.now-arrow
+			position: sticky
+			left: 2px
+			height: 100%
+			width: 0
+			svg
+				position: absolute
+				top: calc(var(--offset) * 100% - 11px)
+				height: 24px
+				width: 24px
+				fill: $clr-red
 	.bunt-scrollbar-rail-wrapper-x, .bunt-scrollbar-rail-wrapper-y
 		z-index: 30
 	.print-grids

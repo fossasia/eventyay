@@ -56,7 +56,7 @@ urlpatterns = [
                     organizer.OrganizerDelete.as_view(),
                     name='organizer.delete',
                 ),
-                path('api/users', organizer.speaker_search, name='organizer.user_list'),
+                path('api/users', organizer.OrganizerSpeakerSearch.as_view(), name='organizer.user_list'),
                 path(
                     'speakers/',
                     organizer.OrganizerSpeakerList.as_view(),
@@ -302,6 +302,16 @@ urlpatterns = [
                                 name='submissions.speakers.delete',
                             ),
                             path(
+                                'speakers/invitations/<int:pk>/resend',
+                                submission.SubmissionSpeakerResendInvitation.as_view(),
+                                name='submissions.speakers.resend_invitation',
+                            ),
+                            path(
+                                'speakers/invitations/<int:pk>/revoke',
+                                submission.SubmissionSpeakerRevokeInvitation.as_view(),
+                                name='submissions.speakers.revoke_invitation',
+                            ),
+                            path(
                                 'etherpad/generate',
                                 submission.SubmissionEtherpadGenerate.as_view(),
                                 name='submissions.etherpad.generate',
@@ -363,6 +373,11 @@ urlpatterns = [
                             ),
                         ]
                     ),
+                ),
+                path(
+                    'speaker-autocomplete/',
+                    organizer.EventSpeakerAutocomplete.as_view(),
+                    name='event.speaker_autocomplete',
                 ),
                 path('speakers/', speaker.SpeakerList.as_view(), name='speakers.list'),
                 path(
