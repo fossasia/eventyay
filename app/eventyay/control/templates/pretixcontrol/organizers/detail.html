@@ -152,7 +152,7 @@
                             <span class="fa fa-eye"></span>
                         </a>
                         {% if "can_create_events" in request.orgapermset %}
-                            <a href="{% url "eventyay_common:events.add" %}?clone={{ e.pk }}" class="btn btn-sm btn-default"
+                            <a href="{% url "eventyay_common:event.clone" organizer=e.organizer.slug event=e.slug %}" class="btn btn-sm btn-default"
                                     title="{% trans "Clone event" %}" data-toggle="tooltip">
                                 <span class="fa fa-copy"></span>
                             </a>
