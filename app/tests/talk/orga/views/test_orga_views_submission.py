@@ -333,7 +333,8 @@ def test_orga_speaker_page_excludes_submission_answers(
 
     assert response.status_code == 200
     assert response.context["form"].fields["name"].required
-    assert submission.event.organizer.orga_urls.user_search in response.text
+    assert submission.event.orga_urls.speaker_autocomplete in response.text
+    assert submission.event.organizer.orga_urls.user_search not in response.text
     speaker_context = response.context["speakers"][0]
     assert speaker_context["other_submissions"] == [other_submission]
     reviewer_answers = speaker_context["reviewer_answers"]
@@ -770,6 +771,7 @@ def test_orga_can_set_multiple_submission_videos_from_list(orga_client, event, s
     urls = [
         "https://youtu.be/dQw4w9WgXcQ?t=90",
         "https://vimeo.com/123456789#t=1m30s",
+        "https://commons.wikimedia.org/wiki/File:Big_Buck_Bunny_medium.ogv",
     ]
     response = orga_client.post(
         submission.orga_urls.video_link,
@@ -856,6 +858,23 @@ def test_orga_can_see_all_feedback(orga_client, event, feedback):
     assert response.status_code == 200
     assert feedback.talk.title in response.text
     assert feedback.review in response.text
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "tab,expected_colspan",
+    [
+        ("pending", 7),
+        ("published", 6),
+        ("hidden", 6),
+        ("anonymous", 6),
+    ],
+)
+def test_orga_feedback_empty_state_colspan(orga_client, event, tab, expected_colspan):
+    url = f"{event.orga_urls.feedback}?tab={tab}"
+    response = orga_client.get(url, follow=True)
+    assert response.status_code == 200
+    assert f'<td colspan="{expected_colspan}" class="text-center text-muted">' in response.text
 
 
 @pytest.mark.django_db
