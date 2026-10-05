@@ -367,9 +367,7 @@ class ReviewExportForm(ExportForm):
 
         queryset = queryset.filter(submission__in=submissions_for_user(self.event, self.user))
         queryset = queryset.exclude(submission__speakers__in=[self.user]).distinct()
-        return queryset.select_related('submission', 'user').prefetch_related(
-            'answers', 'answers__question', 'scores', 'scores__category'
-        )
+        return queryset.select_related('submission', 'user').prefetch_related('answers', 'answers__question', 'scores')
 
     def _get_submission_id_value(self, obj):
         return obj.submission.code
