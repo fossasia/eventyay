@@ -83,9 +83,13 @@
                 <tr>
                 <th>
                     {% trans "Event name" %}
+                    <a href="?{% url_replace request 'ordering' '-name' %}"><i class="fa fa-caret-down"></i></a>
+                    <a href="?{% url_replace request 'ordering' 'name' %}"><i class="fa fa-caret-up"></i></a>
                 </th>
                 <th>
                     {% trans "Short form" %}
+                    <a href="?{% url_replace request 'ordering' '-slug' %}"><i class="fa fa-caret-down"></i></a>
+                    <a href="?{% url_replace request 'ordering' 'slug' %}"><i class="fa fa-caret-up"></i></a>
                 </th>
                 <th>
                     {% trans "Organizer" %}
