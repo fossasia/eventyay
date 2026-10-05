@@ -14,6 +14,8 @@
 #   A maintainer can remove the label by hand at any time to stop the process
 #   (e.g. for backend-only changes where a video makes no sense).
 #   Re-adding the label restarts the clock.
+#   When the bot closes a PR it also removes the label. If the PR is reopened,
+#   a reviewer checks it and adds the label again if a video is still needed.
 #
 # Setup: create a label named exactly "needs-screencast" in the repo.
 # To change the label name, edit it in the two places marked LABEL below.
@@ -168,6 +170,8 @@ jobs:
                       ].join('\n'),
                     });
                     await github.rest.pulls.update({ owner, repo, pull_number: n, state: 'closed' });
+                    // Remove the label so a reopened PR is not closed again automatically.
+                    await github.rest.issues.removeLabel({ owner, repo, issue_number: n, name: LABEL });
                   });
                   continue;
                 }
