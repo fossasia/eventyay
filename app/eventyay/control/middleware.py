@@ -254,7 +254,14 @@ class AuditLogMiddleware:
                     except (TypeError, ValueError) as e:
                         post_data = f"Serialization failed: {str(e)}"
             
-            url = request.get_full_path()[:255]
+            query = request.GET.copy()
+            for k in list(query.keys()):
+                if any(m in k.lower() for m in ('password', 'token', 'key', 'secret')):
+                    query.setlist(k, ['***'])
+            url = request.path
+            if query:
+                url += '?' + query.urlencode(safe='*')
+            url = url[:255]
 
             is_hijacked = getattr(request.user, 'is_hijacked', False) or bool(request.session.get('hijack_history'))
             if is_hijacked:
