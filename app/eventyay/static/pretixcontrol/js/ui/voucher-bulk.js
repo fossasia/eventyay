@@ -3,6 +3,7 @@ const tagSelector = '[name="tag"]';
 const tagPrefixSelector = '[name="use_tag_as_prefix"]';
 let hasScrolledToError = false;
 let currentRequestId = 0;
+let isSubmitting = false;
 
 function syncPrefix(form, preserveExisting = false) {
     if (!form) {
@@ -29,6 +30,9 @@ function formFor(target) {
 }
 
 function scrollToError(container = document) {
+    if (isSubmitting) {
+        return;
+    }
     const errorEl = container.querySelector(
         `${formSelector} .alert-danger, ${formSelector} .has-error`
     );
@@ -62,7 +66,11 @@ document.addEventListener(
     'submit',
     (event) => {
         if (event.target.matches(formSelector)) {
+            const form = event.target;
             hasScrolledToError = false;
+            isSubmitting = true;
+            form.querySelectorAll('.alert-danger').forEach((el) => el.remove());
+            form.querySelectorAll('.has-error').forEach((el) => el.classList.remove('has-error'));
         }
     },
     true
@@ -81,8 +89,16 @@ document.addEventListener('click', async (event) => {
     const prefixInput = form.querySelector('#voucher-bulk-codes-prefix');
     const codesInput = form.querySelector('#id_codes');
     const formGroup = numInput ? numInput.closest('.form-group') : null;
-    const num = numInput ? numInput.value.trim() : '';
+    let num = numInput ? numInput.value.trim() : '';
     const prefix = prefixInput ? prefixInput.value.trim() : '';
+
+    // If quantity is left empty, default to 5 (matching backend default)
+    if (num === '') {
+        num = '5';
+        if (numInput) {
+            numInput.value = '5';
+        }
+    }
 
     if (Number.isInteger(Number(num)) && Number(num) > 0) {
         const url = btn.getAttribute('data-rng-url');
@@ -134,10 +150,33 @@ document.addEventListener('click', async (event) => {
     }
 });
 
-const observer = new MutationObserver(() => {
-    document.querySelectorAll(formSelector).forEach((form) => syncPrefix(form, true));
-    if (!hasScrolledToError) {
-        scrollToError();
+const observer = new MutationObserver((mutations) => {
+    let formOrWrapperMutated = false;
+    for (const mutation of mutations) {
+        if (
+            mutation.target.closest &&
+            (mutation.target.closest(formSelector) || mutation.target.closest('#page-wrapper'))
+        ) {
+            formOrWrapperMutated = true;
+            break;
+        }
+        for (const node of mutation.addedNodes) {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+                if (node.matches(formSelector) || node.querySelector(formSelector)) {
+                    formOrWrapperMutated = true;
+                    break;
+                }
+            }
+        }
+        if (formOrWrapperMutated) break;
+    }
+
+    if (formOrWrapperMutated) {
+        isSubmitting = false;
+        document.querySelectorAll(formSelector).forEach((form) => syncPrefix(form, true));
+        if (!hasScrolledToError) {
+            scrollToError();
+        }
     }
 });
 
@@ -150,6 +189,7 @@ if (document.body) {
 }
 
 window.addEventListener('pageshow', () => {
+    isSubmitting = false;
     document.querySelectorAll(formSelector).forEach((form) => syncPrefix(form, true));
     scrollToError();
 });
