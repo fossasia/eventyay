@@ -182,33 +182,6 @@ class AnswerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
     review = PrimaryKeyRelatedField(read_only=True, required=False)
     answer_file = UploadedFileField(required=False)
 
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        request = self.context.get("request")
-        
-        if request and "person" in data and isinstance(data["person"], dict):
-            from eventyay.talk_rules.orga import (
-                can_view_speaker_names,
-                enforces_hide_speaker_names,
-                is_reviewer_only_for_event,
-            )
-            event = instance.question.event
-            
-            hide_names = enforces_hide_speaker_names(request.user, event) or (
-                is_reviewer_only_for_event(request.user, event)
-                and not can_view_speaker_names(request.user, event)
-            )
-            
-            if hide_names:
-                for field in [
-                    "fullname", "email", "biography", "job_title", 
-                    "organization", "avatar_url", "social_links", 
-                    "avatar_source", "avatar_license"
-                ]:
-                    data["person"].pop(field, None)
-                    
-        return data
-
     def validate(self, data):
         question = self.get_with_fallback(data, "question")
 
