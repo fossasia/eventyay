@@ -306,7 +306,10 @@ class SpeakerProfileForm(
             is_associated = (
                 existing_user.profiles.filter(event=self.event).exists()
                 or existing_user.submissions.filter(event=self.event).exists()
-                or existing_user.teams.filter(organizer=self.event.organizer).exists()
+                or existing_user.teams.filter(
+                    Q(organizer=self.event.organizer)
+                    & (Q(all_events=True) | Q(limit_events=self.event))
+                ).exists()
             )
             if not is_associated:
                 raise ValidationError(
