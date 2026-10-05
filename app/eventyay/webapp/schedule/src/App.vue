@@ -6,13 +6,13 @@
 	template(v-else-if="scheduleError")
 		.schedule-error
 			.error-message {{ $t('An error occurred while loading the schedule. Please try again later.') }}
-	template(v-else-if="isTalkView && schedule && resolvedTalk")
-		talk-detail(:talk="resolvedTalk", :baseUrl="eventUrl")
+	template(v-else-if="isTalkView && schedule")
+		talk-detail(:talk="resolvedTalk", :talkId="talkCode", :baseUrl="eventUrl")
 	template(v-else-if="isSpeakerView && schedule")
 		featured-speakers(v-if="view === 'featured-speakers'")
 		speakers-list(v-else-if="view === 'speakers'")
 		speaker-detail(v-else-if="view === 'speaker'", :speakerId="speakerCode", :onHomeServer="onHomeServer")
-	template(v-else-if="schedule && schedule.talks.length")
+	template(v-else-if="schedule && (schedule.talks.length || (isFeaturedPage && featuredRemote))")
 		schedule-toolbar(v-if="(scheduleMeta || schedule) && !publicFavsUrl",
 			:version="version || scheduleMeta?.version || ''",
 			:isCurrent="scheduleMeta?.is_current !== false",
@@ -57,8 +57,9 @@
 			@toggleSessionsMode="sessionsMode = !sessionsMode",
 			@setTimeDensityMinutes="setTimeDensityMinutes($event)",
 			@goToNow="goToNow")
-		grid-schedule-wrapper(ref="scheduleDisplay", v-if="showGrid && !sessionsMode",
-			:sessions="sessions",
+		bunt-progress-circular(v-if="dayLoading", size="huge")
+		grid-schedule-wrapper(ref="scheduleDisplay", v-else-if="showGrid && !sessionsMode",
+			:sessions="gridDisplaySessions",
 			:rooms="rooms",
 			:days="days",
 			:currentDay="currentDay",
@@ -99,8 +100,23 @@
 			@changeDay="setCurrentDay($event)",
 			@fav="fav($event)",
 			@unfav="unfav($event)")
-		.no-results(v-if="sessions && !sessions.length && searchQuery")
+		.no-results(v-if="sessions && !sessions.length && (searchQuery || (isFeaturedPage && featuredRemote))")
 			.no-results-text No sessions match your search.
+		list-pagination(
+			v-if="isFeaturedPage && featuredTotalPages > 1",
+			compact,
+			:current-page="featuredPage",
+			:total-pages="featuredTotalPages",
+			:items="featuredVisiblePages",
+			:status="featuredPageStatus",
+			:aria-label="$t('Featured sessions pagination')",
+			:previous-label="$t('Prev')",
+			:previous-aria-label="$t('Previous page')",
+			:next-label="$t('Next')",
+			:next-aria-label="$t('Next page')",
+			:loading="featuredPageLoading",
+			@change="fetchFeaturedPage"
+		)
 	bunt-progress-circular(v-else, size="huge", :page="true")
 	.error-messages(v-if="errorMessages.length")
 		.error-message(v-for="message in errorMessages", :key="message")
@@ -133,11 +149,12 @@ import GridScheduleWrapper from '~/components/GridScheduleWrapper'
 import FavButton from '~/components/FavButton'
 import Session from '~/components/Session'
 import SessionModal from '~/components/SessionModal'
+import ListPagination from '~/components/ListPagination.vue'
 const SpeakersList = defineAsyncComponent(() => import('~/components/SpeakersList'))
 const FeaturedSpeakers = defineAsyncComponent(() => import('~/components/FeaturedSpeakers'))
 const SpeakerDetail = defineAsyncComponent(() => import('~/components/SpeakerDetail'))
 const TalkDetail = defineAsyncComponent(() => import('~/components/TalkDetail'))
-import { findScrollParent, getLocalizedString, getSessionTime, getSessionTypeLabel, isProperSession, isPopularityFeatureEnabled, isPopularitySortAvailable, isPopularityVisibleOnSchedule, normalizePopularityCount, computeTalkExporters, areScheduleExportsDisabled, resolveScheduleApiBase, talksToScheduleSessions, buildSessionsBySpeaker, talkToSession, sortSessionsByStart, isTalkSchedulePending, getCsrfToken, loadStarredSharingPreference, updateStarredSharingPreference, fetchWidgetScheduleData } from '~/utils'
+import { findScrollParent, getLocalizedString, getSessionTime, getSessionTypeLabel, isProperSession, isPopularityFeatureEnabled, isPopularitySortAvailable, isPopularityVisibleOnSchedule, normalizePopularityCount, computeTalkExporters, areScheduleExportsDisabled, resolveScheduleApiBase, talksToScheduleSessions, buildSessionsBySpeaker, talkToSession, sortSessionsByStart, isTalkSchedulePending, visiblePageItems, pageStatusRange, getCsrfToken, loadStarredSharingPreference, updateStarredSharingPreference, fetchWidgetScheduleData, fetchTalkScheduleDetail, mergeCompactScheduleDay, sessionIntersectsDay } from '~/utils'
 import { changeScheduleLanguage } from './i18n.js'
 import { isShiftSchedule, resolveMode } from './teamshifts-adapter'
 import { logOperational } from './operationalLog.js'
@@ -168,7 +185,7 @@ const markdownIt = MarkdownIt({
 
 export default {
 	name: 'PretalxSchedule',
-	components: { FavButton, LinearSchedule, GridScheduleWrapper, Session, SessionModal, ScheduleToolbar, SpeakersList, FeaturedSpeakers, SpeakerDetail, TalkDetail },
+	components: { FavButton, LinearSchedule, GridScheduleWrapper, Session, SessionModal, ScheduleToolbar, SpeakersList, FeaturedSpeakers, SpeakerDetail, TalkDetail, ListPagination },
 	props: {
 		eventUrl: String,
 		locale: String,
@@ -248,9 +265,8 @@ export default {
 					event.preventDefault()
 					return
 				}
-				if (this.onHomeServer) return
+				if (this.onHomeServer || isTalkSchedulePending(session)) return
 				event.preventDefault()
-
 				this.showSessionDetails(session, event)
 			},
 			generateSessionLinkUrl: ({eventUrl, session}) => {
@@ -306,6 +322,11 @@ export default {
 			scrollParent: null,
 			scrollParentWidth: Infinity,
 			schedule: null,
+			loadedScheduleDays: {},
+			textReadyDays: {},
+			displayedGridDay: null,
+			gridScrollDays: [],
+			dayLoading: false,
 			userTimezone: null,
 			now: moment(),
 			currentDay: null,
@@ -335,17 +356,33 @@ export default {
 			scheduleMeta: null,
 			sessionsMode: false,
 			searchQuery: '',
+			featuredPage: 1,
+			featuredTotalCount: 0,
+			featuredTotalPages: 1,
+			featuredPageSize: 48,
+			featuredPageLoading: false,
+			featuredRemote: false,
+			featuredPagingReady: false,
+			featuredSearchTimeout: null,
 			recordingFilter: 'all',
-			timeDensityMinutes: Number(localStorage.getItem('schedule-time-density-minutes') || 30),
+			timeDensityMinutes: (() => {
+				try {
+					return Number(localStorage.getItem('schedule-time-density-minutes') || 30)
+				} catch (error) {
+					console.error('Failed to read schedule time density from localStorage', error)
+					return 30
+				}
+			})(),
 			sortIncludeRoom: false,
 			sortIncludePopularity: false,
 			sortIncludeDate: (() => {
 				try {
 					const stored = localStorage.getItem('schedule-include-datetime')
-					if (stored === null) return false
+					if (stored === null) return true
 					return stored === 'true'
-				} catch {
-					return false
+				} catch (error) {
+					console.error('Failed to read schedule date-sort preference from localStorage', error)
+					return true
 				}
 			})(),
 		}
@@ -511,7 +548,7 @@ export default {
 		// sessions: baseSessions + search filter. Used for display.
 		sessions () {
 			if (!this.baseSessions) return
-			if (!this.searchQuery) return this.baseSessions
+			if (!this.searchQuery || (this.isFeaturedPage && this.featuredRemote)) return this.baseSessions
 			const q = this.searchQuery.toLowerCase()
 			return this.baseSessions.filter(s => {
 				const speakerNames = (s.speakers || []).map(sp => (sp?.name || '').toLowerCase()).join(' ')
@@ -535,10 +572,40 @@ export default {
 			}
 			return this.schedule.rooms.filter(r => roomsInSessions.has(r))
 		},
-		// allDays: all unique days from baseSessions, always unfiltered by sort.
+		scheduleNeedsEveryDay () {
+			if (!this.schedule?.compact || this.isTalkView || this.isSpeakerView || this.isFeaturedPage) return false
+			return !this.showGrid || this.sessionsMode || !!this.searchQuery || this.onlyFavs
+				|| this.hasActiveFilterSelections || this.recordingFilter !== 'all'
+		},
+		scheduleNeedsText () {
+			if (!this.schedule?.compact) return false
+			return !this.showGrid || this.sessionsMode || !!this.searchQuery
+		},
+		gridDisplaySessions () {
+			if (!this.sessions) return this.sessions
+			if (!this.schedule?.compact || !this.showGrid || this.sessionsMode || this.scheduleNeedsEveryDay) return this.sessions
+			const days = this.gridScrollDays.length
+				? this.gridScrollDays
+				: [this.displayedGridDay || this.currentDay].filter(Boolean)
+			if (!days.length) return this.sessions
+			return this.sessions.filter(session => (
+				session.start && days.some(day => sessionIntersectsDay(session, day, this.currentTimezone))
+			))
+		},
+		// allDays: day index from a compact payload when it matches the active
+		// timezone, otherwise every day present in the loaded sessions.
 		// Passed to the toolbar so day-picker buttons are never hidden by the
 		// 'Include datetime' sort toggle.
 		allDays () {
+			if (
+				this.schedule?.compact
+				&& this.currentTimezone
+				&& Array.isArray(this.schedule.days)
+				&& this.schedule.days.length
+				&& this.schedule.view_timezone === this.currentTimezone
+			) {
+				return this.schedule.days.map(day => moment.tz(day, this.currentTimezone).startOf('day'))
+			}
 			if (!this.baseSessions) return []
 			const seen = new Set()
 			const days = []
@@ -585,9 +652,24 @@ export default {
 			if (!this.sessions) return []
 			return this.sessions.filter(s => isProperSession(s))
 		},
+		featuredPageStatus () {
+			if (!this.isFeaturedPage || this.featuredTotalPages <= 1 || !this.featuredTotalCount) return ''
+			const range = pageStatusRange(this.featuredPage, this.featuredPageSize, this.featuredTotalCount)
+			if (!range) return ''
+			return this.$t('Showing {{start}}–{{end}} of {{total}} featured sessions', range)
+		},
+		featuredVisiblePages () {
+			return visiblePageItems(this.featuredTotalPages, this.featuredPage)
+		},
 		resolvedTalk () {
-			if (!this.talkCode || !this.sessions) return null
-			return this.sessionsLookup[this.talkCode] || null
+			if (!this.talkCode) return null
+			return this.sessionsLookup[this.talkCode]
+				|| this.inlineScheduleSessions.find(session => session.id === this.talkCode || session.code === this.talkCode)
+				|| null
+		},
+		talkUnavailableMessage () {
+			const m = this.translationMessages || {}
+			return m.schedule_pending_secondary || this.$t('To be announced')
 		},
 		eventSlug () {
 			let url = ''
@@ -662,11 +744,12 @@ export default {
 				this.apiUrl = this.remoteApiUrl
 			}
 			this.loadFavs().then((favs) => {
-				this.favs = this.pruneFavs(favs, this.schedule)
+				this.favs = this.featuredRemote ? favs : this.pruneFavs(favs, this.schedule)
 			})
 		},
 		recordingFilter () {
 			this.writeRecordingQueryParam()
+			if (this._initialized && this.schedule?.compact) this.syncCompactCoverage()
 		},
 		sortIncludeDate () {
 			try {
@@ -674,9 +757,42 @@ export default {
 			} catch {
 				// ignore localStorage access errors
 			}
+		},
+		searchQuery () {
+			if (this.schedule?.compact && this._initialized) this.syncCompactCoverage()
+			if (!this.featuredPagingReady || !this.isFeaturedPage || !this.featuredRemote) return
+			if (this.featuredSearchTimeout) clearTimeout(this.featuredSearchTimeout)
+			this.featuredSearchTimeout = setTimeout(() => {
+				this.fetchFeaturedPage(1)
+			}, 300)
+		},
+		currentDay () {
+			if (!this._initialized || !this.schedule?.compact || this.scheduleNeedsEveryDay) return
+			this.syncCompactCoverage()
+		},
+		currentTimezone () {
+			if (!this._initialized || !this.schedule?.compact) return
+			this._compactTimezoneGeneration = (this._compactTimezoneGeneration || 0) + 1
+			this.reloadCompactIndex()
+		},
+		sessionsMode () {
+			if (!this._initialized || !this.schedule?.compact) return
+			this.syncCompactCoverage()
+		},
+		onlyFavs () {
+			if (!this._initialized || !this.schedule?.compact) return
+			this.syncCompactCoverage()
+		},
+		hasActiveFilterSelections (active) {
+			if (active && this._initialized && this.schedule?.compact) this.syncCompactCoverage()
+		},
+		sortBy () {
+			if (!this.featuredPagingReady || !this.isFeaturedPage || !this.featuredRemote) return
+			this.fetchFeaturedPage(1)
 		}
 	},
 	async created () {
+		this._compactTimezoneGeneration = 0
 		// Gotta get the fragment early, before anything else sneakily modifies it
 		const fragment = window.location.hash.slice(1)
 		await changeScheduleLanguage(this.locale)
@@ -716,6 +832,7 @@ export default {
 					if (!Array.isArray(this.schedule.talks)) {
 						this.schedule.talks = []
 					}
+					this.readFeaturedPageMeta(this.schedule)
 				}
 			} catch (e) { /* ignore parse error, fall through to fetch */ }
 		}
@@ -760,8 +877,7 @@ export default {
 				this.scheduleUnavailable = true
 				return
 			}
-			this.currentTimezone = localStorage.getItem(`${this.eventSlug}_timezone`)
-			this.currentTimezone = [this.schedule.timezone, this.userTimezone].includes(this.currentTimezone) ? this.currentTimezone : this.schedule.timezone
+			this.currentTimezone = this.getSavedTimezone()
 			this.now = moment.tz(this.currentTimezone)
 			setInterval(() => this.now = moment.tz(this.currentTimezone), 30000)
 			this.apiUrl = this.remoteApiUrl || (window.location.origin + '/api/v1/events/' + this.eventSlug + '/')
@@ -779,78 +895,59 @@ export default {
 			return
 		}
 
-		if (this.schedule.schedule_unavailable || (!this.schedule.talks.length && !this.isFeaturedPage)) {
+		const showWithoutTalks = this.isFeaturedPage || this.view === 'featured-speakers'
+		if (this.schedule.schedule_unavailable || (!this.schedule.talks.length && !showWithoutTalks)) {
 			this.scheduleUnavailable = true
 			return
 		}
-		this.currentTimezone = localStorage.getItem(`${this.eventSlug}_timezone`)
-		this.currentTimezone = [this.schedule.timezone, this.userTimezone].includes(this.currentTimezone) ? this.currentTimezone : this.schedule.timezone
-		if (this.days?.length) {
+		this.currentTimezone = this.getSavedTimezone()
+		if (this.schedule.compact) {
+			this.noteCompactPayload(this.schedule)
+			if (this.currentTimezone !== this.schedule.view_timezone) {
+				await this.reloadCompactIndex()
+			}
+		}
+		const knownDays = this.allDays || []
+		if (knownDays.length) {
 			const todayStr = this.now.clone().tz(this.currentTimezone).format('YYYY-MM-DD')
-			const todayDay = this.days.find(d => d.clone().tz(this.currentTimezone).format('YYYY-MM-DD') === todayStr)
-			this.currentDay = todayDay ? todayStr : this.days[0].format('YYYY-MM-DD')
+			const todayDay = knownDays.find(d => d.clone().tz(this.currentTimezone).format('YYYY-MM-DD') === todayStr)
+			this.currentDay = todayDay ? todayStr : knownDays[0].format('YYYY-MM-DD')
 		}
 		this.now = moment.tz(this.currentTimezone)
 		setInterval(() => this.now = moment.tz(this.currentTimezone), 30000)
+		this.featuredPagingReady = this.isFeaturedPage
 		if (!this.scrollParentResizeObserver) {
 			await this.$nextTick()
 			this.onWindowResize()
 		}
-		this.schedule.tracks.forEach(t => { t.value = t.id; t.label = getLocalizedString(t.name); this.allTracks.push(t) })
-		this.schedule.rooms.forEach(r => { this.allRooms.push({ id: r.id, value: r.id, label: getLocalizedString(r.name), selected: false }) })
-		const typeSet = new Set()
-		this.schedule.talks.forEach(s => {
-			const typeLabel = getSessionTypeLabel(s.session_type)
-			if (typeLabel && !typeSet.has(typeLabel)) {
-				typeSet.add(typeLabel)
-				this.allTypes.push({ value: typeLabel, label: typeLabel, selected: false })
-			}
-		})
-		// Build language filter from event content_locales (configured by organiser),
-		// falling back to per-talk content_locale for older data.
-		const langSet = new Set()
-		const eventLocales = this.schedule.content_locales || []
-		eventLocales.forEach(code => {
-			if (code && !langSet.has(code)) {
-				langSet.add(code)
-				const displayName = (() => {
-					try { return new Intl.DisplayNames([this.locale], { type: 'language' }).of(code) } catch { return code }
-				})()
-				this.allLanguages.push({ value: code, label: displayName, selected: false })
-			}
-		})
-
-		// Also include any per-talk locales not already covered by event locales
-		this.schedule.talks.forEach(s => {
-			if (s.content_locale && !langSet.has(s.content_locale)) {
-				langSet.add(s.content_locale)
-				const displayName = (() => {
-					try { return new Intl.DisplayNames([this.locale], { type: 'language' }).of(s.content_locale) } catch { return s.content_locale }
-				})()
-				this.allLanguages.push({ value: s.content_locale, label: displayName, selected: false })
-			}
-		})
+		this.mergeFeaturedFilters(this.schedule)
 
 		// set API URL before loading favs
 		this.apiUrl = this.remoteApiUrl || (window.location.origin + '/api/v1/events/' + this.eventSlug + '/')
 		if (this.publicFavsUrl) {
 			this.favsReadOnly = true
 			this.onlyFavs = true
-			this.favs = this.pruneFavs(await this.loadPublicFavs(), this.schedule)
+			const publicFavs = await this.loadPublicFavs()
+			this.favs = this.featuredRemote ? publicFavs : this.pruneFavs(publicFavs, this.schedule)
 		} else {
-			this.favs = this.pruneFavs(await this.loadFavs(), this.schedule)
+			const savedFavs = await this.loadFavs()
+			this.favs = this.featuredRemote ? savedFavs : this.pruneFavs(savedFavs, this.schedule)
 			if (!this.loggedIn && this.favs.length) this.showAnonymousFavsInfo()
 		}
 		this.shareStarredSessions = await loadStarredSharingPreference(this.eventUrl)
 
 		if (fragment && fragment.length === 10) {
 			const initialDay = moment.tz(fragment, this.currentTimezone)
-			const filteredDays = this.days.filter(d => d.clone().tz(this.currentTimezone).format('YYYY-MM-DD') === initialDay.format('YYYY-MM-DD'))
+			const knownDays = (this.allDays?.length ? this.allDays : this.days) || []
+			const filteredDays = knownDays.filter(d => d.clone().tz(this.currentTimezone).format('YYYY-MM-DD') === initialDay.format('YYYY-MM-DD'))
 			if (filteredDays.length) {
 				this.currentDay = filteredDays[0].format('YYYY-MM-DD')
 			}
 		}
 		this._initialized = true
+		if (this.schedule?.compact) {
+			this.syncCompactCoverage()
+		}
 	},
 	async mounted () {
 		// We block until we have either a regular parent or a shadow DOM parent
@@ -862,19 +959,301 @@ export default {
 			poll()
 		})
 		this.scrollParent = findScrollParent(this.$el.parentElement || this.$el.getRootNode().host)
+		this._onScheduleScroll = () => this.maybeLoadNextGridDay()
 		if (this.scrollParent) {
 			this.scrollParentResizeObserver = new ResizeObserver(this.onScrollParentResize)
 			this.scrollParentResizeObserver.observe(this.scrollParent)
 			this.scrollParentWidth = this.scrollParent.offsetWidth
+			this.scrollParent.addEventListener('scroll', this._onScheduleScroll, { passive: true })
 		} else { // scrolling document
 			window.addEventListener('resize', this.onWindowResize)
 			this.onWindowResize()
+			window.addEventListener('scroll', this._onScheduleScroll, { passive: true })
+		}
+	},
+	unmounted () {
+		if (this._onScheduleScroll) {
+			window.removeEventListener('scroll', this._onScheduleScroll)
+			this.scrollParent?.removeEventListener('scroll', this._onScheduleScroll)
 		}
 	},
 	destroyed () {
 		// TODO destroy observers
 	},
 	methods: {
+		noteCompactPayload (payload) {
+			if (!payload?.compact || !payload.date) return
+			this.loadedScheduleDays = { ...this.loadedScheduleDays, [payload.date]: true }
+			if (!this.displayedGridDay) this.displayedGridDay = payload.date
+			if (payload.text) {
+				this.textReadyDays = { ...this.textReadyDays, [payload.date]: true }
+			}
+		},
+		compactRequestTimezone () {
+			if (!this.currentTimezone || this.currentTimezone === this.schedule?.timezone) return ''
+			return this.currentTimezone
+		},
+		async reloadCompactIndex () {
+			if (!this.schedule?.compact) return
+			const generation = this._compactTimezoneGeneration || 0
+			const timezone = this.compactRequestTimezone()
+			const payload = await fetchWidgetScheduleData(this.eventUrl, {
+				version: this.version || '',
+				compact: true,
+				indexOnly: true,
+				timezone,
+			})
+			if (generation !== (this._compactTimezoneGeneration || 0) || timezone !== this.compactRequestTimezone()) return
+			if (!payload?.days) return
+			this.schedule.days = payload.days
+			this.schedule.view_timezone = payload.view_timezone || this.currentTimezone
+			if (payload.session_types) this.schedule.session_types = payload.session_types
+			if (payload.content_locales) this.schedule.content_locales = payload.content_locales
+			if (payload.rooms) this.schedule.rooms = payload.rooms
+			if (payload.tracks) this.schedule.tracks = payload.tracks
+			this.loadedScheduleDays = {}
+			this.textReadyDays = {}
+			this.displayedGridDay = null
+			this.gridScrollDays = []
+			this.mergeFeaturedFilters(this.schedule)
+			if (this.currentDay && !payload.days.includes(this.currentDay)) {
+				this.currentDay = payload.days[0] || this.currentDay
+			}
+			// currentDay's watcher does not run when the selected day is still in the new index.
+			if (this._initialized && payload.days.length) {
+				await this.syncCompactCoverage()
+			}
+		},
+		async ensureScheduleDay (day, { includeText = false } = {}) {
+			if (!this.schedule?.compact || !day) return
+			const loaded = !!this.loadedScheduleDays[day]
+			const textReady = !!this.textReadyDays[day]
+			if (loaded && (!includeText || textReady)) return
+			const key = `${this._compactTimezoneGeneration || 0}|${this.compactRequestTimezone()}|${day}|${includeText ? 'text' : 'cards'}`
+			if (!this._dayPromises) this._dayPromises = {}
+			if (this._dayPromises[key]) return this._dayPromises[key]
+			const promise = this.fetchCompactDay(day, includeText)
+			this._dayPromises[key] = promise
+			try {
+				await promise
+			} finally {
+				delete this._dayPromises[key]
+			}
+		},
+		/**
+		 * @throws {Error} when the schedule day request fails
+		 */
+		async fetchCompactDay (day, includeText) {
+			const generation = this._compactTimezoneGeneration || 0
+			const timezone = this.compactRequestTimezone()
+			const payload = await fetchWidgetScheduleData(this.eventUrl, {
+				version: this.version || '',
+				compact: true,
+				date: day,
+				timezone,
+				includeText,
+			})
+			if (generation !== (this._compactTimezoneGeneration || 0) || timezone !== this.compactRequestTimezone()) return
+			if (!payload) return
+			mergeCompactScheduleDay(this.schedule, payload)
+			this.loadedScheduleDays = { ...this.loadedScheduleDays, [day]: true }
+			if (includeText || payload.text) {
+				this.textReadyDays = { ...this.textReadyDays, [day]: true }
+			}
+			this.mergeFeaturedFilters(this.schedule)
+		},
+		async ensureAllScheduleDays ({ includeText = false } = {}) {
+			const days = this.schedule?.days || []
+			if (!days.length) return
+			await Promise.all(days.map(day => this.ensureScheduleDay(day, { includeText })))
+		},
+		prefetchAdjacentScheduleDays (day) {
+			const days = this.schedule?.days || []
+			const index = days.indexOf(day)
+			if (index < 0) return
+			const neighbors = [days[index - 1], days[index + 1]].filter(Boolean)
+			neighbors.forEach(neighbor => {
+				this.ensureScheduleDay(neighbor, { includeText: false }).catch(error => {
+					console.error('Failed to prefetch schedule day', neighbor, error)
+				})
+			})
+		},
+		async syncCompactCoverage () {
+			if (!this.schedule?.compact || this.isTalkView || this.isSpeakerView || this.isFeaturedPage) return
+			if (this.scheduleNeedsEveryDay) {
+				this.dayLoading = true
+				try {
+					await this.ensureAllScheduleDays({ includeText: this.scheduleNeedsText })
+				} catch (error) {
+					console.error('Failed to load schedule days', error)
+				} finally {
+					this.dayLoading = false
+				}
+				return
+			}
+			if (!this.currentDay) return
+			const alreadyLoaded = !!this.loadedScheduleDays[this.currentDay]
+			const showingOtherDay = this.gridScrollDays.some(day => day !== this.currentDay && this.loadedScheduleDays[day])
+			if (!alreadyLoaded && !showingOtherDay) this.dayLoading = true
+			try {
+				await this.ensureScheduleDay(this.currentDay, { includeText: false })
+				this.displayedGridDay = this.currentDay
+				// Keep days already revealed by scrolling. Reset only when the
+				// selected day is not on screen, such as a toolbar jump.
+				if (!this.gridScrollDays.includes(this.currentDay)) {
+					this.gridScrollDays = [this.currentDay]
+				}
+				this.prefetchAdjacentScheduleDays(this.currentDay)
+				if (this.userNavigatingToDay === this.currentDay) {
+					this.$nextTick(() => { this.forceScrollDay++ })
+				}
+				this.$nextTick(() => this.maybeLoadNextGridDay())
+			} catch (error) {
+				console.error('Failed to load schedule day', this.currentDay, error)
+			} finally {
+				this.dayLoading = false
+			}
+		},
+		distanceToScheduleEnd () {
+			const el = this.scrollParent
+			if (!el || el === document.documentElement || el === document.body) {
+				const doc = document.documentElement
+				return doc.scrollHeight - window.scrollY - window.innerHeight
+			}
+			return el.scrollHeight - el.scrollTop - el.clientHeight
+		},
+		scheduleScrollHeight () {
+			const el = this.scrollParent
+			if (!el || el === document.documentElement || el === document.body) {
+				return document.documentElement.scrollHeight
+			}
+			return el.scrollHeight
+		},
+		async maybeLoadNextGridDay () {
+			if (!this._initialized || !this.schedule?.compact || !this.showGrid || this.sessionsMode || this.scheduleNeedsEveryDay) return
+			if (this._extendingGrid) return
+			const distance = this.distanceToScheduleEnd()
+			if (distance == null || distance > 640) return
+			const days = this.schedule.days || []
+			const shown = this.gridScrollDays.length ? this.gridScrollDays : (this.currentDay ? [this.currentDay] : [])
+			const last = shown[shown.length - 1]
+			const index = days.indexOf(last)
+			if (index < 0 || index + 1 >= days.length) return
+			const next = days[index + 1]
+			const heightBefore = this.scheduleScrollHeight()
+			this._extendingGrid = true
+			try {
+				await this.ensureScheduleDay(next, { includeText: false })
+				if (!this.gridScrollDays.includes(next)) {
+					this.gridScrollDays = [...shown, next]
+				}
+				this.prefetchAdjacentScheduleDays(next)
+			} catch (error) {
+				console.error('Failed to load the next schedule day', next, error)
+				return
+			} finally {
+				this._extendingGrid = false
+			}
+			this.$nextTick(() => {
+				if (this.scheduleScrollHeight() <= heightBefore) return
+				this.maybeLoadNextGridDay()
+			})
+		},
+		readFeaturedPageMeta (data) {
+			if (!this.isFeaturedPage || !data) return
+			this.featuredPage = data.page || 1
+			this.featuredTotalCount = typeof data.count === 'number' ? data.count : (data.talks || []).length
+			this.featuredTotalPages = data.num_pages || 1
+			this.featuredPageSize = data.page_size || this.featuredPageSize
+			if (this.featuredTotalPages > 1) this.featuredRemote = true
+		},
+		mergeFeaturedFilters (schedule) {
+			if (!schedule) return
+			const knownTracks = new Set(this.allTracks.map(track => track.id))
+			;(schedule.tracks || []).forEach(track => {
+				if (track?.id == null || knownTracks.has(track.id)) return
+				knownTracks.add(track.id)
+				this.allTracks.push({
+					...track,
+					value: track.id,
+					label: getLocalizedString(track.name),
+					selected: false,
+				})
+			})
+			const knownRooms = new Set(this.allRooms.map(room => room.id))
+			;(schedule.rooms || []).forEach(room => {
+				if (room?.id == null || knownRooms.has(room.id)) return
+				knownRooms.add(room.id)
+				this.allRooms.push({
+					id: room.id,
+					value: room.id,
+					label: getLocalizedString(room.name),
+					selected: false,
+				})
+			})
+			const knownTypes = new Set(this.allTypes.map(type => type.value))
+			const knownLanguages = new Set(this.allLanguages.map(language => language.value))
+			const addLanguage = (code) => {
+				if (!code || knownLanguages.has(code)) return
+				knownLanguages.add(code)
+				let label = code
+				try {
+					label = new Intl.DisplayNames([this.locale], { type: 'language' }).of(code) || code
+				} catch {
+					label = code
+				}
+				this.allLanguages.push({ value: code, label, selected: false })
+			}
+			;(schedule.content_locales || []).forEach(addLanguage)
+			;(schedule.session_types || []).forEach(type => {
+				const typeLabel = getSessionTypeLabel(type)
+				if (typeLabel && !knownTypes.has(typeLabel)) {
+					knownTypes.add(typeLabel)
+					this.allTypes.push({ value: typeLabel, label: typeLabel, selected: false })
+				}
+			})
+			;(schedule.talks || []).forEach(talk => {
+				const typeLabel = getSessionTypeLabel(talk.session_type)
+				if (typeLabel && !knownTypes.has(typeLabel)) {
+					knownTypes.add(typeLabel)
+					this.allTypes.push({ value: typeLabel, label: typeLabel, selected: false })
+				}
+				addLanguage(talk.content_locale)
+			})
+		},
+		async fetchFeaturedPage (page) {
+			if (!this.isFeaturedPage) return
+			this._featuredFetchController?.abort()
+			const controller = new AbortController()
+			this._featuredFetchController = controller
+			const nextPage = Math.min(Math.max(page, 1), this.featuredTotalPages || 1)
+			this.featuredPageLoading = true
+			try {
+				const base = (this.eventUrl || '').replace(/\/?$/, '/')
+				const url = new URL(`${base}featured/`, window.location.origin)
+				url.searchParams.set('format', 'json')
+				if (nextPage > 1) url.searchParams.set('page', String(nextPage))
+				if (this.searchQuery) url.searchParams.set('q', this.searchQuery)
+				if (this.sortBy && this.sortBy !== 'title') url.searchParams.set('sort', this.sortBy)
+				const response = await fetch(url.toString(), { signal: controller.signal })
+				if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
+				const data = await response.json()
+				this.schedule = {
+					...(this.schedule || {}),
+					...data,
+					talks: data.talks || [],
+				}
+				this.readFeaturedPageMeta(data)
+				this.mergeFeaturedFilters(this.schedule)
+				window.scrollTo({top: 0, behavior: 'smooth'})
+			} catch (error) {
+				if (error?.name !== 'AbortError') {
+					this.scheduleError = true
+				}
+			} finally {
+				if (this._featuredFetchController === controller) this.featuredPageLoading = false
+			}
+		},
 		getFavStorageKey (userCode = null) {
 			if (this.loggedIn && userCode) return `${this.eventSlug}_${userCode}_favs`
 			return `${this.eventSlug}_favs`
@@ -980,6 +1359,11 @@ export default {
 		},
 		onWindowResize () {
 			this.scrollParentWidth = document.body.offsetWidth
+		},
+		getSavedTimezone () {
+			// Any timezone from the picker can be saved, not only the event or browser timezone
+			const saved = localStorage.getItem(`${this.eventSlug}_timezone`)
+			return saved && moment.tz.zone(saved) ? saved : this.schedule.timezone
 		},
 		saveTimezone () {
 			localStorage.setItem(`${this.eventSlug}_timezone`, this.currentTimezone)
@@ -1241,20 +1625,41 @@ export default {
 			}
 			this.$refs.sessionModal?.showModal()
 
-			// Fetch additional data if needed
-			if (!talk.apiContent) {
+			// Fetch additional data if needed. The submissions API supplies answers
+			// and resources; the schedule detail supplies the recording iframe
+			// and fills abstract/description when the grid payload omitted them.
+			if (!talk.apiContent || !talk.scheduleDetailLoaded) {
 				try {
-					// Ensure isLoading is true for the session description part
 					if (this.modalContent && this.modalContent.contentType === 'session' && this.modalContent.contentObject.id === session.id) {
-						this.modalContent.contentObject.isLoading = true;
+						this.modalContent.contentObject.isLoading = true
 					}
-					talk.apiContent = await this.remoteApiRequest(`submissions/${session.id}/?expand=answers.question,resources`, 'GET')
-					// Update content with fetched description if we are still on the same session
+					const detailPromise = talk.scheduleDetailLoaded
+						? Promise.resolve(null)
+						: fetchTalkScheduleDetail(this.eventUrl, session.id, { version: this.version || '' }).catch(error => {
+							console.error('Failed to load session schedule detail', session.id, error)
+							return null
+						})
+					const apiPromise = talk.apiContent
+						? Promise.resolve(talk.apiContent)
+						: this.remoteApiRequest(`submissions/${session.id}/?expand=answers.question,resources`, 'GET')
+					const [apiData, detail] = await Promise.all([apiPromise, detailPromise])
+					if (apiData) talk.apiContent = apiData
+					if (detail) {
+						talk.scheduleDetailLoaded = true
+						if (detail.recording_iframe) talk.recording_iframe = detail.recording_iframe
+						if (!talk.abstract && detail.abstract) talk.abstract = detail.abstract
+						if (!talk.description && detail.description) talk.description = detail.description
+					}
+					if (apiData?.abstract && !talk.abstract) talk.abstract = apiData.abstract
+					if (apiData?.description && !talk.description) talk.description = apiData.description
 					if (this.modalContent && this.modalContent.contentType === 'session' && this.modalContent.contentObject.id === session.id) {
 						this.modalContent = {
 							contentType: 'session',
 							contentObject: {
 								...session,
+								abstract: session.abstract || talk.abstract,
+								description: session.description || talk.description,
+								recording_iframe: session.recording_iframe || talk.recording_iframe,
 								exporters,
 								apiContent: talk.apiContent,
 								isLoading: false,

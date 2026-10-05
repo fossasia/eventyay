@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8' ?>
-{% load xmlescape %}
+{% load xmlescape %}{% load tz %}
 <iCalendar xmlns:pentabarf='http://pentabarf.org' xmlns:xCal='urn:ietf:params:xml:ns:xcal'>
     <vcalendar>
         <version>2.0</version>
@@ -12,8 +12,8 @@
             <uid>{{ entry.uid|xmlescape }}@{{ data.domain|xmlescape }}</uid>
             <pentabarf:event-slug>{{ entry.slug|xmlescape }}</pentabarf:event-slug>
             <pentabarf:title>{{ entry.name|xmlescape }}</pentabarf:title>
-            <dtstart>{{ entry.start_utc|date:"Ymd\THis\Z" }}</dtstart>
-            <dtend>{{ entry.end_utc|date:"Ymd\THis\Z" }}</dtend>
+            <dtstart>{{ entry.start_utc|utc|date:"Ymd\THis\Z" }}</dtstart>
+            <dtend>{{ entry.end_utc|utc|date:"Ymd\THis\Z" }}</dtend>
             <duration>{{ entry.pentabarf_export_duration }}</duration>
             <summary>{{ entry.name|xmlescape }}</summary>
             <class>PUBLIC</class>

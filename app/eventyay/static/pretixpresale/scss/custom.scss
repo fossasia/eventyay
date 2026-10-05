@@ -58,59 +58,10 @@
     }
 }
 
-.presale-sticky-tabs-wrap {
-    position: sticky;
-    top: 0;
-    z-index: 1200;
-    width: 100%;
-}
-
+/* Public event tab bar styles live in common/css/_public_nav.css.
+ * Keep only sticky-wrap max-width tweak and organizer #header-nav-bar overrides here. */
 .presale-sticky-tabs-inner {
-    margin: 0;
-    background: var(--color-bg);
-    width: 100%;
     max-width: 100%;
-    word-break: keep-all;
-    flex-wrap: nowrap;
-    border-radius: var(--size-border-radius) var(--size-border-radius) 0 0;
-}
-
-.presale-sticky-tabs {
-    display: flex;
-    flex-wrap: nowrap;
-    align-items: center;
-    z-index: 400;
-    background: var(--color-bg);
-    border-radius: var(--size-border-radius) var(--size-border-radius) 0 0;
-    padding: 0 0 2px;
-    flex-shrink: 0;
-    /* DO NOT set overflow here - it would clip dropdown menus */
-}
-
-/* Base styles for all breakpoints: keep tab links as flex row.
- * Mobile overrides add overflow-x:auto for horizontal scrolling. */
-.presale-tabs-scroll {
-    display: flex;
-    align-items: center;
-    flex: 1 1 auto;
-    min-width: 0;
-}
-
-.presale-sticky-tabs a.header-tab {
-    padding: 8px 10px 4px 10px;
-    border-bottom: 2px solid transparent;
-}
-
-.presale-sticky-tabs a.header-tab:hover,
-.presale-sticky-tabs a.header-tab:focus-visible {
-    color: var(--color-header-navigation-hover);
-    text-decoration: none;
-    border-bottom: 2px dotted currentColor;
-}
-
-.presale-sticky-tabs a.header-tab.active,
-.presale-sticky-tabs a.header-tab.underline {
-    border-bottom: 2px solid currentColor;
 }
 
 .presale-sticky-tabs #header-nav-bar {
@@ -127,55 +78,6 @@
     gap: 2rem;
     font-size: 1.65rem;
     flex-wrap: nowrap;
-}
-
-.presale-sticky-tabs .header-row-right {
-    color: var(--color-header-navigation);
-    margin-left: auto;
-    margin-right: 10px;
-    display: flex;
-    flex-wrap: nowrap;
-    flex-shrink: 0;
-    align-items: center;
-    font-size: 1rem;
-    gap: 16px;
-}
-
-
-.presale-sticky-tabs .header-row-right details.dropdown,
-.presale-sticky-tabs .header-row-right>a {
-    display: inline-flex;
-    align-items: center;
-}
-
-.presale-sticky-tabs .header-row-right details.dropdown summary {
-    align-items: center;
-}
-
-.presale-sticky-tabs .header-row-right .header-nav,
-.presale-sticky-tabs .header-row-right .locale-switch-toggle,
-.presale-sticky-tabs .header-row-right a {
-    color: var(--color-header-navigation);
-}
-
-.presale-sticky-tabs .header-row-right details.dropdown summary:hover,
-.presale-sticky-tabs .header-row-right details.dropdown summary:focus-visible,
-.presale-sticky-tabs .header-row-right a:not(.header-nav):hover,
-.presale-sticky-tabs .header-row-right a:not(.header-nav):focus-visible {
-    color: var(--color-header-navigation-hover);
-}
-
-.presale-sticky-tabs .header-row-right .header-nav {
-    border-color: var(--color-header-navigation);
-    background: transparent;
-}
-
-.presale-sticky-tabs .header-row-right .header-nav:hover,
-.presale-sticky-tabs .header-row-right .header-nav:focus {
-    color: white;
-    background: var(--color-primary);
-    border-color: var(--color-primary);
-    text-decoration: none;
 }
 
 #main-card {
@@ -201,16 +103,6 @@
     }
 }
 
-/* Desktop: hide icons that are mobile-only (globe + user in nav dropdowns) */
-.nav-icon-mobile {
-    display: none;
-}
-
-/* Desktop: hide mobile-only CfS abbreviation */
-.cfs-short {
-    display: none;
-}
-
 /* Desktop: keep hero overlay full-width so floating Join Video aligns to page edge. */
 @media (min-width: 769px) {
     .event-hero-overlay {
@@ -229,90 +121,6 @@
     #top-bg {
         height: 480px;
     }
-
-    /* Keep the sticky tabs in a single flex row */
-    .presale-sticky-tabs {
-        flex-direction: row;
-        flex-wrap: nowrap;
-        align-items: center;
-        /* NO overflow here — dropdown must escape this container */
-    }
-
-    /* ONLY the tab links scroll horizontally */
-    .presale-tabs-scroll {
-        flex: 1 1 auto;
-        min-width: 0;
-        overflow-x: auto;
-        overflow-y: visible;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-        display: flex;
-        align-items: center;
-    }
-
-    .presale-tabs-scroll::-webkit-scrollbar {
-        display: none;
-    }
-
-    .presale-sticky-tabs-inner {
-        overflow: visible;
-    }
-
-    .presale-sticky-tabs a.header-tab {
-        white-space: nowrap;
-        flex-shrink: 0;
-        padding: 4px 6px 3px 6px;
-        font-size: 0.8rem;
-    }
-
-    .presale-sticky-tabs .header-row-right {
-        margin-left: 0;
-        margin-right: 2px;
-        flex-shrink: 0;
-        font-size: 0.8rem;
-        gap: 0;
-    }
-
-    .presale-sticky-tabs .header-row-right details.dropdown {
-        position: relative;
-    }
-
-    .presale-sticky-tabs .header-row-right details.dropdown .dropdown-content {
-        right: 0;
-        left: auto;
-        max-width: calc(100vw - 16px);
-    }
-
-    /* Hide text labels for Language and User dropdowns — icon-only on mobile */
-    .mobile-hide-text {
-        display: none;
-    }
-
-    /* Show the mobile-only icons on mobile */
-    .nav-icon-mobile {
-        display: inline;
-        font-size: 1.25rem;
-    }
-
-    /* Remove the caret arrow — redundant when showing icon-only */
-    .presale-sticky-tabs .header-row-right details.dropdown summary .fa-caret-down {
-        display: none;
-    }
-
-    /* Tighten padding on the summary trigger button */
-    .presale-sticky-tabs .header-row-right details.dropdown summary {
-        padding: 2px 4px;
-    }
-
-    /* Show abbreviated "CfS" instead of "Call for Speakers" */
-    .cfs-full {
-        display: none;
-    }
-
-    .cfs-short {
-        display: inline;
-    }
-
 
     /* Logged-out login link: icon-only on mobile, like the icon dropdowns */
     .login-link {
@@ -334,12 +142,6 @@
         width: 100%;
         padding-left: 12px;
         padding-right: 12px;
-    }
-
-    /* Presale event index: full-bleed hero overlay */
-    #main-container.page-presale-event-index .event-hero-overlay {
-        padding-left: 0;
-        padding-right: 0;
     }
 
     #main-card {

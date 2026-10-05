@@ -2,15 +2,16 @@
 .pretalx-schedule(:style="{'--scrollparent-width': scrollParentWidth + 'px'}", :class="[draggedSession ? 'is-dragging' : '', !caps.canDrag ? 'is-public-shifts' : '']", @pointerup="caps.canDrag ? stopDragging() : null")
 	template(v-if="schedule")
 		#main-wrapper
-			#unassigned.no-print(v-if="caps.canDrag", v-scrollbar.y="", :class="{'is-collapsed': isUnassignedCollapsed}", @pointerenter="isUnassigning = true", @pointerleave="onUnassignedLeave")
+			#unassigned.no-print(v-if="caps.canDrag", v-scrollbar.y="", :class="{'is-collapsed': isUnassignedCollapsed}", @pointerenter="onUnassignedEnter", @pointerleave="onUnassignedLeave")
 				.unassigned-mobile-header(@click="isUnassignedCollapsed = !isUnassignedCollapsed")
 					span.unassigned-title
 						i.fa.fa-list
 						span {{ translations.unassignedTitle }} ({{ unscheduled.length }})
-						span.drop-hint(v-if="draggedSession")  - {{ $t('Drop here to unassign') }}
+						span.drop-hint(v-if="draggedSession && caps.showRoles")  - {{ $t('Drop here to unassign') }}
 					span.unassigned-collapse-icon
 						i.fa(:class="isUnassignedCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'")
 				.unassigned-body
+					p.unschedule-hint(v-if="unscheduleHint", role="status") {{ unscheduleHint }}
 					.unassigned-header
 						.density-controls
 							button.density-btn(:class="{active: condensedView}", @click="toggleCondensedView", :title="condensedView ? $t('Normal view') : $t('Condensed view')", :aria-pressed="condensedView.toString()")
@@ -20,9 +21,7 @@
 								span.time-density-display {{ timeDensityMinutes }} {{ $t('min') }}
 								i.fa.fa-chevron-down(aria-hidden="true")
 								.time-density-menu.vue-dropdown(v-if="showTimeDensityMenu")
-									.density-option(v-for="mins in [5, 15, 30, 60]", @click.stop="timeDensityMinutes = mins; onTimeDensityChange(); showTimeDensityMenu = false", :class="{active: timeDensityMinutes === mins}")
-							session.new-break.small-break(v-if="caps.canCreateBreak", :session="{title: '+ ' + translations.newBreak}", :isDragged="false", tabindex="0", @startDragging="startNewBreak", @click.stop="showNewBreakHint", @focus="showNewBreakHint", @blur="removeNewBreakHint", @keydown="onNewBreakKeydown", @pointerleave="removeNewBreakHint", :aria-describedby="newBreakTooltip ? 'new-break-hint' : undefined")
-							.new-break-hint(v-if="newBreakTooltip", id="new-break-hint", role="tooltip") {{ newBreakTooltip }}
+									.density-option(v-for="mins in [5, 10, 15, 30, 60]", @click.stop="timeDensityMinutes = mins; onTimeDensityChange(); showTimeDensityMenu = false", :class="{active: timeDensityMinutes === mins}") {{ mins }} {{ $t('min') }}
 						.title
 							bunt-input#filter-input(v-model="unassignedFilterString", :placeholder="translations.filterSessions", icon="search", name="filter-input")
 							#unassigned-sort(@click="showUnassignedSortMenu = !showUnassignedSortMenu", :class="{'active': showUnassignedSortMenu}")
@@ -36,8 +35,8 @@
 						.new-break-hint(v-if="newBreakTooltip", id="new-break-hint", role="tooltip") {{ newBreakTooltip }}
 					session(v-for="un in unscheduled", :key="un.id", :session="un", @startDragging="startDragging", :isDragged="draggedSession && un.id === draggedSession.id", @editSession="editorStart($event)", @deleteSession="deleteSessionDirect($event)", @assignMembers="openAssignModal($event)")
 					.deleted-room-sessions(v-if="deletedRoomSessions.length")
-						h3 {{ caps.showRoles ? $t('Deleted Room Shifts') : $t('Deleted Room Sessions') }}
-						p {{ caps.showRoles ? $t('These shifts were assigned to a room that has been deleted. Drag them into another room to restore them to the schedule.') : $t('These sessions were assigned to a room that has been deleted. Drag them into another room to restore them to the schedule.') }}
+						h3 {{ caps.showRoles ? $t('Shifts from Unavailable Rooms') : $t('Deleted Room Sessions') }}
+						p {{ caps.showRoles ? $t('These shifts were in a room that has been deleted or unscheduled. Drag them into another room to restore them to the schedule.') : $t('These sessions were assigned to a room that has been deleted. Drag them into another room to restore them to the schedule.') }}
 						session(v-for="session in deletedRoomSessions", :key="session.id", :session="session", @startDragging="startDragging", :isDragged="draggedSession && session.id === draggedSession.id")
 			#schedule-wrapper(v-scrollbar.x.y="")
 				.schedule-controls
@@ -60,7 +59,8 @@
 					@createSession="caps.canEdit ? createSession($event) : null",
 					@editSession="caps.canEdit ? editorStart($event) : null",
 					@deleteSession="caps.canDelete ? deleteSessionDirect($event) : null",
-					@assignMembers="caps.canAssignMembers ? openAssignModal($event) : null")
+					@assignMembers="caps.canAssignMembers ? openAssignModal($event) : null",
+					@unscheduleSession="caps.canDrag ? unscheduleSession($event) : null")
 			#session-editor-wrapper(v-if="editorSession && caps.canEdit", @click="editorSession = null")
 				form#session-editor(@click.stop="", @submit.prevent="editorSave")
 					h3.session-editor-title(v-if="editorSession.code")
@@ -416,6 +416,8 @@ function onConfirmDialogCancel() {
   confirmDialogAction = null
 }
 const isUnassigning = ref<boolean>(false)
+const unscheduleHint = ref<string>('')
+let unscheduleHintTimer: ReturnType<typeof setTimeout> | null = null
 const locales = ref<string[]>(['en'])
 const unassignedFilterString = ref<string>('')
 const unassignedSort = ref<string>('title')
@@ -560,13 +562,14 @@ const unscheduled = computed<SessionData[]>(() => {
 const deletedRoomSessions = computed<SessionData[]>(() => {
   if (!schedule.value) return []
   const isShifts = mode === 'shifts' || mode === 'public-shifts'
-  if (isShifts) return []
   return schedule.value.talks
     .filter(
       (session) =>
         session.code &&
         session.start &&
-        (!session.room || !roomsLookup.value[lookupKey(session.room)]),
+        (isShifts
+          ? (session.room && !roomsLookup.value[lookupKey(session.room)])
+          : (!session.room || !roomsLookup.value[lookupKey(session.room)])),
     )
     .map((session) => ({
       id: session.id,
@@ -576,11 +579,12 @@ const deletedRoomSessions = computed<SessionData[]>(() => {
       start: moment(session.start),
       end: moment(session.end),
       duration: session.end ? moment(session.end).diff(moment(session.start), 'minutes') : session.duration,
-      speakers: resolveSessionSpeakers(session.speakers),
-      track: tracksLookup.value[lookupKey(session.track)],
+      speakers: isShifts ? [] : resolveSessionSpeakers(session.speakers),
+      track: isShifts ? undefined : tracksLookup.value[lookupKey(session.track)],
       state: session.state,
       deletedRoom: true,
       do_not_record: session.do_not_record,
+      roles: isShifts ? (session.roles ?? []) : undefined,
     }))
 })
 
@@ -981,6 +985,27 @@ function onNewBreakKeydown(event: KeyboardEvent) {
   }
 }
 
+function onUnassignedEnter() {
+  isUnassigning.value = true
+  if (isScheduledTalkDrag()) showUnscheduleHint()
+}
+
+function isScheduledTalkDrag(): boolean {
+  const session = draggedSession.value
+  if (!session || mode !== 'talks') return false
+  return Boolean(session.code && session.start && !session.deletedRoom)
+}
+
+function showUnscheduleHint() {
+  unscheduleHint.value = $t('Click the cross on the session to remove it from the schedule')
+  isUnassignedCollapsed.value = false
+  if (unscheduleHintTimer) clearTimeout(unscheduleHintTimer)
+  unscheduleHintTimer = setTimeout(() => {
+    unscheduleHint.value = ''
+    unscheduleHintTimer = null
+  }, 5000)
+}
+
 function onUnassignedLeave() {
   isUnassigning.value = false
   removeNewBreakHint()
@@ -1007,19 +1032,50 @@ function startDragging({ event, session }: DragStartEvent) {
   draggedSession.value = session as SessionData
 }
 
+async function unscheduleSession(session: { id: number | string; code?: string | null }): Promise<void> {
+  if (!schedule.value || !session.code || mode !== 'talks') return
+  const movedSession = schedule.value.talks.find((s) => s.id === Number(session.id))
+  if (!movedSession?.code || !movedSession.start) return
+  const previous = {
+    start: movedSession.start,
+    end: movedSession.end,
+    room: movedSession.room,
+  }
+  movedSession.start = null
+  movedSession.end = null
+  movedSession.room = undefined
+  try {
+    await saveTalk(movedSession)
+  } catch (error) {
+    movedSession.start = previous.start
+    movedSession.end = previous.end
+    movedSession.room = previous.room
+    console.error('Failed to remove session from schedule', { sessionId: movedSession.id, error })
+    return
+  }
+  try {
+    await fetchAdditionalScheduleData()
+  } catch (error) {
+    console.error('Failed to refresh schedule data after removing session', { sessionId: movedSession.id, error })
+  }
+}
+
 async function stopDragging(): Promise<void> {
   try {
     if (isUnassigning.value && draggedSession.value) {
       if (draggedSession.value.code && !draggedSession.value.deletedRoom) {
         const movedSession = schedule.value?.talks.find((s) => s.id === draggedSession.value!.id)
+        if (movedSession && (mode === 'shifts' || mode === 'public-shifts')) {
+          movedSession.room = undefined
+          await saveTalk(movedSession)
+          await fetchAdditionalScheduleData()
+        } else if (draggedSession.value.start) {
+          showUnscheduleHint()
+        }
+      } else if (draggedSession.value.deletedRoom) {
+        const movedSession = schedule.value?.talks.find((s) => s.id === draggedSession.value!.id)
         if (movedSession) {
-          if (mode === 'shifts' || mode === 'public-shifts') {
-            movedSession.room = undefined
-          } else {
-            movedSession.start = null
-            movedSession.end = null
-            movedSession.room = undefined
-          }
+          movedSession.room = undefined
           await saveTalk(movedSession)
           await fetchAdditionalScheduleData()
         }
@@ -1118,6 +1174,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  if (unscheduleHintTimer) clearTimeout(unscheduleHintTimer)
   document.removeEventListener('touchmove', preventScrollOnDrag)
   window.removeEventListener('click', onWindowClick)
   window.removeEventListener('resize', onWindowResize)
@@ -1338,8 +1395,6 @@ onUnmounted(() => {
 			&:focus-visible
 				outline: 2px solid var(--color-primary, #3b82f6)
 				outline-offset: 2px
-		.new-break.c-linear-schedule-session.small-break
-			display: none
 		.new-break.c-linear-schedule-session.desktop-break
 			display: flex
 		.new-break-hint
@@ -1352,6 +1407,14 @@ onUnmounted(() => {
 			border-radius: 4px
 			pointer-events: none
 			margin: 0 12px 8px 8px
+		.unschedule-hint
+			margin: 8px 8px 12px 8px
+			padding: 8px 10px
+			border-radius: 4px
+			background-color: #fff4e5
+			color: #7a4b00
+			font-size: 13px
+			line-height: 1.4
 		#unassigned-sort-menu
 			color: $clr-primary-text-light
 			display: flex
@@ -1485,56 +1548,6 @@ onUnmounted(() => {
 						padding: 4px 8px
 						.density-btn-text
 							display: none
-					.small-break.c-linear-schedule-session
-						display: inline-flex
-						align-items: center
-						justify-content: center
-						margin-left: auto
-						margin-top: 0
-						margin-bottom: 0
-						margin-right: 0
-						height: 30px
-						min-height: 30px
-						max-height: 30px
-						padding: 0 12px
-						background: #f1f5f9
-						border: 1px solid #94a3b8
-						border-radius: 6px
-						color: #0f172a
-						font-weight: 600
-						font-size: 13px
-						cursor: grab
-						user-select: none
-						box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05)
-						transition: all 0.15s ease
-						box-sizing: border-box
-						flex-shrink: 0
-						min-width: 0
-						width: auto
-						&:hover, &:active
-							background: #e2e8f0
-							border-color: var(--color-primary, #2185d0)
-							color: var(--color-primary, #2185d0)
-						.time-box
-							display: none
-						.info
-							display: flex
-							align-items: center
-							padding: 0
-							margin: 0
-							.title-row
-								display: flex
-								align-items: center
-								.title
-									font-size: 13px
-									font-weight: 600
-									color: inherit
-									white-space: nowrap
-									overflow: hidden
-									text-overflow: ellipsis
-									max-width: 120px
-			.desktop-break.c-linear-schedule-session
-				display: none
 		#schedule-wrapper
 			width: 100%
 			margin-right: 0

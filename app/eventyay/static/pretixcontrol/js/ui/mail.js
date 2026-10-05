@@ -16,6 +16,13 @@ function preview_task_error(item) {
     "use strict";
     return function(jqXHR, textStatus, errorThrown) {
         $('#' + item + '_panel').data('ajaxing', false);
+        console.error('Email settings preview failed:', textStatus, errorThrown);
+        if (jqXHR.status === 400 && typeof jqXHR.responseJSON?.error === 'string') {
+            document.getElementById(item + '_preview').querySelectorAll('div').forEach((target) => {
+                target.textContent = jqXHR.responseJSON.error;
+            });
+            return;
+        }
         $('#' + item + '_preview div').text(gettext('An error has occurred.'));
         if (textStatus === "timeout") {
             alert(gettext("The request took too long. Please try again."));

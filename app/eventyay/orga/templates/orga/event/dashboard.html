@@ -9,7 +9,7 @@
 
 {% block stylesheets %}
     {% compress css %}
-        <link rel="stylesheet" href="{% static "orga/css/modern-dashboard.css" %}">
+        <link rel="stylesheet" href="{% static 'eventyay-common/css/common_dashboard.css' %}">
     {% endcompress %}
     {% if can_view_submission_stats %}
         <link rel="stylesheet" type="text/css" href="{% static "vendored/apexcharts/apexcharts.css" %}" />
@@ -101,9 +101,9 @@
 
         {% include "orga/includes/dashboard_action_cards.html" %}
 
-        
-
         {% include "orga/includes/dashboard_kpi_cards.html" %}
+
+        {% include "orga/includes/dashboard_readiness_cards.html" %}
 
         {% if can_view_submission_stats %}
             {% include "orga/submission/includes/statistics.html" %}

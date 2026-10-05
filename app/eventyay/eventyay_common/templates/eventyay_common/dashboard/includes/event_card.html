@@ -46,7 +46,7 @@
         {% for action in card.module_actions %}
           {% if action.dialog_id %}
             <a href="#" role="button"
-               class="cd-module-btn cd-module-btn--{{ action.tone }}"
+               class="cd-module-btn"
                aria-label="{{ action.label }}"
                title="{{ action.label }}"
                aria-haspopup="dialog" aria-controls="{{ action.dialog_id }}"
@@ -55,7 +55,7 @@
             </a>
           {% elif action.modal_target %}
             <a href="#"
-               class="cd-module-btn cd-module-btn--{{ action.tone }}"
+               class="cd-module-btn"
                aria-label="{{ action.label }}"
                title="{{ action.label }}"
                data-toggle="modal"
@@ -64,7 +64,7 @@
             </a>
           {% else %}
             <a href="{{ action.url }}"
-               class="cd-module-btn cd-module-btn--{{ action.tone }}"
+               class="cd-module-btn"
                aria-label="{{ action.label }}"
                title="{{ action.label }}"
                data-toggle="tooltip">

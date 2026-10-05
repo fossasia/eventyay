@@ -241,7 +241,8 @@ def test_talk_starrers_are_paginated(client, event, slot):
     flags = dict(event.feature_flags or {})
     flags['session_popularity_enabled'] = True
     event.feature_flags = flags
-    event.save(update_fields=['feature_flags'])
+    event.talks_published = True
+    event.save(update_fields=['feature_flags', 'talks_published'])
     with scopes_disabled():
         users = [
             User.objects.create_user(
