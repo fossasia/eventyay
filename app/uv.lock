@@ -1167,7 +1167,7 @@ dependencies = [
 [[package]]
 name = "eventyay-business"
 version = "1.0.0"
-source = { git = "https://github.com/fossasia/eventyay-business.git?branch=main#3e4b495387244c78cd9262f5d1c1fd655419b3b3" }
+source = { git = "https://github.com/fossasia/eventyay-business.git?branch=main#0d9e89b73f973c4889359220790c52c23e936a49" }
 
 [[package]]
 name = "eventyay-hubspot"
@@ -1181,7 +1181,7 @@ dependencies = [
 [[package]]
 name = "eventyay-interpretation"
 version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-interpretation.git?branch=main#500ffdb385234886bd5a94ca96ce1b6b624b5e78" }
+source = { git = "https://github.com/fossasia/eventyay-interpretation.git?branch=main#a02f0fb7b314680eb2eb848bb44bebe0fea5cdd1" }
 dependencies = [
     { name = "cryptography" },
     { name = "requests" },
@@ -1214,7 +1214,7 @@ dependencies = [
 [[package]]
 name = "eventyay-teamshifts"
 version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-teamshifts.git?branch=main#a9cc5970d59cc56b5d228b12c5b1b7079557f7dd" }
+source = { git = "https://github.com/fossasia/eventyay-teamshifts.git?branch=main#d3d0dd2c22267a892c37d99a919937e64ef1d58f" }
 
 [[package]]
 name = "eventyay-unified"
@@ -1695,7 +1695,7 @@ test = [
 [[package]]
 name = "eventyay-veditor"
 version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-veditor.git?branch=main#5e1f4bcc5f2976307fc70e66527c5a91f415e565" }
+source = { git = "https://github.com/fossasia/eventyay-veditor.git?branch=main#73597b7a43633187391edad7ecc02022c53c5823" }
 
 [[package]]
 name = "execnet"

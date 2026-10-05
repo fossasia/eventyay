@@ -349,13 +349,18 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
 
     @context
     def schedule_data_json(self):
-        """Inline non-enriched schedule JSON for all schedule pages.
+        """Inline compact schedule JSON for the interactive schedule.
 
-        Vue reads this directly and skips the widget endpoint fetch entirely,
-        removing a full round-trip from every page load.  Released schedules are
-        cached for 5 minutes; WIP is never cached (and uses all_talks=True).
+        One day's session cards are embedded so the grid can render without a
+        second request. Abstracts and descriptions are included only when the
+        page renders them (list view). Other days are fetched on demand.
         """
-        return build_schedule_json(self.request, self.schedule)
+        return build_schedule_json(
+            self.request,
+            self.schedule,
+            compact=True,
+            include_text=self.show_talk_list(),
+        )
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -382,7 +387,7 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
         return ctx
 
 
-@cache_page(60 * 60 * 24, key_prefix='schedule-messages-v8')
+@cache_page(60 * 60 * 24, key_prefix='schedule-messages-v9')
 def schedule_messages(request, **kwargs):
     """Cached for static exports; bump key_prefix when message keys or copy change."""
     strings = {
@@ -405,7 +410,7 @@ def schedule_messages(request, **kwargs):
         'sort_by_popularity': _('Most popular'),
         'fullscreen': _('Fullscreen'),
         'exit_fullscreen': _('Exit Fullscreen'),
-        'latest': _('Latest'),
+        'schedule_versions': _('Schedule versions'),
         'version_warning_editable': _(
             'You are currently viewing the editable schedule version. It may not match the released version.'
         ),
@@ -507,6 +512,10 @@ def talk_sort_key(talk):
 
 class ScheduleNoJsView(ScheduleView):
     template_name = 'agenda/schedule_nojs.html'
+
+    def schedule_data_json(self):
+        # The fallback page renders sessions from the database, including abstracts.
+        return ''
 
     def get_schedule_data(self):
         schedule = self.get_object()
