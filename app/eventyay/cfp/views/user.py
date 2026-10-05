@@ -417,17 +417,17 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
         kwargs['draft_save'] = self.is_draft_action()
         return kwargs
 
-    @transaction.atomic
     def redeem_access_code(self, submission):
         if not submission.access_code_id:
             return True
         access_code = self.request.event.submitter_access_codes.select_for_update().get(pk=submission.access_code_id)
-        if not submission.cfp_open and not access_code.is_valid:
-            return False
+        if not access_code.is_valid:
+            return submission.cfp_open
         access_code.redeemed += 1
         access_code.save(update_fields=['redeemed'])
         return True
 
+    @transaction.atomic
     def form_valid(self, form):
         if self.can_edit:
             # Validate formset before saving form to prevent partial persistence
@@ -449,6 +449,7 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
                 and self.request.POST.get('action', 'submit') == 'dedraft'
             ):
                 if not self.redeem_access_code(form.instance):
+                    transaction.set_rollback(True)
                     messages.error(self.request, phrases.cfp.submission_uneditable)
                     return redirect(self.object.urls.user_base)
                 form.instance.make_submitted(person=self.request.user)

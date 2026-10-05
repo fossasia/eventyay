@@ -277,6 +277,24 @@ def test_draft_with_used_up_access_code_cannot_be_submitted_after_deadline(speak
 
 
 @pytest.mark.django_db
+def test_draft_with_used_up_access_code_does_not_redeem_it_while_cfp_is_open(speaker_client, submission, access_code):
+    access_code.maximum_uses = 1
+    access_code.redeemed = 1
+    access_code.save()
+    data = close_cfp_with_draft(submission, access_code)
+    submission.event.cfp.deadline = now() + dt.timedelta(days=1)
+    submission.event.cfp.save()
+
+    speaker_client.post(submission.urls.user_base, follow=True, data=data)
+
+    with scope(event=submission.event):
+        submission.refresh_from_db()
+        assert submission.state == SubmissionStates.SUBMITTED
+    access_code.refresh_from_db()
+    assert access_code.redeemed == 1
+
+
+@pytest.mark.django_db
 def test_saving_draft_with_access_code_does_not_redeem_it(client, user, event, access_code):
     access_code.maximum_uses = 1
     access_code.save()
