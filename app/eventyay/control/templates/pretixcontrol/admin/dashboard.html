@@ -824,7 +824,7 @@
                                             &nbsp;&nbsp;{% trans "SMTP is not fully configured." %}
                                         </td>
                                         <td class="text-right">
-                                            <a href="{% url 'eventyay_admin:admin.global.settings' %}#tab3">{% trans "Configure" %}</a>
+                                            <a href="{% url 'eventyay_admin:admin.global.settings' %}#tab-email">{% trans "Configure" %}</a>
                                         </td>
                                     </tr>
                                 {% endif %}
@@ -867,7 +867,7 @@
                                         {% endif %}
                                     </td>
                                     <td class="text-right">
-                                        <a href="{% url 'eventyay_admin:admin.global.settings' %}#tab3">{% trans "Configure" %}</a>
+                                        <a href="{% url 'eventyay_admin:admin.global.settings' %}#tab-email">{% trans "Configure" %}</a>
                                     </td>
                                 </tr>
                                 {% if config_sso_ok is not None %}
