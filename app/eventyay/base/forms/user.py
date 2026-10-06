@@ -175,7 +175,8 @@ class UserSettingsForm(forms.ModelForm):
         password1 = cleaned_data.get('new_pw')
         old_pw = cleaned_data.get('old_pw')
 
-        if not self.requires_password_reset and password1 and not old_pw:
+        # A wrong or rate-limited current password is already reported on the field itself.
+        if not self.requires_password_reset and password1 and not old_pw and 'old_pw' not in self.errors:
             raise forms.ValidationError(self.error_messages['pw_current'], code='pw_current')
 
         if password1:

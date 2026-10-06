@@ -98,8 +98,6 @@ class GeneralSettingsView(LoginRequiredMixin, AccountMenuMixIn, UpdateView):
         return super().form_invalid(form)
 
     def form_valid(self, form):
-        messages.success(self.request, _('Your changes have been saved.'))
-
         data = {}
         for k in form.changed_data:
             if k not in ('old_pw', 'new_pw_repeat', 'clear_profile_picture'):
@@ -142,6 +140,12 @@ class GeneralSettingsView(LoginRequiredMixin, AccountMenuMixIn, UpdateView):
             self.object.process_image('profile_picture', generate_thumbnail=True)
 
         self.request.user.log_action('eventyay.user.settings.changed', user=self.request.user, data=data)
+
+        # Only queue the confirmation once the user has actually been saved.
+        if 'new_pw' in form.changed_data:
+            messages.success(self.request, _('Your password has been changed successfully.'))
+        else:
+            messages.success(self.request, _('Your changes have been saved.'))
 
         update_session_auth_hash(self.request, self.request.user)
 
