@@ -142,6 +142,7 @@
 <script>
 import { computed, defineAsyncComponent } from 'vue'
 import moment from 'moment-timezone'
+import { getMomentLocale, validateLanguageCode } from './locales/momentLocales'
 import 'moment/locale/de'
 import 'moment/locale/fr'
 import 'moment/locale/es'
@@ -246,6 +247,15 @@ function localeToMoment (code) {
 
 function setMomentLocale (code) {
 	const locale = localeToMoment(code)
+	
+	// Validate locale before setting
+	const validation = validateLanguageCode(locale)
+	if (!validation.valid) {
+		console.warn('⚠️ Invalid locale for moment:', validation.errors.join(', '))
+		moment.locale('en')
+		return
+	}
+	
 	try {
 		moment.locale(locale)
 	} catch (error) {
