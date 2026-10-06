@@ -965,3 +965,28 @@ def test_speaker_view_mixin_get_object_establishes_scope(rf, event, speaker, org
 
         obj = mixin.get_object()
         assert obj == speaker
+
+
+@pytest.mark.django_db
+def test_orga_can_create_speaker_with_custom_field(orga_client, event, speaker_question):
+    with scope(event=event):
+        speaker_question.target = "speaker"
+        speaker_question.save(update_fields=["target"])
+
+    response = orga_client.post(
+        event.orga_urls.new_speaker,
+        data={
+            "fullname": "Custom Field Speaker",
+            "email": "custom.field@example.org",
+            "biography": "Has a custom field answer",
+            f"question_{speaker_question.id}": "My custom answer",
+        },
+        follow=True,
+    )
+    assert response.status_code == 200
+    with scope(event=event):
+        profile = SpeakerProfile.objects.filter(
+            event=event, user__email="custom.field@example.org"
+        ).first()
+        assert profile is not None
+        assert profile.answers.filter(question=speaker_question, answer="My custom answer").exists()
