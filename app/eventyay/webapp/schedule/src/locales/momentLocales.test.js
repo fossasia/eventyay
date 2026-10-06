@@ -8,7 +8,12 @@ import moment from 'moment'
 import MOMENT_LOCALE_MAP, {
   getMomentLocale,
   getAvailableLocales,
-  validateLanguageCode
+  validateLanguageCode,
+  setMomentLocale,
+  getLocaleWhitelist,
+  isWhitelistedLocale,
+  validateWhitelist,
+  getLocaleSecurityAudit
 } from './momentLocales.js'
 
 // Test: getMomentLocale() - Input Validation
@@ -76,6 +81,17 @@ test('getMomentLocale() - throwOnUnknown option', () => {
   assert.throws(() => getMomentLocale('invalid', { throwOnUnknown: true }), RangeError)
 })
 
+test('getMomentLocale() - Non-whitelisted locale falls back', () => {
+  // da, nb, fi, etc. are in MOMENT_LOCALE_MAP but not in whitelist
+  const result = getMomentLocale('da', { checkWhitelist: true })
+  assert.equal(result, 'en')
+})
+
+test('getMomentLocale() - Whitelisted locale works', () => {
+  const result = getMomentLocale('en', { checkWhitelist: true })
+  assert.equal(result, 'en')
+})
+
 // Test: validateLanguageCode()
 test('validateLanguageCode() - Valid locale', () => {
   const result = validateLanguageCode('en')
@@ -102,10 +118,117 @@ test('validateLanguageCode() - Null input', () => {
   assert.ok(result.errors.length > 0)
 })
 
-test('validateLanguageCode() - Optional locale warning', () => {
-  const result = validateLanguageCode('es')
-  assert.equal(result.valid, true)
-  assert.ok(result.warnings.length > 0 || result.warnings.length === 0) // es may not be required
+test('validateLanguageCode() - Non-whitelisted locale', () => {
+  // da is in MOMENT_LOCALE_MAP but not whitelisted
+  const result = validateLanguageCode('da')
+  assert.equal(result.valid, false)
+  assert.ok(result.errors.some(e => e.includes('whitelisted')))
+})
+
+// Test: setMomentLocale() - Whitelist Validation
+test('setMomentLocale() - Valid whitelisted locale', () => {
+  const result = setMomentLocale('en')
+  assert.equal(result.success, true)
+  assert.equal(result.whitelisted, true)
+})
+
+test('setMomentLocale() - Non-whitelisted locale rejected', () => {
+  const result = setMomentLocale('da')  // Not whitelisted
+  assert.equal(result.success, false)
+  assert.ok(result.error)
+})
+
+test('setMomentLocale() - Non-whitelisted locale falls back', () => {
+  const result = setMomentLocale('da')
+  assert.equal(result.fallback, 'en')
+})
+
+test('setMomentLocale() - Throws on non-whitelisted with throwOnInvalid', () => {
+  assert.throws(() => {
+    setMomentLocale('da', { throwOnInvalid: true });
+  });
+})
+
+test('setMomentLocale() - Normalizes locale to lowercase', () => {
+  const result = setMomentLocale('PT')
+  assert.equal(result.normalizedLocale, 'pt')
+})
+
+test('setMomentLocale() - Handles whitespace in locale', () => {
+  const result = setMomentLocale('  en  ')
+  assert.equal(result.success, true)
+  assert.equal(result.normalizedLocale, 'en')
+})
+
+test('setMomentLocale() - Returns detailed result object', () => {
+  const result = setMomentLocale('en')
+  assert.ok(result.hasOwnProperty('success'))
+  assert.ok(result.hasOwnProperty('requestedLocale'))
+  assert.ok(result.hasOwnProperty('normalizedLocale'))
+  assert.ok(result.hasOwnProperty('momentLocale'))
+  assert.ok(result.hasOwnProperty('timestamp'))
+  assert.ok(result.hasOwnProperty('whitelisted'))
+})
+
+test('setMomentLocale() - Invalid type falls back', () => {
+  const result = setMomentLocale(null)
+  assert.equal(result.success, false)
+  assert.equal(result.fallback, 'en')
+})
+
+test('setMomentLocale() - Throws on invalid type with throwOnInvalid', () => {
+  assert.throws(() => {
+    setMomentLocale(123, { throwOnInvalid: true });
+  });
+})
+
+// Test: Locale Whitelist
+test('Locale Whitelist - getLocaleWhitelist returns array', () => {
+  const whitelist = getLocaleWhitelist()
+  assert.ok(Array.isArray(whitelist))
+  assert.ok(whitelist.length > 0)
+})
+
+test('Locale Whitelist - Contains required locales', () => {
+  const whitelist = getLocaleWhitelist()
+  assert.ok(whitelist.includes('en'))
+  assert.ok(whitelist.includes('pt'))
+})
+
+test('Locale Whitelist - No duplicates', () => {
+  const whitelist = getLocaleWhitelist()
+  const uniqueWhitelist = new Set(whitelist)
+  assert.equal(whitelist.length, uniqueWhitelist.size)
+})
+
+test('Locale Whitelist - validateWhitelist works', () => {
+  const validation = validateWhitelist()
+  assert.equal(validation.valid, true)
+  assert.ok(validation.whitelistSize > 0)
+  assert.equal(validation.requiredCount, 2)
+})
+
+test('Locale Whitelist - isWhitelistedLocale works', () => {
+  assert.ok(isWhitelistedLocale('en'))
+  assert.ok(isWhitelistedLocale('pt'))
+  assert.ok(!isWhitelistedLocale('da'))
+  assert.ok(!isWhitelistedLocale('invalid'))
+})
+
+test('Locale Whitelist - getLocaleWhitelist returns copy', () => {
+  const whitelist1 = getLocaleWhitelist()
+  const whitelist2 = getLocaleWhitelist()
+  assert.notStrictEqual(whitelist1, whitelist2)  // Different arrays (copies)
+})
+
+// Test: Locale Security Audit
+test('Locale Security - getLocaleSecurityAudit returns structure', () => {
+  const audit = getLocaleSecurityAudit()
+  assert.ok(audit.hasOwnProperty('totalAttempts'))
+  assert.ok(audit.hasOwnProperty('successCount'))
+  assert.ok(audit.hasOwnProperty('failureCount'))
+  assert.ok(audit.hasOwnProperty('recentAttempts'))
+  assert.ok(audit.hasOwnProperty('suspiciousActivity'))
 })
 
 // Test: getAvailableLocales()
