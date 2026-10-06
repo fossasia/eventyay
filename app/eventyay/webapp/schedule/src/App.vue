@@ -177,6 +177,31 @@ function localesMatch (filterValue, sessionValue) {
 	return localePrimary(a) === localePrimary(b)
 }
 
+function localeToMoment (code) {
+	if (!code) return 'en'
+	const normalized = normalizeLocaleCode(code)
+	const map = {
+		'zh-hans': 'zh-cn',
+		'zh-hant': 'zh-tw',
+		'pt-pt': 'pt',
+		'nn-no': 'nn',
+		'nb-no': 'nb',
+		'de-formal': 'de',
+		'de-informal': 'de',
+		'nl-informal': 'nl',
+	}
+	return map[normalized] || normalized
+}
+
+function setMomentLocale (code) {
+	const locale = localeToMoment(code)
+	try {
+		moment.locale(locale)
+	} catch {
+		moment.locale('en')
+	}
+}
+
 
 const markdownIt = MarkdownIt({
 	linkify: false,
@@ -721,6 +746,7 @@ export default {
 	watch: {
 		async locale (value) {
 			await changeScheduleLanguage(value)
+			setMomentLocale(value)
 		},
 		popularityFeatureEnabled (enabled) {
 			if (!enabled) {
@@ -797,7 +823,7 @@ export default {
 		const fragment = window.location.hash.slice(1)
 		await changeScheduleLanguage(this.locale)
 		this.readRecordingQueryParam()
-		moment.locale(this.locale)
+		setMomentLocale(this.locale)
 		this.userTimezone = moment.tz.guess()
 		// If opened via old /sessions/ URL, activate sessions mode
 		if (this.view === 'sessions') {
