@@ -1,16 +1,34 @@
+.contact-organizer-btn,
 footer .contact-organizer-btn {
     background: none;
     border: none;
     padding: 0;
     margin: 0;
     font: inherit;
-    color: inherit;
+    color: var(--color-primary-text, var(--color-primary, inherit));
     cursor: pointer;
     text-decoration: none;
+    display: inline;
 }
 
-footer .contact-organizer-btn:hover {
+.contact-organizer-btn:hover,
+.contact-organizer-btn:focus,
+footer .contact-organizer-btn:hover,
+footer .contact-organizer-btn:focus {
+    color: var(--color-primary-text-dark, var(--color-primary-hover, var(--color-primary, inherit)));
     text-decoration: underline;
+    outline: none;
+}
+
+.contact-organizer-btn:active,
+footer .contact-organizer-btn:active {
+    color: var(--color-primary-text-dark, var(--color-primary, inherit));
+}
+
+.contact-organizer-btn:focus-visible,
+footer .contact-organizer-btn:focus-visible {
+    outline: 2px solid var(--color-primary, currentColor);
+    outline-offset: 2px;
 }
 
 .contact-organizer-dialog {
