@@ -447,7 +447,19 @@ class ComposeMailPreview(EventPermissionRequired, View):
                 request.event,
                 ['event', 'submission', 'user', 'slot'],
             )
-            expanded = safe_html.format_map(context_dict)
+            try:
+                expanded = safe_html.format_map(context_dict)
+            except ValueError:
+                return JsonResponse(
+                    {
+                        'error': _(
+                            'Invalid email template! '
+                            'Please check that you don’t have stray { or } somewhere, '
+                            'and that there are no spaces inside the {} blocks.'
+                        )
+                    },
+                    status=400,
+                )
             preview_html = expand_email_variable_chips(expanded, dict(context_dict))
             return JsonResponse({'html': preview_html})
 
