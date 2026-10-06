@@ -161,6 +161,7 @@ from eventyay.control.forms.orders import (
 from eventyay.control.permissions import EventPermissionRequiredMixin
 from eventyay.control.signals import order_search_forms
 from eventyay.control.views import PaginationMixin
+from eventyay.control.views.event import invalid_template_response
 from eventyay.helpers.safedownload import check_token
 from eventyay.presale.utils import build_position_additional_fields
 
@@ -2541,7 +2542,10 @@ class OrderMailPreview(EventPermissionRequiredMixin, OrderViewMixin, View):
             )
         with language(order.locale, request.event.settings.region):
             email_context = get_email_context(event=order.event, order=order, position=position)
-        email_content = render_mail(LazyI18nString(request.POST.get('content', '')), email_context)
+        try:
+            email_content = render_mail(LazyI18nString(request.POST.get('content', '')), email_context)
+        except ValueError:
+            return invalid_template_response()
         return JsonResponse({'html': compile_email_body(email_content)})
 
 

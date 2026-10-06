@@ -1218,6 +1218,10 @@ class TeamMailForm(ScheduledAtValidationMixin, forms.Form):
             for field_name in ('teams', 'subject', 'message'):
                 self.fields[field_name].required = False
 
+        phs = [f'{{{p}}}' for p in placeholder_names]
+        self.fields['subject'].validators.append(PlaceholderValidator(phs))
+        self.fields['message'].validators.append(PlaceholderValidator(phs))
+
     @cached_property
     def grouped_placeholders(self):
         placeholders = self.valid_placeholders
