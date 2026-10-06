@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 import json
 import smtplib
 import time
@@ -102,6 +103,23 @@ class UserFilterFormTest(TestCase):
         self.spam_user = _make_user('sp@ex.com', is_spam=True)
         self.clean_user = _make_user('cl@ex.com', is_spam=False)
 
+        User.objects.filter(pk=self.verified_user.pk).update(
+            date_joined=datetime(2023, 1, 1, 10, 0, tzinfo=UTC),
+            last_login=datetime(2024, 4, 1, 10, 0, tzinfo=UTC),
+        )
+        User.objects.filter(pk=self.unverified_user.pk).update(
+            date_joined=datetime(2023, 2, 1, 10, 0, tzinfo=UTC),
+            last_login=datetime(2024, 3, 1, 10, 0, tzinfo=UTC),
+        )
+        User.objects.filter(pk=self.spam_user.pk).update(
+            date_joined=datetime(2023, 3, 1, 10, 0, tzinfo=UTC),
+            last_login=datetime(2024, 2, 1, 10, 0, tzinfo=UTC),
+        )
+        User.objects.filter(pk=self.clean_user.pk).update(
+            date_joined=datetime(2023, 4, 1, 10, 0, tzinfo=UTC),
+            last_login=datetime(2024, 1, 1, 10, 0, tzinfo=UTC),
+        )
+
     def _filter(self, data):
         qs = User.objects.all().annotate(
             is_email_verified=Exists(
@@ -140,6 +158,31 @@ class UserFilterFormTest(TestCase):
         qs = self._filter({})
         self.assertGreaterEqual(qs.count(), 4)
 
+    def test_filter_order_by_date_joined_asc(self):
+        qs = self._filter({'ordering': 'date_joined'})
+        emails = list(qs.values_list('email', flat=True))
+        self.assertEqual(emails, ['v@ex.com', 'u@ex.com', 'sp@ex.com', 'cl@ex.com'])
+
+    def test_filter_order_by_date_joined_desc(self):
+        qs = self._filter({'ordering': '-date_joined'})
+        emails = list(qs.values_list('email', flat=True))
+        self.assertEqual(emails, ['cl@ex.com', 'sp@ex.com', 'u@ex.com', 'v@ex.com'])
+
+    def test_filter_order_by_last_login_asc(self):
+        qs = self._filter({'ordering': 'last_login'})
+        emails = list(qs.values_list('email', flat=True))
+        self.assertEqual(emails, ['cl@ex.com', 'sp@ex.com', 'u@ex.com', 'v@ex.com'])
+
+    def test_filter_order_by_last_login_desc(self):
+        qs = self._filter({'ordering': '-last_login'})
+        emails = list(qs.values_list('email', flat=True))
+        self.assertEqual(emails, ['v@ex.com', 'u@ex.com', 'sp@ex.com', 'cl@ex.com'])
+
+    def test_filter_ordering_with_search_and_status(self):
+        qs = self._filter({'ordering': '-date_joined', 'spam': 'no'})
+        emails = list(qs.values_list('email', flat=True))
+        self.assertEqual(emails, ['cl@ex.com', 'u@ex.com', 'v@ex.com'])
+
 
 class AdminUserListViewTest(TestCase):
 
@@ -168,6 +211,10 @@ class AdminUserListViewTest(TestCase):
         content = response.content.decode()
         self.assertIn('Member Since', content)
         self.assertIn('Last Accessed', content)
+        self.assertIn('ordering=-date_joined', content)
+        self.assertIn('ordering=date_joined', content)
+        self.assertIn('ordering=-last_login', content)
+        self.assertIn('ordering=last_login', content)
         self.assertIn('Verified', content)
         self.assertIn('Mark as Spam', content)
         self.assertIn('name="action" value="toggle_verified"', content)

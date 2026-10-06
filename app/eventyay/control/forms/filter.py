@@ -1530,6 +1530,8 @@ class UserFilterForm(FilterForm):
         'verified': 'is_email_verified',
         'admin': 'is_staff',
         'spam': 'is_spam',
+        'date_joined': 'date_joined',
+        'last_login': 'last_login',
     }
     status = forms.ChoiceField(
         label=_('Status'),
