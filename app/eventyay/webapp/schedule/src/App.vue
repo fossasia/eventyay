@@ -879,7 +879,25 @@ async locale (value) {
 		const fragment = window.location.hash.slice(1)
 		await changeScheduleLanguage(this.locale)
 		this.readRecordingQueryParam()
-		setMomentLocale(this.locale)
+		try {
+			await setMomentLocale(this.locale)
+		} catch (error) {
+			// Log error for debugging
+			console.error('Failed to set moment locale:', {
+				operation: 'locale-initialization',
+				message: error.message,
+				code: error.code,
+				stack: error.stack,
+				timestamp: new Date().toISOString()
+			});
+
+			// Fallback to default locale (English)
+			this.locale = 'en';
+			await setMomentLocale('en');
+
+			// Show user-friendly error message
+			this.$toast.error('Failed to load schedule locale. Please try refreshing the page.');
+		}
 		this.userTimezone = moment.tz.guess()
 		// If opened via old /sessions/ URL, activate sessions mode
 		if (this.view === 'sessions') {
