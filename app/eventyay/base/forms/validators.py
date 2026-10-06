@@ -1,4 +1,4 @@
-import re
+from string import Formatter
 
 from django.core.exceptions import ValidationError
 from django.core.validators import BaseValidator
@@ -23,13 +23,20 @@ class PlaceholderValidator(BaseValidator):
                 self.__call__(v)
             return
 
-        if value.count('{') != value.count('}'):
+        # Parse like str.format_map does, so escaped braces such as {{literal}} stay literal text.
+        try:
+            parsed = list(Formatter().parse(value))
+        except ValueError:
             raise ValidationError(
                 _('Invalid placeholder syntax: You used a different number of "{" than of "}".'),
                 code='invalid_placeholder_syntax',
             )
 
-        data_placeholders = list(re.findall(r'({[^}]*})', value, re.X))
+        data_placeholders = [
+            '{%s%s%s}' % (field_name, f'!{conversion}' if conversion else '', f':{format_spec}' if format_spec else '')
+            for literal_text, field_name, format_spec, conversion in parsed
+            if field_name is not None
+        ]
         invalid_placeholders = []
         for placeholder in data_placeholders:
             # Clean backslashes that might be added by markdown editors (e.g. {join\_online\_event})

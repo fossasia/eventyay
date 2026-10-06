@@ -9,6 +9,7 @@ from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.functional import cached_property
+from django.utils.html import escape
 from django.template.loader import render_to_string
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext_lazy
@@ -50,6 +51,18 @@ from .forms import (
 
 
 logger = logging.getLogger(__name__)
+
+
+def preview_validation_error(form) -> JsonResponse:
+    # mail-preview.js inserts these as HTML, and messages can echo user input such as an invalid placeholder.
+    errors = {
+        str(escape(form.fields[name].label or name if name in form.fields else name)): [
+            str(escape(error)) for error in field_errors
+        ]
+        for name, field_errors in form.errors.items()
+    }
+    return JsonResponse({'success': False, 'error': True, 'errors': errors}, status=400)
+
 
 @event_permission_required('can_change_orders')
 def attendees_select2(request, **kwargs):
@@ -217,7 +230,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
 
     def form_invalid(self, form):
         if self.request.POST.get('action') == 'preview' and self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'success': False, 'error': True}, status=400)
+            return preview_validation_error(form)
         return super().form_invalid(form)
 
     def form_valid(self, form):
@@ -901,7 +914,7 @@ class EditEmailQueueView(EventPermissionRequiredMixin, UpdateView):
 
     def form_invalid(self, form):
         if self.request.POST.get('action') == 'preview' and self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'success': False, 'error': True}, status=400)
+            return preview_validation_error(form)
         messages.error(self.request, _('We could not save the email. See below for details.'))
         return super().form_invalid(form)
 
@@ -1229,7 +1242,7 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyTo
 
     def form_invalid(self, form):
         if self.request.POST.get('action') == 'preview' and self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'success': False, 'error': True}, status=400)
+            return preview_validation_error(form)
         messages.error(self.request, _('We could not save the email. See below for details.'))
         return super().form_invalid(form)
 

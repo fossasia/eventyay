@@ -148,3 +148,41 @@ def test_editor_email_preview_renders_placeholders(mail_client, event):
     html = response.json()['previews']['en']
     assert '{literal}' in html
     assert '<span class="placeholder"' in html
+
+
+@pytest.mark.django_db
+def test_team_mail_form_accepts_escaped_braces(event):
+    with scope(event=event):
+        form = TeamMailForm(
+            event=event,
+            data={'subject_0': 'Briefing {{internal}} for {event_name}', 'message_0': 'Use {{name}} literally, {name}'},
+        )
+        form.is_valid()
+    assert 'subject' not in form.errors
+    assert 'message' not in form.errors
+
+
+@pytest.mark.django_db
+def test_order_mail_form_accepts_escaped_braces_in_subject(event, order):
+    with scope(event=event):
+        form = OrderMailForm(
+            order=order,
+            data={'subject': 'Order {code} {{internal}}', 'message': 'Hello', 'sendto': order.email},
+        )
+        form.is_valid()
+    assert 'subject' not in form.errors
+
+
+@pytest.mark.django_db
+def test_team_mail_ajax_preview_returns_escaped_field_errors(mail_client, event):
+    response = mail_client.post(
+        event_url(event, 'mails/compose/teams/'),
+        {'action': 'preview', 'subject_0': 'Briefing for {<b>x</b>}', 'message_0': 'See you there :}'},
+        HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        secure=True,
+    )
+    assert response.status_code == 400
+    errors = response.json()['errors']
+    assert STRAY_BRACE_ERROR in errors['Message'][0]
+    assert '&lt;b&gt;x&lt;/b&gt;' in errors['Subject'][0]
+    assert '<b>' not in errors['Subject'][0]
