@@ -1,7 +1,8 @@
 /* Shared mail composer layout (orga talks + ticket sendmail). */
 
 .mail-composer {
-  --composer-border-radius: 8px;
+  /* Platform radius (--size-border-radius) in px: the ticket control has a 10px root font. */
+  --composer-border-radius: 4px;
   --composer-control-height: 40px;
   --composer-font-size: 16px;
   --composer-small-control-height: 32px;
@@ -35,7 +36,7 @@
 .mail-composer .composer-send-group > .btn,
 .mail-composer .composer-send-group > details > summary.btn {
   min-height: var(--composer-control-height);
-  padding: 8px 16px;
+  padding: 7px 16px;
 }
 
 .mail-composer .composer-intro {
@@ -76,7 +77,23 @@
 .mail-composer > .card > .card-header {
   background-color: var(--color-card-header);
   border-bottom: 1px solid var(--color-card-border);
+  border-radius: calc(var(--composer-border-radius) - 1px) calc(var(--composer-border-radius) - 1px) 0 0;
   padding: 12px 20px;
+}
+
+/* Talks renders the action bar as .submit-group.panel; match the section cards above it. */
+.mail-composer .submit-group.panel {
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--composer-border-radius);
+  box-shadow: none;
+  padding: 20px;
+}
+
+@media (min-width: 769px) {
+  .mail-composer .submit-group.panel {
+    align-items: center;
+  }
 }
 
 .mail-composer .card-header [data-toggle="tooltip"],
@@ -86,6 +103,10 @@
 
 .mail-composer > .card > .card-body {
   padding: 20px;
+}
+
+.mail-composer > .card > .card-body hr {
+  border-top-color: var(--color-card-border);
 }
 
 .mail-composer button,
@@ -102,6 +123,7 @@
 .mail-composer [role="button"].btn-sm,
 .mail-composer a.btn-sm,
 .mail-composer summary.btn-sm {
+  border-radius: var(--composer-border-radius);
   font-size: var(--composer-small-font-size);
   line-height: 21px;
   min-height: var(--composer-small-control-height);
@@ -148,6 +170,12 @@
   border-radius: var(--composer-border-radius);
   box-sizing: border-box;
   font-size: var(--composer-font-size);
+}
+
+/* Same height as the Choices dropdowns; tickets would otherwise get Bootstrap 3's 32/34px. */
+.mail-composer input:is([type="text"], [type="email"], [type="url"], [type="number"], [type="date"], [type="time"]) {
+  min-height: var(--composer-control-height);
+  padding: 6px 12px;
 }
 
 .mail-composer input[lang],
@@ -396,6 +424,8 @@
 .mail-composer .composer-filters .splitdatetimerow input[type="time"] {
   flex: 1 1 0;
   min-width: 0;
+  padding-left: 8px;
+  padding-right: 8px;
   width: auto;
 }
 
@@ -444,6 +474,7 @@
 /* fileInput.js wraps uploads in .eventyay-file-pick-wrapper; stretch it like other controls. */
 .mail-composer .col-md-9 > .eventyay-file-pick-wrapper,
 .form-with-placeholder .card-body .col-md-9 > .eventyay-file-pick-wrapper {
+  border-radius: var(--composer-border-radius, 4px);
   box-sizing: border-box;
   max-width: 100%;
   min-height: var(--composer-control-height);
@@ -754,6 +785,15 @@
 .composer-send-group > .dropdown {
   display: flex;
   overflow: visible;
+}
+
+.composer-send-group > .btn.btn-primary {
+  border-color: var(--color-primary);
+}
+
+.composer-send-group > .btn.btn-primary:hover,
+.composer-send-group > .btn.btn-primary:focus {
+  border-color: var(--color-primary-hover);
 }
 
 .composer-send-group > .btn {
