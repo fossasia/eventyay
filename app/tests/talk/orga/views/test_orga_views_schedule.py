@@ -3,11 +3,14 @@ import json
 from uuid import uuid4
 
 import pytest
+from celery.app.task import Task
+from django.contrib.auth.models import AnonymousUser
 from django.urls import reverse
 from django.utils.timezone import now
 from django_scopes import scope
 
 from eventyay.base.models import Schedule
+from eventyay.common.templatetags.event_tags import can_list_schedule
 
 
 @pytest.mark.django_db
@@ -376,8 +379,15 @@ def test_orga_cannot_reuse_schedule_name(orga_client, event):
 
 
 @pytest.mark.django_db
-def test_orga_can_toggle_schedule_visibility(orga_client, event):
+def test_orga_can_toggle_schedule_visibility(orga_client, event, mocker, rf):
     from eventyay.base.models import Event
+
+    with scope(event=event):
+        event.talks_published = True
+        event.save(update_fields=['talks_published'])
+        Schedule.objects.create(event=event, version='v1', published=now())
+    public_request = rf.get('/')
+    public_request.user = AnonymousUser()
 
     assert event.feature_flags["show_schedule"] is True
     response = orga_client.get(event.orga_urls.toggle_schedule)
@@ -391,6 +401,7 @@ def test_orga_can_toggle_schedule_visibility(orga_client, event):
     assert "Make schedule public" not in page.text
     assert "Visitors will see sessions as coming soon until you publish it again." in page.text
 
+    enqueue_task = mocker.spy(Task, 'apply_async')
     response = orga_client.post(event.orga_urls.toggle_schedule, follow=True)
     assert response.status_code == 200
     assert response.text.count("Make schedule public") == 1
@@ -398,12 +409,18 @@ def test_orga_can_toggle_schedule_visibility(orga_client, event):
     assert "Visitors will be able to see the released schedule." in response.text
     event = Event.objects.get(pk=event.pk)
     assert event.feature_flags["show_schedule"] is False
+    with scope(event=event):
+        assert event.settings.get('talk_schedule_public', as_type=bool) is False
+        assert can_list_schedule({'request': public_request}, event=event) is False
 
     response = orga_client.post(event.orga_urls.toggle_schedule)
     assert response.status_code == 302
     event = Event.objects.get(pk=event.pk)
     with scope(event=event):
         assert event.feature_flags["show_schedule"] is True
+        assert event.settings.get('talk_schedule_public', as_type=bool) is True
+        assert can_list_schedule({'request': public_request}, event=event) is True
+    enqueue_task.assert_not_called()
 
 
 @pytest.mark.django_db

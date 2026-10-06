@@ -1,11 +1,9 @@
 import collections
 import datetime as dt
 import json
-import logging
 
-from asgiref.sync import async_to_sync
 import dateutil.parser
-from celery.exceptions import TaskError
+from asgiref.sync import async_to_sync
 from django.apps import apps
 from django.conf import settings
 from django.contrib import messages
@@ -33,6 +31,9 @@ from eventyay.base.models.room import (
     schedule_editor_room_url,
     unassign_linked_sessions_from_room,
 )
+from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
+from eventyay.base.services.event import notify_event_change
+from eventyay.base.services.room import soft_delete_room
 from eventyay.common.language import get_current_language_information
 from eventyay.common.text.path import safe_filename
 from eventyay.common.text.phrases import phrases
@@ -44,12 +45,7 @@ from eventyay.common.views.mixins import (
 )
 from eventyay.orga.forms.schedule import ScheduleReleaseForm
 from eventyay.schedule.forms import QuickScheduleForm, RoomForm
-from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
-from eventyay.base.services.event import notify_event_change
-from eventyay.base.services.room import soft_delete_room
 from eventyay.talk_rules.tracks import apply_track_limit_to_slots, filter_schedule_talk_data, get_allowed_tracks
-
-logger = logging.getLogger(__name__)
 
 
 class ScheduleView(EventPermissionRequired, TemplateView):
@@ -202,25 +198,6 @@ class ScheduleToggleView(EventPermissionRequired, View):
             messages.success(request, _('The schedule is now public.'))
         else:
             messages.success(request, _('The public schedule has been unpublished.'))
-        # Trigger tickets to hidden/unhidden schedule menu
-        try:
-            from eventyay.orga.tasks import trigger_public_schedule
-
-            trigger_public_schedule.apply_async(
-                kwargs={
-                    'is_show_schedule': is_public,
-                    'event_slug': request.event.slug,
-                    'organiser_slug': request.event.organizer.slug,
-                    'user_email': request.user.email,
-                },
-                ignore_result=True,
-            )
-        except (TaskError, ConnectionError):
-            log_event('talk', 'connection.schedule_public', OUTCOME_FAILURE, error_code='enqueue_failed', event_id=getattr(self.request.event, 'pk', None), backend='tickets_api')
-            logger.warning('Could not enqueue schedule visibility sync')
-        except Exception:
-            log_event('talk', 'connection.schedule_public', OUTCOME_FAILURE, error_code='enqueue_failed', event_id=getattr(self.request.event, 'pk', None), backend='tickets_api')
-            logger.exception('Unexpected error enqueueing schedule visibility sync')
         return redirect(request.event.orga_urls.schedule)
 
 
