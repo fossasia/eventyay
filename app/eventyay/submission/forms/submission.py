@@ -489,11 +489,23 @@ class SubmissionFilterForm(forms.Form):
         required=False,
         label=_('Room status'),
         choices=(
-            ('', _('All room statuses')),
-            ('published', _('Room published')),
-            ('not_published', _('Room not published')),
-            ('not_assigned', _('Room not assigned')),
+            ('', _('Room status')),
+            ('published', _('Published')),
+            ('not_published', _('Not published')),
+            ('not_assigned', _('Not assigned')),
         ),
+        widget=EnhancedSelect,
+    )
+    readiness = forms.ChoiceField(
+        required=False,
+        label=_('Readiness'),
+        choices=(
+            ('', _('All states')),
+            ('scheduled', _('Scheduled')),
+            ('unscheduled', _('Unscheduled')),
+            ('with_conflicts', _('With conflicts')),
+        ),
+        widget=EnhancedSelect,
     )
     content_locale = forms.MultipleChoiceField(
         required=False,
@@ -683,6 +695,57 @@ class SubmissionFilterForm(forms.Form):
 
         return qs
 
+    def _filter_readiness(self, qs, readiness):
+        if not readiness:
+            return qs
+
+        wip_schedule = getattr(self.event, 'wip_schedule', None)
+        if wip_schedule is None:
+            return qs.none() if readiness != 'unscheduled' else qs
+
+        if readiness == 'scheduled':
+            assigned_slots = TalkSlot.objects.filter(
+                submission_id=OuterRef('pk'),
+                schedule=wip_schedule,
+                room__isnull=False,
+                start__isnull=False,
+                is_visible=True,
+            )
+            return qs.filter(state=SubmissionStates.CONFIRMED).annotate(is_scheduled=Exists(assigned_slots)).filter(is_scheduled=True)
+
+        if readiness == 'unscheduled':
+            visible_slots = TalkSlot.objects.filter(
+                submission_id=OuterRef('pk'),
+                schedule=wip_schedule,
+                is_visible=True,
+            )
+            unscheduled_slots = TalkSlot.objects.filter(
+                submission_id=OuterRef('pk'),
+                schedule=wip_schedule,
+                room__isnull=True,
+                start__isnull=True,
+                is_visible=True,
+            )
+            return qs.filter(state=SubmissionStates.CONFIRMED).annotate(
+                has_visible=Exists(visible_slots),
+                has_unscheduled=Exists(unscheduled_slots)
+            ).filter(Q(has_unscheduled=True) | Q(has_visible=False))
+
+
+        if readiness == 'with_conflicts':
+            warnings = wip_schedule.get_all_talk_warnings()
+            talks_with_conflicts = [
+                talk.submission_id
+                for talk, warns in warnings.items()
+                if warns
+                and talk.submission_id
+                and talk.submission.state == SubmissionStates.CONFIRMED
+                and talk.is_visible
+            ]
+            return qs.filter(id__in=talks_with_conflicts)
+
+        return qs
+
     def filter_queryset(self, qs):
         for field in ('submission_type', 'content_locale', 'track', 'tags'):
             value = self.cleaned_data.get(field)
@@ -704,6 +767,8 @@ class SubmissionFilterForm(forms.Form):
             qs = qs.filter(pending_state__isnull=True)
 
         qs = self._filter_room_status(qs, self.cleaned_data.get('room_status'))
+
+        qs = self._filter_readiness(qs, self.cleaned_data.get('readiness'))
 
         search = self.cleaned_data.get('q')
         if search:

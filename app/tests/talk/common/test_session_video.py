@@ -120,6 +120,7 @@ def test_set_submission_video_urls_stores_multiple(event, submission):
     urls = [
         'https://youtu.be/dQw4w9WgXcQ?t=90',
         'https://vimeo.com/123456789#t=1m30s',
+        'https://commons.wikimedia.org/wiki/File:Big_Buck_Bunny_medium.ogv',
     ]
     with scope(event=event):
         stored = set_submission_video_urls(submission, urls)

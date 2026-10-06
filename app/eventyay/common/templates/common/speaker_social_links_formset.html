@@ -45,7 +45,8 @@
                     </div>
                 {% endfor %}
             </div>
-            <template data-formset-empty-form>
+            <script type="form-template" data-formset-empty-form>
+                {% escapescript %}
                     <div class="row partner-link-row mb-2" data-formset-form data-social-link-row>
                         <div class="sr-only">{{ social_media_formset.empty_form.DELETE }}</div>
                         <div class="col-md-3">
@@ -65,7 +66,8 @@
                             </button>
                         </div>
                     </div>
-            </template>
+                {% endescapescript %}
+            </script>
             <p class="mt-2 mb-0">
                 <button type="button" class="btn btn-sm btn-info" data-formset-add>
                     <i class="fa fa-plus" aria-hidden="true"></i> {% translate "Add social media link" %}

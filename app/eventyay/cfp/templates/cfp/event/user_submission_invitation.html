@@ -21,8 +21,12 @@
 
     <div class="alert alert-info offset-md-3" role="alert"><div>
         {% blocktranslate trimmed %}
-            Invite another speaker to your proposal here. Instead of letting us send an email,
-            (which might get caught by spam filters) you can also give them this link:
+            The speaker will receive an email invitation to join this proposal and complete their
+            speaker information.
+        {% endblocktranslate %}
+        <br>
+        {% blocktranslate trimmed %}
+            If the email gets caught by a spam filter, you can also give them this link:
         {% endblocktranslate %}
         <br>
         {{ submission.urls.accept_invitation.full|copyable }}

@@ -70,6 +70,7 @@ class SpeakerImportSerializer(serializers.Serializer):
 class SpeakerImportView(APIView):
     permission_classes = (EventPermission,)
     permission = 'can_change_submissions'
+    endpoint = 'speakers'
 
     @extend_schema(summary='Import Speakers', request=SpeakerImportSerializer)
     def post(self, request, organizer, event):
