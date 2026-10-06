@@ -201,10 +201,10 @@ class TestAdminDashboardConfigLinks:
         settings_url = reverse('eventyay_admin:admin.global.settings')
         dashboard = admin_client.get(reverse('eventyay_admin:admin.dashboard'))
         assert dashboard.status_code == 200
-        tabs = set(re.findall(rf'href="{re.escape(settings_url)}#([\w-]+)"', dashboard.content.decode()))
-        assert tabs == {'tab-email'}
+        tabs = re.findall(rf'href="{re.escape(settings_url)}#([\w-]+)"', dashboard.content.decode())
+        assert tabs == ['tab-email', 'tab-email']
 
         settings_page = admin_client.get(settings_url)
         assert settings_page.status_code == 200
-        for tab in tabs:
+        for tab in set(tabs):
             assert f'<fieldset id="{tab}">' in settings_page.content.decode()
