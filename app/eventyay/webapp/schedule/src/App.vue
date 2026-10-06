@@ -142,6 +142,63 @@
 <script>
 import { computed, defineAsyncComponent } from 'vue'
 import moment from 'moment-timezone'
+import 'moment/locale/de'
+import 'moment/locale/fr'
+import 'moment/locale/es'
+import 'moment/locale/ar'
+import 'moment/locale/zh-cn'
+import 'moment/locale/zh-tw'
+import 'moment/locale/pt'
+import 'moment/locale/ja'
+import 'moment/locale/ko'
+import 'moment/locale/nl'
+import 'moment/locale/nb'
+import 'moment/locale/nn'
+import 'moment/locale/it'
+import 'moment/locale/ru'
+import 'moment/locale/pl'
+import 'moment/locale/sv'
+import 'moment/locale/da'
+import 'moment/locale/no'
+import 'moment/locale/fi'
+import 'moment/locale/tr'
+import 'moment/locale/he'
+import 'moment/locale/th'
+import 'moment/locale/vi'
+import 'moment/locale/ko'
+import 'moment/locale/id'
+import 'moment/locale/ms'
+import 'moment/locale/tl'
+import 'moment/locale/et'
+import 'moment/locale/lt'
+import 'moment/locale/lv'
+import 'moment/locale/sl'
+import 'moment/locale/sk'
+import 'moment/locale/hu'
+import 'moment/locale/cs'
+import 'moment/locale/el'
+import 'moment/locale/ro'
+import 'moment/locale/bg'
+import 'moment/locale/hr'
+import 'moment/locale/sr'
+import 'moment/locale/mk'
+import 'moment/locale/sq'
+import 'moment/locale/mt'
+import 'moment/locale/is'
+import 'moment/locale/fa'
+import 'moment/locale/ur'
+import 'moment/locale/ps'
+import 'moment/locale/ku'
+import 'moment/locale/ar'
+import 'moment/locale/bn'
+import 'moment/locale/gu'
+import 'moment/locale/mr'
+import 'moment/locale/ta'
+import 'moment/locale/te'
+import 'moment/locale/ml'
+import 'moment/locale/kn'
+import 'moment/locale/ko'
+import 'moment/locale/ja'
 import MarkdownIt from 'markdown-it'
 import ScheduleToolbar from '~/components/ScheduleToolbar'
 import LinearSchedule from '~/components/LinearSchedule'
@@ -177,7 +234,31 @@ function localesMatch (filterValue, sessionValue) {
 	return localePrimary(a) === localePrimary(b)
 }
 
+function localeToMoment (code) {
+	if (!code) return 'en'
+	const normalized = normalizeLocaleCode(code)
+	const map = {
+		'zh-hans': 'zh-cn',
+		'zh-hant': 'zh-tw',
+		'pt-pt': 'pt',
+		'nn-no': 'nn',
+		'nb-no': 'nb',
+		'de-formal': 'de',
+		'de-informal': 'de',
+		'nl-informal': 'nl',
+	}
+	return map[normalized] || normalized
+}
 
+function setMomentLocale (code) {
+	const locale = localeToMoment(code)
+	try {
+		moment.locale(locale)
+	} catch (error) {
+		console.error('Failed to set moment locale:', error)
+		moment.locale('en')
+	}
+}
 const markdownIt = MarkdownIt({
 	linkify: false,
 	breaks: true
@@ -719,8 +800,9 @@ export default {
 		}
 	},
 	watch: {
-		async locale (value) {
+async locale (value) {
 			await changeScheduleLanguage(value)
+			setMomentLocale(value)
 		},
 		popularityFeatureEnabled (enabled) {
 			if (!enabled) {
@@ -797,7 +879,7 @@ export default {
 		const fragment = window.location.hash.slice(1)
 		await changeScheduleLanguage(this.locale)
 		this.readRecordingQueryParam()
-		moment.locale(this.locale)
+		setMomentLocale(this.locale)
 		this.userTimezone = moment.tz.guess()
 		// If opened via old /sessions/ URL, activate sessions mode
 		if (this.view === 'sessions') {
