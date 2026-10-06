@@ -9,7 +9,7 @@
     <script type="text/javascript" src="{% static 'move-email-elements/moveEmailElements.js' %}"></script>
     <script type="text/javascript"
             src="{% static 'control/js/global-settings-pages.js' %}"
-            data-business-redirect-url="{% url 'eventyay_admin:admin.global.business' %}"
+            data-business-redirect-url="{{ business_settings_url }}"
             data-ticketing-redirect-url="{% url 'eventyay_admin:admin.global.ticketing' %}"></script>
     <script type="text/javascript" src="{% static 'control/js/admin-test-email.js' %}"></script>
     <script type="text/javascript" src="{% static 'control/js/admin-test-turnstile.js' %}"></script>
