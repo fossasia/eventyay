@@ -1196,7 +1196,7 @@ class VoucherCreate(AdministratorPermissionRequiredMixin, CreateView):
         return ctx
 
     def get_success_url(self) -> str:
-        return reverse('eventyay_admin:admin.global.business') + '#tab-event_vouchers'
+        return reverse('eventyay_admin:admin.vouchers')
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -1240,7 +1240,7 @@ class VoucherUpdate(AdministratorPermissionRequiredMixin, UpdateView):
         return super().form_valid(form)
 
     def get_success_url(self) -> str:
-        return reverse('eventyay_admin:admin.global.business') + '#tab-event_vouchers'
+        return reverse('eventyay_admin:admin.vouchers')
 
 
 class VoucherDetail(AdministratorPermissionRequiredMixin, DetailView):
@@ -1347,7 +1347,7 @@ class VoucherDelete(AdministratorPermissionRequiredMixin, DeleteView):
         return HttpResponseRedirect(success_url)
 
     def get_success_url(self) -> str:
-        return reverse('eventyay_admin:admin.global.business') + '#tab-event_vouchers'
+        return reverse('eventyay_admin:admin.vouchers')
 
 
 class SystemConfigView(AdministratorPermissionRequiredMixin, TemplateView):

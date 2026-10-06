@@ -149,6 +149,14 @@ class Voucher(LoggedModel):
             'organiser. This is applicable for products that require approval.'
         ),
     )
+    all_addons_included = models.BooleanField(
+        default=False,
+        verbose_name=_('Offer all add-on products for free when redeeming this voucher'),
+    )
+    all_bundles_included = models.BooleanField(
+        default=False,
+        verbose_name=_('Include all bundled products without a designated price when redeeming this voucher'),
+    )
     price_mode = models.CharField(
         verbose_name=_('Price mode'),
         max_length=100,
@@ -259,6 +267,13 @@ class Voucher(LoggedModel):
                 ),
                 name='voucher_percent_value_lte_100',
             ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(budget__isnull=True)
+                    | models.Q(all_addons_included=False, all_bundles_included=False)
+                ),
+                name='voucher_budget_not_with_included_products',
+            ),
         ]
 
     def __str__(self):
@@ -285,6 +300,8 @@ class Voucher(LoggedModel):
                 'value': self.value,
                 'price_mode': self.price_mode,
                 'budget': self.budget,
+                'all_addons_included': self.all_addons_included,
+                'all_bundles_included': self.all_bundles_included,
             }
         )
 
@@ -302,6 +319,16 @@ class Voucher(LoggedModel):
 
         if budget is not None and budget < Decimal('0.00'):
             raise ValidationError({'budget': _('Voucher budget cannot be negative.')})
+
+        if budget is not None and (data.get('all_addons_included') or data.get('all_bundles_included')):
+            raise ValidationError(
+                {
+                    'budget': _(
+                        'A discount budget cannot be combined with free add-on or included bundle products, '
+                        'since those discounts are not tracked against the budget.'
+                    )
+                }
+            )
 
     @staticmethod
     def clean_product_properties(
