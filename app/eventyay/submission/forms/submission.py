@@ -541,10 +541,11 @@ class SubmissionFilterForm(forms.Form):
         initial['exclude_pending'] = False
         super().__init__(*args, initial=initial, **kwargs)
         qs = event.submissions
-        state_qs = Submission.objects.filter(event=event)
         if usable_states:
             qs = qs.filter(state__in=usable_states)
-            state_qs = state_qs.filter(state__in=usable_states)
+        # Derive state_qs from the already-scoped qs so that reviewer track/
+        # assignment restrictions are honoured in the state-pill counts.
+        state_qs = qs
         state_count = {
             d['state']: d['state__count'] for d in state_qs.order_by('state').values('state').annotate(Count('state'))
         }
