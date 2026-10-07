@@ -1,6 +1,9 @@
 import json
 import smtplib
 import time
+from datetime import datetime
+
+from django.utils import timezone
 from unittest.mock import patch
 
 from django import forms as django_forms
@@ -172,6 +175,91 @@ class AdminUserListViewTest(TestCase):
         self.assertIn('name="action" value="toggle_verified"', content)
         self.assertIn('name="action" value="toggle_spam"', content)
         self.assertIn(f'name="user_id" value="{self.target_user.pk}"', content)
+
+    def test_users_can_be_sorted_by_member_since_and_last_accessed(self):
+        older = _make_user('older@example.com')
+        middle = _make_user('middle@example.com')
+        newer = _make_user('newer@example.com')
+
+        older.date_joined = timezone.make_aware(datetime(2026, 1, 1))
+        middle.date_joined = timezone.make_aware(datetime(2026, 2, 1))
+        newer.date_joined = timezone.make_aware(datetime(2026, 3, 1))
+
+        older.last_login = timezone.make_aware(datetime(2026, 3, 1))
+        middle.last_login = timezone.make_aware(datetime(2026, 2, 1))
+        newer.last_login = timezone.make_aware(datetime(2026, 1, 1))
+
+        User.objects.bulk_update(
+            [older, middle, newer],
+            ['date_joined', 'last_login'],
+        )
+
+        self._login_as_admin()
+
+        with patch.object(self.admin.__class__, 'has_active_staff_session', return_value=True):
+            response = self.client.get(
+                reverse('eventyay_admin:admin.users'),
+                {'ordering': 'date_joined'},
+            )
+
+        users = [
+            u.email
+            for u in response.context['users']
+            if u.email in {'older@example.com', 'middle@example.com', 'newer@example.com'}
+        ]
+        self.assertEqual(
+            users,
+            ['older@example.com', 'middle@example.com', 'newer@example.com'],
+        )
+
+        with patch.object(self.admin.__class__, 'has_active_staff_session', return_value=True):
+            response = self.client.get(
+                reverse('eventyay_admin:admin.users'),
+                {'ordering': '-date_joined'},
+            )
+
+        users = [
+            u.email
+            for u in response.context['users']
+            if u.email in {'older@example.com', 'middle@example.com', 'newer@example.com'}
+        ]
+        self.assertEqual(
+            users,
+            ['newer@example.com', 'middle@example.com', 'older@example.com'],
+        )
+
+        with patch.object(self.admin.__class__, 'has_active_staff_session', return_value=True):
+            response = self.client.get(
+                reverse('eventyay_admin:admin.users'),
+                {'ordering': 'last_login'},
+            )
+
+        users = [
+            u.email
+            for u in response.context['users']
+            if u.email in {'older@example.com', 'middle@example.com', 'newer@example.com'}
+        ]
+        self.assertEqual(
+            users,
+            ['newer@example.com', 'middle@example.com', 'older@example.com'],
+        )
+
+        with patch.object(self.admin.__class__, 'has_active_staff_session', return_value=True):
+            response = self.client.get(
+                reverse('eventyay_admin:admin.users'),
+                {'ordering': '-last_login'},
+            )
+
+        users = [
+            u.email
+            for u in response.context['users']
+            if u.email in {'older@example.com', 'middle@example.com', 'newer@example.com'}
+        ]
+        self.assertEqual(
+            users,
+            ['older@example.com', 'middle@example.com', 'newer@example.com'],
+        )
+
 
 
 class UserToggleViewsTest(TestCase):

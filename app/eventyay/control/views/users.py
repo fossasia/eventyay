@@ -101,6 +101,18 @@ class UserListView(AdministratorPermissionRequiredMixin, ListView):
         )
         if self.filter_form.is_valid():
             qs = self.filter_form.filter_qs(qs)
+
+        ordering = self.request.GET.get('ordering')
+        ordering_map = {
+            'date_joined': 'date_joined',
+            '-date_joined': '-date_joined',
+            'last_login': 'last_login',
+            '-last_login': '-last_login',
+        }
+
+        if ordering in ordering_map:
+            qs = qs.order_by(ordering_map[ordering])
+
         return qs
 
     def get_context_data(self, **kwargs):

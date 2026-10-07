@@ -96,10 +96,14 @@
                     <th class="text-nowrap">
                         {% trans "Member Since" %}
                         <span class="text-muted small" data-browser-timezone-label></span>
+                        <a href="?{% url_replace request 'ordering' '-date_joined' %}"><i class="fa fa-caret-down"></i></a>
+                        <a href="?{% url_replace request 'ordering' 'date_joined' %}"><i class="fa fa-caret-up"></i></a>
                     </th>
                     <th class="text-nowrap">
                         {% trans "Last Accessed" %}
                         <span class="text-muted small" data-browser-timezone-label></span>
+                        <a href="?{% url_replace request 'ordering' '-last_login' %}"><i class="fa fa-caret-down"></i></a>
+                        <a href="?{% url_replace request 'ordering' 'last_login' %}"><i class="fa fa-caret-up"></i></a>
                     </th>
                     <th class="text-right">{% trans "Actions" %}</th>
                     <th class="text-right"></th>
