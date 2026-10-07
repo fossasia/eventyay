@@ -1,4 +1,3 @@
-import datetime as dt
 from functools import partial
 import logging
 import os
@@ -10,9 +9,8 @@ from django.conf import settings
 from django.contrib.auth.hashers import check_password
 from django.core.exceptions import ValidationError
 from django.db.models import Count, Q
+from django.db.models.functions import Trim
 from django.utils.functional import cached_property
-from django.utils.timezone import now
-from django.utils.crypto import get_random_string
 from django.utils.translation import gettext_lazy as _
 from django_scopes.forms import SafeModelChoiceField, SafeModelMultipleChoiceField
 from i18nfield.forms import I18nModelForm
@@ -93,11 +91,7 @@ class SpeakerProfileForm(
             'after finishing the proposal process.'
         ),
         required=False,
-    )
-    no_email = forms.BooleanField(
-        label=_('This speaker does not require an email'),
-        help_text=_('No account or invitation email will be created for this speaker.'),
-        required=False,
+        widget=forms.EmailInput(attrs={'autocomplete': 'off'}),
     )
     USER_FIELDS = [
         'fullname',
@@ -115,7 +109,6 @@ class SpeakerProfileForm(
         self.event = kwargs.pop('event', None)
         self.with_email = kwargs.pop('with_email', True)
         self.essential_only = kwargs.pop('essential_only', False)
-        self.ignore_first_time_exclude = kwargs.pop('ignore_first_time_exclude', False)
         self.enforce_account_name_match = enforce_account_name_match
         kwargs['instance'] = None
         if self.user:
@@ -164,12 +157,9 @@ class SpeakerProfileForm(
 
         for field_name in ('fullname', 'email'):
             if field_name in self.fields:
-                is_req = not getattr(self, 'not_strict', False)
-                if field_name == 'email' and self.is_bound and self.data.get('no_email'):
-                    is_req = False
-                self.fields[field_name].required = is_req
+                self.fields[field_name].required = not self.not_strict
                 if hasattr(self.fields[field_name].widget, 'is_required'):
-                    self.fields[field_name].widget.is_required = is_req
+                    self.fields[field_name].widget.is_required = not self.not_strict
 
         cfp_defaults = default_fields()
         _cfp = getattr(self.event, 'cfp', None) if hasattr(self.event, 'cfp') else None
@@ -261,29 +251,16 @@ class SpeakerProfileForm(
         return [
             field
             for field in self.USER_FIELDS
-            if (self.ignore_first_time_exclude or field not in self.FIRST_TIME_EXCLUDE) and (field != 'email' or self.with_email)
+            if field not in self.FIRST_TIME_EXCLUDE and (field != 'email' or self.with_email)
         ]
 
     def clean_email(self):
-        if self.cleaned_data.get('no_email') or not self.with_email:
-            return None
         email = self.cleaned_data.get('email')
-        if not email:
-            return email
         qs = User.objects.all()
         if self.user:
             qs = qs.exclude(pk=self.user.pk)
-        existing_user = qs.filter(email__iexact=email).first()
-        if existing_user:
-            is_associated = (
-                existing_user.profiles.filter(event=self.event).exists()
-                or existing_user.submissions.filter(event=self.event).exists()
-                or existing_user.teams.filter(organizer=self.event.organizer).exists()
-            )
-            if not is_associated:
-                raise ValidationError(_("A user with this email address exists but is not associated with this event. For privacy reasons, you cannot directly add them. Please ask them to submit a proposal or register first."))
-            if existing_user.profiles.filter(event=self.event).exists():
-                raise ValidationError(get_email_address_error())
+        if qs.filter(email__iexact=email):
+            raise ValidationError(get_email_address_error())
         return email
 
     def clean_avatar(self):
@@ -310,11 +287,6 @@ class SpeakerProfileForm(
 
     def clean(self):
         data = super().clean()
-        
-        if not data.get('no_email') and not data.get('email') and not getattr(self, 'not_strict', False):
-            if 'email' in self.fields and not self.errors.get('email'):
-                self.add_error('email', forms.ValidationError(_('This field is required.')))
-
         _cfp = getattr(self.event, 'cfp', None) if hasattr(self.event, 'cfp') else None
         if not getattr(self, 'not_strict', False) and _cfp and _cfp.require_avatar and not data.get('avatar') and not data.get('get_gravatar'):
             if _cfp.enable_gravatar:
@@ -343,40 +315,6 @@ class SpeakerProfileForm(
         return data
 
     def save(self, **kwargs):
-        self._user_was_preexisting = False
-        if not self.user:
-            email = self.cleaned_data.get('email')
-            existing_user = None
-            if email:
-                existing_user = User.objects.filter(email__iexact=email).first()
-
-            if existing_user:
-                self.user = existing_user
-                self._user_was_preexisting = True
-            else:
-                self.user = User(
-                    email=email,
-                    locale=self.event.locale,
-                    timezone=self.event.timezone,
-                )
-                if email:
-                    self.user.pw_reset_token = get_random_string(32)
-                    self.user.pw_reset_time = now() + dt.timedelta(days=60)
-                self.user.save()
-
-        if self._user_was_preexisting:
-            # Do not mutate the pre-existing account's global data (name, avatar, email, etc.).
-            # The organizer only has permission to create a SpeakerProfile, not to edit
-            # another user's account. We only need the user attached to the profile.
-            self.instance.event = self.event
-            self.instance.user = self.user
-            self.speaker = self.user
-            result = super().save(**kwargs)
-            for key, value in self.cleaned_data.items():
-                if key.startswith('question_'):
-                    self.save_questions(key, value)
-            return result
-
         avatar_changed = 'avatar' in self.changed_data
         old_thumbnails_to_delete = []
         if avatar_changed:
@@ -414,7 +352,6 @@ class SpeakerProfileForm(
 
         self.instance.event = self.event
         self.instance.user = self.user
-        self.speaker = self.user
         result = super().save(**kwargs)
 
         if avatar_changed:
@@ -551,6 +488,19 @@ class SpeakerFilterForm(forms.Form):
         required=False,
         widget=EnhancedSelect,
     )
+    readiness = forms.ChoiceField(
+        required=False,
+        label=_('Readiness'),
+        choices=(
+            ('', _('All states')),
+            ('confirmed', _('Confirmed speakers')),
+            ('missing_biography', _('Missing biography')),
+            ('missing_profile_image', _('Missing profile image')),
+            ('missing_affiliation', _('Missing affiliation')),
+            ('without_session', _('Without session')),
+        ),
+        widget=EnhancedSelect,
+    )
     question = SafeModelChoiceField(queryset=TalkQuestion.objects.none(), required=False, widget=forms.HiddenInput())
 
     def __init__(self, *args, event=None, filter_arrival=False, **kwargs):
@@ -572,6 +522,35 @@ class SpeakerFilterForm(forms.Form):
             )
         if has_arrived := data.get('arrived'):
             queryset = queryset.filter(has_arrived=(has_arrived == 'true'))
+        
+        if readiness := data.get('readiness'):
+            if readiness == 'confirmed':
+                queryset = queryset.filter(user__submissions__state=SubmissionStates.CONFIRMED, user__submissions__event=self.event)
+            elif readiness == 'missing_biography':
+                import html
+                from django.utils.html import strip_tags
+                def is_empty(text):
+                    if not text:
+                        return True
+                    return not html.unescape(strip_tags(text)).strip()
+                empty_ids = [p.id for p in queryset if is_empty(p.biography)]
+                queryset = queryset.filter(id__in=empty_ids)
+            elif readiness == 'missing_profile_image':
+                queryset = queryset.filter(Q(user__avatar__isnull=True) | Q(user__avatar=''))
+            elif readiness == 'missing_affiliation':
+                import html
+                from django.utils.html import strip_tags
+                def is_empty(text):
+                    if not text:
+                        return True
+                    return not html.unescape(strip_tags(text)).strip()
+                empty_ids = [p.id for p in queryset if is_empty(p.organization)]
+                queryset = queryset.filter(id__in=empty_ids)
+            elif readiness == 'without_session':
+                queryset = queryset.exclude(
+                    user__submissions__in=self.event.submissions.filter(state__in=SubmissionStates.accepted_states)
+                )
+
         return queryset
 
 

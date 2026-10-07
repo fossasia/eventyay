@@ -2,6 +2,8 @@ import bs4
 import pytest
 from django_scopes import scope
 
+from eventyay.base.models import SpeakerInvitation
+
 
 SPEAKER_DATA = {
     "fullname": "Jane Speaker",
@@ -13,15 +15,6 @@ SPEAKER_DATA = {
 def speaker_url(speaker, event):
     with scope(event=event):
         return speaker.event_profile(event).orga_urls.base
-
-
-@pytest.mark.django_db
-def test_new_speaker_form_uses_new_session_label(orga_client, event):
-    response = orga_client.get(event.orga_urls.new_speaker)
-    assert response.status_code == 200
-    assert "Create a new session for this speaker" in response.text
-    assert "Also create a new session for this speaker" not in response.text
-    assert "Link an existing session instead" in response.text
 
 
 @pytest.mark.django_db
@@ -37,7 +30,7 @@ def test_existing_speaker_page_offers_session_options(orga_client, event, speake
 
 
 @pytest.mark.django_db
-def test_existing_speaker_can_be_linked_to_existing_session(orga_client, event, speaker, other_submission):
+def test_existing_speaker_can_be_linked_to_existing_session(orga_client, event, speaker, submission, other_submission):
     response = orga_client.post(
         speaker_url(speaker, event),
         data={**SPEAKER_DATA, "link_existing_session": "on", "existing_session_id": other_submission.pk},
@@ -51,23 +44,20 @@ def test_existing_speaker_can_be_linked_to_existing_session(orga_client, event, 
 
 @pytest.mark.django_db
 def test_existing_sessions_respect_team_track_limits(
-    orga_client, orga_user, event, submission, other_submission, track, other_track
+    orga_client, orga_user, event, speaker, submission, other_submission, track, other_track
 ):
     with scope(event=event):
-        submission.track = track
-        submission.save()
-        other_submission.track = other_track
+        other_submission.track = track
         other_submission.save()
-        orga_user.teams.first().limit_tracks.add(track)
-    response = orga_client.get(event.orga_urls.new_speaker)
+        orga_user.teams.first().limit_tracks.add(other_track)
+    response = orga_client.get(speaker_url(speaker, event))
     options = bs4.BeautifulSoup(response.text, "html.parser").select("#id_existing_session_id option")
     values = {option["value"] for option in options}
-    assert str(submission.pk) in values
     assert str(other_submission.pk) not in values
 
 
 @pytest.mark.django_db
-def test_existing_speaker_can_get_a_new_session(orga_client, event, speaker, track):
+def test_existing_speaker_can_get_a_new_session(orga_client, event, speaker, submission, track):
     with scope(event=event):
         submission_type = event.submission_types.first()
     response = orga_client.post(
@@ -99,7 +89,7 @@ def test_existing_speaker_cannot_link_a_session_twice(orga_client, event, speake
 
 
 @pytest.mark.django_db
-def test_existing_speaker_cannot_create_and_link_at_once(orga_client, event, speaker, other_submission):
+def test_existing_speaker_cannot_create_and_link_at_once(orga_client, event, speaker, submission, other_submission):
     response = orga_client.post(
         speaker_url(speaker, event),
         data={
@@ -131,7 +121,9 @@ def test_session_edit_page_lists_speakers_with_add_and_remove(orga_client, event
 
 
 @pytest.mark.django_db
-def test_speaker_linked_from_speaker_page_shows_on_session_page(orga_client, event, speaker, other_submission):
+def test_speaker_linked_from_speaker_page_shows_on_session_page(
+    orga_client, event, speaker, submission, other_submission
+):
     orga_client.post(
         speaker_url(speaker, event),
         data={**SPEAKER_DATA, "link_existing_session": "on", "existing_session_id": other_submission.pk},
@@ -184,3 +176,35 @@ def test_session_page_ignores_external_next_url(orga_client, event, speaker, sub
     )
     assert response.status_code == 302
     assert response.url == submission.orga_urls.speakers
+
+
+@pytest.mark.django_db
+def test_session_page_invites_new_speaker_and_lists_invitation(orga_client, event, submission):
+    edit_url = submission.orga_urls.edit
+    response = orga_client.post(
+        f"{submission.orga_urls.speakers}?next={edit_url}",
+        data={"email": "new.speaker@example.org", "name": "New Speaker"},
+    )
+    assert response.status_code == 302
+    assert response.url == edit_url
+    response = orga_client.get(edit_url)
+    section = bs4.BeautifulSoup(response.text, "html.parser").select_one("[data-session-speakers]")
+    assert "New Speaker" in section.text
+    assert "Pending" in section.text
+
+
+@pytest.mark.django_db
+def test_session_page_revokes_pending_invitation(orga_client, event, submission):
+    with scope(event=event):
+        invitation = SpeakerInvitation.objects.create(
+            submission=submission, email="cospeaker@example.org", name="Co Speaker"
+        )
+    edit_url = submission.orga_urls.edit
+    revoke_url = bs4.BeautifulSoup(orga_client.get(edit_url).text, "html.parser").select_one(
+        "[data-session-speakers] form[action*='revoke']"
+    )["action"]
+    response = orga_client.post(revoke_url)
+    assert response.status_code == 302
+    assert response.url.startswith(edit_url)
+    with scope(event=event):
+        assert not submission.speaker_invitations.filter(pk=invitation.pk, status="pending").exists()

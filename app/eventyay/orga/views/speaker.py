@@ -1,28 +1,24 @@
-import datetime as dt
-
+from django import forms
 from django.conf import settings
 from django.contrib import messages
-from django import forms
-from django.db import IntegrityError, transaction
+from django.db import transaction
 from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q
 from django.db.models.expressions import OrderBy
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
-from django.utils.crypto import get_random_string
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from urllib.parse import urlencode
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import DetailView, FormView, ListView, View
 from django_context_decorator import context
 from django_scopes import scope
 
+from eventyay.agenda.views.utils import clear_schedule_caches
 from eventyay.base.models import Answer, SpeakerProfile, User
 from eventyay.base.models.base import CachedFile
 from eventyay.base.models.information import SpeakerInformation
-from eventyay.base.models.mail import MailTemplateRoles
 from eventyay.base.models.submission import Submission, SubmissionStates
 from eventyay.base.services.orderimport import parse_csv
 from eventyay.base.services.talkimport import import_speakers
@@ -30,7 +26,6 @@ from eventyay.base.views.tasks import AsyncAction
 from eventyay.common.exceptions import SendMailException
 from eventyay.common.image import gravatar_csp
 from eventyay.common.permissions import is_admin_mode_active
-from eventyay.common.urls import build_absolute_uri
 from eventyay.common.text.phrases import phrases
 from eventyay.common.views.generic import CreateOrUpdateView, OrgaCRUDView
 from eventyay.common.views.mixins import (
@@ -51,7 +46,6 @@ from eventyay.person.forms import (
     SpeakerInformationForm,
     SpeakerProfileForm,
 )
-from eventyay.person.forms.profile import get_email_address_error
 from eventyay.person.social_link_mixin import SpeakerSocialLinksMixin
 from eventyay.submission.forms import TalkQuestionsForm
 from eventyay.talk_rules.person import is_only_reviewer
@@ -210,15 +204,12 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
 
 class SpeakerViewMixin(PermissionRequired):
     def get_object(self):
-        from django_scopes import scope
-
-        with scope(event=self.request.event):
-            return get_object_or_404(
-                User.objects.filter(profiles__in=speaker_profiles_for_user(self.request.event, self.request.user))
-                .order_by('id')
-                .distinct(),
-                code=self.kwargs['code'],
-            )
+        return get_object_or_404(
+            User.objects.filter(profiles__in=speaker_profiles_for_user(self.request.event, self.request.user))
+            .order_by('id')
+            .distinct(),
+            code=self.kwargs['code'],
+        )
 
     @cached_property
     def object(self):
@@ -240,9 +231,6 @@ class SpeakerViewMixin(PermissionRequired):
 
 
 class SpeakerSessionMixin:
-    def get_session_speaker(self):
-        return None
-
     @context
     @cached_property
     def can_link_sessions(self):
@@ -254,9 +242,7 @@ class SpeakerSessionMixin:
     @cached_property
     def existing_sessions(self):
         sessions = self.request.event.submissions.exclude(state__in=(SubmissionStates.DELETED, SubmissionStates.DRAFT))
-        speaker = self.get_session_speaker()
-        if speaker:
-            sessions = sessions.exclude(speakers=speaker)
+        sessions = sessions.exclude(speakers=self.profile.user)
         sessions = apply_track_limit(sessions, self.request.event, self.request.user)
         return sessions.only('pk', 'title', 'code').order_by('title')
 
@@ -297,7 +283,7 @@ class SpeakerSessionMixin:
             return None
 
         if add_session and (not self.session_form.is_valid() or not self.session_questions_form.is_valid()):
-            messages.error(self.request, phrases.base.error_saving_changes)
+            form.add_error(None, forms.ValidationError(_('Please fix the errors in the session details below.')))
             return None
 
         existing_session = None
@@ -323,114 +309,10 @@ class SpeakerSessionMixin:
         else:
             session = existing_session
         if session:
-            from eventyay.agenda.views.utils import clear_schedule_caches
-
             session.speakers.add(user)
             session.log_action('eventyay.submission.speakers.add', person=self.request.user, orga=True)
             clear_schedule_caches(self.request.event, speaker=user)
         return session
-
-
-@method_decorator(gravatar_csp(), name='dispatch')
-class SpeakerCreate(
-    SpeakerSessionMixin, SpeakerSocialLinksMixin, EventPermissionRequired, ActionFromUrl, CreateOrUpdateView
-):
-    template_name = 'orga/speaker/create.html'
-    form_class = SpeakerProfileForm
-    model = SpeakerProfile
-    permission_required = 'base.orga_list_speakerprofile'
-    write_permission_required = 'base.update_speakerprofile'
-
-    def get_object(self):
-        return None
-
-    def get_permission_object(self):
-        return self.request.event
-
-    def get_success_url(self) -> str:
-        return self.request.event.orga_urls.speakers
-
-    def get_social_links_profile(self):
-        return None
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs.update({'event': self.request.event, 'user': self.object})
-        if not self.request.user.has_perm('base.orga_view_speaker_emails', self.request.event):
-            kwargs['with_email'] = False
-            # Force no_email=True so the invitation branch is never reached with a None email.
-            kwargs.setdefault('initial', {})
-            kwargs['initial']['no_email'] = True
-        kwargs['ignore_first_time_exclude'] = True
-        return kwargs
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update(self.get_social_links_context())
-        return context
-
-    @transaction.atomic
-    def form_valid(self, form):
-        with scope(event=self.request.event):
-            if not self.social_media_formset_is_valid():
-                return self.form_invalid(form)
-
-            session_options = self.clean_session_options(form)
-            if session_options is None:
-                return self.form_invalid(form)
-            add_session, existing_session = session_options
-
-            try:
-                with transaction.atomic():
-                    self.object = form.save()
-            except IntegrityError:
-                form.add_error('email', forms.ValidationError(get_email_address_error()))
-                return self.form_invalid(form)
-
-            user = self.object.user
-
-            is_preexisting = getattr(form, '_user_was_preexisting', False)
-
-            # Do not overwrite pw_reset_token for pre-existing accounts
-            self.save_social_media_formset(profile=self.object)
-
-            if not form.cleaned_data.get('no_email') and user.email:
-                if is_preexisting:
-                    invitation_link = build_absolute_uri(
-                        'cfp:event.login',
-                        kwargs={'organizer': self.request.event.organizer.slug, 'event': self.request.event.slug},
-                    )
-                else:
-                    invitation_link = build_absolute_uri(
-                        'cfp:event.new_recover',
-                        kwargs={'organizer': self.request.event.organizer.slug, 'event': self.request.event.slug, 'token': user.pw_reset_token},
-                    )
-
-                context = {
-                    'user': user,
-                    'event': self.request.event,
-                    'invitation_link': invitation_link,
-                }
-                template = self.request.event.get_mail_template(MailTemplateRoles.NEW_SPEAKER_INVITE)
-                template.to_mail(
-                    user=user,
-                    event=self.request.event,
-                    context=context,
-                    context_kwargs={'user': user, 'event': self.request.event},
-                    locale=self.request.event.locale,
-                    commit=True,
-                    skip_queue=is_preexisting,
-                )
-
-            self.save_session_options(user, add_session, existing_session)
-            if add_session:
-                messages.success(self.request, _('Speaker and session created successfully.'))
-            elif existing_session:
-                messages.success(self.request, _('Speaker added and linked to existing session successfully.'))
-            else:
-                messages.success(self.request, _('Speaker created successfully.'))
-
-            return redirect(self.get_success_url())
 
 
 @method_decorator(gravatar_csp(), name='dispatch')
@@ -446,9 +328,6 @@ class SpeakerDetail(SpeakerSessionMixin, SpeakerSocialLinksMixin, SpeakerViewMix
 
     def get_social_links_profile(self):
         return self.profile
-
-    def get_session_speaker(self):
-        return self.profile.user
 
     @context
     @cached_property

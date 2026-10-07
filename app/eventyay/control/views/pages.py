@@ -437,7 +437,7 @@ class SystemPageView(ShowPageView):
                 else:
                     # Default copy is Markdown; convert so ShowPageView can render HTML.
                     text = compile_markdown(
-                        f'# {title}\n\n' + str(_('Content for this page has not been configured yet.'))
+                        str(_('Content for this page has not been configured yet.'))
                     )
                 return Page(
                     title=title,

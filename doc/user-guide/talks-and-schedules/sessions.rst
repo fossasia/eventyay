@@ -243,3 +243,5 @@ Session Management
 
 This comprehensive guide covers all aspects of managing sessions, from submission through to scheduling and confirmation. Sessions progress through various states and can be enhanced with metadata like tracks, session types, and custom fields.
 
+Recordings attached to a session are covered in :doc:`session-videos`.
+

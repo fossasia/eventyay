@@ -5,25 +5,49 @@
 <fieldset class="mt-4" data-session-speakers>
     <legend id="speakers">{% translate "Speakers" %}</legend>
     <ul class="list-group mb-3">
-        {% for speaker in submission.speakers.all %}
+        {% for entry in session_speakers %}
+            {% with speaker=entry.user %}
             <li class="list-group-item d-flex flex-wrap align-items-center justify-content-between">
                 <span>
                     <a href="{% url 'orga:speakers.view' organizer=request.event.organizer.slug event=request.event.slug code=speaker.code %}">{{ speaker.get_display_name }}</a>
                     {% if can_view_speaker_emails and speaker.email %}
                         <small class="text-muted ml-2">{{ speaker.email }}</small>
                     {% endif %}
+                    {% if entry.invitation %}
+                        <span class="badge bg-warning text-dark ml-2">{% translate "Pending" %}</span>
+                    {% endif %}
                 </span>
                 <form method="post" action="{{ submission.orga_urls.delete_speaker }}?next={{ request.get_full_path|urlencode }}%23speakers" class="d-inline">
                     {% csrf_token %}
                     <input type="hidden" name="id" value="{{ speaker.id }}">
-                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                    <button type="submit" class="btn btn-sm btn-outline-danger" data-confirm="{% translate 'Do you really want to remove this speaker from the session?' %}">
                         <i class="fa fa-trash"></i> {% translate "Remove" %}
                     </button>
                 </form>
             </li>
-        {% empty %}
-            <li class="list-group-item text-muted">{% translate "This session has no speakers yet." %}</li>
+            {% endwith %}
         {% endfor %}
+        {% for invitation in pending_invitations %}
+            <li class="list-group-item d-flex flex-wrap align-items-center justify-content-between">
+                <span>
+                    {% if can_view_speaker_emails %}
+                        {{ invitation.display_name }}
+                    {% else %}
+                        {{ invitation.name|default:_("Invited speaker") }}
+                    {% endif %}
+                    <span class="badge bg-warning text-dark ml-2">{% translate "Pending" %}</span>
+                </span>
+                <form method="post" action="{% url 'orga:submissions.speakers.revoke_invitation' organizer=request.event.organizer.slug event=request.event.slug code=submission.code pk=invitation.pk %}?next={{ request.get_full_path|urlencode }}%23speakers" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger" data-confirm="{% translate 'Do you really want to revoke this invitation?' %}">
+                        <i class="fa fa-trash"></i> {% translate "Revoke invitation" %}
+                    </button>
+                </form>
+            </li>
+        {% endfor %}
+        {% if not session_speakers and not pending_invitations %}
+            <li class="list-group-item text-muted">{% translate "This session has no speakers yet." %}</li>
+        {% endif %}
     </ul>
     <form method="post" action="{{ submission.orga_urls.speakers }}?next={{ request.get_full_path|urlencode }}%23speakers" class="form d-flex w-100 flex-column speaker-inline-form">
         {% csrf_token %}
@@ -41,6 +65,7 @@
                 <button type="submit" class="btn btn-success btn-block"><i class="fa fa-plus"></i> {% translate "Add speaker" %}</button>
             </div>
         </div>
+        <div class="col-md-12">{{ add_speaker_form.send_immediately.as_field_group }}</div>
         <small class="form-text text-muted col-md-12">
             {% translate "Search for an existing speaker by email, or enter a new email address to invite a new speaker." %}
         </small>

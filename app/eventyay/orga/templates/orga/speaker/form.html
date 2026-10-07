@@ -20,7 +20,7 @@
     {% endif %}
     {% has_event_perm "base.update_speakerprofile" request.user request form.instance as can_edit_speaker %}
     {% if can_edit_speaker and can_link_sessions %}
-        <script type="module" src="{% static 'orga/js/speaker_create.js' %}"></script>
+        <script type="module" src="{% static 'orga/js/speaker_session_options.js' %}"></script>
     {% endif %}
 {% endblock scripts %}
 

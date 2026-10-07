@@ -20,7 +20,7 @@
     </div>
 </div>
 
-<div id="session_section" class="d-none">
+<div id="session_section"{% if not request.POST.add_session %} class="d-none"{% endif %}>
     <h3>{% translate "Session Details" %}</h3>
     {% for field in session_form %}
         {{ field.as_field_group }}
@@ -28,7 +28,7 @@
     {{ session_questions_form }}
 </div>
 
-<div id="existing_session_section" class="d-none">
+<div id="existing_session_section"{% if not request.POST.link_existing_session %} class="d-none"{% endif %}>
     <h3>{% translate "Select Existing Session" %}</h3>
     <div class="form-group row">
         <label class="col-md-3 col-form-label" for="id_existing_session_id">

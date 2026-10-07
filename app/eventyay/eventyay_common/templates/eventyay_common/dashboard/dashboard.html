@@ -1,6 +1,11 @@
 {% extends "eventyay_common/base.html" %}
 {% load i18n %}
 {% block title %}{% trans "Dashboard" %}{% endblock %}
+
+{% load static %}
+{% block custom_header %}
+    <link rel="stylesheet" href="{% static 'eventyay-common/css/common_dashboard.css' %}">
+{% endblock %}
 {% block content %}
   {% if is_onboarding_dashboard %}
     {% include "eventyay_common/dashboard/onboarding.html" %}

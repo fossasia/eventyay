@@ -152,7 +152,7 @@
                     {% endif %}
                 {% empty %}
                     <tr>
-                        <td colspan="5" class="text-center text-muted">
+                        <td colspan="{% if current_tab == 'pending' %}7{% else %}6{% endif %}" class="text-center text-muted">
                             {% translate "There has been no feedback for sessions in this tab yet." %}
                         </td>
                     </tr>
