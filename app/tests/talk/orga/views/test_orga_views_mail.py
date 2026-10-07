@@ -1,4 +1,5 @@
 import datetime as dt
+import json
 from unittest.mock import patch
 
 import pytest
@@ -1379,7 +1380,6 @@ def test_mail_detail_form_preserves_external_historical_to_users(event, mail, ot
 def test_compose_mail_preview_endpoint(orga_client, event):
     url = event.orga_urls.base + 'mails/compose/preview'
     # Test valid JSON with placeholder
-    import json
     response = orga_client.post(
         url,
         data=json.dumps({"html": "<p>Hello {event}</p>", "locale": "en"}),

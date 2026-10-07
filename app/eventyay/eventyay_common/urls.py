@@ -227,9 +227,9 @@ urlpatterns = [
         name='account.oauth.own-app.roll',
     ),
     path(
-        'account/oauth/own-app/<int:pk>/disable',
+        'account/oauth/own-app/<int:pk>/delete',
         account.OAuthApplicationDeleteView.as_view(),
-        name='account.oauth.own-app.disable',
+        name='account.oauth.own-app.delete',
     ),
     path('account/history', account.HistoryView.as_view(), name='account.history'),
 ]

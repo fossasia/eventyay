@@ -46,6 +46,8 @@ MAX_WIDTH: dict[str, int] = {
     'invoice_logo_image': 1000,
     'startpage_header_image': 1920,
     'profile_picture': 1000,     # user profile picture
+    'avatar': 1000,              # speaker avatar
+    'image': 1920,               # submission image
 }
 
 class OptimizedImages(NamedTuple):
@@ -145,7 +147,7 @@ def optimize_uploaded_image(
 
     orig_w, _ = image.size
     
-    optimized_bytes, optimized_ext = encode_optimized(image, f'.{original_ext}', max_dimensions=(max_w, 999999))
+    optimized_bytes, optimized_ext = encode_optimized(image, f'.{original_ext}', max_dimensions=(max_w, 16383))
     
     # encode_optimized returns extensions with a dot (e.g., '.jpg')
     optimized_ext = optimized_ext.lstrip('.')

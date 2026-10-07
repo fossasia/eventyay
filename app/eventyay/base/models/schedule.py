@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from collections import defaultdict, namedtuple
 from contextlib import suppress
-from datetime import UTC
+from datetime import UTC, date, timedelta
 from functools import lru_cache
 from typing import TYPE_CHECKING
 from urllib.parse import quote
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from xml.etree.ElementTree import tostring as xml_tostring
 
 import qrcode as qr_lib
@@ -25,6 +26,7 @@ from qrcode.image.svg import SvgPathFillImage
 from eventyay.agenda.export_resources import enriched_resource_entry
 from eventyay.agenda.signals import register_recording_provider
 from eventyay.common.social_links import serialize_social_link
+from eventyay.person.services import build_public_speaker_role
 from eventyay.agenda.tasks import export_schedule_html
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls
@@ -96,6 +98,188 @@ def make_speaker_qr_map(speaker_base_url: str) -> dict:
         'google_calendar': make_qr_svg(f'{b}/talks/export/google-calendar'),
         'webcal': make_qr_svg(f'{b}/talks/export/webcal'),
     }
+
+
+def resolve_schedule_timezone(event, view_timezone: str | None) -> tuple[ZoneInfo, str]:
+    """Timezone used to split a schedule into calendar days.
+
+    The returned name is the caller's string when it is a real zone, so the
+    client can match it against the timezone it requested.
+    """
+    if view_timezone:
+        try:
+            return ZoneInfo(view_timezone), view_timezone
+        except (ZoneInfoNotFoundError, ValueError, TypeError):
+            return event.tz, event.timezone
+    return event.tz, event.timezone
+
+
+def local_days_for_slot(start, end, tz: ZoneInfo) -> list[date]:
+    """Calendar days a slot occupies in ``tz``.
+
+    A slot that ends exactly at local midnight does not occupy that next date.
+    The schedule hides a day that has no session and no break.
+    """
+    if start is None:
+        return []
+    if timezone.is_naive(start):
+        start = timezone.make_aware(start, UTC)
+    end_value = end or start
+    if timezone.is_naive(end_value):
+        end_value = timezone.make_aware(end_value, UTC)
+    day = start.astimezone(tz).date()
+    local_end = end_value.astimezone(tz)
+    last = local_end.date()
+    ends_at_midnight = (
+        local_end.hour == 0
+        and local_end.minute == 0
+        and local_end.second == 0
+        and local_end.microsecond == 0
+    )
+    if ends_at_midnight and last > day:
+        last -= timedelta(days=1)
+    days = []
+    while day <= last:
+        days.append(day)
+        day += timedelta(days=1)
+        if len(days) > 14:
+            break
+    return days
+
+
+def default_schedule_day(days: list[str], today: date) -> date | None:
+    """Prefer today, otherwise the first future day, otherwise the last day."""
+    parsed = []
+    for value in days:
+        try:
+            parsed.append(date.fromisoformat(value))
+        except ValueError:
+            continue
+    if not parsed:
+        return None
+    if today in parsed:
+        return today
+    if today < parsed[0]:
+        return parsed[0]
+    return parsed[-1]
+
+
+def compact_schedule_index(talks, tz: ZoneInfo) -> dict:
+    """Day membership and filter metadata without loading talk text."""
+    rows = talks.values_list(
+        'pk',
+        'start',
+        'end',
+        'room_id',
+        'submission__track_id',
+        'submission__submission_type__name',
+        'submission__content_locale',
+    )
+    days = set()
+    ids_by_day = defaultdict(list)
+    untimed_ids = []
+    room_ids = set()
+    track_ids = set()
+    session_types = []
+    seen_types = set()
+    locales = []
+    seen_locales = set()
+    for pk, start, end, room_id, track_id, session_type, locale in rows:
+        if room_id:
+            room_ids.add(room_id)
+        if track_id:
+            track_ids.add(track_id)
+        if session_type:
+            type_key = str(session_type)
+            if type_key not in seen_types:
+                seen_types.add(type_key)
+                session_types.append(session_type)
+        if locale and locale not in seen_locales:
+            seen_locales.add(locale)
+            locales.append(locale)
+        if not start:
+            untimed_ids.append(pk)
+            continue
+        for day in local_days_for_slot(start, end, tz):
+            key = day.isoformat()
+            days.add(key)
+            ids_by_day[key].append(pk)
+    return {
+        'days': sorted(days),
+        'ids_by_day': ids_by_day,
+        'untimed_ids': untimed_ids,
+        'room_ids': room_ids,
+        'track_ids': track_ids,
+        'session_types': session_types,
+        'locales': locales,
+    }
+
+
+def serialize_schedule_room(room) -> dict:
+    return {
+        'id': room.id,
+        'name': room.name,
+        'description': room.description if room.description else '',
+        'video_url': getattr(room, 'video_url', ''),
+        'has_interpretation': room.has_interpretation,
+    }
+
+
+def serialize_schedule_track(track) -> dict:
+    return {
+        'id': track.id,
+        'name': track.name,
+        'description': track.description,
+        'color': track.color,
+    }
+
+
+def compact_index_payload(schedule, compact_index, view_tz_name, show_content_locale) -> dict:
+    """Days, rooms, tracks, and filter metadata with no session cards."""
+    event = schedule.event
+    rooms = event.rooms.filter(pk__in=compact_index['room_ids'], deleted=False, is_unscheduled=False)
+    tracks = event.tracks.filter(pk__in=compact_index['track_ids'])
+    locales = list(event.content_locales if show_content_locale else [])
+    for locale in compact_index['locales']:
+        if locale not in locales:
+            locales.append(locale)
+    return {
+        'talks': [],
+        'speakers': [],
+        'version': schedule.version,
+        'timezone': event.timezone,
+        'event_start': event.date_from.isoformat(),
+        'event_end': event.date_to.isoformat(),
+        'content_locales': locales,
+        'feature_flags': event.schedule_client_feature_flags(),
+        'compact': True,
+        'days': compact_index['days'],
+        'date': None,
+        'view_timezone': view_tz_name,
+        'session_types': compact_index['session_types'],
+        'rooms': [
+            serialize_schedule_room(room)
+            for room in sorted(rooms, key=lambda room: (room.position if room.position is not None else 9999, room.id))
+        ],
+        'tracks': [
+            serialize_schedule_track(track)
+            for track in sorted(tracks, key=lambda track: track.position or 0)
+        ],
+    }
+
+
+def apply_compact_shell(result, schedule, compact_index, view_tz_name, selected_day, show_content_locale):
+    """Attach day index and full filter metadata onto a compact day payload."""
+    shell = compact_index_payload(schedule, compact_index, view_tz_name, show_content_locale)
+    result['compact'] = True
+    result['days'] = shell['days']
+    result['view_timezone'] = shell['view_timezone']
+    result['date'] = selected_day.isoformat() if selected_day else None
+    result['session_types'] = shell['session_types']
+    result['content_locales'] = shell['content_locales']
+    result['rooms'] = shell['rooms']
+    result['tracks'] = shell['tracks']
+    return result
 
 
 class Schedule(PretalxModel):
@@ -826,6 +1010,11 @@ class Schedule(PretalxModel):
         include_featured_speaker_metadata=True,
         include_qrcodes=False,
         respect_public_visibility=True,
+        compact=False,
+        on_date=None,
+        view_timezone=None,
+        include_text=False,
+        index_only=False,
     ):
         """Build schedule JSON for widgets and exports.
 
@@ -837,6 +1026,11 @@ class Schedule(PretalxModel):
 
         ``submission_codes``: optional collection of submission codes; when given, only those
         talks are included.  Useful for building per-talk or per-speaker slim payloads.
+
+        ``compact``: schedule-grid payload. Omits abstracts, descriptions, biographies,
+        exporter URLs, and full-size avatars. ``on_date`` limits talks to one local day.
+        ``include_text`` adds abstracts and descriptions for list view and search.
+        ``index_only`` returns days, rooms, tracks, and filter metadata without talks.
         """
         talks = self.talks.all()
         if not all_talks:
@@ -862,9 +1056,29 @@ class Schedule(PretalxModel):
                 'submission__answers__options',
             )
         talks = talks.order_by('start')
+        if compact and not include_text:
+            talks = talks.defer('submission__abstract', 'submission__description')
+
+        view_tz, view_tz_name = resolve_schedule_timezone(self.event, view_timezone if compact else None)
+        compact_index = compact_schedule_index(talks, view_tz) if compact else None
+        selected_day = None
+        if compact_index is not None and not index_only:
+            today = timezone.now().astimezone(view_tz).date()
+            default_day = default_schedule_day(compact_index['days'], today)
+            selected_day = on_date or default_day
+            day_ids = []
+            if selected_day is not None:
+                day_ids.extend(compact_index['ids_by_day'].get(selected_day.isoformat(), []))
+            if selected_day is not None and selected_day == default_day:
+                day_ids.extend(compact_index['untimed_ids'])
+            elif selected_day is None:
+                day_ids.extend(compact_index['untimed_ids'])
+            talks = talks.filter(pk__in=day_ids)
 
         popularity_enabled = bool(self.event.get_feature_flag('session_popularity_enabled'))
         show_content_locale = not respect_public_visibility or self.event.cfp.public_content_locale
+        if compact_index is not None and index_only:
+            return compact_index_payload(self, compact_index, view_tz_name, show_content_locale)
 
         talk_list = list(talks)
         fav_counts: dict[str, int] = {}
@@ -948,8 +1162,6 @@ class Schedule(PretalxModel):
                     'code': talk.submission.code,
                     'id': talk.id,
                     'title': talk.submission.title,
-                    'abstract': talk.submission.abstract if show_abstract else '',
-                    'description': talk.submission.description if show_description else '',
                     'speakers': [speaker.code for speaker in talk_speakers],
                     'track': talk.submission.track_id if talk.submission else None,
                     'start': talk.local_start,
@@ -966,6 +1178,9 @@ class Schedule(PretalxModel):
                     'session_type': talk.submission.submission_type.name,
                     'content_locale': talk.submission.content_locale if show_content_locale else '',
                 }
+                if not compact or include_text:
+                    talk_data['abstract'] = talk.submission.abstract if show_abstract else ''
+                    talk_data['description'] = talk.submission.description if show_description else ''
                 # Attach stream URL if a stream schedule overlaps this slot.
                 if talk.room_id and talk.start and talk.end:
                     schedules = stream_schedules_by_room.get(talk.room_id)
@@ -987,7 +1202,7 @@ class Schedule(PretalxModel):
                         if match:
                             talk_data['stream_url'] = match.url
                             talk_data['stream_type'] = match.stream_type
-                if enrich:
+                if enrich and not compact:
                     talk_data['resources'] = [
                         enriched_resource_entry(resource)
                         for resource in talk.submission.resources.all()
@@ -1082,19 +1297,20 @@ class Schedule(PretalxModel):
         speaker_list = []
         # Prefetch all speaker profiles for this event to avoid N+1 queries
 
-        speaker_profiles = {
-            profile.user_id: profile
-            for profile in SpeakerProfile.objects.filter(
-                event=self.event,
-                user__in=speakers,
-            ).select_related('user').prefetch_related('social_links')
-        }
+        profile_queryset = SpeakerProfile.objects.filter(
+            event=self.event,
+            user__in=speakers,
+        ).select_related('user')
+        if compact:
+            profile_queryset = profile_queryset.defer('biography')
+        else:
+            profile_queryset = profile_queryset.prefetch_related('social_links')
+        speaker_profiles = {profile.user_id: profile for profile in profile_queryset}
         show_social_links = getattr(self.event.cfp, 'request_social_links', False) and (
             not respect_public_visibility or self.event.cfp.is_field_public('social_links')
         )
 
         missing_thumb_user_ids = []
-
         for user in speakers:
             # Avoid calling event_profile() here: it can hit the DB (and even create/save
             # a profile). For schedule JSON, missing profiles should simply result in
@@ -1103,19 +1319,29 @@ class Schedule(PretalxModel):
             speaker_data = {
                 'code': user.code,
                 'name': user.fullname or None,
-                'biography': getattr(profile, 'biography', '') if show_biography else '',
                 'is_featured': bool(getattr(profile, 'is_featured', False)),
                 'featured_position': getattr(profile, 'position', None),
             }
-            speaker_data.update(list_avatar_urls(user, self.event, include=include_avatar))
-            if include_avatar and needs_avatar_thumbnails(user, speaker_data):
+            if not compact:
+                speaker_data['biography'] = getattr(profile, 'biography', '') if show_biography else ''
+                speaker_data['speaker_role'] = build_public_speaker_role(profile, self.event) if profile else ''
+            avatar_urls = list_avatar_urls(user, self.event, include=include_avatar)
+            if compact:
+                tiny = avatar_urls.get('avatar_thumbnail_tiny')
+                if tiny:
+                    speaker_data['avatar_thumbnail_tiny'] = tiny
+                elif avatar_urls.get('avatar_thumbnail_default'):
+                    speaker_data['avatar_thumbnail_default'] = avatar_urls['avatar_thumbnail_default']
+            else:
+                speaker_data.update(avatar_urls)
+            if include_avatar and needs_avatar_thumbnails(user, avatar_urls):
                 missing_thumb_user_ids.append(user.pk)
-            if show_social_links and profile:
+            if show_social_links and profile and not compact:
                 speaker_data['social_links'] = [serialize_social_link(link) for link in profile.social_links.all()]
             if not include_featured_speaker_metadata:
                 speaker_data['is_featured'] = False
                 speaker_data['featured_position'] = None
-            if enrich:
+            if enrich and not compact:
                 spk_base = f'{base_url}speakers/{user.code}'
                 spk_full_base = f'{full_base_url}speakers/{user.code}'
                 spk_ics = f'{spk_base}/talks.ics'
@@ -1133,6 +1359,10 @@ class Schedule(PretalxModel):
                     speaker_data['exporters']['qrcodes'] = make_speaker_qr_map(spk_full_base)
             speaker_list.append(speaker_data)
         result['speakers'] = speaker_list
+        if compact_index is not None:
+            apply_compact_shell(result, self, compact_index, view_tz_name, selected_day, show_content_locale)
+            if include_text:
+                result['text'] = True
         if missing_thumb_user_ids:
             from eventyay.person.tasks import enqueue_missing_avatar_thumbnails
 

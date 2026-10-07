@@ -231,6 +231,36 @@ export function isTalkSchedulePending (talk) {
 	return Boolean(talk?.schedule_pending || !talk?.start)
 }
 
+export function visiblePageItems (total, current) {
+	if (total <= 1) return []
+	if (total <= 7) return Array.from({length: total}, (_, index) => index + 1)
+	const wanted = new Set([1, total, current, current - 1, current + 1])
+	const pages = [...wanted].filter(page => page >= 1 && page <= total).sort((a, b) => a - b)
+	const items = []
+	let last = 0
+	for (const page of pages) {
+		if (last && page - last > 1) items.push('ellipsis')
+		items.push(page)
+		last = page
+	}
+	return items
+}
+
+export function pageStatusRange (page, pageSize, total) {
+	if (!total || !pageSize) return null
+	return {
+		start: ((page - 1) * pageSize) + 1,
+		end: Math.min(page * pageSize, total),
+		total,
+	}
+}
+
+const TENTATIVE_SESSION_TEXT = 'These details are tentative and may change, including speakers and other session information.'
+
+export function tentativeSessionText (messages) {
+	return messages?.schedule_pending_tentative || TENTATIVE_SESSION_TEXT
+}
+
 export function talkToSession (talk, {
 	timezone,
 	speakersLookup = {},
@@ -397,10 +427,23 @@ export async function updateStarredSharingPreference (eventUrl, value) {
  * Fetch schedule widget JSON. Returns null when no schedule is published,
  * throws on unexpected network/parse failures.
  */
-export async function fetchWidgetScheduleData (eventUrl, { version = '', enrichData = false } = {}) {
+export async function fetchWidgetScheduleData (eventUrl, {
+	version = '',
+	enrichData = false,
+	compact = false,
+	date = '',
+	timezone = '',
+	includeText = false,
+	indexOnly = false,
+} = {}) {
 	const versionPath = version ? `v/${version}/` : ''
 	const params = new URLSearchParams()
 	if (enrichData) params.set('enrich', '1')
+	if (compact) params.set('compact', '1')
+	if (date) params.set('date', date)
+	if (timezone) params.set('tz', timezone)
+	if (includeText) params.set('text', '1')
+	if (indexOnly) params.set('index', '1')
 	const query = params.toString()
 	const suffix = query ? `?${query}` : ''
 	const urls = [
@@ -431,6 +474,134 @@ export async function fetchWidgetScheduleData (eventUrl, { version = '', enrichD
 		}
 	}
 	throw new Error('schedule widget fetch failed')
+}
+
+/**
+ * Public session detail for the schedule modal. May throw on network failure.
+ * @throws {Error} when the detail request fails
+ */
+export async function fetchTalkScheduleDetail (eventUrl, code, { version = '' } = {}) {
+	const versionPath = version ? `v/${version}/` : ''
+	const base = (eventUrl || '').replace(/\/?$/, '/')
+	const url = `${base}schedule/${versionPath}widgets/schedule.json?talk=${encodeURIComponent(code)}`
+	const response = await fetch(url)
+	if (response.status === 404) return null
+	if (!response.ok) {
+		throw new Error('talk schedule detail failed')
+	}
+	return response.json()
+}
+
+function scheduleTalkKey (talk) {
+	if (!talk) return ''
+	if (talk.code) return `code:${talk.code}`
+	return `id:${talk.id}`
+}
+
+function mergeScheduleCollection (current, incoming, idKey) {
+	const items = Array.isArray(current) ? current.slice() : []
+	const index = new Map(items.map((item, position) => [item?.[idKey], position]))
+	for (const item of incoming || []) {
+		const id = item?.[idKey]
+		if (id == null) continue
+		const existingIndex = index.get(id)
+		if (existingIndex == null) {
+			items.push(item)
+			index.set(id, items.length - 1)
+			continue
+		}
+		items[existingIndex] = { ...items[existingIndex], ...item }
+	}
+	return items
+}
+
+function mergeSpeakerRecords (current, incoming) {
+	const items = Array.isArray(current) ? current.slice() : []
+	const index = new Map(items.map((item, position) => [item?.code, position]))
+	for (const speaker of incoming || []) {
+		if (!speaker?.code) continue
+		const existingIndex = index.get(speaker.code)
+		if (existingIndex == null) {
+			items.push(speaker)
+			index.set(speaker.code, items.length - 1)
+			continue
+		}
+		const existing = items[existingIndex]
+		const merged = { ...existing, ...speaker }
+		if (existing.biography && !speaker.biography) merged.biography = existing.biography
+		if (existing.avatar && !speaker.avatar) merged.avatar = existing.avatar
+		if (existing.avatar_thumbnail_default && !speaker.avatar_thumbnail_default) {
+			merged.avatar_thumbnail_default = existing.avatar_thumbnail_default
+		}
+		if (existing.avatar_thumbnail_tiny && !speaker.avatar_thumbnail_tiny) {
+			merged.avatar_thumbnail_tiny = existing.avatar_thumbnail_tiny
+		}
+		items[existingIndex] = merged
+	}
+	return items
+}
+
+/**
+ * Merge a compact day response into the schedule already on the page.
+ * Later card payloads must not wipe abstracts or recordings loaded earlier.
+ */
+export function mergeCompactScheduleDay (schedule, payload) {
+	if (!schedule || !payload) return schedule
+	const talks = Array.isArray(schedule.talks) ? schedule.talks.slice() : []
+	const index = new Map(talks.map((talk, position) => [scheduleTalkKey(talk), position]))
+	for (const talk of payload.talks || []) {
+		const key = scheduleTalkKey(talk)
+		if (!key) continue
+		const existingIndex = index.get(key)
+		if (existingIndex == null) {
+			talks.push(talk)
+			index.set(key, talks.length - 1)
+			continue
+		}
+		const existing = talks[existingIndex]
+		const merged = { ...existing, ...talk }
+		if (existing.abstract && !talk.abstract) merged.abstract = existing.abstract
+		if (existing.description && !talk.description) merged.description = existing.description
+		if (existing.recording_iframe && !talk.recording_iframe) merged.recording_iframe = existing.recording_iframe
+		talks[existingIndex] = merged
+	}
+	schedule.talks = talks
+	schedule.speakers = mergeSpeakerRecords(schedule.speakers, payload.speakers)
+	if (payload.rooms?.length) schedule.rooms = mergeScheduleCollection(schedule.rooms, payload.rooms, 'id')
+	if (payload.tracks?.length) schedule.tracks = mergeScheduleCollection(schedule.tracks, payload.tracks, 'id')
+	if (payload.days?.length) schedule.days = payload.days
+	if (payload.view_timezone) schedule.view_timezone = payload.view_timezone
+	if (payload.session_types?.length) schedule.session_types = payload.session_types
+	if (payload.content_locales?.length) schedule.content_locales = payload.content_locales
+	if (payload.date) schedule.date = payload.date
+	return schedule
+}
+
+/**
+ * Calendar days a session or break actually occupies.
+ * An end that falls exactly on local midnight does not occupy that next day.
+ */
+export function daysOccupiedBySession (session, timezone) {
+	if (!session?.start) return []
+	const start = timezone ? session.start.clone().tz(timezone) : session.start.clone()
+	const end = (session.end || session.start).clone()
+	const zonedEnd = timezone ? end.tz(timezone) : end
+	let last = zonedEnd
+	const midnight = zonedEnd.clone().startOf('day')
+	if (zonedEnd.isAfter(start) && zonedEnd.isSame(midnight)) {
+		last = zonedEnd.clone().subtract(1, 'millisecond')
+	}
+	const days = []
+	for (let day = start.clone().startOf('day'); day.isSameOrBefore(last); day.add(1, 'day')) {
+		days.push(day.format('YYYY-MM-DD'))
+		if (days.length > 14) break
+	}
+	return days
+}
+
+export function sessionIntersectsDay (session, day, timezone) {
+	if (!day) return false
+	return daysOccupiedBySession(session, timezone).includes(day)
 }
 
 // Schedule runs as a web component without Font Awesome; use inline SVG icons.

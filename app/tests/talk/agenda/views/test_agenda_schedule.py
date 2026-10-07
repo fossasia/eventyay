@@ -1,3 +1,5 @@
+import json
+import re
 import textwrap
 from urllib.parse import quote
 
@@ -6,13 +8,48 @@ from django.urls import reverse
 from django_scopes import scope
 
 
+def _inline_schedule_payload(html):
+    match = re.search(
+        r'<script id="pretalx-schedule-data" type="application/json">(.*?)</script>',
+        html,
+    )
+    assert match, 'interactive schedule should embed its data'
+    return json.loads(match.group(1))
+
+
 @pytest.mark.django_db
 @pytest.mark.usefixtures('other_slot')
-@pytest.mark.parametrize('version,max_queries', (('js', 6), ('nojs', 8)))
+def test_schedule_page_embeds_compact_day_without_abstract(client, event, slot):
+    with scope(event=event):
+        event.talks_published = True
+        event.save(update_fields=['talks_published'])
+        slot.submission.abstract = 'UniqueAbstractForCompactSchedule'
+        slot.submission.save(update_fields=['abstract'])
+        day = slot.local_start.date().isoformat()
+    response = client.get(event.urls.schedule, follow=True, HTTP_ACCEPT='text/html')
+    assert response.status_code == 200
+    payload = _inline_schedule_payload(response.text)
+    assert payload['compact'] is True
+    assert payload['date'] == day
+    talk = next(item for item in payload['talks'] if item.get('code') == slot.submission.code)
+    assert 'abstract' not in talk
+    assert 'UniqueAbstractForCompactSchedule' not in response.text
+    nojs = client.get(event.urls.schedule_nojs, follow=True, HTTP_ACCEPT='text/html')
+    assert nojs.status_code == 200
+    assert 'UniqueAbstractForCompactSchedule' in nojs.text
+    talk_page = client.get(slot.submission.urls.public, follow=True)
+    assert 'UniqueAbstractForCompactSchedule' in talk_page.text
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures('other_slot')
+@pytest.mark.parametrize('version,max_queries', (('js', 45), ('nojs', 32)))
 def test_can_see_schedule(client, django_assert_max_num_queries, user, event, slot, version, max_queries):
     with scope(event=event):
+        event.talks_published = True
+        event.save(update_fields=['talks_published'])
         del event.current_schedule
-        assert user.has_perm('schedule.list_schedule', event)
+        assert user.has_perm('base.list_schedule', event)
         url = event.urls.schedule if version == 'js' else event.urls.schedule_nojs
 
     with django_assert_max_num_queries(max_queries):
@@ -23,7 +60,9 @@ def test_can_see_schedule(client, django_assert_max_num_queries, user, event, sl
         test_string = '<pretalx-schedule' if version == 'js' else slot.submission.title
         assert test_string in response.text
     if version == 'js':
-        assert 'pretalx-schedule-data' not in response.text
+        payload = _inline_schedule_payload(response.text)
+        assert payload['compact'] is True
+        assert 'abstract' not in next(item for item in payload['talks'] if item.get('code'))
 
 
 @pytest.mark.django_db
@@ -429,6 +468,7 @@ def test_orga_can_view_wip_speakers_list(orga_client, event):
     response = orga_client.get(url)
     assert response.status_code == 200
     assert 'version="wip"' in response.text
+    assert 'pretalx-schedule-data' in response.text
 
 
 @pytest.mark.django_db

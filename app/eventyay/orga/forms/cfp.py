@@ -137,6 +137,8 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
             'abstract',
             'description',
             'biography',
+            'job_title',
+            'organization',
             'avatar_source',
             'avatar_license',
         ]
@@ -145,6 +147,8 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
             'description',
             'notes',
             'biography',
+            'job_title',
+            'organization',
             'avatar',
             'avatar_source',
             'avatar_license',
@@ -172,6 +176,8 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
             'slides',
             'fullname',
             'biography',
+            'job_title',
+            'organization',
             'avatar',
             'social_links',
         ]

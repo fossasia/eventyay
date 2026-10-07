@@ -58,6 +58,8 @@ def test_widget_pages(
 ):
     event.feature_flags['show_schedule'] = show_schedule
     event.feature_flags['show_widget_if_not_public'] = show_widget_if_not_public
+    if expected == 200:
+        event.talks_published = True
     event.save()
     response = client.get(event.urls.base + url, follow=True)
     assert response.status_code == expected
@@ -71,16 +73,69 @@ def test_widget_data(
     django_assert_num_queries,
 ):
     event.feature_flags['show_schedule'] = True
+    event.talks_published = True
     event.save()
-    with django_assert_num_queries(14):
+    with django_assert_num_queries(19):
         response = client.get(event.urls.schedule + 'widgets/schedule.json', follow=True)
     assert response.status_code == 200
+    assert 'abstract' in response.json()['talks'][0]
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures('slot', 'other_slot')
+def test_widget_data_compact_day_omits_abstract(client, event, slot):
+    event.feature_flags['show_schedule'] = True
+    event.talks_published = True
+    event.save()
+    with scope(event=event):
+        day = slot.local_start.date().isoformat()
+        abstract = slot.submission.abstract
+    response = client.get(
+        event.urls.schedule + f'widgets/schedule.json?compact=1&date={day}',
+        follow=True,
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload['compact'] is True
+    assert payload['date'] == day
+    talk = next(item for item in payload['talks'] if item.get('code') == slot.submission.code)
+    assert 'abstract' not in talk
+    assert abstract not in response.content.decode()
+    assert 'qrcodes' not in response.content.decode()
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures('slot')
+def test_widget_data_rejects_invalid_day(client, event):
+    event.feature_flags['show_schedule'] = True
+    event.talks_published = True
+    event.save()
+    response = client.get(event.urls.schedule + 'widgets/schedule.json?compact=1&date=nope', follow=True)
+    assert response.status_code == 400
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures('slot')
+def test_widget_talk_detail_has_text_without_qrcodes(client, event, slot):
+    event.feature_flags['show_schedule'] = True
+    event.talks_published = True
+    event.save()
+    response = client.get(
+        event.urls.schedule + f'widgets/schedule.json?talk={slot.submission.code}',
+        follow=True,
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload['code'] == slot.submission.code
+    assert payload['abstract'] == slot.submission.abstract
+    assert 'qrcodes' not in response.content.decode()
 
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures('slot', 'other_slot')
 def test_widget_data_enriched(client, event):
     event.feature_flags['show_schedule'] = True
+    event.talks_published = True
     event.save()
 
     response = client.get(event.urls.schedule + 'widgets/schedule.json?enrich=1', follow=True)
@@ -96,6 +151,8 @@ def test_widget_data_enriched(client, event):
 @pytest.mark.usefixtures('slot')
 def test_versioned_widget_data(client, event, schedule):
     with scope(event=event):
+        event.talks_published = True
+        event.save(update_fields=['talks_published'])
         event.wip_schedule.freeze('new')
 
     response = client.get(event.urls.schedule + f'widgets/schedule.json?v={schedule.version}')
@@ -105,6 +162,8 @@ def test_versioned_widget_data(client, event, schedule):
 @pytest.mark.django_db
 @pytest.mark.usefixtures('slot')
 def test_bogus_versioned_widget_data(client, event):
+    event.talks_published = True
+    event.save(update_fields=['talks_published'])
     response = client.get(event.urls.schedule + 'widgets/schedule.json?v=nopedinope')
     assert response.status_code == 200
 
@@ -112,6 +171,8 @@ def test_bogus_versioned_widget_data(client, event):
 @pytest.mark.django_db
 @pytest.mark.usefixtures('slot')
 def test_anon_cannot_access_wip_schedule(client, event):
+    event.talks_published = True
+    event.save(update_fields=['talks_published'])
     response = client.get(event.urls.schedule + 'widgets/schedule.json?v=wip')
     assert response.status_code == 404
 
@@ -119,6 +180,8 @@ def test_anon_cannot_access_wip_schedule(client, event):
 @pytest.mark.django_db
 @pytest.mark.usefixtures('slot')
 def test_orga_can_access_wip_schedule(orga_client, event):
+    event.talks_published = True
+    event.save(update_fields=['talks_published'])
     response = orga_client.get(event.urls.schedule + 'widgets/schedule.json?v=wip')
     assert response.status_code == 200
 

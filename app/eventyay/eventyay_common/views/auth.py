@@ -351,7 +351,7 @@ class Recover(TemplateView):
 
     def invalid(self, msg):
         messages.error(self.request, self.error_messages[msg])
-        return redirect('auth.forgot')
+        return redirect('eventyay_common:auth.forgot')
 
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():

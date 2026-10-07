@@ -3,6 +3,7 @@ from django.conf import settings
 from django.core.validators import validate_email
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
+from i18nfield.forms import I18nFormField, I18nTextInput
 
 from eventyay.base.forms.widgets import SplitDateTimePickerWidget
 from eventyay.base.models import Event, Organizer, User
@@ -84,6 +85,17 @@ DELIVERY_MODE_CHOICES = [
 
 class AdminComposeForm(ScheduledAtValidationMixin, forms.Form):
     default_renderer = TabularFormRenderer
+
+    # Fields that choose the recipients. A test email ignores them.
+    AUDIENCE_FIELDS = (
+        'recipient_group', 'account_status', 'user_role', 'language',
+        'selected_organisers', 'selected_events', 'selected_users',
+        'event_status', 'event_date_from', 'event_date_to',
+        'organiser_status', 'billing_status', 'ticketing_status', 'cfp_status', 'setup_status',
+        'created_after', 'created_before', 'last_active_after', 'last_active_before',
+        'exclude_admins', 'exclude_inactive', 'exclude_unconfirmed_email',
+    )
+
     recipient_group = forms.ChoiceField(
         label=_('Recipient group'),
         choices=[('', _('Select recipient group'))] + list(AdminRecipientGroup.choices),
@@ -130,6 +142,8 @@ class AdminComposeForm(ScheduledAtValidationMixin, forms.Form):
             'data-model-select2': 'generic',
             'data-select2-url': '',  # set in __init__
             'data-placeholder': _('Search organisers…'),
+            'data-minimum-input-length': 3,
+            'data-delay': 250,
         }),
     )
 
@@ -141,6 +155,8 @@ class AdminComposeForm(ScheduledAtValidationMixin, forms.Form):
             'data-model-select2': 'generic',
             'data-select2-url': '',  # set in __init__
             'data-placeholder': _('Search events…'),
+            'data-minimum-input-length': 3,
+            'data-delay': 250,
         }),
     )
 
@@ -152,6 +168,8 @@ class AdminComposeForm(ScheduledAtValidationMixin, forms.Form):
             'data-model-select2': 'generic',
             'data-select2-url': '',  # set in __init__
             'data-placeholder': _('Search by name or email…'),
+            'data-minimum-input-length': 3,
+            'data-delay': 250,
         }),
     )
 
@@ -280,22 +298,9 @@ class AdminComposeForm(ScheduledAtValidationMixin, forms.Form):
         widget=forms.TextInput(attrs={'placeholder': 'bcc1@domain.com, bcc2@domain.com'}),
     )
 
-    subject = forms.CharField(
-        label=_('Subject'),
-        max_length=500,
-        widget=forms.TextInput(attrs={'placeholder': _('Email subject')}),
-    )
-
-    message = I18nEmailBodyFormField(
-        label=_('Message'),
-        placeholders=[
-            'user_name', 'first_name', 'last_name', 'email', 'account_url',
-            'organiser_name', 'organiser_url',
-            'event_name', 'event_url', 'event_start_date', 'event_end_date',
-            'platform_name', 'platform_url', 'support_email', 'support_url',
-        ],
-        locales=['en'],
-    )
+    # subject and message are created in __init__ with platform locales
+    subject = None
+    message = None
     attachment = CachedFileField(
         label=_('Attachment'),
         required=False,
@@ -338,13 +343,42 @@ class AdminComposeForm(ScheduledAtValidationMixin, forms.Form):
         help_text=_('If checked, the email will be sent immediately instead of being added to the outbox.'),
     )
 
-    def __init__(self, *args, draft_save: bool = False, **kwargs):
+    def __init__(self, *args, draft_save: bool = False, test_send: bool = False, **kwargs):
         self.draft_save = draft_save
+        self.test_send = test_send
         super().__init__(*args, **kwargs)
+
+        for field_name in ('subject', 'message'):
+            value = self.initial.get(field_name)
+            if value is not None:
+                if hasattr(value, 'data'):
+                    value = value.data
+                if isinstance(value, str) and value:
+                    self.initial[field_name] = {settings.LANGUAGE_CODE: value}
 
         lang_choices = [('', _('All'))]
         lang_choices.extend(settings.LANGUAGES)
         self.fields['language'].choices = lang_choices
+
+        platform_locales = [code for code, _name in settings.LANGUAGES]
+        self.fields['subject'] = I18nFormField(
+            label=_('Subject'),
+            widget=I18nTextInput,
+            max_length=500,
+            required=not draft_save,
+            locales=platform_locales,
+        )
+        self.fields['message'] = I18nEmailBodyFormField(
+            label=_('Message'),
+            placeholders=[
+                'user_name', 'first_name', 'last_name', 'email', 'account_url',
+                'organiser_name', 'organiser_url',
+                'event_name', 'event_url', 'event_start_date', 'event_end_date',
+                'platform_name', 'platform_url', 'support_email', 'support_url',
+            ],
+            required=not draft_save,
+            locales=platform_locales,
+        )
 
         self.fields['selected_users'].widget.attrs['data-select2-url'] = reverse('eventyay_admin:admin.users.select2')
         self.fields['selected_events'].widget.attrs['data-select2-url'] = reverse('control:events.typeahead')
@@ -393,10 +427,48 @@ class AdminComposeForm(ScheduledAtValidationMixin, forms.Form):
             self.fields['subject'].required = False
             self.fields['message'].required = False
 
+        if test_send:
+            # A test email only goes to the test address, so the audience, content and delivery settings
+            # are optional.
+            self._skip_test_send_validation(True)
+            self.fields['test_email'].required = True
+            self.fields['test_email'].error_messages['required'] = _('Please enter a test email address.')
+
+    def _skip_test_send_validation(self, skip: bool):
+        # Disabled fields ignore the submitted value, so a malformed date, a stale event ID or a
+        # half-filled schedule cannot fail validation.
+        for name in (*self.AUDIENCE_FIELDS, 'scheduled_at'):
+            self.fields[name].disabled = skip
+        self.fields['recipient_group'].required = not skip
+        # The i18n subject/message fields check ``one_required`` instead of ``required``.
+        self.fields['subject'].one_required = not skip
+        self.fields['message'].one_required = not skip
+
+    def clean_scheduled_at(self):
+        if self.test_send:
+            return None
+        return super().clean_scheduled_at()
+
     def clean(self):
         cleaned = super().clean()
+        if self.test_send:
+            # Only skipped while validating, so the page shown afterwards still marks these as required
+            # and keeps the audience and schedule the admin entered.
+            self._skip_test_send_validation(False)
+            return cleaned
         if cleaned is None:
             return cleaned
+
+        if not self.draft_save:
+            default_locale = settings.LANGUAGE_CODE
+            for field_name in ('subject', 'message'):
+                value = cleaned.get(field_name)
+                if value and hasattr(value, 'data') and isinstance(value.data, dict):
+                    if not value.data.get(default_locale):
+                        self.add_error(
+                            field_name,
+                            _('A %(locale)s translation is required.') % {'locale': default_locale},
+                        )
 
         send_immediately = cleaned.get('send_immediately', False)
         scheduled_at = cleaned.get('scheduled_at')
