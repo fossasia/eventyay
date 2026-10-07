@@ -38,7 +38,7 @@
                          class="avatar"
                          data-gravatar="{{ user.gravatar_parameter }}"
                          data-avatar="{% if user.avatar_url %}{{ user.avatar_url }}{% endif %}"
-                         alt="{% translate 'Your speaker photo' %}"
+                         alt="{{ form.avatar.label }}"
                          {% if user.avatar_url %}src="{{ user.avatar_url }}"
                          {% elif user.get_gravatar and request.event.cfp.enable_gravatar %}src="{{ gravatar_url }}"{% endif %} />
 

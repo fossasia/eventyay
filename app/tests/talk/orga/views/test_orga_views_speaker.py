@@ -2,7 +2,11 @@ import json
 
 import bs4
 import pytest
+from django.utils.translation import override
 from django_scopes import scope, scopes_disabled
+from i18nfield.strings import LazyI18nString
+
+from eventyay.base.models import User
 from eventyay.base.models.question import TalkQuestionRequired as QuestionRequired
 
 from eventyay.person.forms import SpeakerProfileForm
@@ -124,6 +128,77 @@ def test_speaker_profile_form_not_strict_allows_missing_required_fields(speaker,
         assert "fullname" not in form.errors
         assert "email" not in form.errors
         assert "avatar" not in form.errors
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("cached_defaults", (None, "fallback", "translated"))
+@pytest.mark.parametrize("locale", ("en", "de"))
+def test_speaker_profile_photo_labels_with_cached_defaults(
+    speaker, event, cached_defaults, locale
+):
+    expected_labels = {
+        "avatar": "Speaker photo",
+        "avatar_source": "Speaker photo source",
+        "avatar_license": "Speaker photo license",
+        "get_gravatar": "Retrieve speaker photo via gravatar",
+    }
+    with override("en"):
+        configuration = []
+        for name in expected_labels:
+            model_field = User._meta.get_field(name)
+            label = str(model_field.verbose_name)
+            help_text = str(model_field.help_text)
+            with override("de"):
+                german_label = str(model_field.verbose_name)
+                german_help = str(model_field.help_text)
+            configuration.append({
+                "key": name,
+                "label": LazyI18nString({
+                    "en": label, "de": german_label if cached_defaults == "translated" else label,
+                }),
+                "help_text": LazyI18nString({
+                    "en": help_text, "de": german_help if cached_defaults == "translated" else help_text,
+                }),
+            })
+
+    with scope(event=event), override(locale):
+        form = SpeakerProfileForm(
+            user=speaker,
+            event=event,
+            field_configuration=configuration if cached_defaults else None,
+        )
+        for name, expected_label in expected_labels.items():
+            assert str(form.fields[name].label) == expected_label
+        assert "your speaker photo" in str(form.fields["get_gravatar"].help_text)
+        assert "profile picture" not in str(form.fields["get_gravatar"].help_text)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("locale", ("en", "de"))
+def test_speaker_profile_photo_preserves_custom_labels_and_help(speaker, event, locale):
+    label = LazyI18nString({"en": "Your headshot", "de": "Ihr Porträt"})
+    help_text = LazyI18nString({"en": "Use your own photo.", "de": "Eigenes Foto verwenden."})
+    configuration = [
+        {"key": "avatar", "label": label},
+        {"key": "get_gravatar", "help_text": help_text},
+    ]
+    with scope(event=event), override(locale):
+        form = SpeakerProfileForm(user=speaker, event=event, field_configuration=configuration)
+        assert str(form.fields["avatar"].label) == label.data[locale]
+        assert help_text.data[locale] in str(form.fields["get_gravatar"].help_text)
+        assert form.fields["get_gravatar"].original_help_text is help_text
+    assert label.data == {"en": "Your headshot", "de": "Ihr Porträt"}
+
+
+@pytest.mark.django_db
+def test_cfp_speaker_profile_uses_speaker_photo_wording(speaker_client, event):
+    event.talks_published = True
+    event.save(update_fields=["talks_published"])
+    response = speaker_client.get(event.urls.user, follow=True)
+    assert response.status_code == 200
+    assert "Speaker photo" in response.text
+    assert 'alt="Speaker photo"' in response.text
+    assert "Profile picture" not in response.text
 
 
 @pytest.mark.django_db
