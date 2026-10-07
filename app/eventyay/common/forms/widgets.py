@@ -25,6 +25,8 @@ from django.utils.translation import gettext_lazy as _
 from i18nfield.forms import I18nTextarea
 from i18nfield.strings import LazyI18nString
 
+from eventyay.common.image import ALLOWED_IMAGE_EXTENSIONS
+
 
 def add_class(attrs, css_class):
     attrs = attrs or {}
@@ -116,6 +118,32 @@ class ImageInput(ClearableBasenameFileInput):
         widget_attrs = ctx['widget'].get('attrs') or {}
         alt = widget_attrs.pop('alt', None) or (self.attrs or {}).get('alt') or _('Image preview')
         ctx['widget']['alt_text'] = alt
+        return ctx
+
+
+class AnswerFileInput(ClearableBasenameFileInput):
+    """Upload control for file questions that previews the current upload.
+
+    Image uploads are rendered inline above the upload control, so organisers
+    and speakers see the actual picture instead of the stored file name. Other
+    uploads keep a plain file name link. The raw upload path is never shown.
+    """
+
+    template_name = 'common/widgets/answer_file_input.html'
+
+    def get_context(self, name, value, attrs):
+        ctx = super().get_context(name, value, attrs)
+        widget = ctx['widget']
+        widget_attrs = widget.get('attrs') or {}
+        alt = widget_attrs.get('alt') or _('Uploaded image')
+        # ``alt`` is only meant for the preview image, so leave it off the file input without
+        # changing the attrs this widget renders from.
+        widget['attrs'] = {key: value for key, value in widget_attrs.items() if key != 'alt'}
+        file_name = Path(value.name).name if widget['is_initial'] else ''
+        widget['alt_text'] = alt
+        widget['file_name'] = file_name
+        widget['file_url'] = value.url if widget['is_initial'] else ''
+        widget['is_image'] = bool(file_name) and Path(file_name).suffix.lower() in ALLOWED_IMAGE_EXTENSIONS
         return ctx
 
 
