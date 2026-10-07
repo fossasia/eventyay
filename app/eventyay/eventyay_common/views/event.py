@@ -306,11 +306,6 @@ class EventCreateView(TemplateView):
     def clone_from(self):
         if hasattr(self, '_clone_from'):
             return self._clone_from
-        if self.request.GET.get('clone'):
-            try:
-                return self.get_clone_queryset().get(pk=self.request.GET.get('clone'))
-            except Event.DoesNotExist:
-                pass
         return None
 
     @property

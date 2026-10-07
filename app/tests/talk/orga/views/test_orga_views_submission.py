@@ -1,13 +1,15 @@
 import datetime as dt
+import io
 import json
 
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils.timezone import now
 from django_scopes import scope
+from PIL import Image
 
 from eventyay.base.models.log import ActivityLog
-from eventyay.base.models import Submission, SubmissionStates
+from eventyay.base.models import Answer, Availability, Submission, SubmissionStates
 from eventyay.base.models.question import TalkQuestionRequired as QuestionRequired, TalkQuestionVariant as QuestionVariant
 from eventyay.common.session_video import (
     SESSION_VIDEO_IMPORT_KEY,
@@ -336,10 +338,164 @@ def test_orga_speaker_page_excludes_submission_answers(
     assert submission.event.orga_urls.speaker_autocomplete in response.text
     assert submission.event.organizer.orga_urls.user_search not in response.text
     speaker_context = response.context["speakers"][0]
-    assert speaker_context["other_submissions"] == [other_submission]
-    reviewer_answers = speaker_context["reviewer_answers"]
-    assert speaker_answer in reviewer_answers
-    assert answer not in reviewer_answers
+    assert speaker_context.other_submissions == (other_submission,)
+    speaker_answers = speaker_context.answers
+    assert speaker_answer in speaker_answers
+    assert answer not in speaker_answers
+
+
+@pytest.mark.django_db
+def test_orga_speaker_page_renders_shared_speaker_details(
+    orga_client, submission, other_submission, speaker_answer
+):
+    with scope(event=submission.event):
+        other_submission.speakers.add(submission.speakers.first())
+
+    response = orga_client.get(submission.orga_urls.speakers)
+
+    assert response.status_code == 200
+    assert 'class="speaker-details"' in response.text
+    assert speaker_answer.question.question in response.text
+    assert f'href="{other_submission.orga_urls.base}"' in response.text
+
+
+@pytest.mark.django_db
+def test_reviewer_speaker_page_links_other_proposals_to_reviews(
+    review_client, submission, other_submission
+):
+    with scope(event=submission.event):
+        other_submission.speakers.add(submission.speakers.first())
+
+    response = review_client.get(submission.orga_urls.speakers)
+
+    assert response.status_code == 200
+    assert 'class="speaker-details"' in response.text
+    assert f'href="{other_submission.orga_urls.reviews}"' in response.text
+    assert f'href="{other_submission.orga_urls.base}"' not in response.text
+
+
+@pytest.mark.django_db
+def test_orga_submission_tabs_show_date_answers(
+    orga_client, event, submission, question, speaker_question
+):
+    with scope(event=event):
+        event.timezone = "Europe/Berlin"
+        event.save()
+        event.settings.timezone = "Europe/Berlin"
+        question.variant = QuestionVariant.DATE
+        question.save()
+        speaker_question.variant = QuestionVariant.DATETIME
+        speaker_question.save()
+        Answer.objects.create(
+            question=question, submission=submission, answer="2031-12-24"
+        )
+        Answer.objects.create(
+            question=speaker_question,
+            person=submission.speakers.first(),
+            answer="2031-12-25 10:30:00+00:00",
+        )
+
+    content = orga_client.get(submission.orga_urls.base)
+    speakers = orga_client.get(submission.orga_urls.speakers)
+    reviews = orga_client.get(submission.orga_urls.reviews)
+
+    # Shown in words and in the event's timezone, not as the stored ISO string.
+    assert "Dec. 24, 2031" in content.text
+    assert "Dec. 25, 2031, 11:30" in speakers.text
+    assert "Dec. 24, 2031" in reviews.text
+    assert "Dec. 25, 2031, 11:30" in reviews.text
+    assert "10:30:00+00:00" not in speakers.text
+    assert "10:30:00+00:00" not in reviews.text
+
+
+@pytest.mark.django_db
+def test_orga_speakers_tab_shows_unparseable_date_answers_as_entered(
+    orga_client, event, submission, speaker_question
+):
+    with scope(event=event):
+        speaker_question.variant = QuestionVariant.DATE
+        speaker_question.save()
+        Answer.objects.create(
+            question=speaker_question,
+            person=submission.speakers.first(),
+            answer="next spring",
+        )
+
+    response = orga_client.get(submission.orga_urls.speakers)
+
+    assert "next spring" in response.text
+
+
+@pytest.mark.django_db
+def test_orga_speakers_tab_formats_phone_number(
+    orga_client, event, submission, speaker_question
+):
+    with scope(event=event):
+        speaker_question.variant = QuestionVariant.PHONE_NUMBER
+        speaker_question.save()
+        Answer.objects.create(
+            question=speaker_question,
+            person=submission.speakers.first(),
+            answer="+4915112345678",
+        )
+
+    response = orga_client.get(submission.orga_urls.speakers)
+
+    assert "+49 1511 2345678" in response.text
+
+
+@pytest.mark.django_db
+def test_orga_speakers_tab_shows_availabilities_as_time_ranges(
+    orga_client, event, submission
+):
+    with scope(event=event):
+        event.cfp.fields["availabilities"] = {"visibility": "optional"}
+        event.cfp.save()
+        profile = submission.speakers.first().event_profile(event)
+        Availability.objects.create(
+            event=event,
+            person=profile,
+            start=dt.datetime(2031, 12, 24, 9, 0, tzinfo=dt.UTC),
+            end=dt.datetime(2031, 12, 24, 17, 0, tzinfo=dt.UTC),
+        )
+
+    response = orga_client.get(submission.orga_urls.speakers)
+
+    assert "Dec. 24, 2031, 09:00 – 17:00" in response.text
+    assert "Start time" not in response.text
+
+
+@pytest.mark.django_db
+def test_orga_content_tab_shows_country_name(orga_client, event, submission, question):
+    with scope(event=event):
+        question.variant = QuestionVariant.COUNTRY
+        question.save()
+        Answer.objects.create(question=question, submission=submission, answer="DE")
+
+    response = orga_client.get(submission.orga_urls.base)
+
+    assert "Germany" in response.text
+
+
+@pytest.mark.django_db
+def test_reviews_tab_shows_speaker_avatar_once(review_client, event, submission):
+    image = io.BytesIO()
+    Image.new("RGB", (64, 64), (88, 166, 255)).save(image, format="PNG")
+    with scope(event=event):
+        event.cfp.fields["avatar"] = {"visibility": "optional"}
+        event.cfp.save()
+        speaker = submission.speakers.first()
+        speaker.avatar.save(
+            "avatar.png", SimpleUploadedFile("avatar.png", image.getvalue())
+        )
+
+    response = review_client.get(submission.orga_urls.reviews)
+
+    details = response.text.index('class="speaker-details"')
+    speaker_name = response.text[response.text.rindex("<label", 0, details) : details]
+    assert speaker.get_display_name() in speaker_name
+    assert "<img" not in speaker_name
+    assert "speaker-avatar-preview" in response.text
 
 
 @pytest.mark.django_db
