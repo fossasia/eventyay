@@ -1,5 +1,9 @@
+from contextlib import suppress
+from pathlib import Path
+
 import dateutil.parser
 from django.db import models
+from django.utils.dateparse import parse_date, parse_datetime
 from django.utils.formats import date_format
 from django.utils.functional import cached_property
 from django.utils.timezone import now
@@ -9,6 +13,7 @@ from i18nfield.fields import I18nCharField
 
 from eventyay.base.models import Choices
 from eventyay.base.models.fields import MultiStringField
+from eventyay.common.image import ALLOWED_IMAGE_EXTENSIONS
 from eventyay.common.text.path import path_with_hash
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls
@@ -471,6 +476,34 @@ class Answer(PretalxModel):
             return True
         if self.answer == 'False':
             return False
+
+    @property
+    def answer_file_name(self):
+        """The uploaded file's name, without the internal storage path."""
+        if not self.answer_file:
+            return ''
+        return Path(self.answer_file.name).name
+
+    @property
+    def answer_file_is_image(self):
+        """Whether the upload can be displayed inline with an ``<img>`` tag."""
+        if not self.answer_file:
+            return False
+        return Path(self.answer_file.name).suffix.lower() in ALLOWED_IMAGE_EXTENSIONS
+
+    @property
+    def answer_date(self):
+        """A date question's answer as a ``date``, or ``None`` if it does not parse."""
+        with suppress(ValueError):
+            return parse_date(self.answer or '')
+        return None
+
+    @property
+    def answer_datetime(self):
+        """A date and time question's answer as a ``datetime``, or ``None`` if it does not parse."""
+        with suppress(ValueError):
+            return parse_datetime(self.answer or '')
+        return None
 
     @property
     def answer_string(self):

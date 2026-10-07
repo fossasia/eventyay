@@ -39,7 +39,7 @@
             <div class="col-md-9">
                 <strong class="submission-title-with-track">
                     <span class="color-square" style="--track-color: {{ submission.track.color|default:'#cccccc' }}"{% if submission.track %} title="{{ submission.track.name }}"{% endif %}></span>
-                    <span>{{ submission.title }}</span>
+                    <span>{% if can_view_speakers %}{{ submission.title }}{% else %}{{ submission.anonymised.title|default:submission.title }}{% endif %}</span>
                 </strong>
             </div>
         </div>
@@ -116,7 +116,11 @@
             <div class="form-group row">
                 <label class="col-md-3 col-form-label">{% translate "Abstract" %}</label>
                 <div class="col-md-9">
-                    {{ submission.abstract|rich_text }}
+                    {% if can_view_speakers %}
+                        {{ submission.abstract|rich_text }}
+                    {% else %}
+                        {{ submission.anonymised.abstract|default:submission.abstract|rich_text }}
+                    {% endif %}
                 </div>
             </div>
         {% endif %}
@@ -125,7 +129,11 @@
             <div class="form-group row">
                 <label class="col-md-3 col-form-label">{% translate "Description" %}</label>
                 <div class="col-md-9">
-                    {{ submission.description|rich_text }}
+                    {% if can_view_speakers %}
+                        {{ submission.description|rich_text }}
+                    {% else %}
+                        {{ submission.anonymised.description|default:submission.description|rich_text }}
+                    {% endif %}
                 </div>
             </div>
         {% endif %}
@@ -134,7 +142,11 @@
             <div class="form-group row">
                 <label class="col-md-3 col-form-label">{% translate "Notes" %}</label>
                 <div class="col-md-9">
-                    {{ submission.notes|rich_text }}
+                    {% if can_view_speakers %}
+                        {{ submission.notes|rich_text }}
+                    {% else %}
+                        {{ submission.anonymised.notes|default:submission.notes|rich_text }}
+                    {% endif %}
                 </div>
             </div>
         {% endif %}
@@ -194,7 +206,7 @@
                 <label class="col-md-3 col-form-label">{% translate "Session image" %}</label>
                 <div class="col-md-9">
                     <a href="{{ submission.image.url }}" target="_blank">
-                        <img src="{{ submission.image.url }}" alt="{{ submission.title }}">
+                        <img src="{{ submission.image.url }}" alt="{% if can_view_speakers %}{{ submission.title }}{% else %}{{ submission.anonymised.title|default:submission.title }}{% endif %}">
                     </a>
                 </div>
             </div>
@@ -211,6 +223,15 @@
                             </li>
                         {% endfor %}
                     </ul>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if submission.etherpad_url %}
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label">{% translate "Etherpad" %}</label>
+                <div class="col-md-9">
+                    <a href="{{ submission.etherpad_url }}" target="_blank" rel="noopener noreferrer">{{ submission.etherpad_url }}</a>
                 </div>
             </div>
         {% endif %}
@@ -236,34 +257,11 @@
             </div>
         {% endif %}
 
-        {% if questions_form and questions_form.fields %}
+        {% if submission_answers %}
             <div class="form-group row">
                 <label class="col-md-3 col-form-label">{{ phrases.cfp.custom_fields }}</label>
-                <div class="col-md-9 custom-fields-container">
-                    {% for field in questions_form %}
-                        <div class="mb-3">
-                            <strong>{{ field.label }}</strong>
-                            <div class="mt-1">
-                                {% if field.field.answer %}
-                                    {% if field.field.question.variant == 'boolean' %}
-                                        {% if field.field.answer.boolean_answer %}
-                                            <span class="value-pill value-pill--positive"><i class="fa fa-check text-success"></i> {% translate "Yes" %}</span>
-                                        {% else %}
-                                            <span class="value-pill value-pill--negative"><i class="fa fa-times text-danger"></i> {% translate "No" %}</span>
-                                        {% endif %}
-                                    {% elif field.field.answer.answer_file %}
-                                        <a href="{{ field.field.answer.answer_file.url }}" target="_blank">
-                                            <i class="fa fa-paperclip"></i> {{ field.field.answer.answer_file.name }}
-                                        </a>
-                                    {% else %}
-                                        {{ field.field.answer.answer_string|rich_text|default:"-" }}
-                                    {% endif %}
-                                {% else %}
-                                    <em class="text-muted">{% translate "No answer provided" %}</em>
-                                {% endif %}
-                            </div>
-                        </div>
-                    {% endfor %}
+                <div class="col-md-9 custom-fields-container submission-answers">
+                    {% include "orga/includes/submission_answers.html" with answers=submission_answers %}
                 </div>
             </div>
         {% endif %}
