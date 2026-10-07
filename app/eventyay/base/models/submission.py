@@ -126,7 +126,7 @@ class SubmissionStates(Choices):
 
 class SubmissionManager(models.Manager):
     def get_queryset(self):
-        return super().get_queryset().exclude(state=SubmissionStates.DELETED).exclude(state=SubmissionStates.DRAFT)
+        return super().get_queryset().exclude(state__in=[SubmissionStates.DELETED, SubmissionStates.DRAFT])
 
 
 class DeletedSubmissionManager(models.Manager):
