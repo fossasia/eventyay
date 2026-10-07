@@ -583,12 +583,9 @@ class SubmissionFilterForm(forms.Form):
                 count=Count(
                     'submissions',
                     distinct=True,
-                    filter=Q(event=event)
-                    & ~Q(
-                        submissions__state__in=[
-                            SubmissionStates.DELETED,
-                            SubmissionStates.DRAFT,
-                        ]
+                    filter=Q(
+                        submissions__event=event,
+                        submissions__state__in=SubmissionStates.valid_submission_states,
                     ),
                 )
             ).order_by('-count')
@@ -610,11 +607,9 @@ class SubmissionFilterForm(forms.Form):
                 submission_count=Count(
                     'submissions',
                     distinct=True,
-                    filter=~Q(
-                        submissions__state__in=[
-                            SubmissionStates.DELETED,
-                            SubmissionStates.DRAFT,
-                        ]
+                    filter=Q(
+                        submissions__event=event,
+                        submissions__state__in=SubmissionStates.valid_submission_states,
                     ),
                 )
             )

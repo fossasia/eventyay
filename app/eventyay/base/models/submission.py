@@ -111,6 +111,7 @@ class SubmissionStates(Choices):
 
     accepted_states = (ACCEPTED, CONFIRMED)
     terminal_states = (REJECTED, DELETED, CANCELED, WITHDRAWN)
+    valid_submission_states = (SUBMITTED, ACCEPTED, CONFIRMED, REJECTED, CANCELED, WITHDRAWN)
 
     @staticmethod
     def get_color(state):
@@ -830,11 +831,9 @@ class Submission(GenerateCode, PretalxModel):
         orga: bool = True,
         from_pending: bool = False,
     ):
-        """Sets the submission's state to 'deleted'."""
+        """Sets the submission's state to 'deleted' while preserving session data."""
         previous = self.state
         self._set_state(SubmissionStates.DELETED, force, person=person)
-        for answer in self.answers.all():
-            answer.remove(person=person, force=force)
         self.log_action(
             'eventyay.submission.deleted',
             person=person,

@@ -333,7 +333,7 @@ class TalkQuestion(OrderedModel, PretalxModel):
         return event.questions(manager='all_objects').all()
 
     def missing_answers(self, filter_speakers: list = False, filter_talks: list = False) -> int:
-        """Returns how many answers are still missing or this question.
+        """Returns how many answers are still missing for this question.
 
         This method only supports submission questions and speaker questions.
         For missing reviews, please use the get_missing_reviews method.
@@ -343,20 +343,17 @@ class TalkQuestion(OrderedModel, PretalxModel):
         """
         from eventyay.base.models import Submission, SubmissionStates, User
 
-        answers = self.answers.all()
-        filter_talks = filter_talks or Submission.objects.none()
-        filter_speakers = filter_speakers or User.objects.none()
-        if filter_speakers or filter_talks:
-            answers = answers.filter(models.Q(person__in=filter_speakers) | models.Q(submission__in=filter_talks))
-        answer_count = answers.count()
         if self.target == TalkQuestionTarget.SUBMISSION:
             submissions = filter_talks or self.event.submissions.all()
-            return max(submissions.count() - answer_count, 0)
+            answers = self.answers.filter(submission__in=submissions)
+            return max(submissions.count() - answers.count(), 0)
         if self.target == TalkQuestionTarget.SPEAKER:
-            users = filter_speakers or User.objects.filter(submissions__event_id=self.event.pk).exclude(
-                submissions__state__in=[SubmissionStates.DELETED, SubmissionStates.DRAFT]
+            users = filter_speakers or User.objects.filter(
+                submissions__event_id=self.event.pk,
+                submissions__state__in=SubmissionStates.valid_submission_states,
             ).distinct()
-            return max(users.count() - answer_count, 0)
+            answers = self.answers.filter(person__in=users)
+            return max(users.count() - answers.count(), 0)
         return 0
 
 
