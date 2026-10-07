@@ -51,13 +51,37 @@ def check_entitlement(
     return final_decision
 
 
-def record_usage(organizer, capability: str, amount: int = 1, **kwargs) -> None:
+def record_usage(
+    organizer,
+    capability: str,
+    *,
+    quantity: float,
+    unit: str,
+    source_type: str,
+    source_id: str,
+    idempotency_key: str,
+    event=None,
+    metadata: dict | None = None,
+    **kwargs,
+) -> None:
     """
     Records usage of a capability for an organizer.
     Dispatches the `entitlement_usage_recorded` signal.
+
+    ``idempotency_key`` must be stable for the thing being counted, so that
+    receivers can drop duplicates if the same usage is reported twice.
     """
     entitlement_usage_recorded.send(
-        sender=organizer, capability=capability, amount=amount, **kwargs
+        sender=organizer,
+        capability=capability,
+        quantity=quantity,
+        unit=unit,
+        source_type=source_type,
+        source_id=source_id,
+        idempotency_key=idempotency_key,
+        event=event,
+        metadata=metadata,
+        **kwargs,
     )
 
 

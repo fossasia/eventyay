@@ -4,7 +4,8 @@ from unittest.mock import patch
 
 import pytest
 from django import forms as dj_forms
-from django.urls import reverse
+from django.apps import apps
+from django.urls import NoReverseMatch, resolve, reverse
 from django.utils.timezone import now
 
 from eventyay.base.models import User
@@ -49,6 +50,7 @@ class TestGlobalSettingsTabsAndSections:
             'update-check',
             'maps',
             'etherpad',
+            'security',
             'voxbento',
             'hubspot',
         ]
@@ -76,6 +78,10 @@ class TestGlobalSettingsTabsAndSections:
         assert 'id="tab-etherpad"' in content
         assert 'id="tab-voxbento"' in content
         assert 'id="tab-hubspot"' in content
+        if apps.is_installed('eventyay_business'):
+            assert f'data-business-redirect-url="{reverse("plugins:eventyay_business:settings")}"' in content
+        else:
+            assert f'data-business-redirect-url="{reverse("eventyay_admin:admin.vouchers")}"' in content
 
         # Check Meta data content
         assert 'seo_homepage_title' in content
@@ -102,12 +108,16 @@ class TestGlobalSettingsTabsAndSections:
 
     def test_settings_save_behavior(self, staff_client):
         url = reverse('eventyay_admin:admin.global.settings')
+        gs = GlobalSettingsObject()
+        gs.settings.set('billing_validation', False)
+        gs.settings.set('payment_stripe_secret_key', 'sk_live_keep_me')
         post_data = {
             'region': 'DE',
             'mail_from': 'noreply@example.com',
             'email_vendor': 'smtp',
             'smtp_host': 'smtp.example.com',
             'smtp_port': '587',
+            'anti_abuse_provider': 'disabled',
             'allow_all_users_create_organizer': 'on',
             'allow_payment_users_create_organizer': 'on',
             'event_series_creation_enabled': 'on',
@@ -122,7 +132,6 @@ class TestGlobalSettingsTabsAndSections:
         assert response.status_code == 302, (response.context['form'].errors if response.context and 'form' in response.context else response.content)
         assert response['Location'] == reverse('eventyay_admin:admin.global.settings')
 
-        gs = GlobalSettingsObject()
         assert gs.settings.get('seo_homepage_title') == 'My Platform Title'
         assert gs.settings.get('seo_homepage_description') == 'My Platform Description'
         assert gs.settings.get('allow_all_users_create_organizer', as_type=bool) is True
@@ -132,6 +141,8 @@ class TestGlobalSettingsTabsAndSections:
         assert gs.settings.get('update_check_perform', as_type=bool) is True
         assert gs.settings.get('update_check_email') == 'updates@example.com'
         assert gs.settings.get('telemetry_enabled', as_type=bool) is True
+        assert gs.settings.get('billing_validation', as_type=bool) is False
+        assert gs.settings.get('payment_stripe_secret_key') == 'sk_live_keep_me'
 
     @patch('eventyay.control.views.global_settings.update_check.apply')
     def test_update_check_trigger_in_settings(self, mock_update_check, staff_client):
@@ -158,6 +169,7 @@ class TestGlobalSettingsTabsAndSections:
                 'email_vendor': 'smtp',
                 'smtp_host': 'smtp.example.com',
                 'smtp_port': '587',
+                'anti_abuse_provider': 'disabled',
             }
             form_files = {
                 'seo_social_image': uploaded_file,
@@ -247,7 +259,6 @@ class TestGlobalTicketingSettings:
             'payment_stripe_connect_client_id': 'ca_test_client_id',
             'payment_stripe_connect_publishable_key': 'pk_live_ticket_stripe_key',
             'payment_stripe_connect_secret_key': 'sk_live_ticket_stripe_key',
-            'payment_stripe_connect_app_fee_percent': '2.50',
             'payment_paypal_connect_client_id': 'paypal_client_123',
             'payment_paypal_connect_endpoint': 'sandbox',
             'reservation_time': '45',
@@ -260,7 +271,6 @@ class TestGlobalTicketingSettings:
         gs = GlobalSettingsObject()
         assert gs.settings.get('payment_stripe_connect_client_id') == 'ca_test_client_id'
         assert gs.settings.get('payment_stripe_connect_publishable_key') == 'pk_live_ticket_stripe_key'
-        assert gs.settings.get('payment_stripe_connect_app_fee_percent', as_type=Decimal) == Decimal('2.50')
         assert gs.settings.get('payment_paypal_connect_client_id') == 'paypal_client_123'
         assert gs.settings.get('payment_paypal_connect_endpoint') == 'sandbox'
         assert gs.settings.get('reservation_time', as_type=int) == 45
@@ -296,6 +306,64 @@ class TestGlobalTicketingSettings:
 
 @pytest.mark.django_db
 class TestLegacyUrlsAndRedirects:
+    def test_business_plugin_settings_route_renders_plugin_page(self, staff_client):
+        if not apps.is_installed('eventyay_business'):
+            pytest.skip('Business plugin is not enabled')
+        try:
+            url = reverse('plugins:eventyay_business:settings')
+        except NoReverseMatch:
+            pytest.skip('Business plugin URLs are not installed')
+
+        assert resolve(url).namespace == 'plugins:eventyay_business'
+        response = staff_client.get(url)
+        assert response.status_code == 200
+        assert b'Business Settings' in response.content
+
+    def test_legacy_business_url_redirects_to_vouchers_without_plugin(self, staff_client):
+        url = reverse('eventyay_admin:admin.global.business')
+
+        def reverse_without_business_plugin(name, *args, **kwargs):
+            if name == 'plugins:eventyay_business:settings':
+                raise NoReverseMatch(name)
+            return reverse(name, *args, **kwargs)
+
+        with patch('eventyay.control.views.global_settings.reverse', side_effect=reverse_without_business_plugin):
+            response = staff_client.get(url)
+        assert response.status_code == 302
+        assert response['Location'] == reverse('eventyay_admin:admin.vouchers')
+
+    @pytest.mark.parametrize(
+        ('tab', 'fragment'),
+        [
+            ('organizer_billing', '#tab-organizer_billing'),
+            ('billing_validation', '#tab-billing_validation'),
+            ('ticket_fee', ''),
+        ],
+    )
+    def test_legacy_business_tab_redirects_to_plugin(self, staff_client, tab, fragment):
+        business_url = '/admin/global/business/settings/'
+
+        def reverse_with_business_plugin(name, *args, **kwargs):
+            if name == 'plugins:eventyay_business:settings':
+                return business_url
+            return reverse(name, *args, **kwargs)
+
+        with patch('eventyay.control.views.global_settings.reverse', side_effect=reverse_with_business_plugin):
+            response = staff_client.get(reverse('eventyay_admin:admin.global.settings'), {'tab': tab})
+        assert response.status_code == 302
+        assert response['Location'] == business_url + fragment
+
+    def test_legacy_business_tab_falls_back_to_vouchers_without_plugin(self, staff_client):
+        def reverse_without_business_plugin(name, *args, **kwargs):
+            if name == 'plugins:eventyay_business:settings':
+                raise NoReverseMatch(name)
+            return reverse(name, *args, **kwargs)
+
+        with patch('eventyay.control.views.global_settings.reverse', side_effect=reverse_without_business_plugin):
+            response = staff_client.get(reverse('eventyay_admin:admin.global.settings'), {'tab': 'ticket_fee'})
+        assert response.status_code == 302
+        assert response['Location'] == reverse('eventyay_admin:admin.vouchers')
+
     def test_legacy_metadata_url_redirects_to_settings_tab(self, staff_client):
         url = reverse('eventyay_admin:admin.global.metadata')
         response = staff_client.get(url)
@@ -348,7 +416,6 @@ class TestPluginProvidedPaymentSettingsRegression:
         def custom_payment_receiver(sender, **kwargs):
             return OrderedDict([
                 ('payment_customplugin_api_key', dj_forms.CharField(label='Custom Plugin API Key', required=False)),
-                ('customplugin_general_setting', dj_forms.CharField(label='General Plugin Setting', required=False)),
             ])
 
         register_global_settings.connect(custom_payment_receiver, dispatch_uid='test_custom_payment_receiver')
@@ -356,14 +423,12 @@ class TestPluginProvidedPaymentSettingsRegression:
             # GlobalTicketingSettingsForm must collect payment_customplugin_api_key
             ticketing_form = GlobalTicketingSettingsForm()
             assert 'payment_customplugin_api_key' in ticketing_form.fields
-            assert 'customplugin_general_setting' not in ticketing_form.fields
 
             payment_group = next(g for g in ticketing_form.field_groups if g[0] == 'payment-gateways')
             assert 'payment_customplugin_api_key' in payment_group[2]
 
-            # GlobalSettingsForm must collect customplugin_general_setting and NOT payment_customplugin_api_key
+            # Payment plugin fields belong only to the ticketing form.
             settings_form = GlobalSettingsForm()
-            assert 'customplugin_general_setting' in settings_form.fields
             assert 'payment_customplugin_api_key' not in settings_form.fields
 
             # Verify saving via GlobalTicketingSettingsForm persists the value

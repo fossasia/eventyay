@@ -351,10 +351,12 @@ class ReviewExportForm(ExportForm):
                 label=str(_('Score in “{score_category}”')).format(score_category=score_category.name),
             )
 
-    def get_additional_data(self, obj):
-        return {
-            str(sc.name): getattr(obj.scores.filter(category=sc).first(), 'value', None) for sc in self.score_categories
-        }
+    def get_object_attribute(self, obj, attribute: str):
+        if attribute in self.score_field_names:
+            category_id = int(attribute.removeprefix('score_'))
+            # Uses the prefetched scores, so this costs no extra query per review
+            return next((score.value for score in obj.scores.all() if score.category_id == category_id), None)
+        return super().get_object_attribute(obj, attribute)
 
     def get_queryset(self):
         target = self.cleaned_data.get('target')
@@ -365,9 +367,7 @@ class ReviewExportForm(ExportForm):
 
         queryset = queryset.filter(submission__in=submissions_for_user(self.event, self.user))
         queryset = queryset.exclude(submission__speakers__in=[self.user]).distinct()
-        return queryset.select_related('submission', 'user').prefetch_related(
-            'answers', 'answers__question', 'scores', 'scores__category'
-        )
+        return queryset.select_related('submission', 'user').prefetch_related('answers', 'answers__question', 'scores')
 
     def _get_submission_id_value(self, obj):
         return obj.submission.code

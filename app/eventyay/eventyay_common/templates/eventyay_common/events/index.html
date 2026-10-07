@@ -7,6 +7,7 @@
 
 {% block custom_header %}
     {{ block.super }}
+    <link rel="stylesheet" href="{% static 'eventyay-common/css/common_dashboard.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -179,6 +180,12 @@
                             <span class="fa fa-edit"></span>
                         </a>
                     </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-muted">
+                            {% trans "No events found." %}
+                        </td>
                     </tr>
                 {% endfor %}
                 </tbody>
