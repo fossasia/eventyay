@@ -111,6 +111,22 @@ class TestSubmitterInvitesSpeaker:
             assert invitation.mail.sent is not None
             assert submission in invitation.mail.submissions.all()
 
+    def test_form_ignores_custom_subject_and_text(self, event, submission, user):
+        from eventyay.cfp.forms.submissions import SubmissionInvitationForm
+
+        with scope(event=event):
+            form = SubmissionInvitationForm(
+                submission=submission,
+                speaker=user,
+                data={'speaker': 'jane@example.net', 'subject': 'Buy now', 'text': 'Spam'},
+            )
+            assert form.is_valid()
+            mail = form.save()[0].mail
+
+            assert 'Buy now' not in mail.subject
+            assert 'Spam' not in mail.text
+            assert submission.urls.accept_invitation.full() in mail.text
+
     def test_failed_delivery_is_recorded(self, event, submission, user, monkeypatch):
         def explode(*args, **kwargs):
             raise SendMailException('backend is down')
@@ -402,7 +418,7 @@ class TestSubmitterInviteView:
             form = SubmissionInvitationForm(
                 submission=submission,
                 speaker=user,
-                data={'speaker': 'jane@example.net', 'subject': 'Hi', 'text': 'Join me'},
+                data={'speaker': 'jane@example.net'},
             )
             assert form.is_valid()
 
