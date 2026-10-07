@@ -55,7 +55,12 @@ class OAuthAuthorizedAppRevokeView(DetailView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['application'] = self.get_object().application
+        obj = self.get_object()
+        ctx['application'] = obj.application
+        confirm_message = _(
+            'Are you sure you want to revoke access to your account for the application {application}?'
+        )
+        ctx['confirm_message'] = confirm_message.format(application=f'<strong>{obj.application}</strong>')
         return ctx
 
     def post(self, request, *args, **kwargs):
