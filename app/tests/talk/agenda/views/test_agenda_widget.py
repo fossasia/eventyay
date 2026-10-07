@@ -287,3 +287,20 @@ def test_schedule_messages_respects_explicit_lang_query_param(client, event):
     assert payload_zh['search'] == '搜索'
     assert payload_zh['add_to_calendar'] == '添加到日历'
     assert payload_zh['print'] == '打印'
+
+
+@pytest.mark.django_db
+def test_schedule_messages_falls_back_for_unsupported_lang_param(client, event):
+    event.locale = 'en'
+    event.settings.set('locale', 'en')
+    event.settings.set('locales', ['en'])
+    event.talks_published = True
+    event.feature_flags['show_schedule'] = True
+    event.save()
+
+    response = client.get(event.urls.schedule + 'widget/messages.js?lang=unsupported-xyz')
+    assert response.status_code == 200
+    payload = json.loads(response.content.decode().split('const PRETALX_MESSAGES = ')[1].rstrip(';'))
+    assert payload['search'] == 'Search'
+    assert payload['add_to_calendar'] == 'Add to Calendar'
+    assert payload['print'] == 'Print'

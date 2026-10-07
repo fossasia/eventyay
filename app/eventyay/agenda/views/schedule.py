@@ -4,6 +4,7 @@ from contextlib import suppress
 from datetime import timedelta
 from urllib.parse import unquote, urljoin, urlparse, urlunparse
 
+from django.conf import settings
 from django.contrib import messages
 from django.core import signing
 from django.core.cache import cache
@@ -391,7 +392,13 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
 @cache_page(60 * 60 * 24, key_prefix='schedule-messages-v9')
 def schedule_messages(request, **kwargs):
     """Cached for static exports; bump key_prefix when message keys or copy change."""
-    lang = request.GET.get('lang') or getattr(request, 'event_language', None) or request.LANGUAGE_CODE
+    requested_lang = request.GET.get('lang')
+    supported_languages = {code for code, _ in settings.LANGUAGES}
+    lang = (
+        requested_lang.lower()
+        if requested_lang and requested_lang.lower() in supported_languages
+        else getattr(request, 'event_language', None) or request.LANGUAGE_CODE
+    )
     with translation.override(lang):
         strings = {
             'favs_anonymous_notice': _(
