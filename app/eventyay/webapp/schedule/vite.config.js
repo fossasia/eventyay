@@ -66,7 +66,14 @@ export default defineConfig({
 		alias: [
 			{ find: '~', replacement: path.resolve(dirname, 'src') },
 			{ find: /^buntpapier$/, replacement: path.resolve(dirname, 'node_modules/buntpapier/src/index.js') },
-			{ find: 'moment-timezone', replacement: path.resolve(dirname, 'node_modules/moment-timezone/builds/moment-timezone-with-data-10-year-range.js') },
+			{ find: /^moment-timezone$/, replacement: path.resolve(dirname, 'node_modules/moment-timezone/builds/moment-timezone-with-data-10-year-range.js') },
+			// Resolve every `moment` import to the CommonJS entry point.
+			// moment's package.json also exposes an ESM build via
+			// `jsnext:main` (dist/moment.js), which would otherwise create
+			// a second moment instance that the lazy-loaded locale chunks
+			// do not register with. Pinning to moment.js keeps a single
+			// shared instance across the app and all locale chunks.
+			{ find: /^moment$/, replacement: path.resolve(dirname, 'node_modules/moment/moment.js') },
 		],
 	},
 	build: {
@@ -86,6 +93,18 @@ export default defineConfig({
 				entryFileNames: 'pretalx-schedule.js',
 				chunkFileNames: (chunkInfo) => `pretalx-schedule-${stableChunkBase(chunkInfo)}.js`,
 				assetFileNames: 'pretalx-schedule.[ext]',
+				// Keep moment core and moment-timezone in a single shared chunk so
+				// the application and the lazy-loaded locale chunks all register
+				// with the same moment instance. Locale files themselves stay in
+				// separate on-demand chunks.
+				manualChunks(id) {
+					if (id.includes('node_modules/moment/locale/')) {
+						return
+					}
+					if (id.includes('node_modules/moment/') || id.includes('node_modules/moment-timezone/')) {
+						return 'pretalx-schedule-moment'
+					}
+				}
 			}
 		}
 	},

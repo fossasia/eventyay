@@ -143,57 +143,7 @@
 import { computed, defineAsyncComponent } from 'vue'
 import moment from 'moment-timezone'
 import { getMomentLocale, validateLanguageCode } from './locales/momentLocales'
-import 'moment/locale/de'
-import 'moment/locale/fr'
-import 'moment/locale/es'
-import 'moment/locale/ar'
-import 'moment/locale/zh-cn'
-import 'moment/locale/zh-tw'
-import 'moment/locale/pt'
-import 'moment/locale/ja'
-import 'moment/locale/ko'
-import 'moment/locale/nl'
-import 'moment/locale/nb'
-import 'moment/locale/nn'
-import 'moment/locale/it'
-import 'moment/locale/ru'
-import 'moment/locale/pl'
-import 'moment/locale/sv'
-import 'moment/locale/da'
-import 'moment/locale/fi'
-import 'moment/locale/tr'
-import 'moment/locale/he'
-import 'moment/locale/th'
-import 'moment/locale/vi'
-import 'moment/locale/id'
-import 'moment/locale/ms'
-import 'moment/locale/et'
-import 'moment/locale/lt'
-import 'moment/locale/lv'
-import 'moment/locale/sl'
-import 'moment/locale/sk'
-import 'moment/locale/hu'
-import 'moment/locale/cs'
-import 'moment/locale/el'
-import 'moment/locale/ro'
-import 'moment/locale/bg'
-import 'moment/locale/hr'
-import 'moment/locale/sr'
-import 'moment/locale/mk'
-import 'moment/locale/sq'
-import 'moment/locale/mt'
-import 'moment/locale/is'
-import 'moment/locale/fa'
-import 'moment/locale/ur'
-import 'moment/locale/ps'
-import 'moment/locale/ku'
-import 'moment/locale/bn'
-import 'moment/locale/gu'
-import 'moment/locale/mr'
-import 'moment/locale/ta'
-import 'moment/locale/te'
-import 'moment/locale/ml'
-import 'moment/locale/kn'
+import { loadMomentLocale } from './locales/lazyLoader'
 import MarkdownIt from 'markdown-it'
 import ScheduleToolbar from '~/components/ScheduleToolbar'
 import LinearSchedule from '~/components/LinearSchedule'
@@ -245,9 +195,9 @@ function localeToMoment (code) {
 	return map[normalized] || normalized
 }
 
-function setMomentLocale (code) {
+async function setMomentLocale (code) {
 	const locale = localeToMoment(code)
-	
+
 	// Validate locale before setting
 	const validation = validateLanguageCode(locale)
 	if (!validation.valid) {
@@ -255,8 +205,15 @@ function setMomentLocale (code) {
 		moment.locale('en')
 		return
 	}
-	
+
 	try {
+		// Load the locale chunk on demand instead of bundling all locales upfront
+		const loadResult = await loadMomentLocale(locale)
+		if (!loadResult.success) {
+			console.warn('⚠️ Could not lazy-load moment locale, falling back to en:', locale, loadResult.error)
+			moment.locale('en')
+			return
+		}
 		moment.locale(locale)
 	} catch (error) {
 		console.error('Failed to set moment locale:', error)
@@ -804,9 +761,9 @@ export default {
 		}
 	},
 	watch: {
-async locale (value) {
+		async locale (value) {
 			await changeScheduleLanguage(value)
-			setMomentLocale(value)
+			await setMomentLocale(value)
 		},
 		popularityFeatureEnabled (enabled) {
 			if (!enabled) {
