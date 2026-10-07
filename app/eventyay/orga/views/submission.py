@@ -346,7 +346,6 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
                 email=email,
                 name=form.cleaned_data.get('name'),
                 locale=form.cleaned_data.get('locale'),
-                biography=form.cleaned_data.get('biography'),
                 user=self.request.user,
             )
             messages.success(self.request, _('The speaker has been added to the proposal.'))
@@ -357,7 +356,7 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
         kwargs = super().get_form_kwargs()
         kwargs['event'] = self.request.event
         kwargs['require_name'] = True
-        kwargs['include_biography'] = True
+        kwargs['include_biography'] = False
         return kwargs
 
     def get_success_url(self):
@@ -419,7 +418,7 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
                 data=self.request.POST if self.request.method == 'POST' else None,
                 event=self.request.event,
                 prefix='speaker',
-                include_biography=True,
+                include_biography=False,
                 draft_save=self.request.POST.get('state') == SubmissionStates.DRAFT,
             )
 
@@ -569,7 +568,6 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
                     name=self.new_speaker_form.cleaned_data['name'],
                     locale=self.new_speaker_form.cleaned_data.get('locale'),
                     user=self.request.user,
-                    biography=self.new_speaker_form.cleaned_data.get('biography'),
                 )
         else:
             formset_result = self.save_formset(form.instance)
