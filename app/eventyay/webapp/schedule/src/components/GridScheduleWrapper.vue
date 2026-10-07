@@ -26,6 +26,7 @@
 </template>
 <script>
 import GridSchedule from './GridSchedule'
+import { daysOccupiedBySession } from '../utils'
 
 export default {
 	components: { GridSchedule },
@@ -75,10 +76,7 @@ export default {
 			// First pass: create groups of one day and put all sessions into their day(s)
 			const dayToSessions = new Map();
 			for (const session of this.sessions) {
-				const startDay = session.start.clone().tz(this.timezone).startOf('day');
-				const endDay = session.end.clone().tz(this.timezone).startOf('day');
-				for (let day = startDay.clone(); day.isSameOrBefore(endDay); day.add(1, 'day')) {
-					const dayKey = day.format('YYYY-MM-DD');
+				for (const dayKey of daysOccupiedBySession(session, this.timezone)) {
 					if (!dayToSessions.has(dayKey)) {
 						dayToSessions.set(dayKey, []);
 					}

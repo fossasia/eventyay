@@ -72,8 +72,7 @@
 							) {{ $t('Delete this room') }}
 	.ui-form-actions
 		bunt-button.btn-save(@click="save", :loading="saving", :error="!!error") {{ creating ? $t('Create') : $t('Save') }}
-		bunt-button.btn-sync(v-if="!creating && interpretationAdmin.usePluginStreams", @click="syncServices", :loading="syncing", :error="!!syncError", style="margin-left: 10px") {{ $t('Sync Services') }}
-		.errors {{ error || syncError || validationErrors.join(', ') }}
+		.errors {{ error || validationErrors.join(', ') }}
 </template>
 <script>
 import { markRaw } from 'vue'
@@ -96,7 +95,6 @@ import {
 	cloneLanguageStreamEntries,
 	fetchInterpretationLanguageStreams,
 	saveInterpretationLanguageStreams,
-	syncInterpretationServices,
 } from 'lib/interpretation-language-streams'
 
 export default {
@@ -132,9 +130,7 @@ export default {
 				'channel-loungemesh': ChannelLoungeMesh,
 			}),
 			saving: false,
-			syncing: false,
 			error: null,
-			syncError: null,
 			confirmingDelete: false,
 			deletingRoomName: '',
 			deleting: false,
@@ -245,12 +241,13 @@ export default {
 			this.saving = true
 			try {
 				let roomId = this.config.id
-				if (this.creating) {
+				if (this.creating && !this.config.id) {
 					({ room: roomId } = await this.$store.dispatch('createRoom', {
 						name: this.config.name,
 						description: this.config.description,
 						modules: []
 					}))
+					this.config.id = roomId
 				}
 				let moduleConfig = this.config.module_config || []
 				if (['channel-bbb', 'channel-jitsi'].includes(this.inferredType?.id)) {
@@ -275,6 +272,10 @@ export default {
 					} catch (e) {
 						console.warn('Failed to store streamScheduleDraft in sessionStorage:', e)
 					}
+				}
+
+				if (this.$refs.settings?.saveInterpretationConfig) {
+					await this.$refs.settings.saveInterpretationConfig(roomId)
 				}
 
 				if (this.$refs.settings?.saveStreamSchedules) {
@@ -308,16 +309,6 @@ export default {
 				this.saving = false
 				this.error = error.message || error
 			}
-		},
-		async syncServices() {
-			this.syncError = null
-			this.syncing = true
-			try {
-				await syncInterpretationServices(this.$store, this.config.id)
-			} catch (error) {
-				this.syncError = error.message || error
-			}
-			this.syncing = false
 		},
 		cancelDelete() {
 			this.confirmingDelete = false

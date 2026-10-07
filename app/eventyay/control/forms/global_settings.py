@@ -5,12 +5,14 @@ from typing import List, Union
 
 from django import forms
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import UploadedFile
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.forms import SECRET_REDACTED, SecretKeySettingsField, SecretKeySettingsWidget, SettingsForm
+from eventyay.base.models.privacy import ConsentProvider
 from eventyay.base.settings import EVENT_SERIES_CREATION_ENABLED, MEETUP_CREATION_ENABLED, GlobalSettingsObject
 from eventyay.base.signals import register_global_settings
 from eventyay.common.urls import get_file_url_path
@@ -73,8 +75,6 @@ class GlobalSettingsForm(SettingsForm):
         Load default email setting form .cfg file if not set
         """
         global_settings = self.obj.settings
-        if global_settings.get('billing_validation') is None:
-            global_settings.set('billing_validation', True)
         if global_settings.get(EVENT_SERIES_CREATION_ENABLED) is None:
             global_settings.set(EVENT_SERIES_CREATION_ENABLED, True)
         if global_settings.get(MEETUP_CREATION_ENABLED) is None:
@@ -783,39 +783,7 @@ class GlobalTicketingSettingsForm(SettingsForm):
                         help_text=_('Test secret key for ticket payments via the Stripe plugin.'),
                     ),
                 ),
-                (
-                    'payment_stripe_connect_app_fee_percent',
-                    forms.DecimalField(
-                        label=_('App fee percentage'),
-                        required=False,
-                        decimal_places=2,
-                        max_digits=10,
-                        help_text=_('A percentage fee charged on each ticket payment processed through Stripe Connect.'),
-                        validators=[MinValueValidator(0), MaxValueValidator(100)],
-                    ),
-                ),
-                (
-                    'payment_stripe_connect_app_fee_min',
-                    forms.DecimalField(
-                        label=_('App fee minimum'),
-                        required=False,
-                        decimal_places=2,
-                        max_digits=10,
-                        help_text=_('Minimum fee amount charged on ticket payments.'),
-                        validators=[MinValueValidator(0)],
-                    ),
-                ),
-                (
-                    'payment_stripe_connect_app_fee_max',
-                    forms.DecimalField(
-                        label=_('App fee maximum'),
-                        required=False,
-                        decimal_places=2,
-                        max_digits=10,
-                        help_text=_('Maximum fee amount charged on ticket payments.'),
-                        validators=[MinValueValidator(0)],
-                    ),
-                ),
+
                 # PayPal
                 (
                     'payment_paypal_connect_client_id',
@@ -873,9 +841,6 @@ class GlobalTicketingSettingsForm(SettingsForm):
             'payment_stripe_connect_secret_key',
             'payment_stripe_connect_test_publishable_key',
             'payment_stripe_connect_test_secret_key',
-            'payment_stripe_connect_app_fee_percent',
-            'payment_stripe_connect_app_fee_min',
-            'payment_stripe_connect_app_fee_max',
 
             # PayPal
             'payment_paypal_connect_client_id',
@@ -974,124 +939,62 @@ class StripeKeyValidator:
             raise forms.ValidationError(message, code='invalid-stripe-key', params=params)
 
 
-class GlobalBusinessSettingsForm(SettingsForm):
+class PrivacySettingsForm(SettingsForm):
+    """
+    Privacy & Compliance configuration.
+
+    The consent provider is a single choice rather than independent switches,
+    which is what keeps the built-in Klaro banner and an external CMP from ever
+    running at the same time (issue #5414, section 9).
+    """
+
+    auto_fields = [
+        'privacy_cmp_provider_name',
+        'privacy_cmp_script_url',
+        'privacy_policy_url',
+        'privacy_cookie_policy_url',
+        'privacy_category_functional_enabled',
+        'privacy_category_analytics_enabled',
+        'privacy_category_marketing_enabled',
+        'privacy_category_embed_enabled',
+    ]
+
     def __init__(self, *args, **kwargs):
+        """__init__ method."""
         self.obj = GlobalSettingsObject()
         super().__init__(*args, obj=self.obj, **kwargs)
 
-        self.fields.update(
-            OrderedDict([
-                # Stripe for Organizer Billing
-                (
-                    'payment_stripe_publishable_key',
-                    forms.CharField(
-                        label=_('Publishable key (Live)'),
-                        required=False,
-                        validators=(StripeKeyValidator('pk_live_'),),
-                        help_text=_('Live publishable key for organizer billing and platform fees.'),
-                    ),
-                ),
-                (
-                    'payment_stripe_secret_key',
-                    SecretKeySettingsField(
-                        label=_('Secret key (Live)'),
-                        required=False,
-                        validators=(StripeKeyValidator(['sk_live_', 'rk_live_']),),
-                        help_text=_('Live secret key for organizer billing and platform fees.'),
-                    ),
-                ),
-                (
-                    'payment_stripe_test_publishable_key',
-                    forms.CharField(
-                        label=_('Publishable key (Test)'),
-                        required=False,
-                        validators=(StripeKeyValidator('pk_test_'),),
-                        help_text=_('Test publishable key for organizer billing and platform fees.'),
-                    ),
-                ),
-                (
-                    'payment_stripe_test_secret_key',
-                    SecretKeySettingsField(
-                        label=_('Secret key (Test)'),
-                        required=False,
-                        validators=(StripeKeyValidator(['sk_test_', 'rk_test_']),),
-                        help_text=_('Test secret key for organizer billing and platform fees.'),
-                    ),
-                ),
-                (
-                    'stripe_webhook_secret_key',
-                    SecretKeySettingsField(
-                        label=_('Webhook secret key'),
-                        required=False,
-                        help_text=_('Configure this endpoint in your Stripe dashboard to receive billing events.'),
-                    ),
-                ),
-                (
-                    'ticket_fee_percentage',
-                    forms.DecimalField(
-                        label=_('Ticket fee percentage'),
-                        required=False,
-                        decimal_places=2,
-                        max_digits=10,
-                        help_text=_('A percentage fee will be charged for each ticket sold.'),
-                        validators=[MinValueValidator(0), MaxValueValidator(100)],
-                    ),
-                ),
-                (
-                    'ticket_fee_maximum',
-                    forms.DecimalField(
-                        label=_('Global maximum ticket fee'),
-                        required=False,
-                        decimal_places=2,
-                        max_digits=12,
-                        min_value=0,
-                        help_text=_('Global maximum fee limit per order in platform base currency. Set to 0 or leave empty for no limit.'),
-                    ),
-                ),
-                (
-                    'billing_validation',
-                    forms.BooleanField(
-                        required=False,
-                        label=_('Billing validation'),
-                        help_text=_(
-                            'Billing validation lets you require organizers to set up a billing method before they can create events. '
-                            'When this option is enabled, no new event can be created until a valid billing method has been added.'
-                        ),
-                    ),
-                ),
-                (
-                    'business_grace_period_days',
-                    forms.IntegerField(
-                        label=_('Business subscription grace period (days)'),
-                        required=False,
-                        min_value=0,
-                        initial=7,
-                        help_text=_('Number of days past-due subscriptions remain active before being expired.'),
-                    ),
-                ),
-            ])
+        self.fields['privacy_consent_provider'] = forms.ChoiceField(
+            label=_('Consent provider'),
+            choices=ConsentProvider.choices,
+            required=True,
+            help_text=_(
+                'Existing deployments stay on "Disabled" until an administrator turns consent on.'
+            ),
         )
 
-        if 'billing_validation' not in self.initial or self.initial['billing_validation'] is None:
-            self.initial['billing_validation'] = self.obj.settings.get('billing_validation', as_type=bool, default=True)
-        grace_days = self.obj.settings.get('business_grace_period_days', as_type=int, default=7)
-        if grace_days is not None:
-            self.initial['business_grace_period_days'] = int(grace_days)
+    def clean(self):
+        """clean method."""
+        data = super().clean()
+        provider = data.get('privacy_consent_provider')
 
-        self.field_groups = [
-            ('organizer_billing', _('Organizer Billing'), [
-                'payment_stripe_publishable_key',
-                'payment_stripe_secret_key',
-                'payment_stripe_test_publishable_key',
-                'payment_stripe_test_secret_key',
-                'stripe_webhook_secret_key',
-                'business_grace_period_days',
-            ]),
-            ('ticket_fee', _('Ticket Fee'), [
-                'ticket_fee_percentage',
-                'ticket_fee_maximum',
-            ]),
-            ('billing_validation', _('Billing Validation'), [
-                'billing_validation',
-            ]),
-        ]
+        if provider == ConsentProvider.EXTERNAL and not data.get('privacy_cmp_script_url'):
+            raise ValidationError(
+                {'privacy_cmp_script_url': _('An external CMP needs a script URL to load.')}
+            )
+
+        # A banner that points at a missing policy page is worse than no banner,
+        # so refuse the combination instead of silently rendering a dead link.
+        if provider == ConsentProvider.KLARO and not data.get('privacy_cookie_policy_url'):
+            raise ValidationError(
+                {'privacy_cookie_policy_url': _('Publish a Cookie Policy before enabling the banner.')}
+            )
+
+        # GDPR/ePrivacy require the banner to link to the overarching Privacy
+        # Policy as well as the Cookie Policy, so enforce both the same way.
+        if provider == ConsentProvider.KLARO and not data.get('privacy_policy_url'):
+            raise ValidationError(
+                {'privacy_policy_url': _('Publish a Privacy Policy before enabling the banner.')}
+            )
+
+        return data
