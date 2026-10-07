@@ -48,6 +48,8 @@ class VoucherSerializer(I18nAwareModelSerializer):
             'valid_until',
             'block_quota',
             'allow_ignore_quota',
+            'all_addons_included',
+            'all_bundles_included',
             'price_mode',
             'value',
             'budget',

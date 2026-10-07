@@ -1154,7 +1154,7 @@ class Submission(GenerateCode, PretalxModel):
                 },
             )
 
-    def send_invite(self, to, _from=None, subject=None, text=None):
+    def send_invite(self, to, _from=None):
         """Invites one or more speakers by email and sends right away.
 
         Returns the list of :class:`SpeakerInvitation` objects that were
@@ -1163,11 +1163,11 @@ class Submission(GenerateCode, PretalxModel):
         from .mail import QueuedMail
         from .speaker_invitation import SpeakerInvitation
 
-        if not _from and (not subject or not text):
+        if not _from:
             raise ValueError('Please enter a sender for this invitation.')
 
-        subject = subject or phrases.cfp.invite_subject.format(speaker=_from.get_display_name())
-        text = text or phrases.cfp.invite_text.format(
+        subject = phrases.cfp.invite_subject.format(speaker=_from.get_display_name())
+        text = phrases.cfp.invite_text.format(
             event=self.event.name,
             title=self.title,
             url=self.urls.accept_invitation.full(),

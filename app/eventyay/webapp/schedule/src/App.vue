@@ -100,8 +100,8 @@
 			@changeDay="setCurrentDay($event)",
 			@fav="fav($event)",
 			@unfav="unfav($event)")
-		.no-results(v-if="sessions && !sessions.length && (searchQuery || (isFeaturedPage && featuredRemote))")
-			.no-results-text No sessions match your search.
+		.no-results(v-if="sessions && (sessionsMode ? !properSessions.length : !sessions.length) && scheduleCoverageComplete && !dayLoading && !publicFavsLoading && publicFavsLoaded", role="status")
+			.no-results-text {{ $t('No sessions match the current filters.') }}
 		list-pagination(
 			v-if="isFeaturedPage && featuredTotalPages > 1",
 			compact,
@@ -342,6 +342,8 @@ export default {
 			allTypes: [],
 			allLanguages: [],
 			onlyFavs: false,
+			publicFavsLoading: !!this.publicFavsUrl,
+			publicFavsLoaded: !this.publicFavsUrl,
 			shareStarredSessions: false,
 			scheduleError: false,
 			scheduleUnavailable: false,
@@ -580,6 +582,13 @@ export default {
 		scheduleNeedsText () {
 			if (!this.schedule?.compact) return false
 			return !this.showGrid || this.sessionsMode || !!this.searchQuery
+		},
+		scheduleCoverageComplete () {
+			if (!this.schedule?.compact) return true
+			if (this.schedule.view_timezone !== this.currentTimezone) return false
+			const days = this.scheduleNeedsEveryDay ? this.schedule.days : [this.currentDay]
+			return !!days?.length && days.every(day => this.loadedScheduleDays[day]
+				&& (!this.scheduleNeedsText || this.textReadyDays[day]))
 		},
 		gridDisplaySessions () {
 			if (!this.sessions) return this.sessions
@@ -885,6 +894,7 @@ export default {
 				this.favsReadOnly = true
 				this.onlyFavs = true
 				this.favs = this.pruneFavs(await this.loadPublicFavs(), this.schedule)
+				this.publicFavsLoading = false
 			} else {
 				this.favs = this.pruneFavs(await this.loadFavs(), this.schedule)
 				if (!this.loggedIn && this.favs.length) this.showAnonymousFavsInfo()
@@ -929,6 +939,7 @@ export default {
 			this.onlyFavs = true
 			const publicFavs = await this.loadPublicFavs()
 			this.favs = this.featuredRemote ? publicFavs : this.pruneFavs(publicFavs, this.schedule)
+			this.publicFavsLoading = false
 		} else {
 			const savedFavs = await this.loadFavs()
 			this.favs = this.featuredRemote ? savedFavs : this.pruneFavs(savedFavs, this.schedule)
@@ -1445,14 +1456,22 @@ export default {
 		},
 		async loadPublicFavs () {
 			if (!this.publicFavsUrl) return []
+			this.publicFavsLoaded = false
 			try {
 				const response = await fetch(this.publicFavsUrl)
-				if (!response.ok) return []
+				if (!response.ok) {
+					console.error('Failed to load public favourites: HTTP', response.status)
+					return []
+				}
 				const data = await response.json()
-				if (Array.isArray(data)) return data
-				if (data && Array.isArray(data.favs)) return data.favs
-			} catch {
-				return []
+				const favs = Array.isArray(data) ? data : data?.favs
+				if (Array.isArray(favs)) {
+					this.publicFavsLoaded = true
+					return favs
+				}
+				console.error('Failed to load public favourites: invalid response format')
+			} catch (error) {
+				console.error('Failed to load public favourites', error)
 			}
 			return []
 		},

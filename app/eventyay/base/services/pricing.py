@@ -5,7 +5,6 @@ from eventyay.base.models import (
     AbstractPosition,
     InvoiceAddress,
     Product,
-    ProductAddOn,
     ProductVariation,
     Voucher,
 )
@@ -29,12 +28,14 @@ def get_price(
     tax_rule=None,
 ) -> TaxedPrice:
     if addon_to:
-        try:
-            iao = addon_to.product.addons.get(addon_category_id=product.category_id)
-            if iao.price_included:
-                return TAXED_ZERO
-        except ProductAddOn.DoesNotExist:
-            pass
+        if addon_to.voucher_id and addon_to.voucher.all_addons_included:
+            return TAXED_ZERO
+        # Iterate the (possibly prefetched) relation instead of .get() to avoid a query per call
+        for iao in addon_to.product.addons.all():
+            if iao.addon_category_id == product.category_id:
+                if iao.price_included:
+                    return TAXED_ZERO
+                break
 
     price = product.default_price
     if subevent and product.pk in subevent.product_price_overrides:
