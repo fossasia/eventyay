@@ -341,7 +341,7 @@ class TalkQuestion(OrderedModel, PretalxModel):
         :param filter_speakers: Apply only to these speakers.
         :param filter_talks: Apply only to these talks.
         """
-        from eventyay.base.models import Submission, User
+        from eventyay.base.models import Submission, SubmissionStates, User
 
         answers = self.answers.all()
         filter_talks = filter_talks or Submission.objects.none()
@@ -353,7 +353,9 @@ class TalkQuestion(OrderedModel, PretalxModel):
             submissions = filter_talks or self.event.submissions.all()
             return max(submissions.count() - answer_count, 0)
         if self.target == TalkQuestionTarget.SPEAKER:
-            users = filter_speakers or User.objects.filter(submissions__event_id=self.event.pk)
+            users = filter_speakers or User.objects.filter(submissions__event_id=self.event.pk).exclude(
+                submissions__state__in=[SubmissionStates.DELETED, SubmissionStates.DRAFT]
+            ).distinct()
             return max(users.count() - answer_count, 0)
         return 0
 

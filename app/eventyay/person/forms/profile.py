@@ -591,7 +591,8 @@ class UserSpeakerFilterForm(forms.Form):
             .annotate(
                 submission_count=Count(
                     'submissions',
-                    filter=Q(submissions__event__in=events),
+                    filter=Q(submissions__event__in=events)
+                    & ~Q(submissions__state__in=(SubmissionStates.DELETED, SubmissionStates.DRAFT)),
                     distinct=True,
                 ),
                 accepted_submission_count=Count(

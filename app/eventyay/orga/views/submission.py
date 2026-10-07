@@ -98,7 +98,7 @@ from eventyay.talk_rules.tracks import apply_track_limit, user_has_track_limits
 
 class SubmissionViewMixin(PermissionRequired):
     def get_queryset(self):
-        return Submission.objects.filter(event=self.request.event)
+        return Submission.all_objects.filter(event=self.request.event)
 
     def get_object(self):
         return get_object_or_404(
@@ -141,7 +141,8 @@ class ReviewerSubmissionFilter:
 
     def get_queryset(self, for_review=False):
         queryset = (
-            self.request.event.submissions.all()
+            self.request.event.submissions(manager='all_objects')
+            .exclude(state=SubmissionStates.DRAFT)
             .select_related('submission_type', 'event', 'track')
             .prefetch_related('speakers')
         )
@@ -830,7 +831,7 @@ class BaseSubmissionList(Sortable, ReviewerSubmissionFilter, PaginationMixin, Li
         # see the proposals they can review.
         qs = super().get_queryset(for_review=for_review).order_by('-id')
         if not self.filter_form.is_valid():
-            return qs
+            return qs.exclude(state=SubmissionStates.DELETED)
         return self.filter_form.filter_queryset(qs)
 
     def get_queryset(self):

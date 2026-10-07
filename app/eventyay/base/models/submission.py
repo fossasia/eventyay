@@ -89,14 +89,14 @@ class SubmissionStates(Choices):
     valid_choices = [(key, value) for key, value in display_values.items()]
 
     valid_next_states = {
-        SUBMITTED: (REJECTED, WITHDRAWN, ACCEPTED),
-        REJECTED: (ACCEPTED, SUBMITTED),
-        ACCEPTED: (CONFIRMED, CANCELED, REJECTED, SUBMITTED, WITHDRAWN),
-        CONFIRMED: (ACCEPTED, CANCELED),
-        CANCELED: (ACCEPTED, CONFIRMED),
-        WITHDRAWN: (SUBMITTED),
+        SUBMITTED: (REJECTED, WITHDRAWN, ACCEPTED, DELETED),
+        REJECTED: (ACCEPTED, SUBMITTED, DELETED),
+        ACCEPTED: (CONFIRMED, CANCELED, REJECTED, SUBMITTED, WITHDRAWN, DELETED),
+        CONFIRMED: (ACCEPTED, CANCELED, DELETED),
+        CANCELED: (ACCEPTED, CONFIRMED, DELETED),
+        WITHDRAWN: (SUBMITTED, DELETED),
         DELETED: (),
-        DRAFT: (SUBMITTED,),
+        DRAFT: (SUBMITTED, DELETED),
     }
 
     method_names = {
@@ -119,6 +119,7 @@ class SubmissionStates(Choices):
             SubmissionStates.ACCEPTED: '--color-success',
             SubmissionStates.CONFIRMED: '--color-success',
             SubmissionStates.REJECTED: '--color-danger',
+            SubmissionStates.DELETED: '--color-danger',
         }.get(state, '--color-grey')
 
 
