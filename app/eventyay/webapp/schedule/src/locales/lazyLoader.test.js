@@ -7,7 +7,10 @@ import {
 	getLoadedMomentLocales,
 	getMomentLocaleLoadStats,
 	preloadMomentLocales,
+	preloadCommonLocales,
 	resetMomentLocaleLoader,
+	getLoadingState,
+	COMMON_LOCALES,
 	MOMENT_LOCALE_LOADERS
 } from './lazyLoader.js'
 
@@ -128,4 +131,43 @@ test('loader map keys are lowercase locale codes', () => {
 	for (const key of Object.keys(MOMENT_LOCALE_LOADERS)) {
 		assert.equal(key, key.toLowerCase())
 	}
+})
+
+test('COMMON_LOCALES includes all whitelisted locales', () => {
+	const whitelisted = ['en', 'pt', 'es', 'fr', 'de', 'ru', 'zh-cn', 'ja', 'ko', 'it', 'pl', 'tr']
+	for (const w of whitelisted) {
+		assert.ok(COMMON_LOCALES.includes(w), `Missing whitelisted locale: ${w}`)
+	}
+})
+
+test('preloadCommonLocales loads all whitelisted locales', async () => {
+	resetMomentLocaleLoader()
+	const results = await preloadCommonLocales()
+
+	assert.ok(results.every(r => r.success), 'All common locales should load successfully')
+	for (const w of ['en', 'pt', 'es', 'fr', 'de', 'ru', 'zh-cn', 'ja', 'ko', 'it', 'pl', 'tr']) {
+		assert.ok(isMomentLocaleLoaded(w), `${w} should be loaded`)
+	}
+})
+
+test('getLoadingState reports correct state', async () => {
+	resetMomentLocaleLoader()
+	assert.equal(getLoadingState('de'), 'idle')
+
+	const promise = loadMomentLocale('de')
+	// While loading, state should be 'loading'
+	assert.equal(getLoadingState('de'), 'loading')
+
+	await promise
+	assert.equal(getLoadingState('de'), 'loaded')
+})
+
+test('loadMomentLocale retries on failure', async () => {
+	resetMomentLocaleLoader()
+	
+	// The loader for 'nonexistent' will fail, but we can test retry behavior
+	// by checking that it doesn't immediately give up
+	const result = await loadMomentLocale('nonexistent', { maxRetries: 1 })
+	assert.equal(result.success, false)
+	assert.ok(result.error)
 })

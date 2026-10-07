@@ -68,6 +68,14 @@ const MOMENT_LOCALE_LOADERS = {
 // 'en' is bundled with moment core and needs no separate load
 const loadedLocales = new Set(['en'])
 const pendingLoads = new Map()
+const loadingStates = new Map() // locale -> 'loading' | 'idle' | 'error'
+
+// Common locales to preload on startup (whitelisted + high-usage)
+const COMMON_LOCALES = ['en', 'pt', 'es', 'fr', 'de', 'ru', 'zh-cn', 'ja', 'ko', 'it', 'pl', 'tr']
+
+// Retry configuration
+const MAX_RETRIES = 2
+const BASE_RETRY_DELAY = 300 // ms
 
 /**
  * Normalize a locale code for loader lookup
@@ -87,12 +95,15 @@ export function isMomentLocaleLoaded(locale) {
 }
 
 /**
- * Load a moment.js locale on demand
+ * Load a moment.js locale on demand with retry logic
  *
  * @param {string} locale - Locale code to load (e.g. 'de', 'zh-cn')
+ * @param {Object} options - Options
+ * @param {number} options.maxRetries - Max retry attempts (default: 2)
  * @returns {Promise<Object>} Result with success status, locale, and cached flag
  */
-export async function loadMomentLocale(locale) {
+export async function loadMomentLocale(locale, options = {}) {
+	const { maxRetries = MAX_RETRIES } = options
 	const code = normalizeLocaleCode(locale)
 
 	if (!code) {
@@ -123,22 +134,39 @@ export async function loadMomentLocale(locale) {
 		return { success: true, locale: code, cached: true }
 	}
 
-	const loadPromise = loader()
-	pendingLoads.set(code, loadPromise)
+	let attempt = 0
+	const loadWithRetry = async () => {
+		const loadPromise = loader()
+		pendingLoads.set(code, loadPromise)
+		loadingStates.set(code, 'loading')
 
-	try {
-		await loadPromise
-		loadedLocales.add(code)
-		return { success: true, locale: code, cached: false }
-	} catch (error) {
-		pendingLoads.delete(code)
-		console.error(`Failed to load moment locale: ${code}`, error)
-		return {
-			success: false,
-			locale: code,
-			error: error?.message || String(error)
+		try {
+			await loadPromise
+			loadedLocales.add(code)
+			loadingStates.set(code, 'idle')
+			return { success: true, locale: code, cached: false }
+		} catch (error) {
+			pendingLoads.delete(code)
+			loadingStates.set(code, 'error')
+			
+			if (attempt < maxRetries) {
+				attempt++
+				const delay = BASE_RETRY_DELAY * Math.pow(2, attempt - 1)
+				console.warn(`Locale load failed (attempt ${attempt}/${maxRetries}), retrying in ${delay}ms:`, code, error)
+				await new Promise(r => setTimeout(r, delay))
+				return loadWithRetry()
+			}
+			
+			console.error(`Failed to load moment locale after ${maxRetries + 1} attempts: ${code}`, error)
+			return {
+				success: false,
+				locale: code,
+				error: error?.message || String(error)
+			}
 		}
 	}
+
+	return loadWithRetry()
 }
 
 /**
@@ -153,6 +181,27 @@ export async function preloadMomentLocales(locales) {
 	}
 
 	return Promise.all(locales.map(locale => loadMomentLocale(locale)))
+}
+
+/**
+ * Preload commonly used locales on startup for better UX
+ *
+ * @returns {Promise<Object[]>} Results from preloadMomentLocales
+ */
+export async function preloadCommonLocales() {
+	return preloadMomentLocales(COMMON_LOCALES)
+}
+
+/**
+ * Get the loading state of a locale
+ *
+ * @param {string} locale - Locale code
+ * @returns {string} 'idle' | 'loading' | 'error' | 'loaded'
+ */
+export function getLoadingState(locale) {
+	const code = normalizeLocaleCode(locale)
+	if (loadedLocales.has(code)) return 'loaded'
+	return loadingStates.get(code) || 'idle'
 }
 
 /**
@@ -187,4 +236,4 @@ export function resetMomentLocaleLoader() {
 	pendingLoads.clear()
 }
 
-export { MOMENT_LOCALE_LOADERS }
+export { MOMENT_LOCALE_LOADERS, COMMON_LOCALES }

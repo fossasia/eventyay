@@ -142,8 +142,8 @@
 <script>
 import { computed, defineAsyncComponent } from 'vue'
 import moment from 'moment-timezone'
-import { getMomentLocale, validateLanguageCode } from './locales/momentLocales'
-import { loadMomentLocale } from './locales/lazyLoader'
+import { validateLanguageCode } from './locales/momentLocales'
+import { loadMomentLocale, preloadCommonLocales } from './locales/lazyLoader'
 import MarkdownIt from 'markdown-it'
 import ScheduleToolbar from '~/components/ScheduleToolbar'
 import LinearSchedule from '~/components/LinearSchedule'
@@ -836,6 +836,8 @@ export default {
 	},
 	async created () {
 		this._compactTimezoneGeneration = 0
+		// Preload common locales in background for instant locale switching
+		preloadCommonLocales().catch(err => console.warn('Preload common locales failed:', err))
 		// Gotta get the fragment early, before anything else sneakily modifies it
 		const fragment = window.location.hash.slice(1)
 		await changeScheduleLanguage(this.locale)
