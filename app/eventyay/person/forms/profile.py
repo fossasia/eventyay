@@ -132,8 +132,10 @@ class SpeakerProfileForm(
             field_kwargs = {
                 'initial': initial.get(field),
                 'disabled': read_only,
-                'help_text': User._meta.get_field(field).help_text,
+                'help_text': self.Meta.help_texts.get(field, User._meta.get_field(field).help_text),
             }
+            if field in self.Meta.labels:
+                field_kwargs['label'] = self.Meta.labels[field]
             if field == 'avatar':
                 field_kwargs['max_size'] = settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE]
             self.fields[field] = field_class(**field_kwargs)
@@ -290,9 +292,9 @@ class SpeakerProfileForm(
         _cfp = getattr(self.event, 'cfp', None) if hasattr(self.event, 'cfp') else None
         if not getattr(self, 'not_strict', False) and _cfp and _cfp.require_avatar and not data.get('avatar') and not data.get('get_gravatar'):
             if _cfp.enable_gravatar:
-                msg = _('Please provide a profile picture or allow us to load your picture from gravatar!')
+                msg = _('Please provide a speaker photo or allow us to load your photo from gravatar!')
             else:
-                msg = _('Please provide a profile picture!')
+                msg = _('Please provide a speaker photo!')
             self.add_error('avatar', forms.ValidationError(msg))
 
         fullname = self.cleaned_data.get('fullname')
@@ -368,6 +370,18 @@ class SpeakerProfileForm(
         model = SpeakerProfile
         fields = ('biography', 'job_title', 'organization')
         public_fields = ['fullname', 'biography', 'job_title', 'organization', 'avatar']
+        labels = {
+            'avatar': _('Speaker photo'),
+            'avatar_source': _('Speaker photo source'),
+            'avatar_license': _('Speaker photo license'),
+            'get_gravatar': _('Retrieve speaker photo via gravatar'),
+        }
+        help_texts = {
+            'get_gravatar': _(
+                'If you have registered with an email address that has a gravatar account, '
+                'we can retrieve your speaker photo from there.'
+            ),
+        }
         widgets = {
             'biography': RichTextWidget,
             'avatar': AvatarInput,

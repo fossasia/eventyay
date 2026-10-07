@@ -208,10 +208,10 @@ def test_submission_speakers_wraps_avatar_license_text(orga_client, speaker, eve
 
     assert response.status_code == 200
     doc = bs4.BeautifulSoup(response.content, "lxml")
-    for label in ("Profile Picture Source:", "Profile Picture License:"):
+    for label in ("Speaker photo source", "Speaker photo license"):
         element = doc.find("strong", string=label)
         assert element is not None
-        wrapper = element.find_parent("p")
+        wrapper = element.find_parent("div", class_="avatar-license-text")
         assert wrapper is not None
         assert "avatar-license-text" in wrapper.get("class", [])
 

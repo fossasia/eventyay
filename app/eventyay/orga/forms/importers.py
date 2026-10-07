@@ -88,21 +88,28 @@ SPEAKER_IMPORT_FIELDS: list[ImportField] = [
     ),
     ImportField(
         identifier='avatar_url',
-        label=_('Profile picture URL'),
-        help_text=_('A URL pointing to the speaker\'s profile picture. The image will be downloaded and saved.'),
-        suggestions=['picture', 'avatar', 'profile picture', 'profile picture url', 'avatar url', 'image', 'image url', 'photo', 'photo url'],
+        label=_('Speaker photo URL'),
+        help_text=_('A URL pointing to the speaker\'s photo. The image will be downloaded and saved.'),
+        suggestions=[
+            'speaker photo', 'speaker photo url', 'picture', 'avatar', 'profile picture', 'profile picture url',
+            'avatar url', 'image', 'image url', 'photo', 'photo url',
+        ],
     ),
     ImportField(
         identifier='avatar_source',
-        label=_('Profile picture source'),
+        label=_('Speaker photo source'),
         help_text=_('Name the author or source of the image and include a link if available.'),
-        suggestions=['avatar source', 'profile picture source', 'image source', 'picture source'],
+        suggestions=[
+            'speaker photo source', 'avatar source', 'profile picture source', 'image source', 'picture source',
+        ],
     ),
     ImportField(
         identifier='avatar_license',
-        label=_('Profile picture license'),
+        label=_('Speaker photo license'),
         help_text=_('Please provide the license name and link if applicable.'),
-        suggestions=['avatar license', 'profile picture license', 'image license', 'picture license'],
+        suggestions=[
+            'speaker photo license', 'avatar license', 'profile picture license', 'image license', 'picture license',
+        ],
     ),
     ImportField(
         identifier='identifier',

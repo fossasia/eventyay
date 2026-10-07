@@ -6,7 +6,7 @@
 
 <div class="avatar-form form-group row">
     <label class="col-md-3 col-form-label">
-        <span>{% translate "Profile picture" %}<span class="d-inline text-danger">{% if form.avatar.field.required or form.avatar.field.widget.is_required %} *{% endif %}</span></span>
+        <span>{{ form.avatar.label }}<span class="d-inline text-danger">{% if form.avatar.field.required or form.avatar.field.widget.is_required %} *{% endif %}</span></span>
         {% if not form.avatar.field.required and not form.avatar.field.widget.is_required %}<span class="optional">{% translate "Optional" %}</span>{% endif %}
     </label>
     <div class="avatar-form-fields col-md-9">
@@ -38,7 +38,7 @@
                          class="avatar"
                          data-gravatar="{{ user.gravatar_parameter }}"
                          data-avatar="{% if user.avatar_url %}{{ user.avatar_url }}{% endif %}"
-                         alt="{% translate "Your avatar" %}"
+                         alt="{% translate 'Your speaker photo' %}"
                          {% if user.avatar_url %}src="{{ user.avatar_url }}"
                          {% elif user.get_gravatar and request.event.cfp.enable_gravatar %}src="{{ gravatar_url }}"{% endif %} />
 
