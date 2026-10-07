@@ -55,12 +55,11 @@ logger = logging.getLogger(__name__)
 
 def preview_validation_error(form) -> JsonResponse:
     # mail-preview.js inserts these as HTML, and messages can echo user input such as an invalid placeholder.
-    errors = {
-        str(escape(form.fields[name].label or name if name in form.fields else name)): [
-            str(escape(error)) for error in field_errors
-        ]
-        for name, field_errors in form.errors.items()
-    }
+    errors = {}
+    for name, field_errors in form.errors.items():
+        field = form.fields.get(name)
+        label = field.label if field and field.label else name
+        errors[str(escape(label))] = [str(escape(error)) for error in field_errors]
     return JsonResponse({'success': False, 'error': True, 'errors': errors}, status=400)
 
 
