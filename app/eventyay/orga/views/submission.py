@@ -690,13 +690,17 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
                     raise RollbackTransaction()
 
                 if created:
-                    if email := self.new_speaker_form.cleaned_data['email']:
+                    speaker_data = self.new_speaker_form.cleaned_data
+                    email = speaker_data.get('email')
+                    name = speaker_data.get('name')
+                    biography = speaker_data.get('biography')
+                    if email or name or biography:
                         form.instance.add_speaker(
                             email=email,
-                            name=self.new_speaker_form.cleaned_data['name'],
-                            locale=self.new_speaker_form.cleaned_data.get('locale'),
+                            name=name,
+                            locale=speaker_data.get('locale'),
                             user=self.request.user,
-                            biography=self.new_speaker_form.cleaned_data.get('biography'),
+                            biography=biography,
                         )
                 else:
                     formset_result = self.save_formset(form.instance)

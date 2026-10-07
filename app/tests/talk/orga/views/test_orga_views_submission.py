@@ -625,7 +625,7 @@ def test_orga_create_submission_preserves_speaker_after_form_error(orga_client, 
 
 
 @pytest.mark.django_db
-def test_orga_create_submission_does_not_save_before_speaker_validation(orga_client, event):
+def test_orga_can_create_submission_with_speaker_name_without_email(orga_client, event):
     with scope(event=event):
         type_pk = event.submission_types.first().pk
 
@@ -635,21 +635,38 @@ def test_orga_create_submission_does_not_save_before_speaker_validation(orga_cli
             "abstract": "abstract",
             "content_locale": "en",
             "description": "description",
-            "speaker-name": "Foo Speaker",
+            "duration": "",
+            "slot_count": 1,
+            "notes": "notes",
+            "internal_notes": "internal_notes",
+            "speaker-name": "Keynote Speaker",
+            "speaker-biography": "A noted keynote speaker.",
             "speaker-locale": "en",
             "state": "submitted",
             "submission_type": type_pk,
             "title": "title",
         },
+        follow=True,
     )
-
-    speaker_form = response.context["new_speaker_form"]
     assert response.status_code == 200
-    assert "__all__" not in speaker_form.errors
-    assert "email" in speaker_form.errors
-    assert len(speaker_form.errors["email"]) == 1
     with scope(event=event):
-        assert event.submissions.count() == 0
+        assert event.submissions.count() == 1
+        sub = event.submissions.first()
+        assert sub.speakers.count() == 1
+        speaker = sub.speakers.first()
+        assert speaker.fullname == "Keynote Speaker"
+        assert not speaker.email
+        assert speaker.event_profile(event).biography == "A noted keynote speaker."
+        assert sub.mails.all().count() == 0
+        assert sub.speaker_invitations.count() == 0
+
+
+@pytest.mark.django_db
+def test_orga_new_submission_speaker_email_help_text_explains_optional(orga_client, event):
+    response = orga_client.get(event.orga_urls.new_submission)
+    assert response.status_code == 200
+    assert "Optional. If provided, the speaker will be invited to create an account." in response.text
+    assert "You can add it later." in response.text
 
 
 @pytest.mark.django_db

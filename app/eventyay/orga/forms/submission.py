@@ -312,7 +312,9 @@ def get_speaker_choice_label(*, name: str | None, email: str) -> str:
 class AddSpeakerForm(forms.Form):
     email = forms.EmailField(
         label=phrases.cfp.speaker_email,
-        help_text=_('The email address of the speaker holding the session. They will be invited to create an account.'),
+        help_text=_(
+            'Optional. If provided, the speaker will be invited to create an account. You can add it later.'
+        ),
         required=False,
         widget=forms.Select,
     )
@@ -379,7 +381,11 @@ class AddSpeakerForm(forms.Form):
             name = self.data.get(name_key)
             email_widget.choices = [(email, get_speaker_choice_label(name=name, email=email))]
         if require_name:
+            # Adding a speaker to an existing session still needs an invite address.
             self.fields['email'].required = True
+            self.fields['email'].help_text = _(
+                'The email address of the speaker holding the session. They will be invited to create an account.'
+            )
             self.fields['name'].required = True
             if self.is_bound and self.data.get(email_key) and not self.data.get(name_key):
                 existing_user = User.objects.filter(email__iexact=self.data[email_key]).only('fullname').first()
@@ -394,32 +400,36 @@ class AddSpeakerForm(forms.Form):
 
     def clean(self):
         data = super().clean()
-        if data.get('name') and not data.get('email'):
-            self.add_error('email', _('Please provide an email address.'))
+        email = (data.get('email') or '').strip() or None
+        name = (data.get('name') or '').strip()
+        biography = data.get('biography') or ''
+        data['email'] = email
+        data['name'] = name
 
-        if self.submission and (email := data.get('email')):
-            if self.submission.has_speaker_email(email):
-                self.add_error(
-                    'email',
-                    _('This speaker has already been added or invited to the proposal.'),
-                )
+        if self.submission and email and self.submission.has_speaker_email(email):
+            self.add_error(
+                'email',
+                _('This speaker has already been added or invited to the proposal.'),
+            )
 
         existing_biography = False
-        email = data.get('email')
         if email:
             existing_user = User.objects.filter(email__iexact=email).first()
             if existing_user:
                 existing_profile = existing_user.profiles.filter(event=self.event).first()
                 existing_biography = bool(existing_profile and existing_profile.biography)
 
+        speaker_being_added = bool(email or name or biography)
         if (
             not self.draft_save
-            and email
+            and speaker_being_added
             and getattr(self, 'biography_required', False)
             and not existing_biography
-            and not data.get('biography')
+            and not biography
         ):
             self.add_error('biography', _('This field is required.'))
         return data
+
+
 class AddSpeakerInlineForm(AddSpeakerForm):
     default_renderer = InlineFormLabelRenderer

@@ -802,7 +802,12 @@ class User(
     # From talk
     def get_display_name(self) -> str:
         """Returns a user's name or 'Unnamed user'."""
-        return str(self.fullname) if self.fullname else str(self)
+        name = (
+            (self.fullname or "").strip()
+            or (self.email or "").strip()
+            or (self.nick or "").strip()
+        )
+        return name if name else str(_("Unnamed user"))
 
     # Override to add caching.
     def has_perm(self, perm: str, obj: Self | None = None) -> bool:
