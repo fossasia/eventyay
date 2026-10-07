@@ -1269,6 +1269,10 @@ onUnmounted(() => {
 			margin-right: 12px
 		> .bunt-scrollbar-rail-y
 			margin: 0
+		.c-linear-schedule-session
+			min-width: 0
+			width: 100%
+			box-sizing: border-box
 		.unassigned-header
 			position: sticky
 			top: 0
