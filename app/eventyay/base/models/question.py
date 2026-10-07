@@ -332,7 +332,7 @@ class TalkQuestion(OrderedModel, PretalxModel):
     def get_order_queryset(event):
         return event.questions(manager='all_objects').all()
 
-    def missing_answers(self, filter_speakers: list = False, filter_talks: list = False) -> int:
+    def missing_answers(self, filter_speakers: list = None, filter_talks: list = None) -> int:
         """Returns how many answers are still missing for this question.
 
         This method only supports submission questions and speaker questions.
@@ -344,18 +344,22 @@ class TalkQuestion(OrderedModel, PretalxModel):
         from eventyay.base.models import Submission, SubmissionStates, User
 
         if self.target == TalkQuestionTarget.SUBMISSION:
-            submissions = filter_talks or self.event.submissions.all()
+            submissions = self.event.submissions.all() if filter_talks is None or filter_talks is False else filter_talks
             total_submissions = len(submissions) if isinstance(submissions, (list, tuple, set)) else submissions.count()
-            answers = self.answers.filter(submission__in=submissions)
-            return max(total_submissions - answers.count(), 0)
+            answered = self.answers.filter(submission__in=submissions).values('submission').distinct().count()
+            return max(total_submissions - answered, 0)
         if self.target == TalkQuestionTarget.SPEAKER:
-            users = filter_speakers or User.objects.filter(
-                submissions__event_id=self.event.pk,
-                submissions__state__in=SubmissionStates.valid_submission_states,
-            ).distinct()
+            users = (
+                User.objects.filter(
+                    submissions__event_id=self.event.pk,
+                    submissions__state__in=SubmissionStates.valid_submission_states,
+                ).distinct()
+                if filter_speakers is None or filter_speakers is False
+                else filter_speakers
+            )
             total_users = len(users) if isinstance(users, (list, tuple, set)) else users.count()
-            answers = self.answers.filter(person__in=users)
-            return max(total_users - answers.count(), 0)
+            answered = self.answers.filter(person__in=users).values('person').distinct().count()
+            return max(total_users - answered, 0)
         return 0
 
 

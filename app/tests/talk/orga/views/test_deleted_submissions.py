@@ -250,16 +250,32 @@ def test_question_missing_answers_supports_list_input(event, speaker, submission
             question="Submission Question?",
             target=TalkQuestionTarget.SUBMISSION,
         )
-        # Pass Python list directly
+        # Pass non-empty Python list
         assert sub_question.missing_answers(filter_talks=[submission]) == 1
+        # Pass empty Python list (explicit empty filter)
+        assert sub_question.missing_answers(filter_talks=[]) == 0
+
+        # Create multiple answers for the same submission
+        Answer.objects.create(question=sub_question, submission=submission, answer="Answer 1")
+        Answer.objects.create(question=sub_question, submission=submission, answer="Answer 2")
+        assert sub_question.missing_answers(filter_talks=[submission]) == 0
+        assert sub_question.missing_answers() == 0
 
         speaker_question = TalkQuestion.objects.create(
             event=event,
             question="Speaker Question?",
             target=TalkQuestionTarget.SPEAKER,
         )
-        # Pass Python list directly
+        # Pass non-empty Python list
         assert speaker_question.missing_answers(filter_speakers=[speaker]) == 1
+        # Pass empty Python list (explicit empty filter)
+        assert speaker_question.missing_answers(filter_speakers=[]) == 0
+
+        # Create multiple answers for the same speaker
+        Answer.objects.create(question=speaker_question, person=speaker, answer="Speaker Answer 1")
+        Answer.objects.create(question=speaker_question, person=speaker, answer="Speaker Answer 2")
+        assert speaker_question.missing_answers(filter_speakers=[speaker]) == 0
+        assert speaker_question.missing_answers() == 0
 
 
 @pytest.mark.django_db
@@ -279,4 +295,63 @@ def test_deleted_submission_read_only_allowed_but_edit_blocked(orga_client, even
     # Edit view (mutation) blocks deleted submission and returns 404
     response_edit = orga_client.get(deleted_sub.orga_urls.edit, follow=True)
     assert response_edit.status_code == 404
+
+
+@pytest.mark.django_db
+def test_reviewer_track_limit_detail_view_active_and_deleted(
+    review_client,
+    review_user,
+    event,
+    track,
+    other_track,
+    submission_type,
+):
+    with scope(event=event):
+        review_user.teams.first().limit_tracks.add(track)
+
+        allowed_sub = Submission.objects.create(
+            event=event,
+            submission_type=submission_type,
+            title="Allowed Active Proposal",
+            track=track,
+            state=SubmissionStates.SUBMITTED,
+        )
+        allowed_deleted_sub = Submission.objects.create(
+            event=event,
+            submission_type=submission_type,
+            title="Allowed Deleted Proposal",
+            track=track,
+            state=SubmissionStates.DELETED,
+        )
+        off_limit_sub = Submission.objects.create(
+            event=event,
+            submission_type=submission_type,
+            title="Off Limit Active Proposal",
+            track=other_track,
+            state=SubmissionStates.SUBMITTED,
+        )
+        off_limit_deleted_sub = Submission.objects.create(
+            event=event,
+            submission_type=submission_type,
+            title="Off Limit Deleted Proposal",
+            track=other_track,
+            state=SubmissionStates.DELETED,
+        )
+
+    # Allowed active proposal is visible to reviewer (200)
+    response = review_client.get(allowed_sub.orga_urls.base, follow=True)
+    assert response.status_code == 200
+
+    # Allowed deleted proposal is visible to reviewer (200)
+    response = review_client.get(allowed_deleted_sub.orga_urls.base, follow=True)
+    assert response.status_code == 200
+
+    # Off-limit active proposal returns 404 for reviewer
+    response = review_client.get(off_limit_sub.orga_urls.base, follow=True)
+    assert response.status_code == 404
+
+    # Off-limit deleted proposal returns 404 for reviewer
+    response = review_client.get(off_limit_deleted_sub.orga_urls.base, follow=True)
+    assert response.status_code == 404
+
 

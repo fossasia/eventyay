@@ -768,12 +768,19 @@ class SubmissionContentView(SubmissionContent):
     http_method_names = ['get', 'head', 'options']
 
     def get_queryset(self, for_review=False):
-        return (
+        queryset = (
             self.request.event.submissions(manager='all_objects')
             .exclude(state=SubmissionStates.DRAFT)
             .select_related('submission_type', 'event', 'track')
             .prefetch_related('speakers')
         )
+        if self.is_only_reviewer:
+            queryset = limit_for_reviewers(queryset, self.request.event, self.request.user, self.limit_tracks)
+        elif user_has_track_limits(self.request.event, self.request.user):
+            queryset = apply_track_limit(queryset, self.request.event, self.request.user)
+        if for_review or 'is_reviewer' in self.request.user.get_permissions_for_event(self.request.event):
+            queryset = annotate_assigned(queryset, self.request.event, self.request.user)
+        return queryset
 
     def get_permission_required(self):
         if 'code' in self.kwargs:
