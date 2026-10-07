@@ -1,4 +1,8 @@
-from eventyay.base.services.stats import DummyObject, group_overview_by_classification
+import pytest
+from django.utils.timezone import now
+
+from eventyay.base.models import Event, Organizer
+from eventyay.base.services.stats import DummyObject, group_overview_by_classification, order_overview
 
 
 def _product(name, admission, num):
@@ -218,3 +222,15 @@ def test_group_overview_by_classification_keeps_fees_last_with_custom_categories
 
     assert [str(group.name) for group, _items in groups] == ['Merch', 'Fees']
     assert groups[-1][1] == [fee_product]
+
+
+@pytest.mark.django_db
+def test_order_overview_totals_are_zero_without_products():
+    organizer = Organizer.objects.create(name='Dummy', slug='dummy')
+    event = Event.objects.create(organizer=organizer, name='Dummy', slug='dummy', date_from=now())
+
+    products_by_category, total = order_overview(event, fees=True)
+
+    assert products_by_category == []
+    states = ('total', 'unapproved', 'canceled', 'paid', 'pending', 'expired')
+    assert total == {'num': dict.fromkeys(states, (0, 0, 0))}

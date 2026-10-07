@@ -170,16 +170,24 @@ export default {
 			sessionsMode: this.linearOnly,
 			searchQuery: '',
 			recordingFilter: 'all',
-			timeDensityMinutes: Number(localStorage.getItem('schedule-time-density-minutes') || 30),
+			timeDensityMinutes: (() => {
+				try {
+					return Number(localStorage.getItem('schedule-time-density-minutes') || 30)
+				} catch (error) {
+					console.error('Failed to read schedule time density from localStorage', error)
+					return 30
+				}
+			})(),
 			internalSortBy: this.sortBy || 'title',
 			sortIncludeRoom: false,
 			sortIncludeDate: (() => {
 				try {
 					const stored = localStorage.getItem('schedule-include-datetime')
-					if (stored === null) return false
+					if (stored === null) return true
 					return stored === 'true'
-				} catch {
-					return false
+				} catch (error) {
+					console.error('Failed to read schedule date-sort preference from localStorage', error)
+					return true
 				}
 			})(),
 			sortIncludePopularity: false,

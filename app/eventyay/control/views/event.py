@@ -872,9 +872,20 @@ class MailSettingsPreview(EventPermissionRequiredMixin, View):
                 idx = matched.group('idx')
                 if idx in self.supported_locale:
                     with language(self.supported_locale[idx], self.request.event.settings.region):
-                        msgs[self.supported_locale[idx]] = markdown_compile_email(
-                            v.format_map(self.placeholders(preview_product))
-                        )
+                        try:
+                            formatted = v.format_map(self.placeholders(preview_product))
+                        except ValueError:
+                            return JsonResponse(
+                                {
+                                    'error': _(
+                                        'Invalid email template! '
+                                        'Please check that you don’t have stray { or } somewhere, '
+                                        'and that there are no spaces inside the {} blocks.'
+                                    )
+                                },
+                                status=400,
+                            )
+                        msgs[self.supported_locale[idx]] = markdown_compile_email(formatted)
 
         return JsonResponse({'product': preview_product, 'msgs': msgs})
 
@@ -1314,12 +1325,12 @@ class EventActions(EventPermissionRequiredMixin, ListView):
 class EventActionDiscard(EventPermissionRequiredMixin, View):
     permission = 'can_change_orders'
 
-    def get(self, request, **kwargs):
+    def post(self, request, **kwargs):
         action = get_object_or_404(RequiredAction, event=request.event, pk=kwargs.get('id'))
         action.done = True
         action.user = request.user
         action.save()
-        messages.success(self.request, _('The issue has been marked as resolved!'))
+        messages.success(request, _('The issue has been marked as resolved!'))
         return redirect(self.get_success_url())
 
     def get_success_url(self) -> str:
@@ -1553,7 +1564,7 @@ class WidgetSettings(EventSettingsViewMixin, EventPermissionRequiredMixin, FormV
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['urlprefix'] = settings.SITE_URL
+        ctx['urlprefix'] = settings.SITE_URL.rstrip('/')
         domain = get_event_domain(self.request.event, fallback=True)
         if domain:
             siteurlsplit = urlsplit(settings.SITE_URL)

@@ -13,7 +13,9 @@
                 {% endif %}
                 <li class="page-item page-current disabled">
                     <span class="page-link">
-                        {% blocktrans trimmed with page=page_obj.number of=page_obj.paginator.num_pages count=page_obj.paginator.count %}
+                        {% blocktrans trimmed count count=page_obj.paginator.count with page=page_obj.number of=page_obj.paginator.num_pages %}
+                            Page {{ page }} of {{ of }} ({{ count }} element)
+                        {% plural %}
                             Page {{ page }} of {{ of }} ({{ count }} elements)
                         {% endblocktrans %}
                     </span>
@@ -28,7 +30,9 @@
             {% else %}
                 <li class="page-item page-current disabled">
                     <span class="page-link">
-                        {% blocktrans trimmed with count=page_obj.paginator.count %}
+                        {% blocktrans trimmed count count=page_obj.paginator.count %}
+                            {{ count }} element
+                        {% plural %}
                             {{ count }} elements
                         {% endblocktrans %}
                     </span>

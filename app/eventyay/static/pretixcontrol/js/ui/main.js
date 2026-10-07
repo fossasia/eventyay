@@ -641,8 +641,10 @@ var form_handlers = function (el) {
             width: '100%',
             language: $("body").attr("data-select2-locale"),
             placeholder: $(this).attr("data-placeholder"),
+            minimumInputLength: parseInt(this.getAttribute("data-minimum-input-length"), 10) || 0,
             ajax: {
                 url: $(this).attr('data-select2-url'),
+                delay: parseInt(this.getAttribute("data-delay"), 10) || 0,
                 data: function (params) {
                     return {
                         query: params.term,
@@ -926,26 +928,6 @@ $(function () {
         $.getJSON(url, function (data) {
             $("#id_basics-slug").val(data.slug);
         });
-    });
-
-    // Vouchers
-    $("#voucher-bulk-codes-generate").click(function () {
-        var num = $("#voucher-bulk-codes-num").val();
-        var prefix = $('#voucher-bulk-codes-prefix').val();
-        if (num != "") {
-            var url = $(this).attr("data-rng-url");
-            $("#id_codes").html("Generating...");
-            $(".form-group:has(#voucher-bulk-codes-num)").removeClass("has-error");
-            $.getJSON(url + '?num=' + num + '&prefix=' + encodeURIComponent(prefix), function (data) {
-                $("#id_codes").val(data.codes.join("\n"));
-            });
-        } else {
-            $(".form-group:has(#voucher-bulk-codes-num)").addClass("has-error");
-            $("#voucher-bulk-codes-num").focus();
-            setTimeout(function () {
-                $(".form-group:has(#voucher-bulk-codes-num)").removeClass("has-error");
-            }, 3000);
-        }
     });
 
     form_handlers($("body"));

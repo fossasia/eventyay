@@ -259,7 +259,7 @@ export default {
 			openDropdown: null,
 			activeViewMode: this.viewMode,
 			mobileFiltersOpen: false,
-			speakersGridWidth: typeof window === 'undefined' ? 360 : window.innerWidth,
+			speakersGridWidth: 0,
 			featuredCardWidth: 360,
 			mobileMoreOpen: false,
 			selectedLanguages: [],
@@ -323,6 +323,9 @@ export default {
 		selectedTracks() {
 			if (!this.filtersReady || this.usesLocalSpeakers) return
 			this.updateUrlAndFetch({page: 1})
+		},
+		filteredSpeakers() {
+			if (this.activeViewMode === 'details') this.observeFeaturedSpeakersGrid()
 		}
 	},
 	beforeUnmount() {
@@ -404,10 +407,13 @@ export default {
 		},
 		featuredColumns() {
 			const speakers = this.filteredSpeakers
-			const card = this.featuredCardWidth
-			const gap = 18
-			const available = this.speakersGridWidth || card
-			const count = Math.max(1, Math.floor((available + gap) / (card + gap)))
+			const available = this.speakersGridWidth || (window.innerWidth >= 768 ? Math.min(window.innerWidth - 32, 1140) : 400)
+			
+			let count = 1
+			if (available >= 960) count = 4
+			else if (available >= 720) count = 3
+			else if (available >= 480) count = 2
+
 			const columnCount = Math.min(count, Math.max(speakers.length, 1))
 			const columns = Array.from({length: columnCount}, () => [])
 			speakers.forEach((speaker, index) => {
@@ -592,6 +598,16 @@ export default {
 					}
 					return nodes
 				})()
+
+			if (this.$refs.featuredSpeakersGrid) {
+				const openDetails = this.$refs.featuredSpeakersGrid.querySelectorAll('details.featured-speaker-card[open]')
+				openDetails.forEach(details => {
+					if (!path.includes(details)) {
+						details.removeAttribute('open')
+					}
+				})
+			}
+
 			if (path.includes(this.$el)) return
 			this.closeToolbarOverlays()
 		},
@@ -816,6 +832,9 @@ export default {
 	display: flex
 	flex-direction: column
 	min-height: 0
+	min-width: 0
+	width: 100%
+	max-width: 100%
 	position: relative
 	&.is-embedded
 		overflow: visible !important
@@ -832,7 +851,7 @@ export default {
 		display: flex
 		align-items: center
 		gap: 8px
-		padding: 6px 8px 0
+		padding: 6px 0 0
 		flex-wrap: wrap
 		min-width: 0
 		width: 100%
@@ -851,7 +870,9 @@ export default {
 			gap: 8px
 			border: 1px solid #ddd
 			border-radius: 6px
-			padding: 6px 10px
+			padding: 0 10px
+			min-height: 36px
+			box-sizing: border-box
 			background: #fff
 			flex: 1 1 260px
 			min-width: 220px
@@ -896,8 +917,11 @@ export default {
 		.filter-btn
 			display: flex
 			align-items: center
+			justify-content: center
 			gap: 5px
-			padding: 6px 12px
+			padding: 0 12px
+			min-height: 36px
+			box-sizing: border-box
 			border: 1px solid #ddd
 			border-radius: 6px
 			background: #fff
@@ -942,12 +966,15 @@ export default {
 				flex-shrink: 0
 				margin-left: 6px
 			&.clear-filters-btn
-				padding: 6px 10px
+				padding: 0 10px
 				justify-content: center
 			&.mobile-toggle-btn
 				display: none
-				padding: 6px 10px
+				padding: 0 10px
 				font-weight: 600
+			&.view-btn
+				padding: 0 10px
+				flex: 0 0 auto
 		.dropdown-menu
 			position: absolute
 			top: calc(100% + 4px)
@@ -1022,31 +1049,35 @@ export default {
 	.speakers-grid
 		display: flex
 		flex-direction: column
-		padding: 10px
+		padding: 10px 0
 		gap: 12px
 	.speakers-details
 		display: flex
 		flex-direction: column
-		padding: 16px
+		padding: 16px 0
 		gap: 12px
+		min-width: 0
+		width: 100%
+		max-width: 100%
+		box-sizing: border-box
 
 		.featured-speakers-grid
 			display: flex
-			justify-content: center
+			justify-content: flex-start
 			align-items: flex-start
 			gap: 18px
 			width: 100%
+			min-width: 0
+			max-width: 100%
+			box-sizing: border-box
 
 		.featured-speaker-stack
 			display: flex
 			flex-direction: column
 			gap: 18px
-			width: 400px
-			max-width: 100%
-			flex: 0 0 400px
-			@media (min-width: 768px)
-				width: 360px
-				flex-basis: 360px
+			flex: 1 1 0
+			min-width: 0
+			max-width: 400px
 
 		.featured-speaker-column
 			width: 100%
@@ -1325,7 +1356,7 @@ export default {
 @media (max-width: 600px)
 	.c-speakers-list
 		.speakers-toolbar
-			padding: 6px 8px 0
+			padding: 6px 0 0
 			gap: 6px
 			flex-wrap: nowrap
 			.search-box
