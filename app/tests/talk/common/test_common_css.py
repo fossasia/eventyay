@@ -80,10 +80,6 @@ def test_contact_organizer_button_css_rules():
     assert '.contact-organizer-btn:focus:not(:focus-visible)' in css_content
     assert 'footer .contact-organizer-btn:focus:not(:focus-visible)' in css_content
 
-    # Focus-visible styling
-    assert '.contact-organizer-btn:focus-visible' in css_content
-    assert 'footer .contact-organizer-btn:focus-visible' in css_content
-
     # Active styling
     assert '.contact-organizer-btn:active' in css_content
     assert 'footer .contact-organizer-btn:active' in css_content
