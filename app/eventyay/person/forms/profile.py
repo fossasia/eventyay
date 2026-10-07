@@ -114,6 +114,8 @@ class SpeakerProfileForm(
         self.essential_only = kwargs.pop('essential_only', False)
         # Orga Speakers → Add speaker only. Never enable on public/CFP forms.
         self.allow_no_email = kwargs.pop('allow_no_email', False)
+        if self.allow_no_email and self.user and self.user.email:
+            self.allow_no_email = False
         self.ignore_first_time_exclude = kwargs.pop('ignore_first_time_exclude', False)
         self.enforce_account_name_match = enforce_account_name_match
         kwargs['instance'] = None

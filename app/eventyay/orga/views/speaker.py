@@ -370,6 +370,8 @@ class SpeakerCreate(SpeakerSocialLinksMixin, EventPermissionRequired, ActionFrom
             elif existing_session:
                 existing_session.speakers.add(user)
                 session = existing_session
+                from eventyay.agenda.views.utils import clear_schedule_caches
+                clear_schedule_caches(self.request.event, submission=existing_session)
                 messages.success(
                     self.request, _('Speaker added and linked to existing session successfully.')
                 )
