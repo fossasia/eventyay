@@ -98,7 +98,7 @@ from eventyay.talk_rules.tracks import apply_track_limit, user_has_track_limits
 
 class SubmissionViewMixin(PermissionRequired):
     def get_queryset(self):
-        return Submission.all_objects.filter(event=self.request.event)
+        return Submission.objects.filter(event=self.request.event)
 
     def get_object(self):
         return get_object_or_404(
@@ -141,8 +141,7 @@ class ReviewerSubmissionFilter:
 
     def get_queryset(self, for_review=False):
         queryset = (
-            self.request.event.submissions(manager='all_objects')
-            .exclude(state=SubmissionStates.DRAFT)
+            self.request.event.submissions
             .select_related('submission_type', 'event', 'track')
             .prefetch_related('speakers')
         )
@@ -768,6 +767,14 @@ class SubmissionContentView(SubmissionContent):
     template_name = 'orga/submission/content.html'
     http_method_names = ['get', 'head', 'options']
 
+    def get_queryset(self, for_review=False):
+        return (
+            self.request.event.submissions(manager='all_objects')
+            .exclude(state=SubmissionStates.DRAFT)
+            .select_related('submission_type', 'event', 'track')
+            .prefetch_related('speakers')
+        )
+
     def get_permission_required(self):
         if 'code' in self.kwargs:
             return ['base.orga_list_submission']  # View permission for reviewers
@@ -829,7 +836,20 @@ class BaseSubmissionList(Sortable, ReviewerSubmissionFilter, PaginationMixin, Li
     def _get_base_queryset(self, for_review=False):
         # If somebody has *only* reviewer permissions for this event, they can only
         # see the proposals they can review.
-        qs = super().get_queryset(for_review=for_review).order_by('-id')
+        qs = (
+            self.request.event.submissions(manager='all_objects')
+            .exclude(state=SubmissionStates.DRAFT)
+            .select_related('submission_type', 'event', 'track')
+            .prefetch_related('speakers')
+            .order_by('-id')
+        )
+        if self.is_only_reviewer:
+            qs = limit_for_reviewers(qs, self.request.event, self.request.user, self.limit_tracks)
+        elif user_has_track_limits(self.request.event, self.request.user):
+            qs = apply_track_limit(qs, self.request.event, self.request.user)
+        if for_review or 'is_reviewer' in self.request.user.get_permissions_for_event(self.request.event):
+            qs = annotate_assigned(qs, self.request.event, self.request.user)
+
         if not self.filter_form.is_valid():
             return qs.exclude(state=SubmissionStates.DELETED)
         return self.filter_form.filter_queryset(qs)

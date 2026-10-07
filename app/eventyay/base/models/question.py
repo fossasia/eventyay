@@ -345,15 +345,17 @@ class TalkQuestion(OrderedModel, PretalxModel):
 
         if self.target == TalkQuestionTarget.SUBMISSION:
             submissions = filter_talks or self.event.submissions.all()
+            total_submissions = len(submissions) if isinstance(submissions, (list, tuple, set)) else submissions.count()
             answers = self.answers.filter(submission__in=submissions)
-            return max(submissions.count() - answers.count(), 0)
+            return max(total_submissions - answers.count(), 0)
         if self.target == TalkQuestionTarget.SPEAKER:
             users = filter_speakers or User.objects.filter(
                 submissions__event_id=self.event.pk,
                 submissions__state__in=SubmissionStates.valid_submission_states,
             ).distinct()
+            total_users = len(users) if isinstance(users, (list, tuple, set)) else users.count()
             answers = self.answers.filter(person__in=users)
-            return max(users.count() - answers.count(), 0)
+            return max(total_users - answers.count(), 0)
         return 0
 
 

@@ -240,3 +240,43 @@ def test_question_missing_answers_excludes_deleted(event, speaker, submission, s
             answer="Done",
         )
         assert speaker_question.missing_answers() == 0
+
+
+@pytest.mark.django_db
+def test_question_missing_answers_supports_list_input(event, speaker, submission):
+    with scope(event=event):
+        sub_question = TalkQuestion.objects.create(
+            event=event,
+            question="Submission Question?",
+            target=TalkQuestionTarget.SUBMISSION,
+        )
+        # Pass Python list directly
+        assert sub_question.missing_answers(filter_talks=[submission]) == 1
+
+        speaker_question = TalkQuestion.objects.create(
+            event=event,
+            question="Speaker Question?",
+            target=TalkQuestionTarget.SPEAKER,
+        )
+        # Pass Python list directly
+        assert speaker_question.missing_answers(filter_speakers=[speaker]) == 1
+
+
+@pytest.mark.django_db
+def test_deleted_submission_read_only_allowed_but_edit_blocked(orga_client, event, submission_type):
+    with scope(event=event):
+        deleted_sub = Submission.objects.create(
+            event=event,
+            submission_type=submission_type,
+            title="Deleted Proposal",
+            state=SubmissionStates.DELETED,
+        )
+
+    # Read-only detail view allows viewing deleted submission
+    response_view = orga_client.get(deleted_sub.orga_urls.base, follow=True)
+    assert response_view.status_code == 200
+
+    # Edit view (mutation) blocks deleted submission and returns 404
+    response_edit = orga_client.get(deleted_sub.orga_urls.edit, follow=True)
+    assert response_edit.status_code == 404
+
