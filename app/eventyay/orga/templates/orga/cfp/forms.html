@@ -139,6 +139,9 @@
                             <th>
                                 <div class="font-weight-bold">{% translate "Title" %}</div>
                                 <div class="small text-muted font-weight-normal mt-1">{{ question_texts.title }}</div>
+                                {% if question_help_texts.title %}
+                                    <div class="small text-muted font-weight-normal mt-1">{{ question_help_texts.title }}</div>
+                                {% endif %}
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch always-on" aria-label="{% translate 'Title is always active' %}">
@@ -164,7 +167,10 @@
                                 </label>
                             </td>
                             <td class="text-center">{{ field_counts.title }}</td>
-                            <td class="text-right">
+                            <td class="text-right text-nowrap">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='title' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                    <i class="fa fa-cog fa-fw"></i>
+                                </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
                                 </button>
@@ -176,6 +182,9 @@
                             <th>
                                 <div class="font-weight-bold">{% translate "Session type" %}</div>
                                 <div class="small text-muted font-weight-normal mt-1">{{ question_texts.submission_type }}</div>
+                                {% if question_help_texts.submission_type %}
+                                    <div class="small text-muted font-weight-normal mt-1">{{ question_help_texts.submission_type }}</div>
+                                {% endif %}
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch always-on" aria-label="{% translate 'Session type is always active' %}">
@@ -201,7 +210,10 @@
                                 </label>
                             </td>
                             <td class="text-center">{{ field_counts.submission_type }}</td>
-                            <td class="text-right">
+                            <td class="text-right text-nowrap">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='submission_type' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                    <i class="fa fa-cog fa-fw"></i>
+                                </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
                                 </button>
@@ -214,6 +226,9 @@
                             <th>
                                 <div class="font-weight-bold">{% translate "Abstract" %}</div>
                                 <div class="small text-muted font-weight-normal mt-1">{{ question_texts.abstract }}</div>
+                                {% if question_help_texts.abstract %}
+                                    <div class="small text-muted font-weight-normal mt-1">{{ question_help_texts.abstract }}</div>
+                                {% endif %}
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -245,7 +260,10 @@
                                 </label>
                             </td>
                             <td class="text-center">{{ field_counts.abstract }}</td>
-                            <td class="text-right">
+                            <td class="text-right text-nowrap">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='abstract' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                    <i class="fa fa-cog fa-fw"></i>
+                                </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
                                 </button>
@@ -259,6 +277,9 @@
                             <th>
                                 <div class="font-weight-bold">{% translate "Description" %}</div>
                                 <div class="small text-muted font-weight-normal mt-1">{{ question_texts.description }}</div>
+                                {% if question_help_texts.description %}
+                                    <div class="small text-muted font-weight-normal mt-1">{{ question_help_texts.description }}</div>
+                                {% endif %}
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -290,7 +311,10 @@
                                 </label>
                             </td>
                             <td class="text-center">{{ field_counts.description }}</td>
-                            <td class="text-right">
+                            <td class="text-right text-nowrap">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='description' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                    <i class="fa fa-cog fa-fw"></i>
+                                </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
                                 </button>
@@ -304,6 +328,9 @@
                             <th>
                                 <div class="font-weight-bold">{% translate "Notes" %}</div>
                                 <div class="small text-muted font-weight-normal mt-1">{{ question_texts.notes }}</div>
+                                {% if question_help_texts.notes %}
+                                    <div class="small text-muted font-weight-normal mt-1">{{ question_help_texts.notes }}</div>
+                                {% endif %}
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -329,7 +356,10 @@
                             <td></td>
                             <td></td>
                             <td class="text-center">{{ field_counts.notes }}</td>
-                            <td class="text-right">
+                            <td class="text-right text-nowrap">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='notes' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                    <i class="fa fa-cog fa-fw"></i>
+                                </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
                                 </button>
@@ -343,6 +373,9 @@
                             <th>
                                 <div class="font-weight-bold">{% translate "Track" %}</div>
                                 <div class="small text-muted font-weight-normal mt-1">{{ question_texts.track }}</div>
+                                {% if question_help_texts.track %}
+                                    <div class="small text-muted font-weight-normal mt-1">{{ question_help_texts.track }}</div>
+                                {% endif %}
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -373,7 +406,10 @@
                                 </label>
                             </td>
                             <td class="text-center">{{ field_counts.track }}</td>
-                            <td class="text-right">
+                            <td class="text-right text-nowrap">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='track' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                    <i class="fa fa-cog fa-fw"></i>
+                                </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
                                 </button>
@@ -387,6 +423,9 @@
                             <th>
                                 <div class="font-weight-bold">{% translate "Duration" %}</div>
                                 <div class="small text-muted font-weight-normal mt-1">{{ question_texts.duration }}</div>
+                                {% if question_help_texts.duration %}
+                                    <div class="small text-muted font-weight-normal mt-1">{{ question_help_texts.duration }}</div>
+                                {% endif %}
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -417,7 +456,10 @@
                                 </label>
                             </td>
                             <td class="text-center">{{ field_counts.duration }}</td>
-                            <td class="text-right">
+                            <td class="text-right text-nowrap">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='duration' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                    <i class="fa fa-cog fa-fw"></i>
+                                </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
                                 </button>
@@ -431,6 +473,9 @@
                             <th>
                                 <div class="font-weight-bold">{% translate "Slot Count" %}</div>
                                 <div class="small text-muted font-weight-normal mt-1">{{ question_texts.slot_count }}</div>
+                                {% if question_help_texts.slot_count %}
+                                    <div class="small text-muted font-weight-normal mt-1">{{ question_help_texts.slot_count }}</div>
+                                {% endif %}
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -456,7 +501,10 @@
                             <td></td>
                             <td></td>
                             <td class="text-center">{{ field_counts.slot_count }}</td>
-                            <td class="text-right">
+                            <td class="text-right text-nowrap">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='slot_count' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                    <i class="fa fa-cog fa-fw"></i>
+                                </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
                                 </button>
@@ -483,6 +531,9 @@
                                     </span>
                                 </span>
                                 <div class="small text-muted font-weight-normal mt-1">{{ question_texts.content_locale }}</div>
+                                {% if question_help_texts.content_locale %}
+                                    <div class="small text-muted font-weight-normal mt-1">{{ question_help_texts.content_locale }}</div>
+                                {% endif %}
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -515,10 +566,13 @@
                                 </label>
                             </td>
                             <td class="text-center">{{ field_counts.content_locale }}</td>
-                            <td class="text-right">
+                            <td class="text-right text-nowrap">
                                 <button type="button" class="btn btn-sm btn-default content-locale-settings-btn {% if field.value == 'do_not_ask' %}hidden{% endif %}" title="{% translate 'Settings' %}" aria-label="{% translate 'Content Locale settings' %}">
                                     <i class="fa fa-cog"></i>
                                 </button>
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='content_locale' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                    <i class="fa fa-cog fa-fw"></i>
+                                </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
                                 </button>
@@ -533,6 +587,9 @@
                             <th>
                                 <div class="font-weight-bold">{% translate "Session image" %}</div>
                                 <div class="small text-muted font-weight-normal mt-1">{{ question_texts.image }}</div>
+                                {% if question_help_texts.image %}
+                                    <div class="small text-muted font-weight-normal mt-1">{{ question_help_texts.image }}</div>
+                                {% endif %}
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -564,7 +621,10 @@
                                 </label>
                             </td>
                             <td class="text-center">{{ field_counts.image }}</td>
-                            <td class="text-right">
+                            <td class="text-right text-nowrap">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='image' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                    <i class="fa fa-cog fa-fw"></i>
+                                </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
                                 </button>
@@ -578,6 +638,9 @@
                             <th>
                                 <div class="font-weight-bold">{% translate "Slides" %}</div>
                                 <div class="small text-muted font-weight-normal mt-1">{{ question_texts.slides }}</div>
+                                {% if question_help_texts.slides %}
+                                    <div class="small text-muted font-weight-normal mt-1">{{ question_help_texts.slides }}</div>
+                                {% endif %}
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -609,7 +672,10 @@
                                 </label>
                             </td>
                             <td class="text-center">{{ field_counts.slides }}</td>
-                            <td class="text-right">
+                            <td class="text-right text-nowrap">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='slides' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                    <i class="fa fa-cog fa-fw"></i>
+                                </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
                                 </button>
@@ -620,7 +686,15 @@
                         {# Session videos — organiser-only; not asked on the speaker CfP #}
                         {% with field=sform.cfp_ask_session_videos %}
                         <tr dragsort-id="session_videos">
-                            <th>{% translate "Session videos" %}</th>
+                            <th>
+                                <div class="font-weight-bold">{% translate "Session videos" %}</div>
+                                {% if question_texts.session_videos %}
+                                    <div class="small text-muted font-weight-normal mt-1">{{ question_texts.session_videos }}</div>
+                                {% endif %}
+                                {% if question_help_texts.session_videos %}
+                                    <div class="small text-muted font-weight-normal mt-1">{{ question_help_texts.session_videos }}</div>
+                                {% endif %}
+                            </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     aria-label="{% translate 'Toggle active state for Session videos' %}">
@@ -637,7 +711,10 @@
                             <td></td>
                             <td></td>
                             <td></td>
-                            <td class="text-right">
+                            <td class="text-right text-nowrap">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='session_videos' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                    <i class="fa fa-cog fa-fw"></i>
+                                </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
                                 </button>
@@ -651,6 +728,9 @@
                             <th>
                                 <div class="font-weight-bold">{% translate "Recording opt-out" %}</div>
                                 <div class="small text-muted font-weight-normal mt-1">{{ question_texts.do_not_record }}</div>
+                                {% if question_help_texts.do_not_record %}
+                                    <div class="small text-muted font-weight-normal mt-1">{{ question_help_texts.do_not_record }}</div>
+                                {% endif %}
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -676,7 +756,10 @@
                             <td></td>
                             <td></td>
                             <td class="text-center">{{ field_counts.do_not_record }}</td>
-                            <td class="text-right">
+                            <td class="text-right text-nowrap">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='do_not_record' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                    <i class="fa fa-cog fa-fw"></i>
+                                </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
                                 </button>
@@ -787,6 +870,9 @@
                             <th>
                                 <div class="font-weight-bold">{% translate "Full Name" %}</div>
                                 <div class="small text-muted font-weight-normal mt-1">{{ question_texts.fullname }}</div>
+                                {% if question_help_texts.fullname %}
+                                    <div class="small text-muted font-weight-normal mt-1">{{ question_help_texts.fullname }}</div>
+                                {% endif %}
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch always-on" aria-label="{% translate 'Full Name is always active' %}">
@@ -815,7 +901,10 @@
                             </td>
 
                             <td class="text-center">{{ field_counts.name }}</td>
-                            <td class="text-right">
+                            <td class="text-right text-nowrap">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='speaker' field='fullname' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                    <i class="fa fa-cog fa-fw"></i>
+                                </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
                                 </button>
@@ -829,6 +918,9 @@
                             <th>
                                 <div class="font-weight-bold">{% translate "Biography" %}</div>
                                 <div class="small text-muted font-weight-normal mt-1">{{ question_texts.biography }}</div>
+                                {% if question_help_texts.biography %}
+                                    <div class="small text-muted font-weight-normal mt-1">{{ question_help_texts.biography }}</div>
+                                {% endif %}
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -861,7 +953,10 @@
                             </td>
 
                             <td class="text-center">{{ field_counts.biography }}</td>
-                            <td class="text-right">
+                            <td class="text-right text-nowrap">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='speaker' field='biography' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                    <i class="fa fa-cog fa-fw"></i>
+                                </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
                                 </button>
@@ -875,6 +970,9 @@
                             <th>
                                 <div class="font-weight-bold">{% translate "Job title/role" %}</div>
                                 <div class="small text-muted font-weight-normal mt-1">{{ question_texts.job_title }}</div>
+                                {% if question_help_texts.job_title %}
+                                    <div class="small text-muted font-weight-normal mt-1">{{ question_help_texts.job_title }}</div>
+                                {% endif %}
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -906,7 +1004,10 @@
                                 </label>
                             </td>
                             <td class="text-center">{{ field_counts.job_title }}</td>
-                            <td class="text-right">
+                            <td class="text-right text-nowrap">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='speaker' field='job_title' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                    <i class="fa fa-cog fa-fw"></i>
+                                </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
                                 </button>
@@ -920,6 +1021,9 @@
                             <th>
                                 <div class="font-weight-bold">{% translate "Organization" %}</div>
                                 <div class="small text-muted font-weight-normal mt-1">{{ question_texts.organization }}</div>
+                                {% if question_help_texts.organization %}
+                                    <div class="small text-muted font-weight-normal mt-1">{{ question_help_texts.organization }}</div>
+                                {% endif %}
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -951,7 +1055,10 @@
                                 </label>
                             </td>
                             <td class="text-center">{{ field_counts.organization }}</td>
-                            <td class="text-right">
+                            <td class="text-right text-nowrap">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='speaker' field='organization' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                    <i class="fa fa-cog fa-fw"></i>
+                                </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
                                 </button>
@@ -965,6 +1072,9 @@
                             <th>
                                 <div class="font-weight-bold">{% translate "Profile picture" %}</div>
                                 <div class="small text-muted font-weight-normal mt-1">{{ question_texts.avatar }}</div>
+                                {% if question_help_texts.avatar %}
+                                    <div class="small text-muted font-weight-normal mt-1">{{ question_help_texts.avatar }}</div>
+                                {% endif %}
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -997,10 +1107,10 @@
                             </td>
 
                             <td class="text-center">{{ field_counts.avatar }}</td>
-                            <td class="text-right">
-                                <button type="button" class="btn btn-sm btn-default profile-picture-settings-button" title="{% translate 'Profile picture settings' %}" aria-label="{% translate 'Profile picture settings' %}" aria-controls="profile-picture-settings-popover" aria-expanded="false">
-                                    <i class="fa fa-cog"></i>
-                                </button>
+                            <td class="text-right text-nowrap">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='speaker' field='avatar' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                    <i class="fa fa-cog fa-fw"></i>
+                                </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
                                 </button>
@@ -1014,6 +1124,9 @@
                             <th>
                                 <div class="font-weight-bold">{% translate "Profile picture source" %}</div>
                                 <div class="small text-muted font-weight-normal mt-1">{{ question_texts.avatar_source }}</div>
+                                {% if question_help_texts.avatar_source %}
+                                    <div class="small text-muted font-weight-normal mt-1">{{ question_help_texts.avatar_source }}</div>
+                                {% endif %}
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -1039,7 +1152,10 @@
                             <td>{{ sform.cfp_avatar_source_max_length.as_field_group }}</td>
                             <td></td>
                             <td class="text-center">{{ field_counts.avatar_source }}</td>
-                            <td class="text-right">
+                            <td class="text-right text-nowrap">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='speaker' field='avatar_source' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                    <i class="fa fa-cog fa-fw"></i>
+                                </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
                                 </button>
@@ -1053,6 +1169,9 @@
                             <th>
                                 <div class="font-weight-bold">{% translate "Profile picture license" %}</div>
                                 <div class="small text-muted font-weight-normal mt-1">{{ question_texts.avatar_license }}</div>
+                                {% if question_help_texts.avatar_license %}
+                                    <div class="small text-muted font-weight-normal mt-1">{{ question_help_texts.avatar_license }}</div>
+                                {% endif %}
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -1078,7 +1197,10 @@
                             <td>{{ sform.cfp_avatar_license_max_length.as_field_group }}</td>
                             <td></td>
                             <td class="text-center">{{ field_counts.avatar_license }}</td>
-                            <td class="text-right">
+                            <td class="text-right text-nowrap">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='speaker' field='avatar_license' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                    <i class="fa fa-cog fa-fw"></i>
+                                </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
                                 </button>
@@ -1092,6 +1214,9 @@
                             <th>
                                 <div class="font-weight-bold">{% translate "Availability" %}</div>
                                 <div class="small text-muted font-weight-normal mt-1">{{ question_texts.availabilities }}</div>
+                                {% if question_help_texts.availabilities %}
+                                    <div class="small text-muted font-weight-normal mt-1">{{ question_help_texts.availabilities }}</div>
+                                {% endif %}
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -1117,7 +1242,10 @@
                             <td></td>
                             <td></td>
                             <td class="text-center">{{ field_counts.availabilities }}</td>
-                            <td class="text-right">
+                            <td class="text-right text-nowrap">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='speaker' field='availabilities' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                    <i class="fa fa-cog fa-fw"></i>
+                                </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
                                 </button>
@@ -1131,6 +1259,9 @@
                             <th>
                                 <div class="font-weight-bold">{% translate "Additional speakers" %}</div>
                                 <div class="small text-muted font-weight-normal mt-1">{{ question_texts.additional_speaker }}</div>
+                                {% if question_help_texts.additional_speaker %}
+                                    <div class="small text-muted font-weight-normal mt-1">{{ question_help_texts.additional_speaker }}</div>
+                                {% endif %}
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -1156,7 +1287,10 @@
                             <td></td>
                             <td></td>
                             <td class="text-center">{{ field_counts.additional_speaker }}</td>
-                            <td class="text-right">
+                            <td class="text-right text-nowrap">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='speaker' field='additional_speaker' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                    <i class="fa fa-cog fa-fw"></i>
+                                </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
                                 </button>
@@ -1167,7 +1301,15 @@
                         {# Social Media #}
                         {% with field=sform.cfp_ask_social_links %}
                         <tr dragsort-id="social_links">
-                            <th>{% translate "Social Media" %}</th>
+                            <th>
+                                <div class="font-weight-bold">{% translate "Social Media" %}</div>
+                                {% if question_texts.social_links %}
+                                    <div class="small text-muted font-weight-normal mt-1">{{ question_texts.social_links }}</div>
+                                {% endif %}
+                                {% if question_help_texts.social_links %}
+                                    <div class="small text-muted font-weight-normal mt-1">{{ question_help_texts.social_links }}</div>
+                                {% endif %}
+                            </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     aria-label="{% translate 'Toggle active state for Social Media' %}">
@@ -1198,7 +1340,10 @@
                                 </label>
                             </td>
                             <td class="text-center">{{ field_counts.social_links }}</td>
-                            <td class="text-right">
+                            <td class="text-right text-nowrap">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='speaker' field='social_links' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                    <i class="fa fa-cog fa-fw"></i>
+                                </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
                                 </button>
@@ -1363,18 +1508,6 @@
                     </div>
                 </div>
             </fieldset>
-        <div class="profile-picture-settings-popover d-none" id="profile-picture-settings-popover" role="dialog" aria-label="{% translate 'Enable Gravatar' %}">
-            <div class="profile-picture-settings-option">
-                <label class="profile-picture-settings-title mb-0 mr-3" for="{{ sform.cfp_enable_gravatar.auto_id }}">
-                    {% translate "Enable Gravatar" %}
-                </label>
-                <label class="toggle-switch flex-shrink-0" data-field-id="{{ sform.cfp_enable_gravatar.auto_id }}" aria-label="{% translate 'Enable Gravatar' %}">
-                    {{ sform.cfp_enable_gravatar }}
-                    <span class="toggle-slider"></span>
-                </label>
-            </div>
-            <small class="profile-picture-settings-help text-muted">{{ sform.cfp_enable_gravatar.help_text }}</small>
-        </div>
         {% include "orga/includes/submit_row.html" %}
     </form>
     </div>

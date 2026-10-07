@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import override
 from django_scopes.forms import SafeModelChoiceField, SafeModelMultipleChoiceField
-from i18nfield.forms import I18nFormMixin, I18nModelForm
+from i18nfield.forms import I18nFormField, I18nFormMixin, I18nModelForm, I18nTextarea, I18nTextInput
 from i18nfield.strings import LazyI18nString
 from eventyay.common.forms.fields import I18nRichTextFormField
 from eventyay.common.sanitizers import sanitize_rich_text
@@ -36,7 +36,7 @@ from eventyay.common.forms.widgets import (
     HtmlDateTimeInput,
     TextInputWithAddon,
 )
-from eventyay.common.language import get_language_choices_native_with_ui_name
+from eventyay.common.language import get_language_choices_native_with_ui_name, language
 from eventyay.common.text.phrases import phrases
 from eventyay.control.forms import MultipleLanguagesWidget
 from eventyay.orga.utils.colors import generate_random_high_contrast_color
@@ -932,3 +932,298 @@ class ReminderFilterForm(QuestionFilterForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['questions'].queryset = self.get_question_queryset()
+
+
+TARGET_TO_STEP = {
+    'session': 'info',
+    'speaker': 'profile',
+}
+
+BUILTIN_FIELD_DEFAULTS = {
+    'session': {
+        'title': {
+            'label': _('Proposal title'),
+            'help_text': '',
+        },
+        'submission_type': {
+            'label': _('Session type'),
+            'help_text': '',
+        },
+        'track': {
+            'label': _('Track'),
+            'help_text': '',
+        },
+        'content_locale': {
+            'label': phrases.base.language,
+            'help_text': '',
+        },
+        'abstract': {
+            'label': _('Abstract'),
+            'help_text': phrases.base.use_markdown,
+        },
+        'description': {
+            'label': _('Description'),
+            'help_text': phrases.base.use_markdown,
+        },
+        'notes': {
+            'label': _('Notes'),
+            'help_text': _('These notes are meant for the organiser and won’t be made public.'),
+        },
+        'slot_count': {
+            'label': _('Slot Count'),
+            'help_text': _('How many times this session will take place.'),
+        },
+        'do_not_record': {
+            'label': _('Don’t record this session.'),
+            'help_text': '',
+        },
+        'image': {
+            'label': _('Session image'),
+            'help_text': _('Use this if you want an illustration to go with your proposal.'),
+        },
+        'slides': {
+            'label': _('Slides'),
+            'help_text': _('Upload PDF files. Only PDF is supported right now.'),
+        },
+        'session_videos': {
+            'label': _('Session videos'),
+            'help_text': '',
+        },
+        'duration': {
+            'label': _('Duration'),
+            'help_text': _('The duration in minutes.'),
+        },
+    },
+    'speaker': {
+        'fullname': {
+            'label': _('Full name'),
+            'help_text': '',
+        },
+        'biography': {
+            'label': _('Biography'),
+            'help_text': phrases.base.use_markdown,
+        },
+        'job_title': {
+            'label': _('Job title/role'),
+            'help_text': _('What is your official job title?'),
+        },
+        'organization': {
+            'label': _('Organization'),
+            'help_text': _('What organization or company do you represent?'),
+        },
+        'avatar': {
+            'label': _('Profile picture'),
+            'help_text': _(
+                'We recommend uploading an image at least 400px wide. '
+                'A square image works best, as we display it in a circle in several places.'
+            ),
+        },
+        'avatar_source': {
+            'label': _('Profile Picture Source'),
+            'help_text': _('Please enter the name of the author or source of image and a link if applicable.'),
+        },
+        'avatar_license': {
+            'label': _('Profile Picture License'),
+            'help_text': _('Please enter the name of the license of the photo and link to it if applicable.'),
+        },
+        'availabilities': {
+            'label': _('Availability'),
+            'help_text': '',
+        },
+        'additional_speaker': {
+            'label': _('Additional Speaker'),
+            'help_text': _(
+                'If you have a co-speaker, please add their email address here, and we will invite them '
+                'to create an account. If you have more than one co-speaker, you can add more speakers '
+                'after finishing the proposal process.'
+            ),
+        },
+        'social_links': {
+            'label': _('Social Links'),
+            'help_text': '',
+        },
+    },
+}
+
+
+class CfPFieldSettingsForm(ReadOnlyFlag, I18nHelpText, I18nFormMixin, forms.Form):
+    label = I18nFormField(
+        label=_('Default label/text'),
+        widget=I18nTextInput,
+        required=False,
+    )
+    help_text = I18nFormField(
+        label=_('Help text'),
+        widget=I18nTextarea,
+        required=False,
+    )
+    enable_gravatar = forms.BooleanField(
+        label=_('Enable Gravatar'),
+        help_text=_('Allow speakers to use Gravatar for their profile picture.'),
+        required=False,
+    )
+
+    def __init__(self, *args, event, target, field_id, **kwargs):
+        self.event = event
+        self.target = target
+        self.field_id = field_id
+        kwargs['locales'] = self.event.locales
+        super().__init__(*args, **kwargs)
+
+        if not (self.target == 'speaker' and self.field_id == 'avatar'):
+            self.fields.pop('enable_gravatar')
+        else:
+            self.initial['enable_gravatar'] = self.event.cfp.enable_gravatar
+            self.fields['enable_gravatar'].initial = self.event.cfp.enable_gravatar
+
+        existing_flow = self.event.cfp.settings.get('flow', {})
+        field_config = self._get_existing_field_config(existing_flow)
+
+        default_def = BUILTIN_FIELD_DEFAULTS.get(self.target, {}).get(self.field_id, {})
+        default_label = default_def.get('label', '')
+        default_help_text = default_def.get('help_text', '')
+
+        initial_label = self._build_initial_i18n(field_config, 'label', default_label)
+        initial_help_text = self._build_initial_i18n(field_config, 'help_text', default_help_text)
+
+        self.initial.setdefault('label', initial_label)
+        self.initial.setdefault('help_text', initial_help_text)
+
+    def _get_existing_field_config(self, flow_data):
+        step_key = TARGET_TO_STEP.get(self.target, self.target)
+        if not isinstance(flow_data, dict):
+            return None
+        steps = flow_data.get('steps', {})
+        step_data = None
+        if isinstance(steps, dict):
+            step_data = steps.get(step_key)
+        elif isinstance(steps, list):
+            step_data = next((s for s in steps if isinstance(s, dict) and s.get('identifier') == step_key), None)
+        if not isinstance(step_data, dict):
+            return None
+        fields = step_data.get('fields')
+        if isinstance(fields, list):
+            return next((f for f in fields if isinstance(f, dict) and f.get('key') == self.field_id), None)
+        elif isinstance(fields, dict):
+            return fields.get(self.field_id)
+        return None
+
+    def _build_initial_i18n(self, field_config, attr, default_value):
+        data = {}
+        stored_value = field_config.get(attr) if field_config else None
+        stored_data = None
+        if isinstance(stored_value, LazyI18nString):
+            stored_data = stored_value.data
+        elif isinstance(stored_value, dict):
+            stored_data = stored_value
+        elif isinstance(stored_value, str) and stored_value:
+            stored_data = {'en': stored_value}
+
+        for locale in self.event.locales:
+            if stored_data and locale in stored_data and stored_data[locale] is not None:
+                data[locale] = stored_data[locale]
+            else:
+                with language(locale):
+                    data[locale] = str(default_value) if default_value else ''
+        return LazyI18nString(data)
+
+    def _get_or_init_flow_data(self):
+        flow_data = self.event.cfp.settings.get('flow')
+        if isinstance(flow_data, list):
+            flow_data = {
+                'steps': {s.get('identifier'): s for s in flow_data if isinstance(s, dict) and s.get('identifier')}
+            }
+        elif not isinstance(flow_data, dict):
+            flow_data = {'steps': {}}
+        elif 'steps' not in flow_data or not isinstance(flow_data['steps'], dict):
+            if isinstance(flow_data.get('steps'), list):
+                flow_data['steps'] = {
+                    s.get('identifier'): s
+                    for s in flow_data['steps']
+                    if isinstance(s, dict) and s.get('identifier')
+                }
+            else:
+                flow_data['steps'] = {}
+        return flow_data
+
+    def _ensure_step_data(self, flow_data):
+        step_key = TARGET_TO_STEP.get(self.target, self.target)
+        if step_key not in flow_data['steps'] or not isinstance(flow_data['steps'][step_key], dict):
+            flow_data['steps'][step_key] = {'identifier': step_key, 'fields': []}
+        return flow_data['steps'][step_key]
+
+    def _ensure_field_entry(self, step_data):
+        if 'fields' not in step_data or not isinstance(step_data['fields'], list):
+            if isinstance(step_data.get('fields'), dict):
+                step_data['fields'] = [
+                    {'key': k, **v} if isinstance(v, dict) else {'key': k}
+                    for k, v in step_data['fields'].items()
+                ]
+            else:
+                step_data['fields'] = []
+        fields_list = step_data['fields']
+        field_entry = next((f for f in fields_list if isinstance(f, dict) and f.get('key') == self.field_id), None)
+        if field_entry is None:
+            field_entry = {'key': self.field_id}
+            fields_list.append(field_entry)
+        return field_entry
+
+    def _get_dict_copy(self, val, fallback):
+        if isinstance(val, LazyI18nString):
+            return dict(val.data)
+        if isinstance(val, dict):
+            return dict(val)
+        if isinstance(fallback, LazyI18nString):
+            return dict(fallback.data)
+        if isinstance(fallback, dict):
+            return dict(fallback)
+        return {}
+
+    def reset_locale(self, locale):
+        default_def = BUILTIN_FIELD_DEFAULTS.get(self.target, {}).get(self.field_id, {})
+        with language(locale):
+            default_label = str(default_def.get('label', '')) if default_def.get('label') else ''
+            default_help_text = str(default_def.get('help_text', '')) if default_def.get('help_text') else ''
+
+        flow_data = self._get_or_init_flow_data()
+        step_data = self._ensure_step_data(flow_data)
+        field_entry = self._ensure_field_entry(step_data)
+
+        label_dict = self._get_dict_copy(field_entry.get('label'), self.initial.get('label'))
+        help_text_dict = self._get_dict_copy(field_entry.get('help_text'), self.initial.get('help_text'))
+
+        label_dict[locale] = default_label
+        help_text_dict[locale] = default_help_text
+
+        field_entry['label'] = label_dict
+        field_entry['help_text'] = help_text_dict
+
+        self.event.cfp.settings['flow'] = flow_data
+        self.event.cfp.save(update_fields=['settings'])
+        self.event.__dict__.pop('cfp_flow', None)
+        return self.event.cfp
+
+    def save(self):
+        cleaned_label = self.cleaned_data.get('label')
+        cleaned_help_text = self.cleaned_data.get('help_text')
+
+        label_dict = cleaned_label.data if isinstance(cleaned_label, LazyI18nString) else (cleaned_label or {})
+        help_text_dict = (
+            cleaned_help_text.data if isinstance(cleaned_help_text, LazyI18nString) else (cleaned_help_text or {})
+        )
+
+        flow_data = self._get_or_init_flow_data()
+        step_data = self._ensure_step_data(flow_data)
+        field_entry = self._ensure_field_entry(step_data)
+
+        field_entry['label'] = label_dict
+        field_entry['help_text'] = help_text_dict
+
+        self.event.cfp.settings['flow'] = flow_data
+
+        if self.target == 'speaker' and self.field_id == 'avatar' and 'enable_gravatar' in self.cleaned_data:
+            self.event.cfp.settings['cfp_enable_gravatar'] = self.cleaned_data['enable_gravatar']
+
+        self.event.cfp.save(update_fields=['settings'])
+        self.event.__dict__.pop('cfp_flow', None)
+        return self.event.cfp

@@ -151,6 +151,12 @@ urlpatterns = [
                 ),
                 path('cfp/text/', cfp.CfPTextDetail.as_view(), name='cfp.text.view'),
                 path('cfp/flow/', cfp.CfPFlowEditor.as_view(), name='cfp.flow'),
+                path('cfp/forms/', cfp.CfPForms.as_view(), name='cfp.forms'),
+                path(
+                    'cfp/forms/<str:target>/<str:field>/',
+                    cfp.CfPFieldSettings.as_view(),
+                    name='cfp.forms.field_settings',
+                ),
                 path('cfp/questions/', cfp.CfPForms.as_view(), name='cfp.questions.view'),
                 path(
                     'cfp/questions/remind/',
