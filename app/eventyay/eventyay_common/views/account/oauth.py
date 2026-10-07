@@ -10,6 +10,7 @@ from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import ListView, DetailView
 from django.shortcuts import redirect
+from django.utils.html import format_html
 from oauth2_provider.scopes import get_scopes_backend
 from oauth2_provider.models import get_application_model
 from oauth2_provider.views import (
@@ -63,7 +64,10 @@ class OAuthAuthorizedAppRevokeView(DetailView):
         confirm_message = _(
             'Are you sure you want to revoke access to your account for the application {application}?'
         )
-        ctx['confirm_message'] = confirm_message.format(application=f'<strong>{obj.application}</strong>')
+        ctx['confirm_message'] = format_html(
+            confirm_message,
+            application=format_html('<strong>{}</strong>', obj.application),
+        )
         return ctx
 
     def post(self, request, *args, **kwargs):
