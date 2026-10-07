@@ -535,7 +535,7 @@ class SpeakerFilterForm(forms.Form):
             ('', _('All states')),
             ('confirmed', _('Confirmed speakers')),
             ('missing_biography', _('Missing biography')),
-            ('missing_profile_image', _('Missing profile image')),
+            ('missing_profile_image', _('Missing speaker photo')),
             ('missing_affiliation', _('Missing affiliation')),
             ('without_session', _('Without session')),
         ),
