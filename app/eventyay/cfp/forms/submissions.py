@@ -1,6 +1,7 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
+from eventyay.base.services.speaker_invite_limits import validate_speaker_invite_rate_limit
 from eventyay.common.text.phrases import phrases
 
 
@@ -22,6 +23,15 @@ class SubmissionInvitationForm(forms.Form):
                 _('This speaker has already been added or invited to the proposal.')
             )
         return email
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if not self.submission.can_invite_co_speakers:
+            raise forms.ValidationError(
+                phrases.cfp.invite_limit_reached.format(count=self.submission.MAX_CO_SPEAKERS)
+            )
+        validate_speaker_invite_rate_limit(self.speaker)
+        return cleaned_data
 
     def save(self):
         return self.submission.send_invite(
