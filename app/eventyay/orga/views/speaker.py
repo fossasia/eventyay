@@ -504,8 +504,24 @@ class SpeakerCreate(SpeakerSocialLinksMixin, EventPermissionRequired, ActionFrom
 
     def _extra_speakers_valid(self, form, entries):
         valid = True
+        emails_seen = set()
+        if form.is_valid():
+            primary_email = form.cleaned_data.get('email')
+            if primary_email:
+                emails_seen.add(primary_email.lower())
+
         for extra_form, social_formset in entries:
             form_valid = extra_form.is_valid()
+            if form_valid:
+                email = extra_form.cleaned_data.get('email')
+                if email:
+                    email_lower = email.lower()
+                    if email_lower in emails_seen:
+                        extra_form.add_error('email', forms.ValidationError(_('This email address is already used in this form.')))
+                        form_valid = False
+                    else:
+                        emails_seen.add(email_lower)
+
             social_valid = True
             social_prefix = f'{extra_form.prefix}-social_links-TOTAL_FORMS'
             if social_formset is not None and social_prefix in self.request.POST:
