@@ -172,7 +172,7 @@ class SpeakerProfileForm(
                     field_name == 'email'
                     and self.allow_no_email
                     and self.is_bound
-                    and self.data.get('no_email')
+                    and self.data.get(self.add_prefix('no_email'))
                 ):
                     is_req = False
                 self.fields[field_name].required = is_req

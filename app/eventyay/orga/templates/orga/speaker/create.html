@@ -6,6 +6,7 @@
 
 {% block stylesheets %}
     <link rel="stylesheet" href="{% static 'orga/css/question-toggles.css' %}">
+    <link rel="stylesheet" href="{% static 'orga/css/speaker_create.css' %}">
 {% endblock stylesheets %}
 
 {% block scripts %}
@@ -37,20 +38,7 @@
         {% csrf_token %}
         {% include "common/forms/errors.html" %}
 
-        {% for field in form %}
-            {% if field.name == 'avatar' %}
-                {% include "common/avatar.html" with user=form.instance.user form=form %}
-            {% elif field.name == 'get_gravatar' %}
-                {# already handled by avatar.html #}
-            {% elif field.name == 'availabilities' %}
-                {% include "common/availabilities.html" %}
-                {{ field.as_field_group }}
-            {% elif field.name == 'social_links' %}
-                {% include "common/speaker_social_links_formset.html" %}
-            {% else %}
-                {{ field.as_field_group }}
-            {% endif %}
-        {% endfor %}
+        {% include "orga/speaker/includes/profile_fields.html" with speaker_form=form speaker_social_formset=social_media_formset %}
 
         <div class="form-group row">
             <label class="col-md-3 col-form-label" for="id_add_session">
@@ -64,77 +52,111 @@
                     <span class="toggle-slider"></span>
                 </label>
                 <span class="ml-2 text-muted">
-                    {% translate "Turn on to create a new session. You can also link existing sessions below." %}
+                    {% translate "Turn on to create a new session. Linking an existing session is turned off while this is on." %}
                 </span>
             </div>
         </div>
 
-        <div id="existing_session_section">
-            <div data-session-links>
-                {% if selected_session_ids %}
-                    {% for selected_id in selected_session_ids %}
-                        <div class="form-group row" data-session-link-row>
-                            <label class="col-md-3 col-form-label">{% translate "Link existing session" %}</label>
-                            <div class="col-md-9 d-flex align-items-start">
-                                <select name="existing_session_id" class="form-control" aria-label="{% translate 'Link existing session' %}">
+        <div id="existing_session_section" class="form-group row">
+            <label class="col-md-3 col-form-label" for="id_existing_session_id">
+                {% translate "Link existing session" %}
+            </label>
+            <div class="col-md-9">
+                <div data-session-links>
+                    {% if selected_session_ids %}
+                        {% for selected_id in selected_session_ids %}
+                            <div class="row mb-2" data-session-link-row>
+                                <div class="col-md-11">
+                                    <select name="existing_session_id" class="form-control" aria-label="{% translate 'Link existing session' %}">
+                                        <option value="">{% translate "— do not link a session —" %}</option>
+                                        {% for session in existing_sessions %}
+                                            <option value="{{ session.pk }}"
+                                                {% if selected_id == session.pk|stringformat:"s" %}selected{% endif %}>
+                                                {{ session.title }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-1">
+                                    <button type="button" class="btn btn-danger btn-sm" data-remove-session-link title="{% translate 'Remove' %}" aria-label="{% translate 'Remove' %}">
+                                        <i class="fa fa-minus" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="row mb-2" data-session-link-row>
+                            <div class="col-md-11">
+                                <select id="id_existing_session_id" name="existing_session_id" class="form-control" aria-label="{% translate 'Link existing session' %}">
                                     <option value="">{% translate "— do not link a session —" %}</option>
                                     {% for session in existing_sessions %}
-                                        <option value="{{ session.pk }}"
-                                            {% if selected_id == session.pk|stringformat:"s" %}selected{% endif %}>
-                                            {{ session.title }}
-                                        </option>
+                                        <option value="{{ session.pk }}">{{ session.title }}</option>
                                     {% endfor %}
                                 </select>
-                                <button type="button" class="btn btn-default ml-2" data-remove-session-link>
-                                    {% translate "Remove" %}
+                            </div>
+                            <div class="col-md-1">
+                                <button type="button" class="btn btn-danger btn-sm" data-remove-session-link title="{% translate 'Remove' %}" aria-label="{% translate 'Remove' %}">
+                                    <i class="fa fa-minus" aria-hidden="true"></i>
                                 </button>
                             </div>
                         </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="form-group row" data-session-link-row>
-                        <label class="col-md-3 col-form-label" for="id_existing_session_id">{% translate "Link existing session" %}</label>
-                        <div class="col-md-9 d-flex align-items-start">
-                            <select id="id_existing_session_id" name="existing_session_id" class="form-control" aria-label="{% translate 'Link existing session' %}">
-                                <option value="">{% translate "— do not link a session —" %}</option>
-                                {% for session in existing_sessions %}
-                                    <option value="{{ session.pk }}">{{ session.title }}</option>
-                                {% endfor %}
-                            </select>
-                            <button type="button" class="btn btn-default ml-2" data-remove-session-link>
-                                {% translate "Remove" %}
-                            </button>
-                        </div>
-                    </div>
-                {% endif %}
-            </div>
-            <div class="form-group row">
-                <div class="col-md-9 offset-md-3">
-                    <button type="button" class="btn btn-default" id="link-another-session">
-                        {% translate "Link another session" %}
-                    </button>
-                    <small class="form-text text-muted">
-                        {% translate "Link this speaker to one or more existing sessions, create a new session, or do both." %}
-                    </small>
+                    {% endif %}
                 </div>
+                <p class="mt-2 mb-0">
+                    <button type="button" class="btn btn-sm btn-info" id="link-another-session">
+                        <i class="fa fa-plus" aria-hidden="true"></i> {% translate "Add another session" %}
+                    </button>
+                </p>
             </div>
             <template id="session-link-row-template">
-                <div class="form-group row" data-session-link-row>
-                    <label class="col-md-3 col-form-label">{% translate "Link existing session" %}</label>
-                    <div class="col-md-9 d-flex align-items-start">
+                <div class="row mb-2" data-session-link-row>
+                    <div class="col-md-11">
                         <select name="existing_session_id" class="form-control" aria-label="{% translate 'Link existing session' %}">
                             <option value="">{% translate "— do not link a session —" %}</option>
                             {% for session in existing_sessions %}
                                 <option value="{{ session.pk }}">{{ session.title }}</option>
                             {% endfor %}
                         </select>
-                        <button type="button" class="btn btn-default ml-2" data-remove-session-link>
-                            {% translate "Remove" %}
+                    </div>
+                    <div class="col-md-1">
+                        <button type="button" class="btn btn-danger btn-sm" data-remove-session-link title="{% translate 'Remove' %}" aria-label="{% translate 'Remove' %}">
+                            <i class="fa fa-minus" aria-hidden="true"></i>
                         </button>
                     </div>
                 </div>
             </template>
         </div>
+
+        <input type="hidden" name="extra_speaker_total" id="extra_speaker_total" value="{{ extra_speaker_total }}">
+        <div data-extra-speakers>
+            {% for extra in extra_speaker_forms %}
+                <section class="speaker-create-block" data-extra-speaker>
+                    <div class="speaker-create-block__header">
+                        <h3>{% translate "Additional speaker" %}</h3>
+                        <button type="button" class="btn btn-danger btn-sm" data-remove-extra-speaker title="{% translate 'Remove speaker' %}" aria-label="{% translate 'Remove speaker' %}">
+                            <i class="fa fa-minus" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    {% include "orga/speaker/includes/profile_fields.html" with speaker_form=extra.form speaker_social_formset=extra.social_formset omit_social_formset_id=True omit_availability_assets=True %}
+                </section>
+            {% endfor %}
+        </div>
+        <p class="speaker-create-add">
+            <button type="button" class="btn btn-sm btn-info" id="add-another-speaker">
+                <i class="fa fa-plus" aria-hidden="true"></i> {% translate "Add another speaker" %}
+            </button>
+        </p>
+        <template id="extra-speaker-template">
+            <section class="speaker-create-block" data-extra-speaker>
+                <div class="speaker-create-block__header">
+                    <h3>{% translate "Additional speaker" %}</h3>
+                    <button type="button" class="btn btn-danger btn-sm" data-remove-extra-speaker title="{% translate 'Remove speaker' %}" aria-label="{% translate 'Remove speaker' %}">
+                        <i class="fa fa-minus" aria-hidden="true"></i>
+                    </button>
+                </div>
+                {% include "orga/speaker/includes/profile_fields.html" with speaker_form=extra_speaker_template_form speaker_social_formset=extra_speaker_template_social_formset omit_social_formset_id=True omit_availability_assets=True %}
+            </section>
+        </template>
 
         <div id="session_section" class="d-none">
             <h3>{% translate "Session Details" %}</h3>

@@ -9,8 +9,9 @@
         {% if not request.event.cfp.require_social_links %}<span class="optional">{% translate "Optional" %}</span>{% endif %}
     </label>
     <div class="col-md-9">
-        <div id="social-links-formset"
+        <div {% if not omit_formset_id %}id="social-links-formset"{% endif %}
              class="partner-link-formset formset"
+             data-social-link-formset
              data-formset
              data-formset-prefix="{{ social_media_formset.prefix }}"
              data-social-link-prefixes='{{ social_link_prefixes|escapejson_dumps }}'>

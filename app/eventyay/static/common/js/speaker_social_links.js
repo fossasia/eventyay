@@ -61,8 +61,13 @@ function cloneEmptyFormRow(emptyFormTemplate, index) {
 }
 
 export function initSpeakerSocialLinksFormset(root = document) {
-    const formset = root.getElementById?.('social-links-formset') || root.querySelector?.('#social-links-formset')
-    if (!formset) return
+    const formset = root.matches?.('[data-social-link-formset]')
+        ? root
+        : root.querySelector?.('[data-social-link-formset]')
+            || root.getElementById?.('social-links-formset')
+            || root.querySelector?.('#social-links-formset')
+    if (!formset || formset.dataset.socialLinksReady === 'true') return
+    formset.dataset.socialLinksReady = 'true'
 
     const prefixes = parsePrefixes(formset)
     const prefix = formset.dataset.formsetPrefix

@@ -1,0 +1,30 @@
+.speaker-create-add {
+    margin: 0.5rem 0 1.5rem;
+}
+
+.speaker-create-block {
+    margin: 1.5rem 0;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--color-border, #d9e2ec);
+}
+
+.speaker-create-block__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.speaker-create-block__header h3 {
+    margin: 0;
+}
+
+.session-link-section.is-disabled {
+    opacity: 0.45;
+}
+
+.session-link-section.is-disabled select,
+.session-link-section.is-disabled button {
+    pointer-events: none;
+}
