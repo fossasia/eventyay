@@ -109,7 +109,7 @@ export function initSpeakerCreateForm(root = document) {
     root.querySelector?.('[data-extra-speakers]')
   const extraSpeakerTemplate =
     root.getElementById?.('extra-speaker-template') || root.querySelector?.('#extra-speaker-template')
-  const form = root.querySelector?.('form') || (root.tagName === 'FORM' ? root : null)
+  const form = root.querySelector?.('#speaker-create-form') || root.querySelector?.('form:not(.mobile-navbar-view-form):not(.d-inline)') || (root.tagName === 'FORM' ? root : null)
 
   if (existingSessionSection) {
     existingSessionSection.classList.add('session-link-section')
@@ -159,6 +159,11 @@ export function initSpeakerCreateForm(root = document) {
       block.querySelectorAll('input[name$="no_email"]').forEach((checkbox) => {
         checkbox.dispatchEvent(new Event('change', { bubbles: true }))
       })
+      if (window.eventyayTiptap?.mountEditor) {
+        block.querySelectorAll('textarea[data-tiptap-profile]').forEach((textarea) => {
+          window.eventyayTiptap.mountEditor(textarea)
+        })
+      }
     })
   }
 

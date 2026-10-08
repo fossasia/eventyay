@@ -80,7 +80,7 @@
             </ul>
         </span>
     </div>
-    <form method="post" enctype="multipart/form-data">
+    <form id="speaker-create-form" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {% include "common/forms/errors.html" %}
 

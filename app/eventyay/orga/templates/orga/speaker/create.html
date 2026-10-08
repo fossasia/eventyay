@@ -34,7 +34,7 @@
             {% include "orga/event/component_link.html" %}
         </div>
     </nav>
-    <form method="post" enctype="multipart/form-data">
+    <form id="speaker-create-form" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {% include "common/forms/errors.html" %}
 
@@ -141,11 +141,15 @@
                 </section>
             {% endfor %}
         </div>
-        <p class="speaker-create-add">
-            <button type="button" class="btn btn-sm btn-info" id="add-another-speaker">
-                <i class="fa fa-plus" aria-hidden="true"></i> {% translate "Add another speaker" %}
-            </button>
-        </p>
+        <div class="speaker-create-add">
+            <div class="form-group row mb-0">
+                <div class="col-md-9 offset-md-3">
+                    <button type="button" class="btn btn-sm btn-info" id="add-another-speaker">
+                        <i class="fa fa-plus" aria-hidden="true"></i> {% translate "Add another speaker" %}
+                    </button>
+                </div>
+            </div>
+        </div>
         <template id="extra-speaker-template">
             <section class="speaker-create-block" data-extra-speaker>
                 <div class="speaker-create-block__header">
