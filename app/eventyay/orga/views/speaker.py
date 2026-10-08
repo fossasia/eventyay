@@ -319,7 +319,10 @@ class SpeakerCreate(SpeakerSocialLinksMixin, EventPermissionRequired, ActionFrom
                 return self.form_invalid(form)
 
             add_session = self.request.POST.get('add_session') == 'on'
-            link_existing_session = self.request.POST.get('link_existing_session') == 'on'
+            session_pk = (self.request.POST.get('existing_session_id') or '').strip()
+            link_existing_session = (
+                self.request.POST.get('link_existing_session') == 'on' or bool(session_pk)
+            )
 
             if add_session and link_existing_session:
                 form.add_error(
@@ -336,7 +339,6 @@ class SpeakerCreate(SpeakerSocialLinksMixin, EventPermissionRequired, ActionFrom
 
             existing_session = None
             if link_existing_session:
-                session_pk = self.request.POST.get('existing_session_id')
                 if not session_pk:
                     form.add_error(None, forms.ValidationError(_('Please select an existing session to link.')))
                     return self.form_invalid(form)
