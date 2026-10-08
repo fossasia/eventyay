@@ -274,6 +274,9 @@ class SpeakerCreate(SpeakerSocialLinksMixin, EventPermissionRequired, ActionFrom
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(self.get_social_links_context())
+        context['selected_session_ids'] = [
+            pk for pk in self.request.POST.getlist('existing_session_id') if str(pk).strip()
+        ]
         return context
 
     def _linkable_sessions(self):
@@ -319,32 +322,30 @@ class SpeakerCreate(SpeakerSocialLinksMixin, EventPermissionRequired, ActionFrom
                 return self.form_invalid(form)
 
             add_session = self.request.POST.get('add_session') == 'on'
-            session_pk = (self.request.POST.get('existing_session_id') or '').strip()
-            link_existing_session = (
-                self.request.POST.get('link_existing_session') == 'on' or bool(session_pk)
-            )
-
-            if add_session and link_existing_session:
-                form.add_error(
-                    None,
-                    forms.ValidationError(
-                        _('You cannot both create a new session and link an existing session.')
-                    ),
-                )
-                return self.form_invalid(form)
+            session_pks = []
+            for raw_pk in self.request.POST.getlist('existing_session_id'):
+                raw_pk = str(raw_pk).strip()
+                if not raw_pk or raw_pk in session_pks:
+                    continue
+                session_pks.append(raw_pk)
+            link_requested = self.request.POST.get('link_existing_session') == 'on'
 
             if add_session and (not self.session_form.is_valid() or not self.session_questions_form.is_valid()):
                 messages.error(self.request, phrases.base.error_saving_changes)
                 return self.form_invalid(form)
 
-            existing_session = None
-            if link_existing_session:
-                if not session_pk:
+            existing_sessions = []
+            if session_pks or link_requested:
+                if not session_pks:
                     form.add_error(None, forms.ValidationError(_('Please select an existing session to link.')))
                     return self.form_invalid(form)
                 try:
-                    existing_session = self._linkable_sessions().get(pk=session_pk)
-                except (Submission.DoesNotExist, ValueError, TypeError):
+                    requested_ids = [int(pk) for pk in session_pks]
+                except (TypeError, ValueError):
+                    form.add_error(None, forms.ValidationError(_('The selected session does not exist.')))
+                    return self.form_invalid(form)
+                existing_sessions = list(self._linkable_sessions().filter(pk__in=requested_ids))
+                if len(existing_sessions) != len(requested_ids):
                     form.add_error(None, forms.ValidationError(_('The selected session does not exist.')))
                     return self.form_invalid(form)
 
@@ -368,12 +369,22 @@ class SpeakerCreate(SpeakerSocialLinksMixin, EventPermissionRequired, ActionFrom
                 self.session_questions_form.submission = session
                 self.session_questions_form.save()
                 session.speakers.add(user)
-                messages.success(self.request, _('Speaker and session created successfully.'))
-            elif existing_session:
-                existing_session.speakers.add(user)
-                session = existing_session
+            if existing_sessions:
                 from eventyay.agenda.views.utils import clear_schedule_caches
-                clear_schedule_caches(self.request.event, submission=existing_session)
+
+                for existing_session in existing_sessions:
+                    existing_session.speakers.add(user)
+                    clear_schedule_caches(self.request.event, submission=existing_session)
+                if session is None:
+                    session = existing_sessions[0]
+            if add_session and existing_sessions:
+                messages.success(
+                    self.request,
+                    _('Speaker created, linked to the selected sessions, and a new session was added.'),
+                )
+            elif add_session:
+                messages.success(self.request, _('Speaker and session created successfully.'))
+            elif existing_sessions:
                 messages.success(
                     self.request, _('Speaker added and linked to existing session successfully.')
                 )

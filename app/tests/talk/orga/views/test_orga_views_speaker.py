@@ -830,22 +830,63 @@ def test_orga_can_create_speaker_and_link_existing_session(orga_client, event, s
 
 
 @pytest.mark.django_db
-def test_orga_cannot_add_and_link_session_simultaneously(orga_client, event, submission):
+def test_orga_link_flag_without_session_does_not_create_speaker(orga_client, event):
     response = orga_client.post(
         event.orga_urls.new_speaker,
         data={
             "fullname": "Conflict Speaker",
             "email": "conflict@example.org",
             "biography": "New biography text",
-            "add_session": "on",
             "link_existing_session": "on",
         },
     )
     assert response.status_code == 200
-    assert "You cannot both create a new session and link an existing session." in response.text
+    assert "Please select an existing session to link." in response.text
     with scope(event=event):
         assert not SpeakerProfile.objects.filter(
             event=event, user__email="conflict@example.org"
+        ).exists()
+
+
+@pytest.mark.django_db
+def test_orga_can_link_multiple_sessions_and_create_one(
+    orga_client, event, submission, other_submission
+):
+    with scope(event=event):
+        submission_type = event.submission_types.first()
+    response = orga_client.post(
+        event.orga_urls.new_speaker,
+        data={
+            "fullname": "Multi Session Speaker",
+            "email": "multi.session@example.org",
+            "biography": "New biography text",
+            "add_session": "on",
+            "existing_session_id": [submission.pk, other_submission.pk],
+            "session-title": "Brand New Session",
+            "session-abstract": "Session abstract",
+            "session-description": "Session description",
+            "session-content_locale": "en",
+            "session-duration": "",
+            "session-slot_count": 1,
+            "session-notes": "",
+            "session-internal_notes": "",
+            "session-submission_type": submission_type.pk,
+            "session-state": "submitted",
+        },
+        follow=True,
+    )
+    assert response.status_code == 200
+    with scope(event=event):
+        profile = SpeakerProfile.objects.filter(
+            event=event, user__email="multi.session@example.org"
+        ).first()
+        assert profile is not None
+        submission.refresh_from_db()
+        other_submission.refresh_from_db()
+        assert profile.user in submission.speakers.all()
+        assert profile.user in other_submission.speakers.all()
+        assert event.submissions.filter(
+            title="Brand New Session", speakers=profile.user
         ).exists()
 
 

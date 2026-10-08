@@ -1,12 +1,19 @@
 /**
- * Speakers → Add speaker: toggle optional session sections and email field.
+ * Speakers → Add speaker: optional new session, extra session links, and email field.
  */
 
-function applySessionSections({
-  addSessionCheckbox,
-  existingSessionSelect,
-  sessionSection,
-}) {
+function refreshRemoveButtons(section) {
+  if (!section) return
+  const rows = section.querySelectorAll('[data-session-link-row]')
+  rows.forEach((row) => {
+    const button = row.querySelector('[data-remove-session-link]')
+    if (button) {
+      button.hidden = rows.length < 2
+    }
+  })
+}
+
+function applySessionSections({ addSessionCheckbox, sessionSection }) {
   const addChecked = Boolean(addSessionCheckbox?.checked)
 
   if (sessionSection) {
@@ -14,10 +21,6 @@ function applySessionSections({
     sessionSection.querySelectorAll('input, select, textarea').forEach((el) => {
       el.disabled = !addChecked
     })
-  }
-
-  if (existingSessionSelect) {
-    existingSessionSelect.disabled = addChecked
   }
 }
 
@@ -33,44 +36,50 @@ function applyEmailState({ noEmailCheckbox, emailField, emailWrapper }) {
 
 export function initSpeakerCreateForm(root = document) {
   const addSessionCheckbox = root.getElementById?.('id_add_session') || root.querySelector?.('#id_add_session')
-  const existingSessionSelect =
-    root.getElementById?.('id_existing_session_id') || root.querySelector?.('#id_existing_session_id')
   const noEmailCheckbox = root.getElementById?.('id_no_email') || root.querySelector?.('#id_no_email')
   const sessionSection = root.getElementById?.('session_section') || root.querySelector?.('#session_section')
+  const existingSessionSection =
+    root.getElementById?.('existing_session_section') || root.querySelector?.('#existing_session_section')
+  const linkAnotherButton =
+    root.getElementById?.('link-another-session') || root.querySelector?.('#link-another-session')
+  const rowTemplate =
+    root.getElementById?.('session-link-row-template') || root.querySelector?.('#session-link-row-template')
   const emailField = root.getElementById?.('id_email') || root.querySelector?.('#id_email')
   const emailWrapper = emailField ? emailField.closest('.form-group') : null
 
-  const sessionState = {
-    addSessionCheckbox,
-    existingSessionSelect,
-    sessionSection,
-  }
-  const emailState = { noEmailCheckbox, emailField, emailWrapper }
-
   if (addSessionCheckbox) {
     addSessionCheckbox.addEventListener('change', () => {
-      if (addSessionCheckbox.checked && existingSessionSelect) {
-        existingSessionSelect.value = ''
-      }
-      applySessionSections(sessionState)
+      applySessionSections({ addSessionCheckbox, sessionSection })
     })
   }
 
-  if (existingSessionSelect) {
-    existingSessionSelect.addEventListener('change', () => {
-      if (existingSessionSelect.value && addSessionCheckbox) {
-        addSessionCheckbox.checked = false
-      }
-      applySessionSections(sessionState)
+  if (existingSessionSection) {
+    existingSessionSection.addEventListener('click', (event) => {
+      const removeButton = event.target.closest?.('[data-remove-session-link]')
+      if (!removeButton || !existingSessionSection.contains(removeButton)) return
+      removeButton.closest('[data-session-link-row]')?.remove()
+      refreshRemoveButtons(existingSessionSection)
+    })
+  }
+
+  if (linkAnotherButton && rowTemplate && existingSessionSection) {
+    linkAnotherButton.addEventListener('click', () => {
+      const links = existingSessionSection.querySelector('[data-session-links]')
+      if (!links) return
+      links.appendChild(rowTemplate.content.cloneNode(true))
+      refreshRemoveButtons(existingSessionSection)
     })
   }
 
   if (noEmailCheckbox) {
-    noEmailCheckbox.addEventListener('change', () => applyEmailState(emailState))
+    noEmailCheckbox.addEventListener('change', () => {
+      applyEmailState({ noEmailCheckbox, emailField, emailWrapper })
+    })
   }
 
-  applySessionSections(sessionState)
-  applyEmailState(emailState)
+  applySessionSections({ addSessionCheckbox, sessionSection })
+  applyEmailState({ noEmailCheckbox, emailField, emailWrapper })
+  refreshRemoveButtons(existingSessionSection)
 }
 
 initSpeakerCreateForm()
