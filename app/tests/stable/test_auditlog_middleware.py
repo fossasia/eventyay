@@ -94,3 +94,18 @@ class AuditLogMiddlewareTest(TestCase):
         log = self.staff_session.logs.first()
         self.assertIsNotNone(log)
         self.assertEqual(log.impersonating, impersonated_user)
+
+    def test_query_parameter_masking(self):
+        request = self._get_request(method='GET', path='/control/users/?search=test&password=abc&api_token=123')
+        
+        middleware = AuditLogMiddleware(lambda req: None)
+        middleware(request)
+
+        log = self.staff_session.logs.first()
+        self.assertIsNotNone(log)
+        
+        self.assertIn('search=test', log.url)
+        self.assertIn('password=***', log.url)
+        self.assertIn('api_token=***', log.url)
+        self.assertNotIn('abc', log.url)
+        self.assertNotIn('123', log.url)

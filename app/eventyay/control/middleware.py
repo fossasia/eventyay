@@ -239,7 +239,10 @@ class AuditLogMiddleware:
                         if isinstance(d, dict):
                             for k, v in list(d.items()):
                                 if isinstance(k, str) and any(marker in k.lower() for marker in ('password', 'token', 'key', 'secret')):
-                                    d[k] = '***'
+                                    if isinstance(v, list):
+                                        d[k] = ['***'] * len(v)
+                                    else:
+                                        d[k] = '***'
                                 else:
                                     mask_data(v)
                         elif isinstance(d, list):

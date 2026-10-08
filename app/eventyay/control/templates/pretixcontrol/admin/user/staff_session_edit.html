@@ -44,7 +44,7 @@
             {% if log.post_data %}
             <details>
                 <summary>{% trans "View payload" %}</summary>
-                {{ log.post_data }}
+                <pre class="mb-0"><code>{{ log.post_data }}</code></pre>
             </details>
             {% endif %}
         </td>
