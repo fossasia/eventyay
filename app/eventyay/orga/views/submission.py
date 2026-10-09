@@ -1,5 +1,6 @@
 import json
 from collections import Counter
+from dataclasses import replace
 
 from dateutil import rrule
 from django.conf import settings
@@ -7,7 +8,7 @@ from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.syndication.views import Feed
 from django.db import transaction
-from django.db.models import Count as DbCount, Prefetch, Q
+from django.db.models import Count as DbCount, Q
 from django.db.models.functions import TruncDate
 from django.forms.models import BaseModelFormSet, inlineformset_factory
 from django.http import Http404, HttpResponse, JsonResponse
@@ -22,7 +23,6 @@ from django_context_decorator import context
 from urllib.parse import urlencode
 
 from eventyay.base.models import (
-    Answer,
     Feedback,
     LogEntry,
     Resource,
@@ -34,13 +34,11 @@ from eventyay.base.models import (
     SubmissionComment,
     SubmissionStates,
     Tag,
-    TalkQuestionTarget,
     User,
 )
 from eventyay.base.models.base import CachedFile
 from eventyay.common.views.helpers import is_ajax_request
 from eventyay.base.models.mail import MailTemplateRoles
-from eventyay.base.models.profile import SpeakerProfile
 from eventyay.base.services.etherpad import (
     EtherpadConfigurationError,
     EtherpadError,
@@ -78,6 +76,11 @@ from eventyay.orga.forms.submission import (
     AnonymiseForm,
     SubmissionForm,
     SubmissionStateChangeForm,
+)
+from eventyay.orga.utils.speakers import (
+    get_submission_answers,
+    get_submission_speakers,
+    viewer_is_reviewer_only,
 )
 from eventyay.submission.forms import (
     ResourceForm,
@@ -305,49 +308,16 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
     @context
     @cached_property
     def speakers(self):
-        submission = self.object
-        speakers_qs = submission.speakers.all().prefetch_related(
-            Prefetch(
-                'profiles',
-                queryset=SpeakerProfile.objects.filter(event=submission.event).prefetch_related('availabilities'),
-                to_attr='_event_profiles',
-            ),
-            Prefetch(
-                'answers',
-                queryset=Answer.objects.filter(
-                    question__event=submission.event,
-                    question__is_visible_to_reviewers=True,
-                    question__target=TalkQuestionTarget.SPEAKER,
-                )
-                .select_related('question')
-                .order_by('question__position'),
-                to_attr='_reviewer_answers',
-            ),
-            Prefetch(
-                'submissions',
-                queryset=Submission.objects.filter(event=submission.event),
-                to_attr='_event_submissions',
-            ),
+        speakers = get_submission_speakers(
+            self.object,
+            for_reviewers=viewer_is_reviewer_only(self.request.user, self.request.event),
+            user=self.request.user,
         )
         invitations = {
             invitation.user_id: invitation
-            for invitation in submission.speaker_invitations.filter(user__isnull=False)
+            for invitation in self.object.speaker_invitations.filter(user__isnull=False)
         }
-        return [
-            {
-                'user': speaker,
-                'profile': speaker.event_profile(submission.event),
-                'other_submissions': [s for s in speaker._event_submissions if s.code != submission.code],
-                'email': speaker.email,
-                'avatar': speaker.avatar,
-                'avatar_url': speaker.get_avatar_url(event=submission.event),
-                'avatar_source': speaker.avatar_source,
-                'avatar_license': speaker.avatar_license,
-                'reviewer_answers': speaker._reviewer_answers,
-                'invitation': invitations.get(speaker.pk),
-            }
-            for speaker in speakers_qs
-        ]
+        return [replace(speaker, invitation=invitations.get(speaker.user.pk)) for speaker in speakers]
 
     @context
     @cached_property
@@ -440,14 +410,14 @@ class SubmissionSpeakerResendInvitation(SubmissionSpeakers):
             submission=self.object,
             pk=self.kwargs['pk'],
         )
-        if not invitation.can_resend:
+        if not invitation.can_resend_orga:
             message = _('This invitation cannot be resent.')
             if is_ajax_request(request):
                 return JsonResponse({'message': str(message), 'success': False}, status=409)
             messages.warning(request, message)
             return redirect(self.object.orga_urls.speakers)
 
-        delivered = invitation.resend(requestor=request.user)
+        delivered = invitation.resend(requestor=request.user, orga=True)
         if delivered:
             message = _('Invitation sent to {email}.').format(email=invitation.email)
         else:
@@ -767,6 +737,17 @@ class SubmissionContentView(SubmissionContent):
     template_name = 'orga/submission/content.html'
     http_method_names = ['get', 'head', 'options']
 
+    @context
+    @cached_property
+    def submission_answers(self):
+        submission = self.get_object()
+        if not submission:
+            return []
+        return get_submission_answers(
+            submission,
+            for_reviewers=viewer_is_reviewer_only(self.request.user, self.request.event),
+        )
+
     def get_permission_required(self):
         if 'code' in self.kwargs:
             return ['base.orga_list_submission']  # View permission for reviewers
@@ -789,6 +770,22 @@ class SubmissionContentView(SubmissionContent):
                 }
             )
         return tags
+
+    @context
+    @cached_property
+    def scheduled_slot(self):
+        submission = self.get_object()
+        if not isinstance(submission, Submission) or not submission.pk:
+            return None
+        return (
+            submission.slots.filter(
+                schedule__version__isnull=True,
+                start__isnull=False,
+            )
+            .select_related('room')
+            .order_by('start')
+            .first()
+        )
 
 
 class BaseSubmissionList(Sortable, ReviewerSubmissionFilter, PaginationMixin, ListView):
