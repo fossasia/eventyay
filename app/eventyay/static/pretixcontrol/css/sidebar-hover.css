@@ -150,3 +150,11 @@ body.sidebar-minimized .sidebar:focus-within .context-selector .context-indicato
     font-weight: normal;
   }
 }
+
+.sidebar .nav-second-level li a {
+  padding-left: 43px;
+}
+html.rtl .sidebar .nav-second-level li a {
+  padding-left: 15px;
+  padding-right: 43px;
+}

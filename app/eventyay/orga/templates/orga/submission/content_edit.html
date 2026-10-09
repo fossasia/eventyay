@@ -92,9 +92,9 @@
                             name="session_video_urls"
                             rows="3"
                             autocomplete="off"
-                            placeholder="{% translate "One YouTube or Vimeo URL per line" %}"
+                            placeholder="{% translate "One YouTube, Vimeo, or Wikimedia Commons URL per line" %}"
                         >{{ session_video_urls_text }}</textarea>
-                        <small class="form-text text-muted">{% translate "YouTube or Vimeo URLs, one per line." %}</small>
+                        <small class="form-text text-muted">{% translate "YouTube, Vimeo, or Wikimedia Commons URLs, one per line." %}</small>
                         {% if session_video_urls_error %}
                             <div class="help-block">{{ session_video_urls_error }}</div>
                         {% endif %}
@@ -147,5 +147,5 @@
             {% endif %}
         </fieldset></form>
 
-    <span id="vars" remoteUrl="{{ request.event.organizer.orga_urls.user_search }}"></span>
+    <span id="vars" remoteUrl="{{ request.event.orga_urls.speaker_autocomplete }}" data-no-results="{% translate 'No matching person found for this event.' %}"></span>
 {% endblock submission_content %}

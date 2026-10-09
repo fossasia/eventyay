@@ -65,25 +65,67 @@
         {% endif %}
     </h5>
     {% if can_invite_speakers and can_edit %}
-        <form class="add-speaker" action="{{ submission.urls.invite }}">
-            <div class="form-group form-inline flex-row">
-                <div class="mt-1">
-                    {{ submission.display_speaker_names }},
+        {% if submission.can_invite_co_speakers %}
+            <form class="add-speaker" action="{{ submission.urls.invite }}">
+                <div class="form-group form-inline flex-row">
+                    <div class="mt-1">
+                        {{ submission.display_speaker_names }},
+                    </div>
+                    <div class="input-group pl-2 w-auto">
+                        <input name="email" class="form-control form-control-sm" placeholder="mail@example.org" autocomplete="off">
+                        <span class="input-group-btn input-group-append">
+                            <button class="btn btn-success btn-sm">
+                                <i class="fa fa-plus"></i>
+                            </button>
+                        </span>
+                    </div>
                 </div>
-                <div class="input-group pl-2 w-auto">
-                    <input name="email" class="form-control form-control-sm" placeholder="mail@example.org">
-                    <span class="input-group-btn input-group-append">
-                        <button class="btn btn-success btn-sm">
-                            <i class="fa fa-plus"></i>
-                        </button>
-                    </span>
-                </div>
+            </form>
+        {% else %}
+            <div class="mt-1">
+                {{ submission.display_speaker_names }}
             </div>
-        </form>
+            <div class="text-muted small mt-1">
+                {% blocktranslate with count=submission.MAX_CO_SPEAKERS trimmed %}
+                    This proposal has reached the maximum of {{ count }} co-speakers.
+                {% endblocktranslate %}
+            </div>
+        {% endif %}
     {% else %}
         <div class="mt-1">
             {{ submission.display_speaker_names }}
         </div>
+    {% endif %}
+    {% if pending_invitations %}
+        <ul class="list-unstyled mt-2 pending-speaker-invitations">
+            {% for invitation in pending_invitations %}
+                <li>
+                    {{ invitation.display_name }}
+                    <span class="badge bg-warning text-dark">{% translate "Pending" %}</span>
+                    {% if invitation.mail_state == "failed" %}
+                        <span class="text-danger">{% translate "Invitation email failed" %}</span>
+                    {% endif %}
+                    {% if can_invite_speakers and can_edit %}
+                        {% if invitation.can_resend %}
+                            <form method="post" action="{% url 'cfp:event.user.submission.invite.resend' organizer=request.event.organizer.slug event=request.event.slug code=submission.code pk=invitation.pk %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-info">{% translate "Resend invitation" %}</button>
+                            </form>
+                        {% elif invitation.resend_count >= invitation.MAX_RESENDS %}
+                            <span class="text-muted small ml-1" title="{% blocktranslate with count=invitation.MAX_RESENDS trimmed %}This invitation has already been resent the maximum of {{ count }} times.{% endblocktranslate %}">
+                                {% translate "Resend limit reached" %}
+                            </span>
+                        {% endif %}
+                    {% endif %}
+                    {% if can_invite_speakers and can_edit %}
+                        <form method="post" action="{% url 'cfp:event.user.submission.invite.revoke' organizer=request.event.organizer.slug event=request.event.slug code=submission.code pk=invitation.pk %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fa fa-trash"></i> {% translate "Revoke invitation" %}</button>
+                        </form>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
     {% endif %}
         <form method="post" enctype="multipart/form-data" novalidate>
             {% include "common/forms/errors.html" %}

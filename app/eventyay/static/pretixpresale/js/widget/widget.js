@@ -204,11 +204,36 @@ var makeid = function (length) {
     return text;
 };
 
-var site_is_secure = function () {
-    return /https.*/.test(document.location.protocol)
+var shop_is_secure = function (targetUrl) {
+    // Prefer the shop URL: an HTTP host page may still embed an HTTPS shop in an iframe.
+    if (targetUrl && /^https:/i.test(targetUrl)) {
+        return true;
+    }
+    return /^https:/i.test(document.location.protocol);
 };
 
 var widget_id = makeid(16);
+// /widget/<ns>/ keeps ACAO through production nginx (/widgets?/); legacy /w/<ns>/ still resolves.
+var cart_namespace_path = 'widget/' + widget_id;
+
+function eventRootFromCartAddUrl(responseUrl) {
+    // Match the final namespaced cart-add path. Organizer/event slugs may contain
+    // "/cart/add", so taking the first occurrence would recover the wrong root.
+    var re = /\/(?:w|widget)\/[a-zA-Z0-9]{16}\/cart\/add(?=[/?#]|$)/g;
+    var match = null;
+    var m;
+    while ((m = re.exec(responseUrl)) !== null) {
+        match = m;
+    }
+    if (!match) {
+        return null;
+    }
+    var root = responseUrl.substring(0, match.index);
+    if (root.charAt(root.length - 1) !== '/') {
+        root += '/';
+    }
+    return root;
+}
 
 /* Vue Components */
 Vue.component('availbox', {
@@ -291,9 +316,9 @@ Vue.component('availbox', {
         waiting_list_url: function () {
             var u
             if (this.item.has_variations) {
-                u = this.$root.target_url + 'w/' + widget_id + '/waitinglist/?item=' + this.item.id + '&var=' + this.variation.id + '&widget_data=' + encodeURIComponent(this.$root.widget_data_json);
+                u = this.$root.target_url + cart_namespace_path + '/waitinglist?product=' + this.item.id + '&var=' + this.variation.id + '&widget_data=' + encodeURIComponent(this.$root.widget_data_json);
             } else {
-                u = this.$root.target_url + 'w/' + widget_id + '/waitinglist/?item=' + this.item.id + '&widget_data=' + encodeURIComponent(this.$root.widget_data_json);
+                u = this.$root.target_url + cart_namespace_path + '/waitinglist?product=' + this.item.id + '&widget_data=' + encodeURIComponent(this.$root.widget_data_json);
             }
             if (this.$root.subevent) {
                 u += '&subevent=' + this.$root.subevent
@@ -557,10 +582,13 @@ var shared_methods = {
     buy_error_callback: function (xhr, data) {
         if (xhr.status === 405 && typeof xhr.responseURL !== "undefined") {
             // Likely a redirect!
-            this.$root.target_url = xhr.responseURL.substr(0, xhr.responseURL.indexOf("/cart/add") - 18);
-            this.$root.overlay.frame_loading = false;
-            this.buy();
-            return;
+            var recovered = eventRootFromCartAddUrl(xhr.responseURL);
+            if (recovered && recovered !== this.$root.target_url) {
+                this.$root.target_url = recovered;
+                this.$root.overlay.frame_loading = false;
+                this.buy();
+                return;
+            }
         }
         this.$root.overlay.error_message = strings['cart_error'];
         this.$root.overlay.frame_loading = false;
@@ -584,7 +612,7 @@ var shared_methods = {
                 data.redirect = this.$root.target_url.replace(/^([^\/]+:\/\/[^\/]+)\/.*$/, "$1") + data.redirect;
             }
             var url = data.redirect;
-            if (url.indexOf('?')) {
+            if (url.indexOf('?') >= 0) {
                 url = url + '&iframe=1&locale=' + lang + '&take_cart_id=' + this.$root.cart_id;
             } else {
                 url = url + '?iframe=1&locale=' + lang + '&take_cart_id=' + this.$root.cart_id;
@@ -641,7 +669,7 @@ var shared_methods = {
     },
     resume: function () {
         var redirect_url;
-        redirect_url = this.$root.target_url + 'w/' + widget_id + '/';
+        redirect_url = this.$root.target_url + cart_namespace_path + '/';
         if (this.$root.subevent && !this.$root.cart_id) {
             // button with subevent but no items
             redirect_url += this.$root.subevent + '/';
@@ -688,7 +716,7 @@ var shared_iframe_fragment = (
     + '<div class="pretix-widget-frame-loading" v-show="$root.frame_loading">'
     + '<svg width="256" height="256" viewBox="0 0 1792 1792" xmlns="http://www.w3.org/2000/svg"><path class="pretix-widget-primary-color" d="M1152 896q0-106-75-181t-181-75-181 75-75 181 75 181 181 75 181-75 75-181zm512-109v222q0 12-8 23t-20 13l-185 28q-19 54-39 91 35 50 107 138 10 12 10 25t-9 23q-27 37-99 108t-94 71q-12 0-26-9l-138-108q-44 23-91 38-16 136-29 186-7 28-36 28h-222q-14 0-24.5-8.5t-11.5-21.5l-28-184q-49-16-90-37l-141 107q-10 9-25 9-14 0-25-11-126-114-165-168-7-10-7-23 0-12 8-23 15-21 51-66.5t54-70.5q-27-50-41-99l-183-27q-13-2-21-12.5t-8-23.5v-222q0-12 8-23t19-13l186-28q14-46 39-92-40-57-107-138-10-12-10-24 0-10 9-23 26-36 98.5-107.5t94.5-71.5q13 0 26 10l138 107q44-23 91-38 16-136 29-186 7-28 36-28h222q14 0 24.5 8.5t11.5 21.5l28 184q49 16 90 37l142-107q9-9 24-9 13 0 25 10 129 119 165 170 7 8 7 22 0 12-8 23-15 21-51 66.5t-54 70.5q26 50 41 98l183 28q13 2 21 12.5t8 23.5z"/></svg>'
     + '</div>'
-    + '<div class="pretix-widget-frame-inner" ref="frame-container" v-show="$root.frame_shown">'
+    + '<div class="pretix-widget-frame-inner" ref="frame-container" v-show="$root.frame_shown || $root.frame_loading">'
     + '<iframe frameborder="0" width="650px" height="650px" @load="iframeLoaded" '
     + '        :name="$root.parent.widget_id" src="about:blank" v-once>'
     + 'Please enable frames in your browser!'
@@ -747,10 +775,26 @@ Vue.component('pretix-overlay', {
         },
         close: function () {
             this.$root.frame_shown = false;
+            this.$root.frame_loading = false;
+            var container = this.$refs['frame-container'];
+            var iframe = container && container.children[0];
+            if (iframe) {
+                iframe.src = 'about:blank';
+            }
             this.$root.parent.frame_dismissed = true;
             this.$root.parent.reload();
         },
         iframeLoaded: function () {
+            // Ignore the initial about:blank load so it cannot clear the spinner
+            // before checkout navigation starts (first-open race).
+            var container = this.$refs['frame-container'];
+            var iframe = container && container.children[0];
+            if (iframe) {
+                var src = iframe.src || '';
+                if (!src || src.indexOf('about:blank') === 0) {
+                    return;
+                }
+            }
             if (this.$root.frame_loading) {
                 this.$root.frame_loading = false;
                 this.$root.frame_shown = true;
@@ -802,7 +846,7 @@ Vue.component('pretix-widget-event-form', {
         + '</button>'
         + '</div>'
         + '</form>'
-        + '<form method="get" :action="$root.voucherFormTarget" target="_blank" '
+        + '<form method="get" :action="$root.voucherFormTarget" :target="$root.formTarget" '
         + '      v-if="$root.vouchers_exist && !$root.disable_vouchers && !$root.voucher_code">'
         + '<div class="pretix-widget-voucher">'
         + '<h3 class="pretix-widget-voucher-headline">'+ strings['redeem_voucher'] +'</h3>'
@@ -1339,7 +1383,7 @@ var shared_root_methods = {
         if (this.$root.useIframe) {
             event.preventDefault();
             var url = event.target.attributes.href.value;
-            if (url.indexOf('?')) {
+            if (url.indexOf('?') >= 0) {
                 url += '&iframe=1';
             } else {
                 url += '?iframe=1';
@@ -1467,7 +1511,7 @@ var shared_root_methods = {
         });
     },
     startseating: function () {
-        var redirect_url = this.$root.target_url + 'w/' + widget_id;
+        var redirect_url = this.$root.target_url + cart_namespace_path;
         if (this.$root.subevent){
             redirect_url += '/' + this.$root.subevent;
         }
@@ -1500,6 +1544,9 @@ var shared_root_computed = {
         return "pretix_widget_" + this.target_url.replace(/[^a-zA-Z0-9]+/g, "_");
     },
     formTarget: function () {
+        if (this.useIframe) {
+            return this.widget_id;
+        }
         var is_firefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
         var is_android = navigator.userAgent.toLowerCase().indexOf("android") > -1;
         if (is_android && is_firefox) {
@@ -1513,7 +1560,7 @@ var shared_root_computed = {
         }
     },
     voucherFormTarget: function () {
-        var form_target = this.target_url + 'w/' + widget_id + '/redeem?iframe=1&locale=' + lang;
+        var form_target = this.target_url + cart_namespace_path + '/redeem/?iframe=1&locale=' + lang;
         var cookie = getCookie(this.cookieName);
         if (cookie) {
             form_target += "&take_cart_id=" + cookie;
@@ -1537,11 +1584,11 @@ var shared_root_computed = {
             }
             return target;
         }
-        var checkout_url = "/" + this.target_url.replace(/^[^\/]+:\/\/([^\/]+)\//, "") + "w/" + widget_id + "/";
+        var checkout_url = "/" + this.target_url.replace(/^[^\/]+:\/\/([^\/]+)\//, "") + cart_namespace_path + "/";
         if (!this.$root.cart_exists) {
             checkout_url += "checkout/start";
         }
-        var form_target = this.target_url + 'w/' + widget_id + '/cart/add?iframe=1&next=' + encodeURIComponent(checkout_url);
+        var form_target = this.target_url + cart_namespace_path + '/cart/add?iframe=1&next=' + encodeURIComponent(checkout_url);
         var cookie = getCookie(this.cookieName);
         if (cookie) {
             form_target += "&take_cart_id=" + cookie;
@@ -1549,7 +1596,7 @@ var shared_root_computed = {
         return form_target
     },
     useIframe: function () {
-        return !this.disable_iframe && (this.skip_ssl || site_is_secure());
+        return !this.disable_iframe && (this.skip_ssl || shop_is_secure(this.target_url));
     },
     showPrices: function () {
         var has_priced = false;

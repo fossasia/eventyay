@@ -25,7 +25,7 @@ from eventyay.common.forms.validators import (
     MinDateTimeValidator,
     MinDateValidator,
 )
-from eventyay.common.forms.widgets import HtmlDateInput, HtmlDateTimeInput
+from eventyay.common.forms.widgets import AnswerFileInput, HtmlDateInput, HtmlDateTimeInput
 from eventyay.common.text.phrases import phrases
 from eventyay.common.utils.language import localize_event_text
 from phonenumber_field.formfields import PhoneNumberField
@@ -387,7 +387,7 @@ class QuestionFieldsMixin:
                 return field
         if question.variant == TalkQuestionVariant.VIDEO:
             video_help = original_help_text or _(
-                'Paste YouTube or Vimeo URLs, one per line. '
+                'Paste YouTube, Vimeo, or Wikimedia Commons URLs, one per line. '
                 'Publish this field to embed the videos on the public session page.'
             )
 
@@ -395,12 +395,12 @@ class QuestionFieldsMixin:
                 urls = parse_video_urls(value)
                 if value and str(value).strip() and not urls:
                     raise ValidationError(
-                        _('Please enter valid YouTube or Vimeo URLs, one per line.')
+                        _('Please enter valid YouTube, Vimeo, or Wikimedia Commons URLs, one per line.')
                     )
                 for url in urls:
                     if get_video_embed_info(url) is None:
                         raise ValidationError(
-                            _('Please enter valid YouTube or Vimeo URLs, one per line.')
+                            _('Please enter valid YouTube, Vimeo, or Wikimedia Commons URLs, one per line.')
                         )
 
             field = forms.CharField(
@@ -414,7 +414,7 @@ class QuestionFieldsMixin:
             )
             field.original_help_text = original_help_text
             field.widget.attrs['placeholder'] = (
-                'https://www.youtube.com/watch?v=…\nhttps://vimeo.com/…'
+                'https://www.youtube.com/watch?v=…\nhttps://vimeo.com/…\nhttps://commons.wikimedia.org/wiki/File:…'
             )
             return field
         if question.variant == TalkQuestionVariant.TEXT:
@@ -451,6 +451,7 @@ class QuestionFieldsMixin:
                 disabled=read_only,
                 help_text=help_text,
                 initial=initial,
+                widget=AnswerFileInput(attrs={'alt': label_text}),
                 extensions={
                     '.png': ['image/png', '.png'],
                     '.jpg': ['image/jpeg', '.jpg'],

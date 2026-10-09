@@ -261,6 +261,10 @@ export default {
 			const localizedRoom = getLocalizedString(session?.room?.name)
 			return (localizedRoom || '').toString().toLowerCase()
 		},
+		trackSortKey (session) {
+			const localizedTrack = getLocalizedString(session?.track?.name)
+			return (localizedTrack || '').toString().toLowerCase()
+		},
 		sessionComparator (a, b) {
 			if (!a?.id && b?.id) return 1
 			if (a?.id && !b?.id) return -1
@@ -287,6 +291,10 @@ export default {
 				}
 				const dateCmp = a.start.diff(b.start)
 				if (dateCmp !== 0) return dateCmp
+				const roomCmp = this.roomSortKey(a).localeCompare(this.roomSortKey(b))
+				if (roomCmp !== 0) return roomCmp
+				const trackCmp = this.trackSortKey(a).localeCompare(this.trackSortKey(b))
+				if (trackCmp !== 0) return trackCmp
 			}
 
 			const direction = this.sortBy === 'title_desc' ? -1 : 1
@@ -383,12 +391,13 @@ export default {
 			font-size: 14px
 			font-weight: 500
 			color: $clr-secondary-text-light
-			padding-left: 5px
+			padding-left: 0
 			.day
 				font-weight: 600
 		.break
 			z-index: 10
-			margin: 8px
+			margin: 8px 0
+			margin-right: 8px
 			padding: 8px
 			border-radius: 4px
 			background-color: $clr-grey-200
@@ -405,9 +414,10 @@ export default {
 		.bucket
 			.bucket-label
 				font-size: 13px
-				padding-left: 8px
+				padding-left: 0
 			.break
-				margin: 6px 4px
+				margin: 6px 0
+				margin-right: 4px
 				.title
 					font-size: 16px
 
@@ -417,7 +427,7 @@ export default {
 		.bucket-label
 			font-size: 12px
 		.break
-			margin: 4px
+			margin: 4px 4px
 			padding: 4px
 			.title
 				font-size: 16px
@@ -428,7 +438,7 @@ export default {
 		.bucket-label
 			font-size: 16px
 		.break
-			margin: 12px
+			margin: 12px 8px
 			padding: 12px
 			.title
 				font-size: 22px
