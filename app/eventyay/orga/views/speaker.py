@@ -280,14 +280,7 @@ class SpeakerCreate(SpeakerSocialLinksMixin, EventPermissionRequired, ActionFrom
         context['selected_session_ids'] = [
             pk for pk in self.request.POST.getlist('existing_session_id') if str(pk).strip()
         ]
-        context['extra_speaker_total'] = self._extra_speaker_total()
-        context['extra_speaker_forms'] = [
-            {'form': extra_form, 'social_formset': social_formset}
-            for extra_form, social_formset in self.extra_speaker_entries
-            if not self._extra_prefix_is_blank(extra_form.prefix)
-        ]
-        context['extra_speaker_template_form'] = self._speaker_profile_form('extra-__prefix__')
-        context['extra_speaker_template_social_formset'] = self._extra_social_formset('extra-__prefix__')
+
         return context
 
     def _linkable_sessions(self):
@@ -345,13 +338,7 @@ class SpeakerCreate(SpeakerSocialLinksMixin, EventPermissionRequired, ActionFrom
                 session_pks = []
                 link_requested = False
 
-            extra_speaker_entries = [
-                entry
-                for entry in self.extra_speaker_entries
-                if not self._extra_prefix_is_blank(entry[0].prefix)
-            ]
-            if not self._extra_speakers_valid(form, extra_speaker_entries):
-                return self.form_invalid(form)
+
 
             if add_session and (not self.session_form.is_valid() or not self.session_questions_form.is_valid()):
                 messages.error(self.request, phrases.base.error_saving_changes)
@@ -396,44 +383,21 @@ class SpeakerCreate(SpeakerSocialLinksMixin, EventPermissionRequired, ActionFrom
                     existing_session.speakers.add(user)
                 if session is None:
                     session = existing_sessions[0]
-            created_users = [(user, getattr(form, '_user_was_preexisting', False), form)]
-            for extra_form, social_formset in extra_speaker_entries:
-                extra_profile = extra_form.save()
-                if social_formset is not None:
-                    save_speaker_social_links(extra_profile, social_formset)
-                extra_user = extra_profile.user
-                if session is not None:
-                    session.speakers.add(extra_user)
-                for existing_session in existing_sessions:
-                    existing_session.speakers.add(extra_user)
-                created_users.append(
-                    (extra_user, getattr(extra_form, '_user_was_preexisting', False), extra_form)
-                )
+            is_preexisting = getattr(form, '_user_was_preexisting', False)
             if existing_sessions:
                 from eventyay.agenda.views.utils import clear_schedule_caches
 
                 for existing_session in existing_sessions:
                     clear_schedule_caches(self.request.event, submission=existing_session)
 
-            if add_session and len(created_users) > 1:
-                messages.success(self.request, _('Speakers and session created successfully.'))
-            elif add_session:
+            if add_session:
                 messages.success(self.request, _('Speaker and session created successfully.'))
-            elif existing_sessions and len(created_users) > 1:
-                messages.success(
-                    self.request, _('Speakers added and linked to existing sessions successfully.')
-                )
             elif existing_sessions:
-                messages.success(
-                    self.request, _('Speaker added and linked to existing session successfully.')
-                )
-            elif len(created_users) > 1:
-                messages.success(self.request, _('Speakers created successfully.'))
+                messages.success(self.request, _('Speaker added and linked to existing session successfully.'))
             else:
                 messages.success(self.request, _('Speaker created successfully.'))
 
-            for created_user, is_preexisting, created_form in created_users:
-                self._send_new_speaker_invite(created_user, created_form, session, is_preexisting)
+            self._send_new_speaker_invite(user, form, session, is_preexisting)
 
             return redirect(self.get_success_url())
 
@@ -452,95 +416,7 @@ class SpeakerCreate(SpeakerSocialLinksMixin, EventPermissionRequired, ActionFrom
             kwargs['files'] = self.request.FILES
         return SpeakerProfileForm(**kwargs)
 
-    def _extra_social_formset(self, prefix, bind=False):
-        if not self.social_links_enabled():
-            return None
-        return build_speaker_social_links_formset(
-            data=self.request.POST if bind else None,
-            prefix=f'{prefix}-social_links',
-        )
 
-    def _extra_speaker_total(self):
-        if self.request.method != 'POST':
-            return 0
-        try:
-            return max(int(self.request.POST.get('extra_speaker_total') or 0), 0)
-        except (TypeError, ValueError):
-            return 0
-
-    def _extra_prefix_is_blank(self, prefix):
-        """Ignore an added block until the organizer actually fills it in."""
-
-        def posted(field_name):
-            return str(self.request.POST.get(f'{prefix}-{field_name}') or '').strip()
-
-        if posted('fullname') or posted('email') or posted('biography') or posted('no_email'):
-            return False
-        if self.request.FILES.get(f'{prefix}-avatar'):
-            return False
-        for key, value in self.request.POST.items():
-            if not str(value).strip():
-                continue
-            if key.startswith(f'{prefix}-question_'):
-                return False
-            if key.startswith(f'{prefix}-social_links-') and key.endswith('-path'):
-                return False
-        return True
-
-    @cached_property
-    def extra_speaker_entries(self):
-        if self.request.method != 'POST':
-            return []
-        entries = []
-        for index in range(self._extra_speaker_total()):
-            prefix = f'extra-{index}'
-            entries.append(
-                (
-                    self._speaker_profile_form(prefix, bind=True),
-                    self._extra_social_formset(prefix, bind=True),
-                )
-            )
-        return entries
-
-    def _extra_speakers_valid(self, form, entries):
-        valid = True
-        emails_seen = set()
-        if form.is_valid():
-            primary_email = form.cleaned_data.get('email')
-            if primary_email:
-                emails_seen.add(primary_email.lower())
-
-        for extra_form, social_formset in entries:
-            form_valid = extra_form.is_valid()
-            if form_valid:
-                email = extra_form.cleaned_data.get('email')
-                if email:
-                    email_lower = email.lower()
-                    if email_lower in emails_seen:
-                        extra_form.add_error('email', forms.ValidationError(_('This email address is already used in this form.')))
-                        form_valid = False
-                    else:
-                        emails_seen.add(email_lower)
-
-            social_valid = True
-            social_prefix = f'{extra_form.prefix}-social_links-TOTAL_FORMS'
-            if social_formset is not None and social_prefix in self.request.POST:
-                social_valid = social_formset.is_valid()
-                if social_valid and self.social_links_required() and not formset_has_social_links(social_formset):
-                    social_formset.non_form_errors().append(_('Please add at least one social media link.'))
-                    social_valid = False
-            if form_valid and social_valid:
-                continue
-            valid = False
-            label = extra_form.data.get(extra_form.add_prefix('fullname')) or _('Additional speaker')
-            form.add_error(
-                None,
-                forms.ValidationError(
-                    _('Could not add %(speaker)s. Check the additional speaker fields below.')
-                    % {'speaker': label}
-                ),
-            )
-        return valid
 
     def _send_new_speaker_invite(self, user, form, session, is_preexisting):
         if form.cleaned_data.get('no_email') or not user.email:

@@ -890,35 +890,6 @@ def test_orga_can_link_multiple_sessions_and_create_one(
         ).exists()
 
 
-@pytest.mark.django_db
-def test_orga_can_add_another_speaker_on_the_same_form(orga_client, event, submission):
-    response = orga_client.post(
-        event.orga_urls.new_speaker,
-        data={
-            "fullname": "Primary Speaker",
-            "email": "primary.speaker@example.org",
-            "biography": "Primary biography",
-            "existing_session_id": submission.pk,
-            "extra_speaker_total": "1",
-            "extra-0-fullname": "Co Speaker",
-            "extra-0-email": "co.speaker@example.org",
-            "extra-0-biography": "Co biography",
-        },
-        follow=True,
-    )
-    assert response.status_code == 200
-    with scope(event=event):
-        primary = SpeakerProfile.objects.filter(
-            event=event, user__email="primary.speaker@example.org"
-        ).first()
-        co_speaker = SpeakerProfile.objects.filter(
-            event=event, user__email="co.speaker@example.org"
-        ).first()
-        assert primary is not None
-        assert co_speaker is not None
-        submission.refresh_from_db()
-        assert primary.user in submission.speakers.all()
-        assert co_speaker.user in submission.speakers.all()
 
 
 @pytest.mark.django_db

@@ -40,23 +40,6 @@
 
         {% include "orga/speaker/includes/profile_fields.html" with speaker_form=form speaker_social_formset=social_media_formset %}
 
-        <div class="form-group row">
-            <label class="col-md-3 col-form-label" for="id_add_session">
-                {% translate "Add new session" %}
-            </label>
-            <div class="col-md-9 d-flex align-items-center">
-                <label class="toggle-switch mb-0">
-                    <input type="checkbox" id="id_add_session" name="add_session"
-                           aria-label="{% translate 'Enable creating a new session' %}"
-                           {% if request.POST.add_session %}checked{% endif %}>
-                    <span class="toggle-slider"></span>
-                </label>
-                <span class="ml-2 text-muted">
-                    {% translate "Turn on to create a new session. Linking an existing session is turned off while this is on." %}
-                </span>
-            </div>
-        </div>
-
         <div id="existing_session_section" class="form-group row">
             <label class="col-md-3 col-form-label" for="id_existing_session_id">
                 {% translate "Link existing session" %}
@@ -127,40 +110,22 @@
             </template>
         </div>
 
-        <input type="hidden" name="extra_speaker_total" id="extra_speaker_total" value="{{ extra_speaker_total }}">
-        <div data-extra-speakers>
-            {% for extra in extra_speaker_forms %}
-                <section class="speaker-create-block" data-extra-speaker>
-                    <div class="speaker-create-block__header">
-                        <h3>{% translate "Additional speaker" %}</h3>
-                        <button type="button" class="btn btn-danger btn-sm" data-remove-extra-speaker title="{% translate 'Remove speaker' %}" aria-label="{% translate 'Remove speaker' %}">
-                            <i class="fa fa-minus" aria-hidden="true"></i>
-                        </button>
-                    </div>
-                    {% include "orga/speaker/includes/profile_fields.html" with speaker_form=extra.form speaker_social_formset=extra.social_formset omit_social_formset_id=True omit_availability_assets=True %}
-                </section>
-            {% endfor %}
-        </div>
-        <div class="speaker-create-add">
-            <div class="form-group row mb-0">
-                <div class="col-md-9 offset-md-3">
-                    <button type="button" class="btn btn-sm btn-info" id="add-another-speaker">
-                        <i class="fa fa-plus" aria-hidden="true"></i> {% translate "Add another speaker" %}
-                    </button>
-                </div>
+        <div class="form-group row">
+            <label class="col-md-3 col-form-label" for="id_add_session">
+                {% translate "Add new session" %}
+            </label>
+            <div class="col-md-9 d-flex align-items-center">
+                <label class="toggle-switch mb-0">
+                    <input type="checkbox" id="id_add_session" name="add_session"
+                           aria-label="{% translate 'Enable creating a new session' %}"
+                           {% if request.POST.add_session %}checked{% endif %}>
+                    <span class="toggle-slider"></span>
+                </label>
+                <span class="ml-2 text-muted">
+                    {% translate "Turn on to create a new session. Linking an existing session is turned off while this is on." %}
+                </span>
             </div>
         </div>
-        <template id="extra-speaker-template">
-            <section class="speaker-create-block" data-extra-speaker>
-                <div class="speaker-create-block__header">
-                    <h3>{% translate "Additional speaker" %}</h3>
-                    <button type="button" class="btn btn-danger btn-sm" data-remove-extra-speaker title="{% translate 'Remove speaker' %}" aria-label="{% translate 'Remove speaker' %}">
-                        <i class="fa fa-minus" aria-hidden="true"></i>
-                    </button>
-                </div>
-                {% include "orga/speaker/includes/profile_fields.html" with speaker_form=extra_speaker_template_form speaker_social_formset=extra_speaker_template_social_formset omit_social_formset_id=True omit_availability_assets=True %}
-            </section>
-        </template>
 
         <div id="session_section" class="d-none">
             <h3>{% translate "Session Details" %}</h3>

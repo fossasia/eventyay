@@ -51,29 +51,6 @@ function appendTemplateRow(template, container) {
   return row
 }
 
-function rewriteSpeakerPrefix(block, index) {
-  // Only the speaker form prefix. Social-link rows keep their own __prefix__.
-  const token = 'extra-__prefix__'
-  const value = `extra-${index}`
-  const rewriteElement = (el) => {
-    ;['name', 'id', 'for'].forEach((attr) => {
-      const current = el.getAttribute(attr)
-      if (current && current.includes(token)) {
-        el.setAttribute(attr, current.replaceAll(token, value))
-      }
-    })
-    if (el.dataset?.formsetPrefix && el.dataset.formsetPrefix.includes(token)) {
-      el.dataset.formsetPrefix = el.dataset.formsetPrefix.replaceAll(token, value)
-    }
-  }
-  const rewriteTree = (node) => {
-    if (node.nodeType === Node.ELEMENT_NODE) rewriteElement(node)
-    node.querySelectorAll?.('*').forEach(rewriteElement)
-    // Inputs inside <template> are not visible to querySelectorAll.
-    node.querySelectorAll?.('template').forEach((template) => rewriteTree(template.content))
-  }
-  rewriteTree(block)
-}
 
 function bindNoEmailToggles(form) {
   if (!form) return
@@ -103,12 +80,6 @@ export function initSpeakerCreateForm(root = document) {
     root.getElementById?.('link-another-session') || root.querySelector?.('#link-another-session')
   const rowTemplate =
     root.getElementById?.('session-link-row-template') || root.querySelector?.('#session-link-row-template')
-  const addSpeakerButton =
-    root.getElementById?.('add-another-speaker') || root.querySelector?.('#add-another-speaker')
-  const extraSpeakers =
-    root.querySelector?.('[data-extra-speakers]')
-  const extraSpeakerTemplate =
-    root.getElementById?.('extra-speaker-template') || root.querySelector?.('#extra-speaker-template')
   const form = root.querySelector?.('#speaker-create-form') || root.querySelector?.('form:not(.mobile-navbar-view-form):not(.d-inline)') || (root.tagName === 'FORM' ? root : null)
 
   if (existingSessionSection) {
@@ -136,36 +107,7 @@ export function initSpeakerCreateForm(root = document) {
     })
   }
 
-  if (extraSpeakers) {
-    extraSpeakers.addEventListener('click', (event) => {
-      const removeButton = event.target.closest?.('[data-remove-extra-speaker]')
-      if (!removeButton || !extraSpeakers.contains(removeButton)) return
-      removeButton.closest('[data-extra-speaker]')?.remove()
-    })
-  }
 
-  const extraTotal = root.getElementById?.('extra_speaker_total') || root.querySelector?.('#extra_speaker_total')
-
-  if (addSpeakerButton && extraSpeakerTemplate && extraSpeakers && extraTotal) {
-    addSpeakerButton.addEventListener('click', () => {
-      const index = Number(extraTotal.value || 0)
-      const block = appendTemplateRow(extraSpeakerTemplate, extraSpeakers)
-      if (!block) return
-      rewriteSpeakerPrefix(block, index)
-      extraTotal.value = String(index + 1)
-      block.querySelectorAll('[data-social-link-formset]').forEach((formset) => {
-        initSpeakerSocialLinksFormset(formset)
-      })
-      block.querySelectorAll('input[name$="no_email"]').forEach((checkbox) => {
-        checkbox.dispatchEvent(new Event('change', { bubbles: true }))
-      })
-      if (window.eventyayTiptap?.mountEditor) {
-        block.querySelectorAll('textarea[data-tiptap-profile]').forEach((textarea) => {
-          window.eventyayTiptap.mountEditor(textarea)
-        })
-      }
-    })
-  }
 
   bindNoEmailToggles(form)
   root.querySelectorAll?.('[data-social-link-formset]').forEach((formset) => {
