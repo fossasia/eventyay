@@ -1,5 +1,6 @@
 import logging
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.functions import Lower
 from django.dispatch import receiver
@@ -7,9 +8,18 @@ from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_scopes import ScopedManager, scopes_disabled
 
+from eventyay.base.services.speaker_invite_limits import (
+    CFP_MAX_INVITE_RESENDS,
+    get_invitation_resend_count,
+    record_invitation_resend,
+    record_speaker_invite_send,
+    release_invitation_resend,
+)
 from eventyay.common.exceptions import SendMailException
+from eventyay.common.text.phrases import phrases
 from eventyay.mail.signals import queuedmail_post_send
 
+from .mail import QueuedMail
 from .mixins import PretalxModel
 
 
@@ -79,6 +89,12 @@ class SpeakerInvitation(PretalxModel):
 
     objects = ScopedManager(event='submission__event')
 
+    MAX_RESENDS = CFP_MAX_INVITE_RESENDS
+
+    @property
+    def resend_count(self):
+        return get_invitation_resend_count(self)
+
     class Meta:
         ordering = ('created',)
         constraints = (
@@ -110,6 +126,10 @@ class SpeakerInvitation(PretalxModel):
 
     @property
     def can_resend(self):
+        return self.is_pending and self.mail_id is not None and self.resend_count < self.MAX_RESENDS
+
+    @property
+    def can_resend_orga(self):
         return self.is_pending and self.mail_id is not None
 
     @property
@@ -183,15 +203,35 @@ class SpeakerInvitation(PretalxModel):
 
     deliver.alters_data = True
 
-    def resend(self, requestor=None):
-        from .mail import QueuedMail
+    def resend(self, requestor=None, orga=False):
+        """Sends the invitation email again; returns whether it was delivered.
+
+        Speaker resends count against the resend and hourly send limits and
+        raise ValidationError when one of them refuses the resend. A resend
+        that fails to deliver does not count against the resend limit.
+        """
+        if not self.mail:
+            return False
+
+        if not orga:
+            if self.resend_count >= self.MAX_RESENDS:
+                raise ValidationError(phrases.cfp.invite_resend_limit_reached.format(count=self.MAX_RESENDS))
+            if requestor:
+                record_speaker_invite_send(requestor)
+            record_invitation_resend(self, self.MAX_RESENDS)
 
         mail = self.mail
         if mail.sent:
             submissions = list(mail.submissions.all())
             mail = QueuedMail.objects.get(pk=mail.pk).copy_to_draft()
             mail.submissions.add(*submissions)
-        return self.deliver(mail=mail, send_immediately=True, requestor=requestor)
+            self.mail = mail
+            self.save(update_fields=['mail', 'updated'])
+
+        delivered = self.deliver(mail=mail, send_immediately=True, requestor=requestor)
+        if not orga and not delivered:
+            release_invitation_resend(self)
+        return delivered
 
     resend.alters_data = True
 

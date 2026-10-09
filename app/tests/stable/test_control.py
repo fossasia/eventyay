@@ -2,8 +2,12 @@
 Tests for organizer control panel and event management pages.
 These require authentication and organizer team membership.
 """
-import pytest
+import re
 from urllib.parse import urlparse
+
+import pytest
+from django.test import override_settings
+from django.urls import reverse
 
 
 @pytest.mark.django_db
@@ -160,6 +164,7 @@ class TestGlobalSettingsEmail:
 
     def test_test_email_invalid_sender(self, admin_client):
         from django.urls import reverse
+
         from eventyay.base.settings import GlobalSettingsObject
 
         gs = GlobalSettingsObject()
@@ -172,6 +177,7 @@ class TestGlobalSettingsEmail:
 
     def test_test_email_smtp_unreachable(self, admin_client, monkeypatch):
         from django.urls import reverse
+
         from eventyay.base.settings import GlobalSettingsObject
 
         def mock_open(self):
@@ -188,3 +194,20 @@ class TestGlobalSettingsEmail:
         response = admin_client.post(url, {'test_email': 'test@example.com'})
         assert response.status_code == 302
         assert response['Location'].endswith('#tab-email')
+
+
+@pytest.mark.django_db
+class TestAdminDashboardConfigLinks:
+    @override_settings(EMAIL_HOST='')
+    def test_global_settings_links_open_existing_tabs(self, admin_client):
+        settings_url = reverse('eventyay_admin:admin.global.settings')
+        dashboard = admin_client.get(reverse('eventyay_admin:admin.dashboard'))
+        assert dashboard.status_code == 200
+        tabs = re.findall(rf'href="{re.escape(settings_url)}#([\w-]+)"', dashboard.content.decode())
+        assert tabs == ['tab-email-open', 'tab-email-open']
+
+        settings_page = admin_client.get(settings_url)
+        assert settings_page.status_code == 200
+        for tab in set(tabs):
+            base_tab = tab.removesuffix('-open')
+            assert f'<fieldset id="{base_tab}">' in settings_page.content.decode()
