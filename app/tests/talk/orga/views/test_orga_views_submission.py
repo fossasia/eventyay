@@ -325,6 +325,30 @@ def test_orga_requires_name_for_new_speaker(orga_client, submission):
 
 
 @pytest.mark.django_db
+def test_orga_can_add_speakers_when_biography_required(orga_client, event, submission):
+    with scope(event=event):
+        event.cfp.fields["biography"] = {"visibility": "required"}
+        event.cfp.save()
+        assert submission.speakers.count() == 1
+
+    data = {
+        "email": "some_unused@mail.org",
+        "name": "New Speaker",
+        "biography": "This is a biography.",
+    }
+
+    response = orga_client.post(
+        submission.orga_urls.speakers,
+        data=data,
+        follow=True,
+    )
+    submission.refresh_from_db()
+
+    assert submission.speakers.count() == 2
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
 def test_orga_speaker_page_excludes_submission_answers(
     orga_client, submission, other_submission, answer, speaker_answer
 ):
@@ -1399,4 +1423,30 @@ def test_submission_list_hides_track_name_for_anonymised(orga_client, submission
     # We check that it is absent from the visible cell content by verifying
     # the span has no inner text with the track name.
     assert f">{track.name}<" not in content
+
+
+@pytest.mark.django_db
+def test_orga_submission_speakers_tab_omits_biography(orga_client, event, submission):
+    with scope(event=event):
+        event.cfp.fields["biography"] = {"visibility": "optional"}
+        event.cfp.save()
+
+    response = orga_client.get(submission.orga_urls.speakers)
+    assert response.status_code == 200
+    form = response.context.get("form")
+    assert form is not None
+    assert "biography" not in form.fields
+
+
+@pytest.mark.django_db
+def test_orga_submission_create_proposal_includes_biography(orga_client, event):
+    with scope(event=event):
+        event.cfp.fields["biography"] = {"visibility": "optional"}
+        event.cfp.save()
+
+    response = orga_client.get(event.orga_urls.new_submission)
+    assert response.status_code == 200
+    form = response.context.get("new_speaker_form")
+    assert form is not None
+    assert "biography" in form.fields
 
