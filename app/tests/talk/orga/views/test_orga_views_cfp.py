@@ -894,3 +894,33 @@ def test_question_reminders_respect_track_restrictions(
     with scope(event=event):
         reminders = QueuedMail.objects.exclude(pk__in=existing_ids)
         assert reminders.count() == int(restriction != "other" and not answered)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("target", ("submission", "speaker"))
+@pytest.mark.parametrize("answered", (False, True))
+def test_question_reminders_include_trackless_submissions(
+    orga_client, event, question, submission, speaker, track, target, answered
+):
+    """Trackless submissions remain eligible for restricted, unanswered questions."""
+    with scope(event=event):
+        submission.track = None
+        submission.save(update_fields=["track"])
+        question.target = target
+        question.save(update_fields=["target"])
+        question.tracks.add(track)
+        if answered:
+            Answer.objects.create(
+                question=question, answer="Answered",
+                submission=submission if target == "submission" else None,
+                person=speaker if target == "speaker" else None,
+            )
+        existing_ids = list(QueuedMail.objects.values_list("pk", flat=True))
+    response = orga_client.post(
+        event.cfp.urls.remind_questions,
+        {"role": "", "questions": [question.pk]},
+    )
+    assert response.status_code == 302
+    with scope(event=event):
+        reminders = QueuedMail.objects.exclude(pk__in=existing_ids)
+        assert reminders.count() == int(not answered)
