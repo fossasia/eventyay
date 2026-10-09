@@ -390,7 +390,6 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
         kwargs = super().get_form_kwargs()
         kwargs['event'] = self.request.event
         kwargs['require_name'] = True
-        kwargs['include_biography'] = True
         kwargs['submission'] = self.object
         return kwargs
 
@@ -770,6 +769,22 @@ class SubmissionContentView(SubmissionContent):
                 }
             )
         return tags
+
+    @context
+    @cached_property
+    def scheduled_slot(self):
+        submission = self.get_object()
+        if not isinstance(submission, Submission) or not submission.pk:
+            return None
+        return (
+            submission.slots.filter(
+                schedule__version__isnull=True,
+                start__isnull=False,
+            )
+            .select_related('room')
+            .order_by('start')
+            .first()
+        )
 
 
 class BaseSubmissionList(Sortable, ReviewerSubmissionFilter, PaginationMixin, ListView):
