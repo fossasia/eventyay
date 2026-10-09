@@ -1,0 +1,89 @@
+{% load i18n %}
+{% load rich_text %}
+{% load thumbnail %}
+{% comment %}
+  The complete submitted information for one speaker, shared by the organiser
+  submission Speakers and Reviews tabs so the two cannot drift apart. Expects
+  `speaker` (a SubmissionSpeaker) and `can_view_speaker_emails`. A speaker
+  without a profile for this event has no biography or availabilities.
+
+  Every item is a label above its value, the same layout the custom field
+  answers use, so all of them line up.
+{% endcomment %}
+<div class="speaker-details">
+  {% if request.event.cfp.request_biography and speaker.profile and speaker.profile.biography %}
+    <div class="submission-detail">
+      <strong class="submission-detail-label">{% translate 'Biography' %}</strong>
+      <div class="submission-detail-value">{{ speaker.profile.biography|rich_text }}</div>
+    </div>
+  {% endif %}
+  {% if request.event.cfp.request_job_title and speaker.profile and speaker.profile.job_title %}
+    <div class="submission-detail">
+      <strong class="submission-detail-label">{% translate 'Job title/role' %}</strong>
+      <div class="submission-detail-value">{{ speaker.profile.job_title }}</div>
+    </div>
+  {% endif %}
+  {% if request.event.cfp.request_organization and speaker.profile and speaker.profile.organization %}
+    <div class="submission-detail">
+      <strong class="submission-detail-label">{% translate 'Organization' %}</strong>
+      <div class="submission-detail-value">{{ speaker.profile.organization }}</div>
+    </div>
+  {% endif %}
+  {% if request.event.cfp.request_avatar and speaker.avatar_url %}
+    <div class="submission-detail">
+      <strong class="submission-detail-label">{% translate 'Avatar' %}</strong>
+      <div class="submission-detail-value">
+        <a href="{{ speaker.avatar_url }}" data-lightbox>
+          <img loading="lazy" class="speaker-avatar-preview" src="{% if speaker.avatar %}{{ speaker.avatar|thumbnail:"default" }}{% else %}{{ speaker.avatar_url }}{% endif %}" alt="{% translate "The speaker's profile picture" %}">
+        </a>
+      </div>
+    </div>
+  {% endif %}
+  {% if request.event.cfp.request_avatar_source and speaker.avatar_source %}
+    <div class="submission-detail avatar-license-text">
+      <strong class="submission-detail-label">{% translate 'Profile Picture Source' %}</strong>
+      <div class="submission-detail-value">{{ speaker.avatar_source|truncatewords:200 }}</div>
+    </div>
+  {% endif %}
+  {% if request.event.cfp.request_avatar_license and speaker.avatar_license %}
+    <div class="submission-detail avatar-license-text">
+      <strong class="submission-detail-label">{% translate 'Profile Picture License' %}</strong>
+      <div class="submission-detail-value">{{ speaker.avatar_license|truncatewords:200 }}</div>
+    </div>
+  {% endif %}
+  {% if speaker.email and can_view_speaker_emails %}
+    <div class="submission-detail">
+      <strong class="submission-detail-label">{% translate 'E-Mail' %}</strong>
+      <div class="submission-detail-value">{{ speaker.email }}</div>
+    </div>
+  {% endif %}
+  {% include "orga/includes/speaker_social_links.html" with social_links=speaker.social_links %}
+  {% if request.event.cfp.request_availabilities and speaker.profile %}
+    {% with speaker.profile.availabilities.all as availabilities %}
+      {% if availabilities %}
+        <div class="submission-detail">
+          <strong class="submission-detail-label">{% translate 'Availabilities' %}</strong>
+          <ul class="submission-detail-value speaker-availabilities">
+            {% for availability in availabilities %}
+              <li>{{ availability.start|date:"DATE_FORMAT" }}, {{ availability.start|time:"TIME_FORMAT" }} – {% if availability.end|date:"Ymd" != availability.start|date:"Ymd" %}{{ availability.end|date:"DATE_FORMAT" }}, {% endif %}{{ availability.end|time:"TIME_FORMAT" }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+    {% endwith %}
+  {% endif %}
+  {% include "orga/includes/submission_answers.html" with answers=speaker.answers %}
+  {% if speaker.other_submissions %}
+    <div class="submission-detail">
+      <strong class="submission-detail-label">{% translate 'Other proposals' %}</strong>
+      <ul class="submission-detail-value speaker-other-submissions">
+        {% for other in speaker.other_submissions %}
+          <li>
+            <a href="{{ other.viewer_url }}">{{ other.title }}</a>
+            {% include "cfp/event/fragment_state.html" with state=other.state as_badge=True %}
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+</div>

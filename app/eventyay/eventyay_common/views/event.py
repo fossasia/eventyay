@@ -17,7 +17,7 @@ from django.core.files import File
 from django.core.files.storage import default_storage
 from django.db import transaction
 from django.db.models.deletion import ProtectedError
-from django.db.models import Case, F, Max, Min, Prefetch, Q, Sum, When, IntegerField
+from django.db.models import Case, F, Max, Min, Prefetch, Q, Sum, When, IntegerField, Count
 from django.db.models.functions import Coalesce, Greatest
 from django.http import HttpRequest, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect
@@ -51,6 +51,7 @@ from eventyay.base.meetup import (
     provision_meetup_event,
 )
 from eventyay.base.models import Event, EventMetaValue, GlobalPluginConfig, Organizer, Quota
+from eventyay.base.models.submission import Submission, SpeakerRole
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.services.notifications import notify_organizer_followers
 from eventyay.base.models.cfp import default_fields
@@ -182,6 +183,10 @@ class EventList(PaginationMixin, ListView):
                     100,
                     (round(q.cached_availability_paid_orders / q.size * 100) if q.size > 0 else 100),
                 )
+                
+        from eventyay.base.services.stats import attach_dashboard_stats
+        ctx['events'] = attach_dashboard_stats(ctx['events'])
+
         ctx['event_series_creation_enabled'] = is_event_series_creation_enabled(self.request)
         ctx['meetup_creation_enabled'] = is_meetup_creation_enabled(self.request)
         return ctx
@@ -306,11 +311,6 @@ class EventCreateView(TemplateView):
     def clone_from(self):
         if hasattr(self, '_clone_from'):
             return self._clone_from
-        if self.request.GET.get('clone'):
-            try:
-                return self.get_clone_queryset().get(pk=self.request.GET.get('clone'))
-            except Event.DoesNotExist:
-                pass
         return None
 
     @property

@@ -22,6 +22,7 @@ from django_scopes import scopes_disabled
 
 from eventyay.base.email import TEST_EMAIL_BODY, TEST_EMAIL_SUBJECT
 from eventyay.base.models import Event, LogEntry, Organizer, User
+from eventyay.base.i18n import LazyI18nString
 from eventyay.base.models.admin_mail import (
     AdminEmailQueue,
     AdminEmailQueueFilter,
@@ -554,19 +555,6 @@ def _populate_recipients(mail: AdminEmailQueue, recipients: list[dict]) -> int:
     return len(objs)
 
 
-def _get_message_text(cd: dict) -> str:
-    """Extract plain string from message field (handles LazyI18nString from I18nEmailBodyFormField)."""
-    msg = cd.get('message', '')
-    if msg is None:
-        return ''
-    if hasattr(msg, 'data'):
-        data = msg.data
-        if isinstance(data, dict):
-            return data.get('en', '') or (next(iter(data.values()), '') if data else '')
-        return str(data) if data else ''
-    return str(msg) if msg else ''
-
-
 PLACEHOLDER_GROUPS = {
     'user': [
         {'key': 'user_name', 'label': _('Full name'), 'example': 'Jane Doe'},
@@ -672,6 +660,8 @@ class AdminMessageComposeView(AdministratorPermissionRequiredMixin, FormView):
         ctx['output'] = getattr(self, 'output', None)
         ctx['recipient_count'] = getattr(self, 'recipient_count', 0)
         ctx['placeholders'] = PLACEHOLDER_GROUPS
+        ctx['platform_locales'] = [code for code, _name in django_settings.LANGUAGES]
+        ctx['platform_default_locale'] = django_settings.LANGUAGE_CODE
         draft = ctx['draft']
         ctx['editing_queued'] = draft is not None and draft.status == AdminEmailStatus.QUEUED
         if draft and draft.recipient_count_snapshot is not None:
@@ -719,7 +709,7 @@ class AdminMessageComposeView(AdministratorPermissionRequiredMixin, FormView):
             mail = draft
             mail.recipient_group = cd['recipient_group']
             mail.subject = cd.get('subject', '')
-            mail.message = _get_message_text(cd)
+            mail.message = cd.get('message', '')
             mail.reply_to = cd.get('reply_to', '')
             mail.bcc = cd.get('bcc', '')
             mail.attachment = attachment.id if attachment else None
@@ -731,7 +721,7 @@ class AdminMessageComposeView(AdministratorPermissionRequiredMixin, FormView):
                 user=self.request.user,
                 recipient_group=cd['recipient_group'],
                 subject=cd.get('subject', ''),
-                message=_get_message_text(cd),
+                message=cd.get('message', ''),
                 reply_to=cd.get('reply_to', ''),
                 bcc=cd.get('bcc', ''),
                 attachment=attachment.id if attachment else None,
@@ -751,7 +741,7 @@ class AdminMessageComposeView(AdministratorPermissionRequiredMixin, FormView):
                 action_type='eventyay.admin.mail.draft_saved',
                 data=json.dumps({
                     'admin_email_id': mail.pk,
-                    'subject': mail.subject,
+                    'subject': str(mail.subject),
                     'recipient_group': mail.recipient_group,
                 }),
             )
@@ -790,7 +780,7 @@ class AdminMessageComposeView(AdministratorPermissionRequiredMixin, FormView):
                     return redirect('eventyay_admin:admin.messages.outbox')
                 mail.recipient_group = cd['recipient_group']
                 mail.subject = cd.get('subject', '')
-                mail.message = _get_message_text(cd)
+                mail.message = cd.get('message', '')
                 mail.reply_to = cd.get('reply_to', '')
                 mail.bcc = cd.get('bcc', '')
                 attachment = cd.get('attachment')
@@ -816,7 +806,7 @@ class AdminMessageComposeView(AdministratorPermissionRequiredMixin, FormView):
             data=json.dumps({
                 'admin_email_id': mail.pk,
                 'recipient_count': count,
-                'subject': mail.subject,
+                'subject': str(mail.subject),
                 'recipient_group': mail.recipient_group,
                 'send_immediately': cd.get('send_immediately', False),
                 'scheduled_at': mail.scheduled_at.isoformat() if mail.scheduled_at else None,
@@ -843,12 +833,15 @@ class AdminMessageComposeView(AdministratorPermissionRequiredMixin, FormView):
         return redirect('eventyay_admin:admin.messages.outbox')
 
     def _send_test_email(self, form, test_email: str):
-
         cd = form.cleaned_data
+        default_locale = django_settings.LANGUAGE_CODE
+        subject_i18n = cd.get('subject', '')
+        message_i18n = cd.get('message', '')
+        subject = LazyI18nString(subject_i18n).localize(default_locale) if subject_i18n else ''
+        body = LazyI18nString(message_i18n).localize(default_locale) if message_i18n else ''
         # An empty subject or message falls back to the text of the email settings test email, so the
         # test email is never blank. The editor submits "<p></p>" when emptied, so look for visible content.
-        subject = cd.get('subject') or str(TEST_EMAIL_SUBJECT)
-        body = _get_message_text(cd)
+        subject = subject or str(TEST_EMAIL_SUBJECT)
         if not strip_tags(body).strip() and '<img' not in body:
             body = str(TEST_EMAIL_BODY)
 
@@ -882,17 +875,37 @@ class AdminMessageComposeView(AdministratorPermissionRequiredMixin, FormView):
 
         return self.render_to_response(self.get_context_data(form=form))
 
-    def _build_preview(self, cd: dict) -> dict:
-        subject = cd.get('subject', '')
-        body = _get_message_text(cd)
-        for key, value in SAMPLE_CONTEXT.items():
-            subject = subject.replace('{' + key + '}', value)
-            body = body.replace('{' + key + '}', value)
+    @staticmethod
+    def _filled_locales(value) -> set[str]:
+        data = value.data if isinstance(value, LazyI18nString) else value
+        if isinstance(data, dict):
+            return {locale for locale, text in data.items() if text}
+        return {django_settings.LANGUAGE_CODE} if data else set()
 
-        return {
-            'subject': subject,
-            'html': AdminEmailQueue.make_html(body),
-        }
+    def _build_preview(self, cd: dict) -> dict:
+        subject_i18n = LazyI18nString(cd.get('subject', ''))
+        message_i18n = LazyI18nString(cd.get('message', ''))
+        active_locales = self._filled_locales(cd.get('subject')) | self._filled_locales(cd.get('message'))
+        output: dict[str, dict] = {}
+        for locale, _name in django_settings.LANGUAGES:
+            if locale not in active_locales:
+                continue
+            subject = subject_i18n.localize(locale)
+            body = message_i18n.localize(locale)
+            for key, value in SAMPLE_CONTEXT.items():
+                subject = subject.replace('{' + key + '}', value)
+                body = body.replace('{' + key + '}', value)
+            output[locale] = {
+                'subject': subject,
+                'html': AdminEmailQueue.make_html(body),
+            }
+        if not output:
+            default_locale = django_settings.LANGUAGE_CODE
+            output[default_locale] = {
+                'subject': '',
+                'html': AdminEmailQueue.make_html(''),
+            }
+        return output
 
 
 class AdminMessageOutboxView(AdministratorPermissionRequiredMixin, PaginationMixin, ListView):
@@ -1049,7 +1062,7 @@ class AdminMessageSendView(AdministratorPermissionRequiredMixin, View):
                 object_id=mail.pk,
                 user=request.user,
                 action_type='eventyay.admin.mail.sent',
-                data=json.dumps({'admin_email_id': mail.pk, 'subject': mail.subject}),
+                data=json.dumps({'admin_email_id': mail.pk, 'subject': str(mail.subject)}),
             )
             messages.success(request, _('The email has been queued for sending.'))
 
@@ -1077,7 +1090,7 @@ class AdminMessageCancelView(AdministratorPermissionRequiredMixin, View):
             object_id=mail.pk,
             user=request.user,
             action_type='eventyay.admin.mail.cancelled',
-            data=json.dumps({'admin_email_id': mail.pk, 'subject': mail.subject}),
+            data=json.dumps({'admin_email_id': mail.pk, 'subject': str(mail.subject)}),
         )
 
         messages.success(request, _('The email has been cancelled.'))
@@ -1092,7 +1105,7 @@ class AdminMessageDeleteView(AdministratorPermissionRequiredMixin, View):
             object_id=pk,
             user=request.user,
             action_type='eventyay.admin.mail.deleted',
-            data=json.dumps({'admin_email_id': pk, 'subject': mail.subject}),
+            data=json.dumps({'admin_email_id': pk, 'subject': str(mail.subject)}),
         )
         mail.delete()
         messages.success(request, _('The draft has been deleted.'))
@@ -1108,7 +1121,7 @@ class AdminMessageDuplicateView(AdministratorPermissionRequiredMixin, View):
             object_id=new_mail.pk,
             user=request.user,
             action_type='eventyay.admin.mail.duplicated',
-            data=json.dumps({'source_id': pk, 'new_id': new_mail.pk, 'subject': new_mail.subject}),
+            data=json.dumps({'source_id': pk, 'new_id': new_mail.pk, 'subject': str(new_mail.subject)}),
         )
         messages.success(request, _('The email has been duplicated as a draft.'))
         return redirect(new_mail.get_edit_url())
@@ -1177,7 +1190,8 @@ class AdminMessageSentDetailView(AdministratorPermissionRequiredMixin, TemplateV
         ctx = super().get_context_data(**kwargs)
         mail = get_object_or_404(AdminEmailQueue, pk=self.kwargs['pk'], status=AdminEmailStatus.SENT)
         ctx['mail'] = mail
-        ctx['html_body'] = AdminEmailQueue.make_html(mail.message)
+        default_locale = django_settings.LANGUAGE_CODE
+        ctx['html_body'] = AdminEmailQueue.make_html(LazyI18nString(mail.message).localize(default_locale))
         return ctx
 
 

@@ -52,9 +52,14 @@ class CartTestMixin:
             slug='30c3',
             date_from=datetime.datetime(now().year + 1, 12, 26, tzinfo=datetime.timezone.utc),
             live=True,
+            tickets_published=True,
+            currency='EUR',
             plugins='eventyay.plugins.banktransfer',
             sales_channels=['web', 'bar'],
         )
+        # Presale cart/widget tests expect guest checkout and stay-on-shop after add-to-cart.
+        self.event.settings.set('require_registered_account_for_tickets', False)
+        self.event.settings.set('redirect_to_checkout_directly', False)
         self.tr19 = self.event.tax_rules.create(rate=Decimal('19.00'))
         self.category = ItemCategory.objects.create(event=self.event, name='Everything', position=0)
         self.quota_shirts = Quota.objects.create(event=self.event, name='Shirts', size=2)
@@ -65,9 +70,9 @@ class CartTestMixin:
             default_price=12,
             tax_rule=self.tr19,
         )
-        self.quota_shirts.items.add(self.shirt)
-        self.shirt_red = ItemVariation.objects.create(item=self.shirt, default_price=14, value='Red')
-        self.shirt_blue = ItemVariation.objects.create(item=self.shirt, value='Blue')
+        self.quota_shirts.products.add(self.shirt)
+        self.shirt_red = ItemVariation.objects.create(product=self.shirt, default_price=14, value='Red')
+        self.shirt_blue = ItemVariation.objects.create(product=self.shirt, value='Blue')
         self.quota_shirts.variations.add(self.shirt_red)
         self.quota_shirts.variations.add(self.shirt_blue)
         self.quota_tickets = Quota.objects.create(event=self.event, name='Tickets', size=5)
@@ -78,11 +83,11 @@ class CartTestMixin:
             default_price=23,
             tax_rule=self.tr19,
         )
-        self.quota_tickets.items.add(self.ticket)
+        self.quota_tickets.products.add(self.ticket)
 
         self.quota_all = Quota.objects.create(event=self.event, name='All', size=None)
-        self.quota_all.items.add(self.ticket)
-        self.quota_all.items.add(self.shirt)
+        self.quota_all.products.add(self.ticket)
+        self.quota_all.products.add(self.shirt)
         self.quota_all.variations.add(self.shirt_blue)
         self.quota_all.variations.add(self.shirt_red)
 
@@ -109,6 +114,8 @@ class CartTest(CartTestMixin, TestCase):
             assert not CartPosition.objects.filter(cart_id=self.session_key, event=self.event).exists()
 
     def test_after_payment_period(self):
+        self.event.timezone = 'Europe/Berlin'
+        self.event.save()
         self.event.settings.payment_term_last = (now() - datetime.timedelta(days=1)).date().isoformat()
         response = self.client.post(
             '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),

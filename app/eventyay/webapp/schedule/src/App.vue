@@ -100,8 +100,8 @@
 			@changeDay="setCurrentDay($event)",
 			@fav="fav($event)",
 			@unfav="unfav($event)")
-		.no-results(v-if="sessions && !sessions.length && (searchQuery || (isFeaturedPage && featuredRemote))")
-			.no-results-text No sessions match your search.
+		.no-results(v-if="sessions && (sessionsMode ? !properSessions.length : !sessions.length) && scheduleCoverageComplete && !dayLoading && !publicFavsLoading && publicFavsLoaded", role="status")
+			.no-results-text {{ $t('No sessions match the current filters.') }}
 		list-pagination(
 			v-if="isFeaturedPage && featuredTotalPages > 1",
 			compact,
@@ -342,6 +342,8 @@ export default {
 			allTypes: [],
 			allLanguages: [],
 			onlyFavs: false,
+			publicFavsLoading: !!this.publicFavsUrl,
+			publicFavsLoaded: !this.publicFavsUrl,
 			shareStarredSessions: false,
 			scheduleError: false,
 			scheduleUnavailable: false,
@@ -580,6 +582,13 @@ export default {
 		scheduleNeedsText () {
 			if (!this.schedule?.compact) return false
 			return !this.showGrid || this.sessionsMode || !!this.searchQuery
+		},
+		scheduleCoverageComplete () {
+			if (!this.schedule?.compact) return true
+			if (this.schedule.view_timezone !== this.currentTimezone) return false
+			const days = this.scheduleNeedsEveryDay ? this.schedule.days : [this.currentDay]
+			return !!days?.length && days.every(day => this.loadedScheduleDays[day]
+				&& (!this.scheduleNeedsText || this.textReadyDays[day]))
 		},
 		gridDisplaySessions () {
 			if (!this.sessions) return this.sessions
@@ -877,8 +886,7 @@ export default {
 				this.scheduleUnavailable = true
 				return
 			}
-			this.currentTimezone = localStorage.getItem(`${this.eventSlug}_timezone`)
-			this.currentTimezone = [this.schedule.timezone, this.userTimezone].includes(this.currentTimezone) ? this.currentTimezone : this.schedule.timezone
+			this.currentTimezone = this.getSavedTimezone()
 			this.now = moment.tz(this.currentTimezone)
 			setInterval(() => this.now = moment.tz(this.currentTimezone), 30000)
 			this.apiUrl = this.remoteApiUrl || (window.location.origin + '/api/v1/events/' + this.eventSlug + '/')
@@ -886,6 +894,7 @@ export default {
 				this.favsReadOnly = true
 				this.onlyFavs = true
 				this.favs = this.pruneFavs(await this.loadPublicFavs(), this.schedule)
+				this.publicFavsLoading = false
 			} else {
 				this.favs = this.pruneFavs(await this.loadFavs(), this.schedule)
 				if (!this.loggedIn && this.favs.length) this.showAnonymousFavsInfo()
@@ -901,8 +910,7 @@ export default {
 			this.scheduleUnavailable = true
 			return
 		}
-		this.currentTimezone = localStorage.getItem(`${this.eventSlug}_timezone`)
-		this.currentTimezone = [this.schedule.timezone, this.userTimezone].includes(this.currentTimezone) ? this.currentTimezone : this.schedule.timezone
+		this.currentTimezone = this.getSavedTimezone()
 		if (this.schedule.compact) {
 			this.noteCompactPayload(this.schedule)
 			if (this.currentTimezone !== this.schedule.view_timezone) {
@@ -931,6 +939,7 @@ export default {
 			this.onlyFavs = true
 			const publicFavs = await this.loadPublicFavs()
 			this.favs = this.featuredRemote ? publicFavs : this.pruneFavs(publicFavs, this.schedule)
+			this.publicFavsLoading = false
 		} else {
 			const savedFavs = await this.loadFavs()
 			this.favs = this.featuredRemote ? savedFavs : this.pruneFavs(savedFavs, this.schedule)
@@ -1075,7 +1084,9 @@ export default {
 			if (index < 0) return
 			const neighbors = [days[index - 1], days[index + 1]].filter(Boolean)
 			neighbors.forEach(neighbor => {
-				this.ensureScheduleDay(neighbor, { includeText: false }).catch(error => {
+				this.ensureScheduleDay(neighbor, { includeText: false }).then(() => {
+					this.pruneFavsAfterCompactCoverage()
+				}).catch(error => {
 					console.error('Failed to prefetch schedule day', neighbor, error)
 				})
 			})
@@ -1086,6 +1097,7 @@ export default {
 				this.dayLoading = true
 				try {
 					await this.ensureAllScheduleDays({ includeText: this.scheduleNeedsText })
+					this.pruneFavsAfterCompactCoverage()
 				} catch (error) {
 					console.error('Failed to load schedule days', error)
 				} finally {
@@ -1110,6 +1122,7 @@ export default {
 					this.$nextTick(() => { this.forceScrollDay++ })
 				}
 				this.$nextTick(() => this.maybeLoadNextGridDay())
+				this.pruneFavsAfterCompactCoverage()
 			} catch (error) {
 				console.error('Failed to load schedule day', this.currentDay, error)
 			} finally {
@@ -1150,6 +1163,7 @@ export default {
 					this.gridScrollDays = [...shown, next]
 				}
 				this.prefetchAdjacentScheduleDays(next)
+				this.pruneFavsAfterCompactCoverage()
 			} catch (error) {
 				console.error('Failed to load the next schedule day', next, error)
 				return
@@ -1362,6 +1376,11 @@ export default {
 		onWindowResize () {
 			this.scrollParentWidth = document.body.offsetWidth
 		},
+		getSavedTimezone () {
+			// Any timezone from the picker can be saved, not only the event or browser timezone
+			const saved = localStorage.getItem(`${this.eventSlug}_timezone`)
+			return saved && moment.tz.zone(saved) ? saved : this.schedule.timezone
+		},
 		saveTimezone () {
 			localStorage.setItem(`${this.eventSlug}_timezone`, this.currentTimezone)
 		},
@@ -1442,14 +1461,22 @@ export default {
 		},
 		async loadPublicFavs () {
 			if (!this.publicFavsUrl) return []
+			this.publicFavsLoaded = false
 			try {
 				const response = await fetch(this.publicFavsUrl)
-				if (!response.ok) return []
+				if (!response.ok) {
+					console.error('Failed to load public favourites: HTTP', response.status)
+					return []
+				}
 				const data = await response.json()
-				if (Array.isArray(data)) return data
-				if (data && Array.isArray(data.favs)) return data.favs
-			} catch {
-				return []
+				const favs = Array.isArray(data) ? data : data?.favs
+				if (Array.isArray(favs)) {
+					this.publicFavsLoaded = true
+					return favs
+				}
+				console.error('Failed to load public favourites: invalid response format')
+			} catch (error) {
+				console.error('Failed to load public favourites', error)
 			}
 			return []
 		},
@@ -1463,9 +1490,28 @@ export default {
 			const message = this.translationMessages.favs_anonymous_notice || this.$t('Your favourites can only be saved locally in this browser. Please sign in or register to sync starred sessions and use more features. Locally saved stars may be lost if you clear your browser data; we are not responsible for data loss in this case.')
 			if (message) this.pushErrorMessage(message)
 		},
+		hasCompleteCompactTalks (schedule = this.schedule) {
+			if (!schedule?.compact) return true
+			const days = schedule.days || []
+			if (!days.length) return false
+			return days.every(day => this.loadedScheduleDays?.[day])
+		},
 		pruneFavs (favs, schedule) {
+			// Keep stars while compact days are still loading; prune stale codes
+			// only after every day is fetched so favs.length stays accurate.
+			if (!schedule) return favs || []
+			if (schedule.compact && !this.hasCompleteCompactTalks(schedule)) return favs || []
 			const talkSet = new Set((schedule.talks || []).map(talk => talk.code))
-			return favs.filter(code => talkSet.has(code))
+			return (favs || []).filter(code => talkSet.has(code))
+		},
+		pruneFavsAfterCompactCoverage () {
+			if (this.featuredRemote || this.favsReadOnly || !this.schedule) return
+			if (!this.hasCompleteCompactTalks(this.schedule)) return
+			const next = this.pruneFavs(this.favs, this.schedule)
+			if (next.length === this.favs.length && next.every((code, i) => code === this.favs[i])) return
+			this.favs = next
+			// Persist pruned list; keep UI state even if localStorage write fails.
+			this.saveFavs()
 		},
 		saveFavs () {
 			const storageKey = this.getFavStorageKey(this.loggedIn ? this.userCode : null)

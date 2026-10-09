@@ -3,6 +3,7 @@ import logging
 from collections import Counter, namedtuple
 from datetime import datetime, time, timedelta
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 
 from celery.exceptions import MaxRetriesExceededError
 from django.conf import settings
@@ -616,7 +617,7 @@ def _check_date(event: Event, now_dt: datetime):
         if tlv:
             term_last = make_aware(
                 datetime.combine(tlv.datetime(event).date(), time(hour=23, minute=59, second=59)),
-                event.timezone,
+                ZoneInfo(event.settings.timezone),
             )
             if term_last < now_dt:
                 raise OrderError(error_messages['ended'])
@@ -704,7 +705,7 @@ def _check_positions(
                         tlv.datetime(cp.subevent).date(),
                         time(hour=23, minute=59, second=59),
                     ),
-                    event.timezone,
+                    ZoneInfo(event.settings.timezone),
                 )
                 if term_last < now_dt:
                     err = err or error_messages['some_subevent_ended']
@@ -772,7 +773,10 @@ def _check_positions(
             if cp.is_bundled:
                 try:
                     bundle = cp.addon_to.product.bundles.get(bundled_product=cp.product, bundled_variation=cp.variation)
-                    bprice = bundle.designated_price or 0
+                    if cp.addon_to.voucher_id and cp.addon_to.voucher.all_bundles_included:
+                        bprice = Decimal('0.00')
+                    else:
+                        bprice = bundle.designated_price or 0
                 except ProductBundle.DoesNotExist:
                     bprice = cp.price
                 except ProductBundle.MultipleObjectsReturned:
@@ -1230,7 +1234,9 @@ def _perform_order(
 
     with lockfn() as now_dt:
         positions = list(
-            positions.select_related('product', 'variation', 'subevent', 'seat', 'addon_to').prefetch_related('addons')
+            positions.select_related(
+                'product', 'variation', 'subevent', 'seat', 'addon_to', 'addon_to__voucher'
+            ).prefetch_related('addons')
         )
         positions.sort(key=lambda k: position_ids.index(k.pk))
         if len(positions) == 0:

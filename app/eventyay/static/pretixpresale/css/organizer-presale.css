@@ -518,6 +518,15 @@ body.organizer-presale-page .header-follow-floating {
   }
 }
 
+/* The header is shorter on phones, so the floating button would sit under the tab bar */
+@media (max-width: 768px) {
+  body.organizer-presale-page .header-follow-floating {
+    position: static;
+    margin-top: 14px;
+    align-self: flex-end;
+  }
+}
+
 body.organizer-presale-page .header-follow-floating .btn-follow {
   display: inline-flex;
   align-items: center;

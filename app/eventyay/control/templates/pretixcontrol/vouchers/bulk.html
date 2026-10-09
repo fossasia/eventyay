@@ -18,10 +18,14 @@
                 <div class="col-md-7 col-sm-12 col-md-offset-3">
                     <input type="text" class="form-control input-xs"
                            id="voucher-bulk-codes-prefix"
+                           name="codes_prefix"
+                           value="{{ request.POST.codes_prefix|default:'' }}"
                            placeholder="{% trans "Prefix (optional)" %}">
                     <div class="input-group">
                         <input type="number" class="form-control input-xs"
                                id="voucher-bulk-codes-num"
+                               name="codes_num"
+                               value="{{ request.POST.codes_num|default:'' }}"
                                placeholder="{% trans "Number" context "number_of_things" %}">
                         <div class="input-group-btn">
                             <button class="btn btn-default" type="button" id="voucher-bulk-codes-generate"
@@ -78,6 +82,8 @@
             {% bootstrap_field form.block_quota layout="control" %}
             {% bootstrap_field form.allow_ignore_quota layout="control" %}
             {% bootstrap_field form.allow_ignore_approval layout="control" %}
+            {% bootstrap_field form.all_addons_included layout="control" %}
+            {% bootstrap_field form.all_bundles_included layout="control" %}
             {% bootstrap_field form.budget addon_after=request.event.currency layout="control" %}
             {% bootstrap_field form.comment layout="control" %}
             {% bootstrap_field form.show_hidden_products layout="control" %}
