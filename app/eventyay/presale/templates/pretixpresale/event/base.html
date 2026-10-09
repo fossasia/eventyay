@@ -65,11 +65,6 @@
             </div>
         {% endfor %}
     {% endif %}
-    {% if request.event.settings.banner_text %}
-        <div class="site-notice-top">
-            {{ request.event.settings.banner_text|event_localize|rich_text }}
-        </div>
-    {% endif %}
 {% endblock %}
 
 {% block content %}
@@ -77,11 +72,6 @@
 {% endblock %}
 
 {% block footer %}
-    {% if request.event.settings.banner_text_bottom %}
-        <div class="site-notice-bottom">
-            {{ request.event.settings.banner_text_bottom|event_localize|rich_text }}
-        </div>
-    {% endif %}
     {% if request.event.testmode %}
         {% has_event_perm "base.orga_access_event" request.user request request.event as is_organiser %}
         {% if request.event.live or is_organiser %}
