@@ -1237,27 +1237,27 @@ class GiftCardFilterForm(FilterForm):
 
 class EventFilterForm(FilterForm):
     orders = {
+        'name': 'name',
         'slug': 'slug',
         'organizer': 'organizer__name',
         'date_from': 'order_from',
         'date_to': 'order_to',
         'live': 'live',
     }
-    status = forms.ChoiceField(
+    status = forms.MultipleChoiceField(
         label=_('Status'),
         choices=(
-            ('', _('All events')),
-            ('my_events', _('My Events')),
-            ('live', _('Shop live')),
-            ('running', _('Shop live and presale running')),
-            ('notlive', _('Shop not live')),
-            ('future', _('Presale not started')),
-            ('past', _('Presale over')),
-            ('date_future', _('Single event running or in the future')),
-            ('date_past', _('Single event in the past')),
-            ('series', _('Event series')),
+            ('live', _('Live')),
+            ('draft', _('Draft')),
+            ('past', _('Past')),
         ),
+        widget=forms.SelectMultiple(attrs={
+            'data-model-select2': 'tags',
+            'data-placeholder': _('Status'),
+            'class': 'form-control select2-static',
+        }),
         required=False,
+        initial=['live', 'draft', 'past'],
     )
     organizer = forms.ModelChoiceField(
         label=_('Organizer'),
@@ -1316,49 +1316,28 @@ class EventFilterForm(FilterForm):
     def filter_qs(self, qs):
         fdata = self.cleaned_data
 
-        if fdata.get('status') == 'my_events':
-            # Filter for events where user is a team member
-            user = self.request.user
-            qs = qs.filter(
-                Q(organizer__teams__members=user)
-                & (
-                    Q(organizer__teams__all_events=True)
-                    | Q(organizer__teams__limit_events__in=qs.values_list('pk', flat=True))
-                )
-            ).distinct()
-        elif fdata.get('status') == 'live':
-            qs = qs.filter(live=True)
-        elif fdata.get('status') == 'running':
-            qs = (
-                qs.filter(live=True)
-                .annotate(p_end=Coalesce(F('presale_end'), F('date_to'), F('date_from')))
-                .filter(Q(presale_start__isnull=True) | Q(presale_start__lte=now()))
-                .filter(Q(p_end__gte=now()))
-            )
-        elif fdata.get('status') == 'notlive':
-            qs = qs.filter(live=False)
-        elif fdata.get('status') == 'future':
-            qs = qs.filter(presale_start__gte=now())
-        elif fdata.get('status') == 'past':
-            qs = qs.filter(presale_end__lte=now())
-        elif fdata.get('status') == 'date_future':
-            qs = qs.filter(
-                Q(has_subevents=False)
-                & Q(
-                    Q(Q(date_to__isnull=True) & Q(date_from__gte=now()))
-                    | Q(Q(date_to__isnull=False) & Q(date_to__gte=now()))
-                )
-            )
-        elif fdata.get('status') == 'date_past':
-            qs = qs.filter(
+        statuses = fdata.get('status')
+        if statuses:
+            q_past = Q(
                 Q(has_subevents=False)
                 & Q(
                     Q(Q(date_to__isnull=True) & Q(date_from__lt=now()))
                     | Q(Q(date_to__isnull=False) & Q(date_to__lt=now()))
                 )
             )
-        elif fdata.get('status') == 'series':
-            qs = qs.filter(has_subevents=True)
+            q_live = Q(live=True) & ~q_past
+            q_draft = Q(live=False) & ~q_past
+            
+            q_status = Q()
+            if 'live' in statuses:
+                q_status |= q_live
+            if 'draft' in statuses:
+                q_status |= q_draft
+            if 'past' in statuses:
+                q_status |= q_past
+                
+            if q_status:
+                qs = qs.filter(q_status)
 
         if fdata.get('organizer'):
             qs = qs.filter(organizer=fdata.get('organizer'))
