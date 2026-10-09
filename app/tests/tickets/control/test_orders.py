@@ -1,11 +1,14 @@
+import datetime
 from datetime import timedelta
 from decimal import Decimal
 from unittest import mock
+from zoneinfo import ZoneInfo
 
 import pytest
 from bs4 import BeautifulSoup
 from django.core import mail
 from django.test import override_settings
+from django.urls import reverse
 from django.utils.timezone import now
 from django_countries.fields import Country
 from django_scopes import scope, scopes_disabled
@@ -406,6 +409,32 @@ def test_order_export_positions_include_name_company_and_job_title(env):
 
 
 @pytest.mark.django_db
+def test_order_export_positions_renders_subevent_dates_in_event_timezone(env):
+    event, user, order, ticket = env
+    event.has_subevents = True
+    event.timezone = 'Europe/Berlin'
+    event.settings.timezone = 'Europe/Berlin'
+    event.save()
+    subevent = event.subevents.create(
+        name='Day one',
+        date_from=datetime.datetime(2026, 5, 1, 9, 0, tzinfo=datetime.timezone.utc),
+        date_to=datetime.datetime(2026, 5, 1, 18, 0, tzinfo=datetime.timezone.utc),
+    )
+    position = order.positions.first()
+    position.subevent = subevent
+    position.save()
+
+    exporter = OrderListExporter(event)
+    rows = [row for row in exporter.iterate_positions({}) if not isinstance(row, exporter.ProgressSetTotal)]
+    headers = rows[0]
+    data = rows[1]
+
+    assert data[headers.index('Date')] == 'Day one'
+    assert data[headers.index('Start date')] == '2026-05-01 11:00:00 CEST'
+    assert data[headers.index('End date')] == '2026-05-01 20:00:00 CEST'
+
+
+@pytest.mark.django_db
 def test_order_export_orders_include_name_parts_from_position(env):
     event, user, order, ticket = env
     event.settings.set('name_scheme', 'given_family')
@@ -573,22 +602,35 @@ def test_order_transition_to_expired_success(client, env):
 
 
 @pytest.mark.django_db
-def test_order_transition_to_paid_in_time_success(client, env):
+@pytest.mark.parametrize('timezone', ['America/Los_Angeles', 'Asia/Tokyo'])
+@override_settings(DEBUG=True, SITE_NETLOC='example.com', ALLOWED_HOSTS=['example.com'])
+def test_order_transition_to_paid_in_time_success(client, env, timezone):
+    env[0].settings.timezone = timezone
+    assert env[0].timezone == 'UTC'
+    payment_date = (now() - timedelta(days=1)).date()
     with scopes_disabled():
         q = Quota.objects.create(event=env[0], size=0)
-    q.items.add(env[3])
-    client.login(email='dummy@dummy.dummy', password='dummy')
-    client.post(
-        '/control/event/dummy/dummy/orders/FOO/transition',
+    q.products.add(env[3])
+    client.force_login(env[1])
+    response = client.post(
+        reverse('control:event.order.transition', kwargs={
+            'organizer': env[0].organizer.slug, 'event': env[0].slug, 'code': env[2].code,
+        }),
         {
             'amount': str(env[2].pending_sum),
-            'payment_date': now().date().isoformat(),
+            'payment_date': payment_date.isoformat(),
             'status': 'p',
         },
+        HTTP_HOST='example.com',
     )
     with scopes_disabled():
         o = Order.objects.get(id=env[2].id)
+    assert response.status_code == 302
     assert o.status == Order.STATUS_PAID
+    with scope(event=env[0], organizer=env[0].organizer):
+        assert o.payments.get(state=OrderPayment.PAYMENT_STATE_CONFIRMED).payment_date == datetime.datetime.combine(
+            payment_date, datetime.time(), tzinfo=ZoneInfo(timezone)
+        )
 
 
 @pytest.mark.django_db
@@ -1580,6 +1622,8 @@ def test_order_extend_expired_voucher_budget_fail(client, env):
 def test_order_mark_paid_overdue_quota_blocked_by_waiting_list(client, env):
     with scopes_disabled():
         o = Order.objects.get(id=env[2].id)
+        env[0].timezone = 'Europe/Berlin'
+        env[0].save()
         o.status = Order.STATUS_EXPIRED
         o.expires = now() - timedelta(days=5)
         o.save()
@@ -1592,7 +1636,7 @@ def test_order_mark_paid_overdue_quota_blocked_by_waiting_list(client, env):
         '/control/event/dummy/dummy/orders/FOO/transition',
         {
             'status': 'p',
-            'payment_date': now().date().isoformat(),
+            'payment_date': '2016-01-26',
             'amount': str(o.pending_sum),
         },
         follow=True,

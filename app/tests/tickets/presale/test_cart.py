@@ -114,6 +114,8 @@ class CartTest(CartTestMixin, TestCase):
             assert not CartPosition.objects.filter(cart_id=self.session_key, event=self.event).exists()
 
     def test_after_payment_period(self):
+        self.event.timezone = 'Europe/Berlin'
+        self.event.save()
         self.event.settings.payment_term_last = (now() - datetime.timedelta(days=1)).date().isoformat()
         response = self.client.post(
             '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
