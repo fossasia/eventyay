@@ -11,11 +11,17 @@
     {% if not can_accept_invite %}
 
         <p>
-            {% blocktranslate trimmed %}
-                Unfortunately, you cannot accept this invitation at the moment.
-                This may be because the invitation has expired, or because the
-                proposal cannot be edited any more.
-            {% endblocktranslate %}
+            {% if deny_reason == 'limit' %}
+                {% blocktranslate with count=submission.MAX_CO_SPEAKERS trimmed %}
+                    This proposal has already reached the maximum of {{ count }} co-speakers.
+                {% endblocktranslate %}
+            {% else %}
+                {% blocktranslate trimmed %}
+                    Unfortunately, you cannot accept this invitation at the moment.
+                    This may be because the invitation has expired, or because the
+                    proposal cannot be edited any more.
+                {% endblocktranslate %}
+            {% endif %}
         </p>
         <p>
             {% blocktranslate trimmed %}
