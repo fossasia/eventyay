@@ -410,14 +410,14 @@ class SubmissionSpeakerResendInvitation(SubmissionSpeakers):
             submission=self.object,
             pk=self.kwargs['pk'],
         )
-        if not invitation.can_resend:
+        if not invitation.can_resend_orga:
             message = _('This invitation cannot be resent.')
             if is_ajax_request(request):
                 return JsonResponse({'message': str(message), 'success': False}, status=409)
             messages.warning(request, message)
             return redirect(self.object.orga_urls.speakers)
 
-        delivered = invitation.resend(requestor=request.user)
+        delivered = invitation.resend(requestor=request.user, orga=True)
         if delivered:
             message = _('Invitation sent to {email}.').format(email=invitation.email)
         else:
