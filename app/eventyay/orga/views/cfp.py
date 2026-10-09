@@ -1048,8 +1048,11 @@ class CfPFieldSettings(EventPermissionRequired, FormView):
         return context
 
     def post(self, request, *args, **kwargs):
-        if request.POST.get('action') == 'reset':
-            reset_lang = request.POST.get('locale') or request.POST.get('lang')
+        action = request.POST.get('action', '')
+        if action == 'reset' or action.startswith('reset:') or 'reset_locale' in request.POST:
+            reset_lang = request.POST.get('locale') or request.POST.get('lang') or request.POST.get('reset_locale')
+            if not reset_lang and action.startswith('reset:'):
+                reset_lang = action.split(':', 1)[1]
             if reset_lang in self.request.event.locales:
                 form = self.get_form()
                 form.reset_locale(reset_lang)

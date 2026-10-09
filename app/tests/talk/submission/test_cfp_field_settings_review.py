@@ -359,3 +359,63 @@ def test_session_videos_field_settings_not_exposed(orga_client, event):
         response = orga_client.get(overview_url)
         assert response.status_code == 200
         assert url not in response.rendered_content
+
+
+@pytest.mark.django_db
+def test_cfp_field_settings_post_reset_csp_compatible(orga_client, event):
+    """Test that resetting a locale via action='reset:<locale>' works and template contains no inline JS."""
+    with scope(event=event):
+        event.locale_array = 'en,de'
+        event.settings.set('locales', ['en', 'de'])
+        event.save()
+
+        # Seed custom labels for both en and de
+        event.cfp.settings['flow'] = {
+            'steps': {
+                'info': {
+                    'identifier': 'info',
+                    'fields': [
+                        {
+                            'key': 'title',
+                            'label': {'en': 'Custom English Title', 'de': 'Custom German Title'},
+                            'help_text': {'en': 'Help EN', 'de': 'Help DE'},
+                        }
+                    ],
+                }
+            }
+        }
+        event.cfp.save(update_fields=['settings'])
+
+        url = reverse(
+            'orga:cfp.forms.field_settings',
+            kwargs={
+                'organizer': event.organizer.slug,
+                'event': event.slug,
+                'target': 'session',
+                'field': 'title',
+            },
+        )
+
+        # 1. Verify GET renders dropdown without inline onclick handlers
+        get_response = orga_client.get(url)
+        assert get_response.status_code == 200
+        content = get_response.rendered_content
+        assert 'onclick=' not in content
+        assert 'reset-locale-input' not in content
+        assert 'name="action" value="reset:de"' in content
+        assert 'name="action" value="reset:en"' in content
+
+        # 2. Reset German locale via action='reset:de'
+        post_response = orga_client.post(url, {'action': 'reset:de'})
+        assert post_response.status_code == 302
+
+        event.refresh_from_db()
+        field_config = event.cfp.settings['flow']['steps']['info']['fields'][0]
+
+        # English customization is preserved
+        assert field_config['label']['en'] == 'Custom English Title'
+        assert field_config['help_text']['en'] == 'Help EN'
+
+        # German is reset to default (e.g. 'Titel' in German)
+        assert field_config['label']['de'] != 'Custom German Title'
+        assert field_config['label']['de'] == 'Titel'

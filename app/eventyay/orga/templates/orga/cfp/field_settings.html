@@ -29,9 +29,8 @@
                 <a href="{% url 'orga:cfp.forms' organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-default btn-cancel mr-auto">
                     {% translate "Back to forms" %}
                 </a>
-                <input type="hidden" name="locale" id="reset-locale-input" value="{% if locales|length == 1 %}{{ locales.0 }}{% endif %}">
                 {% if locales|length == 1 %}
-                    <button type="submit" name="action" value="reset" class="btn btn-outline-danger" formnovalidate onclick="document.getElementById('reset-locale-input').value='{{ locales.0 }}';">
+                    <button type="submit" name="action" value="reset:{{ locales.0 }}" class="btn btn-outline-danger" formnovalidate>
                         <i class="fa fa-undo"></i> {% translate "Reset to default" %} ({{ locales.0 }})
                     </button>
                 {% else %}
@@ -42,7 +41,7 @@
                         <ul class="dropdown-menu dropdown-menu-right">
                             {% for locale in locales %}
                                 <li>
-                                    <button type="submit" name="action" value="reset" class="btn btn-link dropdown-item text-danger text-left w-100" formnovalidate onclick="document.getElementById('reset-locale-input').value='{{ locale }}';">
+                                    <button type="submit" name="action" value="reset:{{ locale }}" class="btn btn-link dropdown-item text-danger text-left w-100" formnovalidate>
                                         {% blocktrans with lang=locale %}Reset {{ lang }}{% endblocktrans %}
                                     </button>
                                 </li>
