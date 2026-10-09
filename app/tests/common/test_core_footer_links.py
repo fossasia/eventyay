@@ -313,8 +313,10 @@ def test_footer_context_renders_correctly(rf):
         assert soup.find('a', href=lambda h: h and 'docs.eventyay.com' in h) is not None
 
 
-def test_public_pages_base_template_unauthenticated(rf):
+@pytest.mark.django_db
+def test_public_pages_base_template_unauthenticated(rf, mocker):
     # Verify public page shell renders language switcher, login link, and no sidebar for guests
+    mocker.patch('eventyay.common.signals.user_dashboard_links.send', return_value=[])
     request = rf.get('/terms/')
     request.user = AnonymousUser()
     request.LANGUAGE_CODE = 'en'
@@ -338,8 +340,10 @@ def test_public_pages_base_template_unauthenticated(rf):
     assert soup.find('aside', id='startpage-sidebar') is None
 
 
-def test_public_pages_base_template_authenticated(rf):
+@pytest.mark.django_db
+def test_public_pages_base_template_authenticated(rf, mocker):
     # Verify public page shell renders language switcher, profile dropdown, and sidebar for logged-in users
+    mocker.patch('eventyay.common.signals.user_dashboard_links.send', return_value=[])
     request = rf.get('/terms/')
     user = MagicMock(is_authenticated=True, is_staff=False, email='user@eventyay.com', fullname='Test User')
     request.user = user
@@ -368,6 +372,43 @@ def test_public_pages_base_template_authenticated(rf):
     sidebar = soup.find('aside', id='startpage-sidebar')
     assert sidebar is not None
     assert soup.find('a', href=lambda h: h and '/common/orders/' in h) is not None
+
+
+@pytest.mark.django_db
+def test_public_pages_base_template_rtl_sidebar(rf, mocker):
+    # Verify that RTL languages get dir="rtl" and class="rtl" on the html element
+    mocker.patch('eventyay.common.signals.user_dashboard_links.send', return_value=[])
+    request = rf.get('/terms/')
+    request.LANGUAGE_CODE = 'ar'  # Arabic is an RTL language
+    user = MagicMock(is_authenticated=True, is_staff=False, email='user@eventyay.com', fullname='Test User')
+    request.user = user
+
+    nav_items = [
+        {'label': 'My Orders', 'url': '/common/orders/', 'active': False, 'icon': 'shopping-cart'},
+        {'label': 'My Events', 'url': '/common/events/', 'active': False, 'icon': 'calendar'},
+    ]
+    context = {
+        'request': request,
+        'page': MagicMock(title='Terms of Service'),
+        'content': '<p>Terms content</p>',
+        'nav_items': nav_items,
+        'staff_session': False,
+        'language_options': [{'code': 'en', 'label': 'English'}, {'code': 'ar', 'label': 'Arabic'}],
+        'core_footer_links': [],
+        'django_settings': settings,
+        'rtl': True,
+    }
+    html = render_to_string('pretixcontrol/admin/pages/show.html', context)
+    soup = BeautifulSoup(html, 'html.parser')
+
+    html_tag = soup.find('html')
+    assert html_tag is not None
+    assert html_tag.get('dir') == 'rtl'
+    assert 'rtl' in html_tag.get('class', [])
+
+    assert soup.find('button', id='sidebar-toggle') is not None
+    sidebar = soup.find('aside', id='startpage-sidebar')
+    assert sidebar is not None
 
 
 def test_global_settings_page_preview_form_encoded(rf):

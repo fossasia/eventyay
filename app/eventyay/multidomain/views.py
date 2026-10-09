@@ -32,6 +32,7 @@ from eventyay.common.language import get_ui_language_options
 from eventyay.common.templatetags.vite import fetch_vite_html, VIDEO_DIST_DIR, VIDEO_DEV_SERVER
 from eventyay.consts import SizeKey
 from eventyay.eventyay_common.video.traits_sync import check_has_active_staff_session
+from eventyay.helpers.i18n import is_rtl
 
 logger = logging.getLogger(__name__)
 
@@ -189,6 +190,7 @@ class VideoSPAView(View):
                 },
                 'externalAuthUrl': getattr(event, 'external_auth_url', None),
                 'locale': event.locale,
+                'rtl': is_rtl(event.locale),
                 'date_locale': cfg.get('date_locale', 'en-ie'),
                 'theme': build_video_theme_for_event(event),
                 'video_player': cfg.get('video_player', {}),

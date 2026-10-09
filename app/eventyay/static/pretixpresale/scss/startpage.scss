@@ -1130,9 +1130,41 @@ body.startpage-body {
       }
     }
 
-    .organizer-more {
-      margin-top: 1.5rem;
-      text-align: center;
-    }
+     .organizer-more {
+       margin-top: 1.5rem;
+       text-align: center;
+     }
+   }
+}
+
+/*
+ * RTL sidebar positioning
+ * =======================
+ * In RTL, the hamburger toggle and sidebar drawer must mirror to the right.
+ * The HTML gets class="rtl" when the active language is RTL (see base templates).
+ */
+html.rtl {
+  /* Hamburger moves to the right side */
+  .navbar-toggle-sidebar,
+  #sidebar-toggle {
+    float: right;
+    margin-left: 0;
+    margin-right: 10px;
+  }
+
+  /* Sidebar drawer opens from the right */
+  .startpage-sidebar {
+    left: auto;
+    right: 0;
+    transform: translateX(100%);
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
+  }
+
+  .startpage-sidebar-open .startpage-sidebar {
+    transform: translateX(0);
+  }
+
+  body.startpage-sidebar-open .startpage-sidebar {
+    transform: translateX(0);
   }
 }

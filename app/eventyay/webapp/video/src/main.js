@@ -23,6 +23,7 @@ import features from 'features'
 import config from 'config'
 import { hasOrganizerTraits } from 'lib/traitGrants'
 import { loadThemeConfig } from 'theme'
+import { applyRtlDirection } from 'lib/rtl'
 
 function ensureWebsiteFontsLoaded() {
   if (document.head.querySelector('link[data-eventyay-fonts]')) {
@@ -52,6 +53,9 @@ function ensureEventSettingsCssLoaded() {
 }
 
 async function init({ token, inviteToken }) {
+  // Apply RTL direction early, before Vue app is created
+  applyRtlDirection()
+
   ensureWebsiteFontsLoaded()
   ensureEventSettingsCssLoaded()
   await loadThemeConfig()

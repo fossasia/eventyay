@@ -216,6 +216,7 @@ export default defineConfig(({ mode }) => {
       target: 'esnext',
       sourcemap: false, // Added for debugging vendor-webrtc issue
       cssCodeSplit: false,
+      cssMinify: false,
       chunkSizeWarningLimit: 1250,
       rollupOptions: {
         checks: {

@@ -1,0 +1,202 @@
+// RTL-specific styles for video webapp
+// These styles are applied when the HTML element has class="rtl" (set by applyRtlDirection)
+
+html.rtl {
+	// App bar - move hamburger to the right
+	.c-app-bar {
+		// The .left section contains the hamburger and brand
+		// In RTL, we want it on the right
+		justify-content: flex-start
+
+		.left {
+			order: 1
+			margin-left: auto
+			margin-right: 0
+
+			.navbar-toggle-sidebar {
+				// Hamburger button on the far right
+				margin-left: 8px
+				margin-right: 0
+			}
+
+			.navbar-brand {
+				margin-left: 16px
+				margin-right: 2px
+			}
+
+			.nav-view-event {
+				margin-left: 8px
+				margin-right: 0
+			}
+		}
+
+		.nav-actions {
+			order: 0
+			margin-left: 0
+			margin-right: auto
+		}
+	}
+
+	// Sidebar positioning - move to the right in RTL
+	.v-app {
+		// Sidebar width variable
+		--sidebar-width: 250px
+
+		.app-content {
+			// In RTL, sidebar is on the right, so padding-right instead of padding-left
+			transition: padding-right 0.2s cubic-bezier(0.4, 0, 0.2, 1)
+
+			+above('m') {
+				padding-left: 0 !important
+				padding-right: 250px !important
+
+				&.sidebar-collapsed {
+					padding-right: 45px !important
+				}
+			}
+
+			+below('m') {
+				padding-left: 0 !important
+				padding-right: 0 !important
+			}
+		}
+
+		// Rooms sidebar - position on the right in RTL
+		.c-rooms-sidebar {
+			left: auto
+			right: 0
+
+			+above('m') {
+				transform: translateX(0)
+				box-shadow: none
+
+				&.sidebar-collapsed:not(:hover) {
+					width: 45px !important
+				}
+
+				&.sidebar-collapsed:hover {
+					width: 250px
+					box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15)
+					z-index: 160
+				}
+			}
+
+			+below('m') {
+				transform: translateX(100%)
+
+				&.sidebar-mobile-open {
+					transform: translateX(0)
+				}
+			}
+		}
+
+		// Organiser sidebar - position on the right in RTL
+		.c-organiser-sidebar {
+			left: auto
+			right: 0
+
+			+above('m') {
+				transform: translateX(0)
+				box-shadow: none
+
+				&.sidebar-collapsed:not(:hover) {
+					width: 45px !important
+				}
+
+				&.sidebar-collapsed:hover {
+					width: 250px
+					box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15)
+					z-index: 160
+				}
+			}
+
+			+below('m') {
+				transform: translateX(100%)
+
+				&.sidebar-mobile-open {
+					transform: translateX(0)
+				}
+			}
+		}
+
+		// Sidebar backdrop
+		.sidebar-backdrop {
+			left: 0
+			right: 0
+		}
+
+		// Dropdown menus - adjust positioning for RTL
+		.language-dropdown,
+		.profile-dropdown {
+			left: 0
+			right: auto
+		}
+
+		// Media source placeholder positioning
+		.c-app-bar {
+			.left {
+				flex-direction: row-reverse
+			}
+		}
+
+		// Adjust profile dropdown submenu
+		.profile-submenu {
+			left: 0
+			right: auto
+			margin-left: 8px
+			margin-right: 0
+		}
+
+		// Notifications positioning
+		.c-app-bar .user-section .profile-dropdown {
+			left: 0
+			right: auto
+		}
+
+		// Language dropdown
+		.language-dropdown {
+			left: 4px
+			right: auto
+		}
+	}
+}
+
+// RTL specific media queries
+@media (max-width: 991px) {
+	html[dir="rtl"],
+	html.rtl {
+		.c-app-bar {
+			.left {
+				.navbar-brand {
+					margin-left: 6px
+					margin-right: 0
+				}
+			}
+		}
+	}
+}
+
+@media (max-width: 767px) {
+	html[dir="rtl"],
+	html.rtl {
+		.c-app-bar {
+			.left {
+				.navbar-brand {
+					margin-left: 0
+					margin-right: 0
+				}
+			}
+		}
+	}
+}
+
+@media (max-width: 480px) {
+	html[dir="rtl"],
+	html.rtl {
+		.c-app-bar {
+			.left .navbar-brand .brand-text {
+				display: none
+			}
+		}
+	}
+}

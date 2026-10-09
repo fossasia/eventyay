@@ -44,15 +44,47 @@ html.rtl {
       margin-right: 15px;
     }
 
-    /* Profile/admin items pushed toward toggle */
-    .navbar .navbar-top-links.navbar-right {
-      order: 9;
-      display: flex;
-      flex-direction: row;
-      margin-left: 0;
-      margin-right: 0;
-    }
-  }
+     /* Profile/admin items pushed toward toggle */
+     .navbar .navbar-top-links.navbar-right {
+       order: 9;
+       display: flex;
+       flex-direction: row;
+       margin-left: 0;
+       margin-right: 0;
+     }
+   }
+
+   /*
+    * Mobile Layout (RTL)
+    * ==================
+    * On screens narrower than 768px, the sidebar becomes a mobile drawer
+    * that slides in/out. In LTR, the drawer sits on the left; in RTL it
+    * must sit on the right to match the language direction, and the
+    * hamburger toggle must mirror that side.
+    */
+    @media (max-width: 767px) {
+      .navbar-toggle-sidebar,
+      #sidebar-toggle {
+        float: right;
+        margin-left: 0;
+        margin-right: 10px;
+      }
+
+     .sidebar {
+       left: auto;
+       right: 0;
+       transform: translateX(100%);
+       box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
+     }
+
+     body:not(.sidebar-minimized) .sidebar {
+       transform: translateX(0%);
+     }
+
+     body.sidebar-minimized .sidebar {
+       transform: translateX(100%);
+     }
+   }
   .sidebar-text {
     margin-right: 8px;
   }

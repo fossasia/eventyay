@@ -151,14 +151,56 @@ def base_placeholders(sender, **kwargs):
                 _date(event.cfp.deadline.astimezone(event.tz), 'SHORT_DATETIME_FORMAT')
                 if hasattr(event, 'cfp') and event.cfp.deadline else ''
             ),
-            _('The general CfP deadline'),
+_('The general CfP deadline'),
+        ),
+        SimpleFunctionalMailTextPlaceholder(
+            'event_dates',
+            ['event'],
+            lambda event: event.get_date_range_display(),
+            lambda event: event.get_date_range_display(),
+            _('The event\'s date range'),
+        ),
+        SimpleFunctionalMailTextPlaceholder(
+            'event_start_date',
+            ['event'],
+            lambda event: event.get_date_from_display(short=True) if event.date_from else '',
+            lambda event: event.get_date_from_display(short=True) if event.date_from else '',
+            _('The event\'s start date'),
+        ),
+        SimpleFunctionalMailTextPlaceholder(
+            'event_end_date',
+            ['event'],
+            lambda event: event.get_date_to_display(short=True) if event.date_to else '',
+            lambda event: event.get_date_to_display(short=True) if event.date_to else '',
+            _('The event\'s end date'),
+        ),
+        SimpleFunctionalMailTextPlaceholder(
+            'event_location',
+            ['event'],
+            lambda event: str(event.location) if event.location else '',
+            lambda event: str(event.location) if event.location else _('(no location set)'),
+            _('The event\'s venue / location'),
+        ),
+        *placeholder_aliases(
+            ['organizer_name', 'organizer'],
+            ['event'],
+            lambda event: str(event.organizer),
+            lambda event: str(event.organizer),
+            _('The organizer\'s name'),
+        ),
+        SimpleFunctionalMailTextPlaceholder(
+            'contact_email',
+            ['event'],
+            lambda event: event.organizer.primary_contact_email if hasattr(event, 'organizer') and event.organizer.primary_contact_email else '',
+            lambda event: 'organizer@example.org',
+            _('The event\'s contact email address'),
         ),
         *placeholder_aliases(
             ['proposal_code', 'session_code', 'code'],
             ['submission'],
             lambda submission: submission.code,
             'F8VVL',
-            _('The proposal’s unique ID'),
+            _('The proposal\'s unique ID'),
         ),
         SimpleFunctionalMailTextPlaceholder(
             'talk_url',
