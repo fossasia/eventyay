@@ -805,8 +805,6 @@ class GeneralEventSettingsForm(EventSettingsForm):
         'event_list_type',
         'event_list_available_only',
         'event_info_text',
-        'banner_text',
-        'banner_text_bottom',
         'allow_modifications',
         'last_order_modification_date',
         'allow_modifications_after_checkin',
