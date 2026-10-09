@@ -185,6 +185,33 @@
             </div>
         {% endif %}
 
+        {% if scheduled_slot %}
+            {% if scheduled_slot.room %}
+                <div class="form-group row">
+                    <label class="col-md-3 col-form-label">{% translate "Room" %}</label>
+                    <div class="col-md-9">
+                        {{ scheduled_slot.room.name }}
+                    </div>
+                </div>
+            {% endif %}
+            {% if scheduled_slot.local_start %}
+                <div class="form-group row">
+                    <label class="col-md-3 col-form-label">{% translate "Start" %}</label>
+                    <div class="col-md-9">
+                        {{ scheduled_slot.local_start|date:"j N Y, H:i" }}
+                    </div>
+                </div>
+            {% endif %}
+            {% if scheduled_slot.local_end %}
+                <div class="form-group row">
+                    <label class="col-md-3 col-form-label">{% translate "End" %}</label>
+                    <div class="col-md-9">
+                        {{ scheduled_slot.local_end|date:"j N Y, H:i" }}
+                    </div>
+                </div>
+            {% endif %}
+        {% endif %}
+
         <div class="form-group row">
             <label class="col-md-3 col-form-label">{% translate "Duration" %}</label>
             <div class="col-md-9">
