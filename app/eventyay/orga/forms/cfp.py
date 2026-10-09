@@ -1,4 +1,5 @@
 import json
+import logging
 
 from django import forms
 from django.db.models import Count, Q
@@ -40,6 +41,8 @@ from eventyay.common.language import get_language_choices_native_with_ui_name, l
 from eventyay.common.text.phrases import phrases
 from eventyay.control.forms import MultipleLanguagesWidget
 from eventyay.orga.utils.colors import generate_random_high_contrast_color
+
+logger = logging.getLogger(__name__)
 
 
 class CfPGeneralSettingsForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nFormMixin, forms.Form):
@@ -132,6 +135,7 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
 
     def __init__(self, *args, obj, **kwargs):
         super().__init__(*args, obj=obj, **kwargs)
+        self.fields.pop('cfp_enable_gravatar', None)
         self.length_fields = [
             'title',
             'abstract',
@@ -320,7 +324,6 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
         fields_config = self.instance.cfp.settings.get('fields_config')
 
         self.instance.cfp.settings['count_length_in'] = self.cleaned_data.get('count_length_in') or 'chars'
-        self.instance.cfp.settings['cfp_enable_gravatar'] = self.cleaned_data.get('cfp_enable_gravatar', False)
 
         # Restore fields_config after setting other values (also when it is an empty dict)
         if fields_config is not None:
@@ -985,10 +988,6 @@ BUILTIN_FIELD_DEFAULTS = {
             'label': _('Slides'),
             'help_text': _('Upload PDF files. Only PDF is supported right now.'),
         },
-        'session_videos': {
-            'label': _('Session videos'),
-            'help_text': '',
-        },
         'duration': {
             'label': _('Duration'),
             'help_text': _('The duration in minutes.'),
@@ -1090,6 +1089,11 @@ class CfPFieldSettingsForm(ReadOnlyFlag, I18nHelpText, I18nFormMixin, forms.Form
         self.initial.setdefault('help_text', initial_help_text)
 
     def _get_existing_field_config(self, flow_data):
+        if isinstance(flow_data, str) and flow_data.strip():
+            try:
+                flow_data = json.loads(flow_data)
+            except (json.JSONDecodeError, ValueError, TypeError):
+                return None
         step_key = TARGET_TO_STEP.get(self.target, self.target)
         if not isinstance(flow_data, dict):
             return None
@@ -1129,6 +1133,13 @@ class CfPFieldSettingsForm(ReadOnlyFlag, I18nHelpText, I18nFormMixin, forms.Form
 
     def _get_or_init_flow_data(self):
         flow_data = self.event.cfp.settings.get('flow')
+        if isinstance(flow_data, str) and flow_data.strip():
+            try:
+                flow_data = json.loads(flow_data)
+            except (json.JSONDecodeError, ValueError, TypeError):
+                logger.warning("Malformed JSON in event.cfp.settings['flow']")
+                flow_data = None
+
         if isinstance(flow_data, list):
             flow_data = {
                 'steps': {s.get('identifier'): s for s in flow_data if isinstance(s, dict) and s.get('identifier')}
@@ -1168,15 +1179,19 @@ class CfPFieldSettingsForm(ReadOnlyFlag, I18nHelpText, I18nFormMixin, forms.Form
             fields_list.append(field_entry)
         return field_entry
 
-    def _get_dict_copy(self, val, fallback):
+    def _get_dict_copy(self, val, fallback=None):
         if isinstance(val, LazyI18nString):
             return dict(val.data)
         if isinstance(val, dict):
             return dict(val)
+        if isinstance(val, str) and val:
+            return {'en': val}
         if isinstance(fallback, LazyI18nString):
             return dict(fallback.data)
         if isinstance(fallback, dict):
             return dict(fallback)
+        if isinstance(fallback, str) and fallback:
+            return {'en': fallback}
         return {}
 
     def reset_locale(self, locale):
@@ -1189,14 +1204,24 @@ class CfPFieldSettingsForm(ReadOnlyFlag, I18nHelpText, I18nFormMixin, forms.Form
         step_data = self._ensure_step_data(flow_data)
         field_entry = self._ensure_field_entry(step_data)
 
-        label_dict = self._get_dict_copy(field_entry.get('label'), self.initial.get('label'))
-        help_text_dict = self._get_dict_copy(field_entry.get('help_text'), self.initial.get('help_text'))
+        existing_label = self._get_dict_copy(field_entry.get('label'), {})
+        existing_help_text = self._get_dict_copy(field_entry.get('help_text'), {})
 
-        label_dict[locale] = default_label
-        help_text_dict[locale] = default_help_text
+        initial_label = self._get_dict_copy(self.initial.get('label'), {})
+        initial_help_text = self._get_dict_copy(self.initial.get('help_text'), {})
 
-        field_entry['label'] = label_dict
-        field_entry['help_text'] = help_text_dict
+        for loc, val in initial_label.items():
+            if loc in self.event.locales:
+                existing_label.setdefault(loc, val)
+        for loc, val in initial_help_text.items():
+            if loc in self.event.locales:
+                existing_help_text.setdefault(loc, val)
+
+        existing_label[locale] = default_label
+        existing_help_text[locale] = default_help_text
+
+        field_entry['label'] = existing_label
+        field_entry['help_text'] = existing_help_text
 
         self.event.cfp.settings['flow'] = flow_data
         self.event.cfp.save(update_fields=['settings'])
@@ -1216,8 +1241,17 @@ class CfPFieldSettingsForm(ReadOnlyFlag, I18nHelpText, I18nFormMixin, forms.Form
         step_data = self._ensure_step_data(flow_data)
         field_entry = self._ensure_field_entry(step_data)
 
-        field_entry['label'] = label_dict
-        field_entry['help_text'] = help_text_dict
+        existing_label = self._get_dict_copy(field_entry.get('label'), {})
+        existing_help_text = self._get_dict_copy(field_entry.get('help_text'), {})
+
+        for loc in self.event.locales:
+            if loc in label_dict:
+                existing_label[loc] = label_dict[loc]
+            if loc in help_text_dict:
+                existing_help_text[loc] = help_text_dict[loc]
+
+        field_entry['label'] = existing_label
+        field_entry['help_text'] = existing_help_text
 
         self.event.cfp.settings['flow'] = flow_data
 

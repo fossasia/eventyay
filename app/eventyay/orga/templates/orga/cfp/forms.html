@@ -688,12 +688,6 @@
                         <tr dragsort-id="session_videos">
                             <th>
                                 <div class="font-weight-bold">{% translate "Session videos" %}</div>
-                                {% if question_texts.session_videos %}
-                                    <div class="small text-muted font-weight-normal mt-1">{{ question_texts.session_videos }}</div>
-                                {% endif %}
-                                {% if question_help_texts.session_videos %}
-                                    <div class="small text-muted font-weight-normal mt-1">{{ question_help_texts.session_videos }}</div>
-                                {% endif %}
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -712,9 +706,6 @@
                             <td></td>
                             <td></td>
                             <td class="text-right text-nowrap">
-                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='session_videos' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
-                                    <i class="fa fa-cog fa-fw"></i>
-                                </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
                                 </button>

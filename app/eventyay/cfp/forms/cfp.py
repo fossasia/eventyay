@@ -113,18 +113,22 @@ class CfPFormMixin:
         if not field or not self.field_configuration:
             return
         field_data = self.field_configuration.get(field_name) or {}
-        field.original_help_text = field_data.get('help_text') or ''
-        if field.original_help_text:
+        if 'help_text' in field_data and field_data['help_text'] is not None:
             from eventyay.base.templatetags.rich_text import rich_text
 
-            field.help_text = rich_text(
-                str(field.original_help_text) + ' ' + str(getattr(field, 'added_help_text', ''))
-            )
+            raw_help_text = field_data.get('help_text') or ''
+            field.original_help_text = raw_help_text
+            added = str(getattr(field, 'added_help_text', '')).strip()
+            text = (str(raw_help_text) + (' ' + added if added else '')).strip()
+            field.help_text = rich_text(text) if text else ''
+
         stored_label = field_data.get('label')
         if stored_label:
             # Preserve explicit organizer customizations, but avoid pinning cached
             # gettext fallbacks that can block future PO/MO updates.
             label_data = getattr(stored_label, 'data', None)
+            if isinstance(stored_label, dict):
+                label_data = stored_label
             if label_data:
                 english = label_data.get('en', '')
                 has_real_translation = any(

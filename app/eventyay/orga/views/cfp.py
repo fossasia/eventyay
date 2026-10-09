@@ -325,9 +325,10 @@ class CfPForms(EventPermissionRequired, TemplateView):
                                 field_items = []
                             for field_key, field_data in field_items:
                                 if isinstance(field_data, dict):
-                                    if field_data.get('label'):
-                                        question_texts[field_key] = str(field_data['label'])
-                                    if field_data.get('help_text'):
+                                    raw_label = field_data.get('label')
+                                    if raw_label is not None and str(raw_label).strip():
+                                        question_texts[field_key] = str(raw_label)
+                                    if 'help_text' in field_data and field_data['help_text'] is not None:
                                         question_help_texts[field_key] = str(field_data['help_text'])
         except Exception as e:
             logger.warning('Failed to parse cfp_flow config for event %s: %s', event.id, e)
@@ -1021,7 +1022,7 @@ class CfPFieldSettings(EventPermissionRequired, FormView):
     def dispatch(self, request, *args, **kwargs):
         target = kwargs.get('target')
         field_id = kwargs.get('field')
-        if target not in BUILTIN_FIELD_KEYS or field_id not in BUILTIN_FIELD_KEYS[target]:
+        if target not in BUILTIN_FIELD_DEFAULTS or field_id not in BUILTIN_FIELD_DEFAULTS[target]:
             raise Http404(_('The requested field does not exist.'))
         return super().dispatch(request, *args, **kwargs)
 
