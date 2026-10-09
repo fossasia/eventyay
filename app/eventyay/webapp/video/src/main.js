@@ -23,7 +23,6 @@ import features from 'features'
 import config from 'config'
 import { hasOrganizerTraits } from 'lib/traitGrants'
 import { loadThemeConfig } from 'theme'
-import 'webrtc-adapter'
 
 function ensureWebsiteFontsLoaded() {
   if (document.head.querySelector('link[data-eventyay-fonts]')) {

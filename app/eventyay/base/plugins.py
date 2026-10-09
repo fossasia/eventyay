@@ -38,6 +38,7 @@ BETA_PLUGINS: frozenset[str] = frozenset(
         'interpretation',
         'socialmedia',
         'teamshifts',
+        'veditor',
     ]
 )
 

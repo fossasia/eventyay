@@ -2,9 +2,10 @@ import logging
 from urllib.parse import quote
 
 from django.contrib import messages
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
+from django.utils.html import escape
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import View
 
@@ -61,7 +62,38 @@ class CheckoutView(View):
                 request.session['pending_cart_success'] = True
             messages.info(request, _('Please log in to complete your order.'))
             logger.info('Redirecting to login as require_registered_account_for_tickets is enabled.')
-            return redirect(build_login_url_with_next(request.path))
+            login_url = build_login_url_with_next(request.get_full_path())
+            # The login page sends X-Frame-Options: DENY. Redirecting there from the
+            # widget iframe leaves a blank popup; serve a framable interstitial instead.
+            # Only trust iframe_session on namespaced widget carts so a prior ?iframe=1
+            # visit cannot change ordinary (unframed) checkout login redirects.
+            if 'iframe' in request.GET or (
+                request.session.get('iframe_session') and kwargs.get('cart_namespace')
+            ):
+                login_label = _('Log in')
+                message = _('Please log in to complete your order.')
+                html = (
+                    '<!DOCTYPE html><html><head><meta charset="utf-8">'
+                    '<meta name="viewport" content="width=device-width, initial-scale=1">'
+                    '<title>%(title)s</title>'
+                    '<style>body{font-family:sans-serif;display:flex;align-items:center;'
+                    'justify-content:center;min-height:100vh;margin:0;padding:1.5rem;'
+                    'text-align:center;color:#222}'
+                    'a{display:inline-block;margin-top:1rem;padding:.75rem 1.25rem;'
+                    'background:#2185d0;color:#fff;text-decoration:none;border-radius:4px}'
+                    '</style></head><body><div><p>%(message)s</p>'
+                    '<p><a href="%(url)s" target="_blank" rel="noopener">%(label)s</a></p>'
+                    '</div></body></html>'
+                ) % {
+                    'title': escape(str(login_label)),
+                    'message': escape(str(message)),
+                    'url': escape(login_url),
+                    'label': escape(str(login_label)),
+                }
+                resp = HttpResponse(html)
+                resp.xframe_options_exempt = True
+                return resp
+            return redirect(login_url)
 
         if request.session.pop('pending_cart_success', False):
             messages.success(request, _('The products have been successfully added to your cart.'))

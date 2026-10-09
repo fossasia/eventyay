@@ -441,6 +441,7 @@ class CartManager:
         cp_is_net: bool = None,
         force_custom_price=False,
         bundled_sum=Decimal('0.00'),
+        addon_to=None,
     ):
         try:
             return get_price(
@@ -453,6 +454,7 @@ class CartManager:
                 invoice_address=self.invoice_address,
                 force_custom_price=force_custom_price,
                 bundled_sum=bundled_sum,
+                addon_to=addon_to,
             )
         except TaxRule.SaleNotAllowed:
             raise CartError(error_messages['country_blocked'])
@@ -487,9 +489,9 @@ class CartManager:
             requires_seat = Value(0, output_field=IntegerField())
         expired = (
             self.positions.filter(expires__lte=self.now_dt)
-            .select_related('product', 'variation', 'voucher', 'addon_to', 'addon_to__product')
+            .select_related('product', 'variation', 'voucher', 'addon_to', 'addon_to__product', 'addon_to__voucher')
             .annotate(requires_seat=requires_seat)
-            .prefetch_related('product__quotas', 'variation__quotas', 'addons')
+            .prefetch_related('product__quotas', 'variation__quotas', 'addons', 'addon_to__product__addons')
             .order_by('-is_bundled')
         )
         err = None
@@ -505,7 +507,9 @@ class CartManager:
                 bundle = cp.addon_to.product.bundles.filter(
                     bundled_product=cp.product, bundled_variation=cp.variation
                 ).first()
-                if bundle:
+                if cp.addon_to.voucher_id and cp.addon_to.voucher.all_bundles_included:
+                    price = Decimal('0.00')
+                elif bundle:
                     price = bundle.designated_price or 0
                 else:
                     price = cp.price
@@ -550,6 +554,7 @@ class CartManager:
                         cp.subevent,
                         cp_is_net=True,
                         bundled_sum=bundled_sum,
+                        addon_to=cp.addon_to,
                     )
                     price = TaxedPrice(net=price.net, gross=price.net, rate=0, tax=0, name='')
                     pbv = self._get_price(
@@ -560,6 +565,7 @@ class CartManager:
                         cp.subevent,
                         cp_is_net=True,
                         bundled_sum=bundled_sum,
+                        addon_to=cp.addon_to,
                     )
                     pbv = TaxedPrice(net=pbv.net, gross=pbv.net, rate=0, tax=0, name='')
                 else:
@@ -570,6 +576,7 @@ class CartManager:
                         cp.price,
                         cp.subevent,
                         bundled_sum=bundled_sum,
+                        addon_to=cp.addon_to,
                     )
                     pbv = self._get_price(
                         cp.product,
@@ -578,6 +585,7 @@ class CartManager:
                         cp.price,
                         cp.subevent,
                         bundled_sum=bundled_sum,
+                        addon_to=cp.addon_to,
                     )
 
             quotas = list(cp.quotas)
@@ -612,6 +620,18 @@ class CartManager:
             self._operations.append(op)
         return err
 
+    @staticmethod
+    def _apply_included_addon_prices(position, voucher):
+        if not voucher.all_addons_included and not voucher.all_bundles_included:
+            return
+        for addon in position.addons.all():
+            if (addon.is_bundled and voucher.all_bundles_included) or (
+                not addon.is_bundled and voucher.all_addons_included
+            ):
+                if addon.price != Decimal('0.00'):
+                    addon.price = Decimal('0.00')
+                    addon.save(update_fields=['price'])
+
     def apply_voucher(self, voucher_code: str):
         if self._operations:
             raise CartError('Applying a voucher to the whole cart should not be combined with other operations.')
@@ -625,7 +645,7 @@ class CartManager:
         if not voucher.is_active():
             raise CartError(error_messages['voucher_expired'])
 
-        for p in self.positions:
+        for p in self.positions.prefetch_related('addons'):
             if p.voucher_id:
                 continue
 
@@ -642,7 +662,7 @@ class CartManager:
                 continue
 
             bundled_sum = Decimal('0.00')
-            if not p.addon_to_id:
+            if not p.addon_to_id and not voucher.all_bundles_included:
                 for bundledp in p.addons.all():
                     if bundledp.is_bundled:
                         bundledprice = bundledp.price
@@ -755,7 +775,9 @@ class CartManager:
                 else:
                     bundle_quotas = []
 
-                if bundle.designated_price:
+                if voucher and voucher.all_bundles_included:
+                    bprice = TAXED_ZERO
+                elif bundle.designated_price:
                     bprice = self._get_price(
                         bproduct,
                         bvar,
@@ -767,7 +789,8 @@ class CartManager:
                     )
                 else:
                     bprice = TAXED_ZERO
-                bundled_sum += bundle.designated_price * bundle.count
+                if not (voucher and voucher.all_bundles_included):
+                    bundled_sum += bundle.designated_price * bundle.count
 
                 bop = self.AddOperation(
                     count=bundle.count,
@@ -856,7 +879,7 @@ class CartManager:
         toplevel_cp = (
             self.positions.filter(addon_to__isnull=True)
             .prefetch_related('addons', 'product__addons', 'product__addons__addon_category')
-            .select_related('product', 'variation')
+            .select_related('product', 'variation', 'voucher')
         )
 
         # Prefill some of the cache containers
@@ -904,7 +927,7 @@ class CartManager:
             input_addons[cp.id][a['product'], a['variation']] = a.get('count', 1)
             selected_addons[cp.id, product.category_id][a['product'], a['variation']] = a.get('count', 1)
 
-            if price_included[cp.pk].get(product.category_id):
+            if price_included[cp.pk].get(product.category_id) or (cp.voucher and cp.voucher.all_addons_included):
                 price = TAXED_ZERO
             else:
                 price = self._get_price(product, variation, None, a.get('price'), cp.subevent)
@@ -1396,6 +1419,7 @@ class CartManager:
                 op.position.voucher = op.voucher
                 op.position.save()
                 vouchers_ok[op.voucher] -= 1
+                self._apply_included_addon_prices(op.position, op.voucher)
 
         for p in new_cart_positions:
             if getattr(p, '_answers', None):

@@ -8,7 +8,7 @@ from urllib.request import urlopen
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.serializers.json import DjangoJSONEncoder
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.urls.exceptions import NoReverseMatch
@@ -27,12 +27,20 @@ from eventyay.agenda.views.utils import build_public_schedule_exporters
 from eventyay.base.models import Event
 from eventyay.base.models.room import AnonymousInvite
 from eventyay.base.services.video_theme import build_video_theme_for_event
+from eventyay.common.gzip import gzip_if_accepted
 from eventyay.common.language import get_ui_language_options
 from eventyay.common.templatetags.vite import fetch_vite_html, VIDEO_DIST_DIR, VIDEO_DEV_SERVER
 from eventyay.consts import SizeKey
 from eventyay.eventyay_common.video.traits_sync import check_has_active_staff_session
 
 logger = logging.getLogger(__name__)
+
+VIDEO_ASSET_CACHE = 'public, max-age=3600'
+
+
+def video_asset_cache_control(relative_path: str) -> str:
+    """Cache every video file for one hour. The path selects the file, not the lifetime."""
+    return VIDEO_ASSET_CACHE
 
 
 def safe_reverse(name: str, **kw) -> str:
@@ -100,7 +108,19 @@ class VideoSPAView(View):
                     schedule = event.current_schedule
 
                 schedule_version = schedule.version if schedule else None
-                schedule_exporters = build_public_schedule_exporters(event, version=schedule_version)
+                if request.GET.get('exporters') == '1':
+                    return JsonResponse({
+                        'exporters': build_public_schedule_exporters(
+                            event,
+                            version=schedule_version,
+                            include_qrcode=True,
+                        ),
+                    })
+                schedule_exporters = build_public_schedule_exporters(
+                    event,
+                    version=schedule_version,
+                    include_qrcode=False,
+                )
 
             if self.is_organizer:
                 base_path = f'/video/event/{event.organizer.slug}/{event.slug}'
@@ -232,7 +252,7 @@ class VideoSPAView(View):
                     'sort_by_popularity': str(_('Most popular')),
                     'fullscreen': str(_('Fullscreen')),
                     'exit_fullscreen': str(_('Exit Fullscreen')),
-                    'latest': str(_('Latest')),
+                    'schedule_versions': str(_('Schedule versions')),
                     'version_warning_editable': str(_(
                         'You are currently viewing the editable schedule version.'
                         ' It may not match the released version.'
@@ -306,7 +326,7 @@ class VideoSPAView(View):
 
         resp = HttpResponse(html_content, content_type='text/html')
         resp._csp_ignore = True  # Disable CSP for SPA (relies on dynamic inline scripts)
-        return resp
+        return gzip_if_accepted(request, resp)
 
 
 class VideoAssetView(View):
@@ -336,11 +356,12 @@ class VideoAssetView(View):
                 rel = os.path.relpath(fp, VIDEO_DIST_DIR)
                 resp = static_serve(request, rel, document_root=VIDEO_DIST_DIR)
                 resp._csp_ignore = True
+                resp['Cache-Control'] = video_asset_cache_control(rel)
                 # Ensure proper content type for module scripts
                 ctype, _rest = guess_type(fp)
                 if ctype:
                     resp['Content-Type'] = ctype
-                return resp
+                return gzip_if_accepted(request, resp)
         logger.warning('Video asset not found: %s', path)
         raise Http404()
 

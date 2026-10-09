@@ -275,23 +275,25 @@
 			.toolbar-secondary(:class="{open: mobileMoreOpen}", ref="mobileMorePanel")
 				.version-area(v-if="!isFeaturedPage && (versionOptions.length || changelogUrl || isWipPreview)")
 					.version-dropdown(ref="versionDropdown")
-						button.toolbar-btn.version-btn.tooltip-align-right(
+						button.toolbar-btn.icon-only.version-btn.tooltip-align-right(
 							:class="{disabled: isWipPreview}",
 							@click="!isWipPreview && (versionOpen = !versionOpen)",
-							:aria-label="isWipPreview ? publicOnlyFeatureHint : undefined"
+							:aria-label="isWipPreview ? publicOnlyFeatureHint : t.schedule_versions",
+							:aria-disabled="isWipPreview ? 'true' : null",
+							:aria-expanded="isWipPreview ? null : (versionOpen ? 'true' : 'false')",
+							:aria-haspopup="isWipPreview ? null : 'menu'"
 						)
-							svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
-								path(d="M12 8v4l3 3")
-								circle(cx="12", cy="12", r="10")
-							span.version-current {{ currentVersionLabel }}
-							svg.chevron-icon(:class="{open: versionOpen}", viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
-								path(d="M6 9l6 6 6-6")
+							svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", stroke-linecap="round", stroke-linejoin="round")
+								rect(x="11" y="4" width="10" height="16" rx="2")
+								line(x1="7" y1="6" x2="7" y2="18")
+								line(x1="3" y1="8" x2="3" y2="16")
 						.version-menu(v-if="versionOpen")
 							a.version-item(
 								v-for="v in versionOptions",
 								:key="v.version",
 								:href="v.url",
-								:class="{active: v.version === version}"
+								:class="{active: v.version === version}",
+								:aria-current="v.version === version ? 'page' : null"
 							)
 								span {{ formatVersionLabel(v.version) }}
 								span.version-current-badge(v-if="v.isCurrent") {{ t.current }}
@@ -323,7 +325,7 @@
 							role="menuitemradio",
 							:aria-checked="timeDensityMinutes === opt.value ? 'true' : 'false'",
 							@click="selectTimeDensity(opt.value)") {{ opt.label }}
-				button.toolbar-btn.icon-only(v-if="showPrint", @click="printSchedule", :aria-label="t.print")
+				button.toolbar-btn.icon-only.print-btn(v-if="showPrint", @click="printSchedule", :aria-label="t.print")
 					svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 						polyline(points="6 9 6 2 18 2 18 9")
 						path(d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2")
@@ -446,7 +448,7 @@ export default {
 				print: m.print || this.$t('Print'),
 				fullscreen: m.fullscreen || this.$t('Fullscreen'),
 				exit_fullscreen: m.exit_fullscreen || this.$t('Exit Fullscreen'),
-				latest: m.latest || this.$t('Latest'),
+				schedule_versions: m.schedule_versions || this.$t('Schedule versions'),
 				version_warning_editable: m.version_warning_editable || this.$t('You are currently viewing the editable schedule version, which is unreleased and may change at any time.'),
 				version_warning_wip: m.version_warning_wip || this.$t('You are currently viewing the unreleased schedule preview. It may change at any time and is not visible to the public.'),
 				version_warning_old: m.version_warning_old || this.$t('You are currently viewing an older schedule version.'),
@@ -482,6 +484,7 @@ export default {
 			const minText = this.t.minutes || this.$t('min')
 			return [
 				{ value: 5, label: `5 ${minText}` },
+				{ value: 10, label: `10 ${minText}` },
 				{ value: 15, label: `15 ${minText}` },
 				{ value: 30, label: `30 ${minText}` },
 				{ value: 60, label: `60 ${minText}` },
@@ -553,10 +556,6 @@ export default {
 		},
 		nonLanguageFilterGroups() {
 			return (this.filterGroups || []).filter(g => g.refKey !== 'language')
-		},
-		currentVersionLabel() {
-			if (this.version) return this.formatVersionLabel(this.version)
-			return this.t.latest
 		},
 		versionOptions() {
 			if (!this.versions || !this.versions.length) return []
@@ -792,7 +791,7 @@ export default {
 			if (this.$refs.densityDropdown && !path.includes(this.$refs.densityDropdown)) {
 				this.densityOpen = false
 			}
-			if (this.searchExpanded && this.$refs.searchArea && !path.includes(this.$refs.searchArea)) {
+			if (this.searchExpanded && this.$refs.searchArea && !path.includes(this.$refs.searchArea) && !this.eventTargetsStarToggle(path)) {
 				this.closeSearch()
 			}
 			if (!path.includes(this.$el)) {
@@ -1040,6 +1039,13 @@ export default {
 		closeSearch() {
 			this.searchExpanded = false
 			this.$emit('update:searchQuery', '')
+		},
+		eventTargetsStarToggle(path) {
+			return path.some(node => {
+				const classList = node?.classList
+				if (!classList) return false
+				return classList.contains('fav-button') || classList.contains('btn-fav-container')
+			})
 		}
 	}
 }
@@ -1140,6 +1146,17 @@ export default {
 			color: #666
 		.filter-dropdown-area
 			position: relative
+			> .toolbar-btn:not(.icon-only)
+				border: 1px solid #ddd
+				border-radius: 6px
+				padding: 0 10px
+				height: 32px
+				justify-content: center
+				gap: 6px
+				background: #fff
+				&:hover
+					border-color: #bbb
+					background: #f8f8f8
 		.filter-dropdown-menu
 			position: absolute
 			left: 0
@@ -1534,13 +1551,9 @@ export default {
 		.version-dropdown
 			position: relative
 			display: inline-block
-		.version-btn
-			font-weight: 600
-			.version-current
-				margin: 0 4px
 		.version-menu
 			position: absolute
-			right: 0
+			inset-inline-end: 0
 			top: 100%
 			background: #fff
 			min-width: 180px
@@ -1666,6 +1679,8 @@ export default {
 				opacity: 1
 				transform: translateX(-50%) translateY(0)
 				transition: opacity 0.05s ease, transform 0.05s ease
+			&[aria-expanded="true"]::after
+				opacity: 0
 		&.disabled
 			opacity: 0.5
 			cursor: not-allowed
@@ -1801,18 +1816,25 @@ export default {
 			grid-template-columns: auto minmax(0, 1fr) auto
 			align-items: center
 			gap: 8px
+			padding: 0
 		.toolbar-left
 			flex: none
 			min-width: 0
+			grid-column: 1
+			align-self: center
 		.toolbar-center
 			flex: none
 			justify-content: center
 			min-width: 0
 			max-width: 100%
+			grid-column: 2
+			align-self: center
 		.toolbar-right
 			flex: none
 			min-width: 0
+			grid-column: 3
 			justify-self: end
+			align-self: center
 
 @media (max-width: 1024px)
 	.c-schedule-toolbar
@@ -1823,7 +1845,7 @@ export default {
 			align-items: center
 			height: auto
 			min-height: 40px
-			padding: 6px 8px
+			padding: 6px 0
 			gap: 6px
 			.toolbar-left
 				grid-area: left
@@ -2053,7 +2075,7 @@ export default {
 		.toolbar-btn.icon-only[aria-label]::after
 			display: none
 		.toolbar-row
-			padding: 6px
+			padding: 6px 0
 			.toolbar-center
 				.day-btn
 					font-size: 13px
@@ -2095,6 +2117,26 @@ export default {
 				stroke: currentColor
 				color: inherit
 				fill: none
+
+@media (min-width: 1025px)
+	.c-schedule-toolbar .toolbar-right
+		.toolbar-right-quick,
+		.toolbar-secondary
+			display: contents
+		.search-area
+			order: 10
+		.timezone-area
+			order: 20
+		.version-area
+			order: 30
+		.print-btn
+			order: 40
+		.exporter-area
+			order: 50
+		.density-area
+			order: 60
+		.fullscreen-desktop
+			order: 70
 
 @media print
 	.c-schedule-toolbar

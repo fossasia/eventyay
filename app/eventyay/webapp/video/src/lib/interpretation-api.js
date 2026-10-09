@@ -1,3 +1,5 @@
+import api from 'lib/api'
+
 export function apiErrorDetail(data) {
 	const detail = data?.detail
 	if (typeof detail === 'string') return detail
@@ -33,15 +35,10 @@ export function interpretationApiUrl(store, roomId, suffix = 'config/') {
 
 export async function interpretationAuthHeaders(json = false) {
 	let authHeader = null
-	try {
-		const { default: api } = await import('lib/api')
-		if (api?._config?.token) {
-			authHeader = `Bearer ${api._config.token}`
-		} else if (api?._config?.clientId) {
-			authHeader = `Client ${api._config.clientId}`
-		}
-	} catch (e) {
-		// Ignore if running outside browser/vite environment
+	if (api?._config?.token) {
+		authHeader = `Bearer ${api._config.token}`
+	} else if (api?._config?.clientId) {
+		authHeader = `Client ${api._config.clientId}`
 	}
 	const headers = { Accept: 'application/json' }
 	if (json) headers['Content-Type'] = 'application/json'

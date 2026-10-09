@@ -924,12 +924,21 @@ def build_public_starred_schedule_json(request: HttpRequest, starred_codes: Iter
     return serialize_widget_schedule_data(data, event=request.event)
 
 
-def build_schedule_json(request: HttpRequest, schedule=None) -> str:
-    """Build non-enriched schedule JSON for inline embedding on all schedule pages.
+def build_schedule_json(
+    request: HttpRequest,
+    schedule=None,
+    *,
+    compact: bool = True,
+    include_text: bool = False,
+    on_date=None,
+    view_timezone: str | None = None,
+) -> str:
+    """Build schedule JSON for inline embedding on schedule pages.
 
-    Covers WIP and released schedules.  Released schedules are cached for 5 minutes
-    keyed on schedule PK; WIP is never cached.  Callers that view a specific version
-    should pass that ``schedule`` object directly.
+    The interactive schedule embeds one compact day (no abstracts, descriptions,
+    biographies, exporter URLs, or full-size avatars). List view asks for session
+    text because those pages render abstracts. Released schedules are cached for
+    5 minutes keyed on schedule PK; WIP is never cached.
     """
     if schedule is None:
         schedule = request.event.current_schedule
@@ -938,18 +947,30 @@ def build_schedule_json(request: HttpRequest, schedule=None) -> str:
 
     featured = include_public_featured_speaker_metadata(request.user, request.event)
     settings_part = schedule_widget_featured_cache_key_part(request.event)
+    language = get_language() or ''
     if schedule.version:
-        cache_key = f'eagenda:schedule:{schedule.pk}:{int(featured)}:{settings_part}'
+        cache_key = (
+            f'eagenda:schedule:{schedule.pk}:{int(featured)}:{settings_part}:'
+            f'compact={int(compact)}:text={int(include_text)}:'
+            f'date={on_date or ""}:tz={view_timezone or ""}:{language}'
+        )
         cached = cache.get(cache_key)
         if cached is not None:
             return cached
 
-    result = _serialize_schedule_build_data(
-        schedule,
-        all_talks=not bool(schedule.version),
-        enrich=False,
-        include_featured_speaker_metadata=featured,
-    )
+    build_kwargs = {
+        'all_talks': not bool(schedule.version),
+        'enrich': False,
+        'include_featured_speaker_metadata': featured,
+    }
+    if compact:
+        build_kwargs.update(
+            compact=True,
+            include_text=include_text,
+            on_date=on_date,
+            view_timezone=view_timezone,
+        )
+    result = _serialize_schedule_build_data(schedule, **build_kwargs)
 
     if schedule.version:
         cache.set(cache_key, result, CACHE_TTL)
@@ -1642,7 +1663,7 @@ def get_schedule_exporters(request, public=False):
     ]
 
 
-def build_public_schedule_exporters(event, version=None):
+def build_public_schedule_exporters(event, version=None, include_qrcode=True):
     """Build serialized exporter metadata for public schedule pages.
 
     Returns a list of dicts suitable for JSON serialization, each with
@@ -1650,9 +1671,12 @@ def build_public_schedule_exporters(event, version=None):
     Used by both the agenda view and the video SPA to ensure identical
     exporter lists in both UIs.  Result is cached for 5 minutes per
     (event.pk, version, active language) to avoid firing Django signals on every request.
+
+    The video shell passes include_qrcode=False. QR drawings are about 10KB
+    each and are only needed after the schedule export menu opens.
     """
     language = get_language() or ''
-    cache_key = f'eagenda:exporters:{event.pk}:{version or ""}:{language}'
+    cache_key = f'eagenda:exporters:{event.pk}:{version or ""}:{language}:{int(bool(include_qrcode))}'
     cached = cache.get(cache_key)
     if cached is not None:
         return cached
@@ -1705,7 +1729,11 @@ def build_public_schedule_exporters(event, version=None):
                 'verbose_name': force_str(exporter.verbose_name),
                 'icon': getattr(exporter, 'icon', ''),
                 'export_url': url,
-                'qrcode_svg': str(exporter.get_qrcode()) if getattr(exporter, 'show_qrcode', False) else '',
+                'qrcode_svg': (
+                    str(exporter.get_qrcode())
+                    if include_qrcode and getattr(exporter, 'show_qrcode', False)
+                    else ''
+                ),
             }
         )
     cache.set(cache_key, result, CACHE_TTL)

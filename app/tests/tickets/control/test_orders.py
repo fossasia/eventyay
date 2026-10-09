@@ -216,6 +216,43 @@ def test_order_list(client, env):
 
 
 @pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_order_overview_links_filter_order_list_by_product(client, env):
+    with scope(organizer=env[0].organizer, event=env[0]):
+        workshop = Item.objects.create(
+            event=env[0],
+            name='Workshop',
+            category=None,
+            default_price=10,
+            admission=False,
+        )
+        shirt = Item.objects.create(
+            event=env[0],
+            name='Shirt',
+            category=None,
+            default_price=15,
+            admission=False,
+        )
+        size = shirt.variations.create(value='M')
+    client.login(email='dummy@dummy.dummy', password='dummy')
+
+    response = client.get('/control/event/dummy/dummy/orders/overview/')
+    assert response.status_code == 200
+    hrefs = {a['href'] for a in BeautifulSoup(response.content.decode(), 'lxml').find_all('a', href=True)}
+    listurl = '/control/event/dummy/dummy/orders/'
+    ticket_link = f'{listurl}?product={env[3].pk}&status=np&provider='
+    workshop_link = f'{listurl}?product={workshop.pk}&status=np&provider='
+    assert ticket_link in hrefs
+    assert workshop_link in hrefs
+    assert f'{listurl}?product={shirt.pk}-{size.pk}&status=np&provider=' in hrefs
+    assert not any('?item=' in href for href in hrefs)
+
+    # Following a product's count opens the order list filtered to that product
+    assert 'FOO' in client.get(ticket_link).content.decode()
+    assert 'FOO' not in client.get(workshop_link).content.decode()
+
+
+@pytest.mark.django_db
 def test_orders_advanced_filter_helpers():
     from django.http import QueryDict
 
