@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.db.models import F, Max, Min, Prefetch
+from django.db.models import Count, F, Max, Min, Prefetch
 from django.db.models.functions import Coalesce, Greatest
 from django.http import JsonResponse
 from django.utils.crypto import get_random_string
@@ -7,7 +7,9 @@ from django.utils.functional import cached_property
 from django.views import View
 from django.views.generic import ListView
 
-from eventyay.base.models import Event, EventMetaValue, Organizer, Quota
+from eventyay.base.models import Event, EventMetaValue, Organizer, Quota, Submission
+from eventyay.base.models.submission import SpeakerRole
+from django_scopes import scope
 from eventyay.base.services.quotas import QuotaAvailability
 from eventyay.control.forms.filter import EventFilterForm
 from eventyay.control.permissions import OrganizerPermissionRequiredMixin
@@ -83,6 +85,10 @@ class EventList(PaginationMixin, ListView):
                     100,
                     round(q.cached_availability_paid_orders / q.size * 100) if q.size > 0 else 100,
                 )
+                
+        from eventyay.base.services.stats import attach_dashboard_stats
+        ctx['events'] = attach_dashboard_stats(ctx['events'])
+
         return ctx
 
     @cached_property
