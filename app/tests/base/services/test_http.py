@@ -1,7 +1,9 @@
-
+import socket
+import time
 from unittest.mock import patch
 
 import pytest
+import requests
 
 from eventyay.base.services import http
 
@@ -69,3 +71,34 @@ def test_head_does_not_follow_redirects_by_default(mock_request):
 def test_head_redirect_default_can_be_overridden(mock_request):
     http.head('https://example.com', allow_redirects=True)
     assert mock_request.call_args.kwargs['allow_redirects'] is True
+
+
+@pytest.fixture
+def stalled_server(monkeypatch):
+    """A local server that accepts connections but never sends a response."""
+    monkeypatch.setenv('NO_PROXY', '127.0.0.1')
+    monkeypatch.setenv('no_proxy', '127.0.0.1')
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind(('127.0.0.1', 0))
+    server.listen(1)
+    try:
+        yield f'http://127.0.0.1:{server.getsockname()[1]}/'
+    finally:
+        server.close()
+
+
+def test_stalled_endpoint_raises_timeout_with_explicit_override(stalled_server):
+    """A silent endpoint must raise a timeout instead of blocking forever."""
+    start = time.monotonic()
+    with pytest.raises(requests.exceptions.Timeout):
+        http.get(stalled_server, timeout=(1, 0.5))
+    assert time.monotonic() - start < 5
+
+
+def test_stalled_endpoint_raises_timeout_with_default(stalled_server, monkeypatch):
+    """The default timeout alone (no caller override) must also bound a stalled call."""
+    monkeypatch.setattr(http, 'DEFAULT_TIMEOUT', (1, 0.5))
+    start = time.monotonic()
+    with pytest.raises(requests.exceptions.Timeout):
+        http.post(stalled_server, json={'ping': 'pong'})
+    assert time.monotonic() - start < 5
