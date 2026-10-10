@@ -2,6 +2,7 @@ import pytest
 from io import BytesIO
 from PIL import Image
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.urls import reverse
 from django.utils.datastructures import MultiValueDict
 from django_scopes import scope
 from eventyay.submission.forms.submission import InfoForm
@@ -14,6 +15,13 @@ def _create_test_image(color="red", format="PNG", width=100, height=100):
     img.save(buf, format=format)
     buf.seek(0)
     return SimpleUploadedFile(f"test.{format.lower()}", buf.read(), content_type=f"image/{format.lower()}")
+
+
+def _create_truncated_jpeg(name='broken.jpg'):
+    # Pillow can open the header, but optimizing the image fails with OSError.
+    buf = BytesIO()
+    Image.effect_noise((400, 400), 64).convert('RGB').save(buf, format='JPEG')
+    return SimpleUploadedFile(name, buf.getvalue()[:4000], content_type='image/jpeg')
 
 
 def _create_test_svg():
@@ -143,3 +151,52 @@ def test_speaker_profile_form_clean_avatar_without_new_upload(user, event):
         cleaned_avatar = form.cleaned_data.get('avatar')
         
         assert cleaned_avatar == profile.avatar
+
+
+@pytest.mark.django_db
+def test_info_form_clean_image_that_cannot_be_processed(event):
+    with scope(event=event):
+        form = InfoForm(
+            event=event,
+            data={'title': 'Test submission', 'abstract': 'Test abstract', 'content_locale': 'en'},
+            files=MultiValueDict({'image': [_create_truncated_jpeg()]}),
+        )
+
+        assert not form.is_valid()
+        assert form.errors['image'] == ['Failed to process image.']
+
+
+@pytest.mark.django_db
+def test_speaker_profile_form_clean_avatar_that_cannot_be_processed(user, event):
+    with scope(event=event):
+        profile, _ = SpeakerProfile.objects.get_or_create(user=user, event=event)
+        form = SpeakerProfileForm(
+            user=user,
+            event=event,
+            instance=profile,
+            data={'name': 'Test User', 'email': user.email},
+            files=MultiValueDict({'avatar': [_create_truncated_jpeg()]}),
+        )
+
+        assert not form.is_valid()
+        assert form.errors['avatar'] == ['Failed to process image.']
+
+
+@pytest.mark.django_db
+def test_user_account_profile_picture_that_cannot_be_processed(client, user):
+    client.force_login(user)
+
+    response = client.post(
+        reverse('eventyay_common:account.general'),
+        {
+            'fullname': 'Profile Picture User',
+            'locale': 'en',
+            'timezone': 'UTC',
+            'profile_picture': _create_truncated_jpeg(),
+        },
+    )
+
+    assert response.status_code == 200
+    assert 'Failed to process image.' in response.content.decode()
+    user.refresh_from_db()
+    assert not user.profile_picture
