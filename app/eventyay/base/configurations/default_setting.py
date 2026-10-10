@@ -2330,7 +2330,7 @@ Your {event} team"""
             widget=I18nTextarea,
             widget_kwargs={'attrs': {'rows': '2'}},
             help_text=_(
-                'Not displayed anywhere by default, but if you want to, you can use this e.g. in ticket templates.'
+                'Used in ticket templates.'
             ),
         ),
     },
@@ -2449,7 +2449,7 @@ Your {event} team"""
             label=_('Info text'),
             widget=I18nTextarea,
             help_text=_(
-                'Not displayed anywhere by default, but if you want to, you can use this e.g. in ticket templates.'
+                'Used in ticket templates.'
             ),
         ),
     },
