@@ -15,30 +15,46 @@
         <div class="tabbed-form">
             <fieldset id="tab-payment-gateways">
                 <legend>{% translate "Payment Gateways" %}</legend>
+                {% if 'payment_stripe_connect_client_id' in form.fields or 'payment_stripe_connect_publishable_key' in form.fields or 'payment_stripe_connect_secret_key' in form.fields or 'payment_stripe_connect_test_publishable_key' in form.fields or 'payment_stripe_connect_test_secret_key' in form.fields %}
                 <fieldset class="payment-gateway-section">
                     <legend>{% translate "Stripe — Ticket Payments" %}</legend>
                     <p class="help-block">
                         {% translate "This configuration is used for ticket payments via the Stripe plugin." %}
                     </p>
 
+                    {% if 'payment_stripe_connect_client_id' in form.fields %}
                     <div class="payment-subsection">
                         <h4>{% translate "Client Configuration" %}</h4>
                         {% bootstrap_field form.payment_stripe_connect_client_id layout='control' %}
                     </div>
+                    {% endif %}
 
+                    {% if 'payment_stripe_connect_publishable_key' in form.fields or 'payment_stripe_connect_secret_key' in form.fields %}
                     <div class="payment-subsection">
                         <h4>{% translate "Live Credentials" %}</h4>
+                        {% if 'payment_stripe_connect_publishable_key' in form.fields %}
                         {% bootstrap_field form.payment_stripe_connect_publishable_key layout='control' %}
+                        {% endif %}
+                        {% if 'payment_stripe_connect_secret_key' in form.fields %}
                         {% bootstrap_field form.payment_stripe_connect_secret_key layout='control' %}
+                        {% endif %}
                     </div>
+                    {% endif %}
 
+                    {% if 'payment_stripe_connect_test_publishable_key' in form.fields or 'payment_stripe_connect_test_secret_key' in form.fields %}
                     <div class="payment-subsection">
                         <h4>{% translate "Test Credentials" %}</h4>
+                        {% if 'payment_stripe_connect_test_publishable_key' in form.fields %}
                         {% bootstrap_field form.payment_stripe_connect_test_publishable_key layout='control' %}
+                        {% endif %}
+                        {% if 'payment_stripe_connect_test_secret_key' in form.fields %}
                         {% bootstrap_field form.payment_stripe_connect_test_secret_key layout='control' %}
+                        {% endif %}
                     </div>
+                    {% endif %}
 
                 </fieldset>
+                {% endif %}
 
                 <fieldset class="payment-gateway-section">
                     <legend>{% translate "PayPal — Ticket Payments" %}</legend>
