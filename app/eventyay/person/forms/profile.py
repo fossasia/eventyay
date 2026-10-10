@@ -1,4 +1,5 @@
 from functools import partial
+import datetime as dt
 import logging
 import os
 
@@ -10,7 +11,9 @@ from django.contrib.auth.hashers import check_password
 from django.core.exceptions import ValidationError
 from django.db.models import Count, Q
 from django.db.models.functions import Trim
+from django.utils.crypto import get_random_string
 from django.utils.functional import cached_property
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_scopes.forms import SafeModelChoiceField, SafeModelMultipleChoiceField
 from i18nfield.forms import I18nModelForm
@@ -109,6 +112,11 @@ class SpeakerProfileForm(
         self.event = kwargs.pop('event', None)
         self.with_email = kwargs.pop('with_email', True)
         self.essential_only = kwargs.pop('essential_only', False)
+        # Orga Speakers → Add speaker only. Never enable on public/CFP forms.
+        self.allow_no_email = kwargs.pop('allow_no_email', False)
+        if self.allow_no_email and self.user and self.user.email:
+            self.allow_no_email = False
+        self.ignore_first_time_exclude = kwargs.pop('ignore_first_time_exclude', False)
         self.enforce_account_name_match = enforce_account_name_match
         kwargs['instance'] = None
         if self.user:
@@ -158,9 +166,19 @@ class SpeakerProfileForm(
 
         for field_name in ('fullname', 'email'):
             if field_name in self.fields:
-                self.fields[field_name].required = not self.not_strict
+                is_req = not self.not_strict
+                # Only honour no_email when the orga create form explicitly enables it.
+                # Never trust a bare POST flag on public/CFP forms.
+                if (
+                    field_name == 'email'
+                    and self.allow_no_email
+                    and self.is_bound
+                    and self.data.get(self.add_prefix('no_email'))
+                ):
+                    is_req = False
+                self.fields[field_name].required = is_req
                 if hasattr(self.fields[field_name].widget, 'is_required'):
-                    self.fields[field_name].widget.is_required = not self.not_strict
+                    self.fields[field_name].widget.is_required = is_req
 
         cfp_defaults = default_fields()
         _cfp = getattr(self.event, 'cfp', None) if hasattr(self.event, 'cfp') else None
@@ -240,6 +258,18 @@ class SpeakerProfileForm(
         # Reorder fields based on configuration
         self.order_fields_by_config('speaker')
 
+        # Orga Speakers create only: keep this off public/CFP forms that iterate `{% for field in form %}`.
+        if self.allow_no_email and 'email' in self.fields:
+            self.fields['no_email'] = forms.BooleanField(
+                label=_('This speaker does not require an email'),
+                help_text=_('No account or invitation email will be created for this speaker.'),
+                required=False,
+            )
+            field_order = list(self.fields.keys())
+            field_order.remove('no_email')
+            field_order.insert(field_order.index('email') + 1, 'no_email')
+            self.order_fields(field_order)
+
         if self.is_bound and not self.is_valid() and 'availabilities' in self.errors:
             # Replace self.data with a version that uses initial["availabilities"]
             # in order to have event and timezone data available
@@ -254,16 +284,48 @@ class SpeakerProfileForm(
         return [
             field
             for field in self.USER_FIELDS
-            if field not in self.FIRST_TIME_EXCLUDE and (field != 'email' or self.with_email)
+            if (self.ignore_first_time_exclude or field not in self.FIRST_TIME_EXCLUDE)
+            and (field != 'email' or self.with_email)
         ]
 
     def clean_email(self):
+        # email is declared before no_email, so clean_email runs before no_email
+        # lands in cleaned_data. Read the submitted checkbox from data instead.
+        if self.allow_no_email:
+            no_email = self.data.get(self.add_prefix('no_email')) if self.is_bound else None
+            if no_email or self.cleaned_data.get('no_email'):
+                return None
+        if not self.with_email:
+            return None
         email = self.cleaned_data.get('email')
+        if not email:
+            return None
         qs = User.objects.all()
         if self.user:
             qs = qs.exclude(pk=self.user.pk)
-        if qs.filter(email__iexact=email):
-            raise ValidationError(get_email_address_error())
+        existing_user = qs.filter(email__iexact=email).first()
+        if existing_user:
+            if self.user:
+                raise ValidationError(get_email_address_error())
+            # Create path: only reuse users already associated with this event.
+            is_associated = (
+                existing_user.profiles.filter(event=self.event).exists()
+                or existing_user.submissions.filter(event=self.event).exists()
+                or existing_user.teams.filter(
+                    Q(organizer=self.event.organizer)
+                    & (Q(all_events=True) | Q(limit_events=self.event))
+                ).exists()
+            )
+            if not is_associated:
+                raise ValidationError(
+                    _(
+                        'A user with this email address exists but is not associated with this event. '
+                        'For privacy reasons, you cannot directly add them. Please ask them to submit '
+                        'a proposal or register first.'
+                    )
+                )
+            if existing_user.profiles.filter(event=self.event).exists():
+                raise ValidationError(get_email_address_error())
         return email
 
     def clean_avatar(self):
@@ -290,6 +352,16 @@ class SpeakerProfileForm(
 
     def clean(self):
         data = super().clean()
+        if (
+            self.allow_no_email
+            and not data.get('no_email')
+            and not data.get('email')
+            and not getattr(self, 'not_strict', False)
+            and 'email' in self.fields
+            and not self.errors.get('email')
+        ):
+            self.add_error('email', forms.ValidationError(_('This field is required.')))
+
         _cfp = getattr(self.event, 'cfp', None) if hasattr(self.event, 'cfp') else None
         if not getattr(self, 'not_strict', False) and _cfp and _cfp.require_avatar and not data.get('avatar') and not data.get('get_gravatar'):
             if _cfp.enable_gravatar:
@@ -318,6 +390,35 @@ class SpeakerProfileForm(
         return data
 
     def save(self, **kwargs):
+        self._user_was_preexisting = False
+        if not self.user:
+            email = self.cleaned_data.get('email')
+            existing_user = User.objects.filter(email__iexact=email).first() if email else None
+            if existing_user:
+                self.user = existing_user
+                self._user_was_preexisting = True
+            else:
+                self.user = User(
+                    email=email,
+                    locale=self.event.locale,
+                    timezone=self.event.timezone,
+                )
+                if email:
+                    self.user.pw_reset_token = get_random_string(32)
+                    self.user.pw_reset_time = now() + dt.timedelta(days=60)
+                self.user.save()
+
+        if self._user_was_preexisting:
+            # Organizers may attach a SpeakerProfile, not mutate another account.
+            self.instance.event = self.event
+            self.instance.user = self.user
+            self.speaker = self.user
+            result = super().save(**kwargs)
+            for key, value in self.cleaned_data.items():
+                if key.startswith('question_'):
+                    self.save_questions(key, value)
+            return result
+
         avatar_changed = 'avatar' in self.changed_data
         old_thumbnails_to_delete = []
         if avatar_changed:
@@ -355,6 +456,7 @@ class SpeakerProfileForm(
 
         self.instance.event = self.event
         self.instance.user = self.user
+        self.speaker = self.user
         result = super().save(**kwargs)
 
         if avatar_changed:

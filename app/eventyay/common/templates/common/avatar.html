@@ -29,22 +29,30 @@
                     {% endif %}
                 {% endif %}
             </div>
-            {% with gravatar_url="https://www.gravatar.com/avatar/"|add:user.gravatar_parameter|add:"?s=140&d=identicon" %}
-            <div class="form-image-preview {% if not user.avatar_url %}{% if not user.get_gravatar or not request.event.cfp.enable_gravatar %}d-none{% endif %}{% endif %}">
-                <a href="{% if user.avatar_url %}{{ user.avatar_url }}{% elif user.get_gravatar and request.event.cfp.enable_gravatar %}{{ gravatar_url }}{% endif %}"
-                   data-lightbox="{% if user.avatar_url %}{{ user.avatar_url }}{% elif user.get_gravatar and request.event.cfp.enable_gravatar %}{{ gravatar_url }}{% endif %}">
+            {% if user %}
+                {% with gravatar_url="https://www.gravatar.com/avatar/"|add:user.gravatar_parameter|add:"?s=140&d=identicon" %}
+                <div class="form-image-preview {% if not user.avatar_url %}{% if not user.get_gravatar or not request.event.cfp.enable_gravatar %}d-none{% endif %}{% endif %}">
+                    <a href="{% if user.avatar_url %}{{ user.avatar_url }}{% elif user.get_gravatar and request.event.cfp.enable_gravatar %}{{ gravatar_url }}{% endif %}"
+                       data-lightbox="{% if user.avatar_url %}{{ user.avatar_url }}{% elif user.get_gravatar and request.event.cfp.enable_gravatar %}{{ gravatar_url }}{% endif %}">
 
-                    <img loading="lazy"
-                         class="avatar"
-                         data-gravatar="{{ user.gravatar_parameter }}"
-                         data-avatar="{% if user.avatar_url %}{{ user.avatar_url }}{% endif %}"
-                         alt="{% translate "Your avatar" %}"
-                         {% if user.avatar_url %}src="{{ user.avatar_url }}"
-                         {% elif user.get_gravatar and request.event.cfp.enable_gravatar %}src="{{ gravatar_url }}"{% endif %} />
+                        <img loading="lazy"
+                             class="avatar"
+                             data-gravatar="{{ user.gravatar_parameter }}"
+                             data-avatar="{% if user.avatar_url %}{{ user.avatar_url }}{% endif %}"
+                             alt="{% translate "Your avatar" %}"
+                             {% if user.avatar_url %}src="{{ user.avatar_url }}"
+                             {% elif user.get_gravatar and request.event.cfp.enable_gravatar %}src="{{ gravatar_url }}"{% endif %} />
 
-                </a>
-            </div>
-            {% endwith %}
+                    </a>
+                </div>
+                {% endwith %}
+            {% else %}
+                <div class="form-image-preview d-none">
+                    <a href="" data-lightbox="">
+                        <img loading="lazy" class="avatar" data-gravatar="" data-avatar="" alt="{% translate "Your avatar" %}" />
+                    </a>
+                </div>
+            {% endif %}
         </div>
     </div>
 </div>

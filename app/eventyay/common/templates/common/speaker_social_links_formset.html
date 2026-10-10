@@ -12,8 +12,9 @@
         {% if form.social_links.help_text %}
             <div class="form-text text-muted mb-2">{{ form.social_links.help_text }}</div>
         {% endif %}
-        <div id="social-links-formset"
+        <div {% if not omit_formset_id %}id="social-links-formset"{% endif %}
              class="partner-link-formset formset"
+             data-social-link-formset
              data-formset
              data-formset-prefix="{{ social_media_formset.prefix }}"
              data-social-link-prefixes='{{ social_link_prefixes|escapejson_dumps }}'>
@@ -48,8 +49,7 @@
                     </div>
                 {% endfor %}
             </div>
-            <script type="form-template" data-formset-empty-form>
-                {% escapescript %}
+            <template data-formset-empty-form>
                     <div class="row partner-link-row mb-2" data-formset-form data-social-link-row>
                         <div class="sr-only">{{ social_media_formset.empty_form.DELETE }}</div>
                         <div class="col-md-3">
@@ -69,8 +69,7 @@
                             </button>
                         </div>
                     </div>
-                {% endescapescript %}
-            </script>
+            </template>
             <p class="mt-2 mb-0">
                 <button type="button" class="btn btn-sm btn-info" data-formset-add>
                     <i class="fa fa-plus" aria-hidden="true"></i> {% translate "Add social media link" %}
