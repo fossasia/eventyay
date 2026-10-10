@@ -175,7 +175,10 @@ class NanoCDNStorage(Storage):
     def size(self, name):
         resp = http.head(urllib.parse.urljoin(self.base_url, name))
         _raise_cdn_status(resp, 'head')
-        return int(resp.headers["Content-Length"])
+        try:
+            return int(resp.headers["Content-Length"])
+        except (KeyError, ValueError) as e:
+            raise OSError(f"CDN returned no valid Content-Length for {name!r}") from e
 
     def url(self, name):
         return urllib.parse.urljoin(settings.MEDIA_URL, name)
