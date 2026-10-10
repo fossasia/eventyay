@@ -70,6 +70,8 @@ div.c-linear-schedule-session.is-shift-session(
 		:details="confirmDetails",
 		:confirm-label="confirmLabel",
 		:confirm-class="confirmButtonClass",
+		:email-label="confirmEmailLabel",
+		v-model:send-email="sendEmail",
 		:error="confirmError",
 		:busy="claimBusy",
 		@confirm="confirmRoleAction",
@@ -89,6 +91,8 @@ import {
 	getCurrentUserId,
 	getCurrentUserName,
 	getShiftTrackColor,
+	getShiftActionEmails,
+	setShiftActionEmails,
 	claimUrl,
 	withdrawUrl,
 } from './index'
@@ -149,6 +153,7 @@ export default {
 			confirmAction: null,
 			confirmRole: null,
 			confirmError: '',
+			sendEmail: true,
 			openAssigneesRoleId: null,
 			assigneesPopoverList: [],
 			assigneesPopoverTitle: 'Assigned',
@@ -282,6 +287,11 @@ export default {
 		confirmButtonClass () {
 			return this.confirmAction === 'drop' ? 'btn-danger' : 'btn-primary'
 		},
+		confirmEmailLabel () {
+			return this.confirmAction === 'drop'
+				? this.$t('Email me a confirmation of this drop')
+				: this.$t('Email me a confirmation of this sign-up')
+		},
 		confirmDetails () {
 			const role = this.confirmRole
 			if (!role) return []
@@ -367,7 +377,7 @@ export default {
 					method: 'POST',
 					headers,
 					credentials: 'same-origin',
-					body: JSON.stringify({ role_id: role.id }),
+					body: JSON.stringify({ role_id: role.id, send_email: this.sendEmail }),
 				})
 				const data = await response.json().catch(() => ({}))
 				if (!response.ok) {
@@ -375,6 +385,7 @@ export default {
 					this.confirmError = data.error || this.$t('Could not update this shift.')
 					return
 				}
+				setShiftActionEmails(this.scheduleData, data.shift_action_emails ?? this.sendEmail)
 				if (Array.isArray(data.roles)) {
 					this.session.roles.splice(0, this.session.roles.length, ...data.roles)
 				} else {
@@ -393,6 +404,7 @@ export default {
 			this.confirmAction = action
 			this.confirmRole = role
 			this.confirmError = ''
+			this.sendEmail = getShiftActionEmails(this.scheduleData)
 			this.$nextTick(() => this.$refs.shiftConfirm?.show())
 		},
 		closeConfirm () {

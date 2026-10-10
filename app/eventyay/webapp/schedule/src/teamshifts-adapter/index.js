@@ -120,6 +120,21 @@ export function getCurrentUserName (scheduleData) {
 	return data?.schedule?.current_user_name || data?.current_user_name || ''
 }
 
+/**
+ * Whether the volunteer wants a confirmation email when they claim or drop a shift.
+ * Defaults to true when the backend does not send a saved choice.
+ */
+export function getShiftActionEmails (scheduleData) {
+	const data = scheduleData?.value ?? scheduleData
+	return (data?.schedule?.shift_action_emails ?? data?.shift_action_emails) !== false
+}
+
+export function setShiftActionEmails (scheduleData, value) {
+	const data = scheduleData?.value ?? scheduleData
+	const target = data?.schedule ?? data
+	if (target) target.shift_action_emails = Boolean(value)
+}
+
 export function getShiftId (session) {
 	if (session?.talkId != null) return session.talkId
 	const raw = session?.id
