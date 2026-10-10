@@ -71,6 +71,12 @@
                         </td>
                         <td class="numeric">{{ mail.sent }}</td>
                     </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-muted">
+                            {% translate "No sent emails found." %}
+                        </td>
+                    </tr>
                 {% endfor %}
             </tbody>
         </table>

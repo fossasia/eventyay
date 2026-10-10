@@ -1,9 +1,9 @@
 import datetime
-
-import pytest
 from unittest.mock import patch
 
+import pytest
 from django.db import transaction
+from django.test import override_settings
 from django.urls import reverse
 from django_scopes import scopes_disabled
 
@@ -16,6 +16,7 @@ def class_monkeypatch(request, monkeypatch):
     request.cls.monkeypatch = monkeypatch
 
 
+@override_settings(SITE_URL='https://testserver')
 @pytest.mark.usefixtures('class_monkeypatch')
 class OrganizerTest(SoupTest):
     @scopes_disabled()
@@ -28,7 +29,7 @@ class OrganizerTest(SoupTest):
             organizer=self.orga1,
             name='30C3',
             slug='30c3',
-            date_from=datetime.datetime(2013, 12, 26, tzinfo=datetime.timezone.utc),
+            date_from=datetime.datetime(2013, 12, 26, tzinfo=datetime.UTC),
             plugins='eventyay.plugins.banktransfer,tests.tickets.testdummy',
         )
 
@@ -50,10 +51,20 @@ class OrganizerTest(SoupTest):
         self.assertIn('CCC', tabletext)
         self.assertNotIn('MRM', tabletext)
 
+    def test_organizer_list_empty_state(self):
+        doc = self.get_doc('/control/organizers/?query=nonexistentorg123')
+        tabletext = doc.select('#page-wrapper .table')[0].text
+        self.assertIn('No organizers found.', tabletext)
+
     def test_organizer_detail(self):
         doc = self.get_doc('/control/organizer/ccc/')
         tabletext = doc.select('#page-wrapper .table')[0].text
         self.assertIn('30C3', tabletext)
+
+    def test_organizer_detail_empty_state(self):
+        doc = self.get_doc('/control/organizer/ccc/?query=nonexistentevent123')
+        tabletext = doc.select('#page-wrapper .table')[0].text
+        self.assertIn('No events found.', tabletext)
 
     def test_organizer_detail_shows_clone_link_when_user_can_clone(self):
         clone_url = reverse(
@@ -106,7 +117,7 @@ class OrganizerTest(SoupTest):
     def test_organizer_detail_shows_clone_link_for_staff_session(self):
         with scopes_disabled():
             User.objects.create_user('staff@dummy.dummy', 'dummy', is_staff=True)
-            
+
         self.client.login(email='staff@dummy.dummy', password='dummy')
         clone_url = reverse(
             'eventyay_common:event.clone',
@@ -117,11 +128,12 @@ class OrganizerTest(SoupTest):
         self.assertIn(clone_url, doc.decode())
 
     def test_organizer_settings(self):
-        doc = self.get_doc('/control/organizer/%s/edit' % (self.orga1.slug,))
+        url = reverse('eventyay_common:organizer.edit', kwargs={'organizer': self.orga1.slug})
+        doc = self.get_doc(url)
         doc.select('[name=name]')[0]['value'] = 'CCC e.V.'
 
         doc = self.post_doc(
-            '/control/organizer/%s/edit' % (self.orga1.slug,),
+            url,
             extract_form_fields(doc.select('.container-fluid form')[0]),
         )
         assert len(doc.select('.alert-success')) > 0
@@ -136,14 +148,15 @@ class OrganizerTest(SoupTest):
             nonlocal called
             called = True
 
+        url = reverse('eventyay_common:organizer.edit', kwargs={'organizer': self.orga1.slug})
         self.monkeypatch.setattr('eventyay.presale.style.regenerate_organizer_css.apply_async', set_called)
         assert not self.orga1.settings.presale_css_checksum
-        doc = self.get_doc('/control/organizer/%s/edit' % (self.orga1.slug,))
+        doc = self.get_doc(url)
         doc.select('[name=settings-primary_color]')[0]['value'] = '#33c33c'
 
         with transaction.atomic():
             doc = self.post_doc(
-                '/control/organizer/%s/edit' % (self.orga1.slug,),
+                url,
                 extract_form_fields(doc.select('.container-fluid form')[0]),
             )
             assert len(doc.select('.alert-success')) > 0

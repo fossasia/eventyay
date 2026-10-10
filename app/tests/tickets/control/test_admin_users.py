@@ -3,13 +3,13 @@ import smtplib
 import time
 from unittest.mock import patch
 
+from allauth.account.models import EmailAddress
+from celery.exceptions import Retry
 from django import forms as django_forms
 from django.db.models import Exists, OuterRef
 from django.test import TestCase
 from django.urls import reverse
 
-from allauth.account.models import EmailAddress
-from celery.exceptions import Retry
 from eventyay.base.forms.auth import LoginForm
 from eventyay.base.models import User
 from eventyay.base.services.mail import SendMailException
@@ -94,10 +94,14 @@ class UserFilterFormTest(TestCase):
 
     def setUp(self):
         self.verified_user = _make_user('v@ex.com')
-        EmailAddress.objects.create(user=self.verified_user, email=self.verified_user.email, primary=True, verified=True)
+        EmailAddress.objects.create(
+            user=self.verified_user, email=self.verified_user.email, primary=True, verified=True
+        )
 
         self.unverified_user = _make_user('u@ex.com')
-        EmailAddress.objects.create(user=self.unverified_user, email=self.unverified_user.email, primary=True, verified=False)
+        EmailAddress.objects.create(
+            user=self.unverified_user, email=self.unverified_user.email, primary=True, verified=False
+        )
 
         self.spam_user = _make_user('sp@ex.com', is_spam=True)
         self.clean_user = _make_user('cl@ex.com', is_spam=False)
@@ -174,13 +178,33 @@ class AdminUserListViewTest(TestCase):
         self.assertIn('name="action" value="toggle_spam"', content)
         self.assertIn(f'name="user_id" value="{self.target_user.pk}"', content)
 
+    def test_empty_state_when_search_has_no_match(self):
+        self._login_as_admin()
+        with patch.object(self.admin.__class__, 'has_active_staff_session', return_value=True):
+            response = self.client.get(reverse('eventyay_admin:admin.users'), {'query': 'nonexistentuser123'})
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn('No users found.', content)
+        self.assertNotIn('target@example.com', content)
+
+    def test_users_present_when_search_matches(self):
+        self._login_as_admin()
+        with patch.object(self.admin.__class__, 'has_active_staff_session', return_value=True):
+            response = self.client.get(reverse('eventyay_admin:admin.users'), {'query': 'target@example.com'})
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertNotIn('No users found.', content)
+        self.assertIn('target@example.com', content)
+
 
 class UserToggleViewsTest(TestCase):
 
     def setUp(self):
         self.admin = _make_admin()
         self.target_user = _make_user('toggle@example.com')
-        self.email_address = EmailAddress.objects.create(user=self.target_user, email=self.target_user.email, primary=True, verified=False)
+        self.email_address = EmailAddress.objects.create(
+            user=self.target_user, email=self.target_user.email, primary=True, verified=False
+        )
 
     def _post_as_admin(self, action, user_id):
         self.client.force_login(self.admin)
@@ -287,7 +311,9 @@ class UserEmailActionsTest(TestCase):
     def setUp(self):
         self.admin = _make_admin()
         self.target_user = _make_user('emailtarget@example.com')
-        self.email_address = EmailAddress.objects.create(user=self.target_user, email=self.target_user.email, primary=True, verified=False)
+        self.email_address = EmailAddress.objects.create(
+            user=self.target_user, email=self.target_user.email, primary=True, verified=False
+        )
 
     def _post_as_admin(self, action, user_id):
         self.client.force_login(self.admin)
@@ -321,7 +347,10 @@ class UserEmailActionsTest(TestCase):
         self.assertEqual(data['status'], 'error')
         self.assertIn('has no email address', data['message'])
 
-    @patch('allauth.account.models.EmailAddress.send_confirmation', side_effect=smtplib.SMTPException('connection refused'))
+    @patch(
+        'allauth.account.models.EmailAddress.send_confirmation',
+        side_effect=smtplib.SMTPException('connection refused'),
+    )
     def test_resend_verification_mail_error(self, mock_send):
         with self.assertLogs('eventyay.control.views.users', level='ERROR') as logs:
             response = self._post_as_admin('resend_verification', self.target_user.pk)

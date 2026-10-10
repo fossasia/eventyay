@@ -199,6 +199,12 @@
                         </a>
                     </td>
                 </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="{% if not hide_orga %}8{% else %}7{% endif %}" class="text-muted">
+                        {% trans "No events found." %}
+                    </td>
+                </tr>
             {% endfor %}
             </tbody>
             </table>
