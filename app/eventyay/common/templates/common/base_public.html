@@ -17,7 +17,7 @@
 <html lang="{{ html_locale }}"{% if rtl %} dir="rtl" class="rtl"{% endif %}>
     <head>
         <meta charset="utf-8">
-        <title>{% block title %}{% endblock title %}{% if current_event %} {{ current_event.name|event_localize }}{% endif %} :: {{ site_name }}</title>
+        <title>{% block title %}{% endblock title %}{% if current_event %} {{ current_event.name|event_localize }}{% endif %} - {{ site_name }}</title>
         <meta name="title" content="{% block meta_title %}{% endblock meta_title %}{% if current_event %} - {{ current_event.name|event_localize }}{% endif %} {{ site_name }}">
         <meta name="description" content="{% block meta_description %}{% if current_event %}Schedule, talks and talk submissions for {{ current_event.name|event_localize }}{% else %}Talks and talk submissions by {{ site_name }} {% endif %}{% endblock %}">
         <meta name="application-name" content="{{ site_name }}">
