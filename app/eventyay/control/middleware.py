@@ -79,12 +79,17 @@ class PermissionMiddleware:
         if request.path.startswith(unwanted_path):
             next_url = reverse('eventyay_common:dashboard')
         else:
-            next_url = request.path
+            next_url = request.get_full_path()
         logger.info('URL to redirect to, after logging-in: %s', next_url)
         from django.contrib.auth.views import redirect_to_login
 
         logger.info('Redirect to login page: %s', resolved_login_url)
-        return redirect_to_login(next_url, resolved_login_url, REDIRECT_FIELD_NAME)
+        resp = redirect_to_login(next_url, resolved_login_url, REDIRECT_FIELD_NAME)
+        if 'iframe' in request.GET or 'iframe=1' in next_url:
+            if 'iframe=' not in resp.url:
+                resp.url += ('&' if '?' in resp.url else '?') + 'iframe=1'
+            resp.xframe_options_exempt = True
+        return resp
 
     def __call__(self, request: HttpRequest) -> HttpResponse:
         url = resolve(request.path_info)

@@ -25,7 +25,7 @@
   <div class='form-group buttons'>
     {% if backend.identifier == 'native' %}
       {% if can_reset %}
-        <a href='{% url "eventyay_common:auth.forgot" %}' class='btn btn-link btn-block'>
+        <a href='{% url "eventyay_common:auth.forgot" %}{% append_next request.GET.next %}' class='btn btn-link btn-block'>
           {% translate 'Lost password?' %}
         </a>
       {% endif %}

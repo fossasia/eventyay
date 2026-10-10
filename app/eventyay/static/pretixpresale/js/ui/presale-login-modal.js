@@ -1,11 +1,15 @@
 const modal = document.getElementById('checkout-login-modal');
 if (modal) {
     const i18n = modal.dataset;
-    const loginBtn = document.getElementById('checkout-login-btn');
+    const loginBtns = [
+        document.getElementById('checkout-login-btn'),
+        document.getElementById('presale-header-login-btn'),
+    ].filter(Boolean);
     const closeBtn = modal.querySelector('.checkout-login-close');
     const errorDiv = document.getElementById('checkout-login-error');
     const nextUrlInput = document.getElementById('checkout-next-url');
     let checkoutUrl = '';
+    let lastActiveLoginBtn = null;
 
     // Constants for SSO popup
     const POPUP_WIDTH = 600;
@@ -17,11 +21,13 @@ if (modal) {
     const REDIRECT_PARAM = 'next';
 
     // Open modal
-    if (loginBtn) {
-        loginBtn.addEventListener('click', (e) => {
+    loginBtns.forEach((btn) => {
+        btn.addEventListener('click', (e) => {
             e.preventDefault();
-            checkoutUrl = loginBtn.dataset.checkoutUrl || '';
+            lastActiveLoginBtn = btn;
+            checkoutUrl = btn.dataset.checkoutUrl || window.location.href;
             if (nextUrlInput) nextUrlInput.value = checkoutUrl;
+
 
             // Update SSO links with next URL
             const ssoLinks = modal.querySelectorAll('.checkout-sso-btn');
@@ -34,10 +40,12 @@ if (modal) {
                 link.href = url.toString();
             });
 
+            const isIframe = window.location.search.includes('iframe=1') || checkoutUrl.includes('iframe=1');
             const registerLink = document.getElementById('checkout-register-link');
             if (registerLink && checkoutUrl) {
                 const url = new URL(registerLink.href, window.location.origin);
                 url.searchParams.set(REDIRECT_PARAM, checkoutUrl);
+                if (isIframe) url.searchParams.set('iframe', '1');
                 registerLink.href = url.toString();
             }
 
@@ -45,6 +53,7 @@ if (modal) {
             if (forgotLink && checkoutUrl) {
                 const u = new URL(forgotLink.href, window.location.origin);
                 u.searchParams.set(REDIRECT_PARAM, checkoutUrl);
+                if (isIframe) u.searchParams.set('iframe', '1');
                 forgotLink.href = u.toString();
             }
 
@@ -67,7 +76,7 @@ if (modal) {
                 }
             }, 100);
         });
-    }
+    });
 
     // Centralized function to close modal and cleanup
     const closeModal = () => {
@@ -78,7 +87,7 @@ if (modal) {
             activeCheckLogin = null;
         }
         // Return focus to the button that opened the modal
-        loginBtn?.focus();
+        lastActiveLoginBtn?.focus();
     };
 
     // Close modal on close button click
@@ -134,28 +143,40 @@ if (modal) {
             if (errorDiv) errorDiv.style.display = 'none';
 
             const formData = new FormData(loginForm);
+            const loginUrl = new URL(loginForm.action, window.location.origin);
+            if (checkoutUrl) {
+                loginUrl.searchParams.set('next', checkoutUrl);
+            }
 
             try {
-                const response = await fetch(loginForm.action, {
+                const response = await fetch(loginUrl.toString(), {
                     method: 'POST',
                     body: formData,
-                    credentials: 'same-origin',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    redirect: 'manual'
+                    credentials: 'include',
+                    redirect: 'follow'
                 });
 
-                // Login endpoint returns 302 on success (redirect: 'manual' prevents auto-follow)
-                if (response.status === 302 || response.type === 'opaqueredirect') {
-                    window.location.href = checkoutUrl;
+                const isSuccess = response.redirected || (response.url && !response.url.includes('/login'));
+                if (isSuccess) {
+                    window.location.href = response.url || checkoutUrl;
                     return;
                 }
 
-                // 200 response from Django form means validation failed (invalid credentials)
                 if (response.ok) {
+                    let msg = i18n.msgInvalidCredentials ?? '';
+                    try {
+                        const html = await response.text();
+                        const doc = new DOMParser().parseFromString(html, 'text/html');
+                        const err = doc.querySelector('.alert-danger, .has-error .help-block');
+                        if (err && err.textContent.trim()) {
+                            msg = err.textContent.trim();
+                        }
+                    } catch (parseErr) {
+                        console.error('Failed to parse login response:', response.status, response.url, parseErr);
+                        msg = i18n.msgLoginFailed ?? i18n.msgServerError ?? '';
+                    }
                     if (errorDiv) {
-                        errorDiv.textContent = i18n.msgInvalidCredentials ?? '';
+                        errorDiv.textContent = msg;
                         errorDiv.style.display = 'block';
                     }
                 } 

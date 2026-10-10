@@ -6,6 +6,14 @@
 {% load eventurl %}
 {% block title %}{% trans "Registration details" %}{% endblock %}
 {% block content %}
+    {% if is_widget_iframe or 'iframe' in request.GET or request.session.iframe_session %}
+        <div class="order-widget-nav-bar">
+            <div class="order-widget-nav-title">
+                <i class="fa fa-ticket text-primary" aria-hidden="true"></i>
+                <span>{{ order.code }}</span>
+            </div>
+        </div>
+    {% endif %}
     <h2>
         {% blocktrans trimmed %}
             Your registration

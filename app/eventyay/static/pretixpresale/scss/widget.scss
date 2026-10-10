@@ -37,7 +37,6 @@ $widget-alert-danger-text: #a94442;
   h3 {
     font-size: $font-size-h3;
     font-weight: normal;
-    padding: 0 15px 10px;
     margin-bottom: 0;
     border-bottom: 2px solid #ccc;
   }
@@ -635,25 +634,60 @@ $widget-alert-danger-text: #a94442;
     position: fixed;
     left: 50%;
     width: 600px;
+    max-width: calc(100vw - 32px);
     margin-left: -300px;
     top: 100px;
-    background: white;
-    border-radius: 5px 5px 5px 5px;
-    -moz-border-radius: 5px 5px 5px 5px;
-    -webkit-border-radius: 5px 5px 5px 5px;
-    box-shadow: 0 4px 18px 0 rgba(0, 0, 0, 0.1), 0 6px 20px 0 rgba(0, 0, 0, 0.09);
-    -webkit-box-shadow: 0 4px 18px 0 rgba(0, 0, 0, 0.1), 0 6px 20px 0 rgba(0, 0, 0, 0.09);
-    -moz-box-shadow: 0 4px 18px 0 rgba(0, 0, 0, 0.1), 0 6px 20px 0 rgba(0, 0, 0, 0.09);
+    background: #ffffff;
+    color: #1e293b;
+    border-radius: 8px;
+    -moz-border-radius: 8px;
+    -webkit-border-radius: 8px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    -webkit-box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    -moz-box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
     box-sizing: border-box;
-    padding: 42px 20px 20px 20px;
+    padding: 44px 24px 24px 24px;
     text-align: center;
-    font-size: 20px;
+    font-size: 16px;
+    line-height: 1.5;
+
+    @media (max-width: 640px) {
+      left: 16px;
+      margin-left: 0;
+      width: calc(100vw - 32px);
+    }
+
+    p {
+      color: #1e293b;
+      margin: 0 0 16px 0;
+    }
 
     p:first-child {
       margin-top: 0;
+      color: #1e293b;
+      font-size: 17px;
+      font-weight: 500;
     }
     p:last-child {
       margin-bottom: 0;
+    }
+
+    button {
+      background-color: var(--color-primary, #{$btn-primary-bg});
+      color: #ffffff;
+      border: 1px solid var(--color-primary, #{$btn-primary-bg});
+      border-radius: 6px;
+      padding: 8px 24px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+
+      &:hover, &:focus {
+        background-color: color-mix(in srgb, var(--color-primary, #{$btn-primary-bg}) 90%, black);
+        border-color: color-mix(in srgb, var(--color-primary, #{$btn-primary-bg}) 90%, black);
+        color: #ffffff;
+      }
     }
   }
   .pretix-widget-alert-icon {
@@ -718,6 +752,33 @@ $widget-alert-danger-text: #a94442;
     padding: 10px;
   }
 
+  .pretix-widget-frame-back {
+    position: fixed;
+    left: 10%;
+    top: 10%;
+    width: 24px;
+    height: 24px;
+    background: $brand-primary;
+    margin: -12px 0 0 -12px;
+    border-radius: 12px;
+    -moz-border-radius: 12px;
+    -webkit-border-radius: 12px;
+    text-align: center;
+    z-index: 10;
+  }
+
+  .pretix-widget-frame-back a {
+    color: white;
+    font-weight: bold;
+    font-family: sans-serif;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+  }
+
   .pretix-widget-frame-close {
     position: fixed;
     right: 10%;
@@ -730,6 +791,7 @@ $widget-alert-danger-text: #a94442;
     -moz-border-radius: 12px;
     -webkit-border-radius: 12px;
     text-align: center;
+    z-index: 10;
   }
 
   .pretix-widget-frame-close a {
@@ -737,8 +799,11 @@ $widget-alert-danger-text: #a94442;
     font-weight: bold;
     font-family: sans-serif;
     text-decoration: none;
-    padding: 4px 0;
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
   }
 
   .pretix-widget-frame-inner iframe {
@@ -868,9 +933,15 @@ $widget-alert-danger-text: #a94442;
       margin-left: -540px;
       width: 1080px;
     }
+    .pretix-widget-frame-back {
+      left: 50%;
+      margin-left: -552px;
+      right: auto;
+    }
     .pretix-widget-frame-close {
       left: 50%;
       margin-left: 528px;
+      right: auto;
     }
   }
 }
@@ -890,9 +961,19 @@ $widget-alert-danger-text: #a94442;
     -moz-box-shadow: none;
     padding: 40px 0 0 0;
   }
+  .pretix-widget-frame-holder .pretix-widget-frame-back {
+    left: 20px;
+    top: 20px;
+    margin: -12px 0 0 0;
+    background: white;
+    svg path {
+      fill: $brand-primary;
+    }
+  }
   .pretix-widget-frame-holder .pretix-widget-frame-close {
     right: 20px;
     top: 20px;
+    margin: -12px 0 0 0;
     background: white;
     svg path {
       fill: $brand-primary;

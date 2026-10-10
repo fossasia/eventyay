@@ -721,6 +721,9 @@ var shared_iframe_fragment = (
     + '        :name="$root.parent.widget_id" src="about:blank" v-once>'
     + 'Please enable frames in your browser!'
     + '</iframe>'
+    + '<div class="pretix-widget-frame-back"><a href="#" @click.prevent="back" aria-label="Back">'
+    + '<svg height="16px" viewBox="0 0 512 512" width="16px" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M327.3 98.7c-9.4-9.4-24.6-9.4-33.9 0l-144 144c-9.4 9.4-9.4 24.6 0 33.9l144 144c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9L197.9 256l129.4-123.4c9.4-9.4 9.4-24.6 0-33.9z"/></svg>'
+    + '</a></div>'
     + '<div class="pretix-widget-frame-close"><a href="#" @click.prevent="close">'
     + '<svg height="16px" viewBox="0 0 512 512" width="16px" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M437.5,386.6L306.9,256l130.6-130.6c14.1-14.1,14.1-36.8,0-50.9c-14.1-14.1-36.8-14.1-50.9,0L256,205.1L125.4,74.5  c-14.1-14.1-36.8-14.1-50.9,0c-14.1,14.1-14.1,36.8,0,50.9L205.1,256L74.5,386.6c-14.1,14.1-14.1,36.8,0,50.9  c14.1,14.1,36.8,14.1,50.9,0L256,306.9l130.6,130.6c14.1,14.1,36.8,14.1,50.9,0C451.5,423.4,451.5,400.6,437.5,386.6z"/></svg>'
     + '</a></div>'
@@ -772,6 +775,21 @@ Vue.component('pretix-overlay', {
             this.$root.frame_loading = true;
             this.$root.error_message = null;
             this.$root.error_url_after = null;
+        },
+        back: function () {
+            var container = this.$refs['frame-container'];
+            var iframe = container && container.children[0];
+            if (iframe && iframe.contentWindow) {
+                try {
+                    iframe.contentWindow.postMessage('pretix:back', '*');
+                } catch (e) {
+                    try {
+                        iframe.contentWindow.history.back();
+                    } catch (fallbackError) {
+                        console.warn('Failed to navigate back in iframe', fallbackError);
+                    }
+                }
+            }
         },
         close: function () {
             this.$root.frame_shown = false;
@@ -1585,9 +1603,7 @@ var shared_root_computed = {
             return target;
         }
         var checkout_url = "/" + this.target_url.replace(/^[^\/]+:\/\/([^\/]+)\//, "") + cart_namespace_path + "/";
-        if (!this.$root.cart_exists) {
-            checkout_url += "checkout/start";
-        }
+        checkout_url += "checkout/start";
         var form_target = this.target_url + cart_namespace_path + '/cart/add?iframe=1&next=' + encodeURIComponent(checkout_url);
         var cookie = getCookie(this.cookieName);
         if (cookie) {

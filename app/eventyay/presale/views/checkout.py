@@ -2,17 +2,16 @@ import logging
 from urllib.parse import quote
 
 from django.contrib import messages
-from django.http import Http404, HttpResponse
+from django.http import Http404
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
-from django.utils.html import escape
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import View
 
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.services.cart import CartError
 from eventyay.base.signals import validate_cart
-from eventyay.common.views.helpers import build_login_url_with_next
+from eventyay.common.views.helpers import build_login_url_with_next, is_widget_iframe_request
 from eventyay.multidomain.urlreverse import eventreverse
 from eventyay.presale.checkoutflow import get_checkout_flow
 from eventyay.presale.views import (
@@ -31,7 +30,10 @@ class CheckoutView(View):
         kwargs = {}
         if 'cart_namespace' in self.kwargs:
             kwargs['cart_namespace'] = self.kwargs['cart_namespace']
-        return eventreverse(self.request.event, 'presale:event.index', kwargs=kwargs) + '?require_cookie=true'
+        url = eventreverse(self.request.event, 'presale:event.index', kwargs=kwargs) + '?require_cookie=true'
+        if is_widget_iframe_request(request, trust_session=bool(self.kwargs.get('cart_namespace'))) and 'iframe=1' not in url:
+            url += '&iframe=1'
+        return url
 
     def dispatch(self, request, *args, **kwargs):
         self.request = request
@@ -63,37 +65,10 @@ class CheckoutView(View):
             messages.info(request, _('Please log in to complete your order.'))
             logger.info('Redirecting to login as require_registered_account_for_tickets is enabled.')
             login_url = build_login_url_with_next(request.get_full_path())
-            # The login page sends X-Frame-Options: DENY. Redirecting there from the
-            # widget iframe leaves a blank popup; serve a framable interstitial instead.
-            # Only trust iframe_session on namespaced widget carts so a prior ?iframe=1
-            # visit cannot change ordinary (unframed) checkout login redirects.
-            if 'iframe' in request.GET or (
-                request.session.get('iframe_session') and kwargs.get('cart_namespace')
-            ):
-                login_label = _('Log in')
-                message = _('Please log in to complete your order.')
-                html = (
-                    '<!DOCTYPE html><html><head><meta charset="utf-8">'
-                    '<meta name="viewport" content="width=device-width, initial-scale=1">'
-                    '<title>%(title)s</title>'
-                    '<style>body{font-family:sans-serif;display:flex;align-items:center;'
-                    'justify-content:center;min-height:100vh;margin:0;padding:1.5rem;'
-                    'text-align:center;color:#222}'
-                    'a{display:inline-block;margin-top:1rem;padding:.75rem 1.25rem;'
-                    'background:#2185d0;color:#fff;text-decoration:none;border-radius:4px}'
-                    '</style></head><body><div><p>%(message)s</p>'
-                    '<p><a href="%(url)s" target="_blank" rel="noopener">%(label)s</a></p>'
-                    '</div></body></html>'
-                ) % {
-                    'title': escape(str(login_label)),
-                    'message': escape(str(message)),
-                    'url': escape(login_url),
-                    'label': escape(str(login_label)),
-                }
-                resp = HttpResponse(html)
+            resp = redirect(login_url)
+            if is_widget_iframe_request(request, trust_session=bool(kwargs.get('cart_namespace'))):
                 resp.xframe_options_exempt = True
-                return resp
-            return redirect(login_url)
+            return resp
 
         if request.session.pop('pending_cart_success', False):
             messages.success(request, _('The products have been successfully added to your cart.'))
@@ -144,4 +119,7 @@ class CheckoutView(View):
     def redirect(self, url):
         if 'cart_id' in self.request.GET:
             url += ('&' if '?' in url else '?') + 'cart_id=' + quote(self.request.GET.get('cart_id'))
+        if is_widget_iframe_request(self.request, trust_session=bool(self.kwargs.get('cart_namespace'))):
+            if 'iframe=1' not in url:
+                url += ('&' if '?' in url else '?') + 'iframe=1'
         return redirect(url)

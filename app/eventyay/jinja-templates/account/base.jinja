@@ -32,6 +32,10 @@
         margin: 0;
       }
     }
+    body.widget-iframe-view .navbar,
+    body.widget-iframe-view .allauth-navbar {
+      display: none;
+    }
   </style>
 
   {% block extra_head %}{% endblock extra_head %}
@@ -39,8 +43,9 @@
     {{ {'show': _('Show password'), 'hide': _('Hide password')} | tojson }}
   </script>
   <script type="module" src="{{ static_url('common/js/password_toggle.js') }}"></script>
+  <script type="text/javascript" src="{{ static_url('pretixpresale/js/ui/iframe.js') }}"></script>
 </head>
-<body>
+<body class="{% if (request and ('iframe' in request.GET)) or is_widget_iframe %}widget-iframe-view{% endif %}">
   <div class='page-wrapper'>
     <nav class="navbar navbar-inverse navbar-static-top allauth-navbar" role="navigation">
       <div class="navbar-header">

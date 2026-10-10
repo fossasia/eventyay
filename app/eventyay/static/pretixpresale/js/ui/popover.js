@@ -120,74 +120,105 @@ $(function () {
   const ticketPath = eventPk !== '' ? `${orderPath}?event=${encodeURIComponent(eventPk)}` : orderPath;
   const dashboardPath = '/common/';
 
-  const blocks = [
-    `<div data-name="popover-profile-menu">
-      <div class="profile-menu">
-          <a href="${basePath}/" target="_self" class="btn btn-outline-success">
-              <i class="fa fa-home"></i> ${window.gettext('Home')}
-          </a>
-      </div>
-      <div class="profile-menu">
-          <a href="${basePath}${dashboardPath}" target="_self" class="btn btn-outline-success">
-              <i class="fa fa-dashboard"></i> ${window.gettext('Dashboard')}
-          </a>
-      </div>
-      <hr>
-      <div class="profile-menu">
-          <a href="${basePath}${orderPath}" target="_self" class="btn btn-outline-success">
-              <i class="fa fa-shopping-cart"></i> ${window.gettext('My orders')}
-          </a>
-      </div>
-      <div class="profile-menu">
-          <a href="${basePath}${ticketPath}" target="_self" class="btn btn-outline-success">
-              <i class="fa fa-ticket"></i> ${window.gettext('My tickets')}
-          </a>
-      </div>`
-  ];
+  const isIframe = window.location.search.includes('iframe=1') || window.location.pathname.includes('/widget/');
+  const orderUrl = isIframe ? `${basePath}${orderPath}?iframe=1` : `${basePath}${orderPath}`;
+  const ticketUrl = isIframe ? (eventPk !== '' ? `${basePath}${orderPath}?iframe=1&event=${encodeURIComponent(eventPk)}` : orderUrl) : `${basePath}${ticketPath}`;
 
-  if (talksPublished && hasCfpSubmissions) {
+  const blocks = [];
+  if (isIframe) {
+    blocks.push(
+      `<div data-name="popover-profile-menu">
+        <div class="profile-menu">
+            <a href="${orderUrl}" target="_self" class="btn btn-outline-success">
+                <i class="fa fa-shopping-cart"></i> ${window.gettext('My orders')}
+            </a>
+        </div>
+        <div class="profile-menu">
+            <a href="${ticketUrl}" target="_self" class="btn btn-outline-success">
+                <i class="fa fa-ticket"></i> ${window.gettext('My tickets')}
+            </a>
+        </div>
+        <hr>
+        <div class="profile-menu">
+            <a href="${basePath}${logoutPath}" target="_self" class="btn btn-outline-success">
+                <i class="fa fa-sign-out"></i> ${window.gettext('Logout')}
+            </a>
+        </div>`
+    );
+  } else {
+    blocks.push(
+      `<div data-name="popover-profile-menu">
+        <div class="profile-menu">
+            <a href="${basePath}/" target="_self" class="btn btn-outline-success">
+                <i class="fa fa-home"></i> ${window.gettext('Home')}
+            </a>
+        </div>
+        <div class="profile-menu">
+            <a href="${basePath}${dashboardPath}" target="_self" class="btn btn-outline-success">
+                <i class="fa fa-dashboard"></i> ${window.gettext('Dashboard')}
+            </a>
+        </div>
+        <hr>
+        <div class="profile-menu">
+            <a href="${basePath}${orderPath}" target="_self" class="btn btn-outline-success">
+                <i class="fa fa-shopping-cart"></i> ${window.gettext('My orders')}
+            </a>
+        </div>
+        <div class="profile-menu">
+            <a href="${basePath}${ticketPath}" target="_self" class="btn btn-outline-success">
+                <i class="fa fa-ticket"></i> ${window.gettext('My tickets')}
+            </a>
+        </div>`
+    );
+
+    if (talksPublished && hasCfpSubmissions) {
+      blocks.push(
+        `<hr>
+        <div class="profile-menu">
+            <a href="${basePath}/${organizerName}/${eventSlug}/me/submissions/" target="_self" class="btn btn-outline-success">
+                <i class="fa fa-sticky-note-o"></i> ${window.gettext('My proposals')}
+            </a>
+        </div>
+        <div class="profile-menu">
+            <a href="${basePath}/${organizerName}/${eventSlug}/me" target="_self" class="btn btn-outline-success">
+                <i class="fa fa-address-card-o"></i> ${window.gettext('Speaker profile')}
+            </a>
+        </div>
+        <div class="profile-menu">
+            <a href="${basePath}/${organizerName}/${eventSlug}/me/mails/" target="_self" class="btn btn-outline-success">
+                <i class="fa fa-envelope"></i> ${window.gettext('Speaker Emails')}
+            </a>
+        </div>`
+      );
+    }
+
     blocks.push(
       `<hr>
-      <div class="profile-menu">
-          <a href="${basePath}/${organizerName}/${eventSlug}/me/submissions/" target="_self" class="btn btn-outline-success">
-              <i class="fa fa-sticky-note-o"></i> ${window.gettext('My proposals')}
+        <div class="profile-menu">
+          <a href="${basePath}${profilePath}" target="_self" class="btn btn-outline-success">
+          <i class="fa fa-user"></i> ${window.gettext('Account')}
           </a>
-      </div>
-      <div class="profile-menu">
-          <a href="${basePath}/${organizerName}/${eventSlug}/me" target="_self" class="btn btn-outline-success">
-              <i class="fa fa-address-card-o"></i> ${window.gettext('Speaker profile')}
-          </a>
-      </div>
-      <div class="profile-menu">
-          <a href="${basePath}/${organizerName}/${eventSlug}/me/mails/" target="_self" class="btn btn-outline-success">
-              <i class="fa fa-envelope"></i> ${window.gettext('Speaker Emails')}
-          </a>
-      </div>`
+        </div>`
     );
-  }
 
-  blocks.push(
-    `<hr>
-      <div class="profile-menu">
-        <a href="${basePath}${profilePath}" target="_self" class="btn btn-outline-success">
-        <i class="fa fa-user"></i> ${window.gettext('Account')}
-        </a>
-      </div>`
-  );
+    if (showOrganizerArea) {
+      blocks.push(
+        `<div class="profile-menu organizer-area">
+            <a href="${basePath}/common/event/${organizerName}/${eventSlug}" target="_self" class="btn btn-outline-success">
+                <i class="fa fa-gears"></i> ${window.gettext('Organizer area')}
+            </a>
+        </div>`
+      );
+    }
 
-  if (showOrganizerArea) {
     blocks.push(
-      `<div class="profile-menu organizer-area">
-          <a href="${basePath}/common/event/${organizerName}/${eventSlug}" target="_self" class="btn btn-outline-success">
-              <i class="fa fa-gears"></i> ${window.gettext('Organizer area')}
+      `<div class="profile-menu">
+          <a href="${basePath}${logoutPath}" target="_self" class="btn btn-outline-success">
+              <i class="fa fa-sign-out"></i> ${window.gettext('Logout')}
           </a>
       </div>`
     );
   }
-
-  blocks.push(
-    `<div class="profile-menu">
-        <a href="${basePath}${logoutPath}" target="_self" class="btn btn-outline-success">
             <i class="fa fa-sign-out"></i> ${window.gettext('Logout')}
         </a>
     </div>

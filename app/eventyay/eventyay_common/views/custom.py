@@ -7,9 +7,12 @@ from allauth.account.views import SignupView as _SignupView
 from django import forms
 from django.conf import settings
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.html import conditional_escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
+
+from eventyay.common.views.helpers import allow_frame_if_iframe_param
 
 from eventyay.base.models.page import Page
 from eventyay.base.services.turnstile import (
@@ -37,6 +40,7 @@ class SignupConfirmationForm(forms.Form):
         return cleaned_data
 
 
+@method_decorator(allow_frame_if_iframe_param, 'dispatch')
 class ConfirmEmailView(_ConfirmEmailView):
     """Custom email confirmation view that separates HTML from translatable strings."""
 
@@ -80,6 +84,7 @@ class ConfirmEmailView(_ConfirmEmailView):
 
 
 # Override to provide additional context for the signup page, such as pages that require confirmation.
+@method_decorator(allow_frame_if_iframe_param, 'dispatch')
 class SignupView(_SignupView):
     # Explicitly use the Jinja template override located in jinja-templates/account/
     template_name = 'account/signup.jinja'

@@ -1064,6 +1064,12 @@ export default {
 	z-index: 100
 	background-color: $clr-white
 	box-sizing: border-box
+	color-scheme: light
+	color: #111
+	svg.tb-icon,
+	svg.chevron-icon
+		stroke: currentColor
+		color: inherit
 	.version-warning-banner
 		color: #856404
 		background: #fff3cd
@@ -1154,6 +1160,7 @@ export default {
 				justify-content: center
 				gap: 6px
 				background: #fff
+				color: #111
 				&:hover
 					border-color: #bbb
 					background: #f8f8f8
@@ -1649,6 +1656,7 @@ export default {
 	.toolbar-btn
 		border: none
 		background: transparent
+		color: #111
 		cursor: pointer
 		height: 28px
 		padding: 0 6px

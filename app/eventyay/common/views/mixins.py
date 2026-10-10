@@ -22,7 +22,7 @@ from rules.contrib.views import PermissionRequiredMixin
 from eventyay.common.forms import SearchForm
 from eventyay.common.permissions import is_admin_mode_active
 from eventyay.common.text.phrases import phrases
-from eventyay.common.views.helpers import build_login_url_with_next
+from eventyay.common.views.helpers import build_login_url_with_next, is_widget_iframe_request
 
 SessionStore = import_string(f'{settings.SESSION_ENGINE}.SessionStore')
 logger = logging.getLogger(__name__)
@@ -215,6 +215,13 @@ class PermissionRequired(PermissionRequiredMixin):
             for key in ('permission_object', 'object'):
                 if getattr(self, key, None):
                     self.get_permission_object = lambda self: getattr(self, key)  # noqa
+
+    def dispatch(self, request, *args, **kwargs):
+        if getattr(request, 'resolver_match', None):
+            namespaces = request.resolver_match.namespaces
+            if ('cfp' in namespaces or 'agenda' in namespaces) and is_widget_iframe_request(request):
+                raise Http404()
+        return super().dispatch(request, *args, **kwargs)
 
     def has_permission(self):
         """Check if user has permission, with admin mode support.

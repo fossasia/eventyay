@@ -19,6 +19,7 @@ from django.utils.http import http_date
 
 from eventyay.base.middleware import should_skip_session_save
 from eventyay.base.models import Event
+from eventyay.helpers.cookies import delete_cookie_without_samesite, set_cookie_without_samesite
 
 LOCAL_HOST_NAMES = ('testserver', 'localhost', '127.0.0.1')
 ANY_DOMAIN_ALLOWED = ('robots.txt', 'redirect')
@@ -155,6 +156,12 @@ class MultiDomainMiddleware:
             # yet. We will show the start page instead of a confusing (to organizers)
             # 404.
             return
+        # Nothing matched ─ if this is a main-domain auth route, serve it directly
+        # so widget iframe login AJAX can complete on the tunnel domain (Claudflare
+        # etc.) without a cross-origin redirect. Also avoids DisallowedHost errors
+        # for signup/forgot links opened from the widget.
+        if resolved.url_name in MAIN_DOMAIN_AUTH_ROUTES:
+            return None
         # This domain is not configured for any event, so we will show a 404.
         # Note that this should not occur on a well-configured host, as the web server
         # should make sure that a domain is configured before serving it (as it needs to
@@ -200,7 +207,13 @@ class SessionMiddleware(BaseSessionMiddleware):
             # First check if we need to delete this cookie.
             # The session should be deleted only if the session is entirely empty
             if settings.SESSION_COOKIE_NAME in request.COOKIES and empty:
-                response.delete_cookie(settings.SESSION_COOKIE_NAME)
+                delete_cookie_without_samesite(
+                    request,
+                    response,
+                    settings.SESSION_COOKIE_NAME,
+                    path=settings.SESSION_COOKIE_PATH,
+                    domain=get_cookie_domain(request),
+                )
                 return response
             if accessed:
                 patch_vary_headers(response, ('Cookie',))
@@ -220,7 +233,9 @@ class SessionMiddleware(BaseSessionMiddleware):
                         request.session.save()
                     except UpdateError:  # pragma: no cover
                         request.session.create()
-                    response.set_cookie(
+                    set_cookie_without_samesite(
+                        request,
+                        response,
                         settings.SESSION_COOKIE_NAME,
                         request.session.session_key,
                         max_age=max_age,
@@ -229,7 +244,6 @@ class SessionMiddleware(BaseSessionMiddleware):
                         path=settings.SESSION_COOKIE_PATH,
                         secure=request.scheme == 'https',
                         httponly=settings.SESSION_COOKIE_HTTPONLY or None,
-                        samesite=settings.SESSION_COOKIE_SAMESITE,
                     )
         return response
 
@@ -256,7 +270,9 @@ class CsrfViewMiddleware(BaseCsrfMiddleware):
         else:
             # Set the CSRF cookie even if it's already set, so we renew
             # the expiry timer.
-            response.set_cookie(
+            set_cookie_without_samesite(
+                request,
+                response,
                 settings.CSRF_COOKIE_NAME,
                 request.META['CSRF_COOKIE'],
                 max_age=settings.CSRF_COOKIE_AGE,
@@ -264,7 +280,6 @@ class CsrfViewMiddleware(BaseCsrfMiddleware):
                 path=settings.CSRF_COOKIE_PATH,
                 secure=request.scheme == 'https',
                 httponly=settings.CSRF_COOKIE_HTTPONLY,
-                samesite=settings.CSRF_COOKIE_SAMESITE,
             )
             # Content varies with the CSRF cookie, so set the Vary header.
             patch_vary_headers(response, ('Cookie',))

@@ -9,103 +9,235 @@
 
 {% block custom_header %}
     {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/advanced-filter.css' %}">
     <link rel="stylesheet" href="{% static 'eventyay-common/css/common_dashboard.css' %}">
     <script type="module" src="{% static 'eventyay-common/js/orders-filter.js' %}"></script>
 {% endblock %}
 
 {% block content %}
-    <h1>{% trans "My Tickets" %}</h1>
-    <div class="advanced-filter-search" data-advanced-filter-search>
-        <form class="filter-form advanced-filter-search-form" action="" method="get">
-            <div class="advanced-filter-search-bar">
-                <div class="advanced-filter-field" style="flex: 1 1 200px; margin-bottom: 0;">
-                    {% bootstrap_field filter_form.code layout='inline' %}
-                </div>
-                <div class="advanced-filter-field" style="flex: 1 1 200px; margin-bottom: 0;">
-                    {% bootstrap_field filter_form.event layout='inline' %}
-                </div>
-                <div class="advanced-filter-field" style="flex: 1 1 160px; margin-bottom: 0;">
-                    {% bootstrap_field filter_form.status layout='inline' %}
-                </div>
-                <div class="advanced-filter-field" style="flex: 1 1 160px; margin-bottom: 0;">
-                    <label class="sr-only" for="{{ filter_form.date_from.id_for_label }}">{{ filter_form.date_from.label }}</label>
-                    <div class="input-group date">
-                        {{ filter_form.date_from }}
-                        <span class="input-group-addon" aria-hidden="true">
-                            <span class="fa fa-calendar"></span>
-                        </span>
+    {% if is_widget_iframe %}
+        <div class="orders-widget-iframe" hidden></div>
+        <div class="orders-widget-container">
+            <!-- Widget Header -->
+            <div class="orders-widget-header">
+                <div class="orders-widget-header-left">
+                    <div class="orders-widget-title-group">
+                        <h2 class="orders-widget-title">
+                            <i class="fa fa-ticket text-primary" aria-hidden="true"></i>
+                            {% if filtered_event %}
+                                {% trans "Tickets" %}: {{ filtered_event.name }}
+                            {% else %}
+                                {% trans "My Tickets" %}
+                            {% endif %}
+                        </h2>
                     </div>
                 </div>
-                <div class="advanced-filter-field" style="flex: 1 1 160px; margin-bottom: 0;">
-                    <label class="sr-only" for="{{ filter_form.date_to.id_for_label }}">{{ filter_form.date_to.label }}</label>
-                    <div class="input-group date">
-                        {{ filter_form.date_to }}
-                        <span class="input-group-addon" aria-hidden="true">
-                            <span class="fa fa-calendar"></span>
-                        </span>
+                {% if request.user.is_authenticated %}
+                    <div class="orders-widget-user-badge" title="{{ request.user.email }}">
+                        <i class="fa fa-user-circle" aria-hidden="true"></i>
+                        <span class="orders-widget-user-email">{{ request.user.email }}</span>
                     </div>
-                </div>
-                <div class="advanced-filter-search-actions">
-                    <button type="submit" class="btn btn-primary" aria-label="{% trans 'Apply filters' %}" title="{% trans 'Apply filters' %}">
-                        <span class="fa fa-filter" aria-hidden="true"></span>
-                    </button>
-                    <a href="{{ request.path }}" class="btn btn-default btn-clear-filter" aria-label="{% trans 'Clear filters' %}" title="{% trans 'Clear filters' %}">
-                        <span class="fa fa-eraser" aria-hidden="true"></span>
-                        <span class="sr-only">{% trans "Clear filters" %}</span>
-                    </a>
-                </div>
+                {% endif %}
             </div>
-        </form>
-    </div>
-    <div data-ajax-results-region>
-        {% if order_list %}
-        <div class="table-responsive">
-            <table class="table table-condensed table-hover table-quotas events-table">
-                <thead>
-                    <tr>
-                        <th>{{ _('Order code') }}</th>
-                        <th>{{ _('Event') }}</th>
-                        <th>{{ _('Order Date') }}</th>
-                        <th>{{ _('Order total') }}</th>
-                        <th>{{ _('Status') }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for order in order_list %}
-                    <tr>
-                        <td data-label="{{ _('Order code') }}">
-                            <a href="{% abseventurl order.event 'presale:event.order' order=order.code secret=order.secret %}">
-                                {{ order.code }}
+
+            <!-- Widget Filters -->
+            <div class="orders-widget-filter-bar">
+                <form class="filter-form orders-widget-filter-form" action="" method="get">
+                    <input type="hidden" name="iframe" value="1">
+                    <div class="orders-widget-filter-inputs">
+                        <div class="orders-widget-filter-field search-field">
+                            <div class="input-group">
+                                <span class="input-group-addon"><i class="fa fa-search" aria-hidden="true"></i></span>
+                                <input type="text" name="code" value="{{ request.GET.code|default:'' }}" class="form-control" placeholder="{% trans 'Search by order code...' %}">
+                            </div>
+                        </div>
+                        <div class="orders-widget-filter-field event-field">
+                            {% bootstrap_field filter_form.event layout='inline' %}
+                        </div>
+                        <div class="orders-widget-filter-field status-field">
+                            <select name="status" class="form-control">
+                                <option value="">{% trans "All statuses" %}</option>
+                                <option value="p" {% if request.GET.status == 'p' %}selected{% endif %}>{% trans "Paid" %}</option>
+                                <option value="n" {% if request.GET.status == 'n' %}selected{% endif %}>{% trans "Pending" %}</option>
+                                <option value="e" {% if request.GET.status == 'e' %}selected{% endif %}>{% trans "Expired" %}</option>
+                                <option value="c" {% if request.GET.status == 'c' %}selected{% endif %}>{% trans "Canceled" %}</option>
+                            </select>
+                        </div>
+                        <div class="orders-widget-filter-buttons">
+                            <button type="submit" class="btn btn-primary btn-sm" title="{% trans 'Apply filters' %}">
+                                <i class="fa fa-filter" aria-hidden="true"></i> {% trans "Filter" %}
+                            </button>
+                            {% if has_active_filters %}
+                                <a href="{{ request.path }}?iframe=1" class="btn btn-default btn-sm btn-clear-filter" title="{% trans 'Clear filters' %}">
+                                    <i class="fa fa-times" aria-hidden="true"></i>
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Orders Cards List -->
+            <div data-ajax-results-region>
+                {% if order_list %}
+                    <div class="orders-widget-cards-list">
+                        {% for order in order_list %}
+                            <div class="order-widget-card">
+                                <div class="order-widget-card-header">
+                                    <div class="order-widget-code-wrap">
+                                        <span class="order-widget-code-label">{% trans "Order" %}</span>
+                                        <span class="order-widget-code-pill">{{ order.code }}</span>
+                                    </div>
+                                    <div class="order-widget-status-wrap">
+                                        {% include "eventyay_common/orders/fragment_order_status.html" with order=order event=order.event %}
+                                    </div>
+                                </div>
+                                <div class="order-widget-card-body">
+                                    <h3 class="order-widget-event-name">
+                                        <a href="{% eventurl order.event 'presale:event.order' order=order.code secret=order.secret %}?iframe=1">
+                                            {{ order.event.name }}
+                                        </a>
+                                    </h3>
+                                    <div class="order-widget-meta-row">
+                                        <div class="order-widget-meta-item">
+                                            <i class="fa fa-calendar" aria-hidden="true"></i>
+                                            <span>{{ order.datetime|date:"SHORT_DATETIME_FORMAT" }}</span>
+                                        </div>
+                                        <div class="order-widget-meta-item order-widget-total">
+                                            <span class="order-widget-total-label">{% trans "Total" %}:</span>
+                                            <strong>{{ order.total|money:order.event.currency }}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="order-widget-card-footer">
+                                    <a href="{% eventurl order.event 'presale:event.order' order=order.code secret=order.secret %}?iframe=1" class="btn btn-primary btn-sm btn-block order-widget-view-btn">
+                                        <i class="fa fa-ticket" aria-hidden="true"></i> {% trans "View Tickets & Order Details" %} <i class="fa fa-arrow-right" aria-hidden="true"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% include 'pretixcontrol/pagination.html' %}
+                {% else %}
+                    <div class="orders-widget-empty-card">
+                        <div class="orders-widget-empty-icon">
+                            <i class="fa fa-ticket" aria-hidden="true"></i>
+                        </div>
+                        {% if has_active_filters %}
+                            <h3>{% trans "No matching tickets" %}</h3>
+                            <p>{% trans "No tickets match your filter criteria." %}</p>
+                            <a href="{{ request.path }}?iframe=1" class="btn btn-default btn-sm">
+                                <i class="fa fa-times" aria-hidden="true"></i> {% trans "Clear filters" %}
                             </a>
-                        </td>
-                        <td data-label="{{ _('Event') }}">
-                            <a href="{% eventurl order.event 'presale:event.index' %}">{{ order.event.name }}</a>
-                        </td>
-                        <td data-label="{{ _('Order Date') }}">{{ order.datetime|date:"SHORT_DATETIME_FORMAT" }}</td>
-                        <td data-label="{{ _('Order total') }}">
-                            {{ order.total|money:order.event.currency }}
-                        </td>
-                        <td data-label="{{ _('Status') }}" class="events-table__cell--no-border">
-                            {% include "eventyay_common/orders/fragment_order_status.html" with order=order event=order.event %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                        {% else %}
+                            <h3>{% trans "No tickets yet" %}</h3>
+                            {% if filtered_event %}
+                                <p>{% trans "You do not have any tickets for this event yet." %}</p>
+                                <a href="{% eventurl filtered_event 'presale:event.index' %}?iframe=1" class="btn btn-primary">
+                                    <i class="fa fa-shopping-cart" aria-hidden="true"></i> {% trans "Get tickets for this event" %}
+                                </a>
+                            {% else %}
+                                <p>{% trans "You do not have any tickets in your account yet." %}</p>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
         </div>
-        {% include 'pretixcontrol/pagination.html' %}
-        {% else %}
-          {% if has_active_filters %}
-            <div class="alert alert-info">{% trans "No tickets match your filters." %}</div>
-          {% else %}
-            {% url 'presale:events.upcoming' as browse_events_url %}
-            {% url 'eventyay_common:dashboard' as dashboard_url %}
-            {% trans "No tickets yet" as empty_title %}
-            {% trans "Browse upcoming events and register to see your tickets here." as empty_description %}
-            {% trans "Browse events" as empty_primary_label %}
-            {% trans "Go to dashboard" as empty_secondary_label %}
-            {% include "eventyay_common/includes/personal_empty_state.html" with icon="ticket" title=empty_title description=empty_description primary_url=browse_events_url primary_label=empty_primary_label secondary_url=dashboard_url secondary_label=empty_secondary_label %}
-          {% endif %}
-        {% endif %}
-    </div>
+    {% else %}
+        <h1>{% trans "My Tickets" %}</h1>
+        <div class="advanced-filter-search" data-advanced-filter-search>
+            <form class="filter-form advanced-filter-search-form" action="" method="get">
+                <div class="advanced-filter-search-bar">
+                    <div class="advanced-filter-field" style="flex: 1 1 200px; margin-bottom: 0;">
+                        {% bootstrap_field filter_form.code layout='inline' %}
+                    </div>
+                    <div class="advanced-filter-field" style="flex: 1 1 200px; margin-bottom: 0;">
+                        {% bootstrap_field filter_form.event layout='inline' %}
+                    </div>
+                    <div class="advanced-filter-field" style="flex: 1 1 160px; margin-bottom: 0;">
+                        {% bootstrap_field filter_form.status layout='inline' %}
+                    </div>
+                    <div class="advanced-filter-field" style="flex: 1 1 160px; margin-bottom: 0;">
+                        <label class="sr-only" for="{{ filter_form.date_from.id_for_label }}">{{ filter_form.date_from.label }}</label>
+                        <div class="input-group date">
+                            {{ filter_form.date_from }}
+                            <span class="input-group-addon" aria-hidden="true">
+                                <span class="fa fa-calendar"></span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="advanced-filter-field" style="flex: 1 1 160px; margin-bottom: 0;">
+                        <label class="sr-only" for="{{ filter_form.date_to.id_for_label }}">{{ filter_form.date_to.label }}</label>
+                        <div class="input-group date">
+                            {{ filter_form.date_to }}
+                            <span class="input-group-addon" aria-hidden="true">
+                                <span class="fa fa-calendar"></span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="advanced-filter-search-actions">
+                        <button type="submit" class="btn btn-primary" aria-label="{% trans 'Apply filters' %}" title="{% trans 'Apply filters' %}">
+                            <span class="fa fa-filter" aria-hidden="true"></span>
+                        </button>
+                        <a href="{{ request.path }}" class="btn btn-default btn-clear-filter" aria-label="{% trans 'Clear filters' %}" title="{% trans 'Clear filters' %}">
+                            <span class="fa fa-eraser" aria-hidden="true"></span>
+                            <span class="sr-only">{% trans "Clear filters" %}</span>
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div data-ajax-results-region>
+            {% if order_list %}
+            <div class="table-responsive">
+                <table class="table table-condensed table-hover table-quotas events-table">
+                    <thead>
+                        <tr>
+                            <th>{{ _('Order code') }}</th>
+                            <th>{{ _('Event') }}</th>
+                            <th>{{ _('Order Date') }}</th>
+                            <th>{{ _('Order total') }}</th>
+                            <th>{{ _('Status') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in order_list %}
+                        <tr>
+                            <td data-label="{{ _('Order code') }}">
+                                <a href="{% abseventurl order.event 'presale:event.order' order=order.code secret=order.secret %}">
+                                    {{ order.code }}
+                                </a>
+                            </td>
+                            <td data-label="{{ _('Event') }}">
+                                <a href="{% eventurl order.event 'presale:event.index' %}">{{ order.event.name }}</a>
+                            </td>
+                            <td data-label="{{ _('Order Date') }}">{{ order.datetime|date:"SHORT_DATETIME_FORMAT" }}</td>
+                            <td data-label="{{ _('Order total') }}">
+                                {{ order.total|money:order.event.currency }}
+                            </td>
+                            <td data-label="{{ _('Status') }}" class="events-table__cell--no-border">
+                                {% include "eventyay_common/orders/fragment_order_status.html" with order=order event=order.event %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% include 'pretixcontrol/pagination.html' %}
+            {% else %}
+              {% if has_active_filters %}
+                <div class="alert alert-info">{% trans "No tickets match your filters." %}</div>
+              {% else %}
+                {% url 'presale:events.upcoming' as browse_events_url %}
+                {% url 'eventyay_common:dashboard' as dashboard_url %}
+                {% trans "No tickets yet" as empty_title %}
+                {% trans "Browse upcoming events and register to see your tickets here." as empty_description %}
+                {% trans "Browse events" as empty_primary_label %}
+                {% trans "Go to dashboard" as empty_secondary_label %}
+                {% include "eventyay_common/includes/personal_empty_state.html" with icon="ticket" title=empty_title description=empty_description primary_url=browse_events_url primary_label=empty_primary_label secondary_url=dashboard_url secondary_label=empty_secondary_label %}
+              {% endif %}
+            {% endif %}
+        </div>
+    {% endif %}
 {% endblock %}

@@ -28,6 +28,7 @@ from eventyay.base.services.system_questions import (
     get_system_question_base_states,
     get_system_question_product_overrides,
 )
+from eventyay.common.views.helpers import is_widget_iframe_request
 from eventyay.helpers.cookies import set_cookie_without_samesite
 from eventyay.multidomain.urlreverse import eventreverse
 from eventyay.presale.organizer_exports import build_organizer_calendar_exporters
@@ -389,6 +390,9 @@ class EventViewMixin:
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['event'] = self.request.event
+        cart_ns = self.kwargs.get('cart_namespace') or ''
+        context['cart_namespace'] = cart_ns
+        context['is_widget_iframe'] = is_widget_iframe_request(self.request, trust_session=bool(cart_ns))
         return context
 
     def get_index_url(self):

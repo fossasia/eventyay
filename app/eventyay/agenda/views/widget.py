@@ -351,7 +351,7 @@ def widget_script(request, organizer=None, event=None, **kwargs):
         "var host=document.createElement('eventyay-widget-host');"
         "var shadow=host.attachShadow({mode:'open'});"
         "var reset=document.createElement('style');"
-        "reset.textContent=':host{display:block}pretalx-schedule{display:block;color:#0d0f10;background:#fff}';"
+        "reset.textContent=':host{display:block;color-scheme:light}pretalx-schedule{display:block;color:#0d0f10;background:#fff;color-scheme:light}';"
         "shadow.appendChild(reset);"
         "keepScheduleStyle(element, host);"
         "element.parentNode.insertBefore(host,element);"

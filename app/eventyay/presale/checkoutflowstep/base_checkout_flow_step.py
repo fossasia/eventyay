@@ -4,6 +4,7 @@ from django.utils.translation import pgettext_lazy
 from django_scopes import scopes_disabled
 
 from eventyay.base.models import InvoiceAddress
+from eventyay.common.views.helpers import is_widget_iframe_request
 from eventyay.multidomain.urlreverse import eventreverse
 from eventyay.presale.views.cart import cart_session
 
@@ -56,7 +57,10 @@ class BaseCheckoutFlowStep:
         kwargs = {'step': self.identifier}
         if request.resolver_match and 'cart_namespace' in request.resolver_match.kwargs:
             kwargs['cart_namespace'] = request.resolver_match.kwargs['cart_namespace']
-        return eventreverse(self.event, 'presale:event.checkout', kwargs=kwargs)
+        url = eventreverse(self.event, 'presale:event.checkout', kwargs=kwargs)
+        if is_widget_iframe_request(request):
+            url += ('&' if '?' in url else '?') + 'iframe=1'
+        return url
 
     def get_prev_url(self, request):
         prev = self.get_prev_applicable(request)
@@ -64,7 +68,10 @@ class BaseCheckoutFlowStep:
             kwargs = {}
             if request.resolver_match and 'cart_namespace' in request.resolver_match.kwargs:
                 kwargs['cart_namespace'] = request.resolver_match.kwargs['cart_namespace']
-            return eventreverse(self.request.event, 'presale:event.index', kwargs=kwargs)
+            url = eventreverse(self.request.event, 'presale:event.index', kwargs=kwargs)
+            if is_widget_iframe_request(request):
+                url += ('&' if '?' in url else '?') + 'iframe=1'
+            return url
         else:
             return prev.get_step_url(request)
 

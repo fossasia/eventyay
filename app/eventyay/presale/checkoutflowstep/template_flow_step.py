@@ -1,5 +1,7 @@
 from django.views.generic.base import TemplateResponseMixin
 
+from eventyay.common.views.helpers import is_widget_iframe_request
+
 from .base_checkout_flow_step import BaseCheckoutFlowStep
 
 
@@ -15,6 +17,11 @@ class TemplateFlowStep(TemplateResponseMixin, BaseCheckoutFlowStep):
             'checkout_flow',
             [step for step in self.request._checkout_flow if step.is_applicable(self.request)],
         )
+        cart_ns = ''
+        if self.request.resolver_match and 'cart_namespace' in self.request.resolver_match.kwargs:
+            cart_ns = self.request.resolver_match.kwargs['cart_namespace'] or ''
+        kwargs.setdefault('cart_namespace', cart_ns)
+        kwargs.setdefault('is_widget_iframe', is_widget_iframe_request(self.request, trust_session=bool(cart_ns)))
         return kwargs
 
     def render(self, **kwargs):

@@ -94,6 +94,7 @@
             <script defer src="{% static 'common/js/nav-tabs.js' %}"></script>
             <script defer src="{% static 'common/js/nav-overflow.js' %}"></script>
             <script type="module" src="{% static 'common/js/contact-modal.js' %}"></script>
+            <script type="text/javascript" src="{% static "pretixpresale/js/ui/iframe.js" %}"></script>
         {% endcompress %}
         {# Keep tiptapLoader outside the compress block so document.currentScript keeps data-tiptap-* attributes (see common/js/tiptapLoader.js). #}
         <script type="module" src="{% static 'common/js/tiptapLoader.js' %}" data-tiptap-js="{% static 'editor/editor.js' %}" data-tiptap-css="{% static 'editor/editor.css' %}"></script>

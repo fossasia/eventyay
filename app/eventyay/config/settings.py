@@ -450,9 +450,9 @@ _LIBRARY_MIDDLEWARES = (
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'eventyay.base.middleware.LoadSheddingMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    'eventyay.common.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    'eventyay.common.middleware.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'eventyay.middleware.block_404.Block404Middleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -466,10 +466,8 @@ if DEBUG and importlib.util.find_spec('debug_toolbar'):
 _OURS_MIDDLEWARES = (
     'eventyay.base.middleware.CustomCommonMiddleware',
     'eventyay.base.middleware.GloballyDisabledPluginMiddleware',
-    'eventyay.common.middleware.SessionMiddleware',  # Add session handling
     'eventyay.common.middleware.MultiDomainMiddleware',  # Check which host is used and if it is valid
     'eventyay.common.middleware.EventPermissionMiddleware',  # Sets locales, request.event, available events, etc.
-    'eventyay.common.middleware.CsrfViewMiddleware',  # Protect against CSRF attacks before forms/data are processed
     'eventyay.multidomain.middlewares.MultiDomainMiddleware',
     'eventyay.multidomain.middlewares.SessionMiddleware',
     'eventyay.multidomain.middlewares.CsrfViewMiddleware',
@@ -1647,3 +1645,7 @@ if IS_DEVELOPMENT:
         ALLOWED_HOSTS = list(dict.fromkeys([*ALLOWED_HOSTS, '10.0.2.2', '10.0.3.2']))
     # Trust standard local and emulator origins for CSRF
     CSRF_TRUSTED_ORIGINS += ['http://localhost:8000', 'http://127.0.0.1:8000', 'http://10.0.2.2:8000', 'http://10.0.3.2:8000']
+    # Trust Cloudflare quick-tunnel origins (the widget iframe posts back with an
+    # ``Origin`` header from e.g. https://<random>.trycloudflare.com). These hostnames
+    # change on every tunnel restart, so a wildcard is required. Dev-only.
+    CSRF_TRUSTED_ORIGINS += ['https://*.trycloudflare.com']

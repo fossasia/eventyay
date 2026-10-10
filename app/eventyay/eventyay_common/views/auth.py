@@ -25,6 +25,7 @@ from django.db import transaction
 from django.http import HttpRequest
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext_lazy as _
@@ -44,6 +45,7 @@ from eventyay.base.forms.auth import (
 from eventyay.base.models import TeamInvite, U2FDevice, User, WebAuthnDevice
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.services.mail import SendMailException
+from eventyay.common.views.helpers import allow_frame_if_iframe_param
 from eventyay.helpers.cookies import set_cookie_without_samesite
 from eventyay.helpers.jwt_generate import generate_sso_token
 from eventyay.multidomain.middlewares import get_cookie_domain
@@ -117,6 +119,7 @@ def set_cookie_after_logged_in(request, response):
     return response
 
 
+@allow_frame_if_iframe_param
 def login(request):
     """
     Render and process a most basic login form. Takes an URL as GET
@@ -268,6 +271,7 @@ class RepeatedResetDenied(Exception):  # NOQA: N818
     pass
 
 
+@method_decorator(allow_frame_if_iframe_param, 'dispatch')
 class Forgot(TemplateView):
     template_name = 'eventyay_common/auth/forgot.html'
 
@@ -307,8 +311,20 @@ class Forgot(TemplateView):
                     )
                 )
                 messages.info(request, msg)
-            return redirect('eventyay_common:auth.forgot')
+            return redirect(self._reset_redirect())
         return self.get(request, *args, **kwargs)
+
+    def _reset_redirect(self):
+        """Preserve the widget iframe + checkout ``next`` context across the forgot/recover flow."""
+        url = reverse('eventyay_common:auth.forgot')
+        params = []
+        if 'next' in self.request.GET:
+            params.append('next=' + quote(self.request.GET['next']))
+        if 'iframe' in self.request.GET:
+            params.append('iframe=1')
+        if params:
+            url += '?' + '&'.join(params)
+        return url
 
     @cached_property
     def form(self):
@@ -321,6 +337,7 @@ class Forgot(TemplateView):
         return context
 
 
+@method_decorator(allow_frame_if_iframe_param, 'dispatch')
 class Recover(TemplateView):
     template_name = 'eventyay_common/auth/recover.html'
 
@@ -353,6 +370,17 @@ class Recover(TemplateView):
         messages.error(self.request, self.error_messages[msg])
         return redirect('eventyay_common:auth.forgot')
 
+    def _login_redirect(self):
+        url = reverse('auth.login')
+        params = []
+        if 'next' in self.request.GET:
+            params.append('next=' + quote(self.request.GET['next']))
+        if 'iframe' in self.request.GET:
+            params.append('iframe=1')
+        if params:
+            url += '?' + '&'.join(params)
+        return url
+
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
             try:
@@ -365,7 +393,7 @@ class Recover(TemplateView):
             user.save()
             messages.success(request, _('You can now login using your new password.'))
             user.log_action('eventyay.eventyay_common.auth.user.forgot_password.recovered')
-            return redirect('auth.login')
+            return redirect(self._login_redirect())
         else:
             return self.get(request, *args, **kwargs)
 

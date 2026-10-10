@@ -28,6 +28,14 @@
 {% endblock %}
 {% block content %}
 <main>
+    {% if is_widget_iframe or 'iframe' in request.GET or request.session.iframe_session %}
+        <div class="order-widget-nav-bar">
+            <div class="order-widget-nav-title">
+                <i class="fa fa-ticket text-primary" aria-hidden="true"></i>
+                <span>{% trans "Order" %}: {{ order.code }}</span>
+            </div>
+        </div>
+    {% endif %}
     {% if "thanks" in request.GET or "paid" in request.GET %}
         {% if order.require_approval %}
             <div class="thank-you thank-you-pending">

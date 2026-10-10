@@ -1,25 +1,45 @@
+from http import cookies
 import re
 
 from django.conf import settings
+
+cookies.Morsel._reserved['partitioned'] = 'Partitioned'
+if hasattr(cookies.Morsel, '_flags'):
+    cookies.Morsel._flags.add('partitioned')
 
 
 def set_cookie_without_samesite(request, response, key, *args, **kwargs):
     assert 'samesite' not in kwargs
     response.set_cookie(key, *args, **kwargs)
-    is_secure = kwargs.get('secure', False) or request.scheme == 'https' or settings.SITE_URL.startswith('https://')
-    if not is_secure:
-        # https://www.chromestatus.com/feature/5633521622188032
+    if not should_send_same_site_none(request.headers.get('User-Agent', '')):
         return
-    if should_send_same_site_none(request.headers.get('User-Agent', '')):
-        # Chromium is rolling out SameSite=Lax as a default
-        # https://www.chromestatus.com/feature/5088147346030592
-        # This however breaks all eventyay-in-an-iframe things, such as the eventyay Widget.
-        # Sadly, this means we need to forcefully set SameSite=None and rely on our other
-        # CSRF protections to be working.
+    is_secure = (
+        kwargs.get('secure', False)
+        or request.is_secure()
+        or request.scheme == 'https'
+        or settings.SITE_URL.startswith('https://')
+        or request.headers.get('X-Forwarded-Proto', '') == 'https'
+    )
+    if is_secure:
         response.cookies[key]['samesite'] = 'None'
-        # This will only work on secure cookies as well
-        # https://www.chromestatus.com/feature/5633521622188032
-        response.cookies[key]['secure'] = is_secure
+        response.cookies[key]['secure'] = True
+        response.cookies[key]['partitioned'] = True
+
+
+def delete_cookie_without_samesite(request, response, key, path='/', domain=None, samesite=None):
+    response.delete_cookie(key, path=path, domain=domain, samesite=samesite)
+    if not should_send_same_site_none(request.headers.get('User-Agent', '')):
+        return
+    is_secure = (
+        request.is_secure()
+        or request.scheme == 'https'
+        or settings.SITE_URL.startswith('https://')
+        or request.headers.get('X-Forwarded-Proto', '') == 'https'
+    )
+    if is_secure and key in response.cookies:
+        response.cookies[key]['samesite'] = 'None'
+        response.cookies[key]['secure'] = True
+        response.cookies[key]['partitioned'] = True
 
 
 # Based on https://www.chromium.org/updates/same-site/incompatible-clients
