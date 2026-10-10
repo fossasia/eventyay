@@ -28,12 +28,11 @@ def get_price(
     tax_rule=None,
 ) -> TaxedPrice:
     if addon_to:
-        if addon_to.voucher_id and addon_to.voucher.all_addons_included:
-            return TAXED_ZERO
+        # Only products from one of the parent's add-on categories may be included for free.
         # Iterate the (possibly prefetched) relation instead of .get() to avoid a query per call
         for iao in addon_to.product.addons.all():
             if iao.addon_category_id == product.category_id:
-                if iao.price_included:
+                if iao.price_included or (addon_to.voucher_id and addon_to.voucher.all_addons_included):
                     return TAXED_ZERO
                 break
 

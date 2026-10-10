@@ -6,7 +6,7 @@ import pycountry
 from django.conf import settings
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.files import File
-from django.db.models import F, Q
+from django.db.models import F, Q, prefetch_related_objects
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy
 from django_countries.fields import Country
@@ -1454,6 +1454,12 @@ class OrderCreateSerializer(I18nAwareModelSerializer):
                     order.invoice_address = ia
                     ia.last_modified = now()
 
+            # Load add-on rules of parent products once, so pricing add-ons does not query per position
+            parent_positionids = {pos_data['addon_to'] for pos_data in positions_data if pos_data.get('addon_to')}
+            prefetch_related_objects(
+                [pos_data['product'] for pos_data in positions_data if pos_data['positionid'] in parent_positionids],
+                'addons',
+            )
             pos_map = {}
             for pos_data in positions_data:
                 answers_data = pos_data.pop('answers', [])
