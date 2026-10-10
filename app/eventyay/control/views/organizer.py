@@ -1,9 +1,12 @@
+import csv
+import io
 from datetime import timedelta
 
 from django import forms
 from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -274,6 +277,11 @@ class LogView(OrganizerPermissionRequiredMixin, PaginationMixin, ListView):
     model = LogEntry
     context_object_name = 'logs'
 
+    def get(self, request, *args, **kwargs):
+        if request.GET.get('download', '') == 'yes':
+            return self._download_csv()
+        return super().get(request, *args, **kwargs)
+
     def get_queryset(self):
         qs = (
             self.request.organizer.all_logentries()
@@ -288,3 +296,90 @@ class LogView(OrganizerPermissionRequiredMixin, PaginationMixin, ListView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data()
         return ctx
+
+    def _download_csv(self):
+        output = io.StringIO()
+        writer = csv.writer(output, quoting=csv.QUOTE_NONNUMERIC, delimiter=',')
+
+        headers = [
+            _('Date/time'),
+            _('User'),
+            _('API token'),
+            _('Device'),
+            _('OAuth application'),
+            _('Event'),
+            _('Action type'),
+            _('Object'),
+            _('Description'),
+            _('Data'),
+            _('Shredded'),
+        ]
+        writer.writerow(headers)
+
+        qs = self.get_queryset()
+        for log in qs:
+            user_str = ''
+            if log.user:
+                user_str = log.user.get_full_name()
+                if log.user.is_staff:
+                    user_str += ' (admin)'
+            elif log.device:
+                user_str = f'Device: {log.device.name}'
+            elif log.api_token:
+                user_str = f'API: {log.api_token.name}'
+            elif log.oauth_application:
+                user_str = f'OAuth: {log.oauth_application.name}'
+
+            api_token_str = log.api_token.name if log.api_token else ''
+            device_str = log.device.name if log.device else ''
+            oauth_str = log.oauth_application.name if log.oauth_application else ''
+            event_str = log.event.slug if log.event else ''
+
+            obj_str = ''
+            if log.display_object:
+                obj_str = str(log.display_object)
+
+            desc_str = ''
+            try:
+                desc_str = log.display()
+            except Exception:
+                desc_str = log.action_type
+
+            data_str = ''
+            if log.data:
+                try:
+                    import json as json_module
+                    data_dict = json_module.loads(log.data)
+                    sensitive_keys = {'password', 'secret', 'token', 'key', 'authorization', 'auth'}
+                    def sanitize_dict(d, path=''):
+                        if isinstance(d, dict):
+                            return {
+                                k: '[REDACTED]' if any(s in k.lower() for s in sensitive_keys) else sanitize_dict(v, f'{path}.{k}')
+                                for k, v in d.items()
+                            }
+                        elif isinstance(d, list):
+                            return [sanitize_dict(item, f'{path}[]') for item in d]
+                        else:
+                            return d
+                    sanitized = sanitize_dict(data_dict)
+                    data_str = json_module.dumps(sanitized, ensure_ascii=False)
+                except Exception:
+                    data_str = log.data
+
+            writer.writerow([
+                log.datetime.isoformat(),
+                user_str,
+                api_token_str,
+                device_str,
+                oauth_str,
+                event_str,
+                log.action_type,
+                obj_str,
+                desc_str,
+                data_str,
+                _('Yes') if log.shredded else _('No'),
+            ])
+
+        r = HttpResponse(output.getvalue().encode('utf-8'), content_type='text/csv')
+        r['Content-Disposition'] = f'attachment; filename="organizer-logs-{self.request.organizer.slug}.csv"'
+        return r

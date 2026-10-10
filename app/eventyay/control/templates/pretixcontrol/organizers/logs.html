@@ -20,6 +20,9 @@
                 {% endfor %}
             </select>
             <button class="btn btn-primary" type="submit">{% trans "Filter" %}</button>
+            <a href="?download=yes{% if request.GET.user %}&user={{ request.GET.user }}{% endif %}{% if request.GET.content_type %}&content_type={{ request.GET.content_type }}{% endif %}{% if request.GET.object %}&object={{ request.GET.object }}{% endif %}" class="btn btn-default">
+                <span class="fa fa-download fa-fw"></span> {% trans "Export CSV" %}
+            </a>
         </p>
     </form>
     <ul class="list-group">

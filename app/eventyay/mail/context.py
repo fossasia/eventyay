@@ -191,7 +191,7 @@ _('The general CfP deadline'),
         SimpleFunctionalMailTextPlaceholder(
             'contact_email',
             ['event'],
-            lambda event: event.organizer.primary_contact_email if hasattr(event, 'organizer') and event.organizer.primary_contact_email else '',
+            lambda event: event.organizer.billing.primary_contact_email if hasattr(event, 'organizer') and hasattr(event.organizer, 'billing') and event.organizer.billing.primary_contact_email else '',
             lambda event: 'organizer@example.org',
             _('The event\'s contact email address'),
         ),
