@@ -1,3 +1,4 @@
+import datetime as dt
 from urllib.parse import parse_qs, urlparse
 
 import pytest
@@ -5,9 +6,10 @@ from django.conf import settings
 from django.core import mail as djmail
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
+from django.utils.timezone import now
 from django_scopes import scope
 
-from eventyay.base.models import SubmissionStates
+from eventyay.base.models import Submission, SubmissionStates
 from eventyay.submission.forms.submission import AUTO_DRAFT_TITLE
 
 
@@ -204,6 +206,126 @@ def test_can_save_partial_draft_submission_without_required_fields(speaker_clien
         assert submission.title == AUTO_DRAFT_TITLE
         assert submission.description == "Updated draft description"
         assert submission.state == SubmissionStates.DRAFT
+
+
+def close_cfp_with_draft(submission, access_code=None):
+    event = submission.event
+    event.talks_published = True
+    event.save()
+    event.cfp.deadline = now() - dt.timedelta(days=1)
+    event.cfp.save()
+    with scope(event=event):
+        submission.state = SubmissionStates.DRAFT
+        submission.access_code = access_code
+        submission.save()
+        return {
+            "title": submission.title,
+            "submission_type": submission.submission_type.pk,
+            "content_locale": submission.content_locale,
+            "description": submission.description,
+            "abstract": submission.abstract,
+            "notes": submission.notes,
+            "resource-TOTAL_FORMS": 0,
+            "resource-INITIAL_FORMS": 0,
+            "resource-MIN_NUM_FORMS": 0,
+            "resource-MAX_NUM_FORMS": 1000,
+            "action": "dedraft",
+        }
+
+
+@pytest.mark.django_db
+def test_draft_with_access_code_can_be_submitted_after_deadline(speaker_client, submission, access_code):
+    access_code.maximum_uses = 1
+    access_code.save()
+    data = close_cfp_with_draft(submission, access_code)
+
+    response = speaker_client.post(submission.urls.user_base, follow=True, data=data)
+
+    assert response.status_code == 200
+    with scope(event=submission.event):
+        submission.refresh_from_db()
+        assert submission.state == SubmissionStates.SUBMITTED
+    access_code.refresh_from_db()
+    assert access_code.redeemed == 1
+
+
+@pytest.mark.django_db
+def test_draft_without_access_code_cannot_be_submitted_after_deadline(speaker_client, submission):
+    data = close_cfp_with_draft(submission)
+
+    speaker_client.post(submission.urls.user_base, follow=True, data=data)
+
+    with scope(event=submission.event):
+        submission.refresh_from_db()
+        assert submission.state == SubmissionStates.DRAFT
+
+
+@pytest.mark.django_db
+def test_draft_with_used_up_access_code_cannot_be_submitted_after_deadline(speaker_client, submission, access_code):
+    access_code.maximum_uses = 1
+    access_code.redeemed = 1
+    access_code.save()
+    data = close_cfp_with_draft(submission, access_code)
+
+    speaker_client.post(submission.urls.user_base, follow=True, data=data)
+
+    with scope(event=submission.event):
+        submission.refresh_from_db()
+        assert submission.state == SubmissionStates.DRAFT
+    access_code.refresh_from_db()
+    assert access_code.redeemed == 1
+
+
+@pytest.mark.django_db
+def test_draft_with_used_up_access_code_does_not_redeem_it_while_cfp_is_open(speaker_client, submission, access_code):
+    access_code.maximum_uses = 1
+    access_code.redeemed = 1
+    access_code.save()
+    data = close_cfp_with_draft(submission, access_code)
+    submission.event.cfp.deadline = now() + dt.timedelta(days=1)
+    submission.event.cfp.save()
+
+    speaker_client.post(submission.urls.user_base, follow=True, data=data)
+
+    with scope(event=submission.event):
+        submission.refresh_from_db()
+        assert submission.state == SubmissionStates.SUBMITTED
+    access_code.refresh_from_db()
+    assert access_code.redeemed == 1
+
+
+@pytest.mark.django_db
+def test_saving_draft_with_access_code_does_not_redeem_it(client, user, event, access_code):
+    access_code.maximum_uses = 1
+    access_code.save()
+    event.talks_published = True
+    event.save()
+    event.cfp.deadline = now() - dt.timedelta(days=1)
+    event.cfp.save()
+    client.force_login(user)
+    response = client.get(f"{event.cfp.urls.submit}?access_code={access_code.code}", follow=True)
+    with scope(event=event):
+        submission_type = event.cfp.default_type.pk
+
+    client.post(
+        response.redirect_chain[-1][0],
+        data={
+            "title": "Late talk",
+            "submission_type": submission_type,
+            "content_locale": "en",
+            "description": "Description",
+            "abstract": "Abstract",
+            "action": "draft",
+        },
+        follow=True,
+    )
+
+    with scope(event=event):
+        draft = Submission.all_objects.get(event=event, state=SubmissionStates.DRAFT)
+        assert draft.access_code == access_code
+        assert draft.editable
+    access_code.refresh_from_db()
+    assert access_code.redeemed == 0
 
 
 @pytest.mark.django_db

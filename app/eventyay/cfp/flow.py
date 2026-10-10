@@ -11,6 +11,7 @@ from django.contrib import messages
 from django.contrib.auth import login
 from django.core.files.storage import FileSystemStorage
 from django.core.files.uploadedfile import UploadedFile
+from django.db.models import F
 from django.forms import ValidationError
 from django.http import HttpResponseNotAllowed
 from django.shortcuts import redirect
@@ -640,8 +641,9 @@ class InfoStep(GenericFlowStep, FormFlowStep):
         if access_code:
             submission.access_code = access_code
             submission.save()
-            access_code.redeemed += 1
-            access_code.save()
+            if not draft:
+                access_code.redeemed = F('redeemed') + 1
+                access_code.save(update_fields=['redeemed'])
 
         request.submission = submission
 
