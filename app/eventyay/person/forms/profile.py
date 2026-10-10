@@ -144,6 +144,7 @@ class SpeakerProfileForm(
             }
             if field == 'avatar':
                 field_kwargs['max_size'] = settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE]
+                field_kwargs.setdefault('label', _('Profile picture'))
             self.fields[field] = field_class(**field_kwargs)
             custom_widget_class = self.Meta.widgets.get(field)
             if custom_widget_class:
@@ -250,7 +251,9 @@ class SpeakerProfileForm(
             self.fields['social_links'] = forms.CharField(
                 required=False,
                 widget=forms.HiddenInput(),
+                label=_('Social Media'),
             )
+            self._update_cfp_texts('social_links')
 
         # Reorder fields based on configuration
         self.order_fields_by_config('speaker')

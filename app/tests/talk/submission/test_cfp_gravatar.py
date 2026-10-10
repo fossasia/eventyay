@@ -1,7 +1,8 @@
 import pytest
 from django import forms
 from django_scopes import scope
-from eventyay.orga.forms.cfp import CfPSettingsForm
+
+from eventyay.orga.forms.cfp import CfPFieldSettingsForm, CfPSettingsForm
 
 
 def cfp_settings_form_data(event, **overrides):
@@ -57,23 +58,45 @@ def test_cfp_enable_gravatar_missing_key(event):
 
 
 @pytest.mark.django_db
-def test_cfp_settings_form_toggle_gravatar(event):
-    """Test that CfPSettingsForm correctly updates enable_gravatar setting."""
+def test_gravatar_owned_by_profile_picture_settings(event):
+    """Test that Profile Picture settings owns Gravatar and CfPSettingsForm does not disable it."""
     with scope(event=event):
-        # Test disabling Gravatar
-        form_data = cfp_settings_form_data(event, cfp_enable_gravatar=False)
-        form = CfPSettingsForm(obj=event, read_only=False, data=form_data)
-        if form.is_valid():
-            form.save()
-            assert not event.cfp.enable_gravatar
-        else:
-            pytest.fail(f"Form invalid: {form.errors}")
+        # 1. Disable Gravatar through Profile Picture field settings
+        field_form = CfPFieldSettingsForm(
+            data={'enable_gravatar': False, 'label_0': 'Profile picture', 'help_text_0': ''},
+            event=event,
+            target='speaker',
+            field_id='avatar',
+        )
+        assert field_form.is_valid(), field_form.errors
+        field_form.save()
+        event.refresh_from_db()
+        assert not event.cfp.enable_gravatar
 
-        # Test re-enabling Gravatar
-        form_data = cfp_settings_form_data(event, cfp_enable_gravatar=True)
-        form = CfPSettingsForm(obj=event, read_only=False, data=form_data)
-        if form.is_valid():
-            form.save()
-            assert event.cfp.enable_gravatar
-        else:
-            pytest.fail(f"Form invalid: {form.errors}")
+        # 2. Saving unrelated CFP Forms settings does NOT alter or disable Gravatar
+        form_data = cfp_settings_form_data(event)
+        settings_form = CfPSettingsForm(obj=event, read_only=False, data=form_data)
+        assert settings_form.is_valid(), settings_form.errors
+        settings_form.save()
+        event.refresh_from_db()
+        assert not event.cfp.enable_gravatar
+
+        # 3. Enable Gravatar through Profile Picture field settings persists
+        field_form = CfPFieldSettingsForm(
+            data={'enable_gravatar': True, 'label_0': 'Profile picture', 'help_text_0': ''},
+            event=event,
+            target='speaker',
+            field_id='avatar',
+        )
+        assert field_form.is_valid(), field_form.errors
+        field_form.save()
+        event.refresh_from_db()
+        assert event.cfp.enable_gravatar
+
+        # 4. Saving unrelated CFP Forms settings preserves enabled Gravatar
+        form_data = cfp_settings_form_data(event)
+        settings_form = CfPSettingsForm(obj=event, read_only=False, data=form_data)
+        assert settings_form.is_valid(), settings_form.errors
+        settings_form.save()
+        event.refresh_from_db()
+        assert event.cfp.enable_gravatar

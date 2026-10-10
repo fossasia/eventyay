@@ -1,0 +1,55 @@
+{% extends "orga/base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block extra_title %}{% blocktrans with field=field_label %}Field settings: {{ field }}{% endblocktrans %} :: {% endblock extra_title %}
+
+{% block content %}
+    {% blocktrans with field=field_label asvar header_title_var %}Field settings: {{ field }}{% endblocktrans %}
+    {% include "common/includes/header_nav.html" with header_title=header_title_var %}
+
+    <form action="" method="post" class="form-horizontal">
+        {% csrf_token %}
+        {% include "common/forms/errors.html" %}
+
+        <fieldset>
+            <legend>{% translate "Settings" %}</legend>
+            {{ form.label.as_field_group }}
+            {{ form.help_text.as_field_group }}
+            {% if target == 'speaker' and field_id == 'avatar' and form.enable_gravatar %}
+                {{ form.enable_gravatar.as_field_group }}
+            {% endif %}
+        </fieldset>
+
+        <div class="form-group row submit-group">
+            <div class="col-md-9 offset-md-3 col-md-offset-3 d-flex align-items-center">
+                <button type="submit" class="btn btn-primary btn-save mr-2">
+                    {% translate "Save" %}
+                </button>
+                <a href="{% url 'orga:cfp.forms' organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-default btn-cancel mr-auto">
+                    {% translate "Back to forms" %}
+                </a>
+                {% if locales|length == 1 %}
+                    <button type="submit" name="action" value="reset:{{ locales.0 }}" class="btn btn-outline-danger" formnovalidate>
+                        <i class="fa fa-undo"></i> {% translate "Reset to default" %} ({{ locales.0 }})
+                    </button>
+                {% else %}
+                    <div class="dropdown d-inline-block">
+                        <button type="button" class="btn btn-outline-danger dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fa fa-undo"></i> {% translate "Reset to default" %} <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-right">
+                            {% for locale in locales %}
+                                <li>
+                                    <button type="submit" name="action" value="reset:{{ locale }}" class="btn btn-link dropdown-item text-danger text-left w-100" formnovalidate>
+                                        {% blocktrans with lang=locale %}Reset {{ lang }}{% endblocktrans %}
+                                    </button>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </form>
+{% endblock content %}

@@ -4,7 +4,9 @@ from django.core.exceptions import ValidationError
 from django.forms.utils import ErrorDict
 from django.utils.translation import gettext_lazy as _
 
+from eventyay.cfp.constants import CfPLazyI18nString
 from eventyay.common.language import language
+
 
 logger = logging.getLogger(__name__)
 
@@ -113,25 +115,35 @@ class CfPFormMixin:
         if not field or not self.field_configuration:
             return
         field_data = self.field_configuration.get(field_name) or {}
-        field.original_help_text = field_data.get('help_text') or ''
-        if field.original_help_text:
+        if 'help_text' in field_data and field_data['help_text'] is not None:
             from eventyay.base.templatetags.rich_text import rich_text
 
-            field.help_text = rich_text(
-                str(field.original_help_text) + ' ' + str(getattr(field, 'added_help_text', ''))
-            )
+            raw_help_text = field_data.get('help_text') or ''
+            default_help = getattr(field, 'original_help_text', None) or field.help_text
+            if not isinstance(raw_help_text, CfPLazyI18nString):
+                raw_help_text = CfPLazyI18nString(raw_help_text, default=default_help)
+            field.original_help_text = raw_help_text
+            added = str(getattr(field, 'added_help_text', '')).strip()
+            text = (str(raw_help_text) + (' ' + added if added else '')).strip()
+            field.help_text = rich_text(text) if text else ''
+
         stored_label = field_data.get('label')
         if stored_label:
+            default_label = field.label
+            if not isinstance(stored_label, CfPLazyI18nString):
+                stored_label = CfPLazyI18nString(stored_label, default=default_label)
             # Preserve explicit organizer customizations, but avoid pinning cached
             # gettext fallbacks that can block future PO/MO updates.
             label_data = getattr(stored_label, 'data', None)
+            if isinstance(stored_label, dict):
+                label_data = stored_label
             if label_data:
                 english = label_data.get('en', '')
                 has_real_translation = any(
                     v and v != english for k, v in label_data.items() if k != 'en'
                 )
                 with language('en'):
-                    default_english_label = str(field.label or '')
+                    default_english_label = str(default_label or '')
                 has_custom_english = bool(english) and english != default_english_label
             else:
                 has_real_translation = True

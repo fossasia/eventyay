@@ -1,4 +1,5 @@
 import json
+import logging
 
 from django import forms
 from django.db.models import Count, Q
@@ -6,10 +7,9 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import override
 from django_scopes.forms import SafeModelChoiceField, SafeModelMultipleChoiceField
-from i18nfield.forms import I18nFormMixin, I18nModelForm
+from i18nfield.forms import I18nFormField, I18nFormMixin, I18nModelForm, I18nTextarea, I18nTextInput
 from i18nfield.strings import LazyI18nString
-from eventyay.common.forms.fields import I18nRichTextFormField
-from eventyay.common.sanitizers import sanitize_rich_text
+
 from eventyay.base.models import (
     AnswerOption,
     SubmissionType,
@@ -21,12 +21,8 @@ from eventyay.base.models import (
 )
 from eventyay.base.models.cfp import CfP, default_fields
 from eventyay.base.models.question import TalkQuestionRequired
-from eventyay.common.session_video import (
-    ensure_session_video_question,
-    exclude_session_video_from_cfp_questions,
-    get_session_video_question,
-)
-from eventyay.common.forms.fields import ColorField
+from eventyay.cfp.constants import BUILTIN_FIELD_DEFAULTS, TARGET_TO_STEP
+from eventyay.common.forms.fields import ColorField, I18nRichTextFormField
 from eventyay.common.forms.mixins import I18nHelpText, JsonSubfieldMixin, ReadOnlyFlag
 from eventyay.common.forms.renderers import InlineFormRenderer
 from eventyay.common.forms.widgets import (
@@ -36,10 +32,19 @@ from eventyay.common.forms.widgets import (
     HtmlDateTimeInput,
     TextInputWithAddon,
 )
-from eventyay.common.language import get_language_choices_native_with_ui_name
+from eventyay.common.language import get_language_choices_native_with_ui_name, language
+from eventyay.common.sanitizers import sanitize_rich_text
+from eventyay.common.session_video import (
+    ensure_session_video_question,
+    exclude_session_video_from_cfp_questions,
+    get_session_video_question,
+)
 from eventyay.common.text.phrases import phrases
 from eventyay.control.forms import MultipleLanguagesWidget
 from eventyay.orga.utils.colors import generate_random_high_contrast_color
+
+
+logger = logging.getLogger(__name__)
 
 
 class CfPGeneralSettingsForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nFormMixin, forms.Form):
@@ -132,6 +137,7 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
 
     def __init__(self, *args, obj, **kwargs):
         super().__init__(*args, obj=obj, **kwargs)
+        self.fields.pop('cfp_enable_gravatar', None)
         self.length_fields = [
             'title',
             'abstract',
@@ -320,7 +326,6 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
         fields_config = self.instance.cfp.settings.get('fields_config')
 
         self.instance.cfp.settings['count_length_in'] = self.cleaned_data.get('count_length_in') or 'chars'
-        self.instance.cfp.settings['cfp_enable_gravatar'] = self.cleaned_data.get('cfp_enable_gravatar', False)
 
         # Restore fields_config after setting other values (also when it is an empty dict)
         if fields_config is not None:
@@ -932,3 +937,211 @@ class ReminderFilterForm(QuestionFilterForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['questions'].queryset = self.get_question_queryset()
+
+
+class CfPFieldSettingsForm(ReadOnlyFlag, I18nHelpText, I18nFormMixin, forms.Form):
+    label = I18nFormField(
+        label=_('Default label/text'),
+        widget=I18nTextInput,
+        required=False,
+    )
+    help_text = I18nFormField(
+        label=_('Help text'),
+        widget=I18nTextarea,
+        required=False,
+    )
+    enable_gravatar = forms.BooleanField(
+        label=_('Enable Gravatar'),
+        help_text=_('Allow speakers to use Gravatar for their profile picture.'),
+        required=False,
+    )
+
+    def __init__(self, *args, event, target, field_id, **kwargs):
+        self.event = event
+        self.target = target
+        self.field_id = field_id
+        kwargs['locales'] = self.event.locales
+        super().__init__(*args, **kwargs)
+
+        if not (self.target == 'speaker' and self.field_id == 'avatar'):
+            self.fields.pop('enable_gravatar')
+        else:
+            self.initial['enable_gravatar'] = self.event.cfp.enable_gravatar
+            self.fields['enable_gravatar'].initial = self.event.cfp.enable_gravatar
+
+        existing_flow = self.event.cfp.settings.get('flow', {})
+        field_config = self._get_existing_field_config(existing_flow)
+
+        default_def = BUILTIN_FIELD_DEFAULTS.get(self.target, {}).get(self.field_id, {})
+        default_label = default_def.get('label', '')
+        default_help_text = default_def.get('help_text', '')
+
+        initial_label = self._build_initial_i18n(field_config, 'label', default_label)
+        initial_help_text = self._build_initial_i18n(field_config, 'help_text', default_help_text)
+
+        self.initial.setdefault('label', initial_label)
+        self.initial.setdefault('help_text', initial_help_text)
+
+    def _get_existing_field_config(self, flow_data):
+        if isinstance(flow_data, str) and flow_data.strip():
+            try:
+                flow_data = json.loads(flow_data)
+            except (json.JSONDecodeError, ValueError, TypeError):
+                return None
+        step_key = TARGET_TO_STEP.get(self.target, self.target)
+        if not isinstance(flow_data, dict):
+            return None
+        steps = flow_data.get('steps', {})
+        step_data = None
+        if isinstance(steps, dict):
+            step_data = steps.get(step_key)
+        elif isinstance(steps, list):
+            step_data = next((s for s in steps if isinstance(s, dict) and s.get('identifier') == step_key), None)
+        if not isinstance(step_data, dict):
+            return None
+        fields = step_data.get('fields')
+        if isinstance(fields, list):
+            return next((f for f in fields if isinstance(f, dict) and f.get('key') == self.field_id), None)
+        elif isinstance(fields, dict):
+            return fields.get(self.field_id)
+        return None
+
+    def _build_initial_i18n(self, field_config, attr, default_value):
+        data = {}
+        stored_value = field_config.get(attr) if field_config else None
+        stored_data = None
+        if isinstance(stored_value, LazyI18nString):
+            stored_data = stored_value.data
+        elif isinstance(stored_value, dict):
+            stored_data = stored_value
+        elif isinstance(stored_value, str) and stored_value:
+            stored_data = {'en': stored_value}
+
+        for locale in self.event.locales:
+            if stored_data and locale in stored_data and stored_data[locale] is not None:
+                data[locale] = stored_data[locale]
+            else:
+                with language(locale):
+                    data[locale] = str(default_value) if default_value else ''
+        return LazyI18nString(data)
+
+    def _get_or_init_flow_data(self):
+        flow_data = self.event.cfp.settings.get('flow')
+        if isinstance(flow_data, str) and flow_data.strip():
+            try:
+                flow_data = json.loads(flow_data)
+            except (json.JSONDecodeError, ValueError, TypeError):
+                logger.warning("Malformed JSON in event.cfp.settings['flow']")
+                flow_data = None
+
+        if isinstance(flow_data, list):
+            flow_data = {
+                'steps': {s.get('identifier'): s for s in flow_data if isinstance(s, dict) and s.get('identifier')}
+            }
+        elif not isinstance(flow_data, dict):
+            flow_data = {'steps': {}}
+        elif 'steps' not in flow_data or not isinstance(flow_data['steps'], dict):
+            if isinstance(flow_data.get('steps'), list):
+                flow_data['steps'] = {
+                    s.get('identifier'): s
+                    for s in flow_data['steps']
+                    if isinstance(s, dict) and s.get('identifier')
+                }
+            else:
+                flow_data['steps'] = {}
+        return flow_data
+
+    def _ensure_step_data(self, flow_data):
+        step_key = TARGET_TO_STEP.get(self.target, self.target)
+        if step_key not in flow_data['steps'] or not isinstance(flow_data['steps'][step_key], dict):
+            flow_data['steps'][step_key] = {'identifier': step_key, 'fields': []}
+        return flow_data['steps'][step_key]
+
+    def _ensure_field_entry(self, step_data):
+        if 'fields' not in step_data or not isinstance(step_data['fields'], list):
+            if isinstance(step_data.get('fields'), dict):
+                step_data['fields'] = [
+                    {'key': k, **v} if isinstance(v, dict) else {'key': k}
+                    for k, v in step_data['fields'].items()
+                ]
+            else:
+                step_data['fields'] = []
+        fields_list = step_data['fields']
+        field_entry = next((f for f in fields_list if isinstance(f, dict) and f.get('key') == self.field_id), None)
+        if field_entry is None:
+            field_entry = {'key': self.field_id}
+            fields_list.append(field_entry)
+        return field_entry
+
+    def _get_dict_copy(self, val, fallback=None):
+        if isinstance(val, LazyI18nString):
+            return dict(val.data)
+        if isinstance(val, dict):
+            return dict(val)
+        if isinstance(val, str) and val:
+            return {'en': val}
+        if isinstance(fallback, LazyI18nString):
+            return dict(fallback.data)
+        if isinstance(fallback, dict):
+            return dict(fallback)
+        if isinstance(fallback, str) and fallback:
+            return {'en': fallback}
+        return {}
+
+    def reset_locale(self, locale):
+        default_def = BUILTIN_FIELD_DEFAULTS.get(self.target, {}).get(self.field_id, {})
+        with language(locale):
+            default_label = str(default_def.get('label', '')) if default_def.get('label') else ''
+            default_help_text = str(default_def.get('help_text', '')) if default_def.get('help_text') else ''
+
+        flow_data = self._get_or_init_flow_data()
+        step_data = self._ensure_step_data(flow_data)
+        field_entry = self._ensure_field_entry(step_data)
+
+        existing_label = self._get_dict_copy(field_entry.get('label'), {})
+        existing_help_text = self._get_dict_copy(field_entry.get('help_text'), {})
+
+        existing_label[locale] = default_label
+        existing_help_text[locale] = default_help_text
+
+        field_entry['label'] = existing_label
+        field_entry['help_text'] = existing_help_text
+
+        self.event.cfp.settings['flow'] = flow_data
+        self.event.cfp.save(update_fields=['settings'])
+        self.event.__dict__.pop('cfp_flow', None)
+        return self.event.cfp
+
+    def save(self):
+        cleaned_label = self.cleaned_data.get('label')
+        cleaned_help_text = self.cleaned_data.get('help_text')
+
+        label_dict = cleaned_label.data if isinstance(cleaned_label, LazyI18nString) else (cleaned_label or {})
+        help_text_dict = (
+            cleaned_help_text.data if isinstance(cleaned_help_text, LazyI18nString) else (cleaned_help_text or {})
+        )
+
+        flow_data = self._get_or_init_flow_data()
+        step_data = self._ensure_step_data(flow_data)
+        field_entry = self._ensure_field_entry(step_data)
+
+        existing_label = self._get_dict_copy(field_entry.get('label'), {})
+        existing_help_text = self._get_dict_copy(field_entry.get('help_text'), {})
+
+        for loc in self.event.locales:
+            if loc in label_dict:
+                existing_label[loc] = label_dict[loc]
+            if loc in help_text_dict:
+                existing_help_text[loc] = help_text_dict[loc]
+
+        field_entry['label'] = existing_label
+        field_entry['help_text'] = existing_help_text
+
+        self.event.cfp.settings['flow'] = flow_data
+
+        if self.target == 'speaker' and self.field_id == 'avatar' and 'enable_gravatar' in self.cleaned_data:
+            self.event.cfp.settings['cfp_enable_gravatar'] = self.cleaned_data['enable_gravatar']
+
+        self.event.cfp.save(update_fields=['settings'])
+        self.event.__dict__.pop('cfp_flow', None)
+        return self.event.cfp
