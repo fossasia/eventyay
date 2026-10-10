@@ -26,6 +26,7 @@ from eventyay.base.services.system_questions import (
     get_system_question_base_states,
     get_system_question_product_overrides,
 )
+from eventyay.helpers.image_optimize import optimize_question_image
 from eventyay.presale.signals import contact_form_fields_overrides
 
 
@@ -265,8 +266,9 @@ class BaseQuestionsViewMixin:
             answer.answer = value.answer
         elif isinstance(field, forms.FileField):
             if isinstance(value, UploadedFile):
-                answer.file.save(value.name, value)
-                answer.answer = 'file://' + value.name
+                upload = optimize_question_image(value)
+                answer.file.save(upload.name, upload)
+                answer.answer = f'file://{answer.file.name}'
         else:
             answer.answer = value
 

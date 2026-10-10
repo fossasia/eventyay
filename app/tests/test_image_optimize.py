@@ -7,6 +7,7 @@ from PIL import Image
 from eventyay.helpers.image_optimize import (
     MAX_WIDTH,
     OptimizedImages,
+    optimize_question_image,
     optimize_uploaded_image,
 )
 
@@ -23,7 +24,19 @@ def _create_test_image(width: int, height: int, mode: str = 'RGB', format: str =
     )
 
 
-@pytest.mark.parametrize('setting_key', ['logo_image', 'event_logo_image', 'event_preview_image', 'organizer_logo_image', 'organizer_header_image', 'og_image', 'picture'])
+@pytest.mark.parametrize(
+    'setting_key',
+    [
+        'logo_image',
+        'event_logo_image',
+        'event_preview_image',
+        'organizer_logo_image',
+        'organizer_header_image',
+        'og_image',
+        'picture',
+        'question_file',
+    ],
+)
 def test_optimize_uploaded_image_resizes(setting_key):
     max_w = MAX_WIDTH[setting_key]
     orig_w = max_w + 500
@@ -152,6 +165,22 @@ def test_optimize_uploaded_image_invalid_image():
     )
     with pytest.raises(OSError):
         optimize_uploaded_image(upload, 'logo_image')
+
+
+def test_optimize_question_image_converts_raster_upload_to_webp():
+    upload = _create_test_image(2000, 1000, format='PNG')
+    upload.name = 'speaker.png'
+
+    optimized = optimize_question_image(upload)
+
+    assert optimized.name == 'speaker.webp'
+    assert Image.open(optimized).format == 'WEBP'
+
+
+def test_optimize_question_image_preserves_document_upload():
+    upload = SimpleUploadedFile('slides.pdf', b'%PDF-1.7', content_type='application/pdf')
+
+    assert optimize_question_image(upload) is upload
 
 
 def test_optimize_uploaded_image_preserves_animated_gif():

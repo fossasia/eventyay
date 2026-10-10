@@ -13,23 +13,41 @@ Usage::
 import logging
 import os
 import shutil
+from contextlib import nullcontext
 
 from django.conf import settings
-from django.core.management.base import BaseCommand, CommandError
 from django.core.files.storage import default_storage
+from django.core.management.base import BaseCommand, CommandError
+from django.db import transaction
 from django.utils import timezone
 from django_scopes import scopes_disabled
 
-from eventyay.base.models import Submission, User, Product, Room, Event_SettingsStore, Organizer_SettingsStore
+from eventyay.base.models import (
+    Answer,
+    Event,
+    Event_SettingsStore,
+    Organizer_SettingsStore,
+    Product,
+    QuestionAnswer,
+    Room,
+    Submission,
+    User,
+)
 from eventyay.common.image import invalidate_speaker_avatar_caches, is_svg_filename, process_image
+from eventyay.helpers.image_optimize import QUESTION_IMAGE_EXTENSIONS
 
 logger = logging.getLogger(__name__)
 
 IMAGE_TARGETS = {
     'user': (User, 'avatar', True),
+    'profile_picture': (User, 'profile_picture', True),
     'submission': (Submission, 'image', False),
     'product': (Product, 'picture', False),
     'room': (Room, 'picture', False),
+    'event_logo': (Event, 'logo', False),
+    'event_header_image': (Event, 'header_image', False),
+    'question_answer': (Answer, 'answer_file', False, True),
+    'ticket_question_answer': (QuestionAnswer, 'file', False, True),
 }
 
 SETTINGS_KEYS = [
@@ -128,72 +146,104 @@ class Command(BaseCommand):
         min_bytes = min_size_kb * 1024
         stats = {'compressed': 0, 'failed': 0, 'skipped': 0, 'dry_run': 0}
 
-        def process_image_field(image, model_name, pk, generate_thumbnail):
-            if not image or not image.name or is_svg_filename(image.name):
-                stats['skipped'] += 1
-                return
+        def process_image_field(
+            image,
+            model_name,
+            pk,
+            generate_thumbnail,
+            raster_only=False,
+            model=None,
+            field_name=None,
+        ):
+            expected_name = image.name
+            lock = transaction.atomic() if model else nullcontext()
+            with lock:
+                if model:
+                    instance = model.objects.select_for_update().filter(pk=pk).first()
+                    if not instance:
+                        stats['skipped'] += 1
+                        return
+                    image = getattr(instance, field_name)
+                    if image.name != expected_name:
+                        stats['skipped'] += 1
+                        return
 
-            try:
-                size = image.size
-            except (NotImplementedError, AttributeError, OSError):
-                stats['failed'] += 1
-                logger.exception('Could not read size for %s on %s pk=%s', image.name, model_name, pk)
-                self.stderr.write(self.style.ERROR(f'FAILED size read: {model_name} pk={pk} file={image.name}'))
-                return
+                if not image or not image.name or is_svg_filename(image.name):
+                    stats['skipped'] += 1
+                    return
 
-            if size <= min_bytes:
-                stats['skipped'] += 1
-                return
+                if raster_only and os.path.splitext(image.name)[1].lower() not in QUESTION_IMAGE_EXTENSIONS:
+                    stats['skipped'] += 1
+                    return
 
-            try:
-                location = image.path
-            except (NotImplementedError, AttributeError):
-                location = 'remote storage'
-                
-            if dry_run:
-                stats['dry_run'] += 1
-                self.stdout.write(f'WOULD compress {model_name} pk={pk} name={image.name} location={location} size={size / 1024:.2f} KB')
-                return
-
-            # Perform backup
-            try:
-                self._backup_file(image, backup_dir, prefix=f'{model_name}_{pk}')
-            except OSError as e:
-                stats['failed'] += 1
-                self.stderr.write(self.style.ERROR(f'FAILED backup: {model_name} pk={pk} file={image.name} error={e}'))
-                return False
-
-            # Compress
-            if process_image(image=image, generate_thumbnail=generate_thumbnail):
-                stats['compressed'] += 1
                 try:
-                    new_size = image.size
+                    size = image.size
                 except (NotImplementedError, AttributeError, OSError):
-                    new_size = 'unknown'
-                
-                size_kb = f'{size / 1024:.2f} KB'
-                new_size_kb = f'{new_size / 1024:.2f} KB' if isinstance(new_size, int) else 'unknown'
-                
-                self.stdout.write(
-                    self.style.SUCCESS(
-                        f'Compressed {model_name} pk={pk} name={image.name} location={location} (size: {size_kb} -> {new_size_kb})'
+                    stats['failed'] += 1
+                    logger.exception('Could not read size for %s on %s pk=%s', image.name, model_name, pk)
+                    self.stderr.write(self.style.ERROR(f'FAILED size read: {model_name} pk={pk} file={image.name}'))
+                    return
+
+                if size <= min_bytes:
+                    stats['skipped'] += 1
+                    return
+
+                try:
+                    location = image.path
+                except (NotImplementedError, AttributeError):
+                    location = 'remote storage'
+
+                if dry_run:
+                    stats['dry_run'] += 1
+                    self.stdout.write(f'WOULD compress {model_name} pk={pk} name={image.name} location={location} size={size / 1024:.2f} KB')
+                    return
+
+                try:
+                    self._backup_file(image, backup_dir, prefix=f'{model_name}_{pk}')
+                except OSError as e:
+                    stats['failed'] += 1
+                    self.stderr.write(self.style.ERROR(f'FAILED backup: {model_name} pk={pk} file={image.name} error={e}'))
+                    return False
+
+                if process_image(image=image, generate_thumbnail=generate_thumbnail):
+                    stats['compressed'] += 1
+                    try:
+                        new_size = image.size
+                    except (NotImplementedError, AttributeError, OSError):
+                        new_size = 'unknown'
+
+                    size_kb = f'{size / 1024:.2f} KB'
+                    new_size_kb = f'{new_size / 1024:.2f} KB' if isinstance(new_size, int) else 'unknown'
+
+                    self.stdout.write(
+                        self.style.SUCCESS(
+                            f'Compressed {model_name} pk={pk} name={image.name} location={location} (size: {size_kb} -> {new_size_kb})'
+                        )
                     )
-                )
-                return True
-            else:
+                    return True
                 stats['failed'] += 1
                 self.stderr.write(self.style.ERROR(f'FAILED compress: {model_name} pk={pk} file={image.name}'))
                 return False
 
         with scopes_disabled():
             # 1. Process regular models
-            for model_key, (model, field_name, generate_thumbnail) in IMAGE_TARGETS.items():
+            for model_key, target in IMAGE_TARGETS.items():
                 if model_key not in models_to_process:
                     continue
+                model, field_name, generate_thumbnail, *target_options = target
+                raster_only = bool(target_options and target_options[0])
                 queryset = model.objects.exclude(**{f'{field_name}__isnull': True}).exclude(**{field_name: ''})
                 for instance in queryset.iterator(chunk_size=200):
                     image = getattr(instance, field_name)
-                    success = process_image_field(image, model.__name__, instance.pk, generate_thumbnail)
+                    success = process_image_field(
+                        image,
+                        model.__name__,
+                        instance.pk,
+                        generate_thumbnail,
+                        raster_only,
+                        model,
+                        field_name,
+                    )
                     if success and model is User:
                         invalidate_speaker_avatar_caches(instance)
                         
