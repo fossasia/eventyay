@@ -1309,6 +1309,9 @@ a.event-public-text-link:visited {
   a[href]::after {
     content: " (" attr(href) ")";
   }
+  a.header-tab[href]::after {
+    content: "";
+  }
   a[href^="#"]::after {
     content: "";
   }
@@ -1316,6 +1319,24 @@ a.event-public-text-link:visited {
   /* Match pre-linkify print: hero/content title links should not show raw URLs */
   a.event-public-text-link[href]::after {
     content: "";
+  }
+
+  body.is-printing-fullscreen .header,
+  body.is-printing-fullscreen .event-hero,
+  body.is-printing-fullscreen #header-tabs,
+  body.is-printing-fullscreen .footer,
+  body.is-printing-fullscreen footer,
+  body.is-printing-fullscreen #event-nonpublic,
+  body.is-printing-fullscreen #event-testmode,
+  body.is-printing-fullscreen .event-home-back {
+    display: none !important;
+  }
+
+  body.is-printing-fullscreen #main-container {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
   }
 
   nav.navbar {

@@ -661,6 +661,8 @@ export default {
 	mounted() {
 		document.addEventListener('click', this.outsideClick, true)
 		document.addEventListener('fullscreenchange', this.onFullscreenChange)
+		window.addEventListener('beforeprint', this.onBeforePrint)
+		window.addEventListener('afterprint', this.onAfterPrint)
 		if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
 			this._stackedToolbarMq = window.matchMedia(`(max-width: ${STACKED_TOOLBAR_MAX_WIDTH}px)`)
 			this._onStackedToolbarMqChange = () => {
@@ -695,6 +697,8 @@ export default {
 	beforeUnmount() {
 		document.removeEventListener('click', this.outsideClick, true)
 		document.removeEventListener('fullscreenchange', this.onFullscreenChange)
+		window.removeEventListener('beforeprint', this.onBeforePrint)
+		window.removeEventListener('afterprint', this.onAfterPrint)
 		if (this._stackedToolbarMq && this._onStackedToolbarMqChange) {
 			if (typeof this._stackedToolbarMq.removeEventListener === 'function') {
 				this._stackedToolbarMq.removeEventListener('change', this._onStackedToolbarMqChange)
@@ -911,6 +915,14 @@ export default {
 		onFullscreenChange() {
 			this.isFullscreen = !!document.fullscreenElement
 			this.$emit('fullscreen-change', this.isFullscreen)
+		},
+		onBeforePrint() {
+			if (this.isFullscreen) {
+				document.body.classList.add('is-printing-fullscreen')
+			}
+		},
+		onAfterPrint() {
+			document.body.classList.remove('is-printing-fullscreen')
 		},
 		printSchedule() {
 			window.print()
