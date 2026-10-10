@@ -192,6 +192,11 @@ const routes = [
 				}]
 			},
 			{
+				path: 'event/interpretation',
+				name: 'admin:interpretation',
+				component: () => import('views/admin/interpretation')
+			},
+			{
 				path: 'event/kiosks',
 				name: 'admin:kiosks:index',
 				component: () => import('views/admin/kiosks/index')
@@ -273,6 +278,12 @@ export function checkRoutePermission(to) {
 				room.modules?.some(module => ['channel.janus', 'channel.zoom', 'channel.jitsi'].includes(module.type))
 			if (isChatRoom) return false
 		}
+	}
+	if (name === 'admin:interpretation') {
+		const hasPlugin = window.eventyay?.plugins?.some(p => p.includes('interpretation')) || false
+		const hasValidUrl = window.eventyay?.interpretationUrl && window.eventyay.interpretationUrl !== '/missing-url-registration/'
+		if (!hasPlugin || !hasValidUrl) return false
+		return isAdmin || hasPerm('world:update')
 	}
 	if (isAdmin) return true
 	if (name === 'admin:config') {

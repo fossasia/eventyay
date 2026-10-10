@@ -162,6 +162,8 @@ class VideoSPAView(View):
                 'hasOrganiserPermissions': can_manage,
                 'publicVideoUrl': f'/{event.organizer.slug}/{event.slug}/video',
                 'homeUrl': safe_reverse('eventyay_common:event.index', organizer=event.organizer.slug, event=event.slug),
+                'plugins': event.get_plugins() if hasattr(event, 'get_plugins') else [],
+                'interpretationUrl': safe_reverse('plugins:interpretation:dashboard', organizer=event.organizer.slug, event=event.slug),
                 'ticketUrl': safe_reverse('control:event.index', organizer=event.organizer.slug, event=event.slug) if has_ticket_access else None,
                 'talkUrl': safe_reverse('orga:event.dashboard', organizer=event.organizer.slug, event=event.slug) if has_talk_access else None,
                 'videoUrl': f'/video/event/{event.organizer.slug}/{event.slug}/',

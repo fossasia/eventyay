@@ -55,6 +55,12 @@
 				.card-details
 					.card-title {{ $t('Rooms & Stages') }}
 					.card-desc {{ $t('Create, configure and manage video rooms') }}
+			router-link.action-card(:to="{name: 'admin:interpretation'}", v-if="(hasPermission('world:update') || isAdminMode) && isInterpretationEnabled")
+				.card-icon
+					i.mdi.mdi-translate
+				.card-details
+					.card-title {{ $t('Interpretation') }}
+					.card-desc {{ $t('A plugin for live interpretation of video streams') }}
 			router-link.action-card(:to="{name: 'admin:announcements'}", v-if="(hasPermission('world:announce') || isAdminMode) && Boolean(liveFeatures.announcements)")
 				.card-icon
 					i.mdi.mdi-bullhorn
@@ -204,7 +210,15 @@ export default {
 		},
 		hasModuleNav() {
 			return Boolean(window.eventyay?.isOrganizerArea || this.homeUrl)
-		}
+		},
+		interpretationUrl() {
+			return window.eventyay?.interpretationUrl || '#'
+		},
+		isInterpretationEnabled() {
+			const hasPlugin = window.eventyay?.plugins?.some(p => p.includes('interpretation')) || false
+			const hasValidUrl = window.eventyay?.interpretationUrl && window.eventyay.interpretationUrl !== '/missing-url-registration/'
+			return hasPlugin && hasValidUrl
+		},
 	},
 	methods: {
 		getRoomTypeLabel(room) {

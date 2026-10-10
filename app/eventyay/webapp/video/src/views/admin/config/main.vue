@@ -9,6 +9,7 @@
 		.ui-form-body(v-if="loaded")
 			.config-tabs(role="tablist")
 				button.tab-btn(type="button", role="tab", v-if="hasGeneral", :class="{active: activeTab === 'general'}", @click="activeTab = 'general'") {{ $t('General & Live Features') }}
+				button.tab-btn(type="button", role="tab", v-if="hasInterpretation", :class="{active: activeTab === 'interpretation'}", @click="activeTab = 'interpretation'") {{ $t('Interpretation') }}
 				button.tab-btn(type="button", role="tab", v-if="hasBBB", :class="{active: activeTab === 'bbb'}", @click="activeTab = 'bbb'") {{ $t('BigBlueButton') }}
 				button.tab-btn(type="button", role="tab", v-if="hasZoom", :class="{active: activeTab === 'zoom'}", @click="activeTab = 'zoom'") {{ $t('Zoom') }}
 				button.tab-btn(type="button", role="tab", v-if="hasJitsi", :class="{active: activeTab === 'jitsi'}", @click="activeTab = 'jitsi'") {{ $t('Jitsi Meet') }}
@@ -76,6 +77,11 @@
 					template(#default="{focus, blur}")
 						textarea(@focus="focus", @blur="blur", v-model="hlsConfig")
 				.json-error-message(v-if="v$.hlsConfig.$invalid") {{ v$.hlsConfig.$errors[0]?.$message || $t('Invalid JSON') }}
+			.tab-content(v-if="hasInterpretation", v-show="activeTab === 'interpretation'")
+				h2 {{ $t('Enable Interpretation') }}
+				bunt-checkbox(v-model="config.interpretation.is_enabled", :label="$t('Enable live interpretation for this event')", name="interpretation_is_enabled")
+				bunt-checkbox(v-model="config.interpretation.use_plugin_streams", :label="$t('Use plugin language streams in the video room')", name="interpretation_use_plugin_streams")
+				p.help-block(v-if="config.interpretation.use_plugin_streams", style="margin-left: 32px; color: #64748b; font-size: 13px; max-width: 600px; line-height: 1.4;") {{ $t('When enabled, the video room audio translation dropdown reads language streams from this plugin instead of the core video room module.') }}
 	.ui-form-actions(v-if="loaded")
 		bunt-button.btn-save(@click="save", :loading="saving", :error-message="error") {{ $t('Save') }}
 		.errors {{ validationErrors.join(', ') }}
@@ -97,9 +103,11 @@ const hasZoom = computed(() => Boolean(store.getters['hasPermission']?.('world:r
 const hasJitsi = computed(() => Boolean(store.getters['hasPermission']?.('world:rooms.create.jitsi') || store.getters['hasPermission']?.('world:rooms.create.stage') || store.getters['isAdminMode']))
 const hasJanus = computed(() => Boolean(store.getters['hasPermission']?.('world:rooms.create.chat') || store.getters['hasPermission']?.('world:rooms.create.stage') || store.getters['isAdminMode']))
 const hasStage = computed(() => Boolean(store.getters['hasPermission']?.('world:rooms.create.stage') || store.getters['isAdminMode']))
+const hasInterpretation = computed(() => Boolean(window.eventyay?.plugins?.some(p => p.includes('interpretation'))))
 
 const defaultTab = computed(() => {
 	if (hasGeneral.value) return 'general'
+	if (hasInterpretation.value) return 'interpretation'
 	if (hasBBB.value) return 'bbb'
 	if (hasZoom.value) return 'zoom'
 	if (hasJitsi.value) return 'jitsi'
@@ -112,6 +120,7 @@ const activeTab = ref(defaultTab.value)
 watch([hasGeneral, hasBBB, hasZoom, hasJitsi, hasJanus, hasStage], () => {
 	const validTabs = []
 	if (hasGeneral.value) validTabs.push('general')
+	if (hasInterpretation.value) validTabs.push('interpretation')
 	if (hasBBB.value) validTabs.push('bbb')
 	if (hasZoom.value) validTabs.push('zoom')
 	if (hasJitsi.value) validTabs.push('jitsi')
@@ -166,6 +175,10 @@ const config = ref({
 		enable_platform_chat: true,
 		enable_platform_qa: false,
 		enable_platform_polls: false
+	},
+	interpretation: {
+		is_enabled: false,
+		use_plugin_streams: false
 	}
 })
 const hlsConfig = ref('')
@@ -236,9 +249,27 @@ async function fetchConfig() {
 				kiosks: false,
 				direct_messaging: false,
 				announcements: false
-			}, data.live_features || {})
+			}, data.live_features || {}),
+			interpretation: {
+				is_enabled: false,
+				use_plugin_streams: false
+			}
 		}
 		hlsConfig.value = data.video_player?.['hls.js'] ? JSON.stringify(data.video_player['hls.js'], null, 2) : ''
+		if (hasInterpretation.value && window.eventyay?.interpretationUrl) {
+			try {
+				const response = await fetch(window.eventyay.interpretationUrl, { credentials: 'same-origin' })
+				if (response.ok) {
+					const html = await response.text()
+					const parser = new DOMParser()
+					const doc = parser.parseFromString(html, 'text/html')
+					config.value.interpretation.is_enabled = doc.querySelector('input[name="interpretation-interpretation_is_enabled"]')?.checked || false
+					config.value.interpretation.use_plugin_streams = doc.querySelector('input[name="interpretation-interpretation_use_plugin_streams"]')?.checked || false
+				}
+			} catch (e) {
+				console.error('Failed to fetch interpretation settings', e)
+			}
+		}
 		loaded.value = true
 	} catch (e) {
 		error.value = e.message || e.toString()
@@ -305,6 +336,28 @@ async function save() {
 			}
 		}
 		const updated = await api.call('world.config.patch', patch)
+		if (hasInterpretation.value && window.eventyay?.interpretationUrl) {
+			try {
+				const csrfToken = document.cookie.split('; ').find(row => row.startsWith('eventyay_csrftoken='))?.split('=')[1] || window.eventyay?.csrfToken
+				const formData = new URLSearchParams()
+				if (csrfToken) formData.append('csrfmiddlewaretoken', csrfToken)
+				formData.append('interpretation_event_settings_save', '1')
+				if (config.value.interpretation.is_enabled) formData.append('interpretation-interpretation_is_enabled', 'on')
+				if (config.value.interpretation.use_plugin_streams) formData.append('interpretation-interpretation_use_plugin_streams', 'on')
+				
+				await fetch(window.eventyay.interpretationUrl, {
+					method: 'POST',
+					credentials: 'same-origin',
+					headers: {
+						'Content-Type': 'application/x-www-form-urlencoded',
+						...(csrfToken ? {'X-CSRFToken': csrfToken} : {})
+					},
+					body: formData.toString()
+				})
+			} catch (e) {
+				console.error('Failed to save interpretation settings', e)
+			}
+		}
 		if (store.state.world && patch.live_features) {
 			store.state.world.live_features = patch.live_features
 		}
