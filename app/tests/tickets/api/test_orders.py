@@ -4,6 +4,7 @@ import json
 from decimal import Decimal
 from unittest import mock
 
+from eventyay.base.services.orders import OrderError
 import pytest
 from django.core import mail as djmail
 from django.core.files.base import ContentFile
@@ -1419,6 +1420,28 @@ def test_order_mark_paid_expired(token_client, organizer, event, order):
     assert resp.status_code == 400
     order.refresh_from_db()
     assert order.status == Order.STATUS_PAID
+
+
+@pytest.mark.django_db
+def test_order_mark_expired_race_returns_400(token_client, organizer, event, order):
+    # Simulates the order becoming non-pending after the view's initial
+    # status check: the service rejects the transition and the API must
+    # return a client error instead of crashing or reporting success.
+
+    order.status = Order.STATUS_PENDING
+    order.save()
+    with mock.patch(
+        'eventyay.api.views.order.mark_order_expired',
+        side_effect=OrderError('The order is not pending.'),
+    ) as expired:
+        resp = token_client.post(
+            f'/api/v1/organizers/{organizer.slug}/events/{event.slug}/orders/{order.code}/mark_expired/'
+        )
+    expired.assert_called_once()
+    assert resp.status_code == 400
+    assert 'not pending' in resp.data['detail']
+    order.refresh_from_db()
+    assert order.status == Order.STATUS_PENDING
 
 
 @pytest.mark.django_db

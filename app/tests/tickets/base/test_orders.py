@@ -1,6 +1,7 @@
 import json
 from datetime import datetime, timedelta
 from decimal import Decimal
+from unittest import mock
 
 import pytest
 from zoneinfo import ZoneInfo
@@ -35,6 +36,7 @@ from eventyay.base.services.orders import (
     cancel_order,
     deny_order,
     expire_orders,
+    mark_order_expired,
     reactivate_order,
     send_download_reminders,
     send_expiry_warnings,
@@ -339,6 +341,101 @@ def test_expire_twice(event):
     o2 = Order.objects.get(id=o2.id)
     assert o2.status == Order.STATUS_EXPIRED
     assert o2.invoices.count() == 2
+
+
+@pytest.mark.django_db
+def test_mark_order_expired_does_not_overwrite_paid_order(event):
+    o2 = Order.objects.create(
+        code='FO2',
+        event=event,
+        email='dummy@dummy.test',
+        status=Order.STATUS_PENDING,
+        locale='en',
+        datetime=now(),
+        expires=now() - timedelta(days=10),
+        total=12,
+    )
+    generate_invoice(o2)
+    stale = Order.objects.get(id=o2.id)
+    # Simulate the valid payment transition via the real payment path
+    o2.payments.create(provider='manual', amount=o2.total).confirm()
+    assert Order.objects.get(id=o2.id).status == Order.STATUS_PAID
+    invoice_count = Order.objects.get(id=o2.id).invoices.count()
+
+    with pytest.raises(OrderError):
+        mark_order_expired(stale)
+
+    o2 = Order.objects.get(id=o2.id)
+    assert o2.status == Order.STATUS_PAID
+    assert o2.invoices.count() == invoice_count
+    assert not o2.all_logentries().filter(action_type='eventyay.event.order.expired').exists()
+
+
+@pytest.mark.django_db
+def test_mark_order_expired_sends_no_signal_for_paid_order(event):
+    o2 = Order.objects.create(
+        code='FO2',
+        event=event,
+        email='dummy@dummy.test',
+        status=Order.STATUS_PENDING,
+        locale='en',
+        datetime=now(),
+        expires=now() - timedelta(days=10),
+        total=12,
+    )
+    stale = Order.objects.get(id=o2.id)
+    assert stale.status == Order.STATUS_PENDING
+    o2.payments.create(provider='manual', amount=o2.total).confirm()
+    assert Order.objects.get(id=o2.id).status == Order.STATUS_PAID
+    with (
+        mock.patch('eventyay.base.services.orders.order_expired') as expired_signal,
+        pytest.raises(OrderError),
+    ):
+        mark_order_expired(stale)
+    expired_signal.send.assert_not_called()
+    assert Order.objects.get(id=o2.id).status == Order.STATUS_PAID
+
+
+@pytest.mark.django_db
+def test_expire_orders_skips_paid_order_and_continues(event):
+    paid = Order.objects.create(
+        code='PAID',
+        event=event,
+        email='dummy@dummy.test',
+        status=Order.STATUS_PENDING,
+        locale='en',
+        datetime=now(),
+        expires=now() - timedelta(days=10),
+        total=12,
+    )
+    pending = Order.objects.create(
+        code='PEND',
+        event=event,
+        email='dummy@dummy.test',
+        status=Order.STATUS_PENDING,
+        locale='en',
+        datetime=now(),
+        expires=now() - timedelta(days=10),
+        total=12,
+    )
+    generate_invoice(paid)
+    generate_invoice(pending)
+    paid_invoice_count = paid.invoices.count()
+
+    def mock_mark_expired(order, *args, **kwargs):
+        if order.code == 'PAID':
+            Order.objects.filter(pk=order.pk).update(status=Order.STATUS_PAID)
+        return mark_order_expired(order, *args, **kwargs)
+
+    with mock.patch('eventyay.base.services.orders.mark_order_expired', side_effect=mock_mark_expired):
+        expire_orders(None)
+
+    paid.refresh_from_db()
+    assert paid.status == Order.STATUS_PAID
+    assert paid.invoices.count() == paid_invoice_count
+    assert not paid.all_logentries().filter(action_type='eventyay.event.order.expired').exists()
+    pending.refresh_from_db()
+    assert pending.status == Order.STATUS_EXPIRED
 
 
 @pytest.mark.django_db
