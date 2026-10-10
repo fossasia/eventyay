@@ -567,9 +567,6 @@
                             </td>
                             <td class="text-center">{{ field_counts.content_locale }}</td>
                             <td class="text-right text-nowrap">
-                                <button type="button" class="btn btn-sm btn-default content-locale-settings-btn {% if field.value == 'do_not_ask' %}hidden{% endif %}" title="{% translate 'Settings' %}" aria-label="{% translate 'Content Locale settings' %}">
-                                    <i class="fa fa-cog"></i>
-                                </button>
                                 <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='content_locale' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
                                     <i class="fa fa-cog fa-fw"></i>
                                 </a>

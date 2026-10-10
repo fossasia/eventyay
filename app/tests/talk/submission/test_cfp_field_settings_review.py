@@ -360,6 +360,20 @@ def test_session_videos_field_settings_not_exposed(orga_client, event):
         assert response.status_code == 200
         assert url not in response.rendered_content
 
+        # Content Locale has exactly one Settings icon and no duplicate button
+        content = response.rendered_content
+        assert 'content-locale-settings-btn' not in content
+        content_locale_url = reverse(
+            'orga:cfp.forms.field_settings',
+            kwargs={
+                'organizer': event.organizer.slug,
+                'event': event.slug,
+                'target': 'session',
+                'field': 'content_locale',
+            },
+        )
+        assert content.count(f'href="{content_locale_url}"') == 1
+
 
 @pytest.mark.django_db
 def test_cfp_field_settings_post_reset_csp_compatible(orga_client, event):
