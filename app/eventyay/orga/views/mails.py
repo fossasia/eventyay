@@ -32,7 +32,7 @@ from eventyay.common.views.mixins import (
     PermissionRequired,
     Sortable,
 )
-from eventyay.helpers.timezone import format_scheduled_datetime
+from eventyay.helpers.timezone import format_scheduled_datetime, format_timezone_name
 from eventyay.mail.signals import request_pre_send
 from eventyay.orga.forms.mails import (
     DraftRemindersForm,
@@ -734,7 +734,7 @@ class ComposeMailBaseView(EventPermissionRequired, FormView):
                 _('{count} emails have been scheduled for {datetime} ({timezone}).').format(
                     count=len(result),
                     datetime=format_scheduled_datetime(self.request.event, scheduled_at),
-                    timezone=self.request.event.timezone,
+                    timezone=format_timezone_name(self.request.event.timezone),
                 ),
             )
         elif is_draft:

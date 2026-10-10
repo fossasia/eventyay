@@ -1,5 +1,6 @@
 {% load eventurl %}
 {% load i18n %}
+{% load timezone %}
 {% load tz %}
 
 {% if position %}
@@ -18,7 +19,7 @@
                 {{ ev.get_date_range_display }}
                 {% if event.settings.show_times %}
                     {% with tz=event.settings.timezone %}
-                        {{ ev.date_from|timezone:tz|date:"TIME_FORMAT" }} ({{ tz }})
+                        {{ ev.date_from|timezone:tz|date:"TIME_FORMAT" }} ({{ tz|timezone_display }})
                     {% endwith %}
                 {% endif %}
             </td>
@@ -70,7 +71,7 @@
                     {{ event.get_date_range_display }}
                     {% if event.settings.show_times %}
                         {% with tz=event.settings.timezone %}
-                            {{ event.date_from|timezone:tz|date:"TIME_FORMAT" }} ({{ tz }})
+                            {{ event.date_from|timezone:tz|date:"TIME_FORMAT" }} ({{ tz|timezone_display }})
                         {% endwith %}
                     {% endif %}
                 {% endif %}
@@ -111,7 +112,7 @@
                                         {{ groupkey.2.get_date_range_display }}
                                         {% if event.settings.show_times %}
                                             {% with tz=event.settings.timezone %}
-                                                {{ groupkey.2.date_from|timezone:tz|date:"TIME_FORMAT" }} ({{ tz }})
+                                                {{ groupkey.2.date_from|timezone:tz|date:"TIME_FORMAT" }} ({{ tz|timezone_display }})
                                             {% endwith %}
                                         {% endif %}
                                     {% endif %}

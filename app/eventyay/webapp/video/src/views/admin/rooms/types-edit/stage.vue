@@ -72,7 +72,7 @@
 				.fields-grid.datetime-grid(v-if="isScheduledMode")
 					.field-group
 						label.field-label
-							| {{ $t('Start date & time') }} ({{ eventTimezone }})
+							| {{ $t('Start date & time') }} ({{ eventTimezoneLabel }})
 							span.required-star *
 						.input-wrapper.datetime-wrapper
 							input.datetime-input(
@@ -85,7 +85,7 @@
 
 					.field-group
 						label.field-label
-							| {{ $t('End date & time') }} ({{ eventTimezone }})
+							| {{ $t('End date & time') }} ({{ eventTimezoneLabel }})
 							span.required-star *
 						.input-wrapper.datetime-wrapper
 							input.datetime-input(
@@ -98,7 +98,7 @@
 
 					.timezone-hint
 						i.mdi.mdi-clock-outline(aria-hidden="true")
-						| {{ $t('All times shown in the event timezone') }} ({{ eventTimezone }}).
+						| {{ $t('All times shown in the event timezone') }} ({{ eventTimezoneLabel }}).
 
 				.single-stream-scheduled-hint(v-if="streams.length === 1 && isScheduledMode")
 					span {{ $t('This stage has a scheduled time window.') }}
@@ -275,6 +275,9 @@ export default defineComponent({
 		},
 		eventTimezone() {
 			return this.$store.state.world?.timezone || this.$store.state.userTimezone || moment.tz.guess() || 'UTC'
+		},
+		eventTimezoneLabel() {
+			return this.eventTimezone.replace(/_/g, ' ')
 		},
 		isScheduledMode() {
 			return inferPlaybackModeFromStreams(this.streams) === PLAYBACK_MODE_SCHEDULE_DRIVEN

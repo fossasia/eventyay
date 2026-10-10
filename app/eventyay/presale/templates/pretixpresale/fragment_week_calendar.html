@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load timezone %}
 {% load presale_locale %}
 <div class="week-calendar">
     {% for day in days %}
@@ -51,7 +52,7 @@
                                         </strong>
                                     {% endif %}
                                     {% if multiple_timezones %}
-                                        {{ event.timezone }}
+                                        {{ event.timezone|timezone_display }}
                                     {% endif %}
                                 </span>
                             {% endif %}

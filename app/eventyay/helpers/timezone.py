@@ -6,6 +6,11 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from django.utils.formats import date_format
 
 
+def format_timezone_name(timezone: str | None) -> str:
+    """Return a human-readable timezone label without changing its identifier."""
+    return str(timezone).replace('_', ' ') if timezone else ''
+
+
 def get_browser_timezone(tz_string: Optional[str], fallback: str = 'UTC') -> ZoneInfo:
     """
     Resolve a :class:`zoneinfo.ZoneInfo` from user-provided input.

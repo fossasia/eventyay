@@ -8,7 +8,7 @@ const initAvailabilities = (element) => {
     element.insertAdjacentElement("afterend", editor)
     editor.insertAdjacentHTML(
         "beforebegin",
-        `<div class="availabilities-tz-hint">${data.event.timezone}</div>`,
+        `<div class="availabilities-tz-hint">${data.event.timezone.replace(/_/g, " ")}</div>`,
     )
 
     const save_events = () => {
