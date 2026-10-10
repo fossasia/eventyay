@@ -26,7 +26,7 @@
             {% endblocktranslate %}
         </div>
         {% endif %}
-        {% if request.event|get_feature_flag:'use_tracks' and submission.track %}
+        {% if submission.track %}
         <div class="col-auto">
             <span class="text-muted">{% translate 'Track' %}:</span>
             {{ submission.track.name|event_localize }}

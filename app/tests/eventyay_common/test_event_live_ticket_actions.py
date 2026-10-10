@@ -158,3 +158,4 @@ def test_status_badge_stays_visible_next_to_either_action(
     without_ticket = organizer_client.get(live_url).content.decode()
     assert badge in without_ticket
     assert SET_UP_LABEL in without_ticket
+

@@ -598,8 +598,8 @@ class QueuedMailFilterForm(forms.Form):
         self.event = event
         super().__init__(*args, **kwargs)
 
-        # Only show track filter if tracks are enabled
-        if not event.get_feature_flag('use_tracks'):
+        # Only show track filter if the event has tracks
+        if not event.tracks.exists():
             self.fields.pop('track')
         else:
             mail_filter = Q(submissions__mails__event=event)

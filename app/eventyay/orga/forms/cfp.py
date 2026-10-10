@@ -48,11 +48,6 @@ class CfPGeneralSettingsForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18n
     requires an 'obj' argument in __init__ which must be an Event instance with a related 'cfp' object.
     """
 
-    use_tracks = forms.BooleanField(
-        label=_('Use tracks'),
-        required=False,
-        help_text=_('Do you organise your sessions by tracks?'),
-    )
     present_multiple_times = forms.BooleanField(
         label=_('Slot Count'),
         required=False,
@@ -109,7 +104,6 @@ class CfPGeneralSettingsForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18n
     class Meta:
         # These are JSON fields on event.settings
         json_fields = {
-            'use_tracks': 'feature_flags',
             'submission_public_review': 'feature_flags',
             'present_multiple_times': 'feature_flags',
             'mail_on_new_submission': 'mail_settings',
@@ -122,7 +116,7 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
     """
 
     class Meta(CfPGeneralSettingsForm.Meta):
-        # The boolean feature-flag fields (use_tracks, present_multiple_times, etc.) are
+        # The boolean feature-flag fields (present_multiple_times, etc.) are
         # inherited from CfPGeneralSettingsForm but are NOT rendered on the Forms page
         # template.  If JsonSubfieldMixin.save() were to process them here it would read
         # False from the missing POST keys and silently overwrite the stored values.
@@ -440,7 +434,7 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
             if target and 'target' in self.fields:
                 self.initial['target'] = target
                 self.fields['target'].initial = target
-        if not (event.get_feature_flag('use_tracks') and event.tracks.all().count() and event.cfp.request_track):
+        if not (event.tracks.exists() and event.cfp.request_track):
             self.fields.pop('tracks')
         else:
             self.fields['tracks'].queryset = event.tracks.all()
@@ -760,7 +754,7 @@ class SubmitterAccessCodeForm(forms.ModelForm):
         kwargs['initial'] = initial
         super().__init__(*args, **kwargs)
         self.fields['submission_type'].queryset = SubmissionType.objects.filter(event=self.event)
-        if event.get_feature_flag('use_tracks'):
+        if event.tracks.exists():
             self.fields['track'].queryset = Track.objects.filter(event=self.event)
         else:
             self.fields.pop('track')
@@ -871,7 +865,7 @@ class QuestionFilterForm(forms.Form):
         self.event = event
         super().__init__(*args, **kwargs)
         self.fields['submission_type'].queryset = SubmissionType.objects.filter(event=event)
-        if not event.get_feature_flag('use_tracks'):
+        if not event.tracks.exists():
             self.fields.pop('track', None)
         elif 'track' in self.fields:
             self.fields['track'].queryset = event.tracks.all()

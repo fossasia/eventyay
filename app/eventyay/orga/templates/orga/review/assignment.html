@@ -35,12 +35,13 @@
                 <i class="fa fa-plus"></i> {% translate "New team" %}
             </a>
         </div>
+        {% with has_tracks=request.event.tracks.exists %}
         <table class="table table-sm table-flip">
             <thead>
                 <tr>
                     <th class="col col-md-4">{% translate "Team" %}</th>
                     <th class="col col-md-3">{% translate "Members" %}</th>
-                    {% if request.event|get_feature_flag:"use_tracks" %}
+                    {% if has_tracks %}
                         <th class="col col-md-3">{% translate "Limited to tracks" %}</th>
                     {% endif %}
                     <th></th>
@@ -74,7 +75,7 @@
                                 -
                             {% endif %}
                         </td>
-                        {% if request.event|get_feature_flag:"use_tracks" %}
+                        {% if has_tracks %}
                             <td>
                                 {% for track in team.limit_tracks.all %}
                                     <span class="badge color-secondary">{{ track.name }}</span>
@@ -107,6 +108,7 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% endwith %}
     </section>
     <section role="tabpanel" id="tabpanel-individual" aria-labelledby="tab-individual" tabindex="0" aria-hidden="false">
 

@@ -80,6 +80,7 @@
 
     <div data-ajax-results-region>
     <div class="table-responsive-sm">
+
         <table class="table table-sm table-flip table-sticky">
             <thead>
                 <tr>
@@ -96,7 +97,7 @@
                             <a href="{% querystring sort="-submission_type__name" %}"><i class="fa fa-caret-up" title="{% translate "Sort (z-a)" %}"></i></a>
                         </th>
                     {% endif %}
-                    {% if request.event|get_feature_flag:"use_tracks" %}
+                    {% if show_tracks %}
                         <th>
                             {% translate "Track" %}
                             <a href="{% querystring sort="track__name" %}"><i class="fa fa-caret-down" title="{% translate "Sort (a-z)" %}"></i></a>
@@ -148,7 +149,7 @@
                             </td>
                         {% endif %}
                         {% if show_submission_types %}<td>{{ submission.submission_type.name }}</td>{% endif %}
-                        {% if request.event|get_feature_flag:"use_tracks" %}
+                        {% if show_tracks %}
                             <td>
                                 {% if submission.track %}
                                     {% if submission.is_anonymised %}
@@ -215,6 +216,7 @@
                 {% endfor %}
             </tbody>
         </table>
+
     </div>
 
     {% include "orga/includes/pagination.html" %}

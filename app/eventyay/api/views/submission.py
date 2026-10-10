@@ -715,6 +715,7 @@ class TrackViewSet(CachedCatalogListMixin, PretalxViewSetMixin, viewsets.ModelVi
     endpoint = 'tracks'
     search_fields = ('name',)
     allow_public_read = True
+    write_permission = 'can_change_event_settings'
     catalog_name = 'tracks'
     catalog_max_age = 3600
 

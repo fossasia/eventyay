@@ -86,7 +86,7 @@ class OutboxList(EventPermissionRequired, Sortable, Filterable, PaginationMixin,
     @context
     @cached_property
     def show_tracks(self):
-        return self.request.event.get_feature_flag('use_tracks')
+        return self.request.event.tracks.exists()
 
     @context
     @cached_property
@@ -127,7 +127,7 @@ class SentMail(EventPermissionRequired, Sortable, Filterable, PaginationMixin, L
     @context
     @cached_property
     def show_tracks(self):
-        return self.request.event.get_feature_flag('use_tracks')
+        return self.request.event.tracks.exists()
 
 
 class DraftList(OutboxList):

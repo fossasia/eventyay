@@ -1060,10 +1060,11 @@ class EventLive(TemplateView):
                         'url': cfp.urls.text,
                     }
                 )
+            with scope(event=self.request.event):
+                track_count = self.request.event.tracks.count()
             if (
-                self.request.event.get_feature_flag('use_tracks')
-                and cfp.request_track
-                and self.request.event.tracks.count() < 2
+                cfp.request_track
+                and track_count == 0
             ):
                 suggestions.append(
                     {

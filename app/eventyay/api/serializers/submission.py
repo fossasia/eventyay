@@ -4,6 +4,7 @@ from drf_spectacular.utils import extend_schema_field
 from rest_flex_fields.serializers import FlexFieldsSerializerMixin
 from rest_framework import exceptions, serializers
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
+from django_scopes import scope
 
 from eventyay.api.mixins import PretalxSerializer
 from eventyay.api.serializers.fields import UploadedFileField
@@ -144,7 +145,11 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
         # many=True fields are wrapped in ManyRelatedField; the live queryset lives on child_relation.
         self.fields['tags'].child_relation.queryset = self.event.tags.all()
 
-        if not self.event.get_feature_flag('use_tracks'):
+        has_tracks = False
+        if self.event:
+            with scope(event=self.event):
+                has_tracks = self.event.tracks.exists()
+        if not has_tracks:
             self.fields.pop('track', None)
         request_require_fields = [
             'title',

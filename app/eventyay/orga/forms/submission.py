@@ -79,7 +79,7 @@ class SubmissionForm(ReadOnlyFlag, RequestRequire, forms.ModelForm):
             self.fields['slides'].set_max_items(get_slides_max_count(self.event))
         if not event.get_feature_flag('present_multiple_times'):
             self.fields.pop('slot_count', None)
-        if not event.get_feature_flag('use_tracks'):
+        if not event.tracks.exists():
             self.fields.pop('track', None)
         elif 'track' in self.fields:
             self.fields['track'].queryset = event.tracks.all()

@@ -121,7 +121,7 @@ class InfoForm(
     def _set_track(self, instance=None):
         if 'track' in self.fields:
             if (
-                not self.event.get_feature_flag('use_tracks')
+                not self.event.tracks.exists()
                 or instance
                 and instance.state != SubmissionStates.SUBMITTED
             ):

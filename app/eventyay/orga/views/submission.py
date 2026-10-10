@@ -1,3 +1,4 @@
+from django_scopes import scope
 import json
 from collections import Counter
 from dataclasses import replace
@@ -850,11 +851,12 @@ class SubmissionList(EventPermissionRequired, BaseSubmissionList):
         return self.get_queryset().filter(pending_state__isnull=False).count()
 
     @context
+    @cached_property
     def show_tracks(self):
-        if self.request.event.get_feature_flag('use_tracks'):
+        with scope(event=self.request.event):
             if self.limit_tracks:
                 return len(self.limit_tracks) > 1
-            return self.request.event.tracks.all().count() > 1
+            return self.request.event.tracks.count() > 1
 
     @context
     def session_videos_enabled(self):
@@ -877,7 +879,7 @@ class SubmissionList(EventPermissionRequired, BaseSubmissionList):
                 urls = []
             submission.session_video_urls = urls
             submission.session_video_urls_json = json.dumps(urls)
-        if self.request.event.get_feature_flag('use_tracks'):
+        if self.request.event.tracks.exists():
             ctx['track_colors'] = {
                 track.pk: track.color
                 for track in self.request.event.tracks.all()
@@ -1092,7 +1094,8 @@ class SubmissionStatsMixin:
     def show_tracks(self):
         if not self.can_view_submission_stats:
             return False
-        return bool(self.request.event.get_feature_flag('use_tracks'))
+        with scope(event=self.request.event):
+            return bool(self.request.event.tracks.exists())
 
     @context
     @cached_property
