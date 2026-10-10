@@ -1,8 +1,14 @@
+import json
 from types import SimpleNamespace
 
 import pytest
+from django.core.cache import cache
+from django.template.loader import render_to_string
+from django.utils import translation
 from django_scopes import scope
 
+from eventyay.agenda.management.commands.export_schedule_html import event_urls
+from eventyay.agenda.views.schedule import schedule_messages
 from eventyay.agenda.views.widget import color_etag, event_css
 
 
@@ -241,3 +247,73 @@ def test_event_css_etag_returns_none_string_when_no_colors_are_set(rf):
     request.event = make_event(primary_color='')
 
     assert color_etag(request) == 'none'
+
+
+def test_schedule_messages_caches_per_language(rf):
+    cache.clear()
+    try:
+        # 1. Chinese request
+        with translation.override('zh-hans'):
+            req_zh = rf.get('/widget/messages.js', HTTP_ACCEPT_LANGUAGE='zh-CN,zh;q=0.9')
+            res_zh = schedule_messages(req_zh)
+            assert res_zh.status_code == 200
+            assert 'Accept-Language' in res_zh.get('Vary', '')
+            assert 'Cookie' in res_zh.get('Vary', '')
+            data_zh = json.loads(
+                res_zh.content.decode().replace('const PRETALX_MESSAGES = ', '').rstrip(';')
+            )
+            assert data_zh['search'] == '搜索'
+            assert data_zh['yes'] == '是'
+
+        # 2. English request - must get English, not Chinese cached response
+        with translation.override('en'):
+            req_en = rf.get('/widget/messages.js', HTTP_ACCEPT_LANGUAGE='en-US,en;q=0.9')
+            res_en = schedule_messages(req_en)
+            assert res_en.status_code == 200
+            assert 'Accept-Language' in res_en.get('Vary', '')
+            assert 'Cookie' in res_en.get('Vary', '')
+            data_en = json.loads(
+                res_en.content.decode().replace('const PRETALX_MESSAGES = ', '').rstrip(';')
+            )
+            assert data_en['search'] == 'Search'
+            assert data_en['yes'] == 'Yes'
+    finally:
+        cache.clear()
+
+
+def test_pretalx_messages_script_tag_includes_version():
+    request = SimpleNamespace(
+        user=SimpleNamespace(is_anonymous=True, is_authenticated=False),
+        event=SimpleNamespace(urls=SimpleNamespace(schedule='https://example.com/schedule/')),
+    )
+    rendered = render_to_string('agenda/includes/pretalx_messages_script.html', {'request': request})
+    assert 'widget/messages.js?v=10' in rendered
+
+
+def test_export_schedule_html_event_urls_includes_versioned_messages_js(mocker):
+    fake_urls = SimpleNamespace(
+        base='https://test/base/',
+        schedule='https://test/schedule/',
+        schedule_nojs='https://test/schedule/nojs/',
+        schedule_widget_data='https://test/schedule/widget/data/',
+        featured='https://test/schedule/featured/',
+        talks='https://test/schedule/talks/',
+        speakers='https://test/schedule/speakers/',
+        changelog='https://test/schedule/changelog/',
+        feed='https://test/schedule/feed/',
+    )
+    fake_event = SimpleNamespace(
+        urls=fake_urls,
+        schedules=mocker.MagicMock(filter=mocker.MagicMock(return_value=[])),
+        talks=[],
+        speakers=[],
+    )
+    mocker.patch(
+        'eventyay.agenda.management.commands.export_schedule_html.register_data_exporters.send',
+        return_value=[],
+    )
+
+    urls = list(event_urls(fake_event))
+    assert 'https://test/schedule/widget/messages.js?v=10' in urls
+
+

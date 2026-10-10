@@ -21,6 +21,7 @@ from django.utils.http import urlencode
 from django.utils.translation import get_language, gettext_lazy as _, pgettext_lazy
 from django.views.decorators.cache import cache_page
 from django.views.decorators.http import require_http_methods
+from django.views.decorators.vary import vary_on_headers
 from django.views.generic import TemplateView
 from django_context_decorator import context
 
@@ -387,7 +388,8 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
         return ctx
 
 
-@cache_page(60 * 60 * 24, key_prefix='schedule-messages-v9')
+@cache_page(60 * 60 * 24, key_prefix='schedule-messages-v10')
+@vary_on_headers('Accept-Language', 'Cookie')
 def schedule_messages(request, **kwargs):
     """Cached for static exports; bump key_prefix when message keys or copy change."""
     strings = {

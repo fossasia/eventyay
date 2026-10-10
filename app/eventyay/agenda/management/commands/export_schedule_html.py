@@ -104,7 +104,7 @@ def schedule_version_urls(event):
 def event_urls(event):
     yield event.urls.base
     yield event.urls.schedule
-    yield event.urls.schedule + 'widget/messages.js'
+    yield event.urls.schedule + 'widget/messages.js?v=10'
     yield event.urls.schedule_nojs
     yield event.urls.schedule_widget_data
     yield from schedule_version_urls(event)
