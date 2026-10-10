@@ -9,6 +9,7 @@ from django.core.exceptions import SuspiciousFileOperation
 from django.core.files import File
 from django.core.files.storage import Storage
 
+from eventyay.base.services import http
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 
 """
@@ -103,7 +104,7 @@ class NanoCDNStorage(Storage):
         return NanoCDNFile(name, self, mode)
 
     def _read(self, name):
-        resp = requests.get(urllib.parse.urljoin(self.base_url, name), stream=True)
+        resp = http.get(urllib.parse.urljoin(self.base_url, name), stream=True)
         if resp.status_code == 404:
             raise FileNotFoundError()
         _raise_cdn_status(resp, 'get')
@@ -133,7 +134,7 @@ class NanoCDNStorage(Storage):
                 os.path.dirname(name), os.path.basename(name) + "." + sha1[:14]
             )
 
-        resp = requests.put(
+        resp = http.put(
             urllib.parse.urljoin(self.base_url, os.path.join("upload", name)),
             data=content,
             allow_redirects=False,
@@ -158,23 +159,29 @@ class NanoCDNStorage(Storage):
     def delete(self, name):
         if isinstance(name, NanoCDNFile):
             name = name.name
-        resp = requests.delete(urllib.parse.urljoin(self.base_url, name))
+        resp = http.delete(urllib.parse.urljoin(self.base_url, name))
         if resp.status_code == 404:
             return resp  # That is fine
         _raise_cdn_status(resp, 'delete')
         return resp
 
     def exists(self, name):
-        resp = requests.head(urllib.parse.urljoin(self.base_url, name))
+        resp = http.head(urllib.parse.urljoin(self.base_url, name))
         if resp.status_code == 404:
             return False
         _raise_cdn_status(resp, 'head')
         return True
 
     def size(self, name):
-        resp = requests.head(urllib.parse.urljoin(self.base_url, name))
+        resp = http.head(urllib.parse.urljoin(self.base_url, name))
         _raise_cdn_status(resp, 'head')
-        return resp["Content-Length"]
+        try:
+            size = int(resp.headers["Content-Length"])
+        except (KeyError, ValueError) as e:
+            raise OSError(f"CDN returned no valid Content-Length for {name!r}") from e
+        if size < 0:
+            raise OSError(f"CDN returned no valid Content-Length for {name!r}")
+        return size
 
     def url(self, name):
         return urllib.parse.urljoin(settings.MEDIA_URL, name)
