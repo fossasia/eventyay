@@ -137,6 +137,31 @@ export function withdrawUrl (eventUrl, session) {
 	return `${base}teamshifts/shifts/${getShiftId(session)}/withdraw/`
 }
 
+export function getCanManageShifts (scheduleData) {
+	const data = scheduleData?.value ?? scheduleData
+	return data?.schedule?.can_manage_shifts ?? data?.can_manage_shifts ?? false
+}
+
+export function getEventRoles (scheduleData) {
+	const data = scheduleData?.value ?? scheduleData
+	return data?.schedule?.roles ?? data?.roles ?? []
+}
+
+export function manageUrl (eventUrl, session) {
+	const base = (eventUrl || '').replace(/\/?$/, '/')
+	return `${base}teamshifts/shifts/${getShiftId(session)}/manage/`
+}
+
+export function assignmentsUrl (eventUrl) {
+	const base = (eventUrl || '').replace(/\/?$/, '/')
+	return `${base}teamshifts/shifts/assignments/`
+}
+
+export function membersUrl (eventUrl) {
+	const base = (eventUrl || '').replace(/\/?$/, '/')
+	return `${base}teamshifts/shifts/members/`
+}
+
 function roomId (room) {
 	return room?.id ?? room
 }
