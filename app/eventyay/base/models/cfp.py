@@ -1,11 +1,14 @@
 import datetime as dt
 
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from i18nfield.fields import I18nCharField, I18nTextField
 
+from eventyay.base.services.stale_cache import bump_schedule_cache_version_on_commit
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls
 
@@ -283,3 +286,15 @@ class CfP(PretalxModel):
     def enable_gravatar(self) -> bool:
         """Check if Gravatar is enabled for this event's CfP."""
         return self.settings.get('cfp_enable_gravatar', True)
+
+
+@receiver(post_save, sender=CfP)
+def invalidate_schedule_cache_on_cfp_fields_change(sender, instance, **kwargs):
+    """Rebuild cached public schedule and speaker data, whose fields follow the CfP field visibility."""
+    if kwargs.get('created'):
+        return
+    update_fields = kwargs.get('update_fields')
+    if update_fields is not None and 'fields' not in update_fields:
+        return
+    if instance.event_id:
+        bump_schedule_cache_version_on_commit(instance.event_id)
