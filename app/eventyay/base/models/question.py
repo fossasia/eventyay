@@ -316,6 +316,8 @@ class TalkQuestion(OrderedModel, PretalxModel):
         if self.question_required == TalkQuestionRequired.REQUIRED:
             return True
         if self.question_required == TalkQuestionRequired.AFTER_DEADLINE:
+            if not self.deadline:
+                return False
             return self.deadline <= _now
         return False
 
