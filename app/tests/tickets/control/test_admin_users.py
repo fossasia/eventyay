@@ -2,14 +2,16 @@ import json
 import smtplib
 import time
 from unittest.mock import patch
+from urllib.parse import parse_qs, urlencode, urlparse
 
+from allauth.account.models import EmailAddress
+from bs4 import BeautifulSoup
+from celery.exceptions import Retry
 from django import forms as django_forms
 from django.db.models import Exists, OuterRef
 from django.test import TestCase
 from django.urls import reverse
 
-from allauth.account.models import EmailAddress
-from celery.exceptions import Retry
 from eventyay.base.forms.auth import LoginForm
 from eventyay.base.models import User
 from eventyay.base.services.mail import SendMailException
@@ -140,6 +142,80 @@ class UserFilterFormTest(TestCase):
         qs = self._filter({})
         self.assertGreaterEqual(qs.count(), 4)
 
+    def test_order_by_date_joined(self):
+        from datetime import timedelta
+        from django.utils import timezone
+        now = timezone.now()
+        u1 = _make_user('dj1@ex.com')
+        u1.date_joined = now - timedelta(days=2)
+        u1.save(update_fields=['date_joined'])
+        u2 = _make_user('dj2@ex.com')
+        u2.date_joined = now - timedelta(days=1)
+        u2.save(update_fields=['date_joined'])
+
+        qs_asc = self._filter({'ordering': 'date_joined'})
+        emails = list(qs_asc.filter(email__in=['dj1@ex.com', 'dj2@ex.com']).values_list('email', flat=True))
+        self.assertEqual(emails, ['dj1@ex.com', 'dj2@ex.com'])
+
+        qs_desc = self._filter({'ordering': '-date_joined'})
+        emails = list(qs_desc.filter(email__in=['dj1@ex.com', 'dj2@ex.com']).values_list('email', flat=True))
+        self.assertEqual(emails, ['dj2@ex.com', 'dj1@ex.com'])
+
+    def test_order_by_last_login(self):
+        from datetime import timedelta
+        from django.utils import timezone
+        now = timezone.now()
+        u1 = _make_user('ll1@ex.com')
+        u1.last_login = now - timedelta(days=2)
+        u1.date_joined = now - timedelta(days=10)
+        u1.save(update_fields=['last_login', 'date_joined'])
+
+        u2 = _make_user('ll2@ex.com')
+        u2.last_login = now - timedelta(days=1)
+        u2.date_joined = now - timedelta(days=10)
+        u2.save(update_fields=['last_login', 'date_joined'])
+
+        # u3 has never logged in (last_login is None); fallback to date_joined
+        u3 = _make_user('ll3@ex.com')
+        u3.last_login = None
+        u3.date_joined = now - timedelta(days=5)
+        u3.save(update_fields=['last_login', 'date_joined'])
+
+        # Ascending: u1 (2 days ago), u2 (1 day ago), u3 (fallback 5 days ago -> earliest is u1=2d, u3=5d, u2=1d)
+        # Specifically: u3 (5d ago) < u1 (2d ago) < u2 (1d ago)
+        qs_asc = self._filter({'ordering': 'last_login'})
+        emails = list(qs_asc.filter(email__in=['ll1@ex.com', 'll2@ex.com', 'll3@ex.com']).values_list('email', flat=True))
+        self.assertEqual(emails, ['ll3@ex.com', 'll1@ex.com', 'll2@ex.com'])
+
+        # Descending: u2 (1d ago) > u1 (2d ago) > u3 (5d ago)
+        qs_desc = self._filter({'ordering': '-last_login'})
+        emails = list(qs_desc.filter(email__in=['ll1@ex.com', 'll2@ex.com', 'll3@ex.com']).values_list('email', flat=True))
+        self.assertEqual(emails, ['ll2@ex.com', 'll1@ex.com', 'll3@ex.com'])
+
+    def test_order_by_identical_timestamps_tie_breaker(self):
+        from django.utils import timezone
+
+        now = timezone.now()
+        u1 = _make_user('tie1@ex.com')
+        u1.last_login = now
+        u1.date_joined = now
+        u1.save(update_fields=['last_login', 'date_joined'])
+
+        u2 = _make_user('tie2@ex.com')
+        u2.last_login = now
+        u2.date_joined = now
+        u2.save(update_fields=['last_login', 'date_joined'])
+
+        expected = [u2.email, u1.email] if u2.pk > u1.pk else [u1.email, u2.email]
+
+        qs_last_login = self._filter({'ordering': '-last_login'})
+        emails = list(qs_last_login.filter(email__in=['tie1@ex.com', 'tie2@ex.com']).values_list('email', flat=True))
+        self.assertEqual(emails, expected)
+
+        qs_date_joined = self._filter({'ordering': '-date_joined'})
+        emails = list(qs_date_joined.filter(email__in=['tie1@ex.com', 'tie2@ex.com']).values_list('email', flat=True))
+        self.assertEqual(emails, expected)
+
 
 class AdminUserListViewTest(TestCase):
 
@@ -168,11 +244,50 @@ class AdminUserListViewTest(TestCase):
         content = response.content.decode()
         self.assertIn('Member Since', content)
         self.assertIn('Last Accessed', content)
+        self.assertIn('ordering=-date_joined', content)
+        self.assertIn('ordering=date_joined', content)
+        self.assertIn('ordering=-last_login', content)
+        self.assertIn('ordering=last_login', content)
+        self.assertIn('aria-label="Sort by Member Since descending"', content)
+        self.assertIn('aria-label="Sort by Member Since ascending"', content)
+        self.assertIn('aria-label="Sort by Last Accessed descending"', content)
+        self.assertIn('aria-label="Sort by Last Accessed ascending"', content)
         self.assertIn('Verified', content)
         self.assertIn('Mark as Spam', content)
         self.assertIn('name="action" value="toggle_verified"', content)
         self.assertIn('name="action" value="toggle_spam"', content)
         self.assertIn(f'name="user_id" value="{self.target_user.pk}"', content)
+
+    def test_sort_links_remove_page_parameter(self):
+        for i in range(31):
+            _make_user(f'pageuser{i}@example.com')
+        self._login_as_admin()
+        query_params = {
+            'query': 'pageuser',
+            'status': 'active',
+            'spam': 'no',
+            'page': '2',
+        }
+        with patch.object(self.admin.__class__, 'has_active_staff_session', return_value=True):
+            response = self.client.get(reverse('eventyay_admin:admin.users') + '?' + urlencode(query_params))
+        self.assertEqual(response.status_code, 200)
+
+        doc = BeautifulSoup(response.content.decode(), 'lxml')
+        expected_sort_links = {
+            'Sort by Member Since descending': '-date_joined',
+            'Sort by Member Since ascending': 'date_joined',
+            'Sort by Last Accessed descending': '-last_login',
+            'Sort by Last Accessed ascending': 'last_login',
+        }
+        for label, expected_order in expected_sort_links.items():
+            link = doc.find('a', attrs={'aria-label': label})
+            self.assertIsNotNone(link, f'Sort link with aria-label "{label}" not found')
+            parsed_query = parse_qs(urlparse(link['href']).query)
+            self.assertNotIn('page', parsed_query)
+            self.assertEqual(parsed_query.get('ordering'), [expected_order])
+            self.assertEqual(parsed_query.get('query'), ['pageuser'])
+            self.assertEqual(parsed_query.get('status'), ['active'])
+            self.assertEqual(parsed_query.get('spam'), ['no'])
 
 
 class UserToggleViewsTest(TestCase):

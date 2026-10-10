@@ -24,6 +24,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
 from django.db.models import JSONField, Q
+from django.db.models.functions import Coalesce
 from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.crypto import get_random_string, salted_hmac
@@ -393,6 +394,9 @@ class User(
         verbose_name = _('User')
         verbose_name_plural = _('Users')
         ordering = ('email',)
+        indexes = [
+            models.Index(Coalesce('last_login', 'date_joined'), name='user_last_accessed_idx'),
+        ]
         rules_permissions = {
             'administrator': is_administrator,
         }

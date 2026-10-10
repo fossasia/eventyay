@@ -97,10 +97,14 @@
                     </th>
                     <th class="text-nowrap">
                         {% trans "Member Since" %}
+                        <a href="?{% url_replace request 'ordering' '-date_joined' 'page' '' %}" aria-label="{% trans "Sort by Member Since descending" %}"><i class="fa fa-caret-down" aria-hidden="true"></i></a>
+                        <a href="?{% url_replace request 'ordering' 'date_joined' 'page' '' %}" aria-label="{% trans "Sort by Member Since ascending" %}"><i class="fa fa-caret-up" aria-hidden="true"></i></a>
                         <span class="text-muted small" data-browser-timezone-label></span>
                     </th>
                     <th class="text-nowrap">
                         {% trans "Last Accessed" %}
+                        <a href="?{% url_replace request 'ordering' '-last_login' 'page' '' %}" aria-label="{% trans "Sort by Last Accessed descending" %}"><i class="fa fa-caret-down" aria-hidden="true"></i></a>
+                        <a href="?{% url_replace request 'ordering' 'last_login' 'page' '' %}" aria-label="{% trans "Sort by Last Accessed ascending" %}"><i class="fa fa-caret-up" aria-hidden="true"></i></a>
                         <span class="text-muted small" data-browser-timezone-label></span>
                     </th>
                     <th class="text-right">{% trans "Actions" %}</th>
