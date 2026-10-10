@@ -91,6 +91,12 @@
 				.card-details
 					.card-title {{ $t('Reports') }}
 					.card-desc {{ $t('Download analytics, session and attendee data') }}
+			router-link.action-card(:to="{name: 'plugins:interpretation:dashboard'}", v-if="hasInterpretationPlugin")
+				.card-icon
+					i.mdi.mdi-translate
+				.card-details
+					.card-title {{ $t('Interpretation') }}
+					.card-desc {{ $t('Configure live interpretation for rooms') }}
 
 	.section-block
 		.section-header
@@ -155,6 +161,12 @@ export default {
 	computed: {
 		...mapState(['world', 'connected', 'rooms', 'roomViewers']),
 		...mapGetters(['hasPermission', 'isAdminMode']),
+		plugins() {
+			return window.eventyay?.plugins || []
+		},
+		hasInterpretationPlugin() {
+			return this.plugins.includes('interpretation')
+		},
 		liveFeatures() {
 			return Object.assign({
 				chat_rooms: false,

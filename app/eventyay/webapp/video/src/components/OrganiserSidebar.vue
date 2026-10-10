@@ -64,6 +64,14 @@ aside.c-organiser-sidebar(
 							router-link.nav-sub-link.nav-sub-link--add.nav-sub-link--nested(:to="{name: 'admin:rooms:new'}", @click="onNavClick")
 								span.mdi.mdi-plus(aria-hidden="true")
 								span {{ $t('New Room') }}
+							router-link.nav-sub-link.nav-sub-link--action(
+								v-if="plugins.includes('interpretation')",
+								:to="{name: 'plugins:interpretation:dashboard'}",
+								:class="{active: $route.name === 'plugins:interpretation:dashboard'}",
+								@click="onNavClick"
+							)
+								i.mdi.mdi-translate(aria-hidden="true")
+								span {{ $t('Interpretation') }}
 
 				//- 3. Chat rooms (collapsible, hidden if chat_rooms is disabled)
 				li.nav-fold(v-if="(hasPermission('room:update') || hasPermission('world:rooms.create.chat') || isAdminMode) && liveFeatures.chat_rooms")
@@ -225,6 +233,9 @@ export default {
 	computed: {
 		...mapState(['world', 'rooms']),
 		...mapGetters(['hasPermission', 'isAdminMode']),
+		plugins() {
+			return window.eventyay?.plugins || []
+		},
 		commonAccountUrl() {
 			return window.eventyay?.commonAccountUrl || window.eventyay?.homeUrl || '/'
 		},
@@ -235,6 +246,9 @@ export default {
 				direct_messaging: false,
 				announcements: false
 			}, this.world?.live_features || window.eventyay?.liveFeatures || {})
+		},
+		hasInterpretationPlugin() {
+			return this.plugins.includes('interpretation')
 		},
 		eventDateSubtitle() {
 			const dateFrom = this.world?.date_from || window.eventyay?.eventDates?.date_from

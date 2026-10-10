@@ -224,6 +224,7 @@ class VideoSPAView(View):
                     'date_from': event.date_from.isoformat() if event.date_from else None,
                     'date_to': event.date_to.isoformat() if event.date_to else None,
                 },
+                'plugins': event.get_plugins(),
                 'eventTimezone': event.settings.timezone,
                 'eventTitle': str(event.name),
                 'visibleLogoUrl': event.visible_logo_url or '',
