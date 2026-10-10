@@ -620,7 +620,21 @@
                         {# Session videos — organiser-only; not asked on the speaker CfP #}
                         {% with field=sform.cfp_ask_session_videos %}
                         <tr dragsort-id="session_videos">
-                            <th>{% translate "Session videos" %}</th>
+                            <th>
+                                <span class="cfp-session-videos-heading-content">
+                                    <span class="cfp-organizer-only-label">{% translate "Session videos" %}</span>
+                                    <span class="cfp-inline-help-wrapper">
+                                        <button type="button" class="btn btn-link btn-xs p-0 cfp-inline-help-toggle"
+                                            aria-label="{% translate 'Information about Session videos' %}"
+                                            aria-describedby="session-videos-help">
+                                            <i class="fa fa-question-circle-o text-info" aria-hidden="true"></i>
+                                        </button>
+                                        <span id="session-videos-help" class="cfp-inline-help-box" role="tooltip">
+                                            {% translate "This field can only be edited by organizers. It is not displayed on the proposal form." %}
+                                        </span>
+                                    </span>
+                                </span>
+                            </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     aria-label="{% translate 'Toggle active state for Session videos' %}">
@@ -632,7 +646,9 @@
                                     id="{{ field.auto_id }}" data-is-question-field="true"
                                     data-default-state="optional">
                             </td>
-                            <td></td>
+                            <td class="text-center">
+                                {% translate "Organizer only" %}
+                            </td>
                             <td></td>
                             <td></td>
                             <td></td>
