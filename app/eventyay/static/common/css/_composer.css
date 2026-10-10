@@ -141,7 +141,7 @@
   color: var(--color-primary-text-dark);
 }
 
-.mail-composer input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+.mail-composer input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not(.select2-search__field):not(.choices__input),
 .mail-composer select,
 .mail-composer textarea {
   border-color: var(--color-border);
