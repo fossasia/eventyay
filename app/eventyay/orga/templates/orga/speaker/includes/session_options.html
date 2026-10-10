@@ -1,0 +1,96 @@
+{% load i18n %}
+
+<div id="existing_session_section" class="form-group row">
+    <label class="col-md-3 col-form-label" for="id_existing_session_id">
+        {% translate "Link existing session" %}
+    </label>
+    <div class="col-md-9">
+        <div data-session-links>
+            {% if selected_session_ids %}
+                {% for selected_id in selected_session_ids %}
+                    <div class="row mb-2" data-session-link-row>
+                        <div class="col-md-11">
+                            <select name="existing_session_id" class="form-control" aria-label="{% translate 'Link existing session' %}">
+                                <option value="">{% translate "— do not link a session —" %}</option>
+                                {% for session in existing_sessions %}
+                                    <option value="{{ session.pk }}"
+                                        {% if selected_id == session.pk|stringformat:"s" %}selected{% endif %}>
+                                        {{ session.title }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-1">
+                            <button type="button" class="btn btn-danger btn-sm" data-remove-session-link title="{% translate 'Remove' %}" aria-label="{% translate 'Remove' %}">
+                                <i class="fa fa-minus" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="row mb-2" data-session-link-row>
+                    <div class="col-md-11">
+                        <select id="id_existing_session_id" name="existing_session_id" class="form-control" aria-label="{% translate 'Link existing session' %}">
+                            <option value="">{% translate "— do not link a session —" %}</option>
+                            {% for session in existing_sessions %}
+                                <option value="{{ session.pk }}">{{ session.title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <button type="button" class="btn btn-danger btn-sm" data-remove-session-link title="{% translate 'Remove' %}" aria-label="{% translate 'Remove' %}">
+                            <i class="fa fa-minus" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        <p class="mt-2 mb-0">
+            <button type="button" class="btn btn-sm btn-info" id="link-another-session">
+                <i class="fa fa-plus" aria-hidden="true"></i> {% translate "Add another session" %}
+            </button>
+        </p>
+    </div>
+    <template id="session-link-row-template">
+        <div class="row mb-2" data-session-link-row>
+            <div class="col-md-11">
+                <select name="existing_session_id" class="form-control" aria-label="{% translate 'Link existing session' %}">
+                    <option value="">{% translate "— do not link a session —" %}</option>
+                    {% for session in existing_sessions %}
+                        <option value="{{ session.pk }}">{{ session.title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-1">
+                <button type="button" class="btn btn-danger btn-sm" data-remove-session-link title="{% translate 'Remove' %}" aria-label="{% translate 'Remove' %}">
+                    <i class="fa fa-minus" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+    </template>
+</div>
+
+<div class="form-group row">
+    <label class="col-md-3 col-form-label" for="id_add_session">
+        {% translate "Add new session" %}
+    </label>
+    <div class="col-md-9 d-flex align-items-center">
+        <label class="toggle-switch mb-0">
+            <input type="checkbox" id="id_add_session" name="add_session"
+                   aria-label="{% translate 'Enable creating a new session' %}"
+                   {% if request.POST.add_session %}checked{% endif %}>
+            <span class="toggle-slider"></span>
+        </label>
+        <span class="ml-2 text-muted">
+            {% translate "Turn on to create a new session. Linking an existing session is turned off while this is on." %}
+        </span>
+    </div>
+</div>
+
+<div id="session_section"{% if not request.POST.add_session %} class="d-none"{% endif %}>
+    <h3>{% translate "Session Details" %}</h3>
+    {% for field in session_form %}
+        {{ field.as_field_group }}
+    {% endfor %}
+    {{ session_questions_form }}
+</div>

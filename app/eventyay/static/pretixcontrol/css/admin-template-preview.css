@@ -1,0 +1,13 @@
+.template-preview .d-none {
+  display: none;
+}
+
+.template-preview .mail-editor-tabs {
+  grid-template-columns: 100%;
+}
+
+.template-preview .mail-editor-mode-tabs,
+.template-preview .mail-message-preview-panel {
+  grid-column: 1;
+  margin-right: 0;
+}

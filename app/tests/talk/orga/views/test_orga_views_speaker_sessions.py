@@ -21,9 +21,10 @@ def speaker_url(speaker, event):
 def test_existing_speaker_page_offers_session_options(orga_client, event, speaker, submission, other_submission):
     response = orga_client.get(speaker_url(speaker, event))
     assert response.status_code == 200
-    assert "Create a new session for this speaker" in response.text
-    assert "Link an existing session instead" in response.text
-    options = bs4.BeautifulSoup(response.text, "html.parser").select("#id_existing_session_id option")
+    page = bs4.BeautifulSoup(response.text, "html.parser")
+    assert page.select_one("#id_add_session") is not None
+    assert page.select_one("#existing_session_section") is not None
+    options = page.select("#id_existing_session_id option")
     values = {option["value"] for option in options}
     assert str(other_submission.pk) in values
     assert str(submission.pk) not in values
@@ -54,6 +55,22 @@ def test_existing_sessions_respect_team_track_limits(
     options = bs4.BeautifulSoup(response.text, "html.parser").select("#id_existing_session_id option")
     values = {option["value"] for option in options}
     assert str(other_submission.pk) not in values
+
+
+@pytest.mark.django_db
+def test_new_session_tracks_respect_team_track_limits(
+    orga_client, orga_user, event, speaker, submission, track, other_track
+):
+    with scope(event=event):
+        submission.track = track
+        submission.save()
+        orga_user.teams.first().limit_tracks.add(track)
+    response = orga_client.get(speaker_url(speaker, event))
+    page = bs4.BeautifulSoup(response.text, "html.parser")
+    options = page.select("#session_section select[name=session-track] option")
+    values = {option["value"] for option in options}
+    assert str(track.pk) in values
+    assert str(other_track.pk) not in values
 
 
 @pytest.mark.django_db
@@ -89,19 +106,28 @@ def test_existing_speaker_cannot_link_a_session_twice(orga_client, event, speake
 
 
 @pytest.mark.django_db
-def test_existing_speaker_cannot_create_and_link_at_once(orga_client, event, speaker, submission, other_submission):
+def test_new_session_replaces_linking_existing_session(
+    orga_client, event, speaker, submission, other_submission, track
+):
+    with scope(event=event):
+        submission_type = event.submission_types.first()
     response = orga_client.post(
         speaker_url(speaker, event),
         data={
             **SPEAKER_DATA,
             "add_session": "on",
-            "link_existing_session": "on",
             "existing_session_id": other_submission.pk,
+            "session-title": "Brand New Session",
+            "session-state": "submitted",
+            "session-abstract": "Session abstract",
+            "session-track": track.pk,
+            "session-submission_type": submission_type.pk,
         },
+        follow=True,
     )
     assert response.status_code == 200
-    assert "You cannot both create a new session and link an existing session." in response.text
     with scope(event=event):
+        assert event.submissions.filter(title="Brand New Session", speakers=speaker).exists()
         assert not other_submission.speakers.filter(pk=speaker.pk).exists()
 
 
