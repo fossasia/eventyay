@@ -4,6 +4,7 @@ from contextlib import suppress
 from datetime import timedelta
 from urllib.parse import unquote, urljoin, urlparse, urlunparse
 
+from django.conf import settings
 from django.contrib import messages
 from django.core import signing
 from django.core.cache import cache
@@ -15,10 +16,11 @@ from django.http import (
     JsonResponse,
 )
 from django.urls import resolve, reverse
-from django.utils import timezone
+from django.utils import timezone, translation
 from django.utils.functional import cached_property
 from django.utils.http import urlencode
-from django.utils.translation import get_language, gettext_lazy as _, pgettext_lazy
+from django.utils.translation import get_language, pgettext_lazy
+from django.utils.translation import gettext_lazy as _
 from django.views.decorators.cache import cache_page
 from django.views.decorators.http import require_http_methods
 from django.views.generic import TemplateView
@@ -390,88 +392,97 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
 @cache_page(60 * 60 * 24, key_prefix='schedule-messages-v9')
 def schedule_messages(request, **kwargs):
     """Cached for static exports; bump key_prefix when message keys or copy change."""
-    strings = {
-        'favs_anonymous_notice': _(
-            'Your favourites can only be saved locally in this browser. '
-            'Please sign in or register to sync starred sessions and use more features. '
-            'Locally saved stars may be lost if you clear your browser data; '
-            'we are not responsible for data loss in this case.'
-        ),
-        'favs_not_saved': _(
-            'Could not save favourites in this browser. Please check your browser storage settings.'
-        ),
-        'no_matching_options': _('Sorry, no matching options.'),
-        'view_changelog': _('View Changelog'),
-        'go_to_current_version': _('Go to current version'),
-        'reset_all_filters': _('Reset all filters'),
-        'sort_by': _('Sort'),
-        'sort_by_room': _('By room'),
-        'sort_by_title': _('A–Z'),
-        'sort_by_popularity': _('Most popular'),
-        'fullscreen': _('Fullscreen'),
-        'exit_fullscreen': _('Exit Fullscreen'),
-        'schedule_versions': _('Schedule versions'),
-        'version_warning_editable': _(
-            'You are currently viewing the editable schedule version. It may not match the released version.'
-        ),
-        'version_warning_wip': _(
-            'You are currently viewing the unreleased schedule preview. '
-            'It may change at any time and is not visible to the public.'
-        ),
-        'version_warning_old': _('You are currently viewing an older schedule version.'),
-        'join_room': _('Join room'),
-        'join_session': _('Join session'),
-        'view_video': _('View Video'),
-        'watch_live': _('Watch live'),
-        'speaker_fallback': pgettext_lazy('noun', 'Speaker'),
-        'speaker_name_not_provided': _('Speaker name not provided'),
-        'add_to_calendar': _('Add to Calendar'),
-        'public_schedule_only': _(
-            'Only available on the public schedule once a schedule is released and public.'
-        ),
-        'ical': _('iCal'),
-        'json': _('JSON'),
-        'xml': _('XML'),
-        'xcal': _('XCal'),
-        'google_calendar': _('Google Calendar'),
-        'webcal': _('Webcal'),
-        'yes': _('Yes'),
-        'no': _('No'),
-        'no_speakers_found': _('No speakers found.'),
-        'sessions': _('Sessions'),
-        'tracks': _('Tracks'),
-        'speakers': _('Speakers'),
-        'downloads': _('Downloads'),
-        'starred_by': _('Starred by'),
-        'starred': _('Starred'),
-        'show_talk_starrers': _('Share starred sessions'),
-        'show_talk_starrers_tooltip': _(
-            'Make your starred sessions visible to others. You can open someone else\'s starred list only if they have enabled sharing.'
-        ),
-        'no_file_provided': _('No file provided'),
-        'no_response': _('No response'),
-        'other_timezones': _('Other Timezones'),
-        'current': _('current'),
-        'print': _('Print'),
-        'list_view': _('List View'),
-        'calendar_view': _('Calendar View'),
-        'search': _('Search'),
-        'featured_speakers': _('Featured Speakers'),
-        'view_profile': _('View speaker profile'),
-        'view_all_speakers': _('View all speakers'),
-        'no_starred_sessions': _('No starred sessions.'),
-        'schedule_do_not_record': _('This session will not be recorded.'),
-        'schedule_room_has_interpretation': _('This room has live interpretation.'),
-        'back': _('Back'),
-        'schedule_pending_secondary': _('To be announced'),
-        'schedule_pending_tentative': _(
-            'These details are tentative and may change, including speakers and other session information.'
-        ),
-        'schedule_speakers_overflow_hint': _('+%(count)s more'),
-        'schedule_speakers_overflow_label': _('+%(count)s more speakers'),
-        'no_schedule_available': _('No schedule has been published yet. Please check back later.'),
-    }
-    strings = {key: str(value) for key, value in strings.items()}
+    requested_lang = request.GET.get('lang')
+    supported_languages = {code for code, _ in settings.LANGUAGES}
+    lang = (
+        requested_lang.lower()
+        if requested_lang and requested_lang.lower() in supported_languages
+        else getattr(request, 'event_language', None) or request.LANGUAGE_CODE
+    )
+    with translation.override(lang):
+        strings = {
+            'favs_anonymous_notice': _(
+                'Your favourites can only be saved locally in this browser. '
+                'Please sign in or register to sync starred sessions and use more features. '
+                'Locally saved stars may be lost if you clear your browser data; '
+                'we are not responsible for data loss in this case.'
+            ),
+            'favs_not_saved': _(
+                'Could not save favourites in this browser. Please check your browser storage settings.'
+            ),
+            'no_matching_options': _('Sorry, no matching options.'),
+            'view_changelog': _('View Changelog'),
+            'go_to_current_version': _('Go to current version'),
+            'reset_all_filters': _('Reset all filters'),
+            'sort_by': _('Sort'),
+            'sort_by_room': _('By room'),
+            'sort_by_title': _('A–Z'),
+            'sort_by_popularity': _('Most popular'),
+            'fullscreen': _('Fullscreen'),
+            'exit_fullscreen': _('Exit Fullscreen'),
+            'schedule_versions': _('Schedule versions'),
+            'version_warning_editable': _(
+                'You are currently viewing the editable schedule version. It may not match the released version.'
+            ),
+            'version_warning_wip': _(
+                'You are currently viewing the unreleased schedule preview. '
+                'It may change at any time and is not visible to the public.'
+            ),
+            'version_warning_old': _('You are currently viewing an older schedule version.'),
+            'join_room': _('Join room'),
+            'join_session': _('Join session'),
+            'view_video': _('View Video'),
+            'watch_live': _('Watch live'),
+            'speaker_fallback': pgettext_lazy('noun', 'Speaker'),
+            'speaker_name_not_provided': _('Speaker name not provided'),
+            'add_to_calendar': _('Add to Calendar'),
+            'public_schedule_only': _(
+                'Only available on the public schedule once a schedule is released and public.'
+            ),
+            'ical': _('iCal'),
+            'json': _('JSON'),
+            'xml': _('XML'),
+            'xcal': _('XCal'),
+            'google_calendar': _('Google Calendar'),
+            'webcal': _('Webcal'),
+            'yes': _('Yes'),
+            'no': _('No'),
+            'no_speakers_found': _('No speakers found.'),
+            'sessions': _('Sessions'),
+            'tracks': _('Tracks'),
+            'speakers': _('Speakers'),
+            'downloads': _('Downloads'),
+            'starred_by': _('Starred by'),
+            'starred': _('Starred'),
+            'show_talk_starrers': _('Share starred sessions'),
+            'show_talk_starrers_tooltip': _(
+                'Make your starred sessions visible to others. '
+                'You can open someone else\'s starred list only if they have enabled sharing.'
+            ),
+            'no_file_provided': _('No file provided'),
+            'no_response': _('No response'),
+            'other_timezones': _('Other Timezones'),
+            'current': _('current'),
+            'print': _('Print'),
+            'list_view': _('List View'),
+            'calendar_view': _('Calendar View'),
+            'search': _('Search'),
+            'featured_speakers': _('Featured Speakers'),
+            'view_profile': _('View speaker profile'),
+            'view_all_speakers': _('View all speakers'),
+            'no_starred_sessions': _('No starred sessions.'),
+            'schedule_do_not_record': _('This session will not be recorded.'),
+            'schedule_room_has_interpretation': _('This room has live interpretation.'),
+            'back': _('Back'),
+            'schedule_pending_secondary': _('To be announced'),
+            'schedule_pending_tentative': _(
+                'These details are tentative and may change, including speakers and other session information.'
+            ),
+            'schedule_speakers_overflow_hint': _('+%(count)s more'),
+            'schedule_speakers_overflow_label': _('+%(count)s more speakers'),
+            'no_schedule_available': _('No schedule has been published yet. Please check back later.'),
+        }
+        strings = {key: str(value) for key, value in strings.items()}
     return HttpResponse(
         f'const PRETALX_MESSAGES = {json.dumps(strings)};',
         content_type='application/javascript',

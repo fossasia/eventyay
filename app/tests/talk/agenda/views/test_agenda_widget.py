@@ -1,3 +1,4 @@
+import json
 from types import SimpleNamespace
 
 import pytest
@@ -241,3 +242,65 @@ def test_event_css_etag_returns_none_string_when_no_colors_are_set(rf):
     request.event = make_event(primary_color='')
 
     assert color_etag(request) == 'none'
+
+
+@pytest.mark.django_db
+def test_schedule_messages_returns_english_for_english_event_with_chinese_accept_language(client, event):
+    event.locale = 'en'
+    event.settings.set('locale', 'en')
+    event.settings.set('locales', ['en'])
+    event.talks_published = True
+    event.feature_flags['show_schedule'] = True
+    event.save()
+
+    response = client.get(
+        event.urls.schedule + 'widget/messages.js',
+        HTTP_ACCEPT_LANGUAGE='zh-hans,zh;q=0.9',
+    )
+    assert response.status_code == 200
+    content = response.content.decode()
+    payload = json.loads(content.split('const PRETALX_MESSAGES = ')[1].rstrip(';'))
+    assert payload['search'] == 'Search'
+    assert payload['add_to_calendar'] == 'Add to Calendar'
+    assert payload['print'] == 'Print'
+
+
+@pytest.mark.django_db
+def test_schedule_messages_respects_explicit_lang_query_param(client, event):
+    event.locale = 'en'
+    event.settings.set('locale', 'en')
+    event.settings.set('locales', ['en', 'zh-hans'])
+    event.talks_published = True
+    event.feature_flags['show_schedule'] = True
+    event.save()
+
+    response_en = client.get(event.urls.schedule + 'widget/messages.js?lang=en')
+    assert response_en.status_code == 200
+    payload_en = json.loads(response_en.content.decode().split('const PRETALX_MESSAGES = ')[1].rstrip(';'))
+    assert payload_en['search'] == 'Search'
+    assert payload_en['add_to_calendar'] == 'Add to Calendar'
+    assert payload_en['print'] == 'Print'
+
+    response_zh = client.get(event.urls.schedule + 'widget/messages.js?lang=zh-hans')
+    assert response_zh.status_code == 200
+    payload_zh = json.loads(response_zh.content.decode().split('const PRETALX_MESSAGES = ')[1].rstrip(';'))
+    assert payload_zh['search'] == '搜索'
+    assert payload_zh['add_to_calendar'] == '添加到日历'
+    assert payload_zh['print'] == '打印'
+
+
+@pytest.mark.django_db
+def test_schedule_messages_falls_back_for_unsupported_lang_param(client, event):
+    event.locale = 'en'
+    event.settings.set('locale', 'en')
+    event.settings.set('locales', ['en'])
+    event.talks_published = True
+    event.feature_flags['show_schedule'] = True
+    event.save()
+
+    response = client.get(event.urls.schedule + 'widget/messages.js?lang=unsupported-xyz')
+    assert response.status_code == 200
+    payload = json.loads(response.content.decode().split('const PRETALX_MESSAGES = ')[1].rstrip(';'))
+    assert payload['search'] == 'Search'
+    assert payload['add_to_calendar'] == 'Add to Calendar'
+    assert payload['print'] == 'Print'
