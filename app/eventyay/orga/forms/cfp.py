@@ -1,3 +1,4 @@
+import copy
 import json
 
 from django import forms
@@ -6,8 +7,9 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import override
 from django_scopes.forms import SafeModelChoiceField, SafeModelMultipleChoiceField
-from i18nfield.forms import I18nFormMixin, I18nModelForm
+from i18nfield.forms import I18nFormField, I18nFormMixin, I18nModelForm, I18nTextInput, I18nTextarea
 from i18nfield.strings import LazyI18nString
+from eventyay.cfp.flow import CfPFlow, FIELD_STEP_MAP, get_field_default
 from eventyay.common.forms.fields import I18nRichTextFormField
 from eventyay.common.sanitizers import sanitize_rich_text
 from eventyay.base.models import (
@@ -132,6 +134,7 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
 
     def __init__(self, *args, obj, **kwargs):
         super().__init__(*args, obj=obj, **kwargs)
+        self.fields.pop('cfp_enable_gravatar', None)
         self.length_fields = [
             'title',
             'abstract',
@@ -320,7 +323,8 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
         fields_config = self.instance.cfp.settings.get('fields_config')
 
         self.instance.cfp.settings['count_length_in'] = self.cleaned_data.get('count_length_in') or 'chars'
-        self.instance.cfp.settings['cfp_enable_gravatar'] = self.cleaned_data.get('cfp_enable_gravatar', False)
+        if 'cfp_enable_gravatar' in self.cleaned_data:
+            self.instance.cfp.settings['cfp_enable_gravatar'] = self.cleaned_data['cfp_enable_gravatar']
 
         # Restore fields_config after setting other values (also when it is an empty dict)
         if fields_config is not None:
@@ -932,3 +936,107 @@ class ReminderFilterForm(QuestionFilterForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['questions'].queryset = self.get_question_queryset()
+
+
+class CfPBuiltinFieldSettingsForm(I18nFormMixin, forms.Form):
+    label = I18nFormField(
+        label=_('Field label / title'),
+        widget=I18nTextInput,
+        required=True,
+    )
+    help_text = I18nFormField(
+        label=_('Help text'),
+        widget=I18nTextarea,
+        required=False,
+    )
+    enable_gravatar = forms.BooleanField(
+        label=_('Enable Gravatar'),
+        help_text=_('Allow speakers to use Gravatar for their profile picture.'),
+        required=False,
+    )
+
+    def __init__(self, *args, event, field_key, **kwargs):
+        self.event = event
+        self.field_key = field_key
+        locales = event.locales
+        super().__init__(*args, locales=locales, **kwargs)
+
+        if field_key != 'avatar':
+            self.fields.pop('enable_gravatar', None)
+        else:
+            self.initial['enable_gravatar'] = event.cfp.enable_gravatar
+            self.fields['enable_gravatar'].initial = event.cfp.enable_gravatar
+
+        step_id = FIELD_STEP_MAP.get(field_key, 'info')
+        step_config = event.cfp_flow.config.get('steps', {}).get(step_id, {})
+        fields_config = step_config.get('fields', [])
+        if isinstance(fields_config, dict):
+            field_data = fields_config.get(field_key, {})
+        else:
+            field_data = next((f for f in fields_config if isinstance(f, dict) and f.get('key') == field_key), {})
+
+        stored_label = field_data.get('label')
+        stored_help_text = field_data.get('help_text')
+
+        label_data = {}
+        help_text_data = {}
+        for loc in locales:
+            val = None
+            if stored_label:
+                if isinstance(stored_label, LazyI18nString) and loc in stored_label.data:
+                    val = stored_label.data[loc]
+                elif isinstance(stored_label, dict) and loc in stored_label:
+                    val = stored_label[loc]
+                else:
+                    val = str(stored_label)
+            if not val:
+                val = get_field_default(field_key, 'label', loc)
+            label_data[loc] = val
+
+            ht_val = None
+            if stored_help_text:
+                if isinstance(stored_help_text, LazyI18nString) and loc in stored_help_text.data:
+                    ht_val = stored_help_text.data[loc]
+                elif isinstance(stored_help_text, dict) and loc in stored_help_text:
+                    ht_val = stored_help_text[loc]
+                else:
+                    ht_val = str(stored_help_text)
+            if ht_val is None:
+                ht_val = get_field_default(field_key, 'help_text', loc)
+            help_text_data[loc] = ht_val
+
+        self.initial['label'] = LazyI18nString(label_data)
+        self.initial['help_text'] = LazyI18nString(help_text_data)
+
+    def save(self):
+        step_id = FIELD_STEP_MAP.get(self.field_key, 'info')
+        flow = CfPFlow(self.event)
+        config = copy.deepcopy(self.event.cfp.settings.get('flow') or {})
+        if isinstance(config, str):
+            config = json.loads(config)
+        if not isinstance(config, dict):
+            config = {}
+        steps = config.setdefault('steps', {})
+        step_data = steps.setdefault(step_id, {})
+        fields_list = step_data.setdefault('fields', [])
+        if isinstance(fields_list, dict):
+            fields_list = list(fields_list.values())
+            step_data['fields'] = fields_list
+
+        field_entry = next((f for f in fields_list if isinstance(f, dict) and f.get('key') == self.field_key), None)
+        if not field_entry:
+            field_entry = {'key': self.field_key}
+            fields_list.append(field_entry)
+
+        label_val = self.cleaned_data['label']
+        field_entry['label'] = label_val.data if isinstance(label_val, LazyI18nString) else label_val
+
+        help_text_val = self.cleaned_data['help_text']
+        field_entry['help_text'] = help_text_val.data if isinstance(help_text_val, LazyI18nString) else help_text_val
+
+        flow.save_config(config)
+
+        if self.field_key == 'avatar' and 'enable_gravatar' in self.cleaned_data:
+            self.event.cfp.settings['cfp_enable_gravatar'] = self.cleaned_data['enable_gravatar']
+            self.event.cfp.save(update_fields=['settings'])
+

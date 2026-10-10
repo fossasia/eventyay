@@ -368,3 +368,22 @@
         max-width: 100%;
     }
 }
+
+.cfp-forms-page .cfp-option-table tbody th .font-weight-normal,
+.cfp-forms-page .cfp-option-table tbody th .field-help-text,
+.cfp-forms-page .cfp-option-table tbody th small,
+.cfp-forms-page .cfp-option-table tbody th .small {
+    font-weight: normal;
+}
+
+.cfp-field-settings-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.cfp-field-settings-actions .btn + .btn,
+.cfp-field-settings-actions button + button {
+    margin-left: 0.75rem;
+}
+

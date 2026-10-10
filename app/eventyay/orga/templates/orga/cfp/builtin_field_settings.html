@@ -1,0 +1,71 @@
+{% extends 'orga/base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block extra_title %}{{ page_title }} :: {% endblock extra_title %}
+
+{% block stylesheets %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'orga/css/cfp.css' %}">
+{% endblock stylesheets %}
+
+{% block content %}
+  {% include 'common/includes/header_nav.html' with header_title=page_title %}
+
+  {% if locales|length > 1 %}
+    <ul class="nav nav-tabs mb-3" role="tablist" id="language-tabs">
+      {% for loc, loc_name in locales %}
+        <li class="nav-item {% if loc == active_lang %}active{% endif %}">
+          <a class="nav-link lang-tab-btn {% if loc == active_lang %}active{% endif %}" href="?lang={{ loc }}" data-lang="{{ loc }}" role="tab">
+            {{ loc_name }}
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+    {% include 'common/forms/errors.html' %}
+
+    <input type="hidden" name="active_lang" id="active_lang" value="{{ active_lang }}">
+
+    <fieldset>
+      <legend>{% translate 'Field label' %}</legend>
+      {{ form.label.as_field_group }}
+    </fieldset>
+
+    <fieldset>
+      <legend>{% translate 'Help text' %}</legend>
+      {{ form.help_text.as_field_group }}
+    </fieldset>
+
+    {% if form.enable_gravatar %}
+      <fieldset>
+        <legend>{% translate 'Profile picture settings' %}</legend>
+        {{ form.enable_gravatar.as_field_group }}
+      </fieldset>
+    {% endif %}
+
+    <div class="submit-group panel">
+      <span>
+        <a href="{{ back_url }}" class="btn btn-default btn-lg">
+          {% translate 'Back to forms' %}
+        </a>
+      </span>
+      <div class="cfp-field-settings-actions">
+        <button type="submit" name="action" value="reset" class="btn btn-outline-info btn-lg mr-2">
+          <i class="fa fa-undo"></i> {% translate 'Reset to default' %}
+        </button>
+        <button type="submit" class="btn btn-success btn-lg">
+          <i class="fa fa-check"></i> {{ phrases.base.save }}
+        </button>
+      </div>
+    </div>
+  </form>
+{% endblock content %}
+
+{% block scripts %}
+  {{ block.super }}
+  <script type="module" src="{% static 'orga/js/builtinFieldSettings.js' %}"></script>
+{% endblock scripts %}

@@ -50,6 +50,140 @@ from eventyay.submission.forms import InfoForm
 logger = logging.getLogger(__name__)
 
 
+FIELD_STEP_MAP = {
+    # Session fields (InfoStep)
+    'title': 'info',
+    'submission_type': 'info',
+    'abstract': 'info',
+    'description': 'info',
+    'notes': 'info',
+    'track': 'info',
+    'duration': 'info',
+    'slot_count': 'info',
+    'content_locale': 'info',
+    'image': 'info',
+    'slides': 'info',
+    'do_not_record': 'info',
+    # Speaker fields (ProfileStep)
+    'fullname': 'profile',
+    'biography': 'profile',
+    'job_title': 'profile',
+    'organization': 'profile',
+    'avatar': 'profile',
+    'avatar_source': 'profile',
+    'avatar_license': 'profile',
+    'availabilities': 'profile',
+    'additional_speaker': 'profile',
+    'social_links': 'profile',
+}
+
+FIELD_DEFAULTS = {
+    'title': {
+        'label': _('Title'),
+        'help_text': _('Proposal title'),
+    },
+    'submission_type': {
+        'label': _('Session type'),
+        'help_text': _('Session type'),
+    },
+    'abstract': {
+        'label': _('Abstract'),
+        'help_text': _('Abstract'),
+    },
+    'description': {
+        'label': _('Description'),
+        'help_text': _('Description'),
+    },
+    'notes': {
+        'label': _('Notes'),
+        'help_text': _('Notes'),
+    },
+    'track': {
+        'label': _('Track'),
+        'help_text': _('Track'),
+    },
+    'duration': {
+        'label': _('Duration'),
+        'help_text': _('Duration'),
+    },
+    'slot_count': {
+        'label': _('Slot Count'),
+        'help_text': _('Slot Count'),
+    },
+    'content_locale': {
+        'label': _('Language'),
+        'help_text': _('Language'),
+    },
+    'image': {
+        'label': _('Session image'),
+        'help_text': _('Use this if you want an illustration to go with your proposal.'),
+    },
+    'slides': {
+        'label': _('Slides'),
+        'help_text': _('Slides'),
+    },
+    'do_not_record': {
+        'label': _('Recording opt-out'),
+        'help_text': _('Don’t record this session.'),
+    },
+    'fullname': {
+        'label': _('Full Name'),
+        'help_text': _('Full name'),
+    },
+    'biography': {
+        'label': _('Biography'),
+        'help_text': _('Biography'),
+    },
+    'job_title': {
+        'label': _('Job title/role'),
+        'help_text': _('What is your official job title?'),
+    },
+    'organization': {
+        'label': _('Organization'),
+        'help_text': _('What organization or company do you represent?'),
+    },
+    'avatar': {
+        'label': _('Profile picture'),
+        'help_text': _('Profile picture'),
+    },
+    'avatar_source': {
+        'label': _('Profile picture source'),
+        'help_text': _('Profile Picture Source'),
+    },
+    'avatar_license': {
+        'label': _('Profile picture license'),
+        'help_text': _('Profile Picture License'),
+    },
+    'availabilities': {
+        'label': _('Availability'),
+        'help_text': _('Availability'),
+    },
+    'additional_speaker': {
+        'label': _('Additional Speaker'),
+        'help_text': _(
+            'If you have a co-speaker, please add their email address here, and we will invite them '
+            'to create an account. If you have more than one co-speaker, you can add more speakers '
+            'after finishing the proposal process.'
+        ),
+    },
+    'social_links': {
+        'label': _('Social Media'),
+        'help_text': _('Social Media'),
+    },
+}
+
+
+def get_field_default(field_key: str, attr: str, locale: str) -> str:
+    defaults = FIELD_DEFAULTS.get(field_key, {})
+    val = defaults.get(attr, '')
+    if not val:
+        return ''
+    from django.utils.translation import override
+    with override(locale):
+        return str(val)
+
+
+
 def i18n_string(data, locales):
     if isinstance(data, LazyI18nString):
         return data

@@ -153,6 +153,11 @@ urlpatterns = [
                 path('cfp/flow/', cfp.CfPFlowEditor.as_view(), name='cfp.flow'),
                 path('cfp/questions/', cfp.CfPForms.as_view(), name='cfp.questions.view'),
                 path(
+                    'cfp/questions/field/<str:field>/settings/',
+                    cfp.CfPBuiltinFieldSettings.as_view(),
+                    name='cfp.field.settings',
+                ),
+                path(
                     'cfp/questions/remind/',
                     cfp.CfPQuestionRemind.as_view(),
                     name='cfp.questions.remind',
