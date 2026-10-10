@@ -29,6 +29,7 @@ except ImportError:
 from i18nfield.strings import LazyI18nString
 
 from eventyay.common.views.redirect import safelink as sl
+from eventyay.helpers.placeholders import escape_stray_braces
 
 register = template.Library()
 
@@ -186,6 +187,7 @@ _PREVIEW_PLACEHOLDER_CONTEXT: tuple[str, ...] = (
     'order',
     'position',
     'position_or_address',
+    'user',
     'team',
     'invoice_address',
 )
@@ -202,7 +204,7 @@ def expand_email_preview_placeholders(html_body: str, event, *, locale: str | No
 
     with language(resolved_locale, event.settings.region):
         context_dict = build_email_preview_context(event, list(_PREVIEW_PLACEHOLDER_CONTEXT))
-        expanded = html_body.format_map(context_dict)
+        expanded = escape_stray_braces(html_body).format_map(context_dict)
         return expand_email_variable_chips(expanded, dict(context_dict))
 
 

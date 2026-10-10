@@ -2,14 +2,18 @@ import json
 from datetime import timedelta
 
 import pytest
+from django.core import mail as djmail
 from django.utils import timezone
 from django_scopes import scope, scopes_disabled
 
 from eventyay.base.models import Order, Team
 from eventyay.control.forms.orders import OrderMailForm
+from eventyay.helpers.placeholders import escape_stray_braces, find_placeholders
 from eventyay.plugins.sendmail.forms import TeamMailForm
 
-STRAY_BRACE_ERROR = 'Invalid placeholder syntax'
+# The subject and message from the #6251 review recording.
+REVIEW_SUBJECT = 'TEST "{"    Chai ki Tapri "}"'
+REVIEW_MESSAGE = 'TEST {} {event_name}'
 
 
 @pytest.fixture
@@ -49,140 +53,132 @@ def event_url(event, path):
     return f'/control/event/{event.organizer.slug}/{event.slug}/{path}'
 
 
-@pytest.mark.django_db
 @pytest.mark.parametrize(
-    ('subject', 'message', 'field'),
+    ('template', 'rendered'),
     [
-        ('Volunteer briefing for {event_name', 'Hello', 'subject'),
-        ('Volunteer briefing', 'See you there :}', 'message'),
+        (REVIEW_SUBJECT, REVIEW_SUBJECT),
+        ('TEST {} {event_name}', 'TEST {} Test Event'),
+        ('Volunteer briefing for {event_name', 'Volunteer briefing for {event_name'),
+        ('See you there :}', 'See you there :}'),
+        ('{{literal}} {event_name}', '{literal} Test Event'),
+        ('{event.name} {0} {a:>5} }{', '{event.name} {0} {a:>5} }{'),
     ],
 )
-def test_team_mail_form_rejects_stray_brace(event, subject, message, field):
-    with scope(event=event):
-        form = TeamMailForm(event=event, data={'subject_0': subject, 'message_0': message})
-        assert not form.is_valid()
-    assert STRAY_BRACE_ERROR in str(form.errors[field])
+def test_escape_stray_braces_keeps_only_placeholders(template, rendered):
+    assert escape_stray_braces(template).format_map({'event_name': 'Test Event'}) == rendered
+
+
+def test_find_placeholders_ignores_literal_braces():
+    assert find_placeholders('{" x "} {} {{y}} {event_name} {join\\_online\\_event}') == [
+        '{event_name}',
+        '{join_online_event}',
+    ]
 
 
 @pytest.mark.django_db
-def test_team_mail_form_accepts_known_placeholder(event):
+@pytest.mark.parametrize(
+    ('subject', 'message'),
+    [
+        (REVIEW_SUBJECT, REVIEW_MESSAGE),
+        ('Volunteer briefing for {event_name', 'See you there :}'),
+        ('Briefing {{internal}} for {event_name}', 'Use {{name}} literally, {name}'),
+    ],
+)
+def test_team_mail_form_accepts_braces_as_text(event, subject, message):
     with scope(event=event):
-        form = TeamMailForm(event=event, data={'subject_0': 'Briefing for {event_name}', 'message_0': 'Hi {name}'})
+        form = TeamMailForm(event=event, data={'subject_0': subject, 'message_0': message})
         form.is_valid()
     assert 'subject' not in form.errors
     assert 'message' not in form.errors
 
 
 @pytest.mark.django_db
-def test_order_mail_form_rejects_stray_brace_in_subject(event, order):
+def test_team_mail_form_still_rejects_misspelled_placeholder(event):
+    with scope(event=event):
+        form = TeamMailForm(event=event, data={'subject_0': 'Briefing for {evnt_name}', 'message_0': 'Hi'})
+        assert not form.is_valid()
+    assert 'Invalid placeholder(s): {evnt_name}' in str(form.errors['subject'])
+
+
+@pytest.mark.django_db
+def test_order_mail_form_accepts_braces_as_text(event, order):
     with scope(event=event):
         form = OrderMailForm(
             order=order,
-            data={'subject': 'Your order for {event', 'message': 'Hello', 'sendto': order.email},
+            data={'subject': REVIEW_SUBJECT, 'message': 'See you there :}', 'sendto': order.email},
         )
-        assert not form.is_valid()
-    assert STRAY_BRACE_ERROR in str(form.errors['subject'])
+        form.is_valid()
+    assert 'subject' not in form.errors
+    assert 'message' not in form.errors
 
 
 @pytest.mark.django_db
-def test_order_send_mail_with_stray_brace_shows_form_error(mail_client, event, order):
+def test_order_send_mail_keeps_braces_in_sent_email(mail_client, event, order):
+    djmail.outbox = []
     response = mail_client.post(
         event_url(event, f'orders/{order.code}/sendmail'),
-        {'subject': 'Your order for {event', 'message': 'Hello', 'sendto': order.email},
+        {'subject': REVIEW_SUBJECT, 'message': 'Order {code}. See you there :}', 'sendto': order.email},
         secure=True,
     )
-    assert response.status_code == 200
-    assert STRAY_BRACE_ERROR in response.content.decode()
+    assert response.status_code == 302
+    assert len(djmail.outbox) == 1
+    assert djmail.outbox[0].subject == REVIEW_SUBJECT
+    assert f'Order {order.code}. See you there :}}' in djmail.outbox[0].body
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize('text', ['See you there :}', 'See you there {'])
-def test_order_mail_preview_returns_validation_error(mail_client, event, order, text):
+def test_order_mail_preview_renders_braces_as_text(mail_client, event, order):
     response = mail_client.post(
         event_url(event, f'orders/{order.code}/sendmail/preview'),
-        {'content': text},
-        secure=True,
-    )
-    assert response.status_code == 400
-    assert 'stray { or }' in response.json()['error']
-
-
-@pytest.mark.django_db
-def test_order_mail_preview_renders_placeholders(mail_client, event, order):
-    response = mail_client.post(
-        event_url(event, f'orders/{order.code}/sendmail/preview'),
-        {'content': 'Order {code} {{literal}}'},
+        {'content': 'Order {code} {{literal}} {} See you there :}'},
         secure=True,
     )
     assert response.status_code == 200
     html = response.json()['html']
-    assert order.code in html
-    assert '{literal}' in html
+    assert f'Order {order.code} {{literal}} {{}} See you there :}}' in html
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize('payload_format', ['form', 'json'])
-def test_editor_email_preview_returns_validation_error(mail_client, event, payload_format):
+def test_editor_email_preview_renders_braces_as_text(mail_client, event, payload_format):
     url = event_url(event, 'editor/email-preview')
+    body = '<p>TEST {} {event_name} {all_submissions_url} See you there :}</p>'
     if payload_format == 'json':
         response = mail_client.post(
-            url,
-            data=json.dumps({'html': '<p>See you there :}</p>', 'locale': 'en'}),
-            content_type='application/json',
-            secure=True,
+            url, data=json.dumps({'html': body, 'locale': 'en'}), content_type='application/json', secure=True
         )
+        html = response.json()['html']
     else:
-        response = mail_client.post(url, {'body_en': '<p>See you there :}</p>'}, secure=True)
-    assert response.status_code == 400
-    assert 'stray { or }' in response.json()['error']
+        response = mail_client.post(url, {'body_en': body}, secure=True)
+        html = response.json()['previews']['en']
+    assert response.status_code == 200
+    assert 'TEST {}' in html
+    assert 'See you there :}' in html
+    assert '<span class="placeholder"' in html
+    assert '/me/submissions/' in html
 
 
 @pytest.mark.django_db
-def test_editor_email_preview_renders_placeholders(mail_client, event):
+def test_team_mail_ajax_preview_renders_review_input(mail_client, event):
     response = mail_client.post(
-        event_url(event, 'editor/email-preview'),
-        {'body_en': '<p>{{literal}} {event_name}</p>'},
+        event_url(event, 'mails/compose/teams/'),
+        {'action': 'preview', 'subject_0': REVIEW_SUBJECT, 'message_0': REVIEW_MESSAGE},
+        HTTP_X_REQUESTED_WITH='XMLHttpRequest',
         secure=True,
     )
     assert response.status_code == 200
-    html = response.json()['previews']['en']
-    assert '{literal}' in html
-    assert '<span class="placeholder"' in html
+    html = response.json()['html']
+    assert 'Chai ki Tapri' in html
+    assert 'TEST {}' in html
 
 
 @pytest.mark.django_db
-def test_team_mail_form_accepts_escaped_braces(event):
-    with scope(event=event):
-        form = TeamMailForm(
-            event=event,
-            data={'subject_0': 'Briefing {{internal}} for {event_name}', 'message_0': 'Use {{name}} literally, {name}'},
-        )
-        form.is_valid()
-    assert 'subject' not in form.errors
-    assert 'message' not in form.errors
-
-
-@pytest.mark.django_db
-def test_order_mail_form_accepts_escaped_braces_in_subject(event, order):
-    with scope(event=event):
-        form = OrderMailForm(
-            order=order,
-            data={'subject': 'Order {code} {{internal}}', 'message': 'Hello', 'sendto': order.email},
-        )
-        form.is_valid()
-    assert 'subject' not in form.errors
-
-
-@pytest.mark.django_db
-def test_team_mail_ajax_preview_returns_escaped_field_errors(mail_client, event):
+def test_team_mail_ajax_preview_returns_field_errors(mail_client, event):
     response = mail_client.post(
         event_url(event, 'mails/compose/teams/'),
-        {'action': 'preview', 'subject_0': 'Briefing for {<b>x</b>}', 'message_0': 'See you there :}'},
+        {'action': 'preview', 'subject_0': 'Briefing for {evnt_name}', 'message_0': 'Hi'},
         HTTP_X_REQUESTED_WITH='XMLHttpRequest',
         secure=True,
     )
     assert response.status_code == 400
-    errors = response.json()['errors']
-    assert STRAY_BRACE_ERROR in errors['Message'][0]
-    assert '&lt;b&gt;x&lt;/b&gt;' in errors['Subject'][0]
-    assert '<b>' not in errors['Subject'][0]
+    assert 'Invalid placeholder(s): {evnt_name}' in response.json()['errors']['Subject'][0]

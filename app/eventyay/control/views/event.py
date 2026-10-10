@@ -814,19 +814,6 @@ class MailSettings(EventSettingsViewMixin, EventSettingsFormView):
             return self.get(request)
 
 
-def invalid_template_response() -> JsonResponse:
-    return JsonResponse(
-        {
-            'error': _(
-                'Invalid email template! '
-                'Please check that you don’t have stray { or } somewhere, '
-                'and that there are no spaces inside the {} blocks.'
-            )
-        },
-        status=400,
-    )
-
-
 class MailSettingsPreview(EventPermissionRequiredMixin, View):
     permission = 'can_change_event_settings'
 
@@ -888,7 +875,16 @@ class MailSettingsPreview(EventPermissionRequiredMixin, View):
                         try:
                             formatted = v.format_map(self.placeholders(preview_product))
                         except ValueError:
-                            return invalid_template_response()
+                            return JsonResponse(
+                                {
+                                    'error': _(
+                                        'Invalid email template! '
+                                        'Please check that you don’t have stray { or } somewhere, '
+                                        'and that there are no spaces inside the {} blocks.'
+                                    )
+                                },
+                                status=400,
+                            )
                         msgs[self.supported_locale[idx]] = markdown_compile_email(formatted)
 
         return JsonResponse({'product': preview_product, 'msgs': msgs})
@@ -975,37 +971,31 @@ class EditorEmailPreview(EventPermissionRequiredMixin, View):
             return HttpResponseBadRequest('locale must be a string')
 
         safe_html = sanitize_email_html(raw_html)
-        try:
-            preview_html = expand_email_preview_placeholders(safe_html, request.event, locale=locale or None)
-        except ValueError:
-            return invalid_template_response()
+        preview_html = expand_email_preview_placeholders(safe_html, request.event, locale=locale or None)
         return JsonResponse({'html': preview_html})
 
     def _handle_form(self, request):
         event = request.event
         previews = {}
 
-        try:
-            for key, values in request.POST.lists():
-                if not key.startswith('body_') or not values:
-                    continue
-                locale = key[5:]
-                body = values[0]
-                if not body:
-                    continue
-                safe_html = sanitize_email_html(body)
-                previews[locale] = expand_email_preview_placeholders(safe_html, event, locale=locale)
+        for key, values in request.POST.lists():
+            if not key.startswith('body_') or not values:
+                continue
+            locale = key[5:]
+            body = values[0]
+            if not body:
+                continue
+            safe_html = sanitize_email_html(body)
+            previews[locale] = expand_email_preview_placeholders(safe_html, event, locale=locale)
 
-            if not previews:
-                body = request.POST.get('body', '')
-                if body:
-                    safe_html = sanitize_email_html(body)
-                    event_locales = list(event.settings.locales)
-                    previews[event_locales[0] if event_locales else 'en'] = expand_email_preview_placeholders(
-                        safe_html, event
-                    )
-        except ValueError:
-            return invalid_template_response()
+        if not previews:
+            body = request.POST.get('body', '')
+            if body:
+                safe_html = sanitize_email_html(body)
+                event_locales = list(event.settings.locales)
+                previews[event_locales[0] if event_locales else 'en'] = expand_email_preview_placeholders(
+                    safe_html, event
+                )
 
         return JsonResponse({'previews': previews})
 

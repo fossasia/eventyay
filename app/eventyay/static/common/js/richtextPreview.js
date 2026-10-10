@@ -7,12 +7,6 @@ function showPreviewError(target) {
   target.textContent = typeof window.gettext === 'function' ? window.gettext('Preview could not be loaded.') : 'Preview could not be loaded.'
 }
 
-async function readPreviewValidationError(response) {
-  if (response.status !== 400) return null
-  const data = await response.json()
-  return typeof data.error === 'string' ? data.error : null
-}
-
 function replaceHtml(target, html) {
   const parsed = new DOMParser().parseFromString(html || '', 'text/html')
   target.replaceChildren(...parsed.body.childNodes)
@@ -53,12 +47,6 @@ function initRichTextPreviewTabs() {
           credentials: 'same-origin',
           body: params,
         })
-        const validationError = await readPreviewValidationError(response)
-        if (validationError) {
-          console.error('Rich text preview validation failed:', validationError)
-          blocks.forEach((block) => { block.textContent = validationError })
-          return
-        }
         if (!response.ok) throw new Error(`Preview request failed: ${response.status}`)
         const data = await response.json()
         if (data.previews) {
@@ -110,12 +98,6 @@ function initEmailPreviewTabs() {
           credentials: 'same-origin',
           body: params,
         })
-        const validationError = await readPreviewValidationError(response)
-        if (validationError) {
-          console.error('Email preview validation failed:', validationError)
-          blocks.forEach((block) => { block.textContent = validationError })
-          return
-        }
         if (!response.ok) throw new Error(`Preview request failed: ${response.status}`)
         const data = await response.json()
         const previews = data.previews || {}

@@ -527,7 +527,7 @@ class OrderMailForm(forms.Form):
             self.fields[fn].help_text += ' ' + str(ht)
         else:
             self.fields[fn].help_text = ht
-        self.fields[fn].validators.append(PlaceholderValidator(phs_display))
+        self.fields[fn].validators.append(PlaceholderValidator(phs_display, literal_braces=True))
 
     def __init__(self, *args, **kwargs):
         order = self.order = kwargs.pop('order')
@@ -542,7 +542,9 @@ class OrderMailForm(forms.Form):
             initial=str(order.event.settings.mail_text_order_custom_mail.localize(order.locale)),
         )
         self._add_placeholder_help_text('message', placeholder_names)
-        self.fields['subject'].validators.append(PlaceholderValidator(['{%s}' % p for p in placeholder_names]))
+        self.fields['subject'].validators.append(
+            PlaceholderValidator(['{%s}' % p for p in placeholder_names], literal_braces=True)
+        )
 
 
 class OrderPositionMailForm(OrderMailForm):
