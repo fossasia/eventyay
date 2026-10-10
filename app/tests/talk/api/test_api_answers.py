@@ -541,3 +541,24 @@ def test_team_token_can_answer_nonpublic_question_and_upsert(client, event, revi
         content = response.json()
         assert content["id"] == answer_id
         assert content["answer"] == "Upserted team token answer"
+
+@pytest.mark.django_db
+def test_answer_expand_person(event, orga_user_token, client, speaker_question, speaker):
+    with scope(event=event):
+        Answer.objects.create(
+            question=speaker_question, person=speaker.user, answer="My answer here"
+        )
+
+    response = client.get(
+        f"{event.api_urls.answers}?expand=person",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    content = json.loads(response.text)
+
+    assert response.status_code == 200
+    assert len(content["results"]) == 1
+    data = content["results"][0]
+
+    assert data["person"]["code"] == speaker.code
+    assert data["person"]["fullname"] == speaker.user.fullname
