@@ -145,6 +145,29 @@ class FilterForm(forms.Form):
         return string
 
 
+class EventLogFilterForm(forms.Form):
+    date_from = forms.DateField(
+        label=_('Start date'),
+        required=False,
+        input_formats=['%Y-%m-%d'],
+        widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
+    )
+    date_to = forms.DateField(
+        label=_('End date'),
+        required=False,
+        input_formats=['%Y-%m-%d'],
+        widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        date_from = cleaned_data.get('date_from')
+        date_to = cleaned_data.get('date_to')
+        if date_from and date_to and date_to < date_from:
+            self.add_error('date_to', _('End date must be on or after the start date.'))
+        return cleaned_data
+
+
 class OrderFilterForm(FilterForm):
     query = forms.CharField(
         label=_('Search orders…'),

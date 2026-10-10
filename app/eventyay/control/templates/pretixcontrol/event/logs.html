@@ -33,6 +33,20 @@
                     {% endif %}
                 {% endfor %}
             </select>
+            <label for="{{ date_filter_form.date_from.id_for_label }}">
+                {{ date_filter_form.date_from.label }}
+            </label>
+            {{ date_filter_form.date_from }}
+            {% for error in date_filter_form.date_from.errors %}
+                <span class="text-danger">{{ error }}</span>
+            {% endfor %}
+            <label for="{{ date_filter_form.date_to.id_for_label }}">
+                {{ date_filter_form.date_to.label }}
+            </label>
+            {{ date_filter_form.date_to }}
+            {% for error in date_filter_form.date_to.errors %}
+                <span class="text-danger">{{ error }}</span>
+            {% endfor %}
             <button class="btn btn-primary" type="submit">{% trans "Filter" %}</button>
         </p>
     </form>

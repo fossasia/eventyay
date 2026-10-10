@@ -1,3 +1,4 @@
+from datetime import datetime, time, timedelta
 import html
 import io
 import json
@@ -27,7 +28,7 @@ from django.http import (
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.functional import cached_property
-from django.utils.timezone import now
+from django.utils.timezone import get_current_timezone, make_aware, now
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import DeleteView, FormView, ListView
@@ -79,6 +80,7 @@ from eventyay.control.forms.event import (
     TicketSettingsForm,
     WidgetCodeForm,
 )
+from eventyay.control.forms.filter import EventLogFilterForm
 from eventyay.control.permissions import EventPermissionRequiredMixin
 from eventyay.control.views.user import RecentAuthenticationRequiredMixin
 from eventyay.helpers.database import rolledback_transaction
@@ -1234,6 +1236,7 @@ class EventLog(EventPermissionRequiredMixin, PaginationMixin, ListView):
     context_object_name = 'logs'
 
     def get_queryset(self):
+        self.date_filter_form = EventLogFilterForm(self.request.GET)
         qs = (
             self.request.event.logentry_set.all()
             .select_related('user', 'content_type', 'api_token', 'oauth_application', 'device')
@@ -1293,10 +1296,24 @@ class EventLog(EventPermissionRequiredMixin, PaginationMixin, ListView):
             if self.request.GET.get('object'):
                 qs = qs.filter(object_id=self.request.GET.get('object'))
 
+        if self.date_filter_form.is_valid():
+            date_from = self.date_filter_form.cleaned_data['date_from']
+            date_to = self.date_filter_form.cleaned_data['date_to']
+            current_timezone = get_current_timezone()
+            if date_from:
+                start_datetime = make_aware(datetime.combine(date_from, time.min), current_timezone)
+                qs = qs.filter(datetime__gte=start_datetime)
+            if date_to:
+                end_datetime = make_aware(
+                    datetime.combine(date_to + timedelta(days=1), time.min), current_timezone
+                )
+                qs = qs.filter(datetime__lt=end_datetime)
+
         return qs
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data()
+        ctx['date_filter_form'] = self.date_filter_form
         ctx['userlist'] = self.request.event.logentry_set.order_by().distinct().values('user__id', 'user__email')
         ctx['devicelist'] = (
             self.request.event.logentry_set.order_by('device__name').distinct().values('device__id', 'device__name')
