@@ -41,8 +41,10 @@ div.c-linear-schedule-session.is-shift-session(
 							.role-assignees-more-wrap(v-if="hiddenAssigneeCount(role)")
 								button.role-assignees-more(
 									type="button",
-									:aria-expanded="openAssigneesRoleId != null ? 'true' : 'false'",
-									@click.stop="toggleAssigneesPopover(role, $event)") +{{ hiddenAssigneeCount(role) }} {{ $t('more') }}
+									aria-haspopup="dialog",
+									:aria-expanded="openAssigneesRoleId === roleKey(role) ? 'true' : 'false'",
+									@click.stop="toggleAssigneesPopover(role, $event)",
+									@keydown.esc="closeAssigneesPopover(true)") +{{ hiddenAssigneeCount(role) }} {{ $t('more') }}
 						span.text-muted(v-if="!assignedList(role).length") {{ $t('None') }}
 				.shift-actions
 					template(v-if="isMyRole(role)")
@@ -57,6 +59,9 @@ div.c-linear-schedule-session.is-shift-session(
 			.room(v-if="showRoom && session.room", :title="getLocalizedString(session.room.name)") {{ getLocalizedString(session.room.name) }}
 	assignees-popover(
 		:open="openAssigneesRoleId != null",
+		:target="assigneesPopoverTarget",
+		ref="assigneesPopover",
+		@close="onAssigneesPopoverClose",
 		:title="assigneesPopoverTitle",
 		:assignees="assigneesPopoverList",
 		:top="assigneesPopoverPos.top",
@@ -152,6 +157,7 @@ export default {
 			openAssigneesRoleId: null,
 			assigneesPopoverList: [],
 			assigneesPopoverTitle: 'Assigned',
+			assigneesPopoverTarget: 'body',
 			assigneesPopoverPos: { top: 0, left: 0, width: 260, maxHeight: 280 },
 		}
 	},
@@ -161,13 +167,16 @@ export default {
 			const path = event.composedPath?.() || []
 			const inside = path.some((node) => {
 				const el = node
-				return el?.classList?.contains?.('role-assignees-popover') || el?.classList?.contains?.('role-assignees-more')
+				return el?.classList?.contains?.('role-assignees-popover') || el === this._assigneesTrigger
 			})
 			if (inside) return
 			this.closeAssigneesPopover()
 		}
-		this._onScroll = () => {
-			if (this.openAssigneesRoleId != null) this.closeAssigneesPopover()
+		this._onScroll = (event) => {
+			if (this.openAssigneesRoleId == null) return
+			const path = event.composedPath?.() || []
+			if (path.some(node => node?.classList?.contains?.('role-assignees-popover'))) return
+			this.closeAssigneesPopover()
 		}
 		document.addEventListener('pointerdown', this._onAssigneesDocPointerDown, true)
 		window.addEventListener('scroll', this._onScroll, true)
@@ -315,21 +324,36 @@ export default {
 		capacityLabel (role) {
 			return this.$t('{{assigned}}/{{capacity}} needed', { assigned: getAssignedList(role).length, capacity: role.capacity })
 		},
-		closeAssigneesPopover () {
+		closeAssigneesPopover (restoreFocus = false) {
+			const trigger = this._assigneesTrigger
+			this._assigneesTrigger = null
 			this.openAssigneesRoleId = null
 			this.assigneesPopoverList = []
+			if (restoreFocus === true) this.$nextTick(() => trigger?.focus?.())
+		},
+		onAssigneesPopoverClose (payload) {
+			if (payload?.relatedTarget && payload.relatedTarget === this._assigneesTrigger) return
+			this.closeAssigneesPopover(payload?.restoreFocus)
 		},
 		toggleAssigneesPopover (role, event) {
-			const roleId = role.id ?? role.name
+			const roleId = this.roleKey(role)
 			if (this.openAssigneesRoleId === roleId) {
-				this.closeAssigneesPopover()
+				this.closeAssigneesPopover(true)
 				return
 			}
 			const list = getAssignedList(role)
 			this.assigneesPopoverList = list
 			this.assigneesPopoverTitle = `Assigned (${list.length})`
-			this.assigneesPopoverPos = placeAssigneesPopover(event.currentTarget)
+			const trigger = event.currentTarget
+			const root = trigger.getRootNode?.()
+			this.assigneesPopoverTarget = (typeof ShadowRoot !== 'undefined' && root instanceof ShadowRoot) ? root : 'body'
+			this.assigneesPopoverPos = placeAssigneesPopover(trigger)
+			this._assigneesTrigger = trigger
 			this.openAssigneesRoleId = roleId
+			this.$nextTick(() => this.$refs.assigneesPopover?.focus())
+		},
+		roleKey (role) {
+			return role.id ?? role.name
 		},
 		roleName (role) {
 			return getLocalizedString(role.name)

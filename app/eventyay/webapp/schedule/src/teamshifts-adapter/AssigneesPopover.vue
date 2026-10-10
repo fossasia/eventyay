@@ -1,10 +1,16 @@
 <template lang="pug">
-teleport(to="body")
+teleport(:to="target")
 	.role-assignees-popover(
 		v-if="open",
+		ref="panel",
+		role="dialog",
+		tabindex="-1",
+		:aria-label="title",
 		:style="panelStyle",
 		@click.stop="",
-		@pointerdown.stop="")
+		@pointerdown.stop="",
+		@keydown.esc.stop.prevent="$emit('close', { restoreFocus: true })",
+		@focusout="onFocusOut")
 		.role-assignees-popover-title {{ title }}
 		ul.role-assignees-popover-list
 			li(v-for="(user, i) in assignees", :key="user.id || i")
@@ -16,14 +22,26 @@ teleport(to="body")
 <script>
 export default {
 	name: 'AssigneesPopover',
+	emits: ['close'],
 	props: {
 		open: { type: Boolean, default: false },
+		target: { type: [String, Object], default: 'body' },
 		title: { type: String, default: 'Assigned' },
 		assignees: { type: Array, default: () => [] },
 		top: { type: Number, default: 0 },
 		left: { type: Number, default: 0 },
 		width: { type: Number, default: 260 },
 		maxHeight: { type: Number, default: 280 },
+	},
+	methods: {
+		focus () {
+			this.$refs.panel?.focus?.({ preventScroll: true })
+		},
+		onFocusOut (event) {
+			const next = event.relatedTarget
+			if (next && this.$refs.panel?.contains(next)) return
+			if (next) this.$emit('close', { restoreFocus: false, relatedTarget: next })
+		},
 	},
 	computed: {
 		panelStyle () {
@@ -51,6 +69,7 @@ export default {
 	border: 1px solid rgba(0, 0, 0, 0.12)
 	border-radius: 6px
 	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16)
+	outline: none
 	padding: 10px
 	display: flex
 	flex-direction: column
