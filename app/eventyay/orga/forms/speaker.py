@@ -9,6 +9,7 @@ from django_scopes import scope
 from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.models import SubmissionStates, User
+from eventyay.common.social_links import format_social_links_for_csv
 from eventyay.common.text.phrases import phrases
 from eventyay.orga.forms.export import ExportForm
 
@@ -59,6 +60,28 @@ class SpeakerExportForm(ExportForm):
         label=_('Picture License'),
         help_text=_("The license of the speaker's profile picture"),
     )
+    job_title = forms.BooleanField(
+        required=False,
+        initial=True,
+        label=_('Job title/role'),
+    )
+    organization = forms.BooleanField(
+        required=False,
+        initial=True,
+        label=_('Organization'),
+    )
+    social_links = forms.BooleanField(
+        required=False,
+        initial=True,
+        label=_('Social links'),
+        help_text=_('Active social media and website links, formatted as network: URL.'),
+    )
+    is_featured = forms.BooleanField(
+        required=False,
+        initial=True,
+        label=_('Featured'),
+        help_text=_('Show this speaker in public list of featured speakers.'),
+    )
 
     class Meta:
         model = User
@@ -90,6 +113,10 @@ class SpeakerExportForm(ExportForm):
     def export_field_names(self) -> list[str]:
         field_names = self.Meta.model_fields + [
             'biography',
+            'job_title',
+            'organization',
+            'social_links',
+            'is_featured',
             'avatar',
             'avatar_source',
             'avatar_license',
@@ -111,8 +138,9 @@ class SpeakerExportForm(ExportForm):
                     )
                 ).distinct()
             return queryset.prefetch_related(
-                'profiles', 
+                'profiles',
                 'profiles__event',
+                'profiles__social_links',
                 Prefetch('submissions', queryset=self.event.submissions.all(), to_attr='event_submissions')
             ).order_by('code')
 
@@ -121,6 +149,22 @@ class SpeakerExportForm(ExportForm):
 
     def _get_biography_value(self, obj):
         return obj._profile.biography
+
+    def _get_job_title_value(self, obj):
+        profile = getattr(obj, '_profile', None)
+        return profile.job_title if profile else ''
+
+    def _get_organization_value(self, obj):
+        profile = getattr(obj, '_profile', None)
+        return profile.organization if profile else ''
+
+    def _get_social_links_value(self, obj):
+        profile = getattr(obj, '_profile', None)
+        return format_social_links_for_csv(profile.social_links.all()) if profile else ''
+
+    def _get_is_featured_value(self, obj):
+        profile = getattr(obj, '_profile', None)
+        return profile.is_featured if profile else False
 
     def _get_submission_ids_value(self, obj):
         return [sub.code for sub in obj.event_submissions]
