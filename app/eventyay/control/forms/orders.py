@@ -515,6 +515,7 @@ class OrderLocaleForm(forms.ModelForm):
 
 class OrderMailForm(forms.Form):
     subject = forms.CharField(label=_('Subject'), required=True)
+    placeholder_parameters = ('event', 'order')
 
     def _placeholder_names(self, base_parameters: list[str]) -> list[str]:
         return sorted(get_available_placeholders(self.order.event, base_parameters).keys())
@@ -526,14 +527,14 @@ class OrderMailForm(forms.Form):
             self.fields[fn].help_text += ' ' + str(ht)
         else:
             self.fields[fn].help_text = ht
-        self.fields[fn].validators.append(PlaceholderValidator(phs_display))
+        self.fields[fn].validators.append(PlaceholderValidator(phs_display, literal_braces=True))
 
     def __init__(self, *args, **kwargs):
         order = self.order = kwargs.pop('order')
         super().__init__(*args, **kwargs)
         self.fields['sendto'] = forms.EmailField(label=_('Recipient'), required=True, initial=order.email)
         self.fields['sendto'].widget.attrs['readonly'] = 'readonly'
-        placeholder_names = self._placeholder_names(['event', 'order'])
+        placeholder_names = self._placeholder_names(list(self.placeholder_parameters))
         self.fields['message'] = EmailBodyField(
             label=_('Message'),
             required=True,
@@ -541,21 +542,18 @@ class OrderMailForm(forms.Form):
             initial=str(order.event.settings.mail_text_order_custom_mail.localize(order.locale)),
         )
         self._add_placeholder_help_text('message', placeholder_names)
+        self.fields['subject'].validators.append(
+            PlaceholderValidator(['{%s}' % p for p in placeholder_names], literal_braces=True)
+        )
 
 
 class OrderPositionMailForm(OrderMailForm):
+    placeholder_parameters = ('event', 'order', 'position')
+
     def __init__(self, *args, **kwargs):
         position = self.position = kwargs.pop('position')
         super().__init__(*args, **kwargs)
         self.fields['sendto'].initial = position.attendee_email
-        placeholder_names = self._placeholder_names(['event', 'order', 'position'])
-        self.fields['message'] = EmailBodyField(
-            label=_('Message'),
-            required=True,
-            placeholders=placeholder_names,
-            initial=str(self.order.event.settings.mail_text_order_custom_mail.localize(self.order.locale)),
-        )
-        self._add_placeholder_help_text('message', placeholder_names)
 
 
 class OrderRefundForm(forms.Form):
