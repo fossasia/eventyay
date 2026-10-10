@@ -31,23 +31,23 @@
   {% endif %}
   {% if request.event.cfp.request_avatar and speaker.avatar_url %}
     <div class="submission-detail">
-      <strong class="submission-detail-label">{% translate 'Avatar' %}</strong>
+      <strong class="submission-detail-label">{% translate 'Speaker photo' %}</strong>
       <div class="submission-detail-value">
         <a href="{{ speaker.avatar_url }}" data-lightbox>
-          <img loading="lazy" class="speaker-avatar-preview" src="{% if speaker.avatar %}{{ speaker.avatar|thumbnail:"default" }}{% else %}{{ speaker.avatar_url }}{% endif %}" alt="{% translate "The speaker's profile picture" %}">
+          <img loading="lazy" class="speaker-avatar-preview" src="{% if speaker.avatar %}{{ speaker.avatar|thumbnail:'default' }}{% else %}{{ speaker.avatar_url }}{% endif %}" alt="{% translate "The speaker's photo" %}">
         </a>
       </div>
     </div>
   {% endif %}
   {% if request.event.cfp.request_avatar_source and speaker.avatar_source %}
     <div class="submission-detail avatar-license-text">
-      <strong class="submission-detail-label">{% translate 'Profile Picture Source' %}</strong>
+      <strong class="submission-detail-label">{% translate 'Speaker photo source' %}</strong>
       <div class="submission-detail-value">{{ speaker.avatar_source|truncatewords:200 }}</div>
     </div>
   {% endif %}
   {% if request.event.cfp.request_avatar_license and speaker.avatar_license %}
     <div class="submission-detail avatar-license-text">
-      <strong class="submission-detail-label">{% translate 'Profile Picture License' %}</strong>
+      <strong class="submission-detail-label">{% translate 'Speaker photo license' %}</strong>
       <div class="submission-detail-value">{{ speaker.avatar_license|truncatewords:200 }}</div>
     </div>
   {% endif %}

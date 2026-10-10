@@ -296,9 +296,9 @@ class CfPForms(EventPermissionRequired, TemplateView):
             'availabilities': str(_('Availability')),
             'additional_speaker': str(_('Additional Speaker')),
             'fullname': str(_('Full name')),
-            'avatar': str(_('Profile picture')),
-            'avatar_source': str(_('Profile Picture Source')),
-            'avatar_license': str(_('Profile Picture License')),
+            'avatar': str(_('Speaker photo')),
+            'avatar_source': str(_('Speaker photo source')),
+            'avatar_license': str(_('Speaker photo license')),
         }
 
         try:

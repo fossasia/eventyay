@@ -103,10 +103,10 @@
             <div class="td-kpi-link">{% trans "View speakers" %} <span aria-hidden="true">></span></div>
         </a>
 
-        <a href="{{ request.event.orga_urls.speakers }}?readiness=missing_profile_image" class="td-kpi-card {% if speaker_readiness.missing_profile_image > 0 %}td-kpi-orange{% else %}td-kpi-blue{% endif %}" title="{% trans 'Missing profile image' %}">
+        <a href="{{ request.event.orga_urls.speakers }}?readiness=missing_profile_image" class="td-kpi-card {% if speaker_readiness.missing_profile_image > 0 %}td-kpi-orange{% else %}td-kpi-blue{% endif %}" title="{% trans 'Missing speaker photo' %}">
             <div class="td-kpi-top">
                 <span class="td-kpi-icon" aria-hidden="true"><span class="fa fa-picture-o"></span></span>
-                <span class="td-kpi-label">{% trans "Missing profile image" %}</span>
+                <span class="td-kpi-label">{% trans "Missing speaker photo" %}</span>
             </div>
             <div class="td-kpi-value">{{ speaker_readiness.missing_profile_image }}</div>
             <div class="td-kpi-hint td-kpi-hint-spacer" aria-hidden="true"></div>

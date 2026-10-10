@@ -46,6 +46,7 @@ from eventyay.common.forms.widgets import (
     EnhancedSelectMultiple,
     RichTextWidget,
 )
+from eventyay.common.language import language
 from eventyay.common.text.phrases import phrases
 from eventyay.consts import SizeKey
 from eventyay.schedule.forms import AvailabilitiesFormMixin
@@ -74,6 +75,22 @@ def validate_avatar_license_text(value):
     if len(words) > AVATAR_LICENSE_TEXT_WORD_LIMIT:
         raise ValidationError(AVATAR_LICENSE_TEXT_VALIDATION_ERROR)
     return value
+
+
+def is_default_cfp_text(value, default):
+    """Recognize cached defaults without overwriting organiser custom text."""
+    if not value or value is default:
+        return True
+    translations = getattr(value, 'data', None)
+    if not isinstance(translations, dict):
+        return False
+    with language('en'):
+        english = str(default)
+    for locale, text in translations.items():
+        with language(locale):
+            if text and text not in (english, str(default)):
+                return False
+    return True
 
 
 class SpeakerProfileForm(
@@ -136,12 +153,15 @@ class SpeakerProfileForm(
         if self.user:
             initial.update({field: getattr(self.user, field) for field in self.user_fields})
         for field in self.user_fields:
-            field_class = self.Meta.field_classes.get(field, User._meta.get_field(field).formfield)
+            model_field = User._meta.get_field(field)
+            field_class = self.Meta.field_classes.get(field, model_field.formfield)
             field_kwargs = {
                 'initial': initial.get(field),
                 'disabled': read_only,
-                'help_text': User._meta.get_field(field).help_text,
+                'help_text': model_field.help_text,
             }
+            if field in self.Meta.labels:
+                field_kwargs['label'] = model_field.verbose_name
             if field == 'avatar':
                 field_kwargs['max_size'] = settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE]
             self.fields[field] = field_class(**field_kwargs)
@@ -157,6 +177,14 @@ class SpeakerProfileForm(
                         new_widget.attrs[attr_name] = old_widget.attrs[attr_name]
                 self.fields[field].widget = new_widget
             self._update_cfp_texts(field)
+            # Resolve cached CfP defaults before applying speaker-specific wording.
+            if field in self.Meta.labels and is_default_cfp_text(self.fields[field].label, model_field.verbose_name):
+                self.fields[field].label = self.Meta.labels[field]
+            if field in self.Meta.help_texts:
+                stored_help = (self.field_configuration or {}).get(field, {}).get('help_text')
+                if is_default_cfp_text(stored_help, model_field.help_text):
+                    self.fields[field].help_text = self.Meta.help_texts[field]
+                    self.fields[field].original_help_text = self.Meta.help_texts[field]
 
         field_names = list(self.fields)
         if 'fullname' in field_names:
@@ -362,9 +390,9 @@ class SpeakerProfileForm(
         _cfp = getattr(self.event, 'cfp', None) if hasattr(self.event, 'cfp') else None
         if not getattr(self, 'not_strict', False) and _cfp and _cfp.require_avatar and not data.get('avatar') and not data.get('get_gravatar'):
             if _cfp.enable_gravatar:
-                msg = _('Please provide a profile picture or allow us to load your picture from gravatar!')
+                msg = _('Please provide a speaker photo or allow us to load your photo from gravatar!')
             else:
-                msg = _('Please provide a profile picture!')
+                msg = _('Please provide a speaker photo!')
             self.add_error('avatar', forms.ValidationError(msg))
 
         fullname = self.cleaned_data.get('fullname')
@@ -470,6 +498,18 @@ class SpeakerProfileForm(
         model = SpeakerProfile
         fields = ('biography', 'job_title', 'organization')
         public_fields = ['fullname', 'biography', 'job_title', 'organization', 'avatar']
+        labels = {
+            'avatar': _('Speaker photo'),
+            'avatar_source': _('Speaker photo source'),
+            'avatar_license': _('Speaker photo license'),
+            'get_gravatar': _('Retrieve speaker photo via gravatar'),
+        }
+        help_texts = {
+            'get_gravatar': _(
+                'If you have registered with an email address that has a gravatar account, '
+                'we can retrieve your speaker photo from there.'
+            ),
+        }
         widgets = {
             'biography': RichTextWidget,
             'avatar': AvatarInput,
@@ -597,7 +637,7 @@ class SpeakerFilterForm(forms.Form):
             ('', _('All states')),
             ('confirmed', _('Confirmed speakers')),
             ('missing_biography', _('Missing biography')),
-            ('missing_profile_image', _('Missing profile image')),
+            ('missing_profile_image', _('Missing speaker photo')),
             ('missing_affiliation', _('Missing affiliation')),
             ('without_session', _('Without session')),
         ),

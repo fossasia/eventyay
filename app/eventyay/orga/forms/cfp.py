@@ -79,7 +79,7 @@ class CfPGeneralSettingsForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18n
     )
     cfp_enable_gravatar = forms.BooleanField(
         label=_('Enable Gravatar'),
-        help_text=_('Allow speakers to use Gravatar for their profile picture.'),
+        help_text=_('Allow speakers to use Gravatar for their speaker photo.'),
         required=False,
     )
 
