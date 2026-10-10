@@ -1,6 +1,7 @@
 {% extends "pretixcontrol/items/base.html" %}
 {% load i18n %}
 {% load static %}
+{% load urlreplace %}
 {% block title %}{% trans "Event logs" %}{% endblock %}
 {% block inside %}
     <h1>{% trans "Event logs" %}</h1>
@@ -34,6 +35,10 @@
                 {% endfor %}
             </select>
             <button class="btn btn-primary" type="submit">{% trans "Filter" %}</button>
+            <a href="?{% url_replace request 'download' 'yes' %}" class="btn btn-default">
+                <i class="fa fa-download"></i>
+                {% trans "Export as CSV" %}
+            </a>
         </p>
     </form>
     <ul class="list-group">
