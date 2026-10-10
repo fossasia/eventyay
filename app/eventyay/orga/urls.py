@@ -380,6 +380,7 @@ urlpatterns = [
                     name='event.speaker_autocomplete',
                 ),
                 path('speakers/', speaker.SpeakerList.as_view(), name='speakers.list'),
+                path('speakers/new/', speaker.SpeakerCreate.as_view(), name='speakers.create'),
                 path(
                     'speakers/<code>/',
                     include(

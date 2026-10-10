@@ -18,6 +18,9 @@
         <script defer src="{% static "cfp/js/animateFormset.js" %}"></script>
         <script type="module" src="{% static 'common/js/speaker_social_links.js' %}"></script>
     {% endif %}
+    {% if 'no_email' in form.fields %}
+        <script type="module" src="{% static 'orga/js/speaker_create.js' %}"></script>
+    {% endif %}
 {% endblock scripts %}
 
 {% block extra_title %}{{ form.instance.user.get_display_name }} :: {% endblock extra_title %}
@@ -77,7 +80,7 @@
             </ul>
         </span>
     </div>
-    <form method="post" enctype="multipart/form-data">
+    <form id="speaker-create-form" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {% include "common/forms/errors.html" %}
 
