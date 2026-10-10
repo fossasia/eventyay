@@ -6,6 +6,13 @@
 {% load rules %}
 {% load static %}
 
+{% block stylesheets %}
+    {% if can_link_sessions %}
+        <link rel="stylesheet" href="{% static 'orga/css/question-toggles.css' %}">
+        <link rel="stylesheet" href="{% static 'orga/css/speaker_create.css' %}">
+    {% endif %}
+{% endblock stylesheets %}
+
 {% block scripts %}
     {% if form.biography %}
         <script src="{% static "vendored/marked.min.js" %}" defer></script> {# do not compress #}
@@ -18,7 +25,8 @@
         <script defer src="{% static "cfp/js/animateFormset.js" %}"></script>
         <script type="module" src="{% static 'common/js/speaker_social_links.js' %}"></script>
     {% endif %}
-    {% if 'no_email' in form.fields %}
+    {% has_event_perm "base.update_speakerprofile" request.user request form.instance as can_edit_speaker %}
+    {% if 'no_email' in form.fields or can_edit_speaker and can_link_sessions %}
         <script type="module" src="{% static 'orga/js/speaker_create.js' %}"></script>
     {% endif %}
 {% endblock scripts %}
@@ -98,6 +106,9 @@
                 {{ field.as_field_group }}
             {% endif %}
         {% endfor %}
+        {% if can_edit_speaker and can_link_sessions %}
+            {% include "orga/speaker/includes/session_options.html" %}
+        {% endif %}
         {% include "orga/includes/submit_row.html" %}
 
     </form>
