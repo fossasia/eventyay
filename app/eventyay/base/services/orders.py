@@ -825,6 +825,7 @@ def _check_positions(
                     bundled_sum=bundled_sum,
                     max_discount=max_discount,
                     custom_price_is_tax_rate=cp.override_tax_rate,
+                    validate_free_price_bounds=False,
                 )
                 pbv = get_price(
                     cp.product,
@@ -838,6 +839,7 @@ def _check_positions(
                     bundled_sum=bundled_sum,
                     max_discount=max_discount,
                     custom_price_is_tax_rate=cp.override_tax_rate,
+                    validate_free_price_bounds=False,
                 )
         except TaxRule.SaleNotAllowed:
             err = err or error_messages['country_blocked']
@@ -2032,6 +2034,7 @@ class OrderChangeManager:
                             subevent=op.position.subevent,
                             custom_price=op.position.price,
                             invoice_address=self._invoice_address,
+                            validate_free_price_bounds=False,
                         ).gross,
                     )
                 assign_issued_admission_bounds(op.position)
@@ -2095,6 +2098,7 @@ class OrderChangeManager:
                             subevent=op.position.subevent,
                             custom_price=op.position.price,
                             invoice_address=self._invoice_address,
+                            validate_free_price_bounds=False,
                         ).gross,
                     )
                 op.position.save()

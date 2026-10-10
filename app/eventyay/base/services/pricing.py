@@ -26,6 +26,7 @@ def get_price(
     bundled_sum: Decimal = Decimal('0.00'),
     max_discount: Decimal = None,
     tax_rule=None,
+    validate_free_price_bounds: bool = True,
 ) -> TaxedPrice:
     if addon_to:
         if addon_to.voucher_id and addon_to.voucher.all_addons_included:
@@ -47,6 +48,7 @@ def get_price(
         if subevent and variation.pk in subevent.var_price_overrides:
             price = subevent.var_price_overrides[variation.pk]
 
+    base_price = price
     if voucher:
         price = voucher.calculate_price(price, max_discount=max_discount)
 
@@ -88,7 +90,10 @@ def get_price(
         min_gross = price.gross
 
         if product.free_price_min is not None:
-            min_price_obj = tax_rule.tax(product.free_price_min, invoice_address=invoice_address)
+            min_floor = max(base_price, product.free_price_min)
+            if voucher:
+                min_floor = voucher.calculate_price(min_floor, max_discount=max_discount)
+            min_price_obj = tax_rule.tax(min_floor, invoice_address=invoice_address)
             # Effective minimum: never allow undercuts of voucher/subevent-adjusted base price.
             min_net = max(min_price_obj.net, min_net)
             min_gross = max(min_price_obj.gross, min_gross)
@@ -101,20 +106,21 @@ def get_price(
 
         currency = product.event.currency
 
-        if custom_price_is_net:
-            if max_net is not None and custom_price > max_net:
-                raise ValueError('price_too_high_max', str(min_net), str(max_net), currency)
-            if custom_price < min_net:
-                if max_net is not None:
-                    raise ValueError('price_too_low', str(min_net), str(max_net), currency)
-                raise ValueError('price_too_low', str(min_net), currency)
-        else:
-            if max_gross is not None and custom_price > max_gross:
-                raise ValueError('price_too_high_max', str(min_gross), str(max_gross), currency)
-            if custom_price < min_gross:
-                if max_gross is not None:
-                    raise ValueError('price_too_low', str(min_gross), str(max_gross), currency)
-                raise ValueError('price_too_low', str(min_gross), currency)
+        if validate_free_price_bounds:
+            if custom_price_is_net:
+                if max_net is not None and custom_price > max_net:
+                    raise ValueError('price_too_high_max', str(min_net), str(max_net), currency)
+                if custom_price < min_net:
+                    if max_net is not None:
+                        raise ValueError('price_too_low', str(min_net), str(max_net), currency)
+                    raise ValueError('price_too_low', str(min_net), currency)
+            else:
+                if max_gross is not None and custom_price > max_gross:
+                    raise ValueError('price_too_high_max', str(min_gross), str(max_gross), currency)
+                if custom_price < min_gross:
+                    if max_gross is not None:
+                        raise ValueError('price_too_low', str(min_gross), str(max_gross), currency)
+                    raise ValueError('price_too_low', str(min_gross), currency)
 
         if custom_price_is_net:
             price = tax_rule.tax(
