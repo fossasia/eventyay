@@ -1431,6 +1431,7 @@ class StaffSessionAuditLog(models.Model):
     url = models.CharField(max_length=255)
     method = models.CharField(max_length=255)
     impersonating = models.ForeignKey('User', null=True, blank=True, on_delete=models.PROTECT)
+    post_data = models.TextField(null=True, blank=True)
 
     class Meta:
         ordering = ('datetime',)

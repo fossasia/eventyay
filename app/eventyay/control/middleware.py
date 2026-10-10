@@ -1,3 +1,4 @@
+import json
 import logging
 from urllib.parse import quote, urljoin
 
@@ -8,6 +9,7 @@ from django.http import (
     HttpRequest,
     HttpResponse,
     HttpResponseRedirect,
+    RawPostDataException,
 )
 from django.shortcuts import get_object_or_404, redirect, render, resolve_url
 from django.template.response import TemplateResponse
@@ -213,22 +215,75 @@ class AuditLogMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+        """
+        Intercepts requests to control/admin areas and records audit logs
+        for active staff sessions. Captures request paths and masked POST payloads.
+        """
         if (request.path.startswith(get_script_prefix() + 'control') or
             request.path.startswith(get_script_prefix() + 'admin')) and request.user.is_authenticated:
-            if getattr(request.user, 'is_hijacked', False):
-                hijack_history = request.session.get('hijack_history', False)
-                hijacker = get_object_or_404(User, pk=hijack_history[0])
-                ss = hijacker.get_active_staff_session(request.session.get('hijacker_session'))
-                if ss:
-                    ss.logs.create(
-                        url=request.path,
-                        method=request.method,
-                        impersonating=request.user,
-                    )
+            
+            post_data = None
+            if request.method == 'POST':
+                data_dict = None
+                if request.POST:
+                    data_dict = dict(request.POST.lists())
+                elif request.content_type == 'application/json':
+                    try:
+                        if request.body:
+                            data_dict = json.loads(request.body)
+                    except (ValueError, TypeError, RawPostDataException):
+                        pass
+
+                if data_dict and isinstance(data_dict, (dict, list)):
+                    def mask_data(d):
+                        if isinstance(d, dict):
+                            for k, v in list(d.items()):
+                                if isinstance(k, str) and any(marker in k.lower() for marker in ('password', 'token', 'key', 'secret')):
+                                    if isinstance(v, list):
+                                        d[k] = ['***'] * len(v)
+                                    else:
+                                        d[k] = '***'
+                                else:
+                                    mask_data(v)
+                        elif isinstance(d, list):
+                            for item in d:
+                                mask_data(item)
+
+                    mask_data(data_dict)
+                    try:
+                        post_data = json.dumps(data_dict)
+                        if post_data and len(post_data) > 10000:
+                            post_data = post_data[:10000] + '... [truncated]'
+                    except (TypeError, ValueError) as e:
+                        post_data = f"Serialization failed: {str(e)}"
+            
+            query = request.GET.copy()
+            for k in list(query.keys()):
+                if any(m in k.lower() for m in ('password', 'token', 'key', 'secret')):
+                    query.setlist(k, ['***'])
+            url = request.path
+            if query:
+                url += '?' + query.urlencode(safe='*')
+            url = url[:255]
+
+            is_hijacked = getattr(request.user, 'is_hijacked', False) or bool(request.session.get('hijack_history'))
+            if is_hijacked:
+                hijack_history = request.session.get('hijack_history') or []
+                if hijack_history:
+                    hijacker = User.objects.filter(pk=hijack_history[0]).first()
+                    if hijacker:
+                        ss = hijacker.get_active_staff_session(request.session.get('hijacker_session'))
+                        if ss:
+                            ss.logs.create(
+                                url=url,
+                                method=request.method,
+                                impersonating=request.user,
+                                post_data=post_data,
+                            )
             else:
                 ss = request.user.get_active_staff_session(request.session.session_key)
                 if ss:
-                    ss.logs.create(url=request.path, method=request.method)
+                    ss.logs.create(url=url, method=request.method, post_data=post_data)
 
         response = self.get_response(request)
         return response
