@@ -9,8 +9,7 @@ from django.utils.translation import override
 from django_scopes.forms import SafeModelChoiceField, SafeModelMultipleChoiceField
 from i18nfield.forms import I18nFormField, I18nFormMixin, I18nModelForm, I18nTextarea, I18nTextInput
 from i18nfield.strings import LazyI18nString
-from eventyay.common.forms.fields import I18nRichTextFormField
-from eventyay.common.sanitizers import sanitize_rich_text
+
 from eventyay.base.models import (
     AnswerOption,
     SubmissionType,
@@ -22,12 +21,8 @@ from eventyay.base.models import (
 )
 from eventyay.base.models.cfp import CfP, default_fields
 from eventyay.base.models.question import TalkQuestionRequired
-from eventyay.common.session_video import (
-    ensure_session_video_question,
-    exclude_session_video_from_cfp_questions,
-    get_session_video_question,
-)
-from eventyay.common.forms.fields import ColorField
+from eventyay.cfp.constants import BUILTIN_FIELD_DEFAULTS, TARGET_TO_STEP
+from eventyay.common.forms.fields import ColorField, I18nRichTextFormField
 from eventyay.common.forms.mixins import I18nHelpText, JsonSubfieldMixin, ReadOnlyFlag
 from eventyay.common.forms.renderers import InlineFormRenderer
 from eventyay.common.forms.widgets import (
@@ -38,9 +33,16 @@ from eventyay.common.forms.widgets import (
     TextInputWithAddon,
 )
 from eventyay.common.language import get_language_choices_native_with_ui_name, language
+from eventyay.common.sanitizers import sanitize_rich_text
+from eventyay.common.session_video import (
+    ensure_session_video_question,
+    exclude_session_video_from_cfp_questions,
+    get_session_video_question,
+)
 from eventyay.common.text.phrases import phrases
 from eventyay.control.forms import MultipleLanguagesWidget
 from eventyay.orga.utils.colors import generate_random_high_contrast_color
+
 
 logger = logging.getLogger(__name__)
 
@@ -937,114 +939,6 @@ class ReminderFilterForm(QuestionFilterForm):
         self.fields['questions'].queryset = self.get_question_queryset()
 
 
-TARGET_TO_STEP = {
-    'session': 'info',
-    'speaker': 'profile',
-}
-
-BUILTIN_FIELD_DEFAULTS = {
-    'session': {
-        'title': {
-            'label': _('Proposal title'),
-            'help_text': '',
-        },
-        'submission_type': {
-            'label': _('Session type'),
-            'help_text': '',
-        },
-        'track': {
-            'label': _('Track'),
-            'help_text': '',
-        },
-        'content_locale': {
-            'label': phrases.base.language,
-            'help_text': '',
-        },
-        'abstract': {
-            'label': _('Abstract'),
-            'help_text': phrases.base.use_markdown,
-        },
-        'description': {
-            'label': _('Description'),
-            'help_text': phrases.base.use_markdown,
-        },
-        'notes': {
-            'label': _('Notes'),
-            'help_text': _('These notes are meant for the organiser and won’t be made public.'),
-        },
-        'slot_count': {
-            'label': _('Slot Count'),
-            'help_text': _('How many times this session will take place.'),
-        },
-        'do_not_record': {
-            'label': _('Don’t record this session.'),
-            'help_text': '',
-        },
-        'image': {
-            'label': _('Session image'),
-            'help_text': _('Use this if you want an illustration to go with your proposal.'),
-        },
-        'slides': {
-            'label': _('Slides'),
-            'help_text': _('Upload PDF files. Only PDF is supported right now.'),
-        },
-        'duration': {
-            'label': _('Duration'),
-            'help_text': _('The duration in minutes.'),
-        },
-    },
-    'speaker': {
-        'fullname': {
-            'label': _('Full name'),
-            'help_text': '',
-        },
-        'biography': {
-            'label': _('Biography'),
-            'help_text': phrases.base.use_markdown,
-        },
-        'job_title': {
-            'label': _('Job title/role'),
-            'help_text': _('What is your official job title?'),
-        },
-        'organization': {
-            'label': _('Organization'),
-            'help_text': _('What organization or company do you represent?'),
-        },
-        'avatar': {
-            'label': _('Profile picture'),
-            'help_text': _(
-                'We recommend uploading an image at least 400px wide. '
-                'A square image works best, as we display it in a circle in several places.'
-            ),
-        },
-        'avatar_source': {
-            'label': _('Profile Picture Source'),
-            'help_text': _('Please enter the name of the author or source of image and a link if applicable.'),
-        },
-        'avatar_license': {
-            'label': _('Profile Picture License'),
-            'help_text': _('Please enter the name of the license of the photo and link to it if applicable.'),
-        },
-        'availabilities': {
-            'label': _('Availability'),
-            'help_text': '',
-        },
-        'additional_speaker': {
-            'label': _('Additional Speaker'),
-            'help_text': _(
-                'If you have a co-speaker, please add their email address here, and we will invite them '
-                'to create an account. If you have more than one co-speaker, you can add more speakers '
-                'after finishing the proposal process.'
-            ),
-        },
-        'social_links': {
-            'label': _('Social Links'),
-            'help_text': '',
-        },
-    },
-}
-
-
 class CfPFieldSettingsForm(ReadOnlyFlag, I18nHelpText, I18nFormMixin, forms.Form):
     label = I18nFormField(
         label=_('Default label/text'),
@@ -1206,16 +1100,6 @@ class CfPFieldSettingsForm(ReadOnlyFlag, I18nHelpText, I18nFormMixin, forms.Form
 
         existing_label = self._get_dict_copy(field_entry.get('label'), {})
         existing_help_text = self._get_dict_copy(field_entry.get('help_text'), {})
-
-        initial_label = self._get_dict_copy(self.initial.get('label'), {})
-        initial_help_text = self._get_dict_copy(self.initial.get('help_text'), {})
-
-        for loc, val in initial_label.items():
-            if loc in self.event.locales:
-                existing_label.setdefault(loc, val)
-        for loc, val in initial_help_text.items():
-            if loc in self.event.locales:
-                existing_help_text.setdefault(loc, val)
 
         existing_label[locale] = default_label
         existing_help_text[locale] = default_help_text

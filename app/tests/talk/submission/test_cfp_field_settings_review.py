@@ -5,6 +5,7 @@ from django.urls import reverse
 from django_scopes import scope
 
 from eventyay.cfp.flow import CfPFlow
+from eventyay.common.language import language
 from eventyay.orga.forms.cfp import (
     BUILTIN_FIELD_DEFAULTS,
     CfPFieldSettingsForm,
@@ -433,3 +434,142 @@ def test_cfp_field_settings_post_reset_csp_compatible(orga_client, event):
         # German is reset to default (e.g. 'Titel' in German)
         assert field_config['label']['de'] != 'Custom German Title'
         assert field_config['label']['de'] == 'Titel'
+
+
+@pytest.mark.django_db
+def test_reset_only_selected_locale_persisted(event):
+    """Test requirement A: Resetting one locale persists ONLY the selected locale."""
+    with scope(event=event):
+        event.locale_array = 'en,de'
+        event.settings.set('locales', ['en', 'de'])
+        event.save()
+
+        # No custom stored values initially
+        event.cfp.settings['flow'] = {}
+        event.cfp.save(update_fields=['settings'])
+
+        form = CfPFieldSettingsForm(
+            event=event,
+            target='session',
+            field_id='title',
+        )
+        form.reset_locale('de')
+        event.refresh_from_db()
+
+        saved_flow = event.cfp.settings['flow']
+        assert isinstance(saved_flow, dict)
+        info_fields = {f['key']: f for f in saved_flow['steps']['info']['fields']}
+        assert 'title' in info_fields
+        title_config = info_fields['title']
+
+        # ONLY 'de' must be persisted; 'en' must NOT be automatically persisted
+        assert 'de' in title_config['label']
+        assert 'en' not in title_config['label']
+        assert title_config['label'] == {'de': 'Titel'}
+
+        assert 'de' in title_config['help_text']
+        assert 'en' not in title_config['help_text']
+        assert title_config['help_text'] == {'de': ''}
+
+
+@pytest.mark.django_db
+def test_missing_locale_uses_builtin_fallback(event):
+    """Test requirement B: Missing locale uses built-in default at runtime, not another locale."""
+    with scope(event=event):
+        event.locale_array = 'en,de'
+        event.settings.set('locales', ['en', 'de'])
+        event.save()
+
+        # Stored value only contains 'de'
+        event.cfp.settings['flow'] = {
+            'steps': {
+                'info': {
+                    'identifier': 'info',
+                    'fields': [
+                        {
+                            'key': 'title',
+                            'label': {'de': 'Deutscher Einreichungstitel'},
+                        },
+                        {
+                            'key': 'abstract',
+                            'help_text': {'de': 'Eigener deutscher Hilfetext'},
+                        },
+                    ],
+                }
+            }
+        }
+        event.cfp.save(update_fields=['settings'])
+        event.__dict__.pop('cfp_flow', None)
+
+        flow = CfPFlow(event)
+        info_fields = {f['key']: f for f in flow.config['steps']['info']['fields']}
+
+        # 1. Flow config resolution: requesting English must NOT return the German value
+        with language('en'):
+            assert str(info_fields['title']['label']) == 'Proposal title'
+            assert str(info_fields['title']['label']) != 'Deutscher Einreichungstitel'
+            # abstract has a built-in markdown help text in English
+            assert 'Markdown' in str(info_fields['abstract']['help_text'])
+            assert str(info_fields['abstract']['help_text']) != 'Eigener deutscher Hilfetext'
+
+        # 2. Flow config resolution: requesting German returns the German custom value
+        with language('de'):
+            assert str(info_fields['title']['label']) == 'Deutscher Einreichungstitel'
+            assert str(info_fields['abstract']['help_text']) == 'Eigener deutscher Hilfetext'
+
+        # 3. Form field resolution: InfoForm reflects built-in defaults for missing English
+        with language('en'):
+            info_form_en = InfoForm(event=event, field_configuration=flow.config['steps']['info']['fields'])
+            assert str(info_form_en.fields['title'].label) == 'Proposal title'
+            assert str(info_form_en.fields['title'].label) != 'Deutscher Einreichungstitel'
+            assert 'Markdown' in str(info_form_en.fields['abstract'].help_text)
+            assert 'Eigener deutscher Hilfetext' not in str(info_form_en.fields['abstract'].help_text)
+
+        with language('de'):
+            info_form_de = InfoForm(event=event, field_configuration=flow.config['steps']['info']['fields'])
+            assert str(info_form_de.fields['title'].label) == 'Deutscher Einreichungstitel'
+            assert 'Eigener deutscher Hilfetext' in str(info_form_de.fields['abstract'].help_text)
+
+
+@pytest.mark.django_db
+def test_existing_custom_translations_preserved_on_reset(event):
+    """Test requirement C & D: Existing custom translations in other locales remain untouched."""
+    with scope(event=event):
+        event.locale_array = 'en,de'
+        event.settings.set('locales', ['en', 'de'])
+        event.save()
+
+        # Custom translations stored for both en and de
+        event.cfp.settings['flow'] = {
+            'steps': {
+                'info': {
+                    'identifier': 'info',
+                    'fields': [
+                        {
+                            'key': 'title',
+                            'label': {'en': 'Custom English Title', 'de': 'Custom German Title'},
+                            'help_text': {'en': 'Custom English Help', 'de': 'Custom German Help'},
+                        }
+                    ],
+                }
+            }
+        }
+        event.cfp.save(update_fields=['settings'])
+
+        form = CfPFieldSettingsForm(
+            event=event,
+            target='session',
+            field_id='title',
+        )
+        form.reset_locale('de')
+        event.refresh_from_db()
+
+        field_config = event.cfp.settings['flow']['steps']['info']['fields'][0]
+
+        # English custom values remain untouched
+        assert field_config['label']['en'] == 'Custom English Title'
+        assert field_config['help_text']['en'] == 'Custom English Help'
+
+        # German values are reset to built-in defaults
+        assert field_config['label']['de'] == 'Titel'
+        assert field_config['help_text']['de'] == ''

@@ -20,6 +20,7 @@ from django.views.generic import FormView, TemplateView, UpdateView, View
 from django_context_decorator import context
 
 from eventyay.base.models import (
+    BUILTIN_FIELD_KEYS,
     AnswerOption,
     Availability,
     CfP,
@@ -31,11 +32,15 @@ from eventyay.base.models import (
     TalkQuestion,
     TalkQuestionRequired,
     TalkQuestionTarget,
+    TalkQuestionVariant,
     Track,
+    normalize_field_order,
 )
+from eventyay.cfp.constants import CfPLazyI18nString
 from eventyay.cfp.flow import CfPFlow
 from eventyay.common.forms import I18nFormSet
 from eventyay.common.language import get_language_choices_native_with_ui_name
+from eventyay.common.session_video import exclude_session_video_from_cfp_questions
 from eventyay.common.text.phrases import phrases
 from eventyay.common.text.serialize import I18nStrJSONEncoder
 from eventyay.common.views.generic import OrgaCRUDView
@@ -47,9 +52,9 @@ from eventyay.common.views.mixins import (
 )
 from eventyay.orga.forms import CfPForm, SubmissionTypeForm, TalkQuestionForm, TrackForm
 from eventyay.orga.forms.cfp import (
+    BUILTIN_FIELD_DEFAULTS,
     AccessCodeSendForm,
     AnswerOptionForm,
-    BUILTIN_FIELD_DEFAULTS,
     CfPFieldSettingsForm,
     CfPGeneralSettingsForm,
     CfPSettingsForm,
@@ -57,22 +62,6 @@ from eventyay.orga.forms.cfp import (
     ReminderFilterForm,
     SubmitterAccessCodeForm,
 )
-from eventyay.base.models import (
-    AnswerOption,
-    BUILTIN_FIELD_KEYS,
-    CfP,
-    normalize_field_order,
-    TalkQuestion,
-    TalkQuestionRequired,
-    TalkQuestionTarget,
-    TalkQuestionVariant,
-    SubmissionType,
-    SubmitterAccessCode,
-    Track,
-    SpeakerProfile,
-    Availability,
-)
-from eventyay.common.session_video import exclude_session_video_from_cfp_questions
 from eventyay.talk_rules.submission import questions_for_user
 
 
@@ -327,9 +316,18 @@ class CfPForms(EventPermissionRequired, TemplateView):
                                 if isinstance(field_data, dict):
                                     raw_label = field_data.get('label')
                                     if raw_label is not None and str(raw_label).strip():
+                                        if not isinstance(raw_label, CfPLazyI18nString):
+                                            raw_label = CfPLazyI18nString(
+                                                raw_label, default=question_texts.get(field_key)
+                                            )
                                         question_texts[field_key] = str(raw_label)
                                     if 'help_text' in field_data and field_data['help_text'] is not None:
-                                        question_help_texts[field_key] = str(field_data['help_text'])
+                                        raw_help = field_data['help_text']
+                                        if not isinstance(raw_help, CfPLazyI18nString):
+                                            raw_help = CfPLazyI18nString(
+                                                raw_help, default=question_help_texts.get(field_key)
+                                            )
+                                        question_help_texts[field_key] = str(raw_help)
         except Exception as e:
             logger.warning('Failed to parse cfp_flow config for event %s: %s', event.id, e)
 

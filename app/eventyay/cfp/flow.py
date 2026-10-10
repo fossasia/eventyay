@@ -29,6 +29,7 @@ from eventyay.base.models import (
     Track,
     User,
 )
+from eventyay.cfp.constants import BUILTIN_FIELD_DEFAULTS, STEP_TO_TARGET, CfPLazyI18nString
 from eventyay.cfp.signals import cfp_steps
 from eventyay.common.exceptions import SendMailException
 from eventyay.common.language import language
@@ -50,9 +51,11 @@ from eventyay.submission.forms import InfoForm
 logger = logging.getLogger(__name__)
 
 
-def i18n_string(data, locales):
+def i18n_string(data, locales, default=None):
     if isinstance(data, LazyI18nString):
-        return data
+        if not default:
+            return data
+        data = data.data
     data = copy.deepcopy(data)
     with language('en'):
         if isinstance(data, Promise):
@@ -73,6 +76,10 @@ def i18n_string(data, locales):
                     translation = gettext(english)
                     if translation != english:
                         data[locale] = translation
+                    elif not stored:
+                        data[locale] = english
+    if default is not None:
+        return CfPLazyI18nString(data, default=default)
     return LazyI18nString(data)
 
 
@@ -1023,13 +1030,19 @@ class CfPFlow:
                 step_config[configurable] = data[configurable]
 
         step_config['fields'] = []
+        step_identifier = data.get('identifier')
+        target = STEP_TO_TARGET.get(step_identifier, step_identifier)
         for config_field in data.get('fields', []):
             field = {}
+            field_key = config_field.get('key')
+            field_default = BUILTIN_FIELD_DEFAULTS.get(target, {}).get(field_key, {})
             for key in ('help_text', 'request', 'required', 'key', 'label'):
                 if key in config_field:
-                    field[key] = (
-                        i18n_string(config_field[key], locales) if key in ('help_text', 'label') else config_field[key]
-                    )
+                    if key in ('help_text', 'label'):
+                        default_val = field_default.get(key)
+                        field[key] = i18n_string(config_field[key], locales, default=default_val)
+                    else:
+                        field[key] = config_field[key]
             step_config['fields'].append(field)
         return step_config
 
