@@ -1639,8 +1639,12 @@ class OrderTransition(OrderView):
 
                 messages.success(self.request, _('The order has been canceled.'))
         elif self.order.status == Order.STATUS_PENDING and to == 'e':
-            mark_order_expired(self.order, user=self.request.user)
-            messages.success(self.request, _('The order has been marked as expired.'))
+            try:
+                mark_order_expired(self.order, user=self.request.user)
+            except OrderError as e:
+                messages.error(self.request, str(e))
+            else:
+                messages.success(self.request, _('The order has been marked as expired.'))
         return redirect(self.get_order_url())
 
     def get(self, *args, **kwargs):

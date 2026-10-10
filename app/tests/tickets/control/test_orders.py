@@ -6,6 +6,7 @@ from zoneinfo import ZoneInfo
 
 import pytest
 from bs4 import BeautifulSoup
+from django.contrib.messages import get_messages
 from django.core import mail
 from django.test import override_settings
 from django.urls import reverse
@@ -39,6 +40,7 @@ from eventyay.base.services.invoices import (
     generate_cancellation,
     generate_invoice,
 )
+from eventyay.base.services.orders import OrderError
 from tests.tickets.api.test_orders import MockedCharge
 from tests.tickets.base import SoupTest
 
@@ -901,6 +903,33 @@ def test_order_transition(client, env, process):
         assert o.status == process[1]
     else:
         assert o.status == process[0]
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_order_transition_stale_expiry_shows_error(client, env):
+    # Simulates the order becoming non-pending after the view's initial
+    # status check: the service rejects the transition and the view must
+    # report the error instead of crashing or reporting success.
+    with scopes_disabled():
+        o = Order.objects.get(id=env[2].id)
+    assert o.status == Order.STATUS_PENDING
+    client.login(email='dummy@dummy.dummy', password='dummy')
+    with mock.patch(
+        'eventyay.control.views.orders.mark_order_expired',
+        side_effect=OrderError('The order is not pending.'),
+    ):
+        response = client.post(
+            '/control/event/dummy/dummy/orders/FOO/transition',
+            {'status': 'e'},
+        )
+    assert response.status_code == 302
+    messages = [str(m) for m in get_messages(response.wsgi_request)]
+    assert any('not pending' in message for message in messages)
+    assert not any('marked as expired' in message for message in messages)
+    with scopes_disabled():
+        o = Order.objects.get(id=env[2].id)
+    assert o.status == Order.STATUS_PENDING
 
 
 @pytest.mark.django_db

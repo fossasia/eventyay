@@ -694,11 +694,14 @@ class OrderViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        mark_order_expired(
-            order,
-            user=request.user if request.user.is_authenticated else None,
-            auth=request.auth,
-        )
+        try:
+            mark_order_expired(
+                order,
+                user=request.user if request.user.is_authenticated else None,
+                auth=request.auth,
+            )
+        except OrderError as e:
+            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return self.retrieve(request, [], **kwargs)
 
     @action(detail=True, methods=['POST'])

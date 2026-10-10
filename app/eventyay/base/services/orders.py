@@ -283,6 +283,9 @@ def mark_order_expired(order, user=None, auth=None):
         if isinstance(user, int):
             user = User.objects.get(pk=user)
         with order.event.lock():
+            order = Order.objects.select_for_update().get(pk=order.pk)
+            if order.status != Order.STATUS_PENDING:
+                raise OrderError(_('The order is not pending.'))
             order.status = Order.STATUS_EXPIRED
             order.save(update_fields=['status'])
 
@@ -1331,7 +1334,13 @@ def expire_orders(sender, **kwargs):
             expire = o.event.settings.get('payment_term_expire_automatically', as_type=bool)
             event_id = o.event_id
         if expire:
-            mark_order_expired(o)
+            try:
+                mark_order_expired(o)
+            except OrderError:
+                # The order changed state concurrently (e.g. it was paid
+                # after this task queried it). Skip it and continue with
+                # the remaining orders.
+                continue
 
 
 @receiver(signal=periodic_task)
