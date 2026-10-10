@@ -5,7 +5,31 @@
 }
 #editor-canvas-area {
     position: relative;
-    min-height: 250px;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+}
+
+/* Scale the background canvas with its column and keep the Fabric wrapper aligned. */
+#pdf-canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+#fabric-container {
+    width: 100%;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+}
+#fabric-container .canvas-container {
+    width: 100% !important;
+    height: 100% !important;
+}
+#fabric-container canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
 }
 #fabric-container,
 #fabric-container canvas {
@@ -102,8 +126,63 @@ body {
 }
 
 #editor-toolbox-area .colorpicker.colorpicker-2x {
-    min-width: 244px;
+    min-width: 0;
+    max-width: 100%;
 }
+
+#editor-toolbox-area {
+    min-width: 0;
+}
+
+#editor-toolbox-area .panel,
+#editor-toolbox-area .panel-body {
+    min-width: 0;
+}
+
+#editor-toolbox-area input,
+#editor-toolbox-area select,
+#editor-toolbox-area textarea {
+    max-width: 100%;
+}
+
+#editor-toolbox-area .btn {
+    max-width: 100%;
+    white-space: normal;
+}
+
+#editor-toolbox-area #pdf-empty,
+#editor-toolbox-area .fileinput-button {
+    box-sizing: border-box;
+    width: 100%;
+}
+
+#editor-toolbox-area .fileinput-button {
+    display: block;
+    text-align: left;
+}
+
+@media (min-width: 1051px) and (max-width: 1100px) {
+    #editor-canvas-column {
+        width: calc(66.6666667% - 5px);
+    }
+
+    #editor-toolbox-area {
+        width: calc(33.3333333% + 5px);
+    }
+}
+
+@media (max-width: 1050px) {
+    #editor-canvas-column,
+    #editor-toolbox-area {
+        float: none;
+        width: 100%;
+    }
+
+    #editor-toolbox-area {
+        margin-top: 15px;
+    }
+}
+
 
 
 
