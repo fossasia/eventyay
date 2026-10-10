@@ -23,6 +23,7 @@ from eventyay.base.models.auth import User
 from eventyay.base.models.profile import SpeakerProfile
 from eventyay.base.models.question import TalkQuestionTarget
 from eventyay.common.social_links import serialize_social_link
+from eventyay.common.text.rich_text import is_empty_rich_text
 from eventyay.talk_rules.orga import can_view_speaker_names, is_reviewer_only_for_event
 
 
@@ -205,7 +206,7 @@ class SpeakerOrgaSerializer(AvailabilitiesMixin, SpeakerSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.event:
-            for field in ('avatar', 'availabilities'):
+            for field in ('avatar', 'availabilities', 'biography'):
                 if field not in self.fields:
                     continue
                 if not getattr(self.event.cfp, f'request_{field}'):
@@ -232,6 +233,14 @@ class SpeakerOrgaSerializer(AvailabilitiesMixin, SpeakerSerializer):
 @register_serializer(versions=CURRENT_VERSIONS)
 class SpeakerUpdateSerializer(SpeakerOrgaSerializer):
     avatar = UploadedFileField(required=False, source='speaker.user')
+
+    def validate_biography(self, value):
+        if is_empty_rich_text(value):
+            if self.event and self.event.cfp.require_biography:
+                from django.utils.translation import gettext_lazy as _
+                raise exceptions.ValidationError(_('This field is required.'))
+            return ""
+        return value
 
     def validate_avatar(self, avatar):
         if not avatar:

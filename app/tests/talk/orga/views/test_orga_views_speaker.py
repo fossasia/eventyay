@@ -107,6 +107,53 @@ def test_orga_can_edit_speaker(orga_client, speaker, event, submission):
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize("empty_biography", ("", "<p></p>", "<p><br></p>", "<p>&nbsp;</p>"))
+def test_orga_cannot_save_empty_required_biography(
+    orga_client, speaker, event, submission, empty_biography
+):
+    with scope(event=event):
+        event.cfp.fields["biography"]["visibility"] = "required"
+        event.cfp.save()
+        profile = speaker.event_profile(event)
+        original_biography = profile.biography
+        url = profile.orga_urls.base
+
+    response = orga_client.post(
+        url,
+        data={
+            "name": speaker.fullname,
+            "fullname": speaker.fullname,
+            "email": speaker.email,
+            "biography": empty_biography,
+        },
+        follow=True,
+    )
+    assert response.status_code == 200
+    assert "This field is required." in response.text
+    with scope(event=event):
+        profile.refresh_from_db()
+        assert profile.biography == original_biography
+
+
+@pytest.mark.django_db
+def test_speaker_profile_form_rejects_empty_required_biography(speaker, event):
+    with scope(event=event):
+        event.cfp.fields["biography"]["visibility"] = "required"
+        event.cfp.save()
+        form = SpeakerProfileForm(
+            data={
+                "fullname": speaker.fullname,
+                "email": speaker.email,
+                "biography": "<p></p>",
+            },
+            event=event,
+            user=speaker,
+        )
+        assert not form.is_valid()
+        assert "biography" in form.errors
+
+
+@pytest.mark.django_db
 def test_speaker_profile_form_not_strict_allows_missing_required_fields(speaker, event):
     event.cfp.fields["avatar"]["visibility"] = "required"
     event.cfp.save()

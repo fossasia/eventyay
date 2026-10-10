@@ -494,6 +494,30 @@ def test_speaker_update_by_orga(
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize("empty_biography", ("", "<p></p>", "<p><br></p>"))
+def test_speaker_update_rejects_empty_required_biography(
+    client, orga_user_write_token, event, speaker, submission, empty_biography
+):
+    with scope(event=event):
+        event.cfp.fields["biography"]["visibility"] = "required"
+        event.cfp.save()
+        original_biography = speaker.event_profile(event).biography
+
+    response = client.patch(
+        event.api_urls.speakers + f"{speaker.code}/",
+        data=json.dumps({"biography": empty_biography}),
+        follow=True,
+        content_type="application/json",
+        headers={"Authorization": f"Token {orga_user_write_token.token}"},
+    )
+    assert response.status_code == 400, response.text
+    content = json.loads(response.text)
+    assert "biography" in content
+    with scope(event=event):
+        assert speaker.event_profile(event).biography == original_biography
+
+
+@pytest.mark.django_db
 def test_speaker_update_by_orga_readonly(
     client, orga_user_token, event, speaker, submission
 ):

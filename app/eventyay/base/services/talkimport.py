@@ -21,6 +21,7 @@ from django_scopes import scope
 
 from eventyay.base.i18n import language
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
+from eventyay.common.text.rich_text import is_empty_rich_text
 from eventyay.base.models import (
     Answer,
     CachedFile,
@@ -982,6 +983,14 @@ def _import_speaker_row(event, settings, record, acting_user, caches=None):
             user=user,
             event=event,
         )
+
+        if biography and is_empty_rich_text(biography):
+            biography = None
+
+        final_biography = biography if biography else profile.biography
+        if event.cfp.require_biography and is_empty_rich_text(final_biography):
+            raise ImportExecutionError(_('Biography is required.'))
+
         profile_update_fields = []
         if biography:
             profile.biography = biography

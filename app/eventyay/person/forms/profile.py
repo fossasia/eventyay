@@ -47,6 +47,7 @@ from eventyay.common.forms.widgets import (
     RichTextWidget,
 )
 from eventyay.common.text.phrases import phrases
+from eventyay.common.text.rich_text import is_empty_rich_text
 from eventyay.consts import SizeKey
 from eventyay.schedule.forms import AvailabilitiesFormMixin
 
@@ -346,6 +347,15 @@ class SpeakerProfileForm(
 
     def clean_avatar_license(self):
         return validate_avatar_license_text(self.cleaned_data.get('avatar_license'))
+
+    def clean_biography(self):
+        value = self.cleaned_data.get('biography')
+        field = self.fields.get('biography')
+        if is_empty_rich_text(value):
+            if field and field.required:
+                raise ValidationError(_('This field is required.'))
+            return ""
+        return value
 
     def clean(self):
         data = super().clean()
