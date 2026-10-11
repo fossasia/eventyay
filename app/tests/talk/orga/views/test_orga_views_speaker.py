@@ -3,8 +3,11 @@ import json
 import bs4
 import pytest
 from django_scopes import scope, scopes_disabled
-from eventyay.base.models.question import TalkQuestionRequired as QuestionRequired
 
+from eventyay.base.models import SpeakerProfile, User
+from eventyay.base.models.mail import QueuedMail
+from eventyay.base.models.question import TalkQuestionRequired as QuestionRequired
+from eventyay.orga.views.speaker import SpeakerViewMixin
 from eventyay.person.forms import SpeakerProfileForm
 from eventyay.person.forms.profile import AVATAR_LICENSE_TEXT_VALIDATION_ERROR
 
@@ -643,3 +646,390 @@ def test_orga_can_export_answers_json(
             "Proposal IDs": [submission.code],
         }
     ]
+
+
+@pytest.mark.django_db
+def test_orga_speakers_list_has_add_speaker_button(orga_client, event):
+    response = orga_client.get(event.orga_urls.speakers)
+    assert response.status_code == 200
+    assert "Add speaker" in response.text
+    assert event.orga_urls.new_speaker in response.text
+
+
+@pytest.mark.django_db
+def test_orga_can_create_speaker_with_email(orga_client, event):
+    response = orga_client.post(
+        event.orga_urls.new_speaker,
+        data={
+            "fullname": "New Speaker",
+            "email": "new.speaker@example.org",
+            "biography": "New biography text",
+        },
+        follow=True,
+    )
+    assert response.status_code == 200
+    with scope(event=event):
+        profile = SpeakerProfile.objects.filter(
+            event=event, user__email="new.speaker@example.org"
+        ).first()
+        assert profile is not None
+        assert profile.user.submissions.filter(event=event).count() == 0
+
+
+@pytest.mark.django_db
+def test_orga_can_create_speaker_without_email(orga_client, event):
+    response = orga_client.post(
+        event.orga_urls.new_speaker,
+        data={
+            "fullname": "No Email Speaker",
+            "no_email": "on",
+            "biography": "New biography text",
+        },
+        follow=True,
+    )
+    assert response.status_code == 200
+    with scope(event=event):
+        profile = SpeakerProfile.objects.filter(
+            event=event, user__fullname="No Email Speaker"
+        ).first()
+        assert profile is not None
+        assert not profile.user.email
+        assert not QueuedMail.objects.filter(event=event, to_users=profile.user).exists()
+
+
+@pytest.mark.django_db
+def test_orga_create_speaker_form_includes_no_email_option(orga_client, event):
+    response = orga_client.get(event.orga_urls.new_speaker)
+    assert response.status_code == 200
+    assert "This speaker does not require an email" in response.text
+    assert 'id="id_no_email"' in response.text
+
+
+@pytest.mark.django_db
+def test_cfp_speaker_profile_form_does_not_expose_no_email(event, speaker):
+    """Regression: no_email must stay orga-create-only and never leak onto public forms."""
+    with scope(event=event):
+        public_form = SpeakerProfileForm(event=event, user=speaker)
+        assert "no_email" not in public_form.fields
+        assert "no_email" not in public_form.as_p()
+
+        create_form = SpeakerProfileForm(
+            event=event, user=None, allow_no_email=True, ignore_first_time_exclude=True
+        )
+        assert "no_email" in create_form.fields
+
+
+@pytest.mark.django_db
+def test_speaker_profile_form_ignores_no_email_post_without_allow_flag(event, speaker):
+    with scope(event=event):
+        form = SpeakerProfileForm(
+            event=event,
+            user=speaker,
+            data={
+                "fullname": speaker.fullname,
+                "email": "",
+                "no_email": "on",
+                "biography": "Still required to look valid",
+            },
+        )
+        assert "no_email" not in form.fields
+        assert not form.is_valid()
+
+
+@pytest.mark.django_db
+def test_orga_can_create_speaker_with_new_session(orga_client, event):
+    with scope(event=event):
+        submission_type = event.submission_types.first()
+    response = orga_client.post(
+        event.orga_urls.new_speaker,
+        data={
+            "fullname": "Session Speaker",
+            "email": "session.speaker@example.org",
+            "biography": "New biography text",
+            "add_session": "on",
+            "session-title": "New Session Title",
+            "session-abstract": "Session abstract",
+            "session-description": "Session description",
+            "session-content_locale": "en",
+            "session-duration": "",
+            "session-slot_count": 1,
+            "session-notes": "",
+            "session-internal_notes": "",
+            "session-submission_type": submission_type.pk,
+            "session-state": "submitted",
+        },
+        follow=True,
+    )
+    assert response.status_code == 200
+    with scope(event=event):
+        profile = SpeakerProfile.objects.filter(
+            event=event, user__email="session.speaker@example.org"
+        ).first()
+        assert profile is not None
+        assert event.submissions.filter(
+            title="New Session Title", speakers=profile.user
+        ).exists()
+
+
+@pytest.mark.django_db
+def test_orga_can_create_speaker_without_email_with_session(orga_client, event):
+    with scope(event=event):
+        submission_type = event.submission_types.first()
+    response = orga_client.post(
+        event.orga_urls.new_speaker,
+        data={
+            "fullname": "VIP Keynote",
+            "no_email": "on",
+            "biography": "Keynote biography",
+            "add_session": "on",
+            "session-title": "VIP Keynote Session",
+            "session-abstract": "Abstract",
+            "session-description": "Description",
+            "session-content_locale": "en",
+            "session-duration": "",
+            "session-slot_count": 1,
+            "session-notes": "",
+            "session-internal_notes": "",
+            "session-submission_type": submission_type.pk,
+            "session-state": "submitted",
+        },
+        follow=True,
+    )
+    assert response.status_code == 200
+    with scope(event=event):
+        profile = SpeakerProfile.objects.filter(event=event, user__fullname="VIP Keynote").first()
+        assert profile is not None
+        assert not profile.user.email
+        assert event.submissions.filter(
+            title="VIP Keynote Session", speakers=profile.user
+        ).exists()
+        assert not QueuedMail.objects.filter(event=event, to_users=profile.user).exists()
+
+
+@pytest.mark.django_db
+def test_orga_can_create_speaker_and_link_existing_session(orga_client, event, submission):
+    response = orga_client.post(
+        event.orga_urls.new_speaker,
+        data={
+            "fullname": "Linked Speaker",
+            "email": "linked.speaker@example.org",
+            "biography": "New biography text",
+            "link_existing_session": "on",
+            "existing_session_id": submission.pk,
+        },
+        follow=True,
+    )
+    assert response.status_code == 200
+    with scope(event=event):
+        profile = SpeakerProfile.objects.filter(
+            event=event, user__email="linked.speaker@example.org"
+        ).first()
+        assert profile is not None
+        submission.refresh_from_db()
+        assert profile.user in submission.speakers.all()
+
+
+@pytest.mark.django_db
+def test_orga_link_flag_without_session_does_not_create_speaker(orga_client, event):
+    response = orga_client.post(
+        event.orga_urls.new_speaker,
+        data={
+            "fullname": "Conflict Speaker",
+            "email": "conflict@example.org",
+            "biography": "New biography text",
+            "link_existing_session": "on",
+        },
+    )
+    assert response.status_code == 200
+    assert "Please select an existing session to link." in response.text
+    with scope(event=event):
+        assert not SpeakerProfile.objects.filter(
+            event=event, user__email="conflict@example.org"
+        ).exists()
+
+
+@pytest.mark.django_db
+def test_orga_can_link_multiple_sessions_and_create_one(
+    orga_client, event, submission, other_submission
+):
+    with scope(event=event):
+        submission_type = event.submission_types.first()
+    response = orga_client.post(
+        event.orga_urls.new_speaker,
+        data={
+            "fullname": "Multi Session Speaker",
+            "email": "multi.session@example.org",
+            "biography": "New biography text",
+            "add_session": "on",
+            "existing_session_id": [submission.pk, other_submission.pk],
+            "session-title": "Brand New Session",
+            "session-abstract": "Session abstract",
+            "session-description": "Session description",
+            "session-content_locale": "en",
+            "session-duration": "",
+            "session-slot_count": 1,
+            "session-notes": "",
+            "session-internal_notes": "",
+            "session-submission_type": submission_type.pk,
+            "session-state": "submitted",
+        },
+        follow=True,
+    )
+    assert response.status_code == 200
+    with scope(event=event):
+        profile = SpeakerProfile.objects.filter(
+            event=event, user__email="multi.session@example.org"
+        ).first()
+        assert profile is not None
+        submission.refresh_from_db()
+        other_submission.refresh_from_db()
+        assert profile.user not in submission.speakers.all()
+        assert profile.user not in other_submission.speakers.all()
+        assert event.submissions.filter(
+            title="Brand New Session", speakers=profile.user
+        ).exists()
+
+
+
+
+@pytest.mark.django_db
+def test_orga_cannot_create_speaker_with_unassociated_global_user_email(orga_client, event):
+    with scopes_disabled():
+        outsider = User.objects.create_user(
+            email="outsider@example.org",
+            password="speakerpwd1!",
+            fullname="Outside User",
+        )
+    response = orga_client.post(
+        event.orga_urls.new_speaker,
+        data={
+            "fullname": "Global Speaker",
+            "email": outsider.email,
+            "biography": "New biography text",
+        },
+    )
+    assert response.status_code == 200
+    assert "not associated with this event" in response.text
+    with scope(event=event):
+        assert not SpeakerProfile.objects.filter(event=event, user=outsider).exists()
+
+
+@pytest.mark.django_db
+def test_orga_can_create_speaker_with_associated_user_email(orga_client, event):
+    with scopes_disabled():
+        teammate = User.objects.create_user(
+            email="teammate@example.org",
+            password="speakerpwd1!",
+            fullname="Team Mate",
+        )
+    with scope(event=event):
+        event.organizer.teams.first().members.add(teammate)
+
+    response = orga_client.post(
+        event.orga_urls.new_speaker,
+        data={
+            "fullname": "Associated Speaker",
+            "email": teammate.email,
+            "biography": "New biography text",
+        },
+        follow=True,
+    )
+    assert response.status_code == 200
+    with scope(event=event):
+        assert SpeakerProfile.objects.filter(event=event, user=teammate).exists()
+
+
+@pytest.mark.django_db
+def test_orga_cannot_create_speaker_without_email_when_required(orga_client, event):
+    response = orga_client.post(
+        event.orga_urls.new_speaker,
+        data={
+            "fullname": "Missing Email Speaker",
+            "email": "",
+            "biography": "Biography text",
+        },
+    )
+    assert response.status_code == 200
+    assert "This field is required." in response.text
+    with scope(event=event):
+        assert not SpeakerProfile.objects.filter(
+            event=event, user__fullname="Missing Email Speaker"
+        ).exists()
+
+
+@pytest.mark.django_db
+def test_orga_cannot_create_speaker_with_empty_biography_when_required(orga_client, event):
+    with scope(event=event):
+        event.cfp.fields["biography"]["visibility"] = "required"
+        event.cfp.save(update_fields=["fields"])
+    response = orga_client.post(
+        event.orga_urls.new_speaker,
+        data={
+            "fullname": "Empty Bio Speaker",
+            "email": "empty@example.org",
+            "biography": "",
+        },
+    )
+    assert response.status_code == 200
+    assert "This field is required." in response.text
+    with scope(event=event):
+        assert not SpeakerProfile.objects.filter(
+            event=event, user__email="empty@example.org"
+        ).exists()
+
+
+@pytest.mark.django_db
+def test_standalone_speaker_appears_on_speakers_list(orga_client, event):
+    response = orga_client.post(
+        event.orga_urls.new_speaker,
+        data={
+            "fullname": "Standalone Visible",
+            "email": "standalone.visible@example.org",
+            "biography": "Visible without a session",
+        },
+        follow=True,
+    )
+    assert response.status_code == 200
+    list_response = orga_client.get(event.orga_urls.speakers)
+    assert list_response.status_code == 200
+    assert "Standalone Visible" in list_response.text
+
+
+@pytest.mark.django_db
+def test_speaker_view_mixin_get_object_establishes_scope(rf, event, speaker, orga_user):
+    with scopes_disabled():
+        request = rf.get("/")
+        request.event = event
+        request.user = orga_user
+
+        mixin = SpeakerViewMixin()
+        mixin.request = request
+        mixin.kwargs = {"code": speaker.code}
+
+        obj = mixin.get_object()
+        assert obj == speaker
+
+
+@pytest.mark.django_db
+def test_orga_can_create_speaker_with_custom_field(orga_client, event, speaker_question):
+    with scope(event=event):
+        speaker_question.target = "speaker"
+        speaker_question.save(update_fields=["target"])
+
+    response = orga_client.post(
+        event.orga_urls.new_speaker,
+        data={
+            "fullname": "Custom Field Speaker",
+            "email": "custom.field@example.org",
+            "biography": "Has a custom field answer",
+            f"question_{speaker_question.id}": "My custom answer",
+        },
+        follow=True,
+    )
+    assert response.status_code == 200
+    with scope(event=event):
+        profile = SpeakerProfile.objects.filter(
+            event=event, user__email="custom.field@example.org"
+        ).first()
+        assert profile is not None
+        assert profile.answers.filter(question=speaker_question, answer="My custom answer").exists()

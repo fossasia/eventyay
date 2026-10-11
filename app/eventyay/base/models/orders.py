@@ -1333,7 +1333,10 @@ class QuestionAnswer(models.Model):
 
     @property
     def is_image(self):
-        return any(self.file.name.lower().endswith(e) for e in ('.jpg', '.png', '.gif', '.tiff', '.bmp', '.jpeg'))
+        return any(
+            self.file.name.lower().endswith(extension)
+            for extension in ('.jpg', '.png', '.gif', '.tiff', '.bmp', '.jpeg', '.webp')
+        )
 
     @property
     def file_name(self):
