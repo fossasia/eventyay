@@ -29,7 +29,7 @@ a.c-linear-schedule-session(:class="{faved, 'has-date': showDate, 'short-session
 		.speakers-row(v-if="namedSpeakers.length")
 			.speakers(
 				ref="speakersRow",
-				:class="{'names-clamped': isShortSession, 'has-roles': showSpeakerRoles}",
+				:class="{'names-clamped': isShortSession}",
 				:aria-label="speakersAriaLabel")
 				span.speaker(v-for="(speaker, i) of namedSpeakers", :key="speaker.code || i")
 					img(
@@ -39,10 +39,8 @@ a.c-linear-schedule-session(:class="{faved, 'has-date': showDate, 'short-session
 						aria-hidden="true",
 						loading="lazy",
 						decoding="async")
-					span.speaker-text
-						span.speaker-label {{ speaker.name }}
-						span.speaker-role(v-if="showSpeakerRoles && speakerRole(speaker)") {{ speakerRole(speaker) }}
-					span.speaker-separator(v-if="!showSpeakerRoles && i + 1 < namedSpeakers.length", aria-hidden="true") ,
+					span.speaker-label {{ speakerLabel(speaker) }}
+					span.speaker-separator(v-if="i + 1 < namedSpeakers.length", aria-hidden="true") ,
 			span.speakers-overflow-hint(
 				v-if="speakersHiddenCount > 0",
 				:aria-label="speakersOverflowLabel") {{ speakersOverflowHint }}
@@ -286,15 +284,8 @@ export default {
 		namedSpeakers () {
 			return (this.session.speakers || []).filter(s => (s.name || '').trim())
 		},
-		showSpeakerRoles () {
-			// Short sessions clamp the speakers to one line, so they keep showing names only.
-			return !this.isShortSession && this.namedSpeakers.some(speaker => this.speakerRole(speaker))
-		},
 		speakersAriaLabel () {
-			return this.namedSpeakers.map(speaker => {
-				const role = this.speakerRole(speaker)
-				return role ? `${speaker.name} (${role})` : speaker.name
-			}).join(', ')
+			return this.namedSpeakers.map(speaker => this.speakerLabel(speaker)).join(', ')
 		},
 		speakersOverflowHint () {
 			if (!this.speakersHiddenCount) return ''
@@ -329,8 +320,10 @@ export default {
 		onSessionClick (event) {
 			this.onSessionLinkClick(event, this.session)
 		},
-		speakerRole (speaker) {
-			return (speaker.speaker_role || '').trim()
+		speakerLabel (speaker) {
+			// The public job title and organization follow the name in brackets.
+			const role = (speaker.speaker_role || '').trim()
+			return role ? `${speaker.name} (${role})` : speaker.name
 		},
 		gridMetaTitle (text) {
 			if (!this.isGridVeryShort || !text) return null
@@ -679,26 +672,21 @@ expandClampedSessionText()
 					margin: 0 6px 0 0
 					object-fit: cover
 					flex: 0 0 auto
-				.speaker-text
-					display: flex
-					flex-direction: column
-					min-width: 0
 				.speaker-label
 					min-width: 0
 					overflow: hidden
 					text-overflow: ellipsis
 					white-space: nowrap
-				.speaker-role
-					min-width: 0
-					white-space: normal
-					overflow-wrap: break-word
-					font-size: 0.85em
-					line-height: 1.3
 				.speaker-separator
 					flex: 0 0 auto
 					white-space: nowrap
-			&.has-roles
-				gap: 4px 16px
+			// Outside the one-line clamp of short sessions, a speaker whose name and role
+			// do not fit on the line wraps instead of being cut off.
+			&:not(.names-clamped) .speaker
+				white-space: normal
+				.speaker-label
+					white-space: normal
+					overflow-wrap: break-word
 			&.names-clamped
 				max-height: var(--session-speaker-line-height)
 				overflow: hidden
