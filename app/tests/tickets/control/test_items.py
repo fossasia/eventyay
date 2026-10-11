@@ -19,6 +19,7 @@ from eventyay.base.models import (
     Team,
     User,
 )
+from eventyay.control.forms.product import ProductCreateForm, ProductUpdateForm
 from tests.tickets.base import SoupTest, extract_form_fields
 
 
@@ -991,3 +992,110 @@ class ProductDeleteTest(ItemFormTest):
         doc = self.get_doc(url)
         assert doc.select_one('p strong').text == 'Standard'
         assert doc.select_one('button.btn-delete') is None
+
+
+class ProductFreePriceBoundsTest(ItemFormTest):
+    def test_create_negative_free_price_min_rejected(self):
+        with scope(organizer=self.orga1, event=self.event1):
+            form = ProductCreateForm(
+                instance=Item(event=self.event1),
+                event=self.event1,
+                user=self.user,
+                data={
+                    'name_0': 'Free Price Ticket',
+                    'default_price': '0.00',
+                    'free_price': True,
+                    'free_price_min': '-5.00',
+                    'free_price_max': '20.00',
+                },
+            )
+            assert not form.is_valid()
+            assert 'free_price_min' in form.errors
+
+    def test_create_valid_free_price_min_accepted(self):
+        with scope(organizer=self.orga1, event=self.event1):
+            form = ProductCreateForm(
+                instance=Item(event=self.event1),
+                event=self.event1,
+                user=self.user,
+                data={
+                    'name_0': 'Free Price Ticket',
+                    'default_price': '0.00',
+                    'free_price': True,
+                    'free_price_min': '5.00',
+                    'free_price_max': '20.00',
+                },
+            )
+            assert form.is_valid(), form.errors
+            item = form.save()
+            assert item.free_price_min == Decimal('5.00')
+
+    def test_create_max_less_than_min_rejected(self):
+        with scope(organizer=self.orga1, event=self.event1):
+            form = ProductCreateForm(
+                instance=Item(event=self.event1),
+                event=self.event1,
+                user=self.user,
+                data={
+                    'name_0': 'Free Price Ticket',
+                    'default_price': '0.00',
+                    'free_price': True,
+                    'free_price_min': '25.00',
+                    'free_price_max': '20.00',
+                },
+            )
+            assert not form.is_valid()
+            assert 'free_price_max' in form.errors
+
+    def test_create_free_price_disabled_clears_bounds(self):
+        with scope(organizer=self.orga1, event=self.event1):
+            form = ProductCreateForm(
+                instance=Item(event=self.event1),
+                event=self.event1,
+                user=self.user,
+                data={
+                    'name_0': 'Fixed Price Ticket',
+                    'default_price': '10.00',
+                    'free_price': False,
+                    'free_price_min': '-5.00',
+                    'free_price_max': '20.00',
+                },
+            )
+            assert form.is_valid(), form.errors
+            assert form.cleaned_data['free_price_min'] is None
+            assert form.cleaned_data['free_price_max'] is None
+
+    def test_update_negative_free_price_min_rejected(self):
+        with scope(organizer=self.orga1, event=self.event1):
+            form = ProductUpdateForm(
+                instance=self.item1,
+                event=self.event1,
+                data={
+                    'name_0': self.item1.name,
+                    'default_price': '0.00',
+                    'free_price': True,
+                    'free_price_min': '-5.00',
+                    'free_price_max': '20.00',
+                    'active': True,
+                },
+            )
+            assert not form.is_valid()
+            assert 'free_price_min' in form.errors
+
+    @override_settings(DEBUG=True)
+    def test_post_negative_free_price_min_rejected(self):
+        url = f'/control/event/{self.orga1.slug}/{self.event1.slug}/products/add'
+        response = self.client.post(
+            url,
+            {
+                'name_0': 'Negative Min Ticket',
+                'default_price': '0.00',
+                'free_price': True,
+                'free_price_min': '-5.00',
+                'free_price_max': '20.00',
+            },
+        )
+        assert response.status_code == 200
+        assert 'The minimum price must not be negative.' in response.content.decode()
+        with scope(organizer=self.orga1, event=self.event1):
+            assert not Item.objects.filter(name='Negative Min Ticket').exists()

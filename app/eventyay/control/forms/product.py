@@ -65,9 +65,17 @@ def clean_free_price_bounds(cleaned_data, form=None):
         cleaned_data['free_price_max'] = None
         return
 
+    free_price_min = cleaned_data.get('free_price_min')
+    if free_price_min is not None and free_price_min < 0:
+        msg = _('The minimum price must not be negative.')
+        if form is not None:
+            form.add_error('free_price_min', msg)
+        else:
+            raise forms.ValidationError({'free_price_min': [msg]})
+
     effective_min = effective_free_price_min(
         cleaned_data.get('default_price'),
-        cleaned_data.get('free_price_min'),
+        free_price_min,
     )
     free_price_max = cleaned_data.get('free_price_max')
     if effective_min is not None and free_price_max is not None and effective_min > free_price_max:
@@ -576,7 +584,7 @@ class ProductCreateForm(I18nModelForm):
             elif tax_rule_rate is not None and not tax_rule_name:
                 self.add_error('tax_rule_name', _('Please enter a tax name.'))
 
-        clean_free_price_bounds(cleaned_data)
+        clean_free_price_bounds(cleaned_data, form=self)
 
         return cleaned_data
 
