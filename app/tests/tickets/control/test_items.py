@@ -1145,3 +1145,28 @@ class FreePriceBoundsTest(ItemFormTest):
             assert new_item.free_price_min is None
             assert new_item.free_price_max is None
 
+    def test_create_item_copy_from_exceeds_max_rejected(self):
+        with scopes_disabled():
+            source_item = Item.objects.create(
+                event=self.event1,
+                name='Source Product With Limits',
+                default_price=Decimal('10.00'),
+                free_price=True,
+                free_price_min=Decimal('5.00'),
+                free_price_max=Decimal('15.00'),
+            )
+            new_item = Item(event=self.event1)
+            form = ProductCreateForm(
+                instance=new_item,
+                event=self.event1,
+                user=self.user,
+                data={
+                    'name_0': 'Higher Default Price',
+                    'default_price': '25.00',
+                    'quota_option': 'none',
+                    'copy_from': str(source_item.pk),
+                },
+            )
+            assert not form.is_valid()
+            assert 'copy_from' in form.errors
+

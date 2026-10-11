@@ -630,7 +630,7 @@ class ProductCreateForm(I18nModelForm):
 
         clean_free_price_bounds(cleaned_data, form=self)
 
-        if cleaned_data.get('copy_from'):
+        if cleaned_data.get('copy_from') and 'free_price' not in self.changed_data:
             source = cleaned_data['copy_from']
             if source.free_price:
                 if (source.free_price_min is not None and source.free_price_min < 0) or (
@@ -640,6 +640,18 @@ class ProductCreateForm(I18nModelForm):
                         'copy_from',
                         _('The selected product has invalid negative free-price limits.'),
                     )
+                else:
+                    eff_min = effective_free_price_min(
+                        cleaned_data.get('default_price'),
+                        source.free_price_min,
+                    )
+                    if eff_min is not None and source.free_price_max is not None and eff_min > source.free_price_max:
+                        self.add_error(
+                            'copy_from',
+                            _(
+                                'The selected product’s maximum price is lower than the entered default price.'
+                            ),
+                        )
 
         return cleaned_data
 
