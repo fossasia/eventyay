@@ -1450,3 +1450,20 @@ def test_orga_submission_create_proposal_includes_biography(orga_client, event):
     assert form is not None
     assert "biography" in form.fields
 
+
+@pytest.mark.django_db
+def test_orga_cfp_forms_shows_session_videos_as_organizer_only(orga_client, event):
+    """Assert the CFP questions page renders the Session videos field with
+    the organizer-only label, inline help tooltip, and the 'Organizer only'
+    Required-column value."""
+    response = orga_client.get(event.cfp.urls.questions, follow=True)
+    assert response.status_code == 200
+    content = response.text
+    assert "cfp-organizer-only-label" in content
+    assert "Session videos" in content
+    assert "Organizer only" in content
+    assert (
+        "This field can only be edited by organizers. "
+        "It is not displayed on the proposal form."
+    ) in content
+
