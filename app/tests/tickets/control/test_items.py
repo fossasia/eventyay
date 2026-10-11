@@ -1099,3 +1099,79 @@ class ProductFreePriceBoundsTest(ItemFormTest):
         assert 'The minimum price must not be negative.' in response.content.decode()
         with scope(organizer=self.orga1, event=self.event1):
             assert not Item.objects.filter(name='Negative Min Ticket').exists()
+
+    def test_create_copy_from_negative_free_price_min_rejected(self):
+        with scope(organizer=self.orga1, event=self.event1):
+            source = Item.objects.create(
+                event=self.event1,
+                name='Source Negative',
+                default_price=Decimal('10.00'),
+                free_price=True,
+                free_price_min=Decimal('-5.00'),
+                free_price_max=Decimal('20.00'),
+            )
+            form = ProductCreateForm(
+                instance=Item(event=self.event1),
+                event=self.event1,
+                user=self.user,
+                data={
+                    'name_0': 'Copied Ticket',
+                    'default_price': '10.00',
+                    'copy_from': str(source.pk),
+                },
+            )
+            assert not form.is_valid()
+            assert 'free_price_min' in form.errors
+            assert 'copy_from' in form.errors
+            assert not Item.objects.filter(name='Copied Ticket').exists()
+
+    @override_settings(DEBUG=True)
+    def test_post_copy_from_negative_free_price_min_rejected(self):
+        with scope(organizer=self.orga1, event=self.event1):
+            source = Item.objects.create(
+                event=self.event1,
+                name='Source Negative HTTP',
+                default_price=Decimal('10.00'),
+                free_price=True,
+                free_price_min=Decimal('-5.00'),
+                free_price_max=Decimal('20.00'),
+            )
+        url = f'/control/event/{self.orga1.slug}/{self.event1.slug}/products/add'
+        response = self.client.post(
+            url,
+            {
+                'name_0': 'Copied HTTP Ticket',
+                'default_price': '10.00',
+                'copy_from': str(source.pk),
+            },
+        )
+        assert response.status_code == 200
+        assert 'The minimum price must not be negative.' in response.content.decode()
+        with scope(organizer=self.orga1, event=self.event1):
+            assert not Item.objects.filter(name='Copied HTTP Ticket').exists()
+
+    def test_create_copy_from_valid_free_price_accepted(self):
+        with scope(organizer=self.orga1, event=self.event1):
+            source = Item.objects.create(
+                event=self.event1,
+                name='Source Valid',
+                default_price=Decimal('10.00'),
+                free_price=True,
+                free_price_min=Decimal('5.00'),
+                free_price_max=Decimal('20.00'),
+            )
+            form = ProductCreateForm(
+                instance=Item(event=self.event1),
+                event=self.event1,
+                user=self.user,
+                data={
+                    'name_0': 'Copied Valid Ticket',
+                    'default_price': '10.00',
+                    'copy_from': str(source.pk),
+                },
+            )
+            assert form.is_valid(), form.errors
+            item = form.save()
+            assert item.free_price is True
+            assert item.free_price_min == Decimal('5.00')
+            assert item.free_price_max == Decimal('20.00')

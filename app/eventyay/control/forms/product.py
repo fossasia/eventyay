@@ -446,9 +446,6 @@ class ProductCreateForm(I18nModelForm):
                 'max_per_order',
                 'generate_tickets',
                 'checkin_attention',
-                'free_price',
-                'free_price_min',
-                'free_price_max',
                 'original_price',
                 'sales_channels',
                 'issue_giftcard',
@@ -462,6 +459,10 @@ class ProductCreateForm(I18nModelForm):
             )
             for f in fields:
                 setattr(self.instance, f, getattr(self.cleaned_data['copy_from'], f))
+
+            self.instance.free_price = self.cleaned_data.get('free_price')
+            self.instance.free_price_min = self.cleaned_data.get('free_price_min')
+            self.instance.free_price_max = self.cleaned_data.get('free_price_max')
         else:
             # Add to all sales channels by default
             self.instance.sales_channels = list(get_all_sales_channels().keys())
@@ -584,7 +585,15 @@ class ProductCreateForm(I18nModelForm):
             elif tax_rule_rate is not None and not tax_rule_name:
                 self.add_error('tax_rule_name', _('Please enter a tax name.'))
 
+        copy_from = cleaned_data.get('copy_from')
+        if copy_from:
+            cleaned_data['free_price'] = copy_from.free_price
+            cleaned_data['free_price_min'] = copy_from.free_price_min
+            cleaned_data['free_price_max'] = copy_from.free_price_max
+
         clean_free_price_bounds(cleaned_data, form=self)
+        if copy_from and 'free_price_min' in self.errors:
+            self.add_error('copy_from', _('The minimum price must not be negative.'))
 
         return cleaned_data
 
