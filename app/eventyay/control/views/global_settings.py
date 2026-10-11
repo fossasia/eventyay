@@ -870,6 +870,9 @@ class RevealSecretSettingView(View):
     })
 
     GLOBAL_ONLY_KEYS: frozenset[str] = frozenset({
+        'payment_stripe_connect_secret_key',
+        'payment_stripe_connect_test_secret_key',
+        'payment_paypal_connect_secret_key',
         'payment_stripe_secret_key',
         'payment_stripe_test_secret_key',
         'stripe_webhook_secret_key',
