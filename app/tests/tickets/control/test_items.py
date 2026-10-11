@@ -1,10 +1,14 @@
 import datetime
 from decimal import Decimal
 
+import pytest
+from django import forms
 from django.test import override_settings
 from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
 from i18nfield.strings import LazyI18nString
+
+from eventyay.control.forms.product import clean_free_price_bounds
 
 from eventyay.base.models import (
     Event,
@@ -991,3 +995,98 @@ class ProductDeleteTest(ItemFormTest):
         doc = self.get_doc(url)
         assert doc.select_one('p strong').text == 'Standard'
         assert doc.select_one('button.btn-delete') is None
+
+
+class FreePriceBoundsTest(ItemFormTest):
+    def test_clean_free_price_bounds_negative_min_standalone(self):
+        with pytest.raises(forms.ValidationError) as excinfo:
+            clean_free_price_bounds({
+                'free_price': True,
+                'default_price': Decimal('0.00'),
+                'free_price_min': Decimal('-5.00'),
+                'free_price_max': Decimal('20.00'),
+            })
+        assert 'free_price_min' in excinfo.value.message_dict
+        assert 'The minimum price must not be negative.' in str(excinfo.value.message_dict['free_price_min'])
+
+    def test_clean_free_price_bounds_negative_max_standalone(self):
+        with pytest.raises(forms.ValidationError) as excinfo:
+            clean_free_price_bounds({
+                'free_price': True,
+                'default_price': Decimal('0.00'),
+                'free_price_min': Decimal('0.00'),
+                'free_price_max': Decimal('-5.00'),
+            })
+        assert 'free_price_max' in excinfo.value.message_dict
+        assert 'The maximum price must not be negative.' in str(excinfo.value.message_dict['free_price_max'])
+
+    def test_clean_free_price_bounds_both_negative_standalone(self):
+        with pytest.raises(forms.ValidationError) as excinfo:
+            clean_free_price_bounds({
+                'free_price': True,
+                'default_price': Decimal('0.00'),
+                'free_price_min': Decimal('-5.00'),
+                'free_price_max': Decimal('-2.00'),
+            })
+        assert 'free_price_min' in excinfo.value.message_dict
+        assert 'free_price_max' in excinfo.value.message_dict
+
+    def test_clean_free_price_bounds_disabled_clears_negative(self):
+        cleaned_data = {
+            'free_price': False,
+            'free_price_min': Decimal('-5.00'),
+            'free_price_max': Decimal('-2.00'),
+        }
+        clean_free_price_bounds(cleaned_data)
+        assert cleaned_data['free_price_min'] is None
+        assert cleaned_data['free_price_max'] is None
+
+    def test_clean_free_price_bounds_valid_values(self):
+        cleaned_data = {
+            'free_price': True,
+            'default_price': Decimal('0.00'),
+            'free_price_min': Decimal('5.00'),
+            'free_price_max': Decimal('20.00'),
+        }
+        clean_free_price_bounds(cleaned_data)
+        assert cleaned_data['free_price_min'] == Decimal('5.00')
+        assert cleaned_data['free_price_max'] == Decimal('20.00')
+
+    def test_create_item_negative_free_price_min_rejected(self):
+        doc = self.get_doc('/control/event/%s/%s/items/add' % (self.orga1.slug, self.event1.slug))
+        form_data = extract_form_fields(doc.select('.container-fluid form')[0])
+        form_data['name_0'] = 'Free Price Donation'
+        form_data['default_price'] = '0.00'
+        form_data['free_price'] = 'on'
+        form_data['free_price_min'] = '-5.00'
+        form_data['free_price_max'] = '20.00'
+        form_data['quota_option'] = 'none'
+        doc = self.post_doc(
+            '/control/event/%s/%s/items/add' % (self.orga1.slug, self.event1.slug),
+            form_data,
+        )
+        assert not doc.select('.alert-success')
+        assert doc.select('.has-error')
+        with scopes_disabled():
+            assert not Item.objects.filter(name__icontains='Free Price Donation').exists()
+
+    def test_create_item_valid_free_price_succeeds(self):
+        doc = self.get_doc('/control/event/%s/%s/items/add' % (self.orga1.slug, self.event1.slug))
+        form_data = extract_form_fields(doc.select('.container-fluid form')[0])
+        form_data['name_0'] = 'Valid Free Price'
+        form_data['default_price'] = '0.00'
+        form_data['free_price'] = 'on'
+        form_data['free_price_min'] = '5.00'
+        form_data['free_price_max'] = '20.00'
+        form_data['quota_option'] = 'none'
+        doc = self.post_doc(
+            '/control/event/%s/%s/items/add' % (self.orga1.slug, self.event1.slug),
+            form_data,
+        )
+        assert doc.select('.alert-success')
+        with scopes_disabled():
+            item = Item.objects.get(name__icontains='Valid Free Price')
+            assert item.free_price is True
+            assert item.free_price_min == Decimal('5.00')
+            assert item.free_price_max == Decimal('20.00')
+
