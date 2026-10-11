@@ -63,5 +63,8 @@ class FeedbackSerializer(I18nAwareModelSerializer):
     def get_replies(self, obj):
         if obj.parent_id is None:
             replies = obj.replies.filter(status='published').order_by('created')
-            return FeedbackReplySerializer(replies, many=True).data
+            request = self.context.get('request')
+            if not request or not request.user.has_perm('base.orga_list_submission', request.event):
+                replies = replies.filter(is_public=True)
+            return FeedbackReplySerializer(replies, many=True, context=self.context).data
         return []
