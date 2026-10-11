@@ -200,7 +200,7 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
             required=False,
             min_value=1,
             initial=obj.cfp.fields.get('slides', default_fields()['slides']).get('max_count', 1),
-            help_text=_('Maximum number of slide links or PDF files per proposal.'),
+            help_text=_('Maximum number of slide files per proposal'),
         )
         self.fields['cfp_slides_max_count'].widget.attrs['placeholder'] = ''
         for attribute in self.request_require_fields:

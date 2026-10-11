@@ -11,9 +11,9 @@
 
 {% block title %}
     {% if messages %}
-        {{ messages|join:" " }} ::
+        {{ messages|join:" " }} -
     {% endif %}
-    {% block thetitle %}{% endblock %}{% if request.event %}{% if request.resolver_match.url_name != "event.index" %} :: {% endif %}{{ event.name|event_localize }}{% endif %}
+    {% block thetitle %}{% endblock %}{% if request.event %}{% if request.resolver_match.url_name != "event.index" %} - {% endif %}{{ event.name|event_localize }}{% endif %}
 {% endblock %}
 
 {% block favicons %}
