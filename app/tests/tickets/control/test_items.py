@@ -1137,12 +1137,8 @@ class FreePriceBoundsTest(ItemFormTest):
                     'quota_option': 'none',
                 },
             )
-            # Simulate cleaned_data with copy_from
-            form.cleaned_data = {
-                'name': 'Direct Cloned Product',
-                'copy_from': legacy_item,
-                'quota_option': ProductCreateForm.NONE,
-            }
+            assert form.is_valid()
+            form.cleaned_data['copy_from'] = legacy_item
             form.save()
             new_item.refresh_from_db()
             assert new_item.free_price is True

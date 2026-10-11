@@ -457,9 +457,6 @@ class ProductCreateForm(I18nModelForm):
                 'max_per_order',
                 'generate_tickets',
                 'checkin_attention',
-                'free_price',
-                'free_price_min',
-                'free_price_max',
                 'original_price',
                 'sales_channels',
                 'issue_giftcard',
@@ -473,14 +470,23 @@ class ProductCreateForm(I18nModelForm):
             )
             for f in fields:
                 setattr(self.instance, f, getattr(self.cleaned_data['copy_from'], f))
-            if self.instance.free_price:
-                if self.instance.free_price_min is not None and self.instance.free_price_min < 0:
+            if 'free_price' not in self.changed_data:
+                source = self.cleaned_data['copy_from']
+                self.instance.free_price = source.free_price
+                if source.free_price:
+                    self.instance.free_price_min = (
+                        source.free_price_min
+                        if source.free_price_min is not None and source.free_price_min >= 0
+                        else None
+                    )
+                    self.instance.free_price_max = (
+                        source.free_price_max
+                        if source.free_price_max is not None and source.free_price_max >= 0
+                        else None
+                    )
+                else:
                     self.instance.free_price_min = None
-                if self.instance.free_price_max is not None and self.instance.free_price_max < 0:
                     self.instance.free_price_max = None
-            else:
-                self.instance.free_price_min = None
-                self.instance.free_price_max = None
         else:
             # Add to all sales channels by default
             self.instance.sales_channels = list(get_all_sales_channels().keys())
@@ -509,6 +515,25 @@ class ProductCreateForm(I18nModelForm):
 
         self.instance.position = (self.event.products.aggregate(p=Max('position'))['p'] or 0) + 1
         instance = super().save(*args, **kwargs)
+
+        if self.cleaned_data.get('copy_from') and 'free_price' not in self.changed_data:
+            source = self.cleaned_data['copy_from']
+            instance.free_price = source.free_price
+            if source.free_price:
+                instance.free_price_min = (
+                    source.free_price_min
+                    if source.free_price_min is not None and source.free_price_min >= 0
+                    else None
+                )
+                instance.free_price_max = (
+                    source.free_price_max
+                    if source.free_price_max is not None and source.free_price_max >= 0
+                    else None
+                )
+            else:
+                instance.free_price_min = None
+                instance.free_price_max = None
+            instance.save(update_fields=['free_price', 'free_price_min', 'free_price_max'])
 
         if not self.event.has_subevents and not self.cleaned_data.get('has_variations'):
             if (
