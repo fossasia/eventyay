@@ -8,7 +8,7 @@ from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
 from i18nfield.strings import LazyI18nString
 
-from eventyay.control.forms.product import clean_free_price_bounds
+from eventyay.control.forms.product import ProductCreateForm, clean_free_price_bounds
 
 from eventyay.base.models import (
     Event,
@@ -1089,4 +1089,63 @@ class FreePriceBoundsTest(ItemFormTest):
             assert item.free_price is True
             assert item.free_price_min == Decimal('5.00')
             assert item.free_price_max == Decimal('20.00')
+
+    def test_create_item_copy_from_negative_free_price_rejected(self):
+        with scopes_disabled():
+            legacy_item = Item.objects.create(
+                event=self.event1,
+                name='Legacy Bad Product',
+                default_price=Decimal('10.00'),
+                free_price=True,
+                free_price_min=Decimal('-5.00'),
+                free_price_max=Decimal('20.00'),
+            )
+        doc = self.get_doc('/control/event/%s/%s/items/add?copy_from=%s' % (
+            self.orga1.slug, self.event1.slug, legacy_item.pk
+        ))
+        form_data = extract_form_fields(doc.select('.container-fluid form')[0])
+        form_data['name_0'] = 'Cloned Product'
+        form_data['copy_from'] = str(legacy_item.pk)
+        form_data['quota_option'] = 'none'
+        doc = self.post_doc(
+            '/control/event/%s/%s/items/add' % (self.orga1.slug, self.event1.slug),
+            form_data,
+        )
+        assert not doc.select('.alert-success')
+        assert doc.select('.has-error')
+        with scopes_disabled():
+            assert not Item.objects.filter(name__icontains='Cloned Product').exists()
+
+    def test_product_create_form_save_sanitizes_copied_negative_bounds(self):
+        with scopes_disabled():
+            legacy_item = Item.objects.create(
+                event=self.event1,
+                name='Legacy Product Negative Bounds',
+                default_price=Decimal('10.00'),
+                free_price=True,
+                free_price_min=Decimal('-5.00'),
+                free_price_max=Decimal('-2.00'),
+            )
+            new_item = Item(event=self.event1)
+            form = ProductCreateForm(
+                instance=new_item,
+                event=self.event1,
+                user=self.user,
+                data={
+                    'name_0': 'Direct Cloned Product',
+                    'default_price': '10.00',
+                    'quota_option': 'none',
+                },
+            )
+            # Simulate cleaned_data with copy_from
+            form.cleaned_data = {
+                'name': 'Direct Cloned Product',
+                'copy_from': legacy_item,
+                'quota_option': ProductCreateForm.NONE,
+            }
+            form.save()
+            new_item.refresh_from_db()
+            assert new_item.free_price is True
+            assert new_item.free_price_min is None
+            assert new_item.free_price_max is None
 

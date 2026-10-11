@@ -473,6 +473,14 @@ class ProductCreateForm(I18nModelForm):
             )
             for f in fields:
                 setattr(self.instance, f, getattr(self.cleaned_data['copy_from'], f))
+            if self.instance.free_price:
+                if self.instance.free_price_min is not None and self.instance.free_price_min < 0:
+                    self.instance.free_price_min = None
+                if self.instance.free_price_max is not None and self.instance.free_price_max < 0:
+                    self.instance.free_price_max = None
+            else:
+                self.instance.free_price_min = None
+                self.instance.free_price_max = None
         else:
             # Add to all sales channels by default
             self.instance.sales_channels = list(get_all_sales_channels().keys())
@@ -596,6 +604,17 @@ class ProductCreateForm(I18nModelForm):
                 self.add_error('tax_rule_name', _('Please enter a tax name.'))
 
         clean_free_price_bounds(cleaned_data, form=self)
+
+        if cleaned_data.get('copy_from'):
+            source = cleaned_data['copy_from']
+            if source.free_price:
+                if (source.free_price_min is not None and source.free_price_min < 0) or (
+                    source.free_price_max is not None and source.free_price_max < 0
+                ):
+                    self.add_error(
+                        'copy_from',
+                        _('The selected product has invalid negative free-price limits.'),
+                    )
 
         return cleaned_data
 
