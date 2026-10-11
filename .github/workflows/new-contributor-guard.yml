@@ -10,13 +10,21 @@
 #   2. Checks how many OTHER open PRs they have across the organisation.
 #      If they already have MAX_OPEN_PRS or more, this PR is closed with a friendly
 #      message listing their open PRs, and gets the label "pr-limit-reached".
-#   3. Otherwise asks for a screencast: adds "needs-screencast" and posts the request.
+#   3. Otherwise asks for a screencast: posts the request and adds "needs-screencast".
 #      The screencast-required workflow then handles the reminder and closing.
 #      (Skipped if the description already contains a video, or if this PR had
 #      "needs-screencast" before - e.g. it was closed for a missing video and reopened;
 #      a reviewer then decides whether to add the label again.)
+#      Draft PRs are not asked yet; the request is posted when the draft is marked
+#      "Ready for review".
 #
-# Members, owners, collaborators and bots are never checked.
+# Members, owners, collaborators and bots are never checked. If an author is no longer
+# new (e.g. graduated before reopening a PR), leftover guard labels are removed.
+#
+# Known limitations (accepted to keep the workflow simple):
+#   - Counts use GitHub search, which can lag a few seconds and only sees public repos.
+#     Someone opening several PRs within seconds may get one extra PR through;
+#     their next PR is then caught.
 #
 # Setup: create the labels "new-contributor" and "pr-limit-reached" in the repo
 # ("needs-screencast" already exists for the screencast workflow).
@@ -25,15 +33,10 @@ name: New contributor guard
 
 on:
   pull_request_target:
-    types: [opened, reopened]
+    types: [opened, reopened, ready_for_review]
 
 permissions:
   pull-requests: write # enough to comment on, label and close PRs
-
-# Handle one PR per author at a time, so PRs opened in quick succession are counted correctly.
-concurrency:
-  group: new-contributor-guard-${{ github.event.pull_request.user.login }}
-  cancel-in-progress: false
 
 env:
   ORG: ${{ github.repository_owner }} # the organisation to count PRs in (e.g. fossasia)
@@ -61,10 +64,23 @@ jobs:
             const GRADUATE = Number(process.env.GRADUATE_AFTER_MERGED);
             const { NEW_LABEL, LIMIT_LABEL, SCREENCAST_LABEL } = process.env;
             const labelsOnPr = (pr.labels ?? []).map(l => l.name);
+            const action = context.payload.action; // opened, reopened or ready_for_review
+
+            const removeLabelIfPresent = async name => {
+              if (labelsOnPr.includes(name)) {
+                await github.rest.issues.removeLabel({ owner, repo, issue_number: n, name });
+              }
+            };
+            // Someone who is not (or no longer) new should not carry guard labels.
+            const clearGuardLabels = async () => {
+              await removeLabelIfPresent(NEW_LABEL);
+              await removeLabelIfPresent(LIMIT_LABEL);
+            };
 
             // 1. Maintainers are never "new".
             if (['OWNER', 'MEMBER', 'COLLABORATOR'].includes(pr.author_association)) {
               core.info(`${author} is ${pr.author_association}, nothing to do`);
+              await clearGuardLabels();
               return;
             }
 
@@ -75,6 +91,7 @@ jobs:
             const merged = await search(`is:pr is:merged author:${author} org:${ORG}`);
             if (merged.total_count >= GRADUATE) {
               core.info(`${author} has ${merged.total_count} merged PR(s) in ${ORG}, not a new contributor`);
+              await clearGuardLabels();
               return;
             }
             core.info(`${author} has ${merged.total_count} merged PR(s) in ${ORG}, new contributor`);
@@ -84,11 +101,15 @@ jobs:
             }
 
             // 3. Open PR limit: count their OTHER open PRs across the organisation.
-            const open = await search(`is:pr is:open author:${author} org:${ORG}`);
-            const others = open.items.filter(i => i.html_url !== pr.html_url);
-            core.info(`${author} has ${others.length} other open PR(s) in ${ORG} (limit ${MAX_OPEN})`);
+            //    Only when a PR is opened or reopened, not when a draft becomes ready for review.
+            let others = [];
+            if (action !== 'ready_for_review') {
+              const open = await search(`is:pr is:open author:${author} org:${ORG}`);
+              others = open.items.filter(i => i.html_url !== pr.html_url);
+              core.info(`${author} has ${others.length} other open PR(s) in ${ORG} (limit ${MAX_OPEN})`);
+            }
 
-            if (others.length >= MAX_OPEN) {
+            if (action !== 'ready_for_review' && others.length >= MAX_OPEN) {
               const list = others.slice(0, 10).map(i => `- ${i.html_url}`).join('\n');
               await github.rest.issues.createComment({
                 owner, repo, issue_number: n,
@@ -105,17 +126,25 @@ jobs:
               if (!labelsOnPr.includes(LIMIT_LABEL)) {
                 await github.rest.issues.addLabels({ owner, repo, issue_number: n, labels: [LIMIT_LABEL] });
               }
+              // An old screencast request must not keep running while the PR is closed.
+              await removeLabelIfPresent(SCREENCAST_LABEL);
               await github.rest.pulls.update({ owner, repo, pull_number: n, state: 'closed' });
               core.info(`#${n}: closed, limit reached`);
               return;
             }
 
             // Under the limit: if this PR was closed for the limit earlier and is now reopened, clear that label.
-            if (labelsOnPr.includes(LIMIT_LABEL)) {
-              await github.rest.issues.removeLabel({ owner, repo, issue_number: n, name: LIMIT_LABEL });
-            }
+            await removeLabelIfPresent(LIMIT_LABEL);
 
-            // 4. Ask for a screencast.
+            // 4. Ask for a screencast (not yet for drafts; that happens on "ready for review").
+            if (pr.draft) {
+              core.info(`#${n}: draft PR, screencast will be requested when it is marked ready for review`);
+              return;
+            }
+            if (labelsOnPr.includes(SCREENCAST_LABEL)) {
+              core.info(`#${n}: already has ${SCREENCAST_LABEL}, nothing more to do`);
+              return;
+            }
             // Same video detection as in screencast-required.yml.
             const ASSET_RE = /https:\/\/github\.com\/user-attachments\/assets\/[\w-]+/gi;
             const LINK_RE = /https:\/\/[^\s)"'<>]+\.(mp4|mov|webm|mkv)\b|https:\/\/(www\.)?(youtube\.com|youtu\.be|loom\.com|vimeo\.com)\/\S+/i;
@@ -147,7 +176,8 @@ jobs:
 
             // Labels added by this workflow do not trigger other workflows, so the request
             // comment is posted here (same text as in screencast-required.yml).
-            await github.rest.issues.addLabels({ owner, repo, issue_number: n, labels: [SCREENCAST_LABEL] });
+            // The comment is posted first and the label added after it, so a PR never
+            // carries the label without having received the request.
             await github.rest.issues.createComment({
               owner, repo, issue_number: n,
               body: [
@@ -158,4 +188,5 @@ jobs:
                 `If no video is added within **${process.env.SCREENCAST_CLOSE_HOURS} hours**, this PR will be closed automatically. You are welcome to reopen it or submit a new PR once you have the screencast.`,
               ].join('\n'),
             });
+            await github.rest.issues.addLabels({ owner, repo, issue_number: n, labels: [SCREENCAST_LABEL] });
             core.info(`#${n}: screencast requested`);
