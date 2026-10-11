@@ -61,7 +61,10 @@ def event_url(event, path):
         ('Volunteer briefing for {event_name', 'Volunteer briefing for {event_name'),
         ('See you there :}', 'See you there :}'),
         ('{{literal}} {event_name}', '{literal} Test Event'),
-        ('{event.name} {0} {a:>5} }{', '{event.name} {0} {a:>5} }{'),
+        ('{event.name} {0} }{', '{event.name} {0} }{'),
+        ('{event_name:>12}|', '  Test Event|'),
+        ('{event_name!r}', "'Test Event'"),
+        ('{note: see below} {event_name:>5d}', '{note: see below} {event_name:>5d}'),
     ],
 )
 def test_escape_stray_braces_keeps_only_placeholders(template, rendered):
@@ -69,9 +72,10 @@ def test_escape_stray_braces_keeps_only_placeholders(template, rendered):
 
 
 def test_find_placeholders_ignores_literal_braces():
-    assert find_placeholders('{" x "} {} {{y}} {event_name} {join\\_online\\_event}') == [
+    assert find_placeholders('{" x "} {} {{y}} {event_name} {join\\_online\\_event} {code:>8} {note: x}') == [
         '{event_name}',
         '{join_online_event}',
+        '{code:>8}',
     ]
 
 
