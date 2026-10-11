@@ -77,6 +77,7 @@ from eventyay.orga.forms.submission import (
     SubmissionForm,
     SubmissionStateChangeForm,
 )
+from eventyay.orga.templatetags.staff_session import has_event_perm
 from eventyay.orga.utils.speakers import (
     get_submission_answers,
     get_submission_speakers,
@@ -859,6 +860,37 @@ class SubmissionList(EventPermissionRequired, BaseSubmissionList):
     @context
     def session_videos_enabled(self):
         return event_session_videos_enabled(self.request.event)
+
+    @context
+    def submission_colspan(self):
+        can_change_submission = has_event_perm(
+            'base.state_change_submission',
+            self.request.user,
+            self.request,
+            self.request.event,
+        )
+        can_view_speakers = has_event_perm(
+            'base.orga_list_speakerprofile',
+            self.request.user,
+            self.request,
+            self.request.event,
+        )
+        show_submission_types = bool(self.show_submission_types())
+        use_tracks = bool(self.request.event.get_feature_flag('use_tracks'))
+        session_videos_enabled = bool(self.session_videos_enabled())
+
+        colspan = 2  # Title and State columns are always present
+        if can_view_speakers:
+            colspan += 1
+        if show_submission_types:
+            colspan += 1
+        if use_tracks:
+            colspan += 1
+        if can_change_submission:
+            colspan += 2  # Featured and Actions columns
+            if session_videos_enabled:
+                colspan += 1
+        return colspan
 
     def get_queryset(self):
         qs = super().get_queryset()
