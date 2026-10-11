@@ -66,11 +66,7 @@ class SpeakerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         request = self.context.get('request')
-        if (
-            self.event
-            and request
-            and request.user.has_perm('base.orga_list_speakerprofile', self.event)
-        ):
+        if self.event and request and request.user.is_authenticated:
             from eventyay.talk_rules.orga import (
                 can_view_speaker_emails,
                 can_view_speaker_names,
@@ -95,6 +91,8 @@ class SpeakerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
                 data.pop('organization', None)
                 data.pop('avatar_url', None)
                 data.pop('social_links', None)
+                data.pop('avatar_source', None)
+                data.pop('avatar_license', None)
             elif hide_emails:
                 data.pop('email', None)
         return data

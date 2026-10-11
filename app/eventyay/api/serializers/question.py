@@ -289,7 +289,7 @@ class AnswerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             ),
             "person": (
                 "eventyay.api.serializers.speaker.SpeakerSerializer",
-                {"read_only": True, "omit": ("answers",)},
+                {"read_only": True, "omit": ("answers",), "source": "speaker_profile"},
             ),
             # submissions and reviews are currently not expandable due to permissions
             # concerns: We’d have to make sure that users with access to e.g. some

@@ -126,6 +126,9 @@ def test_reveal_secret_requires_staff(normal_client, admin_password, reveal_url)
 
 @pytest.mark.django_db
 @pytest.mark.parametrize('key', [
+    'payment_stripe_connect_secret_key',
+    'payment_stripe_connect_test_secret_key',
+    'payment_paypal_connect_secret_key',
     'payment_stripe_secret_key',
     'payment_stripe_test_secret_key',
     'stripe_webhook_secret_key',
