@@ -16,6 +16,7 @@ from urllib.parse import urljoin, urlparse
 import datetime
 from zoneinfo import ZoneInfo
 import requests
+import urllib3
 from bs4 import BeautifulSoup
 from celery import chain
 from celery.exceptions import MaxRetriesExceededError
@@ -807,6 +808,10 @@ def encoder_linelength(msg):
 # - IndexError (If regex failed)
 # - requests.RequestException
 # - ssl.SSLError
+CID_IMAGE_MAX_BYTES = 5 * 1024 * 1024
+CID_IMAGE_DEADLINE_SECONDS = 30
+
+
 def convert_image_to_cid(image_src: str, cid_id: str, verify_ssl: bool = True) -> MIMEImage | None:
     if image_src.startswith('data:image/'):
         # Let ValueError bubble up here.
@@ -831,7 +836,7 @@ def convert_image_to_cid(image_src: str, cid_id: str, verify_ssl: bool = True) -
             return None
 
         try:
-            if response.status_code >= 500:
+            if response.status_code >= 400:
                 log_event(
                     'mail',
                     'connection.get',
@@ -842,10 +847,16 @@ def convert_image_to_cid(image_src: str, cid_id: str, verify_ssl: bool = True) -
                 )
                 return None
 
-            max_bytes = 5 * 1024 * 1024
-            deadline = time.monotonic() + 30
+            max_bytes = CID_IMAGE_MAX_BYTES
+            deadline = time.monotonic() + CID_IMAGE_DEADLINE_SECONDS
             chunks, total = [], 0
-            for chunk in response.iter_content(chunk_size=8192):
+            while True:
+                # read1() returns after a single network read, so the deadline is re-checked
+                # after every read. iter_content() only returns once a whole chunk has arrived,
+                # which a server dribbling bytes can stretch far past the deadline.
+                chunk = response.raw.read1(8192, decode_content=True)
+                if not chunk:
+                    break
                 total += len(chunk)
                 if total > max_bytes or time.monotonic() > deadline:
                     log_event(
@@ -857,7 +868,7 @@ def convert_image_to_cid(image_src: str, cid_id: str, verify_ssl: bool = True) -
                     )
                     return None
                 chunks.append(chunk)
-        except requests.RequestException:
+        except (requests.RequestException, urllib3.exceptions.HTTPError):
             log_event('mail', 'connection.get', OUTCOME_FAILURE, error_code='request_error', backend='cid_image')
             return None
         finally:
