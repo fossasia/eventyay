@@ -109,6 +109,7 @@ def test_orga_can_see_expanded_reviews(
     assert data["submission"]["track"]["name"]["en"] == track.name
     assert data["submission"]["submission_type"]["name"]["en"] == submission_type.name
     assert data["user"]["code"] == user.code
+    assert data["user"]["fullname"] == user.fullname
     assert data["scores"][0]["category"]["name"]["en"] == category.name
     assert data["answers"][0]["answer"] == "text!"
 

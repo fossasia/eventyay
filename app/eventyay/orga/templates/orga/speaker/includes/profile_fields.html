@@ -1,0 +1,25 @@
+{% if speaker_form.non_field_errors %}
+  <div class="alert alert-danger">
+    {% for error in speaker_form.non_field_errors %}
+      <div>{{ error }}</div>
+    {% endfor %}
+  </div>
+{% endif %}
+{% for field in speaker_form %}
+  {% if field.name == 'avatar' %}
+    {% include 'common/avatar.html' with user=speaker_form.instance.user form=speaker_form %}
+  {% elif field.name == 'get_gravatar' %}
+    {# already handled by avatar.html #}
+  {% elif field.name == 'availabilities' %}
+    {% if not omit_availability_assets %}
+      {% include 'common/availabilities.html' %}
+    {% endif %}
+    {{ field.as_field_group }}
+  {% elif field.name == 'social_links' %}
+    {% if speaker_social_formset %}
+      {% include 'common/speaker_social_links_formset.html' with social_media_formset=speaker_social_formset omit_formset_id=omit_social_formset_id %}
+    {% endif %}
+  {% else %}
+    {{ field.as_field_group }}
+  {% endif %}
+{% endfor %}

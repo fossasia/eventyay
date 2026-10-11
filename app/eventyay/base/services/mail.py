@@ -26,6 +26,7 @@ from django.core.mail import (
 )
 from django.core.mail.message import SafeMIMEText
 from django.db import transaction
+from django.template import TemplateDoesNotExist
 from django.template.loader import get_template
 from django.utils.timezone import override
 from django.utils.translation import gettext as _
@@ -294,7 +295,8 @@ def mail(
                         DeprecationWarning,
                     )
                     body_html = renderer.render(content_plain, signature, raw_subject, order)
-            except:
+            except (TemplateDoesNotExist, TypeError, ValueError):
+                # Fall back to plain-text email if the HTML body can't be rendered.
                 logger.exception('Could not render HTML body')
                 log_event('mail', 'mail.template.render', OUTCOME_FAILURE, error_code='html_render', event_id=event.id if event else None, order_id=order.pk if order else None)
                 body_html = None
@@ -470,7 +472,7 @@ def mail_send_task(
                                 for a in args:
                                     try:
                                         email.attach(*a)
-                                    except:
+                                    except (ValueError, TypeError):
                                         pass
                             else:
                                 message = (
@@ -518,7 +520,7 @@ def mail_send_task(
                                 inv.file.file.read(),
                                 'application/pdf',
                             )
-                    except:
+                    except (OSError, ValueError, TypeError):
                         logger.exception('Could not attach invoice to email')
                         pass
 
@@ -531,7 +533,7 @@ def mail_send_task(
                             cf.file.file.read(),
                             cf.type,
                         )
-                    except:
+                    except (OSError, ValueError, TypeError):
                         logger.exception('Could not attach file to email')
                         pass
 

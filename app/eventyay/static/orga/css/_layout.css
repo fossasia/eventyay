@@ -3447,14 +3447,14 @@ a.btn-speaker-not-arrived {
 }
 
 .speaker-session-list {
-  padding-left: 0;
-  margin-left: 0;
+  padding: 0;
+  margin: 0;
   list-style: none;
 }
 
 .speaker-session-list li {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 0.35rem;
 }
 

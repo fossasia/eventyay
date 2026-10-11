@@ -1084,7 +1084,9 @@ export default {
 			if (index < 0) return
 			const neighbors = [days[index - 1], days[index + 1]].filter(Boolean)
 			neighbors.forEach(neighbor => {
-				this.ensureScheduleDay(neighbor, { includeText: false }).catch(error => {
+				this.ensureScheduleDay(neighbor, { includeText: false }).then(() => {
+					this.pruneFavsAfterCompactCoverage()
+				}).catch(error => {
 					console.error('Failed to prefetch schedule day', neighbor, error)
 				})
 			})
@@ -1095,6 +1097,7 @@ export default {
 				this.dayLoading = true
 				try {
 					await this.ensureAllScheduleDays({ includeText: this.scheduleNeedsText })
+					this.pruneFavsAfterCompactCoverage()
 				} catch (error) {
 					console.error('Failed to load schedule days', error)
 				} finally {
@@ -1119,6 +1122,7 @@ export default {
 					this.$nextTick(() => { this.forceScrollDay++ })
 				}
 				this.$nextTick(() => this.maybeLoadNextGridDay())
+				this.pruneFavsAfterCompactCoverage()
 			} catch (error) {
 				console.error('Failed to load schedule day', this.currentDay, error)
 			} finally {
@@ -1159,6 +1163,7 @@ export default {
 					this.gridScrollDays = [...shown, next]
 				}
 				this.prefetchAdjacentScheduleDays(next)
+				this.pruneFavsAfterCompactCoverage()
 			} catch (error) {
 				console.error('Failed to load the next schedule day', next, error)
 				return
@@ -1485,9 +1490,28 @@ export default {
 			const message = this.translationMessages.favs_anonymous_notice || this.$t('Your favourites can only be saved locally in this browser. Please sign in or register to sync starred sessions and use more features. Locally saved stars may be lost if you clear your browser data; we are not responsible for data loss in this case.')
 			if (message) this.pushErrorMessage(message)
 		},
+		hasCompleteCompactTalks (schedule = this.schedule) {
+			if (!schedule?.compact) return true
+			const days = schedule.days || []
+			if (!days.length) return false
+			return days.every(day => this.loadedScheduleDays?.[day])
+		},
 		pruneFavs (favs, schedule) {
+			// Keep stars while compact days are still loading; prune stale codes
+			// only after every day is fetched so favs.length stays accurate.
+			if (!schedule) return favs || []
+			if (schedule.compact && !this.hasCompleteCompactTalks(schedule)) return favs || []
 			const talkSet = new Set((schedule.talks || []).map(talk => talk.code))
-			return favs.filter(code => talkSet.has(code))
+			return (favs || []).filter(code => talkSet.has(code))
+		},
+		pruneFavsAfterCompactCoverage () {
+			if (this.featuredRemote || this.favsReadOnly || !this.schedule) return
+			if (!this.hasCompleteCompactTalks(this.schedule)) return
+			const next = this.pruneFavs(this.favs, this.schedule)
+			if (next.length === this.favs.length && next.every((code, i) => code === this.favs[i])) return
+			this.favs = next
+			// Persist pruned list; keep UI state even if localStorage write fails.
+			this.saveFavs()
 		},
 		saveFavs () {
 			const storageKey = this.getFavStorageKey(this.loggedIn ? this.userCode : null)

@@ -390,7 +390,6 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
         kwargs = super().get_form_kwargs()
         kwargs['event'] = self.request.event
         kwargs['require_name'] = True
-        kwargs['include_biography'] = True
         kwargs['submission'] = self.object
         return kwargs
 
@@ -410,14 +409,14 @@ class SubmissionSpeakerResendInvitation(SubmissionSpeakers):
             submission=self.object,
             pk=self.kwargs['pk'],
         )
-        if not invitation.can_resend:
+        if not invitation.can_resend_orga:
             message = _('This invitation cannot be resent.')
             if is_ajax_request(request):
                 return JsonResponse({'message': str(message), 'success': False}, status=409)
             messages.warning(request, message)
             return redirect(self.object.orga_urls.speakers)
 
-        delivered = invitation.resend(requestor=request.user)
+        delivered = invitation.resend(requestor=request.user, orga=True)
         if delivered:
             message = _('Invitation sent to {email}.').format(email=invitation.email)
         else:
@@ -770,6 +769,22 @@ class SubmissionContentView(SubmissionContent):
                 }
             )
         return tags
+
+    @context
+    @cached_property
+    def scheduled_slot(self):
+        submission = self.get_object()
+        if not isinstance(submission, Submission) or not submission.pk:
+            return None
+        return (
+            submission.slots.filter(
+                schedule__version__isnull=True,
+                start__isnull=False,
+            )
+            .select_related('room')
+            .order_by('start')
+            .first()
+        )
 
 
 class BaseSubmissionList(Sortable, ReviewerSubmissionFilter, PaginationMixin, ListView):

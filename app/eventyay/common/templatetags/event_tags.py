@@ -327,16 +327,6 @@ def is_event_team_member(context, event=None):
 
 
 @register.simple_tag(takes_context=True)
-def has_event_permission(context, event, permission):
-    request = context.get('request')
-    event = event or getattr(request, 'event', None)
-    user = getattr(request, 'user', None)
-    if not event or not user or user.is_anonymous:
-        return False
-    return user.has_event_permission(event.organizer, event, permission, request=request)
-
-
-@register.simple_tag(takes_context=True)
 def user_has_submissions(context, event=None):
     """Return True if the authenticated user has submitted proposals for this event."""
     request = context.get('request')
