@@ -244,13 +244,19 @@ class AnswerViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         # We don't want duplicate answers
+        defaults = {"answer": serializer.validated_data["answer"]}
+        if "answer_file" in serializer.validated_data:
+            defaults["answer_file"] = serializer.validated_data["answer_file"]
         answer, _ = Answer.objects.update_or_create(
             question=serializer.validated_data["question"],
             review=serializer.validated_data.get("review"),
             submission=serializer.validated_data.get("submission"),
             person=serializer.validated_data.get("person"),
-            defaults={"answer": serializer.validated_data["answer"]},
+            defaults=defaults,
         )
+        if "answer_file" in serializer.validated_data and answer.answer_file:
+            answer.answer = f"file://{answer.answer_file.name}"
+            answer.save(update_fields=["answer"])
         options = serializer.validated_data.get("options")
         if options is not None:
             answer.options.set(options)
