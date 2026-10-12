@@ -210,12 +210,12 @@
                             <span>{{ stripe_connect_account_name|default:stripe_connect_user_id }}</span>
                             <span class="text-muted">({{ stripe_connect_user_id }})</span>
                         </div>
-                        {% trans "Are you sure you want to disconnect this Stripe account?" as disconnect_confirm_msg %}
-                        <button type="submit"
-                                form="event-stripe-disconnect-form"
-                                class="btn btn-sm btn-default"
-                                data-confirm="{{ disconnect_confirm_msg }}">
-                            <i class="fa fa-chain-broken"></i> {% trans "Disconnect" %}
+                        {% trans 'Are you sure you want to disconnect this Stripe account?' as disconnect_confirm_msg %}
+                        <button type='submit'
+                                form='event-stripe-disconnect-form'
+                                class='btn btn-sm btn-default'
+                                data-confirm='{{ disconnect_confirm_msg }}'>
+                            <i class='fa fa-chain-broken'></i> {% trans 'Disconnect' %}
                         </button>
                     </div>
                 </div>
@@ -595,10 +595,10 @@
     {% csrf_token %}
 </form>
 {% if stripe_disconnect_url %}
-<form id="event-stripe-disconnect-form"
-      action="{{ stripe_disconnect_url }}"
-      method="post"
-      class="stripe-disconnect-form">
+<form id='event-stripe-disconnect-form'
+      action='{{ stripe_disconnect_url }}'
+      method='post'
+      class='stripe-disconnect-form'>
     {% csrf_token %}
 </form>
 {% endif %}

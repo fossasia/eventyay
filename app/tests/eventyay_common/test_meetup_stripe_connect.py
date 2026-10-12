@@ -18,6 +18,7 @@ from eventyay.base.payment import PaymentException, StripePaymentProvider
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.stripe_connect import (
     build_stripe_oauth_state,
+    deauthorize_stripe_account,
     get_event_stripe_publishable_key,
     get_stripe_connect_credentials,
     load_stripe_oauth_state,
@@ -645,4 +646,32 @@ def test_paid_rsvp_testmode_succeeds_with_platform_test_keys(meetup_event, rf):
     order = Order.objects.get(event=meetup_event, email='test_attendee2@example.com')
     assert order.status == Order.STATUS_PAID
     assert order.testmode is True
+
+
+@pytest.mark.django_db
+@scopes_disabled()
+def test_deauthorize_stripe_account_mock_credentials_handling(meetup_event):
+    """Test that mock credentials skip remote Stripe calls only when both keys are mock, rejecting mixed pairs."""
+    gs = GlobalSettingsObject()
+    meetup_event.testmode = False
+
+    # Mixed pair: mock client ID with non-mock secret key -> raises ValueError
+    gs.settings.set('payment_stripe_connect_client_id', 'ca_test_mock_123')
+    gs.settings.set('payment_stripe_connect_secret_key', 'sk_live_real_key')
+    with pytest.raises(ValueError, match='mock credentials must be configured together'):
+        deauthorize_stripe_account(stripe_user_id='acct_test_123', event=meetup_event)
+
+    # Mixed pair: non-mock client ID with mock secret key -> raises ValueError
+    gs.settings.set('payment_stripe_connect_client_id', 'ca_live_real_id')
+    gs.settings.set('payment_stripe_connect_secret_key', 'sk_test_mock_123')
+    with pytest.raises(ValueError, match='mock credentials must be configured together'):
+        deauthorize_stripe_account(stripe_user_id='acct_test_123', event=meetup_event)
+
+    # Both mock: skips Stripe API call without error
+    gs.settings.set('payment_stripe_connect_client_id', 'ca_test_mock_123')
+    gs.settings.set('payment_stripe_connect_secret_key', 'sk_test_mock_123')
+    with patch('stripe.OAuth.deauthorize') as mock_deauth:
+        deauthorize_stripe_account(stripe_user_id='acct_test_123', event=meetup_event)
+        mock_deauth.assert_not_called()
+
 
