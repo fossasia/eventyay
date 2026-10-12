@@ -5,6 +5,8 @@ from eventyay import __version__ as version
 
 
 class PassbookApp(AppConfig):
+    """Django AppConfig for the Apple Wallet / Passbook ticket output plugin."""
+
     name = 'eventyay.plugins.passbook'
     verbose_name = _('Passbook / Apple Wallet tickets')
 
@@ -16,6 +18,7 @@ class PassbookApp(AppConfig):
         description = _('Output tickets as Passbook (.pkpass) files for Apple Wallet and compatible apps.')
 
     def ready(self):
+        """Connect plugin signal receivers when the app is loaded."""
         from . import signals  # noqa: F401
 
 

@@ -1297,6 +1297,7 @@ class OrderDownloadMixin:
                 return provider
 
     def get(self, request, *args, **kwargs):
+        """Handle GET request for ticket downloads."""
         if not self.output or not self.output.is_enabled:
             return self.error(OrderError(_('You requested an invalid ticket output type.')))
         if 'position' not in kwargs and not self.output.multi_download_enabled:
@@ -1306,6 +1307,7 @@ class OrderDownloadMixin:
         return self.post(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
+        """Handle POST request to generate and initiate ticket download."""
         if not self.output or not self.output.is_enabled:
             return self.error(OrderError(_('You requested an invalid ticket output type.')))
         if 'position' not in kwargs and not self.output.multi_download_enabled:

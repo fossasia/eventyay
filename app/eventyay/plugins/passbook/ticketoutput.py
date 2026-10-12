@@ -12,9 +12,9 @@ from io import BytesIO
 from zipfile import ZIP_DEFLATED, ZipFile
 
 from cryptography import x509
-from cryptography.exceptions import UnsupportedAlgorithm
+from cryptography.exceptions import InvalidSignature, UnsupportedAlgorithm
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import ec, rsa
+from cryptography.hazmat.primitives.asymmetric import ec, padding, rsa
 from cryptography.hazmat.primitives.serialization import pkcs7
 from cryptography.x509.oid import NameOID
 from django import forms
@@ -43,6 +43,8 @@ logger = logging.getLogger('eventyay.plugins.passbook')
 
 @dataclass(frozen=True)
 class SigningMaterial:
+    """Immutable container for validated Apple Wallet cryptographic credentials."""
+
     certificate: x509.Certificate
     certificate_pem: bytes
     private_key: pkcs7.PKCS7PrivateKeyTypes
@@ -53,6 +55,7 @@ class SigningMaterial:
 
 
 def read_file(value) -> bytes:
+    """Read binary content from a file-like object, storage path, PEM string, or raw bytes."""
     if not value:
         return b''
     if isinstance(value, (bytes, bytearray)):
@@ -82,6 +85,7 @@ def read_file(value) -> bytes:
 
 
 def load_certificate(value) -> tuple[x509.Certificate, bytes]:
+    """Parse an X.509 certificate from PEM or DER content and return it with PEM bytes."""
     content = read_file(value)
     try:
         cert = x509.load_pem_x509_certificate(content)
@@ -95,18 +99,46 @@ def load_certificate(value) -> tuple[x509.Certificate, bytes]:
 
 @lru_cache(maxsize=256)
 def stored_certificate_validity(value: str) -> tuple[datetime, datetime]:
+    """Return cached validity datetime range for a stored certificate path."""
     cert, __ = load_certificate(value)
     return cert.not_valid_before_utc, cert.not_valid_after_utc
 
 
 def certificate_validity(value) -> tuple[datetime, datetime]:
+    """Return validity range (not_valid_before_utc, not_valid_after_utc) for a certificate."""
     if isinstance(value, str):
         return stored_certificate_validity(value)
     cert, __ = load_certificate(value)
     return cert.not_valid_before_utc, cert.not_valid_after_utc
 
 
+def verify_certificate_chain(signing_cert: x509.Certificate, wwdr_cert: x509.Certificate) -> None:
+    """Verify that the signing certificate was issued and signed by the Apple WWDR intermediate CA."""
+    if signing_cert.issuer != wwdr_cert.subject:
+        raise ValidationError(_('The signing certificate was not issued by the provided Apple WWDR CA certificate.'))
+    try:
+        pub = wwdr_cert.public_key()
+        if isinstance(pub, rsa.RSAPublicKey):
+            pub.verify(
+                signing_cert.signature,
+                signing_cert.tbs_certificate_bytes,
+                padding.PKCS1v15(),
+                signing_cert.signature_hash_algorithm,
+            )
+        elif isinstance(pub, ec.EllipticCurvePublicKey):
+            pub.verify(
+                signing_cert.signature,
+                signing_cert.tbs_certificate_bytes,
+                ec.ECDSA(signing_cert.signature_hash_algorithm),
+            )
+    except (InvalidSignature, TypeError, ValueError, UnsupportedAlgorithm) as exc:
+        raise ValidationError(
+            _('The signing certificate signature cannot be verified with the Apple WWDR CA certificate.')
+        ) from exc
+
+
 def load_signing_material(certificate, private_key_data: str, password: str, wwdr_certificate) -> SigningMaterial:
+    """Load, validate, and pair signing certificate, private key, and Apple WWDR intermediate CA."""
     if not certificate or not private_key_data or not wwdr_certificate:
         raise ValidationError(_('Certificate, private key, and Apple WWDR certificate are required.'))
     try:
@@ -124,11 +156,26 @@ def load_signing_material(certificate, private_key_data: str, password: str, wwd
     if not isinstance(key, (rsa.RSAPrivateKey, ec.EllipticCurvePrivateKey)):
         raise ValidationError(_('The Apple Wallet private key uses an unsupported algorithm.'))
 
+    # Verify that the private key matches the signing certificate public key
+    cert_pub_bytes = signing_cert.public_key().public_bytes(
+        serialization.Encoding.DER,
+        serialization.PublicFormat.SubjectPublicKeyInfo,
+    )
+    key_pub_bytes = key.public_key().public_bytes(
+        serialization.Encoding.DER,
+        serialization.PublicFormat.SubjectPublicKeyInfo,
+    )
+    if cert_pub_bytes != key_pub_bytes:
+        raise ValidationError(_('The Apple Wallet certificate does not match the private key.'))
+
     now = datetime.now(UTC)
     if not (signing_cert.not_valid_before_utc <= now <= signing_cert.not_valid_after_utc):
         raise ValidationError(_('The Apple Wallet signing certificate is expired or not yet valid.'))
     if not (wwdr_cert.not_valid_before_utc <= now <= wwdr_cert.not_valid_after_utc):
         raise ValidationError(_('The Apple WWDR CA certificate is expired or not yet valid.'))
+
+    # Verify certificate chain to WWDR intermediate CA
+    verify_certificate_chain(signing_cert, wwdr_cert)
 
     return SigningMaterial(
         certificate=signing_cert,
@@ -142,16 +189,18 @@ def load_signing_material(certificate, private_key_data: str, password: str, wwd
 
 
 def validate_certificate_identity(material: SigningMaterial, team_identifier: str, pass_type_identifier: str) -> None:
+    """Validate that the certificate explicitly contains and matches the configured Apple Team ID and Pass Type ID."""
     ou_attrs = material.certificate.subject.get_attributes_for_oid(NameOID.ORGANIZATIONAL_UNIT_NAME)
-    if ou_attrs and team_identifier:
-        ou_val = ou_attrs[0].value
-        if ou_val != team_identifier:
-            raise ValidationError(
-                _(
-                    'The certificate Organizational Unit ({cert_ou}) '
-                    'does not match the configured Team Identifier ({team_id}).'
-                ).format(cert_ou=ou_val, team_id=team_identifier)
-            )
+    if not ou_attrs:
+        raise ValidationError(_('The certificate does not contain an Organizational Unit (Team ID).'))
+    ou_val = ou_attrs[0].value
+    if team_identifier and ou_val != team_identifier:
+        raise ValidationError(
+            _(
+                'The certificate Organizational Unit ({cert_ou}) '
+                'does not match the configured Team Identifier ({team_id}).'
+            ).format(cert_ou=ou_val, team_id=team_identifier)
+        )
 
     uid_attrs = material.certificate.subject.get_attributes_for_oid(NameOID.USER_ID)
     cn_attrs = material.certificate.subject.get_attributes_for_oid(NameOID.COMMON_NAME)
@@ -163,7 +212,9 @@ def validate_certificate_identity(material: SigningMaterial, team_identifier: st
         if cn_val.startswith('Pass Type ID: '):
             cert_pass_type = cn_val[len('Pass Type ID: '):]
 
-    if cert_pass_type and pass_type_identifier and cert_pass_type != pass_type_identifier:
+    if not cert_pass_type:
+        raise ValidationError(_('The certificate does not contain a recognized Pass Type ID.'))
+    if pass_type_identifier and cert_pass_type != pass_type_identifier:
         raise ValidationError(
             _(
                 'The certificate Pass Type ID ({cert_pass}) '
@@ -173,6 +224,7 @@ def validate_certificate_identity(material: SigningMaterial, team_identifier: st
 
 
 def hex_to_rgb(hex_color: str) -> str:
+    """Convert a hex color string (#RRGGBB or #RGB) to Apple Wallet 'rgb(R, G, B)' format."""
     color = hex_color.lstrip('#')
     if len(color) == 3:
         color = ''.join(c * 2 for c in color)
@@ -186,6 +238,7 @@ def hex_to_rgb(hex_color: str) -> str:
 
 
 def create_blank_png(width: int, height: int) -> bytes:
+    """Generate in-memory transparent PNG bytes of specified dimensions."""
     img = Image.new('RGBA', (width, height), (255, 255, 255, 0))
     out = BytesIO()
     img.save(out, 'PNG')
@@ -193,6 +246,7 @@ def create_blank_png(width: int, height: int) -> bytes:
 
 
 def resized_png(content: bytes, size: tuple[int, int], crop: bool = False) -> bytes:
+    """Resize image content to target dimensions with optional center crop."""
     try:
         with Image.open(BytesIO(content)) as source_img:
             img = source_img.convert('RGBA')
@@ -212,6 +266,7 @@ def resized_png(content: bytes, size: tuple[int, int], crop: bool = False) -> by
 
 
 def sign_manifest(manifest_bytes: bytes, material: SigningMaterial) -> bytes:
+    """Generate detached PKCS#7 signature over manifest bytes with signingTime authenticated attribute."""
     # Try OpenSSL first: produces full detached PKCS#7 signature with signingTime authenticated attribute
     try:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -239,10 +294,17 @@ def sign_manifest(manifest_bytes: bytes, material: SigningMaterial) -> bytes:
                 '-out', sig_path,
                 '-outform', 'DER',
             ]
+            input_bytes = None
             if material.private_key_password:
-                cmd.extend(['-passin', f'pass:{material.private_key_password}'])
+                cmd.extend(['-passin', 'stdin'])
+                input_bytes = f'{material.private_key_password}\n'.encode()
 
-            proc = subprocess.run(cmd, capture_output=True, check=False)
+            proc = subprocess.run(
+                cmd,
+                input=input_bytes,
+                capture_output=True,
+                check=False,
+            )
             if proc.returncode == 0 and os.path.exists(sig_path):
                 with open(sig_path, 'rb') as f:
                     return f.read()
@@ -265,6 +327,8 @@ def sign_manifest(manifest_bytes: bytes, material: SigningMaterial) -> bytes:
 
 
 class PassbookTicketOutput(BaseTicketOutput):
+    """Ticket output generator producing signed Apple Wallet (.pkpass) passes."""
+
     identifier = 'passbook'
     verbose_name = _('Apple Wallet / Passbook')
     download_button_icon = 'fa-mobile'
@@ -274,10 +338,12 @@ class PassbookTicketOutput(BaseTicketOutput):
 
     @cached_property
     def global_settings(self):
+        """Return cached platform-wide global settings object."""
         return GlobalSettingsObject().settings
 
     @property
     def team_identifier(self) -> str:
+        """Return configured Apple Developer Team ID from event or global settings."""
         return (
             self.settings.get('team_identifier')
             or self.settings.get('team_id')
@@ -287,6 +353,7 @@ class PassbookTicketOutput(BaseTicketOutput):
 
     @property
     def pass_type_identifier(self) -> str:
+        """Return configured Apple Pass Type ID from event or global settings."""
         return (
             self.settings.get('pass_type_identifier')
             or self.settings.get('pass_type_id')
@@ -296,6 +363,7 @@ class PassbookTicketOutput(BaseTicketOutput):
 
     @cached_property
     def certificate_value(self):
+        """Resolve pass signing certificate from event or global configuration."""
         return (
             self.settings.get('certificate', as_type=File)
             or self.event.settings.get('ticketoutput_passbook_certificate', as_type=File)
@@ -307,14 +375,17 @@ class PassbookTicketOutput(BaseTicketOutput):
 
     @cached_property
     def private_key_value(self):
+        """Resolve pass signing private key from event or global configuration."""
         return self.settings.get('private_key') or self.global_settings.get('passbook_key') or ''
 
     @cached_property
     def private_key_password_value(self):
+        """Resolve private key password from event or global configuration."""
         return self.settings.get('private_key_password') or self.global_settings.get('passbook_key_password') or ''
 
     @cached_property
     def wwdr_certificate_value(self):
+        """Resolve Apple WWDR intermediate CA certificate from event or global configuration."""
         return (
             self.settings.get('wwdr_certificate', as_type=File)
             or self.event.settings.get('ticketoutput_passbook_wwdr_certificate', as_type=File)
@@ -326,6 +397,7 @@ class PassbookTicketOutput(BaseTicketOutput):
 
     @cached_property
     def signing_material(self) -> SigningMaterial:
+        """Load and validate full signing material and identity matching."""
         material = load_signing_material(
             self.certificate_value,
             self.private_key_value,
@@ -341,6 +413,7 @@ class PassbookTicketOutput(BaseTicketOutput):
 
     @property
     def is_configured(self) -> bool:
+        """Check if all required Apple Wallet signing parameters are configured."""
         return bool(
             self.team_identifier
             and self.pass_type_identifier
@@ -351,6 +424,7 @@ class PassbookTicketOutput(BaseTicketOutput):
 
     @property
     def is_available(self) -> bool:
+        """Check whether credentials are fully configured and valid for pass generation."""
         if not self.is_configured:
             return False
         try:
@@ -360,10 +434,12 @@ class PassbookTicketOutput(BaseTicketOutput):
 
     @property
     def is_enabled(self) -> bool:
+        """Check whether pass output is enabled for attendee ticket downloads."""
         return super().is_enabled and self.is_available
 
     @property
     def preview_allowed(self) -> bool:
+        """Return whether organizer preview generation is allowed."""
         if not self.is_available:
             return False
         try:
@@ -373,6 +449,7 @@ class PassbookTicketOutput(BaseTicketOutput):
 
     @property
     def settings_form_fields(self) -> dict:
+        """Return form fields for configuring Apple Wallet pass colors and credentials."""
         color_validator = RegexValidator(
             regex=r'^#[0-9a-fA-F]{6}$',
             message=_('Enter a color in #RRGGBB format.'),
@@ -468,6 +545,7 @@ class PassbookTicketOutput(BaseTicketOutput):
         )
 
     def settings_form_clean(self, cleaned_data: dict) -> dict:
+        """Validate Apple Wallet credentials when settings form is submitted."""
         prefix = 'ticketoutput_passbook_'
         if not cleaned_data.get(f'{prefix}_enabled'):
             return cleaned_data
@@ -493,10 +571,12 @@ class PassbookTicketOutput(BaseTicketOutput):
         return cleaned_data
 
     def settings_content_render(self, request: HttpRequest) -> str:
+        """Render introductory and configuration guidance template in tickets settings."""
         template = get_template('pretixplugins/passbook/form.html')
         return template.render({'request': request, 'provider_configured': self.is_configured})
 
     def pass_data(self, position: OrderPosition) -> dict:
+        """Build dictionary representing the complete pass.json structure for an order position."""
         order = position.order
         event = position.subevent or order.event
         product_name = str(position.product.name)
@@ -584,6 +664,7 @@ class PassbookTicketOutput(BaseTicketOutput):
         return payload
 
     def pass_files(self, position: OrderPosition) -> dict[str, bytes]:
+        """Construct dictionary of archive files (pass.json, icons, logos) for an order position."""
         payload = json.dumps(self.pass_data(position), ensure_ascii=False, separators=(',', ':')).encode()
         files = {'pass.json': payload}
 
@@ -620,6 +701,7 @@ class PassbookTicketOutput(BaseTicketOutput):
         return files
 
     def generate(self, position: OrderPosition) -> tuple[str, str, bytes]:
+        """Generate complete, signed .pkpass ZIP archive for an individual order position."""
         files = self.pass_files(position)
         manifest_data = {name: hashlib.sha1(content).hexdigest() for name, content in files.items()}
         manifest = json.dumps(

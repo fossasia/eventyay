@@ -1,4 +1,5 @@
 import json
+import subprocess
 import zipfile
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
@@ -19,7 +20,7 @@ from django_scopes import scope
 from rest_framework.test import APIRequestFactory
 
 from eventyay.api.serializers.order import OrderDownloadsField
-from eventyay.base.email import get_combined_ticket_output_identifier
+from eventyay.base.email import get_combined_ticket_output_identifier, render_download_tickets_pdf_button
 from eventyay.base.models import (
     Event,
     Order,
@@ -31,6 +32,7 @@ from eventyay.base.models import (
 )
 from eventyay.base.plugins import get_all_plugins
 from eventyay.base.signals import register_ticket_outputs
+from eventyay.control.forms.global_settings import GlobalTicketingSettingsForm
 from eventyay.plugins.passbook.apps import PassbookApp
 from eventyay.plugins.passbook.forms import CertificateFileField, PNGImageField, PrivateKeyWidget
 from eventyay.plugins.passbook.ticketoutput import (
@@ -48,6 +50,7 @@ from eventyay.plugins.passbook.ticketoutput import (
 
 @pytest.fixture
 def test_certs():
+    """Generate self-contained test certificates mimicking Apple WWDR CA and Pass Type signer."""
     # 1. Generate CA (mimicking Apple WWDR CA)
     ca_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     ca_name = x509.Name([
@@ -94,6 +97,7 @@ def test_certs():
     )
 
     return {
+        'ca_key': ca_key,
         'ca_cert': ca_cert,
         'ca_pem': ca_pem,
         'signer_cert': signer_cert,
@@ -105,6 +109,7 @@ def test_certs():
 
 @pytest.fixture
 def env(test_certs):
+    """Create test organizer, event with Passbook plugin, order, and position."""
     o = Organizer.objects.create(name='Passbook Org', slug='passbook-org')
     event = Event.objects.create(
         organizer=o,
@@ -138,6 +143,7 @@ def env(test_certs):
 
 @pytest.mark.django_db
 def test_plugin_metadata_and_registration(env):
+    """Verify Passbook plugin registration, AppConfig, and signal registration."""
     o, event, order, pos = env
     app_config = apps.get_app_config('passbook')
     assert isinstance(app_config, PassbookApp)
@@ -154,6 +160,7 @@ def test_plugin_metadata_and_registration(env):
 
 @pytest.mark.django_db
 def test_output_properties_and_defaults(env, test_certs):
+    """Verify PassbookTicketOutput properties and configuration defaults."""
     o, event, order, pos = env
     with scope(organizer=o, event=event):
         output = PassbookTicketOutput(event)
@@ -181,6 +188,7 @@ def test_output_properties_and_defaults(env, test_certs):
 
 
 def test_hex_to_rgb():
+    """Verify hex to CSS rgb string conversion and fallback behavior."""
     assert hex_to_rgb('#ffffff') == 'rgb(255, 255, 255)'
     assert hex_to_rgb('#000000') == 'rgb(0, 0, 0)'
     assert hex_to_rgb('#1b4d6b') == 'rgb(27, 77, 107)'
@@ -189,6 +197,7 @@ def test_hex_to_rgb():
 
 
 def test_load_certificate_and_signing_material(test_certs):
+    """Verify loading certificate, private key, and validating identity attributes."""
     cert, pem = load_certificate(test_certs['signer_pem'])
     assert isinstance(cert, x509.Certificate)
     assert pem.startswith(b'-----BEGIN CERTIFICATE-----')
@@ -221,10 +230,124 @@ def test_load_certificate_and_signing_material(test_certs):
     assert 'does not match the configured Pass Type Identifier' in str(exc.value)
 
 
-def test_expired_certificate_raises_validation_error(test_certs):
-    ca_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-    ca_name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, 'Test CA')])
+def test_private_key_mismatch_raises_validation_error(test_certs):
+    """Verify that mismatched certificate and private key raise ValidationError."""
+    mismatched_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    mismatched_key_pem = mismatched_key.private_bytes(
+        serialization.Encoding.PEM,
+        serialization.PrivateFormat.PKCS8,
+        serialization.NoEncryption(),
+    )
+    with pytest.raises(ValidationError) as exc:
+        load_signing_material(
+            certificate=ContentFile(test_certs['signer_pem']),
+            private_key_data=mismatched_key_pem.decode(),
+            password='',
+            wwdr_certificate=ContentFile(test_certs['ca_pem']),
+        )
+    assert 'certificate does not match the private key' in str(exc.value)
 
+
+def test_untrusted_wwdr_raises_validation_error(test_certs):
+    """Verify that a signing certificate not signed by the WWDR CA raises ValidationError."""
+    unrelated_ca_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    unrelated_ca_name = x509.Name([
+        x509.NameAttribute(NameOID.COMMON_NAME, 'Unrelated CA'),
+    ])
+    unrelated_ca_cert = (
+        x509.CertificateBuilder()
+        .subject_name(unrelated_ca_name)
+        .issuer_name(unrelated_ca_name)
+        .public_key(unrelated_ca_key.public_key())
+        .serial_number(x509.random_serial_number())
+        .not_valid_before(datetime.now(UTC) - timedelta(days=1))
+        .not_valid_after(datetime.now(UTC) + timedelta(days=365))
+        .add_extension(x509.BasicConstraints(ca=True, path_length=None), critical=True)
+        .sign(unrelated_ca_key, hashes.SHA256())
+    )
+    unrelated_ca_pem = unrelated_ca_cert.public_bytes(serialization.Encoding.PEM)
+
+    with pytest.raises(ValidationError) as exc:
+        load_signing_material(
+            certificate=ContentFile(test_certs['signer_pem']),
+            private_key_data=test_certs['signer_key_pem'].decode(),
+            password='',
+            wwdr_certificate=ContentFile(unrelated_ca_pem),
+        )
+    assert 'was not issued by the provided Apple WWDR CA certificate' in str(exc.value)
+
+
+def test_certificate_missing_attributes_raises_validation_error(test_certs):
+    """Verify that certificates missing OU or Pass Type ID attribute raise ValidationError."""
+    key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+
+    # 1. Cert missing OU
+    no_ou_name = x509.Name([
+        x509.NameAttribute(NameOID.COMMON_NAME, 'Pass Type ID: pass.eventyay.ticket'),
+        x509.NameAttribute(NameOID.USER_ID, 'pass.eventyay.ticket'),
+    ])
+    no_ou_cert = (
+        x509.CertificateBuilder()
+        .subject_name(no_ou_name)
+        .issuer_name(test_certs['ca_cert'].subject)
+        .public_key(key.public_key())
+        .serial_number(x509.random_serial_number())
+        .not_valid_before(datetime.now(UTC) - timedelta(days=1))
+        .not_valid_after(datetime.now(UTC) + timedelta(days=365))
+        .sign(test_certs['ca_key'], hashes.SHA256())
+    )
+    mat_no_ou = SigningMaterial(
+        certificate=no_ou_cert,
+        certificate_pem=no_ou_cert.public_bytes(serialization.Encoding.PEM),
+        private_key=key,
+        private_key_pem=b'',
+        private_key_password='',
+        wwdr_certificate=test_certs['ca_cert'],
+        wwdr_certificate_pem=test_certs['ca_pem'],
+    )
+    with pytest.raises(ValidationError) as exc:
+        validate_certificate_identity(
+            mat_no_ou,
+            team_identifier='TEAM123456',
+            pass_type_identifier='pass.eventyay.ticket',
+        )
+    assert 'does not contain an Organizational Unit' in str(exc.value)
+
+    # 2. Cert missing Pass Type ID
+    no_ptid_name = x509.Name([
+        x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, 'TEAM123456'),
+        x509.NameAttribute(NameOID.COMMON_NAME, 'Generic Certificate'),
+    ])
+    no_ptid_cert = (
+        x509.CertificateBuilder()
+        .subject_name(no_ptid_name)
+        .issuer_name(test_certs['ca_cert'].subject)
+        .public_key(key.public_key())
+        .serial_number(x509.random_serial_number())
+        .not_valid_before(datetime.now(UTC) - timedelta(days=1))
+        .not_valid_after(datetime.now(UTC) + timedelta(days=365))
+        .sign(test_certs['ca_key'], hashes.SHA256())
+    )
+    mat_no_ptid = SigningMaterial(
+        certificate=no_ptid_cert,
+        certificate_pem=no_ptid_cert.public_bytes(serialization.Encoding.PEM),
+        private_key=key,
+        private_key_pem=b'',
+        private_key_password='',
+        wwdr_certificate=test_certs['ca_cert'],
+        wwdr_certificate_pem=test_certs['ca_pem'],
+    )
+    with pytest.raises(ValidationError) as exc:
+        validate_certificate_identity(
+            mat_no_ptid,
+            team_identifier='TEAM123456',
+            pass_type_identifier='pass.eventyay.ticket',
+        )
+    assert 'does not contain a recognized Pass Type ID' in str(exc.value)
+
+
+def test_expired_certificate_raises_validation_error(test_certs):
+    """Verify that an expired signing certificate raises ValidationError."""
     expired_signer_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     expired_signer_name = x509.Name([
         x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, 'TEAM123456'),
@@ -233,19 +356,24 @@ def test_expired_certificate_raises_validation_error(test_certs):
     expired_signer_cert = (
         x509.CertificateBuilder()
         .subject_name(expired_signer_name)
-        .issuer_name(ca_name)
+        .issuer_name(test_certs['ca_cert'].subject)
         .public_key(expired_signer_key.public_key())
         .serial_number(x509.random_serial_number())
         .not_valid_before(datetime.now(UTC) - timedelta(days=100))
         .not_valid_after(datetime.now(UTC) - timedelta(days=10))
-        .sign(ca_key, hashes.SHA256())
+        .sign(test_certs['ca_key'], hashes.SHA256())
     )
     expired_pem = expired_signer_cert.public_bytes(serialization.Encoding.PEM)
+    expired_key_pem = expired_signer_key.private_bytes(
+        serialization.Encoding.PEM,
+        serialization.PrivateFormat.PKCS8,
+        serialization.NoEncryption(),
+    )
 
     with pytest.raises(ValidationError) as exc:
         load_signing_material(
             certificate=ContentFile(expired_pem),
-            private_key_data=test_certs['signer_key_pem'].decode(),
+            private_key_data=expired_key_pem.decode(),
             password='',
             wwdr_certificate=ContentFile(test_certs['ca_pem']),
         )
@@ -253,6 +381,7 @@ def test_expired_certificate_raises_validation_error(test_certs):
 
 
 def test_expired_wwdr_certificate_raises_validation_error(test_certs):
+    """Verify that an expired WWDR CA certificate raises ValidationError."""
     expired_ca_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     expired_ca_name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, 'Expired WWDR')])
     expired_ca_cert = (
@@ -279,6 +408,7 @@ def test_expired_wwdr_certificate_raises_validation_error(test_certs):
 
 
 def test_sign_manifest_contains_signing_time(test_certs):
+    """Verify that sign_manifest produces a valid PKCS#7 signature with signingTime."""
     material = load_signing_material(
         certificate=ContentFile(test_certs['signer_pem']),
         private_key_data=test_certs['signer_key_pem'].decode(),
@@ -294,8 +424,46 @@ def test_sign_manifest_contains_signing_time(test_certs):
     assert signing_time_oid_der in sig
 
 
+def test_sign_manifest_password_via_stdin(test_certs, monkeypatch):
+    """Verify that signing a manifest with a password uses stdin and does not leak the password in CLI args."""
+    executed_cmds = []
+
+    def fake_run(cmd, input=None, capture_output=True, check=False):
+        executed_cmds.append({'cmd': cmd, 'input': input})
+
+        class DummyProcess:
+            returncode = 1
+            stderr = b'simulated'
+
+        return DummyProcess()
+
+    monkeypatch.setattr(subprocess, 'run', fake_run)
+
+    material = SigningMaterial(
+        certificate=test_certs['signer_cert'],
+        certificate_pem=test_certs['signer_pem'],
+        private_key=test_certs['signer_key'],
+        private_key_pem=test_certs['signer_key_pem'],
+        private_key_password='secret_password_123',
+        wwdr_certificate=test_certs['ca_cert'],
+        wwdr_certificate_pem=test_certs['ca_pem'],
+    )
+    manifest_data = json.dumps({'pass.json': 'abcdef'}).encode()
+    sig = sign_manifest(manifest_data, material)
+    assert isinstance(sig, bytes)
+    assert len(executed_cmds) == 1
+    call_info = executed_cmds[0]
+    assert '-passin' in call_info['cmd']
+    passin_idx = call_info['cmd'].index('-passin')
+    assert call_info['cmd'][passin_idx + 1] == 'stdin'
+    assert call_info['input'] == b'secret_password_123\n'
+    for arg in call_info['cmd']:
+        assert 'secret_password_123' not in arg
+
+
 @pytest.mark.django_db
 def test_pass_data_structure(env):
+    """Verify pass.json payload structure matches Apple PassKit specifications."""
     o, event, order, pos = env
     with scope(organizer=o, event=event):
         event.settings.set('ticketoutput_passbook_team_id', 'TEAM123456')
@@ -340,6 +508,7 @@ def test_pass_data_structure(env):
 
 @pytest.mark.django_db
 def test_pass_files_and_generate(env, test_certs):
+    """Verify pass archive generation and files packaging into .pkpass."""
     o, event, order, pos = env
     with scope(organizer=o, event=event):
         cert_path = default_storage.save('pub/test_cert_gen.pem', ContentFile(test_certs['signer_pem']))
@@ -382,6 +551,7 @@ def test_pass_files_and_generate(env, test_certs):
 
 
 def test_form_fields_validation(test_certs):
+    """Verify certificate and image field cleaners and widget masking."""
     cert_field = CertificateFileField()
 
     valid_file = SimpleUploadedFile('cert.pem', test_certs['signer_pem'], content_type='application/x-pem-file')
@@ -406,6 +576,7 @@ def test_form_fields_validation(test_certs):
 
 @pytest.mark.django_db
 def test_settings_form_clean(env, test_certs):
+    """Verify ticket output settings form validation and error handling."""
     o, event, order, pos = env
     with scope(organizer=o, event=event):
         output = PassbookTicketOutput(event)
@@ -437,6 +608,7 @@ def test_settings_form_clean(env, test_certs):
 
 
 def test_read_file_handling():
+    """Verify file reading utility handles bytes, strings, streams, and missing paths."""
     # Empty / None
     assert read_file(None) == b''
     assert read_file('') == b''
@@ -460,6 +632,7 @@ def test_read_file_handling():
 
 @pytest.mark.django_db
 def test_combined_download_exclusion(env, test_certs):
+    """Verify single-attendee passbook output is excluded from combined downloads."""
     o, event, order, pos = env
     with scope(organizer=o, event=event):
         cert_path = default_storage.save('pub/test_cert_comb.pem', ContentFile(test_certs['signer_pem']))
@@ -487,3 +660,40 @@ def test_combined_download_exclusion(env, test_certs):
         # 2. Check get_combined_ticket_output_identifier excludes passbook
         combined_id = get_combined_ticket_output_identifier(event)
         assert combined_id != 'passbook'
+
+
+@pytest.mark.django_db
+def test_global_ticketing_settings_form_includes_passbook_group():
+    """Verify GlobalTicketingSettingsForm renders the passbook group and passbook fields."""
+    form = GlobalTicketingSettingsForm()
+    group_keys = [g[0] for g in form.field_groups]
+    assert 'passbook' in group_keys
+    expected_fields = [
+        'passbook_team_id',
+        'passbook_pass_type_id',
+        'passbook_certificate_file',
+        'passbook_wwdr_certificate_file',
+        'passbook_key',
+        'passbook_key_password',
+    ]
+    for field_name in expected_fields:
+        assert field_name in form.fields
+
+    passbook_group = next(g for g in form.field_groups if g[0] == 'passbook')
+    for field_name in expected_fields:
+        assert field_name in passbook_group[2]
+
+
+@pytest.mark.django_db
+def test_get_combined_ticket_output_identifier_none_when_disabled(env):
+    """Verify get_combined_ticket_output_identifier returns None when no multi-download output is enabled."""
+    o, event, order, pos = env
+    with scope(organizer=o, event=event):
+        event.settings.ticketoutput_pdf__enabled = False
+        event.settings.ticketoutput_passbook__enabled = True
+
+        combined_id = get_combined_ticket_output_identifier(event)
+        assert combined_id is None
+
+        btn_html = render_download_tickets_pdf_button(event, order)
+        assert btn_html == ''

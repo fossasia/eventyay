@@ -486,6 +486,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, url_name='download', url_path='download/(?P<output>[^/]+)')
     def download(self, request, output, **kwargs):
+        """Download combined ticket files for an entire order when supported."""
         provider = self._get_output_provider(output)
         if not provider.multi_download_enabled:
             raise PermissionDenied('Combined download is not supported for this ticket output.')

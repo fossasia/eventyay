@@ -13,6 +13,7 @@ from eventyay.plugins.passbook.forms import CertificateFileField, PrivateKeyFiel
 
 @receiver(register_ticket_outputs, dispatch_uid='output_passbook')
 def register_ticket_output(sender, **kwargs):
+    """Register the Passbook ticket output with the Eventyay ticket outputs signal."""
     from .ticketoutput import PassbookTicketOutput
 
     return PassbookTicketOutput
@@ -20,6 +21,7 @@ def register_ticket_output(sender, **kwargs):
 
 @receiver(register_global_settings, dispatch_uid='passbook_global_settings')
 def register_passbook_global_settings(sender, **kwargs):
+    """Register platform-wide Apple Wallet developer credential fields in global settings."""
     return OrderedDict(
         [
             (

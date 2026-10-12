@@ -253,6 +253,7 @@ class CheckinSerializer(I18nAwareModelSerializer):
 
 class OrderDownloadsField(serializers.Field):
     def to_representation(self, instance: Order):
+        """Serialize available ticket output download URLs for an order."""
         if instance.status != Order.STATUS_PAID:
             if (
                 instance.status != Order.STATUS_PENDING

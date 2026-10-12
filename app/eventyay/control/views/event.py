@@ -1682,6 +1682,7 @@ class QuickSetupView(FormView):
 
     @transaction.atomic
     def form_valid(self, form):
+        """Process valid quick setup form submission and configure default ticket outputs."""
         if self.request.POST.get('action') == 'draft':
             draft_tickets = []
             for f in self.formset:

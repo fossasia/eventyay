@@ -783,18 +783,16 @@ class HierarkeyMixin:
             field = self.fields.get(name)
             value = self.cleaned_data[name]
             if isinstance(value, UploadedFile):
-                # Delete old file
-                fname = self._s.get(name, as_type=File)
-                if fname:
-                    try:
-                        default_storage.delete(fname.name)
-                    except OSError:  # pragma: no cover
-                        logger.error('Deleting file %s failed.', fname.name)
-
-                # Create new file
+                old_file = self._s.get(name, as_type=File)
+                # Create new file first so that if storage fails, old file remains intact
                 newname = default_storage.save(self.get_new_filename(value.name), value)
                 value._name = newname
                 self._s.set(name, value)
+                if old_file and old_file.name != newname:
+                    try:
+                        default_storage.delete(old_file.name)
+                    except OSError:  # pragma: no cover
+                        logger.error('Deleting file %s failed.', old_file.name)
             elif isinstance(value, File):
                 # file is unchanged
                 continue

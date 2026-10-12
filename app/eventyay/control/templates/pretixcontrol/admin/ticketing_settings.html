@@ -89,6 +89,19 @@
                 {% bootstrap_field form.reservation_time layout='control' %}
                 {% bootstrap_field form.max_products_per_order layout='control' %}
             </fieldset>
+
+            {% for group_key, group_label, field_names in form.field_groups %}
+                {% if group_key != "payment-gateways" and group_key != "cart" %}
+                    <fieldset id="tab-{{ group_key }}">
+                        <legend>{{ group_label }}</legend>
+                        {% for field_name in field_names %}
+                            {% with form|getitem:field_name as field %}
+                                {% bootstrap_field field layout='control' %}
+                            {% endwith %}
+                        {% endfor %}
+                    </fieldset>
+                {% endif %}
+            {% endfor %}
         </div>
 
         <div class="form-group submit-group">
