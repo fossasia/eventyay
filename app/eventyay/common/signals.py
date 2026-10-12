@@ -13,9 +13,10 @@ from django.dispatch.dispatcher import NO_RECEIVERS
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
-from eventyay.base.models import Event
+from eventyay.base.models import BillingInvoiceEmail, Event
 from eventyay.base.operational_logging import OUTCOME_SUCCESS, log_event
 from eventyay.base.signals import resolve_app_for_module, check_plugin_active
+from eventyay.consts import EVENTYAY_EMAIL_NONE_VALUE
 
 logger = logging.getLogger(__name__)
 
@@ -270,6 +271,34 @@ def process_scheduled_emails(sender, **kwargs):
     from eventyay.plugins.sendmail.models import EmailQueue
     from eventyay.base.models.mail import QueuedMail
     from eventyay.common.exceptions import SendMailException
+    # Mail services import the model package, which imports this signals module.
+    from eventyay.base.services.mail import SendMailException as BillingMailSendException, mail_send_task
+
+    for _ in range(MAIL_SEND_BATCH_SIZE):
+        with transaction.atomic():
+            billing_mail = (
+                BillingInvoiceEmail.objects.select_for_update(skip_locked=True)
+                .filter(sent_at__isnull=True)
+                .order_by('pk')
+                .first()
+            )
+            if billing_mail is None:
+                break
+            try:
+                mail_send_task.run(
+                    subject=billing_mail.subject,
+                    body=billing_mail.body,
+                    sender=EVENTYAY_EMAIL_NONE_VALUE,
+                    to=[billing_mail.recipient],
+                    html=None,
+                    attach_file_base64=billing_mail.pdf_base64,
+                    attach_file_name=billing_mail.pdf_filename,
+                )
+            except BillingMailSendException:
+                logger.exception('Unable to send billing invoice email %s', billing_mail.pk)
+                break
+            billing_mail.sent_at = now()
+            billing_mail.save(update_fields=['sent_at'])
 
     for _ in range(MAIL_SEND_BATCH_SIZE):
         with transaction.atomic():

@@ -187,8 +187,18 @@ class InvoiceStatusUpdate(AdministratorPermissionRequiredMixin, View):
                 invoice.status = status
                 invoice.updated_by = request.user.email[:50]
                 invoice.paid_datetime = now() if status == BillingInvoice.STATUS_PAID else invoice.paid_datetime
-                invoice.reminder_enabled = status == BillingInvoice.STATUS_PENDING
-                invoice.save(update_fields=['status', 'updated_by', 'updated_at', 'paid_datetime', 'reminder_enabled'])
+                invoice.reminder_enabled = False
+                invoice.automatic_payment_enabled = False
+                invoice.save(
+                    update_fields=[
+                        'status',
+                        'updated_by',
+                        'updated_at',
+                        'paid_datetime',
+                        'reminder_enabled',
+                        'automatic_payment_enabled',
+                    ]
+                )
                 invoice.log_action(
                     'eventyay.billing.invoice.status_changed',
                     user=request.user,

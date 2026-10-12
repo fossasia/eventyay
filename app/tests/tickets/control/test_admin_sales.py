@@ -5,12 +5,27 @@ from io import BytesIO, StringIO
 from types import SimpleNamespace
 from unittest.mock import patch
 
+from django.db import DatabaseError
 from django.test import Client, override_settings
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
-from eventyay.base.models import BillingInvoice, Event, LogEntry, Order, OrderPosition, Organizer, User
-from eventyay.eventyay_common.tasks import billing_invoice_send_email
+from eventyay.base.models import (
+    BillingInvoice,
+    BillingInvoiceEmail,
+    Event,
+    LogEntry,
+    Order,
+    OrderPosition,
+    Organizer,
+    User,
+)
+from eventyay.common.signals import process_scheduled_emails
+from eventyay.eventyay_common.tasks import (
+    billing_invoice_send_email,
+    process_auto_billing_charge,
+    retry_failed_payment,
+)
 from tests.tickets.base import SoupTest
 
 
@@ -99,6 +114,7 @@ class AdminSalesTest(SoupTest):
         self.invoice.refresh_from_db()
         self.assertEqual(self.invoice.status, 'p')
         self.assertFalse(self.invoice.reminder_enabled)
+        self.assertFalse(self.invoice.automatic_payment_enabled)
         self.assertIsNotNone(self.invoice.paid_datetime)
         log = LogEntry.objects.get(action_type='eventyay.billing.invoice.status_changed')
         self.assertEqual(log.user, self.admin)
@@ -178,7 +194,8 @@ class AdminSalesTest(SoupTest):
             self.assertEqual(response.status_code, 302)
             self.invoice.refresh_from_db()
             self.assertEqual(self.invoice.status, status)
-            self.assertEqual(self.invoice.reminder_enabled, status == 'n')
+            self.assertFalse(self.invoice.reminder_enabled)
+            self.assertFalse(self.invoice.automatic_payment_enabled)
             previous = status
         count = LogEntry.objects.filter(action_type='eventyay.billing.invoice.status_changed').count()
         self.client.post(f'/admin/sales/invoices/{self.invoice.pk}/status/', {'status': 'n', 'previous_status': 'n'})
@@ -191,10 +208,68 @@ class AdminSalesTest(SoupTest):
         billing = SimpleNamespace(primary_contact_email='new-billing@example.com')
         with (
             patch('eventyay.eventyay_common.tasks.InvoicePDFGenerator') as generator,
-            patch('eventyay.eventyay_common.tasks.mail_send_task.apply_async') as enqueue,
+            patch('eventyay.base.services.mail.mail_send_task.run') as send,
         ):
             generator.return_value.generate.return_value = pdf
             billing_invoice_send_email('Invoice', 'Invoice content', self.invoice, billing)
+            billing_invoice_send_email('Invoice', 'Invoice content', self.invoice, billing)
+            self.assertEqual(BillingInvoiceEmail.objects.filter(invoice=self.invoice).count(), 1)
+            send.assert_not_called()
+            process_scheduled_emails(sender=None)
         self.invoice.refresh_from_db()
         self.assertEqual(self.invoice.sent_to_email, billing.primary_contact_email)
-        self.assertEqual(enqueue.call_args.kwargs['kwargs']['to'], [billing.primary_contact_email])
+        self.assertEqual(send.call_args.kwargs['to'], [billing.primary_contact_email])
+        self.assertIsNotNone(BillingInvoiceEmail.objects.get(invoice=self.invoice).sent_at)
+
+    @scopes_disabled()
+    def test_email_outbox_and_reminder_roll_back_together(self):
+        pdf = BytesIO(b'demo pdf')
+        pdf.filename = 'invoice.pdf'
+        billing = SimpleNamespace(primary_contact_email='new-billing@example.com')
+        reminder_date = now()
+        with patch('eventyay.eventyay_common.tasks.InvoicePDFGenerator') as generator:
+            generator.return_value.generate.return_value = pdf
+            with patch.object(BillingInvoice, 'save', side_effect=DatabaseError('write failed')):
+                with self.assertRaises(DatabaseError):
+                    billing_invoice_send_email(
+                        'Reminder',
+                        'Reminder content',
+                        self.invoice,
+                        billing,
+                        delivery_key='reminder:test',
+                        reminder_date=reminder_date,
+                    )
+        self.assertFalse(BillingInvoiceEmail.objects.filter(invoice=self.invoice).exists())
+        self.invoice.refresh_from_db()
+        self.assertIsNone(self.invoice.last_reminder_datetime)
+
+    @scopes_disabled()
+    def test_failed_invoice_keeps_unpaid_warning(self):
+        self.client.post(
+            f'/admin/sales/invoices/{self.invoice.pk}/status/',
+            {
+                'status': BillingInvoice.STATUS_FAILED,
+                'previous_status': BillingInvoice.STATUS_PENDING,
+            },
+        )
+        self.assertTrue(self.organizer.has_unpaid_invoice())
+
+    @scopes_disabled()
+    def test_status_only_edit_cannot_schedule_charge_or_retry(self):
+        url = f'/admin/sales/invoices/{self.invoice.pk}/status/'
+        self.client.post(url, {'status': 'p', 'previous_status': 'n'})
+        self.client.post(url, {'status': 'n', 'previous_status': 'p'})
+        self.invoice.refresh_from_db()
+        self.assertFalse(self.invoice.automatic_payment_enabled)
+        self.invoice.stripe_payment_intent_id = 'pi_existing'
+        self.invoice.reminder_schedule = [now().day]
+        self.invoice.save(update_fields=['stripe_payment_intent_id', 'reminder_schedule'])
+        with patch('eventyay.eventyay_common.tasks.retry_payment') as retry:
+            retry_failed_payment()
+        retry.assert_not_called()
+        self.invoice.stripe_payment_intent_id = ''
+        self.invoice.monthly_bill = (now() - datetime.timedelta(days=20)).date().replace(day=1)
+        self.invoice.save(update_fields=['stripe_payment_intent_id', 'monthly_bill'])
+        with patch('eventyay.eventyay_common.tasks.process_auto_billing_charge_stripe') as charge:
+            process_auto_billing_charge()
+        charge.assert_not_called()
