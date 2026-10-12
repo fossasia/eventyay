@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n eventsignal %}
 <section class="cc-section" aria-labelledby="cc-components-title">
   <div class="cc-section-header">
     <h2 id="cc-components-title" class="cc-section-title">
@@ -48,4 +48,6 @@
       </article>
     {% endfor %}
   </div>
+
+  {% eventsignal request.event 'eventyay.control.signals.event_dashboard_components' request=request %}
 </section>

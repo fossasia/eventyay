@@ -22,6 +22,8 @@
         <!-- 1. Header & Status Badges -->
         {% include "eventyay_common/event/includes/command_center/header.html" %}
 
+        {% eventsignal request.event 'eventyay.control.signals.event_dashboard_top' request=request %}
+
         <!-- 2. Event Workflow Timeline -->
         {% include "eventyay_common/event/includes/command_center/workflow.html" %}
 

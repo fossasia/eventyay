@@ -623,7 +623,9 @@ class EventIndexView(TemplateView):
 
         return actions
 
-    def _get_at_a_glance_kpis(self, event: Event, permissions: Dict[str, Any], subevent=None) -> Dict[str, Any]:
+    def _get_at_a_glance_kpis(
+        self, event: Event, permissions: Dict[str, Any], subevent=None, header_data: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """Aggregate high-level cross-event KPIs."""
         can_view_orders = permissions.get('can_view_orders', False)
         has_talk = permissions.get('has_talk_access', False)
@@ -660,8 +662,18 @@ class EventIndexView(TemplateView):
             sessions_confirmed = 0
             speakers_confirmed = 0
 
-        event_status_text = _('Live') if event.live else (_('Past') if (event.date_to and event.date_to < now()) else _('Draft'))
-        event_status_class = 'live' if event.live else 'off'
+        if header_data:
+            event_status_text = header_data.get('event_status', _('Draft'))
+            event_status_class = header_data.get('event_status_class', 'draft')
+        elif not event.live:
+            event_status_text = _('Draft')
+            event_status_class = 'draft'
+        elif event.date_to and event.date_to < now():
+            event_status_text = _('Past')
+            event_status_class = 'past'
+        else:
+            event_status_text = _('Live')
+            event_status_class = 'live'
 
         return {
             'event_status_text': event_status_text,
@@ -688,7 +700,12 @@ class EventIndexView(TemplateView):
             ordered_c = opqs.filter(order__status__in=(Order.STATUS_PAID, Order.STATUS_PENDING)).count() if permissions.get('can_view_orders') else 0
             paid_c = opqs.filter(order__status=Order.STATUS_PAID).count() if permissions.get('can_view_orders') else 0
             pending_appr = event.orders.filter(status=Order.STATUS_PENDING, require_approval=True).count() if permissions.get('can_view_orders') else 0
-            rev_sum = OrderPosition.objects.filter(order__event=event, order__status=Order.STATUS_PAID).aggregate(sum=Sum('price'))['sum'] or Decimal('0.00') if permissions.get('can_view_orders') else Decimal('0.00')
+            rev_sum = Decimal('0.00')
+            if permissions.get('can_view_orders'):
+                rev_qs = OrderPosition.objects.filter(order__event=event, order__status=Order.STATUS_PAID)
+                if subevent:
+                    rev_qs = rev_qs.filter(subevent=subevent)
+                rev_sum = rev_qs.aggregate(sum=Sum('price'))['sum'] or Decimal('0.00')
 
             cards.append({
                 'id': 'tickets',
@@ -751,6 +768,13 @@ class EventIndexView(TemplateView):
 
         # 4. Social Media Card
         has_social = 'socialmedia' in plugins
+        social_url = None
+        if has_social:
+            try:
+                social_url = reverse('plugins:socialmedia:index', kwargs={'event': event.slug, 'organizer': event.organizer.slug})
+            except NoReverseMatch:
+                social_url = None
+
         cards.append({
             'id': 'socialmedia',
             'name': _('Social Media'),
@@ -759,13 +783,20 @@ class EventIndexView(TemplateView):
             'status_class': 'live' if has_social else 'off',
             'metrics': [],
             'empty_state': _('No social posts scheduled yet.') if has_social else _('Plugin not enabled'),
-            'btn_text': _('Open social dashboard') if has_social else None,
-            'url': '#',
+            'btn_text': _('Open social dashboard') if social_url else None,
+            'url': social_url,
             'enabled': has_social,
         })
 
         # 5. TeamShifts Card
         has_teamshifts = 'teamshifts' in plugins
+        teamshifts_url = None
+        if has_teamshifts:
+            try:
+                teamshifts_url = reverse('plugins:teamshifts:organizer_dashboard', kwargs={'organizer': event.organizer.slug})
+            except NoReverseMatch:
+                teamshifts_url = None
+
         cards.append({
             'id': 'teamshifts',
             'name': _('TeamShifts'),
@@ -774,13 +805,20 @@ class EventIndexView(TemplateView):
             'status_class': 'live' if has_teamshifts else 'off',
             'metrics': [],
             'empty_state': _('No TeamShifts configured yet.') if has_teamshifts else _('Plugin not enabled'),
-            'btn_text': _('Open TeamShifts dashboard') if has_teamshifts else None,
-            'url': '#',
+            'btn_text': _('Open TeamShifts dashboard') if teamshifts_url else None,
+            'url': teamshifts_url,
             'enabled': has_teamshifts,
         })
 
         # 6. Exhibitors & Sponsors Card
         has_exhibition = 'exhibition' in plugins
+        exhibition_url = None
+        if has_exhibition:
+            try:
+                exhibition_url = reverse('plugins:exhibition:index', kwargs={'event': event.slug, 'organizer': event.organizer.slug})
+            except NoReverseMatch:
+                exhibition_url = None
+
         cards.append({
             'id': 'exhibition',
             'name': _('Exhibitors & Sponsors'),
@@ -789,8 +827,8 @@ class EventIndexView(TemplateView):
             'status_class': 'live' if has_exhibition else 'off',
             'metrics': [],
             'empty_state': _('No exhibitors configured yet.') if has_exhibition else _('Plugin not enabled'),
-            'btn_text': _('Open exhibitors dashboard') if has_exhibition else None,
-            'url': '#',
+            'btn_text': _('Open exhibitors dashboard') if exhibition_url else None,
+            'url': exhibition_url,
             'enabled': has_exhibition,
         })
 
@@ -838,10 +876,26 @@ class EventIndexView(TemplateView):
 
     def _get_organiser_teams(self, event: Event) -> Dict[str, Any]:
         """Collect organiser name and assigned teams."""
+        can_manage_teams = self.request.user.has_organizer_permission(
+            event.organizer, 'can_change_teams', request=self.request
+        )
+        can_change_organizer_settings = self.request.user.has_organizer_permission(
+            event.organizer, 'can_change_organizer_settings', request=self.request
+        )
+        manage_url = None
+        if can_manage_teams and can_change_organizer_settings:
+            try:
+                manage_url = (
+                    reverse('eventyay_common:organizer.teams', kwargs={'organizer': event.organizer.slug})
+                    + '?section=permissions'
+                )
+            except NoReverseMatch:
+                manage_url = None
+
         return {
             'organizer_name': event.organizer.name,
             'teams': list(event.teams.values('id', 'name')),
-            'manage_url': reverse('eventyay_common:organizer.teams', kwargs={'organizer': event.organizer.slug}) + '?section=permissions',
+            'manage_url': manage_url,
         }
 
     def _get_analytics_overview(self, event: Event, permissions: Dict[str, Any]) -> Dict[str, Any]:
@@ -923,7 +977,7 @@ class EventIndexView(TemplateView):
             header_data = self._get_header_data(request.event, request)
             workflow_timeline = self._get_workflow_timeline(request.event, permissions)
             action_required = self._get_action_required(request.event, permissions, subevent=subevent)
-            at_a_glance = self._get_at_a_glance_kpis(request.event, permissions, subevent=subevent)
+            at_a_glance = self._get_at_a_glance_kpis(request.event, permissions, subevent=subevent, header_data=header_data)
             component_cards = self._get_component_cards(request.event, permissions, subevent=subevent)
             upcoming_milestones = self._get_upcoming_milestones(request.event)
             organiser_info = self._get_organiser_teams(request.event)

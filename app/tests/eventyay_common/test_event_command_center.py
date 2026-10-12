@@ -129,3 +129,58 @@ def test_command_center_permission_talk_only(client, user, organizer, event, com
     content = response.content.decode()
     # Tickets control dashboard link should NOT be present
     assert reverse('control:event.index', kwargs={'organizer': organizer.slug, 'event': event.slug}) not in content
+    # Manage teams link should NOT be present for user without organizer settings and team permissions
+    assert 'Manage teams &amp; roles' not in content and 'Manage teams & roles' not in content
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_command_center_team_manage_url_permission_gating(organizer_client, client, organizer, event, command_center_url):
+    """Admin sees manage teams link; user without organizer permissions does not."""
+    from eventyay.base.models import User
+
+    # organizer_client is an organizer admin
+    response_admin = organizer_client.get(command_center_url)
+    assert response_admin.status_code == 200
+    assert response_admin.context['organiser_info']['manage_url'] is not None
+    assert 'Manage teams' in response_admin.content.decode()
+
+    # user without organizer permissions
+    viewer_user = User.objects.create_user(email='viewer@example.com', password='viewerpass123')
+    team = Team.objects.create(
+        organizer=organizer,
+        name='Viewer Team',
+        all_events=False,
+        can_view_orders=True,
+    )
+    team.limit_events.add(event)
+    team.members.add(viewer_user)
+
+    client.force_login(viewer_user)
+    response_viewer = client.get(command_center_url)
+    assert response_viewer.status_code == 200
+    assert response_viewer.context['organiser_info']['manage_url'] is None
+    viewer_content = response_viewer.content.decode()
+    assert 'Manage teams' not in viewer_content
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_command_center_past_event_status_consistency(organizer_client, event, command_center_url):
+    """Past live event shows Past in both header and KPI card."""
+    from datetime import timedelta
+    from django.utils.timezone import now
+
+    with scopes_disabled():
+        event.live = True
+        event.date_from = now() - timedelta(days=10)
+        event.date_to = now() - timedelta(days=2)
+        event.save()
+
+    response = organizer_client.get(command_center_url)
+    assert response.status_code == 200
+    assert str(response.context['header_data']['event_status']) == 'Past'
+    assert str(response.context['at_a_glance']['event_status_text']) == 'Past'
+    assert response.context['header_data']['event_status_class'] == 'past'
+    assert response.context['at_a_glance']['event_status_class'] == 'past'
+

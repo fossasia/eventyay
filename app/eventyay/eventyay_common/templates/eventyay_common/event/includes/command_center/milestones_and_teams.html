@@ -50,11 +50,13 @@
         </div>
       </div>
     </div>
+    {% if organiser_info.manage_url %}
     <div class="cc-card-footer-action">
       <a href="{{ organiser_info.manage_url }}" class="cc-component-btn">
         <span>{% trans 'Manage teams & roles' %}</span>
         <span class="fa fa-arrow-right" aria-hidden="true"></span>
       </a>
     </div>
+    {% endif %}
   </div>
 </div>
