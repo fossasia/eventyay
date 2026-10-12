@@ -1170,3 +1170,34 @@ class FreePriceBoundsTest(ItemFormTest):
             assert not form.is_valid()
             assert 'copy_from' in form.errors
 
+    def test_product_create_form_save_commit_false_preserves_unsaved_state(self):
+        """Test ProductCreateForm.save(commit=False) sets copied bounds on the instance without saving to database."""
+        with scopes_disabled():
+            legacy_item = Item.objects.create(
+                event=self.event1,
+                name='Legacy Product Bounds',
+                default_price=Decimal('10.00'),
+                free_price=True,
+                free_price_min=Decimal('5.00'),
+                free_price_max=Decimal('20.00'),
+            )
+            new_item = Item(event=self.event1)
+            form = ProductCreateForm(
+                instance=new_item,
+                event=self.event1,
+                user=self.user,
+                data={
+                    'name_0': 'Unsaved Product',
+                    'default_price': '10.00',
+                    'quota_option': 'none',
+                },
+            )
+            assert form.is_valid()
+            form.cleaned_data['copy_from'] = legacy_item
+            instance = form.save(commit=False)
+            assert instance.pk is None
+            assert instance.free_price is True
+            assert instance.free_price_min == Decimal('5.00')
+            assert instance.free_price_max == Decimal('20.00')
+
+

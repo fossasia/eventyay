@@ -462,7 +462,7 @@ class ProductCreateForm(I18nModelForm):
                 required=False,
             )
 
-    def save(self, *args, **kwargs):
+    def save(self, commit=True, *args, **kwargs):
         if self.cleaned_data.get('copy_from'):
             fields = (
                 'description',
@@ -518,11 +518,12 @@ class ProductCreateForm(I18nModelForm):
             self.instance.tax_rule = tax_rule
 
         self.instance.position = (self.event.products.aggregate(p=Max('position'))['p'] or 0) + 1
-        instance = super().save(*args, **kwargs)
+        instance = super().save(commit=commit, *args, **kwargs)
 
         if self.cleaned_data.get('copy_from') and 'free_price' not in self.changed_data:
             copy_sanitized_free_price_bounds(instance, self.cleaned_data['copy_from'])
-            instance.save(update_fields=['free_price', 'free_price_min', 'free_price_max'])
+            if commit:
+                instance.save(update_fields=['free_price', 'free_price_min', 'free_price_max'])
 
         if not self.event.has_subevents and not self.cleaned_data.get('has_variations'):
             if (
