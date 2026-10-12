@@ -93,6 +93,7 @@ import {
 	getShiftTrackColor,
 	getShiftActionEmails,
 	setShiftActionEmails,
+	roleActionPayload,
 	claimUrl,
 	withdrawUrl,
 } from './index'
@@ -377,7 +378,7 @@ export default {
 					method: 'POST',
 					headers,
 					credentials: 'same-origin',
-					body: JSON.stringify({ role_id: role.id, send_email: this.sendEmail }),
+					body: JSON.stringify(roleActionPayload(role, this.sendEmail)),
 				})
 				const data = await response.json().catch(() => ({}))
 				if (!response.ok) {

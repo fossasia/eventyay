@@ -135,6 +135,13 @@ export function setShiftActionEmails (scheduleData, value) {
 	if (target) target.shift_action_emails = Boolean(value)
 }
 
+/**
+ * Request body for the claim and withdraw endpoints.
+ */
+export function roleActionPayload (role, sendEmail) {
+	return { role_id: role.id, send_email: Boolean(sendEmail) }
+}
+
 export function getShiftId (session) {
 	if (session?.talkId != null) return session.talkId
 	const raw = session?.id
