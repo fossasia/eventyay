@@ -100,6 +100,25 @@ def clean_free_price_bounds(cleaned_data, form=None):
         raise forms.ValidationError(errors)
 
 
+def copy_sanitized_free_price_bounds(target, source):
+    """Copy free-price configuration from source to target, clearing negative bounds."""
+    target.free_price = source.free_price
+    if source.free_price:
+        target.free_price_min = (
+            source.free_price_min
+            if source.free_price_min is not None and source.free_price_min >= 0
+            else None
+        )
+        target.free_price_max = (
+            source.free_price_max
+            if source.free_price_max is not None and source.free_price_max >= 0
+            else None
+        )
+    else:
+        target.free_price_min = None
+        target.free_price_max = None
+
+
 def clean_default_price(value):
     if value is not None and value < 0:
         raise forms.ValidationError(_('The price must not be negative.'))
@@ -471,22 +490,7 @@ class ProductCreateForm(I18nModelForm):
             for f in fields:
                 setattr(self.instance, f, getattr(self.cleaned_data['copy_from'], f))
             if 'free_price' not in self.changed_data:
-                source = self.cleaned_data['copy_from']
-                self.instance.free_price = source.free_price
-                if source.free_price:
-                    self.instance.free_price_min = (
-                        source.free_price_min
-                        if source.free_price_min is not None and source.free_price_min >= 0
-                        else None
-                    )
-                    self.instance.free_price_max = (
-                        source.free_price_max
-                        if source.free_price_max is not None and source.free_price_max >= 0
-                        else None
-                    )
-                else:
-                    self.instance.free_price_min = None
-                    self.instance.free_price_max = None
+                copy_sanitized_free_price_bounds(self.instance, self.cleaned_data['copy_from'])
         else:
             # Add to all sales channels by default
             self.instance.sales_channels = list(get_all_sales_channels().keys())
@@ -517,22 +521,7 @@ class ProductCreateForm(I18nModelForm):
         instance = super().save(*args, **kwargs)
 
         if self.cleaned_data.get('copy_from') and 'free_price' not in self.changed_data:
-            source = self.cleaned_data['copy_from']
-            instance.free_price = source.free_price
-            if source.free_price:
-                instance.free_price_min = (
-                    source.free_price_min
-                    if source.free_price_min is not None and source.free_price_min >= 0
-                    else None
-                )
-                instance.free_price_max = (
-                    source.free_price_max
-                    if source.free_price_max is not None and source.free_price_max >= 0
-                    else None
-                )
-            else:
-                instance.free_price_min = None
-                instance.free_price_max = None
+            copy_sanitized_free_price_bounds(instance, self.cleaned_data['copy_from'])
             instance.save(update_fields=['free_price', 'free_price_min', 'free_price_max'])
 
         if not self.event.has_subevents and not self.cleaned_data.get('has_variations'):
