@@ -142,6 +142,22 @@ export function roleActionPayload (role, sendEmail) {
 	return { role_id: role.id, send_email: Boolean(sendEmail) }
 }
 
+export function scheduleApiUrl (eventUrl) {
+	const base = (eventUrl || '').replace(/\/?$/, '/')
+	return `${base}teamshifts/shifts/api/`
+}
+
+/**
+ * Whether a claim or drop already took effect, judging by the shift's current roles.
+ * A request can fail after the server applied the change (for example on a timeout),
+ * so the dialog checks this before showing an error.
+ */
+export function roleActionApplied (action, roles, roleId, userId) {
+	const role = (roles || []).find(r => r.id === roleId)
+	const assigned = getAssignedList(role).some(user => user.id === userId)
+	return action === 'drop' ? !assigned : assigned
+}
+
 export function getShiftId (session) {
 	if (session?.talkId != null) return session.talkId
 	const raw = session?.id

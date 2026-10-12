@@ -94,6 +94,9 @@ import {
 	getShiftActionEmails,
 	setShiftActionEmails,
 	roleActionPayload,
+	roleActionApplied,
+	scheduleApiUrl,
+	getShiftId,
 	claimUrl,
 	withdrawUrl,
 } from './index'
@@ -362,7 +365,7 @@ export default {
 			if (this.hasOverlappingAssignment) return false
 			return true
 		},
-		async postRoleAction (url, role) {
+		async postRoleAction (url, role, action) {
 			this.claimBusy = true
 			this.confirmError = ''
 			this.closeAssigneesPopover()
@@ -383,6 +386,7 @@ export default {
 				const data = await response.json().catch(() => ({}))
 				if (!response.ok) {
 					logOperational({action: 'schedule.save', outcome: 'failure', backend: 'teamshifts', error_code: 'http_error', status: response.status})
+					if (await this.recoverFromFailedAction(action, role)) return
 					this.confirmError = data.error || this.$t('Could not update this shift.')
 					return
 				}
@@ -396,9 +400,31 @@ export default {
 				this.closeConfirm()
 			} catch {
 				logOperational({action: 'schedule.save', outcome: 'failure', backend: 'teamshifts', error_code: 'network_error'})
+				if (await this.recoverFromFailedAction(action, role)) return
 				this.confirmError = this.$t('Could not update this shift.')
 			} finally {
 				this.claimBusy = false
+			}
+		},
+		async recoverFromFailedAction (action, role) {
+			// The request may have failed after the server applied the change. Re-read the
+			// shift so the buttons match the server, and treat an applied change as done.
+			try {
+				const response = await fetch(scheduleApiUrl(this.eventUrl), {
+					headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+					credentials: 'same-origin',
+				})
+				if (!response.ok) return false
+				const data = await response.json()
+				const shiftId = String(getShiftId(this.session))
+				const talk = (data.talks || []).find(t => String(t.id) === shiftId)
+				if (!talk || !Array.isArray(talk.roles)) return false
+				this.session.roles.splice(0, this.session.roles.length, ...talk.roles)
+				if (!roleActionApplied(action, talk.roles, role.id, this.currentUserId)) return false
+				this.closeConfirm()
+				return true
+			} catch {
+				return false
 			}
 		},
 		openConfirm (action, role) {
@@ -420,7 +446,7 @@ export default {
 			const url = this.confirmAction === 'drop'
 				? withdrawUrl(this.eventUrl, this.session)
 				: claimUrl(this.eventUrl, this.session)
-			return this.postRoleAction(url, role)
+			return this.postRoleAction(url, role, this.confirmAction)
 		},
 	},
 }
