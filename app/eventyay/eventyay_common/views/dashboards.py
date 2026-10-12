@@ -1,5 +1,6 @@
 import logging
 from datetime import timedelta
+from decimal import Decimal
 from typing import Any, Dict, List, Optional, Tuple
 from zoneinfo import ZoneInfo
 from bs4 import BeautifulSoup
@@ -16,29 +17,36 @@ from django.db.models import (
     Q,
     QuerySet,
     Subquery,
+    Sum,
 )
 from django.db.models.functions import Coalesce, Greatest
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
-from django.urls import reverse
+from django.urls import NoReverseMatch, reverse
 from django.utils.formats import date_format
 from django.utils.html import escape, format_html
 from django.utils.timezone import now
-from django.utils.translation import gettext
+from django.utils.translation import gettext, ngettext
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import TemplateView
+from django_scopes import scope
 
 
+from eventyay.base.decimal import round_decimal
 from eventyay.base.models import (
     Event,
+    Order,
+    OrderPosition,
+    OrderRefund,
     Product,
     ProductCategory,
-    Order,
-    OrderRefund,
     Question,
     Quota,
     RequiredAction,
+    SpeakerProfile,
     SubEvent,
+    Submission,
+    SubmissionStates,
     Voucher,
 )
 from eventyay.base.meetup import is_meetup_event
@@ -200,6 +208,28 @@ def event_index_widgets_lazy(request: HttpRequest, **kwargs) -> JsonResponse:
     return JsonResponse({'widgets': widgets})
 
 
+def classify_log_category(log) -> str:
+    """Classify log entry into standard category badge."""
+    if not log.content_type:
+        return 'System'
+    model = log.content_type.model.lower()
+    if model in ('order', 'orderposition', 'orderrefund', 'cancellationrequest'):
+        return 'Order'
+    elif model in ('submission', 'talk'):
+        return 'Talk'
+    elif model in ('speakerprofile', 'speaker'):
+        return 'Speaker'
+    elif model in ('product', 'productvariation', 'productcategory', 'quota'):
+        return 'Product'
+    elif model in ('checkin', 'checkinlist'):
+        return 'Check-in'
+    elif model in ('event', 'eventsettings'):
+        return 'Settings'
+    elif 'video' in model or 'stage' in model:
+        return 'Video'
+    return model.capitalize()
+
+
 class EventIndexView(TemplateView):
     """
     A class-based view for rendering the event index dashboard.
@@ -353,6 +383,514 @@ class EventIndexView(TemplateView):
             and CancellationRequest.objects.filter(order__event=request.event).exists(),
         }
 
+    def _get_header_data(self, event: Event, request: HttpRequest) -> Dict[str, Any]:
+        """Generate event header and status badges."""
+        if not event.live:
+            event_status_label = _('Draft')
+            event_status_class = 'draft'
+        elif event.date_to and event.date_to < now():
+            event_status_label = _('Past')
+            event_status_class = 'past'
+        else:
+            event_status_label = _('Live')
+            event_status_class = 'live'
+
+        ticket_shop_status = event.ticket_component_presale_status
+        public_url = eventreverse(event, 'presale:event.index')
+        try:
+            full_public_url = request.build_absolute_uri(public_url)
+        except (NoReverseMatch, AttributeError, ValueError):
+            full_public_url = public_url
+
+        return {
+            'event_status': event_status_label,
+            'event_status_class': event_status_class,
+            'is_testmode': bool(event.testmode),
+            'is_private_testmode': bool(event.private_testmode),
+            'ticket_shop_status': ticket_shop_status,
+            'timezone': event.cache.get_or_set('timezone', lambda e=event: e.settings.timezone),
+            'public_url': full_public_url,
+            'date_range': event.get_date_range_display(),
+        }
+
+    def _get_workflow_timeline(self, event: Event, permissions: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Generate 6-step event lifecycle workflow timeline."""
+        has_products = event.products.exists()
+        setup_done = has_products and (event.live or bool(event.settings.get('payment_providers', None)))
+        setup_url = (
+            reverse('eventyay_common:event.update', kwargs={'organizer': event.organizer.slug, 'event': event.slug})
+            if permissions.get('can_change_event_settings')
+            else None
+        )
+
+        shop_status = event.ticket_component_presale_status
+        is_shop_live = shop_status.get('class') == 'live'
+        ticketing_url = (
+            reverse('control:event.index', kwargs={'organizer': event.organizer.slug, 'event': event.slug})
+            if permissions.get('has_ticket_access')
+            else None
+        )
+
+        has_cfp = hasattr(event, 'cfp') and bool(event.cfp)
+        cfp_open = bool(has_cfp and event.cfp.is_open)
+        cfp_closed = bool(has_cfp and event.cfp.max_deadline and now() > event.cfp.max_deadline)
+        cfp_url = None
+        if permissions.get('has_talk_access'):
+            try:
+                cfp_url = reverse('orga:cfp.overview', kwargs={'organizer': event.organizer.slug, 'event': event.slug})
+            except NoReverseMatch:
+                pass
+
+        current_sched = getattr(event, 'current_schedule', None)
+        wip_sched = getattr(event, 'wip_schedule', None)
+        has_scheduled_talks = bool(wip_sched and wip_sched.talks.filter(start__isnull=False).exists())
+        schedule_url = None
+        if permissions.get('has_talk_access'):
+            try:
+                schedule_url = reverse('orga:schedule.view', kwargs={'organizer': event.organizer.slug, 'event': event.slug})
+            except NoReverseMatch:
+                pass
+
+        is_event_past = bool(event.date_to and now() > event.date_to)
+        is_event_live = bool(event.date_from and event.date_to and event.date_from <= now() <= event.date_to)
+        video_url = (
+            reverse('eventyay_common:event.create_access_to_video', kwargs={'organizer': event.organizer.slug, 'event': event.slug})
+            if permissions.get('has_video_access')
+            else None
+        )
+
+        wrapup_active = is_event_past
+
+        return [
+            {
+                'name': _('Setup'),
+                'icon': 'cogs',
+                'phase': 'done' if setup_done else 'current',
+                'status_text': _('Completed') if setup_done else _('In progress'),
+                'summary': _('Configured') if setup_done else _('Setup required'),
+                'url': setup_url,
+            },
+            {
+                'name': _('Ticketing'),
+                'icon': 'ticket',
+                'phase': 'current' if is_shop_live else ('done' if has_products else 'todo'),
+                'status_text': _('Live') if is_shop_live else (_('Configured') if has_products else _('Upcoming')),
+                'summary': shop_status.get('text', ''),
+                'url': ticketing_url,
+            },
+            {
+                'name': _('Call for Proposals'),
+                'icon': 'bullhorn',
+                'phase': 'current' if cfp_open else ('done' if cfp_closed else 'todo'),
+                'status_text': _('Open') if cfp_open else (_('Closed') if cfp_closed else _('Upcoming')),
+                'summary': event.cfp.max_deadline.strftime('%b %d') if (has_cfp and event.cfp.max_deadline and cfp_open) else '',
+                'url': cfp_url,
+            },
+            {
+                'name': _('Schedule'),
+                'icon': 'calendar',
+                'phase': 'done' if current_sched else ('current' if has_scheduled_talks else 'todo'),
+                'status_text': _('Published') if current_sched else (_('In progress') if has_scheduled_talks else _('Upcoming')),
+                'summary': _('Published') if current_sched else (_('Draft') if has_scheduled_talks else ''),
+                'url': schedule_url,
+            },
+            {
+                'name': _('Live Event'),
+                'icon': 'video-camera',
+                'phase': 'done' if is_event_past else ('current' if is_event_live else 'todo'),
+                'status_text': _('Completed') if is_event_past else (_('Live now') if is_event_live else _('Upcoming')),
+                'summary': _('Active') if is_event_live else '',
+                'url': video_url,
+            },
+            {
+                'name': _('Wrap-up'),
+                'icon': 'flag-checkered',
+                'phase': 'current' if wrapup_active else 'todo',
+                'status_text': _('In progress') if wrapup_active else _('Upcoming'),
+                'summary': _('Reports & review') if wrapup_active else '',
+                'url': None,
+            },
+        ]
+
+    def _get_action_required(self, event: Event, permissions: Dict[str, Any], subevent=None) -> List[Dict[str, Any]]:
+        """Collect cross-event actionable alert cards."""
+        actions = []
+        if permissions.get('can_view_orders'):
+            pending_approvals = event.orders.filter(status=Order.STATUS_PENDING, require_approval=True).count()
+            if pending_approvals > 0:
+                actions.append({
+                    'id': 'orders-approval',
+                    'icon': 'clock-o',
+                    'title': _('Orders need approval'),
+                    'count': pending_approvals,
+                    'desc': ngettext(
+                        '%(count)d order needs review and approval.',
+                        '%(count)d orders need review and approval.',
+                        pending_approvals,
+                    ) % {'count': pending_approvals},
+                    'severity': 'danger',
+                    'btn_text': _('Review orders'),
+                    'url': reverse('control:event.orders', kwargs={'event': event.slug, 'organizer': event.organizer.slug}) + '?status=p&approval=yes',
+                })
+
+            overpaid_orders = Order.annotate_overpayments(event.orders).filter(
+                Q(~Q(status=Order.STATUS_CANCELED) & Q(pending_sum_t__lt=0))
+                | Q(Q(status=Order.STATUS_CANCELED) & Q(pending_sum_rc__lt=0))
+            ).count()
+            if overpaid_orders > 0:
+                actions.append({
+                    'id': 'overpaid-orders',
+                    'icon': 'money',
+                    'title': _('Overpaid orders'),
+                    'count': overpaid_orders,
+                    'desc': ngettext(
+                        '%(count)d overpaid order. Consider refunding extra amount.',
+                        '%(count)d overpaid orders. Consider refunding extra amount.',
+                        overpaid_orders,
+                    ) % {'count': overpaid_orders},
+                    'severity': 'warning',
+                    'btn_text': _('View overpaid orders'),
+                    'url': reverse('control:event.orders', kwargs={'event': event.slug, 'organizer': event.organizer.slug}) + '?status=overpaid',
+                })
+
+        if permissions.get('can_change_event_settings') and not event.products.exists():
+            actions.append({
+                'id': 'setup-products',
+                'icon': 'wrench',
+                'title': _('Setup tasks remaining'),
+                'count': 1,
+                'desc': _('No ticket products configured yet. Set up ticketing to start sales.'),
+                'severity': 'info',
+                'btn_text': _('Go to setup'),
+                'url': reverse('control:event.quick', kwargs={'event': event.slug, 'organizer': event.organizer.slug}),
+            })
+
+        if permissions.get('has_talk_access'):
+            wip_schedule = getattr(event, 'wip_schedule', None)
+            if wip_schedule:
+                unscheduled = wip_schedule.talks.filter(
+                    Q(start__isnull=True) | Q(room__isnull=True),
+                    is_visible=True,
+                    submission__state=SubmissionStates.CONFIRMED,
+                ).count()
+                if unscheduled > 0:
+                    actions.append({
+                        'id': 'unscheduled-sessions',
+                        'icon': 'calendar-times-o',
+                        'title': _('Unscheduled sessions'),
+                        'count': unscheduled,
+                        'desc': ngettext(
+                            '%(count)d confirmed session is not yet scheduled to a slot.',
+                            '%(count)d confirmed sessions are not yet scheduled to a slot.',
+                            unscheduled,
+                        ) % {'count': unscheduled},
+                        'severity': 'warning',
+                        'btn_text': _('Open schedule'),
+                        'url': reverse('orga:schedule.view', kwargs={'event': event.slug, 'organizer': event.organizer.slug}),
+                    })
+
+            incomplete_speakers = SpeakerProfile.objects.filter(
+                Q(event=event, user__in=event.speakers)
+                & (Q(biography__isnull=True) | Q(biography='') | Q(user__avatar__isnull=True) | Q(user__avatar=''))
+            ).distinct().count()
+            if incomplete_speakers > 0:
+                actions.append({
+                    'id': 'incomplete-speakers',
+                    'icon': 'user-times',
+                    'title': _('Incomplete speaker profiles'),
+                    'count': incomplete_speakers,
+                    'desc': ngettext(
+                        '%(count)d speaker is missing bio or photo.',
+                        '%(count)d speakers are missing bio or photo.',
+                        incomplete_speakers,
+                    ) % {'count': incomplete_speakers},
+                    'severity': 'caution',
+                    'btn_text': _('Review speakers'),
+                    'url': reverse('orga:speakers.list', kwargs={'event': event.slug, 'organizer': event.organizer.slug}),
+                })
+
+        if permissions.get('has_video_access') and not is_video_enabled(event):
+            actions.append({
+                'id': 'video-configuration',
+                'icon': 'video-camera',
+                'title': _('Video room configuration'),
+                'count': 1,
+                'desc': _('Video streaming and room settings need configuration.'),
+                'severity': 'info',
+                'btn_text': _('Open video settings'),
+                'url': reverse('eventyay_common:event.create_access_to_video', kwargs={'event': event.slug, 'organizer': event.organizer.slug}),
+            })
+
+        return actions
+
+    def _get_at_a_glance_kpis(self, event: Event, permissions: Dict[str, Any], subevent=None) -> Dict[str, Any]:
+        """Aggregate high-level cross-event KPIs."""
+        can_view_orders = permissions.get('can_view_orders', False)
+        has_talk = permissions.get('has_talk_access', False)
+
+        if can_view_orders:
+            opqs = OrderPosition.objects.filter(
+                order__event=event,
+                product__admission=True,
+            )
+            if subevent:
+                opqs = opqs.filter(subevent=subevent)
+            attendees_ordered = opqs.filter(
+                order__status__in=(Order.STATUS_PAID, Order.STATUS_PENDING)
+            ).count()
+            attendees_paid = opqs.filter(
+                order__status=Order.STATUS_PAID
+            ).count()
+            rev_qs = OrderPosition.objects.filter(
+                order__event=event,
+                order__status=Order.STATUS_PAID
+            )
+            if subevent:
+                rev_qs = rev_qs.filter(subevent=subevent)
+            revenue_sum = rev_qs.aggregate(sum=Sum('price'))['sum'] or Decimal('0.00')
+        else:
+            attendees_ordered = 0
+            attendees_paid = 0
+            revenue_sum = Decimal('0.00')
+
+        if has_talk:
+            sessions_confirmed = event.submissions.filter(state=SubmissionStates.CONFIRMED).count()
+            speakers_confirmed = event.speakers.count()
+        else:
+            sessions_confirmed = 0
+            speakers_confirmed = 0
+
+        event_status_text = _('Live') if event.live else (_('Past') if (event.date_to and event.date_to < now()) else _('Draft'))
+        event_status_class = 'live' if event.live else 'off'
+
+        return {
+            'event_status_text': event_status_text,
+            'event_status_class': event_status_class,
+            'attendees_ordered': attendees_ordered,
+            'attendees_paid': attendees_paid,
+            'sessions_confirmed': sessions_confirmed,
+            'speakers_confirmed': speakers_confirmed,
+            'revenue_sum': revenue_sum,
+            'currency': event.currency,
+        }
+
+    def _get_component_cards(self, event: Event, permissions: Dict[str, Any], subevent=None) -> List[Dict[str, Any]]:
+        """Generate status cards for tickets, talks, video, and active plugins."""
+        cards = []
+        plugins = event.get_plugins()
+
+        # 1. Tickets Card
+        if permissions.get('has_ticket_access'):
+            shop_status = event.ticket_component_presale_status
+            opqs = OrderPosition.objects.filter(order__event=event, product__admission=True)
+            if subevent:
+                opqs = opqs.filter(subevent=subevent)
+            ordered_c = opqs.filter(order__status__in=(Order.STATUS_PAID, Order.STATUS_PENDING)).count() if permissions.get('can_view_orders') else 0
+            paid_c = opqs.filter(order__status=Order.STATUS_PAID).count() if permissions.get('can_view_orders') else 0
+            pending_appr = event.orders.filter(status=Order.STATUS_PENDING, require_approval=True).count() if permissions.get('can_view_orders') else 0
+            rev_sum = OrderPosition.objects.filter(order__event=event, order__status=Order.STATUS_PAID).aggregate(sum=Sum('price'))['sum'] or Decimal('0.00') if permissions.get('can_view_orders') else Decimal('0.00')
+
+            cards.append({
+                'id': 'tickets',
+                'name': _('Tickets'),
+                'icon': 'ticket',
+                'status': shop_status.get('text', _('Active')),
+                'status_class': shop_status.get('class', 'live'),
+                'metrics': [
+                    {'label': _('Ordered attendees'), 'value': ordered_c},
+                    {'label': _('Paid attendees'), 'value': paid_c},
+                    {'label': _('Awaiting approval'), 'value': pending_appr},
+                    {'label': _('Revenue'), 'value': f'{event.currency} {rev_sum:,.2f}' if permissions.get('can_view_orders') else '-'},
+                ],
+                'btn_text': _('Open tickets dashboard'),
+                'url': reverse('control:event.index', kwargs={'event': event.slug, 'organizer': event.organizer.slug}),
+                'enabled': True,
+            })
+
+        # 2. Talks & Speakers Card
+        if permissions.get('has_talk_access'):
+            total_proposals = event.submissions.count()
+            accepted_c = event.submissions.filter(state__in=[SubmissionStates.ACCEPTED, SubmissionStates.CONFIRMED]).count()
+            acc_rate = round((accepted_c / total_proposals) * 100, 1) if total_proposals else 0
+            talk_status = _('CfP Open') if (hasattr(event, 'cfp') and event.cfp and event.cfp.is_open) else (_('Active') if total_proposals else _('Setup'))
+
+            cards.append({
+                'id': 'talks',
+                'name': _('Talks & Speakers'),
+                'icon': 'bullhorn',
+                'status': talk_status,
+                'status_class': 'live' if (hasattr(event, 'cfp') and event.cfp and event.cfp.is_open) else 'info',
+                'metrics': [
+                    {'label': _('Sessions'), 'value': accepted_c},
+                    {'label': _('Speakers'), 'value': event.speakers.count()},
+                    {'label': _('Proposals'), 'value': total_proposals},
+                    {'label': _('Acceptance rate'), 'value': f'{acc_rate}%'},
+                ],
+                'btn_text': _('Open talks dashboard'),
+                'url': reverse('orga:event.dashboard', kwargs={'event': event.slug, 'organizer': event.organizer.slug}),
+                'enabled': True,
+            })
+
+        # 3. Video Card
+        if permissions.get('has_video_access'):
+            video_active = is_video_enabled(event)
+            cards.append({
+                'id': 'video',
+                'name': _('Video'),
+                'icon': 'video-camera',
+                'status': _('Configured') if video_active else _('Not configured'),
+                'status_class': 'live' if video_active else 'off',
+                'metrics': [
+                    {'label': _('Status'), 'value': _('Configured') if video_active else _('Inactive')},
+                ] if video_active else [],
+                'empty_state': _('No video rooms configured yet.') if not video_active else None,
+                'btn_text': _('Open video dashboard'),
+                'url': reverse('eventyay_common:event.create_access_to_video', kwargs={'event': event.slug, 'organizer': event.organizer.slug}),
+                'enabled': True,
+            })
+
+        # 4. Social Media Card
+        has_social = 'socialmedia' in plugins
+        cards.append({
+            'id': 'socialmedia',
+            'name': _('Social Media'),
+            'icon': 'share-alt',
+            'status': _('Active') if has_social else _('Not configured'),
+            'status_class': 'live' if has_social else 'off',
+            'metrics': [],
+            'empty_state': _('No social posts scheduled yet.') if has_social else _('Plugin not enabled'),
+            'btn_text': _('Open social dashboard') if has_social else None,
+            'url': '#',
+            'enabled': has_social,
+        })
+
+        # 5. TeamShifts Card
+        has_teamshifts = 'teamshifts' in plugins
+        cards.append({
+            'id': 'teamshifts',
+            'name': _('TeamShifts'),
+            'icon': 'users',
+            'status': _('Active') if has_teamshifts else _('Not configured'),
+            'status_class': 'live' if has_teamshifts else 'off',
+            'metrics': [],
+            'empty_state': _('No TeamShifts configured yet.') if has_teamshifts else _('Plugin not enabled'),
+            'btn_text': _('Open TeamShifts dashboard') if has_teamshifts else None,
+            'url': '#',
+            'enabled': has_teamshifts,
+        })
+
+        # 6. Exhibitors & Sponsors Card
+        has_exhibition = 'exhibition' in plugins
+        cards.append({
+            'id': 'exhibition',
+            'name': _('Exhibitors & Sponsors'),
+            'icon': 'handshake-o',
+            'status': _('Active') if has_exhibition else _('Not configured'),
+            'status_class': 'live' if has_exhibition else 'off',
+            'metrics': [],
+            'empty_state': _('No exhibitors configured yet.') if has_exhibition else _('Plugin not enabled'),
+            'btn_text': _('Open exhibitors dashboard') if has_exhibition else None,
+            'url': '#',
+            'enabled': has_exhibition,
+        })
+
+        return cards
+
+    def _get_upcoming_milestones(self, event: Event) -> List[Dict[str, Any]]:
+        """Collect upcoming and completed milestones."""
+        milestones = []
+        if hasattr(event, 'cfp') and event.cfp and event.cfp.max_deadline:
+            milestones.append({
+                'title': _('Call for Proposals closes'),
+                'date': event.cfp.max_deadline,
+            })
+        if event.date_from:
+            milestones.append({
+                'title': _('Event starts'),
+                'date': event.date_from,
+            })
+        if event.date_to and event.date_to != event.date_from:
+            milestones.append({
+                'title': _('Event ends'),
+                'date': event.date_to,
+            })
+            milestones.append({
+                'title': _('Event wrap-up & reports'),
+                'date': event.date_to + timedelta(days=14),
+            })
+
+        milestones.sort(key=lambda m: m['date'])
+        now_dt = now()
+        for m in milestones:
+            m['is_past'] = m['date'] < now_dt
+
+        first_future_found = False
+        for m in milestones:
+            if not m['is_past']:
+                if not first_future_found:
+                    m['is_current'] = True
+                    first_future_found = True
+                else:
+                    m['is_current'] = False
+            else:
+                m['is_current'] = False
+        return milestones
+
+    def _get_organiser_teams(self, event: Event) -> Dict[str, Any]:
+        """Collect organiser name and assigned teams."""
+        return {
+            'organizer_name': event.organizer.name,
+            'teams': list(event.teams.values('id', 'name')),
+            'manage_url': reverse('eventyay_common:organizer.teams', kwargs={'organizer': event.organizer.slug}) + '?section=permissions',
+        }
+
+    def _get_analytics_overview(self, event: Event, permissions: Dict[str, Any]) -> Dict[str, Any]:
+        """Aggregate cross-event analytics metrics."""
+        can_view_orders = permissions.get('can_view_orders', False)
+        has_talk = permissions.get('has_talk_access', False)
+
+        order_count = event.orders.filter(status=Order.STATUS_PAID).count() if can_view_orders else 0
+        revenue_total = OrderPosition.objects.filter(order__event=event, order__status=Order.STATUS_PAID).aggregate(sum=Sum('price'))['sum'] or Decimal('0.00') if can_view_orders else Decimal('0.00')
+
+        proposal_stats = {}
+        if has_talk:
+            proposal_stats = {
+                'submitted': event.submissions.count(),
+                'accepted': event.submissions.filter(state=SubmissionStates.ACCEPTED).count(),
+                'confirmed': event.submissions.filter(state=SubmissionStates.CONFIRMED).count(),
+                'rejected': event.submissions.filter(state=SubmissionStates.REJECTED).count(),
+            }
+
+        return {
+            'order_count': order_count,
+            'revenue_total': revenue_total,
+            'currency': event.currency,
+            'proposal_stats': proposal_stats,
+            'stats_url': reverse('control:event.orders', kwargs={'event': event.slug, 'organizer': event.organizer.slug}) if can_view_orders else None,
+        }
+
+    def _get_recent_activity(self, event: Event, permissions: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Collect recent cross-event activity."""
+        qs = (
+            event.logentry_set.all()
+            .select_related('user', 'content_type', 'api_token', 'oauth_application', 'device')
+            .order_by('-datetime')
+        )
+        qs = self._filter_log_entries(qs, permissions)
+        entries = []
+        for log in qs[:8]:
+            entries.append({
+                'datetime': log.datetime,
+                'actor': str(log.user) if log.user else (_('System') if not log.api_token else _('API Token')),
+                'category': self._classify_log_category(log),
+                'display': log.display(self.request),
+            })
+        return entries
+
+    def _classify_log_category(self, log) -> str:
+        """Classify log entry into standard category badge."""
+        return classify_log_category(log)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         request = self.request
@@ -360,6 +898,13 @@ class EventIndexView(TemplateView):
         # Get subevent and permissions
         subevent = get_subevent(request)
         permissions = self._get_user_permissions()
+
+        access = get_cached_event_dashboard_access(
+            request, request.user, request.organizer, request.event
+        )
+        permissions['has_ticket_access'] = access['has_ticket_access']
+        permissions['has_talk_access'] = access['has_talk_access']
+        permissions['has_video_access'] = access['has_video_access']
 
         # Collect widgets
         widgets = self._collect_dashboard_widgets(subevent)
@@ -371,11 +916,19 @@ class EventIndexView(TemplateView):
             .order_by('-datetime')
         )
         qs = self._filter_log_entries(qs, permissions)
-
-        access = get_cached_event_dashboard_access(
-            request, request.user, request.organizer, request.event
-        )
         can_view_orders = permissions['can_view_orders']
+
+        # Wrap event queries with scope
+        with scope(event=request.event):
+            header_data = self._get_header_data(request.event, request)
+            workflow_timeline = self._get_workflow_timeline(request.event, permissions)
+            action_required = self._get_action_required(request.event, permissions, subevent=subevent)
+            at_a_glance = self._get_at_a_glance_kpis(request.event, permissions, subevent=subevent)
+            component_cards = self._get_component_cards(request.event, permissions, subevent=subevent)
+            upcoming_milestones = self._get_upcoming_milestones(request.event)
+            organiser_info = self._get_organiser_teams(request.event)
+            analytics_overview = self._get_analytics_overview(request.event, permissions)
+            recent_activity = self._get_recent_activity(request.event, permissions)
 
         # Prepare context
         context.update(
@@ -390,9 +943,21 @@ class EventIndexView(TemplateView):
                     initial={'comment': request.event.comment},
                     readonly=not permissions['can_change_event_settings'],
                 ),
+                'has_ticket_access': access['has_ticket_access'],
+                'has_talk_access': access['has_talk_access'],
+                'has_video_access': access['has_video_access'],
                 'is_video_enabled': is_video_enabled(request.event),
                 'can_change_event_settings': permissions['can_change_event_settings'],
                 'can_view_orders': can_view_orders,
+                'header_data': header_data,
+                'workflow_timeline': workflow_timeline,
+                'action_required': action_required,
+                'at_a_glance': at_a_glance,
+                'component_cards': component_cards,
+                'upcoming_milestones': upcoming_milestones,
+                'organiser_info': organiser_info,
+                'analytics_overview': analytics_overview,
+                'recent_activity': recent_activity,
                 **self._check_event_statuses(can_view_orders),
             }
         )

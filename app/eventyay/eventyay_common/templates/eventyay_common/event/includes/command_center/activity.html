@@ -1,0 +1,52 @@
+{% load i18n %}
+<section class="cc-section" aria-labelledby="cc-activity-title">
+  <div class="cc-section-header">
+    <h2 id="cc-activity-title" class="cc-section-title">
+      <span class="fa fa-history text-primary" aria-hidden="true"></span>
+      {% trans 'Recent activity' %}
+    </h2>
+    {% if can_change_event_settings or can_view_orders %}
+      <a href="{% url 'control:event.log' organizer=request.event.organizer.slug event=request.event.slug %}" class="cc-component-btn">
+        <span>{% trans 'View full activity logs' %}</span>
+        <span class="fa fa-arrow-right" aria-hidden="true"></span>
+      </a>
+    {% endif %}
+  </div>
+
+  <div class="cc-activity-card cc-activity-feed">
+    {% if recent_activity %}
+      <div class="table-responsive">
+        <table class="cc-activity-table">
+          <thead>
+            <tr>
+              <th class="cc-col-time">{% trans 'Time' %}</th>
+              <th class="cc-col-actor">{% trans 'Actor' %}</th>
+              <th class="cc-col-category">{% trans 'Category' %}</th>
+              <th>{% trans 'Description' %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for entry in recent_activity %}
+              <tr>
+                <td class="text-muted cc-time-cell">
+                  <span class="fa fa-clock-o text-muted" aria-hidden="true"></span>
+                  {{ entry.datetime|date:'SHORT_DATETIME_FORMAT' }}
+                </td>
+                <td><strong>{{ entry.actor }}</strong></td>
+                <td>
+                  <span class="cc-cat-badge cc-cat-{{ entry.category|lower }}">{{ entry.category }}</span>
+                </td>
+                <td>{{ entry.display|safe }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="cc-component-empty text-center cc-empty-pad">
+        <span class="fa fa-info-circle fa-lg text-muted" aria-hidden="true"></span>
+        <p class="cc-empty-msg">{% trans 'No recent activity recorded for this event.' %}</p>
+      </div>
+    {% endif %}
+  </div>
+</section>
