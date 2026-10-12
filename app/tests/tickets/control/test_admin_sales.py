@@ -286,6 +286,41 @@ class AdminSalesTest(SoupTest):
                 self.assertEqual(send.call_count, 2)
 
     @scopes_disabled()
+    def test_paid_invoice_discards_queued_reminder_but_sends_notice(self):
+        reminder = BillingInvoiceEmail.objects.create(
+            invoice=self.invoice,
+            delivery_key='reminder:2026-10-12',
+            recipient='billing@example.com',
+            subject='Payment reminder',
+            body='Please pay',
+            pdf_base64='cGRm',
+            pdf_filename='invoice.pdf',
+        )
+        notice = BillingInvoiceEmail.objects.create(
+            invoice=self.invoice,
+            delivery_key='notice:2026-10',
+            recipient='billing@example.com',
+            subject='Invoice',
+            body='Invoice content',
+            pdf_base64='cGRm',
+            pdf_filename='invoice.pdf',
+        )
+        response = self.client.post(
+            f'/admin/sales/invoices/{self.invoice.pk}/status/',
+            {'status': BillingInvoice.STATUS_PAID, 'previous_status': BillingInvoice.STATUS_PENDING},
+        )
+        self.assertEqual(response.status_code, 302)
+
+        with patch('eventyay.base.services.mail.mail_send_task.run') as send:
+            process_scheduled_emails.__wrapped__(sender=None)
+
+        self.assertFalse(BillingInvoiceEmail.objects.filter(pk=reminder.pk).exists())
+        notice.refresh_from_db()
+        self.assertIsNotNone(notice.sent_at)
+        self.assertEqual(send.call_count, 1)
+        self.assertEqual(send.call_args.kwargs['subject'], 'Invoice')
+
+    @scopes_disabled()
     def test_automatic_payment_intent_uses_stable_invoice_idempotency_key(self):
         with (
             patch('eventyay.helpers.stripe_utils.get_stripe_secret_key', return_value='sk_test'),

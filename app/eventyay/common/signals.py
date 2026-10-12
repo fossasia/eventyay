@@ -16,7 +16,7 @@ from django.dispatch.dispatcher import NO_RECEIVERS
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
-from eventyay.base.models import BillingInvoiceEmail, Event
+from eventyay.base.models import BillingInvoice, BillingInvoiceEmail, Event
 from eventyay.base.operational_logging import OUTCOME_SUCCESS, log_event
 from eventyay.base.signals import resolve_app_for_module, check_plugin_active
 from eventyay.consts import EVENTYAY_EMAIL_NONE_VALUE
@@ -277,17 +277,42 @@ def process_scheduled_emails(sender, **kwargs):
     # Mail services import the model package, which imports this signals module.
     from eventyay.base.services.mail import SendMailException as BillingMailSendException, mail_send_task
 
+    processed_billing_mail_ids = set()
     for _ in range(MAIL_SEND_BATCH_SIZE):
         with transaction.atomic():
-            billing_mail = (
-                BillingInvoiceEmail.objects.select_for_update(skip_locked=True)
+            candidate = (
+                BillingInvoiceEmail.objects
                 .filter(sent_at__isnull=True)
                 .filter(Q(last_attempt_at__isnull=True) | Q(last_attempt_at__lte=now() - timedelta(minutes=15)))
+                .exclude(pk__in=processed_billing_mail_ids)
                 .order_by('pk')
+                .values('pk', 'invoice_id', 'delivery_key')
+                .first()
+            )
+            if candidate is None:
+                break
+            processed_billing_mail_ids.add(candidate['pk'])
+            invoice = None
+            if candidate['delivery_key'].startswith('reminder:'):
+                # Match the invoice-before-outbox lock order used when queuing reminders.
+                invoice = (
+                    BillingInvoice.objects.select_for_update(skip_locked=True)
+                    .filter(pk=candidate['invoice_id'])
+                    .first()
+                )
+                if invoice is None:
+                    continue
+            billing_mail = (
+                BillingInvoiceEmail.objects.select_for_update(skip_locked=True)
+                .filter(pk=candidate['pk'], sent_at__isnull=True)
+                .filter(Q(last_attempt_at__isnull=True) | Q(last_attempt_at__lte=now() - timedelta(minutes=15)))
                 .first()
             )
             if billing_mail is None:
-                break
+                continue
+            if invoice and (invoice.status != BillingInvoice.STATUS_PENDING or not invoice.reminder_enabled):
+                billing_mail.delete()
+                continue
             try:
                 mail_send_task.run(
                     subject=billing_mail.subject,
