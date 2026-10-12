@@ -1156,6 +1156,10 @@ DEFAULT_SETTINGS = {
         'default': 'True',
         'type': bool,
     },
+    'ticketoutput_passbook__enabled': {
+        'default': 'True',
+        'type': bool,
+    },
     'ticket_download_date': {
         'default': None,
         'type': RelativeDateWrapper,

@@ -1299,12 +1299,16 @@ class OrderDownloadMixin:
     def get(self, request, *args, **kwargs):
         if not self.output or not self.output.is_enabled:
             return self.error(OrderError(_('You requested an invalid ticket output type.')))
+        if 'position' not in kwargs and not self.output.multi_download_enabled:
+            return self.error(OrderError(_('You requested an invalid ticket output type.')))
         if 'async_id' in request.GET and settings.HAS_CELERY:
             return self.get_result(request)
         return self.post(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         if not self.output or not self.output.is_enabled:
+            return self.error(OrderError(_('You requested an invalid ticket output type.')))
+        if 'position' not in kwargs and not self.output.multi_download_enabled:
             return self.error(OrderError(_('You requested an invalid ticket output type.')))
         if not self.order or ('position' in kwargs and not self.order_position):
             raise Http404(_('Unknown order code or not authorized to access this order.'))

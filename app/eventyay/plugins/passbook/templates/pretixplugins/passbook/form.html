@@ -1,0 +1,16 @@
+{% load i18n %}
+<div class="alert alert-info">
+    {% blocktrans trimmed %}
+        Passbook tickets enable attendees to save their tickets directly into Apple Wallet or compatible Android apps (e.g. PassAndroid).
+        Passes are cryptographically signed using Apple Pass Type Developer certificates.
+        If credentials are not configured below for this event, the platform global default credentials will be used automatically.
+    {% endblocktrans %}
+</div>
+{% if not provider_configured %}
+<div class="alert alert-warning">
+    {% blocktrans trimmed %}
+        Apple Wallet signing credentials are not yet configured for this instance or event.
+        Tickets cannot be generated in Apple Wallet format until valid Apple Developer credentials are configured.
+    {% endblocktrans %}
+</div>
+{% endif %}
