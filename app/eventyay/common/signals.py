@@ -5,6 +5,7 @@ from functools import wraps
 from typing import Any, Callable
 
 import django.dispatch
+from celery.exceptions import Retry
 from django.apps import apps
 from django.conf import settings
 from django.core.cache import cache
@@ -297,7 +298,7 @@ def process_scheduled_emails(sender, **kwargs):
                     attach_file_base64=billing_mail.pdf_base64,
                     attach_file_name=billing_mail.pdf_filename,
                 )
-            except BillingMailSendException:
+            except (BillingMailSendException, Retry):
                 logger.exception('Unable to send billing invoice email %s', billing_mail.pk)
                 billing_mail.failed_attempts += 1
                 billing_mail.last_attempt_at = now()

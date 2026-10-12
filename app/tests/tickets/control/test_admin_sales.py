@@ -5,6 +5,7 @@ from io import BytesIO, StringIO
 from types import SimpleNamespace
 from unittest.mock import patch
 
+from celery.exceptions import Retry
 from django.db import DatabaseError
 from django.test import Client, override_settings
 from django.utils.timezone import now
@@ -247,40 +248,42 @@ class AdminSalesTest(SoupTest):
 
     @scopes_disabled()
     def test_failed_billing_email_does_not_block_later_outbox_entries(self):
-        failed = BillingInvoiceEmail.objects.create(
-            invoice=self.invoice,
-            delivery_key='initial',
-            recipient='bad@example.com',
-            subject='Invoice',
-            body='Invoice content',
-            pdf_base64='cGRm',
-            pdf_filename='invoice.pdf',
-        )
-        later = BillingInvoiceEmail.objects.create(
-            invoice=self.invoice,
-            delivery_key='reminder:1',
-            recipient='good@example.com',
-            subject='Reminder',
-            body='Reminder content',
-            pdf_base64='cGRm',
-            pdf_filename='invoice.pdf',
-        )
+        for index, error in enumerate((SendMailException('bad recipient', already_logged=True), Retry('later'))):
+            with self.subTest(error=type(error).__name__):
+                failed = BillingInvoiceEmail.objects.create(
+                    invoice=self.invoice,
+                    delivery_key=f'initial:{index}',
+                    recipient='bad@example.com',
+                    subject='Invoice',
+                    body='Invoice content',
+                    pdf_base64='cGRm',
+                    pdf_filename='invoice.pdf',
+                )
+                later = BillingInvoiceEmail.objects.create(
+                    invoice=self.invoice,
+                    delivery_key=f'reminder:{index}',
+                    recipient='good@example.com',
+                    subject='Reminder',
+                    body='Reminder content',
+                    pdf_base64='cGRm',
+                    pdf_filename='invoice.pdf',
+                )
 
-        def send_mail(**kwargs):
-            if kwargs['to'] == ['bad@example.com']:
-                raise SendMailException('bad recipient', already_logged=True)
+                def send_mail(**kwargs):
+                    if kwargs['to'] == ['bad@example.com']:
+                        raise error
 
-        with patch('eventyay.base.services.mail.mail_send_task.run', side_effect=send_mail) as send:
-            process_scheduled_emails.__wrapped__(sender=None)
-            process_scheduled_emails.__wrapped__(sender=None)
+                with patch('eventyay.base.services.mail.mail_send_task.run', side_effect=send_mail) as send:
+                    process_scheduled_emails.__wrapped__(sender=None)
+                    process_scheduled_emails.__wrapped__(sender=None)
 
-        failed.refresh_from_db()
-        later.refresh_from_db()
-        self.assertEqual(failed.failed_attempts, 1)
-        self.assertIsNotNone(failed.last_attempt_at)
-        self.assertIsNone(failed.sent_at)
-        self.assertIsNotNone(later.sent_at)
-        self.assertEqual(send.call_count, 2)
+                failed.refresh_from_db()
+                later.refresh_from_db()
+                self.assertEqual(failed.failed_attempts, 1)
+                self.assertIsNotNone(failed.last_attempt_at)
+                self.assertIsNone(failed.sent_at)
+                self.assertIsNotNone(later.sent_at)
+                self.assertEqual(send.call_count, 2)
 
     @scopes_disabled()
     def test_automatic_payment_intent_uses_stable_invoice_idempotency_key(self):
