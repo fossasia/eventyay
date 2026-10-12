@@ -86,14 +86,14 @@
 /* Select2 appends the menu to body; keep it aligned with composer controls. */
 body > .select2-container.mail-composer-dropdown .select2-dropdown {
   border-color: var(--color-border, #ccc);
-  border-radius: 0 0 var(--composer-border-radius, 8px) var(--composer-border-radius, 8px);
+  border-radius: 0 0 var(--composer-border-radius, 4px) var(--composer-border-radius, 4px);
   box-shadow: none;
   margin-top: -1px;
   overflow: hidden;
 }
 
 body > .select2-container.mail-composer-dropdown .select2-dropdown--above {
-  border-radius: var(--composer-border-radius, 8px) var(--composer-border-radius, 8px) 0 0;
+  border-radius: var(--composer-border-radius, 4px) var(--composer-border-radius, 4px) 0 0;
   margin-bottom: -1px;
   margin-top: 0;
 }
