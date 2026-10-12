@@ -1,5 +1,6 @@
 import logging
 import uuid
+from datetime import timedelta
 from functools import wraps
 from typing import Any, Callable
 
@@ -8,6 +9,7 @@ from django.apps import apps
 from django.conf import settings
 from django.core.cache import cache
 from django.db import transaction
+from django.db.models import Q
 from django.dispatch import receiver
 from django.dispatch.dispatcher import NO_RECEIVERS
 from django.utils.timezone import now
@@ -279,6 +281,7 @@ def process_scheduled_emails(sender, **kwargs):
             billing_mail = (
                 BillingInvoiceEmail.objects.select_for_update(skip_locked=True)
                 .filter(sent_at__isnull=True)
+                .filter(Q(last_attempt_at__isnull=True) | Q(last_attempt_at__lte=now() - timedelta(minutes=15)))
                 .order_by('pk')
                 .first()
             )
@@ -296,7 +299,10 @@ def process_scheduled_emails(sender, **kwargs):
                 )
             except BillingMailSendException:
                 logger.exception('Unable to send billing invoice email %s', billing_mail.pk)
-                break
+                billing_mail.failed_attempts += 1
+                billing_mail.last_attempt_at = now()
+                billing_mail.save(update_fields=['failed_attempts', 'last_attempt_at'])
+                continue
             billing_mail.sent_at = now()
             billing_mail.save(update_fields=['sent_at'])
 

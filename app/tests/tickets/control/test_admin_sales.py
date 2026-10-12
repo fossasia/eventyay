@@ -20,12 +20,14 @@ from eventyay.base.models import (
     Organizer,
     User,
 )
+from eventyay.base.services.mail import SendMailException
 from eventyay.common.signals import process_scheduled_emails
 from eventyay.eventyay_common.tasks import (
     billing_invoice_send_email,
     process_auto_billing_charge,
     retry_failed_payment,
 )
+from eventyay.helpers.stripe_utils import create_payment_intent
 from tests.tickets.base import SoupTest
 
 
@@ -242,6 +244,65 @@ class AdminSalesTest(SoupTest):
         self.assertFalse(BillingInvoiceEmail.objects.filter(invoice=self.invoice).exists())
         self.invoice.refresh_from_db()
         self.assertIsNone(self.invoice.last_reminder_datetime)
+
+    @scopes_disabled()
+    def test_failed_billing_email_does_not_block_later_outbox_entries(self):
+        failed = BillingInvoiceEmail.objects.create(
+            invoice=self.invoice,
+            delivery_key='initial',
+            recipient='bad@example.com',
+            subject='Invoice',
+            body='Invoice content',
+            pdf_base64='cGRm',
+            pdf_filename='invoice.pdf',
+        )
+        later = BillingInvoiceEmail.objects.create(
+            invoice=self.invoice,
+            delivery_key='reminder:1',
+            recipient='good@example.com',
+            subject='Reminder',
+            body='Reminder content',
+            pdf_base64='cGRm',
+            pdf_filename='invoice.pdf',
+        )
+
+        def send_mail(**kwargs):
+            if kwargs['to'] == ['bad@example.com']:
+                raise SendMailException('bad recipient', already_logged=True)
+
+        with patch('eventyay.base.services.mail.mail_send_task.run', side_effect=send_mail) as send:
+            process_scheduled_emails.__wrapped__(sender=None)
+            process_scheduled_emails.__wrapped__(sender=None)
+
+        failed.refresh_from_db()
+        later.refresh_from_db()
+        self.assertEqual(failed.failed_attempts, 1)
+        self.assertIsNotNone(failed.last_attempt_at)
+        self.assertIsNone(failed.sent_at)
+        self.assertIsNotNone(later.sent_at)
+        self.assertEqual(send.call_count, 2)
+
+    @scopes_disabled()
+    def test_automatic_payment_intent_uses_stable_invoice_idempotency_key(self):
+        with (
+            patch('eventyay.helpers.stripe_utils.get_stripe_secret_key', return_value='sk_test'),
+            patch('eventyay.helpers.stripe_utils.stripe.PaymentIntent.create') as create,
+        ):
+            create.return_value = SimpleNamespace(id='pi_same')
+            for unused in range(2):
+                create_payment_intent(
+                    7,
+                    'eur',
+                    'cus_test',
+                    'pm_test',
+                    {'invoice_id': self.invoice.pk},
+                    str(self.invoice.pk),
+                )
+        self.assertEqual(create.call_count, 2)
+        self.assertEqual(
+            [call.kwargs['idempotency_key'] for call in create.call_args_list],
+            [f'auto-billing-invoice-{self.invoice.pk}'] * 2,
+        )
 
     @scopes_disabled()
     def test_failed_invoice_keeps_unpaid_warning(self):

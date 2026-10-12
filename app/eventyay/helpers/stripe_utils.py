@@ -296,6 +296,7 @@ def create_payment_intent(
         payment_method=payment_method_id,
         automatic_payment_methods={'enabled': True, 'allow_redirects': 'never'},
         metadata=metadata,
+        idempotency_key=f'auto-billing-invoice-{invoice_id}',
     )
     billing_invoice_updated = BillingInvoice.objects.filter(id=invoice_id).update(
         stripe_payment_intent_id=payment_intent.id

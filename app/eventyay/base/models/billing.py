@@ -89,6 +89,8 @@ class BillingInvoiceEmail(models.Model):
     pdf_base64 = models.TextField()
     pdf_filename = models.CharField(max_length=255)
     sent_at = models.DateTimeField(null=True, blank=True)
+    failed_attempts = models.PositiveIntegerField(default=0)
+    last_attempt_at = models.DateTimeField(null=True, blank=True)
 
     objects = ScopedManager(organizer='invoice__organizer')
 
