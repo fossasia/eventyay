@@ -3,6 +3,7 @@ from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
 import pytest
+import stripe
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.contrib.sessions.middleware import SessionMiddleware
@@ -13,7 +14,7 @@ from django_scopes import scopes_disabled
 
 from eventyay.base.meetup import get_rsvp_product_and_quota, provision_meetup_event
 from eventyay.base.models import Event, Order, OrderPayment
-from eventyay.base.payment import StripePaymentProvider
+from eventyay.base.payment import PaymentException, StripePaymentProvider
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.stripe_connect import (
     build_stripe_oauth_state,
@@ -23,6 +24,7 @@ from eventyay.base.stripe_connect import (
 from eventyay.eventyay_common.forms.event import EventCommonSettingsForm
 from eventyay.eventyay_common.views.event import EventUpdate
 from eventyay.eventyay_common.views.stripe_connect import (
+    SESSION_STRIPE_OAUTH_NONCE_KEY,
     EventStripeConnectAuthorizeView,
     EventStripeConnectCallbackView,
     EventStripeConnectDisconnectView,
@@ -70,6 +72,7 @@ def non_meetup_event(db, organizer):
 
 @pytest.mark.django_db
 def test_stripe_connect_credentials_helper(meetup_event):
+    """Test Stripe Connect credential resolution and strict test mode isolation."""
     gs = GlobalSettingsObject()
     gs.settings.set('payment_stripe_connect_client_id', 'ca_platform_client_123')
     gs.settings.set('payment_stripe_connect_secret_key', 'sk_platform_live_key')
@@ -81,27 +84,37 @@ def test_stripe_connect_credentials_helper(meetup_event):
     assert creds['publishable_key'] == 'pk_platform_live_key'
     assert creds['is_configured'] is True
 
-    # Testmode fallback
+    # Test mode event must NOT fall back to live keys
     meetup_event.testmode = True
+    test_creds_unconfigured = get_stripe_connect_credentials(meetup_event)
+    assert test_creds_unconfigured['secret_key'] == ''
+    assert test_creds_unconfigured['publishable_key'] == ''
+    assert test_creds_unconfigured['is_configured'] is False
+
+    # When test keys are configured, they are resolved for testmode events
     gs.settings.set('payment_stripe_connect_test_secret_key', 'sk_platform_test_key')
     gs.settings.set('payment_stripe_connect_test_publishable_key', 'pk_platform_test_key')
     test_creds = get_stripe_connect_credentials(meetup_event)
     assert test_creds['secret_key'] == 'sk_platform_test_key'
     assert test_creds['publishable_key'] == 'pk_platform_test_key'
+    assert test_creds['is_configured'] is True
 
 
 @pytest.mark.django_db
 def test_stripe_oauth_state_encoding_and_validation():
-    state = build_stripe_oauth_state(event_id=42, user_id=99, next_url='/settings/')
+    """Test building and parsing cryptographically signed OAuth state tokens."""
+    state = build_stripe_oauth_state(event_id=42, user_id=99, next_url='/settings/', nonce='nonce_123')
     payload = load_stripe_oauth_state(state)
     assert payload['event_id'] == 42
     assert payload['user_id'] == 99
     assert payload['next_url'] == '/settings/'
+    assert payload['nonce'] == 'nonce_123'
 
 
 @pytest.mark.django_db
 @scopes_disabled()
 def test_stripe_connect_authorize_view_redirects_to_stripe(meetup_event, rf, user):
+    """Test OAuth authorize endpoint binds session nonce and redirects to Stripe."""
     gs = GlobalSettingsObject()
     gs.settings.set('payment_stripe_connect_client_id', 'ca_platform_client_123')
     gs.settings.set('payment_stripe_connect_secret_key', 'sk_platform_live_key')
@@ -121,11 +134,13 @@ def test_stripe_connect_authorize_view_redirects_to_stripe(meetup_event, rf, use
     assert resp['Location'].startswith('https://connect.stripe.com/oauth/authorize?')
     assert 'client_id=ca_platform_client_123' in resp['Location']
     assert 'response_type=code' in resp['Location']
+    assert SESSION_STRIPE_OAUTH_NONCE_KEY in req.session
 
 
 @pytest.mark.django_db
 @scopes_disabled()
 def test_stripe_connect_authorize_view_404_on_non_meetup(non_meetup_event, rf, user):
+    """Test OAuth endpoints return 404 for standard ticket events."""
     req = rf.get('/stripe/connect/')
     req.event = non_meetup_event
     req.organizer = non_meetup_event.organizer
@@ -142,16 +157,18 @@ def test_stripe_connect_authorize_view_404_on_non_meetup(non_meetup_event, rf, u
 @pytest.mark.django_db
 @scopes_disabled()
 def test_stripe_connect_callback_view_success(meetup_event, rf, user):
+    """Test successful OAuth callback validates nonce, exchanges code, and stores credentials."""
     gs = GlobalSettingsObject()
     gs.settings.set('payment_stripe_connect_client_id', 'ca_platform_client_123')
     gs.settings.set('payment_stripe_connect_secret_key', 'sk_platform_live_key')
 
-    state = build_stripe_oauth_state(event_id=meetup_event.pk, user_id=user.pk)
+    state = build_stripe_oauth_state(event_id=meetup_event.pk, user_id=user.pk, nonce='valid_nonce_abc')
     req = rf.get(f'/stripe/callback/?code=ac_123456&state={state}')
     req.event = meetup_event
     req.organizer = meetup_event.organizer
     req.user = user
     SessionMiddleware(lambda r: None).process_request(req)
+    req.session[SESSION_STRIPE_OAUTH_NONCE_KEY] = 'valid_nonce_abc'
     setattr(req, '_messages', FallbackStorage(req))
 
     mock_oauth_resp = {
@@ -174,18 +191,40 @@ def test_stripe_connect_callback_view_success(meetup_event, rf, user):
     assert meetup_event.settings.get('payment_stripe_connect_publishable_key') == 'pk_test_connected_123'
     assert meetup_event.settings.get('payment_stripe_connect_account_name') == 'Organizer Business'
     assert meetup_event.settings.get('payment_stripe__enabled', as_type=bool) is True
+    assert SESSION_STRIPE_OAUTH_NONCE_KEY not in req.session
+
+
+@pytest.mark.django_db
+@scopes_disabled()
+def test_stripe_connect_callback_view_rejects_nonce_mismatch(meetup_event, rf, user):
+    """Test OAuth callback rejects requests with missing or mismatched session nonces."""
+    state = build_stripe_oauth_state(event_id=meetup_event.pk, user_id=user.pk, nonce='forged_nonce')
+    req = rf.get(f'/stripe/callback/?code=ac_123456&state={state}')
+    req.event = meetup_event
+    req.organizer = meetup_event.organizer
+    req.user = user
+    SessionMiddleware(lambda r: None).process_request(req)
+    req.session[SESSION_STRIPE_OAUTH_NONCE_KEY] = 'legitimate_nonce'
+    setattr(req, '_messages', FallbackStorage(req))
+
+    view = EventStripeConnectCallbackView()
+    view.setup(req)
+    resp = view.get(req)
+
+    assert resp.status_code == 302
+    assert meetup_event.settings.get('payment_stripe_connect_user_id') is None
 
 
 @pytest.mark.django_db
 @scopes_disabled()
 def test_stripe_connect_callback_view_handles_denied(meetup_event, rf, user):
+    """Test OAuth callback handles user denial from Stripe."""
     req = rf.get('/stripe/callback/?error=access_denied&error_description=The+user+denied+your+request')
     req.event = meetup_event
     req.organizer = meetup_event.organizer
     req.user = user
     SessionMiddleware(lambda r: None).process_request(req)
-    storage = FallbackStorage(req)
-    setattr(req, '_messages', storage)
+    setattr(req, '_messages', FallbackStorage(req))
 
     view = EventStripeConnectCallbackView()
     view.setup(req)
@@ -198,6 +237,7 @@ def test_stripe_connect_callback_view_handles_denied(meetup_event, rf, user):
 @pytest.mark.django_db
 @scopes_disabled()
 def test_stripe_connect_disconnect_view(meetup_event, rf, user):
+    """Test disconnecting a connected account calls deauthorize and clears settings."""
     gs = GlobalSettingsObject()
     gs.settings.set('payment_stripe_connect_client_id', 'ca_platform_client_123')
     gs.settings.set('payment_stripe_connect_secret_key', 'sk_platform_live_key')
@@ -228,9 +268,39 @@ def test_stripe_connect_disconnect_view(meetup_event, rf, user):
 
 @pytest.mark.django_db
 @scopes_disabled()
-def test_event_settings_form_validation_with_connected_account(meetup_event):
-    """Paid meetup passes form validation when connected Stripe account exists without manual secrets."""
+def test_stripe_connect_disconnect_handles_deauth_error_and_retains_settings(meetup_event, rf, user):
+    """Test that unexpected Stripe deauthorization errors retain local settings for retry."""
+    gs = GlobalSettingsObject()
+    gs.settings.set('payment_stripe_connect_client_id', 'ca_platform_client_123')
+    gs.settings.set('payment_stripe_connect_secret_key', 'sk_platform_live_key')
+
     meetup_event.settings.set('payment_stripe_connect_user_id', 'acct_test_connected_123')
+    meetup_event.settings.set('payment_stripe_connect_publishable_key', 'pk_test_connected_123')
+    meetup_event.settings.set('payment_stripe__enabled', True)
+
+    req = rf.post('/stripe/disconnect/')
+    req.event = meetup_event
+    req.organizer = meetup_event.organizer
+    req.user = user
+    SessionMiddleware(lambda r: None).process_request(req)
+    setattr(req, '_messages', FallbackStorage(req))
+
+    with patch('stripe.OAuth.deauthorize', side_effect=stripe.error.APIConnectionError('Network failure')):
+        view = EventStripeConnectDisconnectView()
+        view.setup(req)
+        resp = view.post(req)
+
+    assert resp.status_code == 302
+    # Settings must be retained so the organizer does not lose the account identifier
+    assert meetup_event.settings.get('payment_stripe_connect_user_id') == 'acct_test_connected_123'
+
+
+@pytest.mark.django_db
+@scopes_disabled()
+def test_event_settings_form_validation_with_connected_account(meetup_event):
+    """Paid meetup passes form validation when connected Stripe account exists with a publishable key."""
+    meetup_event.settings.set('payment_stripe_connect_user_id', 'acct_test_connected_123')
+    meetup_event.settings.set('payment_stripe_connect_publishable_key', 'pk_test_connected_123')
 
     form = EventCommonSettingsForm(obj=meetup_event)
     data = form.initial.copy()
@@ -321,6 +391,7 @@ def test_paid_rsvp_success_with_stripe_connect(meetup_event, rf):
 @pytest.mark.django_db
 @scopes_disabled()
 def test_stripe_payment_provider_is_enabled_and_executes_with_connect(meetup_event, rf):
+    """Test StripePaymentProvider execution with Stripe Connect."""
     gs = GlobalSettingsObject()
     gs.settings.set('payment_stripe_connect_secret_key', 'sk_platform_live_key')
     meetup_event.settings.set('payment_stripe_connect_user_id', 'acct_connected_provider_789')
@@ -361,6 +432,41 @@ def test_stripe_payment_provider_is_enabled_and_executes_with_connect(meetup_eve
 
     payment.refresh_from_db()
     assert payment.state == OrderPayment.PAYMENT_STATE_CONFIRMED
+
+
+@pytest.mark.django_db
+@scopes_disabled()
+def test_stripe_payment_provider_rejects_testmode_without_test_keys(meetup_event, rf):
+    """Test StripePaymentProvider raises error for test orders when test keys are not configured."""
+    gs = GlobalSettingsObject()
+    # Only live keys configured
+    gs.settings.set('payment_stripe_connect_secret_key', 'sk_platform_live_key')
+    meetup_event.settings.set('payment_stripe_connect_user_id', 'acct_connected_provider_789')
+    meetup_event.settings.set('payment_stripe__enabled', True)
+    meetup_event.testmode = True
+
+    provider = StripePaymentProvider(meetup_event)
+    order = Order.objects.create(
+        event=meetup_event,
+        email='buyer@example.com',
+        status=Order.STATUS_PENDING,
+        datetime=timezone.now(),
+        expires=timezone.now(),
+        total=Decimal('15.00'),
+        sales_channel='web',
+        locale='en',
+        code='TEST2',
+        testmode=True,
+    )
+    payment = order.payments.create(
+        state=OrderPayment.PAYMENT_STATE_CREATED,
+        provider='stripe',
+        amount=Decimal('15.00'),
+    )
+
+    req = rf.post('/', data={'stripe_token': 'tok_visa'})
+    with pytest.raises(PaymentException, match='test mode credentials'):
+        provider.execute_payment(req, payment)
 
 
 @pytest.mark.django_db

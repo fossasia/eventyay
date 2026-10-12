@@ -48,6 +48,7 @@ from eventyay.base.meetup import (
     build_video_form_fields,
     is_meetup_event,
 )
+from eventyay.base.stripe_connect import get_stripe_connect_credentials
 from eventyay.control.forms.global_settings import StripeKeyValidator
 from eventyay.consts import SizeKey
 from eventyay.base.models import Event, Organizer, TaxRule, Team
@@ -2163,7 +2164,15 @@ class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
             fee = cleaned_data.get('registration_fee')
             if not fee or fee <= Decimal('0.00'):
                 self.add_error('registration_fee', _('Please enter a valid registration fee greater than 0.'))
-            has_connect = bool(getattr(self, 'event', None) and self.event.settings.get('payment_stripe_connect_user_id'))
+            event_obj = getattr(self, 'event', None)
+            has_connect = bool(
+                event_obj
+                and event_obj.settings.get('payment_stripe_connect_user_id')
+                and (
+                    event_obj.settings.get('payment_stripe_connect_publishable_key')
+                    or get_stripe_connect_credentials(event_obj).get('publishable_key')
+                )
+            )
             if not has_connect:
                 if not cleaned_data.get('payment_stripe_publishable_key'):
                     self.add_error('payment_stripe_publishable_key', _('Please enter your Stripe publishable key.'))

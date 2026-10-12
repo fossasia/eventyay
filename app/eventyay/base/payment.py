@@ -45,6 +45,7 @@ from eventyay.base.reldate import RelativeDateField, RelativeDateWrapper
 from eventyay.base.services.cart import get_fees
 from eventyay.base.settings import SettingsSandbox
 from eventyay.base.signals import register_payment_providers
+from eventyay.base.stripe_connect import get_stripe_connect_credentials
 from eventyay.base.templatetags.money import money_filter
 from eventyay.base.templatetags.rich_text import rich_text
 from eventyay.helpers.countries import CachedCountries
@@ -1514,16 +1515,29 @@ class StripePaymentProvider(BasePaymentProvider):
         return True
 
     def execute_payment(self, request: HttpRequest, payment: OrderPayment):
+        """Execute payment charge via Stripe API.
+
+        Supports both standard organizer-configured Stripe secrets and platform-level
+        Stripe Connect accounts using Direct/Destination charges with stripe_account.
+
+        Args:
+            request: The current HttpRequest.
+            payment: The OrderPayment instance being processed.
+
+        Raises:
+            PaymentException: If Stripe credentials are misconfigured, required tokens are missing,
+                or charge processing fails.
+        """
         connect_user_id = self.event.settings.get('payment_stripe_connect_user_id')
         secret_key = self.settings.get('secret_key')
         stripe_account = None
 
         if connect_user_id:
-            from eventyay.base.stripe_connect import get_stripe_connect_credentials
-
             creds = get_stripe_connect_credentials(self.event)
             secret_key = creds.get('secret_key')
             stripe_account = connect_user_id
+            if payment.order.testmode and not secret_key:
+                raise PaymentException(_('Stripe Connect test mode credentials are not configured on this platform.'))
             if not secret_key:
                 raise PaymentException(_('Stripe Connect is not configured on this platform.'))
         elif not secret_key:

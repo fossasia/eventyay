@@ -20,6 +20,7 @@ from eventyay.base.meetup import get_rsvp_product_and_quota, is_meetup_event
 from eventyay.base.models import Quota
 from eventyay.base.models.orders import Order, OrderPayment, OrderPosition
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
+from eventyay.base.stripe_connect import get_stripe_connect_credentials
 from eventyay.base.templatetags.money import money_filter
 from eventyay.multidomain.urlreverse import eventreverse
 from eventyay.presale.views import EventViewMixin
@@ -161,21 +162,27 @@ class MeetupRsvpView(EventViewMixin, View):
 
         stripe_enabled = request.event.settings.get('payment_stripe__enabled', as_type=bool, default=False)
         connect_user_id = request.event.settings.get('payment_stripe_connect_user_id')
-        publishable_key = request.event.settings.get('payment_stripe_publishable_key')
-        secret_key = request.event.settings.get('payment_stripe_secret_key')
+        publishable_key = None
+        secret_key = None
         stripe_account = None
 
         if connect_user_id:
-            from eventyay.base.stripe_connect import get_stripe_connect_credentials
-
             creds = get_stripe_connect_credentials(request.event)
             secret_key = creds.get('secret_key')
             publishable_key = (
                 request.event.settings.get('payment_stripe_connect_publishable_key')
                 or creds.get('publishable_key')
-                or publishable_key
             )
             stripe_account = connect_user_id
+            if request.event.testmode and not secret_key:
+                messages.error(
+                    request,
+                    _('Stripe Connect test mode credentials are not configured on this platform.'),
+                )
+                return self._redirect_to_index(request)
+        else:
+            publishable_key = request.event.settings.get('payment_stripe_publishable_key')
+            secret_key = request.event.settings.get('payment_stripe_secret_key')
 
         if not stripe_enabled or not publishable_key or not secret_key:
             messages.error(

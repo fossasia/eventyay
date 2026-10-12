@@ -18,9 +18,17 @@ STRIPE_CONNECT_AUTHORIZE_URL = 'https://connect.stripe.com/oauth/authorize'
 
 
 def get_stripe_connect_credentials(event=None) -> dict[str, Any]:
-    """
-    Retrieve platform Stripe Connect credentials based on global settings
-    and testmode configuration.
+    """Retrieve platform Stripe Connect credentials.
+
+    For test-mode events, strictly retrieves test-mode credentials and avoids
+    falling back to live keys to prevent unintentional charges against live resources.
+
+    Args:
+        event: Optional Event instance to check testmode configuration.
+
+    Returns:
+        A dictionary containing client_id, secret_key, publishable_key, is_configured flag,
+        and testmode status.
     """
     gs = GlobalSettingsObject()
     testmode = bool(event and getattr(event, 'testmode', False))
@@ -33,15 +41,11 @@ def get_stripe_connect_credentials(event=None) -> dict[str, Any]:
     if testmode:
         secret_key = (
             gs.settings.get('payment_stripe_connect_test_secret_key')
-            or gs.settings.get('payment_stripe_connect_secret_key')
             or getattr(django_settings, 'STRIPE_CONNECT_TEST_SECRET_KEY', '')
-            or getattr(django_settings, 'STRIPE_CONNECT_SECRET_KEY', '')
         )
         publishable_key = (
             gs.settings.get('payment_stripe_connect_test_publishable_key')
-            or gs.settings.get('payment_stripe_connect_publishable_key')
             or getattr(django_settings, 'STRIPE_CONNECT_TEST_PUBLISHABLE_KEY', '')
-            or getattr(django_settings, 'STRIPE_CONNECT_PUBLISHABLE_KEY', '')
         )
     else:
         secret_key = (
@@ -58,25 +62,43 @@ def get_stripe_connect_credentials(event=None) -> dict[str, Any]:
         'secret_key': secret_key or '',
         'publishable_key': publishable_key or '',
         'is_configured': bool(client_id and secret_key),
+        'testmode': testmode,
     }
 
 
-def build_stripe_oauth_state(*, event_id: int, user_id: int, next_url: str = '') -> str:
-    """
-    Build a cryptographically signed OAuth state token containing event ID,
-    user ID, and redirect target.
+def build_stripe_oauth_state(*, event_id: int, user_id: int, next_url: str = '', nonce: str = '') -> str:
+    """Build a cryptographically signed OAuth state token.
+
+    Args:
+        event_id: Primary key of the event being configured.
+        user_id: Primary key of the user initiating the connection.
+        next_url: Post-authorization redirect target URL.
+        nonce: Cryptographic random nonce for browser session binding.
+
+    Returns:
+        HMAC-signed state token string.
     """
     payload = {
         'event_id': event_id,
         'user_id': user_id,
         'next_url': next_url,
+        'nonce': nonce,
     }
     return signing.dumps(payload, salt=STRIPE_CONNECT_OAUTH_STATE_SALT)
 
 
 def load_stripe_oauth_state(state: str) -> dict[str, Any]:
-    """
-    Validate and decode a signed OAuth state token, enforcing expiration.
+    """Validate and decode a signed OAuth state token.
+
+    Args:
+        state: HMAC-signed state token received from the OAuth callback.
+
+    Returns:
+        Decoded payload dictionary.
+
+    Raises:
+        BadSignature: If the state token has been tampered with or is invalid.
+        SignatureExpired: If the state token has exceeded the maximum age.
     """
     return signing.loads(
         state,
@@ -86,8 +108,18 @@ def load_stripe_oauth_state(state: str) -> dict[str, Any]:
 
 
 def build_stripe_authorize_url(*, redirect_uri: str, state: str, event=None) -> str:
-    """
-    Construct the Stripe Connect OAuth authorization URL.
+    """Construct the Stripe Connect OAuth authorization URL.
+
+    Args:
+        redirect_uri: Absolute callback URL configured for Stripe redirects.
+        state: Signed state parameter to prevent CSRF.
+        event: Optional Event instance for credential resolution.
+
+    Returns:
+        Complete Stripe OAuth authorize URL.
+
+    Raises:
+        ValueError: If platform Client ID is not configured.
     """
     creds = get_stripe_connect_credentials(event)
     client_id = creds.get('client_id')
@@ -105,26 +137,40 @@ def build_stripe_authorize_url(*, redirect_uri: str, state: str, event=None) -> 
 
 
 def exchange_stripe_authorization_code(*, code: str, event=None) -> dict[str, Any]:
-    """
-    Exchange authorization code for access credentials via stripe.OAuth.token.
+    """Exchange authorization code for access credentials via stripe.OAuth.token.
+
+    Args:
+        code: Authorization code returned by Stripe in the callback.
+        event: Optional Event instance for credential resolution.
+
+    Returns:
+        Stripe OAuth token response dictionary containing stripe_user_id and keys.
+
+    Raises:
+        ValueError: If platform Stripe secret key is missing.
+        stripe.error.StripeError: If the token exchange fails on the Stripe API.
     """
     creds = get_stripe_connect_credentials(event)
     secret_key = creds.get('secret_key')
     if not secret_key:
         raise ValueError(_('Stripe Connect secret key is not configured on this platform.'))
 
-    resp = stripe.OAuth.token(
+    return stripe.OAuth.token(
         grant_type='authorization_code',
         code=code,
         api_key=secret_key,
     )
-    return resp
 
 
 def get_stripe_account_display_name(stripe_user_id: str, event=None) -> str:
-    """
-    Attempt to retrieve a human-readable display name for the connected Stripe account.
-    Falls back to the stripe_user_id.
+    """Attempt to retrieve a human-readable display name for the connected Stripe account.
+
+    Args:
+        stripe_user_id: Connected account identifier (e.g. acct_...).
+        event: Optional Event instance for credential resolution.
+
+    Returns:
+        Account business profile name, dashboard display name, email, or account ID fallback.
     """
     creds = get_stripe_connect_credentials(event)
     secret_key = creds.get('secret_key')
@@ -139,11 +185,11 @@ def get_stripe_account_display_name(stripe_user_id: str, event=None) -> str:
         if hasattr(biz_profile, 'name') and biz_profile.name:
             return biz_profile.name
 
-        settings = getattr(acct, 'settings', None) or {}
+        settings_obj = getattr(acct, 'settings', None) or {}
         dashboard = (
-            getattr(settings, 'dashboard', None)
-            if hasattr(settings, 'dashboard')
-            else (settings.get('dashboard') if isinstance(settings, dict) else None)
+            getattr(settings_obj, 'dashboard', None)
+            if hasattr(settings_obj, 'dashboard')
+            else (settings_obj.get('dashboard') if isinstance(settings_obj, dict) else None)
         )
         if dashboard:
             if hasattr(dashboard, 'display_name'):
@@ -158,27 +204,31 @@ def get_stripe_account_display_name(stripe_user_id: str, event=None) -> str:
         email = getattr(acct, 'email', None)
         if email:
             return email
-    except Exception as exc:
+    except stripe.error.StripeError as exc:
         logger.warning('Could not retrieve display name for Stripe account %s: %s', stripe_user_id, exc)
 
     return stripe_user_id
 
 
 def deauthorize_stripe_account(*, stripe_user_id: str, event=None) -> None:
-    """
-    Revoke access to the connected Stripe account if credentials are valid.
+    """Revoke access to the connected Stripe account.
+
+    Args:
+        stripe_user_id: Connected account identifier to deauthorize.
+        event: Optional Event instance for credential resolution.
+
+    Raises:
+        ValueError: If platform credentials or stripe_user_id are missing.
+        stripe.error.StripeError: If Stripe API deauthorization fails.
     """
     creds = get_stripe_connect_credentials(event)
     secret_key = creds.get('secret_key')
     client_id = creds.get('client_id')
     if not secret_key or not client_id or not stripe_user_id:
-        return
+        raise ValueError(_('Stripe Connect platform credentials or account ID are missing.'))
 
-    try:
-        stripe.OAuth.deauthorize(
-            client_id=client_id,
-            stripe_user_id=stripe_user_id,
-            api_key=secret_key,
-        )
-    except Exception as exc:
-        logger.warning('Could not deauthorize Stripe account %s: %s', stripe_user_id, exc)
+    stripe.OAuth.deauthorize(
+        client_id=client_id,
+        stripe_user_id=stripe_user_id,
+        api_key=secret_key,
+    )

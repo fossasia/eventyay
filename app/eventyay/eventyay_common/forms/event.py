@@ -29,6 +29,7 @@ from eventyay.base.meetup import (
 )
 from eventyay.base.models import Event
 from eventyay.base.settings import validate_event_settings
+from eventyay.base.stripe_connect import get_stripe_connect_credentials
 from eventyay.common.language import get_language_choices_native_with_ui_name
 from eventyay.common.urls import get_file_url_path, is_http_url
 from eventyay.multidomain.urlreverse import build_absolute_uri
@@ -97,7 +98,12 @@ class EventCommonSettingsForm(SettingsForm):
         if is_meetup_event(self.event):
             add_video_field_errors(self, data.get('video_type'), data.get('video_url'))
             fee = data.get('registration_fee')
-            has_connect = bool(self.event.settings.get('payment_stripe_connect_user_id'))
+            connect_user_id = self.event.settings.get('payment_stripe_connect_user_id')
+            connect_pub_key = (
+                self.event.settings.get('payment_stripe_connect_publishable_key')
+                or get_stripe_connect_credentials(self.event).get('publishable_key')
+            )
+            has_connect = bool(connect_user_id and connect_pub_key)
             if fee and fee > Decimal('0.00') and not has_connect:
                 pub_key = data.get('payment_stripe_publishable_key') or self.event.settings.get('payment_stripe_publishable_key')
                 sec_key = data.get('payment_stripe_secret_key') or self.event.settings.get('payment_stripe_secret_key')
@@ -170,7 +176,12 @@ class EventCommonSettingsForm(SettingsForm):
                         product.save(update_fields=['default_price'])
 
                 stripe_sec = self.cleaned_data.get('payment_stripe_secret_key') or self.event.settings.get('payment_stripe_secret_key')
-                has_connect = bool(self.event.settings.get('payment_stripe_connect_user_id'))
+                connect_user_id = self.event.settings.get('payment_stripe_connect_user_id')
+                connect_pub_key = (
+                    self.event.settings.get('payment_stripe_connect_publishable_key')
+                    or get_stripe_connect_credentials(self.event).get('publishable_key')
+                )
+                has_connect = bool(connect_user_id and connect_pub_key)
                 if reg_fee > Decimal('0.00') and (stripe_sec or has_connect):
                     self.cleaned_data['payment_stripe__enabled'] = True
                 elif reg_fee == Decimal('0.00') and not self.cleaned_data.get('payment_stripe_publishable_key') and not has_connect:

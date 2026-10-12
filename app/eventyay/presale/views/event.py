@@ -777,20 +777,14 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
             'guest_checkout_allowed': not event.settings.require_registered_account_for_tickets,
             'meetup_registration_fee': registration_fee or Decimal('0.00'),
             'stripe_publishable_key': (
-                event.settings.get('payment_stripe_publishable_key')
-                or event.settings.get('payment_stripe_connect_publishable_key')
-                or (
-                    get_stripe_connect_credentials(event).get('publishable_key', '')
-                    if event.settings.get('payment_stripe_connect_user_id')
-                    else ''
+                (
+                    event.settings.get('payment_stripe_connect_publishable_key')
+                    or get_stripe_connect_credentials(event).get('publishable_key', '')
                 )
+                if event.settings.get('payment_stripe_connect_user_id')
+                else event.settings.get('payment_stripe_publishable_key', '')
             ),
-            'stripe_account': (
-                event.settings.get('payment_stripe_connect_user_id', '')
-                if not event.settings.get('payment_stripe_publishable_key')
-                and not event.settings.get('payment_stripe_connect_publishable_key')
-                else ''
-            ),
+            'stripe_account': event.settings.get('payment_stripe_connect_user_id', '') or '',
         }
 
     def get_context_data(self, **kwargs):
