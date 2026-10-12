@@ -555,3 +555,6 @@ def billing_invoice_send_email(subject, content, invoice, organizer_billing):
             'attach_file_name': pdf_buffer.filename,
         }
     )
+
+    invoice.sent_to_email = organizer_billing.primary_contact_email
+    invoice.save(update_fields=['sent_to_email'])
