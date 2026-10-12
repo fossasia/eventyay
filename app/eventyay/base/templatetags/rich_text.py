@@ -11,6 +11,7 @@ import markdown
 from bleach import DEFAULT_CALLBACKS
 # TODO: Remove bleach import
 from bleach.linkifier import build_email_re, build_url_re
+from bs4 import BeautifulSoup
 from django import template
 from django.conf import settings
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -356,6 +357,35 @@ def rich_text_snippet(text: str):
     if not rendered:
         return rendered
     return mark_safe(_unwrap_single_paragraph(str(rendered)))
+
+
+def _link_remote_images(html_body: str) -> str:
+    """Replace images that are not embedded in the email with links, so viewing it loads nothing."""
+    soup = BeautifulSoup(html_body, 'html.parser')
+    for img in soup.find_all('img'):
+        src = img.get('src', '').strip()
+        # Browsers ignore whitespace and control characters in URLs, so check the source without them.
+        if re.sub(r'[\x00-\x20]', '', src).lower().startswith('data:image/'):
+            continue
+        if src:
+            link = soup.new_tag('a', href=src, target='_blank', rel='noopener noreferrer')
+            link.string = img.get('alt') or src
+            img.replace_with(link)
+        else:
+            img.replace_with(img.get('alt', ''))
+    return str(soup)
+
+
+@register.filter
+def rich_text_email(text: str):
+    """Render a stored email body the way the HTML email shows it to the recipient.
+
+    Images that are not embedded in the email are shown as links instead, so opening
+    the email history does not contact the image host.
+    """
+    if not text:
+        return ''
+    return mark_safe(_link_remote_images(compile_email_body(text)))
 
 
 @register.filter
