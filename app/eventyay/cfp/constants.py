@@ -84,18 +84,18 @@ BUILTIN_FIELD_DEFAULTS = {
             'help_text': _('What organization or company do you represent?'),
         },
         'avatar': {
-            'label': _('Profile picture'),
+            'label': _('Speaker photo'),
             'help_text': _(
                 'We recommend uploading an image at least 400px wide. '
                 'A square image works best, as we display it in a circle in several places.'
             ),
         },
         'avatar_source': {
-            'label': _('Profile Picture Source'),
+            'label': _('Speaker photo source'),
             'help_text': _('Please enter the name of the author or source of image and a link if applicable.'),
         },
         'avatar_license': {
-            'label': _('Profile Picture License'),
+            'label': _('Speaker photo license'),
             'help_text': _('Please enter the name of the license of the photo and link to it if applicable.'),
         },
         'availabilities': {
@@ -142,8 +142,7 @@ class CfPLazyI18nString(LazyI18nString):
         if isinstance(self.data, dict):
             firstpart = lng.split('-')[0]
             similar = [
-                loc for loc in self.data.keys()
-                if (loc.startswith(firstpart + '-') or firstpart == loc) and loc != lng
+                loc for loc in self.data.keys() if (loc.startswith(firstpart + '-') or firstpart == loc) and loc != lng
             ]
             if lng in self.data and self.data[lng] is not None:
                 return self.data[lng]

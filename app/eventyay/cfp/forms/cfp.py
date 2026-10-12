@@ -3,6 +3,7 @@ import logging
 from django.core.exceptions import ValidationError
 from django.forms.utils import ErrorDict
 from django.utils.translation import gettext_lazy as _
+from i18nfield.strings import LazyI18nString
 
 from eventyay.cfp.constants import CfPLazyI18nString
 from eventyay.common.language import language
@@ -120,7 +121,7 @@ class CfPFormMixin:
 
             raw_help_text = field_data.get('help_text') or ''
             default_help = getattr(field, 'original_help_text', None) or field.help_text
-            if not isinstance(raw_help_text, CfPLazyI18nString):
+            if not isinstance(raw_help_text, LazyI18nString):
                 raw_help_text = CfPLazyI18nString(raw_help_text, default=default_help)
             field.original_help_text = raw_help_text
             added = str(getattr(field, 'added_help_text', '')).strip()
@@ -130,7 +131,7 @@ class CfPFormMixin:
         stored_label = field_data.get('label')
         if stored_label:
             default_label = field.label
-            if not isinstance(stored_label, CfPLazyI18nString):
+            if not isinstance(stored_label, LazyI18nString):
                 stored_label = CfPLazyI18nString(stored_label, default=default_label)
             # Preserve explicit organizer customizations, but avoid pinning cached
             # gettext fallbacks that can block future PO/MO updates.
@@ -139,9 +140,7 @@ class CfPFormMixin:
                 label_data = stored_label
             if label_data:
                 english = label_data.get('en', '')
-                has_real_translation = any(
-                    v and v != english for k, v in label_data.items() if k != 'en'
-                )
+                has_real_translation = any(v and v != english for k, v in label_data.items() if k != 'en')
                 with language('en'):
                     default_english_label = str(default_label or '')
                 has_custom_english = bool(english) and english != default_english_label
