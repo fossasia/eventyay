@@ -145,13 +145,13 @@ class EventReviewSettings(EventSettingsPermission, ActionFromUrl, FormView):
     @transaction.atomic
     def form_valid(self, form):
         try:
-            phases = self.save_phases()
-            scores = self.save_scores()
+            with transaction.atomic():
+                phases = self.save_phases()
+                scores = self.save_scores()
+                if not phases or not scores:
+                    raise ValidationError(phrases.base.error_saving_changes)
         except ValidationError as e:
             messages.error(self.request, e.message)
-            return self.get(self.request, *self.args, **self.kwargs)
-        if not phases or not scores:
-            messages.error(self.request, phrases.base.error_saving_changes)
             return self.get(self.request, *self.args, **self.kwargs)
         form.save()
         if self.scores_formset.has_changed():
