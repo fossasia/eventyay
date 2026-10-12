@@ -1175,3 +1175,29 @@ class ProductFreePriceBoundsTest(ItemFormTest):
             assert item.free_price is True
             assert item.free_price_min == Decimal('5.00')
             assert item.free_price_max == Decimal('20.00')
+
+    def test_create_copy_from_valid_source_with_non_numeric_free_price_min(self):
+        with scope(organizer=self.orga1, event=self.event1):
+            source = Item.objects.create(
+                event=self.event1,
+                name='Source Valid',
+                default_price=Decimal('10.00'),
+                free_price=True,
+                free_price_min=Decimal('5.00'),
+                free_price_max=Decimal('20.00'),
+            )
+            form = ProductCreateForm(
+                instance=Item(event=self.event1),
+                event=self.event1,
+                user=self.user,
+                data={
+                    'name_0': 'Copied Ticket',
+                    'default_price': '10.00',
+                    'copy_from': str(source.pk),
+                    'free_price_min': 'invalid',
+                },
+            )
+            assert not form.is_valid()
+            assert 'free_price_min' in form.errors
+            assert 'copy_from' not in form.errors
+            assert not Item.objects.filter(name='Copied Ticket').exists()

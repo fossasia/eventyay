@@ -592,7 +592,7 @@ class ProductCreateForm(I18nModelForm):
             cleaned_data['free_price_max'] = copy_from.free_price_max
 
         clean_free_price_bounds(cleaned_data, form=self)
-        if copy_from and 'free_price_min' in self.errors:
+        if copy_from and copy_from.free_price and copy_from.free_price_min is not None and copy_from.free_price_min < 0:
             self.add_error('copy_from', _('The minimum price must not be negative.'))
 
         return cleaned_data
