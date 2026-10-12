@@ -211,12 +211,12 @@
                             <span class="text-muted">({{ stripe_connect_user_id }})</span>
                         </div>
                         {% trans "Are you sure you want to disconnect this Stripe account?" as disconnect_confirm_msg %}
-                        <form method="post" action="{{ stripe_disconnect_url }}" class="stripe-disconnect-form" style="margin: 0; display: inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-default" data-confirm="{{ disconnect_confirm_msg }}">
-                                <i class="fa fa-chain-broken"></i> {% trans "Disconnect" %}
-                            </button>
-                        </form>
+                        <button type="submit"
+                                form="event-stripe-disconnect-form"
+                                class="btn btn-sm btn-default"
+                                data-confirm="{{ disconnect_confirm_msg }}">
+                            <i class="fa fa-chain-broken"></i> {% trans "Disconnect" %}
+                        </button>
                     </div>
                 </div>
             </div>
@@ -594,6 +594,14 @@
       method="post">
     {% csrf_token %}
 </form>
+{% if stripe_disconnect_url %}
+<form id="event-stripe-disconnect-form"
+      action="{{ stripe_disconnect_url }}"
+      method="post"
+      class="stripe-disconnect-form">
+    {% csrf_token %}
+</form>
+{% endif %}
 <script src="{% static 'eventyay-common/js/event-settings-images.js' %}" type="module"></script>
 <script src="{% static 'eventyay-common/js/stripe-disconnect.js' %}" type="module"></script>
 {% endblock %}

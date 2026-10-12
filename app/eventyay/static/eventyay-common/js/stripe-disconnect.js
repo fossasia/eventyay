@@ -6,7 +6,9 @@ function initStripeDisconnect() {
   const forms = document.querySelectorAll('.stripe-disconnect-form');
   forms.forEach(form => {
     form.addEventListener('submit', event => {
-      const btn = form.querySelector('button[data-confirm]');
+      const btn = event.submitter
+        || form.querySelector('button[data-confirm]')
+        || (form.id ? document.querySelector(`button[form="${form.id}"][data-confirm]`) : null);
       const message = btn ? btn.getAttribute('data-confirm') : 'Are you sure you want to disconnect this Stripe account?';
       if (!window.confirm(message)) {
         event.preventDefault();
