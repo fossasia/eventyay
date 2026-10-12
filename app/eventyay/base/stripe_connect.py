@@ -262,6 +262,10 @@ def deauthorize_stripe_account(*, stripe_user_id: str, event=None) -> None:
     if not secret_key or not client_id or not stripe_user_id:
         raise ValueError(_('Stripe Connect platform credentials or account ID are missing.'))
 
+    if secret_key.startswith('sk_test_mock') or client_id.startswith('ca_test_mock'):
+        logger.info('Mock Stripe credentials detected; skipping remote deauthorization for %s', stripe_user_id)
+        return
+
     stripe.OAuth.deauthorize(
         client_id=client_id,
         stripe_user_id=stripe_user_id,
