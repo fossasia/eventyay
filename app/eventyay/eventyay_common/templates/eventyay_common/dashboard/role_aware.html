@@ -1,0 +1,326 @@
+{% load i18n %}
+{% load static %}
+{% load eventurl %}
+
+<section class="common-dashboard cd-role-aware" aria-labelledby="common-dashboard-title">
+  <header class="common-dashboard__header cd-header-hero">
+    <div class="cd-header-hero__titles">
+      <h1 id="common-dashboard-title" class="common-dashboard__title">
+        {% trans "Dashboard" %}
+      </h1>
+      <p class="cd-header-hero__subtitle">
+        {% trans "Your events, tickets, sessions and more — all in one place." %}
+      </p>
+    </div>
+    {% if can_create_event %}
+      <div class="cd-header-hero__action">
+        <a class="btn btn-primary cd-create-btn" href="{{ create_event_url }}">
+          <span class="fa fa-plus-circle" aria-hidden="true"></span>
+          {% trans "Create event" %}
+        </a>
+      </div>
+    {% endif %}
+  </header>
+
+  <section class="common-dashboard__section cd-search-section" aria-label="{% trans 'Go to event' %}">
+    <div class="cd-search">
+      <div class="cd-search__field cd-search__field--typeahead">
+        <span class="fa fa-search cd-search__icon" aria-hidden="true"></span>
+        <div class="dropdown-container">
+          <label class="sr-only" for="dashboard_query">{% trans "Go to event" %}</label>
+          <input type="text" class="form-control cd-search__input" id="dashboard_query"
+                 placeholder="{% trans 'Search events or go to event...' %}"
+                 data-typeahead-query autofocus>
+          <ul data-event-typeahead data-source="{{ typeahead_source_url|default:'/control/events/typeahead/' }}" data-typeahead-field="#dashboard_query"
+              class="event-dropdown dropdown-menu">
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {% if create_actions %}
+    <section class="common-dashboard__section" aria-labelledby="organiser-quick-actions-title">
+      <h2 id="organiser-quick-actions-title">{% trans "Quick actions" %}</h2>
+      <div class="cd-card-grid cd-card-grid--actions">
+        {% for action in create_actions %}
+          <article class="cd-action-card">
+            <div class="cd-action-card__icon cd-action-card__icon--{{ action.tone }}" aria-hidden="true">
+              <span class="fa fa-{{ action.icon }}"></span>
+            </div>
+            <h3>{{ action.title }}</h3>
+            <p>{{ action.description }}</p>
+            <a class="cd-action-card__link" href="{{ action.url }}">
+              {{ action.title }}
+              <span aria-hidden="true">></span>
+            </a>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  {% if next_up %}
+    <section class="common-dashboard__section cd-next-up-section" aria-labelledby="next-up-title">
+      <div class="common-dashboard__section-head">
+        <h2 id="next-up-title">{% trans "Next up" %}</h2>
+      </div>
+      <article class="cd-next-up-card">
+        <div class="cd-next-up-card__media">
+          {% if next_up.image_url %}
+            <img src="{{ next_up.image_url }}" alt="" loading="lazy">
+          {% else %}
+            <div class="cd-next-up-card__placeholder">
+              <span class="fa fa-calendar"></span>
+            </div>
+          {% endif %}
+        </div>
+        <div class="cd-next-up-card__body">
+          <div class="cd-next-up-card__badges">
+            {% if next_up.role_label %}
+              <span class="cd-badge cd-badge--role cd-badge--role-{{ next_up.role }}">{{ next_up.role_label }}</span>
+            {% endif %}
+            {% if next_up.status_label %}
+              <span class="cd-badge cd-badge--status cd-badge--{{ next_up.status_tone }}">{{ next_up.status_label }}</span>
+            {% endif %}
+          </div>
+          <h3 class="cd-next-up-card__title">
+            <a href="{{ next_up.primary_action.url }}">{{ next_up.name }}</a>
+          </h3>
+          <div class="cd-next-up-card__meta">
+            {% if next_up.date_range %}
+              <p><span class="fa fa-calendar-o" aria-hidden="true"></span> {{ next_up.date_range }}{% if next_up.time_label %} · {{ next_up.time_label }}{% endif %}</p>
+            {% endif %}
+            {% if next_up.location %}
+              <p><span class="fa fa-map-marker" aria-hidden="true"></span> {{ next_up.location }}</p>
+            {% endif %}
+          </div>
+          <div class="cd-next-up-card__actions">
+            {% if next_up.primary_action %}
+              <a class="btn btn-primary cd-next-up-card__btn-primary" href="{{ next_up.primary_action.url }}">
+                {{ next_up.primary_action.label }}
+              </a>
+            {% endif %}
+            {% if next_up.secondary_links %}
+              <div class="cd-next-up-card__secondary-links">
+                {% for link in next_up.secondary_links %}
+                  <a href="{{ link.url }}" class="cd-secondary-link">{{ link.label }}</a>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </article>
+    </section>
+  {% endif %}
+
+  {% if has_attention %}
+    <section class="common-dashboard__section cd-attention-section" aria-labelledby="needs-attention-title">
+      <div class="common-dashboard__section-head">
+        <h2 id="needs-attention-title">{% trans "Needs your attention" %}</h2>
+      </div>
+      <div class="cd-attention-grid">
+        {% for item in attention_items %}
+          <article class="cd-attention-card cd-attention-card--{{ item.tone }}">
+            <div class="cd-attention-card__icon">
+              <span class="fa fa-{{ item.icon }}"></span>
+            </div>
+            <div class="cd-attention-card__content">
+              <h3>{{ item.title }}</h3>
+              {% if item.event_name %}
+                <p class="cd-attention-card__event">{{ item.event_name }}</p>
+              {% endif %}
+              <p class="cd-attention-card__desc">{{ item.description }}</p>
+            </div>
+            <div class="cd-attention-card__action">
+              <a href="{{ item.url }}" class="btn btn-sm btn-default cd-attention-btn cd-attention-btn--{{ item.tone }}">
+                {{ item.action_label }}
+              </a>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  {% if has_my_events %}
+    <section class="common-dashboard__section" aria-labelledby="my-events-title">
+      <div class="common-dashboard__section-head">
+        <h2 id="my-events-title">{% trans "Your upcoming events" %}</h2>
+        <a class="common-dashboard__view-all" href="{{ events_list_url }}">
+          {% trans "View all events" %}
+          <span aria-hidden="true">></span>
+        </a>
+      </div>
+      <div class="cd-card-grid cd-card-grid--role-aware">
+        {% for card in my_events %}
+          {% include "eventyay_common/dashboard/includes/event_card.html" with card=card %}
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  {% if has_tickets or has_sessions or has_organising %}
+    <section class="common-dashboard__section cd-compact-hub">
+      <div class="cd-compact-grid">
+        {% if has_tickets %}
+          <div class="cd-compact-panel" aria-labelledby="compact-tickets-title">
+            <div class="cd-compact-panel__head">
+              <h3 id="compact-tickets-title">
+                <span class="fa fa-ticket"></span> {% trans "My tickets" %}
+              </h3>
+              <a href="{{ tickets_list_url }}" class="cd-compact-panel__more">{% trans "View all" %}</a>
+            </div>
+            <div class="cd-compact-panel__body">
+              <ul class="cd-compact-list">
+                {% for t in my_tickets %}
+                  <li class="cd-compact-item">
+                    <div class="cd-compact-item__main">
+                      <strong class="cd-compact-item__title">{{ t.event_name }}</strong>
+                      <span class="cd-compact-item__meta">#{{ t.code }} · {{ t.date_range }}</span>
+                    </div>
+                    <div class="cd-compact-item__side">
+                      <span class="cd-badge cd-badge--{{ t.status_tone }}">{{ t.status }}</span>
+                      <a href="{{ t.url }}" class="btn btn-xs btn-default cd-compact-item__btn">{{ t.action_label }}</a>
+                    </div>
+                  </li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        {% endif %}
+
+        {% if has_sessions %}
+          <div class="cd-compact-panel" aria-labelledby="compact-sessions-title">
+            <div class="cd-compact-panel__head">
+              <h3 id="compact-sessions-title">
+                <span class="fa fa-microphone"></span> {% trans "My sessions and proposals" %}
+              </h3>
+              <a href="{{ sessions_list_url }}" class="cd-compact-panel__more">{% trans "View all" %}</a>
+            </div>
+            <div class="cd-compact-panel__body">
+              <ul class="cd-compact-list">
+                {% for s in my_sessions %}
+                  <li class="cd-compact-item">
+                    <div class="cd-compact-item__main">
+                      <strong class="cd-compact-item__title">{{ s.title }}</strong>
+                      <span class="cd-compact-item__meta">{{ s.event_name }} · {{ s.date_range }}</span>
+                    </div>
+                    <div class="cd-compact-item__side">
+                      <span class="cd-badge cd-badge--{{ s.status_tone }}">{{ s.status }}</span>
+                      <a href="{{ s.url }}" class="btn btn-xs btn-default cd-compact-item__btn">{{ s.action_label }}</a>
+                    </div>
+                  </li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        {% endif %}
+
+        {% if has_organising %}
+          <div class="cd-compact-panel" aria-labelledby="compact-organising-title">
+            <div class="cd-compact-panel__head">
+              <h3 id="compact-organising-title">
+                <span class="fa fa-users"></span> {% trans "Organising" %}
+              </h3>
+              <a href="{{ organising_list_url }}" class="cd-compact-panel__more">{% trans "View all" %}</a>
+            </div>
+            <div class="cd-compact-panel__body">
+              <ul class="cd-compact-list">
+                {% for o in organising_events %}
+                  <li class="cd-compact-item">
+                    <div class="cd-compact-item__main">
+                      <strong class="cd-compact-item__title">{{ o.name }}</strong>
+                      <span class="cd-compact-item__meta">{{ o.date_range }}</span>
+                    </div>
+                    <div class="cd-compact-item__side">
+                      <span class="cd-badge cd-badge--{{ o.status_tone }}">{{ o.status }}</span>
+                      <a href="{{ o.url }}" class="btn btn-xs btn-default cd-compact-item__btn">{{ o.action_label }}</a>
+                    </div>
+                  </li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </section>
+  {% endif %}
+
+  {% if has_recent_activity %}
+    <section class="common-dashboard__section cd-recent-activity-section" aria-labelledby="recent-activity-title">
+      <div class="common-dashboard__section-head">
+        <h2 id="recent-activity-title">{% trans "Recent activity" %}</h2>
+      </div>
+      <div class="cd-recent-activity-card">
+        <ul class="cd-activity-list">
+          {% for act in recent_activity %}
+            <li class="cd-activity-item">
+              <div class="cd-activity-item__icon">
+                <span class="fa fa-{{ act.icon }}"></span>
+              </div>
+              <div class="cd-activity-item__body">
+                <a href="{{ act.url }}" class="cd-activity-item__title">{{ act.title }}</a>
+                <span class="cd-activity-item__event">{{ act.event_name }}</span>
+              </div>
+              {% if act.time_ago %}
+                <span class="cd-activity-item__time">{% blocktrans with t=act.time_ago %}{{ t }} ago{% endblocktrans %}</span>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </section>
+  {% endif %}
+
+  {% if widgets %}
+    <section class="common-dashboard__section" aria-labelledby="organiser-widgets-title">
+      <h2 id="organiser-widgets-title">{% trans "Other features" %}</h2>
+      <div class="dashboard">
+        {% for w in widgets %}
+          <div class="widget-{{ w.display_size|default:'small' }} {{ w.container_class|default:'widget-container' }} {% if w.lazy %}widget-lazy-loading{% endif %}" data-lazy-id="{{ w.lazy }}">
+            {% if w.url %}
+              <a href="{{ w.url }}" class="widget">
+                {% if w.lazy %}
+                  <span class="fa fa-cog fa-4x"></span>
+                {% else %}
+                  {{ w.content|safe }}
+                {% endif %}
+              </a>
+            {% else %}
+              <div class="widget">
+                {% if w.lazy %}
+                  <span class="fa fa-cog fa-4x"></span>
+                {% else %}
+                  {{ w.content|safe }}
+                {% endif %}
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  <div class="modal popup-modal" id="alert-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-body">
+          <div class="modal-card">
+            <div class="modal-card-icon">
+              <i class="fa fa-cog big-rotating-icon"></i>
+            </div>
+            <div class="modal-card-content">
+              <h3>{% trans "Component not enabled!" %}</h3>
+              <p>{% trans "You need to enable this component first" %}</p>
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Ok" %}</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% include "eventyay_common/includes/ticket_permission_dialog.html" %}
+  {% include "eventyay_common/includes/talk_permission_dialog.html" %}
+  {% include "eventyay_common/includes/video_permission_dialog.html" with dialog_id=video_permission_dialog_id %}
+</section>

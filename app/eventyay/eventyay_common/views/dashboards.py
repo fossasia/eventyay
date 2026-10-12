@@ -55,8 +55,12 @@ from eventyay.multidomain.urlreverse import eventreverse
 
 from .meetup import get_meetup_analytics_context
 
-from ...base.models.orders import CancellationRequest
-from ..onboarding import build_onboarding_context, build_organiser_dashboard_context, user_needs_onboarding
+from ..onboarding import (
+    build_onboarding_context,
+    build_organiser_dashboard_context,
+    build_role_aware_dashboard_context,
+    user_needs_onboarding,
+)
 from ..permissions import (
     filter_timeline_entry_for_ticket_access,
     get_cached_event_dashboard_access,
@@ -714,7 +718,7 @@ def eventyay_common_dashboard(request: HttpRequest) -> HttpResponse:
     for r, result in user_dashboard_widgets.send(request, user=request.user):
         widgets.extend(result)
 
-    ctx = build_organiser_dashboard_context(request, annotated_event_query)
+    ctx = build_role_aware_dashboard_context(request, annotated_event_query)
     ctx['widgets'] = rearrange(widgets)
     ctx['video_permission_dialog_id'] = VIDEO_PERMISSION_DIALOG_ID
     return render(request, 'eventyay_common/dashboard/dashboard.html', ctx)
