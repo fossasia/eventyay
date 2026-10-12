@@ -61,8 +61,8 @@
 					@deleteSession="caps.canDelete ? deleteSessionDirect($event) : null",
 					@assignMembers="caps.canAssignMembers ? openAssignModal($event) : null",
 					@unscheduleSession="caps.canDrag ? unscheduleSession($event) : null")
-			#session-editor-wrapper(v-if="editorSession && caps.canEdit", @click="editorSession = null")
-				form#session-editor(@click.stop="", @submit.prevent="editorSave")
+			#session-editor-wrapper(v-if="editorSession && caps.canEdit", @click="editorCancel")
+				form#session-editor(@click.stop="", @submit.prevent="editorSave", @keydown.enter="editorSubmit")
 					h3.session-editor-title(v-if="editorSession.code")
 						a(v-if="caps.showSubmissionLinks && organizerSlug && eventSlug", :href="`${api.getOrgaEventBase()}/submissions/${editorSession.code}/`") {{ getLocalizedString(editorSession.title) }}
 						span(v-else) {{ getLocalizedString(editorSession.title) }}
@@ -123,6 +123,7 @@
 					.button-row
 						input(type="submit")
 						bunt-button#btn-delete(v-if="caps.canEditRoles ? editorSession.id : !editorSession.code", @click="editorDelete", :loading="editorSessionWaiting") {{ $t('Delete') }}
+						bunt-button#btn-cancel(type="button", @click="editorCancel") {{ $t('Cancel') }}
 						bunt-button#btn-save(@click="editorSave", :loading="editorSessionWaiting") {{ $t('Save') }}
 			
 			#assign-modal-wrapper(v-if="assigningSession && caps.canAssignMembers", @click="closeAssignModal")
@@ -747,6 +748,9 @@ async function createSession(e: CreateSessionEvent): Promise<void> {
 function editorStart(session: SessionData | Talk): void {
   editorSessionError.value = ''
   const newEditorSession = { ...session } as SessionData
+  if (newEditorSession.title && typeof newEditorSession.title === 'object') {
+    newEditorSession.title = { ...newEditorSession.title }
+  }
   if (caps.canEditRoles) {
     if (!newEditorSession.roles || newEditorSession.roles.length === 0) {
       newEditorSession.roles = [{ id: undefined, capacity: 1 }]
@@ -755,10 +759,44 @@ function editorStart(session: SessionData | Talk): void {
     }
   }
   editorSession.value = newEditorSession
+  void nextTick(() => {
+    const form = document.getElementById('session-editor') as HTMLFormElement | null
+    if (form) {
+      const input = form.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(
+        'input:not([type="submit"]):not([type="hidden"]), select, textarea'
+      )
+      if (input) {
+        input.focus()
+        if (input instanceof HTMLInputElement && input.type === 'text') {
+          input.select?.()
+        }
+      }
+    }
+  })
+}
+
+function editorSubmit(event: KeyboardEvent): void {
+  if (event.isComposing || event.keyCode === 229) return
+
+  const target = event.target as HTMLElement | null
+  if (
+    target instanceof HTMLButtonElement ||
+    target?.closest('button') ||
+    target instanceof HTMLTextAreaElement
+  ) return
+
+  const form = target?.closest('form') ?? (document.getElementById('session-editor') as HTMLFormElement | null)
+  if (form && !form.checkValidity()) {
+    form.reportValidity()
+    return
+  }
+  event.preventDefault()
+  event.stopPropagation()
+  void editorSave()
 }
 
 async function editorSave(): Promise<void> {
-  if (!editorSession.value) return
+  if (!editorSession.value || editorSessionWaiting.value) return
 
   editorSessionWaiting.value = true
   if (editorSession.value.start) {
@@ -813,6 +851,11 @@ async function editorSave(): Promise<void> {
   } finally {
     editorSessionWaiting.value = false
   }
+}
+
+function editorCancel(): void {
+  editorSession.value = null
+  editorSessionError.value = ''
 }
 
 async function editorDelete(): Promise<void> {
@@ -1165,11 +1208,23 @@ const preventScrollOnDrag = (e: TouchEvent) => {
   }
 }
 
+function onWindowKeydown(event: KeyboardEvent): void {
+  if (!editorSession.value) return
+  if (event.key === 'Escape') {
+    editorCancel()
+    return
+  }
+  if (event.key === 'Enter') {
+    editorSubmit(event)
+  }
+}
+
 onMounted(() => {
   document.addEventListener('touchmove', preventScrollOnDrag, { passive: false })
   window.addEventListener('click', onWindowClick)
   window.addEventListener('resize', onWindowResize)
   window.addEventListener('storage', onStorageChange)
+  window.addEventListener('keydown', onWindowKeydown)
   onWindowResize()
 })
 
@@ -1179,6 +1234,7 @@ onUnmounted(() => {
   window.removeEventListener('click', onWindowClick)
   window.removeEventListener('resize', onWindowResize)
   window.removeEventListener('storage', onStorageChange)
+  window.removeEventListener('keydown', onWindowKeydown)
 })
 </script>
 
@@ -1604,6 +1660,10 @@ onUnmounted(() => {
 			#btn-delete
 				button-style(color: $clr-danger, text-color: $clr-white)
 				font-weight: bold
+			#btn-cancel
+				font-weight: bold
+				margin-left: 8px
+				button-style(color: #6c757d)
 			#btn-save
 				margin-left: auto
 				font-weight: bold

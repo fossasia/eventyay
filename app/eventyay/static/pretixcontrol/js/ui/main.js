@@ -930,26 +930,6 @@ $(function () {
         });
     });
 
-    // Vouchers
-    $("#voucher-bulk-codes-generate").click(function () {
-        var num = $("#voucher-bulk-codes-num").val();
-        var prefix = $('#voucher-bulk-codes-prefix').val();
-        if (num != "") {
-            var url = $(this).attr("data-rng-url");
-            $("#id_codes").html("Generating...");
-            $(".form-group:has(#voucher-bulk-codes-num)").removeClass("has-error");
-            $.getJSON(url + '?num=' + num + '&prefix=' + encodeURIComponent(prefix), function (data) {
-                $("#id_codes").val(data.codes.join("\n"));
-            });
-        } else {
-            $(".form-group:has(#voucher-bulk-codes-num)").addClass("has-error");
-            $("#voucher-bulk-codes-num").focus();
-            setTimeout(function () {
-                $(".form-group:has(#voucher-bulk-codes-num)").removeClass("has-error");
-            }, 3000);
-        }
-    });
-
     form_handlers($("body"));
 
     $(".qrcode-canvas").each(function () {

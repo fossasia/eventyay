@@ -34,6 +34,11 @@ from eventyay.orga.forms.review import (
     TagsForm,
 )
 from eventyay.orga.forms.submission import SubmissionStateChangeForm
+from eventyay.orga.utils.speakers import (
+    get_submission_answers,
+    get_submission_speakers,
+    viewer_is_reviewer_only,
+)
 from eventyay.orga.views.submission import BaseSubmissionList
 from eventyay.submission.forms import SubmissionFilterForm, TalkQuestionsForm
 from eventyay.submission.permissions import can_view_reviews
@@ -291,7 +296,8 @@ class ReviewDashboard(EventPermissionRequired, BaseSubmissionList):
     @context
     @cached_property
     def show_tracks(self):
-        return self.request.event.get_feature_flag('use_tracks') and self.request.event.tracks.all().count() > 1
+        with scope(event=self.request.event):
+            return self.request.event.tracks.count() > 1
 
     @context
     @cached_property
@@ -378,7 +384,8 @@ class BulkReview(EventPermissionRequired, TemplateView):
     @context
     @cached_property
     def show_tracks(self):
-        return self.request.event.get_feature_flag('use_tracks') and self.request.event.tracks.all().count() > 1
+        with scope(event=self.request.event):
+            return self.request.event.tracks.count() > 1
 
     def get_context_data(self, **kwargs):
         result = super().get_context_data(**kwargs)
@@ -509,8 +516,23 @@ class ReviewSubmission(ReviewViewMixin, PermissionRequired, CreateOrUpdateView):
         )
 
     @context
-    def profiles(self):
-        return [speaker.event_profile(self.request.event) for speaker in self.submission.speakers.all()]
+    @cached_property
+    def for_reviewers(self):
+        return viewer_is_reviewer_only(self.request.user, self.request.event)
+
+    @context
+    @cached_property
+    def speakers(self):
+        return get_submission_speakers(
+            self.submission,
+            for_reviewers=self.for_reviewers,
+            user=self.request.user,
+        )
+
+    @context
+    @cached_property
+    def submission_answers(self):
+        return get_submission_answers(self.submission, for_reviewers=self.for_reviewers)
 
     @context
     @cached_property

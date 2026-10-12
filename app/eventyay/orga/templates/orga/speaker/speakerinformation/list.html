@@ -11,12 +11,13 @@
 
 {% block list_content %}
     <div class="table-responsive-sm">
+        {% with has_tracks=request.event.tracks.exists %}
         <table class="table table-sm table-flip table-sticky">
             <thead>
                 <tr>
                     <th>{% translate "Title" %}</th>
                     <th>{% translate "Target group" %}</th>
-                    {% if request.event|get_feature_flag:"use_tracks" %}
+                    {% if has_tracks %}
                         <th>{% translate "Tracks" %}</th>
                     {% endif %}
                     <th>{% translate "Session types" %}</th>
@@ -43,7 +44,7 @@
                                 {% translate "Only confirmed speakers" %}
                             {% endif %}
                         </td>
-                        {% if request.event|get_feature_flag:"use_tracks" %}
+                        {% if has_tracks %}
                             <td>
                                 {% if info.limit_tracks.exists %}
                                     {% for track in info.limit_tracks.all %}
@@ -86,6 +87,7 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% endwith %}
     </div>
 
     {% include "orga/includes/pagination.html" %}

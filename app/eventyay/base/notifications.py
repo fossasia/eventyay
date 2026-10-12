@@ -1,6 +1,7 @@
 import logging
 from collections import OrderedDict, namedtuple
 from itertools import groupby
+from zoneinfo import ZoneInfo
 
 from django.dispatch import receiver
 from django.utils.formats import date_format
@@ -203,7 +204,7 @@ class ParametrizedOrderNotificationType(NotificationType):
         n.add_attribute(
             _('Order date'),
             date_format(
-                order.datetime.astimezone(logentry.event.timezone),
+                order.datetime.astimezone(ZoneInfo(logentry.event.timezone)),
                 'SHORT_DATETIME_FORMAT',
             ),
         )

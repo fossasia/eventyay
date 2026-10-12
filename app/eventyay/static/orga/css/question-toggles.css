@@ -305,6 +305,32 @@ select.required-status-dropdown[data-current="after_deadline"] {
     display: block;
 }
 
+.cfp-organizer-only-label {
+    display: inline-block;
+    padding: 0.1em 0.35em;
+    background-color: var(--color-grey-pale);
+    border-radius: 2px;
+}
+
+.cfp-session-videos-heading-content {
+    display: grid;
+    width: 100%;
+    grid-template-columns: max-content max-content;
+    align-items: center;
+    justify-items: end;
+    justify-content: end;
+    column-gap: 0.25rem;
+}
+
+@media (max-width: 768px) {
+    .cfp-session-videos-heading-content {
+        display: inline-grid;
+        width: auto;
+        justify-content: start;
+        justify-items: start;
+    }
+}
+
 /* CFP Option Table Styles - Use more specific selectors to avoid unintended hiding */
 .cfp-option-table tbody select[name^="cfp_ask_"] {
     display: none;
@@ -324,6 +350,17 @@ select.required-status-dropdown[data-current="after_deadline"] {
 /* Vertically center toggle switches and dropdowns in table cells */
 .cfp-option-table tbody td {
     vertical-align: middle;
+}
+
+.cfp-option-table tbody tr[dragsort-id="session_videos"] > th,
+.cfp-option-table tbody tr[dragsort-id="session_videos"] > td {
+    vertical-align: middle;
+}
+
+@media (min-width: 769px) {
+    .cfp-option-table tbody tr[dragsort-id="session_videos"] > th {
+        padding-top: 0;
+    }
 }
 
 .cfp-option-table td.text-right {

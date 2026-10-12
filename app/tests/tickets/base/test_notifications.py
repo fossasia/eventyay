@@ -84,6 +84,19 @@ def test_notification_trigger_event_specific(event, order, user, monkeypatch_on_
 
 
 @pytest.mark.django_db
+def test_notification_order_date_accepts_event_timezone_name(event, order, user, monkeypatch_on_commit):
+    event.timezone = 'Europe/Berlin'
+    event.save()
+    djmail.outbox = []
+    user.notification_settings.create(method='mail', event=event, action_type='pretix.event.order.paid', enabled=True)
+
+    with transaction.atomic():
+        order.log_action('pretix.event.order.paid', {})
+
+    assert len(djmail.outbox) == 1
+
+
+@pytest.mark.django_db
 def test_notification_trigger_global(event, order, user, monkeypatch_on_commit):
     djmail.outbox = []
     user.notification_settings.create(method='mail', event=None, action_type='pretix.event.order.paid', enabled=True)

@@ -1,0 +1,13 @@
+.banner-bottom, .site-notice-bottom,
+.banner-top, .site-notice-top {
+  padding-left: var(--size-spacer);
+  padding-right: var(--size-spacer);
+}
+
+@media (max-width: 768px) {
+  .banner-bottom, .site-notice-bottom,
+  .banner-top, .site-notice-top {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+}

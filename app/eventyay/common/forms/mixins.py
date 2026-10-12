@@ -19,13 +19,14 @@ from hierarkey.forms import HierarkeyForm
 from i18nfield.forms import I18nFormField
 
 from eventyay.common.forms.fields import ExtensionFileField
+from eventyay.helpers.image_optimize import optimize_question_image
 from eventyay.common.forms.validators import (
     MaxDateTimeValidator,
     MaxDateValidator,
     MinDateTimeValidator,
     MinDateValidator,
 )
-from eventyay.common.forms.widgets import HtmlDateInput, HtmlDateTimeInput
+from eventyay.common.forms.widgets import AnswerFileInput, HtmlDateInput, HtmlDateTimeInput
 from eventyay.common.text.phrases import phrases
 from eventyay.common.utils.language import localize_event_text
 from phonenumber_field.formfields import PhoneNumberField
@@ -42,7 +43,6 @@ from eventyay.base.models import TalkQuestion, TalkQuestionTarget, TalkQuestionV
 from eventyay.base.models.cfp import BUILTIN_FIELD_KEYS, normalize_field_order, default_fields
 
 logger = logging.getLogger(__name__)
-
 
 class EventLocalizedModelChoiceField(forms.ModelChoiceField):
     def label_from_instance(self, obj):
@@ -451,6 +451,7 @@ class QuestionFieldsMixin:
                 disabled=read_only,
                 help_text=help_text,
                 initial=initial,
+                widget=AnswerFileInput(attrs={'alt': label_text}),
                 extensions={
                     '.png': ['image/png', '.png'],
                     '.jpg': ['image/jpeg', '.jpg'],
@@ -651,8 +652,9 @@ class QuestionFieldsMixin:
                 answer.answer = ''
         elif isinstance(field, forms.FileField):
             if isinstance(value, UploadedFile):
-                answer.answer_file.save(value.name, value, save=False)
-                answer.answer = 'file://' + value.name
+                upload = optimize_question_image(value)
+                answer.answer_file.save(upload.name, upload, save=False)
+                answer.answer = f'file://{answer.answer_file.name}'
             value = answer.answer
         elif value is not None and isinstance(value, Country):
             answer.answer = value.code

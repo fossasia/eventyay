@@ -16,12 +16,16 @@ from django.forms import (
     TimeInput,
     Widget,
 )
+from html import unescape as html_unescape
+
 from django.utils.datastructures import MultiValueDict
-from django.utils.html import escape
+from django.utils.html import escape, strip_tags
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from i18nfield.forms import I18nTextarea
 from i18nfield.strings import LazyI18nString
+
+from eventyay.common.image import ALLOWED_IMAGE_EXTENSIONS
 
 
 def add_class(attrs, css_class):
@@ -117,6 +121,32 @@ class ImageInput(ClearableBasenameFileInput):
         return ctx
 
 
+class AnswerFileInput(ClearableBasenameFileInput):
+    """Upload control for file questions that previews the current upload.
+
+    Image uploads are rendered inline above the upload control, so organisers
+    and speakers see the actual picture instead of the stored file name. Other
+    uploads keep a plain file name link. The raw upload path is never shown.
+    """
+
+    template_name = 'common/widgets/answer_file_input.html'
+
+    def get_context(self, name, value, attrs):
+        ctx = super().get_context(name, value, attrs)
+        widget = ctx['widget']
+        widget_attrs = widget.get('attrs') or {}
+        alt = widget_attrs.get('alt') or _('Uploaded image')
+        # ``alt`` is only meant for the preview image, so leave it off the file input without
+        # changing the attrs this widget renders from.
+        widget['attrs'] = {key: value for key, value in widget_attrs.items() if key != 'alt'}
+        file_name = Path(value.name).name if widget['is_initial'] else ''
+        widget['alt_text'] = alt
+        widget['file_name'] = file_name
+        widget['file_url'] = value.url if widget['is_initial'] else ''
+        widget['is_image'] = bool(file_name) and Path(file_name).suffix.lower() in ALLOWED_IMAGE_EXTENSIONS
+        return ctx
+
+
 class RichTextWidget(Textarea):
     """Tiptap-enhanced textarea for simple rich text editing.
 
@@ -131,10 +161,20 @@ class RichTextWidget(Textarea):
 
     template_name = 'common/widgets/richtext.html'
 
+    def use_required_attribute(self, initial):
+        # Native required on a hidden textarea races the Tiptap UI; validate in Django.
+        return False
+
     def __init__(self, attrs=None):
         attrs = attrs.copy() if attrs is not None else {}
         attrs.setdefault('data-tiptap-profile', 'richtext')
         super().__init__(attrs=attrs)
+
+    def value_from_datadict(self, data, files, name):
+        value = super().value_from_datadict(data, files, name)
+        if value and isinstance(value, str) and not html_unescape(strip_tags(value)).strip():
+            return ''
+        return value
 
 
 class MarkdownWidget(RichTextWidget):
@@ -154,10 +194,31 @@ class I18nRichTextWidget(I18nTextarea):
     shared editor bundle can mount one rich text editor per language.
     """
 
+    def use_required_attribute(self, initial):
+        return False
+
     def __init__(self, locales, field, attrs=None, **kwargs):
         attrs = attrs.copy() if attrs is not None else {}
         attrs.setdefault('data-tiptap-profile', 'richtext')
         super().__init__(locales=locales, field=field, attrs=attrs)
+
+    def value_from_datadict(self, data, files, name):
+        value = super().value_from_datadict(data, files, name)
+        if not value:
+            return value
+        if isinstance(value, list):
+            return [
+                '' if isinstance(v, str) and not html_unescape(strip_tags(v)).strip() else v
+                for v in value
+            ]
+        if isinstance(value, dict):
+            return {
+                k: ('' if isinstance(v, str) and not html_unescape(strip_tags(v)).strip() else v)
+                for k, v in value.items()
+            }
+        if isinstance(value, str) and not html_unescape(strip_tags(value)).strip():
+            return ''
+        return value
 
     def render(self, name: str, value, attrs=None, renderer=None) -> str:
         if self.is_localized:
