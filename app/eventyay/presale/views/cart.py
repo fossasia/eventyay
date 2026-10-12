@@ -283,9 +283,9 @@ def get_or_create_cart_id(request, create=True):
 
     Therefore, we introduce cart namespacing in pretix 1.9.0. In addition to your default session that you
     have at /orga/event/ as usual, you will have a different cart session with a different cart ID at
-    /orga/event/w/mysecretnonce123/. Such a namespace parameter can be passed to all views relevant to the
-    widget (e.g. /orga/event/w/mysecretnonce123/cart/add) that are not already unguessable
-    (like /orga/event/orders/ABCDE/secret123465456/).
+    /orga/event/widget/mysecretnonce123/ (legacy /w/<ns>/ still works). Such a namespace parameter can be
+    passed to all views relevant to the widget (e.g. /orga/event/widget/mysecretnonce123/cart/add) that are
+    not already unguessable (like /orga/event/orders/ABCDE/secret123465456/).
 
     The actual cart IDs for those namespaced carts will then be stored at
     request.session['current_cart_event_42_mysecretnonce123'].

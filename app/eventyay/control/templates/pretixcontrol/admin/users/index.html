@@ -313,6 +313,12 @@
                             {% endif %}
                         </td>
                     </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="11" class="text-muted">
+                            {% trans "No users found." %}
+                        </td>
+                    </tr>
                 {% endfor %}
                 </tbody>
             </table>

@@ -321,35 +321,58 @@ $widget-alert-danger-text: #a94442;
     font-weight: bold;
   }
 
+  .pretix-widget-voucher {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 10px;
+    row-gap: 10px;
+    padding: 0 0 10px;
+  }
+
   .pretix-widget-voucher-headline {
+    flex: 0 0 100%;
     margin: 10px 0 0 0;
   }
   .pretix-widget-voucher-text {
-    margin: 10px 0;
+    flex: 0 0 100%;
+    margin: 0;
     padding: 0 15px;
   }
 
   .pretix-widget-voucher-input-wrap {
-    padding: 0 15px;
-    width: 75%;
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0 0 0 15px;
+    width: auto;
     box-sizing: border-box;
-    float: left;
+    float: none;
   }
 
   .pretix-widget-voucher input {
     width: 100%;
+    height: $input-height-base;
     box-sizing: border-box;
   }
 
   .pretix-widget-voucher-button-wrap {
-    padding: 0 15px;
-    width: 25%;
+    flex: 0 0 auto;
+    padding: 0 15px 0 0;
+    width: auto;
+    min-width: 7.5rem;
     box-sizing: border-box;
-    float: left;
+    float: none;
   }
 
   .pretix-widget-voucher button {
     width: 100%;
+    height: $input-height-base;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 0;
+    padding-bottom: 0;
   }
 
   .pretix-widget-item-with-picture .pretix-widget-main-item-row .pretix-widget-item-title-and-description {
@@ -771,13 +794,17 @@ $widget-alert-danger-text: #a94442;
     margin-left: 0;
   }
   .pretix-widget-voucher-input-wrap {
+    flex: 0 0 100%;
     width: 100%;
+    padding: 0 15px;
     float: none;
   }
   .pretix-widget-voucher-button-wrap {
+    flex: 0 0 100%;
     width: 100%;
+    padding: 0 15px;
     float: none;
-    margin-top: 10px;
+    margin-top: 0;
   }
 
   .pretix-widget-event-list-entry {

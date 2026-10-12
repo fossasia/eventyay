@@ -17,8 +17,24 @@
     display: block;
 }
 
-.submission-content-view .form-group .col-md-9.session-video-urls ul {
+/* Rich text values (abstract, description, notes) arrive wrapped in
+   paragraphs; keep the first line level with its label. */
+.submission-content-view .form-group .col-md-9 > p:first-child {
+    margin-top: 0;
+}
+
+.submission-content-view .form-group .col-md-9 > p:last-child {
     margin-bottom: 0;
+}
+
+/* Bootstrap's list-unstyled is not loaded on organiser pages, so the link
+   lists on this tab (session videos, resources) kept the browser's bullets,
+   indent and top margin, which pushed them off their label's line. */
+.submission-content-view .form-group .col-md-9 > ul.list-unstyled {
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-left: 0;
+    list-style: none;
 }
 
 .submission-content-view .form-group .col-md-9.custom-fields-container {
