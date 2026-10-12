@@ -20,10 +20,14 @@ from eventyay.base.meetup import get_rsvp_product_and_quota, is_meetup_event
 from eventyay.base.models import Quota
 from eventyay.base.models.orders import Order, OrderPayment, OrderPosition
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
-from eventyay.base.stripe_connect import get_stripe_connect_credentials
+from eventyay.base.stripe_connect import (
+    get_event_stripe_publishable_key,
+    get_stripe_connect_credentials,
+)
 from eventyay.base.templatetags.money import money_filter
 from eventyay.multidomain.urlreverse import eventreverse
 from eventyay.presale.views import EventViewMixin
+
 
 logger = logging.getLogger(__name__)
 
@@ -169,12 +173,9 @@ class MeetupRsvpView(EventViewMixin, View):
         if connect_user_id:
             creds = get_stripe_connect_credentials(request.event)
             secret_key = creds.get('secret_key')
-            publishable_key = (
-                request.event.settings.get('payment_stripe_connect_publishable_key')
-                or creds.get('publishable_key')
-            )
+            publishable_key = get_event_stripe_publishable_key(request.event)
             stripe_account = connect_user_id
-            if request.event.testmode and not secret_key:
+            if request.event.testmode and (not secret_key or not publishable_key):
                 messages.error(
                     request,
                     _('Stripe Connect test mode credentials are not configured on this platform.'),
@@ -309,10 +310,21 @@ class MeetupRsvpView(EventViewMixin, View):
                     order.save(update_fields=['status'])
                     payment.state = OrderPayment.PAYMENT_STATE_FAILED
                     payment.save(update_fields=['state'])
-                    messages.error(request, _('Payment could not be completed. Any charge has been automatically refunded.'))
+                    messages.error(
+                        request,
+                        _('Payment could not be completed. Any charge has been automatically refunded.'),
+                    )
                     return self._redirect_to_index(request)
         except stripe.error.CardError as e:
-            log_event('plugins', 'connection.stripe', OUTCOME_FAILURE, error_code='card_error', event_id=request.event.pk, order_code=order.code, backend='stripe')
+            log_event(
+                'plugins',
+                'connection.stripe',
+                OUTCOME_FAILURE,
+                error_code='card_error',
+                event_id=request.event.pk,
+                order_code=order.code,
+                backend='stripe',
+            )
             with scope(organizer=request.event.organizer):
                 order.status = Order.STATUS_CANCELED
                 order.save(update_fields=['status'])
@@ -321,7 +333,15 @@ class MeetupRsvpView(EventViewMixin, View):
             messages.error(request, _('Payment failed: ') + str(e.user_message or e))
             return self._redirect_to_index(request)
         except stripe.error.StripeError as e:
-            log_event('plugins', 'connection.stripe', OUTCOME_FAILURE, error_code='stripe_error', event_id=request.event.pk, order_code=order.code, backend='stripe')
+            log_event(
+                'plugins',
+                'connection.stripe',
+                OUTCOME_FAILURE,
+                error_code='stripe_error',
+                event_id=request.event.pk,
+                order_code=order.code,
+                backend='stripe',
+            )
             logger.warning('Stripe error during meetup RSVP for order %s', order.code)
             with scope(organizer=request.event.organizer):
                 order.status = Order.STATUS_CANCELED
@@ -331,14 +351,25 @@ class MeetupRsvpView(EventViewMixin, View):
             messages.error(request, _('Payment processing error: ') + str(e.user_message or e))
             return self._redirect_to_index(request)
         except Exception:
-            log_event('plugins', 'connection.stripe', OUTCOME_FAILURE, error_code='rsvp_failed', event_id=request.event.pk, order_code=order.code, backend='stripe')
+            log_event(
+                'plugins',
+                'connection.stripe',
+                OUTCOME_FAILURE,
+                error_code='rsvp_failed',
+                event_id=request.event.pk,
+                order_code=order.code,
+                backend='stripe',
+            )
             logger.exception('Unexpected error during meetup RSVP')
             with scope(organizer=request.event.organizer):
                 order.status = Order.STATUS_CANCELED
                 order.save(update_fields=['status'])
                 payment.state = OrderPayment.PAYMENT_STATE_FAILED
                 payment.save(update_fields=['state'])
-            messages.error(request, _('An unexpected error occurred while processing your payment. Please try again.'))
+            messages.error(
+                request,
+                _('An unexpected error occurred while processing your payment. Please try again.'),
+            )
             return self._redirect_to_index(request)
 
         request.session[MEETUP_RSVP_SESSION_KEY.format(request.event.pk)] = order.code

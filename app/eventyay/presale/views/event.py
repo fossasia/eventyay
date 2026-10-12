@@ -48,7 +48,7 @@ from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.meetup import ensure_video_credentials, get_rsvp_product_and_quota, is_meetup_event
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.settings import GlobalSettingsObject
-from eventyay.base.stripe_connect import get_stripe_connect_credentials
+from eventyay.base.stripe_connect import get_event_stripe_publishable_key
 from eventyay.base.models import (
     Order,
     OrderPosition,
@@ -776,14 +776,7 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
             'rsvp_registration_closed': rsvp_registration_closed,
             'guest_checkout_allowed': not event.settings.require_registered_account_for_tickets,
             'meetup_registration_fee': registration_fee or Decimal('0.00'),
-            'stripe_publishable_key': (
-                (
-                    event.settings.get('payment_stripe_connect_publishable_key')
-                    or get_stripe_connect_credentials(event).get('publishable_key', '')
-                )
-                if event.settings.get('payment_stripe_connect_user_id')
-                else event.settings.get('payment_stripe_publishable_key', '')
-            ),
+            'stripe_publishable_key': get_event_stripe_publishable_key(event),
             'stripe_account': event.settings.get('payment_stripe_connect_user_id', '') or '',
         }
 

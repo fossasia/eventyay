@@ -66,6 +66,41 @@ def get_stripe_connect_credentials(event=None) -> dict[str, Any]:
     }
 
 
+def get_event_stripe_publishable_key(event) -> str:
+    """Resolve the appropriate Stripe publishable key for an event.
+
+    For Stripe Connect accounts in test mode, strictly ensures a test publishable key
+    (starting with 'pk_test_') is returned and prevents pairing a test secret key
+    with a live publishable key stored from OAuth.
+
+    Args:
+        event: The Event instance.
+
+    Returns:
+        The resolved Stripe publishable key string, or empty string.
+    """
+    if not event:
+        return ''
+
+    connect_user_id = event.settings.get('payment_stripe_connect_user_id')
+    if connect_user_id:
+        creds = get_stripe_connect_credentials(event)
+        if getattr(event, 'testmode', False):
+            platform_test_pk = creds.get('publishable_key') or ''
+            stored_pk = event.settings.get('payment_stripe_connect_publishable_key') or ''
+            if platform_test_pk and platform_test_pk.startswith('pk_test_'):
+                return platform_test_pk
+            if stored_pk and stored_pk.startswith('pk_test_'):
+                return stored_pk
+            return ''
+        return (
+            event.settings.get('payment_stripe_connect_publishable_key')
+            or creds.get('publishable_key')
+            or ''
+        )
+    return event.settings.get('payment_stripe_publishable_key') or ''
+
+
 def build_stripe_oauth_state(*, event_id: int, user_id: int, next_url: str = '', nonce: str = '') -> str:
     """Build a cryptographically signed OAuth state token.
 

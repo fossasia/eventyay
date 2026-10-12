@@ -213,7 +213,7 @@
                         {% trans "Are you sure you want to disconnect this Stripe account?" as disconnect_confirm_msg %}
                         <form method="post" action="{{ stripe_disconnect_url }}" class="stripe-disconnect-form" style="margin: 0; display: inline;">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-default" data-confirm="{{ disconnect_confirm_msg|escapejs }}">
+                            <button type="submit" class="btn btn-sm btn-default" data-confirm="{{ disconnect_confirm_msg }}">
                                 <i class="fa fa-chain-broken"></i> {% trans "Disconnect" %}
                             </button>
                         </form>

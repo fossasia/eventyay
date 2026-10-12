@@ -18,6 +18,7 @@ from eventyay.base.payment import PaymentException, StripePaymentProvider
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.stripe_connect import (
     build_stripe_oauth_state,
+    get_event_stripe_publishable_key,
     get_stripe_connect_credentials,
     load_stripe_oauth_state,
 )
@@ -495,3 +496,153 @@ def test_event_settings_template_context_renders_stripe_connect(meetup_event, rf
         kwargs={'organizer': meetup_event.organizer.slug, 'event': meetup_event.slug},
     )
     assert expected_url in context['stripe_connect_url']
+
+
+@pytest.mark.django_db
+@scopes_disabled()
+def test_stripe_connect_disconnect_handles_missing_platform_creds_and_retains_settings(meetup_event, rf, user):
+    """Test that missing platform credentials (ValueError) retains local settings and displays error."""
+    meetup_event.settings.set('payment_stripe_connect_user_id', 'acct_test_connected_123')
+    meetup_event.settings.set('payment_stripe_connect_publishable_key', 'pk_test_connected_123')
+    meetup_event.settings.set('payment_stripe__enabled', True)
+
+    req = rf.post('/stripe/disconnect/')
+    req.event = meetup_event
+    req.organizer = meetup_event.organizer
+    req.user = user
+    SessionMiddleware(lambda r: None).process_request(req)
+    storage = FallbackStorage(req)
+    setattr(req, '_messages', storage)
+
+    with patch(
+        'eventyay.eventyay_common.views.stripe_connect.deauthorize_stripe_account',
+        side_effect=ValueError('Missing credentials'),
+    ):
+        view = EventStripeConnectDisconnectView()
+        view.setup(req)
+        resp = view.post(req)
+
+    assert resp.status_code == 302
+    assert meetup_event.settings.get('payment_stripe_connect_user_id') == 'acct_test_connected_123'
+    messages_list = [m.message for m in storage]
+    assert any('platform credentials are missing' in str(m) for m in messages_list)
+
+
+@pytest.mark.django_db
+@scopes_disabled()
+def test_get_event_stripe_publishable_key_testmode_isolation(meetup_event):
+    """Test get_event_stripe_publishable_key isolates test and live keys properly."""
+    gs = GlobalSettingsObject()
+    gs.settings.set('payment_stripe_connect_publishable_key', 'pk_platform_live_key')
+    meetup_event.settings.set('payment_stripe_connect_user_id', 'acct_123')
+    meetup_event.settings.set('payment_stripe_connect_publishable_key', 'pk_live_stored_key')
+
+    # Live mode: returns stored live key
+    meetup_event.testmode = False
+    assert get_event_stripe_publishable_key(meetup_event) == 'pk_live_stored_key'
+
+    # Test mode: stored live key is rejected when no platform test publishable key exists
+    meetup_event.testmode = True
+    assert get_event_stripe_publishable_key(meetup_event) == ''
+
+    # Test mode: platform test publishable key is preferred and returned
+    gs.settings.set('payment_stripe_connect_test_publishable_key', 'pk_test_platform_key')
+    assert get_event_stripe_publishable_key(meetup_event) == 'pk_test_platform_key'
+
+
+@pytest.mark.django_db
+@scopes_disabled()
+def test_paid_rsvp_testmode_rejects_when_only_live_publishable_key_available(meetup_event, rf):
+    """Paid RSVP in testmode rejects when only live publishable key is available."""
+    product, quota = get_rsvp_product_and_quota(meetup_event)
+    product.default_price = Decimal('20.00')
+    product.save(update_fields=['default_price'])
+
+    gs = GlobalSettingsObject()
+    gs.settings.set('payment_stripe_connect_client_id', 'ca_platform_client_123')
+    gs.settings.set('payment_stripe_connect_test_secret_key', 'sk_test_platform_key')
+    # Platform has no test publishable key; only live stored key exists
+
+    meetup_event.testmode = True
+    meetup_event.settings.set('payment_stripe__enabled', True)
+    meetup_event.settings.set('payment_stripe_connect_user_id', 'acct_connected_test_456')
+    meetup_event.settings.set('payment_stripe_connect_publishable_key', 'pk_live_stored_key')
+    meetup_event.settings.set('require_registered_account_for_tickets', False)
+
+    req = rf.post(
+        f'/{meetup_event.slug}/rsvp',
+        data={
+            'attendee_name': 'Test Attendee',
+            'attendee_email': 'test_attendee@example.com',
+            'stripe_token': 'tok_visa',
+        },
+    )
+    req.event = meetup_event
+    req.LANGUAGE_CODE = 'en'
+    req.user = AnonymousUser()
+    SessionMiddleware(lambda r: None).process_request(req)
+    req.session.save()
+    storage = FallbackStorage(req)
+    setattr(req, '_messages', storage)
+
+    view = MeetupRsvpView()
+    response = view.post(req)
+    assert response.status_code == 302
+    messages_list = [m.message for m in storage]
+    assert any('test mode credentials are not configured' in str(m) for m in messages_list)
+    assert not Order.objects.filter(event=meetup_event, email='test_attendee@example.com').exists()
+
+
+@pytest.mark.django_db
+@scopes_disabled()
+def test_paid_rsvp_testmode_succeeds_with_platform_test_keys(meetup_event, rf):
+    """Paid RSVP in testmode pairs platform test publishable and secret keys even if event has stored live key."""
+    product, quota = get_rsvp_product_and_quota(meetup_event)
+    product.default_price = Decimal('20.00')
+    product.save(update_fields=['default_price'])
+
+    gs = GlobalSettingsObject()
+    gs.settings.set('payment_stripe_connect_client_id', 'ca_platform_client_123')
+    gs.settings.set('payment_stripe_connect_test_secret_key', 'sk_test_platform_key')
+    gs.settings.set('payment_stripe_connect_test_publishable_key', 'pk_test_platform_key')
+
+    meetup_event.testmode = True
+    meetup_event.settings.set('payment_stripe__enabled', True)
+    meetup_event.settings.set('payment_stripe_connect_user_id', 'acct_connected_test_456')
+    # Even if event previously stored a live key from live connect
+    meetup_event.settings.set('payment_stripe_connect_publishable_key', 'pk_live_stored_key')
+    meetup_event.settings.set('require_registered_account_for_tickets', False)
+
+    req = rf.post(
+        f'/{meetup_event.slug}/rsvp',
+        data={
+            'attendee_name': 'Test Attendee',
+            'attendee_email': 'test_attendee2@example.com',
+            'stripe_token': 'tok_visa',
+        },
+    )
+    req.event = meetup_event
+    req.LANGUAGE_CODE = 'en'
+    req.user = AnonymousUser()
+    SessionMiddleware(lambda r: None).process_request(req)
+    req.session.save()
+    storage = FallbackStorage(req)
+    setattr(req, '_messages', storage)
+
+    mock_intent = MagicMock()
+    mock_intent.id = 'pi_test_connect_999'
+    mock_intent.status = 'succeeded'
+
+    with patch('stripe.PaymentIntent.create', return_value=mock_intent) as mock_create:
+        view = MeetupRsvpView()
+        response = view.post(req)
+        assert response.status_code == 302
+        mock_create.assert_called_once()
+        _, kwargs = mock_create.call_args
+        assert kwargs['api_key'] == 'sk_test_platform_key'
+        assert kwargs['stripe_account'] == 'acct_connected_test_456'
+
+    order = Order.objects.get(event=meetup_event, email='test_attendee2@example.com')
+    assert order.status == Order.STATUS_PAID
+    assert order.testmode is True
+

@@ -12,7 +12,6 @@ from django.utils.translation import gettext_lazy as _
 from django.views import View
 
 from eventyay.base.meetup import is_meetup_event
-from eventyay.base.models import Event
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.stripe_connect import (
     build_stripe_authorize_url,
@@ -276,35 +275,40 @@ class EventStripeConnectDisconnectView(EventPermissionRequiredMixin, View):
             kwargs={'organizer': event.organizer.slug, 'event': event.slug},
         )
 
-        with transaction.atomic():
-            stripe_user_id = event.settings.get('payment_stripe_connect_user_id')
-            if not stripe_user_id:
-                messages.info(request, _('No active Stripe Connect account found.'))
-                return redirect(next_url)
+        stripe_user_id = event.settings.get('payment_stripe_connect_user_id')
+        if not stripe_user_id:
+            messages.info(request, _('No active Stripe Connect account found.'))
+            return redirect(next_url)
 
-            try:
-                deauthorize_stripe_account(stripe_user_id=stripe_user_id, event=event)
-            except stripe.error.StripeError as exc:
-                error_msg = str(exc).lower()
-                # If account is already deauthorized or not found on Stripe, permit clearing local settings
-                is_revoked = (
-                    'already_deauthorized' in error_msg
-                    or 'not authorized' in error_msg
-                    or 'does not exist' in error_msg
+        try:
+            deauthorize_stripe_account(stripe_user_id=stripe_user_id, event=event)
+        except stripe.error.StripeError as exc:
+            error_msg = str(exc).lower()
+            # If account is already deauthorized or not found on Stripe, permit clearing local settings
+            is_revoked = (
+                'already_deauthorized' in error_msg
+                or 'not authorized' in error_msg
+                or 'does not exist' in error_msg
+            )
+            if is_revoked:
+                logger.info('Stripe account %s was already deauthorized on Stripe: %s', stripe_user_id, exc)
+            else:
+                logger.error('Failed to deauthorize Stripe account %s: %s', stripe_user_id, exc)
+                messages.error(
+                    request,
+                    _('Could not disconnect Stripe account: %(error)s. Please try again.')
+                    % {'error': getattr(exc, 'user_message', str(exc))},
                 )
-                if is_revoked:
-                    logger.info('Stripe account %s was already deauthorized on Stripe: %s', stripe_user_id, exc)
-                else:
-                    logger.error('Failed to deauthorize Stripe account %s: %s', stripe_user_id, exc)
-                    messages.error(
-                        request,
-                        _('Could not disconnect Stripe account: %(error)s. Please try again.')
-                        % {'error': getattr(exc, 'user_message', str(exc))},
-                    )
-                    return redirect(next_url)
-            except ValueError as exc:
-                logger.warning('Missing platform credentials for deauthorization: %s', exc)
+                return redirect(next_url)
+        except ValueError as exc:
+            logger.warning('Missing platform credentials for deauthorization: %s', exc)
+            messages.error(
+                request,
+                _('Stripe Connect platform credentials are missing. The account was not disconnected.'),
+            )
+            return redirect(next_url)
 
+        with transaction.atomic():
             event.settings.delete('payment_stripe_connect_user_id')
             event.settings.delete('payment_stripe_connect_publishable_key')
             event.settings.delete('payment_stripe_connect_account_name')
