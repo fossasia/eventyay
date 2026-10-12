@@ -71,7 +71,7 @@ div.c-linear-schedule-session.is-shift-session(
 		:confirm-label="confirmLabel",
 		:confirm-class="confirmButtonClass",
 		:email-label="confirmEmailLabel",
-		v-model:send-email="sendEmail",
+		v-model:sendEmail="sendEmail",
 		:error="confirmError",
 		:busy="claimBusy",
 		@confirm="confirmRoleAction",
