@@ -1,14 +1,16 @@
+from concurrent.futures import ThreadPoolExecutor
 from decimal import Decimal
 
 import pytest
 from bs4 import BeautifulSoup
-from django.db import connection
+from django.apps import apps
+from django.db import OperationalError, connection, connections, transaction
 from django.test import override_settings
 from django.test.utils import CaptureQueriesContext
 from django.utils import translation
 from django_scopes import scope
 
-from eventyay.base.models import Review, ReviewScore, ReviewScoreCategory, User
+from eventyay.base.models import Event, Review, ReviewScore, ReviewScoreCategory, User
 from eventyay.base.models.submission import Submission
 from eventyay.orga.forms.review import ReviewExportForm
 
@@ -91,6 +93,7 @@ def test_review_export_skips_unselected_category_scores(event, reviewer, exporte
 
 @pytest.mark.django_db
 def test_review_export_reads_category_scores_from_prefetch(event, reviewer, exporter, categories):
+    """Adding reviews must not add a separate database query for each category score."""
     main, relevance = categories
     fields = ['score', f'score_{main.pk}', f'score_{relevance.pk}']
     create_review(event, reviewer, categories, 'A talk', (1, 2))
@@ -110,6 +113,7 @@ def test_review_export_reads_category_scores_from_prefetch(event, reviewer, expo
 
 
 def review_settings_data(client, event):
+    """Build a browser-equivalent POST payload while preserving the rendered field values."""
     response = client.get(event.orga_urls.review_settings)
     assert response.status_code == 200
     page = BeautifulSoup(response.content, 'html.parser')
@@ -140,6 +144,7 @@ def review_settings_data(client, event):
 def test_rejected_review_scoring_preserves_categories_phases_and_export(
     client, event, reviewer, exporter, categories, mocker, category_count
 ):
+    """Rejecting all independent scores must also preserve the phase and exported total."""
     with scope(event=event):
         all_categories = list(categories)
         for index in range(2, category_count):
@@ -179,6 +184,7 @@ def test_rejected_review_scoring_preserves_categories_phases_and_export(
 @pytest.mark.django_db
 @override_settings(COMPRESS_ENABLED=False, COMPRESS_OFFLINE=False)
 def test_invalid_score_form_preserves_review_phase(client, event, exporter, mocker):
+    """A score-field error must undo phase changes saved earlier in the request."""
     with scope(event=event):
         phase = event.review_phases.order_by('position').first()
         phase_name = phase.name
@@ -198,6 +204,7 @@ def test_invalid_score_form_preserves_review_phase(client, event, exporter, mock
 @pytest.mark.django_db
 @override_settings(COMPRESS_ENABLED=False, COMPRESS_OFFLINE=False)
 def test_valid_independent_score_configuration_saves(client, event, exporter, categories, mocker):
+    """Independent categories are valid when another category still contributes to the total."""
     with scope(event=event):
         client.force_login(exporter)
         data = review_settings_data(client, event)
@@ -212,3 +219,53 @@ def test_valid_independent_score_configuration_saves(client, event, exporter, ca
         assert main.is_independent and main.weight == 0
         assert not relevance.is_independent and relevance.weight == 1
         recalculate.assert_called_once_with(kwargs={'event_id': event.pk}, ignore_result=True)
+
+
+@pytest.mark.django_db(transaction=True, available_apps=[app.name for app in apps.get_app_configs()])
+@pytest.mark.skipif(connection.vendor != 'postgresql', reason='Requires PostgreSQL row-lock contention.')
+@override_settings(COMPRESS_ENABLED=False, COMPRESS_OFFLINE=False)
+def test_concurrent_review_settings_wait_before_validating(client, mocker, request):
+    """A competing save must wait for the current event's scoring transaction before validation."""
+    mocker.patch('eventyay.base.models.cache.VersionedModel._set_cache_version_sync')
+    event = request.getfixturevalue('event')
+    exporter = request.getfixturevalue('exporter')
+    categories = request.getfixturevalue('categories')
+    with scope(event=event):
+        client.force_login(exporter)
+        data = review_settings_data(client, event)
+        data['scores-1-is_independent'] = 'on'
+        mocker.patch('eventyay.orga.views.event.recalculate_all_review_scores.apply_async')
+        validate = mocker.spy(ReviewScoreCategory, '_validate_independence')
+
+        def competing_save():
+            """Use another database connection to submit a stale scoring form."""
+            try:
+                competing_client = client.__class__()
+                competing_client.force_login(exporter)
+                with connections['default'].cursor() as cursor:
+                    cursor.execute("SET lock_timeout = '500ms'")
+                try:
+                    return competing_client.post(event.orga_urls.review_settings, data).status_code
+                except OperationalError as error:
+                    return error.__cause__.sqlstate
+            finally:
+                connections.close_all()
+
+        with transaction.atomic():
+            Event.objects.select_for_update().get(pk=event.pk)
+            main, relevance = categories
+            main.is_independent = True
+            main.save()
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                result = executor.submit(competing_save).result(timeout=30)
+
+            assert result == '55P03'  # PostgreSQL lock timeout.
+            assert validate.call_count == 1
+
+        response = client.post(event.orga_urls.review_settings, data)
+        assert response.status_code == 302
+        assert event.score_categories.filter(is_independent=False).exists()
+        main.refresh_from_db()
+        relevance.refresh_from_db()
+        assert not main.is_independent
+        assert relevance.is_independent

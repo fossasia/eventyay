@@ -14,6 +14,7 @@ from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, ListView, TemplateView, UpdateView, View
 from django_context_decorator import context
+from django_scopes import scope
 
 from eventyay.agenda.views.utils import get_schedule_exporters
 from eventyay.base.models import Event, LogEntry, ReviewPhase, ReviewScoreCategory, TeamInvite, User
@@ -144,8 +145,10 @@ class EventReviewSettings(EventSettingsPermission, ActionFromUrl, FormView):
 
     @transaction.atomic
     def form_valid(self, form):
+        """Serialize scoring saves and roll back phase and score updates together on rejection."""
         try:
-            with transaction.atomic():
+            with scope(event=self.request.event), transaction.atomic():
+                Event.objects.select_for_update().get(pk=self.request.event.pk)
                 phases = self.save_phases()
                 scores = self.save_scores()
                 if not phases or not scores:
