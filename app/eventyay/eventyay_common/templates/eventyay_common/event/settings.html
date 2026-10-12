@@ -198,9 +198,54 @@
             <legend>{% trans "Registration fee & Payment" %}</legend>
             {% bootstrap_field sform.registration_fee layout="control" %}
             {% bootstrap_field sform.payment_stripe__enabled layout="control" %}
-            {% bootstrap_field sform.payment_stripe_publishable_key layout="control" %}
-            {% bootstrap_field sform.payment_stripe_secret_key layout="control" %}
-            {% bootstrap_field sform.payment_stripe_merchant_country layout="control" %}
+
+            {% if stripe_connect_user_id %}
+            <div class="form-group row">
+                <label class="col-md-3 control-label">{% trans "Stripe Connect" %}</label>
+                <div class="col-md-9">
+                    <div class="alert alert-success" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <div>
+                            <i class="fa fa-check-circle"></i>
+                            <strong>{% trans "Connected to Stripe" %}:</strong>
+                            <span>{{ stripe_connect_account_name|default:stripe_connect_user_id }}</span>
+                            <span class="text-muted">({{ stripe_connect_user_id }})</span>
+                        </div>
+                        <form method="post" action="{{ stripe_disconnect_url }}" style="margin: 0; display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-default" onclick="return confirm('{% trans "Are you sure you want to disconnect this Stripe account?" %}');">
+                                <i class="fa fa-chain-broken"></i> {% trans "Disconnect" %}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% elif stripe_connect_available %}
+            <div class="form-group row">
+                <label class="col-md-3 control-label">{% trans "Stripe Connect" %}</label>
+                <div class="col-md-9">
+                    <a href="{{ stripe_connect_url }}" class="btn btn-primary" id="btn-stripe-connect">
+                        <i class="fa fa-external-link"></i> {% trans "Connect with Stripe" %}
+                    </a>
+                    <div class="help-block">
+                        {% trans "Connect your Stripe account to accept registration fees directly without managing API keys." %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <details class="panel panel-default" {% if sform.payment_stripe_secret_key.value or sform.payment_stripe_publishable_key.value or sform.payment_stripe_secret_key.errors or sform.payment_stripe_publishable_key.errors %}open{% endif %} style="margin-top: 15px; margin-bottom: 15px;">
+                <summary class="panel-heading" style="cursor: pointer; font-weight: bold; list-style: revert;">
+                    {% trans "Advanced: Custom Stripe Secrets" %}
+                </summary>
+                <div class="panel-body">
+                    <p class="text-muted small">
+                        {% trans "If you prefer to configure your own custom Stripe API keys instead of using Stripe Connect, enter them below." %}
+                    </p>
+                    {% bootstrap_field sform.payment_stripe_publishable_key layout="control" %}
+                    {% bootstrap_field sform.payment_stripe_secret_key layout="control" %}
+                    {% bootstrap_field sform.payment_stripe_merchant_country layout="control" %}
+                </div>
+            </details>
         </fieldset>
         {% endif %}
 

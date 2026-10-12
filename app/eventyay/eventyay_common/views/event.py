@@ -725,8 +725,17 @@ class EventUpdate(
         ):
             # Ignore case Event is created only for Talk as it not enable yet.
             context['is_talk_event_created'] = True
-            
-        
+        if is_meetup_event(self.object):
+            from eventyay.base.stripe_connect import get_stripe_connect_credentials
+
+            stripe_creds = get_stripe_connect_credentials(self.object)
+            context['stripe_connect_available'] = stripe_creds['is_configured']
+            context['stripe_connect_user_id'] = self.object.settings.get('payment_stripe_connect_user_id', default='')
+            context['stripe_connect_account_name'] = self.object.settings.get('payment_stripe_connect_account_name', default='')
+            stripe_kwargs = {'organizer': self.object.organizer.slug, 'event': self.object.slug}
+            context['stripe_connect_url'] = reverse('eventyay_common:event.stripe.connect', kwargs=stripe_kwargs)
+            context['stripe_disconnect_url'] = reverse('eventyay_common:event.stripe.disconnect', kwargs=stripe_kwargs)
+
         return context
 
     def _run_email_test(self):

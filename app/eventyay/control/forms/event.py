@@ -2163,12 +2163,14 @@ class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
             fee = cleaned_data.get('registration_fee')
             if not fee or fee <= Decimal('0.00'):
                 self.add_error('registration_fee', _('Please enter a valid registration fee greater than 0.'))
-            if not cleaned_data.get('payment_stripe_publishable_key'):
-                self.add_error('payment_stripe_publishable_key', _('Please enter your Stripe publishable key.'))
-            if not cleaned_data.get('payment_stripe_secret_key'):
-                self.add_error('payment_stripe_secret_key', _('Please enter your Stripe secret key.'))
-            if not cleaned_data.get('payment_stripe_merchant_country'):
-                self.add_error('payment_stripe_merchant_country', _('Please select your Stripe merchant country.'))
+            has_connect = bool(getattr(self, 'event', None) and self.event.settings.get('payment_stripe_connect_user_id'))
+            if not has_connect:
+                if not cleaned_data.get('payment_stripe_publishable_key'):
+                    self.add_error('payment_stripe_publishable_key', _('Please enter your Stripe publishable key.'))
+                if not cleaned_data.get('payment_stripe_secret_key'):
+                    self.add_error('payment_stripe_secret_key', _('Please enter your Stripe secret key.'))
+                if not cleaned_data.get('payment_stripe_merchant_country'):
+                    self.add_error('payment_stripe_merchant_country', _('Please select your Stripe merchant country.'))
 
         cleaned_data['privacy_type'] = cleaned_data.get('privacy_type') or PRIVACY_PUBLIC
 

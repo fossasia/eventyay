@@ -160,10 +160,28 @@ class MeetupRsvpView(EventViewMixin, View):
             return self._redirect_to_index(request)
 
         stripe_enabled = request.event.settings.get('payment_stripe__enabled', as_type=bool, default=False)
+        connect_user_id = request.event.settings.get('payment_stripe_connect_user_id')
         publishable_key = request.event.settings.get('payment_stripe_publishable_key')
         secret_key = request.event.settings.get('payment_stripe_secret_key')
+        stripe_account = None
+
+        if connect_user_id:
+            from eventyay.base.stripe_connect import get_stripe_connect_credentials
+
+            creds = get_stripe_connect_credentials(request.event)
+            secret_key = creds.get('secret_key')
+            publishable_key = (
+                request.event.settings.get('payment_stripe_connect_publishable_key')
+                or creds.get('publishable_key')
+                or publishable_key
+            )
+            stripe_account = connect_user_id
+
         if not stripe_enabled or not publishable_key or not secret_key:
-            messages.error(request, _('Payment is currently unavailable because the organizer payment settings are incomplete.'))
+            messages.error(
+                request,
+                _('Payment is currently unavailable because the organizer payment settings are incomplete.'),
+            )
             return self._redirect_to_index(request)
 
         with transaction.atomic():
@@ -230,6 +248,8 @@ class MeetupRsvpView(EventViewMixin, View):
                 },
                 'api_key': secret_key,
             }
+            if stripe_account:
+                params['stripe_account'] = stripe_account
             if stripe_token.startswith('tok_'):
                 params['payment_method_data'] = {'type': 'card', 'card': {'token': stripe_token}}
             else:
@@ -252,12 +272,31 @@ class MeetupRsvpView(EventViewMixin, View):
                     payment.confirm(send_mail=True, lock=False)
                     order.refresh_from_db()
                 except Exception:
-                    log_event('plugins', 'connection.stripe', OUTCOME_FAILURE, error_code='confirm_failed', event_id=request.event.pk, order_code=order.code, backend='stripe')
+                    log_event(
+                        'plugins',
+                        'connection.stripe',
+                        OUTCOME_FAILURE,
+                        error_code='confirm_failed',
+                        event_id=request.event.pk,
+                        order_code=order.code,
+                        backend='stripe',
+                    )
                     logger.exception('Error confirming meetup payment')
                     try:
-                        stripe.Refund.create(payment_intent=intent.id, api_key=secret_key)
+                        refund_params = {'payment_intent': intent.id, 'api_key': secret_key}
+                        if stripe_account:
+                            refund_params['stripe_account'] = stripe_account
+                        stripe.Refund.create(**refund_params)
                     except Exception:
-                        log_event('plugins', 'connection.stripe', OUTCOME_FAILURE, error_code='refund_failed', event_id=request.event.pk, order_code=order.code, backend='stripe')
+                        log_event(
+                            'plugins',
+                            'connection.stripe',
+                            OUTCOME_FAILURE,
+                            error_code='refund_failed',
+                            event_id=request.event.pk,
+                            order_code=order.code,
+                            backend='stripe',
+                        )
                         logger.exception('Failed to auto-refund meetup payment')
                     order.status = Order.STATUS_CANCELED
                     order.save(update_fields=['status'])

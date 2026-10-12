@@ -1447,7 +1447,9 @@ class StripePaymentProvider(BasePaymentProvider):
 
     @property
     def is_enabled(self) -> bool:
-        return bool(self.settings.get('_enabled', as_type=bool, default=False) and self.settings.get('secret_key'))
+        has_secret = bool(self.settings.get('secret_key'))
+        has_connect = bool(self.event.settings.get('payment_stripe_connect_user_id'))
+        return bool(self.settings.get('_enabled', as_type=bool, default=False) and (has_secret or has_connect))
 
     def is_allowed(self, request: HttpRequest, total: Decimal = None):
         if not is_meetup_event(self.event):
@@ -1512,8 +1514,19 @@ class StripePaymentProvider(BasePaymentProvider):
         return True
 
     def execute_payment(self, request: HttpRequest, payment: OrderPayment):
+        connect_user_id = self.event.settings.get('payment_stripe_connect_user_id')
         secret_key = self.settings.get('secret_key')
-        if not secret_key:
+        stripe_account = None
+
+        if connect_user_id:
+            from eventyay.base.stripe_connect import get_stripe_connect_credentials
+
+            creds = get_stripe_connect_credentials(self.event)
+            secret_key = creds.get('secret_key')
+            stripe_account = connect_user_id
+            if not secret_key:
+                raise PaymentException(_('Stripe Connect is not configured on this platform.'))
+        elif not secret_key:
             raise PaymentException(_('Stripe secret key is not configured.'))
 
         stripe_token = (request.POST.get('stripe_token') or '').strip()
@@ -1539,6 +1552,8 @@ class StripePaymentProvider(BasePaymentProvider):
                 },
                 'api_key': secret_key,
             }
+            if stripe_account:
+                params['stripe_account'] = stripe_account
             if stripe_token.startswith('tok_'):
                 params['payment_method_data'] = {'type': 'card', 'card': {'token': stripe_token}}
             else:

@@ -11,6 +11,7 @@ from eventyay.eventyay_common.views import (
     event,
     event_api,
     organizer,
+    stripe_connect,
     team,
 )
 from eventyay.eventyay_common.views.account.email import EmailAddressManagementView
@@ -159,6 +160,21 @@ urlpatterns = [
                     'settings/gmail/disconnect/',
                     gmail_oauth.EventGmailOAuthDisconnectView.as_view(),
                     name='event.gmail.disconnect',
+                ),
+                path(
+                    'settings/stripe/connect/',
+                    stripe_connect.EventStripeConnectAuthorizeView.as_view(),
+                    name='event.stripe.connect',
+                ),
+                path(
+                    'settings/stripe/callback/',
+                    stripe_connect.EventStripeConnectCallbackView.as_view(),
+                    name='event.stripe.callback',
+                ),
+                path(
+                    'settings/stripe/disconnect/',
+                    stripe_connect.EventStripeConnectDisconnectView.as_view(),
+                    name='event.stripe.disconnect',
                 ),
                 path('plugins/', event.EventPlugins.as_view(), name='event.plugins'),
                 path('live/', event.EventLive.as_view(), name='event.live'),

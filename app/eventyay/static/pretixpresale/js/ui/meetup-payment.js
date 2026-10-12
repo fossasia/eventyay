@@ -23,6 +23,7 @@ function initMeetupPayment() {
     const originalBtnText = btnText ? btnText.textContent : 'Pay now';
     const errorAlert = form.querySelector('#meetupPaymentErrorAlert');
     const stripePublishableKey = form.dataset.stripePublishableKey || '';
+    const stripeAccount = form.dataset.stripeAccount || '';
     const msgNameRequired = form.dataset.msgNameRequired || 'Please enter your full name.';
     const msgEmailRequired = form.dataset.msgEmailRequired || 'Please enter a valid email address.';
     const msgUnavailable = form.dataset.msgUnavailable || 'Card payment is unavailable. Please refresh the page and try again.';
@@ -55,7 +56,11 @@ function initMeetupPayment() {
         if (elementsMounted || !stripePublishableKey || !window.Stripe) return;
 
         try {
-            stripe = window.Stripe(stripePublishableKey);
+            if (stripeAccount) {
+                stripe = window.Stripe(stripePublishableKey, { stripeAccount: stripeAccount });
+            } else {
+                stripe = window.Stripe(stripePublishableKey);
+            }
             elements = stripe.elements();
 
             const elementStyles = {

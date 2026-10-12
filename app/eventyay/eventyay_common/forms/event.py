@@ -97,7 +97,8 @@ class EventCommonSettingsForm(SettingsForm):
         if is_meetup_event(self.event):
             add_video_field_errors(self, data.get('video_type'), data.get('video_url'))
             fee = data.get('registration_fee')
-            if fee and fee > Decimal('0.00'):
+            has_connect = bool(self.event.settings.get('payment_stripe_connect_user_id'))
+            if fee and fee > Decimal('0.00') and not has_connect:
                 pub_key = data.get('payment_stripe_publishable_key') or self.event.settings.get('payment_stripe_publishable_key')
                 sec_key = data.get('payment_stripe_secret_key') or self.event.settings.get('payment_stripe_secret_key')
                 country = data.get('payment_stripe_merchant_country') or self.event.settings.get('payment_stripe_merchant_country')
@@ -169,9 +170,10 @@ class EventCommonSettingsForm(SettingsForm):
                         product.save(update_fields=['default_price'])
 
                 stripe_sec = self.cleaned_data.get('payment_stripe_secret_key') or self.event.settings.get('payment_stripe_secret_key')
-                if reg_fee > Decimal('0.00') and stripe_sec:
+                has_connect = bool(self.event.settings.get('payment_stripe_connect_user_id'))
+                if reg_fee > Decimal('0.00') and (stripe_sec or has_connect):
                     self.cleaned_data['payment_stripe__enabled'] = True
-                elif reg_fee == Decimal('0.00') and not self.cleaned_data.get('payment_stripe_publishable_key'):
+                elif reg_fee == Decimal('0.00') and not self.cleaned_data.get('payment_stripe_publishable_key') and not has_connect:
                     self.cleaned_data['payment_stripe_secret_key'] = ''
                     self.cleaned_data['payment_stripe_publishable_key'] = ''
                     self.cleaned_data['payment_stripe_merchant_country'] = ''
