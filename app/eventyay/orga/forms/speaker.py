@@ -46,18 +46,18 @@ class SpeakerExportForm(ExportForm):
     avatar = forms.BooleanField(
         required=False,
         initial=True,
-        label=_('Picture'),
-        help_text=_('The link to the speaker’s profile picture'),
+        label=_('Speaker photo'),
+        help_text=_('The link to the speaker’s photo'),
     )
     avatar_source = forms.BooleanField(
         required=False,
-        label=_('Picture Source'),
-        help_text=_("The source of the speaker's profile picture"),
+        label=_('Speaker photo source'),
+        help_text=_("The source of the speaker's photo"),
     )
     avatar_license = forms.BooleanField(
         required=False,
-        label=_('Picture License'),
-        help_text=_("The license of the speaker's profile picture"),
+        label=_('Speaker photo license'),
+        help_text=_("The license of the speaker's photo"),
     )
 
     class Meta:
