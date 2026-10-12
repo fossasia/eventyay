@@ -1,6 +1,7 @@
 {% extends "pretixcontrol/event/base.html" %}
 {% load i18n %}
 {% load bootstrap3 %}
+{% load rich_text %}
 {% block title %}{% trans "Email history" %}{% endblock %}
 {% block content %}
     <h1>
@@ -50,7 +51,7 @@
                             <strong>{% trans "Subject:" %}
                                 {{ log.parsed_data.subject }}</strong>
                         </p>
-                        <pre>{{ log.parsed_data.message }}</pre>
+                        <div class="mail-body well well-sm">{{ log.parsed_data.message|rich_text_email }}</div>
                     {% endif %}
                 </li>
             {% endfor %}
