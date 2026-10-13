@@ -5,9 +5,9 @@ import pytest
 from django.test import override_settings
 from django.urls import reverse
 from django.utils.timezone import now
-from django_scopes import scope, scopes_disabled
+from django_scopes import scopes_disabled
 
-from eventyay.base.models import Team, User
+from eventyay.base.models import Order, Submission, SubmissionStates, Team, User
 
 
 @pytest.fixture
@@ -137,7 +137,9 @@ def test_command_center_permission_talk_only(client, user, organizer, event, com
 
 @pytest.mark.django_db
 @override_settings(SITE_URL='https://testserver')
-def test_command_center_team_manage_url_permission_gating(organizer_client, client, organizer, event, command_center_url):
+def test_command_center_team_manage_url_permission_gating(
+    organizer_client, client, organizer, event, command_center_url
+):
     """Admin sees manage teams link; user without organizer permissions does not."""
     # organizer_client is an organizer admin
     response_admin = organizer_client.get(command_center_url)
@@ -180,4 +182,107 @@ def test_command_center_past_event_status_consistency(organizer_client, event, c
     assert str(response.context['at_a_glance']['event_status_text']) == 'Past'
     assert response.context['header_data']['event_status_class'] == 'past'
     assert response.context['at_a_glance']['event_status_class'] == 'past'
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_command_center_ticket_shop_testmode_workflow_status(organizer_client, event, command_center_url):
+    """When event testmode is active, ticketing step is labeled 'In test mode' rather than 'Live'."""
+    with scopes_disabled():
+        event.live = True
+        event.testmode = True
+        event.tickets_published = True
+        event.save()
+
+    response = organizer_client.get(command_center_url)
+    assert response.status_code == 200
+    workflow = response.context['workflow_timeline']
+    ticketing_step = next(s for s in workflow if s['name'] == 'Ticketing')
+    assert str(ticketing_step['status_text']) == 'In test mode'
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_command_center_approval_url_status_pa(organizer_client, event, command_center_url):
+    """Pending approvals action card links to ?status=pa."""
+    with scopes_disabled():
+        Order.objects.create(
+            event=event,
+            status=Order.STATUS_PENDING,
+            require_approval=True,
+            total=10,
+        )
+
+    response = organizer_client.get(command_center_url)
+    assert response.status_code == 200
+    actions = response.context['action_required']
+    approval_action = next((a for a in actions if a['id'] == 'orders-approval'), None)
+    assert approval_action is not None
+    assert '?status=pa' in approval_action['url']
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_command_center_confirmed_speakers_count(organizer_client, event, team, command_center_url):
+    """Confirmed speakers count includes speakers on confirmed submissions before schedule release."""
+    with scopes_disabled():
+        team.can_change_submissions = True
+        team.save()
+        speaker = User.objects.create_user(email='confirmed_speaker@example.com', password='pass')
+        st = event.submission_types.create(name='Keynote', default_duration=30)
+        sub = Submission.objects.create(
+            event=event,
+            submission_type=st,
+            title='Confirmed Talk',
+            state=SubmissionStates.CONFIRMED,
+        )
+        sub.speakers.add(speaker)
+
+    response = organizer_client.get(command_center_url)
+    assert response.status_code == 200
+    assert response.context['at_a_glance']['speakers_confirmed'] == 1
+    talks_card = next(c for c in response.context['component_cards'] if c['id'] == 'talks')
+    speaker_metric = next(m for m in talks_card['metrics'] if m['label'] == 'Speakers')
+    assert speaker_metric['value'] == 1
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_command_center_read_only_schedule_no_wip_created(organizer_client, event, command_center_url):
+    """Rendering command center does not create draft schedules."""
+    with scopes_disabled():
+        initial_schedules_count = event.schedules.count()
+
+    response = organizer_client.get(command_center_url)
+    assert response.status_code == 200
+
+    with scopes_disabled():
+        assert event.schedules.count() == initial_schedules_count
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_command_center_milestones_schedule_url(organizer_client, client, organizer, event, team, command_center_url):
+    """Admin with talk access sees schedule link in milestones; user without talk access does not."""
+    team.can_change_submissions = True
+    team.save()
+
+    response_admin = organizer_client.get(command_center_url)
+    assert response_admin.status_code == 200
+    assert response_admin.context['milestones_schedule_url'] is not None
+
+    ticket_user = User.objects.create_user(email='ticket_user@example.com', password='pass')
+    ticket_team = Team.objects.create(
+        organizer=organizer,
+        name='Ticket Only Team',
+        all_events=False,
+        can_view_orders=True,
+    )
+    ticket_team.limit_events.add(event)
+    ticket_team.members.add(ticket_user)
+
+    client.force_login(ticket_user)
+    response_user = client.get(command_center_url)
+    assert response_user.status_code == 200
+    assert response_user.context['milestones_schedule_url'] is None
 

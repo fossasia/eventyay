@@ -25,6 +25,14 @@
         {% trans 'No upcoming milestones configured.' %}
       </div>
     {% endif %}
+    {% if milestones_schedule_url %}
+    <div class="cc-card-footer-action">
+      <a href="{{ milestones_schedule_url }}" class="cc-component-btn">
+        <span>{% trans 'View schedule' %}</span>
+        <span class="fa fa-arrow-right" aria-hidden="true"></span>
+      </a>
+    </div>
+    {% endif %}
   </div>
 
   <!-- Section 7: Organiser and teams -->

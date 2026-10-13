@@ -47,6 +47,7 @@ from eventyay.base.models import (
     SubEvent,
     Submission,
     SubmissionStates,
+    User,
     Voucher,
 )
 from eventyay.base.meetup import is_meetup_event
@@ -424,7 +425,13 @@ class EventIndexView(TemplateView):
         )
 
         shop_status = event.ticket_component_presale_status
-        is_shop_live = shop_status.get('class') == 'live'
+        is_shop_public = bool(
+            event.live
+            and event.tickets_published
+            and not event.testmode
+            and not event.private_testmode_tickets_enabled
+        )
+        is_shop_testmode = bool(event.testmode or event.private_testmode_tickets_enabled)
         ticketing_url = (
             reverse('control:event.index', kwargs={'organizer': event.organizer.slug, 'event': event.slug})
             if permissions.get('has_ticket_access')
@@ -442,12 +449,15 @@ class EventIndexView(TemplateView):
                 pass
 
         current_sched = getattr(event, 'current_schedule', None)
-        wip_sched = getattr(event, 'wip_schedule', None)
-        has_scheduled_talks = bool(wip_sched and wip_sched.talks.filter(start__isnull=False).exists())
+        wip_sched = event.schedules.filter(version__isnull=True).first() if hasattr(event, 'schedules') else None
+        has_scheduled_talks = bool(
+            (wip_sched and wip_sched.talks.filter(start__isnull=False).exists())
+            or (current_sched and current_sched.talks.filter(start__isnull=False).exists())
+        )
         schedule_url = None
         if permissions.get('has_talk_access'):
             try:
-                schedule_url = reverse('orga:schedule.view', kwargs={'organizer': event.organizer.slug, 'event': event.slug})
+                schedule_url = reverse('orga:schedule.main', kwargs={'organizer': event.organizer.slug, 'event': event.slug})
             except NoReverseMatch:
                 pass
 
@@ -461,6 +471,19 @@ class EventIndexView(TemplateView):
 
         wrapup_active = is_event_past
 
+        if is_shop_public:
+            ticketing_phase = 'current'
+            ticketing_status = _('Live')
+        elif is_shop_testmode:
+            ticketing_phase = 'current'
+            ticketing_status = _('In test mode')
+        elif has_products:
+            ticketing_phase = 'done'
+            ticketing_status = _('Configured')
+        else:
+            ticketing_phase = 'todo'
+            ticketing_status = _('Upcoming')
+
         return [
             {
                 'name': _('Setup'),
@@ -473,8 +496,8 @@ class EventIndexView(TemplateView):
             {
                 'name': _('Ticketing'),
                 'icon': 'ticket',
-                'phase': 'current' if is_shop_live else ('done' if has_products else 'todo'),
-                'status_text': _('Live') if is_shop_live else (_('Configured') if has_products else _('Upcoming')),
+                'phase': ticketing_phase,
+                'status_text': ticketing_status,
                 'summary': shop_status.get('text', ''),
                 'url': ticketing_url,
             },
@@ -516,8 +539,18 @@ class EventIndexView(TemplateView):
         """Collect cross-event actionable alert cards."""
         actions = []
         if permissions.get('can_view_orders'):
-            pending_approvals = event.orders.filter(status=Order.STATUS_PENDING, require_approval=True).count()
+            order_qs = event.orders.all()
+            if subevent:
+                order_qs = order_qs.filter(all_positions__subevent=subevent).distinct()
+
+            pending_approvals = order_qs.filter(status=Order.STATUS_PENDING, require_approval=True).count()
             if pending_approvals > 0:
+                approval_url = (
+                    reverse('control:event.orders', kwargs={'event': event.slug, 'organizer': event.organizer.slug})
+                    + '?status=pa'
+                )
+                if subevent:
+                    approval_url += f'&subevent={subevent.id}'
                 actions.append({
                     'id': 'orders-approval',
                     'icon': 'clock-o',
@@ -530,14 +563,20 @@ class EventIndexView(TemplateView):
                     ) % {'count': pending_approvals},
                     'severity': 'danger',
                     'btn_text': _('Review orders'),
-                    'url': reverse('control:event.orders', kwargs={'event': event.slug, 'organizer': event.organizer.slug}) + '?status=p&approval=yes',
+                    'url': approval_url,
                 })
 
-            overpaid_orders = Order.annotate_overpayments(event.orders).filter(
+            overpaid_orders = Order.annotate_overpayments(order_qs).filter(
                 Q(~Q(status=Order.STATUS_CANCELED) & Q(pending_sum_t__lt=0))
                 | Q(Q(status=Order.STATUS_CANCELED) & Q(pending_sum_rc__lt=0))
             ).count()
             if overpaid_orders > 0:
+                overpaid_url = (
+                    reverse('control:event.orders', kwargs={'event': event.slug, 'organizer': event.organizer.slug})
+                    + '?status=overpaid'
+                )
+                if subevent:
+                    overpaid_url += f'&subevent={subevent.id}'
                 actions.append({
                     'id': 'overpaid-orders',
                     'icon': 'money',
@@ -550,7 +589,7 @@ class EventIndexView(TemplateView):
                     ) % {'count': overpaid_orders},
                     'severity': 'warning',
                     'btn_text': _('View overpaid orders'),
-                    'url': reverse('control:event.orders', kwargs={'event': event.slug, 'organizer': event.organizer.slug}) + '?status=overpaid',
+                    'url': overpaid_url,
                 })
 
         if permissions.get('can_change_event_settings') and not event.products.exists():
@@ -566,7 +605,7 @@ class EventIndexView(TemplateView):
             })
 
         if permissions.get('has_talk_access'):
-            wip_schedule = getattr(event, 'wip_schedule', None)
+            wip_schedule = event.schedules.filter(version__isnull=True).first() if hasattr(event, 'schedules') else None
             if wip_schedule:
                 unscheduled = wip_schedule.talks.filter(
                     Q(start__isnull=True) | Q(room__isnull=True),
@@ -586,11 +625,18 @@ class EventIndexView(TemplateView):
                         ) % {'count': unscheduled},
                         'severity': 'warning',
                         'btn_text': _('Open schedule'),
-                        'url': reverse('orga:schedule.view', kwargs={'event': event.slug, 'organizer': event.organizer.slug}),
+                        'url': reverse(
+                            'orga:schedule.main',
+                            kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+                        ),
                     })
 
+            confirmed_speakers_qs = User.objects.filter(
+                submissions__event=event,
+                submissions__state=SubmissionStates.CONFIRMED,
+            ).distinct()
             incomplete_speakers = SpeakerProfile.objects.filter(
-                Q(event=event, user__in=event.speakers)
+                Q(event=event, user__in=confirmed_speakers_qs)
                 & (Q(biography__isnull=True) | Q(biography='') | Q(user__avatar__isnull=True) | Q(user__avatar=''))
             ).distinct().count()
             if incomplete_speakers > 0:
@@ -606,7 +652,10 @@ class EventIndexView(TemplateView):
                     ) % {'count': incomplete_speakers},
                     'severity': 'caution',
                     'btn_text': _('Review speakers'),
-                    'url': reverse('orga:speakers.list', kwargs={'event': event.slug, 'organizer': event.organizer.slug}),
+                    'url': reverse(
+                        'orga:speakers.list',
+                        kwargs={'event': event.slug, 'organizer': event.organizer.slug},
+                    ),
                 })
 
         if permissions.get('has_video_access') and not is_video_enabled(event):
@@ -623,8 +672,39 @@ class EventIndexView(TemplateView):
 
         return actions
 
+    def _get_shared_order_metrics(
+        self, event: Event, subevent: Optional[SubEvent], can_view_orders: bool
+    ) -> Dict[str, Any]:
+        """Compute shared paid order aggregates once per request to avoid redundant queries."""
+        if not can_view_orders:
+            return {
+                'paid_orders_count': 0,
+                'revenue_sum': Decimal('0.00'),
+            }
+
+        paid_positions = OrderPosition.objects.filter(
+            order__event=event,
+            order__status=Order.STATUS_PAID,
+        )
+        if subevent:
+            paid_positions = paid_positions.filter(subevent=subevent)
+
+        metrics = paid_positions.aggregate(
+            rev_sum=Sum('price'),
+            order_count=Count('order_id', distinct=True),
+        )
+        return {
+            'paid_orders_count': metrics['order_count'] or 0,
+            'revenue_sum': metrics['rev_sum'] or Decimal('0.00'),
+        }
+
     def _get_at_a_glance_kpis(
-        self, event: Event, permissions: Dict[str, Any], subevent=None, header_data: Optional[Dict[str, Any]] = None
+        self,
+        event: Event,
+        permissions: Dict[str, Any],
+        subevent=None,
+        header_data: Optional[Dict[str, Any]] = None,
+        shared_order_metrics: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Aggregate high-level cross-event KPIs."""
         can_view_orders = permissions.get('can_view_orders', False)
@@ -643,13 +723,16 @@ class EventIndexView(TemplateView):
             attendees_paid = opqs.filter(
                 order__status=Order.STATUS_PAID
             ).count()
-            rev_qs = OrderPosition.objects.filter(
-                order__event=event,
-                order__status=Order.STATUS_PAID
-            )
-            if subevent:
-                rev_qs = rev_qs.filter(subevent=subevent)
-            revenue_sum = rev_qs.aggregate(sum=Sum('price'))['sum'] or Decimal('0.00')
+            if shared_order_metrics is not None:
+                revenue_sum = shared_order_metrics['revenue_sum']
+            else:
+                rev_qs = OrderPosition.objects.filter(
+                    order__event=event,
+                    order__status=Order.STATUS_PAID
+                )
+                if subevent:
+                    rev_qs = rev_qs.filter(subevent=subevent)
+                revenue_sum = rev_qs.aggregate(sum=Sum('price'))['sum'] or Decimal('0.00')
         else:
             attendees_ordered = 0
             attendees_paid = 0
@@ -657,7 +740,10 @@ class EventIndexView(TemplateView):
 
         if has_talk:
             sessions_confirmed = event.submissions.filter(state=SubmissionStates.CONFIRMED).count()
-            speakers_confirmed = event.speakers.count()
+            speakers_confirmed = User.objects.filter(
+                submissions__event=event,
+                submissions__state=SubmissionStates.CONFIRMED,
+            ).distinct().count()
         else:
             sessions_confirmed = 0
             speakers_confirmed = 0
@@ -686,7 +772,13 @@ class EventIndexView(TemplateView):
             'currency': event.currency,
         }
 
-    def _get_component_cards(self, event: Event, permissions: Dict[str, Any], subevent=None) -> List[Dict[str, Any]]:
+    def _get_component_cards(
+        self,
+        event: Event,
+        permissions: Dict[str, Any],
+        subevent=None,
+        shared_order_metrics: Optional[Dict[str, Any]] = None,
+    ) -> List[Dict[str, Any]]:
         """Generate status cards for tickets, talks, video, and active plugins."""
         cards = []
         plugins = event.get_plugins()
@@ -699,13 +791,22 @@ class EventIndexView(TemplateView):
                 opqs = opqs.filter(subevent=subevent)
             ordered_c = opqs.filter(order__status__in=(Order.STATUS_PAID, Order.STATUS_PENDING)).count() if permissions.get('can_view_orders') else 0
             paid_c = opqs.filter(order__status=Order.STATUS_PAID).count() if permissions.get('can_view_orders') else 0
-            pending_appr = event.orders.filter(status=Order.STATUS_PENDING, require_approval=True).count() if permissions.get('can_view_orders') else 0
-            rev_sum = Decimal('0.00')
+
+            order_qs = event.orders.all()
+            if subevent:
+                order_qs = order_qs.filter(all_positions__subevent=subevent).distinct()
+            pending_appr = order_qs.filter(status=Order.STATUS_PENDING, require_approval=True).count() if permissions.get('can_view_orders') else 0
+
             if permissions.get('can_view_orders'):
-                rev_qs = OrderPosition.objects.filter(order__event=event, order__status=Order.STATUS_PAID)
-                if subevent:
-                    rev_qs = rev_qs.filter(subevent=subevent)
-                rev_sum = rev_qs.aggregate(sum=Sum('price'))['sum'] or Decimal('0.00')
+                if shared_order_metrics is not None:
+                    rev_sum = shared_order_metrics['revenue_sum']
+                else:
+                    rev_qs = OrderPosition.objects.filter(order__event=event, order__status=Order.STATUS_PAID)
+                    if subevent:
+                        rev_qs = rev_qs.filter(subevent=subevent)
+                    rev_sum = rev_qs.aggregate(sum=Sum('price'))['sum'] or Decimal('0.00')
+            else:
+                rev_sum = Decimal('0.00')
 
             cards.append({
                 'id': 'tickets',
@@ -730,6 +831,10 @@ class EventIndexView(TemplateView):
             accepted_c = event.submissions.filter(state__in=[SubmissionStates.ACCEPTED, SubmissionStates.CONFIRMED]).count()
             acc_rate = round((accepted_c / total_proposals) * 100, 1) if total_proposals else 0
             talk_status = _('CfP Open') if (hasattr(event, 'cfp') and event.cfp and event.cfp.is_open) else (_('Active') if total_proposals else _('Setup'))
+            confirmed_speakers_count = User.objects.filter(
+                submissions__event=event,
+                submissions__state=SubmissionStates.CONFIRMED,
+            ).distinct().count()
 
             cards.append({
                 'id': 'talks',
@@ -739,7 +844,7 @@ class EventIndexView(TemplateView):
                 'status_class': 'live' if (hasattr(event, 'cfp') and event.cfp and event.cfp.is_open) else 'info',
                 'metrics': [
                     {'label': _('Sessions'), 'value': accepted_c},
-                    {'label': _('Speakers'), 'value': event.speakers.count()},
+                    {'label': _('Speakers'), 'value': confirmed_speakers_count},
                     {'label': _('Proposals'), 'value': total_proposals},
                     {'label': _('Acceptance rate'), 'value': f'{acc_rate}%'},
                 ],
@@ -768,10 +873,14 @@ class EventIndexView(TemplateView):
 
         # 4. Social Media Card
         has_social = 'socialmedia' in plugins
+        can_access_social = permissions.get('can_change_event_settings', False)
         social_url = None
-        if has_social:
+        if has_social and can_access_social:
             try:
-                social_url = reverse('plugins:socialmedia:index', kwargs={'event': event.slug, 'organizer': event.organizer.slug})
+                social_url = reverse(
+                    'plugins:socialmedia:index',
+                    kwargs={'event': event.slug, 'organizer': event.organizer.slug},
+                )
             except NoReverseMatch:
                 social_url = None
 
@@ -785,15 +894,24 @@ class EventIndexView(TemplateView):
             'empty_state': _('No social posts scheduled yet.') if has_social else _('Plugin not enabled'),
             'btn_text': _('Open social dashboard') if social_url else None,
             'url': social_url,
-            'enabled': has_social,
+            'enabled': has_social and can_access_social,
         })
 
         # 5. TeamShifts Card
         has_teamshifts = 'teamshifts' in plugins
+        can_access_teamshifts = (
+            self.request.user.has_organizer_permission(event.organizer, 'can_change_teams', request=self.request)
+            or self.request.user.has_organizer_permission(
+                event.organizer, 'can_change_organizer_settings', request=self.request
+            )
+        )
         teamshifts_url = None
-        if has_teamshifts:
+        if has_teamshifts and can_access_teamshifts:
             try:
-                teamshifts_url = reverse('plugins:teamshifts:organizer_dashboard', kwargs={'organizer': event.organizer.slug})
+                teamshifts_url = reverse(
+                    'plugins:teamshifts:organizer_dashboard',
+                    kwargs={'organizer': event.organizer.slug},
+                )
             except NoReverseMatch:
                 teamshifts_url = None
 
@@ -807,15 +925,22 @@ class EventIndexView(TemplateView):
             'empty_state': _('No TeamShifts configured yet.') if has_teamshifts else _('Plugin not enabled'),
             'btn_text': _('Open TeamShifts dashboard') if teamshifts_url else None,
             'url': teamshifts_url,
-            'enabled': has_teamshifts,
+            'enabled': has_teamshifts and can_access_teamshifts,
         })
 
         # 6. Exhibitors & Sponsors Card
         has_exhibition = 'exhibition' in plugins
+        can_access_exhibition = (
+            permissions.get('can_change_event_settings', False)
+            or permissions.get('can_change_items', False)
+        )
         exhibition_url = None
-        if has_exhibition:
+        if has_exhibition and can_access_exhibition:
             try:
-                exhibition_url = reverse('plugins:exhibition:index', kwargs={'event': event.slug, 'organizer': event.organizer.slug})
+                exhibition_url = reverse(
+                    'plugins:exhibition:index',
+                    kwargs={'event': event.slug, 'organizer': event.organizer.slug},
+                )
             except NoReverseMatch:
                 exhibition_url = None
 
@@ -829,7 +954,7 @@ class EventIndexView(TemplateView):
             'empty_state': _('No exhibitors configured yet.') if has_exhibition else _('Plugin not enabled'),
             'btn_text': _('Open exhibitors dashboard') if exhibition_url else None,
             'url': exhibition_url,
-            'enabled': has_exhibition,
+            'enabled': has_exhibition and can_access_exhibition,
         })
 
         return cards
@@ -874,6 +999,15 @@ class EventIndexView(TemplateView):
                 m['is_current'] = False
         return milestones
 
+    def _get_milestones_schedule_url(self, event: Event, permissions: Dict[str, Any]) -> Optional[str]:
+        """Return schedule URL for milestones card if user has talk permissions."""
+        if permissions.get('has_talk_access'):
+            try:
+                return reverse('orga:schedule.main', kwargs={'organizer': event.organizer.slug, 'event': event.slug})
+            except NoReverseMatch:
+                return None
+        return None
+
     def _get_organiser_teams(self, event: Event) -> Dict[str, Any]:
         """Collect organiser name and assigned teams."""
         can_manage_teams = self.request.user.has_organizer_permission(
@@ -898,13 +1032,27 @@ class EventIndexView(TemplateView):
             'manage_url': manage_url,
         }
 
-    def _get_analytics_overview(self, event: Event, permissions: Dict[str, Any]) -> Dict[str, Any]:
+    def _get_analytics_overview(
+        self,
+        event: Event,
+        permissions: Dict[str, Any],
+        subevent: Optional[SubEvent] = None,
+        shared_order_metrics: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         """Aggregate cross-event analytics metrics."""
         can_view_orders = permissions.get('can_view_orders', False)
         has_talk = permissions.get('has_talk_access', False)
 
-        order_count = event.orders.filter(status=Order.STATUS_PAID).count() if can_view_orders else 0
-        revenue_total = OrderPosition.objects.filter(order__event=event, order__status=Order.STATUS_PAID).aggregate(sum=Sum('price'))['sum'] or Decimal('0.00') if can_view_orders else Decimal('0.00')
+        if can_view_orders and shared_order_metrics is not None:
+            order_count = shared_order_metrics['paid_orders_count']
+            revenue_total = shared_order_metrics['revenue_sum']
+        elif can_view_orders:
+            order_metrics = self._get_shared_order_metrics(event, subevent, can_view_orders)
+            order_count = order_metrics['paid_orders_count']
+            revenue_total = order_metrics['revenue_sum']
+        else:
+            order_count = 0
+            revenue_total = Decimal('0.00')
 
         proposal_stats = {}
         if has_talk:
@@ -915,12 +1063,21 @@ class EventIndexView(TemplateView):
                 'rejected': event.submissions.filter(state=SubmissionStates.REJECTED).count(),
             }
 
+        stats_url = None
+        if can_view_orders:
+            stats_url = reverse(
+                'control:event.orders',
+                kwargs={'event': event.slug, 'organizer': event.organizer.slug},
+            )
+            if subevent:
+                stats_url += f'?subevent={subevent.id}'
+
         return {
             'order_count': order_count,
             'revenue_total': revenue_total,
             'currency': event.currency,
             'proposal_stats': proposal_stats,
-            'stats_url': reverse('control:event.orders', kwargs={'event': event.slug, 'organizer': event.organizer.slug}) if can_view_orders else None,
+            'stats_url': stats_url,
         }
 
     def _get_recent_activity(self, event: Event, permissions: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -974,14 +1131,32 @@ class EventIndexView(TemplateView):
 
         # Wrap event queries with scope
         with scope(event=request.event):
+            shared_order_metrics = self._get_shared_order_metrics(request.event, subevent, can_view_orders)
             header_data = self._get_header_data(request.event, request)
             workflow_timeline = self._get_workflow_timeline(request.event, permissions)
             action_required = self._get_action_required(request.event, permissions, subevent=subevent)
-            at_a_glance = self._get_at_a_glance_kpis(request.event, permissions, subevent=subevent, header_data=header_data)
-            component_cards = self._get_component_cards(request.event, permissions, subevent=subevent)
+            at_a_glance = self._get_at_a_glance_kpis(
+                request.event,
+                permissions,
+                subevent=subevent,
+                header_data=header_data,
+                shared_order_metrics=shared_order_metrics,
+            )
+            component_cards = self._get_component_cards(
+                request.event,
+                permissions,
+                subevent=subevent,
+                shared_order_metrics=shared_order_metrics,
+            )
             upcoming_milestones = self._get_upcoming_milestones(request.event)
+            milestones_schedule_url = self._get_milestones_schedule_url(request.event, permissions)
             organiser_info = self._get_organiser_teams(request.event)
-            analytics_overview = self._get_analytics_overview(request.event, permissions)
+            analytics_overview = self._get_analytics_overview(
+                request.event,
+                permissions,
+                subevent=subevent,
+                shared_order_metrics=shared_order_metrics,
+            )
             recent_activity = self._get_recent_activity(request.event, permissions)
 
         # Prepare context
@@ -1009,6 +1184,7 @@ class EventIndexView(TemplateView):
                 'at_a_glance': at_a_glance,
                 'component_cards': component_cards,
                 'upcoming_milestones': upcoming_milestones,
+                'milestones_schedule_url': milestones_schedule_url,
                 'organiser_info': organiser_info,
                 'analytics_overview': analytics_overview,
                 'recent_activity': recent_activity,
