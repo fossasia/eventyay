@@ -2594,7 +2594,7 @@ class EventTest(TestCase):
             organizer=self.organizer,
             name='Source Event Bad Bounds',
             slug='copy-src-bounds',
-            date_from=datetime.datetime(2013, 12, 26, 9, 0, 0, tzinfo=datetime.timezone.utc),
+            date_from=datetime.datetime(2013, 12, 26, 9, 0, 0, tzinfo=datetime.UTC),
         )
         with scopes_disabled():
             Item.objects.create(
@@ -2609,7 +2609,7 @@ class EventTest(TestCase):
             organizer=self.organizer,
             name='Destination Event',
             slug='copy-dst-bounds',
-            date_from=datetime.datetime(2013, 12, 27, 9, 0, 0, tzinfo=datetime.timezone.utc),
+            date_from=datetime.datetime(2013, 12, 27, 9, 0, 0, tzinfo=datetime.UTC),
         )
         event2.copy_data_from(event1)
         with scopes_disabled():

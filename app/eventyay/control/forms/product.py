@@ -46,6 +46,9 @@ from eventyay.helpers.models import modelcopy
 from eventyay.helpers.money import change_decimal_field
 
 
+FREE_PRICE_FIELDS = ('free_price', 'free_price_min', 'free_price_max')
+
+
 def effective_free_price_min(default_price, free_price_min):
     """Match checkout pricing: minimum is the higher of default and configured minimum."""
     if default_price is None and free_price_min is None:
@@ -462,6 +465,9 @@ class ProductCreateForm(I18nModelForm):
                 required=False,
             )
 
+    def _has_free_price_changes(self):
+        return any(f in self.changed_data for f in FREE_PRICE_FIELDS)
+
     def save(self, commit=True, *args, **kwargs):
         if self.cleaned_data.get('copy_from'):
             fields = (
@@ -489,7 +495,7 @@ class ProductCreateForm(I18nModelForm):
             )
             for f in fields:
                 setattr(self.instance, f, getattr(self.cleaned_data['copy_from'], f))
-            if 'free_price' not in self.changed_data:
+            if not self._has_free_price_changes():
                 copy_sanitized_free_price_bounds(self.instance, self.cleaned_data['copy_from'])
         else:
             # Add to all sales channels by default
@@ -520,7 +526,7 @@ class ProductCreateForm(I18nModelForm):
         self.instance.position = (self.event.products.aggregate(p=Max('position'))['p'] or 0) + 1
         instance = super().save(commit=commit, *args, **kwargs)
 
-        if self.cleaned_data.get('copy_from') and 'free_price' not in self.changed_data:
+        if self.cleaned_data.get('copy_from') and not self._has_free_price_changes():
             copy_sanitized_free_price_bounds(instance, self.cleaned_data['copy_from'])
             if commit:
                 instance.save(update_fields=['free_price', 'free_price_min', 'free_price_max'])
@@ -620,28 +626,38 @@ class ProductCreateForm(I18nModelForm):
 
         clean_free_price_bounds(cleaned_data, form=self)
 
-        if cleaned_data.get('copy_from') and 'free_price' not in self.changed_data:
+        if cleaned_data.get('copy_from') and not self._has_free_price_changes():
             source = cleaned_data['copy_from']
             if source.free_price:
-                if (source.free_price_min is not None and source.free_price_min < 0) or (
-                    source.free_price_max is not None and source.free_price_max < 0
-                ):
+                source_min = (
+                    source.free_price_min
+                    if source.free_price_min is not None and source.free_price_min >= 0
+                    else None
+                )
+                source_max = (
+                    source.free_price_max
+                    if source.free_price_max is not None and source.free_price_max >= 0
+                    else None
+                )
+                cleaned_data['free_price'] = True
+                cleaned_data['free_price_min'] = source_min
+                cleaned_data['free_price_max'] = source_max
+
+                default_price = cleaned_data.get('default_price')
+                if default_price is not None and source_max is not None and default_price > source_max:
                     self.add_error(
                         'copy_from',
-                        _('The selected product has invalid negative free-price limits.'),
+                        _('The selected product’s maximum price is lower than the entered default price.'),
                     )
-                else:
-                    eff_min = effective_free_price_min(
-                        cleaned_data.get('default_price'),
-                        source.free_price_min,
+                if source_min is not None and source_max is not None and source_min > source_max:
+                    self.add_error(
+                        'copy_from',
+                        _('The selected product’s maximum price is lower than its configured minimum price.'),
                     )
-                    if eff_min is not None and source.free_price_max is not None and eff_min > source.free_price_max:
-                        self.add_error(
-                            'copy_from',
-                            _(
-                                'The selected product’s maximum price is lower than the entered default price.'
-                            ),
-                        )
+            else:
+                cleaned_data['free_price'] = False
+                cleaned_data['free_price_min'] = None
+                cleaned_data['free_price_max'] = None
 
         return cleaned_data
 

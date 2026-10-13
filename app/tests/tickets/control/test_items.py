@@ -4,6 +4,7 @@ from decimal import Decimal
 import pytest
 from django import forms
 from django.test import override_settings
+from django.urls import reverse
 from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
 from i18nfield.strings import LazyI18nString
@@ -997,6 +998,7 @@ class ProductDeleteTest(ItemFormTest):
         assert doc.select_one('button.btn-delete') is None
 
 
+@override_settings(SITE_URL='https://testserver')
 class FreePriceBoundsTest(ItemFormTest):
     def test_clean_free_price_bounds_negative_min_standalone(self):
         with pytest.raises(forms.ValidationError) as excinfo:
@@ -1053,7 +1055,8 @@ class FreePriceBoundsTest(ItemFormTest):
         assert cleaned_data['free_price_max'] == Decimal('20.00')
 
     def test_create_item_negative_free_price_min_rejected(self):
-        doc = self.get_doc('/control/event/%s/%s/items/add' % (self.orga1.slug, self.event1.slug))
+        url = reverse('control:event.products.add', kwargs={'organizer': self.orga1.slug, 'event': self.event1.slug})
+        doc = self.get_doc(url)
         form_data = extract_form_fields(doc.select('.container-fluid form')[0])
         form_data['name_0'] = 'Free Price Donation'
         form_data['default_price'] = '0.00'
@@ -1061,17 +1064,15 @@ class FreePriceBoundsTest(ItemFormTest):
         form_data['free_price_min'] = '-5.00'
         form_data['free_price_max'] = '20.00'
         form_data['quota_option'] = 'none'
-        doc = self.post_doc(
-            '/control/event/%s/%s/items/add' % (self.orga1.slug, self.event1.slug),
-            form_data,
-        )
+        doc = self.post_doc(url, form_data)
         assert not doc.select('.alert-success')
         assert doc.select('.has-error')
         with scopes_disabled():
             assert not Item.objects.filter(name__icontains='Free Price Donation').exists()
 
     def test_create_item_valid_free_price_succeeds(self):
-        doc = self.get_doc('/control/event/%s/%s/items/add' % (self.orga1.slug, self.event1.slug))
+        url = reverse('control:event.products.add', kwargs={'organizer': self.orga1.slug, 'event': self.event1.slug})
+        doc = self.get_doc(url)
         form_data = extract_form_fields(doc.select('.container-fluid form')[0])
         form_data['name_0'] = 'Valid Free Price'
         form_data['default_price'] = '0.00'
@@ -1079,10 +1080,7 @@ class FreePriceBoundsTest(ItemFormTest):
         form_data['free_price_min'] = '5.00'
         form_data['free_price_max'] = '20.00'
         form_data['quota_option'] = 'none'
-        doc = self.post_doc(
-            '/control/event/%s/%s/items/add' % (self.orga1.slug, self.event1.slug),
-            form_data,
-        )
+        doc = self.post_doc(url, form_data)
         assert doc.select('.alert-success')
         with scopes_disabled():
             item = Item.objects.get(name__icontains='Valid Free Price')
@@ -1090,7 +1088,7 @@ class FreePriceBoundsTest(ItemFormTest):
             assert item.free_price_min == Decimal('5.00')
             assert item.free_price_max == Decimal('20.00')
 
-    def test_create_item_copy_from_negative_free_price_rejected(self):
+    def test_create_item_copy_from_negative_free_price_sanitized(self):
         with scopes_disabled():
             legacy_item = Item.objects.create(
                 event=self.event1,
@@ -1100,21 +1098,19 @@ class FreePriceBoundsTest(ItemFormTest):
                 free_price_min=Decimal('-5.00'),
                 free_price_max=Decimal('20.00'),
             )
-        doc = self.get_doc('/control/event/%s/%s/items/add?copy_from=%s' % (
-            self.orga1.slug, self.event1.slug, legacy_item.pk
-        ))
+        url = reverse('control:event.products.add', kwargs={'organizer': self.orga1.slug, 'event': self.event1.slug})
+        doc = self.get_doc(f'{url}?copy_from={legacy_item.pk}')
         form_data = extract_form_fields(doc.select('.container-fluid form')[0])
         form_data['name_0'] = 'Cloned Product'
         form_data['copy_from'] = str(legacy_item.pk)
         form_data['quota_option'] = 'none'
-        doc = self.post_doc(
-            '/control/event/%s/%s/items/add' % (self.orga1.slug, self.event1.slug),
-            form_data,
-        )
-        assert not doc.select('.alert-success')
-        assert doc.select('.has-error')
+        doc = self.post_doc(url, form_data)
+        assert doc.select('.alert-success')
         with scopes_disabled():
-            assert not Item.objects.filter(name__icontains='Cloned Product').exists()
+            item = Item.objects.get(name__icontains='Cloned Product')
+            assert item.free_price is True
+            assert item.free_price_min is None
+            assert item.free_price_max == Decimal('20.00')
 
     def test_product_create_form_save_sanitizes_copied_negative_bounds(self):
         with scopes_disabled():
@@ -1135,13 +1131,75 @@ class FreePriceBoundsTest(ItemFormTest):
                     'name_0': 'Direct Cloned Product',
                     'default_price': '10.00',
                     'quota_option': 'none',
+                    'copy_from': str(legacy_item.pk),
                 },
             )
             assert form.is_valid()
-            form.cleaned_data['copy_from'] = legacy_item
             form.save()
             new_item.refresh_from_db()
             assert new_item.free_price is True
+            assert new_item.free_price_min is None
+            assert new_item.free_price_max is None
+
+    def test_product_create_form_copy_from_preserves_user_entered_bounds(self):
+        with scopes_disabled():
+            source_item = Item.objects.create(
+                event=self.event1,
+                name='Source Item Bounds',
+                default_price=Decimal('10.00'),
+                free_price=True,
+                free_price_min=Decimal('5.00'),
+                free_price_max=Decimal('20.00'),
+            )
+            new_item = Item(event=self.event1)
+            form = ProductCreateForm(
+                instance=new_item,
+                event=self.event1,
+                user=self.user,
+                data={
+                    'name_0': 'Custom Bounds Product',
+                    'default_price': '10.00',
+                    'free_price': 'on',
+                    'free_price_min': '8.00',
+                    'free_price_max': '35.00',
+                    'quota_option': 'none',
+                    'copy_from': str(source_item.pk),
+                },
+            )
+            assert form.is_valid()
+            form.save()
+            new_item.refresh_from_db()
+            assert new_item.free_price is True
+            assert new_item.free_price_min == Decimal('8.00')
+            assert new_item.free_price_max == Decimal('35.00')
+
+    def test_product_create_form_copy_from_preserves_disabled_free_price(self):
+        with scopes_disabled():
+            source_item = Item.objects.create(
+                event=self.event1,
+                name='Source Item Free Price Enabled',
+                default_price=Decimal('10.00'),
+                free_price=True,
+                free_price_min=Decimal('5.00'),
+                free_price_max=Decimal('20.00'),
+            )
+            new_item = Item(event=self.event1)
+            form = ProductCreateForm(
+                instance=new_item,
+                event=self.event1,
+                user=self.user,
+                initial={'free_price': True},
+                data={
+                    'name_0': 'Disabled Free Price Product',
+                    'default_price': '10.00',
+                    'quota_option': 'none',
+                    'copy_from': str(source_item.pk),
+                },
+            )
+            assert form.is_valid()
+            form.save()
+            new_item.refresh_from_db()
+            assert new_item.free_price is False
             assert new_item.free_price_min is None
             assert new_item.free_price_max is None
 
@@ -1169,6 +1227,65 @@ class FreePriceBoundsTest(ItemFormTest):
             )
             assert not form.is_valid()
             assert 'copy_from' in form.errors
+            copy_errors = str(form.errors['copy_from'])
+            assert 'The selected product’s maximum price is lower than the entered default price.' in copy_errors
+            assert 'configured minimum price' not in copy_errors
+
+    def test_create_item_copy_from_source_min_exceeds_max_rejected(self):
+        with scopes_disabled():
+            legacy_item = Item.objects.create(
+                event=self.event1,
+                name='Legacy Inverted Bounds',
+                default_price=Decimal('10.00'),
+                free_price=True,
+                free_price_min=Decimal('20.00'),
+                free_price_max=Decimal('10.00'),
+            )
+            new_item = Item(event=self.event1)
+            form = ProductCreateForm(
+                instance=new_item,
+                event=self.event1,
+                user=self.user,
+                data={
+                    'name_0': 'Cloned Inverted',
+                    'default_price': '5.00',
+                    'quota_option': 'none',
+                    'copy_from': str(legacy_item.pk),
+                },
+            )
+            assert not form.is_valid()
+            assert 'copy_from' in form.errors
+            copy_errors = str(form.errors['copy_from'])
+            assert 'The selected product’s maximum price is lower than its configured minimum price.' in copy_errors
+            assert 'entered default price' not in copy_errors
+
+    def test_create_item_copy_from_both_exceed_max_rejected(self):
+        with scopes_disabled():
+            legacy_item = Item.objects.create(
+                event=self.event1,
+                name='Legacy Both Inverted',
+                default_price=Decimal('10.00'),
+                free_price=True,
+                free_price_min=Decimal('20.00'),
+                free_price_max=Decimal('10.00'),
+            )
+            new_item = Item(event=self.event1)
+            form = ProductCreateForm(
+                instance=new_item,
+                event=self.event1,
+                user=self.user,
+                data={
+                    'name_0': 'Cloned Both Conflicts',
+                    'default_price': '25.00',
+                    'quota_option': 'none',
+                    'copy_from': str(legacy_item.pk),
+                },
+            )
+            assert not form.is_valid()
+            assert 'copy_from' in form.errors
+            copy_errors = str(form.errors['copy_from'])
+            assert 'The selected product’s maximum price is lower than the entered default price.' in copy_errors
+            assert 'The selected product’s maximum price is lower than its configured minimum price.' in copy_errors
 
     def test_product_create_form_save_commit_false_preserves_unsaved_state(self):
         """Test ProductCreateForm.save(commit=False) sets copied bounds on the instance without saving to database."""
@@ -1190,10 +1307,10 @@ class FreePriceBoundsTest(ItemFormTest):
                     'name_0': 'Unsaved Product',
                     'default_price': '10.00',
                     'quota_option': 'none',
+                    'copy_from': str(legacy_item.pk),
                 },
             )
             assert form.is_valid()
-            form.cleaned_data['copy_from'] = legacy_item
             instance = form.save(commit=False)
             assert instance.pk is None
             assert instance.free_price is True
