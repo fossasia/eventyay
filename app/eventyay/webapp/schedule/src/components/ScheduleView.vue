@@ -666,6 +666,7 @@ export default {
 </script>
 
 <style lang="stylus">
+@import '../styles/fullscreen.styl'
 .c-schedule-view
 	display: flex
 	flex-direction: column
@@ -680,6 +681,7 @@ export default {
 		.c-schedule-toolbar
 			border-bottom: 1px solid $clr-dividers-light
 			box-shadow: 0 1px 3px rgba(0,0,0,0.08)
+		fullscreen-gutter()
 	.schedule-content
 		flex: 1
 		min-height: 0

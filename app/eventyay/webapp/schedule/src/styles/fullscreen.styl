@@ -1,0 +1,23 @@
+// Side gutter for the schedule while it is the fullscreen element. Same as
+// the page padding around the embedded schedule, and wider than the 15px
+// buntpapier scrollbar rail. It goes on the content, not on the fullscreen
+// element, so the scroll areas still reach the screen edge and their
+// scrollbars sit in it.
+//
+// Imported explicitly (not through vite's stylus `imports`) because the video
+// app builds ScheduleView.vue with its own stylus config.
+$fullscreen-gutter = 16px
+
+fullscreen-gutter()
+	> .c-schedule-toolbar .toolbar-row
+		padding-left: $fullscreen-gutter
+		padding-right: $fullscreen-gutter
+	.c-grid-schedule
+		margin-left: $fullscreen-gutter
+		margin-right: $fullscreen-gutter
+	.c-linear-schedule > .bucket
+		padding-left: $fullscreen-gutter
+		padding-right: $fullscreen-gutter
+		// the gutter already keeps cards clear of the scrollbar rail
+		.c-linear-schedule-session, .break
+			margin-right: 0
