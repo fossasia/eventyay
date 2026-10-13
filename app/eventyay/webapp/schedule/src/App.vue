@@ -1751,6 +1751,9 @@ export default {
 </script>
 <style lang="stylus">
 @import 'styles/global.styl'
+// same as the page padding around the embedded schedule, and wider than
+// the 15px buntpapier scrollbar rail
+$fullscreen-gutter = 16px
 .schedule-error
 	color: $clr-error
 	font-size: 18px
@@ -1782,8 +1785,22 @@ export default {
 		margin: 0
 		overflow: auto
 		--pretalx-sticky-top-offset: 0px
+		// The gutter goes on the content, not on this element, so the scroll
+		// areas still reach the screen edge and their scrollbars sit in it.
 		> .c-schedule-toolbar
 			border-bottom: 1px solid $clr-dividers-light
+			.toolbar-row
+				padding-left: $fullscreen-gutter
+				padding-right: $fullscreen-gutter
+		.c-grid-schedule
+			margin-left: $fullscreen-gutter
+			margin-right: $fullscreen-gutter
+		.c-linear-schedule > .bucket
+			padding-left: $fullscreen-gutter
+			padding-right: $fullscreen-gutter
+			// the gutter already keeps cards clear of the scrollbar rail
+			.c-linear-schedule-session, .break
+				margin-right: 0
 	&.grid-schedule
 		overflow-x: clip
 		margin: 0 auto
