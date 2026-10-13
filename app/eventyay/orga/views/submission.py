@@ -259,6 +259,7 @@ class SubmissionSpeakersDelete(SubmissionViewMixin, View):
 
         if submission in speaker.submissions.all():
             submission.remove_speaker(speaker, user=request.user)
+            request.event.cache.set('rebuild_schedule_export', True, None)
             messages.success(request, _('The speaker has been removed from the proposal.'))
         else:
             messages.warning(request, _('The speaker was not part of this proposal.'))
