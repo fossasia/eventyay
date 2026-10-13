@@ -1,11 +1,13 @@
 """Tests for Unified Event Command Center (Issue #5092)."""
+from datetime import timedelta
 
 import pytest
 from django.test import override_settings
 from django.urls import reverse
+from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
 
-from eventyay.base.models import Team
+from eventyay.base.models import Team, User
 
 
 @pytest.fixture
@@ -137,8 +139,6 @@ def test_command_center_permission_talk_only(client, user, organizer, event, com
 @override_settings(SITE_URL='https://testserver')
 def test_command_center_team_manage_url_permission_gating(organizer_client, client, organizer, event, command_center_url):
     """Admin sees manage teams link; user without organizer permissions does not."""
-    from eventyay.base.models import User
-
     # organizer_client is an organizer admin
     response_admin = organizer_client.get(command_center_url)
     assert response_admin.status_code == 200
@@ -168,9 +168,6 @@ def test_command_center_team_manage_url_permission_gating(organizer_client, clie
 @override_settings(SITE_URL='https://testserver')
 def test_command_center_past_event_status_consistency(organizer_client, event, command_center_url):
     """Past live event shows Past in both header and KPI card."""
-    from datetime import timedelta
-    from django.utils.timezone import now
-
     with scopes_disabled():
         event.live = True
         event.date_from = now() - timedelta(days=10)
