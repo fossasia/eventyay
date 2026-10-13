@@ -168,7 +168,7 @@
                             </td>
                             <td class="text-center">{{ field_counts.title }}</td>
                             <td class="text-right text-nowrap">
-                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='title' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='title' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Title' %}" title="{% translate 'Settings for Title' %}">
                                     <i class="fa fa-cog fa-fw"></i>
                                 </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
@@ -211,7 +211,7 @@
                             </td>
                             <td class="text-center">{{ field_counts.submission_type }}</td>
                             <td class="text-right text-nowrap">
-                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='submission_type' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='submission_type' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Session type' %}" title="{% translate 'Settings for Session type' %}">
                                     <i class="fa fa-cog fa-fw"></i>
                                 </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
@@ -261,7 +261,7 @@
                             </td>
                             <td class="text-center">{{ field_counts.abstract }}</td>
                             <td class="text-right text-nowrap">
-                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='abstract' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='abstract' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Abstract' %}" title="{% translate 'Settings for Abstract' %}">
                                     <i class="fa fa-cog fa-fw"></i>
                                 </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
@@ -312,7 +312,7 @@
                             </td>
                             <td class="text-center">{{ field_counts.description }}</td>
                             <td class="text-right text-nowrap">
-                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='description' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='description' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Description' %}" title="{% translate 'Settings for Description' %}">
                                     <i class="fa fa-cog fa-fw"></i>
                                 </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
@@ -357,7 +357,7 @@
                             <td></td>
                             <td class="text-center">{{ field_counts.notes }}</td>
                             <td class="text-right text-nowrap">
-                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='notes' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='notes' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Notes' %}" title="{% translate 'Settings for Notes' %}">
                                     <i class="fa fa-cog fa-fw"></i>
                                 </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
@@ -407,7 +407,7 @@
                             </td>
                             <td class="text-center">{{ field_counts.track }}</td>
                             <td class="text-right text-nowrap">
-                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='track' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='track' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Track' %}" title="{% translate 'Settings for Track' %}">
                                     <i class="fa fa-cog fa-fw"></i>
                                 </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
@@ -457,7 +457,7 @@
                             </td>
                             <td class="text-center">{{ field_counts.duration }}</td>
                             <td class="text-right text-nowrap">
-                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='duration' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='duration' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Duration' %}" title="{% translate 'Settings for Duration' %}">
                                     <i class="fa fa-cog fa-fw"></i>
                                 </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
@@ -502,7 +502,7 @@
                             <td></td>
                             <td class="text-center">{{ field_counts.slot_count }}</td>
                             <td class="text-right text-nowrap">
-                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='slot_count' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='slot_count' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Slot Count' %}" title="{% translate 'Settings for Slot Count' %}">
                                     <i class="fa fa-cog fa-fw"></i>
                                 </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
@@ -567,7 +567,7 @@
                             </td>
                             <td class="text-center">{{ field_counts.content_locale }}</td>
                             <td class="text-right text-nowrap">
-                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='content_locale' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='content_locale' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Content Locale' %}" title="{% translate 'Settings for Content Locale' %}">
                                     <i class="fa fa-cog fa-fw"></i>
                                 </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
@@ -619,7 +619,7 @@
                             </td>
                             <td class="text-center">{{ field_counts.image }}</td>
                             <td class="text-right text-nowrap">
-                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='image' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='image' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Session image' %}" title="{% translate 'Settings for Session image' %}">
                                     <i class="fa fa-cog fa-fw"></i>
                                 </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
@@ -670,7 +670,7 @@
                             </td>
                             <td class="text-center">{{ field_counts.slides }}</td>
                             <td class="text-right text-nowrap">
-                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='slides' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='slides' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Slides' %}" title="{% translate 'Settings for Slides' %}">
                                     <i class="fa fa-cog fa-fw"></i>
                                 </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
@@ -759,7 +759,7 @@
                             <td></td>
                             <td class="text-center">{{ field_counts.do_not_record }}</td>
                             <td class="text-right text-nowrap">
-                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='do_not_record' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='session' field='do_not_record' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Recording opt-out' %}" title="{% translate 'Settings for Recording opt-out' %}">
                                     <i class="fa fa-cog fa-fw"></i>
                                 </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
@@ -904,7 +904,7 @@
 
                             <td class="text-center">{{ field_counts.name }}</td>
                             <td class="text-right text-nowrap">
-                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='speaker' field='fullname' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='speaker' field='fullname' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Full Name' %}" title="{% translate 'Settings for Full Name' %}">
                                     <i class="fa fa-cog fa-fw"></i>
                                 </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
@@ -956,7 +956,7 @@
 
                             <td class="text-center">{{ field_counts.biography }}</td>
                             <td class="text-right text-nowrap">
-                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='speaker' field='biography' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='speaker' field='biography' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Biography' %}" title="{% translate 'Settings for Biography' %}">
                                     <i class="fa fa-cog fa-fw"></i>
                                 </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
@@ -1007,7 +1007,7 @@
                             </td>
                             <td class="text-center">{{ field_counts.job_title }}</td>
                             <td class="text-right text-nowrap">
-                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='speaker' field='job_title' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='speaker' field='job_title' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Job title/role' %}" title="{% translate 'Settings for Job title/role' %}">
                                     <i class="fa fa-cog fa-fw"></i>
                                 </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
@@ -1058,7 +1058,7 @@
                             </td>
                             <td class="text-center">{{ field_counts.organization }}</td>
                             <td class="text-right text-nowrap">
-                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='speaker' field='organization' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='speaker' field='organization' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Organization' %}" title="{% translate 'Settings for Organization' %}">
                                     <i class="fa fa-cog fa-fw"></i>
                                 </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
@@ -1110,7 +1110,7 @@
 
                             <td class="text-center">{{ field_counts.avatar }}</td>
                             <td class="text-right text-nowrap">
-                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='speaker' field='avatar' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='speaker' field='avatar' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Speaker photo' %}" title="{% translate 'Settings for Speaker photo' %}">
                                     <i class="fa fa-cog fa-fw"></i>
                                 </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
@@ -1155,7 +1155,7 @@
                             <td></td>
                             <td class="text-center">{{ field_counts.avatar_source }}</td>
                             <td class="text-right text-nowrap">
-                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='speaker' field='avatar_source' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='speaker' field='avatar_source' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Speaker photo source' %}" title="{% translate 'Settings for Speaker photo source' %}">
                                     <i class="fa fa-cog fa-fw"></i>
                                 </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
@@ -1200,7 +1200,7 @@
                             <td></td>
                             <td class="text-center">{{ field_counts.avatar_license }}</td>
                             <td class="text-right text-nowrap">
-                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='speaker' field='avatar_license' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='speaker' field='avatar_license' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Speaker photo license' %}" title="{% translate 'Settings for Speaker photo license' %}">
                                     <i class="fa fa-cog fa-fw"></i>
                                 </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
@@ -1245,7 +1245,7 @@
                             <td></td>
                             <td class="text-center">{{ field_counts.availabilities }}</td>
                             <td class="text-right text-nowrap">
-                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='speaker' field='availabilities' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='speaker' field='availabilities' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Availability' %}" title="{% translate 'Settings for Availability' %}">
                                     <i class="fa fa-cog fa-fw"></i>
                                 </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
@@ -1290,7 +1290,7 @@
                             <td></td>
                             <td class="text-center">{{ field_counts.additional_speaker }}</td>
                             <td class="text-right text-nowrap">
-                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='speaker' field='additional_speaker' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='speaker' field='additional_speaker' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Additional speakers' %}" title="{% translate 'Settings for Additional speakers' %}">
                                     <i class="fa fa-cog fa-fw"></i>
                                 </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
@@ -1343,7 +1343,7 @@
                             </td>
                             <td class="text-center">{{ field_counts.social_links }}</td>
                             <td class="text-right text-nowrap">
-                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='speaker' field='social_links' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings' %}" title="{% translate 'Settings' %}">
+                                <a href="{% url 'orga:cfp.forms.field_settings' organizer=request.event.organizer.slug event=request.event.slug target='speaker' field='social_links' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Social Media' %}" title="{% translate 'Settings for Social Media' %}">
                                     <i class="fa fa-cog fa-fw"></i>
                                 </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">

@@ -52,10 +52,16 @@ logger = logging.getLogger(__name__)
 
 
 def i18n_string(data, locales, default=None):
+    if data is None:
+        if default is not None:
+            return CfPLazyI18nString(None, default=default)
+        return LazyI18nString(None)
     if isinstance(data, LazyI18nString):
         if not default:
             return data
         data = data.data
+        if data is None:
+            return CfPLazyI18nString(None, default=default)
     data = copy.deepcopy(data)
     with language('en'):
         if isinstance(data, Promise):
@@ -63,21 +69,23 @@ def i18n_string(data, locales, default=None):
         if isinstance(data, str):
             data = {'en': str(data)}
         elif not isinstance(data, dict):
+            if default is not None:
+                return CfPLazyI18nString(None, default=default)
             data = {'en': ''}
         english = data.get('en', '')
 
     for locale in locales:
         if locale != 'en':
-            stored = data.get(locale, '')
-            # Re-evaluate if missing OR if the stored value is identical to English,
-            # which indicates a failed gettext lookup that was cached as a fallback.
-            if not stored or stored == english:
-                with language(locale):
-                    translation = gettext(english)
-                    if translation != english:
-                        data[locale] = translation
-                    elif not stored:
-                        data[locale] = english
+            if locale in data:
+                # The locale entry is explicitly present (including an explicitly empty string)
+                continue
+            if default is not None:
+                # A built-in default exists; do not populate missing locales with English,
+                # allowing CfPLazyI18nString to dynamically resolve the locale-specific default.
+                continue
+            with language(locale):
+                translation = gettext(english)
+                data[locale] = translation if translation != english else english
     if default is not None:
         return CfPLazyI18nString(data, default=default)
     return LazyI18nString(data)

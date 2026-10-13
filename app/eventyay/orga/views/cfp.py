@@ -267,29 +267,11 @@ class CfPForms(EventPermissionRequired, TemplateView):
             'social_links': social_links_count,
         }
 
-        question_texts = {
-            'title': str(_('Proposal title')),
-            'submission_type': str(_('Session type')),
-            'track': str(_('Track')),
-            'content_locale': str(_('Language')),
-            'abstract': str(_('Abstract')),
-            'description': str(_('Description')),
-            'notes': str(_('Notes')),
-            'slot_count': str(_('Slot Count')),
-            'do_not_record': str(_('Don’t record this session.')),
-            'image': str(_('Session image')),
-            'slides': str(_('Slides')),
-            'duration': str(_('Duration')),
-            'biography': str(_('Biography')),
-            'job_title': str(_('Job title/role')),
-            'organization': str(_('Organization')),
-            'availabilities': str(_('Availability')),
-            'additional_speaker': str(_('Additional Speaker')),
-            'fullname': str(_('Full name')),
-            'avatar': str(_('Speaker photo')),
-            'avatar_source': str(_('Speaker photo source')),
-            'avatar_license': str(_('Speaker photo license')),
-        }
+        question_texts = {}
+        for target_defaults in BUILTIN_FIELD_DEFAULTS.values():
+            for f_key, f_data in target_defaults.items():
+                if f_data.get('label'):
+                    question_texts[f_key] = str(f_data['label'])
 
         question_help_texts = {}
         for target_defaults in BUILTIN_FIELD_DEFAULTS.values():
@@ -328,7 +310,7 @@ class CfPForms(EventPermissionRequired, TemplateView):
                                                 raw_help, default=question_help_texts.get(field_key)
                                             )
                                         question_help_texts[field_key] = str(raw_help)
-        except Exception as e:
+        except (KeyError, TypeError, ValueError, AttributeError) as e:
             logger.warning('Failed to parse cfp_flow config for event %s: %s', event.id, e)
 
         context['question_texts'] = question_texts
@@ -1050,6 +1032,8 @@ class CfPFieldSettings(EventPermissionRequired, FormView):
         context['default_label'] = default_label
         context['default_help_text'] = default_def.get('help_text', '')
         context['locales'] = self.request.event.locales
+        locale_names = dict(get_language_choices_native_with_ui_name(codes=self.request.event.locales))
+        context['locale_choices'] = [(code, locale_names.get(code, code)) for code in self.request.event.locales]
         return context
 
     def post(self, request, *args, **kwargs):
@@ -1072,9 +1056,11 @@ class CfPFieldSettings(EventPermissionRequired, FormView):
                         'locale': reset_lang,
                     },
                 )
+                lang_names = dict(get_language_choices_native_with_ui_name(codes=[reset_lang]))
+                display_name = lang_names.get(reset_lang, reset_lang)
                 messages.success(
                     self.request,
-                    _('The field was reset to default for %(language)s.') % {'language': reset_lang},
+                    _('The field was reset to default for %(language)s.') % {'language': display_name},
                 )
                 return redirect(self.get_success_url())
             messages.error(self.request, _('Please select a valid language to reset.'))

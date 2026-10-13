@@ -111,7 +111,7 @@ BUILTIN_FIELD_DEFAULTS = {
             ),
         },
         'social_links': {
-            'label': _('Social Links'),
+            'label': _('Social Media'),
             'help_text': '',
         },
     },

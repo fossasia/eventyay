@@ -29,9 +29,9 @@
                 <a href="{% url 'orga:cfp.forms' organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-default btn-cancel mr-auto">
                     {% translate "Back to forms" %}
                 </a>
-                {% if locales|length == 1 %}
-                    <button type="submit" name="action" value="reset:{{ locales.0 }}" class="btn btn-outline-danger" formnovalidate>
-                        <i class="fa fa-undo"></i> {% translate "Reset to default" %} ({{ locales.0 }})
+                {% if locale_choices|length == 1 %}
+                    <button type="submit" name="action" value="reset:{{ locale_choices.0.0 }}" class="btn btn-outline-danger" formnovalidate>
+                        <i class="fa fa-undo"></i> {% translate "Reset to default" %} ({{ locale_choices.0.1 }})
                     </button>
                 {% else %}
                     <div class="dropdown d-inline-block">
@@ -39,10 +39,10 @@
                             <i class="fa fa-undo"></i> {% translate "Reset to default" %} <span class="caret"></span>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-right">
-                            {% for locale in locales %}
+                            {% for locale_code, locale_name in locale_choices %}
                                 <li>
-                                    <button type="submit" name="action" value="reset:{{ locale }}" class="btn btn-link dropdown-item text-danger text-left w-100" formnovalidate>
-                                        {% blocktrans with lang=locale %}Reset {{ lang }}{% endblocktrans %}
+                                    <button type="submit" name="action" value="reset:{{ locale_code }}" class="btn btn-link dropdown-item text-danger text-left w-100" formnovalidate>
+                                        {% blocktrans with lang=locale_name %}Reset {{ lang }}{% endblocktrans %}
                                     </button>
                                 </li>
                             {% endfor %}

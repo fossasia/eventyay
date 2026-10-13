@@ -1,10 +1,12 @@
 import json
 
 import pytest
+from django.contrib.messages import get_messages
 from django.urls import reverse
+from django.utils.translation import gettext_lazy as _
 from django_scopes import scope
 
-from eventyay.cfp.flow import CfPFlow
+from eventyay.cfp.flow import CfPFlow, i18n_string
 from eventyay.common.language import language
 from eventyay.orga.forms.cfp import (
     BUILTIN_FIELD_DEFAULTS,
@@ -573,3 +575,236 @@ def test_existing_custom_translations_preserved_on_reset(event):
         # German values are reset to built-in defaults
         assert field_config['label']['de'] == 'Titel'
         assert field_config['help_text']['de'] == ''
+
+
+@pytest.mark.django_db
+def test_question_texts_built_dynamically_includes_all_builtin_fields(orga_client, event):
+    """Test finding 1: question_texts is built dynamically from BUILTIN_FIELD_DEFAULTS."""
+    with scope(event=event):
+        # 1. Check default overview includes track and social_links
+        overview_url = reverse(
+            'orga:cfp.forms',
+            kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+        )
+        response = orga_client.get(overview_url)
+        assert response.status_code == 200
+        q_texts = response.context['question_texts']
+        assert 'track' in q_texts
+        assert q_texts['track'] == 'Track'
+        assert 'social_links' in q_texts
+        assert q_texts['social_links'] == 'Social Media'
+        assert 'title' in q_texts
+        assert q_texts['title'] == 'Proposal title'
+        assert 'content_locale' in q_texts
+
+        # 2. Customized label in flow overrides dynamic question_texts
+        event.cfp.settings['flow'] = {
+            'steps': {
+                'info': {
+                    'identifier': 'info',
+                    'fields': [
+                        {'key': 'track', 'label': {'en': 'Custom Track Label'}},
+                    ],
+                },
+                'profile': {
+                    'identifier': 'profile',
+                    'fields': [
+                        {'key': 'social_links', 'label': {'en': 'Online Links'}},
+                    ],
+                },
+            }
+        }
+        event.cfp.save(update_fields=['settings'])
+        event.__dict__.pop('cfp_flow', None)
+
+        response = orga_client.get(overview_url)
+        assert response.status_code == 200
+        assert response.context['question_texts']['track'] == 'Custom Track Label'
+        assert response.context['question_texts']['social_links'] == 'Online Links'
+
+
+def test_i18n_string_preserves_explicit_empty_string_and_does_not_populate_english_when_default_exists():
+    """Test finding 2: Preserve explicitly empty translations and allow correct locale fallback."""
+    # Explicitly empty string in 'de' must not be overwritten or treated as missing
+    data = {'en': 'English Help', 'de': ''}
+    result = i18n_string(data, locales=['en', 'de'], default='Default Help')
+    assert result.data['de'] == ''
+    assert result.data['en'] == 'English Help'
+    with language('de'):
+        assert str(result) == ''
+    with language('en'):
+        assert str(result) == 'English Help'
+
+    # Missing 'de' with default: missing locale must not be populated with English
+    data_missing = {'en': 'Custom Title'}
+    default_text = _('Proposal title')
+    result_missing = i18n_string(data_missing, locales=['en', 'de'], default=default_text)
+    assert 'de' not in result_missing.data
+    # In English, custom title is returned
+    with language('en'):
+        assert str(result_missing) == 'Custom Title'
+    # In German, falls back dynamically to the German translation of the default
+    with language('de'):
+        assert str(result_missing) == str(default_text)
+
+    # None data with default returns Lazy string using default
+    result_none = i18n_string(None, locales=['en', 'de'], default=default_text)
+    with language('de'):
+        assert str(result_none) == str(default_text)
+
+
+@pytest.mark.django_db
+def test_builtin_social_media_label_and_reset(event):
+    """Test finding 3: BUILTIN_FIELD_DEFAULTS label is 'Social Media' and resetting restores it."""
+    with scope(event=event):
+        assert str(BUILTIN_FIELD_DEFAULTS['speaker']['social_links']['label']) == 'Social Media'
+
+        # Customize social_links label
+        form = CfPFieldSettingsForm(
+            data={'label_0': 'My Socials', 'help_text_0': ''},
+            event=event,
+            target='speaker',
+            field_id='social_links',
+        )
+        assert form.is_valid(), form.errors
+        form.save()
+        event.refresh_from_db()
+
+        field_config = event.cfp.settings['flow']['steps']['profile']['fields'][0]
+        assert field_config['label']['en'] == 'My Socials'
+
+        # Reset restoring default label
+        reset_form = CfPFieldSettingsForm(
+            event=event,
+            target='speaker',
+            field_id='social_links',
+        )
+        reset_form.reset_locale('en')
+        event.refresh_from_db()
+
+        field_config = event.cfp.settings['flow']['steps']['profile']['fields'][0]
+        assert field_config['label']['en'] == 'Social Media'
+
+
+@pytest.mark.django_db
+def test_forms_overview_settings_links_have_field_specific_accessible_names(orga_client, event):
+    """Test finding 4: Every Settings action includes its field name in aria-label and title."""
+    with scope(event=event):
+        overview_url = reverse(
+            'orga:cfp.forms',
+            kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+        )
+        response = orga_client.get(overview_url)
+        assert response.status_code == 200
+        content = response.rendered_content
+
+        # No generic Settings aria-label on links
+        assert 'aria-label="Settings"' not in content
+        assert 'title="Settings"' not in content
+
+        # Verify field-specific aria-label and title for configurable fields
+        expected_fields = [
+            'Title',
+            'Session type',
+            'Abstract',
+            'Description',
+            'Notes',
+            'Track',
+            'Duration',
+            'Slot Count',
+            'Content Locale',
+            'Session image',
+            'Slides',
+            'Recording opt-out',
+            'Full Name',
+            'Biography',
+            'Job title/role',
+            'Organization',
+            'Speaker photo',
+            'Speaker photo source',
+            'Speaker photo license',
+            'Availability',
+            'Additional speakers',
+            'Social Media',
+        ]
+        for field_name in expected_fields:
+            assert f'aria-label="Settings for {field_name}"' in content
+            assert f'title="Settings for {field_name}"' in content
+
+
+@pytest.mark.django_db
+def test_cfp_forms_safe_exception_handling_for_malformed_flow(orga_client, event):
+    """Test finding 5: Malformed CFP flow configurations are caught and handled gracefully."""
+    with scope(event=event):
+        overview_url = reverse(
+            'orga:cfp.forms',
+            kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+        )
+
+        malformed_configs = [
+            {'steps': 'not_a_dict'},
+            {'steps': {'info': 'not_a_dict'}},
+            {'steps': {'info': {'fields': 'not_a_list'}}},
+            {'steps': {'info': {'fields': [{'key': None}]}}},
+            {'steps': {'info': {'fields': [{'no_key': True}]}}},
+        ]
+        for cfg in malformed_configs:
+            event.cfp.settings['flow'] = cfg
+            event.cfp.save(update_fields=['settings'])
+            event.__dict__.pop('cfp_flow', None)
+
+            response = orga_client.get(overview_url)
+            assert response.status_code == 200
+            assert 'question_texts' in response.context
+
+
+@pytest.mark.django_db
+def test_field_settings_reset_displays_human_readable_language_names(orga_client, event):
+    """Test finding 6: Reset controls and success messages use human-readable language names."""
+    with scope(event=event):
+        # 1. Multi-language event: dropdown displays human-readable names
+        event.locale_array = 'en,de'
+        event.settings.set('locales', ['en', 'de'])
+        event.save()
+
+        url = reverse(
+            'orga:cfp.forms.field_settings',
+            kwargs={
+                'organizer': event.organizer.slug,
+                'event': event.slug,
+                'target': 'session',
+                'field': 'title',
+            },
+        )
+        response = orga_client.get(url)
+        assert response.status_code == 200
+        content = response.rendered_content
+        # Ensure human-readable names are rendered in the reset buttons
+        assert 'Reset English' in content
+        assert 'Deutsch (German)' in content
+        assert 'value="reset:en"' in content
+        assert 'value="reset:de"' in content
+
+        # POST reset for German displays success message with human-readable language name
+        post_response = orga_client.post(url, {'action': 'reset:de'}, follow=True)
+        assert post_response.status_code == 200
+        messages = [str(m) for m in get_messages(post_response.wsgi_request)]
+        assert any('The field was reset to default for' in m and 'Deutsch (German)' in m for m in messages)
+
+        # 2. Single-language event: single reset button displays human-readable name
+        event.locale_array = 'en'
+        event.settings.set('locales', ['en'])
+        event.save()
+
+        response_single = orga_client.get(url)
+        assert response_single.status_code == 200
+        content_single = response_single.rendered_content
+        assert 'Reset to default' in content_single
+        assert '(English)' in content_single
+        assert 'value="reset:en"' in content_single
+
+        # POST reset for English displays success message with English
+        post_response_single = orga_client.post(url, {'action': 'reset:en'}, follow=True)
+        assert post_response_single.status_code == 200
+        messages_single = [str(m) for m in get_messages(post_response_single.wsgi_request)]
+        assert any('The field was reset to default for English.' in m for m in messages_single)
