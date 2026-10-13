@@ -23,6 +23,10 @@ class PlatformFeePolicy:
             raise TypeError('Platform fee percentage must be a Decimal.')
         if not isinstance(self.maximum_fee, Decimal):
             raise TypeError('Platform fee maximum must be a Decimal.')
+        if not self.percentage.is_finite():
+            raise ValueError('Platform fee percentage must be finite.')
+        if not self.maximum_fee.is_finite():
+            raise ValueError('Platform fee maximum must be finite.')
         if self.percentage < 0 or self.percentage > 100:
             raise ValueError('Platform fee percentage must be between 0 and 100.')
         if self.maximum_fee < 0:

@@ -85,7 +85,11 @@ def test_platform_fee_rejects_multiple_policies(fee_signal):
     [
         ('percentage', Decimal('-0.01'), 'between 0 and 100'),
         ('percentage', Decimal('100.01'), 'between 0 and 100'),
+        ('percentage', Decimal('Infinity'), 'must be finite'),
+        ('percentage', Decimal('NaN'), 'must be finite'),
         ('maximum_fee', Decimal('-0.01'), 'cannot be negative'),
+        ('maximum_fee', Decimal('Infinity'), 'must be finite'),
+        ('maximum_fee', Decimal('NaN'), 'must be finite'),
     ],
 )
 def test_platform_fee_policy_rejects_invalid_values(field, value, error):
