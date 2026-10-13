@@ -286,3 +286,17 @@ def test_command_center_milestones_schedule_url(organizer_client, client, organi
     assert response_user.status_code == 200
     assert response_user.context['milestones_schedule_url'] is None
 
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_command_center_recent_activity_logentry(organizer_client, event, command_center_url):
+    """LogEntry records render without TypeError in recent activity feed."""
+    with scopes_disabled():
+        event.log_action('eventyay.event.settings')
+
+    response = organizer_client.get(command_center_url)
+    assert response.status_code == 200
+    assert len(response.context['recent_activity']) == 1
+    assert response.context['recent_activity'][0]['display'] is not None
+
+

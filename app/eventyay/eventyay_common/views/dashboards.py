@@ -1090,11 +1090,12 @@ class EventIndexView(TemplateView):
         qs = self._filter_log_entries(qs, permissions)
         entries = []
         for log in qs[:8]:
+            display_val = log.display() if callable(getattr(log, 'display', None)) else getattr(log, 'display', '')
             entries.append({
                 'datetime': log.datetime,
                 'actor': str(log.user) if log.user else (_('System') if not log.api_token else _('API Token')),
                 'category': self._classify_log_category(log),
-                'display': log.display(self.request),
+                'display': display_val,
             })
         return entries
 
