@@ -296,9 +296,9 @@ class CfPForms(EventPermissionRequired, TemplateView):
             'availabilities': str(_('Availability')),
             'additional_speaker': str(_('Additional Speaker')),
             'fullname': str(_('Full name')),
-            'avatar': str(_('Profile picture')),
-            'avatar_source': str(_('Profile Picture Source')),
-            'avatar_license': str(_('Profile Picture License')),
+            'avatar': str(_('Speaker photo')),
+            'avatar_source': str(_('Speaker photo source')),
+            'avatar_license': str(_('Speaker photo license')),
         }
 
         try:
@@ -754,8 +754,15 @@ class CfPQuestionRemind(EventPermissionRequired, FormView):
         missing = []
         submissions = submissions.filter(speakers__in=[person])
         for question in questions:
+            track_ids = {track.pk for track in question.tracks.all()}
+            relevant_submissions = [
+                submission for submission in submissions
+                if not track_ids or not submission.track_id or submission.track_id in track_ids
+            ]
+            if not relevant_submissions:
+                continue
             if question.target == TalkQuestionTarget.SUBMISSION:
-                for submission in submissions:
+                for submission in relevant_submissions:
                     answer = question.answers.filter(submission=submission).first()
                     if not answer or not answer.is_answered:
                         missing.append(question)
@@ -776,7 +783,7 @@ class CfPQuestionRemind(EventPermissionRequired, FormView):
     def form_valid(self, form):
         submissions = form.get_submissions()
         people = self.request.event.submitters.filter(submissions__in=submissions)
-        questions = form.cleaned_data['questions'] or form.get_question_queryset()
+        questions = (form.cleaned_data['questions'] or form.get_question_queryset()).prefetch_related('tracks')
         data = {
             'url': self.request.event.urls.user_submissions.full(),
         }

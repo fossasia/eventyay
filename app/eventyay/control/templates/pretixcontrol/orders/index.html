@@ -295,6 +295,12 @@
                             <td class="text-right flip">{{ o.pcnt|default_if_none:"0" }}</td>
                             <td class="list-meta text-right flip">{% include "pretixcontrol/orders/fragment_order_status.html" with order=o %}</td>
                         </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-muted">
+                                {% trans "No orders found." %}
+                            </td>
+                        </tr>
                     {% endfor %}
                     </tbody>
                     {% if sums %}
