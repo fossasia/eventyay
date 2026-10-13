@@ -641,9 +641,8 @@ class InfoStep(GenericFlowStep, FormFlowStep):
         if access_code:
             submission.access_code = access_code
             submission.save()
-            if not draft:
-                access_code.redeemed = F('redeemed') + 1
-                access_code.save(update_fields=['redeemed'])
+            access_code.redeemed = F('redeemed') + 1
+            access_code.save(update_fields=['redeemed'])
 
         request.submission = submission
 

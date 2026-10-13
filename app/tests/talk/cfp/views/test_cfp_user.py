@@ -236,6 +236,7 @@ def close_cfp_with_draft(submission, access_code=None):
 @pytest.mark.django_db
 def test_draft_with_access_code_can_be_submitted_after_deadline(speaker_client, submission, access_code):
     access_code.maximum_uses = 1
+    access_code.redeemed = 1
     access_code.save()
     data = close_cfp_with_draft(submission, access_code)
 
@@ -261,9 +262,8 @@ def test_draft_without_access_code_cannot_be_submitted_after_deadline(speaker_cl
 
 
 @pytest.mark.django_db
-def test_draft_with_used_up_access_code_cannot_be_submitted_after_deadline(speaker_client, submission, access_code):
-    access_code.maximum_uses = 1
-    access_code.redeemed = 1
+def test_draft_with_expired_access_code_cannot_be_submitted_after_deadline(speaker_client, submission, access_code):
+    access_code.valid_until = now() - dt.timedelta(hours=1)
     access_code.save()
     data = close_cfp_with_draft(submission, access_code)
 
@@ -272,30 +272,10 @@ def test_draft_with_used_up_access_code_cannot_be_submitted_after_deadline(speak
     with scope(event=submission.event):
         submission.refresh_from_db()
         assert submission.state == SubmissionStates.DRAFT
-    access_code.refresh_from_db()
-    assert access_code.redeemed == 1
 
 
 @pytest.mark.django_db
-def test_draft_with_used_up_access_code_does_not_redeem_it_while_cfp_is_open(speaker_client, submission, access_code):
-    access_code.maximum_uses = 1
-    access_code.redeemed = 1
-    access_code.save()
-    data = close_cfp_with_draft(submission, access_code)
-    submission.event.cfp.deadline = now() + dt.timedelta(days=1)
-    submission.event.cfp.save()
-
-    speaker_client.post(submission.urls.user_base, follow=True, data=data)
-
-    with scope(event=submission.event):
-        submission.refresh_from_db()
-        assert submission.state == SubmissionStates.SUBMITTED
-    access_code.refresh_from_db()
-    assert access_code.redeemed == 1
-
-
-@pytest.mark.django_db
-def test_saving_draft_with_access_code_does_not_redeem_it(client, user, event, access_code):
+def test_saving_draft_with_access_code_uses_the_code(client, user, event, access_code):
     access_code.maximum_uses = 1
     access_code.save()
     event.talks_published = True
@@ -325,7 +305,25 @@ def test_saving_draft_with_access_code_does_not_redeem_it(client, user, event, a
         assert draft.access_code == access_code
         assert draft.editable
     access_code.refresh_from_db()
-    assert access_code.redeemed == 0
+    assert access_code.redeemed == 1
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("cfp_open", (True, False))
+def test_used_up_access_code_link_is_rejected(client, user, event, access_code, cfp_open):
+    access_code.maximum_uses = 1
+    access_code.redeemed = 1
+    access_code.save()
+    event.talks_published = True
+    event.save()
+    event.cfp.deadline = now() + dt.timedelta(days=1) if cfp_open else now() - dt.timedelta(days=1)
+    event.cfp.save()
+    client.force_login(user)
+
+    response = client.get(f"{event.cfp.urls.submit}?access_code={access_code.code}", follow=True)
+
+    assert "/info/" not in response.redirect_chain[-1][0]
+    assert "This access code is invalid or has already been used." in response.text
 
 
 @pytest.mark.django_db
