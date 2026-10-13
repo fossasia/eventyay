@@ -486,7 +486,7 @@ class SubmissionInviteView(LoggedInEventPageMixin, SubmissionViewMixin, FormView
         try:
             invitation = form.save()
         except ValidationError as e:
-            messages.error(self.request, e.message if hasattr(e, 'message') else str(e))
+            messages.error(self.request, ' '.join(e.messages))
             return redirect(self.submission.urls.user_base)
 
         self.submission.log_action('eventyay.submission.speakers.invite', person=self.request.user)
@@ -532,7 +532,7 @@ class SubmissionInviteResendView(LoggedInEventPageMixin, SubmissionViewMixin, Vi
         try:
             delivered = invitation.resend(requestor=request.user)
         except ValidationError as e:
-            messages.error(request, e.message)
+            messages.error(request, ' '.join(e.messages))
         else:
             if delivered:
                 messages.success(

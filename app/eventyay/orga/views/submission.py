@@ -142,9 +142,14 @@ class ReviewerSubmissionFilter:
         if self.is_only_reviewer:
             return get_reviewer_tracks(self.request.event, self.request.user)
 
-    def get_queryset(self, for_review=False):
+    def get_queryset(self, for_review=False, include_deleted=False):
+        submissions = (
+            self.request.event.submissions(manager='all_objects').exclude(state=SubmissionStates.DRAFT)
+            if include_deleted
+            else self.request.event.submissions
+        )
         queryset = (
-            self.request.event.submissions
+            submissions
             .select_related('submission_type', 'event', 'track')
             .prefetch_related('speakers')
         )
@@ -737,19 +742,7 @@ class SubmissionContentView(SubmissionContent):
     http_method_names = ['get', 'head', 'options']
 
     def get_queryset(self, for_review=False):
-        queryset = (
-            self.request.event.submissions(manager='all_objects')
-            .exclude(state=SubmissionStates.DRAFT)
-            .select_related('submission_type', 'event', 'track')
-            .prefetch_related('speakers')
-        )
-        if self.is_only_reviewer:
-            queryset = limit_for_reviewers(queryset, self.request.event, self.request.user, self.limit_tracks)
-        elif user_has_track_limits(self.request.event, self.request.user):
-            queryset = apply_track_limit(queryset, self.request.event, self.request.user)
-        if for_review or 'is_reviewer' in self.request.user.get_permissions_for_event(self.request.event):
-            queryset = annotate_assigned(queryset, self.request.event, self.request.user)
-        return queryset
+        return super().get_queryset(for_review=for_review, include_deleted=True)
     @context
     @cached_property
     def submission_answers(self):
@@ -838,20 +831,7 @@ class BaseSubmissionList(Sortable, ReviewerSubmissionFilter, PaginationMixin, Li
     def _get_base_queryset(self, for_review=False):
         # If somebody has *only* reviewer permissions for this event, they can only
         # see the proposals they can review.
-        qs = (
-            self.request.event.submissions(manager='all_objects')
-            .exclude(state=SubmissionStates.DRAFT)
-            .select_related('submission_type', 'event', 'track')
-            .prefetch_related('speakers')
-            .order_by('-id')
-        )
-        if self.is_only_reviewer:
-            qs = limit_for_reviewers(qs, self.request.event, self.request.user, self.limit_tracks)
-        elif user_has_track_limits(self.request.event, self.request.user):
-            qs = apply_track_limit(qs, self.request.event, self.request.user)
-        if for_review or 'is_reviewer' in self.request.user.get_permissions_for_event(self.request.event):
-            qs = annotate_assigned(qs, self.request.event, self.request.user)
-
+        qs = super().get_queryset(for_review=for_review, include_deleted=True).order_by('-id')
         if not self.filter_form.is_valid():
             return qs.exclude(state=SubmissionStates.DELETED)
         return self.filter_form.filter_queryset(qs)

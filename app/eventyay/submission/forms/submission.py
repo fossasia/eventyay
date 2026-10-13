@@ -758,18 +758,16 @@ class SubmissionFilterForm(forms.Form):
 
         state_filter = self.cleaned_data.get('state')
         if state_filter:
-            states = [state for state in state_filter if not state.startswith('pending_state__')]
-            pending_states = [state.split('__')[1] for state in state_filter if state not in states]
-            if states and not pending_states:
-                qs = qs.filter(state__in=states)
-            elif pending_states and not states:
-                qs = qs.filter(pending_state__in=pending_states)
-                if SubmissionStates.DELETED not in pending_states:
-                    qs = qs.exclude(state=SubmissionStates.DELETED)
-            else:
-                qs = qs.filter(Q(state__in=states) | Q(pending_state__in=pending_states))
-                if SubmissionStates.DELETED not in states and SubmissionStates.DELETED not in pending_states:
-                    qs = qs.exclude(state=SubmissionStates.DELETED)
+            states = [s for s in state_filter if not s.startswith('pending_state__')]
+            pending = [s.split('__')[1] for s in state_filter if s.startswith('pending_state__')]
+            query = Q()
+            if states:
+                query |= Q(state__in=states)
+            if pending:
+                query |= Q(pending_state__in=pending)
+            qs = qs.filter(query)
+            if SubmissionStates.DELETED not in states and SubmissionStates.DELETED not in pending:
+                qs = qs.exclude(state=SubmissionStates.DELETED)
         else:
             qs = qs.exclude(state=SubmissionStates.DELETED)
 

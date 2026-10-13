@@ -337,34 +337,40 @@ class TalkQuestion(OrderedModel, PretalxModel):
     def get_order_queryset(event):
         return event.questions(manager='all_objects').all()
 
-    def missing_answers(self, filter_speakers: list = None, filter_talks: list = None) -> int:
+    def missing_answers(self, filter_speakers=None, filter_talks=None) -> int:
         """Returns how many answers are still missing for this question.
 
-        This method only supports submission questions and speaker questions.
-        For missing reviews, please use the get_missing_reviews method.
-
-        :param filter_speakers: Apply only to these speakers.
-        :param filter_talks: Apply only to these talks.
+        :param filter_speakers: Apply only to these speakers (queryset or iterable).
+        :param filter_talks: Apply only to these talks (queryset or iterable).
         """
-        from eventyay.base.models import Submission, SubmissionStates, User
+        from eventyay.base.models import SubmissionStates, User
 
         if self.target == TalkQuestionTarget.SUBMISSION:
-            submissions = self.event.submissions.all() if filter_talks is None or filter_talks is False else filter_talks
-            total_submissions = len(submissions) if isinstance(submissions, (list, tuple, set)) else submissions.count()
+            if filter_talks in (None, False):
+                submissions = self.event.submissions.all()
+            else:
+                is_seq = isinstance(filter_talks, (list, tuple, set))
+                pks = [getattr(s, 'pk', s) for s in filter_talks] if is_seq else filter_talks
+                submissions = self.event.submissions.filter(pk__in=pks)
+            if self.tracks.exists():
+                submissions = submissions.filter(track__in=self.tracks.all())
+            if self.submission_types.exists():
+                submissions = submissions.filter(submission_type__in=self.submission_types.all())
             answered = self.answers.filter(submission__in=submissions).values('submission').distinct().count()
-            return max(total_submissions - answered, 0)
+            return max(submissions.count() - answered, 0)
+
         if self.target == TalkQuestionTarget.SPEAKER:
-            users = (
-                User.objects.filter(
-                    submissions__event_id=self.event.pk,
-                    submissions__state__in=SubmissionStates.valid_submission_states,
-                ).distinct()
-                if filter_speakers is None or filter_speakers is False
-                else filter_speakers
-            )
-            total_users = len(users) if isinstance(users, (list, tuple, set)) else users.count()
-            answered = self.answers.filter(person__in=users).values('person').distinct().count()
-            return max(total_users - answered, 0)
+            speakers = User.objects.filter(
+                submissions__event_id=self.event_id,
+                submissions__state__in=SubmissionStates.valid_submission_states,
+            ).distinct()
+            if filter_speakers not in (None, False):
+                is_seq = isinstance(filter_speakers, (list, tuple, set))
+                pks = [getattr(u, 'pk', u) for u in filter_speakers] if is_seq else filter_speakers
+                speakers = speakers.filter(pk__in=pks)
+            answered = self.answers.filter(person__in=speakers).values('person').distinct().count()
+            return max(speakers.count() - answered, 0)
+
         return 0
 
 

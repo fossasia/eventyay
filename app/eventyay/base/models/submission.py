@@ -1214,8 +1214,6 @@ class Submission(GenerateCode, PretalxModel):
         if not address or self.speakers.filter(email__iexact=address).exists():
             return None
 
-        record_speaker_invite_send(_from)
-
         with scope(event=self.event), transaction.atomic():
             locked_submission = type(self).all_objects.select_for_update().get(pk=self.pk)
             if locked_submission.speakers.filter(email__iexact=address).exists():
@@ -1233,6 +1231,8 @@ class Submission(GenerateCode, PretalxModel):
                 not invitation.is_pending or invitation.is_delivered or invitation.mail_id is not None
             ):
                 return invitation
+
+            record_speaker_invite_send(_from)
 
             mail = QueuedMail.objects.create(
                 event=self.event,
