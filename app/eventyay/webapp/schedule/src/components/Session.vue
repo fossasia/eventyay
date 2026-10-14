@@ -680,13 +680,25 @@ expandClampedSessionText()
 				.speaker-separator
 					flex: 0 0 auto
 					white-space: nowrap
-			// Outside the one-line clamp of short sessions, a speaker whose name and role
-			// do not fit on the line wraps instead of being cut off.
-			&:not(.names-clamped) .speaker
+			// Outside the one-line clamp of short sessions, the speakers flow like a sentence
+			// and only wrap where the line is full. The avatar stays with the name and the
+			// comma with the role, so a long role does not start a new line for each speaker.
+			&:not(.names-clamped)
+				display: block
 				white-space: normal
-				.speaker-label
-					white-space: normal
-					overflow-wrap: break-word
+				.speaker
+					display: inline
+					img
+						display: inline-block
+						vertical-align: middle
+					.speaker-label
+						white-space: normal
+						overflow-wrap: break-word
+					// A real space after the comma, so the line can break between speakers.
+					.speaker-separator
+						white-space: normal
+						&::after
+							content: ' '
 			&.names-clamped
 				max-height: var(--session-speaker-line-height)
 				overflow: hidden
