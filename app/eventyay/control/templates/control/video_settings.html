@@ -41,9 +41,21 @@
                 <span class="video-tab-badge">{{ loungemesh_servers|length }}</span>
             </a>
         </li>
+        <li role="presentation" class="{% if active_tab == 'streaming' %}active{% endif %}">
+            <a href="#streaming" aria-controls="streaming" role="tab" data-toggle="tab">
+                <span class="fa fa-play-circle" aria-hidden="true"></span> {% trans 'Streaming' %}
+            </a>
+        </li>
     </ul>
 
     <div class="tab-content">
+        <div role="tabpanel" class="tab-pane {% if active_tab == 'streaming' %}active{% endif %}" id="streaming">
+            <div class="video-admin-card">
+                <h2>{% trans 'Streaming configuration' %}</h2>
+                <p>{% trans 'Stream sources and schedules are configured for each event and room. Open an event to manage its streaming configuration.' %}</p>
+                <a href="{% url 'eventyay_admin:video_admin:event.list' %}" class="btn btn-default">{% trans 'Manage video events' %}</a>
+            </div>
+        </div>
         <!-- General Tab -->
         <div role="tabpanel" class="tab-pane {% if active_tab == 'general' %}active{% endif %}" id="general">
             <div class="video-admin-card">

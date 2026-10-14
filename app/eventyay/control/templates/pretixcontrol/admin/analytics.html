@@ -1,0 +1,31 @@
+{% extends 'pretixcontrol/admin/base.html' %}
+{% load i18n static compress %}
+{% block title %}{% trans 'Platform analytics' %}{% endblock %}
+{% block custom_header %}
+  {{ block.super }}
+  {% compress css %}
+    <link rel="stylesheet" href="{% static 'pretixcontrol/css/platform-dashboard.css' %}">
+  {% endcompress %}
+  <script type="module" src="{% static 'pretixcontrol/js/platform-dashboard.js' %}"></script>
+{% endblock %}
+{% block content %}
+  <main class="platform-dashboard">
+    <h1>{% trans 'Platform analytics' %}</h1>
+    <p><a href="{% url 'eventyay_admin:admin.dashboard' %}">← {% trans 'Platform Dashboard' %}</a></p>
+    <p>{% trans 'Last updated' %}: {{ last_updated|date:'DATETIME_FORMAT' }}</p>
+    {% include 'pretixcontrol/admin/activity.html' %}
+    {% for chart in activity_charts %}
+      <section class="platform-card">
+        <h2>{{ chart.title }}</h2>
+        {% for series in chart.series %}
+          <details>
+            <summary>{% trans 'View data' %} {{ series.currency }}</summary>
+            <table class="table"><thead><tr><th>{% trans 'Date' %}</th><th>{% trans 'Total' %} {{ series.currency }}</th></tr></thead>
+              <tbody>{% for date, value in series.rows %}<tr><td>{{ date|date:'d M Y H:i' }}</td><td>{{ value|floatformat:2 }}</td></tr>{% endfor %}</tbody>
+            </table>
+          </details>
+        {% endfor %}
+      </section>
+    {% endfor %}
+  </main>
+{% endblock %}

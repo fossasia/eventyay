@@ -71,6 +71,7 @@ from eventyay.common.text.phrases import phrases
 from eventyay.control.forms.admin.vouchers import InvoiceVoucherForm, VoucherFilterForm
 from eventyay.control.forms.filter import AdminOrderFilterForm, OrganizerFilterForm, SubmissionFilterForm, TaskFilterForm
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
+from eventyay.control.platform_dashboard import activity_context, dashboard_cards
 from eventyay.control.video.admin_dashboard import get_video_server_dashboard_rows
 from eventyay.control.views import PaginationMixin
 from eventyay.control.views.main import EventList
@@ -631,6 +632,43 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
 
         ctx['video_server_rows'] = get_video_server_dashboard_rows()
 
+        with scopes_disabled():
+            paid_events = Product.objects.filter(default_price__gt=0).values('event_id')
+            enabled_payments = Event_SettingsStore.objects.filter(
+                key__startswith='payment_', key__endswith='__enabled', value='True',
+            ).exclude(key__in=[
+                'payment_free__enabled', 'payment_boxoffice__enabled',
+                'payment_offsetting__enabled', 'payment_giftcard__enabled',
+            ]).values('object_id')
+            ctx['events_missing_payment_count'] = Event.objects.filter(pk__in=paid_events).exclude(
+                pk__in=enabled_payments).count()
+            ctx['events_upcoming_count'] = Event.objects.filter(has_subevents=False, date_from__gt=n).count()
+            ctx['events_recent_count'] = Event.objects.filter(created__gte=n - timedelta(days=7)).count()
+        ctx['last_scheduled_run'] = PeriodicTask.objects.filter(last_run_at__isnull=False).order_by(
+            '-last_run_at').values_list('last_run_at', flat=True).first()
+        ctx['config_video_ok'] = any(row['active'] for row in ctx['video_server_rows'])
+        ctx.update(activity_context(self.request.GET.get('range', '30d')))
+        dashboard_cards(ctx)
+
+        return ctx
+
+
+class AdminOperations(AdminDashboard):
+    template_name = 'pretixcontrol/admin/operations.html'
+
+
+class AdminAnalytics(AdministratorPermissionRequiredMixin, TemplateView):
+    template_name = 'pretixcontrol/admin/analytics.html'
+
+    def get_context_data(self, **kwargs):
+        """Expose aggregate series only to an authenticated administrator session."""
+        ctx = super().get_context_data(**kwargs)
+        ctx.update(activity_context(self.request.GET.get('range', '30d')))
+        metric = self.kwargs.get('metric')
+        if metric:
+            ctx['activity_charts'] = [chart for chart in ctx['activity_charts'] if chart['key'] == metric]
+            if not ctx['activity_charts']:
+                raise Http404
         return ctx
 
 
