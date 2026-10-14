@@ -841,7 +841,15 @@ Receivers must accept **kwargs.
 
 register_entitlements = django.dispatch.Signal()
 """
-Sent to collect all available capabilities. 
+Sent to collect all available capabilities.
 Receivers should return a dictionary of capabilities they define or enforce.
 Sender is None.
+"""
+
+platform_fee_policy = django.dispatch.Signal()
+"""
+Sent to resolve an optional platform fee policy for a payment.
+Sender is the ``Event`` instance. Kwargs are ``order`` and ``payment``.
+Receivers should return a ``PlatformFeePolicy`` or ``None`` when they do not
+provide a fee. Only one receiver may provide a policy.
 """
