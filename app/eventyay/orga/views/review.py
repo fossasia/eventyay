@@ -297,7 +297,8 @@ class ReviewDashboard(EventPermissionRequired, BaseSubmissionList):
     @context
     @cached_property
     def show_tracks(self):
-        return self.request.event.get_feature_flag('use_tracks') and self.request.event.tracks.all().count() > 1
+        with scope(event=self.request.event):
+            return self.request.event.tracks.count() > 1
 
     @context
     @cached_property
@@ -384,7 +385,8 @@ class BulkReview(EventPermissionRequired, TemplateView):
     @context
     @cached_property
     def show_tracks(self):
-        return self.request.event.get_feature_flag('use_tracks') and self.request.event.tracks.all().count() > 1
+        with scope(event=self.request.event):
+            return self.request.event.tracks.count() > 1
 
     def get_context_data(self, **kwargs):
         result = super().get_context_data(**kwargs)

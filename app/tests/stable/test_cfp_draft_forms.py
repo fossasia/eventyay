@@ -420,3 +420,53 @@ def test_speaker_profile_form_not_strict_allows_missing_required_fields(event, u
     assert 'fullname' not in form.errors
     assert 'email' not in form.errors
     assert 'avatar' not in form.errors
+
+@pytest.mark.django_db
+def test_info_form_requires_submission_type_in_not_strict_mode(event):
+    # Ensure there are multiple submission types so the field isn't disabled
+    from eventyay.base.models import SubmissionType
+    SubmissionType.objects.create(event=event, name={'en': 'Dummy'}, default_duration=30)
+
+    form = InfoForm(
+        event,
+        data={
+            'title': 'Test title',
+            'content_locale': event.locale,
+            'slot_count': 1,
+            # submission_type is explicitly omitted
+        },
+        not_strict=True,
+        draft_save=False,
+    )
+
+    assert not form.is_valid()
+    assert 'submission_type' in form.errors
+    assert len(form.errors['submission_type']) == 1
+    error = form.errors.as_data()['submission_type'][0]
+    assert error.code == 'required_step_field'
+
+
+@pytest.mark.django_db
+def test_info_form_requires_submission_type_existing_error(event):
+    # Ensure there are multiple submission types so the field isn't disabled
+    from eventyay.base.models import SubmissionType
+    SubmissionType.objects.create(event=event, name={'en': 'Dummy'}, default_duration=30)
+
+    # Submitting an invalid submission_type id triggers the standard choice validation error
+    form = InfoForm(
+        event,
+        data={
+            'title': 'Test title',
+            'content_locale': event.locale,
+            'slot_count': 1,
+            'submission_type': 9999,
+        },
+        not_strict=True,
+        draft_save=False,
+    )
+
+    assert not form.is_valid()
+    assert 'submission_type' in form.errors
+    assert len(form.errors['submission_type']) == 1
+    error = form.errors.as_data()['submission_type'][0]
+    assert error.code == 'invalid_choice'
