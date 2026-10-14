@@ -7,7 +7,7 @@ import pytest
 from django.core import mail as djmail
 from django_scopes import scope
 
-from eventyay.base.models import Answer, Event, Track
+from eventyay.base.models import Answer, Event, Submission, SubmissionType, Track
 from eventyay.base.models import QueuedMail
 from eventyay.base.models import TalkQuestion as Question
 from eventyay.base.models.question import TalkQuestionRequired as QuestionRequired
@@ -938,4 +938,114 @@ def test_orga_cfp_forms_shows_session_videos_as_organizer_only(orga_client, even
         "This field can only be edited by organizers. "
         "It is not displayed on the proposal form."
     ) in content
+
+
+@pytest.mark.django_db
+def test_track_list_sorting(orga_client, event):
+    url = event.cfp.urls.tracks
+    with scope(event=event):
+        t1 = Track.objects.create(event=event, name="Beta Track", color="#111111", position=2)
+        t2 = Track.objects.create(event=event, name="Alpha Track", color="#ffffff", position=1)
+        t3 = Track.objects.create(event=event, name="Gamma Track", color="#000000", position=3)
+        # Create proposals for tracks
+        sub_type = event.submission_types.first()
+        Submission.objects.create(event=event, title="Sub 1", track=t3, submission_type=sub_type)
+        Submission.objects.create(event=event, title="Sub 2", track=t3, submission_type=sub_type)
+        Submission.objects.create(event=event, title="Sub 3", track=t1, submission_type=sub_type)
+
+    # Default sort (no ?sort) preserves position order
+    response = orga_client.get(url)
+    assert response.status_code == 200
+    pks = [t.pk for t in response.context["track_list"]]
+    assert pks == [t2.pk, t1.pk, t3.pk]
+
+    # Sort by name ascending (a-z)
+    response = orga_client.get(f"{url}?sort=name")
+    assert response.status_code == 200
+    pks = [t.pk for t in response.context["track_list"]]
+    assert pks == [t2.pk, t1.pk, t3.pk]
+    assert "fa-caret-down" in response.text
+    assert "text-primary" in response.text
+
+    # Sort by name descending (z-a)
+    response = orga_client.get(f"{url}?sort=-name")
+    assert response.status_code == 200
+    pks = [t.pk for t in response.context["track_list"]]
+    assert pks == [t3.pk, t1.pk, t2.pk]
+
+    # Sort by color ascending
+    response = orga_client.get(f"{url}?sort=color")
+    assert response.status_code == 200
+    pks = [t.pk for t in response.context["track_list"]]
+    assert pks == [t3.pk, t1.pk, t2.pk]
+
+    # Sort by color descending
+    response = orga_client.get(f"{url}?sort=-color")
+    assert response.status_code == 200
+    pks = [t.pk for t in response.context["track_list"]]
+    assert pks == [t2.pk, t1.pk, t3.pk]
+
+    # Sort by proposals descending (high to low)
+    response = orga_client.get(f"{url}?sort=-proposals")
+    assert response.status_code == 200
+    pks = [t.pk for t in response.context["track_list"]]
+    assert pks == [t3.pk, t1.pk, t2.pk]
+
+    # Sort by proposals ascending (low to high)
+    response = orga_client.get(f"{url}?sort=proposals")
+    assert response.status_code == 200
+    pks = [t.pk for t in response.context["track_list"]]
+    assert pks == [t2.pk, t1.pk, t3.pk]
+
+
+@pytest.mark.django_db
+def test_submission_type_list_sorting(orga_client, event):
+    url = event.cfp.urls.types
+    with scope(event=event):
+        st1 = SubmissionType.objects.create(event=event, name="Workshop", default_duration=120, position=2)
+        SubmissionType.objects.create(event=event, name="Keynote", default_duration=60, position=1)
+        st3 = SubmissionType.objects.create(event=event, name="Lightning Talk", default_duration=15, position=3)
+        # Create proposals
+        Submission.objects.create(event=event, title="Sub A", submission_type=st3)
+        Submission.objects.create(event=event, title="Sub B", submission_type=st3)
+        Submission.objects.create(event=event, title="Sub C", submission_type=st1)
+
+    # Sort by name ascending (a-z)
+    response = orga_client.get(f"{url}?sort=name")
+    assert response.status_code == 200
+    names = [st.name for st in response.context["submissiontype_list"]]
+    assert names == sorted(names, key=str)
+    assert "fa-caret-down" in response.text
+    assert "text-primary" in response.text
+
+    # Sort by name descending (z-a)
+    response = orga_client.get(f"{url}?sort=-name")
+    assert response.status_code == 200
+    names = [st.name for st in response.context["submissiontype_list"]]
+    assert names == sorted(names, key=str, reverse=True)
+
+    # Sort by default_duration descending (high to low)
+    response = orga_client.get(f"{url}?sort=-default_duration")
+    assert response.status_code == 200
+    durations = [st.default_duration for st in response.context["submissiontype_list"]]
+    assert durations == sorted(durations, reverse=True)
+
+    # Sort by default_duration ascending (low to high)
+    response = orga_client.get(f"{url}?sort=default_duration")
+    assert response.status_code == 200
+    durations = [st.default_duration for st in response.context["submissiontype_list"]]
+    assert durations == sorted(durations)
+
+    # Sort by proposals descending (high to low)
+    response = orga_client.get(f"{url}?sort=-proposals")
+    assert response.status_code == 200
+    proposals = [st.proposals for st in response.context["submissiontype_list"]]
+    assert proposals == sorted(proposals, reverse=True)
+
+    # Sort by proposals ascending (low to high)
+    response = orga_client.get(f"{url}?sort=proposals")
+    assert response.status_code == 200
+    proposals = [st.proposals for st in response.context["submissiontype_list"]]
+    assert proposals == sorted(proposals)
+
 

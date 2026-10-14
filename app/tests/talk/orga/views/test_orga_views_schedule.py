@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.utils.timezone import now
 from django_scopes import scope
 
-from eventyay.base.models import Schedule
+from eventyay.base.models import Room, Schedule
 
 
 @pytest.mark.django_db
@@ -774,3 +774,48 @@ def test_room_list_view_survives_missing_linked_room_column(
         r for r in response.context["room_list"] if r.pk == room.pk
     )
     assert listed_room.has_linked_shifts is False
+
+
+@pytest.mark.django_db
+def test_room_list_sorting(orga_client, event):
+    url = reverse(
+        "orga:schedule.rooms.list",
+        kwargs={"organizer": event.organizer.slug, "event": event.slug},
+    )
+    with scope(event=event):
+        r1 = Room.objects.create(event=event, name="Beta Room", capacity=100, position=2)
+        r2 = Room.objects.create(event=event, name="Alpha Room", capacity=250, position=1)
+        r3 = Room.objects.create(event=event, name="Gamma Room", capacity=50, position=3)
+
+    # Default sort (no ?sort) preserves position order
+    response = orga_client.get(url)
+    assert response.status_code == 200
+    pks = [r.pk for r in response.context["room_list"]]
+    assert pks == [r2.pk, r1.pk, r3.pk]
+
+    # Sort by name ascending (a-z)
+    response = orga_client.get(f"{url}?sort=name")
+    assert response.status_code == 200
+    pks = [r.pk for r in response.context["room_list"]]
+    assert pks == [r2.pk, r1.pk, r3.pk]
+    assert "fa-caret-down" in response.text
+    assert "text-primary" in response.text
+
+    # Sort by name descending (z-a)
+    response = orga_client.get(f"{url}?sort=-name")
+    assert response.status_code == 200
+    pks = [r.pk for r in response.context["room_list"]]
+    assert pks == [r3.pk, r1.pk, r2.pk]
+
+    # Sort by capacity ascending
+    response = orga_client.get(f"{url}?sort=capacity")
+    assert response.status_code == 200
+    pks = [r.pk for r in response.context["room_list"]]
+    assert pks == [r3.pk, r1.pk, r2.pk]
+
+    # Sort by capacity descending (high to low)
+    response = orga_client.get(f"{url}?sort=-capacity")
+    assert response.status_code == 200
+    pks = [r.pk for r in response.context["room_list"]]
+    assert pks == [r2.pk, r1.pk, r3.pk]
+

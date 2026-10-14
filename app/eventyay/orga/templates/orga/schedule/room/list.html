@@ -23,8 +23,36 @@
         <table class="table table-sm table-flip table-sticky">
             <thead>
                 <tr>
-                    <th>{% translate "Name" %}</th>
-                    <th class="numeric">{% translate "Capacity" %}</th>
+                    <th>
+                        {% if request.GET.sort == 'name' %}
+                            <a href="{% querystring sort='-name' %}">{% translate 'Name' %}</a>
+                            <a href="{% querystring sort='name' %}" class="text-primary font-weight-bold" aria-label="{% translate 'Sorted ascending (a-z)' %}"><i class="fa fa-caret-down" title="{% translate 'Sort (a-z)' %}"></i></a>
+                            <a href="{% querystring sort='-name' %}" class="text-muted" aria-label="{% translate 'Sort (z-a)' %}"><i class="fa fa-caret-up" title="{% translate 'Sort (z-a)' %}"></i></a>
+                        {% elif request.GET.sort == '-name' %}
+                            <a href="{% querystring sort='name' %}">{% translate 'Name' %}</a>
+                            <a href="{% querystring sort='name' %}" class="text-muted" aria-label="{% translate 'Sort (a-z)' %}"><i class="fa fa-caret-down" title="{% translate 'Sort (a-z)' %}"></i></a>
+                            <a href="{% querystring sort='-name' %}" class="text-primary font-weight-bold" aria-label="{% translate 'Sorted descending (z-a)' %}"><i class="fa fa-caret-up" title="{% translate 'Sort (z-a)' %}"></i></a>
+                        {% else %}
+                            <a href="{% querystring sort='name' %}">{% translate 'Name' %}</a>
+                            <a href="{% querystring sort='name' %}" class="text-muted" aria-label="{% translate 'Sort (a-z)' %}"><i class="fa fa-caret-down" title="{% translate 'Sort (a-z)' %}"></i></a>
+                            <a href="{% querystring sort='-name' %}" class="text-muted" aria-label="{% translate 'Sort (z-a)' %}"><i class="fa fa-caret-up" title="{% translate 'Sort (z-a)' %}"></i></a>
+                        {% endif %}
+                    </th>
+                    <th class="numeric">
+                        {% if request.GET.sort == '-capacity' %}
+                            <a href="{% querystring sort='capacity' %}">{% translate 'Capacity' %}</a>
+                            <a href="{% querystring sort='-capacity' %}" class="text-primary font-weight-bold" aria-label="{% translate 'Sorted descending (high-low)' %}"><i class="fa fa-caret-down" title="{% translate 'Sort (high-low)' %}"></i></a>
+                            <a href="{% querystring sort='capacity' %}" class="text-muted" aria-label="{% translate 'Sort (low-high)' %}"><i class="fa fa-caret-up" title="{% translate 'Sort (low-high)' %}"></i></a>
+                        {% elif request.GET.sort == 'capacity' %}
+                            <a href="{% querystring sort='-capacity' %}">{% translate 'Capacity' %}</a>
+                            <a href="{% querystring sort='-capacity' %}" class="text-muted" aria-label="{% translate 'Sort (high-low)' %}"><i class="fa fa-caret-down" title="{% translate 'Sort (high-low)' %}"></i></a>
+                            <a href="{% querystring sort='capacity' %}" class="text-primary font-weight-bold" aria-label="{% translate 'Sorted ascending (low-high)' %}"><i class="fa fa-caret-up" title="{% translate 'Sort (low-high)' %}"></i></a>
+                        {% else %}
+                            <a href="{% querystring sort='-capacity' %}">{% translate 'Capacity' %}</a>
+                            <a href="{% querystring sort='-capacity' %}" class="text-muted" aria-label="{% translate 'Sort (high-low)' %}"><i class="fa fa-caret-down" title="{% translate 'Sort (high-low)' %}"></i></a>
+                            <a href="{% querystring sort='capacity' %}" class="text-muted" aria-label="{% translate 'Sort (low-high)' %}"><i class="fa fa-caret-up" title="{% translate 'Sort (low-high)' %}"></i></a>
+                        {% endif %}
+                    </th>
                     <th></th>
                 </tr>
             </thead>
