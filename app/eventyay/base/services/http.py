@@ -7,7 +7,7 @@ sends a response. Several outbound calls in this codebase run inside
 Celery tasks (some with ``acks_late=True``), so a single unresponsive
 third party can occupy a worker indefinitely.
 
-Use ``get`` / ``post`` / ``put`` / ``delete`` / ``head`` from this module
+Use ``get`` / ``post`` / ``put`` / ``patch`` / ``delete`` / ``head`` from this module
 instead of calling ``requests`` directly, so every outbound call gets a
 sane default timeout unless the caller explicitly overrides it.
 """
@@ -41,6 +41,10 @@ def post(url: str, **kwargs):
 
 def put(url: str, **kwargs):
     return request('PUT', url, **kwargs)
+
+
+def patch(url: str, **kwargs):
+    return request('PATCH', url, **kwargs)
 
 
 def delete(url: str, **kwargs):

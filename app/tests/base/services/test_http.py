@@ -102,3 +102,12 @@ def test_stalled_endpoint_raises_timeout_with_default(stalled_server, monkeypatc
     with pytest.raises(requests.exceptions.Timeout):
         http.post(stalled_server, json={'ping': 'pong'})
     assert time.monotonic() - start < 5
+
+
+def test_patch_applies_default_timeout():
+    with patch('eventyay.base.services.http.requests.request') as mocked:
+        http.patch('https://example.com/hook', json={'a': 1})
+
+    mocked.assert_called_once_with(
+        'PATCH', 'https://example.com/hook', json={'a': 1}, timeout=http.DEFAULT_TIMEOUT
+    )
