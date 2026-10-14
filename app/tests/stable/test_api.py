@@ -127,6 +127,22 @@ def test_feedback_serializer_without_authenticated_request_excludes_private_repl
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize('reply_count', [1, 5])
+def test_feedback_reply_authors_are_loaded_in_one_query(event, feedback_thread, django_assert_num_queries, reply_count):
+    """Serializing more public replies must not add an author query per reply."""
+    parent, public_reply, _ = feedback_thread
+    with scope(event=event):
+        for index in range(reply_count - 1):
+            author = User.objects.create_user(email=f'reply-author-{index}@example.com', fullname=f'Author {index}')
+            Feedback.objects.create(talk=parent.talk, parent=parent, author=author, review=f'Reply {index}')
+        with django_assert_num_queries(1):
+            replies = FeedbackSerializer().get_replies(parent)
+        assert len(replies) == reply_count
+        assert replies[0]['author']['code'] == public_reply.author.code
+        assert all(reply['author'] is not None for reply in replies)
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize('endpoint', ['list', 'detail'])
 @pytest.mark.parametrize('target', ['self', 'other', 'all'])
 @pytest.mark.parametrize('session_speaker', [False, True])

@@ -64,7 +64,7 @@ class FeedbackSerializer(I18nAwareModelSerializer):
     def get_replies(self, obj):
         """Return published replies visible to organisers or their target speakers."""
         if obj.parent_id is None:
-            replies = obj.replies.filter(status='published').order_by('created')
+            replies = obj.replies.filter(status='published').select_related('author').order_by('created')
             request = self.context.get('request')
             if not request or not request.user.has_perm('base.orga_list_submission', request.event):
                 if request and request.user.is_authenticated:
