@@ -94,6 +94,11 @@ class NanoCDNFile(File):
         return self.file.read(num_bytes)
 
 
+# (connect, read) in seconds. The request body is sent under the *connect* timeout, so it must be
+# generous enough for large uploads over slow links; the read timeout covers the CDN's response.
+CDN_UPLOAD_TIMEOUT = (60, 300)
+
+
 class NanoCDNStorage(Storage):
     def __init__(self):
         self.base_url = settings.NANOCDN_URL
@@ -138,6 +143,7 @@ class NanoCDNStorage(Storage):
             urllib.parse.urljoin(self.base_url, os.path.join("upload", name)),
             data=content,
             allow_redirects=False,
+            timeout=CDN_UPLOAD_TIMEOUT,
         )
         if resp.status_code != 409:
             _raise_cdn_status(resp, 'put')

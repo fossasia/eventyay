@@ -868,7 +868,7 @@ def convert_image_to_cid(image_src: str, cid_id: str, verify_ssl: bool = True) -
                     )
                     return None
                 chunks.append(chunk)
-        except (requests.RequestException, urllib3.exceptions.HTTPError):
+        except (requests.RequestException, urllib3.exceptions.HTTPError, OSError):
             log_event('mail', 'connection.get', OUTCOME_FAILURE, error_code='request_error', backend='cid_image')
             return None
         finally:
