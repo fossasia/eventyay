@@ -861,7 +861,13 @@ class SubmissionList(EventPermissionRequired, BaseSubmissionList):
 
     def sort_queryset(self, qs):
         sort_key = self.request.GET.get('sort') or ''
-        can_view_speakers = self.request.user.has_perm('base.orga_list_speakerprofile', self.request.event)
+        # Same check the template uses to show the Speakers column, so admin mode counts.
+        can_view_speakers = has_event_perm(
+            'base.orga_list_speakerprofile',
+            self.request.user,
+            self.request,
+            self.request.event,
+        )
         if sort_key.lstrip('-') != 'speakers' or not can_view_speakers:
             return super().sort_queryset(qs)
         # Sort by the first speaker shown in the Speakers column, so a session with

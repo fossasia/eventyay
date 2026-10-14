@@ -2,6 +2,7 @@ import pytest
 from django_scopes import scope
 
 from eventyay.base.models import Submission, SubmissionType, User
+from eventyay.base.models.auth import StaffSession
 
 
 @pytest.fixture
@@ -79,6 +80,17 @@ class TestSessionListSpeakerSort:
 
         assert 'href="?sort=-speakers" class="sort-active" aria-current="true"' in content
         assert content.count('class="sort-active"') == 1
+
+    def test_admin_mode_without_team_permission_sorts_by_speaker(self, client, staff_user, event, sessions):
+        client.force_login(staff_user)
+        session = client.session
+        session.save()
+        StaffSession.objects.create(user=staff_user, session_key=session.session_key)
+
+        response = client.get(event.orga_urls.submissions, {'sort': 'speakers'})
+
+        assert response.status_code == 200
+        assert _titles(response) == ['B panel', 'C talk by Mike', 'A talk by Zoe', 'D session without speaker']
 
     def test_default_sort_marks_state(self, orga_client, event, sessions):
         response = orga_client.get(event.orga_urls.submissions)
