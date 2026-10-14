@@ -84,6 +84,32 @@ class TestSessionListSpeakerSort:
             'D session without speaker',
         ]
 
+    def test_speaker_name_is_trimmed_before_sorting(self, orga_client, event, sessions):
+        with scope(event=event):
+            zed = User.objects.create_user(email='zed@example.org', password='x', fullname='  Zed Zander')
+            # Whitespace only: sorts by the email, like a missing name.
+            kim = User.objects.create_user(email='kim@example.org', password='x', fullname='   ')
+            for title, speaker in (('F talk by Zed', zed), ('G talk by Kim', kim)):
+                submission = Submission.objects.create(
+                    title=title,
+                    event=event,
+                    submission_type=sessions['zoe'].submission_type,
+                    abstract='Abstract',
+                    content_locale='en',
+                )
+                submission.speakers.add(speaker)
+
+        response = orga_client.get(event.orga_urls.submissions, {'sort': 'speakers'})
+
+        assert _titles(response) == [
+            'B panel',
+            'G talk by Kim',
+            'C talk by Mike',
+            'F talk by Zed',
+            'A talk by Zoe',
+            'D session without speaker',
+        ]
+
     def test_speakers_cell_lists_first_speaker_first(self, orga_client, event, sessions):
         response = orga_client.get(event.orga_urls.submissions, {'sort': 'speakers'})
 

@@ -139,8 +139,7 @@ def speaker_sort_name(prefix=''):
     """Case-insensitive speaker name, following the fallbacks of ``User.get_display_name``."""
     return Lower(
         Coalesce(
-            NullIf(f'{prefix}fullname', Value('')),
-            *(NullIf(Trim(f'{prefix}{field}'), Value('')) for field in ('email', 'nick', 'client_id')),
+            *(NullIf(Trim(f'{prefix}{field}'), Value('')) for field in ('fullname', 'email', 'nick', 'client_id')),
             Concat(Value('user:'), Cast(f'{prefix}pk', CharField())),
             output_field=CharField(),
         )
