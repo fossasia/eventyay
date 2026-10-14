@@ -3227,16 +3227,16 @@ wheels = [
 
 [[package]]
 name = "rjsmin"
-version = "1.2.5"
+version = "1.3.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/59/16/14288d309d0f42c6586440c47bf6ec1a880218f698f30293fa3782db4008/rjsmin-1.2.5.tar.gz", hash = "sha256:a3f8040b0273dec773e0e807e86a4d0a9535516c0a0a35aa1bb6de6e15bb1f09", size = 427399, upload-time = "2025-10-12T10:50:27.422Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d4/7e/1a5e8fa9cf68e9147b4bc041e247783117a9d100cdec91d0efaea785d035/rjsmin-1.3.0.tar.gz", hash = "sha256:7c2ef57d55e2d76db0c0d0f7399c6c5efde995c677b190ba30fb94019f94a07e", size = 427569, upload-time = "2026-10-10T16:32:12.994Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d6/f3/143727b02b5c5fdc08335be8b2184f19b762ee7d184bb4459e94ed668ae0/rjsmin-1.2.5-cp312-cp312-manylinux1_i686.whl", hash = "sha256:d8b6ddaaa78fd2d3243da11c13033946d211d37729c64814cefe32dba02d9921", size = 31838, upload-time = "2025-10-12T10:50:49.553Z" },
-    { url = "https://files.pythonhosted.org/packages/13/dc/72ca27c526925e88e273c3af6848777b289e4eb0854afcd7c6dbbfd4d196/rjsmin-1.2.5-cp312-cp312-manylinux1_x86_64.whl", hash = "sha256:2f46270969613de2292a7f747c31cabd9354cc49f6cd23f9cc8688d3af9f889e", size = 31795, upload-time = "2025-10-12T10:50:50.459Z" },
-    { url = "https://files.pythonhosted.org/packages/49/1e/f8bfe2f6949b31adb66563ceca84d9d38f32867aad303cf4311b12534487/rjsmin-1.2.5-cp312-cp312-manylinux2014_aarch64.whl", hash = "sha256:6e7b1bb52665894d8cba84144ee91723475948d5d1a54d7f0b25a1cdce8c5921", size = 32085, upload-time = "2025-10-12T10:50:51.704Z" },
-    { url = "https://files.pythonhosted.org/packages/df/d0/239d16374e9e3e0aba2e4924175f2401f21126a1c2df83f5fb18af3ec808/rjsmin-1.2.5-cp312-cp312-musllinux_1_1_aarch64.whl", hash = "sha256:f68dd62707d62fc1771be4407892cb932d48fa19a51e7a0e35a11b00e427e3f7", size = 35995, upload-time = "2025-10-12T10:50:52.714Z" },
-    { url = "https://files.pythonhosted.org/packages/43/61/179f5ef72a688cf290acdbcdfcbacc4af297751af1b10d4097af03cb31eb/rjsmin-1.2.5-cp312-cp312-musllinux_1_1_i686.whl", hash = "sha256:73b6b099f8afb8aa7ff9ddfbfd4d6ae6540dfe7630833a04a26f1d9f67528eaf", size = 36200, upload-time = "2025-10-12T10:50:54.065Z" },
-    { url = "https://files.pythonhosted.org/packages/c9/3b/42bb50ee0bb3a4baa8f435ad6bfca48ed5a5b46e4b614e1f4d320ce729d2/rjsmin-1.2.5-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:372d57835014a332dbf227b6de284ea3ee052600ab0f176df959c75a33f0690e", size = 36110, upload-time = "2025-10-12T10:50:55.393Z" },
+    { url = "https://files.pythonhosted.org/packages/01/91/99d614e06732cca2449b6ba7b905d15a519b6582356f34b05b33db7d83da/rjsmin-1.3.0-cp312-cp312-manylinux1_i686.whl", hash = "sha256:e736445f9caa582e0ccd610496233c5ecab25c2c23919bbee3b26ab001822938", size = 31819, upload-time = "2026-10-10T16:32:40.826Z" },
+    { url = "https://files.pythonhosted.org/packages/f0/9d/8e7273f035a001cc6be0bf299e2d1c7aafebf56e6e41f8a48e3df26b0313/rjsmin-1.3.0-cp312-cp312-manylinux1_x86_64.whl", hash = "sha256:6d54aca193b49e80ad39f580cd44ad0364bbfd48e48e25a60a94cdd5fbd9ea3d", size = 31783, upload-time = "2026-10-10T16:32:42.926Z" },
+    { url = "https://files.pythonhosted.org/packages/21/f0/f9a0e1cde24871d36db10d2bea1f95e586268db12b2061c455fde7a43f2d/rjsmin-1.3.0-cp312-cp312-manylinux2014_aarch64.whl", hash = "sha256:cdff2f8deb1e85e80f00bb9aeb4026d389c101ac92418bc9b67996314da15d85", size = 32059, upload-time = "2026-10-10T16:32:45.183Z" },
+    { url = "https://files.pythonhosted.org/packages/83/3f/6e386145ecea8a4caf3aa954bbcf8f9d925f08766977c3dfe9873938b300/rjsmin-1.3.0-cp312-cp312-musllinux_1_1_aarch64.whl", hash = "sha256:c96bf2e3d46045012ce2e94b12ebb8d32263dd602de1f47dc0dc4592f8f462cb", size = 35967, upload-time = "2026-10-10T16:32:47.249Z" },
+    { url = "https://files.pythonhosted.org/packages/f0/1e/959e76b390bb05aa50265ea8b6a04528aaf4185276e3d512dd20f8cb2347/rjsmin-1.3.0-cp312-cp312-musllinux_1_1_i686.whl", hash = "sha256:1f77fb40f31360253ede74dea46a3c82485ba5737023c066a1b1296dbc75927b", size = 36165, upload-time = "2026-10-10T16:32:49.277Z" },
+    { url = "https://files.pythonhosted.org/packages/6e/d1/2f0d64ba1a307fd6ea259941d23f8514b628a9cdde330a1e2b89dc037b83/rjsmin-1.3.0-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:94e0187a3fe41a09bcbf0fab2c6fbf3b75253472a165d6ffffb42065221eb5f6", size = 36096, upload-time = "2026-10-10T16:32:51.39Z" },
 ]
 
 [[package]]
