@@ -867,3 +867,23 @@ def test_room_list_sorting_multilingual(orga_client, orga_user, event):
     pks = [r.pk for r in response.context["room_list"]]
     assert pks == [r1.pk, r2.pk, r3.pk]
 
+
+@pytest.mark.django_db
+def test_room_list_sorting_malformed_brace_text(orga_client, event):
+    url = reverse(
+        "orga:schedule.rooms.list",
+        kwargs={"organizer": event.organizer.slug, "event": event.slug},
+    )
+    with scope(event=event):
+        # Create rooms with malformed brace-prefixed strings and plain strings
+        r1 = Room.objects.create(event=event, name="{Room", position=1)
+        r2 = Room.objects.create(event=event, name="Alpha Room", position=2)
+        r3 = Room.objects.create(event=event, name="{Room}", position=3)
+        r4 = Room.objects.create(event=event, name={"en": "Beta Room"}, position=4)
+
+    # Must sort safely without raising database JSON syntax errors
+    response = orga_client.get(f"{url}?sort=name")
+    assert response.status_code == 200
+    pks = [r.pk for r in response.context["room_list"]]
+    assert pks == [r1.pk, r3.pk, r2.pk, r4.pk]
+

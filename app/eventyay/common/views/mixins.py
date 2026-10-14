@@ -149,7 +149,17 @@ class Sortable:
                 if loc and loc not in locales:
                     locales.append(loc)
 
-            name_json = Cast(plain_key, JSONField())
+            is_valid_json = (
+                Q(**{f'{plain_key}__startswith': '{"'})
+                & Q(**{f'{plain_key}__contains': '":'})
+                & Q(**{f'{plain_key}__endswith': '}'})
+            )
+            json_source = Case(
+                When(is_valid_json, then=F(plain_key)),
+                default=Value('{}'),
+                output_field=CharField(),
+            )
+            name_json = Cast(json_source, JSONField())
             fallback_expressions = [
                 NullIf(KeyTextTransform(loc, name_json), Value(''))
                 for loc in locales
@@ -157,7 +167,7 @@ class Sortable:
             fallback_expressions.append(F(plain_key))
             expr = Case(
                 When(
-                    **{f'{plain_key}__startswith': '{'},
+                    is_valid_json,
                     then=Coalesce(*fallback_expressions, output_field=CharField()),
                 ),
                 default=F(plain_key),
