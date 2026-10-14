@@ -7,15 +7,18 @@ from csp.decorators import csp_exempt
 from django import forms
 from django.conf import settings
 from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured, PermissionDenied
-from django.db.models import CharField, Q
-from django.db.models.functions import Lower
-from django.http import FileResponse, Http404, HttpRequest
+from django.db.models import Case, CharField, F, JSONField, Q, Value, When
+from django.db.models.fields.json import KeyTextTransform
+from django.db.models.functions import Cast, Coalesce, Lower, NullIf
+from django.http import FileResponse, Http404, HttpRequest, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import translation
 from django.utils.functional import cached_property
 from django.utils.module_loading import import_string
 from django.utils.translation import gettext_lazy as _
 from django_context_decorator import context
 from formtools.wizard.forms import ManagementForm
+from i18nfield.fields import I18nFieldMixin
 from i18nfield.forms import I18nModelForm
 from rules.contrib.views import PermissionRequiredMixin
 
@@ -110,18 +113,59 @@ class Sortable:
             return self._sort_queryset(qs, self._get_secondary_sort(''))
 
         is_text = False
+        is_i18n = False
+        target_field = None
         if '__' not in plain_key:
             with suppress(FieldDoesNotExist):
-                is_text = isinstance(qs.model._meta.get_field(plain_key), CharField)
+                target_field = qs.model._meta.get_field(plain_key)
         else:
             split_key = plain_key.split('__')
             if len(split_key) == 2:
-                is_text = isinstance(
-                    qs.model._meta.get_field(split_key[0]).related_model._meta.get_field(split_key[1]),
-                    CharField,
-                )
+                with suppress(FieldDoesNotExist):
+                    rel = qs.model._meta.get_field(split_key[0])
+                    rel_model = getattr(rel, 'related_model', None)
+                    if rel_model:
+                        target_field = rel_model._meta.get_field(split_key[1])
 
-        if is_text:
+        if target_field is not None:
+            is_text = isinstance(target_field, CharField)
+            is_i18n = isinstance(target_field, I18nFieldMixin)
+
+        if is_i18n:
+            req = getattr(self, 'request', None)
+            active_locale = (
+                getattr(req, 'LANGUAGE_CODE', None)
+                or translation.get_language()
+                or getattr(settings, 'LANGUAGE_CODE', 'en')
+            )
+            base_active_locale = active_locale.split('-')[0] if '-' in active_locale else active_locale
+            event = getattr(req, 'event', None)
+            event_locale = getattr(event, 'locale', None)
+            default_locale = getattr(settings, 'LANGUAGE_CODE', 'en')
+            event_locales = list(getattr(event, 'locales', []) or [])
+
+            locales = []
+            for loc in [active_locale, base_active_locale, event_locale, default_locale] + event_locales:
+                if loc and loc not in locales:
+                    locales.append(loc)
+
+            name_json = Cast(plain_key, JSONField())
+            fallback_expressions = [
+                NullIf(KeyTextTransform(loc, name_json), Value(''))
+                for loc in locales
+            ]
+            fallback_expressions.append(F(plain_key))
+            expr = Case(
+                When(
+                    **{f'{plain_key}__startswith': '{'},
+                    then=Coalesce(*fallback_expressions, output_field=CharField()),
+                ),
+                default=F(plain_key),
+                output_field=CharField(),
+            )
+            qs = qs.annotate(key=Lower(expr))
+            sort_key = '-key' if plain_key != sort_key else 'key'
+        elif is_text:
             # TODO: this only sorts direct lookups case insensitively
             # A sorting field like 'speaker__name' will not be found
             qs = qs.annotate(key=Lower(plain_key))
@@ -494,7 +538,18 @@ class OrderActionMixin:
         'list': {'post': 'order_handler'},
     }
 
+    def can_reorder(self):
+        sort_key = self.request.GET.get('sort') or ''
+        return not sort_key or sort_key == 'default'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['can_reorder'] = self.can_reorder()
+        return ctx
+
     def order_handler(self, request, *args, **kwargs):
+        if not self.can_reorder():
+            return HttpResponseBadRequest('Reordering is only allowed in default position order.')
         order = request.POST.get('order')
         if order:
             order = order.split(',')

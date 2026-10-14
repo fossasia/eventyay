@@ -619,6 +619,8 @@ class RoomView(Sortable, OrderActionMixin, OrgaCRUDView):
         return ctx
 
     def order_handler(self, request, *args, **kwargs):
+        if not self.can_reorder():
+            return HttpResponseBadRequest('Reordering is only allowed in default position order.')
         order = request.POST.get('order')
         if order:
             pks = [pk.strip() for pk in order.split(',') if pk.strip()]
