@@ -120,6 +120,44 @@ export function getCurrentUserName (scheduleData) {
 	return data?.schedule?.current_user_name || data?.current_user_name || ''
 }
 
+/**
+ * Whether the volunteer wants a confirmation email when they claim or drop a shift.
+ * Defaults to true when the backend does not send a saved choice.
+ */
+export function getShiftActionEmails (scheduleData) {
+	const data = scheduleData?.value ?? scheduleData
+	return (data?.schedule?.shift_action_emails ?? data?.shift_action_emails) !== false
+}
+
+export function setShiftActionEmails (scheduleData, value) {
+	const data = scheduleData?.value ?? scheduleData
+	const target = data?.schedule ?? data
+	if (target) target.shift_action_emails = Boolean(value)
+}
+
+/**
+ * Request body for the claim and withdraw endpoints.
+ */
+export function roleActionPayload (role, sendEmail) {
+	return { role_id: role.id, send_email: Boolean(sendEmail) }
+}
+
+export function scheduleApiUrl (eventUrl) {
+	const base = (eventUrl || '').replace(/\/?$/, '/')
+	return `${base}teamshifts/shifts/api/`
+}
+
+/**
+ * Whether a claim or drop already took effect, judging by the shift's current roles.
+ * A request can fail after the server applied the change (for example on a timeout),
+ * so the dialog checks this before showing an error.
+ */
+export function roleActionApplied (action, roles, roleId, userId) {
+	const role = (roles || []).find(r => r.id === roleId)
+	const assigned = getAssignedList(role).some(user => user.id === userId)
+	return action === 'drop' ? !assigned : assigned
+}
+
 export function getShiftId (session) {
 	if (session?.talkId != null) return session.talkId
 	const raw = session?.id
