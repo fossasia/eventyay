@@ -1453,6 +1453,9 @@ def test_addons_create(token_client, organizer, event, item, category, category2
         },
         format='json',
     )
+    assert resp.status_code == 400
+    assert 'addon_category' in resp.data
+
     # Omitted max_count defaults to 1; min_count=2 must fail range validation
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/products/{}/addons/'.format(organizer.slug, event.slug, item.pk),
