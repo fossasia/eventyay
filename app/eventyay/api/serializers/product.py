@@ -133,12 +133,23 @@ class ProductAddOnSerializer(serializers.ModelSerializer):
     def validate(self, data):
         data = super().validate(data)
 
-        full_data = self.to_internal_value(self.to_representation(self.instance)) if self.instance else {}
-        full_data.update(data)
+        min_count = data.get('min_count')
+        max_count = data.get('max_count')
 
-        ProductAddOn.clean_min_count(full_data.get('min_count'))
-        ProductAddOn.clean_max_count(full_data.get('max_count'))
-        ProductAddOn.clean_max_min_count(full_data.get('max_count'), full_data.get('min_count'))
+        if self.instance:
+            if min_count is None:
+                min_count = self.instance.min_count
+            if max_count is None:
+                max_count = self.instance.max_count
+        else:
+            if min_count is None:
+                min_count = ProductAddOn._meta.get_field('min_count').default
+            if max_count is None:
+                max_count = ProductAddOn._meta.get_field('max_count').default
+
+        ProductAddOn.clean_min_count(min_count)
+        ProductAddOn.clean_max_count(max_count)
+        ProductAddOn.clean_max_min_count(max_count, min_count)
 
         return data
 

@@ -1453,8 +1453,20 @@ def test_addons_create(token_client, organizer, event, item, category, category2
         },
         format='json',
     )
+    # Omitted max_count defaults to 1; min_count=2 must fail range validation
+    resp = token_client.post(
+        '/api/v1/organizers/{}/events/{}/products/{}/addons/'.format(organizer.slug, event.slug, item.pk),
+        {
+            'addon_category': category.pk,
+            'min_count': 2,
+        },
+        format='json',
+    )
     assert resp.status_code == 400
-    assert 'addon_category' in resp.data
+    assert (
+        resp.content.decode() == '{"non_field_errors":["The maximum count needs to be greater than the minimum '
+        'count."]}'
+    )
 
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/products/{}/addons/'.format(organizer.slug, event.slug, item.pk),
