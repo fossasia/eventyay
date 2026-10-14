@@ -62,6 +62,28 @@ class TestSessionListSpeakerSort:
         assert response.status_code == 200
         assert _titles(response) == ['A talk by Zoe', 'C talk by Mike', 'B panel', 'D session without speaker']
 
+    def test_speaker_without_name_or_email_sorts_by_nick(self, orga_client, event, sessions):
+        with scope(event=event):
+            quinn = User.objects.create(email=None, fullname=None, nick='Quinn')
+            submission = Submission.objects.create(
+                title='E talk by Quinn',
+                event=event,
+                submission_type=sessions['zoe'].submission_type,
+                abstract='Abstract',
+                content_locale='en',
+            )
+            submission.speakers.add(quinn)
+
+        response = orga_client.get(event.orga_urls.submissions, {'sort': 'speakers'})
+
+        assert _titles(response) == [
+            'B panel',
+            'C talk by Mike',
+            'E talk by Quinn',
+            'A talk by Zoe',
+            'D session without speaker',
+        ]
+
     def test_speakers_cell_lists_first_speaker_first(self, orga_client, event, sessions):
         response = orga_client.get(event.orga_urls.submissions, {'sort': 'speakers'})
 

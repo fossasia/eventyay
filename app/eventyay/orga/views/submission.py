@@ -10,7 +10,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.syndication.views import Feed
 from django.db import transaction
 from django.db.models import CharField, Count as DbCount, F, OuterRef, Prefetch, Q, Subquery, Value
-from django.db.models.functions import Coalesce, Lower, NullIf, TruncDate
+from django.db.models.functions import Cast, Coalesce, Concat, Lower, NullIf, Trim, TruncDate
 from django.forms.models import BaseModelFormSet, inlineformset_factory
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -136,8 +136,15 @@ class SubmissionViewMixin(PermissionRequired):
 
 
 def speaker_sort_name(prefix=''):
-    """Case-insensitive speaker name as shown in lists, falling back to the email."""
-    return Lower(Coalesce(NullIf(f'{prefix}fullname', Value('')), f'{prefix}email', output_field=CharField()))
+    """Case-insensitive speaker name, following the fallbacks of ``User.get_display_name``."""
+    return Lower(
+        Coalesce(
+            NullIf(f'{prefix}fullname', Value('')),
+            *(NullIf(Trim(f'{prefix}{field}'), Value('')) for field in ('email', 'nick', 'client_id')),
+            Concat(Value('user:'), Cast(f'{prefix}pk', CharField())),
+            output_field=CharField(),
+        )
+    )
 
 
 class ReviewerSubmissionFilter:
