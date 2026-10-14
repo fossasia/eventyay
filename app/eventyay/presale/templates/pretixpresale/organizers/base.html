@@ -11,9 +11,9 @@
 
 {% block title %}
     {% if messages %}
-        {{ messages|join:" " }} ::
+        {{ messages|join:" " }} -
     {% endif %}
-    {% block pagetitle %}{% endblock %}{% if request.resolver_match.url_name != "organizer.index" %} :: {% endif %}{{ organizer.name }}
+    {% block pagetitle %}{% endblock %} - {{ organizer.name }}
 {% endblock %}
 
 {% block meta_description %}

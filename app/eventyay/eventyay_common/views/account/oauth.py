@@ -88,7 +88,13 @@ class OAuthApplicationRegistrationView(AccountMenuMixIn, ApplicationRegistration
         form.instance.client_type = 'confidential'
         form.instance.authorization_grant_type = 'authorization-code'
         oauth_application_registered.send(sender=self.request, user=self.request.user, application=form.instance)
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        messages.success(self.request, _('The application has been registered.'))
+        return response
+
+    def form_invalid(self, form):
+        messages.error(self.request, _('The application could not be registered. See below for details.'))
+        return super().form_invalid(form)
 
 
 class ApplicationUpdateForm(forms.ModelForm):
@@ -117,6 +123,15 @@ class OAuthApplicationUpdateView(AccountMenuMixIn, ApplicationUpdate):
     def get_queryset(self):
         return super().get_queryset().filter(active=True)
 
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, _('Your changes have been saved.'))
+        return response
+
+    def form_invalid(self, form):
+        messages.error(self.request, _('Your changes could not be saved. See below for details.'))
+        return super().form_invalid(form)
+
 
 class OAuthApplicationRollView(ApplicationDetail):
     template_name = 'eventyay_common/account/oauth-app-rollkeys.html'
@@ -130,9 +145,9 @@ class OAuthApplicationRollView(ApplicationDetail):
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
-        messages.success(request, _('A new client secret has been generated and is now effective.'))
         self.object.client_secret = generate_client_secret()
         self.object.save()
+        messages.success(request, _('A new client secret has been generated and is now effective.'))
         return HttpResponseRedirect(self.object.get_absolute_url())
 
     def get_queryset(self):
@@ -175,4 +190,5 @@ class OAuthApplicationDeleteView(ApplicationDelete):
             )
             self.object.active = False
             self.object.save(update_fields=['active'])
+        messages.success(request, _('The application has been deleted.'))
         return HttpResponseRedirect(self.success_url)

@@ -9,7 +9,7 @@
 {% load static %}
 
 {% load presale_locale %}
-{% block title %}{% if submission_title %}{{ submission_title|event_localize }}{% else %}{% translate "Create proposal" %}{% endif %} :: {{ request.event.name|event_localize }}{% endblock title %}
+{% block title %}{% if submission_title %}{{ submission_title|event_localize }}{% else %}{% translate "Create proposal" %}{% endif %} -{% endblock title %}
 
 {% block cfp_header %}
     {% include "cfp/includes/forms_header.html" %}

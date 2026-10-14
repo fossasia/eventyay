@@ -132,17 +132,18 @@ class TestGlobalSettingsTabsAndSections:
         assert response.status_code == 302, (response.context['form'].errors if response.context and 'form' in response.context else response.content)
         assert response['Location'] == reverse('eventyay_admin:admin.global.settings')
 
-        assert gs.settings.get('seo_homepage_title') == 'My Platform Title'
-        assert gs.settings.get('seo_homepage_description') == 'My Platform Description'
-        assert gs.settings.get('allow_all_users_create_organizer', as_type=bool) is True
-        assert gs.settings.get('allow_payment_users_create_organizer', as_type=bool) is True
-        assert gs.settings.get(EVENT_SERIES_CREATION_ENABLED, as_type=bool) is True
-        assert gs.settings.get(MEETUP_CREATION_ENABLED, as_type=bool) is True
-        assert gs.settings.get('update_check_perform', as_type=bool) is True
-        assert gs.settings.get('update_check_email') == 'updates@example.com'
-        assert gs.settings.get('telemetry_enabled', as_type=bool) is True
-        assert gs.settings.get('billing_validation', as_type=bool) is False
-        assert gs.settings.get('payment_stripe_secret_key') == 'sk_live_keep_me'
+        saved_gs = GlobalSettingsObject()
+        assert saved_gs.settings.get('seo_homepage_title') == 'My Platform Title'
+        assert saved_gs.settings.get('seo_homepage_description') == 'My Platform Description'
+        assert saved_gs.settings.get('allow_all_users_create_organizer', as_type=bool) is True
+        assert saved_gs.settings.get('allow_payment_users_create_organizer', as_type=bool) is True
+        assert saved_gs.settings.get(EVENT_SERIES_CREATION_ENABLED, as_type=bool) is True
+        assert saved_gs.settings.get(MEETUP_CREATION_ENABLED, as_type=bool) is True
+        assert saved_gs.settings.get('update_check_perform', as_type=bool) is True
+        assert saved_gs.settings.get('update_check_email') == 'updates@example.com'
+        assert saved_gs.settings.get('telemetry_enabled', as_type=bool) is True
+        assert saved_gs.settings.get('billing_validation', as_type=bool) is False
+        assert saved_gs.settings.get('payment_stripe_secret_key') == 'sk_live_keep_me'
 
     @patch('eventyay.control.views.global_settings.update_check.apply')
     def test_update_check_trigger_in_settings(self, mock_update_check, staff_client):
@@ -216,11 +217,10 @@ class TestGlobalTicketingSettings:
         assert 'id="tab-cart"' in content
 
         # Payment gateway providers
-        assert 'Stripe — Ticket Payments' in content
         assert 'PayPal — Ticket Payments' in content
-        assert 'payment_stripe_connect_client_id' in content
-        assert 'payment_stripe_connect_publishable_key' in content
-        assert 'payment_stripe_connect_secret_key' in content
+        if not apps.is_installed('eventyay_stripe'):
+            assert 'Stripe — Ticket Payments' not in content
+            assert 'name="payment_stripe_connect_client_id"' not in content
         assert 'payment_paypal_connect_client_id' in content
         assert 'payment_paypal_connect_endpoint' in content
 
@@ -253,12 +253,73 @@ class TestGlobalTicketingSettings:
         assert response.status_code == 200
         assert 'payment_paypal_connect_partner_payer_id' in response.content.decode('utf-8')
 
+    def test_ticketing_page_renders_only_registered_stripe_fields(self, staff_client):
+        with patch.object(
+            register_global_settings,
+            'send',
+            return_value=[
+                (
+                    'stripe',
+                    OrderedDict(
+                        [
+                            (
+                                'payment_stripe_connect_secret_key',
+                                dj_forms.CharField(required=False),
+                            ),
+                        ]
+                    ),
+                ),
+            ],
+        ):
+            response = staff_client.get(reverse('eventyay_admin:admin.global.ticketing'))
+
+        assert response.status_code == 200
+        content = response.content.decode('utf-8')
+        assert 'Stripe — Ticket Payments' in content
+        assert 'Live Credentials' in content
+        assert 'name="payment_stripe_connect_secret_key"' in content
+        assert 'Client Configuration' not in content
+        assert 'Test Credentials' not in content
+
+    def test_ticketing_page_saves_stripe_fields_registered_by_plugin(self, staff_client):
+        def stripe_settings(sender, **kwargs):
+            return OrderedDict(
+                (key, dj_forms.CharField(required=False))
+                for key in (
+                    'payment_stripe_connect_client_id',
+                    'payment_stripe_connect_publishable_key',
+                    'payment_stripe_connect_secret_key',
+                    'payment_stripe_connect_test_publishable_key',
+                    'payment_stripe_connect_test_secret_key',
+                )
+            )
+
+        register_global_settings.connect(stripe_settings, dispatch_uid='test_stripe_settings')
+        try:
+            url = reverse('eventyay_admin:admin.global.ticketing')
+            response = staff_client.get(url)
+            assert response.status_code == 200
+            assert 'Stripe — Ticket Payments' in response.content.decode('utf-8')
+            assert 'name="payment_stripe_connect_client_id"' in response.content.decode('utf-8')
+
+            response = staff_client.post(url, {
+                'payment_stripe_connect_client_id': 'ca_test_client_id',
+                'payment_stripe_connect_publishable_key': 'pk_live_ticket_stripe_key',
+                'payment_paypal_connect_endpoint': 'live',
+                'reservation_time': '30',
+                'max_products_per_order': '0',
+            })
+        finally:
+            register_global_settings.disconnect(dispatch_uid='test_stripe_settings')
+
+        assert response.status_code == 302
+        gs = GlobalSettingsObject()
+        assert gs.settings.get('payment_stripe_connect_client_id') == 'ca_test_client_id'
+        assert gs.settings.get('payment_stripe_connect_publishable_key') == 'pk_live_ticket_stripe_key'
+
     def test_ticketing_settings_save_behavior(self, staff_client):
         url = reverse('eventyay_admin:admin.global.ticketing')
         post_data = {
-            'payment_stripe_connect_client_id': 'ca_test_client_id',
-            'payment_stripe_connect_publishable_key': 'pk_live_ticket_stripe_key',
-            'payment_stripe_connect_secret_key': 'sk_live_ticket_stripe_key',
             'payment_paypal_connect_client_id': 'paypal_client_123',
             'payment_paypal_connect_endpoint': 'sandbox',
             'reservation_time': '45',
@@ -269,8 +330,6 @@ class TestGlobalTicketingSettings:
         assert response['Location'] == reverse('eventyay_admin:admin.global.ticketing')
 
         gs = GlobalSettingsObject()
-        assert gs.settings.get('payment_stripe_connect_client_id') == 'ca_test_client_id'
-        assert gs.settings.get('payment_stripe_connect_publishable_key') == 'pk_live_ticket_stripe_key'
         assert gs.settings.get('payment_paypal_connect_client_id') == 'paypal_client_123'
         assert gs.settings.get('payment_paypal_connect_endpoint') == 'sandbox'
         assert gs.settings.get('reservation_time', as_type=int) == 45
@@ -285,8 +344,8 @@ class TestGlobalTicketingSettings:
         gs.settings.set('payment_paypal_connect_endpoint', 'https://api.paypal.com')
         form = GlobalTicketingSettingsForm()
         assert form.initial['payment_paypal_connect_endpoint'] == 'live'
-        assert 'payment_stripe_connect_client_id' in form.fields
-        assert 'payment_stripe_connect_secret_key' in form.fields
+        if not apps.is_installed('eventyay_stripe'):
+            assert 'payment_stripe_connect_client_id' not in form.fields
 
     def test_ticketing_form_accepts_legacy_paypal_endpoint_on_save(self):
         gs = GlobalSettingsObject()

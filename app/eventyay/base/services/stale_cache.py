@@ -104,21 +104,24 @@ _bump_on_commit_local = threading.local()
 
 
 def bump_schedule_cache_version_on_commit(event_id):
-    """Bump at most once per event per database transaction."""
+    """Bump at most once per event per database transaction.
+
+    Every call registers its own callback, because a rolled back transaction
+    drops its callbacks. Only the first callback of a commit bumps the version.
+    """
     pending = getattr(_bump_on_commit_local, 'pending', None)
     if pending is None:
         pending = set()
         _bump_on_commit_local.pending = pending
-    if event_id in pending:
-        return
     pending.add(event_id)
     transaction.on_commit(lambda: _flush_schedule_cache_bump(event_id))
 
 
 def _flush_schedule_cache_bump(event_id):
     pending = getattr(_bump_on_commit_local, 'pending', None)
-    if pending is not None:
-        pending.discard(event_id)
+    if pending is None or event_id not in pending:
+        return
+    pending.discard(event_id)
     bump_schedule_cache_version(event_id)
 
 
