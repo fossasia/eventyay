@@ -107,7 +107,7 @@
     }
 
     .cfp-forms-page .cfp-option-table {
-        table-layout: fixed;
+        table-layout: auto;
         width: 100%;
     }
 
