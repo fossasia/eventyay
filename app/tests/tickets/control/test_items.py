@@ -1130,6 +1130,7 @@ class FreePriceBoundsTest(ItemFormTest):
                 data={
                     'name_0': 'Direct Cloned Product',
                     'default_price': '10.00',
+                    'free_price': 'on',
                     'quota_option': 'none',
                     'copy_from': str(legacy_item.pk),
                 },
@@ -1188,7 +1189,6 @@ class FreePriceBoundsTest(ItemFormTest):
                 instance=new_item,
                 event=self.event1,
                 user=self.user,
-                initial={'free_price': True},
                 data={
                     'name_0': 'Disabled Free Price Product',
                     'default_price': '10.00',
@@ -1221,6 +1221,9 @@ class FreePriceBoundsTest(ItemFormTest):
                 data={
                     'name_0': 'Higher Default Price',
                     'default_price': '25.00',
+                    'free_price': 'on',
+                    'free_price_min': '5.00',
+                    'free_price_max': '15.00',
                     'quota_option': 'none',
                     'copy_from': str(source_item.pk),
                 },
@@ -1249,6 +1252,9 @@ class FreePriceBoundsTest(ItemFormTest):
                 data={
                     'name_0': 'Cloned Inverted',
                     'default_price': '5.00',
+                    'free_price': 'on',
+                    'free_price_min': '20.00',
+                    'free_price_max': '10.00',
                     'quota_option': 'none',
                     'copy_from': str(legacy_item.pk),
                 },
@@ -1277,6 +1283,9 @@ class FreePriceBoundsTest(ItemFormTest):
                 data={
                     'name_0': 'Cloned Both Conflicts',
                     'default_price': '25.00',
+                    'free_price': 'on',
+                    'free_price_min': '20.00',
+                    'free_price_max': '10.00',
                     'quota_option': 'none',
                     'copy_from': str(legacy_item.pk),
                 },
@@ -1306,6 +1315,9 @@ class FreePriceBoundsTest(ItemFormTest):
                 data={
                     'name_0': 'Unsaved Product',
                     'default_price': '10.00',
+                    'free_price': 'on',
+                    'free_price_min': '5.00',
+                    'free_price_max': '20.00',
                     'quota_option': 'none',
                     'copy_from': str(legacy_item.pk),
                 },
@@ -1316,5 +1328,49 @@ class FreePriceBoundsTest(ItemFormTest):
             assert instance.free_price is True
             assert instance.free_price_min == Decimal('5.00')
             assert instance.free_price_max == Decimal('20.00')
+
+    def test_product_create_form_init_populates_free_price_initial_from_source(self):
+        """Test ProductCreateForm.__init__ populates self.initial for FREE_PRICE_FIELDS
+        and changed_data detects unchecking.
+        """
+        with scopes_disabled():
+            source_item = Item.objects.create(
+                event=self.event1,
+                name='Source Item For Init',
+                default_price=Decimal('10.00'),
+                free_price=True,
+                free_price_min=Decimal('5.00'),
+                free_price_max=Decimal('20.00'),
+            )
+            # Unbound form (e.g. GET request with copy_from in initial)
+            unbound_form = ProductCreateForm(
+                event=self.event1,
+                user=self.user,
+                initial={'copy_from': source_item},
+            )
+            assert unbound_form.initial['free_price'] is True
+            assert unbound_form.initial['free_price_min'] == Decimal('5.00')
+            assert unbound_form.initial['free_price_max'] == Decimal('20.00')
+
+            # Bound form (POST request where user leaves free_price unchecked)
+            new_item = Item(event=self.event1)
+            bound_form = ProductCreateForm(
+                instance=new_item,
+                event=self.event1,
+                user=self.user,
+                data={
+                    'name_0': 'Unchecked Copy',
+                    'default_price': '10.00',
+                    'quota_option': 'none',
+                    'copy_from': str(source_item.pk),
+                },
+            )
+            assert bound_form.initial['free_price'] is True
+            assert bound_form.is_valid()
+            assert 'free_price' in bound_form.changed_data
+            saved_item = bound_form.save()
+            assert saved_item.free_price is False
+            assert saved_item.free_price_min is None
+            assert saved_item.free_price_max is None
 
 

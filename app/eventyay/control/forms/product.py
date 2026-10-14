@@ -18,6 +18,7 @@ from django.utils.translation import (
 from django.utils.translation import (
     pgettext_lazy,
 )
+from django_scopes import scope
 from django_scopes.forms import (
     SafeModelChoiceField,
     SafeModelMultipleChoiceField,
@@ -394,6 +395,8 @@ class ProductCreateForm(I18nModelForm):
         kwargs.setdefault('initial', {})
         kwargs['initial'].setdefault('admission', True)
         super().__init__(*args, **kwargs)
+        if not getattr(self.instance, 'event_id', None) and not getattr(self.instance, 'event', None):
+            self.instance.event = self.event
 
         self.fields['category'].queryset = self.instance.event.categories.all()
         self.fields['category'].widget = Select2(
@@ -423,6 +426,46 @@ class ProductCreateForm(I18nModelForm):
             empty_label=_('Do not copy'),
             required=False,
         )
+
+        copy_from = None
+        if self.is_bound:
+            prefix_key = self.add_prefix('copy_from')
+            if prefix_key in self.data:
+                copy_from = self.data.get(prefix_key)
+            elif 'copy_from' in self.data:
+                copy_from = self.data.get('copy_from')
+            elif self.initial:
+                copy_from = self.initial.get('copy_from')
+        elif self.initial:
+            copy_from = self.initial.get('copy_from')
+
+        if copy_from:
+            source = None
+            if isinstance(copy_from, Product):
+                source = copy_from
+            else:
+                try:
+                    with scope(organizer=self.event.organizer):
+                        source = self.event.products.filter(pk=copy_from).first()
+                except (ValueError, TypeError, OverflowError):
+                    source = None
+
+            if source:
+                self.initial['free_price'] = source.free_price
+                if source.free_price:
+                    self.initial['free_price_min'] = (
+                        source.free_price_min
+                        if source.free_price_min is not None and source.free_price_min >= 0
+                        else None
+                    )
+                    self.initial['free_price_max'] = (
+                        source.free_price_max
+                        if source.free_price_max is not None and source.free_price_max >= 0
+                        else None
+                    )
+                else:
+                    self.initial['free_price_min'] = None
+                    self.initial['free_price_max'] = None
         if self.event.tax_rules.exists():
             self.fields['tax_rule'].required = True
 
@@ -525,11 +568,6 @@ class ProductCreateForm(I18nModelForm):
 
         self.instance.position = (self.event.products.aggregate(p=Max('position'))['p'] or 0) + 1
         instance = super().save(commit=commit, *args, **kwargs)
-
-        if self.cleaned_data.get('copy_from') and not self._has_free_price_changes():
-            copy_sanitized_free_price_bounds(instance, self.cleaned_data['copy_from'])
-            if commit:
-                instance.save(update_fields=['free_price', 'free_price_min', 'free_price_max'])
 
         if not self.event.has_subevents and not self.cleaned_data.get('has_variations'):
             if (
