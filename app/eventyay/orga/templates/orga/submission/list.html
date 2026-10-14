@@ -86,34 +86,40 @@
                 <tr>
                     <th>
                         {% translate "Title" %}
-                        <a href="{% querystring sort="title" %}"><i class="fa fa-caret-down" title="{% translate "Sort (a-z)" %}"></i></a>
-                        <a href="{% querystring sort="-title" %}"><i class="fa fa-caret-up" title="{% translate "Sort (z-a)" %}"></i></a>
+                        <a href="{% querystring sort="title" %}"{% if current_sort == "title" %} class="sort-active" aria-current="true"{% endif %}><i class="fa fa-caret-down" title="{% translate "Sort (a-z)" %}"></i></a>
+                        <a href="{% querystring sort="-title" %}"{% if current_sort == "-title" %} class="sort-active" aria-current="true"{% endif %}><i class="fa fa-caret-up" title="{% translate "Sort (z-a)" %}"></i></a>
                     </th>
-                    {% if can_view_speakers %}<th>{{ phrases.schedule.speakers }}</th>{% endif %}
+                    {% if can_view_speakers %}
+                        <th>
+                            {{ phrases.schedule.speakers }}
+                            <a href="{% querystring sort="speakers" %}"{% if current_sort == "speakers" %} class="sort-active" aria-current="true"{% endif %}><i class="fa fa-caret-down" title="{% translate "Sort (a-z)" %}"></i></a>
+                            <a href="{% querystring sort="-speakers" %}"{% if current_sort == "-speakers" %} class="sort-active" aria-current="true"{% endif %}><i class="fa fa-caret-up" title="{% translate "Sort (z-a)" %}"></i></a>
+                        </th>
+                    {% endif %}
                     {% if show_submission_types %}
                         <th>
                             {% translate "Type" %}
-                            <a href="{% querystring sort="submission_type__name" %}"><i class="fa fa-caret-down" title="{% translate "Sort (a-z)" %}"></i></a>
-                            <a href="{% querystring sort="-submission_type__name" %}"><i class="fa fa-caret-up" title="{% translate "Sort (z-a)" %}"></i></a>
+                            <a href="{% querystring sort="submission_type__name" %}"{% if current_sort == "submission_type__name" %} class="sort-active" aria-current="true"{% endif %}><i class="fa fa-caret-down" title="{% translate "Sort (a-z)" %}"></i></a>
+                            <a href="{% querystring sort="-submission_type__name" %}"{% if current_sort == "-submission_type__name" %} class="sort-active" aria-current="true"{% endif %}><i class="fa fa-caret-up" title="{% translate "Sort (z-a)" %}"></i></a>
                         </th>
                     {% endif %}
                     {% if show_tracks %}
                         <th>
                             {% translate "Track" %}
-                            <a href="{% querystring sort="track__name" %}"><i class="fa fa-caret-down" title="{% translate "Sort (a-z)" %}"></i></a>
-                            <a href="{% querystring sort="-track__name" %}"><i class="fa fa-caret-up" title="{% translate "Sort (z-a)" %}"></i></a>
+                            <a href="{% querystring sort="track__name" %}"{% if current_sort == "track__name" %} class="sort-active" aria-current="true"{% endif %}><i class="fa fa-caret-down" title="{% translate "Sort (a-z)" %}"></i></a>
+                            <a href="{% querystring sort="-track__name" %}"{% if current_sort == "-track__name" %} class="sort-active" aria-current="true"{% endif %}><i class="fa fa-caret-up" title="{% translate "Sort (z-a)" %}"></i></a>
                         </th>
                     {% endif %}
                     <th>
                         {% translate "State" %}
-                        <a href="{% querystring sort="state" %}"><i class="fa fa-caret-down" title="{% translate "Sort (a-z)" %}"></i></a>
-                        <a href="{% querystring sort="-state" %}"><i class="fa fa-caret-up" title="{% translate "Sort (z-a)" %}"></i></a>
+                        <a href="{% querystring sort="state" %}"{% if current_sort == "state" %} class="sort-active" aria-current="true"{% endif %}><i class="fa fa-caret-down" title="{% translate "Sort (a-z)" %}"></i></a>
+                        <a href="{% querystring sort="-state" %}"{% if current_sort == "-state" %} class="sort-active" aria-current="true"{% endif %}><i class="fa fa-caret-up" title="{% translate "Sort (z-a)" %}"></i></a>
                     </th>
                     {% if can_change_submission %}
                         <th class="text-center">
                             {% translate "Featured" %} <i class="fa fa-question-circle" data-toggle="tooltip" title="{% translate "Show this session on the list of featured sessions, once it was accepted" %}"></i>
-                            <a href="{% querystring sort="-is_featured" %}"><i class="fa fa-caret-down"></i></a>
-                            <a href="{% querystring sort="is_featured" %}"><i class="fa fa-caret-up"></i></a>
+                            <a href="{% querystring sort="-is_featured" %}"{% if current_sort == "-is_featured" %} class="sort-active" aria-current="true"{% endif %}><i class="fa fa-caret-down"></i></a>
+                            <a href="{% querystring sort="is_featured" %}"{% if current_sort == "is_featured" %} class="sort-active" aria-current="true"{% endif %}><i class="fa fa-caret-up"></i></a>
                         </th>
                         {% if session_videos_enabled %}
                         <th class="text-center">

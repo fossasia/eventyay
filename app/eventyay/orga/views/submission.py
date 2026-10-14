@@ -9,8 +9,8 @@ from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.syndication.views import Feed
 from django.db import transaction
-from django.db.models import Count as DbCount, Q
-from django.db.models.functions import TruncDate
+from django.db.models import CharField, Count as DbCount, F, OuterRef, Prefetch, Q, Subquery, Value
+from django.db.models.functions import Coalesce, Lower, NullIf, TruncDate
 from django.forms.models import BaseModelFormSet, inlineformset_factory
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -38,6 +38,7 @@ from eventyay.base.models import (
     User,
 )
 from eventyay.base.models.base import CachedFile
+from eventyay.base.models.submission import SpeakerRole
 from eventyay.common.views.helpers import is_ajax_request
 from eventyay.base.models.mail import MailTemplateRoles
 from eventyay.base.services.etherpad import (
@@ -134,6 +135,11 @@ class SubmissionViewMixin(PermissionRequired):
         return is_agenda_submission_visible(None, self.object)
 
 
+def speaker_sort_name(prefix=''):
+    """Case-insensitive speaker name as shown in lists, falling back to the email."""
+    return Lower(Coalesce(NullIf(f'{prefix}fullname', Value('')), f'{prefix}email', output_field=CharField()))
+
+
 class ReviewerSubmissionFilter:
     @cached_property
     def is_only_reviewer(self):
@@ -148,7 +154,7 @@ class ReviewerSubmissionFilter:
         queryset = (
             self.request.event.submissions.all()
             .select_related('submission_type', 'event', 'track')
-            .prefetch_related('speakers')
+            .prefetch_related(Prefetch('speakers', queryset=User.objects.order_by(speaker_sort_name(), 'pk')))
         )
         if self.is_only_reviewer:
             queryset = limit_for_reviewers(queryset, self.request.event, self.request.user, self.limit_tracks)
@@ -845,6 +851,34 @@ class SubmissionList(EventPermissionRequired, BaseSubmissionList):
     @context
     def show_submission_types(self):
         return self.request.event.submission_types.all().count() > 1
+
+    @context
+    def current_sort(self):
+        sort_key = self.request.GET.get('sort')
+        if not sort_key or sort_key == 'default':
+            return self.default_sort_field
+        return sort_key
+
+    def sort_queryset(self, qs):
+        sort_key = self.request.GET.get('sort') or ''
+        can_view_speakers = self.request.user.has_perm('base.orga_list_speakerprofile', self.request.event)
+        if sort_key.lstrip('-') != 'speakers' or not can_view_speakers:
+            return super().sort_queryset(qs)
+        # Sort by the first speaker shown in the Speakers column, so a session with
+        # several speakers has exactly one, predictable position. Sessions without
+        # speakers go last in both directions.
+        first_speaker = (
+            SpeakerRole.objects.filter(submission=OuterRef('pk'))
+            .annotate(name=speaker_sort_name('user__'))
+            .order_by('name', 'user__pk')
+            .values('name')[:1]
+        )
+        qs = qs.annotate(speaker_sort=Subquery(first_speaker))
+        if sort_key.startswith('-'):
+            order = F('speaker_sort').desc(nulls_last=True)
+        else:
+            order = F('speaker_sort').asc(nulls_last=True)
+        return qs.order_by(order, Lower('title'), 'pk')
 
     @context
     @cached_property
