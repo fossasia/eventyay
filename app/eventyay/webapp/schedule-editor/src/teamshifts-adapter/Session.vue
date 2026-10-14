@@ -6,7 +6,7 @@
 			.ampm(v-if="startTime.ampm") {{ startTime.ampm }}
 		.duration {{ durationPretty }}
 	.info
-		.title-row(style="display: flex; justify-content: space-between; align-items: flex-start;")
+		.title-row
 			.title(:class="{'title-clamped': isShortSession}") {{ getLocalizedString(session.title) }}
 			.card-actions(v-if="caps.canEdit && !isBreak && session.room")
 				button.btn.btn-link.p-0.mr-2(type="button", @pointerdown.stop, @click.stop="$emit('editSession', session)", :aria-label="$t('Edit')", :title="$t('Edit')")
@@ -47,7 +47,7 @@
 						input(type="hidden", name="csrfmiddlewaretoken", :value="csrfToken")
 						button.btn.btn-sm.btn-primary(type="submit", @click.stop, @pointerdown.stop) {{ $t('Sign Up') }}
 				template(v-else)
-					span.text-muted(style="font-size:11px") {{ $t('Full / Restricted') }}
+					span.text-muted.shift-status-hint {{ $t('Full / Restricted') }}
 
 		.shift-manage.mt-2.text-right(v-else-if="caps.canAssignMembers && !isBreak && session.room")
 			button.btn.btn-sm.btn-assign-members(type="button", @pointerdown.stop, @click.stop="$emit('assignMembers', session)") {{ session.roles?.some(r => r.assigned.length < r.capacity) ? $t('Assign Members') : $t('Manage') }}
@@ -317,7 +317,11 @@ function onPointerDown(event: PointerEvent): void {
   if (!event.isPrimary || event.button !== 0) return
   const el = event.target as HTMLElement
   if (el && el.releasePointerCapture) {
-    try { el.releasePointerCapture(event.pointerId) } catch (_) {}
+    try {
+      el.releasePointerCapture(event.pointerId)
+    } catch {
+      // ignore pointer capture release failure
+    }
   }
   emit('startDragging', { session: props.session, event })
 }
@@ -325,6 +329,12 @@ function onPointerDown(event: PointerEvent): void {
 
 <style lang="stylus">
 .c-linear-schedule-session.is-shift-session
+	.title-row
+		display: flex
+		justify-content: space-between
+		align-items: flex-start
+	.shift-status-hint
+		font-size: 11px
 	.roles-list
 		display: flex
 		flex-direction: column
