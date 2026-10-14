@@ -9,7 +9,7 @@ from hierarkey.proxy import HierarkeyProxy
 from rest_framework import serializers
 
 from eventyay.common.urls import get_file_url_path, get_url_scheme, is_http_url, normalize_url_scheme
-from eventyay.helpers.image_optimize import optimize_uploaded_image
+from eventyay.helpers.image_optimize import optimize_question_image, optimize_uploaded_image
 
 
 def remove_duplicates_from_list(data):
@@ -79,6 +79,9 @@ class UploadedFileField(serializers.Field):
                 return opt.optimized
             except (ValueError, OSError):
                 self.fail('invalid_image')
+
+        if self.field_name == 'answer_file':
+            return optimize_question_image(cf.file)
 
         return cf.file
 
