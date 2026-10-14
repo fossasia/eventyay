@@ -21,21 +21,20 @@
             {% endif %}
         </fieldset>
 
-        <div class="form-group row submit-group">
-            <div class="col-md-9 offset-md-3 col-md-offset-3 d-flex align-items-center">
-                <button type="submit" class="btn btn-primary btn-save mr-2">
-                    {% translate "Save" %}
-                </button>
-                <a href="{% url 'orga:cfp.forms' organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-default btn-cancel mr-auto">
+        <div class="submit-group panel">
+            <span>
+                <a href="{% url 'orga:cfp.forms' organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-default btn-lg">
                     {% translate "Back to forms" %}
                 </a>
+            </span>
+            <span>
                 {% if locale_choices|length == 1 %}
-                    <button type="submit" name="action" value="reset:{{ locale_choices.0.0 }}" class="btn btn-outline-danger" formnovalidate>
+                    <button type="submit" name="action" value="reset:{{ locale_choices.0.0 }}" class="btn btn-outline-danger btn-lg mr-2" formnovalidate>
                         <i class="fa fa-undo"></i> {% translate "Reset to default" %} ({{ locale_choices.0.1 }})
                     </button>
                 {% else %}
-                    <div class="dropdown d-inline-block">
-                        <button type="button" class="btn btn-outline-danger dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <div class="dropdown d-inline-block mr-2">
+                        <button type="button" class="btn btn-outline-danger btn-lg dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             <i class="fa fa-undo"></i> {% translate "Reset to default" %} <span class="caret"></span>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-right">
@@ -49,7 +48,10 @@
                         </ul>
                     </div>
                 {% endif %}
-            </div>
+                <button type="submit" class="btn btn-success btn-lg">
+                    <i class="fa fa-check"></i> {% translate "Save" %}
+                </button>
+            </span>
         </div>
     </form>
 {% endblock content %}

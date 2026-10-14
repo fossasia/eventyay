@@ -808,3 +808,70 @@ def test_field_settings_reset_displays_human_readable_language_names(orga_client
         assert post_response_single.status_code == 200
         messages_single = [str(m) for m in get_messages(post_response_single.wsgi_request)]
         assert any('The field was reset to default for English.' in m for m in messages_single)
+
+
+@pytest.mark.django_db
+def test_content_locale_row_present_with_field_settings_action(orga_client, event):
+    """Verify Content Locale row is present on forms overview with
+    active/required controls and exactly one settings link."""
+    with scope(event=event):
+        url = reverse(
+            'orga:cfp.forms',
+            kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+        )
+        response = orga_client.get(url)
+        assert response.status_code == 200
+        content = response.rendered_content
+
+        # Row exists with dragsort-id
+        assert '<tr dragsort-id="content_locale">' in content
+        assert 'Content Locale' in content
+
+        # Active and required controls
+        assert 'Toggle active state for Content Locale' in content
+        assert 'Required status for Content Locale' in content
+        assert 'Public toggle for Content Locale' in content
+
+        # Exactly one settings action
+        settings_url = reverse(
+            'orga:cfp.forms.field_settings',
+            kwargs={
+                'organizer': event.organizer.slug,
+                'event': event.slug,
+                'target': 'session',
+                'field': 'content_locale',
+            },
+        )
+        assert content.count(f'href="{settings_url}"') == 1
+        assert 'aria-label="Settings for Content Locale"' in content
+
+
+@pytest.mark.django_db
+def test_field_settings_ui_layout_and_styling(orga_client, event):
+    """Verify Field settings page uses standard Eventyay submit-group panel layout and button classes."""
+    with scope(event=event):
+        url = reverse(
+            'orga:cfp.forms.field_settings',
+            kwargs={
+                'organizer': event.organizer.slug,
+                'event': event.slug,
+                'target': 'session',
+                'field': 'content_locale',
+            },
+        )
+        response = orga_client.get(url)
+        assert response.status_code == 200
+        content = response.rendered_content
+
+        # Submit group uses panel layout, not misaligned grid row
+        assert '<div class="submit-group panel">' in content
+        assert 'form-group row submit-group' not in content
+        assert 'offset-md-3' not in content
+
+        # Standard Eventyay buttons
+        assert 'btn btn-default btn-lg' in content
+        assert 'Back to forms' in content
+        assert 'btn btn-success btn-lg' in content
+        assert 'Save' in content
+        assert 'btn btn-outline-danger btn-lg' in content
+        assert 'Reset to default' in content
