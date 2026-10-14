@@ -3586,6 +3586,14 @@ a.btn-speaker-not-arrived {
   vertical-align: middle;
 }
 
+.speaker-list-table thead .sort-link {
+  color: var(--color-text-muted);
+}
+
+.speaker-list-table thead .sort-link.sort-active {
+  color: var(--color-primary);
+}
+
 .speaker-list-table .speaker-sessions-cell {
   max-width: 26rem;
   min-width: 10rem;
