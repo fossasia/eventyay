@@ -1,5 +1,5 @@
 version = 1
-revision = 5
+revision = 3
 requires-python = "==3.12.*"
 resolution-markers = [
     "platform_python_implementation == 'CPython' and sys_platform == 'linux'",
@@ -709,14 +709,14 @@ wheels = [
 
 [[package]]
 name = "django-bootstrap3"
-version = "26.2"
+version = "26.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a5/e3/0f0f40276e34e9b22cc95a284a26e732675dde272f44eb8b5b2bb49c4809/django_bootstrap3-26.2.tar.gz", hash = "sha256:e9be75b7bbf63c14a4c5955cf77546eb1d36eb80c135943ae094aa4d5b2f7d4e", size = 46887, upload-time = "2026-07-30T11:12:23.686Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/12/32/2389e1b0b7cba369e5736c0b576893dd7b820cf31badc8b04e22252c2ddb/django_bootstrap3-26.3.tar.gz", hash = "sha256:9fdd8b4fa027c6f4d6d296cd2d9e8b429ebb6bd5cef654bbe9d29ad3e3f7394b", size = 69513, upload-time = "2026-10-11T09:54:26.878Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/83/59/fdbd0fa0ba375b4831bab34d4e3a8063de9b0bfed44f38feee7bdcb2a671/django_bootstrap3-26.2-py3-none-any.whl", hash = "sha256:7b86df95f2c10d2d94f0e1d327b7b32c4f3a4022d20804180f396e165f9aab4e", size = 24172, upload-time = "2026-07-30T11:12:22.658Z" },
+    { url = "https://files.pythonhosted.org/packages/b6/98/9051754cfda101bc706c9dec98ae586fad063bd1ec049f0814aaec0183f2/django_bootstrap3-26.3-py3-none-any.whl", hash = "sha256:3420be4c2a13c0673b7153353684349d3229114f4379c2eb6c5358300d59405f", size = 25109, upload-time = "2026-10-11T09:54:25.719Z" },
 ]
 
 [[package]]
