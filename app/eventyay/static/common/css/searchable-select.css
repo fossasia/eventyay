@@ -39,6 +39,12 @@
   border-color: var(--color-primary, #2185d0);
 }
 
+.searchable-select__toggle:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  background: var(--color-grey-lightest, #eee);
+}
+
 .searchable-select__toggle:focus {
   outline: none;
   border-color: var(--color-primary, #2185d0);

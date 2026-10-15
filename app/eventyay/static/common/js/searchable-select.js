@@ -23,6 +23,11 @@ const isDisabledItem = function(item) {
   return item.getAttribute('aria-disabled') === 'true'
 }
 
+const optionIsDisabled = function(option) {
+  const group = option.parentElement
+  return option.disabled || Boolean(group && group.tagName === 'OPTGROUP' && group.disabled)
+}
+
 const initSearchableSelect = function(select) {
   if (select.dataset[READY_FLAG] === '1' || select.multiple) {
     return
@@ -145,14 +150,14 @@ const initSearchableSelect = function(select) {
       item.setAttribute('role', 'option')
       item.dataset.value = option.value
       item.textContent = allLabel && option.value === '' ? allLabel : option.text
-      if (option.disabled) {
+      if (optionIsDisabled(option)) {
         item.setAttribute('aria-disabled', 'true')
       }
       item.addEventListener('mousedown', function(event) {
         event.preventDefault()
       })
       item.addEventListener('click', function() {
-        if (option.disabled) {
+        if (optionIsDisabled(option)) {
           return
         }
         choose(option.value)
@@ -179,7 +184,7 @@ const initSearchableSelect = function(select) {
   }
 
   const open = function() {
-    if (!panel.hidden) {
+    if (!panel.hidden || select.disabled) {
       return
     }
     panel.hidden = false
@@ -265,6 +270,7 @@ const initSearchableSelect = function(select) {
 
   select.addEventListener('change', syncLabel)
   rebuild()
+  toggle.disabled = select.disabled
   select.classList.add('searchable-select__native')
   select.tabIndex = -1
   select.setAttribute('aria-hidden', 'true')
