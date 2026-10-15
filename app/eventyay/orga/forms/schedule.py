@@ -25,6 +25,7 @@ class ScheduleReleaseForm(I18nHelpText, I18nModelForm):
     notify_speakers = forms.BooleanField(label=_('Notify speakers of changes'), required=False, initial=True)
 
     def __init__(self, *args, event=None, **kwargs):
+        """Initialize release defaults and notification help for the event."""
         super().__init__(*args, **kwargs)
         self.event = event
         self.fields['version'].required = True

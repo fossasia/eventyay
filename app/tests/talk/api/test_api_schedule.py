@@ -272,6 +272,7 @@ def test_orga_can_release_breaks_only_schedule_via_api(client, orga_user_write_t
 def test_orga_cannot_release_schedule_with_existing_version(
     client, orga_user_write_token, event
 ):
+    """Return a version field error when a release name is already in use."""
     with scope(event=event):
         event.wip_schedule.freeze("v2.0")
     release_data = {"version": "v2.0"}
@@ -315,6 +316,7 @@ def test_orga_cannot_release_reserved_schedule_version(client, orga_user_write_t
 def test_orga_cannot_release_schedule_without_version_name(
     client, orga_user_write_token, event
 ):
+    """Require a version name even when the release includes a comment."""
     release_data = {"comment": "Just a comment"}
     response = client.post(
         event.api_urls.schedules + "release/",

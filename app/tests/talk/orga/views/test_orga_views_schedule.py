@@ -328,6 +328,7 @@ def test_orga_cannot_reset_to_wrong_version(orga_client, event):
 @pytest.mark.usefixtures("accepted_submission")
 @pytest.mark.usefixtures("room")
 def test_orga_can_release_and_reset_schedule(orga_client, event):
+    """Release a schedule and reset its draft without creating another release."""
     with scope(event=event):
         assert Schedule.objects.count() == 1
         event.talks_published = True
