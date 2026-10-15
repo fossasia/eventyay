@@ -69,14 +69,10 @@ export function getAssignedList (role) {
 	return []
 }
 
-export const ASSIGNEE_PREVIEW_LIMIT = 2
-
-export function previewAssignees (role) {
-	return getAssignedList(role).slice(0, ASSIGNEE_PREVIEW_LIMIT)
-}
-
-export function hiddenAssigneeCount (role) {
-	return Math.max(0, getAssignedList(role).length - ASSIGNEE_PREVIEW_LIMIT)
+export function sortedAssignees (role) {
+	return [...getAssignedList(role)].sort((a, b) =>
+		String(a?.name ?? '').localeCompare(String(b?.name ?? ''), undefined, { sensitivity: 'base', numeric: true })
+	)
 }
 
 export function getCapacityStatus (role) {
