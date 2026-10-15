@@ -6,9 +6,19 @@
 			.header-text
 				h4 {{ title }}
 				p.header-subtitle {{ $t('Add multi-language audio or video interpretation channels for attendees.') }}
-		bunt-button.btn-add-entry(@click="addEntry")
-			i.mdi.mdi-plus(aria-hidden="true")
-			span {{ $t('Add another language') }}
+				p.header-warning(v-if="!translationModelSetup")
+					i.mdi.mdi-alert-circle-outline(aria-hidden="true")
+					span {{ $t('No translation model configured. Please set up a model first.') }}
+		.header-actions
+			bunt-button.btn-add-entry(@click="addEntry", :disabled="!translationModelSetup")
+				i.mdi.mdi-plus(aria-hidden="true")
+				span {{ $t('Add another language') }}
+			router-link.btn-settings-link(
+				v-if="settingsRoute"
+				:to="settingsRoute"
+				:title="$t('Manage Interpretation')"
+			)
+				i.mdi.mdi-cog(aria-hidden="true")
 
 	.empty-state(v-if="entries.length === 0")
 		i.mdi.mdi-translate-off(aria-hidden="true")
@@ -56,7 +66,7 @@
 				bunt-switch(
 					name="use_video",
 					v-model="entry.use_video",
-					:label="$t('Use video from this interpretation channel')",
+					:label="$t('Use audio and captions from this interpretation channel')",
 					:hint="$t('If enabled, attendees see both video and audio from this channel. If disabled, attendees hear the audio while watching the main video.')"
 				)
 </template>
@@ -75,6 +85,18 @@ export default {
 		title: {
 			type: String,
 			default: '',
+		},
+		roomId: {
+			type: [String, Number],
+			default: null,
+		},
+		settingsRoute: {
+			type: Object,
+			default: null,
+		},
+		translationModelSetup: {
+			type: Boolean,
+			default: true,
 		},
 	},
 	data() {
@@ -145,6 +167,18 @@ export default {
 					margin: 2px 0 0 0
 					font-size: 13px
 					color: $clr-secondary-text-light
+				.header-warning
+					display: flex
+					align-items: center
+					gap: 4px
+					margin: 4px 0 0 0
+					font-size: 13px
+					color: $clr-danger
+		.header-actions
+			display: flex
+			align-items: center
+			gap: 12px
+
 		.btn-add-entry
 			themed-button-secondary()
 			font-size: 13px
@@ -154,6 +188,23 @@ export default {
 			display: inline-flex
 			align-items: center
 			gap: 6px
+
+		.btn-settings-link
+			display: inline-flex
+			align-items: center
+			justify-content: center
+			width: 38px
+			height: 38px
+			border-radius: 6px
+			background-color: $clr-grey-100
+			color: $clr-grey-700
+			text-decoration: none
+			transition: background-color 0.2s ease, color 0.2s ease
+			&:hover
+				background-color: $clr-grey-200
+				color: var(--clr-primary)
+			i
+				font-size: 20px
 
 	.empty-state
 		display: flex
