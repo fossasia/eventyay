@@ -9,13 +9,13 @@ from eventyay.common.text.phrases import phrases
 
 
 def _is_in_preparation(event):
-    """Keep unpublished Talks in preparation until the event starts."""
-    return not event.talks_published and now() < event.date_from
+    """Keep non-public Talks in preparation until the event starts."""
+    return not event.user_can_view_talks() and now() < event.date_from
 
 
 def _is_cfp_open(event):
     """Show an open CfP only while public Talks accept proposals before the event."""
-    return event.talks_published and now() < event.date_from and event.cfp.is_open
+    return event.user_can_view_talks() and now() < event.date_from and event.cfp.is_open
 
 
 def _is_in_review(event):

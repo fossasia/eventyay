@@ -82,3 +82,27 @@ def test_new_event_starts_in_preparation(event, is_public):
         assert stages['PREPARATION']['phase'] == 'current'
         assert all(stages[stage]['phase'] == 'todo' for stage in STAGE_ORDER[1:])
         assert str(stages['CFP_OPEN']['name']) == 'CfP'
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('talks_published', (True, False))
+@pytest.mark.parametrize('private_testmode,private_talks', ((True, True), (True, False), (False, True), (False, False)))
+def test_cfp_stage_matches_public_talks_access(event, talks_published, private_testmode, private_talks):
+    """Keep private Talks in preparation without hiding public or ticket-only test modes."""
+    with scope(event=event):
+        event.date_from = now() + dt.timedelta(days=2)
+        event.date_to = event.date_from + dt.timedelta(days=1)
+        event.talks_published = talks_published
+        event.private_testmode = private_testmode
+        event.save()
+        event.settings.set('private_testmode_talks', private_talks)
+        event.settings.set('private_testmode_tickets', True)
+        event.settings.set('talks_testmode', True)
+        is_public = talks_published and not (private_testmode and private_talks)
+        assert event.user_can_view_talks() is is_public
+        assert event.cfp.is_open is True
+        stages = get_stages(event)
+        assert stages['PREPARATION']['phase'] == ('done' if is_public else 'current')
+        assert stages['CFP_OPEN']['phase'] == ('current' if is_public else 'todo')
+        assert str(stages['CFP_OPEN']['name']) == ('CfP is open' if is_public else 'CfP')
+        assert all(stages[stage]['phase'] == 'todo' for stage in STAGE_ORDER[2:])
