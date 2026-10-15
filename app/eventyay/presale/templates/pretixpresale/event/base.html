@@ -42,15 +42,46 @@
     {% endif %}
 {% endblock %}
 
-{% block header_tabs %}
-    {% if request.event.settings.organizer_link_back %}
-        <a class="header-tab" href="{% eventurl request.organizer "presale:organizer.index" %}">
-            &laquo; {% blocktrans trimmed with name=request.organizer.name %}
-            Show all events of {{ name }}
-        {% endblocktrans %}
-        </a>
+{% load nav_tags %}
+
+{% block presale_back_navigation %}
+    {% if not is_widget_iframe and not request.session.iframe_session and not cart_namespace and 'iframe' not in request.GET %}
+        {{ block.super }}
     {% endif %}
-    {% include "common/fragment_nav.html" with nav_context="presale" %}
+{% endblock presale_back_navigation %}
+
+{% block header_right %}
+    {{ block.super }}
+{% endblock header_right %}
+
+
+{% block header_tabs %}
+    {% if is_widget_iframe or request.session.iframe_session or cart_namespace or 'iframe' in request.GET %}
+        {% if cart_namespace %}
+            {% eventurl request.event 'presale:event.index' cart_namespace=cart_namespace as iframe_event_index_url %}
+        {% else %}
+            {% eventurl request.event 'presale:event.index' as iframe_event_index_url %}
+        {% endif %}
+        <a href="{{ iframe_event_index_url }}{% if is_widget_iframe or 'iframe' in request.GET %}?iframe=1{% endif %}" id="nav-tab-info" class="header-tab {% if request.resolver_match.url_name == 'event.index' and '#tickets' not in request.get_full_path %}active{% endif %}">
+            <i class="fa fa-info-circle"></i> {% translate "Info" %}
+        </a>
+        {% tickets_tab_visible as show_tickets_tab %}
+        {% if show_tickets_tab and not is_meetup_event %}
+            {% get_localized_menu_label request.event 'menu_label_tickets' as label %}
+            <a href="{{ iframe_event_index_url }}{% if is_widget_iframe or 'iframe' in request.GET %}?iframe=1{% endif %}#tickets" id="nav-tab-tickets" class="header-tab">
+                <i class="fa fa-ticket"></i> {{ label }}
+            </a>
+        {% endif %}
+    {% else %}
+        {% if request.event.settings.organizer_link_back %}
+            <a class="header-tab" href="{% eventurl request.organizer "presale:organizer.index" %}">
+                &laquo; {% blocktrans trimmed with name=request.organizer.name %}
+                Show all events of {{ name }}
+            {% endblocktrans %}
+            </a>
+        {% endif %}
+        {% include "common/fragment_nav.html" with nav_context="presale" %}
+    {% endif %}
 {% endblock header_tabs %}
 
 

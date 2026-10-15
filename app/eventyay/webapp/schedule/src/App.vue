@@ -1769,12 +1769,15 @@ export default {
 
 .pretalx-schedule, dialog.pretalx-modal
 	color: rgb(13 15 16)
+	color-scheme: light
 
 .pretalx-schedule
 	display: flex
 	flex-direction: column
 	min-height: 0
 	font-size: 14px
+	background: #fff
+	color-scheme: light
 	--pretalx-clr-text: rgb(13,15,16)
 	&:fullscreen
 		background: #fff

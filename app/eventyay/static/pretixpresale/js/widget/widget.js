@@ -209,6 +209,11 @@ var shop_is_secure = function (targetUrl) {
     if (targetUrl && /^https:/i.test(targetUrl)) {
         return true;
     }
+    // Loopback is a secure context. Keep checkout in the popup on local HTTP
+    // instead of submitting the cart form into a new tab.
+    if (targetUrl && /^https?:\/\/(?:localhost|127\.0\.0\.1|\[::1\])(?::\d+)?(?:\/|$)/i.test(targetUrl)) {
+        return true;
+    }
     return /^https:/i.test(document.location.protocol);
 };
 
@@ -552,6 +557,26 @@ Vue.component('category', {
     }
 });
 
+function getOverlayIframe(overlay) {
+    if (!overlay) return null;
+    if (overlay.$children && overlay.$children[0] && overlay.$children[0].$refs && overlay.$children[0].$refs['frame-container']) {
+        var container = overlay.$children[0].$refs['frame-container'];
+        if (container.children && container.children[0]) {
+            return container.children[0];
+        }
+    }
+    if (overlay.$refs && overlay.$refs['frame-container']) {
+        var container = overlay.$refs['frame-container'];
+        if (container.children && container.children[0]) {
+            return container.children[0];
+        }
+    }
+    if (overlay.$el && overlay.$el.querySelector) {
+        return overlay.$el.querySelector('.pretix-widget-frame-inner iframe') || overlay.$el.querySelector('iframe');
+    }
+    return null;
+}
+
 var shared_methods = {
     buy: function (event) {
         if (this.$root.useIframe) {
@@ -603,7 +628,7 @@ var shared_methods = {
     },
     buy_callback: function (data) {
         if (data.redirect) {
-            var iframe = this.$root.overlay.$children[0].$refs['frame-container'].children[0];
+            var iframe = getOverlayIframe(this.$root.overlay);
             if (data.cart_id) {
                 this.$root.cart_id = data.cart_id;
                 setCookie(this.$root.cookieName, data.cart_id, 30);
@@ -625,7 +650,9 @@ var shared_methods = {
                 }
                 this.$root.overlay.frame_loading = false;
             } else {
-                iframe.src = url;
+                if (iframe) {
+                    iframe.src = url;
+                }
             }
         } else {
             this.async_task_id = data.async_id;
@@ -649,9 +676,11 @@ var shared_methods = {
         if (this.$root.widget_data) {
             redirect_url += '&widget_data=' + encodeURIComponent(this.$root.widget_data_json);
         }
-        var iframe = this.$root.overlay.$children[0].$refs['frame-container'].children[0];
+        var iframe = getOverlayIframe(this.$root.overlay);
         this.$root.overlay.frame_loading = true;
-        iframe.src = redirect_url;
+        if (iframe) {
+            iframe.src = redirect_url;
+        }
     },
     voucher_open: function (voucher) {
         var redirect_url;
@@ -660,9 +689,11 @@ var shared_methods = {
             redirect_url += '&widget_data=' + encodeURIComponent(this.$root.widget_data_json);
         }
         if (this.$root.useIframe) {
-            var iframe = this.$root.overlay.$children[0].$refs['frame-container'].children[0];
+            var iframe = getOverlayIframe(this.$root.overlay);
             this.$root.overlay.frame_loading = true;
-            iframe.src = redirect_url;
+            if (iframe) {
+                iframe.src = redirect_url;
+            }
         } else {
             window.open(redirect_url);
         }
@@ -682,9 +713,11 @@ var shared_methods = {
             redirect_url += '&widget_data=' + encodeURIComponent(this.$root.widget_data_json);
         }
         if (this.$root.useIframe) {
-            var iframe = this.$root.overlay.$children[0].$refs['frame-container'].children[0];
+            var iframe = getOverlayIframe(this.$root.overlay);
             this.$root.overlay.frame_loading = true;
-            iframe.src = redirect_url;
+            if (iframe) {
+                iframe.src = redirect_url;
+            }
         } else {
             window.open(redirect_url);
         }
@@ -721,6 +754,9 @@ var shared_iframe_fragment = (
     + '        :name="$root.parent.widget_id" src="about:blank" v-once>'
     + 'Please enable frames in your browser!'
     + '</iframe>'
+    + '<div class="pretix-widget-frame-back"><a href="#" @click.prevent="back" aria-label="Back">'
+    + '<svg height="16px" viewBox="0 0 512 512" width="16px" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M327.3 98.7c-9.4-9.4-24.6-9.4-33.9 0l-144 144c-9.4 9.4-9.4 24.6 0 33.9l144 144c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9L197.9 256l129.4-123.4c9.4-9.4 9.4-24.6 0-33.9z"/></svg>'
+    + '</a></div>'
     + '<div class="pretix-widget-frame-close"><a href="#" @click.prevent="close">'
     + '<svg height="16px" viewBox="0 0 512 512" width="16px" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M437.5,386.6L306.9,256l130.6-130.6c14.1-14.1,14.1-36.8,0-50.9c-14.1-14.1-36.8-14.1-50.9,0L256,205.1L125.4,74.5  c-14.1-14.1-36.8-14.1-50.9,0c-14.1,14.1-14.1,36.8,0,50.9L205.1,256L74.5,386.6c-14.1,14.1-14.1,36.8,0,50.9  c14.1,14.1,36.8,14.1,50.9,0L256,306.9l130.6,130.6c14.1,14.1,36.8,14.1,50.9,0C451.5,423.4,451.5,400.6,437.5,386.6z"/></svg>'
     + '</a></div>'
@@ -772,6 +808,21 @@ Vue.component('pretix-overlay', {
             this.$root.frame_loading = true;
             this.$root.error_message = null;
             this.$root.error_url_after = null;
+        },
+        back: function () {
+            var container = this.$refs['frame-container'];
+            var iframe = container && container.children[0];
+            if (iframe && iframe.contentWindow) {
+                try {
+                    iframe.contentWindow.postMessage('pretix:back', '*');
+                } catch (e) {
+                    try {
+                        iframe.contentWindow.history.back();
+                    } catch (fallbackError) {
+                        console.warn('Failed to navigate back in iframe', fallbackError);
+                    }
+                }
+            }
         },
         close: function () {
             this.$root.frame_shown = false;
@@ -1388,7 +1439,10 @@ var shared_root_methods = {
             } else {
                 url += '?iframe=1';
             }
-            this.$root.overlay.$children[0].$refs['frame-container'].children[0].src = url;
+            var iframe = getOverlayIframe(this.$root.overlay);
+            if (iframe) {
+                iframe.src = url;
+            }
             this.$root.overlay.frame_loading = true;
         } else {
             return;
@@ -1523,9 +1577,11 @@ var shared_root_methods = {
             redirect_url += '&widget_data=' + encodeURIComponent(this.$root.widget_data_json);
         }
         if (this.$root.useIframe) {
-            var iframe = this.$root.overlay.$children[0].$refs['frame-container'].children[0];
+            var iframe = getOverlayIframe(this.$root.overlay);
             this.$root.overlay.frame_loading = true;
-            iframe.src = redirect_url;
+            if (iframe) {
+                iframe.src = redirect_url;
+            }
         } else {
             window.open(redirect_url);
         }
@@ -1585,9 +1641,7 @@ var shared_root_computed = {
             return target;
         }
         var checkout_url = "/" + this.target_url.replace(/^[^\/]+:\/\/([^\/]+)\//, "") + cart_namespace_path + "/";
-        if (!this.$root.cart_exists) {
-            checkout_url += "checkout/start";
-        }
+        checkout_url += "checkout/start";
         var form_target = this.target_url + cart_namespace_path + '/cart/add?iframe=1&next=' + encodeURIComponent(checkout_url);
         var cookie = getCookie(this.cookieName);
         if (cookie) {

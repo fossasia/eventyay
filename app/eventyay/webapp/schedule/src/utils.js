@@ -23,10 +23,17 @@ export function getSessionTypeLabel (sessionType) {
 	return ''
 }
 
-const checkPropScrolling = (node, prop) => ['auto', 'scroll'].includes(getComputedStyle(node, null).getPropertyValue(prop))
+const checkPropScrolling = (node, prop) => {
+	if (!node || node.nodeType !== 1) return false
+	return ['auto', 'scroll'].includes(getComputedStyle(node, null).getPropertyValue(prop))
+}
 const isScrolling = node => checkPropScrolling(node, 'overflow') || checkPropScrolling(node, 'overflow-x') || checkPropScrolling(node, 'overflow-y')
 export function findScrollParent (node) {
-	if (!node || node === document.body) return
+	if (!node || node === document.body || node === document.documentElement) return
+	if (node.nodeType === 11 && node.host) {
+		return findScrollParent(node.host)
+	}
+	if (node.nodeType !== 1) return
 	if (isScrolling(node)) return node
 	return findScrollParent(node.parentNode)
 }
@@ -356,7 +363,7 @@ export function getCsrfToken () {
 }
 
 export function buildStarredSharingUrl (eventUrl) {
-	const base = (eventUrl || '').replace(/\/$/, '')
+	const base = (eventUrl || '').replace(/\/schedule\/?$/, '').replace(/\/$/, '')
 	return `${base}/schedule/starred-sharing.json`
 }
 
@@ -396,7 +403,14 @@ export async function loadStarredSharingPreference (eventUrl) {
 	}
 	if (!eventUrl) return false
 	try {
-		const response = await fetch(buildStarredSharingUrl(eventUrl), { credentials: 'same-origin' })
+		const sharingUrl = buildStarredSharingUrl(eventUrl)
+		if (typeof window !== 'undefined' && window.location) {
+			const urlObj = new URL(sharingUrl, window.location.href)
+			if (urlObj.origin !== window.location.origin) {
+				return false
+			}
+		}
+		const response = await fetch(sharingUrl, { credentials: 'same-origin' })
 		if (!response.ok) return false
 		const data = await response.json()
 		return !!data?.show_publicly
@@ -446,9 +460,10 @@ export async function fetchWidgetScheduleData (eventUrl, {
 	if (indexOnly) params.set('index', '1')
 	const query = params.toString()
 	const suffix = query ? `?${query}` : ''
+	const base = (eventUrl || '').replace(/\/schedule\/?$/, '').replace(/\/?$/, '/')
 	const urls = [
-		`${eventUrl}schedule/${versionPath}widgets/schedule.json${suffix}`,
-		`${eventUrl}schedule/${versionPath}widget/v2.json${suffix}`,
+		`${base}schedule/${versionPath}widgets/schedule.json${suffix}`,
+		`${base}schedule/${versionPath}widget/v2.json${suffix}`,
 	]
 	for (const url of urls) {
 		let response
@@ -482,7 +497,7 @@ export async function fetchWidgetScheduleData (eventUrl, {
  */
 export async function fetchTalkScheduleDetail (eventUrl, code, { version = '' } = {}) {
 	const versionPath = version ? `v/${version}/` : ''
-	const base = (eventUrl || '').replace(/\/?$/, '/')
+	const base = (eventUrl || '').replace(/\/schedule\/?$/, '').replace(/\/?$/, '/')
 	const url = `${base}schedule/${versionPath}widgets/schedule.json?talk=${encodeURIComponent(code)}`
 	const response = await fetch(url)
 	if (response.status === 404) return null

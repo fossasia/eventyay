@@ -23,43 +23,45 @@
             <i class="fa fa-ticket"></i> {{ label }}
         </a>
     {% endif %}
-    {% can_view_featured_sessions_public current_event as show_featured_sessions_tab %}
-    {% if show_featured_sessions_tab %}
-        <a href="{{ current_event.urls.featured }}" id="nav-tab-featured" class="header-tab {% if '/featured/' in path %}active{% endif %}" title="{% translate 'Featured Sessions' %}">
-            <i class="fa fa-certificate" aria-hidden="true"></i> {% translate "Featured" %}
-        </a>
-    {% endif %}
-    {% if show_talks_tab %}
-        {% show_schedule_nav_tab current_event as show_schedule_nav %}
-            {% if show_schedule_nav %}
-            {% agenda_schedule_nav_url request current_event as schedule_url %}
-                <a href="{{ schedule_url }}" class="header-tab {% if '/schedule/' in path and '/speakers/' not in path and '/talk/' not in path %}active{% endif %}">
-                    <i class="fa fa-calendar"></i> {{ schedule_label }}
-                </a>
-            {% endif %}
-    {% endif %}
-    {% show_public_speakers_list current_event as show_speakers_list %}
-    {% if show_speakers_list %}
-        {% agenda_speakers_nav_url request current_event as speakers_url %}
-        <a href="{{ speakers_url }}" class="header-tab {% if '/speakers/' in path %}active{% endif %}">
-            <i class="fa fa-group"></i> {{ speakers_label }}
-        </a>
-    {% endif %}
+    {% if not is_widget_iframe and not request.session.iframe_session and not cart_namespace and 'iframe' not in request.GET %}
+        {% can_view_featured_sessions_public current_event as show_featured_sessions_tab %}
+        {% if show_featured_sessions_tab %}
+            <a href="{{ current_event.urls.featured }}" id="nav-tab-featured" class="header-tab {% if '/featured/' in path %}active{% endif %}" title="{% translate 'Featured Sessions' %}">
+                <i class="fa fa-certificate" aria-hidden="true"></i> {% translate "Featured" %}
+            </a>
+        {% endif %}
+        {% if show_talks_tab %}
+            {% show_schedule_nav_tab current_event as show_schedule_nav %}
+                {% if show_schedule_nav %}
+                {% agenda_schedule_nav_url request current_event as schedule_url %}
+                    <a href="{{ schedule_url }}" class="header-tab {% if '/schedule/' in path and '/speakers/' not in path and '/talk/' not in path %}active{% endif %}">
+                        <i class="fa fa-calendar"></i> {{ schedule_label }}
+                    </a>
+                {% endif %}
+        {% endif %}
+        {% show_public_speakers_list current_event as show_speakers_list %}
+        {% if show_speakers_list %}
+            {% agenda_speakers_nav_url request current_event as speakers_url %}
+            <a href="{{ speakers_url }}" class="header-tab {% if '/speakers/' in path %}active{% endif %}">
+                <i class="fa fa-group"></i> {{ speakers_label }}
+            </a>
+        {% endif %}
 
-    {% if show_talks_tab %}
-        {% with cfp=current_event.cfp %}
-            {% if cfp.is_open or access_code.is_valid %}
-                <a class="header-tab {% if '/cfp' in path %}active{% endif %}"
-                    href="{% url 'cfp:event.start' event=current_event.slug organizer=current_event.organizer.slug %}">
-                    <i class="fa fa-bullhorn"></i> <span class="cfs-full">{% translate "Call for Speakers" %}</span><span class="cfs-short">{% translate "CfS" %}</span>
-                </a>
-            {% elif not cfp.settings.hide_after_deadline %}
-                <a class="header-tab {% if '/cfp' in path %}active{% endif %}"
-                    href="{% url 'cfp:event.start' event=current_event.slug organizer=current_event.organizer.slug %}">
-                    <i class="fa fa-bullhorn"></i> <span class="cfs-full">{% translate "Call for Speakers (Closed)" %}</span><span class="cfs-short">{% translate "CfS" %}</span>
-                </a>
-            {% endif %}
-        {% endwith %}
+        {% if show_talks_tab %}
+            {% with cfp=current_event.cfp %}
+                {% if cfp.is_open or access_code.is_valid %}
+                    <a class="header-tab {% if '/cfp' in path %}active{% endif %}"
+                        href="{% url 'cfp:event.start' event=current_event.slug organizer=current_event.organizer.slug %}">
+                        <i class="fa fa-bullhorn"></i> <span class="cfs-full">{% translate "Call for Speakers" %}</span><span class="cfs-short">{% translate "CfS" %}</span>
+                    </a>
+                {% elif not cfp.settings.hide_after_deadline %}
+                    <a class="header-tab {% if '/cfp' in path %}active{% endif %}"
+                        href="{% url 'cfp:event.start' event=current_event.slug organizer=current_event.organizer.slug %}">
+                        <i class="fa fa-bullhorn"></i> <span class="cfs-full">{% translate "Call for Speakers (Closed)" %}</span><span class="cfs-short">{% translate "CfS" %}</span>
+                    </a>
+                {% endif %}
+            {% endwith %}
+        {% endif %}
     {% endif %}
 
     {% eventsignal current_event "eventyay.presale.signals.header_nav_tabs" request=request %}

@@ -13,7 +13,7 @@
     </p>
 
     <p class='additional-links'>
-      <a href='{{ url_for('auth.login') }}'>{{ _('Back to Login') }}</a>
+      <a href="{{ url_for('auth.login') }}{% if request and request.GET.get('next') %}?next={{ request.GET.get('next')|urlencode }}{% if 'iframe' in request.GET %}&iframe=1{% endif %}{% elif request and 'iframe' in request.GET %}?iframe=1{% endif %}">{{ _('Back to Login') }}</a>
     </p>
   </div>
 {% endblock content %}

@@ -7,13 +7,13 @@
 
     {% if request.user.is_authenticated %}
         <div class="navigation-button">
-            <a target="_blank" class="header-nav btn btn-outline-success" data-toggle="popover-profile">
+            <a class="header-nav btn btn-outline-success" data-toggle="popover-profile">
                 <i class="fa fa-user"></i> {{ request.user|short_user_label }}
                 <i class="fa fa-solid fa-caret-down"></i>
             </a>
         </div>
     {% else %}
-        <a href="{% url 'auth.login' %}?next={{ request.get_full_path|urlencode }}">
+        <a href="{% url 'auth.login' %}?next={{ request.get_full_path|urlencode }}{% if is_widget_iframe or 'iframe' in request.GET or cart_namespace %}&iframe=1{% endif %}">
             {% translate "Log in" %}
         </a>
 

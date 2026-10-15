@@ -9,7 +9,7 @@
   <div class='signup-container'>
     <h1>{{ _('Create Account') }}</h1>
 
-    <form method='post' action="{{ url_for('account_signup') }}">
+    <form method='post' action="">
       <input type='hidden' name='csrfmiddlewaretoken' value='{{ csrf_token }}'>
       {{ redirect_field }}
 
@@ -103,7 +103,7 @@
     <div class='additional-links'>
       <p>
         {{ _('Already have an account?') }}
-        <a href="{{ url_for('auth.login') }}">{{ _('Log in') }}</a>
+        <a href="{{ url_for('auth.login') }}{% if request and 'iframe' in request.GET %}?iframe=1{% if 'next' in request.GET %}&next={{ request.GET['next']|urlencode }}{% endif %}{% elif request and 'next' in request.GET %}?next={{ request.GET['next']|urlencode }}{% endif %}">{{ _('Log in') }}</a>
       </p>
     </div>
   </div>

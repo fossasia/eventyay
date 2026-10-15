@@ -16,6 +16,7 @@
         <script type="text/javascript" src="{% static "jquery/js/jquery-3.7.1.min.js" %}"></script>
         <script type="text/javascript" src="{% static "bootstrap/js/bootstrap.js" %}"></script>
         <script type="text/javascript" src="{% static "pretixcontrol/js/ui/collapse_state.js" %}"></script>
+        <script type="text/javascript" src="{% static "pretixpresale/js/ui/iframe.js" %}"></script>
     {% endcompress %}
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -40,9 +41,14 @@
             "hide": "{{ _('Hide password')|escapejs }}"
         }
     </script>
-    <script type="module" src="{% static 'common/js/password_toggle.js' %}"></script>
+    <style>
+        body.widget-iframe-view .navbar,
+        body.widget-iframe-view footer {
+            display: none;
+        }
+    </style>
 </head>
-<body class="auth-page">
+<body class="auth-page{% if is_widget_iframe or 'iframe' in request.GET %} widget-iframe-view{% endif %}">
     <div id="wrapper">
         <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
             <div class="navbar-header">
