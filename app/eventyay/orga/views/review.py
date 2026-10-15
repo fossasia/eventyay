@@ -82,6 +82,7 @@ class ReviewDashboard(EventPermissionRequired, BaseSubmissionList):
 
     def get_queryset(self):
         aggregate_method = self.request.event.review_settings['aggregate_method']
+        aggregate_scores = statistics.median if aggregate_method == 'median' else statistics.fmean
         queryset = (
             self._get_base_queryset(for_review=True)
             .filter(state__in=self.usable_states)
@@ -143,7 +144,7 @@ class ReviewDashboard(EventPermissionRequired, BaseSubmissionList):
                         for score in review.scores.all():
                             if score.category_id in independent_ids:
                                 mapping[score.category_id].append(score.value)
-                    mapping = {key: round(statistics.fmean(value), 1) for key, value in mapping.items()}
+                    mapping = {key: round(aggregate_scores(value), 1) for key, value in mapping.items()}
                     result = []
                     for category in self.independent_categories:
                         result.append(mapping.get(category.pk))

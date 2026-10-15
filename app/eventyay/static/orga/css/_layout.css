@@ -2525,6 +2525,151 @@ h2 .user-name-display img {
   }
 }
 
+@media (min-width: 768px) {
+  html:has(.pretalx-schedule),
+  body:has(.pretalx-schedule) {
+    overflow: hidden;
+    height: 100vh;
+    max-height: 100vh;
+  }
+
+  #page-wrapper:has(.pretalx-schedule) {
+    height: calc(100vh - var(--navbar-height, 50px));
+    max-height: calc(100vh - var(--navbar-height, 50px));
+    overflow: hidden;
+  }
+
+  #page-content:has(.pretalx-schedule) {
+    box-sizing: border-box;
+    padding: 6px 10px 0 10px;
+    height: calc(100vh - var(--navbar-height, 50px));
+    min-height: calc(100vh - var(--navbar-height, 50px));
+    max-height: calc(100vh - var(--navbar-height, 50px));
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+
+  #page-content:has(.pretalx-schedule) > main {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  #page-content:has(.pretalx-schedule) .schedule-header {
+    position: absolute;
+    top: 0;
+    right: 10px;
+    z-index: 60;
+    margin: 0;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  #page-content:has(.pretalx-schedule) .schedule-header > * {
+    pointer-events: auto;
+  }
+
+  html[dir="rtl"] #page-content:has(.pretalx-schedule) .schedule-header,
+  html.rtl #page-content:has(.pretalx-schedule) .schedule-header {
+    left: 10px;
+    right: auto;
+  }
+
+  #page-content:has(.pretalx-schedule) #app {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+}
+
+@media (max-width: 767px) {
+  #page-content:has(.pretalx-schedule) {
+    box-sizing: border-box;
+    padding: 6px 10px 16px 10px;
+    width: 100%;
+    min-height: calc(100vh - var(--navbar-height, 50px));
+    height: auto;
+    overflow-y: auto;
+  }
+
+  #page-content:has(.pretalx-schedule) > main {
+    position: static;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  #page-content:has(.pretalx-schedule) .schedule-header {
+    position: static;
+    margin: 4px 0 8px 0;
+    height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    width: 100%;
+    pointer-events: auto;
+  }
+
+  html[dir="rtl"] #page-content:has(.pretalx-schedule) .schedule-header,
+  html.rtl #page-content:has(.pretalx-schedule) .schedule-header {
+    justify-content: flex-start;
+  }
+
+  #page-content:has(.pretalx-schedule) #app {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+}
+
+#schedule-action-wrapper {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+#schedule-action-wrapper .btn,
+#schedule-action-wrapper details.dropdown summary.btn {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  line-height: 1;
+  border-radius: 5px;
+}
+
+#schedule-action-wrapper .btn i.fa,
+#schedule-action-wrapper details.dropdown summary.btn i.fa {
+  font-size: 11px;
+  line-height: 1;
+}
+
+html[dir="rtl"] #page-content:has(.pretalx-schedule) #schedule-action-wrapper,
+html.rtl #page-content:has(.pretalx-schedule) #schedule-action-wrapper {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+html[dir="rtl"] #page-content:has(.pretalx-schedule) #schedule-action-wrapper .btn,
+html.rtl #page-content:has(.pretalx-schedule) #schedule-action-wrapper .btn,
+html[dir="rtl"] #page-content:has(.pretalx-schedule) #schedule-action-wrapper details.dropdown,
+html.rtl #page-content:has(.pretalx-schedule) #schedule-action-wrapper details.dropdown {
+  margin-left: 0;
+  margin-right: 8px;
+}
+
 #page-content .orga-widget-preview pretalx-schedule {
   --pretalx-sticky-top-offset: -18px;
 }

@@ -6,7 +6,7 @@
 			.ampm(v-if="startTime.ampm") {{ startTime.ampm }}
 		.duration {{ durationPretty }}
 	.info
-		.title-row(style="display: flex; justify-content: space-between; align-items: flex-start;")
+		.title-row
 			.title(:class="{'title-clamped': isShortSession}") {{ getLocalizedString(session.title) }}
 			.card-actions(v-if="caps.canEdit && !isBreak && session.room")
 				button.btn.btn-link.p-0.mr-2(type="button", @pointerdown.stop, @click.stop="$emit('editSession', session)", :aria-label="$t('Edit')", :title="$t('Edit')")
@@ -22,17 +22,9 @@
 						span.role-restricted-tag(v-if="role.is_restricted", :title="$t('Volunteers cannot self-claim this role; requires manual assignment.')") {{ $t('Restricted') }}
 					span.role-badge(:class="getCapacityClass(role)") {{ role.assigned.length }}/{{ role.capacity }} {{ $t('assigned') }}
 				.role-assignees
-					template(v-if="role.assigned.length")
-						span.role-assignee(v-for="(user, i) in previewAssignees(role)", :key="user.id || i")
-							svg.role-user-icon(viewBox="0 0 24 24", aria-hidden="true")
-								path(fill="currentColor", d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z")
+					ul.role-assignee-list(v-if="role.assigned.length")
+						li.role-assignee(v-for="(user, i) in sortedAssignees(role)", :key="user.id || i")
 							span.role-assignee-name {{ user.name }}
-						.role-assignees-more-wrap(v-if="hiddenAssigneeCount(role)")
-							button.role-assignees-more(
-								type="button",
-								:aria-expanded="openAssigneesRoleId != null ? 'true' : 'false'",
-								@click.stop="toggleAssigneesPopover(role, $event)",
-								@pointerdown.stop="") +{{ hiddenAssigneeCount(role) }} more
 					span.text-muted(v-else) {{ $t('None') }}
 
 		template(v-if="caps.showClaimUI")
@@ -47,49 +39,24 @@
 						input(type="hidden", name="csrfmiddlewaretoken", :value="csrfToken")
 						button.btn.btn-sm.btn-primary(type="submit", @click.stop, @pointerdown.stop) {{ $t('Sign Up') }}
 				template(v-else)
-					span.text-muted(style="font-size:11px") {{ $t('Full / Restricted') }}
+					span.text-muted.shift-status-hint {{ $t('Full / Restricted') }}
 
 		.shift-manage.mt-2.text-right(v-else-if="caps.canAssignMembers && !isBreak && session.room")
-			button.btn.btn-sm.btn-assign-members(type="button", @pointerdown.stop, @click.stop="$emit('assignMembers', session)") {{ session.roles?.some(r => r.assigned.length < r.capacity) ? $t('Assign Members') : $t('Manage') }}
+			button.btn.btn-sm.btn-assign-members(type="button", @pointerdown.stop, @click.stop="$emit('assignMembers', session)") {{ session.roles?.some(r => r.assigned.length < r.capacity) ? $t('Sign Up') : $t('Manage') }}
 
 	.warning.no-print(v-if="warnings?.length")
 		.warning-icon.text-danger
 			span(v-if="warnings.length > 1") {{ warnings.length }}
 			i.fa.fa-exclamation-triangle
-	assignees-popover(
-		:open="openAssigneesRoleId != null",
-		:title="assigneesPopoverTitle",
-		:assignees="assigneesPopoverList",
-		:top="assigneesPopoverPos.top",
-		:left="assigneesPopoverPos.left",
-		:width="assigneesPopoverPos.width",
-		:max-height="assigneesPopoverPos.maxHeight")
 </template>
 
 <script lang="ts" setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed } from 'vue'
 import moment, { Moment } from 'moment-timezone'
 import { getLocalizedString } from '~/utils'
 import { getCapabilities, resolveMode, resolveSessionKind, getClaimedShiftIds, getCsrfToken, getClaimBaseUrl } from '~/teamshifts-adapter'
 import type { Capabilities } from '~/teamshifts-adapter/types'
 import type { RoleAssignment } from '~/schemas'
-import AssigneesPopover from '~/teamshifts-adapter/AssigneesPopover.vue'
-
-const ASSIGNEE_PREVIEW_LIMIT = 2
-
-function placeAssigneesPopover(anchorEl: HTMLElement) {
-  const rect = anchorEl.getBoundingClientRect()
-  const width = Math.min(280, Math.max(200, window.innerWidth - 16))
-  const maxHeight = Math.min(280, window.innerHeight - 16)
-  let left = rect.left
-  let top = rect.bottom + 6
-  if (left + width > window.innerWidth - 8) left = window.innerWidth - width - 8
-  if (left < 8) left = 8
-  if (top + 140 > window.innerHeight) {
-    top = Math.max(8, rect.top - 6 - Math.min(maxHeight, 200))
-  }
-  return { top, left, width, maxHeight }
-}
 
 interface Speaker {
   name: string
@@ -174,55 +141,8 @@ const getCapacityClass = (role: RoleAssignment) => {
   return 'badge-partial'
 }
 
-const openAssigneesRoleId = ref<number | string | null>(null)
-const assigneesPopoverList = ref<Array<{ id?: number | string; name: string }>>([])
-const assigneesPopoverTitle = ref('Assigned')
-const assigneesPopoverPos = ref({ top: 0, left: 0, width: 260, maxHeight: 280 })
-
-const previewAssignees = (role: RoleAssignment) => role.assigned.slice(0, ASSIGNEE_PREVIEW_LIMIT)
-const hiddenAssigneeCount = (role: RoleAssignment) => Math.max(0, role.assigned.length - ASSIGNEE_PREVIEW_LIMIT)
-
-const closeAssigneesPopover = () => {
-  openAssigneesRoleId.value = null
-  assigneesPopoverList.value = []
-}
-
-const toggleAssigneesPopover = (role: RoleAssignment, event: MouseEvent) => {
-  const roleId = role.id
-  if (openAssigneesRoleId.value === roleId) {
-    closeAssigneesPopover()
-    return
-  }
-  assigneesPopoverList.value = role.assigned
-  assigneesPopoverTitle.value = `Assigned (${role.assigned.length})`
-  assigneesPopoverPos.value = placeAssigneesPopover(event.currentTarget as HTMLElement)
-  openAssigneesRoleId.value = roleId
-}
-
-const onAssigneesDocPointerDown = (event: PointerEvent) => {
-  if (openAssigneesRoleId.value == null) return
-  const path = event.composedPath?.() || []
-  const inside = path.some((node) => {
-    const el = node as HTMLElement
-    return el?.classList?.contains?.('role-assignees-popover') || el?.classList?.contains?.('role-assignees-more')
-  })
-  if (inside) return
-  closeAssigneesPopover()
-}
-
-const onScroll = () => {
-  if (openAssigneesRoleId.value != null) closeAssigneesPopover()
-}
-
-onMounted(() => {
-  document.addEventListener('pointerdown', onAssigneesDocPointerDown, true)
-  window.addEventListener('scroll', onScroll, true)
-})
-
-onBeforeUnmount(() => {
-  document.removeEventListener('pointerdown', onAssigneesDocPointerDown, true)
-  window.removeEventListener('scroll', onScroll, true)
-})
+const sortedAssignees = (role: RoleAssignment) =>
+  [...role.assigned].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base', numeric: true }))
 
 const classes = computed(() => {
   const cls: string[] = ['istalk']
@@ -317,7 +237,11 @@ function onPointerDown(event: PointerEvent): void {
   if (!event.isPrimary || event.button !== 0) return
   const el = event.target as HTMLElement
   if (el && el.releasePointerCapture) {
-    try { el.releasePointerCapture(event.pointerId) } catch (_) {}
+    try {
+      el.releasePointerCapture(event.pointerId)
+    } catch {
+      // ignore pointer capture release failure
+    }
   }
   emit('startDragging', { session: props.session, event })
 }
@@ -325,6 +249,16 @@ function onPointerDown(event: PointerEvent): void {
 
 <style lang="stylus">
 .c-linear-schedule-session.is-shift-session
+	.time-box
+		.start
+			align-items: center
+			text-align: center
+	.title-row
+		display: flex
+		justify-content: space-between
+		align-items: flex-start
+	.shift-status-hint
+		font-size: 11px
 	.roles-list
 		display: flex
 		flex-direction: column
@@ -384,38 +318,27 @@ function onPointerDown(event: PointerEvent): void {
 						border-color: #c9920a
 						color: #c9920a
 			.role-assignees
-				position: relative
-				display: flex
-				flex-wrap: wrap
-				align-items: center
-				gap: 6px 12px
-				font-size: 12px
-				color: $clr-secondary-text-light
-				margin-top: 4px
-				.role-assignee
-					display: inline-flex
-					align-items: center
-					gap: 6px
-					min-width: 0
-				.role-assignee-name
-					min-width: 0
-				.role-user-icon
-					width: 11px
-					height: 11px
-					flex-shrink: 0
-				.role-assignees-more-wrap
-					position: relative
-				.role-assignees-more
-					border: none
-					background: transparent
-					color: var(--color-primary, #2185d0)
-					font-size: 12px
-					font-weight: 600
-					line-height: 1.3
+				margin-top: 6px
+				.role-assignee-list
+					list-style: none
+					margin: 0
 					padding: 0
-					cursor: pointer
-					&:hover
-						text-decoration: underline
+					display: flex
+					flex-wrap: wrap
+					gap: 4px 6px
+				.role-assignee
+					list-style: none
+					margin: 0
+					padding: 3px 9px
+					max-width: 100%
+					font-size: 12px
+					line-height: 1.3
+					color: $clr-secondary-text-light
+					background-color: $clr-grey-100
+					border-radius: 999px
+					overflow-wrap: anywhere
+					&::marker
+						content: none
 	.shift-manage
 		font-size: 12px
 		.btn
