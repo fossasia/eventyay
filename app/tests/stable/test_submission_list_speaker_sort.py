@@ -140,6 +140,20 @@ class TestSessionListSpeakerSort:
         assert response.status_code == 200
         assert _titles(response) == ['B panel', 'C talk by Mike', 'A talk by Zoe', 'D session without speaker']
 
+    def test_hidden_speaker_names_ignore_speaker_sort(self, orga_client, user, team, event, sessions):
+        team.force_hide_speaker_names = True
+        team.save()
+        assert not user.has_perm('base.orga_list_speakerprofile', event)
+
+        default = orga_client.get(event.orga_urls.submissions)
+        response = orga_client.get(event.orga_urls.submissions, {'sort': '-speakers'})
+
+        assert response.status_code == 200
+        # Sorting by speaker would reveal the hidden names, so the default order is kept.
+        assert _titles(response) == _titles(default)
+        assert _titles(response) != ['A talk by Zoe', 'C talk by Mike', 'B panel', 'D session without speaker']
+        assert 'sort=-speakers' not in response.content.decode().split('<tbody>')[0]
+
     def test_default_sort_marks_state(self, orga_client, event, sessions):
         response = orga_client.get(event.orga_urls.submissions)
         content = response.content.decode()
