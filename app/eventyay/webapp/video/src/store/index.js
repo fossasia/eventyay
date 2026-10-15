@@ -125,6 +125,11 @@ export default new Vuex.Store({
 			}
 			return { organizer: null, event: null }
 		},
+		isInterpretationEnabled() {
+			const hasPlugin = window.eventyay?.plugins?.some(p => p.includes('interpretation')) || false
+			const hasValidUrl = window.eventyay?.interpretationUrl && window.eventyay.interpretationUrl !== '/missing-url-registration/'
+			return Boolean(hasPlugin && hasValidUrl)
+		},
 	},
 	mutations: {
 		updateRooms(state, rooms) {
