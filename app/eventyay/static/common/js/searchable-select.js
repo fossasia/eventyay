@@ -12,24 +12,35 @@ const normalize = function(value) {
     .replace(/[\u0300-\u036f]/g, '')
 }
 
+const escapeSelectorId = function(value) {
+  if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') {
+    return CSS.escape(value)
+  }
+  return String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"')
+}
+
+const isDisabledItem = function(item) {
+  return item.getAttribute('aria-disabled') === 'true'
+}
+
 const initSearchableSelect = function(select) {
   if (select.dataset[READY_FLAG] === '1' || select.multiple) {
     return
   }
-  select.dataset[READY_FLAG] = '1'
 
   const searchPlaceholder = select.dataset.searchPlaceholder || 'Search'
   const emptyText = select.dataset.emptyText || 'No matches'
   const allLabel = select.dataset.allLabel || ''
   const listId = (select.id || select.name || 'searchable-select') + '-listbox'
+  const parent = select.parentNode
+  const nextSibling = select.nextSibling
+  let root = null
 
-  const root = document.createElement('div')
+  try {
+  root = document.createElement('div')
   root.className = 'searchable-select is-enhanced'
-  select.parentNode.insertBefore(root, select)
+  parent.insertBefore(root, select)
   root.appendChild(select)
-  select.classList.add('searchable-select__native')
-  select.tabIndex = -1
-  select.setAttribute('aria-hidden', 'true')
 
   const toggle = document.createElement('button')
   toggle.type = 'button'
@@ -37,18 +48,18 @@ const initSearchableSelect = function(select) {
   toggle.setAttribute('aria-haspopup', 'listbox')
   toggle.setAttribute('aria-expanded', 'false')
   toggle.setAttribute('aria-controls', listId)
+  const value = document.createElement('span')
+  value.className = 'searchable-select__value'
+  value.id = listId + '-value'
   if (select.id) {
-    const label = document.querySelector(`label[for="${CSS.escape(select.id)}"]`)
+    const label = document.querySelector(`label[for="${escapeSelectorId(select.id)}"]`)
     if (label) {
       if (!label.id) {
         label.id = select.id + '-label'
       }
-      toggle.setAttribute('aria-labelledby', label.id)
+      toggle.setAttribute('aria-labelledby', label.id + ' ' + value.id)
     }
   }
-
-  const value = document.createElement('span')
-  value.className = 'searchable-select__value'
   const caret = document.createElement('span')
   caret.className = 'searchable-select__caret'
   caret.setAttribute('aria-hidden', 'true')
@@ -88,7 +99,7 @@ const initSearchableSelect = function(select) {
 
   const visibleOptions = function() {
     return options().filter(function(option) {
-      return !option.hidden && !option.disabled
+      return !option.hidden && !isDisabledItem(option)
     })
   }
 
@@ -135,12 +146,15 @@ const initSearchableSelect = function(select) {
       item.dataset.value = option.value
       item.textContent = allLabel && option.value === '' ? allLabel : option.text
       if (option.disabled) {
-        item.disabled = true
+        item.setAttribute('aria-disabled', 'true')
       }
       item.addEventListener('mousedown', function(event) {
         event.preventDefault()
       })
       item.addEventListener('click', function() {
+        if (option.disabled) {
+          return
+        }
         choose(option.value)
       })
       list.appendChild(item)
@@ -151,16 +165,16 @@ const initSearchableSelect = function(select) {
 
   const applyFilter = function() {
     const query = normalize(search.value.trim())
-    let matches = 0
+    let choiceMatches = 0
     options().forEach(function(option) {
       const isAll = allLabel && option.dataset.value === ''
-      const show = isAll || !query || normalize(option.textContent).includes(query)
-      option.hidden = !show
-      if (show) {
-        matches += 1
+      const matchesQuery = !query || normalize(option.textContent).includes(query)
+      option.hidden = !(isAll || matchesQuery)
+      if (!isAll && query && matchesQuery && !isDisabledItem(option)) {
+        choiceMatches += 1
       }
     })
-    empty.hidden = matches > 0
+    empty.hidden = !query || choiceMatches > 0
     setActive(0)
   }
 
@@ -251,6 +265,25 @@ const initSearchableSelect = function(select) {
 
   select.addEventListener('change', syncLabel)
   rebuild()
+  select.classList.add('searchable-select__native')
+  select.tabIndex = -1
+  select.setAttribute('aria-hidden', 'true')
+  select.dataset[READY_FLAG] = '1'
+  } catch (error) {
+    console.error('searchable-select: failed to enhance select', select, error)
+    if (root && root.parentNode) {
+      parent.insertBefore(select, root)
+      root.remove()
+    } else if (select.parentNode !== parent) {
+      parent.insertBefore(select, nextSibling)
+    }
+    select.classList.remove('searchable-select__native')
+    select.removeAttribute('aria-hidden')
+    if (select.tabIndex === -1) {
+      select.tabIndex = 0
+    }
+    delete select.dataset[READY_FLAG]
+  }
 }
 
 const initSearchableSelects = function(root) {
