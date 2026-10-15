@@ -28182,6 +28182,22 @@ msgstr ""
 msgid "%(name)s - Settings"
 msgstr ""
 
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:146
+msgid "Menus & Texts"
+msgstr ""
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:153
+msgid "Menus"
+msgstr ""
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:160
+msgid "These links will be shown in the header menu of all your public pages."
+msgstr ""
+
+#: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:174
+msgid "These links will be shown in the footer of all your public pages."
+msgstr ""
+
 #: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:46
 msgid "Header links"
 msgstr ""
