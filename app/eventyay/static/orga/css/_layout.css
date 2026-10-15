@@ -2670,6 +2670,41 @@ html.rtl #page-content:has(.pretalx-schedule) #schedule-action-wrapper details.d
   margin-right: 8px;
 }
 
+/* Schedule editor fullscreen mode. */
+body.schedule-fullscreen nav.navbar,
+body.schedule-fullscreen aside.sidebar,
+body.schedule-fullscreen .impersonate-warning,
+body.schedule-fullscreen .global-top-warning,
+body.schedule-fullscreen #page-content footer {
+  display: none !important;
+}
+
+body.schedule-fullscreen #page-wrapper {
+  height: 100vh !important;
+  max-height: 100vh !important;
+}
+
+body.schedule-fullscreen #page-content:has(.pretalx-schedule) {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  width: 100vw;
+  height: 100vh !important;
+  min-height: 100vh !important;
+  max-height: 100vh !important;
+  margin: 0;
+  padding: 6px 10px 0 10px;
+  overflow: auto;
+  background: var(--color-bg, #fff);
+}
+
+/* Keep only the fullscreen toggle in the action bar while in fullscreen. */
+body.schedule-fullscreen #schedule-release,
+body.schedule-fullscreen #schedule-action-wrapper form,
+body.schedule-fullscreen #schedule-action-wrapper details.dropdown {
+  display: none !important;
+}
+
 #page-content .orga-widget-preview pretalx-schedule {
   --pretalx-sticky-top-offset: -18px;
 }

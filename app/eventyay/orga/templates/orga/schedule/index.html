@@ -10,6 +10,7 @@
 {% block scripts %}
     {% vite_hmr %}
     {% vite_asset "src/main.ts" %}
+    <script defer src="{% static 'orga/js/scheduleFullscreen.js' %}"></script>
 {% endblock scripts %}
 
 
@@ -67,6 +68,13 @@
                     </form>
                 </div>
             </details>
+            <button type="button" id="schedule-fullscreen-toggle" class="btn btn-outline-secondary ml-2 btn-sm"
+                    aria-pressed="false"
+                    data-label-enter="{% translate 'Fullscreen' %}"
+                    data-label-exit="{% translate 'Exit fullscreen' %}">
+                <i class="fa fa-expand" aria-hidden="true"></i>
+                <span class="fullscreen-label">{% translate "Fullscreen" %}</span>
+            </button>
         </div>
     </div>
     {% if not rooms_count %}
