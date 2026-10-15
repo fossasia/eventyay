@@ -106,8 +106,14 @@
   text-decoration: none;
   color: inherit
 }
+.timeline-step-content:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 4px
+}
 .timeline-step-links {
-  display: none;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity .15s, visibility 0s .2s;
   position: absolute;
   top: 100%;
   left: 50%;
@@ -121,6 +127,14 @@
   z-index: 10;
   margin-top: 10px
 }
+.timeline-step-links::after {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 0;
+  width: 100%;
+  height: 10px
+}
 .timeline-step-links::before {
   content: '';
   position: absolute;
@@ -133,15 +147,19 @@
   border-top: 1px solid var(--color-grey-light);
   border-left: 1px solid var(--color-grey-light)
 }
-.timeline-step:hover .timeline-step-links {
-  display: block
+.timeline-step:hover .timeline-step-links,
+.timeline-step:focus-within .timeline-step-links {
+  visibility: visible;
+  opacity: 1;
+  transition-delay: 0s
 }
 .timeline-step-links ul {
   list-style: none;
   margin: 0;
   padding: 0
 }
-.timeline-step-links li a {
+.timeline-step-links li a,
+.timeline-step-links li span {
   display: block;
   padding: 8px 16px;
   color: var(--color-primary-text);
@@ -150,7 +168,8 @@
   text-align: left;
   transition: background-color .2s
 }
-.timeline-step-links li a:hover {
+.timeline-step-links li a:hover,
+.timeline-step-links li a:focus-visible {
   background-color: var(--color-grey-lightest);
   color: var(--color-primary)
 }

@@ -2,36 +2,49 @@ import copy
 
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
+from django_scopes import scope
 
-from eventyay.common.text.phrases import phrases
 from eventyay.base.models import SubmissionStates
+from eventyay.common.text.phrases import phrases
 
 
 def _is_in_preparation(event):
-    return not event.is_public and now() <= event.date_from
+    """Keep unpublished Talks in preparation until the event starts."""
+    return not event.talks_published and now() < event.date_from
 
 
 def _is_cfp_open(event):
-    return not _is_in_preparation(event) and event.cfp.is_open
+    """Show an open CfP only while public Talks accept proposals before the event."""
+    return event.talks_published and now() < event.date_from and event.cfp.is_open
 
 
 def _is_in_review(event):
+    """Review submitted proposals after preparation and the public CfP phase."""
     return (
-        not _is_cfp_open(event)
+        now() < event.date_from
+        and not _is_in_preparation(event)
+        and not _is_cfp_open(event)
         and event.submissions.filter(state=SubmissionStates.SUBMITTED).exists()
-        and now() <= event.date_from
     )
 
 
 def _is_in_scheduling_stage(event):
-    return not _is_running(event) and not _is_in_wrapup(event) and not _is_in_review(event)
+    """Schedule sessions once preparation, the CfP and proposal review are over."""
+    return (
+        now() < event.date_from
+        and not _is_in_preparation(event)
+        and not _is_cfp_open(event)
+        and not _is_in_review(event)
+    )
 
 
 def _is_running(event):
-    return event.date_from <= now() <= event.date_to
+    """Treat the start as inclusive and the end as the start of wrapup."""
+    return event.date_from <= now() < event.date_to
 
 
 def _is_in_wrapup(event):
+    """Enter wrapup when the event has ended, regardless of its CfP deadline."""
     return event.date_to <= now()
 
 
@@ -51,7 +64,7 @@ STAGES = {
         ],
     },
     'CFP_OPEN': {
-        'name': _('CfP is open'),
+        'name': _('CfP'),
         'method': _is_cfp_open,
         'icon': 'bullhorn',
         'links': [
@@ -115,10 +128,13 @@ STAGE_ORDER = ['PREPARATION', 'CFP_OPEN', 'REVIEW', 'SCHEDULE', 'EVENT', 'WRAPUP
 
 
 def in_stage(event, stage):
-    return STAGES[stage]['method'](event)
+    """Evaluate a lifecycle phase within the event's data scope."""
+    with scope(event=event):
+        return STAGES[stage]['method'](event)
 
 
 def build_event_url(event, url):
+    """Resolve a phase action's attribute path against the event."""
     result = event
     for part in url:
         result = getattr(result, part)
@@ -126,6 +142,7 @@ def build_event_url(event, url):
 
 
 def get_stages(event):
+    """Mark the active lifecycle phase and the phases before and after it."""
     inactive_state = 'done'
     stages = copy.deepcopy(STAGES)
 
@@ -134,6 +151,8 @@ def get_stages(event):
         if is_stage_active:
             inactive_state = 'todo'
         stages[stage]['phase'] = 'current' if is_stage_active else inactive_state
+        if stage == 'CFP_OPEN' and is_stage_active:
+            stages[stage]['name'] = _('CfP is open')
         for link in stages[stage].get('links', []):
             if 'url' in link and link['url']:
                 link['url'] = build_event_url(event, link['url'])
