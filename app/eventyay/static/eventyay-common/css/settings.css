@@ -339,9 +339,10 @@
     border-top: 1px solid #e0e0e0;
 }
 
-.settings-footer-contact-toggle {
+.form-horizontal .settings-footer-contact-toggle {
     margin-top: 0;
     margin-bottom: 0;
+    padding-top: 0;
 }
 
 .settings-footer-contact-fields {
