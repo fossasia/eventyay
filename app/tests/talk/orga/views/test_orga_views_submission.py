@@ -9,7 +9,7 @@ from django_scopes import scope
 from PIL import Image
 
 from eventyay.base.models.log import ActivityLog
-from eventyay.base.models import Answer, Availability, Submission, SubmissionStates
+from eventyay.base.models import Answer, Availability, Schedule, Submission, SubmissionStates
 from eventyay.base.models.question import TalkQuestionRequired as QuestionRequired, TalkQuestionVariant as QuestionVariant
 from eventyay.common.session_video import (
     SESSION_VIDEO_IMPORT_KEY,
@@ -851,7 +851,6 @@ def test_orga_can_edit_submission_duration(
     orga_client, event, accepted_submission, room,
     old_default, new_default, old_override, new_override, expected_duration,
 ):
-    """Update draft timing for effective duration changes while preserving released slots."""
     with scope(event=event):
         accepted_submission.submission_type.default_duration = old_default
         accepted_submission.submission_type.save(update_fields=['default_duration'])
@@ -900,6 +899,35 @@ def test_orga_can_edit_submission_duration(
         assert slot.room_id == room.pk
         assert released_slot.start == original_start
         assert released_slot.end == original_end
+
+
+@pytest.mark.django_db
+def test_submission_duration_after_schedule_release(event, accepted_submission, room, monkeypatch):
+    monkeypatch.setattr('eventyay.agenda.tasks.warm_schedule_caches.apply_async', lambda **kwargs: None)
+    with scope(event=event):
+        cached_schedule = accepted_submission.event.wip_schedule
+        slot = cached_schedule.talks.get(submission=accepted_submission)
+        original_start = now()
+        original_end = original_start + dt.timedelta(minutes=accepted_submission.get_duration())
+        slot.start = original_start
+        slot.end = original_end
+        slot.room = room
+        slot.save()
+
+        released, draft = Schedule.objects.get(pk=cached_schedule.pk).freeze('1.0', notify_speakers=False)
+        assert accepted_submission.event.wip_schedule.pk == cached_schedule.pk
+        accepted_submission.duration = accepted_submission.get_duration() + 15
+        accepted_submission.save(update_fields=['duration'])
+        accepted_submission.update_duration()
+
+        assert accepted_submission.event.wip_schedule.pk == draft.pk
+        slot.refresh_from_db()
+        draft_slot = draft.talks.get(submission=accepted_submission)
+        assert slot.schedule_id == released.pk
+        assert slot.end == original_end
+        assert draft_slot.start == original_start
+        assert draft_slot.room_id == room.pk
+        assert draft_slot.end == original_start + dt.timedelta(minutes=accepted_submission.duration)
 
 
 @pytest.mark.django_db

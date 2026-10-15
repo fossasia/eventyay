@@ -127,7 +127,6 @@ class SubmissionForm(ReadOnlyFlag, RequestRequire, forms.ModelForm):
         return url
 
     def save(self, *args, **kwargs):
-        """Save session edits and synchronize duration changes to draft schedule slots."""
         if 'content_locale' not in self.fields:
             self.instance.content_locale = self.event.content_locales[0] if self.event.content_locales else self.event.locale
         instance = super().save(*args, **kwargs)

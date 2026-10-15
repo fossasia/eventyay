@@ -462,9 +462,15 @@ class Submission(GenerateCode, PretalxModel):
 
         Should be called whenever the duration changes.
         """
-        for slot in self.event.wip_schedule.talks.filter(submission=self, start__isnull=False):
-            slot.end = slot.start + dt.timedelta(minutes=self.get_duration())
-            slot.save()
+        with scope(event=self.event), transaction.atomic():
+            while True:
+                schedule = self.event.schedules.select_for_update().get(pk=self.event.wip_schedule.pk)
+                if schedule.version is None:
+                    break
+                del self.event.wip_schedule
+            for slot in schedule.talks.filter(submission=self, start__isnull=False):
+                slot.end = slot.start + dt.timedelta(minutes=self.get_duration())
+                slot.save()
 
     update_duration.alters_data = True
 
