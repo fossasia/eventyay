@@ -349,6 +349,28 @@ def test_orga_can_release_and_reset_schedule(orga_client, event):
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize('version', ('wip', 'latest', ' wip ', ' latest '))
+def test_orga_cannot_release_reserved_schedule_version(orga_client, event, slot, version):
+    """Show a field error for reserved names without changing schedules or slots."""
+    with scope(event=event):
+        event.talks_published = True
+        event.save(update_fields=['talks_published'])
+        schedules = list(event.schedules.order_by('pk').values_list('pk', 'version', 'published'))
+        original_slot = (slot.schedule_id, slot.start, slot.end, slot.room_id)
+        mail_count = event.queued_mails.count()
+
+    response = orga_client.post(event.orga_urls.release_schedule, data={'version': version})
+
+    assert response.status_code == 200
+    assert 'This schedule version is reserved. Please choose a different name.' in response.text
+    with scope(event=event):
+        assert list(event.schedules.order_by('pk').values_list('pk', 'version', 'published')) == schedules
+        slot.refresh_from_db()
+        assert (slot.schedule_id, slot.start, slot.end, slot.room_id) == original_slot
+        assert event.queued_mails.count() == mail_count
+
+
+@pytest.mark.django_db
 @pytest.mark.usefixtures("accepted_submission")
 @pytest.mark.usefixtures("room")
 def test_orga_cannot_reuse_schedule_name(orga_client, event):

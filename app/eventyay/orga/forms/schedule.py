@@ -39,7 +39,10 @@ class ScheduleReleaseForm(I18nHelpText, I18nModelForm):
             self.fields['version'].initial = guess_schedule_version(self.event)
 
     def clean_version(self):
+        """Reject reserved or previously used version names before schedule release."""
         version = self.cleaned_data.get('version')
+        if version in ('wip', 'latest'):
+            raise forms.ValidationError(_('This schedule version is reserved. Please choose a different name.'))
         if self.event.schedules.filter(version__iexact=version).exists():
             raise forms.ValidationError(_('This schedule version was used already, please choose a different one.'))
         return version

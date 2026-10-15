@@ -287,6 +287,31 @@ def test_orga_cannot_release_schedule_with_existing_version(
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize('version', ('wip', 'latest', ' wip ', ' latest '))
+def test_orga_cannot_release_reserved_schedule_version(client, orga_user_write_token, event, slot, version):
+    """Return a version validation error and preserve schedules for reserved names."""
+    with scope(event=event):
+        schedules = list(event.schedules.order_by('pk').values_list('pk', 'version', 'published'))
+        original_slot = (slot.schedule_id, slot.start, slot.end, slot.room_id)
+        mail_count = event.queued_mails.count()
+
+    response = client.post(
+        event.api_urls.schedules + 'release/',
+        data=json.dumps({'version': version}),
+        content_type='application/json',
+        headers={'Authorization': f'Token {orga_user_write_token.token}'},
+    )
+
+    assert response.status_code == 400
+    assert response.json()['version'] == ['This schedule version is reserved. Please choose a different name.']
+    with scope(event=event):
+        assert list(event.schedules.order_by('pk').values_list('pk', 'version', 'published')) == schedules
+        slot.refresh_from_db()
+        assert (slot.schedule_id, slot.start, slot.end, slot.room_id) == original_slot
+        assert event.queued_mails.count() == mail_count
+
+
+@pytest.mark.django_db
 def test_orga_cannot_release_schedule_without_version_name(
     client, orga_user_write_token, event
 ):
