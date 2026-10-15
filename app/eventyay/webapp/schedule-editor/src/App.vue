@@ -1,5 +1,5 @@
 <template lang="pug">
-.pretalx-schedule(:style="{'--scrollparent-width': scrollParentWidth + 'px'}", :class="[draggedSession ? 'is-dragging' : '', !caps.canDrag ? 'is-public-shifts' : '']", @pointerup="caps.canDrag ? stopDragging() : null")
+.pretalx-schedule(:class="[draggedSession ? 'is-dragging' : '', !caps.canDrag ? 'is-public-shifts' : '']", @pointerup="caps.canDrag ? stopDragging() : null")
 	template(v-if="schedule")
 		#main-wrapper
 			#unassigned.no-print(v-if="caps.canDrag", v-scrollbar.y="", :class="{'is-collapsed': isUnassignedCollapsed}", @pointerenter="onUnassignedEnter", @pointerleave="onUnassignedLeave")
@@ -22,16 +22,37 @@
 								i.fa.fa-chevron-down(aria-hidden="true")
 								.time-density-menu.vue-dropdown(v-if="showTimeDensityMenu")
 									.density-option(v-for="mins in [5, 10, 15, 30, 60]", @click.stop="timeDensityMinutes = mins; onTimeDensityChange(); showTimeDensityMenu = false", :class="{active: timeDensityMinutes === mins}") {{ mins }} {{ $t('min') }}
-						.title
-							bunt-input#filter-input(v-model="unassignedFilterString", :placeholder="translations.filterSessions", icon="search", name="filter-input")
-							#unassigned-sort(@click="showUnassignedSortMenu = !showUnassignedSortMenu", :class="{'active': showUnassignedSortMenu}")
-								i.fa.fa-sort
+						.search-row
+							.search-input-wrapper
+								i.fa.fa-search(aria-hidden="true")
+								input.search-input(
+									type="text"
+									v-model="unassignedFilterString"
+									:placeholder="translations.searchSessions"
+									:aria-label="translations.searchSessions"
+								)
+								button.clear-search-btn(
+									v-if="unassignedFilterString"
+									type="button"
+									@click="unassignedFilterString = ''"
+									:title="$t('Clear search')"
+									:aria-label="$t('Clear search')"
+								)
+									i.fa.fa-times(aria-hidden="true")
+							button#unassigned-sort(
+								type="button"
+								@click="showUnassignedSortMenu = !showUnassignedSortMenu"
+								:class="{'active': showUnassignedSortMenu}"
+								:title="$t('Sort')"
+								:aria-label="$t('Sort')"
+							)
+								i.fa.fa-sort-amount-desc(aria-hidden="true")
 							#unassigned-sort-menu(v-if="showUnassignedSortMenu")
-								.sort-method(v-for="method of unassignedSortMethods", @click="unassignedSort === method.name ? unassignedSortDirection = unassignedSortDirection * -1 : unassignedSort = method.name; showUnassignedSortMenu = false")
+								.sort-method(v-for="method of unassignedSortMethods", :key="method.name", @click="unassignedSort === method.name ? unassignedSortDirection = unassignedSortDirection * -1 : unassignedSort = method.name; showUnassignedSortMenu = false")
 									span {{ method.label }}
 									i.fa.fa-sort-amount-asc(v-if="unassignedSort === method.name && unassignedSortDirection === 1")
 									i.fa.fa-sort-amount-desc(v-if="unassignedSort === method.name && unassignedSortDirection === -1")
-						session.new-break.desktop-break(v-if="caps.canCreateBreak", :session="{title: '+ ' + translations.newBreak}", :isDragged="false", tabindex="0", @startDragging="startNewBreak", @click.stop="showNewBreakHint", @focus="showNewBreakHint", @blur="removeNewBreakHint", @keydown="onNewBreakKeydown", @pointerleave="removeNewBreakHint", :aria-describedby="newBreakTooltip ? 'new-break-hint' : undefined")
+						session.new-break.desktop-break(v-if="caps.canCreateBreak", :session="{title: '+ ' + translations.newBreak, code: null}", :isDragged="false", tabindex="0", @startDragging="startNewBreak", @click.stop="showNewBreakHint", @focus="showNewBreakHint", @blur="removeNewBreakHint", @keydown="onNewBreakKeydown", @pointerleave="removeNewBreakHint", :aria-describedby="newBreakTooltip ? 'new-break-hint' : undefined")
 						.new-break-hint(v-if="newBreakTooltip", id="new-break-hint", role="tooltip") {{ newBreakTooltip }}
 					session(v-for="un in unscheduled", :key="un.id", :session="un", @startDragging="startDragging", :isDragged="draggedSession && un.id === draggedSession.id", @editSession="editorStart($event)", @deleteSession="deleteSessionDirect($event)", @assignMembers="openAssignModal($event)")
 					.deleted-room-sessions(v-if="deletedRoomSessions.length")
@@ -39,7 +60,7 @@
 						p {{ caps.showRoles ? $t('These shifts were in a room that has been deleted or unscheduled. Drag them into another room to restore them to the schedule.') : $t('These sessions were assigned to a room that has been deleted. Drag them into another room to restore them to the schedule.') }}
 						session(v-for="session in deletedRoomSessions", :key="session.id", :session="session", @startDragging="startDragging", :isDragged="draggedSession && session.id === draggedSession.id")
 			#schedule-wrapper(v-scrollbar.x.y="")
-				.schedule-controls
+				.schedule-controls(:style="actionsControlsStyle")
 					bunt-tabs.days(v-if="days", :modelValue="currentDay.format()", ref="tabs" :class="['grid-tabs']")
 						bunt-tab(v-for="day of days", :key="day.format()", :id="day.format()", :header="day.format(dateFormat)", @selected="changeDay(day)")
 				grid-schedule(:sessions="sessions",
@@ -182,7 +203,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, computed, watch, onMounted, onUnmounted, onBeforeMount, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, onBeforeMount, nextTick } from 'vue'
 import moment, { Moment } from 'moment-timezone'
 import GridSchedule from '~/components/GridSchedule.vue'
 import TalkSession from '~/components/Session.vue'
@@ -448,7 +469,7 @@ function onTimeDensityChange (): void {
 
 
 const translations = computed(() => ({
-  filterSessions: caps.showRoles ? $t('Filter shifts') : $t('Filter sessions'),
+  searchSessions: caps.showRoles ? $t('Search shifts') : $t('Search sessions'),
   unassignedTitle: caps.showRoles ? $t('Unassigned Shifts') : $t('Unassigned Sessions'),
   newBreak: $t('New break'),
 }))
@@ -673,15 +694,7 @@ const days = computed<Moment[]>(() => {
 })
 
 const dateFormat = computed<string>(() => {
-  if (
-    (schedule.value && schedule.value.rooms.length > 2) ||
-    !days.value ||
-    !days.value.length
-  )
-    return 'dddd DD. MMMM'
-  if (days.value && days.value.length <= 5) return 'dddd DD. MMMM'
-  if (days.value && days.value.length <= 7) return 'dddd DD. MMM'
-  return 'ddd DD. MMM'
+  return 'ddd DD MMM'
 })
 
 async function fetchSchedule(options?: { since?: string; warnings?: boolean }): Promise<Schedule> {
@@ -860,7 +873,7 @@ function editorCancel(): void {
 
 async function editorDelete(): Promise<void> {
   if (!editorSession.value) return
-  let deleted = false
+  let deleted: boolean
   if (mode === 'shifts' || mode === 'public-shifts') {
     deleted = await deleteShiftById(editorSession.value.id)
   } else {
@@ -1136,6 +1149,7 @@ async function stopDragging(): Promise<void> {
 
 function onWindowResize() {
   scrollParentWidth.value = document.body.offsetWidth
+  isMobile.value = typeof window !== 'undefined' ? window.innerWidth < 768 : false
 }
 
 async function pollUpdates() {
@@ -1219,7 +1233,43 @@ function onWindowKeydown(event: KeyboardEvent): void {
   }
 }
 
+const isRtl = computed(() => {
+  if (typeof document === 'undefined') return false
+  return document.documentElement.dir === 'rtl' || document.documentElement.classList.contains('rtl')
+})
+
+const isMobile = ref<boolean>(typeof window !== 'undefined' ? window.innerWidth < 768 : false)
+const actionsWidth = ref<number>(0)
+let actionsObserver: ResizeObserver | null = null
+
+const actionsControlsStyle = computed(() => {
+  if (isMobile.value || !actionsWidth.value) return undefined
+  if (isRtl.value) {
+    return { paddingLeft: `${actionsWidth.value + 16}px`, paddingRight: '0px' }
+  }
+  return { paddingRight: `${actionsWidth.value + 16}px`, paddingLeft: '0px' }
+})
+
+function updateActionsWidth(): void {
+  const actionsEl = document.getElementById('schedule-action-wrapper')
+  if (actionsEl) {
+    const width = Math.ceil(actionsEl.getBoundingClientRect().width)
+    if (width > 0) {
+      actionsWidth.value = width
+    }
+  }
+}
+
 onMounted(() => {
+  updateActionsWidth()
+  const actionsEl = document.getElementById('schedule-action-wrapper')
+  if (actionsEl && typeof ResizeObserver !== 'undefined') {
+    actionsObserver = new ResizeObserver(updateActionsWidth)
+    actionsObserver.observe(actionsEl)
+  }
+  if (document.fonts?.ready) {
+    document.fonts.ready.then(updateActionsWidth)
+  }
   document.addEventListener('touchmove', preventScrollOnDrag, { passive: false })
   window.addEventListener('click', onWindowClick)
   window.addEventListener('resize', onWindowResize)
@@ -1229,6 +1279,10 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  if (actionsObserver) {
+    actionsObserver.disconnect()
+    actionsObserver = null
+  }
   if (unscheduleHintTimer) clearTimeout(unscheduleHintTimer)
   document.removeEventListener('touchmove', preventScrollOnDrag)
   window.removeEventListener('click', onWindowClick)
@@ -1239,17 +1293,16 @@ onUnmounted(() => {
 </script>
 
 <style lang="stylus">
-#page-content
-	padding: 0
 .pretalx-schedule
 	display: flex
 	flex-direction: column
 	min-height: 0
 	min-width: 0
-	height: calc(100vh - 160px)
+	flex: 1
+	height: 100%
 	width: 100%
 	font-size: 14px
-	margin-left: 24px
+	margin-left: 0
 	font-family: var(--font-family)
 	color: var(--color-text)
 	h1, h2, h3, h4, h5, h6, legend, button, .btn
@@ -1259,7 +1312,8 @@ onUnmounted(() => {
 		cursor: grabbing
 	#main-wrapper
 		display: flex
-		flex: auto
+		flex: 1
+		height: 100%
 		min-height: 0
 		min-width: 0
 	&.is-public-shifts
@@ -1288,166 +1342,309 @@ onUnmounted(() => {
 		margin-bottom: 0
 		flex: 1
 		min-width: 0
-		height: 48px
-		max-height: 48px
+		height: 36px
+		max-height: 36px
 		overflow-x: auto
 		overflow-y: hidden
 		scrollbar-width: thin
 		.bunt-tabs
-			height: 48px
+			height: 36px
 		.bunt-tabs-header
 			width: 100%
 			min-width: max-content
-			height: 48px
+			height: 36px
 		.bunt-tabs-header-items
 			display: flex
 			flex-wrap: nowrap
 			width: 100%
 			min-width: max-content
-			height: 48px
+			height: 36px
 			margin: 0
 			padding: 0
 			.bunt-tab-header-item
 				flex-shrink: 0
 				white-space: nowrap
-				height: 48px
+				height: 36px
+				padding: 0 12px
+				font-weight: 400
 			.bunt-tab-header-item-text
 				white-space: nowrap
+				font-size: 13px
+				font-weight: 500
+				letter-spacing: 0.02em
+			&.active .bunt-tab-header-item-text,
+			.bunt-tab-header-item.active .bunt-tab-header-item-text
+				font-weight: 500
 	#unassigned
-		margin-top: 35px
-		width: 350px
+		margin-top: 0
+		width: 250px
 		flex: none
+		padding: 0 8px 8px 0
+		border-right: 1px solid #e2e8f0
+		box-sizing: border-box
+		height: 100%
+		min-height: 0
+		overflow-y: auto
 		> *
-			margin-right: 12px
+			margin-right: 0
 		> .bunt-scrollbar-rail-y
 			margin: 0
+		.unassigned-body
+			width: 100%
+			display: flex
+			flex-direction: column
+		.c-linear-schedule-session
+			min-width: 0
+		.c-linear-schedule-session:not(.new-break)
+			margin: 0 0 8px 0
+			min-height: 72px
+			width: 100%
+			box-sizing: border-box
+			border-radius: 6px
+			box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05)
+			.time-box
+				width: 52px
+				padding: 8px 4px
+				> .duration
+					font-size: 12px
+					font-weight: 600
+			.info
+				padding: 6px 8px
+				.title
+					font-size: 13px
+					line-height: 1.3
+					font-weight: 600
+					margin-bottom: 2px
+				.speakers
+					font-size: 12px
+					line-height: 1.25
+					margin-bottom: 2px
+				.bottom-info .track
+					font-size: 11px
+					line-height: 1.2
 		.unassigned-header
 			position: sticky
 			top: 0
 			z-index: 10
 			background-color: $clr-white
-			padding-bottom: 8px
+			padding-bottom: 2px
 			display: flex
 			flex-direction: column
-			
+			width: 100%
+			box-sizing: border-box
 
 		.unassigned-header > .density-controls
 			display: flex
 			align-items: center
-			justify-content: flex-start
-			gap: 12px
-			padding: 0 8px
-			margin-bottom: 12px
-			.select-wrapper.custom-dropdown
-				position: relative
+			gap: 6px
+			width: 100%
+			margin-bottom: 6px
+			padding: 0
+			box-sizing: border-box
+			.density-btn
+				flex: 1
+				height: 30px
+				background: #f8fafc
+				border: 1px solid #cbd5e1
+				border-radius: 6px
+				padding: 0 8px
+				cursor: pointer
+				color: #334155
 				display: flex
 				align-items: center
-				background-color: transparent
-				border: 1px solid #999
-				border-radius: 4px
-				padding: 4px 28px 4px 10px
-				color: #333
-				cursor: pointer
-				font-size: 14px
+				justify-content: center
+				gap: 5px
+				transition: all 0.15s ease
+				font-size: 12px
 				font-weight: 500
-				line-height: 1.2
+				box-sizing: border-box
+				&:hover
+					background-color: #f1f5f9
+					border-color: #94a3b8
+				&:focus-visible
+					outline: 2px solid var(--color-primary, #3b82f6)
+					outline-offset: -1px
+				&.active
+					background-color: #e2e8f0
+					color: #0f172a
+					border-color: #64748b
+				.fa
+					font-size: 12px
+				.density-btn-text
+					margin-left: 0
+					white-space: nowrap
+			.select-wrapper.custom-dropdown
+				position: relative
+				height: 30px
+				display: flex
+				align-items: center
+				justify-content: space-between
+				gap: 6px
+				background-color: #f8fafc
+				border: 1px solid #cbd5e1
+				border-radius: 6px
+				padding: 0 8px
+				color: #334155
+				cursor: pointer
+				font-size: 12px
+				font-weight: 500
+				min-width: 65px
+				box-sizing: border-box
 				transition: all 0.15s ease
 				&:hover
-					background-color: #f3f4f6
+					background-color: #f1f5f9
+					border-color: #94a3b8
 				.fa-chevron-down
-					position: absolute
-					right: 8px
-					pointer-events: none
-					font-size: 12px
-					color: #333
+					font-size: 10px
+					color: #64748b
 				.time-density-menu, .vue-dropdown
 					position: absolute
 					top: calc(100% + 4px)
 					right: 0
 					background-color: white
-					border-radius: 4px
+					border-radius: 6px
 					box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)
-					border: 1px solid #e5e7eb
+					border: 1px solid #e2e8f0
 					z-index: 1000
-					min-width: 120px
+					min-width: 105px
 					display: flex
 					flex-direction: column
 					overflow: hidden
 					cursor: default
 					.density-option
-						padding: 8px 12px
+						padding: 6px 10px
 						display: flex
 						justify-content: space-between
 						align-items: center
 						color: #374151
 						cursor: pointer
+						font-size: 12px
 						&:hover
-							background-color: #f3f4f6
+							background-color: #f1f5f9
 						&.active
-							background-color: #e5e7eb
+							background-color: #e2e8f0
 							color: #111
 						.fa-check
-							font-size: 12px
+							font-size: 11px
 							color: var(--color-primary, #3b82f6)
-			.density-btn
-				background: none
-				border: 1px solid #999
-				border-radius: 4px
-				padding: 4px 10px
-				cursor: pointer
-				color: #333
+		.unassigned-header > .search-row
+			position: relative
+			padding: 0
+			margin: 0 0 6px 0
+			width: 100%
+			display: flex
+			align-items: center
+			gap: 6px
+			box-sizing: border-box
+			.search-input-wrapper
+				flex: 1
+				height: 30px
+				display: flex
+				align-items: center
+				gap: 6px
+				padding: 0 8px
+				background: #ffffff
+				border: 1px solid #cbd5e1
+				border-radius: 6px
+				box-sizing: border-box
+				transition: border-color 0.15s ease, box-shadow 0.15s ease
+				&:focus-within
+					border-color: var(--color-primary, #2185d0)
+					box-shadow: 0 0 0 2px rgba(33, 133, 208, 0.18)
+				.fa-search
+					font-size: 12px
+					color: #94a3b8
+					flex-shrink: 0
+				.search-input
+					flex: 1
+					height: 100%
+					border: none
+					outline: none
+					background: transparent
+					font-size: 12px
+					color: #1e293b
+					padding: 0
+					min-width: 0
+					box-sizing: border-box
+					&::placeholder
+						color: #94a3b8
+						font-size: 12px
+				.clear-search-btn
+					border: none
+					background: transparent
+					color: #94a3b8
+					cursor: pointer
+					padding: 0
+					margin: 0
+					display: flex
+					align-items: center
+					justify-content: center
+					font-size: 11px
+					transition: color 0.15s ease
+					&:hover
+						color: #334155
+			#unassigned-sort
+				width: 30px
+				height: 30px
+				flex-shrink: 0
 				display: flex
 				align-items: center
 				justify-content: center
-				transition: all 0.15s ease
-				font-size: 14px
-				font-weight: 500
-				&:hover
-					background-color: #f3f4f6
-				&:focus-visible
-					outline: 2px solid var(--color-primary, #3b82f6)
-					outline-offset: -1px
-					background-color: #f3f4f6
-				&.active
-					background-color: #e5e7eb
-					color: #111
-					border-color: #6b7280
-					box-shadow: inset 0 2px 4px rgba(0,0,0,0.05)
-				.fa
-					font-size: 14px
-				.density-btn-text
-					margin-left: 6px
-					font-weight: 500
-					white-space: nowrap
-		.unassigned-header > .title
-			position: relative
-			padding: 4px 0
-			font-size: 18px
-			text-align: center
-			background-color: $clr-white
-			border-bottom: 4px solid $clr-dividers-light
-			display: flex
-			align-items: flex-end
-			margin-left: 8px
-			#filter-input
-				width: calc(100% - 36px)
-				.label-input-container, .label-input-container:active
-					.outline
-						display: none
-			#unassigned-sort
-				width: 28px
-				height: 28px
-				text-align: center
 				cursor: pointer
-				border-radius: 4px
-				margin-bottom: 8px
-				margin-left: 4px
-				color: $clr-secondary-text-light
-				&:hover, &.active
-					opacity: 0.8
-					background-color: $clr-dividers-light
+				border-radius: 6px
+				background: #f8fafc
+				border: 1px solid #cbd5e1
+				color: #475569
+				margin: 0
+				box-sizing: border-box
+				transition: all 0.15s ease
+				&:hover
+					background-color: #f1f5f9
+					border-color: #94a3b8
+					color: #0f172a
+				&.active
+					background-color: #e2e8f0
+					border-color: #64748b
+					color: #0f172a
+				.fa
+					font-size: 12px
 		.new-break.c-linear-schedule-session
-			min-height: 48px
+			min-height: 30px
+			height: 30px
+			margin: 0 0 6px 0
+			width: 100%
+			box-sizing: border-box
+			border: 1.5px dashed #94a3b8
+			border-radius: 6px
+			background-color: #f8fafc
+			transition: all 0.15s ease
+			cursor: grab
+			display: flex
+			align-items: center
+			justify-content: center
+			user-select: none
+			.time-box
+				display: none
+			.info
+				width: 100%
+				height: 100%
+				display: flex
+				align-items: center
+				justify-content: center
+				border: none
+				background: transparent
+				padding: 0
+				border-radius: 6px
+				.title
+					font-size: 12px
+					font-weight: 500
+					color: #475569
+					margin: 0
+			&:hover
+				border-color: var(--color-primary, #2185d0)
+				background-color: #f0f7ff
+				.info .title
+					color: var(--color-primary, #2185d0)
 			&:focus-visible
 				outline: 2px solid var(--color-primary, #3b82f6)
 				outline-offset: 2px
@@ -1455,43 +1652,50 @@ onUnmounted(() => {
 			display: flex
 		.new-break-hint
 			display: block
-			background: rgba(0, 0, 0, 0.6)
+			background: rgba(0, 0, 0, 0.75)
 			color: white
-			font-size: 13px
+			font-size: 12px
 			line-height: 1.4
-			padding: 6px 10px
-			border-radius: 4px
+			padding: 5px 8px
+			border-radius: 6px
 			pointer-events: none
-			margin: 0 12px 8px 8px
+			margin: 0 0 6px 0
+			width: 100%
+			box-sizing: border-box
 		.unschedule-hint
-			margin: 8px 8px 12px 8px
-			padding: 8px 10px
-			border-radius: 4px
+			margin: 0 0 6px 0
+			padding: 6px 8px
+			border-radius: 6px
 			background-color: #fff4e5
 			color: #7a4b00
-			font-size: 13px
+			font-size: 12px
 			line-height: 1.4
+			width: 100%
+			box-sizing: border-box
 		#unassigned-sort-menu
-			color: $clr-primary-text-light
+			color: #1e293b
 			display: flex
 			flex-direction: column
 			background-color: white
 			position: absolute
-			top: 53px
-			right: 15px
+			top: calc(100% + 4px)
+			right: 0
 			width: 130px
-			font-size: 16px
+			font-size: 12px
 			cursor: pointer
 			z-index: 1000
-			box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5)
-			text-align: left
+			box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)
+			border: 1px solid #e2e8f0
+			border-radius: 6px
+			overflow: hidden
 			.sort-method
-				padding: 8px 16px
+				padding: 6px 10px
 				display: flex
 				justify-content: space-between
 				align-items: center
+				transition: background-color 0.15s ease
 				&:hover
-					background-color: $clr-dividers-light
+					background-color: #f1f5f9
 		.deleted-room-sessions
 			margin: 24px 12px 0 8px
 			padding-top: 16px
@@ -1509,23 +1713,28 @@ onUnmounted(() => {
 	.schedule-controls
 		display: flex
 		align-items: center
-		justify-content: flex-start
 		position: sticky
 		left: 0
 		top: 0
 		z-index: 50
 		background-color: $clr-white
 		width: 100%
-		height: 48px
-		max-height: 48px
+		height: 36px
+		max-height: 36px
 		box-sizing: border-box
-		overflow: hidden
+		overflow: visible
+		border-bottom: 1px solid #e2e8f0
+		padding-right: 220px
 	#schedule-wrapper
 		flex: 1
 		min-height: 0
 		min-width: 0
 		width: 100%
-		margin-right: 40px
+		height: 100%
+		margin-right: 0
+		padding-left: 8px
+		box-sizing: border-box
+
 	#unassigned
 		.unassigned-mobile-header
 			display: none
@@ -1554,17 +1763,32 @@ onUnmounted(() => {
 					color: #64748b
 					font-size: 14px
 
+html[dir="rtl"],
+html.rtl
+	#unassigned
+		padding: 0 0 8px 8px
+		border-right: none
+		border-left: 1px solid #e2e8f0
+	#schedule-wrapper
+		padding-left: 0
+		padding-right: 8px
+	.schedule-controls
+		padding-right: 0
+		padding-left: 220px
+
 @media (max-width: 767px)
 	.pretalx-schedule
 		margin-left: 0
 		margin-right: 0
 		padding: 0 12px
 		width: 100%
+		height: auto
 		box-sizing: border-box
 		min-height: calc(100vh - 160px)
 		#main-wrapper
 			flex-direction: column
 			width: 100%
+			height: auto
 			box-sizing: border-box
 		#unassigned
 			width: 100%
@@ -1572,8 +1796,9 @@ onUnmounted(() => {
 			margin-top: 0
 			margin-bottom: 12px
 			background-color: $clr-white
-			padding-top: 8px
-			padding-bottom: 4px
+			padding: 8px 0 4px 0
+			border-right: none
+			border-left: none
 			flex: none
 			&.is-collapsed
 				.unassigned-body
@@ -1604,11 +1829,30 @@ onUnmounted(() => {
 						padding: 4px 8px
 						.density-btn-text
 							display: none
+		.schedule-controls
+			padding-right: 0
+			padding-left: 0
 		#schedule-wrapper
 			width: 100%
 			margin-right: 0
+			padding-left: 0
+			padding-right: 0
 			box-sizing: border-box
 			overflow: auto
+
+html[dir="rtl"],
+html.rtl
+	@media (max-width: 767px)
+		.schedule-controls
+			padding-right: 0
+			padding-left: 0
+		#unassigned
+			padding: 8px 0 4px 0
+			border-left: none
+			border-right: none
+		#schedule-wrapper
+			padding-left: 0
+			padding-right: 0
 
 #session-editor-wrapper, #assign-modal-wrapper
 	position: fixed

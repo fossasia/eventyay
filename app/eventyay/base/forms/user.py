@@ -175,10 +175,13 @@ class UserSettingsForm(forms.ModelForm):
         password1 = cleaned_data.get('new_pw')
         old_pw = cleaned_data.get('old_pw')
 
-        if not self.requires_password_reset and password1 and not old_pw:
-            raise forms.ValidationError(self.error_messages['pw_current'], code='pw_current')
+        # A wrong current password already has its own error on the field, so only
+        # ask for it when it was left empty, and show that next to the field too.
+        if not self.requires_password_reset and password1 and not old_pw and not self.has_error('old_pw'):
+            self.add_error('old_pw', forms.ValidationError(self.error_messages['pw_current'], code='pw_current'))
 
-        if password1:
+        # The form is bound to the logged-in user, so only change the password once it is valid.
+        if password1 and not self.errors:
             self.instance.set_password(password1)
 
         return cleaned_data
