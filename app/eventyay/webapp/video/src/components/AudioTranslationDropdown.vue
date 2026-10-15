@@ -210,7 +210,6 @@ export default {
 		align-items: center
 		height: 26px
 		padding: 0 6px
-		min-width: 96px
 		border: 1px solid var(--clr-grey-300, #cbd5e1)
 		border-radius: 5px
 		background: var(--clr-surface, #ffffff)
