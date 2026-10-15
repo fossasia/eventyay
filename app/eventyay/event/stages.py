@@ -3,36 +3,61 @@ import copy
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 
-from eventyay.common.text.phrases import phrases
 from eventyay.base.models import SubmissionStates
+from eventyay.common.text.phrases import phrases
+
+
+def _is_talks_public(event):
+    return bool(getattr(event, 'talks_published', False))
+
+
+def _is_in_wrapup(event):
+    return event.date_to <= now()
+
+
+def _is_running(event):
+    return not _is_in_wrapup(event) and event.date_from <= now() <= event.date_to
 
 
 def _is_in_preparation(event):
-    return not event.is_public and now() <= event.date_from
+    return (
+        not _is_running(event)
+        and not _is_in_wrapup(event)
+        and not _is_talks_public(event)
+        and now() <= event.date_from
+    )
 
 
 def _is_cfp_open(event):
-    return not _is_in_preparation(event) and event.cfp.is_open
+    return (
+        not _is_running(event)
+        and not _is_in_wrapup(event)
+        and not _is_in_preparation(event)
+        and _is_talks_public(event)
+        and hasattr(event, 'cfp')
+        and event.cfp.is_open
+    )
 
 
 def _is_in_review(event):
     return (
-        not _is_cfp_open(event)
+        not _is_running(event)
+        and not _is_in_wrapup(event)
+        and not _is_in_preparation(event)
+        and not _is_cfp_open(event)
         and event.submissions.filter(state=SubmissionStates.SUBMITTED).exists()
         and now() <= event.date_from
     )
 
 
 def _is_in_scheduling_stage(event):
-    return not _is_running(event) and not _is_in_wrapup(event) and not _is_in_review(event)
-
-
-def _is_running(event):
-    return event.date_from <= now() <= event.date_to
-
-
-def _is_in_wrapup(event):
-    return event.date_to <= now()
+    return (
+        not _is_running(event)
+        and not _is_in_wrapup(event)
+        and not _is_in_preparation(event)
+        and not _is_cfp_open(event)
+        and not _is_in_review(event)
+    )
 
 
 STAGES = {
@@ -121,7 +146,9 @@ def in_stage(event, stage):
 def build_event_url(event, url):
     result = event
     for part in url:
-        result = getattr(result, part)
+        result = getattr(result, part, None)
+        if result is None:
+            return None
     return result
 
 
@@ -129,12 +156,15 @@ def get_stages(event):
     inactive_state = 'done'
     stages = copy.deepcopy(STAGES)
 
-    for stage in STAGES:
+    for stage in STAGE_ORDER:
         is_stage_active = inactive_state == 'done' and in_stage(event, stage)
         if is_stage_active:
             inactive_state = 'todo'
         stages[stage]['phase'] = 'current' if is_stage_active else inactive_state
+        if stage == 'CFP_OPEN':
+            stages[stage]['name'] = _('CfP is open') if is_stage_active else _('CfP')
         for link in stages[stage].get('links', []):
             if 'url' in link and link['url']:
                 link['url'] = build_event_url(event, link['url'])
     return stages
+

@@ -1,10 +1,20 @@
 {% load i18n %}
 <div class="dashboard-timeline-container">
-    <div class="dashboard-timeline">
+    <div class="dashboard-timeline" role="navigation" aria-label="{% trans "Event lifecycle phases" %}">
         {% for step in timeline_data %}
-            <div class="timeline-step {{ step.phase }}">
-                <{% if step.links and step.links.0.url %}a href="{{ step.links.0.url }}"{% else %}div{% endif %} class="timeline-step-content">
-                    <div class="timeline-step-icon">
+            <div class="timeline-step {{ step.phase }}{% if step.links and can_change_settings %} has-dropdown{% endif %}" data-step-index="{{ forloop.counter0 }}">
+                <div class="timeline-step-content"
+                    {% if step.links and can_change_settings %}
+                        role="button"
+                        aria-haspopup="true"
+                        aria-expanded="false"
+                        tabindex="0"
+                        title="{% blocktrans with name=step.name %}View actions for {{ name }}{% endblocktrans %}"
+                    {% elif step.links and step.links.0.url %}
+                        role="link"
+                        tabindex="0"
+                    {% endif %}>
+                    <div class="timeline-step-icon" aria-hidden="true">
                         <span class="fa fa-{% if step.phase == 'done' %}check{% else %}{{ step.icon|default:'check' }}{% endif %}"></span>
                     </div>
                     <div class="timeline-step-label">{{ step.name }}</div>
@@ -12,16 +22,22 @@
                     {% if step.summary %}
                         <div class="timeline-step-summary">{{ step.summary }}</div>
                     {% endif %}
-                </{% if step.links and step.links.0.url %}a{% else %}div{% endif %}>
+                </div>
                 
                 {% if step.links and can_change_settings %}
-                    <div class="timeline-step-links">
+                    <div class="timeline-step-links" role="menu" aria-label="{% blocktrans with name=step.name %}{{ name }} actions{% endblocktrans %}">
                         <ul>
                             {% for link in step.links %}
-                                <li>
-                                    <a {% if link.url %}href="{{ link.url }}"{% endif %}>
-                                        {{ link.title }}
-                                    </a>
+                                <li role="none">
+                                    {% if link.url %}
+                                        <a role="menuitem" href="{{ link.url }}">
+                                            {{ link.title }}
+                                        </a>
+                                    {% else %}
+                                        <span class="timeline-step-link-static" role="menuitem" aria-disabled="true">
+                                            {{ link.title }}
+                                        </span>
+                                    {% endif %}
                                 </li>
                             {% endfor %}
                         </ul>
@@ -31,3 +47,4 @@
         {% endfor %}
     </div>
 </div>
+

@@ -33,10 +33,13 @@
   flex: 1;
   text-align: center;
   text-decoration: none;
-  color: inherit
+  color: inherit;
 }
-.timeline-step:hover {
-  text-decoration: none
+.timeline-step:hover,
+.timeline-step:focus-within,
+.timeline-step.is-open {
+  z-index: 25;
+  text-decoration: none;
 }
 .timeline-step::after {
   content: '';
@@ -46,14 +49,14 @@
   width: 100%;
   height: 2px;
   background-color: var(--color-grey-light);
-  z-index: -1
+  z-index: -1;
 }
 .timeline-step.current::after,
 .timeline-step.done::after {
-  background-color: var(--color-primary)
+  background-color: var(--color-primary);
 }
 .timeline-step:last-child::after {
-  display: none
+  display: none;
 }
 .timeline-step-icon {
   width: 36px;
@@ -67,32 +70,32 @@
   color: var(--color-grey-dark);
   font-size: 16px;
   margin-bottom: 8px;
-  transition: all .3s cubic-bezier(.4, 0, .2, 1)
+  transition: all .3s cubic-bezier(.4, 0, .2, 1);
 }
 .timeline-step-icon:hover {
   transform: scale(1.15) translateY(-2px);
-  box-shadow: 0 8px 16px color-mix(in srgb,var(--color-primary) 30%,transparent)
+  box-shadow: 0 8px 16px color-mix(in srgb,var(--color-primary) 30%,transparent);
 }
 .timeline-step.done .timeline-step-icon {
   background-color: var(--color-primary);
   border-color: var(--color-primary);
-  color: #fff
+  color: #fff;
 }
 .timeline-step.current .timeline-step-icon {
   background-color: var(--color-primary);
   border-color: var(--color-primary);
   color: #fff;
-  box-shadow: 0 0 0 4px rgba(var(--color-primary-rgb,0,123,255),.2)
+  box-shadow: 0 0 0 4px rgba(var(--color-primary-rgb,0,123,255),.2);
 }
 .timeline-step-label {
   font-weight: 600;
   font-size: 14px;
   color: var(--color-primary-text);
-  margin-bottom: 4px
+  margin-bottom: 4px;
 }
 .timeline-step-summary {
   font-size: 12px;
-  color: var(--color-grey)
+  color: var(--color-grey);
 }
 .timeline-step-content {
   display: flex;
@@ -100,11 +103,22 @@
   align-items: center;
   text-decoration: none;
   color: inherit;
-  width: 100%
+  width: 100%;
+}
+.timeline-step.has-dropdown .timeline-step-content {
+  cursor: pointer;
+  user-select: none;
+}
+.timeline-step.has-dropdown .timeline-step-content:focus {
+  outline: none;
+}
+.timeline-step.has-dropdown .timeline-step-content:focus-visible .timeline-step-icon {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
 }
 .timeline-step-content:hover {
   text-decoration: none;
-  color: inherit
+  color: inherit;
 }
 .timeline-step-links {
   display: none;
@@ -114,13 +128,14 @@
   transform: translateX(-50%);
   background: var(--color-bg,#fff);
   border: 1px solid var(--color-grey-light);
-  border-radius: 3px;
-  box-shadow: 0 4px 12px rgba(0,0,0,.1);
+  border-radius: 4px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.12);
   padding: 8px 0;
-  min-width: 160px;
-  z-index: 10;
-  margin-top: 10px
+  min-width: 180px;
+  z-index: 30;
+  margin-top: 10px;
 }
+/* Arrow pointer */
 .timeline-step-links::before {
   content: '';
   position: absolute;
@@ -131,28 +146,56 @@
   height: 10px;
   background: var(--color-bg,#fff);
   border-top: 1px solid var(--color-grey-light);
-  border-left: 1px solid var(--color-grey-light)
+  border-left: 1px solid var(--color-grey-light);
+  z-index: 1;
 }
-.timeline-step:hover .timeline-step-links {
-  display: block
+/* Invisible hit-area bridge connecting the step and the dropdown */
+.timeline-step-links::after {
+  content: '';
+  position: absolute;
+  top: -16px;
+  left: -15px;
+  right: -15px;
+  height: 18px;
+  background: transparent;
+  pointer-events: auto;
+}
+.timeline-step:hover .timeline-step-links,
+.timeline-step:focus-within .timeline-step-links,
+.timeline-step.is-open .timeline-step-links {
+  display: block;
 }
 .timeline-step-links ul {
   list-style: none;
   margin: 0;
-  padding: 0
+  padding: 0;
 }
-.timeline-step-links li a {
+.timeline-step-links li {
+  margin: 0;
+  padding: 0;
+}
+.timeline-step-links li a,
+.timeline-step-links li .timeline-step-link-static {
   display: block;
   padding: 8px 16px;
   color: var(--color-primary-text);
   text-decoration: none;
   font-size: 13px;
   text-align: left;
-  transition: background-color .2s
+  line-height: 1.4;
+  white-space: nowrap;
+  transition: background-color .15s ease, color .15s ease;
 }
-.timeline-step-links li a:hover {
+.timeline-step-links li .timeline-step-link-static {
+  color: var(--color-grey);
+  font-style: italic;
+  cursor: default;
+}
+.timeline-step-links li a:hover,
+.timeline-step-links li a:focus {
   background-color: var(--color-grey-lightest);
-  color: var(--color-primary)
+  color: var(--color-primary);
+  outline: none;
 }
 .td-dashboard {
   --td-blue: #2185d0;
