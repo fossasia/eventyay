@@ -837,16 +837,41 @@ def test_orga_can_edit_submission_wrong_answer(
 
 
 @pytest.mark.django_db
-def test_orga_can_edit_submission_duration(orga_client, event, accepted_submission):
+@pytest.mark.parametrize(
+    ('old_default', 'new_default', 'old_override', 'new_override', 'expected_duration'),
+    (
+        (30, 30, None, 123, 123),
+        (30, 60, None, None, 60),
+        (60, 30, None, None, 30),
+        (30, 60, 45, 45, 45),
+        (30, 60, 45, None, 60),
+    ),
+)
+def test_orga_can_edit_submission_duration(
+    orga_client, event, accepted_submission, room,
+    old_default, new_default, old_override, new_override, expected_duration,
+):
+    """Update draft timing for effective duration changes while preserving released slots."""
     with scope(event=event):
+        accepted_submission.submission_type.default_duration = old_default
+        accepted_submission.submission_type.save(update_fields=['default_duration'])
+        accepted_submission.duration = old_override
+        accepted_submission.save(update_fields=['duration'])
+        new_type = event.submission_types.create(name='New type', default_duration=new_default)
         slot = accepted_submission.slots.filter(schedule=event.wip_schedule).first()
-        slot.start = now()
-        slot.end = slot.start + dt.timedelta(minutes=accepted_submission.get_duration())
+        original_start = now()
+        original_end = original_start + dt.timedelta(minutes=accepted_submission.get_duration())
+        slot.start = original_start
+        slot.end = original_end
+        slot.room = room
         slot.save()
-        assert slot.duration == accepted_submission.get_duration()
+        released = event.schedules.create(version='1.0', published=now())
+        released_slot = released.talks.create(
+            submission=accepted_submission, room=room, start=original_start, end=original_end,
+        )
 
     response = orga_client.post(
-        accepted_submission.orga_urls.base,
+        accepted_submission.orga_urls.edit,
         data={
             "abstract": "abstract",
             "content_locale": "en",
@@ -855,18 +880,26 @@ def test_orga_can_edit_submission_duration(orga_client, event, accepted_submissi
             "notes": "notes",
             "speaker": "foo@bar.com",
             "speaker_name": "Foo Speaker",
-            "duration": 123,
+            "duration": new_override if new_override is not None else '',
             "title": "title",
-            "submission_type": accepted_submission.submission_type.pk,
+            "submission_type": new_type.pk,
             "resource-TOTAL_FORMS": 0,
             "resource-INITIAL_FORMS": 0,
         },
-        follow=True,
     )
-    assert response.status_code == 200
+    assert response.status_code == 302
     with scope(event=event):
+        accepted_submission.refresh_from_db()
         slot.refresh_from_db()
-        assert (slot.end - slot.start).seconds / 60 == 123
+        released_slot.refresh_from_db()
+        assert accepted_submission.submission_type_id == new_type.pk
+        assert accepted_submission.duration == new_override
+        assert accepted_submission.get_duration() == expected_duration
+        assert slot.start == original_start
+        assert slot.end == original_start + dt.timedelta(minutes=expected_duration)
+        assert slot.room_id == room.pk
+        assert released_slot.start == original_start
+        assert released_slot.end == original_end
 
 
 @pytest.mark.django_db

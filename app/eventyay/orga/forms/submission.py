@@ -127,13 +127,16 @@ class SubmissionForm(ReadOnlyFlag, RequestRequire, forms.ModelForm):
         return url
 
     def save(self, *args, **kwargs):
+        """Save session edits and synchronize duration changes to draft schedule slots."""
         if 'content_locale' not in self.fields:
             self.instance.content_locale = self.event.content_locales[0] if self.event.content_locales else self.event.locale
         instance = super().save(*args, **kwargs)
         if self.is_creating:
             instance._set_state(self.cleaned_data['state'], force=True)
         else:
-            if 'duration' in self.changed_data:
+            if 'duration' in self.changed_data or (
+                'submission_type' in self.changed_data and instance.duration is None
+            ):
                 instance.update_duration()
             if 'track' in self.changed_data:
                 instance.update_review_scores()
