@@ -851,6 +851,7 @@ def test_orga_can_edit_submission_duration(
     orga_client, event, accepted_submission, room,
     old_default, new_default, old_override, new_override, expected_duration,
 ):
+    """Apply duration edits to draft slots while preserving overrides and released slots."""
     with scope(event=event):
         accepted_submission.submission_type.default_duration = old_default
         accepted_submission.submission_type.save(update_fields=['default_duration'])
@@ -903,6 +904,7 @@ def test_orga_can_edit_submission_duration(
 
 @pytest.mark.django_db
 def test_submission_duration_after_schedule_release(event, accepted_submission, room, monkeypatch):
+    """Refresh a stale draft reference after release without changing the published slot."""
     monkeypatch.setattr('eventyay.agenda.tasks.warm_schedule_caches.apply_async', lambda **kwargs: None)
     with scope(event=event):
         cached_schedule = accepted_submission.event.wip_schedule
