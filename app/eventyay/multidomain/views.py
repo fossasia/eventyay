@@ -17,6 +17,7 @@ from django.utils.encoding import force_str
 from django.utils.functional import Promise
 from django.utils.timezone import now
 from django.utils.translation import gettext as _, pgettext
+from django.middleware.csrf import get_token
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.generic import View
 from django.views.static import serve as static_serve
@@ -162,6 +163,13 @@ class VideoSPAView(View):
                 'hasOrganiserPermissions': can_manage,
                 'publicVideoUrl': f'/{event.organizer.slug}/{event.slug}/video',
                 'homeUrl': safe_reverse('eventyay_common:event.index', organizer=event.organizer.slug, event=event.slug),
+                'plugins': event.get_plugins() if hasattr(event, 'get_plugins') else [],
+                'interpretationUrl': safe_reverse('plugins:interpretation:dashboard', organizer=event.organizer.slug, event=event.slug),
+                'interpretation': {
+                    'isEnabled': bool(event.settings.get('interpretation_is_enabled', default=True, as_type=bool)),
+                    'usePluginStreams': bool(event.settings.get('interpretation_use_plugin_streams', default=False, as_type=bool)),
+                },
+                'csrfToken': get_token(request),
                 'ticketUrl': safe_reverse('control:event.index', organizer=event.organizer.slug, event=event.slug) if has_ticket_access else None,
                 'talkUrl': safe_reverse('orga:event.dashboard', organizer=event.organizer.slug, event=event.slug) if has_talk_access else None,
                 'videoUrl': f'/video/event/{event.organizer.slug}/{event.slug}/',

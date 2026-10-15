@@ -22,7 +22,15 @@ div.c-linear-schedule-session.is-shift-session(
 				.duration {{ getPrettyDuration(session.start, session.end) }}
 		.buffer(v-if="!isSchedulePending")
 	.info
-		.title(:class="{'title-clamped': isShortSession}") {{ getLocalizedString(session.title) }}
+		.title-row
+			.title(:class="{'title-clamped': isShortSession}") {{ getLocalizedString(session.title) }}
+			.organizer-actions(v-if="canManageShifts")
+				button.organizer-action-btn(type="button", @pointerdown.stop, @click.stop="openEditDialog", :title="$t('Edit shift')", :aria-label="$t('Edit shift')")
+					svg.organizer-action-icon(viewBox="0 0 24 24", aria-hidden="true")
+						path(fill="currentColor", d="M6.58 20.57 l1.22 -1.22 l-3.15 -3.15 l-1.22 1.22 v1.43 h1.71 v1.71 h1.43 z M13.58 8.14 q0 -0.29 -0.29 -0.29 q-0.13 0 -0.23 0.09 l-7.26 7.26 q-0.09 0.09 -0.09 0.23 q0 0.29 0.29 0.29 q0.13 0 0.23 -0.09 l7.26 -7.26 q0.09 -0.09 0.09 -0.23 z M12.86 5.57 l5.57 5.57 l-11.14 11.14 h-5.57 v-5.57 z M22 6.86 q0 0.71 -0.5 1.21 l-2.22 2.22 l-5.57 -5.57 l2.22 -2.21 q0.48 -0.51 1.21 -0.51 q0.71 0 1.22 0.51 l3.15 3.13 q0.5 0.52 0.5 1.22 z")
+				button.organizer-action-btn(type="button", @pointerdown.stop, @click.stop="openDeleteConfirm", :title="$t('Delete shift')", :aria-label="$t('Delete shift')")
+					svg.organizer-action-icon(viewBox="0 0 24 24", aria-hidden="true")
+						path(fill="currentColor", d="M9.43 18.43 v-9.43 q0 -0.19 -0.12 -0.31 t-0.31 -0.12 h-0.86 q-0.19 0 -0.31 0.12 t-0.12 0.31 v9.43 q0 0.19 0.12 0.31 t0.31 0.12 h0.86 q0.19 0 0.31 -0.12 t0.12 -0.31 z M12.86 18.43 v-9.43 q0 -0.19 -0.12 -0.31 t-0.31 -0.12 h-0.86 q-0.19 0 -0.31 0.12 t-0.12 0.31 v9.43 q0 0.19 0.12 0.31 t0.31 0.12 h0.86 q0.19 0 0.31 -0.12 t0.12 -0.31 z M16.29 18.43 v-9.43 q0 -0.19 -0.12 -0.31 t-0.31 -0.12 h-0.86 q-0.19 0 -0.31 0.12 t-0.12 0.31 v9.43 q0 0.19 0.12 0.31 t0.31 0.12 h0.86 q0.19 0 0.31 -0.12 t0.12 -0.31 z M9 5.14 h6 l-0.64 -1.57 q-0.09 -0.12 -0.23 -0.15 h-4.25 q-0.13 0.03 -0.23 0.15 z M21.43 5.57 v0.86 q0 0.19 -0.12 0.31 t-0.31 0.12 h-1.29 v12.7 q0 1.11 -0.63 1.92 t-1.51 0.81 h-11.14 q-0.88 0 -1.51 -0.78 t-0.63 -1.9 v-12.75 h-1.29 q-0.19 0 -0.31 -0.12 t-0.12 -0.31 v-0.86 q0 -0.19 0.12 -0.31 t0.31 -0.12 h4.14 l0.94 -2.24 q0.2 -0.5 0.72 -0.84 t1.06 -0.35 h4.29 q0.54 0 1.06 0.35 t0.72 0.84 l0.94 2.24 h4.14 q0.19 0 0.31 0.12 t0.12 0.31 z")
 		.roles-list(v-if="session.roles && session.roles.length")
 			.role-item(v-for="(role, index) in session.roles", :key="role.id ?? index")
 				.role-content
@@ -33,19 +41,15 @@ div.c-linear-schedule-session.is-shift-session(
 						span.role-divider
 						span.role-badge(:class="'badge-' + getCapacityStatus(role)") {{ capacityLabel(role) }}
 					.role-assignees
-						template(v-if="assignedList(role).length")
-							span.role-assignee(v-for="(user, i) in previewAssignees(role)", :key="user.id || i")
-								svg.role-user-icon(viewBox="0 0 24 24", aria-hidden="true")
-									path(fill="currentColor", d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z")
+						ul.role-assignee-list(v-if="assignedList(role).length")
+							li.role-assignee(v-for="(user, i) in sortedAssignees(role)", :key="user.id || i")
 								span.role-assignee-name {{ user.name }}
-							.role-assignees-more-wrap(v-if="hiddenAssigneeCount(role)")
-								button.role-assignees-more(
-									type="button",
-									:aria-expanded="openAssigneesRoleId != null ? 'true' : 'false'",
-									@click.stop="toggleAssigneesPopover(role, $event)") +{{ hiddenAssigneeCount(role) }} {{ $t('more') }}
-						span.text-muted(v-if="!assignedList(role).length") {{ $t('None') }}
+						span.text-muted(v-else) {{ $t('None') }}
 				.shift-actions
-					template(v-if="isMyRole(role)")
+					template(v-if="canManageShifts")
+						button.btn.btn-sm.btn-danger(v-if="isMyRole(role)", type="button", :disabled="claimBusy", @click.stop="openConfirm('drop', role)") {{ $t('Drop') }}
+						button.btn.btn-sm.btn-primary(type="button", :disabled="assignBusy", @click.stop="openAssignDialog(role)") {{ $t('Sign Up') }}
+					template(v-else-if="isMyRole(role)")
 						button.btn.btn-sm.btn-danger(type="button", :disabled="claimBusy", @click.stop="openConfirm('drop', role)") {{ $t('Drop') }}
 					template(v-else-if="canClaimRole(role)")
 						button.btn.btn-sm.btn-primary(type="button", :disabled="claimBusy", @click.stop="openConfirm('claim', role)") {{ $t('Sign Up') }}
@@ -55,14 +59,6 @@ div.c-linear-schedule-session.is-shift-session(
 						span.text-muted {{ $t('Full') }}
 		.bottom-info
 			.room(v-if="showRoom && session.room", :title="getLocalizedString(session.room.name)") {{ getLocalizedString(session.room.name) }}
-	assignees-popover(
-		:open="openAssigneesRoleId != null",
-		:title="assigneesPopoverTitle",
-		:assignees="assigneesPopoverList",
-		:top="assigneesPopoverPos.top",
-		:left="assigneesPopoverPos.left",
-		:width="assigneesPopoverPos.width",
-		:max-height="assigneesPopoverPos.maxHeight")
 	shift-confirm-dialog(
 		ref="shiftConfirm",
 		:title="confirmTitle",
@@ -70,48 +66,69 @@ div.c-linear-schedule-session.is-shift-session(
 		:details="confirmDetails",
 		:confirm-label="confirmLabel",
 		:confirm-class="confirmButtonClass",
+		:email-label="confirmEmailLabel",
+		v-model:sendEmail="sendEmail",
 		:error="confirmError",
 		:busy="claimBusy",
 		@confirm="confirmRoleAction",
 		@cancel="closeConfirm")
+	shift-edit-dialog(
+		v-if="canManageShifts",
+		ref="shiftEdit",
+		:rooms="scheduleRooms",
+		:roles="eventRoles",
+		:timezone="effectiveTimezone",
+		:error="editError",
+		:busy="editBusy",
+		@save="saveEdit",
+		@cancel="closeEditDialog")
+	assign-volunteer-dialog(
+		v-if="canManageShifts",
+		ref="assignDialog",
+		:session="session",
+		:role-id="assignRoleId",
+		:members="members",
+		:error="assignError",
+		:busy="assignBusy",
+		@assign="assignMember",
+		@unassign="unassignMember",
+		@cancel="closeAssignDialog")
 </template>
 
 <script>
 import ShiftConfirmDialog from './ShiftConfirmDialog.vue'
-import AssigneesPopover from './AssigneesPopover.vue'
+import ShiftEditDialog from './ShiftEditDialog.vue'
+import AssignVolunteerDialog from './AssignVolunteerDialog.vue'
 import { getLocalizedString, getPrettyDuration, getSessionTime, getCsrfToken } from '../utils'
 import { logOperational } from '../operationalLog.js'
 import {
 	getCapacityStatus,
 	getAssignedList,
-	previewAssignees,
-	hiddenAssigneeCount,
+	sortedAssignees,
 	getCurrentUserId,
 	getCurrentUserName,
+	getCanManageShifts,
+	getEventRoles,
 	getShiftTrackColor,
+	getShiftActionEmails,
+	setShiftActionEmails,
+	roleActionPayload,
+	roleActionApplied,
+	scheduleApiUrl,
+	getShiftId,
 	claimUrl,
 	withdrawUrl,
+	manageUrl,
+	assignmentsUrl,
+	membersUrl,
 } from './index'
-
-function placeAssigneesPopover (anchorEl) {
-	const rect = anchorEl.getBoundingClientRect()
-	const width = Math.min(280, Math.max(200, window.innerWidth - 16))
-	const maxHeight = Math.min(280, window.innerHeight - 16)
-	let left = rect.left
-	let top = rect.bottom + 6
-	if (left + width > window.innerWidth - 8) left = window.innerWidth - width - 8
-	if (left < 8) left = 8
-	if (top + 140 > window.innerHeight) {
-		top = Math.max(8, rect.top - 6 - Math.min(maxHeight, 200))
-	}
-	return { top, left, width, maxHeight }
-}
 
 export default {
 	name: 'TeamshiftsSession',
 	components: {
 		ShiftConfirmDialog,
-		AssigneesPopover,
+		ShiftEditDialog,
+		AssignVolunteerDialog,
 	},
 	props: {
 		now: Object,
@@ -143,38 +160,20 @@ export default {
 			getSessionTime,
 			getCapacityStatus,
 			getAssignedList,
-			previewAssignees,
-			hiddenAssigneeCount,
+			sortedAssignees,
 			claimBusy: false,
 			confirmAction: null,
 			confirmRole: null,
 			confirmError: '',
-			openAssigneesRoleId: null,
-			assigneesPopoverList: [],
-			assigneesPopoverTitle: 'Assigned',
-			assigneesPopoverPos: { top: 0, left: 0, width: 260, maxHeight: 280 },
+			pendingUnassign: null,
+			editBusy: false,
+			editError: '',
+			assignBusy: false,
+			assignError: '',
+			assignRoleId: null,
+			members: [],
+			sendEmail: true,
 		}
-	},
-	mounted () {
-		this._onAssigneesDocPointerDown = (event) => {
-			if (this.openAssigneesRoleId == null) return
-			const path = event.composedPath?.() || []
-			const inside = path.some((node) => {
-				const el = node
-				return el?.classList?.contains?.('role-assignees-popover') || el?.classList?.contains?.('role-assignees-more')
-			})
-			if (inside) return
-			this.closeAssigneesPopover()
-		}
-		this._onScroll = () => {
-			if (this.openAssigneesRoleId != null) this.closeAssigneesPopover()
-		}
-		document.addEventListener('pointerdown', this._onAssigneesDocPointerDown, true)
-		window.addEventListener('scroll', this._onScroll, true)
-	},
-	beforeUnmount () {
-		document.removeEventListener('pointerdown', this._onAssigneesDocPointerDown, true)
-		window.removeEventListener('scroll', this._onScroll, true)
 	},
 	computed: {
 		effectiveTimezone () {
@@ -231,6 +230,16 @@ export default {
 		currentUserName () {
 			return getCurrentUserName(this.scheduleData)
 		},
+		canManageShifts () {
+			return getCanManageShifts(this.scheduleData)
+		},
+		eventRoles () {
+			return getEventRoles(this.scheduleData)
+		},
+		scheduleRooms () {
+			const data = this.scheduleData?.value ?? this.scheduleData
+			return data?.schedule?.rooms ?? data?.rooms ?? []
+		},
 		myAssignedRoleId () {
 			if (!this.currentUserId || !this.session?.roles) return null
 			for (const role of this.session.roles) {
@@ -268,29 +277,50 @@ export default {
 			return getLocalizedString(this.session.room?.name) || '—'
 		},
 		confirmTitle () {
-			return this.confirmAction === 'drop' ? this.$t('Drop shift role') : this.$t('Claim shift role')
+			if (this.confirmAction === 'drop') return this.$t('Drop shift role')
+			if (this.confirmAction === 'delete') return this.$t('Delete shift')
+			if (this.confirmAction === 'unassign') return this.$t('Unassign volunteer')
+			return this.$t('Claim shift role')
 		},
 		confirmLead () {
 			if (this.confirmAction === 'drop') {
 				return this.$t('Are you sure you want to drop this role? The slot will open again for other team members.')
 			}
+			if (this.confirmAction === 'delete') {
+				return this.$t('Are you sure you want to delete this shift? This cannot be undone.')
+			}
+			if (this.confirmAction === 'unassign') {
+				return this.$t('Are you sure you want to unassign this volunteer from the role?')
+			}
 			return this.$t('Are you sure you want to claim this role for this shift?')
 		},
 		confirmLabel () {
-			return this.confirmAction === 'drop' ? this.$t('Drop') : this.$t('Confirm')
+			if (this.confirmAction === 'drop') return this.$t('Drop')
+			if (this.confirmAction === 'delete') return this.$t('Delete')
+			if (this.confirmAction === 'unassign') return this.$t('Unassign')
+			return this.$t('Confirm')
 		},
 		confirmButtonClass () {
-			return this.confirmAction === 'drop' ? 'btn-danger' : 'btn-primary'
+			return ['drop', 'delete', 'unassign'].includes(this.confirmAction) ? 'btn-danger' : 'btn-primary'
+		},
+		confirmEmailLabel () {
+			if (this.confirmAction === 'drop') return this.$t('Email me a confirmation of this drop')
+			if (this.confirmAction === 'claim') return this.$t('Email me a confirmation of this sign-up')
+			return ''
 		},
 		confirmDetails () {
 			const role = this.confirmRole
-			if (!role) return []
 			const rows = [
 				{ label: this.$t('Shift'), value: getLocalizedString(this.session.title) },
-				{ label: this.$t('Role'), value: this.roleName(role) },
+			]
+			if (role) {
+				rows.push({ label: this.$t('Role'), value: this.roleName(role) })
+			}
+			rows.push(
 				{ label: this.$t('Time'), value: this.shiftTimeLabel },
 				{ label: this.$t('Location'), value: this.shiftLocationLabel },
-			]
+			)
+			if (!role) return rows
 			if (this.confirmAction === 'drop') {
 				const mine = getAssignedList(role).find(user => user.id === this.currentUserId)
 				const selfAssigned = mine ? mine.self_assigned !== false && !mine.assigned_by_name : true
@@ -302,7 +332,10 @@ export default {
 					label: this.$t('Name'),
 					value: mine?.name || this.currentUserName || '—',
 				})
-			} else if (this.currentUserName) {
+			} else if (this.confirmAction === 'unassign') {
+				const target = getAssignedList(role).find(user => user.id === this.pendingUnassign?.userId)
+				rows.push({ label: this.$t('Name'), value: target?.name || '—' })
+			} else if (this.confirmAction === 'claim' && this.currentUserName) {
 				rows.push({ label: this.$t('Name'), value: this.currentUserName })
 			}
 			return rows
@@ -314,22 +347,6 @@ export default {
 		},
 		capacityLabel (role) {
 			return this.$t('{{assigned}}/{{capacity}} needed', { assigned: getAssignedList(role).length, capacity: role.capacity })
-		},
-		closeAssigneesPopover () {
-			this.openAssigneesRoleId = null
-			this.assigneesPopoverList = []
-		},
-		toggleAssigneesPopover (role, event) {
-			const roleId = role.id ?? role.name
-			if (this.openAssigneesRoleId === roleId) {
-				this.closeAssigneesPopover()
-				return
-			}
-			const list = getAssignedList(role)
-			this.assigneesPopoverList = list
-			this.assigneesPopoverTitle = `Assigned (${list.length})`
-			this.assigneesPopoverPos = placeAssigneesPopover(event.currentTarget)
-			this.openAssigneesRoleId = roleId
 		},
 		roleName (role) {
 			return getLocalizedString(role.name)
@@ -351,10 +368,9 @@ export default {
 			if (this.hasOverlappingAssignment) return false
 			return true
 		},
-		async postRoleAction (url, role) {
+		async postRoleAction (url, role, action) {
 			this.claimBusy = true
 			this.confirmError = ''
-			this.closeAssigneesPopover()
 			try {
 				const headers = {
 					'Content-Type': 'application/json',
@@ -367,14 +383,16 @@ export default {
 					method: 'POST',
 					headers,
 					credentials: 'same-origin',
-					body: JSON.stringify({ role_id: role.id }),
+					body: JSON.stringify(roleActionPayload(role, this.sendEmail)),
 				})
 				const data = await response.json().catch(() => ({}))
 				if (!response.ok) {
 					logOperational({action: 'schedule.save', outcome: 'failure', backend: 'teamshifts', error_code: 'http_error', status: response.status})
+					if (await this.recoverFromFailedAction(action, role)) return
 					this.confirmError = data.error || this.$t('Could not update this shift.')
 					return
 				}
+				setShiftActionEmails(this.scheduleData, data.shift_action_emails ?? this.sendEmail)
 				if (Array.isArray(data.roles)) {
 					this.session.roles.splice(0, this.session.roles.length, ...data.roles)
 				} else {
@@ -384,15 +402,38 @@ export default {
 				this.closeConfirm()
 			} catch {
 				logOperational({action: 'schedule.save', outcome: 'failure', backend: 'teamshifts', error_code: 'network_error'})
+				if (await this.recoverFromFailedAction(action, role)) return
 				this.confirmError = this.$t('Could not update this shift.')
 			} finally {
 				this.claimBusy = false
+			}
+		},
+		async recoverFromFailedAction (action, role) {
+			// The request may have failed after the server applied the change. Re-read the
+			// shift so the buttons match the server, and treat an applied change as done.
+			try {
+				const response = await fetch(scheduleApiUrl(this.eventUrl), {
+					headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+					credentials: 'same-origin',
+				})
+				if (!response.ok) return false
+				const data = await response.json()
+				const shiftId = String(getShiftId(this.session))
+				const talk = (data.talks || []).find(t => String(t.id) === shiftId)
+				if (!talk || !Array.isArray(talk.roles)) return false
+				this.session.roles.splice(0, this.session.roles.length, ...talk.roles)
+				if (!roleActionApplied(action, talk.roles, role.id, this.currentUserId)) return false
+				this.closeConfirm()
+				return true
+			} catch {
+				return false
 			}
 		},
 		openConfirm (action, role) {
 			this.confirmAction = action
 			this.confirmRole = role
 			this.confirmError = ''
+			this.sendEmail = getShiftActionEmails(this.scheduleData)
 			this.$nextTick(() => this.$refs.shiftConfirm?.show())
 		},
 		closeConfirm () {
@@ -400,20 +441,212 @@ export default {
 			this.confirmAction = null
 			this.confirmRole = null
 			this.confirmError = ''
+			this.pendingUnassign = null
 		},
 		confirmRoleAction () {
+			if (this.confirmAction === 'delete') return this.deleteShift()
+			if (this.confirmAction === 'unassign') return this.performUnassign()
 			const role = this.confirmRole
 			if (!role) return
 			const url = this.confirmAction === 'drop'
 				? withdrawUrl(this.eventUrl, this.session)
 				: claimUrl(this.eventUrl, this.session)
-			return this.postRoleAction(url, role)
+			return this.postRoleAction(url, role, this.confirmAction)
+		},
+		openEditDialog () {
+			this.editError = ''
+			this.$nextTick(() => this.$refs.shiftEdit?.show(this.session))
+		},
+		closeEditDialog () {
+			this.$refs.shiftEdit?.close()
+			this.editError = ''
+		},
+		async saveEdit (payload) {
+			this.editBusy = true
+			this.editError = ''
+			try {
+				const headers = {
+					'Content-Type': 'application/json',
+					Accept: 'application/json',
+					'X-Requested-With': 'XMLHttpRequest',
+				}
+				const csrf = getCsrfToken()
+				if (csrf) headers['X-CSRFToken'] = csrf
+				const response = await fetch(manageUrl(this.eventUrl, this.session), {
+					method: 'PATCH',
+					headers,
+					credentials: 'same-origin',
+					body: JSON.stringify(payload),
+				})
+				const data = await response.json().catch(() => ({}))
+				if (!response.ok) {
+					logOperational({action: 'schedule.save', outcome: 'failure', backend: 'teamshifts', error_code: 'http_error', status: response.status})
+					this.editError = data.detail || data.error || this.$t('Could not update this shift.')
+					return
+				}
+				window.location.reload()
+			} catch {
+				logOperational({action: 'schedule.save', outcome: 'failure', backend: 'teamshifts', error_code: 'network_error'})
+				this.editError = this.$t('Could not update this shift.')
+			} finally {
+				this.editBusy = false
+			}
+		},
+		openDeleteConfirm () {
+			this.confirmAction = 'delete'
+			this.confirmRole = null
+			this.confirmError = ''
+			this.$nextTick(() => this.$refs.shiftConfirm?.show())
+		},
+		async deleteShift () {
+			this.claimBusy = true
+			this.confirmError = ''
+			try {
+				const headers = {
+					Accept: 'application/json',
+					'X-Requested-With': 'XMLHttpRequest',
+				}
+				const csrf = getCsrfToken()
+				if (csrf) headers['X-CSRFToken'] = csrf
+				const response = await fetch(manageUrl(this.eventUrl, this.session), {
+					method: 'DELETE',
+					headers,
+					credentials: 'same-origin',
+				})
+				if (!response.ok) {
+					const data = await response.json().catch(() => ({}))
+					logOperational({action: 'schedule.save', outcome: 'failure', backend: 'teamshifts', error_code: 'http_error', status: response.status})
+					this.confirmError = data.detail || data.error || this.$t('Could not delete this shift.')
+					return
+				}
+				window.location.reload()
+			} catch {
+				logOperational({action: 'schedule.save', outcome: 'failure', backend: 'teamshifts', error_code: 'network_error'})
+				this.confirmError = this.$t('Could not delete this shift.')
+			} finally {
+				this.claimBusy = false
+			}
+		},
+		openAssignDialog (role) {
+			this.assignRoleId = role.id
+			this.assignError = ''
+			this.members = []
+			this.$nextTick(() => this.$refs.assignDialog?.show())
+			this.loadMembers()
+		},
+		closeAssignDialog () {
+			this.$refs.assignDialog?.close()
+			this.assignError = ''
+			this.assignRoleId = null
+		},
+		async loadMembers () {
+			try {
+				const response = await fetch(membersUrl(this.eventUrl), {
+					headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+					credentials: 'same-origin',
+				})
+				const data = await response.json().catch(() => ({}))
+				if (!response.ok || !Array.isArray(data.members)) {
+					logOperational({action: 'schedule.fetch', outcome: 'failure', backend: 'teamshifts', error_code: response.ok ? 'invalid_payload' : 'http_error', status: response.status})
+					this.assignError = this.$t('Could not load team members.')
+					return
+				}
+				this.members = data.members
+			} catch {
+				logOperational({action: 'schedule.fetch', outcome: 'failure', backend: 'teamshifts', error_code: 'network_error'})
+				this.assignError = this.$t('Could not load team members.')
+			}
+		},
+		async assignMember ({ roleId, userId }) {
+			this.assignBusy = true
+			this.assignError = ''
+			try {
+				const headers = {
+					'Content-Type': 'application/json',
+					Accept: 'application/json',
+					'X-Requested-With': 'XMLHttpRequest',
+				}
+				const csrf = getCsrfToken()
+				if (csrf) headers['X-CSRFToken'] = csrf
+				const response = await fetch(assignmentsUrl(this.eventUrl), {
+					method: 'POST',
+					headers,
+					credentials: 'same-origin',
+					body: JSON.stringify({ shift_id: getShiftId(this.session), user_id: userId, role_id: roleId }),
+				})
+				const data = await response.json().catch(() => ({}))
+				if (!response.ok) {
+					logOperational({action: 'schedule.save', outcome: 'failure', backend: 'teamshifts', error_code: 'http_error', status: response.status})
+					this.assignError = data.detail || this.$t('Could not assign this volunteer.')
+					return
+				}
+				if (Array.isArray(data.roles)) {
+					this.session.roles.splice(0, this.session.roles.length, ...data.roles)
+				}
+			} catch {
+				logOperational({action: 'schedule.save', outcome: 'failure', backend: 'teamshifts', error_code: 'network_error'})
+				this.assignError = this.$t('Could not assign this volunteer.')
+			} finally {
+				this.assignBusy = false
+			}
+		},
+		unassignMember ({ roleId, userId }) {
+			this.pendingUnassign = { roleId, userId }
+			this.confirmAction = 'unassign'
+			this.confirmRole = (this.session.roles || []).find(r => r.id === roleId) || null
+			this.confirmError = ''
+			this.$nextTick(() => this.$refs.shiftConfirm?.show())
+		},
+		async performUnassign () {
+			if (!this.pendingUnassign) return
+			const { roleId, userId } = this.pendingUnassign
+			this.claimBusy = true
+			this.confirmError = ''
+			try {
+				const headers = {
+					Accept: 'application/json',
+					'X-Requested-With': 'XMLHttpRequest',
+				}
+				const csrf = getCsrfToken()
+				if (csrf) headers['X-CSRFToken'] = csrf
+				const url = `${assignmentsUrl(this.eventUrl)}?shift_id=${getShiftId(this.session)}&user_id=${userId}&role_id=${roleId}`
+				const response = await fetch(url, { method: 'DELETE', headers, credentials: 'same-origin' })
+				const data = await response.json().catch(() => ({}))
+				if (!response.ok) {
+					logOperational({action: 'schedule.save', outcome: 'failure', backend: 'teamshifts', error_code: 'http_error', status: response.status})
+					this.confirmError = data.detail || this.$t('Could not unassign this volunteer.')
+					return
+				}
+				if (Array.isArray(data.roles)) {
+					this.session.roles.splice(0, this.session.roles.length, ...data.roles)
+				}
+				this.closeConfirm()
+			} catch {
+				logOperational({action: 'schedule.save', outcome: 'failure', backend: 'teamshifts', error_code: 'network_error'})
+				this.confirmError = this.$t('Could not unassign this volunteer.')
+			} finally {
+				this.claimBusy = false
+			}
 		},
 	},
 }
 </script>
 
 <style lang="stylus">
+.organizer-action-btn
+	display: inline-flex
+	align-items: center
+	flex-shrink: 0
+	padding: 0
+	border: none
+	background: transparent
+	color: #2185d0
+	cursor: pointer
+	&:hover
+		color: #1a6fb5
+.organizer-action-icon
+	width: 14px
+	height: 14px
 .c-linear-schedule-session.is-shift-session
 	z-index: 10
 	display: flex
@@ -511,10 +744,19 @@ export default {
 		border-radius: 0 6px 6px 0
 		background-color: $clr-white
 		min-width: 0
+		.title-row
+			display: flex
+			align-items: flex-start
+			justify-content: space-between
+			gap: 8px
+			margin-bottom: 4px
 		.title
 			font-size: 16px
 			font-weight: 500
-			margin-bottom: 4px
+		.organizer-actions
+			display: flex
+			flex-shrink: 0
+			gap: 28px
 		.bottom-info
 			flex: auto
 			display: flex
@@ -590,42 +832,32 @@ export default {
 							border-color: #c9920a
 							color: #c9920a
 				.role-assignees
-					position: relative
-					display: flex
-					flex-wrap: wrap
-					align-items: center
-					gap: 6px 12px
-					font-size: 12px
-					color: #6c757d
-					margin-top: 4px
-					.role-assignee
-						display: inline-flex
-						align-items: center
-						gap: 6px
-						min-width: 0
-					.role-assignee-name
-						min-width: 0
-					.role-user-icon
-						width: 11px
-						height: 11px
-						flex-shrink: 0
-					.role-assignees-more-wrap
-						position: relative
-					.role-assignees-more
-						border: none
-						background: transparent
-						color: #2185d0
-						font-size: 12px
-						font-weight: 600
-						line-height: 1.3
+					margin-top: 6px
+					.role-assignee-list
+						list-style: none
+						margin: 0
 						padding: 0
-						cursor: pointer
-						&:hover
-							text-decoration: underline
+						display: flex
+						flex-wrap: wrap
+						gap: 4px 6px
+					.role-assignee
+						list-style: none
+						margin: 0
+						padding: 3px 9px
+						max-width: 100%
+						font-size: 12px
+						line-height: 1.3
+						color: $clr-secondary-text-light
+						background-color: $clr-grey-100
+						border-radius: 999px
+						overflow-wrap: anywhere
+						&::marker
+							content: none
 			.shift-actions
 				display: flex
 				align-items: center
 				flex-shrink: 0
+				gap: 6px
 				.btn
 					display: inline-block
 					padding: 2px 8px
