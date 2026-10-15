@@ -70,6 +70,8 @@ div.c-linear-schedule-session.is-shift-session(
 		:details="confirmDetails",
 		:confirm-label="confirmLabel",
 		:confirm-class="confirmButtonClass",
+		:email-label="confirmEmailLabel",
+		v-model:sendEmail="sendEmail",
 		:error="confirmError",
 		:busy="claimBusy",
 		@confirm="confirmRoleAction",
@@ -89,6 +91,12 @@ import {
 	getCurrentUserId,
 	getCurrentUserName,
 	getShiftTrackColor,
+	getShiftActionEmails,
+	setShiftActionEmails,
+	roleActionPayload,
+	roleActionApplied,
+	scheduleApiUrl,
+	getShiftId,
 	claimUrl,
 	withdrawUrl,
 } from './index'
@@ -149,6 +157,7 @@ export default {
 			confirmAction: null,
 			confirmRole: null,
 			confirmError: '',
+			sendEmail: true,
 			openAssigneesRoleId: null,
 			assigneesPopoverList: [],
 			assigneesPopoverTitle: 'Assigned',
@@ -282,6 +291,11 @@ export default {
 		confirmButtonClass () {
 			return this.confirmAction === 'drop' ? 'btn-danger' : 'btn-primary'
 		},
+		confirmEmailLabel () {
+			return this.confirmAction === 'drop'
+				? this.$t('Email me a confirmation of this drop')
+				: this.$t('Email me a confirmation of this sign-up')
+		},
 		confirmDetails () {
 			const role = this.confirmRole
 			if (!role) return []
@@ -351,7 +365,7 @@ export default {
 			if (this.hasOverlappingAssignment) return false
 			return true
 		},
-		async postRoleAction (url, role) {
+		async postRoleAction (url, role, action) {
 			this.claimBusy = true
 			this.confirmError = ''
 			this.closeAssigneesPopover()
@@ -367,14 +381,16 @@ export default {
 					method: 'POST',
 					headers,
 					credentials: 'same-origin',
-					body: JSON.stringify({ role_id: role.id }),
+					body: JSON.stringify(roleActionPayload(role, this.sendEmail)),
 				})
 				const data = await response.json().catch(() => ({}))
 				if (!response.ok) {
 					logOperational({action: 'schedule.save', outcome: 'failure', backend: 'teamshifts', error_code: 'http_error', status: response.status})
+					if (await this.recoverFromFailedAction(action, role)) return
 					this.confirmError = data.error || this.$t('Could not update this shift.')
 					return
 				}
+				setShiftActionEmails(this.scheduleData, data.shift_action_emails ?? this.sendEmail)
 				if (Array.isArray(data.roles)) {
 					this.session.roles.splice(0, this.session.roles.length, ...data.roles)
 				} else {
@@ -384,15 +400,38 @@ export default {
 				this.closeConfirm()
 			} catch {
 				logOperational({action: 'schedule.save', outcome: 'failure', backend: 'teamshifts', error_code: 'network_error'})
+				if (await this.recoverFromFailedAction(action, role)) return
 				this.confirmError = this.$t('Could not update this shift.')
 			} finally {
 				this.claimBusy = false
+			}
+		},
+		async recoverFromFailedAction (action, role) {
+			// The request may have failed after the server applied the change. Re-read the
+			// shift so the buttons match the server, and treat an applied change as done.
+			try {
+				const response = await fetch(scheduleApiUrl(this.eventUrl), {
+					headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+					credentials: 'same-origin',
+				})
+				if (!response.ok) return false
+				const data = await response.json()
+				const shiftId = String(getShiftId(this.session))
+				const talk = (data.talks || []).find(t => String(t.id) === shiftId)
+				if (!talk || !Array.isArray(talk.roles)) return false
+				this.session.roles.splice(0, this.session.roles.length, ...talk.roles)
+				if (!roleActionApplied(action, talk.roles, role.id, this.currentUserId)) return false
+				this.closeConfirm()
+				return true
+			} catch {
+				return false
 			}
 		},
 		openConfirm (action, role) {
 			this.confirmAction = action
 			this.confirmRole = role
 			this.confirmError = ''
+			this.sendEmail = getShiftActionEmails(this.scheduleData)
 			this.$nextTick(() => this.$refs.shiftConfirm?.show())
 		},
 		closeConfirm () {
@@ -407,7 +446,7 @@ export default {
 			const url = this.confirmAction === 'drop'
 				? withdrawUrl(this.eventUrl, this.session)
 				: claimUrl(this.eventUrl, this.session)
-			return this.postRoleAction(url, role)
+			return this.postRoleAction(url, role, this.confirmAction)
 		},
 	},
 }
