@@ -51,6 +51,7 @@ def test_bulk_review_respects_score_category_tracks(review_client, submission, t
 @pytest.mark.parametrize("assigned", (True, False))
 @pytest.mark.django_db
 def test_reviewer_can_add_review(review_client, review_user, submission, assigned):
+    """Allow a reviewer to save scores and text with or without an explicit assignment."""
     with scope(event=submission.event):
         category = submission.event.score_categories.first()
         score = category.scores.filter(value=1).first()
