@@ -289,9 +289,15 @@ def test_orga_cannot_release_schedule_with_existing_version(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize('version', ('wip', 'latest', ' wip ', ' latest '))
-def test_orga_cannot_release_reserved_schedule_version(client, orga_user_write_token, event, slot, version):
-    """Return a version validation error and preserve schedules for reserved names."""
+@pytest.mark.parametrize('has_wip', (True, False))
+def test_orga_cannot_release_reserved_schedule_version(client, orga_user_write_token, event, slot, version, has_wip):
+    """Reject reserved names without changing schedules, including a missing draft."""
     with scope(event=event):
+        if not has_wip:
+            draft = event.schedules.get(version__isnull=True)
+            draft.talks.all().delete()
+            draft.delete()
+        assert event.schedules.filter(version__isnull=True).exists() is has_wip
         schedules = list(event.schedules.order_by('pk').values_list('pk', 'version', 'published'))
         original_slot = (slot.schedule_id, slot.start, slot.end, slot.room_id)
         mail_count = event.queued_mails.count()
