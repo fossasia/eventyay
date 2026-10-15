@@ -1,10 +1,50 @@
 import json
 import re
 import tempfile
+
 import pytest
 from django_scopes import scope
+
 from eventyay.base.models import Review, ReviewScore, ReviewScoreCategory, SubmissionStates, User
 from eventyay.base.models.question import TalkQuestionRequired as QuestionRequired
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('proposal_track', ('matching', 'other', 'none'))
+def test_bulk_review_respects_score_category_tracks(review_client, submission, track, other_track, proposal_track):
+    event = submission.event
+    with scope(event=event):
+        submission.track = {'matching': track, 'other': other_track, 'none': None}[proposal_track]
+        submission.save(update_fields=['track'])
+        general = event.score_categories.get(active=True)
+        category = ReviewScoreCategory.objects.create(event=event, name='Mentoring relevance')
+        category.limit_tracks.add(track)
+        restricted_score = ReviewScore.objects.create(category=category, value=5)
+        general_score = general.scores.get(value=1)
+
+    url = event.orga_urls.reviews + 'bulk/'
+    response = review_client.get(url)
+    assert response.status_code == 200
+    form = response.context['forms'][submission.code]
+    expected = {f'score_{general.pk}', 'text'}
+    if proposal_track == 'matching':
+        expected.add(f'score_{category.pk}')
+    assert set(form.fields) == expected
+    assert len(form.categories) == len({item.pk for item in form.categories})
+
+    response = review_client.post(url, data={
+        f'{submission.code}-score_{general.pk}': general_score.pk,
+        f'{submission.code}-score_{category.pk}': restricted_score.pk,
+        f'{submission.code}-text': 'Bulk review',
+    })
+    assert response.status_code == 200
+    with scope(event=event):
+        review = submission.reviews.get()
+        expected_scores = {general_score.pk}
+        if proposal_track == 'matching':
+            expected_scores.add(restricted_score.pk)
+        assert set(review.scores.values_list('pk', flat=True)) == expected_scores
+        assert review.score == (6 if proposal_track == 'matching' else 1)
 
 
 @pytest.mark.parametrize("assigned", (True, False))

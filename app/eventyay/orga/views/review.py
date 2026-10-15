@@ -412,9 +412,11 @@ class BulkReview(EventPermissionRequired, TemplateView):
         }
         categories = defaultdict(list)
         for category in self.categories:
-            for track in category.limit_tracks.all():
+            tracks = category.limit_tracks.all()
+            for track in tracks:
                 categories[track.pk].append(category)
-            categories[None].append(category)
+            if not tracks:
+                categories[None].append(category)
         return {
             submission.code: ReviewForm(
                 event=self.request.event,
