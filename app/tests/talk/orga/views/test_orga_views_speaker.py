@@ -9,6 +9,7 @@ from i18nfield.strings import LazyI18nString
 from eventyay.base.models import SpeakerProfile, User
 from eventyay.base.models.mail import QueuedMail
 from eventyay.base.models.question import TalkQuestionRequired as QuestionRequired
+from eventyay.base.models.submission import SubmissionStates
 from eventyay.orga.views.speaker import SpeakerViewMixin
 from eventyay.person.forms import SpeakerProfileForm
 from eventyay.person.forms.profile import AVATAR_LICENSE_TEXT_VALIDATION_ERROR
@@ -478,6 +479,108 @@ def test_speaker_list_sorts_by_featured(
 
     names = speaker_names_in_table(response)
     assert names[0] == speaker.fullname
+
+
+@pytest.mark.django_db
+def test_speaker_list_sorts_by_name(
+    orga_client, speaker, other_speaker, event, submission, other_submission
+):
+    speaker.fullname = 'Alice Speaker'
+    speaker.save(update_fields=['fullname'])
+    other_speaker.fullname = 'Zara Speaker'
+    other_speaker.save(update_fields=['fullname'])
+
+    # Test ascending (a-z)
+    response = orga_client.get(event.orga_urls.speakers + '?sort=name', follow=True)
+    assert response.status_code == 200
+    doc = bs4.BeautifulSoup(response.content, 'lxml')
+    names = [link.get_text(strip=True) for link in doc.select('table tbody td a[href*="/speakers/"]')]
+    assert names == ['Alice Speaker', 'Zara Speaker']
+    active_sort = doc.select_one('th a.active')
+    assert active_sort is not None
+    assert 'sort=name' in active_sort['href']
+
+    # Test descending (z-a)
+    response = orga_client.get(event.orga_urls.speakers + '?sort=-name', follow=True)
+    assert response.status_code == 200
+    doc = bs4.BeautifulSoup(response.content, 'lxml')
+    names = [link.get_text(strip=True) for link in doc.select('table tbody td a[href*="/speakers/"]')]
+    assert names == ['Zara Speaker', 'Alice Speaker']
+    active_sort = doc.select_one('th a.active')
+    assert active_sort is not None
+    assert 'sort=-name' in active_sort['href']
+
+
+@pytest.mark.django_db
+def test_speaker_list_sorts_by_proposals_and_accepted(
+    orga_client, speaker, other_speaker, event, submission, other_submission
+):
+    with scope(event=event):
+        # speaker has 1 accepted proposal
+        submission.state = SubmissionStates.ACCEPTED
+        submission.save(update_fields=['state'])
+        # other_speaker has 1 submitted (not accepted) proposal
+        other_submission.state = SubmissionStates.SUBMITTED
+        other_submission.save(update_fields=['state'])
+
+    # Descending by accepted proposals count
+    response = orga_client.get(event.orga_urls.speakers + '?sort=-accepted_submission_count', follow=True)
+    assert response.status_code == 200
+    doc = bs4.BeautifulSoup(response.content, 'lxml')
+    names = [link.get_text(strip=True) for link in doc.select('table tbody td a[href*="/speakers/"]')]
+    assert names[0] == speaker.fullname
+
+    # Ascending by accepted proposals count
+    response = orga_client.get(event.orga_urls.speakers + '?sort=accepted_submission_count', follow=True)
+    assert response.status_code == 200
+    doc = bs4.BeautifulSoup(response.content, 'lxml')
+    names = [link.get_text(strip=True) for link in doc.select('table tbody td a[href*="/speakers/"]')]
+    assert names[0] == other_speaker.fullname
+
+
+@pytest.mark.django_db
+def test_speaker_list_sorts_by_arrival(
+    orga_client, speaker, other_speaker, event, submission, other_submission
+):
+    with scope(event=event):
+        sp_profile = speaker.event_profile(event)
+        sp_profile.has_arrived = True
+        sp_profile.save(update_fields=['has_arrived'])
+
+        other_profile = other_speaker.event_profile(event)
+        other_profile.has_arrived = False
+        other_profile.save(update_fields=['has_arrived'])
+
+    # Arrived first (-has_arrived)
+    response = orga_client.get(event.orga_urls.speakers + '?sort=-has_arrived', follow=True)
+    assert response.status_code == 200
+    doc = bs4.BeautifulSoup(response.content, 'lxml')
+    names = [link.get_text(strip=True) for link in doc.select('table tbody td a[href*="/speakers/"]')]
+    assert names[0] == speaker.fullname
+    assert names[1] == other_speaker.fullname
+    active_sort = doc.select_one('th a.active')
+    assert active_sort is not None
+    assert 'sort=-has_arrived' in active_sort['href']
+
+    # Not arrived first (has_arrived)
+    response = orga_client.get(event.orga_urls.speakers + '?sort=has_arrived', follow=True)
+    assert response.status_code == 200
+    doc = bs4.BeautifulSoup(response.content, 'lxml')
+    names = [link.get_text(strip=True) for link in doc.select('table tbody td a[href*="/speakers/"]')]
+    assert names[0] == other_speaker.fullname
+    assert names[1] == speaker.fullname
+
+
+@pytest.mark.django_db
+def test_speaker_list_sorting_preserved_in_filter_form(
+    orga_client, speaker, event, submission
+):
+    response = orga_client.get(event.orga_urls.speakers + '?sort=-has_arrived', follow=True)
+    assert response.status_code == 200
+    doc = bs4.BeautifulSoup(response.content, 'lxml')
+    hidden_sort = doc.select_one('form input[type="hidden"][name="sort"]')
+    assert hidden_sort is not None
+    assert hidden_sort['value'] == '-has_arrived'
 
 
 @pytest.mark.django_db

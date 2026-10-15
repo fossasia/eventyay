@@ -1,5 +1,4 @@
 {% extends "orga/base.html" %}
-
 {% load compress %}
 {% load staff_session %}
 {% load i18n %}
@@ -63,19 +62,35 @@
         <table class="table table-sm table-flip table-sticky speaker-list-table">
             <thead>
                 <tr>
-                    <th>{% translate "Name" %}</th>
-                    <th class="numeric">{% translate "Accepted Proposals" %}</th>
-                    <th class="numeric">{% translate "Proposals" %}</th>
+                    <th>
+                        {% translate "Name" %}
+                        <a href="{% querystring sort='name' %}" class="{% if request.GET.sort == 'name' or request.GET.sort == 'user__fullname' %}text-primary active{% else %}text-muted{% endif %}" aria-label="{% translate 'Sort (a-z)' %}"><i class="fa fa-caret-down" title="{% translate 'Sort (a-z)' %}"></i></a>
+                        <a href="{% querystring sort='-name' %}" class="{% if request.GET.sort == '-name' or request.GET.sort == '-user__fullname' %}text-primary active{% else %}text-muted{% endif %}" aria-label="{% translate 'Sort (z-a)' %}"><i class="fa fa-caret-up" title="{% translate 'Sort (z-a)' %}"></i></a>
+                    </th>
+                    <th class="numeric">
+                        {% translate "Accepted Proposals" %}
+                        <a href="{% querystring sort='-accepted_submission_count' %}" class="{% if request.GET.sort == '-accepted_submission_count' %}text-primary active{% else %}text-muted{% endif %}" aria-label="{% translate 'Sort (high-low)' %}"><i class="fa fa-caret-down" title="{% translate 'Sort (high-low)' %}"></i></a>
+                        <a href="{% querystring sort='accepted_submission_count' %}" class="{% if request.GET.sort == 'accepted_submission_count' %}text-primary active{% else %}text-muted{% endif %}" aria-label="{% translate 'Sort (low-high)' %}"><i class="fa fa-caret-up" title="{% translate 'Sort (low-high)' %}"></i></a>
+                    </th>
+                    <th class="numeric">
+                        {% translate "Proposals" %}
+                        <a href="{% querystring sort='-submission_count' %}" class="{% if request.GET.sort == '-submission_count' %}text-primary active{% else %}text-muted{% endif %}" aria-label="{% translate 'Sort (high-low)' %}"><i class="fa fa-caret-down" title="{% translate 'Sort (high-low)' %}"></i></a>
+                        <a href="{% querystring sort='submission_count' %}" class="{% if request.GET.sort == 'submission_count' %}text-primary active{% else %}text-muted{% endif %}" aria-label="{% translate 'Sort (low-high)' %}"><i class="fa fa-caret-up" title="{% translate 'Sort (low-high)' %}"></i></a>
+                    </th>
                     <th class="text-center">
                         {% translate "Featured" %}
                         {% if can_update_speaker %}
                             <i class="fa fa-question-circle" data-toggle="tooltip" title="{% translate 'Show this speaker in the list of featured speakers.' %}"></i>
-                            <a href="{% querystring sort='-is_featured' %}" aria-label="{% translate 'Sort featured speakers first' %}"><i class="fa fa-caret-down"></i></a>
-                            <a href="{% querystring sort='is_featured' %}" aria-label="{% translate 'Sort non-featured speakers first' %}"><i class="fa fa-caret-up"></i></a>
+                            <a href="{% querystring sort='-is_featured' %}" class="{% if request.GET.sort == '-is_featured' %}text-primary active{% else %}text-muted{% endif %}" aria-label="{% translate 'Sort featured speakers first' %}"><i class="fa fa-caret-down"></i></a>
+                            <a href="{% querystring sort='is_featured' %}" class="{% if request.GET.sort == 'is_featured' %}text-primary active{% else %}text-muted{% endif %}" aria-label="{% translate 'Sort non-featured speakers first' %}"><i class="fa fa-caret-up"></i></a>
                         {% endif %}
                     </th>
                     <th>{% translate "Sessions" %}</th>
-                    <th></th>
+                    <th class="text-right">
+                        {% translate "Arrival" %}
+                        <a href="{% querystring sort='-has_arrived' %}" class="{% if request.GET.sort == '-has_arrived' or request.GET.sort == '-arrived' %}text-primary active{% else %}text-muted{% endif %}" aria-label="{% translate 'Sort arrived first' %}"><i class="fa fa-caret-down" title="{% translate 'Sort arrived first' %}"></i></a>
+                        <a href="{% querystring sort='has_arrived' %}" class="{% if request.GET.sort == 'has_arrived' or request.GET.sort == 'arrived' %}text-primary active{% else %}text-muted{% endif %}" aria-label="{% translate 'Sort not arrived first' %}"><i class="fa fa-caret-up" title="{% translate 'Sort not arrived first' %}"></i></a>
+                    </th>
                 </tr>
             </thead>
             <tbody dragsort-url="{{ request.event.orga_urls.speakers }}">

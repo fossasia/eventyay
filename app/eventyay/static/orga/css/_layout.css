@@ -3617,6 +3617,24 @@ a.btn-speaker-not-arrived {
   color: var(--color-white);
 }
 
+.speaker-list-table th a {
+  margin-left: 2px;
+}
+
+.speaker-list-table th a.active {
+  color: var(--color-primary, #007bff) !important;
+  font-weight: bold;
+}
+
+.speaker-list-table th a.text-muted {
+  color: #6c757d;
+  opacity: 0.65;
+}
+
+.speaker-list-table th a.text-muted:hover {
+  opacity: 1;
+}
+
 .speaker-list-table td {
   vertical-align: middle;
 }

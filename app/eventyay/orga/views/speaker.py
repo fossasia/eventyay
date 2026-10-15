@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.db import IntegrityError, transaction
 from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q
 from django.db.models.expressions import OrderBy
+from django.db.models.functions import Lower
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
@@ -64,9 +65,28 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
     template_name = 'orga/speaker/list.html'
     context_object_name = 'speakers'
     default_filters = ('user__email__icontains', 'user__fullname__icontains')
-    sortable_fields = ('position', 'user__email', 'user__fullname', 'is_featured')
+    sortable_fields = (
+        'position',
+        'user__email',
+        'user__fullname',
+        'name',
+        'is_featured',
+        'accepted_submission_count',
+        'submission_count',
+        'has_arrived',
+        'arrived',
+    )
     default_sort_field = 'position'
-    secondary_sort = {'position': ('user__fullname',), 'is_featured': ('position', 'user__fullname')}
+    secondary_sort = {
+        'position': ('user__fullname',),
+        'is_featured': ('position', 'user__fullname'),
+        'user__fullname': ('position',),
+        'name': ('position',),
+        'accepted_submission_count': ('user__fullname',),
+        'submission_count': ('user__fullname',),
+        'has_arrived': ('user__fullname',),
+        'arrived': ('user__fullname',),
+    }
     permission_required = 'base.orga_list_speakerprofile'
 
     def _speaker_list_ordering(self, *, descending=False):
@@ -84,6 +104,15 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
         plain_key = sort_key[1:] if sort_key.startswith('-') else sort_key
         if plain_key == 'position':
             return qs.order_by(*self._speaker_list_ordering(descending=sort_key.startswith('-')))
+        if plain_key == 'name':
+            plain_key = 'user__fullname'
+            qs = qs.annotate(key=Lower('user__fullname'))
+            sort_field = '-key' if sort_key.startswith('-') else 'key'
+            return self._sort_queryset(qs, [sort_field] + self._get_secondary_sort(plain_key))
+        if plain_key == 'arrived':
+            plain_key = 'has_arrived'
+            sort_field = '-has_arrived' if sort_key.startswith('-') else 'has_arrived'
+            return self._sort_queryset(qs, [sort_field] + self._get_secondary_sort(plain_key))
         return super().sort_queryset(qs)
 
     def get_filter_form(self):
