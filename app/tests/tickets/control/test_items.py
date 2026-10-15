@@ -1067,8 +1067,42 @@ class FreePriceBoundsTest(ItemFormTest):
         doc = self.post_doc(url, form_data)
         assert not doc.select('.alert-success')
         assert doc.select('.has-error')
+        min_field_group = doc.select('#id_free_price_min')[0].find_parent(class_='form-group')
+        help_blocks = min_field_group.select('.help-block')
+        assert len(help_blocks) == 1
+        assert 'The minimum price must not be negative.' in help_blocks[0].text
+        assert 'The minimum price a user has to enter' not in min_field_group.text
         with scopes_disabled():
             assert not Item.objects.filter(name__icontains='Free Price Donation').exists()
+
+    def test_control_field_renderer_single_error_no_duplicate_help(self):
+        """Test that ControlFieldRenderer renders only the validation error and hides help text on failure."""
+        from eventyay.control.forms.renderers import ControlFieldRenderer
+
+        class SampleForm(forms.Form):
+            free_price_min = forms.DecimalField(
+                label='Minimum price',
+                help_text=(
+                    'The minimum price a user has to enter. If left empty, '
+                    'the default price will be used as the minimum.'
+                ),
+                required=False,
+            )
+
+        # Clean form without errors displays help text
+        form = SampleForm()
+        renderer = ControlFieldRenderer(form['free_price_min'])
+        rendered = renderer.render()
+        assert 'The minimum price a user has to enter' in rendered
+
+        # Form with error displays only the single error message, hiding help text to avoid duplicate notifications
+        form_err = SampleForm(data={'free_price_min': '-5.00'})
+        form_err.is_valid()
+        form_err.add_error('free_price_min', 'The minimum price must not be negative.')
+        renderer_err = ControlFieldRenderer(form_err['free_price_min'])
+        rendered_err = renderer_err.render()
+        assert 'The minimum price must not be negative.' in rendered_err
+        assert 'The minimum price a user has to enter' not in rendered_err
 
     def test_create_item_valid_free_price_succeeds(self):
         url = reverse('control:event.products.add', kwargs={'organizer': self.orga1.slug, 'event': self.event1.slug})
