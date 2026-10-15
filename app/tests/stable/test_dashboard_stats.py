@@ -75,6 +75,12 @@ class TestEventListStats:
         client.force_login(test_user)
         response = client.get('/common/events/')
         assert response.status_code == 200
+        content = response.content.decode()
+        assert 'data-searchable-select' in content
+        assert 'data-search-placeholder="Search organizers"' in content
+        assert 'All organizers</option>' in content
+        assert 'Stats Orga</option>' in content
+        assert 'data-model-select2' not in content
 
         # Check the context for the injected stats
         events = response.context['events']
