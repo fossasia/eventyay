@@ -404,6 +404,7 @@ class BulkReview(EventPermissionRequired, TemplateView):
     @context
     @cached_property
     def forms(self):
+        """Build review forms with unrestricted and matching-track score categories."""
         own_reviews = {
             review.submission_id: review
             for review in self.request.event.reviews.filter(user=self.request.user, submission__in=self.submissions)

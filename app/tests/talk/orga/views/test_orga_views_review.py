@@ -12,6 +12,7 @@ from eventyay.base.models.question import TalkQuestionRequired as QuestionRequir
 @pytest.mark.django_db
 @pytest.mark.parametrize('proposal_track', ('matching', 'other', 'none'))
 def test_bulk_review_respects_score_category_tracks(review_client, submission, track, other_track, proposal_track):
+    """Keep displayed categories, persisted scores and totals aligned with track limits."""
     event = submission.event
     with scope(event=event):
         submission.track = {'matching': track, 'other': other_track, 'none': None}[proposal_track]
