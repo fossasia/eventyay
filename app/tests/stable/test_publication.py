@@ -5,10 +5,10 @@ from bs4 import BeautifulSoup
 from django.contrib.auth.models import AnonymousUser
 from django.test import override_settings
 from django.urls import reverse
-from django_scopes import scopes_disabled
+from django_scopes import scope, scopes_disabled
 
 from eventyay.api.serializers.event import EventSerializer
-from eventyay.base.models import Device, Team
+from eventyay.base.models import Device, EventExtraLink, Team
 from eventyay.base.models.auth import StaffSession
 
 @pytest.mark.django_db
@@ -33,6 +33,12 @@ def test_publication_settings_rendered_in_main_settings(organizer_client, organi
 @override_settings(SITE_URL='https://testserver')
 def test_menus_settings_placement(organizer_client, organizer, event):
     """Keep link editors and contact controls below texts and outside Basics."""
+    with scope(event=event):
+        for role in ('header', 'footer'):
+            EventExtraLink.objects.create(
+                event=event, role=role, label={'en': f'{role.title()} link'},
+                url=f'https://example.com/{role}',
+            )
     url = reverse('eventyay_common:event.update', kwargs={
         'organizer': organizer.slug,
         'event': event.slug,
@@ -57,6 +63,8 @@ def test_menus_settings_placement(organizer_client, organizer, event):
         assert elements.index(control) < elements.index(heading)
     for name in (
         'header-links-TOTAL_FORMS', 'footer-links-TOTAL_FORMS',
+        'header-links-0-label_0', 'header-links-0-url',
+        'footer-links-0-label_0', 'footer-links-0-url',
         'settings-contact_form_enabled', 'settings-contact_mail',
     ):
         control = menus.find(attrs={'name': name})
