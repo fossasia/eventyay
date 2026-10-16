@@ -1,0 +1,35 @@
+{% load i18n %}
+<section class="cc-section" aria-labelledby="cc-action-title">
+  <div class="cc-section-header">
+    <h2 id="cc-action-title" class="cc-section-title">
+      <span class="fa fa-exclamation-circle text-warning" aria-hidden="true"></span>
+      {% trans 'Action required' %}
+    </h2>
+  </div>
+
+  {% if action_required %}
+    <div class="cc-action-grid">
+      {% for action in action_required %}
+        <article class="cc-action-card cc-action-{{ action.severity|default:'warning' }}">
+          <div class="cc-action-card-header">
+            <div class="cc-action-card-icon" aria-hidden="true">
+              <span class="fa fa-{{ action.icon|default:'bell-o' }}"></span>
+            </div>
+            <span class="cc-action-card-title">{{ action.title }}</span>
+            <span class="cc-action-card-count">{{ action.count }}</span>
+          </div>
+          <p class="cc-action-card-desc">{{ action.desc }}</p>
+          <a href="{{ action.url }}" class="cc-action-card-btn">
+            <span>{{ action.btn_text }}</span>
+            <span class="fa fa-arrow-right" aria-hidden="true"></span>
+          </a>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="cc-action-empty">
+      <span class="fa fa-check-circle fa-lg text-success" aria-hidden="true"></span>
+      <span>{% trans 'No action required — All systems operational and up to date.' %}</span>
+    </div>
+  {% endif %}
+</section>

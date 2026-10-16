@@ -1,0 +1,47 @@
+{% load i18n %}
+<div class="cc-header-card">
+  <div class="cc-header-top">
+    <div class="cc-header-titles">
+      <h1 class="cc-header-title">{{ request.event.name }}</h1>
+      <div class="cc-header-dates">
+        <span class="fa fa-calendar" aria-hidden="true"></span>
+        <span>{{ header_data.date_range }}</span>
+      </div>
+      <div class="cc-header-badges">
+        <span class="cc-badge cc-badge-{{ header_data.event_status_class }}" title="{% trans 'Event status' %}">
+          <span class="cc-status-dot" aria-hidden="true"></span>
+          <span>{% trans 'Event status:' %} {{ header_data.event_status }}</span>
+        </span>
+        <span class="cc-badge cc-badge-{{ header_data.ticket_shop_status.class|default:'info' }}" title="{% trans 'Ticket shop status' %}">
+          <span class="fa {{ header_data.ticket_shop_status.icon|default:'fa-ticket' }}" aria-hidden="true"></span>
+          <span>{% trans 'Ticket shop:' %} {{ header_data.ticket_shop_status.text|default:_('Disabled') }}</span>
+        </span>
+        {% if header_data.is_testmode %}
+          <span class="cc-badge cc-badge-test">
+            <span class="fa fa-warning" aria-hidden="true"></span>
+            <span>{% trans 'Test mode' %}</span>
+          </span>
+        {% elif header_data.is_private_testmode %}
+          <span class="cc-badge cc-badge-test">
+            <span class="fa fa-lock" aria-hidden="true"></span>
+            <span>{% trans 'Private test mode' %}</span>
+          </span>
+        {% endif %}
+        <span class="cc-badge cc-badge-draft" title="{% trans 'Event timezone' %}">
+          <span class="fa fa-globe" aria-hidden="true"></span>
+          <span>{{ header_data.timezone }}</span>
+        </span>
+      </div>
+    </div>
+    <div class="cc-url-box" title="{% trans 'Public event URL' %}">
+      <span class="fa fa-link text-muted" aria-hidden="true"></span>
+      <a href="{{ header_data.public_url }}" target="_blank" rel="noopener noreferrer" class="cc-url-text" id="cc-public-url-link">
+        {{ header_data.public_url }}
+      </a>
+      <button type="button" class="cc-copy-btn" id="cc-copy-url-btn" data-url="{{ header_data.public_url }}" data-copied-text="{% trans 'Copied!' %}" aria-label="{% trans 'Copy public URL' %}">
+        <span class="fa fa-clone" aria-hidden="true"></span>
+        <span id="cc-copy-btn-text">{% trans 'Copy' %}</span>
+      </button>
+    </div>
+  </div>
+</div>
