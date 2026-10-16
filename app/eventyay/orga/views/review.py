@@ -16,7 +16,7 @@ from django.views.generic import FormView, TemplateView
 from django_context_decorator import context
 from django_scopes import scope
 
-from eventyay.base.models import Review, ReviewScore, Submission, SubmissionStates
+from eventyay.base.models import Review, ReviewScore, ReviewScoreCategory, Submission, SubmissionStates
 from eventyay.common.forms.renderers import InlineFormRenderer
 from eventyay.common.text.phrases import phrases
 from eventyay.common.views.generic import CreateOrUpdateView
@@ -448,6 +448,21 @@ class BulkReview(EventPermissionRequired, TemplateView):
 
     @transaction.atomic
     def post(self, request, *args, **kwargs):
+        """Keep category eligibility and submission tracks stable throughout a bulk save."""
+        with scope(event=request.event):
+            list(request.event.score_categories.order_by('pk').select_for_update())
+            list(
+                ReviewScoreCategory.limit_tracks.through.objects.filter(reviewscorecategory__event=request.event)
+                .order_by('pk')
+                .select_for_update()
+            )
+            submission_ids = list(
+                request.event.submissions.filter(pk__in=self.submissions.values('pk'))
+                .order_by('pk')
+                .select_for_update()
+                .values_list('pk', flat=True)
+            )
+            self.submissions = self.submissions.filter(pk__in=submission_ids)
         if not all(form.is_valid() for form in self.forms.values()):
             messages.error(self.request, phrases.base.error_saving_changes)
             return super().get(request, *args, **kwargs)

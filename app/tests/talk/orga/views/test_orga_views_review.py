@@ -1,12 +1,16 @@
 import json
 import re
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 
 import pytest
+from django.apps import apps
+from django.db import OperationalError, connection, connections
 from django_scopes import scope
 
 from eventyay.base.models import Review, ReviewScore, ReviewScoreCategory, SubmissionStates, User
 from eventyay.base.models.question import TalkQuestionRequired as QuestionRequired
+from eventyay.orga.forms.review import ReviewForm
 
 
 @pytest.mark.django_db
@@ -46,6 +50,78 @@ def test_bulk_review_respects_score_category_tracks(review_client, submission, t
             expected_scores.add(restricted_score.pk)
         assert set(review.scores.values_list('pk', flat=True)) == expected_scores
         assert review.score == (6 if proposal_track == 'matching' else 1)
+
+
+@pytest.mark.django_db(transaction=True, available_apps=[app.name for app in apps.get_app_configs()])
+@pytest.mark.skipif(connection.vendor != 'postgresql', reason='Requires PostgreSQL row-lock contention.')
+@pytest.mark.parametrize('change', ('submission_track', 'replace_limits', 'add_limit'))
+def test_bulk_review_keeps_track_eligibility_stable(mocker, request, change):
+    """Track and limit edits must wait until a bulk review has finished saving."""
+    mocker.patch('eventyay.base.models.cache.VersionedModel._set_cache_version_sync')
+    submission = request.getfixturevalue('submission')
+    track = request.getfixturevalue('track')
+    other_track = request.getfixturevalue('other_track')
+    review_client = request.getfixturevalue('review_client')
+    event = submission.event
+    with scope(event=event):
+        submission.track = track
+        submission.save(update_fields=['track'])
+        general = event.score_categories.get(active=True)
+        category = ReviewScoreCategory.objects.create(event=event, name='Mentoring relevance')
+        category.limit_tracks.add(track)
+        restricted_score = ReviewScore.objects.create(category=category, value=5)
+        general_score = general.scores.get(value=1)
+
+    def change_configuration():
+        """Attempt a configuration edit using a separate PostgreSQL connection."""
+        try:
+            with connections['default'].cursor() as cursor:
+                cursor.execute("SET lock_timeout = '500ms'")
+            with scope(event=event):
+                if change == 'submission_track':
+                    event.submissions.filter(pk=submission.pk).update(track=other_track)
+                elif change == 'replace_limits':
+                    category.limit_tracks.set([other_track])
+                else:
+                    general.limit_tracks.add(other_track)
+        except OperationalError as error:
+            return error.__cause__.sqlstate
+        finally:
+            connections.close_all()
+
+    original_save = ReviewForm.save
+
+    def save_with_competing_edit(form, *args, **kwargs):
+        """Try an edit after form validation but before its scores are persisted."""
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            assert executor.submit(change_configuration).result(timeout=30) == '55P03'
+        return original_save(form, *args, **kwargs)
+
+    mocker.patch.object(ReviewForm, 'save', save_with_competing_edit)
+    url = event.orga_urls.reviews + 'bulk/'
+    data = {
+        f'{submission.code}-score_{general.pk}': general_score.pk,
+        f'{submission.code}-score_{category.pk}': restricted_score.pk,
+        f'{submission.code}-text': 'Bulk review',
+    }
+    response = review_client.post(url, data=data)
+    assert response.status_code == 200
+    with scope(event=event):
+        review = submission.reviews.get()
+        assert set(review.scores.values_list('pk', flat=True)) == {general_score.pk, restricted_score.pk}
+        assert review.score == 6
+
+    mocker.patch.object(ReviewForm, 'save', original_save)
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        assert executor.submit(change_configuration).result(timeout=30) is None
+    data[f'{submission.code}-text'] = 'Updated bulk review'
+    response = review_client.post(url, data=data)
+    assert response.status_code == 200
+    with scope(event=event):
+        review.refresh_from_db()
+        expected = restricted_score if change == 'add_limit' else general_score
+        assert set(review.scores.values_list('pk', flat=True)) == {expected.pk}
+        assert review.score == expected.value
 
 
 @pytest.mark.parametrize("assigned", (True, False))
