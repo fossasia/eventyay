@@ -3,7 +3,6 @@ from django.views.generic.base import RedirectView
 
 from eventyay.orga.views import (
     auth,
-    cards,
     cfp,
     dashboard,
     event,
@@ -206,11 +205,6 @@ urlpatterns = [
                     'submissions/new',
                     submission.SubmissionContent.as_view(),
                     name='submissions.create',
-                ),
-                path(
-                    'submissions/cards/',
-                    cards.SubmissionCards.as_view(),
-                    name='submissions.cards',
                 ),
                 path(
                     'submissions/feed/',
