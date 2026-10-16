@@ -21,6 +21,7 @@ from django_scopes import scopes_disabled
 from eventyay.base.decimal import round_decimal
 from eventyay.base.models.vouchers import InvoiceVoucher
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
+from eventyay.base.signals import is_legacy_billing_collection_disabled
 from eventyay.helpers.stripe_utils import (
     confirm_payment_intent,
     process_auto_billing_charge_stripe,
@@ -183,6 +184,12 @@ def monthly_billing_collect(self):
 
         ticket_rate = Decimal('0.00')
         for organizer in Organizer.objects.all():
+            if is_legacy_billing_collection_disabled(organizer):
+                logger.info(
+                    'Skipping legacy monthly billing for organizer %s because an external collector owns billing',
+                    organizer.slug,
+                )
+                continue
             organizer_billing = OrganizerBillingModel.objects.filter(organizer=organizer).first()
             invoice_voucher = organizer_billing.invoice_voucher if organizer_billing else None
             total_voucher_discount = Decimal('0.00')
@@ -275,6 +282,12 @@ def process_auto_billing_charge():
         last_month_date = (first_day_of_current_month - relativedelta(months=1)).date()
         pending_invoices = BillingInvoice.objects.filter(Q(monthly_bill=last_month_date) & Q(status='n'))
         for invoice in pending_invoices:
+            if is_legacy_billing_collection_disabled(invoice.organizer):
+                logger.info(
+                    'Skipping legacy automatic charge for organizer %s because an external collector owns billing',
+                    invoice.organizer.slug,
+                )
+                continue
             if invoice.final_ticket_fee > 0:
                 billing_settings = OrganizerBillingModel.objects.filter(organizer_id=invoice.organizer_id).first()
                 if not billing_settings or not billing_settings.stripe_customer_id:
