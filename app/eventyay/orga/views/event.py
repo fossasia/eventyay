@@ -158,9 +158,11 @@ class EventReviewSettings(EventSettingsPermission, ActionFromUrl, FormView):
             return self.get(self.request, *self.args, **self.kwargs)
         form.save()
         if self.scores_formset.has_changed():
-            recalculate_all_review_scores.apply_async(
-                kwargs={'event_id': self.request.event.pk},
-                ignore_result=True,
+            transaction.on_commit(
+                lambda event_id=self.request.event.pk: recalculate_all_review_scores.apply_async(
+                    kwargs={'event_id': event_id},
+                    ignore_result=True,
+                )
             )
         messages.success(self.request, phrases.base.saved)
         return super().form_valid(form)

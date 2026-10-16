@@ -142,7 +142,7 @@ def review_settings_data(client, event):
 @pytest.mark.parametrize('category_count', (2, 4))
 @override_settings(COMPRESS_ENABLED=False, COMPRESS_OFFLINE=False)
 def test_rejected_review_scoring_preserves_categories_phases_and_export(
-    client, event, reviewer, exporter, categories, mocker, category_count
+    client, event, reviewer, exporter, categories, mocker, category_count, django_capture_on_commit_callbacks
 ):
     """Rejecting all independent scores must also preserve the phase and exported total."""
     with scope(event=event):
@@ -167,7 +167,9 @@ def test_rejected_review_scoring_preserves_categories_phases_and_export(
         for index in range(category_count):
             data[f'scores-{index}-is_independent'] = 'on'
         recalculate = mocker.patch('eventyay.orga.views.event.recalculate_all_review_scores.apply_async')
-        response = client.post(event.orga_urls.review_settings, data)
+        mocker.patch('eventyay.base.models.cache.VersionedModel._set_cache_version_sync')
+        with django_capture_on_commit_callbacks(execute=True):
+            response = client.post(event.orga_urls.review_settings, data)
 
         assert response.status_code == 200
         assert b'You need to keep at least one non-independent score category!' in response.content
@@ -183,7 +185,9 @@ def test_rejected_review_scoring_preserves_categories_phases_and_export(
 
 @pytest.mark.django_db
 @override_settings(COMPRESS_ENABLED=False, COMPRESS_OFFLINE=False)
-def test_invalid_score_form_preserves_review_phase(client, event, exporter, mocker):
+def test_invalid_score_form_preserves_review_phase(
+    client, event, exporter, mocker, django_capture_on_commit_callbacks
+):
     """A score-field error must undo phase changes saved earlier in the request."""
     with scope(event=event):
         phase = event.review_phases.order_by('position').first()
@@ -193,7 +197,9 @@ def test_invalid_score_form_preserves_review_phase(client, event, exporter, mock
         data['phase-0-name'] = 'This phase change must be rolled back'
         data['scores-0-name_0'] = ''
         recalculate = mocker.patch('eventyay.orga.views.event.recalculate_all_review_scores.apply_async')
-        response = client.post(event.orga_urls.review_settings, data)
+        mocker.patch('eventyay.base.models.cache.VersionedModel._set_cache_version_sync')
+        with django_capture_on_commit_callbacks(execute=True):
+            response = client.post(event.orga_urls.review_settings, data)
 
         assert response.status_code == 200
         phase.refresh_from_db()
@@ -203,14 +209,19 @@ def test_invalid_score_form_preserves_review_phase(client, event, exporter, mock
 
 @pytest.mark.django_db
 @override_settings(COMPRESS_ENABLED=False, COMPRESS_OFFLINE=False)
-def test_valid_independent_score_configuration_saves(client, event, exporter, categories, mocker):
-    """Independent categories are valid when another category still contributes to the total."""
+def test_valid_independent_score_configuration_saves(
+    client, event, exporter, categories, mocker, django_capture_on_commit_callbacks
+):
+    """Save valid score settings and dispatch recalculation only after commit."""
     with scope(event=event):
         client.force_login(exporter)
         data = review_settings_data(client, event)
         data['scores-0-is_independent'] = 'on'
         recalculate = mocker.patch('eventyay.orga.views.event.recalculate_all_review_scores.apply_async')
-        response = client.post(event.orga_urls.review_settings, data)
+        mocker.patch('eventyay.base.models.cache.VersionedModel._set_cache_version_sync')
+        with django_capture_on_commit_callbacks(execute=True):
+            response = client.post(event.orga_urls.review_settings, data)
+            recalculate.assert_not_called()
 
         assert response.status_code == 302
         main, relevance = categories
