@@ -236,3 +236,25 @@ On new server
 ## Start up
 
 `docker compose up -d`
+
+## Updating review-settings save protection
+
+When deploying the review-settings rollback and event-locking fix for the first
+time, pause review-settings writes until every web instance runs the fixed
+version:
+
+1. Temporarily block new POST requests to the organiser review-settings page at
+   the reverse proxy or load balancer. If route-specific blocking is unavailable,
+   use a maintenance window.
+2. Let in-flight review-settings requests finish before replacing any instances.
+3. Update and restart every web instance, including all replicas and worker
+   processes serving HTTP requests. Confirm that none still serves the old
+   application revision.
+4. Re-enable review-settings writes after all instances have been updated.
+
+The event lock coordinates handlers running the fixed version. Older handlers
+do not acquire that lock and can still commit partial changes on a rejected save,
+so review-settings writes must remain paused throughout a mixed-version rollout.
+This deployment procedure does not repair settings changed by earlier rejected
+saves. If such changes occurred, restore the intended phases and score categories
+and recalculate the affected review totals.
