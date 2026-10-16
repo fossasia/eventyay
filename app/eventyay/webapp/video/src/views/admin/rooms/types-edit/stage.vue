@@ -174,9 +174,7 @@
 				i.mdi.mdi-information(aria-hidden="true")
 				span
 					| {{ $t('Note: To manage advanced settings like LLM choices, API key management, and streaming languages, visit the') }} 
-					a(
-						:href="interpretationSettingsUrl"
-					) {{ $t('Interpretation Plugin Settings') }}
+					router-link(:to="{ name: 'admin:interpretation' }") {{ $t('Interpretation settings page') }}
 					| .
 
 		.interpretation-plugin-language-streams(v-if="showPluginLanguageStreams && isInterpretationFeatureAvailable")
@@ -184,6 +182,9 @@
 				v-if="interpretationConfig.room_enabled && interpretationConfig.interpreter === 'voxbento'"
 				:title="$t('Interpretation channels')"
 				:entries="pluginLanguageStreamEntries"
+				:roomId="roomId"
+				:settingsRoute="{ name: 'admin:interpretation', query: { room: roomId }, hash: '#room-' + roomId }"
+				:translationModelSetup="!!interpretationConfig.translation_model"
 			)
 			.tool-section.skeleton-provider-layout(v-else-if="interpretationConfig.room_enabled && interpretationConfig.interpreter && interpretationConfig.interpreter !== 'voxbento' && interpretationConfig.interpreter !== 'none'")
 				.tool-section-header
@@ -245,7 +246,7 @@ export default defineComponent({
 			validationErrors: {},
 			deletingStreamIndex: null,
 			syncStatus: 'loading',
-			interpretationConfig: { room_enabled: false, interpreter: '' },
+			interpretationConfig: { room_enabled: false, interpreter: '', translation_model: '' },
 			availableInterpreters: [],
 			interpretationPutError: null,
 			_lastFetchRoomId: null,
@@ -253,22 +254,12 @@ export default defineComponent({
 	},
 	computed: {
 		interpretationSettingsUrl() {
-			const world = this.$store.state.world
-			let organizer = world?.organizer_slug || world?.organizer
-			let event = world?.slug || world?.id
-			
-			if (!organizer || organizer === 'default') {
-				const pathParts = window.location.pathname.split('/').filter(Boolean)
-				const eventIndex = pathParts.indexOf('event')
-				if (eventIndex !== -1 && pathParts.length > eventIndex + 2) {
-					organizer = pathParts[eventIndex + 1]
-					event = pathParts[eventIndex + 2]
-				} else if (pathParts.length >= 2) {
-					organizer = pathParts[0]
-					event = pathParts[1]
-				}
+			try {
+				const resolved = this.$router.resolve({ name: 'admin:interpretation' })
+				return resolved?.href || '/event/interpretation'
+			} catch (e) {
+				return '/event/interpretation'
 			}
-			return `/common/event/${organizer}/${event}/interpretation/rooms/`
 		},
 		roomId() {
 			return this.config?.id ? String(this.config.id) : null
@@ -348,7 +339,8 @@ export default defineComponent({
 				if (data.ui_sync_supported) {
 					this.interpretationConfig = {
 						room_enabled: data.room_enabled,
-						interpreter: data.interpreter === 'none' ? '' : (data.interpreter || '')
+						interpreter: data.interpreter === 'none' ? '' : (data.interpreter || ''),
+						translation_model: data.translation_model || ''
 					}
 					this.availableInterpreters = (data.available_interpreters || []).filter(p => p.id !== 'none' && p.configured && !p.is_disconnected)
 					this._lastFetchRoomId = fetchingRoomId
@@ -390,6 +382,15 @@ export default defineComponent({
 					const data = await res.json().catch(() => ({}))
 					this.interpretationPutError = data.detail || `Failed to save captioning settings: ${res.statusText}`
 					throw new Error(this.interpretationPutError)
+				}
+
+				try {
+					const updatedConfig = await api.call('room.config.get', { room: roomId })
+					if (updatedConfig) {
+						this.$store.commit('updateRooms', [updatedConfig])
+					}
+				} catch (e) {
+					console.warn('Failed to update room config in store after interpretation save', e)
 				}
 			} catch (err) {
 				console.error('saveInterpretationConfig failed:', err)
