@@ -124,7 +124,7 @@
                     {{ form.comment.as_field_group }}
                 </div>
                 {% if draft_schedule %}
-                    {% include "agenda/changelog_block.html" with schedule=draft_schedule %}
+                    {% include 'agenda/changelog_block.html' with schedule=draft_schedule %}
                 {% endif %}
             </div>
         </details>
