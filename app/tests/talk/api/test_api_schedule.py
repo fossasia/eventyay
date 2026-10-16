@@ -336,6 +336,48 @@ def test_orga_cannot_release_schedule_without_version_name(
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize('via_api', (True, False))
+def test_release_reports_competing_release(
+    client, orga_client, orga_user_write_token, event, slot, monkeypatch, via_api
+):
+    """Report a competing release through both interfaces without overwriting it."""
+    original_freeze = Schedule.freeze
+
+    def freeze_after_competing_release(draft, *args, **kwargs):
+        """Complete another request after this request has loaded its draft."""
+        with scope(event=draft.event):
+            competing_draft = Schedule.objects.get(pk=draft.pk)
+            original_freeze(competing_draft, 'competing-release', notify_speakers=False)
+            return original_freeze(draft, *args, **kwargs)
+
+    monkeypatch.setattr(Schedule, 'freeze', freeze_after_competing_release)
+    with scope(event=event):
+        event.talks_published = True
+        event.save(update_fields=['talks_published'])
+        schedule_count = event.schedules.count()
+
+    if via_api:
+        response = client.post(
+            event.api_urls.schedules + 'release/',
+            data=json.dumps({'version': 'my-release'}),
+            content_type='application/json',
+            headers={'Authorization': f'Token {orga_user_write_token.token}'},
+        )
+        assert response.status_code == 400
+        assert 'already versioned' in response.json()['version'][0]
+    else:
+        response = orga_client.post(event.orga_urls.release_schedule, data={'version': 'my-release'})
+        assert response.status_code == 200
+        assert 'already versioned' in response.text
+
+    with scope(event=event):
+        assert event.schedules.count() == schedule_count + 1
+        assert event.schedules.filter(version='competing-release').exists()
+        assert not event.schedules.filter(version='my-release').exists()
+        assert event.schedules.filter(version__isnull=True).count() == 1
+
+
+@pytest.mark.django_db
 def test_anonymous_user_cannot_release_schedule(client, event):
     release_data = {"version": "v_anon_release"}
     response = client.post(

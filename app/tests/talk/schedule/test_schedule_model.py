@@ -2,6 +2,7 @@ import datetime as dt
 
 import pytest
 from django.core import mail as djmail
+from django.core.exceptions import ValidationError
 from django.utils.timezone import now
 from django_scopes import scope
 
@@ -122,6 +123,23 @@ def test_freeze_fail_repeat(slot, schedule):
         with pytest.raises(Exception):  # noqa
             old.freeze("version")
         assert Schedule.objects.count() == schedule_count + 1
+
+
+@pytest.mark.django_db
+def test_freeze_rejects_stale_draft(slot):
+    """Preserve a release when another request still holds the original draft."""
+    event = slot.event
+    with scope(event=event):
+        draft_id = event.wip_schedule.pk
+        first_request = Schedule.objects.get(pk=draft_id)
+        second_request = Schedule.objects.get(pk=draft_id)
+        schedule_count = event.schedules.count()
+        first_request.freeze('first-release', notify_speakers=False)
+        with pytest.raises(ValidationError, match='already versioned'):
+            second_request.freeze('second-release', notify_speakers=False)
+        assert event.schedules.get(pk=draft_id).version == 'first-release'
+        assert event.schedules.count() == schedule_count + 1
+        assert event.schedules.filter(version__isnull=True).count() == 1
 
 
 @pytest.mark.django_db

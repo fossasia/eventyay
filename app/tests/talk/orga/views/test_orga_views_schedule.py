@@ -281,14 +281,17 @@ def test_orga_can_see_schedule_release_view(orga_client, event):
 
 @pytest.mark.django_db
 def test_orga_release_breaks_only_schedule_shows_warning(orga_client, event, break_slot):
+    """Keep the release warning visible and allow a breaks-only schedule."""
     with scope(event=event):
+        event.talks_published = True
+        event.save(update_fields=['talks_published'])
         event.wip_schedule.talks.filter(submission__isnull=False).delete()
         assert Schedule.objects.count() == 2
     response = orga_client.get(event.orga_urls.release_schedule, follow=True)
     assert response.status_code == 200
     content = response.content.decode().lower()
     assert 'only breaks' in content
-    assert 'review the issues below before releasing' in content
+    assert 'please review the following before proceeding.' in content
     response = orga_client.post(
         event.orga_urls.release_schedule,
         follow=True,
@@ -351,11 +354,16 @@ def test_orga_can_release_and_reset_schedule(orga_client, event):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize('version', ('wip', 'latest', ' wip ', ' latest '))
-def test_orga_cannot_release_reserved_schedule_version(orga_client, event, slot, version):
-    """Show a field error for reserved names without changing schedules or slots."""
+@pytest.mark.parametrize('has_wip', (True, False))
+def test_orga_cannot_release_reserved_schedule_version(orga_client, event, slot, version, has_wip):
+    """Reject reserved names without changing schedules, even with no draft."""
     with scope(event=event):
         event.talks_published = True
         event.save(update_fields=['talks_published'])
+        if not has_wip:
+            draft = event.schedules.get(version__isnull=True)
+            draft.talks.all().delete()
+            draft.delete()
         schedules = list(event.schedules.order_by('pk').values_list('pk', 'version', 'published'))
         original_slot = (slot.schedule_id, slot.start, slot.end, slot.room_id)
         mail_count = event.queued_mails.count()
