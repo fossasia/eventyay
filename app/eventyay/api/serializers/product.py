@@ -131,6 +131,12 @@ class ProductAddOnSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, data):
+        """
+        Validate product add-on attributes for creation and partial updates.
+
+        Resolves omitted count fields from existing instance values on update or
+        model field defaults on creation before validating count boundaries.
+        """
         data = super().validate(data)
 
         min_count = data.get('min_count')
@@ -154,14 +160,17 @@ class ProductAddOnSerializer(serializers.ModelSerializer):
         return data
 
     def validate_min_count(self, value):
+        """Validate that minimum count is non-negative."""
         ProductAddOn.clean_min_count(value)
         return value
 
     def validate_max_count(self, value):
+        """Validate that maximum count is non-negative."""
         ProductAddOn.clean_max_count(value)
         return value
 
     def validate_addon_category(self, value):
+        """Validate that addon_category belongs to current event and is not duplicated."""
         ProductAddOn.clean_categories(self.context['event'], self.context['product'], self.instance, value)
         return value
 
@@ -284,17 +293,37 @@ class ProductSerializer(I18nAwareModelSerializer):
         return value
 
     def validate_addons(self, value):
+        """
+        Validate inline add-ons on product creation.
+
+        Ensures category ownership, uniqueness per product, and count boundaries
+        using model defaults when count values are omitted.
+        """
         if not self.instance:
+            seen_categories = set()
             for addon_data in value:
-                ProductAddOn.clean_categories(
-                    self.context['event'],
-                    None,
-                    self.instance,
-                    addon_data['addon_category'],
-                )
-                ProductAddOn.clean_min_count(addon_data['min_count'])
-                ProductAddOn.clean_max_count(addon_data['max_count'])
-                ProductAddOn.clean_max_min_count(addon_data['max_count'], addon_data['min_count'])
+                category = addon_data.get('addon_category')
+                if category:
+                    ProductAddOn.clean_categories(
+                        self.context['event'],
+                        None,
+                        self.instance,
+                        category,
+                    )
+                    if category in seen_categories:
+                        raise ValidationError(_('The product already has an add-on of this category.'))
+                    seen_categories.add(category)
+
+                min_count = addon_data.get('min_count')
+                max_count = addon_data.get('max_count')
+                if min_count is None:
+                    min_count = ProductAddOn._meta.get_field('min_count').default
+                if max_count is None:
+                    max_count = ProductAddOn._meta.get_field('max_count').default
+
+                ProductAddOn.clean_min_count(min_count)
+                ProductAddOn.clean_max_count(max_count)
+                ProductAddOn.clean_max_min_count(max_count, min_count)
         return value
 
     @cached_property

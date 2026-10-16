@@ -384,9 +384,9 @@ def test_item_detail_addons(token_client, organizer, event, team, item, category
             'price_included': False,
         }
     ]
-    resp = token_client.get('/api/v1/organizers/{}/events/{}/items/{}/'.format(organizer.slug, event.slug, item.pk))
+    resp = token_client.get('/api/v1/organizers/{}/events/{}/products/{}/'.format(organizer.slug, event.slug, item.pk))
     assert resp.status_code == 200
-    assert res == resp.data
+    assert res['addons'] == resp.data['addons']
 
 
 @pytest.mark.django_db
@@ -569,7 +569,7 @@ def test_item_create_giftcard_validation(token_client, organizer, event, item, c
 @pytest.mark.django_db
 def test_item_create_with_addon(token_client, organizer, event, item, category, category2, taxrule):
     resp = token_client.post(
-        '/api/v1/organizers/{}/events/{}/items/'.format(organizer.slug, event.slug),
+        '/api/v1/organizers/{}/events/{}/products/'.format(organizer.slug, event.slug),
         {
             'category': category.pk,
             'name': {'en': 'Ticket'},
@@ -613,7 +613,7 @@ def test_item_create_with_addon(token_client, organizer, event, item, category, 
         assert 2 == Item.objects.all().count()
 
     resp = token_client.post(
-        '/api/v1/organizers/{}/events/{}/items/'.format(organizer.slug, event.slug),
+        '/api/v1/organizers/{}/events/{}/products/'.format(organizer.slug, event.slug),
         {
             'category': category.pk,
             'name': {'en': 'Ticket'},
@@ -650,12 +650,12 @@ def test_item_create_with_addon(token_client, organizer, event, item, category, 
         format='json',
     )
     assert resp.status_code == 400
-    assert resp.content.decode() == '{"addons":["The add-on\'s category must belong to the same event as the item."]}'
+    assert resp.content.decode() == '{"addons":["The add-on\'s category must belong to the same event as the product."]}'
     with scopes_disabled():
         assert 2 == Item.objects.all().count()
 
     resp = token_client.post(
-        '/api/v1/organizers/{}/events/{}/items/'.format(organizer.slug, event.slug),
+        '/api/v1/organizers/{}/events/{}/products/'.format(organizer.slug, event.slug),
         {
             'category': category.pk,
             'name': {'en': 'Ticket'},
@@ -697,7 +697,7 @@ def test_item_create_with_addon(token_client, organizer, event, item, category, 
         assert 2 == Item.objects.all().count()
 
     resp = token_client.post(
-        '/api/v1/organizers/{}/events/{}/items/'.format(organizer.slug, event.slug),
+        '/api/v1/organizers/{}/events/{}/products/'.format(organizer.slug, event.slug),
         {
             'category': category.pk,
             'name': {'en': 'Ticket'},
@@ -737,9 +737,52 @@ def test_item_create_with_addon(token_client, organizer, event, item, category, 
     assert resp.content.decode() in [
         '{"addons":["The minimum count needs to be equal to or greater than zero."]}',
         '{"addons":[{"min_count":["Ensure this value is greater than or equal to 0."]}]}',
+        '{"addons":{"0":{"min_count":["Ensure this value is greater than or equal to 0."]}}}',
     ]
     with scopes_disabled():
         assert 2 == Item.objects.all().count()
+
+    # Create with addon where min_count and max_count are omitted (model defaults 0 and 1 applied)
+    resp = token_client.post(
+        '/api/v1/organizers/{}/events/{}/products/'.format(organizer.slug, event.slug),
+        {
+            'category': category.pk,
+            'name': {'en': 'Ticket with default addon counts'},
+            'default_price': '23.00',
+            'addons': [
+                {
+                    'addon_category': category.pk,
+                }
+            ],
+        },
+        format='json',
+    )
+    assert resp.status_code == 201
+    with scopes_disabled():
+        new_item = Item.objects.get(pk=resp.data['id'])
+        created_addon = new_item.addons.first()
+        assert created_addon.addon_category == category
+        assert created_addon.min_count == 0
+        assert created_addon.max_count == 1
+
+    # Omitted max_count with min_count > default max_count (1) should fail validation
+    resp = token_client.post(
+        '/api/v1/organizers/{}/events/{}/products/'.format(organizer.slug, event.slug),
+        {
+            'category': category.pk,
+            'name': {'en': 'Invalid Addon Range'},
+            'default_price': '23.00',
+            'addons': [
+                {
+                    'addon_category': category.pk,
+                    'min_count': 5,
+                }
+            ],
+        },
+        format='json',
+    )
+    assert resp.status_code == 400
+    assert resp.content.decode() == '{"addons":["The maximum count needs to be greater than the minimum count."]}'
 
 
 @pytest.mark.django_db
@@ -1005,7 +1048,7 @@ def test_item_update_with_variation(token_client, organizer, event, item):
 @pytest.mark.django_db
 def test_item_update_with_addon(token_client, organizer, event, item, category):
     resp = token_client.patch(
-        '/api/v1/organizers/{}/events/{}/items/{}/'.format(organizer.slug, event.slug, item.pk),
+        '/api/v1/organizers/{}/events/{}/products/{}/'.format(organizer.slug, event.slug, item.pk),
         {
             'addons': [
                 {

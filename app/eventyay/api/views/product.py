@@ -280,6 +280,7 @@ class ProductAddOnViewSet(viewsets.ModelViewSet):
         return ctx
 
     def perform_create(self, serializer):
+        """Create a new product add-on scoped to the active product."""
         product = self.product
         serializer.save(base_product=product)
         product.log_action(
@@ -294,6 +295,7 @@ class ProductAddOnViewSet(viewsets.ModelViewSet):
         )
 
     def perform_update(self, serializer):
+        """Update an existing product add-on and record audit log."""
         serializer.save()
         serializer.instance.base_product.log_action(
             'eventyay.event.product.addons.changed',
