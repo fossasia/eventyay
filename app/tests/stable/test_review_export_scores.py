@@ -9,6 +9,7 @@ from django.test import override_settings
 from django.test.utils import CaptureQueriesContext
 from django.utils import translation
 from django_scopes import scope
+from kombu.exceptions import OperationalError as BrokerError
 
 from eventyay.base.models import Event, Review, ReviewScore, ReviewScoreCategory, User
 from eventyay.base.models.submission import Submission
@@ -46,11 +47,12 @@ def categories(event):
 
 
 def create_review(event, reviewer, categories, title, values):
+    """Create a scored review using valid, unique choices in each category."""
     with scope(event=event):
         submission = Submission.objects.create(title=title, event=event, submission_type=event.cfp.default_type)
         review = Review.objects.create(submission=submission, user=reviewer, text='Good')
         review.scores.set(
-            ReviewScore.objects.create(category=category, value=value)
+            ReviewScore.objects.get_or_create(category=category, value=value, defaults={'label': str(value)})[0]
             for category, value in zip(categories, values)
         )
         review.save()
@@ -203,14 +205,19 @@ def test_invalid_score_form_preserves_review_phase(client, event, exporter, mock
 
 @pytest.mark.django_db
 @override_settings(COMPRESS_ENABLED=False, COMPRESS_OFFLINE=False)
-def test_valid_independent_score_configuration_saves(client, event, exporter, categories, mocker):
+def test_valid_independent_score_configuration_saves(
+    client, event, reviewer, exporter, categories, mocker, django_capture_on_commit_callbacks
+):
     """Independent categories are valid when another category still contributes to the total."""
     with scope(event=event):
+        review = create_review(event, reviewer, categories, 'A talk', (1, 2))
         client.force_login(exporter)
         data = review_settings_data(client, event)
         data['scores-0-is_independent'] = 'on'
         recalculate = mocker.patch('eventyay.orga.views.event.recalculate_all_review_scores.apply_async')
-        response = client.post(event.orga_urls.review_settings, data)
+        with django_capture_on_commit_callbacks(execute=True):
+            response = client.post(event.orga_urls.review_settings, data)
+            recalculate.assert_not_called()
 
         assert response.status_code == 302
         main, relevance = categories
@@ -218,7 +225,117 @@ def test_valid_independent_score_configuration_saves(client, event, exporter, ca
         relevance.refresh_from_db()
         assert main.is_independent and main.weight == 0
         assert not relevance.is_independent and relevance.weight == 1
+        review.refresh_from_db()
+        assert review.score == Decimal('2.00')
         recalculate.assert_called_once_with(kwargs={'event_id': event.pk}, ignore_result=True)
+
+
+@pytest.mark.django_db
+@override_settings(COMPRESS_ENABLED=False, COMPRESS_OFFLINE=False)
+@pytest.mark.parametrize('delete_last_contributing', (False, True))
+def test_review_settings_category_deletion_keeps_contributing_category(
+    client, event, reviewer, exporter, categories, mocker,
+    django_capture_on_commit_callbacks, delete_last_contributing,
+):
+    """Deleting the last contributing category must roll back scores and phase changes."""
+    with scope(event=event):
+        main, relevance = categories
+        relevance.is_independent = delete_last_contributing
+        relevance.save()
+        review = create_review(event, reviewer, categories, 'A talk', (1, 2))
+        original_score = review.score
+        original_score_ids = set(review.scores.values_list('pk', flat=True))
+        original_categories = list(event.score_categories.order_by('pk').values_list('pk', 'weight', 'is_independent'))
+        phase = event.review_phases.order_by('position').first()
+        original_phase_name = phase.name
+        client.force_login(exporter)
+        data = review_settings_data(client, event)
+        data['scores-0-DELETE'] = 'on'
+        data['phase-0-name'] = 'Updated phase'
+        recalculate = mocker.patch('eventyay.orga.views.event.recalculate_all_review_scores.apply_async')
+
+        with django_capture_on_commit_callbacks(execute=True):
+            response = client.post(event.orga_urls.review_settings, data)
+            recalculate.assert_not_called()
+
+        phase.refresh_from_db()
+        review.refresh_from_db()
+        if delete_last_contributing:
+            assert response.status_code == 200
+            assert b'You need to keep at least one non-independent score category!' in response.content
+            assert list(event.score_categories.order_by('pk').values_list('pk', 'weight', 'is_independent')) == (
+                original_categories
+            )
+            assert phase.name == original_phase_name
+            assert set(review.scores.values_list('pk', flat=True)) == original_score_ids
+            assert review.score == original_score
+            recalculate.assert_not_called()
+        else:
+            assert response.status_code == 302
+            assert not event.score_categories.filter(pk=main.pk).exists()
+            assert event.score_categories.filter(is_independent=False).exists()
+            assert phase.name == 'Updated phase'
+            assert review.score == Decimal('2.00')
+            recalculate.assert_called_once_with(kwargs={'event_id': event.pk}, ignore_result=True)
+
+
+@pytest.mark.django_db
+@override_settings(COMPRESS_ENABLED=False, COMPRESS_OFFLINE=False)
+def test_review_settings_outer_rollback_discards_recalculation(
+    client, event, reviewer, exporter, categories, mocker, django_capture_on_commit_callbacks
+):
+    """Rolling back after the handler returns must discard its task and score updates."""
+    with scope(event=event):
+        review = create_review(event, reviewer, categories, 'A talk', (1, 2))
+        client.force_login(exporter)
+        data = review_settings_data(client, event)
+        data['scores-0-is_independent'] = 'on'
+        recalculate = mocker.patch('eventyay.orga.views.event.recalculate_all_review_scores.apply_async')
+
+        with django_capture_on_commit_callbacks(execute=True) as callbacks:
+            with transaction.atomic():
+                response = client.post(event.orga_urls.review_settings, data)
+                assert response.status_code == 302
+                recalculate.assert_not_called()
+                transaction.set_rollback(True)
+
+        assert callbacks == []
+        recalculate.assert_not_called()
+        main = categories[0]
+        main.refresh_from_db()
+        review.refresh_from_db()
+        assert not main.is_independent and main.weight == 1
+        assert review.score == Decimal('3.00')
+
+
+@pytest.mark.django_db
+@override_settings(COMPRESS_ENABLED=False, COMPRESS_OFFLINE=False)
+def test_review_settings_broker_failure_keeps_successful_save(
+    client, event, reviewer, exporter, categories, mocker, django_capture_on_commit_callbacks, caplog
+):
+    """Log a failed post-commit dispatch without reporting a saved configuration as rejected."""
+    with scope(event=event):
+        review = create_review(event, reviewer, categories, 'A talk', (1, 2))
+        client.force_login(exporter)
+        data = review_settings_data(client, event)
+        data['scores-0-is_independent'] = 'on'
+        recalculate = mocker.patch(
+            'eventyay.orga.views.event.recalculate_all_review_scores.apply_async',
+            side_effect=BrokerError('Broker unavailable'),
+        )
+
+        with django_capture_on_commit_callbacks(execute=True):
+            response = client.post(event.orga_urls.review_settings, data)
+            recalculate.assert_not_called()
+
+        assert response.status_code == 302
+        main = categories[0]
+        main.refresh_from_db()
+        review.refresh_from_db()
+        assert main.is_independent and main.weight == 0
+        assert review.score == Decimal('2.00')
+        recalculate.assert_called_once_with(kwargs={'event_id': event.pk}, ignore_result=True)
+        assert 'Broker unavailable' in caplog.text
 
 
 @pytest.mark.django_db(transaction=True, available_apps=[app.name for app in apps.get_app_configs()])

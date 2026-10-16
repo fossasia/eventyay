@@ -158,9 +158,13 @@ class EventReviewSettings(EventSettingsPermission, ActionFromUrl, FormView):
             return self.get(self.request, *self.args, **self.kwargs)
         form.save()
         if self.scores_formset.has_changed():
-            recalculate_all_review_scores.apply_async(
-                kwargs={'event_id': self.request.event.pk},
-                ignore_result=True,
+            event_id = self.request.event.pk
+            transaction.on_commit(
+                lambda: recalculate_all_review_scores.apply_async(
+                    kwargs={'event_id': event_id},
+                    ignore_result=True,
+                ),
+                robust=True,
             )
         messages.success(self.request, phrases.base.saved)
         return super().form_valid(form)
@@ -246,6 +250,7 @@ class EventReviewSettings(EventSettingsPermission, ActionFromUrl, FormView):
         )
 
     def save_scores(self):
+        """Save valid categories and refresh totals when their contribution changes."""
         if not self.scores_formset.is_valid():
             return False
         weights_changed = False
@@ -253,7 +258,7 @@ class EventReviewSettings(EventSettingsPermission, ActionFromUrl, FormView):
             if self.scores_formset._should_delete_form(form):
                 continue
             if form.has_changed():
-                if 'weight' in form.changed_data:
+                if {'weight', 'is_independent'} & set(form.changed_data):
                     weights_changed = True
                 form.instance.event = self.request.event
                 form.save()
@@ -273,6 +278,10 @@ class EventReviewSettings(EventSettingsPermission, ActionFromUrl, FormView):
             if form.instance.pk:
                 form.instance.scores.all().delete()
                 form.instance.delete()
+
+        with scope(event=self.request.event):
+            if not self.request.event.score_categories.filter(is_independent=False).exists():
+                raise ValidationError(_('You need to keep at least one non-independent score category!'))
 
         if weights_changed:
             ReviewScoreCategory.recalculate_scores(self.request.event)
