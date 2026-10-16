@@ -40,6 +40,7 @@ const initSearchableSelect = function(select) {
   const parent = select.parentNode
   const nextSibling = select.nextSibling
   let root = null
+  let observer = null
 
   try {
   root = document.createElement('div')
@@ -142,6 +143,10 @@ const initSearchableSelect = function(select) {
   }
 
   const rebuild = function() {
+    toggle.disabled = select.disabled
+    if (select.disabled) {
+      close(false)
+    }
     list.replaceChildren()
     Array.from(select.options).forEach(function(option, index) {
       const item = document.createElement('li')
@@ -184,6 +189,7 @@ const initSearchableSelect = function(select) {
   }
 
   const open = function() {
+    toggle.disabled = select.disabled
     if (!panel.hidden || select.disabled) {
       return
     }
@@ -222,6 +228,11 @@ const initSearchableSelect = function(select) {
   }
 
   toggle.addEventListener('click', function() {
+    toggle.disabled = select.disabled
+    if (select.disabled) {
+      close(false)
+      return
+    }
     if (panel.hidden) {
       open()
     } else {
@@ -268,6 +279,44 @@ const initSearchableSelect = function(select) {
     }
   })
 
+  if (typeof MutationObserver !== 'undefined') {
+    observer = new MutationObserver(function(mutations) {
+      let shouldRebuild = false
+      let shouldSyncDisabled = false
+      for (const mutation of mutations) {
+        if (mutation.type === 'childList') {
+          shouldRebuild = true
+        } else if (mutation.type === 'attributes') {
+          if (mutation.target === select && mutation.attributeName === 'disabled') {
+            shouldSyncDisabled = true
+          } else if (
+            mutation.target.tagName === 'OPTION' ||
+            mutation.target.tagName === 'OPTGROUP'
+          ) {
+            shouldRebuild = true
+          }
+        }
+      }
+      if (shouldSyncDisabled) {
+        toggle.disabled = select.disabled
+        if (select.disabled) {
+          close(false)
+        }
+      }
+      if (shouldRebuild) {
+        rebuild()
+      }
+    })
+    observer.observe(select, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['disabled', 'value', 'selected', 'label'],
+    })
+  }
+
+  select.rebuildSearchableSelect = rebuild
+  select.addEventListener('eventyay:rebuild', rebuild)
   select.addEventListener('change', syncLabel)
   rebuild()
   toggle.disabled = select.disabled
@@ -276,6 +325,10 @@ const initSearchableSelect = function(select) {
   select.setAttribute('aria-hidden', 'true')
   select.dataset[READY_FLAG] = '1'
   } catch (error) {
+    if (observer) {
+      observer.disconnect()
+    }
+    delete select.rebuildSearchableSelect
     console.error('searchable-select: failed to enhance select', select, error)
     if (root && root.parentNode) {
       parent.insertBefore(select, root)
@@ -293,20 +346,36 @@ const initSearchableSelect = function(select) {
 }
 
 const initSearchableSelects = function(root) {
-  const scope = root && root.querySelectorAll ? root : document
+  const scope = root && root.querySelectorAll ? root : (typeof document !== 'undefined' ? document : null)
+  if (!scope) {
+    return
+  }
   scope.querySelectorAll('select[data-searchable-select]').forEach(initSearchableSelect)
 }
 
-window.eventyayInitSearchableSelects = initSearchableSelects
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', function() {
-    initSearchableSelects(document)
-  })
-} else {
-  initSearchableSelects(document)
+if (typeof window !== 'undefined') {
+  window.eventyayInitSearchableSelects = initSearchableSelects
 }
 
-document.addEventListener('eventyay:ajax-results-replaced', function(event) {
-  initSearchableSelects(event.detail && event.detail.container ? event.detail.container : document)
-})
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      initSearchableSelects(document)
+    })
+  } else {
+    initSearchableSelects(document)
+  }
+
+  document.addEventListener('eventyay:ajax-results-replaced', function(event) {
+    initSearchableSelects(event.detail && event.detail.container ? event.detail.container : document)
+  })
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    initSearchableSelect,
+    initSearchableSelects,
+    normalize,
+    escapeSelectorId,
+  }
+}
