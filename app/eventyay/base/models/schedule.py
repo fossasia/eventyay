@@ -399,9 +399,16 @@ class Schedule(PretalxModel):
         if not self.version:
             raise Exception('Cannot unfreeze schedule version: not released yet.')
 
+        with scope(event=self.event):
+            while True:
+                draft = self.event.schedules.select_for_update().filter(pk=self.event.wip_schedule.pk).first()
+                if draft is not None and draft.version is None:
+                    break
+                del self.event.wip_schedule
+
         # collect all talks, which have been added since this schedule (#72)
         submission_ids = self.talks.all().values_list('submission_id', flat=True)
-        talks = self.event.wip_schedule.talks.exclude(submission_id__in=submission_ids)
+        talks = draft.talks.exclude(submission_id__in=submission_ids)
         try:
             talks = list(talks.union(self.talks.all()))  # We force evaluation to catch the DatabaseError early
         except DatabaseError:  # SQLite cannot deal with ordered querysets in union()
@@ -413,8 +420,8 @@ class Schedule(PretalxModel):
             new_talks.append(talk.copy_to_schedule(wip_schedule, save=False))
         TalkSlot.objects.bulk_create(new_talks)
 
-        self.event.wip_schedule.talks.all().delete()
-        self.event.wip_schedule.delete()
+        draft.talks.all().delete()
+        draft.delete()
 
         with suppress(AttributeError):
             del wip_schedule.event.wip_schedule

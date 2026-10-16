@@ -1,15 +1,18 @@
 import datetime as dt
 import io
 import json
+from concurrent.futures import ThreadPoolExecutor
 
 import pytest
+from django.apps import apps
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import OperationalError, connection, connections, transaction
 from django.utils.timezone import now
 from django_scopes import scope
 from PIL import Image
 
 from eventyay.base.models.log import ActivityLog
-from eventyay.base.models import Answer, Availability, Schedule, Submission, SubmissionStates
+from eventyay.base.models import Answer, Availability, Schedule, Submission, SubmissionStates, TalkSlot
 from eventyay.base.models.question import TalkQuestionRequired as QuestionRequired, TalkQuestionVariant as QuestionVariant
 from eventyay.common.session_video import (
     SESSION_VIDEO_IMPORT_KEY,
@@ -930,6 +933,96 @@ def test_submission_duration_after_schedule_release(event, accepted_submission, 
         assert draft_slot.start == original_start
         assert draft_slot.room_id == room.pk
         assert draft_slot.end == original_start + dt.timedelta(minutes=accepted_submission.duration)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('change', ('duration', 'submission_type', 'default_duration'))
+def test_submission_duration_uses_saved_values(event, accepted_submission, room, change):
+    """A stale submission or cached type must not overwrite the latest saved duration."""
+    with scope(event=event):
+        slot = event.wip_schedule.talks.get(submission=accepted_submission)
+        slot.start = now()
+        slot.end = slot.start + dt.timedelta(minutes=accepted_submission.get_duration())
+        slot.room = room
+        slot.save()
+        new_duration = accepted_submission.get_duration() + 15
+        if change == 'duration':
+            event.submissions.filter(pk=accepted_submission.pk).update(duration=new_duration)
+        elif change == 'submission_type':
+            new_type = event.submission_types.create(name='Longer type', default_duration=new_duration)
+            event.submissions.filter(pk=accepted_submission.pk).update(duration=None, submission_type=new_type)
+        else:
+            event.submissions.filter(pk=accepted_submission.pk).update(duration=None)
+            event.submission_types.filter(pk=accepted_submission.submission_type_id).update(
+                default_duration=new_duration,
+            )
+
+        accepted_submission.update_duration()
+
+        slot.refresh_from_db()
+        assert slot.end == slot.start + dt.timedelta(minutes=new_duration)
+        assert slot.room_id == room.pk
+
+
+@pytest.mark.django_db
+def test_submission_duration_after_schedule_reset(event, accepted_submission, room, monkeypatch):
+    """A duration update must replace a cached draft that a schedule reset deleted."""
+    monkeypatch.setattr('eventyay.agenda.tasks.warm_schedule_caches.apply_async', lambda **kwargs: None)
+    with scope(event=event):
+        slot = event.wip_schedule.talks.get(submission=accepted_submission)
+        slot.start = now()
+        slot.end = slot.start + dt.timedelta(minutes=accepted_submission.get_duration())
+        slot.room = room
+        slot.save()
+        released, draft = event.wip_schedule.freeze('1.0', notify_speakers=False)
+        cached_event = accepted_submission.event
+        assert cached_event.wip_schedule.pk == draft.pk
+        _, reset_draft = Schedule.objects.get(pk=released.pk).unfreeze()
+        accepted_submission.duration = accepted_submission.get_duration() + 15
+        accepted_submission.save(update_fields=['duration'])
+
+        accepted_submission.update_duration()
+
+        assert cached_event.wip_schedule.pk == reset_draft.pk
+        reset_slot = reset_draft.talks.get(submission=accepted_submission)
+        assert reset_slot.end == slot.start + dt.timedelta(minutes=accepted_submission.duration)
+        slot.refresh_from_db()
+        assert slot.end != reset_slot.end
+
+
+@pytest.mark.django_db(transaction=True, available_apps=[app.name for app in apps.get_app_configs()])
+@pytest.mark.skipif(connection.vendor != 'postgresql', reason='Requires PostgreSQL row-lock contention.')
+def test_schedule_reset_locks_draft_before_copying_slots(mocker, request):
+    """A reset must wait for the draft lock before copying or deleting its slots."""
+    mocker.patch('eventyay.base.models.cache.VersionedModel._set_cache_version_sync')
+    mocker.patch('eventyay.agenda.tasks.warm_schedule_caches.apply_async')
+    event = request.getfixturevalue('event')
+    submission = request.getfixturevalue('accepted_submission')
+    with scope(event=event):
+        released, draft = event.wip_schedule.freeze('1.0', notify_speakers=False)
+        copy_slot = mocker.spy(TalkSlot, 'copy_to_schedule')
+
+        def reset_schedule():
+            """Attempt a reset through an independent PostgreSQL connection."""
+            try:
+                with connections['default'].cursor() as cursor:
+                    cursor.execute("SET lock_timeout = '500ms'")
+                with scope(event=event):
+                    try:
+                        Schedule.objects.get(pk=released.pk).unfreeze()
+                    except OperationalError as error:
+                        return error.__cause__.sqlstate
+            finally:
+                connections.close_all()
+
+        with transaction.atomic():
+            Schedule.objects.select_for_update().get(pk=draft.pk)
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                assert executor.submit(reset_schedule).result(timeout=30) == '55P03'
+            copy_slot.assert_not_called()
+
+        _, reset_draft = released.unfreeze()
+        assert reset_draft.talks.filter(submission=submission).exists()
 
 
 @pytest.mark.django_db

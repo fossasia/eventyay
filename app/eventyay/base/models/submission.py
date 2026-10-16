@@ -464,12 +464,14 @@ class Submission(GenerateCode, PretalxModel):
         """
         with scope(event=self.event), transaction.atomic():
             while True:
-                schedule = self.event.schedules.select_for_update().get(pk=self.event.wip_schedule.pk)
-                if schedule.version is None:
+                schedule = self.event.schedules.select_for_update().filter(pk=self.event.wip_schedule.pk).first()
+                if schedule is not None and schedule.version is None:
                     break
                 del self.event.wip_schedule
+            submission = self.event.submissions.select_related('submission_type').get(pk=self.pk)
+            duration = submission.get_duration()
             for slot in schedule.talks.filter(submission=self, start__isnull=False):
-                slot.end = slot.start + dt.timedelta(minutes=self.get_duration())
+                slot.end = slot.start + dt.timedelta(minutes=duration)
                 slot.save()
 
     update_duration.alters_data = True
