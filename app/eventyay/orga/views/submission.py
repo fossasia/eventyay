@@ -858,23 +858,28 @@ class SubmissionList(EventPermissionRequired, BaseSubmissionList):
     def show_submission_types(self):
         return self.request.event.submission_types.all().count() > 1
 
-    @context
-    def current_sort(self):
-        sort_key = self.request.GET.get('sort')
-        if not sort_key or sort_key == 'default':
-            return self.default_sort_field
-        return sort_key
-
-    def sort_queryset(self, qs):
-        sort_key = self.request.GET.get('sort') or ''
+    @cached_property
+    def can_view_speakers(self):
         # Same check the template uses to show the Speakers column, so admin mode counts.
-        can_view_speakers = has_event_perm(
+        return has_event_perm(
             'base.orga_list_speakerprofile',
             self.request.user,
             self.request,
             self.request.event,
         )
-        if sort_key.lstrip('-') != 'speakers' or not can_view_speakers:
+
+    @context
+    def current_sort(self):
+        sort_key = self.request.GET.get('sort')
+        if not sort_key or sort_key == 'default':
+            return self.default_sort_field
+        if sort_key.lstrip('-') == 'speakers' and not self.can_view_speakers:
+            return self.default_sort_field
+        return sort_key
+
+    def sort_queryset(self, qs):
+        sort_key = self.request.GET.get('sort') or ''
+        if sort_key.lstrip('-') != 'speakers' or not self.can_view_speakers:
             return super().sort_queryset(qs)
         # Sort by the first speaker shown in the Speakers column, so a session with
         # several speakers has exactly one, predictable position. Sessions without

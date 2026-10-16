@@ -152,7 +152,10 @@ class TestSessionListSpeakerSort:
         # Sorting by speaker would reveal the hidden names, so the default order is kept.
         assert _titles(response) == _titles(default)
         assert _titles(response) != ['A talk by Zoe', 'C talk by Mike', 'B panel', 'D session without speaker']
-        assert 'sort=-speakers' not in response.content.decode().split('<tbody>')[0]
+        thead = response.content.decode().split('<thead>')[1].split('</thead>')[0]
+        assert 'sort=-speakers' not in thead
+        assert 'sort=speakers' not in thead
+        assert 'href="?sort=state" class="sort-active" aria-current="true"' in thead
 
     def test_default_sort_marks_state(self, orga_client, event, sessions):
         response = orga_client.get(event.orga_urls.submissions)
