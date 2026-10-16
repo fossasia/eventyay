@@ -776,7 +776,6 @@ class Event(
         submissions = '{base}submissions/'
         tags = '{submissions}tags/'
         new_tag = '{tags}new/'
-        submission_cards = '{base}submissions/cards/'
         submission_feed = '{base}submissions/feed/'
         new_submission = '{submissions}new'
         feedback = '{submissions}feedback/'
