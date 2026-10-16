@@ -344,10 +344,14 @@ class Schedule(PretalxModel):
 
         if name in ('wip', 'latest'):
             raise Exception(f'Cannot use reserved name "{name}" for schedule version.')
-        if self.version:
-            raise Exception(f'Cannot freeze schedule version: already versioned as "{self.version}".')
         if not name:
             raise Exception('Cannot create schedule version without a version name.')
+
+        with scope(event=self.event):
+            type(self.event).objects.select_for_update().get(pk=self.event.pk)
+            self.version = Schedule.objects.select_for_update().get(pk=self.pk).version
+        if self.version:
+            raise Exception(f'Cannot freeze schedule version: already versioned as "{self.version}".')
 
         self.version = name
         self.comment = comment
@@ -400,11 +404,10 @@ class Schedule(PretalxModel):
             raise Exception('Cannot unfreeze schedule version: not released yet.')
 
         with scope(event=self.event):
-            while True:
-                draft = self.event.schedules.select_for_update().filter(pk=self.event.wip_schedule.pk).first()
-                if draft is not None and draft.version is None:
-                    break
+            type(self.event).objects.select_for_update().get(pk=self.event.pk)
+            with suppress(AttributeError):
                 del self.event.wip_schedule
+            draft = self.event.schedules.select_for_update().get(pk=self.event.wip_schedule.pk)
 
         # collect all talks, which have been added since this schedule (#72)
         submission_ids = self.talks.all().values_list('submission_id', flat=True)

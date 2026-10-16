@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from django.db import transaction
 from drf_spectacular.utils import extend_schema_field
 from rest_flex_fields.serializers import FlexFieldsSerializerMixin
 from rest_framework import exceptions, serializers
@@ -275,9 +276,13 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             submission.process_image('image', generate_thumbnail=True)
         return submission
 
+    @transaction.atomic
     def update(self, instance, validated_data):
+        """Keep submission edits and their derived draft slots consistent."""
         if not self.event:
             raise serializers.ValidationError('Event is required for submissions.')
+        with scope(event=self.event):
+            type(self.event).objects.select_for_update().get(pk=self.event.pk)
         tags_provided = 'tags' in validated_data
         tags_data = validated_data.pop('tags', [])
         image = validated_data.pop('image', None)
@@ -286,6 +291,11 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
         if 'get_duration' in validated_data:
             validated_data['duration'] = validated_data.pop('get_duration')
             duration_changed = validated_data['duration'] != instance.duration
+        duration_changed = duration_changed or (
+            'submission_type' in validated_data
+            and validated_data['submission_type'].pk != instance.submission_type_id
+            and validated_data.get('duration', instance.duration) is None
+        )
         slot_count_changed = (
             'slot_count' in validated_data
             and validated_data['slot_count'] != instance.slot_count

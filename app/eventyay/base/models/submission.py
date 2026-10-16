@@ -2,6 +2,7 @@ import copy
 import datetime as dt
 import json
 import statistics
+from contextlib import suppress
 from itertools import repeat
 
 from django.conf import settings
@@ -463,12 +464,11 @@ class Submission(GenerateCode, PretalxModel):
         Should be called whenever the duration changes.
         """
         with scope(event=self.event), transaction.atomic():
-            while True:
-                schedule = self.event.schedules.select_for_update().filter(pk=self.event.wip_schedule.pk).first()
-                if schedule is not None and schedule.version is None:
-                    break
+            type(self.event).objects.select_for_update().get(pk=self.event.pk)
+            with suppress(AttributeError):
                 del self.event.wip_schedule
-            submission = self.event.submissions.select_related('submission_type').get(pk=self.pk)
+            schedule = self.event.schedules.select_for_update().get(pk=self.event.wip_schedule.pk)
+            submission = type(self).all_objects.select_related('submission_type').get(pk=self.pk)
             duration = submission.get_duration()
             for slot in schedule.talks.filter(submission=self, start__isnull=False):
                 slot.end = slot.start + dt.timedelta(minutes=duration)
