@@ -1,8 +1,11 @@
+from itertools import batched
+
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.functional import cached_property
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
-from django_scopes import ScopedManager
+from django_scopes import ScopedManager, scope
 from i18nfield.fields import I18nCharField
 
 from eventyay.common.urls import EventUrls
@@ -48,8 +51,30 @@ class ReviewScoreCategory(PretalxModel):
 
     @classmethod
     def recalculate_scores(cls, event):
-        for review in event.reviews.all():
-            review.save(update_score=True)
+        """Recalculate totals in bounded batches without per-review queries or saves."""
+        with scope(event=event):
+            categories = cls.objects.filter(event=event, active=True).prefetch_related('limit_tracks')
+            category_tracks = {
+                category.pk: {track.pk for track in category.limit_tracks.all()} for category in categories
+            }
+            reviews = event.reviews.select_related('submission').prefetch_related(
+                models.Prefetch(
+                    'scores',
+                    queryset=ReviewScore.objects.filter(category_id__in=category_tracks).select_related('category'),
+                    to_attr='recalculation_scores',
+                )
+            )
+            for batch in batched(reviews.iterator(chunk_size=500), 500):
+                updated = now()
+                for review in batch:
+                    scores = [
+                        score for score in review.recalculation_scores
+                        if not category_tracks[score.category_id]
+                        or review.submission.track_id in category_tracks[score.category_id]
+                    ]
+                    review.score = Review.calculate_score(scores)
+                    review.updated = updated
+                Review.objects.bulk_update(batch, ['score', 'updated'], batch_size=500)
 
     def _validate_independence(self):
         if not self.event.score_categories.exclude(pk=self.pk).filter(is_independent=False).exists():
