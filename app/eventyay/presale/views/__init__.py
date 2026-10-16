@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from functools import wraps
 from itertools import groupby
@@ -14,10 +14,10 @@ from eventyay.base.i18n import language
 from eventyay.base.models import (
     CartPosition,
     InvoiceAddress,
+    OrderPosition,
     Organizer,
     OrganizerFollower,
     ProductAddOn,
-    OrderPosition,
     Question,
     QuestionAnswer,
     QuestionOption,
@@ -28,6 +28,7 @@ from eventyay.base.services.system_questions import (
     get_system_question_base_states,
     get_system_question_product_overrides,
 )
+from eventyay.common.views.helpers import is_widget_iframe_request
 from eventyay.helpers.cookies import set_cookie_without_samesite
 from eventyay.multidomain.urlreverse import eventreverse
 from eventyay.presale.organizer_exports import build_organizer_calendar_exporters
@@ -389,6 +390,7 @@ class EventViewMixin:
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['event'] = self.request.event
+        context['is_widget_iframe'] = is_widget_iframe_request(self.request)
         return context
 
     def get_index_url(self):
@@ -479,7 +481,7 @@ def iframe_entry_view_wrapper(view_func):
                 settings.LANGUAGE_COOKIE_NAME,
                 locale,
                 max_age=max_age,
-                expires=(datetime.now(timezone.utc) + timedelta(seconds=max_age)).strftime('%a, %d-%b-%Y %H:%M:%S GMT'),
+                expires=(datetime.now(UTC) + timedelta(seconds=max_age)).strftime('%a, %d-%b-%Y %H:%M:%S GMT'),
                 domain=settings.SESSION_COOKIE_DOMAIN,
             )
             return resp

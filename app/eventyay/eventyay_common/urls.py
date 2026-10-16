@@ -13,6 +13,7 @@ from eventyay.eventyay_common.views import (
     organizer,
     team,
 )
+from eventyay.common.views.helpers import allow_frame_if_iframe_param
 from eventyay.eventyay_common.views.account.email import EmailAddressManagementView
 from eventyay.eventyay_common.views.orders import MyOrdersView
 from eventyay.eventyay_common.views.sessions import MySessionsView
@@ -29,12 +30,16 @@ urlpatterns = [
     path('logout/', auth.logout, name='auth.logout'),
     path(
         'login/',
-        RedirectView.as_view(pattern_name='auth.login', permanent=True, query_string=True),
+        allow_frame_if_iframe_param(
+            RedirectView.as_view(pattern_name='auth.login', permanent=True, query_string=True)
+        ),
         name='auth.login.legacy',
     ),
     path(
         'login/2fa/',
-        RedirectView.as_view(pattern_name='auth.login.2fa', permanent=True, query_string=True),
+        allow_frame_if_iframe_param(
+            RedirectView.as_view(pattern_name='auth.login.2fa', permanent=True, query_string=True)
+        ),
         name='auth.login.2fa.legacy',
     ),
     path('invite/<str:token>/', auth.invite, name='auth.invite'),

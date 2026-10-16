@@ -12,6 +12,7 @@ from eventyay.base.models.orders import Order, OrderPayment
 from eventyay.base.services.orders import perform_order
 from eventyay.base.templatetags.rich_text import rich_text_snippet
 from eventyay.base.views.tasks import AsyncAction
+from eventyay.common.views.helpers import is_widget_iframe_request
 from eventyay.multidomain.urlreverse import eventreverse
 from eventyay.presale.signals import (
     checkout_all_optional,
@@ -169,7 +170,7 @@ class ConfirmStep(CartMixin, AsyncAction, TemplateFlowStep):
     def get_order_url(self, order):
         payment = order.payments.filter(state=OrderPayment.PAYMENT_STATE_CREATED).first()
         if not payment:
-            return (
+            url = (
                 eventreverse(
                     self.request.event,
                     'presale:event.order',
@@ -180,8 +181,13 @@ class ConfirmStep(CartMixin, AsyncAction, TemplateFlowStep):
                 )
                 + '?thanks=1'
             )
-        return eventreverse(
-            self.request.event,
-            'presale:event.order.pay.complete',
-            kwargs={'order': order.code, 'secret': order.secret, 'payment': payment.pk},
-        )
+        else:
+            url = eventreverse(
+                self.request.event,
+                'presale:event.order.pay.complete',
+                kwargs={'order': order.code, 'secret': order.secret, 'payment': payment.pk},
+            )
+        if self.request and is_widget_iframe_request(self.request):
+            sep = '&' if '?' in url else '?'
+            url = f"{url}{sep}iframe=1"
+        return url

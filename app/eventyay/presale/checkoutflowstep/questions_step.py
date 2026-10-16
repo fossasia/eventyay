@@ -236,7 +236,9 @@ class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
                         'changed accordingly.'
                     ),
                 )
-                return redirect(self.get_next_url(request) + '?open_cart=true')
+                next_url = self.get_next_url(request)
+                sep = '&' if '?' in next_url else '?'
+                return redirect(f"{next_url}{sep}open_cart=true")
 
         return redirect(self.get_next_url(request))
 

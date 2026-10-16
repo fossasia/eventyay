@@ -5,8 +5,14 @@ from django import template
 register = template.Library()
 
 
-@register.simple_tag
-def append_next(next_url=None):
-    if next_url and next_url.strip():
-        return f'?{urlencode({"next": next_url})}'
+@register.simple_tag(takes_context=True)
+def append_next(context, next_url=None):
+    request = context.get('request')
+    params = {}
+    if next_url and str(next_url).strip():
+        params['next'] = next_url
+    if request and 'iframe' in request.GET:
+        params['iframe'] = '1'
+    if params:
+        return f'?{urlencode(params)}'
     return ''

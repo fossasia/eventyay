@@ -41,6 +41,7 @@ class PermissionMiddleware:
         'auth.login.legacy',
         'auth.login.2fa',
         'auth.login.2fa.legacy',
+        'auth.logout',
         'account_signup',
         'auth.forgot',
         'auth.forgot.recover',

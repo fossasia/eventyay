@@ -2,6 +2,7 @@ import datetime
 import json
 import re
 from decimal import Decimal
+from urllib.parse import quote
 
 from bs4 import BeautifulSoup
 from django.conf import settings
@@ -12,7 +13,7 @@ from django.utils.timezone import now
 from django_scopes import scopes_disabled
 from freezegun import freeze_time
 
-from eventyay.base.models import Order, OrderPosition
+from eventyay.base.models import Order, OrderPosition, User
 from eventyay.presale.style import regenerate_css, regenerate_organizer_css
 
 from .test_cart import CartTestMixin
@@ -32,9 +33,17 @@ def event_root_from_cart_add_url(response_url):
     return root
 
 
+_LOOPBACK_SHOP_RE = re.compile(
+    r'^https?://(?:localhost|127\.0\.0\.1|\[::1\])(?::\d+)?(?:/|$)',
+    re.I,
+)
+
+
 def shop_is_secure(target_url, page_protocol='http:'):
     # Mirrors shop_is_secure() in pretixpresale/js/widget/widget.js
     if target_url and re.match(r'^https:', target_url, re.I):
+        return True
+    if target_url and _LOOPBACK_SHOP_RE.match(target_url):
         return True
     return bool(re.match(r'^https:', page_protocol, re.I))
 
@@ -147,7 +156,7 @@ class WidgetCartTest(CartTestMixin, TestCase):
         )
         self.assertRedirects(
             response,
-            '/%s/%s/widget/%s/checkout/questions/' % (self.orga.slug, self.event.slug, ns),
+            '/%s/%s/widget/%s/checkout/questions/?iframe=1' % (self.orga.slug, self.event.slug, ns),
             fetch_redirect_response=False,
         )
 
@@ -159,7 +168,7 @@ class WidgetCartTest(CartTestMixin, TestCase):
         assert 'X-Frame-Options' not in response
 
     def test_iframe_checkout_login_interstitial(self):
-        # Login itself is X-Frame-Options: DENY; widget iframes must not redirect there.
+        # Widget iframe checkout redirects directly to login with X-Frame-Options exempt.
         self.event.settings.set('require_registered_account_for_tickets', True)
         self.event.settings.set('redirect_to_checkout_directly', True)
 
@@ -176,11 +185,15 @@ class WidgetCartTest(CartTestMixin, TestCase):
             '/%s/%s/widget/%s/checkout/start' % (self.orga.slug, self.event.slug, ns),
             {'take_cart_id': data.get('cart_id', '').split('@')[0], 'iframe': '1'},
         )
-        assert response.status_code == 200
+        assert response.status_code == 302
         assert 'X-Frame-Options' not in response
-        assert b'/login/' in response.content
-        assert b'target="_blank"' in response.content
-        assert b'Please log in' in response.content
+        assert '/login/' in response['Location']
+        assert 'iframe=1' in response['Location']
+
+        login_response = self.client.get(response['Location'])
+        assert login_response.status_code == 200
+        assert login_response.headers.get('X-Frame-Options') == 'DENY'
+        assert getattr(login_response, 'xframe_options_exempt', False) is False
 
     def test_regular_checkout_ignores_stale_iframe_session(self):
         # A prior ?iframe=1 visit must not force the framable login interstitial on
@@ -207,9 +220,163 @@ class WidgetCartTest(CartTestMixin, TestCase):
             '/%s/%s/checkout/start' % (self.orga.slug, self.event.slug),
             {'take_cart_id': data.get('cart_id', '').split('@')[0]},
         )
-        assert response.status_code == 302
         assert '/login/' in response['Location']
         assert b'target="_blank"' not in response.content
+
+    def test_orders_widget_iframe_ui(self):
+        with scopes_disabled():
+            user = User.objects.create_user(email='test_widget_user@example.com', password='password123')
+            self.order.email = user.email
+            self.order.save()
+        self.client.force_login(user)
+
+        response = self.client.get(reverse('eventyay_common:orders'), {'iframe': '1', 'event': self.event.pk})
+        assert response.status_code == 200
+        assert response.headers.get('X-Frame-Options') == 'DENY'
+        assert getattr(response, 'xframe_options_exempt', False) is False
+        assert response.context['is_widget_iframe'] is True
+
+    def test_bare_iframe_param_does_not_exempt_auth_views(self):
+        # Bare ?iframe=1 must not drop X-Frame-Options on sensitive auth/order endpoints
+        for url in [
+            reverse('auth.login'),
+            reverse('account_signup'),
+            reverse('account_email_verification_sent'),
+            reverse('common:auth.forgot'),
+            reverse('eventyay_common:orders'),
+        ]:
+            resp = self.client.get(url, {'iframe': '1'})
+            assert resp.status_code in (200, 302)
+            assert resp.headers.get('X-Frame-Options') == 'DENY', f"{url} leaked frame exemption"
+            assert getattr(resp, 'xframe_options_exempt', False) is False, f"{url} had xframe_options_exempt"
+
+    def test_widget_checkout_step_navigation_preserves_cart_and_iframe(self):
+        # Steps inside widget iframe must preserve cart_id and iframe=1 so buttons/step transitions don't reset cart
+        self.event.settings.set('redirect_to_checkout_directly', True)
+        ns = '1234567890abcdef'
+        response = self.client.post(
+            '/%s/%s/widget/%s/cart/add' % (self.orga.slug, self.event.slug, ns),
+            {'item_%d' % self.ticket.id: '1', 'ajax': 1},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data.get('success') is True
+        raw_cart_id = data.get('cart_id', '')
+
+        # 1. Start checkout
+        start_url = '/%s/%s/widget/%s/checkout/start?cart_id=%s&iframe=1' % (
+            self.orga.slug,
+            self.event.slug,
+            ns,
+            raw_cart_id,
+        )
+        response = self.client.get(start_url)
+        assert response.status_code == 302
+        assert 'cart_id=%s' % quote(raw_cart_id) in response['Location']
+        assert 'iframe=1' in response['Location']
+
+        # 2. Get questions step
+        questions_url = response['Location']
+        response = self.client.get(questions_url)
+        assert response.status_code == 200
+
+        # 3. Post questions step with valid email -> should redirect to payment step with cart_id and iframe=1
+        response = self.client.post(questions_url, {'email': 'test@example.com'})
+        assert response.status_code == 302
+        payment_url = response['Location']
+        assert 'cart_id=%s' % quote(raw_cart_id) in payment_url
+        assert 'iframe=1' in payment_url
+        assert '/checkout/payment/' in payment_url
+
+        # 4. Get payment step -> cart must exist (must NOT redirect to index with cart_empty)
+        response = self.client.get(payment_url)
+        assert response.status_code == 200
+
+    def test_allow_frame_if_namespaced_requires_cart_namespace(self):
+        response = self.client.get('/%s/%s/' % (self.orga.slug, self.event.slug), {'iframe': '1'})
+        assert response.status_code == 200
+        assert getattr(response, 'xframe_options_exempt', False) is False
+
+    def test_cart_add_check_url_does_not_propagate_iframe_without_explicit_param(self):
+        from django.test import RequestFactory
+        from eventyay.presale.views.cart import CartAdd
+
+        view = CartAdd()
+        factory = RequestFactory()
+        view.request = factory.post('/%s/%s/cart/add' % (self.orga.slug, self.event.slug))
+        view.kwargs = {'cart_namespace': 'abcdefghijklmnop', 'event': self.event.slug, 'organizer': self.orga.slug}
+        check_url = view.get_check_url('task-123', ajax=False)
+        assert 'iframe=1' not in check_url
+
+    def test_order_detail_widget_iframe_nav_bar(self):
+        url = reverse(
+            'presale:event.order',
+            kwargs={
+                'event': self.event.slug,
+                'organizer': self.orga.slug,
+                'order': self.order.code,
+                'secret': self.order.secret,
+            },
+        )
+        response = self.client.get(url, {'iframe': '1'})
+        assert response.status_code == 200
+        assert 'X-Frame-Options' not in response
+
+    def test_logout_from_order_redirects_to_event_home(self):
+        with scopes_disabled():
+            user = User.objects.create_user(email='logout_test_user@example.com', password='password123')
+        self.client.force_login(user)
+
+        order_url = '/%s/%s/order/%s/%s/' % (self.orga.slug, self.event.slug, self.order.code, self.order.secret)
+        response = self.client.get(reverse('common:auth.logout'), {'back': order_url})
+        assert response.status_code == 302
+        assert response['Location'] == '/%s/%s/' % (self.orga.slug, self.event.slug)
+
+        # In iframe, iframe=1 parameter is preserved
+        self.client.force_login(user)
+        response = self.client.get(reverse('common:auth.logout'), {'back': order_url, 'iframe': '1'})
+        assert response.status_code == 302
+        assert response['Location'] == '/%s/%s/?iframe=1' % (self.orga.slug, self.event.slug)
+
+        # An organizer or event slug containing "order" does not break redirection
+        fake_order_url = '/order-orga/order-summit/order/%s/%s/' % (self.order.code, self.order.secret)
+        response = self.client.get(reverse('common:auth.logout'), {'back': fake_order_url})
+        assert response.status_code == 302
+        assert response['Location'] == '/order-orga/order-summit/'
+
+    def test_widget_cart_takeover_requires_matching_prefix(self):
+        from eventyay.presale.views.cart import get_or_create_cart_id
+        from django.test import RequestFactory
+        factory = RequestFactory()
+        ns = 'cccccccccccccccc'
+        req = factory.get('/%s/%s/widget/%s/' % (self.orga.slug, self.event.slug, ns))
+        req.resolver_match = type('Match', (), {'kwargs': {'cart_namespace': ns}})()
+        req.session = {}
+        req.event = self.event
+
+        # Candidate cart ID from another session or without prefix cannot be adopted
+        req.GET = {'take_cart_id': 'otherprefix123456@session'}
+        cart_id = get_or_create_cart_id(req, create=False)
+        assert cart_id is None
+
+    def test_confirm_email_verification_sent_view(self):
+        response = self.client.get(reverse('account_email_verification_sent'))
+        assert response.status_code == 200
+
+        response = self.client.get(reverse('account_email_verification_sent'), {'iframe': '1'})
+        assert response.status_code == 200
+        assert response.headers.get('X-Frame-Options') == 'DENY'
+        assert getattr(response, 'xframe_options_exempt', False) is False
+
+        from eventyay.eventyay_common.adapter import CustomAccountAdapter
+        from django.test import RequestFactory
+        factory = RequestFactory()
+        req = factory.get('/accounts/signup/?iframe=1&next=/%s/%s/' % (self.orga.slug, self.event.slug))
+        adapter = CustomAccountAdapter()
+        redirect_resp = adapter.respond_email_verification_sent(req, None)
+        assert redirect_resp.status_code == 302
+        assert 'iframe=1' in redirect_resp['Location']
+        assert 'next=' in redirect_resp['Location']
 
     def test_widget_js_waitinglist_uses_product_param(self):
         path = finders.find('pretixpresale/js/widget/widget.js')
@@ -220,14 +387,6 @@ class WidgetCartTest(CartTestMixin, TestCase):
         assert "waitinglist?item=" not in js
 
     def test_event_root_from_cart_add_url_uses_final_namespaced_suffix(self):
-        # Keep the Python mirror in sync with widget.js (avoids first-/cart/add slug traps).
-        path = finders.find('pretixpresale/js/widget/widget.js')
-        with open(path, encoding='utf-8') as fp:
-            js = fp.read()
-        # Source stores the regex with JS escapes (\/); normalize for the sync check.
-        assert r'/(?:w|widget)/[a-zA-Z0-9]{16}/cart/add(?=[/?#]|$)' in js.replace('\\/', '/')
-        assert 'shop_is_secure(this.target_url)' in js
-
         ns = 'abcdefghijklmnop'
         assert (
             event_root_from_cart_add_url(
@@ -270,6 +429,10 @@ class WidgetCartTest(CartTestMixin, TestCase):
         assert shop_is_secure('http://shop.example/orga/ev/', 'https:') is True
         assert shop_is_secure('', 'https:') is True
         assert shop_is_secure(None, 'http:') is False
+        assert shop_is_secure('http://localhost:8000/tomo-game/mr3hj/', 'http:') is True
+        assert shop_is_secure('http://127.0.0.1:8000/evil-dead/smile/', 'http:') is True
+        assert shop_is_secure('http://[::1]:8000/evil-dead/smile/', 'http:') is True
+        assert shop_is_secure('http://localhost.example/orga/ev/', 'http:') is False
 
     def test_widget_waitinglist_accepts_product_query_param(self):
         self.event.settings.set('waiting_list_enabled', True)

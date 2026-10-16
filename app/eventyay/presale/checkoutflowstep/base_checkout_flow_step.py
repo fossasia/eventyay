@@ -1,11 +1,14 @@
+from urllib.parse import quote
+
 from django.http import HttpResponseNotAllowed
 from django.utils.functional import cached_property
 from django.utils.translation import pgettext_lazy
 from django_scopes import scopes_disabled
 
 from eventyay.base.models import InvoiceAddress
+from eventyay.common.views.helpers import is_widget_iframe_request
 from eventyay.multidomain.urlreverse import eventreverse
-from eventyay.presale.views.cart import cart_session
+from eventyay.presale.views.cart import cart_session, get_or_create_cart_id
 
 
 class BaseCheckoutFlowStep:
@@ -52,19 +55,43 @@ class BaseCheckoutFlowStep:
     def post(self, request):
         return HttpResponseNotAllowed([])
 
-    def get_step_url(self, request):
+    def get_step_url(self, request=None):
+        request = request or self.request
         kwargs = {'step': self.identifier}
-        if request.resolver_match and 'cart_namespace' in request.resolver_match.kwargs:
-            kwargs['cart_namespace'] = request.resolver_match.kwargs['cart_namespace']
-        return eventreverse(self.event, 'presale:event.checkout', kwargs=kwargs)
+        cart_namespace = None
+        if request and request.resolver_match and 'cart_namespace' in request.resolver_match.kwargs:
+            cart_namespace = request.resolver_match.kwargs['cart_namespace']
+            kwargs['cart_namespace'] = cart_namespace
+        url = eventreverse(self.event, 'presale:event.checkout', kwargs=kwargs)
+        if request:
+            cart_id = request.GET.get('cart_id') or request.POST.get('cart_id')
+            sep = '&' if '?' in url else '?'
+            if cart_id and cart_namespace:
+                url = f"{url}{sep}cart_id={quote(cart_id)}"
+                sep = '&'
+            if is_widget_iframe_request(request, trust_session=bool(cart_namespace)) and 'iframe=1' not in url:
+                url = f"{url}{sep}iframe=1"
+        return url
 
-    def get_prev_url(self, request):
+    def get_prev_url(self, request=None):
+        request = request or self.request
         prev = self.get_prev_applicable(request)
         if not prev:
             kwargs = {}
-            if request.resolver_match and 'cart_namespace' in request.resolver_match.kwargs:
-                kwargs['cart_namespace'] = request.resolver_match.kwargs['cart_namespace']
-            return eventreverse(self.request.event, 'presale:event.index', kwargs=kwargs)
+            cart_namespace = None
+            if request and request.resolver_match and 'cart_namespace' in request.resolver_match.kwargs:
+                cart_namespace = request.resolver_match.kwargs['cart_namespace']
+                kwargs['cart_namespace'] = cart_namespace
+            url = eventreverse(self.request.event, 'presale:event.index', kwargs=kwargs)
+            if request:
+                cart_id = request.GET.get('cart_id') or request.POST.get('cart_id')
+                sep = '&' if '?' in url else '?'
+                if cart_id and cart_namespace:
+                    url = f"{url}{sep}cart_id={quote(cart_id)}"
+                    sep = '&'
+                if is_widget_iframe_request(request, trust_session=bool(cart_namespace)) and 'iframe=1' not in url:
+                    url = f"{url}{sep}iframe=1"
+            return url
         else:
             return prev.get_step_url(request)
 

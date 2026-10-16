@@ -1,6 +1,11 @@
+import http.cookies
 import re
 
 from django.conf import settings
+
+if 'partitioned' not in http.cookies.Morsel._reserved:
+    http.cookies.Morsel._reserved['partitioned'] = 'Partitioned'
+    http.cookies.Morsel._flags.add('partitioned')
 
 
 def set_cookie_without_samesite(request, response, key, *args, **kwargs):
@@ -20,6 +25,17 @@ def set_cookie_without_samesite(request, response, key, *args, **kwargs):
         # This will only work on secure cookies as well
         # https://www.chromestatus.com/feature/5633521622188032
         response.cookies[key]['secure'] = is_secure
+        response.cookies[key]['partitioned'] = True
+
+
+def delete_cookie_without_samesite(request, response, key, *args, **kwargs):
+    response.delete_cookie(key, *args, **kwargs)
+    is_secure = kwargs.get('secure', False) or request.scheme == 'https' or settings.SITE_URL.startswith('https://')
+    if is_secure and should_send_same_site_none(request.headers.get('User-Agent', '')):
+        if key in response.cookies:
+            response.cookies[key]['samesite'] = 'None'
+            response.cookies[key]['secure'] = is_secure
+            response.cookies[key]['partitioned'] = True
 
 
 # Based on https://www.chromium.org/updates/same-site/incompatible-clients

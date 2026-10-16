@@ -1,9 +1,10 @@
 import base64
 import json
 import logging
+import re
 import time
 from typing import cast
-from urllib.parse import quote, urlparse
+from urllib.parse import quote, urlencode, urlparse, urlunparse
 
 import webauthn
 from django.conf import settings
@@ -25,6 +26,7 @@ from django.db import transaction
 from django.http import HttpRequest
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext_lazy as _
@@ -44,6 +46,7 @@ from eventyay.base.forms.auth import (
 from eventyay.base.models import TeamInvite, U2FDevice, User, WebAuthnDevice
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.services.mail import SendMailException
+from eventyay.common.views.helpers import allow_frame_if_iframe_param, is_safe_redirect_url
 from eventyay.helpers.cookies import set_cookie_without_samesite
 from eventyay.helpers.jwt_generate import generate_sso_token
 from eventyay.multidomain.middlewares import get_cookie_domain
@@ -76,13 +79,13 @@ def process_login(request, user, keep_logged_in):
         request.session['eventyay_auth_2fa_user'] = user.pk
         request.session['eventyay_auth_2fa_time'] = str(int(time.time()))
         twofa_url = reverse('auth.login.2fa')
-        if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
+        if is_safe_redirect_url(next_url, request):
             twofa_url += '?next=' + quote(next_url)
         return redirect(twofa_url)
     else:
         auth_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
         request.session['eventyay_auth_login_time'] = int(time.time())
-        if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
+        if is_safe_redirect_url(next_url, request):
             return redirect(next_url)
         return redirect(reverse('eventyay_common:dashboard'))
 
@@ -117,6 +120,7 @@ def set_cookie_after_logged_in(request, response):
     return response
 
 
+@allow_frame_if_iframe_param
 def login(request):
     """
     Render and process a most basic login form. Takes an URL as GET
@@ -136,7 +140,7 @@ def login(request):
         backend = [b for b in backends if b.visible][0]
     if request.user.is_authenticated:
         next_url = backend.get_next_url(request) or 'eventyay_common:dashboard'
-        if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
+        if is_safe_redirect_url(next_url, request):
             return redirect(next_url)
         return redirect(reverse('eventyay_common:dashboard'))
     if request.method == 'POST':
@@ -158,15 +162,27 @@ def login(request):
 
 def logout(request):
     """
-    Log the user out of the current session, then redirect to login page.
+    Log the user out of the current session, then redirect to login page or safe return destination.
+    When logging out from an order page (/order/...), redirect to the event's home/store page.
     """
     auth_logout(request)
     request.session['eventyay_auth_login_time'] = 0
+
+    target = request.GET.get('back') or request.GET.get('next')
+    if target and is_safe_redirect_url(target, request):
+        parsed = urlparse(target)
+        order_match = re.match(r'^((?:/[^/]+/[^/]+)?/)order/[A-Z0-9]+/[a-zA-Z0-9]+', parsed.path, re.IGNORECASE)
+        if order_match:
+            event_home = order_match.group(1)
+            query = 'iframe=1' if ('iframe' in request.GET or 'iframe=1' in parsed.query) else ''
+            target_url = urlunparse((parsed.scheme, parsed.netloc, event_home, '', query, ''))
+            return redirect(target_url)
+        if 'back' in request.GET:
+            return redirect(target)
+
     next = reverse('auth.login')
-    if 'next' in request.GET and url_has_allowed_host_and_scheme(request.GET.get('next'), allowed_hosts=None):
+    if 'next' in request.GET and is_safe_redirect_url(request.GET.get('next'), request):
         next += '?next=' + quote(request.GET.get('next'))
-    if 'back' in request.GET and url_has_allowed_host_and_scheme(request.GET.get('back'), allowed_hosts=None):
-        return redirect(request.GET.get('back'))
     return redirect(next)
 
 
@@ -268,6 +284,7 @@ class RepeatedResetDenied(Exception):  # NOQA: N818
     pass
 
 
+@method_decorator(allow_frame_if_iframe_param, 'dispatch')
 class Forgot(TemplateView):
     template_name = 'eventyay_common/auth/forgot.html'
 
@@ -307,8 +324,24 @@ class Forgot(TemplateView):
                     )
                 )
                 messages.info(request, msg)
-            return redirect('eventyay_common:auth.forgot')
+            return redirect(self._reset_redirect())
         return self.get(request, *args, **kwargs)
+
+    def _redirect_with_next_and_iframe(self, viewname):
+        params = {}
+        next_url = self.request.GET.get('next')
+        if next_url and is_safe_redirect_url(next_url, self.request):
+            params['next'] = next_url
+        if 'iframe' in self.request.GET:
+            params['iframe'] = '1'
+        url = reverse(viewname)
+        if params:
+            url += '?' + urlencode(params)
+        return url
+
+    def _reset_redirect(self):
+        """Preserve the widget iframe + checkout ``next`` context across the forgot/recover flow."""
+        return self._redirect_with_next_and_iframe('eventyay_common:auth.forgot')
 
     @cached_property
     def form(self):
@@ -321,6 +354,7 @@ class Forgot(TemplateView):
         return context
 
 
+@method_decorator(allow_frame_if_iframe_param, 'dispatch')
 class Recover(TemplateView):
     template_name = 'eventyay_common/auth/recover.html'
 
@@ -349,9 +383,33 @@ class Recover(TemplateView):
             return self.invalid('invalid')
         return super().get(request, *args, **kwargs)
 
+    def _reset_redirect(self):
+        params = {}
+        next_url = self.request.GET.get('next')
+        if is_safe_redirect_url(next_url, self.request):
+            params['next'] = next_url
+        if 'iframe' in self.request.GET:
+            params['iframe'] = '1'
+        url = reverse('eventyay_common:auth.forgot')
+        if params:
+            url += '?' + urlencode(params)
+        return url
+
     def invalid(self, msg):
         messages.error(self.request, self.error_messages[msg])
-        return redirect('eventyay_common:auth.forgot')
+        return redirect(self._reset_redirect())
+
+    def _login_redirect(self):
+        params = {}
+        next_url = self.request.GET.get('next')
+        if is_safe_redirect_url(next_url, self.request):
+            params['next'] = next_url
+        if 'iframe' in self.request.GET:
+            params['iframe'] = '1'
+        url = reverse('auth.login')
+        if params:
+            url += '?' + urlencode(params)
+        return url
 
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
@@ -365,7 +423,7 @@ class Recover(TemplateView):
             user.save()
             messages.success(request, _('You can now login using your new password.'))
             user.log_action('eventyay.eventyay_common.auth.user.forgot_password.recovered')
-            return redirect('auth.login')
+            return redirect(self._login_redirect())
         else:
             return self.get(request, *args, **kwargs)
 
@@ -390,6 +448,7 @@ def get_webauthn_rp_id(request):
     return urlparse(settings.SITE_URL).hostname
 
 
+@method_decorator(allow_frame_if_iframe_param, 'dispatch')
 class Login2FAView(TemplateView):
     template_name = 'eventyay_common/auth/login_2fa.html'
 
@@ -475,7 +534,7 @@ class Login2FAView(TemplateView):
             request.session['eventyay_auth_login_time'] = int(time.time())
             del request.session['eventyay_auth_2fa_user']
             del request.session['eventyay_auth_2fa_time']
-            if 'next' in request.GET and url_has_allowed_host_and_scheme(request.GET.get('next'), allowed_hosts=None):
+            if 'next' in request.GET and is_safe_redirect_url(request.GET.get('next'), request):
                 return redirect(request.GET.get('next'))
             return redirect(reverse('eventyay_common:dashboard'))
         else:

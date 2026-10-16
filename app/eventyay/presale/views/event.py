@@ -66,7 +66,7 @@ from eventyay.base.models.product import (
 )
 from eventyay.base.services.geo import resolve_venue_map_coordinates
 from eventyay.base.services.quotas import QuotaAvailability
-from eventyay.common.views.helpers import login_redirect_with_next, redirect_or_json_redirect
+from eventyay.common.views.helpers import is_widget_iframe_request, login_redirect_with_next, redirect_or_json_redirect
 from eventyay.helpers.compat import date_fromisocalendar
 from eventyay.helpers.formats.en.formats import WEEK_FORMAT
 from eventyay.multidomain.urlreverse import eventreverse
@@ -838,7 +838,8 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
             and context['cart']['positions']
             and (self.request.event.has_subevents or self.request.event.presale_is_running)
         )
-        if self.request.event.settings.redirect_to_checkout_directly:
+        is_widget_flow = is_widget_iframe_request(self.request, trust_session=bool(kwargs.get('cart_namespace')))
+        if self.request.event.settings.redirect_to_checkout_directly or is_widget_flow:
             context['cart_redirect'] = eventreverse(
                 self.request.event,
                 'presale:event.checkout.start',
@@ -846,6 +847,8 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
             )
             if context['cart_redirect'].startswith('https:'):
                 context['cart_redirect'] = '/' + context['cart_redirect'].split('/', 3)[3]
+            if is_widget_flow:
+                context['cart_redirect'] += ('&' if '?' in context['cart_redirect'] else '?') + 'iframe=1'
         else:
             context['cart_redirect'] = self.request.get_full_path()
 
@@ -874,16 +877,17 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
         context['featured_speakers_widget_schedule_json'] = ''
         context['featured_speakers_list_public'] = False
 
-        event = self.request.event
-        schedule_data = get_or_build_landing_featured_widget_schedule(event, self.request.user)
-        if schedule_data:
-            context['featured_speakers'] = schedule_data.get('speakers') or []
-            context['featured_speakers_widget_schedule'] = schedule_data
-            context['featured_speakers_list_public'] = schedule_data.get('speakers_list_public', False)
-            context['featured_speakers_widget_schedule_json'] = serialize_widget_schedule_data(
-                schedule_data,
-                event=event,
-            )
+        if not is_widget_flow:
+            event = self.request.event
+            schedule_data = get_or_build_landing_featured_widget_schedule(event, self.request.user)
+            if schedule_data:
+                context['featured_speakers'] = schedule_data.get('speakers') or []
+                context['featured_speakers_widget_schedule'] = schedule_data
+                context['featured_speakers_list_public'] = schedule_data.get('speakers_list_public', False)
+                context['featured_speakers_widget_schedule_json'] = serialize_widget_schedule_data(
+                    schedule_data,
+                    event=event,
+                )
 
         return context
 
@@ -1074,6 +1078,8 @@ class SeatingPlanView(EventViewMixin, TemplateView):
         )
         if context['cart_redirect'].startswith('https:'):
             context['cart_redirect'] = '/' + context['cart_redirect'].split('/', 3)[3]
+        if is_widget_iframe_request(self.request, trust_session=bool(kwargs.get('cart_namespace'))):
+            context['cart_redirect'] += ('&' if '?' in context['cart_redirect'] else '?') + 'iframe=1'
         return context
 
 

@@ -13,16 +13,19 @@ from django.http.request import split_domain_port
 from django.middleware.csrf import CSRF_SESSION_KEY
 from django.middleware.csrf import CsrfViewMiddleware as BaseCsrfMiddleware
 from django.shortcuts import redirect
-from django.urls import resolve
+from django.urls import Resolver404, resolve
 from django.utils.cache import patch_vary_headers
 from django.utils.http import http_date
 
 from eventyay.base.middleware import should_skip_session_save
 from eventyay.base.models import Event
+from eventyay.common.views.helpers import is_widget_iframe_request
+from eventyay.helpers.cookies import delete_cookie_without_samesite, set_cookie_without_samesite
 
 LOCAL_HOST_NAMES = ('testserver', 'localhost', '127.0.0.1')
 ANY_DOMAIN_ALLOWED = ('robots.txt', 'redirect')
 MAIN_DOMAIN_AUTH_ROUTES = (
+    'account_confirm_email',
     'account_signup',
     'auth.forgot',
     'auth.forgot.recover',
@@ -34,6 +37,24 @@ MAIN_DOMAIN_AUTH_ROUTES = (
     'auth.logout',
     'social.oauth.login',
 )
+
+
+def is_main_domain_auth_route(request_or_url_name, path=''):
+    if hasattr(request_or_url_name, 'path_info'):
+        try:
+            resolved = resolve(request_or_url_name.path_info)
+            url_name = resolved.url_name or ''
+            path = request_or_url_name.path_info
+        except Resolver404:
+            return False
+    else:
+        url_name = request_or_url_name
+
+    if url_name and (url_name in MAIN_DOMAIN_AUTH_ROUTES or url_name.startswith('account_')):
+        return True
+    if path and path.startswith('/accounts/'):
+        return True
+    return False
 
 
 class MultiDomainMiddleware:
@@ -146,7 +167,7 @@ class MultiDomainMiddleware:
         ).order_by('-date_from')
         if events:
             request.uses_custom_domain = True
-            if resolved.url_name in MAIN_DOMAIN_AUTH_ROUTES:
+            if is_main_domain_auth_route(resolved.url_name, request.path_info):
                 return redirect(urljoin(settings.SITE_URL, request.get_full_path()))
             public_event = events.filter(is_public=True).first()
             if public_event:
@@ -155,6 +176,8 @@ class MultiDomainMiddleware:
             # yet. We will show the start page instead of a confusing (to organizers)
             # 404.
             return
+        if is_main_domain_auth_route(resolved.url_name, request.path_info):
+            return None
         # This domain is not configured for any event, so we will show a 404.
         # Note that this should not occur on a well-configured host, as the web server
         # should make sure that a domain is configured before serving it (as it needs to
@@ -200,7 +223,21 @@ class SessionMiddleware(BaseSessionMiddleware):
             # First check if we need to delete this cookie.
             # The session should be deleted only if the session is entirely empty
             if settings.SESSION_COOKIE_NAME in request.COOKIES and empty:
-                response.delete_cookie(settings.SESSION_COOKIE_NAME)
+                if is_widget_iframe_request(request, trust_session=True):
+                    delete_cookie_without_samesite(
+                        request,
+                        response,
+                        settings.SESSION_COOKIE_NAME,
+                        domain=get_cookie_domain(request),
+                        path=settings.SESSION_COOKIE_PATH,
+                    )
+                else:
+                    response.delete_cookie(
+                        settings.SESSION_COOKIE_NAME,
+                        domain=get_cookie_domain(request),
+                        path=settings.SESSION_COOKIE_PATH,
+                        samesite=settings.SESSION_COOKIE_SAMESITE,
+                    )
                 return response
             if accessed:
                 patch_vary_headers(response, ('Cookie',))
@@ -220,17 +257,31 @@ class SessionMiddleware(BaseSessionMiddleware):
                         request.session.save()
                     except UpdateError:  # pragma: no cover
                         request.session.create()
-                    response.set_cookie(
-                        settings.SESSION_COOKIE_NAME,
-                        request.session.session_key,
-                        max_age=max_age,
-                        expires=expires,
-                        domain=get_cookie_domain(request),
-                        path=settings.SESSION_COOKIE_PATH,
-                        secure=request.scheme == 'https',
-                        httponly=settings.SESSION_COOKIE_HTTPONLY or None,
-                        samesite=settings.SESSION_COOKIE_SAMESITE,
-                    )
+                    if is_widget_iframe_request(request, trust_session=True):
+                        set_cookie_without_samesite(
+                            request,
+                            response,
+                            settings.SESSION_COOKIE_NAME,
+                            request.session.session_key,
+                            max_age=max_age,
+                            expires=expires,
+                            domain=get_cookie_domain(request),
+                            path=settings.SESSION_COOKIE_PATH,
+                            secure=request.scheme == 'https',
+                            httponly=settings.SESSION_COOKIE_HTTPONLY or None,
+                        )
+                    else:
+                        response.set_cookie(
+                            settings.SESSION_COOKIE_NAME,
+                            request.session.session_key,
+                            max_age=max_age,
+                            expires=expires,
+                            domain=get_cookie_domain(request),
+                            path=settings.SESSION_COOKIE_PATH,
+                            secure=request.scheme == 'https',
+                            httponly=settings.SESSION_COOKIE_HTTPONLY or None,
+                            samesite=settings.SESSION_COOKIE_SAMESITE,
+                        )
         return response
 
     def __call__(self, request):
@@ -256,16 +307,29 @@ class CsrfViewMiddleware(BaseCsrfMiddleware):
         else:
             # Set the CSRF cookie even if it's already set, so we renew
             # the expiry timer.
-            response.set_cookie(
-                settings.CSRF_COOKIE_NAME,
-                request.META['CSRF_COOKIE'],
-                max_age=settings.CSRF_COOKIE_AGE,
-                domain=get_cookie_domain(request),
-                path=settings.CSRF_COOKIE_PATH,
-                secure=request.scheme == 'https',
-                httponly=settings.CSRF_COOKIE_HTTPONLY,
-                samesite=settings.CSRF_COOKIE_SAMESITE,
-            )
+            if is_widget_iframe_request(request, trust_session=True):
+                set_cookie_without_samesite(
+                    request,
+                    response,
+                    settings.CSRF_COOKIE_NAME,
+                    request.META['CSRF_COOKIE'],
+                    max_age=settings.CSRF_COOKIE_AGE,
+                    domain=get_cookie_domain(request),
+                    path=settings.CSRF_COOKIE_PATH,
+                    secure=request.scheme == 'https',
+                    httponly=settings.CSRF_COOKIE_HTTPONLY,
+                )
+            else:
+                response.set_cookie(
+                    settings.CSRF_COOKIE_NAME,
+                    request.META['CSRF_COOKIE'],
+                    max_age=settings.CSRF_COOKIE_AGE,
+                    domain=get_cookie_domain(request),
+                    path=settings.CSRF_COOKIE_PATH,
+                    secure=request.scheme == 'https',
+                    httponly=settings.CSRF_COOKIE_HTTPONLY,
+                    samesite=settings.CSRF_COOKIE_SAMESITE,
+                )
             # Content varies with the CSRF cookie, so set the Vary header.
             patch_vary_headers(response, ('Cookie',))
 
