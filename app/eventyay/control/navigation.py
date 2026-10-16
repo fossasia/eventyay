@@ -533,6 +533,7 @@ def merge_in(nav, newnav):
 
 
 def get_admin_navigation(request):
+    """Group platform administration links and mark the current section active."""
     url = request.resolver_match
     if not url:
         return []
@@ -615,7 +616,8 @@ def get_admin_navigation(request):
         {
             'label': _('System'),
             'url': reverse('eventyay_admin:admin.operations'),
-            'active': url.url_name in ('admin.operations', 'admin.task_management'),
+            'active': url.url_name in ('admin.operations', 'admin.task_management')
+            or url.url_name.startswith('systemlog.'),
             'icon': 'cogs',
             'children': [
                 {'label': _('System operations'), 'url': reverse('eventyay_admin:admin.operations'),

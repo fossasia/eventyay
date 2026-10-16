@@ -12,8 +12,24 @@
   <main class="platform-dashboard">
     <h1>{% trans 'Platform analytics' %}</h1>
     <p><a href="{% url 'eventyay_admin:admin.dashboard' %}">← {% trans 'Platform Dashboard' %}</a></p>
-    <p>{% trans 'Last updated' %}: {{ last_updated|date:'DATETIME_FORMAT' }}</p>
-    {% include 'pretixcontrol/admin/activity.html' %}
+    {% if report_title %}
+      <section class="platform-card">
+        <h2>{{ report_title }}</h2>
+        <div class="table-responsive"><table class="table">
+          <thead><tr>{% for header in report_headers %}<th>{{ header }}</th>{% endfor %}</tr></thead>
+          <tbody>{% for row in report_rows %}<tr>{% for value in row %}<td>{{ value }}</td>{% endfor %}</tr>{% empty %}<tr><td>{% trans 'No records found.' %}</td></tr>{% endfor %}</tbody>
+        </table></div>
+        <nav aria-label="{% trans 'Report pages' %}">
+          {% if report_page.has_previous %}<a href="?page={{ report_page.previous_page_number }}">{% trans 'Previous' %}</a>{% endif %}
+          {{ report_page.number }} / {{ report_page.paginator.num_pages }}
+          {% if report_page.has_next %}<a href="?page={{ report_page.next_page_number }}">{% trans 'Next' %}</a>{% endif %}
+        </nav>
+      </section>
+    {% else %}
+      <p>{% trans 'Last updated' %}: {{ last_updated|date:'DATETIME_FORMAT' }}</p>
+      <p><a href="{% url 'eventyay_admin:admin.analytics.metric' metric='top-events' %}">{% trans 'Events by paid orders' %}</a> · <a href="{% url 'eventyay_admin:admin.analytics.metric' metric='providers' %}">{% trans 'Payment providers' %}</a></p>
+      {% include 'pretixcontrol/admin/activity.html' %}
+    {% endif %}
     {% for chart in activity_charts %}
       <section class="platform-card">
         <h2>{{ chart.title }}</h2>

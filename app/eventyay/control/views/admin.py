@@ -49,7 +49,7 @@ from django.apps import apps
 from redis.exceptions import RedisError
 
 from eventyay import __version__
-from eventyay.celery_app import app
+from eventyay.celery_app import app, task_failure_count
 from eventyay.control.forms.filter import AttendeeFilterForm
 from eventyay.control.forms.admin.admin import UpdateSettingsForm
 
@@ -71,7 +71,8 @@ from eventyay.common.text.phrases import phrases
 from eventyay.control.forms.admin.vouchers import InvoiceVoucherForm, VoucherFilterForm
 from eventyay.control.forms.filter import AdminOrderFilterForm, OrganizerFilterForm, SubmissionFilterForm, TaskFilterForm
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
-from eventyay.control.platform_dashboard import activity_context, dashboard_cards
+from eventyay.control.platform_dashboard import activity_context, dashboard_cards, report_context, setup_events
+from eventyay.base.views.health import healthcheck
 from eventyay.control.video.admin_dashboard import get_video_server_dashboard_rows
 from eventyay.control.views import PaginationMixin
 from eventyay.control.views.main import EventList
@@ -80,9 +81,12 @@ logger = logging.getLogger(__name__)
 
 
 class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
+    """Show a compact platform overview with links to operational detail pages."""
     template_name = 'pretixcontrol/admin/dashboard.html'
+    success_url = 'eventyay_admin:admin.dashboard'
 
     def post(self, request, *args, **kwargs):
+        """Refresh cached indicators and stay on the originating operations page."""
         if request.POST.get('action') == 'refresh' or 'refresh' in request.POST:
             cache.delete_many([
                 'admin_dashboard_events_pending_setup',
@@ -93,9 +97,10 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
                 'admin_dashboard_api_stats',
             ])
             messages.success(request, _('Dashboard cache refreshed successfully.'))
-        return redirect('eventyay_admin:admin.dashboard')
+        return redirect(self.success_url)
 
     def get_context_data(self, **kwargs) -> dict:
+        """Collect platform metrics, health checks and compact dashboard summaries."""
         ctx = super().get_context_data(**kwargs)
         n = now()
         email_stats = None
@@ -391,9 +396,10 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
 
                 # Cache the heavy Top aggregates to prevent production database performance hits
                 def _get_orders_top5():
+                    """Summarize distinct paid orders by event and confirmed payment provider."""
                     top5_event = list(
                         Order.objects.filter(status=Order.STATUS_PAID)
-                        .values('event__name', 'event__slug')
+                        .values('event_id', 'event__name', 'event__slug')
                         .annotate(count=Count('pk'))
                         .order_by('-count')[:5]
                     )
@@ -444,10 +450,12 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
                 if celery_enabled:
                     try:
                         def _get_depth():
+                            """Distinguish idle workers from an inspection without any response."""
                             inspector = app.control.inspect(timeout=1)
-                            active = inspector.active() or {}
-                            return sum(len(v) for v in active.values())
+                            active = inspector.active()
+                            return sum(len(v) for v in active.values()) if active is not None else None
                         celery_depth = cache.get_or_set('admin_dashboard_celery_depth', _get_depth, 300)
+                        celery_depth_unavailable = celery_depth is None
                     except (RedisError, TimeoutError, ConnectionError, OSError):
                         logger.exception('AdminDashboard: failed to get Celery queue depth')
                         celery_depth_unavailable = True
@@ -644,9 +652,16 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
                 pk__in=enabled_payments).count()
             ctx['events_upcoming_count'] = Event.objects.filter(has_subevents=False, date_from__gt=n).count()
             ctx['events_recent_count'] = Event.objects.filter(created__gte=n - timedelta(days=7)).count()
+            ctx['events_needing_setup_count'] = setup_events().count()
         ctx['last_scheduled_run'] = PeriodicTask.objects.filter(last_run_at__isnull=False).order_by(
             '-last_run_at').values_list('last_run_at', flat=True).first()
         ctx['config_video_ok'] = any(row['active'] for row in ctx['video_server_rows'])
+        try:
+            ctx['tasks_failed_24h'] = task_failure_count()
+        except RedisError:
+            logger.exception('Unable to read platform task failures')
+            ctx['tasks_failed_24h'] = None
+        ctx['api_health_ok'] = healthcheck(self.request).status_code == 200
         ctx.update(activity_context(self.request.GET.get('range', '30d')))
         dashboard_cards(ctx)
 
@@ -654,17 +669,23 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
 
 
 class AdminOperations(AdminDashboard):
+    """Retain detailed platform tables outside the compact dashboard."""
     template_name = 'pretixcontrol/admin/operations.html'
+    success_url = 'eventyay_admin:admin.operations'
 
 
 class AdminAnalytics(AdministratorPermissionRequiredMixin, TemplateView):
+    """Display activity details and complete paginated commerce reports."""
     template_name = 'pretixcontrol/admin/analytics.html'
 
     def get_context_data(self, **kwargs):
         """Expose aggregate series only to an authenticated administrator session."""
         ctx = super().get_context_data(**kwargs)
-        ctx.update(activity_context(self.request.GET.get('range', '30d')))
         metric = self.kwargs.get('metric')
+        if metric in ('top-events', 'providers', 'needs-setup'):
+            ctx.update(report_context(metric, self.request.GET.get('page')))
+            return ctx
+        ctx.update(activity_context(self.request.GET.get('range', '30d')))
         if metric:
             ctx['activity_charts'] = [chart for chart in ctx['activity_charts'] if chart['key'] == metric]
             if not ctx['activity_charts']:

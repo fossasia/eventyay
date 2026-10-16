@@ -51,11 +51,9 @@
         <section class="platform-card">
             <h2>{% trans 'System health' %}</h2>
             <div class="table-responsive"><table class="table"><tbody>
-                {% for row in health_rows %}<tr><td>{{ row.label }}</td><td>{{ row.value|default_if_none:'—' }}</td><td><span class="label label-{{ row.style }}">{{ row.status }}</span></td></tr>{% endfor %}
-                <tr><td>{% trans 'Scheduled tasks last run' %}</td><td colspan="2">{{ last_scheduled_run|date:'DATETIME_FORMAT'|default:'—' }}</td></tr>
-                <tr><td>{% trans 'API status' %}</td><td colspan="2">{% trans 'Not monitored' %}</td></tr>
+                {% for row in health_rows %}<tr><td>{{ row.label }}</td><td>{% if row.timestamp %}{{ row.value|date:'DATETIME_FORMAT'|default:'—' }}{% else %}{{ row.value|default_if_none:'—' }}{% endif %}</td><td><span class="label label-{{ row.style }}">{{ row.status }}</span></td></tr>{% endfor %}
             </tbody></table></div>
-            <p class="text-muted">{% trans 'Task failure history and API uptime are not collected here. Cached indicators may be up to five minutes old.' %}</p>
+            <p class="text-muted">{% trans 'API status checks backend dependencies. Task failures are recorded by workers; cached indicators may be up to five minutes old.' %}</p>
             <a href="{% url 'eventyay_admin:admin.operations' %}">{% trans 'View system operations' %} →</a>
         </section>
         <div class="platform-stack">
@@ -80,7 +78,7 @@
     </div>
     <div class="platform-columns platform-columns-four">
         <section class="platform-card"><h2>{% trans 'Events overview' %}</h2>
-            <dl><dt>{% trans 'Running now' %}</dt><dd>{{ events_running }}</dd><dt>{% trans 'Upcoming events' %}</dt><dd>{{ events_upcoming_count }}</dd><dt>{% trans 'Created in the last 7 days' %}</dt><dd>{{ events_recent_count }}</dd><dt>{% trans 'Events needing payment setup' %}</dt><dd>{{ events_missing_payment_count }}</dd></dl>
+            <dl><dt>{% trans 'Running now' %}</dt><dd>{{ events_running }}</dd><dt>{% trans 'Upcoming events' %}</dt><dd>{{ events_upcoming_count }}</dd><dt>{% trans 'Created in the last 7 days' %}</dt><dd>{{ events_recent_count }}</dd><dt>{% trans 'Events needing setup' %}</dt><dd><a href="{% url 'eventyay_admin:admin.analytics.metric' metric='needs-setup' %}">{{ events_needing_setup_count }}</a></dd></dl>
             <a href="{% url 'eventyay_admin:admin.events' %}">{% trans 'View all events' %} →</a>
         </section>
         <section class="platform-card"><h2>{% trans 'Programme overview' %}</h2>
@@ -90,12 +88,12 @@
         <section class="platform-card"><h2>{% trans 'Top events by paid orders' %}</h2>
             <table class="table"><thead><tr><th>{% trans 'Event' %}</th><th>{% trans 'Paid orders' %}</th></tr></thead><tbody>
                 {% for event in orders_top5_by_event %}<tr><td>{{ event.event__name }}</td><td>{{ event.count }}</td></tr>{% empty %}<tr><td colspan="2">{% trans 'No paid orders yet.' %}</td></tr>{% endfor %}
-            </tbody></table><a href="{% url 'eventyay_admin:admin.orders' %}">{% trans 'View full report' %} →</a>
+            </tbody></table><a href="{% url 'eventyay_admin:admin.analytics.metric' metric='top-events' %}">{% trans 'View full report' %} →</a>
         </section>
         <section class="platform-card"><h2>{% trans 'Payment providers' %}</h2>
             <table class="table"><thead><tr><th>{% trans 'Provider' %}</th><th>{% trans 'Paid orders' %}</th></tr></thead><tbody>
                 {% for provider in orders_top5_by_provider %}<tr><td>{{ provider.provider }}</td><td>{{ provider.count }}</td></tr>{% empty %}<tr><td colspan="2">{% trans 'No payments yet.' %}</td></tr>{% endfor %}
-            </tbody></table><a href="{% url 'eventyay_admin:admin.orders' %}">{% trans 'View all orders' %} →</a>
+            </tbody></table><a href="{% url 'eventyay_admin:admin.analytics.metric' metric='providers' %}">{% trans 'View all payment providers' %} →</a>
         </section>
     </div>
     <div class="platform-columns platform-columns-three">

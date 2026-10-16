@@ -9,7 +9,7 @@
 {% block content %}
     <div class="admin-dashboard-title">
         <h1>{% trans "System operations" %}</h1>
-        <form method="post" action="{% url 'eventyay_admin:admin.dashboard' %}" class="form-inline">
+        <form method="post" action="{% url 'eventyay_admin:admin.operations' %}" class="form-inline">
             {% csrf_token %}
             <button type="submit" name="action" value="refresh" class="btn btn-default btn-sm">
                 <i class="fa fa-refresh"></i> {% trans "Refresh Data" %}
@@ -472,7 +472,7 @@
                                     <tr>
                                         <th>{% trans "Proposal" %}</th>
                                         <th>{% trans "Event" %}</th>
-                                        <th>{% trans "Submitted on" %}</th>
+                                        <th>{% trans 'Created on' %}</th>
                                     </tr>
                                 </thead>
                                 <tbody>

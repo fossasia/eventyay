@@ -3,17 +3,60 @@
 from datetime import UTC, timedelta
 from decimal import Decimal
 
-from django.db.models import Count, Min, Sum
+from django.core.paginator import Paginator
+from django.db.models import Count, Min, Q, Sum
 from django.db.models.functions import TruncDay, TruncHour, TruncMonth
 from django.urls import reverse
 from django.utils.timezone import localtime, now
 from django.utils.translation import gettext_lazy as _
 from django_scopes import scopes_disabled
 
-from eventyay.base.models import Event, Order, OrderPayment, User
+from eventyay.base.models import Event, Order, OrderPayment, Product, User
+from eventyay.base.models.event import Event_SettingsStore
 
 
 ACTIVITY_RANGES = {'24h': 1, '7d': 7, '30d': 30, '90d': 90, 'all': None}
+
+
+def setup_events():
+    """Select events without tickets or without a paid-ticket payment method."""
+    paid = Product.objects.filter(default_price__gt=0).values('event_id')
+    enabled = Event_SettingsStore.objects.filter(
+        key__startswith='payment_', key__endswith='__enabled', value='True',
+    ).exclude(key__in=[
+        'payment_free__enabled', 'payment_boxoffice__enabled',
+        'payment_offsetting__enabled', 'payment_giftcard__enabled',
+    ]).values('object_id')
+    return Event.objects.filter(
+        Q(products__isnull=True) | (Q(pk__in=paid) & ~Q(pk__in=enabled))
+    ).distinct()
+
+
+def report_context(metric: str, page):
+    """Provide paginated complete reports rather than dashboard-only previews."""
+    with scopes_disabled():
+        if metric == 'top-events':
+            title = _('Events by paid orders')
+            headers = (_('Event'), _('Organizer'), _('Currency'), _('Paid orders'))
+            fields = ('event__name', 'event__organizer__name', 'event__currency', 'count')
+            rows = Order.objects.filter(status=Order.STATUS_PAID).values(
+                'event_id', *fields[:-1],
+            ).annotate(count=Count('pk')).order_by('-count', 'event_id')
+        elif metric == 'providers':
+            title = _('Payment providers')
+            headers = (_('Provider'), _('Paid orders'))
+            fields = ('provider', 'count')
+            rows = OrderPayment.objects.filter(state=OrderPayment.PAYMENT_STATE_CONFIRMED).values(
+                'provider',
+            ).annotate(count=Count('order_id', distinct=True)).order_by('-count', 'provider')
+        else:
+            title = _('Events needing setup')
+            headers = (_('Event'), _('Organizer'))
+            fields = ('name', 'organizer__name')
+            rows = setup_events().values(*fields, 'pk').order_by('pk')
+        pagination = Paginator(rows, 25).get_page(page)
+        report_rows = [[row[field] for field in fields] for row in pagination.object_list]
+    return {'report_title': title, 'report_headers': headers, 'report_rows': report_rows, 'report_page': pagination}
 
 
 def activity_context(selected_range='30d'):
@@ -148,7 +191,7 @@ def dashboard_cards(ctx):
             'link': _('View emails'),
         },
         {
-            'value': None,
+            'value': ctx.get('tasks_failed_24h'),
             'label': _('Failed tasks (last 24 hours)'),
             'icon': 'exclamation-triangle',
             'url': routes['task_management'],
@@ -188,7 +231,7 @@ def dashboard_cards(ctx):
     ]
     health = [
         (_('Celery tasks active'), ctx.get('celery_depth'), False),
-        (_('Failed tasks (last 24 hours)'), None, True),
+        (_('Failed tasks (last 24 hours)'), ctx.get('tasks_failed_24h'), True),
         (_('Failed payments (last 24 hours)'), ctx.get('payments_failed_24h'), True),
         (_('Failed webhooks (last 24 hours)'), ctx.get('webhook_failed_24h'), True),
         (_('Unsent emails'), ctx.get('email_unsent_count'), True),
@@ -208,6 +251,23 @@ def dashboard_cards(ctx):
             row['status'] = _('Not available')
     if ctx.get('platform_health_unavailable') or ctx.get('celery_depth_unavailable'):
         ctx['health_rows'][0].update(status=_('Error'), style='danger')
+    if ctx.get('email_unsent_count'):
+        ctx['health_rows'][4].update(status=_('Error'), style='danger')
+    ctx['health_rows'].extend([
+        {
+            'label': _('Scheduled tasks last run'),
+            'value': ctx.get('last_scheduled_run'),
+            'timestamp': True,
+            'status': _('OK') if ctx.get('last_scheduled_run') else _('Warning'),
+            'style': 'success' if ctx.get('last_scheduled_run') else 'warning',
+        },
+        {
+            'label': _('API status'),
+            'value': _('Operational') if ctx.get('api_health_ok') else _('Unavailable'),
+            'status': _('OK') if ctx.get('api_health_ok') else _('Error'),
+            'style': 'success' if ctx.get('api_health_ok') else 'danger',
+        },
+    ])
     config_unavailable = ctx.get('config_status_unavailable', False)
     configurations = [
         (_('SMTP / Email'), ctx.get('config_smtp_ok'), config_unavailable),

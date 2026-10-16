@@ -52,8 +52,36 @@
         <div role="tabpanel" class="tab-pane {% if active_tab == 'streaming' %}active{% endif %}" id="streaming">
             <div class="video-admin-card">
                 <h2>{% trans 'Streaming configuration' %}</h2>
-                <p>{% trans 'Stream sources and schedules are configured for each event and room. Open an event to manage its streaming configuration.' %}</p>
-                <a href="{% url 'eventyay_admin:video_admin:event.list' %}" class="btn btn-default">{% trans 'Manage video events' %}</a>
+                <p>{% trans 'Configure room stream URLs and schedules. Times use the platform timezone shown in the footer.' %}</p>
+                <form method="get">
+                    <input type="hidden" name="tab" value="streaming">
+                    {% bootstrap_field streaming_selection.event %}
+                    <button class="btn btn-default" type="submit">{% trans 'Load event' %}</button>
+                </form>
+                {% if streaming_event %}
+                    <h3>{% trans 'Stream schedules' %}</h3>
+                    <div class="table-responsive"><table class="table">
+                        <thead><tr><th>{% trans 'Room' %}</th><th>{% trans 'Title' %}</th><th>{% trans 'Stream URL' %}</th><th>{% trans 'Start' %}</th><th>{% trans 'End' %}</th><th>{% trans 'Actions' %}</th></tr></thead>
+                        <tbody>{% for stream in streaming_page %}<tr>
+                            <td>{{ stream.room.name }}</td><td>{{ stream.title }}</td><td>{{ stream.url }}</td><td>{{ stream.start_time }}</td><td>{{ stream.end_time }}</td>
+                            <td><a class="btn btn-default btn-sm" href="?tab=streaming&amp;event={{ streaming_event.pk }}&amp;stream={{ stream.pk }}">{% trans 'Edit' %}</a></td>
+                        </tr>{% empty %}<tr><td colspan="6">{% trans 'No stream schedules configured.' %}</td></tr>{% endfor %}</tbody>
+                    </table></div>
+                    <nav aria-label="{% trans 'Stream schedule pages' %}">
+                        {% if streaming_page.has_previous %}<a href="?tab=streaming&amp;event={{ streaming_event.pk }}&amp;stream_page={{ streaming_page.previous_page_number }}">{% trans 'Previous' %}</a>{% endif %}
+                        {{ streaming_page.number }} / {{ streaming_page.paginator.num_pages }}
+                        {% if streaming_page.has_next %}<a href="?tab=streaming&amp;event={{ streaming_event.pk }}&amp;stream_page={{ streaming_page.next_page_number }}">{% trans 'Next' %}</a>{% endif %}
+                    </nav>
+                    <h3>{% trans 'Configure stream' %}</h3>
+                    <form method="post">{% csrf_token %}
+                        {% bootstrap_form streaming_form %}
+                        <button class="btn btn-primary" type="submit" name="stream_action" value="save">{% trans 'Save stream' %}</button>
+                        {% if streaming_form.instance.pk %}
+                            <button class="btn btn-danger" type="submit" name="stream_action" value="delete" formnovalidate>{% trans 'Delete stream' %}</button>
+                            <a href="?tab=streaming&amp;event={{ streaming_event.pk }}" class="btn btn-default">{% trans 'Add another stream' %}</a>
+                        {% endif %}
+                    </form>
+                {% endif %}
             </div>
         </div>
         <!-- General Tab -->

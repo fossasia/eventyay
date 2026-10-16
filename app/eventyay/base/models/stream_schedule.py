@@ -69,6 +69,9 @@ class StreamSchedule(models.Model):
         return f'{self.room.name} - {self.start_time}'
 
     def clean(self):
+        """Validate timing after individual form fields have passed validation."""
+        if self.start_time is None or self.end_time is None or self.room_id is None:
+            return super().clean()
         if self.end_time <= self.start_time:
             raise ValidationError({'end_time': _('End time must be after start time.')})
 
