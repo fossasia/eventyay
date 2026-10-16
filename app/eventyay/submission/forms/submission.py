@@ -762,7 +762,15 @@ class SubmissionFilterForm(forms.Form):
         state_filter = self.cleaned_data.get('state')
         if state_filter:
             states = [s for s in state_filter if not s.startswith('pending_state__')]
-            pending = [s.split('__')[1] for s in state_filter if s.startswith('pending_state__')]
+            pending = []
+            for s in state_filter:
+                if not s.startswith('pending_state__'):
+                    continue
+                # Guard against malformed values such as a bare "pending_state__"
+                # with no actual state following the separator.
+                part = s.split('__', 1)[1]
+                if part:
+                    pending.append(part)
             query = Q()
             if states:
                 query |= Q(state__in=states)

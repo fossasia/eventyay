@@ -31,6 +31,19 @@ def answer_file_path(instance, filename):
     return path_with_hash(filename, base_path=f'{instance.question.event.slug}/question_uploads/')
 
 
+def _as_pk_lookup(value):
+    """Normalize a filter argument into a value usable with a ``pk__in`` lookup.
+
+    A :class:`~django.db.models.QuerySet` is passed through unchanged so the ORM can
+    turn it into an efficient subquery. Any other iterable (list, tuple, set,
+    generator, ``dict_values``, …) is reduced to a list of primary keys, accepting
+    either model instances or raw primary keys as items.
+    """
+    if isinstance(value, models.QuerySet):
+        return value
+    return [getattr(item, 'pk', item) for item in value]
+
+
 class TalkQuestionManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().exclude(active=False).exclude(target=TalkQuestionTarget.REVIEWER)
@@ -347,12 +360,10 @@ class TalkQuestion(OrderedModel, PretalxModel):
         from eventyay.base.models import SubmissionStates, User
 
         if self.target == TalkQuestionTarget.SUBMISSION:
-            if filter_talks in (None, False):
+            if filter_talks is None:
                 submissions = self.event.submissions.all()
             else:
-                is_seq = isinstance(filter_talks, (list, tuple, set))
-                pks = [getattr(s, 'pk', s) for s in filter_talks] if is_seq else filter_talks
-                submissions = self.event.submissions.filter(pk__in=pks)
+                submissions = self.event.submissions.filter(pk__in=_as_pk_lookup(filter_talks))
             if self.tracks.exists():
                 submissions = submissions.filter(track__in=self.tracks.all())
             if self.submission_types.exists():
@@ -361,14 +372,13 @@ class TalkQuestion(OrderedModel, PretalxModel):
             return max(submissions.count() - answered, 0)
 
         if self.target == TalkQuestionTarget.SPEAKER:
-            speakers = User.objects.filter(
+            speaker_filter = models.Q(
                 submissions__event_id=self.event_id,
                 submissions__state__in=SubmissionStates.valid_submission_states,
-            ).distinct()
-            if filter_speakers not in (None, False):
-                is_seq = isinstance(filter_speakers, (list, tuple, set))
-                pks = [getattr(u, 'pk', u) for u in filter_speakers] if is_seq else filter_speakers
-                speakers = speakers.filter(pk__in=pks)
+            )
+            if filter_speakers is not None:
+                speaker_filter &= models.Q(pk__in=_as_pk_lookup(filter_speakers))
+            speakers = User.objects.filter(speaker_filter).distinct()
             answered = self.answers.filter(person__in=speakers).values('person').distinct().count()
             return max(speakers.count() - answered, 0)
 

@@ -148,7 +148,7 @@ class ReviewerSubmissionFilter:
         submissions = (
             self.request.event.submissions(manager='all_objects').exclude(state=SubmissionStates.DRAFT)
             if include_deleted
-            else self.request.event.submissions
+            else self.request.event.submissions.all()
         )
         queryset = (
             submissions
@@ -745,6 +745,7 @@ class SubmissionContentView(SubmissionContent):
 
     def get_queryset(self, for_review=False):
         return super().get_queryset(for_review=for_review, include_deleted=True)
+
     @context
     @cached_property
     def submission_answers(self):
