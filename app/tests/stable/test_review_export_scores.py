@@ -4,11 +4,13 @@ from decimal import Decimal
 import pytest
 from bs4 import BeautifulSoup
 from django.apps import apps
+from django.core.exceptions import ValidationError
 from django.db import OperationalError, connection, connections, transaction
 from django.test import override_settings
 from django.test.utils import CaptureQueriesContext
 from django.utils import translation
 from django_scopes import scope
+from kombu.exceptions import OperationalError as BrokerError
 
 from eventyay.base.models import Event, Review, ReviewScore, ReviewScoreCategory, User
 from eventyay.base.models.submission import Submission
@@ -46,11 +48,12 @@ def categories(event):
 
 
 def create_review(event, reviewer, categories, title, values):
+    """Create a review with reusable, labelled score choices."""
     with scope(event=event):
         submission = Submission.objects.create(title=title, event=event, submission_type=event.cfp.default_type)
         review = Review.objects.create(submission=submission, user=reviewer, text='Good')
         review.scores.set(
-            ReviewScore.objects.create(category=category, value=value)
+            ReviewScore.objects.get_or_create(category=category, value=value, defaults={'label': str(value)})[0]
             for category, value in zip(categories, values)
         )
         review.save()
@@ -166,7 +169,7 @@ def test_rejected_review_scoring_preserves_categories_phases_and_export(
         data['phase-0-name'] = 'This phase change must be rolled back'
         for index in range(category_count):
             data[f'scores-{index}-is_independent'] = 'on'
-        recalculate = mocker.patch('eventyay.orga.views.event.recalculate_all_review_scores.apply_async')
+        recalculate = mocker.patch('eventyay.submission.tasks.recalculate_all_review_scores.apply_async')
         mocker.patch('eventyay.base.models.cache.VersionedModel._set_cache_version_sync')
         with django_capture_on_commit_callbacks(execute=True):
             response = client.post(event.orga_urls.review_settings, data)
@@ -196,7 +199,7 @@ def test_invalid_score_form_preserves_review_phase(
         data = review_settings_data(client, event)
         data['phase-0-name'] = 'This phase change must be rolled back'
         data['scores-0-name_0'] = ''
-        recalculate = mocker.patch('eventyay.orga.views.event.recalculate_all_review_scores.apply_async')
+        recalculate = mocker.patch('eventyay.submission.tasks.recalculate_all_review_scores.apply_async')
         mocker.patch('eventyay.base.models.cache.VersionedModel._set_cache_version_sync')
         with django_capture_on_commit_callbacks(execute=True):
             response = client.post(event.orga_urls.review_settings, data)
@@ -208,28 +211,73 @@ def test_invalid_score_form_preserves_review_phase(
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize('change, expected_total', (
+    ('independent', 2), ('inactive', 2), ('weight', 4),
+))
 @override_settings(COMPRESS_ENABLED=False, COMPRESS_OFFLINE=False)
-def test_valid_independent_score_configuration_saves(
-    client, event, exporter, categories, mocker, django_capture_on_commit_callbacks
+def test_valid_score_configuration_updates_totals_without_broker(
+    client, event, reviewer, exporter, categories, mocker, django_capture_on_commit_callbacks,
+    change, expected_total
 ):
-    """Save valid score settings and dispatch recalculation only after commit."""
+    """Commit category changes and their review totals even when the broker is down."""
     with scope(event=event):
+        review = create_review(event, reviewer, categories, 'A talk', (1, 2))
         client.force_login(exporter)
         data = review_settings_data(client, event)
-        data['scores-0-is_independent'] = 'on'
-        recalculate = mocker.patch('eventyay.orga.views.event.recalculate_all_review_scores.apply_async')
+        if change == 'independent':
+            data['scores-0-is_independent'] = 'on'
+        elif change == 'inactive':
+            data.pop('scores-0-active', None)
+        else:
+            data['scores-0-weight'] = '2'
+        recalculate = mocker.patch(
+            'eventyay.submission.tasks.recalculate_all_review_scores.apply_async',
+            side_effect=BrokerError('Broker unavailable'),
+        )
         mocker.patch('eventyay.base.models.cache.VersionedModel._set_cache_version_sync')
         with django_capture_on_commit_callbacks(execute=True):
             response = client.post(event.orga_urls.review_settings, data)
-            recalculate.assert_not_called()
+            assert response.status_code == 302, response.context_data['scores_formset'].errors
+            review.refresh_from_db()
+            assert review.score == expected_total
 
         assert response.status_code == 302
         main, relevance = categories
         main.refresh_from_db()
         relevance.refresh_from_db()
-        assert main.is_independent and main.weight == 0
+        assert main.is_independent is (change == 'independent')
+        assert main.active is (change != 'inactive')
+        assert main.weight == {'independent': 0, 'inactive': 1, 'weight': 2}[change]
         assert not relevance.is_independent and relevance.weight == 1
-        recalculate.assert_called_once_with(kwargs={'event_id': event.pk}, ignore_result=True)
+        recalculate.assert_not_called()
+
+
+@pytest.mark.django_db
+@override_settings(COMPRESS_ENABLED=False, COMPRESS_OFFLINE=False)
+def test_review_recalculation_failure_rolls_back_settings(client, event, reviewer, exporter, categories, mocker):
+    """Roll back category and phase changes when their score recalculation fails."""
+    with scope(event=event):
+        review = create_review(event, reviewer, categories, 'A talk', (1, 2))
+        phase = event.review_phases.order_by('position').first()
+        phase_name = phase.name
+        client.force_login(exporter)
+        data = review_settings_data(client, event)
+        data['phase-0-name'] = 'Must be rolled back'
+        data.pop('scores-0-active', None)
+        mocker.patch.object(
+            ReviewScoreCategory, 'recalculate_scores', side_effect=ValidationError('Cannot recalculate')
+        )
+
+        response = client.post(event.orga_urls.review_settings, data)
+
+        assert response.status_code == 200
+        assert b'Cannot recalculate' in response.content
+        categories[0].refresh_from_db()
+        phase.refresh_from_db()
+        review.refresh_from_db()
+        assert categories[0].active
+        assert phase.name == phase_name
+        assert review.score == 3
 
 
 @pytest.mark.django_db(transaction=True, available_apps=[app.name for app in apps.get_app_configs()])
@@ -245,7 +293,7 @@ def test_concurrent_review_settings_wait_before_validating(client, mocker, reque
         client.force_login(exporter)
         data = review_settings_data(client, event)
         data['scores-1-is_independent'] = 'on'
-        mocker.patch('eventyay.orga.views.event.recalculate_all_review_scores.apply_async')
+        mocker.patch('eventyay.submission.tasks.recalculate_all_review_scores.apply_async')
         validate = mocker.spy(ReviewScoreCategory, '_validate_independence')
 
         def competing_save():

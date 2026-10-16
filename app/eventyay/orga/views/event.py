@@ -44,7 +44,6 @@ from eventyay.orga.forms.review import ReviewExportForm
 from eventyay.orga.forms.schedule import ScheduleExportForm
 from eventyay.orga.forms.speaker import SpeakerExportForm
 from eventyay.person.forms import UserForm
-from eventyay.submission.tasks import recalculate_all_review_scores
 
 from .speaker import SpeakerImportProcessView
 from .submission import SubmissionImportProcessView
@@ -153,17 +152,12 @@ class EventReviewSettings(EventSettingsPermission, ActionFromUrl, FormView):
                 scores = self.save_scores()
                 if not phases or not scores:
                     raise ValidationError(phrases.base.error_saving_changes)
+                if self.scores_formset.has_changed():
+                    ReviewScoreCategory.recalculate_scores(self.request.event)
         except ValidationError as e:
             messages.error(self.request, e.message)
             return self.get(self.request, *self.args, **self.kwargs)
         form.save()
-        if self.scores_formset.has_changed():
-            transaction.on_commit(
-                lambda event_id=self.request.event.pk: recalculate_all_review_scores.apply_async(
-                    kwargs={'event_id': event_id},
-                    ignore_result=True,
-                )
-            )
         messages.success(self.request, phrases.base.saved)
         return super().form_valid(form)
 
@@ -248,15 +242,13 @@ class EventReviewSettings(EventSettingsPermission, ActionFromUrl, FormView):
         )
 
     def save_scores(self):
+        """Save category changes before recalculating totals in the enclosing transaction."""
         if not self.scores_formset.is_valid():
             return False
-        weights_changed = False
         for form in self.scores_formset.initial_forms:
             if self.scores_formset._should_delete_form(form):
                 continue
             if form.has_changed():
-                if 'weight' in form.changed_data:
-                    weights_changed = True
                 form.instance.event = self.request.event
                 form.save()
 
@@ -270,14 +262,10 @@ class EventReviewSettings(EventSettingsPermission, ActionFromUrl, FormView):
             form.save()
 
         for form in self.scores_formset.deleted_forms:
-            if not form.instance.is_independent:
-                weights_changed = True
             if form.instance.pk:
                 form.instance.scores.all().delete()
                 form.instance.delete()
 
-        if weights_changed:
-            ReviewScoreCategory.recalculate_scores(self.request.event)
         return True
 
 
