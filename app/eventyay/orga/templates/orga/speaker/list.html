@@ -65,36 +65,36 @@
                 <tr>
                     <th>
                         {% translate "Name" %}
-                        {% include 'orga/includes/sort_link.html' with key='user__fullname' icon='caret-down' label=_('Sort (a-z)') %}
-                        {% include 'orga/includes/sort_link.html' with key='-user__fullname' icon='caret-up' label=_('Sort (z-a)') %}
+                        <a href="{% querystring sort='user__fullname' page=None %}" class="sort-link{% if current_sort == 'user__fullname' %} sort-active{% endif %}" title="{% translate 'Sort by name (a-z)' %}" aria-label="{% translate 'Sort by name (a-z)' %}"><i class="fa fa-caret-down" aria-hidden="true"></i></a>
+                        <a href="{% querystring sort='-user__fullname' page=None %}" class="sort-link{% if current_sort == '-user__fullname' %} sort-active{% endif %}" title="{% translate 'Sort by name (z-a)' %}" aria-label="{% translate 'Sort by name (z-a)' %}"><i class="fa fa-caret-up" aria-hidden="true"></i></a>
                     </th>
                     <th class="numeric">
                         {% translate "Accepted Proposals" %}
-                        {% include 'orga/includes/sort_link.html' with key='-accepted_submission_count' icon='caret-down' label=_('Sort (high-low)') %}
-                        {% include 'orga/includes/sort_link.html' with key='accepted_submission_count' icon='caret-up' label=_('Sort (low-high)') %}
+                        <a href="{% querystring sort='-accepted_submission_count' page=None %}" class="sort-link{% if current_sort == '-accepted_submission_count' %} sort-active{% endif %}" title="{% translate 'Sort by accepted proposals (high to low)' %}" aria-label="{% translate 'Sort by accepted proposals (high to low)' %}"><i class="fa fa-caret-down" aria-hidden="true"></i></a>
+                        <a href="{% querystring sort='accepted_submission_count' page=None %}" class="sort-link{% if current_sort == 'accepted_submission_count' %} sort-active{% endif %}" title="{% translate 'Sort by accepted proposals (low to high)' %}" aria-label="{% translate 'Sort by accepted proposals (low to high)' %}"><i class="fa fa-caret-up" aria-hidden="true"></i></a>
                     </th>
                     <th class="numeric">
                         {% translate "Proposals" %}
-                        {% include 'orga/includes/sort_link.html' with key='-submission_count' icon='caret-down' label=_('Sort (high-low)') %}
-                        {% include 'orga/includes/sort_link.html' with key='submission_count' icon='caret-up' label=_('Sort (low-high)') %}
+                        <a href="{% querystring sort='-submission_count' page=None %}" class="sort-link{% if current_sort == '-submission_count' %} sort-active{% endif %}" title="{% translate 'Sort by proposals (high to low)' %}" aria-label="{% translate 'Sort by proposals (high to low)' %}"><i class="fa fa-caret-down" aria-hidden="true"></i></a>
+                        <a href="{% querystring sort='submission_count' page=None %}" class="sort-link{% if current_sort == 'submission_count' %} sort-active{% endif %}" title="{% translate 'Sort by proposals (low to high)' %}" aria-label="{% translate 'Sort by proposals (low to high)' %}"><i class="fa fa-caret-up" aria-hidden="true"></i></a>
                     </th>
                     <th class="text-center">
                         {% translate "Featured" %}
                         {% if can_update_speaker %}
                             <i class="fa fa-question-circle" data-toggle="tooltip" title="{% translate 'Show this speaker in the list of featured speakers.' %}"></i>
-                            {% include 'orga/includes/sort_link.html' with key='-is_featured' icon='caret-down' label=_('Sort featured speakers first') %}
-                            {% include 'orga/includes/sort_link.html' with key='is_featured' icon='caret-up' label=_('Sort non-featured speakers first') %}
+                            <a href="{% querystring sort='-is_featured' page=None %}" class="sort-link{% if current_sort == '-is_featured' %} sort-active{% endif %}" title="{% translate 'Sort featured speakers first' %}" aria-label="{% translate 'Sort featured speakers first' %}"><i class="fa fa-caret-down" aria-hidden="true"></i></a>
+                            <a href="{% querystring sort='is_featured' page=None %}" class="sort-link{% if current_sort == 'is_featured' %} sort-active{% endif %}" title="{% translate 'Sort non-featured speakers first' %}" aria-label="{% translate 'Sort non-featured speakers first' %}"><i class="fa fa-caret-up" aria-hidden="true"></i></a>
                         {% endif %}
                     </th>
                     <th>{% translate "Sessions" %}</th>
                     <th class="text-right">
                         {% translate "Arrival" %}
-                        {% include 'orga/includes/sort_link.html' with key='-has_arrived' icon='caret-down' label=_('Sort arrived speakers first') %}
-                        {% include 'orga/includes/sort_link.html' with key='has_arrived' icon='caret-up' label=_('Sort not arrived speakers first') %}
+                        <a href="{% querystring sort='-has_arrived' page=None %}" class="sort-link{% if current_sort == '-has_arrived' %} sort-active{% endif %}" title="{% translate 'Sort arrived speakers first' %}" aria-label="{% translate 'Sort arrived speakers first' %}"><i class="fa fa-caret-down" aria-hidden="true"></i></a>
+                        <a href="{% querystring sort='has_arrived' page=None %}" class="sort-link{% if current_sort == 'has_arrived' %} sort-active{% endif %}" title="{% translate 'Sort not arrived speakers first' %}" aria-label="{% translate 'Sort not arrived speakers first' %}"><i class="fa fa-caret-up" aria-hidden="true"></i></a>
                     </th>
                 </tr>
             </thead>
-            <tbody dragsort-url="{{ request.event.orga_urls.speakers }}">
+            <tbody{% if is_manual_order %} dragsort-url="{{ request.event.orga_urls.speakers }}"{% endif %}>
                 {% for profile in speakers %}
                     <tr dragsort-id="{{ profile.pk }}">
                         <td>
@@ -163,7 +163,7 @@
                                     {% endif %}
                                 {% endif %}
                             {% endif %}
-                            {% if can_update_speaker %}
+                            {% if can_update_speaker and is_manual_order %}
                                 <button draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate "Move item" %}">
                                     <i class="fa fa-arrows"></i>
                                 </button>

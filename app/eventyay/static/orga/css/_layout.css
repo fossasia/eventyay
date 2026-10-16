@@ -3586,11 +3586,13 @@ a.btn-speaker-not-arrived {
   vertical-align: middle;
 }
 
-.speaker-list-table thead .sort-link {
+table thead .sort-link {
   color: var(--color-text-muted);
 }
 
-.speaker-list-table thead .sort-link.sort-active {
+table thead .sort-link:hover,
+table thead .sort-link:focus,
+table thead .sort-link.sort-active {
   color: var(--color-primary);
 }
 

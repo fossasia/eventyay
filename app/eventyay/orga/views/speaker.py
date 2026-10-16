@@ -101,8 +101,8 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
         return super().sort_queryset(qs)
 
     @context
-    def current_sort(self):
-        return self.request.GET.get('sort') or ''
+    def is_manual_order(self) -> bool:
+        return self.current_sort() in ('', 'default', 'position')
 
     def get_filter_form(self):
         with scope(event=self.request.event):

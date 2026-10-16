@@ -543,6 +543,26 @@ def test_speaker_list_sorting_keeps_search(
 
 
 @pytest.mark.django_db
+def test_speaker_list_hides_drag_controls_when_sorted(orga_client, speaker, event, submission):
+    response = orga_client.get(f'{event.orga_urls.speakers}?sort=-submission_count', follow=True)
+
+    assert response.status_code == 200
+    assert 'dragsort-url' not in response.text
+    assert 'dragsort-button' not in response.text
+
+
+@pytest.mark.django_db
+def test_speaker_list_sort_links_name_their_column(orga_client, speaker, event, submission):
+    response = orga_client.get(event.orga_urls.speakers, follow=True)
+
+    doc = bs4.BeautifulSoup(response.content, 'lxml')
+    labels = [link['aria-label'] for link in doc.select('thead a.sort-link')]
+    assert len(labels) == len(set(labels))
+    assert 'Sort by accepted proposals (high to low)' in labels
+    assert 'Sort by proposals (high to low)' in labels
+
+
+@pytest.mark.django_db
 def test_speaker_list_sort_resets_page(orga_client, speaker, event, submission):
     response = orga_client.get(f'{event.orga_urls.speakers}?page=1&sort=user__fullname', follow=True)
 
