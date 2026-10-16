@@ -353,7 +353,9 @@ def test_orga_can_release_and_reset_schedule(orga_client, event):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize('version', ('wip', 'latest', ' wip ', ' latest '))
+@pytest.mark.parametrize(
+    'version', ('wip', 'latest', ' wip ', ' latest ', 'WIP', 'Wip', 'LATEST', 'Latest', ' wIp ', ' LaTeSt '),
+)
 @pytest.mark.parametrize('has_wip', (True, False))
 def test_orga_cannot_release_reserved_schedule_version(orga_client, event, slot, version, has_wip):
     """Reject reserved names without changing schedules, even with no draft."""

@@ -102,25 +102,37 @@ def test_release_acknowledgement_messages_skip_details_shown_elsewhere(break_slo
     assert 'not yet been assigned a track' not in joined
 
 
-@pytest.mark.parametrize("version", ["wip", "latest", None, ""])
+@pytest.mark.parametrize(
+    'version', ('wip', 'latest', 'WIP', 'Wip', 'LATEST', 'Latest', ' wIp ', ' LaTeSt ', None, '', ' \t '),
+)
 @pytest.mark.django_db
-def test_freeze_fail(slot, schedule, version):
+def test_freeze_fail(slot, version):
+    """Reject reserved and empty names with validation errors before changing data."""
     with scope(event=slot.submission.event):
         schedule_count = Schedule.objects.count()
-        with pytest.raises(Exception):  # noqa
-            slot.submission.event.wip_schedule.freeze(
-                version if version is not None else schedule.version
-            )
+        with pytest.raises(ValidationError):
+            slot.submission.event.wip_schedule.freeze(version)
         assert Schedule.objects.count() == schedule_count
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize('version', ('Release 1.0', ' Release 1.0 '))
+def test_freeze_preserves_version_case(slot, version):
+    """Strip surrounding whitespace without changing a valid version's spelling."""
+    with scope(event=slot.event):
+        released, _ = slot.event.wip_schedule.freeze(version, notify_speakers=False)
+        released.refresh_from_db()
+        assert released.version == 'Release 1.0'
+
+
+@pytest.mark.django_db
 def test_freeze_fail_repeat(slot, schedule):
+    """Report attempts to freeze an already released schedule as validation errors."""
     with scope(event=slot.submission.event):
         schedule_count = Schedule.objects.count()
         old, _ = slot.submission.event.wip_schedule.freeze("version")
         assert Schedule.objects.count() == schedule_count + 1
-        with pytest.raises(Exception):  # noqa
+        with pytest.raises(ValidationError, match='already versioned'):
             old.freeze("version")
         assert Schedule.objects.count() == schedule_count + 1
 

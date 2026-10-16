@@ -343,15 +343,19 @@ class Schedule(PretalxModel):
         :rtype: Schedule
         """
 
-        if name in ('wip', 'latest'):
-            raise Exception(f'Cannot use reserved name "{name}" for schedule version.')
-        if not name:
-            raise Exception('Cannot create schedule version without a version name.')
+        if not name or not name.strip():
+            raise ValidationError(_('Cannot create schedule version without a version name.'))
+        name = name.strip()
+        if name.lower() in ('wip', 'latest'):
+            raise ValidationError(_('This schedule version is reserved. Please choose a different name.'))
 
         with scope(event=self.event):
             self.version = Schedule.objects.select_for_update().get(pk=self.pk).version
         if self.version:
-            raise ValidationError(f'Cannot freeze schedule version: already versioned as "{self.version}".')
+            raise ValidationError(
+                _('Cannot freeze schedule version: already versioned as "%(version)s".'),
+                params={'version': self.version},
+            )
 
         self.version = name
         self.comment = comment

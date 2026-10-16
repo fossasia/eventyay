@@ -150,7 +150,8 @@ class ScheduleReleaseView(EventPermissionRequired, FormView):
         return len(self.draft_schedule.generate_notifications(save=False)) if self.draft_schedule else 0
 
     def form_invalid(self, form):
-        messages.error(self.request, _('You have to provide a new, unique schedule version!'))
+        """Direct organisers to the field errors for any rejected release."""
+        messages.error(self.request, phrases.base.error_saving_changes)
         return super().form_invalid(form)
 
     def form_valid(self, form):
