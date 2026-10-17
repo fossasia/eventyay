@@ -27,6 +27,7 @@
             <link rel="stylesheet" type="text/css" href="{% static 'common/css/_markdown_editor.css' %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'leaflet/leaflet.css' %}" />
             <link rel="stylesheet" href="{% static 'eventyay-common/css/loading_modal.css' %}" />
+            <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/print.css' %}" />
 		{% endcompress %}
         <link rel="stylesheet" type="text/css" href="{% static 'common/css/fileInput.css' %}" />
         {% if DEBUG %}
@@ -215,7 +216,7 @@
                     {{ talk_hostname|json_script:"talk_hostname_url" }}
                     {% include "common/fragment_profile_dropdown.html" %}
                 </ul>
-                <div class="navbar-default sidebar" role="navigation">
+                <div class="navbar-default sidebar hidden-print" role="navigation">
                     <div class="sidebar-nav navbar-nav-collapse navbar-collapse">
                         <div class="dropdown context-selector">
                             {% block nav_top_header %}
