@@ -1118,9 +1118,10 @@ table .color-square {
 
 .track-badge {
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.3em;
-  white-space: nowrap;
+  max-width: 30ch;
+  overflow-wrap: anywhere;
 }
 
 .track-badge::before {
@@ -1128,6 +1129,7 @@ table .color-square {
   display: inline-block;
   width: 0.65em;
   height: 0.65em;
+  margin-top: calc((1lh - 0.65em) / 2);
   border-radius: 50%;
   background-color: var(--color-border);
   flex-shrink: 0;
