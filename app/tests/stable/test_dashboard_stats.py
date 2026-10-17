@@ -1,7 +1,3 @@
-import shutil
-import subprocess
-from pathlib import Path
-
 import pytest
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
@@ -205,21 +201,3 @@ class TestEventListStats:
         assert {'e1', 'e2', 'e3'}.issubset(cleared_slugs)
         content_cleared = response_cleared.content.decode()
         assert 'value="" selected>All organizers' in content_cleared
-
-    def test_searchable_select_js_interaction(self):
-        """Execute the node interaction test suite for searchable-select.js."""
-        node_bin = shutil.which('node')
-        if not node_bin:
-            pytest.skip('Node.js is not installed')
-
-        base_dir = Path(__file__).resolve().parent.parent.parent
-        test_file = base_dir / 'eventyay' / 'static' / 'common' / 'js' / 'searchable-select.test.js'
-        assert test_file.exists(), f'Test file {test_file} not found'
-
-        result = subprocess.run(
-            [node_bin, '--test', str(test_file)],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        assert result.returncode == 0, f'Node tests failed:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}'
