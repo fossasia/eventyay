@@ -75,8 +75,8 @@
 						.drop-zone-icon-wrap
 							i.fa(:class="!draggedSession?.code ? 'fa-trash' : 'fa-inbox'")
 						.drop-zone-content
-							span.drop-zone-title {{ !draggedSession?.code ? $t('Drop here to dismiss break') : $t('Drop here to unassign session') }}
-							span.drop-zone-subtitle {{ !draggedSession?.code ? $t('Removes break from timetable') : $t('Returns session to unscheduled list') }}
+							span.drop-zone-title {{ !draggedSession?.code ? $t('Drop here to dismiss break') : translations.unassignDropTitle }}
+							span.drop-zone-subtitle {{ !draggedSession?.code ? $t('Removes break from timetable') : translations.unassignDropSubtitle }}
 					.unassigned-header
 						.density-controls
 							button.density-btn(:class="{active: condensedView}", @click="toggleCondensedView", :title="condensedView ? $t('Normal view') : $t('Condensed view')", :aria-pressed="condensedView.toString()")
@@ -761,6 +761,8 @@ function onTimeDensityChange (): void {
 const translations = computed(() => ({
   searchSessions: caps.showRoles ? $t('Search shifts') : $t('Search sessions'),
   unassignedTitle: caps.showRoles ? $t('Unassigned Shifts') : $t('Unassigned Sessions'),
+  unassignDropTitle: caps.showRoles ? $t('Drop here to unassign shift') : $t('Drop here to unassign session'),
+  unassignDropSubtitle: caps.showRoles ? $t('Returns shift to unassigned list') : $t('Returns session to unscheduled list'),
   newBreak: $t('New break'),
 }))
 

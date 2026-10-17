@@ -2,9 +2,11 @@
 .c-linear-schedule-session.is-shift-session(:style="style", @pointerdown.stop="onPointerDown", :class="classes")
 	.time-box
 		.start(:class="{'has-ampm': startTime?.ampm}", v-if="startTime")
-			.time {{ startTime.time }}
-			.ampm(v-if="startTime.ampm") {{ startTime.ampm }}
-		.duration {{ durationPretty }}
+			.clock
+				.time {{ startTime.time }}
+				.ampm(v-if="startTime.ampm") {{ startTime.ampm }}
+			.duration(v-if="durationPretty") {{ durationPretty }}
+		.duration(v-else-if="durationPretty") {{ durationPretty }}
 	.info
 		.title-row
 			.title(:class="{'title-clamped': isShortSession}") {{ getLocalizedString(session.title) }}
@@ -249,10 +251,6 @@ function onPointerDown(event: PointerEvent): void {
 
 <style lang="stylus">
 .c-linear-schedule-session.is-shift-session
-	.time-box
-		.start
-			align-items: center
-			text-align: center
 	.title-row
 		display: flex
 		justify-content: space-between
