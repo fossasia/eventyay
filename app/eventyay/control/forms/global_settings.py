@@ -11,7 +11,7 @@ from django.core.files.uploadedfile import UploadedFile
 from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.forms import SECRET_REDACTED, SecretKeySettingsField, SecretKeySettingsWidget, SettingsForm
-from eventyay.base.models.privacy import ConsentProvider
+from eventyay.base.models.privacy import ConsentProvider, ThirdPartyService
 from eventyay.base.settings import EVENT_SERIES_CREATION_ENABLED, MEETUP_CREATION_ENABLED, GlobalSettingsObject
 from eventyay.base.signals import register_global_settings
 from eventyay.common.urls import get_file_url_path
@@ -944,3 +944,20 @@ class PrivacySettingsForm(SettingsForm):
             )
 
         return data
+
+
+class ThirdPartyServiceForm(forms.ModelForm):
+    """Add or edit an entry of the third-party service registry."""
+
+    class Meta:
+        model = ThirdPartyService
+        fields = ('title', 'name', 'provider', 'purpose', 'category', 'enabled', 'privacy_policy_url', 'cookie_names')
+        widgets = {
+            'purpose': forms.Textarea(attrs={'rows': 3}),
+            'cookie_names': forms.Textarea(attrs={'rows': 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # A service without a category is left out of the consent banner, so it has to get one here.
+        self.fields['category'].required = True
