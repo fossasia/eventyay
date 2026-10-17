@@ -3,7 +3,7 @@
   .ts-confirm-panel(@click.stop="")
     .ts-confirm-header
       h3 {{ title }}
-      button.modal-close-btn(type="button", :aria-label="$t('Close')", @click="cancel")
+      button.modal-close-btn(type="button", :disabled="busy", :aria-label="$t('Close')", @click="cancel")
         i.fa.fa-times(aria-hidden="true")
     p.ts-confirm-lead(v-if="lead") {{ lead }}
     p.ts-confirm-error(v-if="error") {{ error }}
@@ -16,7 +16,7 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
 
-defineProps<{
+const props = defineProps<{
   title: string
   lead?: string
   confirmLabel?: string
@@ -41,6 +41,7 @@ function close() {
 }
 
 function cancel() {
+  if (props.busy) return
   close()
   emit('cancel')
 }

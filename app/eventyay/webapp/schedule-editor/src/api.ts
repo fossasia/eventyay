@@ -54,6 +54,13 @@ interface AssignmentResponse {
   status: string
 }
 
+export class HTTPError extends Error {
+  constructor(readonly status: number, detail: string) {
+    super(`HTTP error ${status}: ${detail}`)
+    this.name = 'HTTPError'
+  }
+}
+
 const api = {
   getOrgaEventBase(): string {
     return getApiConfig().baseUrl
@@ -71,6 +78,7 @@ const api = {
     return match ? match[2] : null
   },
 
+  /** @throws {HTTPError | Error} when a request fails; callers handle presentation. */
   async http<T>(verb: string, url: string, body: HttpRequestBody): Promise<T> {
     const headers: Record<string, string> = {}
     if (body) headers['Content-Type'] = 'application/json'
@@ -102,14 +110,21 @@ const api = {
     const contentType = response.headers.get('Content-Type') ?? ''
     if (!contentType.includes('application/json')) {
       logOperational({action, outcome: 'failure', backend: 'schedule_editor', error_code: 'non_json', status: response.status})
-      throw new Error(`HTTP error ${response.status}: server returned non-JSON response`)
+      throw new HTTPError(response.status, 'server returned non-JSON response')
     }
 
-    const json = await response.json()
+    let json: unknown
+    try {
+      json = await response.json()
+    } catch (error) {
+      if (response.ok) throw error
+      logOperational({action, outcome: 'failure', backend: 'schedule_editor', error_code: 'invalid_json', status: response.status})
+      throw new HTTPError(response.status, 'server returned invalid JSON')
+    }
 
     if (!response.ok) {
       logOperational({action, outcome: 'failure', backend: 'schedule_editor', error_code: 'http_error', status: response.status})
-      throw new Error(`HTTP error ${response.status}: ${JSON.stringify(json)}`)
+      throw new HTTPError(response.status, JSON.stringify(json))
     }
 
     return json as T
