@@ -24,6 +24,7 @@ def get_extension_from_response(response):
         ".jpg",
         ".gif",
         ".jpeg",
+        ".webp",
     )
     if extension in ext_whitelist:
         return content_type, extension
