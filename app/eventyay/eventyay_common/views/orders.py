@@ -9,6 +9,8 @@ from eventyay.base.models import Order
 from eventyay.control.views import PaginationMixin
 
 from ..forms.filters import UserOrderFilterForm
+from ..onboarding import user_has_verified_email
+
 
 logger = getLogger(__name__)
 
@@ -23,6 +25,8 @@ class MyOrdersView(PaginationMixin, ListView):
 
     def get_queryset(self):
         user = self.request.user
+        if not user_has_verified_email(user):
+            return Order.objects.none()
         qs = Order.objects.filter(Q(email__iexact=user.email)).select_related('event').order_by('-datetime')
 
         if self.filter_form.is_valid():
