@@ -2,10 +2,11 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
+from django.db.models import Q
 from django.forms import inlineformset_factory
 from django.utils.translation import gettext_lazy as _
 
-from django_scopes import scopes_disabled
+from django_scopes import scope, scopes_disabled
 
 from eventyay.base.models import (
     BBBServer,
@@ -14,6 +15,7 @@ from eventyay.base.models import (
     LoungeMeshServer,
     Organizer,
     Room,
+    StreamSchedule,
     TurnServer,
 )
 from eventyay.base.models.event import (
@@ -23,6 +25,68 @@ from eventyay.base.models.event import (
     default_feature_flags,
 )
 from eventyay.base.services.jitsi import normalize_server_url
+from eventyay.api.serializers.stream_schedule import StreamScheduleSerializer
+
+
+class VideoStreamingSelectionForm(forms.Form):
+    """Select the event and optional stream managed by a platform administrator."""
+    event = forms.ModelChoiceField(queryset=Event.objects.none(), required=False, label=_('Event'))
+    stream = forms.IntegerField(required=False, min_value=1, max_value=2**63 - 1, widget=forms.HiddenInput)
+
+    def __init__(self, *args, **kwargs):
+        """Offer all events to the protected platform settings view."""
+        super().__init__(*args, **kwargs)
+        with scopes_disabled():
+            self.fields['event'].queryset = Event.objects.select_related('organizer').order_by('pk')
+
+
+class VideoStreamScheduleForm(forms.ModelForm):
+    """Configure streams with the same timing validation as the room API."""
+    class Meta:
+        model = StreamSchedule
+        fields = ('room', 'title', 'url', 'stream_type', 'start_time', 'end_time', 'config')
+        widgets = {
+            'start_time': forms.DateTimeInput(
+                format='%Y-%m-%dT%H:%M:%S', attrs={'type': 'datetime-local', 'step': '1'},
+            ),
+            'end_time': forms.DateTimeInput(
+                format='%Y-%m-%dT%H:%M:%S', attrs={'type': 'datetime-local', 'step': '1'},
+            ),
+        }
+
+    def __init__(self, *args, event, **kwargs):
+        """Restrict room choices to the selected event and retain existing rooms."""
+        super().__init__(*args, **kwargs)
+        available_rooms = Q(deleted=False)
+        if self.instance.pk:
+            available_rooms |= Q(pk=self.instance.room_id)
+        with scope(event=event):
+            self.fields['room'].queryset = Room.objects.filter(event=event).filter(available_rooms).order_by('pk')
+        self.fields['room'].disabled = bool(self.instance.pk)
+
+    def clean(self):
+        """Validate stream timing and overlap through the existing API validator."""
+        data = super().clean()
+        if self.errors or not data.get('room'):
+            return data
+        serializer = StreamScheduleSerializer(
+            instance=self.instance if self.instance.pk else None,
+            data={key: value for key, value in data.items() if key != 'room'},
+            context={'room': data['room']},
+        )
+        if not serializer.is_valid():
+            for field, errors in serializer.errors.items():
+                self.add_error(field if field in self.fields else None, [str(error) for error in errors])
+        return data
+
+    def clean_config(self):
+        """Require stream configuration to be a JSON object."""
+        config = self.cleaned_data.get('config')
+        if config is None:
+            return {}
+        if not isinstance(config, dict):
+            raise ValidationError(_('Additional configuration must be a JSON object.'))
+        return config
 
 User = get_user_model()
 SECRET_REDACTED = "*****"

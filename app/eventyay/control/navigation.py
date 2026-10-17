@@ -533,6 +533,7 @@ def merge_in(nav, newnav):
 
 
 def get_admin_navigation(request):
+    """Group platform administration links and mark the current section active."""
     url = request.resolver_match
     if not url:
         return []
@@ -572,7 +573,17 @@ def get_admin_navigation(request):
             'active': (url.url_name == 'admin.global.privacy'),
         },
         {
-            'label': _('Generate keys for SSO'),
+            'label': _('Start page'),
+            'url': reverse('eventyay_admin:admin.startpage'),
+            'active': url.url_name == 'admin.startpage',
+        },
+        {
+            'label': _('Update check'),
+            'url': reverse('eventyay_admin:admin.update'),
+            'active': url.url_name == 'admin.update',
+        },
+        {
+            'label': _('SSO / Social authentication'),
             'url': reverse('eventyay_admin:admin.global.sso'),
             'active': (url.url_name == 'admin.global.sso'),
         },
@@ -603,10 +614,19 @@ def get_admin_navigation(request):
             'children': business_children,
         },
         {
-            'label': _('Task management'),
-            'url': reverse('eventyay_admin:admin.task_management'),
-            'active': 'task_management' in url.url_name,
-            'icon': 'tasks',
+            'label': _('System'),
+            'url': reverse('eventyay_admin:admin.operations'),
+            'active': url.url_name in ('admin.operations', 'admin.task_management')
+            or url.url_name.startswith('systemlog.'),
+            'icon': 'cogs',
+            'children': [
+                {'label': _('System operations'), 'url': reverse('eventyay_admin:admin.operations'),
+                 'active': url.url_name == 'admin.operations'},
+                {'label': _('Tasks & queues'), 'url': reverse('eventyay_admin:admin.task_management'),
+                 'active': url.url_name == 'admin.task_management'},
+                {'label': _('Logs'), 'url': reverse('eventyay_admin:video_admin:systemlog.list'),
+                 'active': url.url_name.startswith('systemlog.')},
+            ],
         },
     ]
 
@@ -616,7 +636,17 @@ def get_admin_navigation(request):
         is_video_route = 'video_admin' in url.namespaces
         video_children = [
             {
-                'label': _('Video settings'),
+                'label': _('Dashboard'),
+                'url': reverse('eventyay_admin:admin.operations') + '#admin-video-heading',
+                'active': False,
+            },
+            {
+                'label': _('Events'),
+                'url': reverse('eventyay_admin:video_admin:event.list'),
+                'active': is_video_route and url.url_name.startswith('event.'),
+            },
+            {
+                'label': _('Settings'),
                 'url': reverse('eventyay_admin:video_admin:settings'),
                 'active': is_video_route and (
                     url.url_name == 'settings' or
@@ -627,11 +657,6 @@ def get_admin_navigation(request):
                     url.url_name.startswith('turnserver.') or
                     url.url_name == 'server.toggle-active'
                 ),
-            },
-            {
-                'label': _('Events'),
-                'url': reverse('eventyay_admin:video_admin:event.list'),
-                'active': is_video_route and url.url_name.startswith('event.'),
             },
             {
                 'label': _('System log'),
@@ -682,7 +707,7 @@ def get_admin_navigation(request):
     nav.extend(
         [
             {
-                'label': _('Platform Data'),
+                'label': _('Platform data'),
                 'url': reverse('eventyay_admin:admin.events'),
                 'active': any(c['active'] for c in platform_data_children),
                 'icon': 'database',
@@ -708,6 +733,16 @@ def get_admin_navigation(request):
             },
         ]
     )
+
+    priority = [
+        reverse('eventyay_admin:admin.global.settings'),
+        reverse('eventyay_admin:admin.events'),
+        reverse('eventyay_admin:admin.users'),
+        reverse('eventyay_admin:video_admin:settings'),
+        reverse('eventyay_admin:admin.vouchers'),
+        reverse('eventyay_admin:admin.operations'),
+    ]
+    nav.sort(key=lambda item: priority.index(item['url']) if item['url'] in priority else len(priority))
 
     # --- Admin Message Center ---
     is_messages_route = 'admin.messages' in (url.url_name or '')

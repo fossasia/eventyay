@@ -5,15 +5,17 @@ import json
 import icalendar
 import jwt
 import requests
+from asgiref.sync import async_to_sync
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.core.exceptions import PermissionDenied
+from django.core.paginator import Paginator
 from eventyay.base.models.auth import User
 from django.db import transaction
 from django.db.models import Count, F, Max, OuterRef, Subquery
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
-from django.shortcuts import redirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.crypto import get_random_string
 from django.utils.functional import cached_property
@@ -27,6 +29,7 @@ from django.views.generic import (
     UpdateView,
     View,
 )
+from django_scopes import scope, scopes_disabled
 
 from eventyay.base.models import (
     BBBCall,
@@ -37,6 +40,7 @@ from eventyay.base.models import (
     LoungeMeshServer,
     TurnServer,
     Event,
+    StreamSchedule,
 )
 
 from eventyay.base.models.event import EventPlannedUsage as PlannedUsage
@@ -53,7 +57,11 @@ from eventyay.control.forms.server_management import (
     TurnServerForm,
     UserForm,
     EventForm,
+    VideoStreamScheduleForm,
+    VideoStreamingSelectionForm,
 )
+from eventyay.base.services.event import notify_event_change
+from eventyay.base.services.room import broadcast_stream_change
 from eventyay.base.models.log import LogEntry
 from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, emit_logged_action, log_event
 from eventyay.base.settings import (
@@ -157,7 +165,32 @@ class ProfileView(AdministratorPermissionRequiredMixin, FormView):
 class VideoSettings(AdministratorPermissionRequiredMixin, TemplateView):
     template_name = "control/video_settings.html"
 
+    @cached_property
+    def streaming_selection(self):
+        """Validate the selected event and stream identifiers."""
+        form = VideoStreamingSelectionForm(self.request.GET)
+        with scopes_disabled():
+            if not form.is_valid():
+                raise Http404
+        return form
+
+    @cached_property
+    def streaming_instance(self):
+        """Load a stream only from the explicitly selected event."""
+        event = self.streaming_selection.cleaned_data['event']
+        stream_id = self.streaming_selection.cleaned_data.get('stream')
+        if not stream_id:
+            return None
+        if not event:
+            raise Http404
+        with scope(event=event):
+            return get_object_or_404(
+                StreamSchedule.objects.select_related('room', 'room__event'),
+                pk=stream_id, room__event=event,
+            )
+
     def get_context_data(self, **kwargs):
+        """Group provider settings and the selected event's streaming configuration."""
         ctx = super().get_context_data(**kwargs)
         bbb_qs = BBBServer.objects.select_related("event_exclusive").prefetch_related("organizers", "events").order_by("url")
         janus_qs = JanusServer.objects.select_related("event_exclusive").prefetch_related("organizers", "events").order_by("url")
@@ -233,9 +266,26 @@ class VideoSettings(AdministratorPermissionRequiredMixin, TemplateView):
         ]
         # Active tab defaults to general
         ctx["active_tab"] = kwargs.get("active_tab") or self.request.GET.get("tab", "general")
+        ctx['streaming_selection'] = self.streaming_selection
+        event = self.streaming_selection.cleaned_data['event']
+        ctx['streaming_event'] = event
+        if event:
+            with scope(event=event):
+                ctx['streaming_page'] = Paginator(
+                    StreamSchedule.objects.filter(room__event=event)
+                    .select_related('room').order_by('start_time', 'pk'),
+                    25,
+                ).get_page(self.request.GET.get('stream_page'))
+                if 'streaming_form' not in ctx:
+                    ctx['streaming_form'] = VideoStreamScheduleForm(
+                        event=event, instance=self.streaming_instance,
+                    )
         return ctx
 
     def post(self, request, *args, **kwargs):
+        """Save either the selected stream or global provider visibility."""
+        if 'stream_action' in request.POST:
+            return self.save_streaming(request)
         gs = GlobalSettingsObject()
         changed = []
         for p in SUPPORTED_VIDEO_PROVIDERS:
@@ -277,6 +327,44 @@ class VideoSettings(AdministratorPermissionRequiredMixin, TemplateView):
             messages.info(request, _("No changes made to video server visibility settings."))
 
         return redirect(reverse("eventyay_admin:video_admin:settings") + "?tab=general")
+
+    def save_streaming(self, request):
+        """Save or delete a stream and notify clients after committing its change."""
+        event = self.streaming_selection.cleaned_data['event']
+        action = request.POST.get('stream_action')
+        if not event or action not in ('save', 'delete'):
+            raise Http404
+        with scope(event=event, organizer=event.organizer):
+            instance = self.streaming_instance
+            if action == 'delete':
+                if not instance:
+                    raise Http404
+                room, stream_id = instance.room, instance.pk
+                with transaction.atomic():
+                    instance.delete()
+                    event.log_action(
+                        'eventyay.stream_schedule.deleted', data={'stream_id': stream_id}, user=request.user, orga=True,
+                    )
+                    transaction.on_commit(lambda: notify_admin_stream_change(room, event), robust=True)
+            else:
+                form = VideoStreamScheduleForm(request.POST, event=event, instance=instance)
+                if not form.is_valid():
+                    return self.render_to_response(self.get_context_data(streaming_form=form, active_tab='streaming'))
+                with transaction.atomic():
+                    stream = form.save()
+                    room = stream.room
+                    event.log_action(
+                        'eventyay.stream_schedule.saved', data={'stream_id': stream.pk}, user=request.user, orga=True,
+                    )
+                    transaction.on_commit(lambda: notify_admin_stream_change(room, event), robust=True)
+        messages.success(request, _('Streaming configuration saved.'))
+        return redirect(reverse('eventyay_admin:video_admin:settings') + f'?tab=streaming&event={event.pk}')
+
+
+def notify_admin_stream_change(room, event):
+    """Refresh the affected room and event after a stream configuration change."""
+    async_to_sync(broadcast_stream_change)(room.pk, room.get_current_stream(), reload=True)
+    async_to_sync(notify_event_change)(event.pk)
 
 
 class VideoProviderToggleVisibility(AdministratorPermissionRequiredMixin, View):

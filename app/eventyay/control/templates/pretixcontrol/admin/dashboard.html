@@ -1,990 +1,117 @@
-{% extends "pretixcontrol/admin/base.html" %}
-{% load i18n humanize %}
-{% load static %}
-{% block title %}{% trans "Dashboard" %}{% endblock %}
+{% extends 'pretixcontrol/admin/base.html' %}
+{% load i18n static humanize compress %}
+{% block title %}{% trans 'Platform Dashboard' %}{% endblock %}
 {% block custom_header %}
     {{ block.super }}
-    <link rel="stylesheet" href="{% static 'pretixcontrol/css/admin-page.css' %}">
+    {% compress css %}
+        <link rel="stylesheet" href="{% static 'pretixcontrol/css/platform-dashboard.css' %}">
+    {% endcompress %}
+    <script type="module" src="{% static 'pretixcontrol/js/platform-dashboard.js' %}"></script>
 {% endblock %}
 {% block content %}
-    <div class="admin-dashboard-title">
-        <h1>{% trans "Admin Dashboard" %}</h1>
-        <form method="post" action="{% url 'eventyay_admin:admin.dashboard' %}" class="form-inline">
-            {% csrf_token %}
-            <button type="submit" name="action" value="refresh" class="btn btn-default btn-sm">
-                <i class="fa fa-refresh"></i> {% trans "Refresh Data" %}
-            </button>
+<div class="platform-dashboard">
+    <header class="platform-header">
+        <div><h1>{% trans 'Platform Dashboard' %}</h1><p>{% trans 'Overview of platform activity, system health and key metrics.' %}</p></div>
+        <form method="post">{% csrf_token %}
+            <span>{% trans 'Last updated' %}: {{ last_updated|date:'DATETIME_FORMAT' }}</span>
+            <button type="submit" name="action" value="refresh" class="btn btn-default btn-sm"><i class="fa fa-refresh" aria-hidden="true"></i> {% trans 'Refresh data' %}</button>
         </form>
+    </header>
+    <section class="platform-card platform-section" aria-labelledby="action-heading">
+        <div class="platform-section-heading"><h2 id="action-heading">{% trans 'Action required' %}</h2><a href="{% url 'eventyay_admin:admin.operations' %}">{% trans 'View all alerts' %} →</a></div>
+        <div class="platform-actions">
+            {% for card in action_cards %}
+                <article class="platform-action"><i class="fa fa-{{ card.icon }}" aria-hidden="true"></i>
+                    <div><strong>{{ card.value|default_if_none:'—' }}</strong><p>{{ card.label }}</p>
+                        {% if card.value is None %}<p class="text-muted">{% trans 'Not available' %}</p>{% endif %}
+                        <a href="{{ card.url }}">{{ card.link }} →</a>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    </section>
+    <section aria-label="{% trans 'Key metrics' %}" class="platform-metrics">
+        {% for card in metric_cards %}
+            <a class="platform-card platform-metric" href="{{ card.url }}">
+                <i class="fa fa-{{ card.icon }}" aria-hidden="true"></i>
+                {% if card.kind == 'revenue' %}
+                    {% for revenue in card.revenues %}<strong class="platform-number">{{ revenue.total|floatformat:2 }} {{ revenue.event__currency }}</strong>{% empty %}<strong class="platform-number">0</strong>{% endfor %}
+                    <span>{{ card.label }}</span><small>{% trans 'Confirmed payments less completed refunds' %}</small>
+                {% else %}
+                    <strong class="platform-number">{{ card.value|intcomma }}</strong><span>{{ card.label }}</span>
+                {% endif %}
+            </a>
+        {% endfor %}
+    </section>
+    <section class="platform-card platform-section">
+        {% include 'pretixcontrol/admin/activity.html' %}
+        <a class="platform-footer-link" href="{% url 'eventyay_admin:admin.analytics' %}?range={{ activity_range }}">{% trans 'View all analytics' %} →</a>
+    </section>
+    <div class="platform-columns">
+        <section class="platform-card">
+            <h2>{% trans 'System health' %}</h2>
+            <div class="table-responsive"><table class="table"><tbody>
+                {% for row in health_rows %}<tr><td>{{ row.label }}</td><td>{% if row.timestamp %}{{ row.value|date:'DATETIME_FORMAT'|default:'—' }}{% else %}{{ row.value|default_if_none:'—' }}{% endif %}</td><td><span class="label label-{{ row.style }}">{{ row.status }}</span></td></tr>{% endfor %}
+            </tbody></table></div>
+            <p class="text-muted">{% trans 'API status checks backend dependencies. Task failures are recorded by workers; cached indicators may be up to five minutes old.' %}</p>
+            <a href="{% url 'eventyay_admin:admin.operations' %}">{% trans 'View system operations' %} →</a>
+        </section>
+        <div class="platform-stack">
+            <section class="platform-card">
+                <h2>{% trans 'Revenue & Orders by Currency' %}</h2>
+                <div class="table-responsive"><table class="table"><thead><tr>
+                    <th>{% trans 'Currency' %}</th><th>{% trans 'Gross revenue' %}</th><th>{% trans 'Refunds completed' %}</th><th>{% trans 'Net revenue' %}</th><th>{% trans 'Paid' %}</th><th>{% trans 'Pending' %}</th><th>{% trans 'Cancelled' %}</th><th>{% trans 'Free orders' %}</th>
+                </tr></thead><tbody>
+                    {% for row in orders_net_revenue %}<tr><td>{{ row.currency }}</td><td>{{ row.gross|floatformat:2 }}</td><td>{{ row.refunded|floatformat:2 }}</td><td>{{ row.net|floatformat:2 }}</td><td>{{ row.paid_count }}</td><td>{{ row.pending_count }}</td><td>{{ row.cancelled_count }}</td><td>{{ row.free_count }}</td></tr>
+                    {% empty %}<tr><td colspan="8">{% trans 'No orders yet.' %}</td></tr>{% endfor %}
+                </tbody></table></div><a href="{% url 'eventyay_admin:admin.orders' %}">{% trans 'View all orders' %} →</a>
+            </section>
+            <section class="platform-card">
+                <h2>{% trans 'Recent transactions' %}</h2>
+                {% if orders_detail_unavailable %}<p>{% trans 'Not available' %}</p>{% else %}
+                <div class="table-responsive"><table class="table"><thead><tr><th>{% trans 'Order code' %}</th><th>{% trans 'Event' %}</th><th>{% trans 'Organizer' %}</th><th>{% trans 'Status' %}</th><th>{% trans 'Total' %}</th></tr></thead><tbody>
+                    {% for order in orders_recent_10|slice:':5' %}<tr><td><a href="{% url 'eventyay_admin:admin.orders' %}?query={{ order.code|urlencode }}">{{ order.code }}</a></td><td>{{ order.event.name }}</td><td>{{ order.event.organizer.name }}</td><td>{{ order.get_status_display }}</td><td>{{ order.total|floatformat:2 }} {{ order.event.currency }}</td></tr>
+                    {% empty %}<tr><td colspan="5">{% trans 'No transactions yet.' %}</td></tr>{% endfor %}
+                </tbody></table></div>{% endif %}<a href="{% url 'eventyay_admin:admin.orders' %}">{% trans 'View all transactions' %} →</a>
+            </section>
+        </div>
     </div>
-    <p>{% trans "Overview of platform activity across users, events, orders, and programme." %}</p>
-    <section class="admin-section" aria-labelledby="admin-overview-heading">
-        <h2 id="admin-overview-heading" class="sr-only">{% trans "Platform overview" %}</h2>
-        <div class="dashboard">
-            <div class="widget-container widget-small">
-                <a href="{% url 'eventyay_admin:admin.users' %}" class="widget">
-                    <div class="numwidget">
-                        <span class="num">{{ users_total|intcomma }}</span>
-                        <span class="text">{% trans "Users" %}</span>
-                    </div>
-                </a>
-            </div>
-            <div class="widget-container widget-small">
-                <a href="{% url 'eventyay_admin:admin.events' %}" class="widget">
-                    <div class="numwidget">
-                        <span class="num">{{ events_total|intcomma }}</span>
-                        <span class="text">{% trans "Events" %}</span>
-                    </div>
-                </a>
-            </div>
-            <div class="widget-container widget-small">
-                <a href="{% url 'eventyay_admin:admin.organizers' %}" class="widget">
-                    <div class="numwidget">
-                        <span class="num">{{ organizers_total|intcomma }}</span>
-                        <span class="text">{% trans "Organizers" %}</span>
-                    </div>
-                </a>
-            </div>
-            <div class="widget-container widget-small">
-                <a href="{% url 'eventyay_admin:admin.orders' %}" class="widget">
-                    <div class="numwidget">
-                        <span class="num">{{ orders_total|intcomma }}</span>
-                        <span class="text">{% trans "Orders" %}</span>
-                    </div>
-                </a>
-            </div>
-            <div class="widget-container widget-small">
-                <div class="widget">
-                    <div class="numwidget numwidget-revenue">
-                        {% if orders_revenue %}
-                            {% for rev in orders_revenue|slice:":3" %}
-                                <div class="revenue-line">{{ rev.total|floatformat:2 }} <span class="revenue-currency">{{ rev.event__currency }}</span></div>
-                            {% endfor %}
-                            {% if orders_revenue|length > 3 %}
-                                <div class="revenue-overflow">…</div>
-                            {% endif %}
-                        {% else %}
-                            <span class="num">0.00</span>
-                        {% endif %}
-                        <span class="text">{% trans "Revenue" %}</span>
-                    </div>
-                </div>
-            </div>
-            <div class="widget-container widget-small">
-                <a href="{% url 'eventyay_admin:admin.submissions' %}" class="widget">
-                    <div class="numwidget">
-                        <span class="num">{{ sessions_total|intcomma }}</span>
-                        <span class="text">{% trans "Sessions" %}</span>
-                    </div>
-                </a>
-            </div>
-            <div class="widget-container widget-small">
-                <a href="{% url 'eventyay_admin:admin.submissions' %}" class="widget">
-                    <div class="numwidget">
-                        <span class="num">{{ speakers_total|intcomma }}</span>
-                        <span class="text">{% trans "Speakers" %}</span>
-                    </div>
-                </a>
-            </div>
-            <div class="widget-container widget-small">
-                <a href="{% url 'eventyay_admin:admin.attendees' %}" class="widget">
-                    <div class="numwidget">
-                        <span class="num">{{ attendees_total|intcomma }}</span>
-                        <span class="text">{% trans "Attendees" %}</span>
-                    </div>
-                </a>
-            </div>
-            <div class="widget-container widget-small">
-                <a href="{% url 'eventyay_admin:admin.orders' %}" class="widget">
-                    <div class="numwidget">
-                        <span class="num">{{ tickets_issued|intcomma }}</span>
-                        <span class="text">{% trans "Tickets Issued" %}</span>
-                    </div>
-                </a>
-            </div>
-        </div>
-    </section>
-    <section class="admin-section" aria-labelledby="admin-details-heading">
-        <h2 id="admin-details-heading" class="sr-only">{% trans "Details" %}</h2>
-        <div class="row dashboard-panels">
-            <div class="col-md-12">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <h3 class="panel-title">{% trans "Video servers" %}</h3>
-                    </div>
-                    {% include "control/includes/video_server_table.html" %}
-                    <div class="panel-footer">
-                        <a href="{% url 'eventyay_admin:video_admin:index' %}">{% trans "Manage video servers" %}</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="row dashboard-panels">
-            <div class="col-md-6">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <h3 class="panel-title">{% trans "Users" %}</h3>
-                    </div>
-                    <table class="table table-condensed table-hover">
-                        <tbody>
-                            <tr>
-                                <td>{% trans "Verified" %}</td>
-                                <td class="text-right">{{ users_verified|intcomma }}</td>
-                            </tr>
-                            <tr>
-                                <td>{% trans "Unverified" %}</td>
-                                <td class="text-right">{{ users_unverified|intcomma }}</td>
-                            </tr>
-                            <tr>
-                                <td>{% trans "New users (last 24 hours)" %}</td>
-                                <td class="text-right">{{ users_new_24h|intcomma }}</td>
-                            </tr>
-                            <tr>
-                                <td>{% trans "New users (last 7 days)" %}</td>
-                                <td class="text-right">{{ users_new_7d|intcomma }}</td>
-                            </tr>
-                            <tr>
-                                <td>{% trans "New users (last 30 days)" %}</td>
-                                <td class="text-right">{{ users_new_30d|intcomma }}</td>
-                            </tr>
-                            <tr class="dashboard-divider">
-                                <td>{% trans "Active (last 30 days)" %}</td>
-                                <td class="text-right">{{ users_recently_active|intcomma }}</td>
-                            </tr>
-                            <tr>
-                                <td>{% trans "Staff / Administrators" %}</td>
-                                <td class="text-right">{{ users_staff|intcomma }}</td>
-                            </tr>
-                            <tr>
-                                <td>{% trans "Banned" %}</td>
-                                <td class="text-right">{{ users_banned|intcomma }}</td>
-                            </tr>
-                            <tr>
-                                <td>{% trans "Marked as spam" %}</td>
-                                <td class="text-right">{{ users_is_spam|intcomma }}</td>
-                            </tr>
-                            <tr>
-                                <td>{% trans "Deleted / anonymized" %}</td>
-                                <td class="text-right">{{ users_deleted|intcomma }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <div class="panel-footer">
-                        <a href="{% url 'eventyay_admin:admin.users' %}">{% trans "Manage users" %}</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <h3 class="panel-title">{% trans "Events" %}</h3>
-                    </div>
-                    <table class="table table-condensed table-hover">
-                        <tbody>
-                            <tr>
-                                <td>{% trans "Published" %}</td>
-                                <td class="text-right">{{ events_live|intcomma }}</td>
-                            </tr>
-                            <tr>
-                                <td>{% trans "Running now" %}</td>
-                                <td class="text-right">{{ events_running|intcomma }}</td>
-                            </tr>
-                            <tr>
-                                <td>{% trans "Draft" %}</td>
-                                <td class="text-right">{{ events_draft|intcomma }}</td>
-                            </tr>
-                            <tr>
-                                <td>{% trans "Past" %}</td>
-                                <td class="text-right">{{ events_past|intcomma }}</td>
-                            </tr>
-                            <tr>
-                                <td>{% trans "Event series" %}</td>
-                                <td class="text-right">{{ events_series|intcomma }}</td>
-                            </tr>
-                            <tr>
-                                <td>{% trans "Meetup events" %}</td>
-                                <td class="text-right">{{ events_meetup|intcomma }}</td>
-                            </tr>
-                            <tr>
-                                <td>{% trans "Featured events" %}</td>
-                                <td class="text-right">{{ events_featured|intcomma }}</td>
-                            </tr>
-                            <tr class="dashboard-divider">
-                                <td>{% trans "Events with open CfP" %}</td>
-                                <td class="text-right">{{ events_cfp_open_count|intcomma }}</td>
-                            </tr>
-                            <tr>
-                                <td>{% trans "Events with published schedule" %}</td>
-                                <td class="text-right">{{ events_with_schedule_count|intcomma }}</td>
-                            </tr>
-                            <tr>
-                                <td>{% trans "Organizers" %}</td>
-                                <td class="text-right">{{ organizers_total|intcomma }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <div class="panel-footer">
-                        <a href="{% url 'eventyay_admin:admin.events' %}">{% trans "Manage events" %}</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <section class="admin-section">
-            <div class="row dashboard-panels">
-                <div class="col-md-12">
-                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            <h3 class="panel-title">{% trans "Revenue & Orders by Currency" %}</h3>
-                        </div>
-                        {% if orders_net_revenue %}
-                            <table class="table table-condensed table-hover event-table">
-                                <thead>
-                                    <tr>
-                                        <th>{% trans "Currency" %}</th>
-                                        <th class="text-right">{% trans "Gross Revenue" %}</th>
-                                        <th class="text-right">{% trans "Refunds Completed" %}</th>
-                                        <th class="text-right">{% trans "Net Revenue" %}</th>
-                                        <th class="text-right">{% trans "Paid" %}</th>
-                                        <th class="text-right">{% trans "Pending" %}</th>
-                                        <th class="text-right">{% trans "Cancelled" %}</th>
-                                        <th class="text-right">{% trans "Free Orders" %}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for rev in orders_net_revenue %}
-                                        <tr>
-                                            <td><strong>{{ rev.currency }}</strong></td>
-                                            <td class="text-right">{{ rev.gross|floatformat:2 }}</td>
-                                            <td class="text-right{% if rev.refunded > 0 %} text-danger{% endif %}">
-                                                {% if rev.refunded > 0 %}-{% endif %}{{ rev.refunded|floatformat:2 }}
-                                            </td>
-                                            <td class="text-right text-success"><strong>{{ rev.net|floatformat:2 }}</strong></td>
-                                            <td class="text-right">{{ rev.paid_count|intcomma }}</td>
-                                            <td class="text-right">{{ rev.pending_count|intcomma }}</td>
-                                            <td class="text-right">{{ rev.cancelled_count|intcomma }}</td>
-                                            <td class="text-right">{{ rev.free_count|intcomma }}</td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        {% else %}
-                            <div class="panel-body text-muted">{% trans "No order or revenue data available." %}</div>
-                        {% endif %}
-                        <div class="panel-footer">
-                            <a href="{% url 'eventyay_admin:admin.orders' %}">{% trans "Manage orders" %}</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <div class="platform-columns platform-columns-four">
+        <section class="platform-card"><h2>{% trans 'Events overview' %}</h2>
+            <dl><dt>{% trans 'Running now' %}</dt><dd>{{ events_running }}</dd><dt>{% trans 'Upcoming events' %}</dt><dd>{{ events_upcoming_count }}</dd><dt>{% trans 'Created in the last 7 days' %}</dt><dd>{{ events_recent_count }}</dd><dt>{% trans 'Events needing setup' %}</dt><dd><a href="{% url 'eventyay_admin:admin.analytics.metric' metric='needs-setup' %}">{{ events_needing_setup_count }}</a></dd></dl>
+            <a href="{% url 'eventyay_admin:admin.events' %}">{% trans 'View all events' %} →</a>
         </section>
-        <section class="admin-section" aria-labelledby="admin-orders-detail-heading">
-            <h2 id="admin-orders-detail-heading" class="sr-only">{% trans "Orders Detail" %}</h2>
-            {% if orders_detail_unavailable %}
-                <div class="row dashboard-panels">
-                    <div class="col-md-12">
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                <h3 class="panel-title">{% trans "Orders Detail" %}</h3>
-                            </div>
-                            <div class="panel-body">
-                                <span class="label label-warning">{% trans "Unavailable" %}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            {% else %}
-                <div class="row dashboard-panels">
-                    <div class="col-md-12">
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                <h3 class="panel-title">{% trans "Recent Transactions" %}</h3>
-                            </div>
-                            {% if orders_recent_10 %}
-                                <table class="table table-condensed table-hover event-table">
-                                    <thead>
-                                        <tr>
-                                            <th>{% trans "Order Code" %}</th>
-                                            <th>{% trans "Event" %}</th>
-                                            <th>{% trans "Organizer" %}</th>
-                                            <th>{% trans "Status" %}</th>
-                                            <th class="text-right">{% trans "Total" %}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for o in orders_recent_10 %}
-                                            <tr>
-                                                <td>
-                                                    <a href="{% url 'eventyay_admin:admin.orders' %}?query={{ o.code|urlencode }}">
-                                                        {{ o.code }}
-                                                    </a>
-                                                </td>
-                                                <td>{{ o.event.name }}</td>
-                                                <td>{{ o.event.organizer.name }}</td>
-                                                <td>
-                                                    {% if o.status == 'p' %}
-                                                        <span class="label label-success">{{ o.get_status_display }}</span>
-                                                    {% elif o.status == 'c' %}
-                                                        <span class="label label-danger">{{ o.get_status_display }}</span>
-                                                    {% elif o.status == 'n' %}
-                                                        <span class="label label-warning">{{ o.get_status_display }}</span>
-                                                    {% else %}
-                                                        <span class="label label-default">{{ o.get_status_display }}</span>
-                                                    {% endif %}
-                                                </td>
-                                                <td class="text-right">{{ o.total|floatformat:2 }} {{ o.event.currency }}</td>
-                                            </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            {% else %}
-                                <div class="panel-body text-muted">{% trans "No recent transactions found." %}</div>
-                            {% endif %}
-                            <div class="panel-footer">
-                                <a href="{% url 'eventyay_admin:admin.orders' %}">{% trans "All orders" %}</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="row dashboard-panels">
-                    <div class="col-md-6">
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                <h3 class="panel-title">{% trans "Top Events by Paid Orders" %}</h3>
-                            </div>
-                            {% if orders_top5_by_event %}
-                                <table class="table table-condensed table-hover event-table">
-                                    <thead>
-                                        <tr>
-                                            <th>{% trans "Event" %}</th>
-                                            <th class="text-right">{% trans "Paid Orders" %}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for e in orders_top5_by_event %}
-                                            <tr>
-                                                <td>
-                                                    <a href="{% url 'eventyay_admin:admin.orders' %}?query={{ e.event__slug|urlencode }}">
-                                                        {{ e.event__name }}
-                                                    </a>
-                                                </td>
-                                                <td class="text-right">{{ e.count|intcomma }}</td>
-                                            </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            {% else %}
-                                <div class="panel-body text-muted">{% trans "No event order data." %}</div>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                <h3 class="panel-title">{% trans "Payment Providers" %}</h3>
-                            </div>
-                            {% if orders_top5_by_provider %}
-                                <table class="table table-condensed table-hover event-table">
-                                    <thead>
-                                        <tr>
-                                            <th>{% trans "Provider" %}</th>
-                                            <th class="text-right">{% trans "Paid Orders" %}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for p in orders_top5_by_provider %}
-                                            <tr>
-                                                <td><strong>{{ p.provider }}</strong></td>
-                                                <td class="text-right">{{ p.count|intcomma }}</td>
-                                            </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            {% else %}
-                                <div class="panel-body text-muted">{% trans "No provider data." %}</div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            {% endif %}
+        <section class="platform-card"><h2>{% trans 'Programme overview' %}</h2>
+            <dl>{% for label, value in programme_rows %}<dt>{{ label }}</dt><dd>{{ value|intcomma }}</dd>{% endfor %}</dl>
+            <a href="{% url 'eventyay_admin:admin.submissions' %}">{% trans 'View all sessions' %} →</a>
         </section>
-        <section class="admin-section">
-            <div class="row dashboard-panels">
-
-                <div class="col-md-6">
-                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            <h3 class="panel-title">{% trans "Submissions & Speakers" %}</h3>
-                        </div>
-                        <table class="table table-condensed table-hover">
-                            <tbody>
-                                <tr>
-                                    <td>{% trans "Total proposals" %}</td>
-                                    <td class="text-right">{{ sessions_total|intcomma }}</td>
-                                </tr>
-                                <tr>
-                                    <td>{% trans "Total submitted (non-draft)" %}</td>
-                                    <td class="text-right">{{ sessions_total_submitted|intcomma }}</td>
-                                </tr>
-                                <tr>
-                                    <td>{% trans "Submitted (pending review)" %}</td>
-                                    <td class="text-right">{{ sessions_submitted|intcomma }}</td>
-                                </tr>
-                                <tr>
-                                    <td>{% trans "Accepted" %}</td>
-                                    <td class="text-right">{{ sessions_accepted|intcomma }}</td>
-                                </tr>
-                                <tr>
-                                    <td>{% trans "Confirmed" %}</td>
-                                    <td class="text-right">{{ sessions_confirmed|intcomma }}</td>
-                                </tr>
-                                <tr>
-                                    <td>{% trans "Rejected" %}</td>
-                                    <td class="text-right">{{ sessions_rejected|intcomma }}</td>
-                                </tr>
-                                <tr class="dashboard-divider">
-                                    <td>{% trans "Total speakers" %}</td>
-                                    <td class="text-right">{{ speakers_total|intcomma }}</td>
-                                </tr>
-                                <tr>
-                                    <td>{% trans "Confirmed speakers" %}</td>
-                                    <td class="text-right">{{ speakers_confirmed|intcomma }}</td>
-                                </tr>
-                                <tr>
-                                    <td>{% trans "Unconfirmed speakers" %}</td>
-                                    <td class="text-right">{{ speakers_unconfirmed|intcomma }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <div class="panel-footer">
-                            <a href="{% url 'eventyay_admin:admin.submissions' %}">{% trans "View submissions" %}</a>
-                        </div>
-                    </div>
-                </div>
-
-
-                <div class="col-md-6">
-                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            <h3 class="panel-title">{% trans "Recent Proposals (Submitted)" %}</h3>
-                        </div>
-                        {% if sessions_recent_submissions %}
-                            <table class="table table-condensed table-hover event-table">
-                                <thead>
-                                    <tr>
-                                        <th>{% trans "Proposal" %}</th>
-                                        <th>{% trans "Event" %}</th>
-                                        <th>{% trans "Submitted on" %}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for submission in sessions_recent_submissions %}
-                                        <tr>
-                                            <td>
-                                                <a href="{% url 'eventyay_admin:admin.submissions' %}?query={{ submission.code|urlencode }}">
-                                                    {{ submission.title }}
-                                                </a>
-                                            </td>
-                                            <td>{{ submission.event.name }}</td>
-                                            <td>{{ submission.created|date:"d M Y" }}</td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        {% else %}
-                            <div class="panel-body text-muted">{% trans "No recent submissions." %}</div>
-                        {% endif %}
-                        <div class="panel-footer">
-                            <a href="{% url 'eventyay_admin:admin.submissions' %}">{% trans "View submissions" %}</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <section class="platform-card"><h2>{% trans 'Top events by paid orders' %}</h2>
+            <table class="table"><thead><tr><th>{% trans 'Event' %}</th><th>{% trans 'Paid orders' %}</th></tr></thead><tbody>
+                {% for event in orders_top5_by_event %}<tr><td>{{ event.event__name }}</td><td>{{ event.count }}</td></tr>{% empty %}<tr><td colspan="2">{% trans 'No paid orders yet.' %}</td></tr>{% endfor %}
+            </tbody></table><a href="{% url 'eventyay_admin:admin.analytics.metric' metric='top-events' %}">{% trans 'View full report' %} →</a>
         </section>
-    </section>
-    <section class="admin-section">
-        <div class="row dashboard-panels">
-            <div class="col-md-6">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <h3 class="panel-title">{% trans "Upcoming Events" %}</h3>
-                    </div>
-                    {% if events_upcoming %}
-                        <table class="table table-condensed table-hover event-table">
-                            <thead>
-                                <tr>
-                                    <th>{% trans "Event" %}</th>
-                                    <th>{% trans "Organizer" %}</th>
-                                    <th>{% trans "Date" %}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for event in events_upcoming %}
-                                    <tr>
-                                        <td>
-                                            <a href="{% url 'eventyay_admin:admin.events' %}?query={{ event.slug|urlencode }}">
-                                                {{ event.name }}
-                                            </a>
-                                        </td>
-                                        <td>{{ event.organizer.name }}</td>
-                                        <td>{{ event.date_from|date:"d M Y" }}</td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    {% else %}
-                        <div class="panel-body text-muted">{% trans "No upcoming events." %}</div>
-                    {% endif %}
-                    <div class="panel-footer">
-                        <a href="{% url 'eventyay_admin:admin.events' %}">{% trans "All events" %}</a>
-                    </div>
-                </div>
-            </div>
-
-
-            <div class="col-md-6">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <h3 class="panel-title">{% trans "Recently Created Events" %}</h3>
-                    </div>
-                    {% if events_recent %}
-                        <table class="table table-condensed table-hover event-table">
-                            <thead>
-                                <tr>
-                                    <th>{% trans "Event" %}</th>
-                                    <th>{% trans "Organizer" %}</th>
-                                    <th>{% trans "Status" %}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for event in events_recent %}
-                                    <tr>
-                                        <td>
-                                            <a href="{% url 'eventyay_admin:admin.events' %}?query={{ event.slug|urlencode }}">
-                                                {{ event.name }}
-                                            </a>
-                                        </td>
-                                        <td>{{ event.organizer.name }}</td>
-                                        <td>
-                                            {% if event.live %}
-                                                <span class="label label-success">{% trans "Live" %}</span>
-                                            {% else %}
-                                                <span class="label label-default">{% trans "Draft" %}</span>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    {% else %}
-                        <div class="panel-body text-muted">{% trans "No events found." %}</div>
-                    {% endif %}
-                    <div class="panel-footer">
-                        <a href="{% url 'eventyay_admin:admin.events' %}">{% trans "All events" %}</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <section class="admin-section" id="events-setup-required">
-            <div class="row dashboard-panels">
-                <div class="col-md-6">
-                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            <h3 class="panel-title">{% trans "Events Needing Setup" %}</h3>
-                        </div>
-                        {% if events_pending_setup_list %}
-                            <table class="table table-condensed table-hover event-table">
-                                <thead>
-                                    <tr>
-                                        <th>{% trans "Event" %}</th>
-                                        <th>{% trans "Organizer" %}</th>
-                                        <th class="text-right">{% trans "Status" %}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for event in events_pending_setup_list %}
-                                        <tr>
-                                            <td>
-                                                <a href="{% url 'eventyay_admin:admin.events' %}?query={{ event.slug|urlencode }}">
-                                                    {{ event.name }}
-                                                </a>
-                                            </td>
-                                            <td>{{ event.organizer.name }}</td>
-                                            <td class="text-right">
-                                                {% if not event.has_products %}
-                                                    <span class="label label-danger">{% trans "No Tickets" %}</span>
-                                                {% else %}
-                                                    <span class="label label-default">{% trans "No Payment Method" %}</span>
-                                                {% endif %}
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        {% else %}
-                            <div class="panel-body text-muted">{% trans "No events currently need setup." %}</div>
-                        {% endif %}
-                        <div class="panel-footer">
-                            <a href="{% url 'eventyay_admin:admin.events' %}">{% trans "All events" %}</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    {% if api_status_unavailable %}
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                <h3 class="panel-title">{% trans "API & Webhook Integrations" %}</h3>
-                            </div>
-                            <div class="panel-body">
-                                <span class="label label-warning">{% trans "Unavailable" %}</span>
-                            </div>
-                        </div>
-                    {% else %}
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                <h3 class="panel-title">{% trans "API & Webhook Integrations" %}</h3>
-                            </div>
-                            <table class="table table-condensed table-hover">
-                                <tbody>
-                                    <tr>
-                                        <td>{% trans "Active API Tokens" %}</td>
-                                        <td class="text-right">{{ active_tokens|intcomma }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td>{% trans "Active OAuth Applications" %}</td>
-                                        <td class="text-right">{{ active_oauth_apps|intcomma }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td>{% trans "Active Webhooks" %}</td>
-                                        <td class="text-right">{{ active_webhooks_count|intcomma }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td>{% trans "Webhook calls (last 24 hours)" %}</td>
-                                        <td class="text-right">{{ webhook_calls_24h|intcomma }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td>{% trans "Failed webhook calls (last 24 hours)" %}</td>
-                                        <td class="text-right">{{ webhook_failed_24h|intcomma }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td>{% trans "Webhook Delivery Success Rate" %}</td>
-                                        <td class="text-right">
-                                            {% if webhook_success_rate is not None %}
-                                                <span class="config-status-ok">{{ webhook_success_rate }}%</span>
-                                            {% else %}
-                                                <span class="text-muted">{% trans "No calls yet" %}</span>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>{% trans "API Version" %}</td>
-                                        <td class="text-right">v1 ({{ api_version }})</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
+        <section class="platform-card"><h2>{% trans 'Payment providers' %}</h2>
+            <table class="table"><thead><tr><th>{% trans 'Provider' %}</th><th>{% trans 'Paid orders' %}</th></tr></thead><tbody>
+                {% for provider in orders_top5_by_provider %}<tr><td>{{ provider.provider }}</td><td>{{ provider.count }}</td></tr>{% empty %}<tr><td colspan="2">{% trans 'No payments yet.' %}</td></tr>{% endfor %}
+            </tbody></table><a href="{% url 'eventyay_admin:admin.analytics.metric' metric='providers' %}">{% trans 'View all payment providers' %} →</a>
         </section>
-    </section>
-    <section class="admin-section" aria-labelledby="admin-platform-health-heading">
-        <h2 id="admin-platform-health-heading" class="sr-only">{% trans "Platform Health" %}</h2>
-        <div class="row dashboard-panels">
-            <div class="col-md-6">
-                {% if platform_health_unavailable %}
-                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            <h3 class="panel-title">{% trans "System Operations & Queues" %}</h3>
-                        </div>
-                        <div class="panel-body">
-                            <span class="label label-warning">{% trans "Unavailable" %}</span>
-                        </div>
-                    </div>
-                {% else %}
-                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            <h3 class="panel-title">{% trans "System Operations & Queues" %}</h3>
-                        </div>
-                        <table class="table table-condensed table-hover">
-                            <tbody>
-                                {% if celery_enabled %}
-                                    <tr>
-                                        <td>{% trans "Active Celery tasks (in progress)" %}</td>
-                                        <td class="text-right">
-                                            {% if celery_depth_unavailable %}
-                                                <span class="label label-warning">{% trans "Unavailable" %}</span>
-                                            {% else %}
-                                                {{ celery_depth|intcomma }}
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                {% endif %}
-                                <tr>
-                                    <td>{% trans "Scheduled tasks run (last 24 hours)" %}</td>
-                                    <td class="text-right">{{ scheduled_tasks_run_24h|intcomma }}</td>
-                                </tr>
-                                <tr>
-                                    <td>{% trans "Failed payment attempts (last 24 hours)" %}</td>
-                                    <td class="text-right">{{ payments_failed_24h|intcomma }}</td>
-                                </tr>
-                                <tr>
-                                    <td>{% trans "Open refund requests pending" %}</td>
-                                    <td class="text-right">{{ refunds_pending_count|intcomma }}</td>
-                                </tr>
-                                <tr>
-                                    <td>{% trans "Active Check-in Devices & Scanners" %}</td>
-                                    <td class="text-right">{{ active_devices_count|intcomma }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                {% endif %}
-            </div>
-            {% if sso_section_enabled %}
-                <div class="col-md-6">
-                    {% if sso_unavailable %}
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                <h3 class="panel-title">{% trans "SSO and Authentication" %}</h3>
-                            </div>
-                            <div class="panel-body">
-                                <span class="label label-warning">{% trans "Unavailable" %}</span>
-                            </div>
-                        </div>
-                    {% else %}
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                <h3 class="panel-title">{% trans "SSO and Authentication" %}</h3>
-                            </div>
-                            {% if sso_no_providers %}
-                                <div class="panel-body text-muted">
-                                    {% trans "No SSO providers configured." %}
-                                </div>
-                            {% else %}
-                                <table class="table table-condensed table-hover">
-                                    <tbody>
-                                        {% for provider in sso_providers %}
-                                            <tr>
-                                                <td>{% trans "Connected accounts:" %} <strong>{% firstof provider.name provider.provider|capfirst %}</strong></td>
-                                                <td class="text-right">{{ provider.count|intcomma }}</td>
-                                            </tr>
-                                        {% endfor %}
-                                        <tr class="dashboard-divider">
-                                            <td>{% trans "Users with multiple connections" %}</td>
-                                            <td class="text-right">{{ sso_multi_conn_users|intcomma }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td>{% trans "Recent SSO logins (7 days)" %}</td>
-                                            <td class="text-right">{{ sso_recent_logins|intcomma }}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            {% endif %}
-                        </div>
-                    {% endif %}
-                </div>
-            {% endif %}
-        </div>
-    </section>
-    <section class="admin-section" aria-labelledby="admin-email-config-heading">
-        <h2 id="admin-email-config-heading" class="sr-only">{% trans "Email & Configuration Status" %}</h2>
-        <div class="row dashboard-panels">
-            <div class="col-md-6">
-                {% if email_status_unavailable %}
-                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            <h3 class="panel-title">{% trans "Email/Notification Status" %}</h3>
-                        </div>
-                        <div class="panel-body">
-                            <span class="label label-warning">{% trans "Unavailable" %}</span>
-                        </div>
-                    </div>
-                {% else %}
-                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            <h3 class="panel-title">{% trans "Email/Notification Status" %}</h3>
-                        </div>
-                        <table class="table table-condensed table-hover">
-                            <tbody>
-                                <tr>
-                                    <td>{% trans "Emails sent (last 24 hours)" %}</td>
-                                    <td class="text-right">{{ email_sent_today|intcomma }}</td>
-                                </tr>
-                                <tr>
-                                    <td>{% trans "Emails sent (last 7 days)" %}</td>
-                                    <td class="text-right">{{ email_sent_week|intcomma }}</td>
-                                </tr>
-                                <tr>
-                                    <td>{% trans "Unsent/failed emails" %}</td>
-                                    <td class="text-right">{{ email_unsent_count|intcomma }}</td>
-                                </tr>
-                                {% if email_smtp_warning %}
-                                    <tr>
-                                        <td>
-                                            <span class="label label-warning">{% trans "SMTP Warning" %}</span>
-                                            &nbsp;&nbsp;{% trans "SMTP is not fully configured." %}
-                                        </td>
-                                        <td class="text-right">
-                                            <a href="{% url 'eventyay_admin:admin.global.settings' %}#tab-email-open">{% trans "Configure" %}</a>
-                                        </td>
-                                    </tr>
-                                {% endif %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% endif %}
-            </div>
-            <div class="col-md-6">
-                {% if config_status_unavailable %}
-                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            <h3 class="panel-title">{% trans "Configuration Status" %}</h3>
-                        </div>
-                        <div class="panel-body">
-                            <span class="label label-warning">{% trans "Unavailable" %}</span>
-                        </div>
-                    </div>
-                {% else %}
-                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            <h3 class="panel-title">{% trans "Configuration Status" %}</h3>
-                        </div>
-                        <table class="table table-condensed table-hover">
-                            <thead>
-                                <tr>
-                                    <th>{% trans "Component / Integration" %}</th>
-                                    <th>{% trans "Status" %}</th>
-                                    <th class="text-right">{% trans "Action" %}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>{% trans "SMTP / Email" %}</td>
-                                    <td>
-                                        {% if config_smtp_ok %}
-                                            <span class="config-status-ok">{% trans "Configured" %}</span>
-                                        {% else %}
-                                            <span class="config-status-warn">{% trans "Not configured" %}</span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="text-right">
-                                        <a href="{% url 'eventyay_admin:admin.global.settings' %}#tab-email-open">{% trans "Configure" %}</a>
-                                    </td>
-                                </tr>
-                                {% if config_sso_ok is not None %}
-                                    <tr>
-                                        <td>{% trans "SSO / Social Authentication" %}</td>
-                                        <td>
-                                            {% if config_sso_ok %}
-                                                <span class="config-status-ok">{% trans "Configured" %}</span>
-                                            {% else %}
-                                                <span class="config-status-warn">{% trans "Not configured" %}</span>
-                                            {% endif %}
-                                        </td>
-                                        <td class="text-right">
-                                            <a href="{% url 'plugins:socialauth:admin.global.social.auth.settings' %}#tab-0-0-open">{% trans "Configure" %}</a>
-                                        </td>
-                                    </tr>
-                                {% endif %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-    </section>
-    <section class="admin-section" aria-labelledby="admin-periodic-tasks-heading">
-        <h2 id="admin-periodic-tasks-heading" class="sr-only">{% trans "Periodic Tasks" %}</h2>
-        <div class="row dashboard-panels">
-            <div class="col-md-12">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <h3 class="panel-title">{% trans "Enabled Periodic Tasks" %}</h3>
-                    </div>
-                    {% if periodic_tasks %}
-                        <table class="table table-condensed table-hover event-table">
-                            <thead>
-                                <tr>
-                                    <th>{% trans "Task Name" %}</th>
-                                    <th class="text-right">{% trans "Last Run" %}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for task in periodic_tasks %}
-                                    <tr>
-                                        <td>{{ task.display_name }}</td>
-                                        <td class="text-right">{{ task.formatted_last_run_at }}</td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    {% else %}
-                        <div class="panel-body text-muted">{% trans "No enabled periodic tasks." %}</div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </section>
-    <section class="admin-section" aria-labelledby="admin-documentation-heading">
-        <h2 id="admin-documentation-heading" class="sr-only">{% trans "Documentation & Support" %}</h2>
-        <div class="row dashboard-panels">
-            <div class="col-md-12">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <h3 class="panel-title">{% trans "Documentation & Support Resources" %}</h3>
-                    </div>
-                    <div class="panel-body">
-                        <div class="row">
-                            <div class="col-md-4 col-sm-6">
-                                <ul class="list-unstyled">
-                                    <li>
-                                        <a href="https://docs.eventyay.com/" target="_blank" rel="noopener noreferrer">
-                                            {% trans "Official Docs (docs.eventyay.com)" %}
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="https://docs.eventyay.com/platform-administration/" target="_blank" rel="noopener noreferrer">
-                                            {% trans "Platform Administration Guide" %}
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="https://docs.eventyay.com/user-guide/" target="_blank" rel="noopener noreferrer">
-                                            {% trans "User & Organiser Guide" %}
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
-                            <div class="col-md-4 col-sm-6">
-                                <ul class="list-unstyled">
-                                    <li>
-                                        <a href="{% url 'api-swagger-ui' %}" target="_blank" rel="noopener noreferrer">
-                                            {% trans "Swagger UI (Interactive API)" %}
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="{% url 'api-schema' %}" target="_blank" rel="noopener noreferrer">
-                                            {% trans "OpenAPI Schema (JSON)" %}
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
-                            <div class="col-md-4 col-sm-12">
-                                <ul class="list-unstyled">
-                                    <li>
-                                        <a href="https://github.com/fossasia/eventyay/issues" target="_blank" rel="noopener noreferrer">
-                                            {% trans "Report an Issue" %}
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="{% url 'eventyay_admin:admin.global.settings' %}">
-                                            {% trans "System & Global Settings" %}
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+    </div>
+    <div class="platform-columns platform-columns-three">
+        <section class="platform-card"><h2>{% trans 'Upcoming events' %}</h2>
+            <table class="table"><thead><tr><th>{% trans 'Event' %}</th><th>{% trans 'Organizer' %}</th><th>{% trans 'Date' %}</th></tr></thead><tbody>
+                {% for event in events_upcoming|slice:':5' %}<tr><td><a href="{% url 'eventyay_admin:admin.events' %}?query={{ event.slug|urlencode }}">{{ event.name }}</a></td><td>{{ event.organizer.name }}</td><td>{{ event.date_from|date:'DATE_FORMAT' }}</td></tr>{% empty %}<tr><td colspan="3">{% trans 'No upcoming events.' %}</td></tr>{% endfor %}
+            </tbody></table><a href="{% url 'eventyay_admin:admin.events' %}">{% trans 'View all events' %} →</a>
+        </section>
+        <section class="platform-card"><h2>{% trans 'Recently created events' %}</h2>
+            <table class="table"><thead><tr><th>{% trans 'Event' %}</th><th>{% trans 'Organizer' %}</th><th>{% trans 'Status' %}</th></tr></thead><tbody>
+                {% for event in events_recent|slice:':5' %}<tr><td><a href="{% url 'eventyay_admin:admin.events' %}?query={{ event.slug|urlencode }}">{{ event.name }}</a></td><td>{{ event.organizer.name }}</td><td>{% if event.live %}{% trans 'Live' %}{% else %}{% trans 'Draft' %}{% endif %}</td></tr>{% empty %}<tr><td colspan="3">{% trans 'No events yet.' %}</td></tr>{% endfor %}
+            </tbody></table><a href="{% url 'eventyay_admin:admin.events' %}">{% trans 'View all events' %} →</a>
+        </section>
+        <section class="platform-card"><h2>{% trans 'Configuration status' %}</h2>
+            <table class="table"><tbody>
+                {% for row in configuration_rows %}<tr><th>{{ row.label }}</th><td><span class="label label-{{ row.style }}">{{ row.status }}</span></td></tr>{% endfor %}
+            </tbody></table><a href="{% url 'eventyay_admin:admin.global.settings' %}">{% trans 'View configuration' %} →</a>
+        </section>
+    </div>
+</div>
 {% endblock %}

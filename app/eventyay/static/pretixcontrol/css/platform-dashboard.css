@@ -1,0 +1,54 @@
+.platform-dashboard { max-width: 1600px; margin: 24px auto; color: #243248; }
+.platform-header, .platform-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.platform-header h1 { margin: 0 0 8px; }
+.platform-header p { color: #526176; }
+.platform-header form { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.platform-dashboard h2 { font-size: 18px; margin: 0 0 16px; }
+.platform-dashboard h3 { font-size: 15px; margin: 0 0 12px; }
+.platform-card { background: #fff; border: 1px solid #dce3eb; border-radius: 6px; padding: 18px; min-width: 0; }
+.platform-section, .platform-metrics, .platform-columns { margin-top: 20px; }
+.platform-actions { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.platform-action { display: flex; gap: 12px; padding: 16px; border: 1px solid #dce3eb; border-radius: 5px; }
+.platform-action .fa { font-size: 24px; color: #0868c9; }
+.platform-action strong { display: block; font-size: 23px; color: #a52a20; }
+.platform-action p { font-size: 13px; margin: 6px 0 12px; }
+.platform-action a { font-size: 13px; }
+.platform-metrics { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.platform-metric { display: block; color: inherit; }
+.platform-metric:hover { text-decoration: none; background: #f5f9ff; }
+.platform-metric .fa { float: right; color: #7495d3; font-size: 25px; }
+.platform-number { display: block; color: #0868c9; font-size: 24px; margin-bottom: 8px; overflow-wrap: anywhere; }
+.platform-metric span, .platform-metric small { display: block; }
+.platform-metric small { margin-top: 6px; color: #526176; }
+.platform-charts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.platform-chart svg { width: 100%; height: auto; }
+.platform-chart svg text { font-size: 9px; fill: #526176; }
+.platform-line { fill: none; stroke: #0868c9; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.platform-axis { fill: none; stroke: #b9c7d8; }
+.platform-chart[data-chart="revenue"] .platform-line { stroke: #138651; }
+.platform-chart[data-chart="users"] .platform-line { stroke: #b95c00; }
+.platform-chart[data-chart="events"] .platform-line { stroke: #8743a8; }
+.platform-chart-dates, .platform-chart-actions { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; }
+.platform-chart .text-muted { font-size: 11px; margin-top: 10px; }
+.platform-chart-actions { align-items: center; border-top: 1px solid #e4e9ef; padding-top: 10px; }
+.platform-chart-actions .btn { padding: 0; }
+.platform-ranges { display: flex; margin-bottom: 16px; flex-wrap: wrap; }
+.platform-ranges a { padding: 6px 12px; border: 1px solid #dce3eb; }
+.platform-ranges a[aria-current] { background: #0868c9; color: white; }
+.platform-columns { display: grid; gap: 16px; grid-template-columns: 1fr 2fr; }
+.platform-columns-four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.platform-columns-three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.platform-stack { display: grid; gap: 16px; min-width: 0; }
+.platform-dashboard .table { font-size: 13px; margin-bottom: 10px; }
+.platform-dashboard dl { display: grid; grid-template-columns: 1fr auto; gap: 10px; font-size: 13px; }
+.platform-dashboard dt { font-weight: normal; }
+.platform-dashboard dd { margin: 0; }
+.platform-footer-link { display: block; margin-top: 12px; font-size: 13px; }
+#platform-chart-dialog { width: min(900px, 92vw); border: 1px solid #dce3eb; border-radius: 8px; padding: 24px; max-height: 90vh; overflow: auto; }
+#platform-chart-dialog::backdrop { background: rgb(0 0 0 / 45%); }
+#platform-chart-dialog form { text-align: right; }
+#platform-chart-dialog svg { width: 100%; max-height: 440px; }
+.platform-dashboard a:focus-visible, .platform-dashboard button:focus-visible { outline: 3px solid #0868c9; outline-offset: 3px; }
+@media (max-width: 1200px) { .platform-actions, .platform-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); } .platform-charts, .platform-columns-four { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 800px) { .platform-columns, .platform-columns-three { grid-template-columns: 1fr; } .platform-actions, .platform-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .platform-actions, .platform-charts, .platform-columns-four { grid-template-columns: 1fr; } .platform-card { padding: 12px; } }
