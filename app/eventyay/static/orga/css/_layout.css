@@ -1120,6 +1120,7 @@ table .color-square {
   display: inline-flex;
   align-items: flex-start;
   gap: 0.3em;
+  max-width: 30ch;
   overflow-wrap: anywhere;
 }
 
