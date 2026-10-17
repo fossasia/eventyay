@@ -93,14 +93,14 @@ class SubmissionStates(Choices):
     valid_choices = [(key, value) for key, value in display_values.items()]
 
     valid_next_states = {
-        SUBMITTED: (REJECTED, WITHDRAWN, ACCEPTED),
-        REJECTED: (ACCEPTED, SUBMITTED),
-        ACCEPTED: (CONFIRMED, CANCELED, REJECTED, SUBMITTED, WITHDRAWN),
-        CONFIRMED: (ACCEPTED, CANCELED),
-        CANCELED: (ACCEPTED, CONFIRMED),
-        WITHDRAWN: (SUBMITTED),
+        SUBMITTED: (REJECTED, WITHDRAWN, ACCEPTED, DELETED),
+        REJECTED: (ACCEPTED, SUBMITTED, DELETED),
+        ACCEPTED: (CONFIRMED, CANCELED, REJECTED, SUBMITTED, WITHDRAWN, DELETED),
+        CONFIRMED: (ACCEPTED, CANCELED, DELETED),
+        CANCELED: (ACCEPTED, CONFIRMED, DELETED),
+        WITHDRAWN: (SUBMITTED, DELETED),
         DELETED: (),
-        DRAFT: (SUBMITTED,),
+        DRAFT: (SUBMITTED, DELETED),
     }
 
     method_names = {
@@ -115,6 +115,7 @@ class SubmissionStates(Choices):
 
     accepted_states = (ACCEPTED, CONFIRMED)
     terminal_states = (REJECTED, DELETED, CANCELED, WITHDRAWN)
+    valid_submission_states = (SUBMITTED, ACCEPTED, CONFIRMED, REJECTED, CANCELED, WITHDRAWN)
 
     @staticmethod
     def get_color(state):
@@ -123,12 +124,13 @@ class SubmissionStates(Choices):
             SubmissionStates.ACCEPTED: '--color-success',
             SubmissionStates.CONFIRMED: '--color-success',
             SubmissionStates.REJECTED: '--color-danger',
+            SubmissionStates.DELETED: '--color-danger',
         }.get(state, '--color-grey')
 
 
 class SubmissionManager(models.Manager):
     def get_queryset(self):
-        return super().get_queryset().exclude(state=SubmissionStates.DELETED).exclude(state=SubmissionStates.DRAFT)
+        return super().get_queryset().exclude(state__in=[SubmissionStates.DELETED, SubmissionStates.DRAFT])
 
 
 class DeletedSubmissionManager(models.Manager):
@@ -833,11 +835,9 @@ class Submission(GenerateCode, PretalxModel):
         orga: bool = True,
         from_pending: bool = False,
     ):
-        """Sets the submission's state to 'deleted'."""
+        """Sets the submission's state to 'deleted' while preserving session data."""
         previous = self.state
         self._set_state(SubmissionStates.DELETED, force, person=person)
-        for answer in self.answers.all():
-            answer.remove(person=person, force=force)
         self.log_action(
             'eventyay.submission.deleted',
             person=person,
