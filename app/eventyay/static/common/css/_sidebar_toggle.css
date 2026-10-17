@@ -1,0 +1,8 @@
+/* Sidebar submenus open and close instantly, like the video sidebar. */
+
+/* Talks pages: common/js/collapse.js toggles .show, which common/css/base.css animates.
+   The Tickets, common and admin sidebars toggle .in directly in pretixcontrol/js/menu.js. */
+.sidebar .collapse,
+.sidebar .collapse.show {
+    transition: none;
+}
