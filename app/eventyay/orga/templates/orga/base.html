@@ -525,6 +525,7 @@
                     {% block content %}
                     {% endblock content %}
                 </main>
+                {% block footer %}
                 <footer>
                     {% include "common/powered_by.html" %}
                     {% if development_mode %}
@@ -542,6 +543,7 @@
                         {% endif %}
                     </ul>
                 </footer>
+                {% endblock footer %}
             </div>
         </div>
         {% include "common/includes/modals.html" %}
