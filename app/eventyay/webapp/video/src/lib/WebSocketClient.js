@@ -28,12 +28,34 @@ class WebSocketClient extends EventEmitter {
 	}
 
 	connect() {
+		this._normalClose = false
+		this._createSocket()
+	}
+
+	reconnect() {
+		this._normalClose = false
+		if (this._reconnectTimeout) {
+			clearTimeout(this._reconnectTimeout)
+			this._reconnectTimeout = null
+		}
+		if (this._socket && this._socket.readyState !== WebSocket.CLOSED) {
+			try {
+				this._socket.close()
+			} catch {}
+		}
+		this.emit('reconnecting')
 		this._createSocket()
 	}
 
 	close() {
 		this._normalClose = true
-		this._socket.close()
+		if (this._reconnectTimeout) {
+			clearTimeout(this._reconnectTimeout)
+			this._reconnectTimeout = null
+		}
+		if (this._socket) {
+			this._socket.close()
+		}
 		clearTimeout(this._joinTimeout)
 	}
 
@@ -75,7 +97,7 @@ class WebSocketClient extends EventEmitter {
 		this._pingState = {
 			latestPong: 0
 		}
-		this.normalClose = false
+		this._normalClose = false
 		this._socket.addEventListener('open', () => {
 			this.emit('open')
 			this.socketState = 'open'
@@ -92,8 +114,18 @@ class WebSocketClient extends EventEmitter {
 			if (event.code && event.code !== 1000 && event.code !== 1001) {
 				logOperational({action: 'ws.close', outcome: 'failure', backend: 'live', error_code: 'abnormal_close', status: event.code})
 			}
+			if (this._openRequests) {
+				for (const id of Object.keys(this._openRequests)) {
+					const req = this._openRequests[id]
+					delete this._openRequests[id]
+					if (req.timeout) clearTimeout(req.timeout)
+					req.deferred?.reject(new Error('WebSocket connection closed'))
+				}
+			}
 			if (!this._normalClose) {
-				setTimeout(() => {
+				if (this._reconnectTimeout) clearTimeout(this._reconnectTimeout)
+				this._reconnectTimeout = setTimeout(() => {
+					this._reconnectTimeout = null
 					this.emit('reconnecting')
 					this._createSocket()
 				}, this._config.reconnectDelay)

@@ -223,3 +223,23 @@ export function resolveLanguageOptions(configLocales) {
 	}
 	return locales
 }
+
+export function resolveCurrentLanguage(availableLanguages, preferredLanguage) {
+	const langs = Array.isArray(availableLanguages) && availableLanguages.length > 0
+		? availableLanguages
+		: locales
+	const raw = preferredLanguage || 'en'
+	const candidate = String(raw).replaceAll('_', '-').toLowerCase()
+
+	const exact = langs.find(l => l && l.code && l.code.toLowerCase() === candidate)
+	if (exact) return exact.code
+
+	const prefix = candidate.split('-')[0]
+	const prefixMatch = langs.find(l => l && l.code && (l.code.toLowerCase() === prefix || l.code.toLowerCase().startsWith(`${prefix}-`)))
+	if (prefixMatch) return prefixMatch.code
+
+	const en = langs.find(l => l && l.code && l.code.toLowerCase() === 'en')
+	if (en) return en.code
+
+	return langs[0]?.code || 'en'
+}

@@ -247,6 +247,17 @@ class AuthModule(BaseModule):
     async def _enforce_connection_limit(self):
         connection_limit = self._event_config().get("connection_limit")
         if not connection_limit:
+            from eventyay.base.settings import GlobalSettingsObject
+
+            def _get_global_limit():
+                try:
+                    gs = GlobalSettingsObject()
+                    return gs.settings.get("video_max_connections_per_user", as_type=int, default=0)
+                except Exception:
+                    return 0
+
+            connection_limit = await database_sync_to_async(_get_global_limit)()
+        if not connection_limit:
             return
 
         message = {"type": "connection.replaced"}

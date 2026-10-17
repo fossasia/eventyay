@@ -20,7 +20,7 @@ export default {
 	emits: ['expand'],
 	computed: {
 		availableReactions() {
-			return ['👏', '❤️', '🎉', '👍', '🔥', '😂', '😮', '😢', '🙌', '💯', '🤔', '👎'].map(emoji => {
+			return ['👏', '❤️', '🎉', '👍', '🔥', '😂', '😮', '😢', '🙌', '💯', '🤔', '👎', '✨', '🚀', '💡', '😍', '🥳', '🤩', '🤝', '🦾', '🎯', '☕', '🎈', '🌟'].map(emoji => {
 				let label = getEmojiDataFromNative(emoji).short_names[0]
 				label = label.replace(/_/g, ' ')
 				if (label === '+1') label = 'thumbs up'
@@ -44,17 +44,21 @@ export default {
 .c-reactions-bar
 	display: flex
 	align-items: center
-	flex: none
+	min-width: 0
+	flex: 1 1 auto
+	overflow: hidden
 	.actions
-		display: grid
-		grid-template-columns: repeat(6, 28px)
-		grid-auto-rows: 28px
-		gap: 2px
+		display: flex
+		flex-direction: row
+		flex-wrap: nowrap
+		align-items: center
+		gap: 3px
 		background: var(--clr-surface, #ffffff)
 		border: 1px solid var(--clr-grey-200, #e2e8f0)
-		border-radius: 12px
-		padding: 4px
-		overflow: visible
+		border-radius: 20px
+		padding: 2px 6px
+		overflow: hidden
+		max-width: 100%
 		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04)
 		transition: border-color 0.15s ease, box-shadow 0.15s ease
 		&:hover

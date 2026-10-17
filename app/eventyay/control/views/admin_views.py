@@ -232,12 +232,27 @@ class VideoSettings(AdministratorPermissionRequiredMixin, TemplateView):
             },
         ]
         # Active tab defaults to general
+        gs = GlobalSettingsObject()
+        ctx["video_max_connections_per_user"] = gs.settings.get("video_max_connections_per_user", as_type=int, default=0)
         ctx["active_tab"] = kwargs.get("active_tab") or self.request.GET.get("tab", "general")
         return ctx
 
     def post(self, request, *args, **kwargs):
         gs = GlobalSettingsObject()
         changed = []
+
+        if "video_max_connections_per_user" in request.POST:
+            try:
+                max_conn = int(request.POST.get("video_max_connections_per_user", 0))
+                if max_conn < 0:
+                    max_conn = 0
+            except (ValueError, TypeError):
+                max_conn = 0
+            prev_conn = gs.settings.get("video_max_connections_per_user", as_type=int, default=0)
+            if max_conn != prev_conn:
+                gs.settings.set("video_max_connections_per_user", max_conn)
+                changed.append(f"max connections per user: {max_conn}")
+
         for p in SUPPORTED_VIDEO_PROVIDERS:
             sub_key = f"video_provider_{p}_submitted"
             key_single = f"video_provider_{p}"

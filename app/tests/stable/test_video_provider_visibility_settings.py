@@ -1,7 +1,10 @@
 import pytest
 from asgiref.sync import async_to_sync
+from unittest.mock import AsyncMock, MagicMock, patch
 from django.contrib.auth import get_user_model
+from django.contrib.messages.storage.fallback import FallbackStorage
 from django.core.exceptions import ValidationError
+from django.test import RequestFactory
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
@@ -16,6 +19,8 @@ from eventyay.base.settings import (
     is_video_provider_enabled_for_attendee,
     is_video_provider_enabled_for_organizer,
 )
+from eventyay.control.views.admin_views import VideoSettings
+from eventyay.features.live.modules.auth import AuthModule
 
 
 @pytest.fixture
@@ -246,6 +251,7 @@ def test_get_room_config_marks_disabled_for_inactive_provider(sample_event):
 
 
 @pytest.mark.asyncio
+@pytest.mark.django_db
 async def test_get_room_config_for_user_prevents_direct_access_for_attendees(mocker):
     from unittest.mock import MagicMock
     from eventyay.base.services.event import get_room_config_for_user
@@ -392,6 +398,122 @@ def test_attendee_side_account_with_team_permission_gets_only_attendee_traits(sa
     assert set(attendee_relogin.user.traits) == expected_attendee_traits
     assert "admin" not in attendee_relogin.user.traits
     assert sample_event.has_permission(user=attendee_relogin.user, permission=mod_perms, room=room) is False
+
+
+@pytest.mark.django_db
+def test_video_max_connections_setting_and_admin_view(client, admin_user):
+    client.force_login(admin_user)
+    session = client.session
+    session.save()
+    StaffSession.objects.create(user=admin_user, session_key=session.session_key)
+
+    gs = GlobalSettingsObject()
+    gs.settings.set("video_max_connections_per_user", 5)
+
+    res = client.get("/admin/video/settings/?tab=general")
+    assert res.status_code == 200
+    assert "Max connections per user" in res.content.decode()
+
+    # Test POST update
+    resp = client.post("/admin/video/settings/?tab=general", data={"video_max_connections_per_user": 10})
+    assert resp.status_code == 302
+    assert gs.settings.get("video_max_connections_per_user", as_type=int) == 10
+
+    # Cleanup
+    gs.settings.set("video_max_connections_per_user", 0)
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_enforce_connection_limit_global_fallback():
+    from channels.db import database_sync_to_async
+    gs = GlobalSettingsObject()
+    await database_sync_to_async(gs.settings.set)("video_max_connections_per_user", 2)
+
+    consumer = MagicMock()
+    consumer.user = MagicMock()
+    consumer.user.id = "user-123"
+    consumer.event = MagicMock()
+    consumer.event.id = 1
+    consumer.event.config = {}
+
+    auth_module = AuthModule(consumer)
+    with patch.object(auth_module, "_event_config", return_value={}):
+        with patch("eventyay.features.live.modules.auth.settings.REDIS_USE_PUBSUB", True):
+            with patch("eventyay.features.live.modules.auth.aredis") as mock_aredis:
+                mock_redis = AsyncMock()
+                mock_redis.lrange = AsyncMock(return_value=[b"ch-1"])
+                mock_aredis.return_value.__aenter__.return_value = mock_redis
+                consumer.channel_layer = MagicMock()
+                consumer.channel_layer.send = AsyncMock()
+
+                await auth_module._enforce_connection_limit()
+                # connection_limit 2 means -1 * 2 - 1 = -3
+                mock_redis.lrange.assert_awaited_once_with(
+                    "connections.list.user:user-123",
+                    0,
+                    -3,
+                )
+
+    # Cleanup
+    await database_sync_to_async(gs.settings.set)("video_max_connections_per_user", 0)
+
+
+@pytest.mark.django_db
+def test_create_room_with_module_config_rejects_disabled_provider(sample_event, admin_user):
+    gs = GlobalSettingsObject()
+    gs.settings.set("video_provider_bbb_organizer", False)
+
+    data = {
+        "name": "Test Room BBB",
+        "module_config": [
+            {"type": "call.bigbluebutton", "config": {}}
+        ]
+    }
+
+    try:
+        with pytest.raises(ValidationError) as exc:
+            async_to_sync(create_room)(sample_event, data, creator=admin_user)
+        assert "disabled for room creation" in str(exc.value)
+    finally:
+        gs.settings.set("video_provider_bbb_organizer", True)
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_event_config_disabled_provider_filtered_and_rejected():
+    from channels.db import database_sync_to_async
+    from eventyay.features.live.modules.event import EventModule
+    gs = GlobalSettingsObject()
+    await database_sync_to_async(gs.settings.set)("video_provider_bbb_organizer", False)
+
+    consumer = MagicMock()
+    consumer.event = MagicMock()
+    consumer.event.id = 1
+    consumer.event.has_permission_async = AsyncMock(return_value=True)
+    consumer.send_success = AsyncMock()
+    consumer.send_error = AsyncMock()
+
+    module = EventModule(consumer)
+
+    try:
+        # 1. config_get should filter out bbb_defaults
+        with patch("eventyay.features.live.modules.event._get_serialized_config", AsyncMock(return_value={"title": "Test", "bbb_defaults": {"record": True}})):
+            await module.config_get({})
+            sent_data = consumer.send_success.call_args[0][0]
+            assert "bbb_defaults" not in sent_data
+            assert sent_data["title"] == "Test"
+
+        # 2. config_patch should reject bbb_defaults when disabled
+        await module.config_patch({"bbb_defaults": {"record": True}})
+        consumer.send_error.assert_awaited_once_with(
+            code="provider.disabled",
+            message="Video provider 'bbb' is disabled by platform administrator.",
+        )
+    finally:
+        await database_sync_to_async(gs.settings.set)("video_provider_bbb_organizer", True)
+
+
 
 
 
