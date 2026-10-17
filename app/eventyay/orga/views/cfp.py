@@ -33,7 +33,7 @@ from eventyay.base.models import (
     TalkQuestionTarget,
     Track,
 )
-from eventyay.cfp.flow import CfPFlow
+from eventyay.cfp.flow import CfPFlow, validate_editor_payload
 from eventyay.common.forms import I18nFormSet
 from eventyay.common.language import get_language_choices_native_with_ui_name
 from eventyay.common.text.phrases import phrases
@@ -984,17 +984,20 @@ class CfPFlowEditor(EventPermissionRequired, TemplateView):
         return ctx
 
     def post(self, request, *args, **kwargs):
-        # TODO: Improve validation
+        """Validate and apply CfP flow editor updates or configuration resets."""
         try:
             data = json.loads(request.body.decode())
-        except json.JSONDecodeError as e:
+        except (json.JSONDecodeError, UnicodeDecodeError) as e:
             logger.warning('Request body is not JSON: %s', e)
             return JsonResponse({'error': 'Invalid data'}, status=400)
 
         flow = CfPFlow(self.request.event)
-        if 'action' in data and data['action'] == 'reset':
+        if isinstance(data, dict) and data.get('action') == 'reset':
             flow.reset()
         else:
+            validation_error = validate_editor_payload(data)
+            if validation_error:
+                return JsonResponse({'error': validation_error}, status=400)
             logger.debug('Saving new CfP flow configuration: %s', data)
             flow.save_config(data)
         return JsonResponse({'success': True})

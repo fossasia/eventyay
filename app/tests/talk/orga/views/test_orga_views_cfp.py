@@ -92,6 +92,34 @@ def test_edit_cfp_flow(orga_client, event):
 
 
 @pytest.mark.django_db
+def test_edit_cfp_flow_malformed_payload(orga_client, event):
+    """Verify that submitting malformed CfP flow data returns 400 and preserves existing configuration."""
+    with scope(event=event):
+        initial_config = event.cfp.settings.get("flow", {})
+
+    response = orga_client.post(
+        event.cfp.urls.editor,
+        {"steps": [{}]},
+        content_type="application/json",
+    )
+    assert response.status_code == 400, response.text
+    data = response.json()
+    assert "error" in data
+    assert "missing required field 'identifier'" in data["error"]
+
+    response = orga_client.post(
+        event.cfp.urls.editor,
+        "null",
+        content_type="application/json",
+    )
+    assert response.status_code == 400, response.text
+
+    with scope(event=event):
+        event.refresh_from_db()
+        assert event.cfp.settings.get("flow", {}) == initial_config
+
+
+@pytest.mark.django_db
 def test_edit_cfp_flow_shows_in_frontend(orga_client, event):
     with scope(event=event):
         new_config = event.cfp_flow.get_editor_config(json_compat=True)
