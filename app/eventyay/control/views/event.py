@@ -950,7 +950,7 @@ class EditorEmailPreview(EventPermissionRequiredMixin, View):
        Returns ``{ "previews": { "en": "...", "de": "..." } }``.
     """
 
-    permission = ('can_change_orders', 'can_change_event_settings')
+    permission = ('can_change_orders', 'can_change_event_settings', 'can_change_vouchers')
 
     def post(self, request, *args, **kwargs):
         content_type = request.content_type or ''

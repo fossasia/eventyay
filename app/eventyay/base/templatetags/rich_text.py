@@ -192,6 +192,21 @@ _PREVIEW_PLACEHOLDER_CONTEXT: tuple[str, ...] = (
 )
 
 
+def _preview_placeholder_context(html_body: str) -> list[str]:
+    """Base preview context, plus voucher placeholders when the body uses them.
+
+    Voucher placeholders are added only for bodies that reference them so the
+    voucher ``{url}`` sample does not replace the order status ``{url}``.
+    """
+    parameters = list(_PREVIEW_PLACEHOLDER_CONTEXT)
+    if re.search(
+        r'\{voucher_(?:list|url)\}|data-variable=["\']voucher_(?:list|url)["\']',
+        html_body or '',
+    ):
+        parameters.extend(['voucher_list', 'name'])
+    return parameters
+
+
 def expand_email_preview_placeholders(html_body: str, event, *, locale: str | None = None) -> str:
     """Replace ``{placeholder}`` tokens / Tiptap chips with sample values for editor preview."""
     from eventyay.base.i18n import language
@@ -202,7 +217,7 @@ def expand_email_preview_placeholders(html_body: str, event, *, locale: str | No
         resolved_locale = event.settings.locale
 
     with language(resolved_locale, event.settings.region):
-        context_dict = build_email_preview_context(event, list(_PREVIEW_PLACEHOLDER_CONTEXT))
+        context_dict = build_email_preview_context(event, _preview_placeholder_context(html_body))
         expanded = html_body.format_map(context_dict)
         return expand_email_variable_chips(expanded, dict(context_dict))
 

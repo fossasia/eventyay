@@ -12,6 +12,7 @@ from email.parser import BytesParser
 from itertools import groupby
 from pathlib import Path
 from smtplib import SMTPResponseException
+from urllib.parse import quote
 from zoneinfo import ZoneInfo
 
 import qrcode
@@ -602,6 +603,18 @@ def get_combined_ticket_output_identifier(event: Event) -> str:
     return enabled_ids[0] if enabled_ids else 'pdf'
 
 
+def voucher_redemption_urls(event: Event, voucher_list: Sequence[str]) -> str:
+    """Clickable redemption links, one per voucher code."""
+    from eventyay.multidomain.urlreverse import build_absolute_uri
+
+    links = []
+    for code in voucher_list:
+        url = f'{build_absolute_uri(event, "presale:event.redeem")}?voucher={quote(code)}'
+        safe_url = escape(url)
+        links.append(f'<a href="{safe_url}">{safe_url}</a>')
+    return '<br>'.join(links)
+
+
 def download_tickets_button_label(output: str) -> str:
     if output == 'pdf':
         return str(_('Download tickets (PDF)'))
@@ -908,6 +921,12 @@ def base_placeholders(sender: Event, **kwargs):
             ['voucher_list'],
             lambda voucher_list: '  \n'.join(voucher_list),
             '    68CYU2H6ZTP3WLK5\n    7MB94KKPVEPSMVF2',
+        ),
+        SimpleFunctionalMailTextPlaceholder(
+            'voucher_url',
+            ['event', 'voucher_list'],
+            voucher_redemption_urls,
+            lambda event: voucher_redemption_urls(event, ['68CYU2H6ZTP3WLK5', '7MB94KKPVEPSMVF2']),
         ),
         SimpleFunctionalMailTextPlaceholder(
             'url',

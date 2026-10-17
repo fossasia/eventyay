@@ -561,6 +561,22 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
             expected_failure=True,
         )
 
+    def test_create_bulk_send_includes_redemption_urls(self):
+        self._create_bulk_vouchers(
+            {
+                'codes': 'ABCDE\nDEFGH',
+                'itemvar': '%d' % self.shirt.pk,
+                'send': 'on',
+                'send_subject': 'Your voucher',
+                'send_message': 'Redeem here: {voucher_url}',
+                'send_recipients': 'foo@example.com\nfoo@example.net',
+            }
+        )
+        assert len(djmail.outbox) == 2
+        bodies = [m.body for m in djmail.outbox]
+        assert any('/redeem/?voucher=ABCDE' in body for body in bodies)
+        assert any('/redeem/?voucher=DEFGH' in body for body in bodies)
+
     def test_create_bulk_send(self):
         self._create_bulk_vouchers(
             {
