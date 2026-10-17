@@ -1,13 +1,14 @@
 from types import SimpleNamespace
 
 import pytest
+from bs4 import BeautifulSoup
 from django.contrib.auth.models import AnonymousUser
 from django.test import override_settings
 from django.urls import reverse
-from django_scopes import scopes_disabled
+from django_scopes import scope, scopes_disabled
 
 from eventyay.api.serializers.event import EventSerializer
-from eventyay.base.models import Device, Team
+from eventyay.base.models import Device, EventExtraLink, Team
 from eventyay.base.models.auth import StaffSession
 
 @pytest.mark.django_db
@@ -26,6 +27,54 @@ def test_publication_settings_rendered_in_main_settings(organizer_client, organi
     # startpage_visible must NOT appear in the organiser settings page
     assert b"startpage_visible" not in response.content
     assert b"meta_noindex" in response.content
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_menus_settings_placement(organizer_client, organizer, event):
+    """Keep link editors and contact controls below texts and outside Basics."""
+    with scope(event=event):
+        for role in ('header', 'footer'):
+            EventExtraLink.objects.create(
+                event=event, role=role, label={'en': f'{role.title()} link'},
+                url=f'https://example.com/{role}',
+            )
+    url = reverse('eventyay_common:event.update', kwargs={
+        'organizer': organizer.slug,
+        'event': event.slug,
+    })
+    response = organizer_client.get(url)
+    assert response.status_code == 200
+    soup = BeautifulSoup(response.content, 'html.parser')
+    sections = {
+        fieldset.find('legend', recursive=False).get_text(strip=True): fieldset
+        for fieldset in soup.select('.tabbed-form > fieldset')
+    }
+    menus = sections['Menus & Texts']
+    heading = menus.find('h3', string='Menus')
+    assert heading is not None
+    elements = list(menus.descendants)
+    for field in (
+        'frontpage_text', 'banner_text', 'banner_text_bottom',
+        'menu_label_tickets', 'menu_label_join_video',
+    ):
+        control = menus.find(attrs={'name': f'settings-{field}_0'})
+        assert control is not None
+        assert elements.index(control) < elements.index(heading)
+    for name in (
+        'header-links-TOTAL_FORMS', 'footer-links-TOTAL_FORMS',
+        'header-links-0-label_0', 'header-links-0-url',
+        'footer-links-0-label_0', 'footer-links-0-url',
+        'settings-contact_form_enabled', 'settings-contact_mail',
+    ):
+        control = menus.find(attrs={'name': name})
+        assert control is not None
+        assert elements.index(control) > elements.index(heading)
+        assert sections['Basics'].find(attrs={'name': name}) is None
+    text = menus.get_text(' ', strip=True)
+    assert 'These links will be shown in the header menu of all your public pages.' in text
+    assert 'These links will be shown in the footer of all your public pages.' in text
+
 
 @pytest.mark.django_db
 @override_settings(SITE_URL='https://testserver')
