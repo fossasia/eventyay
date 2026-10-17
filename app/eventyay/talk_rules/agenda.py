@@ -1,5 +1,6 @@
 import rules
 from django.http import Http404
+from django_scopes import scope
 
 from .orga import can_view_speaker_names
 from .person import is_reviewer
@@ -13,6 +14,19 @@ from .submission import (
 
 def is_submission_visible_via_featured(user, submission):
     return bool(submission and submission.is_featured and are_featured_submissions_visible(user, submission.event))
+
+
+def is_submission_visible_via_accepted(user, submission):
+    if not submission:
+        return False
+    event = getattr(submission, 'event', None)
+    if not event or not event.get_feature_flag('show_accepted_publicly'):
+        return False
+    if event.private_testmode_talks_enabled:
+        return False
+    from eventyay.base.models import SubmissionStates
+
+    return submission.state in SubmissionStates.accepted_states
 
 
 def submission_belongs_to_public_featured_speaker(user, submission):
@@ -127,6 +141,7 @@ def is_agenda_submission_visible(user, submission):
         is_submission_visible_via_schedule(user, submission)
         or is_submission_visible_via_featured(user, submission)
         or submission_belongs_to_public_featured_speaker(user, submission)
+        or is_submission_visible_via_accepted(user, submission)
     )
 
 
@@ -167,10 +182,30 @@ def speaker_has_public_featured_submissions(user, profile):
     return bool(pending_public_submission_codes_for_speaker(profile.event, user, profile.user.code))
 
 
+@rules.predicate
+def speaker_has_public_accepted_submissions(user, profile):
+    """Speaker profiles stay public when show_accepted_publicly is enabled and they have accepted talks."""
+    if not profile or not profile.user_id:
+        return False
+    event = getattr(profile, 'event', None)
+    if not event or not event.get_feature_flag('show_accepted_publicly'):
+        return False
+    if event.private_testmode_talks_enabled:
+        return False
+    from eventyay.base.models import SubmissionStates
+
+    with scope(event=event):
+        return profile.user.submissions.filter(
+            event=event,
+            state__in=SubmissionStates.accepted_states,
+        ).exists()
+
+
 is_speaker_viewable = (
     (is_viewable_profile & can_view_schedule)
     | is_featured_speaker_profile
     | speaker_has_public_featured_submissions
+    | speaker_has_public_accepted_submissions
 )
 
 
@@ -253,13 +288,13 @@ def agenda_speakers_page_reachable(user, event):
 def should_hide_public_speaker_sessions(user, event, *, wip_preview=False):
     if wip_preview:
         return False
-    return not is_agenda_visible(user, event)
+    return not is_agenda_visible(user, event) and (
+        event.private_testmode_talks_enabled or not event.get_feature_flag('show_accepted_publicly')
+    )
 
 
 def pending_public_submission_codes_for_speaker(event, user, speaker_code):
     """Submission codes that may appear as coming-soon for this speaker on public pages."""
-    from django_scopes import scope
-
     from eventyay.base.models import SubmissionStates
 
     profile = _speaker_profile_by_code(event, speaker_code, select_related=('user', 'event'))
@@ -277,7 +312,7 @@ def pending_public_submission_codes_for_speaker(event, user, speaker_code):
             .select_related('event')
         )
         for submission in submissions:
-            if featured_speaker or is_submission_visible_via_featured(user, submission):
+            if featured_speaker or is_submission_visible_via_accepted(user, submission) or is_submission_visible_via_featured(user, submission):
                 codes.add(submission.code)
     return codes
 
@@ -318,6 +353,7 @@ def agenda_page_allowed_without_talks_published(url_name, user, event, *, url_kw
         return bool(
             is_submission_visible_via_featured(user, submission)
             or submission_belongs_to_public_featured_speaker(user, submission)
+            or is_submission_visible_via_accepted(user, submission)
         )
     if url_name in ('speaker', 'widget.messages'):
         if url_name == 'speaker':

@@ -224,6 +224,28 @@ class ScheduleToggleView(EventPermissionRequired, View):
         return redirect(request.event.orga_urls.schedule)
 
 
+class ScheduleToggleAcceptedView(EventPermissionRequired, View):
+    permission_required = 'base.update_event'
+
+    @staticmethod
+    def _set_show_accepted_publicly(event, is_shown):
+        """Persist whether accepted sessions are publicly visible."""
+        flags = dict(event.feature_flags_as_mapping())
+        flags['show_accepted_publicly'] = is_shown
+        event.feature_flags = flags
+        event.save(update_fields=['feature_flags'])
+        log_event('talk', 'feature_flag', OUTCOME_SUCCESS, event_id=event.pk, flag_name='show_accepted_publicly')
+
+    def post(self, request, *args, **kwargs):
+        is_shown = not request.event.get_feature_flag('show_accepted_publicly')
+        self._set_show_accepted_publicly(request.event, is_shown)
+        if is_shown:
+            messages.success(request, _('Accepted sessions are now publicly visible.'))
+        else:
+            messages.success(request, _('Unscheduled accepted sessions are now hidden from the public.'))
+        return redirect(request.event.orga_urls.schedule)
+
+
 class ScheduleResendMailsView(EventPermissionRequired, View):
     permission_required = 'base.release_schedule'
 

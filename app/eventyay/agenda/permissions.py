@@ -1,4 +1,5 @@
 import rules
+from django_scopes import scope
 
 from eventyay.person.permissions import can_change_submissions
 from eventyay.talk_rules.submission import are_featured_submissions_visible
@@ -42,14 +43,31 @@ def is_submission_visible_via_featured(user, submission):
     )
 
 
+def is_submission_visible_via_accepted(user, submission):
+    if not submission:
+        return False
+    event = getattr(submission, "event", None)
+    if (
+        not event
+        or not event.get_feature_flag("show_accepted_publicly")
+        or getattr(event, "private_testmode_talks_enabled", False)
+    ):
+        return False
+    from eventyay.base.models import SubmissionStates
+
+    return submission.state in SubmissionStates.accepted_states
+
+
 @rules.predicate
 def is_submission_visible(user, submission):
     submission = getattr(submission, "submission", submission)
     if not submission:
         return False
-    return is_submission_visible_via_schedule(
-        user, submission
-    ) or is_submission_visible_via_featured(user, submission)
+    return (
+        is_submission_visible_via_schedule(user, submission)
+        or is_submission_visible_via_featured(user, submission)
+        or is_submission_visible_via_accepted(user, submission)
+    )
 
 
 @rules.predicate
@@ -71,6 +89,20 @@ def event_uses_feedback(user, event):
 def is_speaker_viewable(user, profile):
     if not profile:
         return False
+    event = getattr(profile, "event", None)
+    if (
+        event
+        and event.get_feature_flag("show_accepted_publicly")
+        and not getattr(event, "private_testmode_talks_enabled", False)
+    ):
+        from eventyay.base.models import SubmissionStates
+
+        with scope(event=event):
+            if profile.user.submissions.filter(
+                event=event,
+                state__in=SubmissionStates.accepted_states,
+            ).exists():
+                return True
     is_speaker = profile.user.submissions.filter(
         slots__schedule=profile.event.current_schedule
     ).exists()
@@ -94,7 +126,7 @@ rules.add_perm(
 )
 # Used by the favourites REST API and agenda utility views to gate access
 # to schedule data.  Matches the predicate used for agenda.view_schedule.
-rules.add_perm(
+rules.set_perm(
     "base.list_schedule",
     is_agenda_visible | can_change_submissions,
 )

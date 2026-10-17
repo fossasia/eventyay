@@ -59,6 +59,18 @@
                             </button>
                         {% endif %}
                     </form>
+                    <form method="post" action="{{ request.event.orga_urls.toggle_show_accepted_publicly }}" class="d-inline">
+                        {% csrf_token %}
+                        {% if request.event|get_feature_flag:"show_accepted_publicly" %}
+                            <button type="submit" class="dropdown-item" role="menuitem" tabindex="-1">
+                                <i class="fa fa-eye-slash"></i> {% translate "Hide accepted publicly" %}
+                            </button>
+                        {% else %}
+                            <button type="submit" class="dropdown-item" role="menuitem" tabindex="-1">
+                                <i class="fa fa-eye"></i> {% translate "Show Accepted Publicly" %}
+                            </button>
+                        {% endif %}
+                    </form>
                     <form method="post" action="resend_mails" class="d-inline">
                         {% csrf_token %}
                         <button type="submit" class="dropdown-item" role="menuitem" tabindex="-1">

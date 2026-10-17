@@ -2,7 +2,6 @@ import copy
 import datetime as dt
 import hashlib
 import logging
-import os
 import string
 import uuid
 from collections import OrderedDict, defaultdict
@@ -12,10 +11,9 @@ from operator import attrgetter
 from urllib.parse import urljoin, urlparse
 from zoneinfo import ZoneInfo
 
-from asgiref.sync import sync_to_async
-from channels.db import database_sync_to_async
 import icalendar
 import jwt
+from channels.db import database_sync_to_async
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned, SuspiciousFileOperation, ValidationError
@@ -51,8 +49,8 @@ from eventyay.base.reldate import RelativeDateWrapper
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.validators import EventSlugBanlistValidator
 from eventyay.common.language import LANGUAGE_NAMES
-from eventyay.common.text.path import path_with_hash, resolve_media_path as _resolve_media_path
-from eventyay.common.text.phrases import phrases
+from eventyay.common.text.path import path_with_hash
+from eventyay.common.text.path import resolve_media_path as _resolve_media_path
 from eventyay.common.urls import EventUrls, is_http_url
 from eventyay.consts import TIMEZONE_CHOICES
 from eventyay.core.permissions import (
@@ -119,6 +117,7 @@ FEATURE_FLAGS = [
 def default_feature_flags():
     return {
         'show_schedule': True,
+        'show_accepted_publicly': False,
         'show_featured': 'never',
         'show_featured_speakers': 'never',
         'show_widget_if_not_public': False,
@@ -801,6 +800,7 @@ class Event(
         release_schedule = '{schedule}release'
         reset_schedule = '{schedule}reset'
         toggle_schedule = '{schedule}toggle'
+        toggle_show_accepted_publicly = '{schedule}toggle-accepted'
         reviews = '{base}reviews/'
         review_assignments = '{reviews}assign/'
         schedule_api = '{base}schedule/api/'
@@ -887,7 +887,7 @@ class Event(
         if og_file:
             if is_http_url(og_file):
                 return og_file
-            
+
             og_path = _resolve_media_path(og_file)
             if og_path:
                 try:
@@ -953,7 +953,7 @@ class Event(
     def save(self, *args, **kwargs):
         was_created = not bool(self.pk)
         locales_changed = False
-        
+
         # Check if locales have changed by comparing locale_array directly
         if not was_created:
             try:
@@ -965,13 +965,13 @@ class Event(
                     locales_changed = True
             except self.__class__.DoesNotExist:
                 pass
-        
+
         if self.date_from and not self.date_to:
             self.date_to = self.date_from + timedelta(hours=24)
 
         obj = super().save(*args, **kwargs)
         self.cache.clear()
-        
+
         # Clear cached_property for locales and related properties to ensure fresh calculation
         if 'locales' in self.__dict__:
             del self.__dict__['locales']
@@ -983,7 +983,7 @@ class Event(
         elif locales_changed:
             # Backfill all existing mail templates with new locales
             self._backfill_all_mail_template_locales()
-        
+
         return obj
 
     def _backfill_all_mail_template_locales(self):
@@ -1143,13 +1143,13 @@ class Event(
         clone_settings = clone_options.get('clone_settings', True)
         clone_design_texts = clone_options.get('clone_design_texts', True)
         clone_email_settings = clone_options.get('clone_email_settings', True)
-        
+
         clone_ticketing = clone_options.get('clone_ticketing_data', True)
         clone_products = clone_options.get('clone_products', True)
         clone_questions = clone_options.get('clone_questions', True)
         clone_checkin_lists = clone_options.get('clone_checkin_lists', True)
         clone_payment_settings = clone_options.get('clone_payment_settings', True)
-        
+
         clone_talks = clone_options.get('clone_talk_data', True)
         clone_cfp = clone_options.get('clone_cfp', True)
         clone_session_types_tracks = clone_options.get('clone_session_types_tracks', True)
@@ -1196,7 +1196,7 @@ class Event(
         variation_map = {}
         question_map = {}
         checkin_list_map = {}
-        
+
         if clone_ticketing:
             if clone_products:
                 for c in ProductCategory.objects.filter(event=other):
@@ -1382,7 +1382,7 @@ class Event(
         )
         def is_email_key(k):
             return k.startswith('mail_') or k.startswith('smtp_')
-            
+
         def is_design_key(k):
             return k in (
                 'primary_color', 'theme_color_success', 'theme_color_danger', 'theme_color_background', 'theme_round_borders',
@@ -1436,13 +1436,11 @@ class Event(
                     s.save()
 
             self.settings.flush()
-            
+
         if clone_talks:
-            from eventyay.base.models.type import SubmissionType
-            from eventyay.base.models.track import Track
             from eventyay.base.models.question import TalkQuestion
-            from eventyay.base.models.access_code import SubmitterAccessCode
-            
+            from eventyay.base.models.type import SubmissionType
+
             if hasattr(self, 'cfp') and getattr(self.cfp, 'default_type_id', None):
                 with scope(event=self):
                     self.cfp.default_type = None
@@ -1472,7 +1470,7 @@ class Event(
                         tr.event = self
                         tr.save()
                         tr.log_action('eventyay.object.cloned')
-                
+
                 talk_question_map = {}
                 talk_question_deps = {}
                 # Destination may already have seeded default speaker questions
@@ -1542,7 +1540,7 @@ class Event(
                         tq.dependency_question = talk_question_map.get(old_dep_id)
                         if tq.dependency_question:
                             tq.save(update_fields=['dependency_question'])
-                
+
                 if hasattr(self, 'cfp') and hasattr(other, 'cfp') and getattr(other.cfp, 'default_type_id', None):
                     with scope(event=self):
                         self.cfp.default_type = submission_type_map.get(other.cfp.default_type_id)
@@ -1562,7 +1560,6 @@ class Event(
                         ac.log_action('eventyay.object.cloned')
 
             if clone_review_settings:
-                from eventyay.base.models import ReviewPhase, ReviewScoreCategory, ReviewScore
 
                 with scope(event=self):
                     self.review_phases.all().delete()
@@ -1591,7 +1588,7 @@ class Event(
                             score.pk = None
                             score.category = sc
                             score.save()
-        
+
         event_copy_data.send(
             sender=self,
             other=other,
@@ -2052,8 +2049,8 @@ class Event(
         """
         Returns a dictionary of initialized payment providers mapped by their identifiers.
         """
-        from ..signals import register_payment_providers
         from ..meetup import is_meetup_event
+        from ..signals import register_payment_providers
 
         if not cached or not hasattr(self, '_cached_payment_providers'):
             responses = register_payment_providers.send(self)
@@ -2563,9 +2560,9 @@ class Event(
     def delete_talk_data(self):
         from django.core.exceptions import ObjectDoesNotExist
 
+        from eventyay.base.models.feedback import Feedback
         from eventyay.base.models.mail import QueuedMail
         from eventyay.base.models.profile import SpeakerProfile
-        from eventyay.base.models.feedback import Feedback
         from eventyay.base.models.question import Answer, AnswerOption
         from eventyay.base.models.resource import Resource
         from eventyay.base.models.slot import TalkSlot
@@ -3103,6 +3100,12 @@ class Event(
         This checks whether the current schedule has any visible, scheduled talks
         or breaks (not just an empty published schedule).
         """
+        if self.get_feature_flag('show_accepted_publicly') and not self.private_testmode_talks_enabled:
+            from eventyay.base.models import SubmissionStates
+
+            with scope(event=self):
+                if self.submissions.filter(state__in=SubmissionStates.accepted_states).exists():
+                    return True
         if not self.current_schedule:
             return False
         schedule = self.current_schedule
@@ -3244,9 +3247,10 @@ class Event(
         return self.schedules.order_by('-published').filter(published__isnull=False).first()
 
     def get_mail_template(self, role):
+        from i18nfield.strings import LazyI18nString
+
         from eventyay.base.models import MailTemplate
         from eventyay.mail.default_templates import get_default_template
-        from i18nfield.strings import LazyI18nString
 
         try:
             with scope(event=self):
@@ -3260,10 +3264,10 @@ class Event(
                 if locale:
                     subject_data[locale] = str(default_subject.localize(locale))
                     text_data[locale] = str(default_text.localize(locale))
-            
+
             subject = LazyI18nString(subject_data) if subject_data else default_subject
             text = LazyI18nString(text_data) if text_data else default_text
-            
+
             with scope(event=self):
                 template, __ = MailTemplate.objects.get_or_create(
                     event=self, role=role, defaults={'subject': subject, 'text': text}
@@ -3277,11 +3281,11 @@ class Event(
             return template
 
         default_subject, default_text = get_default_template(role)
-        
+
         # Pre-check: do we have all locales without needing a write?
         locales_to_check = set(locale for locale in self.locales if locale)
         all_locales_present = True
-        
+
         for field_name, default_value in (('subject', default_subject), ('text', default_text)):
             current_value = getattr(template, field_name)
             if not (
@@ -3290,15 +3294,15 @@ class Event(
                 and hasattr(default_value, 'localize')
             ):
                 continue
-            
+
             if locales_to_check - set(current_value.data.keys()):
                 all_locales_present = False
                 break
-        
+
         # Early return if all locales are already present
         if all_locales_present:
             return template
-        
+
         # Only enter transaction if we need to backfill missing locales
         with scope(event=self), transaction.atomic():
             if template.pk:
@@ -3328,8 +3332,9 @@ class Event(
         return template
 
     def build_initial_data(self):
-        from eventyay.base.models import CfP, MailTemplateRoles, Schedule
         from django_scopes import scope
+
+        from eventyay.base.models import CfP, MailTemplateRoles, Schedule
 
         with scope(event=self):
             if not CfP.objects.filter(event=self).exists():

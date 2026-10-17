@@ -6,8 +6,8 @@ from datetime import UTC, date, timedelta
 from functools import lru_cache
 from typing import TYPE_CHECKING
 from urllib.parse import quote
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from xml.etree.ElementTree import tostring as xml_tostring
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import qrcode as qr_lib
 from django.conf import settings
@@ -17,20 +17,21 @@ from django.db.utils import DatabaseError
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.timezone import now
-from django.utils.translation import gettext_lazy as _, ngettext
-from django.utils.translation import pgettext_lazy
+from django.utils.translation import gettext_lazy as _
+from django.utils.translation import ngettext, pgettext_lazy
 from django_scopes import scope
 from i18nfield.fields import I18nTextField
 from qrcode.image.svg import SvgPathFillImage
 
 from eventyay.agenda.export_resources import enriched_resource_entry
 from eventyay.agenda.signals import register_recording_provider
-from eventyay.common.social_links import serialize_social_link
-from eventyay.person.services import build_public_speaker_role
 from eventyay.agenda.tasks import export_schedule_html
+from eventyay.base.services.stale_cache import bump_schedule_cache_version_on_commit
+from eventyay.common.social_links import serialize_social_link
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls
 from eventyay.common.video_embed import get_video_embed_info, parse_video_urls
+from eventyay.person.services import build_public_speaker_role
 from eventyay.schedule.notifications import render_notifications
 from eventyay.schedule.signals import schedule_release
 from eventyay.talk_rules.agenda import (
@@ -40,7 +41,6 @@ from eventyay.talk_rules.agenda import (
     is_widget_visible,
 )
 from eventyay.talk_rules.submission import is_wip, orga_can_change_submissions
-from eventyay.base.services.stale_cache import bump_schedule_cache_version_on_commit
 
 from .auth import User, list_avatar_urls, needs_avatar_thumbnails
 
@@ -1039,6 +1039,7 @@ class Schedule(PretalxModel):
             talks = self.talks.filter(is_visible=True)
         if respect_public_visibility:
             talks = talks.filter(room__isnull=False).exclude(room__deleted=True)
+        scheduled_slots = talks
         if filter_updated:
             talks = talks.filter(updated__gte=filter_updated)
         if submission_codes is not None:
@@ -1064,6 +1065,7 @@ class Schedule(PretalxModel):
         view_tz, view_tz_name = resolve_schedule_timezone(self.event, view_timezone if compact else None)
         compact_index = compact_schedule_index(talks, view_tz) if compact else None
         selected_day = None
+        default_day = None
         if compact_index is not None and not index_only:
             today = timezone.now().astimezone(view_tz).date()
             default_day = default_schedule_day(compact_index['days'], today)
@@ -1079,6 +1081,31 @@ class Schedule(PretalxModel):
 
         popularity_enabled = bool(self.event.get_feature_flag('session_popularity_enabled'))
         show_content_locale = not respect_public_visibility or self.event.cfp.public_content_locale
+        if (
+            compact_index is not None
+            and self.event.get_feature_flag('show_accepted_publicly')
+            and not getattr(self.event, 'private_testmode_talks_enabled', False)
+        ):
+            from eventyay.base.models import SubmissionStates
+
+            with scope(event=self.event):
+                accepted_types = list(
+                    self.event.submissions.filter(
+                        state__in=SubmissionStates.accepted_states,
+                    ).values_list('track_id', 'submission_type__name', 'content_locale')
+                )
+            seen_types = {str(st) for st in compact_index['session_types']}
+            seen_locales = set(compact_index['locales'])
+            for track_id, st_name, locale in accepted_types:
+                if track_id:
+                    compact_index['track_ids'].add(track_id)
+                if st_name and str(st_name) not in seen_types:
+                    seen_types.add(str(st_name))
+                    compact_index['session_types'].append(st_name)
+                if locale and locale not in seen_locales:
+                    seen_locales.add(locale)
+                    compact_index['locales'].append(locale)
+
         if compact_index is not None and index_only:
             return compact_index_payload(self, compact_index, view_tz_name, show_content_locale)
 
@@ -1273,6 +1300,75 @@ class Schedule(PretalxModel):
                         'room': talk.room_id,
                     }
                 )
+
+        include_pending = (
+            not index_only
+            and (
+                compact_index is None
+                or selected_day is None
+                or selected_day == default_day
+            )
+        )
+        if (
+            respect_public_visibility
+            and include_pending
+            and self.event.get_feature_flag('show_accepted_publicly')
+            and not getattr(self.event, 'private_testmode_talks_enabled', False)
+        ):
+            from eventyay.base.models import SubmissionStates
+
+            with scope(event=self.event):
+                scheduled_codes = set(
+                    scheduled_slots.exclude(submission__isnull=True).values_list('submission__code', flat=True)
+                )
+                sub_qs = self.event.submissions.filter(
+                    state__in=SubmissionStates.accepted_states,
+                )
+                if submission_codes is not None:
+                    sub_qs = sub_qs.filter(code__in=submission_codes)
+                if scheduled_codes:
+                    sub_qs = sub_qs.exclude(code__in=scheduled_codes)
+                if filter_updated:
+                    sub_qs = sub_qs.filter(updated__gte=filter_updated)
+                sub_qs = (
+                    sub_qs.select_related(
+                        'track',
+                        'submission_type',
+                    )
+                    .prefetch_related('speakers')
+                    .order_by('title')
+                )
+                for sub in sub_qs:
+                    if sub.track:
+                        tracks.add(sub.track)
+                    sub_speakers = list(sub.speakers.all())
+                    speakers.update(sub_speakers)
+                    sub_data = {
+                        'code': sub.code,
+                        'id': sub.code,
+                        'title': sub.title,
+                        'speakers': [s.code for s in sub_speakers],
+                        'track': sub.track_id,
+                        'start': None,
+                        'end': None,
+                        'room': None,
+                        'duration': sub.get_duration(),
+                        'updated': sub.updated.isoformat() if sub.updated else None,
+                        'state': None,
+                        'fav_count': (
+                            fav_counts.get(sub.code, 0) if (popularity_enabled and sub) else 0
+                        ),
+                        'do_not_record': (sub.do_not_record if show_do_not_record else None),
+                        'tags': sub.get_tag(),
+                        'session_type': sub.submission_type.name,
+                        'content_locale': sub.content_locale if show_content_locale else '',
+                        'schedule_pending': True,
+                    }
+                    if not compact or include_text:
+                        sub_data['abstract'] = sub.abstract if show_abstract else ''
+                        sub_data['description'] = sub.description if show_description else ''
+                    result['talks'].append(sub_data)
+
         tracks.discard(None)
         tracks = sorted(tracks, key=lambda track: track.position or 0)
         result['tracks'] = [

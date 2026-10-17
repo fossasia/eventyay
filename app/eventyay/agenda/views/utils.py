@@ -10,9 +10,9 @@ from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.models import AnonymousUser
-from django.core.exceptions import ObjectDoesNotExist
 from django.core import signing
 from django.core.cache import cache
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import Count, Q
 from django.http import HttpRequest, HttpResponse, HttpResponseNotModified, HttpResponseRedirect
@@ -20,7 +20,8 @@ from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
 from django.utils.encoding import force_str
 from django.utils.html import strip_tags
-from django.utils.translation import activate, get_language, gettext_lazy as _
+from django.utils.translation import activate, get_language
+from django.utils.translation import gettext_lazy as _
 from django_context_decorator import context
 from django_scopes import scope
 from i18nfield.utils import I18nJSONEncoder
@@ -28,16 +29,17 @@ from i18nfield.utils import I18nJSONEncoder
 from eventyay.base.models import SpeakerProfile, SubmissionStates, TalkSlot, User
 from eventyay.base.models.auth import list_avatar_urls, needs_avatar_thumbnails
 from eventyay.base.models.submission import SubmissionFavourite
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.services.stale_cache import (
     bump_schedule_cache_version_on_commit,
     get_schedule_cache_version,
 )
-from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.common.exporter import BaseExporter
 from eventyay.common.signals import register_data_exporters, register_my_data_exporters
 from eventyay.common.social_links import serialize_social_link
 from eventyay.common.text.path import safe_filename
 from eventyay.common.views.helpers import build_login_url_with_next
+from eventyay.person.services import build_public_speaker_role
 from eventyay.person.tasks import enqueue_missing_avatar_thumbnails
 from eventyay.schedule.exporters import FavedICalExporter, filter_featured_public_talk_slots
 from eventyay.talk_rules.agenda import (
@@ -45,14 +47,14 @@ from eventyay.talk_rules.agenda import (
     can_view_public_schedule_sessions,
     can_view_schedule,
     has_public_featured_speakers,
+    is_submission_visible_via_accepted,
     is_submission_visible_via_featured,
     pending_public_submission_codes_for_speaker,
-    submission_belongs_to_public_featured_speaker,
     public_speakers_list_available,
     require_wip_schedule_access,
     speaker_may_show_pending_sessions,
+    submission_belongs_to_public_featured_speaker,
 )
-from eventyay.person.services import build_public_speaker_role
 from eventyay.talk_rules.submission import (
     are_featured_exports_available,
     are_featured_speakers_visible,
@@ -562,7 +564,7 @@ def merge_featured_speakers_into_schedule_data(event, schedule_data, featured_pr
         for speaker in schedule_speakers
         if isinstance(speaker, dict) and speaker.get('code')
     }
-    
+
     for profile in featured_profiles:
         if not profile.user_id:
             continue
@@ -1307,6 +1309,7 @@ def build_pre_agenda_featured_talk_schedule_json(event, user, submission_code):
     if not submission or not (
         is_submission_visible_via_featured(user, submission)
         or submission_belongs_to_public_featured_speaker(user, submission)
+        or is_submission_visible_via_accepted(user, submission)
     ):
         return '{}'
 
