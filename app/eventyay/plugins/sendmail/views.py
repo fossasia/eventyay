@@ -29,7 +29,7 @@ from eventyay.base.templatetags.rich_text import (
 from eventyay.common.mail import get_reply_to_address
 from eventyay.control.permissions import EventPermissionRequiredMixin, event_permission_required
 from eventyay.control.views.event import EventSettingsFormView, EventSettingsViewMixin
-from eventyay.helpers.timezone import format_scheduled_datetime
+from eventyay.helpers.timezone import format_scheduled_datetime, format_timezone_name
 from eventyay.plugins.sendmail.forms import EmailQueueEditForm
 from eventyay.plugins.sendmail.mixins import (
     CopyDraftMixin,
@@ -444,7 +444,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
                 self.request,
                 _('Your email has been scheduled for {datetime} ({timezone}).').format(
                     datetime=format_scheduled_datetime(self.request.event, scheduled_at),
-                    timezone=self.request.event.timezone,
+                    timezone=format_timezone_name(self.request.event.timezone),
                 )
             )
         else:
@@ -1481,7 +1481,7 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyTo
                 self.request,
                 _('Your email has been scheduled for {datetime} ({timezone}).').format(
                     datetime=format_scheduled_datetime(event, scheduled_at),
-                    timezone=event.timezone,
+                    timezone=format_timezone_name(event.timezone),
                 )
             )
         else:

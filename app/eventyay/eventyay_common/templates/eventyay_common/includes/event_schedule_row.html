@@ -18,7 +18,7 @@
             {% endif %}
             <div class="event-schedule-col event-schedule-col-timezone">
                 <label class="event-schedule-label" for="{{ timezone_form.id_for_label }}">
-                    {% trans "Timezone" %}
+                    {{ timezone_form.label }}
                 </label>
                 {% bootstrap_field timezone_form layout="inline" show_label=False form_group_class="" %}
             </div>

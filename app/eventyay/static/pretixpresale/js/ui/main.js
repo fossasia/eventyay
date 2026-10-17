@@ -665,16 +665,20 @@ $(function () {
         });
     }
 
-    const local_tz = moment.tz.guess();
+    const local_tz = moment.tz.guess() || "UTC";
     const localTimeFormat = moment.localeData().longDateFormat('LT') || $("body").attr("data-timeformat") || "h:mm A";
     const localDateTimeFormat = moment.localeData().longDateFormat('LLL') || $("body").attr("data-datetimeformat") || "LL h:mm A";
 
     $("span[data-timezone], small[data-timezone]").each(function() {
         var tzName = $(this).attr("data-timezone")
+        if (!tzName) {
+            return
+        }
+        var tzLabel = tzName.replace(/_/g, " ")
         var t = moment.tz($(this).attr("data-time"), tzName)
 
         $(this).tooltip({
-            'title': gettext("Time zone:") + " " + tzName
+            'title': gettext("Time zone:") + " " + tzLabel
         });
         if (t.tz(tzName).format() !== t.tz(local_tz).format()) {
             var $add = $("<span>")
@@ -692,7 +696,7 @@ $(function () {
             }
             $add.insertAfter($(this));
             $add.tooltip({
-                'title': gettext("Time zone:") + " " + local_tz,
+                'title': gettext("Time zone:") + " " + local_tz.replace(/_/g, " "),
             });
         }
     });

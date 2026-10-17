@@ -1,5 +1,7 @@
 const initAvailabilities = (element) => {
     const data = JSON.parse(element.getAttribute("value"))
+    const timezone = data.event.timezone
+    const timezoneLabel = timezone ? String(timezone).replace(/_/g, " ") : ""
 
     const editor = document.createElement("div")
     editor.classList.add("availabilities-editor")
@@ -8,7 +10,7 @@ const initAvailabilities = (element) => {
     element.insertAdjacentElement("afterend", editor)
     editor.insertAdjacentHTML(
         "beforebegin",
-        `<div class="availabilities-tz-hint">${data.event.timezone}</div>`,
+        `<div class="availabilities-tz-hint">${timezoneLabel}</div>`,
     )
 
     const save_events = () => {

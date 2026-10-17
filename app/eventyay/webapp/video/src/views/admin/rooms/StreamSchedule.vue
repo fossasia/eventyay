@@ -16,7 +16,7 @@
 				.info
 					.title {{ schedule.title || $t('Untitled Stream') }}
 					.url {{ schedule.url }}
-					.time {{ formatDateTime(schedule.start_time) }} - {{ formatDateTime(schedule.end_time) }} ({{ eventTimezone }})
+					.time {{ formatDateTime(schedule.start_time) }} - {{ formatDateTime(schedule.end_time) }} ({{ eventTimezoneLabel }})
 					.type {{ schedule.stream_type }}
 				.actions
 					bunt-icon-button(@click="editSchedule(schedule)") pencil
@@ -33,15 +33,15 @@
 					bunt-input(name="title", v-model="formData.title", :label="$t('Title (optional)')", :placeholder="$t('e.g., Day 1 Stream, Keynotes')")
 					bunt-input(name="url", v-model="formData.url", :label="$t('Stream URL')", :validation="v$.formData.url", required, :placeholder="$t('https://youtube.com/watch?v=...')")
 					.datetime-field
-						label.datetime-label {{ $t('Start Time') }} ({{ eventTimezone }})
+						label.datetime-label {{ $t('Start Time') }} ({{ eventTimezoneLabel }})
 						input.datetime-input(type="datetime-local", v-model="plainStartTime", :class="{'has-error': v$.formData.start_time.$error}")
 						.error-message(v-if="v$.formData.start_time.$error") {{ $t('Start time is required') }}
 					.datetime-field
-						label.datetime-label {{ $t('End Time') }} ({{ eventTimezone }})
+						label.datetime-label {{ $t('End Time') }} ({{ eventTimezoneLabel }})
 						input.datetime-input(type="datetime-local", v-model="plainEndTime", :class="{'has-error': v$.formData.end_time.$error}")
 						.error-message(v-if="v$.formData.end_time.$error") {{ $t('End time is required') }}
 					.timezone-hint
-						i {{ $t('All times in') }} {{ eventTimezone }}
+						i {{ $t('All times in') }} {{ eventTimezoneLabel }}
 					bunt-select(name="stream_type", v-model="formData.stream_type", :label="$t('Stream Type')", :options="streamTypeOptions", option-value="id", option-label="label", :validation="v$.formData.stream_type")
 					.form-error(v-if="saveError")
 						| {{ saveError }}
@@ -120,6 +120,9 @@ export default {
 		},
 		eventTimezone() {
 			return this.$store.state.world?.timezone || 'UTC';
+		},
+		eventTimezoneLabel() {
+			return this.eventTimezone.replace(/_/g, ' ');
 		},
 		plainStartTime: {
 			get() {
