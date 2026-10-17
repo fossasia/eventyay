@@ -118,6 +118,13 @@ table.table-sticky thead {
   box-shadow: 0 2px var(--color-border);
 }
 
+table thead th a.sort-active {
+  padding: 0 3px;
+  border-radius: 3px;
+  background-color: var(--color-primary);
+  color: var(--color-bg);
+}
+
 table .action-column {
   display: flex;
   flex-wrap: nowrap;
