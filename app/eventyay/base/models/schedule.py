@@ -350,12 +350,18 @@ class Schedule(PretalxModel):
             raise ValidationError(_('This schedule version is reserved. Please choose a different name.'))
 
         with scope(event=self.event):
+            type(self.event).objects.select_for_update().get(pk=self.event_id)
             self.version = Schedule.objects.select_for_update().get(pk=self.pk).version
-        if self.version:
-            raise ValidationError(
-                _('Cannot freeze schedule version: already versioned as "%(version)s".'),
-                params={'version': self.version},
-            )
+            if self.version:
+                raise ValidationError(
+                    _('Cannot freeze schedule version: already versioned as "%(version)s".'),
+                    params={'version': self.version},
+                )
+            if Schedule.objects.filter(event_id=self.event_id, version__iexact=name).exists():
+                raise ValidationError(
+                    _("A schedule with the version '%(version)s' already exists for this event."),
+                    params={'version': name},
+                )
 
         self.version = name
         self.comment = comment

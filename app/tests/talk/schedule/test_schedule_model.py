@@ -155,6 +155,23 @@ def test_freeze_rejects_stale_draft(slot):
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize('version', ('release', 'RELEASE', ' Release '))
+def test_freeze_rejects_duplicate_version_on_another_draft(slot, version):
+    """Reject logical duplicate names even when requests hold different drafts."""
+    event = slot.event
+    with scope(event=event):
+        first_draft = event.wip_schedule
+        other_draft = Schedule.objects.create(event=event)
+        first_draft.freeze('Release', notify_speakers=False)
+        schedules = list(event.schedules.order_by('pk').values('pk', 'version', 'published'))
+        slots = list(TalkSlot.objects.order_by('pk').values('pk', 'schedule_id', 'start', 'end'))
+        with pytest.raises(ValidationError, match='already exists'):
+            other_draft.freeze(version, notify_speakers=False)
+        assert list(event.schedules.order_by('pk').values('pk', 'version', 'published')) == schedules
+        assert list(TalkSlot.objects.order_by('pk').values('pk', 'schedule_id', 'start', 'end')) == slots
+
+
+@pytest.mark.django_db
 def test_freeze_cache(slot):
     with scope(event=slot.submission.event):
         slot.event.wip_schedule.freeze("Version")
