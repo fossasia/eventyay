@@ -5,6 +5,7 @@ import os
 import re
 import smtplib
 import ssl
+import time
 import warnings
 from collections.abc import Sequence
 from email.mime.image import MIMEImage
@@ -15,6 +16,7 @@ from urllib.parse import urljoin, urlparse
 import datetime
 from zoneinfo import ZoneInfo
 import requests
+import urllib3
 from bs4 import BeautifulSoup
 from celery import chain
 from celery.exceptions import MaxRetriesExceededError
@@ -51,6 +53,7 @@ from eventyay.base.models import (
     OrderPosition,
     User,
 )
+from eventyay.base.services import http
 from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
 from eventyay.base.services.invoices import invoice_pdf_task
 from eventyay.base.services.tasks import TransactionAwareTask
@@ -357,7 +360,7 @@ class CustomEmail(EmailMultiAlternatives):
     def _add_bodies(self, msg):
         from django.core.mail.message import EmailMessage
         from django.utils.encoding import force_bytes
-        
+
         # Call EmailMessage._add_bodies to handle the plain text body
         EmailMessage._add_bodies(self, msg)
 
@@ -566,6 +569,7 @@ def mail_send_task(
                             'invoices': [],
                         },
                     )
+                log_event('mail', 'connection.send', OUTCOME_FAILURE, error_code='retries_exhausted', backend='gmail')
                 raise SendMailException(f'Failed to send an email to {to}.', already_logged=True) from e
             raise
         except (GmailDailyLimitError, GmailPermanentError) as e:
@@ -580,6 +584,7 @@ def mail_send_task(
                         'invoices': [],
                     },
                 )
+            log_event('mail', 'connection.send', OUTCOME_FAILURE, error_code='gmail_rejected', backend='gmail')
             raise SendMailException(f'Failed to send an email to {to}.', already_logged=True) from e
         except (smtplib.SMTPResponseException, smtplib.SMTPSenderRefused) as e:
             logger.debug('Got error %s. Retry...', e)
@@ -803,6 +808,10 @@ def encoder_linelength(msg):
 # - IndexError (If regex failed)
 # - requests.RequestException
 # - ssl.SSLError
+CID_IMAGE_MAX_BYTES = 5 * 1024 * 1024
+CID_IMAGE_DEADLINE_SECONDS = 30
+
+
 def convert_image_to_cid(image_src: str, cid_id: str, verify_ssl: bool = True) -> MIMEImage | None:
     if image_src.startswith('data:image/'):
         # Let ValueError bubble up here.
@@ -821,23 +830,54 @@ def convert_image_to_cid(image_src: str, cid_id: str, verify_ssl: bool = True) -
         guess_subtype = os.path.splitext(path)[1][1:]
 
         try:
-            response = requests.get(image_src, verify=verify_ssl, timeout=15)
+            response = http.get(image_src, verify=verify_ssl, timeout=15, stream=True)
         except requests.RequestException:
             log_event('mail', 'connection.get', OUTCOME_FAILURE, error_code='request_error', backend='cid_image')
             return None
-        if response.status_code >= 500:
-            log_event(
-                'mail',
-                'connection.get',
-                OUTCOME_FAILURE,
-                error_code='http_error',
-                status=response.status_code,
-                backend='cid_image',
-            )
+
+        try:
+            if response.status_code >= 400:
+                log_event(
+                    'mail',
+                    'connection.get',
+                    OUTCOME_FAILURE,
+                    error_code='http_error',
+                    status=response.status_code,
+                    backend='cid_image',
+                )
+                return None
+
+            max_bytes = CID_IMAGE_MAX_BYTES
+            deadline = time.monotonic() + CID_IMAGE_DEADLINE_SECONDS
+            chunks, total = [], 0
+            while True:
+                # read1() returns after a single network read, so the deadline is re-checked
+                # after every read. iter_content() only returns once a whole chunk has arrived,
+                # which a server dribbling bytes can stretch far past the deadline.
+                chunk = response.raw.read1(8192, decode_content=True)
+                if not chunk:
+                    break
+                total += len(chunk)
+                if total > max_bytes or time.monotonic() > deadline:
+                    log_event(
+                        'mail',
+                        'connection.get',
+                        OUTCOME_FAILURE,
+                        error_code='too_large_or_slow',
+                        backend='cid_image',
+                    )
+                    return None
+                chunks.append(chunk)
+        except (requests.RequestException, urllib3.exceptions.HTTPError, OSError):
+            log_event('mail', 'connection.get', OUTCOME_FAILURE, error_code='request_error', backend='cid_image')
             return None
-        mime_image = MIMEImage(response.content, _subtype=guess_subtype)
+        finally:
+            response.close()
+        mime_image = MIMEImage(b''.join(chunks), _subtype=guess_subtype)
 
     mime_image.add_header('Content-ID', f'<{cid_id}>')
+
+
 
     filename = f"{cid_id}.{guess_subtype}" if guess_subtype else cid_id
     mime_image.add_header('Content-Disposition', 'inline', filename=filename)
