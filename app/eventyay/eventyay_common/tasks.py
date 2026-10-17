@@ -14,9 +14,9 @@ from django.conf import settings
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from django.db import DatabaseError
+from django.db import DatabaseError, transaction
 from django.db.models import Q
-from django_scopes import scopes_disabled
+from django_scopes import scope, scopes_disabled
 
 from eventyay.base.decimal import round_decimal
 from eventyay.base.models.vouchers import InvoiceVoucher
@@ -27,7 +27,7 @@ from eventyay.helpers.stripe_utils import (
     process_auto_billing_charge_stripe,
 )
 
-from ..base.models import BillingInvoice, Event, Order, Organizer
+from ..base.models import BillingInvoice, BillingInvoiceEmail, Event, Order, Organizer
 from ..base.models.organizer import OrganizerBillingModel
 from ..base.services.mail import mail_send_task
 from ..consts import EVENTYAY_EMAIL_NONE_VALUE
@@ -66,6 +66,7 @@ def send_team_webhook(self, user_id, team):
     try:
         # Send the POST request with the payload and the headers
         from django.urls import reverse
+
         webhook_url = reverse('eventyay_common:webhook.team')
         response = requests.post(
             webhook_url,
@@ -80,8 +81,11 @@ def send_team_webhook(self, user_id, team):
         try:
             self.retry(exc=e)
         except self.MaxRetriesExceededError:
-            log_event('core', 'connection.post', OUTCOME_FAILURE, error_code='retries_exhausted', backend='talk_webhook')
+            log_event(
+                'core', 'connection.post', OUTCOME_FAILURE, error_code='retries_exhausted', backend='talk_webhook'
+            )
             logger.error('Max retries exceeded for sending organizer webhook.')
+
 
 def get_header_token(user_id):
     # Fetch the user and organizer instances
@@ -226,20 +230,31 @@ def update_billing_invoice_information(invoice_id: str):
         if not invoice_id:
             logger.error('Missing invoice_id in Stripe webhook metadata')
             return None
-        # Only pending invoices: concurrent Stripe retries must not overwrite
-        # an already-set paid_datetime.
-        invoice_information_updated = BillingInvoice.objects.filter(
-            id=invoice_id,
-            status=BillingInvoice.STATUS_PENDING,
-        ).update(
-            status=BillingInvoice.STATUS_PAID,
-            paid_datetime=timezone.now(),
-            payment_method='stripe',
-            reminder_enabled=False,
-        )
-        if not invoice_information_updated:
-            logger.error('Invoice not found or already updated: %s', invoice_id)
-            return None
+        with transaction.atomic():
+            invoice = BillingInvoice.objects.select_for_update().filter(id=invoice_id).first()
+            if invoice is None:
+                logger.error('Invoice not found: %s', invoice_id)
+                return None
+            if invoice.payment_method == 'stripe' and invoice.paid_datetime:
+                return None
+            # A charge can settle after a manual status change. Preserve an active
+            # refund workflow, but always record that the payment succeeded.
+            if invoice.status not in (BillingInvoice.STATUS_REFUNDING, BillingInvoice.STATUS_REFUNDED):
+                invoice.status = BillingInvoice.STATUS_PAID
+            invoice.paid_datetime = invoice.paid_datetime or timezone.now()
+            invoice.payment_method = 'stripe'
+            invoice.reminder_enabled = False
+            invoice.automatic_payment_enabled = False
+            invoice.save(
+                update_fields=[
+                    'status',
+                    'paid_datetime',
+                    'payment_method',
+                    'reminder_enabled',
+                    'automatic_payment_enabled',
+                    'updated_at',
+                ]
+            )
         logger.info('Payment succeeded for invoice: %s', invoice_id)
     except BillingInvoice.DoesNotExist as e:
         logger.error('Invoice not found in database: %s', str(e))
@@ -280,21 +295,37 @@ def process_auto_billing_charge():
         today = datetime.today()
         first_day_of_current_month = today.replace(day=1)
         last_month_date = (first_day_of_current_month - relativedelta(months=1)).date()
-        pending_invoices = BillingInvoice.objects.filter(Q(monthly_bill=last_month_date) & Q(status='n'))
-        for invoice in pending_invoices:
-            if is_legacy_billing_collection_disabled(invoice.organizer):
-                logger.info(
-                    'Skipping legacy automatic charge for organizer %s because an external collector owns billing',
-                    invoice.organizer.slug,
-                )
-                continue
-            if invoice.final_ticket_fee > 0:
+        pending_invoices = BillingInvoice.objects.filter(
+            monthly_bill=last_month_date,
+            status=BillingInvoice.STATUS_PENDING,
+            automatic_payment_enabled=True,
+        )
+        for invoice_candidate in pending_invoices:
+            with transaction.atomic():
+                invoice = BillingInvoice.objects.select_for_update().get(pk=invoice_candidate.pk)
+                if invoice.status != BillingInvoice.STATUS_PENDING or not invoice.automatic_payment_enabled:
+                    continue
+                if invoice.final_ticket_fee <= 0:
+                    logger.info('No ticket fee for event: %s', invoice.event.slug)
+                    continue
+                if invoice.stripe_payment_intent_id:
+                    continue
+                if is_legacy_billing_collection_disabled(invoice.organizer):
+                    logger.info(
+                        'Skipping legacy automatic charge for organizer %s because an external collector owns billing',
+                        invoice.organizer.slug,
+                    )
+                    continue
                 billing_settings = OrganizerBillingModel.objects.filter(organizer_id=invoice.organizer_id).first()
                 if not billing_settings or not billing_settings.stripe_customer_id:
-                    logger.error('No billing settings or Stripe customer ID found for organizer %s', invoice.organizer.slug)
+                    logger.error(
+                        'No billing settings or Stripe customer ID found for organizer %s', invoice.organizer.slug
+                    )
                     continue
                 if not billing_settings.stripe_payment_method_id:
-                    logger.error('No billing settings or Stripe payment method ID found for organizer %s', invoice.organizer.slug)
+                    logger.error(
+                        'No billing settings or Stripe payment method ID found for organizer %s', invoice.organizer.slug
+                    )
                     continue
 
                 metadata = {
@@ -310,9 +341,6 @@ def process_auto_billing_charge():
                     metadata=metadata,
                     invoice_id=invoice.id,
                 )
-            else:
-                logger.info('No ticket fee for event: %s', invoice.event.slug)
-                continue
     except ValidationError as e:
         logger.error('Error happen when trying to process auto billing charge: %s', e)
 
@@ -454,7 +482,10 @@ def billing_invoice_notification(self):
 @shared_task(bind=True)
 @scopes_disabled()
 def retry_failed_payment(self):
-    pending_invoices = BillingInvoice.objects.filter(status=BillingInvoice.STATUS_PENDING)
+    pending_invoices = BillingInvoice.objects.filter(
+        status=BillingInvoice.STATUS_PENDING,
+        automatic_payment_enabled=True,
+    )
     today = datetime.now(tz.utc)
     logger.info('Start - running task to retry failed payment: %s', today)
     local_tz = ZoneInfo(settings.TIME_ZONE)
@@ -471,11 +502,19 @@ def retry_failed_payment(self):
             if (
                 not invoice.last_reminder_datetime or invoice.last_reminder_datetime < reminder_date
             ) and reminder_date <= today:
-                retry_payment(
-                    payment_intent_id=invoice.stripe_payment_intent_id,
-                    organizer_id=invoice.organizer_id,
-                )
-                logger.info('Payment is retried for event %s', invoice.event.name)
+                with transaction.atomic():
+                    current_invoice = BillingInvoice.objects.select_for_update().get(pk=invoice.pk)
+                    if (
+                        current_invoice.status != BillingInvoice.STATUS_PENDING
+                        or not current_invoice.automatic_payment_enabled
+                        or current_invoice.stripe_payment_intent_id != invoice.stripe_payment_intent_id
+                    ):
+                        break
+                    retry_payment(
+                        payment_intent_id=current_invoice.stripe_payment_intent_id,
+                        organizer_id=current_invoice.organizer_id,
+                    )
+                    logger.info('Payment is retried for event %s', current_invoice.event.name)
 
                 break
     logger.info('End - completed task to retry failed payment.')
@@ -496,13 +535,16 @@ def check_billing_status_for_warning(self):
             continue
         # marked invoice as expired if the due date is passed
         if today > (invoice.created_at + relativedelta(months=1)):
-            logger.info('Invoice is expired for event %s', invoice.event.name)
-            invoice.status = BillingInvoice.STATUS_EXPIRED
-            invoice.reminder_enabled = False
-            invoice.save()
-            # move event's status to non-public
-            invoice.event.live = False
-            invoice.event.save()
+            with transaction.atomic():
+                current_invoice = BillingInvoice.objects.select_for_update().get(pk=invoice.pk)
+                if current_invoice.status != BillingInvoice.STATUS_PENDING or not current_invoice.reminder_enabled:
+                    continue
+                logger.info('Invoice is expired for event %s', current_invoice.event.name)
+                current_invoice.status = BillingInvoice.STATUS_EXPIRED
+                current_invoice.reminder_enabled = False
+                current_invoice.save(update_fields=['status', 'reminder_enabled', 'updated_at'])
+                current_invoice.event.live = False
+                current_invoice.event.save(update_fields=['live'])
             continue
         for reminder_day in sorted(reminder_dates):
             reminder_date = _reminder_datetime(today.year, today.month, reminder_day, tzinfo=local_tz)
@@ -540,31 +582,41 @@ def check_billing_status_for_warning(self):
                     f'Warm regards,\n'
                     f'EventYay Team'
                 )
-                billing_invoice_send_email(mail_subject, mail_content, invoice, organizer_billing)
-
-                invoice.last_reminder_datetime = reminder_date
-                invoice.next_reminder_datetime = get_next_reminder_datetime(invoice.reminder_schedule)
-                invoice.save()
+                billing_invoice_send_email(
+                    mail_subject,
+                    mail_content,
+                    invoice,
+                    organizer_billing,
+                    delivery_key=f'reminder:{reminder_date.isoformat()}',
+                    reminder_date=reminder_date,
+                )
                 break
     logger.info('End - completed task to check billing status for warning.')
 
 
-def billing_invoice_send_email(subject, content, invoice, organizer_billing):
-    organizer_billing_contact = [organizer_billing.primary_contact_email]
-    # generate invoice pdf
-    generator = InvoicePDFGenerator(billing_invoice=invoice, organizer_billing_info=organizer_billing)
-    pdf_buffer = generator.generate()
-    # Send email to organizer
-    pdf_content = pdf_buffer.getvalue()
-    pdf_base64 = base64.b64encode(pdf_content).decode('utf-8')
-    mail_send_task.apply_async(
-        kwargs={
-            'subject': subject,
-            'body': content,
-            'sender': EVENTYAY_EMAIL_NONE_VALUE,
-            'to': organizer_billing_contact,
-            'html': None,
-            'attach_file_base64': pdf_base64,
-            'attach_file_name': pdf_buffer.filename,
-        }
-    )
+def billing_invoice_send_email(subject, content, invoice, organizer_billing, delivery_key=None, reminder_date=None):
+    delivery_key = delivery_key or f'notice:{invoice.monthly_bill.isoformat()}'
+    with scope(event=invoice.event, organizer=invoice.organizer), transaction.atomic():
+        invoice = BillingInvoice.objects.select_for_update().get(pk=invoice.pk)
+        if reminder_date and (invoice.status != BillingInvoice.STATUS_PENDING or not invoice.reminder_enabled):
+            return
+        if BillingInvoiceEmail.objects.filter(invoice=invoice, delivery_key=delivery_key).exists():
+            return
+        generator = InvoicePDFGenerator(billing_invoice=invoice, organizer_billing_info=organizer_billing)
+        pdf_buffer = generator.generate()
+        BillingInvoiceEmail.objects.create(
+            invoice=invoice,
+            delivery_key=delivery_key,
+            recipient=organizer_billing.primary_contact_email,
+            subject=subject,
+            body=content,
+            pdf_base64=base64.b64encode(pdf_buffer.getvalue()).decode('utf-8'),
+            pdf_filename=pdf_buffer.filename,
+        )
+        invoice.sent_to_email = organizer_billing.primary_contact_email
+        update_fields = ['sent_to_email', 'updated_at']
+        if reminder_date:
+            invoice.last_reminder_datetime = reminder_date
+            invoice.next_reminder_datetime = get_next_reminder_datetime(invoice.reminder_schedule)
+            update_fields.extend(['last_reminder_datetime', 'next_reminder_datetime'])
+        invoice.save(update_fields=update_fields)

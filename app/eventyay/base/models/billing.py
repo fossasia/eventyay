@@ -1,5 +1,6 @@
 from datetime import date
 
+from dateutil.relativedelta import relativedelta
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -15,12 +16,20 @@ class BillingInvoice(LoggedModel):
     STATUS_PAID = 'p'
     STATUS_EXPIRED = 'e'
     STATUS_CANCELED = 'c'
+    STATUS_REFUNDING = 'g'
+    STATUS_REFUNDED = 'r'
+    STATUS_FAILED = 'f'
+    STATUS_RESOLVED = 's'
 
     STATUS_CHOICES = [
         (STATUS_PENDING, _('pending')),
         (STATUS_PAID, _('paid')),
         (STATUS_EXPIRED, _('expired')),
         (STATUS_CANCELED, _('canceled')),
+        (STATUS_REFUNDING, _('refunding')),
+        (STATUS_REFUNDED, _('refunded')),
+        (STATUS_FAILED, _('failed')),
+        (STATUS_RESOLVED, _('resolved')),
     ]
 
     organizer = models.ForeignKey('Organizer', on_delete=models.CASCADE)
@@ -28,6 +37,8 @@ class BillingInvoice(LoggedModel):
     event = models.ForeignKey('Event', on_delete=models.CASCADE)
 
     status = models.CharField(max_length=1, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    automatic_payment_enabled = models.BooleanField(default=True)
+    sent_to_email = models.EmailField(blank=True, default='')
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     currency = models.CharField(max_length=3)
 
@@ -63,3 +74,25 @@ class BillingInvoice(LoggedModel):
         verbose_name = 'Billing Invoice'
         verbose_name_plural = 'Billing Invoices'
         ordering = ('-created_at',)
+
+    @property
+    def due_date(self):
+        return self.created_at + relativedelta(months=1)
+
+
+class BillingInvoiceEmail(models.Model):
+    invoice = models.ForeignKey(BillingInvoice, on_delete=models.CASCADE, related_name='email_outbox')
+    delivery_key = models.CharField(max_length=80)
+    recipient = models.EmailField()
+    subject = models.CharField(max_length=255)
+    body = models.TextField()
+    pdf_base64 = models.TextField()
+    pdf_filename = models.CharField(max_length=255)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    failed_attempts = models.PositiveIntegerField(default=0)
+    last_attempt_at = models.DateTimeField(null=True, blank=True)
+
+    objects = ScopedManager(organizer='invoice__organizer')
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['invoice', 'delivery_key'], name='unique_billing_invoice_email')]
