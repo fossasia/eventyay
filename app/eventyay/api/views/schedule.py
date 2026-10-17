@@ -226,14 +226,14 @@ class ScheduleViewSet(PretalxViewSetMixin, viewsets.ReadOnlyModelViewSet):
     )
     @action(detail=False, methods=['POST'])
     def release(self, request, event, organizer=None):
-        wip_schedule = request.event.wip_schedule
+        """Resolve and release the current draft while holding the event lock."""
         serializer = ScheduleReleaseSerializer(data=request.data, context=self.get_serializer_context())
         serializer.is_valid(raise_exception=True)
 
         version_name = serializer.validated_data.get('version')
         comment = serializer.validated_data.get('comment')
 
-        schedule, _ = wip_schedule.freeze(
+        schedule, _ = request.event.release_schedule(
             name=version_name,
             user=request.user,
             notify_speakers=False,

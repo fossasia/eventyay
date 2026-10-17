@@ -2,7 +2,9 @@ import json
 
 from django import forms
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import transaction
 from django.utils.translation import gettext_lazy as _
+from django_scopes import scope
 from django_scopes.forms import SafeModelChoiceField, SafeModelMultipleChoiceField
 
 from eventyay.base.models import Submission, SubmissionStates, User
@@ -126,14 +128,20 @@ class SubmissionForm(ReadOnlyFlag, RequestRequire, forms.ModelForm):
                 raise forms.ValidationError(_('Please enter a valid Etherpad URL.')) from exc
         return url
 
+    @transaction.atomic
     def save(self, *args, **kwargs):
+        """Save session edits and update draft timing when the effective duration changes."""
+        with scope(event=self.event):
+            type(self.event).objects.select_for_update().get(pk=self.event.pk)
         if 'content_locale' not in self.fields:
             self.instance.content_locale = self.event.content_locales[0] if self.event.content_locales else self.event.locale
         instance = super().save(*args, **kwargs)
         if self.is_creating:
             instance._set_state(self.cleaned_data['state'], force=True)
         else:
-            if 'duration' in self.changed_data:
+            if 'duration' in self.changed_data or (
+                'submission_type' in self.changed_data and instance.duration is None
+            ):
                 instance.update_duration()
             if 'track' in self.changed_data:
                 instance.update_review_scores()
