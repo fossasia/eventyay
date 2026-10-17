@@ -125,6 +125,8 @@ class CfPFormMixin:
             # Preserve explicit organizer customizations, but avoid pinning cached
             # gettext fallbacks that can block future PO/MO updates.
             label_data = getattr(stored_label, 'data', None)
+            if label_data is None and isinstance(stored_label, dict):
+                label_data = stored_label
             if label_data:
                 english = label_data.get('en', '')
                 has_real_translation = any(

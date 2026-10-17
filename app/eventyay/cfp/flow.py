@@ -17,7 +17,7 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.datastructures import MultiValueDict
 from django.utils.functional import Promise, cached_property
-from django.utils.translation import gettext
+from django.utils.translation import gettext, override
 from django.utils.translation import gettext_lazy as _
 from django.views.generic.base import TemplateResponseMixin
 from i18nfield.strings import LazyI18nString
@@ -32,6 +32,7 @@ from eventyay.base.models import (
 from eventyay.cfp.signals import cfp_steps
 from eventyay.common.exceptions import SendMailException
 from eventyay.common.language import language
+from eventyay.common.sanitizers import sanitize_rich_text
 from eventyay.common.social_links import get_social_link_value
 from eventyay.common.text.phrases import phrases
 from eventyay.person.forms import (
@@ -50,7 +51,140 @@ from eventyay.submission.forms import InfoForm
 logger = logging.getLogger(__name__)
 
 
-def i18n_string(data, locales):
+FIELD_STEP_MAP = {
+    # Session fields (InfoStep)
+    'title': 'info',
+    'submission_type': 'info',
+    'abstract': 'info',
+    'description': 'info',
+    'notes': 'info',
+    'track': 'info',
+    'duration': 'info',
+    'slot_count': 'info',
+    'content_locale': 'info',
+    'image': 'info',
+    'slides': 'info',
+    'do_not_record': 'info',
+    # Speaker fields (ProfileStep)
+    'fullname': 'profile',
+    'biography': 'profile',
+    'job_title': 'profile',
+    'organization': 'profile',
+    'avatar': 'profile',
+    'avatar_source': 'profile',
+    'avatar_license': 'profile',
+    'availabilities': 'profile',
+    'additional_speaker': 'profile',
+    'social_links': 'profile',
+}
+
+FIELD_DEFAULTS = {
+    'title': {
+        'label': _('Title'),
+        'help_text': _('Proposal title'),
+    },
+    'submission_type': {
+        'label': _('Session type'),
+        'help_text': _('Session type'),
+    },
+    'abstract': {
+        'label': _('Abstract'),
+        'help_text': _('Abstract'),
+    },
+    'description': {
+        'label': _('Description'),
+        'help_text': _('Description'),
+    },
+    'notes': {
+        'label': _('Notes'),
+        'help_text': _('Notes'),
+    },
+    'track': {
+        'label': _('Track'),
+        'help_text': _('Track'),
+    },
+    'duration': {
+        'label': _('Duration'),
+        'help_text': _('Duration'),
+    },
+    'slot_count': {
+        'label': _('Slot Count'),
+        'help_text': _('Slot Count'),
+    },
+    'content_locale': {
+        'label': _('Language'),
+        'help_text': _('Language'),
+    },
+    'image': {
+        'label': _('Session image'),
+        'help_text': _('Use this if you want an illustration to go with your proposal.'),
+    },
+    'slides': {
+        'label': _('Slides'),
+        'help_text': _('Slides'),
+    },
+    'do_not_record': {
+        'label': _('Recording opt-out'),
+        'help_text': _('Don’t record this session.'),
+    },
+    'fullname': {
+        'label': _('Full Name'),
+        'help_text': _('Full name'),
+    },
+    'biography': {
+        'label': _('Biography'),
+        'help_text': _('Biography'),
+    },
+    'job_title': {
+        'label': _('Job title/role'),
+        'help_text': _('What is your official job title?'),
+    },
+    'organization': {
+        'label': _('Organization'),
+        'help_text': _('What organization or company do you represent?'),
+    },
+    'avatar': {
+        'label': _('Profile picture'),
+        'help_text': _('Profile picture'),
+    },
+    'avatar_source': {
+        'label': _('Profile picture source'),
+        'help_text': _('Profile Picture Source'),
+    },
+    'avatar_license': {
+        'label': _('Profile picture license'),
+        'help_text': _('Profile Picture License'),
+    },
+    'availabilities': {
+        'label': _('Availability'),
+        'help_text': _('Availability'),
+    },
+    'additional_speaker': {
+        'label': _('Additional Speaker'),
+        'help_text': _(
+            'If you have a co-speaker, please add their email address here, and we will invite them '
+            'to create an account. If you have more than one co-speaker, you can add more speakers '
+            'after finishing the proposal process.'
+        ),
+    },
+    'social_links': {
+        'label': _('Social Media'),
+        'help_text': _('Social Media'),
+    },
+}
+
+
+def get_field_default(field_key: str, attr: str, locale: str) -> str:
+    defaults = FIELD_DEFAULTS.get(field_key, {})
+    val = defaults.get(attr, '')
+    if not val:
+        return ''
+    with override(locale):
+        return str(val)
+
+
+
+def i18n_string(data, locales, preserve_identical=False):
     if isinstance(data, LazyI18nString):
         return data
     data = copy.deepcopy(data)
@@ -65,10 +199,12 @@ def i18n_string(data, locales):
 
     for locale in locales:
         if locale != 'en':
+            if preserve_identical and locale in data and data[locale] is not None:
+                continue
             stored = data.get(locale, '')
             # Re-evaluate if missing OR if the stored value is identical to English,
             # which indicates a failed gettext lookup that was cached as a fallback.
-            if not stored or stored == english:
+            if not stored or (not preserve_identical and stored == english):
                 with language(locale):
                     translation = gettext(english)
                     if translation != english:
@@ -802,6 +938,43 @@ class ProfileStep(GenericFlowStep, FormFlowStep):
         result['social_media_formset'] = formset
         result['social_link_prefixes'] = social_link_prefixes() if formset is not None else {}
         result['show_social_links'] = formset is not None
+
+        fields_config = self.config.get('fields', [])
+        if isinstance(fields_config, dict):
+            field_data = fields_config.get('social_links', {})
+        else:
+            field_data = next(
+                (f for f in fields_config if isinstance(f, dict) and f.get('key') == 'social_links'),
+                {},
+            )
+
+        social_links_label = None
+        if field_data.get('label'):
+            lbl = field_data['label']
+            social_links_label = (
+                lbl.localize(self.request.LANGUAGE_CODE)
+                if hasattr(lbl, 'localize')
+                else (lbl.get(self.request.LANGUAGE_CODE) if isinstance(lbl, dict) else str(lbl))
+            )
+        if not social_links_label:
+            social_links_label = get_field_default('social_links', 'label', self.request.LANGUAGE_CODE)
+
+        social_links_help_text = None
+        if 'help_text' in field_data and field_data['help_text'] is not None:
+            ht = field_data['help_text']
+            social_links_help_text = (
+                ht.localize(self.request.LANGUAGE_CODE)
+                if hasattr(ht, 'localize')
+                else (ht.get(self.request.LANGUAGE_CODE) if isinstance(ht, dict) else str(ht))
+            )
+        if social_links_help_text is None:
+            social_links_help_text = get_field_default('social_links', 'help_text', self.request.LANGUAGE_CODE)
+
+        if social_links_help_text:
+            social_links_help_text = sanitize_rich_text(str(social_links_help_text))
+
+        result['social_links_label'] = social_links_label
+        result['social_links_help_text'] = social_links_help_text
         return result
 
     def post(self, request):
@@ -975,10 +1148,11 @@ class CfPFlow:
                         {
                             'widget': field.widget.__class__.__name__,
                             'key': key,
-                            'label': i18n_string(field.label, locales),
+                            'label': i18n_string(field.label, locales, preserve_identical=True),
                             'help_text': i18n_string(
                                 getattr(field, 'original_help_text', field.help_text),
                                 locales,
+                                preserve_identical=True,
                             ),
                             'added_help_text': i18n_string(
                                 getattr(field, 'added_help_text', ''),
@@ -1028,7 +1202,9 @@ class CfPFlow:
             for key in ('help_text', 'request', 'required', 'key', 'label'):
                 if key in config_field:
                     field[key] = (
-                        i18n_string(config_field[key], locales) if key in ('help_text', 'label') else config_field[key]
+                        i18n_string(config_field[key], locales, preserve_identical=True)
+                        if key in ('help_text', 'label')
+                        else config_field[key]
                     )
             step_config['fields'].append(field)
         return step_config
