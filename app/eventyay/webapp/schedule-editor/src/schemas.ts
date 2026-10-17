@@ -109,6 +109,14 @@ export const TalkSchema = z.object({
   do_not_record: z.union([z.boolean(), z.null()]).optional().transform(val => val === true).default(false),
   roles: z.array(RoleAssignmentSchema).nullable().optional().default([]),
   kind: z.enum(['talk', 'break', 'shift']).optional(),
+  session_type: z.union([
+    LocalizedTextSchema,
+    z.string().transform(val => ({ en: val })),
+  ]).nullable().optional(),
+  submission_type: z.union([
+    LocalizedTextSchema,
+    z.string().transform(val => ({ en: val })),
+  ]).nullable().optional(),
 });
 
 export const WarningSchema = z.object({
