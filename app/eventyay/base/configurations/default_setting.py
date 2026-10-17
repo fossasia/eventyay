@@ -928,8 +928,8 @@ DEFAULT_SETTINGS = {
             label=_('Event languages'),
             help_text=_(
                 'Users will be able to use eventyay in these languages, and you will be able to provide all texts in '
-                "these languages. If you don't provide a text in the language a user selects, it will be shown in your "
-                "event's default language instead."
+                'these languages. Drag and drop selected languages to reorder them — the first language (bold border) '
+                "is used as your event's default language."
             ),
         ),
     },

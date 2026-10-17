@@ -85,6 +85,9 @@ class EventCommonSettingsForm(SettingsForm):
 
     def clean(self):
         data = super().clean()
+        locales = data.get('locales') or []
+        if locales:
+            data['locale'] = locales[0]
         if data.get('contact_form_enabled') and not data.get('contact_mail'):
             self.add_error(
                 'contact_mail',
@@ -311,6 +314,16 @@ class EventCommonSettingsForm(SettingsForm):
                 self.fields[fname].widget = MultipleLanguagesWidget(
                     choices=self.fields[fname].choices, attrs=getattr(old_widget, 'attrs', None)
                 )
+        if 'locales' in self.fields:
+            ordered_locales = self.initial.get('locales') or []
+            if isinstance(ordered_locales, str):
+                ordered_locales = [code for code in ordered_locales.split(',') if code]
+            self.fields['locales'].widget.attrs['data-ordered-default'] = 'true'
+            self.fields['locales'].widget.attrs['data-default-locale-input'] = f'id_{self.add_prefix("locale")}'
+            self.fields['locales'].widget.attrs['data-selected-order'] = ','.join(ordered_locales)
+        if 'locale' in self.fields:
+            self.fields['locale'].widget = forms.HiddenInput()
+            self.fields['locale'].label = ''
         if self.event and 'content_locales' in self.fields:
             self.fields['content_locales'].initial = self.event.content_locales
         if is_meetup_event(self.event):

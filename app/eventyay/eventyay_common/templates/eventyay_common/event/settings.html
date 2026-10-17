@@ -207,7 +207,7 @@
         <fieldset>
             <legend>{% trans "Localization" %}</legend>
             {% bootstrap_field sform.locales layout="control" %}
-            {% bootstrap_field sform.locale layout="control" %}
+            {{ sform.locale }}
             {% bootstrap_field sform.region layout="control" %}
         </fieldset>
         <fieldset>
