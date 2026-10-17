@@ -318,7 +318,7 @@ class OrganizerIndex(OrganizerViewMixin, EventListMixin, ListView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         for event in ctx['events']:
-            event.tzname = ZoneInfo(event.cache.get_or_set('timezone', lambda: event.settings.timezone))
+            event.tzname = ZoneInfo(event.cache.get_or_set('timezone', lambda e=event: e.settings.timezone))
             if event.has_subevents:
                 event.daterange = daterange(
                     event.min_from.astimezone(event.tzname),
@@ -351,7 +351,8 @@ def add_events_for_days(request, baseqs, before, after, ebd, timezones):
     if hasattr(request, 'organizer'):
         qs = filter_qs_by_attr(qs, request)
     for event in qs:
-        timezones.add(event.settings.timezones)
+        if event.settings.timezone:
+            timezones.add(event.settings.timezone)
         tz = ZoneInfo(event.settings.timezone)
         datetime_from = event.date_from.astimezone(tz)
         date_from = datetime_from.date()
@@ -440,7 +441,8 @@ def add_subevents_for_days(qs, before, after, ebd, timezones, event=None, cart_n
             if hide:
                 continue
 
-        timezones.add(s.timezones)
+        if s.timezone:
+            timezones.add(s.timezone)
         tz = ZoneInfo(s.timezone)
         datetime_from = se.date_from.astimezone(tz)
         date_from = datetime_from.date()

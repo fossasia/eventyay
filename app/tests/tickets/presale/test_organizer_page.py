@@ -1,10 +1,13 @@
+from collections import defaultdict
 from datetime import UTC, datetime, timedelta
+from unittest.mock import MagicMock
 
 import pytest
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
 from eventyay.base.models import Event, Organizer
+from eventyay.presale.views.organizer import add_events_for_days, add_subevents_for_days
 
 
 @pytest.fixture
@@ -304,3 +307,97 @@ def test_ics_subevents_attributes(env, client):
     assert b'SE1' not in r.content
     r = client.get('/mrmcd/events/ical/?attr[loc]=B')
     assert b'SE1' in r.content
+
+
+@pytest.mark.django_db
+def test_calendar_multiple_timezones(env, client):
+    env[0].settings.event_list_type = 'calendar'
+    year = now().year + 1
+    e1 = Event.objects.create(
+        organizer=env[0],
+        name='MRMCD2017_NYC',
+        slug='2017-nyc',
+        date_from=datetime(year, 9, 1, tzinfo=UTC),
+        live=True,
+        is_public=True,
+    )
+    e1.settings.timezone = 'America/New_York'
+    e2 = Event.objects.create(
+        organizer=env[0],
+        name='MRMCD2017_BER',
+        slug='2017-ber',
+        date_from=datetime(year, 9, 2, tzinfo=UTC),
+        live=True,
+        is_public=True,
+    )
+    e2.settings.timezone = 'Europe/Berlin'
+
+    r = client.get(f'/mrmcd/?style=calendar&month=9&year={year}')
+    assert r.status_code == 200
+    assert 'Note that the events in this view are in different timezones.' in r.rendered_content
+
+
+def test_add_events_for_days_populates_timezones():
+    event1 = MagicMock()
+    event1.settings.timezone = 'America/New_York'
+    event1.settings.show_date_to = False
+    event1.date_from = datetime(2026, 9, 1, 10, 0, tzinfo=UTC)
+    event1.date_to = None
+
+    event2 = MagicMock()
+    event2.settings.timezone = 'Europe/Berlin'
+    event2.settings.show_date_to = False
+    event2.date_from = datetime(2026, 9, 2, 10, 0, tzinfo=UTC)
+    event2.date_to = None
+
+    baseqs = MagicMock()
+    mock_qs = MagicMock()
+    mock_qs.__iter__.return_value = [event1, event2]
+    baseqs.filter.return_value.filter.return_value.order_by.return_value.prefetch_related.return_value = mock_qs
+
+    request = MagicMock(spec=[])
+    ebd = defaultdict(list)
+    timezones = set()
+    before = datetime(2026, 9, 1, 0, 0, tzinfo=UTC)
+    after = datetime(2026, 9, 30, 23, 59, tzinfo=UTC)
+
+    add_events_for_days(request, baseqs, before, after, ebd, timezones)
+
+    assert timezones == {'America/New_York', 'Europe/Berlin'}
+
+
+def test_add_subevents_for_days_populates_timezones(monkeypatch):
+    monkeypatch.setattr('eventyay.presale.views.organizer.eventreverse', lambda *args, **kwargs: 'http://testserver')
+
+    se1 = MagicMock()
+    se1.event.settings.timezone = 'America/New_York'
+    se1.event.settings.show_date_to = False
+    se1.event.settings.event_list_available_only = False
+    se1.presale_is_running = False
+    se1.date_from = datetime(2026, 9, 1, 10, 0, tzinfo=UTC)
+    se1.date_to = None
+    se1.name = 'SE 1'
+
+    se2 = MagicMock()
+    se2.event.settings.timezone = 'Europe/Berlin'
+    se2.event.settings.show_date_to = False
+    se2.event.settings.event_list_available_only = False
+    se2.presale_is_running = False
+    se2.date_from = datetime(2026, 9, 2, 10, 0, tzinfo=UTC)
+    se2.date_to = None
+    se2.name = 'SE 2'
+
+    baseqs = MagicMock()
+    mock_sqs = MagicMock()
+    mock_sqs.__iter__.side_effect = lambda: iter([se1, se2])
+    baseqs.filter.return_value.filter.return_value.order_by.return_value = mock_sqs
+
+    ebd = defaultdict(list)
+    timezones = set()
+    before = datetime(2026, 9, 1, 0, 0, tzinfo=UTC)
+    after = datetime(2026, 9, 30, 23, 59, tzinfo=UTC)
+
+    add_subevents_for_days(baseqs, before, after, ebd, timezones)
+
+    assert timezones == {'America/New_York', 'Europe/Berlin'}
+
