@@ -31,6 +31,7 @@ from eventyay.base.models import (
     SpeakerInvitation,
     SpeakerInvitationMailStates,
     SpeakerInvitationStates,
+    SpeakerProfile,
     Submission,
     SubmissionComment,
     SubmissionStates,
@@ -38,6 +39,7 @@ from eventyay.base.models import (
     User,
 )
 from eventyay.base.models.base import CachedFile
+from eventyay.base.models.cfp import BUILTIN_SESSION_FIELDS, BUILTIN_SPEAKER_FIELDS, normalize_field_order
 from eventyay.common.views.helpers import is_ajax_request
 from eventyay.base.models.mail import MailTemplateRoles
 from eventyay.base.services.etherpad import (
@@ -479,6 +481,144 @@ class SubmissionSpeakerRevokeInvitation(SubmissionSpeakers):
         return redirect(self.object.orga_urls.speakers)
 
 
+SESSION_FIELD_TEMPLATE_ORDER = (
+    'title',
+    'submission_type',
+    'track',
+    'tags',
+    'abstract',
+    'description',
+    'notes',
+    'internal_notes',
+    'content_locale',
+    'do_not_record',
+    'is_featured',
+    'duration',
+    'slot_count',
+    'image',
+    'slides',
+    'session_videos',
+    'etherpad_url',
+)
+
+
+def ordered_session_fields(submission_form, questions_form, event, *, include_session_videos):
+    """Session fields in CfP order, with custom questions placed among them."""
+    cfp = getattr(event, 'cfp', None) if hasattr(event, 'cfp') else None
+    saved_order = []
+    if cfp is not None:
+        saved_order = cfp.settings.get('fields_config', {}).get('session', []) or []
+    order = normalize_field_order(list(saved_order) or list(BUILTIN_SESSION_FIELDS), 'session')
+    builtin_names = set(BUILTIN_SESSION_FIELDS)
+
+    entries = []
+    for name in SESSION_FIELD_TEMPLATE_ORDER:
+        if name == 'session_videos':
+            if include_session_videos:
+                entries.append('session_videos')
+            continue
+        field = submission_form.fields.get(name)
+        if field is None or field.widget.is_hidden:
+            continue
+        entries.append(submission_form[name])
+
+    def entry_name(entry):
+        if entry == 'session_videos':
+            return 'session_videos'
+        return entry.name
+
+    def index_by_name(items):
+        return {entry_name(entry): index for index, entry in enumerate(items)}
+
+    placed = index_by_name(entries)
+    last_index = -1
+    for item in order:
+        name = item if isinstance(item, str) else None
+        if not name:
+            continue
+        if name in builtin_names:
+            if name in placed:
+                last_index = placed[name]
+            continue
+        question_name = name if name.startswith('question_') else f'question_{name}'
+        if question_name not in questions_form.fields or question_name in placed:
+            continue
+        insert_at = last_index + 1
+        entries.insert(insert_at, questions_form[question_name])
+        placed = index_by_name(entries)
+        last_index = placed[question_name]
+
+    for name in questions_form.fields:
+        if name not in placed:
+            entries.append(questions_form[name])
+    return entries
+
+
+# Organizer create-speaker fields that are not part of the public CfP order.
+SPEAKER_CFP_FIELD_ALIASES = {
+    'fullname': 'name',
+}
+
+
+def ordered_speaker_fields(speaker_form, event):
+    """Speaker fields in CfP order, with custom questions placed among them."""
+    if speaker_form is None:
+        return []
+    cfp = getattr(event, 'cfp', None) if hasattr(event, 'cfp') else None
+    saved_order = []
+    if cfp is not None:
+        saved_order = cfp.settings.get('fields_config', {}).get('speaker', []) or []
+    order = normalize_field_order(list(saved_order) or list(BUILTIN_SPEAKER_FIELDS), 'speaker')
+
+    entries = []
+    placed = set()
+
+    def append_field(name):
+        if name in placed or name not in speaker_form.fields:
+            return
+        field = speaker_form.fields[name]
+        if field.widget.is_hidden:
+            return
+        entries.append(speaker_form[name])
+        placed.add(name)
+
+    for name in ('email', 'no_email'):
+        append_field(name)
+
+    for item in order:
+        name = item if isinstance(item, str) else None
+        if not name:
+            continue
+        form_name = SPEAKER_CFP_FIELD_ALIASES.get(name, name)
+        if form_name in speaker_form.fields:
+            append_field(form_name)
+            continue
+        question_name = name if name.startswith('question_') else f'question_{name}'
+        append_field(question_name)
+
+    for name in speaker_form.fields:
+        append_field(name)
+    return entries
+
+
+def create_speaker_without_email(submission, *, name, biography, locale, actor):
+    """Create a speaker who has no account email and no invitation."""
+    speaker = User(
+        email=None,
+        fullname=(name or '').strip(),
+        locale=locale or submission.event.locale,
+        timezone=submission.event.timezone,
+    )
+    speaker.save()
+    profile = SpeakerProfile(user=speaker, event=submission.event)
+    if biography:
+        profile.biography = biography
+    profile.save()
+    submission.speakers.add(speaker)
+    submission.log_action('eventyay.submission.speakers.add', person=actor, orga=True)
+    return speaker
+
+
 class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewMixin, CreateOrUpdateView):
     model = Submission
     form_class = SubmissionForm
@@ -501,6 +641,20 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
     @context
     def size_warning(self):
         return SizeFileInput.get_size_warning()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['ordered_session_fields'] = ordered_session_fields(
+            context['form'],
+            self._questions_form,
+            self.request.event,
+            include_session_videos=self.action != 'create' and self.session_videos_enabled,
+        )
+        context['ordered_speaker_fields'] = ordered_speaker_fields(
+            self.new_speaker_form,
+            self.request.event,
+        )
+        return context
 
     @cached_property
     def _formset(self):
@@ -532,11 +686,53 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
         if not self.get_object():
             return AddSpeakerForm(
                 data=self.request.POST if self.request.method == 'POST' else None,
+                files=self.request.FILES if self.request.method == 'POST' else None,
                 event=self.request.event,
                 prefix='speaker',
                 include_biography=True,
+                allow_no_email=True,
+                include_speaker_questions=True,
+                email_autocomplete=False,
                 draft_save=self.request.POST.get('state') == SubmissionStates.DRAFT,
             )
+
+    @context
+    @cached_property
+    def existing_speakers(self):
+        """Speakers already registered for this event, used for linking on creation.
+
+        Only returned when the requesting user has permission to list speaker
+        profiles; team members subject to "always hide speaker details" receive
+        an empty list so speaker names/emails are not disclosed on this page.
+        """
+        if self.get_object():
+            return []
+        if not self.request.user.has_perm('base.orga_list_speakerprofile', self.request.event):
+            return []
+        with scope(event=self.request.event):
+            return (
+                SpeakerProfile.objects
+                .filter(event=self.request.event, user__isnull=False)
+                .select_related('user')
+                .order_by('user__fullname')
+            )
+
+    @context
+    @cached_property
+    def show_existing_speaker_emails(self):
+        """Whether the current user may see speaker email addresses in the link-speaker dropdown."""
+        return self.request.user.has_perm('base.orga_view_speaker_emails', self.request.event)
+
+    @context
+    @cached_property
+    def selected_existing_speaker_ids(self):
+        """Re-populate the existing-speaker selects on a failed POST."""
+        selected = []
+        for raw_pk in self.request.POST.getlist('existing_speaker_id'):
+            raw_pk = str(raw_pk).strip()
+            if raw_pk and raw_pk not in selected:
+                selected.append(raw_pk)
+        return selected
 
     @cached_property
     def _questions_form(self):
@@ -673,9 +869,15 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
         if not self._questions_form.is_valid():
             messages.error(self.request, phrases.base.error_saving_changes)
             return self.form_invalid(form)
-        if created and not self.new_speaker_form.is_valid():
-            messages.error(self.request, phrases.base.error_saving_changes)
-            return self.form_invalid(form)
+
+        if created:
+            add_new_speaker = self.request.POST.get('add_new_speaker') == 'on'
+            existing_speaker_ids = self.selected_existing_speaker_ids
+
+            # Only validate the speaker sub-form when the "add new speaker" toggle is on.
+            if add_new_speaker and not self.new_speaker_form.is_valid():
+                messages.error(self.request, phrases.base.error_saving_changes)
+                return self.form_invalid(form)
 
         self.object = form.instance
         form.instance.event = self.request.event
@@ -691,14 +893,42 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
                     raise RollbackTransaction()
 
                 if created:
-                    if email := self.new_speaker_form.cleaned_data['email']:
-                        form.instance.add_speaker(
-                            email=email,
-                            name=self.new_speaker_form.cleaned_data['name'],
-                            locale=self.new_speaker_form.cleaned_data.get('locale'),
-                            user=self.request.user,
-                            biography=self.new_speaker_form.cleaned_data.get('biography'),
-                        )
+                    if add_new_speaker:
+                        # New speaker — only add if an email (or no_email) was supplied.
+                        email = self.new_speaker_form.cleaned_data.get('email', '')
+                        no_email = self.new_speaker_form.cleaned_data.get('no_email', False)
+                        if no_email:
+                            speaker = create_speaker_without_email(
+                                form.instance,
+                                name=self.new_speaker_form.cleaned_data.get('name', ''),
+                                biography=self.new_speaker_form.cleaned_data.get('biography'),
+                                locale=self.new_speaker_form.cleaned_data.get('locale'),
+                                actor=self.request.user,
+                            )
+                            self.new_speaker_form.save_speaker_questions(speaker)
+                        elif email:
+                            speaker, _invitation = form.instance.add_speaker(
+                                email=email,
+                                name=self.new_speaker_form.cleaned_data.get('name', ''),
+                                locale=self.new_speaker_form.cleaned_data.get('locale'),
+                                user=self.request.user,
+                                biography=self.new_speaker_form.cleaned_data.get('biography'),
+                            )
+                            self.new_speaker_form.save_speaker_questions(speaker)
+                    elif existing_speaker_ids:
+                        try:
+                            requested_ids = [int(pk) for pk in existing_speaker_ids]
+                        except (TypeError, ValueError):
+                            requested_ids = []
+                        if requested_ids:
+                            with scope(event=self.request.event):
+                                profiles = SpeakerProfile.objects.filter(
+                                    pk__in=requested_ids,
+                                    event=self.request.event,
+                                    user__isnull=False,
+                                ).select_related('user')
+                            for profile in profiles:
+                                form.instance.speakers.add(profile.user)
                 else:
                     formset_result = self.save_formset(form.instance)
                     if not formset_result:

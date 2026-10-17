@@ -3,15 +3,16 @@ import json
 from django import forms
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils.translation import gettext_lazy as _
+from django_scopes import scope
 from django_scopes.forms import SafeModelChoiceField, SafeModelMultipleChoiceField
 
-from eventyay.base.models import Submission, SubmissionStates, User
+from eventyay.base.models import SpeakerProfile, Submission, SubmissionStates, TalkQuestionTarget, User
 from eventyay.base.models.cfp import default_fields
 from eventyay.base.models.resource import get_slide_resources
 from eventyay.base.services.etherpad import validate_etherpad_url
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.forms.fields import ImageField
-from eventyay.common.forms.mixins import ReadOnlyFlag, RequestRequire
+from eventyay.common.forms.mixins import QuestionFieldsMixin, ReadOnlyFlag, RequestRequire
 from eventyay.common.forms.renderers import InlineFormLabelRenderer, InlineFormRenderer
 from eventyay.common.forms.widgets import (
     EnhancedSelect,
@@ -84,12 +85,18 @@ class SubmissionForm(ReadOnlyFlag, RequestRequire, forms.ModelForm):
         elif 'track' in self.fields:
             self.fields['track'].queryset = event.tracks.all()
             _cfp = getattr(self.event, 'cfp', None) if hasattr(self.event, 'cfp') else None
-            track_visibility = (_cfp.fields.get('track', default_fields()['track']).get('visibility') if _cfp else 'do_not_ask')
+            track_visibility = (
+                _cfp.fields.get('track', default_fields()['track']).get('visibility')
+                if _cfp else 'do_not_ask'
+            )
             if track_visibility == 'required':
                 self.fields['track'].required = True
         if 'content_locale' in self.fields:
             _cfp = getattr(self.event, 'cfp', None) if hasattr(self.event, 'cfp') else None
-            saved_visibility = (_cfp.fields.get('content_locale', default_fields()['content_locale']).get('visibility') if _cfp else 'do_not_ask')
+            saved_visibility = (
+                _cfp.fields.get('content_locale', default_fields()['content_locale']).get('visibility')
+                if _cfp else 'do_not_ask'
+            )
             if len(self.event.content_locales) <= 1 or saved_visibility == 'do_not_ask':
                 self.fields.pop('content_locale')
             else:
@@ -128,7 +135,9 @@ class SubmissionForm(ReadOnlyFlag, RequestRequire, forms.ModelForm):
 
     def save(self, *args, **kwargs):
         if 'content_locale' not in self.fields:
-            self.instance.content_locale = self.event.content_locales[0] if self.event.content_locales else self.event.locale
+            self.instance.content_locale = (
+                self.event.content_locales[0] if self.event.content_locales else self.event.locale
+            )
         instance = super().save(*args, **kwargs)
         if self.is_creating:
             instance._set_state(self.cleaned_data['state'], force=True)
@@ -248,7 +257,7 @@ def get_speaker_choice_label(*, name: str | None, email: str) -> str:
     return f'{name} ({email})' if name else email
 
 
-class AddSpeakerForm(forms.Form):
+class AddSpeakerForm(QuestionFieldsMixin, forms.Form):
     email = forms.EmailField(
         label=phrases.cfp.speaker_email,
         help_text=_('The email address of the speaker holding the session. They will be invited to create an account.'),
@@ -291,6 +300,9 @@ class AddSpeakerForm(forms.Form):
         include_biography=False,
         draft_save=False,
         submission=None,
+        allow_no_email=False,
+        include_speaker_questions=False,
+        email_autocomplete=True,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
@@ -298,6 +310,10 @@ class AddSpeakerForm(forms.Form):
         self.require_name = require_name
         self.draft_save = draft_save
         self.submission = submission
+        self.allow_no_email = allow_no_email
+        self.fields['email'].hide_optional = True
+        if not email_autocomplete:
+            self.fields['email'].widget = forms.EmailInput(attrs={'autocomplete': 'off'})
 
         self.biography_required = False
         if not include_biography:
@@ -308,9 +324,11 @@ class AddSpeakerForm(forms.Form):
             if visibility == 'do_not_ask':
                 self.fields.pop('biography', None)
             else:
-                # Keep optional unless a speaker is actually added; validate in clean().
                 self.biography_required = visibility == 'required'
-                self.fields['biography'].required = False
+                self.fields['biography'].required = self.biography_required and not self.draft_save
+        if 'name' in self.fields:
+            # CfP full name is always required.
+            self.fields['name'].required = not self.draft_save
         email_key = self.add_prefix('email')
         name_key = self.add_prefix('name')
         email_widget = self.fields['email'].widget
@@ -320,23 +338,111 @@ class AddSpeakerForm(forms.Form):
         if require_name:
             self.fields['email'].required = True
             self.fields['name'].required = True
-            if self.is_bound and self.data.get(email_key) and not self.data.get(name_key):
-                existing_user = User.objects.filter(email__iexact=self.data[email_key]).only('fullname').first()
-                if existing_user and existing_user.fullname:
-                    self.data = self.data.copy()
-                    self.data[name_key] = existing_user.fullname
+        if (
+            'name' in self.fields
+            and self.fields['name'].required
+            and self.is_bound
+            and self.data.get(email_key)
+            and not self.data.get(name_key)
+            and event is not None
+        ):
+            # Only autofill the name from users who already have a speaker
+            # profile for *this* event to avoid leaking names across events.
+            with scope(event=event):
+                existing_profile = (
+                    SpeakerProfile.objects
+                    .filter(event=event, user__email__iexact=self.data[email_key])
+                    .select_related('user')
+                    .first()
+                )
+            if existing_profile and existing_profile.user.fullname:
+                self.data = self.data.copy()
+                self.data[name_key] = existing_profile.user.fullname
+        if (
+            'biography' in self.fields
+            and self.fields['biography'].required
+            and self.is_bound
+            and (email := self.data.get(email_key))
+        ):
+            existing_user = User.objects.filter(email__iexact=email).first()
+            existing_profile = None
+            if existing_user:
+                with scope(event=self.event):
+                    existing_profile = existing_user.profiles.filter(event=self.event).first()
+            if existing_profile and existing_profile.biography:
+                self.fields['biography'].required = False
         if not event.named_locales or len(event.named_locales) < 2:
             self.fields.pop('locale')
         else:
             self.fields['locale'].choices = event.named_locales
             self.fields['locale'].initial = event.locale
 
+        # Inject no_email checkbox right after the email field when allowed.
+        if self.allow_no_email and 'email' in self.fields:
+            self.fields['no_email'] = forms.BooleanField(
+                label=_('This speaker does not require an email'),
+                help_text=_('No account or invitation email will be created for this speaker.'),
+                required=False,
+                initial=False,
+            )
+            field_order = list(self.fields.keys())
+            field_order.remove('no_email')
+            field_order.insert(field_order.index('email') + 1, 'no_email')
+            self.fields = {k: self.fields[k] for k in field_order}
+
+        resolved_speaker = None
+        if self.is_bound and self.data.get(email_key) and event is not None:
+            email = self.data[email_key]
+            with scope(event=event):
+                existing_profile = (
+                    SpeakerProfile.objects
+                    .filter(event=event, user__email__iexact=email)
+                    .select_related('user')
+                    .first()
+                )
+            if existing_profile:
+                resolved_speaker = existing_profile.user
+
+        if include_speaker_questions and event is not None:
+            self.inject_questions_into_fields(
+                target=TalkQuestionTarget.SPEAKER,
+                event=event,
+                speaker=resolved_speaker,
+            )
+
+    def save_speaker_questions(self, speaker):
+        """Save submitted speaker question responses, reconciling any existing answers."""
+        from eventyay.base.models import Answer
+
+        self.speaker = speaker
+        with scope(event=self.event):
+            for key, value in self.cleaned_data.items():
+                if key.startswith('question_'):
+                    field = self.fields[key]
+                    if not getattr(field, 'answer', None) and speaker:
+                        existing_answer = Answer.objects.filter(
+                            person=speaker,
+                            question=field.question,
+                        ).first()
+                        if existing_answer:
+                            field.answer = existing_answer
+                    self.save_questions(key, value)
+
+    @property
+    def speaker_question_fields(self):
+        """Return the form fields that represent custom speaker questions."""
+        return [field for field in self if field.name.startswith('question_')]
+
     def clean(self):
         data = super().clean()
-        if data.get('name') and not data.get('email'):
+
+        if self.allow_no_email and data.get('no_email'):
+            data['email'] = ''
+            self.cleaned_data['email'] = ''
+        elif data.get('name') and not data.get('email'):
             self.add_error('email', _('Please provide an email address.'))
 
-        if self.submission and (email := data.get('email')):
+        if not data.get('no_email') and self.submission and (email := data.get('email')):
             if self.submission.has_speaker_email(email):
                 self.add_error(
                     'email',
@@ -348,13 +454,17 @@ class AddSpeakerForm(forms.Form):
         if email:
             existing_user = User.objects.filter(email__iexact=email).first()
             if existing_user:
-                existing_profile = existing_user.profiles.filter(event=self.event).first()
+                with scope(event=self.event):
+                    existing_profile = existing_user.profiles.filter(event=self.event).first()
                 existing_biography = bool(existing_profile and existing_profile.biography)
 
+        adding_speaker = bool(data.get('no_email') or email or data.get('name'))
+        biography_field = self.fields.get('biography')
         if (
             not self.draft_save
-            and email
+            and adding_speaker
             and getattr(self, 'biography_required', False)
+            and not (biography_field and biography_field.required)
             and not existing_biography
             and not data.get('biography')
         ):

@@ -3,9 +3,20 @@ import json
 import pytest
 from django_scopes import scope
 
-from eventyay.base.models import SpeakerProfile
+from eventyay.api.serializers.speaker import SpeakerOrgaSerializer
+from eventyay.base.models import (
+    Answer,
+    SpeakerProfile,
+    Submission,
+    User,
+)
+from eventyay.base.models import (
+    TalkQuestion as Question,
+)
+from eventyay.base.models import (
+    TalkQuestionTarget as QuestionTarget,
+)
 from eventyay.base.models.auth_token import UserApiToken
-from eventyay.base.models import Answer, TalkQuestion as Question, TalkQuestionTarget as QuestionTarget, Submission
 
 
 @pytest.fixture
@@ -635,3 +646,50 @@ def test_speaker_retrieve_answers_scoped_to_event(
     assert len(content2["answers"]) == 1
     assert content2["answers"][0]["id"] == answer2.pk
     assert content2["answers"][0]["answer"] == "Answer 2"
+
+
+@pytest.mark.django_db
+def test_speaker_orga_serializer_email_nullable():
+    """Verify SpeakerOrgaSerializer email field allows null."""
+    serializer = SpeakerOrgaSerializer()
+    assert serializer.fields["email"].allow_null is True
+
+
+@pytest.mark.django_db
+def test_speaker_orga_serializer_serializes_null_email(event):
+    """Verify SpeakerOrgaSerializer serializes user with null email as None."""
+    with scope(event=event):
+        user = User.objects.create(fullname="No Email Speaker", email=None)
+        profile = SpeakerProfile.objects.create(user=user, event=event)
+        data = SpeakerOrgaSerializer(profile, event=event).data
+        assert data["email"] is None
+
+        user_with_email = User.objects.create(
+            fullname="With Email", email="speaker@example.com"
+        )
+        profile_with_email = SpeakerProfile.objects.create(
+            user=user_with_email, event=event
+        )
+        data_with_email = SpeakerOrgaSerializer(profile_with_email, event=event).data
+        assert data_with_email["email"] == "speaker@example.com"
+
+
+@pytest.mark.django_db
+def test_speaker_retrieve_orga_with_null_email(
+    client, orga_user_token, event, orga_user
+):
+    """Verify retrieving a speaker with no email via the orga API returns null email without error."""
+    with scope(event=event):
+        user = User.objects.create(fullname="No Email Speaker", email=None)
+        SpeakerProfile.objects.create(user=user, event=event)
+
+    response = client.get(
+        event.api_urls.speakers + f"{user.code}/",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    assert response.status_code == 200
+    content = json.loads(response.text)
+    assert content["code"] == user.code
+    assert content["name"] == "No Email Speaker"
+    assert content["email"] is None

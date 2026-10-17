@@ -197,7 +197,7 @@ class SpeakerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
 
 @register_serializer(versions=CURRENT_VERSIONS)
 class SpeakerOrgaSerializer(AvailabilitiesMixin, SpeakerSerializer):
-    email = EmailField(source='user.email')
+    email = EmailField(source='user.email', allow_null=True)
     timezone = CharField(source='user.timezone', read_only=True)
     locale = CharField(source='user.locale', read_only=True)
     availabilities = AvailabilitySerializer(many=True, required=False)
