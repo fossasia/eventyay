@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
+from django.db.models import Q
 from django.forms import inlineformset_factory
 from django.utils.translation import gettext_lazy as _
 
@@ -45,15 +46,22 @@ class VideoStreamScheduleForm(forms.ModelForm):
         model = StreamSchedule
         fields = ('room', 'title', 'url', 'stream_type', 'start_time', 'end_time', 'config')
         widgets = {
-            'start_time': forms.DateTimeInput(format='%Y-%m-%dT%H:%M', attrs={'type': 'datetime-local'}),
-            'end_time': forms.DateTimeInput(format='%Y-%m-%dT%H:%M', attrs={'type': 'datetime-local'}),
+            'start_time': forms.DateTimeInput(
+                format='%Y-%m-%dT%H:%M:%S', attrs={'type': 'datetime-local', 'step': '1'},
+            ),
+            'end_time': forms.DateTimeInput(
+                format='%Y-%m-%dT%H:%M:%S', attrs={'type': 'datetime-local', 'step': '1'},
+            ),
         }
 
     def __init__(self, *args, event, **kwargs):
         """Restrict room choices to the selected event and retain existing rooms."""
         super().__init__(*args, **kwargs)
+        available_rooms = Q(deleted=False)
+        if self.instance.pk:
+            available_rooms |= Q(pk=self.instance.room_id)
         with scope(event=event):
-            self.fields['room'].queryset = Room.objects.filter(event=event, deleted=False).order_by('pk')
+            self.fields['room'].queryset = Room.objects.filter(event=event).filter(available_rooms).order_by('pk')
         self.fields['room'].disabled = bool(self.instance.pk)
 
     def clean(self):

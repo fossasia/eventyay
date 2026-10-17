@@ -3,6 +3,7 @@ from decimal import Decimal
 from unittest.mock import patch
 
 import pytest
+from bs4 import BeautifulSoup
 from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.timezone import now
@@ -275,3 +276,73 @@ def test_video_settings_manage_streams(dashboard_admin, mocker, django_capture_o
                                + f'&stream={stream.pk}').status_code == 404
     assert dashboard_admin.post(edit_url, {'stream_action': 'delete'}).status_code == 302
     assert not StreamSchedule.objects.filter(pk=stream.pk).exists()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('deleted_room', (False, True))
+def test_video_settings_preserve_stream_times_and_existing_room(dashboard_admin, deleted_room):
+    """Round-trip a sub-minute stream, including its existing soft-deleted room."""
+    organizer = Organizer.objects.create(name='Stream edits', slug='stream-edits')
+    event = Event.objects.create(organizer=organizer, name='Stream edits', slug='stream-edits', date_from=now())
+    start = (now() + timedelta(days=1)).replace(second=17, microsecond=0)
+    end = start + timedelta(seconds=11)
+    with scope(event=event):
+        room = Room.objects.create(event=event, name='Current room', deleted=deleted_room)
+        other_room = Room.objects.create(event=event, name='Deleted room', deleted=True)
+        stream = StreamSchedule.objects.create(
+            room=room, title='Original title', url='https://www.youtube.com/watch?v=example',
+            stream_type='youtube', start_time=start, end_time=end,
+        )
+    url = reverse('eventyay_admin:video_admin:settings') + f'?tab=streaming&event={event.pk}'
+    edit_url = url + f'&stream={stream.pk}'
+    response = dashboard_admin.get(edit_url)
+    assert response.status_code == 200
+    page = BeautifulSoup(response.content, 'html.parser')
+    times = {field: page.find(id=f'id_{field}') for field in ('start_time', 'end_time')}
+    assert times['start_time']['value'].endswith(':17')
+    assert times['end_time']['value'].endswith(':28')
+    assert all(widget['step'] == '1' for widget in times.values())
+    room_choices = {option['value'] for option in page.select('#id_room option')}
+    assert str(room.pk) in room_choices
+    assert str(other_room.pk) not in room_choices
+    assert page.find(id='id_room').has_attr('disabled')
+    response = dashboard_admin.post(edit_url, {
+        'stream_action': 'save', 'title': 'Updated title', 'room': room.pk,
+        'url': stream.url, 'stream_type': stream.stream_type, 'config': '{}',
+        **{field: widget['value'] for field, widget in times.items()},
+    })
+    assert response.status_code == 302
+    stream.refresh_from_db()
+    assert (stream.title, stream.room_id, stream.start_time, stream.end_time) == (
+        'Updated title', room.pk, start, end,
+    )
+    page = BeautifulSoup(dashboard_admin.get(url).content, 'html.parser')
+    new_choices = {option['value'] for option in page.select('#id_room option')}
+    assert (str(room.pk) in new_choices) is not deleted_room
+    assert str(other_room.pk) not in new_choices
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('metric', ('orders', 'users', 'events', 'revenue'))
+def test_analytics_formats_money_and_counts(dashboard_admin, metric):
+    """Display integer activity counts while retaining cents for revenue."""
+    organizer = Organizer.objects.create(name='Analytics values', slug='analytics-values')
+    event = Event.objects.create(
+        organizer=organizer, name='Analytics values', slug='analytics-values', date_from=now(), currency='EUR',
+    )
+    with scope(event=event, organizer=organizer):
+        order = Order.objects.create(event=event, total=Decimal('12.50'), status=Order.STATUS_PAID)
+        OrderPayment.objects.create(
+            order=order, provider='manual', state=OrderPayment.PAYMENT_STATE_CONFIRMED,
+            amount=Decimal('12.50'), payment_date=now(),
+        )
+    response = dashboard_admin.get(reverse('eventyay_admin:admin.analytics.metric', kwargs={'metric': metric}))
+    assert response.status_code == 200
+    page = BeautifulSoup(response.content, 'html.parser')
+    values = [cell.get_text(strip=True) for cell in page.select('details table tbody tr td:last-child')]
+    assert values
+    if metric == 'revenue':
+        assert '12.50' in values
+    else:
+        assert '1' in values
+        assert all('.' not in value for value in values)

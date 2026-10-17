@@ -37,7 +37,7 @@
           <details>
             <summary>{% trans 'View data' %} {{ series.currency }}</summary>
             <table class="table"><thead><tr><th>{% trans 'Date' %}</th><th>{% trans 'Total' %} {{ series.currency }}</th></tr></thead>
-              <tbody>{% for date, value in series.rows %}<tr><td>{{ date|date:'d M Y H:i' }}</td><td>{{ value|floatformat:2 }}</td></tr>{% endfor %}</tbody>
+              <tbody>{% for date, value in series.rows %}<tr><td>{{ date|date:'d M Y H:i' }}</td><td>{% if series.currency %}{{ value|floatformat:2 }}{% else %}{{ value }}{% endif %}</td></tr>{% endfor %}</tbody>
             </table>
           </details>
         {% endfor %}
