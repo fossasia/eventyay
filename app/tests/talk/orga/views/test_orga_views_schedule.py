@@ -8,6 +8,7 @@ from django.utils.timezone import now
 from django_scopes import scope
 
 from eventyay.base.models import Schedule
+from eventyay.common.text.phrases import phrases
 
 
 @pytest.mark.django_db
@@ -373,12 +374,27 @@ def test_orga_cannot_release_reserved_schedule_version(orga_client, event, slot,
     response = orga_client.post(event.orga_urls.release_schedule, data={'version': version})
 
     assert response.status_code == 200
-    assert 'This schedule version is reserved. Please choose a different name.' in response.text
+    assert response.text.count('This schedule version is reserved. Please choose a different name.') == 1
+    assert str(phrases.base.error_saving_changes) not in response.text
     with scope(event=event):
         assert list(event.schedules.order_by('pk').values_list('pk', 'version', 'published')) == schedules
         slot.refresh_from_db()
         assert (slot.schedule_id, slot.start, slot.end, slot.room_id) == original_slot
         assert event.queued_mails.count() == mail_count
+
+
+@pytest.mark.django_db
+def test_orga_release_preserves_non_field_error(orga_client, event):
+    """Keep the publication error visible without an additional generic banner."""
+    event.talks_published = False
+    event.private_testmode = False
+    event.save(update_fields=['talks_published', 'private_testmode'])
+
+    response = orga_client.post(event.orga_urls.release_schedule, data={'version': '0.2'})
+
+    assert response.status_code == 400
+    assert response.text.count('Talks must be published or in private test mode to release a schedule.') == 1
+    assert str(phrases.base.error_saving_changes) not in response.text
 
 
 @pytest.mark.django_db

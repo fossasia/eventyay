@@ -149,11 +149,6 @@ class ScheduleReleaseView(EventPermissionRequired, FormView):
         """Count notifications for an existing draft only."""
         return len(self.draft_schedule.generate_notifications(save=False)) if self.draft_schedule else 0
 
-    def form_invalid(self, form):
-        """Direct organisers to the field errors for any rejected release."""
-        messages.error(self.request, phrases.base.error_saving_changes)
-        return super().form_invalid(form)
-
     def form_valid(self, form):
         """Release a valid draft and report a competing release as a form error."""
         private_talks = self.request.event.private_testmode and self.request.event.settings.get(

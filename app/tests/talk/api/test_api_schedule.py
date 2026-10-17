@@ -375,8 +375,8 @@ def test_release_reports_competing_release(
     else:
         response = orga_client.post(event.orga_urls.release_schedule, data={'version': 'my-release'})
         assert response.status_code == 200
-        assert 'already versioned' in response.text
-        assert 'We had trouble saving your input' in response.text
+        assert response.text.count('already versioned') == 1
+        assert 'We had trouble saving your input' not in response.text
         assert 'You have to provide a new, unique schedule version!' not in response.text
 
     with scope(event=event):
