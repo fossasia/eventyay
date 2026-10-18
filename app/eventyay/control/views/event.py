@@ -854,6 +854,19 @@ class MailSettingsPreview(EventPermissionRequiredMixin, View):
                 )
         return self.SafeDict(ctx)
 
+    @staticmethod
+    def _invalid_template_response():
+        return JsonResponse(
+            {
+                'error': _(
+                    'Invalid email template! '
+                    'Please check that you don’t have stray { or } somewhere, '
+                    'and that there are no spaces inside the {} blocks.'
+                )
+            },
+            status=400,
+        )
+
     def post(self, request, *args, **kwargs):
         preview_product = request.POST.get('product', '')
         if preview_product not in MailSettingsForm.base_context:
@@ -881,23 +894,17 @@ class MailSettingsPreview(EventPermissionRequiredMixin, View):
                             # Bodies edited with the Tiptap email editor are already
                             # HTML; sanitize, then expand {placeholder} tokens and chips.
                             safe_html = sanitize_email_html(v)
-                            msgs[locale] = expand_email_preview_placeholders(
-                                safe_html, self.request.event, locale=locale
-                            )
+                            try:
+                                msgs[locale] = expand_email_preview_placeholders(
+                                    safe_html, self.request.event, locale=locale
+                                )
+                            except ValueError:
+                                return self._invalid_template_response()
                             continue
                         try:
                             formatted = v.format_map(self.placeholders(preview_product))
                         except ValueError:
-                            return JsonResponse(
-                                {
-                                    'error': _(
-                                        'Invalid email template! '
-                                        'Please check that you don’t have stray { or } somewhere, '
-                                        'and that there are no spaces inside the {} blocks.'
-                                    )
-                                },
-                                status=400,
-                            )
+                            return self._invalid_template_response()
                         msgs[locale] = markdown_compile_email(formatted)
 
         return JsonResponse({'product': preview_product, 'msgs': msgs})
