@@ -9,12 +9,13 @@
 		.duration(v-else-if="durationPretty") {{ durationPretty }}
 	.info
 		.title(:class="{'title-clamped': isShortSession}") {{ getLocalizedString(session.title) }}
+		.session-type(v-if="sessionType", :title="sessionType") {{ sessionType }}
 		.speakers(v-if="hasSpeakersWithNames", :class="{'speakers-clamped': isShortSession}") {{ speakerNames }}
 		.pending-line(v-if="session.state === 'pending'")
 			i.fa.fa-exclamation-circle
 			span {{ $t('Pending proposal state') }}
 		.bottom-info(v-if="!isBreak && (session.track || session.do_not_record)")
-			.track(v-if="session.track") {{ getLocalizedString(session.track.name) }}
+			.track(v-if="session.track", :title="getLocalizedString(session.track.name)") {{ getLocalizedString(session.track.name) }}
 			.do_not_record.no-print(v-if="session.do_not_record", :title="$t('This session will not be recorded.')", :aria-label="$t('This session will not be recorded.')")
 				svg(viewBox="0 0 116.59076 116.59076", width="24px", height="24px", fill="none", xmlns="http://www.w3.org/2000/svg", aria-hidden="true")
 					g(transform="translate(-9.3465481,-5.441411)")
@@ -62,6 +63,8 @@ interface Session {
   abstract?: string
   room?: string | number
   do_not_record?: boolean
+  session_type?: string | Record<string, string>
+  submission_type?: string | Record<string, string>
   [key: string]: string | number | boolean | Record<string, string> | Speaker[] | Track | Moment | null | undefined
 }
 
@@ -90,6 +93,14 @@ const emit = defineEmits<{
 const mode = resolveMode()
 const isBreak = computed(() => resolveSessionKind(mode, props.session) === 'break')
 const showUnschedule = computed(() => Boolean(props.allowUnschedule && !isBreak.value && !props.isDragClone && props.session.code))
+
+const sessionType = computed<string>(() => {
+  if (isBreak.value) return ''
+  const st = props.session.session_type || props.session.submission_type
+  if (!st) return ''
+  if (typeof st === 'string') return st
+  return getLocalizedString(st) || ''
+})
 
 const hasSpeakersWithNames = computed(() => {
   return props.session.speakers && props.session.speakers.some(speaker => speaker.name)
@@ -345,6 +356,18 @@ sessionTextExpand()
 			font-weight: 500
 			&.title-clamped
 				sessionTextClamp(2)
+		.session-type
+			font-size: 11px
+			font-weight: 600
+			text-transform: uppercase
+			letter-spacing: 0.04em
+			color: $clr-secondary-text-light
+			margin-bottom: 2px
+			display: block
+			min-width: 0
+			max-width: 100%
+			line-height: 1.2
+			ellipsis()
 		.speakers
 			color: $clr-secondary-text-light
 			&.speakers-clamped
@@ -353,12 +376,14 @@ sessionTextExpand()
 			flex: auto
 			display: flex
 			align-items: flex-end
-			gap: 4px
+			gap: 6px
 			min-width: 0
 			.track
-				flex: 1
+				flex: 1 1 auto
 				min-width: 0
 				color: var(--track-color)
+				font-size: 11px
+				line-height: 1.2
 				ellipsis()
 		.do_not_record
 			flex: none

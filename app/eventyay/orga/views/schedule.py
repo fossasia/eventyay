@@ -246,9 +246,10 @@ class ScheduleResendMailsView(EventPermissionRequired, View):
 
 
 def serialize_break(slot):
+    title = slot.description.data if hasattr(slot.description, 'data') else (str(slot.description) if slot.description else '')
     return {
         'id': slot.pk,
-        'title': slot.description.data if slot.description else '',
+        'title': title,
         'description': '',
         'room': slot.room.pk if slot.room else None,
         'start': slot.start.isoformat() if slot.start else None,
@@ -270,6 +271,7 @@ def serialize_slot(slot, warnings=None):
             'title': str(slot.submission.title),
             'speakers': speakers_list,
             'submission_type': str(slot.submission.submission_type.name),
+            'session_type': str(slot.submission.submission_type.name),
             'track': (
                 {
                     'id': slot.submission.track.pk,
