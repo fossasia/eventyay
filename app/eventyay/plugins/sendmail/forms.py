@@ -1,3 +1,4 @@
+import json
 from collections import defaultdict
 
 from django import forms
@@ -12,7 +13,7 @@ from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 from django_scopes.forms import SafeModelMultipleChoiceField
-from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
+from i18nfield.forms import I18nFormField, I18nTextInput
 
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
@@ -27,6 +28,7 @@ from eventyay.base.models.event import SubEvent
 from eventyay.base.models.orders import Order, OrderPosition
 from eventyay.base.models.organizer import Team
 from eventyay.base.models.product import Product
+from eventyay.base.templatetags.rich_text import compile_email_body
 from eventyay.common.forms.fields import I18nEmailBodyFormField
 from eventyay.common.forms.mixins import ScheduledAtValidationMixin
 from eventyay.common.forms.renderers import TabularFormRenderer
@@ -712,86 +714,87 @@ class TicketMailRecipientsForm(MailForm):
         return d
 
 
+class TicketMailBodyFormField(I18nEmailBodyFormField):
+    """Render legacy template text in the HTML editor without changing stored settings."""
+
+    def prepare_value(self, value):
+        """Keep locale values, Markdown formatting and explicit line breaks editable."""
+        values = super().prepare_value(value)
+        if not isinstance(values, list):
+            values = self.widget.decompress(values)
+        return [compile_email_body(text.replace('\n', '  \n')) if text else text for text in values]
+
+
 class MailContentSettingsForm(SettingsForm):
-    mail_text_order_placed = I18nFormField(
+    """Edit transactional ticket templates with the shared email editor."""
+    mail_text_order_placed = TicketMailBodyFormField(
         label=_('Text sent to order contact address'),
         required=False,
-        widget=I18nTextarea,
     )
     mail_send_order_placed_attendee = forms.BooleanField(
         label=_('Send an email to attendees'),
         help_text= MAIL_SEND_ORDER_PLACED_ATTENDEE_HELP,
         required=False,
     )
-    mail_text_order_placed_attendee = I18nFormField(
+    mail_text_order_placed_attendee = TicketMailBodyFormField(
         label=_('Text sent to attendees'),
         required=False,
-        widget=I18nTextarea,
     )
 
-    mail_text_order_paid = I18nFormField(
+    mail_text_order_paid = TicketMailBodyFormField(
         label=_('Text sent to order contact address'),
         required=False,
-        widget=I18nTextarea,
     )
     mail_send_order_paid_attendee = forms.BooleanField(
         label=_('Send an email to attendees'),
         help_text= MAIL_SEND_ORDER_PLACED_ATTENDEE_HELP,
         required=False,
     )
-    mail_text_order_paid_attendee = I18nFormField(
+    mail_text_order_paid_attendee = TicketMailBodyFormField(
         label=_('Text sent to attendees'),
         required=False,
-        widget=I18nTextarea,
     )
 
-    mail_text_order_free = I18nFormField(
+    mail_text_order_free = TicketMailBodyFormField(
         label=_('Text sent to order contact address'),
         required=False,
-        widget=I18nTextarea,
     )
     mail_send_order_free_attendee = forms.BooleanField(
         label=_('Send an email to attendees'),
         help_text= MAIL_SEND_ORDER_PLACED_ATTENDEE_HELP,
         required=False,
     )
-    mail_text_order_free_attendee = I18nFormField(
+    mail_text_order_free_attendee = TicketMailBodyFormField(
         label=_('Text sent to attendees'),
         required=False,
-        widget=I18nTextarea,
     )
 
-    mail_text_meetup_registration = I18nFormField(
+    mail_text_meetup_registration = TicketMailBodyFormField(
         label=_('Text sent to registration contact address'),
         required=False,
-        widget=I18nTextarea,
     )
     mail_send_meetup_registration_attendee = forms.BooleanField(
         label=_('Send an email to attendees'),
         help_text=MAIL_SEND_ORDER_PLACED_ATTENDEE_HELP,
         required=False,
     )
-    mail_text_meetup_registration_attendee = I18nFormField(
+    mail_text_meetup_registration_attendee = TicketMailBodyFormField(
         label=_('Text sent to attendees'),
         required=False,
-        widget=I18nTextarea,
     )
 
-    mail_text_resend_link = I18nFormField(
+    mail_text_resend_link = TicketMailBodyFormField(
         label=_('Text (sent by admin)'),
         required=False,
-        widget=I18nTextarea,
     )
-    mail_text_resend_all_links = I18nFormField(
+    mail_text_resend_all_links = TicketMailBodyFormField(
         label=_('Text (requested by user)'),
         required=False,
-        widget=I18nTextarea,
     )
 
-    mail_text_order_changed = I18nFormField(
+    mail_text_order_changed = TicketMailBodyFormField(
         label=_('Text'),
         required=False,
-        widget=I18nTextarea,
     )
 
     mail_days_order_expire_warning = forms.IntegerField(
@@ -803,44 +806,38 @@ class MailContentSettingsForm(SettingsForm):
             'value is 0, the mail will never be sent.'
         ),
     )
-    mail_text_order_expire_warning = I18nFormField(
+    mail_text_order_expire_warning = TicketMailBodyFormField(
         label=_('Text'),
         required=False,
-        widget=I18nTextarea,
     )
 
-    mail_text_waiting_list = I18nFormField(
+    mail_text_waiting_list = TicketMailBodyFormField(
         label=_('Text'),
         required=False,
-        widget=I18nTextarea,
     )
 
-    mail_text_order_canceled = I18nFormField(
+    mail_text_order_canceled = TicketMailBodyFormField(
         label=_('Text'),
         required=False,
-        widget=I18nTextarea,
     )
 
-    mail_text_order_custom_mail = I18nFormField(
+    mail_text_order_custom_mail = TicketMailBodyFormField(
         label=_('Text'),
         required=False,
-        widget=I18nTextarea,
     )
 
-    mail_text_download_reminder = I18nFormField(
+    mail_text_download_reminder = TicketMailBodyFormField(
         label=_('Text sent to order contact address'),
         required=False,
-        widget=I18nTextarea,
     )
     mail_send_download_reminder_attendee = forms.BooleanField(
         label=_('Send an email to attendees'),
         help_text= MAIL_SEND_ORDER_PLACED_ATTENDEE_HELP,
         required=False,
     )
-    mail_text_download_reminder_attendee = I18nFormField(
+    mail_text_download_reminder_attendee = TicketMailBodyFormField(
         label=_('Text sent to attendees'),
         required=False,
-        widget=I18nTextarea,
     )
     mail_days_download_reminder = forms.IntegerField(
         label=_('Number of days'),
@@ -861,33 +858,29 @@ class MailContentSettingsForm(SettingsForm):
         validators=[contains_web_channel_validate],
     )
 
-    mail_text_order_placed_require_approval = I18nFormField(
+    mail_text_order_placed_require_approval = TicketMailBodyFormField(
         label=_('Received order'),
         required=False,
-        widget=I18nTextarea,
     )
-    mail_text_order_approved = I18nFormField(
+    mail_text_order_approved = TicketMailBodyFormField(
         label=_('Approved order'),
         required=False,
-        widget=I18nTextarea,
         help_text=_(
             'This will only be sent out for non-free orders. Free orders will receive the free order '
             'template from below instead.'
         ),
     )
-    mail_text_order_approved_free = I18nFormField(
+    mail_text_order_approved_free = TicketMailBodyFormField(
         label=_('Approved free order'),
         required=False,
-        widget=I18nTextarea,
         help_text=_(
             'This will only be sent out for free orders. Non-free orders will receive the non-free order '
             'template from above instead.'
         ),
     )
-    mail_text_order_denied = I18nFormField(
+    mail_text_order_denied = TicketMailBodyFormField(
         label=_('Denied order'),
         required=False,
-        widget=I18nTextarea,
     )
 
     base_context = {
@@ -915,13 +908,18 @@ class MailContentSettingsForm(SettingsForm):
     }
 
     def _set_field_placeholders(self, fn, base_parameters):
-        phs = ['{%s}' % p for p in sorted(get_available_placeholders(self.event, base_parameters).keys())]
+        """Use the template's allowed variables for both validation and insertion."""
+        names = sorted(get_available_placeholders(self.event, base_parameters))
+        phs = ['{%s}' % p for p in names]
         ht = _('Available placeholders: {list}').format(list=', '.join(phs))
         if self.fields[fn].help_text:
             self.fields[fn].help_text += f' {str(ht)}'
         else:
             self.fields[fn].help_text = ht
         self.fields[fn].validators.append(PlaceholderValidator(phs))
+        self.fields[fn].widget.attrs['data-tiptap-placeholders'] = json.dumps(names)
+        for widget in self.fields[fn].widget.widgets:
+            widget.attrs['data-tiptap-placeholders'] = json.dumps(names)
 
     def __init__(self, *args, **kwargs):
         self.event = kwargs.get('obj')

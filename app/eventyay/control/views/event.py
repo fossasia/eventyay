@@ -59,9 +59,9 @@ from eventyay.base.services import tickets
 from eventyay.base.services.invoices import build_preview_invoice_pdf
 from eventyay.base.signals import register_ticket_outputs
 from eventyay.base.templatetags.rich_text import (
+    compile_email_body,
     expand_email_preview_placeholders,
     is_placeholder_html_sample,
-    markdown_compile_email,
 )
 from eventyay.control.forms.event import (
     CancelSettingsForm,
@@ -836,24 +836,20 @@ class MailSettingsPreview(EventPermissionRequiredMixin, View):
 
     # get all supported placeholders with dummy values
     def placeholders(self, product):
+        """Keep text samples safe in both editor text and link attributes."""
         ctx = {}
-        url_pattern = re.compile(r'^(https?://|www\.)[^\s]+$')
 
         for p in get_available_placeholders(self.request.event, MailSettingsForm.base_context[product]).values():
             s = str(p.render_sample(self.request.event)).strip()
 
             if s.startswith('*') or is_placeholder_html_sample(s):
                 ctx[p.identifier] = s
-            elif url_pattern.match(s):
-                ctx[p.identifier] = f'<a href="{s}" target="_blank" rel="noopener noreferrer">{s}</a>'
             else:
-                ctx[p.identifier] = '<span class="placeholder" title="{}">{}</span>'.format(
-                    _('This value will be replaced based on dynamic parameters.'),
-                    html.escape(s),
-                )
+                ctx[p.identifier] = html.escape(s)
         return self.SafeDict(ctx)
 
     def post(self, request, *args, **kwargs):
+        """Preview ticket template content through the same compiler used for delivery."""
         preview_product = request.POST.get('product', '')
         if preview_product not in MailSettingsForm.base_context:
             return HttpResponseBadRequest(_('invalid product'))
@@ -888,7 +884,7 @@ class MailSettingsPreview(EventPermissionRequiredMixin, View):
                                 },
                                 status=400,
                             )
-                        msgs[self.supported_locale[idx]] = markdown_compile_email(formatted)
+                        msgs[self.supported_locale[idx]] = compile_email_body(formatted)
 
         return JsonResponse({'product': preview_product, 'msgs': msgs})
 
