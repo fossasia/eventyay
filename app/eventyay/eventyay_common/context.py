@@ -94,7 +94,7 @@ def _default_context(request: HttpRequest):
     ctx['has_ticket_access'] = access['has_ticket_access']
     ctx['has_talk_access'] = access['has_talk_access']
     ctx['has_video_access'] = access['has_video_access']
-    if not event.testmode:
+    if not (event.testmode or event.private_testmode_tickets_enabled):
         with scope(organizer=organizer):
             complain_testmode_orders = event.cache.get('complain_testmode_orders')
             if complain_testmode_orders is None:

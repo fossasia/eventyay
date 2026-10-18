@@ -95,7 +95,7 @@
                 {% if vouchers|length == 0 %}
                     <div class="empty-collection">
                         <p>
-                            {% if request.GET.search or request.GET.tag or request.GET.status or request.GET.subevent %}
+                            {% if filter_form.filtered %}
                                 {% trans "Your search did not match any vouchers." %}
                             {% else %}
                                 {% blocktrans trimmed %}
