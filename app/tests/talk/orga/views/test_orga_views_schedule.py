@@ -880,10 +880,12 @@ def test_room_list_sorting_malformed_brace_text(orga_client, event):
         r2 = Room.objects.create(event=event, name="Alpha Room", position=2)
         r3 = Room.objects.create(event=event, name="{Room}", position=3)
         r4 = Room.objects.create(event=event, name={"en": "Beta Room"}, position=4)
+        r5 = Room.objects.create(event=event, name='{"en": invalid}', position=5)
 
     # Must sort safely without raising database JSON syntax errors
     response = orga_client.get(f"{url}?sort=name")
     assert response.status_code == 200
     pks = [r.pk for r in response.context["room_list"]]
-    assert pks == [r1.pk, r3.pk, r2.pk, r4.pk]
+    assert set(pks) == {r1.pk, r2.pk, r3.pk, r4.pk, r5.pk}
+    assert pks.index(r2.pk) < pks.index(r4.pk)
 

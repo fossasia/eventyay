@@ -7,9 +7,8 @@ from csp.decorators import csp_exempt
 from django import forms
 from django.conf import settings
 from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured, PermissionDenied
-from django.db.models import Case, CharField, F, JSONField, Q, Value, When
-from django.db.models.fields.json import KeyTextTransform
-from django.db.models.functions import Cast, Coalesce, Lower, NullIf
+from django.db.models import Case, CharField, F, Q, Value, When
+from django.db.models.functions import Lower
 from django.http import FileResponse, Http404, HttpRequest, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import translation
@@ -20,6 +19,7 @@ from django_context_decorator import context
 from formtools.wizard.forms import ManagementForm
 from i18nfield.fields import I18nFieldMixin
 from i18nfield.forms import I18nModelForm
+from i18nfield.strings import LazyI18nString
 from rules.contrib.views import PermissionRequiredMixin
 
 from eventyay.common.forms import SearchForm
@@ -138,43 +138,31 @@ class Sortable:
                 or translation.get_language()
                 or getattr(settings, 'LANGUAGE_CODE', 'en')
             )
-            base_active_locale = active_locale.split('-')[0] if '-' in active_locale else active_locale
-            event = getattr(req, 'event', None)
-            event_locale = getattr(event, 'locale', None)
-            default_locale = getattr(settings, 'LANGUAGE_CODE', 'en')
-            event_locales = list(getattr(event, 'locales', []) or [])
+            is_desc = plain_key != sort_key
 
-            locales = []
-            for loc in [active_locale, base_active_locale, event_locale, default_locale] + event_locales:
-                if loc and loc not in locales:
-                    locales.append(loc)
+            def _get_sort_val(obj):
+                parts = plain_key.split('__')
+                curr = obj
+                for part in parts:
+                    if curr is None:
+                        break
+                    curr = getattr(curr, part, None)
+                if isinstance(curr, LazyI18nString) and isinstance(curr.data, dict):
+                    val = curr.localize(active_locale)
+                    if not val:
+                        val = str(curr)
+                    return str(val or '').lower()
+                return str(curr or '').lower()
 
-            is_valid_json = (
-                Q(**{f'{plain_key}__startswith': '{"'})
-                & Q(**{f'{plain_key}__contains': '":'})
-                & Q(**{f'{plain_key}__endswith': '}'})
-            )
-            json_source = Case(
-                When(is_valid_json, then=F(plain_key)),
-                default=Value('{}'),
-                output_field=CharField(),
-            )
-            name_json = Cast(json_source, JSONField())
-            fallback_expressions = [
-                NullIf(KeyTextTransform(loc, name_json), Value(''))
-                for loc in locales
-            ]
-            fallback_expressions.append(F(plain_key))
-            expr = Case(
-                When(
-                    is_valid_json,
-                    then=Coalesce(*fallback_expressions, output_field=CharField()),
-                ),
-                default=F(plain_key),
-                output_field=CharField(),
-            )
-            qs = qs.annotate(key=Lower(expr))
-            sort_key = '-key' if plain_key != sort_key else 'key'
+            items = list(qs)
+            items.sort(key=_get_sort_val, reverse=is_desc)
+            if items:
+                order_cases = [When(pk=item.pk, then=Value(pos)) for pos, item in enumerate(items)]
+                qs = qs.order_by(
+                    Case(*order_cases, default=Value(len(items))),
+                    *self._get_secondary_sort(plain_key),
+                )
+            return qs
         elif is_text:
             # TODO: this only sorts direct lookups case insensitively
             # A sorting field like 'speaker__name' will not be found

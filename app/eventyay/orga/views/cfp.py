@@ -817,7 +817,12 @@ class SubmissionTypeView(Sortable, OrderActionMixin, OrgaCRUDView):
     }
 
     def get_queryset(self):
-        qs = self.request.event.submission_types.all().annotate(proposals=Count('submissions'))
+        qs = self.request.event.submission_types.all().annotate(
+            proposals=Count(
+                'submissions',
+                filter=~Q(submissions__state__in=('deleted', 'draft')),
+            )
+        )
         return self.sort_queryset(qs)
 
     def get_permission_required(self):
@@ -883,7 +888,12 @@ class TrackView(Sortable, OrderActionMixin, OrgaCRUDView):
     }
 
     def get_queryset(self):
-        qs = self.request.event.tracks.all().annotate(proposals=Count('submissions'))
+        qs = self.request.event.tracks.all().annotate(
+            proposals=Count(
+                'submissions',
+                filter=~Q(submissions__state__in=('deleted', 'draft')),
+            )
+        )
         return self.sort_queryset(qs)
 
     def get_permission_required(self):

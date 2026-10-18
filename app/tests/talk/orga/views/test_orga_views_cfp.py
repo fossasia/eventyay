@@ -947,11 +947,16 @@ def test_track_list_sorting(orga_client, event):
         t1 = Track.objects.create(event=event, name="Beta Track", color="#111111", position=2)
         t2 = Track.objects.create(event=event, name="Alpha Track", color="#ffffff", position=1)
         t3 = Track.objects.create(event=event, name="Gamma Track", color="#000000", position=3)
-        # Create proposals for tracks
         sub_type = event.submission_types.first()
         Submission.objects.create(event=event, title="Sub 1", track=t3, submission_type=sub_type)
         Submission.objects.create(event=event, title="Sub 2", track=t3, submission_type=sub_type)
         Submission.objects.create(event=event, title="Sub 3", track=t1, submission_type=sub_type)
+        Submission.all_objects.create(
+            event=event, title="Sub Draft", track=t2, submission_type=sub_type, state="draft"
+        )
+        Submission.all_objects.create(
+            event=event, title="Sub Deleted", track=t2, submission_type=sub_type, state="deleted"
+        )
 
     # Default sort (no ?sort) preserves position order and enables reordering
     response = orga_client.get(url)
@@ -1064,6 +1069,12 @@ def test_submission_type_list_sorting(orga_client, event):
         Submission.objects.create(event=event, title="Sub A", submission_type=st3)
         Submission.objects.create(event=event, title="Sub B", submission_type=st3)
         Submission.objects.create(event=event, title="Sub C", submission_type=st1)
+        Submission.all_objects.create(
+            event=event, title="Sub Draft 2", submission_type=st2, state="draft"
+        )
+        Submission.all_objects.create(
+            event=event, title="Sub Deleted 2", submission_type=st2, state="deleted"
+        )
 
     # Default sort (no ?sort) preserves position order and enables reordering
     response = orga_client.get(url)
