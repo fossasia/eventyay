@@ -705,9 +705,11 @@ form.mail-templates-info-dialog__card {
 }
 
 @media (max-width: 767.98px) {
-  .mail-template-system-form .form-group:has(.checkbox) > .control-label,
-  .mail-template-form .form-group:has(.checkbox) > .control-label {
+  /* Hide redundant empty control-label spacer only for individual boolean attendee checkboxes */
+  .mail-template-system-form label.control-label[for^="id_mail_send_"],
+  .mail-template-form label.control-label[for^="id_mail_send_"] {
     display: none;
   }
 }
+
 

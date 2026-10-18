@@ -286,12 +286,12 @@ input[type="radio"] {
 }
 
 /* Specific fix for labels that wrap inputs where the input is the first child */
-label:has(> input[type="radio"]),
 label:has(> input[type="checkbox"]),
-.checkbox label,
-.radio label,
+label:has(> input[type="radio"]):not(.big-radio *),
+.checkbox:not(.big-radio) label,
+.radio:not(.big-radio) label,
 .checkbox-inline,
-.radio-inline,
+.radio-inline:not(.big-radio *),
 label.form-check-label {
   display: inline-flex;
   flex-direction: row;
@@ -306,16 +306,42 @@ label.form-check-label {
   cursor: pointer;
 }
 
-label:has(> input[type="radio"]) input[type="radio"],
 label:has(> input[type="checkbox"]) input[type="checkbox"],
+label:has(> input[type="radio"]):not(.big-radio *) input[type="radio"],
 .checkbox label input[type="checkbox"],
-.radio label input[type="radio"],
+.radio:not(.big-radio) label input[type="radio"],
 .checkbox-inline input[type="checkbox"],
-.radio-inline input[type="radio"] {
+.radio-inline:not(.big-radio *) input[type="radio"] {
   position: static;
   margin: 0;
   flex-shrink: 0;
 }
+
+/* Preserve vertical block layout and hanging radio position for .big-radio */
+.big-radio label,
+.radio.big-radio label,
+.form-horizontal .big-radio label {
+  display: block;
+  font-weight: normal;
+  cursor: pointer;
+  padding: 15px 15px 15px 30px;
+  text-align: left;
+}
+
+.big-radio label input[type="radio"],
+.radio.big-radio label input[type="radio"],
+.form-horizontal .big-radio label input[type="radio"] {
+  position: absolute;
+  margin-top: 4px;
+  margin-left: -20px;
+}
+
+.big-radio .help-block,
+.radio.big-radio .help-block {
+  display: block;
+  margin-bottom: 0;
+}
+
 
 
 input[type="checkbox"] {
