@@ -118,6 +118,23 @@ table.table-sticky thead {
   box-shadow: 0 2px var(--color-border);
 }
 
+/* Same colours as the Speakers list sort links (#6487); only the colour changes, so nothing shifts. */
+table thead .sort-link {
+  color: var(--color-text-muted);
+}
+
+table thead .sort-link:hover,
+table thead .sort-link:focus,
+table thead .sort-link.sort-active {
+  color: var(--color-primary);
+}
+
+table thead .sort-link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+  border-radius: 2px;
+}
+
 table .action-column {
   display: flex;
   flex-wrap: nowrap;
@@ -1118,9 +1135,10 @@ table .color-square {
 
 .track-badge {
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.3em;
-  white-space: nowrap;
+  max-width: 30ch;
+  overflow-wrap: anywhere;
 }
 
 .track-badge::before {
@@ -1128,6 +1146,7 @@ table .color-square {
   display: inline-block;
   width: 0.65em;
   height: 0.65em;
+  margin-top: calc((1lh - 0.65em) / 2);
   border-radius: 50%;
   background-color: var(--color-border);
   flex-shrink: 0;
@@ -3690,6 +3709,16 @@ a.btn-speaker-not-arrived {
 
 .speaker-list-table td {
   vertical-align: middle;
+}
+
+table thead .sort-link {
+  color: var(--color-text-muted);
+}
+
+table thead .sort-link:hover,
+table thead .sort-link:focus,
+table thead .sort-link.sort-active {
+  color: var(--color-primary);
 }
 
 .speaker-list-table .speaker-sessions-cell {
