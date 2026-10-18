@@ -9,8 +9,8 @@ from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.syndication.views import Feed
 from django.db import transaction
-from django.db.models import CharField, Count as DbCount, F, OuterRef, Prefetch, Q, Subquery, Value
-from django.db.models.functions import Cast, Coalesce, Concat, Lower, NullIf, Trim, TruncDate
+from django.db.models import Count as DbCount, F, OuterRef, Prefetch, Q, Subquery
+from django.db.models.functions import Lower, TruncDate
 from django.forms.models import BaseModelFormSet, inlineformset_factory
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -37,6 +37,7 @@ from eventyay.base.models import (
     Tag,
     User,
 )
+from eventyay.base.models.auth import display_name_sort_key
 from eventyay.base.models.base import CachedFile
 from eventyay.base.models.submission import SpeakerRole
 from eventyay.common.views.helpers import is_ajax_request
@@ -135,17 +136,6 @@ class SubmissionViewMixin(PermissionRequired):
         return is_agenda_submission_visible(None, self.object)
 
 
-def speaker_sort_name(prefix=''):
-    """Case-insensitive speaker name, following the fallbacks of ``User.get_display_name``."""
-    return Lower(
-        Coalesce(
-            *(NullIf(Trim(f'{prefix}{field}'), Value('')) for field in ('fullname', 'email', 'nick', 'client_id')),
-            Concat(Value('user:'), Cast(f'{prefix}pk', CharField())),
-            output_field=CharField(),
-        )
-    )
-
-
 class ReviewerSubmissionFilter:
     @cached_property
     def is_only_reviewer(self):
@@ -160,7 +150,7 @@ class ReviewerSubmissionFilter:
         queryset = (
             self.request.event.submissions.all()
             .select_related('submission_type', 'event', 'track')
-            .prefetch_related(Prefetch('speakers', queryset=User.objects.order_by(speaker_sort_name(), 'pk')))
+            .prefetch_related(Prefetch('speakers', queryset=User.objects.order_by(display_name_sort_key(), 'pk')))
         )
         if self.is_only_reviewer:
             queryset = limit_for_reviewers(queryset, self.request.event, self.request.user, self.limit_tracks)
@@ -859,7 +849,7 @@ class SubmissionList(EventPermissionRequired, BaseSubmissionList):
         return self.request.event.submission_types.all().count() > 1
 
     @cached_property
-    def can_view_speakers(self):
+    def can_view_speakers(self) -> bool:
         # Same check the template uses to show the Speakers column, so admin mode counts.
         return has_event_perm(
             'base.orga_list_speakerprofile',
@@ -869,7 +859,7 @@ class SubmissionList(EventPermissionRequired, BaseSubmissionList):
         )
 
     @context
-    def current_sort(self):
+    def current_sort(self) -> str:
         sort_key = self.request.GET.get('sort')
         if not sort_key or sort_key == 'default':
             return self.default_sort_field
@@ -886,7 +876,7 @@ class SubmissionList(EventPermissionRequired, BaseSubmissionList):
         # speakers go last in both directions.
         first_speaker = (
             SpeakerRole.objects.filter(submission=OuterRef('pk'))
-            .annotate(name=speaker_sort_name('user__'))
+            .annotate(name=display_name_sort_key('user__'))
             .order_by('name', 'user__pk')
             .values('name')[:1]
         )
