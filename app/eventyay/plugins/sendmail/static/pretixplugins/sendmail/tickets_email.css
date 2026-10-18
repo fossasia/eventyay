@@ -665,3 +665,36 @@ form.mail-templates-info-dialog__card {
 .mail-templates-info-dialog__body p:last-of-type {
   margin-bottom: 12px;
 }
+
+/* Responsive layout for the system email template edit page (#6589). */
+.mail-template-system-form .preview-panel .tiptap-wrapper,
+.mail-template-system-form .preview-panel [data-tiptap-wrapper] {
+  max-width: 100%;
+}
+
+@media (max-width: 991px) {
+  .mail-template-system-form .form-group {
+    display: block;
+  }
+
+  .mail-template-system-form .form-group > .col-md-3,
+  .mail-template-system-form .form-group > .col-md-9 {
+    width: 100%;
+    max-width: 100%;
+    float: none;
+  }
+
+  .mail-template-system-form .preview-panel > .control-label.col-md-3 {
+    text-align: left;
+    margin-bottom: 6px;
+  }
+
+  .mail-template-system-form .form-group:not(.preview-panel) > label.col-md-3 {
+    display: none;
+  }
+
+  .mail-template-system-form .tiptap-placeholder-dropdown {
+    max-width: calc(100vw - 32px);
+    overflow-x: auto;
+  }
+}
