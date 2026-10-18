@@ -1,5 +1,6 @@
 import html
 import re
+from urllib.parse import quote
 
 import pytest
 from django_scopes import scope
@@ -345,3 +346,29 @@ def test_deleted_submission_content_changes_stay_blocked(orga_client, event, sub
         assert submission.speakers.count() == speaker_count
         assert not submission.speaker_invitations.filter(email='new@example.com').exists()
         assert submission.is_featured is False
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ('other_deleted', 'query', 'expected_query'),
+    [
+        (False, 'state=deleted', ''),
+        (True, 'state=deleted', 'state=deleted'),
+        (False, 'state=deleted&state=submitted', 'state=deleted&state=submitted'),
+    ],
+)
+def test_restoring_last_deleted_submission_returns_to_full_list(
+    orga_client, event, submission, submission_type, other_deleted, query, expected_query
+):
+    with scope(event=event):
+        submission.remove(force=True)
+        if other_deleted:
+            Submission.objects.create(
+                event=event, submission_type=submission_type, title='Other deleted', state=SubmissionStates.DELETED
+            )
+
+    next_url = quote(f'{event.orga_urls.submissions}?{query}')
+    response = orga_client.post(f'{submission.orga_urls.make_submitted}?next={next_url}')
+    assert response.status_code == 302
+    expected = event.orga_urls.submissions + (f'?{expected_query}' if expected_query else '')
+    assert response.url == expected

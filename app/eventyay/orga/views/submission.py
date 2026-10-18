@@ -21,7 +21,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext, gettext_lazy as _
 from django.views.generic import FormView, ListView, TemplateView, UpdateView, View
 from django_context_decorator import context
-from urllib.parse import urlencode
+from urllib.parse import parse_qs, urlencode, urlparse
 
 from eventyay.base.models import (
     Feedback,
@@ -261,8 +261,23 @@ class SubmissionStateChange(SubmissionViewMixin, FormView):
         if self.object.state == SubmissionStates.DELETED and (not url or self.object.code in url):
             return self.request.event.orga_urls.submissions
         elif url and url_has_allowed_host_and_scheme(url, allowed_hosts=None):
+            if self._is_emptied_deleted_list(url):
+                return self.request.event.orga_urls.submissions
             return url
         return self.request.event.orga_urls.submissions
+
+    def _is_emptied_deleted_list(self, url):
+        """Whether ``url`` is the list filtered to deleted sessions only, with none left.
+
+        After the last deleted session changes state, organisers go back to the
+        full list instead of an empty "Deleted" view.
+        """
+        parsed = urlparse(url)
+        if parsed.path != self.request.event.orga_urls.submissions:
+            return False
+        if parse_qs(parsed.query).get('state') != [SubmissionStates.DELETED]:
+            return False
+        return not Submission.all_objects.filter(event=self.request.event, state=SubmissionStates.DELETED).exists()
 
     @context
     def next(self):
