@@ -3488,14 +3488,14 @@ wheels = [
 
 [[package]]
 name = "sphinxcontrib-httpdomain"
-version = "2.1.0"
+version = "2.2.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "sphinx" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/71/84/da10a6e1fd387eeef62ced1368f55404bcbf7dd8d67411510ba0abaef3b7/sphinxcontrib_httpdomain-2.1.0.tar.gz", hash = "sha256:889d7f69b55633e22a28a8222c4952df65f707e0a9a157f38729625a33ea5d5b", size = 20485, upload-time = "2026-10-05T17:28:58.859Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d2/98/ef86f29043c2bce99807ae3949142e00c009c0a761234cff456103b0f429/sphinxcontrib_httpdomain-2.2.1.tar.gz", hash = "sha256:a2710c982476974288cb41044acf26334468aa85e73015e87a1294c62d93f114", size = 21783, upload-time = "2026-10-14T07:56:11.423Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d2/d0/afa87a09a48059fa214248b5286cb2454458ae2dc670f32226838670c370/sphinxcontrib_httpdomain-2.1.0-py3-none-any.whl", hash = "sha256:62ce09d3091d1987916075ba0b3a0e16b7c577d4baa0c109a853ab2587fff1ea", size = 30568, upload-time = "2026-10-05T17:28:57.881Z" },
+    { url = "https://files.pythonhosted.org/packages/3a/65/dbefc7d4bd2f9d38fa02ee9bec624eed3ee1210734fe86c3d34a379f11c3/sphinxcontrib_httpdomain-2.2.1-py3-none-any.whl", hash = "sha256:0ac1e32cd49360967d89132fd56ab68e2347614d99d10683596747e0dcc1d2d9", size = 30551, upload-time = "2026-10-14T07:56:10.465Z" },
 ]
 
 [[package]]
