@@ -288,6 +288,10 @@ input[type="radio"] {
 /* Specific fix for labels that wrap inputs where the input is the first child */
 label:has(> input[type="radio"]),
 label:has(> input[type="checkbox"]),
+.checkbox label,
+.radio label,
+.checkbox-inline,
+.radio-inline,
 label.form-check-label {
   display: inline-flex;
   flex-direction: row;
@@ -296,9 +300,23 @@ label.form-check-label {
   gap: 8px;
   padding-top: 0;
   padding-bottom: 0;
+  padding-left: 0;
   text-align: left;
   margin-bottom: 0;
+  cursor: pointer;
 }
+
+label:has(> input[type="radio"]) input[type="radio"],
+label:has(> input[type="checkbox"]) input[type="checkbox"],
+.checkbox label input[type="checkbox"],
+.radio label input[type="radio"],
+.checkbox-inline input[type="checkbox"],
+.radio-inline input[type="radio"] {
+  position: static;
+  margin: 0;
+  flex-shrink: 0;
+}
+
 
 input[type="checkbox"] {
   border-radius: var(--size-border-radius);
