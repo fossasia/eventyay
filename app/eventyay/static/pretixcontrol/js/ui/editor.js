@@ -753,6 +753,8 @@ var editor = {
         var url = editor.pdf_url;
         // TODO: Handle cross-origin issues if static files are on a different origin
         PDFJS.workerSrc = editor.$pdfcv.attr("data-worker-url");
+        // PDF.js 1.x reads this setting globally, not from getDocument options.
+        PDFJS.isEvalSupported = false;
 
         // Asynchronous download of PDF
         var loadingTask = PDFJS.getDocument(url);
