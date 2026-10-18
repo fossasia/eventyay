@@ -1,0 +1,54 @@
+.sales-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    margin-bottom: 16px;
+}
+
+.sales-filters .form-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 0;
+    min-width: 0;
+}
+
+.sales-filters label {
+    margin-bottom: 0;
+    white-space: nowrap;
+}
+
+.sales-filters .form-control {
+    width: auto;
+    min-width: 0;
+}
+
+.sales-filters .sales-search {
+    flex: 1 1 180px;
+}
+
+.sales-search .form-control {
+    width: 100%;
+}
+
+.sales-filter-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+@media (max-width: 767px) {
+    .sales-filters .form-group {
+        flex: 1 1 100%;
+    }
+
+    .sales-filters label {
+        flex: 0 0 65px;
+    }
+
+    .sales-filters .form-control {
+        flex: 1;
+        width: 100%;
+    }
+}
