@@ -40,11 +40,11 @@ def test_compile_email_body_preserves_html():
 
 
 def test_compile_email_body_preserves_all_heading_levels():
-    from eventyay.base.templatetags.rich_text import _is_tiptap_email_html
+    from eventyay.base.templatetags.rich_text import is_tiptap_email_html
 
     for level in range(1, 7):
         html = f'<h{level}>Heading {level}</h{level}><p>Body</p>'
-        assert _is_tiptap_email_html(html)
+        assert is_tiptap_email_html(html)
         assert compile_email_body(html) == html
 
 

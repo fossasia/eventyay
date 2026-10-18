@@ -166,7 +166,7 @@ _TIPTAP_BLOCK_START_RE = re.compile(
 )
 
 
-def _is_tiptap_email_html(source: str) -> bool:
+def is_tiptap_email_html(source: str) -> bool:
     """Return True when *source* looks like HTML from the Tiptap email editor.
 
     ``nh3.is_html()`` is too broad: legacy Markdown bodies may contain inline
@@ -217,7 +217,7 @@ def compile_email_body(source: str) -> str:
     if not source:
         return source
     source = str(source)
-    if _is_tiptap_email_html(source):
+    if is_tiptap_email_html(source):
         from eventyay.common.sanitizers import sanitize_email_html
         return sanitize_email_html(source)
     return markdown_compile_email(source)

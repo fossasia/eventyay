@@ -59,9 +59,9 @@ from eventyay.base.services import tickets
 from eventyay.base.services.invoices import build_preview_invoice_pdf
 from eventyay.base.signals import register_ticket_outputs
 from eventyay.base.templatetags.rich_text import (
-    _is_tiptap_email_html,
     expand_email_preview_placeholders,
     is_placeholder_html_sample,
+    is_tiptap_email_html,
     markdown_compile_email,
 )
 from eventyay.control.forms.event import (
@@ -818,6 +818,12 @@ class MailSettings(EventSettingsViewMixin, EventSettingsFormView):
             return self.get(request)
 
 
+# Exceptions a malformed mail template can raise while interpolating
+# placeholders (str.format_map / attribute / index lookups on sample values).
+# They are turned into a 400 validation response instead of an HTTP 500.
+TEMPLATE_FORMAT_ERRORS = (ValueError, KeyError, IndexError, AttributeError, TypeError)
+
+
 class MailSettingsPreview(EventPermissionRequiredMixin, View):
     permission = 'can_change_event_settings'
 
@@ -890,7 +896,7 @@ class MailSettingsPreview(EventPermissionRequiredMixin, View):
                 if idx in self.supported_locale:
                     locale = self.supported_locale[idx]
                     with language(locale, self.request.event.settings.region):
-                        if _is_tiptap_email_html(v):
+                        if is_tiptap_email_html(v):
                             # Bodies edited with the Tiptap email editor are already
                             # HTML; sanitize, then expand {placeholder} tokens and chips.
                             safe_html = sanitize_email_html(v)
@@ -898,12 +904,12 @@ class MailSettingsPreview(EventPermissionRequiredMixin, View):
                                 msgs[locale] = expand_email_preview_placeholders(
                                     safe_html, self.request.event, locale=locale
                                 )
-                            except ValueError:
+                            except TEMPLATE_FORMAT_ERRORS:
                                 return self._invalid_template_response()
                             continue
                         try:
                             formatted = v.format_map(self.placeholders(preview_product))
-                        except ValueError:
+                        except TEMPLATE_FORMAT_ERRORS:
                             return self._invalid_template_response()
                         msgs[locale] = markdown_compile_email(formatted)
 

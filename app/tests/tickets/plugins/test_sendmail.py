@@ -1816,16 +1816,22 @@ def test_mail_settings_preview_expands_tiptap_html(settings_client, event):
 
 @pytest.mark.django_db
 @override_settings(DEBUG=True)
-def test_mail_settings_preview_tiptap_invalid_braces_returns_400(settings_client, event):
-    """Malformed braces in editor HTML return a 400, not a 500."""
+@pytest.mark.parametrize('body', [
+    '<p>{0}</p>',          # positional field -> ValueError
+    '<p>{</p>',            # stray brace -> ValueError
+    '<p>{code[999]}</p>',  # out-of-range index -> IndexError
+    '<p>{code.nope}</p>',  # bad attribute -> AttributeError
+    '<p>{code[name]}</p>',  # bad item key on a string -> TypeError
+])
+def test_mail_settings_preview_tiptap_invalid_template_returns_400(settings_client, event, body):
+    """Malformed placeholders in editor HTML return a 400, not a 500."""
     url = reverse(
         'control:event.settings.mail.preview',
         kwargs={'organizer': event.organizer.slug, 'event': event.slug},
     )
-    # ``<p>{0}</p>`` is detected as Tiptap HTML and makes format_map raise ValueError.
     response = settings_client.post(
         url,
-        {'product': 'mail_text_order_placed', 'mail_text_order_placed_0': '<p>{0}</p>'},
+        {'product': 'mail_text_order_placed', 'mail_text_order_placed_0': body},
     )
     assert response.status_code == 400
     assert 'error' in response.json()
