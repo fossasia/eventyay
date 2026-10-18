@@ -573,6 +573,13 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
         
         return d
 
+    def option_key(self, option: LazyI18nString) -> str:
+        """Match stored and uploaded options using non-empty translations."""
+        data = option.data
+        if not isinstance(data, dict):
+            data = {self.event.locale: data}
+        return AnswerOption._meta.get_field('answer').get_prep_value(data)
+
     def save(self, *args, **kwargs):
         """Save the question and merge or replace uploaded response options."""
         instance = super().save(*args, **kwargs)
@@ -598,10 +605,10 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
                 existing_keys = {str(opt.answer) for opt in existing_options}
                 options = [str(opt) for opt in options]
         else:
-            existing_keys = {json.dumps(opt.answer.data, sort_keys=True) for opt in existing_options}
+            existing_keys = {self.option_key(opt.answer) for opt in existing_options}
         new_options = []
         for option in options:
-            option_key = json.dumps(option.data, sort_keys=True) if use_i18n else option
+            option_key = self.option_key(option) if use_i18n else option
             if option_key in existing_keys:
                 continue
             position += 1

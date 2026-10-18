@@ -10,12 +10,14 @@ from django.conf import settings
 from django.core import mail as djmail
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import OperationalError, connection, connections, transaction
+from django.http import QueryDict
 from django.test import TransactionTestCase
 from django_scopes import scope
 
 from eventyay.base.models import Answer, Event, QueuedMail, Track
 from eventyay.base.models import TalkQuestion as Question
 from eventyay.base.models.question import TalkQuestionRequired as QuestionRequired
+from eventyay.orga.forms.cfp import TalkQuestionForm
 
 
 _FORM_OPEN = re.compile(r"<form(?:\s|>)", re.I)
@@ -1159,3 +1161,50 @@ class TestConcurrentQuestionOptionUploads(TransactionTestCase):
                 assert executor.submit(competing_upload).result(timeout=30) == 302
             assert question.options.count() == 2
             assert question.options.filter(pk=existing.pk).exists()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('variant', ('choices', 'multiple_choice', 'select'))
+@pytest.mark.parametrize('existing_value', ('Vegan', {'en': 'Vegan'}, {'en': 'Vegan', 'de': ''}))
+@pytest.mark.parametrize('uploaded_value', ({'en': 'Vegan'}, {'en': 'Vegan', 'de': ''}))
+def test_upload_options_matches_stored_translation_format(
+    event, submission, speaker, variant, existing_value, uploaded_value
+):
+    """Reuse choices when empty translations or legacy strings differ only in storage format."""
+    event.locale_array = 'en,de'
+    event.save()
+    with scope(event=event):
+        question = Question.objects.create(
+            event=event,
+            question='Meal preference',
+            variant=variant,
+            target='submission',
+            question_required=QuestionRequired.OPTIONAL,
+        )
+        existing = question.options.create(answer=existing_value, position=7)
+        answer = Answer.objects.create(question=question, submission=submission, person=speaker)
+        answer.options.add(existing)
+        original_value = question.options.get().answer.data
+        data = QueryDict(mutable=True)
+        data.update(
+            {
+                'target': 'submission',
+                'variant': variant,
+                'question_0': 'Meal preference',
+                'question_required': QuestionRequired.OPTIONAL,
+            }
+        )
+        for _ in range(2):
+            form = TalkQuestionForm(
+                event=event,
+                instance=question,
+                data=data,
+                files={'options': SimpleUploadedFile('options.json', json.dumps([uploaded_value]).encode())},
+            )
+            assert form.is_valid(), form.errors
+            assert form.save() == question
+            option = question.options.get()
+            assert option.pk == existing.pk
+            assert option.position == 7
+            assert option.answer.data == original_value
+            assert list(answer.options.values_list('pk', flat=True)) == [existing.pk]
