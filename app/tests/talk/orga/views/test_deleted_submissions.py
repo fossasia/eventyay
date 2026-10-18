@@ -372,3 +372,32 @@ def test_restoring_last_deleted_submission_returns_to_full_list(
     assert response.status_code == 302
     expected = event.orga_urls.submissions + (f'?{expected_query}' if expected_query else '')
     assert response.url == expected
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ('other_submitted', 'query', 'expected_query'),
+    [
+        (False, 'state=submitted', ''),
+        (True, 'state=submitted', 'state=submitted'),
+        (False, 'state=submitted&state=accepted', 'state=submitted&state=accepted'),
+        (False, 'q=nothing-matches', 'q=nothing-matches'),
+    ],
+)
+def test_emptied_state_filter_returns_to_full_list(
+    orga_client, event, submission, submission_type, other_submitted, query, expected_query
+):
+    if other_submitted:
+        with scope(event=event):
+            Submission.objects.create(
+                event=event, submission_type=submission_type, title='Other submitted', state=SubmissionStates.SUBMITTED
+            )
+
+    next_url = quote(f'{event.orga_urls.submissions}?{query}')
+    response = orga_client.post(f'{submission.orga_urls.accept}?next={next_url}')
+    assert response.status_code == 302
+    expected = event.orga_urls.submissions + (f'?{expected_query}' if expected_query else '')
+    assert response.url == expected
+    with scope(event=event):
+        submission.refresh_from_db()
+        assert submission.state == SubmissionStates.ACCEPTED

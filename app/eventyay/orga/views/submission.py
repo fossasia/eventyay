@@ -12,7 +12,7 @@ from django.db import transaction
 from django.db.models import Count as DbCount, Q
 from django.db.models.functions import TruncDate
 from django.forms.models import BaseModelFormSet, inlineformset_factory
-from django.http import Http404, HttpResponse, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse, QueryDict
 from django.shortcuts import get_object_or_404, redirect
 from django.template.loader import render_to_string
 from django.utils import feedgenerator
@@ -21,7 +21,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext, gettext_lazy as _
 from django.views.generic import FormView, ListView, TemplateView, UpdateView, View
 from django_context_decorator import context
-from urllib.parse import parse_qs, urlencode, urlparse
+from urllib.parse import urlencode, urlparse
 
 from eventyay.base.models import (
     Feedback,
@@ -261,23 +261,29 @@ class SubmissionStateChange(SubmissionViewMixin, FormView):
         if self.object.state == SubmissionStates.DELETED and (not url or self.object.code in url):
             return self.request.event.orga_urls.submissions
         elif url and url_has_allowed_host_and_scheme(url, allowed_hosts=None):
-            if self._is_emptied_deleted_list(url):
+            if self._is_emptied_state_list(url):
                 return self.request.event.orga_urls.submissions
             return url
         return self.request.event.orga_urls.submissions
 
-    def _is_emptied_deleted_list(self, url):
-        """Whether ``url`` is the list filtered to deleted sessions only, with none left.
+    def _is_emptied_state_list(self, url):
+        """Whether ``url`` is the session list filtered by state, with nothing left to show.
 
-        After the last deleted session changes state, organisers go back to the
-        full list instead of an empty "Deleted" view.
+        When a state change moves the last session out of the filtered list (for
+        example the last deleted or submitted one), organisers go back to the full
+        list instead of an empty view.
         """
         parsed = urlparse(url)
         if parsed.path != self.request.event.orga_urls.submissions:
             return False
-        if parse_qs(parsed.query).get('state') != [SubmissionStates.DELETED]:
+        query = QueryDict(parsed.query)
+        if not query.getlist('state'):
             return False
-        return not Submission.all_objects.filter(event=self.request.event, state=SubmissionStates.DELETED).exists()
+        form = SubmissionFilterForm(data=query, event=self.request.event)
+        if not form.is_valid():
+            return False
+        submissions = Submission.all_objects.filter(event=self.request.event).exclude(state=SubmissionStates.DRAFT)
+        return not form.filter_queryset(submissions).exists()
 
     @context
     def next(self):
