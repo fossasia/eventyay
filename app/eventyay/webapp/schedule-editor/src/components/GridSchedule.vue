@@ -132,6 +132,7 @@ const props = defineProps<{
   density: 'compact' | 'default' | 'comfortable'
   timeDensityMinutes: number
   allowOverlap?: boolean
+  isUnassigning?: boolean
 }>()
 
 const emit = defineEmits([
@@ -163,6 +164,12 @@ const timesliceRefs = ref<HTMLElement[]>([])
 
 watch(() => props.draggedSession, (val) => {
   if (!val) {
+    hoverSlice.value = null
+  }
+})
+
+watch(() => props.isUnassigning, (val) => {
+  if (val) {
     hoverSlice.value = null
   }
 })
@@ -594,8 +601,37 @@ const expandTimeslice = (slice: Timeslice) => {
 }
 
 const getTimeAndRoomFromPoint = (clientX: number, clientY: number) => {
+  if (!rootEl.value || props.isUnassigning) return null
+
+  const gridEl = rootEl.value.querySelector('.grid') as HTMLElement | null
+  if (!gridEl) return null
+  const gridRect = gridEl.getBoundingClientRect()
+  if (
+    clientX < gridRect.left ||
+    clientX > gridRect.right ||
+    clientY < gridRect.top ||
+    clientY > gridRect.bottom
+  ) {
+    return null
+  }
+
   // 1. Determine room index by checking which room column the pointer is horizontally within
-  const roomEls = Array.from(rootEl.value?.querySelectorAll('.grid > .room') || [])
+  const roomEls = Array.from(rootEl.value.querySelectorAll('.grid > .room') || [])
+  if (roomEls.length <= 1) return null
+  const minRoomLeft = Math.min(
+    roomEls[1].getBoundingClientRect().left,
+    roomEls[roomEls.length - 1].getBoundingClientRect().left
+  )
+  const maxRoomRight = Math.max(
+    roomEls[1].getBoundingClientRect().right,
+    roomEls[roomEls.length - 1].getBoundingClientRect().right
+  )
+
+  // If pointer is outside room columns (e.g. over time column or moved to the sidebar), it's not over any room!
+  if (clientX < minRoomLeft || clientX > maxRoomRight) {
+    return null
+  }
+
   let roomIndex = -1
   for (let i = 1; i < roomEls.length; i++) {
     const rect = roomEls[i].getBoundingClientRect()
@@ -603,21 +639,19 @@ const getTimeAndRoomFromPoint = (clientX: number, clientY: number) => {
       roomIndex = i - 1
       break
     }
-    if (clientX >= rect.right && i === roomEls.length - 1) {
-      roomIndex = i - 1
-    }
-  }
-  if (roomIndex < 0 && roomEls.length > 1) {
-    if (clientX < roomEls[1].getBoundingClientRect().left) {
-      roomIndex = 0
-    }
   }
   if (roomIndex < 0 || roomIndex >= visibleRooms.value.length) return null
   const room = visibleRooms.value[roomIndex]
 
   // 2. Determine timeslice by checking which row the pointer is vertically within
-  const timesliceEls = Array.from(rootEl.value?.querySelectorAll('.grid > .timeslice') || []) as HTMLElement[]
+  const timesliceEls = Array.from(rootEl.value.querySelectorAll('.grid > .timeslice') || []) as HTMLElement[]
   if (!timesliceEls.length) return null
+
+  const firstSliceTop = timesliceEls[0].getBoundingClientRect().top
+  const lastSliceBottom = timesliceEls[timesliceEls.length - 1].getBoundingClientRect().bottom
+  if (clientY < firstSliceTop || clientY > lastSliceBottom) {
+    return null
+  }
 
   let targetSliceEl: HTMLElement | null = null
   for (let i = 0; i < timesliceEls.length; i++) {
@@ -627,13 +661,6 @@ const getTimeAndRoomFromPoint = (clientX: number, clientY: number) => {
     if (clientY >= rect.top && clientY < bottom) {
       targetSliceEl = timesliceEls[i]
       break
-    }
-  }
-  if (!targetSliceEl) {
-    if (clientY < timesliceEls[0].getBoundingClientRect().top) {
-      targetSliceEl = timesliceEls[0]
-    } else {
-      targetSliceEl = timesliceEls[timesliceEls.length - 1]
     }
   }
 
@@ -648,7 +675,7 @@ let lastPlacementTime = 0
 const tryPlaceSessionAtPoint = (clientX: number, clientY: number): boolean => {
   if (!props.draggedSession) return false
   const now = Date.now()
-  if (now - lastPlacementTime < 300) return false // prevent duplicate triggers
+  if (now - lastPlacementTime < 100) return false // prevent duplicate triggers
   lastPlacementTime = now
 
   const slot = getTimeAndRoomFromPoint(clientX, clientY)
@@ -691,7 +718,7 @@ const onGridClick = (event: MouseEvent) => {
 }
 
 const updateHoverSlice = (e: PointerEvent) => {
-  if (!props.draggedSession) {
+  if (!props.draggedSession || props.isUnassigning) {
     hoverSlice.value = null
     return
   }
@@ -854,24 +881,28 @@ const getSliceLabel = (slice: Timeslice): string => {
   return slice.date.format('LT')
 }
 
-const changeDay = (day: Moment | null) => {
-  if (!day || scrolledDay.value?.isSame(day)) return
+let isScrollDayUpdate = false
 
-  const el = timesliceRefs.value.find(el => el.dataset?.slice === day.format())
-  if (!el) return
+const getStickyHeaderClearance = (): number => {
   const roomEl = rootEl.value?.querySelector('.room')
   const controlsEl = rootEl.value?.parentElement?.querySelector('.schedule-controls')
-  const headerHeight = (roomEl?.getBoundingClientRect().height || 52) + (controlsEl?.getBoundingClientRect().height || 48)
-  const offset = Math.max(0, el.offsetTop - headerHeight)
-  scrollTo(offset)
-  scrolledDay.value = day
-  emit('changeDay', day)
+  return (roomEl?.getBoundingClientRect().height || 52) + (controlsEl?.getBoundingClientRect().height || 48)
 }
 
-const scrollTo = (offset: number) => {
-  if (scrollParent.value) {
-    scrollParent.value.scroll({ top: offset, behavior: 'smooth' })
-  }
+const scrollToDayStart = (day: Moment | null) => {
+  if (!day) return
+  const dayStr = day.format('YYYY-MM-DD')
+  const el = timesliceRefs.value.find((el) => {
+    if (!el.dataset?.slice || !el.classList.contains('datebreak')) return false
+    return moment.parseZone(el.dataset.slice).format('YYYY-MM-DD') === dayStr
+  })
+  if (!el || !scrollParent.value) return
+  const clearance = getStickyHeaderClearance()
+  const rect = el.getBoundingClientRect()
+  const parentRect = scrollParent.value.getBoundingClientRect()
+  const delta = rect.top - parentRect.top - clearance
+  scrollParent.value.scrollTop += delta
+  scrolledDay.value = day
 }
 
 const scrollBy = (offset: number) => {
@@ -903,22 +934,31 @@ const dragOnScroll = () => {
 }
 
 const onIntersect = (entries: IntersectionObserverEntry[]) => {
-  // Find the last visible entry by time, which is intersecting
-  const entry = entries
+  const intersecting = entries.filter((entry) => entry.isIntersecting)
+  if (!intersecting.length) return
+  const entry = intersecting
     .slice()
-    .sort((a, b) => {
-      const aDate = (a.target as HTMLElement).dataset.slice
-      const bDate = (b.target as HTMLElement).dataset.slice
-      return new Date(bDate!).getTime() - new Date(aDate!).getTime()
-    })
-    .find((e) => e.isIntersecting)
+    .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0]
   if (!entry) return
-  const day = moment.parseZone((entry.target as HTMLElement).dataset.slice!).startOf('day')
+  const dayStr = (entry.target as HTMLElement).dataset?.slice
+  if (!dayStr) return
+  const day = moment.parseZone(dayStr).startOf('day')
+  if (scrolledDay.value && day.isSame(scrolledDay.value, 'day')) return
   scrolledDay.value = day
+  // Only update the active day indicator — don't trigger a scroll jump.
+  // scrollToDayStart is only called from toolbar clicks.
+  isScrollDayUpdate = true
   emit('changeDay', day)
 }
 
-watch(() => props.currentDay, (day) => changeDay(day))
+watch(() => props.currentDay, (day) => {
+  // Only scroll when triggered by toolbar click, not by scroll-based observer
+  if (isScrollDayUpdate) {
+    isScrollDayUpdate = false
+    return
+  }
+  scrollToDayStart(day)
+})
 
 onMounted(async () => {
   await nextTick()
