@@ -589,28 +589,25 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
 
         # If we aren't replacing all existing options, we need to make sure
         # we don't add duplicates.
-        existing_options = instance.options.all()
+        existing_options = list(instance.options.all())
+        position = max((option.position for option in existing_options), default=0)
         use_i18n = isinstance(options[0], LazyI18nString) and instance.event.is_multilingual
         if not use_i18n:
             # Monolangual i18n strings with strings aren't equal, so we're normalising.
             with override(instance.event.locale):
-                existing_options = {str(opt.answer): opt for opt in existing_options}
+                existing_keys = {str(opt.answer) for opt in existing_options}
                 options = [str(opt) for opt in options]
         else:
-            existing_options = {json.dumps(opt.answer.data, sort_keys=True): opt for opt in existing_options}
+            existing_keys = {json.dumps(opt.answer.data, sort_keys=True) for opt in existing_options}
         new_options = []
-        changed_options = []
-        for index, option in enumerate(options):
+        for option in options:
             option_key = json.dumps(option.data, sort_keys=True) if use_i18n else option
-            if option_key not in existing_options:
-                new_options.append(AnswerOption(question=instance, answer=option, position=index + 1))
-            else:
-                existing_option = existing_options[option_key]
-                if existing_option.position != index + 1:
-                    existing_option.position = index + 1
-                    changed_options.append(existing_option)
+            if option_key in existing_keys:
+                continue
+            position += 1
+            new_options.append(AnswerOption(question=instance, answer=option, position=position))
+            existing_keys.add(option_key)
         AnswerOption.objects.bulk_create(new_options)
-        AnswerOption.objects.bulk_update(changed_options, ['position'])
         return instance
 
     class Meta:
