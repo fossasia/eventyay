@@ -4,8 +4,9 @@ from decimal import Decimal
 import pytest
 from bs4 import BeautifulSoup
 from django.apps import apps
+from django.core.exceptions import ValidationError
 from django.db import OperationalError, connection, connections, transaction
-from django.test import override_settings
+from django.test import TransactionTestCase, override_settings
 from django.test.utils import CaptureQueriesContext
 from django.utils import translation
 from django_scopes import scope
@@ -338,51 +339,109 @@ def test_review_settings_broker_failure_keeps_successful_save(
         assert 'Broker unavailable' in caplog.text
 
 
-@pytest.mark.django_db(transaction=True, available_apps=[app.name for app in apps.get_app_configs()])
-@pytest.mark.skipif(connection.vendor != 'postgresql', reason='Requires PostgreSQL row-lock contention.')
+class TestConcurrentReviewSettings(TransactionTestCase):
+    """Keep PostgreSQL cleanup cascading across the legacy tables used by this request."""
+
+    available_apps = [app.name for app in apps.get_app_configs()]
+
+    @pytest.fixture(autouse=True)
+    def bind_test_fixtures(self, client, mocker, request):
+        """Make the existing pytest helpers available to the Django transaction test."""
+        self.client = client
+        self.mocker = mocker
+        self.fixture_request = request
+
+    @pytest.mark.skipif(connection.vendor != 'postgresql', reason='Requires PostgreSQL row-lock contention.')
+    @override_settings(COMPRESS_ENABLED=False, COMPRESS_OFFLINE=False)
+    def test_concurrent_review_settings_wait_before_validating(self):
+        """A competing save must wait for the current event's scoring transaction before validation."""
+        client, mocker, request = self.client, self.mocker, self.fixture_request
+        mocker.patch('eventyay.base.models.cache.VersionedModel._set_cache_version_sync')
+        event = request.getfixturevalue('event')
+        exporter = request.getfixturevalue('exporter')
+        categories = request.getfixturevalue('categories')
+        with scope(event=event):
+            client.force_login(exporter)
+            data = review_settings_data(client, event)
+            data['scores-1-is_independent'] = 'on'
+            mocker.patch('eventyay.orga.views.event.recalculate_all_review_scores.apply_async')
+            validate = mocker.spy(ReviewScoreCategory, '_validate_independence')
+
+            def competing_save():
+                """Use another database connection to submit a stale scoring form."""
+                try:
+                    competing_client = client.__class__()
+                    competing_client.force_login(exporter)
+                    with connections['default'].cursor() as cursor:
+                        cursor.execute("SET lock_timeout = '500ms'")
+                    try:
+                        return competing_client.post(event.orga_urls.review_settings, data).status_code
+                    except OperationalError as error:
+                        return error.__cause__.sqlstate
+                finally:
+                    connections.close_all()
+
+            with transaction.atomic():
+                Event.objects.select_for_update().get(pk=event.pk)
+                main, relevance = categories
+                main.is_independent = True
+                main.save()
+                with ThreadPoolExecutor(max_workers=1) as executor:
+                    result = executor.submit(competing_save).result(timeout=30)
+
+                assert result == '55P03'  # PostgreSQL lock timeout.
+                assert validate.call_count == 1
+
+            response = client.post(event.orga_urls.review_settings, data)
+            assert response.status_code == 302
+            assert event.score_categories.filter(is_independent=False).exists()
+            main.refresh_from_db()
+            relevance.refresh_from_db()
+            assert not main.is_independent
+            assert relevance.is_independent
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'error, expected_messages',
+    [
+        pytest.param(ValidationError('Cannot save scoring.'), ['Cannot save scoring.'], id='single'),
+        pytest.param(
+            ValidationError('Invalid category: %(name)s', params={'name': 'Relevance'}),
+            ['Invalid category: Relevance'],
+            id='single-with-params',
+        ),
+        pytest.param(
+            ValidationError(['First validation error.', 'Second validation error.']),
+            ['First validation error.', 'Second validation error.'],
+            id='list',
+        ),
+        pytest.param(
+            ValidationError({'weight': ['Invalid weight.'], '__all__': ['Invalid scoring configuration.']}),
+            ['Invalid weight.', 'Invalid scoring configuration.'],
+            id='dictionary',
+        ),
+    ],
+)
 @override_settings(COMPRESS_ENABLED=False, COMPRESS_OFFLINE=False)
-def test_concurrent_review_settings_wait_before_validating(client, mocker, request):
-    """A competing save must wait for the current event's scoring transaction before validation."""
-    mocker.patch('eventyay.base.models.cache.VersionedModel._set_cache_version_sync')
-    event = request.getfixturevalue('event')
-    exporter = request.getfixturevalue('exporter')
-    categories = request.getfixturevalue('categories')
+def test_review_settings_displays_all_validation_error_formats(
+    client, event, exporter, mocker, error, expected_messages
+):
+    """Reject validation errors safely while rolling back earlier phase changes."""
     with scope(event=event):
+        phase = event.review_phases.order_by('position').first()
+        phase_name = phase.name
         client.force_login(exporter)
         data = review_settings_data(client, event)
-        data['scores-1-is_independent'] = 'on'
-        mocker.patch('eventyay.orga.views.event.recalculate_all_review_scores.apply_async')
-        validate = mocker.spy(ReviewScoreCategory, '_validate_independence')
-
-        def competing_save():
-            """Use another database connection to submit a stale scoring form."""
-            try:
-                competing_client = client.__class__()
-                competing_client.force_login(exporter)
-                with connections['default'].cursor() as cursor:
-                    cursor.execute("SET lock_timeout = '500ms'")
-                try:
-                    return competing_client.post(event.orga_urls.review_settings, data).status_code
-                except OperationalError as error:
-                    return error.__cause__.sqlstate
-            finally:
-                connections.close_all()
-
-        with transaction.atomic():
-            Event.objects.select_for_update().get(pk=event.pk)
-            main, relevance = categories
-            main.is_independent = True
-            main.save()
-            with ThreadPoolExecutor(max_workers=1) as executor:
-                result = executor.submit(competing_save).result(timeout=30)
-
-            assert result == '55P03'  # PostgreSQL lock timeout.
-            assert validate.call_count == 1
+        data['phase-0-name'] = 'This phase change must be rolled back'
+        mocker.patch('eventyay.orga.views.event.EventReviewSettings.save_scores', side_effect=error)
+        recalculate = mocker.patch('eventyay.orga.views.event.recalculate_all_review_scores.apply_async')
 
         response = client.post(event.orga_urls.review_settings, data)
-        assert response.status_code == 302
-        assert event.score_categories.filter(is_independent=False).exists()
-        main.refresh_from_db()
-        relevance.refresh_from_db()
-        assert not main.is_independent
-        assert relevance.is_independent
+
+        assert response.status_code == 200
+        for message in expected_messages:
+            assert message in response.content.decode()
+        phase.refresh_from_db()
+        assert phase.name == phase_name
+        recalculate.assert_not_called()

@@ -154,7 +154,8 @@ class EventReviewSettings(EventSettingsPermission, ActionFromUrl, FormView):
                 if not phases or not scores:
                     raise ValidationError(phrases.base.error_saving_changes)
         except ValidationError as e:
-            messages.error(self.request, e.message)
+            for message in e.messages:
+                messages.error(self.request, message)
             return self.get(self.request, *self.args, **self.kwargs)
         form.save()
         if self.scores_formset.has_changed():
