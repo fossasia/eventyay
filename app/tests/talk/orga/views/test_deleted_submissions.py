@@ -18,25 +18,25 @@ from eventyay.person.forms.profile import UserSpeakerFilterForm
 from eventyay.submission.forms.submission import SubmissionFilterForm
 
 
-@pytest.mark.django_db
-def test_submission_delete_state_transition(submission):
+def _create(event, state, **kwargs):
+    return Submission.objects.create(event=event, submission_type=event.submission_types.first(), state=state, **kwargs)
+
+
+def _hrefs(text, prefix):
+    return {html.unescape(href) for href in re.findall(r'href="([^"]+)"', text) if href.startswith(prefix)}
+
+
+@pytest.fixture
+def deleted_submission(submission):
     with scope(event=submission.event):
-        assert submission.state == SubmissionStates.SUBMITTED
-        submission.state = SubmissionStates.DELETED
-        submission.save()
-        submission.refresh_from_db()
-        assert submission.state == SubmissionStates.DELETED
-        assert submission.is_deleted is True
+        submission.remove(force=True)
+    return submission
 
 
 @pytest.mark.django_db
-def test_submission_remove_preserves_answers(submission, question):
+def test_remove_marks_deleted_and_preserves_answers(submission, question):
     with scope(event=submission.event):
-        answer = Answer.objects.create(
-            submission=submission,
-            question=question,
-            answer='Test answer data',
-        )
+        answer = Answer.objects.create(submission=submission, question=question, answer='Test answer data')
         submission.remove()
         submission.refresh_from_db()
         assert submission.state == SubmissionStates.DELETED
@@ -45,149 +45,83 @@ def test_submission_remove_preserves_answers(submission, question):
 
 
 @pytest.mark.django_db
-def test_submission_list_view_filters_deleted(orga_client, event, submission, submission_type):
+def test_list_hides_deleted_unless_filtered(orga_client, event, submission):
     with scope(event=event):
-        deleted_sub = Submission.objects.create(
-            event=event,
-            submission_type=submission_type,
-            title='Deleted Proposal Title',
-            state=SubmissionStates.DELETED,
-        )
+        deleted = _create(event, SubmissionStates.DELETED, title='Deleted Proposal Title')
+        choices = [choice for choice, _ in SubmissionFilterForm(event=event).fields['state'].choices]
+    assert SubmissionStates.DELETED in choices and SubmissionStates.DRAFT not in choices
 
-    # Default list excludes deleted
-    res_default = orga_client.get(event.orga_urls.submissions, follow=True)
-    assert res_default.status_code == 200
-    assert submission.title in res_default.text and deleted_sub.title not in res_default.text
-
-    # Filtered by DELETED state includes only deleted
-    res_deleted = orga_client.get(f'{event.orga_urls.submissions}?state={SubmissionStates.DELETED}', follow=True)
-    assert res_deleted.status_code == 200
-    assert deleted_sub.title in res_deleted.text and submission.title not in res_deleted.text
+    for query, visible in [
+        ('', {submission}),
+        ('?state=deleted', {deleted}),
+        ('?state=deleted&state=submitted', {submission, deleted}),
+    ]:
+        response = orga_client.get(event.orga_urls.submissions + query)
+        assert response.status_code == 200
+        for sub in (submission, deleted):
+            assert (sub.title in response.text) == (sub in visible), (query, sub.title)
 
 
 @pytest.mark.django_db
-def test_submission_filter_form(event, submission, submission_type):
-    with scope(event=event):
-        deleted = Submission.objects.create(
-            event=event,
-            submission_type=submission_type,
-            title='Deleted Proposal',
-            state=SubmissionStates.DELETED,
-        )
-        form = SubmissionFilterForm(event=event)
-        choices = [c[0] for c in form.fields['state'].choices]
-        assert SubmissionStates.DELETED in choices and SubmissionStates.DRAFT not in choices
-
-        base_qs = event.submissions(manager='all_objects').exclude(state=SubmissionStates.DRAFT)
-        # Default: excludes deleted
-        f_default = SubmissionFilterForm(event=event, data={})
-        assert f_default.is_valid()
-        assert deleted not in f_default.filter_queryset(base_qs)
-        # Filter DELETED: includes only deleted
-        f_del = SubmissionFilterForm(event=event, data={'state': [SubmissionStates.DELETED]})
-        assert f_del.is_valid()
-        qs_del = f_del.filter_queryset(base_qs)
-        assert submission not in qs_del and deleted in qs_del
-        # Filter both: includes both
-        f_both = SubmissionFilterForm(
-            event=event, data={'state': [SubmissionStates.SUBMITTED, SubmissionStates.DELETED]}
-        )
-        assert f_both.is_valid()
-        qs_both = f_both.filter_queryset(base_qs)
-        assert submission in qs_both and deleted in qs_both
-
-
-@pytest.mark.django_db
-def test_speaker_submissions_and_filter_form_exclude_deleted(event, speaker, submission, submission_type):
-    with scope(event=event):
-        deleted = Submission.objects.create(
-            event=event,
-            submission_type=submission_type,
-            title='Deleted Speaker Sub',
-            state=SubmissionStates.DELETED,
-        )
-        deleted.speakers.add(speaker)
-
-        # Profile.submissions property excludes deleted
-        assert deleted not in speaker.profiles.get(event=event).submissions
-
-        # UserSpeakerFilterForm excludes deleted from submission_count
-        form = UserSpeakerFilterForm(events=Event.objects.filter(pk=event.pk), data={'role': 'submitter'})
-        assert form.is_valid()
-        speaker_res = form.filter_queryset(User.objects.filter(pk=speaker.pk)).first()
-        assert speaker_res is not None
-        assert speaker_res.submission_count == 1
-
-
-@pytest.mark.django_db
-def test_submission_filter_form_counts_exclude_deleted(event, submission, submission_type, track):
+def test_counts_exclude_deleted(event, speaker, submission, track):
     with scope(event=event):
         tag = event.tags.create(tag='Test Tag', color='#ff0000')
         submission.tags.add(tag)
         submission.track = track
         submission.save()
+        # The track filter is only shown once an event has several tracks
         event.tracks.create(name='Track 2', color='#00ff00')
-
-        deleted = Submission.objects.create(
-            event=event,
-            submission_type=submission_type,
-            track=track,
-            title='Deleted Tagged',
-            state=SubmissionStates.DELETED,
-        )
+        deleted = _create(event, SubmissionStates.DELETED, track=track, title='Deleted Tagged')
         deleted.tags.add(tag)
+        deleted.speakers.add(speaker)
 
-        form = SubmissionFilterForm(event=event)
-        assert form.fields['tags'].queryset.get(pk=tag.pk).submission_count == 1
-        assert form.fields['track'].queryset.get(pk=track.pk).count == 1
+        assert deleted not in speaker.profiles.get(event=event).submissions
+        speaker_form = UserSpeakerFilterForm(events=Event.objects.filter(pk=event.pk), data={'role': 'submitter'})
+        assert speaker_form.is_valid()
+        assert speaker_form.filter_queryset(User.objects.filter(pk=speaker.pk)).get().submission_count == 1
+
+        filter_form = SubmissionFilterForm(event=event)
+        assert filter_form.fields['tags'].queryset.get(pk=tag.pk).submission_count == 1
+        assert filter_form.fields['track'].queryset.get(pk=track.pk).count == 1
 
 
 @pytest.mark.django_db
 def test_question_missing_answers(event, speaker, submission):
     with scope(event=event):
-        deleted_sub = Submission.objects.create(
-            event=event,
-            submission_type=submission.submission_type,
-            title='Deleted Proposal',
-            state=SubmissionStates.DELETED,
-        )
-        deleted_spk = User.objects.create(email='deleted_spk@example.com')
-        deleted_sub.speakers.add(deleted_spk)
+        deleted = _create(event, SubmissionStates.DELETED, title='Deleted Proposal')
+        deleted_speaker = User.objects.create(email='deleted_spk@example.com')
+        deleted.speakers.add(deleted_speaker)
 
-        # 1. Submission-targeted question
         sub_q = TalkQuestion.objects.create(event=event, question='Sub Q?', target=TalkQuestionTarget.SUBMISSION)
         assert sub_q.missing_answers() == 1
-        assert sub_q.missing_answers(filter_talks=[deleted_sub]) == 0
-        assert sub_q.missing_answers(filter_talks=[submission, deleted_sub]) == 1
+        assert sub_q.missing_answers(filter_talks=[deleted]) == 0
+        assert sub_q.missing_answers(filter_talks=[submission, deleted]) == 1
+        assert sub_q.missing_answers(filter_talks=(s for s in [submission, deleted])) == 1
         assert sub_q.missing_answers(filter_talks=Submission.all_objects.filter(event=event)) == 1
         assert sub_q.missing_answers(filter_talks=[]) == 0
-
-        # Answer submission question (multiple answers for same talk count once)
+        # Several answers for the same talk count once
         Answer.objects.create(question=sub_q, submission=submission, answer='A1')
         Answer.objects.create(question=sub_q, submission=submission, answer='A2')
         assert sub_q.missing_answers() == 0
         assert sub_q.missing_answers(filter_talks=[submission]) == 0
 
-        # Track and submission_type limits exclude non-matching submissions
-        track = event.tracks.create(name='Track A', color='#ff0000')
-        sub_q_limited = TalkQuestion.objects.create(
+        # Track limits exclude non-matching submissions
+        limited_q = TalkQuestion.objects.create(
             event=event, question='Limited Q?', target=TalkQuestionTarget.SUBMISSION
         )
-        sub_q_limited.tracks.add(track)
-        assert sub_q_limited.missing_answers() == 0
-        submission.track = track
+        limited_q.tracks.add(event.tracks.create(name='Track A', color='#ff0000'))
+        assert limited_q.missing_answers() == 0
+        submission.track = limited_q.tracks.get()
         submission.save()
-        assert sub_q_limited.missing_answers() == 1
+        assert limited_q.missing_answers() == 1
 
-        # 2. Speaker-targeted question
         spk_q = TalkQuestion.objects.create(event=event, question='Spk Q?', target=TalkQuestionTarget.SPEAKER)
         assert spk_q.missing_answers() == 1
-        assert spk_q.missing_answers(filter_speakers=[deleted_spk]) == 0
-        assert spk_q.missing_answers(filter_speakers=[speaker, deleted_spk]) == 1
-        assert spk_q.missing_answers(filter_speakers=User.objects.filter(pk__in=[speaker.pk, deleted_spk.pk])) == 1
+        assert spk_q.missing_answers(filter_speakers=[deleted_speaker]) == 0
+        assert spk_q.missing_answers(filter_speakers=[speaker, deleted_speaker]) == 1
+        assert spk_q.missing_answers(filter_speakers=[speaker.pk, deleted_speaker.pk]) == 1
+        assert spk_q.missing_answers(filter_speakers=User.objects.filter(pk__in=[speaker.pk, deleted_speaker.pk])) == 1
         assert spk_q.missing_answers(filter_speakers=[]) == 0
-
-        # Answer speaker question
         Answer.objects.create(question=spk_q, person=speaker, answer='A1')
         Answer.objects.create(question=spk_q, person=speaker, answer='A2')
         assert spk_q.missing_answers() == 0
@@ -195,61 +129,33 @@ def test_question_missing_answers(event, speaker, submission):
 
 
 @pytest.mark.django_db
-def test_deleted_submission_read_only_allowed_but_edit_blocked(orga_client, event, submission_type):
-    with scope(event=event):
-        deleted = Submission.objects.create(
-            event=event,
-            submission_type=submission_type,
-            title='Deleted Proposal',
-            state=SubmissionStates.DELETED,
-        )
-    assert orga_client.get(deleted.orga_urls.base, follow=True).status_code == 200
-    assert orga_client.get(deleted.orga_urls.edit, follow=True).status_code == 404
-
-
-@pytest.mark.django_db
-def test_reviewer_track_limit_detail_view(review_client, review_user, event, track, other_track, submission_type):
-    with scope(event=event):
-        review_user.teams.first().limit_tracks.add(track)
-        allowed_sub = Submission.objects.create(
-            event=event, submission_type=submission_type, track=track, state=SubmissionStates.SUBMITTED
-        )
-        allowed_deleted = Submission.objects.create(
-            event=event, submission_type=submission_type, track=track, state=SubmissionStates.DELETED
-        )
-        off_sub = Submission.objects.create(
-            event=event, submission_type=submission_type, track=other_track, state=SubmissionStates.SUBMITTED
-        )
-        off_deleted = Submission.objects.create(
-            event=event, submission_type=submission_type, track=other_track, state=SubmissionStates.DELETED
-        )
-
-    assert review_client.get(allowed_sub.orga_urls.base, follow=True).status_code == 200
-    assert review_client.get(allowed_deleted.orga_urls.base, follow=True).status_code == 200
-    assert review_client.get(off_sub.orga_urls.base, follow=True).status_code == 404
-    assert review_client.get(off_deleted.orga_urls.base, follow=True).status_code == 404
-
-
-@pytest.mark.django_db
 def test_build_data_excludes_deleted_submission_with_released_slot(slot):
     with scope(event=slot.schedule.event):
-        schedule = slot.schedule
-        submission = slot.submission
-
-        assert any(talk.get('code') == submission.code for talk in schedule.build_data()['talks'])
+        schedule, submission = slot.schedule, slot.submission
+        assert submission.code in {talk.get('code') for talk in schedule.build_data()['talks']}
 
         submission.remove()
-        submission.refresh_from_db()
         slot.refresh_from_db()
-        assert submission.state == SubmissionStates.DELETED
         assert slot.schedule == schedule and slot.is_visible is True
-
-        talk_codes = {talk.get('code') for talk in schedule.build_data()['talks'] if talk.get('code')}
-        assert submission.code not in talk_codes
+        assert submission.code not in {talk.get('code') for talk in schedule.build_data()['talks']}
 
 
-def _hrefs(text, prefix):
-    return {html.unescape(href) for href in re.findall(r'href="([^"]+)"', text) if href.startswith(prefix)}
+@pytest.mark.django_db
+def test_reviewer_track_limits_apply_to_deleted_submissions(review_client, review_user, event, track, other_track):
+    with scope(event=event):
+        review_user.teams.first().limit_tracks.add(track)
+        submissions = {
+            (allowed, state): _create(event, state, track=track if allowed else other_track)
+            for allowed in (True, False)
+            for state in (SubmissionStates.SUBMITTED, SubmissionStates.DELETED)
+        }
+
+    for (allowed, state), sub in submissions.items():
+        for page in ('base', 'speakers', 'reviews', 'comments'):
+            status = review_client.get(getattr(sub.orga_urls, page), follow=True).status_code
+            assert status == (200 if allowed else 404), (allowed, state, page)
+        # Reviewers cannot change the state, so they cannot restore deleted sessions either
+        assert review_client.get(sub.orga_urls.accept).status_code == 404
 
 
 @pytest.mark.django_db
@@ -264,140 +170,89 @@ def _hrefs(text, prefix):
         ('withdraw', SubmissionStates.WITHDRAWN),
     ],
 )
-def test_change_state_of_deleted_submission_from_filtered_list(orga_client, event, submission, action, target):
-    with scope(event=event):
-        submission.remove(force=True)
-
-    # Filter the list by "deleted" and use the state dropdown link of the deleted session
-    res_list = orga_client.get(f'{event.orga_urls.submissions}?state={SubmissionStates.DELETED}')
-    assert res_list.status_code == 200
-    state_url = getattr(submission.orga_urls, action)
-    (dropdown_link,) = _hrefs(res_list.text, f'{state_url}?')
+def test_change_state_of_deleted_submission_from_filtered_list(orga_client, event, deleted_submission, action, target):
+    # Use the state dropdown link of the deleted session in the "Deleted" filter
+    res_list = orga_client.get(f'{event.orga_urls.submissions}?state=deleted')
+    (dropdown_link,) = _hrefs(res_list.text, f'{getattr(deleted_submission.orga_urls, action)}?')
     assert orga_client.get(dropdown_link).status_code == 200
 
-    res = orga_client.post(dropdown_link, follow=True)
-    assert res.status_code == 200
+    assert orga_client.post(dropdown_link, follow=True).status_code == 200
     with scope(event=event):
-        submission.refresh_from_db()
-        assert submission.state == target
-    assert submission.title in orga_client.get(event.orga_urls.submissions).text
+        deleted_submission.refresh_from_db()
+        assert deleted_submission.state == target
+    assert deleted_submission.title in orga_client.get(event.orga_urls.submissions).text
 
 
 @pytest.mark.django_db
-def test_apply_pending_state_on_deleted_submission(orga_client, event, submission):
+def test_apply_pending_state_on_deleted_submission(orga_client, event, deleted_submission):
+    assert orga_client.post(deleted_submission.orga_urls.accept, {'pending': 'on'}).status_code == 302
     with scope(event=event):
-        submission.remove(force=True)
-    assert orga_client.post(submission.orga_urls.accept, {'pending': 'on'}, follow=True).status_code == 200
+        deleted_submission.refresh_from_db()
+        assert (deleted_submission.state, deleted_submission.pending_state) == ('deleted', 'accepted')
+
+    assert orga_client.post(deleted_submission.orga_urls.apply_pending).status_code == 302
     with scope(event=event):
-        submission.refresh_from_db()
-        assert submission.state == SubmissionStates.DELETED
-        assert submission.pending_state == SubmissionStates.ACCEPTED
-    assert orga_client.post(submission.orga_urls.apply_pending, follow=True).status_code == 200
-    with scope(event=event):
-        submission.refresh_from_db()
-        assert submission.state == SubmissionStates.ACCEPTED
-        assert submission.pending_state is None
+        deleted_submission.refresh_from_db()
+        assert (deleted_submission.state, deleted_submission.pending_state) == ('accepted', None)
 
 
 @pytest.mark.django_db
-def test_deleted_submission_pages_have_no_broken_links(orga_client, event, submission):
-    with scope(event=event):
-        submission.remove(force=True)
-
-    pages = [
-        submission.orga_urls.base,
-        submission.orga_urls.speakers,
-        submission.orga_urls.reviews,
-        submission.orga_urls.comments,
-        submission.orga_urls.history,
-    ]
+def test_deleted_submission_pages_have_no_broken_links(orga_client, event, deleted_submission):
+    urls = deleted_submission.orga_urls
     links = set()
-    for page in pages:
+    for page in (urls.base, urls.speakers, urls.reviews, urls.comments, urls.history):
         response = orga_client.get(page)
         assert response.status_code == 200, page
-        links |= {link.split('?')[0] for link in _hrefs(response.text, submission.orga_urls.base)}
-    assert submission.orga_urls.edit not in links
-    for link in links:
-        assert orga_client.get(link).status_code == 200, link
+        links |= {link.split('?')[0] for link in _hrefs(response.text, urls.base)}
+    assert urls.edit not in links
 
-    row_links = _hrefs(
-        orga_client.get(f'{event.orga_urls.submissions}?state={SubmissionStates.DELETED}').text,
-        submission.orga_urls.base,
-    )
+    row_links = _hrefs(orga_client.get(f'{event.orga_urls.submissions}?state=deleted').text, urls.base)
     assert row_links
-    assert not any(link.startswith((submission.orga_urls.edit, submission.orga_urls.delete)) for link in row_links)
-    for link in row_links:
+    assert not any(link.startswith((urls.edit, urls.delete)) for link in row_links)
+    for link in links | row_links:
         assert orga_client.get(link).status_code == 200, link
 
 
 @pytest.mark.django_db
-def test_deleted_submission_content_changes_stay_blocked(orga_client, event, submission):
+def test_deleted_submission_content_changes_stay_blocked(orga_client, event, deleted_submission):
+    urls = deleted_submission.orga_urls
     with scope(event=event):
-        submission.remove(force=True)
-        speaker_count = submission.speakers.count()
+        speaker_count = deleted_submission.speakers.count()
 
-    assert orga_client.get(submission.orga_urls.edit).status_code == 404
-    assert orga_client.post(submission.orga_urls.edit, {'title': 'Changed'}).status_code == 404
-    assert orga_client.post(submission.orga_urls.speakers, {'email': 'new@example.com'}).status_code == 404
-    assert orga_client.post(submission.orga_urls.toggle_featured).status_code == 404
+    assert orga_client.get(urls.edit).status_code == 404
+    assert orga_client.post(urls.edit, {'title': 'Changed'}).status_code == 404
+    assert orga_client.post(urls.speakers, {'email': 'new@example.com'}).status_code == 404
+    assert orga_client.post(urls.toggle_featured).status_code == 404
     with scope(event=event):
-        submission.refresh_from_db()
-        assert submission.title != 'Changed'
-        assert submission.speakers.count() == speaker_count
-        assert not submission.speaker_invitations.filter(email='new@example.com').exists()
-        assert submission.is_featured is False
+        deleted_submission.refresh_from_db()
+        assert deleted_submission.title != 'Changed'
+        assert deleted_submission.speakers.count() == speaker_count
+        assert not deleted_submission.speaker_invitations.filter(email='new@example.com').exists()
+        assert deleted_submission.is_featured is False
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    ('other_deleted', 'query', 'expected_query'),
+    ('start_state', 'action', 'other_state', 'query', 'expected_query'),
     [
-        (False, 'state=deleted', ''),
-        (True, 'state=deleted', 'state=deleted'),
-        (False, 'state=deleted&state=submitted', 'state=deleted&state=submitted'),
-    ],
-)
-def test_restoring_last_deleted_submission_returns_to_full_list(
-    orga_client, event, submission, submission_type, other_deleted, query, expected_query
-):
-    with scope(event=event):
-        submission.remove(force=True)
-        if other_deleted:
-            Submission.objects.create(
-                event=event, submission_type=submission_type, title='Other deleted', state=SubmissionStates.DELETED
-            )
-
-    next_url = quote(f'{event.orga_urls.submissions}?{query}')
-    response = orga_client.post(f'{submission.orga_urls.make_submitted}?next={next_url}')
-    assert response.status_code == 302
-    expected = event.orga_urls.submissions + (f'?{expected_query}' if expected_query else '')
-    assert response.url == expected
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize(
-    ('other_submitted', 'query', 'expected_query'),
-    [
-        (False, 'state=submitted', ''),
-        (True, 'state=submitted', 'state=submitted'),
-        (False, 'state=submitted&state=accepted', 'state=submitted&state=accepted'),
-        (False, 'q=nothing-matches', 'q=nothing-matches'),
+        ('deleted', 'make_submitted', None, 'state=deleted', ''),
+        ('deleted', 'make_submitted', 'deleted', 'state=deleted', 'state=deleted'),
+        ('deleted', 'make_submitted', None, 'state=deleted&state=submitted', 'state=deleted&state=submitted'),
+        ('submitted', 'accept', None, 'state=submitted', ''),
+        ('submitted', 'accept', 'submitted', 'state=submitted', 'state=submitted'),
+        ('submitted', 'accept', None, 'q=nothing-matches', 'q=nothing-matches'),
     ],
 )
 def test_emptied_state_filter_returns_to_full_list(
-    orga_client, event, submission, submission_type, other_submitted, query, expected_query
+    orga_client, event, submission, start_state, action, other_state, query, expected_query
 ):
-    if other_submitted:
-        with scope(event=event):
-            Submission.objects.create(
-                event=event, submission_type=submission_type, title='Other submitted', state=SubmissionStates.SUBMITTED
-            )
-
-    next_url = quote(f'{event.orga_urls.submissions}?{query}')
-    response = orga_client.post(f'{submission.orga_urls.accept}?next={next_url}')
-    assert response.status_code == 302
-    expected = event.orga_urls.submissions + (f'?{expected_query}' if expected_query else '')
-    assert response.url == expected
     with scope(event=event):
-        submission.refresh_from_db()
-        assert submission.state == SubmissionStates.ACCEPTED
+        if start_state == SubmissionStates.DELETED:
+            submission.remove(force=True)
+        if other_state:
+            _create(event, other_state, title='Other session')
+
+    url = f'{getattr(submission.orga_urls, action)}?next={quote(f"{event.orga_urls.submissions}?{query}")}'
+    response = orga_client.post(url)
+    assert response.status_code == 302
+    assert response.url == event.orga_urls.submissions + (f'?{expected_query}' if expected_query else '')
