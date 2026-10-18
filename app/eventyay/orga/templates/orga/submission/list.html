@@ -171,6 +171,7 @@
                         </td>
                         {% if can_change_submission %}
                             <td class="submission_featured text-center">
+                                {% if not submission.is_deleted %}
                                 <div class="form-check d-inline-block" title="{% translate "Show this proposal in the list of featured sessions." %}">
                                     <input
                                         type="checkbox"
@@ -185,9 +186,11 @@
                                 <i class="working fa fa-spinner fa-spin d-none"></i>
                                 <i class="done fa fa-check d-none text-success"></i>
                                 <i class="fail fa fa-times d-none"></i>
+                                {% endif %}
                             </td>
                             {% if session_videos_enabled %}
                             <td class="submission-video text-center">
+                                {% if not submission.is_deleted %}
                                 <button
                                     type="button"
                                     class="btn btn-sm {% if submission.session_video_urls %}btn-success{% else %}btn-outline-secondary{% endif %} submission-video-btn"
@@ -201,15 +204,18 @@
                                 >
                                     <i class="fa fa-youtube-play" aria-hidden="true"></i>
                                 </button>
+                                {% endif %}
                             </td>
                             {% endif %}
                             <td class="action-column">
+                                {% if not submission.is_deleted %}
                                 <a href="{{ submission.orga_urls.edit }}" title="{{ phrases.base.edit }}" class="btn btn-sm btn-info">
                                     <i class="fa fa-edit"></i>
                                 </a>
                                 <a href="{{ submission.orga_urls.delete }}?from=list" title="{{ phrases.base.delete_button }}" class="btn btn-sm btn-danger">
                                     <i class="fa fa-trash"></i>
                                 </a>
+                                {% endif %}
                             </td>
                         {% endif %}
                     </tr>
