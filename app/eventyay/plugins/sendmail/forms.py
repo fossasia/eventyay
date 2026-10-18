@@ -1,6 +1,7 @@
 import json
 from collections import defaultdict
 
+from bs4 import BeautifulSoup
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -723,6 +724,15 @@ class TicketMailBodyFormField(I18nEmailBodyFormField):
         if not isinstance(values, list):
             values = self.widget.decompress(values)
         return [compile_email_body(text.replace('\n', '  \n')) if text else text for text in values]
+
+    def run_validators(self, value):
+        """Apply the template's placeholder restrictions to chip attributes too."""
+        super().run_validators(value)
+        for validator in self.validators:
+            if isinstance(validator, PlaceholderValidator):
+                for text in value.data.values():
+                    chips = BeautifulSoup(text, 'html.parser').select('[data-variable]')
+                    validator(''.join('{' + chip['data-variable'] + '}' for chip in chips))
 
 
 class MailContentSettingsForm(SettingsForm):

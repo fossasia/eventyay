@@ -232,7 +232,12 @@ class FileSavedEmailBackend(_FileBasedEmailBackend):
 class BaseHTMLMailRenderer:
     """
     This is the base class for all HTML e-mail renderers.
+
+    Renderers may opt into receiving editor HTML by setting
+    ``supports_html_body``. Otherwise, ``render`` receives readable plain text.
     """
+
+    supports_html_body = False
 
     def __init__(self, event: Event, organizer=None):
         self.event = event
@@ -252,7 +257,7 @@ class BaseHTMLMailRenderer:
         """
         This method should generate the HTML part of the email.
 
-        :param plain_body: The body of the email in plain text.
+        :param plain_body: The body in plain text, or editor HTML when ``supports_html_body`` is true.
         :param plain_signature: The signature with event organizer contact details in plain text.
         :param subject: The email subject.
         :param order: The order if this email is connected to one, otherwise ``None``.
@@ -295,6 +300,8 @@ class BaseHTMLMailRenderer:
 
 
 class TemplateBasedMailRenderer(BaseHTMLMailRenderer):
+    supports_html_body = True
+
     @property
     def template_name(self):
         raise NotImplementedError()

@@ -57,11 +57,11 @@ from eventyay.base.models.global_plugin_config import GlobalPluginConfig
 from eventyay.base.plugins import get_all_plugins
 from eventyay.base.services import tickets
 from eventyay.base.services.invoices import build_preview_invoice_pdf
+from eventyay.base.services.mail import render_mail
 from eventyay.base.signals import register_ticket_outputs
 from eventyay.base.templatetags.rich_text import (
     compile_email_body,
     expand_email_preview_placeholders,
-    is_placeholder_html_sample,
 )
 from eventyay.control.forms.event import (
     CancelSettingsForm,
@@ -836,16 +836,13 @@ class MailSettingsPreview(EventPermissionRequiredMixin, View):
 
     # get all supported placeholders with dummy values
     def placeholders(self, product):
-        """Keep text samples safe in both editor text and link attributes."""
+        """Provide samples for expansion through the delivery renderer."""
         ctx = {}
 
         for p in get_available_placeholders(self.request.event, MailSettingsForm.base_context[product]).values():
             s = str(p.render_sample(self.request.event)).strip()
 
-            if s.startswith('*') or is_placeholder_html_sample(s):
-                ctx[p.identifier] = s
-            else:
-                ctx[p.identifier] = html.escape(s)
+            ctx[p.identifier] = s
         return self.SafeDict(ctx)
 
     def post(self, request, *args, **kwargs):
@@ -872,7 +869,9 @@ class MailSettingsPreview(EventPermissionRequiredMixin, View):
                 if idx in self.supported_locale:
                     with language(self.supported_locale[idx], self.request.event.settings.region):
                         try:
-                            formatted = v.format_map(self.placeholders(preview_product))
+                            formatted = render_mail(
+                                LazyI18nString({self.supported_locale[idx]: v}), self.placeholders(preview_product)
+                            )
                         except ValueError:
                             return JsonResponse(
                                 {

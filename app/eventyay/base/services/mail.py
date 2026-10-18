@@ -1,4 +1,5 @@
 import base64
+import html
 import inspect
 import logging
 import os
@@ -33,6 +34,7 @@ from django.utils.translation import gettext as _
 from django.utils.translation import pgettext
 from django_scopes import scope, scopes_disabled
 from i18nfield.strings import LazyI18nString
+from markdownify import markdownify
 
 from eventyay.base.email import ClassicMailRenderer
 from eventyay.base.gmail.errors import (
@@ -57,6 +59,11 @@ from eventyay.base.services.tasks import TransactionAwareTask
 from eventyay.base.services.tickets import get_tickets_for_order
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.signals import email_filter, global_email_filter
+from eventyay.base.templatetags.rich_text import (
+    _is_tiptap_email_html,
+    compile_email_body,
+    is_placeholder_html_sample,
+)
 from eventyay.celery_app import app
 from eventyay.common.mail import get_reply_to_address
 from eventyay.consts import SizeKey
@@ -180,7 +187,12 @@ def mail(
             except InvoiceAddress.DoesNotExist:
                 context.update({'invoice_name': '', 'invoice_company': ''})
         renderer = ClassicMailRenderer(None)
-        content_plain = body_plain = render_mail(template, context)
+        editor_template = isinstance(template, LazyI18nString) and _is_tiptap_email_html(str(template))
+        content = render_mail(template, context)
+        plain_content = (
+            markdownify(content, strip=['img']) if editor_template or _is_tiptap_email_html(content) else content
+        )
+        body_plain = plain_content
         subject = str(subject).format_map(TolerantDict(_stringify_mail_context(context)))
         sender = sender or (event.settings.get('mail_from') if event else settings.DEFAULT_FROM_EMAIL) or settings.DEFAULT_FROM_EMAIL
         sender_email_raw = sender
@@ -286,15 +298,16 @@ def mail(
 
         with override(timezone):
             try:
+                renderer_body = content if renderer.supports_html_body else plain_content
                 if 'position' in inspect.signature(renderer.render).parameters:
-                    body_html = renderer.render(content_plain, signature, raw_subject, order, position)
+                    body_html = renderer.render(renderer_body, signature, raw_subject, order, position)
                 else:
                     # Backwards compatibility
                     warnings.warn(
                         'E-mail renderer called without position argument because position argument is not supported.',
                         DeprecationWarning,
                     )
-                    body_html = renderer.render(content_plain, signature, raw_subject, order)
+                    body_html = renderer.render(renderer_body, signature, raw_subject, order)
             except (TemplateDoesNotExist, TypeError, ValueError):
                 # Fall back to plain-text email if the HTML body can't be rendered.
                 logger.exception('Could not render HTML body')
@@ -737,10 +750,17 @@ def expand_email_variable_chips(body: str, context: dict[str, str]) -> str:
 
 
 def render_mail(template, context):
+    """Expand variables with Markdown blocks preserved inside editor HTML."""
     if isinstance(template, LazyI18nString):
         body = str(template)
         if context:
             string_context = _stringify_mail_context(context)
+            if _is_tiptap_email_html(body):
+                string_context = {
+                    key: compile_email_body(value) if '\n' in value or is_placeholder_html_sample(value)
+                    else html.escape(value)
+                    for key, value in string_context.items()
+                }
             body = body.format_map(TolerantDict(string_context))
             body = expand_email_variable_chips(body, string_context)
     else:
