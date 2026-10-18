@@ -1,6 +1,10 @@
 {% extends 'pretixcontrol/admin/base.html' %}
-{% load i18n money urlreplace %}
+{% load i18n money static urlreplace %}
 {% block title %}{% translate 'Sales Overview' %}{% endblock %}
+{% block custom_header %}
+  {{ block.super }}
+  <link rel='stylesheet' href='{% static "pretixcontrol/css/admin-sales.css" %}'>
+{% endblock %}
 {% block content %}
   <h1>{% translate 'Sales Overview' %}</h1>
   <ul class='nav nav-tabs'>
@@ -12,19 +16,19 @@
   {% else %}
     <p class='help-block'>{% translate 'Tickets sold counts admission tickets on paid orders. Revenue is the gross total of currently paid orders, including fees. Each event is reported in its own currency.' %}</p>
   {% endif %}
-  <form method='get' class='row'>
-    <div class='col-sm-5 form-group'>
+  <form method='get' class='sales-filters'>
+    <div class='form-group sales-search'>
       <label for='sales-query'>{% translate 'Search' %}</label>
       <input class='form-control' id='sales-query' name='query' value='{{ query }}' type='search'>
     </div>
-    <div class='col-sm-3 form-group'>
+    <div class='form-group'>
       <label for='sales-status'>{% translate 'Status' %}</label>
       <select class='form-control' id='sales-status' name='status'>
         <option value=''>{% translate 'All statuses' %}</option>
         {% for value, label in statuses %}<option value='{{ value }}'{% if status == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
       </select>
     </div>
-    <div class='col-sm-4 form-group'>
+    <div class='form-group'>
       <label for='sales-ordering'>{% translate 'Sort by' %}</label>
       <select class='form-control' id='sales-ordering' name='ordering'>
         {% for key, label in columns %}
@@ -33,7 +37,7 @@
         {% endfor %}
       </select>
     </div>
-    <div class='col-xs-12 form-group'>
+    <div class='sales-filter-actions'>
       <button class='btn btn-primary' type='submit'>{% translate 'Apply filters' %}</button>
       <a class='btn btn-default' href='{{ request.path }}'>{% translate 'Reset' %}</a>
       <button class='btn btn-default' type='submit' name='export' value='csv'><span class='fa fa-download' aria-hidden='true'></span> {% translate 'Export CSV' %}</button>
