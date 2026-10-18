@@ -574,6 +574,7 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
         return d
 
     def save(self, *args, **kwargs):
+        """Save the question and merge or replace uploaded response options."""
         instance = super().save(*args, **kwargs)
         options = self.cleaned_data.get('options')
         options_replace = self.cleaned_data.get('options_replace')
@@ -596,19 +597,21 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
                 existing_options = {str(opt.answer): opt for opt in existing_options}
                 options = [str(opt) for opt in options]
         else:
-            existing_options = {str(opt.answer): opt for opt in existing_options}
+            existing_options = {json.dumps(opt.answer.data, sort_keys=True): opt for opt in existing_options}
         new_options = []
         changed_options = []
         for index, option in enumerate(options):
-            if option not in existing_options:
+            option_key = json.dumps(option.data, sort_keys=True) if use_i18n else option
+            if option_key not in existing_options:
                 new_options.append(AnswerOption(question=instance, answer=option, position=index + 1))
             else:
-                existing_option = existing_options[option]
+                existing_option = existing_options[option_key]
                 if existing_option.position != index + 1:
                     existing_option.position = index + 1
                     changed_options.append(existing_option)
         AnswerOption.objects.bulk_create(new_options)
         AnswerOption.objects.bulk_update(changed_options, ['position'])
+        return instance
 
     class Meta:
         model = TalkQuestion

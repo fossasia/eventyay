@@ -4,13 +4,15 @@ import re
 from zoneinfo import ZoneInfo
 
 import pytest
+from django.conf import settings
 from django.core import mail as djmail
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django_scopes import scope
 
-from eventyay.base.models import Answer, Event, Track
-from eventyay.base.models import QueuedMail
+from eventyay.base.models import Answer, Event, QueuedMail, Track
 from eventyay.base.models import TalkQuestion as Question
 from eventyay.base.models.question import TalkQuestionRequired as QuestionRequired
+
 
 _FORM_OPEN = re.compile(r"<form(?:\s|>)", re.I)
 _FORM_CLOSE = re.compile(r"</form\s*>", re.I)
@@ -939,3 +941,119 @@ def test_orga_cfp_forms_shows_session_videos_as_organizer_only(orga_client, even
         "It is not displayed on the proposal form."
     ) in content
 
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('variant', ('choices', 'multiple_choice', 'select'))
+@pytest.mark.parametrize('mode', ('translated-append', 'translated-replace', 'plain-append'))
+def test_upload_question_options_preserves_translations_and_answers(
+    orga_client, event, submission, speaker, variant, mode
+):
+    """Import options through the organiser form without losing existing answers."""
+    multilingual = mode != 'plain-append'
+    event.locale_array = 'en,de' if multilingual else 'en'
+    event.save()
+    with scope(event=event):
+        question = Question.objects.create(
+            event=event,
+            question='Meal preference',
+            variant=variant,
+            target='submission',
+            question_required=QuestionRequired.OPTIONAL,
+        )
+        existing = question.options.create(
+            answer={'en': 'Vegetarian', 'de': 'Vegetarisch'} if multilingual else {'en': 'Vegetarian'}, position=1
+        )
+        retained = question.options.create(
+            answer={'en': 'Kosher', 'de': 'Koscher'} if multilingual else {'en': 'Kosher'}, position=2
+        )
+        retained.refresh_from_db()
+        answer = Answer.objects.create(question=question, submission=submission, person=speaker)
+        answer.options.add(existing)
+        uploaded = [
+            {'de': 'Vegetarisch', 'en': 'Vegetarian'},
+            {'en': 'Vegan', 'de': 'Vegan'},
+        ]
+        content = json.dumps(uploaded) if multilingual else 'Vegetarian\nVegan'
+        data = {
+            'target': 'submission',
+            'question_0': 'Meal preference',
+            'variant': variant,
+            'question_required': QuestionRequired.OPTIONAL,
+            'form-TOTAL_FORMS': 2,
+            'form-INITIAL_FORMS': 2,
+            'form-0-id': existing.pk,
+            'form-0-position': existing.position,
+            'form-0-answer_0': 'Vegetarian',
+            'form-1-id': retained.pk,
+            'form-1-position': retained.position,
+            'form-1-answer_0': 'Kosher',
+        }
+        if multilingual:
+            german_index = [code for code, _ in settings.LANGUAGES].index('de')
+            data.update(
+                {
+                    f'question_{german_index}': '',
+                    f'form-0-answer_{german_index}': 'Vegetarisch',
+                    f'form-1-answer_{german_index}': 'Koscher',
+                }
+            )
+        if mode == 'translated-replace':
+            data['options_replace'] = 'on'
+        for _ in range(2 if mode != 'translated-replace' else 1):
+            data['options'] = SimpleUploadedFile('options.json', content.encode())
+            response = orga_client.post(question.urls.edit, data)
+            assert response.status_code == 302, response.context_data['form'].errors
+            if mode != 'translated-replace':
+                assert question.options.count() == 3
+                assert question.options.filter(pk=retained.pk).exists()
+                assert list(answer.options.values_list('pk', flat=True)) == [existing.pk]
+            else:
+                assert question.options.count() == 2
+                assert not question.answers.exists()
+            if multilingual:
+                assert {tuple(sorted(option.answer.data.items())) for option in question.options.all()} == {
+                    tuple(sorted(option.items()))
+                    for option in (uploaded if mode == 'translated-replace' else uploaded + [retained.answer.data])
+                }
+            else:
+                assert {str(option.answer) for option in question.options.all()} == {'Vegetarian', 'Kosher', 'Vegan'}
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('variant', ('choices', 'multiple_choice', 'select'))
+def test_upload_translated_options_with_matching_default_labels(orga_client, event, variant):
+    """Keep choices distinct when only their non-default translations differ."""
+    event.locale_array = 'en,de'
+    event.save()
+    with scope(event=event):
+        question = Question.objects.create(
+            event=event,
+            question='Choose a label',
+            variant=variant,
+            target='submission',
+            question_required=QuestionRequired.OPTIONAL,
+        )
+        existing = question.options.create(answer={'en': 'Other', 'de': 'Andere'}, position=1)
+        german_index = [code for code, _ in settings.LANGUAGES].index('de')
+        translated = {'en': 'Other', 'de': 'Sonstige'}
+        response = orga_client.post(
+            question.urls.edit,
+            {
+                'target': 'submission',
+                'question_0': 'Choose a label',
+                'variant': variant,
+                'question_required': QuestionRequired.OPTIONAL,
+                'form-TOTAL_FORMS': 1,
+                'form-INITIAL_FORMS': 1,
+                'form-0-id': existing.pk,
+                'form-0-position': existing.position,
+                'form-0-answer_0': 'Other',
+                f'form-0-answer_{german_index}': 'Andere',
+                'options': SimpleUploadedFile('options.json', json.dumps([translated]).encode()),
+            },
+        )
+        assert response.status_code == 302
+        assert question.options.count() == 2
+        existing.refresh_from_db()
+        assert existing.answer.data == {'en': 'Other', 'de': 'Andere'}
+        assert question.options.exclude(pk=existing.pk).get().answer.data == translated
