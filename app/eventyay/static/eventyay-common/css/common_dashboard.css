@@ -3735,7 +3735,10 @@ h4.od-subchart {
   border-radius: 6px;
   padding: 4px 6px 4px 12px;
   gap: 8px;
+  width: 100%;
+  min-width: 0;
   max-width: 480px;
+  box-sizing: border-box;
 }
 .cc-url-text {
   font-size: 13px;
@@ -3908,6 +3911,24 @@ h4.od-subchart {
 .cc-action-info .cc-action-card-btn:hover {
   background: #1557b0;
   color: #fff;
+}
+.cc-action-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+  margin-top: auto;
+}
+.cc-action-discard-form {
+  display: inline-block;
+  margin: 0;
+}
+.cc-action-discard-btn {
+  font-size: 11px;
+  color: #5f6368;
+  padding: 2px 8px;
 }
 .cc-action-empty {
   background: #fff;
@@ -4208,7 +4229,8 @@ h4.od-subchart {
 .cc-cat-talk { background: #fef7e0; color: #b06000; }
 .cc-cat-speaker { background: #f3e8fd; color: #7627bb; }
 .cc-cat-product { background: #e6f4ea; color: #137333; }
-.cc-cat-checkin { background: #e0f2f1; color: #00796b; }
+.cc-cat-checkin,
+.cc-cat-check-in { background: #e0f2f1; color: #00796b; }
 .cc-cat-video { background: #fce8e6; color: #d93025; }
 .cc-cat-settings { background: #f1f3f4; color: #5f6368; }
 .cc-cat-system { background: #f1f3f4; color: #5f6368; }

@@ -12,9 +12,10 @@
           <span class="cc-status-dot" aria-hidden="true"></span>
           <span>{% trans 'Event status:' %} {{ header_data.event_status }}</span>
         </span>
+        {% trans 'Disabled' as default_disabled %}
         <span class="cc-badge cc-badge-{{ header_data.ticket_shop_status.class|default:'info' }}" title="{% trans 'Ticket shop status' %}">
           <span class="fa {{ header_data.ticket_shop_status.icon|default:'fa-ticket' }}" aria-hidden="true"></span>
-          <span>{% trans 'Ticket shop:' %} {{ header_data.ticket_shop_status.text|default:_('Disabled') }}</span>
+          <span>{% trans 'Ticket shop:' %} {{ header_data.ticket_shop_status.text|default:default_disabled }}</span>
         </span>
         {% if header_data.is_testmode %}
           <span class="cc-badge cc-badge-test">

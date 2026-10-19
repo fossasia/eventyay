@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
-from eventyay.base.models import Order, Submission, SubmissionStates, Team, User
+from eventyay.base.models import Order, RequiredAction, Submission, SubmissionStates, Team, User
 
 
 @pytest.fixture
@@ -298,5 +298,137 @@ def test_command_center_recent_activity_logentry(organizer_client, event, comman
     assert response.status_code == 200
     assert len(response.context['recent_activity']) == 1
     assert response.context['recent_activity'][0]['display'] is not None
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_command_center_header_ticket_shop_disabled_fallback(organizer_client, event, command_center_url, monkeypatch):
+    """When ticket shop status text is empty, the fallback string 'Disabled' is rendered via template."""
+    from eventyay.eventyay_common.views.dashboards import EventIndexView
+    orig_header = EventIndexView._get_header_data
+
+    def mock_header(self, e, req):
+        data = orig_header(self, e, req)
+        data['ticket_shop_status'] = {'class': 'info', 'icon': 'fa-ticket', 'text': ''}
+        return data
+
+    monkeypatch.setattr(EventIndexView, '_get_header_data', mock_header)
+
+    response = organizer_client.get(command_center_url)
+    assert response.status_code == 200
+    content = response.content.decode()
+    assert 'Ticket shop:' in content
+    assert 'Disabled' in content
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_command_center_organizer_all_events_teams(organizer_client, organizer, event, command_center_url):
+    """Core organizer teams with all_events=True appear in organiser_info teams."""
+    with scopes_disabled():
+        Team.objects.create(
+            organizer=organizer,
+            name='Global Core Team',
+            all_events=True,
+            can_change_event_settings=True,
+        )
+    response = organizer_client.get(command_center_url)
+    assert response.status_code == 200
+    team_names = [t['name'] for t in response.context['organiser_info']['teams']]
+    assert 'Global Core Team' in team_names
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_command_center_shared_submission_metrics_aggregation(organizer_client, event, team, command_center_url):
+    """Submission and speaker metrics are computed once via aggregate rather than redundant queries."""
+    with scopes_disabled():
+        team.can_change_submissions = True
+        team.save()
+        st = event.submission_types.create(name='Standard', default_duration=30)
+        speaker = User.objects.create_user(email='spk_test@example.com', password='pass')
+        sub1 = Submission.objects.create(
+            event=event, submission_type=st, title='Talk 1', state=SubmissionStates.CONFIRMED
+        )
+        sub1.speakers.add(speaker)
+        Submission.objects.create(event=event, submission_type=st, title='Talk 2', state=SubmissionStates.ACCEPTED)
+        Submission.objects.create(event=event, submission_type=st, title='Talk 3', state=SubmissionStates.REJECTED)
+
+    response = organizer_client.get(command_center_url)
+    assert response.status_code == 200
+    assert response.context['analytics_overview']['proposal_stats'] == {
+        'submitted': 3,
+        'accepted': 1,
+        'confirmed': 1,
+        'rejected': 1,
+    }
+    assert response.context['at_a_glance']['sessions_confirmed'] == 1
+    assert response.context['at_a_glance']['speakers_confirmed'] == 1
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_command_center_url_reverse_failure_safe_fallback(organizer_client, event, command_center_url, monkeypatch):
+    """If reverse or eventreverse raises NoReverseMatch, view still renders gracefully."""
+    from django.urls import NoReverseMatch
+
+    import eventyay.eventyay_common.views.dashboards as dashboards_mod
+
+    def mock_eventreverse(*args, **kwargs):
+        raise NoReverseMatch('Mock reverse error')
+
+    monkeypatch.setattr(dashboards_mod, 'eventreverse', mock_eventreverse)
+
+    response = organizer_client.get(command_center_url)
+    assert response.status_code == 200
+    assert response.context['header_data']['public_url'] == ''
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_command_center_checkin_category_badge(organizer_client, event, command_center_url):
+    """Check-in category log entries map to cc-cat-check-in badge class."""
+    from django.contrib.contenttypes.models import ContentType
+
+    from eventyay.base.models import CheckinList
+
+    with scopes_disabled():
+        cl = CheckinList.objects.create(event=event, name='Default')
+        ct = ContentType.objects.get_for_model(CheckinList)
+        event.logentry_set.create(content_type=ct, object_id=cl.pk, action_type='eventyay.event.checkin')
+
+    response = organizer_client.get(command_center_url)
+    assert response.status_code == 200
+    content = response.content.decode()
+    assert 'cc-cat-check-in' in content
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_command_center_required_action_merged_and_discardable(organizer_client, event, command_center_url):
+    """Active RequiredAction appears in action_required cards and can be dismissed via discard_url."""
+    with scopes_disabled():
+        req_action = RequiredAction.objects.create(
+            event=event,
+            action_type='test.operational.alert',
+        )
+
+    response = organizer_client.get(command_center_url)
+    assert response.status_code == 200
+    actions = response.context['action_required']
+    alert_card = next((a for a in actions if a['id'] == f'required-action-{req_action.id}'), None)
+    assert alert_card is not None
+    assert alert_card['discard_url'] is not None
+
+    content = response.content.decode()
+    assert 'Operational alert' in content
+    assert alert_card['discard_url'] in content
+
+    # Post to discard URL to resolve the issue
+    discard_resp = organizer_client.post(alert_card['discard_url'])
+    assert discard_resp.status_code in (302, 200)
+    req_action.refresh_from_db()
+    assert req_action.done is True
+
 
 

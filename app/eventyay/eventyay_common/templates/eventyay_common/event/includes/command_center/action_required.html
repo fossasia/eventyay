@@ -18,11 +18,27 @@
             <span class="cc-action-card-title">{{ action.title }}</span>
             <span class="cc-action-card-count">{{ action.count }}</span>
           </div>
-          <p class="cc-action-card-desc">{{ action.desc }}</p>
-          <a href="{{ action.url }}" class="cc-action-card-btn">
-            <span>{{ action.btn_text }}</span>
-            <span class="fa fa-arrow-right" aria-hidden="true"></span>
-          </a>
+          {% if action.display %}
+            <div class="cc-action-card-desc">{{ action.display|safe }}</div>
+          {% else %}
+            <p class="cc-action-card-desc">{{ action.desc }}</p>
+          {% endif %}
+          <div class="cc-action-card-footer">
+            {% if action.url %}
+              <a href="{{ action.url }}" class="cc-action-card-btn">
+                <span>{{ action.btn_text }}</span>
+                <span class="fa fa-arrow-right" aria-hidden="true"></span>
+              </a>
+            {% endif %}
+            {% if action.discard_url %}
+              <form method="post" action="{{ action.discard_url }}" class="cc-action-discard-form">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-default btn-xs cc-action-discard-btn">
+                  {% trans "Hide message" %}
+                </button>
+              </form>
+            {% endif %}
+          </div>
         </article>
       {% endfor %}
     </div>

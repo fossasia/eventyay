@@ -397,8 +397,9 @@ class EventIndexView(TemplateView):
             event_status_class = 'live'
 
         ticket_shop_status = event.ticket_component_presale_status
-        public_url = eventreverse(event, 'presale:event.index')
+        public_url = ''
         try:
+            public_url = eventreverse(event, 'presale:event.index')
             full_public_url = request.build_absolute_uri(public_url)
         except (NoReverseMatch, AttributeError, ValueError):
             full_public_url = public_url
@@ -538,6 +539,49 @@ class EventIndexView(TemplateView):
     def _get_action_required(self, event: Event, permissions: Dict[str, Any], subevent=None) -> List[Dict[str, Any]]:
         """Collect cross-event actionable alert cards."""
         actions = []
+        if permissions.get('can_change_orders') or permissions.get('can_view_orders'):
+            for req_action in event.requiredaction_set.filter(done=False):
+                request_obj = getattr(self, 'request', None)
+                try:
+                    display_html = req_action.display(request_obj) if request_obj else req_action.action_type
+                except Exception:
+                    display_html = req_action.action_type
+
+                soup = BeautifulSoup(str(display_html), 'html.parser')
+                desc_text = soup.get_text(separator=' ', strip=True) or str(display_html)
+
+                discard_url = None
+                if permissions.get('can_change_orders'):
+                    try:
+                        discard_url = reverse(
+                            'control:event.requiredaction.discard',
+                            kwargs={'event': event.slug, 'organizer': event.organizer.slug, 'id': req_action.id},
+                        )
+                    except NoReverseMatch:
+                        discard_url = None
+
+                list_url = None
+                try:
+                    list_url = reverse(
+                        'control:event.requiredactions',
+                        kwargs={'event': event.slug, 'organizer': event.organizer.slug},
+                    )
+                except NoReverseMatch:
+                    list_url = None
+
+                actions.append({
+                    'id': f'required-action-{req_action.id}',
+                    'icon': 'exclamation-triangle',
+                    'title': _('Operational alert'),
+                    'count': 1,
+                    'desc': desc_text,
+                    'display': display_html,
+                    'severity': 'danger',
+                    'btn_text': _('View alert'),
+                    'url': list_url,
+                    'discard_url': discard_url,
+                })
+
         if permissions.get('can_view_orders'):
             order_qs = event.orders.all()
             if subevent:
@@ -545,12 +589,15 @@ class EventIndexView(TemplateView):
 
             pending_approvals = order_qs.filter(status=Order.STATUS_PENDING, require_approval=True).count()
             if pending_approvals > 0:
-                approval_url = (
-                    reverse('control:event.orders', kwargs={'event': event.slug, 'organizer': event.organizer.slug})
-                    + '?status=pa'
-                )
-                if subevent:
-                    approval_url += f'&subevent={subevent.id}'
+                try:
+                    approval_url = (
+                        reverse('control:event.orders', kwargs={'event': event.slug, 'organizer': event.organizer.slug})
+                        + '?status=pa'
+                    )
+                    if subevent:
+                        approval_url += f'&subevent={subevent.id}'
+                except NoReverseMatch:
+                    approval_url = None
                 actions.append({
                     'id': 'orders-approval',
                     'icon': 'clock-o',
@@ -571,12 +618,15 @@ class EventIndexView(TemplateView):
                 | Q(Q(status=Order.STATUS_CANCELED) & Q(pending_sum_rc__lt=0))
             ).count()
             if overpaid_orders > 0:
-                overpaid_url = (
-                    reverse('control:event.orders', kwargs={'event': event.slug, 'organizer': event.organizer.slug})
-                    + '?status=overpaid'
-                )
-                if subevent:
-                    overpaid_url += f'&subevent={subevent.id}'
+                try:
+                    overpaid_url = (
+                        reverse('control:event.orders', kwargs={'event': event.slug, 'organizer': event.organizer.slug})
+                        + '?status=overpaid'
+                    )
+                    if subevent:
+                        overpaid_url += f'&subevent={subevent.id}'
+                except NoReverseMatch:
+                    overpaid_url = None
                 actions.append({
                     'id': 'overpaid-orders',
                     'icon': 'money',
@@ -593,6 +643,10 @@ class EventIndexView(TemplateView):
                 })
 
         if permissions.get('can_change_event_settings') and not event.products.exists():
+            try:
+                products_url = reverse('control:event.quick', kwargs={'event': event.slug, 'organizer': event.organizer.slug})
+            except NoReverseMatch:
+                products_url = None
             actions.append({
                 'id': 'setup-products',
                 'icon': 'wrench',
@@ -601,7 +655,7 @@ class EventIndexView(TemplateView):
                 'desc': _('No ticket products configured yet. Set up ticketing to start sales.'),
                 'severity': 'info',
                 'btn_text': _('Go to setup'),
-                'url': reverse('control:event.quick', kwargs={'event': event.slug, 'organizer': event.organizer.slug}),
+                'url': products_url,
             })
 
         if permissions.get('has_talk_access'):
@@ -613,6 +667,13 @@ class EventIndexView(TemplateView):
                     submission__state=SubmissionStates.CONFIRMED,
                 ).count()
                 if unscheduled > 0:
+                    try:
+                        schedule_url = reverse(
+                            'orga:schedule.main',
+                            kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+                        )
+                    except NoReverseMatch:
+                        schedule_url = None
                     actions.append({
                         'id': 'unscheduled-sessions',
                         'icon': 'calendar-times-o',
@@ -625,10 +686,7 @@ class EventIndexView(TemplateView):
                         ) % {'count': unscheduled},
                         'severity': 'warning',
                         'btn_text': _('Open schedule'),
-                        'url': reverse(
-                            'orga:schedule.main',
-                            kwargs={'organizer': event.organizer.slug, 'event': event.slug},
-                        ),
+                        'url': schedule_url,
                     })
 
             confirmed_speakers_qs = User.objects.filter(
@@ -640,6 +698,13 @@ class EventIndexView(TemplateView):
                 & (Q(biography__isnull=True) | Q(biography='') | Q(user__avatar__isnull=True) | Q(user__avatar=''))
             ).distinct().count()
             if incomplete_speakers > 0:
+                try:
+                    speakers_url = reverse(
+                        'orga:speakers.list',
+                        kwargs={'event': event.slug, 'organizer': event.organizer.slug},
+                    )
+                except NoReverseMatch:
+                    speakers_url = None
                 actions.append({
                     'id': 'incomplete-speakers',
                     'icon': 'user-times',
@@ -652,13 +717,14 @@ class EventIndexView(TemplateView):
                     ) % {'count': incomplete_speakers},
                     'severity': 'caution',
                     'btn_text': _('Review speakers'),
-                    'url': reverse(
-                        'orga:speakers.list',
-                        kwargs={'event': event.slug, 'organizer': event.organizer.slug},
-                    ),
+                    'url': speakers_url,
                 })
 
         if permissions.get('has_video_access') and not is_video_enabled(event):
+            try:
+                video_url = reverse('eventyay_common:event.create_access_to_video', kwargs={'event': event.slug, 'organizer': event.organizer.slug})
+            except NoReverseMatch:
+                video_url = None
             actions.append({
                 'id': 'video-configuration',
                 'icon': 'video-camera',
@@ -667,7 +733,7 @@ class EventIndexView(TemplateView):
                 'desc': _('Video streaming and room settings need configuration.'),
                 'severity': 'info',
                 'btn_text': _('Open video settings'),
-                'url': reverse('eventyay_common:event.create_access_to_video', kwargs={'event': event.slug, 'organizer': event.organizer.slug}),
+                'url': video_url,
             })
 
         return actions
@@ -698,6 +764,41 @@ class EventIndexView(TemplateView):
             'revenue_sum': metrics['rev_sum'] or Decimal('0.00'),
         }
 
+    def _get_shared_submission_metrics(
+        self, event: Event, has_talk_access: bool
+    ) -> Dict[str, Any]:
+        """Compute shared submission and speaker aggregates once per request to avoid redundant queries."""
+        if not has_talk_access:
+            return {
+                'total': 0,
+                'accepted': 0,
+                'confirmed': 0,
+                'rejected': 0,
+                'accepted_or_confirmed': 0,
+                'confirmed_speakers_count': 0,
+            }
+
+        sub_metrics = event.submissions.aggregate(
+            total=Count('id'),
+            accepted=Count('id', filter=Q(state=SubmissionStates.ACCEPTED)),
+            confirmed=Count('id', filter=Q(state=SubmissionStates.CONFIRMED)),
+            rejected=Count('id', filter=Q(state=SubmissionStates.REJECTED)),
+            accepted_or_confirmed=Count('id', filter=Q(state__in=[SubmissionStates.ACCEPTED, SubmissionStates.CONFIRMED])),
+        )
+        confirmed_speakers_count = User.objects.filter(
+            submissions__event=event,
+            submissions__state=SubmissionStates.CONFIRMED,
+        ).distinct().count()
+
+        return {
+            'total': sub_metrics['total'] or 0,
+            'accepted': sub_metrics['accepted'] or 0,
+            'confirmed': sub_metrics['confirmed'] or 0,
+            'rejected': sub_metrics['rejected'] or 0,
+            'accepted_or_confirmed': sub_metrics['accepted_or_confirmed'] or 0,
+            'confirmed_speakers_count': confirmed_speakers_count,
+        }
+
     def _get_at_a_glance_kpis(
         self,
         event: Event,
@@ -705,6 +806,7 @@ class EventIndexView(TemplateView):
         subevent=None,
         header_data: Optional[Dict[str, Any]] = None,
         shared_order_metrics: Optional[Dict[str, Any]] = None,
+        shared_submission_metrics: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Aggregate high-level cross-event KPIs."""
         can_view_orders = permissions.get('can_view_orders', False)
@@ -739,11 +841,10 @@ class EventIndexView(TemplateView):
             revenue_sum = Decimal('0.00')
 
         if has_talk:
-            sessions_confirmed = event.submissions.filter(state=SubmissionStates.CONFIRMED).count()
-            speakers_confirmed = User.objects.filter(
-                submissions__event=event,
-                submissions__state=SubmissionStates.CONFIRMED,
-            ).distinct().count()
+            if shared_submission_metrics is None:
+                shared_submission_metrics = self._get_shared_submission_metrics(event, has_talk)
+            sessions_confirmed = shared_submission_metrics['confirmed']
+            speakers_confirmed = shared_submission_metrics['confirmed_speakers_count']
         else:
             sessions_confirmed = 0
             speakers_confirmed = 0
@@ -778,6 +879,7 @@ class EventIndexView(TemplateView):
         permissions: Dict[str, Any],
         subevent=None,
         shared_order_metrics: Optional[Dict[str, Any]] = None,
+        shared_submission_metrics: Optional[Dict[str, Any]] = None,
     ) -> List[Dict[str, Any]]:
         """Generate status cards for tickets, talks, video, and active plugins."""
         cards = []
@@ -808,6 +910,11 @@ class EventIndexView(TemplateView):
             else:
                 rev_sum = Decimal('0.00')
 
+            try:
+                tickets_url = reverse('control:event.index', kwargs={'event': event.slug, 'organizer': event.organizer.slug})
+            except NoReverseMatch:
+                tickets_url = None
+
             cards.append({
                 'id': 'tickets',
                 'name': _('Tickets'),
@@ -821,20 +928,24 @@ class EventIndexView(TemplateView):
                     {'label': _('Revenue'), 'value': f'{event.currency} {rev_sum:,.2f}' if permissions.get('can_view_orders') else '-'},
                 ],
                 'btn_text': _('Open tickets dashboard'),
-                'url': reverse('control:event.index', kwargs={'event': event.slug, 'organizer': event.organizer.slug}),
+                'url': tickets_url,
                 'enabled': True,
             })
 
         # 2. Talks & Speakers Card
         if permissions.get('has_talk_access'):
-            total_proposals = event.submissions.count()
-            accepted_c = event.submissions.filter(state__in=[SubmissionStates.ACCEPTED, SubmissionStates.CONFIRMED]).count()
+            if shared_submission_metrics is None:
+                shared_submission_metrics = self._get_shared_submission_metrics(event, True)
+            total_proposals = shared_submission_metrics['total']
+            accepted_c = shared_submission_metrics['accepted_or_confirmed']
             acc_rate = round((accepted_c / total_proposals) * 100, 1) if total_proposals else 0
             talk_status = _('CfP Open') if (hasattr(event, 'cfp') and event.cfp and event.cfp.is_open) else (_('Active') if total_proposals else _('Setup'))
-            confirmed_speakers_count = User.objects.filter(
-                submissions__event=event,
-                submissions__state=SubmissionStates.CONFIRMED,
-            ).distinct().count()
+            confirmed_speakers_count = shared_submission_metrics['confirmed_speakers_count']
+
+            try:
+                talks_url = reverse('orga:event.dashboard', kwargs={'event': event.slug, 'organizer': event.organizer.slug})
+            except NoReverseMatch:
+                talks_url = None
 
             cards.append({
                 'id': 'talks',
@@ -849,13 +960,17 @@ class EventIndexView(TemplateView):
                     {'label': _('Acceptance rate'), 'value': f'{acc_rate}%'},
                 ],
                 'btn_text': _('Open talks dashboard'),
-                'url': reverse('orga:event.dashboard', kwargs={'event': event.slug, 'organizer': event.organizer.slug}),
+                'url': talks_url,
                 'enabled': True,
             })
 
         # 3. Video Card
         if permissions.get('has_video_access'):
             video_active = is_video_enabled(event)
+            try:
+                video_url = reverse('eventyay_common:event.create_access_to_video', kwargs={'event': event.slug, 'organizer': event.organizer.slug})
+            except NoReverseMatch:
+                video_url = None
             cards.append({
                 'id': 'video',
                 'name': _('Video'),
@@ -867,7 +982,7 @@ class EventIndexView(TemplateView):
                 ] if video_active else [],
                 'empty_state': _('No video rooms configured yet.') if not video_active else None,
                 'btn_text': _('Open video dashboard'),
-                'url': reverse('eventyay_common:event.create_access_to_video', kwargs={'event': event.slug, 'organizer': event.organizer.slug}),
+                'url': video_url,
                 'enabled': True,
             })
 
@@ -1028,7 +1143,11 @@ class EventIndexView(TemplateView):
 
         return {
             'organizer_name': event.organizer.name,
-            'teams': list(event.teams.values('id', 'name')),
+            'teams': list(
+                event.organizer.teams.filter(Q(all_events=True) | Q(limit_events=event))
+                .distinct()
+                .values('id', 'name')
+            ),
             'manage_url': manage_url,
         }
 
@@ -1038,6 +1157,7 @@ class EventIndexView(TemplateView):
         permissions: Dict[str, Any],
         subevent: Optional[SubEvent] = None,
         shared_order_metrics: Optional[Dict[str, Any]] = None,
+        shared_submission_metrics: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Aggregate cross-event analytics metrics."""
         can_view_orders = permissions.get('can_view_orders', False)
@@ -1056,21 +1176,26 @@ class EventIndexView(TemplateView):
 
         proposal_stats = {}
         if has_talk:
+            if shared_submission_metrics is None:
+                shared_submission_metrics = self._get_shared_submission_metrics(event, has_talk)
             proposal_stats = {
-                'submitted': event.submissions.count(),
-                'accepted': event.submissions.filter(state=SubmissionStates.ACCEPTED).count(),
-                'confirmed': event.submissions.filter(state=SubmissionStates.CONFIRMED).count(),
-                'rejected': event.submissions.filter(state=SubmissionStates.REJECTED).count(),
+                'submitted': shared_submission_metrics['total'],
+                'accepted': shared_submission_metrics['accepted'],
+                'confirmed': shared_submission_metrics['confirmed'],
+                'rejected': shared_submission_metrics['rejected'],
             }
 
         stats_url = None
         if can_view_orders:
-            stats_url = reverse(
-                'control:event.orders',
-                kwargs={'event': event.slug, 'organizer': event.organizer.slug},
-            )
-            if subevent:
-                stats_url += f'?subevent={subevent.id}'
+            try:
+                stats_url = reverse(
+                    'control:event.orders',
+                    kwargs={'event': event.slug, 'organizer': event.organizer.slug},
+                )
+                if subevent:
+                    stats_url += f'?subevent={subevent.id}'
+            except NoReverseMatch:
+                stats_url = None
 
         return {
             'order_count': order_count,
@@ -1133,6 +1258,9 @@ class EventIndexView(TemplateView):
         # Wrap event queries with scope
         with scope(event=request.event):
             shared_order_metrics = self._get_shared_order_metrics(request.event, subevent, can_view_orders)
+            shared_submission_metrics = self._get_shared_submission_metrics(
+                request.event, permissions.get('has_talk_access', False)
+            )
             header_data = self._get_header_data(request.event, request)
             workflow_timeline = self._get_workflow_timeline(request.event, permissions)
             action_required = self._get_action_required(request.event, permissions, subevent=subevent)
@@ -1142,12 +1270,14 @@ class EventIndexView(TemplateView):
                 subevent=subevent,
                 header_data=header_data,
                 shared_order_metrics=shared_order_metrics,
+                shared_submission_metrics=shared_submission_metrics,
             )
             component_cards = self._get_component_cards(
                 request.event,
                 permissions,
                 subevent=subevent,
                 shared_order_metrics=shared_order_metrics,
+                shared_submission_metrics=shared_submission_metrics,
             )
             upcoming_milestones = self._get_upcoming_milestones(request.event)
             milestones_schedule_url = self._get_milestones_schedule_url(request.event, permissions)
@@ -1157,6 +1287,7 @@ class EventIndexView(TemplateView):
                 permissions,
                 subevent=subevent,
                 shared_order_metrics=shared_order_metrics,
+                shared_submission_metrics=shared_submission_metrics,
             )
             recent_activity = self._get_recent_activity(request.event, permissions)
 
@@ -1216,7 +1347,11 @@ class EventIndexView(TemplateView):
 
         context['today'] = now().astimezone(ZoneInfo(request.event.timezone)).date()
         context['nearly_now'] = now().astimezone(ZoneInfo(request.event.timezone)) - timedelta(seconds=20)
-        context['organizer_teams'] = request.event.teams.values_list('id', 'name')
+        context['organizer_teams'] = (
+            request.event.organizer.teams.filter(Q(all_events=True) | Q(limit_events=request.event))
+            .distinct()
+            .values_list('id', 'name')
+        )
         return context
 
     def post(self, request, *args, **kwargs):
