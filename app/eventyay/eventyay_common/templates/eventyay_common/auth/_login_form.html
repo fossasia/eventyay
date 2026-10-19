@@ -41,7 +41,7 @@
       </a>
     {% endif %}
     {% if not force_show and can_register %}
-      <a href='{% url "account_signup" %}{% append_next request.GET.next %}' class='btn btn-link btn-block'>
+      <a href='{% url "account_signup" %}{% append_next next_url %}' class='btn btn-link btn-block'>
         {% translate 'Register' %}
       </a>
     {% endif %}

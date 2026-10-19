@@ -1,6 +1,6 @@
 import logging
 from enum import StrEnum
-from urllib.parse import parse_qs, urljoin, urlparse
+from urllib.parse import urljoin
 
 from allauth.socialaccount.adapter import get_adapter
 from allauth.socialaccount.models import SocialApp
@@ -16,23 +16,17 @@ from pydantic import ValidationError
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.consts import KEY_SOCIAL_KEEP_LOGGED_IN
-from eventyay.common.redirects import safe_redirect_url, validate_redirect_url
+from eventyay.common.redirects import safe_redirect_url
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
 
 from .schemas.login_providers import LoginProviders
-from .schemas.oauth2_params import OAuth2Params
+
 
 logger = logging.getLogger(__name__)
 
 
 class OAuthLoginView(View):
     def get(self, request: HttpRequest, provider: str) -> HttpResponse:
-        self.set_oauth2_params(request)
-
-        next_url = request.GET.get('next') or request.GET.get('redirect_url')
-        if next_url:
-            request.session['socialauth_next_url'] = safe_redirect_url(request, next_url)
-
         gs = GlobalSettingsObject()
         login_providers = gs.settings.get('login_providers', as_type=dict) or {}
         known_providers = frozenset(LoginProviders.model_fields.keys())
@@ -55,30 +49,13 @@ class OAuthLoginView(View):
         adapter = get_adapter()
         provider_instance = adapter.get_provider(request, provider, client_id=client_id)
 
-        login_url = provider_instance.get_login_url(request)
+        target = request.GET.get('next') or request.GET.get('redirect_url')
+        next_url = safe_redirect_url(request, target) if target else None
+        login_url = (
+            provider_instance.get_login_url(request, next=next_url)
+            if next_url else provider_instance.get_login_url(request)
+        )
         return redirect(login_url)
-
-    @staticmethod
-    def set_oauth2_params(request: HttpRequest) -> None:
-        """Store OAuth2 params in session for Talk module SSO handoff."""
-        next_url = validate_redirect_url(request, request.GET.get('next', ''))
-        if not next_url:
-            return
-
-        parsed = urlparse(next_url)
-
-        # Only allow relative URLs
-        if parsed.netloc or parsed.scheme:
-            return
-
-        params = parse_qs(parsed.query)
-        sanitized_params = {k: v[0] for k, v in params.items() if k in OAuth2Params.model_fields.keys()}
-
-        try:
-            oauth2_params = OAuth2Params.model_validate(sanitized_params)
-            request.session['oauth2_params'] = oauth2_params.model_dump()
-        except ValidationError as e:
-            logger.warning('Ignore invalid OAuth2 parameters: %s.', e)
 
 
 class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):

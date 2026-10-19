@@ -72,10 +72,7 @@ def process_login(request, user, keep_logged_in):
     """
     request.session['eventyay_auth_long_session'] = settings.EVENTYAY_LONG_SESSIONS and keep_logged_in
 
-    # Check for socialauth_next_url (from OAuth flows) first, then fall back to backend's get_next_url
-    next_url = request.session.pop('socialauth_next_url', None)
-    if not next_url:
-        next_url = get_auth_backends()[user.auth_backend].get_next_url(request) or request.GET.get('redirect_url')
+    next_url = get_auth_backends()[user.auth_backend].get_next_url(request) or request.GET.get('redirect_url')
     next_url = safe_redirect_url(request, next_url)
 
     if user.require_2fa:
@@ -155,7 +152,8 @@ def login(request):
     ctx['can_reset'] = settings.EVENTYAY_PASSWORD_RESET
     ctx['backends'] = backends
     ctx['backend'] = backend
-    ctx['next_url'] = request.GET.get('next') or request.GET.get('redirect_url')
+    next_url = request.GET.get('next') or request.GET.get('redirect_url')
+    ctx['next_url'] = safe_redirect_url(request, next_url) if next_url else None
 
     return render(request, 'eventyay_common/auth/login.html', ctx)
 

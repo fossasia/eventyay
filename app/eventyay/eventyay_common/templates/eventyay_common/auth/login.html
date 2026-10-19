@@ -55,7 +55,7 @@
             <div class="login-footer text-center" style="margin-top: 20px;">
                 <p>
                     {% blocktranslate %}Don't have an account?{% endblocktranslate %}
-                    <a href="{% url 'account_signup' %}{% append_next request.GET.next %}">{% translate 'Create one' %}</a>
+                    <a href="{% url 'account_signup' %}{% append_next next_url %}">{% translate 'Create one' %}</a>
                 </p>
             </div>
         {% endif %}

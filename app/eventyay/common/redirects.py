@@ -31,6 +31,8 @@ def safe_redirect_url(request: HttpRequest, target: str | None) -> str:
     destination = validate_redirect_url(request, target or '')
     if not destination:
         return reverse('eventyay_common:dashboard')
-    if url_has_allowed_host_and_scheme(destination, allowed_hosts={request.get_host()}):
+    if url_has_allowed_host_and_scheme(
+        destination, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
         return destination
     return reverse('eventyay_common:external-link') + '?' + urlencode({'next': destination})
