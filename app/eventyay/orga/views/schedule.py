@@ -438,7 +438,13 @@ class TalkUpdate(PermissionRequired, View):
     def get_object(self):
         qs = self.request.event.wip_schedule.talks.filter(pk=self.kwargs.get('pk'))
         qs = apply_track_limit_to_slots(qs, self.request.event, self.request.user)
-        return qs.first()
+        return qs.select_related(
+            'submission',
+            'submission__submission_type',
+            'submission__track',
+            'room',
+            'schedule',
+        ).prefetch_related('submission__speakers').first()
 
     @csrf_exempt
     def dispatch(self, request, *args, **kwargs):
@@ -478,12 +484,17 @@ class TalkUpdate(PermissionRequired, View):
                     talk.save(update_fields=['start', 'end', 'room', 'description', 'updated'])
             except Room.DoesNotExist:
                 return JsonResponse({'error': 'Room not found'})
-            talk.refresh_from_db()
+            for prop in ('local_start', 'local_end', 'real_end', 'warnings', 'warnings_extended', 'as_availability'):
+                talk.__dict__.pop(prop, None)
+            talk.refresh_from_db(fields=['updated'])
         else:
             talk.start = None
             talk.end = None
             talk.room = None
             talk.save(update_fields=['start', 'end', 'room', 'updated'])
+            for prop in ('local_start', 'local_end', 'real_end', 'warnings', 'warnings_extended', 'as_availability'):
+                talk.__dict__.pop(prop, None)
+            talk.refresh_from_db(fields=['updated'])
 
         with_speakers = self.request.event.cfp.request_availabilities
         warnings = talk.schedule.get_talk_warnings(talk, with_speakers=with_speakers)
