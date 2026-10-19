@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 from python_http_client.exceptions import HTTPError
 
 import jwt
+from django import forms
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
@@ -89,6 +90,24 @@ from eventyay.multidomain.urlreverse import build_absolute_uri
 from ..forms.event import EventCloneForm, EventUpdateForm
 
 logger = logging.getLogger(__name__)
+
+
+def use_searchable_organizer_select(form):
+    """Render the organizer filter as a full list the searchable dropdown can filter."""
+    field = form.fields.get('organizer')
+    if field is None:
+        return
+    widget = forms.Select(
+        attrs={
+            'class': 'form-control',
+            'data-searchable-select': '',
+            'data-search-placeholder': _('Search organizers'),
+            'data-empty-text': _('No matching organizers'),
+        }
+    )
+    # Replacing the widget drops the choices that were bound to the previous one.
+    field.widget = widget
+    widget.choices = field.choices
 
 
 class EventList(PaginationMixin, ListView):
@@ -193,7 +212,9 @@ class EventList(PaginationMixin, ListView):
 
     @cached_property
     def filter_form(self):
-        return EventFilterForm(data=self.request.GET, request=self.request)
+        form = EventFilterForm(data=self.request.GET, request=self.request)
+        use_searchable_organizer_select(form)
+        return form
 
 
 class EventCreateView(TemplateView):
@@ -1060,10 +1081,11 @@ class EventLive(TemplateView):
                         'url': cfp.urls.text,
                     }
                 )
+            with scope(event=self.request.event):
+                track_count = self.request.event.tracks.count()
             if (
-                self.request.event.get_feature_flag('use_tracks')
-                and cfp.request_track
-                and self.request.event.tracks.count() < 2
+                cfp.request_track
+                and track_count == 0
             ):
                 suggestions.append(
                     {

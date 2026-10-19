@@ -80,39 +80,46 @@
 
     <div data-ajax-results-region>
     <div class="table-responsive-sm">
+
         <table class="table table-sm table-flip table-sticky">
             <thead>
                 <tr>
                     <th>
                         {% translate "Title" %}
-                        <a href="{% querystring sort="title" %}"><i class="fa fa-caret-down" title="{% translate "Sort (a-z)" %}"></i></a>
-                        <a href="{% querystring sort="-title" %}"><i class="fa fa-caret-up" title="{% translate "Sort (z-a)" %}"></i></a>
+                        {% include 'orga/includes/sort_link.html' with key='title' icon='down' label=_('Sort by title (a-z)') %}
+                        {% include 'orga/includes/sort_link.html' with key='-title' icon='up' label=_('Sort by title (z-a)') %}
                     </th>
-                    {% if can_view_speakers %}<th>{{ phrases.schedule.speakers }}</th>{% endif %}
+                    {% if can_view_speakers %}
+                        <th>
+                            {{ phrases.schedule.speakers }}
+                            {% include 'orga/includes/sort_link.html' with key='speakers' icon='down' label=_('Sort by speaker (a-z)') %}
+                            {% include 'orga/includes/sort_link.html' with key='-speakers' icon='up' label=_('Sort by speaker (z-a)') %}
+                        </th>
+                    {% endif %}
                     {% if show_submission_types %}
                         <th>
                             {% translate "Type" %}
-                            <a href="{% querystring sort="submission_type__name" %}"><i class="fa fa-caret-down" title="{% translate "Sort (a-z)" %}"></i></a>
-                            <a href="{% querystring sort="-submission_type__name" %}"><i class="fa fa-caret-up" title="{% translate "Sort (z-a)" %}"></i></a>
+                            {% include 'orga/includes/sort_link.html' with key='submission_type__name' icon='down' label=_('Sort by type (a-z)') %}
+                            {% include 'orga/includes/sort_link.html' with key='-submission_type__name' icon='up' label=_('Sort by type (z-a)') %}
                         </th>
                     {% endif %}
-                    {% if request.event|get_feature_flag:"use_tracks" %}
+                    {% if show_tracks %}
                         <th>
                             {% translate "Track" %}
-                            <a href="{% querystring sort="track__name" %}"><i class="fa fa-caret-down" title="{% translate "Sort (a-z)" %}"></i></a>
-                            <a href="{% querystring sort="-track__name" %}"><i class="fa fa-caret-up" title="{% translate "Sort (z-a)" %}"></i></a>
+                            {% include 'orga/includes/sort_link.html' with key='track__name' icon='down' label=_('Sort by track (a-z)') %}
+                            {% include 'orga/includes/sort_link.html' with key='-track__name' icon='up' label=_('Sort by track (z-a)') %}
                         </th>
                     {% endif %}
                     <th>
                         {% translate "State" %}
-                        <a href="{% querystring sort="state" %}"><i class="fa fa-caret-down" title="{% translate "Sort (a-z)" %}"></i></a>
-                        <a href="{% querystring sort="-state" %}"><i class="fa fa-caret-up" title="{% translate "Sort (z-a)" %}"></i></a>
+                        {% include 'orga/includes/sort_link.html' with key='state' icon='down' label=_('Sort by state (a-z)') %}
+                        {% include 'orga/includes/sort_link.html' with key='-state' icon='up' label=_('Sort by state (z-a)') %}
                     </th>
                     {% if can_change_submission %}
                         <th class="text-center">
                             {% translate "Featured" %} <i class="fa fa-question-circle" data-toggle="tooltip" title="{% translate "Show this session on the list of featured sessions, once it was accepted" %}"></i>
-                            <a href="{% querystring sort="-is_featured" %}"><i class="fa fa-caret-down"></i></a>
-                            <a href="{% querystring sort="is_featured" %}"><i class="fa fa-caret-up"></i></a>
+                            {% include 'orga/includes/sort_link.html' with key='-is_featured' icon='down' label=_('Sort featured sessions first') %}
+                            {% include 'orga/includes/sort_link.html' with key='is_featured' icon='up' label=_('Sort non-featured sessions first') %}
                         </th>
                         {% if session_videos_enabled %}
                         <th class="text-center">
@@ -148,7 +155,7 @@
                             </td>
                         {% endif %}
                         {% if show_submission_types %}<td>{{ submission.submission_type.name }}</td>{% endif %}
-                        {% if request.event|get_feature_flag:"use_tracks" %}
+                        {% if show_tracks %}
                             <td>
                                 {% if submission.track %}
                                     {% if submission.is_anonymised %}
@@ -221,6 +228,7 @@
                 {% endfor %}
             </tbody>
         </table>
+
     </div>
 
     {% include "orga/includes/pagination.html" %}

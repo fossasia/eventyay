@@ -23,7 +23,8 @@ from django.contrib.auth.tokens import default_token_generator
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
-from django.db.models import JSONField, Q
+from django.db.models import JSONField, Q, Value
+from django.db.models.functions import Cast, Coalesce, Concat, Lower, NullIf, Trim
 from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.crypto import get_random_string, salted_hmac
@@ -199,6 +200,21 @@ def generate_short_token():
 class SuperuserPermissionSet:
     def __contains__(self, item):
         return True
+
+
+def display_name_sort_key(prefix: str = '') -> Lower:
+    """Case-insensitive SQL version of ``User.get_display_name``, for ordering users.
+
+    Follows the same fallbacks as ``User.__str__``. ``prefix`` points at the user
+    from a related model, e.g. ``'user__'``.
+    """
+    return Lower(
+        Coalesce(
+            *(NullIf(Trim(f'{prefix}{field}'), Value('')) for field in ('fullname', 'email', 'nick', 'client_id')),
+            Concat(Value('user:'), Cast(f'{prefix}pk', models.CharField())),
+            output_field=models.CharField(),
+        )
+    )
 
 
 class User(
@@ -393,6 +409,9 @@ class User(
         verbose_name = _('User')
         verbose_name_plural = _('Users')
         ordering = ('email',)
+        indexes = [
+            models.Index(Coalesce('last_login', 'date_joined'), name='user_last_accessed_idx'),
+        ]
         rules_permissions = {
             'administrator': is_administrator,
         }
@@ -1431,6 +1450,7 @@ class StaffSessionAuditLog(models.Model):
     url = models.CharField(max_length=255)
     method = models.CharField(max_length=255)
     impersonating = models.ForeignKey('User', null=True, blank=True, on_delete=models.PROTECT)
+    post_data = models.TextField(null=True, blank=True)
 
     class Meta:
         ordering = ('datetime',)

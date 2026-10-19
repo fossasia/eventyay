@@ -105,6 +105,19 @@
     .cfp-forms-page .cfp-option-table tbody tr:first-child td {
         border-top: none;
     }
+
+    .cfp-forms-page .cfp-option-table {
+        table-layout: auto;
+        width: 100%;
+    }
+
+    .cfp-forms-page .cfp-option-table thead th:first-child {
+        width: 30%;
+    }
+
+    .cfp-forms-page .cfp-option-table thead th:last-child {
+        width: 140px;
+    }
 }
 
 /* Mobile: card layout, no sticky header */

@@ -1509,6 +1509,8 @@ class UserFilterForm(FilterForm):
         'verified': 'is_email_verified',
         'admin': 'is_staff',
         'spam': 'is_spam',
+        'date_joined': 'date_joined',
+        'last_login': 'last_login',
     }
     status = forms.ChoiceField(
         label=_('Status'),
@@ -1597,7 +1599,18 @@ class UserFilterForm(FilterForm):
                     ordering = 'admin_list_fullname'
                 elif ordering == '-fullname':
                     ordering = '-admin_list_fullname'
-            qs = qs.order_by(ordering)
+            if ordering == 'last_login':
+                qs = qs.annotate(admin_last_accessed=Coalesce('last_login', 'date_joined')).order_by(
+                    F('admin_last_accessed').asc(nulls_last=True), '-pk'
+                )
+            elif ordering == '-last_login':
+                qs = qs.annotate(admin_last_accessed=Coalesce('last_login', 'date_joined')).order_by(
+                    F('admin_last_accessed').desc(nulls_last=True), '-pk'
+                )
+            elif ordering in ('date_joined', '-date_joined'):
+                qs = qs.order_by(ordering, '-pk')
+            else:
+                qs = qs.order_by(ordering)
 
         return qs
 

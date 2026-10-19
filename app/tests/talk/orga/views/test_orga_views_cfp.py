@@ -862,7 +862,6 @@ def test_can_send_special_access_code(orga_client, access_code, track):
     response = orga_client.get(access_code.urls.send, follow=True)
     assert response.status_code == 200
 
-
 @pytest.mark.django_db
 @pytest.mark.parametrize("restriction", ("matching", "other", "unrestricted"))
 @pytest.mark.parametrize("target", ("submission", "speaker"))
@@ -924,3 +923,19 @@ def test_question_reminders_include_trackless_submissions(
     with scope(event=event):
         reminders = QueuedMail.objects.exclude(pk__in=existing_ids)
         assert reminders.count() == int(not answered)
+
+
+@pytest.mark.django_db
+def test_orga_cfp_forms_shows_session_videos_as_organizer_only(orga_client, event):
+    response = orga_client.get(event.cfp.urls.questions, follow=True)
+    assert response.status_code == 200
+    content = response.text
+    assert "cfp-organizer-only-label" in content
+    assert "Session videos" in content
+    assert "Organizer only" in content
+    assert "This field can only be edited by organizers."
+    assert (
+        "This field can only be edited by organizers. "
+        "It is not displayed on the proposal form."
+    ) in content
+

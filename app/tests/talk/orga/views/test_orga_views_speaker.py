@@ -2,7 +2,9 @@ import json
 
 import bs4
 import pytest
+from django.utils.translation import override
 from django_scopes import scope, scopes_disabled
+from i18nfield.strings import LazyI18nString
 
 from eventyay.base.models import SpeakerProfile, User
 from eventyay.base.models.mail import QueuedMail
@@ -130,6 +132,77 @@ def test_speaker_profile_form_not_strict_allows_missing_required_fields(speaker,
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize("cached_defaults", (None, "fallback", "translated"))
+@pytest.mark.parametrize("locale", ("en", "de"))
+def test_speaker_profile_photo_labels_with_cached_defaults(
+    speaker, event, cached_defaults, locale
+):
+    expected_labels = {
+        "avatar": "Speaker photo",
+        "avatar_source": "Speaker photo source",
+        "avatar_license": "Speaker photo license",
+        "get_gravatar": "Retrieve speaker photo via gravatar",
+    }
+    with override("en"):
+        configuration = []
+        for name in expected_labels:
+            model_field = User._meta.get_field(name)
+            label = str(model_field.verbose_name)
+            help_text = str(model_field.help_text)
+            with override("de"):
+                german_label = str(model_field.verbose_name)
+                german_help = str(model_field.help_text)
+            configuration.append({
+                "key": name,
+                "label": LazyI18nString({
+                    "en": label, "de": german_label if cached_defaults == "translated" else label,
+                }),
+                "help_text": LazyI18nString({
+                    "en": help_text, "de": german_help if cached_defaults == "translated" else help_text,
+                }),
+            })
+
+    with scope(event=event), override(locale):
+        form = SpeakerProfileForm(
+            user=speaker,
+            event=event,
+            field_configuration=configuration if cached_defaults else None,
+        )
+        for name, expected_label in expected_labels.items():
+            assert str(form.fields[name].label) == expected_label
+        assert "your speaker photo" in str(form.fields["get_gravatar"].help_text)
+        assert "profile picture" not in str(form.fields["get_gravatar"].help_text)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("locale", ("en", "de"))
+def test_speaker_profile_photo_preserves_custom_labels_and_help(speaker, event, locale):
+    label = LazyI18nString({"en": "Your headshot", "de": "Ihr Porträt"})
+    help_text = LazyI18nString({"en": "Use your own photo.", "de": "Eigenes Foto verwenden."})
+    configuration = [
+        {"key": "avatar", "label": label},
+        {"key": "get_gravatar", "help_text": help_text},
+    ]
+    with scope(event=event), override(locale):
+        form = SpeakerProfileForm(user=speaker, event=event, field_configuration=configuration)
+        assert str(form.fields["avatar"].label) == label.data[locale]
+        assert help_text.data[locale] in str(form.fields["get_gravatar"].help_text)
+        assert form.fields["get_gravatar"].original_help_text is help_text
+    assert label.data == {"en": "Your headshot", "de": "Ihr Porträt"}
+
+
+@pytest.mark.django_db
+def test_cfp_speaker_profile_uses_speaker_photo_wording(speaker_client, event):
+    event.talks_published = True
+    event.save(update_fields=["talks_published"])
+    response = speaker_client.get(event.urls.user, follow=True)
+    assert response.status_code == 200
+    assert "Speaker photo" in response.text
+    assert 'alt="Speaker photo"' in response.text
+    assert "Profile picture" not in response.text
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize("field_name", ("avatar_source", "avatar_license"))
 def test_speaker_profile_rejects_long_avatar_license_text(field_name, speaker, event):
     with scope(event=event):
@@ -211,10 +284,10 @@ def test_submission_speakers_wraps_avatar_license_text(orga_client, speaker, eve
 
     assert response.status_code == 200
     doc = bs4.BeautifulSoup(response.content, "lxml")
-    for label in ("Profile Picture Source:", "Profile Picture License:"):
+    for label in ("Speaker photo source", "Speaker photo license"):
         element = doc.find("strong", string=label)
         assert element is not None
-        wrapper = element.find_parent("p")
+        wrapper = element.find_parent("div", class_="avatar-license-text")
         assert wrapper is not None
         assert "avatar-license-text" in wrapper.get("class", [])
 
@@ -405,6 +478,97 @@ def test_speaker_list_sorts_by_featured(
 
     names = speaker_names_in_table(response)
     assert names[0] == speaker.fullname
+
+
+def speaker_names_in_list(response):
+    doc = bs4.BeautifulSoup(response.content, 'lxml')
+    table = doc.select_one('table tbody')
+    assert table is not None
+    return [link.get_text(strip=True) for link in table.select('td a[href*="/speakers/"]')]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ('sort', 'first'),
+    (
+        ('user__fullname', 'speaker'),
+        ('-user__fullname', 'other_speaker'),
+        ('-accepted_submission_count', 'speaker'),
+        ('accepted_submission_count', 'other_speaker'),
+        ('-submission_count', 'speaker'),
+        ('submission_count', 'other_speaker'),
+        ('-has_arrived', 'other_speaker'),
+        ('has_arrived', 'speaker'),
+    ),
+)
+def test_speaker_list_sorts_by_column(
+    orga_client,
+    speaker,
+    other_speaker,
+    event,
+    submission,
+    accepted_submission,
+    other_submission,
+    sort,
+    first,
+):
+    with scope(event=event):
+        profile = other_speaker.event_profile(event)
+        profile.has_arrived = True
+        profile.save(update_fields=['has_arrived'])
+    users = {'speaker': speaker, 'other_speaker': other_speaker}
+    expected = [users[first].fullname, next(user for key, user in users.items() if key != first).fullname]
+
+    response = orga_client.get(f'{event.orga_urls.speakers}?sort={sort}', follow=True)
+
+    assert response.status_code == 200
+    assert speaker_names_in_list(response) == expected
+    doc = bs4.BeautifulSoup(response.content, 'lxml')
+    active = doc.select('thead a.sort-active')
+    assert len(active) == 1
+    assert f'sort={sort}' in active[0]['href']
+
+
+@pytest.mark.django_db
+def test_speaker_list_sorting_keeps_search(
+    orga_client, speaker, other_speaker, event, submission, other_submission
+):
+    response = orga_client.get(f'{event.orga_urls.speakers}?q=example.com&sort=-user__fullname', follow=True)
+
+    assert response.status_code == 200
+    assert speaker_names_in_list(response) == [other_speaker.fullname]
+    doc = bs4.BeautifulSoup(response.content, 'lxml')
+    sort_link = doc.select_one('thead a.sort-link')
+    assert 'q=example.com' in sort_link['href']
+
+
+@pytest.mark.django_db
+def test_speaker_list_hides_drag_controls_when_sorted(orga_client, speaker, event, submission):
+    response = orga_client.get(f'{event.orga_urls.speakers}?sort=-submission_count', follow=True)
+
+    assert response.status_code == 200
+    assert 'dragsort-url' not in response.text
+    assert 'dragsort-button' not in response.text
+
+
+@pytest.mark.django_db
+def test_speaker_list_sort_links_name_their_column(orga_client, speaker, event, submission):
+    response = orga_client.get(event.orga_urls.speakers, follow=True)
+
+    doc = bs4.BeautifulSoup(response.content, 'lxml')
+    labels = [link['aria-label'] for link in doc.select('thead a.sort-link')]
+    assert len(labels) == len(set(labels))
+    assert 'Sort by accepted proposals (high to low)' in labels
+    assert 'Sort by proposals (high to low)' in labels
+
+
+@pytest.mark.django_db
+def test_speaker_list_sort_resets_page(orga_client, speaker, event, submission):
+    response = orga_client.get(f'{event.orga_urls.speakers}?page=1&sort=user__fullname', follow=True)
+
+    assert response.status_code == 200
+    doc = bs4.BeautifulSoup(response.content, 'lxml')
+    assert all('page=' not in link['href'] for link in doc.select('thead a.sort-link'))
 
 
 @pytest.mark.django_db
