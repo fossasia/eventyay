@@ -4,14 +4,16 @@ from unittest.mock import patch
 
 import pytest
 from bs4 import BeautifulSoup
+from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.timezone import now
 from django_scopes import scope
 from redis.exceptions import RedisError
 
-from eventyay.base.models import Event, Order, OrderPayment, Organizer, Room, StreamSchedule, User
-from eventyay.control.platform_dashboard import activity_context, dashboard_cards
+from eventyay.base.models import Event, Order, OrderPayment, Organizer, Product, Room, StreamSchedule, User
+from eventyay.control.forms.server_management import VideoStreamScheduleForm
+from eventyay.control.platform_dashboard import activity_context, dashboard_cards, setup_events
 
 
 @pytest.fixture
@@ -24,7 +26,7 @@ def dashboard_admin(client, db):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize('period, expected', [('24h', 25), ('7d', 7), ('30d', 30), ('90d', 90), ('bad', 30)])
+@pytest.mark.parametrize('period, expected', [('24h', 24), ('7d', 7), ('30d', 30), ('90d', 90), ('bad', 30)])
 def test_activity_ranges_zero_fill_empty_days(period, expected):
     """Keep each activity range complete even when there are no records."""
     data = activity_context(period)
@@ -75,17 +77,32 @@ def test_activity_separates_currencies_and_uses_payment_date():
 
 
 @pytest.mark.django_db
-def test_hourly_activity_excludes_records_older_than_24_hours(settings):
-    """Apply the rolling daily boundary across a daylight-saving transition."""
+@pytest.mark.parametrize('end', (
+    datetime(2026, 10, 25, 12, 30, tzinfo=UTC),
+    datetime(2026, 10, 25, 0, 0, tzinfo=UTC),
+))
+def test_hourly_activity_excludes_records_older_than_24_hours(settings, end):
+    """Use 24 aligned UTC buckets, including activity in the current partial hour."""
     settings.TIME_ZONE = 'Europe/Berlin'
-    end = datetime(2026, 10, 25, 12, 30, tzinfo=UTC)
-    for index, age in enumerate((timedelta(hours=24, minutes=1), timedelta(hours=23), timedelta(hours=1))):
+    last_bucket = end.replace(minute=0, second=0, microsecond=0)
+    start = last_bucket - timedelta(hours=23)
+    timestamps = (
+        start - timedelta(microseconds=1), start, start + timedelta(minutes=30),
+        end - timedelta(minutes=1), end, end + timedelta(microseconds=1),
+    )
+    for index, timestamp in enumerate(timestamps):
         user = User.objects.create_user(f'boundary-{index}@example.test')
-        User.objects.filter(pk=user.pk).update(date_joined=end - age)
+        User.objects.filter(pk=user.pk).update(date_joined=timestamp)
     with patch('eventyay.control.platform_dashboard.now', return_value=end):
         users = next(chart for chart in activity_context('24h')['activity_charts'] if chart['key'] == 'users')
-    assert users['series'][0]['total'] == 2
-    assert users['start'] == end - timedelta(hours=24)
+    rows = dict(users['series'][0]['rows'])
+    assert len(rows) == 24
+    assert list(rows) == [start + timedelta(hours=index) for index in range(24)]
+    assert rows[start] == 2
+    assert rows[last_bucket] == (2 if end.minute else 1)
+    assert users['series'][0]['total'] == 4
+    assert users['start'] == start
+    assert users['end'] == end
 
 
 @pytest.mark.django_db
@@ -129,6 +146,8 @@ def test_dashboard_sections_and_analytics_render(dashboard_admin, settings):
     assert 'Enabled Periodic Tasks' not in html
     assert len(response.context['metric_cards']) == 9
     navigation = {str(item['label']): item for item in response.context['admin_nav_items']}
+    sidebar = BeautifulSoup(html, 'html.parser').select_one('.sidebar')
+    assert sidebar.find('a')['href'] == reverse('eventyay_admin:admin.dashboard')
     assert [str(item['label']) for item in navigation['Video']['children']] == [
         'Dashboard',
         'Events',
@@ -146,6 +165,10 @@ def test_dashboard_sections_and_analytics_render(dashboard_admin, settings):
     dashboard_cards(unavailable)
     assert str(unavailable['configuration_rows'][0]['status']) == 'Error'
     assert unavailable['configuration_rows'][0]['style'] == 'danger'
+    partial = dict(response.context_data)
+    partial.pop('events_missing_payment_count')
+    dashboard_cards(partial)
+    assert partial['action_cards'][3]['value'] == 0
     for metric in ('orders', 'revenue', 'users', 'events'):
         url = reverse('eventyay_admin:admin.analytics.metric', kwargs={'metric': metric})
         detail = dashboard_admin.get(url + '?range=7d')
@@ -346,3 +369,79 @@ def test_analytics_formats_money_and_counts(dashboard_admin, metric):
     else:
         assert '1' in values
         assert all('.' not in value for value in values)
+
+
+@pytest.mark.django_db
+def test_setup_events_without_an_active_scope():
+    """Build and evaluate the platform setup report outside any event scope."""
+    organizer = Organizer.objects.create(name='Setup report', slug='setup-report')
+    events = {}
+    for kind in ('empty', 'free', 'paid', 'configured'):
+        event = Event.objects.create(organizer=organizer, name=kind, slug=kind, date_from=now())
+        events[kind] = event
+        with scope(event=event, organizer=organizer):
+            if kind != 'empty':
+                Product.objects.create(event=event, name='Ticket', default_price=0 if kind == 'free' else 10)
+            if kind == 'configured':
+                event.settings.set('payment_manual__enabled', True)
+    assert set(setup_events().values_list('pk', flat=True)) == {events['empty'].pk, events['paid'].pk}
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('config', (None, '', 'null', '{}', '""'))
+@pytest.mark.parametrize('existing', (False, True))
+def test_stream_form_accepts_empty_config(config, existing):
+    """Clear submitted empty configuration while preserving an omitted edit field."""
+    organizer = Organizer.objects.create(name='Empty config', slug='empty-config')
+    event = Event.objects.create(organizer=organizer, name='Empty config', slug='empty-config', date_from=now())
+    start = now() + timedelta(days=1)
+    with scope(event=event, organizer=organizer):
+        room = Room.objects.create(event=event, name='Stream room')
+        data = {
+            'room': room.pk, 'url': 'https://example.com/live', 'stream_type': 'hls',
+            'start_time': start.isoformat(), 'end_time': (start + timedelta(hours=1)).isoformat(),
+        }
+        if config is not None:
+            data['config'] = config
+        instance = StreamSchedule.objects.create(
+            room=room, url=data['url'], stream_type='hls', start_time=start,
+            end_time=start + timedelta(hours=1), config={'autoplay': True},
+        ) if existing else None
+        form = VideoStreamScheduleForm(data, event=event, instance=instance)
+        assert form.is_valid(), form.errors
+        stream = form.save()
+        stream.refresh_from_db()
+    assert stream.config == ({'autoplay': True} if existing and config is None else {})
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('config', ('[]', 'false', '0', '"{}"', '"text"', 'invalid'))
+def test_stream_form_rejects_non_object_config(config):
+    """Do not normalize invalid JSON or non-object JSON values to an empty object."""
+    organizer = Organizer.objects.create(name='Invalid config', slug='invalid-config')
+    event = Event.objects.create(organizer=organizer, name='Invalid config', slug='invalid-config', date_from=now())
+    start = now() + timedelta(days=1)
+    with scope(event=event, organizer=organizer):
+        room = Room.objects.create(event=event, name='Stream room')
+        form = VideoStreamScheduleForm({
+            'room': room.pk, 'url': 'https://example.com/live', 'stream_type': 'hls',
+            'start_time': start.isoformat(), 'end_time': (start + timedelta(hours=1)).isoformat(), 'config': config,
+        }, event=event)
+        assert not form.is_valid()
+    assert 'config' in form.errors
+
+
+@pytest.mark.parametrize('minutes', (-1, 0, 1, None))
+def test_stream_clean_validates_times_without_a_room(mocker, minutes):
+    """Validate chronology independently of the room and always run base validation."""
+    start = now() + timedelta(days=1)
+    end = start + timedelta(minutes=minutes) if minutes is not None else None
+    stream = StreamSchedule(start_time=start, end_time=end)
+    base_clean = mocker.patch('django.db.models.Model.clean', autospec=True)
+    if minutes is not None and minutes <= 0:
+        with pytest.raises(ValidationError) as error:
+            stream.clean()
+        assert 'end_time' in error.value.message_dict
+    else:
+        stream.clean()
+    base_clean.assert_called_once_with(stream)

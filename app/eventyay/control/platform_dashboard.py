@@ -20,16 +20,17 @@ ACTIVITY_RANGES = {'24h': 1, '7d': 7, '30d': 30, '90d': 90, 'all': None}
 
 def setup_events():
     """Select events without tickets or without a paid-ticket payment method."""
-    paid = Product.objects.filter(default_price__gt=0).values('event_id')
-    enabled = Event_SettingsStore.objects.filter(
-        key__startswith='payment_', key__endswith='__enabled', value='True',
-    ).exclude(key__in=[
-        'payment_free__enabled', 'payment_boxoffice__enabled',
-        'payment_offsetting__enabled', 'payment_giftcard__enabled',
-    ]).values('object_id')
-    return Event.objects.filter(
-        Q(products__isnull=True) | (Q(pk__in=paid) & ~Q(pk__in=enabled))
-    ).distinct()
+    with scopes_disabled():
+        paid = Product.objects.filter(default_price__gt=0).values('event_id')
+        enabled = Event_SettingsStore.objects.filter(
+            key__startswith='payment_', key__endswith='__enabled', value='True',
+        ).exclude(key__in=[
+            'payment_free__enabled', 'payment_boxoffice__enabled',
+            'payment_offsetting__enabled', 'payment_giftcard__enabled',
+        ]).values('object_id')
+        return Event.objects.filter(
+            Q(products__isnull=True) | (Q(pk__in=paid) & ~Q(pk__in=enabled))
+        ).distinct()
 
 
 def report_context(metric: str, page):
@@ -82,11 +83,11 @@ def activity_context(selected_range='30d'):
             start = localtime(min([value for value in earliest if value] + [end])).replace(
                 day=1, hour=0, minute=0, second=0, microsecond=0
             )
+        elif selected_range == '24h':
+            start = end.replace(minute=0, second=0, microsecond=0) - timedelta(hours=23)
         else:
-            start = (end - timedelta(days=days - (selected_range != '24h'))).replace(minute=0, second=0, microsecond=0)
-            if selected_range != '24h':
-                start = start.replace(hour=0)
-        query_start = end - timedelta(hours=24) if selected_range == '24h' else start
+            start = (end - timedelta(days=days - 1)).replace(hour=0, minute=0, second=0, microsecond=0)
+        query_start = start
         buckets = []
         cursor = start
         while cursor <= end:
@@ -205,7 +206,7 @@ def dashboard_cards(ctx):
             'link': _('View orders'),
         },
         {
-            'value': ctx['events_missing_payment_count'],
+            'value': ctx.get('events_missing_payment_count', 0),
             'label': _('Events missing payment setup'),
             'icon': 'calendar',
             'url': routes['operations'] + '#admin-events-heading',

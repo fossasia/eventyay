@@ -735,6 +735,7 @@ def get_admin_navigation(request):
     )
 
     priority = [
+        reverse('eventyay_admin:admin.dashboard'),
         reverse('eventyay_admin:admin.global.settings'),
         reverse('eventyay_admin:admin.events'),
         reverse('eventyay_admin:admin.users'),

@@ -82,7 +82,7 @@ class VideoStreamScheduleForm(forms.ModelForm):
     def clean_config(self):
         """Require stream configuration to be a JSON object."""
         config = self.cleaned_data.get('config')
-        if config is None:
+        if config in (None, ''):
             return {}
         if not isinstance(config, dict):
             raise ValidationError(_('Additional configuration must be a JSON object.'))

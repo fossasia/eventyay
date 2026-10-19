@@ -70,10 +70,13 @@ class StreamSchedule(models.Model):
 
     def clean(self):
         """Validate timing after individual form fields have passed validation."""
-        if self.start_time is None or self.end_time is None or self.room_id is None:
-            return super().clean()
+        super().clean()
+        if self.start_time is None or self.end_time is None:
+            return
         if self.end_time <= self.start_time:
             raise ValidationError({'end_time': _('End time must be after start time.')})
+        if self.room_id is None:
+            return
 
         overlapping = StreamSchedule.objects.filter(
             room=self.room, start_time__lt=self.end_time, end_time__gt=self.start_time
@@ -88,8 +91,6 @@ class StreamSchedule(models.Model):
                     'Please ensure stream schedules do not overlap.'
                 )
             )
-
-        super().clean()
 
     def save(self, *args, **kwargs):
         skip_validation = kwargs.pop('skip_validation', False)

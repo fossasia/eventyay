@@ -83,5 +83,9 @@ def task_failure_count() -> int | None:
     if not settings.HAS_REDIS:
         return None
     timestamp = time.time()
-    with Redis.from_url(settings.REDIS_URL, socket_connect_timeout=1, socket_timeout=1) as redis:
-        return redis.zcount('eventyay:task-failures', f'({timestamp - 86400}', timestamp)
+    try:
+        with Redis.from_url(settings.REDIS_URL, socket_connect_timeout=1, socket_timeout=1) as redis:
+            return redis.zcount('eventyay:task-failures', f'({timestamp - 86400}', timestamp)
+    except RedisError:
+        logger.warning('Unable to read task failure count for platform health', exc_info=True)
+        return None

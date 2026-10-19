@@ -1,6 +1,9 @@
+import pytest
 from celery.app.utils import find_app
 from fakeredis import FakeRedis
+from redis.exceptions import ConnectionError as RedisConnectionError
 from redis.exceptions import RedisError
+from redis.exceptions import TimeoutError as RedisTimeoutError
 
 from eventyay.celery import app as celery_compat_app
 from eventyay.celery_app import app, log_operational_task_failure, record_task_failure, task_failure_count
@@ -46,3 +49,18 @@ def test_task_failure_signal_handles_unavailable_history(settings, mocker):
     logged = mocker.patch('eventyay.celery_app.logger.exception')
     log_operational_task_failure(task_id='task-id', exception=ValueError('Invalid task input'))
     logged.assert_called_once()
+
+
+@pytest.mark.parametrize('error', (RedisConnectionError, RedisTimeoutError))
+@pytest.mark.parametrize('during_query', (False, True))
+def test_task_failure_count_handles_redis_outage(settings, mocker, error, during_query):
+    """Treat connection and query failures as unavailable monitoring data."""
+    settings.HAS_REDIS = True
+    connect = mocker.patch('eventyay.celery_app.Redis.from_url')
+    if during_query:
+        connect.return_value.__enter__.return_value.zcount.side_effect = error('Unavailable')
+    else:
+        connect.side_effect = error('Unavailable')
+    warning = mocker.patch('eventyay.celery_app.logger.warning')
+    assert task_failure_count() is None
+    warning.assert_called_once()
