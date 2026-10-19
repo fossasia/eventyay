@@ -28,17 +28,65 @@
             {% endblocktranslate %}
         </div>
     </dialog>
+    {% if not can_reorder %}
+        <div class="alert alert-info">
+            {% translate "Manual drag-and-drop reordering is disabled while custom sorting is active." %}
+            <a href="{% querystring sort=None %}" class="alert-link">{% translate "Reset to manual order" %}</a>
+        </div>
+    {% endif %}
     <div class="table-responsive-sm">
         <table class="table table-sm table-flip table-sticky">
             <thead>
                 <tr>
-                    <th>{% translate "Session type" %}</th>
-                    <th class="numeric">{% translate "Proposals" %}</th>
-                    <th class="numeric">{% translate "Default duration" %}</th>
+                    <th>
+                        {% if request.GET.sort == 'name' %}
+                            <a href="{% querystring sort='-name' %}">{% translate 'Session type' %}</a>
+                            <a href="{% querystring sort='name' %}" class="text-primary font-weight-bold" aria-label="{% translate 'Sorted ascending (a-z)' %}"><i class="fa fa-caret-up" title="{% translate 'Sort (a-z)' %}"></i></a>
+                            <a href="{% querystring sort='-name' %}" class="text-muted" aria-label="{% translate 'Sort (z-a)' %}"><i class="fa fa-caret-down" title="{% translate 'Sort (z-a)' %}"></i></a>
+                        {% elif request.GET.sort == '-name' %}
+                            <a href="{% querystring sort='name' %}">{% translate 'Session type' %}</a>
+                            <a href="{% querystring sort='name' %}" class="text-muted" aria-label="{% translate 'Sort (a-z)' %}"><i class="fa fa-caret-up" title="{% translate 'Sort (a-z)' %}"></i></a>
+                            <a href="{% querystring sort='-name' %}" class="text-primary font-weight-bold" aria-label="{% translate 'Sorted descending (z-a)' %}"><i class="fa fa-caret-down" title="{% translate 'Sort (z-a)' %}"></i></a>
+                        {% else %}
+                            <a href="{% querystring sort='name' %}">{% translate 'Session type' %}</a>
+                            <a href="{% querystring sort='name' %}" class="text-muted" aria-label="{% translate 'Sort (a-z)' %}"><i class="fa fa-caret-up" title="{% translate 'Sort (a-z)' %}"></i></a>
+                            <a href="{% querystring sort='-name' %}" class="text-muted" aria-label="{% translate 'Sort (z-a)' %}"><i class="fa fa-caret-down" title="{% translate 'Sort (z-a)' %}"></i></a>
+                        {% endif %}
+                    </th>
+                    <th class="numeric">
+                        {% if request.GET.sort == '-proposals' %}
+                            <a href="{% querystring sort='proposals' %}">{% translate 'Proposals' %}</a>
+                            <a href="{% querystring sort='-proposals' %}" class="text-primary font-weight-bold" aria-label="{% translate 'Sorted descending (high-low)' %}"><i class="fa fa-caret-down" title="{% translate 'Sort (high-low)' %}"></i></a>
+                            <a href="{% querystring sort='proposals' %}" class="text-muted" aria-label="{% translate 'Sort (low-high)' %}"><i class="fa fa-caret-up" title="{% translate 'Sort (low-high)' %}"></i></a>
+                        {% elif request.GET.sort == 'proposals' %}
+                            <a href="{% querystring sort='-proposals' %}">{% translate 'Proposals' %}</a>
+                            <a href="{% querystring sort='-proposals' %}" class="text-muted" aria-label="{% translate 'Sort (high-low)' %}"><i class="fa fa-caret-down" title="{% translate 'Sort (high-low)' %}"></i></a>
+                            <a href="{% querystring sort='proposals' %}" class="text-primary font-weight-bold" aria-label="{% translate 'Sorted ascending (low-high)' %}"><i class="fa fa-caret-up" title="{% translate 'Sort (low-high)' %}"></i></a>
+                        {% else %}
+                            <a href="{% querystring sort='-proposals' %}">{% translate 'Proposals' %}</a>
+                            <a href="{% querystring sort='-proposals' %}" class="text-muted" aria-label="{% translate 'Sort (high-low)' %}"><i class="fa fa-caret-down" title="{% translate 'Sort (high-low)' %}"></i></a>
+                            <a href="{% querystring sort='proposals' %}" class="text-muted" aria-label="{% translate 'Sort (low-high)' %}"><i class="fa fa-caret-up" title="{% translate 'Sort (low-high)' %}"></i></a>
+                        {% endif %}
+                    </th>
+                    <th class="numeric">
+                        {% if request.GET.sort == '-default_duration' %}
+                            <a href="{% querystring sort='default_duration' %}">{% translate 'Default duration' %}</a>
+                            <a href="{% querystring sort='-default_duration' %}" class="text-primary font-weight-bold" aria-label="{% translate 'Sorted descending (high-low)' %}"><i class="fa fa-caret-down" title="{% translate 'Sort (high-low)' %}"></i></a>
+                            <a href="{% querystring sort='default_duration' %}" class="text-muted" aria-label="{% translate 'Sort (low-high)' %}"><i class="fa fa-caret-up" title="{% translate 'Sort (low-high)' %}"></i></a>
+                        {% elif request.GET.sort == 'default_duration' %}
+                            <a href="{% querystring sort='-default_duration' %}">{% translate 'Default duration' %}</a>
+                            <a href="{% querystring sort='-default_duration' %}" class="text-muted" aria-label="{% translate 'Sort (high-low)' %}"><i class="fa fa-caret-down" title="{% translate 'Sort (high-low)' %}"></i></a>
+                            <a href="{% querystring sort='default_duration' %}" class="text-primary font-weight-bold" aria-label="{% translate 'Sorted ascending (low-high)' %}"><i class="fa fa-caret-up" title="{% translate 'Sort (low-high)' %}"></i></a>
+                        {% else %}
+                            <a href="{% querystring sort='-default_duration' %}">{% translate 'Default duration' %}</a>
+                            <a href="{% querystring sort='-default_duration' %}" class="text-muted" aria-label="{% translate 'Sort (high-low)' %}"><i class="fa fa-caret-down" title="{% translate 'Sort (high-low)' %}"></i></a>
+                            <a href="{% querystring sort='default_duration' %}" class="text-muted" aria-label="{% translate 'Sort (low-high)' %}"><i class="fa fa-caret-up" title="{% translate 'Sort (low-high)' %}"></i></a>
+                        {% endif %}
+                    </th>
                     <th></th>
                 </tr>
             </thead>
-            <tbody dragsort-url="{{ request.path }}">
+            <tbody {% if can_reorder %}dragsort-url="{{ request.path }}"{% endif %}>
                 {% for type in submissiontype_list %}
                     <tr dragsort-id="{{ type.id }}">
                         <td data-label="{% translate 'Session type' %}">
@@ -48,15 +96,17 @@
                             <a href="{{ type.urls.edit }}">{{ type.name }}</a>
                         </td>
                         <td class="numeric" data-label="{% translate 'Proposals' %}">
-                            <a href="{{ request.event.orga_urls.submissions }}?submission_type={{ type.id }}">{{ type.submissions.all.count }}</a>
+                            <a href="{{ request.event.orga_urls.submissions }}?submission_type={{ type.id }}">{% if type.proposals is not None %}{{ type.proposals }}{% else %}{{ type.submissions.all.count }}{% endif %}</a>
                         </td>
                         <td class="numeric" data-label="{% translate 'Default duration' %}">{{ type.default_duration }}</td>
                         <td class="text-right" data-label="{% translate 'Settings' %}">
-                            <button draggable="true" class="btn btn-sm btn-primary mr-1 dragsort-button"
-                                    title="{% translate "Move item" %}"
-                                    aria-label="{% translate "Move session type" %}">
-                                <i class="fa fa-arrows"></i>
-                            </button>
+                            {% if can_reorder %}
+                                <button draggable="true" class="btn btn-sm btn-primary mr-1 dragsort-button"
+                                        title="{% translate "Move item" %}"
+                                        aria-label="{% translate "Move session type" %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            {% endif %}
                             {% if request.event.cfp.default_type == type %}
                                 <form method="post" action="{{ type.urls.default }}" class="d-inline">
                                     {% csrf_token %}
