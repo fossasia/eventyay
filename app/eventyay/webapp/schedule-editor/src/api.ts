@@ -179,13 +179,17 @@ const api = {
       }
     }
 
-    const response = await this.http<Talk>(action, url, payload)
+    const response = await this.http<Talk | { error?: string; success?: boolean }>(action, url, payload)
+
+    if (response && typeof response === 'object' && 'error' in response && (response as { error?: unknown }).error) {
+      throw new Error(String((response as { error?: unknown }).error))
+    }
 
     if (action !== 'DELETE') {
       if (response && typeof response === 'object' && 'id' in response && 'title' in response) {
         return TalkSchema.parse(response)
       }
-      return response
+      return response as Talk
     }
   },
 

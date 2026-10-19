@@ -49,6 +49,7 @@ from eventyay.base.services.orderimport import parse_csv
 from eventyay.base.services.tasks import ProfiledEventTask
 from eventyay.celery_app import app
 from eventyay.common.social_links import parse_social_links_from_csv
+from eventyay.common.text.rich_text import is_empty_rich_text
 from eventyay.consts import SizeKey
 from eventyay.helpers.countries import CachedCountries
 
@@ -1271,6 +1272,16 @@ def _import_speaker_row(event, settings, record, acting_user, caches=None):
         if len(profiles) == 1:
             user = profiles[0].user
 
+    existing_profile = None
+    if user:
+        existing_profile = SpeakerProfile.objects.filter(user=user, event=event).first()
+
+    clean_biography = biography if not (biography and is_empty_rich_text(biography)) else None
+    existing_biography = existing_profile.biography if existing_profile else None
+    final_biography = clean_biography if clean_biography else existing_biography
+    if event.cfp.require_biography and is_empty_rich_text(final_biography):
+        raise ImportExecutionError(_('Biography is required.'))
+
     created_choice_options: list[tuple[dict, str]] = []
     finalized = False
     try:
@@ -1309,8 +1320,8 @@ def _import_speaker_row(event, settings, record, acting_user, caches=None):
                 event=event,
             )
             profile_update_fields = []
-            if biography:
-                profile.biography = biography
+            if clean_biography:
+                profile.biography = clean_biography
                 profile_update_fields.append('biography')
             if job_title:
                 profile.job_title = job_title[:255]

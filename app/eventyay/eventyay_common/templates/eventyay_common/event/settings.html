@@ -69,44 +69,54 @@
                         {% endblocktranslate %}
                     </div>
                     {% include "orga/includes/event_links_formset.html" with formset=footer_links_formset %}
+                </div>
+            </div>
 
-                    <div class="settings-footer-contact">
-                        <div class="checkbox settings-footer-contact-toggle">
-                            <label>
-                                {{ sform.contact_form_enabled }}
-                                <strong>{% translate "Contact form" %}</strong>
-                            </label>
+            <div class="form-group">
+                <label class="col-md-3 control-label" for="{{ sform.contact_form_enabled.id_for_label }}">
+                    <strong>{% translate "Contact Organizer" %}</strong>
+                </label>
+                <div class="col-md-9">
+                    <div class="checkbox">
+                        <label for="{{ sform.contact_form_enabled.id_for_label }}">
+                            {{ sform.contact_form_enabled }}
+                            {{ sform.contact_form_enabled.label }}
+                        </label>
+                    </div>
+                    {% if sform.contact_form_enabled.help_text %}
+                        <div id="{{ sform.contact_form_enabled.auto_id }}_helptext" class="help-block text-muted">
+                            {{ sform.contact_form_enabled.help_text }}
                         </div>
-                        {% if sform.contact_form_enabled.errors %}
-                            <div class="help-block">
-                                {% for error in sform.contact_form_enabled.errors %}
-                                    <span class="text-danger">{{ error }}</span>
+                    {% endif %}
+                    {% if sform.contact_form_enabled.errors %}
+                        <div class="help-block text-danger">
+                            {% for error in sform.contact_form_enabled.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div id="contact-form-email-fields"
+                         class="settings-footer-contact-fields{% if sform.contact_mail.errors %} has-error{% endif %}">
+                        <label class="control-label" for="{{ sform.contact_mail.id_for_label }}">
+                            {% translate "Organizer email address" %}
+                        </label>
+                        <input type="email"
+                               name="{{ sform.contact_mail.html_name }}"
+                               value="{{ sform.contact_mail.value|default:'' }}"
+                               class="form-control"
+                               id="{{ sform.contact_mail.id_for_label }}"
+                               {% if sform.contact_mail.field.disabled %}disabled{% endif %}>
+                        {% if sform.contact_mail.help_text %}
+                            <p class="help-block text-muted">{{ sform.contact_mail.help_text }}</p>
+                        {% endif %}
+                        {% if sform.contact_mail.errors %}
+                            <div class="help-block text-danger">
+                                {% for error in sform.contact_mail.errors %}
+                                    <span>{{ error }}</span>
                                 {% endfor %}
                             </div>
                         {% endif %}
-
-                        <div id="contact-form-email-fields"
-                             class="settings-footer-contact-fields{% if sform.contact_mail.errors %} has-error{% endif %}">
-                            <label class="control-label" for="{{ sform.contact_mail.id_for_label }}">
-                                {% translate "Organizer email address" %}
-                            </label>
-                            <input type="email"
-                                   name="{{ sform.contact_mail.html_name }}"
-                                   value="{{ sform.contact_mail.value|default:'' }}"
-                                   class="form-control"
-                                   id="{{ sform.contact_mail.id_for_label }}"
-                                   {% if sform.contact_mail.field.disabled %}disabled{% endif %}>
-                            {% if sform.contact_mail.help_text %}
-                                <p class="help-block text-muted">{{ sform.contact_mail.help_text }}</p>
-                            {% endif %}
-                            {% if sform.contact_mail.errors %}
-                                <div class="help-block text-danger">
-                                    {% for error in sform.contact_mail.errors %}
-                                        <span>{{ error }}</span>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
                     </div>
                 </div>
             </div>
@@ -250,13 +260,6 @@
             {% bootstrap_field sform.show_date_to layout="control" %}
             {% bootstrap_field sform.show_times layout="control" %}
         </fieldset>
-        {% if not is_meetup_event %}
-        <fieldset>
-            <legend>{% trans "Publication" %}</legend>
-            {% bootstrap_field form.is_public layout="control" %}
-            {% bootstrap_field sform.meta_noindex layout="control" %}
-        </fieldset>
-        {% endif %}
         <fieldset id="email-settings-tab">
             <legend>{% trans "Email" %}</legend>
             <h4 class="settings-sub-heading">{% trans "General" %}</h4>
