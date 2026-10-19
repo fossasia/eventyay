@@ -134,7 +134,7 @@
 			button.sidebar-divider-toggle.btn-circle(
 				v-if="caps.canDrag",
 				type="button",
-				:class="{'is-collapsed': isSidebarCollapsed}",
+				:class="{'is-collapsed': isSidebarCollapsed , 'is-unassign-target': isSidebarCollapsed && isUnassigning && canDropToDismissOrUnassign, 'is-break-target': isSidebarCollapsed && isUnassigning && canDropToDismissOrUnassign && !draggedSession?.code}",
 				@click="toggleSidebar",
 				:title="isSidebarCollapsed ? $t('Show unscheduled sessions') : $t('Collapse unscheduled sessions')",
 				:aria-label="isSidebarCollapsed ? $t('Show unscheduled sessions') : $t('Collapse unscheduled sessions')"
@@ -613,6 +613,11 @@ watch(draggedSession, (val) => {
 
 function checkIsOverUnassigned(x: number, y: number): boolean {
   if (typeof document === 'undefined') return false
+  if (isSidebarCollapsed.value && !isMobile.value) {
+    const toggle = document.querySelector('.sidebar-divider-toggle')
+    const rect = toggle?.getBoundingClientRect()
+    return Boolean(rect && x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom)
+  }
   if (!cachedUnassignedRect) {
     const el = document.getElementById('unassigned')
     cachedUnassignedRect = el ? el.getBoundingClientRect() : null
@@ -1546,9 +1551,6 @@ function startNewBreak({ event }: DragStartEvent) {
 function startDragging({ event, session }: DragStartEvent) {
   isUnassigning.value = false
   if (session.start && session.id) {
-    if (isSidebarCollapsed.value) {
-      isSidebarCollapsed.value = false
-    }
     if (isUnassignedCollapsed.value) {
       isUnassignedCollapsed.value = false
     }
@@ -3026,6 +3028,14 @@ html.rtl
 		left: 0
 		i.fa-bars
 			font-size: 12px
+	&.is-unassign-target
+		background-color: #fffbeb
+		border-color: #d97706
+		color: #b45309
+		&.is-break-target
+			background-color: #fef2f2
+			border-color: #ef4444
+			color: #dc2626
 
 @media (max-width: 767px)
 	.sidebar-divider-line,
