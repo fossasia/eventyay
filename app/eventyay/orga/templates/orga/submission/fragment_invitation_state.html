@@ -10,7 +10,7 @@
     {% else %}
         <span class="text-muted"><i class="fa fa-clock-o"></i> {% translate "Invitation email not sent yet" %}</span>
     {% endif %}
-    {% if can_edit_speakers and invitation.can_resend %}
+    {% if can_edit_speakers and invitation.can_resend_orga %}
         <button type="button"
                 class="btn btn-sm btn-outline-info ml-2"
                 data-resend-invitation="{% url 'orga:submissions.speakers.resend_invitation' organizer=request.event.organizer.slug event=request.event.slug code=submission.code pk=invitation.pk %}"

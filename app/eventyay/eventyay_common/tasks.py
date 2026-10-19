@@ -21,6 +21,7 @@ from django_scopes import scopes_disabled
 from eventyay.base.decimal import round_decimal
 from eventyay.base.models.vouchers import InvoiceVoucher
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
+from eventyay.base.signals import is_legacy_billing_collection_disabled
 from eventyay.helpers.stripe_utils import (
     confirm_payment_intent,
     process_auto_billing_charge_stripe,
@@ -29,13 +30,21 @@ from eventyay.helpers.stripe_utils import (
 from ..base.models import BillingInvoice, Event, Order, Organizer
 from ..base.models.organizer import OrganizerBillingModel
 from ..base.services.mail import mail_send_task
-from ..base.settings import GlobalSettingsObject
 from ..consts import EVENTYAY_EMAIL_NONE_VALUE
 from ..helpers.jwt_generate import generate_sso_token
 from .billing_invoice import InvoicePDFGenerator
 from .schemas.billing import CollectBillingResponse
 
 logger = logging.getLogger(__name__)
+
+MONTHLY_INVOICE_SUBJECT = '{month} invoice for {event}'
+MONTHLY_INVOICE_TEXT = (
+    'Dear {name},\n\n'
+    'Thank you for using our services! '
+    'Please find attached for a summary of your invoice for {month}.\n\n'
+    'Best regards,\n'
+    'EventYay Team'
+)
 
 
 @shared_task(bind=True, max_retries=5, default_retry_delay=60)  # Retries up to 5 times with a 60-second delay
@@ -173,10 +182,14 @@ def monthly_billing_collect(self):
     try:
         last_month_date = _get_billing_period()
 
-        gs = GlobalSettingsObject()
-        ticket_rate = Decimal(str(gs.settings.get('ticket_fee_percentage') or 2.5))
-
+        ticket_rate = Decimal('0.00')
         for organizer in Organizer.objects.all():
+            if is_legacy_billing_collection_disabled(organizer):
+                logger.info(
+                    'Skipping legacy monthly billing for organizer %s because an external collector owns billing',
+                    organizer.slug,
+                )
+                continue
             organizer_billing = OrganizerBillingModel.objects.filter(organizer=organizer).first()
             invoice_voucher = organizer_billing.invoice_voucher if organizer_billing else None
             total_voucher_discount = Decimal('0.00')
@@ -269,6 +282,12 @@ def process_auto_billing_charge():
         last_month_date = (first_day_of_current_month - relativedelta(months=1)).date()
         pending_invoices = BillingInvoice.objects.filter(Q(monthly_bill=last_month_date) & Q(status='n'))
         for invoice in pending_invoices:
+            if is_legacy_billing_collection_disabled(invoice.organizer):
+                logger.info(
+                    'Skipping legacy automatic charge for organizer %s because an external collector owns billing',
+                    invoice.organizer.slug,
+                )
+                continue
             if invoice.final_ticket_fee > 0:
                 billing_settings = OrganizerBillingModel.objects.filter(organizer_id=invoice.organizer_id).first()
                 if not billing_settings or not billing_settings.stripe_customer_id:
@@ -360,43 +379,7 @@ def calculate_ticket_fee(
 
     ticket_fee = amount * (rate / 100)
 
-    max_fee = None
-    try:
-        from eventyay_business.models import CountryFeeSetting
-    except ImportError:
-        CountryFeeSetting = None
-
-    if CountryFeeSetting is not None:
-        country = event.settings.get('invoice_address_from_country') or event.settings.get('region')
-        if country and event.currency:
-            override = CountryFeeSetting.objects.filter(
-                country=str(country).strip().upper(),
-                currency=str(event.currency).strip().upper(),
-            ).first()
-            if override:
-                ticket_fee = amount * (override.service_fee_percent / Decimal('100.0'))
-                max_fee = round_decimal(override.maximum_fee, currency=event.currency)
-
-    if max_fee is None:
-        gs = GlobalSettingsObject()
-        raw_max_fee = gs.settings.get('ticket_fee_maximum', as_type=Decimal, default=Decimal('0.00'))
-
-        if raw_max_fee and raw_max_fee > Decimal('0.00'):
-            base_currency = getattr(settings, 'DEFAULT_CURRENCY', 'USD')
-            if event.currency and event.currency != base_currency:
-                rates_dict = gs.settings.get('ecb_rates_dict', as_type=dict) or {}
-                if base_currency in rates_dict and event.currency in rates_dict:
-                    rate_conv = (
-                        Decimal(str(rates_dict[event.currency])) / Decimal(str(rates_dict[base_currency]))
-                    ).quantize(Decimal('0.0001'), ROUND_HALF_UP)
-                    max_fee = round_decimal(raw_max_fee * rate_conv, currency=event.currency)
-                else:
-                    logger.warning('ECB rates unavailable for %s→%s; skipping global fee cap for ticket fee calculation.', base_currency, event.currency)
-                    max_fee = Decimal('0.00')
-            else:
-                max_fee = round_decimal(raw_max_fee, currency=event.currency)
-        else:
-            max_fee = Decimal('0.00')
+    max_fee = Decimal('0.00')
 
     ticket_fee = round_decimal(ticket_fee, currency=event.currency)
     if max_fee and max_fee > Decimal('0.00') and ticket_fee > max_fee:
@@ -458,13 +441,10 @@ def billing_invoice_notification(self):
             continue
         month_name = invoice.monthly_bill.strftime('%B')
         # Send email to organizer with invoice pdf
-        mail_subject = f'{month_name} invoice for {invoice.event.name}'
-        mail_content = (
-            f'Dear {organizer_billing.primary_contact_name},\n\n'
-            f'Thank you for using our services! '
-            f'Please find attached for a summary of your invoice for {month_name}.\n\n'
-            f'Best regards,\n'
-            f'EventYay Team'
+        mail_subject = MONTHLY_INVOICE_SUBJECT.format(month=month_name, event=invoice.event.name)
+        mail_content = MONTHLY_INVOICE_TEXT.format(
+            name=organizer_billing.primary_contact_name,
+            month=month_name,
         )
 
         billing_invoice_send_email(mail_subject, mail_content, invoice, organizer_billing)

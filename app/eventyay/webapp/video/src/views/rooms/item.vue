@@ -13,7 +13,7 @@
 				reactions-overlay(v-if="hasLivestream")
 				upcoming-stream-countdown(:room="room")
 		.stage-tool-blocker(v-if="activeStageTool !== null", @click="activeStageTool = null")
-		.stage-captions-dock(v-if="hasLivestream", :class="{open: ccEnabled}")
+		.stage-captions-dock(v-if="hasLivestream && isInterpretationEnabled", :class="{open: ccEnabled}")
 			.docked-captions-card
 				.captions-header
 					.header-left
@@ -26,7 +26,9 @@
 					LiveCaptions(:ws-url="selectedCcWsUrl", :text-size="captionTextSize", :docked="true")
 		.stage-tools(v-if="hasLivestream")
 			.stage-tools-left
-				.tool-section.captions-section
+				reactions-bar
+			.stage-tools-right
+				.tool-section.captions-section(v-if="isInterpretationEnabled")
 					button.stage-tool.cc-toggle(:class="{active: ccEnabled}", @click="toggleCc", :title="$t('Toggle Captions')")
 						i.mdi(:class="ccEnabled ? 'mdi-closed-caption' : 'mdi-closed-caption-outline'")
 						span.cc-label {{ ccEnabled ? $t('Captions On') : $t('Captions Off') }}
@@ -50,7 +52,7 @@
 							i.mdi.mdi-plus
 					.lang-wrapper(v-if="ccEnabled && pluginLanguages.length > 0")
 						AudioTranslationDropdown(:key="`${room.id}-cc`", :languages="pluginLanguages", :selected-language="selectedCcLanguage", :label="$t('Caption Language')", @languageChanged="handleCcLanguageChange")
-				.tool-section.audio-section
+				.tool-section.audio-section(v-if="isInterpretationEnabled")
 					.dropdown-wrapper(v-if="showPluginLanguageDropdown")
 						i.mdi.mdi-account-voice
 						AudioTranslationDropdown(:key="`${room.id}-plugin`", :languages="interpretationLanguages", :selected-language="selectedPluginLanguage", :label="$t('Interpretation')", @languageChanged="handlePluginLanguageChange")
@@ -62,8 +64,6 @@
 							i.mdi(:class="interpMuted || interpVolume === 0 ? 'mdi-volume-off' : 'mdi-volume-high'")
 						input.interp-volume-slider(type="range", min="0", max="1", step="0.05", :value="interpMuted ? 0 : interpVolume", @input="onInterpVolumeInput", :aria-label="$t('Interpretation Volume')", :style="{'--interp-vol': interpMuted ? 0 : interpVolume}")
 						span.vol-pct {{ Math.round((interpMuted ? 0 : interpVolume) * 100) }}%
-			.stage-tools-right
-				reactions-bar
 	.stage(v-else-if="modules['call.janus'] || modules['call.bigbluebutton'] || modules['call.zoom'] || modules['call.jitsi'] || modules['call.loungemesh']")
 		.stage-canvas-container
 			.media-canvas-wrapper
@@ -280,6 +280,9 @@ export default {
 		currentInterpretation() {
 			if (!this.room?.id) return null
 			return this.$store.state.interpretationStreamsByRoom?.[this.room.id] || this.$store.state.youtubeTranslationsByRoom?.[this.room.id] || null
+		},
+		isInterpretationEnabled() {
+			return roomUsesPluginLanguageStreams(this.room)
 		},
 		showPluginLanguageDropdown() {
 			return roomUsesPluginLanguageStreams(this.room) && this.interpretationLanguages.some(entry => entry.language !== 'Original')
@@ -635,6 +638,7 @@ export default {
 			min-height: 0
 			height: auto
 			display: flex
+			flex-wrap: wrap
 			align-items: flex-start
 			justify-content: space-between
 			width: 100%
@@ -658,182 +662,170 @@ export default {
 				min-width: 0
 				flex: 0 1 auto
 				width: max-content
-				min-width: 156px
-				max-width: calc(100% - 196px)
 
-				.tool-section
-					display: flex
-					align-items: center
-					gap: 6px
-					flex-wrap: wrap
-					padding: 4px 6px
-					border: 1px solid var(--clr-grey-200, #e2e8f0)
-					border-radius: 6px
-					background: var(--clr-grey-50, #f8f9fa)
-					width: 100%
-					box-sizing: border-box
+			.tool-section
+				display: flex
+				align-items: center
+				gap: 6px
+				flex-wrap: wrap
+				padding: 4px 6px
+				border: 1px solid var(--clr-grey-200, #e2e8f0)
+				border-radius: 6px
+				background: var(--clr-white, #ffffff)
+				width: auto
+				box-sizing: border-box
 
-				.captions-section
-					display: grid
-					grid-template-columns: auto 1fr
-					align-items: center
-					column-gap: 6px
-					row-gap: 4px
-					.stage-tool.cc-toggle
-						grid-column: 1
-						grid-row: 1
-					.caption-size-stepper
-						grid-column: 2
-						grid-row: 1
-						justify-self: stretch
-						width: 100%
-						justify-content: space-between
-					.lang-wrapper
-						grid-column: 1 / -1
-						grid-row: 2
-						width: 100%
+			.captions-section
+				display: flex
+				align-items: center
+				gap: 6px
+				flex-wrap: wrap
 
-				.lang-wrapper,
-				.dropdown-wrapper
-					display: flex
-					align-items: center
-					gap: 4px
+			.lang-wrapper,
+			.dropdown-wrapper
+				display: flex
+				align-items: center
+				gap: 4px
+				min-width: 150px
+				color: var(--clr-text-secondary, #64748b)
+				.mdi
+					font-size: 16px
+					flex: none
+					color: var(--clr-primary, #2185d0)
+				.c-audio-translation
+					flex: 1
 					min-width: 0
-					width: 100%
-					color: var(--clr-text-secondary, #64748b)
-					.mdi
-						font-size: 16px
-						flex: none
-						color: var(--clr-primary, #2185d0)
-					.c-audio-translation
-						flex: 1
-						min-width: 0
+					.field-shell
 						width: 100%
-						.field-shell
-							width: 100%
-							min-width: 0
+						border: none !important
+						background: transparent !important
+						box-shadow: none !important
+						padding: 0
+						min-width: 0
 
-				.static-audio-pill
-					display: inline-flex
+			.static-audio-pill
+				display: inline-flex
+				align-items: center
+				gap: 4px
+				height: 26px
+				padding: 0 8px
+				border-radius: 13px
+				background: var(--clr-grey-100, #f1f5f9)
+				color: var(--clr-text-secondary, #64748b)
+				font-size: 11px
+				font-weight: 500
+				.mdi
+					font-size: 14px
+					color: var(--clr-primary, #2185d0)
+
+			.interp-volume-box
+				display: inline-flex
+				align-items: center
+				gap: 4px
+				height: 26px
+				padding: 0 6px
+				border-radius: 6px
+				background: var(--clr-grey-100, #f1f5f9)
+				.interp-mute-btn
+					display: flex
 					align-items: center
-					gap: 4px
-					height: 26px
-					padding: 0 8px
-					border-radius: 13px
-					background: var(--clr-grey-100, #f1f5f9)
-					color: var(--clr-text-secondary, #64748b)
-					font-size: 11px
-					font-weight: 500
+					justify-content: center
+					width: 20px
+					height: 20px
+					border: none
+					background: transparent
+					color: var(--clr-text-primary, #1e293b)
+					cursor: pointer
+					padding: 0
 					.mdi
 						font-size: 14px
-						color: var(--clr-primary, #2185d0)
-
-				.interp-volume-box
-					display: inline-flex
-					align-items: center
-					gap: 4px
-					height: 26px
-					padding: 0 6px
-					border-radius: 6px
-					background: var(--clr-grey-100, #f1f5f9)
-					.interp-mute-btn
-						display: flex
-						align-items: center
-						justify-content: center
-						width: 20px
-						height: 20px
-						border: none
-						background: transparent
-						color: var(--clr-text-primary, #1e293b)
-						cursor: pointer
-						padding: 0
-						.mdi
-							font-size: 14px
-					.interp-volume-slider
-						width: 56px
-						height: 3px
-						accent-color: var(--clr-primary, #2185d0)
-						cursor: pointer
-					.vol-pct
-						font-size: 11px
-						font-weight: 600
-						color: var(--clr-text-secondary, #64748b)
-						min-width: 28px
-
-				.stage-tool.cc-toggle
-					display: inline-flex
-					align-items: center
-					gap: 4px
-					height: 26px
-					padding: 0 8px
-					border-radius: 5px
-					border: 1px solid var(--clr-grey-300, #cbd5e1)
-					background: var(--clr-surface, #ffffff)
-					color: var(--clr-text-secondary, #64748b)
-					font-size: 11px
-					font-weight: 500
+				.interp-volume-slider
+					width: 56px
+					height: 3px
+					accent-color: var(--clr-primary, #2185d0)
 					cursor: pointer
-					transition: all 0.15s ease
-					&:hover
-						border-color: var(--clr-primary, #2185d0)
-						color: var(--clr-primary, #2185d0)
-					&.active
-						background-color: var(--clr-primary-alpha-18, rgba(33, 133, 208, 0.12))
-						border-color: var(--clr-primary, #2185d0)
-						color: var(--clr-primary, #2185d0)
-						font-weight: 600
-					.mdi
-						font-size: 15px
+				.vol-pct
+					font-size: 11px
+					font-weight: 600
+					color: var(--clr-text-secondary, #64748b)
+					min-width: 28px
 
-				.caption-size-stepper
-					display: inline-flex
+			.stage-tool.cc-toggle
+				display: inline-flex
+				align-items: center
+				gap: 4px
+				height: 26px
+				padding: 0 8px
+				border-radius: 5px
+				border: 1px solid var(--clr-grey-300, #cbd5e1)
+				background: var(--clr-surface, #ffffff)
+				color: var(--clr-text-secondary, #64748b)
+				font-size: 11px
+				font-weight: 500
+				cursor: pointer
+				transition: all 0.15s ease
+				&:hover
+					border-color: var(--clr-primary, #2185d0)
+					color: var(--clr-primary, #2185d0)
+				&.active
+					background-color: var(--clr-primary-alpha-18, rgba(33, 133, 208, 0.12))
+					border-color: var(--clr-primary, #2185d0)
+					color: var(--clr-primary, #2185d0)
+					font-weight: 600
+				.mdi
+					font-size: 15px
+
+			.caption-size-stepper
+				display: inline-flex
+				align-items: center
+				height: 26px
+				border: 1px solid var(--clr-grey-300, #cbd5e1)
+				border-radius: 5px
+				overflow: hidden
+				background: var(--clr-surface, #ffffff)
+				flex: none
+
+				.size-step
+					display: flex
 					align-items: center
+					justify-content: center
+					width: 22px
 					height: 26px
-					border: 1px solid var(--clr-grey-300, #cbd5e1)
-					border-radius: 5px
-					overflow: hidden
-					background: var(--clr-surface, #ffffff)
-					flex: none
+					padding: 0
+					border: none
+					background: transparent
+					color: var(--clr-text-secondary, #64748b)
+					cursor: pointer
+					&:hover:not(:disabled)
+						background-color: var(--clr-grey-100, #f1f5f9)
+						color: var(--clr-primary, #2185d0)
+					&:disabled
+						opacity: 0.35
+						cursor: default
+					.mdi
+						font-size: 14px
 
-					.size-step
-						display: flex
-						align-items: center
-						justify-content: center
-						width: 22px
-						height: 26px
-						padding: 0
-						border: none
-						background: transparent
-						color: var(--clr-text-secondary, #64748b)
-						cursor: pointer
-						&:hover:not(:disabled)
-							background-color: var(--clr-grey-100, #f1f5f9)
-							color: var(--clr-primary, #2185d0)
-						&:disabled
-							opacity: 0.35
-							cursor: default
-						.mdi
-							font-size: 14px
-
-					.size-sign
-						display: flex
-						align-items: center
-						justify-content: center
-						width: 18px
-						font-size: 13px
-						font-weight: 700
-						line-height: 1
-						color: var(--clr-text-primary, #1e293b)
-						pointer-events: none
+				.size-sign
+					display: flex
+					align-items: center
+					justify-content: center
+					width: 18px
+					font-size: 13px
+					font-weight: 700
+					line-height: 1
+					color: var(--clr-text-primary, #1e293b)
+					pointer-events: none
 
 			.stage-tools-right
 				display: flex
-				align-items: flex-start
+				flex-direction: row
+				flex-wrap: wrap
+				align-items: center
 				justify-content: flex-end
 				gap: 8px
-				flex: none
-				padding-top: 0
-				overflow: visible
+				min-width: 0
+				flex: 0 1 auto
+				width: max-content
 
 		.stage-captions-dock
 			flex: none
@@ -1151,7 +1143,7 @@ export default {
 				gap: 8px
 				.stage-tools-left
 					min-width: 148px
-					max-width: calc(100% - 172px)
+					max-width: 100%
 				.stage-tool.cc-toggle
 					padding: 0
 					width: 26px

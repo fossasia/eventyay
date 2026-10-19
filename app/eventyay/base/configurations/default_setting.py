@@ -1572,7 +1572,10 @@ DEFAULT_SETTINGS = {
         'form_class': forms.BooleanField,
         'serializer_class': serializers.BooleanField,
         'form_kwargs': dict(
-            label=_('Contact form'),
+            label=_('Enable attendees to contact organizers'),
+            help_text=_(
+                'This option enables a contact form that attendees can use to contact an organizer.'
+            ),
             required=False,
         ),
     },
@@ -2330,7 +2333,7 @@ Your {event} team"""
             widget=I18nTextarea,
             widget_kwargs={'attrs': {'rows': '2'}},
             help_text=_(
-                'Not displayed anywhere by default, but if you want to, you can use this e.g. in ticket templates.'
+                'This text will appear on your ticket layout / PDF, not in your shop.'
             ),
         ),
     },
@@ -2403,8 +2406,7 @@ Your {event} team"""
             label=_('Additional success message'),
             help_text=_(
                 'This message will be shown after an order has been created successfully. It will be shown in '
-                'additional'
-                'to the default text.'
+                'addition to the default text.'
             ),
             widget_kwargs={'attrs': {'rows': '2'}},
             widget=I18nTextarea,
@@ -2449,7 +2451,7 @@ Your {event} team"""
             label=_('Info text'),
             widget=I18nTextarea,
             help_text=_(
-                'Not displayed anywhere by default, but if you want to, you can use this e.g. in ticket templates.'
+                'This text will appear on your ticket layout / PDF, not in your shop.'
             ),
         ),
     },

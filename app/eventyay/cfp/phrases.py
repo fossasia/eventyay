@@ -46,6 +46,12 @@ I’m looking forward to it!
     invite_invalid_email = _('Please provide a valid email address.')
     invite_sent = _('The invitation was sent!')
     invite_accepted = _('You are now part of this proposal! Please fill in your profile below.')
+    invite_limit_reached = _(
+        'This proposal has reached the maximum of {count} co-speakers. No further invitations can be sent.'
+    )
+    invite_resend_limit_reached = _('This invitation has already been resent the maximum of {count} times.')
+    invite_rate_limit_reached = _("You've sent the maximum number of invitations for now. Please try again later.")
+    invite_limit_unavailable = _('Invitations cannot be sent right now. Please try again later.')
 
     submission_email_fail = _(
         'We are experiencing difficulties when sending mails, but your session was submitted successfully!'

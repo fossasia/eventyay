@@ -1,9 +1,10 @@
 import pytest
-from django.urls import resolve
+from django.urls import resolve, reverse
 from django.utils.timezone import now
 
 from eventyay.base.models import Event, Organizer, Team, User
 from eventyay.control.navigation import get_admin_navigation, get_event_navigation
+from eventyay.control.signals import nav_global
 
 
 @pytest.fixture
@@ -53,6 +54,7 @@ def test_voucher_only_navigation_shows_vouchers(event, rf):
 
     request = rf.get(f'/control/event/{event.organizer.slug}/{event.slug}/')
     request.user = user
+    request.session = type("DummySession", (), {"session_key": "test"})()
     request.event = event
     request.organizer = event.organizer
     request.eventpermset = user.get_event_permission_set(event.organizer, event)
@@ -79,6 +81,7 @@ def test_product_and_voucher_navigation_keeps_vouchers_under_products(event, rf)
 
     request = rf.get(f'/control/event/{event.organizer.slug}/{event.slug}/')
     request.user = user
+    request.session = type("DummySession", (), {"session_key": "test"})()
     request.event = event
     request.organizer = event.organizer
     request.eventpermset = user.get_event_permission_set(event.organizer, event)
@@ -106,6 +109,7 @@ def test_orders_parent_nav_links_to_overview(event, rf):
 
     request = rf.get(f'/control/event/{event.organizer.slug}/{event.slug}/')
     request.user = user
+    request.session = type("DummySession", (), {"session_key": "test"})()
     request.event = event
     request.organizer = event.organizer
     request.eventpermset = user.get_event_permission_set(event.organizer, event)
@@ -135,6 +139,7 @@ def test_banktransfer_only_navigation_shows_import_export(event, rf):
 
     request = rf.get(f'/control/event/{event.organizer.slug}/{event.slug}/')
     request.user = user
+    request.session = type("DummySession", (), {"session_key": "test"})()
     request.event = event
     request.organizer = event.organizer
     request.eventpermset = user.get_event_permission_set(event.organizer, event)
@@ -151,8 +156,34 @@ def test_banktransfer_only_navigation_shows_import_export(event, rf):
 
     assert orders_nav is not None
     assert any(str(child.get('label')) == 'Import / Export' for child in orders_nav.get('children', []))
-    assert not any(str(child.get('label')) == 'Overview' for child in orders_nav.get('children', []))
-    assert not any(str(child.get('label')) == 'All orders' for child in orders_nav.get('children', []))
+    assert 'can_view_orders' in request.eventpermset
+    assert any(str(child.get('label')) == 'Overview' for child in orders_nav.get('children', []))
+    assert any(str(child.get('label')) == 'All orders' for child in orders_nav.get('children', []))
+
+
+@pytest.mark.django_db
+def test_legacy_plugin_business_navigation_stays_under_business(rf):
+    user = User.objects.create_user('legacy-plugin@example.com', 'dummy', is_staff=True)
+    request = rf.get('/admin/vouchers/')
+    request.user = user
+    request.session = type('DummySession', (), {'session_key': 'test'})()
+    request.resolver_match = resolve('/admin/vouchers/')
+
+    def legacy_business_nav(sender, **kwargs):
+        return [{
+            'label': 'Legacy plugin settings',
+            'url': '/legacy-business-settings/',
+            'parent': reverse('eventyay_admin:admin.global.business'),
+        }]
+
+    nav_global.connect(legacy_business_nav, dispatch_uid='test_legacy_business_nav')
+    try:
+        nav = get_admin_navigation(request)
+    finally:
+        nav_global.disconnect(dispatch_uid='test_legacy_business_nav')
+
+    business_nav = next(item for item in nav if str(item.get('label')) == 'Business')
+    assert any(str(child.get('label')) == 'Legacy plugin settings' for child in business_nav['children'])
 
 
 @pytest.mark.django_db
@@ -160,6 +191,7 @@ def test_admin_navigation_structure_and_hierarchy(rf):
     user = User.objects.create_user('admin@example.com', 'dummy', is_staff=True)
     request = rf.get('/admin/global/settings/')
     request.user = user
+    request.session = type("DummySession", (), {"session_key": "test"})()
     request.resolver_match = resolve('/admin/global/settings/')
 
     nav = get_admin_navigation(request)
@@ -172,6 +204,7 @@ def test_admin_navigation_structure_and_hierarchy(rf):
         'Video',
         'Platform Data',
         'Users',
+        'Message center',
     ]
 
     # Vouchers is no longer a standalone top-level sidebar item
@@ -183,12 +216,9 @@ def test_admin_navigation_structure_and_hierarchy(rf):
     assert 'children' in business_nav
 
     business_children_labels = [str(c.get('label')) for c in business_nav['children']]
-    assert business_children_labels == ['Business Settings', 'Event vouchers']
+    assert business_children_labels == ['Event vouchers']
 
     # Check URLs of Business children
-    business_settings = next(c for c in business_nav['children'] if str(c.get('label')) == 'Business Settings')
-    assert business_settings['url'] == '/admin/global/business/'
-
     event_vouchers = next(c for c in business_nav['children'] if str(c.get('label')) == 'Event vouchers')
     assert event_vouchers['url'] == '/admin/vouchers/'
 
@@ -198,6 +228,7 @@ def test_admin_navigation_voucher_active_state(rf):
     user = User.objects.create_user('admin@example.com', 'dummy', is_staff=True)
     request = rf.get('/admin/vouchers/')
     request.user = user
+    request.session = type("DummySession", (), {"session_key": "test"})()
     request.resolver_match = resolve('/admin/vouchers/')
 
     nav = get_admin_navigation(request)
@@ -207,8 +238,6 @@ def test_admin_navigation_voucher_active_state(rf):
     event_vouchers = next(c for c in business_nav['children'] if str(c.get('label')) == 'Event vouchers')
     assert event_vouchers['active'] is True
 
-    business_settings = next(c for c in business_nav['children'] if str(c.get('label')) == 'Business Settings')
-    assert business_settings['active'] is False
 
 
 @pytest.mark.django_db
@@ -216,6 +245,7 @@ def test_admin_navigation_global_settings_children(rf):
     user = User.objects.create_user('admin@example.com', 'dummy', is_staff=True)
     request = rf.get('/admin/global/settings/')
     request.user = user
+    request.session = type("DummySession", (), {"session_key": "test"})()
     request.resolver_match = resolve('/admin/global/settings/')
 
     nav = get_admin_navigation(request)
@@ -252,6 +282,7 @@ def test_admin_navigation_ticketing_active_state(rf):
     user = User.objects.create_user('admin@example.com', 'dummy', is_staff=True)
     request = rf.get('/admin/global/ticketing/')
     request.user = user
+    request.session = type("DummySession", (), {"session_key": "test"})()
     request.resolver_match = resolve('/admin/global/ticketing/')
 
     nav = get_admin_navigation(request)

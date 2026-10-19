@@ -915,8 +915,10 @@ class Schedule(PretalxModel):
             'release_warning': self.release_warning_message(),
             'acknowledgement_messages': self.release_acknowledgement_messages(talk_warnings),
         }
-        if self.event.get_feature_flag('use_tracks'):
-            warnings['no_track'] = talks.filter(submission__track_id__isnull=True)
+        with scope(event=self.event):
+            has_tracks = self.event.tracks.exists()
+            if has_tracks:
+                warnings['no_track'] = talks.filter(submission__track_id__isnull=True)
         return warnings
 
     @cached_property
@@ -1321,10 +1323,10 @@ class Schedule(PretalxModel):
                 'name': user.fullname or None,
                 'is_featured': bool(getattr(profile, 'is_featured', False)),
                 'featured_position': getattr(profile, 'position', None),
+                'speaker_role': build_public_speaker_role(profile, self.event) if profile else '',
             }
             if not compact:
                 speaker_data['biography'] = getattr(profile, 'biography', '') if show_biography else ''
-                speaker_data['speaker_role'] = build_public_speaker_role(profile, self.event) if profile else ''
             avatar_urls = list_avatar_urls(user, self.event, include=include_avatar)
             if compact:
                 tiny = avatar_urls.get('avatar_thumbnail_tiny')

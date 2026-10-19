@@ -31,6 +31,7 @@ from eventyay.base.settings import (
     is_event_series_creation_enabled,
     is_meetup_creation_enabled,
 )
+from eventyay.base.signals import organizer_billing_payment_method_saved
 from eventyay.common.text.path import resolve_media_path
 from eventyay.control.forms.filter import EventFilterForm, OrganizerFilterForm, advanced_filters_open_from_get
 from eventyay.control.forms.organizer_forms import (
@@ -430,7 +431,23 @@ class OrganizerDetail(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin
         ctx['meta_fields'] = [self.filter_form[f'meta_{p.name}'] for p in self.organizer.meta_properties.all()]
         ctx['event_series_creation_enabled'] = is_event_series_creation_enabled(self.request)
         ctx['meetup_creation_enabled'] = is_meetup_creation_enabled(self.request)
+        ctx['cloneable_event_ids'] = self._cloneable_event_ids(ctx.get('events') or [])
         return ctx
+
+    def _cloneable_event_ids(self, events):
+        if 'can_create_events' not in self.request.orgapermset:
+            return frozenset()
+        
+        if not events:
+            return frozenset()
+            
+        return frozenset(
+            self.request.user.get_events_with_permission(
+                'can_change_event_settings', request=self.request
+            )
+            .filter(pk__in=[event.pk for event in events])
+            .values_list('pk', flat=True)
+        )
 
 
 class OrganizerDetailViewMixin:
@@ -559,10 +576,27 @@ def save_payment_information(request, organizer):
     try:
         stripe_customer_id = get_stripe_customer_id(organizer)
         update_payment_info(setup_intent_id, stripe_customer_id)
+        signal_responses = organizer_billing_payment_method_saved.send_robust(
+            sender=request.organizer,
+            organizer=request.organizer,
+            user=request.user,
+            stripe_customer_id=stripe_customer_id,
+            setup_intent_id=setup_intent_id,
+        )
+        receiver_errors = []
+        for receiver, response in signal_responses:
+            if isinstance(response, Exception):
+                receiver_errors.append(response)
+                logger.error(
+                    'Automatic billing receiver %r failed after saving payment information.',
+                    receiver,
+                    exc_info=(type(response), response, response.__traceback__),
+                )
 
         return Response(
             {
                 'success': True,
+                'billing_integration_notified': not receiver_errors,
             }
         )
     except ValidationError as e:
