@@ -1,11 +1,3 @@
-/*
- * Klaro renders its notice (z-index 999) and preference modal (1000) into the
- * #klaro root. On ticket shop pages #main-card (1030) covers both, and the
- * sticky presale tabs (1200) cover the top of the modal. Giving the root its
- * own stacking context lifts the whole consent layer above that page chrome,
- * while overlays the visitor opens (nav menus from 1300, checkout login at
- * 1500, the loading modal) still go on top of it.
- */
 #klaro {
   position: relative;
   z-index: 1250;
