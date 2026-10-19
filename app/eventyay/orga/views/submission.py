@@ -1,4 +1,5 @@
 from django_scopes import scope
+import copy
 import json
 from collections import Counter
 from dataclasses import replace
@@ -1073,9 +1074,19 @@ class SubmissionHistory(SubmissionViewMixin, ListView):
         return self.request.event
 
 
-class SubmissionFeed(PermissionRequired, Feed):
+class SubmissionFeed(EventPermissionRequired, Feed):
     permission_required = 'base.orga_list_submission'
     feed_type = feedgenerator.Atom1Feed
+
+    def __call__(self, request, *args, **kwargs):
+        # Django calls this shared Feed instance directly instead of going
+        # through dispatch(), so the permission mixin never runs on its own.
+        # Check on a per-request copy to keep the shared instance stateless.
+        feed = copy.copy(self)
+        feed.request = request
+        if not feed.has_permission():
+            return feed.handle_no_permission()
+        return super().__call__(request, *args, **kwargs)
 
     def get_object(self, request, *args, **kwargs):
         return request.event
