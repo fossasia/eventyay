@@ -6,6 +6,7 @@ import re
 from types import SimpleNamespace
 
 from allauth.account.models import EmailAddress
+from django.apps import apps
 from django.conf import settings as django_settings
 from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
@@ -15,7 +16,9 @@ from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.template.loader import render_to_string
 from django.utils import translation
+from django.utils.functional import Promise
 from django.utils.html import escape, strip_tags
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.timezone import now as tz_now
 from django.utils.translation import gettext_lazy as _
 from django.views import View
@@ -24,6 +27,7 @@ from django_scopes import scopes_disabled
 
 from eventyay.base.email import TEST_EMAIL_BODY, TEST_EMAIL_SUBJECT
 from eventyay.base.models import Event, LogEntry, Organizer, User
+from eventyay.base.models.global_plugin_config import GlobalPluginConfig
 from eventyay.base.i18n import LazyI18nString
 from eventyay.base.models.admin_mail import (
     AdminEmailQueue,
@@ -1099,6 +1103,7 @@ def _notification_mail():
 
 
 def get_platform_mail_templates() -> list[dict]:
+    """Return valid core and active-plugin templates for the global catalogue."""
     listed_separately = {
         MailTemplateRoles.NEW_SUBMISSION,
         MailTemplateRoles.SUBMISSION_ACCEPT,
@@ -1155,7 +1160,15 @@ def get_platform_mail_templates() -> list[dict]:
         {'key': 'system-notification', 'name': _('System notification'), 'category': _('System'),
          'trigger': _('System event'), 'load': _notification_mail},
     ])
-    for receiver, response in platform_mail_templates.send(sender=None):
+    known_keys = {template['key'] for template in templates}
+    disabled_modules = GlobalPluginConfig.get_disabled_modules()
+    for receiver, response in platform_mail_templates.send_robust(sender=None):
+        receiver_app = apps.get_containing_app_config(receiver.__module__)
+        if receiver_app and receiver_app.name in disabled_modules:
+            continue
+        if isinstance(response, Exception):
+            logger.error('Mail template receiver %r failed: %s', receiver, response)
+            continue
         if response is None:
             continue
         plugin_templates = [response] if isinstance(response, dict) else response
@@ -1173,7 +1186,37 @@ def get_platform_mail_templates() -> list[dict]:
                     receiver,
                 )
                 continue
-            templates.append(plugin_template)
+            key = plugin_template.get('key')
+            name = plugin_template.get('name')
+            load = plugin_template.get('load')
+            if (
+                not isinstance(key, str)
+                or not key
+                or not isinstance(name, (str, Promise))
+                or not str(name).strip()
+                or not callable(load)
+                or not isinstance(plugin_template.get('preview', {}), dict)
+            ):
+                logger.warning(
+                    'Receiver %r returned a mail template with invalid key, name, or load fields',
+                    receiver,
+                )
+                continue
+            if key in known_keys:
+                logger.warning('Receiver %r returned duplicate mail template key %r', receiver, key)
+                continue
+
+            validated_template = plugin_template.copy()
+            url = validated_template.get('url')
+            if url is not None and (
+                not isinstance(url, str)
+                or not url.startswith('/')
+                or not url_has_allowed_host_and_scheme(url, allowed_hosts=set())
+            ):
+                logger.warning('Receiver %r returned unsafe mail template URL %r', receiver, url)
+                validated_template.pop('url', None)
+            templates.append(validated_template)
+            known_keys.add(key)
     for template in templates:
         template.setdefault('recipient_type', _('User'))
         template.setdefault('preview', {})
