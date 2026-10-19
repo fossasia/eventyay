@@ -3,9 +3,10 @@ import json
 import pytest
 from django_scopes import scope
 
-from eventyay.base.models import SpeakerProfile
+from eventyay.base.models import Answer, SpeakerProfile, Submission
+from eventyay.base.models import TalkQuestion as Question
+from eventyay.base.models import TalkQuestionTarget as QuestionTarget
 from eventyay.base.models.auth_token import UserApiToken
-from eventyay.base.models import Answer, TalkQuestion as Question, TalkQuestionTarget as QuestionTarget, Submission
 
 
 @pytest.fixture
@@ -491,6 +492,64 @@ def test_speaker_update_by_orga(
             .filter(action_type="eventyay.user.profile.update")
             .exists()
         )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("empty_biography", (None, "", "   ", "<p></p>", "<p><br></p>", "<p>&nbsp;</p>"))
+def test_speaker_update_rejects_empty_required_biography(
+    client, orga_user_write_token, event, speaker, submission, empty_biography
+):
+    with scope(event=event):
+        event.cfp.fields["biography"]["visibility"] = "required"
+        event.cfp.save()
+        original_biography = speaker.event_profile(event).biography
+
+    response = client.patch(
+        event.api_urls.speakers + f"{speaker.code}/",
+        data=json.dumps({"biography": empty_biography}),
+        follow=True,
+        content_type="application/json",
+        headers={"Authorization": f"Token {orga_user_write_token.token}"},
+    )
+    assert response.status_code == 400, response.text
+    content = json.loads(response.text)
+    assert "biography" in content
+    with scope(event=event):
+        assert speaker.event_profile(event).biography == original_biography
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ("optional_biography", "expected_biography"),
+    (
+        (None, ""),
+        ("", ""),
+        ("   ", ""),
+        ("<p></p>", ""),
+        ("<p><br></p>", ""),
+        ("<p>&nbsp;</p>", ""),
+        ("Optional bio", "Optional bio"),
+    ),
+)
+def test_speaker_update_optional_empty_biography_normalizes_to_empty_string(
+    client, orga_user_write_token, event, speaker, submission, optional_biography, expected_biography
+):
+    with scope(event=event):
+        event.cfp.fields["biography"]["visibility"] = "optional"
+        event.cfp.save()
+
+    response = client.patch(
+        event.api_urls.speakers + f"{speaker.code}/",
+        data=json.dumps({"biography": optional_biography}),
+        follow=True,
+        content_type="application/json",
+        headers={"Authorization": f"Token {orga_user_write_token.token}"},
+    )
+    assert response.status_code == 200, response.text
+    content = json.loads(response.text)
+    assert content["biography"] == expected_biography
+    with scope(event=event):
+        assert speaker.event_profile(event).biography == expected_biography
 
 
 @pytest.mark.django_db
