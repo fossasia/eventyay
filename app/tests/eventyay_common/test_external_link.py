@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch
 from urllib.parse import parse_qs, urlencode, urlsplit
 
 import pytest
@@ -5,14 +6,29 @@ from bs4 import BeautifulSoup
 from django.urls import reverse
 from django_otp.plugins.otp_static.models import StaticDevice
 
+from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.views.redirect import safelink
 from eventyay.eventyay_common.adapter import CustomAccountAdapter
+from eventyay.multidomain.models import KnownDomain
 
 
 EXTERNAL_LINK = '/common/external-link/'
 DESTINATION = 'https://example.org/path?first=1&second=2#section'
 
 pytestmark = pytest.mark.django_db
+
+
+@pytest.fixture
+def oauth_provider():
+    GlobalSettingsObject().settings.set(
+        'login_providers',
+        {'google': {'state': True, 'client_id': 'test-client', 'secret': 'test-secret'}},
+    )
+    provider = Mock()
+    provider.get_login_url.return_value = '/accounts/google/login/'
+    with patch('eventyay.plugins.socialauth.views.get_adapter') as adapter:
+        adapter.return_value.get_provider.return_value = provider
+        yield provider
 
 
 @pytest.mark.parametrize('client_fixture', ['client', 'authenticated_client'])
@@ -121,14 +137,92 @@ def test_two_factor_login_preserves_warning_until_authentication_finishes(client
     assert int(client.session['_auth_user_id']) == user.pk
 
 
-def test_social_login_destination_requires_confirmation(rf):
+@pytest.mark.parametrize('parameter', ['next', 'redirect_url'])
+def test_social_login_destination_requires_confirmation(client, rf, oauth_provider, parameter):
+    response = client.get(
+        reverse('plugins:socialauth:social.oauth.login', args=['google']),
+        {parameter: DESTINATION},
+    )
+    assert response.status_code == 302
+    assert response.url == '/accounts/google/login/'
     request = rf.get('/accounts/login/')
-    request.session = {'socialauth_next_url': DESTINATION}
+    request.session = client.session
     target = CustomAccountAdapter().get_login_redirect_url(request)
     location = urlsplit(target)
     assert location.path == EXTERNAL_LINK
     assert parse_qs(location.query) == {'next': [DESTINATION]}
     assert 'socialauth_next_url' not in request.session
+    response = client.get(target)
+    assert response.status_code == 200
+    assert response.context['destination'] == DESTINATION
+
+
+@pytest.mark.parametrize('parameter', ['next', 'redirect_url'])
+@pytest.mark.parametrize('preferred', [False, True])
+def test_login_page_preserves_destination_in_social_link(client, oauth_provider, parameter, preferred):
+    gs = GlobalSettingsObject()
+    providers = gs.settings.get('login_providers', as_type=dict)
+    providers['google']['is_preferred'] = preferred
+    gs.settings.set('login_providers', providers)
+    response = client.get(reverse('auth.login'), {parameter: DESTINATION})
+    assert response.status_code == 200
+    page = BeautifulSoup(response.content, 'html.parser')
+    entry_url = reverse('plugins:socialauth:social.oauth.login', args=['google'])
+    link = next(link for link in page.select('a[href]') if urlsplit(link['href']).path == entry_url)
+    assert parse_qs(urlsplit(link['href']).query) == {'next': [DESTINATION]}
+
+
+@pytest.mark.parametrize(
+    'destination',
+    ['javascript:alert(1)', 'https://[broken/', 'https://trusted.org@evil.org/', r'https://example.org\@evil.org/'],
+)
+def test_social_login_rejects_unsafe_destination(client, oauth_provider, destination):
+    response = client.get(
+        reverse('plugins:socialauth:social.oauth.login', args=['google']),
+        {'next': destination},
+    )
+    assert response.status_code == 302
+    assert response.url == '/accounts/google/login/'
+    assert client.session['socialauth_next_url'] == reverse('eventyay_common:dashboard')
+
+
+def test_social_login_preserves_internal_destination(client, rf, oauth_provider):
+    response = client.get(
+        reverse('plugins:socialauth:social.oauth.login', args=['google']),
+        {'next': '/common/organizers/'},
+    )
+    assert response.status_code == 302
+    request = rf.get('/accounts/login/')
+    request.session = client.session
+    assert CustomAccountAdapter().get_login_redirect_url(request) == '/common/organizers/'
+
+
+@pytest.mark.parametrize('signed', [False, True])
+@pytest.mark.parametrize('public', [False, True])
+def test_custom_domain_preserves_external_destination(client, event, settings, signed, public):
+    settings.DEBUG = False
+    settings.SITE_URL = 'https://platform.example'
+    settings.SITE_NETLOC = 'platform.example'
+    settings.ALLOWED_HOSTS = ['tickets.example', 'platform.example']
+    event.custom_domain = 'https://tickets.example'
+    event.is_public = public
+    event.save()
+    KnownDomain.objects.create(domainname='tickets.example', organizer=event.organizer, event=event)
+    warning_url = EXTERNAL_LINK + '?' + urlencode({'next': DESTINATION})
+    response = client.get(
+        safelink(DESTINATION) if signed else warning_url,
+        HTTP_HOST='tickets.example',
+        secure=True,
+    )
+    if signed:
+        assert response.status_code == 302
+        assert response.url == warning_url
+        response = client.get(response.url, HTTP_HOST='tickets.example', secure=True)
+    assert response.status_code == 302
+    assert response.url == settings.SITE_URL + warning_url
+    response = client.get(response.url, HTTP_HOST='platform.example', secure=True)
+    assert response.status_code == 200
+    assert response.context['destination'] == DESTINATION
 
 
 def test_logout_back_requires_confirmation(authenticated_client):

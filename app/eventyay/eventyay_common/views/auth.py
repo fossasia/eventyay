@@ -155,6 +155,7 @@ def login(request):
     ctx['can_reset'] = settings.EVENTYAY_PASSWORD_RESET
     ctx['backends'] = backends
     ctx['backend'] = backend
+    ctx['next_url'] = request.GET.get('next') or request.GET.get('redirect_url')
 
     return render(request, 'eventyay_common/auth/login.html', ctx)
 

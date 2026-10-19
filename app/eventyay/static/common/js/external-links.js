@@ -2,7 +2,7 @@ const interstitial = document.querySelector('script[data-external-link-url]').da
 const confirmationPage = window.location.pathname === new URL(interstitial, window.location.origin).pathname;
 
 function protectLink(link) {
-    if (!link.hasAttribute('href') || (confirmationPage && link.hasAttribute('data-external-link-continue'))) return;
+    if (!link.matches('a[href]') || (confirmationPage && link.hasAttribute('data-external-link-continue'))) return;
     let destination;
     try {
         destination = new URL(link.getAttribute('href'), document.baseURI);
@@ -17,11 +17,11 @@ function protectLink(link) {
     const warning = new URL(interstitial, window.location.origin);
     warning.searchParams.set('next', destination.href);
     link.removeAttribute('download');
-    link.href = warning.href;
+    link.setAttribute('href', warning.href);
 }
 
 function protectLinks(root) {
-    if (root instanceof HTMLAnchorElement) protectLink(root);
+    if (root instanceof Element) protectLink(root);
     root.querySelectorAll('a[href]').forEach(protectLink);
 }
 

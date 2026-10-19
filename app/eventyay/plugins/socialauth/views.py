@@ -9,7 +9,6 @@ from django.contrib import messages
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
-from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import TemplateView, View
 from pydantic import ValidationError
@@ -17,6 +16,7 @@ from pydantic import ValidationError
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.consts import KEY_SOCIAL_KEEP_LOGGED_IN
+from eventyay.common.redirects import safe_redirect_url, validate_redirect_url
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
 
 from .schemas.login_providers import LoginProviders
@@ -29,9 +29,9 @@ class OAuthLoginView(View):
     def get(self, request: HttpRequest, provider: str) -> HttpResponse:
         self.set_oauth2_params(request)
 
-        next_url = request.GET.get('next', '')
-        if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
-            request.session['socialauth_next_url'] = next_url
+        next_url = request.GET.get('next') or request.GET.get('redirect_url')
+        if next_url:
+            request.session['socialauth_next_url'] = safe_redirect_url(request, next_url)
 
         gs = GlobalSettingsObject()
         login_providers = gs.settings.get('login_providers', as_type=dict) or {}
@@ -61,7 +61,7 @@ class OAuthLoginView(View):
     @staticmethod
     def set_oauth2_params(request: HttpRequest) -> None:
         """Store OAuth2 params in session for Talk module SSO handoff."""
-        next_url = request.GET.get('next', '')
+        next_url = validate_redirect_url(request, request.GET.get('next', ''))
         if not next_url:
             return
 
