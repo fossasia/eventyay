@@ -666,6 +666,15 @@ form.mail-templates-info-dialog__card {
   margin-bottom: 12px;
 }
 
+.mail-template-system-form .checkbox label {
+  padding-left: 0;
+}
+
+.mail-template-system-form .checkbox input[type="checkbox"] {
+  position: static;
+  margin-left: 0;
+}
+
 @media (max-width: 991px) {
   .mail-template-system-form .form-group {
     flex-direction: column;
@@ -684,5 +693,9 @@ form.mail-templates-info-dialog__card {
 
   .mail-template-system-form .form-group:has(> .col-md-9 > .checkbox) > label.col-md-3 {
     display: none;
+  }
+
+  .mail-template-system-form .checkbox input[type="checkbox"] {
+    margin-left: 2px;
   }
 }
