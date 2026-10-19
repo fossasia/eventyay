@@ -1,7 +1,7 @@
 import pytest
 from django_scopes import scope
 
-from eventyay.base.models import Submission, SubmissionType, Team
+from eventyay.base.models import Submission, SubmissionType, Team, Track
 
 
 @pytest.fixture
@@ -37,6 +37,32 @@ def test_feed_lists_proposals_for_team_member(client, user, talk_team, submissio
 
     assert response.status_code == 200
     assert submission.title in response.text
+
+
+@pytest.mark.django_db
+def test_feed_only_lists_tracks_the_team_is_limited_to(
+    client, user, event, talk_team, submission
+):
+    with scope(event=event):
+        own_track = Track.objects.create(event=event, name='Own track')
+        other_track = Track.objects.create(event=event, name='Other track')
+        talk_team.limit_tracks.add(own_track)
+        own = Submission.objects.create(
+            title='Proposal in the own track',
+            event=event,
+            submission_type=submission.submission_type,
+            track=own_track,
+            content_locale='en',
+        )
+        submission.track = other_track
+        submission.save()
+    client.force_login(user)
+
+    response = client.get(event.orga_urls.submission_feed)
+
+    assert response.status_code == 200
+    assert own.title in response.text
+    assert submission.title not in response.text
 
 
 @pytest.mark.django_db

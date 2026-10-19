@@ -1115,19 +1115,19 @@ class SubmissionHistory(SubmissionViewMixin, ListView):
         return self.request.event
 
 
-class SubmissionFeed(EventPermissionRequired, Feed):
+class SubmissionFeed(EventPermissionRequired, ReviewerSubmissionFilter, Feed):
     permission_required = 'base.orga_list_submission'
     feed_type = feedgenerator.Atom1Feed
 
     def __call__(self, request, *args, **kwargs):
         # Django calls this shared Feed instance directly instead of going
         # through dispatch(), so the permission mixin never runs on its own.
-        # Check on a per-request copy to keep the shared instance stateless.
+        # Run the whole request on a copy to keep the shared instance stateless.
         feed = copy.copy(self)
         feed.request = request
         if not feed.has_permission():
             return feed.handle_no_permission()
-        return super().__call__(request, *args, **kwargs)
+        return super(SubmissionFeed, feed).__call__(request, *args, **kwargs)
 
     def get_object(self, request, *args, **kwargs):
         return request.event
@@ -1148,7 +1148,8 @@ class SubmissionFeed(EventPermissionRequired, Feed):
         return _('Updates to the {name} schedule.').format(name=obj.name)
 
     def items(self, obj):
-        return obj.submissions.order_by('-pk')
+        # Same reviewer and track limits as the submissions list.
+        return self.get_queryset().order_by('-pk')
 
     def item_title(self, item):
         return _('New {event} proposal: {title}').format(event=item.event.name, title=item.title)
