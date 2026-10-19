@@ -87,6 +87,10 @@ class Sortable:
     secondary_sort = {}
     default_sort_field = None
 
+    @context
+    def current_sort(self) -> str:
+        return self.request.GET.get('sort') or ''
+
     def _get_secondary_sort(self, key):
         secondary_sort_config = getattr(self, 'secondary_sort', None) or {}
         return list(secondary_sort_config.get(key, []) or [])
