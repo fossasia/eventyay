@@ -102,14 +102,12 @@ def test_plugin_template_links_to_customization_page(admin_client):
     try:
         response = admin_client.get(reverse('eventyay_admin:admin.messages.templates'))
     finally:
-        platform_mail_templates.disconnect(
-            dispatch_uid='test_plugin_template_links_to_customization_page'
-        )
+        platform_mail_templates.disconnect(dispatch_uid='test_plugin_template_links_to_customization_page')
 
     assert response.status_code == 200
     assert 'Plugin billing notice' in response.content.decode()
     assert 'Business' in response.content.decode()
-    assert 'href=\'/admin/plugin/billing-template/\'' in response.content.decode()
+    assert "href='/admin/plugin/billing-template/'" in response.content.decode()
 
 
 @pytest.mark.django_db
@@ -127,6 +125,12 @@ def test_plugin_template_registry_isolates_invalid_receivers(admin_client):
                 'load': lambda: ('Subject', 'Body'),
                 'url': 'javascript:alert(1)',
             },
+            {
+                'key': 'invalid-preview',
+                'name': 'Invalid preview',
+                'load': lambda: ('Subject', 'Body'),
+                'preview': {1: 'not a string key'},
+            },
         ]
 
     platform_mail_templates.connect(broken_receiver, dispatch_uid='test_broken_mail_template_receiver')
@@ -140,6 +144,7 @@ def test_plugin_template_registry_isolates_invalid_receivers(admin_client):
 
     keys = [template['key'] for template in templates]
     assert 'missing-load' not in keys
+    assert 'invalid-preview' not in keys
     assert keys.count('account-registration') == 1
     unsafe_template = next(template for template in templates if template['key'] == 'unsafe-url')
     assert 'url' not in unsafe_template
@@ -149,7 +154,11 @@ def test_plugin_template_registry_isolates_invalid_receivers(admin_client):
 
 @pytest.mark.django_db
 def test_disabled_plugin_templates_are_not_listed():
+    receiver_called = False
+
     def disabled_plugin_templates(sender, **kwargs):
+        nonlocal receiver_called
+        receiver_called = True
         return {
             'key': 'disabled-plugin-template',
             'name': 'Disabled plugin template',
@@ -178,6 +187,7 @@ def test_disabled_plugin_templates_are_not_listed():
         platform_mail_templates.disconnect(dispatch_uid='test_disabled_plugin_mail_templates')
 
     assert 'disabled-plugin-template' not in keys
+    assert receiver_called is False
 
 
 @pytest.mark.django_db

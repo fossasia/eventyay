@@ -28,8 +28,12 @@ const getLocalesWithContent = () => {
 
 const toggleLocaleField = (input, hidden) => {
   input.classList.toggle('d-none', hidden)
+  input.hidden = hidden
   const wrapper = input.closest('.tiptap-wrapper')
-  if (wrapper) wrapper.classList.toggle('d-none', hidden)
+  if (wrapper) {
+    wrapper.classList.toggle('d-none', hidden)
+    wrapper.hidden = hidden
+  }
 }
 
 const showLocale = (code, tabs) => {
@@ -44,7 +48,7 @@ const showLocale = (code, tabs) => {
   document.dispatchEvent(new CustomEvent('mail-language-change', { detail: { locale: code } }))
 }
 
-const buildTab = (locale, container, tabs, activeLocales, rebuildFn) => {
+const buildTab = (locale, container, tabs, activeLocales, rebuildFn, preserveContent) => {
   const tab = document.createElement('button')
   tab.type = 'button'
   tab.className = 'mail-language-tab'
@@ -65,10 +69,10 @@ const buildTab = (locale, container, tabs, activeLocales, rebuildFn) => {
       e.stopPropagation()
       document.querySelectorAll(LANGUAGE_INPUT_SELECTOR).forEach((input) => {
         if (input.lang === locale.code) {
-          if (input.__eventyayTiptapEditor) {
+          if (!preserveContent && input.__eventyayTiptapEditor) {
             input.__eventyayTiptapEditor.commands.setContent('', { emitUpdate: false })
           }
-          input.value = ''
+          if (!preserveContent) input.value = ''
           toggleLocaleField(input, true)
         }
       })
@@ -96,6 +100,7 @@ const init = () => {
   const container = document.querySelector('#mail-language-tabs')
   const addBtn = document.querySelector('#add-language-btn')
   const dropdown = document.querySelector('#add-language-dropdown')
+  const activeLocalesInput = document.querySelector('#mail-active-locales')
   if (!container || !addBtn || !dropdown) return
 
   const allLocales = getAllLocales()
@@ -108,9 +113,19 @@ const init = () => {
 
   const tabs = []
   const activeLocales = new Set([DEFAULT_LOCALE])
+  const trackedLocales = (activeLocalesInput?.value || '')
+    .split(',')
+    .map((code) => code.trim())
+    .filter((code) => allLocales.some((locale) => locale.code === code))
+  if (trackedLocales.length) {
+    trackedLocales.forEach((code) => activeLocales.add(code))
+  } else {
+    getLocalesWithContent().forEach((code) => activeLocales.add(code))
+  }
 
-  const prefilled = getLocalesWithContent()
-  prefilled.forEach((code) => activeLocales.add(code))
+  const syncActiveLocales = () => {
+    if (activeLocalesInput) activeLocalesInput.value = [...activeLocales].join(',')
+  }
 
   const rebuildDropdown = () => {
     dropdown.innerHTML = ''
@@ -124,7 +139,14 @@ const init = () => {
         a.addEventListener('click', (e) => {
           e.preventDefault()
           activeLocales.add(locale.code)
-          buildTab(locale, container, tabs, activeLocales, rebuildDropdown)
+          buildTab(
+            locale,
+            container,
+            tabs,
+            activeLocales,
+            rebuildDropdown,
+            Boolean(activeLocalesInput),
+          )
           showLocale(locale.code, tabs)
           rebuildDropdown()
         })
@@ -132,12 +154,22 @@ const init = () => {
         dropdown.appendChild(li)
       })
     addBtn.hidden = dropdown.children.length === 0
+    syncActiveLocales()
   }
 
   const sortedActive = [DEFAULT_LOCALE, ...[...activeLocales].filter((c) => c !== DEFAULT_LOCALE).sort()]
   sortedActive.forEach((code) => {
     const locale = allLocales.find((l) => l.code === code)
-    if (locale) buildTab(locale, container, tabs, activeLocales, rebuildDropdown)
+    if (locale) {
+      buildTab(
+        locale,
+        container,
+        tabs,
+        activeLocales,
+        rebuildDropdown,
+        Boolean(activeLocalesInput),
+      )
+    }
   })
 
   container.setAttribute('role', 'tablist')

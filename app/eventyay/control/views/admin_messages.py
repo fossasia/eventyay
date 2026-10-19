@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import datetime
 import json
@@ -6,6 +7,7 @@ import re
 from types import SimpleNamespace
 
 from allauth.account.models import EmailAddress
+from asgiref.sync import async_to_sync
 from django.apps import apps
 from django.conf import settings as django_settings
 from django.contrib import messages
@@ -1102,6 +1104,45 @@ def _notification_mail():
     return '[{instance}] {prefix}: {title}', body
 
 
+def _send_enabled_platform_mail_template_receivers(disabled_modules):
+    """Dispatch the template signal without invoking disabled plugins."""
+    sync_receivers, async_receivers = platform_mail_templates._live_receivers(None)
+
+    def is_enabled(receiver):
+        receiver_app = apps.get_containing_app_config(receiver.__module__)
+        return not receiver_app or receiver_app.name not in disabled_modules
+
+    sync_receivers = [receiver for receiver in sync_receivers if is_enabled(receiver)]
+    async_receivers = [receiver for receiver in async_receivers if is_enabled(receiver)]
+    responses = []
+    for receiver in sync_receivers:
+        try:
+            response = receiver(signal=platform_mail_templates, sender=None)
+        except Exception as exc:
+            platform_mail_templates._log_robust_failure(receiver, exc)
+            responses.append((receiver, exc))
+        else:
+            responses.append((receiver, response))
+
+    if async_receivers:
+
+        async def call_receiver(receiver):
+            try:
+                return await receiver(signal=platform_mail_templates, sender=None)
+            except Exception as exc:
+                platform_mail_templates._log_robust_failure(receiver, exc)
+                return exc
+
+        async def call_receivers():
+            results = await asyncio.gather(
+                *(call_receiver(receiver) for receiver in async_receivers)
+            )
+            return zip(async_receivers, results)
+
+        responses.extend(async_to_sync(call_receivers)())
+    return responses
+
+
 def get_platform_mail_templates() -> list[dict]:
     """Return valid core and active-plugin templates for the global catalogue."""
     listed_separately = {
@@ -1162,10 +1203,7 @@ def get_platform_mail_templates() -> list[dict]:
     ])
     known_keys = {template['key'] for template in templates}
     disabled_modules = GlobalPluginConfig.get_disabled_modules()
-    for receiver, response in platform_mail_templates.send_robust(sender=None):
-        receiver_app = apps.get_containing_app_config(receiver.__module__)
-        if receiver_app and receiver_app.name in disabled_modules:
-            continue
+    for receiver, response in _send_enabled_platform_mail_template_receivers(disabled_modules):
         if isinstance(response, Exception):
             logger.error('Mail template receiver %r failed: %s', receiver, response)
             continue
@@ -1189,13 +1227,15 @@ def get_platform_mail_templates() -> list[dict]:
             key = plugin_template.get('key')
             name = plugin_template.get('name')
             load = plugin_template.get('load')
+            preview = plugin_template.get('preview', {})
             if (
                 not isinstance(key, str)
                 or not key
                 or not isinstance(name, (str, Promise))
                 or not str(name).strip()
                 or not callable(load)
-                or not isinstance(plugin_template.get('preview', {}), dict)
+                or not isinstance(preview, dict)
+                or not all(isinstance(preview_key, str) for preview_key in preview)
             ):
                 logger.warning(
                     'Receiver %r returned a mail template with invalid key, name, or load fields',
