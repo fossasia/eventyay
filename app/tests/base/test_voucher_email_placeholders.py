@@ -5,7 +5,7 @@ from types import SimpleNamespace
 import pytest
 from django.core.exceptions import ValidationError
 
-from eventyay.base.email import voucher_redemption_urls
+from eventyay.base.email import format_voucher_list, voucher_redemption_urls
 from eventyay.common.forms.widgets import EmailEditorWidget
 from eventyay.control.forms.vouchers import VoucherBulkForm
 
@@ -32,6 +32,12 @@ def _recipients_form(raw):
     form = VoucherBulkForm.__new__(VoucherBulkForm)
     form.cleaned_data = {'send_recipients': raw}
     return form
+
+
+def test_voucher_list_puts_each_code_on_its_own_line():
+    rendered = format_voucher_list(['CODEAAA1', 'A&B'])
+
+    assert rendered == '<span>CODEAAA1<br>A&amp;B</span>'
 
 
 def test_negative_recipient_count_is_rejected():
