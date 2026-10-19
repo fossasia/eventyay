@@ -58,6 +58,14 @@ def get_used_backend(request):
     return backend
 
 
+def get_safe_next(request):
+    """Return the ``next`` parameter if it is a safe local URL, otherwise the dashboard."""
+    next_url = request.GET.get('next')
+    if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
+        return next_url
+    return 'eventyay_common:dashboard'
+
+
 def process_login(request, user, keep_logged_in):
     """
     This method allows you to return a response to a successful log-in. This will set all session values correctly
@@ -278,7 +286,7 @@ class Forgot(TemplateView):
 
     def get(self, request, *args, **kwargs):
         if request.user.is_authenticated:
-            return redirect(request.GET.get('next', 'eventyay_common:dashboard'))
+            return redirect(get_safe_next(request))
         return super().get(request, *args, **kwargs)
 
     def post(self, request: HttpRequest, *args, **kwargs):
@@ -340,7 +348,7 @@ class Recover(TemplateView):
 
     def get(self, request, *args, **kwargs):
         if request.user.is_authenticated:
-            return redirect(request.GET.get('next', 'eventyay_common:dashboard'))
+            return redirect(get_safe_next(request))
         try:
             user = User.objects.get(id=self.request.GET.get('id'), auth_backend='native')
         except User.DoesNotExist:
