@@ -2,6 +2,7 @@
 {% load i18n %}
 {% load bootstrap3 %}
 {% load eventurl %}
+{% load session_tags %}
 
 {% load static %}
 
@@ -58,6 +59,7 @@
                     <th>{% translate "Session Type" %}</th>
                     <th>{% translate "Email" %}</th>
                     <th>{% translate "Profile" %}</th>
+                    <th>{% translate "Video" %}</th>
                 </tr>
             </thead>
             <tbody>
@@ -91,9 +93,18 @@
                         <i class="fa fa-link"></i>
                         </a>
                     </td>
-                    <td data-label="{% translate 'Profile' %}" class="events-table__cell--no-border"><a href="{% url 'cfp:event.user.view' organizer=submission.event.organizer.slug event=submission.event.slug %}">
+                    <td data-label="{% translate 'Profile' %}"><a href="{% url 'cfp:event.user.view' organizer=submission.event.organizer.slug event=submission.event.slug %}">
                             <i class="fa fa-link"></i>
                         </a>
+                    </td>
+                    <td data-label="{% translate 'Video' %}" class="events-table__cell--no-border">
+                        {% if submission|can_review_video:request.user %}
+                            <a class="btn btn-default btn-xs" href="{% speaker_review_url submission %}" title="{% translate 'Review Video in VEditor' %}" data-toggle="tooltip">
+                                <i class="fa fa-video-camera"></i>
+                            </a>
+                        {% else %}
+                            —
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}

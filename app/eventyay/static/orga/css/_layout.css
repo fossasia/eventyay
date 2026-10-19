@@ -263,6 +263,12 @@ aside.sidebar {
   margin-bottom: 0;
   overflow-x: hidden;
   overflow-y: auto;
+
+  /* Submenus open and close instantly, like the video sidebar. */
+  .collapse,
+  .collapse.show {
+    transition: none;
+  }
   
   &.sidebar-uncollapsed,
   &:focus-within {

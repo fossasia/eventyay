@@ -10,6 +10,7 @@
     {% if form.biography %}
         <script src="{% static "vendored/marked.min.js" %}" defer></script> {# do not compress #}
         <script defer src="{% static "vendored/purify.min.js" %}"></script>
+        <script type="module" src="{% static 'common/js/richTextRequired.js' %}"></script>
     {% endif %}
     <script defer src="{% static 'cfp/js/talk_dependencies.js' %}"></script>
     {% if social_media_formset %}
@@ -80,7 +81,7 @@
             </ul>
         </span>
     </div>
-    <form id="speaker-create-form" method="post" enctype="multipart/form-data">
+    <form id="speaker-create-form" method="post" enctype="multipart/form-data" data-richtext-form-error="{% translate 'We had trouble saving your input – Please see below for details.' %}">
         {% csrf_token %}
         {% include "common/forms/errors.html" %}
 
