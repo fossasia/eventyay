@@ -4,7 +4,7 @@
 		emoji-picker-button(@selected="addEmoji")
 		.editor(ref="editorRef")
 		.composer-actions
-			upload-button#btn-file(accept="image/png, image/jpg, image/gif, application/pdf, .png, .jpg, .gif, .jpeg, .pdf", icon="paperclip", multiple=true, :tooltip="$t('Attach a file')", @change="attachFiles")
+			upload-button#btn-file(accept="image/png, image/jpg, image/gif, image/webp, application/pdf, .png, .jpg, .gif, .jpeg, .webp, .pdf", icon="paperclip", multiple=true, :tooltip="$t('Attach a file')", @change="attachFiles")
 			bunt-icon-button#btn-send(:tooltip="$t('Send')", tooltip-placement="top-end", @click="send")
 				svg(viewBox="0 0 24 24")
 					path(fill="currentColor", d="M2,21L23,12L2,3V10L17,12L2,14V21Z")
