@@ -9,8 +9,8 @@ from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.syndication.views import Feed
 from django.db import transaction
-from django.db.models import Count as DbCount, Q
-from django.db.models.functions import TruncDate
+from django.db.models import Count as DbCount, F, OuterRef, Prefetch, Q, Subquery
+from django.db.models.functions import Lower, TruncDate
 from django.forms.models import BaseModelFormSet, inlineformset_factory
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -37,7 +37,9 @@ from eventyay.base.models import (
     Tag,
     User,
 )
+from eventyay.base.models.auth import display_name_sort_key
 from eventyay.base.models.base import CachedFile
+from eventyay.base.models.submission import SpeakerRole
 from eventyay.common.views.helpers import is_ajax_request
 from eventyay.base.models.mail import MailTemplateRoles
 from eventyay.base.services.etherpad import (
@@ -148,7 +150,7 @@ class ReviewerSubmissionFilter:
         queryset = (
             self.request.event.submissions.all()
             .select_related('submission_type', 'event', 'track')
-            .prefetch_related('speakers')
+            .prefetch_related(Prefetch('speakers', queryset=User.objects.order_by(display_name_sort_key(), 'pk')))
         )
         if self.is_only_reviewer:
             queryset = limit_for_reviewers(queryset, self.request.event, self.request.user, self.limit_tracks)
@@ -845,6 +847,45 @@ class SubmissionList(EventPermissionRequired, BaseSubmissionList):
     @context
     def show_submission_types(self):
         return self.request.event.submission_types.all().count() > 1
+
+    @cached_property
+    def can_view_speakers(self) -> bool:
+        # Same check the template uses to show the Speakers column, so admin mode counts.
+        return has_event_perm(
+            'base.orga_list_speakerprofile',
+            self.request.user,
+            self.request,
+            self.request.event,
+        )
+
+    @context
+    def current_sort(self) -> str:
+        sort_key = self.request.GET.get('sort')
+        if not sort_key or sort_key == 'default':
+            return self.default_sort_field
+        if sort_key.lstrip('-') == 'speakers' and not self.can_view_speakers:
+            return self.default_sort_field
+        return sort_key
+
+    def sort_queryset(self, qs):
+        sort_key = self.request.GET.get('sort') or ''
+        if sort_key.lstrip('-') != 'speakers' or not self.can_view_speakers:
+            return super().sort_queryset(qs)
+        # Sort by the first speaker shown in the Speakers column, so a session with
+        # several speakers has exactly one, predictable position. Sessions without
+        # speakers go last in both directions.
+        first_speaker = (
+            SpeakerRole.objects.filter(submission=OuterRef('pk'))
+            .annotate(name=display_name_sort_key('user__'))
+            .order_by('name', 'user__pk')
+            .values('name')[:1]
+        )
+        qs = qs.annotate(speaker_sort=Subquery(first_speaker))
+        if sort_key.startswith('-'):
+            order = F('speaker_sort').desc(nulls_last=True)
+        else:
+            order = F('speaker_sort').asc(nulls_last=True)
+        return qs.order_by(order, Lower('title'), 'pk')
 
     @context
     @cached_property
