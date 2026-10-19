@@ -37,6 +37,9 @@ def test_feed_lists_proposals_for_team_member(client, user, talk_team, submissio
 
     assert response.status_code == 200
     assert submission.title in response.text
+    assert '<summary' not in response.text
+    assert f'state={submission.state}' not in response.text
+    assert submission.state not in response.text
 
 
 @pytest.mark.django_db
@@ -81,4 +84,54 @@ def test_feed_is_404_for_team_member_without_submission_permission(
     response = organizer_client.get(submission.event.orga_urls.submission_feed)
 
     assert response.status_code == 404
+    assert submission.title not in response.text
+
+
+@pytest.mark.django_db
+def test_feed_redirects_anonymous_user_to_login(client, submission):
+    response = client.get(submission.event.orga_urls.submission_feed)
+
+    assert response.status_code == 302
+    assert '/login/' in response['Location']
+
+
+@pytest.mark.django_db
+def test_feed_only_lists_proposals_a_reviewer_may_see(
+    client, user, organizer, event, submission
+):
+    team = Team.objects.create(
+        organizer=organizer,
+        name='Reviewers',
+        all_events=True,
+        is_reviewer=True,
+    )
+    team.members.add(user)
+    with scope(event=event):
+        own_track = Track.objects.create(event=event, name='Own track')
+        other_track = Track.objects.create(event=event, name='Other track')
+        team.limit_tracks.add(own_track)
+        visible = Submission.objects.create(
+            title='Proposal the reviewer may review',
+            event=event,
+            submission_type=submission.submission_type,
+            track=own_track,
+            content_locale='en',
+        )
+        own_proposal = Submission.objects.create(
+            title='Proposal the reviewer is speaking in',
+            event=event,
+            submission_type=submission.submission_type,
+            track=own_track,
+            content_locale='en',
+        )
+        own_proposal.speakers.add(user)
+        submission.track = other_track
+        submission.save()
+    client.force_login(user)
+
+    response = client.get(event.orga_urls.submission_feed)
+
+    assert response.status_code == 200
+    assert visible.title in response.text
+    assert own_proposal.title not in response.text
     assert submission.title not in response.text

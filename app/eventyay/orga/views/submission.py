@@ -1,8 +1,8 @@
-from django_scopes import scope
 import copy
 import json
 from collections import Counter
 from dataclasses import replace
+from urllib.parse import urlencode
 
 from dateutil import rrule
 from django.conf import settings
@@ -22,7 +22,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext, gettext_lazy as _
 from django.views.generic import FormView, ListView, TemplateView, UpdateView, View
 from django_context_decorator import context
-from urllib.parse import urlencode
+from django_scopes import scope
 
 from eventyay.base.models import (
     Feedback,
@@ -1156,6 +1156,10 @@ class SubmissionFeed(EventPermissionRequired, ReviewerSubmissionFilter, Feed):
 
     def item_link(self, item):
         return item.orga_urls.base.full()
+
+    def item_description(self, item):
+        # Feed falls back to str(item), which includes the proposal state.
+        return None
 
     def item_pubdate(self, item):
         return item.created
