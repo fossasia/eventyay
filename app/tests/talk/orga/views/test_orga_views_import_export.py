@@ -95,7 +95,7 @@ def test_import_export_settings_html_export_fields_not_in_general_settings(orga_
 @pytest.mark.django_db
 def test_import_submissions_missing_file(event, orga_user):
     """Calling import_submissions with a nonexistent CachedFile raises ImportExecutionError."""
-    from eventyay.base.services.talkimport import import_submissions, ImportExecutionError
+    from eventyay.base.services.talkimport import ImportExecutionError, import_submissions
 
     with pytest.raises(ImportExecutionError) as exc_info:
         import_submissions(
@@ -106,4 +106,70 @@ def test_import_submissions_missing_file(event, orga_user):
             user_id=orga_user.pk,
         )
     assert "session file could not be found" in str(exc_info.value)
+
+
+@pytest.mark.django_db
+def test_import_speaker_records_transaction_safety_new_user_rejected_biography(event, orga_user):
+    """Verify that when a speaker import row is rejected due to missing required biography,
+    no user or speaker profile is created in the database."""
+    from django_scopes import scope
+
+    from eventyay.base.models import SpeakerProfile, User
+    from eventyay.base.services.talkimport import import_speaker_records
+
+    with scope(event=event):
+        event.cfp.fields["biography"] = {"visibility": "required"}
+        event.cfp.save()
+        user_count_before = User.objects.count()
+        profile_count_before = SpeakerProfile.objects.count()
+
+        records = [
+            {
+                "email": "new-speaker-empty-bio@example.com",
+                "name": "No Bio Speaker",
+                "biography": "<p></p>",
+            }
+        ]
+        result = import_speaker_records(event, records, orga_user)
+        assert result["skipped"] == 1
+        assert len(result["errors"]) == 1
+        assert "Biography is required." in result["errors"][0]
+
+        # Verify transaction safety: no partial User or SpeakerProfile was left behind
+        assert not User.objects.filter(email="new-speaker-empty-bio@example.com").exists()
+        assert User.objects.count() == user_count_before
+        assert SpeakerProfile.objects.count() == profile_count_before
+
+
+@pytest.mark.django_db
+def test_import_speaker_records_transaction_safety_existing_user_rollback(event, orga_user):
+    """Verify that when updating an existing user via import fails required biography validation,
+    the existing user's data is not modified."""
+    from django_scopes import scope
+
+    from eventyay.base.models import SpeakerProfile, User
+    from eventyay.base.services.talkimport import import_speaker_records
+
+    with scope(event=event):
+        event.cfp.fields["biography"] = {"visibility": "required"}
+        event.cfp.save()
+        existing_user = User.objects.create(
+            email="existing-speaker-nobio@example.com",
+            fullname="Original Fullname",
+        )
+        records = [
+            {
+                "email": "existing-speaker-nobio@example.com",
+                "name": "Modified Fullname",
+                "biography": "",
+            }
+        ]
+        result = import_speaker_records(event, records, orga_user)
+        assert result["skipped"] == 1
+        assert len(result["errors"]) == 1
+        assert "Biography is required." in result["errors"][0]
+
+        existing_user.refresh_from_db()
+        assert existing_user.fullname == "Original Fullname"
+        assert SpeakerProfile.objects.filter(user=existing_user, event=event).count() == 0
 

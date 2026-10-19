@@ -1230,6 +1230,14 @@ class Event(
                             i.category = category_map.get(i.category_id)
                         if i.tax_rule_id:
                             i.tax_rule = tax_map.get(i.tax_rule_id)
+                        if i.free_price:
+                            if i.free_price_min is not None and i.free_price_min < 0:
+                                i.free_price_min = None
+                            if i.free_price_max is not None and i.free_price_max < 0:
+                                i.free_price_max = None
+                        else:
+                            i.free_price_min = None
+                            i.free_price_max = None
                         i.save()
                         i.log_action('eventyay.object.cloned')
                         for v in vars:
