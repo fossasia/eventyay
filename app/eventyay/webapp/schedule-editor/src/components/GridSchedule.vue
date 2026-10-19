@@ -1,6 +1,6 @@
 <template lang="pug">
 .c-grid-schedule(ref="rootEl", :class="'density-' + density")
-	.grid(ref="grid", :style="gridStyle", :class="gridClasses", @click="onGridClick($event)", @pointermove="updateHoverSlice($event)", @pointerup="stopDragging($event)")
+	.grid(ref="grid", :style="gridStyle", :class="gridClasses", @click="onGridClick($event)", @pointerup="stopDragging($event)")
 		template(v-for="slice of visibleTimeslices", :key="slice.name")
 			.timeslice(:ref="setTimesliceRef", :class="getSliceClasses(slice)", :data-slice="slice.date.format()", :style="getSliceStyle(slice)", @click="expandTimeslice(slice)") {{ getSliceLabel(slice) }}
 				svg(viewBox="0 0 10 10", v-if="isSliceExpandable(slice)").expand
@@ -162,9 +162,15 @@ const dragStart = ref<DragStartData | null>(null)
 const hiddenRooms = ref<Room[]>([])
 const timesliceRefs = ref<HTMLElement[]>([])
 
+let cachedGrid: {
+  rooms: { left: number; right: number; room: Room; roomIndex: number }[]
+  slices: { top: number; bottom: number; time: Moment }[]
+} | null = null
+
 watch(() => props.draggedSession, (val) => {
   if (!val) {
     hoverSlice.value = null
+    cachedGrid = null
   }
 })
 
@@ -173,6 +179,7 @@ watch(() => props.isUnassigning, (val) => {
     hoverSlice.value = null
   }
 })
+
 
 function applyRoomFocusFromQuery() {
   const params = new URLSearchParams(window.location.search)
@@ -192,12 +199,14 @@ let windowResizeListener: (() => void) | null = null
 let gridOffsetFrame: number | null = null
 
 const refreshGridOffset = () => {
+  cachedGrid = null
   if (grid.value) {
     gridOffset.value = grid.value.getBoundingClientRect().left
   }
 }
 
 const scheduleRefreshGridOffset = () => {
+  cachedGrid = null
   if (gridOffsetFrame !== null) {
     return
   }
@@ -505,6 +514,10 @@ const visibleRooms = computed(() => {
   return props.rooms.filter(room => !hiddenRooms.value.includes(room))
 })
 
+watch([visibleRooms, visibleTimeslices, gridStyle], () => {
+  cachedGrid = null
+})
+
 const visibleSessions = computed(() => {
   return props.sessions.filter(session => !hiddenRooms.value.includes(session.room))
 })
@@ -554,7 +567,13 @@ const stopDragging = (event: PointerEvent) => {
     }
   }
 
-  if (!props.draggedSession || !hoverSlice.value || !hoverSliceLegal.value) return
+  if (!props.draggedSession) return
+  if (pointerRaf !== null) {
+    cancelAnimationFrame(pointerRaf)
+    pointerRaf = null
+  }
+  updateHoverSlice(event)
+  if (!hoverSlice.value || !hoverSliceLegal.value) return
   const start = hoverSlice.value.time
   const end = hoverSlice.value.time.clone().add(props.draggedSession.duration, 'm')
 
@@ -579,10 +598,12 @@ const stopDragging = (event: PointerEvent) => {
       room: hoverSlice.value.room,
     })
   }
+  cachedGrid = null
   hoverSlice.value = null
 }
 
 const expandTimeslice = (slice: Timeslice) => {
+  cachedGrid = null
   const index = visibleTimeslices.value.indexOf(slice)
   if (index + 1 >= visibleTimeslices.value.length) {
     const minimumSliceMins = props.timeDensityMinutes || 30
@@ -603,71 +624,35 @@ const expandTimeslice = (slice: Timeslice) => {
 const getTimeAndRoomFromPoint = (clientX: number, clientY: number) => {
   if (!rootEl.value || props.isUnassigning) return null
 
-  const gridEl = rootEl.value.querySelector('.grid') as HTMLElement | null
-  if (!gridEl) return null
-  const gridRect = gridEl.getBoundingClientRect()
-  if (
-    clientX < gridRect.left ||
-    clientX > gridRect.right ||
-    clientY < gridRect.top ||
-    clientY > gridRect.bottom
-  ) {
-    return null
-  }
-
-  // 1. Determine room index by checking which room column the pointer is horizontally within
-  const roomEls = Array.from(rootEl.value.querySelectorAll('.grid > .room') || [])
-  if (roomEls.length <= 1) return null
-  const minRoomLeft = Math.min(
-    roomEls[1].getBoundingClientRect().left,
-    roomEls[roomEls.length - 1].getBoundingClientRect().left
-  )
-  const maxRoomRight = Math.max(
-    roomEls[1].getBoundingClientRect().right,
-    roomEls[roomEls.length - 1].getBoundingClientRect().right
-  )
-
-  // If pointer is outside room columns (e.g. over time column or moved to the sidebar), it's not over any room!
-  if (clientX < minRoomLeft || clientX > maxRoomRight) {
-    return null
-  }
-
-  let roomIndex = -1
-  for (let i = 1; i < roomEls.length; i++) {
-    const rect = roomEls[i].getBoundingClientRect()
-    if (clientX >= rect.left && clientX < rect.right) {
-      roomIndex = i - 1
-      break
+  if (!cachedGrid) {
+    const roomEls = rootEl.value.querySelectorAll('.grid > .room')
+    const rooms = []
+    for (let i = 1; i < roomEls.length; i++) {
+      const rect = roomEls[i].getBoundingClientRect()
+      if (i - 1 < visibleRooms.value.length) {
+        rooms.push({ left: rect.left, right: rect.right, room: visibleRooms.value[i - 1], roomIndex: i - 1 })
+      }
     }
-  }
-  if (roomIndex < 0 || roomIndex >= visibleRooms.value.length) return null
-  const room = visibleRooms.value[roomIndex]
-
-  // 2. Determine timeslice by checking which row the pointer is vertically within
-  const timesliceEls = Array.from(rootEl.value.querySelectorAll('.grid > .timeslice') || []) as HTMLElement[]
-  if (!timesliceEls.length) return null
-
-  const firstSliceTop = timesliceEls[0].getBoundingClientRect().top
-  const lastSliceBottom = timesliceEls[timesliceEls.length - 1].getBoundingClientRect().bottom
-  if (clientY < firstSliceTop || clientY > lastSliceBottom) {
-    return null
-  }
-
-  let targetSliceEl: HTMLElement | null = null
-  for (let i = 0; i < timesliceEls.length; i++) {
-    const rect = timesliceEls[i].getBoundingClientRect()
-    const nextRect = timesliceEls[i + 1]?.getBoundingClientRect()
-    const bottom = nextRect ? nextRect.top : rect.bottom
-    if (clientY >= rect.top && clientY < bottom) {
-      targetSliceEl = timesliceEls[i]
-      break
+    const timesliceEls = rootEl.value.querySelectorAll('.grid > .timeslice')
+    const slices = []
+    for (let i = 0; i < timesliceEls.length; i++) {
+      const el = timesliceEls[i] as HTMLElement
+      if (!el.dataset.slice) continue
+      const rect = el.getBoundingClientRect()
+      const nextRect = timesliceEls[i + 1]?.getBoundingClientRect()
+      slices.push({ top: rect.top, bottom: nextRect ? nextRect.top : rect.bottom, time: moment(el.dataset.slice) })
     }
+    if (!rooms.length || !slices.length) return null
+    cachedGrid = { rooms, slices }
   }
 
-  if (!targetSliceEl || !targetSliceEl.dataset.slice) return null
-  const time = moment(targetSliceEl.dataset.slice)
+  const room = cachedGrid.rooms.find((r) => clientX >= r.left && clientX < r.right)
+  if (!room) return null
 
-  return { time, room, roomIndex }
+  const slice = cachedGrid.slices.find((s) => clientY >= s.top && clientY < s.bottom)
+  if (!slice) return null
+
+  return { time: slice.time, room: room.room, roomIndex: room.roomIndex }
 }
 
 let lastPlacementTime = 0
@@ -755,10 +740,16 @@ const updateHoverSlice = (e: PointerEvent) => {
   hoverSlice.value = targetSlot
 }
 
-// Document-level handler: catches touch pointermove even when captured by a session element
+let pointerRaf: number | null = null
+let lastPointerEvent: PointerEvent | null = null
 const onDocPointerMove = (e: PointerEvent) => {
   if (props.draggedSession && e.isPrimary) {
-    updateHoverSlice(e)
+    lastPointerEvent = e
+    if (pointerRaf !== null) return
+    pointerRaf = requestAnimationFrame(() => {
+      pointerRaf = null
+      if (props.draggedSession && lastPointerEvent) updateHoverSlice(lastPointerEvent)
+    })
   }
 }
 
@@ -905,9 +896,14 @@ const scrollToDayStart = (day: Moment | null) => {
   scrolledDay.value = day
 }
 
+const onScroll = () => {
+  cachedGrid = null
+}
+
 const scrollBy = (offset: number) => {
   if (scrollParent.value) {
     scrollParent.value.scrollBy({ top: offset, behavior: 'smooth' })
+    cachedGrid = null
   }
 }
 
@@ -969,10 +965,11 @@ onMounted(async () => {
   if (layoutRoot instanceof HTMLElement && layoutRoot !== rootEl.value) {
     observeElementResize(layoutRoot)
   }
-  if (typeof ResizeObserver === 'undefined') {
-    windowResizeListener = scheduleRefreshGridOffset
-    window.addEventListener('resize', windowResizeListener)
+  windowResizeListener = () => {
+    cachedGrid = null
+    scheduleRefreshGridOffset()
   }
+  window.addEventListener('resize', windowResizeListener)
 
   // Listen on document level so touch drags (where pointer is captured elsewhere) work
   document.addEventListener('pointermove', onDocPointerMove)
@@ -986,11 +983,18 @@ onMounted(async () => {
     if (!el.dataset?.slice || !el.classList.contains('datebreak')) return
     observer?.observe(el)
   })
+  scrollParent.value?.addEventListener('scroll', onScroll, { passive: true })
 })
 
 onUnmounted(() => {
   timesliceRefs.value = []
   document.removeEventListener('pointermove', onDocPointerMove)
+  scrollParent.value?.removeEventListener('scroll', onScroll)
+  if (pointerRaf !== null) {
+    cancelAnimationFrame(pointerRaf)
+    pointerRaf = null
+  }
+  cachedGrid = null
   if (gridOffsetFrame !== null) {
     cancelAnimationFrame(gridOffsetFrame)
     gridOffsetFrame = null
