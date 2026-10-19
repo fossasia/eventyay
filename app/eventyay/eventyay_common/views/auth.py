@@ -44,6 +44,7 @@ from eventyay.base.forms.auth import (
 from eventyay.base.models import TeamInvite, U2FDevice, User, WebAuthnDevice
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.services.mail import SendMailException
+from eventyay.common.redirects import safe_redirect_url
 from eventyay.helpers.cookies import set_cookie_without_samesite
 from eventyay.helpers.jwt_generate import generate_sso_token
 from eventyay.multidomain.middlewares import get_cookie_domain
@@ -58,12 +59,8 @@ def get_used_backend(request):
     return backend
 
 
-def get_safe_next(request):
-    """Return the ``next`` parameter if it is a safe local URL, otherwise the dashboard."""
-    next_url = request.GET.get('next')
-    if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
-        return next_url
-    return 'eventyay_common:dashboard'
+def get_safe_next(request: HttpRequest) -> str:
+    return safe_redirect_url(request, request.GET.get('next') or request.GET.get('redirect_url'))
 
 
 def process_login(request, user, keep_logged_in):
@@ -78,7 +75,8 @@ def process_login(request, user, keep_logged_in):
     # Check for socialauth_next_url (from OAuth flows) first, then fall back to backend's get_next_url
     next_url = request.session.pop('socialauth_next_url', None)
     if not next_url:
-        next_url = get_auth_backends()[user.auth_backend].get_next_url(request)
+        next_url = get_auth_backends()[user.auth_backend].get_next_url(request) or request.GET.get('redirect_url')
+    next_url = safe_redirect_url(request, next_url)
 
     if user.require_2fa:
         request.session['eventyay_auth_2fa_user'] = user.pk
@@ -143,10 +141,7 @@ def login(request):
     if not backend.visible:
         backend = [b for b in backends if b.visible][0]
     if request.user.is_authenticated:
-        next_url = backend.get_next_url(request) or 'eventyay_common:dashboard'
-        if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
-            return redirect(next_url)
-        return redirect(reverse('eventyay_common:dashboard'))
+        return redirect(safe_redirect_url(request, backend.get_next_url(request) or request.GET.get('redirect_url')))
     if request.method == 'POST':
         form = LoginForm(backend=backend, data=request.POST, request=request)
         if form.is_valid() and form.user_cache and form.user_cache.auth_backend == backend.identifier:
@@ -171,10 +166,10 @@ def logout(request):
     auth_logout(request)
     request.session['eventyay_auth_login_time'] = 0
     next = reverse('auth.login')
-    if 'next' in request.GET and url_has_allowed_host_and_scheme(request.GET.get('next'), allowed_hosts=None):
-        next += '?next=' + quote(request.GET.get('next'))
-    if 'back' in request.GET and url_has_allowed_host_and_scheme(request.GET.get('back'), allowed_hosts=None):
-        return redirect(request.GET.get('back'))
+    if request.GET.get('next') or request.GET.get('redirect_url'):
+        next += '?next=' + quote(get_safe_next(request))
+    if request.GET.get('back'):
+        return redirect(safe_redirect_url(request, request.GET.get('back')))
     return redirect(next)
 
 
@@ -483,9 +478,7 @@ class Login2FAView(TemplateView):
             request.session['eventyay_auth_login_time'] = int(time.time())
             del request.session['eventyay_auth_2fa_user']
             del request.session['eventyay_auth_2fa_time']
-            if 'next' in request.GET and url_has_allowed_host_and_scheme(request.GET.get('next'), allowed_hosts=None):
-                return redirect(request.GET.get('next'))
-            return redirect(reverse('eventyay_common:dashboard'))
+            return redirect(get_safe_next(request))
         else:
             log_event('core', 'auth.login', OUTCOME_FAILURE, error_code='2fa_failed', user_id=getattr(self.user, 'pk', None))
             messages.error(request, _('Invalid code, please try again.'))

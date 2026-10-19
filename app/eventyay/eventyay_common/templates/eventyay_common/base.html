@@ -117,6 +117,7 @@
         <meta name="referrer" content="origin">
 
         {% block custom_header %}{% endblock %}
+	    {% include 'common/includes/external_links.html' %}
 	</head>
 	<body data-datetimeformat="{{ js_datetime_format }}" data-timeformat="{{ js_time_format }}"
             data-dateformat="{{ js_date_format }}" data-datetimelocale="{{ js_locale }}"
