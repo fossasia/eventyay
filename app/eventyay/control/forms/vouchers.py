@@ -3,6 +3,7 @@ import json
 from collections import namedtuple
 from html import unescape
 from io import StringIO
+from urllib.parse import urlencode
 
 from django import forms
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -18,6 +19,7 @@ from django_scopes.forms import SafeModelChoiceField
 from eventyay.base.email import get_available_placeholders
 from eventyay.base.forms import I18nModelForm, PlaceholderValidator
 from eventyay.base.models import Product, Voucher
+from eventyay.base.templatetags.rich_text import VOUCHER_EMAIL_PREVIEW_CONTEXT
 from eventyay.common.forms.fields import EmailBodyField
 from eventyay.common.forms.widgets import EmailEditorWidget
 from eventyay.control.forms import SplitDateTimeField, SplitDateTimePickerWidget
@@ -444,9 +446,12 @@ class VoucherBulkForm(VoucherForm):
         if widget.attrs.get('data-tiptap-profile') == 'email':
             widget.attrs['data-tiptap-placeholders'] = json.dumps(names)
             event = self.instance.event
-            widget.attrs['data-tiptap-preview-url'] = reverse(
+            preview_url = reverse(
                 'control:event.editor.email.preview',
                 kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+            )
+            widget.attrs['data-tiptap-preview-url'] = (
+                f'{preview_url}?{urlencode({"context": VOUCHER_EMAIL_PREVIEW_CONTEXT})}'
             )
 
     class Meta:
