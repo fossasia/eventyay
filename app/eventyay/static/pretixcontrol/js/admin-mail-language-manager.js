@@ -45,6 +45,8 @@ const showLocale = (code, tabs) => {
     tab.classList.toggle('active', active)
     tab.setAttribute('aria-selected', active ? 'true' : 'false')
   })
+  const selectedLocaleInput = document.querySelector('#mail-selected-locale')
+  if (selectedLocaleInput) selectedLocaleInput.value = code
   document.dispatchEvent(new CustomEvent('mail-language-change', { detail: { locale: code } }))
 }
 
@@ -101,6 +103,7 @@ const init = () => {
   const addBtn = document.querySelector('#add-language-btn')
   const dropdown = document.querySelector('#add-language-dropdown')
   const activeLocalesInput = document.querySelector('#mail-active-locales')
+  const selectedLocaleInput = document.querySelector('#mail-selected-locale')
   if (!container || !addBtn || !dropdown) return
 
   const allLocales = getAllLocales()
@@ -180,7 +183,10 @@ const init = () => {
   })
 
   rebuildDropdown()
-  showLocale(DEFAULT_LOCALE, tabs)
+  const selectedLocale = activeLocales.has(selectedLocaleInput?.value)
+    ? selectedLocaleInput.value
+    : DEFAULT_LOCALE
+  showLocale(selectedLocale, tabs)
 }
 
 if (document.readyState === 'loading') {
