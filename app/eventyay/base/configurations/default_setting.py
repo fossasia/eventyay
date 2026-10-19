@@ -1572,7 +1572,10 @@ DEFAULT_SETTINGS = {
         'form_class': forms.BooleanField,
         'serializer_class': serializers.BooleanField,
         'form_kwargs': dict(
-            label=_('Contact form'),
+            label=_('Enable attendees to contact organizers'),
+            help_text=_(
+                'This option enables a contact form that attendees can use to contact an organizer.'
+            ),
             required=False,
         ),
     },
