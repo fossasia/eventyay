@@ -64,9 +64,23 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
     template_name = 'orga/speaker/list.html'
     context_object_name = 'speakers'
     default_filters = ('user__email__icontains', 'user__fullname__icontains')
-    sortable_fields = ('position', 'user__email', 'user__fullname', 'is_featured')
+    sortable_fields = (
+        'position',
+        'user__email',
+        'user__fullname',
+        'is_featured',
+        'accepted_submission_count',
+        'submission_count',
+        'has_arrived',
+    )
     default_sort_field = 'position'
-    secondary_sort = {'position': ('user__fullname',), 'is_featured': ('position', 'user__fullname')}
+    secondary_sort = {
+        'position': ('user__fullname',),
+        'is_featured': ('position', 'user__fullname'),
+        'accepted_submission_count': ('user__fullname',),
+        'submission_count': ('user__fullname',),
+        'has_arrived': ('user__fullname',),
+    }
     permission_required = 'base.orga_list_speakerprofile'
 
     def _speaker_list_ordering(self, *, descending=False):
@@ -85,6 +99,10 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
         if plain_key == 'position':
             return qs.order_by(*self._speaker_list_ordering(descending=sort_key.startswith('-')))
         return super().sort_queryset(qs)
+
+    @context
+    def is_manual_order(self) -> bool:
+        return self.current_sort() in ('', 'default', 'position')
 
     def get_filter_form(self):
         with scope(event=self.request.event):
