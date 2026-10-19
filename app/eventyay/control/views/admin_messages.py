@@ -49,6 +49,7 @@ from eventyay.control.forms.admin.admin_messages import (
     AdminComposeRecipientsForm,
 )
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin, StaffMemberRequiredMixin
+from eventyay.control.signals import platform_mail_templates
 from eventyay.control.tasks import send_admin_email
 from eventyay.control.views import PaginationMixin
 from eventyay.eventyay_common.tasks import MONTHLY_INVOICE_SUBJECT, MONTHLY_INVOICE_TEXT
@@ -1154,6 +1155,25 @@ def get_platform_mail_templates() -> list[dict]:
         {'key': 'system-notification', 'name': _('System notification'), 'category': _('System'),
          'trigger': _('System event'), 'load': _notification_mail},
     ])
+    for receiver, response in platform_mail_templates.send(sender=None):
+        if response is None:
+            continue
+        plugin_templates = [response] if isinstance(response, dict) else response
+        if not isinstance(plugin_templates, (list, tuple)):
+            logger.warning(
+                'Receiver %r returned %r instead of a mail template dictionary or list',
+                receiver,
+                type(response),
+            )
+            continue
+        for plugin_template in plugin_templates:
+            if not isinstance(plugin_template, dict):
+                logger.warning(
+                    'Receiver %r returned a non-dictionary mail template entry',
+                    receiver,
+                )
+                continue
+            templates.append(plugin_template)
     for template in templates:
         template.setdefault('recipient_type', _('User'))
         template.setdefault('preview', {})

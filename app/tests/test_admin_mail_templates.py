@@ -6,6 +6,7 @@ from django.urls import reverse
 from eventyay.base.models import User
 from eventyay.base.models.auth import StaffSession
 from eventyay.base.models.mail import MailTemplateRoles
+from eventyay.control.signals import platform_mail_templates
 from eventyay.control.views.admin_messages import (
     PLACEHOLDER_PATTERN,
     get_platform_mail_templates,
@@ -69,8 +70,39 @@ def test_template_list_links_every_template(admin_client):
     assert response.status_code == 200
     content = response.content.decode()
     for template in get_platform_mail_templates():
-        url = reverse('eventyay_admin:admin.messages.template_detail', kwargs={'role': template['key']})
+        url = template.get('url') or reverse(
+            'eventyay_admin:admin.messages.template_detail', kwargs={'role': template['key']}
+        )
         assert url in content
+
+
+@pytest.mark.django_db
+def test_plugin_template_links_to_customization_page(admin_client):
+    def plugin_templates(sender, **kwargs):
+        return {
+            'key': 'plugin-billing-notice',
+            'name': 'Plugin billing notice',
+            'category': 'Business',
+            'trigger': 'Invoice issued',
+            'load': lambda: ('Invoice {number}', 'Invoice {number} is ready.'),
+            'url': '/admin/plugin/billing-template/',
+        }
+
+    platform_mail_templates.connect(
+        plugin_templates,
+        dispatch_uid='test_plugin_template_links_to_customization_page',
+    )
+    try:
+        response = admin_client.get(reverse('eventyay_admin:admin.messages.templates'))
+    finally:
+        platform_mail_templates.disconnect(
+            dispatch_uid='test_plugin_template_links_to_customization_page'
+        )
+
+    assert response.status_code == 200
+    assert 'Plugin billing notice' in response.content.decode()
+    assert 'Business' in response.content.decode()
+    assert 'href=\'/admin/plugin/billing-template/\'' in response.content.decode()
 
 
 @pytest.mark.django_db

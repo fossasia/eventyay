@@ -103,6 +103,17 @@ This is no ``EventPluginSignal``, so you do not get the event in the ``sender`` 
 and you may get the signal regardless of whether your plugin is active.
 """
 
+platform_mail_templates = Signal()
+"""
+This signal allows plugins to add entries to the global Message Center template
+catalogue. Receivers should return a template dictionary or a list of template
+dictionaries with the same keys as ``get_platform_mail_templates``. An optional
+``url`` key can point to a plugin-owned customization page.
+
+This is a regular Django signal because the platform template catalogue is global
+and is not associated with a specific event.
+"""
+
 event_dashboard_components = EventPluginSignal()
 """
 Arguments: 'request'
