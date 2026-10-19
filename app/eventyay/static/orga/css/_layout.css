@@ -2586,8 +2586,28 @@ h2 .user-name-display img {
 
   #page-content:has(.pretalx-schedule) > main > .alert {
     flex-shrink: 0;
-    margin-bottom: 6px;
+    margin: 0 12px 8px 0;
     padding: 8px 14px;
+    overflow: hidden;
+    min-height: 40px;
+    box-sizing: border-box;
+  }
+
+  #page-content:has(.pretalx-schedule) > main > .alert::before {
+    margin: -8px 14px -8px -14px;
+    min-width: 44px;
+    font-size: 16px;
+    align-self: stretch;
+  }
+
+  html[dir="rtl"] #page-content:has(.pretalx-schedule) > main > .alert,
+  html.rtl #page-content:has(.pretalx-schedule) > main > .alert {
+    margin: 0 0 8px 12px;
+  }
+
+  html[dir="rtl"] #page-content:has(.pretalx-schedule) > main > .alert::before,
+  html.rtl #page-content:has(.pretalx-schedule) > main > .alert::before {
+    margin: -8px -14px -8px 14px;
   }
 
   #page-content:has(.pretalx-schedule) .schedule-editor-container {
@@ -2702,6 +2722,10 @@ h2 .user-name-display img {
     height: auto;
     min-height: 0;
     overflow: visible;
+  }
+
+  #page-content:has(.pretalx-schedule) > main > .alert {
+    margin: 0 0 8px 0;
   }
 
   #page-content:has(.pretalx-schedule) .schedule-editor-container {
