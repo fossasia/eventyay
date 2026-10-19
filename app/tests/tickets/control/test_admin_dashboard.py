@@ -11,7 +11,7 @@ from django.utils.timezone import now
 from django_scopes import scope
 from redis.exceptions import RedisError
 
-from eventyay.base.models import Event, Order, OrderPayment, Organizer, Product, Room, StreamSchedule, User
+from eventyay.base.models import Event, Order, OrderPayment, Organizer, Product, Room, StreamSchedule, SystemLog, User
 from eventyay.control.forms.server_management import VideoStreamScheduleForm
 from eventyay.control.platform_dashboard import activity_context, dashboard_cards, setup_events
 
@@ -152,7 +152,6 @@ def test_dashboard_sections_and_analytics_render(dashboard_admin, settings):
         'Dashboard',
         'Events',
         'Settings',
-        'System log',
     ]
     assert [str(item['label']) for item in navigation['System']['children']] == [
         'System operations',
@@ -160,6 +159,12 @@ def test_dashboard_sections_and_analytics_render(dashboard_admin, settings):
         'Logs',
     ]
     assert 'Platform data' in navigation
+    voucher_url = reverse('eventyay_admin:admin.vouchers')
+    voucher_labels = [
+        str(item['label']) for group in navigation.values() for item in group.get('children', [])
+        if item['url'] == voucher_url
+    ]
+    assert voucher_labels == ['Event vouchers']
     unavailable = dict(response.context_data)
     unavailable['config_status_unavailable'] = True
     dashboard_cards(unavailable)
@@ -187,13 +192,24 @@ def test_dashboard_sections_and_analytics_render(dashboard_admin, settings):
 
 
 @pytest.mark.django_db
-def test_system_navigation_active_on_logs(dashboard_admin):
-    """Keep the System parent and its Logs child active on the same route."""
-    response = dashboard_admin.get(reverse('eventyay_admin:video_admin:systemlog.list'))
+@pytest.mark.parametrize('detail', (False, True))
+def test_system_navigation_active_on_logs(dashboard_admin, detail):
+    """Show one log link and activate only System on log lists and details."""
+    log_url = reverse('eventyay_admin:video_admin:systemlog.list')
+    if detail:
+        entry = SystemLog.objects.create(module='navigation-test', message='Test entry', trace='{}')
+        url = reverse('eventyay_admin:video_admin:systemlog.detail', kwargs={'pk': entry.pk})
+    else:
+        url = log_url
+    response = dashboard_admin.get(url)
     assert response.status_code == 200
-    system = next(item for item in response.context['admin_nav_items'] if str(item['label']) == 'System')
-    assert system['active']
-    assert system['children'][2]['active']
+    navigation = {str(item['label']): item for item in response.context['admin_nav_items']}
+    assert navigation['System']['active']
+    assert navigation['System']['children'][2]['active']
+    assert not navigation['Video']['active']
+    assert not any(item['active'] for item in navigation['Video']['children'])
+    sidebar = BeautifulSoup(response.content, 'html.parser').select_one('.sidebar')
+    assert len(sidebar.find_all('a', href=log_url)) == 1
 
 
 @pytest.mark.django_db

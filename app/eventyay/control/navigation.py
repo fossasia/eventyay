@@ -658,11 +658,6 @@ def get_admin_navigation(request):
                     url.url_name == 'server.toggle-active'
                 ),
             },
-            {
-                'label': _('System log'),
-                'url': reverse('eventyay_admin:video_admin:systemlog.list'),
-                'active': is_video_route and url.url_name.startswith('systemlog.'),
-            },
         ]
         parent_active = any(c['active'] for c in video_children)
         nav.append(
