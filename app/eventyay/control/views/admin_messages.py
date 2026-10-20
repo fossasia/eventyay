@@ -1,11 +1,15 @@
+import asyncio
 import hashlib
 import datetime
+import functools
 import json
 import logging
 import re
 from types import SimpleNamespace
 
 from allauth.account.models import EmailAddress
+from asgiref.sync import async_to_sync
+from django.apps import apps
 from django.conf import settings as django_settings
 from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
@@ -15,7 +19,9 @@ from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.template.loader import render_to_string
 from django.utils import translation
+from django.utils.functional import Promise
 from django.utils.html import escape, strip_tags
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.timezone import now as tz_now
 from django.utils.translation import gettext_lazy as _
 from django.views import View
@@ -24,6 +30,7 @@ from django_scopes import scopes_disabled
 
 from eventyay.base.email import TEST_EMAIL_BODY, TEST_EMAIL_SUBJECT
 from eventyay.base.models import Event, LogEntry, Organizer, User
+from eventyay.base.models.global_plugin_config import GlobalPluginConfig
 from eventyay.base.i18n import LazyI18nString
 from eventyay.base.models.admin_mail import (
     AdminEmailQueue,
@@ -49,6 +56,7 @@ from eventyay.control.forms.admin.admin_messages import (
     AdminComposeRecipientsForm,
 )
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin, StaffMemberRequiredMixin
+from eventyay.control.signals import platform_mail_templates
 from eventyay.control.tasks import send_admin_email
 from eventyay.control.views import PaginationMixin
 from eventyay.eventyay_common.tasks import MONTHLY_INVOICE_SUBJECT, MONTHLY_INVOICE_TEXT
@@ -1097,7 +1105,50 @@ def _notification_mail():
     return '[{instance}] {prefix}: {title}', body
 
 
+def _send_enabled_platform_mail_template_receivers(disabled_modules):
+    """Dispatch the template signal without invoking disabled plugins."""
+    sync_receivers, async_receivers = platform_mail_templates._live_receivers(None)
+
+    def is_enabled(receiver):
+        func = receiver
+        while isinstance(func, functools.partial):
+            func = func.func
+        receiver_app = apps.get_containing_app_config(func.__module__)
+        return not receiver_app or receiver_app.name not in disabled_modules
+
+    sync_receivers = [receiver for receiver in sync_receivers if is_enabled(receiver)]
+    async_receivers = [receiver for receiver in async_receivers if is_enabled(receiver)]
+    responses = []
+    for receiver in sync_receivers:
+        try:
+            response = receiver(signal=platform_mail_templates, sender=None)
+        except Exception as exc:
+            platform_mail_templates._log_robust_failure(receiver, exc)
+            responses.append((receiver, exc))
+        else:
+            responses.append((receiver, response))
+
+    if async_receivers:
+
+        async def call_receiver(receiver):
+            try:
+                return await receiver(signal=platform_mail_templates, sender=None)
+            except Exception as exc:
+                platform_mail_templates._log_robust_failure(receiver, exc)
+                return exc
+
+        async def call_receivers():
+            results = await asyncio.gather(
+                *(call_receiver(receiver) for receiver in async_receivers)
+            )
+            return zip(async_receivers, results)
+
+        responses.extend(async_to_sync(call_receivers)())
+    return responses
+
+
 def get_platform_mail_templates() -> list[dict]:
+    """Return valid core and active-plugin templates for the global catalogue."""
     listed_separately = {
         MailTemplateRoles.NEW_SUBMISSION,
         MailTemplateRoles.SUBMISSION_ACCEPT,
@@ -1154,6 +1205,62 @@ def get_platform_mail_templates() -> list[dict]:
         {'key': 'system-notification', 'name': _('System notification'), 'category': _('System'),
          'trigger': _('System event'), 'load': _notification_mail},
     ])
+    known_keys = {template['key'] for template in templates}
+    disabled_modules = GlobalPluginConfig.get_disabled_modules()
+    for receiver, response in _send_enabled_platform_mail_template_receivers(disabled_modules):
+        if isinstance(response, Exception):
+            continue
+        if response is None:
+            continue
+        plugin_templates = [response] if isinstance(response, dict) else response
+        if not isinstance(plugin_templates, (list, tuple)):
+            logger.warning(
+                'Receiver %r returned %r instead of a mail template dictionary or list',
+                receiver,
+                type(response),
+            )
+            continue
+        for plugin_template in plugin_templates:
+            if not isinstance(plugin_template, dict):
+                logger.warning(
+                    'Receiver %r returned a non-dictionary mail template entry',
+                    receiver,
+                )
+                continue
+            key = plugin_template.get('key')
+            name = plugin_template.get('name')
+            load = plugin_template.get('load')
+            preview = plugin_template.get('preview', {})
+            if (
+                not isinstance(key, str)
+                or not key
+                or '/' in key
+                or not isinstance(name, (str, Promise))
+                or not str(name).strip()
+                or not callable(load)
+                or not isinstance(preview, dict)
+                or not all(isinstance(preview_key, str) for preview_key in preview)
+            ):
+                logger.warning(
+                    'Receiver %r returned a mail template with invalid key, name, or load fields',
+                    receiver,
+                )
+                continue
+            if key in known_keys:
+                logger.warning('Receiver %r returned duplicate mail template key %r', receiver, key)
+                continue
+
+            validated_template = plugin_template.copy()
+            url = validated_template.get('url')
+            if url is not None and (
+                not isinstance(url, str)
+                or not url.startswith('/')
+                or not url_has_allowed_host_and_scheme(url, allowed_hosts=set())
+            ):
+                logger.warning('Receiver %r returned unsafe mail template URL %r', receiver, url)
+                validated_template.pop('url', None)
+            templates.append(validated_template)
+            known_keys.add(key)
     for template in templates:
         template.setdefault('recipient_type', _('User'))
         template.setdefault('preview', {})
