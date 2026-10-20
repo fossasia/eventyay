@@ -1423,7 +1423,9 @@ class EventSearchView(views.APIView):
     def get(self, request):
         query = request.GET.get('query', '')
         events = (
-            Event.objects.filter(Q(name__icontains=query) | Q(slug__icontains=query))
+            request.user.get_events_with_permission('can_view_orders', request=request).filter(
+                Q(name__icontains=query) | Q(slug__icontains=query)
+            )
             .order_by('name')
             .select_related('organizer')[:10]
         )
