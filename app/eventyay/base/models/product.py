@@ -1226,6 +1226,7 @@ class ProductBundle(models.Model):
 
     @staticmethod
     def clean_productvar(event, bundled_product, bundled_variation):
+        """Validate that bundled product belongs to the event and matches any supplied variation."""
         if not bundled_product:
             raise ValidationError(_('A product needs to be set for this bundle.'))
         if event != bundled_product.event:
@@ -1237,6 +1238,7 @@ class ProductBundle(models.Model):
 
     @staticmethod
     def clean_count(count):
+        """Validate that the bundle count is non-negative."""
         if count < 0:
             raise ValidationError(_('The count needs to be equal to or greater than zero.'))
 

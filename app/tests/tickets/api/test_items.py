@@ -226,6 +226,7 @@ def test_category_delete(token_client, organizer, event, category3, item):
 
 @pytest.fixture
 def item(event):
+    """Fixture providing a sample product with metadata for the main event."""
     item = event.products.create(name='Budget Ticket', default_price=23)
     item.meta_values.create(property=event.product_meta_properties.first(), value='Tuesday')
     return item
@@ -233,11 +234,13 @@ def item(event):
 
 @pytest.fixture
 def item2(event2):
+    """Fixture providing a sample product for a secondary event."""
     return event2.products.create(name='Budget Ticket', default_price=23)
 
 
 @pytest.fixture
 def item3(event):
+    """Fixture providing an additional sample product for the main event."""
     return event.products.create(name='Budget Ticket', default_price=23)
 
 
@@ -986,6 +989,7 @@ def test_item_create_with_bundle_negative_count(token_client, organizer, event, 
 
 @pytest.mark.django_db
 def test_item_update(token_client, organizer, event, item, category, item2, category2, taxrule2):
+    """Test updating product fields and validating constraint errors on update."""
     resp = token_client.patch(
         '/api/v1/organizers/{}/events/{}/items/{}/'.format(organizer.slug, event.slug, item.pk),
         {'min_per_order': 1, 'max_per_order': 2},
@@ -1385,6 +1389,7 @@ def test_only_variation_not_delete(token_client, organizer, event, item, variati
 
 @pytest.fixture
 def bundle(item, item3, category):
+    """Fixture providing a product bundle associated with the main event product."""
     return item.bundles.create(bundled_product=item3, count=1, designated_price=2)
 
 
