@@ -77,6 +77,7 @@ class InvoiceVoucherForm(I18nModelForm):
             'max_usages',
             'budget',
             'allow_partial_usage',
+            'applies_to_platform_fees',
             'event_effect',
             'organizer_effect',
         ]

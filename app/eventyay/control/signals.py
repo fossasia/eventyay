@@ -199,6 +199,46 @@ argument and the current data state in the ``data`` argument.
 As with all plugin signals, the ``sender`` keyword argument will contain the event.
 """
 
+platform_fee_voucher_forms = Signal()
+"""
+Arguments: 'request', 'voucher'
+
+This signal allows you to add forms to the platform fee voucher create and edit pages in
+the admin area, for example to let a voucher discount something your plugin sells. You are
+passed ``request`` and ``voucher`` (``None`` while the voucher is being created) and are
+expected to return a form instance that you bind yourself when appropriate. Set a prefix
+on your form to avoid clashes with other plugins.
+
+Your form is validated together with the voucher form and must implement two methods:
+
+* ``save(voucher)``, called with the saved voucher in the same transaction.
+* ``has_targets()``, returning whether the submitted data makes the voucher apply to
+  anything. An active voucher must apply to ticket platform fees or to at least one
+  plugin target.
+
+The ``sender`` keyword argument will be ``None``.
+"""
+
+platform_fee_voucher_targets = Signal()
+"""
+Arguments: 'voucher'
+
+This signal allows you to describe what a platform fee voucher applies to on its detail
+page. Return a list of short, human-readable strings, such as ``"Plans: Pro, Business"``.
+
+The ``sender`` keyword argument will be ``None``.
+"""
+
+platform_fee_voucher_copied = Signal()
+"""
+Arguments: 'source', 'voucher'
+
+Sent when an admin duplicates a platform fee voucher, so plugins can copy the settings
+they store for ``source`` onto the new ``voucher``.
+
+The ``sender`` keyword argument will be ``None``.
+"""
+
 quota_detail_html = EventPluginSignal()
 """
 Arguments: 'quota'
