@@ -397,7 +397,9 @@ class Submission(GenerateCode, PretalxModel):
                 self.event.active_review_phase and self.event.active_review_phase.speakers_can_change_submissions
             )
         if self.state == SubmissionStates.DRAFT:
-            return self.cfp_open
+            return self.cfp_open or bool(
+                self.access_code and (not self.access_code.valid_until or now() < self.access_code.valid_until)
+            )
         return self.state in SubmissionStates.accepted_states
 
     @property
