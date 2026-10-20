@@ -1,25 +1,31 @@
 <template lang="pug">
-.c-grid-schedule(ref="rootEl", :class="'density-' + density")
-	.grid(ref="grid", :style="gridStyle", :class="gridClasses", @click="onGridClick($event)", @pointermove="updateHoverSlice($event)", @pointerup="stopDragging($event)")
+.c-grid-schedule(ref="rootEl", :class="['density-' + density, timeDensityMinutes <= 10 ? 'fine-steps' : '']")
+	.grid(ref="grid", :style="gridStyle", :class="gridClasses", @click="onGridClick($event)", @pointerup="stopDragging($event)")
 		template(v-for="slice of visibleTimeslices", :key="slice.name")
-			.timeslice(:ref="setTimesliceRef", :class="getSliceClasses(slice)", :data-slice="slice.date.format()", :style="getSliceStyle(slice)", @click="expandTimeslice(slice)") {{ getSliceLabel(slice) }}
-				svg(viewBox="0 0 10 10", v-if="isSliceExpandable(slice)").expand
+			.timeslice(:ref="setTimesliceRef", :class="slice.classes", :data-slice="slice.iso", :data-name="slice.name", :style="slice.style", @click="expandTimeslice(slice)") {{ slice.label }}
+				svg(viewBox="0 0 10 10", v-if="slice.classes && slice.classes.expandable").expand
 					path(d="M 0 4 L 5 0 L 10 4 z")
 					path(d="M 0 6 L 5 10 L 10 6 z")
-			.timeseparator(:class="getSliceClasses(slice)", :style="getSliceStyle(slice)")
-		.room(:style="{'grid-area': `1 / 1 / auto / auto`}")
-		.room(v-for="(room, i) of visibleRooms", :key="room.id", :style="getRoomHeaderStyle(room, i)")
+			.timeseparator(:class="slice.classes", :style="slice.separatorStyle")
+		.room(:style="cornerRoomStyle")
+		.room(v-for="room of visibleRooms", :key="room.id", :style="roomHeaderStyles.get(String(room.id))")
 			span.room-name(:title="getLocalizedString(room.name)") {{ getLocalizedString(room.name) }}
 			.hide-room.no-print(v-if="visibleRooms.length > 1", @click="hiddenRooms = rooms.filter(r => hiddenRooms.includes(r) || r === room)")
 				i.fa.fa-eye-slash
-		session(v-if="draggedSession && hoverSlice", :style="getHoverSliceStyle()", :session="draggedSession", :isDragClone="true", :overrideStart="hoverSlice.time")
+		.placing-preview-slot(v-show="draggedSession && hoverSlice", :style="previewStyle")
+			session.placing-preview(
+				v-if="draggedSession",
+				:session="draggedSession",
+				:isDragClone="true",
+				:overrideStart="hoverSlice ? hoverSlice.time : null"
+			)
 		template(v-for="session of visibleSessions", :key="session.id")
 			session(
 				v-if="hasValidPosition(session)"
 				:session="session",
-				:warnings="getSessionWarnings(session)",
+				:warnings="warningsFor(session)",
 				:isDragged="draggedSession && (session.id === draggedSession.id)",
-				:style="getSessionStyle(session)",
+				:style="sessionStyles.get(session.id)",
 				:showRoom="false",
 				v-bind="talkSessionBindings",
 				@startDragging="startDragging($event)",
@@ -28,7 +34,7 @@
 				@assignMembers="emit('assignMembers', $event)",
 				v-on="talkSessionListeners",
 			)
-		.availability(v-for="availability of visibleAvailabilities", :key="`${availability.room.id}-${availability.start.valueOf()}-${availability.end.valueOf()}`", :style="getSessionStyle(availability)", :class="availability.active ? ['active'] : []")
+		.availability(v-for="availability of visibleAvailabilities", :key="availabilityKey(availability)", :style="availabilityStyles.get(availabilityKey(availability))", :class="availability.active ? ['active'] : []")
 	#hidden-rooms.no-print(v-if="hiddenRooms.length")
 		.hidden-rooms-header
 			i.fa.fa-eye-slash
@@ -96,10 +102,30 @@ interface Timeslice {
   isExpanded?: boolean
   datebreak?: boolean
   gap?: boolean
+  iso?: string
+  label?: string
+  classes?: { datebreak: boolean; gap: boolean; expandable: boolean }
+  style?: Record<string, string>
+  separatorStyle?: Record<string, string>
+}
+
+interface CachedRoom {
+  left: number
+  right: number
+  room: Room
+  roomIndex: number
+}
+
+interface CachedSlice {
+  top: number
+  bottom: number
+  time: Moment
+  name: string
 }
 
 interface HoverSlice {
   time: Moment
+  name: string
   roomIndex: number
   room: Room
   duration: number
@@ -132,6 +158,7 @@ const props = defineProps<{
   density: 'compact' | 'default' | 'comfortable'
   timeDensityMinutes: number
   allowOverlap?: boolean
+  isUnassigning?: boolean
 }>()
 
 const emit = defineEmits([
@@ -161,6 +188,31 @@ const dragStart = ref<DragStartData | null>(null)
 const hiddenRooms = ref<Room[]>([])
 const timesliceRefs = ref<HTMLElement[]>([])
 
+let cachedGrid: {
+  rooms: CachedRoom[]
+  slices: CachedSlice[]
+} | null = null
+let cachedScrollTop = 0
+let cachedScrollLeft = 0
+let dragPointerY = 0
+const previewStyle = ref<Record<string, string>>({})
+const cornerRoomStyle = { 'grid-area': '1 / 1 / auto / auto' }
+const NO_WARNINGS: { message: string }[] = []
+
+watch(() => props.draggedSession, (val) => {
+  if (!val) {
+    hoverSlice.value = null
+    cachedGrid = null
+  }
+})
+
+watch(() => props.isUnassigning, (val) => {
+  if (val) {
+    hoverSlice.value = null
+  }
+})
+
+
 function applyRoomFocusFromQuery() {
   const params = new URLSearchParams(window.location.search)
   const roomParam = params.get('room')
@@ -179,12 +231,14 @@ let windowResizeListener: (() => void) | null = null
 let gridOffsetFrame: number | null = null
 
 const refreshGridOffset = () => {
+  cachedGrid = null
   if (grid.value) {
     gridOffset.value = grid.value.getBoundingClientRect().left
   }
 }
 
 const scheduleRefreshGridOffset = () => {
+  cachedGrid = null
   if (gridOffsetFrame !== null) {
     return
   }
@@ -209,38 +263,41 @@ const hasValidPosition = (session: SessionDatum): boolean => {
 
 const getSliceName = (date: Moment): string => `slice-${date.format('MM-DD-HH-mm')}`
 
+const sessionsByRoom = computed(() => {
+  const map = new Map<string, { id: number | string; start: number; end: number }[]>()
+  for (const session of props.sessions) {
+    if (!session.start || !session.end || !session.room) continue
+    const key = String(session.room.id)
+    const list = map.get(key)
+    const entry = { id: session.id, start: session.start.valueOf(), end: session.end.valueOf() }
+    if (list) list.push(entry)
+    else map.set(key, [entry])
+  }
+  return map
+})
+
 const hoverSliceLegal = computed(() => {
   if (!hoverSlice.value || !hoverSlice.value.room || !props.draggedSession) return false
   if (props.allowOverlap) return true
-  const start = hoverSlice.value.time
-  const end = hoverSlice.value.time.clone().add(props.draggedSession.duration, 'm')
-  const sessionId = props.draggedSession.id
-  const roomId = hoverSlice.value.room.id
-
-  for (const session of props.sessions.filter(s => s.start)) {
-    if (session.room.id === roomId && session.id !== sessionId) {
-      if (
-        session.start.isSame(start) ||
-        session.end.isSame(end) ||
-        session.start.isBetween(start, end) ||
-        session.end.isBetween(start, end) ||
-        start.isBetween(session.start, session.end) ||
-        end.isBetween(session.start, session.end)
-      ) return false
-    }
+  const start = hoverSlice.value.time.valueOf()
+  const end = start + props.draggedSession.duration * 60_000
+  const sessionId = String(props.draggedSession.id)
+  const list = sessionsByRoom.value.get(String(hoverSlice.value.room.id))
+  if (!list) return true
+  for (const session of list) {
+    if (String(session.id) === sessionId) continue
+    if (session.start < end && session.end > start) return false
   }
   return true
 })
 
-const hoverEndSlice = computed((): Moment | null => {
-  if (props.draggedSession && hoverSlice.value) {
-    return hoverSlice.value.time.clone().add(props.draggedSession.duration, 'm')
-  }
-  return null
-})
+function timeStepMinutes(): number {
+  const step = props.timeDensityMinutes || 30
+  return step > 0 ? step : 30
+}
 
 const timeslices = computed<Timeslice[]>(() => {
-  const minimumSliceMins = props.timeDensityMinutes || 30
+  const minimumSliceMins = timeStepMinutes()
   const slices: Timeslice[] = []
   const slicesLookup: Record<string, Timeslice> = {}
 
@@ -270,114 +327,65 @@ const timeslices = computed<Timeslice[]>(() => {
     }
   }
 
-  const fillHalfHours = (start: Moment, end: Moment, { hasSession }: { hasSession?: boolean } = {}) => {
-    let mins = end.diff(start, 'minutes')
-    const startingMins = minimumSliceMins - (start.minute() % minimumSliceMins)
-    const halfHourSlices: Moment[] = []
+  if (!props.start?.isValid() || !props.end?.isValid()) return []
 
-    if (startingMins && startingMins !== minimumSliceMins) {
-      halfHourSlices.push(start.clone().add(startingMins, 'minutes'))
-      mins -= startingMins
+  const day = props.start.clone().startOf('day')
+  const lastDay = props.end.clone().startOf('day')
+  while (day.isSameOrBefore(lastDay, 'day')) {
+    pushSlice(day.clone())
+    let fromMinute = 9 * 60
+    let toMinute = 19 * 60
+    for (const session of props.sessions) {
+      if (!session.start?.isValid() || !session.end?.isValid()) continue
+      if (!session.start.isSame(day, 'day') && !session.end.isSame(day, 'day')) continue
+      const startMinute = Math.max(0, session.start.diff(day, 'minutes'))
+      const endMinute = session.end.diff(day, 'minutes')
+      fromMinute = Math.min(fromMinute, Math.floor(startMinute / minimumSliceMins) * minimumSliceMins)
+      toMinute = Math.max(toMinute, Math.ceil(endMinute / minimumSliceMins) * minimumSliceMins)
     }
-
-    const endingMins = end.minute() % minimumSliceMins
-
-    for (let i = 1; i <= mins / minimumSliceMins; i++) {
-      const sliceDate = start.clone().add(startingMins + minimumSliceMins * i, 'minutes')
-      if (sliceDate.isAfter(end)) break
-      halfHourSlices.push(sliceDate)
+    fromMinute = Math.max(0, fromMinute)
+    toMinute = Math.min(24 * 60, Math.max(toMinute, fromMinute))
+    for (let minute = fromMinute; minute <= toMinute && minute < 24 * 60; minute += minimumSliceMins) {
+      if (minute === 0) continue
+      pushSlice(day.clone().add(minute, 'minutes'))
     }
-
-    if (endingMins) {
-      halfHourSlices.push(end.clone().subtract(endingMins, 'minutes'))
+    for (const session of props.sessions) {
+      if (!session.start?.isValid() || !session.end?.isValid()) continue
+      if (session.start.isSame(day, 'day')) {
+        pushSlice(session.start.clone(), { hasStart: true, hasSession: true })
+      }
+      if (session.end.isSame(day, 'day') && !session.end.isSame(day)) {
+        pushSlice(session.end.clone(), { hasEnd: true })
+      }
     }
-
-    const lastSlice = halfHourSlices.pop()
-    halfHourSlices.forEach(slice => pushSlice(slice!, { hasSession }))
-    if (lastSlice) pushSlice(lastSlice)
+    for (const expanded of expandedTimes.value) {
+      if (expanded.isValid() && expanded.isSame(day, 'day')) pushSlice(expanded, { isExpanded: true })
+    }
+    day.add(1, 'day')
   }
 
-  for (const session of props.sessions) {
-    const lastSlice = slices[slices.length - 1]
-
-    if (!lastSlice) {
-      pushSlice(session.start.clone().startOf('day'))
-    } else if (session.start.isAfter(lastSlice.date, 'minutes')) {
-      fillHalfHours(lastSlice.date, session.start)
-    }
-
-    pushSlice(session.start, { hasStart: true, hasSession: true })
-    pushSlice(session.end, { hasEnd: true })
-    fillHalfHours(session.start, session.end, { hasSession: true })
-  }
-
-  for (const slice of expandedTimes.value) {
-    pushSlice(slice, { isExpanded: true })
-  }
-
-  fillHalfHours(props.start, props.end)
-
-  if (hoverEndSlice.value) pushSlice(hoverEndSlice.value, { hasEnd: true })
-
-  const sliceIsFraction = (slice?: Timeslice): boolean => {
-    if (!slice) return false
-    return slice.date.minutes() % minimumSliceMins !== 0
-  }
-
-  const sliceShouldDisplay = (slice?: Timeslice, index?: number): boolean => {
-    if (!slice || index === undefined) return false
-    if (slice.hasSession || slice.datebreak || slice.hasStart || slice.hasEnd || slice.isExpanded) return true
-    if (slice.date.hour() >= 9 && slice.date.hour() < 19) return true
-
-    const prevSlice = slices[index - 1]
-    const nextSlice = slices[index + 1]
-
-    if (sliceIsFraction(slice)) return true
-    if (
-      ((prevSlice?.hasSession || (prevSlice as any)?.hasBreak || prevSlice?.hasEnd) && sliceIsFraction(prevSlice)) ||
-      ((nextSlice?.hasSession || (nextSlice as any)?.hasBreak) && sliceIsFraction(nextSlice)) ||
-      ((!nextSlice?.hasSession || !(nextSlice as any)?.hasBreak) && (slice.hasSession || (slice as any).hasBreak) && sliceIsFraction(nextSlice))
-    ) return true
-    if ((prevSlice as any)?.hasBreak && (slice as any).hasBreak) return false
-    return false
-  }
-
-  slices.sort((a, b) => a.date.diff(b.date))
-  const compactedSlices: Timeslice[] = []
-
-  for (const [index, slice] of slices.entries()) {
-    if (sliceShouldDisplay(slice, index)) {
-      compactedSlices.push(slice)
-      continue
-    }
-
-    const prevSlice = slices[index - 1]
-    if (prevSlice && sliceShouldDisplay(prevSlice, index - 1) && !prevSlice.datebreak) {
-      prevSlice.gap = true
-    }
-  }
-
-  return compactedSlices
-})
-
-const oddTimeslices = computed<Moment[]>(() => {
-  const minimumSliceMins = props.timeDensityMinutes || 30
-  const result: Moment[] = []
-  props.sessions.forEach(session => {
-    if (session.start.minute() % minimumSliceMins !== 0) result.push(session.start)
-    if (session.end.minute() % minimumSliceMins !== 0) result.push(session.end)
-  })
-  // Remove duplicates by stringifying dates (safe as moment objects)
-  return [...new Set(result.map(m => m.format()))].map(f => moment(f))
+  slices.sort((a, b) => a.date.valueOf() - b.date.valueOf())
+  return slices
 })
 
 const visibleTimeslices = computed<Timeslice[]>(() => {
-  const minimumSliceMins = props.timeDensityMinutes || 30
-  return timeslices.value.filter(slice =>
-    slice.date.minute() % minimumSliceMins === 0 ||
-    expandedTimes.value.some(et => et.isSame(slice.date)) ||
-    oddTimeslices.value.some(ot => ot.isSame(slice.date))
-  )
+  const minimumSliceMins = timeStepMinutes()
+  return timeslices.value.map((slice, index) => {
+    const nextSlice = timeslices.value[index + 1]
+    const expandable = !!nextSlice && nextSlice.date.diff(slice.date, 'minutes') > minimumSliceMins
+    return {
+      ...slice,
+      iso: slice.date.format(),
+      label: slice.datebreak ? slice.date.format('ddd[\n]DD. MMM') : slice.date.format('LT'),
+      classes: {
+        datebreak: !!slice.datebreak,
+        gap: !!slice.gap,
+        expandable,
+      },
+      style: { 'grid-area': `${slice.name} / 1 / auto / auto` },
+      separatorStyle: { 'grid-area': `${slice.name} / 1 / auto / -1` },
+    }
+  })
 })
 
 const densityScale = computed(() => {
@@ -385,6 +393,33 @@ const densityScale = computed(() => {
   if (props.density === 'comfortable') return 1.4
   return 1
 })
+
+const rowHeightPx = computed(() => {
+  const step = timeStepMinutes()
+  return Math.round(60 * (step / 30) * densityScale.value)
+})
+
+const floorToStep = (date: Moment): Moment => {
+  const step = timeStepMinutes()
+  const dayStart = date.clone().startOf('day')
+  const minutes = date.diff(dayStart, 'minutes')
+  return dayStart.add(Math.floor(minutes / step) * step, 'minutes')
+}
+
+const gridRowSpan = (start: Moment, end: Moment): string => {
+  const slices = timeslices.value
+  const exactName = getSliceName(start)
+  const startName = slices.some((slice) => slice.name === exactName) ? exactName : getSliceName(floorToStep(start))
+  const endMs = end.valueOf()
+  for (const slice of slices) {
+    if (slice.date.valueOf() < endMs) continue
+    if (slice.name === startName) return startName
+    return `${startName} / ${slice.name}`
+  }
+  const last = slices[slices.length - 1]
+  if (last && last.name !== startName) return `${startName} / ${last.name}`
+  return startName
+}
 
 const shiftMinColWidth = computed(() => '320px')
 
@@ -405,21 +440,15 @@ const shiftTrackMap = computed(() => {
 
 const gridStyle = computed(() => {
   const scale = densityScale.value
-  const minimumSliceMins = props.timeDensityMinutes || 30
-  const baseSliceHeight = 60 * (minimumSliceMins / 30)
+  const height = rowHeightPx.value
   let rows = `[header] ${Math.round(52 * scale)}px `
+  const step = timeStepMinutes()
   rows += timeslices.value.map((slice, index) => {
+    const labelMin = slice.datebreak ? 52 : 36
     const next = timeslices.value[index + 1]
-    let height = baseSliceHeight
-    if (slice.gap) {
-      height = 100 * (minimumSliceMins / 30)
-    } else if (slice.datebreak) {
-      height = Math.max(52, baseSliceHeight)
-    } else if (next) {
-      height = Math.min(baseSliceHeight, next.date.diff(slice.date, 'minutes') * 2)
-    }
-    height = Math.round(height * scale)
-    return `[${slice.name}] minmax(${height}px, auto)`
+    const minutes = next ? next.date.diff(slice.date, 'minutes') : step
+    const sliceHeight = minutes > 0 && minutes < step ? Math.round(height * (minutes / step)) : height
+    return `[${slice.name}] minmax(${Math.max(sliceHeight, labelMin)}px, auto)`
   }).join(' ')
 
   if (props.allowOverlap && visibleRooms.value.length) {
@@ -496,6 +525,10 @@ const visibleRooms = computed(() => {
   return props.rooms.filter(room => !hiddenRooms.value.includes(room))
 })
 
+watch([visibleRooms, visibleTimeslices, gridStyle], () => {
+  cachedGrid = null
+})
+
 const visibleSessions = computed(() => {
   return props.sessions.filter(session => !hiddenRooms.value.includes(session.room))
 })
@@ -523,6 +556,7 @@ const setTimesliceRef = (el: HTMLElement | null) => {
 
 const startDragging = ({ session, event }: DragEventPayload) => {
   refreshGridOffset()
+  dragPointerY = event.clientY
   dragStart.value = {
     x: event.clientX,
     y: event.clientY,
@@ -545,7 +579,13 @@ const stopDragging = (event: PointerEvent) => {
     }
   }
 
-  if (!props.draggedSession || !hoverSlice.value || !hoverSliceLegal.value) return
+  if (!props.draggedSession) return
+  if (pointerRaf !== null) {
+    cancelAnimationFrame(pointerRaf)
+    pointerRaf = null
+  }
+  updateHoverSlice(event)
+  if (!hoverSlice.value || !hoverSliceLegal.value) return
   const start = hoverSlice.value.time
   const end = hoverSlice.value.time.clone().add(props.draggedSession.duration, 'm')
 
@@ -570,9 +610,12 @@ const stopDragging = (event: PointerEvent) => {
       room: hoverSlice.value.room,
     })
   }
+  cachedGrid = null
+  hoverSlice.value = null
 }
 
 const expandTimeslice = (slice: Timeslice) => {
+  cachedGrid = null
   const index = visibleTimeslices.value.indexOf(slice)
   if (index + 1 >= visibleTimeslices.value.length) {
     const minimumSliceMins = props.timeDensityMinutes || 30
@@ -590,54 +633,79 @@ const expandTimeslice = (slice: Timeslice) => {
   expandedTimes.value = [...new Set(expandedTimes.value.map(d => d.valueOf()))].map(v => moment(v))
 }
 
+const rememberCachedScroll = () => {
+  const parent = scrollParent.value
+  cachedScrollTop = parent?.scrollTop ?? 0
+  cachedScrollLeft = parent?.scrollLeft ?? 0
+}
+
+const syncCachedGridToScroll = () => {
+  if (!cachedGrid) return
+  const parent = scrollParent.value
+  if (!parent) {
+    cachedGrid = null
+    return
+  }
+  const dy = cachedScrollTop - parent.scrollTop
+  const dx = cachedScrollLeft - parent.scrollLeft
+  if (dx === 0 && dy === 0) return
+  for (const room of cachedGrid.rooms) {
+    room.left += dx
+    room.right += dx
+  }
+  for (const slice of cachedGrid.slices) {
+    slice.top += dy
+    slice.bottom += dy
+  }
+  cachedScrollTop = parent.scrollTop
+  cachedScrollLeft = parent.scrollLeft
+}
+
 const getTimeAndRoomFromPoint = (clientX: number, clientY: number) => {
-  // 1. Determine room index by checking which room column the pointer is horizontally within
-  const roomEls = Array.from(rootEl.value?.querySelectorAll('.grid > .room') || [])
-  let roomIndex = -1
-  for (let i = 1; i < roomEls.length; i++) {
-    const rect = roomEls[i].getBoundingClientRect()
-    if (clientX >= rect.left && clientX < rect.right) {
-      roomIndex = i - 1
-      break
-    }
-    if (clientX >= rect.right && i === roomEls.length - 1) {
-      roomIndex = i - 1
-    }
-  }
-  if (roomIndex < 0 && roomEls.length > 1) {
-    if (clientX < roomEls[1].getBoundingClientRect().left) {
-      roomIndex = 0
-    }
-  }
-  if (roomIndex < 0 || roomIndex >= visibleRooms.value.length) return null
-  const room = visibleRooms.value[roomIndex]
+  if (!rootEl.value || !grid.value || props.isUnassigning) return null
 
-  // 2. Determine timeslice by checking which row the pointer is vertically within
-  const timesliceEls = Array.from(rootEl.value?.querySelectorAll('.grid > .timeslice') || []) as HTMLElement[]
-  if (!timesliceEls.length) return null
-
-  let targetSliceEl: HTMLElement | null = null
-  for (let i = 0; i < timesliceEls.length; i++) {
-    const rect = timesliceEls[i].getBoundingClientRect()
-    const nextRect = timesliceEls[i + 1]?.getBoundingClientRect()
-    const bottom = nextRect ? nextRect.top : rect.bottom
-    if (clientY >= rect.top && clientY < bottom) {
-      targetSliceEl = timesliceEls[i]
-      break
+  if (!cachedGrid) {
+    const roomEls = rootEl.value.querySelectorAll('.grid > .room')
+    const rooms: CachedRoom[] = []
+    for (let i = 1; i < roomEls.length; i++) {
+      const rect = roomEls[i].getBoundingClientRect()
+      if (i - 1 < visibleRooms.value.length) {
+        rooms.push({
+          left: rect.left,
+          right: rect.right,
+          room: visibleRooms.value[i - 1],
+          roomIndex: i - 1,
+        })
+      }
     }
-  }
-  if (!targetSliceEl) {
-    if (clientY < timesliceEls[0].getBoundingClientRect().top) {
-      targetSliceEl = timesliceEls[0]
-    } else {
-      targetSliceEl = timesliceEls[timesliceEls.length - 1]
+    const timesliceEls = rootEl.value.querySelectorAll('.grid > .timeslice')
+    const slices: CachedSlice[] = []
+    for (let i = 0; i < timesliceEls.length; i++) {
+      const el = timesliceEls[i] as HTMLElement
+      if (!el.dataset.slice || !el.dataset.name) continue
+      const rect = el.getBoundingClientRect()
+      const nextRect = timesliceEls[i + 1]?.getBoundingClientRect()
+      slices.push({
+        top: rect.top,
+        bottom: nextRect ? nextRect.top : rect.bottom,
+        time: moment(el.dataset.slice),
+        name: el.dataset.name,
+      })
     }
+    if (!rooms.length || !slices.length) return null
+    cachedGrid = { rooms, slices }
+    rememberCachedScroll()
+  } else {
+    syncCachedGridToScroll()
   }
 
-  if (!targetSliceEl || !targetSliceEl.dataset.slice) return null
-  const time = moment(targetSliceEl.dataset.slice)
+  const room = cachedGrid.rooms.find((r) => clientX >= r.left && clientX < r.right)
+  if (!room) return null
 
-  return { time, room, roomIndex }
+  const slice = cachedGrid.slices.find((s) => clientY >= s.top && clientY < s.bottom)
+  if (!slice) return null
+
+  return { time: slice.time, name: slice.name, room: room.room, roomIndex: room.roomIndex }
 }
 
 let lastPlacementTime = 0
@@ -645,7 +713,7 @@ let lastPlacementTime = 0
 const tryPlaceSessionAtPoint = (clientX: number, clientY: number): boolean => {
   if (!props.draggedSession) return false
   const now = Date.now()
-  if (now - lastPlacementTime < 300) return false // prevent duplicate triggers
+  if (now - lastPlacementTime < 100) return false // prevent duplicate triggers
   lastPlacementTime = now
 
   const slot = getTimeAndRoomFromPoint(clientX, clientY)
@@ -674,6 +742,7 @@ const tryPlaceSessionAtPoint = (clientX: number, clientY: number): boolean => {
       room: slot.room,
     })
   }
+  hoverSlice.value = null
   return true
 }
 
@@ -686,54 +755,81 @@ const onGridClick = (event: MouseEvent) => {
   tryPlaceSessionAtPoint(event.clientX, event.clientY)
 }
 
-const updateHoverSlice = (e: PointerEvent) => {
-  if (!props.draggedSession) {
-    hoverSlice.value = null
+const layoutPreview = (slot: HoverSlice | null) => {
+  if (!slot?.time) {
+    previewStyle.value = {}
     return
   }
+  const end = slot.time.clone().add(slot.duration, 'minutes')
+  let col = slot.roomIndex + 2
+  if (props.allowOverlap) {
+    const layout = shiftColumnLayout.value.get(slot.room.id)
+    if (layout) col = layout.colStart
+  }
+  previewStyle.value = {
+    'grid-row': gridRowSpan(slot.time, end),
+    'grid-column': `${col} / ${col + 1}`,
+  }
+}
 
-  if (dragStart.value) {
-    dragStart.value = { ...dragStart.value, y: e.clientY }
+const updateHoverSlice = (e: PointerEvent) => {
+  dragPointerY = e.clientY
+  if (!props.draggedSession || props.isUnassigning) {
+    if (hoverSlice.value) hoverSlice.value = null
+    return
   }
 
   if (!dragScrollTimer.value) {
     dragScrollTimer.value = setInterval(dragOnScroll, 100)
   }
 
+  const cacheWasCold = !cachedGrid
   const slot = getTimeAndRoomFromPoint(e.clientX, e.clientY)
-  if (!slot) return
-
-  hoverSlice.value = {
-    time: slot.time,
-    roomIndex: slot.roomIndex,
-    room: slot.room,
-    duration: props.draggedSession.duration,
+  if (!slot) {
+    if (hoverSlice.value) hoverSlice.value = null
+    return
   }
+
+  const sameCell = !!hoverSlice.value
+    && hoverSlice.value.room?.id === slot.room.id
+    && hoverSlice.value.time.valueOf() === slot.time.valueOf()
+  if (sameCell && !cacheWasCold) return
+
+  if (!sameCell) {
+    hoverSlice.value = {
+      time: slot.time,
+      name: slot.name,
+      roomIndex: slot.roomIndex,
+      room: slot.room,
+      duration: props.draggedSession.duration,
+    }
+  }
+  layoutPreview(hoverSlice.value)
 }
 
-// Document-level handler: catches touch pointermove even when captured by a session element
+let pointerRaf: number | null = null
+let lastPointerEvent: PointerEvent | null = null
+const scheduleHoverUpdate = () => {
+  if (!props.draggedSession || !lastPointerEvent || pointerRaf !== null) return
+  pointerRaf = requestAnimationFrame(() => {
+    pointerRaf = null
+    if (props.draggedSession && lastPointerEvent) updateHoverSlice(lastPointerEvent)
+  })
+}
 const onDocPointerMove = (e: PointerEvent) => {
   if (props.draggedSession && e.isPrimary) {
-    updateHoverSlice(e)
+    lastPointerEvent = e
+    scheduleHoverUpdate()
   }
 }
 
-const getHoverSliceStyle = (): Record<string, string> | undefined => {
-  if (!hoverSlice.value || !props.draggedSession) return undefined
-  let col = hoverSlice.value.roomIndex + 2
-  if (props.allowOverlap && hoverSlice.value.room) {
-    const layout = shiftColumnLayout.value.get(hoverSlice.value.room.id)
-    if (layout) col = layout.colStart
-  }
-  return {
-    'grid-area': `${getSliceName(hoverSlice.value.time)} / ${col} / ${getSliceName(
-      hoverSlice.value.time.clone().add(hoverSlice.value.duration, 'm')
-    )}`,
-  }
+const warningsFor = (session: SessionDatum): { message: string }[] => {
+  if (!session.code) return NO_WARNINGS
+  return props.warnings[session.code] ?? NO_WARNINGS
 }
 
-const getSessionWarnings = (session: SessionDatum): { message: string }[] => {
-  return session.code ? (props.warnings[session.code] || []) : []
+const availabilityKey = (availability: Availability): string => {
+  return `${availability.room.id}-${availability.start.valueOf()}-${availability.end.valueOf()}`
 }
 
 const getOverlapGroup = (session: SessionDatum | Availability): { index: number; total: number } => {
@@ -751,8 +847,11 @@ const getOverlapGroup = (session: SessionDatum | Availability): { index: number;
 }
 
 const getSessionStyle = (session: SessionDatum | Availability): Record<string, string | number> => {
-  if (!session.room || !session.start) return {}
+  if (!session.room || !session.start || !session.end) return {}
   const roomIndex = visibleRooms.value.indexOf(session.room)
+  const style: Record<string, string | number> = {
+    'grid-row': gridRowSpan(session.start, session.end),
+  }
 
   if (props.allowOverlap) {
     const { total } = getOverlapGroup(session)
@@ -762,37 +861,30 @@ const getSessionStyle = (session: SessionDatum | Availability): Record<string, s
         const track = shiftTrackMap.value.get((session as any).id)
         if (track != null) {
           const subCol = roomLayout.colStart + track
-          return {
-            'grid-row': `${getSliceName(session.start)} / ${getSliceName(session.end)}`,
-            'grid-column': `${subCol} / ${subCol + 1}`,
-          }
+          style['grid-column'] = `${subCol} / ${subCol + 1}`
+          return style
         }
       }
     }
     const layout = shiftColumnLayout.value.get(session.room.id)
     if (layout) {
-      if (!('id' in session)) {
-        return {
-          'grid-row': `${getSliceName(session.start)} / ${getSliceName(session.end)}`,
-          'grid-column': `${layout.colStart} / ${layout.colStart + layout.colSpan}`,
-        }
-      }
-      return {
-        'grid-row': `${getSliceName(session.start)} / ${getSliceName(session.end)}`,
-        'grid-column': layout.colStart.toString(),
-      }
+      style['grid-column'] = !('id' in session)
+        ? `${layout.colStart} / ${layout.colStart + layout.colSpan}`
+        : layout.colStart.toString()
+      return style
     }
-    const col = roomIndex > -1 ? roomIndex + 2 : 1
-    return {
-      'grid-row': `${getSliceName(session.start)} / ${getSliceName(session.end)}`,
-      'grid-column': col.toString(),
+    if (roomIndex > -1) {
+      const col = roomIndex + 2
+      style['grid-column'] = `${col} / ${col + 1}`
     }
+    return style
   }
 
-  return {
-    'grid-row': `${getSliceName(session.start)} / ${getSliceName(session.end)}`,
-    'grid-column': roomIndex > -1 ? (roomIndex + 2).toString() : '',
+  if (roomIndex > -1) {
+    const col = roomIndex + 2
+    style['grid-column'] = `${col} / ${col + 1}`
   }
+  return style
 }
 
 
@@ -808,52 +900,62 @@ const getRoomHeaderStyle = (room: { id: number | string }, fallbackIndex: number
   }
 }
 
-const getSliceClasses = (slice: Timeslice): Record<string, boolean> => ({
-  datebreak: slice.datebreak || false,
-  gap: slice.gap || false,
-  expandable: isSliceExpandable(slice),
+const sessionStyles = computed(() => {
+  const map = new Map<number | string, Record<string, string | number>>()
+  for (const session of visibleSessions.value) {
+    map.set(session.id, getSessionStyle(session))
+  }
+  return map
 })
 
-const isSliceExpandable = (slice: Timeslice): boolean => {
-  const index = visibleTimeslices.value.indexOf(slice)
-  if (index + 1 === visibleTimeslices.value.length) return false
-  const nextSlice = visibleTimeslices.value[index + 1]
-  return nextSlice.date.diff(slice.date, 'minutes') > 5
-}
+const availabilityStyles = computed(() => {
+  const map = new Map<string, Record<string, string | number>>()
+  for (const availability of visibleAvailabilities.value) {
+    map.set(availabilityKey(availability), getSessionStyle(availability))
+  }
+  return map
+})
 
-const getSliceStyle = (slice: Timeslice): Record<string, string> => {
-  return { 'grid-area': `${slice.name} / 1 / auto / auto` }
-}
+const roomHeaderStyles = computed(() => {
+  const map = new Map<string, Record<string, string>>()
+  visibleRooms.value.forEach((room, index) => {
+    map.set(String(room.id), getRoomHeaderStyle(room, index))
+  })
+  return map
+})
 
-const getSliceLabel = (slice: Timeslice): string => {
-  if (slice.datebreak) return slice.date.format('ddd[\n]DD. MMM')
-  return slice.date.format('LT')
-}
+let isScrollDayUpdate = false
 
-const changeDay = (day: Moment | null) => {
-  if (!day || scrolledDay.value?.isSame(day)) return
-
-  const el = timesliceRefs.value.find(el => el.dataset?.slice === day.format())
-  if (!el) return
+const getStickyHeaderClearance = (): number => {
   const roomEl = rootEl.value?.querySelector('.room')
   const controlsEl = rootEl.value?.parentElement?.querySelector('.schedule-controls')
-  const headerHeight = (roomEl?.getBoundingClientRect().height || 52) + (controlsEl?.getBoundingClientRect().height || 48)
-  const offset = Math.max(0, el.offsetTop - headerHeight)
-  scrollTo(offset)
-  scrolledDay.value = day
-  emit('changeDay', day)
+  return (roomEl?.getBoundingClientRect().height || 52) + (controlsEl?.getBoundingClientRect().height || 48)
 }
 
-const scrollTo = (offset: number) => {
-  if (scrollParent.value) {
-    scrollParent.value.scroll({ top: offset, behavior: 'smooth' })
-  }
+const scrollToDayStart = (day: Moment | null) => {
+  if (!day) return
+  const dayStr = day.format('YYYY-MM-DD')
+  const el = timesliceRefs.value.find((el) => {
+    if (!el.dataset?.slice || !el.classList.contains('datebreak')) return false
+    return moment.parseZone(el.dataset.slice).format('YYYY-MM-DD') === dayStr
+  })
+  if (!el || !scrollParent.value) return
+  const clearance = getStickyHeaderClearance()
+  const rect = el.getBoundingClientRect()
+  const parentRect = scrollParent.value.getBoundingClientRect()
+  const delta = rect.top - parentRect.top - clearance
+  scrollParent.value.scrollTop += delta
+  scrolledDay.value = day
+}
+
+const onScroll = () => {
+  syncCachedGridToScroll()
+  scheduleHoverUpdate()
 }
 
 const scrollBy = (offset: number) => {
-  if (scrollParent.value) {
-    scrollParent.value.scrollBy({ top: offset, behavior: 'smooth' })
-  }
+  if (!scrollParent.value || offset === 0) return
+  scrollParent.value.scrollTop += offset
 }
 
 const dragOnScroll = () => {
@@ -865,10 +967,9 @@ const dragOnScroll = () => {
     return
   }
 
-  const event = dragStart.value?.session && dragStart.value.session ? dragStart.value.session : null
   if (!dragStart.value) return
 
-  const yPos = dragStart.value.y - staticOffsetTop.value
+  const yPos = dragPointerY - staticOffsetTop.value
   const parentHeight = scrollParent.value?.clientHeight ?? 0
 
   if (yPos < 160) {
@@ -879,22 +980,31 @@ const dragOnScroll = () => {
 }
 
 const onIntersect = (entries: IntersectionObserverEntry[]) => {
-  // Find the last visible entry by time, which is intersecting
-  const entry = entries
+  const intersecting = entries.filter((entry) => entry.isIntersecting)
+  if (!intersecting.length) return
+  const entry = intersecting
     .slice()
-    .sort((a, b) => {
-      const aDate = (a.target as HTMLElement).dataset.slice
-      const bDate = (b.target as HTMLElement).dataset.slice
-      return new Date(bDate!).getTime() - new Date(aDate!).getTime()
-    })
-    .find((e) => e.isIntersecting)
+    .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0]
   if (!entry) return
-  const day = moment.parseZone((entry.target as HTMLElement).dataset.slice!).startOf('day')
+  const dayStr = (entry.target as HTMLElement).dataset?.slice
+  if (!dayStr) return
+  const day = moment.parseZone(dayStr).startOf('day')
+  if (scrolledDay.value && day.isSame(scrolledDay.value, 'day')) return
   scrolledDay.value = day
+  // Only update the active day indicator — don't trigger a scroll jump.
+  // scrollToDayStart is only called from toolbar clicks.
+  isScrollDayUpdate = true
   emit('changeDay', day)
 }
 
-watch(() => props.currentDay, (day) => changeDay(day))
+watch(() => props.currentDay, (day) => {
+  // Only scroll when triggered by toolbar click, not by scroll-based observer
+  if (isScrollDayUpdate) {
+    isScrollDayUpdate = false
+    return
+  }
+  scrollToDayStart(day)
+})
 
 onMounted(async () => {
   await nextTick()
@@ -905,10 +1015,11 @@ onMounted(async () => {
   if (layoutRoot instanceof HTMLElement && layoutRoot !== rootEl.value) {
     observeElementResize(layoutRoot)
   }
-  if (typeof ResizeObserver === 'undefined') {
-    windowResizeListener = scheduleRefreshGridOffset
-    window.addEventListener('resize', windowResizeListener)
+  windowResizeListener = () => {
+    cachedGrid = null
+    scheduleRefreshGridOffset()
   }
+  window.addEventListener('resize', windowResizeListener)
 
   // Listen on document level so touch drags (where pointer is captured elsewhere) work
   document.addEventListener('pointermove', onDocPointerMove)
@@ -922,11 +1033,18 @@ onMounted(async () => {
     if (!el.dataset?.slice || !el.classList.contains('datebreak')) return
     observer?.observe(el)
   })
+  scrollParent.value?.addEventListener('scroll', onScroll, { passive: true })
 })
 
 onUnmounted(() => {
   timesliceRefs.value = []
   document.removeEventListener('pointermove', onDocPointerMove)
+  scrollParent.value?.removeEventListener('scroll', onScroll)
+  if (pointerRaf !== null) {
+    cancelAnimationFrame(pointerRaf)
+    pointerRaf = null
+  }
+  cachedGrid = null
   if (gridOffsetFrame !== null) {
     cancelAnimationFrame(gridOffsetFrame)
     gridOffsetFrame = null
@@ -951,22 +1069,48 @@ onUnmounted(() => {
 
 <style lang="stylus">
 .c-grid-schedule
+	position: relative
 	flex: auto
-	min-height: calc(100% - 36px)
+	min-height: auto
 	display: flex
 	flex-direction: column
 	.grid
 		display: grid
-		grid-template-columns: 78px repeat(var(--total-rooms), 1fr) auto
+		grid-template-columns: 78px repeat(var(--total-rooms), minmax(300px, 1fr)) auto
 		@media (max-width: 767px)
 			grid-template-columns: 78px repeat(var(--total-rooms), minmax(260px, 1fr)) auto
 		position: relative
 		min-width: min-content
-		min-height: 100%
+		min-height: auto
+		> .placing-preview-slot
+			position: absolute
+			top: 8px
+			right: 8px
+			bottom: 8px
+			left: 8px
+			z-index: 30
+			margin: 0
+			min-width: 0
+			min-height: 0
+			pointer-events: none
+			.c-linear-schedule-session
+				width: 100%
+				height: 100%
+				margin: 0
+				min-width: 0
+				min-height: 0
+				opacity: 0.88
+				pointer-events: none
+				box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18), 0 2px 6px rgba(0, 0, 0, 0.08)
+				border-radius: 6px
 		&.illegal-hover
 			cursor: not-allowed
 			.c-linear-schedule-session
 				cursor: not-allowed
+		&.is-dragging
+			.c-linear-schedule-session
+				transition: none
+				pointer-events: none
 		> .room
 			position: sticky
 			top: calc(36px)
@@ -978,9 +1122,11 @@ onUnmounted(() => {
 			background-color: $clr-white
 			border-bottom: 1px solid $clr-dividers-light
 			z-index: 40
-			min-width: 0
+			min-width: 300px
 			box-sizing: border-box
 			padding: 6px 10px
+			@media (max-width: 767px)
+				min-width: 260px
 			&:first-child
 				left: 0
 				top: calc(36px)
@@ -1009,21 +1155,32 @@ onUnmounted(() => {
 					background-color: $clr-grey-200
 
 		.c-linear-schedule-session
+			min-width: 0
 			z-index: 10
 			transition: padding 0.2s ease, font-size 0.2s ease
+			&.short-session
+				align-self: start
+	&.fine-steps
+		.timeslice
+			padding: 4px 4px 0 4px
+			font-size: 11px
+			line-height: 1.15
 	.timeslice
 		color: $clr-secondary-text-light
 		padding: 8px 10px 0 10px
+		overflow: hidden
 		white-space: nowrap
 		position: sticky
 		left: 0
 		width: 78px
 		min-width: 78px
+		max-width: 78px
 		box-sizing: border-box
 		text-align: center
 		background-color: $clr-grey-50
 		border-top: 1px solid $clr-dividers-light
 		z-index: 25
+		contain: paint
 		transition: padding 0.2s ease, font-size 0.2s ease
 		.expand
 			display: none
@@ -1073,8 +1230,14 @@ onUnmounted(() => {
 				.title
 					font-size: 13px
 					margin-bottom: 2px
+				.session-type
+					font-size: 10px
+					margin-bottom: 2px
 				.speakers
 					font-size: 11px
+				.bottom-info
+					.track
+						font-size: 10px
 		.grid > .room
 			font-size: 14px
 			padding: 4px
@@ -1104,23 +1267,29 @@ onUnmounted(() => {
 				padding: 12px
 				.title
 					font-size: 18px
-					margin-bottom: 6px
+					margin-bottom: 4px
+				.session-type
+					font-size: 12px
+					margin-bottom: 4px
 				.speakers
 					font-size: 14px
+				.bottom-info
+					.track
+						font-size: 13px
 		.grid > .room
 			font-size: 20px
 			padding: 12px
 
-	.timeseparator
+	.grid > .timeseparator
 		height: 1px
 		background-color: $clr-dividers-light
-		position: absolute
-		// transform: translate(-16px, -8px)
-		width: 100%
+		position: relative
+		z-index: 0
+		pointer-events: none
+		align-self: start
 		&.datebreak
 			height: 3px
-.bunt-scrollbar-rail-wrapper-x, .bunt-scrollbar-rail-wrapper-y
-	z-index: 30
+
 .availability
 	background-color: white
 	pointer-events: none

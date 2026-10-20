@@ -118,6 +118,23 @@ table.table-sticky thead {
   box-shadow: 0 2px var(--color-border);
 }
 
+/* Same colours as the Speakers list sort links (#6487); only the colour changes, so nothing shifts. */
+table thead .sort-link {
+  color: var(--color-text-muted);
+}
+
+table thead .sort-link:hover,
+table thead .sort-link:focus,
+table thead .sort-link.sort-active {
+  color: var(--color-primary);
+}
+
+table thead .sort-link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+  border-radius: 2px;
+}
+
 table .action-column {
   display: flex;
   flex-wrap: nowrap;
@@ -246,6 +263,12 @@ aside.sidebar {
   margin-bottom: 0;
   overflow-x: hidden;
   overflow-y: auto;
+
+  /* Submenus open and close instantly, like the video sidebar. */
+  .collapse,
+  .collapse.show {
+    transition: none;
+  }
   
   &.sidebar-uncollapsed,
   &:focus-within {
@@ -1118,9 +1141,10 @@ table .color-square {
 
 .track-badge {
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.3em;
-  white-space: nowrap;
+  max-width: 30ch;
+  overflow-wrap: anywhere;
 }
 
 .track-badge::before {
@@ -1128,6 +1152,7 @@ table .color-square {
   display: inline-block;
   width: 0.65em;
   height: 0.65em;
+  margin-top: calc((1lh - 0.65em) / 2);
   border-radius: 50%;
   background-color: var(--color-border);
   flex-shrink: 0;
@@ -2541,7 +2566,7 @@ h2 .user-name-display img {
 
   #page-content:has(.pretalx-schedule) {
     box-sizing: border-box;
-    padding: 6px 10px 0 10px;
+    padding: 6px 0 0 16px;
     height: calc(100vh - var(--navbar-height, 50px));
     min-height: calc(100vh - var(--navbar-height, 50px));
     max-height: calc(100vh - var(--navbar-height, 50px));
@@ -2551,19 +2576,116 @@ h2 .user-name-display img {
     justify-content: flex-start;
   }
 
+  html[dir="rtl"] #page-content:has(.pretalx-schedule),
+  html.rtl #page-content:has(.pretalx-schedule) {
+    padding: 6px 16px 0 0;
+  }
+
   #page-content:has(.pretalx-schedule) > main {
     position: relative;
     flex: 1;
     min-height: 0;
     display: flex;
     flex-direction: column;
+    overflow: visible;
+  }
+
+  #page-content:has(.pretalx-schedule) > main > .alert {
+    flex-shrink: 0;
+    margin: 0 12px 8px 0;
+    padding: 8px 14px;
     overflow: hidden;
+    min-height: 40px;
+    box-sizing: border-box;
+  }
+
+  #page-content:has(.pretalx-schedule) > main > .alert::before {
+    margin: -8px 14px -8px -14px;
+    min-width: 44px;
+    font-size: 16px;
+    align-self: stretch;
+  }
+
+  html[dir="rtl"] #page-content:has(.pretalx-schedule) > main > .alert,
+  html.rtl #page-content:has(.pretalx-schedule) > main > .alert {
+    margin: 0 0 8px 12px;
+  }
+
+  html[dir="rtl"] #page-content:has(.pretalx-schedule) > main > .alert::before,
+  html.rtl #page-content:has(.pretalx-schedule) > main > .alert::before {
+    margin: -8px -14px -8px 14px;
+  }
+
+  #page-content:has(.pretalx-schedule) .schedule-editor-container {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  #page-content:has(.pretalx-schedule) .schedule-editor-container:fullscreen,
+  #page-content:has(.pretalx-schedule) .schedule-editor-container.is-fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
+    margin: 0;
+    padding: 10px 0 14px 16px;
+    background: #ffffff;
+    z-index: 999999;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+  }
+
+  html[dir="rtl"] #page-content:has(.pretalx-schedule) .schedule-editor-container:fullscreen,
+  html.rtl #page-content:has(.pretalx-schedule) .schedule-editor-container:fullscreen,
+  html[dir="rtl"] #page-content:has(.pretalx-schedule) .schedule-editor-container.is-fullscreen,
+  html.rtl #page-content:has(.pretalx-schedule) .schedule-editor-container.is-fullscreen {
+    padding: 10px 16px 14px 0;
+  }
+
+  #page-content:has(.pretalx-schedule) .schedule-editor-container:fullscreen .schedule-header,
+  #page-content:has(.pretalx-schedule) .schedule-editor-container.is-fullscreen .schedule-header {
+    top: 10px;
+    right: 12px;
+  }
+
+  #page-content:has(.pretalx-schedule) .schedule-editor-container:fullscreen .schedule-header #schedule-release,
+  #page-content:has(.pretalx-schedule) .schedule-editor-container.is-fullscreen .schedule-header #schedule-release,
+  #page-content:has(.pretalx-schedule) .schedule-editor-container:fullscreen .schedule-header details.dropdown,
+  #page-content:has(.pretalx-schedule) .schedule-editor-container.is-fullscreen .schedule-header details.dropdown,
+  #page-content:has(.pretalx-schedule) .schedule-editor-container:fullscreen .schedule-header form,
+  #page-content:has(.pretalx-schedule) .schedule-editor-container.is-fullscreen .schedule-header form {
+    display: none;
+  }
+
+  html[dir="rtl"] #page-content:has(.pretalx-schedule) .schedule-editor-container:fullscreen .schedule-header,
+  html.rtl #page-content:has(.pretalx-schedule) .schedule-editor-container:fullscreen .schedule-header,
+  html[dir="rtl"] #page-content:has(.pretalx-schedule) .schedule-editor-container.is-fullscreen .schedule-header,
+  html.rtl #page-content:has(.pretalx-schedule) .schedule-editor-container.is-fullscreen .schedule-header {
+    left: 12px;
+    right: auto;
+  }
+
+  #page-content:has(.pretalx-schedule) .schedule-editor-container:fullscreen .pretalx-schedule,
+  #page-content:has(.pretalx-schedule) .schedule-editor-container.is-fullscreen .pretalx-schedule {
+    flex: 1;
+    height: 100%;
+    min-height: 0;
   }
 
   #page-content:has(.pretalx-schedule) .schedule-header {
     position: absolute;
     top: 0;
-    right: 10px;
+    right: 12px;
     z-index: 60;
     margin: 0;
     height: 36px;
@@ -2578,7 +2700,7 @@ h2 .user-name-display img {
 
   html[dir="rtl"] #page-content:has(.pretalx-schedule) .schedule-header,
   html.rtl #page-content:has(.pretalx-schedule) .schedule-header {
-    left: 10px;
+    left: 12px;
     right: auto;
   }
 
@@ -2587,7 +2709,7 @@ h2 .user-name-display img {
     min-height: 0;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: visible;
   }
 }
 
@@ -2608,6 +2730,17 @@ h2 .user-name-display img {
     overflow: visible;
   }
 
+  #page-content:has(.pretalx-schedule) > main > .alert {
+    margin: 0 0 8px 0;
+  }
+
+  #page-content:has(.pretalx-schedule) .schedule-editor-container {
+    position: static;
+    flex: none;
+    height: auto;
+    overflow: visible;
+  }
+
   #page-content:has(.pretalx-schedule) .schedule-header {
     position: static;
     margin: 4px 0 8px 0;
@@ -2622,6 +2755,28 @@ h2 .user-name-display img {
   html[dir="rtl"] #page-content:has(.pretalx-schedule) .schedule-header,
   html.rtl #page-content:has(.pretalx-schedule) .schedule-header {
     justify-content: flex-start;
+  }
+
+  #page-content:has(.pretalx-schedule) #schedule-action-wrapper {
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;
+    justify-content: flex-end;
+    white-space: normal;
+  }
+
+  html[dir="rtl"] #page-content:has(.pretalx-schedule) #schedule-action-wrapper,
+  html.rtl #page-content:has(.pretalx-schedule) #schedule-action-wrapper {
+    justify-content: flex-start;
+  }
+
+  #page-content:has(.pretalx-schedule) #schedule-action-wrapper > * {
+    margin-left: 0;
+  }
+
+  html[dir="rtl"] #page-content:has(.pretalx-schedule) #schedule-action-wrapper > *,
+  html.rtl #page-content:has(.pretalx-schedule) #schedule-action-wrapper > * {
+    margin-right: 0;
   }
 
   #page-content:has(.pretalx-schedule) #app {
@@ -3584,6 +3739,16 @@ a.btn-speaker-not-arrived {
 
 .speaker-list-table td {
   vertical-align: middle;
+}
+
+table thead .sort-link {
+  color: var(--color-text-muted);
+}
+
+table thead .sort-link:hover,
+table thead .sort-link:focus,
+table thead .sort-link.sort-active {
+  color: var(--color-primary);
 }
 
 .speaker-list-table .speaker-sessions-cell {

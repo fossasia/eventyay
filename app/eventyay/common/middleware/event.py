@@ -70,6 +70,31 @@ def get_login_redirect(request):
     return redirect(build_login_url_with_next(next_url))
 
 
+# Speaker self-service stays available after acceptance mail, before talk pages go live.
+CFP_URLS_WITHOUT_TALKS_PUBLISHED = frozenset(
+    {
+        'event.logout',
+        'event.auth',
+        'event.reset',
+        'event.recover',
+        'event.new_recover',
+        'event.login',
+        'invitation.view',
+        'event.user.view',
+        'event.user.submissions',
+        'event.user.mails',
+        'event.user.submission.edit',
+        'event.user.submission.withdraw',
+        'event.user.submission.confirm',
+        'event.user.submission.discard',
+        'event.user.submission.invite',
+        'event.user.submission.invite.resend',
+        'event.user.submission.invite.revoke',
+        'locale.set',
+    }
+)
+
+
 class EventPermissionMiddleware:
     UNAUTHENTICATED_ORGA_URLS = (
         'invitation.view',
@@ -150,7 +175,10 @@ class EventPermissionMiddleware:
             return response
         if event and not event.user_can_view_talks(request.user, request=request):
             if 'agenda' in url.namespaces or 'cfp' in url.namespaces:
-                if url.url_name != 'event.css':
+                speaker_cfp_page = (
+                    'cfp' in url.namespaces and url.url_name in CFP_URLS_WITHOUT_TALKS_PUBLISHED
+                )
+                if url.url_name != 'event.css' and not speaker_cfp_page:
                     with scope(event=event):
                         if not _agenda_featured_allowed_without_talks_published(url, request, event):
                             raise Http404()
