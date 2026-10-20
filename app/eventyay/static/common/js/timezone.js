@@ -51,7 +51,16 @@ const convertDateTimes = () => {
                 minute: '2-digit',
                 hour12: false,
             });
-            cell.textContent = formatted;
+            // Replace only the server-rendered date text: the cell may also hold the
+            // time zone indicator or a sales channel icon, which must stay.
+            const dateText = [...cell.childNodes].find(
+                (node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim()
+            );
+            if (dateText) {
+                dateText.textContent = dateText.textContent.replace(dateText.textContent.trim(), formatted);
+            } else {
+                cell.prepend(formatted);
+            }
         } catch (e) {
             console.error("timezone.js failed to convert datetime:", e);
             // Swallow parsing exceptions so server-rendered content remains intact.
