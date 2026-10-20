@@ -118,7 +118,7 @@ def serialize_voucher(v):
 def event_list(request):
     query = request.GET.get('query', '')
     try:
-        page = int(request.GET.get('page', '1'))
+        page = max(1, int(request.GET.get('page', '1')))
     except ValueError:
         page = 1
 
@@ -161,7 +161,7 @@ def nav_context_list(request):
     organizer = request.GET.get('organizer', None)
 
     try:
-        page = int(request.GET.get('page', '1'))
+        page = max(1, int(request.GET.get('page', '1')))
     except ValueError:
         page = 1
 
@@ -270,7 +270,7 @@ def nav_context_list(request):
 def subevent_select2(request, **kwargs):
     query = request.GET.get('query', '')
     try:
-        page = int(request.GET.get('page', '1'))
+        page = max(1, int(request.GET.get('page', '1')))
     except ValueError:
         page = 1
 
@@ -315,7 +315,7 @@ def subevent_select2(request, **kwargs):
 def quotas_select2(request, **kwargs):
     query = request.GET.get('query', '')
     try:
-        page = int(request.GET.get('page', '1'))
+        page = max(1, int(request.GET.get('page', '1')))
     except ValueError:
         page = 1
 
@@ -351,7 +351,7 @@ def quotas_select2(request, **kwargs):
 def products_select2(request, **kwargs):
     query = request.GET.get('query', '')
     try:
-        page = int(request.GET.get('page', '1'))
+        page = max(1, int(request.GET.get('page', '1')))
     except ValueError:
         page = 1
 
@@ -377,7 +377,7 @@ def products_select2(request, **kwargs):
 def variations_select2(request, **kwargs):
     query = request.GET.get('query', '')
     try:
-        page = int(request.GET.get('page', '1'))
+        page = max(1, int(request.GET.get('page', '1')))
     except ValueError:
         page = 1
 
@@ -411,7 +411,7 @@ def variations_select2(request, **kwargs):
 def category_select2(request, **kwargs):
     query = request.GET.get('query', '')
     try:
-        page = int(request.GET.get('page', '1'))
+        page = max(1, int(request.GET.get('page', '1')))
     except ValueError:
         page = 1
 
@@ -437,7 +437,7 @@ def category_select2(request, **kwargs):
 def checkinlist_select2(request, **kwargs):
     query = request.GET.get('query', '')
     try:
-        page = int(request.GET.get('page', '1'))
+        page = max(1, int(request.GET.get('page', '1')))
     except ValueError:
         page = 1
 
@@ -477,7 +477,7 @@ def checkinlist_select2(request, **kwargs):
 def productvarquota_select2(request, **kwargs):
     query = request.GET.get('query', '')
     try:
-        page = int(request.GET.get('page', '1'))
+        page = max(1, int(request.GET.get('page', '1')))
     except ValueError:
         page = 1
 
@@ -570,7 +570,7 @@ def productvarquota_select2(request, **kwargs):
 def organizer_select2(request):
     term = request.GET.get('query', '')
     try:
-        page = int(request.GET.get('page', '1'))
+        page = max(1, int(request.GET.get('page', '1')))
     except ValueError:
         page = 1
     qs = Organizer.objects.all()
@@ -602,7 +602,7 @@ def users_select2(request):
     if len(term) < 3:
         return JsonResponse({'results': [], 'pagination': {'more': False}})
     try:
-        page = int(request.GET.get('page', '1'))
+        page = max(1, int(request.GET.get('page', '1')))
     except ValueError:
         page = 1
     qs = User.objects.filter(Q(email__icontains=term) | Q(fullname__icontains=term)).order_by('email')
