@@ -5,7 +5,9 @@
 		h1 {{ $t('Settings') }}
 	scrollbars(y)
 		bunt-progress-circular(size="huge", v-if="!loaded && !error")
-		.error(v-if="error") {{ $t('We could not fetch the current configuration.') }}
+		.config-error(v-if="error && !loaded")
+			.error-message {{ $t('We could not fetch the current configuration.') }}
+			bunt-button.btn-retry(@click="retryFetch") {{ $t('Retry') }}
 		.ui-form-body(v-if="loaded")
 			.config-tabs(role="tablist")
 				button.tab-btn(type="button", role="tab", v-if="hasGeneral", :class="{active: activeTab === 'general'}", @click="activeTab = 'general'") {{ $t('General & Live Features') }}
@@ -97,11 +99,20 @@ import { required, integer, isJson, url } from 'lib/validators'
 const store = useStore()
 const loaded = ref(false)
 
+const videoProviders = computed(() => store.state.world?.video_providers || window.eventyay?.video_providers || {})
+
+const isProviderEnabledForOrganizer = (provId) => {
+	const prov = videoProviders.value[provId]
+	if (prov === undefined) return true
+	if (prov === false) return false
+	return prov.organizer !== false
+}
+
 const hasGeneral = computed(() => Boolean(store.getters['hasPermission']?.('world:update') || store.getters['isAdminMode']))
-const hasBBB = computed(() => Boolean(store.getters['hasPermission']?.('world:rooms.create.bbb') || store.getters['hasPermission']?.('world:rooms.create.stage') || store.getters['isAdminMode']))
-const hasZoom = computed(() => Boolean(store.getters['hasPermission']?.('world:rooms.create.bbb') || store.getters['hasPermission']?.('world:rooms.create.stage') || store.getters['isAdminMode']))
-const hasJitsi = computed(() => Boolean(store.getters['hasPermission']?.('world:rooms.create.jitsi') || store.getters['hasPermission']?.('world:rooms.create.stage') || store.getters['isAdminMode']))
-const hasJanus = computed(() => Boolean(store.getters['hasPermission']?.('world:rooms.create.chat') || store.getters['hasPermission']?.('world:rooms.create.stage') || store.getters['isAdminMode']))
+const hasBBB = computed(() => Boolean((store.getters['hasPermission']?.('world:rooms.create.bbb') || store.getters['hasPermission']?.('world:rooms.create.stage') || store.getters['isAdminMode']) && isProviderEnabledForOrganizer('bbb')))
+const hasZoom = computed(() => Boolean((store.getters['hasPermission']?.('world:rooms.create.bbb') || store.getters['hasPermission']?.('world:rooms.create.stage') || store.getters['isAdminMode']) && isProviderEnabledForOrganizer('zoom')))
+const hasJitsi = computed(() => Boolean((store.getters['hasPermission']?.('world:rooms.create.jitsi') || store.getters['hasPermission']?.('world:rooms.create.stage') || store.getters['isAdminMode']) && isProviderEnabledForOrganizer('jitsi')))
+const hasJanus = computed(() => Boolean((store.getters['hasPermission']?.('world:rooms.create.chat') || store.getters['hasPermission']?.('world:rooms.create.stage') || store.getters['isAdminMode']) && isProviderEnabledForOrganizer('janus')))
 const hasStage = computed(() => Boolean(store.getters['hasPermission']?.('world:rooms.create.stage') || store.getters['isAdminMode']))
 const hasInterpretation = computed(() => Boolean(window.eventyay?.plugins?.some(p => p.includes('interpretation'))))
 
@@ -280,6 +291,11 @@ async function fetchConfig() {
 	}
 }
 
+function retryFetch() {
+	error.value = null
+	fetchConfig()
+}
+
 onMounted(() => {
 	if (store.state.connected) {
 		fetchConfig()
@@ -391,6 +407,17 @@ async function save() {
 	> .c-scrollbars
 		flex: auto
 		min-height: 0
+	.config-error
+		display: flex
+		flex-direction: column
+		align-items: center
+		justify-content: center
+		padding: 40px 20px
+		gap: 16px
+		.error-message
+			color: $clr-danger
+			font-size: 16px
+			font-weight: 500
 	.config-tabs
 		display: flex
 		border-bottom: 1px solid #e2e8f0
