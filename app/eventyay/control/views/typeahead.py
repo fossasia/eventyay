@@ -151,7 +151,7 @@ def event_list(request):
     offset = (page - 1) * pagesize
     doc = {
         'results': [serialize_event(e) for e in qs.select_related('organizer')[offset : offset + pagesize]],
-        'pagination': {'more': total >= (offset + pagesize)},
+        'pagination': {'more': total > (offset + pagesize)},
     }
     return JsonResponse(doc)
 
@@ -262,7 +262,7 @@ def nav_context_list(request):
                     results.remove(organizer)
                 results.insert(1, organizer)
 
-    doc = {'results': results, 'pagination': {'more': total >= (offset + pagesize)}}
+    doc = {'results': results, 'pagination': {'more': total > (offset + pagesize)}}
     return JsonResponse(doc)
 
 
@@ -306,7 +306,7 @@ def subevent_select2(request, **kwargs):
             }
             for e in qs[offset : offset + pagesize]
         ],
-        'pagination': {'more': total >= (offset + pagesize)},
+        'pagination': {'more': total > (offset + pagesize)},
     }
     return JsonResponse(doc)
 
@@ -342,7 +342,7 @@ def quotas_select2(request, **kwargs):
     offset = (page - 1) * pagesize
     doc = {
         'results': [{'id': q.pk, 'name': str(q.name), 'text': q.name} for q in qs[offset : offset + pagesize]],
-        'pagination': {'more': total >= (offset + pagesize)},
+        'pagination': {'more': total > (offset + pagesize)},
     }
     return JsonResponse(doc)
 
@@ -368,7 +368,7 @@ def products_select2(request, **kwargs):
             }
             for e in qs[offset : offset + pagesize]
         ],
-        'pagination': {'more': total >= (offset + pagesize)},
+        'pagination': {'more': total > (offset + pagesize)},
     }
     return JsonResponse(doc)
 
@@ -402,7 +402,7 @@ def variations_select2(request, **kwargs):
             }
             for e in qs[offset : offset + pagesize]
         ],
-        'pagination': {'more': total >= (offset + pagesize)},
+        'pagination': {'more': total > (offset + pagesize)},
     }
     return JsonResponse(doc)
 
@@ -428,7 +428,7 @@ def category_select2(request, **kwargs):
             }
             for e in qs[offset : offset + pagesize]
         ],
-        'pagination': {'more': total >= (offset + pagesize)},
+        'pagination': {'more': total > (offset + pagesize)},
     }
     return JsonResponse(doc)
 
@@ -468,7 +468,7 @@ def checkinlist_select2(request, **kwargs):
             }
             for e in qs[offset : offset + pagesize]
         ],
-        'pagination': {'more': total >= (offset + pagesize)},
+        'pagination': {'more': total > (offset + pagesize)},
     }
     return JsonResponse(doc)
 
@@ -531,7 +531,7 @@ def productvarquota_select2(request, **kwargs):
             pagesize = 20
             offset = (page - 1) * pagesize
             quotaqs = quotaqs[offset : offset + pagesize]
-            more = total >= (offset + pagesize)
+            more = total > (offset + pagesize)
 
     for i in productqs:
         variations = list(i.variations.all())
@@ -588,7 +588,7 @@ def organizer_select2(request):
 
     doc = {
         'results': [{'id': o.pk, 'text': str(o.name)} for o in qs[offset : offset + pagesize]],
-        'pagination': {'more': total >= (offset + pagesize)},
+        'pagination': {'more': total > (offset + pagesize)},
     }
 
     return JsonResponse(doc)
@@ -613,7 +613,7 @@ def users_select2(request):
 
     doc = {
         'results': [{'id': o.pk, 'text': str(o.email)} for o in qs[offset : offset + pagesize]],
-        'pagination': {'more': total >= (offset + pagesize)},
+        'pagination': {'more': total > (offset + pagesize)},
     }
 
     return JsonResponse(doc)
