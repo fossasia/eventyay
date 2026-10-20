@@ -263,6 +263,12 @@ aside.sidebar {
   margin-bottom: 0;
   overflow-x: hidden;
   overflow-y: auto;
+
+  /* Submenus open and close instantly, like the video sidebar. */
+  .collapse,
+  .collapse.show {
+    transition: none;
+  }
   
   &.sidebar-uncollapsed,
   &:focus-within {
@@ -1135,9 +1141,10 @@ table .color-square {
 
 .track-badge {
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.3em;
-  white-space: nowrap;
+  max-width: 30ch;
+  overflow-wrap: anywhere;
 }
 
 .track-badge::before {
@@ -1145,6 +1152,7 @@ table .color-square {
   display: inline-block;
   width: 0.65em;
   height: 0.65em;
+  margin-top: calc((1lh - 0.65em) / 2);
   border-radius: 50%;
   background-color: var(--color-border);
   flex-shrink: 0;
@@ -2584,8 +2592,28 @@ h2 .user-name-display img {
 
   #page-content:has(.pretalx-schedule) > main > .alert {
     flex-shrink: 0;
-    margin-bottom: 6px;
+    margin: 0 12px 8px 0;
     padding: 8px 14px;
+    overflow: hidden;
+    min-height: 40px;
+    box-sizing: border-box;
+  }
+
+  #page-content:has(.pretalx-schedule) > main > .alert::before {
+    margin: -8px 14px -8px -14px;
+    min-width: 44px;
+    font-size: 16px;
+    align-self: stretch;
+  }
+
+  html[dir="rtl"] #page-content:has(.pretalx-schedule) > main > .alert,
+  html.rtl #page-content:has(.pretalx-schedule) > main > .alert {
+    margin: 0 0 8px 12px;
+  }
+
+  html[dir="rtl"] #page-content:has(.pretalx-schedule) > main > .alert::before,
+  html.rtl #page-content:has(.pretalx-schedule) > main > .alert::before {
+    margin: -8px -14px -8px 14px;
   }
 
   #page-content:has(.pretalx-schedule) .schedule-editor-container {
@@ -2700,6 +2728,10 @@ h2 .user-name-display img {
     height: auto;
     min-height: 0;
     overflow: visible;
+  }
+
+  #page-content:has(.pretalx-schedule) > main > .alert {
+    margin: 0 0 8px 0;
   }
 
   #page-content:has(.pretalx-schedule) .schedule-editor-container {
@@ -3707,6 +3739,16 @@ a.btn-speaker-not-arrived {
 
 .speaker-list-table td {
   vertical-align: middle;
+}
+
+table thead .sort-link {
+  color: var(--color-text-muted);
+}
+
+table thead .sort-link:hover,
+table thead .sort-link:focus,
+table thead .sort-link.sort-active {
+  color: var(--color-primary);
 }
 
 .speaker-list-table .speaker-sessions-cell {
