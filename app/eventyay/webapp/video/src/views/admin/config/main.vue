@@ -38,8 +38,6 @@
 				h2 {{ $t('Tracking and statistics') }}
 				bunt-checkbox(v-model="config.track_room_views", :label="$t('Track room views')", name="track_room_views")
 				bunt-checkbox(v-model="config.track_video_event_views", :label="$t('Track video event views')", name="track_video_event_views")
-				h2 {{ $t('System details') }}
-				bunt-input(v-model="config.connection_limit", :label="$t('Max connections')", name="connection_limit", :hint="$t('Set to 0 to allow unlimited connections per user')", :validation="v$.config.connection_limit")
 			.tab-content(v-if="hasBBB", v-show="activeTab === 'bbb'")
 				h2 {{ $t('Settings for newly-created BBB rooms') }}
 				bunt-checkbox(v-model="config.bbb_defaults.record", :label="$t('Allow recording')", name="record")
@@ -143,7 +141,6 @@ watch([hasGeneral, hasBBB, hasZoom, hasJitsi, hasJanus, hasStage], () => {
 })
 
 const config = ref({
-	connection_limit: 0,
 	conftool_url: '',
 	conftool_password: '',
 	track_room_views: true,
@@ -203,10 +200,6 @@ const validationErrors = computed(() => v$.value.$errors?.map(e => e.$message) |
 // Validation rules
 const rules = computed(() => ({
 	config: {
-		connection_limit: {
-			required: required(i18n.t('Max connections is required')),
-			integer: integer(i18n.t('Max connections must be a number'))
-		},
 		...(features?.enabled('conftool') && config.value?.conftool_url ? {
 			conftool_url: { url: url(i18n.t('Conftool URL must be a URL')) }
 		} : {})
@@ -320,7 +313,6 @@ async function save() {
 	try {
 		const patch = {}
 		if (hasGeneral.value) {
-			patch.connection_limit = parseInt(config.value.connection_limit, 10) || 0
 			patch.track_room_views = Boolean(config.value.track_room_views)
 			patch.track_event_views = Boolean(config.value.track_video_event_views)
 			patch.track_video_event_views = Boolean(config.value.track_video_event_views)
