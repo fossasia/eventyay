@@ -27,16 +27,25 @@
 			router-view(:key="$route.fullPath")
 			//- defining keys like this keeps the playing dom element alive for uninterupted transitions
 			//- Single MediaSource for room streaming (persists across navigation to prevent stream restart)
-			media-source(v-if="streamingRoom && user.profile.greeted && !hasFatalError(streamingRoom)", ref="mediaSource", :room="streamingRoom", :background="isStreamInBackground", :key="streamingRoom.id", :role="isStreamInBackground ? null : 'main'", @close="closeMediaSource", @leave="leaveMediaSource")
+			media-source(v-if="streamingRoom && isUserGreeted && !hasFatalError(streamingRoom)", ref="mediaSource", :room="streamingRoom", :background="isStreamInBackground", :key="streamingRoom.id", :role="isStreamInBackground ? null : 'main'", @close="closeMediaSource", @leave="leaveMediaSource")
 			media-source(v-if="call", ref="channelCallSource", :call="call", :background="call.channel !== $route.params.channelId", :key="call.id", @close="$store.dispatch('chat/leaveCall')")
 			#media-source-iframes
 			notifications(:hasBackgroundMedia="isStreamInBackground")
-			.disconnected-warning(v-if="!connected") {{ $t('Connection lost! Trying to reconnect…') }}
+			.disconnected-warning(v-if="!connected && !dismissedDisconnectedWarning")
+				.warning-content
+					.mdi.mdi-sync.mdi-spin.warning-icon
+					.warning-text
+						span.title {{ $t('Connection lost!') }}
+						span.subtitle {{ $t('Attempting to reconnect…') }}
+				.warning-actions
+					bunt-button.btn-retry(@click="reconnectNow") {{ $t('Retry Now') }}
+					button.btn-dismiss(type="button", @click="dismissedDisconnectedWarning = true", :title="$t('Dismiss')")
+						.mdi.mdi-close
 			transition(name="prompt")
-				greeting-prompt(v-if="!user.profile.greeted")
+				greeting-prompt(v-if="showGreetingPrompt", @close="dismissGreetingPrompt")
 		organiser-sidebar(v-if="isAdminRoute", :collapsed="sidebarCollapsed", :show-mobile="showMobileSidebar", @close="showMobileSidebar = false")
 		rooms-sidebar(v-else, :collapsed="sidebarCollapsed", :show-mobile="showMobileSidebar", @close="showMobileSidebar = false")
-	.connecting(v-else-if="!currentFatalError")
+	.connecting(v-else-if="!currentFatalError", :class="{'is-organizer': isAdminRoute || isOrganizerArea}")
 		bunt-progress-circular(size="huge")
 		.details(v-if="socketCloseCode == 1006") {{ $t("Connection failed. We'll retry, but if this error occurs repeatedly, the connection might be blocked by a firewall in your network or by a VPN on your device.") }}
 		.details(v-if="socketCloseCode") {{ $t('Error code') }}: {{ socketCloseCode }}
@@ -64,6 +73,7 @@ export default {
 	components: { AppBar, RoomsSidebar, OrganiserSidebar, MediaSource, GreetingPrompt, Notifications },
 	provide() {
 		return {
+			leaveMediaSource: (room) => this.leaveMediaSource(room),
 			eventUrl: window.eventyay?.eventUrl || '',
 			scheduleData: reactive({
 				schedule: computed(() => this.$store.state.schedule?.schedule),
@@ -141,6 +151,8 @@ export default {
 			showMobileSidebar: false,
 			windowHeight: null,
 			shareStarredSessions: !!window.eventyay?.showPublicly,
+			greetingDismissed: false,
+			dismissedDisconnectedWarning: false,
 		}
 	},
 	computed: {
@@ -194,8 +206,12 @@ export default {
 		},
 		isAdminRoute() {
 			const route = this.$route
-			return this.isOrganizerRouteName(route?.name) ||
+			return Boolean(window.eventyay?.isOrganizerArea) ||
+				this.isOrganizerRouteName(route?.name) ||
 				route?.matched?.some(match => this.isOrganizerRouteName(match.name))
+		},
+		isOrganizerArea() {
+			return Boolean(window.eventyay?.isOrganizerArea || this.isAdminRoute)
 		},
 		// TODO since this is used EVERYWHERE, use provide/inject?
 		modules() {
@@ -275,17 +291,51 @@ export default {
 				media: this.$refs.mediaSource,
 				channel: this.$refs.channelCallSource
 			}
+		},
+		isUserGreeted() {
+			if (this.greetingDismissed) return true
+			if (this.user?.profile?.greeted) return true
+			if (this.isOrganizerArea || this.isAdminRoute || this.$store.getters.isAdminMode) return true
+			if (this.user?.type === 'kiosk') return true
+			const worldKey = this.world?.id || this.world?.slug
+			const userKey = this.user?.id
+			if (worldKey && userKey && typeof localStorage !== 'undefined') {
+				try {
+					if (localStorage.getItem(`eventyay_video_greeted_${worldKey}_${userKey}`)) {
+						return true
+					}
+				} catch {}
+			}
+			return false
+		},
+		showGreetingPrompt() {
+			if (!this.world || !this.user?.profile) return false
+			if (this.isOrganizerArea || this.isAdminRoute || this.$store.getters.isAdminMode) return false
+			if (this.user?.type === 'kiosk') return false
+			if (this.$route?.name?.startsWith?.('standalone:')) return false
+			return !this.isUserGreeted
 		}
 	},
 	created() {
 		this.previousRouteName = this.$route?.name ?? null
 	},
 	watch: {
+		connected(val) {
+			if (val) {
+				this.dismissedDisconnectedWarning = false
+			}
+		},
 		'$route': {
 			handler(to, from) {
 				this.previousRouteName = from?.name ?? null
 				if (this.isOrganizerRouteName(to?.name) || to?.matched?.some(match => this.isOrganizerRouteName(match.name))) {
 					this.backgroundRoom = null
+				}
+				if (!this.connected) {
+					this.$store.dispatch('reconnect')
+				}
+				if (to?.params?.roomId && to.params.roomId !== from?.params?.roomId) {
+					this.$store.commit('clearRoomFatalError', to.params.roomId)
 				}
 			},
 			flush: 'sync'
@@ -323,6 +373,20 @@ export default {
 		window.removeEventListener('keydown', this.onKeydown, true)
 	},
 	methods: {
+		reconnectNow() {
+			this.dismissedDisconnectedWarning = false
+			this.$store.dispatch('reconnect')
+		},
+		dismissGreetingPrompt() {
+			this.greetingDismissed = true
+			const worldKey = this.world?.id || this.world?.slug
+			const userKey = this.user?.id
+			if (worldKey && userKey && typeof localStorage !== 'undefined') {
+				try {
+					localStorage.setItem(`eventyay_video_greeted_${worldKey}_${userKey}`, 'true')
+				} catch {}
+			}
+		},
 		closeMediaSource() {
 			this.backgroundRoom = null
 		},
@@ -331,7 +395,10 @@ export default {
 			this.leftRoomId = roomId ? String(roomId) : null
 			this.backgroundRoom = null
 			if (this.$route.params?.roomId || this.$route.name === 'room' || this.$route.name === 'room:manage') {
-				this.$router.push({ name: 'about' }).catch(() => {
+				const target = (this.isAdminRoute || window.eventyay?.isOrganizerArea)
+					? { name: 'organizer' }
+					: { name: 'about' }
+				this.$router.push(target).catch(() => {
 					this.$router.push('/').catch(() => {})
 				})
 			}
@@ -512,6 +579,8 @@ export default {
 		padding-top: 50px
 		z-index: 1
 		transition: padding-left 0.2s cubic-bezier(0.4, 0, 0.2, 1)
+		&.is-admin-view
+			background: #ffffff !important
 		+above('m')
 			padding-left: 250px !important
 			&.sidebar-collapsed
@@ -556,7 +625,74 @@ export default {
 		top: 50%
 		left: 50%
 		transform: translate(-50%, -50%)
-	.disconnected-warning, .fatal-error
+	.disconnected-warning
+		position: fixed
+		top: 64px
+		left: 50%
+		transform: translateX(-50%)
+		display: flex
+		align-items: center
+		justify-content: space-between
+		gap: 16px
+		background: rgba(220, 38, 38, 0.95)
+		backdrop-filter: blur(8px)
+		color: #ffffff
+		padding: 10px 18px
+		box-sizing: border-box
+		border-radius: 28px
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25), 0 2px 6px rgba(0, 0, 0, 0.15)
+		z-index: 2100
+		max-width: 90vw
+		.warning-content
+			display: flex
+			align-items: center
+			gap: 10px
+			.warning-icon
+				font-size: 20px
+			.warning-text
+				display: flex
+				flex-direction: column
+				.title
+					font-weight: 600
+					font-size: 14px
+					line-height: 1.2
+				.subtitle
+					font-size: 12px
+					opacity: 0.9
+					line-height: 1.2
+		.warning-actions
+			display: flex
+			align-items: center
+			gap: 8px
+			.btn-retry
+				button-style(color: #ffffff, style: clear)
+				background: rgba(255, 255, 255, 0.2)
+				border-radius: 16px
+				padding: 4px 12px
+				font-size: 12px
+				font-weight: 600
+				cursor: pointer
+				transition: background 0.15s ease
+				&:hover
+					background: rgba(255, 255, 255, 0.35)
+			.btn-dismiss
+				background: none
+				border: none
+				color: #ffffff
+				opacity: 0.8
+				cursor: pointer
+				display: flex
+				align-items: center
+				justify-content: center
+				padding: 4px
+				border-radius: 50%
+				transition: opacity 0.15s ease, background 0.15s ease
+				&:hover
+					opacity: 1
+					background: rgba(255, 255, 255, 0.2)
+				.mdi
+					font-size: 18px
+	.fatal-error
 		position: fixed
 		top: 48px
 		left: calc(50% - 240px)
@@ -577,6 +713,8 @@ export default {
 		flex-direction: column
 		justify-content: center
 		align-items: center
+		&.is-organizer
+			background: #ffffff
 		.details
 			text-align: center
 			max-width: 400px

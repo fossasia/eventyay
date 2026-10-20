@@ -148,7 +148,7 @@
                             {% endblocktranslate %}
                         {% elif tickets_private_testmode and talks_private_testmode %}
                             {% blocktranslate trimmed %}
-                                Tickets and talk pages are in private test mode. Only event team members and system administrators can see them.
+                                Tickets and talk pages are in private test mode. Only event team members, system administrators and invited speakers can view this page.
                             {% endblocktranslate %}
                         {% elif tickets_private_testmode %}
                             {% blocktranslate trimmed %}
@@ -156,7 +156,7 @@
                             {% endblocktranslate %}
                         {% else %}
                             {% blocktranslate trimmed %}
-                                Talk pages are in private test mode. Only event team members and system administrators can see them.
+                                The talks feature is in test mode, only team member administrators and invited speaker can view this page.
                             {% endblocktranslate %}
                         {% endif %}
                     </div>

@@ -13,9 +13,9 @@ from eventyay.control.forms import SplitDateTimeField
 
 WAIVER_TYPE_CHOICES = [
     ('none', _('No effect')),
-    ('percent_100', _('Waive all platform fees (100%)')),
-    ('percent', _('Percentage platform fee discount')),
-    ('subtract', _('Fixed platform fee credit')),
+    ('percent_100', _('Waive in full (100%)')),
+    ('percent', _('Percentage discount')),
+    ('subtract', _('Fixed credit')),
 ]
 
 SCOPE_TYPE_CHOICES = [
@@ -77,6 +77,7 @@ class InvoiceVoucherForm(I18nModelForm):
             'max_usages',
             'budget',
             'allow_partial_usage',
+            'applies_to_platform_fees',
             'event_effect',
             'organizer_effect',
         ]
